@@ -1,4 +1,4 @@
-package imaptest
+package imap
 
 import (
 	"crypto/tls"
@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/textproto"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -17,14 +18,16 @@ type Client struct {
 
 	tpc  *textproto.Conn
 	conn net.Conn
-	tag  uint64
+
+	tag uint64
+	m   sync.Mutex
 }
 
 func NewClient(addr string) *Client {
 	return &Client{Addr: addr, Timeout: time.Second * 10}
 }
 
-func (c *Client) Dial() (string, error) {
+func (c *Client) Dial() ([]string, error) {
 	var err error
 	backoff := 50 * time.Millisecond
 	if c.conn == nil {
@@ -35,34 +38,61 @@ func (c *Client) Dial() (string, error) {
 				time.Sleep(backoff)
 				continue
 			}
+			break
 		}
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 	}
 
 	err = c.conn.SetDeadline(time.Now().Add(time.Second * 5))
 	if err != nil {
-		return "", fmt.Errorf("unable to set deadline: %v", err)
+		return nil, fmt.Errorf("unable to set deadline: %v", err)
 	}
 	c.tpc = textproto.NewConn(c.conn)
-	r, err := c.tpc.ReadLine()
-	return r, err
+	d := &Decoder{}
+	d.msg, err = c.tpc.ReadLine()
+
+	return c.readGreetings(d)
 }
 
 func (c *Client) Capability() ([]string, error) {
-	r, err := c.Send("CAPABILITY")
+	tag := c.nextTag()
+	err := c.tpc.PrintfLine("%s CAPABILITY", tag)
 	if err != nil {
 		return nil, err
 	}
-	args := strings.SplitN(r[0], " ", 2)
-	caps := strings.Split(args[1], " ")
-	return caps[1:], nil
+
+	d := &Decoder{}
+	var caps []string
+	for {
+		d.msg, err = c.tpc.ReadLine()
+
+		if d.is(tag) {
+			return caps, d.EndCmd(tag)
+		}
+
+		if err = d.expect("*"); err != nil {
+			return nil, err
+		}
+
+		if err = d.SP().expect("CAPABILITY"); err != nil {
+			return nil, err
+		}
+
+		var name string
+		for d.IsSP() {
+			name, err = d.SP().String()
+			if err != nil {
+				return nil, err
+			}
+			caps = append(caps, name)
+		}
+	}
 }
 
 func (c *Client) Send(line string) ([]string, error) {
-	c.tag++
-	tag := fmt.Sprintf("A%v", c.tag)
+	tag := c.nextTag()
 	err := c.tpc.PrintfLine("%v %v", tag, line)
 	if err != nil {
 		return nil, err
@@ -90,18 +120,31 @@ func (c *Client) SendRaw(line string) (string, error) {
 	return c.tpc.ReadLine()
 }
 
-func (c *Client) StartTLS() (string, error) {
-	r, err := c.send("STARTTLS")
+func (c *Client) StartTLS() error {
+	tag := c.nextTag()
+	err := c.tpc.PrintfLine("%s STARTTLS", tag)
+	if err != nil {
+		return err
+	}
+
+	d := &Decoder{}
+	d.msg, err = c.tpc.ReadLine()
+	if err != nil {
+		return err
+	}
+	err = d.EndCmd(tag)
+	if err != nil {
+		return err
+	}
 
 	tlsConn := tls.Client(c.conn, &tls.Config{InsecureSkipVerify: true})
 	c.conn = tlsConn
 	c.tpc = textproto.NewConn(tlsConn)
-	return r, err
+	return nil
 }
 
 func (c *Client) Login(username, password string) (string, error) {
-	c.tag++
-	c.tpc.PrintfLine("A%v AUTHENTICATE PLAIN", c.tag)
+	c.tpc.PrintfLine("A%v AUTHENTICATE PLAIN", c.nextTag())
 	r, err := c.tpc.ReadLine()
 
 	return r, err
@@ -125,8 +168,7 @@ func (c *Client) PlainAuth(identity, username, password string) error {
 }
 
 func (c *Client) send(line string) (string, error) {
-	c.tag++
-	tag := fmt.Sprintf("A%v", c.tag)
+	tag := c.nextTag()
 	err := c.tpc.PrintfLine("%v %v", tag, line)
 	if err != nil {
 		return "", err
@@ -136,4 +178,42 @@ func (c *Client) send(line string) (string, error) {
 
 func (c *Client) ReadLine() (string, error) {
 	return c.tpc.ReadLine()
+}
+
+func (c *Client) readGreetings(d *Decoder) ([]string, error) {
+	var err error
+	if err = d.expect("*"); err != nil {
+		return nil, err
+	}
+
+	if err = d.SP().expect("OK"); err != nil {
+		return nil, err
+	}
+
+	var caps []string
+	if d.SP().is("[") {
+		_ = d.expect("[")
+		var key string
+		key, err = d.String()
+		switch strings.ToUpper(key) {
+		case "CAPABILITY":
+			var name string
+			for d.IsSP() {
+				name, err = d.SP().String()
+				if err != nil {
+					return nil, err
+				}
+				caps = append(caps, name)
+			}
+		}
+	}
+	return caps, err
+}
+
+func (c *Client) nextTag() string {
+	c.m.Lock()
+	defer c.m.Unlock()
+
+	c.tag++
+	return fmt.Sprintf("A%04d", c.tag)
 }

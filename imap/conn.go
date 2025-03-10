@@ -3,6 +3,7 @@ package imap
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io"
@@ -62,10 +63,13 @@ func (c *conn) readCmd() error {
 	}
 
 	tag, cmd, param := parseLine(line)
+
 	var res *response
 	switch cmd {
 	case "AUTHENTICATE":
 		res = c.handleAuth(tag, param)
+	case "LOGIN":
+		err = c.handleLogin(tag, param)
 	case "CAPABILITY":
 		res = c.handleCapability()
 	case "STARTTLS":
@@ -74,18 +78,35 @@ func (c *conn) readCmd() error {
 		err = c.handleSelect(tag, param)
 	case "LIST":
 		err = c.handleList(tag, param)
+	case "LSUB":
+		err = c.handleLSub(tag, param)
 	case "FETCH":
 		err = c.handleFetch(tag, param)
 	case "CLOSE":
 		err = c.handleClose(tag)
+	case "UID":
+		err = c.handleUid(tag, param)
+	case "LOGOUT":
+		c.tpc.PrintfLine("BYE logout")
+		return nil
+	case "STORE":
+		err = c.handleStore(tag, param)
+	case "NOOP":
+		res = &response{
+			status: ok,
+		}
 	default:
 		log.Errorf("imap: unknown command: %v", line)
 		res = &response{
 			status: bad,
-			text:   "Unknown command",
+			text:   fmt.Sprintf("Unknown command %v", cmd),
 		}
 	}
 	if err != nil {
+		res = &response{
+			status: bad,
+			text:   fmt.Sprintf("error %v", err.Error()),
+		}
 		return err
 	}
 	if res != nil {

@@ -128,7 +128,7 @@ func Test_Mail(t *testing.T) {
 			host: &enginetest.Host{},
 			test: func(t *testing.T, v *smtp.Message, err error) {
 				r.NoError(t, err)
-				r.Equal(t, "quoted-printable", v.Encoding)
+				r.Equal(t, "quoted-printable", v.ContentTransferEncoding)
 			},
 		},
 		{

@@ -44,11 +44,10 @@ func (s *Store) NewMailbox(name, username, password string) {
 		return
 	}
 	s.Mailboxes[name] = &Mailbox{
-		Name:                  name,
-		Username:              username,
-		Password:              password,
-		messageSequenceNumber: 1,
-		uidValidity:           uint32(time.Now().Unix()),
+		Name:            name,
+		Username:        username,
+		Password:        password,
+		nextUidValidity: uint32(time.Now().Unix()),
 	}
 }
 
@@ -65,9 +64,11 @@ func (s *Store) EnsureMailbox(name string) error {
 
 func (s *Store) GetMail(id string) *smtp.Message {
 	for _, b := range s.Mailboxes {
-		for _, m := range b.Messages {
-			if m.MessageId == id {
-				return m.Message
+		for _, f := range b.Folders {
+			for _, m := range f.Messages {
+				if m.MessageId == id {
+					return m.Message
+				}
 			}
 		}
 	}

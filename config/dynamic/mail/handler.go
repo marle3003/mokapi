@@ -13,14 +13,14 @@ import (
 type Handler struct {
 	config       *Config
 	eventEmitter common.EventEmitter
-	Store        *Store
+	MailStore    *Store
 }
 
 func NewHandler(config *Config, store *Store, eventEmitter common.EventEmitter) *Handler {
 	return &Handler{
 		config:       config,
 		eventEmitter: eventEmitter,
-		Store:        store,
+		MailStore:    store,
 	}
 }
 
@@ -64,7 +64,7 @@ func (h *Handler) processMail(rw smtp.ResponseWriter, r *smtp.DataRequest) {
 	}
 
 	for _, rcpt := range clientContext.To {
-		box := h.Store.Mailboxes[rcpt]
+		box := h.MailStore.Mailboxes[rcpt]
 		box.Append(r.Message)
 	}
 
@@ -103,7 +103,7 @@ func (h *Handler) serveMail(rw smtp.ResponseWriter, r *smtp.MailRequest, ctx *sm
 }
 
 func (h *Handler) serveRcpt(rw smtp.ResponseWriter, r *smtp.RcptRequest, ctx *smtp.ClientContext) {
-	if err := h.Store.EnsureMailbox(r.To); err != nil {
+	if err := h.MailStore.EnsureMailbox(r.To); err != nil {
 		h.writeErrorResponse(rw, r, smtp.AddressRejected, fmt.Sprintf("Unknown mailbox %v", r.To))
 		return
 	}

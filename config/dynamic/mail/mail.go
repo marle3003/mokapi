@@ -3,11 +3,17 @@ package mail
 import (
 	"mokapi/imap"
 	"mokapi/smtp"
+	"slices"
 )
 
 type Mail struct {
 	*smtp.Message
-	UId    uint32
+	UId uint32
+
+	// A Message Sequence Number (MSN) is a temporary, per-session identifier for messages within an IMAP folder
+	// (mailbox). It starts from 1 for the first message and increases sequentially for each message in the folder.
+	// Unlike UIDs, which are permanent and unique per folder, Message Sequence Numbers can change between sessions
+	// as messages are added, removed, or expunged.
 	SeqNum uint32
 	Flags  []imap.Flag
 }
@@ -19,4 +25,10 @@ func (m *Mail) HasFlag(flag imap.Flag) bool {
 		}
 	}
 	return false
+}
+
+func (m *Mail) RemoveFlag(flag imap.Flag) {
+	m.Flags = slices.DeleteFunc(m.Flags, func(f imap.Flag) bool {
+		return f == flag
+	})
 }

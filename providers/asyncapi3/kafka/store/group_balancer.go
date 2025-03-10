@@ -84,7 +84,7 @@ func (b *groupBalancer) run() {
 		case <-time.After(time.Duration(timeoutMs) * time.Millisecond):
 			if b.group.Generation == nil {
 				b.group.State = Empty
-				return
+				continue
 			}
 			now := time.Now()
 			for _, m := range b.group.Generation.Members {

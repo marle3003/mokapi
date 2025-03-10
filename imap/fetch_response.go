@@ -13,8 +13,11 @@ type FetchResponse interface {
 type MessageWriter interface {
 	WriteUID(uid uint32)
 	WriteInternalDate(date time.Time)
-	WriteRFC822Size(size int64)
+	WriteRFC822Size(size uint32)
+	WriteFlags(flags ...Flag)
 	WriteEnvelope(env *Envelope)
+	WriteBody(section FetchBodySection) *BodyWriter
+	WriteBodyStructure(body BodyStructure)
 }
 
 type Envelope struct {
@@ -50,6 +53,21 @@ type Address struct {
 }
 
 type BodyStructure struct {
+	Type        string
+	Subtype     string
+	Params      map[string]string
+	Encoding    string
+	Size        uint32
+	MD5         *string
+	Disposition map[string]map[string]string
+	Language    *string
+	Location    *string
+	Parts       []BodyStructure
+}
+
+type FetchData struct {
+	Def  FetchBodySection
+	Data string
 }
 
 type fetchResponse struct {
@@ -72,11 +90,18 @@ func (m *message) WriteUID(uid uint32) {
 }
 
 func (m *message) WriteInternalDate(date time.Time) {
-	m.sb.WriteString(fmt.Sprintf(" INTERNALDATE \"%v\"", date.Format(DateTimeLayout)))
+	m.sb.WriteString(fmt.Sprintf(" INTERNALDATE "))
+	m.sb.WriteByte('"')
+	m.sb.WriteString(date.Format(DateTimeLayout))
+	m.sb.WriteByte('"')
 }
 
-func (m *message) WriteRFC822Size(size int64) {
+func (m *message) WriteRFC822Size(size uint32) {
 	m.sb.WriteString(fmt.Sprintf(" RFC822.SIZE %v", size))
+}
+
+func (m *message) WriteFlags(flags ...Flag) {
+	m.sb.WriteString(fmt.Sprintf(" FLAGS (%v)", joinFlags(flags)))
 }
 
 func (m *message) WriteEnvelope(env *Envelope) {
@@ -107,23 +132,45 @@ func (m *message) WriteEnvelope(env *Envelope) {
 		m.sb.WriteString(fmt.Sprintf(" \"%v\"", env.InReplyTo))
 	}
 	m.sb.WriteString(fmt.Sprintf(" \"%v\"", env.MessageId))
+
+	if len(env.InReplyTo) == 0 {
+		m.sb.WriteString(" NIL")
+	} else {
+		m.sb.WriteString(fmt.Sprintf(" \"%v\"", env.InReplyTo))
+	}
+
 	m.sb.WriteString(")")
 }
 
-func (m *message) WriteBody(body *FetchBody, values []string) {
-	m.sb.WriteString(" BODY[HEADER.FIELDS (")
-	var sb strings.Builder
-	for i, field := range body.HeaderFields {
-		if i > 0 {
-			m.sb.WriteString(" ")
-		}
-		m.sb.WriteString(field)
+func (m *message) WriteBody(section FetchBodySection) *BodyWriter {
+	section.Peek = false
+	w := &BodyWriter{section: section, m: m}
+	return w
+}
 
-		sb.WriteString(fmt.Sprintf("%s=%s\r\n", field, values[i]))
-	}
-	m.sb.WriteString(")]")
-	m.sb.WriteString(fmt.Sprintf(" {%v}\r\n", sb.Len()))
-	m.sb.WriteString(sb.String())
+type BodyWriter struct {
+	section FetchBodySection
+	header  strings.Builder
+	body    strings.Builder
+	m       *message
+}
+
+func (w *BodyWriter) WriteHeader(name, value string) {
+	w.header.WriteString(fmt.Sprintf("%s: %s\r\n", name, value))
+}
+
+func (w *BodyWriter) WriteBody(s string) {
+	w.body.WriteString(s)
+	w.body.WriteString("\r\n\r\n")
+}
+
+func (w *BodyWriter) Close() {
+	w.m.sb.WriteString(" " + w.section.encode())
+	w.m.sb.WriteString(fmt.Sprintf(" {%v}\r\n", w.header.Len()+w.body.Len()+2))
+	w.m.sb.WriteString(w.header.String())
+	// header must end with a blank line
+	w.m.sb.WriteString("\r\n")
+	w.m.sb.WriteString(w.body.String())
 }
 
 func (m *message) writeAddress(addrList []Address) {
@@ -137,4 +184,60 @@ func (m *message) writeAddress(addrList []Address) {
 		m.sb.WriteString(s)
 	}
 	m.sb.WriteString(")")
+}
+
+func (m *message) WriteBodyStructure(b BodyStructure) {
+	m.sb.WriteString(" BODYSTRUCTURE (")
+
+	m.sb.WriteString(fmt.Sprintf("\"%v\" ", b.Type))
+	m.sb.WriteString(fmt.Sprintf("\"%v\" ", b.Subtype))
+	var params []string
+	for k, v := range b.Params {
+		params = append(params,
+			fmt.Sprintf("\"%v\"", k),
+			fmt.Sprintf("\"%v\"", v),
+		)
+	}
+	m.sb.WriteString("(")
+	m.sb.WriteString(strings.Join(params, " "))
+	m.sb.WriteString(") ")
+
+	m.sb.WriteString("NIL ") // body id
+	m.sb.WriteString("NIL ") // body description
+
+	m.sb.WriteString(fmt.Sprintf("\"%v\" ", b.Encoding))
+	m.sb.WriteString(fmt.Sprintf("%v ", b.Size))
+
+	m.sb.WriteString(toNilString(b.MD5) + " ")
+
+	if len(b.Disposition) > 0 {
+		var dispositions []string
+		for k, v := range b.Disposition {
+			var attr []string
+			for name, val := range v {
+				attr = append(attr, fmt.Sprintf("\"%v\"", name), fmt.Sprintf("\"%v\"", val))
+			}
+			dispositions = append(dispositions,
+				fmt.Sprintf("\"%v\"", k),
+				fmt.Sprintf("(%v)", strings.Join(attr, " ")),
+			)
+		}
+		m.sb.WriteString("(")
+		m.sb.WriteString(strings.Join(dispositions, " "))
+		m.sb.WriteString(") ")
+	} else {
+		m.sb.WriteString("NIL ")
+	}
+
+	m.sb.WriteString(toNilString(b.Language) + " ")
+	m.sb.WriteString(toNilString(b.Location))
+
+	m.sb.WriteString(") ")
+}
+
+func toNilString(s *string) string {
+	if s == nil {
+		return "NIL"
+	}
+	return fmt.Sprintf("\"%v\"", s)
 }

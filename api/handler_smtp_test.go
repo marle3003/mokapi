@@ -154,16 +154,20 @@ func TestHandler_Smtp(t *testing.T) {
 								Mailboxes: map[string]*mail.Mailbox{
 									"alice@foo.bar": {
 										Name: "alice@foo.bar",
-										Messages: []*mail.Mail{
-											{
-												Message: &smtp.Message{Sender: nil,
-													From:        []smtp.Address{{Address: "bob@foo.bar"}},
-													To:          []smtp.Address{{Address: "alice@foo.bar"}},
-													MessageId:   "foo-1@mokapi.io",
-													Time:        now,
-													Subject:     "Hello Alice",
-													ContentType: "text/plain",
-													Body:        "foobar",
+										Folders: map[string]*mail.Folder{
+											"Inbox": {
+												Messages: []*mail.Mail{
+													{
+														Message: &smtp.Message{Sender: nil,
+															From:        []smtp.Address{{Address: "bob@foo.bar"}},
+															To:          []smtp.Address{{Address: "alice@foo.bar"}},
+															MessageId:   "foo-1@mokapi.io",
+															Time:        now,
+															Subject:     "Hello Alice",
+															ContentType: "text/plain",
+															Body:        "foobar",
+														},
+													},
 												},
 											},
 										},
@@ -176,7 +180,7 @@ func TestHandler_Smtp(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services/smtp/foo/mailboxes/alice@foo.bar",
 			contentType:  "application/json",
-			responseBody: fmt.Sprintf(`{"name":"alice@foo.bar","mails":[{"from":[{"address":"bob@foo.bar"}],"to":[{"address":"alice@foo.bar"}],"messageId":"foo-1@mokapi.io","time":"%v","subject":"Hello Alice","contentType":"text/plain","body":"foobar"}]}`, now.Format(time.RFC3339Nano)),
+			responseBody: fmt.Sprintf(`{"name":"alice@foo.bar","folders":{"Inbox":{"mails":[{"from":[{"address":"bob@foo.bar"}],"to":[{"address":"alice@foo.bar"}],"messageId":"foo-1@mokapi.io","time":"%v","subject":"Hello Alice","contentType":"text/plain","body":"foobar"}]}}}`, now.Format(time.RFC3339Nano)),
 		},
 		{
 			name: "get smtp mail",
@@ -191,17 +195,21 @@ func TestHandler_Smtp(t *testing.T) {
 								Mailboxes: map[string]*mail.Mailbox{
 									"alice@foo.bar": {
 										Name: "alice@foo.bar",
-										Messages: []*mail.Mail{
-											{
-												Message: &smtp.Message{
-													Sender:      nil,
-													From:        []smtp.Address{{Address: "bob@foo.bar"}},
-													To:          []smtp.Address{{Address: "alice@foo.bar"}},
-													MessageId:   "foo-1@mokapi.io",
-													Time:        now,
-													Subject:     "Hello Alice",
-													ContentType: "text/plain",
-													Body:        "foobar",
+										Folders: map[string]*mail.Folder{
+											"Inbox": {
+												Messages: []*mail.Mail{
+													{
+														Message: &smtp.Message{
+															Sender:      nil,
+															From:        []smtp.Address{{Address: "bob@foo.bar"}},
+															To:          []smtp.Address{{Address: "alice@foo.bar"}},
+															MessageId:   "foo-1@mokapi.io",
+															Time:        now,
+															Subject:     "Hello Alice",
+															ContentType: "text/plain",
+															Body:        "foobar",
+														},
+													},
 												},
 											},
 										},
@@ -229,19 +237,23 @@ func TestHandler_Smtp(t *testing.T) {
 								Mailboxes: map[string]*mail.Mailbox{
 									"alice@foo.bar": {
 										Name: "alice@foo.bar",
-										Messages: []*mail.Mail{
-											{
-												Message: &smtp.Message{
-													Sender:    nil,
-													From:      []smtp.Address{{Address: "bob@foo.bar"}},
-													To:        []smtp.Address{{Address: "alice@foo.bar"}},
-													MessageId: "foo-1@mokapi.io",
-													Time:      now,
-													Attachments: []smtp.Attachment{
-														{
-															Name:        "foo",
-															ContentType: "text/plain",
-															Data:        []byte("foobar"),
+										Folders: map[string]*mail.Folder{
+											"Inbox": {
+												Messages: []*mail.Mail{
+													{
+														Message: &smtp.Message{
+															Sender:    nil,
+															From:      []smtp.Address{{Address: "bob@foo.bar"}},
+															To:        []smtp.Address{{Address: "alice@foo.bar"}},
+															MessageId: "foo-1@mokapi.io",
+															Time:      now,
+															Attachments: []smtp.Attachment{
+																{
+																	Name:        "foo",
+																	ContentType: "text/plain",
+																	Data:        []byte("foobar"),
+																},
+															},
 														},
 													},
 												},
