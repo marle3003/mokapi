@@ -277,6 +277,7 @@ export let events = [
              messageId: 'shopOrder',
              headers: {
                  foo: { value: 'bar', binary: '' },
+                 bar: { value: '', binary: 'dmFsdWUgYXMgYmluYXJ5'}
              }
          }
      },

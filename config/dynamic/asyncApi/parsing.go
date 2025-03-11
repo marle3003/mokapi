@@ -94,7 +94,7 @@ func (r *MessageRef) Parse(config *dynamic.Config, reader dynamic.Reader) error 
 			r.Value.ContentType = cfg.DefaultContentType
 		}
 		if r.Value.ContentType == "" {
-			log.Warn("content type is missing, using application/json ")
+			log.Warn("content type is missing, using application/json")
 			r.Value.ContentType = "application/json"
 		}
 	}
