@@ -72,7 +72,7 @@ func (h *Handler) Store(req *imap.StoreRequest, res imap.FetchResponse, ctx cont
 	c := imap.ClientFromContext(ctx)
 	mb := c.Session["mailbox"].(*Mailbox)
 	selected := c.Session["selected"].(string)
-	f, ok := mb.Folders[selected]
+	folder, ok := mb.Folders[selected]
 	if !ok {
 		return fmt.Errorf("mailbox not found")
 	}
@@ -80,7 +80,12 @@ func (h *Handler) Store(req *imap.StoreRequest, res imap.FetchResponse, ctx cont
 	do := func(action string, flags []imap.Flag, m *Mail) {
 		switch action {
 		case "add":
-			m.Flags = append(m.Flags, flags...)
+			for _, f := range flags {
+				if m.HasFlag(f) {
+					continue
+				}
+				m.Flags = append(m.Flags, f)
+			}
 		case "remove":
 			for _, flag := range flags {
 				m.RemoveFlag(flag)
@@ -91,7 +96,7 @@ func (h *Handler) Store(req *imap.StoreRequest, res imap.FetchResponse, ctx cont
 	}
 
 	if req.Sequence.IsUid {
-		doMessagesByUid(&req.Sequence, f, func(m *Mail) {
+		doMessagesByUid(&req.Sequence, folder, func(m *Mail) {
 			do(req.Action, req.Flags, m)
 			if !req.Silent {
 				w := res.NewMessage(m.UId)
@@ -99,7 +104,7 @@ func (h *Handler) Store(req *imap.StoreRequest, res imap.FetchResponse, ctx cont
 			}
 		})
 	} else {
-		doMessagesByMsn(&req.Sequence, f, func(msn int, m *Mail) {
+		doMessagesByMsn(&req.Sequence, folder, func(msn int, m *Mail) {
 			do(req.Action, req.Flags, m)
 			if !req.Silent {
 				w := res.NewMessage(uint32(msn))
