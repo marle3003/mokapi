@@ -43,7 +43,8 @@ func TestRequire(t *testing.T) {
 
 				var exports *goja.Object
 				err = s.RunFunc(func(vm *goja.Runtime) {
-					exports = vm.Get("exports").ToObject(vm)
+					mod := vm.Get("module").ToObject(vm)
+					exports = mod.Get("exports").ToObject(vm)
 				})
 				time.Sleep(500 * time.Millisecond)
 				r.NoError(t, err)
@@ -176,7 +177,7 @@ func TestRequire(t *testing.T) {
 				r.NoError(t, err)
 
 				_, err = s.RunDefault()
-				r.EqualError(t, err, "loaded module https://foo.bar contains error: ReferenceError: foo is not defined at https://foo.bar:1:51(1) at mokapi/js/require.(*module).require-fm (native)")
+				r.EqualError(t, err, "loaded module https://foo.bar contains error: ReferenceError: foo is not defined at https://foo.bar:1:38(1) at mokapi/js/require.(*module).require-fm (native)")
 			},
 		},
 		{

@@ -22,6 +22,7 @@ type SourceLoader interface {
 type entry struct {
 	program *goja.Program
 	hash    []byte
+	m       sync.Mutex
 }
 
 type Registry struct {
@@ -71,10 +72,21 @@ func (r *Registry) RegisterNativeModule(name string, loader ModuleLoader) {
 
 func (r *Registry) getModuleProgram(modPath string, file *dynamic.Config) (*goja.Program, error) {
 	r.m.Lock()
-	defer r.m.Unlock()
+	e, found := r.modules[modPath]
+	if !found {
+		e = &entry{hash: file.Info.Checksum}
+		r.modules[modPath] = e
+	}
+	r.m.Unlock()
 
-	e := r.modules[modPath]
-	if e == nil || !bytes.Equal(e.hash, file.Info.Checksum) {
+	if e.program != nil && bytes.Equal(e.hash, file.Info.Checksum) {
+		return e.program, nil
+	}
+
+	e.m.Lock()
+	defer e.m.Unlock()
+
+	if e.program == nil || !bytes.Equal(e.hash, file.Info.Checksum) {
 		source := string(file.Raw)
 		if filepath.Ext(modPath) == ".json" {
 			source = "module.exports = JSON.parse('" + template.JSEscapeString(source) + "')"
@@ -84,32 +96,37 @@ func (r *Registry) getModuleProgram(modPath string, file *dynamic.Config) (*goja
 		if err != nil {
 			return nil, err
 		}
-		e = &entry{
-			program: prg,
-			hash:    file.Info.Checksum,
-		}
-		r.modules[modPath] = e
+		e.program = prg
+		e.hash = file.Info.Checksum
 	}
 	return e.program, nil
 }
 
 func (r *Registry) GetProgram(file *dynamic.Config) (*goja.Program, error) {
-	r.m.Lock()
-	defer r.m.Unlock()
-
 	path := getScriptPath(file.Info.Kernel().Url)
 
-	e := r.scripts[path]
-	if e == nil || !bytes.Equal(e.hash, file.Info.Checksum) {
+	r.m.Lock()
+	e, found := r.scripts[path]
+	if !found {
+		e = &entry{hash: file.Info.Checksum}
+		r.scripts[path] = e
+	}
+	r.m.Unlock()
+
+	if e.program != nil && bytes.Equal(e.hash, file.Info.Checksum) {
+		return e.program, nil
+	}
+
+	e.m.Lock()
+	defer e.m.Unlock()
+
+	if e.program == nil || !bytes.Equal(e.hash, file.Info.Checksum) {
 		prg, err := r.compiler.Compile(path, string(file.Raw))
 		if err != nil {
 			return nil, err
 		}
-		e = &entry{
-			program: prg,
-			hash:    file.Info.Checksum,
-		}
-		r.scripts[path] = e
+		e.program = prg
+		e.hash = file.Info.Checksum
 	}
 	return e.program, nil
 }

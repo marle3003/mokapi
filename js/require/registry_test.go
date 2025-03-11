@@ -49,7 +49,7 @@ func TestRegistry(t *testing.T) {
 						throw new Error('m test failed')
 					}
 				`)
-				r.EqualError(t, err, "loaded module mod contains error: SyntaxError: /mod.js: Unterminated string constant. (1:0)\n\n> 1 | \"\n    | ^ at dispatchException (<mokapi/babel.min.js>:2:6239(7)) at mokapi/js/require.(*module).require-fm (native)")
+				r.EqualError(t, err, "loaded module mod contains error: script error: unterminated string literal: mod.js:1:1 at mokapi/js/require.(*module).require-fm (native)")
 			},
 		},
 		{

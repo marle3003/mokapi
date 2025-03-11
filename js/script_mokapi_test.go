@@ -473,7 +473,7 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 				err = s.Run()
 				r.NoError(t, err)
 				b, err := doFunc()
-				r.EqualError(t, err, "Error: test error at test.js:3:46(3)")
+				r.EqualError(t, err, "Error: test error at test.js:3:38(3)")
 				r.False(t, b, "return value should be false on error")
 				s.Close()
 			},

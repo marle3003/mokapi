@@ -87,11 +87,12 @@ func (s *Script) RunDefault() (goja.Value, error) {
 	s.loop.StartLoop()
 
 	result, err := s.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
-		v := vm.Get("exports")
+		v := vm.Get("module")
 		if v == goja.Null() {
 			return nil, NoDefaultFunction
 		}
-		exports := v.ToObject(vm)
+		mod := v.ToObject(vm)
+		exports := mod.Get("exports").ToObject(vm)
 		if f, ok := goja.AssertFunction(exports.Get("default")); ok {
 			return f(goja.Undefined())
 		} else {
@@ -160,6 +161,10 @@ func (s *Script) ensureRuntime() error {
 	}
 
 	s.loop.Run(func(vm *goja.Runtime) {
+		mod := vm.NewObject()
+		mod.Set("exports", vm.NewObject())
+		vm.Set("module", mod)
+
 		_, err = vm.RunProgram(prg)
 	})
 	return err
