@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"github.com/stretchr/testify/require"
+	"strings"
 	"testing"
 	"time"
 )
@@ -345,4 +346,20 @@ func TestRecordBatch_WriteTo_Bytes_Compare(t *testing.T) {
 	}
 
 	require.Equal(t, expected, b)
+}
+
+func TestSize_LongValue(t *testing.T) {
+	// 80 because it must be lower than 128 but the value * 2 must be >= 128 (x<<1 is equal to *2)
+	val := []byte(strings.Repeat("b", 80))
+	records := RecordBatch{Records: []*Record{
+		{
+			Offset:  0,
+			Time:    ToTime(1657010762684),
+			Key:     NewBytes([]byte("foo")),
+			Value:   NewBytes(val),
+			Headers: nil,
+		},
+	}}
+
+	require.Equal(t, 150, records.Size())
 }
