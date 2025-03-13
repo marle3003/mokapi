@@ -152,7 +152,9 @@ func (d *Decoder) Text() (string, error) {
 }
 
 func (d *Decoder) Number() (uint32, error) {
-	s, err := d.Read(isAtom)
+	s, err := d.Read(func(r byte) bool {
+		return r >= '0' && r <= '9'
+	})
 	if err != nil {
 		return 0, d.returnErr(err)
 	}
@@ -223,25 +225,25 @@ func (d *Decoder) Sequence() (IdSet, error) {
 	}
 
 	for _, v := range strings.Split(s, ",") {
-		seq := Range{}
-
 		if i := strings.IndexRune(v, ':'); i >= 0 {
-			seq.Start, err = parseNumSet(v[:i])
+			r := &Range{}
+			r.Start, err = parseNumSet(v[:i])
 			if err != nil {
 				return set, d.returnErr(err)
 			}
-			seq.End, err = parseNumSet(v[i+1:])
+			r.End, err = parseNumSet(v[i+1:])
 			if err != nil {
 				return set, d.returnErr(err)
 			}
+			set.Ids = append(set.Ids, r)
 		} else {
-			seq.Start, err = parseNumSet(v)
+			var n SeqNum
+			n, err = parseNumSet(v)
 			if err != nil {
 				return set, d.returnErr(err)
 			}
-			seq.End = seq.Start
+			set.Ids = append(set.Ids, IdNum(n.Value))
 		}
-		set.Ranges = append(set.Ranges, seq)
 	}
 
 	return set, nil

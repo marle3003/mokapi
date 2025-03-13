@@ -17,25 +17,16 @@ type FetchOptions struct {
 }
 
 type FetchBodySection struct {
-	Type   string
-	Fields []string
-	Parts  []int
-	Peek   bool
+	Type      string
+	Fields    []string
+	Parts     []int
+	Peek      bool
+	Partially *BodyPart
 }
 
-type IdSet struct {
-	Ranges []Range
-	IsUid  bool
-}
-
-type Range struct {
-	Start SeqNum
-	End   SeqNum
-}
-
-type SeqNum struct {
-	Value uint32
-	Star  bool
+type BodyPart struct {
+	Offset uint32
+	Limit  uint32
 }
 
 type FetchBody struct {
@@ -360,24 +351,4 @@ func (b *BodyStructure) readPart(d *Decoder) error {
 	}
 
 	return d.Error()
-}
-
-func (s *IdSet) Contains(num uint32) bool {
-	for _, set := range s.Ranges {
-		if set.Contains(num) {
-			return true
-		}
-	}
-	return false
-}
-
-func (s *Range) Contains(num uint32) bool {
-	if num < s.Start.Value {
-		return false
-	}
-	if s.End.Star {
-		return true
-	} else {
-		return s.Start.Value <= num && s.End.Value >= num
-	}
 }

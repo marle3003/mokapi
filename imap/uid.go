@@ -18,6 +18,8 @@ func (c *conn) handleUid(tag, param string) error {
 		return c.handleUidFetch(tag, d.SP())
 	case "STORE":
 		return c.handleUidStore(tag, d.SP())
+	case "EXPUNGE":
+		return c.handleExpunge(tag, d.SP(), true)
 	default:
 		return fmt.Errorf("UID command %s is not supported", cmd)
 	}

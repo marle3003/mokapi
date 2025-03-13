@@ -63,6 +63,7 @@ func (c *conn) readCmd() error {
 	}
 
 	tag, cmd, param := parseLine(line)
+	d := Decoder{msg: param}
 
 	var res *response
 	switch cmd {
@@ -84,6 +85,8 @@ func (c *conn) readCmd() error {
 		err = c.handleFetch(tag, param)
 	case "CLOSE":
 		err = c.handleClose(tag)
+	case "EXPUNGE":
+		err = c.handleExpunge(tag, &d, false)
 	case "UID":
 		err = c.handleUid(tag, param)
 	case "LOGOUT":
@@ -91,6 +94,10 @@ func (c *conn) readCmd() error {
 		return nil
 	case "STORE":
 		err = c.handleStore(tag, param)
+	case "CREATE":
+		err = c.handleCreate(tag, &d)
+	case "MOVE":
+		err = c.handleMove(tag, &d, false)
 	case "NOOP":
 		res = &response{
 			status: ok,
@@ -107,7 +114,7 @@ func (c *conn) readCmd() error {
 			status: bad,
 			text:   fmt.Sprintf("error %v", err.Error()),
 		}
-		return err
+		return fmt.Errorf("parse command failed '%v': %w", line, err)
 	}
 	if res != nil {
 		return c.writeResponse(tag, res)

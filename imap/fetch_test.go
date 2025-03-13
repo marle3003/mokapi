@@ -26,8 +26,8 @@ func TestServer_Fetch(t *testing.T) {
 			handler: func(t *testing.T) imap.Handler {
 				h := &imaptest.Handler{
 					FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
-						require.Equal(t, uint32(1), request.Sequence.Ranges[0].Start.Value)
-						require.Equal(t, uint32(1), request.Sequence.Ranges[0].End.Value)
+						require.Equal(t, uint32(1), request.Sequence.Ids[0].(*imap.Range).Start.Value)
+						require.Equal(t, uint32(1), request.Sequence.Ids[0].(*imap.Range).End.Value)
 						require.True(t, request.Options.UID, "UID is set")
 
 						msg := response.NewMessage(1)
@@ -53,8 +53,8 @@ func TestServer_Fetch(t *testing.T) {
 			handler: func(t *testing.T) imap.Handler {
 				h := &imaptest.Handler{
 					FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
-						require.Equal(t, uint32(1), request.Sequence.Ranges[0].Start.Value)
-						require.True(t, request.Sequence.Ranges[0].End.Star, "star is set")
+						require.Equal(t, uint32(1), request.Sequence.Ids[0].(*imap.Range).Start.Value)
+						require.True(t, request.Sequence.Ids[0].(*imap.Range).End.Star, "star is set")
 
 						msg := response.NewMessage(1)
 						msg.WriteUID(11)
@@ -306,8 +306,7 @@ func TestServer_Fetch_Macros(t *testing.T) {
 			handler: func(t *testing.T) imap.Handler {
 				h := &imaptest.Handler{
 					FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
-						require.Equal(t, uint32(1), request.Sequence.Ranges[0].Start.Value)
-						require.Equal(t, uint32(1), request.Sequence.Ranges[0].End.Value)
+						require.Equal(t, imap.IdNum(1), request.Sequence.Ids[0].(imap.IdNum))
 						require.True(t, request.Options.Flags, "flag is set")
 						require.True(t, request.Options.InternalDate, "internal date is set")
 						require.True(t, request.Options.RFC822Size, "RFC822Size is set")
@@ -337,8 +336,8 @@ func TestServer_Fetch_Macros(t *testing.T) {
 			handler: func(t *testing.T) imap.Handler {
 				h := &imaptest.Handler{
 					FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
-						require.Equal(t, uint32(1), request.Sequence.Ranges[0].Start.Value)
-						require.True(t, request.Sequence.Ranges[0].End.Star)
+						require.Equal(t, uint32(1), request.Sequence.Ids[0].(*imap.Range).Start.Value)
+						require.True(t, request.Sequence.Ids[0].(*imap.Range).End.Star)
 
 						date, err := time.Parse(time.RFC3339, "2023-03-16T13:07:04+01:00")
 						require.NoError(t, err)
@@ -539,6 +538,32 @@ func TestFetch_Response(t *testing.T) {
 				},
 			},
 		},
+		{
+			request: "FETCH 1 (UID BODY.PEEK[TEXT]<0.2048>)",
+			response: []string{
+				"* 1 FETCH (UID 11 BODY[] {36}",
+				"From: bob@foo.bar",
+				"",
+				"Hello World",
+				"",
+				")",
+				"A0002 OK FETCH completed",
+			},
+			handler: &imaptest.Handler{
+				FetchFunc: func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error {
+					require.Equal(t, uint32(0), request.Options.Body[0].Partially.Offset)
+					require.Equal(t, uint32(2048), request.Options.Body[0].Partially.Limit)
+
+					msg := response.NewMessage(1)
+					msg.WriteUID(11)
+					w := msg.WriteBody(request.Options.Body[0])
+					w.WriteHeader("From", "bob@foo.bar")
+					w.WriteBody("Hello World")
+					w.Close()
+					return nil
+				},
+			},
+		},
 	}
 
 	t.Parallel()
@@ -573,22 +598,22 @@ func TestFetch_Response(t *testing.T) {
 }
 
 func num(i int) imap.IdSet {
-	s := imap.Range{}
+	s := &imap.Range{}
 	s.Start.Value = uint32(i)
 	s.End.Value = uint32(i)
-	return imap.IdSet{Ranges: []imap.Range{s}}
+	return imap.IdSet{Ids: []imap.Set{s}}
 }
 
 func seq(start, end int) imap.IdSet {
-	s := imap.Range{}
+	s := &imap.Range{}
 	s.Start.Value = uint32(start)
 	s.End.Value = uint32(end)
-	return imap.IdSet{Ranges: []imap.Range{s}}
+	return imap.IdSet{Ids: []imap.Set{s}}
 }
 
 func all() imap.IdSet {
-	s := imap.Range{}
+	s := &imap.Range{}
 	s.Start.Value = uint32(1)
 	s.End.Star = true
-	return imap.IdSet{Ranges: []imap.Range{s}}
+	return imap.IdSet{Ids: []imap.Set{s}}
 }

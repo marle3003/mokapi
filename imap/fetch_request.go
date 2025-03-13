@@ -113,6 +113,25 @@ func (s *FetchBodySection) decode(d *Decoder) error {
 	if err = d.expect("]"); err != nil {
 		return err
 	}
+	if d.is("<") {
+		part := BodyPart{}
+		_ = d.expect("<")
+		part.Offset, err = d.Number()
+		if err != nil {
+			return err
+		}
+		if err = d.expect("."); err != nil {
+			return err
+		}
+		part.Limit, err = d.Number()
+		if err != nil {
+			return err
+		}
+		if err = d.expect(">"); err != nil {
+			return err
+		}
+		s.Partially = &part
+	}
 	return nil
 }
 

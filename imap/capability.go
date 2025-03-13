@@ -9,6 +9,9 @@ const (
 	startTLSCap  capability = "STARTTLS"
 	authPlainCap capability = "AUTH=PLAIN"
 	saslIrCap    capability = "SASL-IR"
+
+	uidPlus capability = "UIDPLUS"
+	move    capability = "MOVE"
 )
 
 type capabilities []capability
@@ -54,7 +57,7 @@ func (c *conn) getCapabilities() capabilities {
 	}
 
 	if c.state == AuthenticatedState || c.state == SelectedState {
-		caps = append(caps)
+		caps = append(caps, uidPlus, move)
 	}
 
 	return caps

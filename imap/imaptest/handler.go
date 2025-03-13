@@ -13,6 +13,9 @@ type Handler struct {
 	ListFunc     func(ref, pattern string, flags []imap.MailboxFlags, session map[string]interface{}) ([]imap.ListEntry, error)
 	FetchFunc    func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error
 	StoreFunc    func(request *imap.StoreRequest, response imap.FetchResponse, session map[string]interface{}) error
+	ExpungeFunc  func(set *imap.IdSet, w *imap.ExpungeWriter, session map[string]interface{}) error
+	CreateFunc   func(name string, opt *imap.CreateOptions, session map[string]interface{}) error
+	MoveFunc     func(set *imap.IdSet, dest string, w *imap.MoveWriter, session map[string]interface{}) error
 }
 
 func (h *Handler) Login(username, password string, _ context.Context) error {
@@ -61,6 +64,30 @@ func (h *Handler) Store(request *imap.StoreRequest, response imap.FetchResponse,
 		return h.StoreFunc(request, response, h.session)
 	}
 	panic("STORE not implemented")
+}
+
+func (h *Handler) Expunge(set *imap.IdSet, w *imap.ExpungeWriter, _ context.Context) error {
+	if h.ExpungeFunc != nil {
+		h.ensureSession()
+		return h.ExpungeFunc(set, w, h.session)
+	}
+	panic("EXPUNGE not implemented")
+}
+
+func (h *Handler) Create(name string, opt *imap.CreateOptions, _ context.Context) error {
+	if h.CreateFunc != nil {
+		h.ensureSession()
+		return h.CreateFunc(name, opt, h.session)
+	}
+	panic("CREATE not implemented")
+}
+
+func (h *Handler) Move(set *imap.IdSet, dest string, w *imap.MoveWriter, _ context.Context) error {
+	if h.MoveFunc != nil {
+		h.ensureSession()
+		return h.MoveFunc(set, dest, w, h.session)
+	}
+	panic("MOVE not implemented")
 }
 
 func (h *Handler) ensureSession() {

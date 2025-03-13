@@ -14,7 +14,7 @@ func (e *Encoder) Atom(s string) *Encoder {
 	return e
 }
 
-func (e *Encoder) Number(i int) *Encoder {
+func (e *Encoder) Number(i uint32) *Encoder {
 	e.buf = append(e.buf, fmt.Sprintf("%d", i)...)
 	return e
 }
@@ -47,22 +47,7 @@ func (e *Encoder) ListItem(s string) *Encoder {
 }
 
 func (e *Encoder) SequenceSet(set IdSet) *Encoder {
-	for i, seq := range set.Ranges {
-		if i > 0 {
-			e.buf = append(e.buf, ',')
-		}
-		if seq.Start.Value == seq.End.Value {
-			e.Number(int(seq.Start.Value))
-		} else if seq.End.Star {
-			e.Number(int(seq.Start.Value))
-			e.Byte(':')
-			e.Byte('*')
-		} else {
-			e.Number(int(seq.Start.Value))
-			e.Byte(':')
-			e.Number(int(seq.End.Value))
-		}
-	}
+	e.buf = append(e.buf, set.String()...)
 	return e
 }
 

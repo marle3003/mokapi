@@ -3,6 +3,7 @@ package mail
 import (
 	"context"
 	"fmt"
+	"math"
 	"mokapi/imap"
 	"strings"
 )
@@ -39,18 +40,10 @@ func doMessagesByUid(set *imap.IdSet, folder *Folder, action func(m *Mail)) {
 }
 
 func doMessagesByMsn(set *imap.IdSet, folder *Folder, action func(msn int, m *Mail)) {
-	for _, r := range set.Ranges {
-		start := 0
-		end := int(r.End.Value)
-		if r.Start.Value > 0 {
-			start = int(r.Start.Value) - 1
-		}
-		if r.End.Star {
-			end = len(folder.Messages)
-		}
-
-		for i, msg := range folder.Messages[start:end] {
-			action(i+1, msg)
+	for i, msg := range folder.Messages {
+		msn := i + 1
+		if set.Contains(uint32(msn)) {
+			action(msn, msg)
 		}
 	}
 }
@@ -97,7 +90,12 @@ func writeMessage(msg *Mail, opt imap.FetchOptions, w imap.MessageWriter) {
 				}
 			}
 		} else if body.Type == "text" {
-			bw.WriteBody(msg.Body)
+			if body.Partially != nil {
+				n := int(math.Min(float64(len(msg.Body)), float64(body.Partially.Limit)))
+				bw.WriteBody(msg.Body[body.Partially.Offset:n])
+			} else {
+				bw.WriteBody(msg.Body)
+			}
 		} else if body.Type == "" {
 			for k, v := range msg.Headers {
 				bw.WriteHeader(k, v)

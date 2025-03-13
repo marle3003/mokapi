@@ -22,6 +22,7 @@ type Folder struct {
 	Flags      []imap.MailboxFlags
 	Messages   []*Mail
 	Subscribed bool
+	Folders    map[string]*Folder
 
 	// next available UID for new messages
 	uidNext uint32
@@ -39,18 +40,7 @@ func (mb *Mailbox) Append(m *smtp.Message) {
 
 	mb.EnsureInbox()
 	f := mb.Folders["INBOX"]
-
-	if len(f.Messages) == mailboxSize {
-		f.Messages = f.Messages[0 : len(f.Messages)-1]
-	}
-	uid := f.uidNext
-	f.uidNext++
-	f.Messages = append(f.Messages, &Mail{
-		Message: m,
-		UId:     uid,
-		SeqNum:  uid,
-		Flags:   []imap.Flag{imap.FlagRecent},
-	})
+	f.Append(m)
 }
 
 // Offset to start UID from year 2000 instead of 1970 (Unix epoch)
@@ -67,6 +57,31 @@ func (mb *Mailbox) EnsureInbox() {
 
 		mb.Folders["INBOX"] = f
 	}
+}
+
+func (f *Folder) Append(m *smtp.Message) {
+	if len(f.Messages) == mailboxSize {
+		f.Messages = f.Messages[0 : len(f.Messages)-1]
+	}
+	uid := f.uidNext
+	f.uidNext++
+	f.Messages = append(f.Messages, &Mail{
+		Message: m,
+		UId:     uid,
+		SeqNum:  uid,
+		Flags:   []imap.Flag{imap.FlagRecent},
+	})
+}
+
+func (f *Folder) Copy(m *Mail) {
+	if len(f.Messages) == mailboxSize {
+		f.Messages = f.Messages[0 : len(f.Messages)-1]
+	}
+	uid := f.uidNext
+	f.uidNext++
+	m.UId = uid
+	m.SeqNum = uid
+	f.Messages = append(f.Messages, m)
 }
 
 func (f *Folder) NumRecent() int {
