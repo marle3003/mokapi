@@ -81,6 +81,7 @@ func (r *Record) Size(baseOffSet int64, base time.Time) int {
 	if r.Value != nil {
 		valueLength = r.Value.Size()
 	}
+
 	size := 1 + // attribute
 		sizeVarInt(deltaTimestamp) +
 		sizeVarInt(deltaOffset) +
@@ -229,8 +230,8 @@ func sizeVarInt(x int64) int {
 		ux = ^ux
 	}
 	i := 0
-	for x >= 0x80 {
-		x >>= 7
+	for ux >= 0x80 {
+		ux >>= 7
 		i++
 	}
 	return i + 1
