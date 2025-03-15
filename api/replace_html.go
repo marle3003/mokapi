@@ -59,8 +59,8 @@ func getHttpMetaInfo(segments []string, app *runtime.App) (title, description st
 		return
 	}
 
-	c, ok := app.Http[name]
-	if !ok {
+	c := app.Http.Get(name)
+	if c == nil {
 		return
 	}
 	title = c.Info.Name

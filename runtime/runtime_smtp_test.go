@@ -23,9 +23,9 @@ func TestApp_AddSmtp(t *testing.T) {
 		{
 			name: "event store available",
 			test: func(t *testing.T, app *runtime.App) {
-				app.AddSmtp(newSmtpConfig("https://mokapi.io", &mail.Config{Info: mail.Info{Name: "foo"}}))
+				app.Mail.Add(newSmtpConfig("https://mokapi.io", &mail.Config{Info: mail.Info{Name: "foo"}}))
 
-				require.Contains(t, app.Smtp, "foo")
+				require.NotNil(t, app.Mail.Get("foo"))
 				err := events.Push("bar", events.NewTraits().WithNamespace("smtp").WithName("foo"))
 				require.NoError(t, err, "event store should be available")
 			},
@@ -33,7 +33,7 @@ func TestApp_AddSmtp(t *testing.T) {
 		{
 			name: "send mail request is counted in monitor",
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.AddSmtp(newSmtpConfig("https://mokapi.io", &mail.Config{Info: mail.Info{Name: "foo"}}))
+				info := app.Mail.Add(newSmtpConfig("https://mokapi.io", &mail.Config{Info: mail.Info{Name: "foo"}}))
 				m := monitor.NewSmtp()
 				h := info.Handler(m, enginetest.NewEngine())
 
@@ -47,7 +47,7 @@ func TestApp_AddSmtp(t *testing.T) {
 		{
 			name: "retrieve configs",
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.AddSmtp(newSmtpConfig("https://mokapi.io", &mail.Config{Info: mail.Info{Name: "foo"}}))
+				info := app.Mail.Add(newSmtpConfig("https://mokapi.io", &mail.Config{Info: mail.Info{Name: "foo"}}))
 
 				configs := info.Configs()
 				require.Len(t, configs, 1)
@@ -79,7 +79,7 @@ func TestApp_AddSmtp_Patching(t *testing.T) {
 				newSmtpConfig("https://mokapi.io/b", &mail.Config{Info: mail.Info{Name: "foo", Description: "bar"}}),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.Smtp["foo"]
+				info := app.Mail.Get("foo")
 				require.Equal(t, "bar", info.Info.Description)
 				configs := info.Configs()
 				require.Len(t, configs, 2)
@@ -92,7 +92,7 @@ func TestApp_AddSmtp_Patching(t *testing.T) {
 				newSmtpConfig("https://mokapi.io/a", &mail.Config{Info: mail.Info{Name: "foo", Description: "bar"}}),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.Smtp["foo"]
+				info := app.Mail.Get("foo")
 				require.Equal(t, "foo", info.Info.Description)
 			},
 		},
@@ -103,7 +103,7 @@ func TestApp_AddSmtp_Patching(t *testing.T) {
 				newSmtpConfig("https://mokapi.io/a", &mail.Config{Info: mail.Info{Name: "foo", Description: "bar"}}),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.Smtp["foo"]
+				info := app.Mail.Get("foo")
 				require.Equal(t, "foo", info.Info.Description)
 			},
 		},
@@ -115,7 +115,7 @@ func TestApp_AddSmtp_Patching(t *testing.T) {
 
 			app := runtime.New()
 			for _, c := range tc.configs {
-				app.AddSmtp(c)
+				app.Mail.Add(c)
 			}
 			tc.test(t, app)
 		})
@@ -123,8 +123,10 @@ func TestApp_AddSmtp_Patching(t *testing.T) {
 }
 
 func TestIsSmtpConfig(t *testing.T) {
-	require.True(t, runtime.IsSmtpConfig(&dynamic.Config{Data: &mail.Config{}}))
-	require.False(t, runtime.IsSmtpConfig(&dynamic.Config{Data: "foo"}))
+	_, ok := runtime.IsSmtpConfig(&dynamic.Config{Data: &mail.Config{}})
+	require.True(t, ok)
+	_, ok = runtime.IsSmtpConfig(&dynamic.Config{Data: "foo"})
+	require.False(t, ok)
 }
 
 func newSmtpConfig(name string, config *mail.Config) *dynamic.Config {

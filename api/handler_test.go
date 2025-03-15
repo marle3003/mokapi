@@ -3,7 +3,9 @@ package api
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
+	"mokapi/providers/openapi"
 	"mokapi/runtime"
+	"mokapi/runtime/runtimetest"
 	"mokapi/try"
 	"net/http"
 	"net/http/httptest"
@@ -120,7 +122,7 @@ func TestHandler_Api_Info(t *testing.T) {
 		},
 		{
 			name: "http active",
-			app:  &runtime.App{Http: map[string]*runtime.HttpInfo{"foo": {}}},
+			app:  runtimetest.NewHttpApp(&openapi.Config{}),
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
@@ -135,7 +137,7 @@ func TestHandler_Api_Info(t *testing.T) {
 		},
 		{
 			name: "kafka active",
-			app:  &runtime.App{Kafka: map[string]*runtime.KafkaInfo{"foo": {}}},
+			app:  runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", &runtime.KafkaInfo{})),
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
@@ -150,7 +152,7 @@ func TestHandler_Api_Info(t *testing.T) {
 		},
 		{
 			name: "smtp active",
-			app:  &runtime.App{Smtp: map[string]*runtime.SmtpInfo{"foo": {}}},
+			app:  runtimetest.NewApp(runtimetest.WithMailInfo("foo", &runtime.MailInfo{})),
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
@@ -165,7 +167,7 @@ func TestHandler_Api_Info(t *testing.T) {
 		},
 		{
 			name: "ldap active",
-			app:  &runtime.App{Ldap: map[string]*runtime.LdapInfo{"foo": {}}},
+			app:  runtimetest.NewApp(runtimetest.WithLdapInfo("foo", &runtime.LdapInfo{})),
 			fn: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,

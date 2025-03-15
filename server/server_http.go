@@ -62,34 +62,35 @@ func (m *HttpManager) removeService(name string) {
 }
 
 func (m *HttpManager) Update(e dynamic.ConfigEvent) {
-	if !runtime.IsHttpConfig(e.Config) {
+	cfg, ok := runtime.IsHttpConfig(e.Config)
+	if !ok {
 		return
 	}
 
-	name, cfg := m.app.GetHttp(e.Config)
+	info := m.app.Http.Get(cfg.Info.Name)
 	if e.Event == dynamic.Delete {
-		m.app.RemoveHttp(e.Config)
-		if cfg.Config == nil {
-			m.removeService(name)
+		m.app.Http.Remove(e.Config)
+		if info.Config == nil {
+			m.removeService(cfg.Info.Name)
 			m.stopEmptyServers()
 			return
 		}
-	} else if cfg == nil {
-		cfg = m.app.AddHttp(e.Config)
+	} else if info == nil {
+		info = m.app.Http.Add(e.Config)
 	} else {
-		oldServers := cfg.Servers
-		cfg.AddConfig(e.Config)
-		m.cleanupRemovedServers(cfg, oldServers)
+		oldServers := info.Servers
+		info.AddConfig(e.Config)
+		m.cleanupRemovedServers(info, oldServers)
 	}
 
-	for _, s := range cfg.Servers {
+	for _, s := range info.Servers {
 		u, err := parseUrl(s.Url)
 		if err != nil {
 			log.Errorf("url syntax error %v: %v", e.Config.Info.Url, err.Error())
 			continue
 		}
 
-		err = m.AddService(cfg.Info.Name, u, cfg.Handler(m.app.Monitor.Http, m.eventEmitter), false)
+		err = m.AddService(cfg.Info.Name, u, info.Handler(m.app.Monitor.Http, m.eventEmitter), false)
 		if err != nil {
 			log.Warnf("unable to add '%v' on %v: %v", cfg.Info.Name, s.Url, err.Error())
 			continue

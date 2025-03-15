@@ -37,35 +37,36 @@ func NewSmtpManager(app *runtime.App, eventEmitter engine.EventEmitter, store *c
 }
 
 func (m *SmtpManager) UpdateConfig(e dynamic.ConfigEvent) {
-	if !runtime.IsSmtpConfig(e.Config) {
+	cfg, ok := runtime.IsSmtpConfig(e.Config)
+	if !ok {
 		return
 	}
 
 	m.m.Lock()
 	defer m.m.Unlock()
 
-	name, cfg := m.app.GetSmtp(e.Config)
+	info := m.app.Mail.Get(cfg.Info.Name)
 	if e.Event == dynamic.Delete {
-		m.app.RemoveSmtp(e.Config)
-		if cfg.Config == nil {
-			m.removeService(name)
+		m.app.Mail.Remove(e.Config)
+		if info.Config == nil {
+			m.removeService(cfg.Info.Name)
 		}
 		return
-	} else if cfg == nil {
-		cfg = m.app.AddSmtp(e.Config)
+	} else if info == nil {
+		info = m.app.Mail.Add(e.Config)
 	} else {
-		oldServers := cfg.Servers
-		cfg.AddConfig(e.Config)
-		m.cleanupRemovedServers(cfg, oldServers)
+		oldServers := info.Servers
+		info.AddConfig(e.Config)
+		m.cleanupRemovedServers(info, oldServers)
 	}
 
-	err := m.startServers(cfg)
+	err := m.startServers(info)
 	if err != nil {
 		log.Errorf("starting '%v' failed: %v", cfg.Info.Name, err)
 	}
 }
 
-func (m *SmtpManager) startServers(cfg *runtime.SmtpInfo) error {
+func (m *SmtpManager) startServers(cfg *runtime.MailInfo) error {
 	servers, ok := m.servers[cfg.Info.Name]
 	if !ok {
 		servers = map[string]MailServer{}
@@ -148,7 +149,7 @@ func (m *SmtpManager) removeService(name string) {
 	}
 }
 
-func (m *SmtpManager) cleanupRemovedServers(cfg *runtime.SmtpInfo, old []mail.Server) {
+func (m *SmtpManager) cleanupRemovedServers(cfg *runtime.MailInfo, old []mail.Server) {
 	for _, o := range old {
 		if !slices.ContainsFunc(cfg.Servers, func(s mail.Server) bool {
 			return s.Url == o.Url

@@ -96,9 +96,10 @@ type messageConfig struct {
 	ContentType string      `json:"contentType"`
 }
 
-func getKafkaServices(services map[string]*runtime.KafkaInfo, m *monitor.Monitor) []interface{} {
-	result := make([]interface{}, 0, len(services))
-	for _, hs := range services {
+func getKafkaServices(store *runtime.KafkaStore, m *monitor.Monitor) []interface{} {
+	list := store.List()
+	result := make([]interface{}, 0, len(list))
+	for _, hs := range list {
 		s := service{
 			Name:        hs.Info.Name,
 			Description: hs.Info.Description,
@@ -125,7 +126,7 @@ func (h *handler) getKafkaService(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(r.URL.Path, "/")
 	name := segments[4]
 
-	if s, ok := h.app.Kafka[name]; ok {
+	if s := h.app.Kafka.Get(name); s != nil {
 		k := getKafka(s)
 		k.Metrics = h.app.Monitor.FindAll(metrics.ByNamespace("kafka"), metrics.ByLabel("service", name))
 

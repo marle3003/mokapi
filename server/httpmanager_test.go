@@ -60,7 +60,9 @@ func TestHttpManager_Update(t *testing.T) {
 				c := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://:80"}}}
 				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
 
-				require.Contains(t, m.app.Http, "foo")
+				list := m.app.Http.List()
+				require.Len(t, list, 1)
+				require.Equal(t, "foo", list[0].Info.Name)
 			},
 		},
 		{
@@ -73,8 +75,8 @@ func TestHttpManager_Update(t *testing.T) {
 				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: foo, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
 				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: bar, Info: dynamic.ConfigInfo{Url: MustParseUrl("bar.yml")}}})
 
-				require.Contains(t, m.app.Http, "foo")
-				require.Contains(t, m.app.Http, "bar")
+				list := m.app.Http.List()
+				require.Len(t, list, 2)
 			},
 		},
 		{

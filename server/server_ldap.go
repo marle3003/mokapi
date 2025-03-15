@@ -30,38 +30,40 @@ func NewLdapDirectoryManager(emitter engine.EventEmitter, store *cert.Store, app
 }
 
 func (m *LdapDirectoryManager) UpdateConfig(e dynamic.ConfigEvent) {
-	if !runtime.IsLdapConfig(e.Config) {
+	cfg, ok := runtime.IsLdapConfig(e.Config)
+	if !ok {
 		return
 	}
 
 	m.m.Lock()
 	defer m.m.Unlock()
 
-	name, cfg := m.app.GetLdap(e.Config)
+	name := cfg.Info.Name
+	info := m.app.Ldap.Get(cfg.Info.Name)
 	if e.Event == dynamic.Delete {
-		m.app.RemoveLdap(e.Config)
-		if cfg.Config == nil {
+		m.app.Ldap.Remove(e.Config)
+		if info.Config == nil {
 			log.Infof("removing LDAP host '%v' on binding %v", name, m.servers[name].Addr)
 			m.servers[name].Close()
 			return
 		}
-	} else if cfg == nil {
-		cfg = m.app.AddLdap(e.Config, m.eventEmitter)
+	} else if info == nil {
+		info = m.app.Ldap.Add(e.Config, m.eventEmitter)
 	} else {
-		addr := cfg.Address
-		cfg.AddConfig(e.Config)
+		addr := info.Address
+		info.AddConfig(e.Config)
 		if addr != cfg.Address {
 			s := m.servers[name]
 			log.Infof("removing LDAP host '%v' on binding %v", name, s.Addr)
 			m.servers[name].Close()
-			m.start(cfg)
+			m.start(info)
 		}
 	}
 
 	if s, ok := m.servers[cfg.Info.Name]; ok {
-		s.Handler = cfg.Handler(m.app.Monitor.Ldap)
+		s.Handler = info.Handler(m.app.Monitor.Ldap)
 	} else {
-		m.start(cfg)
+		m.start(info)
 	}
 }
 

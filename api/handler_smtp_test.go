@@ -40,14 +40,12 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp services",
 			app: func() *runtime.App {
-				return &runtime.App{
-					Smtp: map[string]*runtime.SmtpInfo{
-						"foo": {
-							Config: &mail.Config{Info: mail.Info{Name: "foo", Description: "bar", Version: "1.0"}},
-							Store:  &mail.Store{},
-						},
-					},
-				}
+				app := runtime.New()
+				app.Mail.Set("foo", &runtime.MailInfo{
+					Config: &mail.Config{Info: mail.Info{Name: "foo", Description: "bar", Version: "1.0"}},
+					Store:  &mail.Store{},
+				})
+				return app
 			},
 			requestUrl:   "http://foo.api/api/services",
 			contentType:  "application/json",
@@ -56,14 +54,12 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "/api/services/smtp",
 			app: func() *runtime.App {
-				return &runtime.App{
-					Smtp: map[string]*runtime.SmtpInfo{
-						"foo": {
-							Config: &mail.Config{Info: mail.Info{Name: "foo"}},
-							Store:  &mail.Store{},
-						},
-					},
-				}
+				app := runtime.New()
+				app.Mail.Set("foo", &runtime.MailInfo{
+					Config: &mail.Config{Info: mail.Info{Name: "foo"}},
+					Store:  &mail.Store{},
+				})
+				return app
 			},
 			requestUrl:   "http://foo.api/api/services/smtp/foo",
 			contentType:  "application/json",
@@ -82,7 +78,7 @@ func TestHandler_Smtp(t *testing.T) {
 				}
 				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
 
-				app.AddSmtp(cfg)
+				app.Mail.Add(cfg)
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/smtp/foo",
@@ -92,25 +88,23 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp service with mailbox",
 			app: func() *runtime.App {
-				return &runtime.App{
-					Smtp: map[string]*runtime.SmtpInfo{
-						"foo": {
-							Config: &mail.Config{
-								Info:      mail.Info{Name: "foo"},
-								Mailboxes: []mail.MailboxConfig{{Name: "alice@foo.bar", Username: "alice", Password: "foo"}},
-							},
-							Store: &mail.Store{
-								Mailboxes: map[string]*mail.Mailbox{
-									"alice@foo.bar": {
-										Name:     "alice@foo.bar",
-										Username: "alice",
-										Password: "foo",
-									},
-								},
+				app := runtime.New()
+				app.Mail.Set("foo", &runtime.MailInfo{
+					Config: &mail.Config{
+						Info:      mail.Info{Name: "foo"},
+						Mailboxes: []mail.MailboxConfig{{Name: "alice@foo.bar", Username: "alice", Password: "foo"}},
+					},
+					Store: &mail.Store{
+						Mailboxes: map[string]*mail.Mailbox{
+							"alice@foo.bar": {
+								Name:     "alice@foo.bar",
+								Username: "alice",
+								Password: "foo",
 							},
 						},
 					},
-				}
+				})
+				return app
 			},
 			requestUrl:   "http://foo.api/api/services/smtp/foo",
 			contentType:  "application/json",
@@ -119,23 +113,21 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp service with rules",
 			app: func() *runtime.App {
-				return &runtime.App{
-					Smtp: map[string]*runtime.SmtpInfo{
-						"foo": {
-							Config: &mail.Config{
-								Info: mail.Info{Name: "foo"},
-								Rules: []mail.Rule{{
-									Sender:    mustCompile("alice@foo.bar"),
-									Recipient: mustCompile("alice@foo.bar"),
-									Subject:   mustCompile("foo"),
-									Body:      mustCompile("bar"),
-									Action:    "deny",
-								}},
-							},
-							Store: &mail.Store{},
-						},
+				app := runtime.New()
+				app.Mail.Set("foo", &runtime.MailInfo{
+					Config: &mail.Config{
+						Info: mail.Info{Name: "foo"},
+						Rules: []mail.Rule{{
+							Sender:    mustCompile("alice@foo.bar"),
+							Recipient: mustCompile("alice@foo.bar"),
+							Subject:   mustCompile("foo"),
+							Body:      mustCompile("bar"),
+							Action:    "deny",
+						}},
 					},
-				}
+					Store: &mail.Store{},
+				})
+				return app
 			},
 			requestUrl:   "http://foo.api/api/services/smtp/foo",
 			contentType:  "application/json",
@@ -144,30 +136,27 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp mailbox",
 			app: func() *runtime.App {
-				return &runtime.App{
-					Smtp: map[string]*runtime.SmtpInfo{
-						"foo": {
-							Config: &mail.Config{
-								Info: mail.Info{Name: "foo"},
-							},
-							Store: &mail.Store{
-								Mailboxes: map[string]*mail.Mailbox{
-									"alice@foo.bar": {
-										Name: "alice@foo.bar",
-										Folders: map[string]*mail.Folder{
-											"Inbox": {
-												Messages: []*mail.Mail{
-													{
-														Message: &smtp.Message{Sender: nil,
-															From:        []smtp.Address{{Address: "bob@foo.bar"}},
-															To:          []smtp.Address{{Address: "alice@foo.bar"}},
-															MessageId:   "foo-1@mokapi.io",
-															Time:        now,
-															Subject:     "Hello Alice",
-															ContentType: "text/plain",
-															Body:        "foobar",
-														},
-													},
+				app := runtime.New()
+				app.Mail.Set("foo", &runtime.MailInfo{
+					Config: &mail.Config{
+						Info: mail.Info{Name: "foo"},
+					},
+					Store: &mail.Store{
+						Mailboxes: map[string]*mail.Mailbox{
+							"alice@foo.bar": {
+								Name: "alice@foo.bar",
+								Folders: map[string]*mail.Folder{
+									"Inbox": {
+										Messages: []*mail.Mail{
+											{
+												Message: &smtp.Message{Sender: nil,
+													From:        []smtp.Address{{Address: "bob@foo.bar"}},
+													To:          []smtp.Address{{Address: "alice@foo.bar"}},
+													MessageId:   "foo-1@mokapi.io",
+													Time:        now,
+													Subject:     "Hello Alice",
+													ContentType: "text/plain",
+													Body:        "foobar",
 												},
 											},
 										},
@@ -176,7 +165,8 @@ func TestHandler_Smtp(t *testing.T) {
 							},
 						},
 					},
-				}
+				})
+				return app
 			},
 			requestUrl:   "http://foo.api/api/services/smtp/foo/mailboxes/alice@foo.bar",
 			contentType:  "application/json",
@@ -185,31 +175,28 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp mail",
 			app: func() *runtime.App {
-				return &runtime.App{
-					Smtp: map[string]*runtime.SmtpInfo{
-						"foo": {
-							Config: &mail.Config{
-								Info: mail.Info{Name: "foo"},
-							},
-							Store: &mail.Store{
-								Mailboxes: map[string]*mail.Mailbox{
-									"alice@foo.bar": {
-										Name: "alice@foo.bar",
-										Folders: map[string]*mail.Folder{
-											"Inbox": {
-												Messages: []*mail.Mail{
-													{
-														Message: &smtp.Message{
-															Sender:      nil,
-															From:        []smtp.Address{{Address: "bob@foo.bar"}},
-															To:          []smtp.Address{{Address: "alice@foo.bar"}},
-															MessageId:   "foo-1@mokapi.io",
-															Time:        now,
-															Subject:     "Hello Alice",
-															ContentType: "text/plain",
-															Body:        "foobar",
-														},
-													},
+				app := runtime.New()
+				app.Mail.Set("foo", &runtime.MailInfo{
+					Config: &mail.Config{
+						Info: mail.Info{Name: "foo"},
+					},
+					Store: &mail.Store{
+						Mailboxes: map[string]*mail.Mailbox{
+							"alice@foo.bar": {
+								Name: "alice@foo.bar",
+								Folders: map[string]*mail.Folder{
+									"Inbox": {
+										Messages: []*mail.Mail{
+											{
+												Message: &smtp.Message{
+													Sender:      nil,
+													From:        []smtp.Address{{Address: "bob@foo.bar"}},
+													To:          []smtp.Address{{Address: "alice@foo.bar"}},
+													MessageId:   "foo-1@mokapi.io",
+													Time:        now,
+													Subject:     "Hello Alice",
+													ContentType: "text/plain",
+													Body:        "foobar",
 												},
 											},
 										},
@@ -218,7 +205,8 @@ func TestHandler_Smtp(t *testing.T) {
 							},
 						},
 					},
-				}
+				})
+				return app
 			},
 			requestUrl:   "http://foo.api/api/services/smtp/mails/foo-1@mokapi.io",
 			contentType:  "application/json",
@@ -227,33 +215,30 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp mail attachment content",
 			app: func() *runtime.App {
-				return &runtime.App{
-					Smtp: map[string]*runtime.SmtpInfo{
-						"foo": {
-							Config: &mail.Config{
-								Info: mail.Info{Name: "foo"},
-							},
-							Store: &mail.Store{
-								Mailboxes: map[string]*mail.Mailbox{
-									"alice@foo.bar": {
-										Name: "alice@foo.bar",
-										Folders: map[string]*mail.Folder{
-											"Inbox": {
-												Messages: []*mail.Mail{
-													{
-														Message: &smtp.Message{
-															Sender:    nil,
-															From:      []smtp.Address{{Address: "bob@foo.bar"}},
-															To:        []smtp.Address{{Address: "alice@foo.bar"}},
-															MessageId: "foo-1@mokapi.io",
-															Time:      now,
-															Attachments: []smtp.Attachment{
-																{
-																	Name:        "foo",
-																	ContentType: "text/plain",
-																	Data:        []byte("foobar"),
-																},
-															},
+				app := runtime.New()
+				app.Mail.Set("foo", &runtime.MailInfo{
+					Config: &mail.Config{
+						Info: mail.Info{Name: "foo"},
+					},
+					Store: &mail.Store{
+						Mailboxes: map[string]*mail.Mailbox{
+							"alice@foo.bar": {
+								Name: "alice@foo.bar",
+								Folders: map[string]*mail.Folder{
+									"Inbox": {
+										Messages: []*mail.Mail{
+											{
+												Message: &smtp.Message{
+													Sender:    nil,
+													From:      []smtp.Address{{Address: "bob@foo.bar"}},
+													To:        []smtp.Address{{Address: "alice@foo.bar"}},
+													MessageId: "foo-1@mokapi.io",
+													Time:      now,
+													Attachments: []smtp.Attachment{
+														{
+															Name:        "foo",
+															ContentType: "text/plain",
+															Data:        []byte("foobar"),
 														},
 													},
 												},
@@ -264,7 +249,8 @@ func TestHandler_Smtp(t *testing.T) {
 							},
 						},
 					},
-				}
+				})
+				return app
 			},
 			requestUrl:   "http://foo.api/api/services/smtp/mails/foo-1@mokapi.io/attachments/foo",
 			contentType:  "text/plain",

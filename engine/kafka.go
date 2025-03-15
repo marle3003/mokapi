@@ -110,7 +110,7 @@ func (c *KafkaClient) tryGet(cluster string, topic string, retry common.KafkaPro
 func (c *KafkaClient) get(cluster string, topic string) (t *store.Topic, config *asyncapi3.Config, err error) {
 	if len(cluster) == 0 {
 		var topics []*store.Topic
-		for _, v := range c.app.Kafka {
+		for _, v := range c.app.Kafka.List() {
 			if t := v.Topic(topic); t != nil {
 				config = v.Config
 				if len(cluster) == 0 {
@@ -126,7 +126,7 @@ func (c *KafkaClient) get(cluster string, topic string) (t *store.Topic, config 
 			t = topics[0]
 		}
 	} else {
-		if k, ok := c.app.Kafka[cluster]; ok {
+		if k := c.app.Kafka.Get(cluster); k != nil {
 			config = k.Config
 			t = k.Topic(topic)
 		}
