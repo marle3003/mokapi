@@ -3,6 +3,7 @@ package mail
 import (
 	"mokapi/imap"
 	"mokapi/smtp"
+	"strings"
 	"sync"
 	"time"
 )
@@ -59,6 +60,32 @@ func (mb *Mailbox) EnsureInbox() {
 	}
 }
 
+func (mb *Mailbox) List(pattern string) []*Folder {
+	var result []*Folder
+
+	if pattern == "" {
+		for _, child := range mb.Folders {
+			result = append(result, child)
+		}
+		return result
+	}
+	parts := strings.Split(pattern, "/")
+
+	for _, child := range mb.Folders {
+		if parts[0] == child.Name {
+			if len(parts) > 1 {
+				result = append(result, child.List(strings.Join(parts[1:], "/"))...)
+			} else {
+				for _, sub := range child.Folders {
+					result = append(result, sub)
+				}
+			}
+		}
+	}
+
+	return result
+}
+
 func (f *Folder) Append(m *smtp.Message) {
 	if len(f.Messages) == mailboxSize {
 		f.Messages = f.Messages[0 : len(f.Messages)-1]
@@ -105,4 +132,37 @@ func (f *Folder) FirstUnseen() int {
 		}
 	}
 	return -1
+}
+
+func (f *Folder) List(pattern string) []*Folder {
+	if pattern == "" {
+		return nil
+	}
+	parts := strings.Split(pattern, "/")
+	var result []*Folder
+
+	if len(parts) == 1 {
+		switch parts[0] {
+		case "*":
+			result = append(result, f)
+			for _, child := range f.Folders {
+				result = append(result, child.List("*")...)
+			}
+		case "%":
+			result = append(result, f)
+		default:
+			if parts[0] == f.Name {
+				result = append(result, f)
+			}
+		}
+	} else {
+		if parts[0] != f.Name {
+			return nil
+		}
+		for _, child := range f.Folders {
+			result = append(result, child.List(strings.Join(parts[1:], "/"))...)
+		}
+	}
+
+	return result
 }

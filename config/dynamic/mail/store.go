@@ -2,6 +2,7 @@ package mail
 
 import (
 	"fmt"
+	"mokapi/imap"
 	"mokapi/smtp"
 	"time"
 )
@@ -20,7 +21,7 @@ func NewStore(c *Config) *Store {
 		canAddMailbox: len(c.Mailboxes) == 0,
 	}
 	for _, mb := range c.Mailboxes {
-		s.NewMailbox(mb.Name, mb.Username, mb.Password)
+		s.NewMailbox(&mb)
 	}
 
 	return s
@@ -29,7 +30,7 @@ func NewStore(c *Config) *Store {
 func (s *Store) Update(c *Config) {
 	for _, mb := range c.Mailboxes {
 		if _, ok := s.Mailboxes[mb.Name]; !ok {
-			s.NewMailbox(mb.Name, mb.Username, mb.Password)
+			s.NewMailbox(&mb)
 		}
 	}
 }
@@ -39,16 +40,20 @@ func (s *Store) ExistsMailbox(name string) bool {
 	return b
 }
 
-func (s *Store) NewMailbox(name, username, password string) {
-	if _, found := s.Mailboxes[name]; found {
+func (s *Store) NewMailbox(cfg *MailboxConfig) {
+	if _, found := s.Mailboxes[cfg.Name]; found {
 		return
 	}
-	s.Mailboxes[name] = &Mailbox{
-		Name:            name,
-		Username:        username,
-		Password:        password,
+
+	mb := &Mailbox{
+		Name:            cfg.Name,
+		Username:        cfg.Username,
+		Password:        cfg.Password,
 		nextUidValidity: uint32(time.Now().Unix()),
 	}
+	mb.Folders = getFolders(cfg.Folders)
+
+	s.Mailboxes[cfg.Name] = mb
 }
 
 func (s *Store) EnsureMailbox(name string) error {
@@ -58,7 +63,7 @@ func (s *Store) EnsureMailbox(name string) error {
 	if !s.canAddMailbox {
 		return fmt.Errorf("mailbox can not be created")
 	}
-	s.NewMailbox(name, "", "")
+	s.NewMailbox(&MailboxConfig{Name: name})
 	return nil
 }
 
@@ -73,4 +78,24 @@ func (s *Store) GetMail(id string) *smtp.Message {
 		}
 	}
 	return nil
+}
+
+func getFolders(cfg []FolderConfig) map[string]*Folder {
+	result := make(map[string]*Folder)
+	for _, sub := range cfg {
+		f := &Folder{
+			Name:        sub.Name,
+			uidNext:     1,
+			uidValidity: uint32(time.Now().Unix()),
+		}
+
+		for _, flag := range sub.Flags {
+			f.Flags = append(f.Flags, imap.MailboxFlags(flag))
+		}
+
+		f.Folders = getFolders(sub.Folders)
+		result[sub.Name] = f
+	}
+
+	return result
 }

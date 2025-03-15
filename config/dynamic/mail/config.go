@@ -59,9 +59,16 @@ type RuleExpr struct {
 }
 
 type MailboxConfig struct {
-	Name     string `yaml:"name" json:"name"`
-	Username string `yaml:"username" json:"username"`
-	Password string `yaml:"password" json:"password"`
+	Name     string         `yaml:"name" json:"name"`
+	Username string         `yaml:"username" json:"username"`
+	Password string         `yaml:"password" json:"password"`
+	Folders  []FolderConfig `yaml:"folders" json:"folders"`
+}
+
+type FolderConfig struct {
+	Name    string         `yaml:"name" json:"name"`
+	Flags   []string       `yaml:"flags" json:"flags"`
+	Folders []FolderConfig `yaml:"folders" json:"folders"`
 }
 
 func (c *Config) getMailbox(name string) (MailboxConfig, bool) {

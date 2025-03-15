@@ -126,24 +126,195 @@ func TestImapHandler(t *testing.T) {
 				}, r[0])
 			},
 		},
-		//{
-		//	name: "List foo",
-		//	cfg: &mail.Config{
-		//		Mailboxes: []mail.MailboxConfig{
-		//			{
-		//				Name:     "alice@mokapi.io",
-		//				Username: "alice",
-		//				Password: "foo",
-		//			},
-		//		},
-		//	},
-		//	test: func(t *testing.T, h *mail.Handler, ctx context.Context) {
-		//		_ = h.Login("alice", "foo", ctx)
-		//		r, err := h.List("", "foo", nil, ctx)
-		//		require.NoError(t, err)
-		//		require.Len(t, r, 0)
-		//	},
-		//},
+		{
+			name: "List inbox should be first",
+			cfg: &mail.Config{
+				Mailboxes: []mail.MailboxConfig{
+					{
+						Name:     "alice@mokapi.io",
+						Username: "alice",
+						Password: "foo",
+						Folders: []mail.FolderConfig{
+							{Name: "ABC"},
+						},
+					},
+				},
+			},
+			test: func(t *testing.T, h *mail.Handler, ctx context.Context) {
+				_ = h.Login("alice", "foo", ctx)
+				r, err := h.List("", "*", nil, ctx)
+				require.NoError(t, err)
+				require.Len(t, r, 2)
+				require.Equal(t, []imap.ListEntry{
+					{
+						Flags:     nil,
+						Delimiter: "/",
+						Name:      "INBOX",
+					},
+					{
+						Flags:     nil,
+						Delimiter: "/",
+						Name:      "ABC",
+					},
+				}, r)
+			},
+		},
+		{
+			name: "List foo",
+			cfg: &mail.Config{
+				Mailboxes: []mail.MailboxConfig{
+					{
+						Name:     "alice@mokapi.io",
+						Username: "alice",
+						Password: "foo",
+						Folders: []mail.FolderConfig{
+							{
+								Name:  "foo",
+								Flags: []string{"foo", "bar"},
+							},
+						},
+					},
+				},
+			},
+			test: func(t *testing.T, h *mail.Handler, ctx context.Context) {
+				_ = h.Login("alice", "foo", ctx)
+				r, err := h.List("", "foo", nil, ctx)
+				require.NoError(t, err)
+				require.Len(t, r, 1)
+				require.Equal(t, "foo", r[0].Name)
+				require.Equal(t, []imap.MailboxFlags{"foo", "bar"}, r[0].Flags)
+			},
+		},
+		{
+			name: "List Archive/* foo",
+			cfg: &mail.Config{
+				Mailboxes: []mail.MailboxConfig{
+					{
+						Name:     "alice@mokapi.io",
+						Username: "alice",
+						Password: "foo",
+						Folders: []mail.FolderConfig{
+							{
+								Name: "Archive",
+								Folders: []mail.FolderConfig{
+									{
+										Name: "2025",
+										Folders: []mail.FolderConfig{
+											{
+												Name: "foo",
+											},
+										},
+									},
+									{
+										Name: "2026",
+										Folders: []mail.FolderConfig{
+											{
+												Name: "bar",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			test: func(t *testing.T, h *mail.Handler, ctx context.Context) {
+				_ = h.Login("alice", "foo", ctx)
+				r, err := h.List("Archive/*", "foo", nil, ctx)
+				require.NoError(t, err)
+				require.Len(t, r, 1)
+				require.Equal(t, "foo", r[0].Name)
+			},
+		},
+		{
+			name: "List Archive %",
+			cfg: &mail.Config{
+				Mailboxes: []mail.MailboxConfig{
+					{
+						Name:     "alice@mokapi.io",
+						Username: "alice",
+						Password: "foo",
+						Folders: []mail.FolderConfig{
+							{
+								Name: "Archive",
+								Folders: []mail.FolderConfig{
+									{
+										Name: "2025",
+										Folders: []mail.FolderConfig{
+											{
+												Name: "foo",
+											},
+										},
+									},
+									{
+										Name: "2026",
+										Folders: []mail.FolderConfig{
+											{
+												Name: "bar",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			test: func(t *testing.T, h *mail.Handler, ctx context.Context) {
+				_ = h.Login("alice", "foo", ctx)
+				r, err := h.List("Archive", "%", nil, ctx)
+				require.NoError(t, err)
+				require.Equal(t, []imap.ListEntry{
+					{Delimiter: "/", Flags: nil, Name: "2025"},
+					{Delimiter: "/", Flags: nil, Name: "2026"},
+				}, r)
+			},
+		},
+		{
+			name: "List Archive/%",
+			cfg: &mail.Config{
+				Mailboxes: []mail.MailboxConfig{
+					{
+						Name:     "alice@mokapi.io",
+						Username: "alice",
+						Password: "foo",
+						Folders: []mail.FolderConfig{
+							{
+								Name: "Archive",
+								Folders: []mail.FolderConfig{
+									{
+										Name: "2025",
+										Folders: []mail.FolderConfig{
+											{
+												Name: "foo",
+											},
+										},
+									},
+									{
+										Name: "2026",
+										Folders: []mail.FolderConfig{
+											{
+												Name: "bar",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			test: func(t *testing.T, h *mail.Handler, ctx context.Context) {
+				_ = h.Login("alice", "foo", ctx)
+				r, err := h.List("", "Archive/%", nil, ctx)
+				require.NoError(t, err)
+				require.Equal(t, []imap.ListEntry{
+					{Delimiter: "/", Flags: nil, Name: "2025"},
+					{Delimiter: "/", Flags: nil, Name: "2026"},
+				}, r)
+			},
+		},
 	}
 
 	t.Parallel()

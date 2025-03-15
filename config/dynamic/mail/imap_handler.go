@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"mokapi/imap"
 	"mokapi/smtp"
+	"slices"
 	"strings"
 )
 
@@ -59,15 +60,29 @@ func (h *Handler) List(ref, pattern string, flags []imap.MailboxFlags, ctx conte
 	mb := c.Session["mailbox"].(*Mailbox)
 	mb.EnsureInbox()
 
+	folders := mb.List(ref)
+
 	var list []imap.ListEntry
-	for _, f := range mb.Folders {
-		list = append(list, imap.ListEntry{
-			Delimiter: "/",
-			Flags:     f.Flags,
-			Name:      f.Name,
-		})
+	for _, folder := range folders {
+		for _, f := range folder.List(pattern) {
+			list = append(list, imap.ListEntry{
+				Delimiter: "/",
+				Flags:     f.Flags,
+				Name:      f.Name,
+			})
+		}
 	}
 
+	slices.SortFunc(list, func(x, y imap.ListEntry) int {
+		// Some clients expect INBOX to appear first, even if sorting alphabetically.
+		if strings.ToUpper(x.Name) == "INBOX" {
+			return -1
+		}
+		if strings.ToUpper(y.Name) == "INBOX" {
+			return 1
+		}
+		return strings.Compare(x.Name, y.Name)
+	})
 	return list, nil
 }
 
