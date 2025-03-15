@@ -24,7 +24,8 @@ type KafkaStore struct {
 type KafkaInfo struct {
 	*asyncapi3.Config
 	*store.Store
-	configs map[string]*dynamic.Config
+	configs    map[string]*dynamic.Config
+	seenTopics map[string]bool
 }
 
 type KafkaHandler struct {
@@ -34,8 +35,9 @@ type KafkaHandler struct {
 
 func NewKafkaInfo(c *dynamic.Config, store *store.Store) *KafkaInfo {
 	hc := &KafkaInfo{
-		configs: map[string]*dynamic.Config{},
-		Store:   store,
+		configs:    map[string]*dynamic.Config{},
+		Store:      store,
+		seenTopics: map[string]bool{},
 	}
 	hc.AddConfig(c)
 	return hc
@@ -80,16 +82,22 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*Kafka
 	if !ok {
 		ki = NewKafkaInfo(c, store.New(cfg, emitter))
 		s.infos[cfg.Info.Name] = ki
+
+		events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
+		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
 	} else {
 		ki.AddConfig(c)
 	}
 
-	events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
-	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
 	for name := range cfg.Channels {
-		s.monitor.Kafka.Messages.WithLabel(cfg.Info.Name, name).Add(0)
-		s.monitor.Kafka.LastMessage.WithLabel(cfg.Info.Name, name).Set(0)
-		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name).With("topic", name))
+		if _, ok := ki.seenTopics[name]; ok {
+			continue
+		}
+		s.monitor.Kafka.Messages.WithLabel(cfg.Info.Name, name)
+		s.monitor.Kafka.LastMessage.WithLabel(cfg.Info.Name, name)
+		traits := events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name).With("topic", name)
+		events.SetStore(sizeEventStore, traits)
+		ki.seenTopics[name] = true
 	}
 
 	return ki, nil

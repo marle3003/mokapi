@@ -66,12 +66,12 @@ func (s *LdapStore) Add(c *dynamic.Config, emitter common.EventEmitter) *LdapInf
 	if !ok {
 		li = NewLdapInfo(c, emitter)
 		s.infos[cfg.Info.Name] = li
+
+		events.ResetStores(events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
+		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
 	} else {
 		li.AddConfig(c)
 	}
-
-	events.ResetStores(events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
-	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
 
 	return li
 }

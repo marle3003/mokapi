@@ -131,6 +131,23 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 				require.Equal(t, "foo", info.Info.Description)
 			},
 		},
+		{
+			name: "patch does not reset events",
+			configs: []*dynamic.Config{
+				newConfig("https://a.io/b", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "foo"))),
+			},
+			test: func(t *testing.T, app *runtime.App) {
+				err := events.Push("bar", events.NewTraits().WithNamespace("http").WithName("foo"))
+				require.NoError(t, err)
+
+				app.Http.Add(
+					newConfig("https://mokapi.io/a", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "bar"))),
+				)
+
+				e := events.GetEvents(events.NewTraits().WithNamespace("http").WithName("foo"))
+				require.Len(t, e, 1)
+			},
+		},
 	}
 	for _, tc := range testcases {
 		tc := tc

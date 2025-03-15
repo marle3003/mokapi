@@ -128,10 +128,43 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 				require.Equal(t, "foo", info.Info.Description)
 			},
 		},
+		{
+			name: "patch does not reset events and metrics",
+			configs: []*dynamic.Config{
+				getConfig("https://a.io/a",
+					asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "foo", ""),
+						asyncapi3test.WithChannel("bar"),
+					),
+				),
+			},
+			test: func(t *testing.T, app *runtime.App) {
+				err := events.Push("foo", events.NewTraits().WithNamespace("kafka").WithName("foo").With("topic", "bar"))
+				require.NoError(t, err)
+				e := events.GetEvents(events.NewTraits().WithNamespace("kafka"))
+				require.Len(t, e, 1)
+				app.Monitor.Kafka.Messages.WithLabel("foo", "bar").Add(1)
+
+				_, err = app.Kafka.Add(getConfig("https://a.io/b",
+					asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "foo", ""),
+						asyncapi3test.WithChannel("bar"),
+					),
+				), enginetest.NewEngine())
+				require.NoError(t, err)
+
+				e = events.GetEvents(events.NewTraits().WithNamespace("kafka"))
+				require.Len(t, e, 1)
+				v := app.Monitor.Kafka.Messages.WithLabel("foo", "bar").Value()
+				require.Equal(t, float64(1), v)
+			},
+		},
 	}
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			defer events.Reset()
+
 			app := runtime.New()
 			for _, c := range tc.configs {
 				app.Kafka.Add(c, enginetest.NewEngine())

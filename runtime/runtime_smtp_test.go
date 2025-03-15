@@ -107,6 +107,21 @@ func TestApp_AddSmtp_Patching(t *testing.T) {
 				require.Equal(t, "foo", info.Info.Description)
 			},
 		},
+		{
+			name: "patch does not reset events",
+			configs: []*dynamic.Config{
+				newSmtpConfig("https://a.io/b", &mail.Config{Info: mail.Info{Name: "foo", Description: "foo"}}),
+			},
+			test: func(t *testing.T, app *runtime.App) {
+				err := events.Push("bar", events.NewTraits().WithNamespace("smtp").WithName("foo"))
+				require.NoError(t, err)
+
+				app.Mail.Add(newSmtpConfig("https://mokapi.io/a", &mail.Config{Info: mail.Info{Name: "foo", Description: "bar"}}))
+
+				e := events.GetEvents(events.NewTraits().WithNamespace("smtp").WithName("foo"))
+				require.Len(t, e, 1)
+			},
+		},
 	}
 	for _, tc := range testcases {
 		tc := tc

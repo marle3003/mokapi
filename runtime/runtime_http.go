@@ -20,7 +20,8 @@ type HttpStore struct {
 
 type HttpInfo struct {
 	*openapi.Config
-	configs map[string]*dynamic.Config
+	configs   map[string]*dynamic.Config
+	seenPaths map[string]bool
 }
 
 type httpHandler struct {
@@ -30,7 +31,8 @@ type httpHandler struct {
 
 func NewHttpInfo(c *dynamic.Config) *HttpInfo {
 	hc := &HttpInfo{
-		configs: map[string]*dynamic.Config{},
+		configs:   map[string]*dynamic.Config{},
+		seenPaths: map[string]bool{},
 	}
 	hc.AddConfig(c)
 	return hc
@@ -71,14 +73,19 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 	if !ok {
 		hc = NewHttpInfo(c)
 		s.infos[cfg.Info.Name] = hc
+
+		events.ResetStores(events.NewTraits().WithNamespace("http").WithName(name))
+		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("http").WithName(name))
 	} else {
 		hc.AddConfig(c)
 	}
 
-	events.ResetStores(events.NewTraits().WithNamespace("http").WithName(name))
-	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("http").WithName(name))
 	for path := range cfg.Paths {
+		if _, ok := hc.seenPaths[path]; ok {
+			continue
+		}
 		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("http").WithName(name).With("path", path))
+		hc.seenPaths[path] = true
 	}
 
 	return hc

@@ -106,6 +106,21 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 				require.Equal(t, "foo", info.Info.Description)
 			},
 		},
+		{
+			name: "patch does not reset events",
+			configs: []*dynamic.Config{
+				newLdapConfig("https://a.io/b", &directory.Config{Info: directory.Info{Name: "foo", Description: "foo"}}),
+			},
+			test: func(t *testing.T, app *runtime.App) {
+				err := events.Push("bar", events.NewTraits().WithNamespace("ldap").WithName("foo"))
+				require.NoError(t, err)
+
+				app.Ldap.Add(newLdapConfig("https://mokapi.io/a", &directory.Config{Info: directory.Info{Name: "foo", Description: "bar"}}), enginetest.NewEngine())
+
+				e := events.GetEvents(events.NewTraits().WithNamespace("ldap").WithName("foo"))
+				require.Len(t, e, 1)
+			},
+		},
 	}
 	for _, tc := range testcases {
 		tc := tc

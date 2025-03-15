@@ -67,12 +67,12 @@ func (s *MailStore) Add(c *dynamic.Config) *MailInfo {
 	if !ok {
 		mi = NewMailInfo(c)
 		s.infos[cfg.Info.Name] = mi
+
+		events.ResetStores(events.NewTraits().WithNamespace("smtp").WithName(cfg.Info.Name))
+		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("smtp").WithName(cfg.Info.Name))
 	} else {
 		mi.AddConfig(c)
 	}
-
-	events.ResetStores(events.NewTraits().WithNamespace("smtp").WithName(cfg.Info.Name))
-	events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("smtp").WithName(cfg.Info.Name))
 
 	return mi
 }

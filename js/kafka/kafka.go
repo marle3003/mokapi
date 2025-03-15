@@ -92,10 +92,10 @@ func (m *Module) ProduceAsync(v goja.Value) interface{} {
 
 func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 	opt := &common.KafkaProduceArgs{Retry: common.KafkaProduceRetry{
-		MaxRetryTime:     30000 * time.Millisecond,
-		InitialRetryTime: 200 * time.Millisecond,
-		Retries:          5,
-		Factor:           4,
+		MaxRetryTime:     3 * time.Minute,
+		InitialRetryTime: 500 * time.Millisecond,
+		Retries:          10,
+		Factor:           2,
 	}}
 
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
