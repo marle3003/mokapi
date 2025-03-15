@@ -191,7 +191,7 @@ func (suite *PetStoreSuite) TestKafka_TopicConfig() {
 	require.Equal(suite.T(), "petstore.order-event", r.Topics[0].Name)
 	require.Len(suite.T(), r.Topics[0].Partitions, 2)
 
-	require.Len(suite.T(), suite.cmd.App.Http, 1)
+	require.Len(suite.T(), suite.cmd.App.Http.List(), 1)
 }
 
 func (suite *PetStoreSuite) TestKafka_Produce_InvalidFormat() {

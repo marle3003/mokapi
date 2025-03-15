@@ -26,7 +26,7 @@ func TestLdapDirectory(t *testing.T) {
 					Config: newConfig("foo", "data"),
 				})
 
-				require.Len(t, app.Ldap, 0)
+				require.Len(t, app.Ldap.List(), 0)
 			},
 		},
 		{
@@ -37,7 +37,7 @@ func TestLdapDirectory(t *testing.T) {
 						Info: directory.Info{Name: "foo"},
 					}),
 				})
-				require.Contains(t, app.Ldap, "foo")
+				require.NotNil(t, app.Ldap.Get("foo"))
 			},
 		},
 		{
@@ -50,7 +50,7 @@ func TestLdapDirectory(t *testing.T) {
 					}),
 				})
 
-				c := ldap.NewClient(fmt.Sprintf(app.Ldap["foo"].Address))
+				c := ldap.NewClient(fmt.Sprintf(app.Ldap.Get("foo").Address))
 				err := c.Dial()
 				require.NoError(t, err)
 				_, err = c.Bind("", "")

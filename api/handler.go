@@ -164,7 +164,7 @@ func (h *handler) getServices(w http.ResponseWriter, _ *http.Request) {
 	services := make([]interface{}, 0)
 	services = append(services, getHttpServices(h.app.Http, h.app.Monitor)...)
 	services = append(services, getKafkaServices(h.app.Kafka, h.app.Monitor)...)
-	services = append(services, getMailServices(h.app.Smtp, h.app.Monitor)...)
+	services = append(services, getMailServices(h.app.Mail, h.app.Monitor)...)
 	services = append(services, getLdapServices(h.app.Ldap, h.app.Monitor)...)
 	slices.SortFunc(services, func(a interface{}, b interface{}) int {
 		return compareService(a, b)
@@ -187,16 +187,16 @@ func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	i := info{Version: h.app.Version, BuildTime: h.app.BuildTime}
-	if len(h.app.Http) > 0 {
+	if len(h.app.Http.List()) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "http")
 	}
-	if len(h.app.Kafka) > 0 {
+	if len(h.app.Kafka.List()) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "kafka")
 	}
-	if len(h.app.Smtp) > 0 {
+	if len(h.app.Mail.List()) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "smtp")
 	}
-	if len(h.app.Ldap) > 0 {
+	if len(h.app.Ldap.List()) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "ldap")
 	}
 

@@ -32,13 +32,11 @@ func TestHandler_Ldap(t *testing.T) {
 		{
 			name: "get ldap services",
 			app: func() *runtime.App {
-				return &runtime.App{
-					Ldap: map[string]*runtime.LdapInfo{
-						"foo": {
-							Config: &directory.Config{Info: directory.Info{Name: "foo", Description: "bar", Version: "1.0"}},
-						},
-					},
-				}
+				app := runtime.New()
+				app.Ldap.Set("foo", &runtime.LdapInfo{
+					Config: &directory.Config{Info: directory.Info{Name: "foo", Description: "bar", Version: "1.0"}},
+				})
+				return app
 			},
 			requestUrl:   "http://foo.api/api/services",
 			contentType:  "application/json",
@@ -56,7 +54,7 @@ func TestHandler_Ldap(t *testing.T) {
 					},
 				}
 				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
-				app.AddLdap(cfg, enginetest.NewEngine())
+				app.Ldap.Add(cfg, enginetest.NewEngine())
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/ldap/foo",

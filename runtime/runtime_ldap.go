@@ -4,19 +4,26 @@ import (
 	"context"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
-	engine "mokapi/engine/common"
+	"mokapi/engine/common"
 	"mokapi/ldap"
 	"mokapi/providers/directory"
+	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"path/filepath"
 	"sort"
+	"sync"
 	"time"
 )
+
+type LdapStore struct {
+	infos map[string]*LdapInfo
+	m     sync.RWMutex
+}
 
 type LdapInfo struct {
 	*directory.Config
 	configs      map[string]*dynamic.Config
-	eventEmitter engine.EventEmitter
+	eventEmitter common.EventEmitter
 }
 
 type ldapHandler struct {
@@ -24,7 +31,81 @@ type ldapHandler struct {
 	next ldap.Handler
 }
 
-func NewLdapInfo(c *dynamic.Config, emitter engine.EventEmitter) *LdapInfo {
+func (s *LdapStore) Get(name string) *LdapInfo {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	return s.infos[name]
+}
+
+func (s *LdapStore) List() []*LdapInfo {
+	if s == nil {
+		return nil
+	}
+
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	var list []*LdapInfo
+	for _, v := range s.infos {
+		list = append(list, v)
+	}
+	return list
+}
+
+func (s *LdapStore) Add(c *dynamic.Config, emitter common.EventEmitter) *LdapInfo {
+	s.m.Lock()
+	defer s.m.Unlock()
+
+	if len(s.infos) == 0 {
+		s.infos = make(map[string]*LdapInfo)
+	}
+	cfg := c.Data.(*directory.Config)
+	name := cfg.Info.Name
+	li, ok := s.infos[name]
+	if !ok {
+		li = NewLdapInfo(c, emitter)
+		s.infos[cfg.Info.Name] = li
+
+		events.ResetStores(events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
+		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
+	} else {
+		li.AddConfig(c)
+	}
+
+	return li
+}
+
+func (s *LdapStore) Set(name string, li *LdapInfo) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
+	if len(s.infos) == 0 {
+		s.infos = make(map[string]*LdapInfo)
+	}
+
+	s.infos[name] = li
+}
+
+func (s *LdapStore) Remove(c *dynamic.Config) {
+	s.m.RLock()
+
+	cfg := c.Data.(*directory.Config)
+	name := cfg.Info.Name
+	li := s.infos[name]
+	li.Remove(c)
+	if len(li.configs) == 0 {
+		s.m.RUnlock()
+		s.m.Lock()
+		delete(s.infos, name)
+		events.ResetStores(events.NewTraits().WithNamespace("ldap").WithName(name))
+		s.m.Unlock()
+	} else {
+		s.m.RUnlock()
+	}
+}
+
+func NewLdapInfo(c *dynamic.Config, emitter common.EventEmitter) *LdapInfo {
 	li := &LdapInfo{
 		configs:      map[string]*dynamic.Config{},
 		eventEmitter: emitter,
@@ -91,9 +172,9 @@ func (c *LdapInfo) Remove(cfg *dynamic.Config) {
 	c.update()
 }
 
-func IsLdapConfig(c *dynamic.Config) bool {
-	_, ok := c.Data.(*directory.Config)
-	return ok
+func IsLdapConfig(c *dynamic.Config) (*directory.Config, bool) {
+	li, ok := c.Data.(*directory.Config)
+	return li, ok
 }
 
 func getLdapConfig(c *dynamic.Config) *directory.Config {

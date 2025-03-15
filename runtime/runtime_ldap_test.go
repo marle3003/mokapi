@@ -22,9 +22,9 @@ func TestApp_AddLdap(t *testing.T) {
 		{
 			name: "event store available",
 			test: func(t *testing.T, app *runtime.App) {
-				app.AddLdap(newLdapConfig("https://mokapi.io", &directory.Config{Info: directory.Info{Name: "foo"}}), enginetest.NewEngine())
+				app.Ldap.Add(newLdapConfig("https://mokapi.io", &directory.Config{Info: directory.Info{Name: "foo"}}), enginetest.NewEngine())
 
-				require.Contains(t, app.Ldap, "foo")
+				require.NotNil(t, app.Ldap.Get("foo"))
 				err := events.Push("bar", events.NewTraits().WithNamespace("ldap").WithName("foo"))
 				require.NoError(t, err, "event store should be available")
 			},
@@ -32,7 +32,7 @@ func TestApp_AddLdap(t *testing.T) {
 		{
 			name: "bind request is counted in monitor",
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.AddLdap(newLdapConfig("https://mokapi.io", &directory.Config{Info: directory.Info{Name: "foo"}}), enginetest.NewEngine())
+				info := app.Ldap.Add(newLdapConfig("https://mokapi.io", &directory.Config{Info: directory.Info{Name: "foo"}}), enginetest.NewEngine())
 				m := monitor.NewLdap()
 				h := info.Handler(m)
 
@@ -46,7 +46,7 @@ func TestApp_AddLdap(t *testing.T) {
 		{
 			name: "retrieve configs",
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.AddLdap(newLdapConfig("https://mokapi.io", &directory.Config{}), enginetest.NewEngine())
+				info := app.Ldap.Add(newLdapConfig("https://mokapi.io", &directory.Config{}), enginetest.NewEngine())
 
 				configs := info.Configs()
 				require.Len(t, configs, 1)
@@ -78,7 +78,7 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 				newLdapConfig("https://mokapi.io/b", &directory.Config{Info: directory.Info{Name: "foo", Description: "bar"}}),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.Ldap["foo"]
+				info := app.Ldap.Get("foo")
 				require.Equal(t, "bar", info.Info.Description)
 				configs := info.Configs()
 				require.Len(t, configs, 2)
@@ -91,7 +91,7 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 				newLdapConfig("https://mokapi.io/a", &directory.Config{Info: directory.Info{Name: "foo", Description: "bar"}}),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.Ldap["foo"]
+				info := app.Ldap.Get("foo")
 				require.Equal(t, "foo", info.Info.Description)
 			},
 		},
@@ -102,8 +102,23 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 				newLdapConfig("https://mokapi.io/a", &directory.Config{Info: directory.Info{Name: "foo", Description: "bar"}}),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.Ldap["foo"]
+				info := app.Ldap.Get("foo")
 				require.Equal(t, "foo", info.Info.Description)
+			},
+		},
+		{
+			name: "patch does not reset events",
+			configs: []*dynamic.Config{
+				newLdapConfig("https://a.io/b", &directory.Config{Info: directory.Info{Name: "foo", Description: "foo"}}),
+			},
+			test: func(t *testing.T, app *runtime.App) {
+				err := events.Push("bar", events.NewTraits().WithNamespace("ldap").WithName("foo"))
+				require.NoError(t, err)
+
+				app.Ldap.Add(newLdapConfig("https://mokapi.io/a", &directory.Config{Info: directory.Info{Name: "foo", Description: "bar"}}), enginetest.NewEngine())
+
+				e := events.GetEvents(events.NewTraits().WithNamespace("ldap").WithName("foo"))
+				require.Len(t, e, 1)
 			},
 		},
 	}
@@ -114,7 +129,7 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 
 			app := runtime.New()
 			for _, c := range tc.configs {
-				app.AddLdap(c, enginetest.NewEngine())
+				app.Ldap.Add(c, enginetest.NewEngine())
 			}
 			tc.test(t, app)
 		})
@@ -122,8 +137,10 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 }
 
 func TestIsLdapConfig(t *testing.T) {
-	require.True(t, runtime.IsLdapConfig(&dynamic.Config{Data: &directory.Config{}}))
-	require.False(t, runtime.IsLdapConfig(&dynamic.Config{Data: "foo"}))
+	_, ok := runtime.IsLdapConfig(&dynamic.Config{Data: &directory.Config{}})
+	require.True(t, ok)
+	_, ok = runtime.IsLdapConfig(&dynamic.Config{Data: "foo"})
+	require.False(t, ok)
 }
 
 func newLdapConfig(name string, config *directory.Config) *dynamic.Config {

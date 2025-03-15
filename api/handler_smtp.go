@@ -85,9 +85,10 @@ type attachment struct {
 	ContentId   string `json:"contentId"`
 }
 
-func getMailServices(services map[string]*runtime.SmtpInfo, m *monitor.Monitor) []interface{} {
-	result := make([]interface{}, 0, len(services))
-	for _, hs := range services {
+func getMailServices(store *runtime.MailStore, m *monitor.Monitor) []interface{} {
+	list := store.List()
+	result := make([]interface{}, 0, len(list))
+	for _, hs := range list {
 		s := service{
 			Name:        hs.Info.Name,
 			Description: hs.Info.Description,
@@ -96,7 +97,7 @@ func getMailServices(services map[string]*runtime.SmtpInfo, m *monitor.Monitor) 
 		}
 
 		if m != nil {
-			s.Metrics = m.FindAll(metrics.ByNamespace("smtp"), metrics.ByLabel("service", hs.Info.Name))
+			s.Metrics = m.FindAll(metrics.ByNamespace("mail"), metrics.ByLabel("service", hs.Info.Name))
 		}
 
 		result = append(result, &mailSummary{service: s})
@@ -120,8 +121,8 @@ func (h *handler) handleSmtpService(w http.ResponseWriter, r *http.Request) {
 
 	name := segments[4]
 
-	s, ok := h.app.Smtp[name]
-	if !ok {
+	s := h.app.Mail.Get(name)
+	if s == nil {
 		w.WriteHeader(404)
 		return
 	}
@@ -165,7 +166,7 @@ func (h *handler) handleSmtpService(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) getMail(w http.ResponseWriter, messageId string) {
 	var m *smtp.Message
-	for _, s := range h.app.Smtp {
+	for _, s := range h.app.Mail.List() {
 		m = s.Store.GetMail(messageId)
 		if m != nil {
 			break
@@ -182,7 +183,7 @@ func (h *handler) getMail(w http.ResponseWriter, messageId string) {
 
 func (h *handler) getMailAttachment(w http.ResponseWriter, messageId, name string) {
 	var m *smtp.Message
-	for _, s := range h.app.Smtp {
+	for _, s := range h.app.Mail.List() {
 		m = s.Store.GetMail(messageId)
 		if m != nil {
 			break
@@ -216,7 +217,7 @@ func (h *handler) getMailAttachment(w http.ResponseWriter, messageId, name strin
 }
 
 func (h *handler) getMailbox(w http.ResponseWriter, r *http.Request, service, name string) {
-	s := h.app.Smtp[service]
+	s := h.app.Mail.Get(service)
 	mb, ok := s.Store.Mailboxes[name]
 	if !ok {
 		w.WriteHeader(404)

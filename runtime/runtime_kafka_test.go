@@ -26,9 +26,9 @@ func TestApp_AddKafka(t *testing.T) {
 			name: "event store available",
 			test: func(t *testing.T, app *runtime.App) {
 				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""))
-				app.AddKafka(getConfig("foo.bar", c), enginetest.NewEngine())
+				app.Kafka.Add(getConfig("foo.bar", c), enginetest.NewEngine())
 
-				require.Contains(t, app.Kafka, "foo")
+				require.NotNil(t, app.Kafka.Get("foo"))
 				err := events.Push("bar", events.NewTraits().WithNamespace("kafka").WithName("foo"))
 				require.NoError(t, err, "event store should be available")
 			},
@@ -37,9 +37,9 @@ func TestApp_AddKafka(t *testing.T) {
 			name: "event store for topic available",
 			test: func(t *testing.T, app *runtime.App) {
 				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""), asyncapi3test.WithChannel("bar"))
-				app.AddKafka(getConfig("foo.bar", c), enginetest.NewEngine())
+				app.Kafka.Add(getConfig("foo.bar", c), enginetest.NewEngine())
 
-				require.Contains(t, app.Kafka, "foo")
+				require.NotNil(t, app.Kafka.Get("foo"))
 				err := events.Push("bar", events.NewTraits().WithNamespace("kafka").WithName("foo").With("path", "bar"))
 				require.NoError(t, err, "event store should be available")
 			},
@@ -49,7 +49,7 @@ func TestApp_AddKafka(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""),
 					asyncapi3test.WithChannel("bar"))
-				info, err := app.AddKafka(getConfig("foo.bar", c), enginetest.NewEngine())
+				info, err := app.Kafka.Add(getConfig("foo.bar", c), enginetest.NewEngine())
 				require.NoError(t, err)
 				m := monitor.NewKafka()
 				h := info.Handler(m)
@@ -67,7 +67,7 @@ func TestApp_AddKafka(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""),
 					asyncapi3test.WithChannel("bar"))
-				info, err := app.AddKafka(getConfig("foo.bar", c), enginetest.NewEngine())
+				info, err := app.Kafka.Add(getConfig("foo.bar", c), enginetest.NewEngine())
 				require.NoError(t, err)
 
 				configs := info.Configs()
@@ -100,7 +100,7 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 				getConfig("https://mokapi.io/b", asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "bar", ""))),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.Kafka["foo"]
+				info := app.Kafka.Get("foo")
 				require.Equal(t, "bar", info.Info.Description)
 				configs := info.Configs()
 				require.Len(t, configs, 2)
@@ -113,7 +113,7 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 				getConfig("https://mokapi.io/a", asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "bar", ""))),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.Kafka["foo"]
+				info := app.Kafka.Get("foo")
 				require.Equal(t, "foo", info.Info.Description)
 			},
 		},
@@ -124,17 +124,50 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 				getConfig("https://mokapi.io/a", asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "bar", ""))),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.Kafka["foo"]
+				info := app.Kafka.Get("foo")
 				require.Equal(t, "foo", info.Info.Description)
+			},
+		},
+		{
+			name: "patch does not reset events and metrics",
+			configs: []*dynamic.Config{
+				getConfig("https://a.io/a",
+					asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "foo", ""),
+						asyncapi3test.WithChannel("bar"),
+					),
+				),
+			},
+			test: func(t *testing.T, app *runtime.App) {
+				err := events.Push("foo", events.NewTraits().WithNamespace("kafka").WithName("foo").With("topic", "bar"))
+				require.NoError(t, err)
+				e := events.GetEvents(events.NewTraits().WithNamespace("kafka"))
+				require.Len(t, e, 1)
+				app.Monitor.Kafka.Messages.WithLabel("foo", "bar").Add(1)
+
+				_, err = app.Kafka.Add(getConfig("https://a.io/b",
+					asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "foo", ""),
+						asyncapi3test.WithChannel("bar"),
+					),
+				), enginetest.NewEngine())
+				require.NoError(t, err)
+
+				e = events.GetEvents(events.NewTraits().WithNamespace("kafka"))
+				require.Len(t, e, 1)
+				v := app.Monitor.Kafka.Messages.WithLabel("foo", "bar").Value()
+				require.Equal(t, float64(1), v)
 			},
 		},
 	}
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			defer events.Reset()
+
 			app := runtime.New()
 			for _, c := range tc.configs {
-				app.AddKafka(c, enginetest.NewEngine())
+				app.Kafka.Add(c, enginetest.NewEngine())
 			}
 			tc.test(t, app)
 		})
@@ -142,8 +175,10 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 }
 
 func TestIsKafkaConfig(t *testing.T) {
-	require.True(t, runtime.IsKafkaConfig(&dynamic.Config{Data: asyncapi3test.NewConfig()}))
-	require.False(t, runtime.IsKafkaConfig(&dynamic.Config{Data: "foo"}))
+	_, ok := runtime.IsKafkaConfig(&dynamic.Config{Data: asyncapi3test.NewConfig()})
+	require.True(t, ok)
+	_, ok = runtime.IsKafkaConfig(&dynamic.Config{Data: "foo"})
+	require.False(t, ok)
 }
 
 func getConfig(name string, c *asyncapi3.Config) *dynamic.Config {

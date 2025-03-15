@@ -92,7 +92,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 			name: "multiple clusters",
 			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				for i := 0; i < 10; i++ {
-					app.AddKafka(getConfig(
+					app.Kafka.Add(getConfig(
 						asyncapi3test.NewConfig(asyncapi3test.WithInfo(fmt.Sprintf("x%v", i), "", ""))), enginetest.NewEngine())
 				}
 
@@ -231,7 +231,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 								asyncapi3test.WithPayload(schematest.New("string")),
 								asyncapi3test.WithKey(schematest.New("string")))),
 					)
-					app.AddKafka(getConfig(config), nil)
+					app.Kafka.Add(getConfig(config), nil)
 				}()
 
 				err := engine.AddScript(newScript("test.js", `
@@ -248,8 +248,8 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.Len(t, b.Records, 1, "message should be written despite validation error")
 				require.Equal(t, `"foo"`, kafka.BytesToString(b.Records[0].Value))
 				msg := getMessages(hook)
-				require.Contains(t, msg, "kafka topic 'retry' not found. Retry in 200ms")
-				require.Contains(t, msg, "kafka topic 'retry' not found. Retry in 800ms")
+				require.Contains(t, msg, "kafka topic 'retry' not found. Retry in 500ms")
+				require.Contains(t, msg, "kafka topic 'retry' not found. Retry in 1s")
 			},
 		},
 	}
@@ -281,7 +281,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				engine.WithLogger(logrus.StandardLogger()),
 			)
 
-			info, err := app.AddKafka(getConfig(config), e)
+			info, err := app.Kafka.Add(getConfig(config), e)
 			require.NoError(t, err)
 			tc.test(t, app, info.Store, e)
 		})

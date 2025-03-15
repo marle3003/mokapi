@@ -5,15 +5,23 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
 	"mokapi/providers/openapi"
+	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"net/http"
 	"path/filepath"
 	"sort"
+	"sync"
 )
+
+type HttpStore struct {
+	infos map[string]*HttpInfo
+	m     sync.RWMutex
+}
 
 type HttpInfo struct {
 	*openapi.Config
-	configs map[string]*dynamic.Config
+	configs   map[string]*dynamic.Config
+	seenPaths map[string]bool
 }
 
 type httpHandler struct {
@@ -23,10 +31,82 @@ type httpHandler struct {
 
 func NewHttpInfo(c *dynamic.Config) *HttpInfo {
 	hc := &HttpInfo{
-		configs: map[string]*dynamic.Config{},
+		configs:   map[string]*dynamic.Config{},
+		seenPaths: map[string]bool{},
 	}
 	hc.AddConfig(c)
 	return hc
+}
+
+func (s *HttpStore) Get(name string) *HttpInfo {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	return s.infos[name]
+}
+
+func (s *HttpStore) List() []*HttpInfo {
+	if s == nil {
+		return nil
+	}
+
+	s.m.RLock()
+	defer s.m.RUnlock()
+
+	var list []*HttpInfo
+	for _, v := range s.infos {
+		list = append(list, v)
+	}
+	return list
+}
+
+func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
+	s.m.Lock()
+	defer s.m.Unlock()
+
+	if len(s.infos) == 0 {
+		s.infos = make(map[string]*HttpInfo)
+	}
+	cfg := c.Data.(*openapi.Config)
+	name := cfg.Info.Name
+	hc, ok := s.infos[name]
+	if !ok {
+		hc = NewHttpInfo(c)
+		s.infos[cfg.Info.Name] = hc
+
+		events.ResetStores(events.NewTraits().WithNamespace("http").WithName(name))
+		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("http").WithName(name))
+	} else {
+		hc.AddConfig(c)
+	}
+
+	for path := range cfg.Paths {
+		if _, ok := hc.seenPaths[path]; ok {
+			continue
+		}
+		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("http").WithName(name).With("path", path))
+		hc.seenPaths[path] = true
+	}
+
+	return hc
+}
+
+func (s *HttpStore) Remove(c *dynamic.Config) {
+	s.m.RLock()
+
+	cfg := c.Data.(*openapi.Config)
+	name := cfg.Info.Name
+	hc := s.infos[name]
+	hc.Remove(c)
+	if len(hc.configs) == 0 {
+		s.m.RUnlock()
+		s.m.Lock()
+		delete(s.infos, name)
+		events.ResetStores(events.NewTraits().WithNamespace("http").WithName(name))
+		s.m.Unlock()
+	} else {
+		s.m.RUnlock()
+	}
 }
 
 func (c *HttpInfo) AddConfig(config *dynamic.Config) {
@@ -91,12 +171,12 @@ func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	h.next.ServeHTTP(rw, r.WithContext(ctx))
 }
 
-func IsHttpConfig(c *dynamic.Config) bool {
-	switch c.Data.(type) {
+func IsHttpConfig(c *dynamic.Config) (*openapi.Config, bool) {
+	switch v := c.Data.(type) {
 	case *openapi.Config:
-		return true
+		return v, true
 	default:
-		return false
+		return nil, false
 	}
 }
 

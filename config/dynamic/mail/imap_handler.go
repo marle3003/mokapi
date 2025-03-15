@@ -22,18 +22,20 @@ func (h *Handler) Login(username, password string, ctx context.Context) error {
 func (h *Handler) Select(mailbox string, ctx context.Context) (*imap.Selected, error) {
 	c := imap.ClientFromContext(ctx)
 	mb := c.Session["mailbox"].(*Mailbox)
-	if c.Session["selected"] == mailbox {
-
-	} else {
-		c.Session["selected"] = mailbox
-	}
 
 	mb.EnsureInbox()
+
+	// Inbox is a special, mandatory mailbox that is case-insensitive
+	if strings.ToLower(mailbox) == "inbox" {
+		mailbox = "INBOX"
+	}
+
 	f, ok := mb.Folders[mailbox]
 	if !ok {
 		return nil, fmt.Errorf("mailbox not found")
 	}
 
+	c.Session["selected"] = mailbox
 	unseen := f.FirstUnseen()
 
 	return &imap.Selected{
@@ -55,6 +57,7 @@ func (h *Handler) Unselect(ctx context.Context) error {
 func (h *Handler) List(ref, pattern string, flags []imap.MailboxFlags, ctx context.Context) ([]imap.ListEntry, error) {
 	c := imap.ClientFromContext(ctx)
 	mb := c.Session["mailbox"].(*Mailbox)
+	mb.EnsureInbox()
 
 	var list []imap.ListEntry
 	for _, f := range mb.Folders {

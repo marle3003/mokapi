@@ -34,29 +34,30 @@ func NewKafkaManager(emitter common.EventEmitter, app *runtime.App) *KafkaManage
 }
 
 func (m *KafkaManager) UpdateConfig(e dynamic.ConfigEvent) {
-	if !runtime.IsKafkaConfig(e.Config) {
+	cfg, ok := runtime.IsKafkaConfig(e.Config)
+	if !ok {
 		return
 	}
 
-	name, cfg := m.app.GetKafka(e.Config)
+	info := m.app.Kafka.Get(cfg.Info.Name)
 	if e.Event == dynamic.Delete {
-		m.app.RemoveKafka(e.Config)
-		if cfg.Config == nil {
-			m.removeCluster(name)
+		m.app.Kafka.Remove(e.Config)
+		if info.Config == nil {
+			m.removeCluster(cfg.Info.Name)
 			return
 		}
-	} else if cfg == nil {
+	} else if info == nil {
 		var err error
-		cfg, err = m.app.AddKafka(e.Config, m.emitter)
+		info, err = m.app.Kafka.Add(e.Config, m.emitter)
 		if err != nil {
 			log.Errorf("add kafka config %v failed: %v", e.Config.Info.Url, err)
 			return
 		}
 	} else {
-		cfg.AddConfig(e.Config)
+		info.AddConfig(e.Config)
 	}
 
-	m.addOrUpdateCluster(cfg)
+	m.addOrUpdateCluster(info)
 	log.Debugf("processed %v", e.Config.Info.Path())
 }
 
