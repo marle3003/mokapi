@@ -60,7 +60,7 @@ func TestServer_Select(t *testing.T) {
 				UnselectFunc: func(session map[string]interface{}) error {
 					return nil
 				},
-				ExpungeFunc: func(set *imap.IdSet, w *imap.ExpungeWriter, session map[string]interface{}) error {
+				ExpungeFunc: func(set *imap.IdSet, w imap.ExpungeWriter, session map[string]interface{}) error {
 					return nil
 				},
 			},

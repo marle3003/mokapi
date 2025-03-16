@@ -26,9 +26,13 @@ type Handler interface {
 	List(ref, pattern string, flags []MailboxFlags, ctx context.Context) ([]ListEntry, error)
 	Fetch(req *FetchRequest, res FetchResponse, ctx context.Context) error
 	Store(req *StoreRequest, res FetchResponse, ctx context.Context) error
-	Expunge(set *IdSet, w *ExpungeWriter, ctx context.Context) error
+	Expunge(set *IdSet, w ExpungeWriter, ctx context.Context) error
 	Create(name string, opts *CreateOptions, ctx context.Context) error
-	Move(set *IdSet, dest string, w *MoveWriter, ctx context.Context) error
+	Copy(set *IdSet, dest string, w CopyWriter, ctx context.Context) error
+	Move(set *IdSet, dest string, w MoveWriter, ctx context.Context) error
+	Status(req *StatusRequest, ctx context.Context) (StatusResult, error)
+	Subscribe(mailbox string, ctx context.Context) error
+	Unsubscribe(mailbox string, ctx context.Context) error
 }
 
 type Flag string

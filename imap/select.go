@@ -60,10 +60,12 @@ func (c *conn) handleSelect(tag, param string) error {
 	return selected.write()
 }
 
-func (c *conn) handleClose(tag string) error {
-	// close also performs an implicit expunge but no responses are sent
-	if err := c.handler.Expunge(nil, &ExpungeWriter{}, c.ctx); err != nil {
-		return err
+func (c *conn) handleUnselect(tag string, close bool) error {
+	if close {
+		// close also performs an implicit expunge but no responses are sent
+		if err := c.handler.Expunge(nil, &expungeWriter{}, c.ctx); err != nil {
+			return err
+		}
 	}
 
 	if err := c.handler.Unselect(c.ctx); err != nil {

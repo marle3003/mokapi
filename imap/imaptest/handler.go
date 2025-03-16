@@ -6,16 +6,20 @@ import (
 )
 
 type Handler struct {
-	session      map[string]interface{}
-	LoginFunc    func(username, password string, session map[string]interface{}) error
-	SelectFunc   func(mailbox string, session map[string]interface{}) (*imap.Selected, error)
-	UnselectFunc func(session map[string]interface{}) error
-	ListFunc     func(ref, pattern string, flags []imap.MailboxFlags, session map[string]interface{}) ([]imap.ListEntry, error)
-	FetchFunc    func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error
-	StoreFunc    func(request *imap.StoreRequest, response imap.FetchResponse, session map[string]interface{}) error
-	ExpungeFunc  func(set *imap.IdSet, w *imap.ExpungeWriter, session map[string]interface{}) error
-	CreateFunc   func(name string, opt *imap.CreateOptions, session map[string]interface{}) error
-	MoveFunc     func(set *imap.IdSet, dest string, w *imap.MoveWriter, session map[string]interface{}) error
+	session         map[string]interface{}
+	LoginFunc       func(username, password string, session map[string]interface{}) error
+	SelectFunc      func(mailbox string, session map[string]interface{}) (*imap.Selected, error)
+	UnselectFunc    func(session map[string]interface{}) error
+	ListFunc        func(ref, pattern string, flags []imap.MailboxFlags, session map[string]interface{}) ([]imap.ListEntry, error)
+	FetchFunc       func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error
+	StoreFunc       func(request *imap.StoreRequest, response imap.FetchResponse, session map[string]interface{}) error
+	ExpungeFunc     func(set *imap.IdSet, w imap.ExpungeWriter, session map[string]interface{}) error
+	CreateFunc      func(name string, opt *imap.CreateOptions, session map[string]interface{}) error
+	CopyFunc        func(set *imap.IdSet, dest string, w imap.CopyWriter, session map[string]interface{}) error
+	MoveFunc        func(set *imap.IdSet, dest string, w imap.MoveWriter, session map[string]interface{}) error
+	StatusFunc      func(req *imap.StatusRequest, session map[string]interface{}) (imap.StatusResult, error)
+	SubscribeFunc   func(mailbox string, session map[string]interface{}) error
+	UnsubscribeFunc func(mailbox string, session map[string]interface{}) error
 }
 
 func (h *Handler) Login(username, password string, _ context.Context) error {
@@ -66,7 +70,7 @@ func (h *Handler) Store(request *imap.StoreRequest, response imap.FetchResponse,
 	panic("STORE not implemented")
 }
 
-func (h *Handler) Expunge(set *imap.IdSet, w *imap.ExpungeWriter, _ context.Context) error {
+func (h *Handler) Expunge(set *imap.IdSet, w imap.ExpungeWriter, _ context.Context) error {
 	if h.ExpungeFunc != nil {
 		h.ensureSession()
 		return h.ExpungeFunc(set, w, h.session)
@@ -82,12 +86,44 @@ func (h *Handler) Create(name string, opt *imap.CreateOptions, _ context.Context
 	panic("CREATE not implemented")
 }
 
-func (h *Handler) Move(set *imap.IdSet, dest string, w *imap.MoveWriter, _ context.Context) error {
+func (h *Handler) Copy(set *imap.IdSet, dest string, w imap.CopyWriter, _ context.Context) error {
+	if h.CopyFunc != nil {
+		h.ensureSession()
+		return h.CopyFunc(set, dest, w, h.session)
+	}
+	panic("COPY not implemented")
+}
+
+func (h *Handler) Move(set *imap.IdSet, dest string, w imap.MoveWriter, _ context.Context) error {
 	if h.MoveFunc != nil {
 		h.ensureSession()
 		return h.MoveFunc(set, dest, w, h.session)
 	}
 	panic("MOVE not implemented")
+}
+
+func (h *Handler) Status(req *imap.StatusRequest, _ context.Context) (imap.StatusResult, error) {
+	if h.StatusFunc != nil {
+		h.ensureSession()
+		return h.StatusFunc(req, h.session)
+	}
+	panic("STATUS not implemented")
+}
+
+func (h *Handler) Subscribe(mailbox string, _ context.Context) error {
+	if h.SubscribeFunc != nil {
+		h.ensureSession()
+		return h.SubscribeFunc(mailbox, h.session)
+	}
+	panic("SUBSCRIBE not implemented")
+}
+
+func (h *Handler) Unsubscribe(mailbox string, _ context.Context) error {
+	if h.UnsubscribeFunc != nil {
+		h.ensureSession()
+		return h.UnsubscribeFunc(mailbox, h.session)
+	}
+	panic("UNSUBSCRIBE not implemented")
 }
 
 func (h *Handler) ensureSession() {

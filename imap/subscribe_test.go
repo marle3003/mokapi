@@ -9,46 +9,36 @@ import (
 	"testing"
 )
 
-func TestExpunge_Response(t *testing.T) {
+func TestSubscribe_Response(t *testing.T) {
 	testcases := []struct {
 		request  string
 		response []string
 		handler  newHandler
 	}{
 		{
-			request: "EXPUNGE",
+			request: "SUBSCRIBE TRASH)",
 			response: []string{
-				"* 1 EXPUNGE",
-				"A0002 OK EXPUNGE completed",
+				"A0002 OK SUBSCRIBE completed",
 			},
 			handler: func(t *testing.T) imap.Handler {
 				return &imaptest.Handler{
-					ExpungeFunc: func(set *imap.IdSet, w imap.ExpungeWriter, session map[string]interface{}) error {
-						require.Nil(t, set, "no IdSet value is set")
-
-						return w.Write(uint32(1))
+					SubscribeFunc: func(mailbox string, session map[string]interface{}) error {
+						require.Equal(t, "TRASH", mailbox)
+						return nil
 					},
 				}
 			},
 		},
 		{
-			request: "UID EXPUNGE 145",
+			request: "UNSUBSCRIBE TRASH)",
 			response: []string{
-				"* 145 EXPUNGE",
-				"A0002 OK EXPUNGE completed",
+				"A0002 OK UNSUBSCRIBE completed",
 			},
 			handler: func(t *testing.T) imap.Handler {
-				count := 0
 				return &imaptest.Handler{
-					ExpungeFunc: func(set *imap.IdSet, w imap.ExpungeWriter, session map[string]interface{}) error {
-						count++
-						// close does also call expunge
-						if count == 1 {
-							require.NotNil(t, set, "IdSet value is set")
-							require.Equal(t, imap.IdNum(145), set.Ids[0].(imap.IdNum))
-						}
-
-						return w.Write(uint32(145))
+					UnsubscribeFunc: func(mailbox string, session map[string]interface{}) error {
+						require.Equal(t, "TRASH", mailbox)
+						return nil
 					},
 				}
 			},

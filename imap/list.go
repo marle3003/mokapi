@@ -2,7 +2,6 @@ package imap
 
 import (
 	"fmt"
-	"strings"
 )
 
 type ListEntry struct {
@@ -11,7 +10,7 @@ type ListEntry struct {
 	Name      string
 }
 
-func (c *conn) handleList(tag, param string) error {
+func (c *conn) handleList(tag string, d *Decoder) error {
 	if c.state != AuthenticatedState && c.state != SelectedState {
 		return c.writeResponse(tag, &response{
 			status: bad,
@@ -19,9 +18,14 @@ func (c *conn) handleList(tag, param string) error {
 		})
 	}
 
-	args := strings.SplitN(param, " ", 2)
-	ref := args[0]
-	pattern := args[1]
+	ref, err := d.Pattern()
+	if err != nil {
+		return err
+	}
+	pattern, err := d.SP().Pattern()
+	if err != nil {
+		return err
+	}
 	list, err := c.handler.List(ref, pattern, nil, c.ctx)
 	if err != nil {
 		return err
@@ -36,7 +40,7 @@ func (c *conn) handleList(tag, param string) error {
 	return w.write()
 }
 
-func (c *conn) handleLSub(tag, param string) error {
+func (c *conn) handleLSub(tag string, d *Decoder) error {
 	if c.state != AuthenticatedState && c.state != SelectedState {
 		return c.writeResponse(tag, &response{
 			status: bad,
@@ -44,9 +48,14 @@ func (c *conn) handleLSub(tag, param string) error {
 		})
 	}
 
-	args := strings.SplitN(param, " ", 2)
-	ref := args[0]
-	pattern := args[1]
+	ref, err := d.Pattern()
+	if err != nil {
+		return err
+	}
+	pattern, err := d.SP().Pattern()
+	if err != nil {
+		return err
+	}
 	list, err := c.handler.List(ref, pattern, []MailboxFlags{Subscribed}, c.ctx)
 	if err != nil {
 		return err

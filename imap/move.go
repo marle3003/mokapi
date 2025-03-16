@@ -1,8 +1,12 @@
 package imap
 
-type MoveWriter struct {
-	c   *conn
-	tag string
+type MoveWriter interface {
+	CopyWriter
+	WriteExpunge(id uint32) error
+}
+
+type moveWriter struct {
+	copyWriter
 }
 
 func (c *conn) handleMove(tag string, d *Decoder, useUid bool) error {
@@ -22,7 +26,10 @@ func (c *conn) handleMove(tag string, d *Decoder, useUid bool) error {
 	var dest string
 	dest, err = d.SP().String()
 
-	w := &MoveWriter{c: c, tag: tag}
+	w := &moveWriter{copyWriter: copyWriter{
+		c:   c,
+		tag: tag,
+	}}
 	err = c.handler.Move(&set, dest, w, c.ctx)
 	if err != nil {
 		return err
@@ -34,22 +41,6 @@ func (c *conn) handleMove(tag string, d *Decoder, useUid bool) error {
 	})
 }
 
-func (w *MoveWriter) WriteCopy(copy *Copy) error {
-	e := Encoder{}
-
-	e.Byte('[')
-	e.Atom("COPYUID")
-	e.SP().Number(copy.UIDValidity)
-	e.SP().SequenceSet(copy.SourceUIDs)
-	e.SP().SequenceSet(copy.DestUIDs)
-	e.Byte(']')
-	e.SP().Atom("COPY")
-
-	return w.c.writeResponse(untagged, &response{
-		text: e.String(),
-	})
-}
-
-func (w *MoveWriter) WriteExpunge(id uint32) error {
+func (w *moveWriter) WriteExpunge(id uint32) error {
 	return w.c.writeExpunge(id)
 }

@@ -77,14 +77,20 @@ func (c *conn) readCmd() error {
 		err = c.handleStartTLS(tag)
 	case "SELECT":
 		err = c.handleSelect(tag, param)
+	case "STATUS":
+		err = c.handleStatus(tag, &d)
 	case "LIST":
-		err = c.handleList(tag, param)
+		err = c.handleList(tag, &d)
 	case "LSUB":
-		err = c.handleLSub(tag, param)
+		err = c.handleLSub(tag, &d)
+	case "SUBSCRIBE":
+		err = c.handleSubscribe(tag, &d)
+	case "UNSUBSCRIBE":
+		err = c.handleUnsubscribe(tag, &d)
 	case "FETCH":
 		err = c.handleFetch(tag, param)
-	case "CLOSE":
-		err = c.handleClose(tag)
+	case "CLOSE", "UNSELECT":
+		err = c.handleUnselect(tag, cmd == "CLOSE")
 	case "EXPUNGE":
 		err = c.handleExpunge(tag, &d, false)
 	case "UID":
@@ -96,6 +102,8 @@ func (c *conn) readCmd() error {
 		err = c.handleStore(tag, param)
 	case "CREATE":
 		err = c.handleCreate(tag, &d)
+	case "COPY":
+		err = c.handleCopy(tag, &d, false)
 	case "MOVE":
 		err = c.handleMove(tag, &d, false)
 	case "NOOP":

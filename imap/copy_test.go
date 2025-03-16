@@ -9,22 +9,21 @@ import (
 	"testing"
 )
 
-func TestMove_Response(t *testing.T) {
+func TestCopy_Response(t *testing.T) {
 	testcases := []struct {
 		request  string
 		response []string
 		handler  newHandler
 	}{
 		{
-			request: "MOVE 1 foo",
+			request: "COPY 1 foo",
 			response: []string{
 				"* [COPYUID 1435 1 23] COPY",
-				"* 1 EXPUNGE",
-				"A0002 OK MOVE completed",
+				"A0002 OK COPY completed",
 			},
 			handler: func(t *testing.T) imap.Handler {
 				return &imaptest.Handler{
-					MoveFunc: func(set *imap.IdSet, dest string, w imap.MoveWriter, session map[string]interface{}) error {
+					CopyFunc: func(set *imap.IdSet, dest string, w imap.CopyWriter, session map[string]interface{}) error {
 						require.Equal(t, imap.IdNum(1), set.Ids[0].(imap.IdNum))
 						require.Equal(t, "foo", dest)
 
@@ -34,21 +33,20 @@ func TestMove_Response(t *testing.T) {
 							DestUIDs:    imap.IdSet{Ids: []imap.Set{imap.IdNum(23)}},
 						})
 						require.NoError(t, err)
-						return w.WriteExpunge(1)
+						return nil
 					},
 				}
 			},
 		},
 		{
-			request: "MOVE 1:2 foo",
+			request: "COPY 1:2 foo",
 			response: []string{
 				"* [COPYUID 1435 1:2 23:24] COPY",
-				"* 1 EXPUNGE",
-				"A0002 OK MOVE completed",
+				"A0002 OK COPY completed",
 			},
 			handler: func(t *testing.T) imap.Handler {
 				return &imaptest.Handler{
-					MoveFunc: func(set *imap.IdSet, dest string, w imap.MoveWriter, session map[string]interface{}) error {
+					CopyFunc: func(set *imap.IdSet, dest string, w imap.CopyWriter, session map[string]interface{}) error {
 						require.Equal(t, uint32(1), set.Ids[0].(*imap.Range).Start.Value)
 						require.Equal(t, "foo", dest)
 
@@ -58,7 +56,7 @@ func TestMove_Response(t *testing.T) {
 							DestUIDs:    imap.IdSet{Ids: []imap.Set{&imap.Range{Start: imap.SeqNum{Value: 23}, End: imap.SeqNum{Value: 24}}}},
 						})
 						require.NoError(t, err)
-						return w.WriteExpunge(1)
+						return nil
 					},
 				}
 			},

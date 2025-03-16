@@ -151,6 +151,15 @@ func (d *Decoder) Text() (string, error) {
 	})
 }
 
+func (d *Decoder) Pattern() (string, error) {
+	if d.is("\"") {
+		return d.Quoted()
+	}
+	return d.Read(func(r byte) bool {
+		return r != ' '
+	})
+}
+
 func (d *Decoder) Number() (uint32, error) {
 	s, err := d.Read(func(r byte) bool {
 		return r >= '0' && r <= '9'

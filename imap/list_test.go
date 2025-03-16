@@ -19,6 +19,8 @@ func TestServer_List(t *testing.T) {
 			name: "empty",
 			handler: &imaptest.Handler{
 				ListFunc: func(ref, pattern string, _ []imap.MailboxFlags, session map[string]interface{}) ([]imap.ListEntry, error) {
+					require.Equal(t, "", ref)
+					require.Equal(t, "*", pattern)
 					return nil, nil
 				},
 			},

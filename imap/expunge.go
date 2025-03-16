@@ -2,7 +2,11 @@ package imap
 
 import "fmt"
 
-type ExpungeWriter struct {
+type ExpungeWriter interface {
+	Write(id uint32) error
+}
+
+type expungeWriter struct {
 	c *conn
 }
 
@@ -23,7 +27,7 @@ func (c *conn) handleExpunge(tag string, dec *Decoder, useUid bool) error {
 		set = &s
 	}
 
-	w := &ExpungeWriter{c: c}
+	w := &expungeWriter{c: c}
 	if err := c.handler.Expunge(set, w, c.ctx); err != nil {
 		return err
 	}
@@ -33,7 +37,7 @@ func (c *conn) handleExpunge(tag string, dec *Decoder, useUid bool) error {
 	})
 }
 
-func (w *ExpungeWriter) Write(id uint32) error {
+func (w *expungeWriter) Write(id uint32) error {
 	return w.c.writeExpunge(id)
 }
 

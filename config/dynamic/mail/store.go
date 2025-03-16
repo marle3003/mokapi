@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mokapi/imap"
 	"mokapi/smtp"
+	"strings"
 	"time"
 )
 
@@ -83,6 +84,10 @@ func (s *Store) GetMail(id string) *smtp.Message {
 func getFolders(cfg []FolderConfig) map[string]*Folder {
 	result := make(map[string]*Folder)
 	for _, sub := range cfg {
+		if strings.ToUpper(sub.Name) == "INBOX" {
+			sub.Name = "INBOX"
+		}
+
 		f := &Folder{
 			Name:        sub.Name,
 			uidNext:     1,

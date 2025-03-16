@@ -21,21 +21,16 @@ func (h *Handler) Login(username, password string, ctx context.Context) error {
 }
 
 func (h *Handler) Select(mailbox string, ctx context.Context) (*imap.Selected, error) {
-	c := imap.ClientFromContext(ctx)
-	mb := c.Session["mailbox"].(*Mailbox)
+	mb, _ := getContext(ctx)
+	mb.m.Lock()
+	defer mb.m.Unlock()
 
-	mb.EnsureInbox()
-
-	// Inbox is a special, mandatory mailbox that is case-insensitive
-	if strings.ToLower(mailbox) == "inbox" {
-		mailbox = "INBOX"
-	}
-
-	f, ok := mb.Folders[mailbox]
-	if !ok {
+	f := mb.Select(mailbox)
+	if f == nil {
 		return nil, fmt.Errorf("mailbox not found")
 	}
 
+	c := imap.ClientFromContext(ctx)
 	c.Session["selected"] = mailbox
 	unseen := f.FirstUnseen()
 
@@ -56,15 +51,15 @@ func (h *Handler) Unselect(ctx context.Context) error {
 }
 
 func (h *Handler) List(ref, pattern string, flags []imap.MailboxFlags, ctx context.Context) ([]imap.ListEntry, error) {
-	c := imap.ClientFromContext(ctx)
-	mb := c.Session["mailbox"].(*Mailbox)
-	mb.EnsureInbox()
+	mb, _ := getContext(ctx)
+	mb.m.Lock()
+	defer mb.m.Unlock()
 
 	folders := mb.List(ref)
 
 	var list []imap.ListEntry
 	for _, folder := range folders {
-		for _, f := range folder.List(pattern) {
+		for _, f := range folder.List(pattern, flags) {
 			list = append(list, imap.ListEntry{
 				Delimiter: "/",
 				Flags:     f.Flags,
@@ -87,10 +82,12 @@ func (h *Handler) List(ref, pattern string, flags []imap.MailboxFlags, ctx conte
 }
 
 func (h *Handler) Store(req *imap.StoreRequest, res imap.FetchResponse, ctx context.Context) error {
-	folder, err := getCurrentFolder(ctx)
-	if err != nil {
-		return err
+	mb, folder := getContext(ctx)
+	if folder == nil {
+		return fmt.Errorf("folder not found")
 	}
+	mb.m.Lock()
+	defer mb.m.Unlock()
 
 	do := func(action string, flags []imap.Flag, m *Mail) {
 		switch action {
@@ -116,6 +113,7 @@ func (h *Handler) Store(req *imap.StoreRequest, res imap.FetchResponse, ctx cont
 			if !req.Silent {
 				w := res.NewMessage(m.UId)
 				w.WriteFlags(m.Flags...)
+				w.WriteUID(m.UId)
 			}
 		})
 	} else {
@@ -130,11 +128,13 @@ func (h *Handler) Store(req *imap.StoreRequest, res imap.FetchResponse, ctx cont
 	return nil
 }
 
-func (h *Handler) Expunge(id *imap.IdSet, w *imap.ExpungeWriter, ctx context.Context) error {
-	folder, err := getCurrentFolder(ctx)
-	if err != nil {
-		return err
+func (h *Handler) Expunge(id *imap.IdSet, w imap.ExpungeWriter, ctx context.Context) error {
+	mb, folder := getContext(ctx)
+	if folder == nil {
+		return fmt.Errorf("folder not found")
 	}
+	mb.m.Lock()
+	defer mb.m.Unlock()
 
 	var slice []*Mail
 	for i, m := range folder.Messages {
@@ -142,10 +142,19 @@ func (h *Handler) Expunge(id *imap.IdSet, w *imap.ExpungeWriter, ctx context.Con
 			slice = append(slice, m)
 			continue
 		}
+
+		msn := uint32(i + 1)
+		var err error
 		if id == nil {
-			err = w.Write(uint32(i + 1))
+			err = w.Write(msn)
 		} else {
-			err = w.Write(m.UId)
+			if id.IsUid && id.Contains(m.UId) {
+				err = w.Write(m.UId)
+			} else if id.Contains(msn) {
+				err = w.Write(msn)
+			} else {
+				slice = append(slice, m)
+			}
 		}
 		if err != nil {
 			return err
@@ -156,14 +165,19 @@ func (h *Handler) Expunge(id *imap.IdSet, w *imap.ExpungeWriter, ctx context.Con
 }
 
 func (h *Handler) Create(name string, opt *imap.CreateOptions, ctx context.Context) error {
-	c := imap.ClientFromContext(ctx)
-	mb := c.Session["mailbox"].(*Mailbox)
+	mb, _ := getContext(ctx)
+	mb.m.Lock()
+	defer mb.m.Unlock()
 
 	var current *Folder
 	for _, part := range strings.Split(name, "/") {
+		if strings.ToUpper(part) == "INBOX" {
+			current = mb.Folders["INBOX"]
+			continue
+		}
 		folder := &Folder{Name: part}
 		if current != nil {
-			current.Folders[part] = folder
+			current.AddFolder(folder)
 			current = folder
 		} else {
 			mb.Folders[part] = folder
@@ -175,31 +189,114 @@ func (h *Handler) Create(name string, opt *imap.CreateOptions, ctx context.Conte
 	return nil
 }
 
-func (h *Handler) Move(set *imap.IdSet, dest string, w *imap.MoveWriter, ctx context.Context) error {
-	cCtx := imap.ClientFromContext(ctx)
-	mb := cCtx.Session["mailbox"].(*Mailbox)
-	s, err := getCurrentFolder(ctx)
-	if err != nil {
-		return err
+func (h *Handler) Copy(set *imap.IdSet, dest string, w imap.CopyWriter, ctx context.Context) error {
+	mb, source := getContext(ctx)
+	if source == nil {
+		return fmt.Errorf("folder not found")
 	}
-	d := getFolder(mb, dest)
+	mb.m.Lock()
+	defer mb.m.Unlock()
+
+	d := mb.Select(dest)
 	if d == nil {
 		return fmt.Errorf("folder not found")
 	}
 
-	c := &imap.Copy{UIDValidity: d.uidValidity, SourceUIDs: *set}
+	c := &imap.Copy{UIDValidity: d.UidValidity(), SourceUIDs: *set}
 	if set.IsUid {
-		doMessagesByUid(set, s, func(m *Mail) {
+		c.DestUIDs.IsUid = true
+		doMessagesByUid(set, source, func(m *Mail) {
 			d.Copy(m)
 			c.DestUIDs.Append(imap.IdNum(m.UId))
 		})
 	} else {
-		doMessagesByMsn(set, s, func(msn int, m *Mail) {
+		doMessagesByMsn(set, source, func(msn int, m *Mail) {
 			d.Copy(m)
-			c.DestUIDs.Append(imap.IdNum(m.UId))
+			c.DestUIDs.Append(imap.IdNum(msn))
 		})
 	}
 
+	if err := w.WriteCopy(c); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (h *Handler) Move(set *imap.IdSet, dest string, w imap.MoveWriter, ctx context.Context) error {
+	mb, source := getContext(ctx)
+	if source == nil {
+		return fmt.Errorf("folder not found")
+	}
+	mb.m.Lock()
+	defer mb.m.Unlock()
+
+	d := mb.Select(dest)
+	if d == nil {
+		return fmt.Errorf("folder not found")
+	}
+
+	c := &imap.Copy{UIDValidity: d.UidValidity(), SourceUIDs: *set}
+	if set.IsUid {
+		c.DestUIDs.IsUid = true
+		doMessagesByUid(set, source, func(m *Mail) {
+			source.Remove(m)
+			m = d.Copy(m)
+			c.DestUIDs.Append(imap.IdNum(m.UId))
+			w.WriteExpunge(m.UId)
+		})
+	} else {
+		doMessagesByMsn(set, source, func(msn int, m *Mail) {
+			source.Remove(m)
+			m = d.Copy(m)
+			c.DestUIDs.Append(imap.IdNum(msn))
+			w.WriteExpunge(uint32(msn))
+		})
+	}
+
+	if err := w.WriteCopy(c); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (h *Handler) Status(req *imap.StatusRequest, ctx context.Context) (imap.StatusResult, error) {
+	mb, _ := getContext(ctx)
+	mb.m.Lock()
+	defer mb.m.Unlock()
+
+	folder := mb.Select(req.Mailbox)
+	if folder == nil {
+		return imap.StatusResult{}, fmt.Errorf("folder not found")
+	}
+	return folder.Status(), nil
+}
+
+func (h *Handler) Subscribe(mailbox string, ctx context.Context) error {
+	mb, _ := getContext(ctx)
+	mb.m.Lock()
+	defer mb.m.Unlock()
+
+	f := mb.Select(mailbox)
+	if f == nil {
+		return fmt.Errorf("folder not found")
+	}
+	f.Flags = append(f.Flags, imap.Subscribed)
+	return nil
+}
+
+func (h *Handler) Unsubscribe(mailbox string, ctx context.Context) error {
+	mb, _ := getContext(ctx)
+	mb.m.Lock()
+	defer mb.m.Unlock()
+
+	f := mb.Select(mailbox)
+	if f == nil {
+		return fmt.Errorf("folder not found")
+	}
+
+	f.RemoveFlag(imap.Subscribed)
 	return nil
 }
 
@@ -221,29 +318,14 @@ func addressToString(addr smtp.Address) string {
 	return fmt.Sprintf("%s <%s>", addr.Name, addr.Address)
 }
 
-func getCurrentFolder(ctx context.Context) (*Folder, error) {
+func getContext(ctx context.Context) (*Mailbox, *Folder) {
 	c := imap.ClientFromContext(ctx)
 	mb := c.Session["mailbox"].(*Mailbox)
-	selected := c.Session["selected"].(string)
-	folder, ok := mb.Folders[selected]
+	mb.EnsureInbox()
+	selected, ok := c.Session["selected"]
 	if !ok {
-		return folder, fmt.Errorf("mailbox not found")
+		return mb, nil
 	}
-	return folder, nil
-}
-
-func getFolder(mb *Mailbox, name string) *Folder {
-	var current *Folder
-	ok := false
-	for _, part := range strings.Split(name, "/") {
-		if current == nil {
-			current, ok = mb.Folders[part]
-		} else {
-			current, ok = current.Folders[part]
-		}
-		if !ok {
-			return nil
-		}
-	}
-	return current
+	folder := mb.Select(selected.(string))
+	return mb, folder
 }

@@ -1,0 +1,19 @@
+smtp: '1.0'
+info:
+  title: Mokapi's Mail Server
+servers:
+  - url: smtp://127.0.0.1:8025
+  - url: imap://127.0.0.1:143
+rules:
+  - name: Recipient's domain is mokapi.io
+    recipient: '@mokapi.io'
+    action: allow
+mailboxes:
+  - name: bob@mokapi.io
+    username: bob
+    password: bob123
+    folders:
+      - name: Trash
+        flags: [\Trash]
+  - name: alice@mokapi.io
+

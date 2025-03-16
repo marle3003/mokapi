@@ -219,7 +219,7 @@ func (h *mailHandler) Store(req *imap.StoreRequest, res imap.FetchResponse, ctx 
 	return h.next.Store(req, res, ctx)
 }
 
-func (h *mailHandler) Expunge(set *imap.IdSet, w *imap.ExpungeWriter, ctx context.Context) error {
+func (h *mailHandler) Expunge(set *imap.IdSet, w imap.ExpungeWriter, ctx context.Context) error {
 	return h.next.Expunge(set, w, ctx)
 }
 
@@ -227,8 +227,24 @@ func (h *mailHandler) Create(name string, opt *imap.CreateOptions, ctx context.C
 	return h.next.Create(name, opt, ctx)
 }
 
-func (h *mailHandler) Move(set *imap.IdSet, dest string, w *imap.MoveWriter, ctx context.Context) error {
+func (h *mailHandler) Copy(set *imap.IdSet, dest string, w imap.CopyWriter, ctx context.Context) error {
+	return h.next.Copy(set, dest, w, ctx)
+}
+
+func (h *mailHandler) Move(set *imap.IdSet, dest string, w imap.MoveWriter, ctx context.Context) error {
 	return h.next.Move(set, dest, w, ctx)
+}
+
+func (h *mailHandler) Status(req *imap.StatusRequest, ctx context.Context) (imap.StatusResult, error) {
+	return h.next.Status(req, ctx)
+}
+
+func (h *mailHandler) Subscribe(mailbox string, ctx context.Context) error {
+	return h.next.Subscribe(mailbox, ctx)
+}
+
+func (h *mailHandler) Unsubscribe(mailbox string, ctx context.Context) error {
+	return h.next.Unsubscribe(mailbox, ctx)
 }
 
 func getSmtpConfig(c *dynamic.Config) *mail.Config {
