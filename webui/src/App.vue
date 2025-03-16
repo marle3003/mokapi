@@ -3,7 +3,7 @@ import { RouterView } from 'vue-router'
 import Header from './components/Header.vue'
 
 var theme = 'light';
-if (import.meta.env.VITE_DASHBOARD === true) {
+if (import.meta.env.VITE_DASHBOARD === 'true') {
   theme = 'dark'
 }
 if (localStorage.getItem('theme')) {
