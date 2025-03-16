@@ -21,7 +21,19 @@ const { mail, isLoading: isLoading } = fetchMail(messageId)
       <div class="card">
         <div class="card-body">
           <div class="row">
-            <p class="col-10">
+            <div class="col header">
+              <p class="label">Subject</p>
+              <p>{{ mail.subject }}</p>
+            </div>
+            <div class="col-2 align-self-end">
+              <p class="label">Date</p>
+              <p>
+                {{ format(mail.time) }}
+              </p>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col">
               <p class="label">From</p>
               <p class="prop">
                 <ul class="address-list">
@@ -31,16 +43,10 @@ const { mail, isLoading: isLoading } = fetchMail(messageId)
                   </li>
                 </ul>
               </p>
-            </p>
-            <p class="col">
-              <p class="label">Date</p>
-              <p>
-                {{ format(mail.time) }}
-              </p>
-            </p>
+            </div>
           </div>
           <div class="row">
-            <p class="col">
+            <div class="col">
               <p class="label">To</p>
               <p class="prop">
                 <ul class="address-list">
@@ -50,10 +56,10 @@ const { mail, isLoading: isLoading } = fetchMail(messageId)
                   </li>
                 </ul>
               </p>
-            </p>
+            </div>
           </div>
           <div class="row" v-if="mail.cc">
-            <p class="col">
+            <div class="col">
               <p class="label">Cc</p>
               <p class="prop">
                 <ul class="address-list">
@@ -63,10 +69,10 @@ const { mail, isLoading: isLoading } = fetchMail(messageId)
                   </li>
                 </ul>
               </p>
-            </p>
+            </div>
           </div>
           <div class="row" v-if="mail.bcc">
-            <p class="col">
+            <div class="col">
               <p class="label">Bcc</p>
               <p class="prop">
                 <ul class="address-list">
@@ -76,13 +82,7 @@ const { mail, isLoading: isLoading } = fetchMail(messageId)
                   </li>
                 </ul>
               </p>
-            </p>
-          </div>
-          <div class="row">
-            <p class="col">
-              <p class="label">Subject</p>
-              <p class="subject">{{ mail.subject }}</p>
-            </p>
+            </div>
           </div>
         </div>
       </div>

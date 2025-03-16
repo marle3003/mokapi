@@ -6,14 +6,15 @@ import (
 )
 
 type Config struct {
-	ConfigPath    string   `yaml:"-" json:"-"`
-	Info          Info     `yaml:"info" json:"info"`
-	Server        string   `yaml:"server" json:"server"`
-	Servers       []Server `yaml:"servers" json:"servers"`
-	Imap          string   `yaml:"imap" json:"imap"`
-	MaxRecipients int      `yaml:"maxRecipients,omitempty" json:"maxRecipients,omitempty"`
+	ConfigPath        string   `yaml:"-" json:"-"`
+	Info              Info     `yaml:"info" json:"info"`
+	Server            string   `yaml:"server" json:"server"`
+	Servers           []Server `yaml:"servers" json:"servers"`
+	Imap              string   `yaml:"imap" json:"imap"`
+	MaxRecipients     int      `yaml:"maxRecipients,omitempty" json:"maxRecipients,omitempty"`
+	AutoCreateMailbox bool     `yaml:"autoCreateMailbox,omitempty" json:"autoCreateMailbox,omitempty"`
 	//MaxMessageBytes   int       `yaml:"maxMessageBytes,omitempty" json:"maxMessageBytes,omitempty"`
-	//AllowInsecureAuth bool      `yaml:"allowInsecureAuth,omitempty" json:"allowInsecureAuth,omitempty"`
+	//AllowInsecureAuth bool            `yaml:"allowInsecureAuth,omitempty" json:"allowInsecureAuth,omitempty"`
 	Mailboxes []MailboxConfig `yaml:"mailboxes" json:"mailboxes"`
 	Rules     Rules           `yaml:"rules" json:"rules"`
 }

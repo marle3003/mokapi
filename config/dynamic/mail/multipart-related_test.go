@@ -10,7 +10,7 @@ import (
 )
 
 func TestMultipartRelated(t *testing.T) {
-	cfg := &mail.Config{}
+	cfg := &mail.Config{AutoCreateMailbox: true}
 	s := mail.NewStore(cfg)
 	h := mail.NewHandler(cfg, s, enginetest.NewEngine())
 	server, _, err := smtptest.NewServer(h.ServeSMTP)

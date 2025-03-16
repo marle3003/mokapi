@@ -143,7 +143,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name:   "rcpt any is valid",
-			config: &mail.Config{},
+			config: &mail.Config{AutoCreateMailbox: true},
 			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendRcpt(t, h, ctx)
@@ -152,7 +152,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name:   "max recipients valid",
-			config: &mail.Config{MaxRecipients: 5},
+			config: &mail.Config{AutoCreateMailbox: true, MaxRecipients: 5},
 			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendRcpt(t, h, ctx)
@@ -165,7 +165,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name:   "max recipients not valid",
-			config: &mail.Config{MaxRecipients: 2},
+			config: &mail.Config{AutoCreateMailbox: true, MaxRecipients: 2},
 			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendRcpt(t, h, ctx)
@@ -180,7 +180,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name:   "data",
-			config: &mail.Config{},
+			config: &mail.Config{AutoCreateMailbox: true},
 			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendData(t, h, ctx)
@@ -189,7 +189,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name:   "server should add message into mailbox",
-			config: &mail.Config{},
+			config: &mail.Config{AutoCreateMailbox: true},
 			test: func(t *testing.T, h *mail.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendData(t, h, ctx)

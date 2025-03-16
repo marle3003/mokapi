@@ -158,7 +158,8 @@
           "Get started with Kafka": "examples/tutorials/simple-kafka-api.md",
           "Running Mokapi in a CI/CD Pipeline": "examples/tutorials/running-mokapi-github-action.md",
           "Mock LDAP Authentication in Node": "examples/tutorials/mock-ldap-authentication.md",
-          "Mock LDAP Group Permission in Node": "examples/tutorials/mock-ldap-group-permission.md"
+          "Mock LDAP Group Permission in Node": "examples/tutorials/mock-ldap-group-permission.md",
+          "Mock SMTP Server send Mail using Node": "examples/tutorials/mock-smtp-server-send-mail-using-node.md"
         }
       },
       "Examples": {

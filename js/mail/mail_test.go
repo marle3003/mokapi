@@ -99,7 +99,7 @@ m.send('smtp://%v', {from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bo
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := tc.cfg
 			if cfg == nil {
-				cfg = &mail.Config{}
+				cfg = &mail.Config{AutoCreateMailbox: true}
 			}
 			s := mail.NewStore(cfg)
 			h := mail.NewHandler(cfg, s, enginetest.NewEngine())

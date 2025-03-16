@@ -19,7 +19,7 @@ type Store struct {
 func NewStore(c *Config) *Store {
 	s := &Store{
 		Mailboxes:     map[string]*Mailbox{},
-		canAddMailbox: len(c.Mailboxes) == 0,
+		canAddMailbox: c.AutoCreateMailbox,
 	}
 	for _, mb := range c.Mailboxes {
 		s.NewMailbox(&mb)
@@ -30,8 +30,15 @@ func NewStore(c *Config) *Store {
 
 func (s *Store) Update(c *Config) {
 	for _, mb := range c.Mailboxes {
-		if _, ok := s.Mailboxes[mb.Name]; !ok {
+		if exist, ok := s.Mailboxes[mb.Name]; !ok {
 			s.NewMailbox(&mb)
+		} else {
+			exist.Username = mb.Username
+			exist.Password = mb.Password
+			folders := getFolders(mb.Folders)
+			for _, folder := range folders {
+				exist.Folders[folder.Name] = folder
+			}
 		}
 	}
 }

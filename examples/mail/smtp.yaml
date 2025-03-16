@@ -1,0 +1,9 @@
+smtp: '1.0'
+info:
+  title: Mokapi's Mail Server
+servers:
+  - url: smtps://127.0.0.1:2525
+mailboxes:
+  - name: test@example.com
+    username: bob
+    password: secret

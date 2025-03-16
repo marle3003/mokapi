@@ -97,7 +97,7 @@ func getMailServices(store *runtime.MailStore, m *monitor.Monitor) []interface{}
 		}
 
 		if m != nil {
-			s.Metrics = m.FindAll(metrics.ByNamespace("mail"), metrics.ByLabel("service", hs.Info.Name))
+			s.Metrics = m.FindAll(metrics.ByNamespace("smtp"), metrics.ByLabel("service", hs.Info.Name))
 		}
 
 		result = append(result, &mailSummary{service: s})

@@ -31,8 +31,9 @@ func TestSmtp(t *testing.T) {
 					Config: &dynamic.Config{
 						Info: dynamictest.NewConfigInfo(),
 						Data: &mail.Config{
-							Info:   mail.Info{Name: "foo"},
-							Server: fmt.Sprintf("smtp://localhost:%d", port),
+							Info:              mail.Info{Name: "foo"},
+							Server:            fmt.Sprintf("smtp://localhost:%d", port),
+							AutoCreateMailbox: true,
 						},
 					},
 				})
@@ -52,8 +53,9 @@ func TestSmtp(t *testing.T) {
 					Config: &dynamic.Config{
 						Info: dynamictest.NewConfigInfo(),
 						Data: &mail.Config{
-							Info:   mail.Info{Name: "foo"},
-							Server: fmt.Sprintf("smtp://localhost:%d", port),
+							Info:              mail.Info{Name: "foo"},
+							Server:            fmt.Sprintf("smtp://localhost:%d", port),
+							AutoCreateMailbox: true,
 						},
 					},
 				})
