@@ -26,8 +26,8 @@ export default function() {
     })
 }
 `
-const description = `Test SMTP emails safely no risk of spamming mailboxes. Improve quality through visual testing using your favorite testing tool`
-useMeta('Fake SMTP server for testing | mokapi.io', description, "https://mokapi.io/smtp")
+const description = `Mock SMTP & IMAP servers with Mokapi. Safely test email sending & receiving without real delivery. Prevent accidental emails in testing environments.`
+useMeta('Mock SMTP & IMAP Server | mokapi.io', description, "https://mokapi.io/smtp")
 
 onMounted(() => {
   dialog.value = new Modal('#imageDialog', {})
@@ -52,23 +52,23 @@ function hasTouchSupport() {
       <div class="container">
         <div class="row hero-title">
           <div class="col-12 col-lg-6">
-            <h1>End-to-end email testing for a smooth email experience</h1>
+            <h1>Mock SMTP & IMAP Servers Easily with Mokapi</h1>
             <div class="badge-list mb-3">
               <span class="badge">SMTP</span>
             </div>
-            <p class="description">Test SMTP emails safely and no risk of spamming mailboxes</p>
+            <p class="description">Easily send and receive mock emails without a real mail server. Perfect for testing email functionality in your application.</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/guides' }">
-                <button type="button" class="btn btn-outline-primary">Guides</button>
+                <button type="button" class="btn btn-outline-primary">Get Started</button>
               </router-link>
               <router-link :to="{ path: '/docs/examples' }">
-                <button type="button" class="btn btn-outline-primary">Examples</button>
+                <button type="button" class="btn btn-outline-primary">Try Now</button>
               </router-link>
             </p>
           </div>
-          <div class="col-12 col-lg-6 justify-content-center">
-            <a href="#maildialog" data-bs-toggle="modal" data-bs-target="#maildialog">
-              <img src="/mail.png" />
+          <div class="col-12 col-lg-5 justify-content-center">
+            <a href="#dialog" data-bs-toggle="modal" data-bs-target="#dialog">
+              <img src="/logo.svg" alt="Mokapi API Mock Tool" class="mx-auto d-block" />
             </a>
           </div>
           <div class="col-12 d-block d-md-none">
@@ -84,38 +84,47 @@ function hasTouchSupport() {
         </div>
       </div>
     </section>
+    
     <section>
       <div class="container">
-        <h2>Everything you need for your scenario</h2>
-        <div class="card-group">
-          <div class="card">
-            <div class="card-body">
-              <h3 class="card-title">Fake SMTP server</h3>
-              Simulate sending emails for different scenarios
+        <h2>Why Choose Mokapi for SMTP/IMAP?</h2>
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+          <div class="col">
+            <div class="card h-100 position-relative">
+                <div class="card-body">
+                  <h3 class="card-title align-middle"><i class="bi bi-envelope me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block">Simulate Email Sending & Receiving</span></h3>
+                  <p class="card-text pb-4">Easily send and receive mock emails without a real mail server. Perfect for testing email functionality in your application.</p>
+                </div>
             </div>
           </div>
-          <div class="card">
-            <div class="card-body">
-              <h3 class="card-title">Email Preview</h3>
-              Preview your emails in Mokapi's Dasboard.
+          <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                  <h3 class="card-title align-middle"><i class="bi bi-hdd-network me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block">IMAP & SMTP Protocol Support</span></h3>
+                  <p class="card-text pb-4">Fully supports SMTP (sending) and IMAP (retrieving), making it compatible with email clients and testing tools.</p>
+                </div>
             </div>
           </div>
-          <div class="card">
-            <div class="card-body">
-              <h3 class="card-title">QA Automation</h3>
-              Use your favorite testing tool to validate sent emails using
-              Mokapi's Dashboard or API
+          <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                  <h3 class="card-title align-middle"><i class="bi bi-shield-lock me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block">Prevent Accidental Email Sending</span></h3>
+                  <p class="card-text pb-4">nsure that no real emails are sent during testing. Safely simulate email delivery without the risk of reaching real users.</p>
+                </div>
             </div>
           </div>
-          <div class="card">
-            <div class="card-body">
-              <h3 class="card-title">Rules & Mokapi Script</h3>
-              Define rules to allow or deny emails, intercept or forward SMTP mails
+          <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                  <h3 class="card-title align-middle"><i class="bi bi-search me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block">Debug & Inspect Emails in Real-Time</span></h3>
+                  <p class="card-text pb-4">View email logs, headers, and body content directly in Mokapi’s Dashboard. Ideal for debugging email templates and authentication flows.</p>
+                </div>
             </div>
           </div>
         </div>
       </div>
     </section>
+
     <section>
       <div class="container">
         <div class="row">
@@ -144,12 +153,13 @@ function hasTouchSupport() {
         </div>
       </div>
     </section>
+    
     <section>
       <div class="container">
         <div class="row">
           <div class="col-12">
             <h2>Powerful dashboard for your fake email server</h2>
-              <img src="/smtp.png" style="width:100%" />
+              <img src="/dashboard-smtp.png" style="width:100%" />
           </div>
         </div>
       </div>
