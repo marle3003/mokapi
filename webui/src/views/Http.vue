@@ -77,7 +77,7 @@ function getConsoleContent() {
         <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6 px-0">
             <h1>{{ title }}</h1>
-            <div class="mb-3">
+            <div class="badge-list mb-3">
               <span class="badge">HTTP</span>
             </div>
             <p class="description">{{ description }}</p>

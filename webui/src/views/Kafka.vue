@@ -41,7 +41,7 @@ useMeta(title, description, "https://mokapi.io/kafka")
         <div class="row hero-title">
           <div class="col-12 col-lg-6 px-0">
             <h1>Mock and Validate Kafka Messages with Ease</h1>
-            <div class="mb-3">
+            <div class="badge-list mb-3">
               <span class="badge">Kafka</span>
             </div>
             <p class="description">Test and develop Kafka-based applications faster with Mokapi's powerful mocking and validation tools.</p>

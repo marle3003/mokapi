@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useMeta } from '@/composables/meta'
+import Footer from '@/components/Footer.vue'
 
 const ldap = `dn: dc=mokapi,dc=io
 
@@ -26,7 +27,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
         <div class="row hero-title">
           <div class="col-12 col-lg-6">
             <h1>Use Mokapi to Mock an LDAP Server</h1>
-            <div class="mb-3">
+            <div class="badge-list mb-3">
               <span class="badge">LDAP</span>
             </div>
             <p class="description">Simulate LDAP directories for testing and development without setting up a real LDAP server.</p>
@@ -167,4 +168,5 @@ useMeta(title, description, "https://mokapi.io/ldap")
       </div>
     </div>
   </main>
+  <Footer></Footer>
 </template>

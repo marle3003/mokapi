@@ -38,11 +38,11 @@ function hasTouchSupport() {
           <div class="col-12 col-lg-6 px-0">
             
             <h1>Your API Mocking Tool for Agile Development</h1>
-            <div class="mb-3">
-              <span class="badge">HTTP</span>
-              <span class="badge">Kafka</span>
-              <span class="badge">LDAP</span>
-              <span class="badge">SMTP</span>
+            <div class="badge-list mb-3">
+              <a href="http"><span class="badge">HTTP</span></a>
+              <a href="kafka"><span class="badge">Kafka</span></a>
+              <a href="ldap"><span class="badge">LDAP</span></a>
+              <a href="smtp"><span class="badge">SMTP</span></a>
             </div>
             <p class="description">Mock your APIs in Seconds - No registration, no data in the cloud, <b>free</b> and <b>open-source</b></p>
             <p class="d-none d-md-block">
@@ -73,7 +73,7 @@ function hasTouchSupport() {
 
     <section>
       <div class="row">
-        <div class="col-sm-4 mb-3 mb-sm0 ps-1 pe-1">
+        <div class="col-sm-4 mb-3 mb-sm-0 ps-1 pe-1">
           <div class="card">
               <div class="card-body">
                 <h2 class="card-title align-middle"><i class="bi bi-rocket-takeoff me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Speed Up Development</span></h2>
@@ -81,7 +81,7 @@ function hasTouchSupport() {
               </div>
           </div>
         </div>
-        <div class="col-sm-4 mb-3 mb-sm0 ps-1 pe-1">
+        <div class="col-sm-4 mb-3 mb-sm-0 ps-1 pe-1">
           <div class="card">
               <div class="card-body">
                 <h2 class="card-title align-middle"><i class="bi bi-gear me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Automate Testing</span></h2>
@@ -89,7 +89,7 @@ function hasTouchSupport() {
               </div>
           </div>
         </div>
-        <div class="col-sm-4 mb-3 mb-sm0 ps-1 pe-1">
+        <div class="col-sm-4 mb-3 mb-sm-0 ps-1 pe-1">
           <div class="card">
               <div class="card-body">
                 <h2 class="card-title align-middle"><i class="bi bi-tools me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block">Easy Customization</span></h2>
@@ -106,7 +106,7 @@ function hasTouchSupport() {
         <p class="text-center mb-5 w-80">Mokapi allows you to <b>prototype</b>, <b>test</b> and <b>demonstrate</b> APIs in software solutions using realistic data and scenarios.</p>
 
         <div class="row">
-          <div class="col-sm-3 mb-3 mb-sm0 ps-1 pe-1">
+          <div class="col-sm-3 mb-3 mb-sm-0 ps-1 pe-1">
             <div class="card">
               <router-link :to="{path: '/http'}">
                 <div class="card-body">
@@ -116,7 +116,7 @@ function hasTouchSupport() {
               </router-link>
             </div>
           </div>
-          <div class="col-sm-3 mb-3 mb-sm0 ps-1 pe-1">
+          <div class="col-sm-3 mb-3 mb-sm-0 ps-1 pe-1">
             <div class="card">
               <router-link :to="{path: '/kafka'}">
                 <div class="card-body">
@@ -126,7 +126,7 @@ function hasTouchSupport() {
               </router-link>
             </div>
           </div>
-          <div class="col-sm-3 mb-3 mb-sm0 ps-1 pe-1">
+          <div class="col-sm-3 mb-3 mb-sm-0 ps-1 pe-1">
             <div class="card">
               <router-link :to="{path: '/ldap'}">
                 <div class="card-body">
@@ -136,7 +136,7 @@ function hasTouchSupport() {
               </router-link>
             </div>
           </div>
-          <div class="col-sm-3 mb-3 mb-sm0 ps-1 pe-1">
+          <div class="col-sm-3 mb-3 mb-sm-0 ps-1 pe-1">
             <div class="card">
               <router-link :to="{path: '/smtp'}">
                 <div class="card-body">
@@ -260,6 +260,52 @@ function hasTouchSupport() {
         </div>
       </div>
     </section>
+    <section>
+      <h2>Use Cases & Tutorials</h2>
+
+      <div class="row row-cols-1 row-cols-md-2 g-4">
+          <div class="col">
+            <div class="card h-100">
+              <div class="card-body">
+                <i class="icon case-icon bi-globe"></i>
+                <h3 class="card-title mt-3">Get started with REST API</h3>
+                <p class="mt-3">This tutorial will show you how to mock a REST API using an OpenAPI specification.</p>
+                <a href="docs/examples/tutorials/get-started-with-rest-api" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card h-100">
+              <div class="card-body">
+                <i class="icon case-icon bi-lightning"></i>
+                <h3 class="card-title">Get started with Kafka</h3>
+                <p class="mt-4">Learn how to mock a Kafka Topic and verify that your producer generates valid messages according your AsyncAPI specification.</p>
+                <a href="docs/examples/tutorials/get-started-with-kafka" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card h-100">
+              <div class="card-body">
+                <i class="icon case-icon bi-person-check"></i>
+                <h3 class="card-title">Mock LDAP Authentication in Node.js</h3>
+                <p class="mt-4">Learn how to mock LDAP authentication using Mokapi and a Node.js backend. Step-by-step guide with code examples for testing LDAP login without a real server!</p>
+                <a href="docs/examples/tutorials/mock-ldap-authentication-in-node" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
+              </div>
+            </div>
+          </div>
+          <div class="col">
+            <div class="card h-100">
+              <div class="card-body">
+                <i class="icon case-icon bi-envelope-at-fill"></i>
+                <h3 class="card-title">Mocking an SMTP Server sending Emails using a Node.js Client</h3>
+                <p class="mt-4">Learn how to mock an SMTP server using Mokapi and send emails with a Node.js client. Perfect for testing email workflows without real mail servers.</p>
+                <a href="/docs/examples/tutorials/mock-smtp-server-send-mail-using-node" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
+              </div>
+            </div>
+          </div>
+      </div>
+    </section>
   </main>
   <Footer></Footer>
   <div class="modal fade" id="imageDialog" tabindex="-1" aria-hidden="true">
@@ -279,5 +325,8 @@ function hasTouchSupport() {
 <style scoped>
 .pb-6 {
   padding-bottom: 5rem;
+}
+.case-icon {
+  font-size: 40px;
 }
 </style>

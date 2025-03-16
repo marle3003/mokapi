@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue';
 import { useMeta } from '@/composables/meta'
 import { Modal } from 'bootstrap'
+import Footer from '@/components/Footer.vue'
 
 const dialog = ref<Modal>()
 const imageUrl = ref<string>()
@@ -52,7 +53,7 @@ function hasTouchSupport() {
         <div class="row hero-title">
           <div class="col-12 col-lg-6">
             <h1>End-to-end email testing for a smooth email experience</h1>
-            <div class="mb-3">
+            <div class="badge-list mb-3">
               <span class="badge">SMTP</span>
             </div>
             <p class="description">Test SMTP emails safely and no risk of spamming mailboxes</p>
@@ -154,6 +155,7 @@ function hasTouchSupport() {
       </div>
     </section>
   </main>
+  <Footer></Footer>
   <div class="modal fade" id="imageDialog" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">

@@ -35,11 +35,13 @@
 .home .hero-title img {
   max-width: 70%;
 }
-.home .hero-title .badge:first-child {
+.home .hero-title .badge-list >:first-child {
   margin-left: 1.5rem;
 }
-.home .hero-title .badge {
+.home .hero-title .badge-list > a{
   margin-left: 0.5rem;
+}
+.home .hero-title .badge {
   background-color: rgb(8, 109, 215);
   color: white;
 }
