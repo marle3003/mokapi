@@ -109,7 +109,7 @@ function hasTouchSupport() {
             <div class="card h-100">
                 <div class="card-body">
                   <h3 class="card-title align-middle"><i class="bi bi-shield-lock me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block">Prevent Accidental Email Sending</span></h3>
-                  <p class="card-text pb-4">nsure that no real emails are sent during testing. Safely simulate email delivery without the risk of reaching real users.</p>
+                  <p class="card-text pb-4">Ensure that no real emails are sent during testing. Safely simulate email delivery without the risk of reaching real users.</p>
                 </div>
             </div>
           </div>
