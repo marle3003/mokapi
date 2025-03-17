@@ -300,6 +300,56 @@ func TestConfigWatcher_Read(t *testing.T) {
 
 			},
 		},
+		{
+			name: "parent file deleted and child is updated",
+			test: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				configPathParent := mustParse("foo://parent.yml")
+				configPathChild := mustParse("foo://child.yml")
+				var ch chan dynamic.ConfigEvent
+				w.providers["foo"] = &testprovider{
+					read: func(u *url.URL) (*dynamic.Config, error) {
+						c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}}
+						c.Info.Checksum = []byte{1}
+						return c, nil
+					},
+					start: func(configs chan dynamic.ConfigEvent, pool *safe.Pool) error {
+						ch = configs
+						return nil
+					},
+				}
+				pool := safe.NewPool(context.Background())
+				w.Start(pool)
+				defer pool.Stop()
+
+				parent, err := w.Read(configPathParent, nil)
+				require.NoError(t, err)
+				require.NotNil(t, parent)
+
+				child, err := w.Read(configPathChild, nil)
+				require.NoError(t, err)
+				require.NotNil(t, parent)
+				dynamic.AddRef(parent, child)
+
+				var deleted *dynamic.Config
+				w.AddListener(func(e dynamic.ConfigEvent) {
+					if e.Event == dynamic.Delete {
+						deleted = e.Config
+					}
+				})
+
+				time.Sleep(500 * time.Millisecond)
+				ch <- dynamic.ConfigEvent{Name: configPathParent.String(), Event: dynamic.Delete}
+				time.Sleep(5 * time.Millisecond)
+				require.NotNil(t, deleted)
+				require.Equal(t, parent, deleted)
+
+				update := &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPathChild}}
+				update.Info.Checksum = []byte{2}
+				ch <- dynamic.ConfigEvent{Name: configPathChild.String(), Config: update, Event: dynamic.Update}
+				time.Sleep(5 * time.Millisecond)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

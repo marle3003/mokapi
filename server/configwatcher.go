@@ -202,6 +202,12 @@ func (w *ConfigWatcher) configChanged(evt dynamic.ConfigEvent) {
 
 	w.m.Lock()
 	e := w.configs[evt.Config.Info.Url.String()]
+	if e == nil {
+		// config deleted
+		log.Debugf("received a change event for deleted config: %v", evt.Config.Info.Url.String())
+		w.m.Unlock()
+		return
+	}
 	e.m.Lock()
 	w.m.Unlock()
 
@@ -242,6 +248,12 @@ func (w *ConfigWatcher) remove(evt dynamic.ConfigEvent) {
 	w.m.Unlock()
 
 	log.Debugf("removing %v", evt.Config.Info.Url.String())
+
+	// remove from child listener list
+	for _, r := range e.config.Refs.List(false) {
+		r.Listeners.Remove(e.config.Info.Url.String())
+	}
+
 	for _, l := range w.listener {
 		go l(evt)
 	}
