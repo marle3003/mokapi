@@ -83,6 +83,11 @@ func (p *Provider) Start(ch chan dynamic.ConfigEvent, pool *safe.Pool) error {
 		p.forward(ch, ctx)
 	})
 
+	err = p.f.Start(p.ch, pool)
+	if err != nil {
+		return fmt.Errorf("start file provider failed: %w", err)
+	}
+
 	for _, pkg := range p.cfg.Packages {
 		dir, err := p.getPackageDir(pkg.Name, workDir)
 		if err != nil {
@@ -91,11 +96,6 @@ func (p *Provider) Start(ch chan dynamic.ConfigEvent, pool *safe.Pool) error {
 		}
 		p.config[dir] = pkg
 		p.f.Watch(dir, pool)
-	}
-
-	err = p.f.Start(p.ch, pool)
-	if err != nil {
-		return fmt.Errorf("start file provider failed: %w", err)
 	}
 
 	return nil
