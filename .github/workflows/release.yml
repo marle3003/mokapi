@@ -93,7 +93,7 @@ jobs:
             -ver-major="$($versionParts[0])" `
             -ver-minor="$($versionParts[1])" `
             -ver-patch="$($versionParts[2])" `
-            -product-version="${GITHUB_REF##*/v}"
+            -product-version="$($versionParts[0]).$($versionParts[1]).$($versionParts[2])"
 
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
