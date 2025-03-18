@@ -88,7 +88,8 @@ func setResponseData(r *common.EventResponse, m *MediaType, request *common.Even
 	if m != nil {
 		if len(m.Examples) > 0 {
 			keys := reflect.ValueOf(m.Examples).MapKeys()
-			v := keys[rand.Intn(len(keys))].Interface().(*ExampleRef)
+			key := keys[rand.Intn(len(keys))].String()
+			v := m.Examples[key]
 			r.Data = v.Value.Value
 		} else if m.Example != nil {
 			r.Data = m.Example
