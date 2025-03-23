@@ -119,7 +119,7 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
 
             const alert = dialog.getByRole('alert')
             await expect(alert).toBeVisible()
-            await expect(alert).toContainText('schema path #/price/type')
+            await expect(alert).toContainText('error count 1:- #/price/type')
 
             const status = dialog.getByRole('status')
             await expect(dialog.getByRole('status')).not.toBeVisible()
