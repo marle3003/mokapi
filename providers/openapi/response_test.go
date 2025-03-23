@@ -548,7 +548,7 @@ func TestConfig_Patch_Response(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
 				require.Len(t, res.Content, 1)
-				require.Equal(t, "number", res.Content["text/plain"].Schema.Value.Type.String())
+				require.Equal(t, "number", res.Content["text/plain"].Schema.Type.String())
 			},
 		},
 		{
@@ -574,8 +574,8 @@ func TestConfig_Patch_Response(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
 				require.Len(t, res.Content, 1)
-				require.Equal(t, "number", res.Content["text/plain"].Schema.Value.Type.String())
-				require.Equal(t, "double", res.Content["text/plain"].Schema.Value.Format)
+				require.Equal(t, "number", res.Content["text/plain"].Schema.Type.String())
+				require.Equal(t, "double", res.Content["text/plain"].Schema.Format)
 			},
 		},
 	}

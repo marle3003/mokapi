@@ -25,12 +25,12 @@ func Test_Parse(t *testing.T) {
 			),
 			test: func(t *testing.T, c *openapi.Config, err error) {
 				require.NoError(t, err)
-				foo := c.Components.Schemas.Get("Foo").Value
+				foo := c.Components.Schemas.Get("Foo")
 				require.Equal(t, "array", foo.Type.String())
-				bar := c.Components.Schemas.Get("Bar").Value
+				bar := c.Components.Schemas.Get("Bar")
 				require.Equal(t, "string", bar.Type.String())
 				// reference should point to same schema
-				require.Equal(t, bar, foo.Items.Value)
+				require.Equal(t, bar.SubSchema, foo.Items.SubSchema)
 			},
 		},
 		{
@@ -40,7 +40,7 @@ func Test_Parse(t *testing.T) {
 					openapitest.WithOperation("get", openapitest.NewOperation(
 						openapitest.WithResponse(200, openapitest.WithContent("application/json",
 							&openapi.MediaType{
-								Schema: &schema.Ref{Reference: dynamic.Reference{Ref: "#/components/schemas/Foo"}},
+								Schema: &schema.Schema{Ref: "#/components/schemas/Foo"},
 							},
 						)),
 					)),
@@ -51,12 +51,12 @@ func Test_Parse(t *testing.T) {
 			test: func(t *testing.T, c *openapi.Config, err error) {
 				require.NoError(t, err)
 				response := c.Paths["/foo"].Value.Get.Responses.GetResponse(200).Content["application/json"].Schema
-				require.NotNil(t, response.Value)
+				require.NotNil(t, response)
 
-				foo := c.Components.Schemas.Get("Foo").Value
-				require.Equal(t, foo, response.Value)
-				bar := c.Components.Schemas.Get("Bar").Value
-				require.Equal(t, bar, response.Value.Items.Value)
+				foo := c.Components.Schemas.Get("Foo")
+				require.Equal(t, foo.SubSchema, response.SubSchema)
+				bar := c.Components.Schemas.Get("Bar")
+				require.Equal(t, bar.SubSchema, response.Items.SubSchema)
 			},
 		},
 	}
@@ -93,8 +93,8 @@ func Test_ParseAndPatch(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, c *openapi.Config) {
-				foo := c.Components.Schemas.Get("Foo").Value
-				require.True(t, foo.Items.Value.Nullable)
+				foo := c.Components.Schemas.Get("Foo")
+				require.True(t, foo.Items.Nullable)
 			},
 		},
 		{
@@ -105,7 +105,7 @@ func Test_ParseAndPatch(t *testing.T) {
 						openapitest.WithOperation("get", openapitest.NewOperation(
 							openapitest.WithResponse(200, openapitest.WithContent("application/json",
 								&openapi.MediaType{
-									Schema: &schema.Ref{Reference: dynamic.Reference{Ref: "#/components/schemas/Foo"}},
+									Schema: &schema.Schema{Ref: "#/components/schemas/Foo"},
 								},
 							)),
 						)),
@@ -119,8 +119,8 @@ func Test_ParseAndPatch(t *testing.T) {
 			},
 			test: func(t *testing.T, c *openapi.Config) {
 				response := c.Paths["/foo"].Value.Get.Responses.GetResponse(200).Content["application/json"].Schema
-				require.NotNil(t, response.Value)
-				require.True(t, response.Value.Items.Value.Nullable)
+				require.NotNil(t, response)
+				require.True(t, response.Items.Nullable)
 			},
 		},
 	}

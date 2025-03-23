@@ -9,13 +9,13 @@ type JsonSchemaConverter struct {
 	useXml  bool
 }
 
-func ConvertToJsonSchema(ref *Ref) *schema.Schema {
+func ConvertToJsonSchema(s *Schema) *schema.Schema {
 	c := &JsonSchemaConverter{}
-	return c.ConvertToJsonRef(ref)
+	return c.Convert(s)
 }
 
 func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
-	if s == nil {
+	if s == nil || s.SubSchema == nil {
 		return nil
 	}
 	if c.history == nil {
@@ -26,6 +26,7 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	}
 
 	js := &schema.Schema{
+		Boolean:               s.Boolean,
 		Type:                  s.Type,
 		Schema:                s.Schema,
 		Enum:                  s.Enum,
@@ -36,9 +37,9 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 		Pattern:               s.Pattern,
 		Format:                s.Format,
 		MultipleOf:            s.MultipleOf,
-		Items:                 c.ConvertToJsonRef(s.Items),
-		UnevaluatedItems:      c.ConvertToJsonRef(s.UnevaluatedItems),
-		Contains:              c.ConvertToJsonRef(s.Contains),
+		Items:                 c.Convert(s.Items),
+		UnevaluatedItems:      c.Convert(s.UnevaluatedItems),
+		Contains:              c.Convert(s.Contains),
 		MaxContains:           s.MaxContains,
 		MinContains:           s.MinContains,
 		MinItems:              s.MinItems,
@@ -49,12 +50,12 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 		MinProperties:         s.MinProperties,
 		Required:              s.Required,
 		DependentRequired:     s.DependentRequired,
-		UnevaluatedProperties: c.ConvertToJsonRef(s.UnevaluatedProperties),
-		PropertyNames:         c.ConvertToJsonRef(s.PropertyNames),
-		Not:                   c.ConvertToJsonRef(s.Not),
-		If:                    c.ConvertToJsonRef(s.If),
-		Then:                  c.ConvertToJsonRef(s.Then),
-		Else:                  c.ConvertToJsonRef(s.Else),
+		UnevaluatedProperties: c.Convert(s.UnevaluatedProperties),
+		PropertyNames:         c.Convert(s.PropertyNames),
+		Not:                   c.Convert(s.Not),
+		If:                    c.Convert(s.If),
+		Then:                  c.Convert(s.Then),
+		Else:                  c.Convert(s.Else),
 		Title:                 s.Title,
 		Description:           s.Description,
 		Deprecated:            s.Deprecated,
@@ -68,18 +69,18 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	js.ExclusiveMaximum = s.ExclusiveMaximum
 
 	for _, ref := range s.PrefixItems {
-		js.PrefixItems = append(js.PrefixItems, c.ConvertToJsonRef(ref))
+		js.PrefixItems = append(js.PrefixItems, c.Convert(ref))
 	}
 
 	if s.Properties != nil {
 		js.Properties = &schema.Schemas{}
 		for it := s.Properties.Iter(); it.Next(); {
 			propName := it.Key()
-			xml := it.Value().getXml()
+			xml := it.Value().Xml
 			if c.useXml && xml != nil {
 				propName = xml.Name
 			}
-			js.Properties.Set(propName, c.ConvertToJsonRef(it.Value()))
+			js.Properties.Set(propName, c.Convert(it.Value()))
 		}
 	}
 
@@ -87,30 +88,30 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 		if js.PatternProperties == nil {
 			js.PatternProperties = map[string]*schema.Schema{}
 		}
-		js.PatternProperties[k] = c.ConvertToJsonRef(ref)
+		js.PatternProperties[k] = c.Convert(ref)
 	}
 
 	for k, ref := range s.DependentSchemas {
 		if js.DependentSchemas == nil {
 			js.DependentSchemas = map[string]*schema.Schema{}
 		}
-		js.DependentSchemas[k] = c.ConvertToJsonRef(ref)
+		js.DependentSchemas[k] = c.Convert(ref)
 	}
 
 	if s.AdditionalProperties != nil {
-		js.AdditionalProperties = c.ConvertToJsonRef(s.AdditionalProperties)
+		js.AdditionalProperties = c.Convert(s.AdditionalProperties)
 	}
 
 	for _, anyOf := range s.AnyOf {
-		js.AnyOf = append(js.AnyOf, c.ConvertToJsonRef(anyOf))
+		js.AnyOf = append(js.AnyOf, c.Convert(anyOf))
 	}
 
 	for _, oneOf := range s.OneOf {
-		js.OneOf = append(js.OneOf, c.ConvertToJsonRef(oneOf))
+		js.OneOf = append(js.OneOf, c.Convert(oneOf))
 	}
 
 	for _, allOf := range s.AllOf {
-		js.AllOf = append(js.AllOf, c.ConvertToJsonRef(allOf))
+		js.AllOf = append(js.AllOf, c.Convert(allOf))
 	}
 
 	if s.Nullable {
@@ -139,18 +140,5 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 		}
 	}
 
-	return js
-}
-
-func (c *JsonSchemaConverter) ConvertToJsonRef(r *Ref) *schema.Schema {
-	if r == nil || (r.Ref == "" && r.Boolean == nil && r.Value == nil) {
-		return nil
-	}
-	js := &schema.Schema{Ref: r.Ref, Boolean: r.Boolean}
-	if r.Value == nil {
-		return js
-	}
-	js = c.Convert(r.Value)
-	js.Ref = r.Ref
 	return js
 }

@@ -3,9 +3,7 @@ package parameter_test
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi/parameter"
-	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
-	jsonSchema "mokapi/schema/json/schema"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,7 +22,7 @@ func TestParsePath(t *testing.T) {
 			param: &parameter.Parameter{
 				Name:    "foo",
 				Type:    parameter.Path,
-				Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"string"}}},
+				Schema:  schematest.New("string"),
 				Style:   "",
 				Explode: explode(false),
 			},
@@ -47,7 +45,7 @@ func TestParsePath(t *testing.T) {
 			param: &parameter.Parameter{
 				Name:    "foo",
 				Type:    parameter.Path,
-				Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"string"}}},
+				Schema:  schematest.New("string"),
 				Style:   "",
 				Explode: explode(false),
 			},
@@ -70,7 +68,7 @@ func TestParsePath(t *testing.T) {
 			param: &parameter.Parameter{
 				Name:    "foo",
 				Type:    parameter.Path,
-				Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"string"}}},
+				Schema:  schematest.New("string"),
 				Style:   "label",
 				Explode: explode(false),
 			},
@@ -93,7 +91,7 @@ func TestParsePath(t *testing.T) {
 			param: &parameter.Parameter{
 				Name:    "foo",
 				Type:    parameter.Path,
-				Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"string"}}},
+				Schema:  schematest.New("string"),
 				Style:   "matrix",
 				Explode: explode(false),
 			},
@@ -117,7 +115,7 @@ func TestParsePath(t *testing.T) {
 
 				Name:    "foo",
 				Type:    parameter.Path,
-				Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
+				Schema:  schematest.New("array", schematest.WithItems("integer")),
 				Style:   "",
 				Explode: explode(false),
 			},
@@ -140,7 +138,7 @@ func TestParsePath(t *testing.T) {
 			param: &parameter.Parameter{
 				Name:    "foo",
 				Type:    parameter.Path,
-				Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
+				Schema:  schematest.New("array", schematest.WithItems("integer")),
 				Style:   "label",
 				Explode: explode(false),
 			},
@@ -164,7 +162,7 @@ func TestParsePath(t *testing.T) {
 
 				Name:    "foo",
 				Type:    parameter.Path,
-				Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
+				Schema:  schematest.New("array", schematest.WithItems("integer")),
 				Style:   "matrix",
 				Explode: explode(false),
 			},
@@ -187,10 +185,10 @@ func TestParsePath(t *testing.T) {
 			param: &parameter.Parameter{
 				Name: "foo",
 				Type: parameter.Path,
-				Schema: &schema.Ref{Value: schematest.New("object",
+				Schema: schematest.New("object",
 					schematest.WithProperty("role", schematest.New("string")),
 					schematest.WithProperty("firstName", schematest.New("string")),
-				)},
+				),
 				Style:   "",
 				Explode: explode(false),
 			},
@@ -213,12 +211,12 @@ func TestParsePath(t *testing.T) {
 			param: &parameter.Parameter{
 				Name: "foo",
 				Type: parameter.Path,
-				Schema: &schema.Ref{Value: schematest.New("object",
+				Schema: schematest.New("object",
 					schematest.WithProperty("role", schematest.New("string")),
 					schematest.WithProperty("firstName", schematest.New("string")),
 					schematest.WithProperty("msg", schematest.New("string")),
 					schematest.WithProperty("foo", schematest.New("string")),
-				)},
+				),
 				Style:   "",
 				Explode: explode(true),
 			},
@@ -241,10 +239,10 @@ func TestParsePath(t *testing.T) {
 			param: &parameter.Parameter{
 				Name: "foo",
 				Type: parameter.Path,
-				Schema: &schema.Ref{Value: schematest.New("object",
+				Schema: schematest.New("object",
 					schematest.WithProperty("role", schematest.New("string")),
 					schematest.WithProperty("firstName", schematest.New("string")),
-				)},
+				),
 				Style:   "label",
 				Explode: explode(false),
 			},
@@ -267,10 +265,10 @@ func TestParsePath(t *testing.T) {
 			param: &parameter.Parameter{
 				Name: "foo",
 				Type: parameter.Path,
-				Schema: &schema.Ref{Value: schematest.New("object",
+				Schema: schematest.New("object",
 					schematest.WithProperty("role", schematest.New("string")),
 					schematest.WithProperty("firstName", schematest.New("string")),
-				)},
+				),
 				Style:   "matrix",
 				Explode: explode(true),
 			},

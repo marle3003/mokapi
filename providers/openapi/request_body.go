@@ -211,14 +211,14 @@ type urlValueDecoder struct {
 func (d urlValueDecoder) decode(propName string, val interface{}) (interface{}, error) {
 	values := val.([]string)
 
-	prop := d.mt.Schema.Value.Properties.Get(propName)
+	prop := d.mt.Schema.Properties.Get(propName)
 	switch {
-	case prop.Value.Type.IsOneOf("integer", "number", "string"):
+	case prop.Type.IsOneOf("integer", "number", "string"):
 		return values[0], nil
-	case prop.Value.Type.IsArray():
+	case prop.Type.IsArray():
 		return d.decodeArray(propName, values)
 	default:
-		return nil, fmt.Errorf("unsupported type %v", prop.Value.Type)
+		return nil, fmt.Errorf("unsupported type %v", prop.Type)
 	}
 }
 
@@ -248,21 +248,21 @@ func (d multipartForm) decode(m map[string]interface{}, part *multipart.Part) er
 	if err != nil {
 		return err
 	}
-	if d.mt.Schema == nil || d.mt.Schema.Value == nil {
+	if d.mt.Schema == nil || d.mt.Schema.SubSchema == nil {
 		m[name] = b
 		return nil
 	}
 
-	prop := d.mt.Schema.Value.Properties.Get(name)
-	if prop == nil || prop.Value == nil {
+	prop := d.mt.Schema.Properties.Get(name)
+	if prop == nil || prop.SubSchema == nil {
 		m[name] = b
 		return nil
 	}
 
 	p := &parser.Parser{}
-	if prop.Value.Type.IsArray() {
+	if prop.Type.IsArray() {
 		// Array properties are handled by applying the same name to multiple parts, as is recommended by RFC7578
-		p.Schema = schema.ConvertToJsonSchema(prop.Value.Items)
+		p.Schema = schema.ConvertToJsonSchema(prop.Items)
 	} else {
 		p.Schema = schema.ConvertToJsonSchema(prop)
 	}
@@ -282,7 +282,7 @@ func (d multipartForm) decode(m map[string]interface{}, part *multipart.Part) er
 		return err
 	}
 
-	if prop.Value.Type.IsArray() {
+	if prop.Type.IsArray() {
 		var arr []interface{}
 		if m[name] == nil {
 			arr = make([]interface{}, 0)

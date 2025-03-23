@@ -3,9 +3,7 @@ package parameter_test
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi/parameter"
-	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
-	jsonSchema "mokapi/schema/json/schema"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,7 +22,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:   "id",
 					Type:   parameter.Query,
-					Schema: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}},
+					Schema: schematest.New("integer"),
 					Style:  "form",
 				}},
 			},
@@ -42,7 +40,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:   "foo",
 					Type:   parameter.Query,
-					Schema: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"string"}}},
+					Schema: schematest.New("string"),
 					Style:  "form",
 				}},
 			},
@@ -60,7 +58,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}},
+					Schema:  schematest.New("integer"),
 					Style:   "form",
 					Explode: explode(false),
 				}},
@@ -81,7 +79,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:     "id",
 					Type:     parameter.Query,
-					Schema:   &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}},
+					Schema:   schematest.New("integer"),
 					Required: true,
 					Style:    "form",
 				}},
@@ -100,7 +98,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
+					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "form",
 					Explode: explode(true),
 				}},
@@ -119,7 +117,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
+					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "form",
 					Explode: explode(false),
 				}},
@@ -138,7 +136,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
+					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "spaceDelimited",
 					Explode: explode(true),
 				}},
@@ -157,7 +155,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
+					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "spaceDelimited",
 					Explode: explode(false),
 				}},
@@ -176,7 +174,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
+					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "pipeDelimited",
 					Explode: explode(true),
 				}},
@@ -195,7 +193,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}}}}},
+					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "pipeDelimited",
 					Explode: explode(false),
 				}},
@@ -214,12 +212,12 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name: "id",
 					Type: parameter.Query,
-					Schema: &schema.Ref{Value: schematest.New("object",
+					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithProperty("firstName", schematest.New("string")),
 						schematest.WithProperty("msg", schematest.New("string")),
 						schematest.WithProperty("foo", schematest.New("string")),
-					)},
+					),
 					Style:   "form",
 					Explode: explode(true),
 				}},
@@ -238,10 +236,10 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name: "id",
 					Type: parameter.Query,
-					Schema: &schema.Ref{Value: schematest.New("object",
+					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithProperty("firstName", schematest.New("string")),
-					)},
+					),
 					Required: true,
 					Style:    "form",
 					Explode:  explode(true),
@@ -261,10 +259,10 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name: "id",
 					Type: parameter.Query,
-					Schema: &schema.Ref{Value: schematest.New("object",
+					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithProperty("firstName", schematest.New("string")),
-					)},
+					),
 					Required: true,
 					Style:    "form",
 					Explode:  explode(false),
@@ -284,9 +282,9 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name: "id",
 					Type: parameter.Query,
-					Schema: &schema.Ref{Value: schematest.New("object",
+					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
-					)},
+					),
 					Style:   "form",
 					Explode: explode(true),
 				}},
@@ -305,10 +303,10 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name: "id",
 					Type: parameter.Query,
-					Schema: &schema.Ref{Value: schematest.New("object",
+					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithFreeForm(false),
-					)},
+					),
 					Style:   "form",
 					Explode: explode(true),
 				}},
@@ -326,7 +324,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:    "id",
 					Type:    parameter.Query,
-					Schema:  &schema.Ref{Value: schematest.New("object", schematest.WithAdditionalProperties(schematest.New("string")))},
+					Schema:  schematest.New("object", schematest.WithAdditionalProperties(schematest.New("string"))),
 					Style:   "form",
 					Explode: explode(true),
 				}},
@@ -345,10 +343,10 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name: "id",
 					Type: parameter.Query,
-					Schema: &schema.Ref{Value: schematest.New("object",
+					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithProperty("firstName", schematest.New("string")),
-					)},
+					),
 					Style:   "form",
 					Explode: explode(false),
 				}},
@@ -367,10 +365,10 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name: "id",
 					Type: parameter.Query,
-					Schema: &schema.Ref{Value: schematest.New("object",
+					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithProperty("firstName", schematest.New("string")),
-					)},
+					),
 					Style:   "deepObject",
 					Explode: explode(true),
 				}},
@@ -389,11 +387,11 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name: "id",
 					Type: parameter.Query,
-					Schema: &schema.Ref{Value: schematest.New("object",
+					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithProperty("firstName", schematest.New("string")),
 						schematest.WithFreeForm(false),
-					)},
+					),
 					Style:   "deepObject",
 					Explode: explode(true),
 				}},
@@ -412,10 +410,10 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name: "id",
 					Type: parameter.Query,
-					Schema: &schema.Ref{Value: schematest.New("object",
+					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithProperty("age", schematest.New("integer")),
-					)},
+					),
 					Style:   "deepObject",
 					Explode: explode(true),
 				}},
@@ -424,7 +422,7 @@ func TestParseQuery(t *testing.T) {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?id[role]=admin&id[age]=foo&id[lastName]=Smith", nil)
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse query parameter 'id' failed: found 1 error:\ninvalid type, expected integer but got string\nschema path #/type")
+				require.EqualError(t, err, "parse query parameter 'id' failed: error count 1:\n- #/type: invalid type, expected integer but got string")
 				require.Len(t, result[parameter.Query], 0)
 			},
 		},
@@ -434,10 +432,10 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name: "id",
 					Type: parameter.Query,
-					Schema: &schema.Ref{Value: schematest.New("object",
+					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithProperty("firstName", schematest.New("string")),
-					)},
+					),
 					Required: true,
 					Style:    "deepObject",
 					Explode:  explode(true),
@@ -457,7 +455,7 @@ func TestParseQuery(t *testing.T) {
 				{Value: &parameter.Parameter{
 					Name:     "enabled",
 					Type:     parameter.Query,
-					Schema:   &schema.Ref{Value: schematest.New("boolean")},
+					Schema:   schematest.New("boolean"),
 					Required: true,
 				}},
 			},

@@ -14,18 +14,18 @@ import (
 )
 
 type Config struct {
-	Swagger      string                 `yaml:"swagger" json:"swagger"`
-	Info         openapi.Info           `yaml:"info" json:"info"`
-	Schemes      []string               `yaml:"schemes,omitempty" json:"schemes,omitempty"`
-	Consumes     []string               `yaml:"consumes,omitempty" json:"consumes,omitempty"`
-	Produces     []string               `yaml:"produces,omitempty" json:"produces,omitempty"`
-	Host         string                 `yaml:"host,omitempty" json:"host,omitempty"`
-	BasePath     string                 `yaml:"basePath,omitempty" json:"basePath,omitempty"`
-	Paths        PathItems              `yaml:"paths,omitempty" json:"paths,omitempty"`
-	Definitions  map[string]*schema.Ref `yaml:"definitions,omitempty" json:"definitions,omitempty"`
-	Parameters   map[string]*Parameter  `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	Responses    map[string]*Response   `yaml:"responses,omitempty" json:"responses,omitempty"`
-	ExternalDocs *openapi.ExternalDocs  `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
+	Swagger      string                    `yaml:"swagger" json:"swagger"`
+	Info         openapi.Info              `yaml:"info" json:"info"`
+	Schemes      []string                  `yaml:"schemes,omitempty" json:"schemes,omitempty"`
+	Consumes     []string                  `yaml:"consumes,omitempty" json:"consumes,omitempty"`
+	Produces     []string                  `yaml:"produces,omitempty" json:"produces,omitempty"`
+	Host         string                    `yaml:"host,omitempty" json:"host,omitempty"`
+	BasePath     string                    `yaml:"basePath,omitempty" json:"basePath,omitempty"`
+	Paths        PathItems                 `yaml:"paths,omitempty" json:"paths,omitempty"`
+	Definitions  map[string]*schema.Schema `yaml:"definitions,omitempty" json:"definitions,omitempty"`
+	Parameters   map[string]*Parameter     `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	Responses    map[string]*Response      `yaml:"responses,omitempty" json:"responses,omitempty"`
+	ExternalDocs *openapi.ExternalDocs     `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 }
 
 type PathItems map[string]*PathItem
@@ -62,7 +62,7 @@ type Responses struct {
 type Response struct {
 	Ref         string                 `yaml:"$ref,omitempty" json:"$ref,omitempty"`
 	Description string                 `yaml:"description,omitempty" json:"description,omitempty"`
-	Schema      *schema.Ref            `yaml:"schema,omitempty" json:"schema,omitempty"`
+	Schema      *schema.Schema         `yaml:"schema,omitempty" json:"schema,omitempty"`
 	Headers     map[string]*Header     `yaml:"headers,omitempty" json:"headers,omitempty"`
 	Examples    map[string]interface{} `yaml:"examples,omitempty" json:"examples,omitempty"`
 }
@@ -70,31 +70,31 @@ type Response struct {
 type Parameters []*Parameter
 
 type Parameter struct {
-	Ref              string        `yaml:"$ref,omitempty" json:"$ref,omitempty"`
-	In               string        `yaml:"in,omitempty" json:"in,omitempty"`
-	Name             string        `yaml:"name,omitempty" json:"name,omitempty"`
-	Description      string        `yaml:"description,omitempty" json:"description,omitempty"`
-	CollectionFormat string        `yaml:"collectionFormat,omitempty" json:"collectionFormat,omitempty"`
-	Type             string        `yaml:"type,omitempty" json:"type,omitempty"`
-	Format           string        `yaml:"format,omitempty" json:"format,omitempty"`
-	Pattern          string        `yaml:"pattern,omitempty" json:"pattern,omitempty"`
-	AllowEmptyValue  bool          `yaml:"allowEmptyValue,omitempty" json:"allowEmptyValue,omitempty"`
-	Required         bool          `yaml:"required,omitempty" json:"required,omitempty"`
-	Deprecated       bool          `yaml:"deprecated" json:"deprecated"`
-	UniqueItems      bool          `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
-	ExclusiveMin     bool          `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
-	ExclusiveMax     bool          `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
-	Schema           *schema.Ref   `yaml:"schema,omitempty" json:"schema,omitempty"`
-	Items            *schema.Ref   `yaml:"items,omitempty" json:"items,omitempty"`
-	Enum             []interface{} `yaml:"enum,omitempty" json:"enum,omitempty"`
-	MultipleOf       *float64      `yaml:"multipleOf,omitempty" json:"multipleOf,omitempty"`
-	Minimum          *float64      `yaml:"minimum,omitempty" json:"minimum,omitempty"`
-	Maximum          *float64      `yaml:"maximum,omitempty" json:"maximum,omitempty"`
-	MaxLength        *uint64       `yaml:"maxLength,omitempty" json:"maxLength,omitempty"`
-	MaxItems         *int          `yaml:"maxItems,omitempty" json:"maxItems,omitempty"`
-	MinLength        int64         `yaml:"minLength,omitempty" json:"minLength,omitempty"`
-	MinItems         int           `yaml:"minItems,omitempty" json:"minItems,omitempty"`
-	Default          interface{}   `yaml:"default,omitempty" json:"default,omitempty"`
+	Ref              string         `yaml:"$ref,omitempty" json:"$ref,omitempty"`
+	In               string         `yaml:"in,omitempty" json:"in,omitempty"`
+	Name             string         `yaml:"name,omitempty" json:"name,omitempty"`
+	Description      string         `yaml:"description,omitempty" json:"description,omitempty"`
+	CollectionFormat string         `yaml:"collectionFormat,omitempty" json:"collectionFormat,omitempty"`
+	Type             string         `yaml:"type,omitempty" json:"type,omitempty"`
+	Format           string         `yaml:"format,omitempty" json:"format,omitempty"`
+	Pattern          string         `yaml:"pattern,omitempty" json:"pattern,omitempty"`
+	AllowEmptyValue  bool           `yaml:"allowEmptyValue,omitempty" json:"allowEmptyValue,omitempty"`
+	Required         bool           `yaml:"required,omitempty" json:"required,omitempty"`
+	Deprecated       bool           `yaml:"deprecated" json:"deprecated"`
+	UniqueItems      bool           `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
+	ExclusiveMin     bool           `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
+	ExclusiveMax     bool           `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
+	Schema           *schema.Schema `yaml:"schema,omitempty" json:"schema,omitempty"`
+	Items            *schema.Schema `yaml:"items,omitempty" json:"items,omitempty"`
+	Enum             []interface{}  `yaml:"enum,omitempty" json:"enum,omitempty"`
+	MultipleOf       *float64       `yaml:"multipleOf,omitempty" json:"multipleOf,omitempty"`
+	Minimum          *float64       `yaml:"minimum,omitempty" json:"minimum,omitempty"`
+	Maximum          *float64       `yaml:"maximum,omitempty" json:"maximum,omitempty"`
+	MaxLength        *uint64        `yaml:"maxLength,omitempty" json:"maxLength,omitempty"`
+	MaxItems         *int           `yaml:"maxItems,omitempty" json:"maxItems,omitempty"`
+	MinLength        int64          `yaml:"minLength,omitempty" json:"minLength,omitempty"`
+	MinItems         int            `yaml:"minItems,omitempty" json:"minItems,omitempty"`
+	Default          interface{}    `yaml:"default,omitempty" json:"default,omitempty"`
 }
 
 type Header struct {

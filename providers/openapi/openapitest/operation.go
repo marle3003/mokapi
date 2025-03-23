@@ -132,7 +132,7 @@ func WithRequestContent(mediaType string, content *openapi.MediaType) RequestBod
 
 func WithParamSchema(s *schema.Schema) ParamOptions {
 	return func(p *parameter.Parameter) {
-		p.Schema = &schema.Ref{Value: s}
+		p.Schema = s
 	}
 }
 

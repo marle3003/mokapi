@@ -64,7 +64,7 @@ func TestValidation(t *testing.T) {
 						},
 					},
 				})
-				require.EqualError(t, err, "validation error: invalid message: found 1 error:\ninvalid type, expected string but got number\nschema path #/type")
+				require.EqualError(t, err, "validation error: invalid message: error count 1:\n- #/type: invalid type, expected string but got number")
 				require.Len(t, batch, 1)
 			},
 		},
@@ -144,7 +144,7 @@ func TestValidation(t *testing.T) {
 						},
 					},
 				})
-				require.EqualError(t, err, "validation error: invalid key: found 1 error:\ninteger 64 is less than minimum value of 100\nschema path #/minimum")
+				require.EqualError(t, err, "validation error: invalid key: error count 1:\n- #/minimum: integer 64 is less than minimum value of 100")
 				require.Len(t, batch, 1)
 			},
 		},

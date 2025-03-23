@@ -67,7 +67,7 @@ func (c *converter) convertPath(p *PathItem) (*openapi.PathRef, error) {
 	result := &openapi.Path{}
 
 	var body *openapi.RequestBodyRef
-	var bodySchema *schema.Ref
+	var bodySchema *schema.Schema
 	for _, p := range p.Parameters {
 		switch p.In {
 		case "body":
@@ -191,38 +191,38 @@ func (c *converter) convertResponse(r *Response, produces []string) (*openapi.Re
 	return &openapi.ResponseRef{Value: result}, nil
 }
 
-func (c *converter) convertSchema(s *schema.Ref) *schema.Ref {
+func (c *converter) convertSchema(s *schema.Schema) *schema.Schema {
 	if s == nil {
 		return nil
 	}
 
 	if len(s.Ref) > 0 {
-		return &schema.Ref{Reference: dynamic.Reference{Ref: convertRef(s.Ref)}}
+		return &schema.Schema{Ref: convertRef(s.Ref)}
 	}
 
-	if s.Value == nil {
+	if s.SubSchema == nil {
 		return s
 	}
 
-	if s.Value.Type.IsInteger() && s.Value.Format == "" {
-		s.Value.Format = "int32"
+	if s.Type.IsInteger() && s.Format == "" {
+		s.Format = "int32"
 	}
 
-	if s.Value.Items != nil {
-		s.Value.Items = c.convertSchema(s.Value.Items)
+	if s.Items != nil {
+		s.Items = c.convertSchema(s.Items)
 	}
 
-	if s.Value.Properties != nil {
-		for it := s.Value.Properties.Iter(); it.Next(); {
-			s.Value.Properties.Set(it.Key(), c.convertSchema(it.Value()))
+	if s.Properties != nil {
+		for it := s.Properties.Iter(); it.Next(); {
+			s.Properties.Set(it.Key(), c.convertSchema(it.Value()))
 		}
 	}
 
-	if s.Value.AdditionalProperties != nil && len(s.Value.AdditionalProperties.Ref) > 0 {
-		s.Value.AdditionalProperties.Ref = convertRef(s.Value.AdditionalProperties.Ref)
+	if s.AdditionalProperties != nil && len(s.AdditionalProperties.Ref) > 0 {
+		s.AdditionalProperties.Ref = convertRef(s.AdditionalProperties.Ref)
 	}
-	for i, v := range s.Value.AllOf {
-		s.Value.AllOf[i] = c.convertSchema(v)
+	for i, v := range s.AllOf {
+		s.AllOf[i] = c.convertSchema(v)
 	}
 	return s
 }
@@ -246,7 +246,7 @@ func convertParameter(p *Parameter) *parameter.Ref {
 	return &parameter.Ref{Value: &parameter.Parameter{
 		Name: p.Name,
 		Type: parameter.Location(p.In),
-		Schema: &schema.Ref{Value: &schema.Schema{
+		Schema: &schema.Schema{SubSchema: &schema.SubSchema{
 			Type:             jsonSchema.Types{p.Type},
 			Format:           p.Format,
 			Pattern:          p.Pattern,

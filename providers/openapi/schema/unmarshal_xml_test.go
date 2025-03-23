@@ -16,7 +16,7 @@ func TestUnmarshalXML(t *testing.T) {
 		{
 			name: "empty",
 			test: func(t *testing.T) {
-				v, err := schema.UnmarshalXML(strings.NewReader(""), schematest.NewRef(""))
+				v, err := schema.UnmarshalXML(strings.NewReader(""), schematest.New(""))
 				require.NoError(t, err)
 				require.Nil(t, v)
 			},
@@ -32,7 +32,7 @@ func TestUnmarshalXML(t *testing.T) {
 		{
 			name: "string",
 			test: func(t *testing.T) {
-				v, err := schema.UnmarshalXML(strings.NewReader("<book>Harry Potter</book>"), schematest.NewRef("string"))
+				v, err := schema.UnmarshalXML(strings.NewReader("<book>Harry Potter</book>"), schematest.New("string"))
 				require.NoError(t, err)
 				require.Equal(t, "Harry Potter", v)
 			},
@@ -40,7 +40,7 @@ func TestUnmarshalXML(t *testing.T) {
 		{
 			name: "integer",
 			test: func(t *testing.T) {
-				v, err := schema.UnmarshalXML(strings.NewReader("<year>2005</year>"), schematest.NewRef("integer"))
+				v, err := schema.UnmarshalXML(strings.NewReader("<year>2005</year>"), schematest.New("integer"))
 				require.NoError(t, err)
 				require.Equal(t, 2005, v)
 			},
@@ -48,7 +48,7 @@ func TestUnmarshalXML(t *testing.T) {
 		{
 			name: "number",
 			test: func(t *testing.T) {
-				v, err := schema.UnmarshalXML(strings.NewReader("<price>19.90</price>"), schematest.NewRef("number"))
+				v, err := schema.UnmarshalXML(strings.NewReader("<price>19.90</price>"), schematest.New("number"))
 				require.NoError(t, err)
 				require.Equal(t, 19.90, v)
 			},
@@ -56,7 +56,7 @@ func TestUnmarshalXML(t *testing.T) {
 		{
 			name: "boolean",
 			test: func(t *testing.T) {
-				v, err := schema.UnmarshalXML(strings.NewReader("<disabled>true</disabled>"), schematest.NewRef("boolean"))
+				v, err := schema.UnmarshalXML(strings.NewReader("<disabled>true</disabled>"), schematest.New("boolean"))
 				require.NoError(t, err)
 				require.Equal(t, true, v)
 			},
@@ -65,7 +65,7 @@ func TestUnmarshalXML(t *testing.T) {
 			name: "object with one property",
 			test: func(t *testing.T) {
 				v, err := schema.UnmarshalXML(strings.NewReader("<book><title>Harry Potter</title></book>"),
-					schematest.NewRef("object",
+					schematest.New("object",
 						schematest.WithProperty("title", schematest.New("string"))))
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"title": "Harry Potter"}, v)
@@ -75,7 +75,7 @@ func TestUnmarshalXML(t *testing.T) {
 			name: "object with two property",
 			test: func(t *testing.T) {
 				v, err := schema.UnmarshalXML(strings.NewReader("<book><title>Harry Potter</title><author>J K. Rowling</author></book>"),
-					schematest.NewRef("object",
+					schematest.New("object",
 						schematest.WithProperty("title", schematest.New("string"))))
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"title": "Harry Potter", "author": "J K. Rowling"}, v)
@@ -85,7 +85,7 @@ func TestUnmarshalXML(t *testing.T) {
 			name: "object property as attribute",
 			test: func(t *testing.T) {
 				v, err := schema.UnmarshalXML(strings.NewReader(`<person name="alice"></person>`),
-					schematest.NewRef("object",
+					schematest.New("object",
 						schematest.WithProperty("name", schematest.New("string", schematest.WithXml(&schema.Xml{Attribute: true})))))
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"name": "alice"}, v)
@@ -95,7 +95,7 @@ func TestUnmarshalXML(t *testing.T) {
 			name: "object property as attribute and different name",
 			test: func(t *testing.T) {
 				v, err := schema.UnmarshalXML(strings.NewReader(`<person firstname="alice"></person>`),
-					schematest.NewRef("object",
+					schematest.New("object",
 						schematest.WithProperty("name", schematest.New("string", schematest.WithXml(&schema.Xml{Attribute: true, Name: "firstname"})))))
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"name": "alice"}, v)
@@ -113,7 +113,7 @@ func TestUnmarshalXML(t *testing.T) {
 			name: "string array",
 			test: func(t *testing.T) {
 				v, err := schema.UnmarshalXML(strings.NewReader("<books><title>Harry Potter</title></books>"),
-					schematest.NewRef("array",
+					schematest.New("array",
 						schematest.WithItems("string"),
 					),
 				)
@@ -125,7 +125,7 @@ func TestUnmarshalXML(t *testing.T) {
 			name: "string array with two items",
 			test: func(t *testing.T) {
 				v, err := schema.UnmarshalXML(strings.NewReader("<books><title>Harry Potter</title><title>Hush</title></books>"),
-					schematest.NewRef("array",
+					schematest.New("array",
 						schematest.WithItems("string"),
 					),
 				)
@@ -145,7 +145,7 @@ func TestUnmarshalXML(t *testing.T) {
 			name: "array as property",
 			test: func(t *testing.T) {
 				v, err := schema.UnmarshalXML(strings.NewReader("<person><children><name>bob</name><name>sarah</name></children></person>"),
-					schematest.NewRef("object", schematest.WithProperty("children", schematest.New("array",
+					schematest.New("object", schematest.WithProperty("children", schematest.New("array",
 						schematest.WithItems("string"),
 					))),
 				)
@@ -157,7 +157,7 @@ func TestUnmarshalXML(t *testing.T) {
 			name: "array as property and wrapped",
 			test: func(t *testing.T) {
 				v, err := schema.UnmarshalXML(strings.NewReader("<root><books> <books>one</books> <books>two</books>  <books>three</books> </books> </root>"),
-					schematest.NewRef("array",
+					schematest.New("array",
 						schematest.WithItems("string"),
 						schematest.WithXml(&schema.Xml{Wrapped: true, Name: "person"}),
 					),
@@ -170,7 +170,7 @@ func TestUnmarshalXML(t *testing.T) {
 			name: "prefix and namespace",
 			test: func(t *testing.T) {
 				v, err := schema.UnmarshalXML(strings.NewReader(`<smp:book xmlns:smp="https://example.com/schema"><smp:id>15</smp:id><smp:title>Harry Potter</smp:title><smp:author>J K. Rowling</smp:author></smp:book>`),
-					schematest.NewRef("object"),
+					schematest.New("object"),
 				)
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"id": "15", "author": "J K. Rowling", "title": "Harry Potter", "smp": "https://example.com/schema"}, v)
@@ -180,7 +180,7 @@ func TestUnmarshalXML(t *testing.T) {
 			name: "prefix and namespace with property schemas",
 			test: func(t *testing.T) {
 				v, err := schema.UnmarshalXML(strings.NewReader(`<smp:book xmlns:smp="https://example.com/schema"><smp:id>15</smp:id><smp:title>Harry Potter</smp:title><smp:author>J K. Rowling</smp:author></smp:book>`),
-					schematest.NewRef("object",
+					schematest.New("object",
 						schematest.WithProperty("author", schematest.New("string")),
 						schematest.WithProperty("id", schematest.New("integer")),
 						schematest.WithProperty("title", schematest.New("string")),
@@ -194,7 +194,7 @@ func TestUnmarshalXML(t *testing.T) {
 			name: "prefix and namespace prefix not match",
 			test: func(t *testing.T) {
 				v, err := schema.UnmarshalXML(strings.NewReader(`<smp:book xmlns:smp="https://example.com/schema"><smp:id>15</smp:id><smp:title>Harry Potter</smp:title><smp:author>J K. Rowling</smp:author></smp:book>`),
-					schematest.NewRef("object",
+					schematest.New("object",
 						schematest.WithProperty("author", schematest.New("string")),
 						schematest.WithProperty("id", schematest.New("integer", schematest.WithXml(&schema.Xml{Prefix: "foo"}))),
 						schematest.WithProperty("title", schematest.New("string")),
@@ -287,8 +287,7 @@ func TestUnmarshalXML_Old(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			r := &schema.Ref{Value: tc.schema}
-			v, err := schema.UnmarshalXML(strings.NewReader(tc.xml), r)
+			v, err := schema.UnmarshalXML(strings.NewReader(tc.xml), tc.schema)
 			tc.test(t, v, err)
 		})
 	}

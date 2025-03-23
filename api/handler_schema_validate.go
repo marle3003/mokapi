@@ -36,7 +36,7 @@ func (h *handler) validate(w http.ResponseWriter, r *http.Request) {
 
 	var v interface{}
 	switch s := valReq.Schema.(type) {
-	case *schema.Ref:
+	case *schema.Schema:
 		v, err = parseByOpenApi(valReq.Data, s, valReq.ContentType)
 	case *avro.Schema:
 		p := &avro.Parser{Schema: s}
@@ -81,7 +81,7 @@ func parseValidationRequestBody(r *http.Request) (validateRequest, error) {
 	return validateData, nil
 }
 
-func parseByOpenApi(data []byte, s *schema.Ref, ct media.ContentType) (interface{}, error) {
+func parseByOpenApi(data []byte, s *schema.Schema, ct media.ContentType) (interface{}, error) {
 	p := &parser.Parser{ValidateAdditionalProperties: true, Schema: schema.ConvertToJsonSchema(s)}
 	var v interface{}
 	var err error

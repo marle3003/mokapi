@@ -129,7 +129,7 @@ func TestStore(t *testing.T) {
 						},
 					}},
 				)
-				require.EqualError(t, err, "validation error: invalid message: found 1 error:\ninvalid type, expected string but got number\nschema path #/type")
+				require.EqualError(t, err, "validation error: invalid message: error count 1:\n- #/type: invalid type, expected string but got number")
 			},
 		},
 	}

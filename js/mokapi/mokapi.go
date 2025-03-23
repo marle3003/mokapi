@@ -64,11 +64,11 @@ type MarshalArg struct {
 
 func (m *Module) Marshal(i interface{}, args *MarshalArg) string {
 	ct := media.ContentType{}
-	var r *schema.Ref
+	var s *schema.Schema
 	if args != nil {
 		ct = media.ParseContentType(args.ContentType)
 		var err error
-		r, err = faker.ToOpenAPISchema(args.Schema, m.vm)
+		s, err = faker.ToOpenAPISchema(args.Schema, m.vm)
 		if err != nil {
 			panic(m.vm.ToValue(err.Error()))
 		}
@@ -77,7 +77,7 @@ func (m *Module) Marshal(i interface{}, args *MarshalArg) string {
 		ct = media.ParseContentType("application/json")
 	}
 
-	b, err := r.Marshal(i, ct)
+	b, err := s.Marshal(i, ct)
 	if err != nil {
 		panic(m.vm.ToValue(err.Error()))
 	}

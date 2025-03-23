@@ -2,26 +2,12 @@ package schema
 
 import jsonSchema "mokapi/schema/json/schema"
 
-func (r *Ref) Patch(patch *Ref) {
-	if patch == nil {
-		return
-	}
-	if patch.Boolean != nil {
-		r.Boolean = patch.Boolean
-	}
-	if patch.Value == nil {
-		return
-	}
-	if r.Value == nil {
-		r.Value = patch.Value
-		return
-	}
-
-	r.Value.Patch(patch.Value)
-}
-
 func (s *Schema) Patch(patch *Schema) {
-	if patch == nil {
+	if patch == nil || patch.SubSchema == nil {
+		return
+	}
+	if s.SubSchema == nil {
+		s.SubSchema = patch.SubSchema
 		return
 	}
 
@@ -239,17 +225,17 @@ func mergeTypes(origin, patch jsonSchema.Types) jsonSchema.Types {
 	return origin
 }
 
-func patchComposition(s []*Ref, patch []*Ref) []*Ref {
+func patchComposition(s []*Schema, patch []*Schema) []*Schema {
 Patch:
 	for _, p := range patch {
-		if p == nil || p.Value == nil {
+		if p == nil || p.SubSchema == nil {
 			continue
 		}
-		if p.Value.Title == "" {
+		if p.Title == "" {
 			s = append(s, p)
 		} else {
 			for _, r := range s {
-				if r.Value.Title == p.Value.Title {
+				if r.Title == p.Title {
 					r.Patch(p)
 					continue Patch
 				}

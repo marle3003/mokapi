@@ -44,14 +44,14 @@ type operation struct {
 }
 
 type param struct {
-	Name        string      `json:"name"`
-	Type        string      `json:"type"`
-	Description string      `json:"description,omitempty"`
-	Required    bool        `json:"required"`
-	Deprecated  bool        `json:"deprecated"`
-	Style       string      `json:"style,omitempty"`
-	Exploded    bool        `json:"exploded"`
-	Schema      *schema.Ref `json:"schema"`
+	Name        string         `json:"name"`
+	Type        string         `json:"type"`
+	Description string         `json:"description,omitempty"`
+	Required    bool           `json:"required"`
+	Deprecated  bool           `json:"deprecated"`
+	Style       string         `json:"style,omitempty"`
+	Exploded    bool           `json:"exploded"`
+	Schema      *schema.Schema `json:"schema"`
 }
 
 type response struct {
@@ -62,9 +62,9 @@ type response struct {
 }
 
 type header struct {
-	Name        string      `json:"name"`
-	Description string      `json:"description"`
-	Schema      *schema.Ref `json:"schema"`
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	Schema      *schema.Schema `json:"schema"`
 }
 
 type requestBody struct {
@@ -74,8 +74,8 @@ type requestBody struct {
 }
 
 type mediaType struct {
-	Type   string      `json:"type"`
-	Schema *schema.Ref `json:"schema"`
+	Type   string         `json:"type"`
+	Schema *schema.Schema `json:"schema"`
 }
 
 type server struct {

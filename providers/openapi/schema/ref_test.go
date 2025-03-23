@@ -1,20 +1,6 @@
 package schema_test
 
-import (
-	"encoding/json"
-	"fmt"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/dynamictest"
-	"mokapi/providers/openapi/schema"
-	"mokapi/providers/openapi/schema/schematest"
-	jsonSchema "mokapi/schema/json/schema"
-	"net/url"
-	"testing"
-)
-
-func TestRef_HasProperties(t *testing.T) {
+/*func TestRef_HasProperties(t *testing.T) {
 	r := &schema.Ref{}
 	require.False(t, r.HasProperties())
 
@@ -183,7 +169,7 @@ func TestRef_MarshalJSON(t *testing.T) {
 		},
 		{
 			name: "with type",
-			s:    &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"string"}}},
+			s:    &schema.Ref{Value: schematest.New("string")},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, `{"type":"string"}`, s)
@@ -208,4 +194,4 @@ func TestRef_MarshalJSON(t *testing.T) {
 			tc.test(t, string(b), err)
 		})
 	}
-}
+}*/

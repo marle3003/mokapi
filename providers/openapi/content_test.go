@@ -6,7 +6,6 @@ import (
 	"gopkg.in/yaml.v3"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
-	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"testing"
 )
@@ -215,7 +214,7 @@ func TestConfig_Patch_Content(t *testing.T) {
 				openapitest.NewConfig("1.0", openapitest.WithPath(
 					"/foo", openapitest.NewPath(openapitest.WithOperation(
 						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/plain", &openapi.MediaType{Schema: &schema.Ref{Value: schematest.New("string")}})),
+							openapitest.WithResponse(200, openapitest.WithContent("text/plain", &openapi.MediaType{Schema: schematest.New("string")})),
 						),
 					),
 					))),
@@ -224,7 +223,7 @@ func TestConfig_Patch_Content(t *testing.T) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
 				require.Len(t, res.Content, 1)
 				require.NotNil(t, res.Content["text/plain"])
-				require.Equal(t, "string", res.Content["text/plain"].Schema.Value.Type.String())
+				require.Equal(t, "string", res.Content["text/plain"].Schema.Type.String())
 			},
 		},
 	}

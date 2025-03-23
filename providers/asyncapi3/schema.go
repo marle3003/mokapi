@@ -170,7 +170,7 @@ func (m *MultiSchemaFormat) UnmarshalYAML(node *yaml.Node) error {
 	m.Format = format
 	switch {
 	case isOpenApi(format):
-		var s *openapi.Ref
+		var s *openapi.Schema
 		err := schemaNode.Decode(&s)
 		if err != nil {
 			return err
@@ -240,7 +240,7 @@ func unmarshal(raw json.RawMessage, format string) (Schema, error) {
 	if raw != nil {
 		switch {
 		case isOpenApi(format):
-			var r *openapi.Ref
+			var r *openapi.Schema
 			err := json.Unmarshal(raw, &r)
 			return r, err
 		case isAvro(format):

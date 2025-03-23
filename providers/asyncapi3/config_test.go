@@ -135,7 +135,7 @@ func TestStreetlightKafka(t *testing.T) {
 
 func TestConfig_ReferenceSwagger(t *testing.T) {
 	cr := dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
-		return &dynamic.Config{Data: &swagger.Config{Definitions: map[string]*schema.Ref{"foo": schematest.NewRef("string")}}}, nil
+		return &dynamic.Config{Data: &swagger.Config{Definitions: map[string]*schema.Schema{"foo": schematest.New("string")}}}, nil
 	})
 
 	cfg := &asyncapi3.Config{
@@ -144,8 +144,8 @@ func TestConfig_ReferenceSwagger(t *testing.T) {
 				"foo": {
 					Value: &asyncapi3.MultiSchemaFormat{
 						Format: "application/vnd.oai.openapi;version=3.0.0",
-						Schema: &schema.Ref{
-							Reference: dynamic.Reference{Ref: "swagger.json#/definitions/foo"},
+						Schema: &schema.Schema{
+							Ref: "swagger.json#/definitions/foo",
 						},
 					},
 				},
@@ -154,6 +154,6 @@ func TestConfig_ReferenceSwagger(t *testing.T) {
 	}
 	err := cfg.Parse(&dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: cfg}, cr)
 	require.NoError(t, err)
-	s := cfg.Components.Schemas["foo"].Value.Schema.(*schema.Ref)
-	require.Equal(t, "string", s.Value.Type.String())
+	s := cfg.Components.Schemas["foo"].Value.Schema.(*schema.Schema)
+	require.Equal(t, "string", s.Type.String())
 }

@@ -10,8 +10,7 @@ import (
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/parameter"
-	"mokapi/providers/openapi/schema"
-	jsonSchema "mokapi/schema/json/schema"
+	"mokapi/providers/openapi/schema/schematest"
 	"net/http"
 	"net/url"
 	"testing"
@@ -264,7 +263,7 @@ func TestHeader_Parse(t *testing.T) {
 					openapitest.WithPath("/foo", openapitest.NewPath(
 						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
 							openapitest.WithResponse(http.StatusOK,
-								openapitest.WithResponseHeader("foo", "foo description", &schema.Schema{Type: jsonSchema.Types{"string"}}),
+								openapitest.WithResponseHeader("foo", "foo description", schematest.New("string")),
 							))),
 					)),
 				)

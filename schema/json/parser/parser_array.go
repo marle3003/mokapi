@@ -11,7 +11,7 @@ func (p *Parser) ParseArray(data interface{}, s *schema.Schema, evaluated map[in
 	if arr.Kind() != reflect.Slice {
 		return nil, fmt.Errorf("expected array but got: %v", ToString(data))
 	}
-	var err PathErrors
+	var err ErrorList
 	result := make([]interface{}, 0)
 	contains := 0
 	for i := 0; i < arr.Len(); i++ {
@@ -19,7 +19,7 @@ func (p *Parser) ParseArray(data interface{}, s *schema.Schema, evaluated map[in
 		if s.PrefixItems != nil && i < len(s.PrefixItems) {
 			v, errItems := p.parse(o.Interface(), s.PrefixItems[i])
 			if errItems != nil {
-				err = append(err, wrapError("prefixItems", wrapError(fmt.Sprintf("%v", i), errItems)))
+				err = append(err, wrapErrorDetail(errItems, &ErrorDetail{Field: fmt.Sprintf("%d", i)}))
 			} else {
 				result = append(result, v)
 			}
@@ -27,7 +27,7 @@ func (p *Parser) ParseArray(data interface{}, s *schema.Schema, evaluated map[in
 		} else if s.Items != nil {
 			v, errItems := p.parse(o.Interface(), s.Items)
 			if errItems != nil {
-				err = append(err, wrapError("items", errItems))
+				err = append(err, wrapErrorDetail(errItems, &ErrorDetail{Field: "items"}))
 			} else {
 				result = append(result, v)
 			}
@@ -45,21 +45,36 @@ func (p *Parser) ParseArray(data interface{}, s *schema.Schema, evaluated map[in
 
 	if s.Contains != nil {
 		if s.MinContains != nil && contains < *s.MinContains {
-			err = append(err, Errorf("minContains", "contains match count %v is less than minimum contains count of %v", contains, *s.MinContains))
+			err = append(err, &ErrorDetail{
+				Message: fmt.Sprintf("contains match count %v is less than minimum contains count of %v", contains, *s.MinContains),
+				Field:   "minContains",
+			})
 		}
 		if s.MaxContains != nil && contains > *s.MaxContains {
-			err = append(err, Errorf("maxContains", "contains match count %v exceeds maximum contains count of %v", contains, *s.MaxContains))
+			err = append(err, &ErrorDetail{
+				Message: fmt.Sprintf("contains match count %v exceeds maximum contains count of %v", contains, *s.MaxContains),
+				Field:   "maxContains",
+			})
 		}
 		if s.MinContains == nil && contains == 0 {
-			err = append(err, Errorf("contains", "no items match contains"))
+			err = append(err, &ErrorDetail{
+				Message: "no items match contains",
+				Field:   "contains",
+			})
 		}
 	}
 
 	if s.MinItems != nil && len(result) < *s.MinItems {
-		err = append(err, Errorf("minItems", "item count %v is less than minimum count of %v", len(result), *s.MinItems))
+		err = append(err, &ErrorDetail{
+			Message: fmt.Sprintf("item count %v is less than minimum count of %v", len(result), *s.MinItems),
+			Field:   "minItems",
+		})
 	}
 	if s.MaxItems != nil && len(result) > *s.MaxItems {
-		err = append(err, Errorf("maxItems", "item count %v exceeds maximum count of %v", len(result), *s.MaxItems))
+		err = append(err, &ErrorDetail{
+			Message: fmt.Sprintf("item count %v exceeds maximum count of %v", len(result), *s.MaxItems),
+			Field:   "maxItems",
+		})
 	}
 
 	if len(s.Enum) > 0 {
@@ -73,7 +88,10 @@ func (p *Parser) ParseArray(data interface{}, s *schema.Schema, evaluated map[in
 		for i, item := range result {
 			for _, u := range unique {
 				if compare(item, u) {
-					err = append(err, Errorf("uniqueItems", "non-unique array item at index %v", i))
+					err = append(err, &ErrorDetail{
+						Message: fmt.Sprintf("non-unique array item at index %v", i),
+						Field:   "uniqueItems",
+					})
 				}
 			}
 			unique = append(unique, item)

@@ -273,7 +273,7 @@ func createValue(r *asyncapi3.SchemaRef) (value interface{}, err error) {
 	switch v := s.(type) {
 	case *schema.Schema:
 		value, err = generator.New(&generator.Request{Path: generator.Path{&generator.PathElement{Schema: v}}})
-	case *openapi.Ref:
+	case *openapi.Schema:
 		value, err = openapi.CreateValue(v)
 	case *avro.Schema:
 		jsSchema := v.Convert()
@@ -296,7 +296,7 @@ func marshal(value interface{}, r *asyncapi3.SchemaRef, contentType string) ([]b
 	switch v := s.(type) {
 	case *schema.Schema:
 		return encoding.NewEncoder(v).Write(value, media.ParseContentType(contentType))
-	case *openapi.Ref:
+	case *openapi.Schema:
 		return v.Marshal(value, media.ParseContentType(contentType))
 	case *avro.Schema:
 		jsSchema := v.Convert()
@@ -321,8 +321,8 @@ func marshalKey(key interface{}, r *asyncapi3.SchemaRef) ([]byte, error) {
 		} else {
 			return []byte(fmt.Sprintf("%v", key)), nil
 		}
-	case *openapi.Ref:
-		if v.Value != nil && v.Value.Type.IsObject() || v.Value.Type.IsArray() {
+	case *openapi.Schema:
+		if v.SubSchema != nil && v.Type.IsObject() || v.Type.IsArray() {
 			return v.Marshal(key, media.ParseContentType("application/json"))
 		} else {
 			return []byte(fmt.Sprintf("%v", key)), nil

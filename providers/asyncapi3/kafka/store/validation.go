@@ -78,7 +78,7 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyn
 		switch s := msg.Payload.Value.Schema.(type) {
 		case *schema.Schema:
 			msgParser = &parser.Parser{Schema: s, ConvertToSortedMap: true}
-		case *openapi.Ref:
+		case *openapi.Schema:
 			mt := media.ParseContentType(msg.ContentType)
 			if mt.IsXml() {
 				log.Warnf("unsupported payload type: %T", msg.Payload.Value)

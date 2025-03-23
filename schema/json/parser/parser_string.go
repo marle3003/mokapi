@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"mokapi/schema/json/schema"
@@ -27,9 +28,15 @@ func (p *Parser) ParseString(data interface{}, schema *schema.Schema) (interface
 			if schema.IsNullable() {
 				return nil, nil
 			}
-			return nil, Errorf("type", "invalid type, expected string but got null")
+			return nil, &ErrorDetail{
+				Message: fmt.Sprintf("invalid type, expected string but got null"),
+				Field:   "type",
+			}
 		}
-		return nil, Errorf("type", "invalid type, expected %v but got %v", schema.Type, toType(data))
+		return nil, &ErrorDetail{
+			Message: fmt.Sprintf("invalid type, expected %v but got %v", schema.Type, toType(data)),
+			Field:   "type",
+		}
 	}
 
 	return s, validateString(s, schema, p.SkipValidationFormatKeyword)
@@ -41,48 +48,78 @@ func validateString(str string, s *schema.Schema, skipValidationFormatKeyword bo
 		case "date":
 			_, err := time.Parse("2006-01-02", str)
 			if err != nil {
-				return Errorf("format", "string '%v' does not match format 'date'", str)
+				return &ErrorDetail{
+					Message: fmt.Sprintf("string '%v' does not match format 'date'", str),
+					Field:   "format",
+				}
 			}
 		case "date-time":
 			_, err := time.Parse(time.RFC3339, str)
 			if err != nil {
-				return Errorf("format", "string '%v' does not match format 'date-time'", str)
+				return &ErrorDetail{
+					Message: fmt.Sprintf("string '%v' does not match format 'date-time'", str),
+					Field:   "format",
+				}
 			}
 		case "time":
 			_, err := time.Parse("15:04:05Z07:00", str)
 			if err != nil {
-				return Errorf("format", "string '%v' does not match format 'time'", str)
+				return &ErrorDetail{
+					Message: fmt.Sprintf("string '%v' does not match format 'time'", str),
+					Field:   "format",
+				}
 			}
 		case "duration":
 			err := ParseDuration(str)
 			if err != nil {
-				return Errorf("format", "string '%v' does not match format 'duration'", str)
+				return &ErrorDetail{
+					Message: fmt.Sprintf("string '%v' does not match format 'duration'", str),
+					Field:   "format",
+				}
 			}
 		case "email":
 			_, err := mail.ParseAddress(str)
 			if err != nil {
-				return Errorf("format", "string '%v' does not match format 'email'", str)
+				return &ErrorDetail{
+					Message: fmt.Sprintf("string '%v' does not match format 'email'", str),
+					Field:   "format",
+				}
 			}
 		case "uuid":
 			_, err := uuid.Parse(str)
 			if err != nil {
-				return Errorf("format", "string '%v' does not match format 'uuid'", str)
+				return &ErrorDetail{
+					Message: fmt.Sprintf("string '%v' does not match format 'uuid'", str),
+					Field:   "format",
+				}
 			}
 		case "ipv4":
 			ip := net.ParseIP(str)
 			if ip == nil {
-				return Errorf("format", "string '%v' does not match format 'ipv4'", str)
+				return &ErrorDetail{
+					Message: fmt.Sprintf("string '%v' does not match format 'ipv4'", str),
+					Field:   "format",
+				}
 			}
 			if len(strings.Split(str, ".")) != 4 {
-				return Errorf("format", "string '%v' does not match format 'ipv4'", str)
+				return &ErrorDetail{
+					Message: fmt.Sprintf("string '%v' does not match format 'ipv4'", str),
+					Field:   "format",
+				}
 			}
 		case "ipv6":
 			ip := net.ParseIP(str)
 			if ip == nil {
-				return Errorf("format", "string '%v' does not match format 'ipv6'", str)
+				return &ErrorDetail{
+					Message: fmt.Sprintf("string '%v' does not match format 'ipv6'", str),
+					Field:   "format",
+				}
 			}
 			if len(strings.Split(str, ":")) != 8 {
-				return Errorf("format", "string '%v' does not match format 'ipv6'", str)
+				return &ErrorDetail{
+					Message: fmt.Sprintf("string '%v' does not match format 'ipv6'", str),
+					Field:   "format",
+				}
 			}
 		}
 	}
@@ -97,18 +134,30 @@ func validateString(str string, s *schema.Schema, skipValidationFormatKeyword bo
 			} else {
 				msg = err.Error()
 			}
-			return Errorf("pattern", "validate string '%s' with regex pattern '%s' failed: error parsing regex: %s", str, s.Pattern, msg)
+			return &ErrorDetail{
+				Message: fmt.Sprintf("validate string '%s' with regex pattern '%s' failed: error parsing regex: %s", str, s.Pattern, msg),
+				Field:   "pattern",
+			}
 		}
 		if !p.MatchString(str) {
-			return Errorf("pattern", "string '%v' does not match regex pattern '%v'", str, s.Pattern)
+			return &ErrorDetail{
+				Message: fmt.Sprintf("string '%v' does not match regex pattern '%v'", str, s.Pattern),
+				Field:   "pattern",
+			}
 		}
 	}
 
 	if s.MinLength != nil && *s.MinLength > len(str) {
-		return Errorf("minLength", "string '%v' is less than minimum of %v", str, *s.MinLength)
+		return &ErrorDetail{
+			Message: fmt.Sprintf("string '%v' is less than minimum of %v", str, *s.MinLength),
+			Field:   "minLength",
+		}
 	}
 	if s.MaxLength != nil && *s.MaxLength < len(str) {
-		return Errorf("maxLength", "string '%v' exceeds maximum of %v", str, *s.MaxLength)
+		return &ErrorDetail{
+			Message: fmt.Sprintf("string '%v' exceeds maximum of %v", str, *s.MaxLength),
+			Field:   "maxLength",
+		}
 	}
 
 	if len(s.Enum) > 0 {

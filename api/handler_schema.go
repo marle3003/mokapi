@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"mokapi/config/dynamic"
 	"mokapi/media"
 	openApiSchema "mokapi/providers/openapi/schema"
 	avro "mokapi/schema/avro/schema"
@@ -55,7 +54,7 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 
 	var s *jsonSchema.Schema
 	switch t := re.Schema.(type) {
-	case *openApiSchema.Ref:
+	case *openApiSchema.Schema:
 		s = openApiSchema.ConvertToJsonSchema(t)
 	case *avro.Schema:
 		s = t.Convert()
@@ -114,7 +113,7 @@ func encodeExample(v interface{}, schema interface{}, schemaFormat string, conte
 		var data []byte
 		var err error
 		switch t := schema.(type) {
-		case *openApiSchema.Ref:
+		case *openApiSchema.Schema:
 			data, err = t.Marshal(v, ct)
 		case *avro.Schema:
 			switch {
@@ -247,28 +246,29 @@ func (r *requestExample) UnmarshalJSON(data []byte) error {
 }
 
 func unmarshal(raw json.RawMessage, format string) (interface{}, error) {
+	var err error
 	if raw != nil {
 		switch {
 		case isOpenApi(format):
-			var r *openApiSchema.Ref
-			err := json.Unmarshal(raw, &r)
-			err = r.Parse(&dynamic.Config{Data: r}, &dynamic.EmptyReader{})
+			var r *openApiSchema.Schema
+			err = json.Unmarshal(raw, &r)
+			//err = r.Parse(&dynamic.Config{Data: r}, &dynamic.EmptyReader{})
 			return r, err
 		case isAvro(format):
 			var a *avro.Schema
-			err := json.Unmarshal(raw, &a)
+			err = json.Unmarshal(raw, &a)
 			if err != nil {
 				return nil, err
 			}
-			err = a.Parse(&dynamic.Config{Data: a}, &dynamic.EmptyReader{})
+			//err = a.Parse(&dynamic.Config{Data: a}, &dynamic.EmptyReader{})
 			return a, err
 		default:
 			var r *jsonSchema.Schema
-			err := json.Unmarshal(raw, &r)
+			err = json.Unmarshal(raw, &r)
 			if err != nil {
 				return nil, err
 			}
-			err = r.Parse(&dynamic.Config{Data: r}, &dynamic.EmptyReader{})
+			//err = r.Parse(&dynamic.Config{Data: r}, &dynamic.EmptyReader{})
 			return r, err
 		}
 	}

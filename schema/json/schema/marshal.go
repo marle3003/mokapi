@@ -44,8 +44,12 @@ func (e *encoder) encode(r *Schema) ([]byte, error) {
 		v := reflect.ValueOf(r).Elem()
 		t := v.Type()
 		var err error
-		for i := 0; i < v.NumField(); i++ {
-			f := v.Field(i)
+		for i := 0; i < t.NumField(); i++ {
+			ft := t.Field(i)
+			if !ft.IsExported() {
+				continue
+			}
+			f := v.FieldByName(ft.Name)
 			if isEmptyValue(f) {
 				continue
 			}

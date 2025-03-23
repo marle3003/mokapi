@@ -285,6 +285,8 @@ func setResolved(element interface{}, val interface{}) (err error) {
 		if c, ok := val.(Converter); ok {
 			if converted, err := c.ConvertTo(v2.Interface()); err == nil {
 				vCursor = reflect.ValueOf(converted)
+			} else {
+				vCursor = vCursor.Elem()
 			}
 		} else {
 			vCursor = vCursor.Elem()

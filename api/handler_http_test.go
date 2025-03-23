@@ -235,7 +235,7 @@ func TestHandler_Http(t *testing.T) {
 			app: func() *runtime.App {
 				s := schematest.New("object")
 				s.Properties = &schema.Schemas{}
-				s.Properties.Set("loop", &schema.Ref{Reference: dynamic.Reference{Ref: "#/components/schemas/loop"}, Value: s})
+				s.Properties.Set("loop", &schema.Schema{Ref: "#/components/schemas/loop", SubSchema: s.SubSchema})
 
 				return runtimetest.NewHttpApp(
 					openapitest.NewConfig("3.0.0",

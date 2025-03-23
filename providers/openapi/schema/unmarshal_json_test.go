@@ -100,7 +100,7 @@ func TestRef_Unmarshal_Json(t *testing.T) {
 			data:   `{ "foo": null }`,
 			schema: schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected string but got null\nschema path #/foo/type")
+				require.EqualError(t, err, "error count 1:\n- #/foo/type: invalid type, expected string but got null")
 			},
 		},
 		{
@@ -126,7 +126,7 @@ func TestRef_Unmarshal_Json(t *testing.T) {
 			schema: schematest.New("string", schematest.And("number")),
 			data:   `true`,
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected number but got boolean\nschema path #/type")
+				require.EqualError(t, err, "error count 1:\n- #/type: invalid type, expected number but got boolean")
 			},
 		},
 	}
@@ -136,7 +136,7 @@ func TestRef_Unmarshal_Json(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			mt := &openapi.MediaType{Schema: &schema.Ref{Value: tc.schema}}
+			mt := &openapi.MediaType{Schema: tc.schema}
 			i, err := mt.Parse([]byte(tc.data), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
@@ -170,7 +170,7 @@ func TestRef_Unmarshal_Json_Any(t *testing.T) {
 					schematest.New("string"),
 					schematest.New("integer"))),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ndoes not match any schemas of 'anyOf'\nschema path #/anyOf")
+				require.EqualError(t, err, "error count 1:\n- #/anyOf: does not match any schemas")
 			},
 		},
 		{
@@ -249,7 +249,7 @@ func TestRef_Unmarshal_Json_Any(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			mt := &openapi.MediaType{Schema: &schema.Ref{Value: tc.schema}}
+			mt := &openapi.MediaType{Schema: tc.schema}
 			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
@@ -267,15 +267,15 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 		{
 			name:   "not string",
 			s:      `12`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}},
+			schema: schematest.New("string"),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected string but got number\nschema path #/type")
+				require.EqualError(t, err, "error count 1:\n- #/type: invalid type, expected string but got number")
 			},
 		},
 		{
 			name:   "string",
 			s:      `"gbRMaRxHkiJBPta"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}},
+			schema: schematest.New("string"),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "gbRMaRxHkiJBPta", i)
@@ -293,7 +293,7 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 		{
 			name:   "by pattern",
 			s:      `"013-64-5994"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Pattern: "^\\d{3}-\\d{2}-\\d{4}$"},
+			schema: schematest.New("string", schematest.WithPattern("^\\d{3}-\\d{2}-\\d{4}$")),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "013-64-5994", i)
@@ -302,15 +302,15 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 		{
 			name:   "not pattern",
 			s:      `"013-64-59943"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Pattern: "^\\d{3}-\\d{2}-\\d{4}$"},
+			schema: schematest.New("string", schematest.WithPattern("^\\d{3}-\\d{2}-\\d{4}$")),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nstring '013-64-59943' does not match regex pattern '^\\d{3}-\\d{2}-\\d{4}$'\nschema path #/pattern")
+				require.EqualError(t, err, "error count 1:\n- #/pattern: string '013-64-59943' does not match regex pattern '^\\d{3}-\\d{2}-\\d{4}$'")
 			},
 		},
 		{
 			name:   "date",
 			s:      `"1908-12-07"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "date"},
+			schema: schematest.New("string", schematest.WithFormat("date")),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "1908-12-07", i)
@@ -319,15 +319,15 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 		{
 			name:   "not date",
 			s:      `"1908-12-7"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "date"},
+			schema: schematest.New("string", schematest.WithFormat("date")),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nstring '1908-12-7' does not match format 'date'\nschema path #/format")
+				require.EqualError(t, err, "error count 1:\n- #/format: string '1908-12-7' does not match format 'date'")
 			},
 		},
 		{
 			name:   "date-time",
 			s:      `"1908-12-07T04:14:25Z"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "date-time"},
+			schema: schematest.New("string", schematest.WithFormat("date-time")),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "1908-12-07T04:14:25Z", i)
@@ -336,15 +336,15 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 		{
 			name:   "not date-time",
 			s:      `"1908-12-07 T04:14:25Z"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "date-time"},
+			schema: schematest.New("string", schematest.WithFormat("date-time")),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nstring '1908-12-07 T04:14:25Z' does not match format 'date-time'\nschema path #/format")
+				require.EqualError(t, err, "error count 1:\n- #/format: string '1908-12-07 T04:14:25Z' does not match format 'date-time'")
 			},
 		},
 		{
 			name:   "password",
 			s:      `"H|$9lb{J<+S;"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "password"},
+			schema: schematest.New("string", schematest.WithFormat("password")),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "H|$9lb{J<+S;", i)
@@ -353,7 +353,7 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 		{
 			name:   "email",
 			s:      `"markusmoen@pagac.net"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "email"},
+			schema: schematest.New("string", schematest.WithFormat("email")),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "markusmoen@pagac.net", i)
@@ -362,15 +362,15 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 		{
 			name:   "not email",
 			s:      `"markusmoen@@pagac.net"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "email"},
+			schema: schematest.New("string", schematest.WithFormat("email")),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nstring 'markusmoen@@pagac.net' does not match format 'email'\nschema path #/format")
+				require.EqualError(t, err, "error count 1:\n- #/format: string 'markusmoen@@pagac.net' does not match format 'email'")
 			},
 		},
 		{
 			name:   "uuid",
 			s:      `"590c1440-9888-45b0-bd51-a817ee07c3f2"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "uuid"},
+			schema: schematest.New("string", schematest.WithFormat("uuid")),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "590c1440-9888-45b0-bd51-a817ee07c3f2", i)
@@ -379,15 +379,15 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 		{
 			name:   "not uuid",
 			s:      `"590c1440-9888-45b0-bd51-a817ee07c3f2a"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "uuid"},
+			schema: schematest.New("string", schematest.WithFormat("uuid")),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nstring '590c1440-9888-45b0-bd51-a817ee07c3f2a' does not match format 'uuid'\nschema path #/format")
+				require.EqualError(t, err, "error count 1:\n- #/format: string '590c1440-9888-45b0-bd51-a817ee07c3f2a' does not match format 'uuid'")
 			},
 		},
 		{
 			name:   "ipv4",
 			s:      `"152.23.53.100"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "ipv4"},
+			schema: schematest.New("string", schematest.WithFormat("ipv4")),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "152.23.53.100", i)
@@ -396,15 +396,15 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 		{
 			name:   "not ipv4",
 			s:      `"152.23.53.100."`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "ipv4"},
+			schema: schematest.New("string", schematest.WithFormat("ipv4")),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nstring '152.23.53.100.' does not match format 'ipv4'\nschema path #/format")
+				require.EqualError(t, err, "error count 1:\n- #/format: string '152.23.53.100.' does not match format 'ipv4'")
 			},
 		},
 		{
 			name:   "ipv6",
 			s:      `"8898:ee17:bc35:9064:5866:d019:3b95:7857"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "ipv6"},
+			schema: schematest.New("string", schematest.WithFormat("ipv6")),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "8898:ee17:bc35:9064:5866:d019:3b95:7857", i)
@@ -413,23 +413,23 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 		{
 			name:   "not ipv6",
 			s:      `"-8898:ee17:bc35:9064:5866:d019:3b95:7857"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Format: "ipv6"},
+			schema: schematest.New("string", schematest.WithFormat("ipv6")),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nstring '-8898:ee17:bc35:9064:5866:d019:3b95:7857' does not match format 'ipv6'\nschema path #/format")
+				require.EqualError(t, err, "error count 1:\n- #/format: string '-8898:ee17:bc35:9064:5866:d019:3b95:7857' does not match format 'ipv6'")
 			},
 		},
 		{
 			name:   "not minLength",
 			s:      `"foo"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, MinLength: toIntP(4)},
+			schema: schematest.New("string", schematest.WithMinLength(4)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nstring 'foo' is less than minimum of 4\nschema path #/minLength")
+				require.EqualError(t, err, "error count 1:\n- #/minLength: string 'foo' is less than minimum of 4")
 			},
 		},
 		{
 			name:   "minLength",
 			s:      `"foo"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, MinLength: toIntP(3)},
+			schema: schematest.New("string", schematest.WithMinLength(3)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "foo", i)
@@ -438,15 +438,15 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 		{
 			name:   "not maxLength",
 			s:      `"foo"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, MaxLength: toIntP(2)},
+			schema: schematest.New("string", schematest.WithMaxLength(2)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nstring 'foo' exceeds maximum of 2\nschema path #/maxLength")
+				require.EqualError(t, err, "error count 1:\n- #/maxLength: string 'foo' exceeds maximum of 2")
 			},
 		},
 		{
 			name:   "maxLength",
 			s:      `"foo"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, MaxLength: toIntP(3)},
+			schema: schematest.New("string", schematest.WithMaxLength(3)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "foo", i)
@@ -455,7 +455,7 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 		{
 			name:   "enum",
 			s:      `"foo"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Enum: []interface{}{"foo"}},
+			schema: schematest.New("string", schematest.WithEnumValues("foo")),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "foo", i)
@@ -464,15 +464,15 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 		{
 			name:   "not in enum",
 			s:      `"foo"`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Enum: []interface{}{"bar"}},
+			schema: schematest.New("string", schematest.WithEnumValues("bar")),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nvalue 'foo' does not match one in the enumeration [bar]\nschema path #/enum", i)
+				require.EqualError(t, err, "error count 1:\n- #/enum: value 'foo' does not match one in the enumeration [bar]", i)
 			},
 		},
 		{
 			name:   "nullable string",
 			s:      `null`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}, Nullable: true},
+			schema: schematest.New("string", schematest.IsNullable(true)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Nil(t, i)
@@ -486,7 +486,7 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mt := openapi.MediaType{Schema: &schema.Ref{Value: tc.schema}}
+			mt := openapi.MediaType{Schema: tc.schema}
 			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
@@ -524,7 +524,7 @@ func TestRef_Unmarshal_Json_OneOf(t *testing.T) {
 					schematest.WithProperty("bar", schematest.New("boolean"))),
 			),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nvalid against no schemas from 'oneOf':\ninvalid type, expected boolean but got number\nschema path #/oneOf/1/bar/type")
+				require.EqualError(t, err, "error count 1:\n- #/oneOf: valid against no schemas\n\t- #/oneOf/1/bar/type: invalid type, expected boolean but got number")
 			},
 		},
 		{
@@ -537,7 +537,7 @@ func TestRef_Unmarshal_Json_OneOf(t *testing.T) {
 					schematest.WithProperty("foo", schematest.New("number"))),
 			),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nvalid against more than one schema from 'oneOf': valid schema indexes: 0, 1\nschema path #/oneOf")
+				require.EqualError(t, err, "error count 1:\n- #/oneOf: valid against more than one schema: valid schema indexes: 0, 1")
 			},
 		},
 	}
@@ -547,7 +547,7 @@ func TestRef_Unmarshal_Json_OneOf(t *testing.T) {
 		tc := tc
 		t.Run(tc.s, func(t *testing.T) {
 			t.Parallel()
-			mt := &openapi.MediaType{Schema: &schema.Ref{Value: tc.schema}}
+			mt := &openapi.MediaType{Schema: tc.schema}
 			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
@@ -585,7 +585,7 @@ func TestRef_Unmarshal_Json_AllOf(t *testing.T) {
 						schematest.WithProperty("bar", schematest.New("boolean"))),
 				)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ndoes not match all schemas from 'allOf':\nrequired properties are missing: bar\nschema path #/allOf/1/required")
+				require.EqualError(t, err, "error count 1:\n- #/allOf: does not match all schema\n\t- #/allOf/1/required: required properties are missing: bar")
 			},
 		},
 	}
@@ -596,7 +596,7 @@ func TestRef_Unmarshal_Json_AllOf(t *testing.T) {
 		t.Run(tc.s, func(t *testing.T) {
 			t.Parallel()
 
-			mt := &openapi.MediaType{Schema: &schema.Ref{Value: tc.schema}}
+			mt := &openapi.MediaType{Schema: tc.schema}
 			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
@@ -615,7 +615,7 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 		{
 			name:   "int32",
 			s:      "12",
-			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int32"},
+			schema: schematest.New("integer", schematest.WithFormat("int32")),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(12), i)
@@ -624,23 +624,23 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 		{
 			name:   "not int",
 			s:      "3.61",
-			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int32"},
+			schema: schematest.New("integer", schematest.WithFormat("int32")),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected integer but got number\nschema path #/type")
+				require.EqualError(t, err, "error count 1:\n- #/type: invalid type, expected integer but got number")
 			},
 		},
 		{
 			name:   "not int32",
 			s:      fmt.Sprintf("%v", math.MaxInt64),
-			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Format: "int32"},
+			schema: schematest.New("integer", schematest.WithFormat("int32")),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninteger '9.223372036854776e+18' does not match format 'int32'\nschema path #/format")
+				require.EqualError(t, err, "error count 1:\n- #/format: integer '9.223372036854776e+18' does not match format 'int32'")
 			},
 		},
 		{
 			name:   "min",
 			s:      "12",
-			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Minimum: toFloatP(5)},
+			schema: schematest.New("integer", schematest.WithMinimum(5)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(12), i)
@@ -649,23 +649,23 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 		{
 			name:   "minimum=12 and value=12",
 			s:      "12",
-			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Minimum: toFloatP(13)},
+			schema: schematest.New("integer", schematest.WithMinimum(13)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninteger 12 is less than minimum value of 13\nschema path #/minimum")
+				require.EqualError(t, err, "error count 1:\n- #/minimum: integer 12 is less than minimum value of 13")
 			},
 		},
 		{
 			name:   "minimum=12, exclusiveMinimum=true and value=12",
 			s:      "12",
-			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Minimum: toFloatP(12), ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](true)},
+			schema: &schema.Schema{SubSchema: &schema.SubSchema{Type: jsonSchema.Types{"integer"}, Minimum: toFloatP(12), ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](true)}},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninteger 12 equals minimum value of 12 and exclusive minimum is true\nschema path #/minimum")
+				require.EqualError(t, err, "error count 1:\n- #/minimum: integer 12 equals minimum value of 12 and exclusive minimum is true")
 			},
 		},
 		{
 			name:   "minimum=12, exclusiveMinimum=false and value=12",
 			s:      "12",
-			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Minimum: toFloatP(12), ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](false)},
+			schema: &schema.Schema{SubSchema: &schema.SubSchema{Type: jsonSchema.Types{"integer"}, Minimum: toFloatP(12), ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](false)}},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(12), i)
@@ -674,15 +674,15 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 		{
 			name:   "exclusiveMinimum=12 and value=12",
 			s:      "12",
-			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, ExclusiveMinimum: jsonSchema.NewUnionTypeA[float64, bool](12)},
+			schema: &schema.Schema{SubSchema: &schema.SubSchema{Type: jsonSchema.Types{"integer"}, ExclusiveMinimum: jsonSchema.NewUnionTypeA[float64, bool](12)}},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninteger 12 equals minimum value of 12\nschema path #/exclusiveMinimum")
+				require.EqualError(t, err, "error count 1:\n- #/exclusiveMinimum: integer 12 equals minimum value of 12")
 			},
 		},
 		{
 			name:   "exclusiveMinimum=true but no minimum is set",
 			s:      "12",
-			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](true)},
+			schema: &schema.Schema{SubSchema: &schema.SubSchema{Type: jsonSchema.Types{"integer"}, ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](true)}},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(12), i)
@@ -691,7 +691,7 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 		{
 			name:   "max",
 			s:      "12",
-			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Maximum: toFloatP(13)},
+			schema: schematest.New("integer", schematest.WithMaximum(13)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(12), i)
@@ -700,31 +700,31 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 		{
 			name:   "not max",
 			s:      "12",
-			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Maximum: toFloatP(11)},
+			schema: schematest.New("integer", schematest.WithMaximum(11)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninteger 12 exceeds maximum value of 11\nschema path #/maximum")
+				require.EqualError(t, err, "error count 1:\n- #/maximum: integer 12 exceeds maximum value of 11")
 			},
 		},
 		{
 			name:   "not exclusive max",
 			s:      "12",
-			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Maximum: toFloatP(12), ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true)},
+			schema: &schema.Schema{SubSchema: &schema.SubSchema{Type: jsonSchema.Types{"integer"}, Maximum: toFloatP(12), ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true)}},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninteger 12 equals maximum value of 12 and exclusive maximum is true\nschema path #/maximum")
+				require.EqualError(t, err, "error count 1:\n- #/maximum: integer 12 equals maximum value of 12 and exclusive maximum is true")
 			},
 		},
 		{
 			name:   "not in enum",
 			s:      "12",
-			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Enum: []interface{}{1, 2, 3}},
+			schema: schematest.New("integer", schematest.WithEnumValues(1, 2, 3)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nvalue '12' does not match one in the enumeration [1, 2, 3]\nschema path #/enum")
+				require.EqualError(t, err, "error count 1:\n- #/enum: value '12' does not match one in the enumeration [1, 2, 3]")
 			},
 		},
 		{
 			name:   "in enum",
 			s:      "2",
-			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Enum: []interface{}{1, 2, 3}},
+			schema: schematest.New("integer", schematest.WithEnumValues(1, 2, 3)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(2), i)
@@ -738,7 +738,7 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mt := &openapi.MediaType{Schema: &schema.Ref{Value: tc.schema}}
+			mt := &openapi.MediaType{Schema: tc.schema}
 			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
@@ -757,7 +757,7 @@ func TestParse_Number(t *testing.T) {
 		{
 			name:   "float32",
 			s:      "3.612",
-			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, Format: "float32"},
+			schema: schematest.New("number", schematest.WithFormat("float32")),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 3.612, i)
@@ -775,15 +775,15 @@ func TestParse_Number(t *testing.T) {
 		{
 			name:   "float out of range",
 			s:      fmt.Sprintf("%v", math.MaxFloat64),
-			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, Format: "float"},
+			schema: schematest.New("number", schematest.WithFormat("float")),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nnumber '1.7976931348623157e+308' does not match format 'float'\nschema path #/format")
+				require.EqualError(t, err, "error count 1:\n- #/format: number '1.7976931348623157e+308' does not match format 'float'")
 			},
 		},
 		{
 			name:   "min",
 			s:      "3.612",
-			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, Minimum: toFloatP(3.6)},
+			schema: schematest.New("number", schematest.WithMinimum(3.6)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 3.612, i)
@@ -792,23 +792,23 @@ func TestParse_Number(t *testing.T) {
 		{
 			name:   "not min",
 			s:      "3.612",
-			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, Minimum: toFloatP(3.7)},
+			schema: schematest.New("number", schematest.WithMinimum(3.7)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nnumber 3.612 is less than minimum value of 3.7\nschema path #/minimum")
+				require.EqualError(t, err, "error count 1:\n- #/minimum: number 3.612 is less than minimum value of 3.7")
 			},
 		},
 		{
 			name:   "not min float",
 			s:      "3.612",
-			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, Format: "float", Minimum: toFloatP(3.7)},
+			schema: schematest.New("number", schematest.WithFormat("float"), schematest.WithMinimum(3.7)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nnumber '3.612' does not match format 'float'\nschema path #/format")
+				require.EqualError(t, err, "error count 1:\n- #/format: number '3.612' does not match format 'float'")
 			},
 		},
 		{
 			name:   "max",
 			s:      "3.612",
-			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, Maximum: toFloatP(3.7)},
+			schema: schematest.New("number", schematest.WithMaximum(3.7)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 3.612, i)
@@ -817,31 +817,31 @@ func TestParse_Number(t *testing.T) {
 		{
 			name:   "not max",
 			s:      "3.612",
-			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, Maximum: toFloatP(3.6)},
+			schema: schematest.New("number", schematest.WithMaximum(3.6)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nnumber 3.612 exceeds maximum value of 3.6\nschema path #/maximum")
+				require.EqualError(t, err, "error count 1:\n- #/maximum: number 3.612 exceeds maximum value of 3.6")
 			},
 		},
 		{
 			name:   "not max float",
 			s:      "3.612",
-			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, Format: "float", Maximum: toFloatP(3.6)},
+			schema: schematest.New("number", schematest.WithFormat("float"), schematest.WithMaximum(3.6)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nnumber '3.612' does not match format 'float'\nschema path #/format")
+				require.EqualError(t, err, "error count 1:\n- #/format: number '3.612' does not match format 'float'")
 			},
 		},
 		{
 			name:   "not max exclusive",
 			s:      "3.6",
-			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, Maximum: toFloatP(3.6), ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true)},
+			schema: &schema.Schema{SubSchema: &schema.SubSchema{Type: jsonSchema.Types{"number"}, Maximum: toFloatP(3.6), ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true)}},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nnumber 3.6 equals maximum value of 3.6 and exclusive maximum is true\nschema path #/maximum")
+				require.EqualError(t, err, "error count 1:\n- #/maximum: number 3.6 equals maximum value of 3.6 and exclusive maximum is true")
 			},
 		},
 		{
 			name:   "exclusiveMaximum=true but no maximum value is set",
 			s:      "3.6",
-			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true)},
+			schema: &schema.Schema{SubSchema: &schema.SubSchema{Type: jsonSchema.Types{"number"}, ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true)}},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 3.6, i)
@@ -850,15 +850,15 @@ func TestParse_Number(t *testing.T) {
 		{
 			name:   "not in enum",
 			s:      "3.6",
-			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, Enum: []interface{}{3, 4, 5.5}},
+			schema: &schema.Schema{SubSchema: &schema.SubSchema{Type: jsonSchema.Types{"number"}, Enum: []interface{}{3, 4, 5.5}}},
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nvalue '3.6' does not match one in the enumeration [3, 4, 5.5]\nschema path #/enum")
+				require.EqualError(t, err, "error count 1:\n- #/enum: value '3.6' does not match one in the enumeration [3, 4, 5.5]")
 			},
 		},
 		{
 			name:   "in enum",
 			s:      "3.6",
-			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, Enum: []interface{}{3.6, 4, 5.5}},
+			schema: schematest.New("number", schematest.WithEnumValues(3.6, 4, 5.5)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 3.6, i)
@@ -872,7 +872,7 @@ func TestParse_Number(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mt := &openapi.MediaType{Schema: &schema.Ref{Value: tc.schema}}
+			mt := &openapi.MediaType{Schema: tc.schema}
 			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
@@ -889,7 +889,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 		{
 			name:   "empty",
 			s:      "{}",
-			schema: &schema.Schema{Type: jsonSchema.Types{"object"}},
+			schema: schematest.New("object"),
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{}, v)
@@ -954,7 +954,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
 			test: func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nrequired properties are missing: age\nschema path #/required")
+				require.EqualError(t, err, "error count 1:\n- #/required: required properties are missing: age")
 			},
 		},
 		{
@@ -965,7 +965,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 				schematest.WithProperty("age", schematest.New("integer")),
 			),
 			test: func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nstring 'abc' is less than minimum of 6\nschema path #/name/minLength")
+				require.EqualError(t, err, "error count 1:\n- #/name/minLength: string 'abc' is less than minimum of 6")
 			},
 		},
 		{
@@ -977,7 +977,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 				schematest.WithEnum([]interface{}{map[string]interface{}{"name": "bar"}}),
 			),
 			test: func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nvalue '{name: foo}' does not match one in the enumeration [{name: bar}]\nschema path #/enum")
+				require.EqualError(t, err, "error count 1:\n- #/enum: value '{name: foo}' does not match one in the enumeration [{name: bar}]")
 			},
 		},
 		{
@@ -1025,7 +1025,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 				schematest.WithFreeForm(false),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nproperty 'age' not defined and the schema does not allow additional properties\nschema path #/additionalProperties")
+				require.EqualError(t, err, "error count 1:\n- #/additionalProperties: property 'age' not defined and the schema does not allow additional properties")
 			},
 		},
 		{
@@ -1035,7 +1035,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 				schematest.WithMinProperties(2),
 			),
 			test: func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nproperty count 1 is less than minimum count of 2\nschema path #/minProperties")
+				require.EqualError(t, err, "error count 1:\n- #/minProperties: property count 1 is less than minimum count of 2")
 			},
 		},
 		{
@@ -1045,7 +1045,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 				schematest.WithMaxProperties(1),
 			),
 			test: func(t *testing.T, _ interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nproperty count 2 exceeds maximum count of 1\nschema path #/maxProperties")
+				require.EqualError(t, err, "error count 1:\n- #/maxProperties: property count 2 exceeds maximum count of 1")
 			},
 		},
 		{
@@ -1068,7 +1068,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mt := &openapi.MediaType{Schema: &schema.Ref{Value: tc.schema}}
+			mt := &openapi.MediaType{Schema: tc.schema}
 			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
@@ -1085,9 +1085,9 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 		{
 			name: "empty",
 			s:    "[]",
-			schema: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{
-				Value: &schema.Schema{Type: jsonSchema.Types{"string"}},
-			}},
+			schema: schematest.New("array",
+				schematest.WithItems("string"),
+			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Len(t, i, 0)
@@ -1096,9 +1096,9 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 		{
 			name: "string array",
 			s:    `["foo", "bar"]`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"array"}, Items: &schema.Ref{
-				Value: &schema.Schema{Type: jsonSchema.Types{"string"}},
-			}},
+			schema: schematest.New("array",
+				schematest.WithItems("string"),
+			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{"foo", "bar"}, i)
@@ -1107,27 +1107,19 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 		{
 			name: "not min items",
 			s:    `["foo", "bar"]`,
-			schema: &schema.Schema{
-				Type: jsonSchema.Types{"array"},
-				Items: &schema.Ref{
-					Value: &schema.Schema{Type: jsonSchema.Types{"string"}},
-				},
-				MinItems: toIntP(3),
-			},
+			schema: schematest.New("array", schematest.WithMinItems(3),
+				schematest.WithItems("string"),
+			),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nitem count 2 is less than minimum count of 3\nschema path #/minItems")
+				require.EqualError(t, err, "error count 1:\n- #/minItems: item count 2 is less than minimum count of 3")
 			},
 		},
 		{
 			name: "min items",
 			s:    `["foo", "bar"]`,
-			schema: &schema.Schema{
-				Type: jsonSchema.Types{"array"},
-				Items: &schema.Ref{
-					Value: &schema.Schema{Type: jsonSchema.Types{"string"}},
-				},
-				MinItems: toIntP(2),
-			},
+			schema: schematest.New("array", schematest.WithMinItems(2),
+				schematest.WithItems("string"),
+			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{"foo", "bar"}, i)
@@ -1136,27 +1128,19 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 		{
 			name: "not max items",
 			s:    `["foo", "bar"]`,
-			schema: &schema.Schema{
-				Type: jsonSchema.Types{"array"},
-				Items: &schema.Ref{
-					Value: &schema.Schema{Type: jsonSchema.Types{"string"}},
-				},
-				MaxItems: toIntP(1),
-			},
+			schema: schematest.New("array", schematest.WithMaxItems(1),
+				schematest.WithItems("string"),
+			),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nitem count 2 exceeds maximum count of 1\nschema path #/maxItems")
+				require.EqualError(t, err, "error count 1:\n- #/maxItems: item count 2 exceeds maximum count of 1")
 			},
 		},
 		{
 			name: "max items",
 			s:    `["foo", "bar"]`,
-			schema: &schema.Schema{
-				Type: jsonSchema.Types{"array"},
-				Items: &schema.Ref{
-					Value: &schema.Schema{Type: jsonSchema.Types{"string"}},
-				},
-				MaxItems: toIntP(2),
-			},
+			schema: schematest.New("array", schematest.WithMaxItems(2),
+				schematest.WithItems("string"),
+			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{"foo", "bar"}, i)
@@ -1165,41 +1149,29 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 		{
 			name: "not in enum",
 			s:    `["foo", "bar"]`,
-			schema: &schema.Schema{
-				Type: jsonSchema.Types{"array"},
-				Items: &schema.Ref{
-					Value: &schema.Schema{Type: jsonSchema.Types{"string"}},
-				},
-				Enum: []interface{}{[]string{"foo", "test"}},
-			},
+			schema: schematest.New("array", schematest.WithEnumValues([]interface{}{"foo", "test"}),
+				schematest.WithItems("string"),
+			),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nvalue '[foo, bar]' does not match one in the enumeration [[foo, test]]\nschema path #/enum")
+				require.EqualError(t, err, "error count 1:\n- #/enum: value '[foo, bar]' does not match one in the enumeration [[foo, test]]")
 			},
 		},
 		{
 			name: "not with correct order in enum",
 			s:    `["foo", "bar"]`,
-			schema: &schema.Schema{
-				Type: jsonSchema.Types{"array"},
-				Items: &schema.Ref{
-					Value: &schema.Schema{Type: jsonSchema.Types{"string"}},
-				},
-				Enum: []interface{}{[]string{"bar", "foo"}},
-			},
+			schema: schematest.New("array", schematest.WithEnumValues([]interface{}{"bar", "foo"}),
+				schematest.WithItems("string"),
+			),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nvalue '[foo, bar]' does not match one in the enumeration [[bar, foo]]\nschema path #/enum")
+				require.EqualError(t, err, "error count 1:\n- #/enum: value '[foo, bar]' does not match one in the enumeration [[bar, foo]]")
 			},
 		},
 		{
 			name: "in enum",
 			s:    `["foo", "bar"]`,
-			schema: &schema.Schema{
-				Type: jsonSchema.Types{"array"},
-				Items: &schema.Ref{
-					Value: &schema.Schema{Type: jsonSchema.Types{"string"}},
-				},
-				Enum: []interface{}{[]interface{}{"foo", "test"}, []interface{}{"foo", "bar"}},
-			},
+			schema: schematest.New("array", schematest.WithEnumValues([]interface{}{"foo", "test"}, []interface{}{"foo", "bar"}),
+				schematest.WithItems("string"),
+			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{"foo", "bar"}, i)
@@ -1208,27 +1180,19 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 		{
 			name: "not uniqueItems",
 			s:    `["foo", "foo"]`,
-			schema: &schema.Schema{
-				Type: jsonSchema.Types{"array"},
-				Items: &schema.Ref{
-					Value: &schema.Schema{Type: jsonSchema.Types{"string"}},
-				},
-				UniqueItems: true,
-			},
+			schema: schematest.New("array", schematest.WithUniqueItems(),
+				schematest.WithItems("string"),
+			),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nnon-unique array item at index 1\nschema path #/uniqueItems")
+				require.EqualError(t, err, "error count 1:\n- #/uniqueItems: non-unique array item at index 1")
 			},
 		},
 		{
 			name: "uniqueItems",
 			s:    `["foo", "bar"]`,
-			schema: &schema.Schema{
-				Type: jsonSchema.Types{"array"},
-				Items: &schema.Ref{
-					Value: &schema.Schema{Type: jsonSchema.Types{"string"}},
-				},
-				UniqueItems: true,
-			},
+			schema: schematest.New("array", schematest.WithUniqueItems(),
+				schematest.WithItems("string"),
+			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{"foo", "bar"}, i)
@@ -1257,7 +1221,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mt := &openapi.MediaType{Schema: &schema.Ref{Value: tc.schema}}
+			mt := &openapi.MediaType{Schema: tc.schema}
 			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
@@ -1276,7 +1240,7 @@ func TestRef_Unmarshal_Json_Bool(t *testing.T) {
 		{
 			name:   "true",
 			s:      `true`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"boolean"}},
+			schema: schematest.New("boolean"),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, true, i)
@@ -1285,15 +1249,15 @@ func TestRef_Unmarshal_Json_Bool(t *testing.T) {
 		{
 			name:   "int to bool not possible",
 			s:      `1`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"boolean"}},
+			schema: schematest.New("boolean"),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected boolean but got number\nschema path #/type")
+				require.EqualError(t, err, "error count 1:\n- #/type: invalid type, expected boolean but got number")
 			},
 		},
 		{
 			name:   "false",
 			s:      `false`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"boolean"}},
+			schema: schematest.New("boolean"),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, false, i)
@@ -1307,7 +1271,7 @@ func TestRef_Unmarshal_Json_Bool(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mt := &openapi.MediaType{Schema: &schema.Ref{Value: tc.schema}}
+			mt := &openapi.MediaType{Schema: tc.schema}
 			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
@@ -1332,7 +1296,7 @@ func TestRef_Unmarshal_Json_Errors(t *testing.T) {
 		{
 			name:   "invalid json",
 			s:      `bar`,
-			schema: &schema.Schema{Type: jsonSchema.Types{"string"}},
+			schema: schematest.New("string"),
 			test: func(t *testing.T, err error) {
 				require.EqualError(t, err, "invalid json format: invalid character 'b' looking for beginning of value")
 			},
@@ -1345,7 +1309,7 @@ func TestRef_Unmarshal_Json_Errors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mt := &openapi.MediaType{Schema: &schema.Ref{Value: tc.schema}}
+			mt := &openapi.MediaType{Schema: tc.schema}
 			_, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, err)
 		})
@@ -1378,7 +1342,7 @@ func TestRef_Unmarshal_Json_Dictionary(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mt := &openapi.MediaType{Schema: &schema.Ref{Value: tc.schema}}
+			mt := &openapi.MediaType{Schema: tc.schema}
 			_, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
 			require.Equal(t, tc.err, err)
 		})
@@ -1409,7 +1373,7 @@ func TestRef_Unmarshal_Json_SpecialNames(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			mt := &openapi.MediaType{Schema: &schema.Ref{Value: tc.schema}}
+			mt := &openapi.MediaType{Schema: tc.schema}
 			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})

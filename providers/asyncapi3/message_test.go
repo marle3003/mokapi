@@ -24,7 +24,7 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 			test: func(t *testing.T, cfg *asyncapi3.Message, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "application/vnd.oai.openapi;version=3.0.0", cfg.Payload.Value.Format)
-				s := cfg.Payload.Value.Schema.(*schema.Ref)
+				s := cfg.Payload.Value.Schema.(*schema.Schema)
 				require.NotNil(t, s)
 				require.Equal(t, "foo.json#foo", s.Ref)
 			},
@@ -70,7 +70,7 @@ payload:
 			test: func(t *testing.T, cfg *asyncapi3.Message, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "application/vnd.oai.openapi;version=3.0.0", cfg.Payload.Value.Format)
-				s := cfg.Payload.Value.Schema.(*schema.Ref)
+				s := cfg.Payload.Value.Schema.(*schema.Schema)
 				require.NotNil(t, s)
 				require.Equal(t, "foo.json#foo", s.Ref)
 			},

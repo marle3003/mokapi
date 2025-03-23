@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/schema/json/schema"
 )
@@ -20,7 +21,10 @@ func checkValueIsInEnum(i interface{}, enum []interface{}, entrySchema *schema.S
 		}
 	}
 	if !found {
-		return Errorf("enum", "value '%v' does not match one in the enumeration %v", ToString(i), ToString(enum))
+		return &ErrorDetail{
+			Message: fmt.Sprintf("value '%v' does not match one in the enumeration %v", ToString(i), ToString(enum)),
+			Field:   "enum",
+		}
 	}
 
 	return nil

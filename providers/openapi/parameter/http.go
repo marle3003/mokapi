@@ -122,8 +122,8 @@ func parseExplodeObject(param *Parameter, value, separator string, decode decode
 		if err != nil {
 			return nil, err
 		}
-		prop := param.Schema.Value.Properties.Get(key)
-		if prop == nil && !param.Schema.Value.IsFreeForm() && !param.Schema.Value.IsDictionary() {
+		prop := param.Schema.Properties.Get(key)
+		if prop == nil && !param.Schema.IsFreeForm() && !param.Schema.IsDictionary() {
 			return nil, fmt.Errorf("property '%v' not defined in schema: %s", kv[0], param.Schema)
 		}
 
@@ -147,7 +147,7 @@ func parseUnExplodeObject(param *Parameter, value, separator string) (map[string
 		key := elements[i]
 		i++
 
-		prop := param.Schema.Value.Properties.Get(key)
+		prop := param.Schema.Properties.Get(key)
 		if prop == nil {
 			continue
 		}

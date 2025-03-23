@@ -2,7 +2,6 @@ package schema_test
 
 import (
 	"github.com/stretchr/testify/require"
-	"mokapi/config/dynamic"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
@@ -15,7 +14,7 @@ func TestMarshal_Xml(t *testing.T) {
 	testcases := []struct {
 		name   string
 		data   func() interface{}
-		schema *schema.Ref
+		schema *schema.Schema
 		test   func(t *testing.T, s string, err error)
 	}{
 		{
@@ -33,7 +32,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return 4
 			},
-			schema: schematest.NewRef("integer"),
+			schema: schematest.New("integer"),
 			test: func(t *testing.T, s string, err error) {
 				require.EqualError(t, err, "encoding data to 'application/xml' failed: root element name is undefined: reference name of schema and attribute xml.name is empty")
 			},
@@ -43,7 +42,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return 4
 			},
-			schema: schematest.NewRef("integer", schematest.WithXml(&schema.Xml{Name: "foo"})),
+			schema: schematest.New("integer", schematest.WithXml(&schema.Xml{Name: "foo"})),
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "<foo>4</foo>", s)
@@ -54,7 +53,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return 4
 			},
-			schema: &schema.Ref{Reference: dynamic.Reference{Ref: "#/components/schemas/foo"}, Value: schematest.New("integer")},
+			schema: &schema.Schema{Ref: "#/components/schemas/foo", SubSchema: schematest.New("integer").SubSchema},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "<foo>4</foo>", s)
@@ -65,7 +64,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return 4
 			},
-			schema: schematest.NewRef("integer",
+			schema: schematest.New("integer",
 				schematest.WithXml(&schema.Xml{
 					Name:      "foo",
 					Namespace: "https://foo.bar",
@@ -80,7 +79,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return 4
 			},
-			schema: schematest.NewRef("integer",
+			schema: schematest.New("integer",
 				schematest.WithXml(&schema.Xml{
 					Name:      "foo",
 					Prefix:    "ns",
@@ -96,7 +95,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return 4
 			},
-			schema: schematest.NewRef("integer",
+			schema: schematest.New("integer",
 				schematest.WithXml(&schema.Xml{
 					Name:   "foo",
 					Prefix: "ns",
@@ -111,7 +110,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return 4
 			},
-			schema: schematest.NewRef("integer",
+			schema: schematest.New("integer",
 				schematest.WithXml(&schema.Xml{
 					Name:    "foo",
 					Wrapped: true,
@@ -126,7 +125,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return "bar"
 			},
-			schema: schematest.NewRef("string",
+			schema: schematest.New("string",
 				schematest.WithXml(&schema.Xml{
 					Name: "foo",
 				})),
@@ -140,7 +139,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return "<bar>"
 			},
-			schema: schematest.NewRef("string",
+			schema: schematest.New("string",
 				schematest.WithXml(&schema.Xml{
 					Name: "foo",
 				})),
@@ -154,7 +153,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return 4.7
 			},
-			schema: schematest.NewRef("number",
+			schema: schematest.New("number",
 				schematest.WithXml(&schema.Xml{
 					Name: "foo",
 				})),
@@ -168,7 +167,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return 4
 			},
-			schema: schematest.NewRef("integer",
+			schema: schematest.New("integer",
 				schematest.WithXml(&schema.Xml{
 					Name: "foo",
 				})),
@@ -182,7 +181,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return true
 			},
-			schema: schematest.NewRef("boolean",
+			schema: schematest.New("boolean",
 				schematest.WithXml(&schema.Xml{
 					Name: "foo",
 				})),
@@ -196,7 +195,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return []interface{}{1, 2, 3}
 			},
-			schema: schematest.NewRef("array",
+			schema: schematest.New("array",
 				schematest.WithItems("integer"),
 				schematest.WithXml(&schema.Xml{
 					Name:    "foo",
@@ -212,7 +211,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return []interface{}{1, 2, 3}
 			},
-			schema: schematest.NewRef("array",
+			schema: schematest.New("array",
 				schematest.WithItems("integer", schematest.WithXml(
 					&schema.Xml{
 						Name: "item",
@@ -232,14 +231,14 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return 4
 			},
-			schema: schematest.NewRef("array",
+			schema: schematest.New("array",
 				schematest.WithItems("integer"),
 				schematest.WithXml(&schema.Xml{
 					Name:    "foo",
 					Wrapped: true,
 				})),
 			test: func(t *testing.T, s string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/xml' failed: found 1 error:\nexpected array but got: 4")
+				require.EqualError(t, err, "encoding data to 'application/xml' failed: error count 1:\n- expected array but got: 4")
 			},
 		},
 		{
@@ -247,7 +246,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return []interface{}{1, 2, 3}
 			},
-			schema: schematest.NewRef("array",
+			schema: schematest.New("array",
 				schematest.WithXml(&schema.Xml{
 					Name:    "foo",
 					Wrapped: true,
@@ -262,7 +261,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return []interface{}{"bar", nil}
 			},
-			schema: schematest.NewRef("array",
+			schema: schematest.New("array",
 				schematest.WithItems("string", schematest.IsNullable(true)),
 				schematest.WithXml(&schema.Xml{
 					Name:    "foo",
@@ -274,8 +273,8 @@ func TestMarshal_Xml(t *testing.T) {
 			},
 		},
 		{
-			"object from sortedmap",
-			func() interface{} {
+			name: "object from sortedmap",
+			data: func() interface{} {
 				m := sortedmap.NewLinkedHashMap()
 				m.Set("id", 123)
 				m.Set("title", "foo")
@@ -283,7 +282,7 @@ func TestMarshal_Xml(t *testing.T) {
 				m.Set("author", "bar")
 				return m
 			},
-			schematest.NewRef("object",
+			schema: schematest.New("object",
 				schematest.WithXml(&schema.Xml{Name: "book"}),
 				schematest.WithProperty("id", schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: true}))),
 				schematest.WithProperty("title", schematest.New("string",
@@ -299,14 +298,14 @@ func TestMarshal_Xml(t *testing.T) {
 					}),
 				)),
 				schematest.WithProperty("author", schematest.New("string"))),
-			func(t *testing.T, s string, err error) {
+			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, `<book id="123" ns:title="foo" year="2023"><author>bar</author></book>`, s)
 			},
 		},
 		{
-			"object with map and empty schema",
-			func() interface{} {
+			name: "object with map and empty schema",
+			data: func() interface{} {
 				var i interface{}
 				i = map[string]interface{}{
 					"id":     123,
@@ -317,8 +316,8 @@ func TestMarshal_Xml(t *testing.T) {
 				}
 				return []interface{}{i}
 			},
-			&schema.Ref{Value: &schema.Schema{Xml: &schema.Xml{Name: "root"}}},
-			func(t *testing.T, s string, err error) {
+			schema: schematest.New("", schematest.WithXml(&schema.Xml{Name: "root"})),
+			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Len(t, s, 74)
 				require.True(t, strings.HasPrefix(s, "<root>"))
@@ -330,11 +329,11 @@ func TestMarshal_Xml(t *testing.T) {
 			},
 		},
 		{
-			"nil object",
-			func() interface{} {
+			name: "nil object",
+			data: func() interface{} {
 				return nil
 			},
-			schematest.NewRef("object",
+			schema: schematest.New("object",
 				schematest.IsNullable(true),
 				schematest.WithXml(&schema.Xml{Name: "book"}),
 				schematest.WithProperty("id", schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: true}))),
@@ -345,21 +344,21 @@ func TestMarshal_Xml(t *testing.T) {
 					}),
 				)),
 				schematest.WithProperty("author", schematest.New("string"))),
-			func(t *testing.T, s string, err error) {
+			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, `<book></book>`, s)
 			},
 		},
 		{
-			"object with nil properties",
-			func() interface{} {
+			name: "object with nil properties",
+			data: func() interface{} {
 				m := sortedmap.NewLinkedHashMap()
 				m.Set("id", 123)
 				m.Set("title", nil)
 				m.Set("author", nil)
 				return m
 			},
-			schematest.NewRef("object",
+			schema: schematest.New("object",
 				schematest.WithXml(&schema.Xml{Name: "book"}),
 				schematest.WithProperty("id", schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: true}))),
 				schematest.WithProperty("title", schematest.New("string", schematest.IsNullable(true),
@@ -369,7 +368,7 @@ func TestMarshal_Xml(t *testing.T) {
 					}),
 				)),
 				schematest.WithProperty("author", schematest.New("string", schematest.IsNullable(true)))),
-			func(t *testing.T, s string, err error) {
+			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, `<book id="123"></book>`, s)
 			},

@@ -63,7 +63,7 @@ func TestParser_NoType(t *testing.T) {
 				schematest.WithMaxLength(10),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nstring 'foobar1234567' exceeds maximum of 10\nschema path #/maxLength")
+				require.EqualError(t, err, "error count 1:\n- #/maxLength: string 'foobar1234567' exceeds maximum of 10")
 			},
 		},
 		{
@@ -71,7 +71,7 @@ func TestParser_NoType(t *testing.T) {
 			data:   nil,
 			schema: schematest.New("string"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected string but got null\nschema path #/type")
+				require.EqualError(t, err, "error count 1:\n- #/type: invalid type, expected string but got null")
 			},
 		},
 		{
@@ -88,7 +88,7 @@ func TestParser_NoType(t *testing.T) {
 			data:   "foo",
 			schema: schematest.New("string", schematest.WithConst("bar")),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nvalue 'foo' does not match const 'bar'\nschema path #/const")
+				require.EqualError(t, err, "error count 1:\n- #/const: value 'foo' does not match const 'bar'")
 			},
 		},
 		{
@@ -96,7 +96,7 @@ func TestParser_NoType(t *testing.T) {
 			data:   "foo",
 			schema: schematest.New("string", schematest.WithConst(3)),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nconst value does not match schema: invalid type, expected string but got integer\nschema path #/type\nschema path #/const")
+				require.EqualError(t, err, "error count 1:\n- #/const: const value does not match schema: #/type: invalid type, expected string but got integer")
 			},
 		},
 		{
@@ -104,7 +104,7 @@ func TestParser_NoType(t *testing.T) {
 			data:   "foo",
 			schema: schematest.NewTypes(nil, schematest.WithNot(schematest.New("string"))),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nis valid against schema from 'not'\nschema path #/not")
+				require.EqualError(t, err, "error count 1:\n- #/not: is valid against schema")
 			},
 		},
 		{

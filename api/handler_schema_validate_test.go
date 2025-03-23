@@ -61,8 +61,8 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					nil,
 					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] }, "bar":{ "type": ["integer"] } } }, "data":"{\"foo\": 12, \"bar\": \"text\" }", "contentType": "application/json" }`,
 					h,
-					try.BodyContains("invalid type, expected string but got number\nschema path #/foo/type\n"),
-					try.BodyContains("invalid type, expected integer but got string\nschema path #/bar/type\n"),
+					try.BodyContains("- #/foo/type: invalid type, expected string but got number"),
+					try.BodyContains("- #/bar/type: invalid type, expected integer but got string"),
 					try.HasStatusCode(400),
 				)
 			},
@@ -97,7 +97,7 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } }, "additionalProperties": false }, "data":"{ \"foo\":\"bar\", \"foo2\": \"val\" }", "contentType": "application/json" }`,
 					h,
 					try.HasStatusCode(400),
-					try.HasBody("found 1 error:\nproperty 'foo2' not defined and the schema does not allow additional properties\nschema path #/additionalProperties\n"),
+					try.HasBody("error count 1:\n- #/additionalProperties: property 'foo2' not defined and the schema does not allow additional properties\n"),
 				)
 			},
 		},
@@ -114,8 +114,8 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } }, "additionalProperties": false }, "data":"{ \"foo\":\"bar\", \"foo2\": \"val\", \"foo3\": \"val\" }", "contentType": "application/json" }`,
 					h,
 					try.HasStatusCode(400),
-					try.BodyContains("property 'foo2' not defined and the schema does not allow additional properties\n"),
-					try.BodyContains("property 'foo3' not defined and the schema does not allow additional properties\nschema path #/additionalProperties\n"),
+					try.BodyContains("- #/additionalProperties: property 'foo2' not defined and the schema does not allow additional properties"),
+					try.BodyContains("property 'foo3' not defined and the schema does not allow additional properties"),
 				)
 			},
 		},
@@ -132,7 +132,41 @@ func TestHandler_Schema_Validate(t *testing.T) {
 					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } }, "additionalProperties": false }, "data":"{\"foo2\": \"val\" }", "contentType": "application/json" }`,
 					h,
 					try.HasStatusCode(400),
-					try.HasBody("found 1 error:\nproperty 'foo2' not defined and the schema does not allow additional properties\nschema path #/additionalProperties\n"),
+					try.HasBody("error count 1:\n- #/additionalProperties: property 'foo2' not defined and the schema does not allow additional properties\n"),
+				)
+			},
+		},
+		{
+			name: "JSON schema contains reference and the value",
+			app: &runtime.App{
+				Monitor: monitor.New(),
+			},
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/validate",
+					nil,
+					`{ "schema": { "$ref": "#/components/schemas/Foo", "type": ["object"], "properties": { "foo":{ "type": ["string"] } } }, "data":"{\"foo\": 123 }", "contentType": "application/json" }`,
+					h,
+					try.HasBody("error count 1:\n- #/foo/type: invalid type, expected string but got number\n"),
+					try.HasStatusCode(400),
+				)
+			},
+		},
+		{
+			name: "OpenAPI schema contains reference and the value",
+			app: &runtime.App{
+				Monitor: monitor.New(),
+			},
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/validate",
+					nil,
+					`{ "format": "application/vnd.oai.openapi+json;version=3.0.0", "schema": { "$ref": "#/components/schemas/Foo", "type": ["object"], "properties": { "foo":{ "type": ["string"] } } }, "data":"{\"foo\": 123 }", "contentType": "application/json" }`,
+					h,
+					try.HasBody("error count 1:\n- #/foo/type: invalid type, expected string but got number\n"),
+					try.HasStatusCode(400),
 				)
 			},
 		},

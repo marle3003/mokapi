@@ -23,8 +23,7 @@ func TestParse_Number(t *testing.T) {
 			s:    schematest.New("number"),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.IsType(t, &parser.Error{}, err)
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected number but got string\nschema path #/type")
+				require.EqualError(t, err, "error count 1:\n- #/type: invalid type, expected number but got string")
 			},
 		},
 		{
@@ -32,8 +31,7 @@ func TestParse_Number(t *testing.T) {
 			s:    schematest.New("number"),
 			d:    map[string]interface{}{},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.IsType(t, &parser.Error{}, err)
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected number but got object\nschema path #/type")
+				require.EqualError(t, err, "error count 1:\n- #/type: invalid type, expected number but got object")
 			},
 		},
 		{
@@ -41,8 +39,7 @@ func TestParse_Number(t *testing.T) {
 			s:    schematest.New("number", schematest.WithFormat("float")),
 			d:    -3942.2,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.IsType(t, &parser.Error{}, err)
-				require.EqualError(t, err, "found 1 error:\nnumber '-3942.2' does not match format 'float'\nschema path #/format")
+				require.EqualError(t, err, "error count 1:\n- #/format: number '-3942.2' does not match format 'float'")
 			},
 		},
 		{
@@ -108,8 +105,7 @@ func TestParse_Number(t *testing.T) {
 			s:    schematest.New("number"),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.IsType(t, &parser.Error{}, err)
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected number but got string\nschema path #/type")
+				require.EqualError(t, err, "error count 1:\n- #/type: invalid type, expected number but got string")
 			},
 
 			convertStringToNumber: true,
@@ -119,8 +115,7 @@ func TestParse_Number(t *testing.T) {
 			s:    schematest.New("number", schematest.WithFormat("float")),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.IsType(t, &parser.Error{}, err)
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected number but got string\nschema path #/type")
+				require.EqualError(t, err, "error count 1:\n- #/type: invalid type, expected number but got string")
 			},
 
 			convertStringToNumber: true,
@@ -141,8 +136,7 @@ func TestParse_Number(t *testing.T) {
 			s:    schematest.New("number", schematest.WithMultipleOf(3.5)),
 			d:    9.5,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.IsType(t, &parser.Error{}, err)
-				require.EqualError(t, err, "found 1 error:\nnumber 9.5 is not a multiple of 3.5\nschema path #/multipleOf")
+				require.EqualError(t, err, "error count 1:\n- #/multipleOf: number 9.5 is not a multiple of 3.5")
 			},
 		},
 		{
@@ -159,8 +153,7 @@ func TestParse_Number(t *testing.T) {
 			s:    schematest.New("number", schematest.WithMinimum(3.5)),
 			d:    1,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.IsType(t, &parser.Error{}, err)
-				require.EqualError(t, err, "found 1 error:\nnumber 1 is less than minimum value of 3.5\nschema path #/minimum")
+				require.EqualError(t, err, "error count 1:\n- #/minimum: number 1 is less than minimum value of 3.5")
 			},
 		},
 		{
@@ -177,8 +170,7 @@ func TestParse_Number(t *testing.T) {
 			s:    schematest.New("number", schematest.WithMaximum(3.5)),
 			d:    4,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.IsType(t, &parser.Error{}, err)
-				require.EqualError(t, err, "found 1 error:\nnumber 4 exceeds maximum value of 3.5\nschema path #/maximum")
+				require.EqualError(t, err, "error count 1:\n- #/maximum: number 4 exceeds maximum value of 3.5")
 			},
 		},
 		{
@@ -195,8 +187,7 @@ func TestParse_Number(t *testing.T) {
 			s:    schematest.New("number", schematest.WithExclusiveMinimum(3.5)),
 			d:    3.0,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.IsType(t, &parser.Error{}, err)
-				require.EqualError(t, err, "found 1 error:\nnumber 3 is less than minimum value of 3.5\nschema path #/exclusiveMinimum")
+				require.EqualError(t, err, "error count 1:\n- #/exclusiveMinimum: number 3 is less than minimum value of 3.5")
 			},
 		},
 		{
@@ -204,8 +195,7 @@ func TestParse_Number(t *testing.T) {
 			s:    schematest.New("number", schematest.WithExclusiveMinimum(3.5)),
 			d:    3.5,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.IsType(t, &parser.Error{}, err)
-				require.EqualError(t, err, "found 1 error:\nnumber 3.5 equals minimum value of 3.5\nschema path #/exclusiveMinimum")
+				require.EqualError(t, err, "error count 1:\n- #/exclusiveMinimum: number 3.5 equals minimum value of 3.5")
 			},
 		},
 		{
@@ -222,8 +212,7 @@ func TestParse_Number(t *testing.T) {
 			s:    schematest.New("number", schematest.WithExclusiveMinimumFlag(true), schematest.WithMinimum(3)),
 			d:    3,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.IsType(t, &parser.Error{}, err)
-				require.EqualError(t, err, "found 1 error:\nnumber 3 equals minimum value of 3 and exclusive minimum is true\nschema path #/minimum")
+				require.EqualError(t, err, "error count 1:\n- #/minimum: number 3 equals minimum value of 3 and exclusive minimum is true")
 			},
 		},
 		{
@@ -240,8 +229,7 @@ func TestParse_Number(t *testing.T) {
 			s:    schematest.New("number", schematest.WithExclusiveMaximum(3)),
 			d:    4,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.IsType(t, &parser.Error{}, err)
-				require.EqualError(t, err, "found 1 error:\nnumber 4 exceeds maximum value of 3\nschema path #/exclusiveMaximum")
+				require.EqualError(t, err, "error count 1:\n- #/exclusiveMaximum: number 4 exceeds maximum value of 3")
 			},
 		},
 		{
@@ -249,8 +237,7 @@ func TestParse_Number(t *testing.T) {
 			s:    schematest.New("number", schematest.WithExclusiveMaximum(3)),
 			d:    3,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.IsType(t, &parser.Error{}, err)
-				require.EqualError(t, err, "found 1 error:\nnumber 3 equals maximum value of 3\nschema path #/exclusiveMaximum")
+				require.EqualError(t, err, "error count 1:\n- #/exclusiveMaximum: number 3 equals maximum value of 3")
 			},
 		},
 		{
@@ -267,8 +254,7 @@ func TestParse_Number(t *testing.T) {
 			s:    schematest.New("number", schematest.WithExclusiveMaximumFlag(true), schematest.WithMaximum(3)),
 			d:    3,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.IsType(t, &parser.Error{}, err)
-				require.EqualError(t, err, "found 1 error:\nnumber 3 equals maximum value of 3 and exclusive maximum is true\nschema path #/maximum")
+				require.EqualError(t, err, "error count 1:\n- #/maximum: number 3 equals maximum value of 3 and exclusive maximum is true")
 			},
 		},
 		{
@@ -285,7 +271,7 @@ func TestParse_Number(t *testing.T) {
 			s:    schematest.New("number", schematest.WithConst(10.5)),
 			d:    3,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nvalue '3' does not match const '10.5'\nschema path #/const")
+				require.EqualError(t, err, "error count 1:\n- #/const: value '3' does not match const '10.5'")
 			},
 		},
 		{

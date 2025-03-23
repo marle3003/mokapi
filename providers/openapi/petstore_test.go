@@ -22,10 +22,10 @@ func TestPetStore(t *testing.T) {
 			name: "schema Pet",
 			test: func(t *testing.T, c *Config) {
 				pet := c.Components.Schemas.Get("Pet")
-				require.Equal(t, "object", pet.Value.Type.String())
-				require.Equal(t, 6, pet.Value.Properties.Len())
-				id := pet.Value.Properties.Get("id")
-				require.Equal(t, "integer", id.Value.Type.String())
+				require.Equal(t, "object", pet.Type.String())
+				require.Equal(t, 6, pet.Properties.Len())
+				id := pet.Properties.Get("id")
+				require.Equal(t, "integer", id.Type.String())
 			},
 		},
 	}

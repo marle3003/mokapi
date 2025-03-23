@@ -22,7 +22,10 @@ func (p *Parser) ParseAny(s *schema.Schema, data interface{}, evaluated map[stri
 		}
 	}
 
-	return nil, Errorf("anyOf", "does not match any schemas of 'anyOf'")
+	return nil, &ErrorDetail{
+		Message: "does not match any schemas",
+		Field:   "anyOf",
+	}
 }
 
 func (p *Parser) parseAnyObject(m *sortedmap.LinkedHashMap[string, interface{}], s *schema.Schema, evaluated map[string]bool) (interface{}, error) {
@@ -71,12 +74,10 @@ func (p *Parser) parseAnyObject(m *sortedmap.LinkedHashMap[string, interface{}],
 	}
 
 	if result == nil {
-		pe := &PathCompositionError{
-			Path:    fmt.Sprintf("%v", index),
-			Message: "does not match any schemas of 'anyOf'",
-		}
-		pe.append(err)
-		return nil, wrapError("anyOf", pe)
+		return nil, wrapErrorDetail(err, &ErrorDetail{
+			Message: "does not match any schemas",
+			Field:   fmt.Sprintf("anyOf/%d", index),
+		})
 	}
 
 	return result, nil

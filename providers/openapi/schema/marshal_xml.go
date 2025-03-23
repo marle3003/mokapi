@@ -11,8 +11,8 @@ import (
 	"strings"
 )
 
-func marshalXml(i interface{}, r *Ref) ([]byte, error) {
-	if r == nil || r.Value == nil {
+func marshalXml(i interface{}, r *Schema) ([]byte, error) {
+	if r == nil || r.SubSchema == nil {
 		return nil, fmt.Errorf("no schema provided")
 	}
 
@@ -20,8 +20,8 @@ func marshalXml(i interface{}, r *Ref) ([]byte, error) {
 	writer := bufio.NewWriter(&buffer)
 
 	var name string
-	if r.Value.Xml != nil && len(r.Value.Xml.Name) > 0 {
-		name = r.Value.Xml.Name
+	if r.Xml != nil && len(r.Xml.Name) > 0 {
+		name = r.Xml.Name
 	} else if len(r.Ref) > 0 {
 		u, _ := url.Parse(r.Ref)
 		seg := strings.Split(u.Fragment, "/")
@@ -40,12 +40,7 @@ func marshalXml(i interface{}, r *Ref) ([]byte, error) {
 	return buffer.Bytes(), err
 }
 
-func writeXmlElement(name string, i interface{}, r *Ref, w io.Writer) {
-	var s *Schema
-	if r != nil {
-		s = r.Value
-	}
-
+func writeXmlElement(name string, i interface{}, s *Schema, w io.Writer) {
 	wrapped := false
 	attrs := &sortedmap.LinkedHashMap[string, string]{}
 	if s != nil && s.Xml != nil {
@@ -70,15 +65,15 @@ func writeXmlElement(name string, i interface{}, r *Ref, w io.Writer) {
 		if wrapped {
 			writeXmlStart(w, name, attrs)
 		}
-		var sItems *Ref
+		var items *Schema
 		if s != nil {
-			sItems = s.Items
+			items = s.Items
 		}
 		for _, item := range v {
 			if item == nil {
 				continue
 			}
-			writeXmlElement(name, item, sItems, w)
+			writeXmlElement(name, item, items, w)
 		}
 		if wrapped {
 			writeXmlEnd(w, name)
@@ -90,7 +85,7 @@ func writeXmlElement(name string, i interface{}, r *Ref, w io.Writer) {
 		}
 		writeXmlEnd(w, name)
 	case *sortedmap.LinkedHashMap[string, interface{}]:
-		attrs.Merge(getAttributes(v, r))
+		attrs.Merge(getAttributes(v, s))
 		writeXmlStart(w, name, attrs)
 
 		for it := v.Iter(); it.Next(); {
@@ -99,9 +94,9 @@ func writeXmlElement(name string, i interface{}, r *Ref, w io.Writer) {
 			}
 
 			propName := it.Key()
-			prop := r.getProperty(propName)
+			prop := s.Properties.Get(propName)
 			if prop != nil {
-				x := prop.getXml()
+				x := prop.Xml
 				if x != nil && x.Attribute {
 					continue
 				}
@@ -121,24 +116,24 @@ func writeXmlElement(name string, i interface{}, r *Ref, w io.Writer) {
 	}
 }
 
-func getAttributes(m *sortedmap.LinkedHashMap[string, interface{}], r *Ref) *sortedmap.LinkedHashMap[string, string] {
+func getAttributes(m *sortedmap.LinkedHashMap[string, interface{}], r *Schema) *sortedmap.LinkedHashMap[string, string] {
 	attrs := &sortedmap.LinkedHashMap[string, string]{}
 	for it := m.Iter(); it.Next(); {
 		if it.Value() == nil {
 			continue
 		}
 
-		x := r.getPropertyXml(it.Key())
-		if x == nil || !x.Attribute {
+		prop := r.Properties.Get(it.Key())
+		if prop == nil || prop.Xml == nil || !prop.Xml.Attribute {
 			continue
 		}
 
 		attrName := it.Key()
-		if len(x.Name) > 0 {
-			attrName = x.Name
+		if len(prop.Xml.Name) > 0 {
+			attrName = prop.Xml.Name
 		}
-		if len(x.Prefix) > 0 {
-			attrName = fmt.Sprintf("%s:%s", x.Prefix, attrName)
+		if len(prop.Xml.Prefix) > 0 {
+			attrName = fmt.Sprintf("%s:%s", prop.Xml.Prefix, attrName)
 		}
 
 		attrs.Set(attrName, fmt.Sprintf("%v", it.Value()))

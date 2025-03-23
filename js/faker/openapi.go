@@ -28,8 +28,8 @@ func isOpenApiSchema(o *goja.Object) bool {
 	return false
 }
 
-func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Ref, error) {
-	s := &schema.Schema{}
+func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Schema, error) {
+	s := &schema.Schema{SubSchema: &schema.SubSchema{}}
 
 	if v == nil {
 		return nil, nil
@@ -190,5 +190,5 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Ref, error) {
 			}
 		}
 	}
-	return &schema.Ref{Value: s}, nil
+	return s, nil
 }

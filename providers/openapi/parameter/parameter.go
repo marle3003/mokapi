@@ -28,7 +28,7 @@ type Parameter struct {
 	Type Location `yaml:"in" json:"in"`
 
 	// The schema defining the type used for the parameter
-	Schema *schema.Ref `yaml:"schema" json:"schema"`
+	Schema *schema.Schema `yaml:"schema" json:"schema"`
 
 	// Determines whether the parameter is mandatory.
 	// If the location of the parameter is "path", this property
@@ -105,7 +105,7 @@ func (r *Ref) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	}
 
 	if err := r.Value.Schema.Parse(config, reader); err != nil {
-		return err
+		return fmt.Errorf("parse schema failed: %w", err)
 	}
 
 	return nil
