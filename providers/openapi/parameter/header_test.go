@@ -3,9 +3,7 @@ package parameter_test
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi/parameter"
-	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
-	jsonSchema "mokapi/schema/json/schema"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -23,7 +21,7 @@ func TestFromRequest_Header(t *testing.T) {
 			params: parameter.Parameters{{Value: &parameter.Parameter{
 				Type:   parameter.Header,
 				Name:   "debug",
-				Schema: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}, Enum: []interface{}{0, 1}}},
+				Schema: schematest.New("integer", schematest.WithEnumValues(0, 1)),
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -61,7 +59,7 @@ func TestFromRequest_Header(t *testing.T) {
 				Type:     parameter.Header,
 				Name:     "debug",
 				Required: false,
-				Schema:   &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}, Enum: []interface{}{0, 1}}},
+				Schema:   schematest.New("integer", schematest.WithEnumValues(0, 1)),
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -78,7 +76,7 @@ func TestFromRequest_Header(t *testing.T) {
 				Type:     parameter.Header,
 				Name:     "debug",
 				Required: true,
-				Schema:   &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}, Enum: []interface{}{0, 1}}},
+				Schema:   schematest.New("integer", schematest.WithEnumValues(0, 1)),
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -95,7 +93,7 @@ func TestFromRequest_Header(t *testing.T) {
 				Type:     parameter.Header,
 				Name:     "debug",
 				Required: true,
-				Schema:   &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}, Enum: []interface{}{0, 1}}},
+				Schema:   schematest.New("integer", schematest.WithEnumValues(0, 1)),
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -112,7 +110,7 @@ func TestFromRequest_Header(t *testing.T) {
 			params: parameter.Parameters{{Value: &parameter.Parameter{
 				Type:   parameter.Header,
 				Name:   "debug",
-				Schema: &schema.Ref{Value: &schema.Schema{Type: jsonSchema.Types{"integer"}, Enum: []interface{}{0, 1}}},
+				Schema: schematest.New("integer", schematest.WithEnumValues(0, 1)),
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -120,22 +118,16 @@ func TestFromRequest_Header(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse header parameter 'debug' failed: found 1 error:\ninvalid type, expected integer but got string\nschema path #/type")
+				require.EqualError(t, err, "parse header parameter 'debug' failed: error count 1:\n\t- #/type: invalid type, expected integer but got string")
 				require.Len(t, result[parameter.Header], 0)
 			},
 		},
 		{
 			name: "array",
 			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type: parameter.Header,
-				Name: "foo",
-				Schema: &schema.Ref{
-					Value: &schema.Schema{
-						Type: jsonSchema.Types{"array"},
-						Items: &schema.Ref{Value: &schema.Schema{
-							Type: jsonSchema.Types{"integer"},
-						}},
-					}},
+				Type:   parameter.Header,
+				Name:   "foo",
+				Schema: schematest.New("array", schematest.WithItems("integer")),
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -152,15 +144,9 @@ func TestFromRequest_Header(t *testing.T) {
 		{
 			name: "array invalid value",
 			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type: parameter.Header,
-				Name: "foo",
-				Schema: &schema.Ref{
-					Value: &schema.Schema{
-						Type: jsonSchema.Types{"array"},
-						Items: &schema.Ref{Value: &schema.Schema{
-							Type: jsonSchema.Types{"integer"},
-						}},
-					}},
+				Type:   parameter.Header,
+				Name:   "foo",
+				Schema: schematest.New("array", schematest.WithItems("integer")),
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -168,7 +154,7 @@ func TestFromRequest_Header(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse header parameter 'foo' failed: found 1 error:\ninvalid type, expected integer but got string\nschema path #/items/type")
+				require.EqualError(t, err, "parse header parameter 'foo' failed: error count 1:\n\t- #/items/1/type: invalid type, expected integer but got string")
 				require.Len(t, result[parameter.Header], 0)
 			},
 		},
@@ -177,11 +163,10 @@ func TestFromRequest_Header(t *testing.T) {
 			params: parameter.Parameters{{Value: &parameter.Parameter{
 				Type: parameter.Header,
 				Name: "foo",
-				Schema: &schema.Ref{
-					Value: schematest.New("object",
-						schematest.WithProperty("role", schematest.New("string")),
-						schematest.WithProperty("firstName", schematest.New("string")),
-					)},
+				Schema: schematest.New("object",
+					schematest.WithProperty("role", schematest.New("string")),
+					schematest.WithProperty("firstName", schematest.New("string")),
+				),
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -200,10 +185,9 @@ func TestFromRequest_Header(t *testing.T) {
 			params: parameter.Parameters{{Value: &parameter.Parameter{
 				Type: parameter.Header,
 				Name: "foo",
-				Schema: &schema.Ref{
-					Value: schematest.New("object",
-						schematest.WithProperty("role", schematest.New("string")),
-					)},
+				Schema: schematest.New("object",
+					schematest.WithProperty("role", schematest.New("string")),
+				),
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -222,11 +206,10 @@ func TestFromRequest_Header(t *testing.T) {
 			params: parameter.Parameters{{Value: &parameter.Parameter{
 				Type: parameter.Header,
 				Name: "foo",
-				Schema: &schema.Ref{
-					Value: schematest.New("object",
-						schematest.WithProperty("role", schematest.New("string")),
-						schematest.WithProperty("firstName", schematest.New("string")),
-					)},
+				Schema: schematest.New("object",
+					schematest.WithProperty("role", schematest.New("string")),
+					schematest.WithProperty("firstName", schematest.New("string")),
+				),
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -243,11 +226,10 @@ func TestFromRequest_Header(t *testing.T) {
 			params: parameter.Parameters{{Value: &parameter.Parameter{
 				Type: parameter.Header,
 				Name: "foo",
-				Schema: &schema.Ref{
-					Value: schematest.New("object",
-						schematest.WithProperty("role", schematest.New("string")),
-						schematest.WithProperty("age", schematest.New("number")),
-					)},
+				Schema: schematest.New("object",
+					schematest.WithProperty("role", schematest.New("string")),
+					schematest.WithProperty("age", schematest.New("number")),
+				),
 			}}},
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
@@ -255,7 +237,7 @@ func TestFromRequest_Header(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse header parameter 'foo' failed: parse property 'age' failed: found 1 error:\ninvalid type, expected number but got string\nschema path #/type")
+				require.EqualError(t, err, "parse header parameter 'foo' failed: parse property 'age' failed: error count 1:\n\t- #/type: invalid type, expected number but got string")
 				require.Len(t, result[parameter.Header], 0)
 			},
 		},

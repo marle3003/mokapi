@@ -62,6 +62,48 @@ func TestResolveEndpoint(t *testing.T) {
 				require.Equal(t, "application/json", rr.Header().Get("Content-Type"))
 			},
 		},
+		{
+			// there is no official specification for trailing slash. For ease of use, mokapi considers it equivalent
+			name: "spec define suffix / but request does not",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				c.Servers[0].Url = "http://localhost"
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
+				openapitest.AppendPath("/foo/", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, 200, rr.Code)
+				require.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+			},
+		},
+		{
+			// there is no official specification for trailing slash. For ease of use, mokapi considers it equivalent
+			name: "spec define suffix no / but request does",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				c.Servers[0].Url = "http://localhost"
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
+				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo/", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, 200, rr.Code)
+				require.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+			},
+		},
+		{
+			// there is no official specification for trailing slash. For ease of use, mokapi considers it equivalent
+			name: "both uses trailing slash",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				c.Servers[0].Url = "http://localhost"
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
+				openapitest.AppendPath("/foo/", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo/", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, 200, rr.Code)
+				require.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+			},
+		},
 		//
 		// GET
 		//
@@ -184,7 +226,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 				require.Equal(t, 500, rr.Code)
-				require.Equal(t, "read request body 'application/json' failed: found 1 error:\nstring 'foo' is less than minimum of 4\nschema path #/minLength\n", rr.Body.String())
+				require.Equal(t, "read request body 'application/json' failed: error count 1:\n\t- #/minLength: string 'foo' is less than minimum of 4\n", rr.Body.String())
 			},
 		},
 		//
@@ -886,12 +928,12 @@ func (e *engine) Emit(event string, args ...interface{}) []*common.Action {
 	return nil
 }
 
-func newScript(path, src string) *dynamic.Config {
-	return &dynamic.Config{
+func newScript(path, src string) dynamic.ConfigEvent {
+	return dynamic.ConfigEvent{Config: &dynamic.Config{
 		Info: dynamic.ConfigInfo{Url: mustParse(path)},
 		Raw:  []byte(src),
 		Data: &script.Script{Code: src, Filename: path},
-	}
+	}}
 }
 
 func mustParse(s string) *url.URL {

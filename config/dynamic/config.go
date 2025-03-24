@@ -9,7 +9,15 @@ import (
 	"text/template"
 )
 
-type ConfigListener func(*Config)
+type Event int
+
+const (
+	Create Event = iota + 1
+	Update
+	Delete
+)
+
+type ConfigListener func(event ConfigEvent)
 
 type Validator interface {
 	Validate() error
@@ -34,6 +42,12 @@ type Listeners struct {
 	m    sync.Mutex
 }
 
+type ConfigEvent struct {
+	Name   string
+	Config *Config
+	Event  Event
+}
+
 func AddRef(parent, ref *Config) {
 	if parent.Info.Key() == ref.Info.Key() {
 		return
@@ -43,9 +57,12 @@ func AddRef(parent, ref *Config) {
 	if !added {
 		return
 	}
-	ref.Listeners.Add(parent.Info.Url.String(), func(config *Config) {
+	ref.Listeners.Add(parent.Info.Url.String(), func(e ConfigEvent) {
 		parent.Info.Time = ref.Info.Time
-		parent.Listeners.Invoke(parent)
+		parent.Listeners.Invoke(ConfigEvent{Event: Update, Config: parent, Name: parent.Info.Path()})
+		if e.Event == Delete {
+			parent.Refs.Remove(ref)
+		}
 	})
 }
 
@@ -61,12 +78,19 @@ func (l *Listeners) Add(key string, fn ConfigListener) {
 	}
 }
 
-func (l *Listeners) Invoke(c *Config) {
+func (l *Listeners) Remove(key string) {
+	l.m.Lock()
+	defer l.m.Unlock()
+
+	l.list.Del(key)
+}
+
+func (l *Listeners) Invoke(e ConfigEvent) {
 	if l.list == nil {
 		return
 	}
 	for it := l.list.Iter(); it.Next(); {
-		it.Value()(c)
+		it.Value()(e)
 	}
 }
 
@@ -120,6 +144,18 @@ func (r *Refs) Add(ref *Config) bool {
 	}
 	r.refs[key] = ref
 	return true
+}
+
+func (r *Refs) Remove(ref *Config) {
+	r.m.Lock()
+	defer r.m.Unlock()
+
+	if r.refs == nil {
+		return
+	}
+
+	key := ref.Info.Path()
+	delete(r.refs, key)
 }
 
 func renderTemplate(b []byte) ([]byte, error) {

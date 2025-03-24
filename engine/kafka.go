@@ -42,13 +42,6 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 
 	var produced []common.KafkaMessageResult
 	for _, r := range args.Messages {
-		var options []store.WriteOptions
-		if r.Value != nil {
-			options = append(options, func(args *store.WriteArgs) {
-				args.SkipValidation = true
-			})
-		}
-
 		p, err := c.getPartition(t, r.Partition)
 		if err != nil {
 			return nil, err
@@ -64,7 +57,7 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 			return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
 		}
 
-		_, records, err := p.Write(rb, options...)
+		_, records, err := p.Write(rb)
 		if err != nil {
 			var sb strings.Builder
 			for _, r := range records {
@@ -117,7 +110,7 @@ func (c *KafkaClient) tryGet(cluster string, topic string, retry common.KafkaPro
 func (c *KafkaClient) get(cluster string, topic string) (t *store.Topic, config *asyncapi3.Config, err error) {
 	if len(cluster) == 0 {
 		var topics []*store.Topic
-		for _, v := range c.app.Kafka {
+		for _, v := range c.app.Kafka.List() {
 			if t := v.Topic(topic); t != nil {
 				config = v.Config
 				if len(cluster) == 0 {
@@ -133,7 +126,7 @@ func (c *KafkaClient) get(cluster string, topic string) (t *store.Topic, config 
 			t = topics[0]
 		}
 	} else {
-		if k, ok := c.app.Kafka[cluster]; ok {
+		if k := c.app.Kafka.Get(cluster); k != nil {
 			config = k.Config
 			t = k.Topic(topic)
 		}
@@ -280,7 +273,7 @@ func createValue(r *asyncapi3.SchemaRef) (value interface{}, err error) {
 	switch v := s.(type) {
 	case *schema.Schema:
 		value, err = generator.New(&generator.Request{Path: generator.Path{&generator.PathElement{Schema: v}}})
-	case *openapi.Ref:
+	case *openapi.Schema:
 		value, err = openapi.CreateValue(v)
 	case *avro.Schema:
 		jsSchema := v.Convert()
@@ -303,7 +296,7 @@ func marshal(value interface{}, r *asyncapi3.SchemaRef, contentType string) ([]b
 	switch v := s.(type) {
 	case *schema.Schema:
 		return encoding.NewEncoder(v).Write(value, media.ParseContentType(contentType))
-	case *openapi.Ref:
+	case *openapi.Schema:
 		return v.Marshal(value, media.ParseContentType(contentType))
 	case *avro.Schema:
 		jsSchema := v.Convert()
@@ -328,8 +321,8 @@ func marshalKey(key interface{}, r *asyncapi3.SchemaRef) ([]byte, error) {
 		} else {
 			return []byte(fmt.Sprintf("%v", key)), nil
 		}
-	case *openapi.Ref:
-		if v.Value != nil && v.Value.Type.IsObject() || v.Value.Type.IsArray() {
+	case *openapi.Schema:
+		if v.SubSchema != nil && v.Type.IsObject() || v.Type.IsArray() {
 			return v.Marshal(key, media.ParseContentType("application/json"))
 		} else {
 			return []byte(fmt.Sprintf("%v", key)), nil

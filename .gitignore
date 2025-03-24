@@ -4,6 +4,7 @@
 *.dll
 *.so
 *.dylib
+*.syso
 
 # Test binary, built with `go test -c`
 *.test
@@ -17,5 +18,8 @@ data/*
 dist/
 bin/*
 
+node_modules
+
 server/api/dashboard.go
 coverage.txt
+versioninfo.json

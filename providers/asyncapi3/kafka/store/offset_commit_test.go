@@ -236,7 +236,7 @@ func TestOffsetCommit_Validation(t *testing.T) {
 
 				require.Equal(t, 7, len(hook.Entries), hook.Entries)
 				require.Equal(t, logrus.ErrorLevel, hook.LastEntry().Level)
-				require.Equal(t, "kafka OffsetCommit: invalid consumer 'kafkatest' for topic foo: invalid clientId: found 1 error:\nstring 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'\nschema path #/pattern", hook.LastEntry().Message)
+				require.Equal(t, "kafka OffsetCommit: invalid consumer 'kafkatest' for topic foo: invalid clientId: error count 1:\n\t- #/pattern: string 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'", hook.LastEntry().Message)
 			},
 		},
 		{
@@ -277,7 +277,7 @@ func TestOffsetCommit_Validation(t *testing.T) {
 
 				require.Equal(t, 7, len(hook.Entries))
 				require.Equal(t, logrus.ErrorLevel, hook.LastEntry().Level)
-				require.Equal(t, "kafka OffsetCommit: invalid consumer 'kafkatest' for topic foo: invalid groupId: found 1 error:\nstring 'bar' does not match regex pattern '^[A-Z]{10}[0-5]$'\nschema path #/pattern", hook.LastEntry().Message)
+				require.Equal(t, "kafka OffsetCommit: invalid consumer 'kafkatest' for topic foo: invalid groupId: error count 1:\n\t- #/pattern: string 'bar' does not match regex pattern '^[A-Z]{10}[0-5]$'", hook.LastEntry().Message)
 			},
 		},
 		{

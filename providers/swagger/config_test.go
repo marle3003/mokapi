@@ -27,7 +27,7 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			s:    `{"definitions": { "Foo": { "type": "string" } }}`,
 			test: func(t *testing.T, c *Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "string", c.Definitions["Foo"].Value.Type[0])
+				require.Equal(t, "string", c.Definitions["Foo"].Type[0])
 			},
 		},
 		{

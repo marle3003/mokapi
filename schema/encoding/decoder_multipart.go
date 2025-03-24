@@ -46,7 +46,7 @@ func (d *MultipartDecoder) Decode(b []byte, state *DecodeState) (interface{}, er
 
 		part.Close()
 	}
-	return m, nil
+	return state.parser.Parse(m)
 }
 
 func (d *MultipartDecoder) decodePart(part *multipart.Part, state *DecodeState) (interface{}, error) {

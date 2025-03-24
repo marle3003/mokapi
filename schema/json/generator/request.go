@@ -182,6 +182,12 @@ func PathElements(elements ...*PathElement) RequestOption {
 	}
 }
 
+func UseContext(ctx map[string]interface{}) RequestOption {
+	return func(r *Request) {
+		r.context = ctx
+	}
+}
+
 //func Name(name ...string) RequestOption {
 //	return func(r *Request) {
 //		r.Names = append(r.Names, name...)

@@ -655,20 +655,20 @@ func TestSchema_Patch(t *testing.T) {
 			name: "patch examples",
 			schemas: []*schema.Schema{
 				{},
-				{Examples: []interface{}{"foo"}},
+				{Examples: []schema.Example{{"foo"}}},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, []interface{}{"foo"}, result.Examples)
+				require.Equal(t, []schema.Example{{"foo"}}, result.Examples)
 			},
 		},
 		{
 			name: "patch overwrite examples",
 			schemas: []*schema.Schema{
-				{Examples: []interface{}{"bar"}},
-				{Examples: []interface{}{"foo"}},
+				{Examples: []schema.Example{{"bar"}}},
+				{Examples: []schema.Example{{"foo"}}},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, []interface{}{"foo"}, result.Examples)
+				require.Equal(t, []schema.Example{{"foo"}}, result.Examples)
 			},
 		},
 		{

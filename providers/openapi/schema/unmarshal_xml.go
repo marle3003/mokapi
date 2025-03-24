@@ -21,7 +21,7 @@ func (n *node) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	return d.DecodeElement((*proxy)(n), &start)
 }
 
-func UnmarshalXML(r io.Reader, ref *Ref) (interface{}, error) {
+func UnmarshalXML(r io.Reader, ref *Schema) (interface{}, error) {
 	b, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -38,22 +38,17 @@ func UnmarshalXML(r io.Reader, ref *Ref) (interface{}, error) {
 	return parse(n, ref)
 }
 
-func parse(n *node, ref *Ref) (interface{}, error) {
+func parse(n *node, s *Schema) (interface{}, error) {
 	if len(n.Nodes) == 0 && len(n.Attrs) == 0 {
-		return parseValue(string(n.Content), ref)
-	}
-
-	var s *Schema
-	if ref != nil {
-		s = ref.Value
+		return parseValue(string(n.Content), s)
 	}
 
 	if isArray(n) || (s != nil && s.Type.IsArray()) {
-		var items *Ref
+		var items *Schema
 		if s != nil {
 			items = s.Items
 		}
-		if _, wrapped := isWrapped(ref); wrapped {
+		if _, wrapped := isWrapped(s); wrapped {
 			if len(n.Nodes) == 0 {
 				return nil, nil
 			}
@@ -90,12 +85,12 @@ func parse(n *node, ref *Ref) (interface{}, error) {
 	return m, nil
 }
 
-func parseValue(s string, ref *Ref) (interface{}, error) {
-	if ref == nil || ref.Value == nil || ref.Value.Type.IsString() {
+func parseValue(s string, ref *Schema) (interface{}, error) {
+	if ref == nil || ref.SubSchema == nil || ref.Type.IsString() {
 		return s, nil
 	}
 
-	t := ref.Value.Type
+	t := ref.Type
 
 	if t.IsInteger() {
 		v, err := strconv.Atoi(s)
@@ -117,18 +112,18 @@ func parseValue(s string, ref *Ref) (interface{}, error) {
 		return s == "true", nil
 	}
 
-	return nil, fmt.Errorf("unknown type: %v", ref.Value.Type)
+	return nil, fmt.Errorf("unknown type: %v", ref.Type)
 }
 
-func getProperty(name xml.Name, s *Schema, asAttr bool) (string, *Ref) {
+func getProperty(name xml.Name, s *Schema, asAttr bool) (string, *Schema) {
 	if s == nil || !s.HasProperties() {
 		return name.Local, nil
 	}
 
 	prop := s.Properties.Get(name.Local)
 	if prop != nil {
-		if prop.Value != nil && prop.Value.Xml != nil {
-			x := prop.Value.Xml
+		if prop.SubSchema != nil && prop.Xml != nil {
+			x := prop.Xml
 			if len(x.Prefix) > 0 && x.Prefix == name.Space {
 				return name.Local, prop
 			}
@@ -143,7 +138,7 @@ func getProperty(name xml.Name, s *Schema, asAttr bool) (string, *Ref) {
 		if prop == nil {
 			continue
 		}
-		x := prop.Value.Xml
+		x := prop.Xml
 		if x == nil {
 			continue
 		}
@@ -155,7 +150,7 @@ func getProperty(name xml.Name, s *Schema, asAttr bool) (string, *Ref) {
 	return name.Local, nil
 }
 
-func getItems(n *node, ref *Ref) ([]interface{}, error) {
+func getItems(n *node, ref *Schema) ([]interface{}, error) {
 	var r []interface{}
 	for _, child := range n.Nodes {
 		v, err := parse(&child, ref)
@@ -180,10 +175,10 @@ func isArray(n *node) bool {
 	return true
 }
 
-func isWrapped(ref *Ref) (string, bool) {
-	if ref == nil || ref.Value == nil || ref.Value.Xml == nil {
+func isWrapped(ref *Schema) (string, bool) {
+	if ref == nil || ref.SubSchema == nil || ref.Xml == nil {
 		return "", false
 	}
-	x := ref.Value.Xml
+	x := ref.Xml
 	return x.Name, x.Wrapped
 }

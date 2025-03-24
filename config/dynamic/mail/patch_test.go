@@ -33,6 +33,16 @@ func TestConfig_Patch(t *testing.T) {
 			},
 		},
 		{
+			name: "autoCreateMailbox",
+			configs: []*mail.Config{
+				{AutoCreateMailbox: true},
+				{AutoCreateMailbox: false},
+			},
+			test: func(t *testing.T, result *mail.Config) {
+				require.False(t, result.AutoCreateMailbox)
+			},
+		},
+		{
 			name: "add rule",
 			configs: []*mail.Config{
 				{},
@@ -52,6 +62,69 @@ func TestConfig_Patch(t *testing.T) {
 			test: func(t *testing.T, result *mail.Config) {
 				require.Len(t, result.Rules, 1)
 				require.Equal(t, ".*", result.Rules[0].Sender.String())
+			},
+		},
+		{
+			name: "update mailbox",
+			configs: []*mail.Config{
+				{
+					Mailboxes: []mail.MailboxConfig{
+						{
+							Name: "foo@example.com",
+						},
+					},
+				},
+				{
+					Mailboxes: []mail.MailboxConfig{
+						{
+							Name:     "foo@example.com",
+							Password: "secret",
+							Folders: []mail.FolderConfig{
+								{Name: "foo"},
+							},
+						},
+					},
+				},
+			},
+			test: func(t *testing.T, result *mail.Config) {
+				require.Len(t, result.Mailboxes, 1)
+				require.Equal(t, "secret", result.Mailboxes[0].Password)
+				require.Equal(t, []mail.FolderConfig{
+					{Name: "foo"},
+				}, result.Mailboxes[0].Folders)
+			},
+		},
+		{
+			name: "update mailbox folder",
+			configs: []*mail.Config{
+				{
+					Mailboxes: []mail.MailboxConfig{
+						{
+							Name: "foo@example.com",
+							Folders: []mail.FolderConfig{
+								{Name: "foo", Flags: []string{"foo"}},
+							},
+						},
+					},
+				},
+				{
+					Mailboxes: []mail.MailboxConfig{
+						{
+							Name:     "foo@example.com",
+							Password: "secret",
+							Folders: []mail.FolderConfig{
+								{Name: "foo", Flags: []string{"foo", "bar"}},
+							},
+						},
+					},
+				},
+			},
+			test: func(t *testing.T, result *mail.Config) {
+				require.Len(t, result.Mailboxes, 1)
+				require.Equal(t, "secret", result.Mailboxes[0].Password)
+				require.Equal(t, []mail.FolderConfig{
+					{Name: "foo", Flags: []string{"foo", "bar"}},
+				}, result.Mailboxes[0].Folders)
 			},
 		},
 	}

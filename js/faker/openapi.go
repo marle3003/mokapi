@@ -28,8 +28,8 @@ func isOpenApiSchema(o *goja.Object) bool {
 	return false
 }
 
-func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Ref, error) {
-	s := &schema.Schema{}
+func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Schema, error) {
+	s := &schema.Schema{SubSchema: &schema.SubSchema{}}
 
 	if v == nil {
 		return nil, nil
@@ -71,11 +71,13 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Ref, error) {
 			s.Default = obj.Get(k).Export()
 		case "example":
 			i := obj.Get(k).Export()
-			s.Example = i
+			s.Example = &jsonSchema.Example{Value: i}
 		case "examples":
 			i := obj.Get(k).Export()
 			if examples, ok := i.([]interface{}); ok {
-				s.Examples = examples
+				for _, e := range examples {
+					s.Examples = append(s.Examples, jsonSchema.Example{Value: e})
+				}
 			} else {
 				return nil, fmt.Errorf("unexpected type for 'examples'")
 			}
@@ -190,5 +192,5 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Ref, error) {
 			}
 		}
 	}
-	return &schema.Ref{Value: s}, nil
+	return s, nil
 }

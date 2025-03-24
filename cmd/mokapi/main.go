@@ -9,12 +9,12 @@ import (
 	"mokapi/config/decoders"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
-	"mokapi/config/dynamic/directory"
 	"mokapi/config/dynamic/mail"
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/feature"
 	"mokapi/providers/asyncapi3"
+	"mokapi/providers/directory"
 	"mokapi/providers/openapi"
 	"mokapi/providers/swagger"
 	"mokapi/runtime"
@@ -42,12 +42,21 @@ func main() {
 		log.Errorf("load config failed: %v", err)
 		return
 	}
+	err = cfg.Parse()
+	if err != nil {
+		log.Errorf("parse config failed: %v", err)
+		return
+	}
 
-	if cfg.Help {
+	switch {
+	case cfg.Help:
 		printHelp()
 		return
-	} else if cfg.GenerateSkeleton != nil {
+	case cfg.GenerateSkeleton != nil:
 		writeSkeleton(cfg)
+		return
+	case cfg.Version:
+		fmt.Println(versionString)
 		return
 	}
 
@@ -106,15 +115,15 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	smtp := server.NewSmtpManager(app, scriptEngine, certStore)
 	ldap := server.NewLdapDirectoryManager(scriptEngine, certStore, app)
 
-	watcher.AddListener(func(cfg *dynamic.Config) {
-		kafka.UpdateConfig(cfg)
-		http.Update(cfg)
-		smtp.UpdateConfig(cfg)
-		ldap.UpdateConfig(cfg)
-		if err := scriptEngine.AddScript(cfg); err != nil {
+	watcher.AddListener(func(e dynamic.ConfigEvent) {
+		kafka.UpdateConfig(e)
+		http.Update(e)
+		smtp.UpdateConfig(e)
+		ldap.UpdateConfig(e)
+		if err := scriptEngine.AddScript(e); err != nil {
 			log.Error(err)
 		}
-		app.AddConfig(cfg)
+		app.UpdateConfig(e)
 	})
 
 	if u, err := api.BuildUrl(cfg.Api); err == nil {

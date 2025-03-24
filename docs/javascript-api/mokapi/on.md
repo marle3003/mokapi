@@ -6,11 +6,11 @@ description: Attaches an event handler for the given event.
 
 Attaches an event handler for the given event.
 
-| Parameter        | Type     | Description                                                                                                        |
-|------------------|----------|--------------------------------------------------------------------------------------------------------------------|
-| event            | string   | Event type such as `http                                                                                           |
-| handler          | function | An [EventHandler](/docs/javascript-api/mokapi/eventhandler/eventhandler.md) to execute when the event is triggered |
-| args (optional)  | object   | [EventArgs](/docs/javascript-api/mokapi/eventhandler/eventargs.md) object contains additional event arguments.     | 
+| Parameter        | Type     | Description                                                                                                    |
+|------------------|----------|----------------------------------------------------------------------------------------------------------------|
+| event            | string   | Event type such as `http                                                                                       |
+| handler          | function | An [EventHandler](/docs/javascript-api/mokapi/eventhandler) to execute when the event is triggered             |
+| args (optional)  | object   | [EventArgs](/docs/javascript-api/mokapi/eventhandler/eventargs.md) object contains additional event arguments. | 
 
 ## Example Echo Server
 

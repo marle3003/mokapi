@@ -6,9 +6,7 @@
     background-color: #0d1117;
     color: rgb(132, 141, 151);
 }
-.ace_scroller {
-    left: 61px !important;
-}
+
 .ace-mokapi-dark .ace_marker-layer .ace_selected-word, .ace-mokapi-dark  .ace_marker-layer .ace_selection {
     background: #1e4173;
 }
@@ -29,19 +27,19 @@
     color:rgb(126, 231, 135);
 }
 .json .ace-mokapi-light  .ace_variable  {
-    color: rgb(17, 99, 41);
+    color: rgb(5, 80, 174)
 }
 .json .ace-mokapi-dark .ace_string {
     color: rgb(165, 214, 255);
 }
 .json .ace-mokapi-light .ace_string {
-    color: rgb(10, 48, 105);
+    color: rgb(10, 48, 105)
 }
 .json .ace-mokapi-dark .ace_constant.ace_numeric {
     color: rgb(121, 192, 255);
 }
 .json .ace-mokapi-light .ace_constant.ace_numeric {
-    color: rgb(31, 35, 40);
+    color: rgb(5, 80, 174)
 }
 
 /* xml */
@@ -109,4 +107,8 @@
 }
 .javascript .ace-mokapi-light .ace_identifier:has(+ .ace_paren.ace_lparen) {
     color: rgb(102, 57, 186)
+}
+
+.hex .ace_hex, .hex .ace_hex-alt {
+    padding-right: 8px;
 }

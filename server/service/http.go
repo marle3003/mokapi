@@ -61,7 +61,7 @@ func (s *HttpServer) AddOrUpdate(service *HttpService) error {
 	hostname := service.Url.Hostname()
 	paths, ok := s.handlers[hostname]
 	if !ok {
-		log.Infof("adding new host '%v' on binding %v", hostname, s.server.Addr)
+		log.Infof("adding new HTTP host '%v' on binding %v", hostname, s.server.Addr)
 		paths = make(map[string]*HttpService)
 		s.handlers[hostname] = paths
 	}
@@ -77,11 +77,38 @@ func (s *HttpServer) AddOrUpdate(service *HttpService) error {
 		if len(path) == 0 {
 			path = "/"
 		}
-		log.Infof("adding service %v on binding %v on path %v", service.Name, s.server.Addr, path)
+		log.Infof("adding service '%v' on binding %v on path %v", service.Name, s.server.Addr, path)
 		paths[service.Url.Path] = service
 	}
 
 	return nil
+}
+
+func (s *HttpServer) RemoveUrl(u *url.URL) {
+	hostname := u.Hostname()
+	if paths, ok := s.handlers[hostname]; ok {
+		delete(paths, u.Path)
+		if len(paths) == 0 {
+			delete(s.handlers, hostname)
+		}
+	}
+}
+
+func (s *HttpServer) Remove(name string) {
+	s.m.Lock()
+	defer s.m.Unlock()
+
+	for hostname, paths := range s.handlers {
+		for path, service := range paths {
+			if service.Name == name {
+				log.Infof("removing service '%v' on binding %v on path %v", name, s.server.Addr, path)
+				delete(paths, service.Url.Path)
+			}
+		}
+		if len(paths) == 0 {
+			delete(s.handlers, hostname)
+		}
+	}
 }
 
 func (s *HttpServer) Start() {
@@ -106,6 +133,10 @@ func (s *HttpServer) Stop() {
 	}
 }
 
+func (s *HttpServer) CanClose() bool {
+	return len(s.handlers) == 0
+}
+
 func (s *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = r.WithContext(context.WithValue(r.Context(), "time", time.Now()))
 
@@ -113,11 +144,7 @@ func (s *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if service != nil {
 		if !service.IsInternal {
-			log.WithFields(log.Fields{
-				"url":    r.URL.String(),
-				"host":   r.Host,
-				"method": r.Method,
-			}).Info("processing http request")
+			log.Infof("processing http request %v %s", r.Method, r.URL)
 		}
 
 		if service.Handler == nil {

@@ -7,7 +7,7 @@ import (
 
 func TestNewBytes_Len(t *testing.T) {
 	b := NewBytes([]byte("foobar"))
-	require.Equal(t, 6, b.Len())
+	require.Equal(t, 6, b.Size())
 }
 
 func TestNewBytes_Read(t *testing.T) {

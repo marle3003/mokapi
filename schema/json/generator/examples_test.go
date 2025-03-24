@@ -20,8 +20,8 @@ func TestExamples(t *testing.T) {
 				Path: Path{
 					&PathElement{
 						Schema: &schema.Schema{
-							Examples: []interface{}{
-								"Anything", 4035,
+							Examples: []schema.Example{
+								{"Anything"}, {4035},
 							},
 						},
 					},
@@ -37,7 +37,7 @@ func TestExamples(t *testing.T) {
 			req: &Request{
 				Path: Path{
 					&PathElement{
-						Schema: schematest.New("integer", schematest.WithExample("foo")),
+						Schema: schematest.New("integer", schematest.WithExamples("foo")),
 					},
 				},
 			},

@@ -7,16 +7,15 @@ test('Visit Guides', async ({ page, home }) => {
 
     await test.step('meta information are available', async () => {
         await expect(page).toHaveURL('/docs/guides')
-        await expect(page).toHaveTitle('Mocking APIs with Mokapi | Mokapi Guides')
+        await expect(page).toHaveTitle('Getting Started with Mokapi: Mock APIs and Validate Against Schemas | Mokapi Guides')
         await expect(page.locator('meta[name="description"]')).toHaveAttribute(
             'content',
-            'These guides covers everything you need to know about Mokapi and mocking APIs.'
+            'Learn to set up Mokapi for mocking APIs, no account required, free and open-source.'
         )
-        await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://mokapi.io/docs/guides/get-started/welcome')
+        await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://mokapi.io/docs/guides/welcome')
     })
 
     await test.step('navigation is open', async () => {
-        await expect(page.getByRole('button', { name: 'Get Started' })).toHaveCSS('color', config.colorLinkActive)
         const link = page.getByRole('link', { name: 'Welcome' })
         await expect(link).toBeVisible()
         await expect(link).toHaveCSS('color', config.colorLinkActive)
@@ -33,19 +32,20 @@ test('Visit Guides', async ({ page, home }) => {
 
     await test.step('click on Welcome change to canonical url', async () => {
         await page.getByRole('link', { name: 'Welcome' }).click()
-        await expect(page).toHaveURL('/docs/guides/get-started/welcome')
+        await expect(page).toHaveURL('/docs/guides/welcome')
     })
 
     await test.step('navigation collapse works', async () => {
-        await page.getByRole('button', { name: 'HTTP' }).click()
-        await expect(page.getByRole('link', { name: 'Overview' })).toBeVisible()
+        await page.getByRole('link', { name: 'HTTP', exact: true }).click()
+        await expect(page.getByRole('link', { name: 'Quick Start', exact: true })).toBeVisible()
 
-        await page.getByRole('button', { name: 'Kafka' }).click()
-        await expect(page.getByRole('region', { name: 'Kafka' }).getByRole('link', { name: 'Overview' })).toBeVisible()
-        await expect(page.getByRole('region', { name: 'HTTP' }).getByRole('link', { name: 'Overview' })).toBeVisible()
+        await page.getByRole('button', { name: 'Get Started', exact: true }).click()
+        const getStarted = page.getByRole('region', { name: 'Get Started' })
+        await expect(getStarted.getByRole('link', { name: 'Installation' })).toBeVisible()
+        await expect(page.getByRole('region', { name: 'HTTP' }).getByRole('link', { name: 'Quick Start' })).toBeVisible()
 
         await page.getByRole('button', { name: 'Get Started'}).click()
-        await expect(page.getByRole('link', { name: 'Welcome' })).not.toBeVisible()
+        await expect(getStarted.getByRole('link', { name: 'Installation' })).toBeVisible()
     })
 
     await test.step('visit HTTP Quick Start page', async () => {
@@ -62,7 +62,7 @@ test('Visit Guides', async ({ page, home }) => {
         })
 
         await test.step('navigation is open', async () => {
-            await expect(page.getByRole('button', { name: 'HTTP' })).toHaveCSS('color', config.colorLinkActive)
+            await expect(page.getByRole('navigation', { name: 'sidebar' }).getByRole('link', { name: 'HTTP', exact: true })).not.toHaveCSS('color', config.colorLinkActive)
             const link = page.getByRole('link', { name: 'Quick Start' })
             await expect(link).toBeVisible()
             await expect(link).toHaveCSS('color', config.colorLinkActive)

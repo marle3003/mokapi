@@ -20,7 +20,7 @@ func TestParser_Array(t *testing.T) {
 			schema: schematest.New("array"),
 			data:   map[string]interface{}{"a": 1, "b": 2, "c": nil},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected array but got object\nschema path #/type")
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected array but got object")
 			},
 		},
 		{
@@ -37,7 +37,7 @@ func TestParser_Array(t *testing.T) {
 			schema: schematest.New("array", schematest.WithItems("integer")),
 			data:   []interface{}{1, 2, 3, 4, "foo"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected integer but got string\nschema path #/items/type")
+				require.EqualError(t, err, "error count 1:\n\t- #/items/4/type: invalid type, expected integer but got string")
 			},
 		},
 		{
@@ -66,7 +66,7 @@ func TestParser_Array(t *testing.T) {
 			)),
 			data: []interface{}{1, "foo"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected integer but got string\nschema path #/prefixItems/1/type")
+				require.EqualError(t, err, "error count 1:\n\t- #/items/1/type: invalid type, expected integer but got string")
 			},
 		},
 		{
@@ -77,7 +77,7 @@ func TestParser_Array(t *testing.T) {
 			), schematest.WithItems("integer")),
 			data: []interface{}{1, 2, "foo"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected integer but got string\nschema path #/items/type")
+				require.EqualError(t, err, "error count 1:\n\t- #/items/2/type: invalid type, expected integer but got string")
 			},
 		},
 		{
@@ -112,7 +112,7 @@ func TestParser_Array(t *testing.T) {
 			), schematest.WithItemsNew(schematest.NewBool(false))),
 			data: []interface{}{1, 2, "foo"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nschema always fails validation\nschema path #/items/valid")
+				require.EqualError(t, err, "error count 1:\n\t- #/items/2/valid: schema always fails validation")
 			},
 		},
 		{
@@ -123,7 +123,7 @@ func TestParser_Array(t *testing.T) {
 			), schematest.WithUnevaluatedItems(&schema.Schema{Boolean: toBoolP(false)})),
 			data: []interface{}{1, 2, "foo"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nitem at index 2 has not been successfully evaluated and the schema does not allow unevaluated items.\nschema path #/unevaluatedItems")
+				require.EqualError(t, err, "error count 1:\n\t- #/unevaluatedItems: item at index 2 has not been successfully evaluated and the schema does not allow unevaluated items")
 			},
 		},
 		{
@@ -143,7 +143,7 @@ func TestParser_Array(t *testing.T) {
 			schema: schematest.New("array", schematest.WithContains(schematest.New("integer"))),
 			data:   []interface{}{"foo"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nno items match contains\nschema path #/contains")
+				require.EqualError(t, err, "error count 1:\n\t- #/contains: no items match contains")
 			},
 		},
 		{
@@ -163,7 +163,7 @@ func TestParser_Array(t *testing.T) {
 			),
 			data: []interface{}{1},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ncontains match count 1 is less than minimum contains count of 2\nschema path #/minContains")
+				require.EqualError(t, err, "error count 1:\n\t- #/minContains: contains match count 1 is less than minimum contains count of 2")
 			},
 		},
 		{
@@ -186,7 +186,7 @@ func TestParser_Array(t *testing.T) {
 			),
 			data: []interface{}{1, 2},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ncontains match count 2 exceeds maximum contains count of 1\nschema path #/maxContains")
+				require.EqualError(t, err, "error count 1:\n\t- #/maxContains: contains match count 2 exceeds maximum contains count of 1")
 			},
 		},
 		{
@@ -208,7 +208,7 @@ func TestParser_Array(t *testing.T) {
 			),
 			data: []interface{}{1},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nitem count 1 is less than minimum count of 2\nschema path #/minItems")
+				require.EqualError(t, err, "error count 1:\n\t- #/minItems: item count 1 is less than minimum count of 2")
 			},
 		},
 		{
@@ -229,7 +229,7 @@ func TestParser_Array(t *testing.T) {
 			),
 			data: []interface{}{1, 2},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nitem count 2 exceeds maximum count of 1\nschema path #/maxItems")
+				require.EqualError(t, err, "error count 1:\n\t- #/maxItems: item count 2 exceeds maximum count of 1")
 			},
 		},
 		{
@@ -250,7 +250,7 @@ func TestParser_Array(t *testing.T) {
 			),
 			data: []interface{}{1, 2, 2},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nnon-unique array item at index 2\nschema path #/uniqueItems")
+				require.EqualError(t, err, "error count 1:\n\t- #/uniqueItems: non-unique array item at index 2")
 			},
 		},
 		{
@@ -271,7 +271,7 @@ func TestParser_Array(t *testing.T) {
 			),
 			data: []string{"a", "b"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nvalue '[a, b]' does not match const '[a, b, c]'\nschema path #/const")
+				require.EqualError(t, err, "error count 1:\n\t- #/const: value '[a, b]' does not match const '[a, b, c]'")
 			},
 		},
 		{
@@ -283,6 +283,33 @@ func TestParser_Array(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{"a", "b", "c"}, v)
+			},
+		},
+		{
+			name: "numErrors",
+			schema: schematest.New("array",
+				schematest.WithItems("string"),
+			),
+			data: []interface{}{"a", 1, 2},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "error count 2:\n\t- #/items/1/type: invalid type, expected string but got integer\n\t- #/items/2/type: invalid type, expected string but got integer")
+			},
+		},
+		{
+			name: "numErrors nested",
+			schema: schematest.New("array",
+				schematest.WithItems("object",
+					schematest.WithProperty("foo", schematest.New("string", schematest.WithMinLength(3))),
+					schematest.WithProperty("bar", schematest.New("integer", schematest.WithMinimum(5))),
+				),
+			),
+			data: []interface{}{
+				map[string]interface{}{"foo": "foo"},
+				map[string]interface{}{"foo": "foo", "bar": "bar"},
+				map[string]interface{}{"foo": "a", "bar": "bar"},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "error count 3:\n\t- #/items/1/bar/type: invalid type, expected integer but got string\n\t- #/items/2/foo/minLength: string 'a' is less than minimum of 3\n\t- #/items/2/bar/type: invalid type, expected integer but got string")
 			},
 		},
 	}

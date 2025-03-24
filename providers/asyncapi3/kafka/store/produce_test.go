@@ -127,8 +127,8 @@ func TestProduce(t *testing.T) {
 
 				logs := events.GetEvents(events.NewTraits().WithNamespace("kafka").WithName("test").With("topic", "foo"))
 				require.Len(t, logs, 2)
-				require.Equal(t, "foo-2", logs[0].Data.(*store.KafkaLog).Key)
-				require.Equal(t, "bar-2", logs[0].Data.(*store.KafkaLog).Message)
+				require.Equal(t, []byte("foo-2"), logs[0].Data.(*store.KafkaLog).Key.Binary)
+				require.Equal(t, []byte("bar-2"), logs[0].Data.(*store.KafkaLog).Message.Binary)
 				require.Equal(t, int64(1), logs[0].Data.(*store.KafkaLog).Offset)
 
 				require.Equal(t, int64(0), logs[1].Data.(*store.KafkaLog).Offset)
@@ -260,11 +260,11 @@ func TestProduce(t *testing.T) {
 				require.Equal(t, "foo", res.Topics[0].Name)
 				require.Equal(t, kafka.UnknownServerError, res.Topics[0].Partitions[0].ErrorCode, "expected kafka error UnknownServerError")
 				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
-				require.Equal(t, "invalid producer clientId 'kafkatest' for topic foo: found 1 error:\nstring 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'\nschema path #/pattern", res.Topics[0].Partitions[0].ErrorMessage)
+				require.Equal(t, "invalid producer clientId 'kafkatest' for topic foo: error count 1:\n\t- #/pattern: string 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'", res.Topics[0].Partitions[0].ErrorMessage)
 
 				require.Equal(t, 1, len(hook.Entries))
 				require.Equal(t, logrus.ErrorLevel, hook.LastEntry().Level)
-				require.Equal(t, "kafka Produce: invalid producer clientId 'kafkatest' for topic foo: found 1 error:\nstring 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'\nschema path #/pattern", hook.LastEntry().Message)
+				require.Equal(t, "kafka Produce: invalid producer clientId 'kafkatest' for topic foo: error count 1:\n\t- #/pattern: string 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'", hook.LastEntry().Message)
 			},
 		},
 		{
@@ -310,11 +310,43 @@ func TestProduce(t *testing.T) {
 				res, ok := rr.Message.(*produce.Response)
 				require.True(t, ok)
 				require.Equal(t, "foo", res.Topics[0].Name)
-				require.Equal(t, kafka.None, res.Topics[0].Partitions[0].ErrorCode, "expected no kafka error")
+				require.Equal(t, kafka.None, res.Topics[0].Partitions[0].ErrorCode, res.Topics[0].Partitions[0].ErrorMessage)
 				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
 				require.Equal(t, "", res.Topics[0].Partitions[0].ErrorMessage)
 
 				require.Equal(t, 0, len(hook.Entries))
+			},
+		},
+		{
+			"no partitions",
+			func(t *testing.T, s *store.Store) {
+				ch := asyncapi3test.NewChannel(
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 0}))
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("foo",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+					),
+				))
+				rr := kafkatest.NewRecorder()
+				s.ServeMessage(rr, kafkatest.NewRequest("MOKAPITEST1", 3, &produce.Request{
+					Topics: []produce.RequestTopic{
+						{Name: "foo", Partitions: []produce.RequestPartition{
+							{
+								Index: 0,
+								Record: kafka.RecordBatch{
+									Records: []*kafka.Record{{}},
+								},
+							},
+						},
+						}},
+				}))
+
+				res, ok := rr.Message.(*produce.Response)
+				require.True(t, ok)
+				require.Equal(t, "foo", res.Topics[0].Name)
+				require.Equal(t, kafka.UnknownTopicOrPartition, res.Topics[0].Partitions[0].ErrorCode, "expected no kafka error")
 			},
 		},
 	}

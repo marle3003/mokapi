@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useMeta } from '@/composables/meta'
+import Footer from '@/components/Footer.vue'
 
 const script = `import { every } from 'mokapi'
 import { produce } from 'mokapi/kafka'
@@ -28,7 +29,7 @@ export default function() {
 }
 `
 
-const title = `Apache Kafka mocking and testing`
+const title = `Mock and Validate Kafka Messages with Mokapi`
 const description = `Don't wait for producers to send new messages. Create your own sample messages that fit your needs.`
 useMeta(title, description, "https://mokapi.io/kafka")
 </script>
@@ -38,9 +39,12 @@ useMeta(title, description, "https://mokapi.io/kafka")
     <section>
       <div class="container">
         <div class="row hero-title">
-          <div class="col-12 col-lg-6">
-            <h1>Apache Kafka mocking and testing</h1>
-            <p class="description">Create your own sample messages that fit your needs</p>
+          <div class="col-12 col-lg-6 px-0">
+            <h1>Mock and Validate Kafka Messages with Ease</h1>
+            <div class="badge-list mb-3">
+              <span class="badge">Kafka</span>
+            </div>
+            <p class="description">Test and develop Kafka-based applications faster with Mokapi's powerful mocking and validation tools.</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
@@ -50,9 +54,9 @@ useMeta(title, description, "https://mokapi.io/kafka")
               </router-link>
             </p>
           </div>
-          <div class="col-12 col-lg-6 justify-content-center">
+          <div class="col-12 col-lg-5 justify-content-center">
             <a href="#dialog" data-bs-toggle="modal" data-bs-target="#dialog">
-              <img src="/kafka.png" alt="Kafka Cluster Dashboard" />
+              <img src="/logo.svg" alt="Mokapi API Mock Tool" class="mx-auto d-block" />
             </a>
           </div>
           <div class="col-12 d-block d-md-none">
@@ -70,53 +74,85 @@ useMeta(title, description, "https://mokapi.io/kafka")
     </section>
     <section>
       <div class="container">
-        <h2>Bring your AsyncAPI specs to life</h2>
-        <div class="card-group">
-          <div class="card">
-            <div class="card-body">
-              <h3 class="card-title">Configuration as Code</h3>
-              Mock your Kafka Cluster with AsyncAPI
+        <h2>Why Choose Mokapi for Kafka?</h2>
+        <div class="row row-cols-1 row-cols-md-2 g-4">
+          <div class="col">
+            <div class="card h-100 position-relative">
+                <div class="card-body">
+                  <h3 class="card-title align-middle"><i class="bi bi-lightning-charge me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Effortless Kafka Mocking</span></h3>
+                  <p class="card-text pb-4">Simulate Kafka topics and produce or consume messages without setting up a real Kafka cluster.</p>
+                </div>
             </div>
           </div>
-          <div class="card">
-            <div class="card-body">
-              <h3 class="card-title">QA Automation</h3>
-              Verify that messages are written using Mokapi's Dashboard or API
+          <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                  <h3 class="card-title align-middle"><i class="bi bi-shield-check me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Schema Validation</span></h3>
+                  <p class="card-text pb-4">Ensure message consistency by validating against JSON Schema and Avro formats.</p>
+                </div>
             </div>
           </div>
-          <div class="card">
-            <div class="card-body">
-              <h3 class="card-title">Mokapi Scripts</h3>
-              Produce or intercept Kafka messages for your unique workflow and edge cases.
+          <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                  <h3 class="card-title align-middle"><i class="bi bi-file-code me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >AsyncAPI Support</span></h3>
+                  <p class="card-text pb-4">Define Kafka message structures using AsyncAPI and validate messages in real-time.</p>
+                </div>
             </div>
           </div>
-          <div class="card">
-            <div class="card-body">
-              <h3 class="card-title">Validate correct messages</h3>
-              Mokapi validates that your application is producing correct messages.
+          <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                  <h3 class="card-title align-middle"><i class="bi bi-plug me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Seamless Integration</span></h3>
+                  <p class="card-text pb-4">Use Mokapi in your CI/CD pipelines to automate Kafka testing.</p>
+                </div>
             </div>
           </div>
         </div>
       </div>
     </section>
+
     <section>
       <div class="container">
-        <div class="row">
-          <div class="col-12 justify-content-center">
-            <h2>Produce Kafka messages for your specific requirements</h2>
-            <div class="justify-content-center">
-              <pre v-highlightjs="script"><code class="javascript"></code></pre>
-            </div>
-            </div>
+        <h2>Use Cases</h2>
+      <div class="row row-cols-1 row-cols-md-3 g-4">
+        <div class="col">
+          <div class="card h-100 position-relative">
+              <div class="card-body">
+                <h3 class="card-title align-middle"><i class="bi bi-diagram-3 me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Test Microservices</span></h3>
+                <p class="card-text pb-4">Simulate Kafka events to test how microservices respond to different messages and scenarios.</p>
+                <a href="docs/guides/kafka" class="card-link position-absolute" style="bottom: 15px;">Learn More</a>
+              </div>
           </div>
         </div>
+        <div class="col">
+          <div class="card h-100">
+              <div class="card-body">
+                <h3 class="card-title align-middle"><i class="bi bi-check2-circle me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Validate Producer Messages</span></h3>
+                <p class="card-text pb-4">Ensure that producer applications generate valid messages before they reach a real Kafka cluster.</p>
+                <a href="/docs/examples/tutorials/get-started-with-kafka" class="card-link position-absolute" style="bottom: 15px;">Start Validating</a>
+              </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="card h-100">
+              <div class="card-body">
+                <h3 class="card-title align-middle"><i class="bi bi-gear-wide-connected me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Simulate Complex Workflows</span></h3>
+                <p class="card-text pb-4">Mock complex Kafka message flows to test end-to-end interactions between services.</p>
+                <a href="/docs/examples/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="card-link position-absolute" style="bottom: 15px;">Explore Workflows</a>
+              </div>
+          </div>
+        </div>
+      </div>
+      </div>
     </section>
+
     <section>
       <div class="container">
         <div class="row">
           <div class="col-12">
-            <h2>View your data inside Apache Kafka cluster</h2>
-            <p class="text-center">Analyze and inspect topics, topics data, consumer groups and more...</p>
+            <h2>Visualize Kafka Messages</h2>
+            <p class="text-center">Gain insights into your Kafka traffic and consumer groups with the interactive dashboard.</p>
             <a href="#kafkadialog" data-bs-toggle="modal" data-bs-target="#kafkadialog">
               <img src="/kafka-dashboard.png" style="width:100%" alt="Analyze and inspect topics, topics data, consumer groups and more..." />
             </a>
@@ -124,15 +160,6 @@ useMeta(title, description, "https://mokapi.io/kafka")
         </div>
       </div>
     </section>
-    <div class="modal fade" id="dialog" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-body">
-            <img src="/kafka.png" width="100%" alt="Kafka Cluster Dashboard"/>
-          </div>
-        </div>
-      </div>
-    </div>
     <div class="modal fade" id="kafkadialog" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
@@ -143,4 +170,5 @@ useMeta(title, description, "https://mokapi.io/kafka")
       </div>
     </div>
   </main>
+  <Footer></Footer>
 </template>

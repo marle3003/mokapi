@@ -146,7 +146,7 @@ func (suite *PetStoreSuite) TestJsHttpHandler() {
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/4",
 		map[string]string{"Accept": "application/json", "api_key": "123"},
 		try.HasStatusCode(http.StatusInternalServerError),
-		try.HasBody("encoding data to 'application/json' failed: found 1 error:\nrequired properties are missing: name, photoUrls\nschema path #/required\n"))
+		try.HasBody("encoding data to 'application/json' failed: error count 1:\n\t- #/required: required properties are missing: name, photoUrls\n"))
 
 	// use generated data but change pet's name
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/5",
@@ -191,7 +191,7 @@ func (suite *PetStoreSuite) TestKafka_TopicConfig() {
 	require.Equal(suite.T(), "petstore.order-event", r.Topics[0].Name)
 	require.Len(suite.T(), r.Topics[0].Partitions, 2)
 
-	require.Len(suite.T(), suite.cmd.App.Http, 1)
+	require.Len(suite.T(), suite.cmd.App.Http.List(), 1)
 }
 
 func (suite *PetStoreSuite) TestKafka_Produce_InvalidFormat() {
@@ -272,6 +272,7 @@ func (suite *PetStoreSuite) TestKafkaEventAndMetrics() {
 
 	// test kafka events, header added by JavaScript event handler
 	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/events?namespace=kafka", suite.cfg.Api.Port), nil,
-		try.BodyContains(`"headers":{"foo":"bar","x-specification-message-id":`),
+		try.BodyContains(`"headers":{"foo":{"value":"bar","binary":"YmFy"}`),
+		try.BodyContains(`"messageId":"#/components/messages/order"`),
 	)
 }

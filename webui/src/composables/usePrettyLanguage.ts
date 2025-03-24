@@ -20,22 +20,14 @@ export function usePrettyLanguage() {
                 return XmlFormatter(s, {collapseContent: true})
         }
 
-        switch (contentType) {
-            case 'avro/binary':
-                try{ 
-                    return JSON.stringify(JSON.parse(s), null, 2)
-                }catch {
-                    console.error("unable to parse json: "+s)
-                    return s
-                }
-        }
-
         return s
     }
 
     function getLanguage(contentType: string) {
         const mimeType = new MIMEType(contentType)
         switch (mimeType.subtype){
+            case 'xml':
+            case 'problem+xml':
             case 'rss+xml':
                 return 'xml'
             case 'plain':
@@ -44,14 +36,19 @@ export function usePrettyLanguage() {
                 return 'javascript'
             case 'typescript':
                 return 'javascript'
+            case 'yaml':
+                return 'yaml'
+            case 'json':
+            case 'problem+json':
+                return 'json'
         }
 
         switch (contentType) {
             case 'avro/binary':
                 // display avro content as JSON
-                return "javascript"
+                return 'hex'
             default:
-                return 'text'
+                return mimeType.subtype
         }
     }
 
@@ -89,3 +86,11 @@ export function usePrettyLanguage() {
 
     return { formatLanguage, getLanguage, getContentType, formatSchema }
 }
+
+function toBinary(s: string) {
+    const codeUnits = new Uint16Array(s.length);
+    for (let i = 0; i < codeUnits.length; i++) {
+      codeUnits[i] = s.charCodeAt(i);
+    }
+    return btoa(String.fromCharCode(...new Uint8Array(codeUnits.buffer)));
+  }

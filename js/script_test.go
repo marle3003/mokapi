@@ -90,7 +90,8 @@ func TestScript(t *testing.T) {
 		s, err := jstest.New(jstest.WithSource(`function custom() {return 2}; export {custom}`), js.WithHost(&enginetest.Host{}))
 		r.NoError(t, err)
 		err = s.RunFunc(func(vm *goja.Runtime) {
-			exports := vm.Get("exports").ToObject(vm)
+			mod := vm.Get("module").ToObject(vm)
+			exports := mod.Get("exports").ToObject(vm)
 			f, _ := goja.AssertFunction(exports.Get("custom"))
 			v, err := f(goja.Undefined())
 			r.NoError(t, err)

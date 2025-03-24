@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/pkg/errors"
+	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 )
 
@@ -63,6 +64,7 @@ func NewTree() *Tree {
 	root := &Tree{
 		Name: "Faker",
 		Nodes: []*Tree{
+			Context(),
 			Generic(),
 			Compositions(),
 			Pets(),
@@ -92,6 +94,28 @@ func Basic() *Tree {
 			Array(),
 			Bool(),
 			AnyType(),
+		},
+	}
+}
+
+func Context() *Tree {
+	p := parser.Parser{ConvertStringToNumber: true, ConvertStringToBoolean: true}
+	return &Tree{
+		Name: "Context",
+		Test: func(r *Request) bool {
+			if len(r.history) > 2 {
+				return false
+			}
+			v, ok := r.context[r.LastName()]
+			if !ok {
+				return false
+			}
+			_, err := p.ParseWith(v, r.LastSchema())
+			return err == nil
+		},
+		Fake: func(r *Request) (interface{}, error) {
+			v := r.context[r.LastName()]
+			return p.ParseWith(v, r.LastSchema())
 		},
 	}
 }

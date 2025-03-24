@@ -92,6 +92,7 @@ func (c *Channel) UnmarshalYAML(node *yaml.Node) error {
 func (c *Channel) UnmarshalJSON(b []byte) error {
 	// set default
 	c.Bindings.Kafka.ValueSchemaValidation = true
+	c.Bindings.Kafka.KeySchemaValidation = true
 	c.Bindings.Kafka.Partitions = 1
 
 	type alias Channel

@@ -9,7 +9,6 @@ import (
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/providers/swagger"
-	avro "mokapi/schema/avro/schema"
 	json "mokapi/schema/json/schema"
 	"net/url"
 	"os"
@@ -25,6 +24,10 @@ components:
       schemaFormat: 'application/vnd.apache.avro;version=1.9.0'
       schema:
         type: record
+    FooRef:
+      schemaFormat: 'application/vnd.apache.avro;version=1.9.0'
+      schema:
+        $ref: 'npm://foo.bar'
     Bar:
       type: object
 `)
@@ -34,8 +37,13 @@ components:
 
 	multi := cfg.Components.Schemas["Foo"].Value
 	require.Equal(t, "application/vnd.apache.avro;version=1.9.0", multi.Format)
-	avroSchema := multi.Schema.(*avro.Schema)
+	avroSchema := multi.Schema.(*asyncapi3.AvroRef)
 	require.Equal(t, "record", avroSchema.Type[0])
+
+	multi = cfg.Components.Schemas["FooRef"].Value
+	require.Equal(t, "application/vnd.apache.avro;version=1.9.0", multi.Format)
+	avroSchema = multi.Schema.(*asyncapi3.AvroRef)
+	require.Equal(t, "npm://foo.bar", avroSchema.Ref)
 
 	jsonSchema := cfg.Components.Schemas["Bar"].Value.Schema.(*json.Schema)
 	require.Equal(t, "object", jsonSchema.Type.String())
@@ -127,7 +135,7 @@ func TestStreetlightKafka(t *testing.T) {
 
 func TestConfig_ReferenceSwagger(t *testing.T) {
 	cr := dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
-		return &dynamic.Config{Data: &swagger.Config{Definitions: map[string]*schema.Ref{"foo": schematest.NewRef("string")}}}, nil
+		return &dynamic.Config{Data: &swagger.Config{Definitions: map[string]*schema.Schema{"foo": schematest.New("string")}}}, nil
 	})
 
 	cfg := &asyncapi3.Config{
@@ -136,8 +144,8 @@ func TestConfig_ReferenceSwagger(t *testing.T) {
 				"foo": {
 					Value: &asyncapi3.MultiSchemaFormat{
 						Format: "application/vnd.oai.openapi;version=3.0.0",
-						Schema: &schema.Ref{
-							Reference: dynamic.Reference{Ref: "swagger.json#/definitions/foo"},
+						Schema: &schema.Schema{
+							Ref: "swagger.json#/definitions/foo",
 						},
 					},
 				},
@@ -146,6 +154,6 @@ func TestConfig_ReferenceSwagger(t *testing.T) {
 	}
 	err := cfg.Parse(&dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: cfg}, cr)
 	require.NoError(t, err)
-	s := cfg.Components.Schemas["foo"].Value.Schema.(*schema.Ref)
-	require.Equal(t, "string", s.Value.Type.String())
+	s := cfg.Components.Schemas["foo"].Value.Schema.(*schema.Schema)
+	require.Equal(t, "string", s.Type.String())
 }

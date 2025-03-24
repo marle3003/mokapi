@@ -62,10 +62,10 @@ func WithServer(url, description string) ConfigOptions {
 }
 
 func WithComponentSchema(name string, s *schema.Schema) ConfigOptions {
-	return WithComponentSchemaRef(name, &schema.Ref{Value: s})
+	return WithComponentSchemaRef(name, s)
 }
 
-func WithComponentSchemaRef(name string, s *schema.Ref) ConfigOptions {
+func WithComponentSchemaRef(name string, s *schema.Schema) ConfigOptions {
 	return func(c *openapi.Config) {
 		if c.Components.Schemas == nil {
 			c.Components.Schemas = &schema.Schemas{}
@@ -81,9 +81,9 @@ func WithComponentResponse(name string, r *openapi.Response) ConfigOptions {
 func WithComponentResponseRef(name string, r *openapi.ResponseRef) ConfigOptions {
 	return func(c *openapi.Config) {
 		if c.Components.Responses == nil {
-			c.Components.Responses = &openapi.Responses[string]{}
+			c.Components.Responses = openapi.ResponseBodies{}
 		}
-		c.Components.Responses.Set(name, r)
+		c.Components.Responses[name] = r
 	}
 }
 

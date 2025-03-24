@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, ref, inject  } from 'vue';
-import { useRoute } from 'vue-router';
+import { onMounted, ref, inject, computed  } from 'vue';
+import { useRoute, type RouteParamsRawGeneric } from 'vue-router';
 import { useMarkdown } from '@/composables/markdown'
 import { useMeta } from '@/composables/meta'
 import PageNotFound from './PageNotFound.vue';
@@ -12,7 +12,6 @@ import DocNav from '@/components/docs/DocNav.vue';
 const files = inject<Record<string, string>>('files')!
 
 const nav = inject<DocConfig>('nav')!
-const openSidebar = ref(false);
 const dialog = ref<Modal>()
 const imageUrl = ref<string>()
 const imageDescription = ref<string>()
@@ -37,7 +36,38 @@ if (typeof file === 'string'){
   }
 }
 
-const title = ref<string>('')
+const breadcrumb = computed(() => {
+  const list = new Array()
+  let current: DocConfig | DocEntry = nav
+  const params: RouteParamsRawGeneric = {}
+  for (const [index, name] of levels.entries()) {
+    if (index === 0) {
+      current = (<DocConfig>current)[name]
+    }
+    else  {
+      const e: DocEntry | string = (<DocEntry>current).items![name]
+      if (typeof e === 'string') {
+        list.push({ label: name, isLast: true })
+        break
+      } else {
+        current = e
+      }
+    }
+
+    params['level'+(index+1)] = formatParam(name)
+    const item: { label: string, params?: RouteParamsRawGeneric, isLast: boolean, class?: string } = { 
+      label: name, 
+      isLast: false
+    }
+    
+    if (index === 0|| (current && current.index)) {
+      item.params = params
+    }
+    list.push(item)
+  }
+  return list
+})
+
 onMounted(() => {
   setTimeout(() => {
     for (var pre of document.querySelectorAll('pre')) {
@@ -50,21 +80,10 @@ onMounted(() => {
       })
     }
   }, 1000)
-  document.addEventListener("click", function (event) {
-    if (event.target instanceof Element){
-      const target = event.target as Element
-      if (!target.closest("#sidebarToggler") && document.getElementById("sidebar")?.classList.contains("open")) {
-          openSidebar.value = false
-      }
-    }
-  })
-  title.value = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0]) + ' | Mokapi ' + levels[0]
-  useMeta(title.value, metadata.description, getCanonicalUrl(levels))
+  const title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0]) + ' | Mokapi ' + levels[0]
+  useMeta(title, metadata.description, getCanonicalUrl(levels))
   dialog.value = new Modal('#imageDialog', {})
 })
-function toggleSidebar() {
-  openSidebar.value = !openSidebar.value
-}
 function toUrlPath(s: string): string {
   return s.replaceAll(/[\s\/]/g, '-').replace('&', '%26')
 }
@@ -87,23 +106,27 @@ function showImage(target: EventTarget | null) {
 function hasTouchSupport() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 }
+function formatParam(label: any): string {
+  return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
+}
 </script>
 
 <template>
   <main class="d-flex">
     <div style="width: 100%; height: 100%;display: flex;flex-direction: column;">
-      <div class="subheader d-flex d-md-none">
-        <button @click="toggleSidebar" id="sidebarToggler" :class="openSidebar ? '' : 'collapsed'">
-          <i class="bi bi-list"></i> 
-          <i class="bi bi-x"></i>       
-        </button>
-        <span class="ms-2">{{ levels[3] || levels[2] || levels[1] || levels[0] }}</span>
-      </div>
       <div class="d-flex">
-        <div class="text-white sidebar d-none d-md-block" :class="openSidebar ? 'open' : ''" id="sidebar">
-          <DocNav :config="nav" :levels="levels" :title="levels[3] || levels[2] || levels[1] || levels[0]"/>
+        <div class="sidebar d-none d-md-block">
+          <DocNav :config="nav" :levels="levels" :title="levels[0]"/>
         </div>
-        <div style="flex: 1;max-width:760px;margin-bottom: 3rem;">
+        <div style="flex: 1;max-width:50em;margin-bottom: 3rem;">
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb flex-nowrap">
+              <li class="breadcrumb-item text-truncate" v-for="item of breadcrumb" :class="item.isLast ? 'active' : ''">
+                <router-link v-if="item.params && !item.isLast" class="" :to="{ name: 'docs', params: item.params }">{{ item.label }}</router-link>
+                <template v-else class="" :class="item.class">{{ item.label }}</template>
+              </li>
+            </ol>
+          </nav>
           <div v-if="content" v-html="content" class="content" @click="showImage($event.target)"></div>
           <div v-else-if="component" class="content"><component :is="component" /></div>
           <page-not-found v-else />
@@ -127,36 +150,6 @@ function hasTouchSupport() {
 </template>
 
 <style>
-.subheader {
-  background-color: var(--color-background);
-  position:sticky;
-  top:4rem;
-  left: 0;
-  z-index:10;
-  width: 100%;
-  display: flex;
-  border-bottom: 1px solid;
-  border-top: 1px solid;
-  border-color: var(--color-datatable-border);
-  align-items: center;
-  font-weight: 700;
-}
-.subheader button {
-  background-color: var(--color-background);
-  border: 0;
-  color: var(--color-text);
-  font-size: 1.3rem;
-  opacity: 0.8;
-}
-.subheader button:not(.collapsed) .bi-list {
-  display: none;
-}
-.subheader button.collapsed .bi-x {
-  display: none;
-}
-.subheader span {
-  opacity: 0.8;
-}
 .sidebar {
   position: sticky;
   top: 4rem;
@@ -164,24 +157,17 @@ function hasTouchSupport() {
   width: 270px;
   padding-top: 2rem;
 }
-.sidebar.open {
-  background-color: var(--color-background);
-  z-index: 100;
-  display: block !important;
-  position:fixed;
-  top: 102px;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  padding-top: 0;
-  overflow-y: scroll;
+.breadcrumb {
+  padding-top: 2rem;
+  margin-left: 1.2rem;
+  margin-right: 1.2rem;
+  width: calc(100vw - 2rem);
 }
 .content {
   margin-left: 1.2rem;
   margin-right: 1.2rem;
-  padding-top: 2rem;
-  line-height: 1.6;
-  font-size: 1.1rem;
+  line-height: 1.75;
+  font-size: 1rem;
 }
 
 .content h1 {
@@ -199,7 +185,7 @@ function hasTouchSupport() {
 }
 
 .content h2 > svg path {
-  fill: var(--color-link);
+  fill: var(--link-color);
 }
 
 .content h3 {
@@ -232,25 +218,22 @@ table {
 table.selectable td {
     cursor: pointer;
 }
-table thead tr {
-    color: var(--color-datatable-header-text);
-}
 table thead th {
+    color: var(--table-header-color);
     padding: 3px 0 3px 12px;
-    border-color: var(--color-datatable-border);
+    border-color: var(--table-border-color);
     border-top-width: 0px;
     border-bottom-width: 2px;
-    font-weight: 500;
+    font-weight: bold;
 }
 table td {
-    border-top-width: 2px;
-    border-bottom-width: 2px;
-    border-color: var(--color-datatable-border);
+    border-bottom-width: 1px;
+    border-color: var(--table-border-color);
     border-style: solid;
-    padding: 7px 20px 12px 12px;
+    padding: 8px;
     border-left-style: hidden;
     border-right-style: hidden;
-    font-size: 0.9rem;
+    line-height: 1.4;
 }
 
 table tbody tr:hover {
@@ -268,15 +251,21 @@ pre {
   white-space: pre-wrap;
   word-break: break-all;
   border-radius: 6px;
+  line-height: 1.4;
+  font-family: Menlo,Monaco,Consolas,"Courier New",monospace !important;
+  font-size: 0.85rem;
 }
 @media only screen and (max-width: 600px)  {
   pre {
     max-width: 350px !important;
   }
 }
+code {
+  font-family: Menlo,Monaco,Consolas,"Courier New",monospace !important;
+}
 
 .content ul li h3 {
-  font-size: 1.1rem;
+  font-size: 1rem;
   margin-bottom: 0.5rem;
 }
 
@@ -295,7 +284,7 @@ pre {
   border-left-width: 0.2rem ;
   border-left-style: solid;
   border-radius: 0.2rem;
-  font-size: 1.1rem;
+  font-size: 1rem;
   box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.2), 0 0.25rem 0.5rem rgba(0, 0, 0, 0.2);
 }
 .box.no-title {
@@ -314,9 +303,10 @@ pre {
   margin: 0;
 }
 .box mark {
-  background-color: #a0a1a7;
-  padding: 0 0.1rem 0 0.1rem;
-  border-radius: 0.1rem;
+  background-color: var(--color-yellow);
+  color: rgb(3,6,11);
+  padding: 0.1em;
+  border-radius: 0.3em;
 }
 .box.info{
   border-color: var(--color-blue);
@@ -355,7 +345,7 @@ blockquote {
   font-family: Open Sans;
   font-style: italic;
   padding: 1.2em 30px 1.2em 70px;
-  line-height: 1.6;
+  line-height: 1.75;
   font-size: 1.2rem;
   border-left: 8px solid #eabaabff;
   position: relative;
@@ -380,21 +370,22 @@ blockquote span{
 }
 
 .content a.card {
-  background-color: var(--color-tabs-background);
+  background-color: var(--card-background);
   color: var(--color-text);
-  border-color: var(--color-tabs-border);
-  cursor: pointer;
+  border-color: var(--card-border);
   border-radius: 10px;
 }
 .content a.card:hover {
-  border-color: var(--color-background-mute);
-  box-shadow: 0 2px 5px rgba(82,85,93,.7);
+  border-color: var(--card-border-active);
+  cursor: pointer;
 }
 .content a.card .card-title {
-  font-weight: 500;
+  font-weight: bold;
 }
-.content a.card .card-text {
-  font-weight: 400;
-  font-size: 1rem;
+.content li:has(p) {
+  padding: 8px 6px 8px 6px
+}
+.content li > p {
+  margin-bottom: 0;
 }
 </style>

@@ -84,7 +84,7 @@ func (p *Provider) Read(u *url.URL) (*dynamic.Config, error) {
 	return c, err
 }
 
-func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
+func (p *Provider) Start(ch chan dynamic.ConfigEvent, pool *safe.Pool) error {
 	if p.running {
 		return nil
 	}
@@ -98,7 +98,7 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 		p.files[u] = 0
 	}
 
-	interval := time.Second * 5
+	interval := time.Minute * 3
 	if len(p.config.PollInterval) > 0 {
 		interval, err = time.ParseDuration(p.config.PollInterval)
 		if err != nil {
@@ -126,8 +126,8 @@ func (p *Provider) Start(ch chan *dynamic.Config, pool *safe.Pool) error {
 	return nil
 }
 
-func (p *Provider) checkFiles(ch chan *dynamic.Config) {
-	for f := range p.files {
+func (p *Provider) checkFiles(ch chan dynamic.ConfigEvent) {
+	for f, hash := range p.files {
 		u, _ := url.Parse(f)
 		c, changed, err := p.readUrl(u)
 		if err != nil {
@@ -138,7 +138,13 @@ func (p *Provider) checkFiles(ch chan *dynamic.Config) {
 			}
 
 		} else if changed {
-			ch <- c
+			e := dynamic.ConfigEvent{Config: c, Name: f}
+			if hash == 0 {
+				e.Event = dynamic.Create
+			} else {
+				e.Event = dynamic.Update
+			}
+			ch <- e
 		}
 	}
 }

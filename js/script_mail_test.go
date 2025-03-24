@@ -128,7 +128,7 @@ func Test_Mail(t *testing.T) {
 			host: &enginetest.Host{},
 			test: func(t *testing.T, v *smtp.Message, err error) {
 				r.NoError(t, err)
-				r.Equal(t, "quoted-printable", v.Encoding)
+				r.Equal(t, "quoted-printable", v.ContentTransferEncoding)
 			},
 		},
 		{
@@ -206,7 +206,7 @@ func Test_Mail(t *testing.T) {
 			t.Parallel()
 
 			var received *smtp.Message
-			c := &mail.Config{}
+			c := &mail.Config{AutoCreateMailbox: true}
 			h := mail.NewHandler(c, mail.NewStore(c), enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
 				received = args[0].(*smtp.Message)
 				return nil

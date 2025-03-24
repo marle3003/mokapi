@@ -1,6 +1,6 @@
 /**
  * Mokapi JavaScript API
- * https://mokapi.io/docs/guides/get-started/welcome
+ * https://mokapi.io/docs/guides/welcome
  */
 
 import "./faker";
@@ -8,7 +8,8 @@ import "./global";
 import "./http";
 import "./mustache";
 import "./yaml";
-import "./encoding"
+import "./encoding";
+import "./mail";
 
 /**
  * Attaches an event handler for the given event.
@@ -380,7 +381,7 @@ export interface DateArgs {
     /**
      * The format of the textual representation, default is RFC3339
      */
-    layout?: DateLayout;
+    layout?: DateLayout | string;
 
     /**
      * The timestamp of the date, default is current UTC time

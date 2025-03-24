@@ -33,7 +33,7 @@ func printHelp() {
 	fmt.Print("\n")
 
 	fmt.Print("\n  --providers-http-url (string)\n\tLoad the dynamic configuration from file")
-	fmt.Print("\n  --providers-http-poll-interval (string)\n\tLPolling interval for URL (default: 5s)")
+	fmt.Print("\n  --providers-http-poll-interval (string)\n\tLPolling interval for URL (default: 3m)")
 	fmt.Print("\n  --providers-http-poll-timeout (string)\n\tPolling timeout for URL (default is 5s)")
 	fmt.Print("\n  --providers-http-proxy (string)\n\tSpecifies a proxy server for the request")
 	fmt.Print("\n  --providers-http-tls-skip-verify (boolean)\n\tSpecifies a proxy server for the request")
@@ -41,7 +41,7 @@ func printHelp() {
 	fmt.Print("\n")
 
 	fmt.Print("\n  --providers-git-url (string)\n\tLoad one or more dynamic configuration from a GIT repository")
-	fmt.Print("\n  --providers-git-pull-interval (string)\n\tPulling interval for URL (default: 5s)")
+	fmt.Print("\n  --providers-git-pull-interval (string)\n\tPulling interval for URL (default: 3m)")
 	fmt.Print("\n  --providers-git-temp-dir (string)\n\tSpecifies the folder to checkout all GIT repositories")
 	fmt.Print("\n")
 

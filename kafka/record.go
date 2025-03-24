@@ -21,8 +21,14 @@ func NewRecordBatch() RecordBatch {
 	return RecordBatch{Records: make([]*Record, 0)}
 }
 
-func (rb *RecordBatch) ReadFrom(d *Decoder) error {
-	size := d.ReadInt32()
+func (rb *RecordBatch) ReadFrom(d *Decoder, version int16, tag kafkaTag) error {
+	var size int64
+	if version != 0 && version >= tag.compact {
+		size = int64(d.ReadUvarint())
+	} else {
+		size = int64(d.ReadInt32())
+	}
+
 	if size <= 0 {
 		return nil
 	}
@@ -60,35 +66,83 @@ type RecordHeader struct {
 	Value []byte `json:"value"`
 }
 
-func (r *Record) Size() (s int) {
-	r.Key.Seek(0, io.SeekStart)
-	r.Value.Seek(0, io.SeekStart)
+func (r *Record) Size(baseOffSet int64, base time.Time) int {
+	t := Timestamp(r.Time)
+	if t == 0 {
+		t = Timestamp(time.Now())
+	}
+	deltaTimestamp := t - Timestamp(base)
+	deltaOffset := r.Offset - baseOffSet
+	keyLength := 0
 	if r.Key != nil {
-		s += r.Key.Len()
+		keyLength = r.Key.Size()
 	}
+	valueLength := 0
 	if r.Value != nil {
-		s += r.Value.Len()
+		valueLength = r.Value.Size()
 	}
-	return
+
+	size := 1 + // attribute
+		sizeVarInt(deltaTimestamp) +
+		sizeVarInt(deltaOffset) +
+		sizeVarInt(int64(keyLength)) + keyLength +
+		sizeVarInt(int64(valueLength)) + valueLength +
+		sizeVarInt(int64(len(r.Headers)))
+
+	for _, h := range r.Headers {
+		k := len(h.Key)
+		v := len(h.Value)
+		size += sizeVarInt(int64(k)) + k +
+			sizeVarInt(int64(v)) + v
+	}
+
+	return size
 }
 
 func (rb *RecordBatch) Size() (s int) {
+	if len(rb.Records) == 0 {
+		return 0
+	}
+
+	t := rb.Records[0].Time
+	o := rb.Records[0].Offset
+
+	s = 60
 	for _, r := range rb.Records {
-		s += r.Size()
+		s += r.Size(o, t)
 	}
 	return
 }
 
-func (rb *RecordBatch) WriteTo(e *Encoder) {
+func (rb *RecordBatch) WriteTo(e *Encoder, version int16, tag kafkaTag) {
+	isCompact := version != 0 && version >= tag.compact
+
 	if len(rb.Records) == 0 {
-		// send only size of records
-		e.writeInt32(0) // size
+		if isCompact {
+			e.writeUVarInt(0)
+		} else {
+			e.writeInt32(0)
+		}
 		return
 	}
 
-	offsetBatchSize := e.writer.Size()
-	e.writeInt32(0) // placeholder length
+	b := newPageBuffer()
+	rb.writeTo(NewEncoder(b))
 
+	if isCompact {
+		messageSetSize := b.Size() + 1
+		e.writeUVarInt(uint64(messageSetSize))
+	} else {
+		messageSetSize := b.Size()
+		e.writeInt32(int32(messageSetSize))
+	}
+	_, err := b.WriteTo(e.writer)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (rb *RecordBatch) writeTo(e *Encoder) {
 	offset := e.writer.Size()
 	buffer := make([]byte, 8)
 
@@ -106,19 +160,20 @@ func (rb *RecordBatch) WriteTo(e *Encoder) {
 	e.writeInt32(-1)                     // base sequence
 	e.writeInt32(int32(len(rb.Records))) // num records
 
-	firstTimestamp := int64(0)
+	firstTime := rb.Records[0].Time
+	if firstTime.IsZero() {
+		firstTime = time.Now()
+	}
+	firstTimestamp := Timestamp(firstTime)
 	maxTimestamp := int64(0)
 	lastOffSetDetla := uint32(0)
 
 	// records must be sorted by time
 	for i, r := range rb.Records {
+		if r.Time.IsZero() {
+			r.Time = firstTime
+		}
 		t := Timestamp(r.Time)
-		if t == 0 {
-			t = Timestamp(time.Now())
-		}
-		if i == 0 {
-			firstTimestamp = t
-		}
 		if t > maxTimestamp {
 			maxTimestamp = t
 		}
@@ -127,38 +182,18 @@ func (rb *RecordBatch) WriteTo(e *Encoder) {
 		deltaOffset := int64(i)
 		lastOffSetDetla = uint32(i)
 
-		keyLength := r.Key.Len()
-		valueLength := r.Value.Len()
-		headerLength := len(r.Headers)
-
-		size :=
-			1 + // attribute
-				binary.PutVarint(buffer, deltaTimestamp) +
-				binary.PutVarint(buffer, deltaOffset) +
-				binary.PutVarint(buffer, int64(keyLength)) + keyLength +
-				binary.PutVarint(buffer, int64(valueLength)) + valueLength +
-				binary.PutVarint(buffer, int64(headerLength))
-
-		for _, h := range r.Headers {
-			k := len(h.Key)
-			v := len(h.Value)
-			size += binary.PutVarint(buffer, int64(k)) + k +
-				binary.PutVarint(buffer, int64(v)) + v
-		}
-
-		e.writeVarInt(int64(size))
+		e.writeVarInt(int64(r.Size(int64(i), firstTime)))
 		e.writeInt8(0) // attributes
 		e.writeVarInt(deltaTimestamp)
 		e.writeVarInt(deltaOffset)
 
-		e.writeVarNullBytes(r.Key)
-		e.writeVarNullBytes(r.Value)
+		e.writeVarNullBytesFrom(r.Key)
+		e.writeVarNullBytesFrom(r.Value)
 
-		e.writeVarInt(int64(headerLength))
-
+		e.writeVarInt(int64(len(r.Headers)))
 		for _, h := range r.Headers {
 			e.writeVarString(h.Key)
-			e.writeVarNullBytes_Old(h.Value)
+			e.writeVarNullBytes(h.Value)
 		}
 	}
 
@@ -186,7 +221,18 @@ func (rb *RecordBatch) WriteTo(e *Encoder) {
 
 	binary.BigEndian.PutUint32(buffer[:4], checksum)
 	e.writer.WriteAt(buffer[:4], offset+17)
+}
 
-	size := e.writer.Size() - offsetBatchSize - 4
-	e.writer.WriteSizeAt(size, offsetBatchSize)
+func sizeVarInt(x int64) int {
+	// code from binary.PutVarint
+	ux := uint64(x) << 1
+	if x < 0 {
+		ux = ^ux
+	}
+	i := 0
+	for ux >= 0x80 {
+		ux >>= 7
+		i++
+	}
+	return i + 1
 }

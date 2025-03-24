@@ -1,33 +1,26 @@
 :root{
     --color-background: #323743;
     --color-background-mute:  #2e2e31;
-    --color-background-soft: #282b33;
+    --color-background-soft: rgb(40,43,51);
     --color-background-light: #393a40;
 
     --color-border: #282b33;
 
-    --color-red: #ff2e4a;
+    --color-red: rgb(255, 46, 74);
     --color-red-shadow: rgba(255, 46, 74, 0.4);
-    --color-blue: #027bff;
+    --color-blue: rgb(2, 123, 255);
     --color-blue-shadow: rgba(2, 123, 255, 0.4);
-    --color-orange: #ffc347;
+    --color-orange: rgb(255, 195, 71);
     --color-orange-shadow: rgba(255, 195, 71, 0.4);
-    --color-green: #30a72d;
+    --color-green: rgb(48, 167, 45);
     --color-green-shadow: rgba(48, 167, 45, 0.4);
-    --color-yellow: #eab839;
-    --color-yellow-shadow: rgba(234, 184, 57, 0.4);
-    --color-purple: #b644a4;
+    --color-yellow: rgb(255, 193, 7);
+    --color-yellow-shadow: rgba(255, 193, 7, 0.4);
+    --color-purple: rgb(182, 68, 164);
     --color-purpl-shadowe: rgba(182, 68, 164, 0.4);
-    --color-blue-cold: #eabaabff;
 
     --color-brand: #d3d4d5;
     --color-brand-hover: #eabaabff;
-
-    --color-header-link: rgb(211, 212, 213);
-    --color-header-link-active: #eabaabff;
-
-    --color-link: #eabaabff;
-    --color-link-active: #a5899fff;
 
     --color-doc-link: #eabaabff;
     --color-doc-link-active: #a5899fff;
@@ -38,10 +31,6 @@
     --color-button-link-active: #a5899fff;
     --color-button-text-hover: #353e5bff;
     --color-button-border-hover: #a5899fff;
-
-    --color-nav-link: #d3d4d5;
-    --color-nav-link-active: #eabaabff;
-    --shadow-nav-link-active: var(--color-nav-link-active) 1px 0px 10px;
 
     --color-text: #d3d4d5;
     --color-text-light: #a0a1a7;
@@ -56,40 +45,112 @@
     --color-tabs-text: #eabaabff;
 
     --color-popover-border: #52555d;
+
+
+    --header-color: rgb(255,255,255);
+    --header-link-color: var(--header-color);
+    --header-link-color-active: #eabaabff;
+
+    --icon-color: #eabaabff;
+
+    --link-color: #eabaabff;;
+    --link-color-active: #eabaabff;
+ 
+    --nav-color: #d3d4d5;
+    --nav-color-active: #eabaabff;
+
+    --card-background: rgb(255,255,255,0.04);
+    --card-border: rgb(255,255,255,0.1);
+    --card-border-active: rgb(255,255,255,0.2);
+
+    --code-tabs-color: #d3d4d5;
+    --code-tabs-color-active: #eabaabff;
+
+    --table-header-color: var(--text-color);
+    --table-border-color: rgba(255, 255, 255, 0.1);
+
+    --datatable-color: var(--color-text);
+    --datatable-background: var(--color-background-soft);
+    --datatable-background-active: var(--color-background-mute);
+    --datatable-border-color: #52555d;
+    --datatable-header-color: #eabaabff;
+
+    --dashboard-tab-background-active: var(--color-background-soft);
+
+    --source-border: rgb(255,255,255,0.1);
+    --source-header-color: rgb(160, 161, 167);
+    --source-header-background-active: rgb(47,49,56);
+
+    --modal-header-border:  rgba(255, 255, 255, 0.1);
+    --modal-footer-border:  rgba(255, 255, 255, 0.1);
+
+    --footer-background: #282b33;
 }
 
 [data-theme="light"] {
     --color-background: #fff;
     --color-background-mute: #dfe2ec;
-    --color-background-soft: #f6f8fcff;
+    --color-background-soft: rgb(246,250,253);
     --color-background-light: #dfe2ec;
     --color-border: #f6f8fcff;
 
-    --color-blue-cold: #cb8080;
-
-    --color-header-link: rgb(3,6,11);
-    --color-header-link-active: #eabaabff;
-
     --color-text: rgb(3,6,11);
     --color-text-light: rgb(101, 109, 118);
-    --color-link: #cb8080;
-    --color-link-active: #b54a4a;
-    --color-nav-link: #494c68ff;
-    --color-nav-link-active: #cb8080;
-    --shadow-nav-link-active: var(--color-header-link-active) 1px 0px 10px;
 
-    --color-doc-link: #cb8080;
-    --color-doc-link-active: #b54a4a;
-    --color-doc-text-hover: #b54a4a;
+    --color-doc-link: rgb(8, 109, 215);
+    --color-doc-link-active: rgb(8, 109, 215);
+    --color-doc-text-hover: rgb(8, 109, 215);
     --color-doc-border-hover: rgb(22, 19, 21);
 
-    --color-button-link: #cb8080;
-    --color-button-link-active: #cb8080;
+    --color-button-link: rgb(2, 101, 210);
+    --color-button-link-active: rgb(8, 109, 215);
     --color-button-text-hover: #fff;
-    --color-button-border-hover: #cb8080;
+    --color-button-border-hover: rgb(8, 109, 215);
 
     --color-tabs-background: #FFF;
 
-    --color-datatable-header-text: #cb8080;
-    --color-datatable-border: #bbbdc3;
+    --color-datatable-header-text: rgb(8, 109, 215);
+    --color-datatable-border: rgb(8, 109, 215);
+
+
+    --header-color: rgb(36, 36, 36);
+    --header-link-color: var(--header-color);
+    --header-link-color-active: rgb(8, 109, 215);
+
+    --icon-color: #7e708bff;
+
+    --link-color: rgb(8, 109, 215);
+    --link-color-active: rgb(8, 109, 215);
+
+    --nav-color: var(--color-text);
+    --nav-color-active: rgb(8, 109, 215);
+
+    --card-background: rgb(0,0,0,0.01);
+    --card-border: rgb(0,0,0,0.1);
+    --card-border-active: rgb(0,0,0,0.3);
+
+    --code-tabs-color: rgb(36, 36, 36);
+    --code-tabs-color-active: rgb(8, 109, 215);
+
+    --table-header-color: var(--color-text);
+    --table-border-color: rgba(0, 0, 0, 0.1);
+
+    --datatable-color: var(--color-text);
+    --datatable-background: var(--color-background-soft);
+    --datatable-background-active: var(--color-background-mute);
+    --datatable-border-color:  rgba(0, 0, 0, 0.1);
+    --datatable-header-color:  var(--color-text);
+
+    --dashboard-tab-background-active: rgb(240,242,246);
+    --dashboard-nav-border: rgb(0,0,0,0.3);
+    --dashboard-nav-border-active: rgb(8, 109, 215);
+
+    --source-border: rgb(0,0,0,0.2);
+    --source-header-color: rgb(101, 109, 118);
+    --source-header-background-active: rgb(239,244,248);
+
+    --modal-header-border: rgba(0, 0, 0, 0.1);
+    --modal-footer-border: rgba(0, 0, 0, 0.1);
+
+    --footer-background: rgb(244 244 246);
 }

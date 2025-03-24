@@ -9,12 +9,16 @@ jobs:
   release-linux:
     name: Release
     runs-on: ubuntu-latest
+    env:
+      DOCKER_CLI_EXPERIMENTAL: "enabled"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v3
       - name: Docker Login
         uses: docker/login-action@v1
         with:
@@ -46,10 +50,13 @@ jobs:
         run: task publish-npm-package VERSION=${GITHUB_REF##*/v}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
   release-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-go@v5
         with:
           go-version: 1.23.4
@@ -64,6 +71,30 @@ jobs:
         run: task build-vue-app
         env:
           CGO_ENABLED: 0
+      - name: Install goversioninfo
+        run: go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@v1.4.0
+      - name: Generate Windows metadata (.syso)
+        working-directory: ./cmd/mokapi
+        shell: pwsh
+        run: |
+          $versionParts = ($env:GITHUB_REF -replace '.*/v', '').Split('.')
+          '{}' | Out-File versioninfo.json -NoNewline ascii
+          goversioninfo -64 `
+            -platform-specific='true' `
+            -charset="1200" `
+            -company="Mokapi OpenSource" `
+            -copyright="© Marcel Lehmann. Licensed under MIT." `
+            -description="Your API Mocking Tool for Agile Development, using Go and JavaScript" `
+            -icon="../../icon.ico" `
+            -internal-name="mokapi" `
+            -original-name="mokapi.exe" `
+            -product-name="mokapi" `
+            -translation="0x0409" `
+            -ver-major="$($versionParts[0])" `
+            -ver-minor="$($versionParts[1])" `
+            -ver-patch="$($versionParts[2])" `
+            -product-version="$($versionParts[0]).$($versionParts[1]).$($versionParts[2])"
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:

@@ -297,6 +297,18 @@ func TestLoad(t *testing.T) {
 				require.EqualError(t, err, "configuration error foo: not found")
 			},
 		},
+		{
+			name: "argument after positional argument",
+			f: func(t *testing.T) {
+				s := &struct {
+					Name string
+				}{}
+				os.Args = append(os.Args, "mokapi.exe", "file.json", "--foo=bar")
+
+				err := Load([]ConfigDecoder{&FlagDecoder{}}, s)
+				require.EqualError(t, err, "unexpected --foo=bar after positional argument")
+			},
+		},
 	}
 
 	for _, tc := range testcases {

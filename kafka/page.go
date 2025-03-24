@@ -105,7 +105,7 @@ func (f *fragment) Read(b []byte) (int, error) {
 	return read, nil
 }
 
-func (f *fragment) Len() int {
+func (f *fragment) Size() int {
 	return f.length
 }
 

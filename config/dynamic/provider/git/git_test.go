@@ -27,12 +27,12 @@ func TestGit(t *testing.T) {
 	testcases := []struct {
 		name string
 		cfg  static.GitProvider
-		test func(t *testing.T, ch chan *dynamic.Config)
+		test func(t *testing.T, ch chan dynamic.ConfigEvent)
 	}{
 		{
 			name: "clone",
 			cfg:  static.GitProvider{Urls: []string{"https://github.com/marle3003/mokapi-example.git"}},
-			test: func(t *testing.T, ch chan *dynamic.Config) {
+			test: func(t *testing.T, ch chan dynamic.ConfigEvent) {
 				timeout := time.After(1 * time.Second)
 				count := 0
 			Stop:
@@ -42,7 +42,7 @@ func TestGit(t *testing.T) {
 						break Stop
 					case c := <-ch:
 						count++
-						inner := c.Info.Inner()
+						inner := c.Config.Info.Inner()
 						name := filepath.Base(inner.Url.String())
 						path := inner.Url.Path
 						if len(inner.Url.Opaque) > 0 {
@@ -50,10 +50,10 @@ func TestGit(t *testing.T) {
 						}
 
 						require.True(t, strings.HasPrefix(path, os.TempDir()), "file is in system default temp path: %v", path)
-						require.Equal(t, "git", c.Info.Provider)
-						require.Equal(t, "https://github.com/marle3003/mokapi-example.git?file=/"+name, c.Info.Path())
+						require.Equal(t, "git", c.Config.Info.Provider)
+						require.Equal(t, "https://github.com/marle3003/mokapi-example.git?file=/"+name, c.Config.Info.Path())
 						require.Contains(t, gitFiles, name)
-						require.NotNil(t, c.Info.Checksum)
+						require.NotNil(t, c.Config.Info.Checksum)
 					}
 				}
 				require.Equal(t, 4, count)
@@ -62,7 +62,7 @@ func TestGit(t *testing.T) {
 		{
 			name: "clone a branch",
 			cfg:  static.GitProvider{Urls: []string{"https://github.com/marle3003/mokapi-example.git?ref=main"}},
-			test: func(t *testing.T, ch chan *dynamic.Config) {
+			test: func(t *testing.T, ch chan dynamic.ConfigEvent) {
 				timeout := time.After(1 * time.Second)
 				count := 0
 			Stop:
@@ -72,7 +72,7 @@ func TestGit(t *testing.T) {
 						break Stop
 					case c := <-ch:
 						count++
-						name := filepath.Base(c.Info.Inner().Url.String())
+						name := filepath.Base(c.Config.Info.Inner().Url.String())
 						require.Contains(t, gitFiles, name)
 
 					}
@@ -90,7 +90,7 @@ func TestGit(t *testing.T) {
 					},
 				},
 			},
-			test: func(t *testing.T, ch chan *dynamic.Config) {
+			test: func(t *testing.T, ch chan dynamic.ConfigEvent) {
 				timeout := time.After(1 * time.Second)
 				count := 0
 			Stop:
@@ -100,7 +100,7 @@ func TestGit(t *testing.T) {
 						break Stop
 					case c := <-ch:
 						count++
-						name := filepath.Base(c.Info.Inner().Url.String())
+						name := filepath.Base(c.Config.Info.Inner().Url.String())
 						require.Contains(t, gitFiles, name)
 
 					}
@@ -118,7 +118,7 @@ func TestGit(t *testing.T) {
 					},
 				},
 			},
-			test: func(t *testing.T, ch chan *dynamic.Config) {
+			test: func(t *testing.T, ch chan dynamic.ConfigEvent) {
 				timeout := time.After(1 * time.Second)
 				count := 0
 			Stop:
@@ -128,7 +128,7 @@ func TestGit(t *testing.T) {
 						break Stop
 					case c := <-ch:
 						count++
-						name := filepath.Base(c.Info.Inner().Url.String())
+						name := filepath.Base(c.Config.Info.Inner().Url.String())
 						require.Contains(t, gitFiles, name)
 
 					}
@@ -145,7 +145,7 @@ func TestGit(t *testing.T) {
 			g := New(tc.cfg)
 			p := safe.NewPool(context.Background())
 			defer p.Stop()
-			ch := make(chan *dynamic.Config)
+			ch := make(chan dynamic.ConfigEvent)
 			defer close(ch)
 			err := g.Start(ch, p)
 			require.NoError(t, err)
@@ -163,7 +163,7 @@ func TestGit_MultipleUrls(t *testing.T) {
 	defer func() {
 		p.Stop()
 	}()
-	ch := make(chan *dynamic.Config)
+	ch := make(chan dynamic.ConfigEvent)
 	defer close(ch)
 	err := g.Start(ch, p)
 	require.NoError(t, err)
@@ -175,8 +175,8 @@ Stop:
 		select {
 		case <-timeout:
 			break Stop
-		case c := <-ch:
-			files[c.Info.Url.String()] = c
+		case e := <-ch:
+			files[e.Config.Info.Url.String()] = e.Config
 		}
 	}
 	require.Len(t, files, 8)
@@ -199,7 +199,7 @@ func TestCustomTempDir(t *testing.T) {
 	g := New(cfg)
 	p := safe.NewPool(context.Background())
 	defer p.Stop()
-	ch := make(chan *dynamic.Config)
+	ch := make(chan dynamic.ConfigEvent)
 	defer close(ch)
 	err := g.Start(ch, p)
 	require.NoError(t, err)
@@ -211,11 +211,11 @@ Stop:
 		select {
 		case <-timeout:
 			break Stop
-		case c := <-ch:
-			files[c.Info.Url.String()] = c
-			path := c.Info.Inner().Url.Path
-			if len(c.Info.Inner().Url.Opaque) > 0 {
-				path = c.Info.Inner().Url.Opaque
+		case e := <-ch:
+			files[e.Config.Info.Url.String()] = e.Config
+			path := e.Config.Info.Inner().Url.Path
+			if len(e.Config.Info.Inner().Url.Opaque) > 0 {
+				path = e.Config.Info.Inner().Url.Opaque
 			}
 
 			require.True(t, strings.HasPrefix(path, os.TempDir()), "file is in custom  temp path: %v", cfg.TempDir)
@@ -239,15 +239,15 @@ func testGit_SimpleUrl(t *testing.T) {
 	p := safe.NewPool(context.Background())
 	defer p.Stop()
 
-	ch := make(chan *dynamic.Config)
+	ch := make(chan dynamic.ConfigEvent)
 	err := g.Start(ch, p)
 	require.NoError(t, err)
 
 	select {
 	case <-time.After(1 * time.Second):
 		t.Fatal("Timeout")
-	case c := <-ch:
-		require.Equal(t, "foo.txt", filepath.Base(c.Info.Url.String()))
+	case e := <-ch:
+		require.Equal(t, "foo.txt", filepath.Base(e.Config.Info.Url.String()))
 	}
 }
 
@@ -262,7 +262,7 @@ func testGit_SparseUrl(t *testing.T) {
 	p := safe.NewPool(context.Background())
 	defer p.Stop()
 
-	ch := make(chan *dynamic.Config)
+	ch := make(chan dynamic.ConfigEvent)
 	err := g.Start(ch, p)
 	require.NoError(t, err)
 
@@ -272,8 +272,8 @@ Stop:
 		select {
 		case <-time.After(3 * time.Second):
 			break Stop
-		case c := <-ch:
-			files[filepath.Base(c.Info.Url.String())] = c.Info.Url.String()
+		case e := <-ch:
+			files[filepath.Base(e.Config.Info.Url.String())] = e.Config.Info.Url.String()
 		}
 	}
 

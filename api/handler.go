@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -163,8 +164,11 @@ func (h *handler) getServices(w http.ResponseWriter, _ *http.Request) {
 	services := make([]interface{}, 0)
 	services = append(services, getHttpServices(h.app.Http, h.app.Monitor)...)
 	services = append(services, getKafkaServices(h.app.Kafka, h.app.Monitor)...)
-	services = append(services, getMailServices(h.app.Smtp, h.app.Monitor)...)
+	services = append(services, getMailServices(h.app.Mail, h.app.Monitor)...)
 	services = append(services, getLdapServices(h.app.Ldap, h.app.Monitor)...)
+	slices.SortFunc(services, func(a interface{}, b interface{}) int {
+		return compareService(a, b)
+	})
 	w.Header().Set("Content-Type", "application/json")
 	writeJsonBody(w, services)
 }
@@ -183,16 +187,16 @@ func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	i := info{Version: h.app.Version, BuildTime: h.app.BuildTime}
-	if len(h.app.Http) > 0 {
+	if len(h.app.Http.List()) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "http")
 	}
-	if len(h.app.Kafka) > 0 {
+	if len(h.app.Kafka.List()) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "kafka")
 	}
-	if len(h.app.Smtp) > 0 {
+	if len(h.app.Mail.List()) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "smtp")
 	}
-	if len(h.app.Ldap) > 0 {
+	if len(h.app.Ldap.List()) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "ldap")
 	}
 
@@ -203,6 +207,7 @@ func writeJsonBody(w http.ResponseWriter, i interface{}) {
 	b, err := json.Marshal(i)
 	if err != nil {
 		writeError(w, err, http.StatusInternalServerError)
+		return
 	}
 	_, err = w.Write(b)
 	if err != nil {
@@ -222,4 +227,22 @@ func isImage(path string) bool {
 	default:
 		return false
 	}
+}
+
+func compareService(a, b interface{}) int {
+	return strings.Compare(getServiceName(a), getServiceName(b))
+}
+
+func getServiceName(a interface{}) string {
+	switch v := a.(type) {
+	case *httpSummary:
+		return v.Name
+	case *kafkaSummary:
+		return v.Name
+	case *ldapSummary:
+		return v.Name
+	case *mailSummary:
+		return v.Name
+	}
+	return ""
 }

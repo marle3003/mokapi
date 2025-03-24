@@ -1,13 +1,6 @@
 package schema
 
-import (
-	"encoding/json"
-	"fmt"
-	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic"
-)
-
-type Ref struct {
+/*type Ref struct {
 	dynamic.Reference
 	Boolean *bool
 	Value   *Schema
@@ -67,7 +60,7 @@ func (r *Ref) String() string {
 }
 
 func (r *Ref) getXml() *Xml {
-	if r != nil && r.Value != nil {
+	if r != nil && r.Value != nil && r.Value.SubSchema != nil {
 		return r.Value.Xml
 	}
 	return nil
@@ -105,4 +98,4 @@ func (r *Ref) IsFreeForm() bool {
 func (r *Ref) MarshalJSON() ([]byte, error) {
 	e := encoder{refs: map[string]bool{}}
 	return e.encode(r)
-}
+}*/

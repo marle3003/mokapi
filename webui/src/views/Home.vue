@@ -37,12 +37,12 @@ function hasTouchSupport() {
         <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6 px-0">
             
-            <h1>The Ultimate API Mock Tool for Agile Development</h1>
-            <div class="mb-3">
-              <span class="badge">HTTP</span>
-              <span class="badge">Kafka</span>
-              <span class="badge">LDAP</span>
-              <span class="badge">SMTP</span>
+            <h1>Your API Mocking Tool for Agile Development</h1>
+            <div class="badge-list mb-3">
+              <a href="http"><span class="badge">HTTP</span></a>
+              <a href="kafka"><span class="badge">Kafka</span></a>
+              <a href="ldap"><span class="badge">LDAP</span></a>
+              <a href="smtp"><span class="badge">SMTP</span></a>
             </div>
             <p class="description">Mock your APIs in Seconds - No registration, no data in the cloud, <b>free</b> and <b>open-source</b></p>
             <p class="d-none d-md-block">
@@ -70,43 +70,82 @@ function hasTouchSupport() {
         </div>
       </div>
     </section>
+
+    <section>
+      <div class="row">
+        <div class="col-sm-4 mb-3 mb-sm-0 ps-1 pe-1">
+          <div class="card">
+              <div class="card-body">
+                <h2 class="card-title align-middle"><i class="bi bi-rocket-takeoff me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Speed Up Development</span></h2>
+                No more waiting for APIs - develop and test your solution instantly.
+              </div>
+          </div>
+        </div>
+        <div class="col-sm-4 mb-3 mb-sm-0 ps-1 pe-1">
+          <div class="card">
+              <div class="card-body">
+                <h2 class="card-title align-middle"><i class="bi bi-gear me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Automate Testing</span></h2>
+                Integrate Mokapi into your CI/CD pipeline for reliable, automated testing.
+              </div>
+          </div>
+        </div>
+        <div class="col-sm-4 mb-3 mb-sm-0 ps-1 pe-1">
+          <div class="card">
+              <div class="card-body">
+                <h2 class="card-title align-middle"><i class="bi bi-tools me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block">Easy Customization</span></h2>
+                Create custom mock behaviors matching production environments closely.
+              </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section>
       <div class="container">
         <h2>Mock your APIs with one tool</h2>
         <p class="text-center mb-5 w-80">Mokapi allows you to <b>prototype</b>, <b>test</b> and <b>demonstrate</b> APIs in software solutions using realistic data and scenarios.</p>
-        <div class="card-group">
-          <div class="card">
-            <router-link :to="{path: '/http'}">
-              <div class="card-body">
-                <h3 class="card-title">HTTP</h3>
-                Mock your REST API with your OpenAPI specification.
-              </div>
-            </router-link>
+
+        <div class="row">
+          <div class="col-sm-3 mb-3 mb-sm-0 ps-1 pe-1">
+            <div class="card">
+              <router-link :to="{path: '/http'}">
+                <div class="card-body">
+                  <h3 class="card-title">Mock REST APIs</h3>
+                  <p class="mt-4">Simulate REST API endpoints and test your solution without waiting for APIs. Easily configure mock responses to match production.</p>
+                </div>
+              </router-link>
+            </div>
           </div>
-          <div class="card">
-            <router-link :to="{path: '/kafka'}">
-              <div class="card-body">
-                <h3 class="card-title">Apache Kafka</h3>
-                Mock Apache Kafka topics with AsyncAPI specification.
-              </div>
-            </router-link>
+          <div class="col-sm-3 mb-3 mb-sm-0 ps-1 pe-1">
+            <div class="card">
+              <router-link :to="{path: '/kafka'}">
+                <div class="card-body">
+                  <h3 class="card-title">Simulate Kafka Events</h3>
+                  <p class="mt-4">Mock Kafka message streams to test event-driven services and ensure smooth integration with microservices.</p>
+                </div>
+              </router-link>
+            </div>
           </div>
-          <div class="card">
-            <router-link :to="{path: '/ldap'}">
-              <div class="card-body">
-                <h3 class="card-title">LDAP</h3>
-                Integrate your App with a fake LDAP server.
-              </div>
-            </router-link>
+          <div class="col-sm-3 mb-3 mb-sm-0 ps-1 pe-1">
+            <div class="card">
+              <router-link :to="{path: '/ldap'}">
+                <div class="card-body">
+                  <h3 class="card-title">Mock LDAP Services</h3>
+                  <p class="mt-4">Simulate LDAP authentication and directory services to test user access and permissions in isolated environments.</p>
+                </div>
+              </router-link>
+            </div>
           </div>
+          <div class="col-sm-3 mb-3 mb-sm-0 ps-1 pe-1">
             <div class="card">
               <router-link :to="{path: '/smtp'}">
                 <div class="card-body">
-                  <h3 class="card-title">SMTP</h3>
-                  Test SMTP emails safely and no risk of spamming mailboxes.
+                  <h3 class="card-title">SMTP Email Testing</h3>
+                  <p class="mt-4">Simulate email sending and SMTP interactions to test email features in your applications without sending real emails.</p>
                 </div>
               </router-link>
             </div> 
+          </div>
         </div>
       </div>
     </section>
@@ -119,10 +158,10 @@ function hasTouchSupport() {
         <div class="row pb-4 pb-lg-5 mb-lg-5">
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
-              <h2>Control Everything with JavaScript</h2>
-              <p>Learn how to mock APIs with JavaScript to fully control state, headers, delays, and errors in your applications.</p>
+              <h2>Customize Mocks with JavaScript</h2>
+              <p>Write JavaScript to define dynamic responses, simulate real-world API behavior, and adjust mock services on the fly. Create flexible, rule-based simulations that match your production environment.</p>
               <router-link :to="{ path: '/docs/javascript-api' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">Unlock seamless testing</button>
+                <button type="button" class="btn btn-outline-primary btn-sm">Try JavaScript Mocks</button>
               </router-link>
             </div>
           </div>
@@ -133,13 +172,12 @@ function hasTouchSupport() {
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h2>Run your mocks Everywhere</h2>
+              <h2>Run Mocks Anywhere—Local, Cloud, or CI/CD</h2>
               <p>
-                Discover how to run your mock API anywhere, no dependencies.
-                Unleash the power by using CLI arguments, environment variables or file configurations with dynamic hot reloading for seamless development.
+                Run Mokapi in any environment—local development, Docker, cloud, or CI/CD pipelines. Test and simulate APIs seamlessly, no matter where your services are deployed.
               </p>
               <router-link :to="{ path: '/docs/guides/get-started/running' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">Run Mokapi</button>
+                <button type="button" class="btn btn-outline-primary btn-sm">Learn How to Run Mokapi</button>
               </router-link>
             </div>
           </div>
@@ -150,8 +188,8 @@ function hasTouchSupport() {
         <div class="row pb-4 pb-lg-5mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
-              <h2>Everything as Code: Simplify Auditing & Reduce Errors</h2>
-              <p>Discover how Everything as Code can enhance repeatability, simplify audits, and minimize human errors for your deployment process.</p>
+              <h2>Define Mocks as Code – Track Changes & Prevent Errors</h2>
+              <p>Manage all API mocks, configurations, and behaviors as code. Store everything in version control to simplify audits, track changes, and ensure consistency across environments.</p>
               <router-link :to="{ path: '/docs/configuration' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Learn more</button>
               </router-link>
@@ -164,13 +202,12 @@ function hasTouchSupport() {
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h2>Fake Data Generator</h2>
+              <h2>Generate Realistic Test Data Instantly</h2>
               <p>
-                Mokapi uses a decision tree to automatically create a wide range of meaningful fake data for your APIs.
-                This tree can easily be extended to meet your own specific requirements.
+                Create dynamic and realistic fake data for your mocks. Simulate user profiles, transactions, messages, and more—ensuring lifelike API responses for better testing.
               </p>
               <router-link :to="{ path: '/docs/guides/get-started/test-data' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">Explore Data Generator</button>
+                <button type="button" class="btn btn-outline-primary btn-sm">Explore Fake Data Features</button>
               </router-link>
             </div>
           </div>
@@ -181,11 +218,12 @@ function hasTouchSupport() {
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
-              <h2>Patch Configuration</h2>
-              <p>Discover how patching enables effortless, environment-dependent adaptations to specifications without changing the original document.</p>
-              <router-link :to="{ path: '/docs/configuration/configuration/patching' }">
+              <h2>Easily Patch and Merge Configurations</h2>
+              <p>Use patch files to add or modify API specifications without affecting the original - such as adding additional server URLs - and apply them at runtime with hot-reloading.</p>
+              <router-link :to="{ path: '/docs/configuration/patching' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Discover Patching</button>
               </router-link>
+              
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-1">
@@ -195,15 +233,14 @@ function hasTouchSupport() {
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
             <div class="text-lg-start text-center">
-              <h2>Boost Your Testing Efforts</h2>
-              <p>Improve your end-to-end testing performance with Mokapi and easily simulate real-world scenarios and edge cases with Mokapi Script.
-              </p>
+              <h2>Streamline Your Testing Workflow</h2>
+              <p>Accelerate your testing efforts by easily mocking APIs and services. With Mokapi, you can quickly simulate real-world conditions, test edge cases, and validate your integrations without relying on external systems. Improve speed, accuracy, and efficiency while keeping your testing pipeline lightweight and adaptable.</p>
               <router-link :to="{ path: '/docs/blogs/automation-testing-in-agile-development' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">Discover the blog article</button>
+                <button type="button" class="btn btn-outline-primary btn-sm">Explore the blog article</button>
               </router-link>
             </div>
           </div>
-          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-2">
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-2" style="align-items: center; display:flex">
             <img src="/use-case-mock-api.png" @click="showImage($event.target)" alt="A variant of how Mokapi can be used to test a system with realistic data." />
           </div>
         </div>
@@ -211,7 +248,7 @@ function hasTouchSupport() {
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h2>Visualize Your Mock APIs</h2>
-              <p>Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mocked APIs are used.</p>
+              <p>Mokapi’s dashboard lets you visualize your mock APIs. View requests and responses in real-time, generate and validate sample data for testing.</p>
               <router-link :to="{ path: '/docs/guides/get-started/dashboard' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Mokapi's Dashboard</button>
               </router-link>
@@ -221,31 +258,52 @@ function hasTouchSupport() {
             <img src="/dashboard-overview-mock-api.jpg" @click="showImage($event.target)" alt="Mokapi's dashboard with an overview of all mocked APIs including metrics and logs." />
           </div>
         </div>
-        <div class="row pb-4 pb-lg-5">
-          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-lg-1">
-            <div class="text-lg-start text-center">
-              <h2>Enhance Software Quality with Contract Testing</h2>
-              <p>Discover the benefits of contract testing to ensure mock interactions under test control between your software and systems that it collaborates with. Improve collaboration and reliability with this effective quality assurance technique.</p>
-              <router-link :to="{ path: '/docs/blogs/contract-testing' }">
-                <button type="button" class="btn btn-outline-primary btn-sm">Take a look</button>
-              </router-link>
+      </div>
+    </section>
+    <section>
+      <h2>Use Cases & Tutorials</h2>
+
+      <div class="row row-cols-1 row-cols-md-2 g-4">
+          <div class="col">
+            <div class="card h-100">
+              <div class="card-body">
+                <i class="icon case-icon bi-globe"></i>
+                <h3 class="card-title mt-3">Get started with REST API</h3>
+                <p class="mt-3">This tutorial will show you how to mock a REST API using an OpenAPI specification.</p>
+                <a href="docs/examples/tutorials/get-started-with-rest-api" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
+              </div>
             </div>
           </div>
-          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
-            <img src="/mokapi-contract-testing.png" @click="showImage($event.target)" alt="A contract test with Mokapi to test edge cases that are difficult to produce in a real environment." />
-          </div>
-        </div>
-        <div class="row pb-4 pb-lg-5">
-          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
-            <div class="text-lg-start text-center">
-              <h2>Build better software faster</h2>
-              <p>Good tests are deterministic and durable. Test your software if it is ready to release. Only your software, nothing else.</p>
+          <div class="col">
+            <div class="card h-100">
+              <div class="card-body">
+                <i class="icon case-icon bi-lightning"></i>
+                <h3 class="card-title">Get started with Kafka</h3>
+                <p class="mt-4">Learn how to mock a Kafka Topic and verify that your producer generates valid messages according your AsyncAPI specification.</p>
+                <a href="docs/examples/tutorials/get-started-with-kafka" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
+              </div>
             </div>
           </div>
-          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 order-lg-1">
-            <img src="/build-better-software-with-mokapi.png" class="float-lg-end mx-auto d-block" style="width: 80%" @click="showImage($event.target)" alt="Mokapi can support you in both the development and testing process" />
+          <div class="col">
+            <div class="card h-100">
+              <div class="card-body">
+                <i class="icon case-icon bi-person-check"></i>
+                <h3 class="card-title">Mock LDAP Authentication in Node.js</h3>
+                <p class="mt-4">Learn how to mock LDAP authentication using Mokapi and a Node.js backend. Step-by-step guide with code examples for testing LDAP login without a real server!</p>
+                <a href="docs/examples/tutorials/mock-ldap-authentication-in-node" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
+              </div>
+            </div>
           </div>
-        </div>
+          <div class="col">
+            <div class="card h-100">
+              <div class="card-body">
+                <i class="icon case-icon bi-envelope-at-fill"></i>
+                <h3 class="card-title">Mocking an SMTP Server sending Emails using a Node.js Client</h3>
+                <p class="mt-4">Learn how to mock an SMTP server using Mokapi and send emails with a Node.js client. Perfect for testing email workflows without real mail servers.</p>
+                <a href="/docs/examples/tutorials/mock-smtp-server-send-mail-using-node" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
+              </div>
+            </div>
+          </div>
       </div>
     </section>
   </main>
@@ -267,5 +325,8 @@ function hasTouchSupport() {
 <style scoped>
 .pb-6 {
   padding-bottom: 5rem;
+}
+.case-icon {
+  font-size: 40px;
 }
 </style>

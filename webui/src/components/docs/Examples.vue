@@ -18,8 +18,12 @@ for (const key in exampleFiles) {
 const tutorials: any[] = []
 for (const key in tutorialsFiles) {
     const file = tutorialsFiles[key]
-    const meta = parseMetadata(files[`/src/assets/docs/${file}`])
-    tutorials.push({ key: key, meta: meta})
+    try {
+        const meta = parseMetadata(files[`/src/assets/docs/${file}`])
+        tutorials.push({ key: key, meta: meta})
+    } catch (e) {
+        console.error('invalid markdown: '+file )
+    }
 }
 
 function formatParam(label: any): string {
@@ -28,53 +32,51 @@ function formatParam(label: any): string {
 </script>
 
 <template>
-    <div v-if="examples.length > 0">
+    <div v-if="examples.length > 0" class="examples">
         <h1 class="visually-hidden">Examples & Tutorials</h1>
-        <h2 style="margin-top:0">Examples</h2>
-        <ul class="link-list">
-            <li v-for="example of examples">
-                <router-link :to="{ name: 'docs', params: {level2: 'examples', level3: formatParam(example.key)} }">
-                    <p class="link-list-title">{{ example.meta.title }}</p>
-                    <p class="link-list-description">{{ example.meta.description }}</p>
-                </router-link>
-            </li>
-        </ul>
-    </div>
-    <div v-if="tutorials.length > 0">
+
         <h2>Tutorials</h2>
-        <ul class="link-list">
-            <li v-for="tutorial of tutorials">
+        <div class="row row-cols-1 row-cols-md-1 g-3">
+            <div v-for="tutorial of tutorials" class="col">
                 <router-link :to="{ name: 'docs', params: {level2: 'tutorials', level3: formatParam(tutorial.key)} }">
-                    <p class="link-list-title">{{ tutorial.meta.title }}</p>
-                    <p class="link-list-description">{{ tutorial.meta.description }}</p>
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title align-middle"><i class="bi me-2 align-middle d-inline-block icon" :class="tutorial.meta.icon" style="font-size:20px;"></i><span class="align-middle d-inline-block" >{{ tutorial.meta.title }}</span></h3>
+                            {{ tutorial.meta.description }}
+                        </div>
+                    </div>
                 </router-link>
-            </li>
-        </ul>
+            </div>
+        </div>
+
+        <h2>Examples</h2>
+        <div class="row row-cols-1 row-cols-md-1 g-3">
+            <div v-for="example of examples" class="col">
+                <router-link :to="{ name: 'docs', params: {level2: 'examples', level3: formatParam(example.key)} }">
+                    <div class="card">
+                        <div class="card-body">
+                            <h3 class="card-title align-middle"><i class="bi me-2 align-middle d-inline-block icon" :class="example.meta.icon" style="font-size:20px;"></i><span class="align-middle d-inline-block" >{{ example.meta.title }}</span></h3>
+                            {{ example.meta.description }}
+                        </div>
+                    </div>
+                </router-link>
+            </div>
+        </div>
     </div>
 </template>
 
 <style scoped>
-.link-list {
-    list-style-type: none;
-    margin-bottom: 50px;
-    padding: 0;
+.examples .card h3 {
+    margin-top: 0;
 }
-.link-list > li{
-    border-width: 1px;
-    border-style: solid;
-    border-color: var(--color-tabs-border);
-    margin-bottom:-1px;
+.examples a .card:hover {
+  border-color: var(--card-border-active);
+  cursor: pointer;
 }
-.link-list > li > a{
-    padding: 20px;
-    text-decoration: none;
-    display: block;
-}
-.link-list-title {
-    font-size: 1.3rem;
-    margin-bottom: 5px;
-}
-.link-list-description {
-    color: var(--color-text);
+.examples .card {
+  color: var(--color-text);
+  border-color: var(--card-border);
+  background-color: var(--card-background);
+  margin: 7px;
 }
 </style>

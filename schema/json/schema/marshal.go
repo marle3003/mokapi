@@ -29,6 +29,8 @@ func (e *encoder) encode(r *Schema) ([]byte, error) {
 	if r.Ref != "" {
 		// loop protection, only return reference
 		if _, ok := e.refs[r.Ref]; ok {
+			b.Write([]byte(fmt.Sprintf(`"$ref":"%v"`, r.Ref)))
+
 			b.WriteRune('}')
 			return b.Bytes(), nil
 		}
@@ -42,8 +44,12 @@ func (e *encoder) encode(r *Schema) ([]byte, error) {
 		v := reflect.ValueOf(r).Elem()
 		t := v.Type()
 		var err error
-		for i := 0; i < v.NumField(); i++ {
-			f := v.Field(i)
+		for i := 0; i < t.NumField(); i++ {
+			ft := t.Field(i)
+			if !ft.IsExported() {
+				continue
+			}
+			f := v.FieldByName(ft.Name)
 			if isEmptyValue(f) {
 				continue
 			}
@@ -72,6 +78,8 @@ func (e *encoder) encode(r *Schema) ([]byte, error) {
 				}
 				fields.WriteRune('}')
 				bVal = fields.Bytes()
+			case *Schema:
+				bVal, err = e.encode(val)
 			default:
 				bVal, err = json.Marshal(val)
 			}

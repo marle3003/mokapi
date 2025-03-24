@@ -70,11 +70,11 @@ type Schema struct {
 	Else *Schema `yaml:"else,omitempty" json:"else,omitempty"`
 
 	// Annotations
-	Title       string        `yaml:"title,omitempty" json:"title,omitempty"`
-	Description string        `yaml:"description,omitempty" json:"description,omitempty"`
-	Default     interface{}   `yaml:"default,omitempty" json:"default,omitempty"`
-	Deprecated  bool          `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
-	Examples    []interface{} `yaml:"examples,omitempty" json:"examples,omitempty"`
+	Title       string      `yaml:"title,omitempty" json:"title,omitempty"`
+	Description string      `yaml:"description,omitempty" json:"description,omitempty"`
+	Default     interface{} `yaml:"default,omitempty" json:"default,omitempty"`
+	Deprecated  bool        `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
+	Examples    []Example   `yaml:"examples,omitempty" json:"examples,omitempty"`
 
 	// Media
 	ContentMediaType string `yaml:"contentMediaType,omitempty" json:"contentMediaType,omitempty"`

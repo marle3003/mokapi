@@ -12,11 +12,11 @@ func parseQuery(param *Parameter, u *url.URL) (*RequestParameterValue, error) {
 	var err error
 
 	switch {
-	case param.Schema != nil && param.Schema.Value.Type.IsArray():
+	case param.Schema != nil && param.Schema.Type.IsArray():
 		rp := &RequestParameterValue{}
 		rp.Raw, rp.Value, err = parseQueryArray(param, u)
 		return rp, err
-	case param.Schema != nil && param.Schema.Value.Type.IsObject():
+	case param.Schema != nil && param.Schema.Type.IsObject():
 		rp := &RequestParameterValue{}
 		var raw string
 		raw, rp.Value, err = parseQueryObject(param, u)
@@ -66,8 +66,8 @@ func parseQueryObject(param *Parameter, u *url.URL) (string, interface{}, error)
 		for k, values := range u.Query() {
 			match := paramRegex.FindStringSubmatch(k)
 			name := match[1]
-			prop := param.Schema.Value.Properties.Get(name)
-			if prop == nil && !param.Schema.Value.IsFreeForm() && !param.Schema.Value.IsDictionary() {
+			prop := param.Schema.Properties.Get(name)
+			if prop == nil && !param.Schema.IsFreeForm() && !param.Schema.IsDictionary() {
 				return "", nil, fmt.Errorf("property '%v' not defined in schema: %s", name, param.Schema)
 			}
 			s := strings.Join(values, ",")

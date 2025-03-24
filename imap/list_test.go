@@ -13,54 +13,131 @@ func TestServer_List(t *testing.T) {
 	testcases := []struct {
 		name    string
 		handler imap.Handler
-		test    func(t *testing.T, c *imaptest.Client)
+		test    func(t *testing.T, c *imap.Client)
 	}{
 		{
 			name: "empty",
 			handler: &imaptest.Handler{
-				ListFunc: func(ref, pattern string, session map[string]interface{}) ([]imap.ListEntry, error) {
+				ListFunc: func(ref, pattern string, _ []imap.MailboxFlags, session map[string]interface{}) ([]imap.ListEntry, error) {
+					require.Equal(t, "", ref)
+					require.Equal(t, "*", pattern)
 					return nil, nil
 				},
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
 				err = c.PlainAuth("", "bob", "password")
 				require.NoError(t, err)
-				lines, err := c.Send("LIST \"\" \"*\"")
-				require.Equal(t, "A2 OK List completed", lines[0])
+
+				list, err := c.List("", "*")
+				require.NoError(t, err)
+				require.Len(t, list, 0)
 			},
 		},
 		{
 			name: "one found",
 			handler: &imaptest.Handler{
-				ListFunc: func(ref, pattern string, session map[string]interface{}) ([]imap.ListEntry, error) {
+				ListFunc: func(ref, pattern string, _ []imap.MailboxFlags, session map[string]interface{}) ([]imap.ListEntry, error) {
 					return []imap.ListEntry{
 						{
-							Flags: nil,
-							Name:  "foo",
+							Flags:     nil,
+							Delimiter: "/",
+							Name:      "foo",
 						},
 					}, nil
 				},
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
 				err = c.PlainAuth("", "bob", "password")
 				require.NoError(t, err)
-				lines, err := c.Send("LIST \"\" \"*\"")
-				require.Equal(t, "* LIST () NIL foo", lines[0])
-				require.Equal(t, "A2 OK List completed", lines[1])
+
+				list, err := c.List("", "*")
+				require.NoError(t, err)
+				require.Len(t, list, 1)
+				require.Equal(t, "foo", list[0].Name)
 			},
 		},
 		{
 			name:    "not authenticated",
 			handler: &imaptest.Handler{},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
 				lines, err := c.Send("LIST \"\" \"*\"")
-				require.Equal(t, "A1 BAD Command is only valid in authenticated state", lines[0])
+				require.Equal(t, "A0001 BAD Command is only valid in authenticated state", lines[0])
+			},
+		},
+		{
+			name: "one with flags",
+			handler: &imaptest.Handler{
+				ListFunc: func(ref, pattern string, _ []imap.MailboxFlags, session map[string]interface{}) ([]imap.ListEntry, error) {
+					return []imap.ListEntry{
+						{
+							Flags:     []imap.MailboxFlags{imap.HasNoChildren},
+							Delimiter: "/",
+							Name:      "INBOX",
+						},
+					}, nil
+				},
+			},
+			test: func(t *testing.T, c *imap.Client) {
+				_, err := c.Dial()
+				require.NoError(t, err)
+				err = c.PlainAuth("", "bob", "password")
+				require.NoError(t, err)
+
+				list, err := c.List("", "*")
+				require.NoError(t, err)
+				require.Len(t, list, 1)
+				require.Equal(t, "INBOX", list[0].Name)
+				require.Equal(t, imap.HasNoChildren, list[0].Flags[0])
+			},
+		},
+		{
+			name: "LSub empty",
+			handler: &imaptest.Handler{
+				ListFunc: func(ref, pattern string, _ []imap.MailboxFlags, session map[string]interface{}) ([]imap.ListEntry, error) {
+					return nil, nil
+				},
+			},
+			test: func(t *testing.T, c *imap.Client) {
+				_, err := c.Dial()
+				require.NoError(t, err)
+				err = c.PlainAuth("", "bob", "password")
+				require.NoError(t, err)
+
+				list, err := c.LSub("", "*")
+				require.NoError(t, err)
+				require.Len(t, list, 0)
+			},
+		},
+		{
+			name: "LSub returns one",
+			handler: &imaptest.Handler{
+				ListFunc: func(ref, pattern string, _ []imap.MailboxFlags, session map[string]interface{}) ([]imap.ListEntry, error) {
+					return []imap.ListEntry{
+						{
+							Flags:     []imap.MailboxFlags{imap.Subscribed, imap.HasNoChildren},
+							Delimiter: "/",
+							Name:      "INBOX",
+						},
+					}, nil
+				},
+			},
+			test: func(t *testing.T, c *imap.Client) {
+				_, err := c.Dial()
+				require.NoError(t, err)
+				err = c.PlainAuth("", "bob", "password")
+				require.NoError(t, err)
+
+				list, err := c.LSub("", "*")
+				require.NoError(t, err)
+				require.Len(t, list, 1)
+				require.Equal(t, "INBOX", list[0].Name)
+				require.Equal(t, []imap.MailboxFlags{imap.Subscribed, imap.HasNoChildren}, list[0].Flags)
 			},
 		},
 	}
@@ -78,7 +155,7 @@ func TestServer_List(t *testing.T) {
 				require.ErrorIs(t, err, imap.ErrServerClosed)
 			}()
 
-			c := imaptest.NewClient(fmt.Sprintf("localhost:%v", p))
+			c := imap.NewClient(fmt.Sprintf("localhost:%v", p))
 
 			tc.test(t, c)
 		})

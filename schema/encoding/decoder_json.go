@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"mokapi/media"
+	"strings"
 )
 
 type JsonDecoder struct {
 }
 
 func (d *JsonDecoder) IsSupporting(contentType media.ContentType) bool {
-	return contentType.Subtype == "json"
+	return contentType.Subtype == "json" || strings.HasSuffix(contentType.Subtype, "+json")
 }
 
 func (d *JsonDecoder) Decode(b []byte, state *DecodeState) (interface{}, error) {

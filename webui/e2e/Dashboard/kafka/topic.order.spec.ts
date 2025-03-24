@@ -3,6 +3,9 @@ import { useDashboard } from '../../components/dashboard'
 import { useKafkaGroups, useKafkaMessages, useKafkaPartitions } from '../../components/kafka'
 import { test, expect } from '../../models/fixture-dashboard'
 import { useSourceView } from '../../components/source'
+import type { Locator } from '@playwright/test'
+
+const ace = { edit: (id: any) => { return { setValue: (s: string) => {} } } }
 
 test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"])
@@ -69,6 +72,10 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
             clipboard: '"features"'
         })
 
+        await test.step('Check editor features', async () => {
+            await expect(configs.getByText('"properties"')).toHaveCSS('color', 'rgb(126, 231, 135)')
+        })
+
         await test.step('Check expand schema', async () => {
             await configs.getByRole('button', { name: 'Expand' }).click()
             const dialog = page.getByRole('dialog', { name: 'Value - mokapi.shop.products' })
@@ -98,6 +105,41 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
             await dialog.getByRole('button', { name: 'Close' }).click()
         })
 
+        await test.step('Check data validation', async () =>{
+            await configs.getByRole('button', { name: 'Example & Validate' }).click()
+            const dialog = page.getByRole('dialog', { name: 'Value Validator - mokapi.shop.products' })
+            await dialog.getByRole('button', { name: 'Example' }).click()
+            // first we try data that are wrong against the schema
+            const id = await dialog.locator('.modal-dialog .ace_editor').getAttribute('id')
+            await page.evaluate((id) => {
+                ace.edit(id).setValue('{"price":"bar"}')
+                return id
+            }, id)
+            await dialog.getByRole('button', { name: 'Validate' }).click()
+
+            const alert = dialog.getByRole('alert')
+            await expect(alert).toBeVisible()
+            await expect(alert).toContainText('error count 1: #/price/type')
+
+            const status = dialog.getByRole('status')
+            await expect(dialog.getByRole('status')).toBeVisible()
+            await expect(dialog.getByRole('status')).toHaveText('Failed')
+
+            // now with a valid one
+            await page.evaluate((id) => {
+                ace.edit(id).setValue('{"price":12}')
+                return id
+            }, id)
+            await dialog.getByRole('button', { name: 'Validate' }).click()
+
+            await expect(alert).not.toBeVisible()
+
+            await expect(status).toBeVisible()
+            await expect(status).toHaveText('Valid')
+
+            await dialog.getByRole('button', { name: 'Close' }).click()
+        })
+
         await test.step('Go back to cluster view', async () => {
             await page.getByRole('link', { name: 'cluster' }).click()
             await expect(page.getByLabel('name')).toHaveText(cluster.name)
@@ -105,5 +147,8 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
     })
 })
 
-
-
+async function writeToAceEditor(locator: Locator, s: string) {
+    for (const key of s) {
+        await locator.press(key)
+    }
+}

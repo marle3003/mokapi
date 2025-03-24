@@ -69,30 +69,49 @@
   width: 100%;
   position: fixed;
   top: 4rem;
-  z-index: 99;
+  z-index: 10;
+}
+.dashboard-tabs nav > div {
+  border-bottom: 2px solid;
+  border-bottom-color: var(--dashboard-nav-border);
 }
 .dashboard-tabs .nav-link {
   color: var(--color-text);
   position: relative;
-  border-radius: 6px;
-  margin-right: 5px;
+  padding-right: 5px;
+  padding-bottom: 2px;
 }
 .dashboard-tabs .nav-link:hover {
-  color: var(--color-nav-link-active);
+  color: var(--nav-color-active);
   text-decoration: none;
-  background-color: var(--color-background-mute);
-  opacity: 0.8;
+  border-bottom: 4px solid;
+  margin-bottom: -3px;
+  border-bottom-color: var(--dashboard-nav-border-active);
 }
 .dashboard-tabs .nav-link.router-link-active,
 .dashboard-tabs .nav-link.router-link-exact-active {
-  color: var(--color-nav-link-active);
+  color: var(--nav-color-active);
   text-decoration: none;
-  background-color: var(--color-background-mute);
-  opacity: 0.8;
+  border-bottom-color: var(--dashboard-nav-border-active);
+  border-bottom: 4px solid;
+  margin-bottom: -3px;
 }
 .dashboard-content {
   margin-top: 4rem;
 }
 .dashboard a {
   text-decoration: none;
+}
+.dashboard-tabs .nav-link.router-link-active.overview {
+  color: var(--color-text);
+  border-bottom-color: var(--dashboard-nav-border);
+  border-bottom: none;
+}
+.dashboard-tabs .nav-link.router-link-exact-active.overview {
+  border-bottom-color: var(--dashboard-nav-border-active);
+}
+.dashboard-tabs .nav-link.router-link-active.overview:hover {
+  border-bottom: 4px solid;
+  margin-bottom: -3px;
+  border-bottom-color: var(--dashboard-nav-border-active);
 }

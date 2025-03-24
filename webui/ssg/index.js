@@ -36,18 +36,18 @@ const Server = require('./server');
        }
     });
 
-    const pageFound = await page.evaluate(async () => {
+    const [pageFound, msg] = await page.evaluate(async () => {
       const header = document.querySelector('h1')
       if (!header) {
-        return false
+        return [false, `header <h1> not found`]
       }
       if (header.innerText === `Sorry, this page isn't available`) {
-        return false
+        return [false, `Sorry, this page isn't available`]
       }
-      return true
+      return [true, '']
     })
     if (!pageFound) {
-      throw new Error(`page ${url.href} not found`)
+      throw new Error(`page ${url.href} not found: ${msg}`)
     }
 
     const p = path.join('../dist', url.pathname)
@@ -73,7 +73,7 @@ const Server = require('./server');
       await crawl(u)
       } catch (err) {
         if (err.message && err.message.startsWith('page ')) { 
-          throw new Error(`crawl link on page ${u.href} failed: ${err}`)
+          throw new Error(`crawl link on page ${url} failed: ${err}`)
         }
         throw err
       }

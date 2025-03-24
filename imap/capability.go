@@ -10,10 +10,10 @@ const (
 	authPlainCap capability = "AUTH=PLAIN"
 	saslIrCap    capability = "SASL-IR"
 
-	selectCap capability = "SELECT"
-	listCap   capability = "LIST"
-	fetchCap  capability = "FETCH"
-	closeCap  capability = "CLOSE"
+	// IMAP4rev2
+	uidPlus  capability = "UIDPLUS"
+	move     capability = "MOVE"
+	unselect capability = "UNSELECT"
 )
 
 type capabilities []capability
@@ -59,7 +59,7 @@ func (c *conn) getCapabilities() capabilities {
 	}
 
 	if c.state == AuthenticatedState || c.state == SelectedState {
-		caps = append(caps, selectCap, listCap, fetchCap, closeCap)
+		caps = append(caps, uidPlus, move, unselect)
 	}
 
 	return caps

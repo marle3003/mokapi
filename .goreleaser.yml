@@ -4,6 +4,8 @@ builds:
   - env:
       - CGO_ENABLED=0
     ldflags:
+      - -s
+      - -w
       - -X mokapi/version.BuildVersion={{ .Version }}
       - -X mokapi/version.BuildTime={{ .Date }}
     main: ./cmd/mokapi
@@ -18,24 +20,44 @@ archives:
     format: tar.gz
 checksum:
   name_template: "{{ .ProjectName }}_v{{ .Version }}_linux_checksums.txt"
-snapshot:
-  name_template: "{{ .Version }}"
 
 dockers:
   - goos: linux
     goarch: amd64
     image_templates:
       - "mokapi/mokapi:latest"
-      - "mokapi/mokapi:{{ .Tag }}"
+      - "mokapi/mokapi:{{ .Version }}"
+    build_flag_templates:
+      - "--platform=linux/amd64"
     dockerfile: images/release-alpine.Dockerfile
     use: buildx
   - goos: linux
     goarch: amd64
     image_templates:
-      - "mokapi/mokapi:noble"
-      - "mokapi/mokapi:{{ .Tag }}-noble"
+      - "mokapi/mokapi:noble-amd64"
+      - "mokapi/mokapi:{{ .Version }}-noble-amd64"
+    build_flag_templates:
+      - "--platform=linux/amd64"
     dockerfile: images/release-ubuntu.Dockerfile
     use: buildx
+  - goos: linux
+    goarch: arm64
+    image_templates:
+      - "mokapi/mokapi:noble-arm64v8"
+      - "mokapi/mokapi:{{ .Version }}-noble-arm64v8"
+    build_flag_templates:
+      - "--platform=linux/arm64/v8"
+    dockerfile: images/release-ubuntu.Dockerfile
+    use: buildx
+docker_manifests:
+  - name_template: "mokapi/mokapi:noble"
+    image_templates:
+      - "mokapi/mokapi:noble-amd64"
+      - "mokapi/mokapi:noble-arm64v8"
+  - name_template: "mokapi/mokapi:{{ .Version }}-noble"
+    image_templates:
+      - "mokapi/mokapi:{{ .Version }}-noble-amd64"
+      - "mokapi/mokapi:{{ .Version }}-noble-arm64v8"
 
 brews:
   - repository:
@@ -43,13 +65,13 @@ brews:
       name: homebrew-tap
       token: "{{ .Env.TAP_GITHUB_TOKEN }}"
     homepage: https://mokapi.io
-    description: "Easy and flexible API mocking using Go and Javascript - https://mokapi.io"
+    description: "Your API Mocking Tool for Agile Development using Go and Javascript - https://mokapi.io"
 
 nfpms:
   - license: MIT
     maintainer: Marcel Lehmann
     homepage: https://mokapi.io
-    description: "Easy and flexible API mocking using Go and Javascript - https://mokapi.io"
+    description: "Your API Mocking Tool for Agile Development using Go and Javascript - https://mokapi.io"
     formats:
       - rpm
       - deb

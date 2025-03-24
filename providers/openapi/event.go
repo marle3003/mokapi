@@ -84,16 +84,17 @@ func NewEventRequest(r *http.Request) (*common.EventRequest, context.Context) {
 	return req, context.WithValue(ctx, eventKey, req)
 }
 
-func setResponseData(r *common.EventResponse, m *MediaType, path string) error {
+func setResponseData(r *common.EventResponse, m *MediaType, request *common.EventRequest) error {
 	if m != nil {
 		if len(m.Examples) > 0 {
 			keys := reflect.ValueOf(m.Examples).MapKeys()
-			v := keys[rand.Intn(len(keys))].Interface().(*ExampleRef)
+			key := keys[rand.Intn(len(keys))].String()
+			v := m.Examples[key]
 			r.Data = v.Value.Value
 		} else if m.Example != nil {
 			r.Data = m.Example
 		} else {
-			segments := strings.Split(path, "/")
+			segments := strings.Split(request.Key, "/")
 			var names []string
 			for _, seg := range segments[1:] {
 				if !strings.HasPrefix(seg, "{") {
@@ -101,7 +102,13 @@ func setResponseData(r *common.EventResponse, m *MediaType, path string) error {
 				}
 			}
 
-			req := generator.NewRequest(generator.UsePathElement(names[len(names)-1], schema.ConvertToJsonSchema(m.Schema)))
+			req := generator.NewRequest(
+				generator.UsePathElement(
+					names[len(names)-1],
+					schema.ConvertToJsonSchema(m.Schema),
+				),
+				generator.UseContext(getGeneratorContext(request)),
+			)
 			data, err := generator.New(req)
 			if err != nil {
 				return fmt.Errorf("generate response data failed: %v", err)
@@ -126,4 +133,21 @@ func setResponseHeader(r *common.EventResponse, headers Headers) error {
 		}
 	}
 	return nil
+}
+
+func getGeneratorContext(r *common.EventRequest) map[string]interface{} {
+	ctx := map[string]interface{}{}
+	for k, v := range r.Cookie {
+		ctx[k] = v
+	}
+	for k, v := range r.Header {
+		ctx[k] = v
+	}
+	for k, v := range r.Path {
+		ctx[k] = v
+	}
+	for k, v := range r.Query {
+		ctx[k] = v
+	}
+	return ctx
 }

@@ -2,11 +2,13 @@ package api
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
+	avro "mokapi/schema/avro/schema"
 	"mokapi/schema/encoding"
 	"mokapi/schema/json/parser"
 	jsonSchema "mokapi/schema/json/schema"
@@ -14,52 +16,57 @@ import (
 )
 
 type validateRequest struct {
-	Format string
-	Schema interface{}
-	Data   string
+	Format      string
+	Schema      interface{}
+	Data        []byte
+	ContentType media.ContentType
 }
 
 func (h *handler) validate(w http.ResponseWriter, r *http.Request) {
-	ct, err := getValidationDataContentType(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	valReq, err := parseValidationRequestBody(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	switch s := valReq.Schema.(type) {
-	case *schema.Ref:
-		err = parseByOpenApi([]byte(valReq.Data), s, ct)
-	default:
-		err = parseByJson([]byte(valReq.Data), s.(*jsonSchema.Schema), ct)
+	if !(valReq.ContentType.Subtype == "json" || valReq.ContentType.Subtype == "xml" || valReq.ContentType.Key() == "avro/binary") {
+		http.Error(w, fmt.Sprintf("content-type %v not supported. Only json or xml are supported", valReq.ContentType), http.StatusBadRequest)
+		return
 	}
+
+	var v interface{}
+	switch s := valReq.Schema.(type) {
+	case *schema.Schema:
+		v, err = parseByOpenApi(valReq.Data, s, valReq.ContentType)
+	case *avro.Schema:
+		p := &avro.Parser{Schema: s}
+		v, err = encoding.Decode(valReq.Data, encoding.WithContentType(valReq.ContentType), encoding.WithParser(p))
+	default:
+		v, err = parseByJson(valReq.Data, s.(*jsonSchema.Schema), valReq.ContentType)
+	}
+
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		data := parser.Marshal(err)
+		w.Write([]byte(data))
+		return
+	}
+
+	formats := r.URL.Query()["outputFormat"]
+	examples, err := encodeExample(v, valReq.Schema, valReq.Format, formats)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-}
-
-func getValidationDataContentType(r *http.Request) (media.ContentType, error) {
-	dataContentType := r.Header.Get("Data-Content-Type")
-	if len(dataContentType) == 0 {
-		dataContentType = "application/json"
+	if len(examples) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		writeJsonBody(w, examples)
 	}
-	ct := media.ParseContentType(dataContentType)
-	if ct.IsAny() {
-		ct = media.ParseContentType("application/json")
-	}
-	if ct.Subtype != "json" && ct.Subtype != "xml" {
-		return media.Empty, fmt.Errorf("content-type %v not supported. Only json or xml are supported", ct)
-	}
-	return ct, nil
 }
 
 func parseValidationRequestBody(r *http.Request) (validateRequest, error) {
@@ -68,7 +75,7 @@ func parseValidationRequestBody(r *http.Request) (validateRequest, error) {
 		return validateRequest{}, err
 	}
 
-	validateData := validateRequest{}
+	validateData := validateRequest{ContentType: media.ParseContentType("application/json")}
 	err = json.Unmarshal(body, &validateData)
 	if err != nil {
 		return validateData, err
@@ -77,32 +84,25 @@ func parseValidationRequestBody(r *http.Request) (validateRequest, error) {
 	return validateData, nil
 }
 
-func parseByOpenApi(data []byte, s *schema.Ref, ct media.ContentType) error {
+func parseByOpenApi(data []byte, s *schema.Schema, ct media.ContentType) (interface{}, error) {
+	p := &parser.Parser{ValidateAdditionalProperties: true, Schema: schema.ConvertToJsonSchema(s)}
 	var v interface{}
 	var err error
 	if ct.IsXml() {
 		v, err = schema.UnmarshalXML(bytes.NewReader(data), s)
+		if err != nil {
+			return v, err
+		}
+		_, err = p.ParseWith(v, schema.ConvertToJsonSchema(s))
 	} else {
-		v, err = encoding.Decode(data, encoding.WithContentType(ct))
+		_, err = encoding.Decode(data, encoding.WithContentType(ct), encoding.WithParser(p))
 	}
-	if err != nil {
-		return err
-	}
-
-	p := parser.Parser{ValidateAdditionalProperties: true}
-	_, err = p.ParseWith(v, schema.ConvertToJsonSchema(s))
-	return err
+	return v, err
 }
 
-func parseByJson(data []byte, s *jsonSchema.Schema, ct media.ContentType) error {
-	v, err := encoding.Decode(data, encoding.WithContentType(ct))
-	if err != nil {
-		return err
-	}
-
-	p := parser.Parser{ValidateAdditionalProperties: true}
-	_, err = p.ParseWith(v, s)
-	return err
+func parseByJson(data []byte, s *jsonSchema.Schema, ct media.ContentType) (interface{}, error) {
+	p := &parser.Parser{ValidateAdditionalProperties: true, Schema: s}
+	return encoding.Decode(data, encoding.WithContentType(ct), encoding.WithParser(p))
 }
 
 func (r *validateRequest) UnmarshalJSON(data []byte) error {
@@ -132,7 +132,13 @@ func (r *validateRequest) UnmarshalJSON(data []byte) error {
 			if err != nil {
 				return err
 			}
-			r.Data = t.(string)
+			var b []byte
+			b, err = base64.StdEncoding.DecodeString(t.(string))
+			if err == nil {
+				r.Data = b
+			} else {
+				r.Data = []byte(t.(string))
+			}
 		case "format":
 			t, err = d.Token()
 			if err != nil {
@@ -144,6 +150,12 @@ func (r *validateRequest) UnmarshalJSON(data []byte) error {
 			if err != nil {
 				return err
 			}
+		case "contentType":
+			t, err = d.Token()
+			if err != nil {
+				return err
+			}
+			r.ContentType = media.ParseContentType(t.(string))
 		}
 	}
 

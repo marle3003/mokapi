@@ -104,7 +104,6 @@ func TestRequest_Write_Produce(t *testing.T) {
 							Records: []*kafka.Record{
 								{Offset: 0,
 									Time:  time.Time{},
-									Key:   kafka.NewBytes([]byte{}),
 									Value: v,
 								},
 							},

@@ -1,4 +1,5 @@
 import { metrics } from 'metrics.js'
+import { base64} from 'mokapi/encoding';
 
 const Product = {
     type: 'object',
@@ -181,8 +182,8 @@ export let clusters = [
                         payload: {
                             schema: {
                                 type: 'record', fields: [
-                                    { name: 'foo', type: 'string' },
-                                    { name: 'bar', type: 'int' }
+                                    { name: 'Name', type: 'string' },
+                                    { name: 'Age', type: 'int' }
                                 ]
                             }, format: 'application/vnd.apache.avro;version=1.9.0'
                         },
@@ -255,8 +256,12 @@ export let events = [
          time: '2023-02-13T09:49:25.482366+01:00',
          data: {
              offset: 0,
-             key: 'GGOEWXXX0827',
-             message: JSON.stringify({
+             key: {
+                 value: 'GGOEWXXX0827'
+             },
+             message: {
+                 value: JSON.stringify(
+                     {
                          id: 'GGOEWXXX0827',
                          name: 'Waze Women\'s Short Sleeve Tee',
                          description: 'Made of soft tri-blend jersey fabric, this great t-shirt will help you find your Waze. Made in USA.',
@@ -266,11 +271,13 @@ export let events = [
                          url: 'Waze+Womens+Short+Sleeve+Tee',
                          category: 'apparel',
                          subcategory: 'apparel'
-                         }),
+                     })
+             },
              partition: 0,
+             messageId: 'shopOrder',
              headers: {
-                 foo: 'bar',
-                 'x-specification-message-id': 'shopOrder'
+                 foo: { value: 'bar', binary: '' },
+                 bar: { value: '', binary: 'dmFsdWUgYXMgYmluYXJ5'}
              }
          }
      },
@@ -284,8 +291,12 @@ export let events = [
         time: '2023-02-13T09:49:25.482366+01:00',
         data: {
             offset: 1,
-            key: 'GGOEWXXX0828',
-            message: JSON.stringify({
+            key: {
+                value: 'GGOEWXXX0828'
+            },
+            message: {
+                value: JSON.stringify(
+                    {
                         id: 'GGOEWXXX0828',
                         name: 'Waze Men\'s Short Sleeve Tee',
                         description: 'Made of soft tri-blend jersey fabric, this great t-shirt will help you find your Waze. Made in USA.',
@@ -295,11 +306,35 @@ export let events = [
                         url: 'Waze+Mens+Short+Sleeve+Tee',
                         category: 'apparel',
                         subcategory: 'apparel'
-                      }),
+                    })
+            },
             partition: 1,
-            headers: {
-                'x-specification-message-id': 'shopOrder'
-            }
+            messageId: 'shopOrder'
+        }
+    },
+    {
+        id: '123602',
+        traits: {
+            namespace: 'kafka',
+            name: 'Kafka World',
+            topic: 'mokapi.shop.avro'
+        },
+        time: '2025-02-13T09:49:25.482366+01:00',
+        data: {
+            offset: 1,
+            key: {
+                value: 'TEST1'
+            },
+            message: {
+                value: JSON.stringify(
+                    {
+                        Name: 'Carol',
+                        Age: 29,
+                    }),
+                binary: base64.encode([0xa, 0x43, 0x61, 0x72, 0x6f, 0x6c, 0x3a].map(x => String.fromCharCode(x)).join(''))
+            },
+            partition: 1,
+            messageId: 'shopOrder'
         }
     }
  ]

@@ -19,9 +19,9 @@ func parseCookie(param *Parameter, r *http.Request) (*RequestParameterValue, err
 	rp := &RequestParameterValue{Raw: &(cookie.Value), Value: cookie.Value}
 	if param.Schema != nil {
 		switch {
-		case param.Schema.Value.Type.IsArray():
+		case param.Schema.Type.IsArray():
 			rp.Value, err = parseArray(param, strings.Split(cookie.Value, ","))
-		case param.Schema.Value.Type.IsObject():
+		case param.Schema.Type.IsObject():
 			rp.Value, err = parseObject(param, cookie.Value, ",", param.IsExplode(), defaultDecode)
 		default:
 			rp.Value, err = p.ParseWith(cookie.Value, schema.ConvertToJsonSchema(param.Schema))

@@ -43,8 +43,8 @@ func TestKafkaClient_Produce(t *testing.T) {
 				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
-				require.Equal(t, "XidZuoWq ", string(readBytes(b.Records[0].Key)))
-				require.Equal(t, "\"\"", string(readBytes(b.Records[0].Value)))
+				require.Equal(t, "XidZuoWq ", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, "\"\"", kafka.BytesToString(b.Records[0].Value))
 			},
 		},
 		{
@@ -67,8 +67,8 @@ func TestKafkaClient_Produce(t *testing.T) {
 				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
-				require.Equal(t, "foo", string(readBytes(b.Records[0].Key)))
-				require.Equal(t, `"bar"`, string(readBytes(b.Records[0].Value)))
+				require.Equal(t, "foo", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `"bar"`, kafka.BytesToString(b.Records[0].Value))
 				require.Equal(t, "version", b.Records[0].Headers[0].Key)
 				require.Equal(t, []byte("1.0"), b.Records[0].Headers[0].Value)
 			},
@@ -92,7 +92,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 			name: "multiple clusters",
 			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
 				for i := 0; i < 10; i++ {
-					app.AddKafka(getConfig(
+					app.Kafka.Add(getConfig(
 						asyncapi3test.NewConfig(asyncapi3test.WithInfo(fmt.Sprintf("x%v", i), "", ""))), enginetest.NewEngine())
 				}
 
@@ -118,8 +118,9 @@ func TestKafkaClient_Produce(t *testing.T) {
 					export default function() {
 						on('kafka', function(message) {
 							console.log(message)
-							message.value = 'mokapi'
+							message.value = '"mokapi"'
 							message.headers = { version: '1.0' }
+							return true
 						})
 					}
 				`))
@@ -128,13 +129,13 @@ func TestKafkaClient_Produce(t *testing.T) {
 				hook := test.NewGlobal()
 
 				sendMessage(s, nil)
-				require.Equal(t, `{"offset":0,"key":"foo-1","value":"\"bar-1\"","headers":{"x-specification-message-id":"foo"}}`, hook.LastEntry().Message)
+				require.Equal(t, `{"offset":0,"key":"foo-1","value":"\"bar-1\"","schemaId":0,"headers":{}}`, hook.LastEntry().Message)
 
 				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
-				require.Equal(t, "mokapi", string(readBytes(b.Records[0].Value)))
-				require.Len(t, b.Records[0].Headers, 2)
+				require.Equal(t, "\"mokapi\"", string(readBytes(b.Records[0].Value)))
+				require.Len(t, b.Records[0].Headers, 1)
 				version, found := getHeader("version", b.Records[0].Headers)
 				require.True(t, found, "version header not found")
 				require.Equal(t, []byte("1.0"), version.Value)
@@ -148,6 +149,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 					export default function() {
 						on('kafka', function(message) {
 							message.headers = { version: '1.0' }
+							return true
 						})
 					}
 				`))
@@ -156,7 +158,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				sendMessage(s, map[string]string{"foo": "bar"})
 
 				b, _ := s.Topic("foo").Partition(0).Read(0, 1000)
-				require.Len(t, b.Records[0].Headers, 3)
+				require.Len(t, b.Records[0].Headers, 2)
 				require.Contains(t, b.Records[0].Headers, kafka.RecordHeader{
 					Key:   "foo",
 					Value: []byte("bar"),
@@ -175,6 +177,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 					export default function() {
 						on('kafka', function(message) {
 							message.headers = null
+							return true
 						})
 					}
 				`))
@@ -198,7 +201,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 						produce({ topic: 'foo', messages: [{ data: 12 }] })
 					}
 				`))
-				require.EqualError(t, err, "produce kafka message to 'foo' failed: encoding data to 'application/json' failed: found 1 error:\ninvalid type, expected string but got integer\nschema path #/type at mokapi/js/kafka.(*Module).Produce-fm (native)")
+				require.EqualError(t, err, "produce kafka message to 'foo' failed: encoding data to 'application/json' failed: error count 1:\n\t- #/type: invalid type, expected string but got integer at mokapi/js/kafka.(*Module).Produce-fm (native)")
 
 				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
@@ -207,25 +210,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 
 				// logs
 				require.Len(t, hook.Entries, 2)
-				require.Equal(t, "js error: produce kafka message to 'foo' failed: encoding data to 'application/json' failed: found 1 error:\ninvalid type, expected string but got integer\nschema path #/type in test.js", hook.LastEntry().Message)
-			},
-		},
-		{
-			name: "using value instead of data (skip validation)",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
-				err := engine.AddScript(newScript("test.js", `
-					import { produce } from 'mokapi/kafka'
-					export default function() {
-						produce({ topic: 'foo', messages: [{ value: 12 }] })
-					}
-				`))
-				require.NoError(t, err)
-
-				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
-				require.Equal(t, kafka.None, errCode)
-				require.NotNil(t, b)
-				require.Len(t, b.Records, 1, "message should be written despite validation error")
-				require.Equal(t, "12", kafka.BytesToString(b.Records[0].Value))
+				require.Equal(t, "js error: produce kafka message to 'foo' failed: encoding data to 'application/json' failed: error count 1:\n\t- #/type: invalid type, expected string but got integer in test.js", hook.LastEntry().Message)
 			},
 		},
 		{
@@ -246,13 +231,13 @@ func TestKafkaClient_Produce(t *testing.T) {
 								asyncapi3test.WithPayload(schematest.New("string")),
 								asyncapi3test.WithKey(schematest.New("string")))),
 					)
-					app.AddKafka(getConfig(config), nil)
+					app.Kafka.Add(getConfig(config), nil)
 				}()
 
 				err := engine.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
-						produce({ topic: 'retry', messages: [{ value: 12 }] })
+						produce({ topic: 'retry', messages: [{ data: 'foo' }] })
 					}
 				`))
 				require.NoError(t, err)
@@ -261,13 +246,10 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Len(t, b.Records, 1, "message should be written despite validation error")
-				require.Equal(t, "12", kafka.BytesToString(b.Records[0].Value))
-				require.Equal(t, []string([]string{
-					"parsing script test.js",
-					"executing script test.js",
-					"kafka topic 'retry' not found. Retry in 200ms",
-					"kafka topic 'retry' not found. Retry in 800ms",
-				}), getMessages(hook))
+				require.Equal(t, `"foo"`, kafka.BytesToString(b.Records[0].Value))
+				msg := getMessages(hook)
+				require.Contains(t, msg, "kafka topic 'retry' not found. Retry in 500ms")
+				require.Contains(t, msg, "kafka topic 'retry' not found. Retry in 1s")
 			},
 		},
 	}
@@ -299,7 +281,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 				engine.WithLogger(logrus.StandardLogger()),
 			)
 
-			info, err := app.AddKafka(getConfig(config), e)
+			info, err := app.Kafka.Add(getConfig(config), e)
 			require.NoError(t, err)
 			tc.test(t, app, info.Store, e)
 		})
@@ -307,6 +289,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 }
 
 func readBytes(b kafka.Bytes) []byte {
+	b.Seek(0, io.SeekStart)
 	buf := new(bytes.Buffer)
 	_, err := buf.ReadFrom(b)
 	if err != nil {

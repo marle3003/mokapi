@@ -17,48 +17,122 @@ type fetchParser struct {
 	r *bufio.Reader
 }
 
-func parseFetch(s string) (*FetchRequest, error) {
-	switch s {
-	case "FAST":
-		return &FetchRequest{Attributes: FetchFlags | FetchInternalDate | FetchRFC822Size}, nil
-	case "ALL":
-		return &FetchRequest{Attributes: FetchFlags | FetchInternalDate | FetchRFC822Size | FetchEnvelope}, nil
-	case "FULL":
-		return &FetchRequest{Attributes: FetchFlags | FetchInternalDate | FetchRFC822Size | FetchEnvelope | FetchBodyStructure}, nil
+func parseFetch(d *Decoder) (*FetchRequest, error) {
+	r := &FetchRequest{}
+	var err error
+
+	r.Sequence, err = d.Sequence()
+	if err != nil {
+		return r, err
 	}
 
-	r := &FetchRequest{}
-	s = strings.Trim(s, " ")
-	p := fetchParser{r: bufio.NewReader(strings.NewReader(s))}
-
-	err := p.parseList(func() error {
-		name, err := p.consume(isFetchAttrNameChar)
+	if !d.SP().is("(") {
+		macro, err := d.String()
 		if err != nil {
-			return err
+			return nil, err
 		}
-		if len(name) == 0 {
-			return nil
+		switch macro {
+		case "FAST":
+			r.Options.Flags = true
+			r.Options.InternalDate = true
+			r.Options.RFC822Size = true
+		case "ALL":
+			r.Options.Flags = true
+			r.Options.InternalDate = true
+			r.Options.RFC822Size = true
+			r.Options.Envelope = true
+		case "FULL":
+			r.Options.Flags = true
+			r.Options.InternalDate = true
+			r.Options.RFC822Size = true
+			r.Options.Envelope = true
+			r.Options.BodyStructure = true
 		}
-		switch name {
-		case "UID":
-			r.Attributes = r.Attributes | FetchUID
-		case "INTERNALDATE":
-			r.Attributes = r.Attributes | FetchInternalDate
-		case "RFC822.SIZE":
-			r.Attributes = r.Attributes | FetchRFC822Size
-		case "FLAGS":
-			r.Attributes = r.Attributes | FetchFlags
-		case "BODY.PEEK":
-			fb, err := parseFetchBody(&p)
+	} else {
+		err = d.List(func() error {
+			var key string
+			key, err = d.String()
 			if err != nil {
 				return err
 			}
-			r.Body = fb
-		}
-		return nil
-	}, listTypeList)
+			switch strings.ToUpper(key) {
+			case "UID":
+				r.Options.UID = true
+			case "FLAGS":
+				r.Options.Flags = true
+			case "INTERNALDATE":
+				r.Options.InternalDate = true
+			case "RFC822.SIZE":
+				r.Options.RFC822Size = true
+			case "BODYSTRUCTURE":
+				r.Options.BodyStructure = true
+			case "BODY.PEEK":
+				body := FetchBodySection{Peek: true}
+				err = body.decode(d)
+				if err != nil {
+					return err
+				}
+				r.Options.Body = append(r.Options.Body, body)
+			case "BODY":
+				body := FetchBodySection{}
+				err = body.decode(d)
+				if err != nil {
+					return err
+				}
+				r.Options.Body = append(r.Options.Body, body)
+			}
+			return nil
+		})
+	}
 
 	return r, err
+}
+
+func (s *FetchBodySection) decode(d *Decoder) error {
+	var err error
+	if err = d.expect("["); err != nil {
+		return err
+	}
+	var typeName string
+	typeName, err = d.String()
+	switch strings.ToUpper(typeName) {
+	case "HEADER.FIELDS":
+		s.Type = "header"
+		err = d.SP().List(func() error {
+			var field string
+			field, err = d.String()
+			s.Fields = append(s.Fields, field)
+			return err
+		})
+		if err != nil {
+			return err
+		}
+	case "TEXT":
+		s.Type = "text"
+	}
+	if err = d.expect("]"); err != nil {
+		return err
+	}
+	if d.is("<") {
+		part := BodyPart{}
+		_ = d.expect("<")
+		part.Offset, err = d.Number()
+		if err != nil {
+			return err
+		}
+		if err = d.expect("."); err != nil {
+			return err
+		}
+		part.Limit, err = d.Number()
+		if err != nil {
+			return err
+		}
+		if err = d.expect(">"); err != nil {
+			return err
+		}
+		s.Partially = &part
+	}
+	return nil
 }
 
 func parseFetchBody(p *fetchParser) (*FetchBody, error) {

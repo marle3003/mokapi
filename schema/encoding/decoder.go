@@ -34,6 +34,10 @@ func RegisterDecoder(d Decoder) {
 type DecodeOptions func(state *DecodeState)
 
 func DecodeFrom(r io.Reader, opts ...DecodeOptions) (interface{}, error) {
+	if r == nil {
+		return Decode(nil, opts...)
+	}
+
 	b, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -54,13 +58,10 @@ func Decode(b []byte, opts ...DecodeOptions) (interface{}, error) {
 	for _, d := range decoders {
 		if d.IsSupporting(state.contentType) {
 			v, err := d.Decode(b, state)
-			if err != nil {
-				return nil, err
-			}
-			return state.parser.Parse(v)
+			return v, err
 		}
 	}
-	return state.parser.Parse(string(b))
+	return state.parser.Parse(b)
 }
 
 func WithContentType(contentType media.ContentType) DecodeOptions {

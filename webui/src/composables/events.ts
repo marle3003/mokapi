@@ -1,23 +1,24 @@
 import { ref, watchEffect } from 'vue'
-import { useFetch, type Response } from './fetch'
+import { useFetch } from './fetch'
 
 export function useEvents() {
-    let responses: Response[] = []
 
     function fetch(namespace: string, ...labels: Label[]){
         let url = `/api/events?namespace=${namespace}`
         for (let label of labels) {
             url += `&${label.name}=${label.value}`
         }
+        const res = useFetch(url)
         const events = ref<ServiceEvent[]>()
-        const isLoading = ref<Boolean>()
-        const response = useFetch(url)
-        responses.push(response)
-        watchEffect(() =>{
-            events.value = response.data ? response.data : []
-            isLoading.value = !response.data && response.isLoading
+
+        watchEffect(() => {
+            if (!res.data){
+                events.value = []
+                return
+            }
+            events.value = res.data
         })
-        return {events, isLoading, close: response.close}
+        return { events, close: res.close }
     }
 
     function fetchById(id: string){

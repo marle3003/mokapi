@@ -68,8 +68,22 @@ declare interface KafkaMember {
 
 declare interface KafkaEventData {
   offset: number;
-  key: string;
-  message: string;
+  key: KafkaValue;
+  message: KafkaValue;
+  schemaId: number;
+  messageId: string
   partition: number;
-  headers: { [name: string]: string }
+  headers: KafkaHeader
+}
+
+declare interface KafkaHeader { [name: string]: KafkaHeaderValue }
+
+declare interface KafkaHeaderValue {
+  value: string;
+  binary: string;
+}
+
+declare interface KafkaValue {
+  value?: string
+  binary?: string
 }

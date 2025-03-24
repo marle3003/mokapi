@@ -10,7 +10,7 @@ tasks:
   build-windows:
     deps: [build-vue-app]
     cmds:
-      - go build -o mokapi-windows-amd64.exe -ldflags="-X 'mokapi/version.BuildVersion=1.0'" ./cmd/mokapi
+      - go build -o mokapi-windows-amd64.exe -ldflags="-w -s -X 'mokapi/version.BuildVersion=1.0'" ./cmd/mokapi
     env:
       GOOS: windows
       GOARCH: amd64

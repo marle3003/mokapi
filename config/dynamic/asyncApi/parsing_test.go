@@ -316,6 +316,31 @@ func TestMessage(t *testing.T) {
 				require.EqualError(t, err, "resolve reference 'foo.yml#/components/messages/foo' failed: TEST ERROR")
 			},
 		},
+		{
+			name: "use defaultContentType",
+			cfg: &asyncApi.Config{
+				DefaultContentType: "text/plain",
+				Channels: map[string]*asyncApi.ChannelRef{
+					"foo": {Value: &asyncApi.Channel{Publish: &asyncApi.Operation{Message: &asyncApi.MessageRef{Value: &asyncApi.Message{}}}}},
+				},
+			},
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "text/plain", cfg.Channels["foo"].Value.Publish.Message.Value.ContentType)
+			},
+		},
+		{
+			name: "missing content type",
+			cfg: &asyncApi.Config{
+				Channels: map[string]*asyncApi.ChannelRef{
+					"foo": {Value: &asyncApi.Channel{Publish: &asyncApi.Operation{Message: &asyncApi.MessageRef{Value: &asyncApi.Message{}}}}},
+				},
+			},
+			test: func(t *testing.T, cfg *asyncApi.Config, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "application/json", cfg.Channels["foo"].Value.Publish.Message.Value.ContentType)
+			},
+		},
 	}
 
 	t.Parallel()
@@ -330,7 +355,7 @@ func TestMessage(t *testing.T) {
 	}
 
 	t.Run("modify file", func(t *testing.T) {
-		target := &asyncApi.Message{}
+		target := &asyncApi.Message{ContentType: "application/json"}
 		reader := &testReader{readFunc: func(cfg *dynamic.Config) error { return nil }}
 		config := &asyncApi.Config{Channels: map[string]*asyncApi.ChannelRef{
 			"foo": {Value: &asyncApi.Channel{Publish: &asyncApi.Operation{Message: &asyncApi.MessageRef{Ref: "#/components/messages/foo"}}}},

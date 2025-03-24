@@ -40,25 +40,21 @@ onUnmounted(() => {
             <table class="table dataTable selectable">
                 <thead>
                     <tr>
+                        <th scope="col" class="text-left" style="width: 35%">Subject</th>
                         <th scope="col" class="text-left" style="width: 20%">From</th>
                         <th scope="col" class="text-left" style="width: 20%">To</th>
-                        <th scope="col" class="text-left" style="width: 20%">Subject</th>
                         <th scope="col" class="text-center" style="width:15%">Time</th>
-                        <th scope="col" class="text-center">Duration</th>
+                        <th scope="col" class="text-center" style="width:10%">Duration</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="event in events!" :key="event.id" @click="goToMail(eventData(event))">
-                        <td>
-                            {{ eventData(event).from }}
-                        </td>
+                        <td>{{ eventData(event).subject }}</td>
+                        <td>{{ eventData(event).from }}</td>
                         <td>
                             <div v-for="address in eventData(event).to">
                             {{ address }}
                             </div>
-                        </td>
-                        <td>
-                            {{ eventData(event).subject }}
                         </td>
                         <td class="text-center">{{ format(event.time) }}</td>
                         <td class="text-center">{{ duration(eventData(event).duration) }}</td>

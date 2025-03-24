@@ -87,11 +87,12 @@ func (s *Script) RunDefault() (goja.Value, error) {
 	s.loop.StartLoop()
 
 	result, err := s.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
-		v := vm.Get("exports")
+		v := vm.Get("module")
 		if v == goja.Null() {
 			return nil, NoDefaultFunction
 		}
-		exports := v.ToObject(vm)
+		mod := v.ToObject(vm)
+		exports := mod.Get("exports").ToObject(vm)
 		if f, ok := goja.AssertFunction(exports.Get("default")); ok {
 			return f(goja.Undefined())
 		} else {
@@ -121,7 +122,9 @@ func (s *Script) RunFunc(fn func(vm *goja.Runtime)) error {
 }
 
 func (s *Script) Close() {
-	s.loop.Stop()
+	if s.loop != nil {
+		s.loop.Stop()
+	}
 	if s.runtime != nil {
 		s.runtime.Interrupt(fmt.Errorf("closing"))
 		s.runtime = nil
@@ -158,6 +161,10 @@ func (s *Script) ensureRuntime() error {
 	}
 
 	s.loop.Run(func(vm *goja.Runtime) {
+		mod := vm.NewObject()
+		mod.Set("exports", vm.NewObject())
+		vm.Set("module", mod)
+
 		_, err = vm.RunProgram(prg)
 	})
 	return err
@@ -248,6 +255,7 @@ func RegisterNativeModules(registry *require.Registry) {
 	registry.RegisterNativeModule("mokapi/mustache", mustache.Require)
 	registry.RegisterNativeModule("mokapi/yaml", yaml.Require)
 	registry.RegisterNativeModule("mokapi/mail", mail.Require)
+	registry.RegisterNativeModule("mokapi/smtp", mail.Require)
 	registry.RegisterNativeModule("mokapi/ldap", ldap.Require)
 	registry.RegisterNativeModule("mokapi/encoding", encoding.Require)
 }

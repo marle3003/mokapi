@@ -17,7 +17,7 @@ type BufferWriter interface {
 }
 
 type WriterTo interface {
-	WriteTo(e *Encoder)
+	WriteTo(e *Encoder, version int16, tag kafkaTag)
 }
 
 var (
@@ -36,7 +36,7 @@ func NewEncoder(w BufferWriter) *Encoder {
 func newEncodeFunc(t reflect.Type, version int16, tag kafkaTag) encodeFunc {
 	if reflect.PtrTo(t).Implements(writerTo) {
 		return func(e *Encoder, v reflect.Value) {
-			v.Addr().Interface().(WriterTo).WriteTo(e)
+			v.Addr().Interface().(WriterTo).WriteTo(e, version, tag)
 		}
 	}
 
@@ -138,10 +138,10 @@ func (e *Encoder) encodeCompactArray(v reflect.Value, encodeElem encodeFunc) {
 }
 
 func (e *Encoder) encodeArray(v reflect.Value, encodeElem encodeFunc) {
-	len := v.Len()
-	e.writeInt32(int32(len))
+	n := v.Len()
+	e.writeInt32(int32(n))
 
-	for i := 0; i < len; i++ {
+	for i := 0; i < n; i++ {
 		item := v.Index(i)
 		encodeElem(e, item)
 	}
@@ -236,7 +236,7 @@ func (e *Encoder) writeCompactNullBytes(b []byte) {
 	}
 }
 
-func (e *Encoder) writeVarNullBytes_Old(b []byte) {
+func (e *Encoder) writeVarNullBytes(b []byte) {
 	if b == nil {
 		e.writeVarInt(-1)
 	} else {
@@ -245,15 +245,13 @@ func (e *Encoder) writeVarNullBytes_Old(b []byte) {
 	}
 }
 
-func (e *Encoder) writeVarNullBytes(b Bytes) {
+func (e *Encoder) writeVarNullBytesFrom(b Bytes) {
 	if b == nil {
 		e.writeVarInt(-1)
 	} else {
-		e.writeVarInt(int64(b.Len()))
 		b.Seek(0, io.SeekStart)
-		n, err := io.Copy(e, b)
-		_ = n
-		_ = err
+		e.writeVarInt(int64(b.Size()))
+		io.Copy(e, b)
 	}
 }
 

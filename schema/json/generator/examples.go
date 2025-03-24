@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
+	"strings"
 )
 
 func Examples() *Tree {
@@ -12,11 +13,7 @@ func Examples() *Tree {
 
 	validate := func(v interface{}, s *schema.Schema) error {
 		_, err := p.ParseWith(v, s)
-		if err != nil {
-			log.Warnf("skip using example from schema: %v: example is not valid: %v", s, parser.ToString(v))
-			return ErrUnsupported
-		}
-		return nil
+		return err
 	}
 
 	return &Tree{
@@ -30,18 +27,26 @@ func Examples() *Tree {
 			// select random index
 			index := gofakeit.Number(0, len(s.Examples)-1)
 
+			var path []string
+			for _, item := range r.Path {
+				path = append(path, item.Name)
+			}
+
 			// loop until valid example found
 			for i := index; i < len(s.Examples); {
-				v := s.Examples[i]
+				v := s.Examples[i].Value
 				if err := validate(v, s); err == nil {
 					return v, nil
+				} else {
+					log.Warnf("skip using example from schema #/%s: example %d is not valid: %s", strings.Join(path, "/"), i, err.Error())
 				}
 				i = (i + 1) % len(s.Examples)
 				if i == index {
 					break
 				}
 			}
-			log.Warnf("no example is valid: %v: generating a random value", s)
+
+			log.Warnf("no example is valid: #/%v: generating a random value", strings.Join(path, "/"))
 			return nil, ErrUnsupported
 		},
 	}

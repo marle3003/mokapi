@@ -13,6 +13,7 @@ import (
 	"mokapi/providers/openapi/schema/schematest"
 	"net/http"
 	"net/url"
+	"strconv"
 	"testing"
 )
 
@@ -24,39 +25,39 @@ func TestResponse_UnmarshalJSON(t *testing.T) {
 		{
 			name: "200",
 			test: func(t *testing.T) {
-				res := openapi.Responses[int]{}
+				res := openapi.Responses{}
 				err := json.Unmarshal([]byte(`{ "200": { "description": "foo" } }`), &res)
 				require.NoError(t, err)
 				require.Equal(t, 1, res.Len())
-				r, _ := res.Get(200)
+				r, _ := res.Get("200")
 				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
 		{
 			name: "default status code",
 			test: func(t *testing.T) {
-				res := openapi.Responses[int]{}
+				res := openapi.Responses{}
 				err := json.Unmarshal([]byte(`{ "default": { "description": "foo" } }`), &res)
 				require.NoError(t, err)
 				require.Equal(t, 1, res.Len())
-				r, _ := res.Get(0)
+				r, _ := res.Get("default")
 				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
 		{
 			name: "invalid status code",
 			test: func(t *testing.T) {
-				res := openapi.Responses[int]{}
+				res := openapi.Responses{}
 				err := json.Unmarshal([]byte(`{ "foo": { "description": "foo" } }`), &res)
 				// For JSON files, line and column position for error is handled in dynamic package
-				require.EqualError(t, err, "structural error at foo: unable to parse http status 'foo': only HTTP status codes are allowed")
+				require.EqualError(t, err, "structural error at foo: invalid http status code 'foo': only valid HTTP status codes, default or range (1XX, 2XX,...) are allowed")
 				require.Equal(t, 0, res.Len())
 			},
 		},
 		{
 			name: "unexpected array",
 			test: func(t *testing.T) {
-				res := openapi.Responses[int]{}
+				res := openapi.Responses{}
 				err := json.Unmarshal([]byte(`[]`), &res)
 				require.EqualError(t, err, "expected openapi.Responses map, got [")
 				require.Equal(t, 0, res.Len())
@@ -65,7 +66,7 @@ func TestResponse_UnmarshalJSON(t *testing.T) {
 		{
 			name: "response unexpected array",
 			test: func(t *testing.T) {
-				res := openapi.Responses[int]{}
+				res := openapi.Responses{}
 				err := json.Unmarshal([]byte(`{ "200": [{ "description": "foo" }] }`), &res)
 				require.EqualError(t, err, "structural error at 200: expected object but received an array")
 				require.Equal(t, 0, res.Len())
@@ -74,11 +75,33 @@ func TestResponse_UnmarshalJSON(t *testing.T) {
 		{
 			name: "check order of response",
 			test: func(t *testing.T) {
-				res := openapi.Responses[int]{}
-				err := json.Unmarshal([]byte(`{ "200": { "description": "200" }, "204": { "description": "200" }, "202": { "description": "200" }, "301": { "description": "301" }, "404": { "description": "404" } }`), &res)
+				res := openapi.Responses{}
+				err := json.Unmarshal([]byte(`{ "200": { "description": "200" }, "204": { "description": "204" }, "202": { "description": "202" }, "301": { "description": "301" }, "404": { "description": "404" } }`), &res)
 				require.NoError(t, err)
 				require.Equal(t, 5, res.Len())
-				require.Equal(t, []int{200, 204, 202, 301, 404}, res.Keys())
+				require.Equal(t, []string{"200", "204", "202", "301", "404"}, res.Keys())
+			},
+		},
+		{
+			name: "range 2XX",
+			test: func(t *testing.T) {
+				responses := openapi.Responses{}
+				err := json.Unmarshal([]byte(`{ "2XX": { "description": "200" }, "204": { "description": "204" }, "301": { "description": "301" } }`), &responses)
+				require.NoError(t, err)
+				res := responses.GetResponse(202)
+				require.NotNil(t, res)
+				require.Equal(t, "200", res.Description)
+			},
+		},
+		{
+			name: "explicit takes precedence over the range definition",
+			test: func(t *testing.T) {
+				responses := openapi.Responses{}
+				err := json.Unmarshal([]byte(`{ "2XX": { "description": "200" }, "204": { "description": "204" }, "301": { "description": "301" } }`), &responses)
+				require.NoError(t, err)
+				res := responses.GetResponse(204)
+				require.NotNil(t, res)
+				require.Equal(t, "204", res.Description)
 			},
 		},
 	}
@@ -101,38 +124,38 @@ func TestResponse_UnmarshalYAML(t *testing.T) {
 		{
 			name: "200",
 			test: func(t *testing.T) {
-				res := openapi.Responses[int]{}
+				res := openapi.Responses{}
 				err := yaml.Unmarshal([]byte(`'200': { description: foo }`), &res)
 				require.NoError(t, err)
 				require.Equal(t, 1, res.Len())
-				r, _ := res.Get(200)
+				r, _ := res.Get("200")
 				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
 		{
 			name: "default status code",
 			test: func(t *testing.T) {
-				res := openapi.Responses[int]{}
+				res := openapi.Responses{}
 				err := yaml.Unmarshal([]byte(`default: { description: foo }`), &res)
 				require.NoError(t, err)
 				require.Equal(t, 1, res.Len())
-				r, _ := res.Get(0)
+				r, _ := res.Get("default")
 				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
 		{
 			name: "invalid status code",
 			test: func(t *testing.T) {
-				res := openapi.Responses[int]{}
+				res := openapi.Responses{}
 				err := yaml.Unmarshal([]byte(`foo: { description: foo }`), &res)
-				require.EqualError(t, err, "unable to parse http status 'foo': only HTTP status codes are allowed at line 1, column 1")
+				require.EqualError(t, err, "invalid http status code 'foo': only valid HTTP status codes, default or range (1XX, 2XX,...) are allowed at line 1, column 1")
 				require.Equal(t, 0, res.Len())
 			},
 		},
 		{
 			name: "array instead of map",
 			test: func(t *testing.T) {
-				res := openapi.Responses[int]{}
+				res := openapi.Responses{}
 				err := yaml.Unmarshal([]byte(`- 200: [{ description: foo }]`), &res)
 				require.EqualError(t, err, "expected openapi.Responses map, got !!seq")
 				require.Equal(t, 0, res.Len())
@@ -141,7 +164,7 @@ func TestResponse_UnmarshalYAML(t *testing.T) {
 		{
 			name: "response unexpected array",
 			test: func(t *testing.T) {
-				res := openapi.Responses[int]{}
+				res := openapi.Responses{}
 				err := yaml.Unmarshal([]byte(`'200': [{ description: foo }]`), &res)
 				require.EqualError(t, err, "yaml: unmarshal errors:\n  line 1: cannot unmarshal !!seq into openapi.Response")
 				require.Equal(t, 0, res.Len())
@@ -167,17 +190,17 @@ func TestResponses_GetResponse(t *testing.T) {
 		{
 			name: "200",
 			test: func(t *testing.T) {
-				r := &openapi.Responses[int]{}
-				r.Set(http.StatusOK, &openapi.ResponseRef{Value: &openapi.Response{}})
+				r := &openapi.Responses{}
+				r.Set(strconv.Itoa(http.StatusOK), &openapi.ResponseRef{Value: &openapi.Response{}})
 				require.NotNil(t, r.GetResponse(http.StatusOK))
 			},
 		},
 		{
 			name: "200 & 201",
 			test: func(t *testing.T) {
-				r := &openapi.Responses[int]{}
-				r.Set(http.StatusOK, &openapi.ResponseRef{Value: &openapi.Response{Description: "200"}})
-				r.Set(http.StatusCreated, &openapi.ResponseRef{Value: &openapi.Response{Description: "201"}})
+				r := &openapi.Responses{}
+				r.Set(strconv.Itoa(http.StatusOK), &openapi.ResponseRef{Value: &openapi.Response{Description: "200"}})
+				r.Set(strconv.Itoa(http.StatusCreated), &openapi.ResponseRef{Value: &openapi.Response{Description: "201"}})
 				require.NotNil(t, r.GetResponse(http.StatusCreated))
 				require.Equal(t, "201", r.GetResponse(http.StatusCreated).Description)
 			},
@@ -185,24 +208,24 @@ func TestResponses_GetResponse(t *testing.T) {
 		{
 			name: "default",
 			test: func(t *testing.T) {
-				r := &openapi.Responses[int]{}
-				r.Set(0, &openapi.ResponseRef{Value: &openapi.Response{}})
+				r := &openapi.Responses{}
+				r.Set("default", &openapi.ResponseRef{Value: &openapi.Response{}})
 				require.NotNil(t, r.GetResponse(http.StatusOK))
 			},
 		},
 		{
 			name: "reference of ResponseRef not resolved returns nil",
 			test: func(t *testing.T) {
-				r := &openapi.Responses[int]{}
-				r.Set(200, &openapi.ResponseRef{})
+				r := &openapi.Responses{}
+				r.Set("200", &openapi.ResponseRef{})
 				require.Nil(t, r.GetResponse(http.StatusOK))
 			},
 		},
 		{
 			name: "No error if ResponseRef is nil",
 			test: func(t *testing.T) {
-				r := &openapi.Responses[int]{}
-				r.Set(200, nil)
+				r := &openapi.Responses{}
+				r.Set("200", nil)
 				require.Nil(t, r.GetResponse(http.StatusOK))
 			},
 		},
@@ -525,7 +548,7 @@ func TestConfig_Patch_Response(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
 				require.Len(t, res.Content, 1)
-				require.Equal(t, "number", res.Content["text/plain"].Schema.Value.Type.String())
+				require.Equal(t, "number", res.Content["text/plain"].Schema.Type.String())
 			},
 		},
 		{
@@ -551,8 +574,8 @@ func TestConfig_Patch_Response(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
 				require.Len(t, res.Content, 1)
-				require.Equal(t, "number", res.Content["text/plain"].Schema.Value.Type.String())
-				require.Equal(t, "double", res.Content["text/plain"].Schema.Value.Format)
+				require.Equal(t, "number", res.Content["text/plain"].Schema.Type.String())
+				require.Equal(t, "double", res.Content["text/plain"].Schema.Format)
 			},
 		},
 	}

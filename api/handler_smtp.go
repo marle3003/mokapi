@@ -30,9 +30,13 @@ type mailInfo struct {
 }
 
 type mailbox struct {
-	Name     string     `json:"name"`
-	Username string     `json:"username,omitempty"`
-	Password string     `json:"password,omitempty"`
+	Name     string            `json:"name"`
+	Username string            `json:"username,omitempty"`
+	Password string            `json:"password,omitempty"`
+	Folders  map[string]folder `json:"folders,omitempty"`
+}
+
+type folder struct {
 	Messages []*message `json:"mails,omitempty"`
 }
 
@@ -81,9 +85,10 @@ type attachment struct {
 	ContentId   string `json:"contentId"`
 }
 
-func getMailServices(services map[string]*runtime.SmtpInfo, m *monitor.Monitor) []interface{} {
-	result := make([]interface{}, 0, len(services))
-	for _, hs := range services {
+func getMailServices(store *runtime.MailStore, m *monitor.Monitor) []interface{} {
+	list := store.List()
+	result := make([]interface{}, 0, len(list))
+	for _, hs := range list {
 		s := service{
 			Name:        hs.Info.Name,
 			Description: hs.Info.Description,
@@ -116,8 +121,8 @@ func (h *handler) handleSmtpService(w http.ResponseWriter, r *http.Request) {
 
 	name := segments[4]
 
-	s, ok := h.app.Smtp[name]
-	if !ok {
+	s := h.app.Mail.Get(name)
+	if s == nil {
 		w.WriteHeader(404)
 		return
 	}
@@ -161,7 +166,7 @@ func (h *handler) handleSmtpService(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) getMail(w http.ResponseWriter, messageId string) {
 	var m *smtp.Message
-	for _, s := range h.app.Smtp {
+	for _, s := range h.app.Mail.List() {
 		m = s.Store.GetMail(messageId)
 		if m != nil {
 			break
@@ -178,7 +183,7 @@ func (h *handler) getMail(w http.ResponseWriter, messageId string) {
 
 func (h *handler) getMailAttachment(w http.ResponseWriter, messageId, name string) {
 	var m *smtp.Message
-	for _, s := range h.app.Smtp {
+	for _, s := range h.app.Mail.List() {
 		m = s.Store.GetMail(messageId)
 		if m != nil {
 			break
@@ -212,7 +217,7 @@ func (h *handler) getMailAttachment(w http.ResponseWriter, messageId, name strin
 }
 
 func (h *handler) getMailbox(w http.ResponseWriter, r *http.Request, service, name string) {
-	s := h.app.Smtp[service]
+	s := h.app.Mail.Get(service)
 	mb, ok := s.Store.Mailboxes[name]
 	if !ok {
 		w.WriteHeader(404)
@@ -225,8 +230,15 @@ func (h *handler) getMailbox(w http.ResponseWriter, r *http.Request, service, na
 		Password: mb.Password,
 	}
 
-	for _, m := range mb.Messages {
-		result.Messages = append(result.Messages, toMessage(m.Message))
+	for fName, f := range mb.Folders {
+		var messages []*message
+		for _, m := range f.Messages {
+			messages = append(messages, toMessage(m.Message))
+		}
+		if result.Folders == nil {
+			result.Folders = make(map[string]folder)
+		}
+		result.Folders[fName] = folder{Messages: messages}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

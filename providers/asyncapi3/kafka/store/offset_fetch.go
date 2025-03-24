@@ -5,7 +5,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
 	"mokapi/kafka/offsetFetch"
-	"mokapi/schema/encoding"
 	"mokapi/schema/json/parser"
 )
 
@@ -18,7 +17,6 @@ func (s *Store) offsetFetch(rw kafka.ResponseWriter, req *kafka.Request) error {
 	ctx := kafka.ClientFromContext(req)
 
 	for _, rt := range r.Topics {
-		log.Infof("kafka OffsetFetch: topic %v, API Version=%v, client %v", rt.Name, req.Header.ApiVersion, ctx.ClientId)
 		topic := s.Topic(rt.Name)
 		resTopic := offsetFetch.ResponseTopic{Name: rt.Name, Partitions: make([]offsetFetch.Partition, 0, len(rt.PartitionIndexes))}
 
@@ -71,7 +69,8 @@ func validateConsumer(t *Topic, clientId, groupId string) (error, kafka.ErrorCod
 			continue
 		}
 		if op.Bindings.Kafka.ClientId != nil {
-			_, err = encoding.Decode([]byte(clientId), encoding.WithParser(&parser.Parser{Schema: op.Bindings.Kafka.ClientId}))
+			p := parser.Parser{Schema: op.Bindings.Kafka.ClientId}
+			_, err = p.Parse(clientId)
 			if err != nil {
 				last = fmt.Errorf("invalid clientId: %v", err)
 				code = kafka.UnknownServerError
@@ -79,7 +78,8 @@ func validateConsumer(t *Topic, clientId, groupId string) (error, kafka.ErrorCod
 			}
 		}
 		if op.Bindings.Kafka.GroupId != nil {
-			_, err = encoding.Decode([]byte(groupId), encoding.WithParser(&parser.Parser{Schema: op.Bindings.Kafka.GroupId}))
+			p := parser.Parser{Schema: op.Bindings.Kafka.GroupId}
+			_, err = p.Parse(groupId)
 			if err != nil {
 				last = fmt.Errorf("invalid groupId: %v", err)
 				code = kafka.InvalidGroupId

@@ -281,6 +281,12 @@ func WithEnum(e []interface{}) SchemaOptions {
 	}
 }
 
+func WithEnumValues(e ...interface{}) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Enum = e
+	}
+}
+
 func WithMinLength(n int) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.MinLength = &n
@@ -305,15 +311,11 @@ func WithDefault(v interface{}) SchemaOptions {
 	}
 }
 
-func WithExample(v interface{}) SchemaOptions {
-	return func(s *schema.Schema) {
-		s.Examples = append(s.Examples, v)
-	}
-}
-
 func WithExamples(v ...interface{}) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.Examples = append(s.Examples, v...)
+		for _, item := range v {
+			s.Examples = append(s.Examples, schema.Example{Value: item})
+		}
 	}
 }
 
@@ -419,5 +421,17 @@ func WithDef(name string, def *schema.Schema) SchemaOptions {
 			s.Defs = map[string]*schema.Schema{}
 		}
 		s.Defs[name] = def
+	}
+}
+
+func WithTitle(title string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Title = title
+	}
+}
+
+func WithDescription(description string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Description = description
 	}
 }

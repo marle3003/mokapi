@@ -296,7 +296,7 @@ func TestNpmProvider(t *testing.T) {
 				pool.Stop()
 			})
 
-			ch := make(chan *dynamic.Config)
+			ch := make(chan dynamic.ConfigEvent)
 			p := NewFS(tc.cfg, tc.fs)
 			err := p.Start(ch, pool)
 			require.NoError(t, err)
@@ -305,14 +305,14 @@ func TestNpmProvider(t *testing.T) {
 		Collect:
 			for {
 				select {
-				case c := <-ch:
-					path := c.Info.Inner().Url.Path
+				case e := <-ch:
+					path := e.Config.Info.Inner().Url.Path
 					if len(path) == 0 {
-						path = c.Info.Inner().Url.Opaque
+						path = e.Config.Info.Inner().Url.Opaque
 						path = strings.ReplaceAll(path, "\\", "/")
 						path = strings.ReplaceAll(path, "C:/", "/")
 					}
-					configs[path] = c
+					configs[path] = e.Config
 				case <-time.After(time.Second):
 					break Collect
 				}

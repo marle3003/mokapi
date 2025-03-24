@@ -14,7 +14,7 @@ func TestServer_Auth(t *testing.T) {
 	testcases := []struct {
 		name    string
 		handler newHandler
-		test    func(t *testing.T, c *imaptest.Client)
+		test    func(t *testing.T, c *imap.Client)
 	}{
 		{
 			name: "plain",
@@ -28,7 +28,7 @@ func TestServer_Auth(t *testing.T) {
 				}
 				return h
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				mustDial(t, c)
 				err := c.PlainAuth("", "bob", "password")
 				require.NoError(t, err)
@@ -44,10 +44,10 @@ func TestServer_Auth(t *testing.T) {
 				}
 				return h
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				mustDial(t, c)
 				err := c.PlainAuth("", "bob", "password")
-				require.EqualError(t, err, "A1 BAD wrong password")
+				require.EqualError(t, err, "A0001 BAD wrong password")
 			},
 		},
 		{
@@ -55,7 +55,7 @@ func TestServer_Auth(t *testing.T) {
 			handler: func(t *testing.T) imap.Handler {
 				return &imaptest.Handler{}
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				mustDial(t, c)
 				r, err := c.SendRaw("A1 AUTHENTICATE foo")
 				require.NoError(t, err)
@@ -67,7 +67,7 @@ func TestServer_Auth(t *testing.T) {
 			handler: func(t *testing.T) imap.Handler {
 				return &imaptest.Handler{}
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				mustDial(t, c)
 				r, err := c.SendRaw("A1 AUTHENTICATE PLAIN")
 				require.NoError(t, err)
@@ -82,7 +82,7 @@ func TestServer_Auth(t *testing.T) {
 			handler: func(t *testing.T) imap.Handler {
 				return &imaptest.Handler{}
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				mustDial(t, c)
 				r, err := c.SendRaw("A1 AUTHENTICATE PLAIN")
 				require.NoError(t, err)
@@ -99,14 +99,14 @@ func TestServer_Auth(t *testing.T) {
 			handler: func(t *testing.T) imap.Handler {
 				return &imaptest.Handler{}
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				mustDial(t, c)
 				err := c.PlainAuth("", "bob", "password")
 				require.NoError(t, err)
 				lines, err := c.Send("CAPABILITY")
 				require.NoError(t, err)
-				require.Equal(t, "* CAPABILITY IMAP4rev1 SASL-IR SELECT LIST FETCH CLOSE", lines[0])
-				require.Equal(t, "A2 OK CAPABILITY completed", lines[1])
+				require.Equal(t, "* CAPABILITY IMAP4rev1 SASL-IR UIDPLUS MOVE UNSELECT", lines[0])
+				require.Equal(t, "A0002 OK CAPABILITY completed", lines[1])
 			},
 		},
 	}
@@ -124,7 +124,7 @@ func TestServer_Auth(t *testing.T) {
 				require.ErrorIs(t, err, imap.ErrServerClosed)
 			}()
 
-			c := imaptest.NewClient(fmt.Sprintf("localhost:%v", p))
+			c := imap.NewClient(fmt.Sprintf("localhost:%v", p))
 
 			tc.test(t, c)
 		})

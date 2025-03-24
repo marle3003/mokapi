@@ -167,8 +167,8 @@ const router = createRouter({
               meta: { service: 'ldap' },
             },
             {
-              path: '/dashboard/ldap/searches/:id',
-              name: 'ldapSearch',
+              path: '/dashboard/ldap/requests/:id',
+              name: 'ldapRequest',
               component: dashboardView,
               meta: { service: 'ldap' }
             },
@@ -214,7 +214,7 @@ const router = createRouter({
       path: '/docs',
       redirect: ({
         name: 'docs',
-        params: {level1: 'guides', level2: 'get-started', level3: 'welcome'}
+        params: {level1: 'guides', level2: 'welcome'}
       }),
       name: 'docsStart',
       children: [

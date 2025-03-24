@@ -76,7 +76,7 @@ func TestApiVersion_Raw(t *testing.T) {
 
 		0, 0, // Produce
 		0, 0, // min
-		0, 8, // max
+		0, 9, // max
 
 		0, 1, // Fetch
 		0, 0, // min

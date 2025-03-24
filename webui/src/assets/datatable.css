@@ -1,21 +1,21 @@
 table.dataTable {
     border-left-style: hidden;
     border-right-style: hidden;
-    color:var(--color-text);
+    color:var(--datatable-color);
     font-size: 0.9rem;
-    background-color: var(--color-background-soft);
+    background-color: var(--datatable-background);
 }
 table.dataTable th {
-    background-color: var(--color-background-soft);
-    color: var(--color-datatable-header-text);
+    background-color: var(---datatable-background);
+    color: var(--datatable-header-color);
 }
 table.dataTable td {
-    background-color: var(--color-background-soft);
-    color: var(--color-text);
+    background-color: var(--datatable-background);
+    color: var(--datatable-color);
 }
 table.dataTable th {
     padding: 3px 0 3px 12px;
-    border-color: var(--color-datatable-border);
+    border-color: var(--datatable-border-color);
     border-top-width: 0px;
     border-bottom-width: 2px;
     font-weight: 500;
@@ -23,7 +23,7 @@ table.dataTable th {
 table.dataTable td{
     border-top-width: 2px;
     border-bottom-width: 2px;
-    border-color: var(--color-datatable-border);
+    border-color: var(--datatable-border-color);
     border-style: solid;
     padding: 4px 0 3px 12px;
     border-left-style: hidden;
@@ -31,7 +31,7 @@ table.dataTable td{
 }
 
 table.dataTable tr:hover > td {
-    background-color: var(--color-background-mute);
+    background-color: var(--datatable-background-active);
 }
 
 table.dataTable.selectable tr:hover td {
@@ -41,7 +41,7 @@ table.dataTable.selectable tr:hover td {
 table.dataTable .description p {
     font-size: 0.9rem !important;
     margin: 0 !important;
-    line-height: 1.6 !important;
+    line-height: 1.75 !important;
 }
 table .badge {
     vertical-align: middle;

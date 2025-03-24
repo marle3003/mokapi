@@ -39,7 +39,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   "true",
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected boolean but got string\nschema path #/type")
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected boolean but got string")
 			},
 		},
 		{
@@ -68,7 +68,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   0,
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected boolean but got integer\nschema path #/type")
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected boolean but got integer")
 			},
 		},
 		{
@@ -77,7 +77,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   1,
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected boolean but got integer\nschema path #/type")
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected boolean but got integer")
 			},
 		},
 		{
@@ -85,7 +85,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   []bool{true},
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected boolean but got array\nschema path #/type")
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected boolean but got array")
 			},
 		},
 		{
@@ -93,7 +93,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   false,
 			schema: schematest.New("boolean", schematest.WithConst(true)),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nvalue 'false' does not match const 'true'\nschema path #/const")
+				require.EqualError(t, err, "error count 1:\n\t- #/const: value 'false' does not match const 'true'")
 			},
 		},
 		{

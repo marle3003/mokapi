@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"mokapi/config/tls"
+	"net/url"
 	"strings"
 )
 
@@ -18,9 +19,11 @@ type Config struct {
 	Services         Services          `json:"-" yaml:"-"`
 	Js               JsConfig          `json:"js" yaml:"js"`
 	Configs          Configs           `json:"configs" yaml:"configs" explode:"config"`
-	Help             bool              `json:"-" yaml:"-"`
+	Help             bool              `json:"-" yaml:"-" aliases:"h"`
 	GenerateSkeleton interface{}       `json:"-" yaml:"-" flag:"generate-cli-skeleton"`
 	Features         []string          `json:"-" yaml:"-" explode:"feature"`
+	Version          bool              `json:"-" yaml:"-" aliases:"v"`
+	Args             []string          `json:"args" yaml:"-" aliases:"args"` // positional arguments
 }
 
 func NewConfig() *Config {
@@ -166,4 +169,30 @@ func (c *Configs) UnmarshalJSON(b []byte) error {
 		}
 
 	}
+}
+
+func (c *Config) Parse() error {
+	for _, arg := range c.Args {
+		u, err := url.Parse(arg)
+		if err != nil {
+			return err
+		}
+		switch u.Scheme {
+		case "http", "https":
+			c.Providers.Http.Urls = append(c.Providers.Http.Urls, u.String())
+		case "git+https", "git+http":
+			c.Providers.Git.Urls = append(c.Providers.Git.Urls, strings.TrimPrefix(u.String(), "git+"))
+		case "npm":
+			c.Providers.Npm.Packages = append(c.Providers.Npm.Packages, NpmPackage{Name: u.String()})
+		case "":
+			c.Providers.File.Filenames = append(c.Providers.File.Filenames, arg)
+		default:
+			if u.Opaque != "" {
+				c.Providers.File.Filenames = append(c.Providers.File.Filenames, arg)
+			} else {
+				return fmt.Errorf("positional argument is not supported: %v", arg)
+			}
+		}
+	}
+	return nil
 }

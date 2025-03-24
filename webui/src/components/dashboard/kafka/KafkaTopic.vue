@@ -50,7 +50,7 @@ onUnmounted(() => {
                         </p>
                     </div>
                     <div class="col text-end">
-                        <span class="badge bg-secondary" title="Type of API" aria-label="Type of API">Kafka</span>
+                        <span class="badge bg-secondary api" title="Type of API" aria-label="Type of API">Kafka</span>
                     </div>
                 </div>
                 <div class="row">

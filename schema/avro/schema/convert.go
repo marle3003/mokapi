@@ -6,22 +6,45 @@ import (
 )
 
 func (s *Schema) Convert() *json.Schema {
-	js := &json.Schema{}
+	js := &json.Schema{
+		Title:       s.fullname,
+		Description: s.Doc,
+	}
 
-	if len(s.Type) == 1 {
-		if str, ok := s.Type[0].(string); ok {
-			js.Type = append(js.Type, getJsonType(str))
-		} else if wrapped, ok := s.Type[0].(*Schema); ok {
-			js.AnyOf = append(js.AnyOf, wrapped.Convert())
-		}
-	} else {
+	if len(s.Type) > 1 {
 		for _, t := range s.Type {
 			switch v := t.(type) {
 			case string:
-				js.Type = append(js.Type, getJsonType(v))
+				name := getFullname(s, v)
+				if named, ok := table[name]; ok {
+					js.AnyOf = append(js.AnyOf, named.Convert())
+				} else {
+					jsAny := &json.Schema{Type: json.Types{getJsonType(v)}}
+					if v == "int" {
+						jsAny.Format = "int32"
+					}
+					js.AnyOf = append(js.AnyOf, jsAny)
+				}
 			case *Schema:
 				js.AnyOf = append(js.AnyOf, v.Convert())
 			}
+		}
+		return js
+	}
+	if len(s.Type) == 1 {
+		if str, ok := s.Type[0].(string); ok {
+			name := getFullname(s, str)
+			if named, ok := table[name]; ok {
+				js.AnyOf = append(js.AnyOf, named.Convert())
+			} else {
+				jsType := getJsonType(str)
+				js.Type = append(js.Type, jsType)
+				if str == "int" {
+					js.Format = "int32"
+				}
+			}
+		} else if wrapped, ok := s.Type[0].(*Schema); ok {
+			js.AnyOf = append(js.AnyOf, wrapped.Convert())
 		}
 	}
 

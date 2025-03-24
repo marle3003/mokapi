@@ -1,8 +1,8 @@
 ---
-title: Using Mock API Dashboard
+title: Using Mokapi Dashboard
 description: Mokapi provides you a dashboard where you can view your mock APIs or analyze traffic like a HTTP request/response.
 ---
-# Using Mock API Dashboard
+# Using Mokapi Dashboard
 
 The dashboard provides graphical displays of your mock APIs and helps developers 
 simulate real API responses during the development and testing phases. It allows 
@@ -19,10 +19,6 @@ The dashboard is available on port 8080 by default. Open `http://localhost:8080`
 The dashboard displays key metrics like request logs, 
 response times, and error rates, offering a comprehensive 
 overview of how the mock API behaves under different conditions.
-
-Below you can find the list of API types in the dashboard:
-
-- [HTTP](/docs/guides/http/dashboard.md)
 
 ### Generate sample data from the specification
 

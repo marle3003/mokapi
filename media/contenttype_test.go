@@ -17,6 +17,7 @@ func TestParseContentType(t *testing.T) {
 				require.Equal(t, "", ct.Subtype)
 				require.Equal(t, "", ct.Key())
 				require.True(t, ct.IsEmpty())
+				require.True(t, ct.IsAny())
 			},
 		},
 		{

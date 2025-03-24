@@ -21,7 +21,15 @@ func TestParser_ParseObject(t *testing.T) {
 			data:   12,
 			schema: schematest.New("object"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected object but got integer\nschema path #/type")
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected object but got integer")
+			},
+		},
+		{
+			name:   "null but not nullable",
+			data:   nil,
+			schema: schematest.New("object"),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected object but got null")
 			},
 		},
 		{
@@ -29,7 +37,7 @@ func TestParser_ParseObject(t *testing.T) {
 			data:   map[string]interface{}{"foo": 1234},
 			schema: schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected string but got integer\nschema path #/foo/type")
+				require.EqualError(t, err, "error count 1:\n\t- #/foo/type: invalid type, expected string but got integer")
 			},
 		},
 		{
@@ -40,7 +48,17 @@ func TestParser_ParseObject(t *testing.T) {
 				schematest.WithProperty("bar", schematest.New("string")),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 2 errors:\ninvalid type, expected string but got integer\nschema path #/foo/type\ninvalid type, expected string but got integer\nschema path #/bar/type")
+				require.EqualError(t, err, "error count 2:\n\t- #/foo/type: invalid type, expected string but got integer\n\t- #/bar/type: invalid type, expected string but got integer")
+			},
+		},
+		{
+			name: "string property not present",
+			data: map[string]interface{}{},
+			schema: schematest.New("object",
+				schematest.WithProperty("foo", schematest.New("string")),
+			),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
 			},
 		},
 		{
@@ -61,7 +79,7 @@ func TestParser_ParseObject(t *testing.T) {
 				schematest.WithPatternProperty("^S_", schematest.New("string")),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected string but got integer\nschema path #/patternProperties/^S_/type")
+				require.EqualError(t, err, "error count 1:\n\t- #/patternProperties/^S_/type: invalid type, expected string but got integer")
 			},
 		},
 		{
@@ -83,7 +101,7 @@ func TestParser_ParseObject(t *testing.T) {
 				schematest.WithFreeForm(false),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nproperty 'foo' not defined and the schema does not allow additional properties\nschema path #/additionalProperties")
+				require.EqualError(t, err, "error count 1:\n\t- #/additionalProperties: property 'foo' not defined and the schema does not allow additional properties")
 			},
 		},
 		{
@@ -105,7 +123,7 @@ func TestParser_ParseObject(t *testing.T) {
 				schematest.WithAdditionalProperties(schematest.New("string")),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected string but got integer\nschema path #/additionalProperties/number2/type")
+				require.EqualError(t, err, "error count 1:\n\t- #/additionalProperties/number2/type: invalid type, expected string but got integer")
 			},
 		},
 		{
@@ -158,7 +176,7 @@ func TestParser_ParseObject(t *testing.T) {
 				schematest.WithAdditionalProperties(schematest.New("string")),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ninvalid type, expected string but got integer\nschema path #/additionalProperties/keyword/type")
+				require.EqualError(t, err, "error count 1:\n\t- #/additionalProperties/keyword/type: invalid type, expected string but got integer")
 			},
 		},
 		{
@@ -168,7 +186,7 @@ func TestParser_ParseObject(t *testing.T) {
 				schematest.WithProperty("foo", schematest.New("string")),
 				schematest.WithRequired("foo")),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nrequired properties are missing: foo\nschema path #/required")
+				require.EqualError(t, err, "error count 1:\n\t- #/required: required properties are missing: foo")
 			},
 		},
 		{
@@ -189,7 +207,7 @@ func TestParser_ParseObject(t *testing.T) {
 				schematest.WithPropertyNames(schematest.NewTypes(nil, schematest.WithPattern("^[a-z]+"))),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nstring '1_foo' does not match regex pattern '^[a-z]+'\nschema path #/propertyNames/pattern")
+				require.EqualError(t, err, "error count 1:\n\t- #/propertyNames/pattern: string '1_foo' does not match regex pattern '^[a-z]+'")
 			},
 		},
 		{
@@ -210,7 +228,7 @@ func TestParser_ParseObject(t *testing.T) {
 				schematest.WithMinProperties(2),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nproperty count 1 is less than minimum count of 2\nschema path #/minProperties")
+				require.EqualError(t, err, "error count 1:\n\t- #/minProperties: property count 1 is less than minimum count of 2")
 			},
 		},
 		{
@@ -231,7 +249,7 @@ func TestParser_ParseObject(t *testing.T) {
 				schematest.WithMaxProperties(1),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nproperty count 2 exceeds maximum count of 1\nschema path #/maxProperties")
+				require.EqualError(t, err, "error count 1:\n\t- #/maxProperties: property count 2 exceeds maximum count of 1")
 			},
 		},
 		{
@@ -250,7 +268,7 @@ func TestParser_ParseObject(t *testing.T) {
 			schema: schematest.New("object", schematest.WithConst(map[string]interface{}{"foo": "bar"})),
 			data:   map[string]interface{}{"foo": "foobar"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nvalue '{foo: foobar}' does not match const '{foo: bar}'\nschema path #/const")
+				require.EqualError(t, err, "error count 1:\n\t- #/const: value '{foo: foobar}' does not match const '{foo: bar}'")
 			},
 		},
 		{
@@ -267,7 +285,7 @@ func TestParser_ParseObject(t *testing.T) {
 			schema: schematest.New("object", schematest.WithDependentRequired("foo", "bar")),
 			data:   map[string]interface{}{"foo": "foobar"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ndependencies for property 'foo' failed: missing required keys: bar.\nschema path #/dependentRequired")
+				require.EqualError(t, err, "error count 1:\n\t- #/dependentRequired: dependencies for property 'foo' failed: missing required keys: bar.")
 			},
 		},
 		{
@@ -291,7 +309,7 @@ func TestParser_ParseObject(t *testing.T) {
 			),
 			data: map[string]interface{}{"foo": "foobar"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ndependencies for property 'foo' failed:\nrequired properties are missing: bar\nschema path #/dependentSchemas/foo/required")
+				require.EqualError(t, err, "error count 1:\n\t- #/dependentSchemas/foo/required: required properties are missing: bar")
 			},
 		},
 		{
@@ -326,7 +344,7 @@ func TestParser_ParseObject(t *testing.T) {
 			),
 			data: map[string]interface{}{"foo": "bar", "bar": "abc"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ndoes not match schema from 'then':\nstring 'abc' does not match regex pattern '[0-9]+'\nschema path #/then/bar/pattern")
+				require.EqualError(t, err, "error count 1:\n\t- #/then/bar/pattern: does not match schema: string 'abc' does not match regex pattern '[0-9]+'")
 			},
 		},
 		{
@@ -385,7 +403,7 @@ func TestParser_ParseObject(t *testing.T) {
 			),
 			data: map[string]interface{}{"foo": "bar2", "zzz": "abc"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ndoes not match schema from 'else':\nstring 'abc' does not match regex pattern '[0-9]+'\nschema path #/else/zzz/pattern")
+				require.EqualError(t, err, "error count 1:\n\t- #/else/zzz/pattern: does not match schema: string 'abc' does not match regex pattern '[0-9]+'")
 			},
 		},
 		{

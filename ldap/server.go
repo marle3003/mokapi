@@ -68,7 +68,9 @@ func (s *Server) ListenAndServe() error {
 	}
 
 	var err error
+	s.mu.Lock()
 	s.listener, err = net.Listen("tcp", s.Addr)
+	s.mu.Unlock()
 	if err != nil {
 		return err
 	}
@@ -95,6 +97,9 @@ func (s *Server) Serve(l net.Listener) error {
 }
 
 func (s *Server) Close() {
+	if s.inShutdown.isSet() {
+		return
+	}
 	s.inShutdown.setTrue()
 
 	s.mu.Lock()
@@ -171,8 +176,18 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 			msg, err = decodeSearchRequest(body, controls)
 		case abandonRequest:
 			msg = &SearchResponse{Status: CannotCancel}
+		case modifyRequest:
+			msg, err = decodeModifyRequest(body)
+		case addRequest:
+			msg, err = decodeAddRequest(body)
+		case deleteRequest:
+			msg, err = decodeDeleteRequest(body)
+		case modifyDNRequest:
+			msg, err = decodeModifyDNRequest(body)
+		case compareRequest:
+			msg, err = decodeCompareRequest(body)
 		default:
-			log.Errorf("ldap: unknown operation %v, %v", packet.Tag, packet.Description)
+			log.Errorf("ldap: server does not support %v", body.Tag)
 		}
 
 		if err != nil {
@@ -241,9 +256,22 @@ func (r *response) Write(msg Message) error {
 		res.appendSearchDone(env)
 		_, err := r.conn.Write(env.Bytes())
 		return err
+	case *ModifyResponse:
+		res.encode(envelope)
+	case *AddResponse:
+		res.encode(envelope)
+	case *DeleteResponse:
+		res.encode(envelope)
+	case *ModifyDNResponse:
+		res.encode(envelope)
+	case *CompareResponse:
+		res.encode(envelope)
 	default:
 		return fmt.Errorf("unsupported message: %t", msg)
 	}
+
+	_, err := r.conn.Write(envelope.Bytes())
+	return err
 }
 
 func (r *response) write(body *ber.Packet) error {

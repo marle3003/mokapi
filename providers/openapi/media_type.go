@@ -11,9 +11,9 @@ import (
 )
 
 type MediaType struct {
-	Schema   *schema.Ref `yaml:"schema,omitempty" json:"schema,omitempty"`
-	Example  interface{} `yaml:"example,omitempty" json:"example,omitempty"`
-	Examples Examples    `yaml:"examples,omitempty" json:"examples,omitempty"`
+	Schema   *schema.Schema `yaml:"schema,omitempty" json:"schema,omitempty"`
+	Example  interface{}    `yaml:"example,omitempty" json:"example,omitempty"`
+	Examples Examples       `yaml:"examples,omitempty" json:"examples,omitempty"`
 
 	ContentType media.ContentType    `yaml:"-" json:"-"`
 	Encoding    map[string]*Encoding `yaml:"encoding,omitempty" json:"encoding,omitempty"`
@@ -24,7 +24,7 @@ func (m *MediaType) parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 	if err := m.Schema.Parse(config, reader); err != nil {
-		return err
+		return fmt.Errorf("parse schema failed: %s", err)
 	}
 
 	if err := m.Examples.parse(config, reader); err != nil {

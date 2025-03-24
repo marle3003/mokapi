@@ -21,14 +21,20 @@ func (p *Parser) ParseOne(s *schema.Schema, data interface{}, evaluated map[stri
 			continue
 		}
 		if result != nil {
-			return nil, Errorf("oneOf", "valid against more than one schema from 'oneOf': valid schema indexes: %v, %v", validIndex, index)
+			return nil, &ErrorDetail{
+				Message: fmt.Sprintf("valid against more than one schema: valid schema indexes: %v, %v", validIndex, index),
+				Field:   "oneOf",
+			}
 		}
 		result = next
 		validIndex = index
 	}
 
 	if result == nil {
-		return nil, Errorf("oneOf", "valid against no schemas from 'oneOf'")
+		return nil, &ErrorDetail{
+			Message: "valid against no schemas",
+			Field:   "oneOf",
+		}
 	}
 	return result, nil
 }
@@ -43,7 +49,10 @@ func (p *Parser) parseOneObject(m *sortedmap.LinkedHashMap[string, interface{}],
 	for index, one = range s.OneOf {
 		if one == nil {
 			if result != nil {
-				return nil, Errorf("oneOf", "valid against more than one schema from 'oneOf': valid schema indexes: %v, %v", validIndex, index)
+				return nil, &ErrorDetail{
+					Message: fmt.Sprintf("valid against more than one schema: valid schema indexes: %v, %v", validIndex, index),
+					Field:   "oneOf",
+				}
 			}
 			result = m
 			validIndex = index
@@ -65,7 +74,10 @@ func (p *Parser) parseOneObject(m *sortedmap.LinkedHashMap[string, interface{}],
 		next = v.(*sortedmap.LinkedHashMap[string, interface{}])
 
 		if result != nil {
-			return nil, Errorf("oneOf", "valid against more than one schema from 'oneOf': valid schema indexes: %v, %v", validIndex, index)
+			return nil, &ErrorDetail{
+				Message: fmt.Sprintf("valid against more than one schema: valid schema indexes: %v, %v", validIndex, index),
+				Field:   "oneOf",
+			}
 		}
 
 		result = next
@@ -77,12 +89,13 @@ func (p *Parser) parseOneObject(m *sortedmap.LinkedHashMap[string, interface{}],
 	}
 
 	if result == nil {
-		pe := &PathCompositionError{
-			Path:    fmt.Sprintf("%v", index),
-			Message: "valid against no schemas from 'oneOf'",
+		return nil, &ErrorDetail{
+			Message: "valid against no schemas",
+			Field:   "oneOf",
+			Errors: ErrorList{
+				wrapErrorDetail(err, &ErrorDetail{Field: fmt.Sprintf("%d", index)}),
+			},
 		}
-		pe.append(err)
-		return nil, wrapError("oneOf", pe)
 	}
 
 	return result, nil

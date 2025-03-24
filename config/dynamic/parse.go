@@ -75,6 +75,7 @@ func parse(c *Config) (interface{}, error) {
 		} else {
 			s := result.(*script.Script)
 			s.Code = string(b)
+			s.Filename = name
 		}
 	default:
 		if result != nil {
@@ -258,4 +259,10 @@ func reset(c *Config) {
 
 	p := v.Elem()
 	p.Set(reflect.Zero(p.Type()))
+}
+
+type EmptyReader struct{}
+
+func (e *EmptyReader) Read(u *url.URL, v any) (*Config, error) {
+	return nil, fmt.Errorf("not found %v", u.String())
 }

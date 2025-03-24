@@ -157,6 +157,18 @@ func TestStringFormat(t *testing.T) {
 				require.Equal(t, "82910 San Jose", v)
 			},
 		},
+		{
+			name: "string enum",
+			req: &Request{
+				Path: Path{
+					&PathElement{Schema: schematest.New("string", schematest.WithEnumValues("foo", "bar"))},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "foo", v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

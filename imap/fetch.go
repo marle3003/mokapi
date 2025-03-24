@@ -2,28 +2,31 @@ package imap
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
+	"time"
 )
 
-type FetchAttributes uint
+type FetchOptions struct {
+	UID           bool
+	Flags         bool
+	InternalDate  bool
+	RFC822Size    bool
+	Envelope      bool
+	BodyStructure bool
+	Body          []FetchBodySection
+}
 
-const (
-	FetchFlags FetchAttributes = 1 << iota
-	FetchEnvelope
-	FetchInternalDate
-	FetchRFC822Header
-	FetchRFC822Text
-	FetchRFC822Size
-	FetchBodyStructure
-	FetchUID
-)
+type FetchBodySection struct {
+	Type      string
+	Fields    []string
+	Parts     []int
+	Peek      bool
+	Partially *BodyPart
+}
 
-type SequenceSet []Sequence
-
-type Sequence struct {
-	Start int
-	End   int
+type BodyPart struct {
+	Offset uint32
+	Limit  uint32
 }
 
 type FetchBody struct {
@@ -32,10 +35,8 @@ type FetchBody struct {
 }
 
 type FetchRequest struct {
-	Sequence   SequenceSet
-	Attributes FetchAttributes
-	// nil means everything
-	Body *FetchBody
+	Sequence IdSet
+	Options  FetchOptions
 }
 
 func (c *conn) handleFetch(tag, param string) error {
@@ -46,54 +47,26 @@ func (c *conn) handleFetch(tag, param string) error {
 		})
 	}
 
-	args := strings.SplitN(param, " ", 2)
-	seq, err := parseFetchSequence(args[0])
-	if err != nil {
-		return err
-	}
-	req, err := parseFetch(args[1])
+	d := Decoder{msg: param}
+
+	req, err := parseFetch(&d)
 	if err != nil {
 		return err
 	}
 
-	req.Sequence = seq
 	res := fetchResponse{}
 	if err = c.handler.Fetch(req, &res, c.ctx); err != nil {
 		return err
 	}
 
-	if err := c.writeFetchResponse(&res); err != nil {
+	if err = c.writeFetchResponse(&res); err != nil {
 		return err
 	}
 
 	return c.writeResponse(tag, &response{
 		status: ok,
-		text:   "",
+		text:   "FETCH completed",
 	})
-}
-
-func parseFetchSequence(s string) (SequenceSet, error) {
-	args := strings.Split(s, ":")
-	start, err := strconv.Atoi(args[0])
-	if err != nil {
-		return nil, err
-	}
-	end := start
-	if len(args) > 1 {
-		if end, err = strconv.Atoi(args[1]); err != nil {
-			return nil, err
-		}
-	}
-	return SequenceSet{
-		Sequence{
-			Start: start,
-			End:   end,
-		},
-	}, nil
-}
-
-func (a FetchAttributes) Has(attr FetchAttributes) bool {
-	return a&attr == attr
 }
 
 func (c *conn) writeFetchResponse(res *fetchResponse) error {
@@ -107,4 +80,275 @@ func (c *conn) writeFetchResponse(res *fetchResponse) error {
 		}
 	}
 	return nil
+}
+
+type FetchCommand struct {
+	Messages []Message
+}
+
+type Message struct {
+	SeqNumber     uint32
+	UID           uint32
+	Flags         []Flag
+	InternalDate  time.Time
+	Size          uint32
+	BodyStructure BodyStructure
+	Body          []FetchData
+}
+
+func (c *Client) Fetch(set IdSet, options FetchOptions) (*FetchCommand, error) {
+	tag := c.nextTag()
+
+	e := &Encoder{}
+	e.Atom(tag).SP().Atom("FETCH").SP().SequenceSet(set)
+	options.write(e.SP())
+
+	err := e.WriteTo(c.tpc)
+	if err != nil {
+		return nil, err
+	}
+
+	d := Decoder{}
+	cmd := &FetchCommand{}
+	var msg Message
+	for {
+		d.msg, err = c.tpc.ReadLine()
+		if err != nil {
+			return nil, err
+		}
+
+		if d.is(tag) {
+			return cmd, d.EndCmd(tag)
+		}
+
+		if err = d.expect("*"); err != nil {
+			return nil, err
+		}
+
+		var num uint32
+		num, err = d.SP().Number()
+		if err != nil {
+			return nil, err
+		}
+		msg.SeqNumber = num
+
+		err = d.SP().expect("FETCH")
+		if err != nil {
+			return nil, err
+		}
+
+		err = d.SP().List(func() error {
+			var key string
+			key, err = d.String()
+			if err != nil {
+				return err
+			}
+
+			switch strings.ToUpper(key) {
+			case "UID":
+				num, err = d.SP().Number()
+				if err != nil {
+					return err
+				}
+				msg.UID = num
+			case "FLAGS":
+				err = d.SP().List(func() error {
+					var flag string
+					flag, err = d.ReadFlag()
+					if err != nil {
+						return err
+					}
+					msg.Flags = append(msg.Flags, Flag(flag))
+					return nil
+				})
+			case "INTERNALDATE":
+				msg.InternalDate, err = d.SP().Date()
+			case "BODYSTRUCTURE":
+				b := BodyStructure{}
+				err = d.SP().List(func() error {
+					return b.readPart(&d)
+				})
+				msg.BodyStructure = b
+			case "RFC822Size":
+				msg.Size, err = d.SP().Number()
+			case "BODY":
+				body := FetchData{}
+				if err = d.expect("["); err != nil {
+					return err
+				}
+				key, err = d.String()
+				if err != nil {
+					return err
+				}
+				switch key {
+				case "HEADER.FIELDS":
+					body.Def.Type = "header"
+					err = d.SP().List(func() error {
+						var field string
+						field, err = d.String()
+						body.Def.Fields = append(body.Def.Fields, field)
+						return nil
+					})
+					if err != nil {
+						return err
+					}
+				}
+
+				if err = d.expect("]"); err != nil {
+					return err
+				}
+				if d.SP().is("{") {
+					_ = d.expect("{")
+					var size uint32
+					size, err = d.Number()
+					if err != nil {
+						return err
+					}
+					if err = d.expect("}"); err != nil {
+						return err
+					}
+					b := make([]byte, size)
+					_, err = c.tpc.R.Read(b)
+					if err != nil {
+						return err
+					}
+					body.Data = string(b)
+					d.msg, err = c.tpc.ReadLine()
+					if err != nil {
+						return err
+					}
+				} else {
+					body.Data, err = d.String()
+					if err != nil {
+						return err
+					}
+				}
+				msg.Body = append(msg.Body, body)
+			}
+
+			return err
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		cmd.Messages = append(cmd.Messages, msg)
+	}
+}
+
+func (o *FetchOptions) write(e *Encoder) {
+	e.BeginList()
+	if o.UID {
+		e.ListItem("UID")
+	}
+	if o.Flags {
+		e.ListItem("FLAGS")
+	}
+	if o.InternalDate {
+		e.ListItem("INTERNALDATE")
+	}
+	if o.BodyStructure {
+		e.ListItem("BODYSTRUCTURE")
+	}
+	if o.Envelope {
+		e.ListItem("ENVELOPE")
+	}
+	if o.RFC822Size {
+		e.ListItem("RFC822Size")
+	}
+	for _, body := range o.Body {
+		e.ListItem(body.encode())
+	}
+
+	e.EndList()
+}
+
+func (s *FetchBodySection) encode() string {
+	b := Encoder{}
+	b.Atom("BODY")
+	if s.Peek {
+		b.Atom(".PEEK")
+	}
+	b.Byte('[')
+	switch strings.ToLower(s.Type) {
+	case "header":
+		b.Atom("HEADER")
+		if len(s.Fields) > 0 {
+			b.Atom(".FIELDS").SP().BeginList()
+			for _, field := range s.Fields {
+				b.ListItem(field)
+			}
+			b.EndList()
+		}
+
+	}
+	b.Byte(']')
+	return b.String()
+}
+
+func (b *BodyStructure) readPart(d *Decoder) error {
+	if d.is("(") {
+		for d.is("(") {
+			_ = d.List(func() error {
+				part := BodyStructure{}
+				err := part.readPart(d)
+				if err != nil {
+					return err
+				}
+				b.Parts = append(b.Parts, part)
+				return nil
+			})
+		}
+	} else {
+		b.Type, _ = d.Quoted()
+	}
+
+	b.Subtype, _ = d.SP().Quoted()
+
+	_ = d.SP().NilList(func() error {
+		if b.Params == nil {
+			b.Params = map[string]string{}
+		}
+
+		var k string
+		var v string
+		k, _ = d.Quoted()
+		v, _ = d.SP().Quoted()
+		b.Params[k] = v
+		return d.Error()
+	})
+
+	if len(b.Parts) == 0 {
+		_ = d.SP().DiscardValue() // body id
+		_ = d.SP().DiscardValue() // body description
+
+		b.Encoding, _ = d.SP().Quoted()
+		b.Size, _ = d.SP().Number()
+		b.MD5, _ = d.SP().NilString()
+	}
+
+	_ = d.SP().NilList(func() error {
+		if b.Disposition == nil {
+			b.Disposition = map[string]map[string]string{}
+		}
+		key, _ := d.Quoted()
+		m := map[string]string{}
+		_ = d.SP().NilList(func() error {
+			name, _ := d.Quoted()
+			val, _ := d.SP().Quoted()
+			m[name] = val
+			return nil
+		})
+		b.Disposition[key] = m
+		return nil
+	})
+	b.Language, _ = d.SP().NilString()
+	b.Location, _ = d.SP().NilString()
+
+	for d.IsSP() {
+		_ = d.SP().DiscardValue()
+	}
+
+	return d.Error()
 }

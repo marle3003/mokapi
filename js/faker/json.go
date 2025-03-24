@@ -48,7 +48,9 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
 		case "examples":
 			i := obj.Get(k).Export()
 			if examples, ok := i.([]interface{}); ok {
-				s.Examples = examples
+				for _, item := range examples {
+					s.Examples = append(s.Examples, jsonSchema.Example{Value: item})
+				}
 			} else {
 				return nil, fmt.Errorf("unexpected type for 'examples': %v", util.JsType(i))
 			}

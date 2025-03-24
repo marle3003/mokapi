@@ -1,6 +1,7 @@
 package asyncapi3
 
 import (
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 )
@@ -106,7 +107,9 @@ func (r *MessageRef) parse(config *dynamic.Config, reader dynamic.Reader) error 
 		cfg, ok := config.Data.(*Config)
 		if ok {
 			r.Value.ContentType = cfg.DefaultContentType
-		} else {
+		}
+		if r.Value.ContentType == "" {
+			log.Warn("content type is missing, using application/json")
 			r.Value.ContentType = "application/json"
 		}
 	}

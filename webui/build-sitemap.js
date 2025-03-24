@@ -46,10 +46,17 @@ function writeObject(obj, base) {
     const urlPath = base + '/' + segment.toLowerCase()
 
     if (obj[key].hasOwnProperty("index")) {
+      if (typeof obj[key]["index"] === "string") {
+        const stats = fs.statSync(path.join(docsPath, obj[key]["index"]))
+        const url = 'https://mokapi.io/docs' + urlPath.replaceAll('/items', '')
+        const node = util.format(urlTemplate, url, '0.7', stats.mtime.toISOString())
+        xml += node
+      }else {
       const stats = fs.statSync(path.join(docsPath, key.toLowerCase()))
       const url = 'https://mokapi.io/docs' + urlPath.replaceAll('/items', '')
       const node = util.format(urlTemplate, url, '0.7', stats.mtime.toISOString())
       xml += node
+      }
     } else if (typeof obj[key] !== "string") {
       xml += writeObject(obj[key], urlPath)
     } else{

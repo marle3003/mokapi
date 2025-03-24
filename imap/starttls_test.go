@@ -16,7 +16,7 @@ func TestServer_StartTLS(t *testing.T) {
 	testcases := []struct {
 		name      string
 		tlsConfig func() *tls.Config
-		test      func(t *testing.T, c *imaptest.Client)
+		test      func(t *testing.T, c *imap.Client)
 	}{
 		{
 			name: "expect greetings with STARTTLS",
@@ -27,10 +27,10 @@ func TestServer_StartTLS(t *testing.T) {
 				}
 				return &tls.Config{GetCertificate: store.GetCertificate}
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
-				r, err := c.Dial()
+			test: func(t *testing.T, c *imap.Client) {
+				caps, err := c.Dial()
 				require.NoError(t, err)
-				require.Equal(t, "* OK [CAPABILITY IMAP4rev1 SASL-IR STARTTLS AUTH=PLAIN] Mokapi Ready", r)
+				require.Equal(t, []string{"IMAP4rev1", "SASL-IR", "STARTTLS", "AUTH=PLAIN"}, caps)
 			},
 		},
 		{
@@ -42,12 +42,11 @@ func TestServer_StartTLS(t *testing.T) {
 				}
 				return &tls.Config{GetCertificate: store.GetCertificate}
 			},
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
-				r, err := c.StartTLS()
+				err = c.StartTLS()
 				require.NoError(t, err)
-				require.Equal(t, "A1 OK Begin TLS negotiation now", r)
 				caps, err := c.Capability()
 				require.NoError(t, err)
 				require.NotContains(t, caps, "STARTTLS")
@@ -55,7 +54,7 @@ func TestServer_StartTLS(t *testing.T) {
 		},
 		{
 			name: "after auth starttls is not available",
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
 				err = c.PlainAuth("", "bob", "password")
@@ -67,12 +66,11 @@ func TestServer_StartTLS(t *testing.T) {
 		},
 		{
 			name: "STARTTLS not available",
-			test: func(t *testing.T, c *imaptest.Client) {
+			test: func(t *testing.T, c *imap.Client) {
 				_, err := c.Dial()
 				require.NoError(t, err)
-				r, err := c.StartTLS()
-				require.NoError(t, err)
-				require.Equal(t, "A1 BAD STARTTLS not available", r)
+				err = c.StartTLS()
+				require.EqualError(t, err, "imap status [BAD]: STARTTLS not available")
 			},
 		},
 	}
@@ -97,7 +95,7 @@ func TestServer_StartTLS(t *testing.T) {
 				require.ErrorIs(t, err, imap.ErrServerClosed)
 			}()
 
-			c := imaptest.NewClient(fmt.Sprintf("localhost:%v", p))
+			c := imap.NewClient(fmt.Sprintf("localhost:%v", p))
 
 			tc.test(t, c)
 		})

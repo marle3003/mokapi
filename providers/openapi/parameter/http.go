@@ -68,7 +68,11 @@ func FromRequest(params Parameters, route string, r *http.Request) (RequestParam
 			v, err = parsePath(p, route, r)
 			store = parameters[Path]
 			if err != nil {
-				err = fmt.Errorf("parse path parameter '%v' failed: %w", p.Name, err)
+				if strings.Contains(route, "?") {
+					err = fmt.Errorf("parse path parameter '%v' failed: %w. the path contains a quotation mark ('?'), which suggests query parameters are incorrectly included in the path. query parameters should be defined separately in the 'parameters' section", p.Name, err)
+				} else {
+					err = fmt.Errorf("parse path parameter '%v' failed: %w", p.Name, err)
+				}
 			}
 		case Query:
 			v, err = parseQuery(p, r.URL)
@@ -118,8 +122,8 @@ func parseExplodeObject(param *Parameter, value, separator string, decode decode
 		if err != nil {
 			return nil, err
 		}
-		prop := param.Schema.Value.Properties.Get(key)
-		if prop == nil && !param.Schema.Value.IsFreeForm() && !param.Schema.Value.IsDictionary() {
+		prop := param.Schema.Properties.Get(key)
+		if prop == nil && !param.Schema.IsFreeForm() && !param.Schema.IsDictionary() {
 			return nil, fmt.Errorf("property '%v' not defined in schema: %s", kv[0], param.Schema)
 		}
 
@@ -143,7 +147,7 @@ func parseUnExplodeObject(param *Parameter, value, separator string) (map[string
 		key := elements[i]
 		i++
 
-		prop := param.Schema.Value.Properties.Get(key)
+		prop := param.Schema.Properties.Get(key)
 		if prop == nil {
 			continue
 		}

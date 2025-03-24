@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestGitConfig(t *testing.T) {
+func TestStaticConfig(t *testing.T) {
 	testcases := []struct {
 		name string
 		test func(t *testing.T)
@@ -40,7 +40,7 @@ func TestGitConfig(t *testing.T) {
 			},
 		},
 		{
-			name: "help",
+			name: "--help",
 			test: func(t *testing.T) {
 				os.Args = append(os.Args, "mokapi.exe")
 				os.Args = append(os.Args, `--help`)
@@ -49,6 +49,42 @@ func TestGitConfig(t *testing.T) {
 				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
 				require.NoError(t, err)
 				require.Equal(t, true, cfg.Help)
+			},
+		},
+		{
+			name: "-h",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, `-h`)
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+				require.Equal(t, true, cfg.Help)
+			},
+		},
+		{
+			name: "--version",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, `--version`)
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+				require.Equal(t, true, cfg.Version)
+			},
+		},
+		{
+			name: "-v",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				os.Args = append(os.Args, `-v`)
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+				require.Equal(t, true, cfg.Version)
 			},
 		},
 		{
@@ -473,6 +509,101 @@ providers:
 				require.NoError(t, err)
 
 				require.Equal(t, []string{"foo"}, cfg.Providers.File.Directories)
+			},
+		},
+		{
+			name: "positional parameter file",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "foo.json")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.NoError(t, err)
+
+				require.Equal(t, []string{"foo.json"}, cfg.Args)
+				require.Equal(t, "foo.json", cfg.Providers.File.Filenames[0])
+			},
+		},
+		{
+			name: "positional parameter http",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "http://foo.io/foo.json")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.NoError(t, err)
+
+				require.Equal(t, "http://foo.io/foo.json", cfg.Providers.Http.Urls[0])
+			},
+		},
+		{
+			name: "positional parameter https",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "https://foo.io/foo.json")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.NoError(t, err)
+
+				require.Equal(t, "https://foo.io/foo.json", cfg.Providers.Http.Urls[0])
+			},
+		},
+		{
+			name: "positional parameter git with https",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "git+https://foo.io/foo.json")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.NoError(t, err)
+
+				require.Equal(t, "https://foo.io/foo.json", cfg.Providers.Git.Urls[0])
+			},
+		},
+		{
+			name: "positional parameter npm",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "npm://bar/foo.txt?scope=@foo")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.NoError(t, err)
+
+				require.Equal(t, "npm://bar/foo.txt?scope=@foo", cfg.Providers.Npm.Packages[0].Name)
+			},
+		},
+		{
+			name: "positional parameter not supported",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "foo://bar")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.EqualError(t, err, "positional argument is not supported: foo://bar")
+			},
+		},
+		{
+			name: "positional parameter Windows path",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "C:\\bar")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.Equal(t, "C:\\bar", cfg.Providers.File.Filenames[0])
 			},
 		},
 	}

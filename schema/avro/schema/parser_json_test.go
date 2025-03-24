@@ -3,6 +3,8 @@ package schema_test
 import (
 	"encoding/json"
 	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/schema/avro/schema"
 	"testing"
 )
@@ -28,7 +30,7 @@ func TestParser_Parse_Json(t *testing.T) {
 			input:  `123`,
 			schema: &schema.Schema{Type: []interface{}{"string"}},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "invalid type, expected string but got float\nschema path #/type")
+				require.EqualError(t, err, "invalid type, expected type string but got float (float64)\nschema path #/type")
 			},
 		},
 		{
@@ -112,12 +114,23 @@ func TestParser_Parse_Json(t *testing.T) {
 		{
 			name:  "record",
 			input: `{"foo": "bar"}`,
-			schema: &schema.Schema{Type: []interface{}{"record"}, Fields: []schema.Schema{
+			schema: &schema.Schema{Type: []interface{}{"record"}, Fields: []*schema.Schema{
 				{Name: "foo", Type: []interface{}{"string"}},
 			}},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"foo": "bar"}, v)
+			},
+		},
+		{
+			name:  "null and record",
+			input: `null`,
+			schema: &schema.Schema{Type: []interface{}{"null", "record"}, Fields: []*schema.Schema{
+				{Name: "foo", Type: []interface{}{"string"}},
+			}},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, nil, v)
 			},
 		},
 		{
@@ -138,16 +151,65 @@ func TestParser_Parse_Json(t *testing.T) {
 				require.Equal(t, []interface{}{"foo", "bar"}, v)
 			},
 		},
+		{
+			name:  "named enum empty namespace",
+			input: `{ "f1": "foo", "f2": "bar" }`,
+			schema: &schema.Schema{
+				Type: []interface{}{"record"},
+				Fields: []*schema.Schema{
+					{
+						Name: "f1",
+						Type: []interface{}{
+							&schema.Schema{
+								Name:    "foo",
+								Type:    []interface{}{"enum"},
+								Symbols: []string{"foo", "bar", "yuh"},
+							},
+						},
+					},
+					{
+						Name: "f2",
+						Type: []interface{}{"foo"},
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"f1": "foo", "f2": "bar"}, v)
+			},
+		},
+		{
+			name:  "union first is invalid",
+			input: `"foo"`,
+			schema: &schema.Schema{
+				Type: []interface{}{
+					&schema.Schema{
+						Type:    []interface{}{"enum"},
+						Symbols: []string{"ACTIVE", "INACTIVE"},
+					},
+					&schema.Schema{
+						Type: []interface{}{"string"},
+					},
+				},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "foo", v)
+			},
+		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+			err := tc.schema.Parse(&dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: tc.schema}, &dynamictest.Reader{})
+			if err != nil {
+				tc.test(t, nil, err)
+				return
+			}
 
 			var v interface{}
-			err := json.Unmarshal([]byte(tc.input), &v)
+			err = json.Unmarshal([]byte(tc.input), &v)
 			require.NoError(t, err)
 			p := schema.Parser{
 				Schema: tc.schema,

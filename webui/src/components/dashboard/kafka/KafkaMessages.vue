@@ -32,6 +32,14 @@ function eventData(event: ServiceEvent | null): KafkaEventData | null{
     }
     return <KafkaEventData>event.data
 }
+function isAvro(event: ServiceEvent): boolean {
+    const msg = getMessageConfig(event)
+    if (!msg) {
+        return false
+    }
+    const [ _, isAvro ] = getContentType(msg)
+    return isAvro
+}
 onMounted(()=> {
     dialog = new Modal(messageDialog.value)
     tab = new Tab(tabDetailData.value)
@@ -42,15 +50,20 @@ onUnmounted(() => {
 interface DialogData {
     key: string
     message: string
-    headers: { [name: string]: string }
+    source: Source
+    headers: KafkaHeader
     contentType: string
+    contentTypeTitle: string
+    isAvro: boolean
     keyType: string | string[]
     partition: number
     offset: number
     time: string
     topic: string
+    schemaId: number
 }
 let message = ref<DialogData | null>(null)
+let data: KafkaEventData | null
 
 function showMessage(event: ServiceEvent){
     if (getSelection()?.toString()) {
@@ -62,24 +75,44 @@ function showMessage(event: ServiceEvent){
         return
     }
 
-    const topicName = event.traits["topic"]
-    const topic = getTopic(topicName)
-    const messageConfig = getMessageConfig(data?.headers['x-specification-message-id'], topic)
+    const messageConfig = getMessageConfig(event)
     if (!messageConfig) {
-        console.error('x-specification-message-id: '+ data?.headers['x-specification-message-id'])
+        console.error('resolve message failed')
         return
     }
 
+    const [ contentType, isAvro ] = getContentType(messageConfig)
+
+    const source: Source = {}
+    if (data.message.value) {
+        source.preview = {
+                content: formatLanguage(data.message.value, isAvro ? 'application/json' : messageConfig.contentType),
+                contentType: contentType,
+                contentTypeTitle: messageConfig.contentType,
+                description: isAvro ? 'Avro content in JSON format' : undefined
+            }
+    }
+    if (data.message.binary) {
+       source.binary = {
+                content: atob(data.message.binary),
+                contentType: messageConfig.contentType
+            }
+    }
+
     message.value = {
-        key: data.key,
-        message: formatLanguage(data.message, messageConfig.contentType),
+        key: key(data),
+        message: formatLanguage(data.message.value ?? data.message.binary!, messageConfig.contentType),
+        source: source,
         headers: data.headers,
-        contentType: messageConfig.contentType,
+        contentType: contentType,
+        contentTypeTitle: messageConfig.contentType,
+        isAvro: isAvro,
         keyType: messageConfig.key?.schema?.type,
         partition: data.partition,
         offset: data.offset,
         time: format(event.time),
-        topic: topicName
+        topic: event.traits["topic"],
+        schemaId: data.schemaId
     }
     if (dialog){
         tab.show()
@@ -95,10 +128,21 @@ function getTopic(name: string): KafkaTopic {
     }
     throw new Error(`topic ${name} not found`)
 }
-function getMessageConfig(messageId: string | undefined, topic: KafkaTopic): KafkaMessage | undefined {
+function getMessageConfig(event: ServiceEvent): KafkaMessage | undefined {
+    const topicName = event.traits["topic"]
+    const data = eventData(event)
+    const topic = getTopic(topicName)
+
     const keys = Object.keys(topic.messages)
     if (keys.length === 1) {
         return topic.messages[keys[0]]
+    }
+
+    const messageId = data?.messageId
+
+    if (!messageId) {
+        console.error('missing messageId in Kafka event log')
+        return
     }
 
     for (const id in topic.messages){
@@ -107,6 +151,38 @@ function getMessageConfig(messageId: string | undefined, topic: KafkaTopic): Kaf
         }
     }
     return undefined
+}
+function getContentType(msg: KafkaMessage): [string, boolean] {
+    if (msg.payload.format?.includes('application/vnd.apache.avro')) {
+        switch (msg.contentType) {
+            case 'avro/binary':
+            case 'application/octet-stream':
+                return [ 'application/json', true ]
+        }
+    }
+
+    return [ msg.contentType, false ]
+}
+function key(data: KafkaEventData | null): string {
+    if (!data) {
+        return ''
+    }
+    if (data?.key.value !== '') {
+        return data.key.value!
+    }
+    if (data?.key.binary) {
+        return atob(data.key.binary)
+    }
+    return ''
+}
+function formatHeaderValue(v: KafkaHeaderValue) {
+    if (v.value !== '') {
+        return v.value
+    }
+    if (v.binary !== '') {
+        return atob(v.binary)
+    }
+    return ''
 }
 </script>
 
@@ -123,9 +199,9 @@ function getMessageConfig(messageId: string | undefined, topic: KafkaTopic): Kaf
             </tr>
         </thead>
         <tbody>
-            <tr v-for="event in events" :key="event.id" @click="showMessage(event)">
-                <td class="key" v-html="eventData(event)?.key"></td>
-                <td class="message">{{ eventData(event)?.message }}</td>
+            <tr v-for="event in events" :key="event.id" @click="showMessage(event)" :set="data = eventData(event)">
+                <td class="key" >{{ key(data) }}</td>
+                <td class="message" :title="isAvro(event)? 'Avro content displayed as JSON' : ''">{{ data?.message.value ?? data?.message.binary }}</td>
                 <td v-if="!topicName">{{ event.traits["topic"] }}</td>
                 <td class="text-center">{{ format(event.time) }}</td>
             </tr>
@@ -152,8 +228,12 @@ function getMessageConfig(messageId: string | undefined, topic: KafkaTopic): Kaf
                                                     <p id="dialog-message-key" class="label">Key</p>
                                                     <p aria-labelledby="dialog-message-key">{{ message.key }}</p>
                                                 </div>
+                                                <div class="col" v-if="message.schemaId">
+                                                    <p id="dialog-message-key" class="label">Schema ID</p>
+                                                    <p aria-labelledby="dialog-message-key">{{ message.schemaId }}</p>
+                                                </div>
                                             </div>
-                                            <source-view :source="formatLanguage(message.message, message.contentType)" :content-type="message.contentType" />
+                                            <source-view :source="message.source" :content-type="message.contentType" :content-type-title="message.contentTypeTitle" />
                                         </div>
                                         <div class="tab-pane fade" id="detail-header" role="tabpanel">
                                             <table class="table dataTable">
@@ -167,7 +247,7 @@ function getMessageConfig(messageId: string | undefined, topic: KafkaTopic): Kaf
                                                 <tbody>
                                                     <tr v-for="(value, name) of message.headers" :key="name">
                                                         <td>{{ name }}</td>
-                                                        <td>{{ value }}</td>
+                                                        <td>{{ formatHeaderValue(value) }}</td>
                                                     </tr>
                                                 </tbody>
                                             </table>
@@ -195,7 +275,7 @@ function getMessageConfig(messageId: string | undefined, topic: KafkaTopic): Kaf
                                                 </div>
                                                 <div class="col">
                                                     <p id="dialog-meta-key-type" class="label">Key Type</p>
-                                                    <p aria-labelledby="dialog-meta-key-type">{{ message.keyType }}</p>
+                                                    <p aria-labelledby="dialog-meta-key-type">{{ message.keyType ?? 'not specified' }}</p>
                                                 </div>
                                             </div>
                                             <div class="row mb-3">

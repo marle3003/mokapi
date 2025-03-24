@@ -100,7 +100,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	response := NewEventResponse(status, contentType)
 
-	err = setResponseData(response, mediaType, request.Key)
+	err = setResponseData(response, mediaType, request)
 	if err != nil {
 		writeError(rw, r, err, h.config.Info.Name)
 		return
@@ -139,6 +139,8 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(res.Content) == 0 {
+		rw.Header().Del("Content-Type")
+		rw.Header().Set("Content-Length", "0")
 		// no response content is defined which means body is empty
 		if response.StatusCode > 0 {
 			rw.WriteHeader(response.StatusCode)
@@ -195,7 +197,11 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	regex := regexp.MustCompile(`\{(?P<name>.+)\}`) // parameter format "/{param}/"
-	reqSeg := strings.Split(r.URL.Path, "/")
+	requestPath := r.URL.Path
+	if len(requestPath) > 1 {
+		requestPath = strings.TrimRight(requestPath, "/")
+	}
+	reqSeg := strings.Split(requestPath, "/")
 	var lastError error
 
 endpointLoop:
@@ -209,13 +215,14 @@ endpointLoop:
 			continue
 		}
 
-		routePath := ""
-		if path != "/" {
-			routePath = path
-		}
 		servicePath, ok := r.Context().Value("servicePath").(string)
+
+		routePath := path
 		if ok && servicePath != "/" {
 			routePath = servicePath + routePath
+		}
+		if len(routePath) > 1 {
+			routePath = strings.TrimRight(routePath, "/")
 		}
 		routeSeg := strings.Split(routePath, "/")
 
@@ -257,7 +264,7 @@ endpointLoop:
 		return
 	}
 
-	if ctx, err := NewLogEventContext(r, false, events.NewTraits().WithName(h.config.Info.Name)); err != nil {
+	if ctx, err := NewLogEventContext(r, false, events.NewTraits().WithName(h.config.Info.Name).With("path", r.URL.Path).With("method", r.Method)); err != nil {
 		log.Errorf("unable to log http event: %v", err)
 	} else {
 		r = r.WithContext(ctx)

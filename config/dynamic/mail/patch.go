@@ -22,6 +22,7 @@ func (c *Config) patchInfo(patch *Config) {
 	if len(patch.Info.Version) > 0 {
 		c.Info.Version = patch.Info.Version
 	}
+	c.AutoCreateMailbox = patch.AutoCreateMailbox
 }
 
 func (c *Config) patchMailboxes(patch *Config) {
@@ -35,9 +36,10 @@ func (c *Config) patchMailboxes(patch *Config) {
 
 Loop:
 	for _, p := range patch.Mailboxes {
-		for _, v := range c.Mailboxes {
+		for i, v := range c.Mailboxes {
 			if v.Name == p.Name {
-				v.patch(p)
+				v.patch(&p)
+				c.Mailboxes[i] = v
 				continue Loop
 			}
 		}
@@ -45,12 +47,32 @@ Loop:
 	}
 }
 
-func (m *MailboxConfig) patch(patch MailboxConfig) {
+func (m *MailboxConfig) patch(patch *MailboxConfig) {
 	if len(patch.Username) > 0 {
 		m.Username = patch.Username
 	}
 	if len(patch.Password) > 0 {
 		m.Password = patch.Password
+	}
+	if len(m.Folders) == 0 {
+		m.Folders = patch.Folders
+	} else {
+		for _, folder := range patch.Folders {
+			for i, f := range m.Folders {
+				if f.Name == folder.Name {
+				Flags:
+					for _, flag := range folder.Flags {
+						for _, orig := range f.Flags {
+							if orig == flag {
+								continue Flags
+							}
+						}
+						f.Flags = append(f.Flags, flag)
+					}
+				}
+				m.Folders[i] = f
+			}
+		}
 	}
 }
 

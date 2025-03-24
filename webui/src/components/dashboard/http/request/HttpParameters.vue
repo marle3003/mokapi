@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import type { PropType, Ref } from 'vue'
+import { type PropType, computed, ref } from 'vue'
 import { useSchema } from '@/composables/schema'
 import Markdown from 'vue3-markdown-it'
-import { useExample } from '@/composables/example'
+import { useExample, type Response } from '@/composables/example'
 import SourceView from '../../SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 
@@ -14,16 +14,21 @@ const props = defineProps({
     parameters: { type: Array as PropType<Array<HttpParameter>> }
 })
 
-const examples: {[key: string]: string} = {}
-if (props.parameters){
-    for (let parameter of props.parameters){
-        if (!parameter.schema) {
-            continue;
+const opened = ref<{[name: string]: boolean}>({})
+
+const examples = computed(() => {
+    const result: {[key: string]: Response} = {}
+    if (props.parameters){
+        for (let parameter of props.parameters){
+            if (!parameter.schema || !opened.value[parameter.name]) {
+                continue;
+            }
+            let example = fetchExample({schema: { schema: parameter.schema }, contentTypes: ['text/plain'] })
+            result[parameter.name+parameter.type] = example
         }
-        let example = fetchExample({schema: { schema: parameter.schema }, contentType: 'text/plain'})
-        examples[parameter.name+parameter.type] = example.data
     }
-}
+    return result
+})
 
 const sortedParameters = props.parameters?.sort((p1, p2) =>{
     const r = getParameterTypeSortOrder(p1.type) - getParameterTypeSortOrder(p2.type)
@@ -41,12 +46,18 @@ function getParameterTypeSortOrder(type: string): number{
         default: return 4
     }
 }
-function getExample(key: string){
-    const example = examples[key]
-    if (!example || !example){
-        return ''
+function getExample(key: string): Source {
+    const example = examples.value[key]
+    if (!example || !example.data[0] || !example.data[0].value){
+        return { preview: { content: '', contentType: 'text/plain' } }
     }
-    return example
+
+    return { 
+        preview: { 
+            content: example.data[0].value,
+            contentType: 'text/plain' 
+        }
+    }
 }
 
 function showWarningColumn(){
@@ -75,7 +86,7 @@ function showWarningColumn(){
             </tr>
         </thead>
         <tbody>
-            <tr v-for="(parameter, index) in sortedParameters" :key="'parameter-'+index" data-bs-toggle="modal" :data-bs-target="'#modal-parameter-'+index">
+            <tr v-for="(parameter, index) in sortedParameters" :key="'parameter-'+index" @click="opened[parameter.name] = true" data-bs-toggle="modal" :data-bs-target="'#modal-parameter-'+index">
                 <td>{{ parameter.name }}</td>
                 <td>{{ parameter.type }}</td>
                 <td>{{ printType(parameter.schema) }}</td>
@@ -134,10 +145,10 @@ function showWarningColumn(){
 
                                         <div class="tab-content" :id="'pills-tabParameter-parameter-'+index">
                                             <div class="tab-pane fade show active" :id="'pills-schema-parameter-'+index" role="tabpanel">
-                                                <source-view :source="formatSchema(parameter.schema)" content-type="application/json" :hide-content-type="true" />
+                                                <source-view :source="{preview: { content: formatSchema(parameter.schema), contentType: 'application/json' }}" :hide-content-type="true" />
                                             </div>
                                             <div class="tab-pane fade" :id="'pills-example-parameter-'+index" role="tabpanel">
-                                                <source-view :source="getExample(parameter.name+parameter.type)" content-type="text/plain" :hide-content-type="true" />
+                                                <source-view :source="getExample(parameter.name+parameter.type)" :hide-content-type="true" />
                                             </div>
                                         </div>
                                     </div>

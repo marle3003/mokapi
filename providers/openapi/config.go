@@ -18,7 +18,9 @@ var (
 		version.New("3.0.1"),
 		version.New("3.0.2"),
 		version.New("3.0.3"),
+		version.New("3.0.4"),
 		version.New("3.1.0"),
+		version.New("3.1.1"),
 	}
 
 	//go:embed schema.yaml

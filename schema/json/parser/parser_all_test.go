@@ -65,7 +65,7 @@ func TestParser_ParseAll(t *testing.T) {
 				schematest.New("integer", schematest.WithMaximum(11)),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nparse 12 failed: does not match all schemas from 'allOf': all of schema type=integer, schema type=integer maximum=11: integer 12 exceeds maximum value of 11\nschema path #/maximum")
+				require.EqualError(t, err, "error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/1/maximum: integer 12 exceeds maximum value of 11")
 			},
 		},
 		{
@@ -76,7 +76,7 @@ func TestParser_ParseAll(t *testing.T) {
 				schematest.New("string"),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nparse 12 failed: does not match all schemas from 'allOf': all of schema type=integer, schema type=string: invalid type, expected string but got integer\nschema path #/type")
+				require.EqualError(t, err, "error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/1/type: invalid type, expected string but got integer")
 			},
 		},
 		{
@@ -111,7 +111,7 @@ func TestParser_ParseAll(t *testing.T) {
 				schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ndoes not match all schemas from 'allOf':\ninvalid type, expected integer but got object\nschema path #/allOf/0/type")
+				require.EqualError(t, err, "error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/type: invalid type, expected integer but got object")
 			},
 		},
 		{
@@ -155,7 +155,7 @@ func TestParser_ParseAll(t *testing.T) {
 				schematest.New("object", schematest.WithProperty("age", schematest.New("integer")), schematest.WithFreeForm(false)),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 2 errors:\ndoes not match all schemas from 'allOf':\nproperty 'age' not defined and the schema does not allow additional properties\nschema path #/allOf/0/additionalProperties\nproperty 'name' not defined and the schema does not allow additional properties\nschema path #/allOf/1/additionalProperties")
+				require.EqualError(t, err, "error count 3:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/additionalProperties: property 'age' not defined and the schema does not allow additional properties\n\t\t- #/allOf/1/additionalProperties: property 'name' not defined and the schema does not allow additional properties")
 			},
 		},
 		{
@@ -169,7 +169,7 @@ func TestParser_ParseAll(t *testing.T) {
 				schematest.New("object", schematest.WithProperty("age", schematest.New("integer")), schematest.WithFreeForm(false)),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 2 errors:\ndoes not match all schemas from 'allOf':\ninvalid type, expected string but got integer\nschema path #/allOf/0/name/type\nproperty 'age' not defined and the schema does not allow additional properties\nschema path #/allOf/0/additionalProperties\ninvalid type, expected integer but got string\nschema path #/allOf/1/age/type\nproperty 'name' not defined and the schema does not allow additional properties\nschema path #/allOf/1/additionalProperties")
+				require.EqualError(t, err, "error count 5:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/name/type: invalid type, expected string but got integer\n\t\t- #/allOf/0/additionalProperties: property 'age' not defined and the schema does not allow additional properties\n\t\t- #/allOf/1/age/type: invalid type, expected integer but got string\n\t\t- #/allOf/1/additionalProperties: property 'name' not defined and the schema does not allow additional properties")
 			},
 		},
 		{
@@ -186,7 +186,7 @@ func TestParser_ParseAll(t *testing.T) {
 				schematest.New("object", schematest.WithProperty("age", schematest.New("integer"))),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ndoes not match all schemas from 'allOf':\nproperty age not successfully evaluated and schema does not allow unevaluated properties\nschema path #/allOf/0/unevaluatedProperties")
+				require.EqualError(t, err, "error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/unevaluatedProperties: property age not successfully evaluated and schema does not allow unevaluated properties")
 			},
 		},
 		{
@@ -211,7 +211,7 @@ func TestParser_ParseAll(t *testing.T) {
 				"type":           "business",
 			},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ndoes not match all schemas from 'allOf':\nproperty 'type' not defined and the schema does not allow additional properties\nschema path #/allOf/0/additionalProperties")
+				require.EqualError(t, err, "error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/additionalProperties: property 'type' not defined and the schema does not allow additional properties")
 			},
 		},
 		{
@@ -237,7 +237,7 @@ func TestParser_ParseAll(t *testing.T) {
 				"something that doesn't belong": "hi!",
 			},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\nproperty something that doesn't belong not successfully evaluated and schema does not allow unevaluated properties\nschema path #/unevaluatedProperties")
+				require.EqualError(t, err, "error count 1:\n\t- #/unevaluatedProperties: property something that doesn't belong not successfully evaluated and schema does not allow unevaluated properties")
 			},
 		},
 		{
@@ -388,7 +388,7 @@ func TestParser_AllOf_If_Then(t *testing.T) {
 				"postal_code":    "10000",
 			},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ndoes not match all schemas from 'allOf':\ndoes not match schema from 'then':\nstring '10000' does not match regex pattern '[A-Z][0-9][A-Z] [0-9][A-Z][0-9]'\nschema path #/allOf/1/then/postal_code/pattern")
+				require.EqualError(t, err, "error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/1/then/postal_code/pattern: does not match schema: string '10000' does not match regex pattern '[A-Z][0-9][A-Z] [0-9][A-Z][0-9]'")
 			},
 		},
 		{
@@ -409,7 +409,7 @@ func TestParser_AllOf_If_Then(t *testing.T) {
 				"postal_code":    "K1M 1M4",
 			},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "found 1 error:\ndoes not match all schemas from 'allOf':\ndoes not match schema from 'then':\nstring 'K1M 1M4' does not match regex pattern '[0-9]{5}(-[0-9]{4})?'\nschema path #/allOf/0/then/postal_code/pattern")
+				require.EqualError(t, err, "error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/then/postal_code/pattern: does not match schema: string 'K1M 1M4' does not match regex pattern '[0-9]{5}(-[0-9]{4})?'")
 			},
 		},
 	}

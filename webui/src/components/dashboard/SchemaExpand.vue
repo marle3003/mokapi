@@ -28,7 +28,7 @@ const id = createGuid()
                     </div>
                     <div class="modal-body">
                         <div class="codeBlock">
-                            <source-view :source="formatSchema(schema)" content-type="application/json" :hide-content-type="true" :filename="source?.filename" />
+                            <source-view :source="{ preview: { content: formatSchema(schema), contentType: 'application/json' }}" :hide-content-type="true" :filename="source?.filename" />
                         </div>
                     </div>
                 </div>

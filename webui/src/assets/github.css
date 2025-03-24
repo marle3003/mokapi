@@ -5,14 +5,14 @@ github.com style (c) Vasily Polovnyov <vast@whiteants.net>
 */
 
 pre:has(code.hljs) {
-  background: #afb5d0;
+  background: #1e1e1e;
 }
 
 .hljs {
   display: block;
   padding: 0.5em;
   color: #333;
-  background: #afb5d0;
+  background: #1e1e1e;
 }
 
 .hljs-comment,

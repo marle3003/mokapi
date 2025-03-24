@@ -1,22 +1,33 @@
 package schema
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/schema/json/schema"
-	"reflect"
 	"strings"
 )
 
 type Schema struct {
+	Id         string `yaml:"$id,omitempty" json:"$id,omitempty"`
+	Anchor     string `yaml:"$anchor,omitempty" json:"$anchor,omitempty"`
+	Ref        string `yaml:"$ref,omitempty" json:"$ref,omitempty"`
+	DynamicRef string `yaml:"$dynamicRef,omitempty" json:"$dynamicRef,omitempty"`
+
+	*SubSchema
+
+	m map[string]bool
+}
+
+type SubSchema struct {
 	Id string `yaml:"$id,omitempty" json:"$id,omitempty"`
 
-	Schema  string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
-	Boolean *bool  `yaml:"-" json:"-"`
-	Anchor  string `yaml:"$anchor,omitempty" json:"$anchor,omitempty"`
+	Schema     string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
+	Boolean    *bool  `yaml:"-" json:"-"`
+	Anchor     string `yaml:"$anchor,omitempty" json:"$anchor,omitempty"`
+	Ref        string `yaml:"$ref,omitempty" json:"$ref,omitempty"`
+	DynamicRef string `yaml:"$dynamicRef,omitempty" json:"$dynamicRef,omitempty"`
 
 	Type  schema.Types  `yaml:"type,omitempty" json:"type,omitempty"`
 	Enum  []interface{} `yaml:"enum,omitempty" json:"enum,omitempty"`
@@ -36,56 +47,60 @@ type Schema struct {
 	Format    string `yaml:"format,omitempty" json:"format,omitempty"`
 
 	// Array
-	Items            *Ref   `yaml:"items,omitempty" json:"items,omitempty"`
-	PrefixItems      []*Ref `yaml:"prefixItems,omitempty" json:"prefixItems,omitempty"`
-	UnevaluatedItems *Ref   `yaml:"unevaluatedItems,omitempty" json:"unevaluatedItems,omitempty"`
-	Contains         *Ref   `yaml:"contains,omitempty" json:"contains,omitempty"`
-	MaxContains      *int   `yaml:"maxContains,omitempty" json:"maxContains,omitempty"`
-	MinContains      *int   `yaml:"minContains,omitempty" json:"minContains,omitempty"`
-	MinItems         *int   `yaml:"minItems,omitempty" json:"minItems,omitempty"`
-	MaxItems         *int   `yaml:"maxItems,omitempty" json:"maxItems,omitempty"`
-	UniqueItems      bool   `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
-	ShuffleItems     bool   `yaml:"x-shuffleItems,omitempty" json:"x-shuffleItems,omitempty"`
+	Items            *Schema   `yaml:"items,omitempty" json:"items,omitempty"`
+	PrefixItems      []*Schema `yaml:"prefixItems,omitempty" json:"prefixItems,omitempty"`
+	UnevaluatedItems *Schema   `yaml:"unevaluatedItems,omitempty" json:"unevaluatedItems,omitempty"`
+	Contains         *Schema   `yaml:"contains,omitempty" json:"contains,omitempty"`
+	MaxContains      *int      `yaml:"maxContains,omitempty" json:"maxContains,omitempty"`
+	MinContains      *int      `yaml:"minContains,omitempty" json:"minContains,omitempty"`
+	MinItems         *int      `yaml:"minItems,omitempty" json:"minItems,omitempty"`
+	MaxItems         *int      `yaml:"maxItems,omitempty" json:"maxItems,omitempty"`
+	UniqueItems      bool      `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
+	ShuffleItems     bool      `yaml:"x-shuffleItems,omitempty" json:"x-shuffleItems,omitempty"`
 
 	// Object
 	Properties            *Schemas            `yaml:"properties,omitempty" json:"properties,omitempty"`
-	PatternProperties     map[string]*Ref     `yaml:"patternProperties,omitempty" json:"patternProperties,omitempty"`
+	PatternProperties     map[string]*Schema  `yaml:"patternProperties,omitempty" json:"patternProperties,omitempty"`
 	MinProperties         *int                `yaml:"minProperties,omitempty" json:"minProperties,omitempty"`
 	MaxProperties         *int                `yaml:"maxProperties,omitempty" json:"maxProperties,omitempty"`
 	Required              []string            `yaml:"required,omitempty" json:"required,omitempty"`
 	DependentRequired     map[string][]string `yaml:"dependentRequired,omitempty" json:"dependentRequired,omitempty"`
-	DependentSchemas      map[string]*Ref     `yaml:"dependentSchemas,omitempty" json:"dependentSchemas,omitempty"`
-	AdditionalProperties  *Ref                `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
-	UnevaluatedProperties *Ref                `yaml:"unevaluatedProperties,omitempty" json:"unevaluatedProperties,omitempty"`
-	PropertyNames         *Ref                `yaml:"propertyNames,omitempty" json:"propertyNames,omitempty"`
+	DependentSchemas      map[string]*Schema  `yaml:"dependentSchemas,omitempty" json:"dependentSchemas,omitempty"`
+	AdditionalProperties  *Schema             `yaml:"additionalProperties,omitempty" json:"additionalProperties,omitempty"`
+	UnevaluatedProperties *Schema             `yaml:"unevaluatedProperties,omitempty" json:"unevaluatedProperties,omitempty"`
+	PropertyNames         *Schema             `yaml:"propertyNames,omitempty" json:"propertyNames,omitempty"`
 
-	AnyOf []*Ref `yaml:"anyOf,omitempty" json:"anyOf,omitempty"`
-	AllOf []*Ref `yaml:"allOf,omitempty" json:"allOf,omitempty"`
-	OneOf []*Ref `yaml:"oneOf,omitempty" json:"oneOf,omitempty"`
-	Not   *Ref   `yaml:"not,omitempty" json:"not,omitempty"`
+	AnyOf []*Schema `yaml:"anyOf,omitempty" json:"anyOf,omitempty"`
+	AllOf []*Schema `yaml:"allOf,omitempty" json:"allOf,omitempty"`
+	OneOf []*Schema `yaml:"oneOf,omitempty" json:"oneOf,omitempty"`
+	Not   *Schema   `yaml:"not,omitempty" json:"not,omitempty"`
 
-	If   *Ref `yaml:"if,omitempty" json:"if,omitempty"`
-	Then *Ref `yaml:"then,omitempty" json:"then,omitempty"`
-	Else *Ref `yaml:"else,omitempty" json:"else,omitempty"`
+	If   *Schema `yaml:"if,omitempty" json:"if,omitempty"`
+	Then *Schema `yaml:"then,omitempty" json:"then,omitempty"`
+	Else *Schema `yaml:"else,omitempty" json:"else,omitempty"`
 
 	// Annotations
-	Title       string        `yaml:"title,omitempty" json:"title,omitempty"`
-	Description string        `yaml:"description,omitempty" json:"description,omitempty"`
-	Default     interface{}   `yaml:"default,omitempty" json:"default,omitempty"`
-	Deprecated  bool          `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
-	Examples    []interface{} `yaml:"examples,omitempty" json:"examples,omitempty"`
-	Example     interface{}   `yaml:"example,omitempty" json:"example,omitempty"`
+	Title       string           `yaml:"title,omitempty" json:"title,omitempty"`
+	Description string           `yaml:"description,omitempty" json:"description,omitempty"`
+	Default     interface{}      `yaml:"default,omitempty" json:"default,omitempty"`
+	Deprecated  bool             `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
+	Examples    []schema.Example `yaml:"examples,omitempty" json:"examples,omitempty"`
+	Example     *schema.Example  `yaml:"example,omitempty" json:"example,omitempty"`
 
 	// Media
 	ContentMediaType string `yaml:"contentMediaType,omitempty" json:"contentMediaType,omitempty"`
 	ContentEncoding  string `yaml:"contentEncoding,omitempty" json:"contentEncoding,omitempty"`
 
-	Definitions map[string]*Ref `yaml:"definitions,omitempty" json:"definitions,omitempty"`
-	Defs        map[string]*Ref `yaml:"$defs,omitempty" json:"$defs,omitempty"`
+	Definitions map[string]*Schema `yaml:"definitions,omitempty" json:"definitions,omitempty"`
+	Defs        map[string]*Schema `yaml:"$defs,omitempty" json:"$defs,omitempty"`
 
 	// OpenAPI
 	Xml      *Xml `yaml:"xml,omitempty" json:"xml,omitempty"`
 	Nullable bool `yaml:"nullable,omitempty" json:"nullable,omitempty"`
+}
+
+func NewSchema() *Schema {
+	return &Schema{SubSchema: &SubSchema{}}
 }
 
 func (s *Schema) HasProperties() bool {
@@ -97,59 +112,79 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 
-	if s.Id != "" {
-		config.OpenScope(s.Id)
-		defer config.CloseScope()
-	} else {
-		config.Scope.OpenIfNeeded(config.Info.Path())
-	}
+	if s.SubSchema != nil {
+		if s.Id != "" {
+			config.OpenScope(s.Id)
+			defer config.CloseScope()
+		} else {
+			config.Scope.OpenIfNeeded(config.Info.Path())
+		}
 
-	if s.Anchor != "" {
-		if err := config.Scope.SetLexical(s.Anchor, s); err != nil {
+		if s.Anchor != "" {
+			if err := config.Scope.SetLexical(s.Anchor, s); err != nil {
+				return err
+			}
+		}
+
+		for _, d := range s.Definitions {
+			if err := d.Parse(config, reader); err != nil {
+				return err
+			}
+		}
+
+		for _, d := range s.Defs {
+			if err := d.Parse(config, reader); err != nil {
+				return err
+			}
+		}
+
+		if err := s.Items.Parse(config, reader); err != nil {
 			return err
+		}
+
+		if err := s.Properties.Parse(config, reader); err != nil {
+			return err
+		}
+
+		if err := s.AdditionalProperties.Parse(config, reader); err != nil {
+			return err
+		}
+
+		for _, r := range s.AnyOf {
+			if err := r.Parse(config, reader); err != nil {
+				return err
+			}
+		}
+
+		for _, r := range s.AllOf {
+			if err := r.Parse(config, reader); err != nil {
+				return err
+			}
+		}
+
+		for _, r := range s.OneOf {
+			if err := r.Parse(config, reader); err != nil {
+				return err
+			}
 		}
 	}
 
-	for _, d := range s.Definitions {
-		if err := d.Parse(config, reader); err != nil {
+	if s.Ref != "" {
+		r := &Schema{}
+		err := dynamic.Resolve(s.Ref, &r.SubSchema, config, reader)
+		if err != nil {
 			return err
 		}
+		s.apply(r)
 	}
 
-	for _, d := range s.Defs {
-		if err := d.Parse(config, reader); err != nil {
+	if s.DynamicRef != "" {
+		r := &Schema{}
+		err := dynamic.ResolveDynamic(s.DynamicRef, &r.Schema, config, reader)
+		if err != nil {
 			return err
 		}
-	}
-
-	if err := s.Items.Parse(config, reader); err != nil {
-		return err
-	}
-
-	if err := s.Properties.Parse(config, reader); err != nil {
-		return err
-	}
-
-	if err := s.AdditionalProperties.Parse(config, reader); err != nil {
-		return err
-	}
-
-	for _, r := range s.AnyOf {
-		if err := r.Parse(config, reader); err != nil {
-			return err
-		}
-	}
-
-	for _, r := range s.AllOf {
-		if err := r.Parse(config, reader); err != nil {
-			return err
-		}
-	}
-
-	for _, r := range s.OneOf {
-		if err := r.Parse(config, reader); err != nil {
-			return err
-		}
+		s.apply(r)
 	}
 
 	return nil
@@ -281,11 +316,14 @@ func (s *Schema) IsFreeForm() bool {
 	if s.AdditionalProperties == nil || free {
 		return true
 	}
+	if s.AdditionalProperties.Boolean != nil {
+		return *s.AdditionalProperties.Boolean
+	}
 	return s.AdditionalProperties.IsFreeForm()
 }
 
 func (s *Schema) IsDictionary() bool {
-	return s.AdditionalProperties != nil && s.AdditionalProperties.Value != nil && len(s.AdditionalProperties.Value.Type) > 0
+	return s.AdditionalProperties != nil && s.AdditionalProperties.SubSchema != nil && len(s.AdditionalProperties.Type) > 0
 }
 
 func (s *Schema) IsNullable() bool {
@@ -294,146 +332,56 @@ func (s *Schema) IsNullable() bool {
 
 func (s *Schema) ConvertTo(i interface{}) (interface{}, error) {
 	if _, ok := i.(*schema.Schema); ok {
-		return ConvertToJsonSchema(&Ref{Value: s}), nil
+		return ConvertToJsonSchema(s), nil
 	}
 	return nil, fmt.Errorf("cannot convert %v to json schema", i)
 }
 
+func (s *Schema) Resolve(token string) (interface{}, error) {
+	return s.SubSchema, nil
+}
+
 func (s *Schema) UnmarshalJSON(b []byte) error {
+	_ = json.Unmarshal(b, &s.m)
+
 	var boolVal bool
 	if err := json.Unmarshal(b, &boolVal); err == nil {
-		s.Boolean = &boolVal
+		s.SubSchema = &SubSchema{Boolean: &boolVal}
 		return nil
 	}
 
-	type alias Schema
-	a := alias{}
+	a := &SubSchema{}
 	err := dynamic.UnmarshalJSON(b, &a)
 	if err != nil {
 		return err
 	}
-	*s = Schema(a)
+	s.SubSchema = a
+	s.update()
 	return nil
 }
 
 func (s *Schema) UnmarshalYAML(node *yaml.Node) error {
+	_ = node.Decode(&s.m)
+
 	var boolVal bool
 	if err := node.Decode(&boolVal); err == nil {
-		s.Boolean = &boolVal
+		s.SubSchema = &SubSchema{Boolean: &boolVal}
 		return nil
 	}
 
-	type alias Schema
-	a := alias{}
+	a := &SubSchema{}
 	err := node.Decode(&a)
 	if err != nil {
 		return err
 	}
-	*s = Schema(a)
+	s.SubSchema = a
+	s.update()
 	return nil
 }
 
-type encoder struct {
-	refs map[string]bool
-}
-
-func (e *encoder) encode(r *Ref) ([]byte, error) {
-	var b bytes.Buffer
-	if r.Boolean != nil {
-		b.Write([]byte(fmt.Sprintf("%v", *r.Boolean)))
-		return b.Bytes(), nil
-	}
-
-	b.WriteRune('{')
-
-	if r.Ref != "" {
-		b.Write([]byte(fmt.Sprintf(`"ref":"%v"`, r.Ref)))
-
-		// loop protection, only return reference
-		if _, ok := e.refs[r.Ref]; ok {
-			b.WriteRune('}')
-			return b.Bytes(), nil
-		}
-		e.refs[r.Ref] = true
-		defer func() {
-			delete(e.refs, r.Ref)
-		}()
-	}
-
-	if r.Value != nil {
-		v := reflect.ValueOf(r.Value).Elem()
-		t := v.Type()
-		var err error
-		for i := 0; i < v.NumField(); i++ {
-			f := v.Field(i)
-			if isEmptyValue(f) {
-				continue
-			}
-
-			fv := f.Interface()
-			var bVal []byte
-			switch val := fv.(type) {
-			case schema.Types:
-				if len(val) == 0 {
-					continue
-				}
-				bVal, err = val.MarshalJSON()
-			case *Ref:
-				if val == nil {
-					continue
-				}
-				bVal, err = e.encode(val)
-			case *Schemas:
-				var fields bytes.Buffer
-				fields.WriteRune('{')
-				for it := val.Iter(); it.Next(); {
-					if fields.Len() > 1 {
-						fields.WriteRune(',')
-					}
-					sField, err := e.encode(it.Value())
-					if err != nil {
-						return nil, err
-					}
-					fields.WriteString(fmt.Sprintf(`"%v":`, it.Key()))
-					fields.Write(sField)
-				}
-				fields.WriteRune('}')
-				bVal = fields.Bytes()
-			default:
-				bVal, err = json.Marshal(val)
-			}
-
-			if err != nil {
-				return nil, err
-			}
-
-			if b.Len() > 1 {
-				b.Write([]byte{','})
-			}
-
-			tag := t.Field(i).Tag.Get("json")
-			name := strings.Split(tag, ",")[0]
-
-			b.WriteString(fmt.Sprintf(`"%v":`, name))
-			b.Write(bVal)
-		}
-	}
-
-	b.WriteRune('}')
-	return b.Bytes(), nil
-}
-
-func isEmptyValue(v reflect.Value) bool {
-	switch v.Kind() {
-	case reflect.Array, reflect.Map, reflect.Slice, reflect.String:
-		return v.Len() == 0
-	case reflect.Bool,
-		reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
-		reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr,
-		reflect.Float32, reflect.Float64,
-		reflect.Interface, reflect.Pointer:
-		return v.IsZero()
-	default:
-		return false
-	}
+func (s *Schema) update() {
+	s.Id = s.SubSchema.Id
+	s.Anchor = s.SubSchema.Anchor
+	s.Ref = s.SubSchema.Ref
+	s.DynamicRef = s.SubSchema.DynamicRef
 }

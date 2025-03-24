@@ -7,7 +7,8 @@ export function MarkdownItLinks(md: MarkdownIt, opts: Options) {
 
     function replace(s: string): string{
         s = s.replace('.md', '')
-        return s
+        const u = new URL(s, document.location.href)
+        return u.toString()
     }
 
     const route = useRoute()

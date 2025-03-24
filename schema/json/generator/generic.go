@@ -1,6 +1,8 @@
 package generator
 
-import "github.com/brianvoe/gofakeit/v6"
+import (
+	"github.com/brianvoe/gofakeit/v6"
+)
 
 func Generic() *Tree {
 	return &Tree{
@@ -21,6 +23,11 @@ func Null() *Tree {
 			if !s.IsNullable() {
 				return false
 			}
+
+			if len(s.Type) == 1 {
+				return true
+			}
+
 			n := gofakeit.Float32Range(0, 1)
 			return n < 0.05
 		},

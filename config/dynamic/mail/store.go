@@ -2,7 +2,9 @@ package mail
 
 import (
 	"fmt"
+	"mokapi/imap"
 	"mokapi/smtp"
+	"strings"
 	"time"
 )
 
@@ -17,10 +19,10 @@ type Store struct {
 func NewStore(c *Config) *Store {
 	s := &Store{
 		Mailboxes:     map[string]*Mailbox{},
-		canAddMailbox: len(c.Mailboxes) == 0,
+		canAddMailbox: c.AutoCreateMailbox,
 	}
 	for _, mb := range c.Mailboxes {
-		s.NewMailbox(mb.Name, mb.Username, mb.Password)
+		s.NewMailbox(&mb)
 	}
 
 	return s
@@ -28,8 +30,15 @@ func NewStore(c *Config) *Store {
 
 func (s *Store) Update(c *Config) {
 	for _, mb := range c.Mailboxes {
-		if _, ok := s.Mailboxes[mb.Name]; !ok {
-			s.NewMailbox(mb.Name, mb.Username, mb.Password)
+		if exist, ok := s.Mailboxes[mb.Name]; !ok {
+			s.NewMailbox(&mb)
+		} else {
+			exist.Username = mb.Username
+			exist.Password = mb.Password
+			folders := getFolders(mb.Folders)
+			for _, folder := range folders {
+				exist.Folders[folder.Name] = folder
+			}
 		}
 	}
 }
@@ -39,17 +48,20 @@ func (s *Store) ExistsMailbox(name string) bool {
 	return b
 }
 
-func (s *Store) NewMailbox(name, username, password string) {
-	if _, found := s.Mailboxes[name]; found {
+func (s *Store) NewMailbox(cfg *MailboxConfig) {
+	if _, found := s.Mailboxes[cfg.Name]; found {
 		return
 	}
-	s.Mailboxes[name] = &Mailbox{
-		Name:                  name,
-		Username:              username,
-		Password:              password,
-		messageSequenceNumber: 1,
-		uidValidity:           uint32(time.Now().Unix()),
+
+	mb := &Mailbox{
+		Name:            cfg.Name,
+		Username:        cfg.Username,
+		Password:        cfg.Password,
+		nextUidValidity: uint32(time.Now().Unix()),
 	}
+	mb.Folders = getFolders(cfg.Folders)
+
+	s.Mailboxes[cfg.Name] = mb
 }
 
 func (s *Store) EnsureMailbox(name string) error {
@@ -59,17 +71,43 @@ func (s *Store) EnsureMailbox(name string) error {
 	if !s.canAddMailbox {
 		return fmt.Errorf("mailbox can not be created")
 	}
-	s.NewMailbox(name, "", "")
+	s.NewMailbox(&MailboxConfig{Name: name})
 	return nil
 }
 
 func (s *Store) GetMail(id string) *smtp.Message {
 	for _, b := range s.Mailboxes {
-		for _, m := range b.Messages {
-			if m.MessageId == id {
-				return m.Message
+		for _, f := range b.Folders {
+			for _, m := range f.Messages {
+				if m.MessageId == id {
+					return m.Message
+				}
 			}
 		}
 	}
 	return nil
+}
+
+func getFolders(cfg []FolderConfig) map[string]*Folder {
+	result := make(map[string]*Folder)
+	for _, sub := range cfg {
+		if strings.ToUpper(sub.Name) == "INBOX" {
+			sub.Name = "INBOX"
+		}
+
+		f := &Folder{
+			Name:        sub.Name,
+			uidNext:     1,
+			uidValidity: uint32(time.Now().Unix()),
+		}
+
+		for _, flag := range sub.Flags {
+			f.Flags = append(f.Flags, imap.MailboxFlags(flag))
+		}
+
+		f.Folders = getFolders(sub.Folders)
+		result[sub.Name] = f
+	}
+
+	return result
 }

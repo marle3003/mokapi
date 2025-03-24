@@ -221,9 +221,9 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			name: "default retry",
 			test: func(t *testing.T, host *enginetest.Host) {
 				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					r.Equal(t, 30000*time.Millisecond, args.Retry.MaxRetryTime)
-					r.Equal(t, 200*time.Millisecond, args.Retry.InitialRetryTime)
-					r.Equal(t, 5, args.Retry.Retries)
+					r.Equal(t, 3*time.Minute, args.Retry.MaxRetryTime)
+					r.Equal(t, 500*time.Millisecond, args.Retry.InitialRetryTime)
+					r.Equal(t, 10, args.Retry.Retries)
 					return &common.KafkaProduceResult{}, nil
 				}
 

@@ -8,12 +8,15 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/media"
 	"mokapi/sortedmap"
+	"net/http"
 	"strconv"
 )
 
-type Responses[K string | int] struct {
-	sortedmap.LinkedHashMap[K, *ResponseRef]
+type Responses struct {
+	sortedmap.LinkedHashMap[string, *ResponseRef]
 } // map[HttpStatus]*ResponseRef
+
+type ResponseBodies map[string]*ResponseRef
 
 type ResponseRef struct {
 	dynamic.Reference
@@ -37,7 +40,7 @@ type Response struct {
 	Headers Headers
 }
 
-func (r *Responses[K]) UnmarshalJSON(b []byte) error {
+func (r *Responses) UnmarshalJSON(b []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(b))
 	token, err := dec.Token()
 	if err != nil {
@@ -46,7 +49,7 @@ func (r *Responses[K]) UnmarshalJSON(b []byte) error {
 	if delim, ok := token.(json.Delim); ok && delim != '{' {
 		return fmt.Errorf("expected openapi.Responses map, got %s", token)
 	}
-	r.LinkedHashMap = sortedmap.LinkedHashMap[K, *ResponseRef]{}
+	r.LinkedHashMap = sortedmap.LinkedHashMap[string, *ResponseRef]{}
 	for {
 		token, err = dec.Token()
 		if err != nil {
@@ -65,18 +68,11 @@ func (r *Responses[K]) UnmarshalJSON(b []byte) error {
 		}
 		switch m := any(&r.LinkedHashMap).(type) {
 		case *sortedmap.LinkedHashMap[string, *ResponseRef]:
-			m.Set(key, val)
-		case *sortedmap.LinkedHashMap[int, *ResponseRef]:
-			if key == "default" {
-				m.Set(0, val)
-			} else {
-				statusCode, err := strconv.Atoi(key)
-				if err != nil {
-					offset += dynamic.NextTokenIndex(b[offset:])
-					return dynamic.NewStructuralErrorWithField(fmt.Errorf("unable to parse http status '%v': only HTTP status codes are allowed", key), offset, dec, key)
-				}
-				m.Set(statusCode, val)
+			if !isValidStatusCode(key) {
+				offset += dynamic.NextTokenIndex(b[offset:])
+				return dynamic.NewStructuralErrorWithField(fmt.Errorf("invalid http status code '%v': only valid HTTP status codes, default or range (1XX, 2XX,...) are allowed", key), offset, dec, key)
 			}
+			m.Set(key, val)
 		}
 	}
 }
@@ -85,11 +81,11 @@ func (r *ResponseRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
 }
 
-func (r *Responses[K]) UnmarshalYAML(value *yaml.Node) error {
+func (r *Responses) UnmarshalYAML(value *yaml.Node) error {
 	if value.Kind != yaml.MappingNode {
 		return fmt.Errorf("expected openapi.Responses map, got %v", value.Tag)
 	}
-	r.LinkedHashMap = sortedmap.LinkedHashMap[K, *ResponseRef]{}
+	r.LinkedHashMap = sortedmap.LinkedHashMap[string, *ResponseRef]{}
 	for i := 0; i < len(value.Content); i += 2 {
 		var key string
 		err := value.Content[i].Decode(&key)
@@ -103,17 +99,10 @@ func (r *Responses[K]) UnmarshalYAML(value *yaml.Node) error {
 		}
 		switch m := any(&r.LinkedHashMap).(type) {
 		case *sortedmap.LinkedHashMap[string, *ResponseRef]:
-			m.Set(key, val)
-		case *sortedmap.LinkedHashMap[int, *ResponseRef]:
-			if key == "default" {
-				m.Set(0, val)
-			} else {
-				statusCode, err := strconv.Atoi(key)
-				if err != nil {
-					return fmt.Errorf("unable to parse http status '%v': only HTTP status codes are allowed at line %d, column %d", key, value.Line, value.Column)
-				}
-				m.Set(statusCode, val)
+			if !isValidStatusCode(key) {
+				return fmt.Errorf("invalid http status code '%v': only valid HTTP status codes, default or range (1XX, 2XX,...) are allowed at line %d, column %d", key, value.Line, value.Column)
 			}
+			m.Set(key, val)
 		}
 	}
 
@@ -124,7 +113,7 @@ func (r *ResponseRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.UnmarshalYaml(node, &r.Value)
 }
 
-func (r *Responses[K]) Resolve(token string) (interface{}, error) {
+func (r *Responses) Resolve(token string) (interface{}, error) {
 	var res *ResponseRef
 	switch m := any(&r.LinkedHashMap).(type) {
 	case *sortedmap.LinkedHashMap[int, *ResponseRef]:
@@ -142,12 +131,13 @@ func (r *Responses[K]) Resolve(token string) (interface{}, error) {
 	return res.Value, nil
 }
 
-func (r *Responses[K]) GetResponse(httpStatus K) *Response {
-	res, _ := r.Get(httpStatus)
+func (r *Responses) GetResponse(httpStatus int) *Response {
+	res, _ := r.Get(fmt.Sprintf("%v", httpStatus))
 	if res == nil {
-		switch m := any(&r.LinkedHashMap).(type) {
-		case *sortedmap.LinkedHashMap[int, *ResponseRef]:
-			res, _ = m.Get(0)
+		digit := httpStatus / 100
+		rangeStatus := fmt.Sprintf("%vXX", digit)
+		if res, _ = r.Get(rangeStatus); res == nil {
+			res, _ = r.Get("default")
 		}
 	}
 
@@ -189,7 +179,7 @@ func getBestMediaType(m1, m2 *MediaType) *MediaType {
 	return m1
 }
 
-func (r *Responses[K]) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (r *Responses) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
@@ -198,6 +188,20 @@ func (r *Responses[K]) parse(config *dynamic.Config, reader dynamic.Reader) erro
 		res := it.Value()
 		if err := res.parse(config, reader); err != nil {
 			return fmt.Errorf("parse response '%v' failed: %w", it.Key(), err)
+		}
+	}
+
+	return nil
+}
+
+func (r ResponseBodies) parse(config *dynamic.Config, reader dynamic.Reader) error {
+	if r == nil {
+		return nil
+	}
+
+	for k, res := range r {
+		if err := res.parse(config, reader); err != nil {
+			return fmt.Errorf("parse response '%v' failed: %w", k, err)
 		}
 	}
 
@@ -228,7 +232,7 @@ func (r *Response) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	return r.Content.parse(config, reader)
 }
 
-func (r *Responses[K]) patch(patch *Responses[K]) {
+func (r *Responses) patch(patch *Responses) {
 	if patch == nil {
 		return
 	}
@@ -243,6 +247,27 @@ func (r *Responses[K]) patch(patch *Responses[K]) {
 			v.Value.patch(res.Value)
 		} else {
 			r.Set(statusCode, res)
+		}
+	}
+}
+
+func (r ResponseBodies) patch(patch ResponseBodies) {
+	if patch == nil {
+		return
+	}
+
+	for k, v := range patch {
+		if v.Value == nil {
+			continue
+		}
+		if e, ok := r[k]; ok {
+			if e.Value == nil {
+				r[k] = v
+			} else {
+				e.Value.patch(v.Value)
+			}
+		} else {
+			r[k] = v
 		}
 	}
 }
@@ -262,5 +287,22 @@ func (r *Response) patch(patch *Response) {
 		r.Headers = patch.Headers
 	} else {
 		r.Headers.patch(patch.Headers)
+	}
+}
+
+func isValidStatusCode(status string) bool {
+	switch status {
+	case "default", "1XX", "2XX", "3XX", "4XX", "5XX":
+		return true
+	default:
+		i, err := strconv.Atoi(status)
+		if err != nil {
+			return false
+		}
+		// It returns the empty string if the code is unknown.
+		if http.StatusText(i) == "" {
+			return false
+		}
+		return true
 	}
 }

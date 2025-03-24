@@ -371,7 +371,7 @@ func TestJsOpen(t *testing.T) {
 				on('http', function() { return true }, { tags: { name: foo } });
 			}
 		`)
-		s.Listeners.Add("", func(config *dynamic.Config) {
+		s.Config.Listeners.Add("", func(config dynamic.ConfigEvent) {
 			err := e.AddScript(config)
 			r.NoError(t, err)
 		})
@@ -386,7 +386,7 @@ func TestJsOpen(t *testing.T) {
 
 		bar = `export let bar = 'foobar'`
 		barFile.Info.Checksum = []byte("foobar")
-		barFile.Listeners.Invoke(barFile)
+		barFile.Listeners.Invoke(dynamic.ConfigEvent{Config: barFile})
 
 		summaries = e.Run("http")
 
@@ -396,12 +396,12 @@ func TestJsOpen(t *testing.T) {
 	})
 }
 
-func newScript(path, src string) *dynamic.Config {
-	return &dynamic.Config{
+func newScript(path, src string) dynamic.ConfigEvent {
+	return dynamic.ConfigEvent{Config: &dynamic.Config{
 		Info: dynamic.ConfigInfo{Url: mustParse(path)},
 		Raw:  []byte(src),
 		Data: &script.Script{Code: src, Filename: path},
-	}
+	}}
 }
 
 func mustParse(s string) *url.URL {

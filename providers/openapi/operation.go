@@ -6,6 +6,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/providers/openapi/parameter"
 	"net/http"
+	"strconv"
 )
 
 var NoSuccessResponse = errors.New("neither success response (HTTP 2xx) nor 'default' response found")
@@ -42,7 +43,7 @@ type Operation struct {
 
 	// The list of possible responses as they are returned from executing this
 	// operation.
-	Responses *Responses[int] `yaml:"responses" json:"responses"`
+	Responses *Responses `yaml:"responses" json:"responses"`
 
 	Security []SecurityRequirement `yaml:"security" json:"security"`
 
@@ -52,12 +53,20 @@ type Operation struct {
 func (o *Operation) getFirstSuccessResponse() (int, *Response, error) {
 	for it := o.Responses.Iter(); it.Next(); {
 		status := it.Key()
-		if IsHttpStatusSuccess(status) {
+		i, err := strconv.Atoi(status)
+		if err != nil {
+			continue
+		}
+		if IsHttpStatusSuccess(i) {
 			r := it.Value()
-			if r != nil {
-				return status, r.Value, nil
+			i, err := strconv.Atoi(status)
+			if err != nil {
+				return 0, nil, err
 			}
-			return status, nil, nil
+			if r != nil {
+				return i, r.Value, nil
+			}
+			return i, nil, nil
 		}
 	}
 

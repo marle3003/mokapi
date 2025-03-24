@@ -137,14 +137,14 @@ func TestResponses(t *testing.T) {
 	testdata := []struct {
 		name    string
 		content string
-		fn      func(t *testing.T, c *openapi.Responses[int])
+		fn      func(t *testing.T, c *openapi.Responses)
 	}{
 		{
 			name: "default httpstatus",
 			content: `
 default: {}
 `,
-			fn: func(t *testing.T, res *openapi.Responses[int]) {
+			fn: func(t *testing.T, res *openapi.Responses) {
 				r := res.GetResponse(200)
 				require.NotNil(t, r)
 			},
@@ -154,7 +154,7 @@ default: {}
 			content: `
 401: {}
 `,
-			fn: func(t *testing.T, res *openapi.Responses[int]) {
+			fn: func(t *testing.T, res *openapi.Responses) {
 				r := res.GetResponse(401)
 				require.NotNil(t, r)
 			},
@@ -164,7 +164,7 @@ default: {}
 			content: `
 401: {}
 `,
-			fn: func(t *testing.T, res *openapi.Responses[int]) {
+			fn: func(t *testing.T, res *openapi.Responses) {
 				r := res.GetResponse(200)
 				require.Nil(t, r)
 			},
@@ -175,7 +175,7 @@ default: {}
 401: {}
 default: {description: default}
 `,
-			fn: func(t *testing.T, res *openapi.Responses[int]) {
+			fn: func(t *testing.T, res *openapi.Responses) {
 				r := res.GetResponse(200)
 				require.NotNil(t, r)
 				require.Equal(t, "default", r.Description)
@@ -186,7 +186,7 @@ default: {description: default}
 	for _, data := range testdata {
 		d := data
 		t.Run(d.name, func(t *testing.T) {
-			res := &openapi.Responses[int]{}
+			res := &openapi.Responses{}
 			err := yaml.Unmarshal([]byte(d.content), res)
 			require.NoError(t, err)
 			data.fn(t, res)
@@ -212,7 +212,7 @@ components:
 			f: func(t *testing.T, c *openapi.Config) {
 				require.Equal(t, 1, c.Components.Schemas.Len())
 				foo := c.Components.Schemas.Get("Foo")
-				require.Equal(t, "string", foo.Value.Type.String())
+				require.Equal(t, "string", foo.Type.String())
 			},
 		},
 		{
@@ -241,12 +241,12 @@ components:
 			f: func(t *testing.T, c *openapi.Config) {
 				require.NoError(t, c.Validate())
 				require.Len(t, c.Paths, 1)
-				exp := []int{http.StatusNoContent, http.StatusOK}
+				exp := []string{"204", "200"}
 				keys := c.Paths["/foo"].Value.Get.Responses.Keys()
 				require.Equal(t, exp, keys)
 				r := c.Paths["/foo"].Value.Get.Responses.GetResponse(http.StatusOK)
 				content := r.Content["application/xml"]
-				require.NotNil(t, content.Schema.Value, "ref resolved")
+				require.NotNil(t, content.Schema, "ref resolved")
 			},
 		},
 	}
@@ -274,46 +274,46 @@ func TestConfig_PetStore_PetSchema(t *testing.T) {
 	require.Nil(t, config.Components.Schemas.Get("foo"))
 
 	pet := config.Components.Schemas.Get("Pet")
-	require.Equal(t, []string{"name", "photoUrls"}, pet.Value.Required)
-	require.Equal(t, "object", pet.Value.Type.String())
-	require.Equal(t, "Pet", pet.Value.Xml.Name)
+	require.Equal(t, []string{"name", "photoUrls"}, pet.Required)
+	require.Equal(t, "object", pet.Type.String())
+	require.Equal(t, "Pet", pet.Xml.Name)
 
 	// id
-	id := pet.Value.Properties.Get("id")
-	require.Equal(t, "integer", id.Value.Type.String())
-	require.Equal(t, "int64", id.Value.Format)
+	id := pet.Properties.Get("id")
+	require.Equal(t, "integer", id.Type.String())
+	require.Equal(t, "int64", id.Format)
 
 	// category
-	category := pet.Value.Properties.Get("category")
+	category := pet.Properties.Get("category")
 	require.Equal(t, "#/components/schemas/Category", category.Ref)
-	require.NotNil(t, category.Value, "ref resolved")
-	require.Equal(t, "object", category.Value.Type.String())
+	require.NotNil(t, category, "ref resolved")
+	require.Equal(t, "object", category.Type.String())
 
 	// name
-	name := pet.Value.Properties.Get("name")
-	require.Equal(t, "string", name.Value.Type.String())
-	require.Equal(t, "doggie", name.Value.Example)
+	name := pet.Properties.Get("name")
+	require.Equal(t, "string", name.Type.String())
+	require.Equal(t, "doggie", name.Example.Value)
 
 	// photoUrls
-	photoUrls := pet.Value.Properties.Get("photoUrls")
-	require.Equal(t, "array", photoUrls.Value.Type.String())
-	require.Equal(t, "string", photoUrls.Value.Items.Value.Type.String())
-	require.Equal(t, "photoUrl", photoUrls.Value.Xml.Name)
-	require.True(t, photoUrls.Value.Xml.Wrapped)
+	photoUrls := pet.Properties.Get("photoUrls")
+	require.Equal(t, "array", photoUrls.Type.String())
+	require.Equal(t, "string", photoUrls.Items.Type.String())
+	require.Equal(t, "photoUrl", photoUrls.Xml.Name)
+	require.True(t, photoUrls.Xml.Wrapped)
 
 	// tags
-	tags := pet.Value.Properties.Get("tags")
-	require.Equal(t, "array", tags.Value.Type.String())
-	require.Equal(t, "#/components/schemas/Tag", tags.Value.Items.Ref)
-	require.Equal(t, "object", tags.Value.Items.Value.Type.String())
-	require.Equal(t, "tag", tags.Value.Xml.Name)
-	require.True(t, tags.Value.Xml.Wrapped)
+	tags := pet.Properties.Get("tags")
+	require.Equal(t, "array", tags.Type.String())
+	require.Equal(t, "#/components/schemas/Tag", tags.Items.Ref)
+	require.Equal(t, "object", tags.Items.Type.String())
+	require.Equal(t, "tag", tags.Xml.Name)
+	require.True(t, tags.Xml.Wrapped)
 
 	// status
-	status := pet.Value.Properties.Get("status")
-	require.Equal(t, "string", status.Value.Type.String())
-	require.Equal(t, "pet status in the store", status.Value.Description)
-	require.Equal(t, []interface{}{"available", "pending", "sold"}, status.Value.Enum)
+	status := pet.Properties.Get("status")
+	require.Equal(t, "string", status.Type.String())
+	require.Equal(t, "pet status in the store", status.Description)
+	require.Equal(t, []interface{}{"available", "pending", "sold"}, status.Enum)
 
 }
 
@@ -335,17 +335,17 @@ func TestConfig_PetStore_Path(t *testing.T) {
 	require.Len(t, body.Content, 2)
 	require.Equal(t, "#/components/schemas/Pet", body.Content["application/json"].Schema.Ref)
 	require.Equal(t, "#/components/schemas/Pet", body.Content["application/xml"].Schema.Ref)
-	require.NotNil(t, body.Content["application/json"].Schema.Value, "ref resolved")
-	require.NotNil(t, body.Content["application/xml"].Schema.Value, "ref resolved")
+	require.NotNil(t, body.Content["application/json"].Schema, "ref resolved")
+	require.NotNil(t, body.Content["application/xml"].Schema, "ref resolved")
 	require.Equal(t, body.Content["application/json"], body.GetMedia(media.ParseContentType("application/json")))
 	require.Nil(t, body.GetMedia(media.ParseContentType("foo/bar")))
 
-	schema := body.Content["application/json"].Schema.Value
+	schema := body.Content["application/json"].Schema
 	require.Equal(t, []string{"name", "photoUrls"}, schema.Required)
 
 	require.True(t, put.Responses.Len() == 3)
-	r, _ := put.Responses.Get(http.StatusBadRequest)
-	require.Len(t, r.Value.Content, 0)
+	r := put.Responses.GetResponse(http.StatusBadRequest)
+	require.Len(t, r.Content, 0)
 
 }
 
@@ -379,14 +379,14 @@ func TestPetStore_Paramters(t *testing.T) {
 	require.Len(t, params, 2)
 	require.Equal(t, "api_key", params[0].Value.Name)
 	require.Equal(t, parameter.Header, params[0].Value.Type)
-	require.Equal(t, "string", params[0].Value.Schema.Value.Type.String())
+	require.Equal(t, "string", params[0].Value.Schema.Type.String())
 
 	require.Equal(t, "petId", params[1].Value.Name)
 	require.Equal(t, parameter.Path, params[1].Value.Type)
 	require.Equal(t, "Pet id to delete", params[1].Value.Description)
 	require.True(t, params[1].Value.Required)
-	require.Equal(t, "integer", params[1].Value.Schema.Value.Type.String())
-	require.Equal(t, "int64", params[1].Value.Schema.Value.Format)
+	require.Equal(t, "integer", params[1].Value.Schema.Type.String())
+	require.Equal(t, "int64", params[1].Value.Schema.Format)
 }
 
 func TestHttpStatus_IsSuccess(t *testing.T) {
@@ -435,7 +435,7 @@ func TestConfig_Patch(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Equal(t, 1, result.Components.Schemas.Len())
 				require.NotNil(t, result.Components.Schemas.Get("Foo"))
-				require.Equal(t, "string", result.Components.Schemas.Get("Foo").Value.Type.String())
+				require.Equal(t, "string", result.Components.Schemas.Get("Foo").Type.String())
 			},
 		},
 	}

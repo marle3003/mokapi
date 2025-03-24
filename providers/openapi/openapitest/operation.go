@@ -5,12 +5,13 @@ import (
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
+	"strconv"
 )
 
 type OperationOptions func(o *openapi.Operation)
 
 func NewOperation(opts ...OperationOptions) *openapi.Operation {
-	o := &openapi.Operation{Responses: new(openapi.Responses[int])}
+	o := &openapi.Operation{Responses: new(openapi.Responses)}
 	for _, opt := range opts {
 		opt(o)
 	}
@@ -26,13 +27,13 @@ func WithResponse(status int, opts ...ResponseOptions) OperationOptions {
 			opt(r)
 		}
 
-		o.Responses.Set(status, &openapi.ResponseRef{Value: r})
+		o.Responses.Set(strconv.Itoa(status), &openapi.ResponseRef{Value: r})
 	}
 }
 
 func WithResponseRef(status int, ref *openapi.ResponseRef) OperationOptions {
 	return func(o *openapi.Operation) {
-		o.Responses.Set(status, ref)
+		o.Responses.Set(strconv.Itoa(status), ref)
 	}
 }
 
@@ -131,7 +132,7 @@ func WithRequestContent(mediaType string, content *openapi.MediaType) RequestBod
 
 func WithParamSchema(s *schema.Schema) ParamOptions {
 	return func(p *parameter.Parameter) {
-		p.Schema = &schema.Ref{Value: s}
+		p.Schema = s
 	}
 }
 

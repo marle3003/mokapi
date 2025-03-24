@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
 	"unicode"
@@ -22,10 +23,7 @@ type Parser struct {
 func (p *Parser) ParseWith(data interface{}, schema *schema.Schema) (interface{}, error) {
 	v, err := p.parse(data, schema)
 	if err != nil {
-		return v, &Error{
-			NumErrors: NumErrors(err),
-			Err:       err,
-		}
+		return v, &Error{err: err}
 	}
 
 	return v, nil
@@ -34,10 +32,7 @@ func (p *Parser) ParseWith(data interface{}, schema *schema.Schema) (interface{}
 func (p *Parser) Parse(data interface{}) (interface{}, error) {
 	v, err := p.parse(data, p.Schema)
 	if err != nil {
-		return v, &Error{
-			NumErrors: NumErrors(err),
-			Err:       err,
-		}
+		return v, &Error{err: err}
 	}
 
 	return v, nil
@@ -51,7 +46,10 @@ func (p *Parser) parse(data interface{}, s *schema.Schema) (interface{}, error) 
 		if *s.Boolean {
 			return data, nil
 		}
-		return data, Errorf("valid", "schema always fails validation")
+		return data, &ErrorDetail{
+			Message: "schema always fails validation",
+			Field:   "valid",
+		}
 	}
 
 	if data == nil {
@@ -59,8 +57,6 @@ func (p *Parser) parse(data interface{}, s *schema.Schema) (interface{}, error) 
 			return nil, nil
 		} else if s.Default != nil {
 			data = s.Default
-		} else {
-			return nil, Errorf("type", "invalid type, expected %v but got null", s.Type.String())
 		}
 	}
 
@@ -131,15 +127,24 @@ func (p *Parser) parseType(data interface{}, s *schema.Schema, typeName string, 
 	switch data.(type) {
 	case []interface{}:
 		if typeName != "array" {
-			return nil, Errorf("type", "invalid type, expected %v but got %v", typeName, toType(data))
+			return nil, &ErrorDetail{
+				Message: fmt.Sprintf("invalid type, expected %v but got %v", typeName, toType(data)),
+				Field:   "type",
+			}
 		}
 	case map[string]interface{}:
 		if typeName != "object" {
-			return nil, Errorf("type", "invalid type, expected %v but got %v", typeName, toType(data))
+			return nil, &ErrorDetail{
+				Message: fmt.Sprintf("invalid type, expected %v but got %v", typeName, toType(data)),
+				Field:   "type",
+			}
 		}
 	case struct{}:
 		if typeName != "object" {
-			return nil, Errorf("type", "invalid type, expected %v but got %v", typeName, toType(data))
+			return nil, &ErrorDetail{
+				Message: fmt.Sprintf("invalid type, expected %v but got %v", typeName, toType(data)),
+				Field:   "type",
+			}
 		}
 	}
 
@@ -165,16 +170,26 @@ func (p *Parser) parseType(data interface{}, s *schema.Schema, typeName string, 
 		p2 := Parser{ConvertToSortedMap: true}
 		c, constErr := p2.parse(*s.Const, &s2)
 		if constErr != nil {
-			return data, Errorf("const", "const value does not match schema: %v", constErr)
+			return data, &ErrorComposition{
+				Message: "const value does not match schema",
+				Field:   "const",
+				Errors:  ErrorList{constErr},
+			}
 		}
 		if !compare(data, c) {
-			return data, Errorf("const", "value '%v' does not match const '%v'", ToString(data), ToString(c))
+			return data, &ErrorDetail{
+				Message: fmt.Sprintf("value '%v' does not match const '%v'", ToString(data), ToString(c)),
+				Field:   "const",
+			}
 		}
 	}
 
 	if s.Not != nil {
 		if _, notErr := p.parse(data, s.Not); notErr == nil {
-			return data, Errorf("not", "is valid against schema from 'not'")
+			return nil, &ErrorDetail{
+				Message: "is valid against schema",
+				Field:   "not",
+			}
 		}
 	}
 
@@ -193,7 +208,7 @@ func (p *Parser) evaluateUnevaluatedProperties(data interface{}, schema *schema.
 	if schema.UnevaluatedProperties == nil {
 		return data, nil
 	}
-	var err PathErrors
+	var err ErrorList
 
 	if object, ok := data.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
 		for it := object.Iter(); it.Next(); {
@@ -201,11 +216,14 @@ func (p *Parser) evaluateUnevaluatedProperties(data interface{}, schema *schema.
 			val := it.Value()
 			if _, evaluated := evaluatedProperties[name]; !evaluated {
 				if schema.UnevaluatedProperties.Boolean != nil && !*schema.UnevaluatedProperties.Boolean {
-					err = append(err, Errorf("unevaluatedProperties", "property %s not successfully evaluated and schema does not allow unevaluated properties", name))
+					err = append(err, &ErrorDetail{
+						Message: fmt.Sprintf("property %s not successfully evaluated and schema does not allow unevaluated properties", name),
+						Field:   "unevaluatedProperties",
+					})
 				} else {
 					v, evalErr := p.parse(val, schema.UnevaluatedProperties)
 					if evalErr != nil {
-						err = append(err, wrapError("unevaluatedProperties", evalErr))
+						err = append(err, wrapErrorDetail(evalErr, &ErrorDetail{Field: "unevaluatedProperties"}))
 					} else {
 						object.Set(name, v)
 					}
@@ -225,17 +243,26 @@ func (p *Parser) evaluateUnevaluatedItems(data interface{}, schema *schema.Schem
 	if schema.UnevaluatedItems == nil {
 		return data, nil
 	}
-	var err PathErrors
+	var err ErrorList
 
 	if arr, ok := data.([]interface{}); ok {
 		for i, val := range arr {
 			if _, evaluated := evaluatedItems[i]; !evaluated {
 				if schema.UnevaluatedItems.Boolean != nil && !*schema.UnevaluatedItems.Boolean {
-					err = append(err, Errorf("unevaluatedItems", "item at index %v has not been successfully evaluated and the schema does not allow unevaluated items.", i))
+					err = append(err, &ErrorDetail{
+						Message: fmt.Sprintf("item at index %v has not been successfully evaluated and the schema does not allow unevaluated items", i),
+						Field:   "unevaluatedItems",
+					})
 				} else {
 					v, evalErr := p.parse(val, schema.UnevaluatedItems)
 					if evalErr != nil {
-						err = append(err, wrapError("unevaluatedItems", evalErr))
+						err = append(err, wrapErrorDetail(
+							evalErr,
+							&ErrorDetail{
+								Message: fmt.Sprintf("item at index %v has not been successfully evaluated and the schema does not allow unevaluated items", i),
+								Field:   "unevaluatedItems",
+							},
+						))
 					} else {
 						arr[i] = v
 					}

@@ -11,7 +11,7 @@ import (
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
-	jsonSchema "mokapi/schema/json/schema"
+	"mokapi/providers/openapi/schema/schematest"
 	"net/url"
 	"testing"
 )
@@ -28,7 +28,7 @@ func TestComponents_UnmarshalJSON(t *testing.T) {
 				err := json.Unmarshal([]byte(`{ "schemas": {"foo": {"type": "string"}} }`), &c)
 				require.NoError(t, err)
 				require.Equal(t, 1, c.Schemas.Len())
-				require.Equal(t, "string", c.Schemas.Get("foo").Value.Type.String())
+				require.Equal(t, "string", c.Schemas.Get("foo").Type.String())
 			},
 		},
 		{
@@ -37,8 +37,8 @@ func TestComponents_UnmarshalJSON(t *testing.T) {
 				c := openapi.Components{}
 				err := json.Unmarshal([]byte(`{ "responses": {"foo": {"description": "foo"}} }`), &c)
 				require.NoError(t, err)
-				require.Equal(t, 1, c.Responses.Len())
-				r, _ := c.Responses.Get("foo")
+				require.Len(t, c.Responses, 1)
+				r, _ := c.Responses["foo"]
 				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
@@ -115,7 +115,7 @@ func TestComponents_UnmarshalYAML(t *testing.T) {
 				err := yaml.Unmarshal([]byte(`schemas: {foo: {type: string}}`), &c)
 				require.NoError(t, err)
 				require.Equal(t, 1, c.Schemas.Len())
-				require.Equal(t, "string", c.Schemas.Get("foo").Value.Type.String())
+				require.Equal(t, "string", c.Schemas.Get("foo").Type.String())
 			},
 		},
 		{
@@ -124,8 +124,8 @@ func TestComponents_UnmarshalYAML(t *testing.T) {
 				c := openapi.Components{}
 				err := yaml.Unmarshal([]byte(`responses: {foo: {description: foo}}`), &c)
 				require.NoError(t, err)
-				require.Equal(t, 1, c.Responses.Len())
-				r, _ := c.Responses.Get("foo")
+				require.Len(t, c.Responses, 1)
+				r, _ := c.Responses["foo"]
 				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
@@ -202,17 +202,17 @@ func TestComponents_Parse(t *testing.T) {
 					cfg := &dynamic.Config{
 						Info: dynamic.ConfigInfo{Url: u},
 						Data: openapitest.NewConfig("3.0",
-							openapitest.WithComponentSchema("foo", &schema.Schema{Type: jsonSchema.Types{"string"}}),
+							openapitest.WithComponentSchema("foo", schematest.New("string")),
 						),
 					}
 					return cfg, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithComponentSchemaRef("foo", &schema.Ref{Reference: dynamic.Reference{Ref: "foo.yml#/components/schemas/foo"}}),
+					openapitest.WithComponentSchemaRef("foo", &schema.Schema{Ref: "foo.yml#/components/schemas/foo"}),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				require.Equal(t, "string", config.Components.Schemas.Get("foo").Value.Type.String())
+				require.Equal(t, "string", config.Components.Schemas.Get("foo").Type.String())
 			},
 		},
 		{
@@ -222,7 +222,7 @@ func TestComponents_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TESTING ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithComponentSchemaRef("foo", &schema.Ref{Reference: dynamic.Reference{Ref: "foo.yml#/components/schemas/foo"}}),
+					openapitest.WithComponentSchemaRef("foo", &schema.Schema{Ref: "foo.yml#/components/schemas/foo"}),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse components failed: parse schema 'foo' failed: resolve reference 'foo.yml#/components/schemas/foo' failed: TESTING ERROR")
@@ -245,7 +245,7 @@ func TestComponents_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				r, _ := config.Components.Responses.Get("foo")
+				r, _ := config.Components.Responses["foo"]
 				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
@@ -416,21 +416,21 @@ func TestConfig_Patch_Components(t *testing.T) {
 			name: "add schema",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0"),
-				openapitest.NewConfig("1.0", openapitest.WithComponentSchema("foo", &schema.Schema{Type: jsonSchema.Types{"string"}})),
+				openapitest.NewConfig("1.0", openapitest.WithComponentSchema("foo", schematest.New("string"))),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Equal(t, "string", result.Components.Schemas.Get("foo").Value.Type.String())
+				require.Equal(t, "string", result.Components.Schemas.Get("foo").Type.String())
 			},
 		},
 		{
 			name: "patch schema",
 			configs: []*openapi.Config{
-				openapitest.NewConfig("1.0", openapitest.WithComponentSchema("foo", &schema.Schema{Type: jsonSchema.Types{"string"}})),
-				openapitest.NewConfig("1.0", openapitest.WithComponentSchema("foo", &schema.Schema{Format: "bar"})),
+				openapitest.NewConfig("1.0", openapitest.WithComponentSchema("foo", schematest.New("string"))),
+				openapitest.NewConfig("1.0", openapitest.WithComponentSchema("foo", schematest.New("string", schematest.WithFormat("bar")))),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Equal(t, "string", result.Components.Schemas.Get("foo").Value.Type.String())
-				require.Equal(t, "bar", result.Components.Schemas.Get("foo").Value.Format)
+				require.Equal(t, "string", result.Components.Schemas.Get("foo").Type.String())
+				require.Equal(t, "bar", result.Components.Schemas.Get("foo").Format)
 			},
 		},
 		{
@@ -440,7 +440,7 @@ func TestConfig_Patch_Components(t *testing.T) {
 				openapitest.NewConfig("1.0", openapitest.WithComponentResponse("foo", &openapi.Response{Description: "foo"})),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				r, _ := result.Components.Responses.Get("foo")
+				r, _ := result.Components.Responses["foo"]
 				require.Equal(t, "foo", r.Value.Description)
 			},
 		},
@@ -451,7 +451,7 @@ func TestConfig_Patch_Components(t *testing.T) {
 				openapitest.NewConfig("1.0", openapitest.WithComponentResponse("foo", &openapi.Response{Description: "bar"})),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				r, _ := result.Components.Responses.Get("foo")
+				r, _ := result.Components.Responses["foo"]
 				require.Equal(t, "bar", r.Value.Description)
 			},
 		},

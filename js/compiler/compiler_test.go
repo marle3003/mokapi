@@ -22,7 +22,7 @@ func TestScript(t *testing.T) {
 			name: "syntax error",
 			test: func(t *testing.T, c *Compiler) {
 				_, err := c.Compile("test.js", "function test()")
-				require.EqualError(t, err, "SyntaxError: /test.js: Unexpected token, expected \"{\" (1:15)\n\n> 1 | function test()\n    |                ^ at dispatchException (<mokapi/babel.min.js>:2:6239(7))")
+				require.EqualError(t, err, "script error: expected \"{\" but found end of file: test.js:1:15")
 			},
 		},
 		{

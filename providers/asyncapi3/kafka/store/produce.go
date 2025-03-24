@@ -6,7 +6,6 @@ import (
 	"mokapi/kafka"
 	"mokapi/kafka/produce"
 	"mokapi/runtime/monitor"
-	"mokapi/schema/encoding"
 	"mokapi/schema/json/parser"
 )
 
@@ -69,21 +68,17 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 }
 
 func validateProducer(t *Topic, ctx *kafka.ClientContext) error {
-	var err error
-	var last error
 	for _, op := range t.operations {
 		if op.Action != "send" {
 			continue
 		}
 		if op.Bindings.Kafka.ClientId != nil {
-			_, err = encoding.Decode([]byte(ctx.ClientId), encoding.WithParser(&parser.Parser{Schema: op.Bindings.Kafka.ClientId}))
-			if err != nil {
-				last = err
-			} else {
-				return nil
-			}
+			s := op.Bindings.Kafka.ClientId
+			p := parser.Parser{Schema: s}
+			_, err := p.Parse(ctx.ClientId)
+			return err
 		}
 	}
 
-	return last
+	return nil
 }

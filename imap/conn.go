@@ -3,6 +3,7 @@ package imap
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"io"
@@ -62,31 +63,66 @@ func (c *conn) readCmd() error {
 	}
 
 	tag, cmd, param := parseLine(line)
+	d := Decoder{msg: param}
+
 	var res *response
 	switch cmd {
 	case "AUTHENTICATE":
 		res = c.handleAuth(tag, param)
+	case "LOGIN":
+		err = c.handleLogin(tag, param)
 	case "CAPABILITY":
 		res = c.handleCapability()
 	case "STARTTLS":
 		err = c.handleStartTLS(tag)
 	case "SELECT":
 		err = c.handleSelect(tag, param)
+	case "STATUS":
+		err = c.handleStatus(tag, &d)
 	case "LIST":
-		err = c.handleList(tag, param)
+		err = c.handleList(tag, &d)
+	case "LSUB":
+		err = c.handleLSub(tag, &d)
+	case "SUBSCRIBE":
+		err = c.handleSubscribe(tag, &d)
+	case "UNSUBSCRIBE":
+		err = c.handleUnsubscribe(tag, &d)
 	case "FETCH":
 		err = c.handleFetch(tag, param)
-	case "CLOSE":
-		err = c.handleClose(tag)
+	case "CLOSE", "UNSELECT":
+		err = c.handleUnselect(tag, cmd == "CLOSE")
+	case "EXPUNGE":
+		err = c.handleExpunge(tag, &d, false)
+	case "UID":
+		err = c.handleUid(tag, param)
+	case "LOGOUT":
+		c.tpc.PrintfLine("BYE logout")
+		return nil
+	case "STORE":
+		err = c.handleStore(tag, param)
+	case "CREATE":
+		err = c.handleCreate(tag, &d)
+	case "COPY":
+		err = c.handleCopy(tag, &d, false)
+	case "MOVE":
+		err = c.handleMove(tag, &d, false)
+	case "NOOP":
+		res = &response{
+			status: ok,
+		}
 	default:
 		log.Errorf("imap: unknown command: %v", line)
 		res = &response{
 			status: bad,
-			text:   "Unknown command",
+			text:   fmt.Sprintf("Unknown command %v", cmd),
 		}
 	}
 	if err != nil {
-		return err
+		res = &response{
+			status: bad,
+			text:   fmt.Sprintf("error %v", err.Error()),
+		}
+		return fmt.Errorf("parse command failed '%v': %w", line, err)
 	}
 	if res != nil {
 		return c.writeResponse(tag, res)

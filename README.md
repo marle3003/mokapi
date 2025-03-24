@@ -4,7 +4,7 @@
 </a>
 </p>
 
-<h3 align="center">Easy and flexible API mocking</h3>
+<h3 align="center">Your API Mocking Tool for Agile Development</h3>
 
 <p align="center">
 <a href="https://github.com/marle3003/mokapi/releases"><img src="https://img.shields.io/github/release/marle3003/mokapi.svg" alt="Github release"></a>
@@ -14,7 +14,7 @@
 </p>
 <p align="center">
     <a href="https://github.com/marle3003/mokapi/releases">Download</a> ·
-    <a href="https://mokapi.io/docs/guides/get-started/welcome">Documentation</a>
+    <a href="https://mokapi.io/docs/guides/welcome">Documentation</a>
 </p>
 
 **Mokapi** is an open-source tool that allows Agile, DevOps and Continuous Deployment teams
@@ -40,7 +40,7 @@ Its core feature are:
 
 Windows
 ```shell
-chcco install mokapi
+choco install mokapi
 mokapi --providers-http-url https://petstore31.swagger.io/api/v31/openapi.json
 ```
 
@@ -71,8 +71,8 @@ curl http://localhost/api/v31/pet/2 -H 'Accept: application/json'
 
 ## Documentation
 
-- [Get Started](https://mokapi.io/docs/guides/get-started/welcome)
-- [HTTP](https://mokapi.io/docs/guides/http/overview)
+- [Get Started](https://mokapi.io/docs/guides/welcome)
+- [HTTP](https://mokapi.io/docs/guides/http)
 - [Kafka](https://mokapi.io/docs/guides/kafka/overview)
 - [LDAP](https://mokapi.io/docs/guides/ldap/overview)
 - [SMTP](https://mokapi.io/docs/guides/smtp/overview)

@@ -15,7 +15,7 @@ var (
 type Bytes interface {
 	io.ReadCloser
 	io.Seeker
-	Len() int
+	Size() int
 }
 
 type refCounter uint32
@@ -42,13 +42,18 @@ func BytesToString(bytes Bytes) string {
 }
 
 func Read(bytes Bytes) []byte {
+	if bytes == nil {
+		return nil
+	}
 	bytes.Seek(0, io.SeekStart)
-	b := make([]byte, bytes.Len())
+	b := make([]byte, bytes.Size())
 	bytes.Read(b)
 	return b
 }
 
 func (b *bytesReader) Close() error { return nil }
+
+func (b *bytesReader) Size() int { return int(b.Reader.Size()) }
 
 func (r *refCounter) inc() {
 	atomic.AddUint32((*uint32)(r), 1)

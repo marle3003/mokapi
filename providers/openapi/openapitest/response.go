@@ -1,7 +1,6 @@
 package openapitest
 
 import (
-	"mokapi/config/dynamic"
 	"mokapi/media"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/parameter"
@@ -30,7 +29,7 @@ func WithResponseHeader(name, description string, s *schema.Schema) ResponseOpti
 				Parameter: parameter.Parameter{
 					Name:        name,
 					Description: description,
-					Schema:      &schema.Ref{Value: s},
+					Schema:      s,
 				},
 			},
 		}
@@ -88,12 +87,12 @@ func WithExample(example interface{}) ContentOptions {
 
 func WithSchema(s *schema.Schema) ContentOptions {
 	return func(c *openapi.MediaType) {
-		c.Schema = &schema.Ref{Value: s}
+		c.Schema = s
 	}
 }
 
 func WithSchemaRef(r string) ContentOptions {
 	return func(c *openapi.MediaType) {
-		c.Schema = &schema.Ref{Reference: dynamic.Reference{Ref: r}}
+		c.Schema = &schema.Schema{Ref: r}
 	}
 }
