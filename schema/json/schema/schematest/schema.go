@@ -311,15 +311,11 @@ func WithDefault(v interface{}) SchemaOptions {
 	}
 }
 
-func WithExample(v interface{}) SchemaOptions {
-	return func(s *schema.Schema) {
-		s.Examples = append(s.Examples, v)
-	}
-}
-
 func WithExamples(v ...interface{}) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.Examples = append(s.Examples, v...)
+		for _, item := range v {
+			s.Examples = append(s.Examples, schema.Example{Value: item})
+		}
 	}
 }
 

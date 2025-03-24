@@ -18,99 +18,137 @@ type ErrorDetail struct {
 	Errors  ErrorList `json:"errors,omitempty"`
 }
 
+type ErrorComposition struct {
+	Message string    `json:"message,omitempty"`
+	Field   string    `json:"field,omitempty"`
+	Errors  ErrorList `json:"errors,omitempty"`
+}
+
 func (e *Error) Error() string {
 	if e == nil {
 		return ""
 	}
 
-	num := countErrors(e.err)
-	s := toString2(e.err, []string{"#"})
+	items := toString(e.err, []string{"#"}, "")
 
-	return fmt.Sprintf("error count %d:%s", num, s)
+	var sb strings.Builder
+	for _, item := range items {
+		if sb.Len() > 0 {
+			sb.WriteString("\n")
+		}
+		sb.WriteString(fmt.Sprintf("\t%s", item))
+	}
+
+	return fmt.Sprintf("error count %d:\n%s", len(items), sb.String())
 }
 
 func (e *ErrorList) Error() string {
-	return ""
-}
-
-func (e *ErrorDetail) Error() string {
-	return e.toString([]string{"#"})
-}
-
-func (e *ErrorList) toString(path []string) string {
+	list := e.toString([]string{"#"}, "")
 	var sb strings.Builder
-	for _, err := range *e {
-		sb.WriteString(toString2(err, path))
+	for _, item := range list {
+		if sb.Len() > 0 {
+			sb.WriteString("; ")
+		}
+		sb.WriteString(item)
 	}
 	return sb.String()
 }
 
-func (e *ErrorDetail) toString(path []string) string {
+func (e *ErrorDetail) Error() string {
+	list := e.toString([]string{"#"}, "")
 	var sb strings.Builder
+	for _, item := range list {
+		if sb.Len() > 0 {
+			sb.WriteString("; ")
+		}
+		sb.WriteString(item)
+	}
+	return sb.String()
+}
+
+func (e *ErrorComposition) Error() string {
+	list := e.toString([]string{"#"}, "")
+	var sb strings.Builder
+	for _, item := range list {
+		if sb.Len() > 0 {
+			sb.WriteString("; ")
+		}
+		sb.WriteString(item)
+	}
+	return sb.String()
+}
+
+func (e *ErrorList) toString(path []string, output string) []string {
+	var list []string
+	for _, err := range *e {
+		list = append(list, toString(err, path, output)...)
+	}
+	return list
+}
+
+func (e *ErrorDetail) toString(path []string, output string) []string {
 	path = append(path, e.Field)
-	s := strings.Join(path, "/")
 
 	if len(e.Errors) > 0 {
-		if e.Field != "" {
-			if e.Message != "" {
-				sb.WriteString(fmt.Sprintf("%s: %s", s, e.Message))
-			} else {
-				sb.WriteString(fmt.Sprintf("%s:", s))
-			}
-		} else {
-			sb.WriteString(e.Message)
-		}
-
-		sb.WriteString(e.Errors.toString(path))
-
-		return sb.String()
+		return e.Errors.toString(path, output)
 	} else {
-		return fmt.Sprintf("%s: %s", s, e.Message)
+		s := strings.Join(path, "/")
+		if output == "json" {
+			return []string{fmt.Sprintf(`{"schema":"%s","message":"%s"}`, s, e.Message)}
+		}
+		return []string{fmt.Sprintf("- %s: %s", s, e.Message)}
 	}
 }
 
-func (e *ErrorDetail) count() int {
-	if len(e.Errors) == 0 {
-		return 1
+func (e *ErrorComposition) toString(path []string, output string) []string {
+	path = append(path, e.Field)
+	var result []string
+	s := strings.Join(path, "/")
+
+	if output == "json" {
+		var sb strings.Builder
+		sb.WriteString(fmt.Sprintf(`{"schema":"%s","message":"%s"`, s, e.Message))
+		for _, err := range e.Errors {
+			items := toString(err, path, output)
+			for _, item := range items {
+				result = append(result, item)
+			}
+		}
+		if len(result) > 0 {
+			sb.WriteString(fmt.Sprintf(`,"errors":[%s]`, strings.Join(result, ",")))
+		}
+		return []string{sb.String() + "}"}
 	}
-	return countErrors(&e.Errors)
+
+	result = append(result, fmt.Sprintf("- %s: %s", s, e.Message))
+	for _, err := range e.Errors {
+		items := toString(err, path, output)
+		for _, item := range items {
+			result = append(result, fmt.Sprintf("\t%s", item))
+		}
+	}
+	return result
 }
 
-func (e *ErrorList) count() int {
-	sum := 0
-	for _, err := range *e {
-		sum += countErrors(err)
-	}
-	return sum
-}
-
-func countErrors(err error) int {
+func toString(err error, path []string, output string) []string {
 	var detail *ErrorDetail
 	if errors.As(err, &detail) {
-		return detail.count()
-	}
-
-	var list *ErrorList
-	if errors.As(err, &list) {
-		return list.count()
-	}
-
-	return 1
-}
-
-func toString2(err error, path []string) string {
-	prefix := strings.Repeat("\t", len(path)-1)
-
-	var detail *ErrorDetail
-	if errors.As(err, &detail) {
-		return fmt.Sprintf("\n%s- %s", prefix, detail.toString(path))
+		return detail.toString(path, output)
 	}
 	var list *ErrorList
 	if errors.As(err, &list) {
-		return list.toString(path)
+		return list.toString(path, output)
+	}
+	var comp *ErrorComposition
+	if errors.As(err, &comp) {
+		return comp.toString(path, output)
 	}
 
-	return fmt.Sprintf("\n%s- %s", prefix, err.Error())
+	if output == "json" {
+		return []string{fmt.Sprintf(`"%s"`, err.Error())}
+	}
+
+	return []string{fmt.Sprintf("- %s", err.Error())}
 }
 
 func wrapErrorDetail(err error, detail *ErrorDetail) error {
@@ -139,4 +177,17 @@ func wrapErrorDetail(err error, detail *ErrorDetail) error {
 		detail.Message = err.Error()
 	}
 	return detail
+}
+
+func (e *ErrorDetail) append(err error) {
+	e.Errors = append(e.Errors, err)
+}
+
+func Marshal(err error) string {
+	var e *Error
+	if errors.As(err, &e) {
+		items := toString(e.err, []string{"#"}, "json")
+		return fmt.Sprintf("[%s]", strings.Join(items, ","))
+	}
+	return fmt.Sprintf(`[%s]`, err.Error())
 }

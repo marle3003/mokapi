@@ -71,11 +71,13 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Schema, error) {
 			s.Default = obj.Get(k).Export()
 		case "example":
 			i := obj.Get(k).Export()
-			s.Example = i
+			s.Example = &jsonSchema.Example{Value: i}
 		case "examples":
 			i := obj.Get(k).Export()
 			if examples, ok := i.([]interface{}); ok {
-				s.Examples = examples
+				for _, e := range examples {
+					s.Examples = append(s.Examples, jsonSchema.Example{Value: e})
+				}
 			} else {
 				return nil, fmt.Errorf("unexpected type for 'examples'")
 			}

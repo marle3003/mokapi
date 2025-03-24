@@ -170,9 +170,10 @@ func (p *Parser) parseType(data interface{}, s *schema.Schema, typeName string, 
 		p2 := Parser{ConvertToSortedMap: true}
 		c, constErr := p2.parse(*s.Const, &s2)
 		if constErr != nil {
-			return data, &ErrorDetail{
-				Message: fmt.Sprintf("const value does not match schema: %v", constErr),
+			return data, &ErrorComposition{
+				Message: "const value does not match schema",
 				Field:   "const",
+				Errors:  ErrorList{constErr},
 			}
 		}
 		if !compare(data, c) {

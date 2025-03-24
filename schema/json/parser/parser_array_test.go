@@ -20,7 +20,7 @@ func TestParser_Array(t *testing.T) {
 			schema: schematest.New("array"),
 			data:   map[string]interface{}{"a": 1, "b": 2, "c": nil},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/type: invalid type, expected array but got object")
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected array but got object")
 			},
 		},
 		{
@@ -37,7 +37,7 @@ func TestParser_Array(t *testing.T) {
 			schema: schematest.New("array", schematest.WithItems("integer")),
 			data:   []interface{}{1, 2, 3, 4, "foo"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/items/type: invalid type, expected integer but got string")
+				require.EqualError(t, err, "error count 1:\n\t- #/items/4/type: invalid type, expected integer but got string")
 			},
 		},
 		{
@@ -66,7 +66,7 @@ func TestParser_Array(t *testing.T) {
 			)),
 			data: []interface{}{1, "foo"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/1/type: invalid type, expected integer but got string")
+				require.EqualError(t, err, "error count 1:\n\t- #/items/1/type: invalid type, expected integer but got string")
 			},
 		},
 		{
@@ -77,7 +77,7 @@ func TestParser_Array(t *testing.T) {
 			), schematest.WithItems("integer")),
 			data: []interface{}{1, 2, "foo"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/items/type: invalid type, expected integer but got string")
+				require.EqualError(t, err, "error count 1:\n\t- #/items/2/type: invalid type, expected integer but got string")
 			},
 		},
 		{
@@ -112,7 +112,7 @@ func TestParser_Array(t *testing.T) {
 			), schematest.WithItemsNew(schematest.NewBool(false))),
 			data: []interface{}{1, 2, "foo"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/items/valid: schema always fails validation")
+				require.EqualError(t, err, "error count 1:\n\t- #/items/2/valid: schema always fails validation")
 			},
 		},
 		{
@@ -123,7 +123,7 @@ func TestParser_Array(t *testing.T) {
 			), schematest.WithUnevaluatedItems(&schema.Schema{Boolean: toBoolP(false)})),
 			data: []interface{}{1, 2, "foo"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/unevaluatedItems: item at index 2 has not been successfully evaluated and the schema does not allow unevaluated items")
+				require.EqualError(t, err, "error count 1:\n\t- #/unevaluatedItems: item at index 2 has not been successfully evaluated and the schema does not allow unevaluated items")
 			},
 		},
 		{
@@ -143,7 +143,7 @@ func TestParser_Array(t *testing.T) {
 			schema: schematest.New("array", schematest.WithContains(schematest.New("integer"))),
 			data:   []interface{}{"foo"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/contains: no items match contains")
+				require.EqualError(t, err, "error count 1:\n\t- #/contains: no items match contains")
 			},
 		},
 		{
@@ -163,7 +163,7 @@ func TestParser_Array(t *testing.T) {
 			),
 			data: []interface{}{1},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/minContains: contains match count 1 is less than minimum contains count of 2")
+				require.EqualError(t, err, "error count 1:\n\t- #/minContains: contains match count 1 is less than minimum contains count of 2")
 			},
 		},
 		{
@@ -186,7 +186,7 @@ func TestParser_Array(t *testing.T) {
 			),
 			data: []interface{}{1, 2},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/maxContains: contains match count 2 exceeds maximum contains count of 1")
+				require.EqualError(t, err, "error count 1:\n\t- #/maxContains: contains match count 2 exceeds maximum contains count of 1")
 			},
 		},
 		{
@@ -208,7 +208,7 @@ func TestParser_Array(t *testing.T) {
 			),
 			data: []interface{}{1},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/minItems: item count 1 is less than minimum count of 2")
+				require.EqualError(t, err, "error count 1:\n\t- #/minItems: item count 1 is less than minimum count of 2")
 			},
 		},
 		{
@@ -229,7 +229,7 @@ func TestParser_Array(t *testing.T) {
 			),
 			data: []interface{}{1, 2},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/maxItems: item count 2 exceeds maximum count of 1")
+				require.EqualError(t, err, "error count 1:\n\t- #/maxItems: item count 2 exceeds maximum count of 1")
 			},
 		},
 		{
@@ -250,7 +250,7 @@ func TestParser_Array(t *testing.T) {
 			),
 			data: []interface{}{1, 2, 2},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/uniqueItems: non-unique array item at index 2")
+				require.EqualError(t, err, "error count 1:\n\t- #/uniqueItems: non-unique array item at index 2")
 			},
 		},
 		{
@@ -271,7 +271,7 @@ func TestParser_Array(t *testing.T) {
 			),
 			data: []string{"a", "b"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/const: value '[a, b]' does not match const '[a, b, c]'")
+				require.EqualError(t, err, "error count 1:\n\t- #/const: value '[a, b]' does not match const '[a, b, c]'")
 			},
 		},
 		{
@@ -292,7 +292,7 @@ func TestParser_Array(t *testing.T) {
 			),
 			data: []interface{}{"a", 1, 2},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 2:\n- #/items/type: invalid type, expected string but got integer\n- #/items/type: invalid type, expected string but got integer")
+				require.EqualError(t, err, "error count 2:\n\t- #/items/1/type: invalid type, expected string but got integer\n\t- #/items/2/type: invalid type, expected string but got integer")
 			},
 		},
 		{
@@ -309,7 +309,7 @@ func TestParser_Array(t *testing.T) {
 				map[string]interface{}{"foo": "a", "bar": "bar"},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 3:\n- #/items/bar/type: invalid type, expected integer but got string\n- #/items/foo/minLength: string 'a' is less than minimum of 3\n- #/items/bar/type: invalid type, expected integer but got string")
+				require.EqualError(t, err, "error count 3:\n\t- #/items/1/bar/type: invalid type, expected integer but got string\n\t- #/items/2/foo/minLength: string 'a' is less than minimum of 3\n\t- #/items/2/bar/type: invalid type, expected integer but got string")
 			},
 		},
 	}

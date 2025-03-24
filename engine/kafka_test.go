@@ -201,7 +201,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 						produce({ topic: 'foo', messages: [{ data: 12 }] })
 					}
 				`))
-				require.EqualError(t, err, "produce kafka message to 'foo' failed: encoding data to 'application/json' failed: error count 1:\n- #/type: invalid type, expected string but got integer at mokapi/js/kafka.(*Module).Produce-fm (native)")
+				require.EqualError(t, err, "produce kafka message to 'foo' failed: encoding data to 'application/json' failed: error count 1:\n\t- #/type: invalid type, expected string but got integer at mokapi/js/kafka.(*Module).Produce-fm (native)")
 
 				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
@@ -210,7 +210,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 
 				// logs
 				require.Len(t, hook.Entries, 2)
-				require.Equal(t, "js error: produce kafka message to 'foo' failed: encoding data to 'application/json' failed: error count 1:\n- #/type: invalid type, expected string but got integer in test.js", hook.LastEntry().Message)
+				require.Equal(t, "js error: produce kafka message to 'foo' failed: encoding data to 'application/json' failed: error count 1:\n\t- #/type: invalid type, expected string but got integer in test.js", hook.LastEntry().Message)
 			},
 		},
 		{

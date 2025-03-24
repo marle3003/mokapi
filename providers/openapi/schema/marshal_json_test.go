@@ -40,7 +40,7 @@ func TestRef_Marshal_Json(t *testing.T) {
 			schema: schematest.New("number"),
 			data:   nil,
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n- #/type: invalid type, expected number but got null")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n\t- #/type: invalid type, expected number but got null")
 			},
 		},
 		{
@@ -93,7 +93,7 @@ func TestRef_Marshal_Json(t *testing.T) {
 			schema: schematest.New("integer"),
 			data:   "12",
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n- #/type: invalid type, expected integer but got string")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n\t- #/type: invalid type, expected integer but got string")
 			},
 		},
 		{
@@ -137,7 +137,7 @@ func TestRef_Marshal_Json(t *testing.T) {
 			schema: schematest.New("string", schematest.And("number")),
 			data:   true,
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n- #/type: invalid type, expected number but got boolean")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n\t- #/type: invalid type, expected number but got boolean")
 			},
 		},
 	}
@@ -168,7 +168,7 @@ func TestRef_Marshal_Json_Object(t *testing.T) {
 				schematest.WithProperty("value", schematest.New("integer"))),
 			data: 12,
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n- #/type: invalid type, expected object but got integer")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n\t- #/type: invalid type, expected object but got integer")
 				require.Len(t, result, 0)
 			},
 		},
@@ -389,7 +389,7 @@ func TestRef_Marshal_Json_AnyOf(t *testing.T) {
 			),
 			data: map[string]interface{}{"foo": "foo", "bar": "bar", "value": "test"},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n- #/anyOf/1/additionalProperties: does not match any schemas: property 'foo' not defined and the schema does not allow additional properties\nproperty 'value' not defined and the schema does not allow additional properties")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 2:\n\t- #/anyOf/1/additionalProperties: does not match any schemas: property 'foo' not defined and the schema does not allow additional properties\n\t- #/anyOf/1/additionalProperties: does not match any schemas: property 'value' not defined and the schema does not allow additional properties")
 			},
 		},
 		{
@@ -445,7 +445,7 @@ func TestRef_Marshal_Json_OneOf(t *testing.T) {
 			),
 			data: map[string]interface{}{"bark": true, "breed": "Dingo"},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n- #/oneOf: valid against more than one schema: valid schema indexes: 0, 1")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n\t- #/oneOf: valid against more than one schema: valid schema indexes: 0, 1")
 				require.Len(t, result, 0)
 			},
 		},
@@ -484,7 +484,7 @@ func TestRef_Marshal_Json_OneOf(t *testing.T) {
 			),
 			data: map[string]interface{}{"bark": true, "breed": "Dingo"},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n- #/oneOf: valid against more than one schema: valid schema indexes: 0, 1")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n\t- #/oneOf: valid against more than one schema: valid schema indexes: 0, 1")
 				require.Len(t, result, 0)
 			},
 		},
@@ -501,7 +501,7 @@ func TestRef_Marshal_Json_OneOf(t *testing.T) {
 			),
 			data: map[string]interface{}{"bark": true, "breed": "Dingo"},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n- #/oneOf: valid against more than one schema: valid schema indexes: 0, 1")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n\t- #/oneOf: valid against more than one schema: valid schema indexes: 0, 1")
 				require.Len(t, result, 0)
 			},
 		},
@@ -586,7 +586,7 @@ func TestRef_Marshal_Json_AllOf(t *testing.T) {
 				return map[string]interface{}{"bar": "bar"}
 			},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n- #/allOf: does not match all schema\n\t- #/allOf/0/required: required properties are missing: foo")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/required: required properties are missing: foo")
 				require.Len(t, result, 0)
 			},
 		},
@@ -600,7 +600,7 @@ func TestRef_Marshal_Json_AllOf(t *testing.T) {
 				return map[string]interface{}{"bar": "bar"}
 			},
 			test: func(t *testing.T, result string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n- #/allOf: does not match all schema\n\t- #/allOf/1/type: invalid type, expected integer but got object")
+				require.EqualError(t, err, "encoding data to 'application/json' failed: error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/1/type: invalid type, expected integer but got object")
 				require.Len(t, result, 0)
 			},
 		},
@@ -644,25 +644,25 @@ func TestRef_Marshal_Json_Invalid(t *testing.T) {
 			name:   "number",
 			schema: schematest.New("number"),
 			data:   "foo",
-			exp:    "encoding data to 'application/json' failed: error count 1:\n- #/type: invalid type, expected number but got string",
+			exp:    "encoding data to 'application/json' failed: error count 1:\n\t- #/type: invalid type, expected number but got string",
 		},
 		{
 			name:   "exclusiveMinimum",
 			schema: schematest.New("integer", schematest.WithExclusiveMinimum(3)),
 			data:   3,
-			exp:    "encoding data to 'application/json' failed: error count 1:\n- #/exclusiveMinimum: integer 3 equals minimum value of 3",
+			exp:    "encoding data to 'application/json' failed: error count 1:\n\t- #/exclusiveMinimum: integer 3 equals minimum value of 3",
 		},
 		{
 			name:   "min array",
 			schema: schematest.New("array", schematest.WithItems("integer"), schematest.WithMinItems(3)),
 			data:   []interface{}{12, 13},
-			exp:    "encoding data to 'application/json' failed: error count 1:\n- #/minItems: item count 2 is less than minimum count of 3",
+			exp:    "encoding data to 'application/json' failed: error count 1:\n\t- #/minItems: item count 2 is less than minimum count of 3",
 		},
 		{
 			name:   "max array",
 			schema: schematest.New("array", schematest.WithItems("integer"), schematest.WithMaxItems(1)),
 			data:   []interface{}{12, 13},
-			exp:    "encoding data to 'application/json' failed: error count 1:\n- #/maxItems: item count 2 exceeds maximum count of 1",
+			exp:    "encoding data to 'application/json' failed: error count 1:\n\t- #/maxItems: item count 2 exceeds maximum count of 1",
 		},
 		{
 			name: "map missing required property",
@@ -672,7 +672,7 @@ func TestRef_Marshal_Json_Invalid(t *testing.T) {
 				schematest.WithRequired("value"),
 			),
 			data: map[interface{}]interface{}{"name": "foo"},
-			exp:  "encoding data to 'application/json' failed: error count 1:\n- #/required: required properties are missing: value",
+			exp:  "encoding data to 'application/json' failed: error count 1:\n\t- #/required: required properties are missing: value",
 		},
 	}
 

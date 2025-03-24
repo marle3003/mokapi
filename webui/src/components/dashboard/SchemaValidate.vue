@@ -28,6 +28,7 @@ const id = createGuid()
 const state = reactive({
     source: { preview: props.source.preview, binary: props.source.binary },
     errors: '',
+    result: null,
     validated: false,
     view: 'preview'
 })
@@ -90,19 +91,29 @@ function validate() {
     .then(res => {
         const contentType = res.headers.get("content-type");
         if (contentType && contentType.indexOf("application/json") !== -1) {
-            return res.json()
+            return res.json().then((data) => ({
+                status: res.status,
+                body: data,
+            }))
         } else{
-            return res.text()
+            return res.text().then((txt) => ({
+                status: res.status,
+                body: txt,
+            }))
         }
-    }).then(body => {
+    }).then(({ status, body }) => {
         state.validated = true
 
-        if (typeof body === 'string' || body instanceof String) {
+        if (status === 500) {
             const errors = <string>body
             state.errors = errors.replaceAll('\n', '<br />')
+        } else if (status === 400) { 
+            state.errors = ''
+            state.result = body
         } else {
             let examples = body as Example[]
             state.errors = ''
+            state.result = null
             
             if (examples.length === 0) {
                 return
@@ -129,6 +140,35 @@ function update(event: {content: string, type: string}) {
 function switchSource(e: string) {
     state.view = e
 }
+function formatResult(result: any): string {
+    const [s, count] = formatResultItem(result)
+    return `<div>error count ${count}: ${s}</div>`
+}
+function formatResultItem(result: any): [string, number] {
+    if (Array.isArray(result)) {
+        let s = '<ul>'
+        let sum = 0
+        for (const item of result) {
+            const [msg, count] = formatResultItem(item)
+            s += `<li>${msg}</li>`
+            sum += count
+        }
+        return [s + '</ul>', result.length]
+    }else if (typeof result === "object" && result !== null) {
+        if (result.errors) {
+            let s = `${result.schema}: ${result.message}<ul>`
+            let sum = 0
+            for (const item of result.errors) {
+                const [msg, count] = formatResultItem(item)
+                s += `<li>${msg}</li>`
+                sum += count
+            }
+            return [s + '</ul>', result.length]
+        }
+        return [`${result.schema}: ${result.message}`, 1]
+    }
+    return [result, 1]
+}
 </script>
 
 <template>
@@ -145,12 +185,16 @@ function switchSource(e: string) {
                         <div class="alert alert-danger" role="alert" v-if="state.errors.length > 0">
                             <span v-html="state.errors"></span>
                         </div>
+                        <div class="alert alert-danger" role="alert" v-if="state.result">
+                            <span v-html="formatResult(state.result)"></span>
+                        </div>
                         <source-view ref="source" :filename="source?.filename" v-model:source="state.source" :readonly="false" @update="update" @switch="switchSource" />
                     </div>
                     <div class="modal-footer justify-content-between">
                         <span class="float-start">
-                            <span v-if="state.errors.length == 0 && state.validated" class="status" role="status">
-                                <i class="bi bi-check-circle-fill"> Valid</i>
+                            <span  class="status" role="status">
+                                <i v-if="state.errors.length == 0 && state.result == null && state.validated" class="valid bi bi-check-circle-fill"> Valid</i>
+                                <i v-else-if="state.validated" class="failed bi bi-x-circle-fill"> Failed</i>
                             </span>
                         </span>
                         <div class="float-end">
@@ -169,7 +213,13 @@ function switchSource(e: string) {
     margin-left: 15px;
 }
 .modal-footer .status {
-    color: var(--color-green);
     font-size: 16px;
+}
+.modal-footer .status .valid {
+    color: var(--color-green);
+
+}
+.modal-footer .status .failed {
+    color: var(--color-red);
 }
 </style>

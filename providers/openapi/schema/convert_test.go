@@ -398,14 +398,14 @@ func TestConvert(t *testing.T) {
 			name: "examples",
 			s:    schematest.New("object", schematest.WithExample(true)),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
-				require.Equal(t, []interface{}{true}, s.Examples)
+				require.Equal(t, []jsonSchema.Example{{true}}, s.Examples)
 			},
 		},
 		{
 			name: "examples",
 			s:    schematest.New("object", schematest.WithExamples(true)),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
-				require.Equal(t, []interface{}{true}, s.Examples)
+				require.Equal(t, []jsonSchema.Example{{true}}, s.Examples)
 			},
 		},
 		{

@@ -302,7 +302,12 @@ paths:
         "204":
           description: valid without content
         "400":
-          description: data is not valid
+          description: validation result
+          content:
+            "application/json":
+              schema: {}
+        "500":
+          description: server validation error
           content:
             "text/plain":
               schema:

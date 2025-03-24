@@ -379,13 +379,15 @@ func WithDeprecated(b bool) SchemaOptions {
 
 func WithExample(e interface{}) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.Example = e
+		s.Example = &jsonSchema.Example{Value: e}
 	}
 }
 
 func WithExamples(e ...interface{}) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.Examples = e
+		for _, item := range e {
+			s.Examples = append(s.Examples, jsonSchema.Example{Value: item})
+		}
 	}
 }
 

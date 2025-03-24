@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type PropType, computed } from 'vue'
+import { type PropType, computed, ref } from 'vue'
 import { useSchema } from '@/composables/schema'
 import Markdown from 'vue3-markdown-it'
 import { useExample, type Response } from '@/composables/example'
@@ -14,11 +14,13 @@ const props = defineProps({
     parameters: { type: Array as PropType<Array<HttpParameter>> }
 })
 
+const opened = ref<{[name: string]: boolean}>({})
+
 const examples = computed(() => {
     const result: {[key: string]: Response} = {}
     if (props.parameters){
         for (let parameter of props.parameters){
-            if (!parameter.schema) {
+            if (!parameter.schema || !opened.value[parameter.name]) {
                 continue;
             }
             let example = fetchExample({schema: { schema: parameter.schema }, contentTypes: ['text/plain'] })
@@ -84,7 +86,7 @@ function showWarningColumn(){
             </tr>
         </thead>
         <tbody>
-            <tr v-for="(parameter, index) in sortedParameters" :key="'parameter-'+index" data-bs-toggle="modal" :data-bs-target="'#modal-parameter-'+index">
+            <tr v-for="(parameter, index) in sortedParameters" :key="'parameter-'+index" @click="opened[parameter.name] = true" data-bs-toggle="modal" :data-bs-target="'#modal-parameter-'+index">
                 <td>{{ parameter.name }}</td>
                 <td>{{ parameter.type }}</td>
                 <td>{{ printType(parameter.schema) }}</td>

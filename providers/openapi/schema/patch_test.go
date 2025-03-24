@@ -692,7 +692,7 @@ func TestSchema_Patch(t *testing.T) {
 				schematest.New("", schematest.WithExamples("foo")),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, []interface{}{"foo"}, result.Examples)
+				require.Equal(t, []jsonSchema.Example{{"foo"}}, result.Examples)
 			},
 		},
 		{
@@ -702,7 +702,7 @@ func TestSchema_Patch(t *testing.T) {
 				schematest.New("", schematest.WithExamples("foo")),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, []interface{}{"foo"}, result.Examples)
+				require.Equal(t, []jsonSchema.Example{{"foo"}}, result.Examples)
 			},
 		},
 		{
@@ -712,7 +712,7 @@ func TestSchema_Patch(t *testing.T) {
 				schematest.New("", schematest.WithExample([]interface{}{"foo"})),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, []interface{}{"foo"}, result.Example)
+				require.Equal(t, &jsonSchema.Example{Value: []interface{}{"foo"}}, result.Example)
 			},
 		},
 		{
@@ -722,7 +722,7 @@ func TestSchema_Patch(t *testing.T) {
 				schematest.New("", schematest.WithExample([]interface{}{"foo"})),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.Equal(t, []interface{}{"foo"}, result.Example)
+				require.Equal(t, &jsonSchema.Example{Value: []interface{}{"foo"}}, result.Example)
 			},
 		},
 		{

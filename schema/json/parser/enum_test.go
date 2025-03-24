@@ -29,7 +29,7 @@ func TestParse_Enum(t *testing.T) {
 			s:    schematest.New("string", schematest.WithEnum([]interface{}{"a", "b", "c"})),
 			d:    "z",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/enum: value 'z' does not match one in the enumeration [a, b, c]")
+				require.EqualError(t, err, "error count 1:\n\t- #/enum: value 'z' does not match one in the enumeration [a, b, c]")
 			},
 		},
 		{
@@ -46,7 +46,7 @@ func TestParse_Enum(t *testing.T) {
 			s:    schematest.New("integer", schematest.WithEnum([]interface{}{1, 2, 3})),
 			d:    9,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/enum: value '9' does not match one in the enumeration [1, 2, 3]")
+				require.EqualError(t, err, "error count 1:\n\t- #/enum: value '9' does not match one in the enumeration [1, 2, 3]")
 			},
 		},
 		{
@@ -63,7 +63,7 @@ func TestParse_Enum(t *testing.T) {
 			s:    schematest.New("number", schematest.WithEnum([]interface{}{1.1, 2.2, 3.3})),
 			d:    1.5,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/enum: value '1.5' does not match one in the enumeration [1.1, 2.2, 3.3]")
+				require.EqualError(t, err, "error count 1:\n\t- #/enum: value '1.5' does not match one in the enumeration [1.1, 2.2, 3.3]")
 			},
 		},
 		{
@@ -86,7 +86,7 @@ func TestParse_Enum(t *testing.T) {
 			),
 			d: map[string]interface{}{"foo": "qux"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/enum: value '{foo: qux}' does not match one in the enumeration [{foo: bar}, {foo: baz}]")
+				require.EqualError(t, err, "error count 1:\n\t- #/enum: value '{foo: qux}' does not match one in the enumeration [{foo: bar}, {foo: baz}]")
 			},
 		},
 		{
@@ -109,7 +109,7 @@ func TestParse_Enum(t *testing.T) {
 			),
 			d: []interface{}{"foo", "qux"},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/enum: value '[foo, qux]' does not match one in the enumeration [[foo, bar], [foo, baz]]")
+				require.EqualError(t, err, "error count 1:\n\t- #/enum: value '[foo, qux]' does not match one in the enumeration [[foo, bar], [foo, baz]]")
 			},
 		},
 		{

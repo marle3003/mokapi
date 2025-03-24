@@ -91,7 +91,7 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			s:    `{ "example": 12 }`,
 			test: func(t *testing.T, r *schema.Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, float64(12), r.Example)
+				require.Equal(t, float64(12), r.Example.Value)
 			},
 		},
 		{
@@ -99,7 +99,7 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			s:    `{ "example": [1,2,3] }`,
 			test: func(t *testing.T, r *schema.Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{float64(1), float64(2), float64(3)}, r.Example)
+				require.Equal(t, []interface{}{float64(1), float64(2), float64(3)}, r.Example.Value)
 			},
 		},
 		{
@@ -107,7 +107,7 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			s:    `{ "example": { "id": 1, "name": "Jessica Smith" } }`,
 			test: func(t *testing.T, r *schema.Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"id": float64(1), "name": "Jessica Smith"}, r.Example)
+				require.Equal(t, map[string]interface{}{"id": float64(1), "name": "Jessica Smith"}, r.Example.Value)
 			},
 		},
 		{
@@ -677,7 +677,7 @@ enum:
 example: 12
 `,
 			fn: func(t *testing.T, r *schema.Schema) {
-				require.Equal(t, 12, r.Example)
+				require.Equal(t, 12, r.Example.Value)
 			},
 		},
 		{
@@ -686,7 +686,7 @@ example: 12
 example: [1,2,3]
 `,
 			fn: func(t *testing.T, r *schema.Schema) {
-				require.Equal(t, []interface{}{1, 2, 3}, r.Example)
+				require.Equal(t, []interface{}{1, 2, 3}, r.Example.Value)
 			},
 		},
 		{
@@ -697,7 +697,7 @@ example:
   name: Jessica Smith
 `,
 			fn: func(t *testing.T, r *schema.Schema) {
-				require.Equal(t, map[string]interface{}{"id": 1, "name": "Jessica Smith"}, r.Example)
+				require.Equal(t, map[string]interface{}{"id": 1, "name": "Jessica Smith"}, r.Example.Value)
 			},
 		},
 		{
@@ -713,7 +713,7 @@ example:
 				require.Equal(t, []interface{}{
 					map[string]interface{}{"id": 1, "name": "Jessica Smith"},
 					map[string]interface{}{"id": 2, "name": "Ron Stewart"},
-				}, r.Example)
+				}, r.Example.Value)
 			},
 		},
 		{

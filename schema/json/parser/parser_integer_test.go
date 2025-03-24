@@ -23,7 +23,7 @@ func TestParse_Integer(t *testing.T) {
 			s:    schematest.New("integer"),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/type: invalid type, expected integer but got string")
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected integer but got string")
 			},
 		},
 		{
@@ -31,7 +31,7 @@ func TestParse_Integer(t *testing.T) {
 			s:    schematest.New("integer"),
 			d:    map[string]interface{}{},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/type: invalid type, expected integer but got object")
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected integer but got object")
 			},
 		},
 		{
@@ -39,7 +39,7 @@ func TestParse_Integer(t *testing.T) {
 			s:    schematest.New("integer", schematest.WithFormat("int32")),
 			d:    int64(1e10),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/format: integer '10000000000' does not match format 'int32'")
+				require.EqualError(t, err, "error count 1:\n\t- #/format: integer '10000000000' does not match format 'int32'")
 			},
 		},
 		{
@@ -47,7 +47,7 @@ func TestParse_Integer(t *testing.T) {
 			s:    schematest.New("integer", schematest.WithFormat("int32")),
 			d:    int64(-1e10),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/format: integer '-10000000000' does not match format 'int32'")
+				require.EqualError(t, err, "error count 1:\n\t- #/format: integer '-10000000000' does not match format 'int32'")
 			},
 		},
 		{
@@ -84,7 +84,7 @@ func TestParse_Integer(t *testing.T) {
 			s:    schematest.New("integer"),
 			d:    3.4,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/type: invalid type, expected integer but got number")
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected integer but got number")
 			},
 		},
 		{
@@ -112,7 +112,7 @@ func TestParse_Integer(t *testing.T) {
 			s:    schematest.New("integer"),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/type: invalid type, expected integer but got string")
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected integer but got string")
 			},
 
 			convertStringToNumber: true,
@@ -122,7 +122,7 @@ func TestParse_Integer(t *testing.T) {
 			s:    schematest.New("integer", schematest.WithFormat("int32")),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/type: invalid type, expected integer but got string")
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected integer but got string")
 			},
 
 			convertStringToNumber: true,
@@ -143,7 +143,7 @@ func TestParse_Integer(t *testing.T) {
 			s:    schematest.New("integer", schematest.WithMultipleOf(3)),
 			d:    8,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/multipleOf: integer 8 is not a multiple of 3")
+				require.EqualError(t, err, "error count 1:\n\t- #/multipleOf: integer 8 is not a multiple of 3")
 			},
 		},
 		{
@@ -160,7 +160,7 @@ func TestParse_Integer(t *testing.T) {
 			s:    schematest.New("integer", schematest.WithMinimum(3)),
 			d:    1,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/minimum: integer 1 is less than minimum value of 3")
+				require.EqualError(t, err, "error count 1:\n\t- #/minimum: integer 1 is less than minimum value of 3")
 			},
 		},
 		{
@@ -177,7 +177,7 @@ func TestParse_Integer(t *testing.T) {
 			s:    schematest.New("integer", schematest.WithMaximum(3)),
 			d:    4,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/maximum: integer 4 exceeds maximum value of 3")
+				require.EqualError(t, err, "error count 1:\n\t- #/maximum: integer 4 exceeds maximum value of 3")
 			},
 		},
 		{
@@ -194,7 +194,7 @@ func TestParse_Integer(t *testing.T) {
 			s:    schematest.New("integer", schematest.WithExclusiveMinimum(3)),
 			d:    2,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/exclusiveMinimum: integer 2 is less than minimum value of 3")
+				require.EqualError(t, err, "error count 1:\n\t- #/exclusiveMinimum: integer 2 is less than minimum value of 3")
 			},
 		},
 		{
@@ -202,7 +202,7 @@ func TestParse_Integer(t *testing.T) {
 			s:    schematest.New("integer", schematest.WithExclusiveMinimum(3)),
 			d:    3,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/exclusiveMinimum: integer 3 equals minimum value of 3")
+				require.EqualError(t, err, "error count 1:\n\t- #/exclusiveMinimum: integer 3 equals minimum value of 3")
 			},
 		},
 		{
@@ -219,7 +219,7 @@ func TestParse_Integer(t *testing.T) {
 			s:    schematest.New("integer", schematest.WithExclusiveMinimumFlag(true), schematest.WithMinimum(3)),
 			d:    3,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/minimum: integer 3 equals minimum value of 3 and exclusive minimum is true")
+				require.EqualError(t, err, "error count 1:\n\t- #/minimum: integer 3 equals minimum value of 3 and exclusive minimum is true")
 			},
 		},
 		{
@@ -236,7 +236,7 @@ func TestParse_Integer(t *testing.T) {
 			s:    schematest.New("integer", schematest.WithExclusiveMaximum(3)),
 			d:    4,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/exclusiveMaximum: integer 4 exceeds maximum value of 3")
+				require.EqualError(t, err, "error count 1:\n\t- #/exclusiveMaximum: integer 4 exceeds maximum value of 3")
 			},
 		},
 		{
@@ -244,7 +244,7 @@ func TestParse_Integer(t *testing.T) {
 			s:    schematest.New("integer", schematest.WithExclusiveMaximum(3)),
 			d:    3,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/exclusiveMaximum: integer 3 equals maximum value of 3")
+				require.EqualError(t, err, "error count 1:\n\t- #/exclusiveMaximum: integer 3 equals maximum value of 3")
 			},
 		},
 		{
@@ -261,7 +261,7 @@ func TestParse_Integer(t *testing.T) {
 			s:    schematest.New("integer", schematest.WithExclusiveMaximumFlag(true), schematest.WithMaximum(3)),
 			d:    3,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/maximum: integer 3 equals maximum value of 3 and exclusive maximum is true")
+				require.EqualError(t, err, "error count 1:\n\t- #/maximum: integer 3 equals maximum value of 3 and exclusive maximum is true")
 			},
 		},
 		{
@@ -278,7 +278,7 @@ func TestParse_Integer(t *testing.T) {
 			s:    schematest.New("integer", schematest.WithConst(10)),
 			d:    3,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/const: value '3' does not match const '10'")
+				require.EqualError(t, err, "error count 1:\n\t- #/const: value '3' does not match const '10'")
 			},
 		},
 		{

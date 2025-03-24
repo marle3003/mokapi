@@ -13,7 +13,7 @@ func (p *Parser) ParseAll(s *schema.Schema, data interface{}, evaluated map[stri
 		return p2.parseAllObject(m, s, evaluated)
 	}
 
-	allOfError := &ErrorDetail{
+	allOfError := &ErrorComposition{
 		Message: "does not match all schema",
 		Field:   "allOf",
 	}
@@ -42,7 +42,6 @@ func (p *Parser) ParseAll(s *schema.Schema, data interface{}, evaluated map[stri
 
 func (p *Parser) parseAllObject(m *sortedmap.LinkedHashMap[string, interface{}], s *schema.Schema, evaluated map[string]bool) (interface{}, error) {
 	r := sortedmap.NewLinkedHashMap()
-	//err := &PathCompositionError{Path: "allOf", Message: "does not match all schemas from 'allOf'"}
 	err := ErrorList{}
 
 	for index, one := range s.AllOf {
@@ -98,7 +97,7 @@ func (p *Parser) parseAllObject(m *sortedmap.LinkedHashMap[string, interface{}],
 	}
 
 	if len(err) > 0 {
-		return r, &ErrorDetail{
+		return r, &ErrorComposition{
 			Message: "does not match all schema",
 			Field:   "allOf",
 			Errors:  err,

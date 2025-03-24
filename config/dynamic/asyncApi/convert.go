@@ -252,7 +252,7 @@ func convertParameter(name string, p *Parameter) (*asyncapi3.ParameterRef, error
 		}
 
 		for _, example := range p.Schema.Examples {
-			if s, ok := example.(string); !ok {
+			if s, ok := example.Value.(string); !ok {
 				return nil, fmt.Errorf("unable to convert parameter %v: only string example values supported: %v", name, example)
 			} else {
 				target.Examples = append(target.Enum, s)

@@ -141,7 +141,7 @@ func TestModule(t *testing.T) {
 					const m = require('mokapi')
 					m.marshal('foo', { schema: {type: 'integer'}, contentType: 'application/json' })
 				`)
-				r.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n- #/type: invalid type, expected integer but got string at mokapi/js/mokapi.(*Module).Marshal-fm (native)")
+				r.EqualError(t, err, "encoding data to 'application/json' failed: error count 1:\n\t- #/type: invalid type, expected integer but got string at mokapi/js/mokapi.(*Module).Marshal-fm (native)")
 			},
 		},
 		{

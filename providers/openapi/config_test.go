@@ -292,7 +292,7 @@ func TestConfig_PetStore_PetSchema(t *testing.T) {
 	// name
 	name := pet.Properties.Get("name")
 	require.Equal(t, "string", name.Type.String())
-	require.Equal(t, "doggie", name.Example)
+	require.Equal(t, "doggie", name.Example.Value)
 
 	// photoUrls
 	photoUrls := pet.Properties.Get("photoUrls")

@@ -80,12 +80,12 @@ type SubSchema struct {
 	Else *Schema `yaml:"else,omitempty" json:"else,omitempty"`
 
 	// Annotations
-	Title       string        `yaml:"title,omitempty" json:"title,omitempty"`
-	Description string        `yaml:"description,omitempty" json:"description,omitempty"`
-	Default     interface{}   `yaml:"default,omitempty" json:"default,omitempty"`
-	Deprecated  bool          `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
-	Examples    []interface{} `yaml:"examples,omitempty" json:"examples,omitempty"`
-	Example     interface{}   `yaml:"example,omitempty" json:"example,omitempty"`
+	Title       string           `yaml:"title,omitempty" json:"title,omitempty"`
+	Description string           `yaml:"description,omitempty" json:"description,omitempty"`
+	Default     interface{}      `yaml:"default,omitempty" json:"default,omitempty"`
+	Deprecated  bool             `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
+	Examples    []schema.Example `yaml:"examples,omitempty" json:"examples,omitempty"`
+	Example     *schema.Example  `yaml:"example,omitempty" json:"example,omitempty"`
 
 	// Media
 	ContentMediaType string `yaml:"contentMediaType,omitempty" json:"contentMediaType,omitempty"`

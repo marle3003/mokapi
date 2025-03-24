@@ -15,11 +15,13 @@ func (p *Parser) ParseArray(data interface{}, s *schema.Schema, evaluated map[in
 	result := make([]interface{}, 0)
 	contains := 0
 	for i := 0; i < arr.Len(); i++ {
+		errItem := ErrorDetail{Field: fmt.Sprintf("items/%d", i)}
+
 		o := arr.Index(i)
 		if s.PrefixItems != nil && i < len(s.PrefixItems) {
 			v, errItems := p.parse(o.Interface(), s.PrefixItems[i])
 			if errItems != nil {
-				err = append(err, wrapErrorDetail(errItems, &ErrorDetail{Field: fmt.Sprintf("%d", i)}))
+				errItem.append(errItems)
 			} else {
 				result = append(result, v)
 			}
@@ -27,7 +29,7 @@ func (p *Parser) ParseArray(data interface{}, s *schema.Schema, evaluated map[in
 		} else if s.Items != nil {
 			v, errItems := p.parse(o.Interface(), s.Items)
 			if errItems != nil {
-				err = append(err, wrapErrorDetail(errItems, &ErrorDetail{Field: "items"}))
+				errItem.append(errItems)
 			} else {
 				result = append(result, v)
 			}
@@ -40,6 +42,10 @@ func (p *Parser) ParseArray(data interface{}, s *schema.Schema, evaluated map[in
 			if _, errContains := p.parse(o.Interface(), s.Contains); errContains == nil {
 				contains++
 			}
+		}
+
+		if len(errItem.Errors) > 0 {
+			err = append(err, &errItem)
 		}
 	}
 

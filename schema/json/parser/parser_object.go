@@ -12,23 +12,6 @@ import (
 	"strings"
 )
 
-type AdditionalPropertiesNotAllowed struct {
-	Properties []string
-	Schema     *schema.Schema
-}
-
-func (e *AdditionalPropertiesNotAllowed) Error() string {
-	var sb strings.Builder
-	for _, prop := range e.Properties {
-		if sb.Len() > 0 {
-			sb.WriteString("\n")
-		}
-		sb.WriteString(fmt.Sprintf("property '%s' not defined and the schema does not allow additional properties", prop))
-	}
-
-	return sb.String()
-}
-
 func (p *Parser) parseObject(data interface{}, s *schema.Schema, evaluated map[string]bool) (*sortedmap.LinkedHashMap[string, interface{}], error) {
 	var result *sortedmap.LinkedHashMap[string, interface{}]
 	var err error
@@ -124,9 +107,13 @@ func (p *Parser) parseLinkedMap(m *sortedmap.LinkedHashMap[string, interface{}],
 		}
 		if len(additionalProps) > 0 {
 			sort.Strings(additionalProps)
-			err = append(err, wrapErrorDetail(&AdditionalPropertiesNotAllowed{Properties: additionalProps}, &ErrorDetail{
-				Field: "additionalProperties",
-			}))
+			for _, prop := range additionalProps {
+				err = append(err,
+					&ErrorDetail{
+						Field:   "additionalProperties",
+						Message: fmt.Sprintf("property '%s' not defined and the schema does not allow additional properties", prop),
+					})
+			}
 		}
 	} else {
 		for it := m.Iter(); it.Next(); {
@@ -171,9 +158,12 @@ func (p *Parser) parseStruct(v reflect.Value, s *schema.Schema, evaluated map[st
 		}
 	}
 
-	err := p.validateObject(obj, s)
+	valErr := p.validateObject(obj, s)
+	if valErr != nil {
+		return nil, valErr
+	}
 
-	return obj, err
+	return obj, nil
 }
 
 func (p *Parser) parseMap(v reflect.Value, s *schema.Schema, evaluated map[string]bool) (*sortedmap.LinkedHashMap[string, interface{}], error) {
@@ -242,9 +232,13 @@ func (p *Parser) parseMap(v reflect.Value, s *schema.Schema, evaluated map[strin
 		}
 		if len(additionalProps) > 0 {
 			sort.Strings(additionalProps)
-			err = append(err, wrapErrorDetail(&AdditionalPropertiesNotAllowed{Properties: additionalProps}, &ErrorDetail{
-				Field: "additionalProperties",
-			}))
+			for _, prop := range additionalProps {
+				err = append(err,
+					&ErrorDetail{
+						Field:   "additionalProperties",
+						Message: fmt.Sprintf("property '%s' not defined and the schema does not allow additional properties", prop),
+					})
+			}
 		}
 	} else {
 		for _, k := range v.MapKeys() {

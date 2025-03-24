@@ -130,7 +130,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse cookie parameter 'debug' failed: error count 1:\n- #/type: invalid type, expected integer but got string")
+				require.EqualError(t, err, "parse cookie parameter 'debug' failed: error count 1:\n\t- #/type: invalid type, expected integer but got string")
 				require.Len(t, result[parameter.Cookie], 0)
 			},
 		},
@@ -172,7 +172,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse cookie parameter 'foo' failed: error count 1:\n- #/items/type: invalid type, expected integer but got string")
+				require.EqualError(t, err, "parse cookie parameter 'foo' failed: error count 1:\n\t- #/items/1/type: invalid type, expected integer but got string")
 				require.Len(t, result[parameter.Cookie], 0)
 			},
 		},
@@ -267,7 +267,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse cookie parameter 'foo' failed: parse property 'age' failed: error count 1:\n- #/type: invalid type, expected number but got string")
+				require.EqualError(t, err, "parse cookie parameter 'foo' failed: parse property 'age' failed: error count 1:\n\t- #/type: invalid type, expected number but got string")
 				require.Len(t, result[parameter.Cookie], 0)
 			},
 		},

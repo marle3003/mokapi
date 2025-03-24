@@ -422,7 +422,7 @@ func TestParseQuery(t *testing.T) {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?id[role]=admin&id[age]=foo&id[lastName]=Smith", nil)
 			},
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
-				require.EqualError(t, err, "parse query parameter 'id' failed: error count 1:\n- #/type: invalid type, expected integer but got string")
+				require.EqualError(t, err, "parse query parameter 'id' failed: error count 1:\n\t- #/type: invalid type, expected integer but got string")
 				require.Len(t, result[parameter.Query], 0)
 			},
 		},

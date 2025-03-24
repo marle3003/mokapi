@@ -120,7 +120,7 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 
 	js.Examples = s.Examples
 	if s.Example != nil && s.Examples == nil {
-		js.Examples = append(js.Examples, s.Example)
+		js.Examples = append(js.Examples, *s.Example)
 	}
 
 	js.ContentMediaType = s.ContentMediaType

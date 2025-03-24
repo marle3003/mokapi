@@ -33,7 +33,7 @@ func TestParser_ParseAny(t *testing.T) {
 				schematest.New("string"),
 				schematest.New("integer")),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/anyOf: does not match any schemas")
+				require.EqualError(t, err, "error count 1:\n\t- #/anyOf: does not match any schemas")
 			},
 		},
 		{
@@ -43,7 +43,7 @@ func TestParser_ParseAny(t *testing.T) {
 				schematest.New("string"),
 				schematest.New("integer")),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/anyOf: does not match any schemas")
+				require.EqualError(t, err, "error count 1:\n\t- #/anyOf: does not match any schemas")
 			},
 		},
 		{
@@ -195,7 +195,7 @@ func TestParser_ParseAny(t *testing.T) {
 				),
 			),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n- #/anyOf/0/unevaluatedProperties/type: does not match any schemas: invalid type, expected boolean but got string")
+				require.EqualError(t, err, "error count 1:\n\t- #/anyOf/0/unevaluatedProperties/type: does not match any schemas: invalid type, expected boolean but got string")
 			},
 		},
 		{
