@@ -11,26 +11,13 @@ env:
   report-publish-path: reports/${{ github.ref_name }}
 
 jobs:
-  init:
-    runs-on: ubuntu-latest
-    outputs:
-      version: ${{ steps.get_version.outputs.version }}
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Ensure all tags are fetched
-      - uses: ./.github/actions/get-next-patch-version
-        id: get_version
   build-alpha:
-    needs: init
     uses: ./.github/workflows/test.yml
     with:
       image-name: mokapi/mokapi:${GITHUB_REF##*/v}-alpha
       image-artifact-name: mokapi-image
       artifact-test-report: playwright-report
       report-publish-path: reports/${{ github.ref_name }}
-      version: ${{ needs.init.outputs.version }}
 
   publish-image:
     name: Publish docker image

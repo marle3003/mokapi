@@ -14,10 +14,6 @@ on:
       report-publish-path:
         required: true
         type: string
-      version:
-        required: true
-        description: "The version of mokapi to build"
-        type: string
 
 jobs:
   build:
@@ -26,11 +22,15 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensure all tags are fetched
+      - uses: ./.github/actions/get-next-patch-version
+        id: get_version
       - uses: ./.github/actions/build-mokapi-image
         with:
           image-name: ${{ inputs.image-name }}
           artifact-name: ${{ inputs.image-artifact-name }}
-          version: ${{ inputs.version }}
+          version: ${{ steps.get_version.outputs.version }}
 
   test:
     name: Run UI tests
