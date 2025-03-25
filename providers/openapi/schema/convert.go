@@ -26,6 +26,10 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	}
 
 	js := &schema.Schema{
+		Id:                    s.Id,
+		Anchor:                s.Anchor,
+		Ref:                   s.Ref,
+		DynamicRef:            s.DynamicRef,
 		Boolean:               s.Boolean,
 		Type:                  s.Type,
 		Schema:                s.Schema,
