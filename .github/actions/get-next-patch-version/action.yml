@@ -4,6 +4,7 @@ runs:
   steps:
     - name: get version
       id: get_version
+      shell: bash
       run: |
         # Fetch tags from main
         git fetch --tags --force origin main
