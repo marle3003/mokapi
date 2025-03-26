@@ -11,19 +11,53 @@ env:
   report-publish-path: reports/${{ github.ref_name }}
 
 jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+      image-name: ${{ steps.get_version.outputs.image-name }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Ensure all tags are fetched
+      - name: get version
+        id: get_version
+        shell: bash
+        run: |
+          # Fetch tags from main
+          git fetch --tags --force origin main
+
+          # Get the latest tag from main
+          LATEST_TAG=$(git describe --tags --abbrev=0 --match "v*" origin/main || echo "0.0.0")
+          echo "Latest tag from main: $LATEST_TAG"
+
+          # Split version into major, minor, patch
+          IFS='.' read -r MAJOR MINOR PATCH <<< "${LATEST_TAG//[!0-9.]/}"
+
+          # Increment patch version
+          PATCH=$((PATCH + 1))
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+
+          echo "New version: $NEW_VERSION"
+          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "image-name=mokapi/mokapi:$NEW_VERSION-alpha"  >> $GITHUB_OUTPUT
+
   build-alpha:
+    needs: setup
     uses: ./.github/workflows/test.yml
     with:
-      image-name: mokapi/mokapi:${GITHUB_REF##*/v}-alpha
+      image-name: ${{ needs.setup.outputs.image-name }}
       image-artifact-name: mokapi-image
       artifact-test-report: playwright-report
       report-publish-path: reports/${{ github.ref_name }}
+      version: ${{ needs.setup.outputs.version }}
 
   publish-image:
     name: Publish docker image
     runs-on: ubuntu-latest
     if: "success()"
-    needs: build-alpha
+    needs: [ setup, build-alpha ]
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -31,10 +65,10 @@ jobs:
           fetch-depth: 0
       - uses: ./.github/actions/publish-docker-image
         with:
-          image-name: ${{ env.image-name }}
+          image-name: ${{ needs.setup.outputs.image-name }}
           artifact-name: ${{ env.image-artifact-name }}
           docker-username: marle3003
-          docker-password: ${{ secrets.DOCKER_PASSWORD }}
+          docker-password: ${{ needs.setup.outputs.version }}
 
   publish-website:
     name: Publish website
