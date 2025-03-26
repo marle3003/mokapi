@@ -34,7 +34,7 @@ func (r *SchemaRef) UnmarshalYAML(node *yaml.Node) error {
 
 	var multi *MultiSchemaFormat
 	err = node.Decode(&multi)
-	if err == nil && multi.Format != "" {
+	if err == nil && multi.Format != "" || multi.Schema != nil {
 		r.Value = multi
 		return nil
 	}
@@ -58,7 +58,7 @@ func (r *SchemaRef) UnmarshalJSON(b []byte) error {
 	d = json.NewDecoder(bytes.NewReader(b))
 	var multi *MultiSchemaFormat
 	err = d.Decode(&multi)
-	if err == nil && multi.Format != "" {
+	if err == nil && multi.Format != "" || multi.Schema != nil {
 		r.Value = multi
 		return nil
 	}
@@ -166,8 +166,12 @@ func (m *MultiSchemaFormat) UnmarshalYAML(node *yaml.Node) error {
 			schemaNode = node.Content[i+1]
 		}
 	}
-
 	m.Format = format
+
+	if schemaNode == nil {
+		return nil
+	}
+
 	switch {
 	case isOpenApi(format):
 		var s *openapi.Schema
@@ -185,7 +189,7 @@ func (m *MultiSchemaFormat) UnmarshalYAML(node *yaml.Node) error {
 		m.Schema = ref
 	default:
 		var s *jsonSchema.Schema
-		err := node.Decode(&s)
+		err := schemaNode.Decode(&s)
 		if err != nil {
 			return err
 		}

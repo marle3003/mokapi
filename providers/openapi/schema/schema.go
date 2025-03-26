@@ -337,6 +337,15 @@ func (s *Schema) ConvertTo(i interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("cannot convert %v to json schema", i)
 }
 
+func (sub *SubSchema) ConvertTo(i interface{}) (interface{}, error) {
+	if _, ok := i.(*schema.Schema); ok {
+		s := &Schema{SubSchema: sub}
+		s.update()
+		return ConvertToJsonSchema(s), nil
+	}
+	return nil, fmt.Errorf("cannot convert %v to json schema", i)
+}
+
 func (s *Schema) Resolve(token string) (interface{}, error) {
 	return s.SubSchema, nil
 }
