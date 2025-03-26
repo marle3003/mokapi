@@ -68,7 +68,7 @@ jobs:
           image-name: ${{ needs.setup.outputs.image-name }}
           artifact-name: ${{ env.image-artifact-name }}
           docker-username: marle3003
-          docker-password: ${{ needs.setup.outputs.version }}
+          docker-password: ${{ secrets.DOCKER_PASSWORD }}
 
   publish-website:
     name: Publish website
