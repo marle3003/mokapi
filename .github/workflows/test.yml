@@ -30,7 +30,7 @@ jobs:
         with:
           image-name: ${{ inputs.image-name }}
           artifact-name: ${{ inputs.image-artifact-name }}
-          version: v${{ inputs.version }}
+          version: ${{ inputs.version }}
 
   test:
     name: Run UI tests
