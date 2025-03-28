@@ -86,7 +86,7 @@ func parse(n *node, s *Schema) (interface{}, error) {
 }
 
 func parseValue(s string, ref *Schema) (interface{}, error) {
-	if ref == nil || ref.SubSchema == nil || ref.Type.IsString() {
+	if ref == nil || ref.Type.IsString() {
 		return s, nil
 	}
 
@@ -122,7 +122,7 @@ func getProperty(name xml.Name, s *Schema, asAttr bool) (string, *Schema) {
 
 	prop := s.Properties.Get(name.Local)
 	if prop != nil {
-		if prop.SubSchema != nil && prop.Xml != nil {
+		if prop.Xml != nil {
 			x := prop.Xml
 			if len(x.Prefix) > 0 && x.Prefix == name.Space {
 				return name.Local, prop
@@ -176,7 +176,7 @@ func isArray(n *node) bool {
 }
 
 func isWrapped(ref *Schema) (string, bool) {
-	if ref == nil || ref.SubSchema == nil || ref.Xml == nil {
+	if ref == nil || ref.Xml == nil {
 		return "", false
 	}
 	x := ref.Xml

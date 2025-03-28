@@ -53,7 +53,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return 4
 			},
-			schema: &schema.Schema{Ref: "#/components/schemas/foo", SubSchema: schematest.New("integer").SubSchema},
+			schema: &schema.Schema{Ref: "#/components/schemas/foo", Sub: schematest.New("integer")},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "<foo>4</foo>", s)

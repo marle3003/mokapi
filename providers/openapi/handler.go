@@ -320,17 +320,27 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 func (h *responseHandler) serveSecurity(r *http.Request, requirements []SecurityRequirement) error {
 	var errs error
 	for _, req := range requirements {
+		var reqError error
 		for name := range req {
-			config, ok := h.config.Components.SecuritySchemes[name]
+			scheme, ok := h.config.Components.SecuritySchemes[name]
 			if !ok {
 				return newHttpError(http.StatusInternalServerError, fmt.Sprintf("no security scheme found for %v", name))
 			}
-			err := config.Serve(r)
-			if err == nil {
-				return nil
+			err := scheme.Serve(r)
+			var notSupported *NotSupportedSecuritySchemeError
+			if errors.As(err, &notSupported) {
+				log.Warnf(notSupported.Error())
+			} else if err != nil {
+				reqError = errors.Join(reqError, fmt.Errorf("security scheme name '%s' type '%s': %w", name, getSecuritySchemeType(scheme), err))
 			}
-			errs = errors.Join(errs, err)
 		}
+		if reqError == nil {
+			return nil
+		}
+		errs = errors.Join(errs, reqError)
+	}
+	if errs == nil {
+		return nil
 	}
 	return newHttpError(http.StatusForbidden, errs.Error())
 }

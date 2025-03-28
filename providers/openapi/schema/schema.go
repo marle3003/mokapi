@@ -11,23 +11,13 @@ import (
 
 type Schema struct {
 	Id         string `yaml:"$id,omitempty" json:"$id,omitempty"`
-	Anchor     string `yaml:"$anchor,omitempty" json:"$anchor,omitempty"`
 	Ref        string `yaml:"$ref,omitempty" json:"$ref,omitempty"`
 	DynamicRef string `yaml:"$dynamicRef,omitempty" json:"$dynamicRef,omitempty"`
 
-	*SubSchema
-
-	m map[string]bool
-}
-
-type SubSchema struct {
-	Id string `yaml:"$id,omitempty" json:"$id,omitempty"`
-
-	Schema     string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
-	Boolean    *bool  `yaml:"-" json:"-"`
-	Anchor     string `yaml:"$anchor,omitempty" json:"$anchor,omitempty"`
-	Ref        string `yaml:"$ref,omitempty" json:"$ref,omitempty"`
-	DynamicRef string `yaml:"$dynamicRef,omitempty" json:"$dynamicRef,omitempty"`
+	Schema        string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
+	Boolean       *bool  `yaml:"-" json:"-"`
+	Anchor        string `yaml:"$anchor,omitempty" json:"$anchor,omitempty"`
+	DynamicAnchor string `yaml:"$dynamicAnchor,omitempty" json:"$dynamicAnchor,omitempty"`
 
 	Type  schema.Types  `yaml:"type,omitempty" json:"type,omitempty"`
 	Enum  []interface{} `yaml:"enum,omitempty" json:"enum,omitempty"`
@@ -91,16 +81,16 @@ type SubSchema struct {
 	ContentMediaType string `yaml:"contentMediaType,omitempty" json:"contentMediaType,omitempty"`
 	ContentEncoding  string `yaml:"contentEncoding,omitempty" json:"contentEncoding,omitempty"`
 
-	Definitions map[string]*Schema `yaml:"definitions,omitempty" json:"definitions,omitempty"`
-	Defs        map[string]*Schema `yaml:"$defs,omitempty" json:"$defs,omitempty"`
-
 	// OpenAPI
 	Xml      *Xml `yaml:"xml,omitempty" json:"xml,omitempty"`
 	Nullable bool `yaml:"nullable,omitempty" json:"nullable,omitempty"`
-}
 
-func NewSchema() *Schema {
-	return &Schema{SubSchema: &SubSchema{}}
+	Definitions map[string]*Schema `yaml:"definitions,omitempty" json:"definitions,omitempty"`
+	Defs        map[string]*Schema `yaml:"$defs,omitempty" json:"$defs,omitempty"`
+
+	Sub *Schema `yaml:"-" json:"-"`
+	m   map[string]bool
+	cm  changeManager
 }
 
 func (s *Schema) HasProperties() bool {
@@ -112,86 +102,96 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 
-	if s.SubSchema != nil {
-		if s.Id != "" {
-			config.OpenScope(s.Id)
-			defer config.CloseScope()
-		} else {
-			config.Scope.OpenIfNeeded(config.Info.Path())
-		}
-
-		if s.Anchor != "" {
-			if err := config.Scope.SetLexical(s.Anchor, s); err != nil {
-				return err
-			}
-		}
-
-		for _, d := range s.Definitions {
-			if err := d.Parse(config, reader); err != nil {
-				return err
-			}
-		}
-
-		for _, d := range s.Defs {
-			if err := d.Parse(config, reader); err != nil {
-				return err
-			}
-		}
-
-		if err := s.Items.Parse(config, reader); err != nil {
+	for _, d := range s.Definitions {
+		if err := d.Parse(config, reader); err != nil {
 			return err
 		}
+	}
 
-		if err := s.Properties.Parse(config, reader); err != nil {
+	for _, d := range s.Defs {
+		if err := d.Parse(config, reader); err != nil {
 			return err
 		}
+	}
 
-		if err := s.AdditionalProperties.Parse(config, reader); err != nil {
+	if s.Id != "" {
+		config.OpenScope(s.Id)
+		defer config.CloseScope()
+	} else {
+		config.Scope.OpenIfNeeded(config.Info.Path())
+	}
+
+	if s.Anchor != "" {
+		if err := config.Scope.SetLexical(s.Anchor, s); err != nil {
 			return err
 		}
+	}
 
-		for _, r := range s.AnyOf {
-			if err := r.Parse(config, reader); err != nil {
-				return err
-			}
+	if s.DynamicAnchor != "" {
+		if err := config.Scope.SetDynamic(s.DynamicAnchor, s); err != nil {
+			return err
 		}
+	}
 
-		for _, r := range s.AllOf {
-			if err := r.Parse(config, reader); err != nil {
-				return err
-			}
+	if err := s.Items.Parse(config, reader); err != nil {
+		return err
+	}
+
+	if err := s.Properties.Parse(config, reader); err != nil {
+		return err
+	}
+
+	if err := s.AdditionalProperties.Parse(config, reader); err != nil {
+		return err
+	}
+
+	for _, r := range s.AnyOf {
+		if err := r.Parse(config, reader); err != nil {
+			return err
 		}
+	}
 
-		for _, r := range s.OneOf {
-			if err := r.Parse(config, reader); err != nil {
-				return err
-			}
+	for _, r := range s.AllOf {
+		if err := r.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	for _, r := range s.OneOf {
+		if err := r.Parse(config, reader); err != nil {
+			return err
 		}
 	}
 
 	if s.Ref != "" {
-		r := &Schema{}
-		err := dynamic.Resolve(s.Ref, &r.SubSchema, config, reader)
+		err := dynamic.Resolve(s.Ref, &s.Sub, config, reader)
 		if err != nil {
 			return err
 		}
-		s.apply(r)
+		s.apply(s.Sub)
+		s.Sub.cm.Subscribe(s.apply)
 	}
 
 	if s.DynamicRef != "" {
-		r := &Schema{}
-		err := dynamic.ResolveDynamic(s.DynamicRef, &r.Schema, config, reader)
+		err := dynamic.ResolveDynamic(s.DynamicRef, &s.Sub, config, reader)
 		if err != nil {
 			return err
 		}
-		s.apply(r)
+		s.apply(s.Sub)
+		s.Sub.cm.Subscribe(s.apply)
 	}
+
+	s.cm.Notify(s)
 
 	return nil
 }
 
 func (s *Schema) String() string {
 	var sb strings.Builder
+
+	if s.Boolean != nil {
+		return fmt.Sprintf("%v", s.Boolean)
+	}
 
 	if len(s.AnyOf) > 0 {
 		sb.WriteString("any of ")
@@ -323,7 +323,7 @@ func (s *Schema) IsFreeForm() bool {
 }
 
 func (s *Schema) IsDictionary() bool {
-	return s.AdditionalProperties != nil && s.AdditionalProperties.SubSchema != nil && len(s.AdditionalProperties.Type) > 0
+	return s.AdditionalProperties != nil && len(s.AdditionalProperties.Type) > 0
 }
 
 func (s *Schema) IsNullable() bool {
@@ -337,26 +337,23 @@ func (s *Schema) ConvertTo(i interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("cannot convert %v to json schema", i)
 }
 
-func (s *Schema) Resolve(token string) (interface{}, error) {
-	return s.SubSchema, nil
-}
-
 func (s *Schema) UnmarshalJSON(b []byte) error {
 	_ = json.Unmarshal(b, &s.m)
 
 	var boolVal bool
 	if err := json.Unmarshal(b, &boolVal); err == nil {
-		s.SubSchema = &SubSchema{Boolean: &boolVal}
+		s.Boolean = &boolVal
 		return nil
 	}
 
-	a := &SubSchema{}
+	type alias Schema
+	a := alias{}
 	err := dynamic.UnmarshalJSON(b, &a)
 	if err != nil {
 		return err
 	}
-	s.SubSchema = a
-	s.update()
+	a.m = s.m
+	*s = Schema(a)
 	return nil
 }
 
@@ -365,23 +362,17 @@ func (s *Schema) UnmarshalYAML(node *yaml.Node) error {
 
 	var boolVal bool
 	if err := node.Decode(&boolVal); err == nil {
-		s.SubSchema = &SubSchema{Boolean: &boolVal}
+		s.Boolean = &boolVal
 		return nil
 	}
 
-	a := &SubSchema{}
+	type alias Schema
+	a := alias{}
 	err := node.Decode(&a)
 	if err != nil {
 		return err
 	}
-	s.SubSchema = a
-	s.update()
+	a.m = s.m
+	*s = Schema(a)
 	return nil
-}
-
-func (s *Schema) update() {
-	s.Id = s.SubSchema.Id
-	s.Anchor = s.SubSchema.Anchor
-	s.Ref = s.SubSchema.Ref
-	s.DynamicRef = s.SubSchema.DynamicRef
 }

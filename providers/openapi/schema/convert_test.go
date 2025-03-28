@@ -22,10 +22,31 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
+			name: "ref",
+			s:    &schema.Schema{Ref: "foo.yaml"},
+			test: func(t *testing.T, s *jsonSchema.Schema) {
+				require.Equal(t, "foo.yaml", s.Ref)
+			},
+		},
+		{
 			name: "schema",
 			s:    schematest.New("string", schematest.WithSchema("foo")),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.Equal(t, "foo", s.Schema)
+			},
+		},
+		{
+			name: "anchor",
+			s:    &schema.Schema{Anchor: "foo"},
+			test: func(t *testing.T, s *jsonSchema.Schema) {
+				require.Equal(t, "foo", s.Anchor)
+			},
+		},
+		{
+			name: "dynamic ref",
+			s:    &schema.Schema{DynamicRef: "foo"},
+			test: func(t *testing.T, s *jsonSchema.Schema) {
+				require.Equal(t, "foo", s.DynamicRef)
 			},
 		},
 		{
@@ -263,7 +284,7 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			name: "unevaluatedProperties false",
-			s:    schematest.New("object", schematest.WithUnevaluatedProperties(&schema.Schema{SubSchema: &schema.SubSchema{Boolean: toBoolP(false)}})),
+			s:    schematest.New("object", schematest.WithUnevaluatedProperties(&schema.Schema{Boolean: toBoolP(false)})),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.Equal(t, false, *s.UnevaluatedProperties.Boolean)
 			},
@@ -444,55 +465,6 @@ func TestConvert(t *testing.T) {
 
 			js := schema.ConvertToJsonSchema(r)
 			tc.test(t, js)
-		})
-	}
-}
-
-func TestConvertToJsonSchema_Ref(t *testing.T) {
-	testcases := []struct {
-		name string
-		r    *schema.Schema
-		test func(t *testing.T, r *jsonSchema.Schema)
-	}{
-		{
-			name: "nil",
-			r:    nil,
-			test: func(t *testing.T, r *jsonSchema.Schema) {
-				require.Nil(t, r)
-			},
-		},
-		{
-			name: "bool true",
-			r:    &schema.Schema{SubSchema: &schema.SubSchema{Boolean: toBoolP(true)}},
-			test: func(t *testing.T, r *jsonSchema.Schema) {
-				require.Equal(t, true, *r.Boolean)
-			},
-		},
-		{
-			name: "bool false",
-			r:    &schema.Schema{SubSchema: &schema.SubSchema{Boolean: toBoolP(false)}},
-			test: func(t *testing.T, r *jsonSchema.Schema) {
-				require.Equal(t, false, *r.Boolean)
-			},
-		},
-		{
-			name: "schema",
-			r:    schematest.New("string"),
-			test: func(t *testing.T, r *jsonSchema.Schema) {
-				require.Nil(t, r.Boolean)
-				require.Equal(t, "string", r.Type.String())
-			},
-		},
-	}
-
-	t.Parallel()
-	for _, tc := range testcases {
-		tc := tc
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			r := schema.ConvertToJsonSchema(tc.r)
-			tc.test(t, r)
 		})
 	}
 }

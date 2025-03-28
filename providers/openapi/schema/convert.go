@@ -15,7 +15,7 @@ func ConvertToJsonSchema(s *Schema) *schema.Schema {
 }
 
 func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
-	if s == nil || s.SubSchema == nil {
+	if s == nil {
 		return nil
 	}
 	if c.history == nil {
@@ -26,6 +26,10 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	}
 
 	js := &schema.Schema{
+		Id:                    s.Id,
+		Anchor:                s.Anchor,
+		Ref:                   s.Ref,
+		DynamicRef:            s.DynamicRef,
 		Boolean:               s.Boolean,
 		Type:                  s.Type,
 		Schema:                s.Schema,

@@ -657,7 +657,7 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 		{
 			name:   "minimum=12, exclusiveMinimum=true and value=12",
 			s:      "12",
-			schema: &schema.Schema{SubSchema: &schema.SubSchema{Type: jsonSchema.Types{"integer"}, Minimum: toFloatP(12), ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](true)}},
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Minimum: toFloatP(12), ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](true)},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.EqualError(t, err, "error count 1:\n\t- #/minimum: integer 12 equals minimum value of 12 and exclusive minimum is true")
 			},
@@ -665,7 +665,7 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 		{
 			name:   "minimum=12, exclusiveMinimum=false and value=12",
 			s:      "12",
-			schema: &schema.Schema{SubSchema: &schema.SubSchema{Type: jsonSchema.Types{"integer"}, Minimum: toFloatP(12), ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](false)}},
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Minimum: toFloatP(12), ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](false)},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(12), i)
@@ -674,7 +674,7 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 		{
 			name:   "exclusiveMinimum=12 and value=12",
 			s:      "12",
-			schema: &schema.Schema{SubSchema: &schema.SubSchema{Type: jsonSchema.Types{"integer"}, ExclusiveMinimum: jsonSchema.NewUnionTypeA[float64, bool](12)}},
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, ExclusiveMinimum: jsonSchema.NewUnionTypeA[float64, bool](12)},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.EqualError(t, err, "error count 1:\n\t- #/exclusiveMinimum: integer 12 equals minimum value of 12")
 			},
@@ -682,7 +682,7 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 		{
 			name:   "exclusiveMinimum=true but no minimum is set",
 			s:      "12",
-			schema: &schema.Schema{SubSchema: &schema.SubSchema{Type: jsonSchema.Types{"integer"}, ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](true)}},
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](true)},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(12), i)
@@ -708,7 +708,7 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 		{
 			name:   "not exclusive max",
 			s:      "12",
-			schema: &schema.Schema{SubSchema: &schema.SubSchema{Type: jsonSchema.Types{"integer"}, Maximum: toFloatP(12), ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true)}},
+			schema: &schema.Schema{Type: jsonSchema.Types{"integer"}, Maximum: toFloatP(12), ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true)},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.EqualError(t, err, "error count 1:\n\t- #/maximum: integer 12 equals maximum value of 12 and exclusive maximum is true")
 			},
@@ -833,7 +833,7 @@ func TestParse_Number(t *testing.T) {
 		{
 			name:   "not max exclusive",
 			s:      "3.6",
-			schema: &schema.Schema{SubSchema: &schema.SubSchema{Type: jsonSchema.Types{"number"}, Maximum: toFloatP(3.6), ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true)}},
+			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, Maximum: toFloatP(3.6), ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true)},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.EqualError(t, err, "error count 1:\n\t- #/maximum: number 3.6 equals maximum value of 3.6 and exclusive maximum is true")
 			},
@@ -841,7 +841,7 @@ func TestParse_Number(t *testing.T) {
 		{
 			name:   "exclusiveMaximum=true but no maximum value is set",
 			s:      "3.6",
-			schema: &schema.Schema{SubSchema: &schema.SubSchema{Type: jsonSchema.Types{"number"}, ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true)}},
+			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true)},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 3.6, i)
@@ -850,7 +850,7 @@ func TestParse_Number(t *testing.T) {
 		{
 			name:   "not in enum",
 			s:      "3.6",
-			schema: &schema.Schema{SubSchema: &schema.SubSchema{Type: jsonSchema.Types{"number"}, Enum: []interface{}{3, 4, 5.5}}},
+			schema: &schema.Schema{Type: jsonSchema.Types{"number"}, Enum: []interface{}{3, 4, 5.5}},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.EqualError(t, err, "error count 1:\n\t- #/enum: value '3.6' does not match one in the enumeration [3, 4, 5.5]")
 			},

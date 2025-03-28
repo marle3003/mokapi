@@ -1,8 +1,10 @@
 package schema_test
 
 import (
+	"encoding/json"
 	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi/schema"
+	"mokapi/providers/openapi/schema/schematest"
 	jsonSchema "mokapi/schema/json/schema"
 	"testing"
 )
@@ -10,23 +12,46 @@ import (
 func TestSchema_Marshal(t *testing.T) {
 	testcases := []struct {
 		name   string
-		schema schema.Schema
+		schema *schema.Schema
 		exp    string
 	}{
 		{
 			name:   "$ref",
-			schema: schema.Schema{Ref: "#/components/schemas/Foo"},
+			schema: &schema.Schema{Ref: "#/components/schemas/Foo"},
 			exp:    `{"$ref":"#/components/schemas/Foo"}`,
 		},
 		{
 			name:   "false",
-			schema: schema.Schema{SubSchema: &schema.SubSchema{Boolean: toBoolP(false)}},
+			schema: &schema.Schema{Boolean: toBoolP(false)},
 			exp:    `false`,
 		},
 		{
 			name:   "type",
-			schema: schema.Schema{SubSchema: &schema.SubSchema{Type: jsonSchema.Types{"string"}}},
+			schema: &schema.Schema{Type: jsonSchema.Types{"string"}},
 			exp:    `{"type":"string"}`,
+		},
+		{
+			name: "ref",
+			schema: schematest.New("object",
+				schematest.WithProperty("foo", schematest.New("string")),
+				schematest.WithRef("#/components/schemas/Foo"),
+			),
+			exp: `{"$ref":"#/components/schemas/Foo","type":"object","properties":{"foo":{"type":"string"}}}`,
+		},
+		{
+			name:   "Sub should not be marshalled",
+			schema: &schema.Schema{Sub: schematest.New("string")},
+			exp:    `{}`,
+		},
+		{
+			name:   "exclusiveMinimum",
+			schema: schematest.New("integer", schematest.WithExclusiveMinimum(1)),
+			exp:    `{"type":"integer","exclusiveMinimum":1}`,
+		},
+		{
+			name:   "exclusiveMinimum",
+			schema: schematest.New("integer", schematest.WithExclusiveMinimumBool(true)),
+			exp:    `{"type":"integer","exclusiveMinimum":true}`,
 		},
 	}
 
@@ -36,7 +61,7 @@ func TestSchema_Marshal(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s, err := tc.schema.MarshalJSON()
+			s, err := json.Marshal(tc.schema)
 			require.NoError(t, err)
 			require.Equal(t, tc.exp, string(s))
 		})

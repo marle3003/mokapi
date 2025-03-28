@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"net/http"
 )
@@ -20,7 +19,6 @@ type SecurityRequirement map[string][]string
 
 type HttpSecurityScheme struct {
 	Type         string `yaml:"type" json:"type"`
-	Description  string `yaml:"description" json:"description"`
 	Scheme       string `yaml:"scheme" json:"scheme"`
 	BearerFormat string `yaml:"bearerFormat" json:"bearerFormat"`
 }
@@ -78,13 +76,44 @@ func (s *ApiKeySecurityScheme) Serve(req *http.Request) error {
 	return nil
 }
 
+type OAuth2SecurityScheme struct {
+	Type        string                 `yaml:"type" json:"type"`
+	Description string                 `yaml:"description" json:"description"`
+	Flows       map[string]*OAuth2Flow `yaml:"flows" json:"flows"`
+}
+
+type OAuth2Flow struct {
+	AuthorizationUrl string `yaml:"authorizationUrl" json:"authorizationUrl"`
+	TokenUrl         string `yaml:"tokenUrl" json:"tokenUrl"`
+	RefreshUrl       string `yaml:"refreshUrl" json:"refreshUrl"`
+	// Scopes map between scope name and a short description
+	Scopes map[string]string `yaml:"scopes" json:"scopes"`
+}
+
+func (s *OAuth2SecurityScheme) Serve(req *http.Request) error {
+	request := EventRequestFromContext(req.Context())
+	auth := req.Header.Get("Authorization")
+	if auth == "" {
+		return fmt.Errorf("missing authorization header")
+	}
+	request.Header["Authorization"] = auth
+	return nil
+}
+
+type NotSupportedSecuritySchemeError struct {
+	Scheme string
+}
+
 type NotSupportedSecurityScheme struct {
 	Type string `yaml:"type" json:"type"`
 }
 
 func (s *NotSupportedSecurityScheme) Serve(req *http.Request) error {
-	log.Warnf("security scheme %v not supported", s.Type)
-	return nil
+	return &NotSupportedSecuritySchemeError{Scheme: s.Type}
+}
+
+func (e *NotSupportedSecuritySchemeError) Error() string {
+	return fmt.Sprintf("security scheme %v not supported", e.Scheme)
 }
 
 func (s *SecuritySchemes) UnmarshalJSON(b []byte) error {
@@ -125,6 +154,8 @@ func (s *SecuritySchemes) UnmarshalJSON(b []byte) error {
 			v = &HttpSecurityScheme{}
 		case "apiKey":
 			v = &ApiKeySecurityScheme{}
+		case "oauth2":
+			v = &OAuth2SecurityScheme{}
 		default:
 			v = &NotSupportedSecurityScheme{}
 		}
@@ -161,6 +192,8 @@ func (s *SecuritySchemes) UnmarshalYAML(node *yaml.Node) error {
 			v = &HttpSecurityScheme{}
 		case "apiKey":
 			v = &ApiKeySecurityScheme{}
+		case "oauth2":
+			v = &OAuth2SecurityScheme{}
 		default:
 			v = &NotSupportedSecurityScheme{}
 		}
@@ -172,4 +205,19 @@ func (s *SecuritySchemes) UnmarshalYAML(node *yaml.Node) error {
 	}
 
 	return nil
+}
+
+func getSecuritySchemeType(schema SecurityScheme) string {
+	switch v := schema.(type) {
+	case *HttpSecurityScheme:
+		return v.Type
+	case *ApiKeySecurityScheme:
+		return v.Type
+	case *OAuth2SecurityScheme:
+		return v.Type
+	case *NotSupportedSecurityScheme:
+		return v.Type
+	default:
+		return "unknown"
+	}
 }
