@@ -29,7 +29,7 @@ func isOpenApiSchema(o *goja.Object) bool {
 }
 
 func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Schema, error) {
-	s := &schema.Schema{SubSchema: &schema.SubSchema{}}
+	s := &schema.Schema{}
 
 	if v == nil {
 		return nil, nil

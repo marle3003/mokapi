@@ -326,7 +326,7 @@ func TestSchema_Patch(t *testing.T) {
 			name: "patch exclusive minimum",
 			schemas: []*schema.Schema{
 				{},
-				{SubSchema: &schema.SubSchema{ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](true)}},
+				{ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](true)},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.True(t, result.ExclusiveMinimum.B)
@@ -335,8 +335,8 @@ func TestSchema_Patch(t *testing.T) {
 		{
 			name: "patch overwrite minimum",
 			schemas: []*schema.Schema{
-				{SubSchema: &schema.SubSchema{ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](true)}},
-				{SubSchema: &schema.SubSchema{ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](false)}},
+				{ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](true)},
+				{ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](false)},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.False(t, result.ExclusiveMinimum.B)
@@ -346,7 +346,7 @@ func TestSchema_Patch(t *testing.T) {
 			name: "patch exclusive maximum",
 			schemas: []*schema.Schema{
 				{},
-				{SubSchema: &schema.SubSchema{ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true)}},
+				{ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true)},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.True(t, result.ExclusiveMaximum.B)
@@ -355,8 +355,8 @@ func TestSchema_Patch(t *testing.T) {
 		{
 			name: "patch overwrite maximum",
 			schemas: []*schema.Schema{
-				{SubSchema: &schema.SubSchema{ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true)}},
-				{SubSchema: &schema.SubSchema{ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](false)}},
+				{ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true)},
+				{ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](false)},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.False(t, result.ExclusiveMaximum.B)
@@ -537,7 +537,7 @@ func TestSchema_Patch(t *testing.T) {
 			name: "patch additionalProperties",
 			schemas: []*schema.Schema{
 				{},
-				schematest.New("", schematest.WithAdditionalProperties(&schema.Schema{SubSchema: &schema.SubSchema{Boolean: toBoolP(false)}})),
+				schematest.New("", schematest.WithAdditionalProperties(&schema.Schema{Boolean: toBoolP(false)})),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.NotNil(t, result.AdditionalProperties)
@@ -547,8 +547,8 @@ func TestSchema_Patch(t *testing.T) {
 		{
 			name: "patch overwrite additionalProperties",
 			schemas: []*schema.Schema{
-				schematest.New("", schematest.WithAdditionalProperties(&schema.Schema{SubSchema: &schema.SubSchema{Boolean: toBoolP(false)}})),
-				schematest.New("", schematest.WithAdditionalProperties(&schema.Schema{SubSchema: &schema.SubSchema{Boolean: toBoolP(true)}})),
+				schematest.New("", schematest.WithAdditionalProperties(&schema.Schema{Boolean: toBoolP(false)})),
+				schematest.New("", schematest.WithAdditionalProperties(&schema.Schema{Boolean: toBoolP(true)})),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
 				require.Equal(t, true, *result.AdditionalProperties.Boolean)

@@ -30,7 +30,7 @@ func Test_Parse(t *testing.T) {
 				bar := c.Components.Schemas.Get("Bar")
 				require.Equal(t, "string", bar.Type.String())
 				// reference should point to same schema
-				require.Equal(t, bar.SubSchema, foo.Items.SubSchema)
+				require.Equal(t, bar, foo.Items.Sub)
 			},
 		},
 		{
@@ -54,9 +54,9 @@ func Test_Parse(t *testing.T) {
 				require.NotNil(t, response)
 
 				foo := c.Components.Schemas.Get("Foo")
-				require.Equal(t, foo.SubSchema, response.SubSchema)
+				require.Equal(t, foo, response.Sub)
 				bar := c.Components.Schemas.Get("Bar")
-				require.Equal(t, bar.SubSchema, response.Items.SubSchema)
+				require.Equal(t, bar, response.Items.Sub)
 			},
 		},
 	}

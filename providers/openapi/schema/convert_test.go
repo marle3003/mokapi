@@ -23,7 +23,7 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			name: "ref",
-			s:    &schema.Schema{Ref: "foo.yaml", SubSchema: &schema.SubSchema{}},
+			s:    &schema.Schema{Ref: "foo.yaml"},
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.Equal(t, "foo.yaml", s.Ref)
 			},
@@ -37,14 +37,14 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			name: "anchor",
-			s:    &schema.Schema{Anchor: "foo", SubSchema: &schema.SubSchema{}},
+			s:    &schema.Schema{Anchor: "foo"},
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.Equal(t, "foo", s.Anchor)
 			},
 		},
 		{
 			name: "dynamic ref",
-			s:    &schema.Schema{DynamicRef: "foo", SubSchema: &schema.SubSchema{}},
+			s:    &schema.Schema{DynamicRef: "foo"},
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.Equal(t, "foo", s.DynamicRef)
 			},
@@ -284,7 +284,7 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			name: "unevaluatedProperties false",
-			s:    schematest.New("object", schematest.WithUnevaluatedProperties(&schema.Schema{SubSchema: &schema.SubSchema{Boolean: toBoolP(false)}})),
+			s:    schematest.New("object", schematest.WithUnevaluatedProperties(&schema.Schema{Boolean: toBoolP(false)})),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.Equal(t, false, *s.UnevaluatedProperties.Boolean)
 			},

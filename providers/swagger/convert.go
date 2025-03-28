@@ -200,10 +200,6 @@ func (c *converter) convertSchema(s *schema.Schema) *schema.Schema {
 		return &schema.Schema{Ref: convertRef(s.Ref)}
 	}
 
-	if s.SubSchema == nil {
-		return s
-	}
-
 	if s.Type.IsInteger() && s.Format == "" {
 		s.Format = "int32"
 	}
@@ -246,7 +242,7 @@ func convertParameter(p *Parameter) *parameter.Ref {
 	return &parameter.Ref{Value: &parameter.Parameter{
 		Name: p.Name,
 		Type: parameter.Location(p.In),
-		Schema: &schema.Schema{SubSchema: &schema.SubSchema{
+		Schema: &schema.Schema{
 			Type:             jsonSchema.Types{p.Type},
 			Format:           p.Format,
 			Pattern:          p.Pattern,
@@ -258,7 +254,7 @@ func convertParameter(p *Parameter) *parameter.Ref {
 			UniqueItems:      p.UniqueItems,
 			MinItems:         &p.MinItems,
 			MaxItems:         p.MaxItems,
-		}},
+		},
 		Required:    p.Required,
 		Deprecated:  p.Deprecated,
 		Description: p.Description,
