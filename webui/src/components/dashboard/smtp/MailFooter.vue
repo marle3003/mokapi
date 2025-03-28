@@ -13,26 +13,26 @@ defineProps({
     <div class="card">
       <div class="card-body">
         <div class="row">
-          <p class="col">
+          <div class="col">
             <p class="label">Content-Type</p>
             <p>{{ contentType }}</p>
-          </p>
-          <p class="col" v-if="encoding">
+          </div>
+          <div class="col" v-if="encoding">
             <p class="label">Encoding</p>
             <p>{{ encoding }}</p>
-          </p>
+          </div>
         </div>
         <div class="row">
-          <p class="col">
+          <div class="col">
             <p class="label">Message-ID</p>
             <p>{{ messageId }}</p>
-          </p>
-          <p class="col" v-if="inReplyTo">
+          </div>
+          <div class="col" v-if="inReplyTo">
             <p class="label">In-Reply-To</p>
             <p>
               <router-link :to="{name: 'smtpMail', params: { id: messageId } }">{{ inReplyTo }}</router-link>
             </p>
-          </p>
+          </div>
           </div>
       </div>
     </div>

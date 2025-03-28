@@ -35,53 +35,53 @@ const { mail, isLoading: isLoading } = fetchMail(messageId)
           <div class="row">
             <div class="col">
               <p class="label">From</p>
-              <p class="prop">
+              <span class="prop">
                 <ul class="address-list">
                   <li v-for="addr of mail.from">
                     <span class="address-name" v-if="addr.name">{{ addr.name }}</span>
                     <span>{{ addr.address }}</span>
                   </li>
                 </ul>
-              </p>
+              </span>
             </div>
           </div>
           <div class="row">
             <div class="col">
               <p class="label">To</p>
-              <p class="prop">
+              <span class="prop">
                 <ul class="address-list">
                   <li v-for="addr of mail.to">
                     <span class="address-name" v-if="addr.name">{{ addr.name }}</span>
                     <span>{{ addr.address }}</span>
                   </li>
                 </ul>
-              </p>
+              </span>
             </div>
           </div>
           <div class="row" v-if="mail.cc">
             <div class="col">
               <p class="label">Cc</p>
-              <p class="prop">
+              <span class="prop">
                 <ul class="address-list">
                   <li v-for="addr of mail.cc">
                     <span class="address-name" v-if="addr.name">{{ addr.name }}</span>
                     <span>{{ addr.address }}</span>
                   </li>
                 </ul>
-              </p>
+              </span>
             </div>
           </div>
           <div class="row" v-if="mail.bcc">
             <div class="col">
               <p class="label">Bcc</p>
-              <p class="prop">
+              <span class="prop">
                 <ul class="address-list">
                   <li v-for="addr of mail.bcc">
                     <span class="address-name" v-if="addr.name">{{ addr.name }}</span>
                     <span>{{ addr.address }}</span>
                   </li>
                 </ul>
-              </p>
+              </span>
             </div>
           </div>
         </div>
