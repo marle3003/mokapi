@@ -59,7 +59,7 @@ components:
                             type: object
                             properties:
                               statusCode:
-                                type: integer
+                                type: [integer, string]
                               description:
                                 type: string
                               headers:

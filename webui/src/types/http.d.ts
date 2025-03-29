@@ -56,7 +56,7 @@ declare interface HttpRequestBody {
 }
 
 declare interface HttpResponse {
-    statusCode: number
+    statusCode: string
     description: string
     contents: HttpMediaType[]
     headers: HttpParameter[]

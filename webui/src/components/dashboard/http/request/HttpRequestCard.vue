@@ -311,5 +311,8 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
     border-left-width: 2px;
     border-color: var(--color-datatable-border);
 }
+.security .row {
+    margin-bottom: 0.8rem;
+}
 </style>
 

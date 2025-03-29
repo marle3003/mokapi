@@ -18,11 +18,19 @@ const { formatStatusCode, getClassByStatusCode } = usePrettyHttp()
 const { formatSchema } = usePrettyLanguage()
 
 const selected = reactive({
-    contents: {} as  { [statusCode: number]: HttpMediaType}
+    contents: {} as  { [statusCode: number | string]: HttpMediaType}
 })
 
 const responses = computed(() => {
-    return props.operation.responses.sort((r1, r2) => r1.statusCode - r2.statusCode)
+    return props.operation.responses.sort((r1, r2) => {
+        if (typeof r1.statusCode === 'string') {
+            return 1
+        } else if (typeof r2.statusCode === 'string') {
+            return -1
+        } else {
+            return r1.statusCode - r2.statusCode
+        }
+    })
 })
 
 for (let response of responses.value) {
@@ -32,7 +40,7 @@ for (let response of responses.value) {
     selected.contents[response.statusCode] = response.contents[0]
 }
 
-function selectedContentChange(event: any, statusCode: number){
+function selectedContentChange(event: any, statusCode: number | string){
     for (let response of props.operation.responses){
         if (response.statusCode == statusCode){
             for (let content of response.contents){

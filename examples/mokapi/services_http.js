@@ -453,6 +453,10 @@ export let apps = [
                                         }
                                     }
                                 ]
+                            },
+                            {
+                                statusCode: 'default',
+                                description: 'Unexpected error'
                             }
                         ]
                     }
