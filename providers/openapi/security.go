@@ -21,6 +21,7 @@ type HttpSecurityScheme struct {
 	Type         string `yaml:"type" json:"type"`
 	Scheme       string `yaml:"scheme" json:"scheme"`
 	BearerFormat string `yaml:"bearerFormat" json:"bearerFormat"`
+	Description  string `yaml:"description,omitempty" json:"description,omitempty"`
 }
 
 func (s *HttpSecurityScheme) Serve(req *http.Request) error {
@@ -43,9 +44,10 @@ func (s *HttpSecurityScheme) Serve(req *http.Request) error {
 }
 
 type ApiKeySecurityScheme struct {
-	Type string `yaml:"type" json:"type"`
-	In   string `yaml:"in" json:"in"`
-	Name string `yaml:"name" json:"name"`
+	Type        string `yaml:"type" json:"type"`
+	In          string `yaml:"in" json:"in"`
+	Name        string `yaml:"name" json:"name"`
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 }
 
 func (s *ApiKeySecurityScheme) Serve(req *http.Request) error {
@@ -78,7 +80,7 @@ func (s *ApiKeySecurityScheme) Serve(req *http.Request) error {
 
 type OAuth2SecurityScheme struct {
 	Type        string                 `yaml:"type" json:"type"`
-	Description string                 `yaml:"description" json:"description"`
+	Description string                 `yaml:"description,omitempty" json:"description,omitempty"`
 	Flows       map[string]*OAuth2Flow `yaml:"flows" json:"flows"`
 }
 
