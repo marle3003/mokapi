@@ -69,16 +69,18 @@ components:
                               contents:
                                 $ref: '#/components/schemas/MediaTypes'
                         security:
-                          type: object
-                          additionalProperties:
+                          type: array
+                          items:
                             type: object
-                            properties:
-                              scopes:
-                                type: array
-                                items:
-                                  type: string
-                              configs:
-                                type: object
+                            additionalProperties:
+                              type: object
+                              properties:
+                                scopes:
+                                  type: array
+                                  items:
+                                    type: string
+                                configs:
+                                  type: object
     MediaTypes:
       type: array
       items:
