@@ -151,7 +151,16 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	contentType = media.ParseContentType(response.Headers["Content-Type"])
+	if ct, ok := response.Headers["Content-Type"]; ok {
+		contentType = media.ParseContentType(ct)
+	} else {
+		contentType, _, err = ContentTypeFromRequest(r, res)
+		if err != nil {
+			writeError(rw, r, err, h.config.Info.Name)
+			return
+		}
+	}
+
 	mediaType = res.GetContent(contentType)
 	if mediaType == nil {
 		writeError(rw, r, fmt.Errorf("response has no definition for content type: %v", contentType), h.config.Info.Name)
