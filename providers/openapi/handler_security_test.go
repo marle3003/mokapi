@@ -6,6 +6,7 @@ import (
 	"mokapi/engine/common"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
+	"mokapi/runtime/events"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -35,7 +36,12 @@ func TestHandler_Security(t *testing.T) {
 				r.Header.Set("Authorization", "Basic 123")
 				rr := httptest.NewRecorder()
 				h(rr, r)
-				require.Equal(t, `"123"`, rr.Body.String())
+				require.Equal(t, `"Basic 123"`, rr.Body.String())
+
+				logs := events.GetEvents(events.NewTraits().WithNamespace("http"))
+				httpLog := logs[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "Basic 123", httpLog.Request.Parameters[0].Value)
+				require.Equal(t, "Basic 123", *httpLog.Request.Parameters[0].Raw)
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
 				req := args[0].(*common.EventRequest)
@@ -62,6 +68,11 @@ func TestHandler_Security(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 				require.Equal(t, http.StatusForbidden, rr.Code)
+
+				logs := events.GetEvents(events.NewTraits().WithNamespace("http"))
+				httpLog := logs[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "", httpLog.Request.Parameters[0].Value)
+				require.Nil(t, httpLog.Request.Parameters[0].Raw)
 			},
 		},
 		{
@@ -83,7 +94,12 @@ func TestHandler_Security(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 				require.Equal(t, http.StatusOK, rr.Code)
-				require.Equal(t, `"123"`, rr.Body.String())
+				require.Equal(t, `"Bearer 123"`, rr.Body.String())
+
+				logs := events.GetEvents(events.NewTraits().WithNamespace("http"))
+				httpLog := logs[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "Bearer 123", httpLog.Request.Parameters[0].Value)
+				require.Equal(t, "Bearer 123", *httpLog.Request.Parameters[0].Raw)
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
 				req := args[0].(*common.EventRequest)
@@ -113,6 +129,11 @@ func TestHandler_Security(t *testing.T) {
 				h(rr, r)
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, `"123"`, rr.Body.String())
+
+				logs := events.GetEvents(events.NewTraits().WithNamespace("http"))
+				httpLog := logs[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "123", httpLog.Request.Parameters[0].Value)
+				require.Equal(t, "123", *httpLog.Request.Parameters[0].Raw)
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
 				req := args[0].(*common.EventRequest)
@@ -141,6 +162,12 @@ func TestHandler_Security(t *testing.T) {
 				h(rr, r)
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, `"123"`, rr.Body.String())
+
+				logs := events.GetEvents(events.NewTraits().WithNamespace("http"))
+				httpLog := logs[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "apikey", httpLog.Request.Parameters[0].Name)
+				require.Equal(t, "123", httpLog.Request.Parameters[0].Value)
+				require.Equal(t, "123", *httpLog.Request.Parameters[0].Raw)
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
 				req := args[0].(*common.EventRequest)
@@ -170,6 +197,11 @@ func TestHandler_Security(t *testing.T) {
 				h(rr, r)
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, `"123"`, rr.Body.String())
+
+				logs := events.GetEvents(events.NewTraits().WithNamespace("http"))
+				httpLog := logs[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "123", httpLog.Request.Parameters[1].Value)
+				require.Equal(t, "123", *httpLog.Request.Parameters[1].Raw)
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
 				req := args[0].(*common.EventRequest)
@@ -217,6 +249,11 @@ func TestHandler_Security(t *testing.T) {
 
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, `"Bearer 123"`, rr.Body.String())
+
+				logs := events.GetEvents(events.NewTraits().WithNamespace("http"))
+				httpLog := logs[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "Bearer 123", httpLog.Request.Parameters[0].Value)
+				require.Equal(t, "Bearer 123", *httpLog.Request.Parameters[0].Raw)
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
 				req := args[0].(*common.EventRequest)
@@ -296,11 +333,11 @@ func TestHandler_Security(t *testing.T) {
 		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+			events.SetStore(10, events.NewTraits().WithNamespace("http"))
+			defer events.Reset()
 
 			config := &openapi.Config{
 				Info:       openapi.Info{Name: "Testing"},

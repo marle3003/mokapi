@@ -210,6 +210,85 @@ func TestRegistry(t *testing.T) {
 				r.Equal(t, int64(8), v.Export())
 			},
 		},
+		{
+			name: "mod path with slash",
+			sources: map[string]source{
+				"path/child.js": {
+					name:     "child.js",
+					code:     `export default 2+2`,
+					checksum: []byte("1"),
+				},
+			},
+			test: func(t *testing.T, host common.Host, _ map[string]source) {
+				reg, err := require.NewRegistry()
+				r.NoError(t, err)
+
+				vm := goja.New()
+				js.EnableInternal(vm, host, nil, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
+				reg.Enable(vm)
+
+				_, err = vm.RunString(`
+					const m1 = require("path/child")
+				`)
+				r.NoError(t, err)
+			},
+		},
+		{
+			name: "npm module requires relative file",
+			sources: map[string]source{
+				"mod/index.js": {
+					name:     "mod/index.js",
+					code:     `require("./child")`,
+					checksum: []byte("1"),
+				},
+				"mod/child.js": {
+					name:     "mod/child.js",
+					code:     `export default 2+2`,
+					checksum: []byte("1"),
+				},
+			},
+			test: func(t *testing.T, host common.Host, _ map[string]source) {
+				reg, err := require.NewRegistry()
+				r.NoError(t, err)
+
+				vm := goja.New()
+				js.EnableInternal(vm, host, nil, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
+				reg.Enable(vm)
+
+				_, err = vm.RunString(`
+					const m1 = require("mod")
+				`)
+				r.NoError(t, err)
+			},
+		},
+		{
+			name: "npm module requires relative file and name contains dot",
+			sources: map[string]source{
+				"mod/index.js": {
+					name:     "mod/index.js",
+					code:     `require("./child.name")`,
+					checksum: []byte("1"),
+				},
+				"mod/child.name.js": {
+					name:     "mod/child.name.js",
+					code:     `export default 2+2`,
+					checksum: []byte("1"),
+				},
+			},
+			test: func(t *testing.T, host common.Host, _ map[string]source) {
+				reg, err := require.NewRegistry()
+				r.NoError(t, err)
+
+				vm := goja.New()
+				js.EnableInternal(vm, host, nil, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
+				reg.Enable(vm)
+
+				_, err = vm.RunString(`
+					const m1 = require("mod")
+				`)
+				r.NoError(t, err)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

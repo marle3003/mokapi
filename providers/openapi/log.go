@@ -54,37 +54,35 @@ func NewLogEventContext(r *http.Request, deprecated bool, traits events.Traits) 
 		Deprecated: deprecated,
 	}
 
-	go func() {
-		params, _ := parameter.FromContext(r.Context())
+	params, _ := parameter.FromContext(r.Context())
+	if params != nil {
+		for t, values := range params {
+			for k, v := range values {
+				value, _ := json.Marshal(v.Value)
+				l.Request.Parameters = append(l.Request.Parameters, HttpParameter{
+					Name:  k,
+					Type:  string(t),
+					Value: string(value),
+					Raw:   v.Raw,
+				})
+			}
+		}
+	}
+	for k, v := range r.Header {
+		raw := strings.Join(v, ",")
+		p := HttpParameter{
+			Name: k,
+			Type: string(parameter.Header),
+			Raw:  &raw,
+		}
 		if params != nil {
-			for t, values := range params {
-				for k, v := range values {
-					value, _ := json.Marshal(v.Value)
-					l.Request.Parameters = append(l.Request.Parameters, HttpParameter{
-						Name:  k,
-						Type:  string(t),
-						Value: string(value),
-						Raw:   v.Raw,
-					})
-				}
+			if pp, ok := params[parameter.Header][k]; ok {
+				val, _ := json.Marshal(pp.Value)
+				p.Value = string(val)
 			}
 		}
-		for k, v := range r.Header {
-			raw := strings.Join(v, ",")
-			p := HttpParameter{
-				Name: k,
-				Type: string(parameter.Header),
-				Raw:  &raw,
-			}
-			if params != nil {
-				if pp, ok := params[parameter.Header][k]; ok {
-					val, _ := json.Marshal(pp.Value)
-					p.Value = string(val)
-				}
-			}
-			l.Request.Parameters = append(l.Request.Parameters, p)
-		}
-	}()
+		l.Request.Parameters = append(l.Request.Parameters, p)
+	}
 
 	err := events.Push(l, traits.WithNamespace("http"))
 	if err != nil {

@@ -1,8 +1,19 @@
 <script setup lang="ts">
-import type { PropType } from 'vue';
+import { computed, type PropType } from 'vue';
 
-defineProps({
+const props = defineProps({
     parameters: { type: Object as PropType<HttpEventParameter[]>, required: true },
+})
+const sorted = computed(() => {
+    return props.parameters.sort((p1, p2) => {
+        if (p1.value && p2.value) {
+            return p1.name.localeCompare(p2.name)
+        }
+        if (p1.value) {
+            return -1
+        }
+        return 1
+    })
 })
 </script>
 
@@ -17,7 +28,7 @@ defineProps({
             </tr>
         </thead>
         <tbody>
-            <tr v-for="p in parameters">
+            <tr v-for="p in sorted">
                 <td>{{ p.name }}</td>
                 <td>{{ p.type }}</td>
                 <td class="text-center">{{ p.value ? 'yes' : 'no' }}</td>

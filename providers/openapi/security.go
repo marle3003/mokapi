@@ -7,6 +7,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
 	"net/http"
+	"strings"
 )
 
 type SecuritySchemes map[string]SecurityScheme
@@ -26,18 +27,37 @@ type HttpSecurityScheme struct {
 
 func (s *HttpSecurityScheme) Serve(req *http.Request) error {
 	request := EventRequestFromContext(req.Context())
+	log, ok := LogEventFromContext(req.Context())
+
 	auth := req.Header.Get("Authorization")
+
 	if auth == "" {
+		if ok {
+			log.Request.Parameters = append(log.Request.Parameters, HttpParameter{
+				Name: "Authorization",
+				Type: "header",
+			})
+		}
 		return fmt.Errorf("no authorization header")
 	}
 
 	switch s.Scheme {
 	case "bearer":
-		request.Header["Authorization"] = auth[len("Bearer "):]
+		request.Header["Authorization"] = auth
 	case "basic":
-		request.Header["Authorization"] = auth[len("Basic "):]
+		request.Header["Authorization"] = auth
 	default:
 		return fmt.Errorf("security scheme not supported: %v", s.Scheme)
+	}
+
+	if ok {
+		for i, p := range log.Request.Parameters {
+			if p.Name == "Authorization" {
+				p.Value = auth
+				log.Request.Parameters[i] = p
+				break
+			}
+		}
 	}
 
 	return nil
@@ -52,6 +72,7 @@ type ApiKeySecurityScheme struct {
 
 func (s *ApiKeySecurityScheme) Serve(req *http.Request) error {
 	request := EventRequestFromContext(req.Context())
+	var val string
 	switch s.In {
 	case "header":
 		auth := req.Header.Get(s.Name)
@@ -59,22 +80,55 @@ func (s *ApiKeySecurityScheme) Serve(req *http.Request) error {
 			return fmt.Errorf("missing header for API Key: %v", s.Name)
 		}
 		request.Header[s.Name] = auth
+		val = auth
 	case "query":
 		q := req.URL.Query()
 		if !q.Has(s.Name) {
 			return fmt.Errorf("no API key in query: %v", s.Name)
 		}
-		key := req.URL.Query().Get(s.Name)
-		request.Query[s.Name] = key
+		val = req.URL.Query().Get(s.Name)
+		request.Query[s.Name] = val
 	case "cookie":
 		c, err := req.Cookie(s.Name)
 		if errors.Is(err, http.ErrNoCookie) {
 			return fmt.Errorf("no API key in cookie: %v", s.Name)
 		}
 		request.Cookie[s.Name] = c.Value
+		val = c.Value
 	default:
 		return fmt.Errorf("security scheme API Key in not supported: %v", s.In)
 	}
+
+	if log, ok := LogEventFromContext(req.Context()); ok {
+		if s.In == "query" {
+			log.Request.Parameters = append(log.Request.Parameters, HttpParameter{
+				Name:  s.Name,
+				Type:  "query",
+				Value: val,
+				Raw:   &val,
+			})
+		} else if s.In == "cookie" {
+			log.Request.Parameters = append(log.Request.Parameters, HttpParameter{
+				Name:  s.Name,
+				Type:  "cookie",
+				Value: val,
+				Raw:   &val,
+			})
+		} else {
+			name := strings.ToLower(s.Name)
+			for i, p := range log.Request.Parameters {
+				if strings.ToLower(p.Name) == name && p.Type == s.In {
+					// Golang enforces a canonical format, where each word's first letter is capitalized.
+					// Update the name to be identical to the specification name
+					p.Name = s.Name
+					p.Value = val
+					log.Request.Parameters[i] = p
+					break
+				}
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -99,6 +153,17 @@ func (s *OAuth2SecurityScheme) Serve(req *http.Request) error {
 		return fmt.Errorf("missing authorization header")
 	}
 	request.Header["Authorization"] = auth
+
+	if log, ok := LogEventFromContext(req.Context()); ok {
+		for i, p := range log.Request.Parameters {
+			if p.Name == "Authorization" {
+				p.Value = auth
+				log.Request.Parameters[i] = p
+				break
+			}
+		}
+	}
+
 	return nil
 }
 
