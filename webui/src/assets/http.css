@@ -13,7 +13,11 @@
 .operation.head, .operation.trace {
     background-color: var(--color-yellow);
 }
-
+.status-code.default.active {
+    outline-width: 3px;
+    outline-color: rgba(107, 107, 107, 0.4) !important;
+    outline-style: solid;
+}
 .status-code.success {
     background-color: var(--color-green);
 }

@@ -345,14 +345,14 @@ func TestGeneratorInt(t *testing.T) {
 		},
 		{
 			name: "int64 min max positive exclusive but error",
-			schema: &schema.Schema{SubSchema: &schema.SubSchema{
+			schema: &schema.Schema{
 				Type:             jsonSchema.Types{"integer"},
 				Format:           "int64",
 				Minimum:          toFloatP(4),
 				Maximum:          toFloatP(5),
 				ExclusiveMinimum: jsonSchema.NewUnionTypeB[float64, bool](true),
 				ExclusiveMaximum: jsonSchema.NewUnionTypeB[float64, bool](true),
-			}},
+			},
 			test: func(t *testing.T, i interface{}, err error) {
 				require.EqualError(t, err, "invalid minimum '5' and maximum '4' in schema type=integer format=int64 minimum=4 maximum=5 exclusiveMinimum=true exclusiveMaximum=true")
 			},
@@ -724,7 +724,7 @@ func TestGenerator_AllOf(t *testing.T) {
 		{
 			name: "one reference value is null",
 			schema: schematest.NewAllOfRefs(
-				&schema.Schema{},
+				nil,
 				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
 			),
 			test: func(t *testing.T, result interface{}, err error) {

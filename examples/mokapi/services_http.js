@@ -177,6 +177,62 @@ export let apps = [
                                     }
                                 ]
                             }
+                        ],
+                        security: [
+                            {
+                                foo: {
+                                    scopes: [],
+                                    configs: {
+                                        type: "apiKey",
+                                        in: "header",
+                                        name: "X-API-Key"
+                                    }
+                                },
+                            },
+                            {
+                                foo: {
+                                    scopes: [],
+                                    configs: {
+                                        type: "apiKey",
+                                        in: "header",
+                                        name: "X-API-Key"
+                                    }
+                                },
+                                bar: {
+                                    scopes: ["read_pets"],
+                                    configs: {
+                                        type: "oauth2",
+                                        flows: {
+                                            implicit: {
+                                                authorizationUrl: "https://api.example.com/oauth2/authorize",
+                                                scopes: {
+                                                    read_pets: "read your pets",
+                                                    write_pets: "modify pets in your account",
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                basicAuth: {
+                                    scopes: [],
+                                    configs: {
+                                        type: "http",
+                                        scheme: "basic"
+                                    }
+                                }
+                            },
+                            {
+                                bearerAuth: {
+                                    scopes: [],
+                                    configs: {
+                                        type: "http",
+                                        scheme: "bearer",
+                                        bearerFormat: "JWT"
+                                    }
+                                }
+                            }
                         ]
                     }
                 ]
@@ -397,6 +453,10 @@ export let apps = [
                                         }
                                     }
                                 ]
+                            },
+                            {
+                                statusCode: 'default',
+                                description: 'Unexpected error'
                             }
                         ]
                     }

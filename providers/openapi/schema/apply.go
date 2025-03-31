@@ -6,142 +6,170 @@ func (s *Schema) apply(ref *Schema) {
 	if ref == nil {
 		return
 	}
-	if s.SubSchema == nil {
-		s.SubSchema = ref.SubSchema
-		return
-	}
-	if len(s.m) == 0 {
-		s.SubSchema = ref.SubSchema
-		return
-	}
 
 	if s.isEmpty() && s.Boolean == nil && ref.Boolean != nil {
 		s.Boolean = ref.Boolean
 		return
 	}
 
-	if len(s.Type) == 0 {
+	if !s.isSet("type") {
 		s.Type = ref.Type
 	}
-	if s.Enum == nil {
+	if !s.isSet("enum") {
 		s.Enum = ref.Enum
 	}
-	if s.Const == nil {
+	if !s.isSet("const") {
 		s.Const = ref.Const
 	}
-	if len(s.Format) == 0 {
+
+	if !s.isSet("multipleOf") {
+		s.MultipleOf = ref.MultipleOf
+	}
+	if !s.isSet("minimum") {
+		s.Minimum = ref.Minimum
+	}
+	if !s.isSet("maximum") {
+		s.Maximum = ref.Maximum
+	}
+	if !s.isSet("exclusiveMinimum") {
+		s.ExclusiveMinimum = ref.ExclusiveMinimum
+	}
+	if !s.isSet("exclusiveMaximum") {
+		s.ExclusiveMaximum = ref.ExclusiveMaximum
+	}
+
+	if !s.isSet("pattern") {
+		s.Pattern = ref.Pattern
+	}
+	if !s.isSet("minLength") {
+		s.MinLength = ref.MinLength
+	}
+	if !s.isSet("maxLength") {
+		s.MaxLength = ref.MaxLength
+	}
+	if !s.isSet("format") {
 		s.Format = ref.Format
 	}
 
-	if len(s.Pattern) == 0 {
-		s.Pattern = ref.Pattern
-	}
-	if s.MinLength == nil {
-		s.MinLength = ref.MinLength
-	}
-	if s.MaxLength == nil {
-		s.MaxLength = ref.MaxLength
-	}
-	if s.MultipleOf == nil {
-		s.MultipleOf = ref.MultipleOf
-	}
-	if s.Minimum == nil {
-		s.Minimum = ref.Minimum
-	}
-	if s.Maximum == nil {
-		s.Maximum = ref.Maximum
-	}
-	if s.ExclusiveMinimum == nil {
-		s.ExclusiveMinimum = ref.ExclusiveMinimum
-	}
-	if s.ExclusiveMaximum == nil {
-		s.ExclusiveMaximum = ref.ExclusiveMaximum
-	}
-	if s.Items == nil {
+	if !s.isSet("items") {
 		s.Items = ref.Items
 	}
-
-	if _, ok := s.m["uniqueItems"]; !ok {
-		s.UniqueItems = ref.UniqueItems
+	if !s.isSet("prefixItems") {
+		s.PrefixItems = ref.PrefixItems
 	}
-
-	if s.MinItems == nil {
+	if !s.isSet("unevaluatedItems") {
+		s.UnevaluatedItems = ref.UnevaluatedItems
+	}
+	if !s.isSet("contains") {
+		s.Contains = ref.Contains
+	}
+	if !s.isSet("maxContains") {
+		s.MaxContains = ref.MaxContains
+	}
+	if !s.isSet("minContains") {
+		s.MinContains = ref.MinContains
+	}
+	if !s.isSet("minContains") {
+		s.MinContains = ref.MinContains
+	}
+	if !s.isSet("minItems") {
 		s.MinItems = ref.MinItems
 	}
-	if s.MaxItems == nil {
+	if !s.isSet("maxItems") {
 		s.MaxItems = ref.MaxItems
 	}
-
-	if _, ok := s.m["shuffleItems"]; !ok {
+	if !s.isSet("uniqueItems") {
+		s.UniqueItems = ref.UniqueItems
+	}
+	if !s.isSet("shuffleItems") {
 		s.ShuffleItems = ref.ShuffleItems
 	}
 
-	if s.Properties == nil {
+	if !s.isSet("properties") {
 		s.Properties = ref.Properties
 	}
-
-	if s.Required == nil {
-		s.Required = ref.Required
+	if !s.isSet("patternProperties") {
+		s.PatternProperties = ref.PatternProperties
 	}
-
-	if s.AdditionalProperties == nil {
-		s.AdditionalProperties = ref.AdditionalProperties
-	} else {
-		s.AdditionalProperties.apply(ref.AdditionalProperties)
-	}
-
-	if s.MinProperties == nil {
+	if !s.isSet("minProperties") {
 		s.MinProperties = ref.MinProperties
 	}
-	if s.MaxProperties == nil {
+	if !s.isSet("maxProperties") {
 		s.MaxProperties = ref.MaxProperties
 	}
-	if len(s.Title) == 0 {
+	if !s.isSet("required") {
+		s.Required = ref.Required
+	}
+	if !s.isSet("dependentRequired") {
+		s.DependentRequired = ref.DependentRequired
+	}
+	if !s.isSet("dependentSchemas") {
+		s.DependentSchemas = ref.DependentSchemas
+	}
+	if !s.isSet("additionalProperties") {
+		s.AdditionalProperties = ref.AdditionalProperties
+	}
+	if !s.isSet("unevaluatedProperties") {
+		s.UnevaluatedProperties = ref.UnevaluatedProperties
+	}
+	if !s.isSet("propertyNames") {
+		s.PropertyNames = ref.PropertyNames
+	}
+
+	if !s.isSet("anyOf") {
+		s.AnyOf = ref.AnyOf
+	}
+	if !s.isSet("allOf") {
+		s.AllOf = ref.AllOf
+	}
+	if !s.isSet("oneOf") {
+		s.OneOf = ref.OneOf
+	}
+	if !s.isSet("not") {
+		s.Not = ref.Not
+	}
+
+	if !s.isSet("if") {
+		s.If = ref.If
+	}
+	if !s.isSet("then") {
+		s.Then = ref.Then
+	}
+	if !s.isSet("else") {
+		s.Else = ref.Else
+	}
+
+	if !s.isSet("title") {
 		s.Title = ref.Title
 	}
-	if len(s.Description) == 0 {
+	if !s.isSet("description") {
 		s.Description = ref.Description
 	}
-	if s.Default == nil {
+	if !s.isSet("default") {
 		s.Default = ref.Default
 	}
-
-	if _, ok := s.m["deprecated"]; !ok {
+	if !s.isSet("deprecated") {
 		s.Deprecated = ref.Deprecated
 	}
-
-	if s.Examples == nil {
+	if !s.isSet("examples") {
 		s.Examples = ref.Examples
 	}
-	if len(s.ContentMediaType) == 0 {
+	if !s.isSet("example") {
+		s.Example = ref.Example
+	}
+
+	if !s.isSet("contentMediaType") {
 		s.ContentMediaType = ref.ContentMediaType
 	}
-	if len(s.ContentEncoding) == 0 {
+	if !s.isSet("contentEncoding") {
 		s.ContentEncoding = ref.ContentEncoding
 	}
 
-	if s.Definitions == nil {
-		s.Definitions = ref.Definitions
-	} else {
-		for k, v := range ref.Definitions {
-			if def, ok := s.Definitions[k]; ok {
-				def.apply(v)
-			} else {
-				s.Definitions[k] = v
-			}
-		}
+	if !s.isSet("xml") {
+		s.Xml = ref.Xml
 	}
-
-	if s.Defs == nil {
-		s.Defs = ref.Defs
-	} else {
-		for k, v := range ref.Defs {
-			if def, ok := s.Defs[k]; ok {
-				def.apply(v)
-			} else {
-				s.Defs[k] = v
-			}
-		}
+	if !s.isSet("nullable") {
+		s.Nullable = ref.Nullable
 	}
 }
 
@@ -152,4 +180,8 @@ func (s *Schema) isEmpty() bool {
 		}
 	}
 	return true
+}
+
+func (s *Schema) isSet(name string) bool {
+	return s.m[name]
 }

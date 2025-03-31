@@ -83,10 +83,39 @@ components:
 				require.Len(t, c.Components.SecuritySchemes, 1)
 				scheme := c.Components.SecuritySchemes["foo"]
 				require.IsType(t, &openapi.ApiKeySecurityScheme{}, scheme)
-				http := scheme.(*openapi.ApiKeySecurityScheme)
-				require.Equal(t, "apiKey", http.Type)
-				require.Equal(t, "header", http.In)
-				require.Equal(t, "X-API-KEY", http.Name)
+				apiKey := scheme.(*openapi.ApiKeySecurityScheme)
+				require.Equal(t, "apiKey", apiKey.Type)
+				require.Equal(t, "header", apiKey.In)
+				require.Equal(t, "X-API-KEY", apiKey.Name)
+			},
+		},
+		{
+			Name: "oauth2 scheme",
+			Content: `
+openapi: 3.0.0
+components:
+  securitySchemes:
+    foo:
+      type: oauth2
+      description: foobar
+      flows:
+        implicit:
+          authorizationUrl: https://example.com/oauth2
+          scopes:
+            read_pets: read your pets
+            write_pets: modify pets in your account
+`,
+			f: func(t *testing.T, c *openapi.Config) {
+				require.Len(t, c.Components.SecuritySchemes, 1)
+				scheme := c.Components.SecuritySchemes["foo"]
+				require.IsType(t, &openapi.OAuth2SecurityScheme{}, scheme)
+				oauth2 := scheme.(*openapi.OAuth2SecurityScheme)
+				require.Equal(t, "oauth2", oauth2.Type)
+				require.Equal(t, "foobar", oauth2.Description)
+				require.Len(t, oauth2.Flows, 1)
+				require.Contains(t, oauth2.Flows, "implicit")
+				require.Equal(t, "https://example.com/oauth2", oauth2.Flows["implicit"].AuthorizationUrl)
+				require.Equal(t, map[string]string{"write_pets": "modify pets in your account", "read_pets": "read your pets"}, oauth2.Flows["implicit"].Scopes)
 			},
 		},
 	}
@@ -190,10 +219,10 @@ func TestConfig_Security_Json(t *testing.T) {
 				require.Len(t, c.Components.SecuritySchemes, 1)
 				scheme := c.Components.SecuritySchemes["foo"]
 				require.IsType(t, &openapi.ApiKeySecurityScheme{}, scheme)
-				http := scheme.(*openapi.ApiKeySecurityScheme)
-				require.Equal(t, "apiKey", http.Type)
-				require.Equal(t, "header", http.In)
-				require.Equal(t, "X-API-KEY", http.Name)
+				apiKey := scheme.(*openapi.ApiKeySecurityScheme)
+				require.Equal(t, "apiKey", apiKey.Type)
+				require.Equal(t, "header", apiKey.In)
+				require.Equal(t, "X-API-KEY", apiKey.Name)
 			},
 		},
 		{
@@ -204,11 +233,16 @@ func TestConfig_Security_Json(t *testing.T) {
   "securitySchemes": {
     "foo": {
       "type": "oauth2",
+      "description": "foobar",
       "flows": {
         "implicit": {
-          "authorizationUrl": "https://foo.bar"
+          "authorizationUrl": "https://example.com/oauth2",
+          "scopes": {
+            "read_pets": "read your pets",
+            "write_pets": "modify pets in your account"
          }
        }
+     }
     }
   }
 }
@@ -216,7 +250,14 @@ func TestConfig_Security_Json(t *testing.T) {
 			f: func(t *testing.T, c *openapi.Config) {
 				require.Len(t, c.Components.SecuritySchemes, 1)
 				scheme := c.Components.SecuritySchemes["foo"]
-				require.IsType(t, &openapi.NotSupportedSecurityScheme{}, scheme)
+				require.IsType(t, &openapi.OAuth2SecurityScheme{}, scheme)
+				oauth2 := scheme.(*openapi.OAuth2SecurityScheme)
+				require.Equal(t, "oauth2", oauth2.Type)
+				require.Equal(t, "foobar", oauth2.Description)
+				require.Len(t, oauth2.Flows, 1)
+				require.Contains(t, oauth2.Flows, "implicit")
+				require.Equal(t, "https://example.com/oauth2", oauth2.Flows["implicit"].AuthorizationUrl)
+				require.Equal(t, map[string]string{"write_pets": "modify pets in your account", "read_pets": "read your pets"}, oauth2.Flows["implicit"].Scopes)
 			},
 		},
 	}

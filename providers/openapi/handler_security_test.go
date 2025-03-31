@@ -1,10 +1,12 @@
 package openapi_test
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/require"
 	"mokapi/engine/common"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
+	"mokapi/runtime/events"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -25,7 +27,6 @@ func TestHandler_Security(t *testing.T) {
 				)
 				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
 					"foo": &openapi.HttpSecurityScheme{
-						Type:   "http",
 						Scheme: "basic",
 					},
 				}
@@ -35,7 +36,12 @@ func TestHandler_Security(t *testing.T) {
 				r.Header.Set("Authorization", "Basic 123")
 				rr := httptest.NewRecorder()
 				h(rr, r)
-				require.Equal(t, `"123"`, rr.Body.String())
+				require.Equal(t, `"Basic 123"`, rr.Body.String())
+
+				logs := events.GetEvents(events.NewTraits().WithNamespace("http"))
+				httpLog := logs[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "Basic 123", httpLog.Request.Parameters[0].Value)
+				require.Equal(t, "Basic 123", *httpLog.Request.Parameters[0].Raw)
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
 				req := args[0].(*common.EventRequest)
@@ -53,7 +59,6 @@ func TestHandler_Security(t *testing.T) {
 				)
 				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
 					"foo": &openapi.HttpSecurityScheme{
-						Type:   "http",
 						Scheme: "bearer",
 					},
 				}
@@ -63,6 +68,11 @@ func TestHandler_Security(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 				require.Equal(t, http.StatusForbidden, rr.Code)
+
+				logs := events.GetEvents(events.NewTraits().WithNamespace("http"))
+				httpLog := logs[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "", httpLog.Request.Parameters[0].Value)
+				require.Nil(t, httpLog.Request.Parameters[0].Raw)
 			},
 		},
 		{
@@ -74,7 +84,6 @@ func TestHandler_Security(t *testing.T) {
 				)
 				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
 					"foo": &openapi.HttpSecurityScheme{
-						Type:   "http",
 						Scheme: "bearer",
 					},
 				}
@@ -85,7 +94,12 @@ func TestHandler_Security(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 				require.Equal(t, http.StatusOK, rr.Code)
-				require.Equal(t, `"123"`, rr.Body.String())
+				require.Equal(t, `"Bearer 123"`, rr.Body.String())
+
+				logs := events.GetEvents(events.NewTraits().WithNamespace("http"))
+				httpLog := logs[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "Bearer 123", httpLog.Request.Parameters[0].Value)
+				require.Equal(t, "Bearer 123", *httpLog.Request.Parameters[0].Raw)
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
 				req := args[0].(*common.EventRequest)
@@ -103,7 +117,6 @@ func TestHandler_Security(t *testing.T) {
 				)
 				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
 					"foo": &openapi.ApiKeySecurityScheme{
-						Type: "apiKey",
 						In:   "header",
 						Name: "X-API-KEY",
 					},
@@ -116,6 +129,11 @@ func TestHandler_Security(t *testing.T) {
 				h(rr, r)
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, `"123"`, rr.Body.String())
+
+				logs := events.GetEvents(events.NewTraits().WithNamespace("http"))
+				httpLog := logs[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "123", httpLog.Request.Parameters[0].Value)
+				require.Equal(t, "123", *httpLog.Request.Parameters[0].Raw)
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
 				req := args[0].(*common.EventRequest)
@@ -133,7 +151,6 @@ func TestHandler_Security(t *testing.T) {
 				)
 				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
 					"foo": &openapi.ApiKeySecurityScheme{
-						Type: "apiKey",
 						In:   "query",
 						Name: "apikey",
 					},
@@ -145,6 +162,12 @@ func TestHandler_Security(t *testing.T) {
 				h(rr, r)
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, `"123"`, rr.Body.String())
+
+				logs := events.GetEvents(events.NewTraits().WithNamespace("http"))
+				httpLog := logs[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "apikey", httpLog.Request.Parameters[0].Name)
+				require.Equal(t, "123", httpLog.Request.Parameters[0].Value)
+				require.Equal(t, "123", *httpLog.Request.Parameters[0].Raw)
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
 				req := args[0].(*common.EventRequest)
@@ -162,7 +185,6 @@ func TestHandler_Security(t *testing.T) {
 				)
 				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
 					"foo": &openapi.ApiKeySecurityScheme{
-						Type: "apiKey",
 						In:   "cookie",
 						Name: "apikey",
 					},
@@ -175,6 +197,11 @@ func TestHandler_Security(t *testing.T) {
 				h(rr, r)
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, `"123"`, rr.Body.String())
+
+				logs := events.GetEvents(events.NewTraits().WithNamespace("http"))
+				httpLog := logs[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "123", httpLog.Request.Parameters[1].Value)
+				require.Equal(t, "123", *httpLog.Request.Parameters[1].Raw)
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
 				req := args[0].(*common.EventRequest)
@@ -203,13 +230,114 @@ func TestHandler_Security(t *testing.T) {
 				require.Equal(t, http.StatusOK, rr.Code)
 			},
 		},
+		{
+			name: "oauth2",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				op := openapitest.NewOperation(
+					openapitest.WithSecurity(map[string][]string{"foo": {}}),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+				)
+				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
+					"foo": &openapi.OAuth2SecurityScheme{},
+				}
+				openapitest.AppendPath("/foo", c, openapitest.WithOperation("GET", op))
+
+				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
+				r.Header.Set("Authorization", "Bearer 123")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, `"Bearer 123"`, rr.Body.String())
+
+				logs := events.GetEvents(events.NewTraits().WithNamespace("http"))
+				httpLog := logs[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "Bearer 123", httpLog.Request.Parameters[0].Value)
+				require.Equal(t, "Bearer 123", *httpLog.Request.Parameters[0].Raw)
+			},
+			event: func(event string, args ...interface{}) []*common.Action {
+				req := args[0].(*common.EventRequest)
+				r := args[1].(*common.EventResponse)
+				r.Data = req.Header["Authorization"]
+				return nil
+			},
+		},
+		{
+			name: "oauth2 and api key required",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				op := openapitest.NewOperation(
+					openapitest.WithSecurity(
+						map[string][]string{
+							"foo": {},
+							"bar": {},
+						},
+					),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+				)
+				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
+					"foo": &openapi.OAuth2SecurityScheme{},
+					"bar": &openapi.ApiKeySecurityScheme{
+						In:   "header",
+						Name: "apikey",
+					},
+				}
+				openapitest.AppendPath("/foo", c, openapitest.WithOperation("GET", op))
+
+				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
+				r.Header.Set("Authorization", "Bearer 123")
+				r.Header.Set("apikey", "API_KEY_123")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, `"Bearer 123 - API_KEY_123"`, rr.Body.String())
+			},
+			event: func(event string, args ...interface{}) []*common.Action {
+				req := args[0].(*common.EventRequest)
+				r := args[1].(*common.EventResponse)
+				r.Data = fmt.Sprintf("%s - %s", req.Header["Authorization"], req.Header["apikey"])
+				return nil
+			},
+		},
+		{
+			name: "oauth2 or api key required",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				op := openapitest.NewOperation(
+					openapitest.WithSecurity(map[string][]string{"foo": {}}),
+					openapitest.WithSecurity(map[string][]string{"bar": {}}),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+				)
+				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
+					"foo": &openapi.OAuth2SecurityScheme{},
+					"bar": &openapi.ApiKeySecurityScheme{
+						In:   "header",
+						Name: "apikey",
+					},
+				}
+				openapitest.AppendPath("/foo", c, openapitest.WithOperation("GET", op))
+
+				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
+				r.Header.Set("apikey", "API_KEY_123")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, `"API_KEY_123"`, rr.Body.String())
+			},
+			event: func(event string, args ...interface{}) []*common.Action {
+				req := args[0].(*common.EventRequest)
+				r := args[1].(*common.EventResponse)
+				r.Data = req.Header["apikey"]
+				return nil
+			},
+		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+			events.SetStore(10, events.NewTraits().WithNamespace("http"))
+			defer events.Reset()
 
 			config := &openapi.Config{
 				Info:       openapi.Info{Name: "Testing"},

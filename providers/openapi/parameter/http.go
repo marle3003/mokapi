@@ -2,11 +2,13 @@ package parameter
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 	"mokapi/providers/openapi/schema"
 	"mokapi/schema/json/parser"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -95,6 +97,8 @@ func FromRequest(params Parameters, route string, r *http.Request) (RequestParam
 		}
 	}
 
+	validate(route, parameters)
+
 	return parameters, nil
 }
 
@@ -112,7 +116,7 @@ func parseExplodeObject(param *Parameter, value, separator string, decode decode
 	for _, i := range values {
 		kv := strings.Split(i, "=")
 		if len(kv) != 2 {
-			return nil, errors.Errorf("invalid format")
+			return nil, fmt.Errorf("invalid format")
 		}
 		key, err := decode(kv[0])
 		if err != nil {
@@ -170,4 +174,22 @@ func parseArray(param *Parameter, value []string) (interface{}, error) {
 
 func defaultDecode(s string) (string, error) {
 	return s, nil
+}
+
+func validate(route string, params RequestParameters) {
+	re := regexp.MustCompile(`\{([^}]+)}`)
+	matches := re.FindAllStringSubmatch(route, -1)
+
+	var err error
+	for _, match := range matches {
+		if len(match) > 1 {
+			if _, found := params[Path][match[1]]; !found {
+				err = errors.Join(err, fmt.Errorf("invalid path parameter '%v'", match[1]))
+			}
+		}
+	}
+
+	if err != nil {
+		log.Warnf("missing parameter definition for route %s: %s", route, err)
+	}
 }

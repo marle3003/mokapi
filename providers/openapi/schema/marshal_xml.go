@@ -12,7 +12,7 @@ import (
 )
 
 func marshalXml(i interface{}, r *Schema) ([]byte, error) {
-	if r == nil || r.SubSchema == nil {
+	if r == nil {
 		return nil, fmt.Errorf("no schema provided")
 	}
 

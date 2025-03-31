@@ -917,6 +917,58 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 	}
 }
 
+func TestHandler_Parameter(t *testing.T) {
+	testcases := []struct {
+		name  string
+		test  func(t *testing.T, f http.HandlerFunc, c *openapi.Config)
+		event func(event string, args ...interface{}) []*common.Action
+	}{
+		{
+			name: "path parameter missing",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				hook := test.NewGlobal()
+
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json", openapitest.NewContent()),
+					))
+				openapitest.AppendPath("/foo/{id}", c,
+					openapitest.WithOperation(http.MethodPost, op),
+				)
+				r := httptest.NewRequest("post", "http://localhost/foo/123", strings.NewReader(`{ "foo": "bar" }`))
+				r.Header.Set("Content-Type", "application/json")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code)
+
+				require.Len(t, hook.Entries, 2)
+				require.Equal(t, "missing parameter definition for route /foo/{id}: invalid path parameter 'id'", hook.Entries[0].Message)
+			},
+			event: func(event string, args ...interface{}) []*common.Action {
+				req := args[0].(*common.EventRequest)
+				require.NotContains(t, req.Path, "id")
+				require.Len(t, req.Path, 0)
+				return nil
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			config := &openapi.Config{
+				Info:       openapi.Info{Name: "Testing"},
+				Servers:    []*openapi.Server{{Url: "http://localhost"}},
+				Components: openapi.Components{},
+			}
+
+			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
+				h := openapi.NewHandler(config, &engine{emit: tc.event})
+				h.ServeHTTP(rw, r)
+			}, config)
+		})
+	}
+}
+
 type engine struct {
 	emit func(event string, args ...interface{}) []*common.Action
 }

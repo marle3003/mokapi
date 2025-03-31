@@ -15,7 +15,7 @@ func ConvertToJsonSchema(s *Schema) *schema.Schema {
 }
 
 func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
-	if s == nil || s.SubSchema == nil {
+	if s == nil {
 		return nil
 	}
 	if c.history == nil {

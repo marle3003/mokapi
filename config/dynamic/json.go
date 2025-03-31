@@ -342,8 +342,20 @@ func getField(v reflect.Value, name string) (reflect.Value, error) {
 		return field, nil
 	}
 
-	for i := 0; i < v.NumField(); i++ {
-		f := v.Type().Field(i)
+	t := v.Type()
+	for i := 0; i < t.NumField(); i++ {
+		f := t.Field(i)
+
+		if f.Anonymous {
+			v2 := v.Field(i)
+			if v2.Kind() == reflect.Ptr {
+				v2 = v2.Elem()
+			}
+			v2, _ = getField(v2, name)
+			if v2.IsValid() {
+				return v2, nil
+			}
+		}
 
 		tag := f.Tag.Get("json")
 		if len(tag) == 0 {

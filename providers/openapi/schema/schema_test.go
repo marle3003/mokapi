@@ -335,6 +335,14 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 				require.EqualError(t, err, "structural error at items: expected object but received an array")
 			},
 		},
+		{
+			name: "$defs",
+			s:    `{ "$defs": { "content": { "$dynamicAnchor": "T", "not": true } } }`,
+			test: func(t *testing.T, r *schema.Schema, err error) {
+				require.Equal(t, "T", r.Defs["content"].DynamicAnchor)
+				require.Equal(t, true, *r.Defs["content"].Not.Boolean)
+			},
+		},
 	} {
 		test := testcase
 		t.Run(test.name, func(t *testing.T) {
@@ -742,7 +750,7 @@ $ref: '#/components/schemas/foo'
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := schema.NewSchema()
+			s := &schema.Schema{}
 			err := yaml.Unmarshal([]byte(tc.s), &s)
 			require.NoError(t, err)
 			tc.fn(t, s)

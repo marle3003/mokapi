@@ -33,14 +33,15 @@ type pathItem struct {
 }
 
 type operation struct {
-	Method      string       `json:"method"`
-	Summary     string       `json:"summary,omitempty"`
-	Description string       `json:"description,omitempty"`
-	OperationId string       `json:"operationId,omitempty"`
-	Deprecated  bool         `json:"deprecated"`
-	RequestBody *requestBody `json:"requestBody,omitempty"`
-	Parameters  []param      `json:"parameters,omitempty"`
-	Responses   []response   `json:"responses,omitempty"`
+	Method      string                `json:"method"`
+	Summary     string                `json:"summary,omitempty"`
+	Description string                `json:"description,omitempty"`
+	OperationId string                `json:"operationId,omitempty"`
+	Deprecated  bool                  `json:"deprecated"`
+	RequestBody *requestBody          `json:"requestBody,omitempty"`
+	Parameters  []param               `json:"parameters,omitempty"`
+	Responses   []response            `json:"responses,omitempty"`
+	Security    []securityRequirement `json:"security,omitempty"`
 }
 
 type param struct {
@@ -81,6 +82,13 @@ type mediaType struct {
 type server struct {
 	Url         string `json:"url"`
 	Description string `json:"description"`
+}
+
+type securityRequirement map[string]securityScheme
+
+type securityScheme struct {
+	Scopes  []string    `json:"scopes"`
+	Configs interface{} `json:"configs"`
 }
 
 func getHttpServices(store *runtime.HttpStore, m *monitor.Monitor) []interface{} {
@@ -232,6 +240,20 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 
 				op.Responses = append(op.Responses, res)
 			}
+
+			for _, sec := range o.Security {
+				req := securityRequirement{}
+				for n, scopes := range sec {
+					secConfig := s.Components.SecuritySchemes[n]
+					scheme := securityScheme{
+						Scopes:  scopes,
+						Configs: secConfig,
+					}
+					req[n] = scheme
+				}
+				op.Security = append(op.Security, req)
+			}
+
 			pi.Operations = append(pi.Operations, op)
 		}
 		result.Paths = append(result.Paths, pi)
