@@ -38,7 +38,7 @@ func Examples() *Tree {
 				if err := validate(v, s); err == nil {
 					return v, nil
 				} else {
-					log.Warnf("skip using example from schema #/%s: example %d is not valid: %s", strings.Join(path, "/"), i, err.Error())
+					log.Warnf("skip using example from schema #/%s: example with index '%d' is not valid: %s", strings.Join(path, "/"), i, err.Error())
 				}
 				i = (i + 1) % len(s.Examples)
 				if i == index {

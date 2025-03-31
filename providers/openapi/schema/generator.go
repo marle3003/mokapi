@@ -5,7 +5,7 @@ import (
 )
 
 func CreateValue(s *Schema) (interface{}, error) {
-	if s == nil || s.SubSchema == nil {
+	if s == nil {
 		return generator.New(&generator.Request{})
 	}
 	c := &JsonSchemaConverter{}

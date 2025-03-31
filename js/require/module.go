@@ -9,6 +9,7 @@ import (
 	"mokapi/config/dynamic"
 	"net/url"
 	"path/filepath"
+	"slices"
 )
 
 var (
@@ -36,22 +37,16 @@ func (m *module) requireModule(modPath string) *goja.Object {
 		panic(m.vm.ToValue("missing argument"))
 	}
 	cmp := m.getCurrentModulePath()
-	key := fmt.Sprintf("%v:%v", filepath.Dir(cmp), modPath)
 
-	if v, ok := m.modules[key]; ok {
-		return v
-	}
 	if loader, ok := m.registry.native[modPath]; ok {
 		mod := m.createModuleObject()
 		loader(m.vm, mod)
-		m.modules[key] = mod
 		return mod
 	}
 	if u, err := url.Parse(modPath); err == nil && len(u.Scheme) > 0 {
 		src, err := m.host.OpenFile(modPath, "")
 		if err == nil {
 			if mod, err := m.loadModule(modPath, src); err == nil && mod != nil {
-				m.modules[key] = mod
 				return mod
 			}
 		}
@@ -76,7 +71,8 @@ func (m *module) requireModule(modPath string) *goja.Object {
 }
 
 func (m *module) loadFileModule(modPath string) (*goja.Object, error) {
-	if len(filepath.Ext(modPath)) > 0 {
+	ext := filepath.Ext(modPath)
+	if len(ext) > 0 && slices.Contains(supportedExtensions, ext) {
 		src, err := m.host.OpenFile(modPath, "")
 		if err != nil {
 			return nil, ModuleFileNotFound
@@ -89,7 +85,7 @@ func (m *module) loadFileModule(modPath string) (*goja.Object, error) {
 		return m.loadModule(modPath, src)
 	}
 
-	for _, ext := range supportedExtensions {
+	for _, ext = range supportedExtensions {
 		p := modPath + ext
 		if mod, err := m.loadFileModule(p); err == nil {
 			return mod, nil
@@ -107,15 +103,28 @@ func (m *module) loadDirectoryModule(modPath string) (*goja.Object, error) {
 	}
 	if mod, err := m.loadFromPackageFile(modPath); err == nil {
 		return mod, err
+	} else if !errors.Is(err, ModuleFileNotFound) {
+		return nil, err
 	}
 	if mod, err := m.loadFileModule(filepath.Join(modPath, "index.js")); err == nil {
 		return mod, nil
+	} else if !errors.Is(err, ModuleFileNotFound) {
+		return nil, err
 	}
 	if mod, err := m.loadFileModule(filepath.Join(modPath, "index.ts")); err == nil {
 		return mod, nil
+	} else if !errors.Is(err, ModuleFileNotFound) {
+		return nil, err
 	}
 	if mod, err := m.loadFileModule(filepath.Join(modPath, "index.json")); err == nil {
 		return mod, nil
+	} else if !errors.Is(err, ModuleFileNotFound) {
+		return nil, err
+	}
+	if mod, err := m.loadFileModule(fmt.Sprintf("%s.js", modPath)); err == nil {
+		return mod, nil
+	} else if !errors.Is(err, ModuleFileNotFound) {
+		return nil, err
 	}
 
 	return nil, ModuleFileNotFound
@@ -124,7 +133,7 @@ func (m *module) loadDirectoryModule(modPath string) (*goja.Object, error) {
 func (m *module) loadFromPackageFile(modPath string) (*goja.Object, error) {
 	src, err := m.host.OpenFile(filepath.Join(modPath, "package.json"), "")
 	if err != nil {
-		return nil, err
+		return nil, ModuleFileNotFound
 	}
 
 	pkg := struct {
@@ -144,6 +153,8 @@ func (m *module) loadNodeModule(modPath, dir string) (*goja.Object, error) {
 		p := filepath.Join(dir, "node_modules", modPath)
 		if mod, err := m.loadDirectoryModule(p); err == nil {
 			return mod, nil
+		} else if !errors.Is(err, ModuleFileNotFound) {
+			return nil, err
 		}
 		if p == string(filepath.Separator) {
 			break
@@ -159,6 +170,10 @@ func (m *module) loadNodeModule(modPath, dir string) (*goja.Object, error) {
 }
 
 func (m *module) loadModule(modPath string, source *dynamic.Config) (*goja.Object, error) {
+	if mod, ok := m.modules[modPath]; ok {
+		return mod, nil
+	}
+
 	prg, err := m.registry.getModuleProgram(modPath, source)
 	if err != nil {
 		return nil, err
@@ -179,7 +194,9 @@ func (m *module) loadModule(modPath string, source *dynamic.Config) (*goja.Objec
 		mod := m.createModuleObject()
 		exports := mod.Get("exports")
 		require := m.vm.Get("require")
+
 		_, err = call(exports, exports, mod, require)
+		m.modules[modPath] = mod
 		return mod, err
 	} else {
 		return nil, fmt.Errorf("invalid module")

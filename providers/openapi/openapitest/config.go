@@ -151,3 +151,12 @@ func WithComponentPathItemRef(name string, r *openapi.PathRef) ConfigOptions {
 		c.Components.PathItems[name] = r
 	}
 }
+
+func WithComponentSecurity(name string, scheme openapi.SecurityScheme) ConfigOptions {
+	return func(c *openapi.Config) {
+		if c.Components.SecuritySchemes == nil {
+			c.Components.SecuritySchemes = openapi.SecuritySchemes{}
+		}
+		c.Components.SecuritySchemes[name] = scheme
+	}
+}

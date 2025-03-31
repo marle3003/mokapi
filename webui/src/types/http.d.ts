@@ -19,6 +19,7 @@ declare interface HttpOperation {
     parameters: HttpParameter[]
     requestBody: HttpRequestBody
     responses: HttpResponse[]
+    security: HttpSecurity[]
 }
 
 declare interface HttpParameter {
@@ -55,7 +56,7 @@ declare interface HttpRequestBody {
 }
 
 declare interface HttpResponse {
-    statusCode: number
+    statusCode: string
     description: string
     contents: HttpMediaType[]
     headers: HttpParameter[]
@@ -93,4 +94,15 @@ declare interface Action {
     tags: Tags
 }
 
-declare interface Tags {[key: string]: string}
+declare interface Tags { [key: string]: string }
+
+declare interface HttpSecurity {
+    [ name: string ]: HttpSecurityScheme
+}
+
+declare interface HttpSecurityScheme {
+    scopes: string[]
+    configs: { [ name: string ]: any }
+}
+
+

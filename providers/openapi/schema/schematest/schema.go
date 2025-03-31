@@ -8,7 +8,7 @@ import (
 type SchemaOptions func(s *schema.Schema)
 
 func New(typeName string, opts ...SchemaOptions) *schema.Schema {
-	s := &schema.Schema{SubSchema: &schema.SubSchema{}}
+	s := &schema.Schema{}
 	if typeName != "" {
 		s.Type = jsonSchema.Types{typeName}
 	}
@@ -19,7 +19,7 @@ func New(typeName string, opts ...SchemaOptions) *schema.Schema {
 }
 
 func NewTypes(types []string, opts ...SchemaOptions) *schema.Schema {
-	s := &schema.Schema{SubSchema: &schema.SubSchema{}}
+	s := &schema.Schema{}
 	s.Type = types
 	for _, opt := range opts {
 		opt(s)
@@ -30,6 +30,12 @@ func NewTypes(types []string, opts ...SchemaOptions) *schema.Schema {
 func And(typeName string) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.Type = append(s.Type, typeName)
+	}
+}
+
+func WithRef(ref string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Ref = ref
 	}
 }
 
@@ -98,6 +104,15 @@ func WithProperty(name string, ps *schema.Schema) SchemaOptions {
 	}
 }
 
+func WithPropertyRef(name string, r string) SchemaOptions {
+	return func(s *schema.Schema) {
+		if s.Properties == nil {
+			s.Properties = &schema.Schemas{}
+		}
+		s.Properties.Set(name, &schema.Schema{Ref: r})
+	}
+}
+
 func WithPatternProperty(pattern string, ps *schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
 		if s.PatternProperties == nil {
@@ -154,7 +169,7 @@ func Any(schemas ...*schema.Schema) SchemaOptions {
 }
 
 func NewAny(schemas ...*schema.Schema) *schema.Schema {
-	s := &schema.Schema{SubSchema: &schema.SubSchema{}}
+	s := &schema.Schema{}
 	for _, any := range schemas {
 		if any == nil {
 			s.AnyOf = append(s.AnyOf, nil)
@@ -174,7 +189,7 @@ func OneOf(schemas ...*schema.Schema) SchemaOptions {
 }
 
 func NewOneOf(schemas ...*schema.Schema) *schema.Schema {
-	s := &schema.Schema{SubSchema: &schema.SubSchema{}}
+	s := &schema.Schema{}
 	for _, one := range schemas {
 		if one == nil {
 			s.OneOf = append(s.OneOf, nil)
@@ -194,7 +209,7 @@ func AllOf(schemas ...*schema.Schema) SchemaOptions {
 }
 
 func NewAllOf(schemas ...*schema.Schema) *schema.Schema {
-	s := &schema.Schema{SubSchema: &schema.SubSchema{}}
+	s := &schema.Schema{}
 	for _, all := range schemas {
 		if all == nil {
 			s.AllOf = append(s.AllOf, nil)
@@ -206,7 +221,7 @@ func NewAllOf(schemas ...*schema.Schema) *schema.Schema {
 }
 
 func NewAllOfRefs(schemas ...*schema.Schema) *schema.Schema {
-	s := &schema.Schema{SubSchema: &schema.SubSchema{}}
+	s := &schema.Schema{}
 	for _, all := range schemas {
 		s.AllOf = append(s.AllOf, all)
 	}
@@ -257,7 +272,7 @@ func WithAdditionalProperties(additional *schema.Schema) SchemaOptions {
 
 func WithFreeForm(allowed bool) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.AdditionalProperties = &schema.Schema{SubSchema: &schema.SubSchema{Boolean: &allowed}}
+		s.AdditionalProperties = &schema.Schema{Boolean: &allowed}
 	}
 }
 
@@ -279,6 +294,16 @@ func WithExclusiveMinimum(min float64) SchemaOptions {
 			s.ExclusiveMinimum = jsonSchema.NewUnionTypeA[float64, bool](min)
 		} else {
 			s.ExclusiveMinimum.A = min
+		}
+	}
+}
+
+func WithExclusiveMinimumBool(b bool) SchemaOptions {
+	return func(s *schema.Schema) {
+		if s.ExclusiveMinimum == nil {
+			s.ExclusiveMinimum = jsonSchema.NewUnionTypeB[float64, bool](b)
+		} else {
+			s.ExclusiveMinimum.B = b
 		}
 	}
 }
@@ -418,5 +443,26 @@ func WithThen(condition *schema.Schema) SchemaOptions {
 func WithElse(condition *schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.Else = condition
+	}
+}
+
+func WithId(id string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Id = id
+	}
+}
+
+func WithAnchor(anchor string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Anchor = anchor
+	}
+}
+
+func WithDef(name string, def *schema.Schema) SchemaOptions {
+	return func(s *schema.Schema) {
+		if s.Defs == nil {
+			s.Defs = map[string]*schema.Schema{}
+		}
+		s.Defs[name] = def
 	}
 }

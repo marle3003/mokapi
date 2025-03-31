@@ -164,7 +164,7 @@ func (suite *PetStoreSuite) TestLuaFile() {
 	// ensure scripts are executed
 	time.Sleep(2 * time.Second)
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/findByStatus?status=available&status=pending",
-		map[string]string{"Accept": "application/json"},
+		map[string]string{"Accept": "application/json", "Authorization": "foo"},
 		try.HasStatusCode(http.StatusOK),
 		try.HasBody("[{\"name\":\"Gidget\",\"photoUrls\":[\"http://www.pets.com/gidget.png\"],\"status\":\"pending\"},{\"name\":\"Max\",\"photoUrls\":[\"http://www.pets.com/max.png\"],\"status\":\"available\"}]"))
 }

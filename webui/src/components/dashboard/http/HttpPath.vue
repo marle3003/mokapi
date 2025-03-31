@@ -60,14 +60,14 @@ onUnmounted(() => {
                     </div>
                     <div class="row mb-2" v-if="path.summary">
                         <div class="col">
-                            <div class="label">Summary</div>
-                            <div>{{ path.summary }}</div>
+                            <p class="label">Summary</p>
+                            <p>{{ path.summary }}</p>
                         </div>
                     </div>
                     <div class="row" v-if="path.description">
                         <div class="col">
-                            <div class="label">Description</div>
-                            <div>{{ path.description }}</div>
+                            <p class="label">Description</p>
+                            <p>{{ path.description }}</p>
                         </div>
                     </div>
                 </div>

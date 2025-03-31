@@ -42,8 +42,8 @@ INFO[${time(dayjs().second(1))}] adding service Swagger Petstore - OpenAPI 3.0 o
 INFO[${time(dayjs().second(2))}] Processing http request GET http://localhost/api/v3/pet/4
 `
 
-const title = `Bring your OpenAPI specs to life`
-const description = `Develop and test faster with powerful, customizable API mocks. No more waiting for real APIs!`
+const title = `Bring Your REST API Specs to Life`
+const description = `Develop and test faster with powerful, customizable REST API mocks — no more waiting for real APIs!`
 useMeta(title, description, "https://mokapi.io/http")
 
 const dialog = ref<Modal>()
@@ -156,7 +156,7 @@ function getConsoleContent() {
           </span>
           <span class="terminal-title">Mokapi Terminal</span>
         </div>
-        <div class="terminal-body" v-html="getConsoleContent()"></div>
+        <div class="terminal-body" v-html="getConsoleContent()" title="Mock the Swagger Petstore API and log incoming requests to the console"></div>
       </div>
     </section>
     <section class="feature">

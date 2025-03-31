@@ -179,7 +179,6 @@ func resolveUrl(ref string, cfg *Config) (*url.URL, error) {
 		if u.IsAbs() {
 			return u.Parse(ref)
 		}
-		log.Infof("relative reference '%s' was defined as base URI, fallback to retrieval URI '%s'", id, cfg.Info.Path())
 	}
 
 	info := cfg.Info.Kernel()

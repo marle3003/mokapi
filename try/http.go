@@ -121,6 +121,7 @@ func BodyMatch(regexp string) ResponseCondition {
 	}
 }
 
+// "{\"name\":\"foo\",\"servers\":[{\"url\":\"/\",\"description\":\"\"}],\"paths\":[{\"path\":\"/foo/{bar}\",\"operations\":[{\"method\":\"get\",\"deprecated\":false,\"responses\":[{\"statusCode\":\"200\",\"description\":\"foo description\",\"contents\":[{\"type\":\"application/json\",\"schema\":{\"type\":\"object\",\"properties\":{\"loop\":{\"$ref\":\"#/components/schemas/loop\",\"type\":\"object\",\"properties\":{\"loop\":{\"$ref\":\"#/components/schemas/loop\"}}}}}}]}]}]}]
 func HasBodyData(expected interface{}) ResponseCondition {
 	return func(t *testing.T, tr *TestResponse) {
 		body := tr.GetBody()

@@ -83,6 +83,10 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 			if v != nil {
 				c.Data = v
 			}
+
+			log.Debugf("processing %v", c.Info.Path())
+			defer log.Debugf("processed %v", c.Info.Path())
+
 			// Currently, read does not validate config. Add Validate would break compatibility
 			err = dynamic.Parse(e.config, w)
 			if err != nil {
@@ -214,6 +218,9 @@ func (w *ConfigWatcher) configChanged(evt dynamic.ConfigEvent) {
 	c := e.config
 	// set config on evt
 	evt.Config = c
+
+	log.Debugf("processing %v", c.Info.Path())
+
 	err := dynamic.Parse(c, w)
 	if err != nil {
 		log.Errorf("parse error %v: %v", c.Info.Path(), err)
@@ -232,8 +239,6 @@ func (w *ConfigWatcher) configChanged(evt dynamic.ConfigEvent) {
 	}
 
 	e.m.Unlock()
-
-	log.Debugf("processing %v", c.Info.Path())
 
 	for _, l := range w.listener {
 		go l(evt)

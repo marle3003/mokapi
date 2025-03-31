@@ -49,26 +49,12 @@ type encoder struct {
 
 func (e *encoder) encode(s *Schema) ([]byte, error) {
 	var b bytes.Buffer
-	if s.SubSchema != nil && s.SubSchema.Boolean != nil {
+	if s.Boolean != nil {
 		b.Write([]byte(fmt.Sprintf("%v", *s.Boolean)))
 		return b.Bytes(), nil
 	}
 
 	b.WriteRune('{')
-
-	if s.Ref != "" {
-		// loop protection, only return reference
-		if _, ok := e.refs[s.Ref]; ok {
-			b.Write([]byte(fmt.Sprintf(`"$ref":"%v"`, s.Ref)))
-
-			b.WriteRune('}')
-			return b.Bytes(), nil
-		}
-		e.refs[s.Ref] = true
-		defer func() {
-			delete(e.refs, s.Ref)
-		}()
-	}
 
 	v := reflect.ValueOf(s).Elem()
 	t := v.Type()
@@ -86,105 +72,59 @@ func (e *encoder) encode(s *Schema) ([]byte, error) {
 		fv := f.Interface()
 		var bVal []byte
 		switch val := fv.(type) {
-		case *SubSchema:
-			bVal, err = e.encodeSub(val)
-			if err != nil {
-				return nil, err
+		case schema.Types:
+			if len(val) == 0 {
+				continue
 			}
-			if len(bVal) > 0 {
-				if b.Len() > 1 {
-					b.Write([]byte{','})
+			bVal, err = val.MarshalJSON()
+		case *Schemas:
+			var fields bytes.Buffer
+			fields.WriteRune('{')
+			for it := val.Iter(); it.Next(); {
+				if fields.Len() > 1 {
+					fields.WriteRune(',')
 				}
-				b.Write(bVal)
+				sField, err := e.encode(it.Value())
+				if err != nil {
+					return nil, err
+				}
+				fields.WriteString(fmt.Sprintf(`"%v":`, it.Key()))
+				fields.Write(sField)
+			}
+			fields.WriteRune('}')
+			bVal = fields.Bytes()
+		case *Schema:
+			bVal, err = e.encode(val)
+		case *schema.UnionType[float64, bool]:
+			if val.IsA() {
+				bVal, err = json.Marshal(val.A)
+			} else {
+				bVal, err = json.Marshal(val.B)
 			}
 		default:
 			bVal, err = json.Marshal(val)
-			if err != nil {
-				return nil, err
-			}
-			tag := t.Field(i).Tag.Get("json")
-			args := strings.Split(tag, ",")
-			name := args[0]
-
-			if b.Len() > 1 {
-				b.Write([]byte{','})
-			}
-
-			b.WriteString(fmt.Sprintf(`"%v":`, name))
-			b.Write(bVal)
 		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		tag := t.Field(i).Tag.Get("json")
+		args := strings.Split(tag, ",")
+		name := args[0]
+		if name == "-" {
+			continue
+		}
+
+		if b.Len() > 1 {
+			b.Write([]byte{','})
+		}
+
+		b.WriteString(fmt.Sprintf(`"%v":`, name))
+		b.Write(bVal)
 	}
 
 	b.WriteRune('}')
-	return b.Bytes(), nil
-}
-
-func (e *encoder) encodeSub(s *SubSchema) ([]byte, error) {
-	var b bytes.Buffer
-
-	if s != nil {
-		v := reflect.ValueOf(s).Elem()
-		t := v.Type()
-		var err error
-		for i := 0; i < v.NumField(); i++ {
-			ft := t.Field(i)
-			if !ft.IsExported() {
-				continue
-			}
-			f := v.FieldByName(ft.Name)
-			if isEmptyValue(f) {
-				continue
-			}
-
-			fv := f.Interface()
-			var bVal []byte
-			switch val := fv.(type) {
-			case schema.Types:
-				if len(val) == 0 {
-					continue
-				}
-				bVal, err = val.MarshalJSON()
-			case *Schemas:
-				var fields bytes.Buffer
-				fields.WriteRune('{')
-				for it := val.Iter(); it.Next(); {
-					if fields.Len() > 1 {
-						fields.WriteRune(',')
-					}
-					sField, err := e.encode(it.Value())
-					if err != nil {
-						return nil, err
-					}
-					fields.WriteString(fmt.Sprintf(`"%v":`, it.Key()))
-					fields.Write(sField)
-				}
-				fields.WriteRune('}')
-				bVal = fields.Bytes()
-			case *Schema:
-				bVal, err = e.encode(val)
-			case *SubSchema:
-				bVal, err = e.encodeSub(val)
-			default:
-				bVal, err = json.Marshal(val)
-			}
-
-			if err != nil {
-				return nil, err
-			}
-
-			if b.Len() > 1 {
-				b.Write([]byte{','})
-			}
-
-			tag := t.Field(i).Tag.Get("json")
-			args := strings.Split(tag, ",")
-			name := args[0]
-
-			b.WriteString(fmt.Sprintf(`"%v":`, name))
-			b.Write(bVal)
-		}
-	}
-
 	return b.Bytes(), nil
 }
 

@@ -3,11 +3,7 @@ package schema
 import jsonSchema "mokapi/schema/json/schema"
 
 func (s *Schema) Patch(patch *Schema) {
-	if patch == nil || patch.SubSchema == nil {
-		return
-	}
-	if s.SubSchema == nil {
-		s.SubSchema = patch.SubSchema
+	if patch == nil {
 		return
 	}
 
@@ -174,6 +170,8 @@ func (s *Schema) Patch(patch *Schema) {
 			}
 		}
 	}
+
+	s.cm.Notify(s)
 }
 
 func (x *Xml) patch(patch *Xml) {
@@ -228,7 +226,7 @@ func mergeTypes(origin, patch jsonSchema.Types) jsonSchema.Types {
 func patchComposition(s []*Schema, patch []*Schema) []*Schema {
 Patch:
 	for _, p := range patch {
-		if p == nil || p.SubSchema == nil {
+		if p == nil {
 			continue
 		}
 		if p.Title == "" {

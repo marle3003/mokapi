@@ -6,7 +6,6 @@ import (
 	"mokapi/config/static"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
-	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
@@ -141,6 +140,28 @@ func TestHandler_Http(t *testing.T) {
 			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"requestBody":{"description":"foo","contents":[{"type":"application/json","schema":{"type":"string"}}],"required":true}}]}]`,
 		},
 		{
+			name: "get http service with security",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithPath("/foo", openapitest.NewPath(
+							openapitest.WithOperation("get", openapitest.NewOperation(
+								openapitest.WithSecurity(map[string][]string{"foo": {}}),
+							)),
+						)),
+						openapitest.WithComponentSecurity("foo", &openapi.ApiKeySecurityScheme{
+							Type: "apiKey",
+							In:   "header",
+							Name: "X-API-Key",
+						}),
+					),
+				)
+			},
+			requestUrl:   "http://foo.api/api/services/http/foo",
+			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo","operations":[{"method":"get","deprecated":false,"security":[{"foo":{"scopes":[],"configs":{"type":"apiKey","in":"header","name":"X-API-Key"}}}]}]}]`,
+		},
+		{
 			name: "get http service with response",
 			app: func() *runtime.App {
 				return runtimetest.NewHttpApp(
@@ -229,34 +250,6 @@ func TestHandler_Http(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",
 			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":"200","description":"foo description","contents":[{"type":"application/json","schema":{"type":["string","number"]}}]}]}]}]`,
-		},
-		{
-			name: "schema with reference loop",
-			app: func() *runtime.App {
-				s := schematest.New("object")
-				s.Properties = &schema.Schemas{}
-				s.Properties.Set("loop", &schema.Schema{Ref: "#/components/schemas/loop", SubSchema: s.SubSchema})
-
-				return runtimetest.NewHttpApp(
-					openapitest.NewConfig("3.0.0",
-						openapitest.WithInfo("foo", "", ""),
-						openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
-							openapitest.WithOperation("get", openapitest.NewOperation(
-								openapitest.WithResponse(http.StatusOK,
-									openapitest.WithResponseDescription("foo description"),
-									openapitest.WithContent(
-										"application/json",
-										openapitest.NewContent(
-											openapitest.WithSchema(s),
-										),
-									),
-								),
-							)),
-						))),
-				)
-			},
-			requestUrl:   "http://foo.api/api/services/http/foo",
-			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":"200","description":"foo description","contents":[{"type":"application/json","schema":{"type":"object","properties":{"loop":{"$ref":"#/components/schemas/loop","type":"object","properties":{"loop":{"$ref":"#/components/schemas/loop"}}}}}}]}]}]}]`,
 		},
 		{
 			name: "schema with default",

@@ -25,10 +25,19 @@ dockers:
   - goos: linux
     goarch: amd64
     image_templates:
-      - "mokapi/mokapi:latest"
-      - "mokapi/mokapi:{{ .Version }}"
+      - "mokapi/mokapi:latest-amd64"
+      - "mokapi/mokapi:{{ .Version }}-amd64"
     build_flag_templates:
       - "--platform=linux/amd64"
+    dockerfile: images/release-alpine.Dockerfile
+    use: buildx
+  - goos: linux
+    goarch: arm64
+    image_templates:
+      - "mokapi/mokapi:latest-arm64v8"
+      - "mokapi/mokapi:{{ .Version }}-arm64v8"
+    build_flag_templates:
+      - "--platform=linux/arm64/v8"
     dockerfile: images/release-alpine.Dockerfile
     use: buildx
   - goos: linux
@@ -50,6 +59,14 @@ dockers:
     dockerfile: images/release-ubuntu.Dockerfile
     use: buildx
 docker_manifests:
+  - name_template: "mokapi/mokapi:latest"
+    image_templates:
+      - "mokapi/mokapi:latest-amd64"
+      - "mokapi/mokapi:latest-arm64v8"
+  - name_template: "mokapi/mokapi:{{ .Version }}"
+    image_templates:
+      - "mokapi/mokapi:{{ .Version }}-amd64"
+      - "mokapi/mokapi:{{ .Version }}-arm64v8"
   - name_template: "mokapi/mokapi:noble"
     image_templates:
       - "mokapi/mokapi:noble-amd64"

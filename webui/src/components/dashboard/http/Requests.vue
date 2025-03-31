@@ -87,7 +87,7 @@ onUnmounted(() => {
                         <td>
                             {{ eventData(event).request.url }}
                         </td>
-                        <td class="text-center">{{ formatStatusCode(eventData(event).response.statusCode) }}</td>
+                        <td class="text-center">{{ formatStatusCode(eventData(event).response.statusCode.toString()) }}</td>
                         <td class="text-center">{{ format(event.time) }}</td>
                         <td class="text-center">{{ duration(eventData(event).duration) }}</td>
                     </tr>

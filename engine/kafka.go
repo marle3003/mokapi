@@ -322,7 +322,7 @@ func marshalKey(key interface{}, r *asyncapi3.SchemaRef) ([]byte, error) {
 			return []byte(fmt.Sprintf("%v", key)), nil
 		}
 	case *openapi.Schema:
-		if v.SubSchema != nil && v.Type.IsObject() || v.Type.IsArray() {
+		if v.Type.IsObject() || v.Type.IsArray() {
 			return v.Marshal(key, media.ParseContentType("application/json"))
 		} else {
 			return []byte(fmt.Sprintf("%v", key)), nil

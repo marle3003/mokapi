@@ -248,13 +248,13 @@ func (d multipartForm) decode(m map[string]interface{}, part *multipart.Part) er
 	if err != nil {
 		return err
 	}
-	if d.mt.Schema == nil || d.mt.Schema.SubSchema == nil {
+	if d.mt.Schema == nil {
 		m[name] = b
 		return nil
 	}
 
 	prop := d.mt.Schema.Properties.Get(name)
-	if prop == nil || prop.SubSchema == nil {
+	if prop == nil {
 		m[name] = b
 		return nil
 	}

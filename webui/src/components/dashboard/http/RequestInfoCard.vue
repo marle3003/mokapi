@@ -51,8 +51,8 @@ function operation(){
                 <div class="col">
                     <p class="label">Status</p>
                     <p>
-                        <span class="badge status-code" :class="getClassByStatusCode(eventData.response.statusCode)">
-                            {{ formatStatusCode(eventData.response.statusCode) }}
+                        <span class="badge status-code" :class="getClassByStatusCode(eventData.response.statusCode.toString())">
+                            {{ formatStatusCode(eventData.response.statusCode.toString()) }}
                         </span>
                     </p>
                 </div>
