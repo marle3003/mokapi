@@ -24,6 +24,8 @@ func NewHttpApp(configs ...*openapi.Config) *runtime.App {
 
 type Options func(app *runtime.App)
 
+type HttpInfoOptions func(hi *runtime.HttpInfo)
+
 type KafkaInfoOptions func(ki *runtime.KafkaInfo)
 
 func NewKafkaApp(configs ...*asyncapi3.Config) *runtime.App {

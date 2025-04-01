@@ -7,12 +7,15 @@ import (
 	"io"
 	"mokapi/media"
 	openApiSchema "mokapi/providers/openapi/schema"
+	"mokapi/runtime"
 	avro "mokapi/schema/avro/schema"
 	"mokapi/schema/encoding"
 	"mokapi/schema/json/generator"
 	jsonSchema "mokapi/schema/json/schema"
 	"net/http"
 )
+
+const toManyResults = "Your request matches multiple results. Please refine your parameters for a more precise selection."
 
 type schemaInfo struct {
 	Format string      `json:"format,omitempty"`
@@ -34,6 +37,12 @@ type example struct {
 
 func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
+
+	if len(r.URL.RawQuery) > 0 || len(body) == 0 {
+		h.getExampleByQuery(w, r)
+		return
+	}
+
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -87,6 +96,30 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	writeJsonBody(w, examples)
+}
+
+func (h *handler) getExampleByQuery(w http.ResponseWriter, r *http.Request) {
+
+	spec := r.URL.Query().Get("spec")
+	name := r.URL.Query().Get("name")
+
+	specs := getSpecs(h.app, spec, name)
+	if len(specs) > 1 {
+		http.Error(w, fmt.Sprintf(toManyResults), http.StatusBadRequest)
+		return
+	} else if len(specs) == 0 {
+		http.Error(w, fmt.Sprintf("No result found"), http.StatusBadRequest)
+		return
+	}
+
+	switch v := specs[0].(type) {
+	case *runtime.HttpInfo:
+		getOpenApiExample(w, r, v.Config)
+	case *runtime.KafkaInfo:
+		getAsyncApiExample(w, r, v.Config)
+	default:
+		http.Error(w, fmt.Sprintf("No result found"), http.StatusBadRequest)
+	}
 }
 
 func encodeExample(v interface{}, schema interface{}, schemaFormat string, contentTypes []string) ([]example, error) {
@@ -293,4 +326,46 @@ func isOpenApi(format string) bool {
 	default:
 		return false
 	}
+}
+
+func getSpecs(app *runtime.App, spec, name string) []interface{} {
+	var results []interface{}
+
+	switch spec {
+	case "openapi":
+		if name == "" {
+			for _, s := range app.Http.List() {
+				results = append(results, s)
+			}
+		}
+		s := app.Http.Get(name)
+		if s != nil {
+			results = append(results, s)
+		}
+	case "asyncapi":
+		if name == "" {
+			for _, s := range app.Kafka.List() {
+				results = append(results, s)
+			}
+		} else if s := app.Kafka.Get(name); s != nil {
+			results = append(results, s)
+		}
+	default:
+		if name == "" {
+			for _, s := range app.Http.List() {
+				results = append(results, s)
+			}
+		} else if s := app.Http.Get(name); s != nil {
+			results = append(results, s)
+		}
+		if name == "" {
+			for _, s := range app.Kafka.List() {
+				results = append(results, s)
+			}
+		} else if s := app.Kafka.Get(name); s != nil {
+			results = append(results, s)
+		}
+	}
+
+	return results
 }
