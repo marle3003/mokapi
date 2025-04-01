@@ -1,4 +1,4 @@
-import { on, env } from 'mokapi'
+import { on, env, sleep } from 'mokapi'
 import { clusters, events as kafkaEvents, configs as kafkaConfigs } from 'kafka.js'
 import { apps as httpServices, events as httpEvents, configs as httpConfigs } from 'services_http.js'
 import { server as smtpServers, mails, mailEvents, getMail, getAttachment } from 'smtp.js'
@@ -87,6 +87,7 @@ export default async function() {
                 return true
             }
             case 'validate':
+                sleep(1000)
                 let url = `${apiBaseUrl}/api/schema/validate`
                 if (request.query['outputFormat']) {
                     url += '?outputFormat=' + request.query['outputFormat']

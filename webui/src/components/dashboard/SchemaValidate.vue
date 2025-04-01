@@ -30,6 +30,7 @@ const state = reactive({
     errors: '',
     result: null,
     validated: false,
+    validating: false,
     view: 'preview'
 })
 
@@ -73,6 +74,9 @@ function setExample() {
 }
 
 function validate() {
+    state.validating = true
+    state.validated = false
+
     const body = {
         format: props.schema.format,
         schema: props.schema.schema,
@@ -102,6 +106,7 @@ function validate() {
             }))
         }
     }).then(({ status, body }) => {
+        state.validating = false
         state.validated = true
 
         if (status === 500) {
@@ -193,8 +198,9 @@ function formatResultItem(result: any): [string, number] {
                     <div class="modal-footer justify-content-between">
                         <span class="float-start">
                             <span  class="status" role="status">
-                                <i v-if="state.errors.length == 0 && state.result == null && state.validated" class="valid bi bi-check-circle-fill"> Valid</i>
-                                <i v-else-if="state.validated" class="failed bi bi-x-circle-fill"> Failed</i>
+                                <span v-if="state.validating" class="loading"><i class="bi bi-arrow-repeat spin"></i> Validating...</span>
+                                <i v-else-if="state.errors.length == 0 && state.result == null && state.validated" class="valid bi bi-check-circle-fill fade-in"> Valid</i>
+                                <i v-else-if="state.validated" class="failed bi bi-x-circle-fill fade-in"> Failed</i>
                             </span>
                         </span>
                         <div class="float-end">
@@ -221,5 +227,23 @@ function formatResultItem(result: any): [string, number] {
 }
 .modal-footer .status .failed {
     color: var(--color-red);
+}
+.modal-footer .status .loading {
+    color: var(--color-blue);
+}
+.spin {
+    display: inline-block;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 </style>
