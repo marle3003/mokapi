@@ -53,19 +53,19 @@ MOKAPI_PROVIDERS_HTTP_URL=http://127.0.0.1/api
 ```
 
 ### Poll Interval
-Defines in which interval possible changes are checked, default 5 seconds. 
+Defines in which interval possible changes are checked, default 3 minutes. 
 Valid time units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`.
 
 ```yaml tab=File (YAML)
 providers:
   http:
-    pollInterval: 2h45m
+    pollInterval: 3m30s
 ```
 ```bash tab=CLI
---providers-http-poll-interval 2h45m
+--providers-http-poll-interval 3m30s
 ```
 ```bash tab=Env
-MOKAPI_PROVIDERS_HTTP_POLL_INTERVAL=2h45m
+MOKAPI_PROVIDERS_HTTP_POLL_INTERVAL=3m30s
 ```
 
 ### Poll Timeout

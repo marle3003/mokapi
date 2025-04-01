@@ -48,19 +48,19 @@ MOKAPI_PROVIDERS_GIT_URL=https://github.com/PATH-TO/REPOSITORY?ref=branch-name
 ```
 
 ### Pull Interval
-Defines in which interval Mokapi pulls possible changes, default 5 seconds.
+Defines in which interval Mokapi pulls possible changes, default 3 minutes.
 Valid time units are `ns`, `us` (or `µs`), `ms`, `s`, `m`, `h`.
 
 ```yaml tab=File (YAML)
 providers:
   git:
-    pullInterval: 2h45m
+    pullInterval: 3m30s
 ```
 ```bash tab=CLI
---providers-git-pull-interval 2h45m
+--providers-git-pull-interval 3m30s
 ```
 ```bash tab=Env
-MOKAPI_PROVIDERS_GIT_PULL-INTERVAL=2h45m
+MOKAPI_PROVIDERS_GIT_PULL-INTERVAL=3m30s
 ```
 
 ## Advanced Repository Settings
@@ -109,7 +109,7 @@ providers:
   git:
     repositories:
       - url: https://github.com/PATH-TO/REPOSITORY
-        pullInterval: 2h45m
+        pullInterval: 3m30s
 ```
 
 ### TempDir
