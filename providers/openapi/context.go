@@ -19,10 +19,15 @@ func OperationFromContext(ctx context.Context) (*Operation, bool) {
 }
 
 func ContentTypeFromRequest(r *http.Request, res *Response) (media.ContentType, *MediaType, error) {
+	accept := r.Header.Get("accept")
+	return NegotiateContentType(accept, res)
+}
+
+func NegotiateContentType(accept string, res *Response) (media.ContentType, *MediaType, error) {
 	if len(res.Content) == 0 {
 		return media.Empty, nil, nil
 	}
-	accept := r.Header.Get("accept")
+
 	ct, mt := negotiateContentType(accept, res)
 	if ct.IsEmpty() {
 		return media.Empty, nil, newHttpErrorf(http.StatusUnsupportedMediaType,

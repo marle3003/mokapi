@@ -3,16 +3,177 @@ package api
 import (
 	"encoding/json"
 	"github.com/brianvoe/gofakeit/v6"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
+	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/openapi/openapitest"
+	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
+	"mokapi/runtime/runtimetest"
 	avro "mokapi/schema/avro/schema"
 	jsonSchema "mokapi/schema/json/schema"
+	jsonTest "mokapi/schema/json/schema/schematest"
 	"mokapi/try"
 	"net/http"
 	"testing"
 )
+
+func TestHandler_Schema_Example_Query(t *testing.T) {
+	testcases := []struct {
+		name string
+		app  *runtime.App
+		fn   func(t *testing.T, h http.Handler, app *runtime.App)
+	}{
+		{
+			name: "openapi",
+			app: runtimetest.NewHttpApp(openapitest.NewConfig("3.1.0",
+				openapitest.WithInfo("foo", "", ""),
+				openapitest.WithPath("/foo",
+					openapitest.NewPath(openapitest.WithOperation("GET",
+						openapitest.NewOperation(
+							openapitest.WithResponse(200,
+								openapitest.WithContent("application/json", openapitest.NewContent(
+									openapitest.WithSchema(schematest.New("string")),
+								)),
+							),
+						),
+					),
+					),
+				),
+			),
+			),
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example?spec=openapi&name=foo&path=/foo&operation=GET&status=200",
+					map[string]string{"Accept": "application/json"},
+					"",
+					h,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`"XidZuoWq "`))
+
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example",
+					nil,
+					"",
+					h,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`""`))
+
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example?name=foo",
+					map[string]string{"Accept": "application/json"},
+					"",
+					h,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`"Y5elX"`))
+
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example?name=foo",
+					map[string]string{"Accept": "application/xml"},
+					"",
+					h,
+					try.HasStatusCode(400),
+					try.HasBody("none of requests content type(s) are supported: \"application/xml\"\n"))
+			},
+		},
+		{
+			name: "openapi with two status codes",
+			app: runtimetest.NewHttpApp(openapitest.NewConfig("3.1.0",
+				openapitest.WithInfo("foo", "", ""),
+				openapitest.WithPath("/foo",
+					openapitest.NewPath(openapitest.WithOperation("GET",
+						openapitest.NewOperation(
+							openapitest.WithResponse(200,
+								openapitest.WithContent("application/json", openapitest.NewContent(
+									openapitest.WithSchema(schematest.New("string")),
+								)),
+							),
+							openapitest.WithResponse(400,
+								openapitest.WithContent("application/json", openapitest.NewContent(
+									openapitest.WithSchema(schematest.New("string")),
+								)),
+							),
+						),
+					),
+					),
+				),
+			),
+			),
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example?spec=openapi&name=foo&path=/foo&operation=GET&status=200",
+					map[string]string{"Accept": "application/json"},
+					"",
+					h,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`"XidZuoWq "`))
+
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example",
+					nil,
+					"",
+					h,
+					try.HasStatusCode(400),
+					try.HasBody("Your request matches multiple results. Please refine your parameters for a more precise selection.\n"))
+			},
+		},
+		{
+			name: "asyncapi",
+			app: runtimetest.NewKafkaApp(asyncapi3test.NewConfig(
+				asyncapi3test.WithInfo("foo", "", ""),
+				asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithMessage("foo",
+						asyncapi3test.WithPayload(jsonTest.New("string")),
+						asyncapi3test.WithContentType("application/json"),
+					),
+				),
+			),
+			),
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example?spec=asyncapi&name=foo&channel=foo&message=foo",
+					nil,
+					"",
+					h,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`"XidZuoWq "`))
+
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example",
+					nil,
+					"",
+					h,
+					try.HasStatusCode(200),
+					try.HasBody(`""`))
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			gofakeit.Seed(11)
+
+			log.Info(tc.app)
+			h := New(tc.app, static.Api{})
+			tc.fn(t, h, tc.app)
+		})
+	}
+}
 
 func TestHandler_Schema_Example(t *testing.T) {
 	testcases := []struct {
