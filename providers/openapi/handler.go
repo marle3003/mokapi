@@ -180,7 +180,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		} else {
 			body, err = mediaType.Schema.Marshal(response.Data, contentType)
 			if err != nil {
-				writeError(rw, r, err, h.config.Info.Name)
+				writeError(rw, r, fmt.Errorf("write response body for request '%s' failed: %w", r.URL.String(), err), h.config.Info.Name)
 				return
 			}
 		}
