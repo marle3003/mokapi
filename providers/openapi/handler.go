@@ -180,7 +180,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		} else {
 			body, err = mediaType.Schema.Marshal(response.Data, contentType)
 			if err != nil {
-				writeError(rw, r, fmt.Errorf("write response body for request '%s' failed: %w", r.URL.String(), err), h.config.Info.Name)
+				writeError(rw, r, err, h.config.Info.Name)
 				return
 			}
 		}
@@ -296,11 +296,11 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 		status = http.StatusInternalServerError
 	}
 
-	entry := log.WithFields(log.Fields{"url": r.URL, "method": r.Method, "status": status})
+	logMessage := fmt.Sprintf("HTTP request failed with status code %d: %s %s: %s", status, r.Method, r.URL.String(), err.Error())
 	if status == http.StatusInternalServerError {
-		entry.Error(message)
+		log.Errorf(logMessage)
 	} else {
-		entry.Info(message)
+		log.Infof(logMessage)
 	}
 	if m, ok := monitor.HttpFromContext(r.Context()); ok {
 		endpointPath := r.Context().Value("endpointPath")

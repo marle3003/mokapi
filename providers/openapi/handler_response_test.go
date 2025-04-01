@@ -57,7 +57,7 @@ func TestHandler_Response(t *testing.T) {
 			},
 			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, rr.Code)
-				require.Equal(t, "write response body for request 'http://localhost/foo' failed: encoding data to 'application/json' failed: error count 1:\n\t- #/format: string 'foo' does not match format 'date'\n", rr.Body.String())
+				require.Equal(t, "encoding data to 'application/json' failed: error count 1:\n\t- #/format: string 'foo' does not match format 'date'\n", rr.Body.String())
 			},
 		},
 		{
@@ -114,7 +114,7 @@ func TestHandler_Response(t *testing.T) {
 			},
 			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusInternalServerError, rr.Code)
-				require.Equal(t, "write response body for request 'http://localhost/foo' failed: encoding data to 'application/octet-stream' failed: not supported encoding of content types 'application/octet-stream', except simple data types\n", rr.Body.String())
+				require.Equal(t, "encoding data to 'application/octet-stream' failed: not supported encoding of content types 'application/octet-stream', except simple data types\n", rr.Body.String())
 			},
 		},
 	}
