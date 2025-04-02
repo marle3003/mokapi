@@ -309,7 +309,7 @@ function hasTouchSupport() {
     <section id="mokapi-demo" style="text-align: center;">
       <h2>See Mokapi in Action</h2>
       <p>Mocking a REST API and handling an HTTP request.</p>
-      <img src="/mokapi-swagger-petstore.gif" alt="Mokapi demo in action" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
+      <img src="/mokapi-swagger-petstore.gif" alt="Mocking a REST API and Sending HTTP Requests in Action" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
   </section>
   </main>
   <Footer></Footer>
