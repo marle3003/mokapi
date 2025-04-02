@@ -109,6 +109,20 @@ func (c *KafkaClient) tryGet(cluster string, topic string, retry common.KafkaPro
 
 func (c *KafkaClient) get(cluster string, topic string) (t *store.Topic, config *asyncapi3.Config, err error) {
 	if len(cluster) == 0 {
+		if len(topic) == 0 {
+			clusters := c.app.Kafka.List()
+			if len(clusters) > 1 {
+				err = fmt.Errorf("ambiguous cluster: specify the cluster")
+				return
+			}
+			topics := clusters[0].Topics()
+			if len(topics) > 1 {
+				err = fmt.Errorf("ambiguous topic %v. Specify the cluster", topic)
+				return
+			}
+			return topics[0], clusters[0].Config, nil
+		}
+
 		var topics []*store.Topic
 		for _, v := range c.app.Kafka.List() {
 			if t := v.Topic(topic); t != nil {
