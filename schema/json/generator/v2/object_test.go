@@ -104,7 +104,7 @@ func TestObject(t *testing.T) {
 			},
 		},
 		{
-			name: "dicitionary with min and max length",
+			name: "dictionary with min and max length",
 			req: &Request{
 				Schema: schematest.New("object",
 					schematest.WithAdditionalProperties(

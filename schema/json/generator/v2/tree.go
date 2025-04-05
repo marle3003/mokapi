@@ -51,6 +51,8 @@ func buildTree() *Node {
 	r.Children = append(r.Children, newNumberNodes()...)
 	r.Children = append(r.Children, newTextNodes()...)
 	r.Children = append(r.Children, personal()...)
+	r.Children = append(r.Children, addresses()...)
+	r.Children = append(r.Children, locations()...)
 
 	return r
 }
