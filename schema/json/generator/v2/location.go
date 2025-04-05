@@ -2,6 +2,7 @@ package v2
 
 import (
 	"github.com/brianvoe/gofakeit/v6"
+	"mokapi/schema/json/parser"
 	"strings"
 )
 
@@ -10,6 +11,12 @@ func locations() []*Node {
 		{
 			Name: "country",
 			Fake: fakeCountry,
+			Children: []*Node{
+				{
+					Name: "name",
+					Fake: fakeCountry,
+				},
+			},
 		},
 		{
 			Name: "longitude",
@@ -24,6 +31,8 @@ func locations() []*Node {
 
 func fakeCountry(r *Request) (any, error) {
 	s := r.Schema
+	var v string
+
 	if s != nil {
 		max := -1
 		if s.MaxLength != nil {
@@ -32,14 +41,29 @@ func fakeCountry(r *Request) (any, error) {
 
 		if max == 2 {
 			country := gofakeit.CountryAbr()
-			if s.Pattern == "[a-z]{2}" {
-				return strings.ToLower(country), nil
+			v = country
+		} else if s.Pattern != "" {
+			country := gofakeit.CountryAbr()
+			p := parser.Parser{Schema: s}
+			_, err := p.Parse(country)
+			if err == nil {
+				v = country
+			} else {
+				// try lower case
+				country = strings.ToLower(country)
+				_, err = p.Parse(country)
+				if err == nil {
+					v = country
+				}
 			}
-			return country, nil
 		}
 	}
+	if v == "" {
+		v = gofakeit.Country()
+	}
 
-	return gofakeit.Country(), nil
+	r.ctx.store["country"] = v
+	return v, nil
 }
 
 func fakeLongitude(r *Request) (any, error) {
