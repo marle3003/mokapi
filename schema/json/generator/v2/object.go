@@ -43,14 +43,12 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 		if err != nil {
 			return nil, err
 		}
-		restore := map[string]any{}
-		defer req.restoreCtx(restore)
+		req.ctx.Snapshot()
+		defer req.ctx.Restore()
 
 		for _, key := range sorted {
 			f := fakes.Lookup(key)
 			m[key], err = f.fake()
-			restore[key] = req.ctx[key]
-			req.ctx[key] = m[key]
 			if err != nil {
 				return nil, err
 			}

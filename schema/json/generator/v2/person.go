@@ -79,13 +79,21 @@ func personal() []*Node {
 }
 
 func fakePersonName(r *Request) (interface{}, error) {
-	first := r.ctx["firstname"]
+	var err error
+
+	first := r.ctx.store["firstname"]
 	if first == nil {
-		first = gofakeit.FirstName()
+		first, err = fakeFirstname(r)
+		if err != nil {
+			return nil, err
+		}
 	}
-	last := r.ctx["lastname"]
+	last := r.ctx.store["lastname"]
 	if last == nil {
-		last = gofakeit.LastName()
+		last, err = fakeLastname(r)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return fmt.Sprintf("%s %s", first, last), nil
@@ -93,13 +101,15 @@ func fakePersonName(r *Request) (interface{}, error) {
 
 func fakeFirstname(r *Request) (interface{}, error) {
 	var gender string
-	if v, ok := r.ctx["gender"]; ok {
-		gender = v.(string)
-	} else if v, ok = r.ctx["sex"]; ok {
+	if v, ok := r.ctx.store["gender"]; ok {
 		gender = v.(string)
 	}
 	if gender == "" {
-		gender = gofakeit.Gender()
+		v, err := fakeGender(r)
+		if err != nil {
+			return nil, err
+		}
+		gender = v.(string)
 	}
 	pool := femaleFirstNames
 	if gender[0] == 'm' {
@@ -107,11 +117,16 @@ func fakeFirstname(r *Request) (interface{}, error) {
 	}
 
 	index := gofakeit.Number(0, len(pool)-1)
-	return pool[index], nil
+	firstname := pool[index]
+	r.ctx.store["firstname"] = firstname
+	return firstname, nil
 }
 
-func fakeLastname(_ *Request) (interface{}, error) {
-	return gofakeit.LastName(), nil
+func fakeLastname(r *Request) (interface{}, error) {
+	index := gofakeit.Number(0, len(lastNames)-1)
+	last := lastNames[index]
+	r.ctx.store["lastname"] = last
+	return last, nil
 }
 
 func fakeGender(r *Request) (interface{}, error) {
@@ -123,6 +138,7 @@ func fakeGender(r *Request) (interface{}, error) {
 			return v[:m], nil
 		}
 	}
+	r.ctx.store["gender"] = v
 	return v, nil
 }
 
@@ -132,11 +148,19 @@ func fakePersonAge(r *Request) (interface{}, error) {
 }
 
 func fakePerson(r *Request) (interface{}, error) {
+	r.ctx.Snapshot()
+	defer r.ctx.Restore()
+
+	gender, _ := fakeGender(r)
+	first, _ := fakeFirstname(r)
+	last, _ := fakeLastname(r)
+	email, _ := fakeEmail(r)
+
 	return map[string]interface{}{
-		"firstname": gofakeit.FirstName(),
-		"lastname":  gofakeit.LastName(),
-		"gender":    gofakeit.Gender(),
-		"email":     gofakeit.Email(),
+		"firstname": first,
+		"lastname":  last,
+		"gender":    gender,
+		"email":     email,
 	}, nil
 }
 

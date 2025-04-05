@@ -20,7 +20,7 @@ type Request struct {
 	Schema *schema.Schema
 
 	g   *generator
-	ctx map[string]any
+	ctx *context
 }
 
 var g = &generator{
@@ -106,8 +106,31 @@ func (r *Request) With(path []string, s *schema.Schema) *Request {
 	}
 }
 
-func (r *Request) restoreCtx(m map[string]any) {
-	for k, v := range m {
-		r.ctx[k] = v
+type context struct {
+	store
+	snapshots []store
+}
+
+type store map[string]any
+
+func newContext() *context {
+	return &context{store: make(store)}
+}
+
+func (c *context) Snapshot() {
+	c.snapshots = append(c.snapshots, c.store.Snapshot())
+}
+
+func (c *context) Restore() {
+	snapshot := c.snapshots[len(c.snapshots)-1]
+	c.snapshots = c.snapshots[:len(c.snapshots)-1]
+	c.store = snapshot
+}
+
+func (s *store) Snapshot() store {
+	snapshot := map[string]any{}
+	for k, v := range *s {
+		snapshot[k] = v
 	}
+	return snapshot
 }

@@ -14,7 +14,7 @@ type resolver struct {
 
 func resolve(path []string, s *schema.Schema, fallback bool) (*faker, error) {
 	r := resolver{}
-	req := &Request{Path: path, Schema: s, ctx: map[string]interface{}{}, g: g}
+	req := &Request{Path: path, Schema: s, ctx: newContext(), g: g}
 	return r.resolve(req, fallback)
 }
 

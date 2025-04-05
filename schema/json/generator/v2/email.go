@@ -16,22 +16,22 @@ func newEmailNode() *Node {
 
 func fakeEmail(r *Request) (interface{}, error) {
 	choosePersonEmail := false
-	first := r.ctx["firstname"]
+	first := r.ctx.store["firstname"]
 	if first != nil {
 		choosePersonEmail = true
 	}
-	last := r.ctx["lastname"]
+	last := r.ctx.store["lastname"]
 	if last != nil {
 		choosePersonEmail = true
 
 	}
 
 	if choosePersonEmail {
-		if first == "" {
-			first = gofakeit.FirstName()
+		if first == nil {
+			first, _ = fakeFirstname(r)
 		}
-		if last == "" {
-			last = gofakeit.LastName()
+		if last == nil {
+			last, _ = fakeLastname(r)
 		}
 		return strings.ToLower(fmt.Sprintf("%s.%s@%s", first, last, gofakeit.DomainName())), nil
 	}
