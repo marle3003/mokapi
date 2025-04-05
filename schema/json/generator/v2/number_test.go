@@ -107,3 +107,110 @@ func TestNumber(t *testing.T) {
 		})
 	}
 }
+
+func TestYear(t *testing.T) {
+	testcases := []struct {
+		name string
+		req  *Request
+		test func(t *testing.T, v interface{}, err error)
+	}{
+		{
+			name: "year no schema",
+			req: &Request{
+				Path: []string{"year"},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 1926, v)
+			},
+		},
+		{
+			name: "year",
+			req: &Request{
+				Path:   []string{"year"},
+				Schema: schematest.New("integer"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(1926), v)
+			},
+		},
+		{
+			name: "year min",
+			req: &Request{
+				Path:   []string{"year"},
+				Schema: schematest.New("integer", schematest.WithMinimum(1990)),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(2196), v)
+			},
+		},
+		{
+			name: "year min max",
+			req: &Request{
+				Path: []string{"year"},
+				Schema: schematest.New("integer",
+					schematest.WithMinimum(1990),
+					schematest.WithMaximum(2049),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(2016), v)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			gofakeit.Seed(1234567)
+
+			v, err := New(tc.req)
+			tc.test(t, v, err)
+		})
+	}
+}
+
+func TestQuantity(t *testing.T) {
+	testcases := []struct {
+		name string
+		req  *Request
+		test func(t *testing.T, v interface{}, err error)
+	}{
+		{
+			name: "quantity",
+			req: &Request{
+				Path:   []string{"quantity"},
+				Schema: schematest.New("integer"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(79), v)
+			},
+		},
+		{
+			name: "quantity min max",
+			req: &Request{
+				Path: []string{"quantity"},
+				Schema: schematest.New("integer",
+					schematest.WithMinimum(0),
+					schematest.WithMaximum(50),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(23), v)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			gofakeit.Seed(1234567)
+
+			v, err := New(tc.req)
+			tc.test(t, v, err)
+		})
+	}
+}

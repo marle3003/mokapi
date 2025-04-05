@@ -23,7 +23,7 @@ func requestForItems(token string, r *Request) *Request {
 	}
 }
 
-func fakeArray(r *Request, fakeItem func() (interface{}, error)) (interface{}, error) {
+func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 	s := r.Schema
 	if s == nil {
 		s = &schema.Schema{}
@@ -47,9 +47,9 @@ func fakeArray(r *Request, fakeItem func() (interface{}, error)) (interface{}, e
 		var v interface{}
 		var err error
 		if s.UniqueItems {
-			v, err = nextUnique(arr, fakeItem)
+			v, err = nextUnique(arr, fakeItem.fake)
 		} else {
-			v, err = fakeItem()
+			v, err = fakeItem.fake()
 		}
 		if err != nil {
 			return nil, fmt.Errorf("%v: %v", err, s)

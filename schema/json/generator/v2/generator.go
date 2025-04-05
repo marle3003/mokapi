@@ -4,8 +4,6 @@ import (
 	"github.com/brianvoe/gofakeit/v6"
 	"math/rand"
 	"mokapi/schema/json/schema"
-	"regexp"
-	"strings"
 	"time"
 )
 
@@ -21,7 +19,8 @@ type Request struct {
 	Path   []string `json:"path"`
 	Schema *schema.Schema
 
-	g *generator
+	g   *generator
+	ctx map[string]any
 }
 
 var g = &generator{
@@ -34,13 +33,11 @@ func Seed(seed int64) {
 }
 
 func New(r *Request) (interface{}, error) {
-	r.g = g
-	r.tokenizePath()
-	v, err := fakeWalk(g.root, r)
-	if err == nil {
-		return v, nil
+	f, err := resolve(r.Path, r.Schema, true)
+	if err != nil {
+		return nil, err
 	}
-	return fakeBySchema(r)
+	return f.fake()
 }
 
 func fakeBySchema(r *Request) (interface{}, error) {
@@ -49,8 +46,27 @@ func fakeBySchema(r *Request) (interface{}, error) {
 	}
 
 	s := r.Schema
-	if s.IsString() {
+	switch {
+	case s.IsString():
 		return fakeString(r)
+	case s.IsObject():
+		return fakeObject(r.Schema)
+	case s.IsArray():
+		items := func() (interface{}, error) {
+			return fakeBySchema(&Request{})
+		}
+		return fakeArray(r, newFaker(items))
+	case s.Is("boolean"):
+		return gofakeit.Bool(), nil
+	case s.IsNumber():
+		return fakeNumber(r)
+	case s.IsInteger():
+		if s.Format == "int32" {
+			return gofakeit.Int32(), nil
+		}
+		return gofakeit.Int64(), nil
+	case s.IsNullable():
+		return nil, nil
 	}
 
 	i := gofakeit.Number(0, len(types)-1)
@@ -66,14 +82,6 @@ func (r *Request) shift() *Request {
 	return &r2
 }
 
-func (r *Request) tokenizePath() {
-	var result []string
-	for _, path := range r.Path {
-		result = append(result, splitWords(path)...)
-	}
-	r.Path = result
-}
-
 func (r *Request) NextToken() string {
 	if len(r.Path) == 0 {
 		return ""
@@ -81,11 +89,25 @@ func (r *Request) NextToken() string {
 	return r.Path[0]
 }
 
-// splitWords splits camelCase and dot notation into words
-func splitWords(s string) []string {
-	re := regexp.MustCompile(`([a-z])([A-Z])`)
-	s = re.ReplaceAllString(s, "${1} ${2}")
-	s = strings.ReplaceAll(s, ".", " ")
-	s = strings.ToLower(s)
-	return strings.Fields(s)
+func (r *Request) WithSchema(s *schema.Schema) *Request {
+	return r.With(r.Path, s)
+}
+
+func (r *Request) WithPath(path []string) *Request {
+	return r.With(path, r.Schema)
+}
+
+func (r *Request) With(path []string, s *schema.Schema) *Request {
+	return &Request{
+		Path:   path,
+		Schema: s,
+		g:      r.g,
+		ctx:    r.ctx,
+	}
+}
+
+func (r *Request) restoreCtx(m map[string]any) {
+	for k, v := range m {
+		r.ctx[k] = v
+	}
 }
