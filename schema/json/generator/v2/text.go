@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-func newTextNodes() []*Node {
+func textNodes() []*Node {
 	return []*Node{
 		{
 			Name: "description",

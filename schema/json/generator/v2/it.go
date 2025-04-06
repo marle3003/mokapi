@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func newItNodes() []*Node {
+func ictNodes() []*Node {
 	return []*Node{
 		newErrorNode(),
 		newHashNode(),

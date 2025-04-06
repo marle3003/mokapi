@@ -29,7 +29,7 @@ func fakeId(r *Request) (interface{}, error) {
 		n := gofakeit.Number(minLength, maxLength)
 		return gofakeit.Numerify(strings.Repeat("#", n)), nil
 	} else if s.IsInteger() || s.IsAny() {
-		return fakeInteger(s, 1, 100000)
+		return fakeIntegerWithRange(s, 1, 100000)
 	}
 
 	return nil, NotSupported

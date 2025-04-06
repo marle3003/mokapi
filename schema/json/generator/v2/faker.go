@@ -1,7 +1,7 @@
 package v2
 
 var (
-	nullFaker = &faker{fake: func() (interface{}, error) {
+	nullFaker = &faker{fake: func() (any, error) {
 		return nil, nil
 	}}
 )
@@ -13,12 +13,12 @@ type faker struct {
 
 func newFakerWithFallback(n *Node, r *Request) *faker {
 	if n == nil || n.Fake == nil {
-		return &faker{fake: func() (interface{}, error) {
+		return &faker{fake: func() (any, error) {
 			return fakeBySchema(r)
 		}}
 	}
 	return &faker{
-		fake: func() (interface{}, error) {
+		fake: func() (any, error) {
 			v, err := n.Fake(r)
 			if err != nil {
 				return nil, err

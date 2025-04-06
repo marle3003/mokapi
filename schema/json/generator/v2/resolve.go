@@ -2,6 +2,7 @@ package v2
 
 import (
 	"fmt"
+	"github.com/brianvoe/gofakeit/v6"
 	"github.com/jinzhu/inflection"
 	"mokapi/schema/json/schema"
 	"regexp"
@@ -19,6 +20,10 @@ func resolve(path []string, s *schema.Schema, fallback bool) (*faker, error) {
 }
 
 func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
+	if fake, ok := applyConstraints(req); ok {
+		return newFaker(fake), nil
+	}
+
 	s := req.Schema
 
 	if err := r.guardLoopLimit(s); err != nil {
@@ -31,6 +36,18 @@ func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
 	defer func() {
 		r.history = r.history[:len(r.history)-1]
 	}()
+
+	if s != nil {
+		switch {
+		case len(s.AnyOf) > 0:
+			i := gofakeit.Number(0, len(s.AnyOf)-1)
+			return r.resolve(req.WithSchema(s.AnyOf[i]), fallback)
+		case len(s.AllOf) > 0:
+			return r.allOf(req)
+		case len(s.OneOf) > 0:
+			return r.oneOf(req)
+		}
+	}
 
 	if s.IsObject() || s.HasProperties() {
 		return r.resolveObject(req)

@@ -61,10 +61,7 @@ func fakeBySchema(r *Request) (interface{}, error) {
 	case s.IsNumber():
 		return fakeNumber(r)
 	case s.IsInteger():
-		if s.Format == "int32" {
-			return gofakeit.Int32(), nil
-		}
-		return gofakeit.Int64(), nil
+		return fakeInteger(r.Schema)
 	case s.IsNullable():
 		return nil, nil
 	}

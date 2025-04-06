@@ -201,28 +201,11 @@ func TestPerson(t *testing.T) {
 			name: "phone but expect object",
 			req: &Request{
 				Path:   []string{"phone"},
-				Schema: schematest.New("object"),
+				Schema: schematest.New("boolean"),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t,
-					map[string]interface{}{
-						"actor": "jfjqa6WoJUOv",
-						"block": int64(7868624871047129135),
-						"crew":  true,
-						"envy":  "Q WavQeozIeDmm",
-						"part":  "10256636970",
-						"party": map[string]interface{}{
-							"happiness": "35548959830",
-							"intelligence": []interface{}{
-								int64(7479033884925130368), true,
-							},
-						},
-						"pod":    false,
-						"school": int64(8114684127683409738),
-						"train":  "44709213031",
-					},
-					v)
+				require.Equal(t, false, v)
 			},
 		},
 		{

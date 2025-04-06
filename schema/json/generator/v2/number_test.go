@@ -14,6 +14,85 @@ func TestNumber(t *testing.T) {
 		test func(t *testing.T, v interface{}, err error)
 	}{
 		{
+			name: "number with min and max",
+			req: &Request{
+				Schema: schematest.New("number",
+					schematest.WithMinimum(0),
+					schematest.WithMaximum(10),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 6.095916352063622, v)
+			},
+		},
+		{
+			name: "number with min, max and multiplyOf",
+			req: &Request{
+				Schema: schematest.New("number",
+					schematest.WithMinimum(0),
+					schematest.WithMaximum(10),
+					schematest.WithMultipleOf(2.1),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 4.2, v)
+			},
+		},
+		{
+			name: "number with multiplyOf",
+			req: &Request{
+				Schema: schematest.New("number",
+					schematest.WithMultipleOf(2.1),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 8242.5, v)
+			},
+		},
+		{
+			name: "integer with min and max",
+			req: &Request{
+				Schema: schematest.New("integer",
+					schematest.WithMinimum(0),
+					schematest.WithMaximum(10),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 8, v)
+			},
+		},
+		{
+			name: "integer with min, max and multiplyOf",
+			req: &Request{
+				Schema: schematest.New("integer",
+					schematest.WithMinimum(0),
+					schematest.WithMaximum(10),
+					schematest.WithMultipleOf(3),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 3, v)
+			},
+		},
+		{
+			name: "integer with multiplyOf",
+			req: &Request{
+				Schema: schematest.New("integer",
+					schematest.WithMultipleOf(3),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, -9223372036854775806, v)
+				require.Equal(t, -3074457345618258602, -9223372036854775806/3)
+			},
+		},
+		{
 			name: "partyNumber",
 			req: &Request{
 				Path:   []string{"partyNumber"},
