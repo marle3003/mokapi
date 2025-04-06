@@ -47,7 +47,24 @@ func fakeYear(r *Request) (interface{}, error) {
 }
 
 func fakeInteger(s *schema.Schema) (any, error) {
-	return fakeIntegerWithRange(s, math.MinInt64, math.MaxInt64)
+	hasRange := hasNumberRange(s)
+	if !hasRange && s.MultipleOf == nil {
+		if s.Format == "int32" {
+			return gofakeit.Int32(), nil
+		}
+		return gofakeit.Int64(), nil
+	}
+	if hasRange {
+		min, max := getRange(s)
+		if s.MultipleOf != nil {
+			return randomMultiple(int(min), int(max), int(*s.MultipleOf))
+		}
+		return gofakeit.Number(int(min), int(max)), nil
+	}
+	min := 0
+	max := 10000
+	n := gofakeit.Number(min, max)
+	return n * int(*s.MultipleOf), nil
 }
 
 func fakeIntegerWithRange(s *schema.Schema, min, max int) (any, error) {

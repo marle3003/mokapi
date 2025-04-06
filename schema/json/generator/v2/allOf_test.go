@@ -22,7 +22,7 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, -3600881594791838082, v)
+				require.Equal(t, int64(-3600881594791838082), v)
 			},
 		},
 		{
@@ -61,7 +61,7 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, -3600881594791838082, v)
+				require.Equal(t, int64(-3600881594791838082), v)
 			},
 		},
 		{
@@ -157,7 +157,6 @@ func TestAllOf(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			gofakeit.Seed(1234567)
-			Seed(1234567)
 
 			v, err := New(tc.req)
 			tc.test(t, v, err)
