@@ -57,6 +57,7 @@ func buildTree() *Node {
 	r.Children = append(r.Children, languages()...)
 	r.Children = append(r.Children, pets()...)
 	r.Children = append(r.Children, metadata()...)
+	r.Children = append(r.Children, products()...)
 
 	return r
 }
