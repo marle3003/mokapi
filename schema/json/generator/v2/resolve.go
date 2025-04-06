@@ -3,8 +3,9 @@ package v2
 import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
-	"github.com/jinzhu/inflection"
 	"mokapi/schema/json/schema"
+	"net/url"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -47,37 +48,26 @@ func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
 		case len(s.OneOf) > 0:
 			return r.oneOf(req)
 		}
+
+		if s.IsObject() || s.HasProperties() {
+			return r.resolveObject(req)
+		} else if s.IsArray() {
+			return r.resolveArray(req)
+		}
 	}
 
-	if s.IsObject() || s.HasProperties() {
-		return r.resolveObject(req)
-	} else if s.IsArray() {
-		last := req.Path[len(req.Path)-1]
-		item, err := r.resolve(req.With(append(req.Path, inflection.Singular(last)), s.Items), true)
-		if err != nil {
-			return nil, err
+	path := tokenize(req.Path)
+	if s == nil {
+		last := path[len(path)-1]
+		if isPlural(last) {
+			return r.resolve(req.With(path, &schema.Schema{Type: schema.Types{"array"}}), true)
 		}
-		return newFaker(func() (interface{}, error) {
-			list := &Request{
-				Path:   req.Path,
-				Schema: s,
-			}
-			return fakeArray(list, item)
-		}), nil
-	} else {
-		path := tokenize(req.Path)
-		if s == nil {
-			last := path[len(path)-1]
-			if isPlural(last) {
-				return r.resolve(req.With(path, &schema.Schema{Type: schema.Types{"array"}}), true)
-			}
-		}
-		n := findBestMatch(g.root, req.With(path, req.Schema))
-		if n == nil && !fallback {
-			return nil, NoMatchFound
-		}
-		return newFakerWithFallback(n, req), nil
 	}
+	n := findBestMatch(g.root, req.With(path, req.Schema))
+	if n == nil && !fallback {
+		return nil, NoMatchFound
+	}
+	return newFakerWithFallback(n, req), nil
 }
 
 func (r *resolver) guardLoopLimit(s *schema.Schema) error {
@@ -121,6 +111,18 @@ func (n *Node) findBestMatch(r *Request) *Node {
 		}
 	}
 
+	// Check if the current token exists in the root
+	for _, child := range g.root.Children {
+		if child.Name == token {
+			return nil
+		}
+	}
+
+	// Skip current token
+	skip := r.shift()
+	if len(skip.Path) > 0 {
+		return n.findBestMatch(skip)
+	}
 	return nil
 }
 
@@ -130,6 +132,14 @@ func tokenize(path []string) []string {
 		result = append(result, splitWords(p)...)
 	}
 	return result
+}
+
+func getPathFromRef(ref string) string {
+	u, err := url.Parse(ref)
+	if err != nil {
+		return ""
+	}
+	return strings.ToLower(filepath.Base(u.Fragment))
 }
 
 // splitWords splits camelCase and dot notation into words

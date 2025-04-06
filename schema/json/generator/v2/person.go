@@ -148,9 +148,6 @@ func fakePersonAge(r *Request) (interface{}, error) {
 }
 
 func fakePerson(r *Request) (interface{}, error) {
-	r.ctx.Snapshot()
-	defer r.ctx.Restore()
-
 	gender, _ := fakeGender(r)
 	first, _ := fakeFirstname(r)
 	last, _ := fakeLastname(r)

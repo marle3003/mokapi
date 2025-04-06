@@ -8,19 +8,24 @@ import (
 	"reflect"
 )
 
-func requestForItems(token string, r *Request) *Request {
-	token = inflection.Singular(token)
-
-	if len(r.Path) == 0 {
-		if r.Schema.IsArray() {
-			return &Request{Path: []string{token}, Schema: r.Schema.Items, g: r.g}
-		}
-		return &Request{Path: []string{token}, g: r.g}
-	} else {
-		p := []string{token}
-		p = append(p, r.Path[1:]...)
-		return &Request{Path: p, g: r.g}
+func (r *resolver) resolveArray(req *Request) (*faker, error) {
+	s := req.Schema
+	last := req.Path[len(req.Path)-1]
+	path := req.Path
+	singular := inflection.Singular(last)
+	if singular != last {
+		path = append(req.Path, singular)
 	}
+	if s.Items != nil && s.Items.Ref != "" {
+		path = append(path, getPathFromRef(s.Items.Ref))
+	}
+	item, err := r.resolve(req.With(path, s.Items), true)
+	if err != nil {
+		return nil, err
+	}
+	return newFaker(func() (interface{}, error) {
+		return fakeArray(req, item)
+	}), nil
 }
 
 func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
@@ -44,6 +49,7 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 
 	arr := make([]interface{}, 0, length)
 	for i := 0; i < length; i++ {
+		r.ctx.Snapshot()
 		var v interface{}
 		var err error
 		if s.UniqueItems {
@@ -55,6 +61,7 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 			return nil, fmt.Errorf("%v: %v", err, s)
 		}
 		arr = append(arr, v)
+		r.ctx.Restore()
 	}
 
 	if s.ShuffleItems {

@@ -1,5 +1,7 @@
 package v2
 
+import "github.com/pkg/errors"
+
 var (
 	nullFaker = &faker{fake: func() (any, error) {
 		return nil, nil
@@ -21,6 +23,9 @@ func newFakerWithFallback(n *Node, r *Request) *faker {
 		fake: func() (any, error) {
 			v, err := n.Fake(r)
 			if err != nil {
+				if errors.Is(err, NotSupported) {
+					return fakeBySchema(r)
+				}
 				return nil, err
 			}
 			if v, err = validate(v, r); err != nil {

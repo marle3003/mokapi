@@ -53,7 +53,7 @@ func fakeBySchema(r *Request) (interface{}, error) {
 		return fakeObject(r.Schema)
 	case s.IsArray():
 		items := func() (interface{}, error) {
-			return fakeBySchema(&Request{})
+			return fakeBySchema(r.WithSchema(s.Items))
 		}
 		return fakeArray(r, newFaker(items))
 	case s.Is("boolean"):

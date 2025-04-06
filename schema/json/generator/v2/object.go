@@ -43,8 +43,6 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 		if err != nil {
 			return nil, err
 		}
-		req.ctx.Snapshot()
-		defer req.ctx.Restore()
 
 		for _, key := range sorted {
 			f := fakes.Lookup(key)
