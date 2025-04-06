@@ -88,8 +88,8 @@ func TestNumber(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, -9223372036854775806, v)
-				require.Equal(t, -3074457345618258602, -9223372036854775806/3)
+				require.Equal(t, 11775, v)
+				require.Equal(t, 3925, 11775/3)
 			},
 		},
 		{

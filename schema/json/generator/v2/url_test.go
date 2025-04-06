@@ -63,7 +63,7 @@ func TestStringUrl(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, -3652171958352792229, v)
+				require.Equal(t, int64(-3652171958352792229), v)
 			},
 		},
 		{
