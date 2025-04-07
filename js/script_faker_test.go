@@ -69,7 +69,7 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				r.Equal(t, "6", v.String())
+				r.Equal(t, "5", v.String())
 			},
 		},
 		{

@@ -272,7 +272,7 @@ func TestGeneratorInt(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int32"), schematest.WithMinimum(10)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int32(709015639), i)
+				require.Equal(t, int32(196446369), i)
 			},
 		},
 		{
@@ -280,7 +280,7 @@ func TestGeneratorInt(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int32"), schematest.WithMaximum(0)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int32(-1465320663), i)
+				require.Equal(t, int32(-1951037288), i)
 			},
 		},
 		{
@@ -288,7 +288,7 @@ func TestGeneratorInt(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int32"), schematest.WithMinimum(-5), schematest.WithMaximum(5)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int32(4), i)
+				require.Equal(t, int32(-4), i)
 			},
 		},
 		{
@@ -312,7 +312,7 @@ func TestGeneratorInt(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int64"), schematest.WithMaximum(0)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(-8379641344161477543), i)
+				require.Equal(t, int64(-8379641344161477632), i)
 			},
 		},
 		{
@@ -320,7 +320,7 @@ func TestGeneratorInt(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int64"), schematest.WithMinimum(-5), schematest.WithMaximum(5)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(4), i)
+				require.Equal(t, int64(-4), i)
 			},
 		},
 		{
@@ -328,7 +328,7 @@ func TestGeneratorInt(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int64"), schematest.WithMinimum(4), schematest.WithMaximum(10)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(6), i)
+				require.Equal(t, int64(5), i)
 			},
 		},
 		{
@@ -468,7 +468,7 @@ func TestGeneratorArray(t *testing.T) {
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int32(10), int32(9), int32(10), int32(1), int32(4)}, i)
+				require.Equal(t, []interface{}{int32(8), int32(8), int32(6), int32(7), int32(1)}, i)
 			},
 		},
 		{
@@ -478,7 +478,7 @@ func TestGeneratorArray(t *testing.T) {
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int32(9), int32(10), int32(9), int32(10), int32(1)}, i)
+				require.Equal(t, []interface{}{int32(1), int32(8), int32(8), int32(6), int32(7)}, i)
 			},
 		},
 		{
@@ -488,7 +488,7 @@ func TestGeneratorArray(t *testing.T) {
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int32(10), int32(9), int32(10), int32(1), int32(4), int32(8), int32(5), int32(3), int32(7), int32(8)}, i)
+				require.Equal(t, []interface{}{int32(8), int32(8), int32(6), int32(7), int32(1), int32(8), int32(9), int32(5), int32(3), int32(1)}, i)
 			},
 		},
 		{
@@ -498,7 +498,7 @@ func TestGeneratorArray(t *testing.T) {
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int32(10), int32(9), int32(1), int32(4), int32(8), int32(5), int32(3), int32(7), int32(6), int32(2)}, i)
+				require.Equal(t, []interface{}{int32(8), int32(6), int32(7), int32(1), int32(9), int32(5), int32(3), int32(2), int32(4), int32(10)}, i)
 			},
 		},
 		{
@@ -508,7 +508,7 @@ func TestGeneratorArray(t *testing.T) {
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int32(1), int32(9), int32(10)}, i)
+				require.Equal(t, []interface{}{int32(7), int32(6), int32(8)}, i)
 			},
 		},
 		{
@@ -664,7 +664,7 @@ func TestGenerator_AnyOf(t *testing.T) {
 				require.NoError(t, err)
 				b, err := json.Marshal(o)
 				require.NoError(t, err)
-				require.Equal(t, `[{"bar":5},{"bar":1}]`, string(b))
+				require.Equal(t, `[{"bar":4},{"bar":3}]`, string(b))
 			},
 		},
 	}

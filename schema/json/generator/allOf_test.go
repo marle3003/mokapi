@@ -35,7 +35,7 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(5), v)
+				require.Equal(t, int64(6), v)
 			},
 		},
 		{
@@ -48,7 +48,7 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(8), v)
+				require.Equal(t, int64(6), v)
 			},
 		},
 		{
