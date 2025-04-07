@@ -8,161 +8,91 @@ import (
 	"strings"
 )
 
-func Address() *Tree {
-	root := &Tree{
-		Name: "Address",
-		Nodes: []*Tree{
-			CoAddress(),
-			Postcode(),
-			Street(),
-			OpenAddress(),
-			AnyAddress(),
-		},
-	}
-	return root
-}
-
-func CoAddress() *Tree {
-	return &Tree{
-		Name: "CoAddress",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			return strings.ToLower(last.Name) == "coaddress" && last.Schema.IsString()
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return gofakeit.Name(), nil
-		},
-	}
-}
-
-func AnyAddress() *Tree {
-	return &Tree{
-		Name: "AnyAddress",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			return strings.ToLower(last.Name) == "address" && last.Schema.IsAny()
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			addr := gofakeit.Address()
-			return map[string]interface{}{
-				"address":   addr.Address,
-				"street":    addr.Street,
-				"city":      addr.City,
-				"state":     addr.State,
-				"zip":       addr.Zip,
-				"country":   addr.Country,
-				"latitude":  addr.Latitude,
-				"longitude": addr.Longitude,
-			}, nil
-		},
-	}
-}
-
-func City() *Tree {
-	return &Tree{
-		Name: "City",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			return last.Name == "city" && (last.Schema.IsAny() || last.Schema.IsString() || last.Schema.IsInteger())
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			s := r.LastSchema()
-			if s.IsAny() || s.IsString() {
-				return gofakeit.City(), nil
-			} else if s.IsInteger() {
-				return newPostCode(s), nil
-			}
-			return nil, ErrUnsupported
-		},
-	}
-}
-
-func Postcode() *Tree {
-	return &Tree{
-		Name: "Postcode",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			name := strings.ToLower(last.Name)
-			s := last.Schema
-			return (name == "postcode" || name == "zip") &&
-				(s.IsNumber() || s.IsInteger() || s.IsString() || s.IsAny())
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return newPostCode(r.LastSchema()), nil
-		},
-	}
-}
-
-func Street() *Tree {
-	return &Tree{
-		Name: "Street",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			name := strings.ToLower(last.Name)
-			return name == "street" && last.Schema.IsString()
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return gofakeit.Street(), nil
-		},
-	}
-}
-
-func OpenAddress() *Tree {
-	return &Tree{
-		Name: "OpenAddress",
-		Test: func(r *Request) bool {
-			return r.Path.MatchLast(ComparerFunc(func(p *PathElement) bool {
-				return strings.ToLower(p.Name) == "address" || strings.HasSuffix(p.Name, "Address")
-			}), Any())
-		},
-		Nodes: []*Tree{
-			{
-				Name: "Line1",
-				Test: func(r *Request) bool {
-					return strings.ToLower(r.LastName()) == "line1"
+func addresses() []*Node {
+	return []*Node{
+		{
+			Name: "address",
+			Fake: fakeAddress,
+			Children: []*Node{
+				{
+					Name: "co",
+					Fake: fakePersonName,
 				},
-				Fake: func(r *Request) (interface{}, error) {
-					return gofakeit.Name(), nil
+				{
+					Name: "line1",
+					Fake: fakePersonName,
+				},
+				{
+					Name: "line2",
+					Fake: fakeStreet,
+				},
+				{
+					Name: "line3",
+					Fake: func(r *Request) (interface{}, error) {
+						return fmt.Sprintf("%v %v %v", gofakeit.City(), gofakeit.StateAbr(), gofakeit.Zip()), nil
+					},
 				},
 			},
-			{
-				Name: "Line2",
-				Test: func(r *Request) bool {
-					return strings.ToLower(r.LastName()) == "line2"
-				},
-				Fake: func(r *Request) (interface{}, error) {
-					return gofakeit.Street(), nil
+		},
+		{
+			Name: "co",
+			Children: []*Node{
+				{
+					Name: "address",
+					Fake: fakePersonName,
 				},
 			},
-			{
-				Name: "Line3",
-				Test: func(r *Request) bool {
-					return strings.ToLower(r.LastName()) == "line3"
-				},
-				Fake: func(r *Request) (interface{}, error) {
-					return fmt.Sprintf("%v %v %v", gofakeit.City(), gofakeit.StateAbr(), gofakeit.Zip()), nil
+		},
+		{
+			Name: "street",
+			Fake: fakeStreet,
+		},
+		{
+			Name: "city",
+			Fake: fakeCity,
+		},
+		{
+			Name: "postcode",
+			Fake: fakePostcode,
+		},
+		{
+			Name: "zip",
+			Fake: fakePostcode,
+			Children: []*Node{
+				{
+					Name: "code",
+					Fake: fakePostcode,
 				},
 			},
 		},
 	}
 }
 
-func newPostCode(s *schema.Schema) interface{} {
+func fakeStreet(r *Request) (any, error) {
+	v := gofakeit.Street()
+	r.ctx.store["street"] = v
+	return v, nil
+}
+
+func fakeCity(r *Request) (any, error) {
+	var v interface{}
+	s := r.Schema
+	if s.IsAny() || s.IsString() {
+		v = gofakeit.City()
+	} else if s.IsInteger() {
+		v = newPostCode(s)
+	} else {
+		return nil, NotSupported
+	}
+	r.ctx.store["city"] = v
+	return v, nil
+}
+
+func fakePostcode(r *Request) (any, error) {
+	return newPostCode(r.Schema), nil
+}
+
+func newPostCode(s *schema.Schema) any {
 	if s == nil || s.IsAny() {
 		s = &schema.Schema{Type: []string{"string"}}
 	}
@@ -200,4 +130,18 @@ func newPostCode(s *schema.Schema) interface{} {
 		return float64(codeN)
 	}
 	return code
+}
+
+func fakeAddress(r *Request) (interface{}, error) {
+	addr := gofakeit.Address()
+	return map[string]interface{}{
+		"address":   addr.Address,
+		"street":    addr.Street,
+		"city":      addr.City,
+		"state":     addr.State,
+		"zip":       addr.Zip,
+		"country":   addr.Country,
+		"latitude":  addr.Latitude,
+		"longitude": addr.Longitude,
+	}, nil
 }

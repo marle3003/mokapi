@@ -1,9 +1,9 @@
 import { findByName} from 'mokapi/faker'
 
 export default function() {
-    const faker = findByName('Faker')
+    const faker = findByName('')
     const frequency = ['daily', 'weekly', 'monthly', 'yearly']
-    faker.insert(0, {
+    faker.append({
         name: 'Frequency',
         test: (r) => {
             return r.lastName() === 'frequency'

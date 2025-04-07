@@ -24,6 +24,13 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	if r, ok := c.history[s]; ok {
 		return r
 	}
+	if s.Ref != "" {
+		for _, h := range c.history {
+			if h.Ref == s.Ref {
+				return h
+			}
+		}
+	}
 
 	js := &schema.Schema{
 		Id:                    s.Id,

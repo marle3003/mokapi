@@ -2,55 +2,49 @@ package generator
 
 import (
 	"github.com/brianvoe/gofakeit/v6"
-	"strings"
 )
 
-func Name() *Tree {
-	return &Tree{
-		Name: "Name",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			schema := last.Schema
-			return (strings.ToLower(last.Name) == "name" || strings.HasSuffix(last.Name, "Name")) &&
-				!hasPattern(schema) && !hasFormat(schema)
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			schema := r.LastSchema()
-			var collection []string
-			min := 0
-			max := 12
-			if schema != nil && schema.MinLength != nil {
-				min = *schema.MinLength
-			}
-			if schema != nil && schema.MaxLength != nil {
-				max = *schema.MaxLength
-			}
-			if min <= 3 && max >= 3 {
-				collection = append(collection, names3...)
-			}
-			if min <= 4 && max >= 4 {
-				collection = append(collection, names4...)
-			}
-			if min <= 5 && max >= 5 {
-				collection = append(collection, names5...)
-			}
-			if min <= 6 && max >= 6 {
-				collection = append(collection, names6...)
-			}
-			if max >= 12 {
-				collection = append(collection, names...)
-			}
+func newNameNode() *Node {
+	return &Node{Name: "name", Fake: fakeName}
+}
 
-			if len(collection) > 0 {
-				index := gofakeit.Number(0, len(collection)-1)
-				return collection[index], nil
-			}
-			return nil, ErrUnsupported
-		},
+func fakeName(r *Request) (interface{}, error) {
+	if v, ok := r.ctx.store["name"]; ok {
+		return v, nil
 	}
+
+	s := r.Schema
+	var collection []string
+	min := 0
+	max := 12
+	if s != nil && s.MinLength != nil {
+		min = *s.MinLength
+	}
+	if s != nil && s.MaxLength != nil {
+		max = *s.MaxLength
+	}
+	if min <= 3 && max >= 3 {
+		collection = append(collection, names3...)
+	}
+	if min <= 4 && max >= 4 {
+		collection = append(collection, names4...)
+	}
+	if min <= 5 && max >= 5 {
+		collection = append(collection, names5...)
+	}
+	if min <= 6 && max >= 6 {
+		collection = append(collection, names6...)
+	}
+	if max >= 12 {
+		collection = append(collection, names...)
+	}
+
+	if len(collection) > 0 {
+		index := gofakeit.Number(0, len(collection)-1)
+		return collection[index], nil
+	}
+	return nil, NotSupported
+
 }
 
 var names = []string{

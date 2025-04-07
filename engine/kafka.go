@@ -286,12 +286,12 @@ func createValue(r *asyncapi3.SchemaRef) (value interface{}, err error) {
 
 	switch v := s.(type) {
 	case *schema.Schema:
-		value, err = generator.New(&generator.Request{Path: generator.Path{&generator.PathElement{Schema: v}}})
+		value, err = generator.New(&generator.Request{Schema: v})
 	case *openapi.Schema:
 		value, err = openapi.CreateValue(v)
 	case *avro.Schema:
 		jsSchema := v.Convert()
-		value, err = generator.New(&generator.Request{Path: generator.Path{&generator.PathElement{Schema: jsSchema}}})
+		value, err = generator.New(&generator.Request{Schema: jsSchema})
 	default:
 		err = fmt.Errorf("schema format not supported: %v", r.Value.Format)
 	}

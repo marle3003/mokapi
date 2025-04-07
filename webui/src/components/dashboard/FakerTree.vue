@@ -4,10 +4,10 @@ import VueTree from "@ssthouse/vue3-tree-chart"
 import "@ssthouse/vue3-tree-chart/dist/vue3-tree-chart.css"
 import { computed, ref } from "vue"
 
-declare interface Tree{
+declare interface Node{
   name: string
   custom: boolean
-  nodes: Tree[]
+  children: Node[]
 }
 
 const response = useFetch('/api/faker/tree', undefined, false)
@@ -16,24 +16,25 @@ const data = computed(() => {
   if (!response.data) {
     return []
   }
+  response.data.name = 'root'
   return map(response.data)
 })
 
-function map(tree: Tree) {
-  let name = tree.name
+function map(node: Node) {
+  let name = node.name
   // make words with 14 characters or longer wrappable
   if (name.length >= 14) {
     name = name.replace(/([a-z])([A-Z])/g, "$1<wbr>$2");
   }
   const data = {
     name: name,
-    custom: tree.custom,
+    custom: node.custom,
     children: [] as any[]
   }
-  if (!tree.nodes) {
+  if (!node.children) {
     return data
   }
-  for (const n of tree.nodes) {
+  for (const n of node.children) {
     if (!n) {
       continue
     }

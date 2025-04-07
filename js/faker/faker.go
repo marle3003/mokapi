@@ -43,21 +43,13 @@ func (m *Faker) Fake(v goja.Value) interface{} {
 		if err != nil {
 			panic(m.rt.ToValue(err.Error()))
 		}
-		r.Path = generator.Path{
-			&generator.PathElement{
-				Schema: schema.ConvertToJsonSchema(s),
-			},
-		}
+		r.Schema = schema.ConvertToJsonSchema(s)
 	} else {
 		s, err := ToJsonSchema(v, m.rt)
 		if err != nil {
 			panic(m.rt.ToValue(err.Error()))
 		}
-		r.Path = generator.Path{
-			&generator.PathElement{
-				Schema: s,
-			},
-		}
+		r.Schema = s
 	}
 
 	i, err := generator.New(r)
@@ -68,6 +60,6 @@ func (m *Faker) Fake(v goja.Value) interface{} {
 }
 
 func (m *Faker) FindByName(name string) goja.Value {
-	ft := m.host.FindFakerTree(name)
+	ft := m.host.FindFakerNode(name)
 	return convertToNode(ft, m)
 }

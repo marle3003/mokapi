@@ -1,98 +1,80 @@
 package generator
 
-import (
-	"github.com/brianvoe/gofakeit/v6"
-	"strings"
-)
+import "github.com/brianvoe/gofakeit/v6"
 
-func Pets() *Tree {
-	return &Tree{
-		Name: "Pets",
-		Nodes: []*Tree{
-			//PetList(),
-			PetCategory(),
-			PetObject(),
-			AnyPet(),
+func pets() []*Node {
+	return []*Node{
+		{
+			Name: "pet",
+			Fake: fakePet,
+			Children: []*Node{
+				{
+					Name: "name",
+					Fake: fakePetName,
+				},
+				{
+					Name: "category",
+					Fake: fakePetCategory,
+					Children: []*Node{
+						{
+							Name: "name",
+							Fake: fakePetCategory,
+						},
+						{
+							Name: "id",
+							Fake: fakePetCategoryId,
+						},
+					},
+				},
+			},
 		},
 	}
 }
 
-func PetObject() *Tree {
-	return &Tree{
-		Name: "PetObject",
-		Test: func(r *Request) bool {
-			return r.Path.MatchLast(NameIgnoreCase("pets", "pet"), Any())
-		},
-		Nodes: []*Tree{
-			PetName(),
-			PetCategory(),
-		},
+func fakePet(r *Request) (any, error) {
+	if r.Schema.IsObject() {
+		name, _ := fakePetName(r)
+		category, _ := fakeCategory(r)
+		return map[string]any{
+			"name":     name,
+			"category": category,
+		}, nil
 	}
+	return fakePetName(r)
 }
 
-func PetName() *Tree {
-	return &Tree{
-		Name: "PetName",
-		Test: func(r *Request) bool {
-			return r.LastName() == "name"
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return gofakeit.PetName(), nil
-		},
+func fakePetName(r *Request) (any, error) {
+	if v, ok := r.ctx.store["name"]; ok {
+		return v, nil
 	}
+
+	v := gofakeit.PetName()
+	r.ctx.store["name"] = v
+	return v, nil
 }
 
-func AnyPet() *Tree {
-	return &Tree{
-		Name: "Pet",
-		Test: func(r *Request) bool {
-			return r.Path.MatchLast(ComparerFunc(func(p *PathElement) bool {
-				return strings.ToLower(p.Name) == "pet" && (p.Schema.IsAny() || p.Schema.IsString() || (p.Schema.IsObject() && !p.Schema.HasProperties()))
-			}))
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			s := r.LastSchema()
-			if s.IsString() {
-				return gofakeit.PetName(), nil
-			}
-			return nil, ErrUnsupported
-		},
+func fakePetCategory(r *Request) (any, error) {
+	if v, ok := r.ctx.store["category"]; ok {
+		return v, nil
 	}
+
+	index := gofakeit.Number(0, len(petCategory)-1)
+	v := petCategory[index]
+	r.ctx.store["category"] = v
+	return v, nil
 }
 
-func PetCategory() *Tree {
-	return &Tree{
-		Name: "PetCategory",
-		Test: func(r *Request) bool {
-			return r.Path.MatchLast(NameIgnoreCase("pet"), ComparerFunc(func(p *PathElement) bool {
-				return strings.ToLower(p.Name) == "category" && (p.Schema.IsString() || p.Schema.IsObject() || p.Schema.IsAny())
-			}))
-
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			last := r.Last()
-			if last.Schema.IsString() || last.Schema.IsAny() {
-				return petCategory[gofakeit.Number(0, len(petCategory)-1)], nil
-			}
-			if last.Schema.HasProperties() {
-				m := map[string]interface{}{}
-				for it := last.Schema.Properties.Iter(); it.Next(); {
-					if it.Key() == "name" {
-						m["name"] = petCategory[gofakeit.Number(0, len(petCategory)-1)]
-					} else {
-						prop := r.With(UsePathElement(it.Key(), it.Value()))
-						v, err := r.g.tree.Resolve(prop)
-						if err != nil {
-							return nil, err
-						}
-						m[it.Key()] = v
-					}
-				}
-				return m, nil
-			}
-			return nil, ErrUnsupported
-		},
+func fakePetCategoryId(r *Request) (any, error) {
+	if v, ok := r.ctx.store["category.id"]; ok {
+		return v, nil
 	}
+
+	v, err := fakeId(r)
+	if err != nil {
+		return nil, err
+	}
+	r.ctx.store["category.id"] = v
+	return v, nil
 }
 
 var petCategory = []string{"dog", "cat", "rabbit", "guinea pig", "hamster", "ferret", "hedgehog", "parrot", "canary", "turtle", "goldfish"}

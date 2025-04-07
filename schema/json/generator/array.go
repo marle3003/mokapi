@@ -4,95 +4,99 @@ import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/jinzhu/inflection"
-	"github.com/pkg/errors"
+	"mokapi/schema/json/schema"
 	"reflect"
 )
 
-type ArrayOptions struct {
-	MinItems    *int
-	MaxItems    *int
-	Shuffle     bool
-	UniqueItems bool
-	Nullable    bool
-}
-
-func Array() *Tree {
-	return &Tree{
-		Name: "Array",
-		Test: func(r *Request) bool {
-			return r.LastSchema().IsArray()
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			s := r.LastSchema()
-			maxItems := 5
-			if s.MaxItems != nil {
-				maxItems = *s.MaxItems
-			}
-			minItems := 0
-			if s.MinItems != nil {
-				minItems = *s.MinItems
-			}
-			length := minItems
-			if maxItems-minItems > 0 {
-				length = gofakeit.Number(minItems, maxItems)
-			}
-
-			name := RefName(s.Items)
-			if name == "" {
-				name = inflection.Singular(r.LastName())
-			}
-
-			elem := r.With(UsePathElement(name, s.Items))
-			arr := make([]interface{}, 0, length)
-			for i := 0; i < length; i++ {
-				var v interface{}
-				var err error
-				if s.UniqueItems {
-					v, err = nextUnique(arr, elem)
-				} else {
-					v, err = r.g.tree.Resolve(elem)
-				}
-				if err != nil {
-					var rec *RecursionGuard
-					if errors.As(err, &rec) {
-						continue
-					}
-					return nil, fmt.Errorf("%v: %v", err, s)
-				}
-				arr = append(arr, v)
-			}
-
-			if s.ShuffleItems {
-				r.g.rand.Shuffle(len(arr), func(i, j int) { arr[i], arr[j] = arr[j], arr[i] })
-			}
-
-			return arr, nil
-		},
-	}
-}
-
-func nextUnique(arr []interface{}, r *Request) (interface{}, error) {
-	s := r.LastSchema()
-	if s.Enum != nil {
-		n := gofakeit.Number(0, len(s.Enum)-1)
-		for i := 0; i < len(s.Enum); i++ {
-			index := (n + i) % len(s.Enum)
-			v := s.Enum[index]
-			if !contains(arr, v) {
-				return v, nil
-			}
-		}
-	} else {
-		for i := 0; i < 10; i++ {
-			v, err := r.g.tree.Resolve(r)
-			if err != nil {
-				return nil, err
-			}
-			if !contains(arr, v) {
-				return v, nil
-			}
+func (r *resolver) resolveArray(req *Request) (*faker, error) {
+	s := req.Schema
+	path := req.Path
+	if len(path) > 0 {
+		last := req.Path[len(req.Path)-1]
+		singular := inflection.Singular(last)
+		if singular != last {
+			path = append(req.Path, singular)
 		}
 	}
+	var item *faker
+	var err error
+	if s.Items != nil {
+		if s.Items.Ref != "" {
+			path = append(path, getPathFromRef(s.Items.Ref))
+		}
+		if len(s.Items.Enum) > 0 && s.UniqueItems {
+			index := gofakeit.Number(0, len(s.Items.Enum)-1)
+			item = newFaker(func() (any, error) {
+				index = (index + 1) % len(s.Items.Enum)
+				return s.Items.Enum[index], nil
+			})
+		}
+	}
+	if item == nil {
+		item, err = r.resolve(req.With(path, s.Items), true)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return newFaker(func() (interface{}, error) {
+		return fakeArray(req, item)
+	}), nil
+}
+
+func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
+	s := r.Schema
+	if s == nil {
+		s = &schema.Schema{}
+	}
+
+	maxItems := 5
+	if s.MaxItems != nil {
+		maxItems = *s.MaxItems
+	}
+	minItems := 0
+	if s.MinItems != nil {
+		minItems = *s.MinItems
+	}
+	length := minItems
+	if maxItems-minItems > 0 {
+		length = gofakeit.Number(minItems, maxItems)
+	}
+
+	arr := make([]interface{}, 0, length)
+	for i := 0; i < length; i++ {
+		r.ctx.Snapshot()
+		var v interface{}
+		var err error
+		if s.UniqueItems {
+			v, err = nextUnique(arr, fakeItem.fake)
+		} else {
+			v, err = fakeItem.fake()
+		}
+		if err != nil {
+			return nil, fmt.Errorf("%v: %v", err, s)
+		}
+		arr = append(arr, v)
+		r.ctx.Restore()
+	}
+
+	if s.ShuffleItems {
+		r.g.rand.Shuffle(len(arr), func(i, j int) { arr[i], arr[j] = arr[j], arr[i] })
+	}
+
+	return arr, nil
+}
+
+func nextUnique(arr []interface{}, fakeItem func() (interface{}, error)) (interface{}, error) {
+	for i := 0; i < 10; i++ {
+		v, err := fakeItem()
+		if err != nil {
+			return nil, err
+		}
+		if !contains(arr, v) {
+			return v, nil
+		}
+	}
+
 	return nil, fmt.Errorf("can not fill array with unique items")
 }
 

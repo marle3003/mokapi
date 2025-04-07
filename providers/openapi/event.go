@@ -103,11 +103,9 @@ func setResponseData(r *common.EventResponse, m *MediaType, request *common.Even
 			}
 
 			req := generator.NewRequest(
-				generator.UsePathElement(
-					names[len(names)-1],
-					schema.ConvertToJsonSchema(m.Schema),
-				),
-				generator.UseContext(getGeneratorContext(request)),
+				names,
+				schema.ConvertToJsonSchema(m.Schema),
+				getGeneratorContext(request),
 			)
 			data, err := generator.New(req)
 			if err != nil {

@@ -57,18 +57,18 @@ func TestModule(t *testing.T) {
 		{
 			name: "FakerTree: findByName with existing name",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				host.FindFakerTreeFunc = func(name string) *common.FakerTree {
+				host.FindFakerNodeFunc = func(name string) *common.FakerTree {
 					return common.NewFakerTree(generator.FindByName(name))
 				}
 
 				vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 				_, err := vm.RunString(`
 					const m = require('faker')
-					const n = m.findByName('Product')
+					const n = m.findByName('product')
 					if (!n) {
 						throw new Error('not found')
 					}
-					if (n.name() !== 'Product') {
+					if (n.name() !== 'product') {
 						throw new Error('name does not match: '+n.name())
 					}
 				`)
@@ -78,18 +78,17 @@ func TestModule(t *testing.T) {
 		{
 			name: "FakerTree: append custom faker",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				host.FindFakerTreeFunc = func(name string) *common.FakerTree {
+				host.FindFakerNodeFunc = func(name string) *common.FakerTree {
 					return common.NewFakerTree(generator.FindByName(name))
 				}
 
 				vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 				v, err := vm.RunString(`
 					const m = require('faker')
-					const n = m.findByName('Strings')
+					const n = m.findByName('')
 					const frequencyItems = ['never', 'daily', 'weekly', 'monthly', 'yearly']
-					n.insert(0, {
-						name: 'Frequency',
-						test: (r) => { return r.lastName() === 'frequency' },
+					n.append({
+						name: 'frequency',
 						fake: (r) => {
 							return frequencyItems[Math.floor(Math.random()*frequencyItems.length)]
 						}

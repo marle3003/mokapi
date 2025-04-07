@@ -1,206 +1,80 @@
 package generator
 
-import (
-	"mokapi/schema/json/schema"
-	"net/url"
-	"path/filepath"
-)
-
-type Path []*PathElement
-
-type PathElement struct {
-	Name   string         `json:"name"`
-	Schema *schema.Schema `json:"schema"`
-}
+import "mokapi/schema/json/schema"
 
 type Request struct {
-	Path Path `json:"path"`
+	Path   []string       `json:"path"`
+	Schema *schema.Schema `json:"schema"`
 
-	g       *generator
-	history []*schema.Schema
-	context map[string]interface{}
+	g   *generator
+	ctx *context
 }
 
-func NewRequest(opts ...RequestOption) *Request {
-	r := &Request{}
-	for _, opt := range opts {
-		opt(r)
+func NewRequest(path []string, s *schema.Schema, ctx map[string]any) *Request {
+	return &Request{
+		Path:   path,
+		Schema: s,
+		ctx:    &context{store: ctx},
 	}
-	return r
 }
 
-func (r *Request) With(opts ...RequestOption) *Request {
-	r1 := &Request{
-		Path:    r.Path,
-		g:       r.g,
-		history: r.history,
-		context: r.context,
+func (r *Request) shift() *Request {
+	r2 := *r
+	if len(r2.Path) > 0 {
+		r2.Path = r2.Path[1:]
 	}
-	for _, opt := range opts {
-		opt(r1)
-	}
-	return r1
+	return &r2
 }
 
-func (r *Request) LastName() string {
-	last := r.Last()
-	if last == nil {
-		return ""
-	}
-	return last.Name
-}
-
-func (r *Request) LastSchema() *schema.Schema {
-	last := r.Last()
-	if last == nil {
-		return nil
-	}
-	return last.Schema
-}
-
-func (r *Request) Last() *PathElement {
+func (r *Request) NextToken() string {
 	if len(r.Path) == 0 {
-		return nil
-	}
-	return r.Path[len(r.Path)-1]
-}
-
-//func (p Path) Last(c Comparer) bool {
-//	if len(p) == 0 {
-//		return false
-//	}
-//	return c.Compare(p[len(p)-1])
-//}
-
-//func (r *Request) GetName(index int) string {
-//	if len(r.Names) == 0 {
-//		return ""
-//	}
-//	if index < 0 {
-//		index = len(r.Names) + index
-//	}
-//	if index < 0 || index >= len(r.Names) {
-//		return ""
-//	}
-//	return r.Names[index]
-//}
-
-//func (r *Request) GetNames(index int) []string {
-//	if len(r.Names) == 0 {
-//		return nil
-//	}
-//	if index < 0 {
-//		index = len(r.Names) + index
-//	}
-//	if index < 0 || index >= len(r.Names) {
-//		return nil
-//	}
-//	return r.Names[index:]
-//}
-
-//func (p Path) Has(c Comparer) bool {
-//	for _, n := range p {
-//		if c.Compare(n) {
-//			return true
-//		}
-//	}
-//	return false
-//}
-
-type Comparer interface {
-	Compare(p *PathElement) bool
-}
-
-type ComparerList []Comparer
-
-func (p Path) MatchLast(list ...Comparer) bool {
-	n1 := len(list)
-	n2 := len(p)
-	if n2 == 0 || n1 > n2 {
-		return false
-	}
-	for i, c := range list {
-		index := n2 - n1 + i
-		if index >= n2 {
-			return false
-		}
-		if !c.Compare(p[index]) {
-			return false
-		}
-	}
-	return true
-}
-
-//
-//func (r *Request) matchLast(names []string, ignoreCase bool) bool {
-//	n1 := len(names)
-//	n2 := len(r.Names)
-//	if n2 == 0 || n1 > n2 {
-//		return false
-//	}
-//	for i, name := range names {
-//		index := n2 - n1 + i
-//		if index >= n2 {
-//			return false
-//		}
-//		if ignoreCase && strings.ToLower(name) != strings.ToLower(r.Names[index]) {
-//			return false
-//		} else if !ignoreCase && name != r.Names[index] {
-//			return false
-//		}
-//	}
-//	return true
-//}
-
-func (p *PathElement) RefName() string {
-	return RefName(p.Schema)
-}
-
-func RefName(s *schema.Schema) string {
-	if s == nil || s.Ref == "" {
 		return ""
 	}
-	u, err := url.Parse(s.Ref)
-	if err != nil {
-		return ""
-	}
-	return filepath.Base(u.Fragment)
+	return r.Path[0]
 }
 
-type RequestOption func(r *Request)
-
-func UsePathElement(name string, schema *schema.Schema) RequestOption {
-	return func(r *Request) {
-		r.Path = append(r.Path, &PathElement{Name: name, Schema: schema})
-		r.history = append(r.history, schema)
-	}
+func (r *Request) WithSchema(s *schema.Schema) *Request {
+	return r.With(r.Path, s)
 }
 
-func PathElements(elements ...*PathElement) RequestOption {
-	return func(r *Request) {
-		r.Path = append(r.Path, elements...)
+func (r *Request) WithPath(path []string) *Request {
+	return r.With(path, r.Schema)
+}
+
+func (r *Request) With(path []string, s *schema.Schema) *Request {
+	return &Request{
+		Path:   path,
+		Schema: s,
+		g:      r.g,
+		ctx:    r.ctx,
 	}
 }
 
-func UseContext(ctx map[string]interface{}) RequestOption {
-	return func(r *Request) {
-		r.context = ctx
-	}
+type context struct {
+	store
+	snapshots []store
 }
 
-//func Name(name ...string) RequestOption {
-//	return func(r *Request) {
-//		r.Names = append(r.Names, name...)
-//	}
-//}
-//
+type store map[string]any
 
-//func Schema(r *schema.Ref) RequestOption {
-//	return func(r *Request) {
-//		if r == nil {
-//			return
-//		}
-//		r.Schema = r
-//		r.history = append(r.history, s.Value)
-//	}
-//}
+func newContext() *context {
+	return &context{store: make(store)}
+}
+
+func (c *context) Snapshot() {
+	c.snapshots = append(c.snapshots, c.store.Snapshot())
+}
+
+func (c *context) Restore() {
+	snapshot := c.snapshots[len(c.snapshots)-1]
+	c.snapshots = c.snapshots[:len(c.snapshots)-1]
+	c.store = snapshot
+}
+
+func (s *store) Snapshot() store {
+	snapshot := map[string]any{}
+	for k, v := range *s {
+		snapshot[k] = v
+	}
+	return snapshot
+}

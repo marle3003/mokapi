@@ -2,114 +2,78 @@ package generator
 
 import (
 	"github.com/brianvoe/gofakeit/v6"
+	"mokapi/schema/json/parser"
 	"strings"
 )
 
-func Location() *Tree {
-	return &Tree{
-		Name: "Location",
-		Nodes: []*Tree{
-			City(),
-			Country(),
-			CountryName(),
-			Longitude(),
-			Latitude(),
-			Address(),
+func locations() []*Node {
+	return []*Node{
+		{
+			Name: "country",
+			Fake: fakeCountry,
+			Children: []*Node{
+				{
+					Name: "name",
+					Fake: fakeCountry,
+				},
+			},
+		},
+		{
+			Name: "longitude",
+			Fake: fakeLongitude,
+		},
+		{
+			Name: "latitude",
+			Fake: fakeLatitude,
 		},
 	}
 }
 
-func Country() *Tree {
-	return &Tree{
-		Name: "Country",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			if last.Name == "country" &&
-				(last.Schema.IsAny() || last.Schema.IsString()) {
-				if hasPattern(last.Schema) {
-					p := last.Schema.Pattern
-					return p == "[A-Z]{2}" || p == "[a-z]{2}"
-				}
-				if hasFormat(last.Schema) {
-					return false
-				}
-				if last.Schema.IsString() {
-					return (last.Schema.MaxLength == nil || *last.Schema.MaxLength >= 56) &&
-						(last.Schema.MinLength == nil || *last.Schema.MinLength <= 4)
-				}
-			}
-			return false
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			s := r.LastSchema()
-			max := 2
-			if s != nil && s.MaxLength != nil {
-				max = *s.MaxLength
-			}
+func fakeCountry(r *Request) (any, error) {
+	s := r.Schema
+	var v string
 
-			if max == 2 {
-				country := gofakeit.CountryAbr()
-				if s != nil && s.Pattern == "[a-z]{2}" {
-					return strings.ToLower(country), nil
-				}
-				return country, nil
-			}
+	if s != nil {
+		max := -1
+		if s.MaxLength != nil {
+			max = *s.MaxLength
+		}
 
-			return gofakeit.Country(), nil
-		},
+		if max == 2 {
+			country := gofakeit.CountryAbr()
+			v = country
+		} else if s.Pattern != "" {
+			country := gofakeit.CountryAbr()
+			p := parser.Parser{Schema: s}
+			_, err := p.Parse(country)
+			if err == nil {
+				v = country
+			} else {
+				// try lower case
+				country = strings.ToLower(country)
+				_, err = p.Parse(country)
+				if err == nil {
+					v = country
+				}
+			}
+		}
 	}
+	if v == "" {
+		v = gofakeit.Country()
+	}
+
+	r.ctx.store["country"] = v
+	return v, nil
 }
 
-func CountryName() *Tree {
-	return &Tree{
-		Name: "CountryName",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			return last.Name == "countryName" &&
-				(last.Schema.IsAny() || last.Schema.IsAnyString())
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return gofakeit.Country(), nil
-		},
-	}
+func fakeLongitude(r *Request) (any, error) {
+	v := gofakeit.Longitude()
+	r.ctx.store["longitude"] = v
+	return v, nil
 }
 
-func Longitude() *Tree {
-	return &Tree{
-		Name: "Longitude",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			name := strings.ToLower(last.Name)
-			return name == "longitude" && (last.Schema.IsNumber() || last.Schema.IsAny())
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return gofakeit.Longitude(), nil
-		},
-	}
-}
-
-func Latitude() *Tree {
-	return &Tree{
-		Name: "Latitude",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			name := strings.ToLower(last.Name)
-			return name == "latitude" && (last.Schema.IsNumber() || last.Schema.IsAny())
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return gofakeit.Latitude(), nil
-		},
-	}
+func fakeLatitude(r *Request) (any, error) {
+	v := gofakeit.Latitude()
+	r.ctx.store["latitude"] = v
+	return v, nil
 }

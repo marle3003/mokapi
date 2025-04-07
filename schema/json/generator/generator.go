@@ -2,96 +2,105 @@ package generator
 
 import (
 	"fmt"
+	"github.com/brianvoe/gofakeit/v6"
 	"math/rand"
+	"mokapi/schema/json/schema"
 	"time"
 )
 
-var g = &generator{
-	rand: rand.New(rand.NewSource(time.Now().Unix())),
-	tree: NewTree(),
-}
+var types = []any{"string", "number", "integer", "boolean", "array", "object", "null"}
+var weightTypes = []float32{1, 1, 1, 1, 0.2, 0.2, 0.05}
 
 type generator struct {
 	rand *rand.Rand
 
-	tree *Tree
+	root *Node
 }
 
-func Seed(seed int64) {
-	g.rand.Seed(seed)
+var g = &generator{
+	rand: rand.New(rand.NewSource(time.Now().Unix())),
+	root: buildTree(),
 }
 
 func New(r *Request) (interface{}, error) {
 	r.g = g
-	if r.context == nil {
-		r.context = map[string]interface{}{}
+	if r.ctx == nil {
+		r.ctx = newContext()
 	}
-	return r.g.tree.Resolve(r)
+	f, err := resolve(r, true)
+	if err != nil {
+		return nil, err
+	}
+	return f.fake()
 }
 
-func FindByName(name string) *Tree {
-	if len(name) == 0 {
-		return g.tree
-	}
-	if g.tree.Name == name {
-		return g.tree
-	}
-	return g.tree.FindByName(name)
+func Seed(seed int64) {
+	gofakeit.Seed(seed)
+	g.rand.Seed(seed)
 }
 
-func (t *Tree) FindByName(name string) *Tree {
-	for _, node := range t.Nodes {
-		if node.Name == name {
-			return node
+func fakeBySchema(r *Request) (interface{}, error) {
+	if fake, ok := applyConstraints(r); ok {
+		return fake()
+	}
+
+	s := r.Schema
+	var t schema.Types
+	if s != nil {
+		t = s.Type
+	}
+
+	if s != nil && len(s.Type) > 1 {
+		t = s.Type
+		if s.IsNullable() {
+			n := gofakeit.Float32Range(0, 1)
+			if n > 0.05 {
+				t = removeNull(s.Type)
+			}
 		}
-		if n := node.FindByName(name); n != nil {
-			return n
+
+		index := gofakeit.Number(0, len(t)-1)
+		t = schema.Types{t[index]}
+		c := *s
+		c.Type = t
+		s = &c
+		r.Schema = s
+	}
+
+	switch {
+	case t.IsString():
+		return fakeString(r)
+	case t.IsObject():
+		return fakeObject(r)
+	case t.IsArray():
+		items := func() (interface{}, error) {
+			return fakeBySchema(r.WithSchema(s.Items))
+		}
+		return fakeArray(r, newFaker(items))
+	case t.IsBool():
+		return gofakeit.Bool(), nil
+	case t.IsNumber():
+		return fakeNumber(r)
+	case t.IsInteger():
+		return fakeInteger(r.Schema)
+	case t.IsNullable():
+		return nil, nil
+	case t.IsNullable():
+		return nil, nil
+	case s != nil && len(s.Type) > 0:
+		return nil, fmt.Errorf("unsupported schema: %s", s)
+	}
+
+	i, _ := gofakeit.Weighted(types, weightTypes)
+	s = &schema.Schema{Type: schema.Types{i.(string)}}
+	return fakeBySchema(r.WithSchema(s))
+}
+
+func removeNull(slice schema.Types) schema.Types {
+	for i, v := range slice {
+		if v == "null" {
+			slice = append(slice[:i], slice[i+1:]...)
 		}
 	}
-	return nil
-}
-
-func (t *Tree) Append(node *Tree) {
-	t.Nodes = append(t.Nodes, node)
-}
-
-func (t *Tree) Insert(index int, node *Tree) error {
-	if index < 0 {
-		return fmt.Errorf("index must be positive: %v", index)
-	}
-	if index > len(t.Nodes) {
-		return fmt.Errorf("index outside of array: %v", index)
-	}
-	if index == len(t.Nodes) {
-		t.Append(node)
-		return nil
-	}
-	t.Nodes = append(t.Nodes[:index+1], t.Nodes[index:]...)
-	t.Nodes[index] = node
-	return nil
-}
-
-func (t *Tree) RemoveAt(index int) error {
-	if index < 0 {
-		return fmt.Errorf("index must be positive: %v", index)
-	}
-	if index >= len(t.Nodes) {
-		return fmt.Errorf("index outside of array: %v", index)
-	}
-	t.Nodes = append(t.Nodes[:index], t.Nodes[index+1:]...)
-	return nil
-}
-
-func (t *Tree) Remove(name string) error {
-	index := -1
-	for i, n := range t.Nodes {
-		if n.Name == name {
-			index = i
-			break
-		}
-	}
-	if index == -1 {
-		return fmt.Errorf("name %v not found", name)
-	}
-	return t.RemoveAt(index)
+	return slice
 }
