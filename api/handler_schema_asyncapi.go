@@ -70,9 +70,7 @@ func getAsyncApiExample(w http.ResponseWriter, r *http.Request, cfg *asyncapi3.C
 	}
 
 	rnd, err := generator.New(&generator.Request{
-		Path: generator.Path{
-			&generator.PathElement{Schema: s},
-		},
+		Schema: s,
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

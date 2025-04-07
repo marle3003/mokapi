@@ -77,9 +77,8 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rnd, err := generator.New(&generator.Request{
-		Path: generator.Path{
-			&generator.PathElement{Name: re.Name, Schema: s},
-		},
+		Path:   []string{re.Name},
+		Schema: s,
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

@@ -9,6 +9,7 @@ import (
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime/events"
+	"mokapi/schema/json/generator"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -204,7 +205,7 @@ func TestHandler_Response_Context(t *testing.T) {
 			},
 			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, rr.Code)
-				require.Equal(t, `{"id":"cc2f70ec-0dc1-4d9b-86a0-9982dea3bc8f"}`, rr.Body.String())
+				require.Equal(t, `{"id":"98173564-6619-4557-888e-65b16bb5def5"}`, rr.Body.String())
 			},
 		},
 		{
@@ -232,6 +233,7 @@ func TestHandler_Response_Context(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
+			generator.Seed(11)
 			config := openapitest.NewConfig("3.0", tc.opt)
 
 			h := openapi.NewHandler(config, enginetest.NewEngine())

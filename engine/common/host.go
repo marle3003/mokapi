@@ -40,7 +40,7 @@ type Host interface {
 
 	Name() string
 
-	FindFakerTree(name string) *FakerTree
+	FindFakerNode(name string) *FakerTree
 
 	Lock()
 	Unlock()
@@ -128,6 +128,5 @@ func (a *Action) String() string {
 
 type FakerNode interface {
 	Name() string
-	Test(r *generator.Request) bool
 	Fake(r *generator.Request) (interface{}, error)
 }

@@ -124,7 +124,7 @@ export default async function() {
                     return true
                 }
             case 'fakertree':
-                const resp = get(`http://localhost:${port}/mokapi/api/faker/tree`)
+                const resp = get(`${apiBaseUrl}/mokapi/api/faker/tree`)
                 response.body = resp.body
                 return true
         }

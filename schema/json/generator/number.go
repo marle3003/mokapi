@@ -10,220 +10,186 @@ import (
 
 const smallestFloat = 1e-15
 
-func Numbers() *Tree {
-	return &Tree{
-		Name: "Numbers",
-		Nodes: []*Tree{
-			MultipleOf(),
-			Id(),
-			Year(),
-			Quantity(),
-			Integer32(),
-			Integer64(),
-			Float32(),
-			Number(),
-		},
-	}
-}
-
-func Id() *Tree {
-	return &Tree{
-		Name: "Id",
-		Test: func(r *Request) bool {
-			return r.Path.MatchLast(ComparerFunc(func(p *PathElement) bool {
-				return (strings.ToLower(p.Name) == "id" || strings.HasSuffix(p.Name, "Id")) &&
-					(p.Schema.IsInteger() || p.Schema.IsAny())
-			}))
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			s := r.LastSchema()
-			return newInteger(s, 1, 100000)
-		},
-	}
-}
-
-func Year() *Tree {
-	return &Tree{
-		Name: "Year",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			return (strings.ToLower(last.Name) == "year" || strings.HasSuffix(last.Name, "Year") ||
-				strings.HasPrefix(last.Name, "year")) && (last.Schema.IsInteger() || last.Schema.IsAny())
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			s := r.LastSchema()
-			if s.IsAny() {
-				s = &schema.Schema{Type: []string{"integer"}}
-			}
-			min, max := getRangeWithDefault(s, 1900, 2199)
-			return gofakeit.IntRange(int(min), int(max)), nil
-		},
-	}
-}
-
-func Quantity() *Tree {
-	return &Tree{
-		Name: "Quantity",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			return (strings.ToLower(last.Name) == "quantity" || strings.HasSuffix(last.Name, "Quantity")) && (last.Schema.IsInteger() || last.Schema.IsAny())
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			s := r.LastSchema()
-			if s.IsAny() {
-				s = &schema.Schema{Type: []string{"integer"}}
-			}
-			return newInteger(s, 0, 100)
-		},
-	}
-}
-
-func MultipleOf() *Tree {
-	return &Tree{
-		Name: "MultipleOf",
-		Test: func(r *Request) bool {
-			s := r.LastSchema()
-			return (s.IsNumber() || s.IsInteger()) && s.MultipleOf != nil
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			s := r.LastSchema()
-			min := 0
-			max := 100
-			n := gofakeit.Number(min, max)
-			v := *s.MultipleOf * float64(n)
-			if s.Maximum != nil && v > *s.Maximum {
-				for v > *s.Maximum {
-					n--
-					v = *s.MultipleOf * float64(n)
+func numbers() []*Node {
+	return []*Node{
+		{
+			Name: "number",
+			Fake: func(r *Request) (any, error) {
+				if r.Schema == nil {
+					r = r.WithSchema(&schema.Schema{Type: schema.Types{"string"}})
 				}
+				return fakeNumber(r)
+			},
+		},
+		{
+			Name: "age",
+			Fake: fakeAge,
+		},
+		{
+			Name: "year",
+			Fake: fakeYear,
+		},
+		{
+			Name: "quantity",
+			Fake: func(r *Request) (interface{}, error) {
+				return fakeIntegerWithRange(r.Schema, 0, 100)
+			},
+		},
+	}
+}
+
+func fakeYear(r *Request) (interface{}, error) {
+	s := r.Schema
+	if s.IsAny() {
+		s = &schema.Schema{Type: []string{"integer"}}
+	}
+	return fakeIntegerWithRange(s, 1900, 2199)
+}
+
+func fakeInteger(s *schema.Schema) (any, error) {
+	hasRange := hasNumberRange(s)
+	if !hasRange && s.MultipleOf == nil {
+		if s.Format == "int32" {
+			return gofakeit.Int32(), nil
+		}
+		return gofakeit.Int64(), nil
+	}
+	if hasRange {
+		min, max := getRange(s)
+		if err := validateRange(min, max); err != nil {
+			return nil, fmt.Errorf("%w in %s", err, s)
+		}
+		if s.MultipleOf != nil {
+			v, err := randomMultiple(int(min), int(max), int(*s.MultipleOf))
+			if err != nil {
+				return nil, err
+			}
+			if s.Format == "int32" {
+				return int32(v), nil
+			}
+			return int64(v), nil
+		}
+		v := gofakeit.Number(int(min), int(max))
+		if s.Format == "int32" {
+			return int32(v), nil
+		}
+		return int64(v), nil
+	}
+	min := 0
+	max := 10000
+	n := gofakeit.Number(min, max)
+	v := n * int(*s.MultipleOf)
+	if s.Format == "int32" {
+		return int32(v), nil
+	}
+	return v, nil
+}
+
+func fakeIntegerWithRange(s *schema.Schema, min, max int) (any, error) {
+	if s.IsAny() {
+		return gofakeit.Number(min, max), nil
+	}
+
+	minValue, maxValue := getRangeWithDefault(float64(min), float64(max), s)
+	if err := validateRange(minValue, maxValue); err != nil {
+		return nil, fmt.Errorf("%w in %s", err, s)
+	}
+
+	min = int(minValue)
+	max = int(maxValue)
+
+	if s.MultipleOf != nil {
+		v, err := randomMultiple(min, max, int(*s.MultipleOf))
+		if err != nil {
+			return nil, err
+		}
+		if s.Format == "int32" {
+			return int32(v), nil
+		}
+		return int64(v), nil
+	}
+	v := gofakeit.Number(min, max)
+	if s.Format == "int32" {
+		return int32(v), nil
+	}
+	return int64(v), nil
+}
+
+func fakeNumber(r *Request) (interface{}, error) {
+	s := r.Schema
+	if s == nil {
+		return gofakeit.Float64(), nil
+	}
+
+	if s.IsString() {
+		minLength := 11
+		maxLength := 11
+		if s.MaxLength != nil {
+			maxLength = *s.MaxLength
+		}
+		if s.MinLength != nil {
+			minLength = *s.MinLength
+		} else if s.MaxLength != nil {
+			minLength = 0
+		}
+		var n int
+		if minLength == maxLength {
+			n = minLength
+		} else {
+			n = gofakeit.Number(minLength, maxLength)
+		}
+		return gofakeit.Numerify(strings.Repeat("#", n)), nil
+	}
+	if s.IsInteger() {
+		return fakeInteger(s)
+	}
+
+	hasRange := hasNumberRange(s)
+	if !hasRange && s.MultipleOf == nil {
+		if s.Format == "float" {
+			return gofakeit.Float32(), nil
+		}
+		return gofakeit.Float64(), nil
+	}
+	if hasRange {
+		min, max := getRange(s)
+		if err := validateRange(min, max); err != nil {
+			return nil, fmt.Errorf("%w in %s", err, s)
+		}
+		if s.MultipleOf != nil {
+			v, err := randomFloatMultiple(min, max, *s.MultipleOf)
+			if err != nil {
+				return nil, err
+			}
+			if s.Format == "float" {
+				return float32(v), nil
 			}
 			return v, nil
-		},
+		}
+		v := gofakeit.Float64Range(min, max)
+		if s.Format == "float" {
+			return float32(v), nil
+		}
+		return v, nil
 	}
+	min := 0
+	max := 10000
+	n := gofakeit.Number(min, max)
+	v := float64(n) * *s.MultipleOf
+	if s.Format == "float" {
+		return float32(v), nil
+	}
+	return v, nil
 }
 
-func Integer32() *Tree {
-	return &Tree{
-		Name: "Integer32",
-		Test: func(r *Request) bool {
-			s := r.LastSchema()
-			return s.IsInteger() && s.Format == "int32"
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			s := r.LastSchema()
-			if !hasNumberRange(s) {
-				return gofakeit.Int32(), nil
-			}
+func fakeAge(r *Request) (interface{}, error) {
+	min, max := getRangeWithDefault(0, 50, r.Schema)
 
-			min, max := getRange(s)
-			min = math.Ceil(min)
-			max = math.Floor(max)
-
-			if err := validateRange(min, max); err != nil {
-				return 0, fmt.Errorf("%w in %s", err, s)
-			}
-
-			// gofakeit uses Intn function which panics if number is <= 0
-			return int32(math.Round(float64(gofakeit.Float32Range(float32(min), float32(max))))), nil
-		},
+	if r.Schema.IsNumber() {
+		return gofakeit.Float64Range(min, max), nil
+	} else {
+		return gofakeit.Number(int(min), int(max)), nil
 	}
-}
-
-func Integer64() *Tree {
-	return &Tree{
-		Name: "Integer",
-		Test: func(r *Request) bool {
-			return r.LastSchema().IsInteger()
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			s := r.LastSchema()
-			if !hasNumberRange(s) {
-				return gofakeit.Int64(), nil
-			}
-
-			min, max := getRange(s)
-			min = math.Ceil(min)
-			max = math.Floor(max)
-
-			if err := validateRange(min, max); err != nil {
-				return 0, fmt.Errorf("%w in %s", err, s)
-			}
-			if math.IsInf(max-min, 0) {
-				return gofakeit.Int64(), nil
-			}
-
-			// gofakeit uses Intn function which panics if number is <= 0
-			return int64(math.Round(gofakeit.Float64Range(min, max))), nil
-		},
-	}
-}
-
-func Float32() *Tree {
-	return &Tree{
-		Name: "Float32",
-		Test: func(r *Request) bool {
-			s := r.LastSchema()
-			return s.IsNumber() && s.Format == "float"
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			s := r.LastSchema()
-			if !hasNumberRange(s) {
-				return gofakeit.Float32(), nil
-			}
-
-			min, max := getRange(s)
-
-			if err := validateRange(min, max); err != nil {
-				return 0, fmt.Errorf("%w in %s", err, s)
-			}
-
-			return gofakeit.Float32Range(float32(min), float32(max)), nil
-		},
-	}
-}
-
-func Number() *Tree {
-	return &Tree{
-		Name: "Number",
-		Test: func(r *Request) bool {
-			s := r.LastSchema()
-			return s.IsNumber()
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			s := r.LastSchema()
-			if !hasNumberRange(s) {
-				return gofakeit.Float64(), nil
-			}
-
-			min, max := getRange(s)
-
-			if err := validateRange(min, max); err != nil {
-				return 0, fmt.Errorf("%w in %s", err, s)
-			}
-			if math.IsInf(max-min, 0) {
-				return gofakeit.Float64(), nil
-			}
-
-			return gofakeit.Float64Range(min, max), nil
-		},
-	}
-}
-
-func validateRange(min, max float64) error {
-	if min > max {
-		return fmt.Errorf("invalid minimum '%v' and maximum '%v'", min, max)
-	}
-	return nil
-}
-
-func hasNumberRange(s *schema.Schema) bool {
-	return s.Minimum != nil || s.Maximum != nil || s.ExclusiveMinimum != nil || s.ExclusiveMaximum != nil
 }
 
 func getRange(s *schema.Schema) (float64, float64) {
@@ -247,63 +213,78 @@ func getRange(s *schema.Schema) (float64, float64) {
 		}
 	}
 
-	return getRangeWithDefault(s, min, max)
+	return getRangeWithDefault(min, max, s)
 }
 
-func getRangeWithDefault(s *schema.Schema, min, max float64) (float64, float64) {
+func getRangeWithDefault(min, max float64, s *schema.Schema) (float64, float64) {
+	if s == nil {
+		return min, max
+	}
+
 	if s.Minimum != nil {
 		min = *s.Minimum
 	}
 	if s.Maximum != nil {
 		max = *s.Maximum
 	}
+
+	modifier := smallestFloat
+	if s.IsInteger() {
+		modifier = 1
+	}
+
 	if s.ExclusiveMinimum != nil {
 		if s.ExclusiveMinimum.IsA() {
-			min = s.ExclusiveMinimum.A + smallestFloat
+			min = s.ExclusiveMinimum.A + modifier
 		} else {
-			min = *s.Minimum + smallestFloat
+			min = *s.Minimum + modifier
 		}
 	}
 	if s.ExclusiveMaximum != nil {
 		if s.ExclusiveMaximum.IsA() {
-			max = s.ExclusiveMaximum.A - smallestFloat
+			max = s.ExclusiveMaximum.A - modifier
 		} else {
-			max = *s.Maximum - smallestFloat
+			max = *s.Maximum - modifier
 		}
 	}
 
 	return min, max
 }
 
-func newInteger(s *schema.Schema, min, max int) (interface{}, error) {
-	if s.IsAny() {
-		return gofakeit.Number(min, max), nil
+func hasNumberRange(s *schema.Schema) bool {
+	return s.Minimum != nil || s.Maximum != nil || s.ExclusiveMinimum != nil || s.ExclusiveMaximum != nil
+}
+
+func randomMultiple(min, max, multipleOf int) (int, error) {
+	// Adjust min and max to be aligned with multipleOf
+	adjustedMin := ((min + multipleOf - 1) / multipleOf) * multipleOf
+	adjustedMax := (max / multipleOf) * multipleOf
+
+	if adjustedMin > adjustedMax {
+		return 0, fmt.Errorf("no valid multiple in range")
 	}
 
-	if s.Format == "int32" && max > math.MaxInt32 {
-		max = math.MaxInt32
-	}
-	if s.Minimum != nil {
-		min = int(*s.Minimum)
-	}
-	if s.ExclusiveMinimum != nil {
-		if s.ExclusiveMinimum.IsA() {
-			min = int(s.ExclusiveMinimum.A) + 1
-		} else {
-			min = int(*s.Minimum) + 1
-		}
-	}
-	if s.Maximum != nil {
-		max = int(*s.Maximum)
-	}
-	if s.ExclusiveMaximum != nil {
-		if s.ExclusiveMaximum.IsA() {
-			max = int(s.ExclusiveMaximum.A) - 1
-		} else {
-			max = int(*s.Maximum) - 1
-		}
+	count := ((adjustedMax - adjustedMin) / multipleOf) + 1
+	n := gofakeit.Number(0, count)
 
+	return adjustedMin + n*multipleOf, nil
+}
+
+func randomFloatMultiple(min, max, multipleOf float64) (float64, error) {
+	start := math.Ceil(min / multipleOf)
+	end := math.Floor(max / multipleOf)
+
+	if start > end {
+		return 0, fmt.Errorf("no valid multiple in range")
 	}
 
-	return gofakeit.Number(min, max), nil
+	n := gofakeit.Number(0, int(end-start)+1) + int(start)
+	return float64(n) * multipleOf, nil
+}
+
+func validateRange(min, max float64) error {
+	if min > max {
+		return fmt.Errorf("invalid minimum '%v' and maximum '%v'", min, max)
+	}
+	return nil
 }

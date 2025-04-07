@@ -16,12 +16,8 @@ func TestProduct(t *testing.T) {
 		{
 			name: "name",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Name:   "product",
-						Schema: schematest.New("object", schematest.WithProperty("name", nil)),
-					},
-				},
+				Path:   []string{"product"},
+				Schema: schematest.New("object", schematest.WithProperty("name", nil)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -31,41 +27,34 @@ func TestProduct(t *testing.T) {
 		{
 			name: "description",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Name:   "product",
-						Schema: schematest.New("object", schematest.WithProperty("description", nil)),
-					},
-				},
+				Path:   []string{"product"},
+				Schema: schematest.New("object", schematest.WithProperty("description", nil)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"description": "Daily regularly you for recline her choir insufficient poised tribe. Mustering will might annually backwards abroad finger say."}, v)
 			},
 		},
-		//{
-		//	name: "description",
-		//	req: &Request{
-		//		Names: []string{"material"},
-		//	},
-		//	test: func(t *testing.T, v interface{}, err error) {
-		//		require.NoError(t, err)
-		//		require.Equal(t, "stainless", v)
-		//	},
-		//},
 		{
 			name: "category",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Name:   "product",
-						Schema: schematest.New("object", schematest.WithProperty("category", nil)),
-					},
-				},
+				Path:   []string{"product"},
+				Schema: schematest.New("object", schematest.WithProperty("category", nil)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"category": "musical instruments"}, v)
+			},
+		},
+		{
+			name: "material",
+			req: &Request{
+				Path:   []string{"product"},
+				Schema: schematest.New("object", schematest.WithProperty("material", nil)),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"material": "stainless"}, v)
 			},
 		},
 	}

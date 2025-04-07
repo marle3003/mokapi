@@ -16,28 +16,20 @@ func TestLocation(t *testing.T) {
 		{
 			name: "country",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name:   "country",
-						Schema: schematest.New("string"),
-					},
-				},
+				Path:   []string{"country"},
+				Schema: schematest.New("string"),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "SI", v)
+				require.Equal(t, "Slovenia", v)
 			},
 		},
 		{
 			name: "country with pattern [A-Z]{2}",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name: "country",
-						Schema: schematest.New("string",
-							schematest.WithPattern("[A-Z]{2}")),
-					},
-				},
+				Path: []string{"country"},
+				Schema: schematest.New("string",
+					schematest.WithPattern("[A-Z]{2}")),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -47,13 +39,9 @@ func TestLocation(t *testing.T) {
 		{
 			name: "country with pattern [a-z]{2}",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name: "country",
-						Schema: schematest.New("string",
-							schematest.WithPattern("[a-z]{2}")),
-					},
-				},
+				Path: []string{"country"},
+				Schema: schematest.New("string",
+					schematest.WithPattern("[a-z]{2}")),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -61,45 +49,33 @@ func TestLocation(t *testing.T) {
 			},
 		},
 		{
-			name: "country with pattern [a-zA-Z]{2}",
+			name: "country with pattern [a-zA-Z]{4}",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name: "country",
-						Schema: schematest.New("string",
-							schematest.WithPattern("[a-z]{4}")),
-					},
-				},
+				Path: []string{"country"},
+				Schema: schematest.New("string",
+					schematest.WithPattern("^[a-zA-Z]{4}$")),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "cqop", v)
+				require.Equal(t, "cQOp", v)
 			},
 		},
 		{
 			name: "country maxlength 15",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name:   "country",
-						Schema: schematest.New("string", schematest.WithMaxLength(15)),
-					},
-				},
+				Path:   []string{"country"},
+				Schema: schematest.New("string", schematest.WithMaxLength(15)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "FqwCrwMfkOjojx", v)
+				require.Equal(t, "Slovenia", v)
 			},
 		},
 		{
 			name: "countryName",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name:   "countryName",
-						Schema: schematest.New("string"),
-					},
-				},
+				Path:   []string{"countryName"},
+				Schema: schematest.New("string"),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)

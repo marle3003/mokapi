@@ -16,9 +16,8 @@ func TestLanguage(t *testing.T) {
 		{
 			name: "language",
 			req: &Request{
-				Path: Path{
-					&PathElement{Name: "language", Schema: schematest.New("string")},
-				},
+				Path:   []string{"language"},
+				Schema: schematest.New("string"),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -28,9 +27,10 @@ func TestLanguage(t *testing.T) {
 		{
 			name: "language with max=2",
 			req: &Request{
-				Path: Path{
-					&PathElement{Name: "language", Schema: schematest.New("string", schematest.WithMaxLength(2))},
-				},
+				Path: []string{"language"},
+				Schema: schematest.New("string",
+					schematest.WithMaxLength(2),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -40,9 +40,8 @@ func TestLanguage(t *testing.T) {
 		{
 			name: "language with max=5",
 			req: &Request{
-				Path: Path{
-					&PathElement{Name: "language", Schema: schematest.New("string", schematest.WithMaxLength(5))},
-				},
+				Path:   []string{"language"},
+				Schema: schematest.New("string", schematest.WithMaxLength(5)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -52,9 +51,8 @@ func TestLanguage(t *testing.T) {
 		{
 			name: "language with max=15",
 			req: &Request{
-				Path: Path{
-					&PathElement{Name: "language", Schema: schematest.New("string", schematest.WithMaxLength(15))},
-				},
+				Path:   []string{"language"},
+				Schema: schematest.New("string", schematest.WithMaxLength(15)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
