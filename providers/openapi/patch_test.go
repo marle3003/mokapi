@@ -153,6 +153,78 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 				require.Equal(t, 12, body.Content["text/plain"].Example)
 			},
 		},
+		{
+			name: "patch config security",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0"),
+				openapitest.NewConfig("1.0",
+					openapitest.WithGlobalSecurity(map[string][]string{"foo": {}}),
+				),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				require.Len(t, result.Security, 1)
+				require.Contains(t, result.Security[0], "foo")
+			},
+		},
+		{
+			name: "patch config security add scope",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0",
+					openapitest.WithGlobalSecurity(map[string][]string{"foo": {"foo"}}),
+				),
+				openapitest.NewConfig("1.0",
+					openapitest.WithGlobalSecurity(map[string][]string{"foo": {"foo", "bar"}}),
+				),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				require.Len(t, result.Security, 2)
+				require.Equal(t, []string{"foo"}, result.Security[0]["foo"])
+				require.Equal(t, []string{"foo", "bar"}, result.Security[1]["foo"])
+			},
+		},
+		{
+			name: "patch operation security",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.NewPath(openapitest.WithOperation(
+						"post", openapitest.NewOperation(),
+					),
+					))),
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.NewPath(openapitest.WithOperation(
+						"post", openapitest.NewOperation(
+							openapitest.WithSecurity(map[string][]string{"foo": {}})),
+					),
+					))),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				require.Len(t, result.Paths["/foo"].Value.Post.Security, 1)
+				require.Contains(t, result.Paths["/foo"].Value.Post.Security[0], "foo")
+			},
+		},
+		{
+			name: "patch operation security add scope",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.NewPath(openapitest.WithOperation(
+						"post", openapitest.NewOperation(
+							openapitest.WithSecurity(map[string][]string{"foo": {"foo"}}),
+						),
+					),
+					))),
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.NewPath(openapitest.WithOperation(
+						"post", openapitest.NewOperation(
+							openapitest.WithSecurity(map[string][]string{"foo": {"foo", "bar"}})),
+					),
+					))),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				require.Len(t, result.Paths["/foo"].Value.Post.Security, 2)
+				require.Equal(t, []string{"foo"}, result.Paths["/foo"].Value.Post.Security[0]["foo"])
+				require.Equal(t, []string{"foo", "bar"}, result.Paths["/foo"].Value.Post.Security[1]["foo"])
+			},
+		},
 	}
 
 	for _, tc := range testcases {

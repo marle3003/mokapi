@@ -162,6 +162,27 @@ func TestHandler_Http(t *testing.T) {
 			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo","operations":[{"method":"get","deprecated":false,"security":[{"foo":{"scopes":[],"configs":{"type":"apiKey","in":"header","name":"X-API-Key"}}}]}]}]`,
 		},
 		{
+			name: "get http service with global security",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithGlobalSecurity(map[string][]string{"foo": {}}),
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithPath("/foo", openapitest.NewPath(
+							openapitest.WithOperation("get", openapitest.NewOperation()),
+						)),
+						openapitest.WithComponentSecurity("foo", &openapi.ApiKeySecurityScheme{
+							Type: "apiKey",
+							In:   "header",
+							Name: "X-API-Key",
+						}),
+					),
+				)
+			},
+			requestUrl:   "http://foo.api/api/services/http/foo",
+			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo","operations":[{"method":"get","deprecated":false,"security":[{"foo":{"scopes":[],"configs":{"type":"apiKey","in":"header","name":"X-API-Key"}}}]}]}]`,
+		},
+		{
 			name: "get http service with response",
 			app: func() *runtime.App {
 				return runtimetest.NewHttpApp(

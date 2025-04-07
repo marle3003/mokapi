@@ -87,15 +87,9 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(op.Security) > 0 {
-		if err = h.serveSecurity(r, op.Security); err != nil {
-			writeError(rw, r, err, h.config.Info.Name)
-			return
-		}
+		h.serveSecurity(r, op.Security)
 	} else if len(h.config.Security) > 0 {
-		if err = h.serveSecurity(r, h.config.Security); err != nil {
-			writeError(rw, r, err, h.config.Info.Name)
-			return
-		}
+		h.serveSecurity(r, h.config.Security)
 	}
 
 	response := NewEventResponse(status, contentType)
@@ -326,14 +320,14 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 	}
 }
 
-func (h *responseHandler) serveSecurity(r *http.Request, requirements []SecurityRequirement) error {
+func (h *responseHandler) serveSecurity(r *http.Request, requirements []SecurityRequirement) {
 	var errs error
 	for _, req := range requirements {
 		var reqError error
 		for name := range req {
 			scheme, ok := h.config.Components.SecuritySchemes[name]
 			if !ok {
-				return newHttpError(http.StatusInternalServerError, fmt.Sprintf("no security scheme found for %v", name))
+				log.Warnf("%s: no security scheme found for %v", r.URL.String(), name)
 			}
 			err := scheme.Serve(r)
 			var notSupported *NotSupportedSecuritySchemeError
@@ -344,12 +338,11 @@ func (h *responseHandler) serveSecurity(r *http.Request, requirements []Security
 			}
 		}
 		if reqError == nil {
-			return nil
+			return
 		}
 		errs = errors.Join(errs, reqError)
 	}
-	if errs == nil {
-		return nil
+	if errs != nil {
+		log.Infof("%s: security requirement skipped: %v", r.URL.String(), errs.Error())
 	}
-	return newHttpError(http.StatusForbidden, errs.Error())
 }

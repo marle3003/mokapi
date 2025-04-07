@@ -11,6 +11,7 @@ import (
 	"mokapi/js"
 	"mokapi/js/require"
 	"net/url"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -296,6 +297,8 @@ func TestRegistry(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			host := &enginetest.Host{
 				OpenFunc: func(file, hint string) (*dynamic.Config, error) {
+					// to slash for Windows
+					file = filepath.ToSlash(file)
 					if src, ok := tc.sources[file]; ok {
 						return &dynamic.Config{
 							Info: dynamic.ConfigInfo{

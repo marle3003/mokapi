@@ -241,7 +241,8 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 				op.Responses = append(op.Responses, res)
 			}
 
-			for _, sec := range o.Security {
+			requirements := append(o.Security, s.Security...)
+			for _, sec := range requirements {
 				req := securityRequirement{}
 				for n, scopes := range sec {
 					secConfig := s.Components.SecuritySchemes[n]

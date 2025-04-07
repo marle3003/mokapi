@@ -67,7 +67,7 @@ func TestHandler_Security(t *testing.T) {
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
-				require.Equal(t, http.StatusForbidden, rr.Code)
+				require.Equal(t, http.StatusOK, rr.Code)
 
 				logs := events.GetEvents(events.NewTraits().WithNamespace("http"))
 				httpLog := logs[0].Data.(*openapi.HttpLog)
