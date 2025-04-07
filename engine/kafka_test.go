@@ -25,6 +25,42 @@ import (
 	"time"
 )
 
+func TestKafkaClient_Produce_Empty_Parameter(t *testing.T) {
+	gofakeit.Seed(11)
+
+	config := asyncapi3test.NewConfig(
+		asyncapi3test.WithInfo("foo", "", ""),
+		asyncapi3test.WithChannel("foo",
+			asyncapi3test.WithMessage("foo",
+				asyncapi3test.WithContentType("application/json"),
+				asyncapi3test.WithPayload(schematest.New("string")),
+				asyncapi3test.WithKey(schematest.New("string")),
+			),
+		),
+	)
+	app := runtime.New()
+	e := enginetest.NewEngine(
+		engine.WithKafkaClient(engine.NewKafkaClient(app)),
+		engine.WithLogger(logrus.StandardLogger()),
+	)
+
+	info, err := app.Kafka.Add(getConfig(config), e)
+	require.NoError(t, err)
+
+	err = e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ })
+					}
+				`))
+	require.NoError(t, err)
+	b, errCode := info.Store.Topic("foo").Partition(0).Read(0, 1000)
+	require.Equal(t, kafka.None, errCode)
+	require.NotNil(t, b)
+	require.Equal(t, "XidZuoWq ", kafka.BytesToString(b.Records[0].Key))
+	require.Equal(t, "\"\"", kafka.BytesToString(b.Records[0].Value))
+}
+
 func TestKafkaClient_Produce(t *testing.T) {
 	testcases := []struct {
 		name string
