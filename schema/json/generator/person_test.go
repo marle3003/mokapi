@@ -233,6 +233,28 @@ func TestPerson(t *testing.T) {
 				require.Equal(t, map[string]interface{}{"firstname": "Zoey", "lastname": "Nguyen"}, v)
 			},
 		},
+		{
+			name: "birthday",
+			req: &Request{
+				Path:   []string{"person", "birthday"},
+				Schema: schematest.New("string"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "1970-08-26", v)
+			},
+		},
+		{
+			name: "birthDate",
+			req: &Request{
+				Path:   []string{"person", "birthDate"},
+				Schema: schematest.New("string"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "1970-08-26", v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

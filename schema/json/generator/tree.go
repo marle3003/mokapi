@@ -109,6 +109,8 @@ func buildTree() *Node {
 	r.Children = append(r.Children, pets()...)
 	r.Children = append(r.Children, metadata()...)
 	r.Children = append(r.Children, products()...)
+	r.Children = append(r.Children, files()...)
+	r.Children = append(r.Children, companyNodes()...)
 
 	return r
 }

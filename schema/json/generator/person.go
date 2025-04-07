@@ -3,7 +3,9 @@ package generator
 import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
+	"math"
 	"strings"
+	"time"
 )
 
 func personal() []*Node {
@@ -47,6 +49,18 @@ func personal() []*Node {
 					Weight: 0.5,
 					Fake:   fakePersonAge,
 				},
+				{
+					Name:       "birthday",
+					Attributes: []string{"birthday", "birth"},
+					Weight:     0.5,
+					Fake:       fakeBirthday,
+					Children: []*Node{
+						{
+							Name: "date",
+							Fake: fakeBirthday,
+						},
+					},
+				},
 			},
 		},
 		{
@@ -60,6 +74,22 @@ func personal() []*Node {
 		{
 			Name: "phone",
 			Fake: fakePhone,
+			Children: []*Node{
+				{
+					Name: "number",
+					Fake: fakePhone,
+				},
+			},
+		},
+		{
+			Name: "fax",
+			Fake: fakePhone,
+			Children: []*Node{
+				{
+					Name: "number",
+					Fake: fakePhone,
+				},
+			},
 		},
 		{
 			Name:      "contact",
@@ -74,6 +104,10 @@ func personal() []*Node {
 					Name:   "email",
 					Weight: 0.5,
 					Fake:   fakeEmail,
+				},
+				{
+					Name: "type",
+					Fake: fakeContactType,
 				},
 			},
 			Fake: fakeContact,
@@ -197,6 +231,39 @@ func fakeContact(r *Request) (interface{}, error) {
 	}, nil
 }
 
+func fakeBirthday(r *Request) (interface{}, error) {
+	return fakeDateInPastWithMinYear(r, 1940)
+}
+
+func fakeDateInPastWithMinYear(r *Request, minYear int) (interface{}, error) {
+	now := time.Now()
+
+	year := gofakeit.Number(1940, time.Now().Year())
+	year = int(math.Max(float64(year), float64(minYear)))
+	month := gofakeit.Number(1, 12)
+	if year == time.Now().Year() {
+		month = gofakeit.Number(1, int(now.Month()))
+	}
+
+	day := gofakeit.Number(1, maxDayInMonth[month-1])
+	hour := gofakeit.Number(0, 23)
+	minute := gofakeit.Number(0, 59)
+	second := gofakeit.Number(0, 59)
+	nanosecond := gofakeit.Number(0, 999999999)
+
+	d := time.Date(year, time.Month(month), day, hour, minute, second, nanosecond, time.UTC)
+	if r.Schema != nil && r.Schema.Format == "date-time" {
+		return d.Format(time.RFC3339), nil
+	}
+
+	return d.Format("2006-01-02"), nil
+}
+
+func fakeContactType(r *Request) (interface{}, error) {
+	index := gofakeit.Number(0, len(contactTypes)-1)
+	return contactTypes[index], nil
+}
+
 var femaleFirstNames = []string{
 	"Emma", "Olivia", "Ava", "Sophia", "Isabella",
 	"Mia", "Charlotte", "Amelia", "Evelyn", "Abigail",
@@ -234,4 +301,8 @@ var lastNames = []string{
 	"Scott", "Torres", "Nguyen", "Hill", "Flores",
 	"Green", "Adams", "Nelson", "Baker", "Hall",
 	"Rivera", "Campbell", "Mitchell", "Carter", "Roberts",
+}
+
+var contactTypes = []string{
+	"billing", "technical", "sales", "support", "legal", "marketing", "general",
 }

@@ -5,18 +5,46 @@ import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"strings"
+	"time"
 )
 
 func ictNodes() []*Node {
 	return []*Node{
 		newErrorNode(),
 		newHashNode(),
-		{Name: "username", Fake: fakeUsername},
+		{
+			Name: "username",
+			Fake: fakeUsername,
+		},
 		{
 			Name: "user",
 			Fake: fakeUser,
 			Children: []*Node{
-				{Name: "name", Fake: fakeUsername},
+				{
+					Name: "name",
+					Fake: fakeUsername,
+				},
+			},
+		},
+		{
+			Name: "website",
+			Fake: fakeUrl,
+		},
+		{
+			Name: "role",
+			Fake: fakeRole,
+		},
+		{
+			Name: "permission",
+			Fake: fakePermission,
+		},
+		{
+			Name: "last",
+			Children: []*Node{
+				{
+					Name: "login",
+					Fake: fakeLastLogin,
+				},
 			},
 		},
 	}
@@ -61,4 +89,27 @@ func fakeUser(r *Request) (interface{}, error) {
 		"email":     fmt.Sprintf("%s.%s@%s", first, last, gofakeit.DomainName()),
 		"username":  fmt.Sprintf("%c%s", first[0], last),
 	}, nil
+}
+
+func fakeRole(_ *Request) (interface{}, error) {
+	index := gofakeit.Number(0, len(roles)-1)
+	return roles[index], nil
+}
+
+func fakePermission(_ *Request) (interface{}, error) {
+	index := gofakeit.Number(0, len(permissions)-1)
+	return permissions[index], nil
+}
+
+func fakeLastLogin(r *Request) (interface{}, error) {
+	year := time.Now().Year()
+	return fakeDateInPastWithMinYear(r, year-1)
+}
+
+var roles = []string{
+	"admin", "user", "guest", "owner", "editor", "viewer",
+}
+
+var permissions = []string{
+	"read", "create", "update", "delete",
 }
