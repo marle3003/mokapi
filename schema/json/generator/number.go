@@ -69,7 +69,7 @@ func fakeInteger(s *schema.Schema) (any, error) {
 			}
 			return int64(v), nil
 		}
-		v := gofakeit.Number(int(min), int(max))
+		v := int64(math.Round(gofakeit.Float64Range(min, max)))
 		if s.Format == "int32" {
 			return int32(v), nil
 		}

@@ -304,7 +304,7 @@ func TestGeneratorInt(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int64"), schematest.WithMinimum(10)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(843730692693298275), i)
+				require.Equal(t, int64(843730692693298304), i)
 			},
 		},
 		{
