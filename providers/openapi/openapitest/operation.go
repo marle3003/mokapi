@@ -141,3 +141,9 @@ func WithSecurity(s map[string][]string) OperationOptions {
 		o.Security = append(o.Security, s)
 	}
 }
+
+func WithGlobalSecurity(s map[string][]string) ConfigOptions {
+	return func(c *openapi.Config) {
+		c.Security = append(c.Security, s)
+	}
+}

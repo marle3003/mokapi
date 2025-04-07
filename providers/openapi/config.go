@@ -123,6 +123,14 @@ func (c *Config) Patch(patch *Config) {
 		c.Paths.patch(patch.Paths)
 	}
 	c.Components.patch(patch.Components)
+
+	if c.Security == nil {
+		c.Security = patch.Security
+	} else {
+		for _, v := range patch.Security {
+			c.Security = append(c.Security, v)
+		}
+	}
 }
 
 func (r *RequestBody) GetMedia(contentType media.ContentType) *MediaType {
