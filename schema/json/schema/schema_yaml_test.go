@@ -278,6 +278,14 @@ properties:
 				require.Equal(t, false, *s.Not.Boolean)
 			},
 		},
+		{
+			name: "examples",
+			data: `examples: [foo, bar]`,
+			test: func(t *testing.T, s *schema.Schema, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []schema.Example{{Value: "foo"}, {Value: "bar"}}, s.Examples)
+			},
+		},
 	}
 
 	t.Parallel()

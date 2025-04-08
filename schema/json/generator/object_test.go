@@ -17,7 +17,10 @@ func TestObject(t *testing.T) {
 		{
 			name: "object",
 			req: &Request{
-				Schema: schematest.New("object", schematest.WithProperty("name", nil)),
+				Schema: schematest.New("object",
+					schematest.WithProperty("name", nil),
+					schematest.WithRequired("name"),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -27,7 +30,10 @@ func TestObject(t *testing.T) {
 		{
 			name: "no type but properties",
 			req: &Request{
-				Schema: schematest.NewTypes(nil, schematest.WithProperty("name", nil)),
+				Schema: schematest.NewTypes(nil,
+					schematest.WithProperty("name", nil),
+					schematest.WithRequired("name"),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -39,6 +45,7 @@ func TestObject(t *testing.T) {
 			req: &Request{
 				Schema: schematest.New("object",
 					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithRequired("name"),
 					schematest.WithFreeForm(false),
 				),
 			},
@@ -52,6 +59,7 @@ func TestObject(t *testing.T) {
 			req: &Request{
 				Schema: schematest.New("object",
 					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithRequired("name"),
 					schematest.WithFreeForm(true),
 				),
 			},
@@ -164,6 +172,24 @@ func TestObject(t *testing.T) {
 					v)
 			},
 		},
+		{
+			name: "fallback to example",
+			req: &Request{
+				Path: []string{"address"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("foo", schematest.New("string")),
+					schematest.WithExamples(map[string]interface{}{"foo": "bar"}),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]interface{}{
+						"foo": "bar",
+					},
+					v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -186,7 +212,10 @@ func TestLoop(t *testing.T) {
 			name: "no type but properties",
 			req: func() *Request {
 				return &Request{
-					Schema: schematest.NewTypes(nil, schematest.WithProperty("name", nil)),
+					Schema: schematest.NewTypes(nil,
+						schematest.WithProperty("name", nil),
+						schematest.WithRequired("name"),
+					),
 				}
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -228,13 +257,14 @@ func TestLoop(t *testing.T) {
 		{
 			name: "object with properties that contains loop",
 			req: func() *Request {
-				loop := schematest.NewTypes([]string{"object", "null"})
+				loop := schematest.NewTypes([]string{"object", "null"}, schematest.WithRequired("loop"))
 				loop.Properties = &schema.Schemas{}
 				loop.Properties.Set("loop", loop)
 				s := schematest.New("object",
 					schematest.WithProperty("loop1", loop),
 					schematest.WithProperty("loop2", loop),
 					schematest.WithProperty("loop3", loop),
+					schematest.WithRequired("loop1", "loop2", "loop3"),
 				)
 
 				return &Request{

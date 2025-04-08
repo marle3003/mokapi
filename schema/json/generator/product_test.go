@@ -16,8 +16,11 @@ func TestProduct(t *testing.T) {
 		{
 			name: "name",
 			req: &Request{
-				Path:   []string{"product"},
-				Schema: schematest.New("object", schematest.WithProperty("name", nil)),
+				Path: []string{"product"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("name", nil),
+					schematest.WithRequired("name"),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -27,8 +30,11 @@ func TestProduct(t *testing.T) {
 		{
 			name: "description",
 			req: &Request{
-				Path:   []string{"product"},
-				Schema: schematest.New("object", schematest.WithProperty("description", nil)),
+				Path: []string{"product"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("description", nil),
+					schematest.WithRequired("description"),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -38,8 +44,11 @@ func TestProduct(t *testing.T) {
 		{
 			name: "category",
 			req: &Request{
-				Path:   []string{"product"},
-				Schema: schematest.New("object", schematest.WithProperty("category", nil)),
+				Path: []string{"product"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("category", nil),
+					schematest.WithRequired("category"),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -49,8 +58,11 @@ func TestProduct(t *testing.T) {
 		{
 			name: "material",
 			req: &Request{
-				Path:   []string{"product"},
-				Schema: schematest.New("object", schematest.WithProperty("material", nil)),
+				Path: []string{"product"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("material", nil),
+					schematest.WithRequired("material"),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)

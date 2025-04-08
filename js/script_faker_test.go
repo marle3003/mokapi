@@ -147,7 +147,7 @@ func TestScript_Faker(t *testing.T) {
 				s, err := jstest.New(jstest.WithSource(
 					`import { fake } from 'mokapi/faker'
 						 export default function() {
-						 	return fake({ type: 'object', properties: { id: { type: 'integer', format: 'int64' } } })
+						 	return fake({ type: 'object', required: ['id'], properties: { id: { type: 'integer', format: 'int64' } } })
 						 }`),
 					js.WithHost(host))
 				r.NoError(t, err)

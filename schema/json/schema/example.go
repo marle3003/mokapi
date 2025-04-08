@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
@@ -28,6 +29,14 @@ func (e *Example) UnmarshalYAML(node *yaml.Node) error {
 	}
 	e.Value = v
 	return nil
+}
+
+func (e *Example) MarshalJSON() ([]byte, error) {
+	return json.Marshal(e.Value)
+}
+
+func (e *Example) MarshalYAML() ([]byte, error) {
+	return yaml.Marshal(e.Value)
 }
 
 func parseYamlExample(node *yaml.Node) (interface{}, error) {

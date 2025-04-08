@@ -47,8 +47,11 @@ func TestPerson(t *testing.T) {
 		{
 			name: "person name",
 			req: &Request{
-				Path:   []string{"person"},
-				Schema: schematest.New("object", schematest.WithProperty("name", nil)),
+				Path: []string{"person"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("name", nil),
+					schematest.WithRequired("name"),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -63,6 +66,7 @@ func TestPerson(t *testing.T) {
 					schematest.WithProperty("name", schematest.New("string")),
 					schematest.WithProperty("firstname", schematest.New("string")),
 					schematest.WithProperty("lastname", schematest.New("string")),
+					schematest.WithRequired("name", "firstname", "lastname"),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -82,6 +86,7 @@ func TestPerson(t *testing.T) {
 					schematest.WithProperty("firstname", schematest.New("string")),
 					schematest.WithProperty("lastname", schematest.New("string")),
 					schematest.WithProperty("sex", schematest.New("string")),
+					schematest.WithRequired("firstname", "lastname", "sex"),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -106,6 +111,7 @@ func TestPerson(t *testing.T) {
 					schematest.WithProperty("phone", schematest.New("string")),
 					schematest.WithProperty("username", schematest.New("string")),
 					schematest.WithProperty("contact", nil),
+					schematest.WithRequired("firstname", "lastname", "gender", "sex", "email", "phone", "contact"),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -131,7 +137,10 @@ func TestPerson(t *testing.T) {
 				Path: []string{"persons"},
 				Schema: schematest.New("array",
 					schematest.WithMinItems(4),
-					schematest.WithItems("object", schematest.WithProperty("name", nil)),
+					schematest.WithItems("object",
+						schematest.WithProperty("name", nil),
+						schematest.WithRequired("name"),
+					),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -200,6 +209,17 @@ func TestPerson(t *testing.T) {
 			},
 		},
 		{
+			name: "phone schema string",
+			req: &Request{
+				Path:   []string{"notificationPhoneNumber"},
+				Schema: schematest.New("string"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "+28829109", v)
+			},
+		},
+		{
 			name: "phone but expect object",
 			req: &Request{
 				Path:   []string{"phone"},
@@ -228,6 +248,7 @@ func TestPerson(t *testing.T) {
 				Schema: schematest.New("object",
 					schematest.WithProperty("firstname", schematest.New("string")),
 					schematest.WithProperty("lastname", schematest.New("string")),
+					schematest.WithRequired("firstname", "lastname"),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -255,6 +276,44 @@ func TestPerson(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "1970-08-26", v)
+			},
+		},
+		{
+			name: "title depends on firstname",
+			req: &Request{
+				Path: []string{"person"},
+				Schema: schematest.New("array",
+					schematest.WithMinItems(5),
+					schematest.WithItems("object",
+						schematest.WithProperty("firstname", schematest.New("string")),
+						schematest.WithProperty("title", schematest.New("string")),
+						schematest.WithRequired("firstname", "title"),
+					),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{
+					map[string]interface{}{
+						"firstname": "Zoey",
+						"title":     "Prof.",
+					},
+					map[string]interface{}{
+						"firstname": "Dylan",
+						"title":     "Dr.",
+					},
+					map[string]interface{}{
+						"firstname": "Hannah",
+						"title":     "Ms.",
+					},
+					map[string]interface{}{
+						"firstname": "Olivia",
+						"title":     "Mrs."},
+					map[string]interface{}{
+						"firstname": "Audrey",
+						"title":     "Mrs.",
+					},
+				}, v)
 			},
 		},
 	}

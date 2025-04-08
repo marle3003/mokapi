@@ -33,7 +33,8 @@ func (r *resolver) resolveArray(req *Request) (*faker, error) {
 		}
 	}
 	if item == nil {
-		item, err = r.resolve(req.With(path, s.Items), true)
+		req.examples = examplesFromRequest(req)
+		item, err = r.resolve(req.With(path, s.Items, itemsFromExample(req)), true)
 	}
 	if err != nil {
 		return nil, err
@@ -107,4 +108,39 @@ func contains(s []interface{}, v interface{}) bool {
 		}
 	}
 	return false
+}
+
+func itemsFromExample(r *Request) []any {
+	var result []any
+	for _, e := range r.examples {
+		if arr, ok := e.([]any); ok {
+			result = append(result, arr...)
+		}
+	}
+	return result
+}
+
+func itemExamplesFromRequest(r *Request, item *schema.Schema) []any {
+	var result []any
+	if r.examples != nil {
+		for _, e := range r.examples {
+			if arr, ok := e.([]any); ok {
+				for _, i := range arr {
+					result = append(result, i)
+				}
+			}
+		}
+	}
+
+	for _, v := range examples(r.Schema) {
+		if arr, isArray := v.([]any); isArray {
+			for _, i := range arr {
+				result = append(result, i)
+			}
+		}
+	}
+
+	result = append(result, examples(item)...)
+
+	return result
 }

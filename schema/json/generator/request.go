@@ -6,8 +6,9 @@ type Request struct {
 	Path   []string       `json:"path"`
 	Schema *schema.Schema `json:"schema"`
 
-	g   *generator
-	ctx *context
+	g        *generator
+	ctx      *context
+	examples []any
 }
 
 func NewRequest(path []string, s *schema.Schema, ctx map[string]any) *Request {
@@ -34,19 +35,20 @@ func (r *Request) NextToken() string {
 }
 
 func (r *Request) WithSchema(s *schema.Schema) *Request {
-	return r.With(r.Path, s)
+	return r.With(r.Path, s, r.examples)
 }
 
 func (r *Request) WithPath(path []string) *Request {
-	return r.With(path, r.Schema)
+	return r.With(path, r.Schema, r.examples)
 }
 
-func (r *Request) With(path []string, s *schema.Schema) *Request {
+func (r *Request) With(path []string, s *schema.Schema, example []any) *Request {
 	return &Request{
-		Path:   path,
-		Schema: s,
-		g:      r.g,
-		ctx:    r.ctx,
+		Path:     path,
+		Schema:   s,
+		g:        r.g,
+		ctx:      r.ctx,
+		examples: example,
 	}
 }
 
