@@ -144,7 +144,16 @@ func (s *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	if service != nil {
 		if !service.IsInternal {
-			log.Infof("processing http request %v %s", r.Method, r.URL)
+			u := r.URL.String()
+			if r.URL.Host == "" {
+				u = r.Host + u
+				if s.server.TLSConfig != nil {
+					u = "https://" + u
+				} else {
+					u = "http://" + u
+				}
+			}
+			log.Infof("processing http request %v %s", r.Method, u)
 		}
 
 		if service.Handler == nil {

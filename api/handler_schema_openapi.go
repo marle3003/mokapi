@@ -106,9 +106,7 @@ func getOpenApiExample(w http.ResponseWriter, r *http.Request, cfg *openapi.Conf
 	}
 
 	rnd, err := generator.New(&generator.Request{
-		Path: generator.Path{
-			&generator.PathElement{Schema: openApiSchema.ConvertToJsonSchema(s)},
-		},
+		Schema: openApiSchema.ConvertToJsonSchema(s),
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

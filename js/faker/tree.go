@@ -21,15 +21,6 @@ func (n *node) Name() string {
 	return n.name
 }
 
-func (n *node) Test(r *generator.Request) bool {
-	if n.t != nil {
-		return n.t.Test(r)
-	} else if n.test != nil {
-		return n.test(r)
-	}
-	return false
-}
-
 func (n *node) Fake(r *generator.Request) (interface{}, error) {
 	return n.fake(r)
 }
@@ -37,14 +28,6 @@ func (n *node) Fake(r *generator.Request) (interface{}, error) {
 func (n *node) Append(v goja.Value) {
 	t := n.createTree(v)
 	n.t.Append(t)
-}
-
-func (n *node) Insert(index int, v goja.Value) {
-	t := n.createTree(v)
-	err := n.t.Insert(index, t)
-	if err != nil {
-		panic(n.f.rt.ToValue(err))
-	}
 }
 
 func (n *node) RemoveAt(index int) {
@@ -70,7 +53,6 @@ func convertToNode(t *common.FakerTree, m *Faker) goja.Value {
 	obj := m.rt.NewObject()
 	obj.Set("name", n.Name)
 	obj.Set("append", n.Append)
-	obj.Set("insert", n.Insert)
 	obj.Set("removeAt", n.RemoveAt)
 	obj.Set("remove", n.Remove)
 	obj.Set("restore", n.Restore)
@@ -86,19 +68,6 @@ func (n *node) createTree(v goja.Value) *node {
 			case "name":
 				name := obj.Get(k)
 				newNode.name = name.String()
-			case "test":
-				test, _ := goja.AssertFunction(obj.Get(k))
-				newNode.test = func(r *generator.Request) bool {
-					n.f.host.Lock()
-					defer n.f.host.Unlock()
-
-					param := n.f.rt.ToValue(r)
-					v, err := test(goja.Undefined(), param)
-					if err != nil {
-						panic(n.f.rt.ToValue(err.Error()))
-					}
-					return v.ToBoolean()
-				}
 			case "fake":
 				fake, _ := goja.AssertFunction(obj.Get(k))
 				newNode.fake = func(r *generator.Request) (interface{}, error) {

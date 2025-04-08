@@ -5,75 +5,42 @@ import (
 	"strings"
 )
 
-func Color() *Tree {
-	return &Tree{
-		Name: "Color",
-		Nodes: []*Tree{
-			HexColor(),
-			RGBColor(),
-			ColorName(),
+func colors() []*Node {
+	return []*Node{
+		{
+			Name: "color",
+			Fake: fakeColor,
+			Children: []*Node{
+				{
+					Name: "name",
+					Fake: func(r *Request) (any, error) {
+						return gofakeit.Color(), nil
+					},
+				},
+			},
 		},
 	}
 }
 
-func ColorName() *Tree {
-	return &Tree{
-		Name: "ColorName",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			return strings.ToLower(last.Name) == "color" && last.Schema.IsAnyString()
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return gofakeit.Color(), nil
-		},
+func fakeColor(r *Request) (any, error) {
+	s := r.Schema
+	if s == nil {
+		return gofakeit.Color(), nil
 	}
-}
+	if s.MaxLength != nil && *s.MaxLength == 7 {
+		return gofakeit.HexColor(), nil
+	}
 
-func HexColor() *Tree {
-	return &Tree{
-		Name: "HEX-Color",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			if strings.ToLower(last.Name) != "color" || !last.Schema.IsString() {
-				return false
-			}
-			s := r.LastSchema()
-			if s.MaxLength != nil && *s.MaxLength == 7 {
-				return true
-			}
-			return false
-		},
-		Fake: func(r *Request) (interface{}, error) {
+	if len(s.Examples) > 0 {
+		str, ok := s.Examples[0].Value.(string)
+		if ok && strings.HasPrefix(str, "#") {
 			return gofakeit.HexColor(), nil
-		},
+		}
 	}
-}
 
-func RGBColor() *Tree {
-	return &Tree{
-		Name: "RGB-Color",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			if strings.ToLower(last.Name) != "color" || !last.Schema.IsArray() {
-				return false
-			}
-			s := r.LastSchema()
-			if s.Items.IsAny() || (s.Items.IsInteger() && s.Items.MaxItems == nil || *s.Items.MaxItems == 3) {
-				return true
-			}
-			return false
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return gofakeit.RGBColor(), nil
-		},
+	if s.IsString() || s.IsAny() {
+		return gofakeit.Color(), nil
 	}
+
+	return nil, NotSupported
 }

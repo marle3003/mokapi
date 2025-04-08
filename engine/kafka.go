@@ -109,6 +109,20 @@ func (c *KafkaClient) tryGet(cluster string, topic string, retry common.KafkaPro
 
 func (c *KafkaClient) get(cluster string, topic string) (t *store.Topic, config *asyncapi3.Config, err error) {
 	if len(cluster) == 0 {
+		if len(topic) == 0 {
+			clusters := c.app.Kafka.List()
+			if len(clusters) > 1 {
+				err = fmt.Errorf("ambiguous cluster: specify the cluster")
+				return
+			}
+			topics := clusters[0].Topics()
+			if len(topics) > 1 {
+				err = fmt.Errorf("ambiguous topic %v. Specify the cluster", topic)
+				return
+			}
+			return topics[0], clusters[0].Config, nil
+		}
+
 		var topics []*store.Topic
 		for _, v := range c.app.Kafka.List() {
 			if t := v.Topic(topic); t != nil {
@@ -272,12 +286,12 @@ func createValue(r *asyncapi3.SchemaRef) (value interface{}, err error) {
 
 	switch v := s.(type) {
 	case *schema.Schema:
-		value, err = generator.New(&generator.Request{Path: generator.Path{&generator.PathElement{Schema: v}}})
+		value, err = generator.New(&generator.Request{Schema: v})
 	case *openapi.Schema:
 		value, err = openapi.CreateValue(v)
 	case *avro.Schema:
 		jsSchema := v.Convert()
-		value, err = generator.New(&generator.Request{Path: generator.Path{&generator.PathElement{Schema: jsSchema}}})
+		value, err = generator.New(&generator.Request{Schema: jsSchema})
 	default:
 		err = fmt.Errorf("schema format not supported: %v", r.Value.Format)
 	}

@@ -11,17 +11,13 @@ import (
 func TestObject(t *testing.T) {
 	testcases := []struct {
 		name string
-		req  func() *Request
+		req  *Request
 		test func(t *testing.T, v interface{}, err error)
 	}{
 		{
 			name: "object",
-			req: func() *Request {
-				return &Request{
-					Path: Path{
-						&PathElement{Schema: schematest.New("object", schematest.WithProperty("name", nil))},
-					},
-				}
+			req: &Request{
+				Schema: schematest.New("object", schematest.WithProperty("name", nil)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -30,11 +26,167 @@ func TestObject(t *testing.T) {
 		},
 		{
 			name: "no type but properties",
+			req: &Request{
+				Schema: schematest.NewTypes(nil, schematest.WithProperty("name", nil)),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"name": "Ink"}, v)
+			},
+		},
+		{
+			name: "no additional properties",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithFreeForm(false),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"name": "Ink"}, v)
+			},
+		},
+		{
+			name: "with additional properties",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithFreeForm(true),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"name": "Ink"}, v)
+			},
+		},
+		{
+			name: "with additional properties specific",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithAdditionalProperties(
+						schematest.New("object",
+							schematest.WithProperty("age", schematest.New("integer")),
+							schematest.WithProperty("gender", schematest.New("string")),
+							schematest.WithRequired("age", "gender"),
+						),
+					),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]interface{}{
+						"collection": map[string]interface{}{
+							"age": int64(5), "gender": "male",
+						},
+						"comb": map[string]interface{}{
+							"age": int64(85), "gender": "male",
+						},
+						"company": map[string]interface{}{
+							"age": int64(41), "gender": "male",
+						},
+						"luck": map[string]interface{}{
+							"age": int64(10), "gender": "female",
+						},
+						"person": map[string]interface{}{
+							"age": int64(55), "gender": "male",
+						},
+						"problem": map[string]interface{}{
+							"age": int64(53), "gender": "female",
+						},
+						"sunshine": map[string]interface{}{
+							"age": int64(51), "gender": "female",
+						},
+					},
+
+					v)
+			},
+		},
+		{
+			name: "dictionary with min and max length",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithAdditionalProperties(
+						schematest.New("string"),
+					),
+					schematest.WithMinProperties(10),
+					schematest.WithMaxProperties(12),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Len(t, v, 11)
+				require.Equal(t,
+					map[string]interface{}{"brace": "ne", "chapter": "cILXzNQ", "collection": "JZGR", "comb": "q", "company": "gPSz", "life": "BYxST", "luck": "qa6WoJUOvts", "person": "NWavQeozIe", "problem": "sgzs", "string": "ticuuBCbV0biw0", "sunshine": "gPNseoOLAIqos"},
+					v)
+			},
+		},
+		{
+			name: "object no properties",
+			req: &Request{
+				Schema: schematest.New("object"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]interface{}{
+						"brace":      false,
+						"collection": 8.515060348610526e+307,
+						"comb":       "eyNWavQeo",
+						"company":    "OjojxkDngP",
+						"luck":       "eoOLAIqosamhfi",
+						"person": map[string]interface{}{
+							"email":     "camila.white@corporatebleeding-edge.org",
+							"firstname": "Camila",
+							"gender":    "female",
+							"lastname":  "White",
+						},
+						"problem":  int64(4212695239388227044),
+						"sunshine": true,
+					},
+					v)
+			},
+		},
+		{
+			name: "object no properties",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithExamples(map[string]interface{}{"foo": "bar"}),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]interface{}{
+						"foo": "bar",
+					},
+					v)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			gofakeit.Seed(1234567)
+
+			v, err := New(tc.req)
+			tc.test(t, v, err)
+		})
+	}
+}
+
+func TestLoop(t *testing.T) {
+	testcases := []struct {
+		name string
+		req  func() *Request
+		test func(t *testing.T, v interface{}, err error)
+	}{
+		{
+			name: "no type but properties",
 			req: func() *Request {
 				return &Request{
-					Path: Path{
-						&PathElement{Schema: schematest.NewTypes(nil, schematest.WithProperty("name", nil))},
-					},
+					Schema: schematest.NewTypes(nil, schematest.WithProperty("name", nil)),
 				}
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -50,9 +202,7 @@ func TestObject(t *testing.T) {
 				s.Properties.Set("loop", s)
 
 				return &Request{
-					Path: Path{
-						&PathElement{Schema: s},
-					},
+					Schema: s,
 				}
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -67,14 +217,12 @@ func TestObject(t *testing.T) {
 				s.Properties.Set("loop", s)
 
 				return &Request{
-					Path: Path{
-						&PathElement{Schema: s},
-					},
+					Schema: s,
 				}
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"loop": map[string]interface{}{"loop": nil}}, v)
+				require.Equal(t, map[string]interface{}{"loop": nil}, v)
 			},
 		},
 		{
@@ -90,18 +238,21 @@ func TestObject(t *testing.T) {
 				)
 
 				return &Request{
-					Path: Path{
-						&PathElement{Schema: s},
-					},
+					Schema: s,
 				}
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				// here first loop is already broken, because first level is not counted in the loop protection
 				require.Equal(t, map[string]interface{}{
-					"loop1": map[string]interface{}{"loop": nil},
-					"loop2": map[string]interface{}{"loop": nil},
-					"loop3": map[string]interface{}{"loop": nil},
+					"loop1": map[string]interface{}{
+						"loop": nil,
+					},
+					"loop2": map[string]interface{}{
+						"loop": nil,
+					},
+					"loop3": map[string]interface{}{
+						"loop": nil,
+					},
 				},
 					v)
 			},
@@ -117,115 +268,14 @@ func TestObject(t *testing.T) {
 				})
 
 				return &Request{
-					Path: Path{
-						&PathElement{Schema: loop},
-					},
+					Schema: loop,
 				}
 			},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{
-					"array": []interface{}{
-						map[string]interface{}{
-							"array": []interface{}{},
-						},
-						map[string]interface{}{
-							"array": []interface{}{},
-						},
-					},
-				},
-					v)
-			},
-		},
-		{
-			name: "no additional properties",
-			req: func() *Request {
-				return &Request{
-					Path: Path{
-						&PathElement{Schema: schematest.New("object",
-							schematest.WithProperty("name", schematest.New("string")),
-							schematest.WithFreeForm(false),
-						)},
-					},
-				}
-			},
-			test: func(t *testing.T, v interface{}, err error) {
-				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Ink"}, v)
-			},
-		},
-		{
-			name: "with additional properties",
-			req: func() *Request {
-				return &Request{
-					Path: Path{
-						&PathElement{Schema: schematest.New("object",
-							schematest.WithProperty("name", schematest.New("string")),
-							schematest.WithFreeForm(true),
-						)},
-					},
-				}
-			},
-			test: func(t *testing.T, v interface{}, err error) {
-				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Ink"}, v)
-			},
-		},
-		{
-			name: "with additional properties specific",
-			req: func() *Request {
-				return &Request{
-					Path: Path{
-						&PathElement{Schema: schematest.New("object",
-							schematest.WithAdditionalProperties(
-								schematest.New("object",
-									schematest.WithProperty("age", schematest.New("integer")),
-									schematest.WithProperty("gender", schematest.New("string")),
-									schematest.WithRequired("age", "gender"),
-								),
-							),
-						)},
-					},
-				}
-			},
-			test: func(t *testing.T, v interface{}, err error) {
-				require.NoError(t, err)
-				require.Equal(t,
-					map[string]interface{}{
-						"brace": map[string]interface{}{
-							"age":    int64(-2231804065324102411),
-							"gender": "female",
-						},
-						"child": map[string]interface{}{
-							"age":    int64(-5996906719781834924),
-							"gender": "male",
-						},
-						"comb": map[string]interface{}{
-							"age":    int64(298783498632242168),
-							"gender": "male",
-						},
-						"life": map[string]interface{}{
-							"age":    int64(-7574890634918414754),
-							"gender": "male",
-						},
-						"person": map[string]interface{}{
-							"age":    int64(-5048116001741826297),
-							"gender": "female",
-						},
-						"string": map[string]interface{}{
-							"age":    int64(-7377528278928660358),
-							"gender": "female",
-						},
-						"sunshine": map[string]interface{}{
-							"age":    int64(-3652171958352792229),
-							"gender": "male",
-						},
-					},
-					v)
+				require.EqualError(t, err, "recursion in object path found but schema does not allow null: schema type=object properties=[array]")
 			},
 		},
 	}
-
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			gofakeit.Seed(1234567)

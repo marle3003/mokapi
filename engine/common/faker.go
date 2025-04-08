@@ -6,10 +6,10 @@ import (
 
 type FakerTree struct {
 	restore []func() error
-	t       *generator.Tree
+	t       *generator.Node
 }
 
-func NewFakerTree(t *generator.Tree) *FakerTree {
+func NewFakerTree(t *generator.Node) *FakerTree {
 	return &FakerTree{t: t}
 }
 
@@ -17,18 +17,13 @@ func (ft *FakerTree) Name() string {
 	return ft.t.Name
 }
 
-func (ft *FakerTree) Test(r *generator.Request) bool {
-	return ft.t.Test(r)
-}
-
 func (ft *FakerTree) Fake(r *generator.Request) (interface{}, error) {
 	return ft.t.Fake(r)
 }
 
 func (ft *FakerTree) Append(node FakerNode) {
-	t := &generator.Tree{
+	t := &generator.Node{
 		Name:   node.Name(),
-		Test:   node.Test,
 		Fake:   node.Fake,
 		Custom: true,
 	}
@@ -36,23 +31,6 @@ func (ft *FakerTree) Append(node FakerNode) {
 	ft.restore = append(ft.restore, func() error {
 		return ft.t.Remove(t.Name)
 	})
-}
-
-func (ft *FakerTree) Insert(index int, node FakerNode) error {
-	new := &generator.Tree{
-		Name:   node.Name(),
-		Test:   node.Test,
-		Fake:   node.Fake,
-		Custom: true,
-	}
-	err := ft.t.Insert(index, new)
-	if err != nil {
-		return err
-	}
-	ft.restore = append(ft.restore, func() error {
-		return ft.t.Remove(new.Name)
-	})
-	return nil
 }
 
 func (ft *FakerTree) RemoveAt(index int) error {

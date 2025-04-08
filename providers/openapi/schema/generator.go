@@ -10,5 +10,5 @@ func CreateValue(s *Schema) (interface{}, error) {
 	}
 	c := &JsonSchemaConverter{}
 	r := c.Convert(s)
-	return generator.New(&generator.Request{Path: generator.Path{&generator.PathElement{Schema: r}}})
+	return generator.New(&generator.Request{Schema: r})
 }

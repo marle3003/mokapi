@@ -7,22 +7,31 @@ import (
 	"testing"
 )
 
-func TestCategory(t *testing.T) {
+func TestStringEmail(t *testing.T) {
 	testcases := []struct {
 		name string
 		req  *Request
 		test func(t *testing.T, v interface{}, err error)
 	}{
 		{
-			name: "category",
+			name: "email",
 			req: &Request{
-				Path: Path{
-					&PathElement{Name: "category", Schema: schematest.New("string")},
-				},
+				Path:   []string{"email"},
+				Schema: schematest.New("string"),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Crafts", v)
+				require.Equal(t, "shanellewehner@cruickshank.biz", v)
+			},
+		},
+		{
+			name: "email no schema",
+			req: &Request{
+				Path: []string{"email"},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "shanellewehner@cruickshank.biz", v)
 			},
 		},
 	}

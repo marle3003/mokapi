@@ -144,6 +144,8 @@ func validateString(str string, s *schema.Schema, skipValidationFormatKeyword bo
 				Message: fmt.Sprintf("string '%v' does not match regex pattern '%v'", str, s.Pattern),
 				Field:   "pattern",
 			}
+		} else {
+			fmt.Sprintf("")
 		}
 	}
 

@@ -17,15 +17,11 @@ func TestPattern(t *testing.T) {
 		{
 			name: "pattern numbers",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Schema: schematest.New("string",
-							schematest.WithPattern("[0-9]+"),
-							schematest.WithMinLength(10),
-							schematest.WithMaxLength(15),
-						),
-					},
-				},
+				Schema: schematest.New("string",
+					schematest.WithPattern("[0-9]+"),
+					schematest.WithMinLength(10),
+					schematest.WithMaxLength(15),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -35,15 +31,11 @@ func TestPattern(t *testing.T) {
 		{
 			name: "pattern with min length but cannot reach min length",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Schema: schematest.New("string",
-							schematest.WithPattern("[0-5]{1,4}"),
-							schematest.WithMinLength(10),
-							schematest.WithMaxLength(15),
-						),
-					},
-				},
+				Schema: schematest.New("string",
+					schematest.WithPattern("[0-5]{1,4}"),
+					schematest.WithMinLength(10),
+					schematest.WithMaxLength(15),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.EqualError(t, err, "cannot generate value for pattern [0-5]{1,4} and minimum length 10")
@@ -52,15 +44,11 @@ func TestPattern(t *testing.T) {
 		{
 			name: "pattern with start/end and min/max",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Schema: schematest.New("string",
-							schematest.WithPattern("^[a-z]+[A-Z0-9_]+$"),
-							schematest.WithMinLength(8),
-							schematest.WithMaxLength(20),
-						),
-					},
-				},
+				Schema: schematest.New("string",
+					schematest.WithPattern("^[a-z]+[A-Z0-9_]+$"),
+					schematest.WithMinLength(8),
+					schematest.WithMaxLength(20),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -70,15 +58,11 @@ func TestPattern(t *testing.T) {
 		{
 			name: "pattern repeat",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Schema: schematest.New("string",
-							schematest.WithPattern("[[0-5]{1,4}"),
-							schematest.WithMinLength(4),
-							schematest.WithMaxLength(4),
-						),
-					},
-				},
+				Schema: schematest.New("string",
+					schematest.WithPattern("[[0-5]{1,4}"),
+					schematest.WithMinLength(4),
+					schematest.WithMaxLength(4),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -88,15 +72,11 @@ func TestPattern(t *testing.T) {
 		{
 			name: "pattern repeat but cannot reach min length",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Schema: schematest.New("string",
-							schematest.WithPattern("[0-5]{1,4}"),
-							schematest.WithMinLength(5),
-							schematest.WithMaxLength(4),
-						),
-					},
-				},
+				Schema: schematest.New("string",
+					schematest.WithPattern("[0-5]{1,4}"),
+					schematest.WithMinLength(5),
+					schematest.WithMaxLength(4),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.EqualError(t, err, "cannot generate value for pattern [0-5]{1,4} and minimum length 5")
@@ -105,13 +85,9 @@ func TestPattern(t *testing.T) {
 		{
 			name: "complex pattern",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Schema: schematest.New("string",
-							schematest.WithPattern("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"),
-						),
-					},
-				},
+				Schema: schematest.New("string",
+					schematest.WithPattern("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -121,14 +97,10 @@ func TestPattern(t *testing.T) {
 		{
 			name: "complex pattern with minLength",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Schema: schematest.New("string",
-							schematest.WithPattern("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"),
-							schematest.WithMinLength(50),
-						),
-					},
-				},
+				Schema: schematest.New("string",
+					schematest.WithPattern("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"),
+					schematest.WithMinLength(50),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -139,13 +111,9 @@ func TestPattern(t *testing.T) {
 		{
 			name: "fix length",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Schema: schematest.New("string",
-							schematest.WithPattern("\\d{16}"),
-						),
-					},
-				},
+				Schema: schematest.New("string",
+					schematest.WithPattern("\\d{16}"),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)

@@ -16,117 +16,160 @@ func TestPerson(t *testing.T) {
 		{
 			name: "person any",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Name: "person",
-					},
-				},
+				Path: []string{"person"},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
-					"email":     "arelyzemlak@muller.biz",
-					"firstname": "Shanelle",
-					"gender":    "male",
-					"lastname":  "Wehner",
+					"firstname": "Zoey",
+					"lastname":  "Nguyen",
+					"gender":    "female",
+					"email":     "zoey.nguyen@internationaldeliver.info",
+				}, v)
+			},
+		},
+		{
+			name: "person object without properties",
+			req: &Request{
+				Path:   []string{"person"},
+				Schema: schematest.New("object"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{
+					"firstname": "Zoey",
+					"gender":    "female",
+					"lastname":  "Nguyen",
+					"email":     "zoey.nguyen@internationaldeliver.info",
 				}, v)
 			},
 		},
 		{
 			name: "person name",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Name:   "person",
-						Schema: schematest.New("object", schematest.WithProperty("name", nil)),
-					},
-				},
+				Path:   []string{"person"},
+				Schema: schematest.New("object", schematest.WithProperty("name", nil)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Shanelle Wehner"}, v)
+				require.Equal(t, map[string]interface{}{"name": "Zoey Nguyen"}, v)
+			},
+		},
+		{
+			name: "person dependent fields no gender field",
+			req: &Request{
+				Path: []string{"person"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithProperty("firstname", schematest.New("string")),
+					schematest.WithProperty("lastname", schematest.New("string")),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{
+					"firstname": "Zoey",
+					"lastname":  "Nguyen",
+					"name":      "Zoey Nguyen",
+				}, v)
+			},
+		},
+		{
+			name: "person dependent fields with gender field",
+			req: &Request{
+				Path: []string{"person"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("firstname", schematest.New("string")),
+					schematest.WithProperty("lastname", schematest.New("string")),
+					schematest.WithProperty("sex", schematest.New("string")),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{
+					"firstname": "Gabriel",
+					"lastname":  "Clark",
+					"sex":       "male",
+				}, v)
 			},
 		},
 		{
 			name: "person with schema",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Name: "person",
-						Schema: schematest.New("object",
-							schematest.WithProperty("firstname", schematest.New("string")),
-							schematest.WithProperty("lastname", schematest.New("string")),
-							schematest.WithProperty("gender", schematest.New("string")),
-							schematest.WithProperty("sex", schematest.New("string")),
-							schematest.WithProperty("email", schematest.New("string", schematest.WithFormat("email"))),
-							schematest.WithProperty("phone", schematest.New("string")),
-							schematest.WithProperty("contact", nil),
-						),
-					},
-				},
+				Path: []string{"person"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("firstname", schematest.New("string")),
+					schematest.WithProperty("lastname", schematest.New("string")),
+					schematest.WithProperty("gender", schematest.New("string")),
+					schematest.WithProperty("sex", schematest.New("string")),
+					schematest.WithProperty("email", schematest.New("string", schematest.WithFormat("email"))),
+					schematest.WithProperty("phone", schematest.New("string")),
+					schematest.WithProperty("contact", nil),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
-					"firstname": "Shanelle",
-					"lastname":  "Wehner",
+					"contact": map[string]interface{}{
+						"email": "ethan.clark@legacyb2b.net",
+						"phone": "+31986146",
+					},
+					"email":     "ethan.clark@productenvisioneer.io",
+					"firstname": "Ethan",
 					"gender":    "male",
+					"lastname":  "Clark",
+					"phone":     "+737793648930118",
 					"sex":       "male",
-					"email":     "brookmuller@yundt.info",
-					"phone":     "+438893011",
-					"contact":   map[string]interface{}{"email": "eastoncormier@marvin.com", "phone": "+26057350186"},
 				}, v)
 			},
 		},
-		//{
-		//	name: "persons as array",
-		//	req: &Request{
-		//		Names: []string{"persons"},
-		//		Schema: schematest.New("array",
-		//			schematest.WithMinItems(4),
-		//			schematest.WithItems("object", schematest.WithProperty("name", nil)),
-		//		),
-		//	},
-		//	test: func(t *testing.T, v interface{}, err error) {
-		//		require.NoError(t, err)
-		//		require.Equal(t, []interface{}{
-		//			map[string]interface{}{"name": "Jennifer Cruickshank"},
-		//			map[string]interface{}{"name": "Arely Zemlak"},
-		//			map[string]interface{}{"name": "Chase Yundt"},
-		//			map[string]interface{}{"name": "Porter Kiehn"}},
-		//			v)
-		//	},
-		//},
-		//{
-		//	name: "persons as any",
-		//	req: &Request{
-		//		Names: []string{"persons"},
-		//	},
-		//	test: func(t *testing.T, v interface{}, err error) {
-		//		require.NoError(t, err)
-		//		require.Equal(t, []interface{}{
-		//			map[string]interface{}{
-		//				"email":     "brookmuller@yundt.info",
-		//				"firstname": "Jennifer",
-		//				"gender":    "male",
-		//				"lastname":  "Cruickshank"},
-		//			map[string]interface{}{
-		//				"email":     "modestowiza@farrell.name",
-		//				"firstname": "Thad",
-		//				"gender":    "male",
-		//				"lastname":  "Gerhold",
-		//			},
-		//		}, v)
-		//	},
-		//},
+		{
+			name: "persons as array",
+			req: &Request{
+				Path: []string{"persons"},
+				Schema: schematest.New("array",
+					schematest.WithMinItems(4),
+					schematest.WithItems("object", schematest.WithProperty("name", nil)),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{
+					map[string]interface{}{"name": "Gabriel Adams"},
+					map[string]interface{}{"name": "Ella Torres"},
+					map[string]interface{}{"name": "Penelope Jackson"},
+					map[string]interface{}{"name": "Michael Carter"},
+				},
+					v)
+			},
+		},
+		{
+			name: "persons as any",
+			req: &Request{
+				Path: []string{"persons"},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{
+					map[string]interface{}{
+						"email":     "gabriel.adams@futurecultivate.biz",
+						"firstname": "Gabriel",
+						"gender":    "male",
+						"lastname":  "Adams",
+					},
+					map[string]interface{}{
+						"email":     "penelope.jackson@directembrace.biz",
+						"firstname": "Penelope",
+						"gender":    "female",
+						"lastname":  "Jackson",
+					},
+				}, v)
+			},
+		},
 		{
 			name: "contact any",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Name: "contact",
-					},
-				},
+				Path: []string{"contact"},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -136,9 +179,7 @@ func TestPerson(t *testing.T) {
 		{
 			name: "phone any schema",
 			req: &Request{
-				Path: Path{
-					&PathElement{Name: "phone"},
-				},
+				Path: []string{"phone"},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -148,12 +189,8 @@ func TestPerson(t *testing.T) {
 		{
 			name: "phone schema string",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Name:   "phone",
-						Schema: schematest.New("string"),
-					},
-				},
+				Path:   []string{"phone"},
+				Schema: schematest.New("string"),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -163,27 +200,19 @@ func TestPerson(t *testing.T) {
 		{
 			name: "phone but expect object",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Name:   "phone",
-						Schema: schematest.New("object"),
-					},
-				},
+				Path:   []string{"phone"},
+				Schema: schematest.New("boolean"),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.IsType(t, map[string]interface{}{}, v)
+				require.Equal(t, false, v)
 			},
 		},
 		{
 			name: "windowsUserName",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Name:   "windowsUserName",
-						Schema: schematest.New("string"),
-					},
-				},
+				Path:   []string{"windowsUserName"},
+				Schema: schematest.New("string"),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -193,19 +222,37 @@ func TestPerson(t *testing.T) {
 		{
 			name: "person data without person in parent name",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Name: "individual",
-						Schema: schematest.New("object",
-							schematest.WithProperty("firstname", schematest.New("string")),
-							schematest.WithProperty("lastname", schematest.New("string")),
-						),
-					},
-				},
+				Path: []string{"individual"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("firstname", schematest.New("string")),
+					schematest.WithProperty("lastname", schematest.New("string")),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"firstname": "Shanelle", "lastname": "Wehner"}, v)
+				require.Equal(t, map[string]interface{}{"firstname": "Zoey", "lastname": "Nguyen"}, v)
+			},
+		},
+		{
+			name: "birthday",
+			req: &Request{
+				Path:   []string{"person", "birthday"},
+				Schema: schematest.New("string"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "1970-08-26", v)
+			},
+		},
+		{
+			name: "birthDate",
+			req: &Request{
+				Path:   []string{"person", "birthDate"},
+				Schema: schematest.New("string"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "1970-08-26", v)
 			},
 		},
 	}

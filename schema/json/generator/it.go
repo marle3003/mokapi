@@ -5,121 +5,111 @@ import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"strings"
+	"time"
 )
 
-func It() *Tree {
-	return &Tree{
-		Name: "IT",
-		Nodes: []*Tree{
-			StringId(),
-			StringEmail(),
-			StringHash(),
-			Uri(),
-			Username(),
-			Error(),
-			UserObject(),
-			UserAny(),
+func ictNodes() []*Node {
+	return []*Node{
+		newErrorNode(),
+		newHashNode(),
+		{
+			Name: "username",
+			Fake: fakeUsername,
+		},
+		{
+			Name: "user",
+			Fake: fakeUser,
+			Children: []*Node{
+				{
+					Name: "name",
+					Fake: fakeUsername,
+				},
+			},
+		},
+		{
+			Name: "website",
+			Fake: fakeUrl,
+		},
+		{
+			Name: "role",
+			Fake: fakeRole,
+		},
+		{
+			Name: "permission",
+			Fake: fakePermission,
+		},
+		{
+			Name: "last",
+			Children: []*Node{
+				{
+					Name: "login",
+					Fake: fakeLastLogin,
+				},
+			},
 		},
 	}
 }
 
-func Username() *Tree {
-	return &Tree{
-		Name: "Username",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			if !last.Schema.IsString() {
-				return false
-			}
-			return strings.ToLower(last.Name) == "username" || strings.HasSuffix(last.Name, "UserName") ||
-				strings.HasSuffix(last.Name, "Username")
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return gofakeit.Username(), nil
-		},
-	}
+func newErrorNode() *Node {
+	return &Node{Name: "error", Fake: fakeError}
 }
 
-func Error() *Tree {
-	return &Tree{
-		Name: "Error",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			return strings.ToLower(last.Name) == "error" && (last.Schema.IsAnyString() || last.Schema.IsAny())
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return fmt.Sprintf("%v", gofakeit.Error()), nil
-		},
-	}
+func fakeError(r *Request) (interface{}, error) {
+	return gofakeit.Error().Error(), nil
 }
 
-func StringHash() *Tree {
+func newHashNode() *Node {
+	return &Node{Name: "hash", Fake: fakeHash}
+}
+
+func fakeHash(_ *Request) (interface{}, error) {
 	hash := sha1.New()
-	return &Tree{
-		Name: "StringHash",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			return (strings.ToLower(last.Name) == "hash" || strings.HasSuffix(last.Name, "Hash")) &&
-				last.Schema.IsAnyString()
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			s := gofakeit.SentenceSimple()
-			b := hash.Sum([]byte(s))
-			return fmt.Sprintf("%x", b), nil
-		},
-	}
+	s := gofakeit.SentenceSimple()
+	b := hash.Sum([]byte(s))
+	return fmt.Sprintf("%x", b), nil
 }
 
-func UserObject() *Tree {
-	return &Tree{
-		Name: "PetObject",
-		Test: func(r *Request) bool {
-			return r.Path.MatchLast(NameIgnoreCase("users", "user"), Any())
-		},
-		Nodes: []*Tree{
-			UserObjectName(),
-		},
-	}
+func fakeUsername(_ *Request) (interface{}, error) {
+	return gofakeit.Username(), nil
 }
 
-func UserObjectName() *Tree {
-	return &Tree{
-		Name: "UserName",
-		Test: func(r *Request) bool {
-			return r.LastName() == "name"
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return gofakeit.Username(), nil
-		},
+func fakeUser(r *Request) (interface{}, error) {
+	s := r.Schema
+	if s.IsString() {
+		return gofakeit.Username(), nil
 	}
+	firstname := gofakeit.FirstName()
+	lastname := gofakeit.LastName()
+	first := strings.ToLower(firstname)
+	last := strings.ToLower(lastname)
+	return map[string]interface{}{
+		"firstname": firstname,
+		"lastname":  lastname,
+		"gender":    gofakeit.Gender(),
+		"email":     fmt.Sprintf("%s.%s@%s", first, last, gofakeit.DomainName()),
+		"username":  fmt.Sprintf("%c%s", first[0], last),
+	}, nil
 }
 
-func UserAny() *Tree {
-	return &Tree{
-		Name: "AnyPerson",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			return last.Name == "user" && last.Schema.IsAny()
-		},
-		Fake: func(r *Request) (interface{}, error) {
-			return map[string]interface{}{
-				"firstname": gofakeit.FirstName(),
-				"lastname":  gofakeit.LastName(),
-				"gender":    gofakeit.Gender(),
-				"email":     gofakeit.Email(),
-			}, nil
-		},
-	}
+func fakeRole(_ *Request) (interface{}, error) {
+	index := gofakeit.Number(0, len(roles)-1)
+	return roles[index], nil
+}
+
+func fakePermission(_ *Request) (interface{}, error) {
+	index := gofakeit.Number(0, len(permissions)-1)
+	return permissions[index], nil
+}
+
+func fakeLastLogin(r *Request) (interface{}, error) {
+	year := time.Now().Year()
+	return fakeDateInPastWithMinYear(r, year-1)
+}
+
+var roles = []string{
+	"admin", "user", "guest", "owner", "editor", "viewer",
+}
+
+var permissions = []string{
+	"read", "create", "update", "delete",
 }

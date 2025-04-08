@@ -16,11 +16,7 @@ func TestAddress(t *testing.T) {
 		{
 			name: "city",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name: "city",
-					},
-				},
+				Path: []string{"city"},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -30,16 +26,12 @@ func TestAddress(t *testing.T) {
 		{
 			name: "city",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name:   "city",
-						Schema: schematest.New("integer"),
-					},
-				},
+				Path:   []string{"city"},
+				Schema: schematest.New("integer"),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 229109, v)
+				require.Equal(t, int64(229109), v)
 			},
 		},
 		//{
@@ -62,9 +54,17 @@ func TestAddress(t *testing.T) {
 		{
 			name: "zip",
 			request: &Request{
-				Path: Path{
-					&PathElement{Name: "zip"},
-				},
+				Path: []string{"zip"},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "229109", v)
+			},
+		},
+		{
+			name: "zipCode",
+			request: &Request{
+				Path: []string{"zipCode"},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -74,9 +74,7 @@ func TestAddress(t *testing.T) {
 		{
 			name: "postcode any type",
 			request: &Request{
-				Path: Path{
-					&PathElement{Name: "postcode"},
-				},
+				Path: []string{"postcode"},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -86,27 +84,19 @@ func TestAddress(t *testing.T) {
 		{
 			name: "postcode integer",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name:   "postcode",
-						Schema: schematest.New("integer"),
-					},
-				},
+				Path:   []string{"postcode"},
+				Schema: schematest.New("integer"),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 229109, v)
+				require.Equal(t, int64(229109), v)
 			},
 		},
 		{
 			name: "postcode number",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name:   "postcode",
-						Schema: schematest.New("number"),
-					},
-				},
+				Path:   []string{"postcode"},
+				Schema: schematest.New("number"),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -116,12 +106,8 @@ func TestAddress(t *testing.T) {
 		{
 			name: "postcode string min and max",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name:   "postcode",
-						Schema: schematest.New("string", schematest.WithMinLength(5), schematest.WithMaxLength(5)),
-					},
-				},
+				Path:   []string{"postcode"},
+				Schema: schematest.New("string", schematest.WithMinLength(5), schematest.WithMaxLength(5)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -131,19 +117,15 @@ func TestAddress(t *testing.T) {
 		{
 			name: "zip with min & max",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name: "postcode",
-						Schema: schematest.New("integer",
-							schematest.WithMinimum(1000),
-							schematest.WithMaximum(9999),
-						),
-					},
-				},
+				Path: []string{"zip"},
+				Schema: schematest.New("integer",
+					schematest.WithMinimum(1000),
+					schematest.WithMaximum(9999),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 8029, v)
+				require.Equal(t, int64(8029), v)
 			},
 		},
 		//{
@@ -172,11 +154,7 @@ func TestAddress(t *testing.T) {
 		{
 			name: "longitude",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name: "longitude",
-					},
-				},
+				Path: []string{"longitude"},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -186,11 +164,7 @@ func TestAddress(t *testing.T) {
 		{
 			name: "latitude",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name: "latitude",
-					},
-				},
+				Path: []string{"latitude"},
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -200,27 +174,19 @@ func TestAddress(t *testing.T) {
 		{
 			name: "coAddress",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name:   "coAddress",
-						Schema: schematest.New("string"),
-					},
-				},
+				Path:   []string{"coAddress"},
+				Schema: schematest.New("string"),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Shanelle Wehner", v)
+				require.Equal(t, "Zoey Nguyen", v)
 			},
 		},
 		{
 			name: "street",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name:   "street",
-						Schema: schematest.New("string"),
-					},
-				},
+				Path:   []string{"street"},
+				Schema: schematest.New("string"),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -230,13 +196,9 @@ func TestAddress(t *testing.T) {
 		{
 			name: "address - country",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name: "address",
-						Schema: schematest.New("object",
-							schematest.WithProperty("country", schematest.New("string"))),
-					},
-				},
+				Path: []string{"address"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("country", schematest.New("string", schematest.WithMaxLength(2)))),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -246,25 +208,21 @@ func TestAddress(t *testing.T) {
 		{
 			name: "open address",
 			request: &Request{
-				Path: Path{
-					&PathElement{
-						Name: "address",
-						Schema: schematest.New("object",
-							schematest.WithProperty("line1", schematest.New("string")),
-							schematest.WithProperty("line2", schematest.New("string")),
-							schematest.WithProperty("line3", schematest.New("string")),
-							schematest.WithProperty("country", schematest.New("string")),
-						),
-					},
-				},
+				Path: []string{"address"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("line1", schematest.New("string")),
+					schematest.WithProperty("line2", schematest.New("string")),
+					schematest.WithProperty("line3", schematest.New("string")),
+					schematest.WithProperty("country", schematest.New("string")),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
-					"line1":   "Shanelle Wehner",
-					"line2":   "1093 Lockstown",
-					"line3":   "Newark VT 41180",
-					"country": "FJ",
+					"line1":   "Zoey Nguyen",
+					"line2":   "39364 Inletfurt",
+					"line3":   "Nashville-Davidson OH 80573",
+					"country": "Nauru",
 				}, v)
 			},
 		},

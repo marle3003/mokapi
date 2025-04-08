@@ -1,61 +1,33 @@
 package generator
 
-import "github.com/brianvoe/gofakeit/v6"
+import (
+	"github.com/brianvoe/gofakeit/v6"
+)
 
-func Language() *Tree {
-	return &Tree{
-		Name: "Language",
-		Test: func(r *Request) bool {
-			last := r.Last()
-			if last == nil {
-				return false
-			}
-			return (last.Name == "language" || last.Name == "lang") &&
-				((last.Schema.IsString() && !hasFormat(last.Schema) && !hasPattern(last.Schema)) || last.Schema.IsAny())
-		},
-		Nodes: []*Tree{
-			LanguageIso639_1(),
-			LanguageBCP47(),
-			LanguageLong(),
+func languages() []*Node {
+	return []*Node{
+		{
+			Name: "language",
+			Fake: fakeLanguage,
 		},
 	}
 }
 
-func LanguageIso639_1() *Tree {
-	return &Tree{
-		Name: "ISO-639-1",
-		Test: func(r *Request) bool {
-			s := r.LastSchema()
-			return s.MaxLength == nil || *s.MaxLength == 2
-		},
-		Fake: func(r *Request) (interface{}, error) {
+func fakeLanguage(r *Request) (any, error) {
+	s := r.Schema
+	if s.MaxLength != nil {
+		if *s.MaxLength == 2 {
+			// ISO-639-1
 			return gofakeit.LanguageAbbreviation(), nil
-		},
-	}
-}
-
-func LanguageBCP47() *Tree {
-	return &Tree{
-		Name: "BCP-47",
-		Test: func(r *Request) bool {
-			s := r.LastSchema()
-			return s.MaxLength != nil && *s.MaxLength == 5
-		},
-		Fake: func(r *Request) (interface{}, error) {
+		}
+		if *s.MaxLength == 5 {
+			// BCP-47
 			return gofakeit.LanguageBCP(), nil
-		},
-	}
-}
-
-func LanguageLong() *Tree {
-	return &Tree{
-		Name: "BCP-47",
-		Test: func(r *Request) bool {
-			s := r.LastSchema()
-			return s.MaxLength != nil && *s.MaxLength > 5
-		},
-		Fake: func(r *Request) (interface{}, error) {
+		}
+		if *s.MaxLength > 5 {
+			// BCP-47
 			return gofakeit.Language(), nil
-		},
+		}
 	}
+	return gofakeit.LanguageAbbreviation(), nil
 }

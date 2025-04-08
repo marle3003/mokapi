@@ -128,4 +128,12 @@ func (o *Operation) patch(patch *Operation) {
 	}
 
 	o.Parameters.Patch(patch.Parameters)
+
+	if o.Security == nil {
+		o.Security = patch.Security
+	} else {
+		for _, v := range patch.Security {
+			o.Security = append(o.Security, v)
+		}
+	}
 }

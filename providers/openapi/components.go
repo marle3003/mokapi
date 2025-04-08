@@ -86,6 +86,11 @@ func (c *Components) patch(patch Components) {
 	} else {
 		c.Headers.patch(patch.Headers)
 	}
+	if c.SecuritySchemes == nil {
+		c.SecuritySchemes = patch.SecuritySchemes
+	} else {
+		c.SecuritySchemes.patch(patch.SecuritySchemes)
+	}
 }
 
 func (p Parameters) patch(patch Parameters) {

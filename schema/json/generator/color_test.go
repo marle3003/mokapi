@@ -16,9 +16,8 @@ func TestColor(t *testing.T) {
 		{
 			name: "color name",
 			req: &Request{
-				Path: Path{
-					&PathElement{Name: "color", Schema: schematest.New("string")},
-				},
+				Path:   []string{"color"},
+				Schema: schematest.New("string"),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -28,27 +27,12 @@ func TestColor(t *testing.T) {
 		{
 			name: "hex color",
 			req: &Request{
-				Path: Path{
-					&PathElement{Name: "color", Schema: schematest.New("string", schematest.WithMaxLength(7))},
-				},
+				Path:   []string{"color"},
+				Schema: schematest.New("string", schematest.WithMaxLength(7)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "#cea93b", v)
-			},
-		},
-		{
-			name: "rgb color",
-			req: &Request{
-				Path: Path{
-					&PathElement{Name: "color", Schema: schematest.New("array",
-						schematest.WithItems("integer"),
-					)},
-				},
-			},
-			test: func(t *testing.T, v interface{}, err error) {
-				require.NoError(t, err)
-				require.Equal(t, []int{126, 91, 203}, v)
 			},
 		},
 	}

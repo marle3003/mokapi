@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestComposition_AllOf(t *testing.T) {
+func TestAllOf(t *testing.T) {
 	testcases := []struct {
 		name string
 		req  *Request
@@ -16,13 +16,9 @@ func TestComposition_AllOf(t *testing.T) {
 		{
 			name: "with one integer schema",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Schema: schematest.NewAllOf(
-							schematest.New("integer"),
-						),
-					},
-				},
+				Schema: schematest.NewAllOf(
+					schematest.New("integer"),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -32,14 +28,10 @@ func TestComposition_AllOf(t *testing.T) {
 		{
 			name: "with two integer schema, second is more precise",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Schema: schematest.NewAllOf(
-							schematest.New("integer"),
-							schematest.New("integer", schematest.WithMinimum(0), schematest.WithMaximum(10)),
-						),
-					},
-				},
+				Schema: schematest.NewAllOf(
+					schematest.New("integer"),
+					schematest.New("integer", schematest.WithMinimum(0), schematest.WithMaximum(10)),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -49,14 +41,10 @@ func TestComposition_AllOf(t *testing.T) {
 		{
 			name: "with two integer schema, first is more precise",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Schema: schematest.NewAllOf(
-							schematest.New("integer", schematest.WithMinimum(0), schematest.WithMaximum(10)),
-							schematest.New("integer"),
-						),
-					},
-				},
+				Schema: schematest.NewAllOf(
+					schematest.New("integer", schematest.WithMinimum(0), schematest.WithMaximum(10)),
+					schematest.New("integer"),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -66,14 +54,10 @@ func TestComposition_AllOf(t *testing.T) {
 		{
 			name: "first is any, second is integer",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Schema: schematest.NewAllOf(
-							schematest.NewAny(),
-							schematest.New("integer"),
-						),
-					},
-				},
+				Schema: schematest.NewAllOf(
+					schematest.NewAny(),
+					schematest.New("integer"),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -81,15 +65,24 @@ func TestComposition_AllOf(t *testing.T) {
 			},
 		},
 		{
+			name: "multiple shared types",
+			req: &Request{
+				Schema: schematest.NewAllOf(
+					schematest.NewTypes([]string{"integer", "string", "boolean"}),
+					schematest.NewTypes([]string{"integer", "string", "boolean"}),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "lx0+fjywXKo", v)
+			},
+		},
+		{
 			name: "one object",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Schema: schematest.NewAllOf(
-							schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
-						),
-					},
-				},
+				Schema: schematest.NewAllOf(
+					schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -99,14 +92,10 @@ func TestComposition_AllOf(t *testing.T) {
 		{
 			name: "two object",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Schema: schematest.NewAllOf(
-							schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
-							schematest.New("object", schematest.WithProperty("bar", schematest.New("string"))),
-						),
-					},
-				},
+				Schema: schematest.NewAllOf(
+					schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
+					schematest.New("object", schematest.WithProperty("bar", schematest.New("string"))),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -116,20 +105,16 @@ func TestComposition_AllOf(t *testing.T) {
 		{
 			name: "two object with required properties",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Schema: schematest.NewAllOf(
-							schematest.New("object",
-								schematest.WithProperty("foo", schematest.New("string")),
-								schematest.WithRequired("foo"),
-							),
-							schematest.New("object",
-								schematest.WithProperty("bar", schematest.New("string")),
-								schematest.WithRequired("bar"),
-							),
-						),
-					},
-				},
+				Schema: schematest.NewAllOf(
+					schematest.New("object",
+						schematest.WithProperty("foo", schematest.New("string")),
+						schematest.WithRequired("foo"),
+					),
+					schematest.New("object",
+						schematest.WithProperty("bar", schematest.New("string")),
+						schematest.WithRequired("bar"),
+					),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -139,20 +124,16 @@ func TestComposition_AllOf(t *testing.T) {
 		{
 			name: "two object, first is integer and object",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Schema: schematest.NewAllOf(
-							schematest.NewTypes([]string{"integer", "object"},
-								schematest.WithProperty("foo", schematest.New("string")),
-								schematest.WithRequired("foo"),
-							),
-							schematest.New("object",
-								schematest.WithProperty("bar", schematest.New("string")),
-								schematest.WithRequired("bar"),
-							),
-						),
-					},
-				},
+				Schema: schematest.NewAllOf(
+					schematest.NewTypes([]string{"integer", "object"},
+						schematest.WithProperty("foo", schematest.New("string")),
+						schematest.WithRequired("foo"),
+					),
+					schematest.New("object",
+						schematest.WithProperty("bar", schematest.New("string")),
+						schematest.WithRequired("bar"),
+					),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -162,14 +143,10 @@ func TestComposition_AllOf(t *testing.T) {
 		{
 			name: "no shared type",
 			req: &Request{
-				Path: Path{
-					&PathElement{
-						Schema: schematest.NewAllOf(
-							schematest.NewTypes([]string{"integer", "string"}),
-							schematest.NewTypes([]string{"number", "boolean"}),
-						),
-					},
-				},
+				Schema: schematest.NewAllOf(
+					schematest.NewTypes([]string{"integer", "string"}),
+					schematest.NewTypes([]string{"number", "boolean"}),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.EqualError(t, err, "generate random data for schema failed: all of schema type=[integer, string], schema type=[number, boolean]: no shared types found")
@@ -180,7 +157,6 @@ func TestComposition_AllOf(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			gofakeit.Seed(1234567)
-			Seed(1234567)
 
 			v, err := New(tc.req)
 			tc.test(t, v, err)

@@ -42,7 +42,7 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				r.Equal(t, "1.644484108270445e+307", v.String())
+				r.Equal(t, 1.4470162467581058e+308, v.Export())
 			},
 		},
 		{
@@ -161,37 +161,32 @@ func TestScript_Faker(t *testing.T) {
 		{
 			name: "find node",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.FindFakerTreeFunc = func(name string) *common.FakerTree {
-					return common.NewFakerTree(generator.FindByName("Faker"))
+				host.FindFakerNodeFunc = func(name string) *common.FakerTree {
+					return common.NewFakerTree(generator.FindByName(name))
 				}
 
 				s, err := jstest.New(jstest.WithSource(
 					`import { fake, findByName } from 'mokapi/faker'
 						 export default function() {
-						 	let root = findByName('Faker')
-							root.insert(0, {
+						 	let root = findByName('')
+							root.append({
 								name: 'foo',
-								test: () => { return true },
 								fake: (r) => {
-									return {
-										isString: r.lastSchema().isString(),
-										schema:	r.lastSchema().string()
-									}
+									return 'bar'
 								}
 							})
-							return fake({ type: 'string' })
+							return fake({ type: 'object', properties: { foo: { type: 'string'} } })
 						 }`),
 					js.WithHost(host))
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
 				r.Equal(t, map[string]interface{}{
-					"isString": true,
-					"schema":   "schema type=string",
+					"foo": "bar",
 				}, v.Export())
 				r.NoError(t, err)
-				n := generator.FindByName("Faker")
-				err = n.RemoveAt(0)
+				n := generator.FindByName("")
+				err = n.Remove("foo")
 				r.NoError(t, err)
 			},
 		},

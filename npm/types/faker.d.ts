@@ -45,13 +45,6 @@ export interface Tree {
     append: (node: Tree | CustomTree) => void;
 
     /**
-     * Inserts a Tree objects at a specified index position
-     * @param index index - The zero-based index position of the insertion.
-     * @param node node - The tree node to insert
-     */
-    insert: (index: number, node: Tree | CustomTree) => void;
-
-    /**
      * Removes a Tree node at the specific index position
      * @param index index - The zero-based index position to remove.
      */

@@ -14,6 +14,7 @@ type SecuritySchemes map[string]SecurityScheme
 
 type SecurityScheme interface {
 	Serve(req *http.Request) error
+	patch(scheme SecurityScheme)
 }
 
 type SecurityRequirement map[string][]string
@@ -288,3 +289,79 @@ func getSecuritySchemeType(schema SecurityScheme) string {
 		return "unknown"
 	}
 }
+
+func (s SecuritySchemes) patch(patch SecuritySchemes) {
+	for k, p := range patch {
+		if v, ok := s[k]; ok && v != nil {
+			v.patch(p)
+		} else {
+			s[k] = p
+		}
+	}
+}
+
+func (s *HttpSecurityScheme) patch(patch SecurityScheme) {
+	p, ok := patch.(*HttpSecurityScheme)
+	if !ok {
+		return
+	}
+	if len(p.Description) > 0 {
+		s.Description = p.Description
+	}
+	if len(p.Scheme) > 0 {
+		s.Scheme = p.Scheme
+	}
+	if len(p.BearerFormat) > 0 {
+		s.BearerFormat = p.BearerFormat
+	}
+}
+
+func (s *ApiKeySecurityScheme) patch(patch SecurityScheme) {
+	p, ok := patch.(*ApiKeySecurityScheme)
+	if !ok {
+		return
+	}
+	if len(p.Description) > 0 {
+		s.Description = p.Description
+	}
+	if len(p.In) > 0 {
+		s.In = p.In
+	}
+	if len(p.Name) > 0 {
+		s.Name = p.Name
+	}
+}
+
+func (s *OAuth2SecurityScheme) patch(patch SecurityScheme) {
+	p, ok := patch.(*OAuth2SecurityScheme)
+	if !ok {
+		return
+	}
+	if len(p.Description) > 0 {
+		s.Description = p.Description
+	}
+	for k, f := range p.Flows {
+		if v, ok := s.Flows[k]; ok && v != nil {
+			v.patch(f)
+		} else {
+			s.Flows[k] = f
+		}
+	}
+}
+
+func (s *OAuth2Flow) patch(patch *OAuth2Flow) {
+	if len(patch.AuthorizationUrl) > 0 {
+		s.AuthorizationUrl = patch.AuthorizationUrl
+	}
+	if len(patch.RefreshUrl) > 0 {
+		s.RefreshUrl = patch.RefreshUrl
+	}
+	if len(patch.TokenUrl) > 0 {
+		s.TokenUrl = patch.TokenUrl
+	}
+	for k, p := range patch.Scopes {
+		s.Scopes[k] = p
+	}
+}
+
+func (s *NotSupportedSecurityScheme) patch(_ SecurityScheme) {}

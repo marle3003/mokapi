@@ -7,22 +7,25 @@ import (
 	"testing"
 )
 
-func TestArray(t *testing.T) {
+func TestOneOf(t *testing.T) {
 	testcases := []struct {
 		name string
 		req  *Request
 		test func(t *testing.T, v interface{}, err error)
 	}{
 		{
-			name: "string array",
+			name: "oneOf",
 			req: &Request{
-				Path: Path{
-					&PathElement{Schema: schematest.New("array", schematest.WithItems("string"))},
-				},
+				Path: []string{"price"},
+				Schema: schematest.NewOneOf(
+					schematest.New("number", schematest.WithMultipleOf(5)),
+					schematest.New("number", schematest.WithMultipleOf(3)),
+				),
 			},
+
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"lx0+fjywXKo", "jxkDng"}, v)
+				require.Equal(t, float64(12085), v)
 			},
 		},
 	}

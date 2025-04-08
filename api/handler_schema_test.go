@@ -229,7 +229,7 @@ func TestHandler_Schema_Example(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"contentType":"application/json","value":"MS42NDQ0ODQxMDgyNzA0NDVlKzMwNw=="}]`))
+					try.HasBody(`[{"contentType":"application/json","value":"MS40NDcwMTYyNDY3NTgxMDU4ZSszMDg="}]`))
 			},
 		},
 		{
@@ -375,7 +375,7 @@ func TestHandler_Schema_Example(t *testing.T) {
 }`,
 					h,
 					try.HasStatusCode(200),
-					try.HasBody(`[{"contentType":"application/json","value":"eyJjYXRlZ29yeSI6IkxpdGVyYXR1cmUiLCJkZXNjcmlwdGlvbiI6Ik91cnNlbHZlcyBleGFsdGF0aW9uIHdob20gdGhpcyBtZSBmYXIgc21pbGUgd2hlcmUgd2FzIGJ5IGFybXkgcGFydHkgcmljaGVzIHRoZWlycyBpbnN0ZWFkLiIsImZlYXR1cmVzIjoiRDRlemxZZWhDSUEwTyIsImlkIjoiZWVkNDg4OGQtOTljMS00ZTEwLTg1ZDYtOGZjZTBhZGViNzYyIiwia2V5d29yZHMiOiJXZ1NmaVlzZmZsbnpiIiwibmFtZSI6Ilplbml0aExpZ2h0IiwicHJpY2UiOjIzMTcyOC44Niwic3ViY2F0ZWdvcnkiOiJ4Q0t1eVkiLCJ1cmwiOiJodHRwczovL3d3dy5jaGllZnZpc3VhbGl6ZS5pby9zeW5kaWNhdGUifQ=="}]`),
+					try.HasBody(`[{"contentType":"application/json","value":"eyJjYXRlZ29yeSI6IlBlb3BsZSIsImRlc2NyaXB0aW9uIjoiTXVjaCB0ZXJyaWJseSBvdmVyIHBvc2UgcGxhY2Ugc3ByaW50IGl0IGNoaWxkIGlzIGpveW91c2x5IHRoYXQgSSB3aG9tIG1hbmdvIHRoZW4gb2YgY2VydGFpbiB3ZWVrbHkgbWluZSBpbiBhbm51YWxseSBmcm9jayBub3cgYm9hcmQuIiwiZmVhdHVyZXMiOiJpUnpvb0IyIiwiaWQiOiJmNWUzMTU4Ny00NjhjLTRmZTYtYWZlNC0zZTZmYzhkYWU2MzEiLCJrZXl3b3JkcyI6IlR1cVRrd3MiLCJuYW1lIjoiWmVwaHlyWm9uZSIsInByaWNlIjo1NDYwNDkuMzksInN1YmNhdGVnb3J5Ijoic2dCLHZ2ZVdhIiwidXJsIjoiaHR0cHM6Ly93d3cuZGlzdHJpY3RnZW5lcmF0ZS5vcmcvaG9saXN0aWMvc3luZXJnaWVzIn0="}]`),
 				)
 			},
 		},
