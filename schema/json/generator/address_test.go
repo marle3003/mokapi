@@ -34,23 +34,15 @@ func TestAddress(t *testing.T) {
 				require.Equal(t, int64(229109), v)
 			},
 		},
-		//{
-		//	name:    "city array",
-		//	request: &Request{
-		//		request: &Request{
-		//			Path: Path{
-		//				&PathElement{
-		//					Name: "city",
-		//
-		//				},
-		//			},
-		//		},
-		//		Names: []string{"cities"}, Schema: &schema.Schema{Type: []string{"array"}}},
-		//	test: func(t *testing.T, v interface{}, err error) {
-		//		require.NoError(t, err)
-		//		require.Equal(t, []interface{}{"Plano", "New York City"}, v)
-		//	},
-		//},
+		{
+			name: "city array",
+			request: &Request{
+				Path: []string{"cities"}, Schema: schematest.New("array")},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{"Plano", "New York City"}, v)
+			},
+		},
 		{
 			name: "zip",
 			request: &Request{
@@ -128,29 +120,29 @@ func TestAddress(t *testing.T) {
 				require.Equal(t, int64(8029), v)
 			},
 		},
-		//{
-		//	name:    "postcodes",
-		//	request: &Request{Names: []string{"postcodes"}},
-		//	test: func(t *testing.T, v interface{}, err error) {
-		//		require.NoError(t, err)
-		//		require.Equal(t, []interface{}{"29109", "648930"}, v)
-		//	},
-		//},
-		//{
-		//	name: "zips with min & max",
-		//	request: &Request{
-		//		Names: []string{"postcodes"},
-		//		Schema: schematest.New("array", schematest.WithItems(
-		//			"integer",
-		//			schematest.WithMinimum(1000),
-		//			schematest.WithMaximum(9999),
-		//		)),
-		//	},
-		//	test: func(t *testing.T, v interface{}, err error) {
-		//		require.NoError(t, err)
-		//		require.Equal(t, []interface{}{int64(7291), int64(9364)}, v)
-		//	},
-		//},
+		{
+			name:    "postcodes",
+			request: &Request{Path: []string{"postcodes"}},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{"29109", "648930"}, v)
+			},
+		},
+		{
+			name: "zips with min & max",
+			request: &Request{
+				Path: []string{"postcodes"},
+				Schema: schematest.New("array", schematest.WithItems(
+					"integer",
+					schematest.WithMinimum(1000),
+					schematest.WithMaximum(9999),
+				)),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{int64(7291), int64(9364)}, v)
+			},
+		},
 		{
 			name: "longitude",
 			request: &Request{
