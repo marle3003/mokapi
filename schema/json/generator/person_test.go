@@ -104,6 +104,7 @@ func TestPerson(t *testing.T) {
 					schematest.WithProperty("sex", schematest.New("string")),
 					schematest.WithProperty("email", schematest.New("string", schematest.WithFormat("email"))),
 					schematest.WithProperty("phone", schematest.New("string")),
+					schematest.WithProperty("username", schematest.New("string")),
 					schematest.WithProperty("contact", nil),
 				),
 			},
@@ -120,6 +121,7 @@ func TestPerson(t *testing.T) {
 					"lastname":  "Clark",
 					"phone":     "+737793648930118",
 					"sex":       "male",
+					"username":  "eclark",
 				}, v)
 			},
 		},
@@ -216,7 +218,7 @@ func TestPerson(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Lockman7291", v)
+				require.Equal(t, "znguyen", v)
 			},
 		},
 		{

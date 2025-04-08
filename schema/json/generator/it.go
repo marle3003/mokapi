@@ -13,8 +13,9 @@ func ictNodes() []*Node {
 		newErrorNode(),
 		newHashNode(),
 		{
-			Name: "username",
-			Fake: fakeUsername,
+			Name:      "username",
+			DependsOn: []string{"firstname", "lastname"},
+			Fake:      fakeUsername,
 		},
 		{
 			Name: "user",
@@ -69,8 +70,35 @@ func fakeHash(_ *Request) (interface{}, error) {
 	return fmt.Sprintf("%x", b), nil
 }
 
-func fakeUsername(_ *Request) (interface{}, error) {
-	return gofakeit.Username(), nil
+func fakeUsername(r *Request) (interface{}, error) {
+	var err error
+
+	var first string
+	if v, ok := r.ctx.store["firstname"]; ok {
+		first = v.(string)
+	} else {
+		v, err = fakeFirstname(r)
+		if err != nil {
+			return nil, err
+		}
+		first = v.(string)
+	}
+
+	var last string
+	if v, ok := r.ctx.store["lastname"]; ok {
+		last = v.(string)
+	} else {
+		v, err = fakeLastname(r)
+		if err != nil {
+			return nil, err
+		}
+		last = v.(string)
+	}
+
+	first = strings.ToLower(first)
+	last = strings.ToLower(last)
+
+	return fmt.Sprintf("%c%s", first[0], last), nil
 }
 
 func fakeUser(r *Request) (interface{}, error) {
