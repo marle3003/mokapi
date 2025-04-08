@@ -68,11 +68,11 @@ func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
 		if len(path) > 0 {
 			last := path[len(path)-1]
 			if isPlural(last) {
-				return r.resolve(req.With(path, &schema.Schema{Type: schema.Types{"array"}}), true)
+				return r.resolve(req.With(path, &schema.Schema{Type: schema.Types{"array"}}, req.examples), true)
 			}
 		}
 	}
-	n := findBestMatch(g.root, req.With(path, req.Schema))
+	n := findBestMatch(g.root, req.With(path, req.Schema, req.examples))
 	if n == nil && !fallback {
 		return nil, NoMatchFound
 	}

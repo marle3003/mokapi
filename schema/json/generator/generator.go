@@ -27,6 +27,7 @@ func New(r *Request) (interface{}, error) {
 	if r.ctx == nil {
 		r.ctx = newContext()
 	}
+	r.examples = examplesFromRequest(r)
 	f, err := resolve(r, true)
 	if err != nil {
 		return nil, err
@@ -42,6 +43,11 @@ func Seed(seed int64) {
 func fakeBySchema(r *Request) (interface{}, error) {
 	if fake, ok := applyConstraints(r); ok {
 		return fake()
+	}
+	if r.examples != nil {
+		if v, err := selectExample(r); err == nil {
+			return v, nil
+		}
 	}
 
 	s := r.Schema
@@ -103,4 +109,18 @@ func removeNull(slice schema.Types) schema.Types {
 		}
 	}
 	return slice
+}
+
+func selectExample(r *Request) (any, error) {
+	items := r.examples
+	start := gofakeit.Number(0, len(items)-1)
+	for i := 0; i < len(items); i++ {
+		index := (start + i) % len(items)
+		item := items[index]
+
+		if v, err := validate(item, r); err == nil {
+			return v, nil
+		}
+	}
+	return nil, NoMatchFound
 }

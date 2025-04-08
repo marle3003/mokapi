@@ -42,6 +42,7 @@ func TestCurrency(t *testing.T) {
 				Schema: schematest.New("object",
 					schematest.WithProperty("code", nil),
 					schematest.WithProperty("name", nil),
+					schematest.WithRequired("code", "name"),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -79,6 +80,7 @@ func TestCurrency(t *testing.T) {
 					schematest.WithProperty("value", schematest.New("integer")),
 					schematest.WithProperty("currency", schematest.New("string")),
 					schematest.WithProperty("currencyName", schematest.New("string")),
+					schematest.WithRequired("value", "currency", "currencyName"),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -98,6 +100,7 @@ func TestCurrency(t *testing.T) {
 					schematest.WithProperty("amount", schematest.New("number")),
 					schematest.WithProperty("currency", schematest.New("string")),
 					schematest.WithProperty("currencyName", schematest.New("string")),
+					schematest.WithRequired("amount", "currency", "currencyName"),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {

@@ -100,7 +100,7 @@ func buildTree() *Node {
 	r.Children = append(r.Children, numbers()...)
 	r.Children = append(r.Children, ictNodes()...)
 	r.Children = append(r.Children, textNodes()...)
-	r.Children = append(r.Children, personal()...)
+	r.Children = append(r.Children, personal...)
 	r.Children = append(r.Children, addresses()...)
 	r.Children = append(r.Children, locations()...)
 	r.Children = append(r.Children, financials()...)

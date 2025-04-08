@@ -20,6 +20,7 @@ func TestPet(t *testing.T) {
 				Path: []string{"pet"},
 				Schema: schematest.New("object",
 					schematest.WithProperty("name", nil),
+					schematest.WithRequired("name"),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -33,6 +34,7 @@ func TestPet(t *testing.T) {
 				Path: []string{"pet"},
 				Schema: schematest.New("object",
 					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithRequired("name"),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -57,8 +59,9 @@ func TestPet(t *testing.T) {
 			name: "pets-name within object",
 			req: &Request{
 				Path: []string{"pets"},
-				Schema: schematest.New("array", schematest.WithItems(
-					"object", schematest.WithProperty("name", nil),
+				Schema: schematest.New("array", schematest.WithItems("object",
+					schematest.WithProperty("name", nil),
+					schematest.WithRequired("name"),
 				)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -72,8 +75,11 @@ func TestPet(t *testing.T) {
 		{
 			name: "pet-category",
 			req: &Request{
-				Path:   []string{"pet"},
-				Schema: schematest.New("object", schematest.WithProperty("category", nil)),
+				Path: []string{"pet"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("category", nil),
+					schematest.WithRequired("category"),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -86,8 +92,11 @@ func TestPet(t *testing.T) {
 				Path: []string{"pet"},
 				Schema: schematest.New("object",
 					schematest.WithProperty("category", schematest.New("object",
-						schematest.WithProperty("name", nil)),
+						schematest.WithProperty("name", nil),
+						schematest.WithRequired("name"),
 					),
+					),
+					schematest.WithRequired("category"),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -116,7 +125,9 @@ func TestPet(t *testing.T) {
 					schematest.WithProperty("category", schematest.New("object",
 						schematest.WithProperty("name", schematest.New("string")),
 						schematest.WithProperty("id", schematest.New("integer")),
+						schematest.WithRequired("name", "id"),
 					)),
+					schematest.WithRequired("category"),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -132,13 +143,16 @@ func TestPet(t *testing.T) {
 					schematest.WithProperty("category", schematest.New("object",
 						schematest.WithProperty("name", schematest.New("string")),
 						schematest.WithProperty("id", schematest.New("integer")),
+						schematest.WithRequired("name", "id"),
 					)),
 					schematest.WithProperty("petDetails", schematest.New("object",
 						schematest.WithProperty("category", schematest.New("object",
 							schematest.WithProperty("name", schematest.New("string")),
 							schematest.WithProperty("id", schematest.New("integer")),
-						))),
+							schematest.WithRequired("name", "id"),
+						)), schematest.WithRequired("category"),
 					),
+					), schematest.WithRequired("petDetails", "category"),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -165,7 +179,9 @@ func TestPet(t *testing.T) {
 					schematest.WithProperty("name", nil),
 					schematest.WithProperty("owner", schematest.New("object",
 						schematest.WithProperty("name", schematest.New("string")),
+						schematest.WithRequired("name"),
 					)),
+					schematest.WithRequired("name", "owner"),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -191,13 +207,16 @@ func TestPetStore(t *testing.T) {
 		schematest.WithProperty("category", schematest.New("object",
 			schematest.WithProperty("id", schematest.New("integer")),
 			schematest.WithProperty("name", schematest.New("string")),
+			schematest.WithRequired("id", "name"),
 		)),
 		schematest.WithProperty("photoUrls", schematest.New("array", schematest.WithItems("string"))),
 		schematest.WithProperty("tags", schematest.New("object",
 			schematest.WithProperty("id", schematest.New("integer")),
 			schematest.WithProperty("name", schematest.New("string")),
+			schematest.WithRequired("id", "name"),
 		)),
 		schematest.WithProperty("status", schematest.New("string", schematest.WithEnum([]interface{}{"available", "pending", "sold"}))),
+		schematest.WithRequired("id", "category", "photoUrls", "tags", "status"),
 	)
 
 	testcases := []struct {

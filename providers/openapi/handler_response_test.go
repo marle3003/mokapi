@@ -195,7 +195,11 @@ func TestHandler_Response_Context(t *testing.T) {
 					openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
 						openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
 							openapitest.NewContent(openapitest.WithSchema(
-								schematest.New("object", schematest.WithProperty("id", schematest.New("string")))),
+								schematest.New("object",
+									schematest.WithProperty("id", schematest.New("string")),
+									schematest.WithRequired("id"),
+								),
+							),
 							),
 						)),
 					))),
