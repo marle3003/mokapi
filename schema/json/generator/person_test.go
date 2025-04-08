@@ -111,7 +111,7 @@ func TestPerson(t *testing.T) {
 					schematest.WithProperty("phone", schematest.New("string")),
 					schematest.WithProperty("username", schematest.New("string")),
 					schematest.WithProperty("contact", nil),
-					schematest.WithRequired("firstname", "lastname", "gender", "sex", "email", "phone", "contact"),
+					schematest.WithRequired("firstname", "lastname", "gender", "sex", "email", "phone", "username", "contact"),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
