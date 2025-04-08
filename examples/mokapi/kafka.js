@@ -48,6 +48,7 @@ const UserSignedUp = {
             description: 'This property describes the email of the user'
         }
     },
+    required: ['userId', 'userEmail'],
     xml: {
         name: 'user'
     }
