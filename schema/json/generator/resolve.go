@@ -172,6 +172,8 @@ func splitWords(s string) []string {
 	re := regexp.MustCompile(`([a-z])([A-Z])`)
 	s = re.ReplaceAllString(s, "${1} ${2}")
 	s = strings.ReplaceAll(s, ".", " ")
+	s = strings.ReplaceAll(s, "_", " ")
+	s = strings.ReplaceAll(s, "-", " ")
 	s = strings.ToLower(s)
 	return strings.Fields(s)
 }

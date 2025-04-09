@@ -121,15 +121,15 @@ var personal = []*Node{
 func fakePersonName(r *Request) (any, error) {
 	var err error
 
-	first := r.ctx.store["firstname"]
-	if first == nil {
+	first, ok := r.ctx.store["firstname"]
+	if !ok {
 		first, err = fakeFirstname(r)
 		if err != nil {
 			return nil, err
 		}
 	}
-	last := r.ctx.store["lastname"]
-	if last == nil {
+	last, ok := r.ctx.store["lastname"]
+	if !ok {
 		last, err = fakeLastname(r)
 		if err != nil {
 			return nil, err
@@ -144,19 +144,14 @@ func fakeFirstname(r *Request) (any, error) {
 		return v, nil
 	}
 
-	var gender string
-	if v, ok := r.ctx.store["gender"]; ok {
-		gender = v.(string)
+	v, err := fakeGender(r)
+	if err != nil {
+		return nil, err
 	}
-	if gender == "" {
-		v, err := fakeGender(r)
-		if err != nil {
-			return nil, err
-		}
-		gender = v.(string)
-	}
+	sex := v.(string)
+
 	pool := femaleFirstNames
-	if gender[0] == 'm' {
+	if sex[0] == 'm' {
 		pool = maleFirstNames
 	}
 
@@ -178,15 +173,25 @@ func fakeLastname(r *Request) (any, error) {
 }
 
 func fakeGender(r *Request) (any, error) {
+	if v, ok := r.ctx.store["gender"]; ok {
+		return v, nil
+	}
+	if v, ok := r.ctx.store["sex"]; ok {
+		return v, nil
+	}
+
 	v := gofakeit.Gender()
 
 	if r.Schema != nil && r.Schema.MaxLength != nil {
 		m := *r.Schema.MaxLength
 		if m < len(v) {
-			return v[:m], nil
+			v = v[:m]
 		}
 	}
+
 	r.ctx.store["gender"] = v
+	r.ctx.store["sex"] = v
+
 	return v, nil
 }
 

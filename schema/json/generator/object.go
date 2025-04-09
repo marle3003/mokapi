@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
+	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
 	"slices"
@@ -23,10 +24,12 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 
 	var fakes *sortedmap.LinkedHashMap[string, *faker]
 	var err error
+	resetStore := false
 
 	switch {
 	case !s.HasProperties() && s.AdditionalProperties != nil:
 		fakes, err = r.fakeDictionary(req)
+		resetStore = true
 	case !s.HasProperties():
 		if len(s.Examples) > 0 {
 			return fakeByExample(req)
@@ -50,10 +53,42 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 		}
 
 		for _, key := range sorted {
+			if resetStore {
+				req.ctx.Snapshot()
+			}
 			f := fakes.Lookup(key)
 			m[key], err = f.fake()
 			if err != nil {
 				return nil, err
+			}
+			if resetStore {
+				req.ctx.Restore()
+			}
+		}
+
+		if s.If != nil {
+			p := parser.Parser{}
+			_, err := p.ParseWith(m, s.If)
+			var cond *schema.Schema
+			if err == nil && s.Then != nil {
+				cond = s.Then
+			} else if err != nil && s.Else != nil {
+				cond = s.Else
+			}
+			if cond != nil {
+				f, err := r.resolve(req.WithSchema(cond), true)
+				if err != nil {
+					return nil, err
+				}
+				v, err := f.fake()
+				if err != nil {
+					return nil, err
+				}
+				if m2, ok := v.(map[string]interface{}); ok {
+					for key, val := range m2 {
+						m[key] = val
+					}
+				}
 			}
 		}
 
@@ -96,7 +131,6 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 			}
 		}
 		fakes.Set(it.Key(), f)
-
 	}
 	return fakes, nil
 }
@@ -105,7 +139,6 @@ func (r *resolver) fakeDictionary(req *Request) (*sortedmap.LinkedHashMap[string
 	length := numProperties(1, 10, req.Schema)
 	fakes := &sortedmap.LinkedHashMap[string, *faker]{}
 	for i := 0; i < length; i++ {
-
 		f, err := r.resolve(req.WithSchema(req.Schema.AdditionalProperties), true)
 		if err != nil {
 			return nil, err

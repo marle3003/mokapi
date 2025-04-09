@@ -1,6 +1,8 @@
 package generator
 
-import "mokapi/schema/json/schema"
+import (
+	"mokapi/schema/json/schema"
+)
 
 type Request struct {
 	Path   []string       `json:"path"`
@@ -76,7 +78,9 @@ func (c *context) Restore() {
 func (s *store) Snapshot() store {
 	snapshot := map[string]any{}
 	for k, v := range *s {
-		snapshot[k] = v
+		if v != nil {
+			snapshot[k] = v
+		}
 	}
 	return snapshot
 }

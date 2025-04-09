@@ -118,16 +118,15 @@ func TestPerson(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
 					"contact": map[string]interface{}{
-						"email": "ethan.clark@legacyb2b.net",
-						"phone": "+31986146",
-					},
-					"email":     "ethan.clark@productenvisioneer.io",
-					"firstname": "Ethan",
+						"email": "anthony.clark@legacyb2b.net",
+						"phone": "+61350186146"},
+					"email":     "anthony.clark@dynamiccommunities.io",
+					"firstname": "Anthony",
 					"gender":    "male",
 					"lastname":  "Clark",
-					"phone":     "+737793648930118",
+					"phone":     "+61810936489301",
 					"sex":       "male",
-					"username":  "eclark",
+					"username":  "aclark",
 				}, v)
 			},
 		},
@@ -314,6 +313,56 @@ func TestPerson(t *testing.T) {
 						"title":     "Mrs.",
 					},
 				}, v)
+			},
+		},
+		{
+			name: "username, firstname, lastname and sex",
+			req: &Request{
+				Path: []string{"person"},
+				Schema: schematest.New("array",
+					schematest.WithMinItems(5),
+					schematest.WithItems("object",
+						schematest.WithProperty("firstname", schematest.New("string")),
+						schematest.WithProperty("lastname", schematest.New("string")),
+						schematest.WithProperty("sex", schematest.New("string")),
+						schematest.WithProperty("username", schematest.New("string")),
+						schematest.WithRequired("firstname", "lastname", "sex", "username"),
+					),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{
+					map[string]interface{}{
+						"firstname": "Gabriel",
+						"lastname":  "Clark",
+						"sex":       "male",
+						"username":  "gclark",
+					},
+					map[string]interface{}{
+						"firstname": "Ella",
+						"lastname":  "Adams",
+						"sex":       "female",
+						"username":  "eadams",
+					},
+					map[string]interface{}{
+						"firstname": "Penelope",
+						"lastname":  "Torres",
+						"sex":       "female",
+						"username":  "ptorres",
+					},
+					map[string]interface{}{
+						"firstname": "Michael",
+						"lastname":  "Jackson",
+						"sex":       "male",
+						"username":  "mjackson",
+					},
+					map[string]interface{}{
+						"firstname": "Jackson",
+						"lastname":  "Carter",
+						"sex":       "male",
+						"username":  "jcarter",
+					}}, v)
 			},
 		},
 	}

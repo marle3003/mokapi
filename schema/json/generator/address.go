@@ -52,12 +52,9 @@ func addresses() []*Node {
 			Fake: fakeCity,
 		},
 		{
-			Name: "postcode",
-			Fake: fakePostcode,
-		},
-		{
-			Name: "zip",
-			Fake: fakePostcode,
+			Name:       "zip",
+			Attributes: []string{"zip", "postcode", "postal"},
+			Fake:       fakePostcode,
 			Children: []*Node{
 				{
 					Name: "code",

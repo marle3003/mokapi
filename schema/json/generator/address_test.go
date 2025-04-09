@@ -129,7 +129,7 @@ func TestAddress(t *testing.T) {
 			},
 		},
 		{
-			name: "zips with min & max",
+			name: "postcodes with min & max",
 			request: &Request{
 				Path: []string{"postcodes"},
 				Schema: schematest.New("array", schematest.WithItems(
@@ -141,6 +141,16 @@ func TestAddress(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{int64(7291), int64(9364)}, v)
+			},
+		},
+		{
+			name: "postal_code",
+			request: &Request{
+				Path: []string{"postal_code"},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "229109", v)
 			},
 		},
 		{
