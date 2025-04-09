@@ -413,17 +413,17 @@ func TestGeneratorFloat(t *testing.T) {
 		},
 		{
 			name:   "example",
-			exp:    1.644484108270445e+307,
+			exp:    1.0,
 			schema: schematest.New("number", schematest.WithFormat("double"), schematest.WithExample(1)),
 		},
 		{
 			name:   "examples",
-			exp:    1.644484108270445e+307,
+			exp:    7.0,
 			schema: schematest.New("number", schematest.WithFormat("double"), schematest.WithExamples(5, 6, 7)),
 		},
 		{
 			name:   "examples over example",
-			exp:    1.644484108270445e+307,
+			exp:    7.0,
 			schema: schematest.New("number", schematest.WithFormat("double"), schematest.WithExample(1), schematest.WithExamples(5, 6, 7)),
 		},
 		{
@@ -581,16 +581,21 @@ func TestGeneratorObject(t *testing.T) {
 		schema *schema.Schema
 	}{
 		{
-			name:   "simple",
-			exp:    map[string]interface{}{"id": int64(98266)},
-			schema: schematest.New("object", schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32")))),
+			name: "simple",
+			exp:  map[string]interface{}{"id": int64(98266)},
+			schema: schematest.New("object",
+				schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
+				schematest.WithRequired("id"),
+			),
 		},
 		{
 			name: "more fields",
 			exp:  map[string]interface{}{"id": int64(98266), "date": "2038-12-28"},
 			schema: schematest.New("object",
 				schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
-				schematest.WithProperty("date", schematest.New("string", schematest.WithFormat("date")))),
+				schematest.WithProperty("date", schematest.New("string", schematest.WithFormat("date"))),
+				schematest.WithRequired("id", "date"),
+			),
 		},
 		{
 			name: "nested",
@@ -599,8 +604,10 @@ func TestGeneratorObject(t *testing.T) {
 				schematest.WithProperty("nested", schematest.New("object",
 					schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
 					schematest.WithProperty("date", schematest.New("string", schematest.WithFormat("date"))),
+					schematest.WithRequired("id", "date"),
 				),
 				),
+				schematest.WithRequired("nested"),
 			),
 		},
 		{
@@ -615,14 +622,20 @@ func TestGeneratorObject(t *testing.T) {
 			schema: schematest.New("object"),
 		},
 		{
-			name:   "with property _metadata",
-			exp:    map[string]interface{}{"_metadata": int64(-8379641344161477543)},
-			schema: schematest.New("object", schematest.WithProperty("_metadata", schematest.New("integer", schematest.WithFormat("int64")))),
+			name: "with property _metadata",
+			exp:  map[string]interface{}{"_metadata": int64(-8379641344161477543)},
+			schema: schematest.New("object",
+				schematest.WithProperty("_metadata", schematest.New("integer", schematest.WithFormat("int64"))),
+				schematest.WithRequired("_metadata"),
+			),
 		},
 		{
-			name:   "with property address as any",
-			exp:    map[string]interface{}{"address": map[string]interface{}{"address": "364 Unionsville, Norfolk, Ohio 99536", "city": "Norfolk", "country": "Lesotho", "latitude": 88.792592, "longitude": 174.504681, "state": "Ohio", "street": "364 Unionsville", "zip": "99536"}},
-			schema: schematest.New("object", schematest.WithProperty("address", schematest.New(""))),
+			name: "with property address as any",
+			exp:  map[string]interface{}{"address": map[string]interface{}{"address": "364 Unionsville, Norfolk, Ohio 99536", "city": "Norfolk", "country": "Lesotho", "latitude": 88.792592, "longitude": 174.504681, "state": "Ohio", "street": "364 Unionsville", "zip": "99536"}},
+			schema: schematest.New("object",
+				schematest.WithProperty("address", schematest.New("")),
+				schematest.WithRequired("address"),
+			),
 		},
 	}
 
@@ -651,12 +664,17 @@ func TestGenerator_AnyOf(t *testing.T) {
 					schematest.WithItems("",
 						schematest.Any(
 							schematest.New("object",
-								schematest.WithProperty("foo", schematest.New("string"))),
+								schematest.WithProperty("foo", schematest.New("string")),
+								schematest.WithRequired("foo"),
+							),
+
 							schematest.New("object",
 								schematest.WithProperty("bar",
 									schematest.New("integer",
 										schematest.WithMinimum(0),
-										schematest.WithMaximum(5)))),
+										schematest.WithMaximum(5))),
+								schematest.WithRequired("bar"),
+							),
 						),
 					),
 				)
@@ -687,8 +705,14 @@ func TestGenerator_AllOf(t *testing.T) {
 		{
 			name: "all of",
 			schema: schematest.New("", schematest.AllOf(
-				schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
-				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
+				schematest.New("object",
+					schematest.WithProperty("foo", schematest.New("string")),
+					schematest.WithRequired("foo"),
+				),
+				schematest.New("object",
+					schematest.WithProperty("bar", schematest.New("number")),
+					schematest.WithRequired("bar"),
+				),
 			)),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
@@ -699,7 +723,10 @@ func TestGenerator_AllOf(t *testing.T) {
 			name: "one is null",
 			schema: schematest.NewAllOf(
 				nil,
-				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
+				schematest.New("object",
+					schematest.WithProperty("bar", schematest.New("number")),
+					schematest.WithRequired("bar"),
+				),
 			),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
@@ -710,7 +737,10 @@ func TestGenerator_AllOf(t *testing.T) {
 			name: "one reference value is null",
 			schema: schematest.NewAllOfRefs(
 				nil,
-				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
+				schematest.New("object",
+					schematest.WithProperty("bar", schematest.New("number")),
+					schematest.WithRequired("bar"),
+				),
 			),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
@@ -721,10 +751,13 @@ func TestGenerator_AllOf(t *testing.T) {
 			name: "with integer type",
 			schema: schematest.New("", schematest.AllOf(
 				schematest.New("integer"),
-				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
+				schematest.New("object",
+					schematest.WithProperty("bar", schematest.New("number")),
+					schematest.WithRequired("bar"),
+				),
 			)),
 			test: func(t *testing.T, result interface{}, err error) {
-				require.EqualError(t, err, "generate random data for schema failed: all of schema type=integer, schema type=object properties=[bar]: no shared types found")
+				require.EqualError(t, err, "generate random data for schema failed: all of schema type=integer, schema type=object properties=[bar] required=[bar]: no shared types found")
 				require.Nil(t, result)
 			},
 		},
@@ -740,11 +773,13 @@ func TestGenerator_AllOf(t *testing.T) {
 							schematest.WithMinimum(0),
 							schematest.WithMaximum(3),
 						)),
-				)),
+				),
+					schematest.WithRequired("a"),
+				),
 				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
 			)),
 			test: func(t *testing.T, result interface{}, err error) {
-				require.EqualError(t, err, "generate random data for schema failed: schema type=object properties=[a]: can not fill array with unique items: schema type=array unique-items items=schema type=integer minimum=0 maximum=3 minItems=5")
+				require.EqualError(t, err, "generate random data for schema failed: schema type=object properties=[a] required=[a]: can not fill array with unique items: schema type=array unique-items items=schema type=integer minimum=0 maximum=3 minItems=5")
 				require.Nil(t, result)
 			},
 		},
@@ -801,7 +836,7 @@ func TestGenerator_Recursions(t *testing.T) {
 		{
 			"recursion depth 1",
 			func(t *testing.T) {
-				s := schematest.New("object", schematest.And("null"))
+				s := schematest.New("object", schematest.And("null"), schematest.WithRequired("foo"))
 				props := &schema.Schemas{}
 				props.Set("foo", s)
 				s.Properties = props
@@ -817,10 +852,11 @@ func TestGenerator_Recursions(t *testing.T) {
 		{
 			"recursion across two objects depth 1",
 			func(t *testing.T) {
-				child := schematest.New("object")
+				child := schematest.New("object", schematest.WithRequired("foo"))
 				s := schematest.New("object",
 					schematest.IsNullable(true),
 					schematest.WithProperty("bar", child),
+					schematest.WithRequired("bar"),
 				)
 				props := &schema.Schemas{}
 				props.Set("foo", s)
@@ -914,7 +950,9 @@ func TestGeneratorNullable(t *testing.T) {
 		{
 			name: "nullable property",
 			schema: schematest.New("object",
-				schematest.WithProperty("foo", schematest.New("string", schematest.IsNullable(true)))),
+				schematest.WithProperty("foo", schematest.New("string", schematest.IsNullable(true))),
+				schematest.WithRequired("foo"),
+			),
 			seed: 43,
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)

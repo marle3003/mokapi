@@ -24,6 +24,7 @@ type HttpServer struct {
 	server   *http.Server
 	handlers map[string]map[string]*HttpService // map[host][path]Handler
 	m        sync.RWMutex
+	isTls    bool
 }
 
 type HttpService struct {
@@ -37,6 +38,7 @@ func NewHttpServer(port string) *HttpServer {
 	s := &HttpServer{
 		server:   &http.Server{Addr: fmt.Sprintf(":%v", port)},
 		handlers: make(map[string]map[string]*HttpService),
+		isTls:    false,
 	}
 	s.server.Handler = s
 	return s
@@ -47,11 +49,8 @@ func NewHttpServerTls(port string, store *cert.Store) *HttpServer {
 	s.server.TLSConfig = &tls.Config{
 		GetCertificate: store.GetCertificate,
 	}
+	s.isTls = true
 	return s
-}
-
-func (s *HttpServer) IsTls() bool {
-	return s.server.TLSConfig != nil
 }
 
 func (s *HttpServer) AddOrUpdate(service *HttpService) error {
@@ -115,7 +114,7 @@ func (s *HttpServer) Start() {
 	go func() {
 		var err error
 		switch {
-		case s.IsTls():
+		case s.isTls:
 			err = s.server.ListenAndServeTLS("", "")
 		default:
 			err = s.server.ListenAndServe()
@@ -147,7 +146,7 @@ func (s *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			u := r.URL.String()
 			if r.URL.Host == "" {
 				u = r.Host + u
-				if s.server.TLSConfig != nil {
+				if s.isTls {
 					u = "https://" + u
 				} else {
 					u = "http://" + u

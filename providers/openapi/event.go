@@ -136,16 +136,24 @@ func setResponseHeader(r *common.EventResponse, headers Headers) error {
 func getGeneratorContext(r *common.EventRequest) map[string]interface{} {
 	ctx := map[string]interface{}{}
 	for k, v := range r.Cookie {
-		ctx[k] = v
+		if v != nil {
+			ctx[k] = v
+		}
 	}
 	for k, v := range r.Header {
-		ctx[k] = v
+		if v != nil {
+			ctx[k] = v
+		}
 	}
 	for k, v := range r.Path {
-		ctx[k] = v
+		if v != nil {
+			ctx[k] = v
+		}
 	}
 	for k, v := range r.Query {
-		ctx[k] = v
+		if v != nil {
+			ctx[k] = v
+		}
 	}
 	return ctx
 }

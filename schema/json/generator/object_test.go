@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
@@ -17,7 +16,10 @@ func TestObject(t *testing.T) {
 		{
 			name: "object",
 			req: &Request{
-				Schema: schematest.New("object", schematest.WithProperty("name", nil)),
+				Schema: schematest.New("object",
+					schematest.WithProperty("name", nil),
+					schematest.WithRequired("name"),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -27,7 +29,10 @@ func TestObject(t *testing.T) {
 		{
 			name: "no type but properties",
 			req: &Request{
-				Schema: schematest.NewTypes(nil, schematest.WithProperty("name", nil)),
+				Schema: schematest.NewTypes(nil,
+					schematest.WithProperty("name", nil),
+					schematest.WithRequired("name"),
+				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
@@ -39,6 +44,7 @@ func TestObject(t *testing.T) {
 			req: &Request{
 				Schema: schematest.New("object",
 					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithRequired("name"),
 					schematest.WithFreeForm(false),
 				),
 			},
@@ -52,6 +58,7 @@ func TestObject(t *testing.T) {
 			req: &Request{
 				Schema: schematest.New("object",
 					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithRequired("name"),
 					schematest.WithFreeForm(true),
 				),
 			},
@@ -164,11 +171,84 @@ func TestObject(t *testing.T) {
 					v)
 			},
 		},
+		{
+			name: "fallback to example",
+			req: &Request{
+				Path: []string{"address"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("foo", schematest.New("string")),
+					schematest.WithExamples(map[string]interface{}{"foo": "bar"}),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]interface{}{
+						"foo": "bar",
+					},
+					v)
+			},
+		},
+		{
+			name: "if-then",
+			req: &Request{
+				Path: []string{"address"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("country", schematest.New("string")),
+					schematest.WithIf(schematest.NewTypes(nil,
+						schematest.WithProperty("country", schematest.New("string",
+							schematest.WithConst("Bahrain")),
+						),
+					)),
+					schematest.WithThen(schematest.NewTypes(nil,
+						schematest.WithProperty("postal_code", schematest.New("string",
+							schematest.WithPattern("[0-9]{5}(-[0-9]{4})?"))),
+					)),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]interface{}{
+						"country":     "Bahrain",
+						"postal_code": "10936",
+					},
+					v)
+			},
+		},
+		{
+			name: "if-else",
+			req: &Request{
+				Path: []string{"address"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("country", schematest.New("string")),
+					schematest.WithIf(schematest.NewTypes(nil,
+						schematest.WithProperty("country", schematest.New("string",
+							schematest.WithConst("Canada")),
+						),
+					)),
+					schematest.WithElse(schematest.NewTypes(nil,
+						schematest.WithProperty("postal_code", schematest.New("string",
+							schematest.WithPattern("[A-Z][0-9][A-Z] [0-9][A-Z][0-9]")),
+						),
+					)),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]interface{}{
+						"country":     "Bahrain",
+						"postal_code": "C0O 9F0",
+					},
+					v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			gofakeit.Seed(1234567)
+			Seed(1234567)
 
 			v, err := New(tc.req)
 			tc.test(t, v, err)
@@ -186,7 +266,10 @@ func TestLoop(t *testing.T) {
 			name: "no type but properties",
 			req: func() *Request {
 				return &Request{
-					Schema: schematest.NewTypes(nil, schematest.WithProperty("name", nil)),
+					Schema: schematest.NewTypes(nil,
+						schematest.WithProperty("name", nil),
+						schematest.WithRequired("name"),
+					),
 				}
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -228,13 +311,14 @@ func TestLoop(t *testing.T) {
 		{
 			name: "object with properties that contains loop",
 			req: func() *Request {
-				loop := schematest.NewTypes([]string{"object", "null"})
+				loop := schematest.NewTypes([]string{"object", "null"}, schematest.WithRequired("loop"))
 				loop.Properties = &schema.Schemas{}
 				loop.Properties.Set("loop", loop)
 				s := schematest.New("object",
 					schematest.WithProperty("loop1", loop),
 					schematest.WithProperty("loop2", loop),
 					schematest.WithProperty("loop3", loop),
+					schematest.WithRequired("loop1", "loop2", "loop3"),
 				)
 
 				return &Request{
@@ -278,7 +362,7 @@ func TestLoop(t *testing.T) {
 	}
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			gofakeit.Seed(1234567)
+			Seed(1234567)
 
 			v, err := New(tc.req())
 			tc.test(t, v, err)

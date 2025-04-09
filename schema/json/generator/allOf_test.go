@@ -86,15 +86,21 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "FqwCrwMfkOjojx"}, v)
+				require.Equal(t, map[string]interface{}{"foo": "lx0+fjywXKo"}, v)
 			},
 		},
 		{
 			name: "two object",
 			req: &Request{
 				Schema: schematest.NewAllOf(
-					schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
-					schematest.New("object", schematest.WithProperty("bar", schematest.New("string"))),
+					schematest.New("object",
+						schematest.WithProperty("foo", schematest.New("string")),
+						schematest.WithRequired("foo"),
+					),
+					schematest.New("object",
+						schematest.WithProperty("bar", schematest.New("string")),
+						schematest.WithRequired("bar"),
+					),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -150,6 +156,26 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.EqualError(t, err, "generate random data for schema failed: all of schema type=[integer, string], schema type=[number, boolean]: no shared types found")
+			},
+		},
+		{
+			name: "two object with example",
+			req: &Request{
+				Schema: schematest.NewTypes(nil,
+					schematest.WithAllOf(
+						schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
+						schematest.New("object", schematest.WithProperty("bar", schematest.New("string"))),
+					),
+					schematest.WithExamples(
+						map[string]any{"foo": "bar"},
+						map[string]any{"bar": "foo"},
+						map[string]any{"foo": "yuh", "bar": "foo"},
+					),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"bar": "foo", "foo": "yuh"}, v)
 			},
 		},
 	}

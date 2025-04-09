@@ -13,7 +13,7 @@ func addresses() []*Node {
 		{
 			Name: "address",
 			Fake: fakeAddress,
-			Children: []*Node{
+			Children: append([]*Node{
 				{
 					Name: "co",
 					Fake: fakePersonName,
@@ -32,7 +32,7 @@ func addresses() []*Node {
 						return fmt.Sprintf("%v %v %v", gofakeit.City(), gofakeit.StateAbr(), gofakeit.Zip()), nil
 					},
 				},
-			},
+			}, personal[0].Children...),
 		},
 		{
 			Name: "co",
@@ -52,16 +52,23 @@ func addresses() []*Node {
 			Fake: fakeCity,
 		},
 		{
-			Name: "postcode",
-			Fake: fakePostcode,
-		},
-		{
-			Name: "zip",
-			Fake: fakePostcode,
+			Name:       "zip",
+			Attributes: []string{"zip", "postcode", "postal"},
+			Fake:       fakePostcode,
 			Children: []*Node{
 				{
 					Name: "code",
 					Fake: fakePostcode,
+				},
+			},
+		},
+		{
+			Name: "house",
+			Fake: fakeHouseNumber,
+			Children: []*Node{
+				{
+					Name: "number",
+					Fake: fakeHouseNumber,
 				},
 			},
 		},
@@ -144,4 +151,11 @@ func fakeAddress(r *Request) (interface{}, error) {
 		"latitude":  addr.Latitude,
 		"longitude": addr.Longitude,
 	}, nil
+}
+
+func fakeHouseNumber(r *Request) (any, error) {
+	if r.Schema.IsNumber() || r.Schema.IsString() {
+		return fakeIntegerWithRange(r.Schema, 1, 100)
+	}
+	return gofakeit.StreetNumber(), nil
 }

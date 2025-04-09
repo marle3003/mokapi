@@ -10,7 +10,14 @@ func applyConstraints(r *Request) (fakeFunc, bool) {
 	switch {
 	case len(r.Schema.Enum) > 0:
 		return func() (interface{}, error) {
-			return pickEnumValue(r), nil
+
+			v := pickEnumValue(r)
+
+			return v, nil
+		}, true
+	case r.Schema.Const != nil:
+		return func() (any, error) {
+			return *r.Schema.Const, nil
 		}, true
 	}
 
@@ -18,5 +25,19 @@ func applyConstraints(r *Request) (fakeFunc, bool) {
 }
 
 func pickEnumValue(r *Request) interface{} {
-	return r.Schema.Enum[gofakeit.Number(0, len(r.Schema.Enum)-1)]
+	var v any
+	var ok bool
+	if len(r.Path) > 0 {
+		last := r.Path[len(r.Path)-1]
+		if v, ok = r.ctx.store[last]; ok {
+			return v
+		}
+		defer func() {
+
+			r.ctx.store[last] = v
+		}()
+	}
+
+	v = r.Schema.Enum[gofakeit.Number(0, len(r.Schema.Enum)-1)]
+	return v
 }

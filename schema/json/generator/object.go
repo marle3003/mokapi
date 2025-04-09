@@ -1,11 +1,14 @@
 package generator
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
+	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
+	"slices"
 	"unicode"
 )
 
@@ -21,10 +24,12 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 
 	var fakes *sortedmap.LinkedHashMap[string, *faker]
 	var err error
+	resetStore := false
 
 	switch {
 	case !s.HasProperties() && s.AdditionalProperties != nil:
 		fakes, err = r.fakeDictionary(req)
+		resetStore = true
 	case !s.HasProperties():
 		if len(s.Examples) > 0 {
 			return fakeByExample(req)
@@ -48,10 +53,42 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 		}
 
 		for _, key := range sorted {
+			if resetStore {
+				req.ctx.Snapshot()
+			}
 			f := fakes.Lookup(key)
 			m[key], err = f.fake()
 			if err != nil {
 				return nil, err
+			}
+			if resetStore {
+				req.ctx.Restore()
+			}
+		}
+
+		if s.If != nil {
+			p := parser.Parser{}
+			_, err := p.ParseWith(m, s.If)
+			var cond *schema.Schema
+			if err == nil && s.Then != nil {
+				cond = s.Then
+			} else if err != nil && s.Else != nil {
+				cond = s.Else
+			}
+			if cond != nil {
+				f, err := r.resolve(req.WithSchema(cond), true)
+				if err != nil {
+					return nil, err
+				}
+				v, err := f.fake()
+				if err != nil {
+					return nil, err
+				}
+				if m2, ok := v.(map[string]interface{}); ok {
+					for key, val := range m2 {
+						m[key] = val
+					}
+				}
 			}
 		}
 
@@ -66,14 +103,23 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 	fakes := &sortedmap.LinkedHashMap[string, *faker]{}
 	domain := detectDomain(s, g.root)
 	fallback := domain == ""
+	req.examples = examplesFromRequest(req)
 
 	for it := s.Properties.Iter(); it.Next(); {
+		if !slices.Contains(s.Required, it.Key()) {
+			n := gofakeit.Float32Range(0, 1)
+			if n > 0.7 {
+				continue
+			}
+		}
+
 		prop := append(req.Path, it.Key())
-		f, err := r.resolve(req.With(prop, it.Value()), fallback)
+		ex := propertyFromExample(it.Key(), req)
+		f, err := r.resolve(req.With(prop, it.Value(), ex), fallback)
 		if err != nil {
 			if errors.Is(err, NoMatchFound) {
 				if domain != "" {
-					f, err = r.resolve(req.With([]string{domain, it.Key()}, it.Value()), true)
+					f, err = r.resolve(req.With([]string{domain, it.Key()}, it.Value(), ex), true)
 					if err != nil {
 						return nil, err
 					}
@@ -85,7 +131,6 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 			}
 		}
 		fakes.Set(it.Key(), f)
-
 	}
 	return fakes, nil
 }
@@ -94,7 +139,6 @@ func (r *resolver) fakeDictionary(req *Request) (*sortedmap.LinkedHashMap[string
 	length := numProperties(1, 10, req.Schema)
 	fakes := &sortedmap.LinkedHashMap[string, *faker]{}
 	for i := 0; i < length; i++ {
-
 		f, err := r.resolve(req.WithSchema(req.Schema.AdditionalProperties), true)
 		if err != nil {
 			return nil, err
@@ -196,18 +240,13 @@ func fakeObject(r *Request) (interface{}, error) {
 
 	m := map[string]any{}
 	for it := s.Properties.Iter(); it.Next(); {
-		v, err := New(r.With([]string{it.Key()}, it.Value()))
+		v, err := New(r.With([]string{it.Key()}, it.Value(), nil))
 		if err != nil {
 			return nil, err
 		}
 		m[it.Key()] = v
 	}
 	return m, nil
-}
-
-type objectFaker struct {
-	key   string
-	faker *faker
 }
 
 func topologicalSort(fakes *sortedmap.LinkedHashMap[string, *faker]) ([]string, error) {
@@ -261,11 +300,80 @@ func topologicalSort(fakes *sortedmap.LinkedHashMap[string, *faker]) ([]string, 
 	return sorted, nil
 }
 
+func propertyFromExample(prop string, r *Request) []any {
+	if r.examples == nil {
+		return nil
+	}
+
+	var result []any
+	for _, ex := range r.examples {
+		if m, ok := ex.(map[string]interface{}); ok {
+			result = append(result, m[prop])
+		}
+	}
+	return result
+}
+
 func fakeByExample(r *Request) (*faker, error) {
-	index := gofakeit.Number(0, len(r.Schema.Examples)-1)
-	v := r.Schema.Examples[index].Value.(map[string]any)
+	v, ok := example(r.Schema)
+	if !ok {
+		return nil, NoMatchFound
+	}
+	m := v.(map[string]any)
 	f := func() (any, error) {
-		return v, nil
+		return m, nil
 	}
 	return newFaker(f), nil
+}
+
+func examplesFromRequest(r *Request) []any {
+	var result []any
+
+	if r.examples != nil {
+		result = append(result, r.examples...)
+	}
+
+	//mergeUnique(result, examples(r.Schema))
+	result = append(result, examples(r.Schema)...)
+
+	return result
+}
+
+func example(s *schema.Schema) (any, bool) {
+	if s == nil || len(s.Examples) == 0 {
+		return nil, false
+	}
+
+	index := gofakeit.Number(0, len(s.Examples)-1)
+	return s.Examples[index].Value, true
+}
+
+func examples(s *schema.Schema) []any {
+	if s == nil || len(s.Examples) == 0 {
+		return nil
+	}
+
+	var result []any
+	for _, e := range s.Examples {
+		result = append(result, e.Value)
+	}
+	return result
+}
+
+func mergeUnique(a, b []interface{}) []interface{} {
+	seen := make(map[string]struct{})
+	var result []any
+
+	for _, item := range append(a, b...) {
+		// simple way to get a unique key
+		keyBytes, _ := json.Marshal(item)
+		key := string(keyBytes)
+
+		if _, exists := seen[key]; !exists {
+			seen[key] = struct{}{}
+			result = append(result, item)
+		}
+	}
+
+	return result
 }

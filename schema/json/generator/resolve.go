@@ -68,11 +68,11 @@ func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
 		if len(path) > 0 {
 			last := path[len(path)-1]
 			if isPlural(last) {
-				return r.resolve(req.With(path, &schema.Schema{Type: schema.Types{"array"}}), true)
+				return r.resolve(req.With(path, &schema.Schema{Type: schema.Types{"array"}}, req.examples), true)
 			}
 		}
 	}
-	n := findBestMatch(g.root, req.With(path, req.Schema))
+	n := findBestMatch(g.root, req.With(path, req.Schema, req.examples))
 	if n == nil && !fallback {
 		return nil, NoMatchFound
 	}
@@ -172,6 +172,8 @@ func splitWords(s string) []string {
 	re := regexp.MustCompile(`([a-z])([A-Z])`)
 	s = re.ReplaceAllString(s, "${1} ${2}")
 	s = strings.ReplaceAll(s, ".", " ")
+	s = strings.ReplaceAll(s, "_", " ")
+	s = strings.ReplaceAll(s, "-", " ")
 	s = strings.ToLower(s)
 	return strings.Fields(s)
 }

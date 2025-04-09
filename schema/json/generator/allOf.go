@@ -72,7 +72,9 @@ func (r *resolver) allOf(req *Request) (*faker, error) {
 							obj[it.Key()] = nextObj[it.Key()]
 						}
 					} else {
-						obj[it.Key()] = nextObj[it.Key()]
+						if v, found = nextObj[it.Key()]; found {
+							obj[it.Key()] = v
+						}
 					}
 				}
 			} else {

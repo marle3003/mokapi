@@ -416,10 +416,10 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
-			name: "examples",
+			name: "example",
 			s:    schematest.New("object", schematest.WithExample(true)),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
-				require.Equal(t, []jsonSchema.Example{{true}}, s.Examples)
+				require.Equal(t, []jsonSchema.Example{{Value: true}}, s.Examples)
 			},
 		},
 		{

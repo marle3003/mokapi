@@ -122,6 +122,17 @@ func TestUser(t *testing.T) {
 					v)
 			},
 		},
+		{
+			name: "lastLogin",
+			req: &Request{
+				Path:   []string{"lastLogin"},
+				Schema: schematest.New("string", schematest.WithFormat("date-time")),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "2024-08-26T07:02:11Z", v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

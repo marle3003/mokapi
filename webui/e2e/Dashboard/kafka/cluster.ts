@@ -89,8 +89,8 @@ export const cluster = {
                     description: '',
                     contentType: 'application/xml',
                     value: {
-                        lines: '18 lines',
-                        size: '357 B'
+                        lines: '22 lines',
+                        size: '408 B'
                     }
                 },
             ]
