@@ -62,6 +62,9 @@ rootCaKey: ""
 js:
     globalfolders: []
 configs: []
+event:
+    store:
+        size: 100
 `, out)
 			},
 		},

@@ -649,6 +649,19 @@ func TestFileProvider(t *testing.T) {
 				require.Equal(t, "foo", cfg.Features[0])
 			},
 		},
+		{
+			name: "event store size",
+			args: []string{"--event-store-size", "200"},
+			test: func(t *testing.T, cfg *static.Config) {
+				require.Equal(t, int64(200), cfg.Event.Store.Size)
+			},
+		},
+		{
+			name: "default event store size",
+			test: func(t *testing.T, cfg *static.Config) {
+				require.Equal(t, int64(100), cfg.Event.Store.Size)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

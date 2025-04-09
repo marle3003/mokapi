@@ -23,6 +23,7 @@ type Config struct {
 	GenerateSkeleton interface{}       `json:"-" yaml:"-" flag:"generate-cli-skeleton"`
 	Features         []string          `json:"-" yaml:"-" explode:"feature"`
 	Version          bool              `json:"-" yaml:"-" aliases:"v"`
+	Event            Event             `json:"event" yaml:"event"`
 	Args             []string          `json:"args" yaml:"-" aliases:"args"` // positional arguments
 }
 
@@ -32,6 +33,7 @@ func NewConfig() *Config {
 	cfg.Api.Port = "8080"
 	cfg.Api.Dashboard = true
 	cfg.Providers.File.SkipPrefix = []string{"_"}
+	cfg.Event.Store.Size = 100
 	return cfg
 }
 
@@ -139,6 +141,14 @@ type HttpServer struct {
 
 type JsConfig struct {
 	GlobalFolders []string
+}
+
+type Event struct {
+	Store Store
+}
+
+type Store struct {
+	Size int64
 }
 
 type Configs []string

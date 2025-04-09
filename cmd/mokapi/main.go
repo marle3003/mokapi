@@ -98,8 +98,8 @@ func main() {
 }
 
 func createServer(cfg *static.Config) (*server.Server, error) {
-	events.SetStore(100, events.NewTraits().WithNamespace("http"))
-	events.SetStore(100, events.NewTraits().WithNamespace("kafka"))
+	events.SetStore(int(cfg.Event.Store.Size), events.NewTraits().WithNamespace("http"))
+	events.SetStore(int(cfg.Event.Store.Size), events.NewTraits().WithNamespace("kafka"))
 
 	pool := safe.NewPool(context.Background())
 	app := runtime.New()
