@@ -345,7 +345,7 @@ function hasTouchSupport() {
           <div class="tab-pane fade" id="action-mock-data" role="tabpanel" aria-labelledby="mock-data">
 
             <!-- accordion button -->
-            <button class="text-start w-100 mt-3" id="heading-action-mock-data" href="#collapse-action-mock-data" data-bs-toggle="collapse" aria-expanded="true" aria-controls="collapse-action-mock-data">
+            <button class="text-start w-100 mt-3 collapsed" id="heading-action-mock-data" href="#collapse-action-mock-data" data-bs-toggle="collapse" aria-expanded="true" aria-controls="collapse-action-mock-data">
               <h3>Mock data that actually makes sense</h3>
               <p class="mb-0">Generate realistic responses using schema and smart defaults.</p>
             </button>
