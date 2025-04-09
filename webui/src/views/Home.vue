@@ -244,7 +244,7 @@ function hasTouchSupport() {
             <img src="/use-case-mock-api.png" @click="showImage($event.target)" alt="A variant of how Mokapi can be used to test a system with realistic data." />
           </div>
         </div>
-        <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
+        <div class="row mt-lg-5">
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-lg-2">
             <div class="text-lg-start text-center">
               <h2>Visualize Your Mock APIs</h2>
@@ -307,10 +307,38 @@ function hasTouchSupport() {
       </div>
     </section>
     <section id="mokapi-demo" style="text-align: center;">
-      <h2>See Mokapi in Action</h2>
-      <p>Mocking a REST API and handling an HTTP request.</p>
-      <img src="/mokapi-swagger-petstore.gif" alt="Mocking a REST API and Sending HTTP Requests in Action" style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
-  </section>
+      <h2 class="mb-4">See Mokapi in Action</h2>
+      <div class="d-flex align-items-start align-items-stretch">
+        <div class="nav flex-column nav-pills" role="tablist" aria-orientation="vertical">
+          <ul class="nav-vertical mt-1">
+            <li class="pb-3">
+              <button class="active text-start w-100" id="init" data-bs-toggle="pill" data-bs-target="#action-init" type="button" role="tab" aria-controls="action-init" aria-selected="true">
+                <h3>Mocking Swagger's PetStore</h3>
+                <p class="mb-0">Quickly test APIs without writing backend code.</p>
+              </button>
+            </li>
+            <li>
+              <button class="text-start w-100" id="mock-data" data-bs-toggle="pill" data-bs-target="#action-mock-data" type="button" role="tab" aria-controls="action-mock-data">
+                <h3>Mock data that actually makes sense</h3>
+                <p class="mb-0">Generate realistic responses using schema and smart defaults.</p>
+              </button>
+            </li>
+          </ul>
+        </div>
+        <div class="tab-content ms-3 ps-3" style="max-width: 720px;">
+          <div class="tab-pane fade show active position-relative" id="action-init" role="tabpanel" aria-labelledby="init">
+            <img class="img-fluid" src="/mokapi-swagger-petstore.gif" alt="Mocking a REST API and Sending HTTP Requests in Action" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
+            <div class="overlay d-none position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"></div>
+            <a class="btn btn-outline-primary position-absolute top-50 start-50 translate-middle opacity-0 hover-visible" href="/docs/examples/tutorials/get-started-with-rest-api">Get Started</a>
+          </div>
+          <div class="tab-pane fade  position-relative" id="action-mock-data" role="tabpanel" aria-labelledby="mock-data">
+            <img class="img-fluid" src="/mock-realistic-data.gif" alt="Mokapi uses schema definitions and smart defaults to generate realistic and relevant data." style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
+            <div class="overlay d-none position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"></div>
+            <a class="btn btn-outline-primary position-absolute top-50 start-50 translate-middle opacity-0 hover-visible" href="/docs/guides/get-started/test-data">Learn more</a>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
   <Footer></Footer>
   <div class="modal fade" id="imageDialog" tabindex="-1" aria-hidden="true">
@@ -333,5 +361,53 @@ function hasTouchSupport() {
 }
 .case-icon {
   font-size: 40px;
+}
+
+ul.nav-vertical {
+  padding: 0;
+  margin: 0;
+}
+.nav-vertical li {
+  list-style: none;
+}
+.nav-vertical li button {
+  color: var(--bs-card-color);
+  border-color: var(--code-tabs-color);
+  background-color: transparent;
+  padding: 1.25rem;
+  border-radius: 4px;
+
+}
+.nav-vertical li button:hover, .nav-vertical li button.active {
+  color: var(--bs-card-color);
+  border-color: var(--code-tabs-color-active);
+}
+.nav-vertical li button:hover {
+  transform: scale(1.01)
+}
+.nav-vertical li button h3 {
+  font-size: 1rem;
+  margin: 0
+}
+.nav-vertical li button p {
+  font-size: 0.88rem;
+}
+.tab-content .tab-pane {
+  padding: 0;
+}
+
+.tab-content .tab-pane a {
+  background-color: var(--color-background);
+  z-index: 10;
+}
+.hover-visible {
+  transition: opacity 0.3s ease;
+}
+
+.tab-content .tab-pane:hover .hover-visible {
+  opacity: 1 !important;
+}
+.tab-content .tab-pane:hover .overlay {
+  display: block !important;
 }
 </style>
