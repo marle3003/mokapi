@@ -212,7 +212,7 @@ function hasTouchSupport() {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 order-lg-2">
-            <img src="/mock-realistic-test-data.png" @click="showImage($event.target)" alt="A part of Mokapi's Faker decision tree for generating realistic random data depending on the data structure."/>
+            <img class="image" src="/mock-realistic-test-data.png" @click="showImage($event.target)" alt="A part of Mokapi's Faker decision tree for generating realistic random data depending on the data structure."/>
           </div>
         </div>
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-lg-5">
@@ -464,5 +464,11 @@ ul.nav-vertical {
 }
 .tab-content .collapse:hover .overlay {
   display: block !important;
+}
+.image {
+  border-radius: 8px; 
+  box-shadow: 
+    0px 10px 0.5rem rgba(0, 0, 0, 0.3),
+    10px 0px 0.5rem rgba(0, 0, 0, 0.3);
 }
 </style>
