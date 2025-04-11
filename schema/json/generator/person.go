@@ -29,9 +29,59 @@ var personal = []*Node{
 				Fake:      fakeFirstname,
 			},
 			{
+				Name: "first",
+				Children: []*Node{
+					{
+						Name:      "name",
+						DependsOn: []string{"gender", "sex"},
+						Weight:    0.5,
+						Fake:      fakeFirstname,
+					},
+					{
+						Name:      "name2",
+						DependsOn: []string{"gender", "sex"},
+						Weight:    1.0,
+						Fake:      fakeMiddlename,
+					},
+				},
+			},
+			{
+				Name: "middle",
+				Children: []*Node{
+					{
+						Name:      "name",
+						DependsOn: []string{"gender", "sex"},
+						Weight:    0.5,
+						Fake:      fakeMiddlename,
+					},
+				},
+			},
+			{
+				Name:      "middlename",
+				DependsOn: []string{"gender", "sex"},
+				Weight:    1.0,
+				Fake:      fakeMiddlename,
+			},
+			{
+				Name:      "firstname2",
+				DependsOn: []string{"gender", "sex"},
+				Weight:    1.0,
+				Fake:      fakeMiddlename,
+			},
+			{
 				Name:   "lastname",
 				Weight: 1.0,
 				Fake:   fakeLastname,
+			},
+			{
+				Name: "last",
+				Children: []*Node{
+					{
+						Name:   "name",
+						Weight: 0.5,
+						Fake:   fakeLastname,
+					},
+				},
 			},
 			{
 				Name:   "gender",
@@ -64,6 +114,11 @@ var personal = []*Node{
 				Name:      "title",
 				DependsOn: []string{"gender", "sex"},
 				Fake:      fakePersonTitle,
+			},
+			{
+				Name:      "alias",
+				DependsOn: []string{"firstname", "lastname", "name"},
+				Fake:      fakePersonAlias,
 			},
 		},
 	},
@@ -128,12 +183,17 @@ func fakePersonName(r *Request) (any, error) {
 			return nil, err
 		}
 	}
+	middle := r.ctx.store["middlename"]
 	last, ok := r.ctx.store["lastname"]
 	if !ok {
 		last, err = fakeLastname(r)
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if middle != nil {
+		return fmt.Sprintf("%s %s %s", first, middle, last), nil
 	}
 
 	return fmt.Sprintf("%s %s", first, last), nil
@@ -159,6 +219,28 @@ func fakeFirstname(r *Request) (any, error) {
 	firstname := pool[index]
 	r.ctx.store["firstname"] = firstname
 	return firstname, nil
+}
+
+func fakeMiddlename(r *Request) (any, error) {
+	if v, ok := r.ctx.store["middlename"]; ok {
+		return v, nil
+	}
+
+	v, err := fakeGender(r)
+	if err != nil {
+		return nil, err
+	}
+	sex := v.(string)
+
+	pool := middleNamesFemale
+	if sex[0] == 'm' {
+		pool = middleNamesMale
+	}
+
+	index := gofakeit.Number(0, len(pool)-1)
+	middle := pool[index]
+	r.ctx.store["middlename"] = middle
+	return middle, nil
 }
 
 func fakeLastname(r *Request) (any, error) {
@@ -306,6 +388,24 @@ func fakePersonTitle(r *Request) (any, error) {
 	return title, nil
 }
 
+func fakePersonAlias(r *Request) (any, error) {
+	v, err := fakePersonName(r)
+	if err != nil {
+		return nil, err
+	}
+	s := v.(string)
+
+	values := strings.Split(s, " ")
+	if len(values) == 1 {
+		return s, nil
+	}
+	alias := ""
+	for _, p := range values[:len(values)-1] {
+		alias += fmt.Sprintf("%c.", p[0])
+	}
+	return fmt.Sprintf("%s %s", alias, values[len(values)-1]), nil
+}
+
 var (
 	femaleFirstNames = []string{
 		"Emma", "Olivia", "Ava", "Sophia", "Isabella",
@@ -332,6 +432,18 @@ var (
 		"Anthony", "Hudson", "Dylan", "Ezra", "Thomas",
 		"Charles", "Christopher", "Jaxon", "Maverick", "Josiah",
 	}
+
+	middleNamesNeutral = []string{
+		"Taylor", "Jordan", "Morgan", "Riley", "Quinn", "Avery", "Reese", "Sky", "Blair", "Casey", "Drew", "Jules", "Sage", "Cameron", "Noel",
+	}
+
+	middleNamesFemale = append(middleNamesNeutral,
+		"Marie", "Grace", "Rose", "Elizabeth", "Ann", "Jane", "Lynn",
+		"May", "Nicole", "Renee", "Claire", "Faith", "Hope", "Michelle", "Kate")
+
+	middleNamesMale = append(middleNamesNeutral,
+		"James", "Michael", "Alexander", "William", "Joseph", "Edward", "Daniel",
+		"Thomas", "Benjamin", "Lee", "Scott", "Anthony", "Charles", "David", "Andrew")
 
 	lastNames = []string{
 		"Smith", "Johnson", "Williams", "Brown", "Jones",

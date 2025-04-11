@@ -326,7 +326,8 @@ func TestPerson(t *testing.T) {
 						schematest.WithProperty("lastname", schematest.New("string")),
 						schematest.WithProperty("sex", schematest.New("string")),
 						schematest.WithProperty("username", schematest.New("string")),
-						schematest.WithRequired("firstname", "lastname", "sex", "username"),
+						schematest.WithProperty("alias", schematest.New("string")),
+						schematest.WithRequired("firstname", "lastname", "sex", "username", "alias"),
 					),
 				),
 			},
@@ -338,31 +339,66 @@ func TestPerson(t *testing.T) {
 						"lastname":  "Clark",
 						"sex":       "male",
 						"username":  "gclark",
+						"alias":     "G. Clark",
 					},
 					map[string]interface{}{
 						"firstname": "Ella",
 						"lastname":  "Adams",
 						"sex":       "female",
 						"username":  "eadams",
+						"alias":     "E. Adams",
 					},
 					map[string]interface{}{
 						"firstname": "Penelope",
 						"lastname":  "Torres",
 						"sex":       "female",
 						"username":  "ptorres",
+						"alias":     "P. Torres",
 					},
 					map[string]interface{}{
 						"firstname": "Michael",
 						"lastname":  "Jackson",
 						"sex":       "male",
 						"username":  "mjackson",
+						"alias":     "M. Jackson",
 					},
 					map[string]interface{}{
 						"firstname": "Jackson",
 						"lastname":  "Carter",
 						"sex":       "male",
 						"username":  "jcarter",
+						"alias":     "J. Carter",
 					}}, v)
+			},
+		},
+		{
+			name: "detect person domain",
+			req: &Request{
+				Path: []string{"test"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("name", nil),
+					schematest.WithProperty("firstName", nil),
+					schematest.WithRequired("name", "firstName"),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"firstName": "Zoey", "name": "Zoey Nguyen"}, v)
+			},
+		},
+		{
+			name: "middle name as firstName2",
+			req: &Request{
+				Path: []string{"person"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("firstName2", nil),
+					schematest.WithProperty("name", nil),
+					schematest.WithRequired("name", "firstName2"),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"firstName2": "Ann", "name": "Stella Ann Adams"}, v)
 			},
 		},
 	}

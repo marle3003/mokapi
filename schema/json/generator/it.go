@@ -29,7 +29,7 @@ func ictNodes() []*Node {
 		},
 		{
 			Name: "website",
-			Fake: fakeUrl,
+			Fake: fakeWebsite,
 		},
 		{
 			Name: "role",
