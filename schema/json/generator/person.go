@@ -18,9 +18,10 @@ var personal = []*Node{
 		Fake: fakePerson,
 		Children: []*Node{
 			{
-				Name:      "name",
-				DependsOn: []string{"firstname", "lastname"},
-				Fake:      fakePersonName,
+				Name:       "name",
+				Attributes: []string{"name", "fullname"},
+				DependsOn:  []string{"firstname", "lastname"},
+				Fake:       fakePersonName,
 			},
 			{
 				Name:      "firstname",
