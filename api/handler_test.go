@@ -93,7 +93,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			h := New(runtime.New(), static.Api{Dashboard: true})
+			h := New(runtime.New(&static.Config{}), static.Api{Dashboard: true})
 			tc.fn(t, h)
 		})
 	}
@@ -194,7 +194,7 @@ func TestHandler_Api_Info(t *testing.T) {
 }
 
 func TestHandler_NoDashboard(t *testing.T) {
-	h := New(runtime.New(), static.Api{Dashboard: false})
+	h := New(runtime.New(&static.Config{}), static.Api{Dashboard: false})
 	try.Handler(t,
 		http.MethodGet,
 		"http://foo.api/api/foo",

@@ -62,7 +62,7 @@ func TestHandler_Kafka(t *testing.T) {
 		{
 			name: "get specific",
 			app: func() *runtime.App {
-				app := runtime.New()
+				app := runtime.New(&static.Config{})
 				cfg := &dynamic.Config{
 					Info: dynamictest.NewConfigInfo(),
 					Data: asyncapi3test.NewConfig(
@@ -173,7 +173,7 @@ func TestHandler_Kafka(t *testing.T) {
 		{
 			name: "get specific with group",
 			app: func() *runtime.App {
-				app := runtime.New()
+				app := runtime.New(&static.Config{})
 				app.Kafka.Set("foo", getKafkaInfoWithGroup(asyncapi3test.NewConfig(
 					asyncapi3test.WithInfo("foo", "bar", "1.0"),
 					asyncapi3test.WithServer("foo", "kafka", "foo.bar"),
@@ -206,7 +206,7 @@ func TestHandler_Kafka(t *testing.T) {
 					return t1
 				}
 
-				app := runtime.New()
+				app := runtime.New(&static.Config{})
 				app.Kafka.Set("foo", getKafkaInfoWithGroup(asyncapi3test.NewConfig(
 					asyncapi3test.WithInfo("foo", "bar", "1.0"),
 					asyncapi3test.WithServer("foo", "kafka", "foo.bar"),
@@ -254,7 +254,7 @@ func TestHandler_Kafka(t *testing.T) {
 		{
 			name: "get specific with topic and openapi schema",
 			app: func() *runtime.App {
-				app := runtime.New()
+				app := runtime.New(&static.Config{})
 				app.Kafka.Set("foo", getKafkaInfo(asyncapi3test.NewConfig(
 					asyncapi3test.WithInfo("foo", "bar", "1.0"),
 					asyncapi3test.WithChannel("foo",
@@ -294,7 +294,7 @@ func TestHandler_Kafka(t *testing.T) {
 }
 
 func TestHandler_Kafka_NotFound(t *testing.T) {
-	h := New(runtime.New(), static.Api{})
+	h := New(runtime.New(&static.Config{}), static.Api{})
 
 	try.Handler(t,
 		http.MethodGet,

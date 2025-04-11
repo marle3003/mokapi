@@ -39,7 +39,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	feature.Enable(cfg.Features)
 
 	registerDynamicTypes()
-	app := runtime.New()
+	app := runtime.New(cfg)
 
 	watcher := server.NewConfigWatcher(cfg)
 

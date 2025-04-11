@@ -651,15 +651,36 @@ func TestFileProvider(t *testing.T) {
 		},
 		{
 			name: "event store size",
-			args: []string{"--event-store-size", "200"},
+			args: []string{"--event-store-default", "size=200"},
 			test: func(t *testing.T, cfg *static.Config) {
-				require.Equal(t, int64(200), cfg.Event.Store.Size)
+				require.Equal(t, int64(200), cfg.Event.Store["default"].Size)
+			},
+		},
+		{
+			name: "event store size",
+			args: []string{"--event-store-default-size", "200"},
+			test: func(t *testing.T, cfg *static.Config) {
+				require.Equal(t, int64(200), cfg.Event.Store["default"].Size)
 			},
 		},
 		{
 			name: "default event store size",
 			test: func(t *testing.T, cfg *static.Config) {
-				require.Equal(t, int64(100), cfg.Event.Store.Size)
+				require.Equal(t, int64(100), cfg.Event.Store["default"].Size)
+			},
+		},
+		{
+			name: "event store for foo",
+			args: []string{"--event-store-foo-size", "250"},
+			test: func(t *testing.T, cfg *static.Config) {
+				require.Equal(t, int64(250), cfg.Event.Store["foo"].Size)
+			},
+		},
+		{
+			name: "event store name with spaces",
+			args: []string{"--event-store", `Swagger PetStore API={"size": 250}`},
+			test: func(t *testing.T, cfg *static.Config) {
+				require.Equal(t, int64(250), cfg.Event.Store["Swagger PetStore API"].Size)
 			},
 		},
 	}

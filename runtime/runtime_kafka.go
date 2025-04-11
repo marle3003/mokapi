@@ -4,6 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/static"
 	"mokapi/engine/common"
 	"mokapi/kafka"
 	"mokapi/providers/asyncapi3"
@@ -18,6 +19,7 @@ import (
 type KafkaStore struct {
 	infos   map[string]*KafkaInfo
 	monitor *monitor.Monitor
+	cfg     *static.Config
 	m       sync.RWMutex
 }
 
@@ -79,12 +81,18 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*Kafka
 
 	name := cfg.Info.Name
 	ki, ok := s.infos[name]
+
+	eventStore, hasStoreConfig := s.cfg.Event.Store[name]
+	if !hasStoreConfig {
+		eventStore = s.cfg.Event.Store["default"]
+	}
+
 	if !ok {
 		ki = NewKafkaInfo(c, store.New(cfg, emitter))
 		s.infos[cfg.Info.Name] = ki
 
 		events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
-		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
+		events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
 	} else {
 		ki.AddConfig(c)
 	}
@@ -96,7 +104,7 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*Kafka
 		s.monitor.Kafka.Messages.WithLabel(cfg.Info.Name, name)
 		s.monitor.Kafka.LastMessage.WithLabel(cfg.Info.Name, name)
 		traits := events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name).With("topic", name)
-		events.SetStore(sizeEventStore, traits)
+		events.SetStore(int(eventStore.Size), traits)
 		ki.seenTopics[name] = true
 	}
 

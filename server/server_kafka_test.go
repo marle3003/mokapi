@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
+	"mokapi/config/static"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/metaData"
 	"mokapi/providers/asyncapi3"
@@ -31,7 +32,8 @@ func TestKafkaServer(t *testing.T) {
 		),
 	)
 
-	m := NewKafkaManager(nil, runtime.New())
+	cfg := &static.Config{}
+	m := NewKafkaManager(nil, runtime.New(cfg))
 	defer m.Stop()
 	m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}, Data: c}})
 
@@ -276,7 +278,8 @@ func TestKafkaServer_Update(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			m := NewKafkaManager(nil, runtime.New())
+			cfg := &static.Config{}
+			m := NewKafkaManager(nil, runtime.New(cfg))
 			defer m.Stop()
 
 			tc.fn(t, m)

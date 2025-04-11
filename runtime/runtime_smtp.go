@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/mail"
+	"mokapi/config/static"
 	engine "mokapi/engine/common"
 	"mokapi/imap"
 	"mokapi/runtime/events"
@@ -24,6 +25,7 @@ type MailHandler interface {
 type MailStore struct {
 	infos map[string]*MailInfo
 	m     sync.RWMutex
+	cfg   *static.Config
 }
 
 type MailInfo struct {
@@ -64,12 +66,18 @@ func (s *MailStore) Add(c *dynamic.Config) *MailInfo {
 	cfg := c.Data.(*mail.Config)
 	name := cfg.Info.Name
 	mi, ok := s.infos[name]
+
+	store, hasStoreConfig := s.cfg.Event.Store[name]
+	if !hasStoreConfig {
+		store = s.cfg.Event.Store["default"]
+	}
+
 	if !ok {
 		mi = NewMailInfo(c)
 		s.infos[cfg.Info.Name] = mi
 
 		events.ResetStores(events.NewTraits().WithNamespace("smtp").WithName(cfg.Info.Name))
-		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("smtp").WithName(cfg.Info.Name))
+		events.SetStore(int(store.Size), events.NewTraits().WithNamespace("smtp").WithName(cfg.Info.Name))
 	} else {
 		mi.AddConfig(c)
 	}

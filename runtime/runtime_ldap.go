@@ -4,6 +4,7 @@ import (
 	"context"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
+	"mokapi/config/static"
 	"mokapi/engine/common"
 	"mokapi/ldap"
 	"mokapi/providers/directory"
@@ -17,6 +18,7 @@ import (
 
 type LdapStore struct {
 	infos map[string]*LdapInfo
+	cfg   *static.Config
 	m     sync.RWMutex
 }
 
@@ -63,12 +65,18 @@ func (s *LdapStore) Add(c *dynamic.Config, emitter common.EventEmitter) *LdapInf
 	cfg := c.Data.(*directory.Config)
 	name := cfg.Info.Name
 	li, ok := s.infos[name]
+
+	store, hasStoreConfig := s.cfg.Event.Store[name]
+	if !hasStoreConfig {
+		store = s.cfg.Event.Store["default"]
+	}
+
 	if !ok {
 		li = NewLdapInfo(c, emitter)
 		s.infos[cfg.Info.Name] = li
 
 		events.ResetStores(events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
-		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
+		events.SetStore(int(store.Size), events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
 	} else {
 		li.AddConfig(c)
 	}

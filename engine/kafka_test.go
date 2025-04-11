@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"io"
 	"mokapi/config/dynamic"
+	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
@@ -38,7 +39,7 @@ func TestKafkaClient_Produce_Empty_Parameter(t *testing.T) {
 			),
 		),
 	)
-	app := runtime.New()
+	app := runtime.New(&static.Config{})
 	e := enginetest.NewEngine(
 		engine.WithKafkaClient(engine.NewKafkaClient(app)),
 		engine.WithLogger(logrus.StandardLogger()),
@@ -311,7 +312,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 						asyncapi3test.WithPayload(schematest.New("string")),
 						asyncapi3test.WithKey(schematest.New("string")))),
 			)
-			app := runtime.New()
+			app := runtime.New(&static.Config{})
 			e := enginetest.NewEngine(
 				engine.WithKafkaClient(engine.NewKafkaClient(app)),
 				engine.WithLogger(logrus.StandardLogger()),
