@@ -67,6 +67,7 @@ func (s *Store) Topic(name string) *Topic {
 	if t, ok := s.topics[name]; ok {
 		return t
 	}
+
 	return nil
 }
 
@@ -166,7 +167,16 @@ func (s *Store) Update(c *asyncapi3.Config) {
 		}
 	}
 	for name := range s.topics {
-		if _, ok := c.Channels[name]; !ok {
+		foundConfig := false
+		for n, ch := range c.Channels {
+			if ch.Value == nil {
+				continue
+			}
+			if n == name || ch.Value.Address == name {
+				foundConfig = true
+			}
+		}
+		if !foundConfig {
 			s.deleteTopic(name)
 		}
 	}
@@ -213,6 +223,10 @@ func (s *Store) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
 func (s *Store) addTopic(name string, channel *asyncapi3.Channel, ops []*asyncapi3.Operation) (*Topic, error) {
 	s.m.Lock()
 	defer s.m.Unlock()
+
+	if channel.Address != "" {
+		name = channel.Address
+	}
 
 	if _, ok := s.topics[name]; ok {
 		return nil, fmt.Errorf("topic %v already exists", name)
