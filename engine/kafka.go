@@ -35,11 +35,6 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 		return nil, err
 	}
 
-	ch := config.Channels[t.Name]
-	if ch == nil || ch.Value == nil {
-		return nil, fmt.Errorf("produce kafka message to '%v' failed: invalid topic configuration", t.Name)
-	}
-
 	var produced []common.KafkaMessageResult
 	for _, r := range args.Messages {
 		p, err := c.getPartition(t, r.Partition)
@@ -52,7 +47,7 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 			v = r.Value
 		}
 
-		rb, err := c.createRecordBatch(r.Key, v, r.Headers, ch.Value)
+		rb, err := c.createRecordBatch(r.Key, v, r.Headers, t.Config)
 		if err != nil {
 			return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
 		}

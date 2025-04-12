@@ -9,6 +9,7 @@ import (
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
 	"slices"
+	"strings"
 	"unicode"
 )
 
@@ -104,6 +105,9 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 	domain := detectDomain(s, g.root)
 	fallback := domain == ""
 	req.examples = examplesFromRequest(req)
+	if !isKnownDomain(req) {
+		req.Path = append(req.Path, domain)
+	}
 
 	for it := s.Properties.Iter(); it.Next(); {
 		if !slices.Contains(s.Required, it.Key()) {
@@ -179,6 +183,25 @@ func numProperties(min, max int, s *schema.Schema) int {
 	}
 }
 
+func isKnownDomain(r *Request) bool {
+	if len(r.Path) == 0 {
+		return false
+	}
+	domain := r.Path[len(r.Path)-1]
+
+	for _, n := range g.root.Children {
+		if n.Name == domain {
+			return true
+		}
+		for _, attr := range g.root.Attributes {
+			if attr == domain {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func detectDomain(s *schema.Schema, root *Node) string {
 	var attributes []string
 
@@ -213,6 +236,7 @@ func detectDomain(s *schema.Schema, root *Node) string {
 func scoreDomain(attribute []string, n *Node) float64 {
 	score := 0.0
 	for _, attr := range attribute {
+		attr = strings.ToLower(attr)
 		for _, child := range n.Children {
 			if attr == child.Name {
 				score += child.Weight

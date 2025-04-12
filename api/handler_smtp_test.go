@@ -40,7 +40,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp services",
 			app: func() *runtime.App {
-				app := runtime.New()
+				app := runtime.New(&static.Config{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Config: &mail.Config{Info: mail.Info{Name: "foo", Description: "bar", Version: "1.0"}},
 					Store:  &mail.Store{},
@@ -54,7 +54,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "/api/services/smtp",
 			app: func() *runtime.App {
-				app := runtime.New()
+				app := runtime.New(&static.Config{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Config: &mail.Config{Info: mail.Info{Name: "foo"}},
 					Store:  &mail.Store{},
@@ -68,7 +68,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp service",
 			app: func() *runtime.App {
-				app := runtime.New()
+				app := runtime.New(&static.Config{})
 				cfg := &dynamic.Config{
 					Info: dynamictest.NewConfigInfo(),
 					Data: &mail.Config{
@@ -88,7 +88,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp service with mailbox",
 			app: func() *runtime.App {
-				app := runtime.New()
+				app := runtime.New(&static.Config{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Config: &mail.Config{
 						Info:      mail.Info{Name: "foo"},
@@ -113,7 +113,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp service with rules",
 			app: func() *runtime.App {
-				app := runtime.New()
+				app := runtime.New(&static.Config{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Config: &mail.Config{
 						Info: mail.Info{Name: "foo"},
@@ -136,7 +136,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp mailbox",
 			app: func() *runtime.App {
-				app := runtime.New()
+				app := runtime.New(&static.Config{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Config: &mail.Config{
 						Info: mail.Info{Name: "foo"},
@@ -175,7 +175,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp mail",
 			app: func() *runtime.App {
-				app := runtime.New()
+				app := runtime.New(&static.Config{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Config: &mail.Config{
 						Info: mail.Info{Name: "foo"},
@@ -215,7 +215,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp mail attachment content",
 			app: func() *runtime.App {
-				app := runtime.New()
+				app := runtime.New(&static.Config{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Config: &mail.Config{
 						Info: mail.Info{Name: "foo"},

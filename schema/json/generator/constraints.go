@@ -1,6 +1,8 @@
 package generator
 
-import "github.com/brianvoe/gofakeit/v6"
+import (
+	"github.com/brianvoe/gofakeit/v6"
+)
 
 func applyConstraints(r *Request) (fakeFunc, bool) {
 	if r.Schema == nil {
@@ -10,9 +12,7 @@ func applyConstraints(r *Request) (fakeFunc, bool) {
 	switch {
 	case len(r.Schema.Enum) > 0:
 		return func() (interface{}, error) {
-
 			v := pickEnumValue(r)
-
 			return v, nil
 		}, true
 	case r.Schema.Const != nil:
@@ -26,14 +26,9 @@ func applyConstraints(r *Request) (fakeFunc, bool) {
 
 func pickEnumValue(r *Request) interface{} {
 	var v any
-	var ok bool
 	if len(r.Path) > 0 {
 		last := r.Path[len(r.Path)-1]
-		if v, ok = r.ctx.store[last]; ok {
-			return v
-		}
 		defer func() {
-
 			r.ctx.store[last] = v
 		}()
 	}

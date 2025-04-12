@@ -92,10 +92,10 @@ func (s *Store) metadata(rw kafka.ResponseWriter, req *kafka.Request) error {
 }
 
 func isTopicAvailable(t *Topic, b *Broker) bool {
-	if len(t.channel.Servers) == 0 {
+	if len(t.Config.Servers) == 0 {
 		return true
 	}
-	for _, s := range t.channel.Servers {
+	for _, s := range t.Config.Servers {
 		name := path.Base(s.Ref)
 		if name == b.Name {
 			return true

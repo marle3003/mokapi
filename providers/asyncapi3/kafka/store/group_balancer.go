@@ -79,6 +79,7 @@ func (b *groupBalancer) run() {
 	if timeoutMs == 0 {
 		timeoutMs = 6000
 	}
+	gracePeriod := time.Duration(2) * time.Second
 	for {
 		select {
 		case <-time.After(time.Duration(timeoutMs) * time.Millisecond):
@@ -86,10 +87,13 @@ func (b *groupBalancer) run() {
 				b.group.State = Empty
 				continue
 			}
-			now := time.Now()
+			if b.group.State != Stable {
+				continue
+			}
+			now := time.Now().Add(gracePeriod)
 			for _, m := range b.group.Generation.Members {
 				if m.Client.Heartbeat.Add(time.Duration(m.SessionTimeout) * time.Millisecond).Before(now) {
-					log.Infof("kafka: consumer '%v' timed out in group '%v'", m.Client.ClientId, b.group.Name)
+					log.Infof("kafka: consumer '%v' timed out in group '%v': last heartbeat %v", m.Client.ClientId, b.group.Name, m.Client.Heartbeat.Format(time.RFC822))
 					prepareRebalance()
 				}
 			}
@@ -104,7 +108,7 @@ func (b *groupBalancer) run() {
 			if b.group.State == Stable || b.group.State == Empty {
 				prepareRebalance()
 			}
-			log.Infof("kafka: consumer '%v' is joining the group '%v'", j.client.ClientId, b.group.Name)
+			log.Infof("kafka: consumer '%v' is joining the group '%v' with session timeout %v", j.client.ClientId, b.group.Name, j.sessionTimeout)
 			b.joins = append(b.joins, j)
 		case s := <-b.sync:
 			switch {

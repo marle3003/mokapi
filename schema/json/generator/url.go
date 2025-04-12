@@ -13,3 +13,7 @@ func newUriNode() *Node {
 func fakeUrl(_ *Request) (interface{}, error) {
 	return gofakeit.URL(), nil
 }
+
+func fakeWebsite(_ *Request) (interface{}, error) {
+	return gofakeit.DomainName(), nil
+}

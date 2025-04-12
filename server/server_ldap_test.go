@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
+	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	"mokapi/ldap"
 	"mokapi/providers/directory"
@@ -114,7 +115,8 @@ func TestLdapDirectory(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			app := runtime.New()
+			cfg := &static.Config{}
+			app := runtime.New(cfg)
 			m := NewLdapDirectoryManager(enginetest.NewEngine(), nil, app)
 			defer m.Stop()
 

@@ -2,12 +2,11 @@ package runtime
 
 import (
 	"mokapi/config/dynamic"
+	"mokapi/config/static"
 	"mokapi/runtime/monitor"
 	"mokapi/version"
 	"sync"
 )
-
-const sizeEventStore = 20
 
 type App struct {
 	Version   string
@@ -19,21 +18,23 @@ type App struct {
 
 	Monitor *monitor.Monitor
 	m       sync.Mutex
+	cfg     *static.Config
 
 	Configs map[string]*dynamic.Config
 }
 
-func New() *App {
+func New(cfg *static.Config) *App {
 	m := monitor.New()
 	return &App{
 		Version:   version.BuildVersion,
 		BuildTime: version.BuildTime,
 		Monitor:   m,
 		Configs:   map[string]*dynamic.Config{},
-		Http:      &HttpStore{},
-		Kafka:     &KafkaStore{monitor: m},
-		Ldap:      &LdapStore{},
-		Mail:      &MailStore{},
+		Http:      &HttpStore{cfg: cfg},
+		Kafka:     &KafkaStore{monitor: m, cfg: cfg},
+		Ldap:      &LdapStore{cfg: cfg},
+		Mail:      &MailStore{cfg: cfg},
+		cfg:       cfg,
 	}
 }
 

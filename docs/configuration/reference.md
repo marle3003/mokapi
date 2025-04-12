@@ -318,3 +318,49 @@ MOKAPI_RootCaKey=/path/to/caKey.pem
 providers:
   rootCaKey: /path/to/caKey.pem
 ```
+
+## Events Store
+
+Mokapi stores request and event history in memory. You can control the memory size (in number of events) for 
+each event store using the following CLI flags.
+
+Sets the default maximum number of events stored for each event type (e.g., HTTP, Kafka), unless overridden individually.
+(default 100)
+```bash tab=CLI
+--event-store-default-size 200
+```
+```bash tab=Env
+MOKAPI_EVENT_STORE_DEFAULT=200
+```
+```yaml tab=File (YAML)
+event:
+  store:
+    default: 200
+```
+
+Overrides the default event store size for a specific API by name.
+```bash tab=CLI
+--event-store-<name>-size 200
+```
+```bash tab=Env
+MOKAPI_EVENT_STORE_<NAME>=200
+```
+```yaml tab=File (YAML)
+event:
+  store:
+    <name>: 200
+```
+
+Provides advanced configuration for a specific API using a JSON-style syntax.
+This format is required if the API name contains spaces or special characters.
+```bash tab=CLI
+--event-store <api-name>={"size": 250}
+```
+```bash tab=Env
+MOKAPI_EVENT_STORE=<api-name>={"size": 250}
+```
+```yaml tab=File (YAML)
+event:
+  store:
+    "<api-name>": 250
+```

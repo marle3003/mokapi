@@ -64,7 +64,8 @@ js:
 configs: []
 event:
     store:
-        size: 100
+        default:
+            size: 100
 `, out)
 			},
 		},

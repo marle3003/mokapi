@@ -3,6 +3,7 @@ package runtime
 import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
+	"mokapi/config/static"
 	"mokapi/engine/common"
 	"mokapi/providers/openapi"
 	"mokapi/runtime/events"
@@ -15,6 +16,7 @@ import (
 
 type HttpStore struct {
 	infos map[string]*HttpInfo
+	cfg   *static.Config
 	m     sync.RWMutex
 }
 
@@ -70,12 +72,18 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 	cfg := c.Data.(*openapi.Config)
 	name := cfg.Info.Name
 	hc, ok := s.infos[name]
+
+	store, hasStoreConfig := s.cfg.Event.Store[name]
+	if !hasStoreConfig {
+		store = s.cfg.Event.Store["default"]
+	}
+
 	if !ok {
 		hc = NewHttpInfo(c)
 		s.infos[cfg.Info.Name] = hc
 
 		events.ResetStores(events.NewTraits().WithNamespace("http").WithName(name))
-		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("http").WithName(name))
+		events.SetStore(int(store.Size), events.NewTraits().WithNamespace("http").WithName(name))
 	} else {
 		hc.AddConfig(c)
 	}
@@ -84,7 +92,7 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 		if _, ok := hc.seenPaths[path]; ok {
 			continue
 		}
-		events.SetStore(sizeEventStore, events.NewTraits().WithNamespace("http").WithName(name).With("path", path))
+		events.SetStore(int(store.Size), events.NewTraits().WithNamespace("http").WithName(name).With("path", path))
 		hc.seenPaths[path] = true
 	}
 

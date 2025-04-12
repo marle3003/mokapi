@@ -32,7 +32,24 @@ func addresses() []*Node {
 						return fmt.Sprintf("%v %v %v", gofakeit.City(), gofakeit.StateAbr(), gofakeit.Zip()), nil
 					},
 				},
-			}, personal[0].Children...),
+				{
+					Name: "floor",
+					Fake: fakeFloor,
+					Children: []*Node{
+						{
+							Name: "door",
+							Fake: fakeRoom,
+						},
+					},
+				},
+				{
+					Name:       "room",
+					Attributes: []string{"door", "apartment", "suite", "flat", "room"},
+					Fake:       fakeRoom,
+				},
+			},
+				personal[0].Children...,
+			),
 		},
 		{
 			Name: "co",
@@ -48,8 +65,9 @@ func addresses() []*Node {
 			Fake: fakeStreet,
 		},
 		{
-			Name: "city",
-			Fake: fakeCity,
+			Name:       "city",
+			Attributes: []string{"city", "locality"},
+			Fake:       fakeCity,
 		},
 		{
 			Name:       "zip",
@@ -63,14 +81,9 @@ func addresses() []*Node {
 			},
 		},
 		{
-			Name: "house",
-			Fake: fakeHouseNumber,
-			Children: []*Node{
-				{
-					Name: "number",
-					Fake: fakeHouseNumber,
-				},
-			},
+			Name:       "house",
+			Attributes: []string{"house", "building"},
+			Fake:       fakeHouseNumber,
 		},
 	}
 }
@@ -159,3 +172,35 @@ func fakeHouseNumber(r *Request) (any, error) {
 	}
 	return gofakeit.StreetNumber(), nil
 }
+
+func fakeFloor(r *Request) (any, error) {
+	index := gofakeit.Number(0, len(floor)-1)
+	return floor[index], nil
+}
+
+func fakeRoom(r *Request) (any, error) {
+	index := gofakeit.Number(0, len(room)-1)
+	return room[index], nil
+}
+
+var (
+	floor = []string{
+		"1", "2", "3", "G", "LG", "UG", "B1", "M", "10", "PH", "R",
+	}
+	room = []string{
+		"12A",
+		"3B",
+		"101",
+		"7-14",
+		"B2",
+		"G5", // Ground floor unit 5
+		"2F", // 2nd Floor
+		"Unit 8",
+		"Apt. 305",
+		"Suite 12",
+		"Flat 4",
+		"PH1", // Penthouse 1
+		"12B North",
+		"Block C, 402",
+	}
+)

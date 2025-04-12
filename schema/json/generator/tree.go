@@ -98,6 +98,7 @@ func buildTree() *Node {
 	}
 
 	r.Children = append(r.Children, numbers()...)
+	r.Children = append(r.Children, dates()...)
 	r.Children = append(r.Children, ictNodes()...)
 	r.Children = append(r.Children, textNodes()...)
 	r.Children = append(r.Children, personal...)

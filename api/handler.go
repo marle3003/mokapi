@@ -122,6 +122,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getExampleData(w, r)
 	case p == "/api/schema/validate":
 		h.validate(w, r)
+	case strings.HasPrefix(p, "/api/system/"):
+		h.serveSystem(w, r)
 	case strings.HasPrefix(p, "/api/configs"):
 		h.handleConfig(w, r)
 	case strings.HasPrefix(p, "/api/faker/tree"):

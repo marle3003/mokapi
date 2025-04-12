@@ -18,6 +18,12 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
+)
+
+var (
+	noServiceFound = fmt.Errorf("there was no service listening at")
+	tooManyMatches = fmt.Errorf("please use a specific domain: request could not be uniquely assigned to an API")
 )
 
 type HttpServer struct {
@@ -139,7 +145,7 @@ func (s *HttpServer) CanClose() bool {
 func (s *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = r.WithContext(context.WithValue(r.Context(), "time", time.Now()))
 
-	service, servicePath := s.resolveService(r)
+	service, servicePath, err := s.resolveService(r)
 
 	if service != nil {
 		if !service.IsInternal {
@@ -162,11 +168,14 @@ func (s *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			service.Handler.ServeHTTP(w, r)
 		}
 	} else {
-		serveNoServiceFound(w, r)
+		if err == nil {
+			err = noServiceFound
+		}
+		serveError(w, r, err)
 	}
 }
 
-func (s *HttpServer) resolveService(r *http.Request) (*HttpService, string) {
+func (s *HttpServer) resolveService(r *http.Request) (*HttpService, string, error) {
 	host, _, err := net.SplitHostPort(r.Host)
 	if err != nil {
 		host = r.Host
@@ -174,16 +183,32 @@ func (s *HttpServer) resolveService(r *http.Request) (*HttpService, string) {
 
 	if paths, ok := s.handlers[host]; ok {
 		if matchedService, matchedPath := matchPath(paths, r); matchedService != nil {
-			return matchedService, matchedPath
+			return matchedService, matchedPath, nil
 		}
 	}
 
 	// any host
 	if paths, ok := s.handlers[""]; ok {
-		return matchPath(paths, r)
+		m, p := matchPath(paths, r)
+		return m, p, nil
 	}
 
-	return nil, ""
+	// try every host and check whether only one matches
+	matches := map[string]*HttpService{}
+	for _, paths := range s.handlers {
+		if matchedService, matchedPath := matchPath(paths, r); matchedService != nil {
+			matches[matchedPath] = matchedService
+		}
+	}
+	if len(matches) == 1 {
+		for k, v := range matches {
+			return v, k, nil
+		}
+	} else if len(matches) > 1 {
+		return nil, "", tooManyMatches
+	}
+
+	return nil, "", noServiceFound
 }
 
 func matchPath(paths map[string]*HttpService, r *http.Request) (matchedService *HttpService, matchedPath string) {
@@ -198,11 +223,11 @@ func matchPath(paths map[string]*HttpService, r *http.Request) (matchedService *
 	return
 }
 
-func serveNoServiceFound(w http.ResponseWriter, r *http.Request) {
-	msg := fmt.Sprintf("There was no service listening at %v", lib.GetUrl(r))
+func serveError(w http.ResponseWriter, r *http.Request, err error) {
+	msg := fmt.Sprintf("%s %v", err.Error(), lib.GetUrl(r))
 	entry := log.WithFields(log.Fields{"url": r.URL, "method": r.Method, "status": http.StatusNotFound})
 	entry.Info(msg)
-	http.Error(w, msg, 404)
+	http.Error(w, formatMessageForResponse(msg), 404)
 
 	body, _ := io.ReadAll(r.Body)
 	l := &openapi.HttpLog{
@@ -219,7 +244,7 @@ func serveNoServiceFound(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	err := events.Push(l, events.NewTraits().WithNamespace("http"))
+	err = events.Push(l, events.NewTraits().WithNamespace("http"))
 	if err != nil {
 		log.Errorf("unable to log event: %v", err)
 	}
@@ -227,4 +252,13 @@ func serveNoServiceFound(w http.ResponseWriter, r *http.Request) {
 	if m, ok := monitor.HttpFromContext(r.Context()); ok {
 		m.RequestErrorCounter.WithLabel("").Add(1)
 	}
+}
+
+func formatMessageForResponse(s string) string {
+	if s == "" {
+		return s
+	}
+	runes := []rune(s)
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
 }

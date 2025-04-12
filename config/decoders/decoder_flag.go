@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"mokapi/config/dynamic/provider/file"
 	"net/url"
 	"reflect"
@@ -45,7 +44,7 @@ func (f *FlagDecoder) Decode(flags map[string][]string, element interface{}) err
 		ctx := &context{path: name, paths: paths, value: flags[name], element: reflect.ValueOf(element)}
 		err := f.setValue(ctx)
 		if err != nil {
-			return errors.Wrapf(err, "configuration error %v", name)
+			return fmt.Errorf("configuration error %v: %w", name, err)
 		}
 	}
 
@@ -196,19 +195,43 @@ func (f *FlagDecoder) setMap(ctx *context) error {
 		m.Set(reflect.MakeMap(ctx.element.Type()))
 	}
 
-	key := reflect.ValueOf(ctx.paths[0])
-	var ptr reflect.Value
-	ptr = reflect.New(reflect.PointerTo(ctx.element.Type().Elem()))
-
-	if m.MapIndex(key).IsValid() {
-		ptr.Elem().Set(reflect.New(ctx.element.Type().Elem()))
-		ptr.Elem().Elem().Set(ctx.element.MapIndex(key))
+	var key reflect.Value
+	if len(ctx.paths) >= 1 {
+		key = reflect.ValueOf(ctx.paths[0])
+	} else if len(ctx.paths) == 0 {
+		if len(ctx.value) == 1 {
+			kv := strings.Split(ctx.value[0], "=")
+			if len(kv) != 2 {
+				return fmt.Errorf("expected value with key value pair for map like key=value: %s", ctx.value[0])
+			}
+			key = reflect.ValueOf(kv[0])
+			ctx.value = []string{kv[1]}
+		}
 	}
-	if err := f.setValue(ctx.Next(ptr)); err != nil {
-		return err
+
+	v := m.MapIndex(key)
+	if !v.IsValid() {
+		v = reflect.New(m.Type().Elem())
+	} else {
+		p := reflect.New(m.Type().Elem())
+		p.Elem().Set(v)
+		v = p
 	}
 
-	m.SetMapIndex(key, ptr.Elem().Elem())
+	ctx.element = v
+
+	if len(ctx.paths) >= 1 {
+		v = ctx.element
+		if err := f.setValue(ctx.Next(ctx.element)); err != nil {
+			return err
+		}
+	} else {
+		if err := f.setValue(ctx); err != nil {
+			return err
+		}
+	}
+
+	m.SetMapIndex(key, v.Elem())
 
 	return nil
 }
@@ -324,6 +347,10 @@ func splitArrayItems(s string) []string {
 
 func (f *FlagDecoder) setJson(element reflect.Value, i interface{}) error {
 	switch o := i.(type) {
+	case float64:
+		// currently, config uses only int64 as number
+		i = int64(o)
+		element.Set(reflect.ValueOf(i))
 	case int64, string, bool:
 		element.Set(reflect.ValueOf(i))
 	case []interface{}:

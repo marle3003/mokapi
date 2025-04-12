@@ -20,11 +20,30 @@ type Event struct {
 	Time   time.Time   `json:"time"`
 }
 
+type StoreInfo struct {
+	Traits Traits  `json:"traits"`
+	Events []Event `json:"events,omitempty"`
+	Size   int     `json:"size"`
+}
+
 func SetStore(size int, traits Traits) {
 	stores = append(stores, &store{
 		size:   size,
 		traits: traits,
 	})
+}
+
+func GetStores(traits Traits) []StoreInfo {
+	var result []StoreInfo
+	for _, s := range stores {
+		if s.traits.Match(traits) {
+			result = append(result, StoreInfo{
+				Traits: s.traits,
+				Size:   s.size,
+			})
+		}
+	}
+	return result
 }
 
 func Push(data interface{}, traits Traits) error {
