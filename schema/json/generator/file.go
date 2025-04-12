@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"strings"
-	"time"
 )
 
 func files() []*Node {
@@ -23,22 +22,6 @@ func files() []*Node {
 				{
 					Name: "size",
 					Fake: fakeFileSize,
-				},
-				{
-					Name: "at",
-					Fake: fakeFileDate,
-				},
-				{
-					Name: "created",
-					Fake: fakeFileDate,
-				},
-				{
-					Name: "modified",
-					Fake: fakeFileDate,
-				},
-				{
-					Name: "deleted",
-					Fake: fakeFileDate,
 				},
 			},
 		},
@@ -59,9 +42,4 @@ func fakeFileType(r *Request) (any, error) {
 
 func fakeFileSize(r *Request) (any, error) {
 	return fakeIntegerWithRange(r.Schema, 0, 100000)
-}
-
-func fakeFileDate(r *Request) (any, error) {
-	year := time.Now().Year()
-	return fakeDateInPastWithMinYear(r, year-3)
 }

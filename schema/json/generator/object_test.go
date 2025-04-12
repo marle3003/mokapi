@@ -138,18 +138,18 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"brace":      false,
-						"collection": 8.515060348610526e+307,
-						"comb":       "eyNWavQeo",
-						"company":    "OjojxkDngP",
-						"luck":       "eoOLAIqosamhfi",
+						"brace":      9.489807638481764e+307,
+						"collection": int64(2116312089470753225),
+						"comb":       false,
+						"company":    "Redfin",
+						"luck":       int64(-7574890634918414754),
 						"person": map[string]interface{}{
-							"email":     "camila.white@corporatebleeding-edge.org",
-							"firstname": "Camila",
-							"gender":    "female",
-							"lastname":  "White",
+							"email":     "oliver.nelson@globalfacilitate.com",
+							"firstname": "Oliver",
+							"gender":    "male",
+							"lastname":  "Nelson",
 						},
-						"problem":  int64(4212695239388227044),
+						"problem":  true,
 						"sunshine": true,
 					},
 					v)

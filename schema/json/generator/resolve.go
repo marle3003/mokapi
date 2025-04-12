@@ -3,6 +3,7 @@ package generator
 import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
+	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"net/url"
 	"path/filepath"
@@ -20,6 +21,10 @@ func resolve(req *Request, fallback bool) (*faker, error) {
 }
 
 func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
+	if f, ok := useFromContext(req); ok {
+		return f, nil
+	}
+
 	if fake, ok := applyConstraints(req); ok {
 		return newFaker(fake), nil
 	}
@@ -193,6 +198,21 @@ func nullable(s *schema.Schema) (*faker, bool) {
 			return newFaker(func() (any, error) {
 				return nil, nil
 			}), true
+		}
+	}
+	return nil, false
+}
+
+func useFromContext(r *Request) (*faker, bool) {
+	if len(r.Path) > 0 {
+		last := r.Path[len(r.Path)-1]
+		if v, ok := r.ctx.store[last]; ok {
+			p := parser.Parser{Schema: r.Schema}
+			if v, err := p.Parse(v); err == nil {
+				return newFaker(func() (any, error) {
+					return v, nil
+				}), true
+			}
 		}
 	}
 	return nil, false

@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestError(t *testing.T) {
+func TestIt(t *testing.T) {
 	testcases := []struct {
 		name string
 		req  *Request
@@ -32,6 +32,17 @@ func TestError(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "parameter not initialized", v)
+			},
+		},
+		{
+			name: "website",
+			req: &Request{
+				Path:   []string{"website"},
+				Schema: schematest.New("string"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "corporatevirtual.com", v)
 			},
 		},
 	}
