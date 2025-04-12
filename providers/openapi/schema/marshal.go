@@ -39,12 +39,12 @@ func (s *Schema) Marshal(i interface{}, contentType media.ContentType) ([]byte, 
 }
 
 func (s *Schema) MarshalJSON() ([]byte, error) {
-	e := encoder{refs: map[string]bool{}}
+	e := encoder{visited: map[*Schema]bool{}}
 	return e.encode(s)
 }
 
 type encoder struct {
-	refs map[string]bool
+	visited map[*Schema]bool
 }
 
 func (e *encoder) encode(s *Schema) ([]byte, error) {
@@ -53,6 +53,21 @@ func (e *encoder) encode(s *Schema) ([]byte, error) {
 		b.Write([]byte(fmt.Sprintf("%v", *s.Boolean)))
 		return b.Bytes(), nil
 	}
+
+	// check circular reference
+	if e.visited[s] {
+		var v string
+		if s.Ref != "" {
+			v = fmt.Sprintf(`{"$ref":"%s","description":"circular reference"}`, s.Ref)
+
+		} else {
+			v = `{"description":"circular reference"}`
+		}
+		b.Write([]byte(v))
+		return b.Bytes(), nil
+	}
+	e.visited[s] = true
+	defer delete(e.visited, s)
 
 	b.WriteRune('{')
 
