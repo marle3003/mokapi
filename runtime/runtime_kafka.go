@@ -97,15 +97,21 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*Kafka
 		ki.AddConfig(c)
 	}
 
-	for name := range cfg.Channels {
-		if _, ok := ki.seenTopics[name]; ok {
+	for topicName, topic := range cfg.Channels {
+		if topic.Value == nil {
 			continue
 		}
-		s.monitor.Kafka.Messages.WithLabel(cfg.Info.Name, name)
-		s.monitor.Kafka.LastMessage.WithLabel(cfg.Info.Name, name)
-		traits := events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name).With("topic", name)
+		if topic.Value.Address != "" {
+			topicName = topic.Value.Address
+		}
+		if _, ok := ki.seenTopics[topicName]; ok {
+			continue
+		}
+		s.monitor.Kafka.Messages.WithLabel(cfg.Info.Name, topicName)
+		s.monitor.Kafka.LastMessage.WithLabel(cfg.Info.Name, topicName)
+		traits := events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name).With("topic", topicName)
 		events.SetStore(int(eventStore.Size), traits)
-		ki.seenTopics[name] = true
+		ki.seenTopics[topicName] = true
 	}
 
 	return ki, nil
