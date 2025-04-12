@@ -89,7 +89,9 @@ func TestHandler_Events(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			defer events.Reset()
-			h := New(runtime.New(), static.Api{})
+
+			cfg := &static.Config{}
+			h := New(runtime.New(cfg), static.Api{})
 			tc.fn(t, h)
 		})
 	}

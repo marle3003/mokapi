@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/mail"
+	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
@@ -60,7 +61,8 @@ func TestApp_AddSmtp(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			defer events.Reset()
 
-			app := runtime.New()
+			cfg := &static.Config{}
+			app := runtime.New(cfg)
 			tc.test(t, app)
 		})
 	}
@@ -128,7 +130,8 @@ func TestApp_AddSmtp_Patching(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			defer events.Reset()
 
-			app := runtime.New()
+			cfg := &static.Config{}
+			app := runtime.New(cfg)
 			for _, c := range tc.configs {
 				app.Mail.Add(c)
 			}

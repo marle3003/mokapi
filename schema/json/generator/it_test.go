@@ -144,6 +144,17 @@ func TestUser(t *testing.T) {
 				require.Equal(t, "2024-08-26T07:02:11Z", v)
 			},
 		},
+		{
+			name: "password",
+			req: &Request{
+				Path:   []string{"password"},
+				Schema: schematest.New("string"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "F*XR4@jwLY9", v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

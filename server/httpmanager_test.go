@@ -23,10 +23,11 @@ import (
 func TestHttpServers_Monitor(t *testing.T) {
 	logrus.SetOutput(io.Discard)
 	logtest.NewGlobal()
-	store, err := cert.NewStore(&static.Config{})
+	cfg := &static.Config{}
+	store, err := cert.NewStore(cfg)
 	require.NoError(t, err)
 
-	app := runtime.New()
+	app := runtime.New(cfg)
 	m := NewHttpManager(&engine.Engine{}, store, app)
 	defer m.Stop()
 
@@ -169,7 +170,8 @@ func TestHttpManager_Update(t *testing.T) {
 			store, err := cert.NewStore(&static.Config{})
 			require.NoError(t, err)
 
-			m := NewHttpManager(&engine.Engine{}, store, runtime.New())
+			cfg := &static.Config{}
+			m := NewHttpManager(&engine.Engine{}, store, runtime.New(cfg))
 			defer m.Stop()
 
 			data.test(t, m, hook)

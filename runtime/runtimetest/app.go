@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
+	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/kafka/store"
@@ -12,7 +13,8 @@ import (
 )
 
 func NewHttpApp(configs ...*openapi.Config) *runtime.App {
-	app := runtime.New()
+	cfg := &static.Config{}
+	app := runtime.New(cfg)
 	for i, cfg := range configs {
 		app.Http.Add(&dynamic.Config{
 			Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i))),
@@ -29,7 +31,8 @@ type HttpInfoOptions func(hi *runtime.HttpInfo)
 type KafkaInfoOptions func(ki *runtime.KafkaInfo)
 
 func NewKafkaApp(configs ...*asyncapi3.Config) *runtime.App {
-	app := runtime.New()
+	cfg := &static.Config{}
+	app := runtime.New(cfg)
 	for i, cfg := range configs {
 		app.Kafka.Add(&dynamic.Config{
 			Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i))),
@@ -40,7 +43,8 @@ func NewKafkaApp(configs ...*asyncapi3.Config) *runtime.App {
 }
 
 func NewApp(opts ...Options) *runtime.App {
-	app := runtime.New()
+	cfg := &static.Config{}
+	app := runtime.New(cfg)
 	for _, opt := range opts {
 		opt(app)
 	}

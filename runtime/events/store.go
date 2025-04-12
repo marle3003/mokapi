@@ -2,6 +2,8 @@ package events
 
 import "sync"
 
+const defaultSize = 20
+
 type store struct {
 	size   int
 	events []Event
@@ -13,7 +15,12 @@ func (s *store) Push(e Event) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	if len(s.events) == s.size {
+	size := s.size
+	if size == 0 {
+		size = defaultSize
+	}
+
+	if len(s.events) == size {
 		s.events = s.events[0 : len(s.events)-1]
 	}
 	// prepend

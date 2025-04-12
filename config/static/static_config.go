@@ -33,7 +33,7 @@ func NewConfig() *Config {
 	cfg.Api.Port = "8080"
 	cfg.Api.Dashboard = true
 	cfg.Providers.File.SkipPrefix = []string{"_"}
-	cfg.Event.Store.Size = 100
+	cfg.Event.Store = map[string]Store{"default": {Size: 100}}
 	return cfg
 }
 
@@ -144,7 +144,7 @@ type JsConfig struct {
 }
 
 type Event struct {
-	Store Store
+	Store map[string]Store
 }
 
 type Store struct {

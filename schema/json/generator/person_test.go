@@ -372,6 +372,22 @@ func TestPerson(t *testing.T) {
 			},
 		},
 		{
+			name: "person fullname",
+			req: &Request{
+				Path: []string{"person"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("fullName", nil),
+					schematest.WithProperty("firstname", schematest.New("string")),
+					schematest.WithRequired("name"),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"firstname": "Hudson", "fullName": "Hudson Nelson"}, v)
+			},
+		},
+
+		{
 			name: "detect person domain",
 			req: &Request{
 				Path: []string{"test"},

@@ -3,6 +3,7 @@ package runtime_test
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
+	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	"mokapi/ldap"
 	"mokapi/ldap/ldaptest"
@@ -59,7 +60,8 @@ func TestApp_AddLdap(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			defer events.Reset()
 
-			app := runtime.New()
+			cfg := &static.Config{}
+			app := runtime.New(cfg)
 			tc.test(t, app)
 		})
 	}
@@ -127,7 +129,8 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			defer events.Reset()
 
-			app := runtime.New()
+			cfg := &static.Config{}
+			app := runtime.New(cfg)
 			for _, c := range tc.configs {
 				app.Ldap.Add(c, enginetest.NewEngine())
 			}

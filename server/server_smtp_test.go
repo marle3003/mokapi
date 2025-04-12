@@ -142,7 +142,8 @@ func TestSmtp(t *testing.T) {
 			certStore, err := cert.NewStore(&static.Config{})
 			require.NoError(t, err)
 
-			m := server.NewSmtpManager(runtime.New(), enginetest.NewEngine(), certStore)
+			cfg := &static.Config{}
+			m := server.NewSmtpManager(runtime.New(cfg), enginetest.NewEngine(), certStore)
 			defer m.Stop()
 
 			tc.test(t, m)

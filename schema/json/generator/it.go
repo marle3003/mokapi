@@ -48,6 +48,10 @@ func ictNodes() []*Node {
 				},
 			},
 		},
+		{
+			Name: "password",
+			Fake: fakePassword,
+		},
 	}
 }
 
@@ -132,6 +136,10 @@ func fakePermission(_ *Request) (interface{}, error) {
 func fakeLastLogin(r *Request) (interface{}, error) {
 	year := time.Now().Year()
 	return fakeDateInPastWithMinYear(r, year-1)
+}
+
+func fakePassword(r *Request) (interface{}, error) {
+	return gofakeit.Password(true, true, true, true, false, 11), nil
 }
 
 var roles = []string{

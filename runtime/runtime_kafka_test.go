@@ -3,6 +3,7 @@ package runtime_test
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
+	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
@@ -81,7 +82,8 @@ func TestApp_AddKafka(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			defer events.Reset()
 
-			app := runtime.New()
+			cfg := &static.Config{}
+			app := runtime.New(cfg)
 			tc.test(t, app)
 		})
 	}
@@ -165,7 +167,8 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			defer events.Reset()
 
-			app := runtime.New()
+			cfg := &static.Config{}
+			app := runtime.New(cfg)
 			for _, c := range tc.configs {
 				app.Kafka.Add(c, enginetest.NewEngine())
 			}

@@ -3,6 +3,7 @@ package runtime_test
 import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
+	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
@@ -77,7 +78,8 @@ func TestApp_AddHttp(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			defer events.Reset()
 
-			app := runtime.New()
+			cfg := &static.Config{}
+			app := runtime.New(cfg)
 			tc.test(t, app)
 		})
 	}
@@ -94,6 +96,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 	testcases := []struct {
 		name    string
 		configs []*dynamic.Config
+		static  *static.Config
 		test    func(t *testing.T, app *runtime.App)
 	}{
 		{
@@ -148,13 +151,35 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 				require.Len(t, e, 1)
 			},
 		},
+		{
+			name: "patch does not reset events",
+			configs: []*dynamic.Config{
+				newConfig("https://a.io/b", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "foo"))),
+			},
+			static: &static.Config{Event: static.Event{Store: map[string]static.Store{
+				"foo": {Size: 104},
+			}}},
+			test: func(t *testing.T, app *runtime.App) {
+				for i := 0; i < 105; i++ {
+					err := events.Push("bar", events.NewTraits().WithNamespace("http").WithName("foo"))
+					require.NoError(t, err)
+				}
+
+				e := events.GetEvents(events.NewTraits().WithNamespace("http").WithName("foo"))
+				require.Len(t, e, 104)
+			},
+		},
 	}
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			defer events.Reset()
 
-			app := runtime.New()
+			cfg := tc.static
+			if cfg == nil {
+				cfg = &static.Config{}
+			}
+			app := runtime.New(cfg)
 			for _, c := range tc.configs {
 				app.Http.Add(c)
 			}

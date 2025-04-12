@@ -223,7 +223,8 @@ func TestHttp(t *testing.T) {
 			certStore, err := cert.NewStore(&static.Config{})
 			require.NoError(t, err)
 
-			m := server.NewHttpManager(enginetest.NewEngine(), certStore, runtime.New())
+			cfg := &static.Config{}
+			m := server.NewHttpManager(enginetest.NewEngine(), certStore, runtime.New(cfg))
 			defer m.Stop()
 
 			tc.test(t, m)
