@@ -67,3 +67,30 @@ func TestSchema_Marshal(t *testing.T) {
 		})
 	}
 }
+
+func TestCircularRef(t *testing.T) {
+	s := &schema.Schema{}
+	s.Properties = &schema.Schemas{}
+	s.Properties.Set("foo", s)
+
+	b, err := json.Marshal(s)
+	require.NoError(t, err)
+	require.Equal(t, "{\"properties\":{\"foo\":{\"description\":\"circular reference\"}}}", string(b))
+
+	// with ref
+	s.Ref = "#/components/schemas/Foo"
+	b, err = json.Marshal(s)
+	require.NoError(t, err)
+	require.Equal(t, "{\"$ref\":\"#/components/schemas/Foo\",\"properties\":{\"foo\":{\"$ref\":\"#/components/schemas/Foo\",\"description\":\"circular reference\"}}}", string(b))
+
+	// multi-level circular refs
+	s = &schema.Schema{Properties: &schema.Schemas{}}
+
+	bar := &schema.Schema{Properties: &schema.Schemas{}}
+	bar.Properties.Set("foo", s)
+
+	s.Properties.Set("bar", bar)
+	b, err = json.Marshal(s)
+	require.NoError(t, err)
+	require.Equal(t, "{\"properties\":{\"bar\":{\"properties\":{\"foo\":{\"description\":\"circular reference\"}}}}}", string(b))
+}

@@ -12,6 +12,7 @@ import (
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime"
+	"mokapi/runtime/events"
 	"mokapi/server/cert"
 	"mokapi/try"
 	"mokapi/version"
@@ -164,9 +165,12 @@ func TestHttpManager_Update(t *testing.T) {
 
 	for _, data := range testdata {
 		t.Run(data.name, func(t *testing.T) {
+			defer events.Reset()
+
 			logrus.SetOutput(io.Discard)
 			hook := logtest.NewGlobal()
 			logrus.SetLevel(logrus.DebugLevel)
+
 			store, err := cert.NewStore(&static.Config{})
 			require.NoError(t, err)
 
