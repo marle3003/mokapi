@@ -46,7 +46,34 @@ func TestApp_AddKafka(t *testing.T) {
 			},
 		},
 		{
-			name: "",
+			name: "event store for topic available after patching",
+			test: func(t *testing.T, app *runtime.App) {
+				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""), asyncapi3test.WithChannel("foo"))
+				app.Kafka.Add(getConfig("foo.bar", c), enginetest.NewEngine())
+
+				patch := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""), asyncapi3test.WithChannel("bar"))
+				ki := app.Kafka.Get(patch.Info.Name)
+				ki.AddConfig(getConfig("foo.patch", patch))
+
+				require.NotNil(t, app.Kafka.Get("foo"))
+
+				traits := events.NewTraits().WithNamespace("kafka").WithName("foo").With("topic", "foo")
+				_ = events.Push("foo", traits)
+				stores := events.GetStores(traits)
+				require.Len(t, stores, 2, "expected to find two stores for topic foo")
+				require.Equal(t, stores[1].Traits, traits)
+				require.Equal(t, 1, stores[1].NumEvents)
+
+				traits = events.NewTraits().WithNamespace("kafka").WithName("foo").With("topic", "bar")
+				_ = events.Push("bar", traits)
+				stores = events.GetStores(traits)
+				require.Len(t, stores, 2, "expected to find two stores for topic bar")
+				require.Equal(t, stores[1].Traits, traits)
+				require.Equal(t, 1, stores[1].NumEvents)
+			},
+		},
+		{
+			name: "monitor",
 			test: func(t *testing.T, app *runtime.App) {
 				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""),
 					asyncapi3test.WithChannel("bar"))

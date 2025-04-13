@@ -26,8 +26,9 @@ type KafkaStore struct {
 type KafkaInfo struct {
 	*asyncapi3.Config
 	*store.Store
-	configs    map[string]*dynamic.Config
-	seenTopics map[string]bool
+	configs               map[string]*dynamic.Config
+	seenTopics            map[string]bool
+	updateEventAndMetrics func(k *KafkaInfo)
 }
 
 type KafkaHandler struct {
@@ -35,11 +36,12 @@ type KafkaHandler struct {
 	next  kafka.Handler
 }
 
-func NewKafkaInfo(c *dynamic.Config, store *store.Store) *KafkaInfo {
+func NewKafkaInfo(c *dynamic.Config, store *store.Store, updateEventAndMetrics func(info *KafkaInfo)) *KafkaInfo {
 	hc := &KafkaInfo{
-		configs:    map[string]*dynamic.Config{},
-		Store:      store,
-		seenTopics: map[string]bool{},
+		configs:               map[string]*dynamic.Config{},
+		Store:                 store,
+		seenTopics:            map[string]bool{},
+		updateEventAndMetrics: updateEventAndMetrics,
 	}
 	hc.AddConfig(c)
 	return hc
@@ -88,30 +90,13 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*Kafka
 	}
 
 	if !ok {
-		ki = NewKafkaInfo(c, store.New(cfg, emitter))
-		s.infos[cfg.Info.Name] = ki
-
 		events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
 		events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
+
+		ki = NewKafkaInfo(c, store.New(cfg, emitter), s.updateEventStore)
+		s.infos[cfg.Info.Name] = ki
 	} else {
 		ki.AddConfig(c)
-	}
-
-	for topicName, topic := range cfg.Channels {
-		if topic.Value == nil {
-			continue
-		}
-		if topic.Value.Address != "" {
-			topicName = topic.Value.Address
-		}
-		if _, ok := ki.seenTopics[topicName]; ok {
-			continue
-		}
-		s.monitor.Kafka.Messages.WithLabel(cfg.Info.Name, topicName)
-		s.monitor.Kafka.LastMessage.WithLabel(cfg.Info.Name, topicName)
-		traits := events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name).With("topic", topicName)
-		events.SetStore(int(eventStore.Size), traits)
-		ki.seenTopics[topicName] = true
 	}
 
 	return ki, nil
@@ -189,6 +174,7 @@ func (c *KafkaInfo) update() {
 	}
 
 	c.Config = cfg
+	c.updateEventAndMetrics(c)
 	c.Store.Update(cfg)
 }
 
@@ -236,5 +222,29 @@ func getKafkaConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
 	} else {
 		old := c.Data.(*asyncApi.Config)
 		return old.Convert()
+	}
+}
+
+func (c *KafkaStore) updateEventStore(k *KafkaInfo) {
+	eventStore, hasStoreConfig := c.cfg.Event.Store[k.Config.Info.Name]
+	if !hasStoreConfig {
+		eventStore = c.cfg.Event.Store["default"]
+	}
+
+	for topicName, topic := range k.Config.Channels {
+		if topic.Value == nil {
+			continue
+		}
+		if topic.Value.Address != "" {
+			topicName = topic.Value.Address
+		}
+		if _, ok := k.seenTopics[topicName]; ok {
+			continue
+		}
+		c.monitor.Kafka.Messages.WithLabel(k.Config.Info.Name, topicName)
+		c.monitor.Kafka.LastMessage.WithLabel(k.Config.Info.Name, topicName)
+		traits := events.NewTraits().WithNamespace("kafka").WithName(k.Config.Info.Name).With("topic", topicName)
+		events.SetStore(int(eventStore.Size), traits)
+		k.seenTopics[topicName] = true
 	}
 }

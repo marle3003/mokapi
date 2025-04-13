@@ -82,6 +82,8 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.NotNil(t, b)
 				require.Equal(t, "XidZuoWq ", kafka.BytesToString(b.Records[0].Key))
 				require.Equal(t, "\"\"", kafka.BytesToString(b.Records[0].Value))
+
+				require.Equal(t, float64(1), app.Monitor.Kafka.Messages.Sum())
 			},
 		},
 		{
@@ -108,6 +110,34 @@ func TestKafkaClient_Produce(t *testing.T) {
 				require.Equal(t, `"bar"`, kafka.BytesToString(b.Records[0].Value))
 				require.Equal(t, "version", b.Records[0].Headers[0].Key)
 				require.Equal(t, []byte("1.0"), b.Records[0].Headers[0].Value)
+			},
+		},
+		{
+			name: "multiple messages",
+			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
+				err := engine.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						const result = produce({
+							topic: 'foo',
+							messages: [
+								{ key: 'key1', data: 'foo'},
+								{ key: 'key2', data: 'bar'}
+							],
+						})
+						console.log(result)
+					}
+				`))
+				require.NoError(t, err)
+				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Equal(t, "key1", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `"foo"`, kafka.BytesToString(b.Records[0].Value))
+				require.Equal(t, "key2", kafka.BytesToString(b.Records[1].Key))
+				require.Equal(t, `"bar"`, kafka.BytesToString(b.Records[1].Value))
+
+				require.Equal(t, float64(2), app.Monitor.Kafka.Messages.Sum())
 			},
 		},
 		{
