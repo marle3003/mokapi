@@ -74,6 +74,7 @@ declare interface KafkaEventData {
   messageId: string
   partition: number;
   headers: KafkaHeader
+  deleted: boolean
 }
 
 declare interface KafkaHeader { [name: string]: KafkaHeaderValue }

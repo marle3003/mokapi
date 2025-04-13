@@ -89,6 +89,8 @@ components:
                 type: string
               binary:
                 type: string
+        deleted:
+          type: boolean
     KafkaValue:
       type: object
       properties:
