@@ -183,7 +183,11 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 		if ch.Value == nil {
 			continue
 		}
-		t := info.Store.Topic(name)
+		addr := ch.Value.Address
+		if addr == "" {
+			addr = name
+		}
+		t := info.Store.Topic(addr)
 		k.Topics = append(k.Topics, newTopic(info.Store, t, ch.Value, info.DefaultContentType))
 	}
 	sort.Slice(k.Topics, func(i, j int) bool {

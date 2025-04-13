@@ -12,7 +12,7 @@ type Topic struct {
 
 	logger     LogRecord
 	s          *Store
-	channel    *asyncapi3.Channel
+	Config     *asyncapi3.Channel
 	operations []*asyncapi3.Operation
 }
 
@@ -35,10 +35,7 @@ func (t *Topic) delete() {
 }
 
 func newTopic(name string, channel *asyncapi3.Channel, ops []*asyncapi3.Operation, s *Store) *Topic {
-	t := &Topic{Name: name, logger: s.log, s: s, channel: channel, operations: ops}
-	if channel.Address != "" {
-		t.Name = channel.Address
-	}
+	t := &Topic{Name: name, logger: s.log, s: s, Config: channel, operations: ops}
 
 	numPartitions := channel.Bindings.Kafka.Partitions
 	for i := 0; i < numPartitions; i++ {

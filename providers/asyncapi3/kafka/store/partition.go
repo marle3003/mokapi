@@ -131,7 +131,7 @@ func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, records []
 			result, err = p.validator.Validate(r)
 		}
 
-		if len(records) > 0 && p.Topic.channel.Bindings.Kafka.ValueSchemaValidation {
+		if len(records) > 0 && p.Topic.Config.Bindings.Kafka.ValueSchemaValidation {
 			return p.Tail, records, fmt.Errorf("validation error: %w", err)
 		}
 
