@@ -70,6 +70,7 @@ type topic struct {
 	Description string                   `json:"description"`
 	Partitions  []partition              `json:"partitions"`
 	Messages    map[string]messageConfig `json:"messages,omitempty"`
+	Bindings    bindings                 `json:"bindings,omitempty"`
 }
 
 type partition struct {
@@ -94,6 +95,16 @@ type messageConfig struct {
 	Payload     *schemaInfo `json:"payload"`
 	Header      *schemaInfo `json:"header,omitempty"`
 	ContentType string      `json:"contentType"`
+}
+
+type bindings struct {
+	Partitions            int   `json:"partitions,omitempty"`
+	RetentionBytes        int64 `json:"retentionBytes,omitempty"`
+	RetentionMs           int64 `json:"retentionMs,omitempty"`
+	SegmentBytes          int64 `json:"segmentBytes,omitempty"`
+	SegmentMs             int64 `json:"segmentMs,omitempty"`
+	ValueSchemaValidation bool  `json:"valueSchemaValidation,omitempty"`
+	KeySchemaValidation   bool  `json:"keySchemaValidation,omitempty"`
 }
 
 func getKafkaServices(store *runtime.KafkaStore, m *monitor.Monitor) []interface{} {
@@ -188,7 +199,7 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 			addr = name
 		}
 		t := info.Store.Topic(addr)
-		k.Topics = append(k.Topics, newTopic(info.Store, t, ch.Value, info.DefaultContentType))
+		k.Topics = append(k.Topics, newTopic(info.Store, t, ch.Value, info.Config))
 	}
 	sort.Slice(k.Topics, func(i, j int) bool {
 		return strings.Compare(k.Topics[i].Name, k.Topics[j].Name) < 0
@@ -206,7 +217,7 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 	return k
 }
 
-func newTopic(s *store.Store, t *store.Topic, config *asyncapi3.Channel, defaultContentType string) topic {
+func newTopic(s *store.Store, t *store.Topic, ch *asyncapi3.Channel, cfg *asyncapi3.Config) topic {
 	var partitions []partition
 	for _, p := range t.Partitions {
 		partitions = append(partitions, newPartition(s, p))
@@ -217,11 +228,20 @@ func newTopic(s *store.Store, t *store.Topic, config *asyncapi3.Channel, default
 
 	result := topic{
 		Name:        t.Name,
-		Description: config.Description,
+		Description: ch.Description,
 		Partitions:  partitions,
+		Bindings: bindings{
+			Partitions:            t.Config.Bindings.Kafka.Partitions,
+			RetentionBytes:        t.Config.Bindings.Kafka.RetentionBytes,
+			RetentionMs:           t.Config.Bindings.Kafka.RetentionMs,
+			SegmentBytes:          t.Config.Bindings.Kafka.SegmentBytes,
+			SegmentMs:             t.Config.Bindings.Kafka.SegmentMs,
+			ValueSchemaValidation: t.Config.Bindings.Kafka.ValueSchemaValidation,
+			KeySchemaValidation:   t.Config.Bindings.Kafka.KeySchemaValidation,
+		},
 	}
 
-	for messageId, ref := range config.Messages {
+	for messageId, ref := range ch.Messages {
 		if ref.Value == nil {
 			continue
 		}
@@ -243,7 +263,7 @@ func newTopic(s *store.Store, t *store.Topic, config *asyncapi3.Channel, default
 		}
 
 		if m.ContentType == "" {
-			m.ContentType = defaultContentType
+			m.ContentType = cfg.DefaultContentType
 		}
 
 		if msg.Bindings.Kafka.Key != nil {

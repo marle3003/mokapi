@@ -61,6 +61,7 @@ interface DialogData {
     time: string
     topic: string
     schemaId: number
+    deleted: boolean
 }
 let message = ref<DialogData | null>(null)
 let data: KafkaEventData | null
@@ -112,7 +113,8 @@ function showMessage(event: ServiceEvent){
         offset: data.offset,
         time: format(event.time),
         topic: event.traits["topic"],
-        schemaId: data.schemaId
+        schemaId: data.schemaId,
+        deleted: data.deleted
     }
     if (dialog){
         tab.show()
@@ -199,8 +201,8 @@ function formatHeaderValue(v: KafkaHeaderValue) {
             </tr>
         </thead>
         <tbody>
-            <tr v-for="event in events" :key="event.id" @click="showMessage(event)" :set="data = eventData(event)">
-                <td class="key" >{{ key(data) }}</td>
+            <tr v-for="event in events" :key="event.id" @click="showMessage(event)" :set="data = eventData(event)" :class="data?.deleted ? 'deleted': ''">
+                <td class="key">{{ key(data) }}</td>
                 <td class="message" :title="isAvro(event)? 'Avro content displayed as JSON' : ''">{{ data?.message.value ?? data?.message.binary }}</td>
                 <td v-if="!topicName">{{ event.traits["topic"] }}</td>
                 <td class="text-center">{{ format(event.time) }}</td>
@@ -223,6 +225,12 @@ function formatHeaderValue(v: KafkaHeaderValue) {
 
                                     <div class="tab-content" v-if="message">
                                         <div class="tab-pane fade show active" id="detail-data" role="tabpanel">
+                                            <div class="row"><div class="col">                            
+                                            <div class="alert alert-primary d-flex align-items-center" role="alert">
+                                                <i class="bi bi-info-circle-fill me-2" style="font-size: 1rem;"></i>
+                                                <div>Message deleted due to retention or log rolling.</div>
+                                            </div>
+                                        </div></div>
                                             <div class="row mb-3">
                                                 <div class="col">
                                                     <p id="dialog-message-key" class="label">Key</p>
@@ -305,5 +313,8 @@ function formatHeaderValue(v: KafkaHeaderValue) {
 }
 .tab-pane {
     padding: 0;
+}
+table.dataTable tr.deleted td {
+    color: #5E5E5E;
 }
 </style>

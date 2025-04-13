@@ -65,6 +65,8 @@ components:
           type: object
           additionalProperties:
             $ref: '#/components/schemas/MessageConfig'
+        bindings:
+          $ref: '#/components/schemas/TopicBindings'
     Partition:
       type: object
       properties:
@@ -144,3 +146,18 @@ components:
           $ref: 'schema.yml#/components/schemas/Schema'
         contentType:
           type: string
+    TopicBindings:
+      partitions:
+        type: integer
+      retentionBytes:
+        type: integer
+      retentionMs:
+        type: integer
+      segmentBytes:
+        type: integer
+      segmentMs:
+        type: integer
+      valueSchemaValidation:
+        type: boolean
+      keySchemaValidation:
+        type: boolean

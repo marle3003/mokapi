@@ -32,11 +32,16 @@ type Partition struct {
 type Segment struct {
 	Head        int64
 	Tail        int64
-	Log         []*kafka.Record
+	Log         []*record
 	Size        int
 	Opened      time.Time
 	Closed      time.Time
 	LastWritten time.Time
+}
+
+type record struct {
+	Data *kafka.Record
+	Log  *KafkaLog
 }
 
 type WriteOptions func(args *WriteArgs)
@@ -154,7 +159,7 @@ func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, records []
 				segment = p.addSegment()
 			}
 
-			segment.Log = append(segment.Log, r)
+			segment.Log = append(segment.Log, &record{Data: r, Log: result})
 			segment.Tail++
 			segment.LastWritten = now
 			segment.Size += r.Size(baseOffset, baseTime)
@@ -255,7 +260,7 @@ func newSegment(offset int64) *Segment {
 	return &Segment{
 		Head:   offset,
 		Tail:   offset,
-		Log:    make([]*kafka.Record, 0),
+		Log:    make([]*record, 0),
 		Opened: time.Now(),
 	}
 }
@@ -266,13 +271,14 @@ func (s *Segment) contains(offset int64) bool {
 
 func (s *Segment) record(offset int64) *kafka.Record {
 	index := offset - s.Head
-	return s.Log[index]
+	return s.Log[index].Data
 }
 
 func (s *Segment) delete() {
 	for _, r := range s.Log {
-		log.Debugf("delete record: %v", r.Offset)
-		r.Key.Close()
-		r.Value.Close()
+		log.Debugf("delete record: %v", r.Data.Offset)
+		r.Data.Key.Close()
+		r.Data.Value.Close()
+		r.Log.Deleted = true
 	}
 }

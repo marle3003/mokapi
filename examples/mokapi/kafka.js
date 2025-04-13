@@ -133,6 +133,15 @@ export let clusters = [
                         payload: { schema: Product },
                         contentType: 'application/json'
                     }
+                },
+                bindings: {
+                    partitions: 3,
+                    retentionBytes: 1500,
+                    retentionMs: 30000,
+                    segmentBytes: 30000,
+                    segmentMs: 1500,
+                    valueSchemaValidation: true,
+                    keySchemaValidation: false
                 }
             },
             {
@@ -310,7 +319,8 @@ export let events = [
                     })
             },
             partition: 1,
-            messageId: 'shopOrder'
+            messageId: 'shopOrder',
+            deleted: true
         }
     },
     {

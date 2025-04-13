@@ -14,6 +14,7 @@ type KafkaLog struct {
 	MessageId string              `json:"messageId"`
 	Partition int                 `json:"partition"`
 	Headers   map[string]LogValue `json:"headers"`
+	Deleted   bool                `json:"deleted"`
 }
 
 type LogValue struct {

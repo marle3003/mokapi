@@ -63,6 +63,7 @@ func (suite *PetStoreSuite) TestApi() {
 			},
 
 			"topics": []interface{}{map[string]interface{}{
+				"bindings":    map[string]interface{}{"partitions": float64(2), "segmentMs": float64(30000), "valueSchemaValidation": true},
 				"description": "",
 				"messages": map[string]interface{}{
 					"#/components/messages/order": map[string]interface{}{
