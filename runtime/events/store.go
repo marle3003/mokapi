@@ -8,7 +8,7 @@ type store struct {
 	size   int
 	events []Event
 	traits Traits
-	m      sync.Mutex
+	m      sync.RWMutex
 }
 
 func (s *store) Push(e Event) {
@@ -28,6 +28,9 @@ func (s *store) Push(e Event) {
 }
 
 func (s *store) Events(traits Traits) []Event {
+	s.m.RLock()
+	defer s.m.RUnlock()
+
 	var events []Event
 	for _, e := range s.events {
 		if e.Traits.Contains(traits) {

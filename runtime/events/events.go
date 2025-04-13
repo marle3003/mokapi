@@ -3,6 +3,7 @@ package events
 import (
 	"fmt"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 	"sort"
 	"sync"
 	"time"
@@ -10,7 +11,7 @@ import (
 
 var (
 	stores []*store
-	m      sync.Mutex
+	m      sync.RWMutex
 )
 
 type Event struct {
@@ -21,9 +22,10 @@ type Event struct {
 }
 
 type StoreInfo struct {
-	Traits Traits  `json:"traits"`
-	Events []Event `json:"events,omitempty"`
-	Size   int     `json:"size"`
+	Traits    Traits  `json:"traits"`
+	Events    []Event `json:"events,omitempty"`
+	Size      int     `json:"size"`
+	NumEvents int     `json:"numEvents"`
 }
 
 func SetStore(size int, traits Traits) {
@@ -34,12 +36,16 @@ func SetStore(size int, traits Traits) {
 }
 
 func GetStores(traits Traits) []StoreInfo {
+	m.RLock()
+	defer m.RUnlock()
+
 	var result []StoreInfo
 	for _, s := range stores {
 		if s.traits.Match(traits) {
 			result = append(result, StoreInfo{
-				Traits: s.traits,
-				Size:   s.size,
+				Traits:    s.traits,
+				Size:      s.size,
+				NumEvents: len(s.events),
 			})
 		}
 	}
@@ -47,6 +53,9 @@ func GetStores(traits Traits) []StoreInfo {
 }
 
 func Push(data interface{}, traits Traits) error {
+	m.RLock()
+	defer m.RUnlock()
+
 	if len(traits) == 0 {
 		return fmt.Errorf("empty traits not allowed")
 	}
@@ -73,6 +82,9 @@ func Push(data interface{}, traits Traits) error {
 }
 
 func GetEvents(traits Traits) []Event {
+	m.RLock()
+	defer m.RUnlock()
+
 	events := make([]Event, 0)
 
 	for _, s := range stores {
@@ -89,6 +101,9 @@ func GetEvents(traits Traits) []Event {
 }
 
 func GetEvent(id string) Event {
+	m.RLock()
+	defer m.RUnlock()
+
 	for _, s := range stores {
 		for _, e := range s.events {
 			if e.Id == id {
@@ -116,6 +131,8 @@ func ResetStores(traits Traits) {
 			// copy and increment index
 			stores[i] = s
 			i++
+		} else {
+			log.Debugf("reset store %s", traits.String())
 		}
 	}
 	// Prevent memory leak by erasing truncated values
