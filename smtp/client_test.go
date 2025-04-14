@@ -96,7 +96,6 @@ func TestClient(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			l, err := nettest.NewLocalListener("tcp")
-			_ = l
 			require.NoError(t, err)
 			server := &Server{Addr: l.Addr().String()}
 			if tc.tlsConfig != nil {

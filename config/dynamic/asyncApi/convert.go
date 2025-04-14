@@ -62,6 +62,9 @@ func convertChannels(cfg *asyncapi3.Config, channels map[string]*ChannelRef) err
 	}
 
 	for name, orig := range channels {
+		if orig == nil {
+			continue
+		}
 		if len(orig.Ref) > 0 {
 			cfg.Channels[name] = &asyncapi3.ChannelRef{Reference: dynamic.Reference{Ref: orig.Ref}}
 		}
@@ -123,10 +126,12 @@ func addMessage(target *asyncapi3.Channel, msg *asyncapi3.MessageRef, opId, ref,
 	var msgId string
 	if len(opId) > 0 {
 		msgId = opId
-	} else if len(ref) > 0 {
+	} else if msg.Ref != "" {
+		msgId = path.Base(msg.Ref)
+	} else if ref != "" {
 		msgId = path.Base(ref)
 	} else if len(opName) > 0 {
-		msgId = opName
+		msgId = path.Base(opName)
 	}
 
 	target.Messages[msgId] = msg

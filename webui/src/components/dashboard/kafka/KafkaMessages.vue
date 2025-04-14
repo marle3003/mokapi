@@ -158,6 +158,7 @@ function getContentType(msg: KafkaMessage): [string, boolean] {
     if (msg.payload.format?.includes('application/vnd.apache.avro')) {
         switch (msg.contentType) {
             case 'avro/binary':
+            case 'application/avro':
             case 'application/octet-stream':
                 return [ 'application/json', true ]
         }

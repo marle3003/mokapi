@@ -86,7 +86,7 @@ func getAsyncApiExample(w http.ResponseWriter, r *http.Request, cfg *asyncapi3.C
 		switch {
 		case ct.Subtype == "json":
 			data, err = encoding.NewEncoder(t.Convert()).Write(rnd, ct)
-		case ct.Key() == "avro/binary" || ct.Key() == "application/octet-stream":
+		case ct.Key() == "avro/binary" || ct.Key() == "application/avro" || ct.Key() == "application/octet-stream":
 			data, err = t.Marshal(rnd)
 		default:
 			http.Error(w, fmt.Sprintf("unsupported schema type: %T", t), http.StatusBadRequest)

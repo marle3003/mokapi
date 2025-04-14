@@ -121,6 +121,11 @@ var personal = []*Node{
 				DependsOn: []string{"firstname", "lastname", "name"},
 				Fake:      fakePersonAlias,
 			},
+			{
+				Name:      "aliases",
+				DependsOn: []string{"firstname", "lastname", "name"},
+				Fake:      fakePersonAliases,
+			},
 		},
 	},
 	{
@@ -405,6 +410,41 @@ func fakePersonAlias(r *Request) (any, error) {
 		alias += fmt.Sprintf("%c.", p[0])
 	}
 	return fmt.Sprintf("%s %s", alias, values[len(values)-1]), nil
+}
+
+func fakePersonAliases(r *Request) (any, error) {
+	if !r.Schema.IsArray() && !r.Schema.IsAny() {
+		return nil, NotSupported
+	}
+	items := r.Schema.Items
+	if !items.IsString() && !items.IsAny() {
+		return nil, NotSupported
+	}
+
+	v, err := fakePersonName(r)
+	if err != nil {
+		return nil, err
+	}
+	s := v.(string)
+
+	values := strings.Split(s, " ")
+	if len(values) == 1 {
+		return []string{s}, nil
+	}
+
+	if len(values) == 3 {
+		return []string{
+			fmt.Sprintf("%c. %s", values[0][0], values[2]),
+			fmt.Sprintf("%s %c %s", values[0], values[1][0], values[2]),
+			fmt.Sprintf("%c. %c. %s", values[0][0], values[1][0], values[2]),
+			fmt.Sprintf("%c. %c. %c.", values[0][0], values[1][0], values[2][0]),
+		}, nil
+	}
+
+	return []string{
+		fmt.Sprintf("%c. %s", values[0][0], values[1]),
+		fmt.Sprintf("%c. %c.", values[0][0], values[1][0]),
+	}, nil
 }
 
 var (

@@ -4,7 +4,7 @@ import SourceView from '../SourceView.vue'
 import SchemaExpand from '../SchemaExpand.vue'
 import SchemaValidate from '../SchemaValidate.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 
 const props = defineProps<{
     topic: KafkaTopic,
@@ -49,6 +49,7 @@ function getContentType(msg: KafkaMessage): string {
     if (msg.payload.format?.includes('application/vnd.apache.avro')) {
         switch (msg.contentType) {
             case 'avro/binary':
+            case 'application/avro':
             case 'application/octet-stream':
                 return 'application/json'
         }
@@ -57,7 +58,7 @@ function getContentType(msg: KafkaMessage): string {
     return msg.contentType
 }
 
-function source() {
+const source = computed(() => {
     const source: {
         filename?: string
         preview?: Data,
@@ -66,15 +67,19 @@ function source() {
         filename: filename(), 
         preview: { content: '', contentType: getContentType(selected.value!), contentTypeTitle: selected.value!.contentType, description: '' }, 
     }
+    console.log('selected: '+selected.value?.contentType)
     switch (selected.value?.contentType) {
             case 'avro/binary':
+            case 'application/avro':
             case 'application/octet-stream':
                 source.preview!.description = 'Avro content in JSON format'
                 source.binary = { content: '', contentType: selected.value.contentType}
     }
     return source
-}
+})
+
 function messages(topic: KafkaTopic): string[] {
+    console.log(topic.messages)
     return Object.keys(topic.messages).sort((a, b) => {
         return a.localeCompare(b)
     })
@@ -87,13 +92,12 @@ function messages(topic: KafkaTopic): string[] {
             <div class="label">
                 Messages
             </div>
-            
         </div>
         <hr />
     </div>
     <div v-if="selected">
         <div class="row">
-            <div class="col-auto" v-if="selected.name">
+            <div class="col-auto">
                 <p id="message-name" class="label">Name</p>
                 <select class="form-select form-select-sm mb-2" aria-labelledby="message-name" @change="selectedMessageChange" v-if="Object.keys(topic.messages).length > 1">
                     <option v-for="msg in messages(topic)">{{ msg }}</option>
@@ -142,7 +146,7 @@ function messages(topic: KafkaTopic): string[] {
                                 <schema-expand :schema="selected.payload" :title="'Value - '+topic.name" :source="{filename: topic.name+'-message.json'}" />
                             </div>
                             <div class="col-auto pe-2 mt-1">
-                                <schema-validate :title="'Value Validator - '+topic.name" :schema="selected.payload" :source="source()" />
+                                <schema-validate :title="'Value Validator - '+topic.name" :schema="selected.payload" :source="source" />
                             </div>
                         </div>
                     </section>

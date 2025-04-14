@@ -66,7 +66,8 @@ func (suite *PetStoreSuite) TestApi() {
 				"bindings":    map[string]interface{}{"partitions": float64(2), "segmentMs": float64(30000), "valueSchemaValidation": true},
 				"description": "",
 				"messages": map[string]interface{}{
-					"#/components/messages/order": map[string]interface{}{
+					"order": map[string]interface{}{
+						"name":        "order",
 						"contentType": "application/json",
 						"header": map[string]interface{}{
 							"schema": map[string]interface{}{
@@ -274,6 +275,6 @@ func (suite *PetStoreSuite) TestKafkaEventAndMetrics() {
 	// test kafka events, header added by JavaScript event handler
 	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/events?namespace=kafka", suite.cfg.Api.Port), nil,
 		try.BodyContains(`"headers":{"foo":{"value":"bar","binary":"YmFy"}`),
-		try.BodyContains(`"messageId":"#/components/messages/order"`),
+		try.BodyContains(`"messageId":"order"`),
 	)
 }

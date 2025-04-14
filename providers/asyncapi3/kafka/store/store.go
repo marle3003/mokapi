@@ -158,6 +158,11 @@ func (s *Store) Update(c *asyncapi3.Config) {
 		if ch.Value == nil {
 			continue
 		}
+
+		if ch.Value.Address != "" {
+			n = ch.Value.Address
+		}
+
 		if t, ok := s.topics[n]; ok {
 			t.update(ch.Value, s)
 		} else {

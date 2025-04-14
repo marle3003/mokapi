@@ -9,6 +9,10 @@ import (
 )
 
 func (r *resolver) resolveArray(req *Request) (*faker, error) {
+	if f, err := findWithPlural(req); err == nil {
+		return f, nil
+	}
+
 	s := req.Schema
 	path := req.Path
 	if len(path) > 0 {
@@ -143,4 +147,23 @@ func itemExamplesFromRequest(r *Request, item *schema.Schema) []any {
 	result = append(result, examples(item)...)
 
 	return result
+}
+
+func findWithPlural(req *Request) (*faker, error) {
+	if len(req.Path) == 0 {
+		return nil, NotSupported
+	}
+
+	last := req.Path[len(req.Path)-1]
+	plural := inflection.Plural(last)
+	if plural != last {
+		req.Path = append(req.Path[:len(req.Path)-1], plural)
+	}
+
+	path := tokenize(req.Path)
+	n := findBestMatch(g.root, req.WithPath(path))
+	if n != nil && n.Name != "" {
+		return newFakerWithFallback(n, req), nil
+	}
+	return nil, NotSupported
 }

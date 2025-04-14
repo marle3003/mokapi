@@ -107,6 +107,9 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	actions := h.eventEmitter.Emit("http", request, response)
+	if logHttp != nil {
+		logHttp.Actions = actions
+	}
 
 	if status != response.StatusCode {
 		res = op.getResponse(response.StatusCode)
@@ -133,13 +136,27 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(res.Content) == 0 {
-		rw.Header().Del("Content-Type")
-		rw.Header().Set("Content-Length", "0")
-		// no response content is defined which means body is empty
+		if response.Body == "" {
+			// no response content and no body is defined which means body is empty
+			rw.Header().Del("Content-Type")
+			rw.Header().Set("Content-Length", "0")
+		}
 		if response.StatusCode > 0 {
 			rw.WriteHeader(response.StatusCode)
 			if logHttp != nil {
 				logHttp.Response.StatusCode = response.StatusCode
+			}
+		}
+		if response.Body != "" {
+			// Write body even specification defines no content.
+			// Useful for development, UI testing, or when working with incomplete specs.
+			_, err = rw.Write([]byte(response.Body))
+			if err != nil {
+				log.Errorf("write HTTP body failed for %v: %v", r.URL.String(), err)
+			}
+			if logHttp != nil {
+				logHttp.Response.Body = response.Body
+				logHttp.Response.Size = len(response.Body)
 			}
 		}
 		return
@@ -194,7 +211,6 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	if logHttp != nil {
 		logHttp.Response.Body = string(body)
 		logHttp.Response.Size = len(body)
-		logHttp.Actions = actions
 	}
 }
 

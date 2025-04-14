@@ -17,9 +17,15 @@ import (
 
 func TestHandler_Response(t *testing.T) {
 	getConfig := func(s *schema.Schema, contentType string) *openapi.Config {
+		var opts []openapitest.ResponseOptions
+		if contentType != "" {
+			opts = append(opts, openapitest.WithContent(contentType,
+				openapitest.NewContent(openapitest.WithSchema(s))),
+			)
+		}
+
 		op := openapitest.NewOperation(
-			openapitest.WithResponse(http.StatusOK, openapitest.WithContent(contentType,
-				openapitest.NewContent(openapitest.WithSchema(s)))),
+			openapitest.WithResponse(http.StatusOK, opts...),
 		)
 
 		return openapitest.NewConfig("3.0",
@@ -118,6 +124,50 @@ func TestHandler_Response(t *testing.T) {
 				require.Equal(t, "encoding data to 'application/octet-stream' failed: not supported encoding of content types 'application/octet-stream', except simple data types\n", rr.Body.String())
 			},
 		},
+		{
+			name:   "no content defined should send empty response body",
+			config: getConfig(nil, ""),
+			handler: func(event string, req *common.EventRequest, res *common.EventResponse) {
+				res.Data = map[string]interface{}{"foo": "bar"}
+			},
+			req: func() *http.Request {
+				return httptest.NewRequest("get", "http://localhost/foo", nil)
+			},
+			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, "", rr.Header().Get("Content-Type"))
+
+				e := events.GetEvents(events.NewTraits())
+				require.Len(t, e, 1)
+				data := e[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "", data.Response.Body)
+				require.Equal(t, "", data.Response.Headers["Content-Type"])
+				require.Len(t, data.Actions, 1)
+			},
+		},
+		{
+			name:   "no content defined should send body, when res.Body is used",
+			config: getConfig(nil, ""),
+			handler: func(event string, req *common.EventRequest, res *common.EventResponse) {
+				res.Headers["Content-Type"] = "text/plain"
+				res.Body = "foo"
+			},
+			req: func() *http.Request {
+				return httptest.NewRequest("get", "http://localhost/foo", nil)
+			},
+			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, "text/plain", rr.Header().Get("Content-Type"))
+				require.Equal(t, "foo", rr.Body.String())
+
+				e := events.GetEvents(events.NewTraits())
+				require.Len(t, e, 1)
+				data := e[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "foo", data.Response.Body)
+				require.Equal(t, "text/plain", data.Response.Headers["Content-Type"])
+				require.Len(t, data.Actions, 1)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -128,7 +178,12 @@ func TestHandler_Response(t *testing.T) {
 
 			e := &engine{emit: func(event string, args ...interface{}) []*common.Action {
 				tc.handler(event, args[0].(*common.EventRequest), args[1].(*common.EventResponse))
-				return nil
+				return []*common.Action{
+					{
+						Duration: 16,
+						Tags:     map[string]string{"foo": "bar"},
+					},
+				}
 			}}
 
 			h := openapi.NewHandler(tc.config, e)
