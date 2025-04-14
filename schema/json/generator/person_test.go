@@ -417,6 +417,19 @@ func TestPerson(t *testing.T) {
 				require.Equal(t, map[string]interface{}{"firstName2": "Ann", "name": "Stella Ann Adams"}, v)
 			},
 		},
+		{
+			name: "personAliases",
+			req: &Request{
+				Path: []string{"personAliases"},
+				Schema: schematest.New("array",
+					schematest.WithItems("string"),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{"Z. Nguyen", "Z. N."}, v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

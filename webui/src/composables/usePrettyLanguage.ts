@@ -45,6 +45,8 @@ export function usePrettyLanguage() {
 
         switch (contentType) {
             case 'avro/binary':
+            case 'application/avro':
+            case 'application/octet-stream':
                 // display avro content as JSON
                 return 'hex'
             default:

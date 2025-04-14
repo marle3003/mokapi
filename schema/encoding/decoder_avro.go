@@ -8,7 +8,8 @@ type AvroDecoder struct {
 }
 
 func (d *AvroDecoder) IsSupporting(contentType media.ContentType) bool {
-	return contentType.String() == "avro/binary"
+	ct := contentType.String()
+	return ct == "avro/binary" || ct == "application/avro" || ct == "application/octet-stream"
 }
 
 func (d *AvroDecoder) Decode(b []byte, state *DecodeState) (i interface{}, err error) {

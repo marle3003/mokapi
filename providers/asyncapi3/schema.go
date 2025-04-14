@@ -286,7 +286,10 @@ type AvroRef struct {
 }
 
 func (r *AvroRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
-	return dynamic.Resolve(r.Ref, &r.Schema, config, reader)
+	if r.Ref != "" {
+		return dynamic.Resolve(r.Ref, &r.Schema, config, reader)
+	}
+	return nil
 }
 
 func (r *AvroRef) UnmarshalYAML(node *yaml.Node) error {

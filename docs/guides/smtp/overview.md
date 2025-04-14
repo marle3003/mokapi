@@ -10,9 +10,16 @@ your mailbox. You can also use different email addresses for testing, not just y
 This example demonstrates how to configure an SMTP server listen on port 587 on all available
 ip address.
 
-```yaml
+```yaml tab=smtp
 smtp: '1.0'
 info:
   title: Mokapi's Mail Server
 server: smtp://:587
+```
+
+```yaml tab=smtps
+smtp: '1.0'
+info:
+  title: Mokapi's Mail Server
+server: smtps://:587
 ```

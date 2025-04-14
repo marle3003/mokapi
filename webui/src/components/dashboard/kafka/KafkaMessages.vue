@@ -158,6 +158,7 @@ function getContentType(msg: KafkaMessage): [string, boolean] {
     if (msg.payload.format?.includes('application/vnd.apache.avro')) {
         switch (msg.contentType) {
             case 'avro/binary':
+            case 'application/avro':
             case 'application/octet-stream':
                 return [ 'application/json', true ]
         }
@@ -225,7 +226,7 @@ function formatHeaderValue(v: KafkaHeaderValue) {
 
                                     <div class="tab-content" v-if="message">
                                         <div class="tab-pane fade show active" id="detail-data" role="tabpanel">
-                                            <div class="row"><div class="col">                            
+                                            <div class="row" v-if="message.deleted"><div class="col">                            
                                             <div class="alert alert-primary d-flex align-items-center" role="alert">
                                                 <i class="bi bi-info-circle-fill me-2" style="font-size: 1rem;"></i>
                                                 <div>Message deleted due to retention or log rolling.</div>

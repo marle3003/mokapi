@@ -239,7 +239,7 @@ func resolveResource(ref string, element interface{}, config *Config, reader Rea
 		AddRef(config, sub)
 		if _, ok := sub.Data.(Parser); ok && len(sub.Raw) > 0 {
 			// parse again with parent scope hierarchy
-			sub = &Config{Raw: sub.Raw, Data: sub.Data, Info: sub.Info}
+			sub = &Config{Raw: sub.Raw, Data: copyData(sub.Data), Info: sub.Info}
 			sub.Scope.SetParent(config.Scope)
 			err = Parse(sub, reader)
 			if err != nil {
@@ -299,4 +299,21 @@ func setResolved(element interface{}, val interface{}) (err error) {
 	v2.Set(vCursor)
 
 	return
+}
+
+func copyData(input interface{}) interface{} {
+	val := reflect.ValueOf(input)
+
+	if val.Kind() != reflect.Ptr {
+		// Not a pointer — return the original or handle differently
+		return input
+	}
+
+	// Create a new object of the same type
+	c := reflect.New(val.Elem().Type())
+
+	// Set the value of the new object to the original
+	c.Elem().Set(val.Elem())
+
+	return c.Interface()
 }

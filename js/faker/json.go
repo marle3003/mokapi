@@ -135,7 +135,7 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
 					if !ok {
 						return nil, fmt.Errorf("unexpected type for 'required': %v", util.JsType(t))
 					}
-					s.Required = append(s.Type, req)
+					s.Required = append(s.Required, req)
 				}
 			} else {
 				return nil, fmt.Errorf("unexpected type for 'required': %v", util.JsType(i))

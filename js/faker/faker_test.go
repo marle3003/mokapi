@@ -106,6 +106,17 @@ func TestModule(t *testing.T) {
 				r.Contains(t, frequencyItems, m["frequency"])
 			},
 		},
+		{
+			name: "fake with required property",
+			test: func(t *testing.T, vm *goja.Runtime, _ *enginetest.Host) {
+				v, err := vm.RunString(`
+					const m = require('faker')
+					m.fake({ type: 'object', properties: { foo: { type: 'string' }, bar: { type: 'string' }}, required: ['foo', 'bar','x', 'y', 'z'] } )
+				`)
+				r.NoError(t, err)
+				r.Equal(t, map[string]interface{}{"bar": "", "foo": "XidZuoWq "}, v.Export())
+			},
+		},
 	}
 
 	for _, tc := range testcases {

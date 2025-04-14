@@ -132,6 +132,7 @@ func encodeExample(v interface{}, schema interface{}, schemaFormat string, conte
 		case ct.Key() == "text/plain":
 		case ct.Key() == "avro/binary" && isAvro(schemaFormat):
 		case ct.Key() == "application/octet-stream" && isAvro(schemaFormat):
+		case ct.Key() == "application/avro" && isAvro(schemaFormat):
 		case ct.IsAny():
 			ct = media.ParseContentType("application/json")
 		default:
@@ -151,7 +152,7 @@ func encodeExample(v interface{}, schema interface{}, schemaFormat string, conte
 			switch {
 			case ct.Subtype == "json":
 				data, err = encoding.NewEncoder(t.Convert()).Write(v, ct)
-			case ct.Key() == "avro/binary" || ct.Key() == "application/octet-stream":
+			case ct.Key() == "avro/binary" || ct.Key() == "application/avro" || ct.Key() == "application/octet-stream":
 				data, err = t.Marshal(v)
 			default:
 				examples = append(examples, example{

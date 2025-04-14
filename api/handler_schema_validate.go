@@ -29,7 +29,7 @@ func (h *handler) validate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !(valReq.ContentType.Subtype == "json" || valReq.ContentType.Subtype == "xml" || valReq.ContentType.Key() == "avro/binary") {
+	if !(valReq.ContentType.Subtype == "json" || valReq.ContentType.Subtype == "xml" || valReq.ContentType.Key() == "avro/binary" || valReq.ContentType.Key() == "application/avro") {
 		http.Error(w, fmt.Sprintf("content-type %v not supported. Only json or xml are supported", valReq.ContentType), http.StatusBadRequest)
 		return
 	}

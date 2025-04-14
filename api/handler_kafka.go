@@ -254,6 +254,9 @@ func newTopic(s *store.Store, t *store.Topic, ch *asyncapi3.Channel, cfg *asynca
 			Description: msg.Description,
 			ContentType: msg.ContentType,
 		}
+		if m.Name == "" {
+			m.Name = messageId
+		}
 
 		if msg.Payload != nil && msg.Payload.Value != nil {
 			m.Payload = &schemaInfo{Schema: msg.Payload.Value.Schema, Format: msg.Payload.Value.Format}
