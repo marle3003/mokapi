@@ -1,22 +1,23 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { useEvents } from '@/composables/events';
-import { type PropType, onUnmounted } from 'vue';
+import { type PropType, computed, onUnmounted } from 'vue';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 
 const props = defineProps({
     service: { type: Object as PropType<SmtpService> },
 })
+let data: SmtpEventData | null
 
-const labels = []
+const labels: Label[] = []
 if (props.service) {
     labels.push({name: 'name', value: props.service!.name})
 }
 
 const router = useRouter()
-const {fetch} = useEvents()
-const {events, close} = fetch('smtp', ...labels)
-const {format, duration} = usePrettyDates()
+const { fetch } = useEvents()
+const { events, close } = fetch('smtp', ...labels)
+const { format, duration } = usePrettyDates()
 
 function goToMail(data: SmtpEventData){
     router.push({
@@ -27,6 +28,16 @@ function goToMail(data: SmtpEventData){
 function eventData(event: ServiceEvent): SmtpEventData{
     return <SmtpEventData>event.data
 }
+
+const filteredEvents = computed(() => {
+    if (!events.value) {
+        return []
+    }
+    return events.value.filter(e => {
+        const data = eventData(e)
+        return data.messageId
+    })
+})
 
 onUnmounted(() => {
     close()
@@ -48,16 +59,16 @@ onUnmounted(() => {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="event in events!" :key="event.id" @click="goToMail(eventData(event))">
-                        <td>{{ eventData(event).subject }}</td>
-                        <td>{{ eventData(event).from }}</td>
+                    <tr v-for="event in filteredEvents" :key="event.id" :set="data = eventData(event)" @click="goToMail(data!)">
+                        <td>{{ data.subject }}</td>
+                        <td>{{ data.from }}</td>
                         <td>
-                            <div v-for="address in eventData(event).to">
+                            <div v-for="address in data.to">
                             {{ address }}
                             </div>
                         </td>
                         <td class="text-center">{{ format(event.time) }}</td>
-                        <td class="text-center">{{ duration(eventData(event).duration) }}</td>
+                        <td class="text-center">{{ duration(data.duration) }}</td>
                     </tr>
                 </tbody>
             </table>

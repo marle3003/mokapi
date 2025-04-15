@@ -47,7 +47,7 @@ declare interface Mail {
 	time: number
 	subject: string      
 	contentType: string      
-	encoding: string      
+	contentTransferEncoding: string      
 	body: string
     attachments: Attachment[]
 }
