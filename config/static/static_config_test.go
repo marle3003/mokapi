@@ -621,12 +621,13 @@ func TestFileProvider(t *testing.T) {
 	testcases := []struct {
 		name string
 		args []string
-		test func(t *testing.T, cfg *static.Config)
+		test func(t *testing.T, cfg *static.Config, err error)
 	}{
 		{
 			name: "skipPrefix single element appends to default value",
 			args: []string{"--providers-file-skip-prefix", "foo"},
-			test: func(t *testing.T, cfg *static.Config) {
+			test: func(t *testing.T, cfg *static.Config, err error) {
+				require.NoError(t, err)
 				require.Len(t, cfg.Providers.File.SkipPrefix, 2)
 				require.Contains(t, cfg.Providers.File.SkipPrefix, "foo")
 				require.Contains(t, cfg.Providers.File.SkipPrefix, "_")
@@ -635,7 +636,8 @@ func TestFileProvider(t *testing.T) {
 		{
 			name: "skipPrefix list replace default value",
 			args: []string{"--providers-file-skip-prefix", "foo", "bar"},
-			test: func(t *testing.T, cfg *static.Config) {
+			test: func(t *testing.T, cfg *static.Config, err error) {
+				require.NoError(t, err)
 				require.Len(t, cfg.Providers.File.SkipPrefix, 2)
 				require.Contains(t, cfg.Providers.File.SkipPrefix, "foo")
 				require.Contains(t, cfg.Providers.File.SkipPrefix, "bar")
@@ -644,7 +646,8 @@ func TestFileProvider(t *testing.T) {
 		{
 			name: "feature foo",
 			args: []string{"--feature", "foo"},
-			test: func(t *testing.T, cfg *static.Config) {
+			test: func(t *testing.T, cfg *static.Config, err error) {
+				require.NoError(t, err)
 				require.Len(t, cfg.Features, 1)
 				require.Equal(t, "foo", cfg.Features[0])
 			},
@@ -652,34 +655,62 @@ func TestFileProvider(t *testing.T) {
 		{
 			name: "event store size",
 			args: []string{"--event-store-default", "size=200"},
-			test: func(t *testing.T, cfg *static.Config) {
+			test: func(t *testing.T, cfg *static.Config, err error) {
+				require.NoError(t, err)
 				require.Equal(t, int64(200), cfg.Event.Store["default"].Size)
 			},
 		},
 		{
 			name: "event store size",
 			args: []string{"--event-store-default-size", "200"},
-			test: func(t *testing.T, cfg *static.Config) {
+			test: func(t *testing.T, cfg *static.Config, err error) {
+				require.NoError(t, err)
 				require.Equal(t, int64(200), cfg.Event.Store["default"].Size)
 			},
 		},
 		{
 			name: "default event store size",
-			test: func(t *testing.T, cfg *static.Config) {
+			test: func(t *testing.T, cfg *static.Config, err error) {
+				require.NoError(t, err)
 				require.Equal(t, int64(100), cfg.Event.Store["default"].Size)
 			},
 		},
 		{
 			name: "event store for foo",
 			args: []string{"--event-store-foo-size", "250"},
-			test: func(t *testing.T, cfg *static.Config) {
+			test: func(t *testing.T, cfg *static.Config, err error) {
+				require.NoError(t, err)
 				require.Equal(t, int64(250), cfg.Event.Store["foo"].Size)
 			},
 		},
 		{
 			name: "event store name with spaces",
 			args: []string{"--event-store", `Swagger PetStore API={"size": 250}`},
-			test: func(t *testing.T, cfg *static.Config) {
+			test: func(t *testing.T, cfg *static.Config, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(250), cfg.Event.Store["Swagger PetStore API"].Size)
+			},
+		},
+		{
+			name: "event store name with spaces followed by positional parameter: error",
+			args: []string{"--event-store", `Swagger PetStore API={"size": 250}`, "smtp.yaml"},
+			test: func(t *testing.T, cfg *static.Config, err error) {
+				require.EqualError(t, err, "configuration error 'event-store' value '[Swagger PetStore API={\"size\": 250} smtp.yaml]': expected key to set map value")
+			},
+		},
+		{
+			name: "event store name with spaces and positional parameter",
+			args: []string{"--event-store", `Swagger PetStore API={"size": 250}`, "--", "smtp.yaml"},
+			test: func(t *testing.T, cfg *static.Config, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(250), cfg.Event.Store["Swagger PetStore API"].Size)
+			},
+		},
+		{
+			name: "positional parameter followed event store name with spaces and ",
+			args: []string{"smtp.yaml", "--event-store", `Swagger PetStore API={"size": 250}`},
+			test: func(t *testing.T, cfg *static.Config, err error) {
+				require.NoError(t, err)
 				require.Equal(t, int64(250), cfg.Event.Store["Swagger PetStore API"].Size)
 			},
 		},
@@ -694,9 +725,8 @@ func TestFileProvider(t *testing.T) {
 
 			cfg := static.NewConfig()
 			err := decoders.Load([]decoders.ConfigDecoder{decoders.NewDefaultFileDecoder(), decoders.NewFlagDecoder()}, cfg)
-			require.NoError(t, err)
 
-			tc.test(t, cfg)
+			tc.test(t, cfg, err)
 		})
 	}
 }

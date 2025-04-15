@@ -57,20 +57,20 @@ type rejectResponse struct {
 }
 
 type message struct {
-	Sender      *address     `json:"sender,omitempty"`
-	From        []address    `json:"from"`
-	To          []address    `json:"to"`
-	ReplyTo     []address    `json:"replyTo,omitempty"`
-	Cc          []address    `json:"cc,omitempty"`
-	Bcc         []address    `json:"bbc,omitempty"`
-	MessageId   string       `json:"messageId"`
-	InReplyTo   string       `json:"inReplyTo,omitempty"`
-	Time        time.Time    `json:"time"`
-	Subject     string       `json:"subject"`
-	ContentType string       `json:"contentType"`
-	Encoding    string       `json:"encoding,omitempty"`
-	Body        string       `json:"body"`
-	Attachments []attachment `json:"attachments,omitempty"`
+	Sender                  *address     `json:"sender,omitempty"`
+	From                    []address    `json:"from"`
+	To                      []address    `json:"to"`
+	ReplyTo                 []address    `json:"replyTo,omitempty"`
+	Cc                      []address    `json:"cc,omitempty"`
+	Bcc                     []address    `json:"bbc,omitempty"`
+	MessageId               string       `json:"messageId"`
+	InReplyTo               string       `json:"inReplyTo,omitempty"`
+	Time                    time.Time    `json:"time"`
+	Subject                 string       `json:"subject"`
+	ContentType             string       `json:"contentType"`
+	ContentTransferEncoding string       `json:"contentTransferEncoding,omitempty"`
+	Body                    string       `json:"body"`
+	Attachments             []attachment `json:"attachments,omitempty"`
 }
 
 type address struct {
@@ -258,18 +258,18 @@ func getRejectResponse(r mail.Rule) *rejectResponse {
 
 func toMessage(m *smtp.Message) *message {
 	r := &message{
-		From:        toAddress(m.From),
-		To:          toAddress(m.To),
-		ReplyTo:     toAddress(m.ReplyTo),
-		Cc:          toAddress(m.Cc),
-		Bcc:         toAddress(m.Bcc),
-		MessageId:   m.MessageId,
-		InReplyTo:   m.InReplyTo,
-		Time:        m.Time,
-		Subject:     m.Subject,
-		ContentType: m.ContentType,
-		Encoding:    m.Encoding,
-		Body:        m.Body,
+		From:                    toAddress(m.From),
+		To:                      toAddress(m.To),
+		ReplyTo:                 toAddress(m.ReplyTo),
+		Cc:                      toAddress(m.Cc),
+		Bcc:                     toAddress(m.Bcc),
+		MessageId:               m.MessageId,
+		InReplyTo:               m.InReplyTo,
+		Time:                    m.Time,
+		Subject:                 m.Subject,
+		ContentType:             m.ContentType,
+		ContentTransferEncoding: m.ContentTransferEncoding,
+		Body:                    m.Body,
 	}
 
 	if m.Sender != nil {

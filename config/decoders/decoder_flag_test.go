@@ -52,7 +52,7 @@ func TestFlagDecoder_Decode(t *testing.T) {
 				}{}
 				d := &FlagDecoder{}
 				err := d.Decode(map[string][]string{"flag1": {"foo"}}, s)
-				require.EqualError(t, err, "configuration error flag1: value foo cannot be parsed as bool: strconv.ParseBool: parsing \"foo\": invalid syntax")
+				require.EqualError(t, err, "configuration error 'flag1' value '[foo]': value foo cannot be parsed as bool: strconv.ParseBool: parsing \"foo\": invalid syntax")
 				require.False(t, s.Flag1)
 			},
 		},
@@ -259,11 +259,9 @@ func TestFlagDecoder_Decode(t *testing.T) {
 		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
 			tc.f(t)
 		})
 	}

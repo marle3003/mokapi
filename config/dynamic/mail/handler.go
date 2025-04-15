@@ -28,6 +28,7 @@ func (h *Handler) ServeSMTP(rw smtp.ResponseWriter, r smtp.Request) {
 	ctx := smtp.ClientFromContext(r.Context())
 	switch req := r.(type) {
 	case *smtp.LoginRequest:
+		// todo disable Auth capability on server if no mailbox is defined
 		for _, acc := range h.config.Mailboxes {
 			if acc.Username == req.Username && acc.Password == req.Password {
 				rw.Write(&smtp.LoginResponse{Result: &smtp.AuthSucceeded})

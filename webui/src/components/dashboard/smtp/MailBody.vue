@@ -20,7 +20,6 @@ function parseHtmlBody(body: string) {
     body = body.replace(/cid:(?<name>[^"]*)/g, function(_: string, name: string){
       return document.baseURI + attachmentUrl(props.messageId, name).substring(1)
     })
-    const theme = isDark.value ? 'dark' : 'light'
     body = `<style>:host{ all: initial; }</style>${body}`
 
     return body
@@ -63,7 +62,7 @@ function switchTheme() {
 </script>
 
 <template>
-  <div class="card-group mail-body" id="mail-body" :data-theme="isDark ? '' : 'light'">
+  <div class="card-group mail-body" id="mail-body" :data-theme="isDark ? 'dark' : 'light'">
     <div class="card">
       <div class="card-body">
         <div class="float-end tools">
@@ -72,7 +71,7 @@ function switchTheme() {
         </div>
         <div class="row">
           <p class="col">
-            <div id="body" v-if="contentType.startsWith('text/html')" style="display: inline-block;width: 100%"></div>
+            <div id="body" v-if="contentType.startsWith('text/html')" style="display: inline-block; width: 100%;" :style="isDark ? 'color: #fff;' : 'color: #000;'"></div>
             <p v-else>{{ body }}</p>
           </p>
         </div>
