@@ -30,9 +30,9 @@ FROM mokapi/mokapi:v0.9.25 as mokapi
 
 FROM ubuntu:noble
 
-COPY --from=mokapi /mokapi /mokapi
+COPY --from=mokapi /usr/local/bin/mokapi /usr/local/bin/mokapi
 
-ENTRYPOINT ["/mokapi"]
+ENTRYPOINT ["mokapi"]
 ```
 
 ## Using Windows as base image

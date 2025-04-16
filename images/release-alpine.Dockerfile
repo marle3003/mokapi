@@ -1,5 +1,5 @@
 FROM alpine
 
-ADD mokapi /
+ADD mokapi /usr/local/bin/mokapi
 
-ENTRYPOINT ["/mokapi"]
+ENTRYPOINT ["mokapi"]

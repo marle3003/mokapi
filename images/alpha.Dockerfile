@@ -30,6 +30,6 @@ RUN go build -o mokapi -ldflags="-X mokapi/version.BuildVersion=$VERSION -X moka
 
 FROM alpine
 
-COPY --from=gobuild /go/src/github.com/mokapi/mokapi /
+COPY --from=gobuild /go/src/github.com/mokapi/mokapi /usr/local/bin/mokapi
 
-ENTRYPOINT ["/mokapi"]
+ENTRYPOINT ["mokapi"]
