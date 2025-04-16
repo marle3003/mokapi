@@ -93,11 +93,15 @@ function showMessage(event: ServiceEvent){
                 description: isAvro ? 'Avro content in JSON format' : undefined
             }
     }
+
     if (data.message.binary) {
-       source.binary = {
-                content: atob(data.message.binary),
-                contentType: messageConfig.contentType
-            }
+        switch (messageConfig.contentType) {
+                case 'avro/binary':
+                case 'application/avro':
+                case 'application/octet-stream':
+                    source.preview!.description = 'Avro content in JSON format'
+                    source.binary = { content: atob(data.message.binary), contentType: messageConfig.contentType}
+        }
     }
 
     message.value = {
@@ -211,7 +215,7 @@ function formatHeaderValue(v: KafkaHeaderValue) {
         </tbody>
     </table>
     <div class="modal fade" id="messageDialog" ref="messageDialog" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-body">
                     <div class="card-group" >

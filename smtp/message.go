@@ -35,7 +35,6 @@ type Message struct {
 	Time                    time.Time    `json:"time"`
 	Subject                 string       `json:"subject"`
 	ContentType             string       `json:"contentType"`
-	Encoding                string       `json:"encoding"`
 	ContentTransferEncoding string       `json:"contentTransferEncoding"`
 	Body                    string       `json:"body"`
 	Attachments             []Attachment `json:"attachments"`
@@ -88,8 +87,6 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 			m.Subject = val[0]
 		case "content-type":
 			m.ContentType = val[0]
-		case "encoding":
-			m.Encoding = val[0]
 		case "content-transfer-encoding":
 			m.ContentTransferEncoding = val[0]
 		}
@@ -183,7 +180,7 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 			first = false
 		}
 	default:
-		b, err := parse(tc.DotReader(), m.Encoding)
+		b, err := parse(tc.DotReader(), m.ContentTransferEncoding)
 		if err != nil {
 			return err
 		}
@@ -278,8 +275,8 @@ func (m *Message) WriteTo(w io.WriteCloser) error {
 			return err
 		}
 
-		if len(m.Encoding) > 0 {
-			_ = text.PrintfLine("Content-Transfer-Encoding: %s", m.Encoding)
+		if len(m.ContentTransferEncoding) > 0 {
+			err = text.PrintfLine("Content-Transfer-Encoding: %s", m.ContentTransferEncoding)
 			if err != nil {
 				return err
 			}
@@ -419,8 +416,8 @@ func (a *Attachment) WriteTo(w *textproto.Writer, m *Message) error {
 		return err
 	}
 
-	if len(m.Encoding) > 0 {
-		err = w.PrintfLine("Content-Transfer-Encoding: %s", m.Encoding)
+	if len(m.ContentTransferEncoding) > 0 {
+		err = w.PrintfLine("Content-Transfer-Encoding: %s", m.ContentTransferEncoding)
 		if err != nil {
 			return err
 		}

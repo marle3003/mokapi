@@ -67,7 +67,7 @@ const source = computed(() => {
         filename: filename(), 
         preview: { content: '', contentType: getContentType(selected.value!), contentTypeTitle: selected.value!.contentType, description: '' }, 
     }
-    console.log('selected: '+selected.value?.contentType)
+
     switch (selected.value?.contentType) {
             case 'avro/binary':
             case 'application/avro':
@@ -79,7 +79,6 @@ const source = computed(() => {
 })
 
 function messages(topic: KafkaTopic): string[] {
-    console.log(topic.messages)
     return Object.keys(topic.messages).sort((a, b) => {
         return a.localeCompare(b)
     })

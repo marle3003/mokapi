@@ -1,6 +1,7 @@
 package decoders
 
 import (
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"os"
 	"strings"
@@ -223,8 +224,8 @@ func TestLoad(t *testing.T) {
 				defer os.Unsetenv("MOKAPI_items[0].name")
 				require.NoError(t, err)
 				err = os.Setenv("MOKAPI_items[0].value", "123")
-				require.NoError(t, err)
 				defer os.Unsetenv("MOKAPI_items[0].value")
+				require.NoError(t, err)
 
 				err = Load([]ConfigDecoder{&FlagDecoder{}}, s)
 				require.NoError(t, err)
@@ -247,8 +248,8 @@ func TestLoad(t *testing.T) {
 				defer os.Unsetenv("MOKAPI_items_0_name")
 				require.NoError(t, err)
 				err = os.Setenv("MOKAPI_items_0_value", "123")
-				require.NoError(t, err)
 				defer os.Unsetenv("MOKAPI_items_0_value")
+				require.NoError(t, err)
 
 				err = Load([]ConfigDecoder{&FlagDecoder{}}, s)
 				require.NoError(t, err)
@@ -272,7 +273,7 @@ func TestLoad(t *testing.T) {
 				require.NoError(t, err)
 				err = os.Setenv("MOKAPI_ITEMS_0_VALUE", "123")
 				require.NoError(t, err)
-				defer os.Unsetenv("MOKAPI_ITEMS_0_VALUE.0.value")
+				defer os.Unsetenv("MOKAPI_ITEMS_0_VALUE")
 				err = os.Setenv("MOKAPI_items.0.value", "123")
 				require.NoError(t, err)
 				defer os.Unsetenv("MOKAPI_items.0.value")
@@ -294,19 +295,35 @@ func TestLoad(t *testing.T) {
 				os.Args = append(os.Args, "--foo=bar")
 
 				err := Load([]ConfigDecoder{&FlagDecoder{}}, s)
-				require.EqualError(t, err, "configuration error foo: not found")
+				require.EqualError(t, err, "configuration error 'foo' value '[bar]': not found")
 			},
 		},
 		{
 			name: "argument after positional argument",
 			f: func(t *testing.T) {
 				s := &struct {
-					Name string
+					Foo  string
+					Args []string `json:"args" yaml:"-" aliases:"args"`
 				}{}
 				os.Args = append(os.Args, "mokapi.exe", "file.json", "--foo=bar")
 
 				err := Load([]ConfigDecoder{&FlagDecoder{}}, s)
-				require.EqualError(t, err, "unexpected --foo=bar after positional argument")
+				require.NoError(t, err)
+				require.Equal(t, s.Foo, "bar")
+				require.Equal(t, s.Args, []string{"file.json"})
+			},
+		},
+		{
+			name: "after -- an additional flag argument",
+			f: func(t *testing.T) {
+				s := &struct {
+					Foo  string
+					Args []string `json:"args" yaml:"-" aliases:"args"`
+				}{}
+				os.Args = append(os.Args, "mokapi.exe", "--", "--foo=bar")
+
+				err := Load([]ConfigDecoder{&FlagDecoder{}}, s)
+				require.EqualError(t, err, "unknown positional argument: '--foo=bar'")
 			},
 		},
 	}
@@ -314,7 +331,9 @@ func TestLoad(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			log.Infof("Test: %s", tc.name)
 			os.Args = nil
+			log.Infof("Args: %s", os.Args)
 			tc.f(t)
 		})
 	}
@@ -326,7 +345,6 @@ func TestLoad_Invalid(t *testing.T) {
 	}{
 		{args: "name=bar"},
 		{args: "-"},
-		{args: "--"},
 		{args: "-=bar"},
 		{args: "---name=bar"},
 	}

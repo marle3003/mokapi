@@ -89,7 +89,7 @@ const { mail, isLoading: isLoading } = fetchMail(messageId)
     </div>
     <mail-body :messageId="mail.messageId" :body="mail.body" :contentType="mail.contentType" />
     <mail-attachments :messageId="mail.messageId" :attachments="mail.attachments" />
-    <mail-footer :contentType="mail.contentType" :encoding="mail.encoding" :messageId="mail.messageId" :inReplyTo="mail.inReplyTo" />
+    <mail-footer :contentType="mail.contentType" :encoding="mail.contentTransferEncoding" :messageId="mail.messageId" :inReplyTo="mail.inReplyTo" />
   </div>
   <loading v-if="isLoading"></loading>
   <div v-if="!mail && !isLoading">

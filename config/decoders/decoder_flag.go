@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/provider/file"
 	"net/url"
 	"reflect"
@@ -33,6 +34,7 @@ func NewFlagDecoderWithReader(reader file.FSReader) *FlagDecoder {
 }
 
 func (f *FlagDecoder) Decode(flags map[string][]string, element interface{}) error {
+	log.Infof("flags: %v", flags)
 	keys := make([]string, 0, len(flags))
 	for k := range flags {
 		keys = append(keys, k)
@@ -44,7 +46,7 @@ func (f *FlagDecoder) Decode(flags map[string][]string, element interface{}) err
 		ctx := &context{path: name, paths: paths, value: flags[name], element: reflect.ValueOf(element)}
 		err := f.setValue(ctx)
 		if err != nil {
-			return fmt.Errorf("configuration error %v: %w", name, err)
+			return fmt.Errorf("configuration error '%v' value '%v': %w", name, flags[name], err)
 		}
 	}
 
@@ -195,6 +197,9 @@ func (f *FlagDecoder) setMap(ctx *context) error {
 		m.Set(reflect.MakeMap(ctx.element.Type()))
 	}
 
+	i := m.Interface()
+	_ = i
+
 	var key reflect.Value
 	if len(ctx.paths) >= 1 {
 		key = reflect.ValueOf(ctx.paths[0])
@@ -207,6 +212,10 @@ func (f *FlagDecoder) setMap(ctx *context) error {
 			key = reflect.ValueOf(kv[0])
 			ctx.value = []string{kv[1]}
 		}
+	}
+
+	if !key.IsValid() {
+		return fmt.Errorf("expected key to set map value")
 	}
 
 	v := m.MapIndex(key)
