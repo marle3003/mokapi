@@ -118,7 +118,7 @@ function formatParam(label: any): string {
         <div class="sidebar d-none d-md-block">
           <DocNav :config="nav" :levels="levels" :title="levels[0]"/>
         </div>
-        <div style="flex: 1;max-width:50em;margin-bottom: 3rem;">
+        <div style="flex: 1;max-width:50em;margin-bottom: 3rem;margin-left:1rem">
           <nav aria-label="breadcrumb">
             <ol class="breadcrumb flex-nowrap">
               <li class="breadcrumb-item text-truncate" v-for="item of breadcrumb" :class="item.isLast ? 'active' : ''">
@@ -154,14 +154,16 @@ function formatParam(label: any): string {
   position: sticky;
   top: 4rem;
   align-self: flex-start;
-  width: 270px;
+  width: 290px;
   padding-top: 2rem;
 }
 .breadcrumb {
   padding-top: 2rem;
   margin-left: 1.2rem;
   margin-right: 1.2rem;
+  padding-bottom: 0.5rem;
   width: calc(100vw - 2rem);
+  font-size: 0.9rem;
 }
 .content {
   margin-left: 1.2rem;
