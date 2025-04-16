@@ -41,19 +41,19 @@ Its core feature are:
 Windows
 ```shell
 choco install mokapi
-mokapi --providers-http-url https://petstore31.swagger.io/api/v31/openapi.json
+mokapi https://petstore31.swagger.io/api/v31/openapi.json
 ```
 
 MacOS
 ```shell
 brew tap marle3003/tap 
 brew install mokapi
-mokapi --providers-http-url https://petstore31.swagger.io/api/v31/openapi.json
+mokapi https://petstore31.swagger.io/api/v31/openapi.json
 ```
 
 Docker
 ```shell
-docker run --env 'MOKAPI_Providers_Http_URL'='https://petstore31.swagger.io/api/v31/openapi.json' -p 80:80 -p 8080:8080 mokapi/mokapi:latest
+docker run -p 80:80 -p 8080:8080 mokapi/mokapi:latest https://petstore31.swagger.io/api/v31/openapi.json
 ```
 
 Run a request
