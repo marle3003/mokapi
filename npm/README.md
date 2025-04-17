@@ -40,7 +40,7 @@ Its core feature are:
 ## Usage
 
 ```shell
-npx mokapi --Providers.File.Directory=./mokapi
+npx mokapi https://petstore31.swagger.io/api/v31/openapi.json
 ```
 
 ## Documentation
