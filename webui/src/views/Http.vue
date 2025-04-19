@@ -98,7 +98,7 @@ function getConsoleContent() {
                 <router-link :to="{ path: '/docs/guides' }">
                   <button type="button" class="btn btn-outline-primary">Guides</button>
                 </router-link>
-                <router-link :to="{ path: '/docs/examples' }">
+                <router-link :to="{ path: '/docs/resources' }">
                   <button type="button" class="btn btn-outline-primary">Examples</button>
                 </router-link>
               </p>

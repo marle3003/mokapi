@@ -15,14 +15,14 @@ const items = computed(() => {
         for (const key in exampleFiles) {
             const file = exampleFiles[key]
             const meta = parseMetadata(files[`/src/assets/docs/${file}`])
-            items.push({ key: key, meta: meta, tag: 'example' })
+            items.push({ key: key, meta: meta, tag: 'example', level2: 'examples' })
         }
     }
     if (filter.value === 'all' || filter.value === 'tutorials') {
         for (const key in tutorialsFiles) {
             const file = tutorialsFiles[key]
             const meta = parseMetadata(files[`/src/assets/docs/${file}`])
-            items.push({ key: key, meta: meta, tag: 'tutorial' })
+            items.push({ key: key, meta: meta, tag: 'tutorial', level2: 'tutorials' })
         }
     }
     items.sort((x1, x2) => {
@@ -62,7 +62,7 @@ function filterCards(s: string) {
                             <div class="card-tag" :class="item.tag">{{ item.tag }}</div>
                             <h3 class="card-title"><i class="bi me-2 icon " :class="item.meta.icon" style="font-size:20px;"></i><span>{{ item.meta.title }}</span></h3>
                             <div class="card-text">{{ item.meta.description }}</div>
-                            <router-link class="stretched-link" :to="{ name: 'docs', params: {level2: 'tutorials', level3: formatParam(item.key)} }"></router-link>
+                            <router-link class="stretched-link" :to="{ name: 'docs', params: {level2: item.level2, level3: formatParam(item.key)} }"></router-link>
                         </div>
                     </div>
                 </div>
