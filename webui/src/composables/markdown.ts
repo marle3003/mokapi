@@ -56,13 +56,13 @@ function replaceImageUrls(data: string) {
     return data
 }
 
-export function parseMetadata(data: string) {
+export function parseMetadata(data: string): DocMeta {
     const metadataMatch = data.match(metadataRegex)
     if (!metadataMatch) {
-        return {}
+        return {} as DocMeta
     }
   
-    return yaml.load(metadataMatch[1])
+    return yaml.load(metadataMatch[1]) as DocMeta
 }
 
 export function transformPath(path: string): string {

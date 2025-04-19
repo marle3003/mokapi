@@ -270,7 +270,7 @@ function hasTouchSupport() {
                 <i class="icon case-icon bi-globe"></i>
                 <h3 class="card-title mt-3">Get started with REST API</h3>
                 <p class="mt-3">This tutorial will show you how to mock a REST API using an OpenAPI specification.</p>
-                <a href="docs/examples/tutorials/get-started-with-rest-api" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
+                <a href="docs/resources/tutorials/get-started-with-rest-api" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
               </div>
             </div>
           </div>
@@ -280,7 +280,7 @@ function hasTouchSupport() {
                 <i class="icon case-icon bi-lightning"></i>
                 <h3 class="card-title">Get started with Kafka</h3>
                 <p class="mt-4">Learn how to mock a Kafka Topic and verify that your producer generates valid messages according your AsyncAPI specification.</p>
-                <a href="docs/examples/tutorials/get-started-with-kafka" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
+                <a href="docs/resources/tutorials/get-started-with-kafka" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
               </div>
             </div>
           </div>
@@ -290,7 +290,7 @@ function hasTouchSupport() {
                 <i class="icon case-icon bi-person-check"></i>
                 <h3 class="card-title">Mock LDAP Authentication in Node.js</h3>
                 <p class="mt-4">Learn how to mock LDAP authentication using Mokapi and a Node.js backend. Step-by-step guide with code examples for testing LDAP login without a real server!</p>
-                <a href="docs/examples/tutorials/mock-ldap-authentication-in-node" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
+                <a href="docs/resources/tutorials/mock-ldap-authentication-in-node" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
               </div>
             </div>
           </div>
@@ -300,7 +300,7 @@ function hasTouchSupport() {
                 <i class="icon case-icon bi-envelope-at-fill"></i>
                 <h3 class="card-title">Mocking an SMTP Server sending Emails using a Node.js Client</h3>
                 <p class="mt-4">Learn how to mock an SMTP server using Mokapi and send emails with a Node.js client. Perfect for testing email workflows without real mail servers.</p>
-                <a href="/docs/examples/tutorials/mock-smtp-server-send-mail-using-node" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
+                <a href="/docs/resources/tutorials/mock-smtp-server-send-mail-using-node" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
               </div>
             </div>
           </div>
@@ -338,7 +338,7 @@ function hasTouchSupport() {
             <div id="collapse-action-init" class="collapse show pt-lg-0 pt-3 position-relative" role="tabpanel" data-bs-parent="#tab-demo" aria-labelledby="heading-action-init">
               <img class="img-fluid" src="/mokapi-swagger-petstore.gif" alt="Mocking a REST API and Sending HTTP Requests in Action" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
               <div class="overlay d-none position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"></div>
-              <a class="btn btn-outline-primary position-absolute top-50 start-50 translate-middle opacity-0 hover-visible" href="/docs/examples/tutorials/get-started-with-rest-api">Get Started</a>
+              <a class="btn btn-outline-primary position-absolute top-50 start-50 translate-middle opacity-0 hover-visible" href="/docs/resources/tutorials/get-started-with-rest-api">Get Started</a>
             </div>
 
           </div>

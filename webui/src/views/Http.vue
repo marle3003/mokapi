@@ -85,7 +85,7 @@ function getConsoleContent() {
               <router-link :to="{ path: '/docs/guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
               </router-link>
-              <router-link :to="{ path: '/docs/examples/tutorials/get-started-with-rest-api' }">
+              <router-link :to="{ path: '/docs/resources/tutorials/get-started-with-rest-api' }">
                 <button type="button" class="btn btn-outline-primary">Get started</button>
               </router-link>
             </p>
@@ -122,7 +122,7 @@ function getConsoleContent() {
               <div class="card-body">
                 <h2 class="card-title align-middle"><i class="bi bi-arrow-repeat me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Test Without Dependencies</span></h2>
                 <p class="card-text pb-4">Focus on testing your system while simulating external dependencies, enabling faster, more reliable test scenarios.</p>
-                <a href="/docs/examples/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="card-link position-absolute" style="bottom: 15px;">Run Mokapi in GitHub Actions</a>
+                <a href="/docs/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="card-link position-absolute" style="bottom: 15px;">Run Mokapi in GitHub Actions</a>
               </div>
           </div>
         </div>

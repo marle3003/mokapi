@@ -69,12 +69,12 @@
               <h3>Examples & Blogs</h3>
               <ul>
                 <li>
-                  <router-link :to="{ path: '/docs/examples/tutorials/get-started-with-rest-api' }">
+                  <router-link :to="{ path: '/docs/resources/tutorials/get-started-with-rest-api' }">
                     Get started with REST API
                   </router-link>
                 </li>
                 <li>
-                  <router-link :to="{ path: '/docs/examples/tutorials/get-started-with-kafka' }">
+                  <router-link :to="{ path: '/docs/resources/tutorials/get-started-with-kafka' }">
                     Get started with Kafka
                   </router-link>
                 </li>

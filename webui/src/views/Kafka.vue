@@ -130,7 +130,7 @@ useMeta(title, description, "https://mokapi.io/kafka")
               <div class="card-body">
                 <h3 class="card-title align-middle"><i class="bi bi-check2-circle me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Validate Producer Messages</span></h3>
                 <p class="card-text pb-4">Ensure that producer applications generate valid messages before they reach a real Kafka cluster.</p>
-                <a href="/docs/examples/tutorials/get-started-with-kafka" class="card-link position-absolute" style="bottom: 15px;">Start Validating</a>
+                <a href="/docs/resources/tutorials/get-started-with-kafka" class="card-link position-absolute" style="bottom: 15px;">Start Validating</a>
               </div>
           </div>
         </div>
@@ -139,7 +139,7 @@ useMeta(title, description, "https://mokapi.io/kafka")
               <div class="card-body">
                 <h3 class="card-title align-middle"><i class="bi bi-gear-wide-connected me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Simulate Complex Workflows</span></h3>
                 <p class="card-text pb-4">Mock complex Kafka message flows to test end-to-end interactions between services.</p>
-                <a href="/docs/examples/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="card-link position-absolute" style="bottom: 15px;">Explore Workflows</a>
+                <a href="/docs/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="card-link position-absolute" style="bottom: 15px;">Explore Workflows</a>
               </div>
           </div>
         </div>

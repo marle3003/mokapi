@@ -68,6 +68,16 @@ const breadcrumb = computed(() => {
   return list
 })
 
+const showNavigation = computed(() => {
+  if (!file) {
+    return true
+  }
+  if (typeof file === 'string') {
+    return true
+  }
+  return !file.hideNavigation
+})
+
 onMounted(() => {
   setTimeout(() => {
     for (var pre of document.querySelectorAll('pre')) {
@@ -113,13 +123,13 @@ function formatParam(label: any): string {
 
 <template>
   <main class="d-flex">
-    <div style="width: 100%; height: 100%;display: flex;flex-direction: column;">
+    <div style="width: 100%; height: 100%;display: flex;flex-direction: column;" class="doc">
       <div class="d-flex">
-        <div class="sidebar d-none d-md-block">
+        <div class="sidebar d-none d-md-block" v-if="showNavigation">
           <DocNav :config="nav" :levels="levels" :title="levels[0]"/>
         </div>
-        <div style="flex: 1;max-width:50em;margin-bottom: 3rem;margin-left:1rem">
-          <nav aria-label="breadcrumb">
+        <div style="flex: 1;margin-bottom: 3rem;margin-left:1rem" :style="showNavigation ? 'max-width:50em;' : ''">
+          <nav aria-label="breadcrumb" v-if="showNavigation">
             <ol class="breadcrumb flex-nowrap">
               <li class="breadcrumb-item text-truncate" v-for="item of breadcrumb" :class="item.isLast ? 'active' : ''">
                 <router-link v-if="item.params && !item.isLast" class="" :to="{ name: 'docs', params: item.params }">{{ item.label }}</router-link>
@@ -150,6 +160,9 @@ function formatParam(label: any): string {
 </template>
 
 <style>
+.doc {
+  margin-top: 20px;
+}
 .sidebar {
   position: sticky;
   top: 4rem;

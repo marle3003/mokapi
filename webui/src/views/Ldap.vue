@@ -108,7 +108,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
                 <div class="card-body">
                   <h3 class="card-title align-middle"><i class="bi bi-person-check me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >LDAP Authentication Mocking</span></h3>
                   <p class="card-text pb-4">Mock LDAP authentication to simulate login processes in your application, without needing access to a real LDAP server.</p>
-                  <a href="docs/examples/tutorials/mock-ldap-authentication-in-node" class="card-link position-absolute" style="bottom: 15px;">Learn More</a>
+                  <a href="docs/resources/tutorials/mock-ldap-authentication-in-node" class="card-link position-absolute" style="bottom: 15px;">Learn More</a>
                 </div>
             </div>
           </div>
@@ -126,7 +126,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
                 <div class="card-body">
                   <h3 class="card-title align-middle"><i class="bi bi-gear-wide-connected me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >LDAP Mock for Development</span></h3>
                   <p class="card-text pb-4">Set up an LDAP server mock to mimic real server behavior, ensuring seamless integration and testing without needing an actual LDAP server.</p>
-                  <a href="docs/examples/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="card-link position-absolute" style="bottom: 15px;">Get Started</a>
+                  <a href="docs/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="card-link position-absolute" style="bottom: 15px;">Get Started</a>
                 </div>
             </div>
           </div>
