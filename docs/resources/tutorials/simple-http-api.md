@@ -2,6 +2,7 @@
 title: Get started with REST API
 description: This tutorial will show you how to mock a REST API using an OpenAPI specification.
 icon: bi-globe
+tech: http
 ---
 # Get started with REST API
 

@@ -2,6 +2,7 @@
 title:  Mocking LDAP with Group Permissions in a Node.js Backend
 description: Learn how to mock LDAP authentication and group permission using Mokapi and a Node.js backend.
 icon: bi-shield-lock
+tech: ldap
 ---
 
 # Mocking LDAP with Group Permissions in a Node.js Backend

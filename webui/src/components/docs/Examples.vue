@@ -7,21 +7,30 @@ const files = inject<Record<string, string>>('files')!
 const nav = inject<DocConfig>('nav')!
 const exampleFiles = (<DocEntry>nav['Resources'].items!['Examples']).items ?? {}
 const tutorialsFiles = (<DocEntry>nav['Resources'].items!['Tutorials']).items ?? {}
-const filter = ref<string>('all')
+const type = ref<string>('all')
+const tech = ref<string>('all')
 
 const items = computed(() => {
     const items = []
-    if (filter.value === 'all' || filter.value === 'examples') {
+    if (type.value === 'all' || type.value === 'example') {
         for (const key in exampleFiles) {
             const file = exampleFiles[key]
             const meta = parseMetadata(files[`/src/assets/docs/${file}`])
+            if (tech.value !== 'all' && (!meta.tech || meta.tech !== tech.value)) {
+                continue
+            }
+
             items.push({ key: key, meta: meta, tag: 'example', level2: 'examples' })
         }
     }
-    if (filter.value === 'all' || filter.value === 'tutorials') {
+    if (type.value === 'all' || type.value === 'tutorial') {
         for (const key in tutorialsFiles) {
             const file = tutorialsFiles[key]
             const meta = parseMetadata(files[`/src/assets/docs/${file}`])
+            if (tech.value !== 'all' && (!meta.tech || meta.tech !== tech.value)) {
+                continue
+            }
+
             items.push({ key: key, meta: meta, tag: 'tutorial', level2: 'tutorials' })
         }
     }
@@ -34,8 +43,42 @@ const items = computed(() => {
 function formatParam(label: any): string {
   return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
 }
-function filterCards(s: string) {
-    filter.value = s
+
+const state = computed(() => {
+    console.log('----')
+    return {
+        tutorial: isTypeAvailable('tutorial'),
+        example: isTypeAvailable('example'),
+
+        http:  isTechAvailable('http'),
+        kafka: isTechAvailable('kafka'),
+        ldap: isTechAvailable('ldap'),
+        smtp: isTechAvailable('smtp')
+    }
+})
+
+function isTechAvailable(s: string) {
+    if (type.value === 'all') {
+        return true
+    }
+    for (const item of items.value) {
+        if (item.meta.tech === s) {
+            return true
+        }
+    }
+    return false
+}
+function isTypeAvailable(type: string) {
+    if (type === 'all' || tech.value === 'all') {
+        return true
+    }
+    for (const item of items.value) {
+        console.log(item.tag + '==='+type)
+        if (item.tag === type) {
+            return true
+        }
+    }
+    return false
 }
 </script>
 
@@ -49,15 +92,23 @@ function filterCards(s: string) {
 
             <!-- Filter Control -->
             <div class="filter-controls">
-                <button class="btn btn-outline-primary filter-button" :class="filter === 'all' ? 'active' : ''" @click="filterCards('all')">All</button>
-                <button class="btn btn-outline-primary filter-button" :class="filter === 'tutorials' ? 'active' : ''" @click="filterCards('tutorials')">Tutorials</button>
-                <button class="btn btn-outline-primary filter-button" :class="filter === 'examples' ? 'active' : ''" @click="filterCards('examples')">Examples</button>
+                <span>
+                    <button class="btn btn-outline-primary filter-button" :class="type === 'all' ? 'active' : ''" @click="type = 'all'">All</button>
+                    <button class="btn btn-outline-primary filter-button" :class="type === 'tutorial' ? 'active' : ''" @click="type = 'tutorial'" :disabled="!state.tutorial">Tutorials</button>
+                    <button class="btn btn-outline-primary filter-button" :class="type === 'example' ? 'active' : ''" @click="type = 'example'" :disabled="!state.example">Examples</button>
+                </span>
+                <span>
+                    <button class="btn btn-outline-primary filter-button" :class="tech === 'all' ? 'active' : ''" @click="tech = 'all'">All</button>
+                    <button class="btn btn-outline-primary filter-button" :class="tech === 'http' ? 'active' : ''" @click="tech = 'http'" :disabled="!state.http">HTTP</button>
+                    <button class="btn btn-outline-primary filter-button" :class="tech === 'kafka' ? 'active' : ''" @click="tech = 'kafka'" :disabled="!state.kafka">Kafka</button>
+                    <button class="btn btn-outline-primary filter-button" :class="tech === 'ldap' ? 'active' : ''" @click="tech = 'ldap'" :disabled="!state.ldap">LDAP</button>
+                    <button class="btn btn-outline-primary filter-button" :class="tech === 'smtp' ? 'active' : ''" @click="tech = 'smtp'" :disabled="!state.smtp">SMTP</button>
+                </span>
             </div>
 
             <div class="row row-cols-1 row-cols-md-3 g-2">
                 <div v-for="item of items" class="col mb-3">
                     <div class="card h-100">
-                        
                         <div class="card-body">
                             <div class="card-tag" :class="item.tag">{{ item.tag }}</div>
                             <h3 class="card-title"><i class="bi me-2 icon " :class="item.meta.icon" style="font-size:20px;"></i><span>{{ item.meta.title }}</span></h3>
@@ -79,10 +130,13 @@ function filterCards(s: string) {
 
 /* Filter Controls */
 .filter-controls {
+    margin-bottom: 30px;
+}
+.filter-controls span {
     display: flex;
     justify-content: center;
     gap: 10px;
-    margin-bottom: 30px;
+    margin-bottom: 10px;
 }
 
 .filter-button {
@@ -126,6 +180,7 @@ color: var(--color-button-text-hover);
 .examples .card h3 {
     margin-top: 0;
     margin-bottom: 1.5rem;
+    line-height: 1.5;
 }
 .examples a .card:hover {
   border-color: var(--card-border-active);

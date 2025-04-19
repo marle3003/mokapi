@@ -15,6 +15,7 @@ interface DocMeta {
   title: string
   description: string
   icon: string
+  tech: string | undefined
 }
 
 interface Source {
