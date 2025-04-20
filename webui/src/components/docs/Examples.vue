@@ -49,7 +49,6 @@ function formatParam(label: any): string {
 }
 
 const state = computed(() => {
-    console.log('----')
     return {
         tutorial: isTypeAvailable('tutorial'),
         example: isTypeAvailable('example'),
@@ -109,18 +108,34 @@ function setType(s: string) {
 
             <!-- Filter Control -->
             <div class="filter-controls">
-                <span>
+                <div class="d-none  d-md-flex">
                     <button class="btn btn-outline-primary filter-button" :class="type === 'all' ? 'active' : ''" @click="setType('all')">All</button>
                     <button class="btn btn-outline-primary filter-button" :class="type === 'tutorial' ? 'active' : ''" @click="setType('tutorial')" :disabled="!state.tutorial">Tutorials</button>
                     <button class="btn btn-outline-primary filter-button" :class="type === 'example' ? 'active' : ''" @click="setType('example')" :disabled="!state.example">Examples</button>
-                </span>
-                <span>
+                </div>
+                <div class="d-none  d-md-flex">
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'all' ? 'active' : ''" @click="tech = 'all'">All</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'http' ? 'active' : ''" @click="tech = 'http'" :disabled="!state.http">HTTP</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'kafka' ? 'active' : ''" @click="tech = 'kafka'" :disabled="!state.kafka">Kafka</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'ldap' ? 'active' : ''" @click="tech = 'ldap'" :disabled="!state.ldap">LDAP</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'smtp' ? 'active' : ''" @click="tech = 'smtp'" :disabled="!state.smtp">SMTP</button>
-                </span>
+                </div>
+                <div class="d-md-none">
+                    <select class="form-select" aria-label="Category" @change="setType((<any>$event).target.value)">
+                        <option value="all" selected>Tutorials & Example</option>
+                        <option value="tutorial">Tutorials</option>
+                        <option value="example">Example</option>
+                    </select>
+                </div>
+                <div class="d-md-none">
+                    <select class="form-select" aria-label="Technology" @change="tech = (<any>$event).target.value">
+                        <option value="all" selected>All</option>
+                        <option value="http">HTTP</option>
+                        <option value="kafka">Kafka</option>
+                        <option value="ldap">LDAP</option>
+                        <option value="smtp">SMTP</option>
+                    </select>
+                </div>
             </div>
 
             <div class="row row-cols-1 row-cols-md-3 g-2">
@@ -149,7 +164,7 @@ function setType(s: string) {
 .filter-controls {
     margin-bottom: 30px;
 }
-.filter-controls span {
+.filter-controls div {
     display: flex;
     justify-content: center;
     gap: 10px;
@@ -169,6 +184,13 @@ function setType(s: string) {
 color: var(--color-button-text-hover);
   border-color: var( --color-button-border-hover);
   background-color: var(--color-button-link);
+}
+
+.filter-controls select:focus {
+    border-color: var(--color-button-link);
+    /* 134 + ( 255-134) 
+    134, 183, 254 */
+    box-shadow: 0 0 0 0.25rem rgba(165, 127, 159, 0.25);
 }
 
 .examples .card {
