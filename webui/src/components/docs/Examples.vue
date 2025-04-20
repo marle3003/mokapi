@@ -134,6 +134,7 @@ function setType(s: string) {
                         <option value="kafka" :disabled="!state.kafka">Kafka</option>
                         <option value="ldap" :disabled="!state.ldap">LDAP</option>
                         <option value="smtp" :disabled="!state.smtp">SMTP</option>
+                        <option value="core" :disabled="!state.core">Core</option>
                     </select>
                 </div>
             </div>
@@ -186,10 +187,8 @@ color: var(--color-button-text-hover);
   background-color: var(--color-button-link);
 }
 
-.filter-controls select:focus {
+[data-theme="dark"] .filter-controls select:focus {
     border-color: var(--color-button-link);
-    /* 134 + ( 255-134) 
-    134, 183, 254 */
     box-shadow: 0 0 0 0.25rem rgba(165, 127, 159, 0.25);
 }
 
