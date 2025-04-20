@@ -114,7 +114,16 @@ function showItem(name: string | number, item: DocConfig | DocEntry | string) {
           <div class="navbar-container">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item" v-if="isDashboardEnabled">
-              <router-link class="nav-link" :to="{ name: 'dashboard', query: {refresh: 20} }">Dashboard</router-link>            
+              <router-link class="nav-link" :to="{ name: 'dashboard', query: {refresh: 20} }">Dashboard</router-link>
+            </li>
+            <li class="nav-item dropdown">
+              <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">Services</a>
+              <ul class="dropdown-menu">
+                <li><router-link class="dropdown-item" :to="{ path: '/http' }">HTTP</router-link></li>
+                <li><router-link class="dropdown-item" :to="{ path: '/kafka' }">Kafka</router-link></li>
+                <li><router-link class="dropdown-item" :to="{ path: '/ldap' }">LDAP</router-link></li>
+                <li><router-link class="dropdown-item" :to="{ path: '/smtp' }">SMTP</router-link></li>
+              </ul>
             </li>
             <li class="nav-item" v-for="(item, label) of nav">
               <div class="chapter" v-if="hasChildren(item)">
@@ -237,6 +246,30 @@ header .container-fluid {
   border-bottom: 4px solid var(--header-link-color-active);
   margin-bottom: -4px;
 }
+.dropdown-menu .dropdown-item:hover {
+    color: var(--header-link-color-active);
+    text-decoration: none;
+    background-color: transparent;
+}
+.nav-link.dropdown-toggle:hover, .nav-link.dropdown-toggle:focus  {
+    color: var(--header-link-color) !important;
+    border-bottom: none;
+    margin-bottom: 0;
+    text-decoration: none;
+}
+.nav-item.dropdown:has(.router-link-active) .nav-link.dropdown-toggle {
+  color: var(--header-link-color-active);
+}
+.nav-item.dropdown:has(.router-link-active) .nav-link.dropdown-toggle:hover,
+.nav-item.dropdown:has(.router-link-active) .nav-link.dropdown-toggle:focus  {
+  color: var(--header-link-color-active) !important;
+}
+.dropdown-item.router-link-active {
+  color: var(--header-link-color-active);
+}
+.navbar-nav .dropdown-menu {
+  background-color: var(--color-background-soft);
+}
 .tools {
   line-height: 1.2rem;
   margin-right: 1rem;
@@ -314,6 +347,21 @@ header .container-fluid {
   .nav-link.router-link-active {
     border-bottom-width: 0;
     margin-bottom: 0;
+  }
+  .nav-link:hover{
+    color: var(--header-link-color) !important;
+    border-bottom: none;
+    margin-bottom: 0;
+    text-decoration: none;
+  }
+  .navbar-nav .dropdown-toggle::after {
+    content: none;
+  }
+  .navbar-nav .dropdown-menu {
+    display: block;
+    border: none;
+    background-color: var(--color-background);
+    margin-top: 0;
   }
 }
 @media only screen and (max-width: 400px)  {

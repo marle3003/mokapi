@@ -86,7 +86,7 @@ function getConsoleContent() {
                 <button type="button" class="btn btn-outline-primary">Guides</button>
               </router-link>
               <router-link :to="{ path: '/docs/resources/tutorials/get-started-with-rest-api' }">
-                <button type="button" class="btn btn-outline-primary">Get started</button>
+                <button type="button" class="btn btn-outline-primary">Resources</button>
               </router-link>
             </p>
           </div>

@@ -36,7 +36,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
                 <button type="button" class="btn btn-outline-primary">Guides</button>
               </router-link>
               <router-link :to="{ path: '/docs/resources' }">
-                <button type="button" class="btn btn-outline-primary">Examples</button>
+                <button type="button" class="btn btn-outline-primary">Resources</button>
               </router-link>
             </p>
           </div>
@@ -51,7 +51,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
                   <button type="button" class="btn btn-outline-primary">Guides</button>
                 </router-link>
                 <router-link :to="{ path: '/docs/resources' }">
-                  <button type="button" class="btn btn-outline-primary">Examples</button>
+                  <button type="button" class="btn btn-outline-primary">Resources</button>
                 </router-link>
               </p>
           </div>
