@@ -36,7 +36,7 @@ const filtered = computed(() => {
 
     const filtered = []
     for (const item of items.value) {
-       if ((type.value === 'all' || type.value === item.tag) && (tech.value === 'all' || tech.value == item.meta.tech)) {
+       if ((type.value === 'all' || type.value === item.tag) && (tech.value === 'all' || tech.value === item.meta.tech || (tech.value === 'core' && !item.meta.tech))) {
         filtered.push(item)
        }
     }
@@ -56,7 +56,8 @@ const state = computed(() => {
         http:  isTechAvailable('http'),
         kafka: isTechAvailable('kafka'),
         ldap: isTechAvailable('ldap'),
-        smtp: isTechAvailable('smtp')
+        smtp: isTechAvailable('smtp'),
+        core: isTechAvailable('core')
     }
 })
 
@@ -69,11 +70,9 @@ function isTechAvailable(s: string) {
             return true
         }
         if (type.value !== item.tag) {
-            console.log('stop')
             continue
         }
-        if ( item.meta.tech === s) {
-            console.log('tech: ' +s +" - " +type.value + '==='+item.tag)
+        if (item.meta.tech === s || (s === 'core' && !item.meta.tech)) {
             return true
         }
     }
@@ -119,6 +118,7 @@ function setType(s: string) {
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'kafka' ? 'active' : ''" @click="tech = 'kafka'" :disabled="!state.kafka">Kafka</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'ldap' ? 'active' : ''" @click="tech = 'ldap'" :disabled="!state.ldap">LDAP</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'smtp' ? 'active' : ''" @click="tech = 'smtp'" :disabled="!state.smtp">SMTP</button>
+                    <button class="btn btn-outline-primary filter-button" :class="tech === 'core' ? 'active' : ''" @click="tech = 'core'" :disabled="!state.core">Core</button>
                 </div>
                 <div class="d-md-none">
                     <select class="form-select" aria-label="Category" @change="setType((<any>$event).target.value)">
