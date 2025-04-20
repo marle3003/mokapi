@@ -123,17 +123,17 @@ function setType(s: string) {
                 <div class="d-md-none">
                     <select class="form-select" aria-label="Category" @change="setType((<any>$event).target.value)">
                         <option value="all" selected>Tutorials & Example</option>
-                        <option value="tutorial">Tutorials</option>
-                        <option value="example">Example</option>
+                        <option value="tutorial" :disabled="!state.tutorial">Tutorials</option>
+                        <option value="example" :disabled="!state.example">Example</option>
                     </select>
                 </div>
                 <div class="d-md-none">
-                    <select class="form-select" aria-label="Technology" @change="tech = (<any>$event).target.value">
+                    <select class="form-select" aria-label="Technology" @change="tech = (<any>$event).target.value" v-model="tech">
                         <option value="all" selected>All</option>
-                        <option value="http">HTTP</option>
-                        <option value="kafka">Kafka</option>
-                        <option value="ldap">LDAP</option>
-                        <option value="smtp">SMTP</option>
+                        <option value="http" :disabled="!state.http">HTTP</option>
+                        <option value="kafka" :disabled="!state.kafka">Kafka</option>
+                        <option value="ldap" :disabled="!state.ldap">LDAP</option>
+                        <option value="smtp" :disabled="!state.smtp">SMTP</option>
                     </select>
                 </div>
             </div>
