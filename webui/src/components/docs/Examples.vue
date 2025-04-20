@@ -9,35 +9,39 @@ const exampleFiles = (<DocEntry>nav['Resources'].items!['Examples']).items ?? {}
 const tutorialsFiles = (<DocEntry>nav['Resources'].items!['Tutorials']).items ?? {}
 const type = ref<string>('all')
 const tech = ref<string>('all')
-
 const items = computed(() => {
     const items = []
-    if (type.value === 'all' || type.value === 'example') {
-        for (const key in exampleFiles) {
-            const file = exampleFiles[key]
-            const meta = parseMetadata(files[`/src/assets/docs/${file}`])
-            if (tech.value !== 'all' && (!meta.tech || meta.tech !== tech.value)) {
-                continue
-            }
+    for (const key in exampleFiles) {
+        const file = exampleFiles[key]
+        const meta = parseMetadata(files[`/src/assets/docs/${file}`])
 
-            items.push({ key: key, meta: meta, tag: 'example', level2: 'examples' })
-        }
+        items.push({ key: key, meta: meta, tag: 'example', level2: 'examples' })
     }
-    if (type.value === 'all' || type.value === 'tutorial') {
-        for (const key in tutorialsFiles) {
-            const file = tutorialsFiles[key]
-            const meta = parseMetadata(files[`/src/assets/docs/${file}`])
-            if (tech.value !== 'all' && (!meta.tech || meta.tech !== tech.value)) {
-                continue
-            }
+for (const key in tutorialsFiles) {
+        const file = tutorialsFiles[key]
+        const meta = parseMetadata(files[`/src/assets/docs/${file}`])
 
-            items.push({ key: key, meta: meta, tag: 'tutorial', level2: 'tutorials' })
-        }
+        items.push({ key: key, meta: meta, tag: 'tutorial', level2: 'tutorials' })
     }
     items.sort((x1, x2) => {
         return x1.meta.title.localeCompare(x2.meta.title)
     })
     return items
+})
+
+const filtered = computed(() => {
+    if (type.value === 'all' && tech.value === 'all') {
+        return items.value
+    }
+
+    const filtered = []
+    for (const item of items.value) {
+       if ((type.value === 'all' || type.value === item.tag) && (tech.value === 'all' || tech.value == item.meta.tech)) {
+        filtered.push(item)
+       }
+    }
+
+    return filtered
 })
 
 function formatParam(label: any): string {
@@ -62,7 +66,15 @@ function isTechAvailable(s: string) {
         return true
     }
     for (const item of items.value) {
-        if (item.meta.tech === s) {
+        if (type.value === 'all') {
+            return true
+        }
+        if (type.value !== item.tag) {
+            console.log('stop')
+            continue
+        }
+        if ( item.meta.tech === s) {
+            console.log('tech: ' +s +" - " +type.value + '==='+item.tag)
             return true
         }
     }
@@ -73,12 +85,17 @@ function isTypeAvailable(type: string) {
         return true
     }
     for (const item of items.value) {
-        console.log(item.tag + '==='+type)
         if (item.tag === type) {
             return true
         }
     }
     return false
+}
+function setType(s: string) {
+    type.value = s
+    if (!isTechAvailable(tech.value)) {
+        tech.value = 'all'
+    }
 }
 </script>
 
@@ -93,9 +110,9 @@ function isTypeAvailable(type: string) {
             <!-- Filter Control -->
             <div class="filter-controls">
                 <span>
-                    <button class="btn btn-outline-primary filter-button" :class="type === 'all' ? 'active' : ''" @click="type = 'all'">All</button>
-                    <button class="btn btn-outline-primary filter-button" :class="type === 'tutorial' ? 'active' : ''" @click="type = 'tutorial'" :disabled="!state.tutorial">Tutorials</button>
-                    <button class="btn btn-outline-primary filter-button" :class="type === 'example' ? 'active' : ''" @click="type = 'example'" :disabled="!state.example">Examples</button>
+                    <button class="btn btn-outline-primary filter-button" :class="type === 'all' ? 'active' : ''" @click="setType('all')">All</button>
+                    <button class="btn btn-outline-primary filter-button" :class="type === 'tutorial' ? 'active' : ''" @click="setType('tutorial')" :disabled="!state.tutorial">Tutorials</button>
+                    <button class="btn btn-outline-primary filter-button" :class="type === 'example' ? 'active' : ''" @click="setType('example')" :disabled="!state.example">Examples</button>
                 </span>
                 <span>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'all' ? 'active' : ''" @click="tech = 'all'">All</button>
@@ -107,7 +124,7 @@ function isTypeAvailable(type: string) {
             </div>
 
             <div class="row row-cols-1 row-cols-md-3 g-2">
-                <div v-for="item of items" class="col mb-3">
+                <div v-for="item of filtered" class="col mb-3">
                     <div class="card h-100">
                         <div class="card-body">
                             <div class="card-tag" :class="item.tag">{{ item.tag }}</div>
