@@ -292,7 +292,7 @@ header .container-fluid {
 @media only screen and (max-width: 992px)  {
   .navbar-collapse {
     padding: 2rem;
-    padding-top: 1;
+    padding-top: 1rem;
     position: absolute;
     top: 4rem;
     left: 0;

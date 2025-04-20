@@ -128,18 +128,20 @@ function formatParam(label: any): string {
         <div class="sidebar d-none d-md-block" v-if="showNavigation">
           <DocNav :config="nav" :levels="levels" :title="levels[0]"/>
         </div>
-        <div style="flex: 1;margin-bottom: 3rem;margin-left:1rem" :style="showNavigation ? 'max-width:50em;' : ''">
-          <nav aria-label="breadcrumb" v-if="showNavigation">
-            <ol class="breadcrumb flex-nowrap">
-              <li class="breadcrumb-item text-truncate" v-for="item of breadcrumb" :class="item.isLast ? 'active' : ''">
-                <router-link v-if="item.params && !item.isLast" class="" :to="{ name: 'docs', params: item.params }">{{ item.label }}</router-link>
-                <template v-else class="" :class="item.class">{{ item.label }}</template>
-              </li>
-            </ol>
-          </nav>
-          <div v-if="content" v-html="content" class="content" @click="showImage($event.target)"></div>
-          <div v-else-if="component" class="content"><component :is="component" /></div>
-          <page-not-found v-else />
+        <div class="doc-main" style="flex: 1;margin-bottom: 3rem;" :style="showNavigation ? 'max-width:50em;' : ''">
+          <div class="container">
+            <nav aria-label="breadcrumb" v-if="showNavigation">
+              <ol class="breadcrumb flex-nowrap">
+                <li class="breadcrumb-item text-truncate" v-for="item of breadcrumb" :class="item.isLast ? 'active' : ''">
+                  <router-link v-if="item.params && !item.isLast" class="" :to="{ name: 'docs', params: item.params }">{{ item.label }}</router-link>
+                  <template v-else class="" :class="item.class">{{ item.label }}</template>
+                </li>
+              </ol>
+            </nav>
+            <div v-if="content" v-html="content" class="content" @click="showImage($event.target)"></div>
+            <div v-else-if="component" class="content"><component :is="component" /></div>
+            <page-not-found v-else />
+          </div>
         </div>
       </div>
     </div>
@@ -170,17 +172,20 @@ function formatParam(label: any): string {
   width: 290px;
   padding-top: 2rem;
 }
+.doc-main {
+ margin-left: 1rem; 
+}
 .breadcrumb {
   padding-top: 2rem;
-  margin-left: 1.2rem;
-  margin-right: 1.2rem;
+  /*margin-left: 1.2rem;
+  margin-right: 1.2rem;*/
   padding-bottom: 0.5rem;
   width: calc(100vw - 2rem);
   font-size: 0.9rem;
 }
 .content {
-  margin-left: 1.2rem;
-  margin-right: 1.2rem;
+  /*margin-left: 1.2rem;
+  margin-right: 1.2rem;*/
   line-height: 1.75;
   font-size: 1rem;
 }
@@ -273,6 +278,9 @@ pre {
 @media only screen and (max-width: 600px)  {
   pre {
     max-width: 350px !important;
+  }
+  .doc-main {
+    margin-left: 0;
   }
 }
 code {
