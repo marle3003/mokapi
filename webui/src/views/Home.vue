@@ -313,7 +313,6 @@ function hasTouchSupport() {
       </div>
     </section>
     <section class="mokapi-demo" style="text-align: center;">
-      <div class="container">
         <h2 class="mb-4">See Mokapi in Action</h2>
         <div class="align-items-start align-items-stretch">
           <div class="nav flex-column nav-pills" role="tablist" aria-orientation="vertical">
@@ -366,7 +365,6 @@ function hasTouchSupport() {
             </div>
           </div>
         </div>
-      </div>
     </section>
   </main>
   <Footer></Footer>
