@@ -27,7 +27,7 @@ let metadata: any
 if (typeof file === 'string'){
   data = files[`/src/assets/docs/${file}`];
   ({ content, metadata } = useMarkdown(data))
-} else {
+} else if (file) {
   const entry = <DocEntry>file
   if (entry.component) {
     // component must be initialized in main.ts
@@ -37,6 +37,10 @@ if (typeof file === 'string'){
 }
 
 const breadcrumb = computed(() => {
+  if (!file) {
+    return
+  }
+
   const list = new Array()
   let current: DocConfig | DocEntry = nav
   const params: RouteParamsRawGeneric = {}
@@ -90,8 +94,10 @@ onMounted(() => {
       })
     }
   }, 1000)
-  const title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0]) + ' | Mokapi ' + levels[0]
-  useMeta(title, metadata.description, getCanonicalUrl(levels))
+  if (metadata) {
+    const title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0]) + ' | Mokapi ' + levels[0]
+    useMeta(title, metadata.description, getCanonicalUrl(levels))
+  }
   dialog.value = new Modal('#imageDialog', {})
 })
 function toUrlPath(s: string): string {

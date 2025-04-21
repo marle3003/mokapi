@@ -58,7 +58,7 @@ export function useFileResolver() {
         return { name: name, file: obj[name] }
     }
 
-    function getField(obj: any,name: string) {
+    function getField(obj: any, name: string) {
         const searchFor = name.toLowerCase().replaceAll(/[-]/g, ' ')
         return Object.keys(obj).find(
             key => key.toLowerCase().replaceAll(/[\/]/g, ' ') === searchFor)!

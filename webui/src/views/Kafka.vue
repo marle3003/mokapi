@@ -29,7 +29,7 @@ export default function() {
 }
 `
 
-const title = `Mock and Validate Kafka Messages with Mokapi`
+const title = `Turn Kafka Topics into Testable Reality`
 const description = `Don't wait for producers to send new messages. Create your own sample messages that fit your needs.`
 useMeta(title, description, "https://mokapi.io/kafka")
 </script>
@@ -38,13 +38,13 @@ useMeta(title, description, "https://mokapi.io/kafka")
   <main class="home">
     <section>
       <div class="container">
-        <div class="row hero-title">
+        <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6 px-0">
-            <h1>Mock and Validate Kafka Messages with Ease</h1>
+            <h1>{{ title }}</h1>
             <div class="badge-list mb-3">
               <span class="badge">Kafka</span>
             </div>
-            <p class="description">Test and develop Kafka-based applications faster with Mokapi's powerful mocking and validation tools.</p>
+            <p class="description">{{ description }}</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
@@ -54,10 +54,8 @@ useMeta(title, description, "https://mokapi.io/kafka")
               </router-link>
             </p>
           </div>
-          <div class="col-12 col-lg-5 justify-content-center">
-            <a href="#dialog" data-bs-toggle="modal" data-bs-target="#dialog">
-              <img src="/logo.svg" alt="Mokapi API Mock Tool" class="mx-auto d-block" />
-            </a>
+          <div class="col-12 col-lg-5">
+            <img src="/logo.svg" alt="Mokapi API Mock Tool" class="mx-auto d-block" />
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
