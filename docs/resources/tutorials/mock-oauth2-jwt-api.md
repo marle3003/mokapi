@@ -2,6 +2,7 @@
 title:  Secure API Authentication with OAuth2 and JWT in OpenAPI 3.1
 description: Learn how to secure your API using OAuth2 and JWT authentication in OpenAPI 3.1. This tutorial covers defining security schemes, validating JWT tokens with Mokapi, and generating tokens in Bash for API requests.
 icon: bi-shield-lock
+tech: http
 ---
 
 # OpenAPI 3.1 Authentication: OAuth2 and JWT

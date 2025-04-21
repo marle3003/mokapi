@@ -20,7 +20,7 @@
     "@ssthouse/vue3-tree-chart": "^0.2.6",
     "@types/bootstrap": "^5.2.10",
     "@types/whatwg-mimetype": "^3.0.2",
-    "ace-builds": "^1.39.1",
+    "ace-builds": "^1.40.0",
     "bootstrap": "^5.3.5",
     "bootstrap-icons": "^1.11.3",
     "dayjs": "^1.11.13",
@@ -37,10 +37,10 @@
     "xml-formatter": "^3.6.5"
   },
   "devDependencies": {
-    "@playwright/test": "^1.51.1",
+    "@playwright/test": "^1.52.0",
     "@rushstack/eslint-patch": "^1.11.0",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^22.14.0",
+    "@types/node": "^22.14.1",
     "@vitejs/plugin-vue": "^5.2.3",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.5.0",
@@ -50,7 +50,7 @@
     "npm-run-all": "^4.1.5",
     "prettier": "^3.5.3",
     "typescript": "~5.8.3",
-    "vite": "^6.2.6",
+    "vite": "^6.3.2",
     "vue-tsc": "^2.2.8"
   }
 }

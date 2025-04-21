@@ -2,6 +2,7 @@
 title:  "Mock OpenAPI 3.1 Authentication: API Key & Bearer Token"
 description: "Mock OpenAPI 3.1 authentication with API Key & Bearer Token. Customize authentication using Mokapi Scripts for secure API testing."
 icon: bi-key
+tech: http
 ---
 
 # OpenAPI 3.1 Authentication: API Key & Bearer Token
