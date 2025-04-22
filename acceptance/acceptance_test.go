@@ -3,7 +3,6 @@ package acceptance
 import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"mokapi/acceptance/cmd"
 	"mokapi/config/static"
 	"mokapi/runtime/events"
 	"testing"
@@ -18,7 +17,7 @@ func TestAcceptance(t *testing.T) {
 
 type BaseSuite struct {
 	suite.Suite
-	cmd *cmd.Cmd
+	cmd *Cmd
 	cfg *static.Config
 }
 
@@ -31,7 +30,7 @@ func (suite *BaseSuite) initCmd(cfg *static.Config) {
 	events.SetStore(20, events.NewTraits().WithNamespace("ldap"))
 
 	suite.cfg = cfg
-	cmd, err := cmd.Start(cfg)
+	cmd, err := Start(cfg)
 	require.NoError(suite.T(), err)
 	suite.cmd = cmd
 

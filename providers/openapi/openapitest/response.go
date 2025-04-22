@@ -81,7 +81,7 @@ func WithEncoding(propName string, encoding *openapi.Encoding) ContentOptions {
 
 func WithExample(example interface{}) ContentOptions {
 	return func(c *openapi.MediaType) {
-		c.Example = example
+		c.Example = &openapi.ExampleValue{Value: example}
 	}
 }
 

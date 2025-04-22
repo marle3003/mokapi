@@ -46,9 +46,6 @@ func NextTokenIndex(b []byte) int64 {
 }
 
 func unmarshalJSON(d *decoder, v reflect.Value) error {
-	i2 := v.Interface()
-	_ = i2
-
 	if u, _ := indirect(v); u != nil {
 		p := reflect.New(v.Type())
 		p.Elem().Set(v)
