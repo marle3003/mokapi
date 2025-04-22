@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"errors"
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/jinzhu/inflection"
@@ -41,6 +42,14 @@ func (r *resolver) resolveArray(req *Request) (*faker, error) {
 		item, err = r.resolve(req.With(path, s.Items, itemsFromExample(req)), true)
 	}
 	if err != nil {
+		var guard *RecursionGuard
+		if errors.As(err, &guard) {
+			if req.Schema.MinItems == nil || *req.Schema.MinItems == 0 {
+				return newFaker(func() (any, error) {
+					return []any{}, nil
+				}), nil
+			}
+		}
 		return nil, err
 	}
 	return newFaker(func() (interface{}, error) {
