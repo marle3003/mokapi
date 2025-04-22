@@ -97,22 +97,22 @@ Mokapi’s dashboard lets you visualize your mock APIs. View requests and respon
 
 Explore tutorials that walk you through mocking different protocols and scenarios:
 
-- 🔐 [Mocking Authentication with OpenAPI](https://mokapi.io/docs/examples/tutorials/mock-openapi-authentication-api-key-&-bearer-token)\
+- 🔐 [Mocking Authentication with OpenAPI](https://mokapi.io/docs/resources/tutorials/mock-openapi-authentication-api-key-&-bearer-token)\
 Use API key and Bearer token authentication in a mocked API.
 
-- ⚡ [Mocking Kafka with AsyncAPI](https://mokapi.io/docs/examples/tutorials/get-started-with-kafka)\
+- ⚡ [Mocking Kafka with AsyncAPI](https://mokapi.io/docs/resources/tutorials/get-started-with-kafka)\
   mocking a Kafka topic using Mokapi and verifying that a producer generates valid messages.
 
-- 👨‍💻 [Mocking LDAP Authentication](https://mokapi.io/docs/examples/tutorials/mock-ldap-authentication-in-node)\
+- 👨‍💻 [Mocking LDAP Authentication](https://mokapi.io/docs/resources/tutorials/mock-ldap-authentication-in-node)\
 Simulate LDAP-based login flows, including group-based permissions.
 
-- 📧 [Mocking SMTP Mail Servers](https://mokapi.io/docs/examples/tutorials/mock-smtp-server-send-mail-using-node)\
+- 📧 [Mocking SMTP Mail Servers](https://mokapi.io/docs/resources/tutorials/mock-smtp-server-send-mail-using-node)\
 Use Mokapi to simulate sending and receiving emails in Node.js apps.
 
-- 🖥️ [End-to-End Testing with Jest and GitHub Actions](https://mokapi.io/docs/examples/tutorials/running-mokapi-in-a-ci-cd-pipeline)\
+- 🖥️ [End-to-End Testing with Jest and GitHub Actions](https://mokapi.io/docs/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline)\
 Integrate Mokapi into your CI pipeline for full-stack E2E testing.
 
-> More examples are available on [mokapi.io/docs/examples](https://mokapi.io/docs/examples)
+> More examples are available on [mokapi.io/docs/resources](https://mokapi.io/docs/resources)
 
 # 📚 Documentation
 
@@ -122,7 +122,7 @@ Integrate Mokapi into your CI pipeline for full-stack E2E testing.
 - [LDAP](https://mokapi.io/docs/guides/ldap/overview)
 - [SMTP](https://mokapi.io/docs/guides/smtp/overview)
 - [Javascript API](https://mokapi.io/docs/javascript-api)
-- [Examples & Tutorials](https://mokapi.io/docs/examples)
+- [Examples & Tutorials](https://mokapi.io/docs/resources)
 - [Blogs](https://mokapi.io/docs/blogs)
 
 # ☕ Support

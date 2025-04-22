@@ -2,6 +2,7 @@
 title: Get started with Kafka
 description: Learn how to mock a Kafka Topic and verify that your producer generates valid messages according your AsyncAPI specification.
 icon: bi-lightning
+tech: kafka
 ---
 
 # Get started with Kafka
@@ -137,7 +138,7 @@ Mokapi provides a dashboard to monitor and verify messages sent to the mocked Ka
 
 3. <p><strong>Verify the Message:</strong><br />Locate the users topic and verify that the message sent by your producer appears as expected. Mokapi will validate the message against the AsyncAPI specification.
 
-<img src="/docs/examples/tutorials/simple-kafka-example.png" alt="Mokapi Kafka Dashboard" title="Mokapi Kafka Dashboard" />
+<img src="/docs/resources/tutorials/simple-kafka-example.png" alt="Mokapi Kafka Dashboard" title="Mokapi Kafka Dashboard" />
 
 ## Create a Kafka Consumer
 

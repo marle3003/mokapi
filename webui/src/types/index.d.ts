@@ -4,10 +4,18 @@ interface DocConfig{
 
 interface DocEntry {
   expanded?: boolean
+  hideNavigation: boolean
   hideInNavigation: boolean
   component?: string
   index?: DocEntry
   items?: {[name: string]: string | DocEntry }
+}
+
+interface DocMeta {
+  title: string
+  description: string
+  icon: string
+  tech: string | undefined
 }
 
 interface Source {

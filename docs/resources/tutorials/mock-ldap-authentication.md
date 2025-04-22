@@ -2,6 +2,7 @@
 title: Mock LDAP Authentication in Node.js
 description: Learn how to mock LDAP authentication using Mokapi and a Node.js backend. Step-by-step guide with code examples for testing LDAP login without a real server!
 icon: bi-person-check
+tech: ldap
 ---
 
 # Mock LDAP Authentication in Node.js

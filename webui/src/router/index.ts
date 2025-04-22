@@ -211,6 +211,15 @@ const router = createRouter({
       ]
     },
     {
+      path: '/docs/examples/:pathMatch(.*)*',
+      redirect: to => {
+        if (typeof to.params.pathMatch === 'string') {
+          return `/docs/resources/${to.params.pathMatch}`
+        }
+        return `/docs/resources/${to.params.pathMatch.join('/')}`
+      }
+    },
+    {
       path: '/docs',
       redirect: ({
         name: 'docs',

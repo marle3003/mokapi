@@ -2,6 +2,7 @@
 title: "Mock SMTP Server with Mokapi: Send Emails Using a Node.js Client"
 description: Learn how to mock an SMTP server using Mokapi and send emails with a Node.js client. Perfect for testing email workflows without real mail servers.
 icon: bi-envelope-at-fill
+tech: smtp
 ---
 
 # Mocking an SMTP Server with Mokapi and Sending Emails Using a Node.js Client

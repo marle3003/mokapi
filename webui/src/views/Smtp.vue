@@ -61,8 +61,8 @@ function hasTouchSupport() {
               <router-link :to="{ path: '/docs/guides' }">
                 <button type="button" class="btn btn-outline-primary">Get Started</button>
               </router-link>
-              <router-link :to="{ path: '/docs/examples' }">
-                <button type="button" class="btn btn-outline-primary">Try Now</button>
+              <router-link :to="{ path: '/docs/resources' }">
+                <button type="button" class="btn btn-outline-primary">Resources</button>
               </router-link>
             </p>
           </div>
@@ -76,8 +76,8 @@ function hasTouchSupport() {
                 <router-link :to="{ path: '/docs/guides' }">
                   <button type="button" class="btn btn-outline-primary">Guides</button>
                 </router-link>
-                <router-link :to="{ path: '/docs/examples' }">
-                  <button type="button" class="btn btn-outline-primary">Examples</button>
+                <router-link :to="{ path: '/docs/resources' }">
+                  <button type="button" class="btn btn-outline-primary">Resources</button>
                 </router-link>
               </p>
           </div>

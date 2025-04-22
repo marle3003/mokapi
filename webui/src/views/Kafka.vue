@@ -29,7 +29,7 @@ export default function() {
 }
 `
 
-const title = `Mock and Validate Kafka Messages with Mokapi`
+const title = `Turn Kafka Topics into Testable Reality`
 const description = `Don't wait for producers to send new messages. Create your own sample messages that fit your needs.`
 useMeta(title, description, "https://mokapi.io/kafka")
 </script>
@@ -38,34 +38,32 @@ useMeta(title, description, "https://mokapi.io/kafka")
   <main class="home">
     <section>
       <div class="container">
-        <div class="row hero-title">
+        <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6 px-0">
-            <h1>Mock and Validate Kafka Messages with Ease</h1>
+            <h1>{{ title }}</h1>
             <div class="badge-list mb-3">
               <span class="badge">Kafka</span>
             </div>
-            <p class="description">Test and develop Kafka-based applications faster with Mokapi's powerful mocking and validation tools.</p>
+            <p class="description">{{ description }}</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
               </router-link>
-              <router-link :to="{ path: '/docs/examples' }">
-                <button type="button" class="btn btn-outline-primary">Examples</button>
+              <router-link :to="{ path: '/docs/resources' }">
+                <button type="button" class="btn btn-outline-primary">Resources</button>
               </router-link>
             </p>
           </div>
-          <div class="col-12 col-lg-5 justify-content-center">
-            <a href="#dialog" data-bs-toggle="modal" data-bs-target="#dialog">
-              <img src="/logo.svg" alt="Mokapi API Mock Tool" class="mx-auto d-block" />
-            </a>
+          <div class="col-12 col-lg-5">
+            <img src="/logo.svg" alt="Mokapi API Mock Tool" class="mx-auto d-block" />
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
                 <router-link :to="{ path: '/docs/guides' }">
                   <button type="button" class="btn btn-outline-primary">Guides</button>
                 </router-link>
-                <router-link :to="{ path: '/docs/examples' }">
-                  <button type="button" class="btn btn-outline-primary">Examples</button>
+                <router-link :to="{ path: '/docs/resources' }">
+                  <button type="button" class="btn btn-outline-primary">Resources</button>
                 </router-link>
               </p>
           </div>
@@ -130,7 +128,7 @@ useMeta(title, description, "https://mokapi.io/kafka")
               <div class="card-body">
                 <h3 class="card-title align-middle"><i class="bi bi-check2-circle me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Validate Producer Messages</span></h3>
                 <p class="card-text pb-4">Ensure that producer applications generate valid messages before they reach a real Kafka cluster.</p>
-                <a href="/docs/examples/tutorials/get-started-with-kafka" class="card-link position-absolute" style="bottom: 15px;">Start Validating</a>
+                <a href="/docs/resources/tutorials/get-started-with-kafka" class="card-link position-absolute" style="bottom: 15px;">Start Validating</a>
               </div>
           </div>
         </div>
@@ -139,7 +137,7 @@ useMeta(title, description, "https://mokapi.io/kafka")
               <div class="card-body">
                 <h3 class="card-title align-middle"><i class="bi bi-gear-wide-connected me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Simulate Complex Workflows</span></h3>
                 <p class="card-text pb-4">Mock complex Kafka message flows to test end-to-end interactions between services.</p>
-                <a href="/docs/examples/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="card-link position-absolute" style="bottom: 15px;">Explore Workflows</a>
+                <a href="/docs/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="card-link position-absolute" style="bottom: 15px;">Explore Workflows</a>
               </div>
           </div>
         </div>
