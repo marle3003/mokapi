@@ -45,7 +45,7 @@ function hasTouchSupport() {
               <a href="ldap"><span class="badge">LDAP</span></a>
               <a href="smtp"><span class="badge">SMTP</span></a>
             </div>
-            <p class="description">Mock your APIs in Seconds - No registration, no data in the cloud, <b>free</b> and <b>open-source</b></p>
+            <p class="description">Mock your APIs instantly - No registration, no cloud, <b>free</b> and <b>open-source</b></p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
