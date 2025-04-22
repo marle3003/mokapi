@@ -26,7 +26,7 @@ func TestEvent(t *testing.T) {
 						openapitest.WithResponse(200, openapitest.WithContent(
 							"application/json", &openapi.MediaType{
 								Schema:      nil,
-								Example:     "foo",
+								Example:     &openapi.ExampleValue{Value: "foo"},
 								ContentType: media.ContentType{},
 								Encoding:    nil,
 							},

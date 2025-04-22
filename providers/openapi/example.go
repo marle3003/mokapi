@@ -1,10 +1,15 @@
 package openapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 )
+
+type ExampleValue struct {
+	Value any
+}
 
 type Examples map[string]*ExampleRef
 
@@ -14,10 +19,10 @@ type ExampleRef struct {
 }
 
 type Example struct {
-	Summary       string      `yaml:"summary,omitempty" json:"summary,omitempty"`
-	Description   string      `yaml:"description,omitempty" json:"description,omitempty"`
-	Value         interface{} `yaml:"value,omitempty" json:"value,omitempty"`
-	ExternalValue string      `yaml:"externalValue,omitempty" json:"externalValue,omitempty"`
+	Summary       string `yaml:"summary,omitempty" json:"summary,omitempty"`
+	Description   string `yaml:"description,omitempty" json:"description,omitempty"`
+	Value         any    `yaml:"value,omitempty" json:"value,omitempty"`
+	ExternalValue string `yaml:"externalValue,omitempty" json:"externalValue,omitempty"`
 }
 
 func (r *ExampleRef) UnmarshalJSON(b []byte) error {
@@ -26,6 +31,45 @@ func (r *ExampleRef) UnmarshalJSON(b []byte) error {
 
 func (r *ExampleRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.UnmarshalYaml(node, &r.Value)
+}
+
+func (e *ExampleValue) UnmarshalJSON(b []byte) error {
+	return json.Unmarshal(b, &e.Value)
+}
+
+func (e *Example) UnmarshalYAML(node *yaml.Node) error {
+	if node.Kind != yaml.MappingNode {
+		return fmt.Errorf("expected yaml.MappingNode, got %T", node.Kind)
+	}
+
+	for i := 0; i < len(node.Content); i += 2 {
+		key := node.Content[i].Value
+		v := node.Content[i+1]
+		var err error
+		switch key {
+		case "summary":
+			err = v.Decode(&e.Summary)
+		case "description":
+			err = v.Decode(&e.Description)
+		case "value":
+			e.Value, err = dynamic.ParseYamlPlain(v)
+		case "externalValue":
+			err = v.Decode(&e.ExternalValue)
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (e *ExampleValue) UnmarshalYAML(node *yaml.Node) error {
+	v, err := dynamic.ParseYamlPlain(node)
+	if err != nil {
+		return err
+	}
+	e.Value = v
+	return nil
 }
 
 func (e Examples) parse(config *dynamic.Config, reader dynamic.Reader) error {

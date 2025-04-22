@@ -1,4 +1,4 @@
-package objectpath
+package mustache
 
 import (
 	"fmt"

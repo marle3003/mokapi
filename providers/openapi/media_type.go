@@ -12,7 +12,7 @@ import (
 
 type MediaType struct {
 	Schema   *schema.Schema `yaml:"schema,omitempty" json:"schema,omitempty"`
-	Example  interface{}    `yaml:"example,omitempty" json:"example,omitempty"`
+	Example  *ExampleValue  `yaml:"example,omitempty" json:"example,omitempty"`
 	Examples Examples       `yaml:"examples,omitempty" json:"examples,omitempty"`
 
 	ContentType media.ContentType    `yaml:"-" json:"-"`
@@ -41,7 +41,7 @@ func (m *MediaType) patch(patch *MediaType) {
 		m.Schema.Patch(patch.Schema)
 	}
 
-	if patch.Example != nil {
+	if patch.Example != nil && patch.Example.Value != nil {
 		m.Example = patch.Example
 		if len(m.Examples) > 0 {
 			m.Examples = nil

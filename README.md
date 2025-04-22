@@ -68,7 +68,7 @@ curl http://localhost/api/v31/pet/2 -H 'Accept: application/json'
 
 Mokapi makes it simple to control responses using embedded JavaScript.
 
-For example, you can dynamically change the response based on query parameters or headers:
+For example, you can dynamically change the response based on query parameters:
 
 ```typescript
 import { on } from 'mokapi';
