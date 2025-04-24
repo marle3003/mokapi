@@ -2,12 +2,11 @@ package mustache
 
 import (
 	"fmt"
-	"mokapi/objectpath"
 	"regexp"
 	"strings"
 )
 
-var pattern = regexp.MustCompile(`{{\s*([\w\.]+)\s*}}`)
+var pattern = regexp.MustCompile(`{{\s*([\w.*]+)\s*}}`)
 
 func Render(template string, scope interface{}) (string, error) {
 	matches := pattern.FindAllStringSubmatch(template, -1)
@@ -19,7 +18,7 @@ func Render(template string, scope interface{}) (string, error) {
 		if path == "." {
 			value = scope
 		} else {
-			value, err = objectpath.Resolve(path, scope)
+			value, err = Resolve(path, scope)
 			if err != nil {
 				return "", err
 			}

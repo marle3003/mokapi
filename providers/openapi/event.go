@@ -90,29 +90,32 @@ func setResponseData(r *common.EventResponse, m *MediaType, request *common.Even
 			keys := reflect.ValueOf(m.Examples).MapKeys()
 			key := keys[rand.Intn(len(keys))].String()
 			v := m.Examples[key]
-			r.Data = v.Value.Value
+			if v.Value != nil {
+				r.Data = v.Value.Value
+				return nil
+			}
 		} else if m.Example != nil {
-			r.Data = m.Example
-		} else {
-			segments := strings.Split(request.Key, "/")
-			var names []string
-			for _, seg := range segments[1:] {
-				if !strings.HasPrefix(seg, "{") {
-					names = append(names, seg)
-				}
+			r.Data = m.Example.Value
+			return nil
+		}
+		segments := strings.Split(request.Key, "/")
+		var names []string
+		for _, seg := range segments[1:] {
+			if !strings.HasPrefix(seg, "{") {
+				names = append(names, seg)
 			}
+		}
 
-			req := generator.NewRequest(
-				names,
-				schema.ConvertToJsonSchema(m.Schema),
-				getGeneratorContext(request),
-			)
-			data, err := generator.New(req)
-			if err != nil {
-				return fmt.Errorf("generate response data failed: %v", err)
-			} else {
-				r.Data = data
-			}
+		req := generator.NewRequest(
+			names,
+			schema.ConvertToJsonSchema(m.Schema),
+			getGeneratorContext(request),
+		)
+		data, err := generator.New(req)
+		if err != nil {
+			return fmt.Errorf("generate response data failed: %v", err)
+		} else {
+			r.Data = data
 		}
 	}
 	return nil

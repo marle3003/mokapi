@@ -1,6 +1,6 @@
 <p align="center">
 <a href="https://mokapi.io">
-<img src="logo.svg" alt="Mokapi" title="Mokapi" width="300" />
+<img src="https://raw.githubusercontent.com/marle3003/mokapi/refs/heads/main/logo.svg" alt="Mokapi" title="Mokapi" width="300" />
 </a>
 </p>
 
@@ -80,14 +80,14 @@ export default function() {
 
 Mokapi’s dashboard lets you visualize your mock APIs. View requests and responses in real-time, generate and validate sample data for testing.
 
-<img src="webui.png" alt="Mokapi Web UI" title="Mokapi Web UI" />
+<img src="https://raw.githubusercontent.com/marle3003/mokapi/refs/heads/main/webui.png" alt="Mokapi Web UI" title="Mokapi Web UI" />
 
 # 🧪 Learn by Example
 
 Explore tutorials that walk you through mocking different protocols and scenarios:
 
-- 🔐 [Mocking Authentication with OpenAPI](https://mokapi.io/docs/resources/tutorials/mock-openapi-authentication-api-key-&-bearer-token)\
-  Use API key and Bearer token authentication in a mocked API.
+- 🌍 [Get started with REST API](https://mokapi.io/docs/resources/tutorials/get-started-with-rest-api)\
+  This tutorial will show you how to mock a REST API using an OpenAPI specification.
 
 - ⚡ [Mocking Kafka with AsyncAPI](https://mokapi.io/docs/resources/tutorials/get-started-with-kafka)\
   mocking a Kafka topic using Mokapi and verifying that a producer generates valid messages.

@@ -57,10 +57,9 @@ chocolateys:
       - **Multiple Provider support**: File, HTTP, GIT, NPM to gather configurations and scripts.
       - **Dashboard** to see what's going on.
       
-      **Usage:***
-      ```
+      **Usage:**
+      
       mokapi https://petstore31.swagger.io/api/v31/openapi.json
-      ```
     release_notes: "https://github.com/marle3003/mokapi/releases/tag/v{{ .Version }}"
 
     url_template: "https://github.com/marle3003/mokapi/releases/download/{{ .Tag }}/{{ .ArtifactName }}"

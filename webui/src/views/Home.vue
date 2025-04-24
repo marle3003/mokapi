@@ -4,9 +4,10 @@ import Footer from '@/components/Footer.vue'
 import { ref, onMounted } from 'vue'
 import { Modal } from 'bootstrap'
 
+const title = 'Your API Mocking Tool for Agile Development'
 const description = `Mokapi is a developer-friendly open-source API mocking tool that allows you to prototype, test, and demonstrate APIs using realistic data scenarios.`
 
-useMeta('Easy and flexible API Mock Tool | mokapi.io', description, 'https://mokapi.io')
+useMeta(title, description, 'https://mokapi.io')
 
 const dialog = ref<Modal>()
 const imageUrl = ref<string>()
@@ -37,14 +38,14 @@ function hasTouchSupport() {
         <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6 px-0">
             
-            <h1>Your API Mocking Tool for Agile Development</h1>
+            <h1>{{ title }}</h1>
             <div class="badge-list mb-3">
               <a href="http"><span class="badge">HTTP</span></a>
               <a href="kafka"><span class="badge">Kafka</span></a>
               <a href="ldap"><span class="badge">LDAP</span></a>
               <a href="smtp"><span class="badge">SMTP</span></a>
             </div>
-            <p class="description">Mock your APIs in Seconds - No registration, no data in the cloud, <b>free</b> and <b>open-source</b></p>
+            <p class="description">Mock your APIs instantly - No registration, no cloud, <b>free</b> and <b>open-source</b></p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/guides' }">
                 <button type="button" class="btn btn-outline-primary">Guides</button>
@@ -272,8 +273,10 @@ function hasTouchSupport() {
             <div class="col">
               <div class="card h-100">
                 <div class="card-body">
-                  <i class="icon case-icon bi-globe"></i>
-                  <h3 class="card-title mt-3">Get started with REST API</h3>
+                  <h3 class="card-title mt-3">
+                    <i class="icon me-2 bi-globe"></i>
+                    <span>Get started with mock REST API</span>
+                  </h3>
                   <p class="mt-3">This tutorial will show you how to mock a REST API using an OpenAPI specification.</p>
                   <a href="docs/resources/tutorials/get-started-with-rest-api" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
                 </div>
@@ -282,8 +285,10 @@ function hasTouchSupport() {
             <div class="col">
               <div class="card h-100">
                 <div class="card-body">
-                  <i class="icon case-icon bi-lightning"></i>
-                  <h3 class="card-title">Get started with Kafka</h3>
+                  <h3 class="card-title">
+                    <i class="icon me-2 bi-lightning"></i>
+                    <span>Get started with mock Kafka topic</span>
+                  </h3>
                   <p class="mt-4">Learn how to mock a Kafka Topic and verify that your producer generates valid messages according your AsyncAPI specification.</p>
                   <a href="docs/resources/tutorials/get-started-with-kafka" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
                 </div>
@@ -292,8 +297,10 @@ function hasTouchSupport() {
             <div class="col">
               <div class="card h-100">
                 <div class="card-body">
-                  <i class="icon case-icon bi-person-check"></i>
-                  <h3 class="card-title">Mock LDAP Authentication in Node.js</h3>
+                  <h3 class="card-title">
+                    <i class="icon me-2 bi-person-check"></i>
+                    <span>Mock LDAP Authentication in Node.js</span>
+                  </h3>
                   <p class="mt-4">Learn how to mock LDAP authentication using Mokapi and a Node.js backend. Step-by-step guide with code examples for testing LDAP login without a real server!</p>
                   <a href="docs/resources/tutorials/mock-ldap-authentication-in-node" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
                 </div>
@@ -302,8 +309,10 @@ function hasTouchSupport() {
             <div class="col">
               <div class="card h-100">
                 <div class="card-body">
-                  <i class="icon case-icon bi-envelope-at-fill"></i>
-                  <h3 class="card-title">Mocking an SMTP Server sending Emails using a Node.js Client</h3>
+                  <h3 class="card-title">
+                    <i class="icon me-2 bi-envelope-at-fill"></i>
+                    <span>Mocking an SMTP Server sending Emails using a Node.js Client</span>
+                    </h3>
                   <p class="mt-4">Learn how to mock an SMTP server using Mokapi and send emails with a Node.js client. Perfect for testing email workflows without real mail servers.</p>
                   <a href="/docs/resources/tutorials/mock-smtp-server-send-mail-using-node" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
                 </div>
@@ -385,9 +394,6 @@ function hasTouchSupport() {
 <style scoped>
 .pb-6 {
   padding-bottom: 5rem;
-}
-.case-icon {
-  font-size: 40px;
 }
 
 .mokapi-demo > div {

@@ -121,6 +121,12 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 		ex := propertyFromExample(it.Key(), req)
 		f, err := r.resolve(req.With(prop, it.Value(), ex), fallback)
 		if err != nil {
+			var guard *RecursionGuard
+			if errors.As(err, &guard) {
+				if !slices.Contains(req.Schema.Required, it.Key()) {
+					continue
+				}
+			}
 			if errors.Is(err, NoMatchFound) {
 				if domain != "" {
 					f, err = r.resolve(req.With([]string{domain, it.Key()}, it.Value(), ex), true)

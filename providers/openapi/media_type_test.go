@@ -27,7 +27,7 @@ func TestMediaType_UnmarshalJSON(t *testing.T) {
 				err := json.Unmarshal([]byte(`{ "schema": {"type": "string"}, "example": "foo", "examples": {"foo": {"summary": "foo example"}} }`), &mt)
 				require.NoError(t, err)
 				require.Equal(t, "string", mt.Schema.Type.String())
-				require.Equal(t, "foo", mt.Example)
+				require.Equal(t, "foo", mt.Example.Value)
 				require.Equal(t, "foo example", mt.Examples["foo"].Value.Summary)
 				require.True(t, mt.ContentType.IsEmpty())
 			},
@@ -62,8 +62,26 @@ examples:
     summary: foo example`), &mt)
 				require.NoError(t, err)
 				require.Equal(t, "string", mt.Schema.Type.String())
-				require.Equal(t, "foo", mt.Example)
+				require.Equal(t, "foo", mt.Example.Value)
 				require.Equal(t, "foo example", mt.Examples["foo"].Value.Summary)
+				require.True(t, mt.ContentType.IsEmpty())
+			},
+		},
+		{
+			name: "response example with date-time string",
+			test: func(t *testing.T) {
+				mt := &openapi.MediaType{}
+				err := yaml.Unmarshal([]byte(`
+schema: 
+  type: string
+example: 2025-04-22T14:30:00Z
+examples: 
+  foo: 
+    value: 2025-04-22T14:30:00Z`), &mt)
+				require.NoError(t, err)
+				require.Equal(t, "string", mt.Schema.Type.String())
+				require.Equal(t, "2025-04-22T14:30:00Z", mt.Example.Value)
+				require.Equal(t, "2025-04-22T14:30:00Z", mt.Examples["foo"].Value.Value)
 				require.True(t, mt.ContentType.IsEmpty())
 			},
 		},
@@ -270,7 +288,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 				openapitest.NewConfig("1.0", openapitest.WithPath(
 					"/foo", openapitest.NewPath(openapitest.WithOperation(
 						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{Example: "foo"})),
+							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{Example: &openapi.ExampleValue{Value: "foo"}})),
 						),
 					),
 					))),
@@ -278,7 +296,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
 				mt := res.Content["text/html"]
-				require.Equal(t, "foo", mt.Example)
+				require.Equal(t, "foo", mt.Example.Value)
 			},
 		},
 		{
@@ -287,14 +305,14 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 				openapitest.NewConfig("1.0", openapitest.WithPath(
 					"/foo", openapitest.NewPath(openapitest.WithOperation(
 						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{Example: "foo"})),
+							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{Example: &openapi.ExampleValue{Value: "foo"}})),
 						),
 					),
 					))),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
 					"/foo", openapitest.NewPath(openapitest.WithOperation(
 						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{Example: "bar"})),
+							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{Example: &openapi.ExampleValue{Value: "bar"}})),
 						),
 					),
 					))),
@@ -302,7 +320,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
 				mt := res.Content["text/html"]
-				require.Equal(t, "bar", mt.Example)
+				require.Equal(t, "bar", mt.Example.Value)
 			},
 		},
 		{
@@ -311,7 +329,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 				openapitest.NewConfig("1.0", openapitest.WithPath(
 					"/foo", openapitest.NewPath(openapitest.WithOperation(
 						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{Example: "foo"})),
+							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{Example: &openapi.ExampleValue{Value: "foo"}})),
 						),
 					),
 					))),
@@ -326,7 +344,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
 				mt := res.Content["text/html"]
-				require.Equal(t, "foo", mt.Example)
+				require.Equal(t, "foo", mt.Example.Value)
 			},
 		},
 		{
@@ -416,7 +434,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 					"/foo", openapitest.NewPath(openapitest.WithOperation(
 						"post", openapitest.NewOperation(
 							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{
-								Example: "foo",
+								Example: &openapi.ExampleValue{Value: "foo"},
 							})),
 						),
 					),
@@ -454,7 +472,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 					"/foo", openapitest.NewPath(openapitest.WithOperation(
 						"post", openapitest.NewOperation(
 							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{
-								Example: "bar",
+								Example: &openapi.ExampleValue{Value: "bar"},
 							})),
 						),
 					),
@@ -464,7 +482,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
 				mt := res.Content["text/html"]
 				require.Len(t, mt.Examples, 0)
-				require.Equal(t, "bar", mt.Example)
+				require.Equal(t, "bar", mt.Example.Value)
 			},
 		},
 	}

@@ -150,7 +150,7 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 			test: func(t *testing.T, result *openapi.Config) {
 				body := result.Paths["/foo"].Value.Post.RequestBody.Value
 				require.Len(t, body.Content, 1)
-				require.Equal(t, 12, body.Content["text/plain"].Example)
+				require.Equal(t, 12, body.Content["text/plain"].Example.Value)
 			},
 		},
 		{

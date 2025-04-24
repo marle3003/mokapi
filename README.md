@@ -68,7 +68,7 @@ curl http://localhost/api/v31/pet/2 -H 'Accept: application/json'
 
 Mokapi makes it simple to control responses using embedded JavaScript.
 
-For example, you can dynamically change the response based on query parameters or headers:
+For example, you can dynamically change the response based on query parameters:
 
 ```typescript
 import { on } from 'mokapi';
@@ -97,20 +97,20 @@ Mokapi’s dashboard lets you visualize your mock APIs. View requests and respon
 
 Explore tutorials that walk you through mocking different protocols and scenarios:
 
-- 🔐 [Mocking Authentication with OpenAPI](https://mokapi.io/docs/resources/tutorials/mock-openapi-authentication-api-key-&-bearer-token)\
-Use API key and Bearer token authentication in a mocked API.
+- 🌍 [Get started with REST API](https://mokapi.io/docs/resources/tutorials/get-started-with-rest-api)\
+  This tutorial will show you how to mock a REST API using an OpenAPI specification.
 
 - ⚡ [Mocking Kafka with AsyncAPI](https://mokapi.io/docs/resources/tutorials/get-started-with-kafka)\
-  mocking a Kafka topic using Mokapi and verifying that a producer generates valid messages.
+  Mocking a Kafka topic using Mokapi and verifying that a producer generates valid messages.
 
 - 👨‍💻 [Mocking LDAP Authentication](https://mokapi.io/docs/resources/tutorials/mock-ldap-authentication-in-node)\
-Simulate LDAP-based login flows, including group-based permissions.
+  Simulate LDAP-based login flows, including group-based permissions.
 
 - 📧 [Mocking SMTP Mail Servers](https://mokapi.io/docs/resources/tutorials/mock-smtp-server-send-mail-using-node)\
-Use Mokapi to simulate sending and receiving emails in Node.js apps.
+  Use Mokapi to simulate sending and receiving emails in Node.js apps.
 
 - 🖥️ [End-to-End Testing with Jest and GitHub Actions](https://mokapi.io/docs/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline)\
-Integrate Mokapi into your CI pipeline for full-stack E2E testing.
+  Integrate Mokapi into your CI pipeline for full-stack E2E testing.
 
 > More examples are available on [mokapi.io/docs/resources](https://mokapi.io/docs/resources)
 
