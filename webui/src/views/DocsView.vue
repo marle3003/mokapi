@@ -59,13 +59,14 @@ const breadcrumb = computed(() => {
     }
 
     params['level'+(index+1)] = formatParam(name)
-    const item: { label: string, params?: RouteParamsRawGeneric, isLast: boolean, class?: string } = { 
+    const item: { label: string, params?: RouteParamsRawGeneric, isLast: boolean } = { 
       label: name, 
       isLast: false
     }
     
-    if (index === 0|| (current && current.index)) {
-      item.params = params
+    if (index === 0 || (current && current.index)) {
+      // copy the params object and assign
+      item.params = { ...params }
     }
     list.push(item)
   }
@@ -139,8 +140,8 @@ function formatParam(label: any): string {
             <nav aria-label="breadcrumb" v-if="showNavigation">
               <ol class="breadcrumb flex-nowrap">
                 <li class="breadcrumb-item text-truncate" v-for="item of breadcrumb" :class="item.isLast ? 'active' : ''">
-                  <router-link v-if="item.params && !item.isLast" class="" :to="{ name: 'docs', params: item.params }">{{ item.label }}</router-link>
-                  <template v-else class="" :class="item.class">{{ item.label }}</template>
+                  <router-link v-if="item.params && !item.isLast" :to="{ name: 'docs', params: item.params }">{{ item.label }}</router-link>
+                  <template v-else>{{ item.label }}</template>
                 </li>
               </ol>
             </nav>

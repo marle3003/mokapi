@@ -11,8 +11,8 @@ const Server = require('./server');
   visited.add('/')
   const browser = await chromium.launch();
 
-  async function crawl(url) {
-    if (!url.href.startsWith('http://localhost:8025')) {
+  async function crawl(url, text) {
+    if (!url.href.startsWith('http://localhost:8025') || url.href.startsWith('http://localhost:8025/dashboard')) {
       return
     }
     if (visited.has(url.pathname)) {
@@ -20,6 +20,9 @@ const Server = require('./server');
     }
     visited.add(url.pathname)
     console.info(`crawling ${url.href}...`)
+    if (text) {
+      console.log('from link: '+text)
+    }
     const page = await browser.newPage();
     await page.goto(url.href, {
       waitUntil: 'networkidle',
@@ -50,27 +53,24 @@ const Server = require('./server');
       throw new Error(`page ${url.href} not found: ${msg}`)
     }
 
-    const p = path.join('../dist', url.pathname)
+    let p = path.join('../dist', url.pathname)
     if (!fs.existsSync(path.dirname(p))){
       fs.mkdirSync(path.dirname(p), { recursive: true });
     }
 
     let content = await page.content();
     content = content.replace(/http:\/\/localhost:8025/g, '')
-    fs.writeFileSync(p + '.html', content);
 
     let links = new Set(await page.evaluate(async (url) => {
       return Array.from(document.querySelectorAll('a'))
-        .map((a) => new URL(a.href))
-        .filter((u) => u.hostname == url.hostname)
+        .map((a) => { return {url: new URL(a.href), text: a.innerText} })
+        .filter((u) => u.url.hostname == url.hostname)
     }, url))
     await page.close()
 
-    //const promises = [];
     for (const u of links) {
       try {
-      //promises.push(crawl(u))
-      await crawl(u)
+      await crawl(u.url, u.text)
       } catch (err) {
         if (err.message && err.message.startsWith('page ')) { 
           throw new Error(`crawl link on page ${url} failed: ${err}`)
@@ -78,7 +78,13 @@ const Server = require('./server');
         throw err
       }
     }
-    //await Promise.all(promises)
+
+    if (isDir(p)) {
+      console.log('create index.html')
+      p += '/index'
+    }
+
+    fs.writeFileSync(p + '.html', content);
   }
 
   await crawl(new URL('http://localhost:8025/home'))
@@ -87,3 +93,12 @@ const Server = require('./server');
 
   server.close()
 })();
+
+function isDir(path) {
+  try {
+      const stats = fs.statSync(path);
+      return stats.isDirectory();
+  } catch (err) {
+      return false;
+  }
+}
