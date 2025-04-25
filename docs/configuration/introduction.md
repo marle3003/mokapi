@@ -1,6 +1,6 @@
 ---
-title: Introduction
-description: This page will introduce you to the startup and dynamic configurations.
+title: Introduction to Mokapi Configuration | Static & Dynamic Setup Explained
+description: Discover how to configure Mokapi using static files or dynamic updates. Learn startup options, hot-reloading, and flexible setup for your mocked APIs.
 ---
 # Introduction
 
