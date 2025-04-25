@@ -1,6 +1,6 @@
 ---
-title: Args
-description: Args is an object used by functions in the module mokapi/http
+title: Args Object | Mokapi HTTP Module Function Parameters
+description: The Args object is used by functions in the Mokapi HTTP module to access request parameters, headers, body data, and more for API mocking logic.
 ---
 # Args
 

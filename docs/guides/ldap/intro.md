@@ -1,6 +1,6 @@
 ---
 title: How to mock LDAP with Mokapi
-description: Integrate your App with a mock LDAP server
+description: Learn how to mock and test LDAP authentication using Mokapi. Simulate user login, group permissions, and directory structure for development and testing.
 cards:
   items:
     - title: Run your first mocked LDAP
