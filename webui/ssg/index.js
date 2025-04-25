@@ -11,7 +11,7 @@ const Server = require('./server');
   visited.add('/')
   const browser = await chromium.launch();
 
-  async function crawl(url, text) {
+  async function crawl(url) {
     if (!url.href.startsWith('http://localhost:8025') || url.href.startsWith('http://localhost:8025/dashboard')) {
       return
     }
@@ -20,9 +20,6 @@ const Server = require('./server');
     }
     visited.add(url.pathname)
     console.info(`crawling ${url.href}...`)
-    if (text) {
-      console.log('from link: '+text)
-    }
     const page = await browser.newPage();
     await page.goto(url.href, {
       waitUntil: 'networkidle',
@@ -63,14 +60,14 @@ const Server = require('./server');
 
     let links = new Set(await page.evaluate(async (url) => {
       return Array.from(document.querySelectorAll('a'))
-        .map((a) => { return {url: new URL(a.href), text: a.innerText} })
-        .filter((u) => u.url.hostname == url.hostname)
+        .map((a) => new URL(a.href))
+        .filter((u) => u.hostname == url.hostname)
     }, url))
     await page.close()
 
     for (const u of links) {
       try {
-      await crawl(u.url, u.text)
+      await crawl(u)
       } catch (err) {
         if (err.message && err.message.startsWith('page ')) { 
           throw new Error(`crawl link on page ${url} failed: ${err}`)
@@ -80,7 +77,6 @@ const Server = require('./server');
     }
 
     if (isDir(p)) {
-      console.log('create index.html')
       p += '/index'
     }
 

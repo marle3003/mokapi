@@ -23,9 +23,9 @@ API responses.
 Mokapi supports multiple configuration sources, providing flexibility in how you manage and deploy your mock services:
 
 - [**File System:**](/docs/configuration/dynamic/file.md) Store configurations locally for quick access and version control.
-- [**HTTP:**]((/docs/configuration/dynamic/http.md)) Fetch configurations from remote servers, facilitating centralized management. 
+- [**HTTP:**](/docs/configuration/dynamic/http.md) Fetch configurations from remote servers, facilitating centralized management. 
 - [**Git:**](/docs/configuration/dynamic/git.md) Integrate with Git to leverage version control and collaborative workflows. 
-- [**NPM Packages:**]((/docs/configuration/dynamic/npm.md)) Distribute and manage configurations as NPM packages for consistency across projects.
+- [**NPM Packages:**](/docs/configuration/dynamic/npm.md) Distribute and manage configurations as NPM packages for consistency across projects.
 
 ## Best Practices
 
