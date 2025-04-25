@@ -7,10 +7,10 @@ test('Visit Guides', async ({ page, home }) => {
 
     await test.step('meta information are available', async () => {
         await expect(page).toHaveURL('/docs/guides')
-        await expect(page).toHaveTitle('Getting Started with Mokapi: Mock APIs and Validate Against Schemas | Mokapi Guides')
+        await expect(page).toHaveTitle('Getting Started with Mokapi | Mock APIs & Validate with OpenAPI and AsyncAPI | Mokapi Guides')
         await expect(page.locator('meta[name="description"]')).toHaveAttribute(
             'content',
-            'Learn to set up Mokapi for mocking APIs, no account required, free and open-source.'
+            'Learn how to set up Mokapi to mock APIs and validate requests using OpenAPI or AsyncAPI. No account needed—free, open-source, and easy to use.'
         )
         await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://mokapi.io/docs/guides/welcome')
     })
