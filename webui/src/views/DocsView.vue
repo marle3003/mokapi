@@ -96,7 +96,11 @@ onMounted(() => {
     }
   }, 1000)
   if (metadata) {
-    const title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0]) + ' | Mokapi ' + levels[0]
+    const extension = ' | Mokapi ' + levels[0]
+    let title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0])
+    if ((title.length + extension.length) <= 70) {
+      title +=  ' | Mokapi ' + levels[0]
+    }
     useMeta(title, metadata.description, getCanonicalUrl(levels))
   }
   dialog.value = new Modal('#imageDialog', {})
