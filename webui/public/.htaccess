@@ -7,8 +7,8 @@
   RewriteEngine On
 
   # redirect www to non-www
-  RewriteCond %{HTTP_HOST} !^mokapi.io$
-  RewriteRule ^(.*)$ https://mokapi.io/$1 [R,L]
+  RewriteCond %{HTTP_HOST} ^www\.mokapi\.io$ [NC]
+  RewriteRule ^(.*)$ https://mokapi.io/$1 [R=301,L]
 
   # redirect http to https
   RewriteCond %{SERVER_PORT} !^443$
