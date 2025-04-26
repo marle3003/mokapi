@@ -159,7 +159,7 @@ function hasTouchSupport() {
         <div class="row">
           <div class="col-12">
             <h2>Powerful dashboard for your fake email server</h2>
-              <img src="/dashboard-smtp.png" style="width:100%" />
+              <img src="/dashboard-smtp.png" alt="Mokapi dashboard displaying received emails via the built-in SMTP server." style="width:100%" />
           </div>
         </div>
       </div>
