@@ -7,6 +7,7 @@ const files = inject<Record<string, string>>('files')!
 const nav = inject<DocConfig>('nav')!
 const exampleFiles = (<DocEntry>nav['Resources'].items!['Examples']).items ?? {}
 const tutorialsFiles = (<DocEntry>nav['Resources'].items!['Tutorials']).items ?? {}
+const blogFiles = (<DocEntry>nav['Resources'].items!['Blogs']).items ?? {}
 const type = ref<string>('all')
 const tech = ref<string>('all')
 const items = computed(() => {
@@ -14,15 +15,19 @@ const items = computed(() => {
     for (const key in exampleFiles) {
         const file = exampleFiles[key]
         const meta = parseMetadata(files[`/src/assets/docs/${file}`])
-
         items.push({ key: key, meta: meta, tag: 'example', level2: 'examples' })
     }
-for (const key in tutorialsFiles) {
+    for (const key in tutorialsFiles) {
         const file = tutorialsFiles[key]
         const meta = parseMetadata(files[`/src/assets/docs/${file}`])
-
         items.push({ key: key, meta: meta, tag: 'tutorial', level2: 'tutorials' })
     }
+    for (const key in blogFiles) {
+        const file = blogFiles[key]
+        const meta = parseMetadata(files[`/src/assets/docs/${file}`])
+        items.push({ key: key, meta: meta, tag: 'blog', level2: 'blogs' })
+    }
+
     items.sort((x1, x2) => {
         return x1.meta.title.localeCompare(x2.meta.title)
     })
@@ -52,6 +57,7 @@ const state = computed(() => {
     return {
         tutorial: isTypeAvailable('tutorial'),
         example: isTypeAvailable('example'),
+        blog: isTypeAvailable('blog'),
 
         http:  isTechAvailable('http'),
         kafka: isTechAvailable('kafka'),
@@ -102,7 +108,10 @@ function setType(s: string) {
         <div class="container">
             <div class="header">
                 <h1>Explore Mokapi Resources</h1>
-                <p>Browse through tutorials and examples to get the most out of Mokapi.</p>
+                <p>
+                    Explore a variety of tutorials, examples, and blog articles to help you make the most of Mokapi. Whether you're 
+                    learning to mock APIs, validate schemas, or streamline your development process, our resources are designed to support you every step of the way.
+                </p>
             </div>
 
             <!-- Filter Control -->
@@ -111,6 +120,7 @@ function setType(s: string) {
                     <button class="btn btn-outline-primary filter-button" :class="type === 'all' ? 'active' : ''" @click="setType('all')">All</button>
                     <button class="btn btn-outline-primary filter-button" :class="type === 'tutorial' ? 'active' : ''" @click="setType('tutorial')" :disabled="!state.tutorial">Tutorials</button>
                     <button class="btn btn-outline-primary filter-button" :class="type === 'example' ? 'active' : ''" @click="setType('example')" :disabled="!state.example">Examples</button>
+                    <button class="btn btn-outline-primary filter-button" :class="type === 'blog' ? 'active' : ''" @click="setType('blog')" :disabled="!state.blog">Blogs</button>
                 </div>
                 <div class="d-none  d-md-flex">
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'all' ? 'active' : ''" @click="tech = 'all'">All</button>
@@ -144,7 +154,10 @@ function setType(s: string) {
                     <div class="card h-100">
                         <div class="card-body">
                             <div class="card-tag" :class="item.tag">{{ item.tag }}</div>
-                            <h3 class="card-title"><i class="bi me-2 icon " :class="item.meta.icon" style="font-size:20px;"></i><span>{{ item.meta.title }}</span></h3>
+                            <h3 class="card-title">
+                                <i class="bi me-2 icon " :class="item.meta.icon" style="font-size:20px;" v-if="item.meta.icon"></i>
+                                <span>{{ item.meta.title }}</span>
+                            </h3>
                             <div class="card-text">{{ item.meta.description }}</div>
                             <router-link class="stretched-link" :to="{ name: 'docs', params: {level2: item.level2, level3: formatParam(item.key)} }"></router-link>
                         </div>
@@ -211,6 +224,9 @@ color: var(--color-button-text-hover);
 }
 .examples .card .card-tag.tutorial {
     background-color: var(--color-green);
+}
+.examples .card .card-tag.blog {
+    background-color: var(--color-blue);
 }
 .examples .card .card-title {
     padding-top: 10px;

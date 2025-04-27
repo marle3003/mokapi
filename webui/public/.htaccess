@@ -14,11 +14,17 @@
   RewriteCond %{SERVER_PORT} !^443$
   RewriteRule (.+) https://%{HTTP_HOST}/$1 [L,R]
 
-  # Case 1: Redirect exactly /docs/examples to /docs/resources
+  # Redirect exactly /docs/examples to /docs/resources
   RewriteRule ^docs/examples/?$ /docs/resources [R=301,L]
 
-  # Case 2: Redirect anything under /docs/examples/ to /docs/resources/
+  # Redirect anything under /docs/examples/ to /docs/resources/
   RewriteRule ^docs/examples/(.*)$ /docs/resources/$1 [R=301,L]
+
+  # Redirect exactly /docs/blogs to /docs/resources
+  RewriteRule ^docs/blogs/?$ /docs/resources [R=301,L]
+
+  # Redirect anything under /docs/blogs/ to /docs/resources/blogs/
+  RewriteRule ^docs/blogs/(.*)$ /docs/resources/blogs/$1 [R=301,L]
 
   # rewrite for bots if tailing /
   RewriteCond %{HTTP_USER_AGENT} googlebot|bingbot|Seobility|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora\ link\ preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp|redditbot|applebot|flipboard|tumblr|bitlybot|skypeuripreview|nuzzel|discordbot|google\ page\ speed|qwantify|bitrix\ link\ preview|xing-contenttabreceiver|google-inspectiontool|chrome-lighthouse|telegrambot [NC]

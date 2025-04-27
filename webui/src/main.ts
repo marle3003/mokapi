@@ -4,12 +4,10 @@ import router from './router'
 import './assets/main.css'
 import VueHighlightJS from 'vue3-highlightjs'
 import ExamplesVue from './components/docs/Examples.vue'
-import BlogsVue from './components/docs/Blogs.vue'
 
 const app = createApp(App)
 // dynamic doc components
 app.component('examples', ExamplesVue)
-app.component('blogs', BlogsVue)
 
 app.use(router)
 app.use(VueHighlightJS)

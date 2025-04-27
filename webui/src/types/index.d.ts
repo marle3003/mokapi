@@ -14,7 +14,7 @@ interface DocEntry {
 interface DocMeta {
   title: string
   description: string
-  icon: string
+  icon: string | undefined
   tech: string | undefined
 }
 
