@@ -5,7 +5,7 @@ export interface Source {
     size?: ExpectedString
     content: ExpectedString
     filename: ExpectedString
-    clipboard: string
+    clipboard: ExpectedString 
 }
 
 export function useSourceView(locator: Locator) {
@@ -22,11 +22,15 @@ export function useSourceView(locator: Locator) {
             } else {
                 await expect(source.getByLabel('Size of Code')).not.toBeVisible()
             }
-            await expect(source.getByRole('region', { name: 'content' })).toHaveText(expected.content)
+            await expect(source.getByRole('region', { name: 'content' }).locator('.ace_content')).toHaveText(expected.content)
 
             await source.getByRole('button', { name: 'Copy raw content' }).click()
             let clipboardText = await locator.page().evaluate('navigator.clipboard.readText()')
-            await expect(clipboardText).toContain(expected.clipboard)
+            if (typeof expected.clipboard === 'string') {
+                await expect(clipboardText).toContain(expected.clipboard)
+            }else if (expected.clipboard instanceof RegExp) {
+                await expect(clipboardText).toMatch(expected.clipboard)
+            }
 
             await test.step('Check download', async () => {
                 const [ download ] = await Promise.all([

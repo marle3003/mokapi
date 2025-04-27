@@ -23,7 +23,7 @@ const binary = ref<HTMLElement>()
 
 const emit = defineEmits<{
   (e: 'update', value: { content: string, type: string}): void,
-  (e: 'switch', value: string): void
+  (e: 'switch', value: 'preview' | 'binary'): void
 }>()
 
 const { getLanguage } = usePrettyLanguage()
@@ -41,12 +41,13 @@ watch(() => props.source, (source) => {
     if (!current.value) {
       return
     }
+    
     if (current.value?.type === 'preview') {
       current.value.data = source.preview!
     } else {
       current.value.data = source.binary!
     }
-})
+}, { deep: true })
 
 const lines = computed(() => {
   let content = props.source.preview?.content

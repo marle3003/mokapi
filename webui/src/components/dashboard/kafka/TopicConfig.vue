@@ -31,10 +31,8 @@ function filename() {
 }
 
 // select first message
-for (const messageId in props.topic.messages) {
-    selected.value = props.topic.messages[messageId]
-    break
-}
+const first = messages(props.topic)[0]
+selected.value = props.topic.messages[first]
 
 function selectedMessageChange(event: any){
     for (const messageId in props.topic.messages){
@@ -99,7 +97,7 @@ function messages(topic: KafkaTopic): string[] {
             <div class="col-auto">
                 <p id="message-name" class="label">Name</p>
                 <select class="form-select form-select-sm mb-2" aria-labelledby="message-name" @change="selectedMessageChange" v-if="Object.keys(topic.messages).length > 1">
-                    <option v-for="msg in messages(topic)">{{ msg }}</option>
+                    <option v-for="msg in messages(topic)" :selected="msg == selected.name">{{ msg }}</option>
                 </select>
                 <p aria-labelledby="message-name" v-else>{{ selected.name }}</p>
             </div>

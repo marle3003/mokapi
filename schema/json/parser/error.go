@@ -189,5 +189,5 @@ func Marshal(err error) string {
 		items := toString(e.err, []string{"#"}, "json")
 		return fmt.Sprintf("[%s]", strings.Join(items, ","))
 	}
-	return fmt.Sprintf(`[%s]`, err.Error())
+	return fmt.Sprintf(`["%s"]`, err.Error())
 }

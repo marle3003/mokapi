@@ -6,7 +6,7 @@ test('Visit Configuration', async ({ page, home }) => {
 
     await test.step('meta information are available', async () => {
         await expect(page).toHaveURL('/docs/configuration')
-        await expect(page).toHaveTitle('Introduction to Mokapi Configuration | Static & Dynamic Setup Explained | Mokapi Configuration')
+        await expect(page).toHaveTitle('Introduction to Mokapi Configuration | Static & Dynamic Setup Explained')
         await expect(page.locator('meta[name="description"]')).toHaveAttribute(
             'content',
             'Discover how to configure Mokapi using static files or dynamic updates. Learn startup options, hot-reloading, and flexible setup for your mocked APIs.'
