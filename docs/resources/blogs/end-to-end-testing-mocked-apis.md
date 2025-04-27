@@ -101,6 +101,9 @@ development and CI pipelines, leading to faster feedback, fewer bugs, and better
 **Ready to ship faster, more reliable software?**
 [Get started with Mokapi](/docs/guides/get-started/welcome.md)
 
+For a detailed, step-by-step guide on how to use Mokapi in your GitHub Actions workflows, 
+see the [GitHub Actions and Mokapi](/docs/resources/tutorials/running-mokapi-github-action.md).
+
 ---
 
 *A shorter summary of this article is also available on [LinkedIn](https://www.linkedin.com/pulse/end-to-end-testing-mocked-apis-using-mokapi-github-actions-lehmann-nuylf), including a link back here for full details.*
