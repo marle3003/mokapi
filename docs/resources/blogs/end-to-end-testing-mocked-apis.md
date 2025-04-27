@@ -1,6 +1,6 @@
 ---
 title: End-to-End Testing with Mock APIs Using Mokapi
-description: Learn how to improve your end-to-end testing with Mokapi by mocking APIs for faster, more reliable test runs. Discover how to integrate Mokapi into your CI/CD pipeline with GitHub Actions for better control and fewer bugs.
+description: Improve your end-to-end tests by mocking APIs with Mokapi. Integrate it into your CI/CD pipeline for faster, more reliable testing.
 ---
 
 # End-to-End Testing with Mocked APIs Using Mokapi
