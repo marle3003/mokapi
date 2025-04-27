@@ -90,7 +90,7 @@
 [data-theme="light"] {
     --color-background: #fff;
     --color-background-mute: #dfe2ec;
-    --color-background-soft: rgb(246,250,253);
+    --color-background-soft: #f6f8fa;
     --color-background-light: #dfe2ec;
     --color-border: #f6f8fcff;
 

@@ -7,6 +7,7 @@
 @import './nav.css';
 @import './home.css';
 @import 'ace-mokapi.css';
+@import 'github.css';
 @import 'github-dark.css';
 
 body {
@@ -91,7 +92,7 @@ pre{
 }
 
 [data-theme="light"] .doc .content .hljs{
-  background-color: var(--color-background-soft);
+  background-color:	#f6f8fa;
 }
 
 pre {
