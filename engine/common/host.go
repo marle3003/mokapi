@@ -103,8 +103,20 @@ type HttpClientOptions struct {
 }
 
 type Action struct {
-	Duration int64             `json:"duration"`
-	Tags     map[string]string `json:"tags"`
+	Duration   int64             `json:"duration"`
+	Tags       map[string]string `json:"tags"`
+	Parameters []any             `json:"parameters"`
+	Logs       []Log             `json:"logs"`
+	Error      *Error            `json:"error"`
+}
+
+type Log struct {
+	Level   string `json:"level"`
+	Message string `json:"message"`
+}
+
+type Error struct {
+	Message string `json:"message"`
 }
 
 func NewJobOptions() JobOptions {
@@ -124,6 +136,10 @@ func (a *Action) String() string {
 		sb.WriteString(fmt.Sprintf("%v=%v", k, v))
 	}
 	return sb.String()
+}
+
+func (a *Action) AppendLog(level, message string) {
+	a.Logs = append(a.Logs, Log{Level: level, Message: message})
 }
 
 type FakerNode interface {

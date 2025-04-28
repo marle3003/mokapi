@@ -109,6 +109,12 @@ function toUrlPath(s: string): string {
   return s.replaceAll(/[\s\/]/g, '-').replace('&', '%26')
 }
 function getCanonicalUrl(levels: string[]) {
+  if (file) {
+    const entry = <DocEntry>file
+    if (entry.canonical) {
+      return entry.canonical
+    }
+  }
   let canonical = 'https://mokapi.io/docs/' + toUrlPath(levels[0])
   for (let i = 1; i < levels.length; i++) {
     canonical += `/${toUrlPath(levels[i])}`
@@ -378,9 +384,9 @@ blockquote {
   margin: 50px auto;
   font-family: Open Sans;
   font-style: italic;
-  padding: 1.2em 30px 1.2em 70px;
+  padding: 1.2em 30px 1.2em 55px;
   line-height: 1.75;
-  font-size: 1.2rem;
+  font-size: 1rem;
   border-left: 8px solid #eabaabff;
   position: relative;
   background: var(--color-background-soft);
@@ -393,14 +399,17 @@ blockquote:before {
   left: 10px;
   top:-10px;
 }
-blockquote::after{
+blockquote::after {
   content: '';
 }
-blockquote span{
+blockquote span {
   display:block;
   font-style: normal;
   font-weight: bold;
-  margin-top:1em;
+  margin: 0;
+}
+blockquote p {
+  margin: 0;
 }
 
 .content a.card {
