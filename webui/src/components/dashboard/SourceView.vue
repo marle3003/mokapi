@@ -14,6 +14,7 @@ const props = withDefaults(defineProps<{
   height?: number
   maxHeight?: number
   hideContentType?: boolean
+  hideHeader?: boolean
   readonly?: boolean
 }>(), { readonly: true })
 
@@ -121,7 +122,7 @@ function switchCode() {
 
 <template>
   <section aria-label="Source">
-    <div class="header">
+    <div class="header" v-if="!hideHeader">
       <div class="view controls" v-if="source.preview && source.binary">
         <button ref="preview" type="button" class="btn btn-link active" @click="switchPreview()">JSON</button>
         <button ref="binary" type="button" class="btn btn-link" @click="switchCode()">Binary</button>
