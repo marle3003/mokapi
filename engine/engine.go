@@ -77,7 +77,8 @@ func (e *Engine) AddScript(evt dynamic.ConfigEvent) error {
 func (e *Engine) Run(event string, args ...interface{}) []*common.Action {
 	var result []*common.Action
 	for _, s := range e.scripts {
-		result = append(result, s.RunEvent(event, args...)...)
+		actions := s.RunEvent(event, args...)
+		result = append(result, actions...)
 	}
 
 	return result

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
@@ -28,6 +29,8 @@ type scriptHost struct {
 	jobs   map[int]Job
 	events map[string][]*eventHandler
 	file   *dynamic.Config
+
+	actionLogger func(level, message string)
 
 	fakerNodes []*common.FakerTree
 	m          sync.Mutex
@@ -65,21 +68,25 @@ func (sh *scriptHost) Run() (err error) {
 func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*common.Action {
 	var result []*common.Action
 	for _, eh := range sh.events[event] {
-		s := &common.Action{
+		action := &common.Action{
 			Tags: eh.tags,
 		}
+		sh.startEventHandler(action)
 		start := time.Now()
 
 		if b, err := eh.handler(args...); err != nil {
 			log.Errorf("unable to execute event handler: %v", err)
+			action.Error = &common.Error{Message: err.Error()}
 		} else if !b {
 			continue
 		} else {
-			log.WithField("handler", s).Debug("processed event handler")
+			log.WithField("handler", action).Debug("processed event handler")
 		}
 
-		s.Duration = time.Now().Sub(start).Milliseconds()
-		result = append(result, s)
+		action.Duration = time.Now().Sub(start).Milliseconds()
+		action.Parameters = getDeepCopy(args)
+		result = append(result, action)
+		sh.endEventHandler()
 	}
 	return result
 }
@@ -181,18 +188,30 @@ func (sh *scriptHost) close() {
 
 func (sh *scriptHost) Info(args ...interface{}) {
 	sh.engine.logger.Info(args...)
+	if sh.actionLogger != nil {
+		sh.actionLogger("log", fmt.Sprint(args...))
+	}
 }
 
 func (sh *scriptHost) Warn(args ...interface{}) {
 	sh.engine.logger.Warn(args...)
+	if sh.actionLogger != nil {
+		sh.actionLogger("warn", fmt.Sprint(args...))
+	}
 }
 
 func (sh *scriptHost) Error(args ...interface{}) {
 	sh.engine.logger.Error(args...)
+	if sh.actionLogger != nil {
+		sh.actionLogger("error", fmt.Sprint(args...))
+	}
 }
 
 func (sh *scriptHost) Debug(args ...interface{}) {
 	sh.engine.logger.Debug(args...)
+	if sh.actionLogger != nil {
+		sh.actionLogger("debug", fmt.Sprint(args...))
+	}
 }
 
 func (sh *scriptHost) OpenFile(path string, hint string) (*dynamic.Config, error) {
@@ -265,4 +284,22 @@ func getScriptPath(u *url.URL) string {
 		return u.Path
 	}
 	return u.Opaque
+}
+
+func (sh *scriptHost) startEventHandler(action *common.Action) {
+	sh.actionLogger = action.AppendLog
+}
+
+// Function to end the event handler context
+func (sh *scriptHost) endEventHandler() {
+	sh.actionLogger = nil
+}
+
+func getDeepCopy(args []any) []any {
+	result := make([]any, len(args))
+	for i, arg := range args {
+		b, _ := json.Marshal(arg)
+		result[i] = string(b)
+	}
+	return result
 }
