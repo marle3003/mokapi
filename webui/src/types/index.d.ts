@@ -6,6 +6,7 @@ interface DocEntry {
   expanded?: boolean
   hideNavigation: boolean
   hideInNavigation: boolean
+  canonical?: string
   component?: string
   index?: DocEntry
   items?: {[name: string]: string | DocEntry }

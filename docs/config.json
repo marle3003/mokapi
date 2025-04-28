@@ -147,11 +147,20 @@
       "component": "examples",
       "hideNavigation": true,
       "hideInNavigation": true,
+      "canonical": "/docs/resources",
       "title": "Explore Mokapi Resources: Tutorials, Examples, and Blog Articles",
       "description": "Explore Mokapi's resources including tutorials, examples, and blog articles. Learn to mock APIs, validate schemas, and streamline your development."
     },
     "items": {
       "Tutorials": {
+        "index": {
+          "component": "examples",
+          "hideNavigation": true,
+          "hideInNavigation": true,
+          "canonical": "/docs/resources",
+          "title": "Explore Mokapi Resources: Tutorials, Examples, and Blog Articles",
+          "description": "Explore Mokapi's resources including tutorials, examples, and blog articles. Learn to mock APIs, validate schemas, and streamline your development."
+        },
         "items": {
           "Get started with REST API": "resources/tutorials/simple-http-api.md",
           "Mock OpenAPI Authentication API Key & Bearer Token": "resources/tutorials/mock-openapi-auth-apikey-bearer.md",
@@ -166,12 +175,28 @@
         }
       },
       "Examples": {
+        "index": {
+          "component": "examples",
+          "hideNavigation": true,
+          "hideInNavigation": true,
+          "canonical": "/docs/resources",
+          "title": "Explore Mokapi Resources: Tutorials, Examples, and Blog Articles",
+          "description": "Explore Mokapi's resources including tutorials, examples, and blog articles. Learn to mock APIs, validate schemas, and streamline your development."
+        },
         "items": {
           "Mokapi behind Reverse Proxy": "resources/examples/mokapi-behind-proxy.md",
           "Mokapi with custom base image": "resources/examples/mokapi-with-custom-base-image.md"
         }
       },
       "Blogs": {
+        "index": {
+          "component": "examples",
+          "hideNavigation": true,
+          "hideInNavigation": true,
+          "canonical": "/docs/resources",
+          "title": "Explore Mokapi Resources: Tutorials, Examples, and Blog Articles",
+          "description": "Explore Mokapi's resources including tutorials, examples, and blog articles. Learn to mock APIs, validate schemas, and streamline your development."
+        },
         "items": {
           "Automation Testing in Agile Development": "resources/blogs/automation-testing-agile-development.md",
           "Contract Testing": "resources/blogs/contract-testing.md",

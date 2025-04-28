@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, ref  } from 'vue';
 import { parseMetadata } from '@/composables/markdown'
+import { useRoute, useRouter } from 'vue-router';
 
 const files = inject<Record<string, string>>('files')!
 
@@ -10,6 +11,14 @@ const tutorialsFiles = (<DocEntry>nav['Resources'].items!['Tutorials']).items ??
 const blogFiles = (<DocEntry>nav['Resources'].items!['Blogs']).items ?? {}
 const type = ref<string>('all')
 const tech = ref<string>('all')
+
+const router = useRouter()
+const route = useRoute()
+if (route.params.level2) {
+    const level2 = <string>route.params.level2
+    type.value = level2.substring(0, level2.length-1)
+}
+
 const items = computed(() => {
     const items = []
     for (const key in exampleFiles) {
@@ -99,6 +108,11 @@ function setType(s: string) {
     type.value = s
     if (!isTechAvailable(tech.value)) {
         tech.value = 'all'
+    }
+    if (s === 'all') {
+        router.push({ params: { level2: '' } })
+    } else {
+        router.push({ params: { level2: s + 's' } })
     }
 }
 </script>
