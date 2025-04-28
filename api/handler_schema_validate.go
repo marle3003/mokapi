@@ -13,6 +13,7 @@ import (
 	"mokapi/schema/json/parser"
 	jsonSchema "mokapi/schema/json/schema"
 	"net/http"
+	"strings"
 )
 
 type validateRequest struct {
@@ -89,6 +90,11 @@ func parseByOpenApi(data []byte, s *schema.Schema, ct media.ContentType) (interf
 	var v interface{}
 	var err error
 	if ct.IsXml() {
+		str := strings.TrimSpace(string(data))
+		if !strings.HasPrefix(str, "<") {
+			return nil, fmt.Errorf("input does not appear to be valid XML")
+		}
+
 		v, err = schema.UnmarshalXML(bytes.NewReader(data), s)
 		if err != nil {
 			return v, err

@@ -14,6 +14,7 @@ const props = withDefaults(defineProps<{
   height?: number
   maxHeight?: number
   hideContentType?: boolean
+  hideHeader?: boolean
   readonly?: boolean
 }>(), { readonly: true })
 
@@ -23,7 +24,7 @@ const binary = ref<HTMLElement>()
 
 const emit = defineEmits<{
   (e: 'update', value: { content: string, type: string}): void,
-  (e: 'switch', value: string): void
+  (e: 'switch', value: 'preview' | 'binary'): void
 }>()
 
 const { getLanguage } = usePrettyLanguage()
@@ -41,12 +42,13 @@ watch(() => props.source, (source) => {
     if (!current.value) {
       return
     }
+    
     if (current.value?.type === 'preview') {
       current.value.data = source.preview!
     } else {
       current.value.data = source.binary!
     }
-})
+}, { deep: true })
 
 const lines = computed(() => {
   let content = props.source.preview?.content
@@ -120,7 +122,7 @@ function switchCode() {
 
 <template>
   <section aria-label="Source">
-    <div class="header">
+    <div class="header" v-if="!hideHeader">
       <div class="view controls" v-if="source.preview && source.binary">
         <button ref="preview" type="button" class="btn btn-link active" @click="switchPreview()">JSON</button>
         <button ref="binary" type="button" class="btn btn-link" @click="switchCode()">Binary</button>

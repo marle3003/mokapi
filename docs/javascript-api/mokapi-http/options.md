@@ -1,6 +1,6 @@
 ---
-title: options( url, [body], [args] )
-description: Make an HTTP OPTIONS request
+title: options( url, [body], [args] ) - Mock HTTP OPTIONS Requests with Mokapi JavaScript API
+description: Use Mokapi's JavaScript API to mock HTTP OPTIONS requests. Customize responses, handle request data, and simulate APIs for testing and development.
 ---
 # options( url, [body], [args] )
 

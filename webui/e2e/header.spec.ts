@@ -10,8 +10,7 @@ test('header in dashboard', async ({ dashboard }) => {
         await expect(links.nth(2)).toHaveText('Configuration')
         await expect(links.nth(3)).toHaveText('JavaScript API')
         await expect(links.nth(4)).toHaveText('Resources')
-        await expect(links.nth(5)).toHaveText('Blogs')
-        await expect(links.nth(6)).toHaveText('References')
+        await expect(links.nth(5)).toHaveText('References')
     })
 
     await test.step('version number', async() => {

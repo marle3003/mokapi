@@ -59,13 +59,14 @@ const breadcrumb = computed(() => {
     }
 
     params['level'+(index+1)] = formatParam(name)
-    const item: { label: string, params?: RouteParamsRawGeneric, isLast: boolean, class?: string } = { 
+    const item: { label: string, params?: RouteParamsRawGeneric, isLast: boolean } = { 
       label: name, 
       isLast: false
     }
     
-    if (index === 0|| (current && current.index)) {
-      item.params = params
+    if (index === 0 || (current && current.index)) {
+      // copy the params object and assign
+      item.params = { ...params }
     }
     list.push(item)
   }
@@ -95,7 +96,11 @@ onMounted(() => {
     }
   }, 1000)
   if (metadata) {
-    const title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0]) + ' | Mokapi ' + levels[0]
+    const extension = ' | Mokapi ' + levels[0]
+    let title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0])
+    if ((title.length + extension.length) <= 70) {
+      title +=  ' | Mokapi ' + levels[0]
+    }
     useMeta(title, metadata.description, getCanonicalUrl(levels))
   }
   dialog.value = new Modal('#imageDialog', {})
@@ -104,6 +109,12 @@ function toUrlPath(s: string): string {
   return s.replaceAll(/[\s\/]/g, '-').replace('&', '%26')
 }
 function getCanonicalUrl(levels: string[]) {
+  if (file) {
+    const entry = <DocEntry>file
+    if (entry.canonical) {
+      return entry.canonical
+    }
+  }
   let canonical = 'https://mokapi.io/docs/' + toUrlPath(levels[0])
   for (let i = 1; i < levels.length; i++) {
     canonical += `/${toUrlPath(levels[i])}`
@@ -139,8 +150,8 @@ function formatParam(label: any): string {
             <nav aria-label="breadcrumb" v-if="showNavigation">
               <ol class="breadcrumb flex-nowrap">
                 <li class="breadcrumb-item text-truncate" v-for="item of breadcrumb" :class="item.isLast ? 'active' : ''">
-                  <router-link v-if="item.params && !item.isLast" class="" :to="{ name: 'docs', params: item.params }">{{ item.label }}</router-link>
-                  <template v-else class="" :class="item.class">{{ item.label }}</template>
+                  <router-link v-if="item.params && !item.isLast" :to="{ name: 'docs', params: item.params }">{{ item.label }}</router-link>
+                  <template v-else>{{ item.label }}</template>
                 </li>
               </ol>
             </nav>
@@ -373,9 +384,9 @@ blockquote {
   margin: 50px auto;
   font-family: Open Sans;
   font-style: italic;
-  padding: 1.2em 30px 1.2em 70px;
+  padding: 1.2em 30px 1.2em 55px;
   line-height: 1.75;
-  font-size: 1.2rem;
+  font-size: 1rem;
   border-left: 8px solid #eabaabff;
   position: relative;
   background: var(--color-background-soft);
@@ -388,14 +399,17 @@ blockquote:before {
   left: 10px;
   top:-10px;
 }
-blockquote::after{
+blockquote::after {
   content: '';
 }
-blockquote span{
+blockquote span {
   display:block;
   font-style: normal;
   font-weight: bold;
-  margin-top:1em;
+  margin: 0;
+}
+blockquote p {
+  margin: 0;
 }
 
 .content a.card {

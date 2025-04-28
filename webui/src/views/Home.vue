@@ -240,7 +240,7 @@ function hasTouchSupport() {
             <div class="text-lg-start text-center">
               <h2>Streamline Your Testing Workflow</h2>
               <p>Accelerate your testing efforts by easily mocking APIs and services. With Mokapi, you can quickly simulate real-world conditions, test edge cases, and validate your integrations without relying on external systems. Improve speed, accuracy, and efficiency while keeping your testing pipeline lightweight and adaptable.</p>
-              <router-link :to="{ path: '/docs/blogs/automation-testing-in-agile-development' }">
+              <router-link :to="{ path: '/docs/resources/blogs/automation-testing-in-agile-development' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Explore the blog article</button>
               </router-link>
             </div>

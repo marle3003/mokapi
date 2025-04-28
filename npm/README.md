@@ -111,8 +111,7 @@ Explore tutorials that walk you through mocking different protocols and scenario
 - [LDAP](https://mokapi.io/docs/guides/ldap/overview)
 - [SMTP](https://mokapi.io/docs/guides/smtp/overview)
 - [Javascript API](https://mokapi.io/docs/javascript-api)
-- [Examples & Tutorials](https://mokapi.io/docs/resources)
-- [Blogs](https://mokapi.io/docs/blogs)
+- [Resources](https://mokapi.io/docs/resources)
 
 # ☕ Support
 

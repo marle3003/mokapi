@@ -510,7 +510,35 @@ export let events = [
                         file: "/Users/maesi/GolandProjects/mokapi/examples/mokapi/http_handler.js",
                         fileKey: "b6fea8ac-56c7-4e73-a9c0-6887640bdca8",
                         event: "http"
-                    }
+                    },
+                    logs: [
+                        { level: 'info', message: 'a custom log message'},
+                        { level: 'warn', message: 'a warn log message'},
+                        { level: 'error', message: 'a error log message'},
+                        { level: 'debug', message: 'a debug log message'}
+                    ],
+                    parameters: [
+                        JSON.stringify({
+                            method: "POST",
+                            url: "http://127.0.0.1:18080/pet",
+                            parameters: [
+                                {
+                                    name: 'Acceot-Encoding',
+                                    type: 'header',
+                                    raw: 'gzip, deflate'
+                                }
+                            ],
+                            contentType: "application/xml",
+                            body: "<foo bar=test><child><key>foo</key><value>bar</value></child>"
+                        }),
+                        JSON.stringify({
+                            statusCode: 200,
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            data: {"foo":"bar"}
+                        })
+                    ]
                 }
             ]
         },

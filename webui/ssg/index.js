@@ -12,7 +12,7 @@ const Server = require('./server');
   const browser = await chromium.launch();
 
   async function crawl(url) {
-    if (!url.href.startsWith('http://localhost:8025')) {
+    if (!url.href.startsWith('http://localhost:8025') || url.href.startsWith('http://localhost:8025/dashboard')) {
       return
     }
     if (visited.has(url.pathname)) {
@@ -50,14 +50,13 @@ const Server = require('./server');
       throw new Error(`page ${url.href} not found: ${msg}`)
     }
 
-    const p = path.join('../dist', url.pathname)
+    let p = path.join('../dist', url.pathname)
     if (!fs.existsSync(path.dirname(p))){
       fs.mkdirSync(path.dirname(p), { recursive: true });
     }
 
     let content = await page.content();
     content = content.replace(/http:\/\/localhost:8025/g, '')
-    fs.writeFileSync(p + '.html', content);
 
     let links = new Set(await page.evaluate(async (url) => {
       return Array.from(document.querySelectorAll('a'))
@@ -66,10 +65,8 @@ const Server = require('./server');
     }, url))
     await page.close()
 
-    //const promises = [];
     for (const u of links) {
       try {
-      //promises.push(crawl(u))
       await crawl(u)
       } catch (err) {
         if (err.message && err.message.startsWith('page ')) { 
@@ -78,7 +75,12 @@ const Server = require('./server');
         throw err
       }
     }
-    //await Promise.all(promises)
+
+    if (isDir(p)) {
+      p += '/index'
+    }
+
+    fs.writeFileSync(p + '.html', content);
   }
 
   await crawl(new URL('http://localhost:8025/home'))
@@ -87,3 +89,12 @@ const Server = require('./server');
 
   server.close()
 })();
+
+function isDir(path) {
+  try {
+      const stats = fs.statSync(path);
+      return stats.isDirectory();
+  } catch (err) {
+      return false;
+  }
+}

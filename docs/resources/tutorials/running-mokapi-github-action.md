@@ -164,7 +164,7 @@ jobs:
 
       - name: Start Mokapi
         run: |
-          docker run -d --rm --name mokapi -p 80:80 -p 8080:8080 -v ${{ github.workspace }}/mocks:/etc/mokapi/configs --env MOKAPI_PROVIDERS_FILE_DIRECTORY=/etc/mokapi/configs mokapi/mokapi:latest
+          docker run -d --rm --name mokapi -p 80:80 -p 8080:8080 -v ${{ github.workspace }}/mocks:/mocks mokapi/mokapi:latest /mocks
           sleep 5  # Ensure Mokapi is running
 
       - name: Set Up Node.js

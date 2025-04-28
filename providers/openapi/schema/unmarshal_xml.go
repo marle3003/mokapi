@@ -33,7 +33,7 @@ func UnmarshalXML(r io.Reader, ref *Schema) (interface{}, error) {
 	n := &node{}
 	err = xml.Unmarshal(b, &n)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to unmarshal xml: %w", err)
 	}
 	return parse(n, ref)
 }

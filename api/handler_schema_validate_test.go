@@ -168,6 +168,23 @@ func TestHandler_Schema_Validate(t *testing.T) {
 				)
 			},
 		},
+		{
+			name: "validating xml but send json data",
+			app: &runtime.App{
+				Monitor: monitor.New(),
+			},
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/validate",
+					nil,
+					`{ "schema": {"type": ["object"], "properties": { "foo":{ "type": ["string"] } }, "xml": { "name": "root" } }, "data":"{\"foo\":\"bar\"}", "format": "application/vnd.oai.openapi;version=3.0.0", "contentType": "application/xml" }`,
+					h,
+					try.HasBody(`["input does not appear to be valid XML"]`),
+					try.HasStatusCode(400),
+				)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

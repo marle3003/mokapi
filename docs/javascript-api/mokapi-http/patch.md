@@ -1,6 +1,6 @@
 ---
-title: patch( url, [body], [args] )
-description: Make an HTTP PATCH request
+title: patch( url, [body], [args] ) - Mock HTTP PATCH Requests with Mokapi JavaScript API
+description: Use Mokapi's JavaScript API to mock HTTP PATCH requests. Customize responses, handle request data, and simulate APIs for testing and development.
 ---
 # patch( url, [body], [args] )
 

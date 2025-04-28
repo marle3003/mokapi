@@ -7,6 +7,16 @@ import SourceView from './SourceView.vue'
 import { transformPath } from '@/composables/fetch'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
 
+declare interface State {
+    //content: { preview: string | undefined, binary: string | undefined }
+    source: { preview: Data | undefined, binary: Data | undefined}
+    errors: string
+    result: any
+    validated: boolean
+    validating: boolean
+    view: 'preview'  | 'binary'
+}
+
 const props = withDefaults(defineProps<{
   schema: SchemaFormat
   name?: string
@@ -25,8 +35,9 @@ const { formatLanguage } = usePrettyLanguage()
 
 const id = createGuid()
 
-const state = reactive({
-    source: { preview: props.source.preview, binary: props.source.binary },
+const state = reactive<State>({
+    source: { preview: undefined, binary: undefined },
+    //content: { preview: undefined, binary: undefined},
     errors: '',
     result: null,
     validated: false,
@@ -39,18 +50,28 @@ const exampleRequest = {
     schema: props.schema,
     contentTypes: Array()
 }
-if (props.source.preview) {
-    exampleRequest.contentTypes.push(props.source.preview.contentType)
-}
-if (props.source.binary) {
-    exampleRequest.contentTypes.push(props.source.binary.contentType)
-}
 
 var example = fetchExample(exampleRequest)
 watch(() => props.schema, (schema) => {
     exampleRequest.schema = schema
-    example = fetchExample(exampleRequest)
 })
+
+watch(() => props.source, (source) => {
+    exampleRequest.contentTypes = []
+    if (props.source.preview) {
+        const content = state.source.preview?.content
+        state.source.preview = { ...props.source.preview }
+        if (content) {
+            state.source.preview.content = content
+        }
+        exampleRequest.contentTypes.push(state.source.preview.contentType)
+    }
+    if (props.source.binary) {
+        state.source.binary = { ...props.source.binary }
+        exampleRequest.contentTypes.push(state.source.binary.contentType)
+    }
+    example = fetchExample(exampleRequest)
+}, { immediate: true})
 
 function setExample() {
     if (example.error) {
@@ -59,7 +80,7 @@ function setExample() {
     }else{
         state.errors = ''
     }
-    
+
     if (state.source.preview) {
         state.source.preview.content = example.data[0].value
     }
@@ -80,8 +101,8 @@ function validate() {
     const body = {
         format: props.schema.format,
         schema: props.schema.schema,
-        data: state.view === 'preview' ? state.source.preview?.content : btoa(state.source.binary!.content),
-        contentType: state.view === 'preview' ? props.source.preview!.contentType : props.source.binary!.contentType
+        data: state.view === 'preview' ? state.source.preview?.content : btoa(state.source.binary?.content!),
+        contentType: state.view === 'preview' ? state.source.preview!.contentType : state.source.binary!.contentType
     }
     let query = ''
     if (state.source.binary) {
@@ -135,14 +156,14 @@ function validate() {
 }
 
 function update(event: {content: string, type: string}) {
-    if (event.type === 'preview') {
-        state.source.preview!.content = event.content
+    if (event.type === 'preview' && state.source.preview) {
+        state.source.preview.content  = event.content
     }
-    if (event.type === 'binary') {
-        state.source.binary!.content = event.content
+    if (event.type === 'binary' && state.source.binary) {
+        state.source.binary.content  = event.content
     }
 }
-function switchSource(e: string) {
+function switchSource(e: 'preview' | 'binary') {
     state.view = e
 }
 function formatResult(result: any): string {

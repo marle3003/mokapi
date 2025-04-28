@@ -1,6 +1,6 @@
 ---
-title: put( url, [body], [args] )
-description: Make an HTTP PUT request
+title: put( url, [body], [args] ) - Mock HTTP PUT Requests with Mokapi JavaScript API
+description: Use Mokapi's JavaScript API to mock HTTP PUT requests. Customize responses, handle request data, and simulate APIs for testing and development.
 ---
 # put( url, [body], [args] )
 

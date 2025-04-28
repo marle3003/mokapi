@@ -79,12 +79,12 @@
                   </router-link>
                 </li>
                 <li>
-                  <router-link :to="{ path: '/docs/blogs/automation-testing-in-agile-development' }">
+                  <router-link :to="{ path: '/docs/resources/blogs/automation-testing-in-agile-development' }">
                     Automation Testing in Agile Development
                   </router-link>
                 </li>
                 <li>
-                  <router-link :to="{ path: '/docs/blogs/contract-testing' }">
+                  <router-link :to="{ path: '/docs/resources/blogs/contract-testing' }">
                     Contract Testing
                   </router-link>
                 </li>

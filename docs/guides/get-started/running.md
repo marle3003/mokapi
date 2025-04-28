@@ -1,6 +1,6 @@
 ---
-title: Running Your First Mocked REST API
-description: Learn how to mock a REST API and analyze HTTP request and response in the dashboard.
+title: Running Your First Mocked REST API with Mokapi
+description: Learn how to run your first mocked REST API using Mokapi. Monitor HTTP requests and responses in the dashboard—ideal for testing and debugging APIs.
 ---
 # Running Your First Mocked REST API with Mokapi
 

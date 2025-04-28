@@ -57,6 +57,10 @@ function replaceImageUrls(data: string) {
 }
 
 export function parseMetadata(data: string): DocMeta {
+    if (!data) {
+        return {} as DocMeta
+    }
+
     const metadataMatch = data.match(metadataRegex)
     if (!metadataMatch) {
         return {} as DocMeta

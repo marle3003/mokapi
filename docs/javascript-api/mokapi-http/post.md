@@ -1,6 +1,6 @@
 ---
-title: post( url, [body], [args] )
-description: Make an HTTP POST request
+title: post( url, [body], [args] ) - Mock HTTP POST Requests with Mokapi JavaScript API
+description: Use Mokapi's JavaScript API to mock HTTP POST requests. Customize responses, handle request data, and simulate APIs for testing and development.
 ---
 # post( url, [body], [args] )
 

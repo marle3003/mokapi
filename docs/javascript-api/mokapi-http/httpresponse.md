@@ -1,6 +1,6 @@
 ---
-title: Response Object (mokapi/http)
-description: Returned by HTTP request methods in module mokapi/http.
+title: HTTP Response Object | Mokapi JavaScript API Reference (mokapi/http)
+description: Learn about the HTTP Response object returned by Mokapi's HTTP request methods. Access status, headers, and body for API mocking and testing.
 ---
 # Response
 

@@ -92,6 +92,10 @@ declare interface HttpServer {
 declare interface Action {
     duration: number
     tags: Tags
+    parameters: any[]
+    logs: { level: string, message: string}[]
+    error?: { message: string }
+
 }
 
 declare interface Tags { [key: string]: string }

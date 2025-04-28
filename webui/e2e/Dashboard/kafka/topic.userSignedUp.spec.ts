@@ -85,7 +85,48 @@ test('Visit Kafka topic mokapi.shop.userSignedUp', async ({ page, context }) => 
             await dialog.getByRole('button', { name: 'Close' }).click()
         })
 
-        await test.step('Check schema example', async () => {
+        await test.step('Check switch between messages and validating example', async () => {
+            // switch to JSON message
+            await configs.getByLabel('Name').selectOption(topic.messageConfigs[0].name);
+
+            await configs.getByRole('button', { name: 'Example & Validate' }).click()
+            let dialog = page.getByRole('dialog', { name: 'Value Validator - mokapi.shop.userSignedUp' })
+            await dialog.getByRole('button', { name: 'Example' }).click()
+            const { test: testSourceView } = useSourceView(dialog)
+            await testSourceView({
+                lines: /\d+ lines/,
+                size: /\d+ B/,
+                content: /\{.*\}/,
+                filename: 'mokapi.shop.userSignedUp-example.json',
+                clipboard: /^\s*\{[\s\S]*\}\s*$/
+            })
+            await dialog.getByRole('button', { name: 'Close' }).click()
+            await expect(dialog).not.toBeVisible()
+
+            // switch back to XML message
+            await configs.getByLabel('Name').selectOption(topic.messageConfigs[1].name);
+            await configs.getByRole('button', { name: 'Example & Validate' }).click()
+            dialog = page.getByRole('dialog', { name: 'Value Validator - mokapi.shop.userSignedUp' })
+            // contains the same values but different filename
+            await testSourceView({
+                lines: /\d+ lines/,
+                size: /\d+ B/,
+                content: /\{.*\}/,
+                filename: 'mokapi.shop.userSignedUp-example.xml',
+                clipboard: /^\s*\{[\s\S]*\}\s*$/
+            })
+            // validate
+            await dialog.getByRole('button', { name: 'Validate' }).click()
+            // JSON should not be valid for XML
+            const alert = dialog.getByRole('alert')
+            await expect(alert).toBeVisible()
+            await expect(alert).toContainText('error count 1: input does not appear to be valid XML')
+
+            await dialog.getByRole('button', { name: 'Close' }).click()
+            await expect(dialog).not.toBeVisible()
+        })
+
+        await test.step('Check XML schema example', async () => {
             await configs.getByRole('button', { name: 'Example' }).click()
             const dialog = page.getByRole('dialog', { name: 'Value Validator - mokapi.shop.userSignedUp' })
             await dialog.getByRole('button', { name: 'Example' }).click()
