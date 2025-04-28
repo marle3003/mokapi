@@ -134,7 +134,8 @@ function setType(s: string) {
                     <select class="form-select" aria-label="Category" @change="setType((<any>$event).target.value)">
                         <option value="all" selected>Tutorials & Example</option>
                         <option value="tutorial" :disabled="!state.tutorial">Tutorials</option>
-                        <option value="example" :disabled="!state.example">Example</option>
+                        <option value="example" :disabled="!state.example">Examples</option>
+                        <option value="blog" :disabled="!state.example">Blogs</option>
                     </select>
                 </div>
                 <div class="d-md-none">
