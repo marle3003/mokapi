@@ -73,7 +73,7 @@ function formatParameters(action: Action): {name?: string, value: string}[] {
                                 <p>{{ action.error?.message }}</p>
                             </div>
                             <div v-if="action.parameters && action.parameters.length > 0">
-                                <h5>Event Handler Parameters</h5>
+                                <h5>Parameters</h5>
                                 <div class="accordion mb-3" id="parametersAccordion">
       
                                     <div class="accordion-item" v-for="(item, paramIndex) in formatParameters(action)">

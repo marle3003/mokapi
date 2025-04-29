@@ -40,7 +40,7 @@ onUnmounted(() => {
         <div class="card-group" v-if="hasActions">
             <div class="card">
                 <div class="card-body">
-                    <div class="card-title text-center">Actions</div>
+                    <div class="card-title text-center">Event Handlers</div>
                     <actions :actions="eventData().actions" />
                 </div>
             </div>

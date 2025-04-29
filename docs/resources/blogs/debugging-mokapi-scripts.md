@@ -70,6 +70,8 @@ In this case, because the handler returns true, Mokapi will:
 This visibility is incredibly helpful when debugging complex request flows, especially if you have 
 multiple handlers reacting to a single request.
 
+<img src="/dashboard-event-handler-debugging.png" alt="Mokapi dashboard displaying event handler logs for a specific HTTP request." class="image shadow">
+
 ## Best Practices for Debugging
 
 - Use console.log freely during development to trace values and decisions inside your scripts. 
