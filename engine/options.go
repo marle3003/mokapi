@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
 )
@@ -26,6 +27,12 @@ func WithKafkaClient(client common.KafkaClient) Options {
 func WithScheduler(scheduler Scheduler) Options {
 	return func(e *Engine) {
 		e.scheduler = scheduler
+	}
+}
+
+func WithDefaultLogger() Options {
+	return func(e *Engine) {
+		e.logger = newLogger(logrus.StandardLogger())
 	}
 }
 

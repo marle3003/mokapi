@@ -2,9 +2,11 @@ package console
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/dop251/goja"
 	"github.com/sirupsen/logrus"
 	"mokapi/engine/common"
+	"regexp"
 	"strings"
 )
 
@@ -45,36 +47,58 @@ func (c *Module) Debug(args ...goja.Value) {
 }
 
 func (c *Module) log(level logrus.Level, args ...goja.Value) {
-	var sb strings.Builder
-	for i, arg := range args {
-		if i > 1 {
-			sb.WriteString(" ")
+	format := ""
+	if len(args) > 0 {
+		if s, ok := args[0].Export().(string); ok && strings.Contains(s, "%") {
+			format = s
 		}
-		sb.WriteString(c.toString(arg))
 	}
-	msg := sb.String()
+
+	var logArgs []any
+	for _, arg := range args {
+		logArgs = append(logArgs, c.format(arg))
+	}
+
+	if format != "" {
+		if s, ok := formatString(format, logArgs[1:]...); ok {
+			logArgs = []any{s}
+		}
+	}
 
 	switch level {
-	case logrus.InfoLevel:
-		c.logger.Info(msg)
 	case logrus.WarnLevel:
-		c.logger.Warn(msg)
+		c.logger.Warn(logArgs...)
 	case logrus.ErrorLevel:
-		c.logger.Error(msg)
+		c.logger.Error(logArgs...)
 	case logrus.DebugLevel:
-		c.logger.Debug(msg)
+		c.logger.Debug(logArgs...)
+	default:
+		c.logger.Info(logArgs...)
 	}
 }
 
-func (c *Module) toString(v goja.Value) string {
+func (c *Module) format(v goja.Value) any {
 	m, ok := v.(json.Marshaler)
 	if !ok {
-		return v.String()
+		return v.Export()
 	}
 
 	b, err := json.Marshal(m)
 	if err != nil {
-		return v.String()
+		return v.Export()
 	}
 	return string(b)
+}
+
+var fmtErrorRegex = regexp.MustCompile(`%!(?:\([A-Z]+[^)]*\)|[a-zA-Z]\(MISSING\))`)
+
+func formatString(format string, args ...any) (string, bool) {
+	out := fmt.Sprintf(format, args...)
+
+	// Detect Go's error output patterns
+	if fmtErrorRegex.MatchString(out) {
+		return "", false
+	}
+
+	return out, true
 }

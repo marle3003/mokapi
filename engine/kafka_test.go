@@ -42,7 +42,7 @@ func TestKafkaClient_Produce_Empty_Parameter(t *testing.T) {
 	app := runtime.New(&static.Config{})
 	e := enginetest.NewEngine(
 		engine.WithKafkaClient(engine.NewKafkaClient(app)),
-		engine.WithLogger(logrus.StandardLogger()),
+		engine.WithDefaultLogger(),
 	)
 
 	info, err := app.Kafka.Add(getConfig(config), e)
@@ -345,7 +345,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 			app := runtime.New(&static.Config{})
 			e := enginetest.NewEngine(
 				engine.WithKafkaClient(engine.NewKafkaClient(app)),
-				engine.WithLogger(logrus.StandardLogger()),
+				engine.WithDefaultLogger(),
 			)
 
 			info, err := app.Kafka.Add(getConfig(config), e)

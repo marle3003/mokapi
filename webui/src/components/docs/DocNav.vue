@@ -184,4 +184,10 @@ nav {
 .nav button[aria-expanded=true] .bi-caret-down-fill {
   display: none;
 }
+.image.shadow {
+  border-radius: 8px; 
+  box-shadow: 
+    0px 10px 0.5rem rgba(0, 0, 0, 0.3),
+    10px 0px 0.5rem rgba(0, 0, 0, 0.3);
+}
 </style>

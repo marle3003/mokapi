@@ -10,19 +10,20 @@ import (
 )
 
 type Host struct {
-	OpenFileFunc      func(file, hint string) (string, string, error)
-	OpenFunc          func(file, hint string) (*dynamic.Config, error)
-	InfoFunc          func(args ...interface{})
-	WarnFunc          func(args ...interface{})
-	ErrorFunc         func(args ...interface{})
-	DebugFunc         func(args ...interface{})
-	HttpClientTest    *HttpClient
-	KafkaClientTest   *KafkaClient
-	EveryFunc         func(every string, do func(), opt common.JobOptions)
-	CronFunc          func(every string, do func(), opt common.JobOptions)
-	OnFunc            func(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
-	FindFakerNodeFunc func(name string) *common.FakerTree
-	m                 sync.Mutex
+	OpenFileFunc       func(file, hint string) (string, string, error)
+	OpenFunc           func(file, hint string) (*dynamic.Config, error)
+	InfoFunc           func(args ...interface{})
+	WarnFunc           func(args ...interface{})
+	ErrorFunc          func(args ...interface{})
+	DebugFunc          func(args ...interface{})
+	IsLevelEnabledFunc func(level string) bool
+	HttpClientTest     *HttpClient
+	KafkaClientTest    *KafkaClient
+	EveryFunc          func(every string, do func(), opt common.JobOptions)
+	CronFunc           func(every string, do func(), opt common.JobOptions)
+	OnFunc             func(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
+	FindFakerNodeFunc  func(name string) *common.FakerTree
+	m                  sync.Mutex
 }
 
 type HttpClient struct {
@@ -56,6 +57,13 @@ func (h *Host) Debug(args ...interface{}) {
 	if h.DebugFunc != nil {
 		h.DebugFunc(args...)
 	}
+}
+
+func (h *Host) IsLevelEnabled(level string) bool {
+	if h.IsLevelEnabledFunc == nil {
+		return true
+	}
+	return h.IsLevelEnabledFunc(level)
 }
 
 func (h *Host) OpenFile(file, hint string) (*dynamic.Config, error) {

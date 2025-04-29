@@ -507,7 +507,7 @@ export let events = [
                     duration: 20,
                     tags: {
                         name: "dashboard",
-                        file: "/Users/maesi/GolandProjects/mokapi/examples/mokapi/http_handler.js",
+                        file: "examples/mokapi/http_handler.js",
                         fileKey: "b6fea8ac-56c7-4e73-a9c0-6887640bdca8",
                         event: "http"
                     },
@@ -581,9 +581,12 @@ export let events = [
                     duration: 20,
                     tags: {
                         name: "dashboard",
-                        file: "/Users/maesi/GolandProjects/mokapi/examples/mokapi/http_handler.js",
+                        file: "examples/mokapi/http_handler.js",
                         fileKey: "b6fea8ac-56c7-4e73-a9c0-4487640bdca8",
                         event: "http"
+                    },
+                    error: {
+                        message: 'An example script error message'
                     }
                 }
             ]
@@ -625,7 +628,7 @@ export let events = [
                     duration: 20,
                     tags: {
                         name: "dashboard",
-                        file: "/Users/maesi/GolandProjects/mokapi/examples/mokapi/http_handler.js",
+                        file: "examples/mokapi/http_handler.js",
                         fileKey: "b6fea8ac-56c7-4e73-a9c0-4487640bdca8",
                         event: "http"
                     }
@@ -663,7 +666,7 @@ export let events = [
                     duration: 20,
                     tags: {
                         name: "pet store",
-                        file: "/Users/maesi/GolandProjects/mokapi/examples/mokapi/http_handler.js",
+                        file: "examples/mokapi/http_handler.js",
                         fileKey: "b6fea8ac-56c7-4e73-a9c0-6887640bdca8",
                         event: "http"
                     }

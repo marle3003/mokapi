@@ -1,10 +1,11 @@
 package enginetest
 
 type Logger struct {
-	InfoFunc  func(args ...interface{})
-	WarnFunc  func(args ...interface{})
-	ErrorFunc func(args ...interface{})
-	DebugFunc func(args ...interface{})
+	InfoFunc           func(args ...interface{})
+	WarnFunc           func(args ...interface{})
+	ErrorFunc          func(args ...interface{})
+	DebugFunc          func(args ...interface{})
+	IsLevelEnabledFunc func(level string) bool
 }
 
 func (l *Logger) Info(args ...interface{}) {
@@ -33,4 +34,11 @@ func (l *Logger) Debug(args ...interface{}) {
 		return
 	}
 	l.DebugFunc(args...)
+}
+
+func (l *Logger) IsLevelEnabled(level string) bool {
+	if l.IsLevelEnabledFunc == nil {
+		return true
+	}
+	return l.IsLevelEnabledFunc(level)
 }

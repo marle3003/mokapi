@@ -27,7 +27,7 @@ func New(reader dynamic.Reader, app *runtime.App, config *static.Config, paralle
 	return &Engine{
 		scripts:     make(map[string]*scriptHost),
 		scheduler:   NewDefaultScheduler(),
-		logger:      log.StandardLogger(),
+		logger:      newLogger(log.StandardLogger()),
 		reader:      reader,
 		kafkaClient: NewKafkaClient(app),
 		parallel:    parallel,
@@ -39,7 +39,7 @@ func NewEngine(opts ...Options) *Engine {
 	e := &Engine{
 		scripts:   make(map[string]*scriptHost),
 		scheduler: NewDefaultScheduler(),
-		logger:    log.StandardLogger(),
+		logger:    newLogger(log.StandardLogger()),
 	}
 	for _, opt := range opts {
 		opt(e)
@@ -133,4 +133,8 @@ func (e *Engine) Scripts() int {
 	e.m.Lock()
 	defer e.m.Unlock()
 	return len(e.scripts)
+}
+
+func (e *Engine) IsLevelEnabled(level string) bool {
+	return e.logger.IsLevelEnabled(level)
 }

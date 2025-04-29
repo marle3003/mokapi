@@ -188,30 +188,34 @@ func (sh *scriptHost) close() {
 
 func (sh *scriptHost) Info(args ...interface{}) {
 	sh.engine.logger.Info(args...)
-	if sh.actionLogger != nil {
+	if sh.actionLogger != nil && sh.IsLevelEnabled("info") {
 		sh.actionLogger("log", fmt.Sprint(args...))
 	}
 }
 
 func (sh *scriptHost) Warn(args ...interface{}) {
 	sh.engine.logger.Warn(args...)
-	if sh.actionLogger != nil {
+	if sh.actionLogger != nil && sh.IsLevelEnabled("warn") {
 		sh.actionLogger("warn", fmt.Sprint(args...))
 	}
 }
 
 func (sh *scriptHost) Error(args ...interface{}) {
 	sh.engine.logger.Error(args...)
-	if sh.actionLogger != nil {
+	if sh.actionLogger != nil && sh.IsLevelEnabled("error") {
 		sh.actionLogger("error", fmt.Sprint(args...))
 	}
 }
 
 func (sh *scriptHost) Debug(args ...interface{}) {
 	sh.engine.logger.Debug(args...)
-	if sh.actionLogger != nil {
+	if sh.actionLogger != nil && sh.IsLevelEnabled("debug") {
 		sh.actionLogger("debug", fmt.Sprint(args...))
 	}
+}
+
+func (e *scriptHost) IsLevelEnabled(level string) bool {
+	return e.engine.IsLevelEnabled(level)
 }
 
 func (sh *scriptHost) OpenFile(path string, hint string) (*dynamic.Config, error) {
