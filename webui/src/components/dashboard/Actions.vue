@@ -49,6 +49,7 @@ function formatParameters(action: Action): {name?: string, value: string}[] {
         <thead>
             <tr>
                 <th scope="col" class="text-left" style="width: 30px;"></th>
+                <th scope="col" class="text-left" style="width: 30px;">Status</th>
                 <th scope="col" class="text-left">Name</th>
                 <th scope="col" class="text-left">Duration</th>
             </tr>
@@ -57,23 +58,31 @@ function formatParameters(action: Action): {name?: string, value: string}[] {
             <template v-for="(action, index) of actions">
                 <tr data-bs-toggle="collapse" :data-bs-target="'#action_'+index" aria-expanded=false>
                     <td><i class="bi bi-chevron-right"></i><i class="bi bi-chevron-down"></i></td>
+                    <td>
+                        <span class="badge bg-success me-2" v-if="!action.error">Success</span>
+                        <span class="badge bg-danger me-2" v-else>Error</span>
+                    </td>
                     <td>{{ getName(action) }}</td>
                     <td>{{ duration(action.duration) }}</td>
                 </tr>
                 <tr class="collapse-row">
-                    <td colspan="3">
+                    <td colspan="4">
                         <div class="collapse" :id="'action_'+index" style="padding: 2rem;">
-                            <div v-if="action.parameters.length > 0">
+                            <div class="alert alert-danger" role="alert" v-if="action.error">
+                                <h5 class="alert-heading">Error</h5>
+                                <p>{{ action.error?.message }}</p>
+                            </div>
+                            <div v-if="action.parameters && action.parameters.length > 0">
                                 <h5>Event Handler Parameters</h5>
                                 <div class="accordion mb-3" id="parametersAccordion">
       
-                                    <div class="accordion-item" v-for="(item, index) in formatParameters(action)">
-                                        <h2 class="accordion-header mt-0" :id="'param-heading-'+index">
-                                        <button class="accordion-button p-2 collapsed" type="button" data-bs-toggle="collapse" :data-bs-target="'#param-'+index" aria-expanded="false" :aria-controls="'param-'+index">
-                                            {{ item.name ?? index }}
+                                    <div class="accordion-item" v-for="(item, paramIndex) in formatParameters(action)">
+                                        <h2 class="accordion-header mt-0" :id="'action-'+index+'param-heading-'+paramIndex">
+                                        <button class="accordion-button p-2 collapsed" type="button" data-bs-toggle="collapse" :data-bs-target="'#action-'+index+'-param-'+paramIndex" aria-expanded="false" :aria-controls="'action-'+index+'-param-'+paramIndex">
+                                            {{ item.name ?? paramIndex }}
                                         </button>
                                         </h2>
-                                        <div :id="'param-'+index" class="accordion-collapse collapse p-0" :aria-labelledby="'param-heading-'+index" data-bs-parent="#parametersAccordion">
+                                        <div :id="'action-'+index+'-param-'+paramIndex" class="accordion-collapse collapse p-0" :aria-labelledby="'action-'+index+'-param-heading-'+paramIndex" data-bs-parent="#parametersAccordion">
                                             <div class="accordion-body p-0">
                                                 <source-view :source="{ preview: { content: item.value, contentType: 'application/json' }}" :hide-header="true" :max-height="250"></source-view>
                                             </div>
@@ -83,20 +92,19 @@ function formatParameters(action: Action): {name?: string, value: string}[] {
 
                             </div>
                             <h5>Logs</h5>
-                            <ul class="list-group mb-3">
-                                <li v-for="log in action.logs" class="list-group-item">
-                                    <span class="text-body log">
-                                        <i class="bi bi-exclamation-triangle-fill text-warning" v-if="log.level == 'warn'"></i>
-                                        <i class="bi bi-x-circle-fill text-danger" v-else-if="log.level == 'error'"></i>
-                                        <i class="bi bi-bug-fill text-info" v-else-if="log.level == 'debug'"></i>
-                                        <i class="bi bi-chat-dots text-primary" v-else></i>
-                                        {{ log.message }}
-                                    </span>
-                                </li>
-                            </ul>
-                            <div class="alert alert-danger" role="alert" v-if="action.error">
-                                <h5 class="alert-heading">Error</h5>
-                                <p>{{ action.error?.message }}</p>
+                            <div class="mb-3">
+                                <ul class="list-group">
+                                    <li v-for="log in action.logs" class="list-group-item">
+                                        <span class="text-body log">
+                                            <i class="bi bi-exclamation-triangle-fill text-warning" v-if="log.level == 'warn'"></i>
+                                            <i class="bi bi-x-circle-fill text-danger" v-else-if="log.level == 'error'"></i>
+                                            <i class="bi bi-bug-fill text-info" v-else-if="log.level == 'debug'"></i>
+                                            <i class="bi bi-chat-dots text-primary" v-else></i>
+                                            {{ log.message }}
+                                        </span>
+                                    </li>
+                                </ul>
+                                <p v-if="!action.logs || action.logs.length == 0">This event handler did not produce any logs. You can use <code>console.log()</code> or <code>console.error()</code> in your script to output information.</p>
                             </div>
                             <h5>Tags</h5>
                             <table class="table dataTable">
