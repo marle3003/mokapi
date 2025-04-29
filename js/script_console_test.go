@@ -51,6 +51,26 @@ func TestScript_Console(t *testing.T) {
 				r.Equal(t, `{"foo":123,"bar":"mokapi"}`, log)
 			},
 		},
+		{
+			name: "multiple parameters",
+			test: func(t *testing.T, host *enginetest.Host) {
+				var log []any
+				host.InfoFunc = func(args ...interface{}) {
+					log = args
+				}
+				s, err := jstest.New(
+					jstest.WithSource(
+						`export default function() {
+						 	console.log({ foo: 123, bar: 'mokapi' }, "foo")
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				err = s.Run()
+				r.NoError(t, err)
+				r.Equal(t, `{"foo":123,"bar":"mokapi"}`, log[0])
+				r.Equal(t, "foo", log[1])
+			},
+		},
 	}
 
 	t.Parallel()

@@ -14,9 +14,8 @@ import (
 
 func TestBase64(t *testing.T) {
 	testcases := []struct {
-		name   string
-		client *enginetest.HttpClient
-		test   func(t *testing.T, vm *goja.Runtime, host *enginetest.Host)
+		name string
+		test func(t *testing.T, vm *goja.Runtime, host *enginetest.Host)
 	}{
 		{
 			name: "encode empty string",
@@ -91,7 +90,7 @@ func TestBase64(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			vm := goja.New()
 			vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
-			host := &enginetest.Host{HttpClientTest: tc.client}
+			host := &enginetest.Host{}
 			js.EnableInternal(vm, host, &eventloop.EventLoop{}, &dynamic.Config{})
 			req, err := require.NewRegistry()
 			r.NoError(t, err)

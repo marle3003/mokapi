@@ -23,6 +23,7 @@ function getName(action: Action){
     return null
 }
 function formatParameters(action: Action): {name?: string, value: string}[] {
+    console.log('foo %s')
     if (action.tags.event === 'http') {
         return [
             {

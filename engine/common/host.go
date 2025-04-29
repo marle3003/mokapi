@@ -51,6 +51,7 @@ type Logger interface {
 	Warn(args ...interface{})
 	Error(args ...interface{})
 	Debug(args ...interface{})
+	IsLevelEnabled(level string) bool
 }
 
 type KafkaClient interface {

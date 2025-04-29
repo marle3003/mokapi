@@ -2,6 +2,7 @@ package engine_test
 
 import (
 	"github.com/stretchr/testify/require"
+	"mokapi/engine"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"testing"
@@ -11,6 +12,7 @@ func TestEventHandler(t *testing.T) {
 	testcases := []struct {
 		name   string
 		script string
+		logger *enginetest.Logger
 		run    func(evt common.EventEmitter) []*common.Action
 		test   func(t *testing.T, actions []*common.Action, err error)
 	}{
@@ -50,6 +52,48 @@ export default () => {
 				require.Len(t, actions, 1)
 				require.Len(t, actions[0].Logs, 1)
 				require.Equal(t, "a log message from event handler", actions[0].Logs[0].Message)
+				require.Equal(t, "log", actions[0].Logs[0].Level)
+			},
+		},
+		{
+			name: "console.warn",
+			script: `import { on } from 'mokapi'
+export default () => {
+	on('http', () => {
+		console.warn('a log message from event handler')
+		return true
+	})
+}
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				return evt.Emit("http")
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				require.NoError(t, err)
+				require.Len(t, actions, 1)
+				require.Len(t, actions[0].Logs, 1)
+				require.Equal(t, "a log message from event handler", actions[0].Logs[0].Message)
+				require.Equal(t, "warn", actions[0].Logs[0].Level)
+			},
+		},
+		{
+			name: "console.warn but not match log level",
+			script: `import { on } from 'mokapi'
+export default () => {
+	on('http', () => {
+		console.warn('a log message from event handler')
+		return true
+	})
+}
+`,
+			logger: &enginetest.Logger{IsLevelEnabledFunc: func(level string) bool { return false }},
+			run: func(evt common.EventEmitter) []*common.Action {
+				return evt.Emit("http")
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				require.NoError(t, err)
+				require.Len(t, actions, 1)
+				require.Len(t, actions[0].Logs, 0)
 			},
 		},
 		{
@@ -110,7 +154,12 @@ export default () => {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			e := enginetest.NewEngine()
+			var opts []engine.Options
+			if tc.logger != nil {
+				opts = append(opts, engine.WithLogger(tc.logger))
+			}
+
+			e := enginetest.NewEngine(opts...)
 			err := e.AddScript(newScript("test.js", tc.script))
 
 			var actions []*common.Action
