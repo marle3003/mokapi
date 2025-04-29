@@ -1,6 +1,6 @@
 ---
-title: Install Mokapi
-description: Mokapi has packages for Linux, Mac and Windows. You can also use Mokapi inside a Docker container, a standalone binary or using NPM package
+title: "Install Mokapi: Quick & Easy Setup Guide"
+description: Learn how to install Mokapi effortlessly across Windows, macOS, and Linux. Follow the step-by-step guide for a smooth setup experience.
 ---
 # Install Mokapi
 
@@ -56,5 +56,5 @@ You can download Mokapi's binary file from [GitHub Releases page](https://github
 
 ## Next steps
 
-- Go to [Running Mokapi](/docs/guides/get-started/running.md) to learn how to mock your first HTTP API.
-- Configure Intellisense for Mokapi Scripts by installing [Mokapi types](https://www.npmjs.com/package/@types/mokapi)
+- [Create your first Mock](/docs/guides/get-started/running.md)
+- [Install @types/mokapi](https://www.npmjs.com/package/@types/mokapi)

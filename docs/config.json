@@ -201,6 +201,7 @@
           "Automation Testing in Agile Development": "resources/blogs/automation-testing-agile-development.md",
           "Contract Testing": "resources/blogs/contract-testing.md",
           "End to End Testing with Mocked APIs": "resources/blogs/end-to-end-testing-mocked-apis.md",
+          "Bring Your Mock APIs to Life with Mokapi and JavaScript": "resources/blogs/dynamic-mocks-with-javascript.md",
           "Debugging Mokapi Scripts": "resources/blogs/debugging-mokapi-scripts.md"
         }
       }
