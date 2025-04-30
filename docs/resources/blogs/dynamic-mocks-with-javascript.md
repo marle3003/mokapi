@@ -28,19 +28,26 @@ Static mock responses are fine for simple cases, but they quickly fall short whe
 
 - Your frontend depends on different user roles (e.g., admin vs. regular user)
 - You need to simulate errors, timeouts, or permission checks
-- You want random, realistic test data
-- Your API evolves and you don’t want to constantly update static files
+- Backend state changes over time and should affect future responses (e.g., after a POST, the next GET reflects the update)
+- You need data that changes depending on query parameters or request bodies
+- You want to test workflows or sequences of API calls that depend on each other
+- You're working on features like pagination, filtering, or sorting
+- You need to simulate authentication and session-specific behavior
+- You want to create more realistic test scenarios for CI pipelines or manual testing
+- Your team needs fast feedback loops without relying on a fully working backend
 
-Mokapi Scripts make your mocks flexible, responsive, and future-proof — without needing a real backend.
+Dynamic mocks make your development process more reliable, realistic, and efficient.
 
 ## What You Can Do with Mokapi Scripts
 
 - ✅ Return different responses based on query parameters, headers, or body content
-- ✅ Simulate authentication and permissions 
-- ✅ Generate random or structured dynamic data 
-- ✅ Mock complex workflows and conditional logic
+- ✅ Simulate authentication, authorization, and role-based access
+- ✅ Generate random, structured, or context-aware dynamic data
+- ✅ Mock complex workflows with conditional logic and stateful behavior
+- ✅ Chain requests together to simulate real-world usage patterns
+- ✅ Customize error responses, delays, and status codes on the fly
 
-All using familiar JavaScript or TypeScript syntax.
+All using familiar JavaScript or TypeScript — no need to learn a new DSL.
 
 ## Example: Conditional Response Based on a Query Parameter
 
@@ -143,3 +150,9 @@ With Mokapi, your mocks behave exactly the way you need them to.
   Learn how to debug your JavaScript code inside Mokapi
 - [End-to-End Testing with Mock APIs Using Mokapi](/docs/resources/blogs/end-to-end-testing-with-mocked-apis)\
   Improve your end-to-end tests by mocking APIs with Mokapi.
+
+---
+
+*A shorter summary of this article is also available on [LinkedIn](https://www.linkedin.com/pulse/end-to-end-testing-mocked-apis-using-mokapi-github-actions-lehmann-nuylf), including a link back here for full details.*
+
+---
