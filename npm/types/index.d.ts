@@ -122,7 +122,7 @@ export interface EventHandler {
  *   })
  * }
  */
-export type HttpEventHandler = (request: HttpRequest, response: HttpResponse) => boolean;
+export type HttpEventHandler = (request: HttpRequest, response: HttpResponse) => boolean | Promise<boolean>;
 
 /**
  * HttpRequest is an object used by HttpEventHandler that contains request-specific
@@ -204,7 +204,7 @@ export interface Url {
  *   })
  * }
  */
-export type KafkaEventHandler = (message: KafkaEventMessage) => boolean;
+export type KafkaEventHandler = (message: KafkaEventMessage) => boolean | Promise<boolean>;
 
 /**
  * KafkaEventMessage is an object used by KafkaEventHandler that contains Kafka-specific message data.
@@ -243,7 +243,7 @@ export interface KafkaEventMessage {
  *   })
  * }
  */
-export type LdapEventHandler = (request: LdapSearchRequest, response: LdapSearchResponse) => boolean;
+export type LdapEventHandler = (request: LdapSearchRequest, response: LdapSearchResponse) => boolean | Promise<boolean>;
 
 /**
  * LdapSearchRequest is an object used by LdapEventHandler that contains request-specific data.
@@ -343,7 +343,7 @@ export enum LdapResultStatus {
     SizeLimitExceeded = 4,
 }
 
-export type SmtpEventHandler = (record: SmtpEventMessage) => boolean;
+export type SmtpEventHandler = (record: SmtpEventMessage) => boolean | Promise<boolean>;
 
 export interface SmtpEventMessage {
     server: string;

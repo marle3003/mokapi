@@ -21,7 +21,7 @@
   RewriteRule ^docs/examples/(.*)$ /docs/resources/$1 [R=301,L]
 
   # Redirect exactly /docs/blogs to /docs/resources
-  RewriteRule ^docs/blogs/?$ /docs/resources [R=301,L]
+  RewriteRule ^docs/blogs/?$ /docs/resources/blogs [R=301,L]
 
   # Redirect anything under /docs/blogs/ to /docs/resources/blogs/
   RewriteRule ^docs/blogs/(.*)$ /docs/resources/blogs/$1 [R=301,L]
