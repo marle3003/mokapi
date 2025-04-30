@@ -45,7 +45,7 @@ Dynamic mocks make your development process more reliable, realistic, and effici
 - ✅ Generate random, structured, or context-aware dynamic data
 - ✅ Mock complex workflows with conditional logic and stateful behavior
 - ✅ Chain requests together to simulate real-world usage patterns
-- ✅ Customize error responses, delays, and status codes on the fly
+- ✅ Customize error responses, delays, and status codes
 
 All using familiar JavaScript or TypeScript — no need to learn a new DSL.
 
@@ -153,6 +153,6 @@ With Mokapi, your mocks behave exactly the way you need them to.
 
 ---
 
-*A shorter summary of this article is also available on [LinkedIn](https://www.linkedin.com/pulse/end-to-end-testing-mocked-apis-using-mokapi-github-actions-lehmann-nuylf), including a link back here for full details.*
+*A shorter summary of this article is also available on [LinkedIn](https://www.linkedin.com/pulse/make-your-mocks-smarter-javascript-mokapi-marcel-lehmann-np3ef/), including a link back here for full details.*
 
 ---
