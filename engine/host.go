@@ -136,6 +136,7 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 	if len(events.GetStores(t)) == 1 {
 		events.SetStore(int(sh.engine.cfgEvent.Store["Default"].Size), t)
 	}
+	counter := 1
 
 	return func() {
 		sh.Lock()
@@ -145,6 +146,8 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 
 		exec := common.JobExecution{
 			Schedule: schedule,
+			MaxRuns:  opt.Times,
+			Runs:     counter,
 			Tags:     tags,
 		}
 
@@ -169,6 +172,7 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 		handler()
 
 		exec.Duration = time.Now().Sub(start).Milliseconds()
+		counter++
 	}
 }
 

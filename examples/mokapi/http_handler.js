@@ -150,6 +150,8 @@ export default async function() {
         time: '2025-05-01T08:49:25.482366+01:00',
         data: {
             schedule: '3s',
+            maxRuns: -1,
+            runs: 1,
             duration: 2300,
             tags: {
                 name: "cron",

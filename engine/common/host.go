@@ -118,6 +118,8 @@ type Log struct {
 
 type JobExecution struct {
 	Schedule string `json:"scheduled"`
+	MaxRuns  int    `json:"maxRuns"`
+	Runs     int    `json:"runs"`
 
 	Duration int64             `json:"duration"`
 	Tags     map[string]string `json:"tags"`

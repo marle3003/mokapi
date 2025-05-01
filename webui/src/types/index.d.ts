@@ -33,6 +33,8 @@ interface Data {
 
 interface JobExecution {
   schedule: string
+  maxRuns: number
+  runs: number
   duration: number
   tags: { [name: string]: string}
   logs: { level: string, message: string}[]

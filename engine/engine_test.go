@@ -36,6 +36,8 @@ func TestEngine_Scheduler(t *testing.T) {
 				r.Equal(t, "test.js", exec.Tags["name"])
 				r.Greater(t, exec.Duration, int64(0))
 				r.Equal(t, "1s", exec.Schedule)
+				r.Equal(t, -1, exec.MaxRuns)
+				r.Equal(t, 1, exec.Runs)
 
 				r.Equal(t, float64(1), c.Value())
 			},

@@ -33,6 +33,8 @@ function eventData(event: ServiceEvent | null): JobExecution | null{
                     <th scope="col" class="text-left" style="width: 30px;"></th>
                     <th scope="col" class="text-left">Name</th>
                     <th scope="col" class="text-left">Schedule</th>
+                    <th scope="col" class="text-center" style="width:10%">Runs</th>
+                    <th scope="col" class="text-center" style="width:10%">Max Runs</th>
                     <th scope="col" class="text-center" style="width:15%">Time</th>
                     <th scope="col" class="text-center" style="width: 10%">Duration</th>
                 </tr>
@@ -43,11 +45,13 @@ function eventData(event: ServiceEvent | null): JobExecution | null{
                         <td><i class="bi bi-chevron-right"></i><i class="bi bi-chevron-down"></i></td>
                         <td>{{ data!.tags.name }}</td>
                         <td>{{ data!.schedule }}</td>
+                        <td class="text-center">{{ data!.runs }}</td>
+                        <td class="text-center">{{ data!.maxRuns === -1 ? '-' : data!.maxRuns }}</td>
                         <td class="text-center">{{ format(event.time) }}</td>
                         <td class="text-center">{{ duration(data!.duration) }}</td>
                     </tr>
                     <tr class="collapse-row" :set="data = eventData(event)">
-                        <td colspan="5" v-if="data" >
+                        <td colspan="7" v-if="data" >
                             <div class="collapse" :id="'event_'+index" style="padding: 2rem;">
                                 <h5>Logs</h5>
                                 <div class="mb-3">
