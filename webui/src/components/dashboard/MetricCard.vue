@@ -1,7 +1,5 @@
 <script setup lang="ts">
 
-enum Live { "off", "assertive", "polite", undefined }
-
 const props = defineProps<{
     title: string
     value: string | number

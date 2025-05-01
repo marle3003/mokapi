@@ -77,7 +77,6 @@ func TestJsEvery(t *testing.T) {
 				`))
 				r.NoError(t, err)
 				r.Equal(t, 1, e.Scripts(), "script length not 1")
-
 				r.True(t, registered)
 			},
 		},

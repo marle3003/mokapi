@@ -30,3 +30,11 @@ interface Data {
   contentTypeTitle?: string
   description?: string
 }
+
+interface JobExecution {
+  schedule: string
+  duration: number
+  tags: { [name: string]: string}
+  logs: { level: string, message: string}[]
+  error?: { message: string }
+}

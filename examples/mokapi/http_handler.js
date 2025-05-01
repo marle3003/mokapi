@@ -7,6 +7,7 @@ import { metrics } from 'metrics.js'
 import { get, post, fetch } from 'mokapi/http'
 
 const configs = {}
+const jobs = []
 
 export default async function() {
     const apiBaseUrl = `http://localhost:8091/mokapi`
@@ -139,6 +140,24 @@ export default async function() {
             }
         }
     }
+
+    jobs.push({
+        id: "8234",
+        traits: {
+            namespace: "job",
+            name: "cron",
+        },
+        time: '2025-05-01T08:49:25.482366+01:00',
+        data: {
+            schedule: '3s',
+            duration: 2300,
+            tags: {
+                name: "cron",
+                file: "cron.js",
+                fileKey: "6f5cab53-9f51-4bbe-bb32-fe41ee71d542",
+            }
+        }
+    })
 }
 
 function getServices() {
@@ -151,23 +170,28 @@ function getServices() {
 }
 
 function getEvent(id) {
-    for (let e of httpEvents){
+    for (const e of httpEvents){
         if (e.id === id){
             return e
         }
     }
-    for (let e of kafkaEvents){
+    for (const e of kafkaEvents){
         if (e.id === id){
             return e
         }
     }
-    for (let e of mailEvents){
+    for (const e of mailEvents){
         if (e.id === id){
             return e
         }
     }
-    for (let e of searches){
+    for (const e of searches){
         if (e.id === id){
+            return e
+        }
+    }
+    for (const e of jobs) {
+        if (e.id === id) {
             return e
         }
     }
@@ -175,23 +199,28 @@ function getEvent(id) {
 }
 
 function getEvents(traits) {
-    let result = []
-    for (let e of httpEvents){
+    const result = []
+    for (const e of httpEvents){
         if (matchEvent(e, traits)) {
             result.push(e)
         }
     }
-    for (let e of kafkaEvents){
+    for (const e of kafkaEvents){
         if (matchEvent(e, traits)) {
             result.push(e)
         }
     }
-    for (let e of mailEvents) {
+    for (const e of mailEvents) {
         if (matchEvent(e, traits)) {
             result.push(e)
         }
     }
-    for (let e of searches) {
+    for (const e of searches) {
+        if (matchEvent(e, traits)) {
+            result.push(e)
+        }
+    }
+    for (const e of jobs) {
         if (matchEvent(e, traits)) {
             result.push(e)
         }
@@ -215,13 +244,17 @@ function getConfig(id) {
     if (kafkaConfigs[id]) {
         return kafkaConfigs[id]
     }
+    if (jobConfig[id]) {
+        return jobConfig[id]
+    }
     return null
 }
 
 function getConfigs() {
     return [
         ...Object.values(httpConfigs),
-        ...Object.values(kafkaConfigs)
+        ...Object.values(kafkaConfigs),
+        ...Object.values(jobConfig)
     ]
 }
 
@@ -241,4 +274,15 @@ function getInfo(config, type) {
         }
     }
     return info
+}
+
+const jobConfig = {
+    '6f5cab53-9f51-4bbe-bb32-fe41ee71d542': {
+        id: '6f5cab53-9f51-4bbe-bb32-fe41ee71d542',
+        url: 'file://cron.js',
+        provider: 'file',
+        time: '2025-05-01T08:49:25.482366+01:00',
+        data: "import { every } from 'mokapi'; export default function() { every('1s', function() {}); }",
+        filename: 'cron.js'
+    }
 }

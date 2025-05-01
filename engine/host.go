@@ -7,6 +7,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/engine/common"
+	"mokapi/runtime/events"
 	"mokapi/schema/json/generator"
 	"net/http"
 	"net/url"
@@ -30,7 +31,7 @@ type scriptHost struct {
 	events map[string][]*eventHandler
 	file   *dynamic.Config
 
-	actionLogger func(level, message string)
+	eventLogger func(level, message string)
 
 	fakerNodes []*common.FakerTree
 	m          sync.Mutex
@@ -68,16 +69,18 @@ func (sh *scriptHost) Run() (err error) {
 func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*common.Action {
 	var result []*common.Action
 	for _, eh := range sh.events[event] {
+		sh.Lock()
 		action := &common.Action{
 			Tags: eh.tags,
 		}
-		sh.startEventHandler(action)
+		sh.startEventHandler(action.AppendLog)
 		start := time.Now()
 
 		if b, err := eh.handler(args...); err != nil {
 			log.Errorf("unable to execute event handler: %v", err)
 			action.Error = &common.Error{Message: err.Error()}
 		} else if !b {
+			sh.Unlock()
 			continue
 		} else {
 			log.WithField("handler", action).Debug("processed event handler")
@@ -87,21 +90,13 @@ func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*common.Acti
 		action.Parameters = getDeepCopy(args)
 		result = append(result, action)
 		sh.endEventHandler()
+		sh.Unlock()
 	}
 	return result
 }
 
 func (sh *scriptHost) Every(every string, handler func(), opt common.JobOptions) (int, error) {
-	do := func() {
-		defer func() {
-			r := recover()
-			if r != nil {
-				log.Errorf("script error %v: %v", sh.Name(), r)
-			}
-		}()
-		handler()
-	}
-
+	do := sh.newJobFunc(handler, opt, every)
 	job, err := sh.engine.scheduler.Every(every, do, opt)
 
 	if err != nil {
@@ -115,16 +110,7 @@ func (sh *scriptHost) Every(every string, handler func(), opt common.JobOptions)
 }
 
 func (sh *scriptHost) Cron(expr string, handler func(), opt common.JobOptions) (int, error) {
-	do := func() {
-		defer func() {
-			r := recover()
-			if r != nil {
-				log.Errorf("script error %v: %v", sh.Name(), r)
-			}
-		}()
-		handler()
-	}
-
+	do := sh.newJobFunc(handler, opt, expr)
 	job, err := sh.engine.scheduler.Cron(expr, do, opt)
 	if err != nil {
 		return -1, err
@@ -134,6 +120,56 @@ func (sh *scriptHost) Cron(expr string, handler func(), opt common.JobOptions) (
 	sh.jobs[id] = job
 
 	return id, nil
+}
+
+func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule string) func() {
+	tags := map[string]string{
+		"name":    sh.name,
+		"file":    sh.name,
+		"fileKey": sh.file.Info.Key(),
+	}
+	for k, v := range opt.Tags {
+		tags[k] = v
+	}
+
+	t := events.NewTraits().WithNamespace("job").WithName(tags["name"])
+	if len(events.GetStores(t)) == 1 {
+		events.SetStore(int(sh.engine.cfgEvent.Store["Default"].Size), t)
+	}
+
+	return func() {
+		sh.Lock()
+		defer sh.Unlock()
+
+		sh.engine.jobCounter.Add(1)
+
+		exec := common.JobExecution{
+			Schedule: schedule,
+			Tags:     tags,
+		}
+
+		defer func() {
+			r := recover()
+			if r != nil {
+				log.Errorf("script error %v: %v", sh.Name(), r)
+				exec.Error = &common.Error{Message: fmt.Sprintf("%v", r)}
+			}
+
+			sh.endEventHandler()
+
+			err := events.Push(exec, t)
+			if err != nil {
+				log.Errorf("failed to push event: %v", err)
+			}
+		}()
+
+		sh.startEventHandler(exec.AppendLog)
+		start := time.Now()
+
+		handler()
+
+		exec.Duration = time.Now().Sub(start).Milliseconds()
+	}
 }
 
 func (sh *scriptHost) Cancel(jobId int) error {
@@ -188,34 +224,34 @@ func (sh *scriptHost) close() {
 
 func (sh *scriptHost) Info(args ...interface{}) {
 	sh.engine.logger.Info(args...)
-	if sh.actionLogger != nil && sh.IsLevelEnabled("info") {
-		sh.actionLogger("log", fmt.Sprint(args...))
+	if sh.eventLogger != nil && sh.IsLevelEnabled("info") {
+		sh.eventLogger("log", fmt.Sprint(args...))
 	}
 }
 
 func (sh *scriptHost) Warn(args ...interface{}) {
 	sh.engine.logger.Warn(args...)
-	if sh.actionLogger != nil && sh.IsLevelEnabled("warn") {
-		sh.actionLogger("warn", fmt.Sprint(args...))
+	if sh.eventLogger != nil && sh.IsLevelEnabled("warn") {
+		sh.eventLogger("warn", fmt.Sprint(args...))
 	}
 }
 
 func (sh *scriptHost) Error(args ...interface{}) {
 	sh.engine.logger.Error(args...)
-	if sh.actionLogger != nil && sh.IsLevelEnabled("error") {
-		sh.actionLogger("error", fmt.Sprint(args...))
+	if sh.eventLogger != nil && sh.IsLevelEnabled("error") {
+		sh.eventLogger("error", fmt.Sprint(args...))
 	}
 }
 
 func (sh *scriptHost) Debug(args ...interface{}) {
 	sh.engine.logger.Debug(args...)
-	if sh.actionLogger != nil && sh.IsLevelEnabled("debug") {
-		sh.actionLogger("debug", fmt.Sprint(args...))
+	if sh.eventLogger != nil && sh.IsLevelEnabled("debug") {
+		sh.eventLogger("debug", fmt.Sprint(args...))
 	}
 }
 
-func (e *scriptHost) IsLevelEnabled(level string) bool {
-	return e.engine.IsLevelEnabled(level)
+func (sh *scriptHost) IsLevelEnabled(level string) bool {
+	return sh.engine.IsLevelEnabled(level)
 }
 
 func (sh *scriptHost) OpenFile(path string, hint string) (*dynamic.Config, error) {
@@ -290,13 +326,13 @@ func getScriptPath(u *url.URL) string {
 	return u.Opaque
 }
 
-func (sh *scriptHost) startEventHandler(action *common.Action) {
-	sh.actionLogger = action.AppendLog
+func (sh *scriptHost) startEventHandler(eventLog func(level, message string)) {
+	sh.eventLogger = eventLog
 }
 
 // Function to end the event handler context
 func (sh *scriptHost) endEventHandler() {
-	sh.actionLogger = nil
+	sh.eventLogger = nil
 }
 
 func getDeepCopy(args []any) []any {

@@ -11,6 +11,10 @@ export let metrics = [
         value: 52450600
     },
     {
+        name: 'app_job_run_total',
+        value:  1
+    },
+    {
         name: 'http_requests_total{service="Swagger Petstore",endpoint="/pet"}"',
         value: 2
     },

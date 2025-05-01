@@ -147,7 +147,7 @@
       "component": "examples",
       "hideNavigation": true,
       "hideInNavigation": true,
-      "canonical": "/docs/resources",
+      "canonical": "https://mokapi.io/docs/resources",
       "title": "Explore Mokapi Resources: Tutorials, Examples, and Blog Articles",
       "description": "Explore Mokapi's resources including tutorials, examples, and blog articles. Learn to mock APIs, validate schemas, and streamline your development."
     },
@@ -157,7 +157,7 @@
           "component": "examples",
           "hideNavigation": true,
           "hideInNavigation": true,
-          "canonical": "/docs/resources",
+          "canonical": "https://mokapi.io/docs/resources",
           "title": "Explore Mokapi Resources: Tutorials, Examples, and Blog Articles",
           "description": "Explore Mokapi's resources including tutorials, examples, and blog articles. Learn to mock APIs, validate schemas, and streamline your development."
         },
@@ -179,7 +179,7 @@
           "component": "examples",
           "hideNavigation": true,
           "hideInNavigation": true,
-          "canonical": "/docs/resources",
+          "canonical": "https://mokapi.io/docs/resources",
           "title": "Explore Mokapi Resources: Tutorials, Examples, and Blog Articles",
           "description": "Explore Mokapi's resources including tutorials, examples, and blog articles. Learn to mock APIs, validate schemas, and streamline your development."
         },
@@ -193,7 +193,7 @@
           "component": "examples",
           "hideNavigation": true,
           "hideInNavigation": true,
-          "canonical": "/docs/resources",
+          "canonical": "https://mokapi.io/docs/resources",
           "title": "Explore Mokapi Resources: Tutorials, Examples, and Blog Articles",
           "description": "Explore Mokapi's resources including tutorials, examples, and blog articles. Learn to mock APIs, validate schemas, and streamline your development."
         },

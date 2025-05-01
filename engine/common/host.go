@@ -116,6 +116,15 @@ type Log struct {
 	Message string `json:"message"`
 }
 
+type JobExecution struct {
+	Schedule string `json:"scheduled"`
+
+	Duration int64             `json:"duration"`
+	Tags     map[string]string `json:"tags"`
+	Logs     []Log             `json:"logs"`
+	Error    *Error            `json:"error"`
+}
+
 type Error struct {
 	Message string `json:"message"`
 }
@@ -141,6 +150,10 @@ func (a *Action) String() string {
 
 func (a *Action) AppendLog(level, message string) {
 	a.Logs = append(a.Logs, Log{Level: level, Message: message})
+}
+
+func (e *JobExecution) AppendLog(level, message string) {
+	e.Logs = append(e.Logs, Log{Level: level, Message: message})
 }
 
 type FakerNode interface {

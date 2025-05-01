@@ -52,7 +52,7 @@ function formatParameters(action: Action): {name?: string, value: string}[] {
                 <th scope="col" class="text-left" style="width: 30px;"></th>
                 <th scope="col" class="text-left" style="width: 30px;">Status</th>
                 <th scope="col" class="text-left">Name</th>
-                <th scope="col" class="text-left">Duration</th>
+                <th scope="col" class="text-center" style="width: 10%">Duration</th>
             </tr>
         </thead>
         <tbody>
@@ -64,7 +64,7 @@ function formatParameters(action: Action): {name?: string, value: string}[] {
                         <span class="badge bg-danger me-2" v-else>Error</span>
                     </td>
                     <td>{{ getName(action) }}</td>
-                    <td>{{ duration(action.duration) }}</td>
+                    <td class="text-center">{{ duration(action.duration) }}</td>
                 </tr>
                 <tr class="collapse-row">
                     <td colspan="4">

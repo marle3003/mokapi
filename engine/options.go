@@ -4,6 +4,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
+	"mokapi/runtime"
 )
 
 func WithScriptLoader(loader ScriptLoader) Options {
@@ -39,5 +40,11 @@ func WithDefaultLogger() Options {
 func WithLogger(logger common.Logger) Options {
 	return func(e *Engine) {
 		e.logger = logger
+	}
+}
+
+func WithApp(app *runtime.App) Options {
+	return func(e *Engine) {
+		e.jobCounter = app.Monitor.JobCounter
 	}
 }
