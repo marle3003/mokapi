@@ -1,5 +1,5 @@
 ---
-title: head( url, [args] ) - Mock HTTP HEAD Requests with Mokapi JavaScript API
+title: HTTP HEAD Request – head( url, [args] )
 description: Use Mokapi's JavaScript API to mock HTTP HEAD requests. Customize responses, handle request data, and simulate APIs for testing and development.
 ---
 # head( url, [args] )

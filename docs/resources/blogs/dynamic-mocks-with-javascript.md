@@ -1,5 +1,5 @@
 ---
-title: Bring Your Mock APIs to Life with Mokapi and JavaScript
+title: Create Smart API Mocks with Mokapi Scripts
 description: Tired of static mocks? Learn how Mokapi Scripts let you create dynamic mock APIs using JavaScript — perfect for development, testing, and rapid prototyping.
 ---
 

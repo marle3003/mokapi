@@ -1,5 +1,5 @@
 ---
-title: Using Mokapi Dashboard
+title: Analyze your mocked HTTP API in Dashboard
 description: The dashboard helps you analyze your mocked APIs, how they are used and what data is transferred.
 ---
 # Analyze your mocked HTTP API in Dashboard

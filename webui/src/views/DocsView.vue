@@ -18,7 +18,7 @@ const imageDescription = ref<string>()
 
 const route = useRoute()
 const { resolve } = useFileResolver()
-const { file, levels } = resolve(nav, route)
+const { file, levels, isIndex } = resolve(nav, route)
 
 let data
 let component: any
@@ -118,6 +118,9 @@ function getCanonicalUrl(levels: string[]) {
   let canonical = 'https://mokapi.io/docs/' + toUrlPath(levels[0])
   for (let i = 1; i < levels.length; i++) {
     canonical += `/${toUrlPath(levels[i])}`
+  }
+  if (isIndex) {
+    canonical += '/'
   }
   return canonical.toLowerCase()
 }
