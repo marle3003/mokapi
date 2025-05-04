@@ -13,7 +13,7 @@ useMeta(title, description, "https://mokapi.io/kafka")
       <div class="container">
         <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6 px-0">
-            <h1>{{ title }}</h1>
+            <h1>Turn Kafka Topics into Testable Reality</h1>
             <div class="badge-list mb-3">
               <span class="badge">Kafka</span>
             </div>
