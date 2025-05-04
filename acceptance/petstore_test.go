@@ -282,13 +282,13 @@ func (suite *PetStoreSuite) TestKafkaEventAndMetrics() {
 
 func (suite *PetStoreSuite) TestKafka3_Consume() {
 	// ensure scripts are executed
-	time.Sleep(5 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	c := kafkatest.NewClient("localhost:19093", "test")
 	defer c.Close()
 
 	r, err := c.Fetch(12, &fetch.Request{
-		MaxBytes:  200,
+		MaxBytes:  1000,
 		MinBytes:  1,
 		MaxWaitMs: 5000,
 		Topics: []fetch.Topic{
@@ -296,7 +296,7 @@ func (suite *PetStoreSuite) TestKafka3_Consume() {
 				Name: "petstore.order-event",
 				Partitions: []fetch.RequestPartition{{
 					Index:    0,
-					MaxBytes: 200,
+					MaxBytes: 1000,
 				}},
 			},
 		},
