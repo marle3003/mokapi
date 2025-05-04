@@ -11,6 +11,7 @@ type ChannelRef struct {
 }
 
 type Channel struct {
+	Name        string                   `yaml:"-" json:"-"`
 	Title       string                   `yaml:"title" json:"title"`
 	Address     string                   `yaml:"address" json:"address"`
 	Summary     string                   `yaml:"summary" json:"summary"`

@@ -13,109 +13,295 @@ import (
 	"mokapi/engine"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
-	"mokapi/kafka/kafkatest"
-	"mokapi/kafka/produce"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
-	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime"
-	"mokapi/runtime/monitor"
 	"mokapi/schema/json/schema/schematest"
 	"net/url"
 	"testing"
 	"time"
 )
 
-func TestKafkaClient_Produce_Empty_Parameter(t *testing.T) {
-	gofakeit.Seed(11)
-
-	config := asyncapi3test.NewConfig(
-		asyncapi3test.WithInfo("foo", "", ""),
-		asyncapi3test.WithChannel("foo",
-			asyncapi3test.WithMessage("foo",
-				asyncapi3test.WithContentType("application/json"),
-				asyncapi3test.WithPayload(schematest.New("string")),
-				asyncapi3test.WithKey(schematest.New("string")),
+func TestKafkaClient(t *testing.T) {
+	createCfg := func(topic string, msg *asyncapi3.Message) *asyncapi3.Config {
+		ch := asyncapi3test.NewChannel(
+			asyncapi3test.UseMessage("foo",
+				&asyncapi3.MessageRef{Value: msg},
 			),
-		),
-	)
-	app := runtime.New(&static.Config{})
-	e := enginetest.NewEngine(
-		engine.WithKafkaClient(engine.NewKafkaClient(app)),
-		engine.WithDefaultLogger(),
-	)
+		)
 
-	info, err := app.Kafka.Add(getConfig(config), e)
-	require.NoError(t, err)
+		return asyncapi3test.NewConfig(
+			asyncapi3test.WithInfo("foo", "", ""),
+			asyncapi3test.AddChannel("foo", ch),
+			asyncapi3test.WithComponentMessage("foo", msg),
+			asyncapi3test.WithOperation("sendAction",
+				asyncapi3test.WithOperationAction("send"),
+				asyncapi3test.WithOperationChannel(ch),
+				asyncapi3test.UseOperationMessage(msg),
+			),
+		)
+	}
 
-	err = e.AddScript(newScript("test.js", `
+	testcases := []struct {
+		name string
+		cfg  func() *asyncapi3.Config
+		test func(t *testing.T, e *engine.Engine, app *runtime.App)
+	}{
+		{
+			name: "produce empty parameters",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithPayload(schematest.New("string")),
+					asyncapi3test.WithKey(schematest.New("string")),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
 						produce({ })
 					}
 				`))
-	require.NoError(t, err)
-	b, errCode := info.Store.Topic("foo").Partition(0).Read(0, 1000)
-	require.Equal(t, kafka.None, errCode)
-	require.NotNil(t, b)
-	require.Equal(t, "XidZuoWq ", kafka.BytesToString(b.Records[0].Key))
-	require.Equal(t, "\"\"", kafka.BytesToString(b.Records[0].Value))
-}
 
-func TestKafkaClient_Produce(t *testing.T) {
-	testcases := []struct {
-		name string
-		test func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine)
-	}{
+				require.NoError(t, err)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Equal(t, "XidZuoWq ", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, "\"\"", kafka.BytesToString(b.Records[0].Value))
+			},
+		},
 		{
-			name: "random message",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
-				err := engine.AddScript(newScript("test.js", `
+			name: "produce with topic and cluster set",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithPayload(schematest.New("string")),
+					asyncapi3test.WithKey(schematest.New("string")),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
 						produce({ topic: 'foo', cluster: 'foo' })
 					}
 				`))
+
 				require.NoError(t, err)
-				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Equal(t, "XidZuoWq ", kafka.BytesToString(b.Records[0].Key))
 				require.Equal(t, "\"\"", kafka.BytesToString(b.Records[0].Value))
-
-				require.Equal(t, float64(1), app.Monitor.Kafka.Messages.Sum())
 			},
 		},
 		{
-			name: "non random values",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
-				err := engine.AddScript(newScript("test.js", `
+			name: "produce but cluster not found",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithPayload(schematest.New("string")),
+					asyncapi3test.WithKey(schematest.New("string")),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
-						const result = produce({ 
-							topic: 'foo',
-							partition: 0,
-							key: 'foo',
-							value: 'bar',
-							headers: { version: '1.0' },
+						produce({
+							cluster: 'foo2',
+							retry: { retries: 0 }
 						})
-						console.log(result)
 					}
 				`))
+
+				require.EqualError(t, err, "kafka cluster 'foo2' not found at mokapi/js/kafka.(*Module).Produce-fm (native)")
+			},
+		},
+		{
+			name: "produce but topic not found",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithPayload(schematest.New("string")),
+					asyncapi3test.WithKey(schematest.New("string")),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ 
+							topic: 'foo2',
+							cluster: 'foo',
+							retry: { retries: 0 }
+						})
+					}
+				`))
+
+				require.EqualError(t, err, "kafka topic 'foo2' not found at mokapi/js/kafka.(*Module).Produce-fm (native)")
+			},
+		},
+		{
+			name: "produce with specific message",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithPayload(schematest.New("string")),
+					asyncapi3test.WithKey(schematest.New("string")),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ 
+							messages: [
+								{
+									key: 'foo',
+									data: 'bar',
+								}
+							]
+						})
+					}
+				`))
+
 				require.NoError(t, err)
-				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Equal(t, "foo", kafka.BytesToString(b.Records[0].Key))
 				require.Equal(t, `"bar"`, kafka.BytesToString(b.Records[0].Value))
-				require.Equal(t, "version", b.Records[0].Headers[0].Key)
-				require.Equal(t, []byte("1.0"), b.Records[0].Headers[0].Value)
+			},
+		},
+		{
+			name: "produce with specific message value not validating against schema",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithPayload(schematest.New("string")),
+					asyncapi3test.WithKey(schematest.New("string")),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ 
+							messages: [
+								{
+									key: 'foo',
+									// value is not validate by Mokapi
+									value: int32ToBytes(123),
+								}
+							]
+						})
+					}
+					function int32ToBytes (int) {
+					  return [
+						int & 0xff,
+						(int >> 8) & 0xff,
+						(int >> 16) & 0xff,
+						(int >> 24) & 0xff
+					  ]
+					}
+				`))
+
+				require.NoError(t, err)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Equal(t, "foo", kafka.BytesToString(b.Records[0].Key))
+				val := make([]byte, 4)
+				_, _ = b.Records[0].Value.Seek(0, 0)
+				_, err = b.Records[0].Value.Read(val)
+				require.NoError(t, err)
+				require.Equal(t, []byte{123, 0, 0, 0}, val)
+			},
+		},
+		{
+			name: "produce with partition",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithPayload(schematest.New("string")),
+					asyncapi3test.WithKey(schematest.New("string")),
+				)
+				cfg := createCfg("foo", msg)
+				cfg.Channels["foo"].Value.Bindings.Kafka.Partitions = 10
+
+				return cfg
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({
+							messages: [
+								{
+									key: 'foo',
+									data: 'bar',
+									partition: 5
+								}
+							]
+						})
+					}
+				`))
+
+				require.NoError(t, err)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(5).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Equal(t, "foo", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `"bar"`, kafka.BytesToString(b.Records[0].Value))
+			},
+		},
+		{
+			name: "produce with header",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithPayload(schematest.New("string")),
+					asyncapi3test.WithKey(schematest.New("string")),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({
+							messages: [
+								{
+									headers: {
+										foo: 'bar'
+									}
+								}
+							]
+						})
+					}
+				`))
+
+				require.NoError(t, err)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Len(t, b.Records[0].Headers, 1)
+				require.Equal(t, "foo", b.Records[0].Headers[0].Key)
+				require.Equal(t, "bar", string(b.Records[0].Headers[0].Value))
 			},
 		},
 		{
 			name: "multiple messages",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
-				err := engine.AddScript(newScript("test.js", `
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithPayload(schematest.New("string")),
+					asyncapi3test.WithKey(schematest.New("string")),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
 						const result = produce({
@@ -129,7 +315,7 @@ func TestKafkaClient_Produce(t *testing.T) {
 					}
 				`))
 				require.NoError(t, err)
-				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Equal(t, "key1", kafka.BytesToString(b.Records[0].Key))
@@ -141,29 +327,21 @@ func TestKafkaClient_Produce(t *testing.T) {
 			},
 		},
 		{
-			name: "to partition 5",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
-				err := engine.AddScript(newScript("test.js", `
-					import { produce } from 'mokapi/kafka'
-					export default function() {
-						produce({ topic: 'bar', partition: 5 })
-					}
-				`))
-				require.NoError(t, err)
-				b, errCode := s.Topic("bar").Partition(5).Read(0, 1000)
-				require.Equal(t, kafka.None, errCode)
-				require.NotNil(t, b)
+			name: "multiple clusters only topic is set",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithPayload(schematest.New("string")),
+					asyncapi3test.WithKey(schematest.New("string")),
+				)
+				return createCfg("foo", msg)
 			},
-		},
-		{
-			name: "multiple clusters",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
-				for i := 0; i < 10; i++ {
-					app.Kafka.Add(getConfig(
-						asyncapi3test.NewConfig(asyncapi3test.WithInfo(fmt.Sprintf("x%v", i), "", ""))), enginetest.NewEngine())
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				for i := 0; i < 3; i++ {
+					_, _ = app.Kafka.Add(getConfig(
+						asyncapi3test.NewConfig(asyncapi3test.WithInfo(fmt.Sprintf("x%v", i), "", ""))), e)
 				}
 
-				err := engine.AddScript(newScript("test.js", `
+				err := e.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
 						produce({ topic: 'foo' })
@@ -171,34 +349,65 @@ func TestKafkaClient_Produce(t *testing.T) {
 				`))
 				require.NoError(t, err)
 
-				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Len(t, b.Records, 1)
 			},
 		},
 		{
-			name: "trigger event",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
-				err := engine.AddScript(newScript("test.js", `
-					import { on } from 'mokapi'
+			name: "two cluster same topic",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithPayload(schematest.New("string")),
+					asyncapi3test.WithKey(schematest.New("string")),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				cfg := createCfg("foo", nil)
+				cfg.Info.Name = "Other Cluster"
+				_, _ = app.Kafka.Add(getConfig(cfg), e)
+
+				err := e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
 					export default function() {
+						produce({ topic: 'foo' })
+					}
+				`))
+				require.EqualError(t, err, "ambiguous topic foo. Specify the cluster at mokapi/js/kafka.(*Module).Produce-fm (native)")
+			},
+		},
+		{
+			name: "trigger event",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithPayload(schematest.New("string")),
+					asyncapi3test.WithKey(schematest.New("string")),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				hook := test.NewGlobal()
+
+				err := e.AddScript(newScript("test.js", `
+					import { on } from 'mokapi'
+					import { produceAsync } from 'mokapi/kafka'
+					export default async function() {
 						on('kafka', function(message) {
 							console.log(message)
 							message.value = '"mokapi"'
 							message.headers = { version: '1.0' }
 							return true
 						})
+						await produceAsync({ topic: 'foo', messages: [ { data: 'bar' } ] })
 					}
 				`))
 				require.NoError(t, err)
 
-				hook := test.NewGlobal()
+				require.Equal(t, `{"offset":0,"key":"XidZuoWq ","value":"\"bar\"","schemaId":0,"headers":{}}`, hook.LastEntry().Message)
 
-				sendMessage(s, nil)
-				require.Equal(t, `{"offset":0,"key":"foo-1","value":"\"bar-1\"","schemaId":0,"headers":{}}`, hook.LastEntry().Message)
-
-				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Equal(t, "\"mokapi\"", string(readBytes(b.Records[0].Value)))
@@ -209,22 +418,30 @@ func TestKafkaClient_Produce(t *testing.T) {
 			},
 		},
 		{
-			name: "add header",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
-				err := engine.AddScript(newScript("test.js", `
+			name: "trigger event add header",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithPayload(schematest.New("string")),
+					asyncapi3test.WithKey(schematest.New("string")),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
 					import { on } from 'mokapi'
-					export default function() {
+					import { produceAsync } from 'mokapi/kafka'
+					export default async function() {
 						on('kafka', function(message) {
 							message.headers = { version: '1.0' }
 							return true
 						})
+						await produceAsync({ topic: 'foo', messages: [ { headers: { foo: 'bar' } } ] })
 					}
 				`))
 				require.NoError(t, err)
 
-				sendMessage(s, map[string]string{"foo": "bar"})
-
-				b, _ := s.Topic("foo").Partition(0).Read(0, 1000)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
 				require.Len(t, b.Records[0].Headers, 2)
 				require.Contains(t, b.Records[0].Headers, kafka.RecordHeader{
 					Key:   "foo",
@@ -238,51 +455,68 @@ func TestKafkaClient_Produce(t *testing.T) {
 		},
 		{
 			name: "remove all headers",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
-				err := engine.AddScript(newScript("test.js", `
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithPayload(schematest.New("string")),
+					asyncapi3test.WithKey(schematest.New("string")),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
 					import { on } from 'mokapi'
-					export default function() {
+					import { produceAsync } from 'mokapi/kafka'
+					export default async function() {
 						on('kafka', function(message) {
 							message.headers = null
 							return true
 						})
+						await produceAsync({ topic: 'foo', messages: [ { headers: { foo: 'bar' } } ] })
 					}
 				`))
 				require.NoError(t, err)
 
-				sendMessage(s, map[string]string{"foo": "bar"})
-
-				b, _ := s.Topic("foo").Partition(0).Read(0, 1000)
+				b, _ := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Len(t, b.Records[0].Headers, 0)
 			},
 		},
 		{
 			name: "validation error",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithPayload(schematest.New("string")),
+					asyncapi3test.WithKey(schematest.New("string")),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
 				logrus.SetOutput(io.Discard)
 				hook := test.NewGlobal()
 
-				err := engine.AddScript(newScript("test.js", `
+				err := e.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
 						produce({ topic: 'foo', messages: [{ data: 12 }] })
 					}
 				`))
-				require.EqualError(t, err, "produce kafka message to 'foo' failed: encoding data to 'application/json' failed: error count 1:\n\t- #/type: invalid type, expected string but got integer at mokapi/js/kafka.(*Module).Produce-fm (native)")
+				require.EqualError(t, err, "producing kafka message to 'foo' failed: no matching 'send' or 'receive' operation found for value: 12 at mokapi/js/kafka.(*Module).Produce-fm (native)")
 
-				b, errCode := s.Topic("foo").Partition(0).Read(0, 1000)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Len(t, b.Records, 0, "no record should be written")
 
 				// logs
 				require.Len(t, hook.Entries, 2)
-				require.Equal(t, "js error: produce kafka message to 'foo' failed: encoding data to 'application/json' failed: error count 1:\n\t- #/type: invalid type, expected string but got integer in test.js", hook.LastEntry().Message)
+				require.Equal(t, "js error: producing kafka message to 'foo' failed: no matching 'send' or 'receive' operation found for value: 12 in test.js", hook.LastEntry().Message)
 			},
 		},
 		{
 			name: "test retry",
-			test: func(t *testing.T, app *runtime.App, s *store.Store, engine *engine.Engine) {
+			cfg: func() *asyncapi3.Config {
+				return nil
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
 				logrus.SetOutput(io.Discard)
 				logrus.SetLevel(logrus.DebugLevel)
 				hook := test.NewGlobal()
@@ -290,26 +524,39 @@ func TestKafkaClient_Produce(t *testing.T) {
 				go func() {
 					time.Sleep(time.Second * 1)
 
-					config := asyncapi3test.NewConfig(
-						asyncapi3test.WithInfo("foo", "", ""),
-						asyncapi3test.WithChannel("retry",
-							asyncapi3test.WithMessage("foo",
-								asyncapi3test.WithContentType("application/json"),
-								asyncapi3test.WithPayload(schematest.New("string")),
-								asyncapi3test.WithKey(schematest.New("string")))),
+					msg := asyncapi3test.NewMessage(
+						asyncapi3test.WithPayload(schematest.New("string")),
+						asyncapi3test.WithKey(schematest.New("string")),
 					)
-					app.Kafka.Add(getConfig(config), nil)
+
+					ch := asyncapi3test.NewChannel(
+						asyncapi3test.UseMessage("foo",
+							&asyncapi3.MessageRef{Value: msg},
+						),
+					)
+
+					cfg := asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("retry", "", ""),
+						asyncapi3test.AddChannel("retry", ch),
+						asyncapi3test.WithComponentMessage("foo", msg),
+						asyncapi3test.WithOperation("sendAction",
+							asyncapi3test.WithOperationAction("send"),
+							asyncapi3test.WithOperationChannel(ch),
+							asyncapi3test.UseOperationMessage(msg),
+						),
+					)
+					_, _ = app.Kafka.Add(getConfig(cfg), e)
 				}()
 
-				err := engine.AddScript(newScript("test.js", `
+				err := e.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
-						produce({ topic: 'retry', messages: [{ data: 'foo' }] })
+						produce({ topic: 'retry', messages: [{ data: 'foo' }], retry: { retries: 4 } })
 					}
 				`))
 				require.NoError(t, err)
 
-				b, errCode := s.Topic("retry").Partition(0).Read(0, 1000)
+				b, errCode := app.Kafka.Get("retry").Store.Topic("retry").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Len(t, b.Records, 1, "message should be written despite validation error")
@@ -322,41 +569,28 @@ func TestKafkaClient_Produce(t *testing.T) {
 	}
 
 	for _, tc := range testcases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			gofakeit.Seed(11)
 
-			config := asyncapi3test.NewConfig(
-				asyncapi3test.WithInfo("foo", "", ""),
-				asyncapi3test.WithChannel("foo",
-					asyncapi3test.WithMessage("foo",
-						asyncapi3test.WithContentType("application/json"),
-						asyncapi3test.WithPayload(schematest.New("string")),
-						asyncapi3test.WithKey(schematest.New("string")),
-					),
-				),
-				asyncapi3test.WithChannel("bar",
-					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 10}),
-					asyncapi3test.WithMessage("foo",
-						asyncapi3test.WithContentType("application/json"),
-						asyncapi3test.WithPayload(schematest.New("string")),
-						asyncapi3test.WithKey(schematest.New("string")))),
-			)
 			app := runtime.New(&static.Config{})
 			e := enginetest.NewEngine(
 				engine.WithKafkaClient(engine.NewKafkaClient(app)),
 				engine.WithDefaultLogger(),
 			)
 
-			info, err := app.Kafka.Add(getConfig(config), e)
-			require.NoError(t, err)
-			tc.test(t, app, info.Store, e)
+			cfg := tc.cfg()
+			if cfg != nil {
+				_, err := app.Kafka.Add(getConfig(cfg), e)
+				require.NoError(t, err)
+			}
+
+			tc.test(t, e, app)
 		})
 	}
 }
 
 func readBytes(b kafka.Bytes) []byte {
-	b.Seek(0, io.SeekStart)
+	_, _ = b.Seek(0, io.SeekStart)
 	buf := new(bytes.Buffer)
 	_, err := buf.ReadFrom(b)
 	if err != nil {
@@ -370,39 +604,6 @@ func getConfig(c *asyncapi3.Config) *dynamic.Config {
 	cfg := &dynamic.Config{Data: c}
 	cfg.Info.Url = u
 	return cfg
-}
-
-func sendMessage(s *store.Store, headers map[string]string) {
-	var rHeaders []kafka.RecordHeader
-	for k, v := range headers {
-		rHeaders = append(rHeaders, kafka.RecordHeader{
-			Key:   k,
-			Value: []byte(v),
-		})
-	}
-
-	rr := kafkatest.NewRecorder()
-	r := kafkatest.NewRequest("kafkatest", 3, &produce.Request{
-		Topics: []produce.RequestTopic{
-			{Name: "foo", Partitions: []produce.RequestPartition{
-				{
-					Record: kafka.RecordBatch{
-						Records: []*kafka.Record{
-							{
-								Offset:  0,
-								Time:    time.Now(),
-								Key:     kafka.NewBytes([]byte("foo-1")),
-								Value:   kafka.NewBytes([]byte(`"bar-1"`)),
-								Headers: rHeaders,
-							},
-						},
-					},
-				},
-			},
-			}}})
-	m := monitor.New()
-	r.Context = monitor.NewKafkaContext(r.Context, m.Kafka)
-	s.ServeMessage(rr, r)
 }
 
 func getMessages(hook *test.Hook) []string {

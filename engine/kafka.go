@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
@@ -47,9 +48,9 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 			v = r.Value
 		}
 
-		rb, err := c.createRecordBatch(r.Key, v, r.Headers, t.Config)
+		rb, err := c.createRecordBatch(r.Key, v, r.Headers, t.Config, config)
 		if err != nil {
-			return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
+			return nil, fmt.Errorf("producing kafka message to '%v' failed: %w", t.Name, err)
 		}
 
 		_, records, err := p.Write(rb)
@@ -89,7 +90,8 @@ func (c *KafkaClient) tryGet(cluster string, topic string, retry common.KafkaPro
 	backoff := retry.InitialRetryTime
 	for {
 		t, config, err = c.get(cluster, topic)
-		if err == nil {
+		ambiguous := &ambiguousError{}
+		if err == nil || errors.As(err, &ambiguous) {
 			return
 		}
 		count++
@@ -107,12 +109,12 @@ func (c *KafkaClient) get(cluster string, topic string) (t *store.Topic, config 
 		if len(topic) == 0 {
 			clusters := c.app.Kafka.List()
 			if len(clusters) > 1 {
-				err = fmt.Errorf("ambiguous cluster: specify the cluster")
+				err = newAmbiguousError("ambiguous cluster: specify the cluster")
 				return
 			}
 			topics := clusters[0].Topics()
 			if len(topics) > 1 {
-				err = fmt.Errorf("ambiguous topic %v. Specify the cluster", topic)
+				err = newAmbiguousError("ambiguous topic %v. Specify the cluster", topic)
 				return
 			}
 			return topics[0], clusters[0].Config, nil
@@ -129,7 +131,7 @@ func (c *KafkaClient) get(cluster string, topic string) (t *store.Topic, config 
 			}
 		}
 		if len(topics) > 1 {
-			err = fmt.Errorf("ambiguous topic %v. Specify the cluster", topic)
+			err = newAmbiguousError("ambiguous topic %v. Specify the cluster", topic)
 			return
 		} else if len(topics) == 1 {
 			t = topics[0]
@@ -138,6 +140,8 @@ func (c *KafkaClient) get(cluster string, topic string) (t *store.Topic, config 
 		if k := c.app.Kafka.Get(cluster); k != nil {
 			config = k.Config
 			t = k.Topic(topic)
+		} else {
+			return nil, nil, fmt.Errorf("kafka cluster '%v' not found", cluster)
 		}
 	}
 
@@ -160,23 +164,15 @@ func (c *KafkaClient) getPartition(t *store.Topic, partition int) (*store.Partit
 	return t.Partition(partition), nil
 }
 
-func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[string]interface{}, config *asyncapi3.Channel) (rb kafka.RecordBatch, err error) {
-	n := len(config.Messages)
+func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[string]interface{}, topic *asyncapi3.Channel, config *asyncapi3.Config) (rb kafka.RecordBatch, err error) {
+	n := len(topic.Messages)
 	if n == 0 {
 		err = fmt.Errorf("message configuration missing")
 		return
 	}
-	var msg *asyncapi3.Message
-	// select first message
-	for _, m := range config.Messages {
-		if m.Value == nil {
-			continue
-		}
-		msg = m.Value
-		break
-	}
-	if msg == nil {
-		err = fmt.Errorf("message configuration missing")
+
+	msg, err := selectMessage(value, topic.Name, config)
+	if err != nil {
 		return
 	}
 
@@ -204,11 +200,19 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 		}
 	}
 
+	contentType := config.DefaultContentType
+	if msg.ContentType != "" {
+		contentType = msg.ContentType
+	} else if contentType == "" {
+		// set default: https://github.com/asyncapi/spec/issues/319
+		contentType = "application/json"
+	}
+
 	var v []byte
 	if b, ok := value.([]byte); ok {
 		v = b
 	} else {
-		v, err = marshal(value, msg.Payload, msg.ContentType)
+		v, err = marshal(value, msg.Payload, contentType)
 		if err != nil {
 			return
 		}
@@ -346,4 +350,88 @@ func marshalKey(key interface{}, r *asyncapi3.SchemaRef) ([]byte, error) {
 	default:
 		return nil, fmt.Errorf("schema format not supported: %v", r.Value.Format)
 	}
+}
+
+func selectMessage(value any, topic string, cfg *asyncapi3.Config) (*asyncapi3.Message, error) {
+	noOperationDefined := true
+
+	// first try to get send operation
+	for name, op := range cfg.Operations {
+		if op.Value == nil || op.Value.Channel.Value == nil {
+			continue
+		}
+		if op.Value.Channel.Value.Name == topic && op.Value.Action == "send" {
+			noOperationDefined = false
+			for _, msg := range op.Value.Messages {
+				if msg.Value == nil {
+					log.Warnf("no message defined for operation %s", name)
+					continue
+				}
+				if valueMatchMessagePayload(value, msg.Value) {
+					return msg.Value, nil
+				}
+			}
+		}
+	}
+
+	// second try to get receive operation
+	for name, op := range cfg.Operations {
+		if op.Value == nil || op.Value.Channel.Value == nil {
+			continue
+		}
+		if op.Value.Channel.Value.Name == topic && op.Value.Action == "receive" {
+			noOperationDefined = false
+			for _, msg := range op.Value.Messages {
+				if msg.Value == nil {
+					log.Warnf("no message defined for operation %s", name)
+					continue
+				}
+				if valueMatchMessagePayload(value, msg.Value) {
+					return msg.Value, nil
+				}
+			}
+		}
+	}
+
+	if noOperationDefined {
+		return nil, fmt.Errorf("no 'send' or 'receive' operation defined in specification")
+	}
+
+	if value != nil {
+		return nil, fmt.Errorf("no matching 'send' or 'receive' operation found for value: %v", value)
+	}
+	return nil, fmt.Errorf("no matching 'send' or 'receive' operation defined")
+}
+
+func valueMatchMessagePayload(value any, msg *asyncapi3.Message) bool {
+	if value == nil {
+		return true
+	}
+
+	switch v := msg.Payload.Value.Schema.(type) {
+	case *schema.Schema:
+		_, err := encoding.NewEncoder(v).Write(value, media.ParseContentType("application/json"))
+		return err == nil
+	case *openapi.Schema:
+		_, err := v.Marshal(value, media.ParseContentType("application/json"))
+		return err == nil
+	case *avro.Schema:
+		jsSchema := v.Convert()
+		_, err := encoding.NewEncoder(jsSchema).Write(value, media.ParseContentType("application/json"))
+		return err == nil
+	default:
+		return false
+	}
+}
+
+type ambiguousError struct {
+	msg string
+}
+
+func (e *ambiguousError) Error() string {
+	return e.msg
+}
+
+func newAmbiguousError(format string, args ...any) *ambiguousError {
+	return &ambiguousError{fmt.Sprintf(format, args...)}
 }

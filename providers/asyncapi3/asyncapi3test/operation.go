@@ -1,7 +1,6 @@
 package asyncapi3test
 
 import (
-	"mokapi/config/dynamic"
 	"mokapi/providers/asyncapi3"
 )
 
@@ -21,22 +20,15 @@ func WithOperationAction(action string) OperationOptions {
 	}
 }
 
-func WithOperationMessage(ref string) OperationOptions {
+func UseOperationMessage(msg *asyncapi3.Message) OperationOptions {
 	return func(o *asyncapi3.Operation) {
-		o.Messages = append(o.Messages, asyncapi3.MessageRef{Reference: dynamic.Reference{Ref: ref}})
+		o.Messages = append(o.Messages, &asyncapi3.MessageRef{Value: msg})
 	}
 }
 
 func WithOperationChannel(ch *asyncapi3.Channel) OperationOptions {
 	return func(o *asyncapi3.Operation) {
 		o.Channel = asyncapi3.ChannelRef{Value: ch}
-	}
-}
-
-func WithOperationInfo(summary, description string) OperationOptions {
-	return func(o *asyncapi3.Operation) {
-		o.Summary = summary
-		o.Description = description
 	}
 }
 

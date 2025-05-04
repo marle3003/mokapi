@@ -28,6 +28,15 @@ func WithMessage(name string, opts ...MessageOptions) ChannelOptions {
 	}
 }
 
+func UseMessage(name string, msg *asyncapi3.MessageRef) ChannelOptions {
+	return func(c *asyncapi3.Channel) {
+		if c.Messages == nil {
+			c.Messages = make(map[string]*asyncapi3.MessageRef)
+		}
+		c.Messages[name] = msg
+	}
+}
+
 func WithKafkaChannelBinding(bindings asyncapi3.TopicBindings) ChannelOptions {
 	return func(c *asyncapi3.Channel) {
 		c.Bindings.Kafka = bindings
@@ -43,11 +52,5 @@ func WithChannelDescription(desc string) ChannelOptions {
 func AssignToServer(ref string) ChannelOptions {
 	return func(c *asyncapi3.Channel) {
 		c.Servers = append(c.Servers, &asyncapi3.ServerRef{Reference: dynamic.Reference{Ref: ref}})
-	}
-}
-
-func WithTopicBinding(bindings asyncapi3.TopicBindings) ChannelOptions {
-	return func(c *asyncapi3.Channel) {
-		c.Bindings.Kafka = bindings
 	}
 }
