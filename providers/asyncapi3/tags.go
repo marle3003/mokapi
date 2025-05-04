@@ -11,9 +11,9 @@ type TagRef struct {
 }
 
 type Tag struct {
-	Name         string           `yaml:"name" json:"name"`
-	Description  string           `yaml:"description" json:"description"`
-	ExternalDocs []ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
+	Name         string            `yaml:"name" json:"name"`
+	Description  string            `yaml:"description" json:"description"`
+	ExternalDocs []*ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
 }
 
 func (r *TagRef) UnmarshalYAML(node *yaml.Node) error {

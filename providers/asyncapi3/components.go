@@ -33,9 +33,12 @@ func (c *Components) parse(config *dynamic.Config, reader dynamic.Reader) error 
 		}
 	}
 
-	for _, ch := range c.Channels {
+	for name, ch := range c.Channels {
 		if err := ch.parse(config, reader); err != nil {
 			return err
+		}
+		if ch.Value != nil {
+			ch.Value.Name = name
 		}
 	}
 

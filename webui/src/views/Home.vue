@@ -4,7 +4,7 @@ import Footer from '@/components/Footer.vue'
 import { ref, onMounted } from 'vue'
 import { Modal } from 'bootstrap'
 
-const title = 'Your API Mocking Tool for Agile Development'
+const title = 'Mock APIs with Realistic Data | Mokapi Open Source Tool'
 const description = `Mokapi is a developer-friendly open-source API mocking tool that allows you to prototype, test, and demonstrate APIs using realistic data scenarios.`
 
 useMeta(title, description, 'https://mokapi.io')
@@ -38,7 +38,7 @@ function hasTouchSupport() {
         <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6 px-0">
             
-            <h1>{{ title }}</h1>
+            <h1>Your API Mocking Tool for Agile Development</h1>
             <div class="badge-list mb-3">
               <a href="http"><span class="badge">HTTP</span></a>
               <a href="kafka"><span class="badge">Kafka</span></a>

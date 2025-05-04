@@ -18,9 +18,6 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 	}
 
 	f := func(args ...interface{}) (bool, error) {
-		m.host.Lock()
-		defer m.host.Unlock()
-
 		r, err := m.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
 			call, _ := goja.AssertFunction(do)
 			var params []goja.Value

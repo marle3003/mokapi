@@ -66,4 +66,11 @@ func TestConfig_Convert(t *testing.T) {
 	require.IsType(t, &schema.Schema{}, payload.Schema)
 	s := payload.Schema.(*schema.Schema)
 	require.Equal(t, "object", s.Type[0])
+
+	// operations
+	require.Len(t, cfg3.Operations, 4)
+	op := cfg3.Operations["receiveLightMeasurement"].Value
+	require.Equal(t, "send", op.Action)
+	require.Equal(t, channel, op.Channel.Value)
+	require.Equal(t, "Inform about environmental lighting conditions of a particular streetlight.", op.Summary)
 }

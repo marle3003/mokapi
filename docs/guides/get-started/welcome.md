@@ -1,5 +1,5 @@
 ---
-title: "Getting Started with Mokapi | Mock APIs & Validate with OpenAPI and AsyncAPI"
+title: "Getting Started with Mokapi"
 description: Learn how to set up Mokapi to mock APIs and validate requests using OpenAPI or AsyncAPI. No account needed—free, open-source, and easy to use.
 cards:
   items:

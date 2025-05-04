@@ -102,13 +102,13 @@
       },
       "mokapi/http": {
         "items": {
-          "delete": "javascript-api/mokapi-http/delete.md",
           "get": "javascript-api/mokapi-http/get.md",
-          "head": "javascript-api/mokapi-http/head.md",
-          "options": "javascript-api/mokapi-http/options.md",
-          "patch": "javascript-api/mokapi-http/patch.md",
           "post": "javascript-api/mokapi-http/post.md",
           "put": "javascript-api/mokapi-http/put.md",
+          "head": "javascript-api/mokapi-http/head.md",
+          "delete": "javascript-api/mokapi-http/delete.md",
+          "options": "javascript-api/mokapi-http/options.md",
+          "patch": "javascript-api/mokapi-http/patch.md",
           "HttpResponse": "javascript-api/mokapi-http/httpresponse.md",
           "Args": "javascript-api/mokapi-http/args.md"
         }
@@ -147,7 +147,7 @@
       "component": "examples",
       "hideNavigation": true,
       "hideInNavigation": true,
-      "canonical": "/docs/resources",
+      "canonical": "https://mokapi.io/docs/resources",
       "title": "Explore Mokapi Resources: Tutorials, Examples, and Blog Articles",
       "description": "Explore Mokapi's resources including tutorials, examples, and blog articles. Learn to mock APIs, validate schemas, and streamline your development."
     },
@@ -157,7 +157,7 @@
           "component": "examples",
           "hideNavigation": true,
           "hideInNavigation": true,
-          "canonical": "/docs/resources",
+          "canonical": "https://mokapi.io/docs/resources",
           "title": "Explore Mokapi Resources: Tutorials, Examples, and Blog Articles",
           "description": "Explore Mokapi's resources including tutorials, examples, and blog articles. Learn to mock APIs, validate schemas, and streamline your development."
         },
@@ -179,7 +179,7 @@
           "component": "examples",
           "hideNavigation": true,
           "hideInNavigation": true,
-          "canonical": "/docs/resources",
+          "canonical": "https://mokapi.io/docs/resources",
           "title": "Explore Mokapi Resources: Tutorials, Examples, and Blog Articles",
           "description": "Explore Mokapi's resources including tutorials, examples, and blog articles. Learn to mock APIs, validate schemas, and streamline your development."
         },
@@ -193,7 +193,7 @@
           "component": "examples",
           "hideNavigation": true,
           "hideInNavigation": true,
-          "canonical": "/docs/resources",
+          "canonical": "https://mokapi.io/docs/resources",
           "title": "Explore Mokapi Resources: Tutorials, Examples, and Blog Articles",
           "description": "Explore Mokapi's resources including tutorials, examples, and blog articles. Learn to mock APIs, validate schemas, and streamline your development."
         },
@@ -201,6 +201,7 @@
           "Automation Testing in Agile Development": "resources/blogs/automation-testing-agile-development.md",
           "Contract Testing": "resources/blogs/contract-testing.md",
           "End to End Testing with Mocked APIs": "resources/blogs/end-to-end-testing-mocked-apis.md",
+          "Bring Your Mock APIs to Life with Mokapi and JavaScript": "resources/blogs/dynamic-mocks-with-javascript.md",
           "Debugging Mokapi Scripts": "resources/blogs/debugging-mokapi-scripts.md"
         }
       }

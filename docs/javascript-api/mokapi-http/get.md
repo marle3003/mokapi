@@ -1,5 +1,5 @@
 ---
-title: get( url, [args] ) - Mock HTTP GET Requests with Mokapi JavaScript API
+title: HTTP GET Request – get( url, [args] )
 description: Use Mokapi's JavaScript API to mock HTTP GET requests. Customize responses, handle request data, and simulate APIs for testing and development.
 ---
 # get( url, [args] )

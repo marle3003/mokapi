@@ -37,8 +37,8 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 		loop: loop,
 	}
 	obj := module.Get("exports").(*goja.Object)
-	obj.Set("produce", f.Produce)
-	obj.Set("produceAsync", f.ProduceAsync)
+	_ = obj.Set("produce", f.Produce)
+	_ = obj.Set("produceAsync", f.ProduceAsync)
 }
 
 func (m *Module) Produce(v goja.Value) interface{} {
@@ -77,14 +77,14 @@ func (m *Module) ProduceAsync(v goja.Value) interface{} {
 			r := recover()
 			if r != nil {
 				m.loop.Run(func(vm *goja.Runtime) {
-					reject(r)
+					_ = reject(r)
 				})
 			}
 		}()
 
 		result := m.Produce(v)
 		m.loop.Run(func(vm *goja.Runtime) {
-			resolve(result)
+			_ = resolve(result)
 		})
 	}()
 	return p
@@ -171,11 +171,22 @@ func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 						r.Key = k
 					}
 					if v, ok := rec["value"]; ok {
-						if b, ok := v.([]byte); ok {
+						switch val := v.(type) {
+						case []byte:
+							r.Value = val
+						case string:
+							r.Value = []byte(val)
+						case []any:
+							b := make([]byte, len(val))
+							for i, item := range val {
+								if num, ok := item.(int64); ok {
+									b[i] = byte(num)
+								} else {
+									return nil, fmt.Errorf("invalid type in messages: byte numbers: %v", item)
+								}
+							}
 							r.Value = b
-						} else if s, ok := v.(string); ok {
-							r.Value = []byte(s)
-						} else {
+						default:
 							r.Value = []byte(fmt.Sprintf("%v", v))
 						}
 					}

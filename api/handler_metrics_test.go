@@ -30,7 +30,7 @@ func TestHandler_Metrics(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(fmt.Sprintf(`[{"name":"app_start_timestamp","value":%v},{"name":"app_memory_usage_bytes","value":0}]`, int64(app.Monitor.StartTime.Value()))))
+					try.HasBody(fmt.Sprintf(`[{"name":"app_start_timestamp","value":%v},{"name":"app_memory_usage_bytes","value":0},{"name":"app_job_run_total","value":0}]`, int64(app.Monitor.StartTime.Value()))))
 			},
 		},
 		{

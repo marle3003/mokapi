@@ -1,5 +1,5 @@
 ---
-title: del( url, [body], [args] ) - Mock HTTP DELETE Requests with Mokapi JavaScript API
+title: HTTP DELETE Request – del(url[, body], args)
 description: Use Mokapi's JavaScript API to mock HTTP DELETE requests. Customize responses, handle request data, and simulate APIs for testing and development.
 ---
 # del( url, [body], [args] )

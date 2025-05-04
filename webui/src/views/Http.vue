@@ -6,8 +6,6 @@ import { Modal } from 'bootstrap'
 import dayjs from 'dayjs'
 import { onMounted, ref } from 'vue'
 
-const { format } = usePrettyDates()
-
 const script = `import { on } from 'mokapi'
 
 export default function() {
@@ -42,7 +40,7 @@ INFO[${time(dayjs().second(1))}] adding service Swagger Petstore - OpenAPI 3.0 o
 INFO[${time(dayjs().second(2))}] Processing http request GET http://localhost/api/v3/pet/4
 `
 
-const title = `Bring Your REST API Specs to Life`
+const title = `Mock REST APIs with OpenAPI | Mokapi API Prototyping Tool`
 const description = `Develop and test faster with powerful, customizable REST API mocks — no more waiting for real APIs!`
 useMeta(title, description, "https://mokapi.io/http")
 
@@ -76,7 +74,7 @@ function getConsoleContent() {
       <div class="container">
         <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6 px-0">
-            <h1>{{ title }}</h1>
+            <h1>Bring Your REST API Specs to Life</h1>
             <div class="badge-list mb-3">
               <span class="badge">HTTP</span>
             </div>

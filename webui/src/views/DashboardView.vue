@@ -2,6 +2,7 @@
 import { useAppInfo } from '@/composables/appInfo'
 import AppStartCard from '../components/dashboard/AppStartCard.vue'
 import MemoryUsageCard from '../components/dashboard/MemoryCard.vue'
+import MetricCard from '../components/dashboard/MetricCard.vue'
 
 import HttpRequestCard from '../components/dashboard/http/HttpRequestMetricCard.vue'
 import HttpServicesCard from '../components/dashboard/http/HttpServicesCard.vue'
@@ -25,24 +26,41 @@ import Mails from '@/components/dashboard/smtp/Mails.vue'
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 
+import JobCard from '@/components/dashboard/JobCard.vue'
 import ConfigCard from '@/components/dashboard/ConfigCard.vue'
 import FakerTree from '@/components/dashboard/FakerTree.vue'
 
 import '@/assets/dashboard.css'
-import { onMounted, onUnmounted, ref, type Ref } from 'vue'
+import { onMounted, onUnmounted, ref, watchEffect, type Ref } from 'vue'
 
 import { useMeta } from '@/composables/meta'
 import Config from '@/components/dashboard/Config.vue'
 import { useFetch, type Response } from '@/composables/fetch'
 import { useRoute } from 'vue-router'
+import { useMetrics } from '../composables/metrics'
 
 const appInfo = useAppInfo()
 const configs: Ref<Response | undefined> = ref<Response>()
+
+const { query, sum } = useMetrics()
+const count = ref<number>(0)
+const response = query('app')
+watchEffect(() => {
+    count.value = 0
+    if (!response.data) {
+        return
+    }
+    
+    const n = sum(response.data, 'app_job_run_total')
+    count.value = n
+})
+
 onUnmounted(() => {
     appInfo.close()
     if (configs.value) {
         configs.value.close()
     }
+    response.close()
 })
 
 const route = useRoute()
@@ -67,6 +85,10 @@ function isInitLoading() {
     return appInfo.isLoading && !appInfo.data
 }
 
+function hasJobs() {
+    return count.value > 0
+}
+
 const description = `Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mock APIs are used.`
 useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
 </script>
@@ -82,17 +104,20 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                             <li class="nav-item">
                                 <router-link class="nav-link overview" :to="{ name: 'dashboard', query: {refresh: $route.query.refresh} }">Overview</router-link>
                             </li>
-                            <li class="nav-item">
-                                <router-link class="nav-link" :to="{ name: 'http', query: {refresh: $route.query.refresh} }" v-if="isServiceAvailable('http')">HTTP</router-link>
+                            <li class="nav-item" v-if="isServiceAvailable('http')">
+                                <router-link class="nav-link" :to="{ name: 'http', query: {refresh: $route.query.refresh} }">HTTP</router-link>
                             </li>
-                            <li class="nav-item">
-                                <router-link class="nav-link" :to="{ name: 'kafka', query: {refresh: $route.query.refresh} }" v-if="isServiceAvailable('kafka')">Kafka</router-link>
+                            <li class="nav-item" v-if="isServiceAvailable('kafka')">
+                                <router-link class="nav-link" :to="{ name: 'kafka', query: {refresh: $route.query.refresh} }">Kafka</router-link>
                             </li>
-                            <li class="nav-item">
-                                <router-link class="nav-link" :to="{ name: 'smtp', query: {refresh: $route.query.refresh} }" v-if="isServiceAvailable('smtp')">SMTP</router-link>
+                            <li class="nav-item" v-if="isServiceAvailable('smtp')">
+                                <router-link class="nav-link" :to="{ name: 'smtp', query: {refresh: $route.query.refresh} }">SMTP</router-link>
                             </li>
-                            <li class="nav-item">
-                                <router-link class="nav-link" :to="{ name: 'ldap', query: {refresh: $route.query.refresh} }" v-if="isServiceAvailable('ldap')">LDAP</router-link>
+                            <li class="nav-item" v-if="isServiceAvailable('ldap')">
+                                <router-link class="nav-link" :to="{ name: 'ldap', query: {refresh: $route.query.refresh} }">LDAP</router-link>
+                            </li>
+                            <li class="nav-item" v-if="hasJobs()">
+                                <router-link class="nav-link" :to="{ name: 'jobs', query: {refresh: $route.query.refresh} }">Jobs</router-link>
                             </li>
                             <li class="nav-item">
                                 <router-link class="nav-link" :to="{ name: 'configs', query: {refresh: $route.query.refresh} }">Configs</router-link>
@@ -115,6 +140,7 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                         <kafka-message-card v-if="isServiceAvailable('kafka')" />
                         <smtp-message-metric-card v-if="isServiceAvailable('smtp')" />
                         <ldap-search-metric-card v-if="isServiceAvailable('ldap')" />
+                        <metric-card title="Jobs" :value="count" data-testid="metric-job-count" v-if="count > 0"></metric-card>
                     </div>
                     <div class="card-group"  v-if="isServiceAvailable('http')">
                         <http-services-card />
@@ -175,6 +201,12 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                     </div>
                     <div class="card-group">
                         <searches />
+                    </div>
+                </div>
+
+                <div v-if="$route.name === 'jobs'">
+                    <div class="card-group">
+                        <job-card />
                     </div>
                 </div>
 

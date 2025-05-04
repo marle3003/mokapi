@@ -15,7 +15,7 @@ uid: bmiller
 userPassword: bar123
 `
 
-const title = `Use Mokapi to Mock an LDAP Server`
+const title = `Create Mock LDAP Servers for Dev & Testing | Mokapi`
 const description = `Develop and test independently from your company's LDAP directory. Simulate any search request to fullfil your requirements to run your app with a fake LDAP server`
 useMeta(title, description, "https://mokapi.io/ldap")
 </script>

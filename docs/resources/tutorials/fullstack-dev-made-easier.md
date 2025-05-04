@@ -1,10 +1,10 @@
 ---
-title: How to Combine Frontend, Backend, and API Mocks for Fullstack Development with Mokapi
+title: Build Fullstack Apps with Mokapi | Mock APIs for Dev Speed
 description: Combine frontend, backend, and Mokapi to mock third-party APIs locally, speed up dev cycles, and eliminate flaky tests.
 icon: bi-layers
 ---
 
-# Fullstack Dev Made Easier with Mokapi
+# Build Fullstack Apps Faster with Mokapi
 
 **Combining Frontend + Backend + Mokapi in Local Development**
 

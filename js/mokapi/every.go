@@ -10,11 +10,5 @@ func (m *Module) Every(every string, do func(), args goja.Value) (int, error) {
 		panic(m.vm.ToValue(err.Error()))
 	}
 
-	f := func() {
-		m.host.Lock()
-		defer m.host.Unlock()
-		do()
-	}
-
-	return m.host.Every(every, f, options)
+	return m.host.Every(every, do, options)
 }

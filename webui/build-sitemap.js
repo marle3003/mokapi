@@ -48,7 +48,7 @@ function writeObject(obj, base) {
     const urlPath = base + '/' + segment.toLowerCase()
 
     if (key === 'index') {
-      const url = 'https://mokapi.io/docs' + urlPath.replaceAll('/items', '').replace(/\/index$/, "")
+      const url = 'https://mokapi.io/docs' + urlPath.replaceAll('/items', '').replace(/\/index$/, "/")
       let stats;
       if (typeof obj['index'] === "string") {
         stats = fs.statSync(path.join(docsPath, obj["index"]))

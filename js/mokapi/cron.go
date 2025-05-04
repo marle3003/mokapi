@@ -14,13 +14,7 @@ func (m *Module) Cron(expr string, do func(), args goja.Value) (int, error) {
 		panic(m.vm.ToValue(err.Error()))
 	}
 
-	f := func() {
-		m.host.Lock()
-		defer m.host.Unlock()
-		do()
-	}
-
-	return m.host.Cron(expr, f, options)
+	return m.host.Cron(expr, do, options)
 }
 
 func getJobOptions(vm *goja.Runtime, opt goja.Value) (common.JobOptions, error) {

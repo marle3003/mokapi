@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, watchEffect, onUnmounted } from 'vue'
 import MetricCard from './MetricCard.vue'
-import {useMetrics} from '../../composables/metrics'
-import {usePrettyDates} from '@/composables/usePrettyDate'
+import { useMetrics } from '../../composables/metrics'
+import { usePrettyDates } from '@/composables/usePrettyDate'
 
 const {query, sum} = useMetrics()
 const {fromNow, format} = usePrettyDates()

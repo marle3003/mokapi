@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
 	"mokapi/kafka"
+	"mokapi/kafka/fetch"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/metaData"
 	"mokapi/kafka/produce"
@@ -277,4 +278,30 @@ func (suite *PetStoreSuite) TestKafkaEventAndMetrics() {
 		try.BodyContains(`"headers":{"foo":{"value":"bar","binary":"YmFy"}`),
 		try.BodyContains(`"messageId":"order"`),
 	)
+}
+
+func (suite *PetStoreSuite) TestKafka3_Consume() {
+	// ensure scripts are executed
+	time.Sleep(3 * time.Second)
+
+	c := kafkatest.NewClient("localhost:19093", "test")
+	defer c.Close()
+
+	r, err := c.Fetch(12, &fetch.Request{
+		MaxBytes:  1000,
+		MinBytes:  1,
+		MaxWaitMs: 5000,
+		Topics: []fetch.Topic{
+			{
+				Name: "petstore.order-event",
+				Partitions: []fetch.RequestPartition{{
+					Index:    0,
+					MaxBytes: 1000,
+				}},
+			},
+		},
+	})
+	require.NoError(suite.T(), err)
+	require.NotNil(suite.T(), r)
+	require.Len(suite.T(), r.Topics[0].Partitions[0].RecordSet.Records, 1)
 }

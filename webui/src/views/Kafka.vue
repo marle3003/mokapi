@@ -2,34 +2,7 @@
 import { useMeta } from '@/composables/meta'
 import Footer from '@/components/Footer.vue'
 
-const script = `import { every } from 'mokapi'
-import { produce } from 'mokapi/kafka'
-
-export default function() {
-    // produce a random Kafka message
-    produce({ topic: 'orders' })
-
-    let orderId = 0
-    every('30s', function() {
-      orderId++
-      produce({ 
-        topic: 'orders',
-        value: {
-          orderId: orderId,
-          customer: 'Alice',
-          items: [
-            {
-              itemId: 200,
-              quantity: 3
-            }
-          ]
-        }
-      })
-    })
-}
-`
-
-const title = `Turn Kafka Topics into Testable Reality`
+const title = `Mock Kafka Topics with AsyncAPI | Mokapi`
 const description = `Don't wait for producers to send new messages. Create your own sample messages that fit your needs.`
 useMeta(title, description, "https://mokapi.io/kafka")
 </script>
@@ -40,7 +13,7 @@ useMeta(title, description, "https://mokapi.io/kafka")
       <div class="container">
         <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6 px-0">
-            <h1>{{ title }}</h1>
+            <h1>Turn Kafka Topics into Testable Reality</h1>
             <div class="badge-list mb-3">
               <span class="badge">Kafka</span>
             </div>

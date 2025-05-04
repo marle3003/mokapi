@@ -7,6 +7,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/engine/common"
 	"mokapi/runtime"
+	"mokapi/runtime/metrics"
 	"sync"
 )
 
@@ -21,6 +22,8 @@ type Engine struct {
 	m           sync.Mutex
 	loader      ScriptLoader
 	parallel    bool
+	cfgEvent    static.Event
+	jobCounter  *metrics.Counter
 }
 
 func New(reader dynamic.Reader, app *runtime.App, config *static.Config, parallel bool) *Engine {
@@ -32,6 +35,8 @@ func New(reader dynamic.Reader, app *runtime.App, config *static.Config, paralle
 		kafkaClient: NewKafkaClient(app),
 		parallel:    parallel,
 		loader:      NewDefaultScriptLoader(config),
+		cfgEvent:    config.Event,
+		jobCounter:  app.Monitor.JobCounter,
 	}
 }
 

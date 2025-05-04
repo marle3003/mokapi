@@ -11,16 +11,16 @@ type OperationRef struct {
 }
 
 type Operation struct {
-	Action      string              `yaml:"action" json:"action"`
-	Channel     ChannelRef          `yaml:"channel" json:"channel"`
-	Title       string              `yaml:"title" json:"title"`
-	Summary     string              `yaml:"summary" json:"summary"`
-	Description string              `yaml:"description" json:"description"`
-	Bindings    OperationBindings   `yaml:"bindings" json:"bindings"`
-	Traits      []OperationTraitRef `yaml:"traits" json:"traits"`
-	Messages    []MessageRef        `yaml:"messages" json:"messages"`
+	Action      string               `yaml:"action" json:"action"`
+	Channel     ChannelRef           `yaml:"channel" json:"channel"`
+	Title       string               `yaml:"title" json:"title"`
+	Summary     string               `yaml:"summary" json:"summary"`
+	Description string               `yaml:"description" json:"description"`
+	Bindings    OperationBindings    `yaml:"bindings" json:"bindings"`
+	Traits      []*OperationTraitRef `yaml:"traits" json:"traits"`
+	Messages    []*MessageRef        `yaml:"messages" json:"messages"`
 
-	ExternalDocs []ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
+	ExternalDocs []*ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
 }
 
 type OperationTraitRef struct {
@@ -29,13 +29,13 @@ type OperationTraitRef struct {
 }
 
 type OperationTrait struct {
-	Channel     ChannelRef        `yaml:"channel" json:"channel"`
+	Channel     *ChannelRef       `yaml:"channel" json:"channel"`
 	Title       string            `yaml:"title" json:"title"`
 	Summary     string            `yaml:"summary" json:"summary"`
 	Description string            `yaml:"description" json:"description"`
 	Bindings    OperationBindings `yaml:"bindings" json:"bindings"`
 
-	ExternalDocs []ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
+	ExternalDocs []*ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
 }
 
 func (r *OperationRef) UnmarshalYAML(node *yaml.Node) error {

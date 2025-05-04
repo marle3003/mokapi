@@ -46,8 +46,8 @@ components:
 	avroSchema = multi.Schema.(*asyncapi3.AvroRef)
 	require.Equal(t, "npm://foo.bar", avroSchema.Ref)
 
-	jsonSchema := cfg.Components.Schemas["Bar"].Value.Schema.(*jsonSchema.Schema)
-	require.Equal(t, "object", jsonSchema.Type.String())
+	jsSchema := cfg.Components.Schemas["Bar"].Value.Schema.(*jsonSchema.Schema)
+	require.Equal(t, "object", jsSchema.Type.String())
 
 	require.Equal(t, "application/json", cfg.DefaultContentType)
 }
@@ -90,6 +90,7 @@ func TestStreetlightKafka(t *testing.T) {
 	require.Contains(t, cfg.Channels, "lightsDim")
 
 	channel := cfg.Channels["lightingMeasured"]
+	require.Equal(t, "lightingMeasured", channel.Value.Name)
 	require.Equal(t, "smartylighting.streetlights.1.0.event.{streetlightId}.lighting.measured", channel.Value.Address)
 	require.Equal(t, "The topic on which measured values may be produced and consumed.", channel.Description)
 

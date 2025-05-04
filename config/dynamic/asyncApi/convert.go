@@ -44,7 +44,7 @@ func (c *Config) Convert() (*asyncapi3.Config, error) {
 
 	if c.Components != nil {
 		var err error
-		target.Components, err = convertComponents(c.Components)
+		target.Components, err = convertComponents(c.Components, target)
 		if err != nil {
 			return nil, err
 		}
@@ -69,7 +69,7 @@ func convertChannels(cfg *asyncapi3.Config, channels map[string]*ChannelRef) err
 			cfg.Channels[name] = &asyncapi3.ChannelRef{Reference: dynamic.Reference{Ref: orig.Ref}}
 		}
 		if orig.Value != nil {
-			ch, err := convertChannel(name, orig.Value)
+			ch, err := convertChannel(name, orig.Value, cfg)
 			if err != nil {
 				return err
 			}
@@ -80,7 +80,7 @@ func convertChannels(cfg *asyncapi3.Config, channels map[string]*ChannelRef) err
 	return nil
 }
 
-func convertChannel(name string, c *Channel) (*asyncapi3.ChannelRef, error) {
+func convertChannel(name string, c *Channel, config *asyncapi3.Config) (*asyncapi3.ChannelRef, error) {
 	target := &asyncapi3.Channel{
 		Address:     name,
 		Summary:     "",
@@ -88,6 +88,7 @@ func convertChannel(name string, c *Channel) (*asyncapi3.ChannelRef, error) {
 		Messages:    map[string]*asyncapi3.MessageRef{},
 		Bindings:    convertChannelBinding(c.Bindings),
 	}
+	ref := &asyncapi3.ChannelRef{Value: target}
 
 	for _, server := range c.Servers {
 		target.Servers = append(
@@ -104,23 +105,57 @@ func convertChannel(name string, c *Channel) (*asyncapi3.ChannelRef, error) {
 	if c.Publish != nil && c.Subscribe != nil && c.Publish.Message != nil && c.Subscribe.Message != nil {
 		if c.Publish.Message.Ref == c.Subscribe.Message.Ref {
 			msg := convertMessage(c.Publish.Message)
-			addMessage(target, msg, "", "", c.Publish.Message.Ref)
+			msgName := addMessage(target, msg, "", "", c.Publish.Message.Ref)
+			if msgName != "" {
+				addOperation(msgName, "send", c.Publish, ref, msg, config)
+				addOperation(msgName, "receive", c.Subscribe, ref, msg, config)
+			}
 		}
 	} else {
 		if c.Publish != nil {
-			addMessage(target, convertMessage(c.Publish.Message), c.Publish.OperationId, c.Publish.Message.Ref, "publish")
+			msg := convertMessage(c.Publish.Message)
+			msgName := addMessage(target, msg, c.Publish.OperationId, c.Publish.Message.Ref, "publish")
+			if msgName != "" {
+				addOperation(msgName, "send", c.Publish, ref, msg, config)
+			}
 		}
 		if c.Subscribe != nil {
-			addMessage(target, convertMessage(c.Subscribe.Message), c.Subscribe.OperationId, c.Subscribe.Message.Ref, "subscribe")
+			msg := convertMessage(c.Subscribe.Message)
+			msgName := addMessage(target, msg, c.Subscribe.OperationId, c.Subscribe.Message.Ref, "subscribe")
+			if msgName != "" {
+				addOperation(msgName, "receive", c.Subscribe, ref, msg, config)
+			}
 		}
 	}
 
 	return &asyncapi3.ChannelRef{Value: target}, nil
 }
 
-func addMessage(target *asyncapi3.Channel, msg *asyncapi3.MessageRef, opId, ref, opName string) {
+func addOperation(msgName, action string, op *Operation, ch *asyncapi3.ChannelRef, msg *asyncapi3.MessageRef, config *asyncapi3.Config) {
+	name := fmt.Sprintf("%s_%s", action, msgName)
+	if len(op.OperationId) > 0 {
+		name = op.OperationId
+	}
+
+	result := &asyncapi3.Operation{
+		Action:      action,
+		Channel:     *ch,
+		Summary:     op.Summary,
+		Description: op.Description,
+		Bindings:    convertOperationBinding(op.Bindings),
+		Messages:    []*asyncapi3.MessageRef{msg},
+	}
+
+	if config.Operations == nil {
+		config.Operations = map[string]*asyncapi3.OperationRef{}
+	}
+
+	config.Operations[name] = &asyncapi3.OperationRef{Value: result}
+}
+
+func addMessage(target *asyncapi3.Channel, msg *asyncapi3.MessageRef, opId, ref, opName string) string {
 	if msg == nil {
-		return
+		return ""
 	}
 
 	var msgId string
@@ -135,6 +170,7 @@ func addMessage(target *asyncapi3.Channel, msg *asyncapi3.MessageRef, opId, ref,
 	}
 
 	target.Messages[msgId] = msg
+	return msgId
 }
 
 func convertMessage(msg *MessageRef) *asyncapi3.MessageRef {
@@ -294,12 +330,12 @@ func convertServer(s *Server) *asyncapi3.ServerRef {
 		Bindings:        convertServerBinding(s.Bindings),
 	}
 
-	protocol, host, path := resolveServerUrl(s.Url)
+	protocol, host, p := resolveServerUrl(s.Url)
 	if target.Protocol == "" {
 		target.Protocol = protocol
 	}
 	target.Host = host
-	target.Pathname = path
+	target.Pathname = p
 
 	return &asyncapi3.ServerRef{Value: target}
 }
@@ -352,7 +388,16 @@ func convertChannelBinding(b ChannelBindings) asyncapi3.ChannelBindings {
 	}}
 }
 
-func convertComponents(c *Components) (*asyncapi3.Components, error) {
+func convertOperationBinding(b OperationBindings) asyncapi3.OperationBindings {
+	return asyncapi3.OperationBindings{
+		Kafka: asyncapi3.KafkaOperationBinding{
+			GroupId:  b.Kafka.GroupId,
+			ClientId: b.Kafka.ClientId,
+		},
+	}
+}
+
+func convertComponents(c *Components, config *asyncapi3.Config) (*asyncapi3.Components, error) {
 	target := &asyncapi3.Components{}
 
 	for name, server := range c.Servers {
@@ -366,7 +411,7 @@ func convertComponents(c *Components) (*asyncapi3.Components, error) {
 		if target.Servers == nil {
 			target.Channels = map[string]*asyncapi3.ChannelRef{}
 		}
-		ch, err := convertChannel(name, orig)
+		ch, err := convertChannel(name, orig, config)
 		if err != nil {
 			return nil, err
 		}

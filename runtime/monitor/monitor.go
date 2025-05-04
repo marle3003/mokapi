@@ -9,8 +9,9 @@ import (
 )
 
 type Monitor struct {
-	StartTime   *metrics.Gauge `json:"start_time"`
-	MemoryUsage *metrics.Gauge `json:"memstats_alloc_bytes"`
+	StartTime   *metrics.Gauge   `json:"start_time"`
+	MemoryUsage *metrics.Gauge   `json:"memstats_alloc_bytes"`
+	JobCounter  *metrics.Counter `json:"job_counter"`
 
 	Http  *Http  `json:"http"`
 	Kafka *Kafka `json:"kafka"`
@@ -27,6 +28,7 @@ type contextKey string
 func New() *Monitor {
 	startTime := metrics.NewGauge(metrics.WithFQName("app", "start_timestamp"))
 	memoryUsage := metrics.NewGauge(metrics.WithFQName("app", "memory_usage_bytes"))
+	jobCounter := metrics.NewCounter(metrics.WithFQName("app", "job_run_total"))
 
 	h := NewHttp()
 	k := NewKafka()
@@ -36,6 +38,7 @@ func New() *Monitor {
 	collection := []metrics.Metric{
 		startTime,
 		memoryUsage,
+		jobCounter,
 	}
 	collection = append(collection, h.Metrics()...)
 	collection = append(collection, k.Metrics()...)
@@ -46,6 +49,7 @@ func New() *Monitor {
 		RefreshRateSeconds: 5,
 		StartTime:          startTime,
 		MemoryUsage:        memoryUsage,
+		JobCounter:         jobCounter,
 		Http:               h,
 		Kafka:              k,
 		Ldap:               l,

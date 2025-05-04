@@ -30,5 +30,13 @@ export default async function() {
         }
         return false
     });
-    await kafka.produceAsync({ topic: 'petstore.order-event', messages: [{partition: 0}] })
+    await kafka.produceAsync({
+        topic: 'petstore.order-event',
+        cluster: 'A sample AsyncApi Kafka streaming api',
+        messages: [{partition: 0}]
+    })
+    await kafka.produceAsync({
+        topic: 'petstore.order-event',
+        cluster: 'Petstore Stream API',
+    })
 }

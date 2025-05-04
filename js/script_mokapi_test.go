@@ -687,7 +687,7 @@ func TestScript_Mokapi_Sleep(t *testing.T) {
 				_, err = s.RunDefault()
 				r.NoError(t, err)
 				duration := time.Now().Sub(start).Milliseconds()
-				r.Greater(t, duration, int64(300))
+				r.GreaterOrEqual(t, duration, int64(300))
 			},
 		},
 		{
