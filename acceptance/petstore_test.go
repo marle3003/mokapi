@@ -288,8 +288,9 @@ func (suite *PetStoreSuite) TestKafka3_Consume() {
 	defer c.Close()
 
 	r, err := c.Fetch(12, &fetch.Request{
-		MaxBytes: 200,
-		MinBytes: 1,
+		MaxBytes:  200,
+		MinBytes:  1,
+		MaxWaitMs: 1000,
 		Topics: []fetch.Topic{
 			{
 				Name: "petstore.order-event",
