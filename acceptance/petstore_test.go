@@ -282,7 +282,7 @@ func (suite *PetStoreSuite) TestKafkaEventAndMetrics() {
 
 func (suite *PetStoreSuite) TestKafka3_Consume() {
 	// ensure scripts are executed
-	time.Sleep(3 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	c := kafkatest.NewClient("localhost:19093", "test")
 	defer c.Close()
