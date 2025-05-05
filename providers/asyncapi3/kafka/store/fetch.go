@@ -66,6 +66,8 @@ func (s *Store) fetch(rw kafka.ResponseWriter, req *kafka.Request) error {
 				batchSize := batch.Size()
 				size += int32(batchSize)
 				if size > maxSize {
+					// a Kafka broker does not return an error when maxBytes is
+					// too low to return the next message
 					break
 				}
 				data.maxBytes -= batchSize
