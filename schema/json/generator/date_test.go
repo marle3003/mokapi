@@ -124,7 +124,7 @@ func TestStringDate(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]any{"activeFrom": "2020-08-10T23:06:20Z", "inactiveFrom": "2026-09-12T04:37:26Z"}, v)
+				require.Equal(t, map[string]any{"activeFrom": "2020-08-26T07:02:11Z", "inactiveFrom": "2029-08-30T11:01:28Z"}, v)
 			},
 		},
 		{
@@ -137,7 +137,7 @@ func TestStringDate(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]any{"publishedFrom": "2020-08-10T23:06:20Z", "publishedUntil": "2026-09-12T04:37:26Z"}, v)
+				require.Equal(t, map[string]any{"publishedFrom": "2020-08-26T07:02:11Z", "publishedUntil": "2029-08-30T11:01:28Z"}, v)
 			},
 		},
 	}

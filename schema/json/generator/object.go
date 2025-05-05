@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
@@ -110,13 +109,6 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 	}
 
 	for it := s.Properties.Iter(); it.Next(); {
-		if !slices.Contains(s.Required, it.Key()) {
-			n := gofakeit.Float32Range(0, 1)
-			if n > 0.7 {
-				continue
-			}
-		}
-
 		prop := append(req.Path, it.Key())
 		ex := propertyFromExample(it.Key(), req)
 		f, err := r.resolve(req.With(prop, it.Value(), ex), fallback)
@@ -139,6 +131,16 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 			} else {
 				return nil, err
 			}
+		}
+
+		if !slices.Contains(s.Required, it.Key()) {
+			fakes.Set(it.Key(), newFaker(func() (any, error) {
+				n := gofakeit.Float32Range(0, 1)
+				if n > 0.7 {
+					return nil, nil
+				}
+				return f.fake()
+			}))
 		}
 		fakes.Set(it.Key(), f)
 	}
@@ -387,23 +389,5 @@ func examples(s *schema.Schema) []any {
 	for _, e := range s.Examples {
 		result = append(result, e.Value)
 	}
-	return result
-}
-
-func mergeUnique(a, b []interface{}) []interface{} {
-	seen := make(map[string]struct{})
-	var result []any
-
-	for _, item := range append(a, b...) {
-		// simple way to get a unique key
-		keyBytes, _ := json.Marshal(item)
-		key := string(keyBytes)
-
-		if _, exists := seen[key]; !exists {
-			seen[key] = struct{}{}
-			result = append(result, item)
-		}
-	}
-
 	return result
 }

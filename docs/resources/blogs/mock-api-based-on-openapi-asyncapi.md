@@ -97,7 +97,7 @@ mokapi pet-api.yaml
 
 ```shell
 curl http://localhost/pets
-curl http://localhost/pets?category=dog
+curl "http://localhost/pets?category=dog"
 ```
 
 Mokapi will generate random data for those requests. If you query with ?category=dog, Mokapi will return only dogs 
@@ -120,8 +120,10 @@ export default () => {
                    name: 'Molly',
                    category: 'cat'
                }
-           ]
-       } 
+           ];
+           return true;
+       }
+       return false;
     });
 }
 ```

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic/provider/file"
 	"net/url"
 	"reflect"
@@ -34,7 +33,6 @@ func NewFlagDecoderWithReader(reader file.FSReader) *FlagDecoder {
 }
 
 func (f *FlagDecoder) Decode(flags map[string][]string, element interface{}) error {
-	log.Infof("flags: %v", flags)
 	keys := make([]string, 0, len(flags))
 	for k := range flags {
 		keys = append(keys, k)
@@ -105,9 +103,9 @@ func (f *FlagDecoder) setValue(ctx *context) error {
 			ctx.element.Set(reflect.ValueOf(ctx.value[0]))
 		}
 		return nil
+	default:
+		return fmt.Errorf("unsupported config type: %v", ctx.element.Kind())
 	}
-
-	return fmt.Errorf("unsupported config type: %v", ctx.element.Kind())
 }
 
 func ParsePath(key string) []string {
