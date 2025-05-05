@@ -35,6 +35,7 @@ interface JobExecution {
   schedule: string
   maxRuns: number
   runs: number
+  nextRun: string
   duration: number
   tags: { [name: string]: string}
   logs: { level: string, message: string}[]
