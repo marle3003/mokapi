@@ -17,6 +17,7 @@ type Scheduler interface {
 }
 
 type Job interface {
+	NextRun() time.Time
 }
 
 type DefaultScheduler struct {

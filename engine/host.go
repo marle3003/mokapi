@@ -96,33 +96,35 @@ func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*common.Acti
 }
 
 func (sh *scriptHost) Every(every string, handler func(), opt common.JobOptions) (int, error) {
-	do := sh.newJobFunc(handler, opt, every)
+	id := len(sh.jobs)
+
+	do := sh.newJobFunc(handler, opt, every, id)
 	job, err := sh.engine.scheduler.Every(every, do, opt)
 
 	if err != nil {
 		return -1, err
 	}
 
-	id := len(sh.jobs)
 	sh.jobs[id] = job
 
 	return id, nil
 }
 
 func (sh *scriptHost) Cron(expr string, handler func(), opt common.JobOptions) (int, error) {
-	do := sh.newJobFunc(handler, opt, expr)
+	id := len(sh.jobs)
+
+	do := sh.newJobFunc(handler, opt, expr, id)
 	job, err := sh.engine.scheduler.Cron(expr, do, opt)
 	if err != nil {
 		return -1, err
 	}
 
-	id := len(sh.jobs)
 	sh.jobs[id] = job
 
 	return id, nil
 }
 
-func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule string) func() {
+func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule string, id int) func() {
 	tags := map[string]string{
 		"name":    sh.name,
 		"file":    sh.name,
@@ -136,11 +138,13 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 	if len(events.GetStores(t)) == 1 {
 		events.SetStore(int(sh.engine.cfgEvent.Store["Default"].Size), t)
 	}
+	t = t.With("jobId", fmt.Sprintf("%d", id))
 	counter := 1
 
 	return func() {
 		sh.Lock()
 		defer sh.Unlock()
+		job := sh.jobs[id]
 
 		sh.engine.jobCounter.Add(1)
 
@@ -148,6 +152,7 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 			Schedule: schedule,
 			MaxRuns:  opt.Times,
 			Runs:     counter,
+			NextRun:  job.NextRun(),
 			Tags:     tags,
 		}
 

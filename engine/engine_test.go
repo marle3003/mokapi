@@ -32,12 +32,15 @@ func TestEngine_Scheduler(t *testing.T) {
 
 				evts := events.GetEvents(events.NewTraits().WithNamespace("job").WithName("test.js"))
 				r.Len(t, evts, 1)
+				r.Equal(t, "namespace=job, name=test.js, jobId=0", evts[0].Traits.String())
 				exec := evts[0].Data.(common.JobExecution)
 				r.Equal(t, "test.js", exec.Tags["name"])
 				r.Greater(t, exec.Duration, int64(0))
 				r.Equal(t, "1s", exec.Schedule)
 				r.Equal(t, -1, exec.MaxRuns)
 				r.Equal(t, 1, exec.Runs)
+				r.False(t, exec.NextRun.IsZero())
+				r.True(t, exec.NextRun.After(evts[0].Time))
 
 				r.Equal(t, float64(1), c.Value())
 			},
