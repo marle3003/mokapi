@@ -96,6 +96,42 @@ let getMessage = async () => {
 				r.Equal(t, "foo", msg2)
 			},
 		},
+		{
+			name: "async with await",
+			test: func(t *testing.T, host *enginetest.Host) {
+				s, err := jstest.New(jstest.WithPathSource(
+					"test.ts",
+					`
+let msg1;
+export default async function() {
+    msg1 = await getMessage()
+}
+let getMessage = async () => {
+	return new Promise(async (resolve, reject) => {
+	  setTimeout(() => {
+		resolve('foo');
+	  }, 200);
+	});
+}
+`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				defer s.Close()
+
+				err = s.Run()
+				r.NoError(t, err)
+
+				time.Sleep(1 * time.Second)
+				var msg1 string
+				err = s.RunFunc(func(vm *goja.Runtime) {
+					v := vm.Get("msg1")
+					err = vm.ExportTo(v, &msg1)
+					r.NoError(t, err)
+				})
+				time.Sleep(2 * time.Second)
+				r.Equal(t, "foo", msg1)
+			},
+		},
 	}
 
 	t.Parallel()
