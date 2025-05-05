@@ -176,12 +176,12 @@ func (suite *PetStoreSuite) TestGetOrderById() {
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/store/order/1",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":38080,"shipDate":"1986-02-10T22:06:24Z","status":"placed","complete":true}`))
+		try.HasBody(`{"id":98266,"petId":23377,"quantity":92,"shipDate":"2012-01-30T07:58:01Z","status":"approved","complete":false}`))
 
 	try.GetRequest(suite.T(), "https://localhost:18443/store/order/10",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"quantity":73,"shipDate":"2040-11-01T17:41:24Z","complete":true}`))
+		try.HasBody(`{"id":12545,"petId":20895,"quantity":16,"shipDate":"2027-11-26T16:57:16Z","status":"approved","complete":true}`))
 }
 
 func (suite *PetStoreSuite) TestKafka_TopicConfig() {

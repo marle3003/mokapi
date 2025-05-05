@@ -362,9 +362,12 @@ func selectMessage(value any, topic string, cfg *asyncapi3.Config) (*asyncapi3.M
 		}
 		if op.Value.Channel.Value.Name == topic && op.Value.Action == "send" {
 			noOperationDefined = false
+			if len(op.Value.Messages) == 0 {
+				log.Warnf("no message defined for operation %s", name)
+			}
 			for _, msg := range op.Value.Messages {
 				if msg.Value == nil {
-					log.Warnf("no message defined for operation %s", name)
+					log.Errorf("no message defined for operation %s", name)
 					continue
 				}
 				if valueMatchMessagePayload(value, msg.Value) {
@@ -374,13 +377,16 @@ func selectMessage(value any, topic string, cfg *asyncapi3.Config) (*asyncapi3.M
 		}
 	}
 
-	// second try to get receive operation
+	// second, try to get receive operation
 	for name, op := range cfg.Operations {
 		if op.Value == nil || op.Value.Channel.Value == nil {
 			continue
 		}
 		if op.Value.Channel.Value.Name == topic && op.Value.Action == "receive" {
 			noOperationDefined = false
+			if len(op.Value.Messages) == 0 {
+				log.Errorf("no message defined for operation %s", name)
+			}
 			for _, msg := range op.Value.Messages {
 				if msg.Value == nil {
 					log.Warnf("no message defined for operation %s", name)

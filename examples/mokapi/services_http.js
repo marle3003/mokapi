@@ -512,7 +512,7 @@ export let events = [
                         event: "http"
                     },
                     logs: [
-                        { level: 'info', message: 'a custom log message'},
+                        { level: 'info', message: 'a custom log message, see https://mokapi.io'},
                         { level: 'warn', message: 'a warn log message'},
                         { level: 'error', message: 'a error log message'},
                         { level: 'debug', message: 'a debug log message'}

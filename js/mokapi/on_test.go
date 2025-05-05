@@ -110,6 +110,38 @@ func TestModule_On(t *testing.T) {
 				r.EqualError(t, err, "unexpected type for args: String at mokapi/js/mokapi.(*Module).On-fm (native)")
 			},
 		},
+		{
+			name: "async event handler",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var handler func(args ...interface{}) (bool, error)
+				host.OnFunc = func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+					handler = do
+				}
+
+				_, err := vm.RunString(`
+					const m = require('mokapi')
+					m.on('http', async (p) => {
+						p.msg = await getMessage();
+						return true;
+					})
+
+					let getMessage = async () => {
+						return new Promise(async (resolve, reject) => {
+						  setTimeout(() => {
+							resolve('foo');
+						  }, 200);
+						});
+					}
+				`)
+				r.NoError(t, err)
+				p := &struct {
+					Msg string `json:"msg"`
+				}{}
+				_, err = handler(p)
+				r.NoError(t, err)
+				r.Equal(t, "foo", p.Msg)
+			},
+		},
 	}
 
 	t.Parallel()

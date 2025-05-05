@@ -4,6 +4,8 @@ import type { PropType } from 'vue'
 import { useRoute } from 'vue-router'
 import SourceView from './SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
+import { usePrettyHttp } from '@/composables/http'
+import { usePrettyText } from '@/composables/usePrettyText'
 
 defineProps({
     actions: { type: Object as PropType<Action[]>, required: true },
@@ -13,6 +15,8 @@ const { formatLanguage } = usePrettyLanguage()
 
 const route = useRoute()
 const { duration } = usePrettyDates()
+const { parseUrls } = usePrettyText()
+let status: string | null
 
 function getName(action: Action){
     for (const key in action.tags){
@@ -23,7 +27,6 @@ function getName(action: Action){
     return null
 }
 function formatParameters(action: Action): {name?: string, value: string}[] {
-    console.log('foo %s')
     if (action.tags.event === 'http') {
         return [
             {
@@ -43,6 +46,33 @@ function formatParameters(action: Action): {name?: string, value: string}[] {
     }
     return list
 }
+function getStatus(action: Action) {
+    if (action.error) {
+        return 'error'
+    }
+    let hasError = false
+    let hasWarning = false
+    if (!action.logs) {
+        return 'success'
+    }
+    for (const log of action.logs) {
+        switch (log.level) {
+            case 'error': 
+                hasError = true
+                break
+            case 'warn':
+                hasWarning = true
+                break
+        }
+    }
+    if (hasError) {
+        return 'error'
+    }
+    if (hasWarning) {
+        return 'warning'
+    }
+    return 'success'
+}
 </script>
 
 <template>
@@ -59,9 +89,10 @@ function formatParameters(action: Action): {name?: string, value: string}[] {
             <template v-for="(action, index) of actions">
                 <tr data-bs-toggle="collapse" :data-bs-target="'#action_'+index" aria-expanded=false>
                     <td><i class="bi bi-chevron-right"></i><i class="bi bi-chevron-down"></i></td>
-                    <td>
-                        <span class="badge bg-success me-2" v-if="!action.error">Success</span>
-                        <span class="badge bg-danger me-2" v-else>Error</span>
+                    <td :set="status = getStatus(action)">
+                        <span class="badge bg-danger me-2" v-if="status === 'error'">Error</span>
+                        <span class="badge bg-warning me-2" v-else-if="status === 'warning'">Warning</span>
+                        <span class="badge bg-success me-2" v-else>Success</span>
                     </td>
                     <td>{{ getName(action) }}</td>
                     <td class="text-center">{{ duration(action.duration) }}</td>
@@ -101,13 +132,18 @@ function formatParameters(action: Action): {name?: string, value: string}[] {
                                             <i class="bi bi-x-circle-fill text-danger" v-else-if="log.level == 'error'"></i>
                                             <i class="bi bi-bug-fill text-info" v-else-if="log.level == 'debug'"></i>
                                             <i class="bi bi-chat-dots text-primary" v-else></i>
-                                            {{ log.message }}
+                                            <span class="ms-2" v-html="parseUrls(log.message)"></span>
                                         </span>
                                     </li>
                                 </ul>
                                 <p v-if="!action.logs || action.logs.length == 0">This event handler did not produce any logs. You can use <code>console.log()</code> or <code>console.error()</code> in your script to output information.</p>
                             </div>
-                            <h5>Tags</h5>
+                            <h5>
+                                Tags
+                                <a href="/docs/javascript-api/mokapi/eventhandler/eventargs" class="ms-1" title="Learn how to define tags for your event handler" rel="noopener">
+                                    <i class="bi bi-question-circle" aria-hidden="true"></i>
+                                </a>
+                            </h5>
                             <table class="table dataTable">
                                 <thead>
                                     <tr>
@@ -182,5 +218,9 @@ tr[aria-expanded=false] .bi-chevron-down{
 .accordion-button:focus {
     border-color: var(--color-button-link);
     box-shadow: none;
+}
+h5 i {
+    font-size: 0.8rem;
+    vertical-align: top;
 }
 </style>

@@ -196,12 +196,13 @@ func TestObject(t *testing.T) {
 					schematest.WithProperty("country", schematest.New("string")),
 					schematest.WithIf(schematest.NewTypes(nil,
 						schematest.WithProperty("country", schematest.New("string",
-							schematest.WithConst("Bahrain")),
+							schematest.WithConst("Slovenia")),
 						),
 					)),
 					schematest.WithThen(schematest.NewTypes(nil,
 						schematest.WithProperty("postal_code", schematest.New("string",
 							schematest.WithPattern("[0-9]{5}(-[0-9]{4})?"))),
+						schematest.WithRequired("postal_code"),
 					)),
 				),
 			},
@@ -209,8 +210,8 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"country":     "Bahrain",
-						"postal_code": "10936",
+						"country":     "Slovenia",
+						"postal_code": "29109",
 					},
 					v)
 			},
@@ -237,7 +238,7 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"country":     "Bahrain",
+						"country":     "Slovenia",
 						"postal_code": "C0O 9F0",
 					},
 					v)

@@ -38,8 +38,8 @@ func TestConstraints(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]any{
-					"name": "Hudson Nelson",
-					"sex":  "male",
+					"name": "Zoey Nguyen",
+					"sex":  "female",
 				}, v)
 			},
 		},
