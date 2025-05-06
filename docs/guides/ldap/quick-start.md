@@ -18,7 +18,7 @@ the correct network interface and start serving requests.
 
 Below is an example of the simplest configuration, which does not include any custom LDAP entries. In this configuration, 
 Mokapi automatically generates a basic Root DSE entry, which provides essential information about the server, such as 
-the supported LDAP versions, the vendor name and vendor version.
+the supported LDAP versions, the vendor name, and vendor version.
 
 This basic setup is ideal for testing and development purposes, where the focus is on simulating server behavior rather
 than interacting with actual LDAP entries. You can later extend this configuration by adding LDAP entries and more 
@@ -29,14 +29,18 @@ ldap: 1.0 # file configuration version not LDAP protocol version
 host: :389
 ```
 
-To start Mokapi with a specific configuration file, you can use the --provider-file-filename option in the command 
+To start Mokapi with a specific configuration file, you can use the --providers-file-filename option in the command 
 line. This tells Mokapi to load the specified configuration file when it starts.
 
 ```bash
-mokapi --provider-file-filename ldap.yaml
+mokapi --providers-file-filename ldap.yaml
+```
+There is a new shorthand option to start Mokapi with less typing. Simply run:
+```bash
+mokapi ldap.yaml
 ```
 
-## Setup a Simple LDAP Entry Structure
+## Set up a Simple LDAP Entry Structure
 
 Mokapi allows you to configure your LDAP mock server using LDIF files. It supports a wide range of LDIF operations, 
 such as adding new entries, modifying attributes, and even deleting attributes. This flexibility makes it 
