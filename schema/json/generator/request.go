@@ -75,6 +75,11 @@ func (c *context) Restore() {
 	c.store = snapshot
 }
 
+func (c *context) has(key string) bool {
+	_, ok := c.store[key]
+	return ok
+}
+
 func (s *store) Snapshot() store {
 	snapshot := map[string]any{}
 	for k, v := range *s {
