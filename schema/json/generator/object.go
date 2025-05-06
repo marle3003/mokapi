@@ -133,7 +133,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 			}
 		}
 
-		if !slices.Contains(s.Required, it.Key()) {
+		if !slices.Contains(s.Required, it.Key()) && !req.ctx.has(it.Key()) {
 			fakes.Set(it.Key(), newFaker(func() (any, error) {
 				n := gofakeit.Float32Range(0, 1)
 				if n > 0.7 {

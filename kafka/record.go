@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
+	"math/bits"
 	"time"
 )
 
@@ -167,6 +168,7 @@ func (rb *RecordBatch) writeTo(e *Encoder) {
 	firstTimestamp := Timestamp(firstTime)
 	maxTimestamp := int64(0)
 	lastOffSetDetla := uint32(0)
+	baseOffset := rb.Records[0].Offset
 
 	// records must be sorted by time
 	for i, r := range rb.Records {
@@ -182,7 +184,7 @@ func (rb *RecordBatch) writeTo(e *Encoder) {
 		deltaOffset := int64(i)
 		lastOffSetDetla = uint32(i)
 
-		e.writeVarInt(int64(r.Size(int64(i), firstTime)))
+		e.writeVarInt(int64(r.Size(baseOffset, firstTime)))
 		e.writeInt8(0) // attributes
 		e.writeVarInt(deltaTimestamp)
 		e.writeVarInt(deltaOffset)
@@ -224,15 +226,7 @@ func (rb *RecordBatch) writeTo(e *Encoder) {
 }
 
 func sizeVarInt(x int64) int {
-	// code from binary.PutVarint
-	ux := uint64(x) << 1
-	if x < 0 {
-		ux = ^ux
-	}
-	i := 0
-	for ux >= 0x80 {
-		ux >>= 7
-		i++
-	}
-	return i + 1
+	// Kafka-compatible ZigZag
+	i := uint64((x << 1) ^ (x >> 63))
+	return (bits.Len64(i|1) + 6) / 7
 }
