@@ -434,4 +434,19 @@ blockquote p {
 .content li > p {
   margin-bottom: 0;
 }
+
+.carousel-item {
+  height: 400px; 
+}
+.carousel-item img {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+}
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  width: 4rem;
+  height: 4rem;
+  background-size: 100% 100%;
+}
 </style>
