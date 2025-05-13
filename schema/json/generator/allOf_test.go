@@ -86,7 +86,7 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "lx0+fjywXKo"}, v)
+				require.Equal(t, map[string]interface{}{"foo": "FqwCrwMfkOjojx"}, v)
 			},
 		},
 		{
