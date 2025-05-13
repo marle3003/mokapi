@@ -1,6 +1,16 @@
 ---
 title: Mock REST and Kafka APIs Using OpenAPI & AsyncAPI
 description: Mock REST and Kafka APIs with Mokapi using OpenAPI or AsyncAPI. Simulate real world scenario using JavaScript — all in a single tool.
+dashboard:
+  - title: HTTP Requests
+    description: Incoming HTTP requests, including method, URL, headers, query parameters, and body
+    img: /blogs/dashboard-petstore-request.png
+  - title: Kafka Topics
+    description: A live view of Kafka topic contents—see the messages being produced and consumed in real time.
+    img: /blogs/dashboard-petstore-kafka-topic.png
+  - title: Scheduled Jobs
+    description: A list of all scheduled tasks defined in your scripts, along with their execution history, status, and any output or errors.
+    img: /blogs/dashboard-petstore-jobs.png
 ---
 
 # Mock REST and Kafka APIs with OpenAPI & AsyncAPI Using Mokapi
@@ -316,12 +326,11 @@ You can use Mokapi in a GitHub action run as a docker container to streamline yo
 
 ## Dashboard
 
-Explore live API traffic and Kafka messages:
+Mokapi’s built-in dashboard provides deep visibility into your mocked services—whether they’re REST APIs, Kafka topics, 
+or scheduled jobs.
 
-```bash carousel=ff
-/blogs/dashboard-petstore-request.png
-/blogs/dashboard-petstore-kafka-topic.png
-```
+{{ carousel key="dashboard" }}
+
 
 ## Conclusion
 
