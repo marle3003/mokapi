@@ -11,6 +11,7 @@ type FSReader interface {
 	ReadFile(name string) ([]byte, error)
 	Stat(name string) (os.FileInfo, error)
 	GetWorkingDir() (string, error)
+	Abs(string) (string, error)
 }
 
 type Reader struct {
@@ -31,3 +32,5 @@ func (r *Reader) Stat(name string) (fs.FileInfo, error) {
 func (r *Reader) GetWorkingDir() (string, error) {
 	return os.Getwd()
 }
+
+func (r *Reader) Abs(path string) (string, error) { return filepath.Abs(path) }
