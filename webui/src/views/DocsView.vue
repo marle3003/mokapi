@@ -434,4 +434,56 @@ blockquote p {
 .content li > p {
   margin-bottom: 0;
 }
+
+.carousel-caption {
+  background: rgba(0, 0, 0, 0.5); /* semi-transparent black */
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background-color: rgb(255,255,255,0.5);
+  padding-top: 5px;
+  line-height: 18px;
+  color: #fff;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.6s ease-in-out;
+}
+.carousel-item.active .carousel-caption {
+    opacity: 1;
+    transform: translateY(0);
+}
+.carousel-caption h6, .carousel-caption p {
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+}
+.carousel-caption h6 {
+  color: #fff;
+  animation: fadeInUp 0.6s ease-in-out 0.2s forwards;
+}
+.carousel-caption p {
+  margin-bottom: 5px;
+  animation: fadeInUp 0.6s ease-in-out 0.4s forwards;
+}
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.carousel-item {
+  height: 400px; 
+}
+.carousel-item img {
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+}
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+  width: 4rem;
+  height: 4rem;
+  background-size: 100% 100%;
+}
 </style>

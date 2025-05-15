@@ -74,6 +74,13 @@ func (m *MockFS) Stat(name string) (fs.FileInfo, error) {
 	return nil, fmt.Errorf("not found")
 }
 
+func (m *MockFS) Abs(name string) (string, error) {
+	if strings.HasPrefix(name, ".") {
+		return filepath.Join(m.WorkingDir, name), nil
+	}
+	return name, nil
+}
+
 func (f *fileInfo) Name() string {
 	return f.entry.Name
 }

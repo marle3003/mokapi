@@ -6,14 +6,14 @@ import type Renderer from "markdown-it/lib/renderer"
 export function MarkdownItCard(metadata: any): (md: MarkdownIt, opts: Options) => void {
     return function(md: MarkdownIt, opts: Options): void {
         var defaultRender = md.renderer.rules.text!,
-            unescapeAll = md.utils.unescapeAll,
             card = /{{\s*card-grid\s.*}}/,
             kv = /([^\s=]+="[^"]*")/g
 
         function getCard(token: Token) {
-            if (card.exec(token.content)?.slice(1) === null) {
+            if (card.exec(token.content) === null) {
                 return null
             }
+
             const matches = [...token.content.matchAll(kv)]
             if (matches === null || matches.length === 0) {
                 return null
@@ -26,7 +26,7 @@ export function MarkdownItCard(metadata: any): (md: MarkdownIt, opts: Options) =
             return data
         }
 
-        function fenceGroup(tokens: Token[], idx: number, options: Options, env: any, slf: Renderer): string {
+        function text(tokens: Token[], idx: number, options: Options, env: any, slf: Renderer): string {
             if (tokens[idx].hidden) { return ''; }
 
             const card = getCard(tokens[idx])
@@ -58,6 +58,6 @@ export function MarkdownItCard(metadata: any): (md: MarkdownIt, opts: Options) =
             return `<div class="row row-cols-1 row-cols-md-2 g-4 card-grid mt-1">${items}</div>`;
         }
 
-        md.renderer.rules.text = fenceGroup
+        md.renderer.rules.text = text
     }
 };

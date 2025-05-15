@@ -1,6 +1,16 @@
 ---
 title: Mock REST and Kafka APIs Using OpenAPI & AsyncAPI
 description: Mock REST and Kafka APIs with Mokapi using OpenAPI or AsyncAPI. Simulate real world scenario using JavaScript — all in a single tool.
+dashboard:
+  - title: HTTP Requests
+    description: Incoming HTTP requests, including method, URL, headers, query parameters, and body
+    img: /blogs/dashboard-petstore-request.png
+  - title: Kafka Topics
+    description: A live view of Kafka topic contents—see the messages being produced and consumed in real time.
+    img: /blogs/dashboard-petstore-kafka-topic.png
+  - title: Scheduled Jobs
+    description: A list of all scheduled tasks defined in your scripts, along with their execution history, status, and any output or errors.
+    img: /blogs/dashboard-petstore-jobs.png
 ---
 
 # Mock REST and Kafka APIs with OpenAPI & AsyncAPI Using Mokapi
@@ -93,7 +103,7 @@ paths:
 mokapi pet-api.yaml
 ```
 
-### 3. Call the API
+### 3. Make a request
 
 ```shell
 curl http://localhost/pets
@@ -103,34 +113,46 @@ curl "http://localhost/pets?category=dog"
 Mokapi will generate random data for those requests. If you query with ?category=dog, Mokapi will return only dogs 
 thanks to smart mock data generation.
 
-### Adding Custom Logic
+### Add Custom Logic with JavaScript
 
-You can add a JavaScript file to dynamically control responses:
+You can control responses using JavaScript:
 
-```javascript
+```typescript
 import { on } from 'mokapi';
-import { fake } from 'mokapi/faker';
+
+const pets = [
+    {
+        id: 1,
+        name: 'Yoda',
+        category: 'dog'
+    },
+    {
+        id: 2,
+        name: 'Rex',
+        category: 'dog'
+    },
+    {
+        id: 3,
+        name: 'Nugget',
+        category: 'canary'
+    }
+];
 
 export default () => {
     on('http', (request, response) => {
-       if (request.query.category === 'cat') {
-           response.data = [
-               {
-                   id: fake({ type: 'string', format: 'uuid' }),
-                   name: 'Molly',
-                   category: 'cat'
-               }
-           ];
-           return true;
-       }
-       return false;
+        if (request.query.category) {
+          response.data = pets.filter(pet => pet.category === request.query.category)
+        } else {
+          response.data = pets
+        }
+        return true;
     });
 }
 ```
 
-Run Mokapi with the script:
+Run it like this:
 ```shell
-mokapi pet-api.yaml pets.js
+mokapi pet-api.yaml petstore.ts
 ```
 
 ## Mocking Kafka with AsyncAPI
@@ -144,56 +166,143 @@ info:
   version: 1.0.0
 servers:
   kafkaServer:
-    host: localhost:8092
+    host: localhost:9092
     protocol: kafka
 defaultContentType: application/json
 operations:
   receivePetArrived:
     action: receive
     channel:
-      $ref: '#/channels/store.pet.arrived'
+      $ref: '#/channels/petstore.order-event'
+    messages:
+      - $ref: '#/components/messages/OrderMessage'
   sendPetArrived:
     action: send
     channel:
-      $ref: '#/channels/store.pet.arrived'
-channels:
-  store.pet.arrived:
-    description: Details about a newly arrived pet.
+      $ref: '#/channels/petstore.order-event'
     messages:
-      userSignedUp:
-        $ref: '#/components/messages/petArrived'
+      - $ref: '#/components/messages/OrderMessage'
+channels:
+  petstore.order-event:
+    description: Details about a newly placed pet store order.
+    messages:
+      OrderMessage:
+        $ref: '#/components/messages/OrderMessage'
 components:
   messages:
-    petArrived:
+    OrderMessage:
       payload:
-        $ref: '#/components/schemas/Pet'
+        $ref: '#/components/schemas/Order'
   schemas:
-    Pet:
-      id:
-        type: string
-      name:
-        type: string
-      category:
-        type: string
+    Order:
+      properties:
+        id:
+          type: integer
+        petId:
+          type: integer
+        status:
+          type: string
+          enum: [ placed, accepted, completed ]
+        shipDate:
+          type: string
+          format: date-time
+        placed:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+          required:
+            - timestamp
+        accepted:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+          required:
+            - timestamp
+        completed:
+          type: object
+          properties:
+            timestamp:
+              type: string
+              format: date-time
+          required:
+            - timestamp
+      required:
+        - id
+        - petId
+        - status
+        - placed
 ```
 
-### 2. Create a Kafka producer
+### 2. Create a Kafka producer script
 
-```javascript
+```typescript
 import { every } from 'mokapi';
 import { produce } from 'mokapi/kafka';
 
+const orders = [
+  {
+    id: 1,
+    petId: 1,
+    status: 'placed',
+    placed: {
+      timestamp: new Date().toISOString()
+    }
+  },
+  {
+    id: 2,
+    petId: 2,
+    status: 'accepted',
+    shipDate: new Date(Date.now() + 26*60*60*1000).toISOString(),
+    placed: {
+      timestamp: new Date(Date.now() - 60*60*1000).toISOString()
+    },
+    accepted: {
+      timestamp: new Date().toISOString()
+    }
+  },
+  {
+    id: 3,
+    petId: 3,
+    status: 'completed',
+    shipDate: new Date(Date.now() + 24*60*60*1000).toISOString(),
+    placed: {
+      timestamp: new Date(Date.now() - 2.5*60*60*1000).toISOString()
+    },
+    accepted: {
+      timestamp: new Date(Date.now() - 1.5*60*60*1000).toISOString()
+    },
+    completed: {
+      timestamp: new Date().toISOString()
+    }
+  }
+]
+
 export default () => {
-    every('10s', () => {
-        produce({ topic: 'store.pet.arrived' });
-    });
+    let index = 0;
+    every('30s', () => {
+        console.log('producing new random Kafka message')
+        produce({
+          topic: 'petstore.order-event',
+          messages: [
+            {
+              key: orders[index].id,
+              data: orders[index],
+            }
+          ]
+        });
+        index++;
+    }, { times: orders.length });
 }
 ```
 
-### 3. Run Mokapi with your AsyncAPI spec
+### 3. Run Mokapi
 
 ```shell
-mokapi pet-stream-api.yaml producer.js
+mokapi pet-stream-api.yaml producer.ts
 ```
 
 Mokapi will simulate Kafka messages and allow you to inspect them via the dashboard.
@@ -204,17 +313,29 @@ Mokapi will simulate Kafka messages and allow you to inspect them via the dashbo
 - Simulate Kafka events for microservice testing
 - Share mock configurations with your team/organization
 
-You can use Mokapi in a GitHub action run as docker container to streamline your automation.
+You can use Mokapi in a GitHub action run as a docker container to streamline your automation.
 
 ```yaml
 - name: Start Mokapi
   run: |
-    docker run -d --rm --name mokapi -p 80:80 -p 8080:8080 -v ${{ github.workspace }}/mocks:/mocks mokapi/mokapi:latest /mocks
+    docker run -d --rm --name mokapi \
+    -p 80:80 -p 8080:8080 \
+    -v ${{ github.workspace }}/mocks:/mocks \
+    mokapi/mokapi:latest /mocks
 ```
+
+## Dashboard
+
+Mokapi’s built-in dashboard provides deep visibility into your mocked services—whether they’re REST APIs, Kafka topics, 
+or scheduled jobs.
+
+{{ carousel key="dashboard" }}
+
 
 ## Conclusion
 
 Mokapi helps you mock REST and Kafka services quickly using standard API specs. Whether you’re building, testing, 
 or demoing your application, Mokapi provides a simple yet powerful way to simulate realistic API behavior.
 
-Give it a try: [https://mokapi.io](https://mokapi.io)
+**Give it a try**: [https://mokapi.io](https://mokapi.io)\
+**See the full example repo**: [https://github.com/marle3003/mokapi-petstore](https://github.com/marle3003/mokapi-petstore)

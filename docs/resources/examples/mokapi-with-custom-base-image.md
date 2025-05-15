@@ -26,7 +26,7 @@ ENTRYPOINT ["mokapi"]
 ## Using Multi-stage build
 
 ```Dockerfile tab=Dockerfile  
-FROM mokapi/mokapi:v0.9.25 as mokapi
+FROM mokapi/mokapi:v0.9.25 AS mokapi
 
 FROM ubuntu:noble
 

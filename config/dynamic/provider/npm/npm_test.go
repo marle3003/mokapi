@@ -115,6 +115,34 @@ func TestNpmProvider(t *testing.T) {
 			},
 		},
 		{
+			name: "with relative global folder",
+			fs: &filetest.MockFS{
+				WorkingDir: root,
+				Entries: []*filetest.Entry{
+					{
+						Name:  "/bar/node_modules",
+						IsDir: true,
+					},
+					{
+						Name:  "/bar/node_modules/foo",
+						IsDir: true,
+					},
+					{
+						Name:  "/bar/node_modules/foo/foo.txt",
+						IsDir: false,
+						Data:  []byte("foobar"),
+					}}},
+			cfg: static.NpmProvider{
+				GlobalFolders: []string{"./bar/node_modules"},
+				Packages:      []static.NpmPackage{{Name: "foo"}},
+			},
+			test: func(t *testing.T, configs map[string]*dynamic.Config) {
+				require.Len(t, configs, 1)
+				require.Contains(t, configs, "/bar/node_modules/foo/foo.txt")
+				require.Equal(t, []byte("foobar"), configs["/bar/node_modules/foo/foo.txt"].Raw)
+			},
+		},
+		{
 			name: "node_modules in parent directory and two packages",
 			fs: &filetest.MockFS{
 				WorkingDir: root + "foo",

@@ -132,6 +132,15 @@ func TestContent_UnmarshalYAML(t *testing.T) {
 				require.Len(t, c, 0)
 			},
 		},
+		{
+			name: "MediaType not defined",
+			test: func(t *testing.T) {
+				c := openapi.Content{}
+				err := yaml.Unmarshal([]byte("'application/json':"), &c)
+				require.EqualError(t, err, "content.application/json should be object but it is nil")
+				require.Len(t, c, 0)
+			},
+		},
 	}
 
 	t.Parallel()

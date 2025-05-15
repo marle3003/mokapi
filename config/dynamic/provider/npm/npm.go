@@ -162,6 +162,14 @@ func (p *Provider) getPackageDir(name string, workDir string) (string, error) {
 	}
 
 	for _, folder := range p.cfg.GlobalFolders {
+		if folder != "" {
+			abs, err := p.reader.Abs(folder)
+			if err == nil {
+				folder = abs
+			} else {
+				log.Debugf("unable to get absolute path of global folder %v: %v", folder, err)
+			}
+		}
 		dir := filepath.Join(folder, name)
 		if _, err := p.reader.Stat(dir); err == nil {
 			return dir, nil
