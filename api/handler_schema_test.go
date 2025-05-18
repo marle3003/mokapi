@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"github.com/brianvoe/gofakeit/v6"
 	log "github.com/sirupsen/logrus"
@@ -13,6 +14,7 @@ import (
 	"mokapi/runtime/monitor"
 	"mokapi/runtime/runtimetest"
 	avro "mokapi/schema/avro/schema"
+	"mokapi/schema/json/generator"
 	jsonSchema "mokapi/schema/json/schema"
 	jsonTest "mokapi/schema/json/schema/schematest"
 	"mokapi/try"
@@ -196,6 +198,33 @@ func TestHandler_Schema_Example(t *testing.T) {
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
 					try.HasBody(`[{"contentType":"application/json","value":"IlhpZFp1b1dxICI="}]`))
+			},
+		},
+		{
+			name: "string pattern",
+			app: &runtime.App{
+				Monitor: monitor.New(),
+			},
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example",
+					nil,
+					`{"name": "", "schema": {"type": ["string"], "pattern": "(99|98)[0-9]{16}"},"contentTypes": ["text/plain"]}`,
+					h,
+					try.HasStatusCode(200),
+					try.AssertBody(func(t *testing.T, body string) {
+						var data []struct {
+							ContentType string `json:"contentType"`
+							Value       string `json:"value"`
+						}
+						err := json.Unmarshal([]byte(body), &data)
+
+						b, err := base64.StdEncoding.DecodeString(data[0].Value)
+						require.NoError(t, err)
+						require.Equal(t, "981364599489953690", string(b))
+					}),
+				)
 			},
 		},
 		{
@@ -384,7 +413,7 @@ func TestHandler_Schema_Example(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			gofakeit.Seed(11)
+			generator.Seed(11)
 
 			h := New(tc.app, static.Api{})
 			tc.fn(t, h, tc.app)
