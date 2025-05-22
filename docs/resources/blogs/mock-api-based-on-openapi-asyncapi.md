@@ -339,3 +339,9 @@ or demoing your application, Mokapi provides a simple yet powerful way to simula
 
 **Give it a try**: [https://mokapi.io](https://mokapi.io)\
 **See the full example repo**: [https://github.com/marle3003/mokapi-petstore](https://github.com/marle3003/mokapi-petstore)
+
+---
+
+*This article is also available on [LinkedIn](https://www.linkedin.com/pulse/mock-rest-kafka-apis-openapi-asyncapi-using-mokapi-marcel-lehmann-snasf)*
+
+---
