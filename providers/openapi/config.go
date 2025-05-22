@@ -10,6 +10,7 @@ import (
 	jsonSchema "mokapi/schema/json/schema"
 	"mokapi/version"
 	"net/http"
+	"strings"
 )
 
 var (
@@ -85,6 +86,12 @@ func (c *Config) Validate() (err error) {
 
 	if len(c.Info.Name) == 0 {
 		err = errors.Join(err, errors.New("an openapi title is required"))
+	}
+
+	for name := range c.Paths {
+		if !strings.HasPrefix(name, "/") {
+			err = errors.Join(err, fmt.Errorf("should only have path names that start with `/`: '%s'", name))
+		}
 	}
 
 	/*if feature.IsEnabled("openapi-validation") {

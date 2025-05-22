@@ -1,7 +1,6 @@
 package faker_test
 
 import (
-	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
@@ -140,60 +139,4 @@ func TestModule(t *testing.T) {
 			tc.test(t, vm, host)
 		})
 	}
-}
-
-type fakerTreeTest struct {
-	name     string
-	testFunc func(r *generator.Request) bool
-	fakeFunc func(r *generator.Request) (interface{}, error)
-
-	appendFunc   func(tree common.FakerNode)
-	insertFunc   func(index int, tree common.FakerNode) error
-	removeAtFunc func(index int) error
-	removeFunc   func(name string) error
-}
-
-func (f *fakerTreeTest) Name() string {
-	return f.name
-}
-
-func (f *fakerTreeTest) Test(r *generator.Request) bool {
-	if f.testFunc != nil {
-		return f.testFunc(r)
-	}
-	return false
-}
-
-func (f *fakerTreeTest) Fake(r *generator.Request) (interface{}, error) {
-	if f.testFunc != nil {
-		return f.fakeFunc(r)
-	}
-	return nil, fmt.Errorf("not implemented")
-}
-
-func (f *fakerTreeTest) Append(tree common.FakerNode) {
-	if f.appendFunc != nil {
-		f.appendFunc(tree)
-	}
-}
-
-func (f *fakerTreeTest) Insert(index int, tree common.FakerNode) error {
-	if f.insertFunc != nil {
-		return f.insertFunc(index, tree)
-	}
-	return fmt.Errorf("not implemented")
-}
-
-func (f *fakerTreeTest) RemoveAt(index int) error {
-	if f.removeAtFunc != nil {
-		return f.removeAtFunc(index)
-	}
-	return fmt.Errorf("not implemented")
-}
-
-func (f *fakerTreeTest) Remove(name string) error {
-	if f.removeFunc != nil {
-		return f.removeFunc(name)
-	}
-	return fmt.Errorf("not implemented")
 }

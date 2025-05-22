@@ -69,7 +69,7 @@ func parse(c *Config) (interface{}, error) {
 		result, err = parseYaml(b, result)
 	case ".json":
 		result, err = parseJson(b, result)
-	case ".lua", ".js", ".ts":
+	case ".lua", ".js", ".cjs", ".mjs", ".ts":
 		if result == nil {
 			result = script.New(name, b)
 		} else {

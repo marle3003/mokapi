@@ -107,6 +107,12 @@ func HasBody(expected string) ResponseCondition {
 	}
 }
 
+func AssertBody(assert func(t *testing.T, body string)) ResponseCondition {
+	return func(t *testing.T, tr *TestResponse) {
+		assert(t, string(tr.GetBody()))
+	}
+}
+
 func BodyContains(s string) ResponseCondition {
 	return func(t *testing.T, tr *TestResponse) {
 		body := string(tr.GetBody())

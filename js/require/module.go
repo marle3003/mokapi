@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	supportedExtensions = []string{".js", ".ts", ".json", ".yaml", ".yml"}
+	supportedExtensions = []string{".js", ".cjs", ".mjs", ".ts", ".json", ".yaml", ".yml"}
 	ModuleFileNotFound  = errors.New("module not found")
 )
 

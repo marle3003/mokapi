@@ -33,6 +33,7 @@ runs:
       run: |
         npm ci
         npm run copy-docs
+        npm run build-sitemap
         npm run build
       shell: bash
     - name: Install Playwright
