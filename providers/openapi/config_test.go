@@ -117,6 +117,19 @@ info:
 				require.EqualError(t, err, "no OpenApi version defined")
 			},
 		},
+		{
+			name: "path has no prefix '/'",
+			data: `
+openapi: "3.1"
+info:
+  title: foo
+paths:
+  foo: {}
+`,
+			test: func(t *testing.T, err error) {
+				require.EqualError(t, err, "should only have path names that start with `/`: 'foo'")
+			},
+		},
 	}
 
 	t.Parallel()
