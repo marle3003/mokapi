@@ -315,6 +315,9 @@ func (sh *scriptHost) CanClose() bool {
 
 func (sh *scriptHost) FindFakerNode(name string) *common.FakerTree {
 	t := generator.FindByName(name)
+	if t == nil {
+		return nil
+	}
 	ft := common.NewFakerTree(t)
 	sh.fakerNodes = append(sh.fakerNodes, ft)
 	return ft

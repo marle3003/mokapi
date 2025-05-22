@@ -61,5 +61,8 @@ func (m *Faker) Fake(v goja.Value) interface{} {
 
 func (m *Faker) FindByName(name string) goja.Value {
 	ft := m.host.FindFakerNode(name)
+	if ft == nil {
+		return nil
+	}
 	return convertToNode(ft, m)
 }
