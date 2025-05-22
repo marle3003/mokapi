@@ -32,7 +32,7 @@ func NewDefaultScriptLoader(config *static.Config) ScriptLoader {
 func (l *DefaultScriptLoader) Load(file *dynamic.Config, host common.Host) (common.Script, error) {
 	s := file.Data.(*script.Script)
 	switch filepath.Ext(s.Filename) {
-	case ".js", ".ts":
+	case ".js", ".cjs", ".mjs", ".ts":
 		return js.New(file, host, l.config.Js)
 	case ".lua":
 		return lua.New(getScriptPath(file.Info.Url), s.Code, host)
