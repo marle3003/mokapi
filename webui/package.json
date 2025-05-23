@@ -34,7 +34,7 @@
     "vue3-highlightjs": "^1.0.5",
     "vue3-markdown-it": "^1.0.10",
     "whatwg-mimetype": "^4.0.0",
-    "xml-formatter": "^3.6.5"
+    "xml-formatter": "^3.6.6"
   },
   "devDependencies": {
     "@playwright/test": "^1.52.0",
