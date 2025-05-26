@@ -16,11 +16,11 @@ func newEmailNode() *Node {
 
 func fakeEmail(r *Request) (interface{}, error) {
 	choosePersonEmail := false
-	first, ok := r.ctx.store["firstname"]
+	first, ok := r.Context.Values["firstname"]
 	if ok {
 		choosePersonEmail = true
 	}
-	last, ok := r.ctx.store["lastname"]
+	last, ok := r.Context.Values["lastname"]
 	if ok {
 		choosePersonEmail = true
 

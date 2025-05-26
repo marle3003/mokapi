@@ -618,7 +618,7 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int32")),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(12), i)
+				require.Equal(t, int32(12), i)
 			},
 		},
 		{

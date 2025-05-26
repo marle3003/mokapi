@@ -50,7 +50,7 @@ func fakeInteger(s *schema.Schema) (any, error) {
 	hasRange := hasNumberRange(s)
 	if !hasRange && s.MultipleOf == nil {
 		if s.Format == "int32" {
-			return gofakeit.Int32(), nil
+			return int64(gofakeit.Int32()), nil
 		}
 		return gofakeit.Int64(), nil
 	}
@@ -64,25 +64,16 @@ func fakeInteger(s *schema.Schema) (any, error) {
 			if err != nil {
 				return nil, err
 			}
-			if s.Format == "int32" {
-				return int32(v), nil
-			}
 			return int64(v), nil
 		}
 		v := int64(math.Round(gofakeit.Float64Range(min, max)))
-		if s.Format == "int32" {
-			return int32(v), nil
-		}
-		return int64(v), nil
+		return v, nil
 	}
 	min := 0
 	max := 10000
 	n := gofakeit.Number(min, max)
 	v := n * int(*s.MultipleOf)
-	if s.Format == "int32" {
-		return int32(v), nil
-	}
-	return v, nil
+	return int64(v), nil
 }
 
 func fakeIntegerWithRange(s *schema.Schema, min, max int) (any, error) {

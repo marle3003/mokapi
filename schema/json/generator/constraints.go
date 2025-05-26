@@ -29,7 +29,7 @@ func pickEnumValue(r *Request) interface{} {
 	if len(r.Path) > 0 {
 		last := r.Path[len(r.Path)-1]
 		defer func() {
-			r.ctx.store[last] = v
+			r.Context.Values[last] = v
 		}()
 	}
 

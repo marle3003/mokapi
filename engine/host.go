@@ -311,7 +311,7 @@ func (sh *scriptHost) HttpClient(opts common.HttpClientOptions) common.HttpClien
 }
 
 func (sh *scriptHost) CanClose() bool {
-	return len(sh.events) == 0 && len(sh.jobs) == 0 && sh.script.CanClose()
+	return len(sh.events) == 0 && len(sh.jobs) == 0 && sh.script.CanClose() && len(sh.cleanupFuncs) == 0
 }
 
 func (sh *scriptHost) FindFakerNode(name string) *generator.Node {

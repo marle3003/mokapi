@@ -25,6 +25,7 @@ func Require(rt *goja.Runtime, module *goja.Object) {
 	obj := module.Get("exports").(*goja.Object)
 	obj.Set("fake", f.Fake)
 	obj.Set("findByName", f.FindByName)
+	obj.Set("ROOT_NAME", generator.RootName)
 }
 
 func (m *Module) Fake(v goja.Value) interface{} {

@@ -38,7 +38,7 @@ func TestParseString(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int32")),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(42), i)
+				require.Equal(t, int32(42), i)
 			},
 		},
 		{
@@ -47,7 +47,7 @@ func TestParseString(t *testing.T) {
 			schema: schematest.New("number", schematest.WithFormat("float")),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 42.8, i)
+				require.Equal(t, float32(42.8), i)
 			},
 		},
 		{

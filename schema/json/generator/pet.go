@@ -44,28 +44,28 @@ func fakePet(r *Request) (any, error) {
 }
 
 func fakePetName(r *Request) (any, error) {
-	if v, ok := r.ctx.store["name"]; ok {
+	if v, ok := r.Context.Values["name"]; ok {
 		return v, nil
 	}
 
 	v := gofakeit.PetName()
-	r.ctx.store["name"] = v
+	r.Context.Values["name"] = v
 	return v, nil
 }
 
 func fakePetCategory(r *Request) (any, error) {
-	if v, ok := r.ctx.store["category"]; ok {
+	if v, ok := r.Context.Values["category"]; ok {
 		return v, nil
 	}
 
 	index := gofakeit.Number(0, len(petCategory)-1)
 	v := petCategory[index]
-	r.ctx.store["category"] = v
+	r.Context.Values["category"] = v
 	return v, nil
 }
 
 func fakePetCategoryId(r *Request) (any, error) {
-	if v, ok := r.ctx.store["category.id"]; ok {
+	if v, ok := r.Context.Values["category.id"]; ok {
 		return v, nil
 	}
 
@@ -73,7 +73,7 @@ func fakePetCategoryId(r *Request) (any, error) {
 	if err != nil {
 		return nil, err
 	}
-	r.ctx.store["category.id"] = v
+	r.Context.Values["category.id"] = v
 	return v, nil
 }
 

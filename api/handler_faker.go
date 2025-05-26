@@ -6,7 +6,7 @@ import (
 )
 
 func (h *handler) handleFakerTree(w http.ResponseWriter, r *http.Request) {
-	node := generator.FindByName("")
+	node := generator.FindByName(generator.RootName)
 
 	w.Header().Set("Content-Type", "application/json")
 	writeJsonBody(w, node)

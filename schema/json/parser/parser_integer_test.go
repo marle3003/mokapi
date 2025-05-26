@@ -133,7 +133,7 @@ func TestParse_Integer(t *testing.T) {
 			d:    "1234",
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(1234), v)
+				require.Equal(t, int32(1234), v)
 			},
 
 			convertStringToNumber: true,

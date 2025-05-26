@@ -62,18 +62,18 @@ func fakeCountry(r *Request) (any, error) {
 		v = gofakeit.Country()
 	}
 
-	r.ctx.store["country"] = v
+	r.Context.Values["country"] = v
 	return v, nil
 }
 
 func fakeLongitude(r *Request) (any, error) {
 	v := gofakeit.Longitude()
-	r.ctx.store["longitude"] = v
+	r.Context.Values["longitude"] = v
 	return v, nil
 }
 
 func fakeLatitude(r *Request) (any, error) {
 	v := gofakeit.Latitude()
-	r.ctx.store["latitude"] = v
+	r.Context.Values["latitude"] = v
 	return v, nil
 }

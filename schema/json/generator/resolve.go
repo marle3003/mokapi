@@ -78,8 +78,13 @@ func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
 		}
 	}
 	n := findBestMatch(g.root, req.With(path, req.Schema, req.examples))
-	if n == nil && !fallback {
-		return nil, NoMatchFound
+	if n == nil {
+		if !fallback {
+			return nil, NoMatchFound
+		}
+		return newFaker(func() (any, error) {
+			return fakeBySchema(req)
+		}), nil
 	}
 	return newFakerWithFallback(n, req), nil
 }
@@ -105,11 +110,11 @@ func (r *resolver) guardLoopLimit(s *schema.Schema) error {
 
 func findBestMatch(root *Node, r *Request) *Node {
 	for {
-		if len(r.Path) == 0 {
-			return nil
-		}
 		if match := root.findBestMatch(r); match != nil {
 			return match
+		}
+		if len(r.Path) == 0 {
+			return nil
 		}
 		r = r.shift()
 	}
@@ -117,7 +122,7 @@ func findBestMatch(root *Node, r *Request) *Node {
 
 func (n *Node) findBestMatch(r *Request) *Node {
 	token := r.NextToken()
-	if token == "" {
+	if token == "" && n.Name != "root" && n.Fake != nil {
 		return n
 	}
 
@@ -127,7 +132,7 @@ func (n *Node) findBestMatch(r *Request) *Node {
 			attributes = []string{child.Name}
 		}
 		for _, attr := range attributes {
-			if attr == token {
+			if attr == token || attr == "*" {
 				match := child.findBestMatch(r.shift())
 				if match != nil {
 					return match
@@ -206,7 +211,7 @@ func nullable(s *schema.Schema) (*faker, bool) {
 func useFromContext(r *Request) (*faker, bool) {
 	if len(r.Path) > 0 {
 		last := r.Path[len(r.Path)-1]
-		if v, ok := r.ctx.store[last]; ok {
+		if v, ok := r.Context.Values[last]; ok {
 			p := parser.Parser{Schema: r.Schema}
 			if v, err := p.Parse(v); err == nil {
 				return newFaker(func() (any, error) {

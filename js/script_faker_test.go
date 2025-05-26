@@ -167,7 +167,7 @@ func TestScript_Faker(t *testing.T) {
 				s, err := jstest.New(jstest.WithSource(
 					`import { fake, findByName } from 'mokapi/faker'
 						 export default function() {
-						 	let root = findByName('')
+						 	let root = findByName('root')
 							root.children.push({
 								name: 'foo',
 								fake: (r) => {
@@ -184,7 +184,7 @@ func TestScript_Faker(t *testing.T) {
 					"foo": "bar",
 				}, v.Export())
 				r.NoError(t, err)
-				n := generator.FindByName("")
+				n := generator.FindByName(generator.RootName)
 				err = n.Remove("foo")
 				r.NoError(t, err)
 			},

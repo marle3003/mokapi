@@ -78,7 +78,7 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 
 	arr := make([]interface{}, 0, length)
 	for i := 0; i < length; i++ {
-		r.ctx.Snapshot()
+		r.Context.Snapshot()
 		var v interface{}
 		var err error
 		if s.UniqueItems {
@@ -90,7 +90,7 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 			return nil, fmt.Errorf("%v: %v", err, s)
 		}
 		arr = append(arr, v)
-		r.ctx.Restore()
+		r.Context.Restore()
 	}
 
 	if s.ShuffleItems {
@@ -171,7 +171,7 @@ func findWithPlural(req *Request) (*faker, error) {
 
 	path := tokenize(req.Path)
 	n := findBestMatch(g.root, req.WithPath(path))
-	if n != nil && n.Name != "" {
+	if n != nil && !n.isRootOrDefault() && n.Fake != nil {
 		return newFakerWithFallback(n, req), nil
 	}
 	return nil, NotSupported

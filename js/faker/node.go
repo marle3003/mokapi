@@ -6,8 +6,10 @@ import (
 )
 
 type Node struct {
-	origNode *generator.Node
-	children goja.Value
+	origNode   *generator.Node
+	children   goja.Value
+	attributes goja.Value
+	dependsOn  goja.Value
 
 	m       *Module
 	test    func(r *generator.Request) bool
@@ -21,10 +23,6 @@ func NewNode(m *Module, node *generator.Node) goja.Value {
 		m:        m,
 	}
 
-	n.children = newJsArray[*generator.Node](&children{n: n}, n.m.vm, func(v goja.Value) *generator.Node {
-		return convertToNode(v, n.m)
-	})
-
 	m.host.AddCleanupFunc(func() {
 		n.Restore()
 	})
@@ -37,7 +35,26 @@ func (n *Node) Get(key string) goja.Value {
 	case "name":
 		return n.m.vm.ToValue(n.origNode.Name)
 	case "children":
+		if n.children == nil {
+			n.children = newJsArray[*generator.Node](&children{n: n}, n.m.vm, func(v goja.Value) *generator.Node {
+				return convertToNode(v, n.m)
+			})
+		}
 		return n.children
+	case "attributes":
+		if n.attributes == nil {
+			n.attributes = newJsArray[string](&attributes{n: n}, n.m.vm, func(v goja.Value) string {
+				return v.String()
+			})
+		}
+		return n.children
+	case "dependsOn":
+		if n.dependsOn == nil {
+			n.dependsOn = newJsArray[string](&dependsOn{n: n}, n.m.vm, func(v goja.Value) string {
+				return v.String()
+			})
+		}
+		return n.dependsOn
 	case "restore":
 		return n.m.vm.ToValue(func(goja.FunctionCall) goja.Value {
 			n.Restore()
@@ -59,6 +76,15 @@ func (n *Node) Set(key string, val goja.Value) bool {
 			}
 		})
 		return true
+	case "attributes":
+		values, ok := val.Export().([]string)
+		if ok {
+			old := n.origNode.Attributes
+			n.origNode.Attributes = values
+			n.restore = append(n.restore, func() {
+				n.origNode.Attributes = old
+			})
+		}
 	}
 	return false
 }
@@ -101,21 +127,11 @@ func (c *children) Get(i int) *generator.Node {
 }
 
 func (c *children) Set(i int, val *generator.Node) {
-	if i < len(c.n.origNode.Children) {
-		old := c.n.origNode.Children[i]
-		c.n.origNode.Children[i] = val
-		c.n.restore = append(c.n.restore, func() { c.n.origNode.Children[i] = old })
-	} else {
-		n := len(c.n.origNode.Children)
-		// Fill with nil nodes if needed
-		for len(c.n.origNode.Children) < i {
-			c.n.origNode.Children = append(c.n.origNode.Children, nil)
-		}
-		c.n.origNode.Children = append(c.n.origNode.Children, val)
-		c.n.restore = append(c.n.restore, func() {
-			c.n.origNode.Children = c.n.origNode.Children[:n]
-		})
-	}
+	result, restore := Set(c.n.origNode.Children, i, val)
+	c.n.origNode.Children = result
+	c.n.restore = append(c.n.restore, func() {
+		c.n.origNode.Children = restore()
+	})
 }
 
 func (c *children) Splice(start int, deleteCount int, items []*generator.Node) {
@@ -126,38 +142,58 @@ func (c *children) Splice(start int, deleteCount int, items []*generator.Node) {
 	})
 }
 
-func splice[T any](array []T, start int, deleteCount int, items []T) ([]T, func() []T) {
-	if start < 0 {
-		return array, nil
-	}
+type attributes struct {
+	n *Node
+}
 
-	end := start + deleteCount
-	if end > len(array) {
-		end = len(array)
-	}
+func (a *attributes) Len() int {
+	return len(a.n.origNode.Children)
+}
 
-	var toAdd []T
-	for _, item := range items {
-		toAdd = append(toAdd, item)
-	}
+func (a *attributes) Get(i int) string {
+	return a.n.origNode.Attributes[i]
+}
 
-	removed := array[start:end]
+func (a *attributes) Set(i int, val string) {
+	result, restore := Set(a.n.origNode.Attributes, i, val)
+	a.n.origNode.Attributes = result
+	a.n.restore = append(a.n.restore, func() {
+		a.n.origNode.Attributes = restore()
+	})
+}
 
-	result := make([]T, 0, len(array)+len(toAdd)-deleteCount)
-	result = append(result, array[:start]...)
-	result = append(result, toAdd...)
-	result = append(result, array[end:]...)
+func (a *attributes) Splice(start int, deleteCount int, items []string) {
+	result, restore := splice(a.n.origNode.Attributes, start, deleteCount, items)
+	a.n.origNode.Attributes = result
+	a.n.restore = append(a.n.restore, func() {
+		a.n.origNode.Attributes = restore()
+	})
+}
 
-	restore := func() []T {
-		restore := make([]T, start)
-		copy(restore, result[:start])
+type dependsOn struct {
+	n *Node
+}
 
-		restore = append(restore, removed...)
+func (d *dependsOn) Len() int {
+	return len(d.n.origNode.DependsOn)
+}
 
-		added := len(toAdd)
-		restore = append(restore, result[start+added:]...)
-		return restore
-	}
+func (d *dependsOn) Get(i int) string {
+	return d.n.origNode.DependsOn[i]
+}
 
-	return result, restore
+func (d *dependsOn) Set(i int, val string) {
+	result, restore := Set(d.n.origNode.DependsOn, i, val)
+	d.n.origNode.DependsOn = result
+	d.n.restore = append(d.n.restore, func() {
+		d.n.origNode.DependsOn = restore()
+	})
+}
+
+func (d *dependsOn) Splice(start int, deleteCount int, items []string) {
+	result, restore := splice(d.n.origNode.DependsOn, start, deleteCount, items)
+	d.n.origNode.DependsOn = result
+	d.n.restore = append(d.n.restore, func() {
+		d.n.origNode.DependsOn = restore()
+	})
 }

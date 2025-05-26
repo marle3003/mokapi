@@ -78,7 +78,7 @@ func fakeUsername(r *Request) (interface{}, error) {
 	var err error
 
 	var first string
-	if v, ok := r.ctx.store["firstname"]; ok {
+	if v, ok := r.Context.Values["firstname"]; ok {
 		first = v.(string)
 	} else {
 		v, err = fakeFirstname(r)
@@ -89,7 +89,7 @@ func fakeUsername(r *Request) (interface{}, error) {
 	}
 
 	var last string
-	if v, ok := r.ctx.store["lastname"]; ok {
+	if v, ok := r.Context.Values["lastname"]; ok {
 		last = v.(string)
 	} else {
 		v, err = fakeLastname(r)

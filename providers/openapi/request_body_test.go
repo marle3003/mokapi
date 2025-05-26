@@ -329,7 +329,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(12), result.Value)
+				require.Equal(t, int32(12), result.Value)
 			},
 		},
 		{
@@ -350,7 +350,7 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(12), result.Value)
+				require.Equal(t, int32(12), result.Value)
 			},
 		},
 		{

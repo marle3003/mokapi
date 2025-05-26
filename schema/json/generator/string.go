@@ -32,10 +32,13 @@ func fakeString(r *Request) (interface{}, error) {
 	minLength := 0
 	maxLength := 15
 
-	if s != nil && s.MinLength != nil {
+	if s.MinLength != nil {
 		minLength = *s.MinLength
+		if s.MaxLength == nil && minLength > maxLength {
+			maxLength = minLength + maxLength
+		}
 	}
-	if s != nil && s.MaxLength != nil {
+	if s.MaxLength != nil {
 		maxLength = *s.MaxLength
 	}
 

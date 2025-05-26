@@ -23,7 +23,7 @@ func TestHandler_Faker(t *testing.T) {
 			requestUrl: "http://foo.api/api/faker/tree",
 			test: []try.ResponseCondition{
 				try.HasStatusCode(http.StatusOK),
-				try.BodyContains(`{"name":"","children":[`),
+				try.BodyContains(`{"name":"root","children":[`),
 			},
 		},
 	}

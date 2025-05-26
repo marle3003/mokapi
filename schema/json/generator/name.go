@@ -9,7 +9,7 @@ func newNameNode() *Node {
 }
 
 func fakeName(r *Request) (interface{}, error) {
-	if v, ok := r.ctx.store["name"]; ok {
+	if v, ok := r.Context.Values["name"]; ok {
 		return v, nil
 	}
 
