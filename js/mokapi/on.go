@@ -1,6 +1,8 @@
 package mokapi
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/dop251/goja"
 	"mokapi/js/util"
@@ -18,7 +20,13 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 	}
 
 	f := func(args ...interface{}) (bool, error) {
-		r, err := m.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
+		origin, err := getHashes(args...)
+		if err != nil {
+			return false, err
+		}
+
+		var r goja.Value
+		r, err = m.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
 			call, _ := goja.AssertFunction(do)
 			var params []goja.Value
 			for _, v := range args {
@@ -35,7 +43,16 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 			return false, err
 		}
 
-		return r.ToBoolean(), nil
+		if r != goja.Undefined() {
+			return r.ToBoolean(), nil
+		}
+
+		newHashes, err := getHashes(args...)
+		if err != nil {
+			return false, err
+		}
+
+		return haveChanges(origin, newHashes), nil
 	}
 
 	m.host.On(event, f, args.tags)
@@ -68,4 +85,26 @@ func getOnArgs(vm *goja.Runtime, args goja.Value) (onArgs, error) {
 		return result, nil
 	}
 	return onArgs{}, nil
+}
+
+func getHashes(args ...any) ([][]byte, error) {
+	var result [][]byte
+	for _, arg := range args {
+		b, err := json.Marshal(arg)
+		if err != nil {
+			return nil, fmt.Errorf("unable to marshal arg")
+		}
+		result = append(result, b)
+	}
+	return result, nil
+}
+
+func haveChanges(origin [][]byte, new [][]byte) bool {
+	for i, o := range origin {
+		n := new[i]
+		if !bytes.Equal(o, n) {
+			return true
+		}
+	}
+	return false
 }

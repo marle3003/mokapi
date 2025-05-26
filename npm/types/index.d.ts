@@ -108,6 +108,10 @@ export interface EventHandler {
     smtp: SmtpEventHandler;
 }
 
+export type ChangeResult = boolean | void;
+
+export type EventHandlerResult = ChangeResult | Promise<ChangeResult>;
+
 /**
  * HttpEventHandler is a function that is executed when an HTTP event is triggered.
  * https://mokapi.io/docs/javascript-api/mokapi/eventhandler/httpeventhandler
@@ -122,7 +126,7 @@ export interface EventHandler {
  *   })
  * }
  */
-export type HttpEventHandler = (request: HttpRequest, response: HttpResponse) => boolean | Promise<boolean>;
+export type HttpEventHandler = (request: HttpRequest, response: HttpResponse) => EventHandlerResult;
 
 /**
  * HttpRequest is an object used by HttpEventHandler that contains request-specific
@@ -136,7 +140,7 @@ export interface HttpRequest {
     /** Represents a parsed URL. */
     readonly url: Url;
 
-    /** Body contains request body specified by OpenAPI request body. */
+    /** Body contains the request body specified by OpenAPI request body. */
     readonly body: any;
 
     /** Object contains path parameters specified by OpenAPI path parameters. */
@@ -204,7 +208,7 @@ export interface Url {
  *   })
  * }
  */
-export type KafkaEventHandler = (message: KafkaEventMessage) => boolean | Promise<boolean>;
+export type KafkaEventHandler = (message: KafkaEventMessage) => EventHandlerResult;
 
 /**
  * KafkaEventMessage is an object used by KafkaEventHandler that contains Kafka-specific message data.
@@ -243,7 +247,7 @@ export interface KafkaEventMessage {
  *   })
  * }
  */
-export type LdapEventHandler = (request: LdapSearchRequest, response: LdapSearchResponse) => boolean | Promise<boolean>;
+export type LdapEventHandler = (request: LdapSearchRequest, response: LdapSearchResponse) => EventHandlerResult;
 
 /**
  * LdapSearchRequest is an object used by LdapEventHandler that contains request-specific data.
@@ -343,7 +347,7 @@ export enum LdapResultStatus {
     SizeLimitExceeded = 4,
 }
 
-export type SmtpEventHandler = (record: SmtpEventMessage) => boolean | Promise<boolean>;
+export type SmtpEventHandler = (record: SmtpEventMessage) => EventHandlerResult;
 
 export interface SmtpEventMessage {
     server: string;
