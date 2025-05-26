@@ -21,7 +21,7 @@ GET http://localhost/api/v3/pet/4
 HTTP/1.1 200 OK
 Content-Type: application/json
 {
-    "id": 10,
+    "id": 4,
     "name": "Larry",
     "category": {
         "id": 1,
