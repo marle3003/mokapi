@@ -176,7 +176,6 @@ func EnableInternal(vm *goja.Runtime, host engine.Host, loop *eventloop.EventLoo
 	o.Set("loop", loop)
 	o.Set("file", file)
 	vm.Set("mokapi/internal", o)
-
 }
 
 func (s *Script) processObject(v goja.Value) {

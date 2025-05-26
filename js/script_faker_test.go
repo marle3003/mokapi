@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/brianvoe/gofakeit/v6"
 	r "github.com/stretchr/testify/require"
-	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/jstest"
@@ -55,7 +54,7 @@ func TestScript_Faker(t *testing.T) {
 					js.WithHost(host))
 				r.NoError(t, err)
 				_, err = s.RunDefault()
-				r.EqualError(t, err, "unexpected type for 'type': Object at mokapi/js/faker.(*Faker).Fake-fm (native)")
+				r.EqualError(t, err, "unexpected type for 'type': Object at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -82,7 +81,7 @@ func TestScript_Faker(t *testing.T) {
 					js.WithHost(host))
 				r.NoError(t, err)
 				_, err = s.RunDefault()
-				r.EqualError(t, err, "unexpected type for 'exclusiveMinimum': String at mokapi/js/faker.(*Faker).Fake-fm (native)")
+				r.EqualError(t, err, "unexpected type for 'exclusiveMinimum': String at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -109,7 +108,7 @@ func TestScript_Faker(t *testing.T) {
 					js.WithHost(host))
 				r.NoError(t, err)
 				_, err = s.RunDefault()
-				r.EqualError(t, err, "unexpected type for 'exclusiveMaximum': String at mokapi/js/faker.(*Faker).Fake-fm (native)")
+				r.EqualError(t, err, "unexpected type for 'exclusiveMaximum': String at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -138,7 +137,7 @@ func TestScript_Faker(t *testing.T) {
 					js.WithHost(host))
 				r.NoError(t, err)
 				err = s.Run()
-				r.EqualError(t, err, "expect object parameter but got: String at mokapi/js/faker.(*Faker).Fake-fm (native)")
+				r.EqualError(t, err, "expect object parameter but got: String at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -161,15 +160,15 @@ func TestScript_Faker(t *testing.T) {
 		{
 			name: "find node",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.FindFakerNodeFunc = func(name string) *common.FakerTree {
-					return common.NewFakerTree(generator.FindByName(name))
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					return generator.FindByName(name)
 				}
 
 				s, err := jstest.New(jstest.WithSource(
 					`import { fake, findByName } from 'mokapi/faker'
 						 export default function() {
 						 	let root = findByName('')
-							root.append({
+							root.children.push({
 								name: 'foo',
 								fake: (r) => {
 									return 'bar'

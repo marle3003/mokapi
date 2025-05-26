@@ -40,7 +40,8 @@ type Host interface {
 
 	Name() string
 
-	FindFakerNode(name string) *FakerTree
+	FindFakerNode(name string) *generator.Node
+	AddCleanupFunc(f func())
 
 	Lock()
 	Unlock()

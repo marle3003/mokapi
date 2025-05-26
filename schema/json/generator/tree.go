@@ -49,6 +49,10 @@ func (n *Node) Append(child *Node) {
 	n.Children = append(n.Children, child)
 }
 
+func (n *Node) Prepend(child *Node) {
+	n.Children = append([]*Node{child}, n.Children...)
+}
+
 func (n *Node) RemoveAt(index int) error {
 	if index < 0 {
 		return fmt.Errorf("index must be positive: %v", index)

@@ -14,85 +14,56 @@ export function fake(schema: Schema | JSONSchema): any;
 
 /**
  * Gets the tree node with the given name
+ *
  * @param name name - tree node's name
+ * @returns The matching Node from the faker tree.
+ *
  * @example
  * export default function() {
  *   const root = findByName(RootName)
- *   root.insert(0, { name: 'foo', test: () => { return true }, fake: () => { return 'foobar' } })
+ *   root.children.unshift({
+ *      name: 'foo',
+ *      fake: () => {
+ *          return 'foobar'
+ *      }
+ *   })
  *   console.log(fake({type: 'string'}))
+ *   // Expected output: foobar
  * }
  */
-export function findByName(name: string): Tree;
+export function findByName(name: string): Node;
 
 /**
- * The name of the root faker tree
+ * The name of the root node in the faker tree.
  */
-export const RootName = "Faker";
+export const RootName = "root";
 
 /**
- * The Tree object represents a node in the faker tree
+ * Represents a node in the faker tree.
+ * Nodes can have children and can generate fake values based on a request.
  */
-export interface Tree {
+export interface Node {
     /**
-     * Gets the name of the tree node
+     * The name of the node.
      */
     name: string;
 
     /**
-     * Inserts a Tree objects after the last child of this tree.
-     * @param node node - A Tree node to insert after the last child.
+     * The child nodes of this node.
      */
-    append: (node: Tree | CustomTree) => void;
+    children: Node[];
 
     /**
-     * Removes a Tree node at the specific index position
-     * @param index index - The zero-based index position to remove.
-     */
-    removeAt: (index: number) => void;
-
-    /**
-     * Removes a Tree node with the given name
-     * @param name name - The name of a node to remove
-     */
-    remove: (name: string) => void;
-}
-
-/**
- * The CustomTree object represents a custom node in the faker tree
- */
-export interface CustomTree {
-    /**
-     * Gets the name of the custom tree node
-     */
-    name: string;
-
-    /**
-     * Tests whether the tree node supports the request.
-     * @param request request - Request for a new fake value
+     * Generates a fake value based on the given request.
+     *
+     * @param r r - The request describing the value to generate.
+     * @returns A generated fake value.
+     *
      * @example
      * export default function() {
      *   const frequencyItems = ['never', 'daily', 'weekly', 'monthly', 'yearly']
      *   const node = findByName('Strings')
-     *   node.append({
-     *     name: 'Frequency',
-     *     test: (r) => { return r.lastName() === 'frequency' },
-     *     fake: (r) => {
-     *       return frequencyItems[Math.floor(Math.random()*frequencyItems.length)]
-     *     }
-     *   })
-     *   return fake({ type: 'string' })
-     * }
-     */
-    test: (r: Request) => boolean;
-
-    /**
-     * Gets a new fake value
-     * @param request request - Request for a new fake value
-     * @example
-     * export default function() {
-     *   const frequencyItems = ['never', 'daily', 'weekly', 'monthly', 'yearly']
-     *   const node = findByName('Strings')
-     *   node.append({
+     *   node.children.push({
      *     name: 'Frequency',
      *     test: (r) => { return r.lastName() === 'frequency' },
      *     fake: (r) => {
@@ -105,16 +76,18 @@ export interface CustomTree {
     fake: (r: Request) => any;
 }
 
+/**
+ * Represents the input to the fake function on a Node.
+ */
 export interface Request {
-    path: PathElement[];
+    /**
+     * The path to the value to generate
+     */
+    path: string[];
 
-    last: () => PathElement;
-    lastName: () => string;
-    lastSchema: () => JSONSchema;
-}
-
-export interface PathElement {
-    name: string;
+    /**
+     * The JSON Schema describing the value to generate.
+     */
     schema: JSONSchema;
 }
 
