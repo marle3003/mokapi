@@ -54,7 +54,7 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 
 		for _, key := range sorted {
 			if resetStore {
-				req.ctx.Snapshot()
+				req.Context.Snapshot()
 			}
 			f := fakes.Lookup(key)
 			m[key], err = f.fake()
@@ -62,7 +62,7 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 				return nil, err
 			}
 			if resetStore {
-				req.ctx.Restore()
+				req.Context.Restore()
 			}
 		}
 
@@ -133,7 +133,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 			}
 		}
 
-		if !slices.Contains(s.Required, it.Key()) && !req.ctx.has(it.Key()) {
+		if !slices.Contains(s.Required, it.Key()) && !req.Context.Has(it.Key()) {
 			fakes.Set(it.Key(), newFaker(func() (any, error) {
 				n := gofakeit.Float32Range(0, 1)
 				if n > 0.7 {
@@ -252,33 +252,6 @@ func scoreDomain(attribute []string, n *Node) float64 {
 		}
 	}
 	return score
-}
-
-func fakeObject(r *Request) (interface{}, error) {
-	s := r.Schema
-	if s.Properties == nil {
-		s.Properties = &schema.Schemas{LinkedHashMap: sortedmap.LinkedHashMap[string, *schema.Schema]{}}
-		length := numProperties(0, 10, s)
-
-		if length == 0 {
-			return map[string]interface{}{}, nil
-		}
-
-		for i := 0; i < length; i++ {
-			name := fakeDictionaryKey()
-			s.Properties.Set(name, nil)
-		}
-	}
-
-	m := map[string]any{}
-	for it := s.Properties.Iter(); it.Next(); {
-		v, err := New(r.With([]string{it.Key()}, it.Value(), nil))
-		if err != nil {
-			return nil, err
-		}
-		m[it.Key()] = v
-	}
-	return m, nil
 }
 
 func topologicalSort(fakes *sortedmap.LinkedHashMap[string, *faker]) ([]string, error) {

@@ -10,59 +10,52 @@ import (
 	"reflect"
 )
 
-type Faker struct {
-	rt   *goja.Runtime
+type Module struct {
+	vm   *goja.Runtime
 	host common.Host
 }
 
 func Require(rt *goja.Runtime, module *goja.Object) {
 	o := rt.Get("mokapi/internal").(*goja.Object)
 	host := o.Get("host").Export().(common.Host)
-	f := &Faker{
-		rt:   rt,
+	f := &Module{
+		vm:   rt,
 		host: host,
 	}
 	obj := module.Get("exports").(*goja.Object)
 	obj.Set("fake", f.Fake)
 	obj.Set("findByName", f.FindByName)
+	obj.Set("ROOT_NAME", generator.RootName)
 }
 
-func (m *Faker) Fake(v goja.Value) interface{} {
+func (m *Module) Fake(v goja.Value) interface{} {
 	if v == nil {
 		return nil
 	}
 
 	t := v.ExportType()
 	if t.Kind() != reflect.Map {
-		panic(m.rt.ToValue(fmt.Errorf("expect object parameter but got: %v", util.JsType(v.Export()))))
+		panic(m.vm.ToValue(fmt.Errorf("expect object parameter but got: %v", util.JsType(v.Export()))))
 	}
 
 	r := &generator.Request{}
-	if isOpenApiSchema(v.ToObject(m.rt)) {
-		s, err := ToOpenAPISchema(v, m.rt)
+	if isOpenApiSchema(v.ToObject(m.vm)) {
+		s, err := ToOpenAPISchema(v, m.vm)
 		if err != nil {
-			panic(m.rt.ToValue(err.Error()))
+			panic(m.vm.ToValue(err.Error()))
 		}
 		r.Schema = schema.ConvertToJsonSchema(s)
 	} else {
-		s, err := ToJsonSchema(v, m.rt)
+		s, err := ToJsonSchema(v, m.vm)
 		if err != nil {
-			panic(m.rt.ToValue(err.Error()))
+			panic(m.vm.ToValue(err.Error()))
 		}
 		r.Schema = s
 	}
 
 	i, err := generator.New(r)
 	if err != nil {
-		panic(m.rt.ToValue(err.Error()))
+		panic(m.vm.ToValue(err.Error()))
 	}
 	return i
-}
-
-func (m *Faker) FindByName(name string) goja.Value {
-	ft := m.host.FindFakerNode(name)
-	if ft == nil {
-		return nil
-	}
-	return convertToNode(ft, m)
 }

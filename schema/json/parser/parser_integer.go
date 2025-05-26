@@ -7,7 +7,8 @@ import (
 	"strconv"
 )
 
-func (p *Parser) ParseInteger(i interface{}, s *schema.Schema) (n int64, err error) {
+func (p *Parser) ParseInteger(i interface{}, s *schema.Schema) (interface{}, error) {
+	var n int64
 	switch v := i.(type) {
 	case int:
 		n = int64(v)
@@ -22,6 +23,7 @@ func (p *Parser) ParseInteger(i interface{}, s *schema.Schema) (n int64, err err
 		}
 		n = int64(v)
 	case int32:
+		i = v
 		n = int64(v)
 	case string:
 		if !p.ConvertStringToNumber {
@@ -41,6 +43,7 @@ func (p *Parser) ParseInteger(i interface{}, s *schema.Schema) (n int64, err err
 			}
 			n = int64(n32)
 		default:
+			var err error
 			n, err = strconv.ParseInt(v, 10, 64)
 			if err != nil {
 				return 0, &ErrorDetail{
@@ -85,11 +88,17 @@ func (p *Parser) ParseInteger(i interface{}, s *schema.Schema) (n int64, err err
 		return 0, err
 	}
 
-	if len(s.Enum) > 0 {
-		return n, checkValueIsInEnum(n, s.Enum, &schema.Schema{Type: schema.Types{"integer"}})
+	if s.Format == "int32" && !p.SkipValidationFormatKeyword {
+		i = int32(n)
+	} else {
+		i = n
 	}
 
-	return n, nil
+	if len(s.Enum) > 0 {
+		return i, checkValueIsInEnum(n, s.Enum, &schema.Schema{Type: schema.Types{"integer"}})
+	}
+
+	return i, nil
 }
 
 func validateIntegerMinimum(n int64, s *schema.Schema) error {

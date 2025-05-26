@@ -1,6 +1,9 @@
 package generator
 
-import "github.com/pkg/errors"
+import (
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+)
 
 var (
 	nullFaker = &faker{fake: func() (any, error) {
@@ -14,13 +17,11 @@ type faker struct {
 }
 
 func newFakerWithFallback(n *Node, r *Request) *faker {
-	if n == nil || n.Fake == nil {
-		return &faker{fake: func() (any, error) {
-			return fakeBySchema(r)
-		}}
-	}
 	return &faker{
 		fake: func() (any, error) {
+			if n.Fake == nil {
+				log.Debugf("fake function for '%s' not defined", n.Name)
+			}
 			v, err := n.Fake(r)
 			if err != nil {
 				if errors.Is(err, NotSupported) {

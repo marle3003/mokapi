@@ -10,6 +10,8 @@ import (
 var NoMatchFound = errors.New("no match found")
 var NotSupported = errors.New("not supported")
 
+const RootName = "root"
+
 type fakeFunc func() (any, error)
 
 type Node struct {
@@ -27,7 +29,7 @@ func NewNode(name string) *Node {
 }
 
 func FindByName(name string) *Node {
-	if name == "" || name == "root" {
+	if name == "root" {
 		return g.root
 	}
 	return g.root.findByName(name)
@@ -47,6 +49,10 @@ func (n *Node) findByName(name string) *Node {
 
 func (n *Node) Append(child *Node) {
 	n.Children = append(n.Children, child)
+}
+
+func (n *Node) Prepend(child *Node) {
+	n.Children = append([]*Node{child}, n.Children...)
 }
 
 func (n *Node) RemoveAt(index int) error {
@@ -74,6 +80,10 @@ func (n *Node) Remove(name string) error {
 	return n.RemoveAt(index)
 }
 
+func (n *Node) isRootOrDefault() bool {
+	return n.Name == "root" || n.Name == "fakeBySchema"
+}
+
 func isPlural(word string) bool {
 	return word == inflection.Plural(word) && word != inflection.Singular(word)
 }
@@ -87,7 +97,7 @@ func validate(v any, r *Request) (any, error) {
 }
 
 func buildTree() *Node {
-	r := NewNode("")
+	r := NewNode("root")
 	r.Children = []*Node{
 		newNameNode(),
 		newIdNode(),
@@ -112,6 +122,7 @@ func buildTree() *Node {
 	r.Children = append(r.Children, products()...)
 	r.Children = append(r.Children, files()...)
 	r.Children = append(r.Children, companyNodes()...)
+	r.Children = append(r.Children, fakeBySchemaNode())
 
 	return r
 }

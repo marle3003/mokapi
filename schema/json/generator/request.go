@@ -5,19 +5,19 @@ import (
 )
 
 type Request struct {
-	Path   []string       `json:"path"`
-	Schema *schema.Schema `json:"schema"`
+	Path    []string       `json:"path"`
+	Schema  *schema.Schema `json:"schema"`
+	Context *Context       `json:"context"`
 
 	g        *generator
-	ctx      *context
 	examples []any
 }
 
 func NewRequest(path []string, s *schema.Schema, ctx map[string]any) *Request {
 	return &Request{
-		Path:   path,
-		Schema: s,
-		ctx:    &context{store: ctx},
+		Path:    path,
+		Schema:  s,
+		Context: &Context{Values: ctx},
 	}
 }
 
@@ -49,38 +49,38 @@ func (r *Request) With(path []string, s *schema.Schema, example []any) *Request 
 		Path:     path,
 		Schema:   s,
 		g:        r.g,
-		ctx:      r.ctx,
+		Context:  r.Context,
 		examples: example,
 	}
 }
 
-type context struct {
-	store
-	snapshots []store
+type Context struct {
+	Values    Values `json:"values"`
+	snapshots []Values
 }
 
-type store map[string]any
+type Values map[string]any
 
-func newContext() *context {
-	return &context{store: make(store)}
+func newContext() *Context {
+	return &Context{Values: make(Values)}
 }
 
-func (c *context) Snapshot() {
-	c.snapshots = append(c.snapshots, c.store.Snapshot())
+func (c *Context) Snapshot() {
+	c.snapshots = append(c.snapshots, c.Values.Snapshot())
 }
 
-func (c *context) Restore() {
+func (c *Context) Restore() {
 	snapshot := c.snapshots[len(c.snapshots)-1]
 	c.snapshots = c.snapshots[:len(c.snapshots)-1]
-	c.store = snapshot
+	c.Values = snapshot
 }
 
-func (c *context) has(key string) bool {
-	_, ok := c.store[key]
+func (c *Context) Has(key string) bool {
+	_, ok := c.Values[key]
 	return ok
 }
 
-func (s *store) Snapshot() store {
+func (s *Values) Snapshot() Values {
 	snapshot := map[string]any{}
 	for k, v := range *s {
 		if v != nil {

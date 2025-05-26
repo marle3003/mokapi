@@ -6,7 +6,6 @@ import (
 	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
-	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/eventloop"
@@ -17,6 +16,12 @@ import (
 )
 
 func TestModule(t *testing.T) {
+	cleanup := func(host *enginetest.Host) {
+		for index := len(host.CleanupFuncs) - 1; index >= 0; index-- {
+			host.CleanupFuncs[index]()
+		}
+	}
+
 	testcases := []struct {
 		name string
 		test func(t *testing.T, vm *goja.Runtime, host *enginetest.Host)
@@ -28,7 +33,7 @@ func TestModule(t *testing.T) {
 					const m = require('faker')
 					m.fake('foo')
 				`)
-				r.EqualError(t, err, "expect object parameter but got: String at mokapi/js/faker.(*Faker).Fake-fm (native)")
+				r.EqualError(t, err, "expect object parameter but got: String at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -56,8 +61,8 @@ func TestModule(t *testing.T) {
 		{
 			name: "FakerTree: findByName with existing name",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				host.FindFakerNodeFunc = func(name string) *common.FakerTree {
-					return common.NewFakerTree(generator.FindByName(name))
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					return generator.FindByName(name)
 				}
 
 				vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
@@ -67,7 +72,7 @@ func TestModule(t *testing.T) {
 					if (!n) {
 						throw new Error('not found')
 					}
-					if (n.name() !== 'product') {
+					if (n.name !== 'product') {
 						throw new Error('name does not match: '+n.name())
 					}
 				`)
@@ -75,27 +80,84 @@ func TestModule(t *testing.T) {
 			},
 		},
 		{
-			name: "FakerTree: append custom faker",
+			name: "FakerTree: add string node",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				host.FindFakerNodeFunc = func(name string) *common.FakerTree {
-					return common.NewFakerTree(generator.FindByName(name))
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					return generator.FindByName(name)
 				}
 
 				vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 				v, err := vm.RunString(`
 					const m = require('faker')
-					const n = m.findByName('')
+					const root = m.findByName('root')
+				  	root.children.unshift({
+						name: 'foo',
+						attributes: ['*'],
+						fake: () => {
+							return 'foobar'
+						}
+				  	})
+				    m.fake({type: 'string'})
+				`)
+				r.NoError(t, err)
+				r.Equal(t, "foobar", v.Export())
+			},
+		},
+		{
+			name: "FakerTree: dependsOn",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					return generator.FindByName(name)
+				}
+
+				vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
+				v, err := vm.RunString(`
+					const m = require('faker')
+					const root = m.findByName('root')
+				  	root.children.unshift(
+						{
+							name: 'foo',
+							fake: (r) => {
+								const value = 'hello';
+								r.context.values['foo'] = value;
+								return value;
+							}
+						},
+						{
+							name: 'bar',
+							dependsOn: 'foo',
+							fake: (r) => {
+								return r.context.values['foo'] + ' Carol';
+							}
+						},
+					)
+				    m.fake({ properties: { foo: {}, bar: {} } })
+				`)
+				r.NoError(t, err)
+				r.Equal(t, map[string]interface{}{"bar": "hello Carol", "foo": "hello"}, v.Export())
+			},
+		},
+		{
+			name: "FakerTree: append custom faker",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					return generator.FindByName(name)
+				}
+
+				vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
+				v, err := vm.RunString(`
+					const m = require('faker')
+					const n = m.findByName('root')
 					const frequencyItems = ['never', 'daily', 'weekly', 'monthly', 'yearly']
-					n.append({
+					n.children.push({
 						name: 'frequency',
 						fake: (r) => {
 							return frequencyItems[Math.floor(Math.random()*frequencyItems.length)]
 						}
 					})
 					m.fake({
-						type: "object",
 						properties: {
-							frequency: { type: 'string' }
+							frequency: { }
 						}
 					})
 				`)
@@ -130,6 +192,7 @@ func TestModule(t *testing.T) {
 			vm := goja.New()
 			vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 			host := &enginetest.Host{}
+			defer cleanup(host)
 			loop := eventloop.New(vm)
 			defer loop.Stop()
 			loop.StartLoop()

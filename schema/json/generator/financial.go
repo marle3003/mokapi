@@ -61,12 +61,12 @@ func fakeCurrency(r *Request) (any, error) {
 
 func fakeCurrencyCode(r *Request) (any, error) {
 	v := gofakeit.CurrencyShort()
-	r.ctx.store["currency"] = v
+	r.Context.Values["currency"] = v
 	return v, nil
 }
 
 func fakeCurrencyName(r *Request) (any, error) {
-	if code, ok := r.ctx.store["currency"]; ok {
+	if code, ok := r.Context.Values["currency"]; ok {
 		ensureCurrencies()
 		return currencies[code.(string)].name, nil
 	}

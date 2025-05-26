@@ -126,7 +126,7 @@ func TestParse_Number(t *testing.T) {
 			d:    "1234.5",
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 1234.5, v)
+				require.Equal(t, float32(1234.5), v)
 			},
 
 			convertStringToNumber: true,

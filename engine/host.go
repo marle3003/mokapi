@@ -31,10 +31,10 @@ type scriptHost struct {
 	events map[string][]*eventHandler
 	file   *dynamic.Config
 
-	eventLogger func(level, message string)
+	eventLogger  func(level, message string)
+	cleanupFuncs []func()
 
-	fakerNodes []*common.FakerTree
-	m          sync.Mutex
+	m sync.Mutex
 }
 
 func newScriptHost(file *dynamic.Config, engine *Engine) *scriptHost {
@@ -223,12 +223,13 @@ func (sh *scriptHost) close() {
 		sh.script.Close()
 	}
 
-	for _, n := range sh.fakerNodes {
-		err := n.Restore()
-		if err != nil {
-			log.Errorf("failed to close script properly: %v", err)
-		}
+	for index := len(sh.cleanupFuncs) - 1; index >= 0; index-- {
+		sh.cleanupFuncs[index]()
 	}
+}
+
+func (sh *scriptHost) AddCleanupFunc(f func()) {
+	sh.cleanupFuncs = append(sh.cleanupFuncs, f)
 }
 
 func (sh *scriptHost) Info(args ...interface{}) {
@@ -310,17 +311,11 @@ func (sh *scriptHost) HttpClient(opts common.HttpClientOptions) common.HttpClien
 }
 
 func (sh *scriptHost) CanClose() bool {
-	return len(sh.events) == 0 && len(sh.jobs) == 0 && len(sh.fakerNodes) == 0 && sh.script.CanClose()
+	return len(sh.events) == 0 && len(sh.jobs) == 0 && sh.script.CanClose() && len(sh.cleanupFuncs) == 0
 }
 
-func (sh *scriptHost) FindFakerNode(name string) *common.FakerTree {
-	t := generator.FindByName(name)
-	if t == nil {
-		return nil
-	}
-	ft := common.NewFakerTree(t)
-	sh.fakerNodes = append(sh.fakerNodes, ft)
-	return ft
+func (sh *scriptHost) FindFakerNode(name string) *generator.Node {
+	return generator.FindByName(name)
 }
 
 func (sh *scriptHost) Lock() {

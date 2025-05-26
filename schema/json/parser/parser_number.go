@@ -6,7 +6,8 @@ import (
 	"strconv"
 )
 
-func (p *Parser) ParseNumber(i interface{}, s *schema.Schema) (f float64, err error) {
+func (p *Parser) ParseNumber(i interface{}, s *schema.Schema) (v interface{}, err error) {
+	var f float64
 	switch v := i.(type) {
 	case float32:
 		f = float64(v)
@@ -68,11 +69,17 @@ func (p *Parser) ParseNumber(i interface{}, s *schema.Schema) (f float64, err er
 		return 0, err
 	}
 
-	if len(s.Enum) > 0 {
-		return f, checkValueIsInEnum(f, s.Enum, &schema.Schema{Type: schema.Types{"number"}})
+	if s.Format == "float" && !p.SkipValidationFormatKeyword {
+		i = float32(f)
+	} else {
+		i = f
 	}
 
-	return f, nil
+	if len(s.Enum) > 0 {
+		return i, checkValueIsInEnum(f, s.Enum, &schema.Schema{Type: schema.Types{"number"}})
+	}
+
+	return i, nil
 }
 
 func validateNumberMinimum(n float64, s *schema.Schema) error {

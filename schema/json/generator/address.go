@@ -90,7 +90,7 @@ func addresses() []*Node {
 
 func fakeStreet(r *Request) (any, error) {
 	v := gofakeit.Street()
-	r.ctx.store["street"] = v
+	r.Context.Values["street"] = v
 	return v, nil
 }
 
@@ -104,7 +104,7 @@ func fakeCity(r *Request) (any, error) {
 	} else {
 		return nil, NotSupported
 	}
-	r.ctx.store["city"] = v
+	r.Context.Values["city"] = v
 	return v, nil
 }
 

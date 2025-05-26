@@ -4,12 +4,15 @@ import (
 	"fmt"
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
+	"mokapi/schema/json/generator"
 	"net/http"
 	"net/url"
 	"sync"
 )
 
 type Host struct {
+	CleanupFuncs []func()
+
 	OpenFileFunc       func(file, hint string) (string, string, error)
 	OpenFunc           func(file, hint string) (*dynamic.Config, error)
 	InfoFunc           func(args ...interface{})
@@ -22,7 +25,7 @@ type Host struct {
 	EveryFunc          func(every string, do func(), opt common.JobOptions)
 	CronFunc           func(every string, do func(), opt common.JobOptions)
 	OnFunc             func(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
-	FindFakerNodeFunc  func(name string) *common.FakerTree
+	FindFakerNodeFunc  func(name string) *generator.Node
 	m                  sync.Mutex
 }
 
@@ -108,7 +111,7 @@ func (h *Host) Name() string {
 	return "test host"
 }
 
-func (h *Host) FindFakerNode(name string) *common.FakerTree {
+func (h *Host) FindFakerNode(name string) *generator.Node {
 	if h.FindFakerNodeFunc != nil {
 		return h.FindFakerNodeFunc(name)
 	}
@@ -144,6 +147,10 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 		return c.ProduceFunc(args)
 	}
 	return nil, nil
+}
+
+func (h *Host) AddCleanupFunc(f func()) {
+	h.CleanupFuncs = append(h.CleanupFuncs, f)
 }
 
 func mustParse(s string) *url.URL {

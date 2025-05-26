@@ -33,6 +33,18 @@ func (ft *FakerTree) Append(node FakerNode) {
 	})
 }
 
+func (ft *FakerTree) Prepend(node FakerNode) {
+	t := &generator.Node{
+		Name:   node.Name(),
+		Fake:   node.Fake,
+		Custom: true,
+	}
+	ft.t.Prepend(t)
+	ft.restore = append(ft.restore, func() error {
+		return ft.t.Remove(t.Name)
+	})
+}
+
 func (ft *FakerTree) RemoveAt(index int) error {
 	return ft.t.RemoveAt(index)
 }

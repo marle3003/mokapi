@@ -180,7 +180,7 @@ func TestGeneratorString(t *testing.T) {
 			schema: schematest.New("string", schematest.WithMinLength(25)),
 			test: func(v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "XidZuoWq vY5elXhlD4ezlYe", v)
+				require.Equal(t, "XidZuoWq vY5elXhlD4ezlYehCIA0OSwlV", v)
 			},
 		},
 		{
@@ -582,7 +582,7 @@ func TestGeneratorObject(t *testing.T) {
 	}{
 		{
 			name: "simple",
-			exp:  map[string]interface{}{"id": int64(98266)},
+			exp:  map[string]interface{}{"id": int32(98266)},
 			schema: schematest.New("object",
 				schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
 				schematest.WithRequired("id"),
@@ -590,7 +590,7 @@ func TestGeneratorObject(t *testing.T) {
 		},
 		{
 			name: "more fields",
-			exp:  map[string]interface{}{"id": int64(98266), "date": "2038-12-28"},
+			exp:  map[string]interface{}{"id": int32(98266), "date": "2038-12-28"},
 			schema: schematest.New("object",
 				schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
 				schematest.WithProperty("date", schematest.New("string", schematest.WithFormat("date"))),
@@ -599,7 +599,7 @@ func TestGeneratorObject(t *testing.T) {
 		},
 		{
 			name: "nested",
-			exp:  map[string]interface{}{"nested": map[string]interface{}{"id": int64(98266), "date": "2038-12-28"}},
+			exp:  map[string]interface{}{"nested": map[string]interface{}{"id": int32(98266), "date": "2038-12-28"}},
 			schema: schematest.New("object",
 				schematest.WithProperty("nested", schematest.New("object",
 					schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),

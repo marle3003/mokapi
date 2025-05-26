@@ -182,15 +182,15 @@ var personal = []*Node{
 func fakePersonName(r *Request) (any, error) {
 	var err error
 
-	first, ok := r.ctx.store["firstname"]
+	first, ok := r.Context.Values["firstname"]
 	if !ok {
 		first, err = fakeFirstname(r)
 		if err != nil {
 			return nil, err
 		}
 	}
-	middle := r.ctx.store["middlename"]
-	last, ok := r.ctx.store["lastname"]
+	middle := r.Context.Values["middlename"]
+	last, ok := r.Context.Values["lastname"]
 	if !ok {
 		last, err = fakeLastname(r)
 		if err != nil {
@@ -206,7 +206,7 @@ func fakePersonName(r *Request) (any, error) {
 }
 
 func fakeFirstname(r *Request) (any, error) {
-	if v, ok := r.ctx.store["firstname"]; ok {
+	if v, ok := r.Context.Values["firstname"]; ok {
 		return v, nil
 	}
 
@@ -223,12 +223,12 @@ func fakeFirstname(r *Request) (any, error) {
 
 	index := gofakeit.Number(0, len(pool)-1)
 	firstname := pool[index]
-	r.ctx.store["firstname"] = firstname
+	r.Context.Values["firstname"] = firstname
 	return firstname, nil
 }
 
 func fakeMiddlename(r *Request) (any, error) {
-	if v, ok := r.ctx.store["middlename"]; ok {
+	if v, ok := r.Context.Values["middlename"]; ok {
 		return v, nil
 	}
 
@@ -245,26 +245,26 @@ func fakeMiddlename(r *Request) (any, error) {
 
 	index := gofakeit.Number(0, len(pool)-1)
 	middle := pool[index]
-	r.ctx.store["middlename"] = middle
+	r.Context.Values["middlename"] = middle
 	return middle, nil
 }
 
 func fakeLastname(r *Request) (any, error) {
-	if v, ok := r.ctx.store["lastname"]; ok {
+	if v, ok := r.Context.Values["lastname"]; ok {
 		return v, nil
 	}
 
 	index := gofakeit.Number(0, len(lastNames)-1)
 	last := lastNames[index]
-	r.ctx.store["lastname"] = last
+	r.Context.Values["lastname"] = last
 	return last, nil
 }
 
 func fakeGender(r *Request) (any, error) {
-	if v, ok := r.ctx.store["gender"]; ok {
+	if v, ok := r.Context.Values["gender"]; ok {
 		return v, nil
 	}
-	if v, ok := r.ctx.store["sex"]; ok {
+	if v, ok := r.Context.Values["sex"]; ok {
 		return v, nil
 	}
 
@@ -277,8 +277,8 @@ func fakeGender(r *Request) (any, error) {
 		}
 	}
 
-	r.ctx.store["gender"] = v
-	r.ctx.store["sex"] = v
+	r.Context.Values["gender"] = v
+	r.Context.Values["sex"] = v
 
 	return v, nil
 }
@@ -368,12 +368,12 @@ func fakeContactType(r *Request) (any, error) {
 }
 
 func fakePersonTitle(r *Request) (any, error) {
-	if v, ok := r.ctx.store["title"]; ok {
+	if v, ok := r.Context.Values["title"]; ok {
 		return v, nil
 	}
 
 	var gender string
-	if v, ok := r.ctx.store["gender"]; ok {
+	if v, ok := r.Context.Values["gender"]; ok {
 		gender = v.(string)
 	}
 	if gender == "" {
@@ -390,7 +390,7 @@ func fakePersonTitle(r *Request) (any, error) {
 
 	index := gofakeit.Number(0, len(pool)-1)
 	title := pool[index]
-	r.ctx.store["title"] = title
+	r.Context.Values["title"] = title
 	return title, nil
 }
 

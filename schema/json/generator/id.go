@@ -10,7 +10,7 @@ func newIdNode() *Node {
 }
 
 func fakeId(r *Request) (interface{}, error) {
-	if v, ok := r.ctx.store["id"]; ok {
+	if v, ok := r.Context.Values["id"]; ok {
 		if _, err := validate(v, r); err == nil {
 			return v, nil
 		}

@@ -109,14 +109,14 @@ func timePairs() []*Node {
 			if err != nil {
 				return nil, err
 			}
-			r.ctx.store[k] = d
+			r.Context.Values[k] = d
 			return d, nil
 		})
 		nodes = append(nodes, n1)
 		for _, v2 := range v {
 			md := minDate
 			n2 := buildTimePairTree(tokenize([]string{v2}), []string{k}, func(r *Request) (any, error) {
-				if depValue, ok := r.ctx.store[k]; ok {
+				if depValue, ok := r.Context.Values[k]; ok {
 					t, err := time.Parse(time.RFC3339, depValue.(string))
 					if err == nil {
 						md = t
