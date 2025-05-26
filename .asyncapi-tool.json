@@ -1,6 +1,6 @@
 {
   "title": "Mokapi",
-  "description": "Your API Mocking Tool for Agile Development. Mock and simulate AsyncAPI and OpenAPI services for local testing, development, and CI pipelines — with a visual dashboard to inspect your mocks.",
+  "description": "Your API Mocking Tool for Agile Development. Mock and simulate AsyncAPI and OpenAPI services for local testing, development, and CI pipelines — with a visual dashboard to inspect your mocks and a powerful test data generator fully customizable with JavaScript.",
   "links": {
     "websiteUrl": "https://mokapi.io",
     "docsUrl": "https://mokapi.io/docs/guides/welcome",
