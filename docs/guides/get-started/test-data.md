@@ -54,29 +54,31 @@ Content-Type: application/json
 ]
 ```
 
-## Extending Test Data with JavaScript
+## Extending Data Generator with JavaScript
 
 Mokapi’s test data engine is highly extensible using JavaScript, allowing you to customize responses 
 based on specific attributes. In the example below, a random value from a predefined list is assigned to the frequency attribute.
 
 ``` box=info
-It's recommended to define possible values as an enum within the API specification. This example illustrates the flexibility Mokapi offers.
+It’s recommended to define possible values using an enum in your API specification. This allows Mokapi to randomly 
+select a value from the list and clearly document all available options for your API users. This example demonstrates 
+the flexibility Mokapi offers.
 ```
 
 ```javascript
+import { fake, findByName, ROOT_NAME } from 'mokapi/faker';
+
 export default function() {
-    if (!findByName('Frequency')) {
-        const frequencyItems = ['never', 'daily', 'weekly', 'monthly', 'yearly']
-        const node = findByName('Strings')
-        node.append({
-            name: 'Frequency',
-            test: (r) => { return r.lastName() === 'frequency' },
-            fake: (r) => {
-                return frequencyItems[Math.floor(Math.random()*frequencyItems.length)]
-            }
-        })
-    }
-}
+    const frequencyItems = ['never', 'daily', 'weekly', 'monthly', 'yearly'];
+    const root = findByName(ROOT_NAME);
+    root.children.unshift({
+        name: 'Frequency',
+        attributes: [ 'frequency' ],
+        fake: () => {
+            return frequencyItems[Math.floor(Math.random()*frequencyItems.length)]
+        }
+    });
+};
 ```
 
 ## Scripting API Behavior
