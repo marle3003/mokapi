@@ -6,9 +6,9 @@ import (
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/static"
 	"mokapi/engine/common"
-	"mokapi/kafka"
+	"mokapi/mqtt"
 	"mokapi/providers/asyncapi3"
-	"mokapi/providers/asyncapi3/kafka/store"
+	"mokapi/providers/asyncapi3/mqtt/store"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"path/filepath"
@@ -16,28 +16,28 @@ import (
 	"sync"
 )
 
-type KafkaStore struct {
-	infos   map[string]*KafkaInfo
+type MqttStore struct {
+	infos   map[string]*MqttInfo
 	monitor *monitor.Monitor
 	cfg     *static.Config
 	m       sync.RWMutex
 }
 
-type KafkaInfo struct {
+type MqttInfo struct {
 	*asyncapi3.Config
 	*store.Store
 	configs               map[string]*dynamic.Config
 	seenTopics            map[string]bool
-	updateEventAndMetrics func(k *KafkaInfo)
+	updateEventAndMetrics func(k *MqttInfo)
 }
 
-type KafkaHandler struct {
-	kafka *monitor.Kafka
-	next  kafka.Handler
+type MqttHandler struct {
+	Mqtt *monitor.Mqtt
+	next mqtt.Handler
 }
 
-func NewKafkaInfo(c *dynamic.Config, store *store.Store, updateEventAndMetrics func(info *KafkaInfo)) *KafkaInfo {
-	hc := &KafkaInfo{
+func NewMqttInfo(c *dynamic.Config, store *store.Store, updateEventAndMetrics func(info *MqttInfo)) *MqttInfo {
+	hc := &MqttInfo{
 		configs:               map[string]*dynamic.Config{},
 		Store:                 store,
 		seenTopics:            map[string]bool{},
@@ -47,14 +47,14 @@ func NewKafkaInfo(c *dynamic.Config, store *store.Store, updateEventAndMetrics f
 	return hc
 }
 
-func (s *KafkaStore) Get(name string) *KafkaInfo {
+func (s *MqttStore) Get(name string) *MqttInfo {
 	s.m.RLock()
 	defer s.m.RUnlock()
 
 	return s.infos[name]
 }
 
-func (s *KafkaStore) List() []*KafkaInfo {
+func (s *MqttStore) List() []*MqttInfo {
 	if s == nil {
 		return nil
 	}
@@ -62,21 +62,21 @@ func (s *KafkaStore) List() []*KafkaInfo {
 	s.m.RLock()
 	defer s.m.RUnlock()
 
-	var list []*KafkaInfo
+	var list []*MqttInfo
 	for _, v := range s.infos {
 		list = append(list, v)
 	}
 	return list
 }
 
-func (s *KafkaStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*KafkaInfo, error) {
+func (s *MqttStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*MqttInfo, error) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
 	if len(s.infos) == 0 {
-		s.infos = make(map[string]*KafkaInfo)
+		s.infos = make(map[string]*MqttInfo)
 	}
-	cfg, err := getKafkaConfig(c)
+	cfg, err := getMqttConfig(c)
 	if err != nil {
 		return nil, err
 	}
@@ -90,10 +90,10 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*Kafka
 	}
 
 	if !ok {
-		events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
-		events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
+		events.ResetStores(events.NewTraits().WithNamespace("Mqtt").WithName(cfg.Info.Name))
+		events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("Mqtt").WithName(cfg.Info.Name))
 
-		ki = NewKafkaInfo(c, store.New(cfg, emitter), s.updateEventStore)
+		ki = NewMqttInfo(c, store.New(cfg, emitter), s.updateEventStore)
 		s.infos[cfg.Info.Name] = ki
 	} else {
 		ki.AddConfig(c)
@@ -102,21 +102,21 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*Kafka
 	return ki, nil
 }
 
-func (s *KafkaStore) Set(name string, ki *KafkaInfo) {
+func (s *MqttStore) Set(name string, ki *MqttInfo) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
 	if len(s.infos) == 0 {
-		s.infos = make(map[string]*KafkaInfo)
+		s.infos = make(map[string]*MqttInfo)
 	}
 
 	s.infos[name] = ki
 }
 
-func (s *KafkaStore) Remove(c *dynamic.Config) {
+func (s *MqttStore) Remove(c *dynamic.Config) {
 	s.m.RLock()
 
-	cfg, err := getKafkaConfig(c)
+	cfg, err := getMqttConfig(c)
 	if err != nil {
 		return
 	}
@@ -128,20 +128,20 @@ func (s *KafkaStore) Remove(c *dynamic.Config) {
 		s.m.RUnlock()
 		s.m.Lock()
 		delete(s.infos, name)
-		events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(name))
+		events.ResetStores(events.NewTraits().WithNamespace("Mqtt").WithName(name))
 		s.m.Unlock()
 	} else {
 		s.m.RUnlock()
 	}
 }
 
-func (c *KafkaInfo) AddConfig(config *dynamic.Config) {
+func (c *MqttInfo) AddConfig(config *dynamic.Config) {
 	key := config.Info.Url.String()
 	c.configs[key] = config
 	c.update()
 }
 
-func (c *KafkaInfo) update() {
+func (c *MqttInfo) update() {
 	if len(c.configs) == 0 {
 		c.Config = nil
 		c.Store = nil
@@ -161,7 +161,7 @@ func (c *KafkaInfo) update() {
 
 	cfg := &asyncapi3.Config{}
 	for i, k := range keys {
-		p, err := getKafkaConfig(c.configs[k])
+		p, err := getMqttConfig(c.configs[k])
 		if err != nil {
 			log.Errorf("patch %v failed: %v", c.configs[k].Info.Url, err)
 		}
@@ -178,11 +178,11 @@ func (c *KafkaInfo) update() {
 	c.Store.Update(cfg)
 }
 
-func (c *KafkaInfo) Handler(kafka *monitor.Kafka) kafka.Handler {
-	return &KafkaHandler{kafka: kafka, next: c.Store}
+func (c *MqttInfo) Handler(Mqtt *monitor.Mqtt) mqtt.Handler {
+	return &MqttHandler{Mqtt: Mqtt, next: c.Store}
 }
 
-func (c *KafkaInfo) Configs() []*dynamic.Config {
+func (c *MqttInfo) Configs() []*dynamic.Config {
 	var r []*dynamic.Config
 	for _, config := range c.configs {
 		r = append(r, config)
@@ -190,14 +190,14 @@ func (c *KafkaInfo) Configs() []*dynamic.Config {
 	return r
 }
 
-func (h *KafkaHandler) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
-	ctx := monitor.NewKafkaContext(req.Context, h.kafka)
+func (h *MqttHandler) ServeMessage(rw mqtt.ResponseWriter, req *mqtt.Request) {
+	ctx := monitor.NewMqttContext(req.Context, h.Mqtt)
 
 	req.WithContext(ctx)
 	h.next.ServeMessage(rw, req)
 }
 
-func IsKafkaConfig(c *dynamic.Config) (*asyncapi3.Config, bool) {
+func IsMqttConfig(c *dynamic.Config) (*asyncapi3.Config, bool) {
 	var cfg *asyncapi3.Config
 	if old, ok := c.Data.(*asyncApi.Config); ok {
 		var err error
@@ -212,24 +212,24 @@ func IsKafkaConfig(c *dynamic.Config) (*asyncapi3.Config, bool) {
 		}
 	}
 
-	return cfg, hasKafkaBroker(cfg)
+	return cfg, hasMqttBroker(cfg)
 }
 
-func hasKafkaBroker(c *asyncapi3.Config) bool {
+func hasMqttBroker(c *asyncapi3.Config) bool {
 	for _, server := range c.Servers {
-		if server.Value.Protocol == "kafka" {
+		if server.Value.Protocol == "mqtt" {
 			return true
 		}
 	}
 	return false
 }
 
-func (c *KafkaInfo) Remove(cfg *dynamic.Config) {
+func (c *MqttInfo) Remove(cfg *dynamic.Config) {
 	delete(c.configs, cfg.Info.Url.String())
 	c.update()
 }
 
-func getKafkaConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
+func getMqttConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
 	if _, ok := c.Data.(*asyncapi3.Config); ok {
 		return c.Data.(*asyncapi3.Config), nil
 	} else {
@@ -238,7 +238,7 @@ func getKafkaConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
 	}
 }
 
-func (c *KafkaStore) updateEventStore(k *KafkaInfo) {
+func (c *MqttStore) updateEventStore(k *MqttInfo) {
 	eventStore, hasStoreConfig := c.cfg.Event.Store[k.Config.Info.Name]
 	if !hasStoreConfig {
 		eventStore = c.cfg.Event.Store["default"]
@@ -254,9 +254,9 @@ func (c *KafkaStore) updateEventStore(k *KafkaInfo) {
 		if _, ok := k.seenTopics[topicName]; ok {
 			continue
 		}
-		c.monitor.Kafka.Messages.WithLabel(k.Config.Info.Name, topicName)
-		c.monitor.Kafka.LastMessage.WithLabel(k.Config.Info.Name, topicName)
-		traits := events.NewTraits().WithNamespace("kafka").WithName(k.Config.Info.Name).With("topic", topicName)
+		c.monitor.Mqtt.Messages.WithLabel(k.Config.Info.Name, topicName)
+		c.monitor.Mqtt.LastMessage.WithLabel(k.Config.Info.Name, topicName)
+		traits := events.NewTraits().WithNamespace("mqtt").WithName(k.Config.Info.Name).With("topic", topicName)
 		events.SetStore(int(eventStore.Size), traits)
 		k.seenTopics[topicName] = true
 	}

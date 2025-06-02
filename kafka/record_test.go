@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"github.com/stretchr/testify/require"
+	"mokapi/buffer"
 	"strings"
 	"testing"
 	"time"
@@ -223,7 +224,7 @@ func TestRecordBatch_WriteTo(t *testing.T) {
 
 	for _, data := range testdata {
 		t.Run(data.name, func(t *testing.T) {
-			pb := newPageBuffer()
+			pb := buffer.NewPageBuffer()
 
 			e := NewEncoder(pb)
 			data.batch.WriteTo(e, 0, kafkaTag{})
@@ -311,7 +312,7 @@ func TestRecordBatch_WriteTo_Bytes_Compare(t *testing.T) {
 		},
 	}}
 
-	pb := newPageBuffer()
+	pb := buffer.NewPageBuffer()
 
 	e := NewEncoder(pb)
 	records.WriteTo(e, 0, kafkaTag{})

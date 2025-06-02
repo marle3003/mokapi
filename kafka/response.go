@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"mokapi/buffer"
 )
 
 type Response struct {
@@ -59,10 +60,10 @@ func (r *Response) Read(reader io.Reader) error {
 }
 
 func (r *Response) Write(w io.Writer) error {
-	buffer := newPageBuffer()
-	defer buffer.unref()
+	b := buffer.NewPageBuffer()
+	defer b.Unref()
 
-	e := NewEncoder(buffer)
+	e := NewEncoder(b)
 	apiType := ApiTypes[r.Header.ApiKey]
 
 	e.writeInt32(0) // placeholder length
@@ -78,10 +79,10 @@ func (r *Response) Write(w io.Writer) error {
 	}
 
 	var size [4]byte
-	binary.BigEndian.PutUint32(size[:], uint32(buffer.Size()-4))
-	buffer.WriteAt(size[:], 0)
+	binary.BigEndian.PutUint32(size[:], uint32(b.Size()-4))
+	b.WriteAt(size[:], 0)
 
-	_, err := buffer.WriteTo(w)
+	_, err := b.WriteTo(w)
 
 	return err
 }

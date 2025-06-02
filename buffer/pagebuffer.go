@@ -1,61 +1,45 @@
-package kafka
+package buffer
 
 import (
-	"bytes"
+	"encoding/binary"
 	"io"
+	"sync"
+	"sync/atomic"
 )
 
-/*
 var (
-
 	pageBufferPool = sync.Pool{New: func() interface{} { return new(pageBuffer) }}
-
 )
-*/
-type Bytes interface {
-	io.ReadCloser
-	io.Seeker
-	Size() int
-}
 
-/*type refCounter uint32
+type refCounter uint32
 
 type pageBuffer struct {
 	pages  []*page
 	length int
 	cursor int
 	refs   refCounter
-}*/
-
-type bytesReader struct {
-	bytes.Reader
 }
 
-func NewBytes(b []byte) Bytes {
-	r := new(bytesReader)
-	r.Reset(b)
-	return r
+type Writer interface {
 }
 
-func BytesToString(bytes Bytes) string {
-	return string(Read(bytes))
+type Buffer interface {
+	io.Writer
+	WriteTo(io.Writer) (int, error)
+	WriteAt([]byte, int)
+	WriteSizeAt(size int, offset int)
+	Scan(begin, end int, f func([]byte) bool)
+	Size() int
+	Slice(begin, end int) Fragment
+	Unref()
 }
 
-func Read(bytes Bytes) []byte {
-	if bytes == nil {
-		return nil
-	}
-	bytes.Seek(0, io.SeekStart)
-	b := make([]byte, bytes.Size())
-	bytes.Read(b)
-	return b
+type Fragment interface {
+	io.ReadCloser
+	io.Seeker
+	Size() int
 }
 
-func (b *bytesReader) Close() error { return nil }
-
-func (b *bytesReader) Size() int { return int(b.Reader.Size()) }
-
-/*
 func (r *refCounter) inc() {
 	atomic.AddUint32((*uint32)(r), 1)
 }
@@ -65,13 +49,13 @@ func (r *refCounter) dec() bool {
 	return i == 0
 }
 
-func newPageBuffer() *pageBuffer {
+func NewPageBuffer() Buffer {
 	pb := pageBufferPool.Get().(*pageBuffer)
 	pb.refs.inc()
 	return pb
 }
 
-func (pb *pageBuffer) unref() {
+func (pb *pageBuffer) Unref() {
 	if pb.refs.dec() {
 		for _, p := range pb.pages {
 			p.unref()
@@ -159,7 +143,7 @@ func (pb *pageBuffer) WriteTo(w io.Writer) (written int, err error) {
 	return
 }
 
-func (pb *pageBuffer) fragment(begin, end int) *fragment {
+func (pb *pageBuffer) Slice(begin, end int) Fragment {
 	pages := pb.slice(begin, end)
 	f := &fragment{
 		pages:  pages,
@@ -169,4 +153,4 @@ func (pb *pageBuffer) fragment(begin, end int) *fragment {
 	}
 	f.ref()
 	return f
-}*/
+}

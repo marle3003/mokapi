@@ -15,6 +15,7 @@ type Monitor struct {
 
 	Http  *Http  `json:"http"`
 	Kafka *Kafka `json:"kafka"`
+	Mqtt  *Mqtt  `json:"mqtt"`
 	Ldap  *Ldap  `json:"ldap"`
 	Smtp  *Smtp  `json:"smtp"`
 
@@ -34,6 +35,7 @@ func New() *Monitor {
 	k := NewKafka()
 	l := NewLdap()
 	s := NewSmtp()
+	m := NewMqtt()
 
 	collection := []metrics.Metric{
 		startTime,
@@ -42,24 +44,26 @@ func New() *Monitor {
 	}
 	collection = append(collection, h.Metrics()...)
 	collection = append(collection, k.Metrics()...)
+	collection = append(collection, m.Metrics()...)
 	collection = append(collection, l.Metrics()...)
 	collection = append(collection, s.Metrics()...)
 
-	m := &Monitor{
+	mon := &Monitor{
 		RefreshRateSeconds: 5,
 		StartTime:          startTime,
 		MemoryUsage:        memoryUsage,
 		JobCounter:         jobCounter,
 		Http:               h,
 		Kafka:              k,
+		Mqtt:               m,
 		Ldap:               l,
 		Smtp:               s,
 		metrics:            collection,
 	}
 
-	m.StartTime.Set(float64(time.Now().Unix()))
+	mon.StartTime.Set(float64(time.Now().Unix()))
 
-	return m
+	return mon
 }
 
 func (m *Monitor) Start(pool *safe.Pool) {

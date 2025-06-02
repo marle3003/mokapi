@@ -31,6 +31,7 @@ type kafka struct {
 type kafkaServer struct {
 	Name        string           `json:"name"`
 	Host        string           `json:"host"`
+	Protocol    string           `json:"protocol"`
 	Description string           `json:"description"`
 	Tags        []kafkaServerTag `json:"tags,omitempty"`
 }
@@ -173,6 +174,7 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 			Name:        name,
 			Host:        s.Value.Host,
 			Description: s.Value.Description,
+			Protocol:    s.Value.Protocol,
 		}
 		for _, r := range s.Value.Tags {
 			if r.Value == nil {

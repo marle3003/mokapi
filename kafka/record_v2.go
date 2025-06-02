@@ -1,6 +1,9 @@
 package kafka
 
-import "fmt"
+import (
+	"fmt"
+	"mokapi/buffer"
+)
 
 func (rb *RecordBatch) readFromV2(d *Decoder) error {
 	// partition base offset of following records
@@ -22,8 +25,8 @@ func (rb *RecordBatch) readFromV2(d *Decoder) error {
 		return fmt.Errorf("compression currently not supported")
 	}
 
-	pb := newPageBuffer()
-	defer pb.unref()
+	pb := buffer.NewPageBuffer()
+	defer pb.Unref()
 	rb.Records = make([]*Record, numRecords)
 	for i := range rb.Records {
 		r := &Record{}
@@ -41,14 +44,14 @@ func (rb *RecordBatch) readFromV2(d *Decoder) error {
 		keyLength = d.ReadVarInt()
 		if keyLength > 0 {
 			d.writeTo(pb, int(keyLength))
-			r.Key = pb.fragment(keyOffset, keyOffset+int(keyLength))
+			r.Key = pb.Slice(keyOffset, keyOffset+int(keyLength))
 		}
 
 		valueOffset := int(pb.Size())
 		valueLength := d.ReadVarInt()
 		if valueLength > 0 {
 			d.writeTo(pb, int(valueLength))
-			r.Value = pb.fragment(valueOffset, valueOffset+int(valueLength))
+			r.Value = pb.Slice(valueOffset, valueOffset+int(valueLength))
 		}
 
 		headerLen := d.ReadVarInt()

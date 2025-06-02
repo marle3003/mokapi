@@ -1,6 +1,11 @@
-package kafka
+package buffer
 
-/*const pageSize = 65536
+import (
+	"io"
+	"sync"
+)
+
+const pageSize = 65536
 
 var (
 	pagePool = sync.Pool{New: func() interface{} { return new(page) }}
@@ -136,4 +141,3 @@ func (f *fragment) Close() error {
 	f.unref()
 	return nil
 }
-*/
