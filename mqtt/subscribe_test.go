@@ -74,7 +74,6 @@ func TestSubscribe(t *testing.T) {
 				c := mqtttest.NewClient(s.Addr)
 				defer c.Close()
 				r := &mqtt.Request{
-					// The DUP, QoS, and RETAIN flags are not used in the CONNECT message.
 					Header: &mqtt.Header{
 						Type: mqtt.SUBSCRIBE,
 					},
@@ -87,7 +86,6 @@ func TestSubscribe(t *testing.T) {
 							},
 						},
 					},
-					Context: nil,
 				}
 				res, err := c.Send(r)
 				require.NoError(t, err)
