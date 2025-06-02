@@ -14,6 +14,7 @@ type App struct {
 	Http      *HttpStore
 	Ldap      *LdapStore
 	Kafka     *KafkaStore
+	Mqtt      *MqttStore
 	Mail      *MailStore
 
 	Monitor *monitor.Monitor
@@ -32,6 +33,7 @@ func New(cfg *static.Config) *App {
 		Configs:   map[string]*dynamic.Config{},
 		Http:      &HttpStore{cfg: cfg},
 		Kafka:     &KafkaStore{monitor: m, cfg: cfg},
+		Mqtt:      &MqttStore{monitor: m, cfg: cfg},
 		Ldap:      &LdapStore{cfg: cfg},
 		Mail:      &MailStore{cfg: cfg},
 		cfg:       cfg,

@@ -1,0 +1,76 @@
+asyncapi: '3.0.0'
+info:
+  title: Orders MQTT Service
+  version: 1.0.0
+  description: This AsyncAPI document defines the MQTT instance for producing and consuming orders.
+servers:
+  mokapi:
+    host: localhost:1883
+    protocol: mqtt
+    description: Mock MQTT broker provided by Mokapi.
+channels:
+  lightingMeasured:
+    address: "smartylighting/streetlights/1/0/event/{streetlightId}/lighting/measured"
+    messages:
+      lightMeasured:
+        $ref: '#/components/messages/lightMeasured'
+    description: The topic on which measured values may be produced and consumed.
+    parameters:
+      streetlightId:
+        $ref: '#/components/parameters/streetlightId'
+operations:
+  receiveLightMeasurement:
+    action: receive
+    channel:
+      $ref: '#/channels/lightingMeasured'
+    summary: >-
+      Inform about environmental lighting conditions of a particular
+      streetlight.
+    traits:
+      - $ref: '#/components/operationTraits/mqtt'
+    messages:
+      - $ref: '#/channels/lightingMeasured/messages/lightMeasured'
+components:
+  messages:
+    lightMeasured:
+      name: lightMeasured
+      title: Light measured
+      summary: >-
+        Inform about environmental lighting conditions of a particular
+        streetlight.
+      contentType: application/json
+      traits:
+        - $ref: '#/components/messageTraits/commonHeaders'
+      payload:
+        $ref: '#/components/schemas/lightMeasuredPayload'
+  schemas:
+    lightMeasuredPayload:
+      type: object
+      properties:
+        lumens:
+          type: integer
+          minimum: 0
+          description: Light intensity measured in lumens.
+        sentAt:
+          $ref: '#/components/schemas/sentAt'
+    sentAt:
+      type: string
+      format: date-time
+      description: Date and time when the message was sent.
+  parameters:
+    streetlightId:
+      description: The ID of the streetlight.
+  messageTraits:
+    commonHeaders:
+      headers:
+        type: object
+        properties:
+          my-app-header:
+            type: integer
+            minimum: 0
+            maximum: 100
+  operationTraits:
+    mqtt:
+      bindings:
+        mqtt:
+          qos: 1

@@ -60,6 +60,7 @@ func (suite *PetStoreSuite) TestApi() {
 					"description": "",
 					"host":        "127.0.0.1:19092",
 					"name":        "broker",
+					"protocol":    "kafka",
 				},
 			},
 

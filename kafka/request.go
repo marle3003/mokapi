@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"mokapi/buffer"
 	"reflect"
 )
 
@@ -20,10 +21,10 @@ func (r *Request) Write(w io.Writer) error {
 		return fmt.Errorf("message is nil")
 	}
 
-	buffer := newPageBuffer()
-	defer buffer.unref()
+	b := buffer.NewPageBuffer()
+	defer b.Unref()
 
-	e := NewEncoder(buffer)
+	e := NewEncoder(b)
 	t := ApiTypes[r.Header.ApiKey]
 
 	e.writeInt32(0) // placeholder length
@@ -40,10 +41,10 @@ func (r *Request) Write(w io.Writer) error {
 
 	// update length
 	var size [4]byte
-	binary.BigEndian.PutUint32(size[:], uint32(buffer.Size()-4))
-	buffer.WriteAt(size[:], 0)
+	binary.BigEndian.PutUint32(size[:], uint32(b.Size()-4))
+	b.WriteAt(size[:], 0)
 
-	_, err := buffer.WriteTo(w)
+	_, err := b.WriteTo(w)
 
 	if err != nil {
 		return fmt.Errorf("kafka: Write apikey %v: %v", r.Header.ApiKey, err)
