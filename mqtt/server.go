@@ -22,7 +22,7 @@ func (f HandlerFunc) ServeMessage(rw ResponseWriter, req *Request) {
 }
 
 type ResponseWriter interface {
-	Write(messageType Type, msg MessageWriter)
+	Write(messageType Type, msg Message)
 }
 
 type Server struct {

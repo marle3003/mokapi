@@ -33,13 +33,11 @@ func TestMqttBroker(t *testing.T) {
 			Type: mqtt.CONNECT,
 		},
 		Message: &mqtt.ConnectRequest{
-			Header: mqtt.ConnectHeader{
-				Protocol:     "MQTT",
-				Version:      4,
-				CleanSession: true,
-				KeepAlive:    60,
-			},
-			ClientId: "client-foo",
+			Protocol:     "MQTT",
+			Version:      4,
+			CleanSession: true,
+			KeepAlive:    60,
+			ClientId:     "client-foo",
 		},
 		Context: nil,
 	})

@@ -37,16 +37,16 @@ func TestConnect_ReadRequest(t *testing.T) {
 				require.IsType(t, &mqtt.ConnectRequest{}, r.Message)
 				msg := r.Message.(*mqtt.ConnectRequest)
 
-				require.Equal(t, "MQTT", msg.Header.Protocol)
-				require.Equal(t, byte(4), msg.Header.Version)
+				require.Equal(t, "MQTT", msg.Protocol)
+				require.Equal(t, byte(4), msg.Version)
 
-				require.False(t, msg.Header.Username)
-				require.False(t, msg.Header.Password)
-				require.False(t, msg.Header.WillRetain)
-				require.Equal(t, byte(0), msg.Header.WillQoS)
-				require.False(t, msg.Header.WillFlag)
-				require.True(t, msg.Header.CleanSession)
-				require.Equal(t, int16(60), msg.Header.KeepAlive)
+				require.False(t, msg.HasUsername)
+				require.False(t, msg.HasPassword)
+				require.False(t, msg.WillRetain)
+				require.Equal(t, byte(0), msg.WillQoS)
+				require.False(t, msg.WillFlag)
+				require.True(t, msg.CleanSession)
+				require.Equal(t, int16(60), msg.KeepAlive)
 				require.Equal(t, "mqtt", msg.ClientId)
 			},
 		},
@@ -75,16 +75,16 @@ func TestConnect_ReadRequest(t *testing.T) {
 				require.IsType(t, &mqtt.ConnectRequest{}, r.Message)
 				msg := r.Message.(*mqtt.ConnectRequest)
 
-				require.Equal(t, "MQTT", msg.Header.Protocol)
-				require.Equal(t, byte(4), msg.Header.Version)
+				require.Equal(t, "MQTT", msg.Protocol)
+				require.Equal(t, byte(4), msg.Version)
 
-				require.False(t, msg.Header.Username)
-				require.False(t, msg.Header.Password)
-				require.False(t, msg.Header.WillRetain)
-				require.Equal(t, byte(1), msg.Header.WillQoS)
-				require.True(t, msg.Header.WillFlag)
-				require.True(t, msg.Header.CleanSession)
-				require.Equal(t, int16(60), msg.Header.KeepAlive)
+				require.False(t, msg.HasUsername)
+				require.False(t, msg.HasPassword)
+				require.False(t, msg.WillRetain)
+				require.Equal(t, byte(1), msg.WillQoS)
+				require.True(t, msg.WillFlag)
+				require.True(t, msg.CleanSession)
+				require.Equal(t, int16(60), msg.KeepAlive)
 				require.Equal(t, "mqtt", msg.ClientId)
 				require.Equal(t, "foo", msg.Topic)
 				require.Equal(t, "bar", msg.Message)
@@ -128,15 +128,12 @@ func TestConnect(t *testing.T) {
 						Type: mqtt.CONNECT,
 					},
 					Message: &mqtt.ConnectRequest{
-						Header: mqtt.ConnectHeader{
-							Protocol:     "MQTT",
-							Version:      4,
-							CleanSession: true,
-							KeepAlive:    60,
-						},
-						ClientId: "client-foo",
+						Protocol:     "MQTT",
+						Version:      4,
+						CleanSession: true,
+						KeepAlive:    60,
+						ClientId:     "client-foo",
 					},
-					Context: nil,
 				}
 				res, err := c.Send(r)
 				require.NoError(t, err)

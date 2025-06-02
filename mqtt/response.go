@@ -4,21 +4,17 @@ import (
 	"mokapi/buffer"
 )
 
-type MessageWriter interface {
-	Write(e *Encoder)
-}
-
 type Response struct {
 	Header  *Header
-	Message any
+	Message Message
 }
 
 type response struct {
-	h       *Header
-	session *ClientSession
+	h   *Header
+	ctx *ClientContext
 }
 
-func (r *response) Write(messageType Type, msg MessageWriter) {
+func (r *response) Write(messageType Type, msg Message) {
 	b := buffer.NewPageBuffer()
 
 	e := NewEncoder(b)
@@ -27,7 +23,7 @@ func (r *response) Write(messageType Type, msg MessageWriter) {
 	r.h.Type = messageType
 	r.h.Size = b.Size()
 
-	r.session.sendOrQueue(&packet{
+	r.ctx.sendOrQueue(&packet{
 		header:  r.h.with(messageType, b.Size()),
 		payload: b,
 	})

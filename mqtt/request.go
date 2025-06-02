@@ -9,7 +9,7 @@ import (
 
 type Request struct {
 	Header  *Header
-	Message MessageWriter
+	Message Message
 	Context context.Context
 }
 
@@ -45,20 +45,34 @@ func (r *Request) Read(reader io.Reader) error {
 
 	switch r.Header.Type {
 	case CONNECT:
-		connect := readConnect(d)
+		connect := &ConnectRequest{}
+		connect.Read(d)
 		r.Message = connect
 		client := ClientFromContext(r.Context)
 		if client != nil {
 			client.ClientId = connect.ClientId
 		}
+	case PUBLISH:
+		publish := &PublishRequest{}
+		publish.Read(d)
+		r.Message = publish
 	case SUBSCRIBE:
-		subscribe := readSubscribe(d)
+		subscribe := &SubscribeRequest{}
+		subscribe.Read(d)
 		r.Message = subscribe
+	case UNSUBSCRIBE:
+		unsubscribe := &UnsubscribeRequest{}
+		unsubscribe.Read(d)
+		r.Message = unsubscribe
+	}
+
+	if d.err != nil {
+		return d.err
 	}
 
 	if d.leftSize > 0 {
 		return fmt.Errorf("mqtt: remaining length %d is not zero", d.leftSize)
 	}
 
-	return d.err
+	return nil
 }

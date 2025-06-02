@@ -25,8 +25,13 @@ type Header struct {
 	Type   Type
 	Size   int
 	Dup    bool
-	Qos    byte
+	QoS    byte
 	Retain bool
+}
+
+type Message interface {
+	Write(e *Encoder)
+	Read(*Decoder)
 }
 
 func readHeader(d *Decoder) *Header {
@@ -35,7 +40,7 @@ func readHeader(d *Decoder) *Header {
 	b := d.ReadByte()
 	h.Type = Type(b >> 4)
 	h.Dup = (b>>3)&0x01 > 0
-	h.Qos = (b >> 0x06) >> 1
+	h.QoS = (b >> 0x06) >> 1
 	h.Retain = b&0x01 != 0
 	h.Size = d.readRemainingLength()
 
@@ -45,7 +50,7 @@ func readHeader(d *Decoder) *Header {
 }
 
 func (h *Header) Write(w io.Writer) error {
-	b := byte(h.Type)<<4 | encodeBool(h.Dup)<<3 | h.Qos<<1 | encodeBool(h.Retain)
+	b := byte(h.Type)<<4 | encodeBool(h.Dup)<<3 | h.QoS<<1 | encodeBool(h.Retain)
 	w.Write([]byte{b})
 	return writeRemainingLength(w, h.Size)
 }
@@ -55,15 +60,18 @@ func (h *Header) with(messageType Type, size int) *Header {
 		Type:   messageType,
 		Size:   size,
 		Dup:    h.Dup,
-		Qos:    h.Qos,
+		QoS:    h.QoS,
 		Retain: h.Retain,
 	}
 }
 
-func ReadResponse(r io.Reader) *Response {
+func ReadResponse(r io.Reader) (*Response, error) {
 	d := NewDecoder(r, 5)
 	res := &Response{
 		Header: readHeader(d),
+	}
+	if d.err != nil {
+		return nil, d.err
 	}
 
 	switch res.Header.Type {
@@ -71,13 +79,21 @@ func ReadResponse(r io.Reader) *Response {
 		c := &ConnectResponse{}
 		c.Read(d)
 		res.Message = c
+	case PUBACK:
+		p := &PublishResponse{}
+		p.Read(d)
+		res.Message = p
 	case SUBACK:
-		c := &SubscribeResponse{}
-		c.Read(d)
-		res.Message = c
+		s := &SubscribeResponse{}
+		s.Read(d)
+		res.Message = s
+	case UNSUBACK:
+		u := &UnsubscribeResponse{}
+		u.Read(d)
+		res.Message = u
 	}
 
-	return res
+	return res, d.err
 }
 
 type Code struct {
@@ -86,7 +102,8 @@ type Code struct {
 }
 
 var (
-	Accepted                      = Code{"accepted", 0x0}
-	ErrUnsupportedProtocolVersion = Code{"unacceptable protocol version", 0x1}
-	ErrIdentifierRejected         = Code{"identifier rejected", 0x2}
+	Accepted                      = Code{Code: 0x00, Reason: "accepted"}
+	ErrUnsupportedProtocolVersion = Code{Code: 0x01, Reason: "unacceptable protocol version"}
+	ErrIdentifierRejected         = Code{Code: 0x02, Reason: "identifier rejected"}
+	ErrUnspecifiedError           = Code{Code: 0x80, Reason: "unspecified error"}
 )

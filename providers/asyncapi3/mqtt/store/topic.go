@@ -17,14 +17,12 @@ type Topic struct {
 
 func (t *Topic) AddMessage(msg *Message) {
 	if msg.Retain {
-		t.Retained = msg
+
 		if msg.Data == "" {
 			t.Retained = nil
 			return
+		} else {
+			t.Retained = msg
 		}
-	}
-
-	for _, client := range t.Clients {
-		client.send(msg)
 	}
 }

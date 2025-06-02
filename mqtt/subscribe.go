@@ -10,8 +10,7 @@ type SubscribeTopic struct {
 	QoS  byte
 }
 
-func readSubscribe(d *Decoder) *SubscribeRequest {
-	r := &SubscribeRequest{}
+func (r *SubscribeRequest) Read(d *Decoder) {
 	r.MessageId = d.ReadInt16()
 
 	for d.leftSize > 0 {
@@ -22,8 +21,6 @@ func readSubscribe(d *Decoder) *SubscribeRequest {
 			QoS:  qos,
 		})
 	}
-
-	return r
 }
 
 func (r *SubscribeRequest) Write(e *Encoder) {
@@ -44,7 +41,6 @@ func (r *SubscribeResponse) Write(e *Encoder) {
 	for _, qos := range r.TopicQoS {
 		e.writeByte(qos)
 	}
-
 }
 
 func (r *SubscribeResponse) Read(d *Decoder) {

@@ -38,8 +38,9 @@ func (c *Client) Send(r *mqtt.Request) (*mqtt.Response, error) {
 		return nil, err
 	}
 
-	res := mqtt.ReadResponse(c.conn)
-	return res, nil
+	c.conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
+	res, err := mqtt.ReadResponse(c.conn)
+	return res, err
 }
 
 func (c *Client) SendNoResponse(r *mqtt.Request) error {
@@ -55,8 +56,8 @@ func (c *Client) Recv() (*mqtt.Response, error) {
 		return nil, err
 	}
 
-	res := mqtt.ReadResponse(c.conn)
-	return res, nil
+	res, err := mqtt.ReadResponse(c.conn)
+	return res, err
 }
 
 func (c *Client) ensureConnection() error {

@@ -30,8 +30,7 @@ func (c *conn) serve() {
 
 	client := ClientFromContext(ctx)
 	client.Addr = c.conn.RemoteAddr().String()
-	client.Session = &ClientSession{conn: c}
-
+	client.conn = c
 	for {
 		r := &Request{Context: ctx}
 		err := r.Read(c.conn)
@@ -46,8 +45,8 @@ func (c *conn) serve() {
 		}
 
 		res := &response{
-			h:       r.Header,
-			session: client.Session,
+			h:   r.Header,
+			ctx: client,
 		}
 
 		c.server.Handler.ServeMessage(res, r)

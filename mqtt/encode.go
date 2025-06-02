@@ -31,6 +31,13 @@ func (e *Encoder) writeInt16(i int16) {
 	}
 }
 
+func (e *Encoder) Write(b []byte) {
+	_, err := e.writer.Write(b)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func (e *Encoder) writeString(s string) {
 	e.writeInt16(int16(len(s)))
 	for len(s) != 0 {

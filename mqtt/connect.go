@@ -1,86 +1,81 @@
 package mqtt
 
 type ConnectRequest struct {
-	Header   ConnectHeader
-	ClientId string
-	Topic    string
-	Message  string
-	Username string
-	Password string
-}
-
-type ConnectHeader struct {
 	Protocol     string
 	Version      byte
-	Username     bool
-	Password     bool
+	HasUsername  bool
+	HasPassword  bool
 	WillRetain   bool
 	WillQoS      byte
 	WillFlag     bool
 	CleanSession bool
 	KeepAlive    int16
+	ClientId     string
+	Topic        string
+	Message      string
+	Username     string
+	Password     string
 }
 
-func readConnect(d *Decoder) *ConnectRequest {
-	r := &ConnectRequest{}
+type ConnectHeader struct {
+}
 
-	r.Header.Protocol = d.ReadString()
-	r.Header.Version = d.ReadByte()
+func (r *ConnectRequest) Read(d *Decoder) {
+	r.Protocol = d.ReadString()
+	r.Version = d.ReadByte()
 
 	b := d.ReadByte()
-	r.Header.Username = (b>>7)&0x1 > 0
-	r.Header.Password = (b>>6)&0x1 > 0
-	r.Header.WillRetain = (b>>5)&0x1 > 0
-	r.Header.WillQoS = (b >> 3) & 0x3
-	r.Header.WillFlag = (b>>2)&0x1 > 0
-	r.Header.CleanSession = (b>>1)&0x1 > 0
-	r.Header.KeepAlive = d.ReadInt16()
+	r.HasUsername = (b>>7)&0x1 > 0
+	r.HasPassword = (b>>6)&0x1 > 0
+	r.WillRetain = (b>>5)&0x1 > 0
+	r.WillQoS = (b >> 3) & 0x3
+	r.WillFlag = (b>>2)&0x1 > 0
+	r.CleanSession = (b>>1)&0x1 > 0
+	r.KeepAlive = d.ReadInt16()
 
 	r.ClientId = d.ReadString()
 
-	if r.Header.WillFlag {
+	if r.WillFlag {
 		r.Topic = d.ReadString()
 		r.Message = d.ReadString()
 	}
 
-	if r.Header.Username {
+	if r.HasUsername {
 		r.Username = d.ReadString()
 	}
-	if r.Header.Password {
+	if r.HasPassword {
 		r.Password = d.ReadString()
 	}
-
-	return r
 }
 
 func (r *ConnectRequest) Write(e *Encoder) {
-	e.writeString(r.Header.Protocol)
-	e.writeByte(r.Header.Version)
+	e.writeString(r.Protocol)
+	e.writeByte(r.Version)
 	b := byte(0)
-	if r.Header.Username {
+	if r.HasUsername {
 		b |= 0x1 << 7
 	}
-	if r.Header.Password {
+	if r.HasPassword {
 		b |= 0x1 << 6
 	}
-	if r.Header.WillRetain {
+	if r.WillRetain {
 		b |= 0x1 << 5
 	}
-	b |= (r.Header.WillQoS & 0x03) << 1
-	if r.Header.WillFlag {
+	b |= (r.WillQoS & 0x03) << 1
+	if r.WillFlag {
 		b |= 0x1 << 2
 	}
-	if r.Header.CleanSession {
+	if r.CleanSession {
 		b |= 0x1 << 1
 	}
 	e.writeByte(b)
-	e.writeInt16(r.Header.KeepAlive)
+	e.writeInt16(r.KeepAlive)
 	e.writeString(r.ClientId)
 
-	if r.Header.Username {
+	if r.HasUsername {
 		e.writeString(r.Username)
 	}
-	if r.Header.Password {
+	if r.HasPassword {
 		e.writeString(r.Password)
 	}
 }
