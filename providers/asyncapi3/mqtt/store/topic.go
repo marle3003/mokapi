@@ -1,28 +1,19 @@
 package store
 
-import "sync"
+import (
+	"mokapi/providers/asyncapi3"
+	"sync"
+)
 
 type Message struct {
-	Data   string
-	QoS    byte
-	Retain bool
+	Data []byte
+	QoS  byte
 }
 
 type Topic struct {
 	Name     string
-	Clients  map[string]*Client // key clientId
 	Retained *Message
-	m        sync.RWMutex
-}
 
-func (t *Topic) AddMessage(msg *Message) {
-	if msg.Retain {
-
-		if msg.Data == "" {
-			t.Retained = nil
-			return
-		} else {
-			t.Retained = msg
-		}
-	}
+	cfg *asyncapi3.Channel
+	m   sync.RWMutex
 }

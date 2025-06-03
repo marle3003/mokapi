@@ -41,8 +41,12 @@ func (s *Store) Update(cfg *asyncapi3.Config) {
 }
 
 func (s *Store) ServeMessage(rw mqtt.ResponseWriter, req *mqtt.Request) {
+	ctx := mqtt.ClientFromContext(req.Context)
+
 	switch msg := req.Message.(type) {
 	case *mqtt.ConnectRequest:
 		s.connect(rw, msg)
+	case *mqtt.SubscribeRequest:
+		s.subscribe(rw, msg, ctx)
 	}
 }

@@ -87,7 +87,7 @@ func TestConnect_ReadRequest(t *testing.T) {
 				require.Equal(t, int16(60), msg.KeepAlive)
 				require.Equal(t, "mqtt", msg.ClientId)
 				require.Equal(t, "foo", msg.Topic)
-				require.Equal(t, "bar", msg.Message)
+				require.Equal(t, []byte("bar"), msg.Message)
 			},
 		},
 	}

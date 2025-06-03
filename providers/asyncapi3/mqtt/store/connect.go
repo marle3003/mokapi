@@ -34,11 +34,11 @@ func (s *Store) connect(rw mqtt.ResponseWriter, connect *mqtt.ConnectRequest) {
 
 		if t, ok := s.Topics[connect.Topic]; ok {
 			m := &Message{
-				Data:   connect.Message,
-				QoS:    connect.WillQoS,
-				Retain: connect.WillRetain,
+				Data: connect.Message,
+				QoS:  connect.WillQoS,
 			}
-			t.AddMessage(m)
+			_ = m
+			_ = t
 		} else {
 			log.Infof("mqtt broker: invalid topic %v", connect.Topic)
 			rw.Write(mqtt.CONNACK, &mqtt.ConnectResponse{

@@ -42,6 +42,18 @@ func (d *Decoder) ReadString() string {
 	return ""
 }
 
+func (d *Decoder) ReadBytes() []byte {
+	if n := d.ReadInt16(); n < 0 {
+		return nil
+	} else {
+		b := make([]byte, n)
+		if d.readFull(b) {
+			return b[0:]
+		}
+	}
+	return nil
+}
+
 func (d *Decoder) ReadInt16() int16 {
 	if d.readFull(d.buffer[:2]) {
 		i := binary.BigEndian.Uint16(d.buffer[:2])

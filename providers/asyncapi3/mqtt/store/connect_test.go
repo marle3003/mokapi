@@ -105,7 +105,7 @@ func TestConnect(t *testing.T) {
 						ClientId: "foo",
 						WillFlag: true,
 						Topic:    "foo",
-						Message:  "bar",
+						Message:  []byte("bar"),
 					},
 				})
 				res := rr.Message.(*mqtt.ConnectResponse)
@@ -123,7 +123,7 @@ func TestConnect(t *testing.T) {
 						ClientId: "foo",
 						WillFlag: true,
 						Topic:    "foo",
-						Message:  "bar",
+						Message:  []byte("bar"),
 					},
 				})
 				res := rr.Message.(*mqtt.ConnectResponse)

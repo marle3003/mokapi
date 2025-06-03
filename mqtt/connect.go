@@ -12,7 +12,7 @@ type ConnectRequest struct {
 	KeepAlive    int16
 	ClientId     string
 	Topic        string
-	Message      string
+	Message      []byte
 	Username     string
 	Password     string
 }
@@ -37,7 +37,7 @@ func (r *ConnectRequest) Read(d *Decoder) {
 
 	if r.WillFlag {
 		r.Topic = d.ReadString()
-		r.Message = d.ReadString()
+		r.Message = d.ReadBytes()
 	}
 
 	if r.HasUsername {
