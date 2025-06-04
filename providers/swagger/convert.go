@@ -56,6 +56,22 @@ func (c *converter) Convert() (*openapi.Config, error) {
 		}
 	}
 
+	for name, scheme := range c.config.SecurityDefinitions {
+		converted := convertSecurityScheme(scheme)
+		if result.Components.SecuritySchemes == nil {
+			result.Components.SecuritySchemes = map[string]openapi.SecurityScheme{}
+		}
+		result.Components.SecuritySchemes[name] = converted
+	}
+
+	for _, security := range c.config.Security {
+		req := openapi.SecurityRequirement{}
+		for k, v := range security {
+			req[k] = v
+		}
+		result.Security = append(result.Security, req)
+	}
+
 	return result, nil
 }
 
@@ -168,6 +184,14 @@ func (c *converter) convertOperation(o *Operation) (*openapi.Operation, error) {
 		}
 	}
 
+	for _, security := range o.Security {
+		req := openapi.SecurityRequirement{}
+		for k, v := range security {
+			req[k] = v
+		}
+		result.Security = append(result.Security, req)
+	}
+
 	return result, nil
 }
 
@@ -259,6 +283,42 @@ func convertParameter(p *Parameter) *parameter.Ref {
 		Deprecated:  p.Deprecated,
 		Description: p.Description,
 	}}
+}
+
+func convertSecurityScheme(scheme *SecurityScheme) openapi.SecurityScheme {
+	switch scheme.Type {
+	case "apiKey":
+		return &openapi.ApiKeySecurityScheme{
+			Type:        scheme.Type,
+			In:          scheme.In,
+			Name:        scheme.Name,
+			Description: scheme.Description,
+		}
+	case "oauth2":
+		result := &openapi.OAuth2SecurityScheme{
+			Type:        scheme.Type,
+			Description: scheme.Description,
+			Flows:       map[string]*openapi.OAuth2Flow{},
+		}
+		flow := &openapi.OAuth2Flow{
+			AuthorizationUrl: scheme.AuthorizationUrl,
+			TokenUrl:         scheme.TokenUrl,
+			Scopes:           map[string]string{},
+		}
+		for name, scope := range scheme.Scopes {
+			flow.Scopes[name] = scope
+		}
+		result.Flows[scheme.Flow] = flow
+		return result
+	case "basic":
+		return &openapi.HttpSecurityScheme{
+			Type:        "http",
+			Scheme:      scheme.Type,
+			Description: scheme.Description,
+		}
+	default:
+		panic("unsupported security scheme type")
+	}
 }
 
 func setOperation(method string, p *openapi.Path, o *openapi.Operation) {

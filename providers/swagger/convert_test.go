@@ -436,6 +436,58 @@ func TestConvert(t *testing.T) {
 				require.Equal(t, "int64", foo.Format)
 			},
 		},
+		{
+			name:   "security apiKey",
+			config: `{"swagger": "2.0", "securityDefinitions": { "api_key": { "type": "apiKey", "name": "api_key", "in": "header" } } }`,
+			test: func(t *testing.T, config *openapi.Config) {
+				require.Len(t, config.Components.SecuritySchemes, 1)
+				apiKey := config.Components.SecuritySchemes["api_key"].(*openapi.ApiKeySecurityScheme)
+				require.Equal(t, "apiKey", apiKey.Type)
+				require.Equal(t, "api_key", apiKey.Name)
+				require.Equal(t, "header", apiKey.In)
+			},
+		},
+		{
+			name:   "security oauth2",
+			config: `{"swagger": "2.0", "securityDefinitions": { "oauth": { "type": "oauth2", "description": "foo", "authorizationUrl": "https://swagger.io/api/oauth/dialog", "flow": "implicit", "scopes": { "write:pets": "modify pets in your account", "read:pets": "read your pets" } } } }`,
+			test: func(t *testing.T, config *openapi.Config) {
+				require.Len(t, config.Components.SecuritySchemes, 1)
+				oauth2 := config.Components.SecuritySchemes["oauth"].(*openapi.OAuth2SecurityScheme)
+				require.Equal(t, "oauth2", oauth2.Type)
+				require.Equal(t, "foo", oauth2.Description)
+				require.Equal(t, "https://swagger.io/api/oauth/dialog", oauth2.Flows["implicit"].AuthorizationUrl)
+				require.Equal(t, "modify pets in your account", oauth2.Flows["implicit"].Scopes["write:pets"])
+				require.Equal(t, "read your pets", oauth2.Flows["implicit"].Scopes["read:pets"])
+			},
+		},
+		{
+			name:   "security basic",
+			config: `{"swagger": "2.0", "securityDefinitions": { "foo": { "type": "basic", "description": "foo" } } }`,
+			test: func(t *testing.T, config *openapi.Config) {
+				require.Len(t, config.Components.SecuritySchemes, 1)
+				basic := config.Components.SecuritySchemes["foo"].(*openapi.HttpSecurityScheme)
+				require.Equal(t, "http", basic.Type)
+				require.Equal(t, "basic", basic.Scheme)
+				require.Equal(t, "foo", basic.Description)
+			},
+		},
+		{
+			name:   "security requirement",
+			config: `{"swagger": "2.0", "security": [ { "foo": [] } ] }`,
+			test: func(t *testing.T, config *openapi.Config) {
+				require.Len(t, config.Security, 1)
+				require.Equal(t, openapi.SecurityRequirement{"foo": nil}, config.Security[0])
+			},
+		},
+		{
+			name:   "security requirement on operation",
+			config: `{"swagger": "2.0", "paths": { "/pet": { "get": { "security": [ { "foo": [] } ] } } } }`,
+			test: func(t *testing.T, config *openapi.Config) {
+				security := config.Paths["/pet"].Value.Get.Security
+				require.Len(t, security, 1)
+				require.Equal(t, openapi.SecurityRequirement{"foo": nil}, security[0])
+			},
+		},
 	}
 
 	t.Parallel()
