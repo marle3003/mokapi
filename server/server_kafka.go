@@ -11,15 +11,19 @@ import (
 	"sync"
 )
 
-type clusters map[string]*cluster
+type Broker interface {
+	Addr() string
+	Start()
+	Stop()
+}
 
-type cluster struct {
-	brokers map[string]*service.KafkaBroker
+type kafkaCluster struct {
+	brokers map[string]Broker
 	cfg     *runtime.KafkaInfo
 }
 
 type KafkaManager struct {
-	clusters clusters
+	clusters map[string]*kafkaCluster
 	emitter  common.EventEmitter
 	app      *runtime.App
 	m        sync.Mutex
@@ -27,19 +31,24 @@ type KafkaManager struct {
 
 func NewKafkaManager(emitter common.EventEmitter, app *runtime.App) *KafkaManager {
 	return &KafkaManager{
-		clusters: clusters{},
+		clusters: map[string]*kafkaCluster{},
 		emitter:  emitter,
 		app:      app,
 	}
 }
 
 func (m *KafkaManager) UpdateConfig(e dynamic.ConfigEvent) {
+	// todo: should be IsAsyncConfig and HasKafkaBrokers
 	cfg, ok := runtime.IsKafkaConfig(e.Config)
-	if !ok {
+	var info *runtime.KafkaInfo
+	if cfg != nil {
+		info = m.app.Kafka.Get(cfg.Info.Name)
+	}
+
+	if !ok && info == nil {
 		return
 	}
 
-	info := m.app.Kafka.Get(cfg.Info.Name)
 	if e.Event == dynamic.Delete {
 		m.app.Kafka.Remove(e.Config)
 		if info.Config == nil {
@@ -66,14 +75,14 @@ func (m *KafkaManager) addOrUpdateCluster(cfg *runtime.KafkaInfo) {
 	c.update(cfg, m.app.Monitor.Kafka)
 }
 
-func (m *KafkaManager) getOrCreateCluster(cfg *runtime.KafkaInfo) *cluster {
+func (m *KafkaManager) getOrCreateCluster(cfg *runtime.KafkaInfo) *kafkaCluster {
 	m.m.Lock()
 	defer m.m.Unlock()
 
 	c, ok := m.clusters[cfg.Info.Name]
 	if !ok {
 		log.Infof("adding new kafka cluster '%v'", cfg.Info.Name)
-		c = &cluster{cfg: cfg, brokers: make(map[string]*service.KafkaBroker)}
+		c = &kafkaCluster{cfg: cfg, brokers: make(map[string]Broker)}
 		m.clusters[cfg.Info.Name] = c
 	}
 	return c
@@ -92,13 +101,13 @@ func (m *KafkaManager) removeCluster(name string) {
 	delete(m.clusters, name)
 }
 
-func (c *cluster) update(cfg *runtime.KafkaInfo, kafkaMonitor *monitor.Kafka) {
+func (c *kafkaCluster) update(cfg *runtime.KafkaInfo, kafkaMonitor *monitor.Kafka) {
 	c.updateBrokers(cfg, kafkaMonitor)
 }
 
-func (c *cluster) updateBrokers(cfg *runtime.KafkaInfo, kafkaMonitor *monitor.Kafka) {
+func (c *kafkaCluster) updateBrokers(cfg *runtime.KafkaInfo, kafkaMonitor *monitor.Kafka) {
 	brokers := c.brokers
-	c.brokers = make(map[string]*service.KafkaBroker)
+	c.brokers = make(map[string]Broker)
 	for name, server := range cfg.Servers {
 		if server == nil || server.Value == nil {
 			continue
@@ -126,7 +135,7 @@ func (c *cluster) updateBrokers(cfg *runtime.KafkaInfo, kafkaMonitor *monitor.Ka
 	}
 }
 
-func (c *cluster) close() {
+func (c *kafkaCluster) close() {
 	for _, b := range c.brokers {
 		b.Stop()
 	}

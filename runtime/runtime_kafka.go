@@ -198,17 +198,30 @@ func (h *KafkaHandler) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request)
 }
 
 func IsKafkaConfig(c *dynamic.Config) (*asyncapi3.Config, bool) {
-	if cfg, ok := c.Data.(*asyncapi3.Config); ok {
-		return cfg, true
-	}
+	var cfg *asyncapi3.Config
 	if old, ok := c.Data.(*asyncApi.Config); ok {
-		cfg, err := old.Convert()
+		var err error
+		cfg, err = old.Convert()
 		if err != nil {
 			return nil, false
 		}
-		return cfg, true
+	} else {
+		cfg, ok = c.Data.(*asyncapi3.Config)
+		if !ok {
+			return nil, false
+		}
 	}
-	return nil, false
+
+	return cfg, hasKafkaBroker(cfg)
+}
+
+func hasKafkaBroker(c *asyncapi3.Config) bool {
+	for _, server := range c.Servers {
+		if server.Value.Protocol == "kafka" {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *KafkaInfo) Remove(cfg *dynamic.Config) {

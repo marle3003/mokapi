@@ -3,6 +3,7 @@ package kafka
 import (
 	"encoding/binary"
 	"io"
+	"mokapi/buffer"
 	"reflect"
 )
 
@@ -25,11 +26,11 @@ var (
 )
 
 type Encoder struct {
-	writer BufferWriter
+	writer buffer.Buffer
 	buffer [32]byte
 }
 
-func NewEncoder(w BufferWriter) *Encoder {
+func NewEncoder(w buffer.Buffer) *Encoder {
 	return &Encoder{writer: w}
 }
 

@@ -205,7 +205,7 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 }
 
 func TestIsKafkaConfig(t *testing.T) {
-	_, ok := runtime.IsKafkaConfig(&dynamic.Config{Data: asyncapi3test.NewConfig()})
+	_, ok := runtime.IsKafkaConfig(&dynamic.Config{Data: asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", ""))})
 	require.True(t, ok)
 	_, ok = runtime.IsKafkaConfig(&dynamic.Config{Data: "foo"})
 	require.False(t, ok)

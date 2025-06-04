@@ -7,6 +7,7 @@ import (
 	"hash/crc32"
 	"io"
 	"math/bits"
+	"mokapi/buffer"
 	"time"
 )
 
@@ -127,7 +128,7 @@ func (rb *RecordBatch) WriteTo(e *Encoder, version int16, tag kafkaTag) {
 		return
 	}
 
-	b := newPageBuffer()
+	b := buffer.NewPageBuffer()
 	rb.writeTo(NewEncoder(b))
 
 	if isCompact {

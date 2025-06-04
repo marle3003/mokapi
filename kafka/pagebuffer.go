@@ -2,30 +2,30 @@ package kafka
 
 import (
 	"bytes"
-	"encoding/binary"
 	"io"
-	"sync"
-	"sync/atomic"
 )
 
+/*
 var (
-	pageBufferPool = sync.Pool{New: func() interface{} { return new(pageBuffer) }}
-)
 
+	pageBufferPool = sync.Pool{New: func() interface{} { return new(pageBuffer) }}
+
+)
+*/
 type Bytes interface {
 	io.ReadCloser
 	io.Seeker
 	Size() int
 }
 
-type refCounter uint32
+/*type refCounter uint32
 
 type pageBuffer struct {
 	pages  []*page
 	length int
 	cursor int
 	refs   refCounter
-}
+}*/
 
 type bytesReader struct {
 	bytes.Reader
@@ -55,6 +55,7 @@ func (b *bytesReader) Close() error { return nil }
 
 func (b *bytesReader) Size() int { return int(b.Reader.Size()) }
 
+/*
 func (r *refCounter) inc() {
 	atomic.AddUint32((*uint32)(r), 1)
 }
@@ -168,4 +169,4 @@ func (pb *pageBuffer) fragment(begin, end int) *fragment {
 	}
 	f.ref()
 	return f
-}
+}*/

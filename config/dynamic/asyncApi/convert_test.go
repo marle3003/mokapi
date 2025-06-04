@@ -38,7 +38,7 @@ func TestConfig_Convert(t *testing.T) {
 	// Server
 	require.Len(t, cfg3.Servers, 1)
 	require.Equal(t, "test.mosquitto.org:{port}", cfg3.Servers["production"].Value.Host)
-	require.Equal(t, "mqtt", cfg3.Servers["production"].Value.Protocol)
+	require.Equal(t, "kafka", cfg3.Servers["production"].Value.Protocol)
 	require.Equal(t, "Test broker", cfg3.Servers["production"].Value.Description)
 
 	// Channel

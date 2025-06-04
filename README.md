@@ -35,6 +35,10 @@ the risk of bugs in production.
 - **Multiple Provider support**: File, HTTP, GIT, NPM to gather configurations and scripts.
 - **Dashboard** to see what's going on.
 
+## 🧩 OpenAPI & AsyncAPI Support
+
+Mokapi supports mocking REST APIs using **OpenAPI 2.0 / 3.0 / 3.1** and event-driven systems using **AsyncAPI**.
+
 ## 🔧 Spin Up Mokapi
 
 Install and start Mokapi using one of the following methods.

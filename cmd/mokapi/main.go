@@ -113,11 +113,13 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	}
 	http := server.NewHttpManager(scriptEngine, certStore, app)
 	kafka := server.NewKafkaManager(scriptEngine, app)
+	mqtt := server.NewMqttManager(scriptEngine, app)
 	smtp := server.NewSmtpManager(app, scriptEngine, certStore)
 	ldap := server.NewLdapDirectoryManager(scriptEngine, certStore, app)
 
 	watcher.AddListener(func(e dynamic.ConfigEvent) {
 		kafka.UpdateConfig(e)
+		mqtt.UpdateConfig(e)
 		http.Update(e)
 		smtp.UpdateConfig(e)
 		ldap.UpdateConfig(e)

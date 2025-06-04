@@ -14,18 +14,20 @@ import (
 )
 
 type Config struct {
-	Swagger      string                    `yaml:"swagger" json:"swagger"`
-	Info         openapi.Info              `yaml:"info" json:"info"`
-	Schemes      []string                  `yaml:"schemes,omitempty" json:"schemes,omitempty"`
-	Consumes     []string                  `yaml:"consumes,omitempty" json:"consumes,omitempty"`
-	Produces     []string                  `yaml:"produces,omitempty" json:"produces,omitempty"`
-	Host         string                    `yaml:"host,omitempty" json:"host,omitempty"`
-	BasePath     string                    `yaml:"basePath,omitempty" json:"basePath,omitempty"`
-	Paths        PathItems                 `yaml:"paths,omitempty" json:"paths,omitempty"`
-	Definitions  map[string]*schema.Schema `yaml:"definitions,omitempty" json:"definitions,omitempty"`
-	Parameters   map[string]*Parameter     `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	Responses    map[string]*Response      `yaml:"responses,omitempty" json:"responses,omitempty"`
-	ExternalDocs *openapi.ExternalDocs     `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
+	Swagger             string                     `yaml:"swagger" json:"swagger"`
+	Info                openapi.Info               `yaml:"info" json:"info"`
+	Schemes             []string                   `yaml:"schemes,omitempty" json:"schemes,omitempty"`
+	Consumes            []string                   `yaml:"consumes,omitempty" json:"consumes,omitempty"`
+	Produces            []string                   `yaml:"produces,omitempty" json:"produces,omitempty"`
+	Host                string                     `yaml:"host,omitempty" json:"host,omitempty"`
+	BasePath            string                     `yaml:"basePath,omitempty" json:"basePath,omitempty"`
+	Paths               PathItems                  `yaml:"paths,omitempty" json:"paths,omitempty"`
+	Definitions         map[string]*schema.Schema  `yaml:"definitions,omitempty" json:"definitions,omitempty"`
+	Parameters          map[string]*Parameter      `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	Responses           map[string]*Response       `yaml:"responses,omitempty" json:"responses,omitempty"`
+	ExternalDocs        *openapi.ExternalDocs      `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
+	SecurityDefinitions map[string]*SecurityScheme `yaml:"securityDefinitions,omitempty" json:"securityDefinitions,omitempty"`
+	Security            []SecurityRequirement      `yaml:"security" json:"security"`
 }
 
 type PathItems map[string]*PathItem
@@ -43,16 +45,17 @@ type PathItem struct {
 }
 
 type Operation struct {
-	Summary     string     `yaml:"summary,omitempty" json:"summary,omitempty"`
-	Description string     `yaml:"description,omitempty" json:"description,omitempty"`
-	Tags        []string   `yaml:"tags,omitempty" json:"tags,omitempty"`
-	OperationID string     `yaml:"operationId,omitempty" json:"operationId,omitempty"`
-	Deprecated  bool       `yaml:"deprecated" json:"deprecated"`
-	Parameters  Parameters `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	Responses   *Responses `yaml:"responses" json:"responses"`
-	Consumes    []string   `yaml:"consumes,omitempty" json:"consumes,omitempty"`
-	Produces    []string   `yaml:"produces,omitempty" json:"produces,omitempty"`
-	Schemes     []string   `yaml:"schemes,omitempty" json:"schemes,omitempty"`
+	Summary     string                        `yaml:"summary,omitempty" json:"summary,omitempty"`
+	Description string                        `yaml:"description,omitempty" json:"description,omitempty"`
+	Tags        []string                      `yaml:"tags,omitempty" json:"tags,omitempty"`
+	OperationID string                        `yaml:"operationId,omitempty" json:"operationId,omitempty"`
+	Deprecated  bool                          `yaml:"deprecated" json:"deprecated"`
+	Parameters  Parameters                    `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	Responses   *Responses                    `yaml:"responses" json:"responses"`
+	Consumes    []string                      `yaml:"consumes,omitempty" json:"consumes,omitempty"`
+	Produces    []string                      `yaml:"produces,omitempty" json:"produces,omitempty"`
+	Schemes     []string                      `yaml:"schemes,omitempty" json:"schemes,omitempty"`
+	Security    []openapi.SecurityRequirement `yaml:"security,omitempty" json:"security,omitempty"`
 }
 
 type Responses struct {
@@ -223,3 +226,16 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 	*c = Config(a)
 	return nil
 }
+
+type SecurityScheme struct {
+	Type             string            `yaml:"type" json:"type"`
+	Description      string            `yaml:"description,omitempty" json:"description,omitempty"`
+	Name             string            `yaml:"name" json:"name"`
+	In               string            `yaml:"in" json:"in"`
+	Flow             string            `yaml:"flow,omitempty" json:"flow,omitempty"`
+	AuthorizationUrl string            `yaml:"authorizationUrl,omitempty" json:"authorizationUrl,omitempty"`
+	TokenUrl         string            `yaml:"tokenUrl,omitempty" json:"tokenUrl,omitempty"`
+	Scopes           map[string]string `yaml:"scopes,omitempty" json:"scopes,omitempty"`
+}
+
+type SecurityRequirement map[string][]string
