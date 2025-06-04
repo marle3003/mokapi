@@ -6,8 +6,10 @@ import (
 )
 
 type Message struct {
-	Data []byte
-	QoS  byte
+	Topic  string
+	Data   []byte
+	QoS    byte
+	Retain bool
 }
 
 type Topic struct {

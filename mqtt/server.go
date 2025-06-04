@@ -4,9 +4,12 @@ import (
 	"context"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"io"
 	"mokapi/safe"
 	"net"
+	"runtime/debug"
 	"sync"
+	"syscall"
 )
 
 var ErrServerClosed = errors.New("mqtt: Server closed")
@@ -54,7 +57,7 @@ func (s *Server) ListenAndServe() error {
 func (s *Server) Serve(l net.Listener) error {
 	closeCh := s.getCloseChan()
 	for {
-		rw, err := l.Accept()
+		conn, err := l.Accept()
 		if err != nil {
 			select {
 			case <-closeCh:
@@ -65,12 +68,45 @@ func (s *Server) Serve(l net.Listener) error {
 			}
 		}
 
-		c := conn{
-			server: s,
-			conn:   rw,
-			ctx:    s.trackConn(rw),
+		ctx := s.trackConn(conn)
+		go s.serve(conn, ctx)
+	}
+}
+
+func (s *Server) serve(conn net.Conn, ctx context.Context) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer func() {
+		r := recover()
+		if r != nil {
+			log.Debugf("mqtt panic: %v", string(debug.Stack()))
+			log.Errorf("mqtt panic: %v", r)
 		}
-		go c.serve()
+		cancel()
+		s.closeConn(conn)
+	}()
+
+	client := ClientFromContext(ctx)
+	client.Addr = conn.RemoteAddr().String()
+	client.conn = conn
+	for {
+		r := &Request{Context: ctx}
+		err := r.Read(conn)
+		if err != nil {
+			switch {
+			case err == io.EOF || errors.Is(err, net.ErrClosed) || errors.Is(err, syscall.ECONNRESET):
+				return
+			default:
+				log.Errorf("mqtt: %v", err)
+				return
+			}
+		}
+
+		res := &response{
+			h:   r.Header,
+			ctx: client,
+		}
+
+		s.Handler.ServeMessage(res, r)
 	}
 }
 
@@ -125,7 +161,10 @@ func (s *Server) trackConn(conn net.Conn) context.Context {
 	if s.activeConn == nil {
 		s.activeConn = make(map[net.Conn]context.Context)
 	}
-	ctx := NewClientContext(context.Background(), conn.RemoteAddr().String())
+
+	// delete conn struct and implement all in server
+	// NewClientContext(context, net.Conn)
+	ctx := NewClientContext(context.Background(), conn)
 
 	s.activeConn[conn] = ctx
 	return ctx

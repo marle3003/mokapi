@@ -10,13 +10,13 @@ import (
 	"testing"
 )
 
-func TestSubscribe(t *testing.T) {
+func TestPublish(t *testing.T) {
 	testcases := []struct {
 		name string
 		test func(t *testing.T, s *store.Store)
 	}{
 		{
-			name: "subscribe",
+			name: "publish no consumers",
 			test: func(t *testing.T, s *store.Store) {
 				rr := mqtttest.NewRecorder()
 				ctx, conn := mqtttest.NewTestClientContext()
@@ -31,44 +31,19 @@ func TestSubscribe(t *testing.T) {
 				})
 
 				s.ServeMessage(rr, &mqtt.Request{
-					Message: &mqtt.SubscribeRequest{
+					Header: &mqtt.Header{
+						QoS:    0,
+						Retain: false,
+					},
+					Message: &mqtt.PublishRequest{
 						MessageId: 11,
-						Topics: []mqtt.SubscribeTopic{
-							{Name: "foo"},
-						},
+						Topic:     "/foo/bar",
+						Data:      []byte("hello world"),
 					},
 					Context: ctx,
 				})
-				res := rr.Message.(*mqtt.SubscribeResponse)
+				res := rr.Message.(*mqtt.PublishResponse)
 				require.Equal(t, int16(11), res.MessageId)
-				require.Len(t, res.TopicQoS, 1)
-				require.Equal(t, byte(0), res.TopicQoS[0])
-			},
-		},
-		{
-			name: "subscribe but no connect previously",
-			test: func(t *testing.T, s *store.Store) {
-				rr := mqtttest.NewRecorder()
-				ctx, conn := mqtttest.NewTestClientContext()
-				defer conn.Close()
-				client := mqtt.ClientFromContext(ctx)
-				client.ClientId = "foo"
-
-				defer func() {
-					r := recover()
-					require.NotNil(t, r, "Test passed, panic was caught")
-				}()
-
-				s.ServeMessage(rr, &mqtt.Request{
-					Message: &mqtt.SubscribeRequest{
-						MessageId: 11,
-						Topics: []mqtt.SubscribeTopic{
-							{Name: "foo"},
-						},
-					},
-					Context: ctx,
-				})
-				t.Error("Test failed, panic was expected")
 			},
 		},
 	}
