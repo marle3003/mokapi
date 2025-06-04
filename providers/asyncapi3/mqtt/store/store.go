@@ -45,7 +45,7 @@ func (s *Store) ServeMessage(rw mqtt.ResponseWriter, req *mqtt.Request) {
 
 	switch msg := req.Message.(type) {
 	case *mqtt.ConnectRequest:
-		s.connect(rw, msg)
+		s.connect(rw, msg, ctx)
 	case *mqtt.SubscribeRequest:
 		s.subscribe(rw, msg, ctx)
 	case *mqtt.PublishRequest:

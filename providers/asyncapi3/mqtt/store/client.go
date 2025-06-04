@@ -6,20 +6,20 @@ import (
 )
 
 type Client struct {
-	Id     string
-	Clean  bool
-	Topics map[string]*SubscribedTopic
-	ctx    *mqtt.ClientContext
+	Id           string
+	Clean        bool
+	Subscription map[string]Subscription
+	ctx          *mqtt.ClientContext
 }
 
-type SubscribedTopic struct {
+type Subscription struct {
 	// may contain special topic wildcard characters
 	Name string
 	QoS  byte
 }
 
 func (c *Client) publish(msg *Message) {
-	for _, sub := range c.Topics {
+	for _, sub := range c.Subscription {
 		if sub.Name == msg.Topic {
 			c.ctx.Send(&mqtt.Request{
 				Header: &mqtt.Header{
@@ -34,5 +34,16 @@ func (c *Client) publish(msg *Message) {
 				},
 			})
 		}
+	}
+}
+
+func (c *Client) Subscribe(topic string, qos byte) {
+	if c.Subscription == nil {
+		c.Subscription = map[string]Subscription{}
+	}
+
+	c.Subscription[topic] = Subscription{
+		Name: topic,
+		QoS:  qos,
 	}
 }

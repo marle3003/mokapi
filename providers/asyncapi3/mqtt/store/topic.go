@@ -2,7 +2,6 @@ package store
 
 import (
 	"mokapi/providers/asyncapi3"
-	"sync"
 )
 
 type Message struct {
@@ -17,5 +16,4 @@ type Topic struct {
 	Retained *Message
 
 	cfg *asyncapi3.Channel
-	m   sync.RWMutex
 }

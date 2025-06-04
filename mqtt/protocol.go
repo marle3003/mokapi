@@ -79,6 +79,10 @@ func ReadResponse(r io.Reader) (*Response, error) {
 		c := &ConnectResponse{}
 		c.Read(d)
 		res.Message = c
+	case PUBLISH:
+		p := &PublishRequest{}
+		p.Read(d)
+		res.Message = p
 	case PUBACK:
 		p := &PublishResponse{}
 		p.Read(d)

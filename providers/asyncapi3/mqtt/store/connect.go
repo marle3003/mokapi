@@ -5,7 +5,7 @@ import (
 	"mokapi/mqtt"
 )
 
-func (s *Store) connect(rw mqtt.ResponseWriter, connect *mqtt.ConnectRequest) {
+func (s *Store) connect(rw mqtt.ResponseWriter, connect *mqtt.ConnectRequest, ctx *mqtt.ClientContext) {
 
 	if len(connect.ClientId) == 0 || len(connect.ClientId) > 23 {
 		rw.Write(mqtt.CONNACK, &mqtt.ConnectResponse{
@@ -25,7 +25,7 @@ func (s *Store) connect(rw mqtt.ResponseWriter, connect *mqtt.ConnectRequest) {
 		if s.clients == nil {
 			s.clients = map[string]*Client{}
 		}
-		s.clients[connect.ClientId] = &Client{Id: connect.ClientId}
+		s.clients[connect.ClientId] = &Client{Id: connect.ClientId, ctx: ctx}
 	}
 
 	if connect.Topic != "" {

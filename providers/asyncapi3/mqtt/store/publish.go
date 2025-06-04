@@ -10,6 +10,12 @@ func (s *Store) publish(rw mqtt.ResponseWriter, publish *mqtt.PublishRequest, qo
 		Retain: retain,
 	}
 
+	if topic, ok := s.Topics[msg.Topic]; ok {
+		if retain {
+			topic.Retained = msg
+		}
+	}
+
 	rw.Write(mqtt.PUBACK, &mqtt.PublishResponse{
 		MessageId: publish.MessageId,
 	})

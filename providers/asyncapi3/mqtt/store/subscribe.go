@@ -13,16 +13,29 @@ func (s *Store) subscribe(rw mqtt.ResponseWriter, subscribe *mqtt.SubscribeReque
 	}
 
 	for _, topic := range subscribe.Topics {
-		if client.Topics == nil {
-			client.Topics = map[string]*SubscribedTopic{}
-		}
-
-		client.Topics[topic.Name] = &SubscribedTopic{
-			Name: topic.Name,
-			QoS:  topic.QoS,
-		}
+		client.Subscribe(topic.Name, topic.QoS)
 		res.TopicQoS = append(res.TopicQoS, topic.QoS)
+
+		go func() {
+			for _, msg := range s.getRetainedMessages(topic.Name) {
+				client.publish(msg)
+			}
+		}()
 	}
 
-	rw.Write(mqtt.CONNACK, res)
+	rw.Write(mqtt.SUBACK, res)
+}
+
+func (s *Store) getRetainedMessages(name string) []*Message {
+	var retained []*Message
+	for _, topic := range s.Topics {
+		if topic.Name == name {
+			if topic.Retained != nil {
+				{
+					retained = append(retained, topic.Retained)
+				}
+			}
+		}
+	}
+	return retained
 }
