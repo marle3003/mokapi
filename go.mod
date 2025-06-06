@@ -12,7 +12,7 @@ require (
 	github.com/evanw/esbuild v0.25.5
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/go-co-op/gocron v1.37.0
-	github.com/go-git/go-git/v5 v5.16.0
+	github.com/go-git/go-git/v5 v5.16.1
 	github.com/google/uuid v1.6.0
 	github.com/jinzhu/inflection v1.0.0
 	github.com/pkg/errors v0.9.1
