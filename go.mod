@@ -6,7 +6,7 @@ toolchain go1.24.1
 
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/bradleyfalzon/ghinstallation/v2 v2.15.0
+	github.com/bradleyfalzon/ghinstallation/v2 v2.16.0
 	github.com/brianvoe/gofakeit/v6 v6.28.0
 	github.com/dop251/goja v0.0.0-20250309171923-bcd7cc6bf64c
 	github.com/evanw/esbuild v0.25.5
@@ -42,7 +42,7 @@ require (
 	github.com/go-sourcemap/sourcemap v2.1.3+incompatible // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.2 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
-	github.com/google/go-github/v71 v71.0.0 // indirect
+	github.com/google/go-github/v72 v72.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/pprof v0.0.0-20230207041349-798e818bf904 // indirect
 	github.com/huandu/xstrings v1.3.2 // indirect
