@@ -5,12 +5,21 @@ import (
 	"mokapi/mqtt"
 )
 
-func (s *Store) connect(rw mqtt.ResponseWriter, connect *mqtt.ConnectRequest, ctx *mqtt.ClientContext) {
+func (s *Store) connect(rw mqtt.MessageWriter, connect *mqtt.ConnectRequest, ctx *mqtt.ClientContext) {
+
+	if ctx != nil {
+		ctx.ClientId = connect.ClientId
+	}
 
 	if len(connect.ClientId) == 0 || len(connect.ClientId) > 23 {
-		rw.Write(mqtt.CONNACK, &mqtt.ConnectResponse{
-			SessionPresent: false,
-			ReturnCode:     mqtt.ErrIdentifierRejected,
+		rw.Write(&mqtt.Message{
+			Header: &mqtt.Header{
+				Type: mqtt.CONNACK,
+			},
+			Payload: &mqtt.ConnectResponse{
+				SessionPresent: false,
+				ReturnCode:     mqtt.ErrIdentifierRejected,
+			},
 		})
 		return
 	}
@@ -19,8 +28,10 @@ func (s *Store) connect(rw mqtt.ResponseWriter, connect *mqtt.ConnectRequest, ct
 	if connect.CleanSession {
 		delete(s.clients, connect.ClientId)
 	}
-	if _, ok := s.clients[connect.ClientId]; ok {
+	if c, ok := s.clients[connect.ClientId]; ok {
 		sessionPresent = true
+		c.ctx = ctx
+		go c.ResendInflight(0)
 	} else {
 		if s.clients == nil {
 			s.clients = map[string]*Client{}
@@ -29,28 +40,45 @@ func (s *Store) connect(rw mqtt.ResponseWriter, connect *mqtt.ConnectRequest, ct
 	}
 
 	if connect.Topic != "" {
-		s.m.RLock()
-		defer s.m.RUnlock()
+		s.m.Lock()
 
 		if t, ok := s.Topics[connect.Topic]; ok {
 			m := &Message{
 				Data: connect.Message,
 				QoS:  connect.WillQoS,
 			}
-			_ = m
-			_ = t
+			for _, c := range s.clients {
+				c.publish(m)
+			}
+			if connect.WillRetain {
+				t.Retained = m
+			}
+			s.m.Unlock()
 		} else {
 			log.Infof("mqtt broker: invalid topic %v", connect.Topic)
-			rw.Write(mqtt.CONNACK, &mqtt.ConnectResponse{
-				SessionPresent: sessionPresent,
-				ReturnCode:     mqtt.ErrUnspecifiedError,
+			rw.Write(&mqtt.Message{
+				Header: &mqtt.Header{
+					Type: mqtt.CONNACK,
+				},
+				Payload: &mqtt.ConnectResponse{
+					SessionPresent: sessionPresent,
+					ReturnCode:     mqtt.ErrUnspecifiedError,
+				},
 			})
+			s.m.Unlock()
 			return
 		}
 	}
 
-	rw.Write(mqtt.CONNACK, &mqtt.ConnectResponse{
-		SessionPresent: sessionPresent,
-		ReturnCode:     mqtt.Accepted,
+	rw.Write(&mqtt.Message{
+		Header: &mqtt.Header{
+			Type: mqtt.CONNACK,
+		},
+		Payload: &mqtt.ConnectResponse{
+			SessionPresent: sessionPresent,
+			ReturnCode:     mqtt.Accepted,
+		},
 	})
+
+	s.startQoS()
 }

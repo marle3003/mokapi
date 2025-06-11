@@ -14,11 +14,16 @@ func TestMqttBroker(t *testing.T) {
 	port := try.GetFreePort()
 	addr := fmt.Sprintf("127.0.0.1:%v", port)
 	called := false
-	handler := mqtt.HandlerFunc(func(rw mqtt.ResponseWriter, req *mqtt.Request) {
+	handler := mqtt.HandlerFunc(func(rw mqtt.MessageWriter, req *mqtt.Message) {
 		called = true
-		rw.Write(mqtt.CONNACK, &mqtt.ConnectResponse{
-			SessionPresent: false,
-			ReturnCode:     mqtt.Accepted,
+		rw.Write(&mqtt.Message{
+			Header: &mqtt.Header{
+				Type: mqtt.CONNACK,
+			},
+			Payload: &mqtt.ConnectResponse{
+				SessionPresent: false,
+				ReturnCode:     mqtt.Accepted,
+			},
 		})
 	})
 	b := NewMqttBroker(fmt.Sprintf("%v", port), handler)
@@ -27,12 +32,12 @@ func TestMqttBroker(t *testing.T) {
 
 	client := mqtttest.Client{Addr: addr}
 	defer client.Close()
-	_, err := client.Send(&mqtt.Request{
+	_, err := client.Send(&mqtt.Message{
 		// The DUP, QoS, and RETAIN flags are not used in the CONNECT message.
 		Header: &mqtt.Header{
 			Type: mqtt.CONNECT,
 		},
-		Message: &mqtt.ConnectRequest{
+		Payload: &mqtt.ConnectRequest{
 			Protocol:     "MQTT",
 			Version:      4,
 			CleanSession: true,

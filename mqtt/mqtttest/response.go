@@ -4,14 +4,15 @@ import (
 	"mokapi/mqtt"
 )
 
-type ResponseRecorder struct {
-	Message mqtt.Message
+type MessageRecorder struct {
+	Message *mqtt.Message
 }
 
-func NewRecorder() *ResponseRecorder {
-	return &ResponseRecorder{}
+func NewRecorder() *MessageRecorder {
+	return &MessageRecorder{}
 }
 
-func (r *ResponseRecorder) Write(messageType mqtt.Type, msg mqtt.Message) {
+func (r *MessageRecorder) Write(msg *mqtt.Message) error {
 	r.Message = msg
+	return nil
 }

@@ -14,7 +14,7 @@ func TestPublish_ReadRequest(t *testing.T) {
 	testcases := []struct {
 		name string
 		in   []byte
-		test func(t *testing.T, r *mqtt.Request, err error)
+		test func(t *testing.T, r *mqtt.Message, err error)
 	}{
 		{
 			name: "publish to foo",
@@ -26,13 +26,13 @@ func TestPublish_ReadRequest(t *testing.T) {
 				0x0, 0xA, // MessageId
 				'b', 'a', 'r', // Payload
 			},
-			test: func(t *testing.T, r *mqtt.Request, err error) {
+			test: func(t *testing.T, r *mqtt.Message, err error) {
 				require.NoError(t, err)
 
 				require.Equal(t, 10, r.Header.Size)
 
-				require.IsType(t, &mqtt.PublishRequest{}, r.Message)
-				msg := r.Message.(*mqtt.PublishRequest)
+				require.IsType(t, &mqtt.PublishRequest{}, r.Payload)
+				msg := r.Payload.(*mqtt.PublishRequest)
 
 				require.Equal(t, "foo", msg.Topic)
 				require.Equal(t, int16(10), msg.MessageId)
@@ -47,7 +47,7 @@ func TestPublish_ReadRequest(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			r := &mqtt.Request{}
+			r := &mqtt.Message{}
 			err := r.Read(bytes.NewReader(tc.in))
 			tc.test(t, r, err)
 		})
@@ -62,19 +62,24 @@ func TestPublish(t *testing.T) {
 	}{
 		{
 			name: "publish to foo and PUBACK",
-			handler: mqtt.HandlerFunc(func(rw mqtt.ResponseWriter, req *mqtt.Request) {
-				rw.Write(mqtt.PUBACK, &mqtt.PublishResponse{
-					MessageId: 10,
+			handler: mqtt.HandlerFunc(func(rw mqtt.MessageWriter, req *mqtt.Message) {
+				rw.Write(&mqtt.Message{
+					Header: &mqtt.Header{
+						Type: mqtt.PUBACK,
+					},
+					Payload: &mqtt.PublishResponse{
+						MessageId: 10,
+					},
 				})
 			}),
 			test: func(t *testing.T, s *mqtt.Server) {
 				c := mqtttest.NewClient(s.Addr)
 				defer c.Close()
-				r := &mqtt.Request{
+				r := &mqtt.Message{
 					Header: &mqtt.Header{
 						Type: mqtt.PUBLISH,
 					},
-					Message: &mqtt.PublishRequest{
+					Payload: &mqtt.PublishRequest{
 						Topic:     "foo",
 						MessageId: 10,
 						Data:      []byte("bar"),
@@ -83,7 +88,7 @@ func TestPublish(t *testing.T) {
 				res, err := c.Send(r)
 				require.NoError(t, err)
 				require.Equal(t, mqtt.PUBACK, res.Header.Type)
-				msg := res.Message.(*mqtt.PublishResponse)
+				msg := res.Payload.(*mqtt.PublishResponse)
 				require.Equal(t, int16(10), msg.MessageId)
 			},
 		},

@@ -14,7 +14,7 @@ func TestSubscribe_ReadRequest(t *testing.T) {
 	testcases := []struct {
 		name string
 		in   []byte
-		test func(t *testing.T, r *mqtt.Request, err error)
+		test func(t *testing.T, r *mqtt.Message, err error)
 	}{
 		{
 			name: "subscribe to foo",
@@ -26,13 +26,13 @@ func TestSubscribe_ReadRequest(t *testing.T) {
 				'f', 'o', 'o', // topic
 				0x1, // QoS
 			},
-			test: func(t *testing.T, r *mqtt.Request, err error) {
+			test: func(t *testing.T, r *mqtt.Message, err error) {
 				require.NoError(t, err)
 
 				require.Equal(t, 8, r.Header.Size)
 
-				require.IsType(t, &mqtt.SubscribeRequest{}, r.Message)
-				msg := r.Message.(*mqtt.SubscribeRequest)
+				require.IsType(t, &mqtt.SubscribeRequest{}, r.Payload)
+				msg := r.Payload.(*mqtt.SubscribeRequest)
 
 				require.Len(t, msg.Topics, 1)
 				require.Equal(t, "foo", msg.Topics[0].Name)
@@ -47,7 +47,7 @@ func TestSubscribe_ReadRequest(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			r := &mqtt.Request{}
+			r := &mqtt.Message{}
 			err := r.Read(bytes.NewReader(tc.in))
 			tc.test(t, r, err)
 		})
@@ -62,22 +62,27 @@ func TestSubscribe(t *testing.T) {
 	}{
 		{
 			name: "subscribe to foo",
-			handler: mqtt.HandlerFunc(func(rw mqtt.ResponseWriter, req *mqtt.Request) {
-				rw.Write(mqtt.SUBACK, &mqtt.SubscribeResponse{
-					MessageId: 10,
-					TopicQoS: []byte{
-						byte(1),
+			handler: mqtt.HandlerFunc(func(rw mqtt.MessageWriter, req *mqtt.Message) {
+				rw.Write(&mqtt.Message{
+					Header: &mqtt.Header{
+						Type: mqtt.SUBACK,
+					},
+					Payload: &mqtt.SubscribeResponse{
+						MessageId: 10,
+						TopicQoS: []byte{
+							byte(1),
+						},
 					},
 				})
 			}),
 			test: func(t *testing.T, s *mqtt.Server) {
 				c := mqtttest.NewClient(s.Addr)
 				defer c.Close()
-				r := &mqtt.Request{
+				r := &mqtt.Message{
 					Header: &mqtt.Header{
 						Type: mqtt.SUBSCRIBE,
 					},
-					Message: &mqtt.SubscribeRequest{
+					Payload: &mqtt.SubscribeRequest{
 						MessageId: 10,
 						Topics: []mqtt.SubscribeTopic{
 							{
@@ -90,7 +95,7 @@ func TestSubscribe(t *testing.T) {
 				res, err := c.Send(r)
 				require.NoError(t, err)
 				require.Equal(t, mqtt.SUBACK, res.Header.Type)
-				msg := res.Message.(*mqtt.SubscribeResponse)
+				msg := res.Payload.(*mqtt.SubscribeResponse)
 				require.Equal(t, int16(10), msg.MessageId)
 				require.Len(t, msg.TopicQoS, 1)
 				require.Equal(t, byte(1), msg.TopicQoS[0])

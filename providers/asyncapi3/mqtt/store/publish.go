@@ -2,7 +2,7 @@ package store
 
 import "mokapi/mqtt"
 
-func (s *Store) publish(rw mqtt.ResponseWriter, publish *mqtt.PublishRequest, qos byte, retain bool) {
+func (s *Store) publish(rw mqtt.MessageWriter, publish *mqtt.PublishRequest, qos byte, retain bool) {
 	msg := &Message{
 		Topic:  publish.Topic,
 		Data:   publish.Data,
@@ -16,8 +16,13 @@ func (s *Store) publish(rw mqtt.ResponseWriter, publish *mqtt.PublishRequest, qo
 		}
 	}
 
-	rw.Write(mqtt.PUBACK, &mqtt.PublishResponse{
-		MessageId: publish.MessageId,
+	rw.Write(&mqtt.Message{
+		Header: &mqtt.Header{
+			Type: mqtt.PUBACK,
+		},
+		Payload: &mqtt.PublishResponse{
+			MessageId: publish.MessageId,
+		},
 	})
 
 	go func() {

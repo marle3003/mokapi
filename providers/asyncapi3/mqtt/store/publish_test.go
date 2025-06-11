@@ -26,19 +26,19 @@ func TestPublish(t *testing.T) {
 
 				publisher.connect()
 
-				rr := publisher.send(&mqtt.Request{
+				rr := publisher.send(&mqtt.Message{
 					Header: &mqtt.Header{
 						QoS:    0,
 						Retain: false,
 					},
-					Message: &mqtt.PublishRequest{
+					Payload: &mqtt.PublishRequest{
 						MessageId: 11,
 						Topic:     "/foo/bar",
 						Data:      []byte("hello world"),
 					},
 					Context: publisher.ctx,
 				})
-				res := rr.Message.(*mqtt.PublishResponse)
+				res := rr.Message.Payload.(*mqtt.PublishResponse)
 				require.Equal(t, int16(11), res.MessageId)
 			},
 		},
@@ -54,8 +54,8 @@ func TestPublish(t *testing.T) {
 				consumer.connect()
 
 				// subscribe
-				consumer.send(&mqtt.Request{
-					Message: &mqtt.SubscribeRequest{
+				consumer.send(&mqtt.Message{
+					Payload: &mqtt.SubscribeRequest{
 						MessageId: 1,
 						Topics: []mqtt.SubscribeTopic{
 							{
@@ -67,12 +67,12 @@ func TestPublish(t *testing.T) {
 				})
 
 				// publish
-				publisher.send(&mqtt.Request{
+				publisher.send(&mqtt.Message{
 					Header: &mqtt.Header{
 						QoS:    0,
 						Retain: false,
 					},
-					Message: &mqtt.PublishRequest{
+					Payload: &mqtt.PublishRequest{
 						MessageId: 11,
 						Topic:     "/foo/bar",
 						Data:      []byte("hello world"),
@@ -81,10 +81,11 @@ func TestPublish(t *testing.T) {
 				})
 
 				consumer.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
-				res, err := mqtt.ReadResponse(consumer.conn)
+				res := &mqtt.Message{}
+				err := res.Read(consumer.conn)
 				require.NoError(t, err)
 				require.NotNil(t, res)
-				pub := res.Message.(*mqtt.PublishRequest)
+				pub := res.Payload.(*mqtt.PublishRequest)
 				require.Equal(t, int16(1), pub.MessageId)
 				require.Equal(t, "/foo/bar", pub.Topic)
 				require.Equal(t, []byte("hello world"), pub.Data)
@@ -104,12 +105,12 @@ func TestPublish(t *testing.T) {
 				consumer.connect()
 
 				// publish
-				publisher.send(&mqtt.Request{
+				publisher.send(&mqtt.Message{
 					Header: &mqtt.Header{
 						QoS:    0,
 						Retain: true,
 					},
-					Message: &mqtt.PublishRequest{
+					Payload: &mqtt.PublishRequest{
 						MessageId: 11,
 						Topic:     "/foo/bar",
 						Data:      []byte("hello world"),
@@ -119,8 +120,8 @@ func TestPublish(t *testing.T) {
 
 				time.Sleep(500 * time.Millisecond)
 				// subscribe
-				consumer.send(&mqtt.Request{
-					Message: &mqtt.SubscribeRequest{
+				consumer.send(&mqtt.Message{
+					Payload: &mqtt.SubscribeRequest{
 						MessageId: 1,
 						Topics: []mqtt.SubscribeTopic{
 							{
@@ -132,13 +133,151 @@ func TestPublish(t *testing.T) {
 				})
 
 				consumer.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
-				res, err := mqtt.ReadResponse(consumer.conn)
+				res := &mqtt.Message{}
+				err := res.Read(consumer.conn)
 				require.NoError(t, err)
 				require.NotNil(t, res)
-				pub := res.Message.(*mqtt.PublishRequest)
+				pub := res.Payload.(*mqtt.PublishRequest)
 				require.Equal(t, int16(1), pub.MessageId)
 				require.Equal(t, "/foo/bar", pub.Topic)
 				require.Equal(t, []byte("hello world"), pub.Data)
+			},
+		},
+		{
+			name: "consumer subscribes but is offline when publishing QoS=0",
+			test: func(t *testing.T, s *store.Store) {
+				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/foo/bar")))
+
+				publisher := newClient("publisher", s)
+				defer publisher.close()
+				consumer := newClient("consumer", s)
+				defer consumer.close()
+
+				publisher.connect()
+				consumer.connect()
+
+				// subscribe
+				consumer.send(&mqtt.Message{
+					Payload: &mqtt.SubscribeRequest{
+						MessageId: 1,
+						Topics: []mqtt.SubscribeTopic{
+							{
+								Name: "/foo/bar",
+							},
+						},
+					},
+					Context: consumer.ctx,
+				})
+
+				consumer.close()
+
+				// publish
+				publisher.send(&mqtt.Message{
+					Header: &mqtt.Header{
+						QoS: 0,
+					},
+					Payload: &mqtt.PublishRequest{
+						MessageId: 11,
+						Topic:     "/foo/bar",
+						Data:      []byte("hello world"),
+					},
+					Context: publisher.ctx,
+				})
+
+				time.Sleep(500 * time.Millisecond)
+
+				consumer = newClient("consumer", s)
+				consumer.connect()
+
+				consumer.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+				res := &mqtt.Message{}
+				err := res.Read(consumer.conn)
+				require.Error(t, err)
+			},
+		},
+		{
+			name: "consumer subscribes but is offline when publishing QoS=1",
+			test: func(t *testing.T, s *store.Store) {
+				s.RetryInterval = 500 * time.Millisecond
+				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/foo/bar")))
+
+				publisher := newClient("publisher", s)
+				defer publisher.close()
+				consumer := newClient("consumer", s)
+				defer consumer.close()
+
+				publisher.connect()
+				consumer.connect()
+
+				// subscribe
+				consumer.send(&mqtt.Message{
+					Payload: &mqtt.SubscribeRequest{
+						MessageId: 1,
+						Topics: []mqtt.SubscribeTopic{
+							{
+								Name: "/foo/bar",
+								QoS:  byte(1),
+							},
+						},
+					},
+					Context: consumer.ctx,
+				})
+
+				consumer.close()
+				time.Sleep(500 * time.Millisecond)
+
+				// publish
+				publisher.send(&mqtt.Message{
+					Header: &mqtt.Header{
+						QoS:    1,
+						Retain: true,
+					},
+					Payload: &mqtt.PublishRequest{
+						MessageId: 11,
+						Topic:     "/foo/bar",
+						Data:      []byte("hello world"),
+					},
+					Context: publisher.ctx,
+				})
+
+				time.Sleep(500 * time.Millisecond)
+
+				consumer = newClient("consumer", s)
+				defer consumer.close()
+				consumer.connect()
+
+				consumer.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+				res := &mqtt.Message{}
+				err := res.Read(consumer.conn)
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				pub := res.Payload.(*mqtt.PublishRequest)
+				require.Equal(t, int16(1), pub.MessageId)
+				require.Equal(t, "/foo/bar", pub.Topic)
+				require.Equal(t, []byte("hello world"), pub.Data)
+
+				// broker should send the message again because no ACK was sent
+				consumer.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+				res = &mqtt.Message{}
+				err = res.Read(consumer.conn)
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				pub = res.Payload.(*mqtt.PublishRequest)
+				require.Equal(t, int16(1), pub.MessageId)
+				require.Equal(t, "/foo/bar", pub.Topic)
+				require.Equal(t, []byte("hello world"), pub.Data)
+
+				consumer.send(&mqtt.Message{
+					Header: &mqtt.Header{
+						Type: mqtt.PUBACK,
+					},
+					Payload: &mqtt.PublishResponse{MessageId: pub.MessageId},
+				})
+
+				// no further message should be received
+				consumer.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+				res = &mqtt.Message{}
+				err = res.Read(consumer.conn)
 			},
 		},
 	}
@@ -150,6 +289,8 @@ func TestPublish(t *testing.T) {
 			t.Parallel()
 
 			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
+			defer s.Close()
+
 			tc.test(t, s)
 		})
 	}
@@ -178,10 +319,10 @@ func (c *client) close() {
 	c.conn.Close()
 }
 
-func (c *client) connect() *mqtttest.ResponseRecorder {
+func (c *client) connect() *mqtttest.MessageRecorder {
 	rr := mqtttest.NewRecorder()
-	c.handler.ServeMessage(rr, &mqtt.Request{
-		Message: &mqtt.ConnectRequest{
+	c.handler.ServeMessage(rr, &mqtt.Message{
+		Payload: &mqtt.ConnectRequest{
 			ClientId: c.clientCtx.ClientId,
 		},
 		Context: c.ctx,
@@ -189,7 +330,7 @@ func (c *client) connect() *mqtttest.ResponseRecorder {
 	return rr
 }
 
-func (c *client) send(r *mqtt.Request) *mqtttest.ResponseRecorder {
+func (c *client) send(r *mqtt.Message) *mqtttest.MessageRecorder {
 	rr := mqtttest.NewRecorder()
 	c.handler.ServeMessage(rr, r)
 	return rr

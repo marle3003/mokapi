@@ -2,7 +2,7 @@ package store
 
 import "mokapi/mqtt"
 
-func (s *Store) subscribe(rw mqtt.ResponseWriter, subscribe *mqtt.SubscribeRequest, ctx *mqtt.ClientContext) {
+func (s *Store) subscribe(rw mqtt.MessageWriter, subscribe *mqtt.SubscribeRequest, ctx *mqtt.ClientContext) {
 	client, ok := s.clients[ctx.ClientId]
 	if !ok {
 		panic("client not found")
@@ -23,7 +23,12 @@ func (s *Store) subscribe(rw mqtt.ResponseWriter, subscribe *mqtt.SubscribeReque
 		}()
 	}
 
-	rw.Write(mqtt.SUBACK, res)
+	rw.Write(&mqtt.Message{
+		Header: &mqtt.Header{
+			Type: mqtt.SUBACK,
+		},
+		Payload: res,
+	})
 }
 
 func (s *Store) getRetainedMessages(name string) []*Message {

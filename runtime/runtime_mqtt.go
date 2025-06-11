@@ -190,7 +190,7 @@ func (c *MqttInfo) Configs() []*dynamic.Config {
 	return r
 }
 
-func (h *MqttHandler) ServeMessage(rw mqtt.ResponseWriter, req *mqtt.Request) {
+func (h *MqttHandler) ServeMessage(rw mqtt.MessageWriter, req *mqtt.Message) {
 	ctx := monitor.NewMqttContext(req.Context, h.Mqtt)
 
 	req.WithContext(ctx)
