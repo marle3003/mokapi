@@ -58,7 +58,7 @@ func TestModule_On(t *testing.T) {
 				r.NoError(t, err)
 				b, err := handler("foo")
 				r.NoError(t, err)
-				r.Equal(t, false, b)
+				r.Equal(t, true, b)
 				v, _ := vm.RunString("result")
 				r.Equal(t, true, v.Export())
 			},

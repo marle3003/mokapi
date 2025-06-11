@@ -26,7 +26,8 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 			return false, err
 		}
 
-		_, err = m.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
+		var r goja.Value
+		r, err = m.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
 			call, _ := goja.AssertFunction(do)
 			var params []goja.Value
 			for _, v := range args {
@@ -41,6 +42,10 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 
 		if err != nil {
 			return false, err
+		}
+
+		if r != goja.Undefined() {
+			return r.ToBoolean(), nil
 		}
 
 		if eventArgs.track {
