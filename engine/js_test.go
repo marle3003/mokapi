@@ -173,8 +173,7 @@ func TestJsOn(t *testing.T) {
 			import {on, sleep} from 'mokapi'
 			export default function() {
 				on('http', function(request, response) {
-					return true
-				});
+				}, { track: true });
 			}
 		`))
 		r.NoError(t, err)
@@ -196,8 +195,7 @@ func TestJsOn(t *testing.T) {
 			export default function() {
 				on('http', function() {
 					sleep(1000);
-					return true
-				});
+				}, { track: true });
 			}
 		`))
 		r.NoError(t, err)
@@ -216,8 +214,7 @@ func TestJsOn(t *testing.T) {
 			export default function() {
 				on('http', function() {
 					sleep('1s');
-					return true
-				});
+				}, { track: true });
 			}
 		`))
 		r.NoError(t, err)
@@ -234,7 +231,7 @@ func TestJsOn(t *testing.T) {
 		err := e.AddScript(newScript("test.js", `
 			import {on} from 'mokapi'
 			export default function() {
-				on('http', function() {return true}, {tags: {'name': 'foobar'}});
+				on('http', function() {}, {tags: {'name': 'foobar'}, track: true });
 			}
 		`))
 		r.NoError(t, err)
@@ -250,7 +247,7 @@ func TestJsOn(t *testing.T) {
 		err := e.AddScript(newScript("test.js", `
 			import {on} from 'mokapi'
 			export default function() {
-				on('http', function() {return true}, {tags: {'foo': 'bar'}});
+				on('http', function() {}, {tags: {'foo': 'bar'}, track: true });
 			}
 		`))
 		r.NoError(t, err)
@@ -367,7 +364,7 @@ func TestJsOpen(t *testing.T) {
 			import { foo } from 'foo'
 			import { on } from 'mokapi'
 			export default function() {
-				on('http', function() { return true }, { tags: { name: foo } });
+				on('http', function() { }, { tags: { name: foo }, track: true });
 			}
 		`)
 		s.Config.Listeners.Add("", func(config dynamic.ConfigEvent) {

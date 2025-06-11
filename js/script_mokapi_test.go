@@ -435,28 +435,6 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 			},
 		},
 		{
-			name: "return value true",
-			test: func(t *testing.T, host *enginetest.Host) {
-				var doFunc func(args ...interface{}) (bool, error)
-				host.OnFunc = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
-					doFunc = do
-				}
-				s, err := jstest.New(jstest.WithSource(
-					`import { on } from 'mokapi'
-						 export default function() {
-						  	on('http', function() {return true})
-						 }`),
-					js.WithHost(host))
-				r.NoError(t, err)
-				err = s.Run()
-				b, err := doFunc()
-				r.NoError(t, err)
-				r.True(t, b, "return value should be true")
-				r.NoError(t, err)
-				s.Close()
-			},
-		},
-		{
 			name: "on error",
 			test: func(t *testing.T, host *enginetest.Host) {
 				var doFunc func(args ...interface{}) (bool, error)
@@ -502,9 +480,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
-				b, err := doFunc(data)
+				_, err = doFunc(data)
 				r.NoError(t, err)
-				r.True(t, b, "return value should be true")
 				s.Close()
 			},
 		},
@@ -532,9 +509,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
-				b, err := doFunc(data)
+				_, err = doFunc(data)
 				r.NoError(t, err)
-				r.True(t, b, "return value should be true")
 				s.Close()
 			},
 		},
@@ -558,9 +534,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
-				b, err := doFunc(data)
+				_, err = doFunc(data)
 				r.NoError(t, err)
-				r.True(t, b, "return value should be true")
 				s.Close()
 			},
 		},
@@ -667,7 +642,7 @@ func TestScript_Mokapi_Sleep(t *testing.T) {
 				_, err = s.RunDefault()
 				r.NoError(t, err)
 				duration := time.Now().Sub(start).Milliseconds()
-				r.Greater(t, duration, int64(300))
+				r.GreaterOrEqual(t, duration, int64(300))
 			},
 		},
 		{
