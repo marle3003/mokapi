@@ -30,13 +30,16 @@ func TestModule_On(t *testing.T) {
 
 				_, err := vm.RunString(`
 					const m = require('mokapi')
-					m.on('http', () => true)
+					let result = 0;
+					m.on('http', () => result++)
 				`)
 				r.NoError(t, err)
 				r.Equal(t, "http", event)
 				b, err := handler()
 				r.NoError(t, err)
-				r.Equal(t, true, b)
+				r.Equal(t, false, b)
+				v, _ := vm.RunString("result")
+				r.Equal(t, int64(1), v.Export())
 			},
 		},
 		{
@@ -49,16 +52,19 @@ func TestModule_On(t *testing.T) {
 
 				_, err := vm.RunString(`
 					const m = require('mokapi')
-					m.on('http', (param) => param === 'foo')
+					let result = false
+					m.on('http', (param) => result = param === 'foo')
 				`)
 				r.NoError(t, err)
 				b, err := handler("foo")
 				r.NoError(t, err)
 				r.Equal(t, true, b)
+				v, _ := vm.RunString("result")
+				r.Equal(t, true, v.Export())
 			},
 		},
 		{
-			name: "event handler changes params but returns void",
+			name: "event handler changes params",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var handler func(args ...interface{}) (bool, error)
 				host.OnFunc = func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {

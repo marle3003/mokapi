@@ -95,7 +95,7 @@ export function sleep(time: number | string): void;
 
 /**
  * Specifies the interval of a periodic job.
- * Interval string is a possibly signed sequence of decimal numbers, each with optional
+ * Interval string is a possibly signed sequence of decimal numbers, each with an optional
  * fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
  * Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
  */
@@ -108,7 +108,7 @@ export interface EventHandler {
     smtp: SmtpEventHandler;
 }
 
-export type ChangeResult = boolean | void;
+export type ChangeResult = boolean | undefined;
 
 export type EventHandlerResult = ChangeResult | Promise<ChangeResult>;
 

@@ -10,11 +10,12 @@ import (
 )
 
 type onArgs struct {
-	tags map[string]string
+	tags  map[string]string
+	track bool
 }
 
 func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
-	args, err := getOnArgs(m.vm, vArgs)
+	eventArgs, err := getOnArgs(m.vm, vArgs)
 	if err != nil {
 		panic(m.vm.ToValue(err.Error()))
 	}
@@ -47,6 +48,10 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 			return r.ToBoolean(), nil
 		}
 
+		if eventArgs.track {
+			return true, nil
+		}
+
 		newHashes, err := getHashes(args...)
 		if err != nil {
 			return false, err
@@ -55,7 +60,7 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 		return haveChanges(origin, newHashes), nil
 	}
 
-	m.host.On(event, f, args.tags)
+	m.host.On(event, f, eventArgs.tags)
 }
 
 func getOnArgs(vm *goja.Runtime, args goja.Value) (onArgs, error) {
@@ -80,6 +85,15 @@ func getOnArgs(vm *goja.Runtime, args goja.Value) (onArgs, error) {
 				for _, key := range tagsO.Keys() {
 					result.tags[key] = tagsO.Get(key).String()
 				}
+			case "track":
+				v := params.Get(k)
+				if goja.IsUndefined(v) || goja.IsNull(v) {
+					continue
+				}
+				if v.ExportType().Kind() != reflect.Bool {
+					return onArgs{}, fmt.Errorf("unexpected type for track: %v", util.JsType(v.Export()))
+				}
+				result.track = v.ToBoolean()
 			}
 		}
 		return result, nil

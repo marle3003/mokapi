@@ -14,7 +14,7 @@ func TestConnect_ReadRequest(t *testing.T) {
 	testcases := []struct {
 		name string
 		in   []byte
-		test func(t *testing.T, r *mqtt.Request, err error)
+		test func(t *testing.T, r *mqtt.Message, err error)
 	}{
 		{
 			name: "simple connect",
@@ -29,13 +29,13 @@ func TestConnect_ReadRequest(t *testing.T) {
 				0x00, 0x04, // client id length
 				0x6d, 0x71, 0x74, 0x74, // client id
 			},
-			test: func(t *testing.T, r *mqtt.Request, err error) {
+			test: func(t *testing.T, r *mqtt.Message, err error) {
 				require.NoError(t, err)
 
 				require.Equal(t, 16, r.Header.Size)
 
-				require.IsType(t, &mqtt.ConnectRequest{}, r.Message)
-				msg := r.Message.(*mqtt.ConnectRequest)
+				require.IsType(t, &mqtt.ConnectRequest{}, r.Payload)
+				msg := r.Payload.(*mqtt.ConnectRequest)
 
 				require.Equal(t, "MQTT", msg.Protocol)
 				require.Equal(t, byte(4), msg.Version)
@@ -67,13 +67,13 @@ func TestConnect_ReadRequest(t *testing.T) {
 				0x00, 0x03, // message length
 				'b', 'a', 'r', // message
 			},
-			test: func(t *testing.T, r *mqtt.Request, err error) {
+			test: func(t *testing.T, r *mqtt.Message, err error) {
 				require.NoError(t, err)
 
 				require.Equal(t, 26, r.Header.Size)
 
-				require.IsType(t, &mqtt.ConnectRequest{}, r.Message)
-				msg := r.Message.(*mqtt.ConnectRequest)
+				require.IsType(t, &mqtt.ConnectRequest{}, r.Payload)
+				msg := r.Payload.(*mqtt.ConnectRequest)
 
 				require.Equal(t, "MQTT", msg.Protocol)
 				require.Equal(t, byte(4), msg.Version)
@@ -98,7 +98,7 @@ func TestConnect_ReadRequest(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			r := &mqtt.Request{}
+			r := &mqtt.Message{}
 			err := r.Read(bytes.NewReader(tc.in))
 			tc.test(t, r, err)
 		})
@@ -113,21 +113,26 @@ func TestConnect(t *testing.T) {
 	}{
 		{
 			name: "simple connect",
-			handler: mqtt.HandlerFunc(func(rw mqtt.ResponseWriter, req *mqtt.Request) {
-				rw.Write(mqtt.CONNACK, &mqtt.ConnectResponse{
-					SessionPresent: false,
-					ReturnCode:     mqtt.Accepted,
+			handler: mqtt.HandlerFunc(func(w mqtt.MessageWriter, req *mqtt.Message) {
+				w.Write(&mqtt.Message{
+					Header: &mqtt.Header{
+						Type: mqtt.CONNACK,
+					},
+					Payload: &mqtt.ConnectResponse{
+						SessionPresent: false,
+						ReturnCode:     mqtt.Accepted,
+					},
 				})
 			}),
 			test: func(t *testing.T, s *mqtt.Server) {
 				c := mqtttest.NewClient(s.Addr)
 				defer c.Close()
-				r := &mqtt.Request{
+				r := &mqtt.Message{
 					// The DUP, QoS, and RETAIN flags are not used in the CONNECT message.
 					Header: &mqtt.Header{
 						Type: mqtt.CONNECT,
 					},
-					Message: &mqtt.ConnectRequest{
+					Payload: &mqtt.ConnectRequest{
 						Protocol:     "MQTT",
 						Version:      4,
 						CleanSession: true,

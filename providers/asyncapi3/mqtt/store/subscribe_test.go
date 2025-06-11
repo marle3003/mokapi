@@ -24,14 +24,14 @@ func TestSubscribe(t *testing.T) {
 				client := mqtt.ClientFromContext(ctx)
 				client.ClientId = "foo"
 
-				s.ServeMessage(rr, &mqtt.Request{
-					Message: &mqtt.ConnectRequest{
+				s.ServeMessage(rr, &mqtt.Message{
+					Payload: &mqtt.ConnectRequest{
 						ClientId: client.ClientId,
 					},
 				})
 
-				s.ServeMessage(rr, &mqtt.Request{
-					Message: &mqtt.SubscribeRequest{
+				s.ServeMessage(rr, &mqtt.Message{
+					Payload: &mqtt.SubscribeRequest{
 						MessageId: 11,
 						Topics: []mqtt.SubscribeTopic{
 							{Name: "foo"},
@@ -39,7 +39,7 @@ func TestSubscribe(t *testing.T) {
 					},
 					Context: ctx,
 				})
-				res := rr.Message.(*mqtt.SubscribeResponse)
+				res := rr.Message.Payload.(*mqtt.SubscribeResponse)
 				require.Equal(t, int16(11), res.MessageId)
 				require.Len(t, res.TopicQoS, 1)
 				require.Equal(t, byte(0), res.TopicQoS[0])
@@ -59,8 +59,8 @@ func TestSubscribe(t *testing.T) {
 					require.NotNil(t, r, "Test passed, panic was caught")
 				}()
 
-				s.ServeMessage(rr, &mqtt.Request{
-					Message: &mqtt.SubscribeRequest{
+				s.ServeMessage(rr, &mqtt.Message{
+					Payload: &mqtt.SubscribeRequest{
 						MessageId: 11,
 						Topics: []mqtt.SubscribeTopic{
 							{Name: "foo"},
@@ -80,6 +80,8 @@ func TestSubscribe(t *testing.T) {
 			t.Parallel()
 
 			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
+			defer s.Close()
+
 			tc.test(t, s)
 		})
 	}

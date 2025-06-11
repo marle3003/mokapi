@@ -36,6 +36,8 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 	obj.Set("encoding", f.Marshal)
 	obj.Set("date", f.Date)
 	obj.Set("marshal", f.Marshal)
+	obj.Set("patch", patch)
+	obj.Set("Delete", Delete)
 }
 
 func (m *Module) Sleep(i interface{}) {
