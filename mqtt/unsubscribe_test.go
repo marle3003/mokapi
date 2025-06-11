@@ -14,7 +14,7 @@ func TestUnsubscribe_ReadRequest(t *testing.T) {
 	testcases := []struct {
 		name string
 		in   []byte
-		test func(t *testing.T, r *mqtt.Request, err error)
+		test func(t *testing.T, r *mqtt.Message, err error)
 	}{
 		{
 			name: "unsubscribe from foo",
@@ -25,13 +25,13 @@ func TestUnsubscribe_ReadRequest(t *testing.T) {
 				0x00, 0x03, // topic length
 				'f', 'o', 'o', // topic
 			},
-			test: func(t *testing.T, r *mqtt.Request, err error) {
+			test: func(t *testing.T, r *mqtt.Message, err error) {
 				require.NoError(t, err)
 
 				require.Equal(t, 7, r.Header.Size)
 
-				require.IsType(t, &mqtt.UnsubscribeRequest{}, r.Message)
-				msg := r.Message.(*mqtt.UnsubscribeRequest)
+				require.IsType(t, &mqtt.UnsubscribeRequest{}, r.Payload)
+				msg := r.Payload.(*mqtt.UnsubscribeRequest)
 
 				require.Len(t, msg.Topics, 1)
 				require.Equal(t, "foo", msg.Topics[0])
@@ -45,7 +45,7 @@ func TestUnsubscribe_ReadRequest(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			r := &mqtt.Request{}
+			r := &mqtt.Message{}
 			err := r.Read(bytes.NewReader(tc.in))
 			tc.test(t, r, err)
 		})
@@ -60,19 +60,24 @@ func TestUnsubscribe(t *testing.T) {
 	}{
 		{
 			name: "unsubscribe from foo",
-			handler: mqtt.HandlerFunc(func(rw mqtt.ResponseWriter, req *mqtt.Request) {
-				rw.Write(mqtt.UNSUBACK, &mqtt.UnsubscribeResponse{
-					MessageId: 10,
+			handler: mqtt.HandlerFunc(func(rw mqtt.MessageWriter, req *mqtt.Message) {
+				rw.Write(&mqtt.Message{
+					Header: &mqtt.Header{
+						Type: mqtt.UNSUBACK,
+					},
+					Payload: &mqtt.UnsubscribeResponse{
+						MessageId: 10,
+					},
 				})
 			}),
 			test: func(t *testing.T, s *mqtt.Server) {
 				c := mqtttest.NewClient(s.Addr)
 				defer c.Close()
-				r := &mqtt.Request{
+				r := &mqtt.Message{
 					Header: &mqtt.Header{
 						Type: mqtt.UNSUBSCRIBE,
 					},
-					Message: &mqtt.UnsubscribeRequest{
+					Payload: &mqtt.UnsubscribeRequest{
 						MessageId: 10,
 						Topics:    []string{"foo"},
 					},
@@ -80,7 +85,7 @@ func TestUnsubscribe(t *testing.T) {
 				res, err := c.Send(r)
 				require.NoError(t, err)
 				require.Equal(t, mqtt.UNSUBACK, res.Header.Type)
-				msg := res.Message.(*mqtt.UnsubscribeResponse)
+				msg := res.Payload.(*mqtt.UnsubscribeResponse)
 				require.Equal(t, int16(10), msg.MessageId)
 			},
 		},

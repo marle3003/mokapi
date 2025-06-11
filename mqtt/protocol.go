@@ -29,11 +29,6 @@ type Header struct {
 	Retain bool
 }
 
-type Message interface {
-	Write(e *Encoder)
-	Read(*Decoder)
-}
-
 func readHeader(d *Decoder) *Header {
 	h := &Header{}
 
@@ -63,41 +58,6 @@ func (h *Header) with(messageType Type, size int) *Header {
 		QoS:    h.QoS,
 		Retain: h.Retain,
 	}
-}
-
-func ReadResponse(r io.Reader) (*Response, error) {
-	d := NewDecoder(r, 5)
-	res := &Response{
-		Header: readHeader(d),
-	}
-	if d.err != nil {
-		return nil, d.err
-	}
-
-	switch res.Header.Type {
-	case CONNACK:
-		c := &ConnectResponse{}
-		c.Read(d)
-		res.Message = c
-	case PUBLISH:
-		p := &PublishRequest{}
-		p.Read(d)
-		res.Message = p
-	case PUBACK:
-		p := &PublishResponse{}
-		p.Read(d)
-		res.Message = p
-	case SUBACK:
-		s := &SubscribeResponse{}
-		s.Read(d)
-		res.Message = s
-	case UNSUBACK:
-		u := &UnsubscribeResponse{}
-		u.Read(d)
-		res.Message = u
-	}
-
-	return res, d.err
 }
 
 type Code struct {

@@ -20,10 +20,10 @@ func TestConnect(t *testing.T) {
 			name: "missing clientId",
 			test: func(t *testing.T, s *store.Store) {
 				rr := mqtttest.NewRecorder()
-				s.ServeMessage(rr, &mqtt.Request{
-					Message: &mqtt.ConnectRequest{},
+				s.ServeMessage(rr, &mqtt.Message{
+					Payload: &mqtt.ConnectRequest{},
 				})
-				res := rr.Message.(*mqtt.ConnectResponse)
+				res := rr.Message.Payload.(*mqtt.ConnectResponse)
 				require.Equal(t, mqtt.ErrIdentifierRejected, res.ReturnCode)
 			},
 		},
@@ -31,12 +31,12 @@ func TestConnect(t *testing.T) {
 			name: "clientId too long",
 			test: func(t *testing.T, s *store.Store) {
 				rr := mqtttest.NewRecorder()
-				s.ServeMessage(rr, &mqtt.Request{
-					Message: &mqtt.ConnectRequest{
+				s.ServeMessage(rr, &mqtt.Message{
+					Payload: &mqtt.ConnectRequest{
 						ClientId: strings.Repeat("a", 24),
 					},
 				})
-				res := rr.Message.(*mqtt.ConnectResponse)
+				res := rr.Message.Payload.(*mqtt.ConnectResponse)
 				require.Equal(t, mqtt.ErrIdentifierRejected, res.ReturnCode)
 			},
 		},
@@ -44,12 +44,12 @@ func TestConnect(t *testing.T) {
 			name: "no session",
 			test: func(t *testing.T, s *store.Store) {
 				rr := mqtttest.NewRecorder()
-				s.ServeMessage(rr, &mqtt.Request{
-					Message: &mqtt.ConnectRequest{
+				s.ServeMessage(rr, &mqtt.Message{
+					Payload: &mqtt.ConnectRequest{
 						ClientId: "foo",
 					},
 				})
-				res := rr.Message.(*mqtt.ConnectResponse)
+				res := rr.Message.Payload.(*mqtt.ConnectResponse)
 				require.False(t, res.SessionPresent, "SessionPresent should be false")
 			},
 		},
@@ -57,20 +57,20 @@ func TestConnect(t *testing.T) {
 			name: "with session",
 			test: func(t *testing.T, s *store.Store) {
 				rr := mqtttest.NewRecorder()
-				s.ServeMessage(rr, &mqtt.Request{
-					Message: &mqtt.ConnectRequest{
+				s.ServeMessage(rr, &mqtt.Message{
+					Payload: &mqtt.ConnectRequest{
 						ClientId: "foo",
 					},
 				})
-				res := rr.Message.(*mqtt.ConnectResponse)
+				res := rr.Message.Payload.(*mqtt.ConnectResponse)
 				require.False(t, res.SessionPresent, "SessionPresent should be false")
 
-				s.ServeMessage(rr, &mqtt.Request{
-					Message: &mqtt.ConnectRequest{
+				s.ServeMessage(rr, &mqtt.Message{
+					Payload: &mqtt.ConnectRequest{
 						ClientId: "foo",
 					},
 				})
-				res = rr.Message.(*mqtt.ConnectResponse)
+				res = rr.Message.Payload.(*mqtt.ConnectResponse)
 				require.True(t, res.SessionPresent, "SessionPresent should be true")
 			},
 		},
@@ -78,21 +78,21 @@ func TestConnect(t *testing.T) {
 			name: "clean session",
 			test: func(t *testing.T, s *store.Store) {
 				rr := mqtttest.NewRecorder()
-				s.ServeMessage(rr, &mqtt.Request{
-					Message: &mqtt.ConnectRequest{
+				s.ServeMessage(rr, &mqtt.Message{
+					Payload: &mqtt.ConnectRequest{
 						ClientId: "foo",
 					},
 				})
-				res := rr.Message.(*mqtt.ConnectResponse)
+				res := rr.Message.Payload.(*mqtt.ConnectResponse)
 				require.False(t, res.SessionPresent, "SessionPresent should be false")
 
-				s.ServeMessage(rr, &mqtt.Request{
-					Message: &mqtt.ConnectRequest{
+				s.ServeMessage(rr, &mqtt.Message{
+					Payload: &mqtt.ConnectRequest{
 						CleanSession: true,
 						ClientId:     "foo",
 					},
 				})
-				res = rr.Message.(*mqtt.ConnectResponse)
+				res = rr.Message.Payload.(*mqtt.ConnectResponse)
 				require.False(t, res.SessionPresent, "SessionPresent should be false")
 			},
 		},
@@ -100,15 +100,15 @@ func TestConnect(t *testing.T) {
 			name: "unknown topic",
 			test: func(t *testing.T, s *store.Store) {
 				rr := mqtttest.NewRecorder()
-				s.ServeMessage(rr, &mqtt.Request{
-					Message: &mqtt.ConnectRequest{
+				s.ServeMessage(rr, &mqtt.Message{
+					Payload: &mqtt.ConnectRequest{
 						ClientId: "foo",
 						WillFlag: true,
 						Topic:    "foo",
 						Message:  []byte("bar"),
 					},
 				})
-				res := rr.Message.(*mqtt.ConnectResponse)
+				res := rr.Message.Payload.(*mqtt.ConnectResponse)
 				require.Equal(t, mqtt.ErrUnspecifiedError, res.ReturnCode)
 			},
 		},
@@ -118,15 +118,15 @@ func TestConnect(t *testing.T) {
 				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo")))
 
 				rr := mqtttest.NewRecorder()
-				s.ServeMessage(rr, &mqtt.Request{
-					Message: &mqtt.ConnectRequest{
+				s.ServeMessage(rr, &mqtt.Message{
+					Payload: &mqtt.ConnectRequest{
 						ClientId: "foo",
 						WillFlag: true,
 						Topic:    "foo",
 						Message:  []byte("bar"),
 					},
 				})
-				res := rr.Message.(*mqtt.ConnectResponse)
+				res := rr.Message.Payload.(*mqtt.ConnectResponse)
 				require.Equal(t, mqtt.Accepted, res.ReturnCode)
 			},
 		},
@@ -139,6 +139,8 @@ func TestConnect(t *testing.T) {
 			t.Parallel()
 
 			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
+			defer s.Close()
+
 			tc.test(t, s)
 		})
 	}

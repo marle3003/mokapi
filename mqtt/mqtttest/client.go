@@ -28,22 +28,23 @@ func (c *Client) Close() {
 	c.conn = nil
 }
 
-func (c *Client) Send(r *mqtt.Request) (*mqtt.Response, error) {
+func (c *Client) Send(m *mqtt.Message) (*mqtt.Message, error) {
 	if err := c.ensureConnection(); err != nil {
 		return nil, err
 	}
 
-	err := r.Write(c.conn)
+	err := m.Write(c.conn)
 	if err != nil {
 		return nil, err
 	}
 
 	c.conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
-	res, err := mqtt.ReadResponse(c.conn)
+	res := &mqtt.Message{}
+	err = res.Read(c.conn)
 	return res, err
 }
 
-func (c *Client) SendNoResponse(r *mqtt.Request) error {
+func (c *Client) SendNoResponse(r *mqtt.Message) error {
 	if err := c.ensureConnection(); err != nil {
 		return err
 	}
@@ -51,12 +52,13 @@ func (c *Client) SendNoResponse(r *mqtt.Request) error {
 	return r.Write(c.conn)
 }
 
-func (c *Client) Recv() (*mqtt.Response, error) {
+func (c *Client) Recv() (*mqtt.Message, error) {
 	if err := c.ensureConnection(); err != nil {
 		return nil, err
 	}
 
-	res, err := mqtt.ReadResponse(c.conn)
+	res := &mqtt.Message{}
+	err := res.Read(c.conn)
 	return res, err
 }
 

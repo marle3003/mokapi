@@ -15,17 +15,17 @@ import (
 var ErrServerClosed = errors.New("mqtt: Server closed")
 
 type Handler interface {
-	ServeMessage(rw ResponseWriter, req *Request)
+	ServeMessage(rw MessageWriter, m *Message)
 }
 
-type HandlerFunc func(rw ResponseWriter, req *Request)
+type HandlerFunc func(rw MessageWriter, m *Message)
 
-func (f HandlerFunc) ServeMessage(rw ResponseWriter, req *Request) {
-	f(rw, req)
+func (f HandlerFunc) ServeMessage(rw MessageWriter, m *Message) {
+	f(rw, m)
 }
 
-type ResponseWriter interface {
-	Write(messageType Type, msg Message)
+type MessageWriter interface {
+	Write(msg *Message) error
 }
 
 type Server struct {
@@ -89,7 +89,7 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 	client.Addr = conn.RemoteAddr().String()
 	client.conn = conn
 	for {
-		r := &Request{Context: ctx}
+		r := &Message{Context: ctx}
 		err := r.Read(conn)
 		if err != nil {
 			switch {
@@ -101,9 +101,8 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 			}
 		}
 
-		res := &response{
-			h:   r.Header,
-			ctx: client,
+		res := &messageWriter{
+			conn: conn,
 		}
 
 		s.Handler.ServeMessage(res, r)
@@ -168,4 +167,12 @@ func (s *Server) trackConn(conn net.Conn) context.Context {
 
 	s.activeConn[conn] = ctx
 	return ctx
+}
+
+type messageWriter struct {
+	conn net.Conn
+}
+
+func (mw messageWriter) Write(msg *Message) error {
+	return msg.Write(mw.conn)
 }

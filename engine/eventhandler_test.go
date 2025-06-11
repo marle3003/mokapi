@@ -40,8 +40,7 @@ export default () => {
 export default () => {
 	on('http', () => {
 		console.log('a log message from event handler')
-		return true
-	})
+	}, { track: true })
 }
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
@@ -61,8 +60,7 @@ export default () => {
 export default () => {
 	on('http', () => {
 		console.warn('a log message from event handler')
-		return true
-	})
+	}, { track: true })
 }
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
@@ -82,8 +80,7 @@ export default () => {
 export default () => {
 	on('http', () => {
 		console.warn('a log message from event handler')
-		return true
-	})
+	}, { track: true })
 }
 `,
 			logger: &enginetest.Logger{IsLevelEnabledFunc: func(level string) bool { return false }},
@@ -101,8 +98,7 @@ export default () => {
 			script: `import { on } from 'mokapi'
 export default () => {
 	on('http', (msg) => {
-		return true
-	})
+	}, { track: true })
 }
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
@@ -121,11 +117,9 @@ export default () => {
 export default () => {
 	on('http', (req) => {
 		req.method = 'GET'
-		return true
 	})
 	on('http', (req) => {
 		req.method = 'DELETE'
-		return true
 	})
 }
 `,
