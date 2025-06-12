@@ -139,6 +139,50 @@ func TestModule_Patch(t *testing.T) {
 				r.Equal(t, map[string]any{}, v.Export())
 			},
 		},
+		{
+			name: "patch array",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				v, err := vm.RunString(`
+					const m = require('mokapi')
+					m.patch([1,2,3,4], [1,3,4])
+				`)
+				r.NoError(t, err)
+				r.Equal(t, []interface{}{int64(1), int64(3), int64(4), int64(4)}, v.Export())
+			},
+		},
+		{
+			name: "patch array has more items",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				v, err := vm.RunString(`
+					const m = require('mokapi')
+					m.patch([1,2], [1,2,3,4])
+				`)
+				r.NoError(t, err)
+				r.Equal(t, []interface{}{int64(1), int64(2), int64(3), int64(4)}, v.Export())
+			},
+		},
+		{
+			name: "array with delete",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				v, err := vm.RunString(`
+					const m = require('mokapi')
+					m.patch([1,2], [1,m.Delete])
+				`)
+				r.NoError(t, err)
+				r.Equal(t, []interface{}{int64(1)}, v.Export())
+			},
+		},
+		{
+			name: "array with undefined",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				v, err := vm.RunString(`
+					const m = require('mokapi')
+					m.patch([1,2], [undefined])
+				`)
+				r.NoError(t, err)
+				r.Equal(t, []interface{}{int64(1), int64(2)}, v.Export())
+			},
+		},
 	}
 
 	t.Parallel()
