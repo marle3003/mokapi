@@ -146,7 +146,6 @@ func TestModule_On(t *testing.T) {
 					const m = require('mokapi')
 					m.on('http', async (p) => {
 						p.msg = await getMessage();
-						return true;
 					})
 
 					let getMessage = async () => {

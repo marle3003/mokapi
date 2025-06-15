@@ -146,6 +146,37 @@ func TestModule_Every(t *testing.T) {
 				r.EqualError(t, err, "unexpected type for skipImmediateFirstRun: String at mokapi/js/mokapi.(*Module).Every-fm (native)")
 			},
 		},
+		{
+			name: "async event handler",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var f func()
+				host.EveryFunc = func(every string, do func(), opt common.JobOptions) {
+					f = do
+				}
+
+				_, err := vm.RunString(`
+					const m = require('mokapi')
+					let result;
+					m.every('1m', async () => {
+						result = await getMessage();
+					})
+
+					let getMessage = async () => {
+						return new Promise(async (resolve, reject) => {
+						  setTimeout(() => {
+							resolve('foo');
+						  }, 200);
+						});
+					}
+				`)
+				r.NoError(t, err)
+				f()
+				r.NoError(t, err)
+				v, err := vm.RunString("result")
+				r.NoError(t, err)
+				r.Equal(t, "foo", v.Export())
+			},
+		},
 	}
 
 	t.Parallel()
