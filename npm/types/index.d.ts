@@ -122,7 +122,7 @@ export interface EventHandler {
  *   })
  * }
  */
-export type HttpEventHandler = (request: HttpRequest, response: HttpResponse) => void | Promise<void>;
+export type HttpEventHandler = (request: HttpRequest, response: HttpResponse) => void;
 
 /**
  * HttpRequest is an object used by HttpEventHandler that contains request-specific
@@ -204,7 +204,7 @@ export interface Url {
  *   })
  * }
  */
-export type KafkaEventHandler = (message: KafkaEventMessage) => void | Promise<void>;
+export type KafkaEventHandler = (message: KafkaEventMessage) => void;
 
 /**
  * KafkaEventMessage is an object used by KafkaEventHandler that contains Kafka-specific message data.
@@ -243,7 +243,7 @@ export interface KafkaEventMessage {
  *   })
  * }
  */
-export type LdapEventHandler = (request: LdapSearchRequest, response: LdapSearchResponse) => void | Promise<void>;
+export type LdapEventHandler = (request: LdapSearchRequest, response: LdapSearchResponse) => void;
 
 /**
  * LdapSearchRequest is an object used by LdapEventHandler that contains request-specific data.
@@ -343,7 +343,7 @@ export enum LdapResultStatus {
     SizeLimitExceeded = 4,
 }
 
-export type SmtpEventHandler = (record: SmtpEventMessage) => void | Promise<void>;
+export type SmtpEventHandler = (record: SmtpEventMessage) => void;
 
 export interface SmtpEventMessage {
     server: string;

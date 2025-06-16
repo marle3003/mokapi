@@ -277,26 +277,6 @@ func TestScript_Mokapi_Cron(t *testing.T) {
 				r.NoError(t, err)
 			},
 		},
-		{
-			name: "run function",
-			test: func(t *testing.T, host *enginetest.Host) {
-				host.CronFunc = func(every string, do func(), opt common.JobOptions) {
-					do()
-				}
-				s, err := jstest.New(jstest.WithSource(
-					`import { cron } from 'mokapi'
-						 export default function() {
-							let counter = 1
-						  	cron('0/1 0 0 ? * * *', function() {counter++}, {tags: {foo: 'bar'}})
-							return counter
-						 }`),
-					js.WithHost(host))
-				r.NoError(t, err)
-				v, err := s.RunDefault()
-				r.NoError(t, err)
-				r.Equal(t, int64(2), v.ToInteger())
-			},
-		},
 	}
 
 	t.Parallel()

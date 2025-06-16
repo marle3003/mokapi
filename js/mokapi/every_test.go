@@ -147,7 +147,7 @@ func TestModule_Every(t *testing.T) {
 			},
 		},
 		{
-			name: "async event handler",
+			name: "async handler",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var f func()
 				host.EveryFunc = func(every string, do func(), opt common.JobOptions) {
