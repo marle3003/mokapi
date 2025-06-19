@@ -169,7 +169,7 @@ func (p *parser) parse(filter string) (predicate, int, error) {
 	var v *bytes.Buffer
 	var op int
 	for pos := 0; pos < len(filter); pos++ {
-		c := rune(filter[pos])
+		c := filter[pos]
 		switch {
 		case c == '(':
 			v = bytes.NewBuffer(nil)
@@ -206,7 +206,7 @@ func (p *parser) parse(filter string) (predicate, int, error) {
 			return or(fs), pos + n + 2, err
 
 		default:
-			v.WriteRune(c)
+			v.WriteByte(c)
 		}
 	}
 
