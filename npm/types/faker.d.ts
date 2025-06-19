@@ -36,7 +36,7 @@ export function findByName(name: string): Node;
 /**
  * The name of the root node in the faker tree.
  */
-export const Root_Name = "root";
+export const ROOT_NAME = "root";
 
 /**
  * Represents a node in the faker tree.
@@ -63,7 +63,54 @@ export interface Node {
     /**
      * The child nodes of this node.
      */
-    children: Node[];
+    children: Array<Node | AddNode>;
+
+    /**
+     * Generates a fake value based on the given request.
+     *
+     * @param r r - The request describing the value to generate.
+     * @returns A generated fake value.
+     *
+     * @example
+     * export default function() {
+     *   const frequencyItems = ['never', 'daily', 'weekly', 'monthly', 'yearly']
+     *   const node = findByName(ROOT_NAME)
+     *   node.children.unshift({
+     *     name: 'Frequency',
+     *     attributes: [ 'frequency' ]
+     *     fake: (r) => {
+     *       return frequencyItems[Math.floor(Math.random()*frequencyItems.length)]
+     *     }
+     *   })
+     *   console.log(fake({ properties: { frequency } }))
+     *   // Expected output: an object with a frequency attribute containing a random value of frequency
+     * }
+     */
+    fake: (r: Request) => any;
+}
+
+export interface AddNode {
+    /**
+     * The unique name of the node.
+     */
+    name: string;
+
+    /**
+     * Attributes associated with this node.
+     * These will be used for matching path or schema properties.
+     */
+    attributes?: string[];
+
+    /**
+     * A weight that determines how likely this node is to be selected,
+     * if multiple nodes match.
+     */
+    weight?: number;
+
+    /**
+     * The child nodes of this node.
+     */
+    children?: Array<Node | AddNode>;
 
     /**
      * Generates a fake value based on the given request.

@@ -8,13 +8,27 @@ import (
 	"reflect"
 )
 
-func (m *Module) Cron(expr string, do func(), args goja.Value) (int, error) {
+func (m *Module) Cron(expr string, do goja.Value, args goja.Value) (int, error) {
 	options, err := getJobOptions(m.vm, args)
 	if err != nil {
 		panic(m.vm.ToValue(err.Error()))
 	}
 
-	return m.host.Cron(expr, do, options)
+	f := func() {
+		_, err := m.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
+			call, _ := goja.AssertFunction(do)
+			v, err := call(goja.Undefined())
+			if err != nil {
+				return nil, err
+			}
+			return v, nil
+		})
+		if err != nil {
+			panic(m.vm.ToValue(err.Error()))
+		}
+	}
+
+	return m.host.Cron(expr, f, options)
 }
 
 func getJobOptions(vm *goja.Runtime, opt goja.Value) (common.JobOptions, error) {

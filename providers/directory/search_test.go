@@ -1,7 +1,9 @@
 package directory_test
 
 import (
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
@@ -10,6 +12,7 @@ import (
 	"mokapi/ldap/ldaptest"
 	"mokapi/providers/directory"
 	"mokapi/try"
+	"strings"
 	"testing"
 )
 
@@ -220,6 +223,26 @@ func TestSearch_Schema(t *testing.T) {
 				require.Len(t, res.Results, 1)
 			},
 		},
+		{
+			name:  "ldap filter on binary data using hex values >= 128",
+			input: `{ "files": [ "./users.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/users.ldif": {Raw: []byte("dn: cn=user\nobjectSid:: AQUAAAAAAAUVAAAAF8sUcR3r8QcekDXQw9wAAA==")},
+			}},
+			test: func(t *testing.T, h ldap.Handler, err error) {
+				require.NoError(t, err)
+
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					Scope: ldap.ScopeWholeSubtree,
+					//Filter: fmt.Sprintf("(objectSid=%s*)", string([]byte{0x01, 0x05, 0x0, 0x0, 0x0, 0x0, 0x0, 0x05, 0x15, 0x0, 0x0, 0x17, 0xCB})),
+					Filter: fmt.Sprintf("(objectSid=%s*)", unescapeLDAPBytes("\\01\\05\\00\\00\\00\\00\\00\\05\\15\\00\\00\\00\\17\\CB")),
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 1)
+			},
+		},
 	}
 
 	t.Parallel()
@@ -341,4 +364,17 @@ func TestSearch(t *testing.T) {
 			}
 		})
 	}
+}
+
+func unescapeLDAPBytes(s string) string {
+	// Remove any surrounding quotes if needed (optional)
+	s = strings.TrimSpace(s)
+
+	// Remove all backslashes and parse pairs
+	s = strings.ReplaceAll(s, "\\", "")
+	b, err := hex.DecodeString(s)
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
 }
