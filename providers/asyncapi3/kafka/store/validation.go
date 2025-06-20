@@ -170,7 +170,7 @@ func (mv *messageValidator) Validate(record *kafka.Record) (*KafkaLog, error) {
 			return r, err
 		} else {
 			b, _ := json.Marshal(k)
-			r.Message.Value = string(b)
+			r.Key.Value = string(b)
 		}
 	} else {
 		r.Key.Binary = kafka.Read(record.Key)
