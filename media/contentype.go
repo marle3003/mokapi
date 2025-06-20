@@ -3,6 +3,7 @@ package media
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"mime"
 	"reflect"
 	"strconv"
 	"strings"
@@ -22,32 +23,19 @@ type ContentType struct {
 
 func ParseContentType(s string) ContentType {
 	c := ContentType{raw: s, Parameters: make(map[string]string), Q: 1.0}
-	a := strings.Split(s, ";")
-	m := strings.Split(a[0], "/")
-	c.Type = strings.ToLower(strings.TrimSpace(m[0]))
-	if len(m) > 1 {
-		c.Subtype = strings.ToLower(strings.TrimSpace(m[1]))
-	}
-	for _, p := range a[1:] {
-		kv := strings.Split(p, "=")
-		switch kv[0] {
-		case "q":
-			if len(kv) > 1 {
-				var err error
-				if c.Q, err = strconv.ParseFloat(kv[1], 64); err != nil {
-					log.Debugf("invalid q parameter in %v", s)
-					c.Q = 1.0
-				}
-			}
-		default:
-			if len(kv) > 1 {
-				c.Parameters[strings.TrimSpace(kv[0])] = strings.TrimSpace(kv[1])
-			} else {
-				c.Parameters[kv[0]] = ""
-			}
+	c.Type, c.Parameters, _ = mime.ParseMediaType(s)
+	if q, ok := c.Parameters["q"]; ok {
+		var err error
+		if c.Q, err = strconv.ParseFloat(q, 64); err != nil {
+			log.Debugf("invalid q parameter in %v", s)
+			c.Q = 1.0
 		}
 	}
-
+	t := strings.Split(c.Type, "/")
+	if len(t) > 1 {
+		c.Type = strings.TrimSpace(t[0])
+		c.Subtype = strings.TrimSpace(t[1])
+	}
 	return c
 }
 
