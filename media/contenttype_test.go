@@ -68,6 +68,15 @@ func TestParseContentType(t *testing.T) {
 				require.False(t, ct.IsRange())
 			},
 		},
+		{
+			s: `application/xml;boundary="foo"`,
+			validate: func(t *testing.T, ct ContentType) {
+				require.Equal(t, "application", ct.Type)
+				require.Equal(t, "xml", ct.Subtype)
+				require.Equal(t, "foo", ct.Parameters["boundary"])
+				require.False(t, ct.IsRange())
+			},
+		},
 	}
 
 	for _, testcase := range testcases {
