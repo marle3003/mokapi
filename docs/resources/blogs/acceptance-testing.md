@@ -15,7 +15,7 @@ Among the various levels of testing, acceptance testing offers the most direct i
 
 ### The Nature of Acceptance Tests
 
-At its core, an **acceptance test** is an _executable specification_ of how a system should behave, written from a user’s perspective. It is not concerned with how the system is implemented, but with **what it does**—its behavior and its outcomes.
+At its core, an **acceptance test** is an *executable specification* of how a system should behave, written from a user’s perspective. It is not concerned with how the system is implemented, but with **what it does**—its behavior and its outcomes.
 
 While unit tests focus on individual components, acceptance tests focus on the system's intent. They clarify what should happen when a user interacts with the software under certain conditions.
 
@@ -23,11 +23,11 @@ When we get the level of abstraction right, acceptance tests become **clear, pre
 
 ### Solving Ambiguity and Ensuring Reproducibility
 
-One of the most difficult aspects of software development is not writing code—it is **understanding the problem clearly and expressing it precisely**. Programs are, after all, specifications of what we want the system to do. But unlike natural languages, which are rich in context and ambiguity, software requires **unambiguous clarity**.
+One of the most challenging aspects of software development is not writing code—it is **understanding the problem clearly and expressing it precisely**. Programs are, after all, specifications of what we want the system to do. But unlike natural languages, which are rich in context and ambiguity, software requires **unambiguous clarity**.
 
 This is where acceptance testing shines.
 
-By expressing requirements in an executable form, acceptance tests eliminate ambiguity. They define **exactly** what needs to happen. Rather than relying on vague documentation or human interpretation, developers, testers, and stakeholders can rely on **concrete, shared understanding**. The tests describe _behavior_, not implementation details, which makes them robust to changes in how the system is built, as long as it continues to behave as expected.
+By expressing requirements in an executable form, acceptance tests remove ambiguity. They define **exactly** what needs to happen. Rather than relying on vague documentation or human interpretation, developers, testers, and stakeholders can rely on **concrete, shared understanding**. The tests describe *behavior*, not implementation details, which makes them robust to changes in how the system is built, as long as it continues to behave as expected.
 
 Moreover, acceptance tests are **reproducible**. They can be run automatically, as often as needed, to ensure the software continues to meet its defined expectations. This reproducibility is crucial for modern CI pipelines, where tests are run continuously to catch regressions early
 
