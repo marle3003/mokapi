@@ -9,9 +9,9 @@ description: Discover how Mokapi simplifies acceptance testing with mock APIs fo
 
 ## Why Acceptance Testing
 
-**Software testing is not merely a box to check — it is a fundamental process to answer one critical question: _Is our software releasable?**
+**Software testing is not merely a box to check — it is a fundamental process to answer one critical question: Is our software releasable?**
 
-Software testing is not merely a box to check—it is a fundamental process to answer one critical question: **Is our software releasable?** Among the various levels of testing, acceptance testing offers the most direct insight into whether the software meets business and user expectations. It bridges the gap between the world of users and the inner workings of the code by turning expectations into **precise, executable checks** on system behavior.
+Among the various levels of testing, acceptance testing offers the most direct insight into whether the software meets business and user expectations. It bridges the gap between the world of users and the inner workings of the code by turning expectations into **precise, executable checks** on system behavior.
 
 ### The Nature of Acceptance Tests
 
