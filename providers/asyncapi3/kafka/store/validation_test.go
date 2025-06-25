@@ -76,8 +76,8 @@ func TestValidation(t *testing.T) {
 						asyncapi3test.WithKey(schematest.New("integer")),
 					),
 					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{
-						Partitions:          1,
 						KeySchemaValidation: false,
+						Partitions:          1,
 					}),
 				),
 			),
@@ -92,6 +92,44 @@ func TestValidation(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.Len(t, batch, 0)
+
+				e := events.GetEvents(events.NewTraits())
+				require.Len(t, e, 1)
+				require.Equal(t, []byte("foo"), e[0].Data.(*store.KafkaLog).Key.Binary)
+			},
+		},
+		{
+			name: "validating value and key",
+			cfg: asyncapi3test.NewConfig(
+				asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithMessage("foo",
+						asyncapi3test.WithPayload(schematest.New("string")),
+						asyncapi3test.WithKey(schematest.New("string")),
+					),
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{
+						KeySchemaValidation:   true,
+						ValueSchemaValidation: true,
+						Partitions:            1,
+					}),
+				),
+			),
+			test: func(t *testing.T, s *store.Store) {
+				p := s.Topic("foo").Partition(0)
+				_, batch, err := p.Write(kafka.RecordBatch{
+					Records: []*kafka.Record{
+						{
+							Key:   kafka.NewBytes([]byte("12")),
+							Value: kafka.NewBytes([]byte("foo")),
+						},
+					},
+				})
+				require.NoError(t, err)
+				require.Len(t, batch, 0)
+
+				e := events.GetEvents(events.NewTraits())
+				require.Len(t, e, 1)
+				require.Equal(t, `"12"`, e[0].Data.(*store.KafkaLog).Key.Value)
+				require.Equal(t, `"foo"`, e[0].Data.(*store.KafkaLog).Message.Value)
 			},
 		},
 		{
