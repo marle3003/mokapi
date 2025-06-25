@@ -5,7 +5,7 @@ description: Discover how Mokapi simplifies acceptance testing with mock APIs fo
 
 # Acceptance Testing with Mokapi: Focus on What Matters
 
-<img src="/acceptance-testing.png" alt="Example JavaScript code for Mokapi Scripts with annotated benefits of using dynamic API mocks">
+<img src="/acceptance-testing.png" alt="Diagram illustrating acceptance testing as executable specifications interacting with the backend and mocked external APIs using Mokapi.">
 
 ## Why Acceptance Testing
 
@@ -54,7 +54,7 @@ These limitations can make acceptance testing brittle and unreliable—unless yo
 
 That’s where Mokapi comes in. It lets you simulate realistic API behavior in a way that’s fast, accurate, and under your full control.
 
-![[Pasted image 20250624175135.png]]
+<img src="/acceptance-testing-mokapi.png" alt="Flow diagram showing how executable acceptance tests validate backend behavior with mocked APIs.">
 
 Acceptance testing becomes significantly more effective with the right tools—especially in complex environments with multiple APIs, microservices, and evolving interfaces. Mokapi was developed to address precisely these challenges. It provides a powerful, flexible, and specification-oriented approach to API simulation, enabling high-quality acceptance testing in a wide variety of scenarios.
 
