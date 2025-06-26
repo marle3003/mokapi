@@ -115,3 +115,8 @@ This example demonstrates how you can generate valid mock data that conforms to 
 By combining flexible mocks, specification validation, and a smart patching mechanism, **Mokapi makes acceptance testing more resilient, more focused, and easier to maintain**. It helps your team test confidently—whether you're building a new feature in isolation, validating complex integrations, or preparing for a production release.
 
 Mokapi doesn’t just enable acceptance testing—it makes it **practical, maintainable, and deeply aligned with your evolving system and its requirements**.
+
+## Ready to get started?
+
+Learn how to set up acceptance tests with Mokapi in your CI/CD pipeline:
+👉 Running Mokapi in a CI/CD Pipeline
