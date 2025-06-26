@@ -1,9 +1,16 @@
 ---
-title: "Acceptance Testing with Mokapi: Reliable Mock APIs for CI"
+title: "Acceptance Testing with Mokapi: Focus on What Matters"
 description: Discover how Mokapi simplifies acceptance testing with mock APIs for REST or Kafka. Stay aligned with specs, handle edge cases, and test with confidence.
 ---
 
 # Acceptance Testing with Mokapi: Focus on What Matters
+
+In today’s fast-paced development cycles, it’s crucial to ensure your software meets real user
+expectations. While unit tests validate internal code, acceptance testing answers the bigger question:
+Does the system behave as users expect? This post explores the value of acceptance tests and
+how Mokapi supports it by simulating APIs, validating specifications, and enabling robust,
+realistic test cases.
+
 
 <img src="/acceptance-testing.png" alt="Diagram illustrating acceptance testing as executable specifications interacting with the backend and mocked external APIs using Mokapi.">
 
