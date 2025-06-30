@@ -225,7 +225,7 @@ const filtered = computed(() => {
               </div>
 
             </li>
-            <li class="nav-item" style="line-height: 1.5;" v-if="route.query.search">
+            <li class="nav-item ps-5" style="line-height: 1.5;" v-if="route.query.search">
               <div class="d-flex align-items-center search-box">
                 <button class="btn" style="border-width: 1px; border-style: solid" data-bs-toggle="modal" data-bs-target="#search-docs">
                   <i class="bi bi-search ps-2"></i>
@@ -252,7 +252,7 @@ const filtered = computed(() => {
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header">
-          <h6 id="search-title" class="modal-title">Search</h6>
+          <h6 id="search-title" class="modal-title">Search docs</h6>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
@@ -262,7 +262,7 @@ const filtered = computed(() => {
               <input type="text" class="form-control" placeholder="Search" aria-label="Search" v-model="query">
             </div>
           </form>
-          <div class="list-group">
+          <div class="list-group search-results">
             <a v-for="item of filtered" :href="'/docs'+item.path" class="list-group-item list-group-item-action" aria-current="true">
               <p class="mb-1" style="font-size: 16px; font-weight: bold;">{{ item.name }}</p>
               <p class="mb-1" style="font-size: 14px">{{ item.description }}</p>
@@ -396,6 +396,9 @@ header .container-fluid {
 }
 .search-box .btn {
   font-size: 16px;
+}
+.search-results .list-group-item-action {
+  color: var(--color-text);
 }
 @media only screen and (max-width: 992px)  {
   .navbar-collapse {
