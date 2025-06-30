@@ -67,7 +67,9 @@ Acceptance testing becomes significantly more effective with the right tools—e
 
 ### Acceptance Testing Across Boundaries
 
-Mokapi enables you to perform acceptance tests across flexible system boundaries—whether you're focusing on a single microservice or validating your entire architecture—by mocking the APIs they depend on.
+Mokapi makes acceptance testing easier across flexible system boundaries—whether you're focusing on a single microservice or validating your entire architecture—by mocking the APIs they depend on.
+
+<img src="/acceptance-testing-boundaries-mokapi.png" alt="Diagram illustrating flexible acceptance testing boundaries with Mokapi. Shows how tests can target a single microservice or span across multiple services by mocking dependent external APIs.">
 
 ### Powerful Flexibility for Real-World Scenarios
 
