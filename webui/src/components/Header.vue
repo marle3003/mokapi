@@ -103,13 +103,14 @@ const files = inject<Record<string, string>>('files')!
 // Transform files into an array of { name, content }
 const documents = Object.entries(files).map(([path, content]) => {
   const doc = parseMarkdown(content)
+  const url = getUrlPath(path.replace('/src/assets/docs/', ''))
   return {
     name: doc.meta.title,
     description: doc.meta.description,
-    path: path.replace('.md', ''),
+    path: url,
     content: doc.content
   }
-})
+}).filter(doc => doc.path)
 
 const fuse = new Fuse(documents, {
   keys: ['name', 'content'],
@@ -122,13 +123,45 @@ const filtered = computed(() => {
     result = fuse.search(query.value).map(({ item }) => {
       return {
         name: item.name,
-        path: item.path,
+        params: item.path!.reduce((obj, value, index) => {
+          obj[`level${index+1}`] = formatParam(value)
+          return obj
+        }, {} as Record<string, string>),
         description: item.description
       }
     })
   }
   return result
 })
+
+function getUrlPath(filePath: string, cfg?: DocEntry): string[] | undefined {
+  if (cfg) {
+    if (!cfg.items) {
+      return undefined
+    }
+    for (const [key, item] of Object.entries(cfg.items)) {
+      if (item === filePath) {
+        return [key]
+      }
+      if (typeof item !== 'string') {
+        const path = getUrlPath(filePath, item)
+        if (path) {
+          path.unshift(key)
+          return path
+        }
+      }
+    }
+  } else {
+    for (const name in nav) {
+      const path = getUrlPath(filePath, nav[name])
+      if (path) {
+        path.unshift(name)
+        return path
+      }
+    }
+  }
+  return undefined
+}
 </script>
 
 <template>
@@ -248,7 +281,7 @@ const filtered = computed(() => {
   <div style="height: 4rem;visibility: hidden;"></div>
 
   <!-- Search Modal -->
-  <div class="modal fade" tabindex="-1" id="search-docs" aria-labelledby="search-title"  style="max-height: 80%;">
+  <div class="modal fade" tabindex="-1" id="search-docs" aria-labelledby="search-title" style="max-height: 80%;">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-header">
@@ -263,10 +296,10 @@ const filtered = computed(() => {
             </div>
           </form>
           <div class="list-group search-results">
-            <a v-for="item of filtered" :href="'/docs'+item.path" class="list-group-item list-group-item-action" aria-current="true">
+            <router-link v-for="item of filtered" :to="{ name: 'docs', params: item.params }" class="list-group-item list-group-item-action" data-bs-dismiss="modal">
               <p class="mb-1" style="font-size: 16px; font-weight: bold;">{{ item.name }}</p>
               <p class="mb-1" style="font-size: 14px">{{ item.description }}</p>
-            </a>
+            </router-link>
           </div>
         </div>
       </div>
