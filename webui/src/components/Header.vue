@@ -4,9 +4,12 @@ import { RouterLink, useRouter } from 'vue-router'
 import { onUnmounted, inject, ref, computed } from 'vue';
 import { useRoute } from 'vue-router';
 import { useFileResolver } from '@/composables/file-resolver';
+import Fuse from 'fuse.js';
+import { parseMarkdown } from '@/composables/markdown';
 
 const isDashboardEnabled = import.meta.env.VITE_DASHBOARD == 'true'
 let appInfo: AppInfoResponse | null = null
+const query = ref('')
 
 if (isDashboardEnabled) {
   appInfo = useAppInfo()
@@ -94,6 +97,38 @@ function showItem(name: string | number, item: DocConfig | DocEntry | string) {
     }
     return true
 }
+
+const files = inject<Record<string, string>>('files')!
+
+// Transform files into an array of { name, content }
+const documents = Object.entries(files).map(([path, content]) => {
+  const doc = parseMarkdown(content)
+  return {
+    name: doc.meta.title,
+    description: doc.meta.description,
+    path: path.replace('.md', ''),
+    content: doc.content
+  }
+})
+
+const fuse = new Fuse(documents, {
+  keys: ['name', 'content'],
+  threshold: 0.3,
+})
+
+const filtered = computed(() => {
+  let result: any[] = [];
+  if (query.value) {
+    result = fuse.search(query.value).map(({ item }) => {
+      return {
+        name: item.name,
+        path: item.path,
+        description: item.description
+      }
+    })
+  }
+  return result
+})
 </script>
 
 <template>
@@ -190,6 +225,14 @@ function showItem(name: string | number, item: DocConfig | DocEntry | string) {
               </div>
 
             </li>
+            <li class="nav-item" style="line-height: 1.5;" v-if="route.query.search">
+              <div class="d-flex align-items-center search-box">
+                <button class="btn" style="border-width: 1px; border-style: solid" data-bs-toggle="modal" data-bs-target="#search-docs">
+                  <i class="bi bi-search ps-2"></i>
+                  <span class="ps-1 pe-4">Search docs</span>
+                </button>
+              </div>
+            </li>
           </ul>
         </div>
 
@@ -203,6 +246,32 @@ function showItem(name: string | number, item: DocConfig | DocEntry | string) {
     </nav>
   </header>
   <div style="height: 4rem;visibility: hidden;"></div>
+
+  <!-- Search Modal -->
+  <div class="modal fade" tabindex="-1" id="search-docs" aria-labelledby="search-title"  style="max-height: 80%;">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 id="search-title" class="modal-title">Search</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form class="d-flex" role="search">
+            <div class="input-group mb-3">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" placeholder="Search" aria-label="Search" v-model="query">
+            </div>
+          </form>
+          <div class="list-group">
+            <a v-for="item of filtered" :href="'/docs'+item.path" class="list-group-item list-group-item-action" aria-current="true">
+              <p class="mb-1" style="font-size: 16px; font-weight: bold;">{{ item.name }}</p>
+              <p class="mb-1" style="font-size: 14px">{{ item.description }}</p>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -321,6 +390,12 @@ header .container-fluid {
 }
 .navbar button[aria-expanded=true] .bi-caret-down-fill {
   display: none;
+}
+.search-box {
+  padding: 7px;
+}
+.search-box .btn {
+  font-size: 16px;
 }
 @media only screen and (max-width: 992px)  {
   .navbar-collapse {
