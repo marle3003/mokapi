@@ -307,7 +307,7 @@ function navigateAndClose(params: Record<string, string>) {
 
   <!-- Search Modal -->
   <div class="modal fade" tabindex="-1" id="search-docs" aria-labelledby="search-title" style="max-height: 80%;">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable search-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h6 id="search-title" class="modal-title">Search docs</h6>
@@ -457,6 +457,10 @@ header .container-fluid {
 }
 .search-results .list-group-item-action {
   color: var(--color-text);
+}
+.search-dialog input:focus {
+  border-color: var(--bs-border-color);
+  box-shadow: none;
 }
 @media only screen and (max-width: 992px)  {
   .navbar-collapse {
