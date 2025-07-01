@@ -467,6 +467,7 @@ header .container-fluid {
 }
 .search-results .list-group-item-action {
   color: var(--color-text);
+  cursor: pointer;
 }
 .search-dialog input:focus {
   border-color: var(--bs-border-color);
