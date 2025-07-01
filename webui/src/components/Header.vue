@@ -11,6 +11,8 @@ import { Modal } from 'bootstrap';
 const isDashboardEnabled = import.meta.env.VITE_DASHBOARD == 'true'
 let appInfo: AppInfoResponse | null = null
 const query = ref('')
+const tooltipDark = 'Switch to light mode';
+const tooltipLight = 'Switch to dark mode';
 
 if (isDashboardEnabled) {
   appInfo = useAppInfo()
@@ -197,11 +199,11 @@ function navigateAndClose(params: Record<string, string>) {
         <div class="d-flex ms-auto align-items-center tools d-none">
             <a href="https://github.com/marle3003/mokapi" class="version pe-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
             <button class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
-              <i class="bi bi-search pe-2"></i>
+              <i class="bi bi-search pe-2" title="Search"></i>
             </button>
             <button class="btn icon">
-              <i class="bi bi-brightness-high-fill pe-2" @click="switchTheme" v-if="isDark"></i>
-              <i class="bi bi-moon-fill pe-2" @click="switchTheme" v-if="!isDark"></i>
+              <i class="bi bi-brightness-high-fill pe-2" @click="switchTheme" v-if="isDark" :title="tooltipDark"></i>
+              <i class="bi bi-moon-fill pe-2" @click="switchTheme" v-if="!isDark" :title="tooltipLight"></i>
             </button>
           </div>
         <button id="navbar-toggler" class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation" @click="visible=!visible">
@@ -294,11 +296,11 @@ function navigateAndClose(params: Record<string, string>) {
           <div class="d-flex ms-auto align-items-center tools">
             <a href="https://github.com/marle3003/mokapi" class="version me-lg-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
             <button class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
-              <i class="bi bi-search pe-2"></i>
+              <i class="bi bi-search pe-2" title="Search"></i>
             </button>
             <button class="btn icon">
-              <i class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark"></i>
-              <i class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark"></i>
+              <i class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark" :title="tooltipDark"></i>
+              <i class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark" :title="tooltipLight"></i>
             </button>
           </div>
         </div>
