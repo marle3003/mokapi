@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { useAppInfo, type AppInfoResponse } from '../composables/appInfo'
 import { RouterLink, useRouter } from 'vue-router'
-import { onUnmounted, inject, ref, computed } from 'vue';
+import { onUnmounted, inject, ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useFileResolver } from '@/composables/file-resolver';
 import Fuse from 'fuse.js';
 import { parseMarkdown } from '@/composables/markdown';
+import { Modal } from 'bootstrap';
 
 const isDashboardEnabled = import.meta.env.VITE_DASHBOARD == 'true'
 let appInfo: AppInfoResponse | null = null
@@ -162,6 +163,30 @@ function getUrlPath(filePath: string, cfg?: DocEntry): string[] | undefined {
   }
   return undefined
 }
+
+onMounted(() => {
+  const modalEl = document.getElementById('search-docs')!;
+  modalEl.addEventListener('shown.bs.modal', () => {
+    const inputs = modalEl.getElementsByTagName('input')
+    inputs[0].focus()
+  })
+})
+
+
+function navigateAndClose(params: Record<string, string>) {
+  if (document.activeElement instanceof HTMLElement) {
+    // remove focus
+    document.activeElement.blur();
+  }
+
+  const modalEl = document.getElementById('search-docs')!;
+  const modalInstance = Modal.getInstance(modalEl);
+  modalInstance?.hide();
+
+  modalEl.addEventListener('hidden.bs.modal', () => {
+    router.push({ name: 'docs', params: params });
+  }, { once: true });
+}
 </script>
 
 <template>
@@ -258,9 +283,9 @@ function getUrlPath(filePath: string, cfg?: DocEntry): string[] | undefined {
               </div>
 
             </li>
-            <li class="nav-item ps-5" style="line-height: 1.5;" v-if="route.query.search">
+            <li class="nav-item ps-5" style="line-height: 1.5;" >
               <div class="d-flex align-items-center search-box">
-                <button class="btn" style="border-width: 1px; border-style: solid" data-bs-toggle="modal" data-bs-target="#search-docs">
+                <button id="btn-search" class="btn" style="border-width: 1px; border-style: solid" data-bs-toggle="modal" data-bs-target="#search-docs">
                   <i class="bi bi-search ps-2"></i>
                   <span class="ps-1 pe-4">Search docs</span>
                 </button>
@@ -296,10 +321,10 @@ function getUrlPath(filePath: string, cfg?: DocEntry): string[] | undefined {
             </div>
           </form>
           <div class="list-group search-results">
-            <router-link v-for="item of filtered" :to="{ name: 'docs', params: item.params }" class="list-group-item list-group-item-action" data-bs-dismiss="modal">
+            <a v-for="item of filtered" class="list-group-item list-group-item-action" @click.prevent="navigateAndClose(item.params)">
               <p class="mb-1" style="font-size: 16px; font-weight: bold;">{{ item.name }}</p>
               <p class="mb-1" style="font-size: 14px">{{ item.description }}</p>
-            </router-link>
+            </a>
           </div>
         </div>
       </div>
