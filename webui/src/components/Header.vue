@@ -194,10 +194,15 @@ function navigateAndClose(params: Record<string, string>) {
     <nav class="navbar navbar-expand-lg">
       <div class="container-fluid">
         <a class="navbar-brand" href="./"><img src="/logo-header.svg" height="30" alt="Mokapi home"/></a>
-        <div class="d-flex ms-auto tools d-none">
-            <a href="https://github.com/marle3003/mokapi" class="version" v-if="appInfo?.data">Version {{appInfo.data.version}}</a>
-            <i class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark"></i>
-            <i class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark"></i>
+        <div class="d-flex ms-auto align-items-center tools d-none">
+            <a href="https://github.com/marle3003/mokapi" class="version pe-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
+            <button class="btn icon" aria-label="Search" data-bs-target="#search-docs">
+              <i class="bi bi-search pe-2" data-bs-toggle="modal" data-bs-target="#search-docs"></i>
+            </button>
+            <button class="btn icon">
+              <i class="bi bi-brightness-high-fill pe-2" @click="switchTheme" v-if="isDark"></i>
+              <i class="bi bi-moon-fill pe-2" @click="switchTheme" v-if="!isDark"></i>
+            </button>
           </div>
         <button id="navbar-toggler" class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation" @click="visible=!visible">
           <i class="bi bi-list"></i>
@@ -283,21 +288,18 @@ function navigateAndClose(params: Record<string, string>) {
               </div>
 
             </li>
-            <li class="nav-item ps-5" style="line-height: 1.5;" >
-              <div class="d-flex align-items-center search-box">
-                <button id="btn-search" class="btn" style="border-width: 1px; border-style: solid" data-bs-toggle="modal" data-bs-target="#search-docs">
-                  <i class="bi bi-search ps-2"></i>
-                  <span class="ps-1 pe-4">Search docs</span>
-                </button>
-              </div>
-            </li>
           </ul>
         </div>
 
-          <div class="d-flex ms-auto tools">
-            <a href="https://github.com/marle3003/mokapi" class="version" v-if="appInfo?.data">Version {{appInfo.data.version}}</a>
-            <i class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark"></i>
-            <i class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark"></i>
+          <div class="d-flex ms-auto align-items-center tools">
+            <a href="https://github.com/marle3003/mokapi" class="version me-lg-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
+            <button class="btn icon" aria-label="Search" data-bs-target="#search-docs">
+              <i class="bi bi-search pe-2" data-bs-toggle="modal"></i>
+            </button>
+            <button class="btn icon">
+              <i class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark"></i>
+              <i class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -406,6 +408,14 @@ header .container-fluid {
   cursor: pointer;
   font-size: 1.3rem;
 }
+.tools .btn.icon {
+  transition: background 0.2s, transform 0.1s;
+}
+.tools .btn.icon:hover,
+.tools .btn.icon:focus-visible {
+  background-color: rgba(0, 0, 0, 0.1);
+  transform: scale(1.1);
+}
 .navbar .nav .nav-link {
   padding-left: 0;
 }
@@ -478,7 +488,7 @@ header .container-fluid {
 
   }
   .navbar .tools {
-    margin-right: 2rem;
+    margin-right: 0;
     display: flex !important;
   }
   .navbar .collapse .tools {

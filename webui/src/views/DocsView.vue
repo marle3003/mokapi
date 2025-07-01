@@ -197,15 +197,11 @@ function formatParam(label: any): string {
 }
 .breadcrumb {
   padding-top: 2rem;
-  /*margin-left: 1.2rem;
-  margin-right: 1.2rem;*/
   padding-bottom: 0.5rem;
-  width: calc(100vw - 2rem);
+  width: 100%; /*calc(100vw - 290px - 2rem);*/
   font-size: 0.9rem;
 }
 .content {
-  /*margin-left: 1.2rem;
-  margin-right: 1.2rem;*/
   line-height: 1.75;
   font-size: 1rem;
 }
