@@ -196,8 +196,8 @@ function navigateAndClose(params: Record<string, string>) {
         <a class="navbar-brand" href="./"><img src="/logo-header.svg" height="30" alt="Mokapi home"/></a>
         <div class="d-flex ms-auto align-items-center tools d-none">
             <a href="https://github.com/marle3003/mokapi" class="version pe-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
-            <button class="btn icon" aria-label="Search" data-bs-target="#search-docs">
-              <i class="bi bi-search pe-2" data-bs-toggle="modal" data-bs-target="#search-docs"></i>
+            <button class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
+              <i class="bi bi-search pe-2"></i>
             </button>
             <button class="btn icon">
               <i class="bi bi-brightness-high-fill pe-2" @click="switchTheme" v-if="isDark"></i>
@@ -293,8 +293,8 @@ function navigateAndClose(params: Record<string, string>) {
 
           <div class="d-flex ms-auto align-items-center tools">
             <a href="https://github.com/marle3003/mokapi" class="version me-lg-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
-            <button class="btn icon" aria-label="Search" data-bs-target="#search-docs">
-              <i class="bi bi-search pe-2" data-bs-toggle="modal"></i>
+            <button class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
+              <i class="bi bi-search pe-2"></i>
             </button>
             <button class="btn icon">
               <i class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark"></i>
