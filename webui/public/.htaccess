@@ -31,6 +31,8 @@
   RewriteCond %{REQUEST_URI} !\.(html|css|js|less|jpg|png|gif|svg|woff2|xml)$
   RewriteCond %{REQUEST_FILENAME} !^$
   RewriteCond %{REQUEST_FILENAME} !-f
+  # url ends with a slash or is an existing directory
+  RewriteCond %{REQUEST_URI} /$ [OR]
   RewriteCond %{REQUEST_FILENAME} -d
   # Rewrite /about/ → /about/index.html
   RewriteRule ^(.+)/$ $1/index.html [L]
