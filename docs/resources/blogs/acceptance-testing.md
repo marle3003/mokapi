@@ -123,3 +123,9 @@ Mokapi doesn’t just enable acceptance testing—it makes it **practical, maint
 Learn how to set up acceptance tests with Mokapi in your CI/CD pipeline:
 
 👉 [Running Mokapi in a CI/CD Pipeline](/docs/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline)
+
+---
+
+*This article is also available on [LinkedIn](https://www.linkedin.com/pulse/acceptance-testing-mokapi-focus-what-matters-marcel-lehmann-fccjf)*
+
+---
