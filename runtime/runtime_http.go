@@ -31,6 +31,13 @@ type httpHandler struct {
 	next http.Handler
 }
 
+func NewHttpStore(cfg *static.Config) *HttpStore {
+	s := &HttpStore{
+		cfg: cfg,
+	}
+	return s
+}
+
 func NewHttpInfo(c *dynamic.Config) *HttpInfo {
 	hc := &HttpInfo{
 		configs:   map[string]*dynamic.Config{},

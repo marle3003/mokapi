@@ -33,15 +33,15 @@ func TestHttpServers_Monitor(t *testing.T) {
 	defer m.Stop()
 
 	port := try.GetFreePort()
-	url := fmt.Sprintf("http://localhost:%v", port)
-	c := openapitest.NewConfig("3.0", openapitest.WithInfo("test", "1.0", ""), openapitest.WithServer(url, ""))
+	u := fmt.Sprintf("http://localhost:%v", port)
+	c := openapitest.NewConfig("3.0", openapitest.WithInfo("test", "1.0", ""), openapitest.WithServer(u, ""))
 	openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", openapitest.NewOperation()))
 	//c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url}}}
 	m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}, Data: c}})
 
 	// give server time to start
 	time.Sleep(time.Second * 1)
-	try.GetRequest(t, url+"/foo", map[string]string{})
+	try.GetRequest(t, u+"/foo", map[string]string{})
 	require.Equal(t, float64(1), app.Monitor.Http.RequestCounter.Sum())
 }
 
@@ -62,7 +62,7 @@ func TestHttpManager_Update(t *testing.T) {
 				c := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://:80"}}}
 				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
 
-				list := m.app.Http.List()
+				list := m.app.ListHttp()
 				require.Len(t, list, 1)
 				require.Equal(t, "foo", list[0].Info.Name)
 			},
@@ -71,13 +71,13 @@ func TestHttpManager_Update(t *testing.T) {
 			name: "app contains both config",
 			test: func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
 				port := try.GetFreePort()
-				url := fmt.Sprintf("http://localhost:%v", port)
-				foo := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url + "/foo"}}}
-				bar := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "bar"}, Servers: []*openapi.Server{{Url: url + "/bar"}}}
+				u := fmt.Sprintf("http://localhost:%v", port)
+				foo := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: u + "/foo"}}}
+				bar := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "bar"}, Servers: []*openapi.Server{{Url: u + "/bar"}}}
 				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: foo, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
 				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: bar, Info: dynamic.ConfigInfo{Url: MustParseUrl("bar.yml")}}})
 
-				list := m.app.Http.List()
+				list := m.app.ListHttp()
 				require.Len(t, list, 2)
 			},
 		},
@@ -122,10 +122,10 @@ func TestHttpManager_Update(t *testing.T) {
 			name: "add on same path",
 			test: func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
 				port := try.GetFreePort()
-				url := fmt.Sprintf("http://:%v", port)
-				c := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url + "/foo"}}}
+				u := fmt.Sprintf("http://:%v", port)
+				c := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: u + "/foo"}}}
 				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
-				c = &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "bar"}, Servers: []*openapi.Server{{Url: url + "/foo"}}}
+				c = &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "bar"}, Servers: []*openapi.Server{{Url: u + "/foo"}}}
 				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
 
 				entries := hook.Entries
@@ -133,7 +133,7 @@ func TestHttpManager_Update(t *testing.T) {
 				require.Equal(t, fmt.Sprintf("adding new HTTP host '' on binding :%v", port), entries[0].Message)
 				require.Equal(t, fmt.Sprintf("adding service 'foo' on binding :%v on path /foo", port), entries[1].Message)
 				require.Equal(t, "processed foo.yml", entries[2].Message)
-				require.Equal(t, fmt.Sprintf("unable to add 'bar' on %v/foo: service 'foo' is already defined on path '/foo'", url), entries[3].Message)
+				require.Equal(t, fmt.Sprintf("unable to add 'bar' on %v/foo: service 'foo' is already defined on path '/foo'", u), entries[3].Message)
 			},
 		},
 		{
@@ -142,11 +142,11 @@ func TestHttpManager_Update(t *testing.T) {
 				port1 := try.GetFreePort()
 				port2 := try.GetFreePort()
 
-				url := fmt.Sprintf("http://:%v", port1)
-				c := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url}}}
+				u := fmt.Sprintf("http://:%v", port1)
+				c := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: u}}}
 				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
-				url = fmt.Sprintf("http://:%v", port2)
-				c = &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url + "/foo"}}}
+				u = fmt.Sprintf("http://:%v", port2)
+				c = &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: u + "/foo"}}}
 				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
 
 				entries := hook.Entries

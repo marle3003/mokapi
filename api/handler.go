@@ -128,6 +128,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.handleConfig(w, r)
 	case strings.HasPrefix(p, "/api/faker/tree"):
 		h.handleFakerTree(w, r)
+	case strings.HasPrefix(p, "/api/search"):
+		h.getSearchResults(w, r)
 	case h.fileServer != nil:
 		if r.Method != "GET" {
 			http.Error(w, fmt.Sprintf("method %v is not allowed", r.Method), http.StatusMethodNotAllowed)
@@ -164,7 +166,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) getServices(w http.ResponseWriter, _ *http.Request) {
 	services := make([]interface{}, 0)
-	services = append(services, getHttpServices(h.app.Http, h.app.Monitor)...)
+	services = append(services, getHttpServices(h.app.ListHttp(), h.app.Monitor)...)
 	services = append(services, getKafkaServices(h.app.Kafka, h.app.Monitor)...)
 	services = append(services, getMailServices(h.app.Mail, h.app.Monitor)...)
 	services = append(services, getLdapServices(h.app.Ldap, h.app.Monitor)...)
@@ -189,7 +191,7 @@ func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	i := info{Version: h.app.Version, BuildTime: h.app.BuildTime}
-	if len(h.app.Http.List()) > 0 {
+	if len(h.app.ListHttp()) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "http")
 	}
 	if len(h.app.Kafka.List()) > 0 {

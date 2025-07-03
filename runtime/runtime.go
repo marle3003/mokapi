@@ -1,6 +1,8 @@
 package runtime
 
 import (
+	"github.com/blevesearch/bleve/v2"
+	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/runtime/monitor"
@@ -11,7 +13,7 @@ import (
 type App struct {
 	Version   string
 	BuildTime string
-	Http      *HttpStore
+	http      *HttpStore
 	Ldap      *LdapStore
 	Kafka     *KafkaStore
 	Mqtt      *MqttStore
@@ -20,23 +22,28 @@ type App struct {
 	Monitor *monitor.Monitor
 	m       sync.Mutex
 	cfg     *static.Config
+	index   bleve.Index
 
 	Configs map[string]*dynamic.Config
 }
 
 func New(cfg *static.Config) *App {
 	m := monitor.New()
+	mapping := bleve.NewIndexMapping()
+	index, _ := bleve.NewMemOnly(mapping)
+
 	return &App{
 		Version:   version.BuildVersion,
 		BuildTime: version.BuildTime,
 		Monitor:   m,
 		Configs:   map[string]*dynamic.Config{},
-		Http:      &HttpStore{cfg: cfg},
+		http:      NewHttpStore(cfg),
 		Kafka:     &KafkaStore{monitor: m, cfg: cfg},
 		Mqtt:      &MqttStore{monitor: m, cfg: cfg},
 		Ldap:      &LdapStore{cfg: cfg},
 		Mail:      &MailStore{cfg: cfg},
 		cfg:       cfg,
+		index:     index,
 	}
 }
 
@@ -69,4 +76,26 @@ func (a *App) FindConfig(key string) *dynamic.Config {
 	}
 
 	return nil
+}
+
+func (a *App) AddHttp(c *dynamic.Config) *HttpInfo {
+	i := a.http.Add(c)
+	removeHttpFromIndex(a.index, i.Config)
+	err := addHttpToIndex(a.index, i.Config)
+	if err != nil {
+		log.Errorf("add '%s' to search index failed", i.Info.Name)
+	}
+	return i
+}
+
+func (a *App) GetHttp(name string) *HttpInfo {
+	return a.http.Get(name)
+}
+
+func (a *App) RemoveHttp(c *dynamic.Config) {
+	a.http.Remove(c)
+}
+
+func (a *App) ListHttp() []*HttpInfo {
+	return a.http.List()
 }

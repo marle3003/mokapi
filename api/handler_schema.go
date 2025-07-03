@@ -334,11 +334,11 @@ func getSpecs(app *runtime.App, spec, name string) []interface{} {
 	switch spec {
 	case "openapi":
 		if name == "" {
-			for _, s := range app.Http.List() {
+			for _, s := range app.ListHttp() {
 				results = append(results, s)
 			}
 		}
-		s := app.Http.Get(name)
+		s := app.GetHttp(name)
 		if s != nil {
 			results = append(results, s)
 		}
@@ -352,10 +352,10 @@ func getSpecs(app *runtime.App, spec, name string) []interface{} {
 		}
 	default:
 		if name == "" {
-			for _, s := range app.Http.List() {
+			for _, s := range app.ListHttp() {
 				results = append(results, s)
 			}
-		} else if s := app.Http.Get(name); s != nil {
+		} else if s := app.GetHttp(name); s != nil {
 			results = append(results, s)
 		}
 		if name == "" {

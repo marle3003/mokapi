@@ -145,6 +145,12 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 		sh.Lock()
 		defer sh.Unlock()
 		job := sh.jobs[id]
+		var nextRun time.Time
+		if job != nil {
+			nextRun = job.NextRun()
+		} else {
+			log.Debugf("no job found with id %d", id)
+		}
 
 		sh.engine.jobCounter.Add(1)
 
@@ -152,7 +158,7 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 			Schedule: schedule,
 			MaxRuns:  opt.Times,
 			Runs:     counter,
-			NextRun:  job.NextRun(),
+			NextRun:  nextRun,
 			Tags:     tags,
 		}
 

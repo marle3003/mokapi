@@ -7,7 +7,6 @@ import (
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/asyncapi3"
-	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/providers/openapi"
 	"mokapi/runtime"
 )
@@ -16,7 +15,7 @@ func NewHttpApp(configs ...*openapi.Config) *runtime.App {
 	cfg := &static.Config{}
 	app := runtime.New(cfg)
 	for i, cfg := range configs {
-		app.Http.Add(&dynamic.Config{
+		app.AddHttp(&dynamic.Config{
 			Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i))),
 			Data: cfg,
 		})
@@ -34,7 +33,7 @@ func NewKafkaApp(configs ...*asyncapi3.Config) *runtime.App {
 	cfg := &static.Config{}
 	app := runtime.New(cfg)
 	for i, cfg := range configs {
-		app.Kafka.Add(&dynamic.Config{
+		_, _ = app.Kafka.Add(&dynamic.Config{
 			Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i))),
 			Data: cfg,
 		}, enginetest.NewEngine())
@@ -51,31 +50,9 @@ func NewApp(opts ...Options) *runtime.App {
 	return app
 }
 
-func WithKafka(name string, opts ...KafkaInfoOptions) Options {
-	return func(app *runtime.App) {
-		ki := &runtime.KafkaInfo{}
-		for _, opt := range opts {
-			opt(ki)
-		}
-		app.Kafka.Set(name, ki)
-	}
-}
-
 func WithKafkaInfo(name string, ki *runtime.KafkaInfo) Options {
 	return func(app *runtime.App) {
 		app.Kafka.Set(name, ki)
-	}
-}
-
-func WithKafkaConfig(c *asyncapi3.Config) KafkaInfoOptions {
-	return func(ki *runtime.KafkaInfo) {
-		ki.Config = c
-	}
-}
-
-func WithKafkaStore(store *store.Store) KafkaInfoOptions {
-	return func(ki *runtime.KafkaInfo) {
-		ki.Store = store
 	}
 }
 
