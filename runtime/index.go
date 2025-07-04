@@ -46,6 +46,8 @@ func (a *App) Search(queryText string) ([]SearchResult, error) {
 		switch discriminators[0] {
 		case "http":
 			searchResult, err = getHttpSearchResult(fields, discriminators)
+		case "config":
+			searchResult, err = getConfigSearchResult(fields, discriminators)
 		default:
 			log.Errorf("unknown discriminator: %s", strings.Join(discriminators, "_"))
 			continue

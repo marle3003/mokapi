@@ -3,6 +3,7 @@ import { useAppInfo } from '@/composables/appInfo'
 import AppStartCard from '../components/dashboard/AppStartCard.vue'
 import MemoryUsageCard from '../components/dashboard/MemoryCard.vue'
 import MetricCard from '../components/dashboard/MetricCard.vue'
+import Search from '../components/dashboard/Search.vue'
 
 import HttpRequestCard from '../components/dashboard/http/HttpRequestMetricCard.vue'
 import HttpServicesCard from '../components/dashboard/http/HttpServicesCard.vue'
@@ -125,6 +126,9 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                             <li class="nav-item">
                                 <router-link class="nav-link" :to="{ name: 'tree', query: {refresh: $route.query.refresh} }">Faker</router-link>
                             </li>
+                            <li class="nav-item" v-if="route.query.search">
+                                <router-link class="nav-link" :to="{ name: 'search', query: {refresh: $route.query.refresh, search: 1} }">Search</router-link>
+                            </li>
                         </ul>
                     </div>
                 </nav>
@@ -219,6 +223,10 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                     <div class="card-group">
                         <faker-tree v-if="$route.name === 'tree'"></faker-tree>
                     </div>
+                </div>
+
+                <div v-if="$route.name === 'search'" >
+                    <search v-if="$route.name === 'search'"></search>
                 </div>
 
                 <http-service v-if="$route.meta.service === 'http'" />

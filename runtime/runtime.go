@@ -59,6 +59,11 @@ func (a *App) UpdateConfig(e dynamic.ConfigEvent) {
 			a.Configs[r.Info.Key()] = r
 		}
 	}
+
+	removeConfigFromIndex(a.index, e.Config)
+	if err := addConfigToIndex(a.index, e.Config); err != nil {
+		log.Errorf("add '%s' to search index failed", e.Config.Info.Path())
+	}
 }
 
 func (a *App) FindConfig(key string) *dynamic.Config {
