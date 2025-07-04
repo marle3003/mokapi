@@ -3,11 +3,14 @@ package runtime
 import (
 	"fmt"
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/mapping"
 	"mokapi/providers/openapi"
+	"reflect"
 	"strings"
 )
 
 type HttpConfig struct {
+	Type          string
 	Discriminator string
 	Name          string
 	Version       string
@@ -42,16 +45,18 @@ type HttpOperation struct {
 	Responses     string
 }
 
-func addHttpToIndex(index bleve.Index, cfg *openapi.Config) error {
-	err := index.Index(cfg.Info.Name, HttpConfig{
+func (s *HttpStore) addToIndex(cfg *openapi.Config) {
+	if cfg == nil || cfg.Info.Name == "" {
+		return
+	}
+
+	add(s.index, cfg.Info.Name, HttpConfig{
+		Type:          "http",
 		Discriminator: "http",
 		Name:          cfg.Info.Name,
 		Version:       cfg.Info.Version,
 		Description:   cfg.Info.Description,
 	})
-	if err != nil {
-		return err
-	}
 
 	for path, p := range cfg.Paths {
 		if p.Value == nil {
@@ -78,10 +83,7 @@ func addHttpToIndex(index bleve.Index, cfg *openapi.Config) error {
 			})
 		}
 
-		err = index.Index(fmt.Sprintf("%s_%s", cfg.Info.Name, path), pathData)
-		if err != nil {
-			return err
-		}
+		add(s.index, fmt.Sprintf("%s_%s", cfg.Info.Name, path), pathData)
 
 		for method, op := range p.Value.Operations() {
 			id := fmt.Sprintf("%s_%s_%s", cfg.Info.Name, path, method)
@@ -104,23 +106,7 @@ func addHttpToIndex(index bleve.Index, cfg *openapi.Config) error {
 				})
 			}
 
-			err = index.Index(id, opData)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
-
-func removeHttpFromIndex(index bleve.Index, cfg *openapi.Config) {
-	_ = index.Delete(cfg.Info.Name)
-
-	for path, p := range cfg.Paths {
-		_ = index.Delete(fmt.Sprintf("%s_%s", cfg.Info.Name, path))
-		for method := range p.Value.Operations() {
-			_ = index.Delete(fmt.Sprintf("%s_%s_%s", cfg.Info.Name, path, method))
+			add(s.index, id, opData)
 		}
 	}
 }
@@ -146,4 +132,46 @@ func getHttpSearchResult(fields map[string]string, discriminator []string) (*Sea
 		return nil, fmt.Errorf("unsupported search result: %s", strings.Join(discriminator, "_"))
 	}
 	return result, nil
+}
+
+func (s *HttpStore) removeFromIndex(cfg *openapi.Config) {
+	_ = s.index.Delete(cfg.Info.Name)
+
+	for path, p := range cfg.Paths {
+		_ = s.index.Delete(fmt.Sprintf("%s_%s", cfg.Info.Name, path))
+		for method := range p.Value.Operations() {
+			_ = s.index.Delete(fmt.Sprintf("%s_%s_%s", cfg.Info.Name, path, method))
+		}
+	}
+}
+
+func getHttpIndexMapping(m *mapping.IndexMappingImpl) {
+	m.AddDocumentMapping("http", getIndexMapping(HttpConfig{}))
+}
+
+func getIndexMapping(indexable any) *mapping.DocumentMapping {
+	t := reflect.TypeOf(indexable)
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	docMapping := bleve.NewDocumentMapping()
+
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+
+		if field.PkgPath != "" {
+			continue
+		}
+		if field.Type.Kind() != reflect.String {
+			continue
+		}
+
+		fieldMapping := bleve.NewTextFieldMapping()
+		fieldMapping.Analyzer = "ngram"
+		docMapping.AddFieldMappingsAt(field.Name, fieldMapping)
+
+	}
+
+	return docMapping
 }

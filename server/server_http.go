@@ -75,12 +75,14 @@ func (m *HttpManager) Update(e dynamic.ConfigEvent) {
 			m.stopEmptyServers()
 			return
 		}
-	} else if info == nil {
-		info = m.app.AddHttp(e.Config)
-	} else {
-		oldServers := info.Servers
-		info.AddConfig(e.Config)
-		m.cleanupRemovedServers(info, oldServers)
+	}
+	var servers []*openapi.Server
+	if info != nil {
+		servers = info.Servers
+	}
+	info = m.app.AddHttp(e.Config)
+	if servers != nil {
+		m.cleanupRemovedServers(info, servers)
 	}
 
 	for _, s := range info.Servers {

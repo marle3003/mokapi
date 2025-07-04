@@ -5,7 +5,7 @@ const queryText = ref<string>();
 const results = ref();
 watch(queryText, async (q) => {
   console.log('test')
-  const res = await fetch(`/api/search/query?queryText${q}`)
+  const res = await fetch(`/api/search/query?queryText=${q}`)
     .then(async (res) => {
         if (!res.ok) {
             let text = await res.text()
@@ -45,7 +45,7 @@ watch(queryText, async (q) => {
           </div>
         </section>
       </div>
-      <div class="card-group">
+      <div class="card-group" v-if="results">
         <div class="card">
           <div class="card-body">
             <div class="container">
@@ -58,7 +58,7 @@ watch(queryText, async (q) => {
                           <span class="ps-1">{{ result.configName }}</span>
                         </div>
                         <h3 class="pt-1 mb-1">{{ result.title }}</h3>
-                        <p class="mb-1" style="font-size: 14px">{{ result.fragments.join('...') }}</p>
+                        <p class="mb-1" style="font-size: 14px" v-html="result.fragments?.join('...')"></p>
                       </a>
                     </div>
                   </div>

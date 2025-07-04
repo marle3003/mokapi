@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"github.com/blevesearch/bleve/v2"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
@@ -18,6 +19,7 @@ type HttpStore struct {
 	infos map[string]*HttpInfo
 	cfg   *static.Config
 	m     sync.RWMutex
+	index bleve.Index
 }
 
 type HttpInfo struct {
@@ -31,20 +33,12 @@ type httpHandler struct {
 	next http.Handler
 }
 
-func NewHttpStore(cfg *static.Config) *HttpStore {
+func NewHttpStore(cfg *static.Config, index bleve.Index) *HttpStore {
 	s := &HttpStore{
-		cfg: cfg,
+		cfg:   cfg,
+		index: index,
 	}
 	return s
-}
-
-func NewHttpInfo(c *dynamic.Config) *HttpInfo {
-	hc := &HttpInfo{
-		configs:   map[string]*dynamic.Config{},
-		seenPaths: map[string]bool{},
-	}
-	hc.AddConfig(c)
-	return hc
 }
 
 func (s *HttpStore) Get(name string) *HttpInfo {
@@ -86,14 +80,17 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 	}
 
 	if !ok {
-		hc = NewHttpInfo(c)
+		hc = &HttpInfo{
+			configs:   map[string]*dynamic.Config{},
+			seenPaths: map[string]bool{},
+		}
 		s.infos[cfg.Info.Name] = hc
 
 		events.ResetStores(events.NewTraits().WithNamespace("http").WithName(name))
 		events.SetStore(int(store.Size), events.NewTraits().WithNamespace("http").WithName(name))
-	} else {
-		hc.AddConfig(c)
 	}
+	hc.configs[c.Info.Url.String()] = c
+	patchHttp(hc)
 
 	for path := range cfg.Paths {
 		if _, ok := hc.seenPaths[path]; ok {
@@ -102,6 +99,8 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 		events.SetStore(int(store.Size), events.NewTraits().WithNamespace("http").WithName(name).With("path", path))
 		hc.seenPaths[path] = true
 	}
+
+	s.addToIndex(hc.Config)
 
 	return hc
 }
@@ -112,7 +111,13 @@ func (s *HttpStore) Remove(c *dynamic.Config) {
 	cfg := c.Data.(*openapi.Config)
 	name := cfg.Info.Name
 	hc := s.infos[name]
-	hc.Remove(c)
+
+	s.removeFromIndex(hc.Config)
+	delete(hc.configs, c.Info.Url.String())
+
+	patchHttp(hc)
+	s.addToIndex(hc.Config)
+
 	if len(hc.configs) == 0 {
 		s.m.RUnlock()
 		s.m.Lock()
@@ -124,18 +129,13 @@ func (s *HttpStore) Remove(c *dynamic.Config) {
 	}
 }
 
-func (c *HttpInfo) AddConfig(config *dynamic.Config) {
-	c.configs[config.Info.Url.String()] = config
-	c.update()
-}
-
 func (c *HttpInfo) Handler(http *monitor.Http, emitter common.EventEmitter) http.Handler {
 	cfg := c.Config
 	h := openapi.NewHandler(cfg, emitter)
 	return &httpHandler{http: http, next: h}
 }
 
-func (c *HttpInfo) update() {
+func patchHttp(c *HttpInfo) {
 	if len(c.configs) == 0 {
 		c.Config = nil
 		return
@@ -173,11 +173,6 @@ func (c *HttpInfo) Configs() []*dynamic.Config {
 		r = append(r, config)
 	}
 	return r
-}
-
-func (c *HttpInfo) Remove(cfg *dynamic.Config) {
-	delete(c.configs, cfg.Info.Url.String())
-	c.update()
 }
 
 func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {

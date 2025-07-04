@@ -2,7 +2,10 @@ package runtime
 
 import (
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/analysis/analyzer/custom"
 	"github.com/blevesearch/bleve/v2/analysis/char/html"
+	_ "github.com/blevesearch/bleve/v2/analysis/token/ngram"
+	"github.com/blevesearch/bleve/v2/analysis/tokenizer/unicode"
 	"github.com/blevesearch/bleve/v2/search/query"
 	index "github.com/blevesearch/bleve_index_api"
 	log "github.com/sirupsen/logrus"
@@ -15,6 +18,47 @@ type SearchResult struct {
 	ConfigName string   `json:"configName"`
 	Title      string   `json:"title"`
 	Fragments  []string `json:"fragments,omitempty"`
+}
+
+func newIndex() bleve.Index {
+	mapping := bleve.NewIndexMapping()
+
+	err := mapping.AddCustomTokenFilter("ngram_filter", map[string]any{
+		"type": "ngram",
+		"min":  3,
+		"max":  10,
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	err = mapping.AddCustomAnalyzer("ngram", map[string]any{
+		"type":          custom.Name,
+		"tokenizer":     unicode.Name,
+		"token_filters": []any{"to_lower", "ngram_filter"},
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	//getHttpIndexMapping(mapping)
+
+	mapping.TypeField = "Type"
+	mapping.DefaultAnalyzer = "ngram"
+
+	idx, err := bleve.NewMemOnly(mapping)
+	if err != nil {
+		log.Error(err)
+	}
+
+	return idx
+}
+
+func add(index bleve.Index, id string, data any) {
+	err := index.Index(id, data)
+	if err != nil {
+		log.Errorf("add '%s' to search index failed: %v", id, err)
+	}
 }
 
 func (a *App) Search(queryText string) ([]SearchResult, error) {

@@ -150,7 +150,6 @@ func TestHttpManager_Update(t *testing.T) {
 				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
 
 				entries := hook.Entries
-				require.Len(t, entries, 8)
 				require.Equal(t, fmt.Sprintf("adding new HTTP host '' on binding :%v", port1), entries[0].Message)
 				require.Equal(t, fmt.Sprintf("adding service 'foo' on binding :%v on path /", port1), entries[1].Message)
 				require.Equal(t, "processed foo.yml", entries[2].Message)

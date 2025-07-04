@@ -35,6 +35,16 @@ func TestIndex_Http(t *testing.T) {
 			},
 		},
 		{
+			name: "Search by substring",
+			test: func(t *testing.T, app *runtime.App) {
+				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("My petstore API", "", ""))
+				app.AddHttp(toConfig(cfg))
+				r, err := app.Search("pet")
+				require.NoError(t, err)
+				require.Len(t, r, 1)
+			},
+		},
+		{
 			name: "Search by version",
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "1.0", ""))

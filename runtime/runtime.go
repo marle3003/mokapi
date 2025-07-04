@@ -29,22 +29,23 @@ type App struct {
 
 func New(cfg *static.Config) *App {
 	m := monitor.New()
-	mapping := bleve.NewIndexMapping()
-	index, _ := bleve.NewMemOnly(mapping)
 
-	return &App{
+	app := &App{
 		Version:   version.BuildVersion,
 		BuildTime: version.BuildTime,
 		Monitor:   m,
 		Configs:   map[string]*dynamic.Config{},
-		http:      NewHttpStore(cfg),
 		Kafka:     &KafkaStore{monitor: m, cfg: cfg},
 		Mqtt:      &MqttStore{monitor: m, cfg: cfg},
 		Ldap:      &LdapStore{cfg: cfg},
 		Mail:      &MailStore{cfg: cfg},
 		cfg:       cfg,
-		index:     index,
+		index:     newIndex(),
 	}
+
+	app.http = NewHttpStore(cfg, app.index)
+
+	return app
 }
 
 func (a *App) UpdateConfig(e dynamic.ConfigEvent) {
@@ -84,13 +85,7 @@ func (a *App) FindConfig(key string) *dynamic.Config {
 }
 
 func (a *App) AddHttp(c *dynamic.Config) *HttpInfo {
-	i := a.http.Add(c)
-	removeHttpFromIndex(a.index, i.Config)
-	err := addHttpToIndex(a.index, i.Config)
-	if err != nil {
-		log.Errorf("add '%s' to search index failed", i.Info.Name)
-	}
-	return i
+	return a.http.Add(c)
 }
 
 func (a *App) GetHttp(name string) *HttpInfo {
