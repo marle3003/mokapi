@@ -1,7 +1,8 @@
-package api
+package api_test
 
 import (
 	"github.com/stretchr/testify/require"
+	"mokapi/api"
 	"mokapi/config/static"
 	"mokapi/providers/openapi"
 	"mokapi/runtime"
@@ -15,11 +16,11 @@ import (
 func TestHandler_ServeHTTP(t *testing.T) {
 	testcases := []struct {
 		name string
-		fn   func(t *testing.T, h http.Handler)
+		test func(t *testing.T, h http.Handler)
 	}{
 		{
 			name: "PATCH is not allowed",
-			fn: func(t *testing.T, h http.Handler) {
+			test: func(t *testing.T, h http.Handler) {
 				r := httptest.NewRequest(http.MethodPatch, "http://foo.api", nil)
 				rr := httptest.NewRecorder()
 				h.ServeHTTP(rr, r)
@@ -28,7 +29,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 		},
 		{
 			name: "should 405 when POST to file server",
-			fn: func(t *testing.T, h http.Handler) {
+			test: func(t *testing.T, h http.Handler) {
 				r := httptest.NewRequest(http.MethodPost, "http://foo.api", nil)
 				rr := httptest.NewRecorder()
 				h.ServeHTTP(rr, r)
@@ -37,7 +38,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 		},
 		{
 			name: "cors is set",
-			fn: func(t *testing.T, h http.Handler) {
+			test: func(t *testing.T, h http.Handler) {
 				r := httptest.NewRequest(http.MethodGet, "http://foo.api/api/info", nil)
 				rr := httptest.NewRecorder()
 				h.ServeHTTP(rr, r)
@@ -46,8 +47,8 @@ func TestHandler_ServeHTTP(t *testing.T) {
 			},
 		},
 		{
-			name: "/api/info",
-			fn: func(t *testing.T, h http.Handler) {
+			name: "info",
+			test: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
 					"http://foo.api/api/info",
@@ -56,26 +57,12 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"","buildTime":""}`))
-			},
-		},
-		{
-			name: "/api/services/http",
-			fn: func(t *testing.T, h http.Handler) {
-				try.Handler(t,
-					http.MethodGet,
-					"http://foo.api/api/info",
-					nil,
-					"",
-					h,
-					try.HasStatusCode(200),
-					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"","buildTime":""}`))
+					try.HasBody(`{"version":"","buildTime":"","search":{"enabled":false}}`))
 			},
 		},
 		{
 			name: "openapi path should return index.html",
-			fn: func(t *testing.T, h http.Handler) {
+			test: func(t *testing.T, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
 					"http://foo.api/dashboard/http/services/petstore/paths/%2Fpets%2F%7BpetId%7D",
@@ -93,8 +80,9 @@ func TestHandler_ServeHTTP(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			h := New(runtime.New(&static.Config{}), static.Api{Dashboard: true})
-			tc.fn(t, h)
+
+			h := api.New(runtime.New(&static.Config{}), static.Api{Dashboard: true})
+			tc.test(t, h)
 		})
 	}
 }
@@ -117,7 +105,7 @@ func TestHandler_Api_Info(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"1.0","buildTime":"2025-01-04T23:20:50.52Z"}`))
+					try.HasBody(`{"version":"1.0","buildTime":"2025-01-04T23:20:50.52Z","search":{"enabled":false}}`))
 			},
 		},
 		{
@@ -132,7 +120,7 @@ func TestHandler_Api_Info(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"","buildTime":"","activeServices":["http"]}`))
+					try.HasBody(`{"version":"","buildTime":"","activeServices":["http"],"search":{"enabled":false}}`))
 			},
 		},
 		{
@@ -147,7 +135,7 @@ func TestHandler_Api_Info(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"","buildTime":"","activeServices":["kafka"]}`))
+					try.HasBody(`{"version":"","buildTime":"","activeServices":["kafka"],"search":{"enabled":false}}`))
 			},
 		},
 		{
@@ -162,7 +150,7 @@ func TestHandler_Api_Info(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"","buildTime":"","activeServices":["smtp"]}`))
+					try.HasBody(`{"version":"","buildTime":"","activeServices":["smtp"],"search":{"enabled":false}}`))
 			},
 		},
 		{
@@ -177,7 +165,7 @@ func TestHandler_Api_Info(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"","buildTime":"","activeServices":["ldap"]}`))
+					try.HasBody(`{"version":"","buildTime":"","activeServices":["ldap"],"search":{"enabled":false}}`))
 			},
 		},
 	}
@@ -187,21 +175,34 @@ func TestHandler_Api_Info(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			h := New(tc.app, static.Api{})
+			h := api.New(tc.app, static.Api{})
 			tc.fn(t, h)
 		})
 	}
 }
 
 func TestHandler_NoDashboard(t *testing.T) {
-	h := New(runtime.New(&static.Config{}), static.Api{Dashboard: false})
+	h := api.New(runtime.New(&static.Config{}), static.Api{Dashboard: false})
 	try.Handler(t,
 		http.MethodGet,
-		"http://foo.api/api/foo",
+		"http://foo.api",
 		nil,
 		"",
 		h,
 		try.HasStatusCode(404),
 		try.HasHeader("Content-Type", "text/plain; charset=utf-8"),
 		try.HasBody("not found\n"))
+}
+
+func TestHandler_SearchEnabled(t *testing.T) {
+	h := api.New(runtime.New(&static.Config{}), static.Api{Dashboard: true, Search: static.Search{Enabled: true}})
+	try.Handler(t,
+		http.MethodGet,
+		"http://foo.api/api/info",
+		nil,
+		"",
+		h,
+		try.HasStatusCode(200),
+		try.HasHeader("Content-Type", "application/json"),
+		try.HasBody(`{"version":"","buildTime":"","search":{"enabled":true}}`))
 }

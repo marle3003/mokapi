@@ -30,8 +30,15 @@ type Config struct {
 func NewConfig() *Config {
 	cfg := &Config{}
 	cfg.Log = &MokApiLog{Level: "info", Format: "text"}
+
 	cfg.Api.Port = "8080"
 	cfg.Api.Dashboard = true
+	cfg.Api.Search.Enabled = false
+	cfg.Api.Search.Analyzer = "ngram"
+	cfg.Api.Search.Ngram.Min = 3
+	cfg.Api.Search.Ngram.Max = 8
+	cfg.Api.Search.Types = []string{"config", "http"}
+
 	cfg.Providers.File.SkipPrefix = []string{"_"}
 	cfg.Event.Store = map[string]Store{"default": {Size: 100}}
 	return cfg
@@ -54,6 +61,19 @@ type Api struct {
 	Path      string
 	Base      string
 	Dashboard bool
+	Search    Search
+}
+
+type Search struct {
+	Enabled  bool
+	Analyzer string
+	Ngram    NgramAnalyzer
+	Types    []string
+}
+
+type NgramAnalyzer struct {
+	Min int
+	Max int
 }
 
 type FileProvider struct {

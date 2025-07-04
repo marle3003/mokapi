@@ -2,10 +2,7 @@ package runtime
 
 import (
 	"fmt"
-	"github.com/blevesearch/bleve/v2"
-	"github.com/blevesearch/bleve/v2/mapping"
 	"mokapi/providers/openapi"
-	"reflect"
 	"strings"
 )
 
@@ -143,35 +140,4 @@ func (s *HttpStore) removeFromIndex(cfg *openapi.Config) {
 			_ = s.index.Delete(fmt.Sprintf("%s_%s_%s", cfg.Info.Name, path, method))
 		}
 	}
-}
-
-func getHttpIndexMapping(m *mapping.IndexMappingImpl) {
-	m.AddDocumentMapping("http", getIndexMapping(HttpConfig{}))
-}
-
-func getIndexMapping(indexable any) *mapping.DocumentMapping {
-	t := reflect.TypeOf(indexable)
-	if t.Kind() == reflect.Ptr {
-		t = t.Elem()
-	}
-
-	docMapping := bleve.NewDocumentMapping()
-
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
-
-		if field.PkgPath != "" {
-			continue
-		}
-		if field.Type.Kind() != reflect.String {
-			continue
-		}
-
-		fieldMapping := bleve.NewTextFieldMapping()
-		fieldMapping.Analyzer = "ngram"
-		docMapping.AddFieldMappingsAt(field.Name, fieldMapping)
-
-	}
-
-	return docMapping
 }

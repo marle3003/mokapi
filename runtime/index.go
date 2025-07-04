@@ -9,6 +9,7 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 	index "github.com/blevesearch/bleve_index_api"
 	log "github.com/sirupsen/logrus"
+	"mokapi/config/static"
 
 	"strings"
 )
@@ -20,13 +21,17 @@ type SearchResult struct {
 	Fragments  []string `json:"fragments,omitempty"`
 }
 
-func newIndex() bleve.Index {
+func newIndex(cfg *static.Config) bleve.Index {
+	if !cfg.Api.Search.Enabled {
+		return nil
+	}
+
 	mapping := bleve.NewIndexMapping()
 
 	err := mapping.AddCustomTokenFilter("ngram_filter", map[string]any{
 		"type": "ngram",
-		"min":  3,
-		"max":  10,
+		"min":  cfg.Api.Search.Ngram.Min,
+		"max":  cfg.Api.Search.Ngram.Max,
 	})
 	if err != nil {
 		panic(err)
@@ -41,10 +46,7 @@ func newIndex() bleve.Index {
 		panic(err)
 	}
 
-	//getHttpIndexMapping(mapping)
-
-	mapping.TypeField = "Type"
-	mapping.DefaultAnalyzer = "ngram"
+	mapping.DefaultAnalyzer = cfg.Api.Search.Analyzer
 
 	idx, err := bleve.NewMemOnly(mapping)
 	if err != nil {

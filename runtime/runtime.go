@@ -30,20 +30,21 @@ type App struct {
 func New(cfg *static.Config) *App {
 	m := monitor.New()
 
+	index := newIndex(cfg)
+
 	app := &App{
 		Version:   version.BuildVersion,
 		BuildTime: version.BuildTime,
 		Monitor:   m,
 		Configs:   map[string]*dynamic.Config{},
+		http:      NewHttpStore(cfg, index),
 		Kafka:     &KafkaStore{monitor: m, cfg: cfg},
 		Mqtt:      &MqttStore{monitor: m, cfg: cfg},
 		Ldap:      &LdapStore{cfg: cfg},
 		Mail:      &MailStore{cfg: cfg},
 		cfg:       cfg,
-		index:     newIndex(),
+		index:     index,
 	}
-
-	app.http = NewHttpStore(cfg, app.index)
 
 	return app
 }
@@ -61,9 +62,11 @@ func (a *App) UpdateConfig(e dynamic.ConfigEvent) {
 		}
 	}
 
-	removeConfigFromIndex(a.index, e.Config)
-	if err := addConfigToIndex(a.index, e.Config); err != nil {
-		log.Errorf("add '%s' to search index failed", e.Config.Info.Path())
+	if a.cfg.Api.Search.Enabled {
+		removeConfigFromIndex(a.index, e.Config)
+		if err := addConfigToIndex(a.index, e.Config); err != nil {
+			log.Errorf("add '%s' to search index failed", e.Config.Info.Path())
+		}
 	}
 }
 

@@ -71,7 +71,7 @@ onMounted(() => {
     }
 })
 
-function isServiceAvailable(service: string): Boolean{
+function isServiceAvailable(service: string): boolean{
     if (!appInfo.data || !appInfo.data.activeServices){
         return false
     }
@@ -126,7 +126,7 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                             <li class="nav-item">
                                 <router-link class="nav-link" :to="{ name: 'tree', query: {refresh: $route.query.refresh} }">Faker</router-link>
                             </li>
-                            <li class="nav-item" v-if="route.query.search">
+                            <li class="nav-item" v-if="appInfo.data.search.enabled">
                                 <router-link class="nav-link" :to="{ name: 'search', query: {refresh: $route.query.refresh, search: 1} }">Search</router-link>
                             </li>
                         </ul>

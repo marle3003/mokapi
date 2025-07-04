@@ -57,6 +57,15 @@ api:
     path: ""
     base: ""
     dashboard: true
+    search:
+        enabled: false
+        analyzer: ngram
+        ngram:
+            min: 3
+            max: 8
+        types:
+            - config
+            - http
 rootCaCert: ""
 rootCaKey: ""
 js:
@@ -126,10 +135,10 @@ npm:
 
 			main()
 
-			writer.Close()
+			_ = writer.Close()
 			var buf bytes.Buffer
 			_, _ = io.Copy(&buf, reader)
-			reader.Close()
+			_ = reader.Close()
 
 			tc.test(t, buf.String())
 		})

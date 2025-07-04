@@ -45,7 +45,7 @@ router.beforeEach(() => {
   }
 })
 
-function showInHeader(item: any): Boolean{
+function showInHeader(item: any): boolean{
   return typeof item !== 'string'
 }
 function formatParam(label: any): string {

@@ -112,7 +112,7 @@ func TestIndex_Http(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			app := runtime.New(&static.Config{})
+			app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{Enabled: true, Analyzer: "ngram"}}})
 			tc.test(t, app)
 		})
 	}

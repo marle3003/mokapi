@@ -24,21 +24,6 @@ func TestHandler_FileServer(t *testing.T) {
 		fileServer http.Handler
 	}{
 		{
-			name:   "request api info",
-			config: static.Api{Path: "/mokapi", Dashboard: true},
-			fn: func(t *testing.T, h http.Handler) {
-				try.Handler(t,
-					http.MethodGet,
-					"http://foo.api/mokapi/api/info",
-					nil,
-					"",
-					h,
-					try.HasStatusCode(200),
-					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"","buildTime":""}`))
-			},
-		},
-		{
 			name:   "request web app",
 			config: static.Api{Path: "/mokapi", Dashboard: true},
 			fn: func(t *testing.T, h http.Handler) {

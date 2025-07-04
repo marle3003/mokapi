@@ -90,6 +90,9 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 		events.SetStore(int(store.Size), events.NewTraits().WithNamespace("http").WithName(name))
 	}
 	hc.configs[c.Info.Url.String()] = c
+	if s.cfg.Api.Search.Enabled {
+		s.removeFromIndex(cfg)
+	}
 	patchHttp(hc)
 
 	for path := range cfg.Paths {
@@ -100,7 +103,9 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 		hc.seenPaths[path] = true
 	}
 
-	s.addToIndex(hc.Config)
+	if s.cfg.Api.Search.Enabled {
+		s.addToIndex(hc.Config)
+	}
 
 	return hc
 }
@@ -112,11 +117,15 @@ func (s *HttpStore) Remove(c *dynamic.Config) {
 	name := cfg.Info.Name
 	hc := s.infos[name]
 
-	s.removeFromIndex(hc.Config)
+	if s.cfg.Api.Search.Enabled {
+		s.removeFromIndex(hc.Config)
+	}
 	delete(hc.configs, c.Info.Url.String())
 
 	patchHttp(hc)
-	s.addToIndex(hc.Config)
+	if s.cfg.Api.Search.Enabled {
+		s.addToIndex(hc.Config)
+	}
 
 	if len(hc.configs) == 0 {
 		s.m.RUnlock()
