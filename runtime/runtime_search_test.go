@@ -47,7 +47,15 @@ func TestIndex_Config(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{Enabled: true, Analyzer: "ngram"}}})
+			app := runtime.New(&static.Config{Api: static.Api{
+				Search: static.Search{
+					Enabled:  true,
+					Analyzer: "ngram",
+					Ngram: static.NgramAnalyzer{
+						Min: 3,
+						Max: 5,
+					},
+				}}})
 			tc.test(t, app)
 		})
 	}

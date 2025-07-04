@@ -32,7 +32,14 @@ func TestHandler_SearchQuery(t *testing.T) {
 			requestUrl:   "/api/search/query",
 			responseBody: `[{"type":"HTTP","configName":"","title":"foo"}]`,
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{Enabled: true, Analyzer: "ngram"}}})
+				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
+					Enabled:  true,
+					Analyzer: "ngram",
+					Ngram: static.NgramAnalyzer{
+						Min: 3,
+						Max: 5,
+					},
+				}}})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
 				app.AddHttp(toConfig(cfg))
@@ -45,7 +52,14 @@ func TestHandler_SearchQuery(t *testing.T) {
 			requestUrl:   "/api/search/query?queryText=foo",
 			responseBody: `[{"type":"HTTP","configName":"","title":"foo","fragments":["\u003cmark\u003efoo\u003c/mark\u003e"]}]`,
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{Enabled: true, Analyzer: "ngram"}}})
+				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
+					Enabled:  true,
+					Analyzer: "ngram",
+					Ngram: static.NgramAnalyzer{
+						Min: 3,
+						Max: 5,
+					},
+				}}})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
 				app.AddHttp(toConfig(cfg))
