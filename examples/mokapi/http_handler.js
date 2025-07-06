@@ -1,7 +1,7 @@
-import { on, env, sleep } from 'mokapi'
+import { on, sleep } from 'mokapi'
 import { clusters, events as kafkaEvents, configs as kafkaConfigs } from 'kafka.js'
 import { apps as httpServices, events as httpEvents, configs as httpConfigs } from 'services_http.js'
-import { server as smtpServers, mails, mailEvents, getMail, getAttachment } from 'smtp.js'
+import { server as smtpServers, mailEvents, getMail, getAttachment } from 'smtp.js'
 import { server as ldapServers, searches } from 'ldap.js'
 import { metrics } from 'metrics.js'
 import { get, post, fetch } from 'mokapi/http'
@@ -24,7 +24,7 @@ export default async function() {
         switch (request.operationId) {
             case 'info': {
 
-                response.data = {version: "0.11.0", activeServices: ["http", "kafka", "ldap", "smtp"]}
+                response.data = { version: "0.11.0", activeServices: ["http", "kafka", "ldap", "smtp"], search: { enabled: true } }
                 return true
             }
             case 'services':
@@ -128,6 +128,13 @@ export default async function() {
                 const resp = get(`${apiBaseUrl}/mokapi/api/faker/tree`)
                 response.body = resp.body
                 return true
+            case 'search':
+                response.data = [{
+                    type: 'http',
+                    configName: 'Swagger Petstore',
+                    title: "POST  /pet",
+                    fragments: ['Everything', 'store']
+                }]
         }
     }, {tags: {name: "dashboard"}})
 

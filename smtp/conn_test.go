@@ -216,7 +216,7 @@ func testSendData(t *testing.T, conn *textproto.Conn) {
 	mustSendLine(t, conn, "To: bob@foo.bar")
 	mustSendLine(t, conn, "Date: 29 Apr 2023 10:02:36 +0200")
 	mustSendLine(t, conn, "Subject: Using the new SMTP client.")
-	mustSendLine(t, conn, "Content-Type: text/plain; charset=us-ascii")
+	mustSendLine(t, conn, "Content-Specifier: text/plain; charset=us-ascii")
 	mustSendLines(t, conn, "", "")
 	mustSendLine(t, conn, "Hello Bob")
 	mustSendLines(t, conn, "", ".", "")

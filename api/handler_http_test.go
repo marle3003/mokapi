@@ -73,7 +73,7 @@ func TestHandler_Http(t *testing.T) {
 					),
 				}
 				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
-				app.Http.Add(cfg)
+				app.AddHttp(cfg)
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",

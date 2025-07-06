@@ -1,3 +1,4 @@
+import Search from '@/components/dashboard/Search.vue'
 import { createRouter, createWebHistory, useRoute as baseRoute, type RouteLocationRaw, type RouteRecordRaw } from 'vue-router'
 
 let base = document.querySelector("base")?.href ?? '/'
@@ -48,7 +49,7 @@ if (import.meta.env.VITE_DASHBOARD == 'true') {
   startPageRoute = {
     path: '/',
     name: 'home',
-    redirect: to => {
+    redirect: () => {
       return {name: 'dashboard', query: {refresh: 20}}
     }
   }
@@ -110,6 +111,11 @@ const router = createRouter({
           path: '/services',
           name: 'serviceList',
           component: dashboardView
+        },
+        {
+          path: '/dashboard/search',
+          name: 'search',
+          component: Search
         },
         {
           path: '/dashboard/http',

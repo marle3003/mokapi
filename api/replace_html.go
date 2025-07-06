@@ -59,7 +59,7 @@ func getHttpMetaInfo(segments []string, app *runtime.App) (title, description st
 		return
 	}
 
-	c := app.Http.Get(name)
+	c := app.GetHttp(name)
 	if c == nil {
 		return
 	}
@@ -96,9 +96,7 @@ func getHttpMetaInfo(segments []string, app *runtime.App) (title, description st
 
 	if op == nil {
 		description = "Operation not found"
-	}
-
-	if len(op.Summary) > 0 {
+	} else if len(op.Summary) > 0 {
 		description = op.Summary
 	} else if len(op.Description) > 0 {
 		description = op.Description

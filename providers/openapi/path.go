@@ -43,7 +43,7 @@ type Path struct {
 	// A definition of a HEAD operation on this path.
 	Head *Operation
 
-	// A definition of a OPTIONS operation on this path.
+	// A definition of an OPTIONS operation on this path.
 	Options *Operation
 
 	// A definition of a TRACE operation on this path.

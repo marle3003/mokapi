@@ -91,8 +91,7 @@ type securityScheme struct {
 	Configs interface{} `json:"configs"`
 }
 
-func getHttpServices(store *runtime.HttpStore, m *monitor.Monitor) []interface{} {
-	list := store.List()
+func getHttpServices(list []*runtime.HttpInfo, m *monitor.Monitor) []interface{} {
 	result := make([]interface{}, 0, len(list))
 	for _, hs := range list {
 		s := service{
@@ -124,7 +123,7 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 	segments := strings.Split(r.URL.Path, "/")
 	name := segments[4]
 
-	s := h.app.Http.Get(name)
+	s := h.app.GetHttp(name)
 	if s == nil {
 		w.WriteHeader(404)
 		return

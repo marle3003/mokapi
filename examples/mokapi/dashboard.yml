@@ -416,6 +416,19 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/FakerTree'
+  /api/search/query:
+    get:
+      summary: search mock data
+      operationId: search
+      responses:
+        "200":
+          description: search results
+          content:
+            'application/json':
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchResult'
 components:
   schemas:
     FakerTree:
@@ -429,6 +442,19 @@ components:
           type: ['array', 'null']
           items:
             $ref: '#/components/schemas/FakerTree'
+    SearchResult:
+      type: object
+      properties:
+        type:
+          type: string
+        configName:
+          type: string
+        title:
+          type: string
+        fragments:
+          type: array
+          items:
+            type: string
     ServiceInfo:
       type: object
       properties:

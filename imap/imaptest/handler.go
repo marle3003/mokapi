@@ -8,13 +8,15 @@ import (
 type Handler struct {
 	session         map[string]interface{}
 	LoginFunc       func(username, password string, session map[string]interface{}) error
-	SelectFunc      func(mailbox string, session map[string]interface{}) (*imap.Selected, error)
+	SelectFunc      func(mailbox string, readonly bool, session map[string]interface{}) (*imap.Selected, error)
 	UnselectFunc    func(session map[string]interface{}) error
 	ListFunc        func(ref, pattern string, flags []imap.MailboxFlags, session map[string]interface{}) ([]imap.ListEntry, error)
 	FetchFunc       func(request *imap.FetchRequest, response imap.FetchResponse, session map[string]interface{}) error
 	StoreFunc       func(request *imap.StoreRequest, response imap.FetchResponse, session map[string]interface{}) error
 	ExpungeFunc     func(set *imap.IdSet, w imap.ExpungeWriter, session map[string]interface{}) error
 	CreateFunc      func(name string, opt *imap.CreateOptions, session map[string]interface{}) error
+	DeleteFunc      func(mailbox string, session map[string]interface{}) error
+	RenameFunc      func(existingName, newName string, session map[string]interface{}) error
 	CopyFunc        func(set *imap.IdSet, dest string, w imap.CopyWriter, session map[string]interface{}) error
 	MoveFunc        func(set *imap.IdSet, dest string, w imap.MoveWriter, session map[string]interface{}) error
 	StatusFunc      func(req *imap.StatusRequest, session map[string]interface{}) (imap.StatusResult, error)
@@ -30,10 +32,10 @@ func (h *Handler) Login(username, password string, _ context.Context) error {
 	return nil
 }
 
-func (h *Handler) Select(mailbox string, _ context.Context) (*imap.Selected, error) {
+func (h *Handler) Select(mailbox string, readonly bool, _ context.Context) (*imap.Selected, error) {
 	if h.SelectFunc != nil {
 		h.ensureSession()
-		return h.SelectFunc(mailbox, h.session)
+		return h.SelectFunc(mailbox, readonly, h.session)
 	}
 	panic("select not implemented")
 }
@@ -84,6 +86,22 @@ func (h *Handler) Create(name string, opt *imap.CreateOptions, _ context.Context
 		return h.CreateFunc(name, opt, h.session)
 	}
 	panic("CREATE not implemented")
+}
+
+func (h *Handler) Delete(name string, _ context.Context) error {
+	if h.DeleteFunc != nil {
+		h.ensureSession()
+		return h.DeleteFunc(name, h.session)
+	}
+	panic("DELETE not implemented")
+}
+
+func (h *Handler) Rename(existingName, newName string, _ context.Context) error {
+	if h.RenameFunc != nil {
+		h.ensureSession()
+		return h.RenameFunc(existingName, newName, h.session)
+	}
+	panic("DELETE not implemented")
 }
 
 func (h *Handler) Copy(set *imap.IdSet, dest string, w imap.CopyWriter, _ context.Context) error {

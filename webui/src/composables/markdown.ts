@@ -79,3 +79,11 @@ export function transformPath(path: string): string {
     }
     return path
 }
+
+export function parseMarkdown(markdown: string): { meta: DocMeta, content: string } {
+    const metadata = parseMetadata(markdown)
+    let content = replaceImageUrls(markdown).replace(metadataRegex, '')
+
+    content = content.replaceAll(/__APP_VERSION__/g, APP_VERSION)
+    return { meta: metadata, content: content }
+}

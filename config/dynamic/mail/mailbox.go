@@ -1,6 +1,7 @@
 package mail
 
 import (
+	"fmt"
 	"mokapi/imap"
 	"mokapi/smtp"
 	"slices"
@@ -59,6 +60,41 @@ func (mb *Mailbox) AddFolder(child *Folder) {
 	mb.Folders[child.Name] = child
 }
 
+func (mb *Mailbox) ensurePath(path string) *Folder {
+	if mb.Folders == nil {
+		mb.Folders = make(map[string]*Folder)
+	}
+
+	parts := strings.Split(path, "/")
+	var current *Folder
+	for _, part := range parts {
+		var next *Folder
+		if current == nil {
+			next = mb.Folders[part]
+		} else {
+			next = current.Folders[part]
+		}
+		if next == nil {
+			next = &Folder{
+				Name:        part,
+				uidNext:     uint32(time.Now().Unix() - epochOffset),
+				uidValidity: mb.getNextUidValidity(),
+				mb:          mb,
+			}
+			if current == nil {
+				mb.Folders[part] = next
+			} else {
+				if current.Folders == nil {
+					current.Folders = make(map[string]*Folder)
+				}
+				current.Folders[part] = next
+			}
+		}
+		current = next
+	}
+	return current
+}
+
 func (mb *Mailbox) Select(path string) *Folder {
 	parts := strings.Split(path, "/")
 	var current *Folder
@@ -79,6 +115,90 @@ func (mb *Mailbox) Select(path string) *Folder {
 		}
 	}
 	return current
+}
+
+func (mb *Mailbox) DeleteFolder(path string) error {
+	if strings.ToUpper(path) == "INBOX" {
+		return fmt.Errorf("INBOX cannot be deleted")
+	}
+
+	parts := strings.Split(path, "/")
+	var parent *Folder
+	for _, part := range parts[:len(parts)-1] {
+		if parent == nil {
+			parent = mb.Folders[part]
+		} else {
+			parent = parent.Folders[part]
+		}
+		if parent == nil {
+			return fmt.Errorf("mailbox \"%s\" not found", part)
+		}
+	}
+	name := parts[len(parts)-1]
+	if parent != nil {
+		return deleteFolder(parent.Folders, name)
+	}
+	return deleteFolder(mb.Folders, name)
+}
+
+func deleteFolder(folders map[string]*Folder, name string) error {
+	if toDelete, ok := folders[name]; !ok {
+		return fmt.Errorf("mailbox \"%s\" not found", name)
+	} else if len(toDelete.Folders) > 0 {
+		return fmt.Errorf("name \"%s\" has inferior hierarchical names", name)
+	} else {
+		delete(folders, name)
+	}
+	return nil
+}
+
+func (mb *Mailbox) RenameFolder(existingName, newName string) error {
+	if strings.ToUpper(existingName) == "INBOX" {
+		f := mb.ensurePath(newName)
+		inbox := mb.Folders["INBOX"]
+		f.Messages = inbox.Messages
+		inbox.Messages = nil
+		return nil
+	}
+
+	parts := strings.Split(existingName, "/")
+	folders := mb.Folders
+	for _, part := range parts[:len(parts)-1] {
+		folder := folders[part]
+		if folder == nil {
+			return fmt.Errorf("mailbox \"%s\" not found", part)
+		}
+		folders = folders[part].Folders
+	}
+	name := parts[len(parts)-1]
+	toRename, ok := folders[name]
+	if !ok {
+		return fmt.Errorf("mailbox \"%s\" not found", name)
+	}
+
+	parts = strings.Split(newName, "/")
+	folders2 := mb.Folders
+	for _, part := range parts[:len(parts)-1] {
+		folder := folders2[part]
+		if folder == nil {
+			return fmt.Errorf("mailbox \"%s\" not found", part)
+		}
+		if folders[part].Folders == nil {
+			folders[part].Folders = make(map[string]*Folder)
+		}
+		folders2 = folders[part].Folders
+	}
+
+	name2 := parts[len(parts)-1]
+	if _, ok := folders2[name2]; ok {
+		return fmt.Errorf("mailbox \"%s\" already exists", newName)
+	}
+
+	folders2[name2] = toRename
+	toRename.Name = name2
+	delete(folders, name)
+
+	return nil
 }
 
 func (mb *Mailbox) getNextUidValidity() uint32 {

@@ -203,7 +203,8 @@
           "Contract Testing": "resources/blogs/contract-testing.md",
           "End to End Testing with Mocked APIs": "resources/blogs/end-to-end-testing-mocked-apis.md",
           "Bring Your Mock APIs to Life with Mokapi and JavaScript": "resources/blogs/dynamic-mocks-with-javascript.md",
-          "Debugging Mokapi Scripts": "resources/blogs/debugging-mokapi-scripts.md"
+          "Debugging Mokapi Scripts": "resources/blogs/debugging-mokapi-scripts.md",
+          "Acceptance Testing with Mokapi: Focus on What Matters": "resources/blogs/acceptance-testing.md"
         }
       }
     }

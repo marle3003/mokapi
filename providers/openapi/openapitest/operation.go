@@ -76,6 +76,12 @@ func WithHeaderParam(name string, required bool, opts ...ParamOptions) Operation
 	}
 }
 
+func WithParamInfo(description string) ParamOptions {
+	return func(p *parameter.Parameter) {
+		p.Description = description
+	}
+}
+
 func WithRequestBody(description string, required bool, opts ...RequestBodyOptions) OperationOptions {
 	return func(o *openapi.Operation) {
 		body := &openapi.RequestBody{

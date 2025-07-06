@@ -16,7 +16,7 @@ func TestNew(t *testing.T) {
 	app := runtime.New(&static.Config{})
 	require.NotNil(t, app.Monitor)
 	require.Equal(t, "1.0", app.Version)
-	require.Len(t, app.Http.List(), 0)
+	require.Len(t, app.ListHttp(), 0)
 	require.Len(t, app.Kafka.List(), 0)
 	require.Len(t, app.Ldap.List(), 0)
 	require.Len(t, app.Mail.List(), 0)

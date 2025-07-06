@@ -10,6 +10,11 @@ components:
           items:
             type: string
             enum: ["http", "kafka", "smtp", "ldap"]
+        search:
+          type: object
+          properties:
+            enabled:
+              type: boolean
     Service:
       type: object
       properties:

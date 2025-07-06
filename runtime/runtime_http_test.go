@@ -24,9 +24,9 @@ func TestApp_AddHttp(t *testing.T) {
 		{
 			name: "event store available",
 			test: func(t *testing.T, app *runtime.App) {
-				app.Http.Add(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))))
+				app.AddHttp(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))))
 
-				require.NotNil(t, app.Http.Get("foo"))
+				require.NotNil(t, app.GetHttp("foo"))
 				err := events.Push("bar", events.NewTraits().WithNamespace("http").WithName("foo"))
 				require.NoError(t, err, "event store should be available")
 			},
@@ -34,10 +34,10 @@ func TestApp_AddHttp(t *testing.T) {
 		{
 			name: "event store for endpoint available",
 			test: func(t *testing.T, app *runtime.App) {
-				app.Http.Add(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+				app.AddHttp(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
 					openapitest.WithPath("bar", openapitest.NewPath()))))
 
-				require.NotNil(t, app.Http.Get("foo"))
+				require.NotNil(t, app.GetHttp("foo"))
 				err := events.Push("bar", events.NewTraits().WithNamespace("http").WithName("foo").With("path", "bar"))
 				require.NoError(t, err, "event store should be available")
 			},
@@ -45,7 +45,7 @@ func TestApp_AddHttp(t *testing.T) {
 		{
 			name: "request is counted in monitor",
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.Http.Add(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+				info := app.AddHttp(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
 					openapitest.WithPath("/foo", openapitest.NewPath(
 						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
 							openapitest.WithResponse(http.StatusOK),
@@ -64,7 +64,7 @@ func TestApp_AddHttp(t *testing.T) {
 		{
 			name: "retrieve configs",
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.Http.Add(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+				info := app.AddHttp(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
 					openapitest.WithPath("bar", openapitest.NewPath()))))
 
 				configs := info.Configs()
@@ -106,7 +106,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 				newConfig("https://mokapi.io/b", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "bar"))),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.Http.Get("foo")
+				info := app.GetHttp("foo")
 				require.Equal(t, "bar", info.Info.Description)
 				configs := info.Configs()
 				require.Len(t, configs, 2)
@@ -119,7 +119,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 				newConfig("https://mokapi.io/a", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "bar"))),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.Http.Get("foo")
+				info := app.GetHttp("foo")
 				require.Equal(t, "foo", info.Info.Description)
 			},
 		},
@@ -130,7 +130,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 				newConfig("https://mokapi.io/a", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "bar"))),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.Http.Get("foo")
+				info := app.GetHttp("foo")
 				require.Equal(t, "foo", info.Info.Description)
 			},
 		},
@@ -143,7 +143,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 				err := events.Push("bar", events.NewTraits().WithNamespace("http").WithName("foo"))
 				require.NoError(t, err)
 
-				app.Http.Add(
+				app.AddHttp(
 					newConfig("https://mokapi.io/a", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "bar"))),
 				)
 
@@ -181,7 +181,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 			}
 			app := runtime.New(cfg)
 			for _, c := range tc.configs {
-				app.Http.Add(c)
+				app.AddHttp(c)
 			}
 			tc.test(t, app)
 		})

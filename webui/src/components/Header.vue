@@ -1,12 +1,18 @@
 <script setup lang="ts">
 import { useAppInfo, type AppInfoResponse } from '../composables/appInfo'
 import { RouterLink, useRouter } from 'vue-router'
-import { onUnmounted, inject, ref, computed } from 'vue';
+import { onUnmounted, inject, ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
 import { useFileResolver } from '@/composables/file-resolver';
+import Fuse from 'fuse.js';
+import { parseMarkdown } from '@/composables/markdown';
+import { Modal } from 'bootstrap';
 
 const isDashboardEnabled = import.meta.env.VITE_DASHBOARD == 'true'
 let appInfo: AppInfoResponse | null = null
+const query = ref('')
+const tooltipDark = 'Switch to light mode';
+const tooltipLight = 'Switch to dark mode';
 
 if (isDashboardEnabled) {
   appInfo = useAppInfo()
@@ -39,7 +45,7 @@ router.beforeEach(() => {
   }
 })
 
-function showInHeader(item: any): Boolean{
+function showInHeader(item: any): boolean{
   return typeof item !== 'string'
 }
 function formatParam(label: any): string {
@@ -94,6 +100,95 @@ function showItem(name: string | number, item: DocConfig | DocEntry | string) {
     }
     return true
 }
+
+const files = inject<Record<string, string>>('files')!
+
+// Transform files into an array of { name, content }
+const documents = Object.entries(files).map(([path, content]) => {
+  const doc = parseMarkdown(content)
+  const url = getUrlPath(path.replace('/src/assets/docs/', ''))
+  return {
+    name: doc.meta.title,
+    description: doc.meta.description,
+    path: url,
+    content: doc.content
+  }
+}).filter(doc => doc.path)
+
+const fuse = new Fuse(documents, {
+  keys: ['name', 'content'],
+  threshold: 0.3,
+})
+
+const filtered = computed(() => {
+  let result: any[] = [];
+  if (query.value) {
+    result = fuse.search(query.value).map(({ item }) => {
+      return {
+        name: item.name,
+        params: item.path!.reduce((obj, value, index) => {
+          obj[`level${index+1}`] = formatParam(value)
+          return obj
+        }, {} as Record<string, string>),
+        description: item.description
+      }
+    })
+  }
+  return result
+})
+
+function getUrlPath(filePath: string, cfg?: DocEntry): string[] | undefined {
+  if (cfg) {
+    if (!cfg.items) {
+      return undefined
+    }
+    for (const [key, item] of Object.entries(cfg.items)) {
+      if (item === filePath) {
+        return [key]
+      }
+      if (typeof item !== 'string') {
+        const path = getUrlPath(filePath, item)
+        if (path) {
+          path.unshift(key)
+          return path
+        }
+      }
+    }
+  } else {
+    for (const name in nav) {
+      const path = getUrlPath(filePath, nav[name])
+      if (path) {
+        path.unshift(name)
+        return path
+      }
+    }
+  }
+  return undefined
+}
+
+onMounted(() => {
+  const modalEl = document.getElementById('search-docs')!;
+  modalEl.addEventListener('shown.bs.modal', () => {
+    const inputs = modalEl.getElementsByTagName('input')
+    inputs[0].focus()
+  })
+})
+
+
+function navigateAndClose(params: Record<string, string>) {
+  if (document.activeElement instanceof HTMLElement) {
+    // remove focus
+    document.activeElement.blur();
+  }
+
+  const modalEl = document.getElementById('search-docs')!;
+  const modalInstance = Modal.getInstance(modalEl);
+  modalInstance?.hide();
+
+  modalEl.addEventListener('hidden.bs.modal', () => {
+    router.push({ name: 'docs', params: params });
+  }, { once: true });
+}
 </script>
 
 <template>
@@ -101,10 +196,15 @@ function showItem(name: string | number, item: DocConfig | DocEntry | string) {
     <nav class="navbar navbar-expand-lg">
       <div class="container-fluid">
         <a class="navbar-brand" href="./"><img src="/logo-header.svg" height="30" alt="Mokapi home"/></a>
-        <div class="d-flex ms-auto tools d-none">
-            <a href="https://github.com/marle3003/mokapi" class="version" v-if="appInfo?.data">Version {{appInfo.data.version}}</a>
-            <i class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark"></i>
-            <i class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark"></i>
+        <div class="d-flex ms-auto align-items-center tools d-none">
+            <a href="https://github.com/marle3003/mokapi" class="version pe-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
+            <button class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
+              <i class="bi bi-search pe-2" title="Search"></i>
+            </button>
+            <button class="btn icon">
+              <i class="bi bi-brightness-high-fill pe-2" @click="switchTheme" v-if="isDark" :title="tooltipDark"></i>
+              <i class="bi bi-moon-fill pe-2" @click="switchTheme" v-if="!isDark" :title="tooltipLight"></i>
+            </button>
           </div>
         <button id="navbar-toggler" class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation" @click="visible=!visible">
           <i class="bi bi-list"></i>
@@ -193,16 +293,47 @@ function showItem(name: string | number, item: DocConfig | DocEntry | string) {
           </ul>
         </div>
 
-          <div class="d-flex ms-auto tools">
-            <a href="https://github.com/marle3003/mokapi" class="version" v-if="appInfo?.data">Version {{appInfo.data.version}}</a>
-            <i class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark"></i>
-            <i class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark"></i>
+          <div class="d-flex ms-auto align-items-center tools">
+            <a href="https://github.com/marle3003/mokapi" class="version me-lg-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
+            <button class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
+              <i class="bi bi-search pe-2" title="Search"></i>
+            </button>
+            <button class="btn icon">
+              <i class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark" :title="tooltipDark"></i>
+              <i class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark" :title="tooltipLight"></i>
+            </button>
           </div>
         </div>
       </div>
     </nav>
   </header>
   <div style="height: 4rem;visibility: hidden;"></div>
+
+  <!-- Search Modal -->
+  <div class="modal fade" tabindex="-1" id="search-docs" aria-labelledby="search-title" style="max-height: 80%;">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable search-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h6 id="search-title" class="modal-title">Search docs</h6>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form class="d-flex" role="search">
+            <div class="input-group mb-3">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" placeholder="Search" aria-label="Search" v-model="query">
+            </div>
+          </form>
+          <div class="list-group search-results">
+            <a v-for="item of filtered" class="list-group-item list-group-item-action" @click.prevent="navigateAndClose(item.params)">
+              <p class="mb-1" style="font-size: 16px; font-weight: bold;">{{ item.name }}</p>
+              <p class="mb-1" style="font-size: 14px">{{ item.description }}</p>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <style scoped>
@@ -279,6 +410,14 @@ header .container-fluid {
   cursor: pointer;
   font-size: 1.3rem;
 }
+.tools .btn.icon {
+  transition: background 0.2s, transform 0.1s;
+}
+.tools .btn.icon:hover,
+.tools .btn.icon:focus-visible {
+  background-color: rgba(0, 0, 0, 0.1);
+  transform: scale(1.1);
+}
 .navbar .nav .nav-link {
   padding-left: 0;
 }
@@ -322,6 +461,20 @@ header .container-fluid {
 .navbar button[aria-expanded=true] .bi-caret-down-fill {
   display: none;
 }
+.search-box {
+  padding: 7px;
+}
+.search-box .btn {
+  font-size: 16px;
+}
+.search-results .list-group-item-action {
+  color: var(--color-text);
+  cursor: pointer;
+}
+.search-dialog input:focus {
+  border-color: var(--bs-border-color);
+  box-shadow: none;
+}
 @media only screen and (max-width: 992px)  {
   .navbar-collapse {
     padding: 2rem;
@@ -338,7 +491,7 @@ header .container-fluid {
 
   }
   .navbar .tools {
-    margin-right: 2rem;
+    margin-right: 0;
     display: flex !important;
   }
   .navbar .collapse .tools {
