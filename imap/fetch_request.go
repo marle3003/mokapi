@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"strings"
-	"unicode"
 )
 
 const (
@@ -47,6 +46,8 @@ func parseFetch(d *Decoder) (*FetchRequest, error) {
 			r.Options.RFC822Size = true
 			r.Options.Envelope = true
 			r.Options.BodyStructure = true
+		case "BODY":
+			r.Options.BodyStructure = true
 		}
 	} else {
 		err = d.List(func() error {
@@ -74,12 +75,16 @@ func parseFetch(d *Decoder) (*FetchRequest, error) {
 				}
 				r.Options.Body = append(r.Options.Body, body)
 			case "BODY":
-				body := FetchBodySection{}
-				err = body.decode(d)
-				if err != nil {
-					return err
+				if !d.is("[") {
+					r.Options.BodyStructure = true
+				} else {
+					body := FetchBodySection{}
+					err = body.decode(d)
+					if err != nil {
+						return err
+					}
+					r.Options.Body = append(r.Options.Body, body)
 				}
-				r.Options.Body = append(r.Options.Body, body)
 			}
 			return nil
 		})
@@ -93,11 +98,15 @@ func (s *FetchBodySection) decode(d *Decoder) error {
 	if err = d.expect("["); err != nil {
 		return err
 	}
-	var typeName string
-	typeName, err = d.String()
-	switch strings.ToUpper(typeName) {
+
+	var specifier string
+	s.Parts, specifier = parseSectionParts(d)
+
+	switch strings.ToUpper(specifier) {
+	case "HEADER":
+		s.Specifier = "header"
 	case "HEADER.FIELDS":
-		s.Type = "header"
+		s.Specifier = "header"
 		err = d.SP().List(func() error {
 			var field string
 			field, err = d.String()
@@ -108,7 +117,9 @@ func (s *FetchBodySection) decode(d *Decoder) error {
 			return err
 		}
 	case "TEXT":
-		s.Type = "text"
+		s.Specifier = "text"
+	default:
+		s.Specifier = strings.ToLower(specifier)
 	}
 	if err = d.expect("]"); err != nil {
 		return err
@@ -133,40 +144,6 @@ func (s *FetchBodySection) decode(d *Decoder) error {
 		s.Partially = &part
 	}
 	return nil
-}
-
-func parseFetchBody(p *fetchParser) (*FetchBody, error) {
-	if err := p.expect('['); err != nil {
-		return nil, errors.Wrap(err, "expected section start")
-	}
-	section, err := p.consume(isAtomChar)
-	if err != nil {
-		return nil, err
-	}
-	fb := &FetchBody{}
-	switch section {
-	case "HEADER.FIELDS":
-		if err := p.expect(' '); err != nil {
-			return nil, err
-		}
-		err = p.parseList(func() error {
-			field, err := p.consume(isAtomChar)
-			if err != nil {
-				return err
-			}
-			fb.HeaderFields = append(fb.HeaderFields, field)
-			return nil
-		}, listTypeList)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if err := p.expect(']'); err != nil {
-		return nil, errors.Wrap(err, "expected section end")
-	}
-
-	return fb, nil
 }
 
 func (p *fetchParser) parseList(parseItem func() error, listType int) error {
@@ -245,15 +222,18 @@ func (p *fetchParser) consume(valid func(b byte) bool) (string, error) {
 	return sb.String(), nil
 }
 
-func isFetchAttrNameChar(b byte) bool {
-	return b != '[' && isAtomChar(b)
-}
-
-func isAtomChar(b byte) bool {
-	switch b {
-	case '(', ')', '{', ' ', '%', '*', '"', '\\', ']':
-		return false
-	default:
-		return !unicode.IsControl(rune(b))
+func parseSectionParts(d *Decoder) (parts []int, specifier string) {
+	for {
+		if len(parts) > 0 {
+			if err := d.expect("."); err != nil {
+				return
+			}
+		}
+		num, err := d.Number()
+		if err != nil {
+			specifier, _ = d.String()
+			return
+		}
+		parts = append(parts, int(num))
 	}
 }

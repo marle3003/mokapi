@@ -65,6 +65,16 @@ func (c *conn) readCmd() error {
 	tag, cmd, param := parseLine(line)
 	d := Decoder{msg: param}
 
+	// missing feature
+	// - search
+	// - UID search
+	// - idle
+	// - ID
+	// - namespace
+	// - sort
+	// - thread
+	// - append
+
 	var res *response
 	switch cmd {
 	case "AUTHENTICATE":
@@ -75,8 +85,8 @@ func (c *conn) readCmd() error {
 		res = c.handleCapability()
 	case "STARTTLS":
 		err = c.handleStartTLS(tag)
-	case "SELECT":
-		err = c.handleSelect(tag, param)
+	case "SELECT", "EXAMINE":
+		err = c.handleSelect(tag, param, cmd == "EXAMINE")
 	case "STATUS":
 		err = c.handleStatus(tag, &d)
 	case "LIST":
@@ -102,6 +112,10 @@ func (c *conn) readCmd() error {
 		err = c.handleStore(tag, param)
 	case "CREATE":
 		err = c.handleCreate(tag, &d)
+	case "DELETE":
+		err = c.handleDelete(tag, &d)
+	case "RENAME":
+		err = c.handleRename(tag, &d)
 	case "COPY":
 		err = c.handleCopy(tag, &d, false)
 	case "MOVE":

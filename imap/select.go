@@ -18,7 +18,7 @@ type Selected struct {
 	tag  string
 }
 
-func (c *conn) handleSelect(tag, param string) error {
+func (c *conn) handleSelect(tag, param string, readonly bool) error {
 	d := Decoder{msg: param}
 	mailbox, err := d.String()
 	if err != nil {
@@ -46,7 +46,7 @@ func (c *conn) handleSelect(tag, param string) error {
 		})
 	}
 
-	selected, err := c.handler.Select(mailbox, c.ctx)
+	selected, err := c.handler.Select(mailbox, readonly, c.ctx)
 	if err != nil {
 		return c.writeResponse(tag, &response{
 			status: no,
@@ -147,9 +147,13 @@ func (s *Selected) writeFlags() error {
 	})
 }
 
-func (c *Client) Select(folder string) (Selected, error) {
+func (c *Client) Select(folder string, readonly bool) (Selected, error) {
 	tag := c.nextTag()
-	err := c.tpc.PrintfLine("%s SELECT %s", tag, folder)
+	cmd := "SELECT"
+	if readonly {
+		cmd = "EXAMINE"
+	}
+	err := c.tpc.PrintfLine("%s %s %s", tag, cmd, folder)
 	if err != nil {
 		return Selected{}, err
 	}

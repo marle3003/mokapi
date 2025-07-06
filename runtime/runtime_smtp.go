@@ -207,8 +207,8 @@ func (h *mailHandler) Login(username, password string, ctx context.Context) erro
 	return h.next.Login(username, password, ctx)
 }
 
-func (h *mailHandler) Select(mailbox string, ctx context.Context) (*imap.Selected, error) {
-	return h.next.Select(mailbox, ctx)
+func (h *mailHandler) Select(mailbox string, readonly bool, ctx context.Context) (*imap.Selected, error) {
+	return h.next.Select(mailbox, readonly, ctx)
 }
 
 func (h *mailHandler) Unselect(ctx context.Context) error {
@@ -233,6 +233,14 @@ func (h *mailHandler) Expunge(set *imap.IdSet, w imap.ExpungeWriter, ctx context
 
 func (h *mailHandler) Create(name string, opt *imap.CreateOptions, ctx context.Context) error {
 	return h.next.Create(name, opt, ctx)
+}
+
+func (h *mailHandler) Delete(name string, ctx context.Context) error {
+	return h.next.Delete(name, ctx)
+}
+
+func (h *mailHandler) Rename(existingName, newName string, ctx context.Context) error {
+	return h.next.Rename(existingName, newName, ctx)
 }
 
 func (h *mailHandler) Copy(set *imap.IdSet, dest string, w imap.CopyWriter, ctx context.Context) error {

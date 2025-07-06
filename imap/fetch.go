@@ -17,7 +17,7 @@ type FetchOptions struct {
 }
 
 type FetchBodySection struct {
-	Type      string
+	Specifier string
 	Fields    []string
 	Parts     []int
 	Peek      bool
@@ -182,7 +182,144 @@ func (c *Client) Fetch(set IdSet, options FetchOptions) (*FetchCommand, error) {
 				}
 				switch key {
 				case "HEADER.FIELDS":
-					body.Def.Type = "header"
+					body.Def.Specifier = "header"
+					err = d.SP().List(func() error {
+						var field string
+						field, err = d.String()
+						body.Def.Fields = append(body.Def.Fields, field)
+						return nil
+					})
+					if err != nil {
+						return err
+					}
+				}
+
+				if err = d.expect("]"); err != nil {
+					return err
+				}
+				if d.SP().is("{") {
+					_ = d.expect("{")
+					var size uint32
+					size, err = d.Number()
+					if err != nil {
+						return err
+					}
+					if err = d.expect("}"); err != nil {
+						return err
+					}
+					b := make([]byte, size)
+					_, err = c.tpc.R.Read(b)
+					if err != nil {
+						return err
+					}
+					body.Data = string(b)
+					d.msg, err = c.tpc.ReadLine()
+					if err != nil {
+						return err
+					}
+				} else {
+					body.Data, err = d.String()
+					if err != nil {
+						return err
+					}
+				}
+				msg.Body = append(msg.Body, body)
+			}
+
+			return err
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		cmd.Messages = append(cmd.Messages, msg)
+	}
+}
+
+func (c *Client) FetchRaw(fetch string) (*FetchCommand, error) {
+	tag := c.nextTag()
+
+	err := c.tpc.PrintfLine(fmt.Sprintf("%s %s", tag, fetch))
+	if err != nil {
+		return nil, err
+	}
+
+	d := Decoder{}
+	cmd := &FetchCommand{}
+	var msg Message
+	for {
+		d.msg, err = c.tpc.ReadLine()
+		if err != nil {
+			return nil, err
+		}
+
+		if d.is(tag) {
+			return cmd, d.EndCmd(tag)
+		}
+
+		if err = d.expect("*"); err != nil {
+			return nil, err
+		}
+
+		var num uint32
+		num, err = d.SP().Number()
+		if err != nil {
+			return nil, err
+		}
+		msg.SeqNumber = num
+
+		err = d.SP().expect("FETCH")
+		if err != nil {
+			return nil, err
+		}
+
+		err = d.SP().List(func() error {
+			var key string
+			key, err = d.String()
+			if err != nil {
+				return err
+			}
+
+			switch strings.ToUpper(key) {
+			case "UID":
+				num, err = d.SP().Number()
+				if err != nil {
+					return err
+				}
+				msg.UID = num
+			case "FLAGS":
+				err = d.SP().List(func() error {
+					var flag string
+					flag, err = d.ReadFlag()
+					if err != nil {
+						return err
+					}
+					msg.Flags = append(msg.Flags, Flag(flag))
+					return nil
+				})
+			case "INTERNALDATE":
+				msg.InternalDate, err = d.SP().Date()
+			case "BODYSTRUCTURE":
+				b := BodyStructure{}
+				err = d.SP().List(func() error {
+					return b.readPart(&d)
+				})
+				msg.BodyStructure = b
+			case "RFC822Size":
+				msg.Size, err = d.SP().Number()
+			case "BODY":
+				body := FetchData{}
+				if err = d.expect("["); err != nil {
+					return err
+				}
+				key, err = d.String()
+				if err != nil {
+					return err
+				}
+				switch key {
+				case "HEADER.FIELDS":
+					body.Def.Specifier = "header"
 					err = d.SP().List(func() error {
 						var field string
 						field, err = d.String()
@@ -271,7 +408,7 @@ func (s *FetchBodySection) encode() string {
 		b.Atom(".PEEK")
 	}
 	b.Byte('[')
-	switch strings.ToLower(s.Type) {
+	switch strings.ToLower(s.Specifier) {
 	case "header":
 		b.Atom("HEADER")
 		if len(s.Fields) > 0 {
@@ -329,9 +466,6 @@ func (b *BodyStructure) readPart(d *Decoder) error {
 	}
 
 	_ = d.SP().NilList(func() error {
-		if b.Disposition == nil {
-			b.Disposition = map[string]map[string]string{}
-		}
 		key, _ := d.Quoted()
 		m := map[string]string{}
 		_ = d.SP().NilList(func() error {
@@ -340,7 +474,7 @@ func (b *BodyStructure) readPart(d *Decoder) error {
 			m[name] = val
 			return nil
 		})
-		b.Disposition[key] = m
+		b.Disposition = fmt.Sprintf("%v; %v", key, m)
 		return nil
 	})
 	b.Language, _ = d.SP().NilString()

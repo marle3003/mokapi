@@ -21,13 +21,15 @@ const (
 
 type Handler interface {
 	Login(username, password string, ctx context.Context) error
-	Select(mailbox string, ctx context.Context) (*Selected, error)
+	Select(mailbox string, readonly bool, ctx context.Context) (*Selected, error)
 	Unselect(ctx context.Context) error
 	List(ref, pattern string, flags []MailboxFlags, ctx context.Context) ([]ListEntry, error)
 	Fetch(req *FetchRequest, res FetchResponse, ctx context.Context) error
 	Store(req *StoreRequest, res FetchResponse, ctx context.Context) error
 	Expunge(set *IdSet, w ExpungeWriter, ctx context.Context) error
 	Create(name string, opts *CreateOptions, ctx context.Context) error
+	Delete(mailbox string, ctx context.Context) error
+	Rename(existingName, newName string, ctx context.Context) error
 	Copy(set *IdSet, dest string, w CopyWriter, ctx context.Context) error
 	Move(set *IdSet, dest string, w MoveWriter, ctx context.Context) error
 	Status(req *StatusRequest, ctx context.Context) (StatusResult, error)

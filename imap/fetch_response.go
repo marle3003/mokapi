@@ -2,6 +2,7 @@ package imap
 
 import (
 	"fmt"
+	"mokapi/media"
 	"strings"
 	"time"
 )
@@ -16,8 +17,8 @@ type MessageWriter interface {
 	WriteRFC822Size(size uint32)
 	WriteFlags(flags ...Flag)
 	WriteEnvelope(env *Envelope)
-	WriteBody(section FetchBodySection) *BodyWriter
-	WriteBodyStructure(body BodyStructure)
+	WriteBody(section FetchBodySection) BodyWriter
+	WriteBodyStructure(body *BodyStructure)
 }
 
 type Envelope struct {
@@ -59,7 +60,8 @@ type BodyStructure struct {
 	Encoding    string
 	Size        uint32
 	MD5         *string
-	Disposition map[string]map[string]string
+	Disposition string
+	ContentId   *string
 	Language    *string
 	Location    *string
 	Parts       []BodyStructure
@@ -142,35 +144,51 @@ func (m *message) WriteEnvelope(env *Envelope) {
 	m.sb.WriteString(")")
 }
 
-func (m *message) WriteBody(section FetchBodySection) *BodyWriter {
+func (m *message) WriteBody(section FetchBodySection) BodyWriter {
 	section.Peek = false
-	w := &BodyWriter{section: section, m: m}
+	w := &body{section: section, m: m}
 	return w
 }
 
-type BodyWriter struct {
+type BodyWriter interface {
+	WriteHeader(name, value string)
+	WriteBody(s string)
+	Close()
+}
+
+type body struct {
 	section FetchBodySection
 	header  strings.Builder
 	body    strings.Builder
 	m       *message
 }
 
-func (w *BodyWriter) WriteHeader(name, value string) {
+func (w *body) WriteHeader(name, value string) {
 	w.header.WriteString(fmt.Sprintf("%s: %s\r\n", name, value))
 }
 
-func (w *BodyWriter) WriteBody(s string) {
+func (w *body) WriteBody(s string) {
 	w.body.WriteString(s)
 	w.body.WriteString("\r\n\r\n")
 }
 
-func (w *BodyWriter) Close() {
+func (w *body) Close() {
 	w.m.sb.WriteString(" " + w.section.encode())
 	w.m.sb.WriteString(fmt.Sprintf(" {%v}\r\n", w.header.Len()+w.body.Len()+2))
-	w.m.sb.WriteString(w.header.String())
+
 	// header must end with a blank line
-	w.m.sb.WriteString("\r\n")
-	w.m.sb.WriteString(w.body.String())
+	data := w.header.String() + "\r\n" + w.body.String()
+	if w.section.Partially != nil {
+		offset := w.section.Partially.Offset
+		if offset > uint32(len(data)) {
+			return
+		}
+		limit := w.section.Partially.Limit
+		end := min(offset+limit, uint32(len(data)))
+		data = data[offset:end]
+	}
+
+	w.m.sb.WriteString(data)
 }
 
 func (m *message) writeAddress(addrList []Address) {
@@ -186,11 +204,29 @@ func (m *message) writeAddress(addrList []Address) {
 	m.sb.WriteString(")")
 }
 
-func (m *message) WriteBodyStructure(b BodyStructure) {
-	m.sb.WriteString(" BODYSTRUCTURE (")
+func (m *message) WriteBodyStructure(b *BodyStructure) {
+	m.sb.WriteString(" BODYSTRUCTURE ")
 
+	writeStructure(m, b)
+}
+
+func writeStructure(m *message, b *BodyStructure) {
+	// Multipart
+	if strings.ToLower(b.Type) == "multipart" {
+		m.sb.WriteString("(")
+		for _, part := range b.Parts {
+			writeStructure(m, &part)
+		}
+		m.sb.WriteString(fmt.Sprintf("\"%s\") ", b.Subtype))
+		return
+	}
+
+	// Single part
+	m.sb.WriteString("(")
 	m.sb.WriteString(fmt.Sprintf("\"%v\" ", b.Type))
 	m.sb.WriteString(fmt.Sprintf("\"%v\" ", b.Subtype))
+
+	// Params
 	var params []string
 	for k, v := range b.Params {
 		params = append(params,
@@ -198,37 +234,46 @@ func (m *message) WriteBodyStructure(b BodyStructure) {
 			fmt.Sprintf("\"%v\"", v),
 		)
 	}
-	m.sb.WriteString("(")
-	m.sb.WriteString(strings.Join(params, " "))
-	m.sb.WriteString(") ")
-
-	m.sb.WriteString("NIL ") // body id
-	m.sb.WriteString("NIL ") // body description
-
-	m.sb.WriteString(fmt.Sprintf("\"%v\" ", b.Encoding))
-	m.sb.WriteString(fmt.Sprintf("%v ", b.Size))
-
-	m.sb.WriteString(toNilString(b.MD5) + " ")
-
-	if len(b.Disposition) > 0 {
-		var dispositions []string
-		for k, v := range b.Disposition {
-			var attr []string
-			for name, val := range v {
-				attr = append(attr, fmt.Sprintf("\"%v\"", name), fmt.Sprintf("\"%v\"", val))
-			}
-			dispositions = append(dispositions,
-				fmt.Sprintf("\"%v\"", k),
-				fmt.Sprintf("(%v)", strings.Join(attr, " ")),
-			)
-		}
-		m.sb.WriteString("(")
-		m.sb.WriteString(strings.Join(dispositions, " "))
-		m.sb.WriteString(") ")
+	if len(params) > 0 {
+		m.sb.WriteString("(" + strings.Join(params, " ") + ") ")
 	} else {
 		m.sb.WriteString("NIL ")
 	}
 
+	// ID and Description
+	m.sb.WriteString(toNilString(b.ContentId) + " ")
+
+	m.sb.WriteString("NIL ") // body description
+
+	// Encoding and size
+	m.sb.WriteString(fmt.Sprintf("\"%v\" ", b.Encoding))
+	m.sb.WriteString(fmt.Sprintf("%v ", b.Size))
+
+	// MD5
+	m.sb.WriteString(toNilString(b.MD5) + " ")
+
+	// Disposition
+	if len(b.Disposition) > 0 {
+		dispo := media.ParseContentType(b.Disposition)
+
+		list := ""
+		for k, v := range dispo.Parameters {
+			if len(list) > 0 {
+				list += " "
+			}
+			list += fmt.Sprintf("\"%v\" \"%v\"", k, v)
+		}
+
+		if len(list) == 0 {
+			m.sb.WriteString(fmt.Sprintf("(\"%s\") ", dispo.Type))
+		} else {
+			m.sb.WriteString(fmt.Sprintf("(\"%s\" (%s)) ", dispo.Type, list))
+		}
+	} else {
+		m.sb.WriteString("NIL ")
+	}
+
+	// Language and Location
 	m.sb.WriteString(toNilString(b.Language) + " ")
 	m.sb.WriteString(toNilString(b.Location))
 

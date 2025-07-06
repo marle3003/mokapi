@@ -20,7 +20,7 @@ func (h *Handler) Login(username, password string, ctx context.Context) error {
 	return fmt.Errorf("invalid credentials")
 }
 
-func (h *Handler) Select(mailbox string, ctx context.Context) (*imap.Selected, error) {
+func (h *Handler) Select(mailbox string, readonly bool, ctx context.Context) (*imap.Selected, error) {
 	mb, _ := getContext(ctx)
 	mb.m.Lock()
 	defer mb.m.Unlock()
@@ -32,6 +32,7 @@ func (h *Handler) Select(mailbox string, ctx context.Context) (*imap.Selected, e
 
 	c := imap.ClientFromContext(ctx)
 	c.Session["selected"] = mailbox
+	c.Session["readonly"] = readonly
 	unseen := f.FirstUnseen()
 
 	return &imap.Selected{
@@ -187,6 +188,22 @@ func (h *Handler) Create(name string, opt *imap.CreateOptions, ctx context.Conte
 	current.Flags = opt.Flags
 
 	return nil
+}
+
+func (h *Handler) Delete(mailbox string, ctx context.Context) error {
+	mb, _ := getContext(ctx)
+	mb.m.Lock()
+	defer mb.m.Unlock()
+
+	return mb.DeleteFolder(mailbox)
+}
+
+func (h *Handler) Rename(existingName, newName string, ctx context.Context) error {
+	mb, _ := getContext(ctx)
+	mb.m.Lock()
+	defer mb.m.Unlock()
+
+	return mb.RenameFolder(existingName, newName)
 }
 
 func (h *Handler) Copy(set *imap.IdSet, dest string, w imap.CopyWriter, ctx context.Context) error {

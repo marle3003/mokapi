@@ -89,7 +89,7 @@ func (m *SmtpManager) startServers(cfg *runtime.MailInfo) error {
 				continue
 			}
 
-			log.Infof("adding new smtp host on :%v", port)
+			log.Infof("adding new SMTP host on :%v", port)
 			s := service.NewSmtpServer(port, h)
 			s.Start()
 			servers[port] = s
