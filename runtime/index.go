@@ -15,10 +15,11 @@ import (
 )
 
 type SearchResult struct {
-	Type       string   `json:"type"`
-	ConfigName string   `json:"configName"`
-	Title      string   `json:"title"`
-	Fragments  []string `json:"fragments,omitempty"`
+	Type      string            `json:"type"`
+	Domain    string            `json:"domain"`
+	Title     string            `json:"title"`
+	Fragments []string          `json:"fragments,omitempty"`
+	Params    map[string]string `json:"params"`
 }
 
 func newIndex(cfg *static.Config) bleve.Index {

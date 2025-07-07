@@ -32,6 +32,18 @@ func TestIndex_Http(t *testing.T) {
 				r, err := app.Search("foo")
 				require.NoError(t, err)
 				require.Len(t, r, 1)
+				require.Equal(t,
+					runtime.SearchResult{
+						Type:      "HTTP",
+						Domain:    "foo",
+						Title:     "foo",
+						Fragments: []string{"<mark>foo</mark>"},
+						Params: map[string]string{
+							"type":    "http",
+							"service": "foo",
+						},
+					},
+					r[0])
 			},
 		},
 		{
@@ -42,6 +54,18 @@ func TestIndex_Http(t *testing.T) {
 				r, err := app.Search("pet")
 				require.NoError(t, err)
 				require.Len(t, r, 1)
+				require.Equal(t,
+					runtime.SearchResult{
+						Type:      "HTTP",
+						Domain:    "My petstore API",
+						Title:     "My petstore API",
+						Fragments: []string{"My <mark>petstore</mark> API"},
+						Params: map[string]string{
+							"type":    "http",
+							"service": "My petstore API",
+						},
+					},
+					r[0])
 			},
 		},
 		{
@@ -52,6 +76,18 @@ func TestIndex_Http(t *testing.T) {
 				r, err := app.Search("1.0")
 				require.NoError(t, err)
 				require.Len(t, r, 1)
+				require.Equal(t,
+					runtime.SearchResult{
+						Type:      "HTTP",
+						Domain:    "foo",
+						Title:     "foo",
+						Fragments: []string{"<mark>1.0</mark>"},
+						Params: map[string]string{
+							"type":    "http",
+							"service": "foo",
+						},
+					},
+					r[0])
 			},
 		},
 		{
@@ -65,6 +101,19 @@ func TestIndex_Http(t *testing.T) {
 				r, err := app.Search("pets")
 				require.NoError(t, err)
 				require.Len(t, r, 1)
+				require.Equal(t,
+					runtime.SearchResult{
+						Type:      "HTTP",
+						Domain:    "foo",
+						Title:     "/pets",
+						Fragments: []string{"/<mark>pets</mark>"},
+						Params: map[string]string{
+							"type":    "http",
+							"service": "foo",
+							"path":    "/pets",
+						},
+					},
+					r[0])
 			},
 		},
 		{
@@ -78,6 +127,31 @@ func TestIndex_Http(t *testing.T) {
 				r, err := app.Search("description")
 				require.NoError(t, err)
 				require.Len(t, r, 2)
+				require.Equal(t,
+					runtime.SearchResult{
+						Type:      "HTTP",
+						Domain:    "foo",
+						Title:     "foo",
+						Fragments: []string{"a <mark>description</mark>"},
+						Params: map[string]string{
+							"type":    "http",
+							"service": "foo",
+						},
+					},
+					r[0])
+				require.Equal(t,
+					runtime.SearchResult{
+						Type:      "HTTP",
+						Domain:    "foo",
+						Title:     "/pets",
+						Fragments: []string{"a <mark>description</mark>"},
+						Params: map[string]string{
+							"type":    "http",
+							"service": "foo",
+							"path":    "/pets",
+						},
+					},
+					r[1])
 			},
 		},
 		{
@@ -98,10 +172,17 @@ func TestIndex_Http(t *testing.T) {
 				require.Len(t, r, 1)
 				require.Equal(t,
 					runtime.SearchResult{
-						Type:       "HTTP",
-						ConfigName: "foo",
-						Title:      "GET /pets",
-						Fragments:  []string{"<mark>parameter</mark> <mark>description</mark>"}},
+						Type:      "HTTP",
+						Domain:    "foo",
+						Title:     "GET /pets",
+						Fragments: []string{"<mark>parameter</mark> <mark>description</mark>"},
+						Params: map[string]string{
+							"type":    "http",
+							"service": "foo",
+							"path":    "/pets",
+							"method":  "get",
+						},
+					},
 					r[0])
 			},
 		},

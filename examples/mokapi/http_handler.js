@@ -130,10 +130,26 @@ export default async function() {
                 return true
             case 'search':
                 response.data = [{
-                    type: 'http',
-                    configName: 'Swagger Petstore',
+                    type: 'HTTP',
+                    domain: 'Swagger Petstore',
                     title: "POST  /pet",
-                    fragments: ['Everything', 'store']
+                    fragments: ['<mark>Everything</mark>', 'store'],
+                    params: {
+                        type: 'http',
+                        service: 'Swagger Petstore',
+                        path: '/pet',
+                        method: 'post'
+                    }
+                },
+                {
+                    type: 'Config',
+                    domain: 'FILE',
+                    title: "file://root/path/to/my/foo/file.json",
+                    fragments: ['<mark>foo</mark> bar'],
+                    params: {
+                        type: 'config',
+                        id: 'b6fea8ac-56c7-4e73-a9c0-6887640bdca8'
+                    }
                 }]
         }
     }, {tags: {name: "dashboard"}})

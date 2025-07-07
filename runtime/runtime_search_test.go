@@ -17,8 +17,11 @@ func TestIndex_Config(t *testing.T) {
 		{
 			name: "Search by name",
 			test: func(t *testing.T, app *runtime.App) {
+				info := dynamictest.NewConfigInfo()
+				info.Provider = "file"
+
 				cfg := &dynamic.Config{
-					Info: dynamictest.NewConfigInfo(),
+					Info: info,
 					Raw:  []byte(`{"name":"test"}`),
 				}
 
@@ -32,10 +35,14 @@ func TestIndex_Config(t *testing.T) {
 				require.Len(t, r, 1)
 				require.Equal(t,
 					runtime.SearchResult{
-						Type:       "Config",
-						ConfigName: "",
-						Title:      "foo.yml",
-						Fragments:  []string{"{&#34;<mark>name</mark>&#34;:&#34;test&#34;}"},
+						Type:      "Config",
+						Domain:    "FILE",
+						Title:     "file://foo.yml",
+						Fragments: []string{"{&#34;<mark>name</mark>&#34;:&#34;test&#34;}"},
+						Params: map[string]string{
+							"type": "config",
+							"id":   "64613435-3062-6462-3033-316532633233",
+						},
 					},
 					r[0])
 			},

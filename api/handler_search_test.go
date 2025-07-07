@@ -30,7 +30,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 		{
 			name:         "empty search query",
 			requestUrl:   "/api/search/query",
-			responseBody: `[{"type":"HTTP","configName":"","title":"foo"}]`,
+			responseBody: `[{"type":"HTTP","domain":"foo","title":"foo","params":{"service":"foo","type":"http"}}]`,
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
 					Enabled:  true,
@@ -50,7 +50,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 		{
 			name:         "search with query text",
 			requestUrl:   "/api/search/query?queryText=foo",
-			responseBody: `[{"type":"HTTP","configName":"","title":"foo","fragments":["\u003cmark\u003efoo\u003c/mark\u003e"]}]`,
+			responseBody: `[{"type":"HTTP","domain":"foo","title":"foo","fragments":["\u003cmark\u003efoo\u003c/mark\u003e"],"params":{"service":"foo","type":"http"}}]`,
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
 					Enabled:  true,

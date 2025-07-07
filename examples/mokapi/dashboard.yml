@@ -447,13 +447,17 @@ components:
       properties:
         type:
           type: string
-        configName:
+        domain:
           type: string
         title:
           type: string
         fragments:
           type: array
           items:
+            type: string
+        params:
+          type: object
+          additionalProperties:
             type: string
     ServiceInfo:
       type: object
