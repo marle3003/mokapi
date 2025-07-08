@@ -82,6 +82,60 @@ func TestModule_On(t *testing.T) {
 			},
 		},
 		{
+			name: "event handler does not change params",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var handler func(args ...interface{}) (bool, error)
+				host.OnFunc = func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+					handler = do
+				}
+
+				_, err := vm.RunString(`
+					const m = require('mokapi')
+					m.on('http', (param) => { })
+				`)
+				r.NoError(t, err)
+				b, err := handler(map[string]bool{"foo": true})
+				r.NoError(t, err)
+				r.Equal(t, false, b)
+			},
+		},
+		{
+			name: "event handler does not change params but uses track argument",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var handler func(args ...interface{}) (bool, error)
+				host.OnFunc = func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+					handler = do
+				}
+
+				_, err := vm.RunString(`
+					const m = require('mokapi')
+					m.on('http', (param) => { }, { track: true })
+				`)
+				r.NoError(t, err)
+				b, err := handler(map[string]bool{"foo": true})
+				r.NoError(t, err)
+				r.Equal(t, true, b)
+			},
+		},
+		{
+			name: "event handler changes params but disables track",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var handler func(args ...interface{}) (bool, error)
+				host.OnFunc = func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+					handler = do
+				}
+
+				_, err := vm.RunString(`
+					const m = require('mokapi')
+					m.on('http', (param) => { param['foo'] = false }, { track: false })
+				`)
+				r.NoError(t, err)
+				b, err := handler(map[string]bool{"foo": true})
+				r.NoError(t, err)
+				r.Equal(t, false, b)
+			},
+		},
+		{
 			name: "event handler throws error",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var handler func(args ...interface{}) (bool, error)

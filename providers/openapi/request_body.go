@@ -14,6 +14,8 @@ import (
 	"strings"
 )
 
+var defaultContentType = media.ParseContentType("application/octet-stream")
+
 type RequestBodies map[string]*RequestBodyRef
 
 type RequestBodyRef struct {
@@ -119,7 +121,7 @@ func getMedia(contentType media.ContentType, body *RequestBody) (media.ContentTy
 	for _, mt := range body.Content {
 		if contentType.Match(mt.ContentType) {
 			// text/plain > */* and text/*
-			if best.IsPrecise() && (mt.ContentType.IsAny() || mt.ContentType.IsRange()) {
+			if best.IsPrecise() && (mt.ContentType.IsAny() || mt.ContentType.IsRange()) && isDefaultContentType(best) {
 				continue
 			}
 
@@ -133,6 +135,9 @@ func getMedia(contentType media.ContentType, body *RequestBody) (media.ContentTy
 			}
 
 			best = mt.ContentType
+			bestMediaType = mt
+		} else if best.IsEmpty() && mt.ContentType.Match(defaultContentType) {
+			best = defaultContentType
 			bestMediaType = mt
 		}
 	}
@@ -269,8 +274,11 @@ func (d multipartForm) decode(m map[string]interface{}, part *multipart.Part) er
 
 	ct := media.ParseContentType(part.Header.Get("Content-Type"))
 	if e, ok := d.mt.Encoding[name]; ok && e.ContentType != "" {
-		if !ct.Match(media.ParseContentType(e.ContentType)) {
-			return fmt.Errorf("part '%s' does not match content type: %v", name, e.ContentType)
+		expected := media.ParseContentType(e.ContentType)
+		if !expected.Match(defaultContentType) {
+			if !ct.Match(media.ParseContentType(e.ContentType)) {
+				return fmt.Errorf("part '%s' does not match content type: %v", name, e.ContentType)
+			}
 		}
 	}
 
@@ -295,4 +303,11 @@ func (d multipartForm) decode(m map[string]interface{}, part *multipart.Part) er
 	}
 
 	return nil
+}
+
+func isDefaultContentType(mt media.ContentType) bool {
+	if mt.String() == defaultContentType.String() {
+		return true
+	}
+	return false
 }
