@@ -176,10 +176,11 @@ func (p *Provider) skip(path string, isDir bool) bool {
 		return !include(p.cfg.Include, path)
 	}
 
-	name := filepath.Base(path)
-	if name == mokapiIgnoreFile {
+	if isMokapiIgnoreFile(path) {
 		return true
 	}
+
+	name := filepath.Base(path)
 	for _, s := range p.SkipPrefix {
 		if strings.HasPrefix(name, s) {
 			return true
@@ -245,7 +246,7 @@ func (p *Provider) walk(root string) error {
 				p.watchPath(path)
 				p.ch <- dynamic.ConfigEvent{Event: dynamic.Create, Config: c, Name: path}
 			}
-		} else {
+		} else if !isMokapiIgnoreFile(path) {
 			log.Debugf("skip file: %v", path)
 		}
 
@@ -389,4 +390,9 @@ func include(s []string, v string) bool {
 		}
 	}
 	return false
+}
+
+func isMokapiIgnoreFile(path string) bool {
+	name := filepath.Base(path)
+	return name == mokapiIgnoreFile
 }
