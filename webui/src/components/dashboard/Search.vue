@@ -60,7 +60,7 @@ function title(result: any) {
           </div>
             <div class="container text-center">
               <div class="row justify-content-md-center">
-                <div class="col-6 col-auto">
+                <div class="col-8 col-auto">
                   <div class="input-group mb-3">
                     <span class="input-group-text" id="search-icon">
                       <i class="bi bi-search"></i>
@@ -78,7 +78,7 @@ function title(result: any) {
           <div class="card-body">
             <div class="container">
                 <div class="row justify-content-md-center">
-                  <div class="col-6 col-auto">
+                  <div class="col-8 col-auto">
                     <div class="list-group search-results">
                       <a v-for="result of results" class="list-group-item" @click="navigateToSearchResult(result)">
                         <div class="mb-1 config">
