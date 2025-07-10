@@ -10,9 +10,9 @@ import yaml from 'js-yaml'
 const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
 const metadataRegex = /^---([\s\S]*?)---/;
 
-export function useMarkdown(content: string | undefined) {
+export function useMarkdown(content: string | undefined): {content: string | undefined, metadata?: DocMeta} {
     if (!content) {
-        return {content, metadata: {}}
+        return { content }
     }
     try {
         const metadata = parseMetadata(content)
@@ -35,7 +35,7 @@ export function useMarkdown(content: string | undefined) {
         return {content, metadata}
     } catch (e) {
         console.error('invalid markdown: '+content)
-        return { content: '', metadata: {} }
+        return { content: '' }
     }
 }
 

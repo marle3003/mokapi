@@ -23,7 +23,7 @@ const { file, levels, isIndex } = resolve(nav, route)
 let data
 let component: any
 let content: string | undefined
-let metadata: any
+let metadata: DocMeta | undefined
 if (typeof file === 'string'){
   data = files[`/src/assets/docs/${file}`];
   ({ content, metadata } = useMarkdown(data))
@@ -32,7 +32,7 @@ if (typeof file === 'string'){
   if (entry.component) {
     // component must be initialized in main.ts
     component = entry.component
-    metadata = entry
+    metadata = entry as DocMeta
   }
 }
 
@@ -101,7 +101,7 @@ onMounted(() => {
     if ((title.length + extension.length) <= 70) {
       title +=  ' | Mokapi ' + levels[0]
     }
-    useMeta(title, metadata.description, getCanonicalUrl(levels))
+    useMeta(title, metadata.description, getCanonicalUrl(levels), metadata.image)
   }
   dialog.value = new Modal('#imageDialog', {})
 })

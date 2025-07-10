@@ -1,6 +1,6 @@
 const defaultDescription = `Speed up testing process by creating stable development or test environments, reducing external dependencies, and simulating APIs that don't even exist yet.`
 
-export function useMeta(title: string, description: string, canonicalUrl: string) {
+export function useMeta(title: string, description: string, canonicalUrl: string, image?: { url: string, alt: string}) {
     if (!description) {
         description = defaultDescription
     }
@@ -10,11 +10,15 @@ export function useMeta(title: string, description: string, canonicalUrl: string
     setDescription(description)
     setCanonical(canonicalUrl)
 
+    if (!image) {
+        image = { url: '/og-logo.png', alt: 'Mokapi logo' }
+    }
+
     setOpenGraphMeta('og:url', canonicalUrl)
     setOpenGraphMeta('og:title', title)
     setOpenGraphMeta('og:description', description)
-    setOpenGraphMeta('og:image', 'https://mokapi.io/og-logo.png')
-    setOpenGraphMeta('og:image:alt', 'Mokapi logo')
+    setOpenGraphMeta('og:image', 'https://mokapi.io' + image.url)
+    setOpenGraphMeta('og:image:alt', image.alt)
     setOpenGraphMeta('og:type', 'website')
 }
 
