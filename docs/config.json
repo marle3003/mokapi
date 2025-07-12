@@ -211,8 +211,7 @@
   },
   "References": {
     "items": {
-      "Declarative Data": "references/declarative-data.md",
-      "Lua API": "references/lua.md"
+      "Declarative Data": "references/declarative-data.md"
     }
   }
 }

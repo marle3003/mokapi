@@ -127,7 +127,7 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                                 <router-link class="nav-link" :to="{ name: 'tree', query: {refresh: $route.query.refresh} }">Faker</router-link>
                             </li>
                             <li class="nav-item" v-if="appInfo.data.search.enabled">
-                                <router-link class="nav-link" :to="{ name: 'search', query: {refresh: $route.query.refresh, search: 1} }">Search</router-link>
+                                <router-link class="nav-link" :to="{ name: 'search', query: {refresh: $route.query.refresh} }">Search</router-link>
                             </li>
                         </ul>
                     </div>
