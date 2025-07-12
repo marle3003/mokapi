@@ -16,10 +16,11 @@ import (
 )
 
 type HttpStore struct {
-	infos map[string]*HttpInfo
-	cfg   *static.Config
-	m     sync.RWMutex
-	index bleve.Index
+	infos  map[string]*HttpInfo
+	cfg    *static.Config
+	m      sync.RWMutex
+	index  bleve.Index
+	events *events.StoreManager
 }
 
 type HttpInfo struct {
@@ -33,10 +34,11 @@ type httpHandler struct {
 	next http.Handler
 }
 
-func NewHttpStore(cfg *static.Config, index bleve.Index) *HttpStore {
+func NewHttpStore(cfg *static.Config, index bleve.Index, em *events.StoreManager) *HttpStore {
 	s := &HttpStore{
-		cfg:   cfg,
-		index: index,
+		cfg:    cfg,
+		index:  index,
+		events: em,
 	}
 	return s
 }
@@ -86,8 +88,8 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 		}
 		s.infos[cfg.Info.Name] = hc
 
-		events.ResetStores(events.NewTraits().WithNamespace("http").WithName(name))
-		events.SetStore(int(store.Size), events.NewTraits().WithNamespace("http").WithName(name))
+		s.events.ResetStores(events.NewTraits().WithNamespace("http").WithName(name))
+		s.events.SetStore(int(store.Size), events.NewTraits().WithNamespace("http").WithName(name))
 	}
 	hc.configs[c.Info.Url.String()] = c
 	if s.cfg.Api.Search.Enabled {
@@ -99,7 +101,7 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 		if _, ok := hc.seenPaths[path]; ok {
 			continue
 		}
-		events.SetStore(int(store.Size), events.NewTraits().WithNamespace("http").WithName(name).With("path", path))
+		s.events.SetStore(int(store.Size), events.NewTraits().WithNamespace("http").WithName(name).With("path", path))
 		hc.seenPaths[path] = true
 	}
 
@@ -131,16 +133,16 @@ func (s *HttpStore) Remove(c *dynamic.Config) {
 		s.m.RUnlock()
 		s.m.Lock()
 		delete(s.infos, name)
-		events.ResetStores(events.NewTraits().WithNamespace("http").WithName(name))
+		s.events.ResetStores(events.NewTraits().WithNamespace("http").WithName(name))
 		s.m.Unlock()
 	} else {
 		s.m.RUnlock()
 	}
 }
 
-func (c *HttpInfo) Handler(http *monitor.Http, emitter common.EventEmitter) http.Handler {
+func (c *HttpInfo) Handler(http *monitor.Http, emitter common.EventEmitter, eh events.Handler) http.Handler {
 	cfg := c.Config
-	h := openapi.NewHandler(cfg, emitter)
+	h := openapi.NewHandler(cfg, emitter, eh)
 	return &httpHandler{http: http, next: h}
 }
 

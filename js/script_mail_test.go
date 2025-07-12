@@ -8,6 +8,7 @@ import (
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/jstest"
+	"mokapi/runtime/events/eventstest"
 	"mokapi/smtp"
 	"mokapi/try"
 	"testing"
@@ -210,7 +211,7 @@ func Test_Mail(t *testing.T) {
 			h := mail.NewHandler(c, mail.NewStore(c), enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
 				received = args[0].(*smtp.Message)
 				return nil
-			}))
+			}), &eventstest.Handler{})
 
 			port := try.GetFreePort()
 			server := &smtp.Server{Addr: fmt.Sprintf("127.0.0.1:%v", port), Handler: h}

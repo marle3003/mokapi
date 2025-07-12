@@ -8,6 +8,7 @@ import (
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime"
+	"mokapi/runtime/search"
 	"testing"
 )
 
@@ -29,11 +30,11 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search("foo")
+				r, err := app.Search(search.Request{Query: "foo", Limit: 10})
 				require.NoError(t, err)
-				require.Len(t, r, 1)
+				require.Len(t, r.Results, 1)
 				require.Equal(t,
-					runtime.SearchResult{
+					search.ResultItem{
 						Type:      "HTTP",
 						Domain:    "foo",
 						Title:     "foo",
@@ -43,7 +44,7 @@ func TestIndex_Http(t *testing.T) {
 							"service": "foo",
 						},
 					},
-					r[0])
+					r.Results[0])
 			},
 		},
 		{
@@ -51,11 +52,11 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("My petstore API", "", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search("pet")
+				r, err := app.Search(search.Request{Query: "pet", Limit: 10})
 				require.NoError(t, err)
-				require.Len(t, r, 1)
+				require.Len(t, r.Results, 1)
 				require.Equal(t,
-					runtime.SearchResult{
+					search.ResultItem{
 						Type:      "HTTP",
 						Domain:    "My petstore API",
 						Title:     "My petstore API",
@@ -65,7 +66,7 @@ func TestIndex_Http(t *testing.T) {
 							"service": "My petstore API",
 						},
 					},
-					r[0])
+					r.Results[0])
 			},
 		},
 		{
@@ -73,11 +74,11 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "1.0", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search("1.0")
+				r, err := app.Search(search.Request{Query: "1.0", Limit: 10})
 				require.NoError(t, err)
-				require.Len(t, r, 1)
+				require.Len(t, r.Results, 1)
 				require.Equal(t,
-					runtime.SearchResult{
+					search.ResultItem{
 						Type:      "HTTP",
 						Domain:    "foo",
 						Title:     "foo",
@@ -87,7 +88,7 @@ func TestIndex_Http(t *testing.T) {
 							"service": "foo",
 						},
 					},
-					r[0])
+					r.Results[0])
 			},
 		},
 		{
@@ -98,11 +99,11 @@ func TestIndex_Http(t *testing.T) {
 					openapitest.WithPath("/pets", openapitest.NewPath()),
 				)
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search("pets")
+				r, err := app.Search(search.Request{Query: "pets", Limit: 10})
 				require.NoError(t, err)
-				require.Len(t, r, 1)
+				require.Len(t, r.Results, 1)
 				require.Equal(t,
-					runtime.SearchResult{
+					search.ResultItem{
 						Type:      "HTTP",
 						Domain:    "foo",
 						Title:     "/pets",
@@ -113,7 +114,7 @@ func TestIndex_Http(t *testing.T) {
 							"path":    "/pets",
 						},
 					},
-					r[0])
+					r.Results[0])
 			},
 		},
 		{
@@ -124,11 +125,11 @@ func TestIndex_Http(t *testing.T) {
 					openapitest.WithPath("/pets", openapitest.NewPath(openapitest.WithPathInfo("", "a description"))),
 				)
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search("description")
+				r, err := app.Search(search.Request{Query: "description", Limit: 10})
 				require.NoError(t, err)
-				require.Len(t, r, 2)
+				require.Len(t, r.Results, 2)
 				require.Equal(t,
-					runtime.SearchResult{
+					search.ResultItem{
 						Type:      "HTTP",
 						Domain:    "foo",
 						Title:     "foo",
@@ -138,9 +139,9 @@ func TestIndex_Http(t *testing.T) {
 							"service": "foo",
 						},
 					},
-					r[0])
+					r.Results[0])
 				require.Equal(t,
-					runtime.SearchResult{
+					search.ResultItem{
 						Type:      "HTTP",
 						Domain:    "foo",
 						Title:     "/pets",
@@ -151,7 +152,7 @@ func TestIndex_Http(t *testing.T) {
 							"path":    "/pets",
 						},
 					},
-					r[1])
+					r.Results[1])
 			},
 		},
 		{
@@ -167,11 +168,11 @@ func TestIndex_Http(t *testing.T) {
 					)),
 				)
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search("\"parameter description\"")
+				r, err := app.Search(search.Request{Query: "\"parameter description\"", Limit: 10})
 				require.NoError(t, err)
-				require.Len(t, r, 1)
+				require.Len(t, r.Results, 1)
 				require.Equal(t,
-					runtime.SearchResult{
+					search.ResultItem{
 						Type:      "HTTP",
 						Domain:    "foo",
 						Title:     "GET /pets",
@@ -183,7 +184,51 @@ func TestIndex_Http(t *testing.T) {
 							"method":  "get",
 						},
 					},
-					r[0])
+					r.Results[0])
+			},
+		},
+		{
+			name: "Search by api",
+			test: func(t *testing.T, app *runtime.App) {
+				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
+				app.AddHttp(toConfig(cfg))
+				r, err := app.Search(search.Request{Terms: map[string]string{"api": "foo"}, Limit: 10})
+				require.NoError(t, err)
+				require.Len(t, r.Results, 1)
+				require.Equal(t,
+					search.ResultItem{
+						Type:      "HTTP",
+						Domain:    "foo",
+						Title:     "foo",
+						Fragments: []string{"<mark>foo</mark>"},
+						Params: map[string]string{
+							"type":    "http",
+							"service": "foo",
+						},
+					},
+					r.Results[0])
+			},
+		},
+		{
+			name: "Search by api with space",
+			test: func(t *testing.T, app *runtime.App) {
+				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo bar", "", ""))
+				app.AddHttp(toConfig(cfg))
+				r, err := app.Search(search.Request{Terms: map[string]string{"api": "foo bar"}, Limit: 10})
+				require.NoError(t, err)
+				require.Len(t, r.Results, 1)
+				require.Equal(t,
+					search.ResultItem{
+						Type:      "HTTP",
+						Domain:    "foo bar",
+						Title:     "foo bar",
+						Fragments: []string{"<mark>foo</mark> <mark>bar</mark>"},
+						Params: map[string]string{
+							"type":    "http",
+							"service": "foo bar",
+						},
+					},
+					r.Results[0])
 			},
 		},
 	}

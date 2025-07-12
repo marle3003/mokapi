@@ -9,6 +9,7 @@ import (
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
+	"mokapi/runtime/events/eventstest"
 	"mokapi/runtime/monitor"
 	"net/http"
 	"net/http/httptest"
@@ -27,7 +28,7 @@ func TestApp_AddHttp(t *testing.T) {
 				app.AddHttp(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))))
 
 				require.NotNil(t, app.GetHttp("foo"))
-				err := events.Push("bar", events.NewTraits().WithNamespace("http").WithName("foo"))
+				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("http").WithName("foo"))
 				require.NoError(t, err, "event store should be available")
 			},
 		},
@@ -38,7 +39,7 @@ func TestApp_AddHttp(t *testing.T) {
 					openapitest.WithPath("bar", openapitest.NewPath()))))
 
 				require.NotNil(t, app.GetHttp("foo"))
-				err := events.Push("bar", events.NewTraits().WithNamespace("http").WithName("foo").With("path", "bar"))
+				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("http").WithName("foo").With("path", "bar"))
 				require.NoError(t, err, "event store should be available")
 			},
 		},
@@ -52,7 +53,7 @@ func TestApp_AddHttp(t *testing.T) {
 						)))),
 				)))
 				m := monitor.NewHttp()
-				h := info.Handler(m, enginetest.NewEngine())
+				h := info.Handler(m, enginetest.NewEngine(), &events.StoreManager{})
 
 				r := httptest.NewRequest(http.MethodGet, "https://mokapi.io/foo", nil)
 				rr := httptest.NewRecorder()
@@ -76,8 +77,6 @@ func TestApp_AddHttp(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			defer events.Reset()
-
 			cfg := &static.Config{}
 			app := runtime.New(cfg)
 			tc.test(t, app)
@@ -140,14 +139,14 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 				newConfig("https://a.io/b", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "foo"))),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				err := events.Push("bar", events.NewTraits().WithNamespace("http").WithName("foo"))
+				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("http").WithName("foo"))
 				require.NoError(t, err)
 
 				app.AddHttp(
 					newConfig("https://mokapi.io/a", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "bar"))),
 				)
 
-				e := events.GetEvents(events.NewTraits().WithNamespace("http").WithName("foo"))
+				e := app.Events.GetEvents(events.NewTraits().WithNamespace("http").WithName("foo"))
 				require.Len(t, e, 1)
 			},
 		},
@@ -161,11 +160,11 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 			}}},
 			test: func(t *testing.T, app *runtime.App) {
 				for i := 0; i < 105; i++ {
-					err := events.Push("bar", events.NewTraits().WithNamespace("http").WithName("foo"))
+					err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("http").WithName("foo"))
 					require.NoError(t, err)
 				}
 
-				e := events.GetEvents(events.NewTraits().WithNamespace("http").WithName("foo"))
+				e := app.Events.GetEvents(events.NewTraits().WithNamespace("http").WithName("foo"))
 				require.Len(t, e, 104)
 			},
 		},
@@ -173,8 +172,6 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			defer events.Reset()
-
 			cfg := tc.static
 			if cfg == nil {
 				cfg = &static.Config{}

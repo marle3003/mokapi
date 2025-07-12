@@ -5,6 +5,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
 	"mokapi/runtime"
+	"mokapi/runtime/events"
 )
 
 func WithScriptLoader(loader ScriptLoader) Options {
@@ -46,5 +47,12 @@ func WithLogger(logger common.Logger) Options {
 func WithApp(app *runtime.App) Options {
 	return func(e *Engine) {
 		e.jobCounter = app.Monitor.JobCounter
+		e.sm = app.Events
+	}
+}
+
+func WithStoreManager(eventManager *events.StoreManager) Options {
+	return func(e *Engine) {
+		e.sm = eventManager
 	}
 }

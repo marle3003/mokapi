@@ -627,8 +627,9 @@ func TestResolveEndpoint(t *testing.T) {
 	for _, data := range testdata {
 		t.Run(data.name, func(t *testing.T) {
 			test.NewNullLogger()
-			events.SetStore(10, events.NewTraits().WithNamespace("http"))
-			defer events.Reset()
+
+			e := &events.StoreManager{}
+			e.SetStore(10, events.NewTraits().WithNamespace("http"))
 
 			config := &openapi.Config{
 				Info:       openapi.Info{Name: "Testing"},
@@ -637,7 +638,7 @@ func TestResolveEndpoint(t *testing.T) {
 			}
 
 			data.test(t, func(rw http.ResponseWriter, r *http.Request) {
-				h := openapi.NewHandler(config, &engine{})
+				h := openapi.NewHandler(config, &engine{}, e)
 				h.ServeHTTP(rw, r)
 			}, config)
 		})
@@ -798,7 +799,7 @@ func TestHandler_Event(t *testing.T) {
 			}
 
 			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
-				h := openapi.NewHandler(config, &engine{emit: tc.event})
+				h := openapi.NewHandler(config, &engine{emit: tc.event}, &events.StoreManager{})
 				h.ServeHTTP(rw, r)
 			}, config)
 		})
@@ -809,11 +810,11 @@ func TestHandler_Event(t *testing.T) {
 func TestHandler_Log(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, h http.HandlerFunc, c *openapi.Config)
+		test func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler)
 	}{
 		{
 			name: "simple",
-			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
 				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
@@ -822,7 +823,7 @@ func TestHandler_Log(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 
-				logs := events.GetEvents(events.NewTraits().WithNamespace("http"))
+				logs := eh.GetEvents(events.NewTraits().WithNamespace("http"))
 				require.Len(t, logs, 1)
 				log := logs[0]
 				require.NotEmpty(t, log.Id)
@@ -838,8 +839,9 @@ func TestHandler_Log(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			test.NewNullLogger()
-			events.SetStore(10, events.NewTraits().WithNamespace("http"))
-			defer events.Reset()
+
+			m := &events.StoreManager{}
+			m.SetStore(10, events.NewTraits().WithNamespace("http"))
 
 			config := &openapi.Config{
 				Info:       openapi.Info{Name: "Testing"},
@@ -848,9 +850,9 @@ func TestHandler_Log(t *testing.T) {
 			}
 
 			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
-				h := openapi.NewHandler(config, &engine{})
+				h := openapi.NewHandler(config, &engine{}, m)
 				h.ServeHTTP(rw, r)
-			}, config)
+			}, config, m)
 		})
 
 	}
@@ -889,7 +891,7 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 				}
 
 				h := func(rw http.ResponseWriter, r *http.Request) {
-					h := openapi.NewHandler(config, e)
+					h := openapi.NewHandler(config, e, &events.StoreManager{})
 					h.ServeHTTP(rw, r)
 				}
 
@@ -962,7 +964,7 @@ func TestHandler_Parameter(t *testing.T) {
 			}
 
 			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
-				h := openapi.NewHandler(config, &engine{emit: tc.event})
+				h := openapi.NewHandler(config, &engine{emit: tc.event}, &events.StoreManager{})
 				h.ServeHTTP(rw, r)
 			}, config)
 		})

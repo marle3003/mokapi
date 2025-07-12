@@ -21,3 +21,7 @@ type LogValue struct {
 	Value  string `json:"value"`
 	Binary []byte `json:"binary"`
 }
+
+func (l *KafkaLog) Title() string {
+	return l.Key.Value
+}

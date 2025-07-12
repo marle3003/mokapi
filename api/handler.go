@@ -26,13 +26,13 @@ type handler struct {
 }
 
 type info struct {
-	Version        string   `json:"version"`
-	BuildTime      string   `json:"buildTime"`
-	ActiveServices []string `json:"activeServices,omitempty"`
-	Search         search   `json:"search"`
+	Version        string     `json:"version"`
+	BuildTime      string     `json:"buildTime"`
+	ActiveServices []string   `json:"activeServices,omitempty"`
+	Search         searchInfo `json:"search"`
 }
 
-type search struct {
+type searchInfo struct {
 	Enabled bool `json:"enabled"`
 }
 
@@ -197,7 +197,7 @@ func writeError(w http.ResponseWriter, err error, status int) {
 func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	i := info{Version: h.app.Version, BuildTime: h.app.BuildTime, Search: search{Enabled: h.config.Search.Enabled}}
+	i := info{Version: h.app.Version, BuildTime: h.app.BuildTime, Search: searchInfo{Enabled: h.config.Search.Enabled}}
 	if len(h.app.ListHttp()) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "http")
 	}

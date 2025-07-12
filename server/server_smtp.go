@@ -72,7 +72,7 @@ func (m *SmtpManager) startServers(cfg *runtime.MailInfo) error {
 		servers = map[string]MailServer{}
 		m.servers[cfg.Info.Name] = servers
 	}
-	h := cfg.Handler(m.app.Monitor.Smtp, m.eventEmitter)
+	h := cfg.Handler(m.app.Monitor.Smtp, m.eventEmitter, m.app.Events)
 	for _, server := range cfg.Servers {
 		u, err := url.Parse(server.Url)
 		if err != nil {

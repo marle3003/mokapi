@@ -1,6 +1,7 @@
 package acceptance
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
@@ -23,6 +24,7 @@ func (suite *PetStoreSuite) SetupSuite() {
 	port := try.GetFreePort()
 	cfg.Api.Port = fmt.Sprintf("%v", port)
 	cfg.Providers.File.Directories = []string{"./petstore"}
+	cfg.Api.Search.Enabled = true
 	suite.initCmd(cfg)
 }
 
@@ -263,6 +265,21 @@ func (suite *PetStoreSuite) TestEvents() {
 		nil,
 		try.HasStatusCode(http.StatusOK),
 		try.BodyContains(`"url":"http://127.0.0.1:18080/user/bob"`))
+
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%v/api/search/query?type=event&event.traits.namespace=http", suite.cfg.Api.Port),
+		nil,
+		try.HasStatusCode(http.StatusOK),
+		try.AssertBody(func(t *testing.T, body string) {
+			var data map[string]any
+			err := json.Unmarshal([]byte(body), &data)
+			require.NoError(t, err)
+			results := data["results"].([]any)
+			evt := results[0].(map[string]any)
+			require.Equal(t, "Event", evt["type"])
+			require.Equal(t, "GET http://127.0.0.1:18080/user/bob", evt["title"])
+			require.Equal(t, "Swagger Petstore", evt["domain"])
+		}),
+	)
 }
 
 func (suite *PetStoreSuite) TestKafkaEventAndMetrics() {
@@ -305,4 +322,48 @@ func (suite *PetStoreSuite) TestKafka3_Consume() {
 	require.NoError(suite.T(), err)
 	require.NotNil(suite.T(), r)
 	require.Len(suite.T(), r.Topics[0].Partitions[0].RecordSet.Records, 1)
+}
+
+func (suite *PetStoreSuite) TestSearch_Paging() {
+	time.Sleep(3 * time.Second)
+
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%v/api/search/query?api=Swagger%%20Petstore", suite.cfg.Api.Port),
+		nil,
+		try.HasStatusCode(http.StatusOK),
+		try.AssertBody(func(t *testing.T, body string) {
+			var data map[string]any
+			err := json.Unmarshal([]byte(body), &data)
+			require.NoError(t, err)
+			require.NotNil(t, data)
+
+			require.Equal(t, float64(35), data["total"])
+
+			items := data["results"].([]any)
+			require.Len(t, items, 10)
+			evt := items[0].(map[string]interface{})
+			require.Equal(t, "HTTP", evt["type"])
+			require.Equal(t, "Swagger Petstore", evt["title"])
+			require.Equal(t, "Swagger Petstore", evt["domain"])
+		}),
+	)
+
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%v/api/search/query?api=Swagger%%20Petstore&index=1", suite.cfg.Api.Port),
+		nil,
+		try.HasStatusCode(http.StatusOK),
+		try.AssertBody(func(t *testing.T, body string) {
+			var data map[string]any
+			err := json.Unmarshal([]byte(body), &data)
+			require.NoError(t, err)
+			require.NotNil(t, data)
+
+			require.Equal(t, float64(35), data["total"])
+
+			items := data["results"].([]any)
+			require.Len(t, items, 10)
+			evt := items[0].(map[string]interface{})
+			require.Equal(t, "HTTP", evt["type"])
+			require.Equal(t, "GET /pet/{petId}", evt["title"])
+			require.Equal(t, "Swagger Petstore", evt["domain"])
+		}),
+	)
 }

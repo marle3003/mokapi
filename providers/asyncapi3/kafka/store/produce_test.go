@@ -24,17 +24,17 @@ import (
 func TestProduce(t *testing.T) {
 	testcases := []struct {
 		name string
-		fn   func(t *testing.T, s *store.Store)
+		fn   func(t *testing.T, s *store.Store, sm *events.StoreManager)
 	}{
 		{
 			"default",
-			func(t *testing.T, s *store.Store) {
+			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithServer("foo", "kafka", "127.0.0.1"),
 					asyncapi3test.WithChannel("foo")))
 				g := s.GetOrCreateGroup("foo", 0)
 				g.Commit("foo", 0, 0)
-				events.SetStore(5, events.NewTraits().WithNamespace("kafka"))
+				sm.SetStore(5, events.NewTraits().WithNamespace("kafka"))
 
 				rr := kafkatest.NewRecorder()
 				r := kafkatest.NewRequest("kafkatest", 3, &produce.Request{
@@ -125,7 +125,7 @@ func TestProduce(t *testing.T) {
 				require.Less(t, 0.0, m.Kafka.LastMessage.WithLabel("test", "foo").Value())
 				require.Equal(t, 2.0, m.Kafka.Lags.WithLabel("test", "foo", "foo", "0").Value())
 
-				logs := events.GetEvents(events.NewTraits().WithNamespace("kafka").WithName("test").With("topic", "foo"))
+				logs := sm.GetEvents(events.NewTraits().WithNamespace("kafka").WithName("test").With("topic", "foo"))
 				require.Len(t, logs, 2)
 				require.Equal(t, []byte("foo-2"), logs[0].Data.(*store.KafkaLog).Key.Binary)
 				require.Equal(t, []byte("bar-2"), logs[0].Data.(*store.KafkaLog).Message.Binary)
@@ -136,7 +136,7 @@ func TestProduce(t *testing.T) {
 		},
 		{
 			"Base Offset",
-			func(t *testing.T, s *store.Store) {
+			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithChannel("foo")))
 				s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []*kafka.Record{
@@ -177,7 +177,7 @@ func TestProduce(t *testing.T) {
 		},
 		{
 			"invalid message value format",
-			func(t *testing.T, s *store.Store) {
+			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithChannel("foo",
 						asyncapi3test.WithMessage("foo",
@@ -217,7 +217,7 @@ func TestProduce(t *testing.T) {
 		},
 		{
 			"invalid client id",
-			func(t *testing.T, s *store.Store) {
+			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				ch := asyncapi3test.NewChannel(
 					asyncapi3test.WithMessage("foo",
 						asyncapi3test.WithContentType("application/json"),
@@ -269,7 +269,7 @@ func TestProduce(t *testing.T) {
 		},
 		{
 			"valid client id",
-			func(t *testing.T, s *store.Store) {
+			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				ch := asyncapi3test.NewChannel(
 					asyncapi3test.WithMessage("foo",
 						asyncapi3test.WithContentType("application/json"),
@@ -319,7 +319,7 @@ func TestProduce(t *testing.T) {
 		},
 		{
 			"no partitions",
-			func(t *testing.T, s *store.Store) {
+			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				ch := asyncapi3test.NewChannel(
 					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 0}))
 				s.Update(asyncapi3test.NewConfig(
@@ -354,22 +354,22 @@ func TestProduce(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			defer events.Reset()
-
-			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
+			sm := &events.StoreManager{}
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), sm)
 			defer s.Close()
-			tc.fn(t, s)
+			tc.fn(t, s, sm)
 		})
 	}
 }
 
 func TestProduceTriggersEvent(t *testing.T) {
-	defer events.Reset()
+	sm := &events.StoreManager{}
+
 	triggerCount := 0
 	s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
 		triggerCount++
 		return nil
-	}))
+	}), sm)
 	defer s.Close()
 
 	s.Update(asyncapi3test.NewConfig(
@@ -377,7 +377,7 @@ func TestProduceTriggersEvent(t *testing.T) {
 		asyncapi3test.WithChannel("foo")))
 	g := s.GetOrCreateGroup("foo", 0)
 	g.Commit("foo", 0, 0)
-	events.SetStore(5, events.NewTraits().WithNamespace("kafka"))
+	sm.SetStore(5, events.NewTraits().WithNamespace("kafka"))
 
 	rr := kafkatest.NewRecorder()
 	r := kafkatest.NewRequest("kafkatest", 3, &produce.Request{

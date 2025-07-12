@@ -12,6 +12,7 @@ import (
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
+	"mokapi/runtime/events/eventstest"
 	"mokapi/runtime/monitor"
 	"net/url"
 	"testing"
@@ -30,7 +31,7 @@ func TestApp_AddKafka(t *testing.T) {
 				app.Kafka.Add(getConfig("foo.bar", c), enginetest.NewEngine())
 
 				require.NotNil(t, app.Kafka.Get("foo"))
-				err := events.Push("bar", events.NewTraits().WithNamespace("kafka").WithName("foo"))
+				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("kafka").WithName("foo"))
 				require.NoError(t, err, "event store should be available")
 			},
 		},
@@ -41,7 +42,7 @@ func TestApp_AddKafka(t *testing.T) {
 				app.Kafka.Add(getConfig("foo.bar", c), enginetest.NewEngine())
 
 				require.NotNil(t, app.Kafka.Get("foo"))
-				err := events.Push("bar", events.NewTraits().WithNamespace("kafka").WithName("foo").With("path", "bar"))
+				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("kafka").WithName("foo").With("path", "bar"))
 				require.NoError(t, err, "event store should be available")
 			},
 		},
@@ -58,18 +59,18 @@ func TestApp_AddKafka(t *testing.T) {
 				require.NotNil(t, app.Kafka.Get("foo"))
 
 				traits := events.NewTraits().WithNamespace("kafka").WithName("foo").With("topic", "foo")
-				_ = events.Push("foo", traits)
-				stores := events.GetStores(traits)
-				require.Len(t, stores, 2, "expected to find two stores for topic foo")
-				require.Equal(t, stores[1].Traits, traits)
-				require.Equal(t, 1, stores[1].NumEvents)
+				_ = app.Events.Push(&eventstest.Event{Name: "bar"}, traits)
+				stores := app.Events.GetStores(traits)
+				require.Len(t, stores, 3, "expected to find two stores for topic foo")
+				require.Equal(t, stores[2].Traits, traits)
+				require.Equal(t, 1, stores[2].NumEvents)
 
 				traits = events.NewTraits().WithNamespace("kafka").WithName("foo").With("topic", "bar")
-				_ = events.Push("bar", traits)
-				stores = events.GetStores(traits)
-				require.Len(t, stores, 2, "expected to find two stores for topic bar")
-				require.Equal(t, stores[1].Traits, traits)
-				require.Equal(t, 1, stores[1].NumEvents)
+				_ = app.Events.Push(&eventstest.Event{Name: "bar"}, traits)
+				stores = app.Events.GetStores(traits)
+				require.Len(t, stores, 3, "expected to find two stores for topic bar")
+				require.Equal(t, stores[2].Traits, traits)
+				require.Equal(t, 1, stores[2].NumEvents)
 			},
 		},
 		{
@@ -107,8 +108,6 @@ func TestApp_AddKafka(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			defer events.Reset()
-
 			cfg := &static.Config{}
 			app := runtime.New(cfg)
 			tc.test(t, app)
@@ -168,9 +167,9 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				err := events.Push("foo", events.NewTraits().WithNamespace("kafka").WithName("foo").With("topic", "bar"))
+				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("kafka").WithName("foo").With("topic", "bar"))
 				require.NoError(t, err)
-				e := events.GetEvents(events.NewTraits().WithNamespace("kafka"))
+				e := app.Events.GetEvents(events.NewTraits().WithNamespace("kafka"))
 				require.Len(t, e, 1)
 				app.Monitor.Kafka.Messages.WithLabel("foo", "bar").Add(1)
 
@@ -182,7 +181,7 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 				), enginetest.NewEngine())
 				require.NoError(t, err)
 
-				e = events.GetEvents(events.NewTraits().WithNamespace("kafka"))
+				e = app.Events.GetEvents(events.NewTraits().WithNamespace("kafka"))
 				require.Len(t, e, 1)
 				v := app.Monitor.Kafka.Messages.WithLabel("foo", "bar").Value()
 				require.Equal(t, float64(1), v)
@@ -192,8 +191,6 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			defer events.Reset()
-
 			cfg := &static.Config{}
 			app := runtime.New(cfg)
 			for _, c := range tc.configs {

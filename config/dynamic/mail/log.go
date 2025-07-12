@@ -1,6 +1,7 @@
 package mail
 
 import (
+	"fmt"
 	"mokapi/engine/common"
 	"mokapi/runtime/events"
 	"mokapi/smtp"
@@ -16,7 +17,7 @@ type Log struct {
 	Actions   []*common.Action `json:"actions"`
 }
 
-func NewLogEvent(msg *smtp.Message, ctx *smtp.ClientContext, traits events.Traits) *Log {
+func NewLogEvent(msg *smtp.Message, ctx *smtp.ClientContext, eh events.Handler, traits events.Traits) *Log {
 	event := &Log{
 		From:     ctx.From,
 		To:       ctx.To,
@@ -29,6 +30,10 @@ func NewLogEvent(msg *smtp.Message, ctx *smtp.ClientContext, traits events.Trait
 		event.Subject = msg.Subject
 	}
 
-	_ = events.Push(event, traits.WithNamespace("smtp"))
+	_ = eh.Push(event, traits.WithNamespace("smtp"))
 	return event
+}
+
+func (l *Log) Title() string {
+	return fmt.Sprintf("%s", l.Subject)
 }

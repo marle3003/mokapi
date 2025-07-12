@@ -37,7 +37,7 @@ func TestHandler_Response(t *testing.T) {
 		config  *openapi.Config
 		handler func(event string, req *common.EventRequest, res *common.EventResponse)
 		req     func() *http.Request
-		test    func(t *testing.T, rr *httptest.ResponseRecorder)
+		test    func(t *testing.T, rr *httptest.ResponseRecorder, eh events.Handler)
 	}{
 		{
 			name:   "string as response body",
@@ -48,7 +48,7 @@ func TestHandler_Response(t *testing.T) {
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/foo", nil)
 			},
-			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+			test: func(t *testing.T, rr *httptest.ResponseRecorder, eh events.Handler) {
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, "foo", rr.Body.String())
 			},
@@ -62,7 +62,7 @@ func TestHandler_Response(t *testing.T) {
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/foo", nil)
 			},
-			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+			test: func(t *testing.T, rr *httptest.ResponseRecorder, eh events.Handler) {
 				require.Equal(t, http.StatusInternalServerError, rr.Code)
 				require.Equal(t, "encoding data to 'application/json' failed: error count 1:\n\t- #/format: string 'foo' does not match format 'date'\n", rr.Body.String())
 			},
@@ -76,7 +76,7 @@ func TestHandler_Response(t *testing.T) {
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/foo", nil)
 			},
-			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+			test: func(t *testing.T, rr *httptest.ResponseRecorder, eh events.Handler) {
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, `{"foo":null}`, rr.Body.String())
 			},
@@ -90,7 +90,7 @@ func TestHandler_Response(t *testing.T) {
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/foo", nil)
 			},
-			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+			test: func(t *testing.T, rr *httptest.ResponseRecorder, eh events.Handler) {
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, "application/json", rr.Header().Get("Content-Type"))
 				require.Equal(t, `{"foo":"bar"}`, rr.Body.String())
@@ -105,7 +105,7 @@ func TestHandler_Response(t *testing.T) {
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/foo", nil)
 			},
-			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+			test: func(t *testing.T, rr *httptest.ResponseRecorder, eh events.Handler) {
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, "foo", rr.Body.String())
 			},
@@ -119,7 +119,7 @@ func TestHandler_Response(t *testing.T) {
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/foo", nil)
 			},
-			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+			test: func(t *testing.T, rr *httptest.ResponseRecorder, eh events.Handler) {
 				require.Equal(t, http.StatusInternalServerError, rr.Code)
 				require.Equal(t, "encoding data to 'application/octet-stream' failed: not supported encoding of content types 'application/octet-stream', except simple data types\n", rr.Body.String())
 			},
@@ -133,13 +133,13 @@ func TestHandler_Response(t *testing.T) {
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/foo", nil)
 			},
-			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+			test: func(t *testing.T, rr *httptest.ResponseRecorder, eh events.Handler) {
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, "", rr.Header().Get("Content-Type"))
 
-				e := events.GetEvents(events.NewTraits())
-				require.Len(t, e, 1)
-				data := e[0].Data.(*openapi.HttpLog)
+				evt := eh.GetEvents(events.NewTraits())
+				require.Len(t, evt, 1)
+				data := evt[0].Data.(*openapi.HttpLog)
 				require.Equal(t, "", data.Response.Body)
 				require.Equal(t, "", data.Response.Headers["Content-Type"])
 				require.Len(t, data.Actions, 1)
@@ -155,14 +155,14 @@ func TestHandler_Response(t *testing.T) {
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/foo", nil)
 			},
-			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+			test: func(t *testing.T, rr *httptest.ResponseRecorder, eh events.Handler) {
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, "text/plain", rr.Header().Get("Content-Type"))
 				require.Equal(t, "foo", rr.Body.String())
 
-				e := events.GetEvents(events.NewTraits())
-				require.Len(t, e, 1)
-				data := e[0].Data.(*openapi.HttpLog)
+				evt := eh.GetEvents(events.NewTraits())
+				require.Len(t, evt, 1)
+				data := evt[0].Data.(*openapi.HttpLog)
 				require.Equal(t, "foo", data.Response.Body)
 				require.Equal(t, "text/plain", data.Response.Headers["Content-Type"])
 				require.Len(t, data.Actions, 1)
@@ -173,8 +173,8 @@ func TestHandler_Response(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			events.SetStore(10, events.NewTraits().WithNamespace("http"))
-			defer events.Reset()
+			m := &events.StoreManager{}
+			m.SetStore(10, events.NewTraits().WithNamespace("http"))
 
 			e := &engine{emit: func(event string, args ...interface{}) []*common.Action {
 				tc.handler(event, args[0].(*common.EventRequest), args[1].(*common.EventResponse))
@@ -186,11 +186,11 @@ func TestHandler_Response(t *testing.T) {
 				}
 			}}
 
-			h := openapi.NewHandler(tc.config, e)
+			h := openapi.NewHandler(tc.config, e, m)
 			rr := httptest.NewRecorder()
 			h.ServeHTTP(rr, tc.req())
 
-			tc.test(t, rr)
+			tc.test(t, rr, m)
 		})
 	}
 }
@@ -295,7 +295,7 @@ func TestHandler_Response_Context(t *testing.T) {
 			generator.Seed(11)
 			config := openapitest.NewConfig("3.0", tc.opt)
 
-			h := openapi.NewHandler(config, enginetest.NewEngine())
+			h := openapi.NewHandler(config, enginetest.NewEngine(), &events.StoreManager{})
 			rr := httptest.NewRecorder()
 			h.ServeHTTP(rr, tc.req())
 

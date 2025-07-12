@@ -160,6 +160,10 @@ func (e *JobExecution) AppendLog(level, message string) {
 	e.Logs = append(e.Logs, Log{Level: level, Message: message})
 }
 
+func (e *JobExecution) Title() string {
+	return e.Tags["name"]
+}
+
 type FakerNode interface {
 	Name() string
 	Fake(r *generator.Request) (interface{}, error)

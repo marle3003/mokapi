@@ -11,6 +11,7 @@ import (
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
+	"mokapi/runtime/events/eventstest"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
@@ -185,7 +186,7 @@ func TestOffsetCommit(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{})
 			defer s.Close()
 			tc.fn(t, s)
 		})
@@ -330,7 +331,7 @@ func TestOffsetCommit_Validation(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{})
 			defer s.Close()
 			hook := test.NewGlobal()
 			tc.fn(t, s, hook)

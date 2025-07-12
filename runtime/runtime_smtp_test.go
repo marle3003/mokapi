@@ -9,6 +9,7 @@ import (
 	"mokapi/engine/enginetest"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
+	"mokapi/runtime/events/eventstest"
 	"mokapi/runtime/monitor"
 	"mokapi/smtp"
 	"mokapi/smtp/smtptest"
@@ -27,7 +28,7 @@ func TestApp_AddSmtp(t *testing.T) {
 				app.Mail.Add(newSmtpConfig("https://mokapi.io", &mail.Config{Info: mail.Info{Name: "foo"}}))
 
 				require.NotNil(t, app.Mail.Get("foo"))
-				err := events.Push("bar", events.NewTraits().WithNamespace("smtp").WithName("foo"))
+				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("smtp").WithName("foo"))
 				require.NoError(t, err, "event store should be available")
 			},
 		},
@@ -36,7 +37,7 @@ func TestApp_AddSmtp(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Mail.Add(newSmtpConfig("https://mokapi.io", &mail.Config{Info: mail.Info{Name: "foo"}}))
 				m := monitor.NewSmtp()
-				h := info.Handler(m, enginetest.NewEngine())
+				h := info.Handler(m, enginetest.NewEngine(), app.Events)
 
 				ctx := smtp.NewClientContext(context.Background(), "")
 				rr := smtptest.NewRecorder()
@@ -59,8 +60,6 @@ func TestApp_AddSmtp(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			defer events.Reset()
-
 			cfg := &static.Config{}
 			app := runtime.New(cfg)
 			tc.test(t, app)
@@ -115,12 +114,12 @@ func TestApp_AddSmtp_Patching(t *testing.T) {
 				newSmtpConfig("https://a.io/b", &mail.Config{Info: mail.Info{Name: "foo", Description: "foo"}}),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				err := events.Push("bar", events.NewTraits().WithNamespace("smtp").WithName("foo"))
+				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("smtp").WithName("foo"))
 				require.NoError(t, err)
 
 				app.Mail.Add(newSmtpConfig("https://mokapi.io/a", &mail.Config{Info: mail.Info{Name: "foo", Description: "bar"}}))
 
-				e := events.GetEvents(events.NewTraits().WithNamespace("smtp").WithName("foo"))
+				e := app.Events.GetEvents(events.NewTraits().WithNamespace("smtp").WithName("foo"))
 				require.Len(t, e, 1)
 			},
 		},
@@ -128,8 +127,6 @@ func TestApp_AddSmtp_Patching(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			defer events.Reset()
-
 			cfg := &static.Config{}
 			app := runtime.New(cfg)
 			for _, c := range tc.configs {

@@ -16,9 +16,9 @@ func (h *handler) getEvents(w http.ResponseWriter, r *http.Request) {
 			traits.With(k, r.URL.Query().Get(k))
 		}
 
-		data = events.GetEvents(traits)
+		data = h.app.Events.GetEvents(traits)
 	} else {
-		e := events.GetEvent(segments[3])
+		e := h.app.Events.GetEvent(segments[3])
 		if e.IsValid() {
 			data = e
 		} else {

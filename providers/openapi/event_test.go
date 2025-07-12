@@ -7,6 +7,7 @@ import (
 	"mokapi/media"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
+	"mokapi/runtime/events"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -89,7 +90,7 @@ func TestEvent(t *testing.T) {
 			t.Parallel()
 			test.NewNullLogger()
 
-			h := openapi.NewHandler(tc.config, enginetest.NewEngine())
+			h := openapi.NewHandler(tc.config, enginetest.NewEngine(), &events.StoreManager{})
 
 			tc.test(t, h)
 		})

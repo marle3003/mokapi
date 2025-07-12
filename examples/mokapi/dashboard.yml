@@ -420,15 +420,26 @@ paths:
     get:
       summary: search mock data
       operationId: search
+      parameters:
+        - in: query
+          name: queryText
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: index
+          schema:
+            type: integer
       responses:
         "200":
           description: search results
           content:
             'application/json':
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SearchResult'
+                $ref: '#/components/schemas/SearchResult'
 components:
   schemas:
     FakerTree:
@@ -443,6 +454,15 @@ components:
           items:
             $ref: '#/components/schemas/FakerTree'
     SearchResult:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchItem'
+        total:
+          type: integer
+    SearchItem:
       type: object
       properties:
         type:

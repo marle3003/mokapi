@@ -3,7 +3,7 @@ import router from '@/router';
 import { ref, watch } from 'vue';
 
 const queryText = ref<string>();
-const results = ref();
+const result = ref<SearchResult>();
 watch(queryText, async (q) => {
   const res = await fetch(`/api/search/query?queryText=${q}`)
     .then(async (res) => {
@@ -19,7 +19,7 @@ watch(queryText, async (q) => {
     .catch((err) => {
         console.error(err)
     })
-    results.value = res
+    result.value = res
 })
 function navigateToSearchResult(result: any) {
   switch (result.type.toLowerCase()) {
@@ -73,14 +73,14 @@ function title(result: any) {
           </div>
         </section>
       </div>
-      <div class="card-group" v-if="results">
+      <div class="card-group" v-if="result?.results">
         <div class="card">
           <div class="card-body">
             <div class="container">
                 <div class="row justify-content-md-center">
                   <div class="col-6 col-auto">
                     <div class="list-group search-results">
-                      <a v-for="result of results" class="list-group-item" @click="navigateToSearchResult(result)">
+                      <a v-for="result of result.results" class="list-group-item" @click="navigateToSearchResult(result)">
                         <div class="mb-1 config">
                           <span class="badge bg-secondary api">{{ result.type }}</span>
                           <span class="ps-1">{{ result.domain }}</span>

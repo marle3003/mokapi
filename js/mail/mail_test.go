@@ -11,6 +11,7 @@ import (
 	"mokapi/js/eventloop"
 	mod "mokapi/js/mail"
 	"mokapi/js/require"
+	"mokapi/runtime/events/eventstest"
 	"mokapi/smtp/smtptest"
 	"testing"
 )
@@ -102,7 +103,7 @@ m.send('smtp://%v', {from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bo
 				cfg = &mail.Config{AutoCreateMailbox: true}
 			}
 			s := mail.NewStore(cfg)
-			h := mail.NewHandler(cfg, s, enginetest.NewEngine())
+			h := mail.NewHandler(cfg, s, enginetest.NewEngine(), &eventstest.Handler{})
 			server, _, err := smtptest.NewServer(h.ServeSMTP)
 			r.NoError(t, err)
 			defer server.Close()

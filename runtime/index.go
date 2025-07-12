@@ -10,24 +10,34 @@ import (
 	index "github.com/blevesearch/bleve_index_api"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/static"
+	"mokapi/runtime/events"
+	"mokapi/runtime/search"
 
 	"strings"
 )
-
-type SearchResult struct {
-	Type      string            `json:"type"`
-	Domain    string            `json:"domain"`
-	Title     string            `json:"title"`
-	Fragments []string          `json:"fragments,omitempty"`
-	Params    map[string]string `json:"params"`
-}
 
 func newIndex(cfg *static.Config) bleve.Index {
 	if !cfg.Api.Search.Enabled {
 		return nil
 	}
 
+	// 💡 Disable indexing for "_title"
+	disableIndex := bleve.NewTextFieldMapping()
+	disableIndex.Index = false
+	disableIndex.Store = true
+
+	docMapping := bleve.NewDocumentMapping()
+	docMapping.AddFieldMappingsAt("_title", disableIndex)
+	docMapping.AddFieldMappingsAt("discriminator", disableIndex)
+
+	// enable term vectors for all fields, allowing phrase queries (like "Swagger Petstore")
+	defaultField := bleve.NewTextFieldMapping()
+	defaultField.IncludeTermVectors = true
+	docMapping.AddFieldMappingsAt("*", defaultField)
+
 	mapping := bleve.NewIndexMapping()
+	mapping.DefaultMapping = docMapping
+	mapping.DefaultAnalyzer = cfg.Api.Search.Analyzer
 
 	err := mapping.AddCustomTokenFilter("ngram_filter", map[string]any{
 		"type": "ngram",
@@ -47,8 +57,6 @@ func newIndex(cfg *static.Config) bleve.Index {
 		panic(err)
 	}
 
-	mapping.DefaultAnalyzer = cfg.Api.Search.Analyzer
-
 	idx, err := bleve.NewMemOnly(mapping)
 	if err != nil {
 		log.Error(err)
@@ -64,37 +72,56 @@ func add(index bleve.Index, id string, data any) {
 	}
 }
 
-func (a *App) Search(queryText string) ([]SearchResult, error) {
-	var q query.Query
-	if queryText == "" {
-		q = bleve.NewMatchAllQuery()
-	} else {
-		q = bleve.NewQueryStringQuery(queryText)
+func (a *App) Search(r search.Request) (search.Result, error) {
+	result := search.Result{}
+
+	if a.index == nil {
+		return result, &search.ErrNotEnabled{}
 	}
+
+	var clauses []query.Query
+	if r.Query == "" {
+		clauses = append(clauses, bleve.NewMatchAllQuery())
+	} else {
+		clauses = append(clauses, bleve.NewQueryStringQuery(r.Query))
+	}
+
+	for k, v := range r.Terms {
+		term := bleve.NewMatchPhraseQuery(v)
+		term.SetField(k)
+		clauses = append(clauses, term)
+	}
+
+	q := bleve.NewConjunctionQuery(clauses...)
 
 	sr := bleve.NewSearchRequest(q)
+	sr.Size = r.Limit
+	sr.From = r.Limit * r.Index
+	sr.SortBy([]string{"-_score", "_id"})
 	sr.Highlight = bleve.NewHighlightWithStyle(html.Name)
-	result, err := a.index.Search(sr)
+	searchResult, err := a.index.Search(sr)
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 
-	var results []SearchResult
-	for _, hit := range result.Hits {
+	result.Total = searchResult.Total
+	for _, hit := range searchResult.Hits {
+		item := search.ResultItem{}
 
 		doc, err := a.index.Document(hit.ID)
 		if err != nil {
-			return nil, err
+			return result, err
 		}
 		fields := getSearchFields(doc)
 
-		discriminators := strings.Split(fields["Discriminator"], "_")
-		var searchResult *SearchResult
+		discriminators := strings.Split(fields["discriminator"], "_")
 		switch discriminators[0] {
 		case "http":
-			searchResult, err = getHttpSearchResult(fields, discriminators)
+			item, err = getHttpSearchResult(fields, discriminators)
 		case "config":
-			searchResult, err = getConfigSearchResult(fields, discriminators)
+			item, err = getConfigSearchResult(fields, discriminators)
+		case "event":
+			item, err = events.GetSearchResult(fields, discriminators)
 		default:
 			log.Errorf("unknown discriminator: %s", strings.Join(discriminators, "_"))
 			continue
@@ -111,11 +138,11 @@ func (a *App) Search(queryText string) ([]SearchResult, error) {
 				break
 			}
 			c++
-			searchResult.Fragments = append(searchResult.Fragments, fragments...)
+			item.Fragments = append(item.Fragments, fragments...)
 		}
-		results = append(results, *searchResult)
+		result.Results = append(result.Results, item)
 	}
-	return results, nil
+	return result, nil
 }
 
 func getSearchFields(doc index.Document) map[string]string {

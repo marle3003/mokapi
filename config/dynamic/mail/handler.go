@@ -14,13 +14,15 @@ type Handler struct {
 	config       *Config
 	eventEmitter common.EventEmitter
 	MailStore    *Store
+	eh           events.Handler
 }
 
-func NewHandler(config *Config, store *Store, eventEmitter common.EventEmitter) *Handler {
+func NewHandler(config *Config, store *Store, eventEmitter common.EventEmitter, eh events.Handler) *Handler {
 	return &Handler{
 		config:       config,
 		eventEmitter: eventEmitter,
 		MailStore:    store,
+		eh:           eh,
 	}
 }
 
@@ -50,7 +52,7 @@ func (h *Handler) processMail(rw smtp.ResponseWriter, r *smtp.DataRequest) {
 	ctx := r.Context()
 	clientContext := smtp.ClientFromContext(ctx)
 	monitor, doMonitor := monitor.SmtpFromContext(ctx)
-	event := NewLogEvent(r.Message, clientContext, events.NewTraits().WithName(h.config.Info.Name))
+	event := NewLogEvent(r.Message, clientContext, h.eh, events.NewTraits().WithName(h.config.Info.Name))
 	defer func() {
 		i := ctx.Value("time")
 		if i != nil {
@@ -130,7 +132,7 @@ func (h *Handler) writeErrorResponse(rw smtp.ResponseWriter, r smtp.Request, sta
 		status.Message = message
 	}
 	res := r.NewResponse(&status)
-	l := NewLogEvent(nil, clientContext, events.NewTraits().WithName(h.config.Info.Name))
+	l := NewLogEvent(nil, clientContext, h.eh, events.NewTraits().WithName(h.config.Info.Name))
 	l.Error = status.Message
 	_ = rw.Write(res)
 }
@@ -142,7 +144,7 @@ func (h *Handler) writeRuleResponse(rw smtp.ResponseWriter, r smtp.Request, resp
 		EnhancedStatusCode: response.EnhancedStatusCode,
 		Message:            response.Text,
 	})
-	l := NewLogEvent(nil, clientContext, events.NewTraits().WithName(h.config.Info.Name))
+	l := NewLogEvent(nil, clientContext, h.eh, events.NewTraits().WithName(h.config.Info.Name))
 	l.Error = response.Text
 	_ = rw.Write(res)
 }

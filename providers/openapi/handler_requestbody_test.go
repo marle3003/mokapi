@@ -1,6 +1,7 @@
 package openapi_test
 
 import (
+	"github.com/blevesearch/bleve/v2"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 	engine2 "mokapi/engine/common"
@@ -168,8 +169,6 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			test.NewNullLogger()
-			events.SetStore(10, events.NewTraits().WithNamespace("http"))
-			defer events.Reset()
 
 			var r *engine2.EventRequest
 			e := enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*engine2.Action {
@@ -177,7 +176,12 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 				return nil
 			})
 
-			tc.fn(t, openapi.NewHandler(tc.config, e))
+			idx, err := bleve.NewMemOnly(bleve.NewIndexMapping())
+			require.NoError(t, err)
+			store := events.NewStoreManager(idx)
+			store.SetStore(10, events.NewTraits().WithNamespace("http"))
+
+			tc.fn(t, openapi.NewHandler(tc.config, e, store))
 			tc.check(t, r)
 		})
 

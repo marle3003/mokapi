@@ -11,6 +11,7 @@ import (
 	"mokapi/ldap"
 	"mokapi/ldap/ldaptest"
 	"mokapi/providers/directory"
+	"mokapi/runtime/events/eventstest"
 	"mokapi/try"
 	"strings"
 	"testing"
@@ -257,7 +258,7 @@ func TestSearch_Schema(t *testing.T) {
 				tc.test(t, nil, err)
 			} else {
 				err = c.Parse(&dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: try.MustUrl("file:/foo.yml")}}, tc.reader)
-				tc.test(t, directory.NewHandler(c, enginetest.NewEngine()), err)
+				tc.test(t, directory.NewHandler(c, enginetest.NewEngine(), &eventstest.Handler{}), err)
 			}
 		})
 	}
@@ -360,7 +361,7 @@ func TestSearch(t *testing.T) {
 				tc.test(t, nil, err)
 			} else {
 				err = c.Parse(&dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: try.MustUrl("file:/foo.yml")}}, tc.reader)
-				tc.test(t, directory.NewHandler(c, enginetest.NewEngine()), err)
+				tc.test(t, directory.NewHandler(c, enginetest.NewEngine(), &eventstest.Handler{}), err)
 			}
 		})
 	}

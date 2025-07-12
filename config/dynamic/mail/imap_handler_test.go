@@ -7,6 +7,7 @@ import (
 	"mokapi/engine/enginetest"
 	"mokapi/imap"
 	"mokapi/imap/imaptest"
+	"mokapi/runtime/events/eventstest"
 	"testing"
 )
 
@@ -1084,7 +1085,7 @@ func TestImapHandler(t *testing.T) {
 
 			ctx := imap.NewClientContext(context.Background(), "127.0.0.1:84793")
 			s := mail.NewStore(tc.cfg)
-			h := mail.NewHandler(tc.cfg, s, enginetest.NewEngine())
+			h := mail.NewHandler(tc.cfg, s, enginetest.NewEngine(), &eventstest.Handler{})
 			tc.test(t, h, s, ctx)
 		})
 	}

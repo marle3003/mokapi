@@ -26,6 +26,7 @@ type MailStore struct {
 	infos map[string]*MailInfo
 	m     sync.RWMutex
 	cfg   *static.Config
+	sm    *events.StoreManager
 }
 
 type MailInfo struct {
@@ -76,8 +77,8 @@ func (s *MailStore) Add(c *dynamic.Config) *MailInfo {
 		mi = NewMailInfo(c)
 		s.infos[cfg.Info.Name] = mi
 
-		events.ResetStores(events.NewTraits().WithNamespace("smtp").WithName(cfg.Info.Name))
-		events.SetStore(int(store.Size), events.NewTraits().WithNamespace("smtp").WithName(cfg.Info.Name))
+		s.sm.ResetStores(events.NewTraits().WithNamespace("smtp").WithName(cfg.Info.Name))
+		s.sm.SetStore(int(store.Size), events.NewTraits().WithNamespace("smtp").WithName(cfg.Info.Name))
 	} else {
 		mi.AddConfig(c)
 	}
@@ -107,7 +108,7 @@ func (s *MailStore) Remove(c *dynamic.Config) {
 		s.m.RUnlock()
 		s.m.Lock()
 		delete(s.infos, name)
-		events.ResetStores(events.NewTraits().WithNamespace("smtp").WithName(name))
+		s.sm.ResetStores(events.NewTraits().WithNamespace("smtp").WithName(name))
 		s.m.Unlock()
 	} else {
 		s.m.RUnlock()
@@ -166,10 +167,10 @@ func (c *MailInfo) update() {
 	}
 }
 
-func (c *MailInfo) Handler(smtp *monitor.Smtp, emitter engine.EventEmitter) MailHandler {
+func (c *MailInfo) Handler(smtp *monitor.Smtp, emitter engine.EventEmitter, eh events.Handler) MailHandler {
 	return &mailHandler{
 		monitor: smtp,
-		next:    mail.NewHandler(c.Config, c.Store, emitter),
+		next:    mail.NewHandler(c.Config, c.Store, emitter, eh),
 	}
 }
 

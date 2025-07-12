@@ -20,6 +20,7 @@ type MqttStore struct {
 	infos   map[string]*MqttInfo
 	monitor *monitor.Monitor
 	cfg     *static.Config
+	sm      *events.StoreManager
 	m       sync.RWMutex
 }
 
@@ -90,8 +91,8 @@ func (s *MqttStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*MqttIn
 	}
 
 	if !ok {
-		events.ResetStores(events.NewTraits().WithNamespace("Mqtt").WithName(cfg.Info.Name))
-		events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("Mqtt").WithName(cfg.Info.Name))
+		s.sm.ResetStores(events.NewTraits().WithNamespace("Mqtt").WithName(cfg.Info.Name))
+		s.sm.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("Mqtt").WithName(cfg.Info.Name))
 
 		ki = NewMqttInfo(c, store.New(cfg, emitter), s.updateEventStore)
 		s.infos[cfg.Info.Name] = ki
@@ -128,7 +129,7 @@ func (s *MqttStore) Remove(c *dynamic.Config) {
 		s.m.RUnlock()
 		s.m.Lock()
 		delete(s.infos, name)
-		events.ResetStores(events.NewTraits().WithNamespace("Mqtt").WithName(name))
+		s.sm.ResetStores(events.NewTraits().WithNamespace("Mqtt").WithName(name))
 		s.m.Unlock()
 	} else {
 		s.m.RUnlock()
@@ -238,10 +239,10 @@ func getMqttConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
 	}
 }
 
-func (c *MqttStore) updateEventStore(k *MqttInfo) {
-	eventStore, hasStoreConfig := c.cfg.Event.Store[k.Config.Info.Name]
+func (s *MqttStore) updateEventStore(k *MqttInfo) {
+	eventStore, hasStoreConfig := s.cfg.Event.Store[k.Config.Info.Name]
 	if !hasStoreConfig {
-		eventStore = c.cfg.Event.Store["default"]
+		eventStore = s.cfg.Event.Store["default"]
 	}
 
 	for topicName, topic := range k.Config.Channels {
@@ -254,10 +255,10 @@ func (c *MqttStore) updateEventStore(k *MqttInfo) {
 		if _, ok := k.seenTopics[topicName]; ok {
 			continue
 		}
-		c.monitor.Mqtt.Messages.WithLabel(k.Config.Info.Name, topicName)
-		c.monitor.Mqtt.LastMessage.WithLabel(k.Config.Info.Name, topicName)
+		s.monitor.Mqtt.Messages.WithLabel(k.Config.Info.Name, topicName)
+		s.monitor.Mqtt.LastMessage.WithLabel(k.Config.Info.Name, topicName)
 		traits := events.NewTraits().WithNamespace("mqtt").WithName(k.Config.Info.Name).With("topic", topicName)
-		events.SetStore(int(eventStore.Size), traits)
+		s.sm.SetStore(int(eventStore.Size), traits)
 		k.seenTopics[topicName] = true
 	}
 }

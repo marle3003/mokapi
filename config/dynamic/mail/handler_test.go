@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/mail"
 	"mokapi/engine/enginetest"
+	"mokapi/runtime/events/eventstest"
 	"mokapi/smtp"
 	"mokapi/smtp/smtptest"
 	"regexp"
@@ -253,7 +254,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			h := mail.NewHandler(tc.config, mail.NewStore(tc.config), enginetest.NewEngine())
+			h := mail.NewHandler(tc.config, mail.NewStore(tc.config), enginetest.NewEngine(), &eventstest.Handler{})
 			tc.test(t, h)
 		})
 	}

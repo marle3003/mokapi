@@ -129,28 +129,32 @@ export default async function() {
                 response.body = resp.body
                 return true
             case 'search':
-                response.data = [{
-                    type: 'HTTP',
-                    domain: 'Swagger Petstore',
-                    title: "POST  /pet",
-                    fragments: ['<mark>Everything</mark>', 'store'],
-                    params: {
-                        type: 'http',
-                        service: 'Swagger Petstore',
-                        path: '/pet',
-                        method: 'post'
-                    }
-                },
-                {
-                    type: 'Config',
-                    domain: 'FILE',
-                    title: "file://root/path/to/my/foo/file.json",
-                    fragments: ['<mark>foo</mark> bar'],
-                    params: {
-                        type: 'config',
-                        id: 'b6fea8ac-56c7-4e73-a9c0-6887640bdca8'
-                    }
-                }]
+                response.data = {
+                    results: [
+                        {
+                            type: 'HTTP',
+                            domain: 'Swagger Petstore',
+                            title: "POST  /pet",
+                            fragments: ['<mark>Everything</mark>', 'store'],
+                            params: {
+                                type: 'http',
+                                service: 'Swagger Petstore',
+                                path: '/pet',
+                                method: 'post'
+                            }
+                        },
+                        {
+                            type: 'Config',
+                            domain: 'FILE',
+                            title: "file://root/path/to/my/foo/file.json",
+                            fragments: ['<mark>foo</mark> bar'],
+                            params: {
+                                type: 'config',
+                                id: 'b6fea8ac-56c7-4e73-a9c0-6887640bdca8'
+                            }
+                        }],
+                    total: 2
+                }
         }
     }, {tags: {name: "dashboard"}})
 
