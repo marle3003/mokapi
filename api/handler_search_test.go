@@ -67,6 +67,28 @@ func TestHandler_SearchQuery(t *testing.T) {
 				return app
 			},
 		},
+		{
+			name:         "search with param",
+			requestUrl:   "/api/search/query?queryText=api=foo",
+			responseBody: `{"results":[{"type":"HTTP","domain":"foo","title":"foo","fragments":["\u003cmark\u003efoo\u003c/mark\u003e"],"params":{"service":"foo","type":"http"}}],"total":1}`,
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
+					Enabled:  true,
+					Analyzer: "ngram",
+					Ngram: static.NgramAnalyzer{
+						Min: 3,
+						Max: 5,
+					},
+				}}})
+
+				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
+				app.AddHttp(toConfig(cfg))
+				cfg = openapitest.NewConfig("3.0", openapitest.WithInfo("bar", "", ""))
+				app.AddHttp(toConfig(cfg))
+
+				return app
+			},
+		},
 	}
 
 	t.Parallel()

@@ -6,7 +6,7 @@ import (
 	"mokapi/runtime/search"
 	"net/http"
 	"net/url"
-	"slices"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -15,28 +15,15 @@ const queryText = "querytext"
 const searchLimit = "limit"
 const searchIndex = "index"
 
-var skipTerms = []string{queryText, searchLimit, searchIndex}
-
 func (h *handler) getSearchResults(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	values := r.URL.Query()
-	terms := make(map[string]string)
-	for key, vals := range values {
-		if len(vals) > 0 && !slices.ContainsFunc(skipTerms, func(s string) bool {
-			return strings.EqualFold(key, s)
-		}) {
-			terms[key] = vals[0]
-		}
-	}
+	sr := search.Request{Limit: 10}
 
-	sr := search.Request{
-		Query: getQueryParamInsensitive(r.URL.Query(), queryText),
-		Terms: terms,
-		Limit: 10,
-	}
+	q := getQueryParamInsensitive(r.URL.Query(), queryText)
+	sr.Query, sr.Params = parseQuery(q)
 
-	sIndex := getQueryParamInsensitive(r.URL.Query(), "index")
+	sIndex := getQueryParamInsensitive(r.URL.Query(), searchIndex)
 	if sIndex != "" {
 		var err error
 		sr.Index, err = strconv.Atoi(sIndex)
@@ -44,7 +31,7 @@ func (h *handler) getSearchResults(w http.ResponseWriter, r *http.Request) {
 			writeError(w, fmt.Errorf("invalid index value: %s", err), http.StatusBadRequest)
 		}
 	}
-	sLimit := getQueryParamInsensitive(r.URL.Query(), "limit")
+	sLimit := getQueryParamInsensitive(r.URL.Query(), searchLimit)
 	if sLimit != "" {
 		var err error
 		sr.Limit, err = strconv.Atoi(sLimit)
@@ -73,4 +60,22 @@ func getQueryParamInsensitive(values url.Values, key string) string {
 		}
 	}
 	return ""
+}
+
+func parseQuery(query string) (string, map[string]string) {
+	re := regexp.MustCompile(`([\w.]+)=("[^"]+"|\S+)`)
+
+	params := make(map[string]string)
+	matches := re.FindAllStringSubmatch(query, -1)
+
+	s := query
+	for _, m := range matches {
+		key := m[1]
+		value := strings.Trim(m[2], `"`)
+		params[key] = value
+		s = strings.Replace(s, m[0], "", 1)
+	}
+
+	s = strings.TrimSpace(s)
+	return s, params
 }

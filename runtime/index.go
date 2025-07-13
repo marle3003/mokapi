@@ -86,7 +86,7 @@ func (a *App) Search(r search.Request) (search.Result, error) {
 		clauses = append(clauses, bleve.NewQueryStringQuery(r.Query))
 	}
 
-	for k, v := range r.Terms {
+	for k, v := range r.Params {
 		term := bleve.NewMatchPhraseQuery(v)
 		term.SetField(k)
 		clauses = append(clauses, term)

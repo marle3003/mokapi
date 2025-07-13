@@ -52,7 +52,7 @@ func TestIndex_Http(t *testing.T) {
 				}, trait)
 				require.NoError(t, err)
 
-				r, err := app.Search(search.Request{Terms: map[string]string{"type": "event"}, Limit: 10})
+				r, err := app.Search(search.Request{Params: map[string]string{"type": "event"}, Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
 

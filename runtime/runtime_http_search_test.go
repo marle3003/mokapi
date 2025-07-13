@@ -192,7 +192,7 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{Terms: map[string]string{"api": "foo"}, Limit: 10})
+				r, err := app.Search(search.Request{Params: map[string]string{"api": "foo"}, Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
@@ -214,7 +214,7 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo bar", "", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{Terms: map[string]string{"api": "foo bar"}, Limit: 10})
+				r, err := app.Search(search.Request{Params: map[string]string{"api": "foo bar"}, Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
