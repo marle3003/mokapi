@@ -373,6 +373,12 @@ func (p *parser) equal(name, value string) (predicate, error) {
 					s = strings.ReplaceAll(v, "-", "")
 					return v == s
 				}
+			case "activeDirectoryObjectSidMatch", "0.0.0.0":
+				v, _ := sidToBytes(value)
+				f = func(s string) bool {
+					b := []byte(s)
+					return bytes.Equal(b, v) || value == s
+				}
 			default:
 				return nil, fmt.Errorf("unsupported equality type: %v", t)
 			}
@@ -535,4 +541,47 @@ func levenshtein(a, b string) int {
 
 	// Return the final Levenshtein distance
 	return matrix[len(a)][len(b)]
+}
+
+// Converts sddl Sid to []byte
+func sidToBytes(sid string) ([]byte, error) {
+	sid = strings.ReplaceAll(sid, "S-", "")
+	parts := strings.Split(sid, "-")
+
+	if len(parts) < 3 {
+		return nil, fmt.Errorf("invalid sid string format %v", sid)
+	}
+
+	var result []byte
+
+	// Revision
+	rev, revErr := strconv.ParseUint(parts[0], 10, 32)
+	if revErr != nil {
+		return nil, fmt.Errorf("invalid uint value %v at position: %v", parts[0], 0)
+	}
+	result = append(result, byte(rev))
+
+	// SubAuthorityCount
+	result = append(result, byte(len(parts)-2))
+
+	// IdentifierAuthority
+	for range 5 {
+		result = append(result, 0)
+	}
+	authId, authIdErr := strconv.ParseUint(parts[1], 10, 32)
+	if authIdErr != nil {
+		return nil, fmt.Errorf("invalid uint value %v at position: %v", parts[1], 1)
+	}
+	result = append(result, byte(authId))
+	for i, part := range parts[2:] {
+		val, valErr := strconv.ParseUint(part, 10, 32)
+		if valErr != nil {
+			return nil, fmt.Errorf("invalid uint value %v at position: %v", part, i)
+		}
+		b := make([]byte, 4)
+		binary.LittleEndian.PutUint32(b, uint32(val))
+		result = append(result, b...)
+	}
+
+	return result, nil
 }
