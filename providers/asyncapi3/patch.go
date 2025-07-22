@@ -57,7 +57,6 @@ func (c *Config) patchServer(patch *Config) {
 		for name, ps := range patch.Servers {
 			if s, ok := c.Servers[name]; ok {
 				s.patch(ps)
-				c.Servers[name] = s
 			} else {
 				c.Servers[name] = ps
 			}

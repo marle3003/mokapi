@@ -8,7 +8,7 @@ import (
 
 func TestSmtp_Metrics_Mails(t *testing.T) {
 	s := NewSmtp()
-	s.Mails.WithLabel("service_a").Add(1)
+	s.Mails.WithLabel("service_a", "sender_a").Add(1)
 	require.Equal(t, float64(1), s.Mails.Sum())
 }
 

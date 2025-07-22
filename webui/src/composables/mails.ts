@@ -4,7 +4,7 @@ import { useFetch } from './fetch'
 export function useMails() {
     
     function fetchMail(messageId: string) {
-        const response = useFetch(`/api/services/smtp/mails/${messageId}`, undefined, false)
+        const response = useFetch(`/api/services/mail/mails/${messageId}`, undefined, false)
         const mail = ref<Mail | null>(null)
         const isLoading = ref<boolean>()
 
@@ -16,7 +16,7 @@ export function useMails() {
     }
 
     function attachmentUrl(messageId: string, name: string): string {
-        return `/api/services/smtp/mails/${messageId}/attachments/${name}`
+        return `/api/services/mail/mails/${messageId}/attachments/${name}`
     }
 
     return { fetchMail, attachmentUrl }

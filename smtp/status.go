@@ -1,6 +1,8 @@
 package smtp
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"strconv"
@@ -72,6 +74,28 @@ func (e *EnhancedStatusCode) UnmarshalYAML(value *yaml.Node) error {
 	v := strings.Split(value.Value, ".")
 	if len(v) != 3 {
 		return fmt.Errorf("unexpected value %v, expected x.x.x", value.Value)
+	}
+	for index, s := range v {
+		i, err := strconv.ParseInt(s, 10, 8)
+		if err != nil {
+			return fmt.Errorf("unable to parse %v", s)
+		}
+		e[index] = int8(i)
+	}
+	return nil
+}
+
+func (e *EnhancedStatusCode) UnmarshalJSON(b []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(b))
+	t, err := dec.Token()
+	if err != nil {
+		return err
+	}
+	s := t.(string)
+
+	v := strings.Split(s, ".")
+	if len(v) != 3 {
+		return fmt.Errorf("unexpected value %v, expected x.x.x", s)
 	}
 	for index, s := range v {
 		i, err := strconv.ParseInt(s, 10, 8)

@@ -9,7 +9,7 @@ components:
           type: array
           items:
             type: string
-            enum: ["http", "kafka", "smtp", "ldap"]
+            enum: ["http", "kafka", "mail", "ldap"]
         search:
           type: object
           properties:

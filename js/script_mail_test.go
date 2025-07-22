@@ -3,11 +3,11 @@ package js_test
 import (
 	"fmt"
 	r "github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/mail"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/jstest"
+	"mokapi/providers/mail"
 	"mokapi/runtime/events/eventstest"
 	"mokapi/smtp"
 	"mokapi/try"
@@ -207,7 +207,7 @@ func Test_Mail(t *testing.T) {
 			t.Parallel()
 
 			var received *smtp.Message
-			c := &mail.Config{AutoCreateMailbox: true}
+			c := &mail.Config{Settings: &mail.Settings{AutoCreateMailbox: true}}
 			h := mail.NewHandler(c, mail.NewStore(c), enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
 				received = args[0].(*smtp.Message)
 				return nil

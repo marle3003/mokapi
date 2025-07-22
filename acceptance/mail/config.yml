@@ -1,0 +1,10 @@
+mail: 1.0
+info:
+  title: Mokapi MailServer
+servers:
+  smtps:
+    host: localhost:8025
+    protocol: smtps
+rules:
+  - sender: .*@foo.bar
+    action: allow

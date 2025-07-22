@@ -99,8 +99,8 @@ const router = createRouter({
       component: () => import('@/views/Ldap.vue')
     },
     {
-      path: '/smtp',
-      component: () => import('@/views/Smtp.vue')
+      path: '/mail',
+      component: () => import('@/views/Mail.vue')
     },
     {
       path: '/dashboard',
@@ -181,21 +181,21 @@ const router = createRouter({
           ]
         },
         {
-          path: '/dashboard/smtp',
-          name: 'smtp',
+          path: '/dashboard/mail',
+          name: 'mail',
           component: dashboardView,
           children: [
             {
-              path: '/dashboard/smtp/service/:service',
-              name: 'smtpService',
+              path: '/dashboard/mail/service/:service',
+              name: 'mailService',
               component: dashboardView,
-              meta: { service: 'smtp' },
+              meta: { service: 'mail' },
             },
             {
-              path: '/dashboard/smtp/mails/:id',
+              path: '/dashboard/mail/mails/:id',
               name: 'smtpMail',
               component: dashboardView,
-              meta: { service: 'smtp' }
+              meta: { service: 'mail' }
             },
           ]
         },

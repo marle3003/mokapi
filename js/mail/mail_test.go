@@ -5,12 +5,12 @@ import (
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/mail"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/eventloop"
 	mod "mokapi/js/mail"
 	"mokapi/js/require"
+	"mokapi/providers/mail"
 	"mokapi/runtime/events/eventstest"
 	"mokapi/smtp/smtptest"
 	"testing"
@@ -100,7 +100,7 @@ m.send('smtp://%v', {from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bo
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := tc.cfg
 			if cfg == nil {
-				cfg = &mail.Config{AutoCreateMailbox: true}
+				cfg = &mail.Config{Settings: &mail.Settings{AutoCreateMailbox: true}}
 			}
 			s := mail.NewStore(cfg)
 			h := mail.NewHandler(cfg, s, enginetest.NewEngine(), &eventstest.Handler{})

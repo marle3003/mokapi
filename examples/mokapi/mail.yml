@@ -1,0 +1,49 @@
+components:
+  schemas:
+    MailInfo:
+      allOf:
+        - $ref: 'common.yml#/components/schemas/Service'
+        - type: object
+          properties:
+            server:
+              type: string
+            mailboxes:
+              type: array
+              items:
+                $ref: '#/components/schemas/Mailbox'
+            rules:
+              type: array
+              items:
+                $ref: '#/components/schemas/SmtpRule'
+            settings:
+              type: object
+              properties:
+                maxRecipients:
+                  type: integer
+                autoCreateMailbox:
+                  type: boolean
+    Mailbox:
+      type: object
+      properties:
+        name:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        description:
+          type: string
+    SmtpRule:
+      type: object
+      properties:
+        sender:
+          type: string
+        recipient:
+          type: string
+        subject:
+          type: string
+        body:
+          type: string
+        action:
+          type: string
+          enum: [allow, deny]

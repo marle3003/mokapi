@@ -78,3 +78,12 @@ func (suite *MailSuite) TestSendMail() {
 	//c.Quit()
 	//require.NoError(suite.T(), err)
 }
+
+func (suite *MailSuite) TestSendMail_OldFormat() {
+	err := smtptest.SendMail("from@foo.bar",
+		"rcipient@foo.bar",
+		"smtp://localhost:8030",
+		smtptest.WithSubject("Test Mail"),
+	)
+	require.NoError(suite.T(), err)
+}

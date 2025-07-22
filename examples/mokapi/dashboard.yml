@@ -63,10 +63,10 @@ paths:
             application/json:
               schema:
                 $ref: 'kafka.yml#/components/schemas/Kafka'
-  /api/services/smtp/{name}:
+  /api/services/mail/{name}:
     get:
-      summary: Information about the smtp server
-      operationId: serviceSmtp
+      summary: Information about the mail servers
+      operationId: serviceMail
       parameters:
         - name: name
           in: path
@@ -79,7 +79,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'smtp.yml#/components/schemas/SmtpInfo'
+                $ref: 'mail.yml#/components/schemas/MailInfo'
   /api/services/ldap/{name}:
     get:
       summary: Information about the ldap server
@@ -97,7 +97,7 @@ paths:
             application/json:
               schema:
                 $ref: 'ldap.yml#/components/schemas/LdapInfo'
-  /api/services/smtp/mails/{messageId}:
+  /api/services/mail/mails/{messageId}:
     get:
       summary: Retrieve the mail with the given messageId
       operationId: smtpMail
@@ -115,7 +115,7 @@ paths:
               schema:
         "404":
           description: mail not found
-  /api/services/smtp/mails/{messageId}/attachments/{name}:
+  /api/services/mail/mails/{messageId}/attachments/{name}:
     get:
       summary: Retrieve mail attachment's content
       operationId: smtpMailAttachment

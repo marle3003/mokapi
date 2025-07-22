@@ -41,7 +41,7 @@ type serviceType string
 var (
 	ServiceHttp  serviceType = "http"
 	ServiceKafka serviceType = "kafka"
-	ServiceSmtp  serviceType = "smtp"
+	ServiceMail  serviceType = "mail"
 	ServiceLdap  serviceType = "ldap"
 )
 
@@ -115,8 +115,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getHttpService(w, r, h.app.Monitor)
 	case strings.HasPrefix(p, "/api/services/kafka/"):
 		h.getKafkaService(w, r)
-	case strings.HasPrefix(p, "/api/services/smtp/"):
-		h.handleSmtpService(w, r)
+	case strings.HasPrefix(p, "/api/services/mail/"):
+		h.handleMailService(w, r)
 	case strings.HasPrefix(p, "/api/services/ldap/"):
 		h.handleLdapService(w, r)
 	case p == "/api/dashboard":
@@ -205,7 +205,7 @@ func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 		i.ActiveServices = append(i.ActiveServices, "kafka")
 	}
 	if len(h.app.Mail.List()) > 0 {
-		i.ActiveServices = append(i.ActiveServices, "smtp")
+		i.ActiveServices = append(i.ActiveServices, "mail")
 	}
 	if len(h.app.Ldap.List()) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "ldap")

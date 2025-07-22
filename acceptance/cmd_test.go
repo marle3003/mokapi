@@ -13,6 +13,7 @@ import (
 	"mokapi/feature"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/directory"
+	mail2 "mokapi/providers/mail"
 	"mokapi/providers/openapi"
 	"mokapi/providers/swagger"
 	"mokapi/runtime"
@@ -51,13 +52,13 @@ func Start(cfg *static.Config) (*Cmd, error) {
 
 	http := server.NewHttpManager(scriptEngine, certStore, app)
 	kafka := server.NewKafkaManager(scriptEngine, app)
-	smtp := server.NewSmtpManager(app, scriptEngine, certStore)
+	mail := server.NewMailManager(app, scriptEngine, certStore)
 	ldap := server.NewLdapDirectoryManager(scriptEngine, certStore, app)
 
 	watcher.AddListener(func(e dynamic.ConfigEvent) {
 		kafka.UpdateConfig(e)
 		http.Update(e)
-		smtp.UpdateConfig(e)
+		mail.UpdateConfig(e)
 		ldap.UpdateConfig(e)
 		if err := scriptEngine.AddScript(e); err != nil {
 			panic(err)
@@ -76,7 +77,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 
 	pool := safe.NewPool(context.Background())
 	ctx, cancel := context.WithCancel(context.Background())
-	s := server.NewServer(pool, app, watcher, kafka, http, smtp, ldap, scriptEngine)
+	s := server.NewServer(pool, app, watcher, kafka, http, mail, ldap, scriptEngine)
 	s.StartAsync(ctx)
 
 	return &Cmd{
@@ -110,4 +111,7 @@ func registerDynamicTypes() {
 	dynamic.Register("smtp", func(v version.Version) bool {
 		return true
 	}, &mail.Config{})
+	dynamic.Register("mail", func(v version.Version) bool {
+		return true
+	}, &mail2.Config{})
 }

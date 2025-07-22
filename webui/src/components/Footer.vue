@@ -21,8 +21,8 @@
                   </router-link>
                 </li>
                 <li>
-                  <router-link :to="{ path: '/smtp' }">
-                    SMTP
+                  <router-link :to="{ path: '/mail' }">
+                    Email
                   </router-link>
                 </li>
                 <li>

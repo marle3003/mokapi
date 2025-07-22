@@ -1,7 +1,7 @@
 import { on, sleep } from 'mokapi'
 import { clusters, events as kafkaEvents, configs as kafkaConfigs } from 'kafka.js'
 import { apps as httpServices, events as httpEvents, configs as httpConfigs } from 'services_http.js'
-import { server as smtpServers, mailEvents, getMail, getAttachment } from 'smtp.js'
+import { services as mailServices, mailEvents, getMail, getAttachment } from 'mail.js'
 import { server as ldapServers, searches } from 'ldap.js'
 import { metrics } from 'metrics.js'
 import { get, post, fetch } from 'mokapi/http'
@@ -24,7 +24,7 @@ export default async function() {
         switch (request.operationId) {
             case 'info': {
 
-                response.data = { version: "0.11.0", activeServices: ["http", "kafka", "ldap", "smtp"], search: { enabled: true } }
+                response.data = { version: "0.11.0", activeServices: ["http", "kafka", "ldap", "mail"], search: { enabled: true } }
                 return true
             }
             case 'services':
@@ -36,8 +36,8 @@ export default async function() {
             case 'serviceKafka':
                 response.data = clusters[0]
                 return true
-            case 'serviceSmtp':
-                response.data = smtpServers[0]
+            case 'serviceMail':
+                response.data = mailServices[0]
                 return true
             case 'smtpMail':
                 const messageId = request.path['messageId']
@@ -251,7 +251,7 @@ export default async function() {
 function getServices() {
     let http = httpServices.map(x => getInfo(x, 'http'))
     let kafka = clusters.map(x => getInfo(x, 'kafka'))
-    let smtp = smtpServers.map(x => getInfo(x, 'smtp'))
+    let smtp = mailServices.map(x => getInfo(x, 'mail'))
     let ldap = ldapServers.map(x => getInfo(x, 'ldap'))
 
     return http.concat(kafka).concat(smtp).concat(ldap)
