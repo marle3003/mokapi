@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"encoding/binary"
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	log "github.com/sirupsen/logrus"

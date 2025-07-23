@@ -243,6 +243,41 @@ func TestSearch_Schema(t *testing.T) {
 				require.Len(t, res.Results, 1)
 			},
 		},
+		{
+			name:  "ldap filter objectSid using AD style",
+			input: `{ "files": [ "./users.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/users.ldif": {Raw: []byte(`
+dn:
+namingContexts: dc=example_domain_name
+subschemaSubentry: cn=schema
+
+dn: cn=schema
+objectClass: top
+objectClass: subschema
+attributeTypes: ( 1.2.3.4.5.6.7.8 NAME 'objectSid' DESC 'objectSid' EQUALITY activeDirectoryObjectSidMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )
+
+dn: cn=user1
+objectSid:: AQUAAAAAAAUVAAAA0gKWSdIClknSApZJ6QMAAA==
+
+dn: cn=user2
+objectSid:: AQUAAAAAAAUVAAAAF8sUcR3r8QcekDXQw9wAAA==
+`)},
+			}},
+			test: func(t *testing.T, h ldap.Handler, err error) {
+				require.NoError(t, err)
+
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: fmt.Sprintf("(objectSid=S-1-5-21-1234567890-1234567890-1234567890-1001)"),
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 1)
+				require.Equal(t, "cn=user1", res.Results[0].Dn)
+			},
+		},
 	}
 
 	t.Parallel()
