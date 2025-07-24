@@ -15,11 +15,11 @@ import (
 func TestEngine_Scheduler(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, e *engine.Engine, c *metrics.Counter)
+		test func(t *testing.T, e *engine.Engine, c *metrics.Counter, sm *events.StoreManager)
 	}{
 		{
 			name: "run job",
-			test: func(t *testing.T, e *engine.Engine, c *metrics.Counter) {
+			test: func(t *testing.T, e *engine.Engine, c *metrics.Counter, sm *events.StoreManager) {
 				err := e.AddScript(newScript("test.js", `
 					import mokapi from 'mokapi'
 					export default function() {
@@ -30,10 +30,10 @@ func TestEngine_Scheduler(t *testing.T) {
 
 				time.Sleep(300 * time.Millisecond)
 
-				evts := events.GetEvents(events.NewTraits().WithNamespace("job").WithName("test.js"))
+				evts := sm.GetEvents(events.NewTraits().WithNamespace("job").WithName("test.js"))
 				r.Len(t, evts, 1)
 				r.Equal(t, "namespace=job, name=test.js, jobId=0", evts[0].Traits.String())
-				exec := evts[0].Data.(common.JobExecution)
+				exec := evts[0].Data.(*common.JobExecution)
 				r.Equal(t, "test.js", exec.Tags["name"])
 				r.Greater(t, exec.Duration, int64(0))
 				r.Equal(t, "1s", exec.Schedule)
@@ -47,7 +47,7 @@ func TestEngine_Scheduler(t *testing.T) {
 		},
 		{
 			name: "run job with name",
-			test: func(t *testing.T, e *engine.Engine, c *metrics.Counter) {
+			test: func(t *testing.T, e *engine.Engine, c *metrics.Counter, sm *events.StoreManager) {
 				err := e.AddScript(newScript("test.js", `
 					import mokapi from 'mokapi'
 					export default function() {
@@ -58,15 +58,15 @@ func TestEngine_Scheduler(t *testing.T) {
 
 				time.Sleep(300 * time.Millisecond)
 
-				evts := events.GetEvents(events.NewTraits().WithNamespace("job"))
+				evts := sm.GetEvents(events.NewTraits().WithNamespace("job"))
 				r.Len(t, evts, 1)
-				exec := evts[0].Data.(common.JobExecution)
+				exec := evts[0].Data.(*common.JobExecution)
 				r.Equal(t, "foo", exec.Tags["name"])
 			},
 		},
 		{
 			name: "run job with custom tag",
-			test: func(t *testing.T, e *engine.Engine, c *metrics.Counter) {
+			test: func(t *testing.T, e *engine.Engine, c *metrics.Counter, sm *events.StoreManager) {
 				err := e.AddScript(newScript("test.js", `
 					import mokapi from 'mokapi'
 					export default function() {
@@ -77,15 +77,15 @@ func TestEngine_Scheduler(t *testing.T) {
 
 				time.Sleep(300 * time.Millisecond)
 
-				evts := events.GetEvents(events.NewTraits().WithNamespace("job"))
+				evts := sm.GetEvents(events.NewTraits().WithNamespace("job"))
 				r.Len(t, evts, 1)
-				exec := evts[0].Data.(common.JobExecution)
+				exec := evts[0].Data.(*common.JobExecution)
 				r.Equal(t, "bar", exec.Tags["foo"])
 			},
 		},
 		{
 			name: "run job with logs",
-			test: func(t *testing.T, e *engine.Engine, c *metrics.Counter) {
+			test: func(t *testing.T, e *engine.Engine, c *metrics.Counter, sm *events.StoreManager) {
 				err := e.AddScript(newScript("test.js", `
 					import mokapi from 'mokapi'
 					export default function() {
@@ -98,16 +98,16 @@ func TestEngine_Scheduler(t *testing.T) {
 
 				time.Sleep(300 * time.Millisecond)
 
-				evts := events.GetEvents(events.NewTraits().WithNamespace("job"))
+				evts := sm.GetEvents(events.NewTraits().WithNamespace("job"))
 				r.Len(t, evts, 1)
-				exec := evts[0].Data.(common.JobExecution)
+				exec := evts[0].Data.(*common.JobExecution)
 				r.Len(t, exec.Logs, 1)
 				r.Equal(t, "a log message", exec.Logs[0].Message)
 			},
 		},
 		{
 			name: "run job script error",
-			test: func(t *testing.T, e *engine.Engine, c *metrics.Counter) {
+			test: func(t *testing.T, e *engine.Engine, c *metrics.Counter, sm *events.StoreManager) {
 				err := e.AddScript(newScript("test.js", `
 					import mokapi from 'mokapi'
 					export default function() {
@@ -120,9 +120,9 @@ func TestEngine_Scheduler(t *testing.T) {
 
 				time.Sleep(300 * time.Millisecond)
 
-				evts := events.GetEvents(events.NewTraits().WithNamespace("job"))
+				evts := sm.GetEvents(events.NewTraits().WithNamespace("job"))
 				r.Len(t, evts, 1)
-				exec := evts[0].Data.(common.JobExecution)
+				exec := evts[0].Data.(*common.JobExecution)
 				r.NotNil(t, exec.Error)
 				r.Equal(t, "Error: script error at test.js:5:13(3)", exec.Error.Message)
 			},
@@ -140,11 +140,7 @@ func TestEngine_Scheduler(t *testing.T) {
 			defer e.Close()
 			e.Start()
 
-			events.SetStore(10, events.NewTraits().WithNamespace("job"))
-
-			tc.test(t, e, app.Monitor.JobCounter)
-
-			events.Reset()
+			tc.test(t, e, app.Monitor.JobCounter, app.Events)
 		})
 	}
 }

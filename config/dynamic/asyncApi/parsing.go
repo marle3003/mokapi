@@ -27,28 +27,28 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	return nil
 }
 
-func (c *ChannelRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
-	if len(c.Ref) > 0 {
-		return dynamic.Resolve(c.Ref, &c.Value, config, reader)
+func (r *ChannelRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	if len(r.Ref) > 0 {
+		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
-	if c.Value == nil {
+	if r.Value == nil {
 		return nil
 	}
 
-	if c.Value.Publish != nil {
-		if err := c.Value.Publish.Parse(config, reader); err != nil {
+	if r.Value.Publish != nil {
+		if err := r.Value.Publish.Parse(config, reader); err != nil {
 			return err
 		}
 	}
 
-	if c.Value.Subscribe != nil {
-		if err := c.Value.Subscribe.Parse(config, reader); err != nil {
+	if r.Value.Subscribe != nil {
+		if err := r.Value.Subscribe.Parse(config, reader); err != nil {
 			return err
 		}
 	}
 
-	for _, param := range c.Value.Parameters {
+	for _, param := range r.Value.Parameters {
 		if err := param.Parse(config, reader); err != nil {
 			return err
 		}

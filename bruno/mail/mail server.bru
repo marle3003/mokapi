@@ -1,0 +1,15 @@
+meta {
+  name: mail server
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/services/mail/{{mailServerName}}
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

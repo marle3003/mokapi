@@ -1,12 +1,13 @@
 package acceptance
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
 	"mokapi/ldap"
-	"mokapi/providers/directory"
-	"mokapi/runtime/events"
 	"mokapi/runtime/metrics"
+	"mokapi/try"
+	"net/http"
 	"time"
 )
 
@@ -30,12 +31,7 @@ func (suite *LdapSuite) TearDownSuite() {
 	suite.Client.Close()
 }
 
-func (suite *BaseSuite) BeforeTest(_, _ string) {
-	events.SetStore(20, events.NewTraits().WithNamespace("ldap"))
-}
-
 func (suite *LdapSuite) AfterTest(_, _ string) {
-	events.Reset()
 	suite.cmd.App.Monitor.Reset()
 }
 
@@ -66,14 +62,12 @@ func (suite *LdapSuite) TestLog() {
 	}
 	_, err := suite.Client.Search(search)
 	require.NoError(suite.T(), err)
-	e := events.GetEvents(events.NewTraits().WithNamespace("ldap"))
-	require.Len(suite.T(), e, 1)
-	data := e[0].Data.(*directory.SearchLog)
-	require.Equal(suite.T(), "WholeSubtree", data.Request.Scope)
-	require.Equal(suite.T(), "(objectClass=user)", data.Request.Filter)
-	require.Equal(suite.T(), []string{"mail"}, data.Request.Attributes)
-	require.Len(suite.T(), data.Response.Results, 4)
-	require.Equal(suite.T(), "Success", data.Response.Status)
+
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%v/api/events?namespace=ldap", suite.cfg.Api.Port),
+		nil,
+		try.HasStatusCode(http.StatusOK),
+		try.BodyContains(`:{"request":{"operation":"Search","baseDN":"","scope":"WholeSubtree","dereferencePolicy":0,"sizeLimit":0,"timeLimit":0,"typesOnly":false,"filter":"(objectClass=user)","attributes":["mail"],"controls":null}`),
+	)
 }
 
 func (suite *LdapSuite) TestMetric() {

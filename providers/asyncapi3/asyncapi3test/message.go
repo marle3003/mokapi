@@ -51,12 +51,6 @@ func WithMessageInfo(name, title, summary, description string) MessageOptions {
 	}
 }
 
-func WithMessageTrait(trait *asyncapi3.MessageTrait) MessageOptions {
-	return func(m *asyncapi3.Message) {
-		m.Traits = append(m.Traits, &asyncapi3.MessageTraitRef{Value: trait})
-	}
-}
-
 func WithKafkaMessageBinding(b asyncapi3.KafkaMessageBinding) MessageOptions {
 	return func(m *asyncapi3.Message) {
 		m.Bindings.Kafka = b

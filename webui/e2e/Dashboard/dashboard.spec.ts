@@ -61,15 +61,15 @@ test.describe('Dashboard', () => {
         })
 
         await test.step("metric SMTP Mails",async () => {
-            const metricSmtpMessages = dashboard.smtp.metricSmtpMessages
+            const metricSmtpMessages = dashboard.mail.metricSmtpMessages
             await expect(metricSmtpMessages.title).toHaveText('SMTP Mails')
             await expect(metricSmtpMessages.value).toHaveText('3')
             await expect(metricSmtpMessages.additional).not.toBeVisible() 
         })
 
         await test.step("service table SMTP",async () => {
-            const smtpCells = dashboard.smtp.serviceList.getByRole('cell')
-            await expect(smtpCells.nth(0)).toHaveText('Smtp Testserver')
+            const smtpCells = dashboard.mail.serviceList.getByRole('cell')
+            await expect(smtpCells.nth(0)).toHaveText('Mail Testserver')
             await expect(smtpCells.nth(1)).toHaveText('This is a sample smtp server')
             await expect(smtpCells.nth(2)).toHaveText(formatTimestamp(1652635690))
             await expect(smtpCells.nth(3)).toHaveText('3')

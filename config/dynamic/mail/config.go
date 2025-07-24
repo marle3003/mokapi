@@ -81,10 +81,6 @@ func (c *Config) getMailbox(name string) (MailboxConfig, bool) {
 	return MailboxConfig{}, false
 }
 
-func NewRuleExpr(r *regexp.Regexp) *RuleExpr {
-	return &RuleExpr{expr: r}
-}
-
 func (r *RuleExpr) String() string {
 	if r == nil {
 		return ""

@@ -10,11 +10,6 @@ import (
 	"strings"
 )
 
-const (
-	defaultSizeLimit = 1000
-	defaultTimeLimit = 3600
-)
-
 type Config struct {
 	ConfigPath string `yaml:"-" json:"-"`
 	Info       Info

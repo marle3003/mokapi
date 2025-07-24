@@ -10,6 +10,7 @@ import (
 	"mokapi/providers/directory"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
+	"mokapi/runtime/events/eventstest"
 	"mokapi/runtime/monitor"
 	"net/url"
 	"testing"
@@ -26,7 +27,7 @@ func TestApp_AddLdap(t *testing.T) {
 				app.Ldap.Add(newLdapConfig("https://mokapi.io", &directory.Config{Info: directory.Info{Name: "foo"}}), enginetest.NewEngine())
 
 				require.NotNil(t, app.Ldap.Get("foo"))
-				err := events.Push("bar", events.NewTraits().WithNamespace("ldap").WithName("foo"))
+				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("ldap").WithName("foo"))
 				require.NoError(t, err, "event store should be available")
 			},
 		},
@@ -35,7 +36,7 @@ func TestApp_AddLdap(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Ldap.Add(newLdapConfig("https://mokapi.io", &directory.Config{Info: directory.Info{Name: "foo"}}), enginetest.NewEngine())
 				m := monitor.NewLdap()
-				h := info.Handler(m)
+				h := info.Handler(m, app.Events)
 
 				r := ldaptest.NewRequest(0, &ldap.BindRequest{Version: 3, Auth: ldap.Simple})
 				rr := ldaptest.NewRecorder()
@@ -58,8 +59,6 @@ func TestApp_AddLdap(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			defer events.Reset()
-
 			cfg := &static.Config{}
 			app := runtime.New(cfg)
 			tc.test(t, app)
@@ -114,12 +113,12 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 				newLdapConfig("https://a.io/b", &directory.Config{Info: directory.Info{Name: "foo", Description: "foo"}}),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				err := events.Push("bar", events.NewTraits().WithNamespace("ldap").WithName("foo"))
+				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("ldap").WithName("foo"))
 				require.NoError(t, err)
 
 				app.Ldap.Add(newLdapConfig("https://mokapi.io/a", &directory.Config{Info: directory.Info{Name: "foo", Description: "bar"}}), enginetest.NewEngine())
 
-				e := events.GetEvents(events.NewTraits().WithNamespace("ldap").WithName("foo"))
+				e := app.Events.GetEvents(events.NewTraits().WithNamespace("ldap").WithName("foo"))
 				require.Len(t, e, 1)
 			},
 		},
@@ -127,8 +126,6 @@ func TestApp_AddLdap_Patching(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			defer events.Reset()
-
 			cfg := &static.Config{}
 			app := runtime.New(cfg)
 			for _, c := range tc.configs {

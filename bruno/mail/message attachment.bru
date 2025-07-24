@@ -1,0 +1,20 @@
+meta {
+  name: message attachment
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/services/mail/messages/:messageId/attachments/:name
+  body: none
+  auth: inherit
+}
+
+params:path {
+  name: foo.txt
+  messageId: 20230223-084925.763-4196@mokapi.io
+}
+
+settings {
+  encodeUrl: true
+}

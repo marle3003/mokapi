@@ -1,10 +1,13 @@
 package acceptance
 
 import (
+	"encoding/json"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
 	"mokapi/server/cert"
 	"mokapi/smtp/smtptest"
+	"mokapi/try"
+	"testing"
 )
 
 type MailSuite struct{ BaseSuite }
@@ -22,9 +25,45 @@ func (suite *MailSuite) TestSendMail() {
 		"rcipient@foo.bar",
 		"smtps://localhost:8025",
 		smtptest.WithSubject("Test Mail"),
+		smtptest.WithBody("This is the body"),
 		smtptest.WithRootCa(ca),
 	)
 	require.NoError(suite.T(), err)
+
+	// test mail API
+	try.GetRequest(suite.T(), "http://localhost:8080/api/services/mail/Mokapi%20MailServer/mailboxes", nil,
+		try.HasStatusCode(200),
+		try.HasBody(`[{"name":"rcipient@foo.bar","numMessages":1}]`),
+	)
+	try.GetRequest(suite.T(), "http://localhost:8080/api/services/mail/Mokapi%20MailServer/mailboxes/rcipient@foo.bar", nil,
+		try.HasStatusCode(200),
+		try.HasBody(`{"name":"rcipient@foo.bar","numMessages":1,"folders":["INBOX"]}`),
+	)
+	try.GetRequest(suite.T(), "http://localhost:8080/api/services/mail/Mokapi%20MailServer/mailboxes/rcipient@foo.bar/messages", nil,
+		try.HasStatusCode(200),
+		try.AssertBody(func(t *testing.T, body string) {
+			var v any
+			err = json.Unmarshal([]byte(body), &v)
+			require.NoError(suite.T(), err)
+			a := v.([]any)
+			m := a[0].(map[string]any)
+			require.Len(t, m, 8)
+			require.Equal(t, "[::1]:8025", m["server"])
+			require.NotContains(t, m, "attachments")
+			require.NotContains(t, m, "sender")
+			require.NotContains(t, m, "replyTo")
+			require.NotContains(t, m, "cc")
+			require.NotContains(t, m, "bcc")
+			require.NotEmpty(t, m["messageId"])
+			require.NotContains(t, m, "inReplyTo")
+			require.NotEmpty(t, m["date"])
+			require.Equal(t, "Test Mail", m["subject"])
+			require.NotContains(t, m, "contentType")
+			require.NotContains(t, m, "contentTransferEncoding")
+			require.Equal(t, "This is the body", m["body"])
+			require.Equal(t, float64(153), m["size"])
+		}),
+	)
 
 	err = smtptest.SendMail("from@test.bar",
 		"rcipient@foo.bar",
@@ -77,4 +116,13 @@ func (suite *MailSuite) TestSendMail() {
 	//w.Close()
 	//c.Quit()
 	//require.NoError(suite.T(), err)
+}
+
+func (suite *MailSuite) TestSendMail_OldFormat() {
+	err := smtptest.SendMail("from@foo.bar",
+		"rcipient@foo.bar",
+		"smtp://localhost:8030",
+		smtptest.WithSubject("Test Mail"),
+	)
+	require.NoError(suite.T(), err)
 }

@@ -215,7 +215,7 @@ func (c *Client) Select(folder string, readonly bool) (Selected, error) {
 					return sel, err
 				}
 				var key string
-				key, err = d.Read(isAtom)
+				key = d.Read(isAtom)
 				if err != nil {
 					return sel, err
 				}

@@ -20,18 +20,6 @@ type Payload interface {
 
 type MessageOptions func(*Message)
 
-func NewMessage(payload Payload, opts ...MessageOptions) *Message {
-	m := &Message{
-		Header:  &Header{},
-		Payload: payload,
-	}
-
-	for _, opt := range opts {
-		opt(m)
-	}
-	return m
-}
-
 func (m *Message) WithContext(ctx context.Context) *Message {
 	m.Context = ctx
 	return m
@@ -94,10 +82,4 @@ func (m *Message) Read(reader io.Reader) error {
 	}
 
 	return nil
-}
-
-func WithDup() MessageOptions {
-	return func(m *Message) {
-		m.Header.Dup = true
-	}
 }

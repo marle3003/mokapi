@@ -19,12 +19,6 @@ func NewConfig(opts ...ConfigOptions) *asyncApi.Config {
 	return c
 }
 
-func WithTitle(title string) ConfigOptions {
-	return func(c *asyncApi.Config) {
-		c.Info.Name = title
-	}
-}
-
 func WithInfo(title, description, version string) ConfigOptions {
 	return func(c *asyncApi.Config) {
 		c.Info.Name = title
@@ -95,18 +89,6 @@ func WithChannelDescription(description string) ChannelOptions {
 	}
 }
 
-func AssignToServer(server string) ChannelOptions {
-	return func(c *asyncApi.Channel) {
-		c.Servers = append(c.Servers, server)
-	}
-}
-
-func WithTopicBinding(bindings asyncApi.TopicBindings) ChannelOptions {
-	return func(c *asyncApi.Channel) {
-		c.Bindings.Kafka = bindings
-	}
-}
-
 type ServerOptions func(s *asyncApi.Server)
 
 func WithServer(name, protocol, url string, opts ...ServerOptions) ConfigOptions {
@@ -131,12 +113,6 @@ func WithServer(name, protocol, url string, opts ...ServerOptions) ConfigOptions
 func WithServerDescription(description string) ServerOptions {
 	return func(s *asyncApi.Server) {
 		s.Description = description
-	}
-}
-
-func WithServerTags(tags ...asyncApi.ServerTag) ServerOptions {
-	return func(s *asyncApi.Server) {
-		s.Tags = append(s.Tags, tags...)
 	}
 }
 

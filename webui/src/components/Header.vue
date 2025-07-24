@@ -222,7 +222,7 @@ function navigateAndClose(params: Record<string, string>) {
                 <li><router-link class="dropdown-item" :to="{ path: '/http' }">HTTP</router-link></li>
                 <li><router-link class="dropdown-item" :to="{ path: '/kafka' }">Kafka</router-link></li>
                 <li><router-link class="dropdown-item" :to="{ path: '/ldap' }">LDAP</router-link></li>
-                <li><router-link class="dropdown-item" :to="{ path: '/smtp' }">SMTP</router-link></li>
+                <li><router-link class="dropdown-item" :to="{ path: '/mail' }">Email</router-link></li>
               </ul>
             </li>
             <li class="nav-item" v-for="(item, label) of nav">

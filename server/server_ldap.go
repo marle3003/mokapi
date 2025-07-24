@@ -61,14 +61,14 @@ func (m *LdapDirectoryManager) UpdateConfig(e dynamic.ConfigEvent) {
 	}
 
 	if s, ok := m.servers[cfg.Info.Name]; ok {
-		s.Handler = info.Handler(m.app.Monitor.Ldap)
+		s.Handler = info.Handler(m.app.Monitor.Ldap, m.app.Events)
 	} else {
 		m.start(info)
 	}
 }
 
 func (m *LdapDirectoryManager) start(cfg *runtime.LdapInfo) {
-	s := &ldap.Server{Addr: cfg.Address, Handler: cfg.Handler(m.app.Monitor.Ldap)}
+	s := &ldap.Server{Addr: cfg.Address, Handler: cfg.Handler(m.app.Monitor.Ldap, m.app.Events)}
 	m.servers[cfg.Info.Name] = s
 	log.Infof("adding LDAP host '%v' on binding %v", cfg.Info.Name, s.Addr)
 	go func() {

@@ -194,7 +194,7 @@ func TestCustomTempDir(t *testing.T) {
 		},
 		TempDir: t.TempDir(),
 	}
-	t.Cleanup(func() { os.RemoveAll(cfg.TempDir) })
+	t.Cleanup(func() { _ = os.RemoveAll(cfg.TempDir) })
 
 	g := New(cfg)
 	p := safe.NewPool(context.Background())
@@ -226,7 +226,7 @@ Stop:
 }
 
 // go-git requires git installed for file:// repositories
-func testGit_SimpleUrl(t *testing.T) {
+func testGitSimpleUrl(t *testing.T) {
 	repo := newGitRepo(t, t.Name())
 	defer func() {
 		err := os.RemoveAll(repo.dir)

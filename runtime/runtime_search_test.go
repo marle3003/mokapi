@@ -6,6 +6,7 @@ import (
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/runtime"
+	"mokapi/runtime/search"
 	"testing"
 )
 
@@ -30,11 +31,11 @@ func TestIndex_Config(t *testing.T) {
 					Config: cfg,
 					Event:  dynamic.Create,
 				})
-				r, err := app.Search("name")
+				r, err := app.Search(search.Request{Query: "name", Limit: 10})
 				require.NoError(t, err)
-				require.Len(t, r, 1)
+				require.Len(t, r.Results, 1)
 				require.Equal(t,
-					runtime.SearchResult{
+					search.ResultItem{
 						Type:      "Config",
 						Domain:    "FILE",
 						Title:     "file://foo.yml",
@@ -44,7 +45,7 @@ func TestIndex_Config(t *testing.T) {
 							"id":   "64613435-3062-6462-3033-316532633233",
 						},
 					},
-					r[0])
+					r.Results[0])
 			},
 		},
 	}

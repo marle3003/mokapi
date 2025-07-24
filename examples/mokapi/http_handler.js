@@ -1,7 +1,7 @@
 import { on, sleep } from 'mokapi'
 import { clusters, events as kafkaEvents, configs as kafkaConfigs } from 'kafka.js'
 import { apps as httpServices, events as httpEvents, configs as httpConfigs } from 'services_http.js'
-import { server as smtpServers, mailEvents, getMail, getAttachment } from 'smtp.js'
+import { services as mailServices, mailEvents, getMail, getAttachment } from 'mail.js'
 import { server as ldapServers, searches } from 'ldap.js'
 import { metrics } from 'metrics.js'
 import { get, post, fetch } from 'mokapi/http'
@@ -24,7 +24,7 @@ export default async function() {
         switch (request.operationId) {
             case 'info': {
 
-                response.data = { version: "0.11.0", activeServices: ["http", "kafka", "ldap", "smtp"], search: { enabled: true } }
+                response.data = { version: "0.11.0", activeServices: ["http", "kafka", "ldap", "mail"], search: { enabled: true } }
                 return true
             }
             case 'services':
@@ -36,10 +36,39 @@ export default async function() {
             case 'serviceKafka':
                 response.data = clusters[0]
                 return true
-            case 'serviceSmtp':
-                response.data = smtpServers[0]
+            case 'serviceMail':
+                response.data = mailServices[0]
+                return true
+            case 'mailboxes':
+                response.data = mailServices[0].mailboxes
+                return true
+            case 'mailbox':
+                for (const mb of mailServices[0].mailboxes) {
+                    if (mb.name === request.path.mailbox) {
+                        response.data = {
+                            ...mb,
+                            folders: mb.folders.map(x => x.name)
+                        }
+                        return true
+                    }
+                }
+                response.statusCode = 404
+                return true
+            case 'smtpMessages':
+                for (const mb of mailServices[0].mailboxes) {
+                    if (mb.name === request.path.mailbox) {
+                        const result = []
+                        for (const f of mb.folders) {
+                            result.push(...f.messages)
+                        }
+                        response.data = result
+                        return true
+                    }
+                }
+                response.statusCode = 404
                 return true
             case 'smtpMail':
+            case 'smtpMessage':
                 const messageId = request.path['messageId']
                 const mail = getMail(messageId)
                 if (mail == null) {
@@ -49,6 +78,7 @@ export default async function() {
                 }
                 return true
             case 'smtpMailAttachment':
+            case 'smtpAttachment':
                 const attachment = getAttachment(request.path['messageId'], request.path['name'])
                 if (attachment == null) {
                     response.statusCode = 404
@@ -113,7 +143,7 @@ export default async function() {
                     response.data = ''
                     return true
                 }
-            case 'configdata':
+            case 'configData':
                 const configData = configs[request.path.id]
                 if (configData) {
                     response.data = configData.data
@@ -124,33 +154,37 @@ export default async function() {
                     response.data = ''
                     return true
                 }
-            case 'fakertree':
+            case 'fakerTree':
                 const resp = get(`${apiBaseUrl}/mokapi/api/faker/tree`)
                 response.body = resp.body
                 return true
             case 'search':
-                response.data = [{
-                    type: 'HTTP',
-                    domain: 'Swagger Petstore',
-                    title: "POST  /pet",
-                    fragments: ['<mark>Everything</mark>', 'store'],
-                    params: {
-                        type: 'http',
-                        service: 'Swagger Petstore',
-                        path: '/pet',
-                        method: 'post'
-                    }
-                },
-                {
-                    type: 'Config',
-                    domain: 'FILE',
-                    title: "file://root/path/to/my/foo/file.json",
-                    fragments: ['<mark>foo</mark> bar'],
-                    params: {
-                        type: 'config',
-                        id: 'b6fea8ac-56c7-4e73-a9c0-6887640bdca8'
-                    }
-                }]
+                response.data = {
+                    results: [
+                        {
+                            type: 'HTTP',
+                            domain: 'Swagger Petstore',
+                            title: "POST  /pet",
+                            fragments: ['<mark>Everything</mark>', 'store'],
+                            params: {
+                                type: 'http',
+                                service: 'Swagger Petstore',
+                                path: '/pet',
+                                method: 'post'
+                            }
+                        },
+                        {
+                            type: 'Config',
+                            domain: 'FILE',
+                            title: "file://root/path/to/my/foo/file.json",
+                            fragments: ['<mark>foo</mark> bar'],
+                            params: {
+                                type: 'config',
+                                id: 'b6fea8ac-56c7-4e73-a9c0-6887640bdca8'
+                            }
+                        }],
+                    total: 2
+                }
         }
     }, {tags: {name: "dashboard"}})
 
@@ -247,7 +281,7 @@ export default async function() {
 function getServices() {
     let http = httpServices.map(x => getInfo(x, 'http'))
     let kafka = clusters.map(x => getInfo(x, 'kafka'))
-    let smtp = smtpServers.map(x => getInfo(x, 'smtp'))
+    let smtp = mailServices.map(x => getInfo(x, 'mail'))
     let ldap = ldapServers.map(x => getInfo(x, 'ldap'))
 
     return http.concat(kafka).concat(smtp).concat(ldap)

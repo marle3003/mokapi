@@ -1,4 +1,4 @@
-openapi: 3.1
+openapi: "3.1.0"
 info:
   title: Mokapi's Dashboard API
   version: v1
@@ -63,10 +63,10 @@ paths:
             application/json:
               schema:
                 $ref: 'kafka.yml#/components/schemas/Kafka'
-  /api/services/smtp/{name}:
+  /api/services/mail/{name}:
     get:
-      summary: Information about the smtp server
-      operationId: serviceSmtp
+      summary: Information about the mail servers
+      operationId: serviceMail
       parameters:
         - name: name
           in: path
@@ -79,7 +79,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: 'smtp.yml#/components/schemas/SmtpInfo'
+                $ref: 'mail.yml#/components/schemas/MailInfo'
   /api/services/ldap/{name}:
     get:
       summary: Information about the ldap server
@@ -97,10 +97,79 @@ paths:
             application/json:
               schema:
                 $ref: 'ldap.yml#/components/schemas/LdapInfo'
-  /api/services/smtp/mails/{messageId}:
+  /api/services/mail/{name}/mailboxes:
+    get:
+      summary: Retrieve mailboxes for given mail server
+      operationId: mailboxes
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mail
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './mail.yml#/components/schemas/Mailbox'
+        "404":
+          description: mail not found
+  /api/services/mail/{name}/mailboxes/{mailbox}:
+    get:
+      summary: Retrieve mailboxes for given mail server
+      operationId: mailbox
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: mailbox
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mail
+          content:
+            application/json:
+              schema:
+                $ref: './mail.yml#/components/schemas/MailboxDetails'
+        "404":
+          description: mail not found
+  /api/services/mail/{name}/mailboxes/{mailbox}/messages:
+    get:
+      summary: Retrieve mailboxes for given mail server
+      operationId: smtpMessages
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: mailbox
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mail
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './mail.yml#/components/schemas/SmtpMessageInfo'
+  /api/services/mail/messages/{messageId}:
     get:
       summary: Retrieve the mail with the given messageId
-      operationId: smtpMail
+      operationId: smtpMessage
       parameters:
         - name: messageId
           in: path
@@ -113,9 +182,55 @@ paths:
           content:
             application/json:
               schema:
+                $ref: './mail.yml#/components/schemas/SmtpMessage'
         "404":
           description: mail not found
-  /api/services/smtp/mails/{messageId}/attachments/{name}:
+  /api/services/mail/messages/{messageId}/attachments/{name}:
+    get:
+      summary: Retrieve mail attachment's content
+      operationId: smtpMailAttachment
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          description: name or content-id of the attachment
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mail
+          content:
+            '*/*':
+              schema:
+                type: string
+        "404":
+          description: mail attachment not found
+  /api/services/mail/mails/{messageId}:
+    get:
+      summary: Retrieve the mail with the given messageId
+      operationId: smtpMail
+      deprecated: true
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mail
+          content:
+            application/json:
+              schema:
+                $ref: './mail.yml#/components/schemas/SmtpMessage'
+        "404":
+          description: mail not found
+  /api/services/mail/mails/{messageId}/attachments/{name}:
     get:
       summary: Retrieve mail attachment's content
       operationId: smtpMailAttachment
@@ -135,7 +250,7 @@ paths:
           description: mail
           content:
             '*/*':
-              schema:
+              schema: {}
         "404":
           description: mail attachment not found
   /api/services/kafka/{name}/groups:
@@ -224,7 +339,8 @@ paths:
                   type: string
                 format:
                   type: string
-                schema: {}
+                schema:
+                  type: object
                 contentTypes:
                   type: array
                   items:
@@ -385,7 +501,7 @@ paths:
   /api/configs/{id}/data:
     get:
       summary: returns the config data for given id
-      operationId: configdata
+      operationId: configData
       parameters:
         - name: id
           in: path
@@ -408,7 +524,7 @@ paths:
   /api/faker/tree:
     get:
       summary: returns faker tree
-      operationId: fakertree
+      operationId: fakerTree
       responses:
         "200":
           description: content of config
@@ -420,15 +536,26 @@ paths:
     get:
       summary: search mock data
       operationId: search
+      parameters:
+        - in: query
+          name: queryText
+          schema:
+            type: string
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: index
+          schema:
+            type: integer
       responses:
         "200":
           description: search results
           content:
             'application/json':
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/SearchResult'
+                $ref: '#/components/schemas/SearchResult'
 components:
   schemas:
     FakerTree:
@@ -443,6 +570,15 @@ components:
           items:
             $ref: '#/components/schemas/FakerTree'
     SearchResult:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchItem'
+        total:
+          type: integer
+    SearchItem:
       type: object
       properties:
         type:

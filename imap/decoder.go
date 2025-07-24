@@ -14,10 +14,6 @@ type Decoder struct {
 	err error
 }
 
-func NewDecoder(msg string) *Decoder {
-	return &Decoder{msg: msg}
-}
-
 func (d *Decoder) SP() *Decoder {
 	if d.IsSP() {
 		_ = d.expect(" ")
@@ -134,6 +130,10 @@ func (d *Decoder) String() (string, error) {
 	if d.is("\"") {
 		return d.Quoted()
 	}
+	return d.Read(isAtom), nil
+}
+
+func (d *Decoder) Atom() string {
 	return d.Read(isAtom)
 }
 
@@ -145,7 +145,7 @@ func (d *Decoder) NilString() (*string, error) {
 	return &s, err
 }
 
-func (d *Decoder) Text() (string, error) {
+func (d *Decoder) Text() string {
 	return d.Read(func(r byte) bool {
 		return true
 	})
@@ -157,29 +157,26 @@ func (d *Decoder) Pattern() (string, error) {
 	}
 	return d.Read(func(r byte) bool {
 		return r != ' '
-	})
+	}), nil
 }
 
 func (d *Decoder) Number() (uint32, error) {
-	s, err := d.Read(func(r byte) bool {
+	s := d.Read(func(r byte) bool {
 		return r >= '0' && r <= '9'
 	})
-	if err != nil {
-		return 0, d.returnErr(err)
-	}
 	return parseNum(s)
 }
 
-func (d *Decoder) Read(valid func(r byte) bool) (string, error) {
+func (d *Decoder) Read(valid func(r byte) bool) string {
 	var sb strings.Builder
 	for {
 		b, err := d.next()
 		if err == io.EOF {
-			return sb.String(), nil
+			return sb.String()
 		}
 
 		if !valid(b) {
-			return sb.String(), nil
+			return sb.String()
 		}
 
 		sb.WriteByte(b)
@@ -193,14 +190,11 @@ func (d *Decoder) ReadFlag() (string, error) {
 	if isSystem {
 		_, _ = d.readByte()
 	}
-	flag, err := d.Read(isAtom)
-	if err != nil {
-		return "", d.returnErr(err)
-	}
+	flag = d.Read(isAtom)
 	if isSystem {
 		flag = "\\" + flag
 	}
-	return flag, d.returnErr(err)
+	return flag, nil
 }
 
 func (d *Decoder) EndCmd(tag string) error {
@@ -215,11 +209,8 @@ func (d *Decoder) EndCmd(tag string) error {
 		case "OK":
 			return nil
 		case "NO", "BAD":
-			if text, err := d.SP().Text(); err != nil {
-				return d.returnErr(err)
-			} else {
-				return fmt.Errorf("imap status [%v]: %v", status, text)
-			}
+			text := d.SP().Text()
+			return fmt.Errorf("imap status [%v]: %v", status, text)
 		default:
 			return fmt.Errorf("imap unknown status: %s", status)
 		}
@@ -228,11 +219,9 @@ func (d *Decoder) EndCmd(tag string) error {
 
 func (d *Decoder) Sequence() (IdSet, error) {
 	set := IdSet{}
-	s, err := d.Read(func(r byte) bool { return r == '*' || isAtom(r) })
-	if err != nil {
-		return set, d.returnErr(err)
-	}
+	s := d.Read(func(r byte) bool { return r == '*' || isAtom(r) })
 
+	var err error
 	for _, v := range strings.Split(s, ",") {
 		if i := strings.IndexRune(v, ':'); i >= 0 {
 			r := &Range{}
@@ -285,8 +274,8 @@ func (d *Decoder) DiscardValue() error {
 		})
 		return d.returnErr(err)
 	}
-	_, err := d.Read(isAtom)
-	return d.returnErr(err)
+	_ = d.Read(isAtom)
+	return d.err
 }
 
 func (d *Decoder) returnErr(err error) error {

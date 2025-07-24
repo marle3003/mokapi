@@ -32,15 +32,6 @@ func wrapError(path string, err error) *PathError {
 	return &PathError{Err: err, Path: path}
 }
 
-func wrapErrorPath(path []string, err error) error {
-	n := len(path) - 1
-	// loop reverse
-	for i := range path {
-		err = wrapError(path[n-i], err)
-	}
-	return err
-}
-
 func Errorf(path string, format string, args ...interface{}) *PathError {
 	return &PathError{Err: fmt.Errorf(format, args...), Path: path}
 }

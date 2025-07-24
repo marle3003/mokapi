@@ -46,5 +46,6 @@ func WithLogger(logger common.Logger) Options {
 func WithApp(app *runtime.App) Options {
 	return func(e *Engine) {
 		e.jobCounter = app.Monitor.JobCounter
+		e.sm = app.Events
 	}
 }

@@ -10,7 +10,6 @@ import (
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/runtime"
-	"mokapi/runtime/events"
 	"mokapi/schema/json/schema"
 	"mokapi/try"
 	"testing"
@@ -283,8 +282,6 @@ func TestKafkaServer_Update(t *testing.T) {
 			defer m.Stop()
 
 			tc.fn(t, m)
-
-			events.Reset()
 		})
 	}
 }

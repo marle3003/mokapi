@@ -1,0 +1,19 @@
+meta {
+  name: message
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/services/mail/messages/:messageId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  messageId: 20230223-084925.763-4196@mokapi.io
+}
+
+settings {
+  encodeUrl: true
+}

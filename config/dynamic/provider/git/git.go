@@ -44,9 +44,9 @@ type Provider struct {
 
 func New(config static.GitProvider) *Provider {
 	repoConfigs := config.Repositories
-	for _, url := range config.Urls {
-		if len(url) > 0 {
-			repoConfigs = append(repoConfigs, static.GitRepo{Url: url})
+	for _, u := range config.Urls {
+		if len(u) > 0 {
+			repoConfigs = append(repoConfigs, static.GitRepo{Url: u})
 		}
 	}
 
@@ -159,13 +159,16 @@ func (p *Provider) initRepository(r *repository, ch chan dynamic.ConfigEvent, po
 				return fmt.Errorf("git fetch error %v: %v", r.url, err.Error())
 			}
 			err = r.wt.Checkout(&git.CheckoutOptions{Branch: ref})
-			if err != nil && err != git.NoErrAlreadyUpToDate {
+			if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
 				return fmt.Errorf("git checkout error %v: %v", r.url, err.Error())
 			}
 		}
 	}
 
 	ref, err := r.repo.Head()
+	if err != nil {
+		return fmt.Errorf("unable to get git head: %w", err)
+	}
 	r.hash = ref.Hash()
 
 	chFile := make(chan dynamic.ConfigEvent)

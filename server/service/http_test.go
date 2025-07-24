@@ -27,11 +27,11 @@ func (h *testHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 func TestHttpServer_AddOrUpdate(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, h *HttpServer, port string)
+		test func(t *testing.T, h *HttpServer, port string, sm *events.StoreManager)
 	}{
 		{
 			name: "add service on root",
-			test: func(t *testing.T, s *HttpServer, port string) {
+			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
 				err := s.AddOrUpdate(&HttpService{
 					Url:     mustParseUrl("http://localhost"),
 					Handler: &testHandler{},
@@ -42,7 +42,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 			}},
 		{
 			name: "add service on path foo",
-			test: func(t *testing.T, s *HttpServer, port string) {
+			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
 				err := s.AddOrUpdate(&HttpService{
 					Url:     mustParseUrl("http://localhost/foo"),
 					Handler: &testHandler{},
@@ -60,7 +60,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 					nil,
 					try.HasStatusCode(200))
 
-				list := events.GetEvents(events.NewTraits().WithNamespace("http"))
+				list := sm.GetEvents(events.NewTraits().WithNamespace("http"))
 				require.Len(t, list, 1, "only 404 should be logged")
 				data := list[0].Data.(*openapi.HttpLog)
 				require.Len(t, data.Response.Headers, 1)
@@ -68,7 +68,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 			}},
 		{
 			name: "add service with empty url",
-			test: func(t *testing.T, s *HttpServer, port string) {
+			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
 				err := s.AddOrUpdate(&HttpService{
 					Url:     mustParseUrl(""),
 					Handler: &testHandler{},
@@ -85,7 +85,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 			}},
 		{
 			name: "add service with empty host",
-			test: func(t *testing.T, s *HttpServer, port string) {
+			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
 				err := s.AddOrUpdate(&HttpService{
 					Url:     mustParseUrl("/foo"),
 					Handler: &testHandler{},
@@ -100,7 +100,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 			}},
 		{
 			name: "nil handler",
-			test: func(t *testing.T, s *HttpServer, port string) {
+			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
 				err := s.AddOrUpdate(&HttpService{
 					Url:     mustParseUrl(""),
 					Handler: nil,
@@ -116,7 +116,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 			}},
 		{
 			name: "add service on already used path",
-			test: func(t *testing.T, s *HttpServer, port string) {
+			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
 				err := s.AddOrUpdate(&HttpService{
 					Url:     mustParseUrl(""),
 					Handler: nil,
@@ -133,7 +133,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 			}},
 		{
 			name: "update service",
-			test: func(t *testing.T, s *HttpServer, port string) {
+			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
 				err := s.AddOrUpdate(&HttpService{
 					Url:     mustParseUrl(""),
 					Handler: nil,
@@ -158,15 +158,16 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			events.SetStore(20, events.NewTraits().WithNamespace("http"))
-			defer events.Reset()
-			server := NewHttpServer("0")
+			sm := &events.StoreManager{}
+			sm.SetStore(20, events.NewTraits().WithNamespace("http"))
+
+			server := NewHttpServer("0", sm)
 			s := httptest.NewServer(server)
 			defer s.Close()
 
 			u, _ := url.Parse(s.URL)
 
-			tc.test(t, server, u.Port())
+			tc.test(t, server, u.Port(), sm)
 		})
 
 	}

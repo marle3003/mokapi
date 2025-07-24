@@ -20,6 +20,7 @@ type KafkaStore struct {
 	infos   map[string]*KafkaInfo
 	monitor *monitor.Monitor
 	cfg     *static.Config
+	events  *events.StoreManager
 	m       sync.RWMutex
 }
 
@@ -90,10 +91,10 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*Kafka
 	}
 
 	if !ok {
-		events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
-		events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
+		s.events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
+		s.events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
 
-		ki = NewKafkaInfo(c, store.New(cfg, emitter), s.updateEventStore)
+		ki = NewKafkaInfo(c, store.New(cfg, emitter, s.events), s.updateEventStore)
 		s.infos[cfg.Info.Name] = ki
 	} else {
 		ki.AddConfig(c)
@@ -128,7 +129,7 @@ func (s *KafkaStore) Remove(c *dynamic.Config) {
 		s.m.RUnlock()
 		s.m.Lock()
 		delete(s.infos, name)
-		events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(name))
+		s.events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(name))
 		s.m.Unlock()
 	} else {
 		s.m.RUnlock()
@@ -238,10 +239,10 @@ func getKafkaConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
 	}
 }
 
-func (c *KafkaStore) updateEventStore(k *KafkaInfo) {
-	eventStore, hasStoreConfig := c.cfg.Event.Store[k.Config.Info.Name]
+func (s *KafkaStore) updateEventStore(k *KafkaInfo) {
+	eventStore, hasStoreConfig := s.cfg.Event.Store[k.Config.Info.Name]
 	if !hasStoreConfig {
-		eventStore = c.cfg.Event.Store["default"]
+		eventStore = s.cfg.Event.Store["default"]
 	}
 
 	for topicName, topic := range k.Config.Channels {
@@ -254,10 +255,10 @@ func (c *KafkaStore) updateEventStore(k *KafkaInfo) {
 		if _, ok := k.seenTopics[topicName]; ok {
 			continue
 		}
-		c.monitor.Kafka.Messages.WithLabel(k.Config.Info.Name, topicName)
-		c.monitor.Kafka.LastMessage.WithLabel(k.Config.Info.Name, topicName)
+		s.monitor.Kafka.Messages.WithLabel(k.Config.Info.Name, topicName)
+		s.monitor.Kafka.LastMessage.WithLabel(k.Config.Info.Name, topicName)
 		traits := events.NewTraits().WithNamespace("kafka").WithName(k.Config.Info.Name).With("topic", topicName)
-		events.SetStore(int(eventStore.Size), traits)
+		s.events.SetStore(int(eventStore.Size), traits)
 		k.seenTopics[topicName] = true
 	}
 }

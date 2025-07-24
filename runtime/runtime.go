@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
+	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/version"
 	"sync"
@@ -20,9 +21,11 @@ type App struct {
 	Mail      *MailStore
 
 	Monitor *monitor.Monitor
-	m       sync.Mutex
-	cfg     *static.Config
-	index   bleve.Index
+	Events  *events.StoreManager
+
+	m     sync.Mutex
+	cfg   *static.Config
+	index bleve.Index
 
 	Configs map[string]*dynamic.Config
 }
@@ -31,17 +34,25 @@ func New(cfg *static.Config) *App {
 	m := monitor.New()
 
 	index := newIndex(cfg)
+	em := events.NewStoreManager(index)
+
+	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("http"))
+	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("kafka"))
+	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("ldap"))
+	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("mail"))
+	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("job"))
 
 	app := &App{
 		Version:   version.BuildVersion,
 		BuildTime: version.BuildTime,
 		Monitor:   m,
+		Events:    em,
 		Configs:   map[string]*dynamic.Config{},
-		http:      NewHttpStore(cfg, index),
-		Kafka:     &KafkaStore{monitor: m, cfg: cfg},
-		Mqtt:      &MqttStore{monitor: m, cfg: cfg},
-		Ldap:      &LdapStore{cfg: cfg},
-		Mail:      &MailStore{cfg: cfg},
+		http:      NewHttpStore(cfg, index, em),
+		Kafka:     &KafkaStore{monitor: m, cfg: cfg, events: em},
+		Mqtt:      &MqttStore{monitor: m, cfg: cfg, sm: em},
+		Ldap:      &LdapStore{cfg: cfg, events: em},
+		Mail:      &MailStore{cfg: cfg, sm: em},
 		cfg:       cfg,
 		index:     index,
 	}

@@ -1,122 +1,125 @@
-package events
+package events_test
 
 import (
 	"github.com/stretchr/testify/require"
+	"mokapi/runtime/events"
+	"mokapi/runtime/events/eventstest"
 	"testing"
 )
 
 func TestPush(t *testing.T) {
 	testcase := []struct {
 		name string
-		f    func(t *testing.T)
+		f    func(t *testing.T, sm *events.StoreManager)
 	}{
 		{
 			"no traits",
-			func(t *testing.T) {
-				err := Push(nil, NewTraits())
+			func(t *testing.T, sm *events.StoreManager) {
+				err := sm.Push(nil, events.NewTraits())
 				require.EqualError(t, err, "empty traits not allowed")
 			},
 		},
 		{
 			"no store",
-			func(t *testing.T) {
-				err := Push(nil, NewTraits().WithNamespace("foo"))
+			func(t *testing.T, sm *events.StoreManager) {
+				err := sm.Push(nil, events.NewTraits().WithNamespace("foo"))
 				require.EqualError(t, err, "no store found for namespace=foo")
 			},
 		},
 		{
 			"no store matches",
-			func(t *testing.T) {
-				SetStore(10, NewTraits().WithNamespace("bar"))
-				err := Push(nil, NewTraits().WithNamespace("foo"))
+			func(t *testing.T, sm *events.StoreManager) {
+				sm.SetStore(10, events.NewTraits().WithNamespace("bar"))
+				err := sm.Push(nil, events.NewTraits().WithNamespace("foo"))
 				require.EqualError(t, err, "no store found for namespace=foo")
 			},
 		},
 		{
 			"store matches",
-			func(t *testing.T) {
-				SetStore(10, NewTraits().WithNamespace("foo"))
-				err := Push(nil, NewTraits().WithNamespace("foo"))
+			func(t *testing.T, sm *events.StoreManager) {
+				sm.SetStore(10, events.NewTraits().WithNamespace("foo"))
+				err := sm.Push(nil, events.NewTraits().WithNamespace("foo"))
 				require.NoError(t, err)
 			},
 		},
 		{
 			"store matches",
-			func(t *testing.T) {
-				SetStore(10, NewTraits().WithNamespace("foo"))
-				err := Push(nil, NewTraits().WithNamespace("foo").WithName("bar"))
+			func(t *testing.T, sm *events.StoreManager) {
+				sm.SetStore(10, events.NewTraits().WithNamespace("foo"))
+				err := sm.Push(nil, events.NewTraits().WithNamespace("foo").WithName("bar"))
 				require.NoError(t, err)
-				err = Push(nil, NewTraits().WithNamespace("foo").WithName("foobar"))
+				err = sm.Push(nil, events.NewTraits().WithNamespace("foo").WithName("foobar"))
 				require.NoError(t, err)
-				events := GetEvents(NewTraits().WithNamespace("foo"))
-				require.Len(t, events, 2)
-				events = GetEvents(NewTraits().WithNamespace("foo").WithName("bar"))
-				require.Len(t, events, 1)
+				evts := sm.GetEvents(events.NewTraits().WithNamespace("foo"))
+				require.Len(t, evts, 2)
+				evts = sm.GetEvents(events.NewTraits().WithNamespace("foo").WithName("bar"))
+				require.Len(t, evts, 1)
 			},
 		},
 		{
 			"store matches traits",
-			func(t *testing.T) {
-				SetStore(1, NewTraits().WithNamespace("foo"))
-				SetStore(1, NewTraits().WithNamespace("foo").WithName("bar"))
-				err := Push(nil, NewTraits().WithNamespace("foo").WithName("bar"))
+			func(t *testing.T, sm *events.StoreManager) {
+				sm.SetStore(1, events.NewTraits().WithNamespace("foo"))
+				sm.SetStore(1, events.NewTraits().WithNamespace("foo").WithName("bar"))
+				err := sm.Push(nil, events.NewTraits().WithNamespace("foo").WithName("bar"))
 				require.NoError(t, err)
-				err = Push(nil, NewTraits().WithNamespace("foo").WithName("foobar"))
+				err = sm.Push(nil, events.NewTraits().WithNamespace("foo").WithName("foobar"))
 				require.NoError(t, err)
-				events := GetEvents(NewTraits().WithNamespace("foo"))
-				require.Len(t, events, 2)
-				events = GetEvents(NewTraits().WithNamespace("foo").WithName("bar"))
-				require.Len(t, events, 1)
+				evts := sm.GetEvents(events.NewTraits().WithNamespace("foo"))
+				require.Len(t, evts, 2)
+				evts = sm.GetEvents(events.NewTraits().WithNamespace("foo").WithName("bar"))
+				require.Len(t, evts, 1)
 			},
 		},
 		{
 			"get all events",
-			func(t *testing.T) {
-				SetStore(10, NewTraits().WithNamespace("foo"))
-				err := Push(nil, NewTraits().WithNamespace("foo"))
+			func(t *testing.T, sm *events.StoreManager) {
+				sm.SetStore(10, events.NewTraits().WithNamespace("foo"))
+				err := sm.Push(nil, events.NewTraits().WithNamespace("foo"))
 				require.NoError(t, err)
 
-				events := GetEvents(NewTraits())
-				require.Len(t, events, 1)
+				evts := sm.GetEvents(events.NewTraits())
+				require.Len(t, evts, 1)
 			},
 		},
 		{
 			"get events by namespace",
-			func(t *testing.T) {
-				SetStore(10, NewTraits().WithNamespace("foo"))
-				err := Push(nil, NewTraits().WithNamespace("foo"))
+			func(t *testing.T, sm *events.StoreManager) {
+				sm.SetStore(10, events.NewTraits().WithNamespace("foo"))
+				err := sm.Push(nil, events.NewTraits().WithNamespace("foo"))
 				require.NoError(t, err)
 
-				events := GetEvents(NewTraits().WithNamespace("foo"))
-				require.Len(t, events, 1)
+				evts := sm.GetEvents(events.NewTraits().WithNamespace("foo"))
+				require.Len(t, evts, 1)
 			},
 		},
 		{
 			"reset store with traits",
-			func(t *testing.T) {
-				SetStore(10, NewTraits().WithNamespace("foo"))
-				SetStore(10, NewTraits().WithNamespace("bar"))
-				SetStore(10, NewTraits().WithNamespace("foo").WithName("name"))
-				ResetStores(NewTraits().WithNamespace("foo"))
+			func(t *testing.T, sm *events.StoreManager) {
+				sm.SetStore(10, events.NewTraits().WithNamespace("foo"))
+				sm.SetStore(10, events.NewTraits().WithNamespace("bar"))
+				sm.SetStore(10, events.NewTraits().WithNamespace("foo").WithName("name"))
+				sm.ResetStores(events.NewTraits().WithNamespace("foo"))
 
-				require.Len(t, stores, 1)
+				require.Len(t, sm.GetStores(events.NewTraits().WithNamespace("foo")), 0)
+				require.Len(t, sm.GetStores(events.NewTraits().WithNamespace("bar")), 1)
 			},
 		},
 		{
 			"Clean up, ensure size and oldest is removed",
-			func(t *testing.T) {
-				SetStore(2, NewTraits().WithNamespace("foo"))
-				err := Push(1, NewTraits().WithNamespace("foo"))
+			func(t *testing.T, sm *events.StoreManager) {
+				sm.SetStore(2, events.NewTraits().WithNamespace("foo"))
+				err := sm.Push(&eventstest.Event{Name: "1"}, events.NewTraits().WithNamespace("foo"))
 				require.NoError(t, err)
-				err = Push(2, NewTraits().WithNamespace("foo"))
+				err = sm.Push(&eventstest.Event{Name: "2"}, events.NewTraits().WithNamespace("foo"))
 				require.NoError(t, err)
-				err = Push(3, NewTraits().WithNamespace("foo"))
+				err = sm.Push(&eventstest.Event{Name: "3"}, events.NewTraits().WithNamespace("foo"))
 				require.NoError(t, err)
 
-				events := GetEvents(NewTraits().WithNamespace("foo"))
-				require.Len(t, events, 2)
-				require.Equal(t, 3, events[0].Data)
-				require.Equal(t, 2, events[1].Data)
+				evts := sm.GetEvents(events.NewTraits().WithNamespace("foo"))
+				require.Len(t, evts, 2)
+				require.Equal(t, "3", evts[0].Data.Title())
+				require.Equal(t, "2", evts[1].Data.Title())
 			},
 		},
 	}
@@ -124,8 +127,7 @@ func TestPush(t *testing.T) {
 	for _, tc := range testcase {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			defer Reset()
-			tc.f(t)
+			tc.f(t, &events.StoreManager{})
 		})
 	}
 }

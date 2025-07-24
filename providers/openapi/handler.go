@@ -19,6 +19,7 @@ import (
 type operationHandler struct {
 	config *Config
 	next   http.Handler
+	eh     events.Handler
 }
 
 type responseHandler struct {
@@ -26,13 +27,14 @@ type responseHandler struct {
 	eventEmitter common.EventEmitter
 }
 
-func NewHandler(config *Config, eventEmitter common.EventEmitter) http.Handler {
+func NewHandler(config *Config, eventEmitter common.EventEmitter, eh events.Handler) http.Handler {
 	return &operationHandler{
 		config: config,
 		next: &responseHandler{
 			config:       config,
 			eventEmitter: eventEmitter,
 		},
+		eh: eh,
 	}
 }
 
@@ -273,7 +275,12 @@ endpointLoop:
 			m.RequestCounter.WithLabel(h.config.Info.Name, path).Add(1)
 		}
 
-		if ctx, err := NewLogEventContext(r, op.Deprecated, events.NewTraits().WithName(h.config.Info.Name).With("path", path).With("method", r.Method)); err != nil {
+		if ctx, err := NewLogEventContext(
+			r,
+			op.Deprecated,
+			h.eh,
+			events.NewTraits().WithName(h.config.Info.Name).With("path", path).With("method", r.Method),
+		); err != nil {
 			log.Errorf("unable to log http event: %v", err)
 		} else {
 			r = r.WithContext(ctx)
@@ -283,7 +290,12 @@ endpointLoop:
 		return
 	}
 
-	if ctx, err := NewLogEventContext(r, false, events.NewTraits().WithName(h.config.Info.Name).With("path", r.URL.Path).With("method", r.Method)); err != nil {
+	if ctx, err := NewLogEventContext(
+		r,
+		false,
+		h.eh,
+		events.NewTraits().WithName(h.config.Info.Name).With("path", r.URL.Path).With("method", r.Method),
+	); err != nil {
 		log.Errorf("unable to log http event: %v", err)
 	} else {
 		r = r.WithContext(ctx)

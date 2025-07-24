@@ -67,14 +67,6 @@ func (s *StructuralError) wrap(field string, offset int64, d *json.Decoder) *Str
 	return s
 }
 
-func NewSemanticError(err error, field string) *SemanticError {
-	var semantic *SemanticError
-	if errors.As(err, &semantic) {
-		return semantic.wrap(field)
-	}
-	return &SemanticError{Message: err.Error(), Fields: []string{field}}
-}
-
 func (s *SemanticError) wrap(field string) *SemanticError {
 	s.Fields = append([]string{field}, s.Fields...)
 	return s

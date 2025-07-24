@@ -16,19 +16,6 @@ func NewChannel(opts ...ChannelOptions) *asyncApi.Channel {
 
 type OperationOptions func(o *asyncApi.Operation)
 
-func WithSubscribeAndPublish(opts ...OperationOptions) ChannelOptions {
-	return func(c *asyncApi.Channel) {
-		c.Subscribe = &asyncApi.Operation{}
-		for _, opt := range opts {
-			opt(c.Subscribe)
-		}
-		c.Publish = &asyncApi.Operation{}
-		for _, opt := range opts {
-			opt(c.Publish)
-		}
-	}
-}
-
 func WithSubscribe(opts ...OperationOptions) ChannelOptions {
 	return func(c *asyncApi.Channel) {
 		c.Subscribe = &asyncApi.Operation{}
@@ -63,12 +50,6 @@ func WithOperationInfo(id, summary, description string) OperationOptions {
 		o.OperationId = id
 		o.Summary = summary
 		o.Description = description
-	}
-}
-
-func WithOperationBinding(b asyncApi.KafkaOperation) OperationOptions {
-	return func(o *asyncApi.Operation) {
-		o.Bindings.Kafka = b
 	}
 }
 

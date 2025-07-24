@@ -7,6 +7,7 @@ import (
 	"mokapi/engine/common"
 	"mokapi/js"
 	"mokapi/js/jstest"
+	"mokapi/runtime"
 	"path"
 )
 
@@ -21,6 +22,7 @@ func NewEngine(opts ...engine.Options) *engine.Engine {
 			return loader.Load(file, host)
 		})),
 		engine.WithLogger(&Logger{}),
+		engine.WithApp(runtime.New(&static.Config{})),
 	}, opts...)
 	return engine.NewEngine(opts...)
 }

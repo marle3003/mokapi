@@ -9,8 +9,8 @@ import (
 )
 
 var (
-	BuildVersion string = ""
-	BuildTime    string = ""
+	BuildVersion = ""
+	BuildTime    = ""
 )
 
 type Version struct {

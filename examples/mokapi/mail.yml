@@ -1,0 +1,160 @@
+components:
+  schemas:
+    MailInfo:
+      allOf:
+        - $ref: 'common.yml#/components/schemas/Service'
+        - type: object
+          properties:
+            server:
+              type: string
+            mailboxes:
+              type: array
+              items:
+                $ref: '#/components/schemas/Mailbox'
+            rules:
+              type: array
+              items:
+                $ref: '#/components/schemas/SmtpRule'
+            settings:
+              type: object
+              properties:
+                maxRecipients:
+                  type: integer
+                autoCreateMailbox:
+                  type: boolean
+    Mailbox:
+      type: object
+      properties:
+        name:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        description:
+          type: string
+        numMessages:
+          type: integer
+    MailboxDetails:
+      $ref: '#/components/schemas/Mailbox'
+      type: object
+      properties:
+        name:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        description:
+          type: string
+        numMessages:
+          type: integer
+    SmtpRule:
+      type: object
+      properties:
+        sender:
+          type: string
+        recipient:
+          type: string
+        subject:
+          type: string
+        body:
+          type: string
+        action:
+          type: string
+          enum: [allow, deny]
+    SmtpMessageInfo:
+      type: object
+      properties:
+        messageId:
+          type: string
+        subject:
+          type: string
+        from:
+          type: array
+          items:
+            $ref: '#/components/schemas/SmtpAddress'
+        to:
+          type: array
+          items:
+            $ref: '#/components/schemas/SmtpAddress'
+        date:
+          type: string
+          format: datetime
+      additionalProperties: false
+    SmtpMessage:
+      type: object
+      properties:
+        server:
+          type: string
+        sender:
+          anyOf:
+            - type: "null"
+            - $ref: '#/components/schemas/SmtpAddress'
+        from:
+          type: array
+          items:
+            $ref: '#/components/schemas/SmtpAddress'
+        to:
+          type: array
+          items:
+            $ref: '#/components/schemas/SmtpAddress'
+        replyTo:
+          type: array
+          items:
+            $ref: '#/components/schemas/SmtpAddress'
+        cc:
+          type: array
+          items:
+            $ref: '#/components/schemas/SmtpAddress'
+        bcc:
+          type: array
+          items:
+            $ref: '#/components/schemas/SmtpAddress'
+        messageId:
+          type: string
+        inReplyTo:
+          type: string
+        date:
+          type: string
+          format: datetime
+        subject:
+          type: string
+        contentType:
+          type: string
+        contentTransferEncoding:
+          type: string
+        body:
+          type: string
+        size:
+          type: integer
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SmtpAttachment'
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+      additionalProperties: false
+    SmtpAddress:
+      type: object
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+    SmtpAttachment:
+      type: object
+      properties:
+        name:
+          type: string
+        contentType:
+          type: string
+        contentId:
+          type: string
+        disposition:
+          type: string
+        size:
+          type: integer
+      additionalProperties: false

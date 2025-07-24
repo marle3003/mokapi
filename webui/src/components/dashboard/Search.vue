@@ -1,25 +1,32 @@
 <script setup lang="ts">
 import router from '@/router';
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
-const queryText = ref<string>();
-const results = ref();
+const route = useRoute()
+const queryText = ref<string>(route.query.q?.toString() || '');
+const result = ref<SearchResult>();
+
+let timeout: number;
 watch(queryText, async (q) => {
-  const res = await fetch(`/api/search/query?queryText=${q}`)
-    .then(async (res) => {
-        if (!res.ok) {
-            let text = await res.text()
-            throw new Error(res.statusText + ': ' + text)
-        }
-        return res.json()
+  // debounced
+  clearTimeout(timeout)
+  timeout = setTimeout(async () => {
+    router.replace({
+      query: {
+        ...route.query,
+        q: q || undefined  // remove "q" if empty
+      }
     })
-    .then(res => {
-      return res
-    })
-    .catch((err) => {
-        console.error(err)
-    })
-    results.value = res
+    await query(q as string)
+  }, 300)
+})
+
+const pageNumber = computed(() => {
+  if (!result.value) {
+    return 0
+  }
+  return Math.ceil(result.value?.total / 10)
 })
 function navigateToSearchResult(result: any) {
   switch (result.type.toLowerCase()) {
@@ -48,6 +55,24 @@ function title(result: any) {
   }
   return result.title
 }
+
+async function query(q: string) {
+  const res = await fetch(`/api/search/query?queryText=${q}`)
+    .then(async (res) => {
+        if (!res.ok) {
+            let text = await res.text()
+            throw new Error(res.statusText + ': ' + text)
+        }
+        return res.json()
+    })
+    .then(res => {
+      return res
+    })
+    .catch((err) => {
+        console.error(err)
+    })
+    result.value = res
+}
 </script>
 
 <template>
@@ -73,14 +98,14 @@ function title(result: any) {
           </div>
         </section>
       </div>
-      <div class="card-group" v-if="results">
+      <div class="card-group" v-if="result?.results">
         <div class="card">
           <div class="card-body">
             <div class="container">
                 <div class="row justify-content-md-center">
                   <div class="col-8 col-auto">
                     <div class="list-group search-results">
-                      <a v-for="result of results" class="list-group-item" @click="navigateToSearchResult(result)">
+                      <a v-for="result of result.results" class="list-group-item" @click="navigateToSearchResult(result)">
                         <div class="mb-1 config">
                           <span class="badge bg-secondary api">{{ result.type }}</span>
                           <span class="ps-1">{{ result.domain }}</span>
@@ -89,6 +114,27 @@ function title(result: any) {
                         <p class="fragments mb-1" style="font-size: 14px" v-html="result.fragments?.join(' ... ')"></p>
                       </a>
                     </div>
+                  </div>
+                </div>
+                <div class="row justify-content-md-center" v-if="pageNumber > 1">
+                  <div class="col-8 col-auto">
+                    <nav aria-label="Page navigation">
+                      <ul class="pagination justify-content-center">
+                        <li class="page-item">
+                          <a class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                          </a>
+                        </li>
+                        <li class="page-item"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                          <a class="page-link" href="#" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                          </a>
+                        </li>
+                      </ul>
+                    </nav>
                   </div>
                 </div>
             </div>
@@ -143,5 +189,8 @@ function title(result: any) {
   font-weight: bold;
   background-color: unset;
   padding: 0;
+}
+.pagination .page-link {
+  color: var(--link-color)
 }
 </style>

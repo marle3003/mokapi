@@ -16,7 +16,6 @@ const (
 	NotAuthenticatedState ConnState = iota
 	AuthenticatedState
 	SelectedState
-	LogoutState
 )
 
 type Handler interface {

@@ -754,7 +754,9 @@ func TestFetch_Response(t *testing.T) {
 			}()
 
 			c := imap.NewClient(fmt.Sprintf("localhost:%v", p))
-			defer c.Close()
+			defer func() {
+				_ = c.Close()
+			}()
 
 			_, err := c.Dial()
 			require.NoError(t, err)
@@ -773,13 +775,6 @@ func num(i int) imap.IdSet {
 	s := &imap.Range{}
 	s.Start.Value = uint32(i)
 	s.End.Value = uint32(i)
-	return imap.IdSet{Ids: []imap.Set{s}}
-}
-
-func seq(start, end int) imap.IdSet {
-	s := &imap.Range{}
-	s.Start.Value = uint32(start)
-	s.End.Value = uint32(end)
 	return imap.IdSet{Ids: []imap.Set{s}}
 }
 

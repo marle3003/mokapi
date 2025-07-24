@@ -33,6 +33,7 @@ type scriptHost struct {
 
 	eventLogger  func(level, message string)
 	cleanupFuncs []func()
+	sm           *events.StoreManager
 
 	m sync.Mutex
 }
@@ -44,6 +45,7 @@ func newScriptHost(file *dynamic.Config, engine *Engine) *scriptHost {
 		events: make(map[string][]*eventHandler),
 		file:   file,
 		engine: engine,
+		sm:     engine.sm,
 	}
 
 	return sh
@@ -135,8 +137,8 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 	}
 
 	t := events.NewTraits().WithNamespace("job").WithName(tags["name"])
-	if len(events.GetStores(t)) == 1 {
-		events.SetStore(int(sh.engine.cfgEvent.Store["Default"].Size), t)
+	if len(sh.sm.GetStores(t)) == 1 {
+		sh.sm.SetStore(int(sh.engine.cfgEvent.Store["Default"].Size), t)
 	}
 	t = t.With("jobId", fmt.Sprintf("%d", id))
 	counter := 1
@@ -171,7 +173,7 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 
 			sh.endEventHandler()
 
-			err := events.Push(exec, t)
+			err := sh.sm.Push(&exec, t)
 			if err != nil {
 				log.Errorf("failed to push event: %v", err)
 			}

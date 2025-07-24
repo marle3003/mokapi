@@ -29,6 +29,7 @@ var (
 type HttpServer struct {
 	server   *http.Server
 	handlers map[string]map[string]*HttpService // map[host][path]Handler
+	eh       events.Handler
 	m        sync.RWMutex
 	isTls    bool
 }
@@ -40,18 +41,19 @@ type HttpService struct {
 	IsInternal bool
 }
 
-func NewHttpServer(port string) *HttpServer {
+func NewHttpServer(port string, eh events.Handler) *HttpServer {
 	s := &HttpServer{
 		server:   &http.Server{Addr: fmt.Sprintf(":%v", port)},
 		handlers: make(map[string]map[string]*HttpService),
+		eh:       eh,
 		isTls:    false,
 	}
 	s.server.Handler = s
 	return s
 }
 
-func NewHttpServerTls(port string, store *cert.Store) *HttpServer {
-	s := NewHttpServer(port)
+func NewHttpServerTls(port string, store *cert.Store, eh events.Handler) *HttpServer {
+	s := NewHttpServer(port, eh)
 	s.server.TLSConfig = &tls.Config{
 		GetCertificate: store.GetCertificate,
 	}
@@ -171,7 +173,7 @@ func (s *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			err = noServiceFound
 		}
-		serveError(w, r, err)
+		serveError(w, r, err, s.eh)
 	}
 }
 
@@ -223,7 +225,7 @@ func matchPath(paths map[string]*HttpService, r *http.Request) (matchedService *
 	return
 }
 
-func serveError(w http.ResponseWriter, r *http.Request, err error) {
+func serveError(w http.ResponseWriter, r *http.Request, err error, eh events.Handler) {
 	msg := fmt.Sprintf("%s %v", err.Error(), lib.GetUrl(r))
 	entry := log.WithFields(log.Fields{"url": r.URL, "method": r.Method, "status": http.StatusNotFound})
 	entry.Info(msg)
@@ -244,7 +246,7 @@ func serveError(w http.ResponseWriter, r *http.Request, err error) {
 		},
 	}
 
-	err = events.Push(l, events.NewTraits().WithNamespace("http"))
+	err = eh.Push(l, events.NewTraits().WithNamespace("http"))
 	if err != nil {
 		log.Errorf("unable to log event: %v", err)
 	}

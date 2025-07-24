@@ -31,11 +31,11 @@
           "Quick Start": "guides/ldap/quick-start.md"
         }
       },
-      "SMTP": {
-        "index": "guides/smtp/overview.md",
+      "Email": {
+        "index": "guides/mail/overview.md",
         "items": {
-          "Quick Start": "guides/smtp/quick-start.md",
-          "Rules": "guides/smtp/rules.md"
+          "Quick Start": "guides/mail/quick-start.md",
+          "Rules": "guides/mail/rules.md"
         }
       }
     }

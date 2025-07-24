@@ -7,10 +7,8 @@ import (
 	"fmt"
 	"github.com/dop251/goja"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"mokapi/engine/common"
 	"mokapi/smtp"
-	"net"
 	"net/http"
 	"net/mail"
 	netsmtp "net/smtp"
@@ -58,7 +56,7 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 		host: host,
 	}
 	obj := module.Get("exports").(*goja.Object)
-	obj.Set("send", f.Send)
+	_ = obj.Set("send", f.Send)
 }
 
 func (m *Module) Send(addr string, msg *Mail, auth *Auth) {
@@ -175,7 +173,7 @@ func (m *Module) writeAttachments(w *textproto.Writer, msg *Mail) error {
 	if len(msg.Encoding) > 0 {
 		_ = w.PrintfLine("Content-Transfer-Encoding: %s", msg.Encoding)
 	}
-	w.W.WriteString(fmt.Sprintf("\n%s\n", msg.Body))
+	_, _ = w.W.WriteString(fmt.Sprintf("\n%s\n", msg.Body))
 
 	for _, attach := range msg.Attachments {
 		content := []byte(attach.Data)
@@ -212,7 +210,7 @@ func (m *Module) writeAttachments(w *textproto.Writer, msg *Mail) error {
 		if err != nil {
 			return err
 		}
-		w.W.WriteRune('\n')
+		_, _ = w.W.WriteRune('\n')
 	}
 
 	_ = w.PrintfLine("--%v--", boundary)
@@ -276,25 +274,4 @@ func toList(i interface{}) []interface{} {
 		}
 		return nil
 	}
-}
-
-func parseAddr(addr string) (string, error) {
-	u, err := url.Parse(addr)
-	host := addr
-	if err == nil && u.Scheme != "" {
-		host = u.Host
-	}
-	h, port, err := net.SplitHostPort(host)
-	if err != nil {
-		if errors.Is(err, &net.AddrError{}) {
-
-		}
-		return "", fmt.Errorf("unable to parse host '%v': %w", host, err)
-	}
-	if port == "" {
-		port = "25"
-	}
-	host = fmt.Sprintf("%v:%v", h, port)
-
-	return "", nil
 }

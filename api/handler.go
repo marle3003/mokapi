@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -26,13 +27,13 @@ type handler struct {
 }
 
 type info struct {
-	Version        string   `json:"version"`
-	BuildTime      string   `json:"buildTime"`
-	ActiveServices []string `json:"activeServices,omitempty"`
-	Search         search   `json:"search"`
+	Version        string     `json:"version"`
+	BuildTime      string     `json:"buildTime"`
+	ActiveServices []string   `json:"activeServices,omitempty"`
+	Search         searchInfo `json:"search"`
 }
 
-type search struct {
+type searchInfo struct {
 	Enabled bool `json:"enabled"`
 }
 
@@ -41,7 +42,7 @@ type serviceType string
 var (
 	ServiceHttp  serviceType = "http"
 	ServiceKafka serviceType = "kafka"
-	ServiceSmtp  serviceType = "smtp"
+	ServiceMail  serviceType = "mail"
 	ServiceLdap  serviceType = "ldap"
 )
 
@@ -115,8 +116,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getHttpService(w, r, h.app.Monitor)
 	case strings.HasPrefix(p, "/api/services/kafka/"):
 		h.getKafkaService(w, r)
-	case strings.HasPrefix(p, "/api/services/smtp/"):
-		h.handleSmtpService(w, r)
+	case strings.HasPrefix(p, "/api/services/mail/"):
+		h.handleMailService(w, r)
 	case strings.HasPrefix(p, "/api/services/ldap/"):
 		h.handleLdapService(w, r)
 	case p == "/api/dashboard":
@@ -197,7 +198,7 @@ func writeError(w http.ResponseWriter, err error, status int) {
 func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	i := info{Version: h.app.Version, BuildTime: h.app.BuildTime, Search: search{Enabled: h.config.Search.Enabled}}
+	i := info{Version: h.app.Version, BuildTime: h.app.BuildTime, Search: searchInfo{Enabled: h.config.Search.Enabled}}
 	if len(h.app.ListHttp()) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "http")
 	}
@@ -205,7 +206,7 @@ func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 		i.ActiveServices = append(i.ActiveServices, "kafka")
 	}
 	if len(h.app.Mail.List()) > 0 {
-		i.ActiveServices = append(i.ActiveServices, "smtp")
+		i.ActiveServices = append(i.ActiveServices, "mail")
 	}
 	if len(h.app.Ldap.List()) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "ldap")
@@ -256,4 +257,24 @@ func getServiceName(a interface{}) string {
 		return v.Name
 	}
 	return ""
+}
+
+func getPageInfo(r *http.Request) (index int, limit int, err error) {
+	limit = 10
+
+	sIndex := getQueryParamInsensitive(r.URL.Query(), searchIndex)
+	if sIndex != "" {
+		index, err = strconv.Atoi(sIndex)
+		if err != nil {
+			err = fmt.Errorf("invalid index value: %s", err)
+		}
+	}
+	sLimit := getQueryParamInsensitive(r.URL.Query(), searchLimit)
+	if sLimit != "" {
+		limit, err = strconv.Atoi(sLimit)
+		if err != nil {
+			err = fmt.Errorf("invalid limit value: %s", err)
+		}
+	}
+	return
 }

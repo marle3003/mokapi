@@ -9,6 +9,7 @@ const { format } = usePrettyDates()
 const props = defineProps<{
     configs: Config[] | ConfigRef[] | undefined,
     title?: string,
+    hideTitle?: boolean
 }>()
 
 const route = useRoute()
@@ -44,9 +45,9 @@ function showConfig(config: Config | ConfigRef){
 </script>
 
 <template>
-  <section class="card" aria-labelledby="configs">
+  <section class="card configs" aria-labelledby="configs">
       <div class="card-body">
-          <div id="configs" class="card-title text-center">{{ title }}</div>
+          <div v-if="!hideTitle" id="configs" class="card-title text-center">{{ title }}</div>
           <table class="table dataTable selectable" style="table-layout: fixed;">
             <caption class="visually-hidden">{{ title }}</caption>
               <thead>

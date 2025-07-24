@@ -25,16 +25,16 @@ var (
 	}
 
 	//go:embed schema.yaml
-	validation_schema_raw []byte
-	validation_schema     *jsonSchema.Schema
+	validationSchemaRaw []byte
+	validationSchema    *jsonSchema.Schema
 )
 
 func init() {
-	err := yaml.Unmarshal(validation_schema_raw, &validation_schema)
+	err := yaml.Unmarshal(validationSchemaRaw, &validationSchema)
 	if err != nil {
 		panic(err)
 	}
-	err = validation_schema.Parse(&dynamic.Config{Data: validation_schema}, nil)
+	err = validationSchema.Parse(&dynamic.Config{Data: validationSchema}, nil)
 	if err != nil {
 		panic(err)
 	}

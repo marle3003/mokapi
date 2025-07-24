@@ -3,42 +3,46 @@ package runtime
 import (
 	"fmt"
 	"mokapi/providers/openapi"
+	"mokapi/runtime/search"
 	"strings"
 )
 
 type HttpConfig struct {
-	Discriminator string
-	Name          string
-	Version       string
-	Description   string
+	Type          string `json:"type"`
+	Discriminator string `json:"discriminator"`
+	Api           string `json:"api"`
+	Version       string `json:"version"`
+	Description   string `json:"description"`
 }
 
 type HttpPath struct {
-	Discriminator string
-	Name          string
-	Path          string
-	Summary       string
-	Description   string
-	Parameters    []HttpParameter
+	Type          string          `json:"type"`
+	Discriminator string          `json:"discriminator"`
+	Api           string          `json:"api"`
+	Path          string          `json:"path"`
+	Summary       string          `json:"summary"`
+	Description   string          `json:"description"`
+	Parameters    []HttpParameter `json:"parameters"`
 }
 
 type HttpParameter struct {
-	Name        string
-	Description string
-	Location    string
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Location    string `json:"location"`
 }
 
 type HttpOperation struct {
-	Discriminator string
-	Name          string
-	Path          string
-	Method        string
-	Summary       string
-	Description   string
-	Tags          []string
-	Parameters    []HttpParameter
-	RequestBody   string
-	Responses     string
+	Type          string          `json:"type"`
+	Discriminator string          `json:"discriminator"`
+	Api           string          `json:"api"`
+	Path          string          `json:"path"`
+	Method        string          `json:"method"`
+	Summary       string          `json:"summary"`
+	Description   string          `json:"description"`
+	Tags          []string        `json:"tags"`
+	Parameters    []HttpParameter `json:"parameters"`
+	RequestBody   string          `json:"request_body"`
+	Responses     string          `json:"responses"`
 }
 
 func (s *HttpStore) addToIndex(cfg *openapi.Config) {
@@ -47,8 +51,9 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 	}
 
 	add(s.index, cfg.Info.Name, HttpConfig{
+		Type:          "http",
 		Discriminator: "http",
-		Name:          cfg.Info.Name,
+		Api:           cfg.Info.Name,
 		Version:       cfg.Info.Version,
 		Description:   cfg.Info.Description,
 	})
@@ -58,8 +63,9 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 			continue
 		}
 		pathData := HttpPath{
+			Type:          "http",
 			Discriminator: "http_path",
-			Name:          cfg.Info.Name,
+			Api:           cfg.Info.Name,
 			Path:          path,
 			Summary:       p.Summary,
 			Description:   p.Description,
@@ -84,8 +90,9 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 			id := fmt.Sprintf("%s_%s_%s", cfg.Info.Name, path, method)
 
 			opData := HttpOperation{
+				Type:          "http",
 				Discriminator: "http_operation",
-				Name:          cfg.Info.Name,
+				Api:           cfg.Info.Name,
 				Path:          path,
 				Method:        method,
 				Summary:       op.Summary,
@@ -106,15 +113,14 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 	}
 }
 
-func getHttpSearchResult(fields map[string]string, discriminator []string) (*SearchResult, error) {
-	result := &SearchResult{
+func getHttpSearchResult(fields map[string]string, discriminator []string) (search.ResultItem, error) {
+	result := search.ResultItem{
 		Type:   "HTTP",
-		Domain: fields["Name"],
+		Domain: fields["api"],
 	}
 
 	if len(discriminator) == 1 {
-		result.Title = fields["Name"]
-		result.Domain = result.Title
+		result.Title = result.Domain
 		result.Params = map[string]string{
 			"type":    strings.ToLower(result.Type),
 			"service": result.Title,
@@ -124,22 +130,22 @@ func getHttpSearchResult(fields map[string]string, discriminator []string) (*Sea
 
 	switch discriminator[1] {
 	case "path":
-		result.Title = fields["Path"]
+		result.Title = fields["path"]
 		result.Params = map[string]string{
 			"type":    strings.ToLower(result.Type),
-			"service": fields["Name"],
-			"path":    fields["Path"],
+			"service": result.Domain,
+			"path":    fields["path"],
 		}
 	case "operation":
-		result.Title = fmt.Sprintf("%s %s", fields["Method"], fields["Path"])
+		result.Title = fmt.Sprintf("%s %s", fields["method"], fields["path"])
 		result.Params = map[string]string{
 			"type":    strings.ToLower(result.Type),
-			"service": fields["Name"],
-			"path":    fields["Path"],
-			"method":  strings.ToLower(fields["Method"]),
+			"service": result.Domain,
+			"path":    fields["path"],
+			"method":  strings.ToLower(fields["method"]),
 		}
 	default:
-		return nil, fmt.Errorf("unsupported search result: %s", strings.Join(discriminator, "_"))
+		return result, fmt.Errorf("unsupported search result: %s", strings.Join(discriminator, "_"))
 	}
 	return result, nil
 }

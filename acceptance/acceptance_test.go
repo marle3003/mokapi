@@ -4,7 +4,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"mokapi/config/static"
-	"mokapi/runtime/events"
 	"testing"
 	"time"
 )
@@ -23,11 +22,6 @@ type BaseSuite struct {
 
 func (suite *BaseSuite) initCmd(cfg *static.Config) {
 	//logrus.SetOutput(io.Discard)
-
-	events.SetStore(20, events.NewTraits().WithNamespace("http"))
-	events.SetStore(20, events.NewTraits().WithNamespace("kafka"))
-	events.SetStore(20, events.NewTraits().WithNamespace("smtp"))
-	events.SetStore(20, events.NewTraits().WithNamespace("ldap"))
 
 	suite.cfg = cfg
 	cmd, err := Start(cfg)

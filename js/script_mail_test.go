@@ -3,11 +3,12 @@ package js_test
 import (
 	"fmt"
 	r "github.com/stretchr/testify/require"
-	"mokapi/config/dynamic/mail"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/jstest"
+	"mokapi/providers/mail"
+	"mokapi/runtime/events/eventstest"
 	"mokapi/smtp"
 	"mokapi/try"
 	"testing"
@@ -31,7 +32,7 @@ func Test_Mail(t *testing.T) {
 				r.Equal(t, smtp.Address{Address: "bob@mokapi.io"}, v.To[0])
 				r.Equal(t, "A test mail", v.Subject)
 				r.Equal(t, "Hello Bob", v.Body)
-				r.True(t, v.Time.After(time.Now().Add(-time.Minute*1)), "send date should be in the last minute")
+				r.True(t, v.Date.After(time.Now().Add(-time.Minute*1)), "send date should be in the last minute")
 			},
 		},
 		{
@@ -44,7 +45,7 @@ func Test_Mail(t *testing.T) {
 				r.Equal(t, smtp.Address{Address: "bob@mokapi.io"}, v.To[0])
 				r.Equal(t, "A test mail", v.Subject)
 				r.Equal(t, "Hello Bob", v.Body)
-				r.True(t, v.Time.After(time.Now().Add(-time.Minute*1)), "send date should be in the last minute")
+				r.True(t, v.Date.After(time.Now().Add(-time.Minute*1)), "send date should be in the last minute")
 			},
 		},
 		{
@@ -57,7 +58,7 @@ func Test_Mail(t *testing.T) {
 				r.Equal(t, smtp.Address{Address: "bob@mokapi.io"}, v.To[0])
 				r.Equal(t, "A test mail", v.Subject)
 				r.Equal(t, "Hello Bob", v.Body)
-				r.True(t, v.Time.After(time.Now().Add(-time.Minute*1)), "send date should be in the last minute")
+				r.True(t, v.Date.After(time.Now().Add(-time.Minute*1)), "send date should be in the last minute")
 			},
 		},
 		{
@@ -140,7 +141,7 @@ func Test_Mail(t *testing.T) {
 				r.Len(t, v.Attachments, 1)
 				r.Equal(t, "foo.txt", v.Attachments[0].Name)
 				r.Equal(t, "hello world", string(v.Attachments[0].Data))
-				r.Equal(t, "text/plain; charset=utf-8; name=foo.txt", string(v.Attachments[0].ContentType))
+				r.Equal(t, "text/plain; charset=utf-8; name=foo.txt", v.Attachments[0].ContentType)
 				r.Equal(t, "Hello Bob", v.Body)
 			},
 		},
@@ -158,7 +159,7 @@ func Test_Mail(t *testing.T) {
 				r.Len(t, v.Attachments, 1)
 				r.Equal(t, "foo.txt", v.Attachments[0].Name)
 				r.Equal(t, "hello world", string(v.Attachments[0].Data))
-				r.Equal(t, "text/plain; charset=utf-8; name=foo.txt", string(v.Attachments[0].ContentType))
+				r.Equal(t, "text/plain; charset=utf-8; name=foo.txt", v.Attachments[0].ContentType)
 				r.Equal(t, "Hello Bob", v.Body)
 			},
 		},
@@ -176,7 +177,7 @@ func Test_Mail(t *testing.T) {
 				r.Len(t, v.Attachments, 1)
 				r.Equal(t, "test.txt", v.Attachments[0].Name)
 				r.Equal(t, "hello world", string(v.Attachments[0].Data))
-				r.Equal(t, "text/plain; charset=utf-8; name=test.txt", string(v.Attachments[0].ContentType))
+				r.Equal(t, "text/plain; charset=utf-8; name=test.txt", v.Attachments[0].ContentType)
 				r.Equal(t, "Hello Bob", v.Body)
 			},
 		},
@@ -193,7 +194,7 @@ func Test_Mail(t *testing.T) {
 				r.NoError(t, err)
 				r.Len(t, v.Attachments, 1)
 				r.Equal(t, "hello world", string(v.Attachments[0].Data))
-				r.Equal(t, "text/html; name=foo.txt", string(v.Attachments[0].ContentType))
+				r.Equal(t, "text/html; name=foo.txt", v.Attachments[0].ContentType)
 				r.Equal(t, "Hello Bob", v.Body)
 			},
 		},
@@ -206,15 +207,17 @@ func Test_Mail(t *testing.T) {
 			t.Parallel()
 
 			var received *smtp.Message
-			c := &mail.Config{AutoCreateMailbox: true}
+			c := &mail.Config{Settings: &mail.Settings{AutoCreateMailbox: true}}
 			h := mail.NewHandler(c, mail.NewStore(c), enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
 				received = args[0].(*smtp.Message)
 				return nil
-			}))
+			}), &eventstest.Handler{})
 
 			port := try.GetFreePort()
 			server := &smtp.Server{Addr: fmt.Sprintf("127.0.0.1:%v", port), Handler: h}
-			go server.ListenAndServe()
+			go func() {
+				_ = server.ListenAndServe()
+			}()
 			defer server.Close()
 
 			source := fmt.Sprintf(tc.js, port)

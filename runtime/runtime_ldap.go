@@ -17,9 +17,10 @@ import (
 )
 
 type LdapStore struct {
-	infos map[string]*LdapInfo
-	cfg   *static.Config
-	m     sync.RWMutex
+	infos  map[string]*LdapInfo
+	cfg    *static.Config
+	events *events.StoreManager
+	m      sync.RWMutex
 }
 
 type LdapInfo struct {
@@ -75,8 +76,8 @@ func (s *LdapStore) Add(c *dynamic.Config, emitter common.EventEmitter) *LdapInf
 		li = NewLdapInfo(c, emitter)
 		s.infos[cfg.Info.Name] = li
 
-		events.ResetStores(events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
-		events.SetStore(int(store.Size), events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
+		s.events.ResetStores(events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
+		s.events.SetStore(int(store.Size), events.NewTraits().WithNamespace("ldap").WithName(cfg.Info.Name))
 	} else {
 		li.AddConfig(c)
 	}
@@ -106,7 +107,7 @@ func (s *LdapStore) Remove(c *dynamic.Config) {
 		s.m.RUnlock()
 		s.m.Lock()
 		delete(s.infos, name)
-		events.ResetStores(events.NewTraits().WithNamespace("ldap").WithName(name))
+		s.events.ResetStores(events.NewTraits().WithNamespace("ldap").WithName(name))
 		s.m.Unlock()
 	} else {
 		s.m.RUnlock()
@@ -155,8 +156,8 @@ func (c *LdapInfo) update() {
 	c.Config = r
 }
 
-func (c *LdapInfo) Handler(ldap *monitor.Ldap) ldap.Handler {
-	return &ldapHandler{ldap: ldap, next: directory.NewHandler(c.Config, c.eventEmitter)}
+func (c *LdapInfo) Handler(ldap *monitor.Ldap, eh events.Handler) ldap.Handler {
+	return &ldapHandler{ldap: ldap, next: directory.NewHandler(c.Config, c.eventEmitter, eh)}
 }
 
 func (c *LdapInfo) Configs() []*dynamic.Config {

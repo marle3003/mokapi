@@ -15,7 +15,8 @@ type Smtp struct {
 func NewSmtp() *Smtp {
 	mails := metrics.NewCounterMap(
 		metrics.WithFQName("smtp", "mails_total"),
-		metrics.WithLabelNames("service"))
+		metrics.WithLabelNames("service", "sender"),
+	)
 	lastMail := metrics.NewGaugeMap(
 		metrics.WithFQName("smtp", "mail_timestamp"),
 		metrics.WithLabelNames("service"))
