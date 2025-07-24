@@ -194,7 +194,7 @@ func TestCustomTempDir(t *testing.T) {
 		},
 		TempDir: t.TempDir(),
 	}
-	t.Cleanup(func() { os.RemoveAll(cfg.TempDir) })
+	t.Cleanup(func() { _ = os.RemoveAll(cfg.TempDir) })
 
 	g := New(cfg)
 	p := safe.NewPool(context.Background())

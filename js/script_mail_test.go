@@ -215,7 +215,9 @@ func Test_Mail(t *testing.T) {
 
 			port := try.GetFreePort()
 			server := &smtp.Server{Addr: fmt.Sprintf("127.0.0.1:%v", port), Handler: h}
-			go server.ListenAndServe()
+			go func() {
+				_ = server.ListenAndServe()
+			}()
 			defer server.Close()
 
 			source := fmt.Sprintf(tc.js, port)

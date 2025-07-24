@@ -130,7 +130,7 @@ func (p *Provider) watch(pool *safe.Pool) error {
 
 	pool.Go(func(ctx context.Context) {
 		defer func() {
-			p.watcher.Close()
+			_ = p.watcher.Close()
 		}()
 
 		for {

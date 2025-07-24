@@ -53,12 +53,6 @@ func WithOperationInfo(id, summary, description string) OperationOptions {
 	}
 }
 
-func WithOperationBinding(b asyncApi.KafkaOperation) OperationOptions {
-	return func(o *asyncApi.Operation) {
-		o.Bindings.Kafka = b
-	}
-}
-
 func WithChannelKafka(bindings asyncApi.TopicBindings) ChannelOptions {
 	return func(c *asyncApi.Channel) {
 		c.Bindings.Kafka = bindings

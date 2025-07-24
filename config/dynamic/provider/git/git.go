@@ -166,6 +166,9 @@ func (p *Provider) initRepository(r *repository, ch chan dynamic.ConfigEvent, po
 	}
 
 	ref, err := r.repo.Head()
+	if err != nil {
+		return fmt.Errorf("unable to get git head: %w", err)
+	}
 	r.hash = ref.Hash()
 
 	chFile := make(chan dynamic.ConfigEvent)

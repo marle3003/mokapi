@@ -83,9 +83,3 @@ func (m *Message) Read(reader io.Reader) error {
 
 	return nil
 }
-
-func WithDup() MessageOptions {
-	return func(m *Message) {
-		m.Header.Dup = true
-	}
-}

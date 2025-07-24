@@ -277,8 +277,8 @@ func (s *Segment) record(offset int64) *kafka.Record {
 func (s *Segment) delete() {
 	for _, r := range s.Log {
 		log.Debugf("delete record: %v", r.Data.Offset)
-		r.Data.Key.Close()
-		r.Data.Value.Close()
+		_ = r.Data.Key.Close()
+		_ = r.Data.Value.Close()
 		r.Log.Deleted = true
 	}
 }

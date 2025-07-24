@@ -754,7 +754,9 @@ func TestFetch_Response(t *testing.T) {
 			}()
 
 			c := imap.NewClient(fmt.Sprintf("localhost:%v", p))
-			defer c.Close()
+			defer func() {
+				_ = c.Close()
+			}()
 
 			_, err := c.Dial()
 			require.NoError(t, err)

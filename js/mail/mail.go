@@ -56,7 +56,7 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 		host: host,
 	}
 	obj := module.Get("exports").(*goja.Object)
-	obj.Set("send", f.Send)
+	_ = obj.Set("send", f.Send)
 }
 
 func (m *Module) Send(addr string, msg *Mail, auth *Auth) {
@@ -173,7 +173,7 @@ func (m *Module) writeAttachments(w *textproto.Writer, msg *Mail) error {
 	if len(msg.Encoding) > 0 {
 		_ = w.PrintfLine("Content-Transfer-Encoding: %s", msg.Encoding)
 	}
-	w.W.WriteString(fmt.Sprintf("\n%s\n", msg.Body))
+	_, _ = w.W.WriteString(fmt.Sprintf("\n%s\n", msg.Body))
 
 	for _, attach := range msg.Attachments {
 		content := []byte(attach.Data)
@@ -210,7 +210,7 @@ func (m *Module) writeAttachments(w *textproto.Writer, msg *Mail) error {
 		if err != nil {
 			return err
 		}
-		w.W.WriteRune('\n')
+		_, _ = w.W.WriteRune('\n')
 	}
 
 	_ = w.PrintfLine("--%v--", boundary)

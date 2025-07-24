@@ -106,16 +106,16 @@ func WithUniqueItems() SchemaOptions {
 
 func Any(schemas ...*schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
-		for _, any := range schemas {
-			s.AnyOf = append(s.AnyOf, any)
+		for _, a := range schemas {
+			s.AnyOf = append(s.AnyOf, a)
 		}
 	}
 }
 
 func NewAny(schemas ...*schema.Schema) *schema.Schema {
 	s := &schema.Schema{}
-	for _, any := range schemas {
-		s.AnyOf = append(s.AnyOf, any)
+	for _, a := range schemas {
+		s.AnyOf = append(s.AnyOf, a)
 	}
 	return s
 }

@@ -162,8 +162,8 @@ func (s *Script) ensureRuntime() error {
 
 	s.loop.Run(func(vm *goja.Runtime) {
 		mod := vm.NewObject()
-		mod.Set("exports", vm.NewObject())
-		vm.Set("module", mod)
+		_ = mod.Set("exports", vm.NewObject())
+		_ = vm.Set("module", mod)
 
 		_, err = vm.RunProgram(prg)
 	})
@@ -172,10 +172,10 @@ func (s *Script) ensureRuntime() error {
 
 func EnableInternal(vm *goja.Runtime, host engine.Host, loop *eventloop.EventLoop, file *dynamic.Config) {
 	o := vm.NewObject()
-	o.Set("host", host)
-	o.Set("loop", loop)
-	o.Set("file", file)
-	vm.Set("mokapi/internal", o)
+	_ = o.Set("host", host)
+	_ = o.Set("loop", loop)
+	_ = o.Set("file", file)
+	_ = vm.Set("mokapi/internal", o)
 }
 
 func (s *Script) processObject(v goja.Value) {

@@ -42,9 +42,3 @@ func WithMessageId(messageId string) MessageOptions {
 		m.MessageId = messageId
 	}
 }
-
-func WithMessageTrait(trait *asyncApi.MessageTrait) MessageOptions {
-	return func(m *asyncApi.Message) {
-		m.Traits = append(m.Traits, &asyncApi.MessageTraitRef{Value: trait})
-	}
-}
