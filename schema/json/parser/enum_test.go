@@ -55,7 +55,7 @@ func TestParse_Enum(t *testing.T) {
 			d:    2.2,
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, float64(2.2), v)
+				require.Equal(t, 2.2, v)
 			},
 		},
 		{

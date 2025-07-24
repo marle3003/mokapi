@@ -186,8 +186,8 @@ func (s *Script) processObject(v goja.Value) {
 	if !ok {
 		return
 	}
-	if http, ok := m["http"]; ok {
-		s.addHttpEvent(http)
+	if h, ok := m["http"]; ok {
+		s.addHttpEvent(h)
 	}
 }
 

@@ -143,7 +143,7 @@ export default async function() {
                     response.data = ''
                     return true
                 }
-            case 'configdata':
+            case 'configData':
                 const configData = configs[request.path.id]
                 if (configData) {
                     response.data = configData.data
@@ -154,7 +154,7 @@ export default async function() {
                     response.data = ''
                     return true
                 }
-            case 'fakertree':
+            case 'fakerTree':
                 const resp = get(`${apiBaseUrl}/mokapi/api/faker/tree`)
                 response.body = resp.body
                 return true

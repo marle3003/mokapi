@@ -66,10 +66,3 @@ func (s *Store) cleanLog(b *Broker) {
 		}
 	}
 }
-
-func valueOrDefault(i int64, d int64) int64 {
-	if i == 0 {
-		return d
-	}
-	return i
-}

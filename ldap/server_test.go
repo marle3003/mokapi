@@ -2,6 +2,7 @@ package ldap
 
 import (
 	"fmt"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
 	"mokapi/try"
 	"testing"
@@ -79,7 +80,7 @@ func newTestServer(h Handler) (*Server, Client) {
 
 	go func() {
 		err := s.ListenAndServe()
-		if err != nil && err != ErrServerClosed {
+		if err != nil && !errors.Is(err, ErrServerClosed) {
 			panic(err)
 		}
 	}()

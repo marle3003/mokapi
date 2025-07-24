@@ -69,7 +69,7 @@ func TestImapHandler_Fetch(t *testing.T) {
 				err = h.Fetch(&imap.FetchRequest{
 					Sequence: imap.IdSet{Ids: []imap.Set{imap.IdNum(1)}},
 					Options: imap.FetchOptions{
-						Body: []imap.FetchBodySection{imap.FetchBodySection{
+						Body: []imap.FetchBodySection{{
 							Specifier: "header",
 							Peek:      true,
 						}},

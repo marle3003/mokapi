@@ -1,6 +1,7 @@
 package filetest
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -52,7 +53,7 @@ Walk:
 			}
 		}
 		f := &fileInfo{entry: entry}
-		if err := visit(entry.Name, f, nil); err == fs.SkipDir {
+		if err := visit(entry.Name, f, nil); errors.Is(err, fs.SkipDir) {
 			ignoreDirs = append(ignoreDirs, entry.Name)
 		}
 	}

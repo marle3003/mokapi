@@ -7,10 +7,8 @@ import (
 	"fmt"
 	"github.com/dop251/goja"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"mokapi/engine/common"
 	"mokapi/smtp"
-	"net"
 	"net/http"
 	"net/mail"
 	netsmtp "net/smtp"
@@ -276,25 +274,4 @@ func toList(i interface{}) []interface{} {
 		}
 		return nil
 	}
-}
-
-func parseAddr(addr string) (string, error) {
-	u, err := url.Parse(addr)
-	host := addr
-	if err == nil && u.Scheme != "" {
-		host = u.Host
-	}
-	h, port, err := net.SplitHostPort(host)
-	if err != nil {
-		if errors.Is(err, &net.AddrError{}) {
-
-		}
-		return "", fmt.Errorf("unable to parse host '%v': %w", host, err)
-	}
-	if port == "" {
-		port = "25"
-	}
-	host = fmt.Sprintf("%v:%v", h, port)
-
-	return "", nil
 }

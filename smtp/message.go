@@ -113,10 +113,10 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 
 	m.Size += 2 // Extra CRLF before body
 
-	mime := media.ParseContentType(m.ContentType)
+	ct := media.ParseContentType(m.ContentType)
 	switch {
-	case mime.Key() == "multipart/mixed":
-		r := multipart.NewReader(tc.DotReader(), mime.Parameters["boundary"])
+	case ct.Key() == "multipart/mixed":
+		r := multipart.NewReader(tc.DotReader(), ct.Parameters["boundary"])
 		for {
 			p, err := r.NextPart()
 			if err != nil {
@@ -144,9 +144,9 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 			}
 		}
 	// https://www.ietf.org/rfc/rfc2387.txt
-	case mime.Key() == "multipart/related":
-		r := multipart.NewReader(tc.DotReader(), mime.Parameters["boundary"])
-		m.ContentType = strings.Trim(mime.Parameters["type"], "\"")
+	case ct.Key() == "multipart/related":
+		r := multipart.NewReader(tc.DotReader(), ct.Parameters["boundary"])
+		m.ContentType = strings.Trim(ct.Parameters["type"], "\"")
 		first := true
 		for {
 			p, err := r.NextPart()

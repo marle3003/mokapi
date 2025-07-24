@@ -122,7 +122,8 @@ func ToLua(l *lua.LState, from interface{}) (lua.LValue, error) {
 			ud := luar.New(l, i).(*lua.LUserData)
 			ud.Value = p.Interface()
 			return ud, nil
+		default:
+			return nil, fmt.Errorf("type %t not supported", i)
 		}
-		return nil, fmt.Errorf("type %t not supported", i)
 	}
 }

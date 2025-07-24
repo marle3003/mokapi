@@ -37,13 +37,6 @@ func (c *conn) handleAuth(_, param string) *response {
 	}
 
 	for {
-		if err != nil {
-			return &response{
-				status: bad,
-				text:   err.Error(),
-			}
-		}
-
 		challenge, err := saslServer.Next(resp)
 		if err != nil {
 			return &response{

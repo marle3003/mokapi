@@ -141,7 +141,7 @@ func Test_Mail(t *testing.T) {
 				r.Len(t, v.Attachments, 1)
 				r.Equal(t, "foo.txt", v.Attachments[0].Name)
 				r.Equal(t, "hello world", string(v.Attachments[0].Data))
-				r.Equal(t, "text/plain; charset=utf-8; name=foo.txt", string(v.Attachments[0].ContentType))
+				r.Equal(t, "text/plain; charset=utf-8; name=foo.txt", v.Attachments[0].ContentType)
 				r.Equal(t, "Hello Bob", v.Body)
 			},
 		},
@@ -159,7 +159,7 @@ func Test_Mail(t *testing.T) {
 				r.Len(t, v.Attachments, 1)
 				r.Equal(t, "foo.txt", v.Attachments[0].Name)
 				r.Equal(t, "hello world", string(v.Attachments[0].Data))
-				r.Equal(t, "text/plain; charset=utf-8; name=foo.txt", string(v.Attachments[0].ContentType))
+				r.Equal(t, "text/plain; charset=utf-8; name=foo.txt", v.Attachments[0].ContentType)
 				r.Equal(t, "Hello Bob", v.Body)
 			},
 		},
@@ -177,7 +177,7 @@ func Test_Mail(t *testing.T) {
 				r.Len(t, v.Attachments, 1)
 				r.Equal(t, "test.txt", v.Attachments[0].Name)
 				r.Equal(t, "hello world", string(v.Attachments[0].Data))
-				r.Equal(t, "text/plain; charset=utf-8; name=test.txt", string(v.Attachments[0].ContentType))
+				r.Equal(t, "text/plain; charset=utf-8; name=test.txt", v.Attachments[0].ContentType)
 				r.Equal(t, "Hello Bob", v.Body)
 			},
 		},
@@ -194,7 +194,7 @@ func Test_Mail(t *testing.T) {
 				r.NoError(t, err)
 				r.Len(t, v.Attachments, 1)
 				r.Equal(t, "hello world", string(v.Attachments[0].Data))
-				r.Equal(t, "text/html; name=foo.txt", string(v.Attachments[0].ContentType))
+				r.Equal(t, "text/html; name=foo.txt", v.Attachments[0].ContentType)
 				r.Equal(t, "Hello Bob", v.Body)
 			},
 		},

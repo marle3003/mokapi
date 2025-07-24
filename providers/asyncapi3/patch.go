@@ -64,14 +64,14 @@ func (c *Config) patchServer(patch *Config) {
 	}
 }
 
-func (s *ServerRef) patch(patch *ServerRef) {
+func (r *ServerRef) patch(patch *ServerRef) {
 	if patch == nil {
 		return
 	}
-	if s.Value == nil {
-		s.Value = patch.Value
+	if r.Value == nil {
+		r.Value = patch.Value
 	} else {
-		s.Value.patch(patch.Value)
+		r.Value.patch(patch.Value)
 	}
 }
 

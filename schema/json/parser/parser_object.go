@@ -279,7 +279,7 @@ func (p *Parser) validateObject(obj *sortedmap.LinkedHashMap[string, interface{}
 	}
 
 	if s.Required != nil {
-		required := []string{}
+		var required []string
 		for _, p := range s.Required {
 			if _, found := obj.Get(p); !found {
 				required = append(required, p)

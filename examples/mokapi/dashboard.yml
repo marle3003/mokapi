@@ -1,4 +1,4 @@
-openapi: 3.1
+openapi: "3.1.0"
 info:
   title: Mokapi's Dashboard API
   version: v1
@@ -227,6 +227,7 @@ paths:
           content:
             application/json:
               schema:
+                $ref: './mail.yml#/components/schemas/SmtpMessage'
         "404":
           description: mail not found
   /api/services/mail/mails/{messageId}/attachments/{name}:
@@ -338,7 +339,8 @@ paths:
                   type: string
                 format:
                   type: string
-                schema: {}
+                schema:
+                  type: object
                 contentTypes:
                   type: array
                   items:
@@ -499,7 +501,7 @@ paths:
   /api/configs/{id}/data:
     get:
       summary: returns the config data for given id
-      operationId: configdata
+      operationId: configData
       parameters:
         - name: id
           in: path
@@ -522,7 +524,7 @@ paths:
   /api/faker/tree:
     get:
       summary: returns faker tree
-      operationId: fakertree
+      operationId: fakerTree
       responses:
         "200":
           description: content of config

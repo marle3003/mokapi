@@ -39,7 +39,7 @@ func (rb *RecordBatch) readFromV2(d *Decoder) error {
 		r.Offset = baseOffset + offsetDelta
 		r.Time = ToTime(firstTimestamp + timestampDelta)
 
-		keyOffset := int(pb.Size())
+		keyOffset := pb.Size()
 		var keyLength int64
 		keyLength = d.ReadVarInt()
 		if keyLength > 0 {
@@ -47,7 +47,7 @@ func (rb *RecordBatch) readFromV2(d *Decoder) error {
 			r.Key = pb.Slice(keyOffset, keyOffset+int(keyLength))
 		}
 
-		valueOffset := int(pb.Size())
+		valueOffset := pb.Size()
 		valueLength := d.ReadVarInt()
 		if valueLength > 0 {
 			d.writeTo(pb, int(valueLength))

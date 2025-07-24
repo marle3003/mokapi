@@ -52,13 +52,13 @@ func Start(cfg *static.Config) (*Cmd, error) {
 
 	http := server.NewHttpManager(scriptEngine, certStore, app)
 	kafka := server.NewKafkaManager(scriptEngine, app)
-	mail := server.NewMailManager(app, scriptEngine, certStore)
+	mailManager := server.NewMailManager(app, scriptEngine, certStore)
 	ldap := server.NewLdapDirectoryManager(scriptEngine, certStore, app)
 
 	watcher.AddListener(func(e dynamic.ConfigEvent) {
 		kafka.UpdateConfig(e)
 		http.Update(e)
-		mail.UpdateConfig(e)
+		mailManager.UpdateConfig(e)
 		ldap.UpdateConfig(e)
 		if err := scriptEngine.AddScript(e); err != nil {
 			panic(err)
@@ -77,7 +77,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 
 	pool := safe.NewPool(context.Background())
 	ctx, cancel := context.WithCancel(context.Background())
-	s := server.NewServer(pool, app, watcher, kafka, http, mail, ldap, scriptEngine)
+	s := server.NewServer(pool, app, watcher, kafka, http, mailManager, ldap, scriptEngine)
 	s.StartAsync(ctx)
 
 	return &Cmd{

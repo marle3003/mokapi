@@ -133,31 +133,6 @@ func itemsFromExample(r *Request) []any {
 	return result
 }
 
-func itemExamplesFromRequest(r *Request, item *schema.Schema) []any {
-	var result []any
-	if r.examples != nil {
-		for _, e := range r.examples {
-			if arr, ok := e.([]any); ok {
-				for _, i := range arr {
-					result = append(result, i)
-				}
-			}
-		}
-	}
-
-	for _, v := range examples(r.Schema) {
-		if arr, isArray := v.([]any); isArray {
-			for _, i := range arr {
-				result = append(result, i)
-			}
-		}
-	}
-
-	result = append(result, examples(item)...)
-
-	return result
-}
-
 func findWithPlural(req *Request) (*faker, error) {
 	if len(req.Path) == 0 {
 		return nil, NotSupported

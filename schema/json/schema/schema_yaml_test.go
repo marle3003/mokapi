@@ -67,7 +67,7 @@ func TestSchemaYaml(t *testing.T) {
 			data: `enum: [foo, 123]`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"foo", int(123)}, s.Enum)
+				require.Equal(t, []interface{}{"foo", 123}, s.Enum)
 			},
 		},
 		{

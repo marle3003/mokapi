@@ -52,7 +52,7 @@ type WriteArgs struct {
 
 func newPartition(index int, brokers Brokers, logger LogRecord, trigger Trigger, topic *Topic) *Partition {
 	brokerList := make([]int, 0, len(brokers))
-	for i, _ := range brokers {
+	for i := range brokers {
 		brokerList = append(brokerList, i)
 	}
 	p := &Partition{

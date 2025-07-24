@@ -14,10 +14,6 @@ type Decoder struct {
 	err error
 }
 
-func NewDecoder(msg string) *Decoder {
-	return &Decoder{msg: msg}
-}
-
 func (d *Decoder) SP() *Decoder {
 	if d.IsSP() {
 		_ = d.expect(" ")

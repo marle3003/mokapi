@@ -220,7 +220,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 				r := sendMail(t, h, ctx)
 				require.Equal(t, "sender alice@foo.bar does match deny rule: @foo.bar", r.Result.Message)
 				require.Equal(t, smtp.StatusCode(550), r.Result.StatusCode)
-				require.Equal(t, smtp.EnhancedStatusCode(smtp.EnhancedStatusCode{5, 1, 0}), r.Result.EnhancedStatusCode)
+				require.Equal(t, smtp.EnhancedStatusCode{5, 1, 0}, r.Result.EnhancedStatusCode)
 			},
 		},
 		{

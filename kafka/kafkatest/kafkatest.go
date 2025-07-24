@@ -74,36 +74,3 @@ func getApiKey(msg kafka.Message) kafka.ApiKey {
 		panic(fmt.Sprintf("unknown type: %v", t))
 	}
 }
-
-func GetRequest(key kafka.ApiKey) kafka.Message {
-	switch key {
-	case kafka.Produce:
-		return &produce.Request{}
-	case kafka.Fetch:
-		return &fetch.Request{}
-	case kafka.Offset:
-		return &offset.Request{}
-	case kafka.Metadata:
-		return &metaData.Request{}
-	case kafka.OffsetCommit:
-		return &offsetCommit.Request{}
-	case kafka.OffsetFetch:
-		return &offsetFetch.Request{}
-	case kafka.FindCoordinator:
-		return &findCoordinator.Request{}
-	case kafka.JoinGroup:
-		return &joinGroup.Request{}
-	case kafka.Heartbeat:
-		return &heartbeat.Request{}
-	case kafka.SyncGroup:
-		return &syncGroup.Request{}
-	case kafka.ApiVersions:
-		return &apiVersion.Request{}
-	case kafka.ListGroup:
-		return &listgroup.Request{}
-	case kafka.CreateTopics:
-		return &createTopics.Request{}
-	default:
-		panic(fmt.Sprintf("unknown type: %v", key))
-	}
-}

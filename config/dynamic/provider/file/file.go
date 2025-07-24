@@ -293,7 +293,7 @@ func (p *Provider) watchPath(path string) {
 
 func (p *Provider) processEvents(events []fsnotify.Event) {
 	done := map[string]bool{}
-	walkList := []string{}
+	var walkList []string
 
 	for _, evt := range events {
 		key := fmt.Sprintf("%v:%v", evt.Op, evt.Name)
@@ -301,7 +301,7 @@ func (p *Provider) processEvents(events []fsnotify.Event) {
 			continue
 		}
 		if evt.Op == fsnotify.Write {
-			// skip write event if we have already a create event.
+			// skip write event if we already have a create event.
 			key = fmt.Sprintf("%v:%v", fsnotify.Create, evt.Name)
 			if _, ok := done[key]; ok {
 				continue

@@ -49,6 +49,4 @@ var (
 		"Transportation and Logistics", "Real Estate", "Telecommunications", "Energy and Utilities",
 		"Hospitality", "Entertainment and Media", "Construction", "Agriculture", "Aerospace and Defense",
 	}
-
-	organization = []string{}
 )

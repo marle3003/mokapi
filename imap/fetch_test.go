@@ -776,13 +776,6 @@ func num(i int) imap.IdSet {
 	return imap.IdSet{Ids: []imap.Set{s}}
 }
 
-func seq(start, end int) imap.IdSet {
-	s := &imap.Range{}
-	s.Start.Value = uint32(start)
-	s.End.Value = uint32(end)
-	return imap.IdSet{Ids: []imap.Set{s}}
-}
-
 func all() imap.IdSet {
 	s := &imap.Range{}
 	s.Start.Value = uint32(1)

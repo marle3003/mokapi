@@ -1,6 +1,7 @@
 package parameter
 
 import (
+	"errors"
 	"fmt"
 	"mokapi/providers/openapi/schema"
 	"net/http"
@@ -10,7 +11,7 @@ import (
 func parseCookie(param *Parameter, r *http.Request) (*RequestParameterValue, error) {
 	cookie, err := r.Cookie(param.Name)
 	if err != nil || (len(cookie.Value) == 0 && param.Required) {
-		if err == http.ErrNoCookie && !param.Required {
+		if errors.Is(err, http.ErrNoCookie) && !param.Required {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("parameter is required")
