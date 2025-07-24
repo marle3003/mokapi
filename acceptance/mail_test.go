@@ -61,7 +61,7 @@ func (suite *MailSuite) TestSendMail() {
 			require.NotContains(t, m, "contentType")
 			require.NotContains(t, m, "contentTransferEncoding")
 			require.Equal(t, "This is the body", m["body"])
-			require.Greater(t, m["size"], 0)
+			require.Greater(t, m["size"], float64(0))
 		}),
 	)
 
