@@ -10,6 +10,7 @@ import (
 	"mokapi/smtp"
 	"net/http"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -42,12 +43,16 @@ type settings struct {
 }
 
 type mailbox struct {
-	Name        string            `json:"name"`
-	Username    string            `json:"username,omitempty"`
-	Password    string            `json:"password,omitempty"`
-	Description string            `json:"description,omitempty"`
-	NumMessages int               `json:"numMessages"`
-	Folders     map[string]folder `json:"folders,omitempty"`
+	Name        string `json:"name"`
+	Username    string `json:"username,omitempty"`
+	Password    string `json:"password,omitempty"`
+	Description string `json:"description,omitempty"`
+	NumMessages int    `json:"numMessages"`
+}
+
+type mailboxDetails struct {
+	mailbox
+	Folders []string `json:"folders,omitempty"`
 }
 
 type folder struct {
@@ -79,7 +84,7 @@ type message struct {
 	Bcc                     []address    `json:"bbc,omitempty"`
 	MessageId               string       `json:"messageId"`
 	InReplyTo               string       `json:"inReplyTo,omitempty"`
-	Time                    time.Time    `json:"time"`
+	Date                    time.Time    `json:"date"`
 	Subject                 string       `json:"subject"`
 	ContentType             string       `json:"contentType"`
 	ContentTransferEncoding string       `json:"contentTransferEncoding,omitempty"`
@@ -106,7 +111,6 @@ func getMailServices(store *runtime.MailStore, m *monitor.Monitor) []interface{}
 		s := service{
 			Name:        hs.Info.Name,
 			Description: hs.Info.Description,
-			Version:     hs.Info.Version,
 			Type:        ServiceMail,
 		}
 
@@ -123,7 +127,8 @@ func (h *handler) handleMailService(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(r.URL.Path, "/")
 	n := len(segments)
 
-	if n > 5 && segments[4] == "mails" {
+	// segment mails is deprecated
+	if n > 4 && (segments[4] == "mails" || segments[4] == "messages") {
 		if n > 6 && segments[6] == "attachments" {
 			h.getMailAttachment(w, segments[5], segments[7])
 			return
@@ -141,15 +146,27 @@ func (h *handler) handleMailService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(segments) > 6 && segments[5] == "mailboxes" {
-		h.getMailbox(w, r, name, segments[6])
+	if len(segments) > 7 && segments[7] == "messages" {
+		if len(segments) > 6 {
+			h.getMailboxMessages(w, r, name, segments[6])
+		}
+		return
+	}
+
+	if len(segments) > 5 && segments[5] == "mailboxes" {
+		if len(segments) == 7 {
+			h.getMailbox(w, r, name, segments[6])
+		} else if len(segments) == 6 {
+			h.getMailboxes(w, r, name)
+		} else {
+			w.WriteHeader(401)
+		}
 		return
 	}
 
 	result := &mailInfo{
 		Name:        s.Info.Name,
 		Description: s.Info.Description,
-		Version:     s.Info.Version,
 		Configs:     getConfigs(s.Configs()),
 	}
 
@@ -167,9 +184,9 @@ func (h *handler) handleMailService(w http.ResponseWriter, r *http.Request) {
 		result.Settings.AutoCreateMailbox = s.Settings.AutoCreateMailbox
 	}
 
-	for _, m := range s.Store.Mailboxes {
+	for mName, m := range s.Store.Mailboxes {
 		result.Mailboxes = append(result.Mailboxes, mailbox{
-			Name:        m.Name,
+			Name:        mName,
 			Username:    m.Username,
 			Password:    m.Password,
 			Description: m.Description,
@@ -244,7 +261,32 @@ func (h *handler) getMailAttachment(w http.ResponseWriter, messageId, name strin
 	w.Write(att.Data)
 }
 
-func (h *handler) getMailbox(w http.ResponseWriter, r *http.Request, service, name string) {
+func (h *handler) getMailboxes(w http.ResponseWriter, r *http.Request, service string) {
+	s := h.app.Mail.Get(service)
+	var result []mailbox
+
+	var names []string
+	for name := range s.Store.Mailboxes {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	for _, name := range names {
+		mb := s.Store.Mailboxes[name]
+
+		result = append(result, mailbox{
+			Name:        name,
+			Username:    mb.Username,
+			Password:    mb.Password,
+			NumMessages: mb.NumMessages(),
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	writeJsonBody(w, result)
+}
+
+func (h *handler) getMailbox(w http.ResponseWriter, _ *http.Request, service, name string) {
 	s := h.app.Mail.Get(service)
 	mb, ok := s.Store.Mailboxes[name]
 	if !ok {
@@ -252,21 +294,54 @@ func (h *handler) getMailbox(w http.ResponseWriter, r *http.Request, service, na
 		return
 	}
 
-	result := mailbox{
-		Name:     mb.Name,
-		Username: mb.Username,
-		Password: mb.Password,
+	result := mailboxDetails{
+		mailbox: mailbox{
+			Name:        name,
+			Username:    mb.Username,
+			Password:    mb.Password,
+			NumMessages: mb.NumMessages(),
+		},
 	}
 
-	for fName, f := range mb.Folders {
-		var messages []*message
-		for _, m := range f.Messages {
-			messages = append(messages, toMessage(m.Message))
+	for folder := range mb.Folders {
+		result.Folders = append(result.Folders, folder)
+	}
+	sort.Strings(result.Folders)
+
+	w.Header().Set("Content-Type", "application/json")
+	writeJsonBody(w, result)
+}
+
+func (h *handler) getMailboxMessages(w http.ResponseWriter, r *http.Request, service, name string) {
+	s := h.app.Mail.Get(service)
+	mb, ok := s.Store.Mailboxes[name]
+	if !ok {
+		w.WriteHeader(404)
+		return
+	}
+
+	var messages []*mail.Mail
+
+	path := getQueryParamInsensitive(r.URL.Query(), "folder")
+	folders := mb.List(path)
+
+	for _, f := range folders {
+		messages = append(messages, f.ListMessages()...)
+	}
+
+	index, limit, err := getPageInfo(r)
+	if err != nil {
+		writeError(w, err, http.StatusBadRequest)
+		return
+	}
+
+	from := index * limit
+	var result []*smtp.Message
+	if from < len(messages) {
+		limit = min(limit, len(messages))
+		for i := from; i < limit; i++ {
+			result = append(result, messages[i].Message)
 		}
-		if result.Folders == nil {
-			result.Folders = make(map[string]folder)
-		}
-		result.Folders[fName] = folder{Messages: messages}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -293,7 +368,7 @@ func toMessage(m *smtp.Message) *message {
 		Bcc:                     toAddress(m.Bcc),
 		MessageId:               m.MessageId,
 		InReplyTo:               m.InReplyTo,
-		Time:                    m.Time,
+		Date:                    m.Date,
 		Subject:                 m.Subject,
 		ContentType:             m.ContentType,
 		ContentTransferEncoding: m.ContentTransferEncoding,

@@ -3,24 +3,27 @@ package mail
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"gopkg.in/yaml.v3"
+	"mokapi/config/dynamic"
 	"mokapi/smtp"
 	"regexp"
 )
 
+var serverNamePattern = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
+
 type Config struct {
-	Version   string             `yaml:"mail" json:"mail"`
-	Info      Info               `yaml:"info" json:"info"`
-	Servers   map[string]*Server `yaml:"servers" json:"servers"`
-	Settings  *Settings          `yaml:"settings" json:"settings"`
-	Mailboxes []MailboxConfig    `yaml:"mailboxes" json:"mailboxes"`
-	Rules     Rules              `yaml:"rules" json:"rules"`
+	Version   string                    `yaml:"mail" json:"mail"`
+	Info      Info                      `yaml:"info" json:"info"`
+	Servers   map[string]*Server        `yaml:"servers" json:"servers"`
+	Settings  *Settings                 `yaml:"settings" json:"settings"`
+	Mailboxes map[string]*MailboxConfig `yaml:"mailboxes" json:"mailboxes"`
+	Rules     Rules                     `yaml:"rules" json:"rules"`
 }
 
 type Info struct {
 	Name        string `yaml:"title" json:"title"`
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`
-	Version     string `yaml:"version" json:"version"`
 }
 
 type Server struct {
@@ -35,17 +38,15 @@ type Settings struct {
 }
 
 type MailboxConfig struct {
-	Name        string         `yaml:"name" json:"name"`
-	Username    string         `yaml:"username" json:"username"`
-	Password    string         `yaml:"password" json:"password"`
-	Description string         `yaml:"description,omitempty" json:"description,omitempty"`
-	Folders     []FolderConfig `yaml:"folders" json:"folders"`
+	Username    string                   `yaml:"username" json:"username"`
+	Password    string                   `yaml:"password" json:"password"`
+	Description string                   `yaml:"description,omitempty" json:"description,omitempty"`
+	Folders     map[string]*FolderConfig `yaml:"folders" json:"folders"`
 }
 
 type FolderConfig struct {
-	Name    string         `yaml:"name" json:"name"`
-	Flags   []string       `yaml:"flags" json:"flags"`
-	Folders []FolderConfig `yaml:"folders" json:"folders"`
+	Flags   []string                 `yaml:"flags" json:"flags"`
+	Folders map[string]*FolderConfig `yaml:"folders" json:"folders"`
 }
 
 type RuleAction string
@@ -75,6 +76,22 @@ type RejectResponse struct {
 	StatusCode         smtp.StatusCode         `yaml:"statusCode" json:"statusCode"`
 	EnhancedStatusCode smtp.EnhancedStatusCode `yaml:"enhancedStatusCode" json:"enhancedStatusCode"`
 	Text               string                  `yaml:"text" json:"text"`
+}
+
+func (c *Config) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
+	for name := range c.Servers {
+		if !serverNamePattern.MatchString(name) {
+			return fmt.Errorf("server name '%s' does not match valid pattern", name)
+		}
+	}
+
+	for name := range c.Mailboxes {
+		if name == "" {
+			return fmt.Errorf("mailbox name is required")
+		}
+	}
+
+	return nil
 }
 
 func (c *Config) UnmarshalYAML(value *yaml.Node) error {

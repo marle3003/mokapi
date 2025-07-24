@@ -1,0 +1,20 @@
+meta {
+  name: mailbox messages
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/services/mail/{{mailServerName}}/mailboxes/:mailbox/folders/:folder
+  body: none
+  auth: inherit
+}
+
+params:path {
+  folder: INBOX
+  mailbox: alice@mokapi.io
+}
+
+settings {
+  encodeUrl: true
+}

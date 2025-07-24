@@ -20,9 +20,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Login successfully",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -36,9 +35,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Login failed",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -52,9 +50,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Select Inbox",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -70,16 +67,14 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Select Inbox/foo",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
-						Folders: []mail.FolderConfig{
-							{
-								Name: "inbox",
-								Folders: []mail.FolderConfig{
-									{Name: "foo"},
+						Folders: map[string]*mail.FolderConfig{
+							"inbox": {
+								Folders: map[string]*mail.FolderConfig{
+									"foo": {},
 								},
 							},
 						},
@@ -96,9 +91,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Select invalid mailbox",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -113,9 +107,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Unselect a mailbox",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -134,9 +127,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Status Inbox",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -158,9 +150,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "List *",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -179,15 +170,53 @@ func TestImapHandler(t *testing.T) {
 			},
 		},
 		{
-			name: "List inbox should be first",
+			name: "List * with nested folders",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
-						Folders: []mail.FolderConfig{
-							{Name: "ABC"},
+						Folders: map[string]*mail.FolderConfig{
+							"foo": {
+								Folders: map[string]*mail.FolderConfig{
+									"bar": {},
+								},
+							},
+						},
+					},
+				},
+			},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, ctx context.Context) {
+				_ = h.Login("alice", "foo", ctx)
+				r, err := h.List("", "*", nil, ctx)
+				require.NoError(t, err)
+				require.Len(t, r, 3)
+				require.Equal(t, imap.ListEntry{
+					Flags:     nil,
+					Delimiter: "/",
+					Name:      "INBOX",
+				}, r[0])
+				require.Equal(t, imap.ListEntry{
+					Flags:     nil,
+					Delimiter: "/",
+					Name:      "foo",
+				}, r[1])
+				require.Equal(t, imap.ListEntry{
+					Flags:     nil,
+					Delimiter: "/",
+					Name:      "foo/bar",
+				}, r[2])
+			},
+		},
+		{
+			name: "List inbox should be first",
+			cfg: &mail.Config{
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
+						Username: "alice",
+						Password: "foo",
+						Folders: map[string]*mail.FolderConfig{
+							"ABC": {},
 						},
 					},
 				},
@@ -214,14 +243,12 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "List foo",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
-						Folders: []mail.FolderConfig{
-							{
-								Name:  "foo",
+						Folders: map[string]*mail.FolderConfig{
+							"foo": {
 								Flags: []string{"foo", "bar"},
 							},
 						},
@@ -238,31 +265,23 @@ func TestImapHandler(t *testing.T) {
 			},
 		},
 		{
-			name: "List Archive/* foo",
+			name: "List pattern Archive/*/foo",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
-						Folders: []mail.FolderConfig{
-							{
-								Name: "Archive",
-								Folders: []mail.FolderConfig{
-									{
-										Name: "2025",
-										Folders: []mail.FolderConfig{
-											{
-												Name: "foo",
-											},
+						Folders: map[string]*mail.FolderConfig{
+							"Archive": {
+								Folders: map[string]*mail.FolderConfig{
+									"2025": {
+										Folders: map[string]*mail.FolderConfig{
+											"foo": {},
 										},
 									},
-									{
-										Name: "2026",
-										Folders: []mail.FolderConfig{
-											{
-												Name: "bar",
-											},
+									"2026": {
+										Folders: map[string]*mail.FolderConfig{
+											"bar": {},
 										},
 									},
 								},
@@ -273,38 +292,30 @@ func TestImapHandler(t *testing.T) {
 			},
 			test: func(t *testing.T, h *mail.Handler, s *mail.Store, ctx context.Context) {
 				_ = h.Login("alice", "foo", ctx)
-				r, err := h.List("Archive/*", "foo", nil, ctx)
+				r, err := h.List("", "Archive/*/foo", nil, ctx)
 				require.NoError(t, err)
 				require.Len(t, r, 1)
-				require.Equal(t, "foo", r[0].Name)
+				require.Equal(t, "Archive/2025/foo", r[0].Name)
 			},
 		},
 		{
 			name: "List Archive %",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
-						Folders: []mail.FolderConfig{
-							{
-								Name: "Archive",
-								Folders: []mail.FolderConfig{
-									{
-										Name: "2025",
-										Folders: []mail.FolderConfig{
-											{
-												Name: "foo",
-											},
+						Folders: map[string]*mail.FolderConfig{
+							"Archive": {
+								Folders: map[string]*mail.FolderConfig{
+									"2025": {
+										Folders: map[string]*mail.FolderConfig{
+											"foo": {},
 										},
 									},
-									{
-										Name: "2026",
-										Folders: []mail.FolderConfig{
-											{
-												Name: "bar",
-											},
+									"2026": {
+										Folders: map[string]*mail.FolderConfig{
+											"bar": {},
 										},
 									},
 								},
@@ -318,37 +329,30 @@ func TestImapHandler(t *testing.T) {
 				r, err := h.List("Archive", "%", nil, ctx)
 				require.NoError(t, err)
 				require.Equal(t, []imap.ListEntry{
-					{Delimiter: "/", Flags: nil, Name: "2025"},
-					{Delimiter: "/", Flags: nil, Name: "2026"},
+					{Delimiter: "/", Flags: nil, Name: "Archive/2025"},
+					{Delimiter: "/", Flags: nil, Name: "Archive/2026"},
 				}, r)
 			},
 		},
 		{
 			name: "List Archive/%",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
-						Folders: []mail.FolderConfig{
-							{
-								Name: "Archive",
-								Folders: []mail.FolderConfig{
-									{
-										Name: "2025",
-										Folders: []mail.FolderConfig{
-											{
-												Name: "foo",
-											},
+						Folders: map[string]*mail.FolderConfig{
+							"Archive": {
+								Folders: map[string]*mail.FolderConfig{
+									"2025": {
+
+										Folders: map[string]*mail.FolderConfig{
+											"foo": {},
 										},
 									},
-									{
-										Name: "2026",
-										Folders: []mail.FolderConfig{
-											{
-												Name: "bar",
-											},
+									"2026": {
+										Folders: map[string]*mail.FolderConfig{
+											"bar": {},
 										},
 									},
 								},
@@ -362,17 +366,16 @@ func TestImapHandler(t *testing.T) {
 				r, err := h.List("", "Archive/%", nil, ctx)
 				require.NoError(t, err)
 				require.Equal(t, []imap.ListEntry{
-					{Delimiter: "/", Flags: nil, Name: "2025"},
-					{Delimiter: "/", Flags: nil, Name: "2026"},
+					{Delimiter: "/", Flags: nil, Name: "Archive/2025"},
+					{Delimiter: "/", Flags: nil, Name: "Archive/2026"},
 				}, r)
 			},
 		},
 		{
 			name: "Add deleted flag to message",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -402,9 +405,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Add flag should not result in duplicate entries",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -436,9 +438,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Remove flag",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -470,9 +471,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Replace flag",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -504,9 +504,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Add deleted flag to message using UID",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -539,9 +538,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Expunge",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -571,9 +569,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Expunge 1",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -605,9 +602,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "UID Expunge",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -641,9 +637,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Create folder",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -663,9 +658,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Create folder with flags",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -686,9 +680,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Create folder below INBOX",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -708,9 +701,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Move",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -749,9 +741,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "UID Move",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -792,9 +783,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "Copy",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -832,9 +822,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "UID Copy",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -872,9 +861,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "DElETE foo",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -898,9 +886,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "DElETE foo not found",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -918,9 +905,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "DElETE foo but has children",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -941,9 +927,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "DElETE foo/bar",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -967,9 +952,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "DElETE INBOX",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -987,9 +971,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "RENAME foo to bar",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -1016,9 +999,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "RENAME move foo into bar",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},
@@ -1046,9 +1028,8 @@ func TestImapHandler(t *testing.T) {
 		{
 			name: "RENAME INBOX",
 			cfg: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@mokapi.io",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
 						Username: "alice",
 						Password: "foo",
 					},

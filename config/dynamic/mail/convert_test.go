@@ -23,6 +23,15 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
+			name: "info",
+			cfg:  &Config{Info: Info{Name: "name", Description: "description"}},
+			test: func(t *testing.T, c *mail.Config) {
+				require.NotNil(t, c)
+				require.Equal(t, "name", c.Info.Name)
+				require.Equal(t, "description", c.Info.Description)
+			},
+		},
+		{
 			name: "smtp server",
 			cfg:  &Config{Server: "smtp://mokapi.io"},
 			test: func(t *testing.T, c *mail.Config) {
@@ -94,8 +103,7 @@ func TestConvert(t *testing.T) {
 			test: func(t *testing.T, c *mail.Config) {
 				require.NotNil(t, c)
 				require.Len(t, c.Mailboxes, 1)
-				mb := c.Mailboxes[0]
-				require.Equal(t, "alice@mokapi.io", mb.Name)
+				mb := c.Mailboxes["alice@mokapi.io"]
 				require.Equal(t, "alice", mb.Username)
 				require.Equal(t, "password", mb.Password)
 				require.Len(t, mb.Folders, 0)
@@ -121,14 +129,12 @@ func TestConvert(t *testing.T) {
 			test: func(t *testing.T, c *mail.Config) {
 				require.NotNil(t, c)
 				require.Len(t, c.Mailboxes, 1)
-				mb := c.Mailboxes[0]
-				require.Equal(t, "alice@mokapi.io", mb.Name)
+				mb := c.Mailboxes["alice@mokapi.io"]
 				require.Equal(t, "alice", mb.Username)
 				require.Equal(t, "password", mb.Password)
 				require.Len(t, mb.Folders, 1)
-				require.Equal(t, "folder", mb.Folders[0].Name)
-				require.Equal(t, []string{"\\foo"}, mb.Folders[0].Flags)
-				require.Len(t, mb.Folders[0].Folders, 0)
+				require.Equal(t, []string{"\\foo"}, mb.Folders["folder"].Flags)
+				require.Len(t, mb.Folders["folder"].Folders, 0)
 			},
 		},
 		{

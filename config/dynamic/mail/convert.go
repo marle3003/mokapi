@@ -6,7 +6,14 @@ import (
 )
 
 func (c *Config) Convert() *mail.Config {
-	result := &mail.Config{Version: "1.0"}
+	result := &mail.Config{
+		Version: "1.0",
+		Info: mail.Info{
+			Name:        c.Info.Name,
+			Description: c.Info.Description,
+		},
+		Mailboxes: map[string]*mail.MailboxConfig{},
+	}
 
 	if c.Server != "" {
 		name, server, err := getServerFromUrl(c.Server)
@@ -28,17 +35,17 @@ func (c *Config) Convert() *mail.Config {
 	}
 
 	for _, mb := range c.Mailboxes {
-		m := mail.MailboxConfig{
-			Name:     mb.Name,
+		m := &mail.MailboxConfig{
 			Username: mb.Username,
 			Password: mb.Password,
+			Folders:  map[string]*mail.FolderConfig{},
 		}
 
 		for _, fs := range mb.Folders {
-			m.Folders = append(m.Folders, getFolder(fs))
+			m.Folders[fs.Name] = getFolder(fs)
 		}
 
-		result.Mailboxes = append(result.Mailboxes, m)
+		result.Mailboxes[mb.Name] = m
 	}
 
 	for _, r := range c.Rules {
@@ -74,14 +81,14 @@ func getServerFromUrl(serverUrl string) (string, *mail.Server, error) {
 	return "", nil, err
 }
 
-func getFolder(f FolderConfig) mail.FolderConfig {
-	r := mail.FolderConfig{
-		Name:  f.Name,
-		Flags: f.Flags,
+func getFolder(f FolderConfig) *mail.FolderConfig {
+	r := &mail.FolderConfig{
+		Flags:   f.Flags,
+		Folders: map[string]*mail.FolderConfig{},
 	}
 
 	for _, folder := range f.Folders {
-		r.Folders = append(r.Folders, getFolder(folder))
+		r.Folders[folder.Name] = getFolder(folder)
 	}
 	return r
 }

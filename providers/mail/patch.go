@@ -14,9 +14,6 @@ func (c *Config) patchInfo(patch *Config) {
 	if len(patch.Info.Description) > 0 {
 		c.Info.Description = patch.Info.Description
 	}
-	if len(patch.Info.Version) > 0 {
-		c.Info.Version = patch.Info.Version
-	}
 }
 
 func (c *Config) patchServer(patch *Config) {
@@ -69,16 +66,12 @@ func (c *Config) patchMailboxes(patch *Config) {
 		return
 	}
 
-Loop:
-	for _, p := range patch.Mailboxes {
-		for i, v := range c.Mailboxes {
-			if v.Name == p.Name {
-				v.patch(&p)
-				c.Mailboxes[i] = v
-				continue Loop
-			}
+	for name, p := range patch.Mailboxes {
+		if mb, ok := c.Mailboxes[name]; ok {
+			mb.patch(p)
+		} else {
+			c.Mailboxes[name] = p
 		}
-		c.Mailboxes = append(c.Mailboxes, p)
 	}
 }
 
@@ -89,24 +82,15 @@ func (m *MailboxConfig) patch(patch *MailboxConfig) {
 	if len(patch.Password) > 0 {
 		m.Password = patch.Password
 	}
-	if len(m.Folders) == 0 {
-		m.Folders = patch.Folders
-	} else {
-		for _, folder := range patch.Folders {
-			for i, f := range m.Folders {
-				if f.Name == folder.Name {
-				Flags:
-					for _, flag := range folder.Flags {
-						for _, orig := range f.Flags {
-							if orig == flag {
-								continue Flags
-							}
-						}
-						f.Flags = append(f.Flags, flag)
-					}
-				}
-				m.Folders[i] = f
+
+	for name, child := range patch.Folders {
+		if c, ok := m.Folders[name]; ok {
+			c.patch(child)
+		} else {
+			if m.Folders == nil {
+				m.Folders = make(map[string]*FolderConfig)
 			}
+			m.Folders[name] = child
 		}
 	}
 }
@@ -140,5 +124,17 @@ func (r *Rule) patch(patch Rule) {
 	}
 	if patch.RejectResponse != nil {
 		r.RejectResponse = patch.RejectResponse
+	}
+}
+
+func (f *FolderConfig) patch(patch *FolderConfig) {
+	f.Flags = patch.Flags
+
+	for name, child := range patch.Folders {
+		if c, ok := f.Folders[name]; ok {
+			c.patch(child)
+		} else {
+			f.Folders[name] = child
+		}
 	}
 }

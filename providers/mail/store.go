@@ -24,17 +24,17 @@ func NewStore(c *Config) *Store {
 	if c.Settings != nil {
 		s.canAddMailbox = c.Settings.AutoCreateMailbox
 	}
-	for _, mb := range c.Mailboxes {
-		s.NewMailbox(&mb)
+	for name, mb := range c.Mailboxes {
+		s.NewMailbox(name, mb)
 	}
 
 	return s
 }
 
 func (s *Store) Update(c *Config) {
-	for _, mb := range c.Mailboxes {
-		if exist, ok := s.Mailboxes[mb.Name]; !ok {
-			s.NewMailbox(&mb)
+	for name, mb := range c.Mailboxes {
+		if exist, ok := s.Mailboxes[name]; !ok {
+			s.NewMailbox(name, mb)
 		} else {
 			exist.Username = mb.Username
 			exist.Password = mb.Password
@@ -51,13 +51,12 @@ func (s *Store) ExistsMailbox(name string) bool {
 	return b
 }
 
-func (s *Store) NewMailbox(cfg *MailboxConfig) {
-	if _, found := s.Mailboxes[cfg.Name]; found {
+func (s *Store) NewMailbox(name string, cfg *MailboxConfig) {
+	if _, found := s.Mailboxes[name]; found {
 		return
 	}
 
 	mb := &Mailbox{
-		Name:            cfg.Name,
 		Username:        cfg.Username,
 		Password:        cfg.Password,
 		Description:     cfg.Description,
@@ -65,7 +64,7 @@ func (s *Store) NewMailbox(cfg *MailboxConfig) {
 	}
 	mb.Folders = getFolders(cfg.Folders)
 
-	s.Mailboxes[cfg.Name] = mb
+	s.Mailboxes[name] = mb
 }
 
 func (s *Store) EnsureMailbox(name string) error {
@@ -75,7 +74,7 @@ func (s *Store) EnsureMailbox(name string) error {
 	if !s.canAddMailbox {
 		return fmt.Errorf("mailbox can not be created")
 	}
-	s.NewMailbox(&MailboxConfig{Name: name})
+	s.NewMailbox(name, &MailboxConfig{})
 	return nil
 }
 
@@ -92,15 +91,15 @@ func (s *Store) GetMail(id string) *smtp.Message {
 	return nil
 }
 
-func getFolders(cfg []FolderConfig) map[string]*Folder {
+func getFolders(cfg map[string]*FolderConfig) map[string]*Folder {
 	result := make(map[string]*Folder)
-	for _, sub := range cfg {
-		if strings.ToUpper(sub.Name) == "INBOX" {
-			sub.Name = "INBOX"
+	for name, sub := range cfg {
+		if strings.ToUpper(name) == "INBOX" {
+			name = "INBOX"
 		}
 
 		f := &Folder{
-			Name:        sub.Name,
+			Name:        name,
 			uidNext:     1,
 			uidValidity: uint32(time.Now().Unix()),
 		}
@@ -110,7 +109,7 @@ func getFolders(cfg []FolderConfig) map[string]*Folder {
 		}
 
 		f.Folders = getFolders(sub.Folders)
-		result[sub.Name] = f
+		result[name] = f
 	}
 
 	return result

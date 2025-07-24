@@ -31,10 +31,10 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		{
 			name: "auth required without login",
 			config: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{
-						Name:     "alice@foo.bar",
-						Username: "foo", Password: "bar",
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@foo.bar": {
+						Username: "foo",
+						Password: "bar",
 					},
 				},
 			},
@@ -47,8 +47,8 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		{
 			name: "auth invalid credentials",
 			config: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{Username: "alice", Password: "foo"},
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@foo.bar": {Username: "alice", Password: "foo"},
 				},
 			},
 			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
@@ -60,8 +60,8 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		{
 			name: "auth valid",
 			config: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{Username: "alice", Password: "foo"},
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@foo.bar": {Username: "alice", Password: "foo"},
 				},
 			},
 			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
@@ -73,8 +73,8 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		{
 			name: "mail invalid mailbox",
 			config: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{Name: "bob@foo.bar"},
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"bob@foo.bar": {},
 				},
 			},
 			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
@@ -88,8 +88,8 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		{
 			name: "mail valid mailbox",
 			config: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{Name: "alice@foo.bar"},
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@foo.bar": {},
 				},
 			},
 			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
@@ -111,8 +111,8 @@ func TestHandler_ServeSMTP(t *testing.T) {
 			name: "rcpt invalid mailbox",
 			config: &mail.Config{
 				Settings: &mail.Settings{AutoCreateMailbox: false},
-				Mailboxes: []mail.MailboxConfig{
-					{Name: "alice@foo.bar"},
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@foo.bar": {},
 				},
 			},
 			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
@@ -126,9 +126,9 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		{
 			name: "rcpt valid mailbox",
 			config: &mail.Config{
-				Mailboxes: []mail.MailboxConfig{
-					{Name: "alice@foo.bar"},
-					{Name: "bob@foo.bar"},
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@foo.bar": {},
+					"bob@foo.bar":   {},
 				},
 			},
 			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
@@ -192,7 +192,6 @@ func TestHandler_ServeSMTP(t *testing.T) {
 				require.Equal(t, smtp.Ok, r.Result)
 				require.Contains(t, s.Mailboxes, "bob@foo.bar")
 				box := s.Mailboxes["bob@foo.bar"]
-				require.Equal(t, "bob@foo.bar", box.Name)
 				require.Len(t, box.Folders["INBOX"].Messages, 1)
 			},
 		},
@@ -287,7 +286,7 @@ func sendData(t *testing.T, h smtp.Handler, ctx context.Context) *smtp.DataRespo
 	h.ServeSMTP(rr, smtp.NewDataRequest(&smtp.Message{
 		From:    []smtp.Address{{Address: "alice@foo.bar"}},
 		To:      []smtp.Address{{Address: "bob@foo.bar"}},
-		Time:    time.Now(),
+		Date:    time.Now(),
 		Subject: "A mail message",
 	}, ctx))
 	return expectDataesponse(t, rr.Response)

@@ -23,9 +23,8 @@ func TestImapHandler_Fetch(t *testing.T) {
 	}
 
 	cfg := &mail.Config{
-		Mailboxes: []mail.MailboxConfig{
-			{
-				Name:     "alice@mokapi.io",
+		Mailboxes: map[string]*mail.MailboxConfig{
+			"alice@mokapi.io": {
 				Username: "alice",
 				Password: "foo",
 			},
@@ -59,7 +58,7 @@ func TestImapHandler_Fetch(t *testing.T) {
 						To:          []smtp.Address{{"Bob", "bob@mokapi.io"}},
 						Subject:     "Hello Bob",
 						ContentType: "text/html",
-						Time:        mustTime("2025-07-06T13:01:30+00:00"),
+						Date:        mustTime("2025-07-06T13:01:30+00:00"),
 						Size:        182,
 						Body:        "<h1>Hello Bob</h1>",
 					},
@@ -106,7 +105,7 @@ func TestImapHandler_Fetch(t *testing.T) {
 						To:          []smtp.Address{{"Bob", "bob@mokapi.io"}},
 						Subject:     "Hello Bob",
 						ContentType: "text/html",
-						Time:        mustTime("2025-07-06T13:01:30+00:00"),
+						Date:        mustTime("2025-07-06T13:01:30+00:00"),
 						Size:        182,
 						Body:        "<h1>Hello Bob</h1>",
 					},
@@ -154,21 +153,17 @@ func TestImapHandler_Fetch(t *testing.T) {
 						Body:        "hello",
 						Attachments: []smtp.Attachment{
 							{
-								ContentType: "text/plain; charset=utf-8",
-								Disposition: "",
-								Data:        []byte("hello"),
-								Header: map[string]string{
-									"Content-Transfer-Encoding": "7bit",
-								},
+								ContentType:             "text/plain; charset=utf-8",
+								Disposition:             "",
+								Data:                    []byte("hello"),
+								ContentTransferEncoding: "7bit",
 							},
 							{
-								ContentType: "image/png; charset=utf-8",
-								Disposition: "attachment; name=cat.png",
-								Data:        []byte("hello"),
-								ContentId:   "foo",
-								Header: map[string]string{
-									"Content-Transfer-Encoding": "base64",
-								},
+								ContentType:             "image/png; charset=utf-8",
+								Disposition:             "attachment; name=cat.png",
+								Data:                    []byte("hello"),
+								ContentId:               "foo",
+								ContentTransferEncoding: "base64",
 							},
 						},
 					},

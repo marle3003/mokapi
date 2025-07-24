@@ -227,30 +227,8 @@ func (mb *Mailbox) NumMessages() int {
 	return n
 }
 
-func (mb *Mailbox) List(pattern string) []*Folder {
-	var result []*Folder
-
-	if pattern == "" {
-		for _, child := range mb.Folders {
-			result = append(result, child)
-		}
-		return result
-	}
-	parts := strings.Split(pattern, "/")
-
-	for _, child := range mb.Folders {
-		if parts[0] == child.Name {
-			if len(parts) > 1 {
-				result = append(result, child.List(strings.Join(parts[1:], "/"), nil)...)
-			} else {
-				for _, sub := range child.Folders {
-					result = append(result, sub)
-				}
-			}
-		}
-	}
-
-	return result
+func (mb *Mailbox) List(ref string) []*Folder {
+	return List(mb.Folders, ref)
 }
 
 func (f *Folder) UidValidity() uint32 {
@@ -352,40 +330,83 @@ func (f *Folder) AddFolder(child *Folder) {
 	f.Folders[child.Name] = child
 }
 
-func (f *Folder) List(pattern string, flags []imap.MailboxFlags) []*Folder {
+func (f *Folder) List(pattern string, flags []imap.MailboxFlags) []imap.ListEntry {
 	if pattern == "" {
 		return nil
 	}
 	parts := strings.Split(pattern, "/")
-	var result []*Folder
+	var result []imap.ListEntry
 
-	if len(parts) == 1 {
-		switch parts[0] {
-		case "*":
-			if f.HasFlags(flags...) {
-				result = append(result, f)
-			}
-			for _, child := range f.Folders {
-				if !child.HasFlags(flags...) {
-					continue
-				}
-				result = append(result, child.List("*", flags)...)
-			}
-		case "%":
-			if f.HasFlags(flags...) {
-				result = append(result, f)
-			}
-		default:
-			if parts[0] == f.Name && f.HasFlags(flags...) {
-				result = append(result, f)
-			}
+	switch parts[0] {
+	case "*":
+		if len(parts) == 1 && f.HasFlags(flags...) {
+			result = append(result, imap.ListEntry{
+				Flags:     f.Flags,
+				Delimiter: "/",
+				Name:      f.Name,
+			})
 		}
-	} else {
-		if parts[0] != f.Name {
-			return nil
-		}
+
 		for _, child := range f.Folders {
-			result = append(result, child.List(strings.Join(parts[1:], "/"), flags)...)
+			pattern = parts[0]
+			if len(parts) > 1 {
+				pattern = strings.Join(parts[1:], "/")
+			}
+
+			nested := child.List(pattern, flags)
+			for _, e := range nested {
+				result = append(result, imap.ListEntry{
+					Flags:     e.Flags,
+					Delimiter: "/",
+					Name:      join(f.Name, e.Name),
+				})
+			}
+		}
+	case "%":
+		if len(parts) == 1 {
+			for _, child := range f.Folders {
+				if child.HasFlags(flags...) {
+					result = append(result, imap.ListEntry{
+						Flags:     f.Flags,
+						Delimiter: "/",
+						Name:      f.Name,
+					})
+				}
+			}
+		} else {
+			pattern = strings.Join(parts[1:], "/")
+
+			for _, child := range f.Folders {
+				nested := child.List(pattern, flags)
+				for _, e := range nested {
+					result = append(result, imap.ListEntry{
+						Flags:     e.Flags,
+						Delimiter: "/",
+						Name:      join(f.Name, e.Name),
+					})
+				}
+			}
+		}
+	default:
+		if len(parts) == 1 {
+			if parts[0] == f.Name && f.HasFlags(flags...) {
+				result = append(result, imap.ListEntry{
+					Flags:     f.Flags,
+					Delimiter: "/",
+					Name:      f.Name,
+				})
+			}
+		} else {
+			for _, child := range f.Folders {
+				nested := child.List(strings.Join(parts[1:], "/"), flags)
+				for _, e := range nested {
+					result = append(result, imap.ListEntry{
+						Flags:     e.Flags,
+						Delimiter: "/",
+						Name:      join(f.Name, e.Name),
+					})
+				}
+			}
 		}
 	}
 
@@ -410,4 +431,45 @@ func (f *Folder) HasFlags(flags ...imap.MailboxFlags) bool {
 		}
 	}
 	return true
+}
+
+func (f *Folder) ListMessages() []*Mail {
+	var result []*Mail
+	result = append(result, f.Messages...)
+
+	for _, child := range f.Folders {
+		result = append(result, child.ListMessages()...)
+	}
+
+	return result
+}
+
+func join(elems ...string) string {
+	return strings.Join(elems, "/")
+}
+
+func List(folders map[string]*Folder, ref string) []*Folder {
+	var result []*Folder
+
+	if ref == "" {
+		for _, child := range folders {
+			result = append(result, child)
+		}
+		return result
+	}
+	parts := strings.Split(ref, "/")
+
+	for _, child := range folders {
+		if parts[0] == child.Name {
+			if len(parts) > 1 {
+				result = append(result, List(child.Folders, strings.Join(parts[1:], "/"))...)
+			} else {
+				for _, sub := range child.Folders {
+					result = append(result, sub)
+				}
+			}
+		}
+	}
+
+	return result
 }

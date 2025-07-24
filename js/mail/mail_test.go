@@ -41,15 +41,12 @@ m.send('smtp://%v', {from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bo
 		},
 		{
 			name: "Send mail with auth login",
-			cfg: &mail.Config{Mailboxes: []mail.MailboxConfig{
-				{
-					Name:     "alice@mokapi.io",
+			cfg: &mail.Config{Mailboxes: map[string]*mail.MailboxConfig{
+				"alice@mokapi.io": {
 					Username: "alice",
 					Password: "secret",
 				},
-				{
-					Name: "bob@mokapi.io",
-				},
+				"bob@mokapi.io": {},
 			}},
 			run: func(t *testing.T, vm *goja.Runtime, addr string) {
 				_, err := vm.RunString(fmt.Sprintf(`const m = require('mokapi/smtp')
@@ -68,15 +65,12 @@ m.send('smtp://%v', {from: {name: 'Alice', address: 'alice@mokapi.io'}, to: ['bo
 		},
 		{
 			name: "Send mail with auth plain",
-			cfg: &mail.Config{Mailboxes: []mail.MailboxConfig{
-				{
-					Name:     "alice@mokapi.io",
+			cfg: &mail.Config{Mailboxes: map[string]*mail.MailboxConfig{
+				"alice@mokapi.io": {
 					Username: "alice",
 					Password: "secret",
 				},
-				{
-					Name: "bob@mokapi.io",
-				},
+				"bob@mokapi.io": {},
 			}},
 			run: func(t *testing.T, vm *goja.Runtime, addr string) {
 				_, err := vm.RunString(fmt.Sprintf(`const m = require('mokapi/smtp')

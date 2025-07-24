@@ -1,42 +1,10 @@
 import {metrics} from "./metrics.js";
 
-export let services = [
-    {
-        name: 'Mail Testserver',
-        description: 'This is a sample smtp server',
-        version: '1.0',
-        servers: [
-            {
-                name: 'smtp',
-                description: "Mokapi's SMTP Server",
-                host: 'localhost:8025',
-                protocol: 'smtp'
-            },
-            {
-                name: 'imap',
-                description: "Mokapi's IMAP Server",
-                host: 'localhost:8030',
-                protocol: 'imap'
-            },
-        ],
-        mailboxes: [
-            {name: 'alice@mokapi.io', username: 'alice', password: 'foo', description: 'a description using *markdown*', numMessages: 10},
-            {name: 'bob@mokapi.io', username: 'bob', password: 'foo', numMessages: 0},
-        ],
-        rules: [
-            {name: 'mokapi.io', sender: '.*@mokapi.io', action: 'allow'},
-            {name: 'spam', recipient: '.*@foo.bar', subject: 'spam', body: 'spam', action: 'deny'}
-        ],
-        settings: { maxRecipients: 0, autoCreateMailbox: true },
-        metrics: metrics.filter(x => x.name.startsWith("smtp"))
-    }
-]
-
 export let mails = [
     {
         from: [{ name: 'Alice', address: 'alice@mokapi.io' }],
         to: [{ name: 'Bob', address: 'bob@mokapi.io'},{address: 'carol@mokapi.io'}],
-        time: '2023-02-23T08:49:25+01:00',
+        date: '2023-02-23T08:49:25+01:00',
         contentType: 'text/html',
         encoding: 'quoted-printable',
         messageId: '20230223-084925.763-4196@mokapi.io',
@@ -65,6 +33,7 @@ export let mails = [
                 name: 'icon.png',
                 contentType: 'image/png',
                 disposition: 'inline',
+                contentId: 'icon.png',
                 size: 372,
                 data: open('icon.png', { as: 'binary' })
             }
@@ -81,6 +50,55 @@ export let mails = [
             }
         ]
     },
+]
+
+export let services = [
+    {
+        name: 'Mail Testserver',
+        description: 'This is a sample smtp server',
+        version: '1.0',
+        servers: [
+            {
+                name: 'smtp',
+                description: "Mokapi's SMTP Server",
+                host: 'localhost:8025',
+                protocol: 'smtp'
+            },
+            {
+                name: 'imap',
+                description: "Mokapi's IMAP Server",
+                host: 'localhost:8030',
+                protocol: 'imap'
+            },
+        ],
+        mailboxes: [
+            {
+                name: 'alice@mokapi.io',
+                username: 'alice',
+                password: 'foo',
+                description: 'a description using *markdown*',
+                numMessages: 0
+            },
+            {
+                name: 'bob@mokapi.io',
+                username: 'bob',
+                password: 'foo',
+                numMessages: 1,
+                folders: [
+                    {
+                        name: 'INBOX',
+                        messages: mails
+                    }
+                ]
+            },
+        ],
+        rules: [
+            {name: 'mokapi.io', sender: '.*@mokapi.io', action: 'allow'},
+            {name: 'spam', recipient: '.*@foo.bar', subject: 'spam', body: 'spam', action: 'deny'}
+        ],
+        settings: { maxRecipients: 0, autoCreateMailbox: true },
+        metrics: metrics.filter(x => x.name.startsWith("smtp"))
+    }
 ]
 
 export let mailEvents = [

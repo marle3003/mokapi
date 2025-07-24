@@ -64,7 +64,7 @@ func (h *Handler) List(ref, pattern string, flags []imap.MailboxFlags, ctx conte
 			list = append(list, imap.ListEntry{
 				Delimiter: "/",
 				Flags:     f.Flags,
-				Name:      f.Name,
+				Name:      strings.TrimPrefix(join(ref, f.Name), "/"),
 			})
 		}
 	}

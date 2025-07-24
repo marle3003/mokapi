@@ -54,7 +54,7 @@ func writeMessage(msg *Mail, opt imap.FetchOptions, w imap.MessageWriter) {
 		w.WriteUID(msg.UId)
 	}
 	if opt.InternalDate {
-		w.WriteInternalDate(msg.Time)
+		w.WriteInternalDate(msg.Date)
 	}
 	if opt.RFC822Size {
 		w.WriteRFC822Size(uint32(msg.Size))
@@ -64,7 +64,7 @@ func writeMessage(msg *Mail, opt imap.FetchOptions, w imap.MessageWriter) {
 	}
 	if opt.Envelope {
 		env := &imap.Envelope{
-			Date:      msg.Time,
+			Date:      msg.Date,
 			Subject:   msg.Subject,
 			From:      toEnvelopeAddressList(msg.From),
 			ReplyTo:   toEnvelopeAddressList(msg.ReplyTo),
@@ -99,7 +99,7 @@ func writeMessage(msg *Mail, opt imap.FetchOptions, w imap.MessageWriter) {
 				Type:        partType.Type,
 				Subtype:     partType.Subtype,
 				Params:      partType.Parameters,
-				Encoding:    part.Header["Content-Transfer-Encoding"],
+				Encoding:    part.ContentTransferEncoding,
 				Size:        uint32(len(part.Data)),
 				Disposition: part.Disposition,
 			}
@@ -121,7 +121,7 @@ func writeMessage(msg *Mail, opt imap.FetchOptions, w imap.MessageWriter) {
 
 		if body.Specifier == "header" {
 			if len(body.Fields) == 0 {
-				bw.WriteHeader("date", msg.Time.Format(imap.DateTimeLayout))
+				bw.WriteHeader("date", msg.Date.Format(imap.DateTimeLayout))
 				bw.WriteHeader("subject", msg.Subject)
 				bw.WriteHeader("from", addressListToString(msg.From))
 				bw.WriteHeader("to", addressListToString(msg.To))
@@ -141,7 +141,7 @@ func writeMessage(msg *Mail, opt imap.FetchOptions, w imap.MessageWriter) {
 				for _, field := range body.Fields {
 					switch strings.ToLower(field) {
 					case "date":
-						bw.WriteHeader("date", msg.Time.Format(imap.DateTimeLayout))
+						bw.WriteHeader("date", msg.Date.Format(imap.DateTimeLayout))
 					case "subject":
 						bw.WriteHeader("subject", msg.Subject)
 					case "from":
@@ -192,9 +192,10 @@ func writeMessage(msg *Mail, opt imap.FetchOptions, w imap.MessageWriter) {
 					continue
 				}
 				att := msg.Attachments[index]
-				for k, v := range att.Header {
+				for k, v := range att.Headers() {
 					bw.WriteHeader(k, v)
 				}
+
 				bw.WriteBody(string(att.Data))
 			}
 

@@ -1,13 +1,11 @@
 package api
 
 import (
-	"fmt"
 	"github.com/pkg/errors"
 	"mokapi/runtime/search"
 	"net/http"
 	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -23,21 +21,11 @@ func (h *handler) getSearchResults(w http.ResponseWriter, r *http.Request) {
 	q := getQueryParamInsensitive(r.URL.Query(), queryText)
 	sr.Query, sr.Params = parseQuery(q)
 
-	sIndex := getQueryParamInsensitive(r.URL.Query(), searchIndex)
-	if sIndex != "" {
-		var err error
-		sr.Index, err = strconv.Atoi(sIndex)
-		if err != nil {
-			writeError(w, fmt.Errorf("invalid index value: %s", err), http.StatusBadRequest)
-		}
-	}
-	sLimit := getQueryParamInsensitive(r.URL.Query(), searchLimit)
-	if sLimit != "" {
-		var err error
-		sr.Limit, err = strconv.Atoi(sLimit)
-		if err != nil {
-			writeError(w, fmt.Errorf("invalid limit value: %s", err), http.StatusBadRequest)
-		}
+	var err error
+	sr.Index, sr.Limit, err = getPageInfo(r)
+	if err != nil {
+		writeError(w, err, http.StatusBadRequest)
+		return
 	}
 
 	results, err := h.app.Search(sr)

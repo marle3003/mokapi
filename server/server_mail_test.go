@@ -52,6 +52,33 @@ func TestSmtp(t *testing.T) {
 			},
 		},
 		{
+			name: "add smtp server only port defined",
+			test: func(t *testing.T, m *server.MailManager) {
+				m.UpdateConfig(dynamic.ConfigEvent{
+					Config: &dynamic.Config{
+						Info: dynamictest.NewConfigInfo(),
+						Data: &mail.Config{
+							Info: mail.Info{Name: "foo"},
+							Servers: map[string]*mail.Server{
+								"foo": {
+									Host:     fmt.Sprintf(":%d", port),
+									Protocol: "smtp",
+								},
+							},
+							Settings: &mail.Settings{AutoCreateMailbox: true},
+						},
+					},
+				})
+
+				err := smtptest.SendMail("from@foo.bar",
+					"rcipient@foo.bar",
+					fmt.Sprintf("smtp://localhost:%d", port),
+					smtptest.WithSubject("Test Mail"),
+				)
+				require.NoError(t, err)
+			},
+		},
+		{
 			name: "update smtp server",
 			test: func(t *testing.T, m *server.MailManager) {
 				m.UpdateConfig(dynamic.ConfigEvent{

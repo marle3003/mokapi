@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 )
 
@@ -256,4 +257,24 @@ func getServiceName(a interface{}) string {
 		return v.Name
 	}
 	return ""
+}
+
+func getPageInfo(r *http.Request) (index int, limit int, err error) {
+	limit = 10
+
+	sIndex := getQueryParamInsensitive(r.URL.Query(), searchIndex)
+	if sIndex != "" {
+		index, err = strconv.Atoi(sIndex)
+		if err != nil {
+			err = fmt.Errorf("invalid index value: %s", err)
+		}
+	}
+	sLimit := getQueryParamInsensitive(r.URL.Query(), searchLimit)
+	if sLimit != "" {
+		limit, err = strconv.Atoi(sLimit)
+		if err != nil {
+			err = fmt.Errorf("invalid limit value: %s", err)
+		}
+	}
+	return
 }

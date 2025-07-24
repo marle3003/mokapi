@@ -39,7 +39,36 @@ export default async function() {
             case 'serviceMail':
                 response.data = mailServices[0]
                 return true
+            case 'mailboxes':
+                response.data = mailServices[0].mailboxes
+                return true
+            case 'mailbox':
+                for (const mb of mailServices[0].mailboxes) {
+                    if (mb.name === request.path.mailbox) {
+                        response.data = {
+                            ...mb,
+                            folders: mb.folders.map(x => x.name)
+                        }
+                        return true
+                    }
+                }
+                response.statusCode = 404
+                return true
+            case 'smtpMessages':
+                for (const mb of mailServices[0].mailboxes) {
+                    if (mb.name === request.path.mailbox) {
+                        const result = []
+                        for (const f of mb.folders) {
+                            result.push(...f.messages)
+                        }
+                        response.data = result
+                        return true
+                    }
+                }
+                response.statusCode = 404
+                return true
             case 'smtpMail':
+            case 'smtpMessage':
                 const messageId = request.path['messageId']
                 const mail = getMail(messageId)
                 if (mail == null) {
@@ -49,6 +78,7 @@ export default async function() {
                 }
                 return true
             case 'smtpMailAttachment':
+            case 'smtpAttachment':
                 const attachment = getAttachment(request.path['messageId'], request.path['name'])
                 if (attachment == null) {
                     response.statusCode = 404

@@ -15,17 +15,13 @@ func TestStore_Update(t *testing.T) {
 			name: "add mailbox",
 			configs: []*Config{
 				{
-					Mailboxes: []MailboxConfig{
-						{
-							Name: "foo@example.com",
-						},
+					Mailboxes: map[string]*MailboxConfig{
+						"foo@example.com": {},
 					},
 				},
 				{
-					Mailboxes: []MailboxConfig{
-						{
-							Name: "bar@example.com",
-						},
+					Mailboxes: map[string]*MailboxConfig{
+						"bar@example.com": {},
 					},
 				},
 			},
@@ -37,19 +33,16 @@ func TestStore_Update(t *testing.T) {
 			name: "update mailbox",
 			configs: []*Config{
 				{
-					Mailboxes: []MailboxConfig{
-						{
-							Name: "foo@example.com",
-						},
+					Mailboxes: map[string]*MailboxConfig{
+						"foo@example.com": {},
 					},
 				},
 				{
-					Mailboxes: []MailboxConfig{
-						{
-							Name:     "foo@example.com",
+					Mailboxes: map[string]*MailboxConfig{
+						"foo@example.com": {
 							Password: "secret",
-							Folders: []FolderConfig{
-								{Name: "Trash"},
+							Folders: map[string]*FolderConfig{
+								"Trash": {},
 							},
 						},
 					},

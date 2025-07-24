@@ -58,6 +58,10 @@ h4 {
   font-size: 1.1rem;
   font-weight: 600;
 }
+h5 {
+  font-size: 1.03rem;
+  font-weight: 600;
+}
 h6 {
   color: var(--color-text);
 }

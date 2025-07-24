@@ -1,0 +1,19 @@
+meta {
+  name: mailbox
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/services/mail/{{mailServerName}}/mailboxes/:mailbox
+  body: none
+  auth: inherit
+}
+
+params:path {
+  mailbox: alice@mokapi.io
+}
+
+settings {
+  encodeUrl: true
+}

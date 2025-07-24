@@ -13,17 +13,15 @@ func TestConfig_Patch(t *testing.T) {
 		test    func(t *testing.T, result *mail.Config)
 	}{
 		{
-			name: "description and version",
+			name: "description",
 			configs: []*mail.Config{
 				{},
 				{Info: mail.Info{
 					Description: "foo",
-					Version:     "2.0",
 				}},
 			},
 			test: func(t *testing.T, result *mail.Config) {
 				require.Equal(t, "foo", result.Info.Description)
-				require.Equal(t, "2.0", result.Info.Version)
 			},
 		},
 		{
@@ -72,19 +70,16 @@ func TestConfig_Patch(t *testing.T) {
 			name: "update mailbox",
 			configs: []*mail.Config{
 				{
-					Mailboxes: []mail.MailboxConfig{
-						{
-							Name: "foo@example.com",
-						},
+					Mailboxes: map[string]*mail.MailboxConfig{
+						"foo@example.com": {},
 					},
 				},
 				{
-					Mailboxes: []mail.MailboxConfig{
-						{
-							Name:     "foo@example.com",
+					Mailboxes: map[string]*mail.MailboxConfig{
+						"foo@example.com": {
 							Password: "secret",
-							Folders: []mail.FolderConfig{
-								{Name: "foo"},
+							Folders: map[string]*mail.FolderConfig{
+								"foo": {},
 							},
 						},
 					},
@@ -92,32 +87,30 @@ func TestConfig_Patch(t *testing.T) {
 			},
 			test: func(t *testing.T, result *mail.Config) {
 				require.Len(t, result.Mailboxes, 1)
-				require.Equal(t, "secret", result.Mailboxes[0].Password)
-				require.Equal(t, []mail.FolderConfig{
-					{Name: "foo"},
-				}, result.Mailboxes[0].Folders)
+				require.Equal(t, "secret", result.Mailboxes["foo@example.com"].Password)
+				require.Equal(t, map[string]*mail.FolderConfig{
+					"foo": {},
+				}, result.Mailboxes["foo@example.com"].Folders)
 			},
 		},
 		{
 			name: "update mailbox folder",
 			configs: []*mail.Config{
 				{
-					Mailboxes: []mail.MailboxConfig{
-						{
-							Name: "foo@example.com",
-							Folders: []mail.FolderConfig{
-								{Name: "foo", Flags: []string{"foo"}},
+					Mailboxes: map[string]*mail.MailboxConfig{
+						"foo@example.com": {
+							Folders: map[string]*mail.FolderConfig{
+								"foo": {Flags: []string{"foo"}},
 							},
 						},
 					},
 				},
 				{
-					Mailboxes: []mail.MailboxConfig{
-						{
-							Name:     "foo@example.com",
+					Mailboxes: map[string]*mail.MailboxConfig{
+						"foo@example.com": {
 							Password: "secret",
-							Folders: []mail.FolderConfig{
-								{Name: "foo", Flags: []string{"foo", "bar"}},
+							Folders: map[string]*mail.FolderConfig{
+								"foo": {Flags: []string{"foo", "bar"}},
 							},
 						},
 					},
@@ -125,10 +118,10 @@ func TestConfig_Patch(t *testing.T) {
 			},
 			test: func(t *testing.T, result *mail.Config) {
 				require.Len(t, result.Mailboxes, 1)
-				require.Equal(t, "secret", result.Mailboxes[0].Password)
-				require.Equal(t, []mail.FolderConfig{
-					{Name: "foo", Flags: []string{"foo", "bar"}},
-				}, result.Mailboxes[0].Folders)
+				require.Equal(t, "secret", result.Mailboxes["foo@example.com"].Password)
+				require.Equal(t, map[string]*mail.FolderConfig{
+					"foo": {Flags: []string{"foo", "bar"}},
+				}, result.Mailboxes["foo@example.com"].Folders)
 			},
 		},
 	}

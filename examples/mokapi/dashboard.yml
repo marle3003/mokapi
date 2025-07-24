@@ -97,10 +97,124 @@ paths:
             application/json:
               schema:
                 $ref: 'ldap.yml#/components/schemas/LdapInfo'
+  /api/services/mail/{name}/mailboxes:
+    get:
+      summary: Retrieve mailboxes for given mail server
+      operationId: mailboxes
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mail
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './mail.yml#/components/schemas/Mailbox'
+        "404":
+          description: mail not found
+  /api/services/mail/{name}/mailboxes/{mailbox}:
+    get:
+      summary: Retrieve mailboxes for given mail server
+      operationId: mailbox
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: mailbox
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mail
+          content:
+            application/json:
+              schema:
+                $ref: './mail.yml#/components/schemas/MailboxDetails'
+        "404":
+          description: mail not found
+  /api/services/mail/{name}/mailboxes/{mailbox}/messages:
+    get:
+      summary: Retrieve mailboxes for given mail server
+      operationId: smtpMessages
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: mailbox
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mail
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: './mail.yml#/components/schemas/SmtpMessageInfo'
+  /api/services/mail/messages/{messageId}:
+    get:
+      summary: Retrieve the mail with the given messageId
+      operationId: smtpMessage
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mail
+          content:
+            application/json:
+              schema:
+                $ref: './mail.yml#/components/schemas/SmtpMessage'
+        "404":
+          description: mail not found
+  /api/services/mail/messages/{messageId}/attachments/{name}:
+    get:
+      summary: Retrieve mail attachment's content
+      operationId: smtpMailAttachment
+      parameters:
+        - name: messageId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: name
+          description: name or content-id of the attachment
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: mail
+          content:
+            '*/*':
+              schema:
+                type: string
+        "404":
+          description: mail attachment not found
   /api/services/mail/mails/{messageId}:
     get:
       summary: Retrieve the mail with the given messageId
       operationId: smtpMail
+      deprecated: true
       parameters:
         - name: messageId
           in: path
@@ -135,7 +249,7 @@ paths:
           description: mail
           content:
             '*/*':
-              schema:
+              schema: {}
         "404":
           description: mail attachment not found
   /api/services/kafka/{name}/groups:

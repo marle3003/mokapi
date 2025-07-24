@@ -32,7 +32,7 @@ func Test_Mail(t *testing.T) {
 				r.Equal(t, smtp.Address{Address: "bob@mokapi.io"}, v.To[0])
 				r.Equal(t, "A test mail", v.Subject)
 				r.Equal(t, "Hello Bob", v.Body)
-				r.True(t, v.Time.After(time.Now().Add(-time.Minute*1)), "send date should be in the last minute")
+				r.True(t, v.Date.After(time.Now().Add(-time.Minute*1)), "send date should be in the last minute")
 			},
 		},
 		{
@@ -45,7 +45,7 @@ func Test_Mail(t *testing.T) {
 				r.Equal(t, smtp.Address{Address: "bob@mokapi.io"}, v.To[0])
 				r.Equal(t, "A test mail", v.Subject)
 				r.Equal(t, "Hello Bob", v.Body)
-				r.True(t, v.Time.After(time.Now().Add(-time.Minute*1)), "send date should be in the last minute")
+				r.True(t, v.Date.After(time.Now().Add(-time.Minute*1)), "send date should be in the last minute")
 			},
 		},
 		{
@@ -58,7 +58,7 @@ func Test_Mail(t *testing.T) {
 				r.Equal(t, smtp.Address{Address: "bob@mokapi.io"}, v.To[0])
 				r.Equal(t, "A test mail", v.Subject)
 				r.Equal(t, "Hello Bob", v.Body)
-				r.True(t, v.Time.After(time.Now().Add(-time.Minute*1)), "send date should be in the last minute")
+				r.True(t, v.Date.After(time.Now().Add(-time.Minute*1)), "send date should be in the last minute")
 			},
 		},
 		{
