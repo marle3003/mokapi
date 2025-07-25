@@ -98,7 +98,7 @@ export let services = [
             {name: 'spam', recipient: '.*@foo.bar', subject: 'spam', body: 'spam', action: 'deny'}
         ],
         settings: { maxRecipients: 0, autoCreateMailbox: true },
-        metrics: metrics.filter(x => x.name.startsWith("smtp"))
+        metrics: metrics.filter(x => x.name.startsWith("mail"))
     }
 ]
 

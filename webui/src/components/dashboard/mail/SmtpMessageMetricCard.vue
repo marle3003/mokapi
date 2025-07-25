@@ -9,16 +9,16 @@ const props = defineProps({
 })
 
 const {fetchServices} = useService()
-const { sum, max } = useMetrics()
+const { sum } = useMetrics()
 const messages = ref(0)
 const {services, close} = fetchServices('mail')
 watchEffect(() =>{
     messages.value = 0
     for (let service of services.value){
         if (props.labels){
-            messages.value += sum(service.metrics, 'smtp_mails_total', ...props.labels)
+            messages.value += sum(service.metrics, 'mail_mails_total', ...props.labels)
         }else {
-            messages.value += sum(service.metrics, 'smtp_mails_total')
+            messages.value += sum(service.metrics, 'mail_mails_total')
         }
     }
 })
