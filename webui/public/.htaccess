@@ -26,6 +26,12 @@
   # Redirect anything under /docs/blogs/ to /docs/resources/blogs/
   RewriteRule ^docs/blogs/(.*)$ /docs/resources/blogs/$1 [R=301,L]
 
+  # Redirect exactly /smtp to /mail
+  RewriteRule ^smtp/?$ /mail [R=302,L]
+
+  # Redirect anything under /docs/guides/smtp to /docs/guides/mail/
+  RewriteRule ^docs/guides/smtp/?(.*)$ /docs/guides/mail/$1 [R=302,L]
+
   # rewrite for bots if tailing /
   RewriteCond %{HTTP_USER_AGENT} googlebot|bingbot|Seobility|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora\ link\ preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp|redditbot|applebot|flipboard|tumblr|bitlybot|skypeuripreview|nuzzel|discordbot|google\ page\ speed|qwantify|bitrix\ link\ preview|xing-contenttabreceiver|google-inspectiontool|chrome-lighthouse|telegrambot|amazonbot [NC]
   RewriteCond %{REQUEST_FILENAME} !^$
