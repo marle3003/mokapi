@@ -17,7 +17,7 @@ func (r Rules) RunSender(sender string) *RejectResponse {
 				return &RejectResponse{
 					StatusCode:         smtp.AddressRejected.StatusCode,
 					EnhancedStatusCode: smtp.AddressRejected.EnhancedStatusCode,
-					Text:               rule.formatText("sender %v does match deny rule: %v", sender, rule.Sender),
+					Message:            rule.formatText("sender %v does match deny rule: %v", sender, rule.Sender),
 				}
 			} else if !match && rule.Action == Allow {
 				if rule.RejectResponse != nil {
@@ -26,7 +26,7 @@ func (r Rules) RunSender(sender string) *RejectResponse {
 				return &RejectResponse{
 					StatusCode:         smtp.AddressRejected.StatusCode,
 					EnhancedStatusCode: smtp.AddressRejected.EnhancedStatusCode,
-					Text:               rule.formatText("sender %v does not match allow rule: %v", sender, rule.Sender),
+					Message:            rule.formatText("sender %v does not match allow rule: %v", sender, rule.Sender),
 				}
 			}
 		}
@@ -45,7 +45,7 @@ func (r Rules) runRcpt(to string) *RejectResponse {
 				return &RejectResponse{
 					StatusCode:         smtp.AddressRejected.StatusCode,
 					EnhancedStatusCode: smtp.AddressRejected.EnhancedStatusCode,
-					Text:               rule.formatText("recipient %v does match deny rule: %v", to, rule.Recipient),
+					Message:            rule.formatText("recipient %v does match deny rule: %v", to, rule.Recipient),
 				}
 			} else if !match && rule.Action == Allow {
 				if rule.RejectResponse != nil {
@@ -54,7 +54,7 @@ func (r Rules) runRcpt(to string) *RejectResponse {
 				return &RejectResponse{
 					StatusCode:         smtp.AddressRejected.StatusCode,
 					EnhancedStatusCode: smtp.AddressRejected.EnhancedStatusCode,
-					Text:               rule.formatText("recipient %v does not match allow rule: %v", to, rule.Recipient),
+					Message:            rule.formatText("recipient %v does not match allow rule: %v", to, rule.Recipient),
 				}
 			}
 		}
@@ -74,7 +74,7 @@ func (r Rules) runMail(m *smtp.Message) *RejectResponse {
 	return nil
 }
 
-func (r Rule) runSubject(subject string) *RejectResponse {
+func (r *Rule) runSubject(subject string) *RejectResponse {
 	if r.Subject == nil {
 		return nil
 	}
@@ -86,7 +86,7 @@ func (r Rule) runSubject(subject string) *RejectResponse {
 		return &RejectResponse{
 			StatusCode:         smtp.MailReject.StatusCode,
 			EnhancedStatusCode: smtp.MailReject.EnhancedStatusCode,
-			Text:               r.formatText("subject %v does match deny rule: %v", subject, r.Subject),
+			Message:            r.formatText("subject %v does match deny rule: %v", subject, r.Subject),
 		}
 	} else if !match && r.Action == Allow {
 		if r.RejectResponse != nil {
@@ -95,13 +95,13 @@ func (r Rule) runSubject(subject string) *RejectResponse {
 		return &RejectResponse{
 			StatusCode:         smtp.MailReject.StatusCode,
 			EnhancedStatusCode: smtp.MailReject.EnhancedStatusCode,
-			Text:               r.formatText("subject %v does not match allow rule: %v", subject, r.Subject),
+			Message:            r.formatText("subject %v does not match allow rule: %v", subject, r.Subject),
 		}
 	}
 	return nil
 }
 
-func (r Rule) runBody(body string) *RejectResponse {
+func (r *Rule) runBody(body string) *RejectResponse {
 	if r.Body == nil {
 		return nil
 	}
@@ -113,7 +113,7 @@ func (r Rule) runBody(body string) *RejectResponse {
 		return &RejectResponse{
 			StatusCode:         smtp.MailReject.StatusCode,
 			EnhancedStatusCode: smtp.MailReject.EnhancedStatusCode,
-			Text:               r.formatText("body %v does match deny rule: %v", body, r.Body),
+			Message:            r.formatText("body %v does match deny rule: %v", body, r.Body),
 		}
 	} else if !match && r.Action == Allow {
 		if r.RejectResponse != nil {
@@ -122,13 +122,13 @@ func (r Rule) runBody(body string) *RejectResponse {
 		return &RejectResponse{
 			StatusCode:         smtp.MailReject.StatusCode,
 			EnhancedStatusCode: smtp.MailReject.EnhancedStatusCode,
-			Text:               r.formatText("body %v does not match allow rule: %v", body, r.Body),
+			Message:            r.formatText("body %v does not match allow rule: %v", body, r.Body),
 		}
 	}
 	return nil
 }
 
-func (r Rule) formatText(format string, a ...interface{}) string {
+func (r *Rule) formatText(format string, a ...interface{}) string {
 	s := fmt.Sprintf(format, a...)
 	if len(r.Name) > 0 {
 		return fmt.Sprintf("rule %v: %v", r.Name, s)

@@ -31,7 +31,7 @@
           "Quick Start": "guides/ldap/quick-start.md"
         }
       },
-      "Email": {
+      "Mail": {
         "index": "guides/mail/overview.md",
         "items": {
           "Quick Start": "guides/mail/quick-start.md",

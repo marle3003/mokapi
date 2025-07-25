@@ -6,5 +6,6 @@ servers:
     host: localhost:8025
     protocol: smtps
 rules:
-  - sender: .*@foo.bar
+  allowSender:
+    sender: .*@foo.bar
     action: allow

@@ -18,6 +18,7 @@ declare interface SmtpMailbox{
     password: string
     description: string
     numMessages: number
+    folders?: string[]
 }
 
 declare interface SmtpRule {
@@ -53,7 +54,7 @@ declare interface Mail {
 	bcc: MailAddress[]    
 	messageId: string    
     inReplyTo: string   
-	time: number
+	date: number
 	subject: string      
 	contentType: string      
 	contentTransferEncoding: string      

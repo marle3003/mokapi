@@ -11,6 +11,7 @@ import (
 )
 
 var serverNamePattern = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
+var ruleNamePattern = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
 
 type Config struct {
 	Version   string                    `yaml:"mail" json:"mail"`
@@ -22,8 +23,16 @@ type Config struct {
 }
 
 type Info struct {
-	Name        string `yaml:"title" json:"title"`
-	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+	Name        string   `yaml:"title" json:"title"`
+	Description string   `yaml:"description,omitempty" json:"description,omitempty"`
+	Version     string   `yaml:"version" json:"version"`
+	Contact     *Contact `yaml:"contact,omitempty" json:"contact,omitempty"`
+}
+
+type Contact struct {
+	Name  string `yaml:"name,omitempty" json:"name,omitempty"`
+	Url   string `yaml:"url,omitempty" json:"url,omitempty"`
+	Email string `yaml:"email,omitempty" json:"email,omitempty"`
 }
 
 type Server struct {
@@ -49,9 +58,9 @@ type FolderConfig struct {
 	Folders map[string]*FolderConfig `yaml:"folders" json:"folders"`
 }
 
-type RuleAction string
+type Rules map[string]*Rule
 
-type Rules []Rule
+type RuleAction string
 
 const (
 	Allow RuleAction = "allow"
@@ -59,7 +68,7 @@ const (
 )
 
 type Rule struct {
-	Name           string          `yaml:"name" json:"name"`
+	Name           string
 	Sender         *RuleExpr       `yaml:"sender" json:"sender"`
 	Recipient      *RuleExpr       `yaml:"recipient" json:"recipient"`
 	Subject        *RuleExpr       `yaml:"subject" json:"subject"`
@@ -75,10 +84,14 @@ type RuleExpr struct {
 type RejectResponse struct {
 	StatusCode         smtp.StatusCode         `yaml:"statusCode" json:"statusCode"`
 	EnhancedStatusCode smtp.EnhancedStatusCode `yaml:"enhancedStatusCode" json:"enhancedStatusCode"`
-	Text               string                  `yaml:"text" json:"text"`
+	Message            string                  `yaml:"message" json:"message"`
 }
 
 func (c *Config) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
+	if c.Info.Name == "" {
+		return fmt.Errorf("mail configuration missing title")
+	}
+
 	for name := range c.Servers {
 		if !serverNamePattern.MatchString(name) {
 			return fmt.Errorf("server name '%s' does not match valid pattern", name)
@@ -88,6 +101,16 @@ func (c *Config) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
 	for name := range c.Mailboxes {
 		if name == "" {
 			return fmt.Errorf("mailbox name is required")
+		}
+	}
+
+	for name, r := range c.Rules {
+		if r != nil {
+			if !ruleNamePattern.MatchString(name) {
+				return fmt.Errorf("rule name '%s' does not match valid pattern", name)
+			}
+
+			r.Name = name
 		}
 	}
 

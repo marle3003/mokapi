@@ -17,7 +17,7 @@ type Monitor struct {
 	Kafka *Kafka `json:"kafka"`
 	Mqtt  *Mqtt  `json:"mqtt"`
 	Ldap  *Ldap  `json:"ldap"`
-	Smtp  *Smtp  `json:"smtp"`
+	Mail  *Mail  `json:"mail"`
 
 	RefreshRateSeconds int
 
@@ -34,7 +34,7 @@ func New() *Monitor {
 	h := NewHttp()
 	k := NewKafka()
 	l := NewLdap()
-	s := NewSmtp()
+	s := NewMail()
 	m := NewMqtt()
 
 	collection := []metrics.Metric{
@@ -57,7 +57,7 @@ func New() *Monitor {
 		Kafka:              k,
 		Mqtt:               m,
 		Ldap:               l,
-		Smtp:               s,
+		Mail:               s,
 		metrics:            collection,
 	}
 
@@ -82,7 +82,7 @@ func (m *Monitor) Start(pool *safe.Pool) {
 func (m *Monitor) Reset() {
 	m.Http.Reset()
 	m.Kafka.Reset()
-	m.Smtp.Reset()
+	m.Mail.Reset()
 	m.Ldap.Reset()
 }
 
