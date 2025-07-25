@@ -176,7 +176,7 @@ func (h *Handler) Create(name string, opt *imap.CreateOptions, ctx context.Conte
 			current = mb.Folders["INBOX"]
 			continue
 		}
-		folder := &Folder{Name: part}
+		folder := &Folder{Name: part, maxMails: mailboxSize}
 		if current != nil {
 			current.AddFolder(folder)
 			current = folder
@@ -260,14 +260,14 @@ func (h *Handler) Move(set *imap.IdSet, dest string, w imap.MoveWriter, ctx cont
 			source.Remove(m)
 			m = d.Copy(m)
 			c.DestUIDs.Append(imap.IdNum(m.UId))
-			w.WriteExpunge(m.UId)
+			_ = w.WriteExpunge(m.UId)
 		})
 	} else {
 		doMessagesByMsn(set, source, func(msn int, m *Mail) {
 			source.Remove(m)
 			m = d.Copy(m)
 			c.DestUIDs.Append(imap.IdNum(msn))
-			w.WriteExpunge(uint32(msn))
+			_ = w.WriteExpunge(uint32(msn))
 		})
 	}
 

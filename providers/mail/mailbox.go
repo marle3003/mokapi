@@ -17,6 +17,8 @@ type Mailbox struct {
 	Description string
 	Folders     map[string]*Folder
 
+	MaxInboxMails int
+
 	nextUidValidity uint32
 	m               sync.Mutex
 }
@@ -28,7 +30,8 @@ type Folder struct {
 	Subscribed bool
 	Folders    map[string]*Folder
 
-	mb *Mailbox
+	mb       *Mailbox
+	maxMails int
 
 	// next available UID for new messages
 	uidNext uint32
@@ -213,7 +216,7 @@ func (mb *Mailbox) EnsureInbox() {
 	_, ok := mb.Folders["INBOX"]
 	mb.m.Unlock()
 	if !ok {
-		mb.AddFolder(&Folder{Name: "INBOX"})
+		mb.AddFolder(&Folder{Name: "INBOX", maxMails: mb.MaxInboxMails})
 	}
 }
 
@@ -239,7 +242,7 @@ func (f *Folder) UidValidity() uint32 {
 }
 
 func (f *Folder) Append(m *smtp.Message) {
-	if len(f.Messages) == mailboxSize {
+	if f.maxMails > 0 && len(f.Messages) == f.maxMails {
 		f.Messages = f.Messages[0 : len(f.Messages)-1]
 	}
 	uid := f.uidNext

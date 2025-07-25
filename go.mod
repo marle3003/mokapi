@@ -11,7 +11,7 @@ require (
 	github.com/bradleyfalzon/ghinstallation/v2 v2.16.0
 	github.com/brianvoe/gofakeit/v6 v6.28.0
 	github.com/dop251/goja v0.0.0-20250309171923-bcd7cc6bf64c
-	github.com/evanw/esbuild v0.25.5
+	github.com/evanw/esbuild v0.25.8
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/go-co-op/gocron v1.37.0
 	github.com/go-git/go-git/v5 v5.16.2
@@ -21,8 +21,8 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
 	github.com/yuin/gopher-lua v1.1.1
-	golang.org/x/net v0.41.0
-	golang.org/x/text v0.26.0
+	golang.org/x/net v0.42.0
+	golang.org/x/text v0.27.0
 	gopkg.in/go-asn1-ber/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d
 	gopkg.in/yaml.v3 v3.0.1
 	layeh.com/gopher-luar v1.0.11
@@ -83,8 +83,8 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	go.etcd.io/bbolt v1.4.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	golang.org/x/crypto v0.39.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/crypto v0.40.0 // indirect
+	golang.org/x/sys v0.34.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
