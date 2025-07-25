@@ -88,6 +88,10 @@ type RejectResponse struct {
 }
 
 func (c *Config) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
+	if c.Info.Name == "" {
+		return fmt.Errorf("mail configuration missing title")
+	}
+
 	for name := range c.Servers {
 		if !serverNamePattern.MatchString(name) {
 			return fmt.Errorf("server name '%s' does not match valid pattern", name)

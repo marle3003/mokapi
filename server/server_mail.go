@@ -71,7 +71,7 @@ func (m *MailManager) startServers(cfg *runtime.MailInfo) error {
 		servers = map[string]MailServer{}
 		m.servers[cfg.Info.Name] = servers
 	}
-	h := cfg.Handler(m.app.Monitor.Smtp, m.eventEmitter, m.app.Events)
+	h := cfg.Handler(m.app.Monitor.Mail, m.eventEmitter, m.app.Events)
 	for _, server := range cfg.Servers {
 		_, port, err := net.SplitHostPort(server.Host)
 		if err != nil {

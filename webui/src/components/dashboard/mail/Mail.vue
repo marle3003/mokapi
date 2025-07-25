@@ -33,9 +33,11 @@ const { mail, isLoading: isLoading } = fetchMail(messageId)
             <div class="col">
               <p id="from-label" class="label">From</p>
               <ul class="list-unstyled address-list" aria-labelledby="from-label">
-                <li v-for="addr of mail.from">
+                <li v-for="(addr, index) of mail.from">
+                  <span v-if="index>0">, </span>
                   <strong v-if="addr.name">{{ addr.name }}</strong>
-                  <span> &lt;{{ addr.address }}&gt;</span>
+                  <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>
+                  <span v-else>{{ addr.address }}</span>
                 </li>
               </ul>
             </div>
@@ -44,9 +46,11 @@ const { mail, isLoading: isLoading } = fetchMail(messageId)
             <div class="col">
               <p id="to-label" class="label">To</p>
               <ul class="list-unstyled address-list" aria-labelledby="to-label">
-                <li v-for="addr of mail.to">
+                <li v-for="(addr, index) of mail.to">
+                  <span v-if="index>0">, </span>
                   <strong v-if="addr.name">{{ addr.name }}</strong>
-                  <span> &lt;{{ addr.address }}&gt;</span>
+                  <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>
+                  <span v-else>{{ addr.address }}</span>
                 </li>
               </ul>
             </div>
@@ -55,9 +59,11 @@ const { mail, isLoading: isLoading } = fetchMail(messageId)
             <div class="col">
               <p id="cc-label" class="label">Cc</p>
               <ul class="list-unstyled address-list" aria-labelledby="cc-label">
-                <li v-for="addr of mail.cc">
+                <li v-for="(addr, index) of mail.cc">
+                  <span v-if="index>0">, </span>
                   <strong v-if="addr.name">{{ addr.name }}</strong>
-                  <span> &lt;{{ addr.address }}&gt;</span>
+                  <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>
+                  <span v-else>{{ addr.address }}</span>
                 </li>
               </ul>
             </div>
@@ -66,9 +72,11 @@ const { mail, isLoading: isLoading } = fetchMail(messageId)
             <div class="col">
               <p id="bcc-label" class="label">Bcc</p>
               <ul class="list-unstyled address-list" aria-labelledby="bcc-label">
-                <li v-for="addr of mail.bcc">
+                <li v-for="(addr, index) of mail.bcc">
+                  <span v-if="index>0">, </span>
                   <strong v-if="addr.name">{{ addr.name }}</strong>
-                  <span> &lt;{{ addr.address }}&gt;</span>
+                  <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>
+                  <span v-else>{{ addr.address }}</span>
                 </li>
               </ul>
             </div>
@@ -77,7 +85,7 @@ const { mail, isLoading: isLoading } = fetchMail(messageId)
       </section>
     </div>
     <mail-body :messageId="mail.messageId" :body="mail.body" :contentType="mail.contentType" />
-    <mail-attachments v-if="mail.attachments.length > 0" :messageId="mail.messageId" :attachments="mail.attachments" />
+    <mail-attachments v-if="mail.attachments && mail.attachments.length > 0" :messageId="mail.messageId" :attachments="mail.attachments" />
     <mail-footer :contentType="mail.contentType" :encoding="mail.contentTransferEncoding" :messageId="mail.messageId" :inReplyTo="mail.inReplyTo" />
   </div>
   <loading v-if="isLoading"></loading>
@@ -90,12 +98,6 @@ const { mail, isLoading: isLoading } = fetchMail(messageId)
 
 .address-list li {
   display: inline;
-}
-.address-list li::after {
-  content: ", ";
-}
-.address-list li:last-child::after {
-    content: "";
 }
 .address-name {
   font-weight:700;

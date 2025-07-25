@@ -36,7 +36,7 @@ func TestApp_AddSmtp(t *testing.T) {
 			name: "send mail request is counted in monitor",
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Mail.Add(newSmtpConfig("https://mokapi.io", &mail.Config{Info: mail.Info{Name: "foo"}}))
-				m := monitor.NewSmtp()
+				m := monitor.NewMail()
 				h := info.Handler(m, enginetest.NewEngine(), app.Events)
 
 				ctx := smtp.NewClientContext(context.Background(), "")

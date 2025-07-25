@@ -14,11 +14,11 @@ const route = useRoute()
 const router = useRouter()
 
 function messages(service: Service){
-    return sum(service.metrics, 'smtp_mails_total')
+    return sum(service.metrics, 'mail_mails_total')
 }
 
 function lastMail(service: Service){
-    const n = sum(service.metrics, 'smtp_mail_timestamp')
+    const n = sum(service.metrics, 'mail_mail_timestamp')
     if (n == 0){
         return '-'
     }

@@ -268,8 +268,16 @@ func TestParseConfig(t *testing.T) {
 		test   func(t *testing.T, err error)
 	}{
 		{
+			name:   "missing name",
+			config: &mail.Config{},
+			test: func(t *testing.T, err error) {
+				require.EqualError(t, err, "mail configuration missing title")
+			},
+		},
+		{
 			name: "invalid server name",
 			config: &mail.Config{
+				Info: mail.Info{Name: "Test Server"},
 				Servers: map[string]*mail.Server{
 					"invalid!": {},
 				},
@@ -281,6 +289,7 @@ func TestParseConfig(t *testing.T) {
 		{
 			name: "valid server name",
 			config: &mail.Config{
+				Info: mail.Info{Name: "Test Server"},
 				Servers: map[string]*mail.Server{
 					"valid": {},
 				},
@@ -292,6 +301,7 @@ func TestParseConfig(t *testing.T) {
 		{
 			name: "mailbox without name",
 			config: &mail.Config{
+				Info:      mail.Info{Name: "Test Server"},
 				Mailboxes: map[string]*mail.MailboxConfig{"": {}},
 			},
 			test: func(t *testing.T, err error) {
@@ -301,6 +311,7 @@ func TestParseConfig(t *testing.T) {
 		{
 			name: "invalid rule name",
 			config: &mail.Config{
+				Info: mail.Info{Name: "Test Server"},
 				Rules: map[string]*mail.Rule{
 					"invalid!": {},
 				},
@@ -312,6 +323,7 @@ func TestParseConfig(t *testing.T) {
 		{
 			name: "valid rule name",
 			config: &mail.Config{
+				Info: mail.Info{Name: "Test Server"},
 				Rules: map[string]*mail.Rule{
 					"valid": {},
 				},
@@ -323,6 +335,7 @@ func TestParseConfig(t *testing.T) {
 		{
 			name: "rule name from convert",
 			config: &mail.Config{
+				Info: mail.Info{Name: "Test Server"},
 				Rules: map[string]*mail.Rule{
 					"1": {},
 				},

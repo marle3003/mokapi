@@ -17,12 +17,12 @@ func TestHandler_ServeSMTP(t *testing.T) {
 	testcases := []struct {
 		name   string
 		config *mail.Config
-		test   func(t *testing.T, h *mail.Handler, s *mail.Store)
+		test   func(t *testing.T, h *mail.Handler, s *mail.Store, eh *eventstest.Handler)
 	}{
 		{
 			name:   "no auth required",
 			config: &mail.Config{},
-			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
@@ -38,7 +38,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 					},
 				},
 			},
-			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				require.Equal(t, &smtp.AuthRequired, r.Result)
@@ -51,7 +51,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 					"alice@foo.bar": {Username: "alice", Password: "foo"},
 				},
 			},
-			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendLogin(t, h, ctx, "foo", "foo")
 				require.Equal(t, &smtp.InvalidAuthCredentials, r.Result)
@@ -64,7 +64,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 					"alice@foo.bar": {Username: "alice", Password: "foo"},
 				},
 			},
-			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendLogin(t, h, ctx, "alice", "foo")
 				require.Equal(t, &smtp.InvalidAuthCredentials, r.Result)
@@ -77,7 +77,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 					"bob@foo.bar": {},
 				},
 			},
-			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				exp := smtp.AddressRejected
@@ -92,7 +92,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 					"alice@foo.bar": {},
 				},
 			},
-			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
@@ -101,7 +101,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		{
 			name:   "mail any is valid",
 			config: &mail.Config{},
-			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
@@ -115,7 +115,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 					"alice@foo.bar": {},
 				},
 			},
-			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendRcpt(t, h, ctx)
 				exp := smtp.AddressRejected
@@ -131,7 +131,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 					"bob@foo.bar":   {},
 				},
 			},
-			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendRcpt(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
@@ -140,7 +140,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		{
 			name:   "rcpt any is valid",
 			config: &mail.Config{Settings: &mail.Settings{AutoCreateMailbox: true}},
-			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendRcpt(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
@@ -149,7 +149,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		{
 			name:   "max recipients valid",
 			config: &mail.Config{Settings: &mail.Settings{AutoCreateMailbox: true, MaxRecipients: 5}},
-			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendRcpt(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
@@ -162,7 +162,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		{
 			name:   "max recipients not valid",
 			config: &mail.Config{Settings: &mail.Settings{AutoCreateMailbox: true, MaxRecipients: 2}},
-			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendRcpt(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
@@ -176,17 +176,19 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name:   "data",
-			config: &mail.Config{Settings: &mail.Settings{AutoCreateMailbox: true}},
-			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
+			config: &mail.Config{Info: mail.Info{Name: "Testing Mail Server"}, Settings: &mail.Settings{AutoCreateMailbox: true}},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, eh *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendData(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
+				require.Len(t, eh.Events, 1)
+				require.Equal(t, "namespace=mail, name=Testing Mail Server", eh.Events[0].Traits.String())
 			},
 		},
 		{
 			name:   "server should add message into mailbox",
 			config: &mail.Config{Settings: &mail.Settings{AutoCreateMailbox: true}},
-			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendData(t, h, ctx)
 				require.Equal(t, smtp.Ok, r.Result)
@@ -202,7 +204,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 					Sender: mail.NewRuleExpr(".*@mokapi.io"),
 					Action: mail.Allow,
 				}}},
-			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				require.Equal(t, "sender alice@foo.bar does not match allow rule: .*@mokapi.io", r.Result.Message)
@@ -215,7 +217,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 					Sender: mail.NewRuleExpr("@foo.bar"),
 					Action: mail.Deny,
 				}}},
-			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				require.Equal(t, "sender alice@foo.bar does match deny rule: @foo.bar", r.Result.Message)
@@ -235,7 +237,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 						Message:            "custom error message",
 					},
 				}}},
-			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
 				require.Equal(t, "custom error message", r.Result.Message)
@@ -249,8 +251,9 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			s := mail.NewStore(tc.config)
-			h := mail.NewHandler(tc.config, s, enginetest.NewEngine(), &eventstest.Handler{})
-			tc.test(t, h, s)
+			eh := &eventstest.Handler{}
+			h := mail.NewHandler(tc.config, s, enginetest.NewEngine(), eh)
+			tc.test(t, h, s, eh)
 		})
 	}
 }
