@@ -10,6 +10,7 @@ import (
 	"mokapi/smtp"
 	"net/http"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -72,7 +73,16 @@ type rejectResponse struct {
 	Message            string  `json:"message"`
 }
 
+type messageInfo struct {
+	MessageId string    `json:"messageId"`
+	From      []address `json:"from"`
+	To        []address `json:"to"`
+	Subject   string    `json:"subject"`
+	Date      time.Time `json:"date"`
+}
+
 type message struct {
+	Server                  string       `json:"server,omitempty"`
 	Sender                  *address     `json:"sender,omitempty"`
 	From                    []address    `json:"from"`
 	To                      []address    `json:"to"`
@@ -83,10 +93,11 @@ type message struct {
 	InReplyTo               string       `json:"inReplyTo,omitempty"`
 	Date                    time.Time    `json:"date"`
 	Subject                 string       `json:"subject"`
-	ContentType             string       `json:"contentType"`
+	ContentType             string       `json:"contentType,omitempty"`
 	ContentTransferEncoding string       `json:"contentTransferEncoding,omitempty"`
 	Body                    string       `json:"body"`
 	Attachments             []attachment `json:"attachments,omitempty"`
+	Size                    int          `json:"size"`
 }
 
 type address struct {
@@ -193,9 +204,9 @@ func (h *handler) handleMailService(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	if s.Settings != nil {
-		result.Settings.MaxRecipients = s.Settings.MaxRecipients
-		result.Settings.AutoCreateMailbox = s.Settings.AutoCreateMailbox
+	if s.Store.Settings != nil {
+		result.Settings.MaxRecipients = s.Store.Settings.MaxRecipients
+		result.Settings.AutoCreateMailbox = s.Store.Settings.AutoCreateMailbox
 	}
 
 	for mName, m := range s.Store.Mailboxes {
@@ -339,22 +350,33 @@ func (h *handler) getMailboxMessages(w http.ResponseWriter, r *http.Request, ser
 	path := getQueryParamInsensitive(r.URL.Query(), "folder")
 	folders := mb.List(path)
 
-	for _, f := range folders {
-		messages = append(messages, f.ListMessages()...)
-	}
-
 	index, limit, err := getPageInfo(r)
 	if err != nil {
 		writeError(w, err, http.StatusBadRequest)
 		return
 	}
 
+	for _, f := range folders {
+		messages = append(messages, f.ListMessages()...)
+	}
+
+	slices.SortFunc(messages, func(a, b *mail.Mail) int {
+		return a.Date.Compare(b.Date) * -1
+	})
+
 	from := index * limit
-	var result []*smtp.Message
+	var result []messageInfo
 	if from < len(messages) {
 		limit = min(limit, len(messages))
 		for i := from; i < limit; i++ {
-			result = append(result, messages[i].Message)
+			msg := messages[i].Message
+			result = append(result, messageInfo{
+				MessageId: msg.MessageId,
+				From:      toAddress(msg.From),
+				To:        toAddress(msg.To),
+				Subject:   msg.Subject,
+				Date:      msg.Date,
+			})
 		}
 	}
 
@@ -375,6 +397,7 @@ func getRejectResponse(r *mail.Rule) *rejectResponse {
 
 func toMessage(m *smtp.Message) *message {
 	r := &message{
+		Server:                  m.Server,
 		From:                    toAddress(m.From),
 		To:                      toAddress(m.To),
 		ReplyTo:                 toAddress(m.ReplyTo),
@@ -387,6 +410,7 @@ func toMessage(m *smtp.Message) *message {
 		ContentType:             m.ContentType,
 		ContentTransferEncoding: m.ContentTransferEncoding,
 		Body:                    m.Body,
+		Size:                    m.Size,
 	}
 
 	if m.Sender != nil {

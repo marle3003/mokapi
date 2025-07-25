@@ -39,6 +39,7 @@ func (suite *MailSuite) TestSendMail() {
 		try.HasStatusCode(200),
 		try.HasBody(`{"name":"rcipient@foo.bar","numMessages":1,"folders":["INBOX"]}`),
 	)
+	var messageId string
 	try.GetRequest(suite.T(), "http://localhost:8080/api/services/mail/Mokapi%20MailServer/mailboxes/rcipient@foo.bar/messages", nil,
 		try.HasStatusCode(200),
 		try.AssertBody(func(t *testing.T, body string) {
@@ -47,8 +48,26 @@ func (suite *MailSuite) TestSendMail() {
 			require.NoError(suite.T(), err)
 			a := v.([]any)
 			m := a[0].(map[string]any)
+			require.Len(t, m, 5)
+			require.NotEmpty(t, m["messageId"])
+			require.NotEmpty(t, m["date"])
+			require.Equal(t, []any{map[string]any{"address": "from@foo.bar"}}, m["from"])
+			require.Equal(t, []any{map[string]any{"address": "rcipient@foo.bar"}}, m["to"])
+			require.Equal(t, "Test Mail", m["subject"])
+			messageId = m["messageId"].(string)
+		}),
+	)
+	try.GetRequest(suite.T(), "http://localhost:8080/api/services/mail/messages/"+messageId, nil,
+		try.HasStatusCode(200),
+		try.AssertBody(func(t *testing.T, body string) {
+			var v any
+			err = json.Unmarshal([]byte(body), &v)
+			require.NoError(suite.T(), err)
+			m := v.(map[string]any)
 			require.Len(t, m, 8)
 			require.Equal(t, "[::1]:8025", m["server"])
+			require.Equal(t, []any{map[string]any{"address": "from@foo.bar"}}, m["from"])
+			require.Equal(t, []any{map[string]any{"address": "rcipient@foo.bar"}}, m["to"])
 			require.NotContains(t, m, "attachments")
 			require.NotContains(t, m, "sender")
 			require.NotContains(t, m, "replyTo")

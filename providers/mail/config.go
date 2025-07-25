@@ -44,6 +44,7 @@ type Server struct {
 type Settings struct {
 	MaxRecipients     int  `yaml:"maxRecipients" json:"maxRecipients"`
 	AutoCreateMailbox bool `yaml:"autoCreateMailbox" json:"autoCreateMailbox"`
+	MaxInboxMails     int  `yaml:"maxInboxMails" json:"maxInboxMails"`
 }
 
 type MailboxConfig struct {
