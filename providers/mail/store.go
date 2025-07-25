@@ -12,20 +12,17 @@ const mailboxSize = 100
 
 type Store struct {
 	Mailboxes map[string]*Mailbox
-
-	canAddMailbox bool
+	Settings  *Settings
 }
 
 func NewStore(c *Config) *Store {
 	s := &Store{
-		Mailboxes:     map[string]*Mailbox{},
-		canAddMailbox: true,
+		Mailboxes: map[string]*Mailbox{},
+		Settings:  c.Settings,
 	}
-	if c.Settings != nil {
-		s.canAddMailbox = c.Settings.AutoCreateMailbox
-	}
+
 	for name, mb := range c.Mailboxes {
-		s.NewMailbox(name, mb)
+		s.NewMailbox(name, mb, c.Settings)
 	}
 
 	return s
@@ -34,7 +31,7 @@ func NewStore(c *Config) *Store {
 func (s *Store) Update(c *Config) {
 	for name, mb := range c.Mailboxes {
 		if exist, ok := s.Mailboxes[name]; !ok {
-			s.NewMailbox(name, mb)
+			s.NewMailbox(name, mb, c.Settings)
 		} else {
 			exist.Username = mb.Username
 			exist.Password = mb.Password
@@ -51,15 +48,21 @@ func (s *Store) ExistsMailbox(name string) bool {
 	return b
 }
 
-func (s *Store) NewMailbox(name string, cfg *MailboxConfig) {
+func (s *Store) NewMailbox(name string, cfg *MailboxConfig, settings *Settings) {
 	if _, found := s.Mailboxes[name]; found {
 		return
+	}
+
+	maxInboxMails := mailboxSize
+	if settings != nil {
+		maxInboxMails = settings.MaxInboxMails
 	}
 
 	mb := &Mailbox{
 		Username:        cfg.Username,
 		Password:        cfg.Password,
 		Description:     cfg.Description,
+		MaxInboxMails:   maxInboxMails,
 		nextUidValidity: uint32(time.Now().Unix()),
 	}
 	mb.Folders = getFolders(cfg.Folders)
@@ -71,10 +74,10 @@ func (s *Store) EnsureMailbox(name string) error {
 	if _, found := s.Mailboxes[name]; found {
 		return nil
 	}
-	if !s.canAddMailbox {
+	if s.Settings != nil && !s.Settings.AutoCreateMailbox {
 		return fmt.Errorf("mailbox can not be created")
 	}
-	s.NewMailbox(name, &MailboxConfig{})
+	s.NewMailbox(name, &MailboxConfig{}, s.Settings)
 	return nil
 }
 

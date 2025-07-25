@@ -215,6 +215,55 @@ func TestHandler_Smtp(t *testing.T) {
 			responseBody: `{"name":"alice@foo.bar","numMessages":1,"folders":["INBOX"]}`,
 		},
 		{
+			name: "get messages in mailbox",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				app.Mail.Set("foo", &runtime.MailInfo{
+					Config: &mail.Config{
+						Info: mail.Info{Name: "foo"},
+					},
+					Store: &mail.Store{
+						Mailboxes: map[string]*mail.Mailbox{
+							"alice@foo.bar": {
+								Folders: map[string]*mail.Folder{
+									"INBOX": {
+										Messages: []*mail.Mail{
+											{
+												Message: &smtp.Message{Sender: nil,
+													From:        []smtp.Address{{Address: "bob@foo.bar"}},
+													To:          []smtp.Address{{Address: "alice@foo.bar"}},
+													MessageId:   "foo-1@mokapi.io",
+													Date:        mustTime("2023-12-27T13:01:30+00:00"),
+													Subject:     "Hello Alice 1",
+													ContentType: "text/plain",
+													Body:        "foobar",
+												},
+											},
+											{
+												Message: &smtp.Message{Sender: nil,
+													From:        []smtp.Address{{Address: "bob@foo.bar"}},
+													To:          []smtp.Address{{Address: "alice@foo.bar"}},
+													MessageId:   "foo-2@mokapi.io",
+													Date:        mustTime("2023-12-27T13:05:30+00:00"),
+													Subject:     "Hello Alice 2",
+													ContentType: "text/plain",
+													Body:        "foobar",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				})
+				return app
+			},
+			requestUrl:   "http://foo.api/api/services/mail/foo/mailboxes/alice@foo.bar/messages",
+			contentType:  "application/json",
+			responseBody: `[{"messageId":"foo-2@mokapi.io","from":[{"address":"bob@foo.bar"}],"to":[{"address":"alice@foo.bar"}],"subject":"Hello Alice 2","date":"2023-12-27T13:05:30Z"},{"messageId":"foo-1@mokapi.io","from":[{"address":"bob@foo.bar"}],"to":[{"address":"alice@foo.bar"}],"subject":"Hello Alice 1","date":"2023-12-27T13:01:30Z"}]`,
+		},
+		{
 			name: "get smtp mail",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{})
@@ -238,6 +287,7 @@ func TestHandler_Smtp(t *testing.T) {
 													Subject:     "Hello Alice",
 													ContentType: "text/plain",
 													Body:        "foobar",
+													Size:        10,
 												},
 											},
 										},
@@ -251,7 +301,7 @@ func TestHandler_Smtp(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services/mail/messages/foo-1@mokapi.io",
 			contentType:  "application/json",
-			responseBody: fmt.Sprintf(`{"from":[{"address":"bob@foo.bar"}],"to":[{"address":"alice@foo.bar"}],"messageId":"foo-1@mokapi.io","date":"%v","subject":"Hello Alice","contentType":"text/plain","body":"foobar"}`, now.Format(time.RFC3339Nano)),
+			responseBody: fmt.Sprintf(`{"from":[{"address":"bob@foo.bar"}],"to":[{"address":"alice@foo.bar"}],"messageId":"foo-1@mokapi.io","date":"%v","subject":"Hello Alice","contentType":"text/plain","body":"foobar","size":10}`, now.Format(time.RFC3339Nano)),
 		},
 		{
 			name: "get smtp mail attachment content",
