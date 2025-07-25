@@ -109,7 +109,7 @@ You can find the OpenAPI specification of these endpoints
  | /api/services                     | list of all services                   |
  | /api/services/http/{name}         | Information about the http service     |
  | /api/services/kafka/{name}        | Information about the kafka cluster    |
- | /api/services/smtp/{name}         | Information about the smtp server      |
+ | /api/services/mail/{name}         | Information about the smtp server      |
  | /api/services/kafka/{name}/groups | list of kafka groups                   |
  | /api/events                       | list of events                         |
  | /api/events/{id}                  | get event by id                        |

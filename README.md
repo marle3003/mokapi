@@ -122,9 +122,9 @@ Explore tutorials that walk you through mocking different protocols and scenario
 
 - [Get Started](https://mokapi.io/docs/guides/welcome)
 - [HTTP](https://mokapi.io/docs/guides/http)
-- [Kafka](https://mokapi.io/docs/guides/kafka/overview)
-- [LDAP](https://mokapi.io/docs/guides/ldap/overview)
-- [SMTP](https://mokapi.io/docs/guides/smtp/overview)
+- [Kafka](https://mokapi.io/docs/guides/kafka)
+- [LDAP](https://mokapi.io/docs/guides/ldap)
+- [SMTP](https://mokapi.io/docs/guides/mail)
 - [Javascript API](https://mokapi.io/docs/javascript-api)
 - [Resources](https://mokapi.io/docs/resources)
 
