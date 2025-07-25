@@ -29,7 +29,7 @@ jobs:
           go-version: 1.23.4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 23
           registry-url: 'https://registry.npmjs.org'
       - run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
       - run: npm install
@@ -62,7 +62,7 @@ jobs:
           go-version: 1.23.4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 23
           registry-url: 'https://registry.npmjs.org'
       - run: choco install go-task
       - run: npm install
