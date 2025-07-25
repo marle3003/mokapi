@@ -12,7 +12,7 @@ export function useDashboardTabs(page: Page) {
         overview: page.getByRole('link', { name: 'Overview' }),
         http: page.getByRole('link', { name: 'HTTP' }),
         kafka: page.getByRole('link', { name: 'Kafka' }),
-        smtp: page.getByRole('link', { name: 'SMTP' }),
+        mail: page.getByRole('link', { name: 'Mail' }),
         ldap: page.getByRole('link', { name: 'LDAP' }),
         configs: page.getByRole('link', { name: 'Configs' }),
     }

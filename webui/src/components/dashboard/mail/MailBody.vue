@@ -18,7 +18,7 @@ if (mailBodyTheme === 'light') {
 
 function parseHtmlBody(body: string) {
     body = body.replace(/cid:(?<name>[^"]*)/g, function(_: string, name: string){
-      return document.baseURI + attachmentUrl(props.messageId, name).substring(1)
+      return attachmentUrl(props.messageId, name)
     })
     body = `<style>:host{ all: initial; }</style>${body}`
 
@@ -53,7 +53,6 @@ function setBody() {
 }
 
 function switchTheme() {
-  const body = document.getElementById('mail-body')!
   isDark.value = !isDark.value
   const theme = isDark.value ? 'dark' : 'light'
   localStorage.setItem('mail-body-theme', theme)
@@ -63,7 +62,7 @@ function switchTheme() {
 
 <template>
   <div class="card-group mail-body" id="mail-body" :data-theme="isDark ? 'dark' : 'light'">
-    <div class="card">
+    <section class="card" aria-label="Mail Body">
       <div class="card-body">
         <div class="float-end tools">
           <i class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark"></i>
@@ -76,7 +75,7 @@ function switchTheme() {
           </p>
         </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>
 

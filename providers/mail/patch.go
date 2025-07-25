@@ -7,7 +7,7 @@ func (c *Config) Patch(patch *Config) {
 	c.patchInfo(patch)
 	c.patchSettings(patch.Settings)
 	c.patchMailboxes(patch)
-	c.Rules.patch(patch.Rules)
+	c.patchRules(patch.Rules)
 }
 
 func (c *Config) patchInfo(patch *Config) {
@@ -95,21 +95,22 @@ func (m *MailboxConfig) patch(patch *MailboxConfig) {
 	}
 }
 
-func (r *Rules) patch(patch Rules) {
-Loop:
-	for _, p := range patch {
-		for i := range *r {
-			v := &(*r)[i]
-			if v.Name == p.Name {
-				v.patch(p)
-				continue Loop
-			}
+func (c *Config) patchRules(patch map[string]*Rule) {
+	if c.Rules == nil {
+		c.Rules = patch
+		return
+	}
+
+	for name, rule := range patch {
+		if r, ok := c.Rules[name]; ok {
+			r.patch(rule)
+		} else {
+			c.Rules[name] = rule
 		}
-		*r = append(*r, p)
 	}
 }
 
-func (r *Rule) patch(patch Rule) {
+func (r *Rule) patch(patch *Rule) {
 	if patch.Sender != nil {
 		r.Sender = patch.Sender
 	}

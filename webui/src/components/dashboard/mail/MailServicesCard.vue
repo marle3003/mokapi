@@ -14,11 +14,11 @@ const route = useRoute()
 const router = useRouter()
 
 function messages(service: Service){
-    return sum(service.metrics, 'smtp_mails_total')
+    return sum(service.metrics, 'mail_mails_total')
 }
 
 function lastMail(service: Service){
-    const n = sum(service.metrics, 'smtp_mail_timestamp')
+    const n = sum(service.metrics, 'mail_mail_timestamp')
     if (n == 0){
         return '-'
     }
@@ -41,8 +41,9 @@ onUnmounted(() => {
 <template>
     <div class="card" data-testid="mail-service-list">
         <div class="card-body">
-            <div class="card-title text-center">Mail Services</div>
+            <div class="card-title text-center">Mail Servers</div>
             <table class="table dataTable selectable">
+                <caption class="visually-hidden">Mail Servers</caption>
                 <thead>
                     <tr>
                         <th scope="col" class="text-left w-25">Name</th>

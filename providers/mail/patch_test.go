@@ -48,22 +48,22 @@ func TestConfig_Patch(t *testing.T) {
 			name: "add rule",
 			configs: []*mail.Config{
 				{},
-				{Rules: []mail.Rule{{Name: "foo", Sender: mail.NewRuleExpr(".*")}}},
+				{Rules: map[string]*mail.Rule{"foo": {Sender: mail.NewRuleExpr(".*")}}},
 			},
 			test: func(t *testing.T, result *mail.Config) {
 				require.Len(t, result.Rules, 1)
-				require.Equal(t, ".*", result.Rules[0].Sender.String())
+				require.Equal(t, ".*", result.Rules["foo"].Sender.String())
 			},
 		},
 		{
 			name: "patch rule",
 			configs: []*mail.Config{
-				{Rules: []mail.Rule{{Name: "foo"}}},
-				{Rules: []mail.Rule{{Name: "foo", Sender: mail.NewRuleExpr(".*")}}},
+				{Rules: map[string]*mail.Rule{"foo": {}}},
+				{Rules: map[string]*mail.Rule{"foo": {Sender: mail.NewRuleExpr(".*")}}},
 			},
 			test: func(t *testing.T, result *mail.Config) {
 				require.Len(t, result.Rules, 1)
-				require.Equal(t, ".*", result.Rules[0].Sender.String())
+				require.Equal(t, ".*", result.Rules["foo"].Sender.String())
 			},
 		},
 		{

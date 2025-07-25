@@ -9,20 +9,20 @@ defineProps({
 
 <template>
     <table class="table dataTable">
-        <caption class="visually-hidden">Cluster Brokers</caption>
+        <caption class="visually-hidden">Servers</caption>
         <thead>
             <tr>
-                <th scope="col" class="text-left">Protocol</th>
-                <th scope="col" class="text-left">Host</th>
                 <th scope="col" class="text-left">Name</th>
+                <th scope="col" class="text-left">Host</th>
+                <th scope="col" class="text-left">Protocol</th>
                 <th scope="col" class="text-left w-50">Description</th>
             </tr>
         </thead>
         <tbody>
             <tr v-for="server in service.servers" :key="server.name">
-                <td>{{ server.protocol }}</td>
-                <td>{{ server.host }}</td>
                 <td>{{ server.name }}</td>
+                <td>{{ server.host }}</td>
+                <td>{{ server.protocol }}</td>
                 <td><markdown :source="server.description" class="description" :html="true"></markdown></td>
             </tr>
         </tbody>

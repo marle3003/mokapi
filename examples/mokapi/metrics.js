@@ -59,11 +59,11 @@ export let metrics = [
         value: 1652035690
     },
     {
-        name: 'smtp_mails_total{service="Smtp Testserver"}"',
+        name: 'mail_mails_total{service="Smtp Testserver"}"',
         value: 3
     },
     {
-        name: 'smtp_mail_timestamp{service="Smtp Testserver"}"',
+        name: 'mail_mail_timestamp{service="Smtp Testserver"}"',
         value: 1652635690
     },
     {

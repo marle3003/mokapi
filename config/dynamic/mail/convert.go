@@ -1,6 +1,7 @@
 package mail
 
 import (
+	"fmt"
 	"mokapi/providers/mail"
 	"net/url"
 )
@@ -11,8 +12,10 @@ func (c *Config) Convert() *mail.Config {
 		Info: mail.Info{
 			Name:        c.Info.Name,
 			Description: c.Info.Description,
+			Version:     c.Info.Version,
 		},
 		Mailboxes: map[string]*mail.MailboxConfig{},
+		Rules:     map[string]*mail.Rule{},
 	}
 
 	if c.Server != "" {
@@ -48,23 +51,35 @@ func (c *Config) Convert() *mail.Config {
 		result.Mailboxes[mb.Name] = m
 	}
 
-	for _, r := range c.Rules {
-		rule := mail.Rule{
-			Name:      r.Name,
-			Sender:    mail.NewRuleExpr(r.Sender.expr.String()),
-			Recipient: mail.NewRuleExpr(r.Recipient.String()),
-			Subject:   mail.NewRuleExpr(r.Subject.String()),
-			Body:      mail.NewRuleExpr(r.Body.String()),
-			Action:    mail.RuleAction(r.Action),
+	for index, r := range c.Rules {
+		rule := &mail.Rule{
+			Name:   r.Name,
+			Action: mail.RuleAction(r.Action),
 		}
+		if r.Sender != nil {
+			rule.Sender = mail.NewRuleExpr(r.Sender.expr.String())
+		}
+		if r.Recipient != nil {
+			rule.Recipient = mail.NewRuleExpr(r.Recipient.expr.String())
+		}
+		if r.Subject != nil {
+			rule.Subject = mail.NewRuleExpr(r.Subject.String())
+		}
+		if r.Body != nil {
+			rule.Body = mail.NewRuleExpr(r.Body.String())
+		}
+
 		if r.RejectResponse != nil {
 			rule.RejectResponse = &mail.RejectResponse{
 				StatusCode:         r.RejectResponse.StatusCode,
 				EnhancedStatusCode: r.RejectResponse.EnhancedStatusCode,
-				Text:               r.RejectResponse.Text,
+				Message:            r.RejectResponse.Text,
 			}
 		}
-		result.Rules = append(result.Rules, rule)
+		if rule.Name == "" {
+			rule.Name = fmt.Sprintf("%d", index+1)
+		}
+		result.Rules[rule.Name] = rule
 	}
 
 	return result
