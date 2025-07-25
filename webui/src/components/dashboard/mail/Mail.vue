@@ -12,83 +12,80 @@ const { fetchMail } = useMails()
 const { format } = usePrettyDates()
 const messageId = useRoute().params.id as string
 const { mail, isLoading: isLoading } = fetchMail(messageId)
-
 </script>
 
 <template>
   <div v-if="mail">
     <div class="card-group">
-      <div class="card">
+      <section class="card" aria-label="Info">
         <div class="card-body">
           <div class="row">
             <div class="col header">
-              <p class="label">Subject</p>
-              <p>{{ mail.subject }}</p>
+              <p id="subject" class="label">Subject</p>
+              <p aria-labelledby="subject">{{ mail.subject }}</p>
             </div>
             <div class="col-2 align-self-end">
-              <p class="label">Date</p>
-              <p>
-                {{ format(mail.time) }}
-              </p>
+              <p id="date" class="label">Date</p>
+              <p aria-labelledby="date">{{ format(mail.date) }}</p>
             </div>
           </div>
           <div class="row">
             <div class="col">
-              <p class="label">From</p>
-              <span class="prop">
-                <ul class="address-list">
-                  <li v-for="addr of mail.from">
-                    <span class="address-name" v-if="addr.name">{{ addr.name }}</span>
-                    <span>{{ addr.address }}</span>
-                  </li>
-                </ul>
-              </span>
+              <p id="from-label" class="label">From</p>
+              <ul class="list-unstyled address-list" aria-labelledby="from-label">
+                <li v-for="(addr, index) of mail.from">
+                  <span v-if="index>0">, </span>
+                  <strong v-if="addr.name">{{ addr.name }}</strong>
+                  <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>
+                  <span v-else>{{ addr.address }}</span>
+                </li>
+              </ul>
             </div>
           </div>
           <div class="row">
             <div class="col">
-              <p class="label">To</p>
-              <span class="prop">
-                <ul class="address-list">
-                  <li v-for="addr of mail.to">
-                    <span class="address-name" v-if="addr.name">{{ addr.name }}</span>
-                    <span>{{ addr.address }}</span>
-                  </li>
-                </ul>
-              </span>
+              <p id="to-label" class="label">To</p>
+              <ul class="list-unstyled address-list" aria-labelledby="to-label">
+                <li v-for="(addr, index) of mail.to">
+                  <span v-if="index>0">, </span>
+                  <strong v-if="addr.name">{{ addr.name }}</strong>
+                  <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>
+                  <span v-else>{{ addr.address }}</span>
+                </li>
+              </ul>
             </div>
           </div>
           <div class="row" v-if="mail.cc">
             <div class="col">
-              <p class="label">Cc</p>
-              <span class="prop">
-                <ul class="address-list">
-                  <li v-for="addr of mail.cc">
-                    <span class="address-name" v-if="addr.name">{{ addr.name }}</span>
-                    <span>{{ addr.address }}</span>
-                  </li>
-                </ul>
-              </span>
+              <p id="cc-label" class="label">Cc</p>
+              <ul class="list-unstyled address-list" aria-labelledby="cc-label">
+                <li v-for="(addr, index) of mail.cc">
+                  <span v-if="index>0">, </span>
+                  <strong v-if="addr.name">{{ addr.name }}</strong>
+                  <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>
+                  <span v-else>{{ addr.address }}</span>
+                </li>
+              </ul>
             </div>
           </div>
           <div class="row" v-if="mail.bcc">
             <div class="col">
-              <p class="label">Bcc</p>
-              <span class="prop">
-                <ul class="address-list">
-                  <li v-for="addr of mail.bcc">
-                    <span class="address-name" v-if="addr.name">{{ addr.name }}</span>
-                    <span>{{ addr.address }}</span>
-                  </li>
-                </ul>
-              </span>
+              <p id="bcc-label" class="label">Bcc</p>
+              <ul class="list-unstyled address-list" aria-labelledby="bcc-label">
+                <li v-for="(addr, index) of mail.bcc">
+                  <span v-if="index>0">, </span>
+                  <strong v-if="addr.name">{{ addr.name }}</strong>
+                  <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>
+                  <span v-else>{{ addr.address }}</span>
+                </li>
+              </ul>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
     <mail-body :messageId="mail.messageId" :body="mail.body" :contentType="mail.contentType" />
-    <mail-attachments :messageId="mail.messageId" :attachments="mail.attachments" />
+    <mail-attachments v-if="mail.attachments && mail.attachments.length > 0" :messageId="mail.messageId" :attachments="mail.attachments" />
     <mail-footer :contentType="mail.contentType" :encoding="mail.contentTransferEncoding" :messageId="mail.messageId" :inReplyTo="mail.inReplyTo" />
   </div>
   <loading v-if="isLoading"></loading>
@@ -98,26 +95,12 @@ const { mail, isLoading: isLoading } = fetchMail(messageId)
 </template>
 
 <style scoped>
-.prop span {
-  font-size: 0.8rem;
-}
-.address-list {
-  display: inline;
-  list-style: none;
-  padding: 0px;
-}
+
 .address-list li {
   display: inline;
 }
-.address-list li::after {
-  content: ", ";
-}
-.address-list li:last-child::after {
-    content: "";
-}
 .address-name {
   font-weight:700;
-  padding-right: 0.3rem;
 }
 .dashboard .card p.subject {
   font-size: 1.4rem;

@@ -36,14 +36,14 @@ func TestHandler_Smtp(t *testing.T) {
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{})
 				app.Mail.Set("foo", &runtime.MailInfo{
-					Config: &mail.Config{Info: mail.Info{Name: "foo", Description: "bar"}},
+					Config: &mail.Config{Info: mail.Info{Name: "foo", Description: "bar", Version: "2.1"}},
 					Store:  &mail.Store{},
 				})
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services",
 			contentType:  "application/json",
-			responseBody: `[{"name":"foo","description":"bar","type":"mail"}]`,
+			responseBody: `[{"name":"foo","description":"bar","version":"2.1","type":"mail"}]`,
 		},
 		{
 			name: "/api/services/mail",
@@ -110,7 +110,8 @@ func TestHandler_Smtp(t *testing.T) {
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Config: &mail.Config{
 						Info: mail.Info{Name: "foo"},
-						Rules: []mail.Rule{{
+						Rules: map[string]*mail.Rule{"foo": {
+							Name:      "foo",
 							Sender:    mail.NewRuleExpr("alice@foo.bar"),
 							Recipient: mail.NewRuleExpr("alice@foo.bar"),
 							Subject:   mail.NewRuleExpr("foo"),
@@ -124,7 +125,7 @@ func TestHandler_Smtp(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services/mail/foo",
 			contentType:  "application/json",
-			responseBody: `{"name":"foo","rules":[{"name":"","sender":"alice@foo.bar","recipient":"alice@foo.bar","subject":"foo","body":"bar","action":"deny"}],"settings":{"maxRecipients":0,"autoCreateMailbox":false}}`,
+			responseBody: `{"name":"foo","rules":[{"name":"foo","sender":"alice@foo.bar","recipient":"alice@foo.bar","subject":"foo","body":"bar","action":"deny"}],"settings":{"maxRecipients":0,"autoCreateMailbox":false}}`,
 		},
 		{
 			name: "get smtp mailboxes",

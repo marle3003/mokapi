@@ -23,6 +23,7 @@ type mailInfo struct {
 	Name        string       `json:"name"`
 	Description string       `json:"description,omitempty"`
 	Version     string       `json:"version,omitempty"`
+	Contact     *contact     `json:"contact,omitempty"`
 	Servers     []mailServer `json:"servers,omitempty"`
 	Mailboxes   []mailbox    `json:"mailboxes,omitempty"`
 	Rules       []rule       `json:"rules,omitempty"`
@@ -55,10 +56,6 @@ type mailboxDetails struct {
 	Folders []string `json:"folders,omitempty"`
 }
 
-type folder struct {
-	Messages []*message `json:"mails,omitempty"`
-}
-
 type rule struct {
 	Name           string          `json:"name"`
 	Sender         string          `json:"sender"`
@@ -72,7 +69,7 @@ type rule struct {
 type rejectResponse struct {
 	StatusCode         int     `json:"statusCode"`
 	EnhancedStatusCode [3]int8 `json:"enhancedStatusCode"`
-	Text               string  `json:"text"`
+	Message            string  `json:"message"`
 }
 
 type message struct {
@@ -112,6 +109,14 @@ func getMailServices(store *runtime.MailStore, m *monitor.Monitor) []interface{}
 			Name:        hs.Info.Name,
 			Description: hs.Info.Description,
 			Type:        ServiceMail,
+			Version:     hs.Info.Version,
+		}
+		if hs.Info.Contact != nil {
+			s.Contact = &contact{
+				Name:  hs.Info.Contact.Name,
+				Url:   hs.Info.Contact.Url,
+				Email: hs.Info.Contact.Email,
+			}
 		}
 
 		if m != nil {
@@ -167,7 +172,16 @@ func (h *handler) handleMailService(w http.ResponseWriter, r *http.Request) {
 	result := &mailInfo{
 		Name:        s.Info.Name,
 		Description: s.Info.Description,
+		Version:     s.Info.Version,
 		Configs:     getConfigs(s.Configs()),
+	}
+
+	if s.Info.Contact != nil {
+		result.Contact = &contact{
+			Name:  s.Info.Contact.Name,
+			Url:   s.Info.Contact.Url,
+			Email: s.Info.Contact.Email,
+		}
 	}
 
 	for n, ser := range s.Servers {
@@ -258,10 +272,10 @@ func (h *handler) getMailAttachment(w http.ResponseWriter, messageId, name strin
 
 	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=\"%s\"", name))
 	w.Header().Set("Content-Type", att.ContentType)
-	w.Write(att.Data)
+	_, _ = w.Write(att.Data)
 }
 
-func (h *handler) getMailboxes(w http.ResponseWriter, r *http.Request, service string) {
+func (h *handler) getMailboxes(w http.ResponseWriter, _ *http.Request, service string) {
 	s := h.app.Mail.Get(service)
 	var result []mailbox
 
@@ -348,14 +362,14 @@ func (h *handler) getMailboxMessages(w http.ResponseWriter, r *http.Request, ser
 	writeJsonBody(w, result)
 }
 
-func getRejectResponse(r mail.Rule) *rejectResponse {
+func getRejectResponse(r *mail.Rule) *rejectResponse {
 	if r.RejectResponse == nil {
 		return nil
 	}
 	return &rejectResponse{
 		StatusCode:         int(r.RejectResponse.StatusCode),
 		EnhancedStatusCode: r.RejectResponse.EnhancedStatusCode,
-		Text:               r.RejectResponse.Text,
+		Message:            r.RejectResponse.Message,
 	}
 }
 

@@ -12,7 +12,7 @@ info:
   title: Mokapi's Mail Server
 server: smtp://127.0.0.1:25
 rules:
-  - name: Recipient's domain is mokapi.io
+  allowRecipients:
     recipient: '@mokapi.io'
     action: allow
 ```
@@ -23,7 +23,6 @@ The following table describes the rule properties that are available
 
 | Property       | Description                                |
 |----------------|--------------------------------------------|
-| name           | Name of the rule                           |
 | sender         | A regex expression to validate sender      |
 | recipient      | A regex expression to validate recipient   |
 | subject        | A regex expression to validate subject     |
@@ -35,7 +34,8 @@ The following table describes the rule properties that are available
 smtp: 1.0
 server: smtp://localhost:8025
 rules:
-  - sender: @foo.bar
+  rejectSender:
+    sender: @foo.bar
     action: deny
     rejectResponse:
       statusCode: 550

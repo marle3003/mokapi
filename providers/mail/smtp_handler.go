@@ -33,7 +33,7 @@ func (h *Handler) ServeSMTP(rw smtp.ResponseWriter, r smtp.Request) {
 		// todo disable Auth capability on server if no mailbox is defined
 		for _, acc := range h.config.Mailboxes {
 			if acc.Username == req.Username && acc.Password == req.Password {
-				rw.Write(&smtp.LoginResponse{Result: &smtp.AuthSucceeded})
+				_ = rw.Write(&smtp.LoginResponse{Result: &smtp.AuthSucceeded})
 				ctx.Auth = acc.Username
 				return
 			}
@@ -82,7 +82,7 @@ func (h *Handler) processMail(rw smtp.ResponseWriter, r *smtp.DataRequest) {
 	res := &smtp.DataResponse{Result: smtp.Ok}
 	event.Actions = h.eventEmitter.Emit("smtp", r.Message, res.Result)
 
-	rw.Write(res)
+	_ = rw.Write(res)
 }
 
 func (h *Handler) serveMail(rw smtp.ResponseWriter, r *smtp.MailRequest, ctx *smtp.ClientContext) {
@@ -102,7 +102,7 @@ func (h *Handler) serveMail(rw smtp.ResponseWriter, r *smtp.MailRequest, ctx *sm
 		h.writeRuleResponse(rw, r, res)
 	} else {
 		ctx.From = r.From
-		rw.Write(&smtp.MailResponse{Result: smtp.Ok})
+		_ = rw.Write(&smtp.MailResponse{Result: smtp.Ok})
 	}
 }
 
@@ -126,7 +126,7 @@ func (h *Handler) serveRcpt(rw smtp.ResponseWriter, r *smtp.RcptRequest, ctx *sm
 	}
 
 	ctx.To = append(ctx.To, r.To)
-	rw.Write(&smtp.RcptResponse{Result: smtp.Ok})
+	_ = rw.Write(&smtp.RcptResponse{Result: smtp.Ok})
 }
 
 func (h *Handler) writeErrorResponse(rw smtp.ResponseWriter, r smtp.Request, status smtp.Status, message string) {
@@ -145,9 +145,9 @@ func (h *Handler) writeRuleResponse(rw smtp.ResponseWriter, r smtp.Request, resp
 	res := r.NewResponse(&smtp.Status{
 		StatusCode:         response.StatusCode,
 		EnhancedStatusCode: response.EnhancedStatusCode,
-		Message:            response.Text,
+		Message:            response.Message,
 	})
 	l := NewLogEvent(nil, clientContext, h.eh, events.NewTraits().WithName(h.config.Info.Name))
-	l.Error = response.Text
+	l.Error = response.Message
 	_ = rw.Write(res)
 }

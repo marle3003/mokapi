@@ -30,7 +30,7 @@ func NewLogEvent(msg *smtp.Message, ctx *smtp.ClientContext, eh events.Handler, 
 		event.Subject = msg.Subject
 	}
 
-	_ = eh.Push(event, traits.WithNamespace("smtp"))
+	_ = eh.Push(event, traits.WithNamespace("mail"))
 	return event
 }
 
