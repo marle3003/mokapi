@@ -197,8 +197,8 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name: "data with allow rule not match sender",
-			config: &mail.Config{Rules: []mail.Rule{
-				{
+			config: &mail.Config{Rules: map[string]*mail.Rule{
+				"foo": {
 					Sender: mail.NewRuleExpr(".*@mokapi.io"),
 					Action: mail.Allow,
 				}}},
@@ -210,8 +210,8 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name: "data with deny rule",
-			config: &mail.Config{Rules: []mail.Rule{
-				{
+			config: &mail.Config{Rules: map[string]*mail.Rule{
+				"foo": {
 					Sender: mail.NewRuleExpr("@foo.bar"),
 					Action: mail.Deny,
 				}}},
@@ -225,14 +225,14 @@ func TestHandler_ServeSMTP(t *testing.T) {
 		},
 		{
 			name: "data with deny rule custom response",
-			config: &mail.Config{Rules: []mail.Rule{
-				{
+			config: &mail.Config{Rules: map[string]*mail.Rule{
+				"foo": {
 					Sender: mail.NewRuleExpr(".*@foo.bar"),
 					Action: mail.Deny,
 					RejectResponse: &mail.RejectResponse{
 						StatusCode:         500,
 						EnhancedStatusCode: smtp.EnhancedStatusCode{5, 1, 2},
-						Text:               "custom error message",
+						Message:            "custom error message",
 					},
 				}}},
 			test: func(t *testing.T, h *mail.Handler, s *mail.Store) {

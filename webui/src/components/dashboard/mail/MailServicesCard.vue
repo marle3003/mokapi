@@ -41,8 +41,9 @@ onUnmounted(() => {
 <template>
     <div class="card" data-testid="mail-service-list">
         <div class="card-body">
-            <div class="card-title text-center">Mail Services</div>
+            <div class="card-title text-center">Mail Servers</div>
             <table class="table dataTable selectable">
+                <caption class="visually-hidden">Mail Servers</caption>
                 <thead>
                     <tr>
                         <th scope="col" class="text-left w-25">Name</th>

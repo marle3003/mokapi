@@ -24,11 +24,12 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			name: "info",
-			cfg:  &Config{Info: Info{Name: "name", Description: "description"}},
+			cfg:  &Config{Info: Info{Name: "name", Description: "description", Version: "2.1"}},
 			test: func(t *testing.T, c *mail.Config) {
 				require.NotNil(t, c)
 				require.Equal(t, "name", c.Info.Name)
 				require.Equal(t, "description", c.Info.Description)
+				require.Equal(t, "2.1", c.Info.Version)
 			},
 		},
 		{
@@ -154,12 +155,13 @@ func TestConvert(t *testing.T) {
 							Text:               "foobar",
 						},
 					},
+					{},
 				},
 			},
 			test: func(t *testing.T, c *mail.Config) {
 				require.NotNil(t, c)
-				require.Len(t, c.Rules, 1)
-				r := c.Rules[0]
+				require.Len(t, c.Rules, 2)
+				r := c.Rules["foo"]
 				require.Equal(t, "foo", r.Name)
 				require.Equal(t, mail.NewRuleExpr("alice@mokapi.io"), r.Sender)
 				require.Equal(t, mail.NewRuleExpr("bob@mokapi.io"), r.Recipient)
@@ -169,8 +171,9 @@ func TestConvert(t *testing.T) {
 				require.Equal(t, &mail.RejectResponse{
 					StatusCode:         550,
 					EnhancedStatusCode: smtp.EnhancedStatusCode{5, 7, 1},
-					Text:               "foobar",
+					Message:            "foobar",
 				}, r.RejectResponse)
+				require.Contains(t, c.Rules, "2")
 			},
 		},
 	}

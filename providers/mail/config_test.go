@@ -94,7 +94,8 @@ servers:
     host: localhost:8025
     protocol: smtps
 rules:
-  - sender: .*@foo.bar
+  sender:
+    sender: .*@foo.bar
     action: allow
 `,
 			test: func(t *testing.T, c *mail.Config) {
@@ -102,8 +103,8 @@ rules:
 				require.Equal(t, "localhost:8025", c.Servers["smtps"].Host)
 				require.Equal(t, "smtps", c.Servers["smtps"].Protocol)
 				require.Len(t, c.Rules, 1)
-				require.Equal(t, ".*@foo.bar", c.Rules[0].Sender.String())
-				require.Equal(t, mail.Allow, c.Rules[0].Action)
+				require.Equal(t, ".*@foo.bar", c.Rules["sender"].Sender.String())
+				require.Equal(t, mail.Allow, c.Rules["sender"].Action)
 			},
 		},
 		{
@@ -111,21 +112,22 @@ rules:
 			data: `
 smtp: 1.0
 rules:
-  - recipient: .*@foo.bar
+  recipients:
+    recipient: .*@foo.bar
     action: deny
     rejectResponse:
       statusCode: 550
       enhancedStatusCode: 5.7.1
-      text: foobar
+      message: foobar
 `,
 			test: func(t *testing.T, c *mail.Config) {
 				require.Len(t, c.Rules, 1)
-				require.Equal(t, ".*@foo.bar", c.Rules[0].Recipient.String())
-				require.Equal(t, mail.Deny, c.Rules[0].Action)
-				require.NotNil(t, c.Rules[0].RejectResponse)
-				require.Equal(t, smtp.StatusCode(550), c.Rules[0].RejectResponse.StatusCode)
-				require.Equal(t, smtp.EnhancedStatusCode{5, 7, 1}, c.Rules[0].RejectResponse.EnhancedStatusCode)
-				require.Equal(t, "foobar", c.Rules[0].RejectResponse.Text)
+				require.Equal(t, ".*@foo.bar", c.Rules["recipients"].Recipient.String())
+				require.Equal(t, mail.Deny, c.Rules["recipients"].Action)
+				require.NotNil(t, c.Rules["recipients"].RejectResponse)
+				require.Equal(t, smtp.StatusCode(550), c.Rules["recipients"].RejectResponse.StatusCode)
+				require.Equal(t, smtp.EnhancedStatusCode{5, 7, 1}, c.Rules["recipients"].RejectResponse.EnhancedStatusCode)
+				require.Equal(t, "foobar", c.Rules["recipients"].RejectResponse.Message)
 			},
 		},
 	}
@@ -206,42 +208,44 @@ func TestParseConfig_Json(t *testing.T) {
     "protocol": "smtps"
   }
 },
-"rules": [
-  { "sender": ".*@foo.bar",
+"rules": {
+  "sender": {
+    "sender": ".*@foo.bar",
     "action": "allow"
-  }]
+  }}
 }`,
 			test: func(t *testing.T, c *mail.Config) {
 				require.Len(t, c.Servers, 1)
 				require.Equal(t, "localhost:8025", c.Servers["smtps"].Host)
 				require.Equal(t, "smtps", c.Servers["smtps"].Protocol)
 				require.Len(t, c.Rules, 1)
-				require.Equal(t, ".*@foo.bar", c.Rules[0].Sender.String())
-				require.Equal(t, mail.Allow, c.Rules[0].Action)
+				require.Equal(t, ".*@foo.bar", c.Rules["sender"].Sender.String())
+				require.Equal(t, mail.Allow, c.Rules["sender"].Action)
 			},
 		},
 		{
 			name: "custom response rule",
 			data: `{
 "smtp": "1.0",
-"rules": [
-  { "recipient": ".*@foo.bar",
+"rules": {
+  "recipients": { 
+    "recipient": ".*@foo.bar",
     "action": "deny",
     "rejectResponse": {
       "statusCode": 550,
       "enhancedStatusCode": "5.7.1",
-      "text": "foobar"
+      "message": "foobar"
     }
-  }]
+  }}
 }`,
 			test: func(t *testing.T, c *mail.Config) {
 				require.Len(t, c.Rules, 1)
-				require.Equal(t, ".*@foo.bar", c.Rules[0].Recipient.String())
-				require.Equal(t, mail.Deny, c.Rules[0].Action)
-				require.NotNil(t, c.Rules[0].RejectResponse)
-				require.Equal(t, smtp.StatusCode(550), c.Rules[0].RejectResponse.StatusCode)
-				require.Equal(t, smtp.EnhancedStatusCode{5, 7, 1}, c.Rules[0].RejectResponse.EnhancedStatusCode)
-				require.Equal(t, "foobar", c.Rules[0].RejectResponse.Text)
+				require.Equal(t, ".*@foo.bar", c.Rules["recipients"].Recipient.String())
+				require.Equal(t, mail.Deny, c.Rules["recipients"].Action)
+				require.NotNil(t, c.Rules["recipients"].RejectResponse)
+				require.Equal(t, smtp.StatusCode(550), c.Rules["recipients"].RejectResponse.StatusCode)
+				require.Equal(t, smtp.EnhancedStatusCode{5, 7, 1}, c.Rules["recipients"].RejectResponse.EnhancedStatusCode)
+				require.Equal(t, "foobar", c.Rules["recipients"].RejectResponse.Message)
 			},
 		},
 	}
@@ -292,6 +296,39 @@ func TestParseConfig(t *testing.T) {
 			},
 			test: func(t *testing.T, err error) {
 				require.EqualError(t, err, "mailbox name is required")
+			},
+		},
+		{
+			name: "invalid rule name",
+			config: &mail.Config{
+				Rules: map[string]*mail.Rule{
+					"invalid!": {},
+				},
+			},
+			test: func(t *testing.T, err error) {
+				require.EqualError(t, err, "rule name 'invalid!' does not match valid pattern")
+			},
+		},
+		{
+			name: "valid rule name",
+			config: &mail.Config{
+				Rules: map[string]*mail.Rule{
+					"valid": {},
+				},
+			},
+			test: func(t *testing.T, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
+			name: "rule name from convert",
+			config: &mail.Config{
+				Rules: map[string]*mail.Rule{
+					"1": {},
+				},
+			},
+			test: func(t *testing.T, err error) {
+				require.NoError(t, err)
 			},
 		},
 	}

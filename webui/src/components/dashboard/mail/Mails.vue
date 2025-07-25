@@ -49,6 +49,7 @@ onUnmounted(() => {
         <div class="card-body">
             <div class="card-title text-center">Recent Mails</div>
             <table class="table dataTable selectable">
+                <caption class="visually-hidden">Recent Mails</caption>
                 <thead>
                     <tr>
                         <th scope="col" class="text-left" style="width: 35%">Subject</th>

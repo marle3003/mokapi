@@ -77,7 +77,8 @@ export let services = [
                 username: 'alice',
                 password: 'foo',
                 description: 'a description using *markdown*',
-                numMessages: 0
+                numMessages: 0,
+                folders: []
             },
             {
                 name: 'bob@mokapi.io',
