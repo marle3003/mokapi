@@ -248,9 +248,10 @@ func (f *Folder) Append(m *smtp.Message) {
 	uid := f.uidNext
 	f.uidNext++
 	f.Messages = append(f.Messages, &Mail{
-		Message: m,
-		UId:     uid,
-		Flags:   []imap.Flag{imap.FlagRecent},
+		Message:  m,
+		UId:      uid,
+		Flags:    []imap.Flag{imap.FlagRecent},
+		Received: time.Now(),
 	})
 }
 

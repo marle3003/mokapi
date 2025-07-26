@@ -4,12 +4,14 @@ import (
 	"mokapi/imap"
 	"mokapi/smtp"
 	"slices"
+	"time"
 )
 
 type Mail struct {
 	*smtp.Message
-	UId   uint32
-	Flags []imap.Flag
+	UId      uint32
+	Flags    []imap.Flag
+	Received time.Time
 }
 
 func (m *Mail) HasFlag(flag imap.Flag) bool {

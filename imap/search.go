@@ -18,8 +18,8 @@ type SearchCriteria struct {
 	Seq Set
 	UID Set
 
-	Flag    []string
-	NotFlag []string
+	Flag    []Flag
+	NotFlag []Flag
 
 	Before     time.Time
 	Since      time.Time
@@ -101,23 +101,23 @@ func readAtomSearchKey(criteria *SearchCriteria, d *Decoder) error {
 	case "ALL":
 		// do nothing
 	case "ANSWERED", "DELETED", "DRAFT", "FLAGGED", "RECENT", "SEEN":
-		criteria.Flag = append(criteria.Flag, key)
+		criteria.Flag = append(criteria.Flag, toFlag(key))
 	case "UNANSWERED", "UNDELETED", "UNDRAFT", "UNFLAGGED", "UNSEEN":
-		criteria.NotFlag = append(criteria.NotFlag, strings.TrimPrefix(key, "UN"))
+		criteria.NotFlag = append(criteria.NotFlag, toFlag(strings.TrimPrefix(key, "UN")))
 	case "NEW":
-		criteria.Flag = append(criteria.Flag, "RECENT")
-		criteria.NotFlag = append(criteria.NotFlag, "SEEN")
+		criteria.Flag = append(criteria.Flag, toFlag("RECENT"))
+		criteria.NotFlag = append(criteria.NotFlag, toFlag("SEEN"))
 	case "OLD":
-		criteria.NotFlag = append(criteria.NotFlag, "RECENT")
+		criteria.NotFlag = append(criteria.NotFlag, toFlag("RECENT"))
 	case "KEYWORD", "UNKEYWORD":
 		flag, err := d.SP().ReadFlag()
 		if err != nil {
 			return err
 		}
 		if key == "KEYWORD" {
-			criteria.Flag = append(criteria.Flag, flag)
+			criteria.Flag = append(criteria.Flag, toFlag(flag))
 		} else {
-			criteria.NotFlag = append(criteria.Flag, flag)
+			criteria.NotFlag = append(criteria.Flag, toFlag(flag))
 		}
 	case "BCC", "CC", "FROM", "TO", "SUBJECT":
 		value, err := d.SP().String()
@@ -126,7 +126,7 @@ func readAtomSearchKey(criteria *SearchCriteria, d *Decoder) error {
 		}
 		hc := HeaderCriteria{
 			Name:  cases.Title(language.English).String(strings.ToLower(key)),
-			Value: value,
+			Value: strings.ToLower(value),
 		}
 		criteria.Headers = append(criteria.Headers, hc)
 	case "BEFORE", "ON", "SENTBEFORE", "SENTON", "SENTSINCE", "SINCE":
@@ -162,7 +162,7 @@ func readAtomSearchKey(criteria *SearchCriteria, d *Decoder) error {
 		if err != nil {
 			return err
 		}
-		criteria.Body = append(criteria.Body, value)
+		criteria.Body = append(criteria.Body, strings.ToLower(value))
 	case "HEADER":
 		hc := HeaderCriteria{}
 		var err error
@@ -174,6 +174,7 @@ func readAtomSearchKey(criteria *SearchCriteria, d *Decoder) error {
 		if err != nil {
 			return err
 		}
+		hc.Value = strings.ToLower(hc.Value)
 		criteria.Headers = append(criteria.Headers, hc)
 	case "LARGER", "SMALLER":
 		v, err := d.SP().Int64()
@@ -221,16 +222,20 @@ func (c *conn) writeSearchResponse(res *SearchResponse) error {
 	if res.All == nil {
 		return nil
 	}
-	s := res.All.String()
-	if s != "" {
-		err := c.writeResponse(untagged, &response{
-			text: fmt.Sprintf("SEARCH %v", res.All.String()),
-		})
-		if err != nil {
-			return err
-		}
+
+	nums, b := res.All.Nums()
+	if !b {
+		return fmt.Errorf("failed to enumerate message numbers")
 	}
-	return nil
+	if len(nums) == 0 {
+		return nil
+	}
+	e := &Encoder{}
+	e.Atom(untagged).SP().Atom("SEARCH")
+	for _, n := range nums {
+		e.SP().Number(n)
+	}
+	return e.WriteTo(c.tpc)
 }
 
 func (c *SearchCriteria) And(other *SearchCriteria) {
@@ -281,4 +286,8 @@ func smaller(v1, v2 int64) int64 {
 		return v1
 	}
 	return v2
+}
+
+func toFlag(s string) Flag {
+	return Flag("\\" + cases.Title(language.English).String(strings.ToLower(s)))
 }

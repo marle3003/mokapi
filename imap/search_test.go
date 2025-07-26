@@ -71,7 +71,7 @@ func TestSearch_Response(t *testing.T) {
 			name:    "search with sequence number",
 			request: "SEARCH 1:*",
 			response: []string{
-				"* SEARCH 1",
+				"* SEARCH 1 2",
 				"A0002 OK SEARCH completed",
 			},
 			handler: func(t *testing.T) imap.Handler {
@@ -81,6 +81,7 @@ func TestSearch_Response(t *testing.T) {
 
 						set := &imap.IdSet{}
 						set.AddId(1)
+						set.AddId(2)
 
 						return &imap.SearchResponse{All: set}, nil
 					},
@@ -97,7 +98,7 @@ func TestSearch_Response(t *testing.T) {
 			handler: func(t *testing.T) imap.Handler {
 				return &imaptest.Handler{
 					SearchFunc: func(request *imap.SearchRequest) (*imap.SearchResponse, error) {
-						require.Equal(t, []string{"ANSWERED", "DELETED", "DRAFT", "FLAGGED", "RECENT", "SEEN"}, request.Criteria.Flag)
+						require.Equal(t, []imap.Flag{"\\Answered", "\\Deleted", "\\Draft", "\\Flagged", "\\Recent", "\\Seen"}, request.Criteria.Flag)
 
 						set := &imap.IdSet{}
 						set.AddId(1)
@@ -118,7 +119,7 @@ func TestSearch_Response(t *testing.T) {
 				return &imaptest.Handler{
 					SearchFunc: func(request *imap.SearchRequest) (*imap.SearchResponse, error) {
 						require.Empty(t, request.Criteria.Flag)
-						require.Equal(t, []string{"ANSWERED", "DELETED", "DRAFT", "FLAGGED", "SEEN"}, request.Criteria.NotFlag)
+						require.Equal(t, []imap.Flag{"\\Answered", "\\Deleted", "\\Draft", "\\Flagged", "\\Seen"}, request.Criteria.NotFlag)
 
 						set := &imap.IdSet{}
 						set.AddId(1)
@@ -138,8 +139,8 @@ func TestSearch_Response(t *testing.T) {
 			handler: func(t *testing.T) imap.Handler {
 				return &imaptest.Handler{
 					SearchFunc: func(request *imap.SearchRequest) (*imap.SearchResponse, error) {
-						require.Equal(t, []string{"RECENT"}, request.Criteria.Flag)
-						require.Equal(t, []string{"SEEN"}, request.Criteria.NotFlag)
+						require.Equal(t, []imap.Flag{"\\Recent"}, request.Criteria.Flag)
+						require.Equal(t, []imap.Flag{"\\Seen"}, request.Criteria.NotFlag)
 
 						set := &imap.IdSet{}
 						set.AddId(1)
@@ -160,7 +161,7 @@ func TestSearch_Response(t *testing.T) {
 				return &imaptest.Handler{
 					SearchFunc: func(request *imap.SearchRequest) (*imap.SearchResponse, error) {
 						require.Empty(t, request.Criteria.Flag)
-						require.Equal(t, []string{"RECENT"}, request.Criteria.NotFlag)
+						require.Equal(t, []imap.Flag{"\\Recent"}, request.Criteria.NotFlag)
 
 						set := &imap.IdSet{}
 						set.AddId(1)

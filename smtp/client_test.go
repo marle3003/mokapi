@@ -33,6 +33,7 @@ func TestClient(t *testing.T) {
 						require.NoError(t, err)
 					case *DataRequest:
 						msg := req.Message
+						require.Equal(t, "Carol <carol@mokapi.io>", msg.Headers["From"])
 						require.Equal(t, "text/plain; charset=UTF-8", msg.ContentType)
 						require.Equal(t, "Test Mail", msg.Subject)
 						require.Equal(t, "Hello Carol", msg.Body)
@@ -41,7 +42,7 @@ func TestClient(t *testing.T) {
 
 				msg := &Message{
 					Sender:  &Address{Address: "alice@mokapi.io"},
-					To:      []Address{{Address: "carol@mokapi.io"}},
+					To:      []Address{{Name: "Carol", Address: "carol@mokapi.io"}},
 					Subject: "Test Mail",
 					Body:    "Hello Carol",
 				}
