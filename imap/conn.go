@@ -120,6 +120,8 @@ func (c *conn) readCmd() error {
 		err = c.handleCopy(tag, &d, false)
 	case "MOVE":
 		err = c.handleMove(tag, &d, false)
+	case "SEARCH":
+		err = c.handleSearch(tag, &d, false)
 	case "NOOP":
 		res = &response{
 			status: ok,

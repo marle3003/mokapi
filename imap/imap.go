@@ -34,6 +34,7 @@ type Handler interface {
 	Status(req *StatusRequest, ctx context.Context) (StatusResult, error)
 	Subscribe(mailbox string, ctx context.Context) error
 	Unsubscribe(mailbox string, ctx context.Context) error
+	Search(request *SearchRequest, ctx context.Context) (*SearchResponse, error)
 }
 
 type Flag string

@@ -22,6 +22,7 @@ type Handler struct {
 	StatusFunc      func(req *imap.StatusRequest, session map[string]interface{}) (imap.StatusResult, error)
 	SubscribeFunc   func(mailbox string, session map[string]interface{}) error
 	UnsubscribeFunc func(mailbox string, session map[string]interface{}) error
+	SearchFunc      func(request *imap.SearchRequest) (*imap.SearchResponse, error)
 }
 
 func (h *Handler) Login(username, password string, _ context.Context) error {
@@ -142,6 +143,14 @@ func (h *Handler) Unsubscribe(mailbox string, _ context.Context) error {
 		return h.UnsubscribeFunc(mailbox, h.session)
 	}
 	panic("UNSUBSCRIBE not implemented")
+}
+
+func (h *Handler) Search(request *imap.SearchRequest, _ context.Context) (*imap.SearchResponse, error) {
+	if h.SearchFunc != nil {
+		h.ensureSession()
+		return h.SearchFunc(request)
+	}
+	panic("SEARCH not implemented")
 }
 
 func (h *Handler) ensureSession() {

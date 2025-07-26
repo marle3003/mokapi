@@ -51,6 +51,10 @@ func (s *IdSet) Append(v Set) {
 	s.Ids = append(s.Ids, v)
 }
 
+func (s *IdSet) AddId(num uint32) {
+	s.Ids = append(s.Ids, IdNum(num))
+}
+
 func (s *Range) Contains(num uint32) bool {
 	if num < s.Start.Value {
 		return false
@@ -80,4 +84,32 @@ func (n IdNum) Contains(num uint32) bool {
 
 func (n IdNum) String() string {
 	return fmt.Sprintf("%d", n)
+}
+
+func parseSequence(s string) (IdSet, error) {
+	set := IdSet{}
+
+	var err error
+	for _, v := range strings.Split(s, ",") {
+		if i := strings.IndexRune(v, ':'); i >= 0 {
+			r := &Range{}
+			r.Start, err = parseNumSet(v[:i])
+			if err != nil {
+				return set, err
+			}
+			r.End, err = parseNumSet(v[i+1:])
+			if err != nil {
+				return set, err
+			}
+			set.Ids = append(set.Ids, r)
+		} else {
+			var n SeqNum
+			n, err = parseNumSet(v)
+			if err != nil {
+				return set, err
+			}
+			set.Ids = append(set.Ids, IdNum(n.Value))
+		}
+	}
+	return set, nil
 }

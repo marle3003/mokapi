@@ -259,6 +259,10 @@ func (h *mailHandler) Unsubscribe(mailbox string, ctx context.Context) error {
 	return h.next.Unsubscribe(mailbox, ctx)
 }
 
+func (h *mailHandler) Search(req *imap.SearchRequest, ctx context.Context) (*imap.SearchResponse, error) {
+	return h.next.Search(req, ctx)
+}
+
 func getSmtpConfig(c *dynamic.Config) *mail.Config {
 	return c.Data.(*mail.Config)
 }

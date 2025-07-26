@@ -18,7 +18,7 @@ func (d *Decoder) SP() *Decoder {
 	if d.IsSP() {
 		_ = d.expect(" ")
 	} else if d.is("(") {
-		// SP is optional if parenthesized list follows
+		// SP is optional if a parenthesized list follows
 	} else if d.err == nil {
 		d.err = fmt.Errorf("expected SP, got %s", d.msg)
 	}
@@ -38,6 +38,10 @@ func (d *Decoder) ExpectTag(tag string) error {
 		return d.expect(tag)
 	}
 	return d.returnErr(fmt.Errorf("tag '%s' does not exist", tag))
+}
+
+func (d *Decoder) IsList() bool {
+	return d.is("(")
 }
 
 func (d *Decoder) List(f func() error) error {
@@ -167,6 +171,17 @@ func (d *Decoder) Number() (uint32, error) {
 	return parseNum(s)
 }
 
+func (d *Decoder) Int64() (int64, error) {
+	s := d.Read(func(r byte) bool {
+		return r >= '0' && r <= '9'
+	})
+	i, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return 0, d.returnErr(err)
+	}
+	return i, nil
+}
+
 func (d *Decoder) Read(valid func(r byte) bool) string {
 	var sb strings.Builder
 	for {
@@ -218,32 +233,12 @@ func (d *Decoder) EndCmd(tag string) error {
 }
 
 func (d *Decoder) Sequence() (IdSet, error) {
-	set := IdSet{}
 	s := d.Read(func(r byte) bool { return r == '*' || isAtom(r) })
 
-	var err error
-	for _, v := range strings.Split(s, ",") {
-		if i := strings.IndexRune(v, ':'); i >= 0 {
-			r := &Range{}
-			r.Start, err = parseNumSet(v[:i])
-			if err != nil {
-				return set, d.returnErr(err)
-			}
-			r.End, err = parseNumSet(v[i+1:])
-			if err != nil {
-				return set, d.returnErr(err)
-			}
-			set.Ids = append(set.Ids, r)
-		} else {
-			var n SeqNum
-			n, err = parseNumSet(v)
-			if err != nil {
-				return set, d.returnErr(err)
-			}
-			set.Ids = append(set.Ids, IdNum(n.Value))
-		}
+	set, err := parseSequence(s)
+	if err != nil {
+		return set, d.returnErr(err)
 	}
-
 	return set, nil
 }
 
