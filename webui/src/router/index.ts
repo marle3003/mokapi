@@ -12,9 +12,9 @@ export function useRoute() {
     operation: route.params.operation?.toString()
   }
 
-  function service(service: Service): RouteLocationRaw{
+  function service(service: Service, type: string): RouteLocationRaw{
     return {
-        name: 'httpService',
+        name: `${type}Service`,
         params: { service: service.name },
         query: { refresh: route.query.refresh }
     }
@@ -190,6 +190,12 @@ const router = createRouter({
               name: 'mailService',
               component: dashboardView,
               meta: { service: 'mail' },
+            },
+            {
+              path: '/dashboard/mail/service/:service/maiboxes/:name',
+              name: 'smtpMailbox',
+              component: dashboardView,
+              meta: { service: 'mail' }
             },
             {
               path: '/dashboard/mail/mails/:id',

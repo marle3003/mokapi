@@ -67,17 +67,17 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 	for key, val := range header {
 		switch strings.ToLower(key) {
 		case "sender":
-			m.Sender, err = parseAddress(val[0])
+			m.Sender, err = ParseAddress(val[0])
 		case "from":
-			m.From, err = parseAddressList(val[0])
+			m.From, err = ParseAddressList(val[0])
 		case "to":
-			m.To, err = parseAddressList(val[0])
+			m.To, err = ParseAddressList(val[0])
 		case "reply-to":
-			m.ReplyTo, err = parseAddressList(val[0])
+			m.ReplyTo, err = ParseAddressList(val[0])
 		case "cc":
-			m.Cc, err = parseAddressList(val[0])
+			m.Cc, err = ParseAddressList(val[0])
 		case "bcc":
-			m.Bcc, err = parseAddressList(val[0])
+			m.Bcc, err = ParseAddressList(val[0])
 		case "message-id":
 			m.MessageId = val[0]
 		case "in-reply-to":
@@ -355,7 +355,7 @@ func newMessageId() string {
 	return fmt.Sprintf("%v-%v@%v", time.Now().Format("20060102-150405.000"), os.Getpid(), name)
 }
 
-func parseAddress(s string) (*Address, error) {
+func ParseAddress(s string) (*Address, error) {
 	a, err := mail.ParseAddress(s)
 	if err != nil {
 		return nil, err
@@ -366,7 +366,7 @@ func parseAddress(s string) (*Address, error) {
 	}, nil
 }
 
-func parseAddressList(s string) ([]Address, error) {
+func ParseAddressList(s string) ([]Address, error) {
 	list, err := mail.ParseAddressList(s)
 	if err != nil {
 		return nil, err

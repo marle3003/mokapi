@@ -10,6 +10,7 @@ import Mails from './Mails.vue'
 import Mail from './Mail.vue'
 import Rules from './Rules.vue'
 import ConfigCard from '../ConfigCard.vue'
+import Mailbox from './Mailbox.vue'
 
 const { fetchService } = useService()
 const route = useRoute()
@@ -30,8 +31,8 @@ if (serviceName){
           <service-info-card :service="service" type="MAIL" />
       </div>
 
-      <div class="card-group">
-        <section class="card" aria-label="Topic Data">
+      <div class="card-group" v-if="$route.name === 'mailService'">
+        <section class="card">
           <div class="card-body">
             <div class="nav card-tabs" id="myTab" role="tablist">
               <button class="active" id="servers-tab" data-bs-toggle="tab" data-bs-target="#servers" type="button" role="tab" aria-controls="servers" aria-selected="true">Servers</button>
@@ -69,11 +70,12 @@ if (serviceName){
         </section>
       </div>
 
-
-      <div class="card-group">
+      <div class="card-group"  v-if="$route.name === 'mailService'">
         <mails :service="service" />
       </div>
   </div>
+  <Mailbox v-if="$route.name === 'smtpMailbox' && service" :service="service" :mailbox-name="$route.params.name.toString()" />
+  
   <mail v-if="$route.name == 'smtpMail'"></mail>
 </template>
 

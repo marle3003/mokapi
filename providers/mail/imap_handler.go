@@ -317,6 +317,27 @@ func (h *Handler) Unsubscribe(mailbox string, ctx context.Context) error {
 	return nil
 }
 
+func (h *Handler) Append(mailbox string, message *smtp.Message, opt imap.AppendOptions, ctx context.Context) error {
+	mb, _ := getContext(ctx)
+	mb.m.Lock()
+	defer mb.m.Unlock()
+
+	f := mb.Select(mailbox)
+	if f == nil {
+		return fmt.Errorf("mailbox not found")
+	}
+	m := f.Append(message)
+
+	if opt.Flags != nil {
+		m.Flags = opt.Flags
+	}
+	if !opt.Date.IsZero() {
+		m.Date = opt.Date
+	}
+
+	return nil
+}
+
 func addressListToString(list []smtp.Address) string {
 	var sb strings.Builder
 	for _, addr := range list {

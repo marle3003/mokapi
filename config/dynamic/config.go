@@ -15,7 +15,15 @@ const (
 	Create Event = iota + 1
 	Update
 	Delete
+	Chmod
 )
+
+var EventText = map[Event]string{
+	Create: "Create",
+	Update: "Update",
+	Delete: "Delete",
+	Chmod:  "Chmod",
+}
 
 type ConfigListener func(event ConfigEvent)
 
@@ -190,4 +198,8 @@ func (c *Config) OpenScope(name string) {
 
 func (c *Config) CloseScope() {
 	c.Scope.Close()
+}
+
+func (e Event) String() string {
+	return EventText[e]
 }

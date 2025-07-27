@@ -339,6 +339,8 @@ func (p *Provider) processEvents(events []fsnotify.Event) {
 			e.Event = dynamic.Create
 		} else if evt.Has(fsnotify.Write) {
 			e.Event = dynamic.Update
+		} else if evt.Has(fsnotify.Chmod) {
+			e.Event = dynamic.Update
 		}
 
 		dir, _ := filepath.Split(evt.Name)

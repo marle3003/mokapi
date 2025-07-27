@@ -148,11 +148,11 @@ imap:
 
 A Server Object describes an individual SMTP or IMAP server, including connection details and protocol information.
 
-| Field Name  | Type   | Description                                                                      |
-|-------------|--------|----------------------------------------------------------------------------------|
-| host        | string | **REQUIRED**. The server host name. It MAY include the port.                     |
-| protocol    | string | **REQUIRED**. The supported protocol: *smtp*, *imap*, *smtps*, or *imaps*.       |
-| description | string | Optional description for documentation purposes. Supports **CommonMark syntax**. |
+| Field Name  | Type   | Description                                                                        |
+|-------------|--------|------------------------------------------------------------------------------------|
+| host        | string | **REQUIRED**. The server host name. It MAY include the port.                       |
+| protocol    | string | **REQUIRED**. The supported protocol: *smtp*, *imap*, *smtps*, or *imaps*.         |
+| description | string | (Optional) Description for documentation purposes. Supports **CommonMark syntax**. |
 
 ##### Server Object Example
 
@@ -188,11 +188,11 @@ alice@example.com:
 
 A Mailbox Object contains user credentials and a nested folder structure for accessing stored messages.
 
-| Field Name | Type            | Description                                        |
-|------------|-----------------|----------------------------------------------------|
-| username   | string          | Optional username used to authenticate             |
-| password   | string          | Optional password used to authenticate             |
-| folders    | Folders Object  | Optional map of folders belonging to this mailbox  |
+| Field Name | Type            | Description                                                    |
+|------------|-----------------|----------------------------------------------------------------|
+| username   | string          | (Optional) Username used for authentication.                   |
+| password   | string          | (Optional) Password used for authentication. Empty by default. |
+| folders    | Folders Object  | (Optional) A map of folders that belong to this mailbox.       |
 
 ##### Mailbox Object Example
 
@@ -220,10 +220,10 @@ deep hierarchical structures.
 
 Each Folder Object defines an individual folder’s behavior and structure.
 
-| Field Name | Type            | Description                                       |
-|------------|-----------------|---------------------------------------------------|
-| flags      | string          | Optional list of IMAP flags (e.g., \Trash, \Sent) |
-| folders    | Folders Object  | Optional map of folders nested within this one    |
+| Field Name | Type            | Description                                         |
+|------------|-----------------|-----------------------------------------------------|
+| flags      | string          | (Optional) List of IMAP flags (e.g., \Trash, \Sent) |
+| folders    | Folders Object  | (Optional) Map of folders nested within this one    |
 
 ##### Folder Object Example
 
@@ -239,8 +239,8 @@ The settings object defines global configuration options that influence server b
 
 | Field Name        | Type    | Default | Description                                                                                                                                                                                        |
 |-------------------|---------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| maxRecipients     | integer | 0       | Optional maximum number of recipients per email. Use 0 for unlimited.                                                                                                                              |
-| autoCreateMailbox | boolean | true    | Optional setting to auto-generate mailboxes at runtime.                                                                                                                                            |
+| maxRecipients     | integer | 0       | (Optional) Maximum number of recipients per email. Use 0 for unlimited.                                                                                                                            |
+| autoCreateMailbox | boolean | true    | (Optional) Allow create mailboxes at runtime.                                                                                                                                                      |
 | maxInboxMails     | integer | 100     | (Optional) Maximum number of messages kept in the INBOX folder. Oldest mails are removed when the limit is exceeded. Use 0 to disable the limit and store messages indefinitely (not recommended). |
 
 ##### Mailbox Object Example
@@ -276,14 +276,14 @@ A Rule Object defines a pattern-based rule that determines whether a message is 
 The value of each matching field (e.g., sender, subject, body) can be either an exact string or a regular
 expression pattern for more flexible filtering.
 
-| Field Name      | Type                   | Description                         |
-|-----------------|------------------------|-------------------------------------|
-| sender          | string                 | Match against the sender's address  |
-| recipient       | string                 | Match against recipient's address   |
-| subject         | string                 | Match subject line                  |
-| body            | string                 | Match against message body          |
-| action          | string                 | Required: either allow or deny      |
-| rejectResponse  | Reject Response Object | Optional custom rejection response  |
+| Field Name      | Type                   | Description                                   |
+|-----------------|------------------------|-----------------------------------------------|
+| sender          | string                 | (Optional) Match against the sender's address |
+| recipient       | string                 | (Optional) Match against recipient's address  |
+| subject         | string                 | (Optional) Match subject line                 |
+| body            | string                 | (Optional) Match against message body         |
+| action          | string                 | (Optional) Required: either allow or deny     |
+| rejectResponse  | Reject Response Object | Optional custom rejection response            |
 
 ##### Server Object Example
 

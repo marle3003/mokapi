@@ -19,7 +19,8 @@ const { fetch } = useEvents()
 const { events, close } = fetch('mail', ...labels)
 const { format, duration } = usePrettyDates()
 
-function goToMail(data: SmtpEventData){
+function goToMail(evt: ServiceEvent){
+    const data = eventData(evt)
     router.push({
         name: 'smtpMail',
         params: {id: data.messageId},
@@ -60,7 +61,7 @@ onUnmounted(() => {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="event in filteredEvents" :key="event.id" :set="data = eventData(event)" @click="goToMail(data!)">
+                    <tr v-for="event in filteredEvents" :key="event.id" :set="data = eventData(event)" @click="goToMail(event)">
                         <td>{{ data.subject }}</td>
                         <td>{{ data.from }}</td>
                         <td>

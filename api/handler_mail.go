@@ -59,6 +59,7 @@ type mailboxDetails struct {
 
 type rule struct {
 	Name           string          `json:"name"`
+	Description    string          `json:"description,omitempty"`
 	Sender         string          `json:"sender"`
 	Recipient      string          `json:"recipient"`
 	Subject        string          `json:"subject"`
@@ -109,7 +110,7 @@ type attachment struct {
 	Name        string `json:"name"`
 	ContentType string `json:"contentType"`
 	Size        int    `json:"size"`
-	ContentId   string `json:"contentId"`
+	ContentId   string `json:"contentId,omitempty"`
 }
 
 func getMailServices(store *runtime.MailStore, m *monitor.Monitor) []interface{} {
@@ -221,6 +222,7 @@ func (h *handler) handleMailService(w http.ResponseWriter, r *http.Request) {
 	for _, r := range s.Rules {
 		result.Rules = append(result.Rules, rule{
 			Name:           r.Name,
+			Description:    r.Description,
 			Sender:         r.Sender.String(),
 			Recipient:      r.Recipient.String(),
 			Subject:        r.Subject.String(),

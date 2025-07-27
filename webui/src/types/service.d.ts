@@ -3,7 +3,7 @@ declare interface Service {
     description: string
     version: string
     contact: Contact | null
-    type: ServiceType
+    type: string
     metrics: Metric[]
     configs: Config[]
 }

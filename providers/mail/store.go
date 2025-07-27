@@ -2,6 +2,7 @@ package mail
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"mokapi/imap"
 	"mokapi/smtp"
 	"strings"
@@ -11,12 +12,14 @@ import (
 const mailboxSize = 100
 
 type Store struct {
+	Name      string
 	Mailboxes map[string]*Mailbox
 	Settings  *Settings
 }
 
 func NewStore(c *Config) *Store {
 	s := &Store{
+		Name:      c.Info.Name,
 		Mailboxes: map[string]*Mailbox{},
 		Settings:  c.Settings,
 	}
@@ -78,6 +81,7 @@ func (s *Store) EnsureMailbox(name string) error {
 		return fmt.Errorf("mailbox can not be created")
 	}
 	s.NewMailbox(name, &MailboxConfig{}, s.Settings)
+	log.Infof("adding new mailbox '%v' to '%v'", name, s.Name)
 	return nil
 }
 

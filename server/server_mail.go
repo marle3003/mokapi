@@ -88,7 +88,7 @@ func (m *MailManager) startServers(cfg *runtime.MailInfo) error {
 			}
 
 			log.Infof("adding new SMTP host on :%v", port)
-			s := service.NewSmtpServer(port, h)
+			s := service.NewSmtpServer(port, h, m.certStore)
 			s.Start()
 			servers[port] = s
 		case "smtps":
@@ -102,8 +102,8 @@ func (m *MailManager) startServers(cfg *runtime.MailInfo) error {
 			}
 
 			log.Infof("adding new SMTPS host on %v", port)
-			s := service.NewSmtpServerTls(port, h, m.certStore)
-			s.Start()
+			s := service.NewSmtpServer(port, h, m.certStore)
+			s.StartTls()
 			servers[port] = s
 		case "imap":
 			if port == "" {
@@ -184,7 +184,7 @@ func (m *MailManager) cleanupRemovedServers(cfg *runtime.MailInfo, old map[strin
 			case *service.ImapServer:
 				if s.Addr() == addr {
 					log.Infof("removing '%v' on IMAP binding %v", cfg.Info.Name, addr)
-					s.Start()
+					s.Stop()
 					delete(m.servers, addr)
 				}
 			}

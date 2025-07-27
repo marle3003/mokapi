@@ -12,7 +12,7 @@ declare interface MailServer {
     description: string
 }
 
-declare interface SmtpMailbox{
+declare interface SmtpMailbox {
     name: string
     username: string
     password: string
@@ -23,16 +23,24 @@ declare interface SmtpMailbox{
 
 declare interface SmtpRule {
     name: string
-    sender: string    
-	recipient: string    
-	subject: string    
-	body: string    
-	action: RuleAction 
+    description?: string
+    sender: string
+	recipient: string
+	subject: string
+	body: string
+	action: RuleAction
+    rejectResponse?: RejectResponse
 }
 
 declare enum RuleAction {
     allow = 'allow',
     deny = 'deny'
+}
+
+declare interface RejectResponse {
+    statusCode: string
+    enhancedStatusCode: string
+    message: string
 }
 
 declare interface SmtpEventData {
@@ -46,18 +54,18 @@ declare interface SmtpEventData {
 }
 
 declare interface Mail {
-    sender: MailAddress    
+    sender: MailAddress
     from: MailAddress[]
-	to: MailAddress[] 
-	replyTo: MailAddress[]  
-	cc: MailAddress[]    
-	bcc: MailAddress[]    
-	messageId: string    
-    inReplyTo: string   
+	to: MailAddress[]
+	replyTo: MailAddress[]
+	cc: MailAddress[]
+	bcc: MailAddress[]
+	messageId: string
+    inReplyTo: string
 	date: number
-	subject: string      
-	contentType: string      
-	contentTransferEncoding: string      
+	subject: string
+	contentType: string
+	contentTransferEncoding: string
 	body: string
     attachments: Attachment[]
 }
@@ -72,6 +80,7 @@ declare interface Attachment {
     contentType: string
     size: number
     disposition: string
+    contentId?: string
 }
 
 declare interface MailSettings {

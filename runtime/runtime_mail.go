@@ -263,6 +263,10 @@ func (h *mailHandler) Search(req *imap.SearchRequest, ctx context.Context) (*ima
 	return h.next.Search(req, ctx)
 }
 
+func (h *mailHandler) Append(mailbox string, msg *smtp.Message, opt imap.AppendOptions, ctx context.Context) error {
+	return h.next.Append(mailbox, msg, opt, ctx)
+}
+
 func getSmtpConfig(c *dynamic.Config) *mail.Config {
 	return c.Data.(*mail.Config)
 }

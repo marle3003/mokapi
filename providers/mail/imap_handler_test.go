@@ -8,6 +8,7 @@ import (
 	"mokapi/imap/imaptest"
 	"mokapi/providers/mail"
 	"mokapi/runtime/events/eventstest"
+	"mokapi/smtp"
 	"testing"
 )
 
@@ -1054,6 +1055,66 @@ func TestImapHandler(t *testing.T) {
 				require.NotNil(t, f)
 				require.Equal(t, "old", f.Name)
 				require.Len(t, f.Messages, 1)
+			},
+		},
+		{
+			name: "APPEND SENT",
+			cfg: &mail.Config{
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
+						Username: "alice",
+						Password: "foo",
+						Folders: map[string]*mail.FolderConfig{
+							"Sent": {},
+						},
+					},
+				},
+			},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, ctx context.Context) {
+				_ = h.Login("alice", "foo", ctx)
+				_, err := h.Select("Inbox", false, ctx)
+				require.NoError(t, err)
+
+				mb := s.Mailboxes["alice@mokapi.io"]
+				mb.Folders["INBOX"].Messages = append(mb.Folders["INBOX"].Messages, &mail.Mail{})
+
+				err = h.Append("Sent", &smtp.Message{MessageId: "1"}, imap.AppendOptions{}, ctx)
+				require.NoError(t, err)
+
+				f := mb.Select("Sent")
+				require.Len(t, f.Messages, 1)
+				require.Equal(t, "1", f.Messages[0].MessageId)
+				require.Equal(t, []imap.Flag{imap.FlagRecent}, f.Messages[0].Flags)
+			},
+		},
+		{
+			name: "APPEND SENT with flags",
+			cfg: &mail.Config{
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
+						Username: "alice",
+						Password: "foo",
+						Folders: map[string]*mail.FolderConfig{
+							"Sent": {},
+						},
+					},
+				},
+			},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, ctx context.Context) {
+				_ = h.Login("alice", "foo", ctx)
+				_, err := h.Select("Inbox", false, ctx)
+				require.NoError(t, err)
+
+				mb := s.Mailboxes["alice@mokapi.io"]
+				mb.Folders["INBOX"].Messages = append(mb.Folders["INBOX"].Messages, &mail.Mail{})
+
+				err = h.Append("Sent", &smtp.Message{MessageId: "1"}, imap.AppendOptions{Flags: []imap.Flag{imap.FlagSeen}}, ctx)
+				require.NoError(t, err)
+
+				f := mb.Select("Sent")
+				require.Len(t, f.Messages, 1)
+				require.Equal(t, "1", f.Messages[0].MessageId)
+				require.Equal(t, []imap.Flag{imap.FlagSeen}, f.Messages[0].Flags)
 			},
 		},
 	}

@@ -3,12 +3,14 @@ package mail
 import (
 	"bufio"
 	"bytes"
+	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"github.com/dop251/goja"
 	"github.com/google/uuid"
 	"mokapi/engine/common"
 	"mokapi/smtp"
+	"net"
 	"net/http"
 	"net/mail"
 	netsmtp "net/smtp"
@@ -153,9 +155,75 @@ func (m *Module) Send(addr string, msg *Mail, auth *Auth) {
 		}
 	}
 
-	err = netsmtp.SendMail(host, auth.getAuth(), sender, to, body.Bytes())
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+
+	var conn net.Conn
+	if u != nil && u.Scheme == "smtps" {
+		conn, err = tls.Dial("tcp", host, tlsConfig)
+		if err != nil {
+			toJsError(m.rt, err)
+			return
+		}
+	} else {
+		conn, err = net.Dial("tcp", host)
+	}
+
+	c, err := netsmtp.NewClient(conn, host)
 	if err != nil {
 		toJsError(m.rt, err)
+		return
+	}
+
+	if err = c.Hello("localhost"); err != nil {
+		toJsError(m.rt, err)
+		return
+	}
+	if ok, _ := c.Extension("STARTTLS"); ok {
+		if err = c.StartTLS(tlsConfig); err != nil {
+			toJsError(m.rt, err)
+			return
+		}
+	}
+
+	if auth != nil {
+		if err = c.Auth(auth.getAuth()); err != nil {
+			toJsError(m.rt, err)
+			return
+		}
+	}
+
+	if err = c.Mail(sender); err != nil {
+		toJsError(m.rt, err)
+		return
+	}
+
+	for _, t := range to {
+		if err = c.Rcpt(t); err != nil {
+			toJsError(m.rt, err)
+			return
+		}
+	}
+
+	wc, err := c.Data()
+	if err != nil {
+		toJsError(m.rt, err)
+		return
+	}
+	_, err = wc.Write(body.Bytes())
+	if err != nil {
+		toJsError(m.rt, err)
+		return
+	}
+	err = wc.Close()
+	if err != nil {
+		toJsError(m.rt, err)
+		return
+	}
+	if err = c.Quit(); err != nil {
+		toJsError(m.rt, err)
+		return
 	}
 }
 

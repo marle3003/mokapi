@@ -70,6 +70,7 @@ const (
 
 type Rule struct {
 	Name           string
+	Description    string          `yaml:"description,omitempty" json:"description,omitempty"`
 	Sender         *RuleExpr       `yaml:"sender" json:"sender"`
 	Recipient      *RuleExpr       `yaml:"recipient" json:"recipient"`
 	Subject        *RuleExpr       `yaml:"subject" json:"subject"`
@@ -93,9 +94,12 @@ func (c *Config) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
 		return fmt.Errorf("mail configuration missing title")
 	}
 
-	for name := range c.Servers {
+	for name, server := range c.Servers {
 		if !serverNamePattern.MatchString(name) {
 			return fmt.Errorf("server name '%s' does not match valid pattern", name)
+		}
+		if server.Protocol == "" {
+			return fmt.Errorf("missing protocol for server '%s'", name)
 		}
 	}
 

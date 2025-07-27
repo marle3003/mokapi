@@ -3,11 +3,14 @@ info:
   title: Mokapi's Mail Server
 servers:
   smtp:
-    host: localhost:8025
+    host: localhost:25
+    protocol: smtp
   imap:
     host: localhost:143
+    protocol: imap
 rules:
-  - name: Recipient's domain is mokapi.io
+  recipientDomainIsMokapi:
+    description: Recipient's domain is mokapi.io
     recipient: '@mokapi.io'
     action: allow
 mailboxes:
@@ -17,5 +20,6 @@ mailboxes:
     folders:
       Trash:
         flags: [\Trash]
-  alice@mokapi.io: {}
+  alice@mokapi.io:
+    username: alice@mokapi.io
 

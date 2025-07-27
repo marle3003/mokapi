@@ -241,18 +241,22 @@ func (f *Folder) UidValidity() uint32 {
 	return f.uidValidity
 }
 
-func (f *Folder) Append(m *smtp.Message) {
+func (f *Folder) Append(msg *smtp.Message) *Mail {
 	if f.maxMails > 0 && len(f.Messages) == f.maxMails {
 		f.Messages = f.Messages[0 : len(f.Messages)-1]
 	}
 	uid := f.uidNext
 	f.uidNext++
-	f.Messages = append(f.Messages, &Mail{
-		Message:  m,
+
+	m := &Mail{
+		Message:  msg,
 		UId:      uid,
 		Flags:    []imap.Flag{imap.FlagRecent},
 		Received: time.Now(),
-	})
+	}
+
+	f.Messages = append(f.Messages, m)
+	return m
 }
 
 func (f *Folder) Copy(m *Mail) *Mail {

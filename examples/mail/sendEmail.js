@@ -3,7 +3,7 @@ const nodemailer = require("nodemailer");
 async function sendEmail() {
     let transporter = nodemailer.createTransport({
         host: "localhost",
-        port: 2525, // Mokapi's SMTP server
+        port: 25, // Mokapi's SMTP server
         secure: true,
         auth: {
             user: "bob",

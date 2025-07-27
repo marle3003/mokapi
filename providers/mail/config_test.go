@@ -291,11 +291,23 @@ func TestParseConfig(t *testing.T) {
 			config: &mail.Config{
 				Info: mail.Info{Name: "Test Server"},
 				Servers: map[string]*mail.Server{
-					"valid": {},
+					"valid": {Protocol: "smtps"},
 				},
 			},
 			test: func(t *testing.T, err error) {
 				require.NoError(t, err)
+			},
+		},
+		{
+			name: "missing protocol",
+			config: &mail.Config{
+				Info: mail.Info{Name: "Test Server"},
+				Servers: map[string]*mail.Server{
+					"valid": {},
+				},
+			},
+			test: func(t *testing.T, err error) {
+				require.EqualError(t, err, "missing protocol for server 'valid'")
 			},
 		},
 		{

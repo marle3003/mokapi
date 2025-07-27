@@ -183,7 +183,7 @@ func (w *ConfigWatcher) addOrUpdate(evt dynamic.ConfigEvent) error {
 		w.configs[c.Info.Url.String()] = e
 		c.Listeners.Add("ConfigWatcher", w.configChanged)
 	} else if bytes.Equal(e.config.Info.Checksum, c.Info.Checksum) {
-		log.Debugf("Checksum not changed. Skip reloading %v (%v)", e.config.Info.Url.String(), evt.Event)
+		log.Debugf("Checksum not changed. Skip reloading %v (%s)", e.config.Info.Url.String(), evt.Event)
 		w.m.Unlock()
 		return nil
 	} else {
