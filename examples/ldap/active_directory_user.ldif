@@ -1,0 +1,32 @@
+# Simple diffinition of AD domain user
+
+# Root DSE.
+dn:
+namingContexts: dc=example_domain_name
+subschemaSubentry: cn=schema
+
+# Schema definition
+dn: cn=schema
+objectClass: top
+objectClass: subschema
+# 'activeDirectoryObjectSidMatch' is a custom logic which allows filtering by (objectSid=S-1-...).
+# Such filtering is AD only feature so we should specify that objectSid can be found by either (objectSid=S-1-...) or (objectSid=\00\01\AB...).
+# Custom objectClass 'myUser' make it possible to attach 'activeDirectoryObjectSidMatch' to entry.
+attributeTypes: ( 1.2.3.4.5.6.7.8 NAME 'objectSid' DESC 'objectSid' EQUALITY activeDirectoryObjectSidMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )
+objectClasses: ( 1.2.3.4.5.6.7.9 NAME 'myUser' SUP top STRUCTURAL MUST ( cn ) MAY ( objectSid ) )
+
+# Example domain
+dn: dc=example_domain_name
+objectClass: top
+objectClass: domain
+dc: example_domain_name
+
+# Example user
+dn: uid=example_user_name,dc=example_domain_name
+objectClass: myUser
+objectClass: user
+cn: example_user_name
+mail: example_user_name@example.com
+# SID in binary form (Base64 encoded).
+# S-1-5-21-1234567890-1234567890-1234567890-1001
+objectSid:: AQUAAAAAAAUVAAAA0gKWSdIClknSApZJ6QMAAA==
