@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import router from '@/router';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 const route = useRoute()
@@ -33,6 +33,13 @@ const pageRange = computed(() => {
 
   return Array.from({ length: end - start + 1 }, (_, i) => start + i)
 })
+let timeout: number;
+watch(queryText, async (q) => {
+  // debounced
+  clearTimeout(timeout)
+  timeout = setTimeout(async () => {await search()}, 300)
+})
+
 function navigateToSearchResult(result: any) {
   switch (result.type.toLowerCase()) {
     case 'http':
