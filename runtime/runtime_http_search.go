@@ -3,16 +3,20 @@ package runtime
 import (
 	"fmt"
 	"mokapi/providers/openapi"
+	openApiSchema "mokapi/providers/openapi/schema"
 	"mokapi/runtime/search"
+	"mokapi/schema/json/schema"
 	"strings"
 )
 
 type HttpConfig struct {
-	Type          string `json:"type"`
-	Discriminator string `json:"discriminator"`
-	Api           string `json:"api"`
-	Version       string `json:"version"`
-	Description   string `json:"description"`
+	Type          string            `json:"type"`
+	Discriminator string            `json:"discriminator"`
+	Api           string            `json:"api"`
+	Version       string            `json:"version"`
+	Description   string            `json:"description"`
+	Contact       *openapi.Contact  `json:"contact"`
+	Servers       []*openapi.Server `json:"servers"`
 }
 
 type HttpPath struct {
@@ -26,9 +30,10 @@ type HttpPath struct {
 }
 
 type HttpParameter struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Location    string `json:"location"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	Location    string            `json:"location"`
+	Schema      *schema.IndexData `json:"schema"`
 }
 
 type HttpOperation struct {
@@ -42,7 +47,12 @@ type HttpOperation struct {
 	Tags          []string        `json:"tags"`
 	Parameters    []HttpParameter `json:"parameters"`
 	RequestBody   string          `json:"request_body"`
-	Responses     string          `json:"responses"`
+	Responses     []HttpResponse  `json:"responses"`
+}
+
+type HttpResponse struct {
+	Description string            `json:"description"`
+	Schema      *schema.IndexData `json:"schema"`
 }
 
 func (s *HttpStore) addToIndex(cfg *openapi.Config) {
@@ -50,13 +60,17 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 		return
 	}
 
-	add(s.index, cfg.Info.Name, HttpConfig{
+	c := HttpConfig{
 		Type:          "http",
 		Discriminator: "http",
 		Api:           cfg.Info.Name,
 		Version:       cfg.Info.Version,
 		Description:   cfg.Info.Description,
-	})
+		Contact:       cfg.Info.Contact,
+		Servers:       cfg.Servers,
+	}
+
+	add(s.index, cfg.Info.Name, c)
 
 	for path, p := range cfg.Paths {
 		if p.Value == nil {
@@ -77,10 +91,13 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 			pathData.Description = p.Value.Description
 		}
 		for _, param := range p.Value.Parameters {
+			ps := openApiSchema.ConvertToJsonSchema(param.Value.Schema)
+
 			pathData.Parameters = append(pathData.Parameters, HttpParameter{
 				Name:        param.Value.Name,
 				Description: param.Value.Description,
 				Location:    param.Value.Type.String(),
+				Schema:      schema.NewIndexData(ps),
 			})
 		}
 
@@ -101,11 +118,32 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 				Parameters:    pathData.Parameters,
 			}
 			for _, param := range op.Parameters {
+				ps := openApiSchema.ConvertToJsonSchema(param.Value.Schema)
+
 				opData.Parameters = append(opData.Parameters, HttpParameter{
 					Name:        param.Value.Name,
 					Description: param.Value.Description,
 					Location:    param.Value.Type.String(),
+					Schema:      schema.NewIndexData(ps),
 				})
+			}
+
+			if op.Responses != nil {
+				for it := op.Responses.Iter(); it.Next(); {
+					v := it.Value().Value
+					if v == nil {
+						continue
+					}
+					for _, mt := range v.Content {
+						rs := openApiSchema.ConvertToJsonSchema(mt.Schema)
+
+						opData.Responses = append(opData.Responses, HttpResponse{
+							Description: v.Description,
+							Schema:      schema.NewIndexData(rs),
+						})
+					}
+
+				}
 			}
 
 			add(s.index, id, opData)

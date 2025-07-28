@@ -2,7 +2,7 @@
 title: SMTP Quick Start
 description: Send and inspect fake emails locally using Mokapi as a mock SMTP server.
 ---
-# Quick Start
+# SMTP Quick Start
 
 Quickly get up and running with Mokapi as a fake SMTP server for testing and development — no real emails are sent,
 and no risk of spamming real users.
@@ -64,6 +64,7 @@ You’ll see the received message under Mail → Messages, including its full co
 
 ## What's Next?
 
+- [Test email workflows with Playwright and Mokapi](/docs/resources/blogs/testing-email-workflows-with-playwright-and-mokapi)
 - [Add recipient rules](/docs/guides/mail/rules.md) to allow or deny specific domains
 - [Patch the config](/docs/configuration/patching.md) to test different scenarios
 

@@ -11,7 +11,7 @@ type store struct {
 	m      sync.RWMutex
 }
 
-func (s *store) Push(e Event) {
+func (s *store) Push(e Event) *Event {
 	s.m.Lock()
 	defer s.m.Unlock()
 
@@ -20,11 +20,15 @@ func (s *store) Push(e Event) {
 		size = defaultSize
 	}
 
+	var removed *Event
 	if len(s.events) == size {
+		removed = &s.events[len(s.events)-1]
 		s.events = s.events[0 : len(s.events)-1]
 	}
 	// prepend
 	s.events = append([]Event{e}, s.events...)
+
+	return removed
 }
 
 func (s *store) Events(traits Traits) []Event {

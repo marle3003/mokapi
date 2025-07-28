@@ -51,9 +51,13 @@ func (m *StoreManager) Push(data EventData, traits Traits) error {
 
 	evt := NewEvent(data, traits)
 
-	m.addToIndex(&evt, traits)
+	m.addToIndex(&evt)
 
-	bestStore.Push(evt)
+	removed := bestStore.Push(evt)
+	if removed != nil {
+		m.removeFromIndex(removed)
+	}
+
 	return nil
 }
 

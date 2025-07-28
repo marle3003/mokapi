@@ -14,14 +14,14 @@ type eventIndex struct {
 	Event         *Event `json:"event"`
 }
 
-func (m *StoreManager) addToIndex(event *Event, traits Traits) {
+func (m *StoreManager) addToIndex(event *Event) {
 	if m.index == nil {
 		return
 	}
 
 	data := eventIndex{
 		Type:          "event",
-		Discriminator: fmt.Sprintf("event_%s", traits.String()),
+		Discriminator: fmt.Sprintf("event_%s", event.Traits.String()),
 		Event:         event,
 		Title:         event.Data.Title(),
 	}
@@ -29,6 +29,10 @@ func (m *StoreManager) addToIndex(event *Event, traits Traits) {
 	if err := m.index.Index(event.Id, data); err != nil {
 		log.Errorf("add '%s' to search index failed: %v", event.Id, err)
 	}
+}
+
+func (m *StoreManager) removeFromIndex(event *Event) {
+	_ = m.index.Delete(event.Id)
 }
 
 func GetSearchResult(fields map[string]string, _ []string) (search.ResultItem, error) {
