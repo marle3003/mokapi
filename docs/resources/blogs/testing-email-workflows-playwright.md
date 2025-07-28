@@ -2,6 +2,7 @@
 title: Testing Email Workflows with Playwright and Mokapi
 description: A complete guide to end-to-end testing of email workflows using Mokapi and Playwright
 icon: bi-envelope-paper
+tech: mail
 ---
 
 # Reliable Testing of Email Workflows with Playwright and Mokapi

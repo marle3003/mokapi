@@ -57,10 +57,6 @@ using SmtpClient client = new SmtpClient("127.0.0.1", 25);
 client.Send(message);
 ```
 
-``` box=tip
-Make sure the to and from addresses match any rules or mailboxes you define later if you expand your config.
-```
-
 ## 4. View the Message in the Dashboard
 
 After sending the email, visit [http://localhost:8080](http://localhost:8080).

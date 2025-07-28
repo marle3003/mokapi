@@ -71,7 +71,7 @@ const state = computed(() => {
         http:  isTechAvailable('http'),
         kafka: isTechAvailable('kafka'),
         ldap: isTechAvailable('ldap'),
-        smtp: isTechAvailable('smtp'),
+        mail: isTechAvailable('mail'),
         core: isTechAvailable('core')
     }
 })
@@ -141,7 +141,7 @@ function setType(s: string) {
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'http' ? 'active' : ''" @click="tech = 'http'" :disabled="!state.http">HTTP</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'kafka' ? 'active' : ''" @click="tech = 'kafka'" :disabled="!state.kafka">Kafka</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'ldap' ? 'active' : ''" @click="tech = 'ldap'" :disabled="!state.ldap">LDAP</button>
-                    <button class="btn btn-outline-primary filter-button" :class="tech === 'smtp' ? 'active' : ''" @click="tech = 'smtp'" :disabled="!state.smtp">SMTP</button>
+                    <button class="btn btn-outline-primary filter-button" :class="tech === 'mail' ? 'active' : ''" @click="tech = 'mail'" :disabled="!state.mail">Mail</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'core' ? 'active' : ''" @click="tech = 'core'" :disabled="!state.core">Core</button>
                 </div>
                 <div class="d-md-none">
@@ -158,7 +158,7 @@ function setType(s: string) {
                         <option value="http" :disabled="!state.http">HTTP</option>
                         <option value="kafka" :disabled="!state.kafka">Kafka</option>
                         <option value="ldap" :disabled="!state.ldap">LDAP</option>
-                        <option value="smtp" :disabled="!state.smtp">SMTP</option>
+                        <option value="mail" :disabled="!state.mail">Mail</option>
                         <option value="core" :disabled="!state.core">Core</option>
                     </select>
                 </div>
