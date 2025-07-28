@@ -7,12 +7,31 @@ const route = useRoute()
 const queryText = ref<string>(route.query.q?.toString() ?? '')
 const pageIndex = ref(getIndex())
 const result = ref<SearchResult>();
+const maxVisiblePages = 10  // max pages in pagination
 
 const pageNumber = computed(() => {
   if (!result.value) {
     return 0
   }
   return Math.ceil(result.value?.total / 10)
+})
+const pageRange = computed(() => {
+  const half = Math.floor(maxVisiblePages / 2)
+
+  let start = pageIndex.value + 1 - half
+  let end = pageIndex.value + 1 + half - 1
+
+  if (start < 1) {
+    start = 1
+    end = maxVisiblePages
+  }
+
+  if (end > pageNumber.value) {
+    end = pageNumber.value
+    start = Math.max(1, pageNumber.value - maxVisiblePages + 1)
+  }
+
+  return Array.from({ length: end - start + 1 }, (_, i) => start + i)
 })
 function navigateToSearchResult(result: any) {
   switch (result.type.toLowerCase()) {
@@ -162,14 +181,14 @@ async function search() {
                   <div class="col-8 col-auto">
                     <nav aria-label="Page navigation">
                       <ul class="pagination justify-content-center">
-                        <li class="page-item" :class="pageIndex === 0 ? 'disabled' : ''">
-                          <a class="page-link" aria-label="Previous" @click="pageIndex_click(pageIndex--)" @event.prevent="pageIndex === 0">
+                        <li class="page-item" v-if="pageIndex > 0">
+                          <a class="page-link" aria-label="Previous" @click="pageIndex_click(pageIndex--)">
                             <span aria-hidden="true">&laquo;</span>
                           </a>
                         </li>
-                        <li class="page-item" v-for="index in pageNumber"><a class="page-link" @click="pageIndex_click(index - 1)">{{ index }}</a></li>
-                        <li class="page-item" :class="pageIndex + 1 === pageNumber ? 'disabled' : ''">
-                          <a class="page-link" aria-label="Next"  @click="pageIndex_click(pageIndex++)"  @event.prevent="pageIndex + 1 === pageNumber">
+                        <li class="page-item" v-for="index in pageRange"><a class="page-link" @click="pageIndex_click(index - 1)">{{ index }}</a></li>
+                        <li class="page-item" v-if="pageIndex + 1 < pageNumber">
+                          <a class="page-link" aria-label="Next" @click="pageIndex_click(pageIndex++)">
                             <span aria-hidden="true">&raquo;</span>
                           </a>
                         </li>
@@ -226,12 +245,6 @@ async function search() {
 }
 .page-item {
   cursor: pointer;
-}
-.page-item.disabled {
-  cursor: default;
-}
-.page-item.disabled .page-link {
-  color: gray;
 }
 </style>
 

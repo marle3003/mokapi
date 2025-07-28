@@ -32,6 +32,9 @@ func (m *StoreManager) addToIndex(event *Event) {
 }
 
 func (m *StoreManager) removeFromIndex(event *Event) {
+	if m.index == nil {
+		return
+	}
 	_ = m.index.Delete(event.Id)
 }
 
