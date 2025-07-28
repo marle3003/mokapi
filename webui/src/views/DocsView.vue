@@ -151,7 +151,7 @@ function formatParam(label: any): string {
         <div class="doc-main" style="flex: 1;margin-bottom: 3rem;" :style="showNavigation ? 'max-width:50em;' : ''">
           <div class="container">
             <nav aria-label="breadcrumb" v-if="showNavigation">
-              <ol class="breadcrumb flex-nowrap">
+              <ol class="breadcrumb">
                 <li class="breadcrumb-item text-truncate" v-for="item of breadcrumb" :class="item.isLast ? 'active' : ''">
                   <router-link v-if="item.params && !item.isLast" :to="{ name: 'docs', params: item.params }">{{ item.label }}</router-link>
                   <template v-else>{{ item.label }}</template>
