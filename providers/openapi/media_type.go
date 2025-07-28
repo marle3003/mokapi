@@ -58,8 +58,10 @@ func (m *MediaType) patch(patch *MediaType) {
 }
 
 func (m *MediaType) Parse(b []byte, contentType media.ContentType) (interface{}, error) {
-	if !contentType.IsDerivedFrom(m.ContentType) {
-		return nil, fmt.Errorf("content type '%v' does not match: %v", m.ContentType, contentType)
+	if !isDefaultContentType(m.ContentType) {
+		if !contentType.IsDerivedFrom(m.ContentType) {
+			return nil, fmt.Errorf("content type '%v' does not match: %v", m.ContentType, contentType)
+		}
 	}
 
 	if contentType.IsXml() {

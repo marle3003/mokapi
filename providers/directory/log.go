@@ -1,6 +1,7 @@
 package directory
 
 import (
+	"fmt"
 	"mokapi/engine/common"
 	"mokapi/ldap"
 	"mokapi/runtime/events"
@@ -36,14 +37,14 @@ type SearchResult struct {
 	Attributes map[string][]string `json:"attributes"`
 }
 
-func NewSearchLogEvent(r *ldap.SearchRequest, traits events.Traits) *SearchLog {
+func NewSearchLogEvent(r *ldap.SearchRequest, eh events.Handler, traits events.Traits) *SearchLog {
 	event := &SearchLog{
 		Request:  fromRequest(r),
 		Response: &SearchResponse{},
 		Duration: 0,
 		Actions:  nil,
 	}
-	_ = events.Push(event, traits.WithNamespace("ldap"))
+	_ = eh.Push(event, traits.WithNamespace("ldap"))
 	return event
 }
 
@@ -85,7 +86,7 @@ type Response struct {
 	Message   string `json:"message"`
 }
 
-func NewAddLogEvent(req *ldap.AddRequest, res *ldap.AddResponse, traits events.Traits) *AddLog {
+func NewAddLogEvent(req *ldap.AddRequest, res *ldap.AddResponse, eh events.Handler, traits events.Traits) *AddLog {
 	var attr []Attribute
 	for _, v := range req.Attributes {
 		attr = append(attr, Attribute{
@@ -108,7 +109,7 @@ func NewAddLogEvent(req *ldap.AddRequest, res *ldap.AddResponse, traits events.T
 		Duration: 0,
 		Actions:  nil,
 	}
-	_ = events.Push(l, traits.WithNamespace("ldap"))
+	_ = eh.Push(l, traits.WithNamespace("ldap"))
 
 	return l
 }
@@ -131,7 +132,7 @@ type Modify struct {
 	Attribute    *Attribute `json:"attribute"`
 }
 
-func NewModifyLogEvent(req *ldap.ModifyRequest, res *ldap.ModifyResponse, traits events.Traits) *ModifyLog {
+func NewModifyLogEvent(req *ldap.ModifyRequest, res *ldap.ModifyResponse, eh events.Handler, traits events.Traits) *ModifyLog {
 	var items []Modify
 	for _, v := range req.Items {
 		items = append(items, Modify{
@@ -157,7 +158,7 @@ func NewModifyLogEvent(req *ldap.ModifyRequest, res *ldap.ModifyResponse, traits
 		Duration: 0,
 		Actions:  nil,
 	}
-	_ = events.Push(l, traits.WithNamespace("ldap"))
+	_ = eh.Push(l, traits.WithNamespace("ldap"))
 
 	return l
 }
@@ -174,7 +175,7 @@ type DeleteRequest struct {
 	Dn        string `json:"dn"`
 }
 
-func NewDeleteLogEvent(req *ldap.DeleteRequest, res *ldap.DeleteResponse, traits events.Traits) *DeleteLog {
+func NewDeleteLogEvent(req *ldap.DeleteRequest, res *ldap.DeleteResponse, eh events.Handler, traits events.Traits) *DeleteLog {
 	l := &DeleteLog{
 		Request: &DeleteRequest{
 			Operation: "Delete",
@@ -188,7 +189,7 @@ func NewDeleteLogEvent(req *ldap.DeleteRequest, res *ldap.DeleteResponse, traits
 		Duration: 0,
 		Actions:  nil,
 	}
-	_ = events.Push(l, traits.WithNamespace("ldap"))
+	_ = eh.Push(l, traits.WithNamespace("ldap"))
 
 	return l
 }
@@ -208,7 +209,7 @@ type ModifyDNRequest struct {
 	NewSuperiorDn string `json:"newSuperiorDn"`
 }
 
-func NewModifyDNLogEvent(req *ldap.ModifyDNRequest, res *ldap.ModifyDNResponse, traits events.Traits) *ModifyDNLog {
+func NewModifyDNLogEvent(req *ldap.ModifyDNRequest, res *ldap.ModifyDNResponse, eh events.Handler, traits events.Traits) *ModifyDNLog {
 	l := &ModifyDNLog{
 		Request: &ModifyDNRequest{
 			Operation:     "ModifyDN",
@@ -225,7 +226,7 @@ func NewModifyDNLogEvent(req *ldap.ModifyDNRequest, res *ldap.ModifyDNResponse, 
 		Duration: 0,
 		Actions:  nil,
 	}
-	_ = events.Push(l, traits.WithNamespace("ldap"))
+	_ = eh.Push(l, traits.WithNamespace("ldap"))
 
 	return l
 }
@@ -244,7 +245,7 @@ type CompareRequest struct {
 	Value     string `json:"value"`
 }
 
-func NewCompareLogEvent(req *ldap.CompareRequest, res *ldap.CompareResponse, traits events.Traits) *CompareLog {
+func NewCompareLogEvent(req *ldap.CompareRequest, res *ldap.CompareResponse, eh events.Handler, traits events.Traits) *CompareLog {
 	l := &CompareLog{
 		Request: &CompareRequest{
 			Operation: "Compare",
@@ -259,7 +260,31 @@ func NewCompareLogEvent(req *ldap.CompareRequest, res *ldap.CompareResponse, tra
 		Duration: 0,
 		Actions:  nil,
 	}
-	_ = events.Push(l, traits.WithNamespace("ldap"))
+	_ = eh.Push(l, traits.WithNamespace("ldap"))
 
 	return l
+}
+
+func (l *SearchLog) Title() string {
+	return l.Request.Filter
+}
+
+func (l *CompareLog) Title() string {
+	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Value)
+}
+
+func (l *ModifyLog) Title() string {
+	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Dn)
+}
+
+func (l *ModifyDNLog) Title() string {
+	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Dn)
+}
+
+func (l *DeleteLog) Title() string {
+	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Dn)
+}
+
+func (l *AddLog) Title() string {
+	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Dn)
 }

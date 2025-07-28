@@ -8,6 +8,7 @@ import (
 	"mokapi/kafka/listgroup"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
+	"mokapi/runtime/events/eventstest"
 	"testing"
 )
 
@@ -79,7 +80,7 @@ func TestListGroup(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{})
 			defer s.Close()
 			tc.fn(t, s)
 		})

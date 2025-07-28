@@ -91,6 +91,17 @@ func (c *Client) Capability() ([]string, error) {
 	}
 }
 
+func (c *Client) SendRawLines(lines []string) (string, error) {
+	for _, line := range lines {
+		err := c.tpc.PrintfLine(line)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return c.tpc.ReadLine()
+}
+
 func (c *Client) Send(line string) ([]string, error) {
 	tag := c.nextTag()
 	err := c.tpc.PrintfLine("%v %v", tag, line)

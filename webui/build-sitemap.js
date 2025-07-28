@@ -16,8 +16,8 @@ const pages = [
     url: 'https://mokapi.io/kafka'
   },
   {
-    file: './src/views/Smtp.vue',
-    url: 'https://mokapi.io/smtp'
+    file: './src/views/Mail.vue',
+    url: 'https://mokapi.io/mail'
   },
   {
     file: './src/views/Ldap.vue',

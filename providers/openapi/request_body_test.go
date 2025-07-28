@@ -16,7 +16,7 @@ import (
 
 type errReader int
 
-func (errReader) Read(p []byte) (n int, err error) {
+func (errReader) Read(_ []byte) (n int, err error) {
 	return 0, fmt.Errorf("TESTING ERROR")
 }
 
@@ -268,6 +268,21 @@ func TestBodyFromRequest(t *testing.T) {
 			},
 		},
 		{
+			name: "application/pdf should match application/octet-stream",
+			operation: openapitest.NewOperation(
+				openapitest.WithRequestBody("foo", true,
+					openapitest.WithRequestContent("application/octet-stream", openapitest.NewContent()),
+				)),
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodPost, "https://foo.bar", strings.NewReader("binary"))
+				r.Header.Set("Content-Type", "application/pdf")
+				return r
+			},
+			test: func(t *testing.T, result *openapi.Body, err error) {
+				require.NoError(t, err)
+			},
+		},
+		{
 			name: "no matching MediaType for Content-Type and error while reading body",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
@@ -403,6 +418,41 @@ foobar
 						"city":   "Hillsbery, UT",
 					},
 					"id":           "123e4567-e89b-12d3-a456-426655440000",
+					"profileImage": "foobar",
+				}, result.Value)
+			},
+		},
+		{
+			name: "multipart/form-data with pdf should match application/octet-stream",
+			operation: openapitest.NewOperation(
+				openapitest.WithRequestBody("foo", true,
+					openapitest.WithRequestContent("multipart/form-data", openapitest.NewContent(
+						openapitest.WithSchema(
+							schematest.New("object",
+								schematest.WithProperty("profileImage", schematest.New("string", schematest.WithFormat("binary"))),
+							),
+						),
+						openapitest.WithEncoding("profileImage", &openapi.Encoding{
+							ContentType: "application/octet-stream",
+						}),
+					),
+					))),
+			request: func() *http.Request {
+				body := strings.NewReader(`
+--abcde12345
+Content-Disposition: form-data; name="profileImage"; filename="doc.pdf"
+Content-Type: application/pdf
+
+foobar
+--abcde12345--
+`)
+				r := httptest.NewRequest(http.MethodPost, "https://foo.bar", body)
+				r.Header.Set("Content-Type", "multipart/form-data; boundary=abcde12345")
+				return r
+			},
+			test: func(t *testing.T, result *openapi.Body, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{
 					"profileImage": "foobar",
 				}, result.Value)
 			},

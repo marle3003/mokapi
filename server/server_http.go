@@ -92,7 +92,7 @@ func (m *HttpManager) Update(e dynamic.ConfigEvent) {
 			continue
 		}
 
-		err = m.AddService(cfg.Info.Name, u, info.Handler(m.app.Monitor.Http, m.eventEmitter), false)
+		err = m.AddService(cfg.Info.Name, u, info.Handler(m.app.Monitor.Http, m.eventEmitter, m.app.Events), false)
 		if err != nil {
 			log.Warnf("unable to add '%v' on %v: %v", cfg.Info.Name, s.Url, err.Error())
 			continue
@@ -122,9 +122,9 @@ func (m *HttpManager) getOrCreateServer(scheme string, port string) *service.Htt
 	defer m.m.Unlock()
 
 	if scheme == "https" {
-		server = service.NewHttpServerTls(port, m.certStore)
+		server = service.NewHttpServerTls(port, m.certStore, m.app.Events)
 	} else {
-		server = service.NewHttpServer(port)
+		server = service.NewHttpServer(port, m.app.Events)
 	}
 
 	m.servers[port] = server

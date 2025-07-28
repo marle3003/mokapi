@@ -146,7 +146,7 @@ func (rb *RecordBatch) WriteTo(e *Encoder, version int16, tag kafkaTag) {
 
 func (rb *RecordBatch) writeTo(e *Encoder) {
 	offset := e.writer.Size()
-	buffer := make([]byte, 8)
+	b := make([]byte, 8)
 
 	e.writeInt64(rb.Records[0].Offset)   // base offset
 	e.writeInt32(0)                      // size: 8
@@ -200,19 +200,19 @@ func (rb *RecordBatch) writeTo(e *Encoder) {
 		}
 	}
 
-	binary.BigEndian.PutUint32(buffer[:4], lastOffSetDetla)
-	e.writer.WriteAt(buffer[:4], offset+23)
+	binary.BigEndian.PutUint32(b[:4], lastOffSetDetla)
+	e.writer.WriteAt(b[:4], offset+23)
 
-	binary.BigEndian.PutUint64(buffer[:8], uint64(firstTimestamp))
-	e.writer.WriteAt(buffer[:8], offset+27)
+	binary.BigEndian.PutUint64(b[:8], uint64(firstTimestamp))
+	e.writer.WriteAt(b[:8], offset+27)
 
-	binary.BigEndian.PutUint64(buffer[:8], uint64(maxTimestamp))
-	e.writer.WriteAt(buffer[:8], offset+35)
+	binary.BigEndian.PutUint64(b[:8], uint64(maxTimestamp))
+	e.writer.WriteAt(b[:8], offset+35)
 
 	totalLength := e.writer.Size() - offset
 	batchSize := totalLength - 12 // offset(8) + size(4)
-	binary.BigEndian.PutUint32(buffer[:4], uint32(batchSize))
-	e.writer.WriteAt(buffer[:4], offset+8)
+	binary.BigEndian.PutUint32(b[:4], uint32(batchSize))
+	e.writer.WriteAt(b[:4], offset+8)
 
 	checksum := uint32(0)
 	crcTable := crc32.MakeTable(crc32.Castagnoli)
@@ -222,8 +222,8 @@ func (rb *RecordBatch) writeTo(e *Encoder) {
 		return true
 	})
 
-	binary.BigEndian.PutUint32(buffer[:4], checksum)
-	e.writer.WriteAt(buffer[:4], offset+17)
+	binary.BigEndian.PutUint32(b[:4], checksum)
+	e.writer.WriteAt(b[:4], offset+17)
 }
 
 func sizeVarInt(x int64) int {

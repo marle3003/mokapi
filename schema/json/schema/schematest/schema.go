@@ -48,15 +48,6 @@ func WithPropertyRef(name string, r string) SchemaOptions {
 	}
 }
 
-func WithPropertyNew(name string, prop *schema.Schema) SchemaOptions {
-	return func(s *schema.Schema) {
-		if s.Properties == nil {
-			s.Properties = &schema.Schemas{}
-		}
-		s.Properties.Set(name, prop)
-	}
-}
-
 func WithPatternProperty(pattern string, ps *schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
 		if s.PatternProperties == nil {
@@ -115,26 +106,18 @@ func WithUniqueItems() SchemaOptions {
 
 func Any(schemas ...*schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
-		for _, any := range schemas {
-			s.AnyOf = append(s.AnyOf, any)
+		for _, a := range schemas {
+			s.AnyOf = append(s.AnyOf, a)
 		}
 	}
 }
 
 func NewAny(schemas ...*schema.Schema) *schema.Schema {
 	s := &schema.Schema{}
-	for _, any := range schemas {
-		s.AnyOf = append(s.AnyOf, any)
+	for _, a := range schemas {
+		s.AnyOf = append(s.AnyOf, a)
 	}
 	return s
-}
-
-func OneOf(schemas ...*schema.Schema) SchemaOptions {
-	return func(s *schema.Schema) {
-		for _, one := range schemas {
-			s.OneOf = append(s.OneOf, one)
-		}
-	}
 }
 
 func NewOneOf(schemas ...*schema.Schema) *schema.Schema {
@@ -143,14 +126,6 @@ func NewOneOf(schemas ...*schema.Schema) *schema.Schema {
 		s.OneOf = append(s.OneOf, one)
 	}
 	return s
-}
-
-func AllOf(schemas ...*schema.Schema) SchemaOptions {
-	return func(s *schema.Schema) {
-		for _, all := range schemas {
-			s.AllOf = append(s.AllOf, all)
-		}
-	}
 }
 
 func NewAllOf(schemas ...*schema.Schema) *schema.Schema {
@@ -299,12 +274,6 @@ func WithMaxLength(n int) SchemaOptions {
 	}
 }
 
-func IsNullable(b bool) SchemaOptions {
-	return func(s *schema.Schema) {
-		s.Type = append(s.Type, "null")
-	}
-}
-
 func WithDefault(v interface{}) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.Default = v
@@ -409,12 +378,6 @@ func WithAnchor(anchor string) SchemaOptions {
 	}
 }
 
-func WithDynamicAnchor(anchor string) SchemaOptions {
-	return func(s *schema.Schema) {
-		s.DynamicAnchor = anchor
-	}
-}
-
 func WithDef(name string, def *schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
 		if s.Defs == nil {
@@ -427,11 +390,5 @@ func WithDef(name string, def *schema.Schema) SchemaOptions {
 func WithTitle(title string) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.Title = title
-	}
-}
-
-func WithDescription(description string) SchemaOptions {
-	return func(s *schema.Schema) {
-		s.Description = description
 	}
 }

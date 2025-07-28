@@ -7,6 +7,7 @@ import (
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
+	"mokapi/runtime/events"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 )
@@ -14,12 +15,12 @@ import (
 func TestStore(t *testing.T) {
 	testcases := []struct {
 		name string
-		fn   func(t *testing.T)
+		fn   func(t *testing.T, sm *events.StoreManager)
 	}{
 		{
 			"empty",
-			func(t *testing.T) {
-				s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
+			func(t *testing.T, sm *events.StoreManager) {
+				s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), sm)
 				defer s.Close()
 				require.Equal(t, 0, len(s.Brokers()))
 				require.Equal(t, 0, len(s.Topics()))
@@ -29,10 +30,10 @@ func TestStore(t *testing.T) {
 		},
 		{
 			"server",
-			func(t *testing.T) {
+			func(t *testing.T, sm *events.StoreManager) {
 				s := store.New(asyncapi3test.NewConfig(
 					asyncapi3test.WithServer("foo", "kafka", "foo:9092"),
-				), enginetest.NewEngine())
+				), enginetest.NewEngine(), sm)
 				defer s.Close()
 				require.Equal(t, 1, len(s.Brokers()))
 				require.Equal(t, 0, len(s.Topics()))
@@ -44,10 +45,10 @@ func TestStore(t *testing.T) {
 		},
 		{
 			"topic",
-			func(t *testing.T) {
+			func(t *testing.T, sm *events.StoreManager) {
 				s := store.New(asyncapi3test.NewConfig(
 					asyncapi3test.WithChannel("foo"),
-				), enginetest.NewEngine())
+				), enginetest.NewEngine(), sm)
 				defer s.Close()
 				require.Equal(t, 0, len(s.Brokers()))
 				require.Equal(t, 1, len(s.Topics()))
@@ -60,8 +61,8 @@ func TestStore(t *testing.T) {
 		},
 		{
 			"create topic",
-			func(t *testing.T) {
-				s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
+			func(t *testing.T, sm *events.StoreManager) {
+				s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), sm)
 				defer s.Close()
 				topic, err := s.NewTopic("foo", asyncapi3test.NewChannel(), []*asyncapi3.Operation{})
 				require.NoError(t, err)
@@ -71,8 +72,8 @@ func TestStore(t *testing.T) {
 		},
 		{
 			"create topic, already exists",
-			func(t *testing.T) {
-				s := store.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo")), enginetest.NewEngine())
+			func(t *testing.T, sm *events.StoreManager) {
+				s := store.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo")), enginetest.NewEngine(), sm)
 				defer s.Close()
 				_, err := s.NewTopic("foo", asyncapi3test.NewChannel(), []*asyncapi3.Operation{})
 				require.Error(t, err, "topic foo already exists")
@@ -80,8 +81,8 @@ func TestStore(t *testing.T) {
 		},
 		{
 			"update topic add partition",
-			func(t *testing.T) {
-				s := store.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 1}))), enginetest.NewEngine())
+			func(t *testing.T, sm *events.StoreManager) {
+				s := store.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 1}))), enginetest.NewEngine(), sm)
 				defer s.Close()
 
 				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 2}))))
@@ -91,8 +92,8 @@ func TestStore(t *testing.T) {
 		},
 		{
 			"update topic remove partition",
-			func(t *testing.T) {
-				s := store.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 2}))), enginetest.NewEngine())
+			func(t *testing.T, sm *events.StoreManager) {
+				s := store.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 2}))), enginetest.NewEngine(), sm)
 				defer s.Close()
 
 				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 1}))))
@@ -102,7 +103,7 @@ func TestStore(t *testing.T) {
 		},
 		{
 			"update topic change schema",
-			func(t *testing.T) {
+			func(t *testing.T, sm *events.StoreManager) {
 				s := store.New(asyncapi3test.NewConfig(
 					asyncapi3test.WithChannel("foo",
 						asyncapi3test.WithMessage("foo",
@@ -110,7 +111,7 @@ func TestStore(t *testing.T) {
 							asyncapi3test.WithContentType("application/json"),
 						),
 					)),
-					enginetest.NewEngine())
+					enginetest.NewEngine(), sm)
 				defer s.Close()
 
 				s.Update(asyncapi3test.NewConfig(
@@ -139,7 +140,7 @@ func TestStore(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			tc.fn(t)
+			tc.fn(t, &events.StoreManager{})
 		})
 	}
 }

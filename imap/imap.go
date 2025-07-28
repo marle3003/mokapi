@@ -2,6 +2,7 @@ package imap
 
 import (
 	"context"
+	"mokapi/smtp"
 	"strings"
 )
 
@@ -16,7 +17,6 @@ const (
 	NotAuthenticatedState ConnState = iota
 	AuthenticatedState
 	SelectedState
-	LogoutState
 )
 
 type Handler interface {
@@ -35,6 +35,8 @@ type Handler interface {
 	Status(req *StatusRequest, ctx context.Context) (StatusResult, error)
 	Subscribe(mailbox string, ctx context.Context) error
 	Unsubscribe(mailbox string, ctx context.Context) error
+	Search(request *SearchRequest, ctx context.Context) (*SearchResponse, error)
+	Append(mailbox string, msg *smtp.Message, opt AppendOptions, ctx context.Context) error
 }
 
 type Flag string

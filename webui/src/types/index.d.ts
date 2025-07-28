@@ -10,13 +10,17 @@ interface DocEntry {
   component?: string
   index?: DocEntry
   items?: {[name: string]: string | DocEntry }
+
+  title?: string
+  description: string
 }
 
 interface DocMeta {
   title: string
   description: string
-  icon: string | undefined
-  tech: string | undefined
+  icon?: string
+  tech?: string
+  image?: { url: string, alt: string }
 }
 
 interface Source {

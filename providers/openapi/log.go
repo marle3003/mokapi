@@ -3,6 +3,7 @@ package openapi
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"mokapi/engine/common"
 	"mokapi/lib"
 	"mokapi/providers/openapi/parameter"
@@ -19,6 +20,8 @@ type HttpLog struct {
 	Duration   int64            `json:"duration"`
 	Deprecated bool             `json:"deprecated"`
 	Actions    []*common.Action `json:"actions"`
+	Api        string           `json:"api"`
+	Path       string           `json:"path"`
 }
 
 type HttpRequestLog struct {
@@ -43,7 +46,7 @@ type HttpParameter struct {
 	Raw   *string `json:"raw"`
 }
 
-func NewLogEventContext(r *http.Request, deprecated bool, traits events.Traits) (context.Context, error) {
+func NewLogEventContext(r *http.Request, deprecated bool, eh events.Handler, traits events.Traits) (context.Context, error) {
 	l := &HttpLog{
 		Request: &HttpRequestLog{
 			Method:      r.Method,
@@ -52,6 +55,8 @@ func NewLogEventContext(r *http.Request, deprecated bool, traits events.Traits) 
 		},
 		Response:   &HttpResponseLog{Headers: make(map[string]string)},
 		Deprecated: deprecated,
+		Api:        traits.GetName(),
+		Path:       traits.Get("path"),
 	}
 
 	params, _ := parameter.FromContext(r.Context())
@@ -84,7 +89,7 @@ func NewLogEventContext(r *http.Request, deprecated bool, traits events.Traits) 
 		l.Request.Parameters = append(l.Request.Parameters, p)
 	}
 
-	err := events.Push(l, traits.WithNamespace("http"))
+	err := eh.Push(l, traits.WithNamespace("http"))
 	if err != nil {
 		return nil, err
 	}
@@ -96,4 +101,8 @@ func NewLogEventContext(r *http.Request, deprecated bool, traits events.Traits) 
 func LogEventFromContext(ctx context.Context) (*HttpLog, bool) {
 	l, ok := ctx.Value(logKey).(*HttpLog)
 	return l, ok
+}
+
+func (l *HttpLog) Title() string {
+	return fmt.Sprintf("%s %s", l.Request.Method, l.Request.Url)
 }

@@ -3,11 +3,11 @@ package mail
 import (
 	"bufio"
 	"bytes"
+	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"github.com/dop251/goja"
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"mokapi/engine/common"
 	"mokapi/smtp"
 	"net"
@@ -58,7 +58,7 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 		host: host,
 	}
 	obj := module.Get("exports").(*goja.Object)
-	obj.Set("send", f.Send)
+	_ = obj.Set("send", f.Send)
 }
 
 func (m *Module) Send(addr string, msg *Mail, auth *Auth) {
@@ -155,9 +155,75 @@ func (m *Module) Send(addr string, msg *Mail, auth *Auth) {
 		}
 	}
 
-	err = netsmtp.SendMail(host, auth.getAuth(), sender, to, body.Bytes())
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+
+	var conn net.Conn
+	if u != nil && u.Scheme == "smtps" {
+		conn, err = tls.Dial("tcp", host, tlsConfig)
+		if err != nil {
+			toJsError(m.rt, err)
+			return
+		}
+	} else {
+		conn, err = net.Dial("tcp", host)
+	}
+
+	c, err := netsmtp.NewClient(conn, host)
 	if err != nil {
 		toJsError(m.rt, err)
+		return
+	}
+
+	if err = c.Hello("localhost"); err != nil {
+		toJsError(m.rt, err)
+		return
+	}
+	if ok, _ := c.Extension("STARTTLS"); ok {
+		if err = c.StartTLS(tlsConfig); err != nil {
+			toJsError(m.rt, err)
+			return
+		}
+	}
+
+	if auth != nil {
+		if err = c.Auth(auth.getAuth()); err != nil {
+			toJsError(m.rt, err)
+			return
+		}
+	}
+
+	if err = c.Mail(sender); err != nil {
+		toJsError(m.rt, err)
+		return
+	}
+
+	for _, t := range to {
+		if err = c.Rcpt(t); err != nil {
+			toJsError(m.rt, err)
+			return
+		}
+	}
+
+	wc, err := c.Data()
+	if err != nil {
+		toJsError(m.rt, err)
+		return
+	}
+	_, err = wc.Write(body.Bytes())
+	if err != nil {
+		toJsError(m.rt, err)
+		return
+	}
+	err = wc.Close()
+	if err != nil {
+		toJsError(m.rt, err)
+		return
+	}
+	if err = c.Quit(); err != nil {
+		toJsError(m.rt, err)
+		return
 	}
 }
 
@@ -175,7 +241,7 @@ func (m *Module) writeAttachments(w *textproto.Writer, msg *Mail) error {
 	if len(msg.Encoding) > 0 {
 		_ = w.PrintfLine("Content-Transfer-Encoding: %s", msg.Encoding)
 	}
-	w.W.WriteString(fmt.Sprintf("\n%s\n", msg.Body))
+	_, _ = w.W.WriteString(fmt.Sprintf("\n%s\n", msg.Body))
 
 	for _, attach := range msg.Attachments {
 		content := []byte(attach.Data)
@@ -212,7 +278,7 @@ func (m *Module) writeAttachments(w *textproto.Writer, msg *Mail) error {
 		if err != nil {
 			return err
 		}
-		w.W.WriteRune('\n')
+		_, _ = w.W.WriteRune('\n')
 	}
 
 	_ = w.PrintfLine("--%v--", boundary)
@@ -276,25 +342,4 @@ func toList(i interface{}) []interface{} {
 		}
 		return nil
 	}
-}
-
-func parseAddr(addr string) (string, error) {
-	u, err := url.Parse(addr)
-	host := addr
-	if err == nil && u.Scheme != "" {
-		host = u.Host
-	}
-	h, port, err := net.SplitHostPort(host)
-	if err != nil {
-		if errors.Is(err, &net.AddrError{}) {
-
-		}
-		return "", fmt.Errorf("unable to parse host '%v': %w", host, err)
-	}
-	if port == "" {
-		port = "25"
-	}
-	host = fmt.Sprintf("%v:%v", h, port)
-
-	return "", nil
 }

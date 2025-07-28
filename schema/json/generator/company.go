@@ -38,7 +38,7 @@ func fakeCompany(r *Request) (any, error) {
 	return nil, NotSupported
 }
 
-func fakeIndustry(r *Request) (any, error) {
+func fakeIndustry(_ *Request) (any, error) {
 	index := gofakeit.Number(0, len(industry)-1)
 	return industry[index], nil
 }
@@ -49,6 +49,4 @@ var (
 		"Transportation and Logistics", "Real Estate", "Telecommunications", "Energy and Utilities",
 		"Hospitality", "Entertainment and Media", "Construction", "Agriculture", "Aerospace and Defense",
 	}
-
-	organization = []string{}
 )

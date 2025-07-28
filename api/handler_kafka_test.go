@@ -11,6 +11,7 @@ import (
 	"mokapi/providers/asyncapi3/kafka/store"
 	schematest2 "mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
+	"mokapi/runtime/events/eventstest"
 	"mokapi/runtime/monitor"
 	"mokapi/runtime/runtimetest"
 	"mokapi/schema/json/schema/schematest"
@@ -137,7 +138,7 @@ func TestHandler_Kafka(t *testing.T) {
 						),
 					),
 				)
-				s := store.New(c, enginetest.NewEngine())
+				s := store.New(c, enginetest.NewEngine(), &eventstest.Handler{})
 
 				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", &runtime.KafkaInfo{
 					Config: c,
@@ -160,7 +161,7 @@ func TestHandler_Kafka(t *testing.T) {
 						),
 					),
 				)
-				s := store.New(c, enginetest.NewEngine())
+				s := store.New(c, enginetest.NewEngine(), &eventstest.Handler{})
 
 				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", &runtime.KafkaInfo{
 					Config: c,
@@ -358,12 +359,12 @@ func TestHandler_Kafka_Metrics(t *testing.T) {
 func getKafkaInfo(config *asyncapi3.Config) *runtime.KafkaInfo {
 	return &runtime.KafkaInfo{
 		Config: config,
-		Store:  store.New(config, enginetest.NewEngine()),
+		Store:  store.New(config, enginetest.NewEngine(), &eventstest.Handler{}),
 	}
 }
 
 func getKafkaInfoWithGroup(config *asyncapi3.Config, group *store.Group) *runtime.KafkaInfo {
-	s := store.New(config, enginetest.NewEngine())
+	s := store.New(config, enginetest.NewEngine(), &eventstest.Handler{})
 	g := s.GetOrCreateGroup(group.Name, 0)
 	group.Coordinator, _ = s.Broker(0)
 	*g = *group

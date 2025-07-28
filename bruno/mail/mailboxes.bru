@@ -1,0 +1,15 @@
+meta {
+  name: mailboxes
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/services/mail/{{mailServerName}}/mailboxes
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

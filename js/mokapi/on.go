@@ -10,8 +10,9 @@ import (
 )
 
 type onArgs struct {
-	tags  map[string]string
-	track bool
+	tags       map[string]string
+	track      bool
+	isTrackSet bool
 }
 
 func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
@@ -48,8 +49,8 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 			return r.ToBoolean(), nil
 		}
 
-		if eventArgs.track {
-			return true, nil
+		if eventArgs.isTrackSet {
+			return eventArgs.track, nil
 		}
 
 		newHashes, err := getHashes(args...)
@@ -94,6 +95,7 @@ func getOnArgs(vm *goja.Runtime, args goja.Value) (onArgs, error) {
 					return onArgs{}, fmt.Errorf("unexpected type for track: %v", util.JsType(v.Export()))
 				}
 				result.track = v.ToBoolean()
+				result.isTrackSet = true
 			}
 		}
 		return result, nil

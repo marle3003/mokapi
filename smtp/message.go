@@ -23,23 +23,23 @@ import (
 const DateTimeLayout = "02-Jan-2006 15:04:05 -0700"
 
 type Message struct {
-	Server                  string       `json:"server"`
-	Sender                  *Address     `json:"sender"`
-	From                    []Address    `json:"from"`
-	To                      []Address    `json:"to"`
-	ReplyTo                 []Address    `json:"replyTo"`
-	Cc                      []Address    `json:"cc"`
-	Bcc                     []Address    `json:"bcc"`
-	MessageId               string       `json:"messageId"`
-	InReplyTo               string       `json:"inReplyTo"`
-	Time                    time.Time    `json:"time"`
-	Subject                 string       `json:"subject"`
-	ContentType             string       `json:"contentType"`
-	ContentTransferEncoding string       `json:"contentTransferEncoding"`
-	Body                    string       `json:"body"`
-	Attachments             []Attachment `json:"attachments"`
-	Size                    int
-	Headers                 map[string]string
+	Server                  string            `json:"server"`
+	Sender                  *Address          `json:"sender,omitempty"`
+	From                    []Address         `json:"from"`
+	To                      []Address         `json:"to"`
+	ReplyTo                 []Address         `json:"replyTo,omitempty"`
+	Cc                      []Address         `json:"cc,omitempty"`
+	Bcc                     []Address         `json:"bcc,omitempty"`
+	MessageId               string            `json:"messageId"`
+	InReplyTo               string            `json:"inReplyTo,omitempty"`
+	Date                    time.Time         `json:"date"`
+	Subject                 string            `json:"subject"`
+	ContentType             string            `json:"contentType,omitempty"`
+	ContentTransferEncoding string            `json:"contentTransferEncoding,omitempty"`
+	Body                    string            `json:"body"`
+	Attachments             []Attachment      `json:"attachments,omitempty"`
+	Size                    int               `json:"size"`
+	Headers                 map[string]string `json:"-"`
 }
 
 type Address struct {
@@ -48,12 +48,13 @@ type Address struct {
 }
 
 type Attachment struct {
-	Name        string `json:"name"`
-	ContentType string `json:"contentType"`
-	Disposition string `json:"disposition"`
-	Data        []byte `json:"data"`
-	ContentId   string `json:"contentId"`
-	Header      map[string]string
+	Name                    string `json:"name"`
+	ContentType             string `json:"contentType"`
+	ContentTransferEncoding string `json:"contentTransferEncoding"`
+	ContentDescription      string `json:"contentDescription"`
+	Disposition             string `json:"disposition"`
+	Data                    []byte `json:"data"`
+	ContentId               string `json:"contentId"`
 }
 
 func (m *Message) readFrom(tc textproto.Reader) error {
@@ -66,23 +67,23 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 	for key, val := range header {
 		switch strings.ToLower(key) {
 		case "sender":
-			m.Sender, err = parseAddress(val[0])
+			m.Sender, err = ParseAddress(val[0])
 		case "from":
-			m.From, err = parseAddressList(val[0])
+			m.From, err = ParseAddressList(val[0])
 		case "to":
-			m.To, err = parseAddressList(val[0])
+			m.To, err = ParseAddressList(val[0])
 		case "reply-to":
-			m.ReplyTo, err = parseAddressList(val[0])
+			m.ReplyTo, err = ParseAddressList(val[0])
 		case "cc":
-			m.Cc, err = parseAddressList(val[0])
+			m.Cc, err = ParseAddressList(val[0])
 		case "bcc":
-			m.Bcc, err = parseAddressList(val[0])
+			m.Bcc, err = ParseAddressList(val[0])
 		case "message-id":
 			m.MessageId = val[0]
 		case "in-reply-to":
 			m.InReplyTo = val[0]
 		case "date":
-			m.Time, err = mail.ParseDate(val[0])
+			m.Date, err = mail.ParseDate(val[0])
 		case "subject":
 			m.Subject = val[0]
 		case "content-type":
@@ -101,21 +102,21 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 	}
 
 	if date := header.Get("Date"); date != "" {
-		m.Time, err = mail.ParseDate(date)
+		m.Date, err = mail.ParseDate(date)
 		if err != nil {
 			return err
 		}
 	} else {
-		m.Time = time.Now()
+		m.Date = time.Now()
 	}
-	m.Size += len("Date") + 2 + len(m.Time.Format(DateTimeLayout)) + 2
+	m.Size += len("Date") + 2 + len(m.Date.Format(DateTimeLayout)) + 2
 
 	m.Size += 2 // Extra CRLF before body
 
-	mime := media.ParseContentType(m.ContentType)
+	ct := media.ParseContentType(m.ContentType)
 	switch {
-	case mime.Key() == "multipart/mixed":
-		r := multipart.NewReader(tc.DotReader(), mime.Parameters["boundary"])
+	case ct.Key() == "multipart/mixed":
+		r := multipart.NewReader(tc.DotReader(), ct.Parameters["boundary"])
 		for {
 			p, err := r.NextPart()
 			if err != nil {
@@ -143,9 +144,9 @@ func (m *Message) readFrom(tc textproto.Reader) error {
 			}
 		}
 	// https://www.ietf.org/rfc/rfc2387.txt
-	case mime.Key() == "multipart/related":
-		r := multipart.NewReader(tc.DotReader(), mime.Parameters["boundary"])
-		m.ContentType = strings.Trim(mime.Parameters["type"], "\"")
+	case ct.Key() == "multipart/related":
+		r := multipart.NewReader(tc.DotReader(), ct.Parameters["boundary"])
+		m.ContentType = strings.Trim(ct.Parameters["type"], "\"")
 		first := true
 		for {
 			p, err := r.NextPart()
@@ -329,10 +330,12 @@ func newAttachment(part *multipart.Part) (Attachment, error) {
 		return Attachment{}, err
 	}
 	att := Attachment{
-		Name:        name,
-		ContentType: part.Header.Get("Content-Type"),
-		Disposition: part.Header.Get("Content-Disposition"),
-		Data:        b,
+		Name:                    name,
+		ContentType:             part.Header.Get("Content-Type"),
+		ContentTransferEncoding: encoding,
+		ContentDescription:      part.Header.Get("Content-Description"),
+		Disposition:             part.Header.Get("Content-Disposition"),
+		Data:                    b,
 	}
 
 	contentId := part.Header.Get("Content-ID")
@@ -352,7 +355,7 @@ func newMessageId() string {
 	return fmt.Sprintf("%v-%v@%v", time.Now().Format("20060102-150405.000"), os.Getpid(), name)
 }
 
-func parseAddress(s string) (*Address, error) {
+func ParseAddress(s string) (*Address, error) {
 	a, err := mail.ParseAddress(s)
 	if err != nil {
 		return nil, err
@@ -363,7 +366,7 @@ func parseAddress(s string) (*Address, error) {
 	}, nil
 }
 
-func parseAddressList(s string) ([]Address, error) {
+func ParseAddressList(s string) ([]Address, error) {
 	list, err := mail.ParseAddressList(s)
 	if err != nil {
 		return nil, err
@@ -480,4 +483,24 @@ func (a *Attachment) WriteTo(w *textproto.Writer, m *Message) error {
 	err = w.PrintfLine("")
 
 	return err
+}
+
+func (a *Attachment) Headers() map[string]string {
+	headers := make(map[string]string)
+	if len(a.ContentType) > 0 {
+		headers["Content-Type"] = a.ContentType
+	}
+	if len(a.ContentTransferEncoding) > 0 {
+		headers["Content-Transfer-Encoding"] = a.ContentTransferEncoding
+	}
+	if len(a.Disposition) > 0 {
+		headers["Content-Disposition"] = a.Disposition
+	}
+	if len(a.ContentId) > 0 {
+		headers["Content-ID"] = a.ContentId
+	}
+	if len(a.ContentDescription) > 0 {
+		headers["Content-Description"] = a.ContentDescription
+	}
+	return headers
 }

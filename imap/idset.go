@@ -8,6 +8,7 @@ import (
 type Set interface {
 	Contains(num uint32) bool
 	String() string
+	Nums() ([]uint32, bool)
 }
 
 type IdSet struct {
@@ -51,6 +52,26 @@ func (s *IdSet) Append(v Set) {
 	s.Ids = append(s.Ids, v)
 }
 
+func (s *IdSet) AddId(num uint32) {
+	s.Ids = append(s.Ids, IdNum(num))
+}
+
+func (s *IdSet) AddRange(start, end SeqNum) {
+	s.Ids = append(s.Ids, &Range{Start: start, End: end})
+}
+
+func (s *IdSet) Nums() ([]uint32, bool) {
+	var results []uint32
+	for _, set := range s.Ids {
+		nums, b := set.Nums()
+		if !b {
+			return nil, false
+		}
+		results = append(results, nums...)
+	}
+	return results, true
+}
+
 func (s *Range) Contains(num uint32) bool {
 	if num < s.Start.Value {
 		return false
@@ -74,10 +95,53 @@ func (s *Range) String() string {
 	return sb.String()
 }
 
+func (s *Range) Nums() ([]uint32, bool) {
+	if s.Start.Star || s.End.Star {
+		return nil, false
+	}
+	var results []uint32
+	for i := s.Start.Value; i <= s.End.Value; i++ {
+		results = append(results, i)
+	}
+	return results, true
+}
+
 func (n IdNum) Contains(num uint32) bool {
 	return uint32(n) == num
 }
 
 func (n IdNum) String() string {
 	return fmt.Sprintf("%d", n)
+}
+
+func (n IdNum) Nums() ([]uint32, bool) {
+	return []uint32{uint32(n)}, true
+}
+
+func parseSequence(s string) (IdSet, error) {
+	set := IdSet{}
+
+	var err error
+	for _, v := range strings.Split(s, ",") {
+		if i := strings.IndexRune(v, ':'); i >= 0 {
+			r := &Range{}
+			r.Start, err = parseNumSet(v[:i])
+			if err != nil {
+				return set, err
+			}
+			r.End, err = parseNumSet(v[i+1:])
+			if err != nil {
+				return set, err
+			}
+			set.Ids = append(set.Ids, r)
+		} else {
+			var n SeqNum
+			n, err = parseNumSet(v)
+			if err != nil {
+				return set, err
+			}
+			set.Ids = append(set.Ids, IdNum(n.Value))
+		}
+	}
+	return set, nil
 }

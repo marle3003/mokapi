@@ -406,13 +406,39 @@ export type DateLayout =
     | "RFC3339Nano";
 
 /**
- * Additional event arguments
+ * EventArgs object contains additional arguments for an event handler.
+ * https://mokapi.io/docs/javascript-api/mokapi/on
+ *
+ * Use this to customize how the event appears in the dashboard or to control tracking.
+ *
+ * @property tags Optional key-value pairs used to label the event in the dashboard.
+ *
+ * @property track Set to `true` to enable tracking of this event handler in the dashboard.
+ *                 If omitted, Mokapi automatically checks whether the response object has
+ *                 been modified and tracks the handler only if a change is detected.
+ *
+ * @example
+ * export default function() {
+ *   on('http', function(req, res) {
+ *     res.data = { message: "tracked event" }
+ *   }, {
+ *     tags: { feature: 'beta', owner: 'team-a' },
+ *     track: true
+ *   })
+ * }
  */
 export interface EventArgs {
     /**
      * Adds or overrides existing tags used in dashboard
      */
     tags?: { [key: string]: string };
+
+    /**
+     * Set to `true` to enable tracking of this event handler in the dashboard.
+     * Set to `false` to disable tracking. If omitted, Mokapi checks the response
+     * object to determine if the handler changed it, and tracks it accordingly.
+     */
+    track?: boolean;
 }
 
 /**

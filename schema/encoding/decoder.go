@@ -45,10 +45,6 @@ func DecodeFrom(r io.Reader, opts ...DecodeOptions) (interface{}, error) {
 	return Decode(b, opts...)
 }
 
-func DecodeString(s string, opts ...DecodeOptions) (interface{}, error) {
-	return Decode([]byte(s), opts...)
-}
-
 func Decode(b []byte, opts ...DecodeOptions) (interface{}, error) {
 	state := newDecodeState()
 	for _, opt := range opts {

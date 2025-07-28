@@ -24,7 +24,7 @@ type predicate func(entry Entry) bool
 func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 	msg := r.Message.(*ldap.SearchRequest)
 	m, doMonitor := monitor.LdapFromContext(r.Context)
-	event := NewSearchLogEvent(msg, events.NewTraits().WithName(d.config.Info.Name))
+	event := NewSearchLogEvent(msg, d.eh, events.NewTraits().WithName(d.config.Info.Name))
 	defer func() {
 		i := r.Context.Value("time")
 		if i != nil {

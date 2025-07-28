@@ -1,20 +1,8 @@
 package imap
 
 import (
-	"bufio"
-	"fmt"
-	"github.com/pkg/errors"
 	"strings"
 )
-
-const (
-	listTypeList    = 0
-	listTypeSection = 1
-)
-
-type fetchParser struct {
-	r *bufio.Reader
-}
 
 func parseFetch(d *Decoder) (*FetchRequest, error) {
 	r := &FetchRequest{}
@@ -144,82 +132,6 @@ func (s *FetchBodySection) decode(d *Decoder) error {
 		s.Partially = &part
 	}
 	return nil
-}
-
-func (p *fetchParser) parseList(parseItem func() error, listType int) error {
-	var openChar, closeChar byte
-	switch listType {
-	case 0:
-		openChar = '('
-		closeChar = ')'
-	case 1:
-		openChar = '['
-		closeChar = ']'
-	}
-
-	if err := p.expect(openChar); err != nil {
-		return errors.Wrap(err, "expected list")
-	}
-
-	if p.hasNext(closeChar) {
-		return nil
-	}
-
-	for {
-		if err := parseItem(); err != nil {
-			return err
-		}
-
-		if p.hasNext(closeChar) {
-			return nil
-		}
-		if err := p.expect(' '); err != nil {
-			return nil
-		}
-	}
-}
-
-func (p *fetchParser) expect(expect byte) error {
-	b, err := p.r.ReadByte()
-	if err != nil {
-		return err
-	}
-	if b != expect {
-		return fmt.Errorf("expected %c, got %c", expect, b)
-	}
-	return nil
-}
-
-func (p *fetchParser) hasNext(b byte) bool {
-	if read, err := p.r.Peek(1); err != nil {
-		return false
-	} else if read[0] == b {
-		_, err = p.r.ReadByte()
-		return err == nil
-	}
-	return false
-}
-
-func (p *fetchParser) consume(valid func(b byte) bool) (string, error) {
-	var sb strings.Builder
-	for {
-		next, err := p.r.Peek(1)
-		if err != nil {
-			return "", err
-		}
-		if !valid(next[0]) {
-			break
-		}
-		b, err := p.r.ReadByte()
-		if err != nil {
-			return "", err
-		}
-		sb.WriteByte(b)
-	}
-	if sb.Len() == 0 {
-		return "", nil
-	}
-	return sb.String(), nil
 }
 
 func parseSectionParts(d *Decoder) (parts []int, specifier string) {

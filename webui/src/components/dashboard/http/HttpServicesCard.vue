@@ -33,7 +33,7 @@ function goToService(s: Service) {
         return
     }
 
-    router.push(service(s))
+    router.push(service(s, 'http'))
 }
 
 onUnmounted(() => {

@@ -69,6 +69,9 @@ func (f *FlagDecoder) setValue(ctx *context) error {
 		ctx.element = ctx.element.Elem()
 		return f.setValue(ctx)
 	case reflect.String:
+		if len(ctx.value) > 1 {
+			return fmt.Errorf("expected a single string, but received multiple values")
+		}
 		s := strings.Trim(ctx.value[0], "\"")
 		ctx.element.SetString(s)
 		return nil

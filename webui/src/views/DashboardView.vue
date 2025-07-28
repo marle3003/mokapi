@@ -19,10 +19,10 @@ import LdapService from '../components/dashboard/ldap/Service.vue'
 import LdapSearchMetricCard from '../components/dashboard/ldap/LdapRequestMetricCard.vue'
 import Searches from '@/components/dashboard/ldap/Requests.vue'
 
-import SmtpMessageMetricCard from '../components/dashboard/smtp/SmtpMessageMetricCard.vue'
-import SmtpServicesCard from '../components/dashboard/smtp/SmtpServicesCard.vue'
-import SmtpService from '../components/dashboard/smtp/Service.vue'
-import Mails from '@/components/dashboard/smtp/Mails.vue'
+import SmtpMessageMetricCard from '../components/dashboard/mail/SmtpMessageMetricCard.vue'
+import MailServicesCard from '../components/dashboard/mail/MailServicesCard.vue'
+import MailService from '../components/dashboard/mail/Service.vue'
+import Mails from '@/components/dashboard/mail/Mails.vue'
 
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
@@ -91,7 +91,7 @@ function hasJobs() {
 }
 
 const description = `Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mock APIs are used.`
-useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
+useMeta('Dashboard | mokapi.io', description, '')
 </script>
 
 <template>
@@ -111,8 +111,8 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                             <li class="nav-item" v-if="isServiceAvailable('kafka')">
                                 <router-link class="nav-link" :to="{ name: 'kafka', query: {refresh: $route.query.refresh} }">Kafka</router-link>
                             </li>
-                            <li class="nav-item" v-if="isServiceAvailable('smtp')">
-                                <router-link class="nav-link" :to="{ name: 'smtp', query: {refresh: $route.query.refresh} }">SMTP</router-link>
+                            <li class="nav-item" v-if="isServiceAvailable('mail')">
+                                <router-link class="nav-link" :to="{ name: 'mail', query: {refresh: $route.query.refresh} }">Mail</router-link>
                             </li>
                             <li class="nav-item" v-if="isServiceAvailable('ldap')">
                                 <router-link class="nav-link" :to="{ name: 'ldap', query: {refresh: $route.query.refresh} }">LDAP</router-link>
@@ -127,7 +127,7 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                                 <router-link class="nav-link" :to="{ name: 'tree', query: {refresh: $route.query.refresh} }">Faker</router-link>
                             </li>
                             <li class="nav-item" v-if="appInfo.data.search.enabled">
-                                <router-link class="nav-link" :to="{ name: 'search', query: {refresh: $route.query.refresh, search: 1} }">Search</router-link>
+                                <router-link class="nav-link" :to="{ name: 'search', query: {refresh: $route.query.refresh} }">Search</router-link>
                             </li>
                         </ul>
                     </div>
@@ -142,7 +142,7 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                     <div class="card-group">
                         <http-request-card v-if="isServiceAvailable('http')" includeError />
                         <kafka-message-card v-if="isServiceAvailable('kafka')" />
-                        <smtp-message-metric-card v-if="isServiceAvailable('smtp')" />
+                        <smtp-message-metric-card v-if="isServiceAvailable('mail')" />
                         <ldap-search-metric-card v-if="isServiceAvailable('ldap')" />
                         <metric-card title="Jobs" :value="count" data-testid="metric-job-count" v-if="count > 0"></metric-card>
                     </div>
@@ -152,8 +152,8 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                     <div class="card-group"  v-if="isServiceAvailable('kafka')">
                         <kafka-clusters-card />
                     </div>
-                    <div class="card-group"  v-if="isServiceAvailable('smtp')">
-                        <smtp-services-card />
+                    <div class="card-group"  v-if="isServiceAvailable('mail')">
+                        <mail-services-card />
                     </div>
                     <div class="card-group"  v-if="isServiceAvailable('ldap')">
                         <ldap-services-card />
@@ -184,12 +184,12 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
                     </div>
                 </div>
 
-                <div v-if="$route.name === 'smtp'">
+                <div v-if="$route.name === 'mail'">
                     <div class="card-group">
-                        <smtp-message-metric-card v-if="isServiceAvailable('smtp')" />
+                        <smtp-message-metric-card v-if="isServiceAvailable('mail')" />
                     </div>
-                    <div class="card-group"  v-if="isServiceAvailable('smtp')">
-                        <smtp-services-card />
+                    <div class="card-group"  v-if="isServiceAvailable('mail')">
+                        <mail-services-card />
                     </div>
                     <div class="card-group">
                         <mails />
@@ -231,7 +231,7 @@ useMeta('Dashboard | mokapi.io', description, "https://mokapi.io/smtp")
 
                 <http-service v-if="$route.meta.service === 'http'" />
                 <kafka-service v-if="$route.meta.service === 'kafka'" />
-                <smtp-service v-if="$route.meta.service === 'smtp'" />
+                <mail-service v-if="$route.meta.service === 'mail'" />
                 <ldap-service v-if="$route.meta.service === 'ldap'" />
                 <config v-if="$route.name === 'config'"></config>
             </div>

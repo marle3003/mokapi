@@ -28,12 +28,6 @@ func WithContentType(s string) MessageOptions {
 	}
 }
 
-func WithKey(s *schema.Schema) MessageOptions {
-	return func(m *asyncApi.Message) {
-		m.Bindings.Kafka.Key = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{Schema: s}}
-	}
-}
-
 func WithMessageInfo(name, title, summary, description string) MessageOptions {
 	return func(m *asyncApi.Message) {
 		m.Name = name
@@ -46,11 +40,5 @@ func WithMessageInfo(name, title, summary, description string) MessageOptions {
 func WithMessageId(messageId string) MessageOptions {
 	return func(m *asyncApi.Message) {
 		m.MessageId = messageId
-	}
-}
-
-func WithMessageTrait(trait *asyncApi.MessageTrait) MessageOptions {
-	return func(m *asyncApi.Message) {
-		m.Traits = append(m.Traits, &asyncApi.MessageTraitRef{Value: trait})
 	}
 }

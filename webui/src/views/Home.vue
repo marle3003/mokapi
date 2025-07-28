@@ -43,7 +43,7 @@ function hasTouchSupport() {
               <a href="http"><span class="badge">HTTP</span></a>
               <a href="kafka"><span class="badge">Kafka</span></a>
               <a href="ldap"><span class="badge">LDAP</span></a>
-              <a href="smtp"><span class="badge">SMTP</span></a>
+              <a href="mail"><span class="badge">Email</span></a>
             </div>
             <p class="description">Mock your APIs instantly - No registration, no cloud, <b>free</b> and <b>open-source</b></p>
             <p class="d-none d-md-block">
@@ -141,7 +141,7 @@ function hasTouchSupport() {
           </div>
           <div class="col-sm-3 mb-3 mb-sm-0 ps-1 pe-1">
             <div class="card">
-              <router-link :to="{path: '/smtp'}">
+              <router-link :to="{path: '/mail'}">
                 <div class="card-body">
                   <h3 class="card-title">SMTP Email Testing</h3>
                   <p class="mt-4">Simulate email sending and SMTP interactions to test email features in your applications without sending real emails.</p>

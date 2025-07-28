@@ -6,10 +6,6 @@ type eventEmitter struct {
 	emit func(event string, args ...interface{}) []*common.Action
 }
 
-func NewEventEmitter() common.EventEmitter {
-	return &eventEmitter{}
-}
-
 func NewEngineWithHandler(handler func(event string, args ...interface{}) []*common.Action) common.EventEmitter {
 	return &eventEmitter{emit: handler}
 }

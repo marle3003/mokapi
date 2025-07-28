@@ -20,7 +20,7 @@ jobs:
       - name: Setup node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 23
       - name: build webui
         working-directory: ./webui
         run: |
@@ -29,7 +29,7 @@ jobs:
           npm run build
 
       - name: Run Unit tests.
-        run: go test -v  -coverprofile=coverage.out -covermode=atomic ./...
+        run: go test -v --cover -coverprofile=coverage.out -covermode=atomic ./...
 
       - name: Upload Coverage report to CodeCov
         uses: codecov/codecov-action@v3

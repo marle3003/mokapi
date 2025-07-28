@@ -52,7 +52,7 @@ type WriteArgs struct {
 
 func newPartition(index int, brokers Brokers, logger LogRecord, trigger Trigger, topic *Topic) *Partition {
 	brokerList := make([]int, 0, len(brokers))
-	for i, _ := range brokers {
+	for i := range brokers {
 		brokerList = append(brokerList, i)
 	}
 	p := &Partition{
@@ -277,8 +277,8 @@ func (s *Segment) record(offset int64) *kafka.Record {
 func (s *Segment) delete() {
 	for _, r := range s.Log {
 		log.Debugf("delete record: %v", r.Data.Offset)
-		r.Data.Key.Close()
-		r.Data.Value.Close()
+		_ = r.Data.Key.Close()
+		_ = r.Data.Value.Close()
 		r.Log.Deleted = true
 	}
 }

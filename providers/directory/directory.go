@@ -15,10 +15,11 @@ import (
 type Directory struct {
 	config  *Config
 	emitter engine.EventEmitter
+	eh      events.Handler
 }
 
-func NewHandler(config *Config, emitter engine.EventEmitter) ldap.Handler {
-	return &Directory{config: config, emitter: emitter}
+func NewHandler(config *Config, emitter engine.EventEmitter, eh events.Handler) ldap.Handler {
+	return &Directory{config: config, emitter: emitter, eh: eh}
 }
 
 func (d *Directory) ServeLDAP(res ldap.ResponseWriter, r *ldap.Request) {
@@ -149,7 +150,7 @@ func (d *Directory) serveModify(rw ldap.ResponseWriter, r *ldap.ModifyRequest, c
 
 	m, doMonitor := monitor.LdapFromContext(ctx)
 	if doMonitor {
-		l := NewModifyLogEvent(r, res, events.NewTraits().WithName(d.config.Info.Name))
+		l := NewModifyLogEvent(r, res, d.eh, events.NewTraits().WithName(d.config.Info.Name))
 		defer func() {
 			i := ctx.Value("time")
 			if i != nil {
@@ -185,7 +186,7 @@ func (d *Directory) serveAdd(rw ldap.ResponseWriter, r *ldap.AddRequest, ctx con
 
 	m, doMonitor := monitor.LdapFromContext(ctx)
 	if doMonitor {
-		l := NewAddLogEvent(r, res, events.NewTraits().WithName(d.config.Info.Name))
+		l := NewAddLogEvent(r, res, d.eh, events.NewTraits().WithName(d.config.Info.Name))
 		defer func() {
 			i := ctx.Value("time")
 			if i != nil {
@@ -216,7 +217,7 @@ func (d *Directory) serveDelete(rw ldap.ResponseWriter, r *ldap.DeleteRequest, c
 
 	m, doMonitor := monitor.LdapFromContext(ctx)
 	if doMonitor {
-		l := NewDeleteLogEvent(r, res, events.NewTraits().WithName(d.config.Info.Name))
+		l := NewDeleteLogEvent(r, res, d.eh, events.NewTraits().WithName(d.config.Info.Name))
 		defer func() {
 			i := ctx.Value("time")
 			if i != nil {
@@ -250,7 +251,7 @@ func (d *Directory) serveModifyDn(rw ldap.ResponseWriter, r *ldap.ModifyDNReques
 
 	m, doMonitor := monitor.LdapFromContext(ctx)
 	if doMonitor {
-		l := NewModifyDNLogEvent(r, res, events.NewTraits().WithName(d.config.Info.Name))
+		l := NewModifyDNLogEvent(r, res, d.eh, events.NewTraits().WithName(d.config.Info.Name))
 		defer func() {
 			i := ctx.Value("time")
 			if i != nil {
@@ -280,7 +281,7 @@ func (d *Directory) serveCompare(rw ldap.ResponseWriter, r *ldap.CompareRequest,
 
 	m, doMonitor := monitor.LdapFromContext(ctx)
 	if doMonitor {
-		l := NewCompareLogEvent(r, res, events.NewTraits().WithName(d.config.Info.Name))
+		l := NewCompareLogEvent(r, res, d.eh, events.NewTraits().WithName(d.config.Info.Name))
 		defer func() {
 			i := ctx.Value("time")
 			if i != nil {

@@ -7,6 +7,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/engine/common"
 	"mokapi/runtime"
+	"mokapi/runtime/events"
 	"mokapi/runtime/metrics"
 	"sync"
 )
@@ -24,6 +25,7 @@ type Engine struct {
 	parallel    bool
 	cfgEvent    static.Event
 	jobCounter  *metrics.Counter
+	sm          *events.StoreManager
 }
 
 func New(reader dynamic.Reader, app *runtime.App, config *static.Config, parallel bool) *Engine {
@@ -37,6 +39,7 @@ func New(reader dynamic.Reader, app *runtime.App, config *static.Config, paralle
 		loader:      NewDefaultScriptLoader(config),
 		cfgEvent:    config.Event,
 		jobCounter:  app.Monitor.JobCounter,
+		sm:          app.Events,
 	}
 }
 

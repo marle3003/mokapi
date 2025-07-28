@@ -24,6 +24,17 @@ func TestFlagDecoder_Decode(t *testing.T) {
 			},
 		},
 		{
+			name: "config is string but multiple argument values",
+			f: func(t *testing.T) {
+				s := &struct {
+					Name string
+				}{}
+				d := &FlagDecoder{}
+				err := d.Decode(map[string][]string{"name": {"foo", "bar"}}, s)
+				require.EqualError(t, err, "configuration error 'name' value '[foo bar]': expected a single string, but received multiple values")
+			},
+		},
+		{
 			name: "bool",
 			f: func(t *testing.T) {
 				s := &struct {

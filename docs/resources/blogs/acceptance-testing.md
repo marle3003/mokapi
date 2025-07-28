@@ -1,6 +1,9 @@
 ---
 title: "Acceptance Testing with Mokapi: Focus on What Matters"
 description: Discover how Mokapi simplifies acceptance testing with mock APIs for REST or Kafka. Stay aligned with specs, handle edge cases, and test with confidence.
+image:
+    url: "/acceptance-testing.png"
+    alt: Diagram illustrating acceptance testing as executable specifications interacting with the backend and mocked external APIs using Mokapi.
 ---
 
 # Acceptance Testing with Mokapi: Focus on What Matters

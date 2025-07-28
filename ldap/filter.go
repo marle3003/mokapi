@@ -184,7 +184,3 @@ func parseUnary(children []*ber.Packet) (string, error) {
 	}
 	return decompileFilter(children[0])
 }
-
-func is(p *ber.Packet, op int) bool {
-	return p != nil && p.Tag == ber.Tag(op)
-}

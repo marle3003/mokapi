@@ -23,7 +23,7 @@ const { file, levels, isIndex } = resolve(nav, route)
 let data
 let component: any
 let content: string | undefined
-let metadata: any
+let metadata: DocMeta | undefined
 if (typeof file === 'string'){
   data = files[`/src/assets/docs/${file}`];
   ({ content, metadata } = useMarkdown(data))
@@ -32,7 +32,7 @@ if (typeof file === 'string'){
   if (entry.component) {
     // component must be initialized in main.ts
     component = entry.component
-    metadata = entry
+    metadata = entry as DocMeta
   }
 }
 
@@ -101,7 +101,7 @@ onMounted(() => {
     if ((title.length + extension.length) <= 70) {
       title +=  ' | Mokapi ' + levels[0]
     }
-    useMeta(title, metadata.description, getCanonicalUrl(levels))
+    useMeta(title, metadata.description, getCanonicalUrl(levels), metadata.image)
   }
   dialog.value = new Modal('#imageDialog', {})
 })
@@ -151,7 +151,7 @@ function formatParam(label: any): string {
         <div class="doc-main" style="flex: 1;margin-bottom: 3rem;" :style="showNavigation ? 'max-width:50em;' : ''">
           <div class="container">
             <nav aria-label="breadcrumb" v-if="showNavigation">
-              <ol class="breadcrumb flex-nowrap">
+              <ol class="breadcrumb">
                 <li class="breadcrumb-item text-truncate" v-for="item of breadcrumb" :class="item.isLast ? 'active' : ''">
                   <router-link v-if="item.params && !item.isLast" :to="{ name: 'docs', params: item.params }">{{ item.label }}</router-link>
                   <template v-else>{{ item.label }}</template>

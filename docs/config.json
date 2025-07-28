@@ -31,11 +31,11 @@
           "Quick Start": "guides/ldap/quick-start.md"
         }
       },
-      "SMTP": {
-        "index": "guides/smtp/overview.md",
+      "Mail": {
+        "index": "guides/mail/overview.md",
         "items": {
-          "Quick Start": "guides/smtp/quick-start.md",
-          "Rules": "guides/smtp/rules.md"
+          "Quick Start": "guides/mail/quick-start.md",
+          "Rules": "guides/mail/rules.md"
         }
       }
     }
@@ -204,15 +204,15 @@
           "End to End Testing with Mocked APIs": "resources/blogs/end-to-end-testing-mocked-apis.md",
           "Bring Your Mock APIs to Life with Mokapi and JavaScript": "resources/blogs/dynamic-mocks-with-javascript.md",
           "Debugging Mokapi Scripts": "resources/blogs/debugging-mokapi-scripts.md",
-          "Acceptance Testing with Mokapi: Focus on What Matters": "resources/blogs/acceptance-testing.md"
+          "Acceptance Testing with Mokapi: Focus on What Matters": "resources/blogs/acceptance-testing.md",
+          "Testing Email Workflows with Playwright and Mokapi": "resources/blogs/testing-email-workflows-playwright.md"
         }
       }
     }
   },
   "References": {
     "items": {
-      "Declarative Data": "references/declarative-data.md",
-      "Lua API": "references/lua.md"
+      "Declarative Data": "references/declarative-data.md"
     }
   }
 }

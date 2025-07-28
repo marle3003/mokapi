@@ -13,13 +13,14 @@ import (
 type MailOptions func(m *mail)
 
 type mail struct {
-	from      string
-	to        string
-	subject   string
-	body      []byte
-	auth      smtp.Auth
-	u         *url.URL
-	tlsConfig *tls.Config
+	from        string
+	to          string
+	contentType string
+	subject     string
+	body        []byte
+	auth        smtp.Auth
+	u           *url.URL
+	tlsConfig   *tls.Config
 }
 
 func SendMail(from, to, addr string, opts ...MailOptions) error {
@@ -71,8 +72,13 @@ func SendMail(from, to, addr string, opts ...MailOptions) error {
 	}
 
 	msg := fmt.Sprintf("From: %v\r\n"+
-		"To: %v\r\n"+
-		"Subject: %v\r\n\r\n", from, to, m.subject)
+		"To: %v\r\n", from, to)
+
+	if m.contentType != "" {
+		msg += fmt.Sprintf("Content-Type: %v\r\n", m.contentType)
+	}
+
+	msg += fmt.Sprintf("Subject: %v\r\n\r\n", m.subject)
 
 	_, err = w.Write([]byte(msg))
 	if err != nil {
@@ -149,4 +155,10 @@ func getConn(m *mail) (net.Conn, error) {
 		return tlsDialer.Dial("tcp", addr)
 	}
 	return net.Dial("tcp", addr)
+}
+
+func WithContentType(contentType string) MailOptions {
+	return func(m *mail) {
+		m.contentType = contentType
+	}
 }

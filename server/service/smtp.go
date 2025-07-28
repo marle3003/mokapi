@@ -13,23 +13,14 @@ type SmtpServer struct {
 	server *smtp.Server
 }
 
-func NewSmtpServer(port string, handler smtp.Handler) *SmtpServer {
-	s := &SmtpServer{
-		server: &smtp.Server{
-			Addr:    fmt.Sprintf(":%s", port),
-			Handler: handler,
-		},
-	}
-	return s
-}
-
-func NewSmtpServerTls(port string, handler smtp.Handler, store *cert.Store) *SmtpServer {
+func NewSmtpServer(port string, handler smtp.Handler, store *cert.Store) *SmtpServer {
 	s := &SmtpServer{
 		server: &smtp.Server{
 			Addr:    fmt.Sprintf(":%s", port),
 			Handler: handler,
 			TLSConfig: &tls.Config{
-				GetCertificate: store.GetCertificate,
+				GetCertificate:     store.GetCertificate,
+				InsecureSkipVerify: true,
 			},
 		},
 	}
@@ -42,12 +33,16 @@ func (s *SmtpServer) Addr() string {
 
 func (s *SmtpServer) Start() {
 	go func() {
-		var err error
-		if s.server.TLSConfig == nil {
-			err = s.server.ListenAndServe()
-		} else {
-			err = s.server.ListenAndServeTLS()
+		err := s.server.ListenAndServe()
+		if !errors.Is(err, smtp.ErrServerClosed) {
+			log.Error(err)
 		}
+	}()
+}
+
+func (s *SmtpServer) StartTls() {
+	go func() {
+		err := s.server.ListenAndServeTLS()
 		if !errors.Is(err, smtp.ErrServerClosed) {
 			log.Error(err)
 		}

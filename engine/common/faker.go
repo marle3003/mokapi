@@ -9,10 +9,6 @@ type FakerTree struct {
 	t       *generator.Node
 }
 
-func NewFakerTree(t *generator.Node) *FakerTree {
-	return &FakerTree{t: t}
-}
-
 func (ft *FakerTree) Name() string {
 	return ft.t.Name
 }

@@ -15,10 +15,10 @@ import (
 	"mokapi/feature"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/directory"
+	mail2 "mokapi/providers/mail"
 	"mokapi/providers/openapi"
 	"mokapi/providers/swagger"
 	"mokapi/runtime"
-	"mokapi/runtime/events"
 	"mokapi/safe"
 	"mokapi/server"
 	"mokapi/server/cert"
@@ -98,10 +98,6 @@ func main() {
 }
 
 func createServer(cfg *static.Config) (*server.Server, error) {
-	events.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("http"))
-	events.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("kafka"))
-	events.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("job"))
-
 	pool := safe.NewPool(context.Background())
 	app := runtime.New(cfg)
 
@@ -114,14 +110,14 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	http := server.NewHttpManager(scriptEngine, certStore, app)
 	kafka := server.NewKafkaManager(scriptEngine, app)
 	mqtt := server.NewMqttManager(scriptEngine, app)
-	smtp := server.NewSmtpManager(app, scriptEngine, certStore)
+	mailManager := server.NewMailManager(app, scriptEngine, certStore)
 	ldap := server.NewLdapDirectoryManager(scriptEngine, certStore, app)
 
 	watcher.AddListener(func(e dynamic.ConfigEvent) {
 		kafka.UpdateConfig(e)
 		mqtt.UpdateConfig(e)
 		http.Update(e)
-		smtp.UpdateConfig(e)
+		mailManager.UpdateConfig(e)
 		ldap.UpdateConfig(e)
 		if err := scriptEngine.AddScript(e); err != nil {
 			log.Error(err)
@@ -138,7 +134,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 		return nil, err
 	}
 
-	return server.NewServer(pool, app, watcher, kafka, http, smtp, ldap, scriptEngine), nil
+	return server.NewServer(pool, app, watcher, kafka, http, mailManager, ldap, scriptEngine), nil
 }
 
 func configureLogging(cfg *static.Config) {
@@ -179,4 +175,7 @@ func registerDynamicTypes() {
 	dynamic.Register("smtp", func(v version.Version) bool {
 		return true
 	}, &mail.Config{})
+	dynamic.Register("mail", func(v version.Version) bool {
+		return true
+	}, &mail2.Config{})
 }

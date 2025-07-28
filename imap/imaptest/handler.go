@@ -3,6 +3,7 @@ package imaptest
 import (
 	"context"
 	"mokapi/imap"
+	"mokapi/smtp"
 )
 
 type Handler struct {
@@ -22,6 +23,8 @@ type Handler struct {
 	StatusFunc      func(req *imap.StatusRequest, session map[string]interface{}) (imap.StatusResult, error)
 	SubscribeFunc   func(mailbox string, session map[string]interface{}) error
 	UnsubscribeFunc func(mailbox string, session map[string]interface{}) error
+	SearchFunc      func(request *imap.SearchRequest) (*imap.SearchResponse, error)
+	AppendFunc      func(mailbox string, msg *smtp.Message, opt imap.AppendOptions) error
 }
 
 func (h *Handler) Login(username, password string, _ context.Context) error {
@@ -142,6 +145,22 @@ func (h *Handler) Unsubscribe(mailbox string, _ context.Context) error {
 		return h.UnsubscribeFunc(mailbox, h.session)
 	}
 	panic("UNSUBSCRIBE not implemented")
+}
+
+func (h *Handler) Search(request *imap.SearchRequest, _ context.Context) (*imap.SearchResponse, error) {
+	if h.SearchFunc != nil {
+		h.ensureSession()
+		return h.SearchFunc(request)
+	}
+	panic("SEARCH not implemented")
+}
+
+func (h *Handler) Append(mailbox string, msg *smtp.Message, opt imap.AppendOptions, _ context.Context) error {
+	if h.AppendFunc != nil {
+		h.ensureSession()
+		return h.AppendFunc(mailbox, msg, opt)
+	}
+	panic("APPEND not implemented")
 }
 
 func (h *Handler) ensureSession() {

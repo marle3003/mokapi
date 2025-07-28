@@ -35,9 +35,13 @@ func (store *Store) createTlsCertificate(info *tls.ClientHelloInfo) (*tls.Certif
 		serverName = host
 	}
 
-	info.Conn.LocalAddr().String()
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128) // 2^128
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		return nil, err
+	}
 	cert, key, err := store.CreateCertificate(x509.Certificate{
-		SerialNumber: big.NewInt(1658),
+		SerialNumber: serialNumber,
 		Subject: pkix.Name{
 			CommonName: serverName,
 		},
@@ -46,7 +50,7 @@ func (store *Store) createTlsCertificate(info *tls.ClientHelloInfo) (*tls.Certif
 		NotAfter:              time.Now().AddDate(10, 0, 0),
 		SubjectKeyId:          []byte{1, 2, 3, 4, 5, 6},
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage:              x509.KeyUsageDigitalSignature,
+		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		IPAddresses:           []net.IP{net.ParseIP(host)},
 		BasicConstraintsValid: true,
 	})

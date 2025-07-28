@@ -19,6 +19,13 @@ type Selected struct {
 }
 
 func (c *conn) handleSelect(tag, param string, readonly bool) error {
+	if c.state != AuthenticatedState && c.state != SelectedState {
+		return c.writeResponse(tag, &response{
+			status: bad,
+			text:   "Command is only valid in authenticated state",
+		})
+	}
+
 	d := Decoder{msg: param}
 	mailbox, err := d.String()
 	if err != nil {
@@ -215,7 +222,7 @@ func (c *Client) Select(folder string, readonly bool) (Selected, error) {
 					return sel, err
 				}
 				var key string
-				key, err = d.Read(isAtom)
+				key = d.Read(isAtom)
 				if err != nil {
 					return sel, err
 				}

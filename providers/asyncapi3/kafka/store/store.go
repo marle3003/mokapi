@@ -35,21 +35,23 @@ type Store struct {
 	groups       map[string]*Group
 	cluster      string
 	eventEmitter common.EventEmitter
+	eh           events.Handler
 
 	m sync.RWMutex
 }
 
-func NewEmpty(eventEmitter common.EventEmitter) *Store {
+func NewEmpty(eventEmitter common.EventEmitter, eh events.Handler) *Store {
 	return &Store{
 		topics:       make(map[string]*Topic),
 		brokers:      make(map[int]*Broker),
 		groups:       make(map[string]*Group),
 		eventEmitter: eventEmitter,
+		eh:           eh,
 	}
 }
 
-func New(config *asyncapi3.Config, eventEmitter common.EventEmitter) *Store {
-	s := NewEmpty(eventEmitter)
+func New(config *asyncapi3.Config, eventEmitter common.EventEmitter, eh events.Handler) *Store {
+	s := NewEmpty(eventEmitter, eh)
 	s.Update(config)
 	return s
 }
@@ -299,7 +301,7 @@ func (s *Store) getBrokerByHost(addr string) *Broker {
 }
 
 func (s *Store) log(log *KafkaLog, traits events.Traits) {
-	events.Push(
+	s.eh.Push(
 		log,
 		traits.WithNamespace("kafka").WithName(s.cluster),
 	)

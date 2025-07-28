@@ -45,7 +45,7 @@ onUnmounted(() => {
                         <div class="col">
                             <p class="label">Service</p>
                             <p data-testid="service">
-                                <router-link :to="route.service(service)">
+                                <router-link :to="route.service(service, 'http')">
                                 {{ service.name }}
                                 </router-link>
                             </p>

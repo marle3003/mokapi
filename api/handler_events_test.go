@@ -6,6 +6,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
+	"mokapi/runtime/events/eventstest"
 	"mokapi/try"
 	"net/http"
 	"testing"
@@ -15,11 +16,11 @@ import (
 func TestHandler_Events(t *testing.T) {
 	testcases := []struct {
 		name string
-		fn   func(t *testing.T, h http.Handler)
+		fn   func(t *testing.T, h http.Handler, sm *events.StoreManager)
 	}{
 		{
 			name: "empty http events",
-			fn: func(t *testing.T, h http.Handler) {
+			fn: func(t *testing.T, h http.Handler, sm *events.StoreManager) {
 				try.Handler(t,
 					http.MethodGet,
 					"http://foo.api/api/events?namespace=http",
@@ -33,10 +34,10 @@ func TestHandler_Events(t *testing.T) {
 		},
 		{
 			name: "with http events",
-			fn: func(t *testing.T, h http.Handler) {
-				events.SetStore(1, events.NewTraits().WithNamespace("http"))
-				err := events.Push("foo", events.NewTraits().WithNamespace("http"))
-				event := events.GetEvents(events.NewTraits())[0]
+			fn: func(t *testing.T, h http.Handler, sm *events.StoreManager) {
+				sm.SetStore(1, events.NewTraits().WithNamespace("http"))
+				err := sm.Push(&eventstest.Event{Name: "foo"}, events.NewTraits().WithNamespace("http"))
+				event := sm.GetEvents(events.NewTraits())[0]
 				require.NoError(t, err)
 				try.Handler(t,
 					http.MethodGet,
@@ -46,17 +47,17 @@ func TestHandler_Events(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(fmt.Sprintf(`[{"id":"%v","traits":{"namespace":"http"},"data":"foo","time":"%v"}]`,
+					try.HasBody(fmt.Sprintf(`[{"id":"%v","traits":{"namespace":"http"},"data":{"Name":"foo","api":""},"time":"%v"}]`,
 						event.Id,
 						event.Time.Format(time.RFC3339Nano))))
 			},
 		},
 		{
 			name: "get specific event",
-			fn: func(t *testing.T, h http.Handler) {
-				events.SetStore(1, events.NewTraits().WithNamespace("http"))
-				err := events.Push("foo", events.NewTraits().WithNamespace("http"))
-				event := events.GetEvents(events.NewTraits())[0]
+			fn: func(t *testing.T, h http.Handler, sm *events.StoreManager) {
+				sm.SetStore(1, events.NewTraits().WithNamespace("http"))
+				err := sm.Push(&eventstest.Event{Name: "foo"}, events.NewTraits().WithNamespace("http"))
+				event := sm.GetEvents(events.NewTraits())[0]
 				require.NoError(t, err)
 				try.Handler(t,
 					http.MethodGet,
@@ -66,14 +67,14 @@ func TestHandler_Events(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(fmt.Sprintf(`{"id":"%v","traits":{"namespace":"http"},"data":"foo","time":"%v"}`,
+					try.HasBody(fmt.Sprintf(`{"id":"%v","traits":{"namespace":"http"},"data":{"Name":"foo","api":""},"time":"%v"}`,
 						event.Id,
 						event.Time.Format(time.RFC3339Nano))))
 			},
 		},
 		{
 			name: "get specific event but not existing",
-			fn: func(t *testing.T, h http.Handler) {
+			fn: func(t *testing.T, h http.Handler, sm *events.StoreManager) {
 				try.Handler(t,
 					http.MethodGet,
 					"http://foo.api/api/events/1234",
@@ -88,11 +89,11 @@ func TestHandler_Events(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			defer events.Reset()
-
 			cfg := &static.Config{}
-			h := New(runtime.New(cfg), static.Api{})
-			tc.fn(t, h)
+			app := runtime.New(cfg)
+
+			h := New(app, static.Api{})
+			tc.fn(t, h, app.Events)
 		})
 	}
 }

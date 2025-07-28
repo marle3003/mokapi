@@ -150,7 +150,7 @@ func TestHandler_Api_Info(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"","buildTime":"","activeServices":["smtp"],"search":{"enabled":false}}`))
+					try.HasBody(`{"version":"","buildTime":"","activeServices":["mail"],"search":{"enabled":false}}`))
 			},
 		},
 		{

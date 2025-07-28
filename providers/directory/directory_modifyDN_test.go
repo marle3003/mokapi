@@ -6,6 +6,7 @@ import (
 	"mokapi/ldap"
 	"mokapi/ldap/ldaptest"
 	"mokapi/providers/directory"
+	"mokapi/runtime/events/eventstest"
 	"mokapi/sortedmap"
 	"testing"
 )
@@ -142,7 +143,7 @@ func TestDirectory_ServeModifyDn(t *testing.T) {
 
 	for _, test := range testcases {
 		t.Run(test.name, func(t *testing.T) {
-			d := directory.NewHandler(test.config, enginetest.NewEngine())
+			d := directory.NewHandler(test.config, enginetest.NewEngine(), &eventstest.Handler{})
 			test.fn(t, d, test.config.Entries)
 		})
 	}

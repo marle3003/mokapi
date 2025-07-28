@@ -222,7 +222,7 @@ function navigateAndClose(params: Record<string, string>) {
                 <li><router-link class="dropdown-item" :to="{ path: '/http' }">HTTP</router-link></li>
                 <li><router-link class="dropdown-item" :to="{ path: '/kafka' }">Kafka</router-link></li>
                 <li><router-link class="dropdown-item" :to="{ path: '/ldap' }">LDAP</router-link></li>
-                <li><router-link class="dropdown-item" :to="{ path: '/smtp' }">SMTP</router-link></li>
+                <li><router-link class="dropdown-item" :to="{ path: '/mail' }">Email</router-link></li>
               </ul>
             </li>
             <li class="nav-item" v-for="(item, label) of nav">
@@ -311,7 +311,7 @@ function navigateAndClose(params: Record<string, string>) {
 
   <!-- Search Modal -->
   <div class="modal fade" tabindex="-1" id="search-docs" aria-labelledby="search-title" style="max-height: 80%;">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable search-dialog">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable search-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <h6 id="search-title" class="modal-title">Search docs</h6>

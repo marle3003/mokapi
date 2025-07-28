@@ -1,10 +1,62 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import router from '@/router';
+import { computed, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 
-const queryText = ref<string>();
-const results = ref();
+const route = useRoute()
+const queryText = ref<string>(route.query.q?.toString() || '');
+const result = ref<SearchResult>();
+
+let timeout: number;
 watch(queryText, async (q) => {
-  console.log('test')
+  // debounced
+  clearTimeout(timeout)
+  timeout = setTimeout(async () => {
+    router.replace({
+      query: {
+        ...route.query,
+        q: q || undefined  // remove "q" if empty
+      }
+    })
+    await query(q as string)
+  }, 300)
+})
+
+const pageNumber = computed(() => {
+  if (!result.value) {
+    return 0
+  }
+  return Math.ceil(result.value?.total / 10)
+})
+function navigateToSearchResult(result: any) {
+  switch (result.type.toLowerCase()) {
+    case 'http':
+      if (result.params.path) {
+        const endpoint = result.params.path.split('/')
+        endpoint.shift() // path starts with a slash: remove first empty entry
+        if (result.params.method) {
+          endpoint.push(result.params.method)
+        }
+        return router.push({ name: 'httpEndpoint', params: { endpoint, ...result.params } })
+      }
+      else {
+        return router.push({ name: 'httpService', params: result.params })
+      }
+    case 'config':
+      return router.push({ name: 'config', params: result.params })
+  }
+}
+function title(result: any) {
+  if (result.type === "Config") {
+    const n = result.title.length
+    if (n > 20) {
+      return '...' + result.title.slice(n-20)
+    }
+  }
+  return result.title
+}
+
+async function query(q: string) {
   const res = await fetch(`/api/search/query?queryText=${q}`)
     .then(async (res) => {
         if (!res.ok) {
@@ -19,9 +71,8 @@ watch(queryText, async (q) => {
     .catch((err) => {
         console.error(err)
     })
-    console.log(res)
-    results.value = res
-})
+    result.value = res
+}
 </script>
 
 <template>
@@ -29,38 +80,61 @@ watch(queryText, async (q) => {
     <div class="card-group">
       <section class="card" aria-labelledby="search">
         <div class="card-body">
-          <div id="search" class="card-title text-center mb-4">Search your mocks</div>
-              <div class="container text-center">
-                <div class="row justify-content-md-center">
-                  <div class="col-6 col-auto">
-                    <div class="input-group mb-3">
-                      <span class="input-group-text" id="search-icon">
-                        <i class="bi bi-search"></i>
-                      </span>
-                      <input type="text" class="form-control" placeholder="Search" aria-label="Search" aria-describedby="search-icon" v-model="queryText">
-                    </div>
+          <div id="search" class="card-title text-center mb-4">
+            <h2 style="margin-block-start: 1rem;font-size: 1.5rem;">Search your mocks</h2>
+          </div>
+            <div class="container text-center">
+              <div class="row justify-content-md-center">
+                <div class="col-8 col-auto">
+                  <div class="input-group mb-3">
+                    <span class="input-group-text" id="search-icon">
+                      <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control" placeholder="Search" aria-label="Search" aria-describedby="search-icon" v-model="queryText">
                   </div>
                 </div>
               </div>
+            </div>
           </div>
         </section>
       </div>
-      <div class="card-group" v-if="results">
+      <div class="card-group" v-if="result?.results">
         <div class="card">
           <div class="card-body">
             <div class="container">
                 <div class="row justify-content-md-center">
-                  <div class="col-6 col-auto">
+                  <div class="col-8 col-auto">
                     <div class="list-group search-results">
-                      <a v-for="result of results" class="list-group-item">
+                      <a v-for="result of result.results" class="list-group-item" @click="navigateToSearchResult(result)">
                         <div class="mb-1 config">
-                          <span class="badge bg-secondary api" title="Type of API" aria-label="Type of API" data-testid="service-type">{{ result.type }}</span>
-                          <span class="ps-1">{{ result.configName }}</span>
+                          <span class="badge bg-secondary api">{{ result.type }}</span>
+                          <span class="ps-1">{{ result.domain }}</span>
                         </div>
-                        <h3 class="pt-1 mb-1">{{ result.title }}</h3>
-                        <p class="mb-1" style="font-size: 14px" v-html="result.fragments?.join('...')"></p>
+                        <h3>{{ title(result) }}</h3>
+                        <p class="fragments mb-1" style="font-size: 14px" v-html="result.fragments?.join(' ... ')"></p>
                       </a>
                     </div>
+                  </div>
+                </div>
+                <div class="row justify-content-md-center" v-if="pageNumber > 1">
+                  <div class="col-8 col-auto">
+                    <nav aria-label="Page navigation">
+                      <ul class="pagination justify-content-center">
+                        <li class="page-item">
+                          <a class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                          </a>
+                        </li>
+                        <li class="page-item"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                          <a class="page-link" href="#" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                          </a>
+                        </li>
+                      </ul>
+                    </nav>
                   </div>
                 </div>
             </div>
@@ -86,9 +160,11 @@ watch(queryText, async (q) => {
 }
 .search-results a {
   border: none;
-  background-color: var(--color-background-soft);;
+  background-color: var(--color-background-soft);
   padding-left: 0;
   padding-right: 0;
+  padding-top: 15px;
+  padding-bottom: 15px;
 }
 .search-results a:hover {
   background-color: transparent;
@@ -98,7 +174,23 @@ watch(queryText, async (q) => {
 .search-results a:hover h3 {
   color: var(--link-color);
 }
+.search-results h3 {
+  padding-top: 5px;
+  margin-top: 3px;
+}
 .search-results .config {
   line-height: 1;
+}
+</style>
+
+<style>
+.search-results .fragments mark {
+  color: var(--color-text);
+  font-weight: bold;
+  background-color: unset;
+  padding: 0;
+}
+.pagination .page-link {
+  color: var(--link-color)
 }
 </style>

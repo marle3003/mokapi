@@ -24,9 +24,17 @@ func (t Traits) WithName(v string) Traits {
 	return t.With(name, v)
 }
 
+func (t Traits) GetName() string {
+	return t.Get(name)
+}
+
 func (t Traits) With(name, value string) Traits {
 	t[name] = value
 	return t
+}
+
+func (t Traits) Get(name string) string {
+	return t[name]
 }
 
 func (t Traits) String() string {

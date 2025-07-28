@@ -14,7 +14,7 @@ func (h *handler) serveSystem(w http.ResponseWriter, r *http.Request) {
 			traits.With(k, r.URL.Query().Get(k))
 		}
 
-		data := events.GetStores(traits)
+		data := h.app.Events.GetStores(traits)
 		if data == nil {
 			w.WriteHeader(404)
 		} else {

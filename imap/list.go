@@ -104,7 +104,7 @@ func (c *Client) List(ref, pattern string) ([]ListEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	list := []ListEntry{}
+	var list []ListEntry
 	d := &Decoder{}
 	for {
 		d.msg, err = c.tpc.ReadLine()
@@ -166,7 +166,7 @@ func (c *Client) LSub(ref, pattern string) ([]ListEntry, error) {
 	if err != nil {
 		return nil, err
 	}
-	list := []ListEntry{}
+	var list []ListEntry
 	d := &Decoder{}
 
 	for {

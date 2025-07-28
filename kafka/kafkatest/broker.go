@@ -1,6 +1,7 @@
 package kafkatest
 
 import (
+	"errors"
 	"fmt"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
@@ -44,7 +45,7 @@ func NewBroker(opts ...BrokerOptions) *Broker {
 
 	go func() {
 		err := b.server.ListenAndServe()
-		if err != nil && err != kafka.ErrServerClosed {
+		if err != nil && !errors.Is(err, kafka.ErrServerClosed) {
 			panic(err)
 		}
 	}()
@@ -61,32 +62,10 @@ func (b *Broker) Close() {
 	b.server.Close()
 }
 
-//func (b *Broker) AddRecords(topic string, records ...protocol.Record) {
-//	b.client.Produce(3, &produce.Request{
-//		Topics: []produce.RequestTopic{
-//			{
-//				Name: topic, Partitions: []produce.RequestPartition{
-//					{
-//						Index: 0,
-//						Record: protocol.RecordBatch{
-//							Records: records,
-//						},
-//					},
-//				},
-//			}},
-//	})
-//}
-
 func (b *Broker) HostPort() (string, int) {
 	h, ps, _ := net.SplitHostPort(b.Addr)
 	p, _ := strconv.Atoi(ps)
 	return h, p
-}
-
-func WithPort(addr string) BrokerOptions {
-	return func(c *config) {
-		c.addr = addr
-	}
 }
 
 func WithHandler(h kafka.Handler) BrokerOptions {

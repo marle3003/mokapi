@@ -3,7 +3,7 @@ import { MokapiModel } from './mokapi'
 import { Metric } from './metric'
 import { HttpModel } from './http'
 import { KafkaModel } from './kafka'
-import { SmtpModel } from './smtp'
+import { MailModel } from './mail'
 
 export class DashboardModel extends MokapiModel {
     readonly tabs: Locator
@@ -11,7 +11,7 @@ export class DashboardModel extends MokapiModel {
 
     readonly http: HttpModel
     readonly kafka: KafkaModel
-    readonly smtp: SmtpModel
+    readonly mail: MailModel
 
     readonly metricAppStart: Metric
     readonly metricMemoryUsage: Metric
@@ -23,7 +23,7 @@ export class DashboardModel extends MokapiModel {
 
         this.http = new HttpModel(page.locator('main'))
         this.kafka = new KafkaModel(page.locator('main'))
-        this.smtp = new SmtpModel(page.locator('main'))
+        this.mail = new MailModel(page.locator('main'))
 
         this.metricAppStart = new Metric(page.getByTestId('metric-app-start'))
         this.metricMemoryUsage = new Metric(page.getByTestId('metric-memory-usage'))

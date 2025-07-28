@@ -66,7 +66,6 @@ func (c *conn) readCmd() error {
 	d := Decoder{msg: param}
 
 	// missing feature
-	// - search
 	// - UID search
 	// - idle
 	// - ID
@@ -120,6 +119,10 @@ func (c *conn) readCmd() error {
 		err = c.handleCopy(tag, &d, false)
 	case "MOVE":
 		err = c.handleMove(tag, &d, false)
+	case "SEARCH":
+		err = c.handleSearch(tag, &d, false)
+	case "APPEND":
+		err = c.handleAppend(tag, &d)
 	case "NOOP":
 		res = &response{
 			status: ok,

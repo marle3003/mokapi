@@ -9,6 +9,7 @@ import (
 	"mokapi/kafka/syncGroup"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
+	"mokapi/runtime/events/eventstest"
 	"testing"
 	"time"
 )
@@ -363,7 +364,7 @@ func TestGroupBalancing(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{})
 			defer s.Close()
 			b := kafkatest.NewBroker(kafkatest.WithHandler(s))
 			defer b.Close()
