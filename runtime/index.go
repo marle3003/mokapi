@@ -3,8 +3,13 @@ package runtime
 import (
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/custom"
+	"github.com/blevesearch/bleve/v2/analysis/char/asciifolding"
 	"github.com/blevesearch/bleve/v2/analysis/char/html"
+	_ "github.com/blevesearch/bleve/v2/analysis/lang/en"
+	"github.com/blevesearch/bleve/v2/analysis/token/camelcase"
+	"github.com/blevesearch/bleve/v2/analysis/token/lowercase"
 	_ "github.com/blevesearch/bleve/v2/analysis/token/ngram"
+	"github.com/blevesearch/bleve/v2/analysis/token/porter"
 	"github.com/blevesearch/bleve/v2/analysis/tokenizer/unicode"
 	"github.com/blevesearch/bleve/v2/search/query"
 	index "github.com/blevesearch/bleve_index_api"
@@ -28,7 +33,15 @@ func newIndex(cfg *static.Config) bleve.Index {
 
 	docMapping := bleve.NewDocumentMapping()
 	docMapping.AddFieldMappingsAt("_title", disableIndex)
+	docMapping.AddFieldMappingsAt("_time", disableIndex)
 	docMapping.AddFieldMappingsAt("discriminator", disableIndex)
+
+	apiField := bleve.NewTextFieldMapping()
+	apiField.Analyzer = "mokapi_analyzer"
+	apiField.IncludeInAll = false // Exclude from default search
+	apiField.Store = true
+	apiField.Index = true
+	docMapping.AddFieldMappingsAt("api", apiField)
 
 	// enable term vectors for all fields, allowing phrase queries (like "Swagger Petstore")
 	defaultField := bleve.NewTextFieldMapping()
@@ -37,21 +50,19 @@ func newIndex(cfg *static.Config) bleve.Index {
 
 	mapping := bleve.NewIndexMapping()
 	mapping.DefaultMapping = docMapping
-	mapping.DefaultAnalyzer = cfg.Api.Search.Analyzer
+	mapping.DefaultAnalyzer = "mokapi_analyzer"
 
-	err := mapping.AddCustomTokenFilter("ngram_filter", map[string]any{
-		"type": "ngram",
-		"min":  cfg.Api.Search.Ngram.Min,
-		"max":  cfg.Api.Search.Ngram.Max,
-	})
-	if err != nil {
-		panic(err)
-	}
+	stemmer := porter.Name
 
-	err = mapping.AddCustomAnalyzer("ngram", map[string]any{
-		"type":          custom.Name,
-		"tokenizer":     unicode.Name,
-		"token_filters": []any{"to_lower", "ngram_filter"},
+	err := mapping.AddCustomAnalyzer("mokapi_analyzer", map[string]any{
+		"type":         custom.Name,
+		"tokenizer":    unicode.Name,
+		"char_filters": []any{asciifolding.Name},
+		"token_filters": []any{
+			lowercase.Name,
+			camelcase.Name,
+			stemmer,
+		},
 	})
 	if err != nil {
 		panic(err)
@@ -83,7 +94,8 @@ func (a *App) Search(r search.Request) (search.Result, error) {
 	if r.Query == "" {
 		clauses = append(clauses, bleve.NewMatchAllQuery())
 	} else {
-		clauses = append(clauses, bleve.NewQueryStringQuery(r.Query))
+		q := bleve.NewQueryStringQuery(r.Query)
+		clauses = append(clauses, q)
 	}
 
 	for k, v := range r.Params {
@@ -93,7 +105,6 @@ func (a *App) Search(r search.Request) (search.Result, error) {
 	}
 
 	q := bleve.NewConjunctionQuery(clauses...)
-
 	sr := bleve.NewSearchRequest(q)
 	sr.Size = r.Limit
 	sr.From = r.Limit * r.Index
@@ -122,6 +133,8 @@ func (a *App) Search(r search.Request) (search.Result, error) {
 			item, err = getConfigSearchResult(fields, discriminators)
 		case "event":
 			item, err = events.GetSearchResult(fields, discriminators)
+		case "kafka":
+			item, err = getKafkaSearchResult(fields, discriminators)
 		default:
 			log.Errorf("unknown discriminator: %s", strings.Join(discriminators, "_"))
 			continue

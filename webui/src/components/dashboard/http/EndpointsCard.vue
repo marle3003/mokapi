@@ -31,10 +31,10 @@ function goToPath(path: HttpPath){
         return
     }
 
-    router.push(route.path(props.service, path))
+    router.push(route.httpPath(props.service, path))
 }
 function goToOperation(path: HttpPath, operation: HttpOperation){
-    router.push(route.operation(props.service, path, operation))
+    router.push(route.httpOperation(props.service, path, operation))
 }
 function lastRequest(path: HttpPath){
     const n = sum(props.service.metrics, 'http_request_timestamp', {name: 'endpoint', value: path.path})

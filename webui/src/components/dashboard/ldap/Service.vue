@@ -5,10 +5,7 @@ import { useRoute } from 'vue-router'
 import Servers from './Server.vue'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
 import Searches from './Requests.vue'
-import Search from './Search.vue'
 import ConfigCard from '../ConfigCard.vue'
-import Modify from './Modify.vue'
-import Add from './Add.vue'
 import Request from './Request.vue'
 
 const {fetchService} = useService()

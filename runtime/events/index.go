@@ -4,7 +4,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/runtime/search"
-	"strings"
+	"time"
 )
 
 type eventIndex struct {
@@ -12,6 +12,7 @@ type eventIndex struct {
 	Discriminator string `json:"discriminator"`
 	Title         string `json:"_title" index:"false" store:"true"`
 	Event         *Event `json:"event"`
+	Time          string `json:"_time"`
 }
 
 func (m *StoreManager) addToIndex(event *Event) {
@@ -24,6 +25,7 @@ func (m *StoreManager) addToIndex(event *Event) {
 		Discriminator: fmt.Sprintf("event_%s", event.Traits.String()),
 		Event:         event,
 		Title:         event.Data.Title(),
+		Time:          event.Time.Format(time.RFC3339),
 	}
 
 	if err := m.index.Index(event.Id, data); err != nil {
@@ -43,10 +45,14 @@ func GetSearchResult(fields map[string]string, _ []string) (search.ResultItem, e
 		Type:   "Event",
 		Title:  fields["_title"],
 		Domain: fields["event.data.api"],
+		Time:   fields["_time"],
+	}
+	if fields["event.traits.namespace"] == "kafka" {
+		result.Domain = fmt.Sprintf("%s - %s", fields["event.data.api"], fields["event.traits.topic"])
 	}
 	result.Params = map[string]string{
-		"type": strings.ToLower(result.Type),
-		"id":   fields["event.id"],
+		"namespace": fields["event.traits.namespace"],
+		"id":        fields["event.id"],
 	}
 
 	return result, nil

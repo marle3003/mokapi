@@ -2,12 +2,15 @@ package server
 
 import (
 	log "github.com/sirupsen/logrus"
+	"maps"
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
+	"mokapi/providers/asyncapi3"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
 	"mokapi/server/service"
 	"net/url"
+	"slices"
 	"sync"
 )
 
@@ -20,6 +23,7 @@ type Broker interface {
 type kafkaCluster struct {
 	brokers map[string]Broker
 	cfg     *runtime.KafkaInfo
+	monitor *monitor.Kafka
 }
 
 type KafkaManager struct {
@@ -38,41 +42,34 @@ func NewKafkaManager(emitter common.EventEmitter, app *runtime.App) *KafkaManage
 }
 
 func (m *KafkaManager) UpdateConfig(e dynamic.ConfigEvent) {
-	// todo: should be IsAsyncConfig and HasKafkaBrokers
-	cfg, ok := runtime.IsKafkaConfig(e.Config)
-	var info *runtime.KafkaInfo
-	if cfg != nil {
-		info = m.app.Kafka.Get(cfg.Info.Name)
-	}
-
-	if !ok && info == nil {
+	cfg, ok := runtime.IsAsyncApiConfig(e.Config)
+	if !ok {
 		return
 	}
 
-	if e.Event == dynamic.Delete {
+	info := m.app.Kafka.Get(cfg.Info.Name)
+	if e.Event == dynamic.Delete || info != nil && !info.HasKafkaServer() {
 		m.app.Kafka.Remove(e.Config)
 		if info.Config == nil {
 			m.removeCluster(cfg.Info.Name)
 			return
 		}
-	} else if info == nil {
-		var err error
-		info, err = m.app.Kafka.Add(e.Config, m.emitter)
-		if err != nil {
-			log.Errorf("add kafka config %v failed: %v", e.Config.Info.Url, err)
-			return
-		}
-	} else {
-		info.AddConfig(e.Config)
+	}
+	var servers map[string]*asyncapi3.ServerRef
+	if info != nil {
+		servers = info.Servers
+	}
+	var err error
+	info, err = m.app.Kafka.Add(e.Config, m.emitter)
+	if err != nil {
+		log.Errorf("add kafka config %v failed: %v", e.Config.Info.Url, err)
+		return
 	}
 
-	m.addOrUpdateCluster(info)
-	log.Debugf("processed %v", e.Config.Info.Path())
-}
+	c := m.getOrCreateCluster(info)
+	c.updateBrokers(info, servers)
 
-func (m *KafkaManager) addOrUpdateCluster(cfg *runtime.KafkaInfo) {
-	c := m.getOrCreateCluster(cfg)
-	c.update(cfg, m.app.Monitor.Kafka)
+	log.Debugf("processed %v", e.Config.Info.Path())
 }
 
 func (m *KafkaManager) getOrCreateCluster(cfg *runtime.KafkaInfo) *kafkaCluster {
@@ -82,7 +79,7 @@ func (m *KafkaManager) getOrCreateCluster(cfg *runtime.KafkaInfo) *kafkaCluster 
 	c, ok := m.clusters[cfg.Info.Name]
 	if !ok {
 		log.Infof("adding new kafka cluster '%v'", cfg.Info.Name)
-		c = &kafkaCluster{cfg: cfg, brokers: make(map[string]Broker)}
+		c = &kafkaCluster{cfg: cfg, brokers: make(map[string]Broker), monitor: m.app.Monitor.Kafka}
 		m.clusters[cfg.Info.Name] = c
 	}
 	return c
@@ -101,13 +98,22 @@ func (m *KafkaManager) removeCluster(name string) {
 	delete(m.clusters, name)
 }
 
-func (c *kafkaCluster) update(cfg *runtime.KafkaInfo, kafkaMonitor *monitor.Kafka) {
-	c.updateBrokers(cfg, kafkaMonitor)
-}
+func (c *kafkaCluster) updateBrokers(cfg *runtime.KafkaInfo, old map[string]*asyncapi3.ServerRef) {
+	servers := slices.Collect(maps.Values(cfg.Servers))
 
-func (c *kafkaCluster) updateBrokers(cfg *runtime.KafkaInfo, kafkaMonitor *monitor.Kafka) {
-	brokers := c.brokers
-	c.brokers = make(map[string]Broker)
+	for name, server := range old {
+		if !slices.ContainsFunc(servers, func(s *asyncapi3.ServerRef) bool {
+			return s.Value != nil && server.Value != nil && s.Value.Host == server.Value.Host
+		}) {
+			port, _ := getPortFromUrl(server.Value.Host)
+			if b, ok := c.brokers[port]; ok {
+				log.Infof("removing kafka broker '%v' on port %v from cluster '%v'", name, b.Addr(), cfg.Info.Name)
+				b.Stop()
+				delete(c.brokers, port)
+			}
+		}
+	}
+
 	for name, server := range cfg.Servers {
 		if server == nil || server.Value == nil {
 			continue
@@ -118,20 +124,13 @@ func (c *kafkaCluster) updateBrokers(cfg *runtime.KafkaInfo, kafkaMonitor *monit
 			continue
 		}
 
-		broker, found := brokers[port]
-		if found {
-			delete(brokers, port)
-		} else {
+		broker, found := c.brokers[port]
+		if !found {
 			log.Infof("adding new kafka broker '%v' on port %v to cluster '%v'", name, port, cfg.Info.Name)
-			broker = service.NewKafkaBroker(port, cfg.Handler(kafkaMonitor))
+			broker = service.NewKafkaBroker(port, cfg.Handler(c.monitor))
 			broker.Start()
 		}
 		c.brokers[port] = broker
-	}
-
-	for name, broker := range brokers {
-		log.Infof("removing kafka broker '%v' on port %v from cluster '%v'", name, broker.Addr(), cfg.Info.Name)
-		broker.Stop()
 	}
 }
 

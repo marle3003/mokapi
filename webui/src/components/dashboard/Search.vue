@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { usePrettyDates } from '@/composables/usePrettyDate';
 import router from '@/router';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 
 const route = useRoute()
+const { format } = usePrettyDates()
 const queryText = ref<string>(route.query.q?.toString() ?? '')
 const pageIndex = ref(getIndex())
 const result = ref<SearchResult>();
@@ -34,7 +36,10 @@ const pageRange = computed(() => {
   return Array.from({ length: end - start + 1 }, (_, i) => start + i)
 })
 let timeout: number;
-watch(queryText, async (q) => {
+watch(queryText, async () => {
+  if (!queryText.value || queryText.value.length < 3) {
+    return
+  }
   // debounced
   clearTimeout(timeout)
   timeout = setTimeout(async () => {await search()}, 300)
@@ -56,14 +61,34 @@ function navigateToSearchResult(result: any) {
       }
     case 'config':
       return router.push({ name: 'config', params: result.params })
+    case 'kafka':
+      if (result.params.topic) {
+        return router.push({ name: 'kafkaTopic', params: result.params })
+      }
+      return router.push({ name: 'kafkaService', params: result.params })
+    case 'event':
+      switch (result.params.namespace) {
+        case 'http':
+          return router.push({ name: 'httpRequest', params: result.params })
+        case 'kafka':
+          return router.push({ name: 'kafkaMessage', params: result.params })
+      }
   }
+  console.error(`search result type '${result.type.toLowerCase()}' not supported for navigation`)
 }
-function title(result: any) {
-  if (result.type === "Config") {
-    const n = result.title.length
-    if (n > 20) {
-      return '...' + result.title.slice(n-55)
-    }
+function title(result: SearchItem) {
+  switch (result.type) {
+    case "Config":
+      const n = result.title.length
+      if (n > 55) {
+        return '...' + result.title.slice(n-55)
+      }
+      break
+    case "Event":
+      if (result.params.namespace === 'kafka') {
+        return `Key: ${result.title}`
+      }
+      break
   }
   return result.title
 }
@@ -151,7 +176,7 @@ async function search() {
           </div>
             <div class="container text-center">
               <div class="row justify-content-md-center">
-                <div class="col-5 col-auto">
+                <div class="col-6 col-auto">
                   <div class="input-group mb-3">
                     <input type="text" class="form-control" placeholder="Search" aria-label="Search" aria-describedby="search-icon" v-model="queryText" @keypress="search_keypressed">
                     <button class="btn btn-outline-secondary" type="button" @click="search_clicked">
@@ -169,15 +194,18 @@ async function search() {
           <div class="card-body">
             <div class="container">
                 <div class="row justify-content-md-center">
-                  <div class="col-8 col-auto">
+                  <div class="col-6 col-auto">
                     <div class="list-group search-results">
                       <div class="list-group-item" v-for="result of result.results">
                         <div class="mb-1 config">
-                          <span class="badge bg-secondary api">{{ result.type }}</span>
-                          <span class="ps-1">{{ result.domain }}</span>
+                          <div class="mb-1">
+                            <span class="badge bg-secondary api">{{ result.type }}</span>
+                            <span v-if="result.domain" class="ps-2">{{ result.domain }}</span>
+                          </div>
+                          <small v-if="result.time" class="text-muted">{{ format(result.time) }}</small>
                         </div>
                          <a @click="navigateToSearchResult(result)">
-                          <h3>{{ title(result) }}</h3>
+                          <h3 v-html="title(result)"></h3>
                          </a>
                         <p class="fragments mb-1" style="font-size: 14px" v-html="result.fragments?.join(' ... ')"></p>
                       </div>
@@ -185,17 +213,19 @@ async function search() {
                   </div>
                 </div>
                 <div class="row justify-content-md-center" v-if="pageNumber > 1">
-                  <div class="col-8 col-auto">
+                  <div class="col-6 col-auto">
                     <nav aria-label="Page navigation">
                       <ul class="pagination justify-content-center">
                         <li class="page-item" v-if="pageIndex > 0">
-                          <a class="page-link" aria-label="Previous" @click="pageIndex_click(pageIndex--)">
+                          <a class="page-link" aria-label="Previous" @click="pageIndex_click(pageIndex - 1)">
                             <span aria-hidden="true">&laquo;</span>
                           </a>
                         </li>
-                        <li class="page-item" v-for="index in pageRange"><a class="page-link" @click="pageIndex_click(index - 1)">{{ index }}</a></li>
+                        <li v-for="index in pageRange" :key="index" class="page-item" :class="index === pageIndex + 1 ? 'active' : ''">
+                          <a class="page-link" @click="pageIndex_click(index - 1)">{{ index }}</a>
+                        </li>
                         <li class="page-item" v-if="pageIndex + 1 < pageNumber">
-                          <a class="page-link" aria-label="Next" @click="pageIndex_click(pageIndex++)">
+                          <a class="page-link" aria-label="Next" @click="pageIndex_click(pageIndex + 1)">
                             <span aria-hidden="true">&raquo;</span>
                           </a>
                         </li>

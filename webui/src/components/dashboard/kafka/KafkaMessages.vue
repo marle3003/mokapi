@@ -5,6 +5,7 @@ import { usePrettyDates } from '@/composables/usePrettyDate'
 import { Modal, Tab } from 'bootstrap'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import SourceView from '../SourceView.vue'
+import router from '@/router'
 
 const props = defineProps<{
     service: KafkaService,
@@ -49,7 +50,6 @@ onUnmounted(() => {
 })
 interface DialogData {
     key: string
-    message: string
     source: Source
     headers: KafkaHeader
     contentType: string
@@ -65,6 +65,27 @@ interface DialogData {
 }
 let message = ref<DialogData | null>(null)
 let data: KafkaEventData | null
+let clickTimeout: number | null = null
+
+function handleMessageClick(event: ServiceEvent) {
+    if (clickTimeout) {
+        clearTimeout(clickTimeout)
+        clickTimeout = null
+        showMessage(event)
+    } else {
+        clickTimeout = setTimeout(() => {
+            goToMessage(event)
+            clickTimeout = null
+        }, 250)
+    }
+}
+
+function goToMessage(event: ServiceEvent) {
+    router.push({
+        name: 'kafkaMessage',
+        params: { id: event.id }
+    })
+}
 
 function showMessage(event: ServiceEvent){
     if (getSelection()?.toString()) {
@@ -106,7 +127,6 @@ function showMessage(event: ServiceEvent){
 
     message.value = {
         key: key(data),
-        message: formatLanguage(data.message.value ?? data.message.binary!, messageConfig.contentType),
         source: source,
         headers: data.headers,
         contentType: contentType,
@@ -200,13 +220,13 @@ function formatHeaderValue(v: KafkaHeaderValue) {
             <tr>
                 <th scope="col" class="text-left" style="width: 10%">Key</th>
                 <th scope="col" class="text-left" >Value</th>
-                <th scope="col" class="text-left" style="width: 10%" v-if="!topicName" >Topic</th>
+                <th scope="col" class="text-left" style="width: 10%" v-if="!topicName">Topic</th>
                 <th scope="col" class="text-center" style="width: 10%">Time</th>
                 
             </tr>
         </thead>
         <tbody>
-            <tr v-for="event in events" :key="event.id" @click="showMessage(event)" :set="data = eventData(event)" :class="data?.deleted ? 'deleted': ''">
+            <tr v-for="event in events" :key="event.id" @click="handleMessageClick(event)" :set="data = eventData(event)" :class="data?.deleted ? 'deleted': ''">
                 <td class="key">{{ key(data) }}</td>
                 <td class="message" :title="isAvro(event)? 'Avro content displayed as JSON' : ''">{{ data?.message.value ?? data?.message.binary }}</td>
                 <td v-if="!topicName">{{ event.traits["topic"] }}</td>
@@ -224,7 +244,9 @@ function formatHeaderValue(v: KafkaHeaderValue) {
                                 <div class="row">
                                     <ul class="nav nav-pills tab-sm mb-3" role="tablist">
                                         <li class="nav-link show active" style="padding-left: 12px;" ref="tabDetailData" id="detail-data-tab" data-bs-toggle="tab" data-bs-target="#detail-data" type="button" role="tab" aria-controls="detail-data" aria-selected="true">Data</li>
-                                        <li class="nav-link" :class="message?.headers ? '' : 'disabled'" id="detail-header-tab" data-bs-toggle="tab" data-bs-target="#detail-header" type="button" role="tab" aria-controls="detail-header" aria-selected="false">Header</li>
+                                        <li class="nav-link" :class="message?.headers ? '' : 'disabled'" id="detail-header-tab" data-bs-toggle="tab" data-bs-target="#detail-header" type="button" role="tab" aria-controls="detail-header" aria-selected="false">
+                                            Header <span v-if="message?.headers" class="badge bg-secondary">{{ Object.keys(message.headers).length }}</span>
+                                        </li>
                                         <li class="nav-link" id="detail-meta-tab" data-bs-toggle="tab" data-bs-target="#detail-meta" type="button" role="tab" aria-controls="detail-meta" aria-selected="false">Metadata</li>
                                     </ul>
 
@@ -267,22 +289,22 @@ function formatHeaderValue(v: KafkaHeaderValue) {
                                         </div>
 
                                         <div class="tab-pane fade" id="detail-meta" role="tabpanel">
-                                            <div class="row mb-3">
+                                            <div class="row mb-2">
                                                 <p id="dialog-meta-partition" class="label">Topic</p>
                                                     <p aria-labelledby="dialog-meta-partition">{{ message.topic }}</p>
                                             </div>
-                                            <div class="row mb-3">
-                                                <div class="col">
+                                            <div class="row mb-2">
+                                                <div class="col-2">
                                                     <p id="dialog-meta-offset" class="label">Offset</p>
                                                     <p aria-labelledby="dialog-meta-offset">{{ message.offset }}</p>
                                                 </div>
-                                                <div class="col">
+                                                <div class="col-2">
                                                     <p id="dialog-meta-partition" class="label">Partition</p>
                                                     <p aria-labelledby="dialog-meta-partition">{{ message.partition }}</p>
                                                 </div>
                                             </div>
-                                            <div class="row mb-3">
-                                                <div class="col">
+                                            <div class="row mb-2">
+                                                <div class="col-2">
                                                     <p id="dialog-meta-message-content-type" class="label">Message Content Type</p>
                                                     <p aria-labelledby="dialog-meta-message-content-type">{{ message.contentType }}</p>
                                                 </div>
@@ -291,7 +313,7 @@ function formatHeaderValue(v: KafkaHeaderValue) {
                                                     <p aria-labelledby="dialog-meta-key-type">{{ message.keyType ?? 'not specified' }}</p>
                                                 </div>
                                             </div>
-                                            <div class="row mb-3">
+                                            <div class="row mb-2">
                                                 <div class="col">
                                                     <p id="dialog-meta-time" class="label">Time</p>
                                                     <p aria-labelledby="dialog-meta-time">{{ message.time }}</p>

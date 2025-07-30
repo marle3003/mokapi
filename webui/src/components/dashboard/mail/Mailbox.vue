@@ -31,7 +31,7 @@ onUnmounted(() => res.close());
 const res = useFetch(
   `/api/services/mail/${props.service.name}/mailboxes/${props.mailboxName}/messages`,
 );
-const messages = ref<Mail[]>()
+const messages = ref<Message[]>()
 
 watchEffect(() => {
   if (!res.data) {
@@ -41,10 +41,10 @@ watchEffect(() => {
   messages.value = res.data;
 });
 
-function goToMail(data: Mail) {
+function goToMail(msg: Message) {
   router.push({
     name: "smtpMail",
-    params: { id: data.messageId },
+    params: { id: msg.data.messageId },
   });
 }
 </script>
@@ -136,13 +136,13 @@ function goToMail(data: Mail) {
           <tbody>
             <tr
               v-for="message in messages"
-              :key="message.messageId"
+              :key="message.data.messageId"
               @click="goToMail(message)"
             >
-              <td>{{ message.subject }}</td>
+              <td>{{ message.data.subject }}</td>
               <td>
                 <ul class="list-unstyled">
-                  <li v-for="addr of message.from">
+                  <li v-for="addr of message.data.from">
                     <strong v-if="addr.name">{{ addr.name }}</strong>
                     <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>
                     <span v-else>{{ addr.address }}</span>
@@ -151,14 +151,14 @@ function goToMail(data: Mail) {
               </td>
               <td>
                 <ul class="list-unstyled">
-                  <li v-for="addr of message.to">
+                  <li v-for="addr of message.data.to">
                     <strong v-if="addr.name">{{ addr.name }}</strong>
                     <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>
                     <span v-else>{{ addr.address }}</span>
                   </li>
                 </ul>
               </td>
-              <td class="text-center">{{ format(message.date) }}</td>
+              <td class="text-center">{{ format(message.data.date) }}</td>
             </tr>
           </tbody>
         </table>

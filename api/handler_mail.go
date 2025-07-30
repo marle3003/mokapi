@@ -83,13 +83,18 @@ type messageInfo struct {
 }
 
 type message struct {
+	Service string       `json:"service"`
+	Data    *messageData `json:"data"`
+}
+
+type messageData struct {
 	Server                  string       `json:"server,omitempty"`
 	Sender                  *address     `json:"sender,omitempty"`
 	From                    []address    `json:"from"`
 	To                      []address    `json:"to"`
 	ReplyTo                 []address    `json:"replyTo,omitempty"`
 	Cc                      []address    `json:"cc,omitempty"`
-	Bcc                     []address    `json:"bbc,omitempty"`
+	Bcc                     []address    `json:"bcc,omitempty"`
 	MessageId               string       `json:"messageId"`
 	InReplyTo               string       `json:"inReplyTo,omitempty"`
 	Date                    time.Time    `json:"date"`
@@ -238,9 +243,11 @@ func (h *handler) handleMailService(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) getMail(w http.ResponseWriter, messageId string) {
 	var m *smtp.Message
+	var store *mail.Store
 	for _, s := range h.app.Mail.List() {
 		m = s.Store.GetMail(messageId)
 		if m != nil {
+			store = s.Store
 			break
 		}
 	}
@@ -250,7 +257,10 @@ func (h *handler) getMail(w http.ResponseWriter, messageId string) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	writeJsonBody(w, toMessage(m))
+	writeJsonBody(w, message{
+		Service: store.Name,
+		Data:    toMessage(m),
+	})
 }
 
 func (h *handler) getMailAttachment(w http.ResponseWriter, messageId, name string) {
@@ -397,8 +407,8 @@ func getRejectResponse(r *mail.Rule) *rejectResponse {
 	}
 }
 
-func toMessage(m *smtp.Message) *message {
-	r := &message{
+func toMessage(m *smtp.Message) *messageData {
+	r := &messageData{
 		Server:                  m.Server,
 		From:                    toAddress(m.From),
 		To:                      toAddress(m.To),

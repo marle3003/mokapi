@@ -5,8 +5,9 @@ interface SearchResult {
 
 interface SearchItem {
     type: string
-    domain: string
+    domain?: string
     title: string
     fragments: string[]
     params: { [name: string]: string }
+    time?: string
 }

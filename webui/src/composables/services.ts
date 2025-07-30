@@ -3,8 +3,8 @@ import { useFetch } from './fetch'
 
 export function useService() {
     
-    function fetchServices(type?: string) {
-        const response = useFetch('/api/services')
+    function fetchServices(type?: string, doRefresh: boolean = true) {
+        const response = useFetch('/api/services', {}, doRefresh)
         const services = ref<Service[]>([])
 
         watchEffect(() => {

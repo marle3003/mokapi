@@ -5,7 +5,7 @@ export function useMails() {
     
     function fetchMail(messageId: string) {
         const response = useFetch(`/api/services/mail/messages/${messageId}`, undefined, false)
-        const mail = ref<Mail | null>(null)
+        const mail = ref<Message | null>(null)
         const isLoading = ref<boolean>()
 
         watchEffect(() => {

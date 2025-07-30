@@ -584,17 +584,20 @@ components:
         type:
           type: string
         domain:
-          type: string
+          type: [string, 'null']
         title:
           type: string
         fragments:
-          type: array
+          type: [array, 'null']
           items:
             type: string
         params:
           type: object
           additionalProperties:
             type: string
+        time:
+          type: [string, 'null']
+          format: date-time
     ServiceInfo:
       type: object
       properties:

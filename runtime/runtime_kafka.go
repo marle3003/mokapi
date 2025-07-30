@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"github.com/blevesearch/bleve/v2"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
@@ -21,6 +22,7 @@ type KafkaStore struct {
 	monitor *monitor.Monitor
 	cfg     *static.Config
 	events  *events.StoreManager
+	index   bleve.Index
 	m       sync.RWMutex
 }
 
@@ -98,6 +100,10 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*Kafka
 		s.infos[cfg.Info.Name] = ki
 	} else {
 		ki.AddConfig(c)
+	}
+
+	if s.cfg.Api.Search.Enabled {
+		s.addToIndex(ki.Config)
 	}
 
 	return ki, nil
@@ -198,7 +204,7 @@ func (h *KafkaHandler) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request)
 	h.next.ServeMessage(rw, req)
 }
 
-func IsKafkaConfig(c *dynamic.Config) (*asyncapi3.Config, bool) {
+func IsAsyncApiConfig(c *dynamic.Config) (*asyncapi3.Config, bool) {
 	var cfg *asyncapi3.Config
 	if old, ok := c.Data.(*asyncApi.Config); ok {
 		var err error
@@ -213,16 +219,7 @@ func IsKafkaConfig(c *dynamic.Config) (*asyncapi3.Config, bool) {
 		}
 	}
 
-	return cfg, hasKafkaBroker(cfg)
-}
-
-func hasKafkaBroker(c *asyncapi3.Config) bool {
-	for _, server := range c.Servers {
-		if server.Value.Protocol == "kafka" {
-			return true
-		}
-	}
-	return false
+	return cfg, true
 }
 
 func (c *KafkaInfo) Remove(cfg *dynamic.Config) {

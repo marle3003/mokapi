@@ -9,48 +9,49 @@ import (
 	"strings"
 )
 
-type HttpConfig struct {
+type httpSearchIndexData struct {
 	Type          string            `json:"type"`
 	Discriminator string            `json:"discriminator"`
 	Api           string            `json:"api"`
+	Name          string            `json:"name"`
 	Version       string            `json:"version"`
 	Description   string            `json:"description"`
 	Contact       *openapi.Contact  `json:"contact"`
 	Servers       []*openapi.Server `json:"servers"`
 }
 
-type HttpPath struct {
-	Type          string          `json:"type"`
-	Discriminator string          `json:"discriminator"`
-	Api           string          `json:"api"`
-	Path          string          `json:"path"`
-	Summary       string          `json:"summary"`
-	Description   string          `json:"description"`
-	Parameters    []HttpParameter `json:"parameters"`
+type httpPathSearchIndexData struct {
+	Type          string                         `json:"type"`
+	Discriminator string                         `json:"discriminator"`
+	Api           string                         `json:"api"`
+	Path          string                         `json:"path"`
+	Summary       string                         `json:"summary"`
+	Description   string                         `json:"description"`
+	Parameters    []httpParameterSearchIndexData `json:"parameters"`
 }
 
-type HttpParameter struct {
+type httpParameterSearchIndexData struct {
 	Name        string            `json:"name"`
 	Description string            `json:"description"`
 	Location    string            `json:"location"`
 	Schema      *schema.IndexData `json:"schema"`
 }
 
-type HttpOperation struct {
-	Type          string          `json:"type"`
-	Discriminator string          `json:"discriminator"`
-	Api           string          `json:"api"`
-	Path          string          `json:"path"`
-	Method        string          `json:"method"`
-	Summary       string          `json:"summary"`
-	Description   string          `json:"description"`
-	Tags          []string        `json:"tags"`
-	Parameters    []HttpParameter `json:"parameters"`
-	RequestBody   string          `json:"request_body"`
-	Responses     []HttpResponse  `json:"responses"`
+type httpOperationSearchIndexData struct {
+	Type          string                         `json:"type"`
+	Discriminator string                         `json:"discriminator"`
+	Api           string                         `json:"api"`
+	Path          string                         `json:"path"`
+	Method        string                         `json:"method"`
+	Summary       string                         `json:"summary"`
+	Description   string                         `json:"description"`
+	Tags          []string                       `json:"tags"`
+	Parameters    []httpParameterSearchIndexData `json:"parameters"`
+	RequestBody   string                         `json:"request_body"`
+	Responses     []httpResponseSearchIndexData  `json:"responses"`
 }
 
-type HttpResponse struct {
+type httpResponseSearchIndexData struct {
 	Description string            `json:"description"`
 	Schema      *schema.IndexData `json:"schema"`
 }
@@ -60,10 +61,11 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 		return
 	}
 
-	c := HttpConfig{
+	c := httpSearchIndexData{
 		Type:          "http",
 		Discriminator: "http",
 		Api:           cfg.Info.Name,
+		Name:          cfg.Info.Name,
 		Version:       cfg.Info.Version,
 		Description:   cfg.Info.Description,
 		Contact:       cfg.Info.Contact,
@@ -76,7 +78,7 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 		if p.Value == nil {
 			continue
 		}
-		pathData := HttpPath{
+		pathData := httpPathSearchIndexData{
 			Type:          "http",
 			Discriminator: "http_path",
 			Api:           cfg.Info.Name,
@@ -93,7 +95,7 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 		for _, param := range p.Value.Parameters {
 			ps := openApiSchema.ConvertToJsonSchema(param.Value.Schema)
 
-			pathData.Parameters = append(pathData.Parameters, HttpParameter{
+			pathData.Parameters = append(pathData.Parameters, httpParameterSearchIndexData{
 				Name:        param.Value.Name,
 				Description: param.Value.Description,
 				Location:    param.Value.Type.String(),
@@ -106,7 +108,7 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 		for method, op := range p.Value.Operations() {
 			id := fmt.Sprintf("%s_%s_%s", cfg.Info.Name, path, method)
 
-			opData := HttpOperation{
+			opData := httpOperationSearchIndexData{
 				Type:          "http",
 				Discriminator: "http_operation",
 				Api:           cfg.Info.Name,
@@ -120,7 +122,7 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 			for _, param := range op.Parameters {
 				ps := openApiSchema.ConvertToJsonSchema(param.Value.Schema)
 
-				opData.Parameters = append(opData.Parameters, HttpParameter{
+				opData.Parameters = append(opData.Parameters, httpParameterSearchIndexData{
 					Name:        param.Value.Name,
 					Description: param.Value.Description,
 					Location:    param.Value.Type.String(),
@@ -137,7 +139,7 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 					for _, mt := range v.Content {
 						rs := openApiSchema.ConvertToJsonSchema(mt.Schema)
 
-						opData.Responses = append(opData.Responses, HttpResponse{
+						opData.Responses = append(opData.Responses, httpResponseSearchIndexData{
 							Description: v.Description,
 							Schema:      schema.NewIndexData(rs),
 						})
@@ -153,12 +155,11 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 
 func getHttpSearchResult(fields map[string]string, discriminator []string) (search.ResultItem, error) {
 	result := search.ResultItem{
-		Type:   "HTTP",
-		Domain: fields["api"],
+		Type: "HTTP",
 	}
 
 	if len(discriminator) == 1 {
-		result.Title = result.Domain
+		result.Title = fields["name"]
 		result.Params = map[string]string{
 			"type":    strings.ToLower(result.Type),
 			"service": result.Title,
@@ -168,6 +169,7 @@ func getHttpSearchResult(fields map[string]string, discriminator []string) (sear
 
 	switch discriminator[1] {
 	case "path":
+		result.Domain = fields["api"]
 		result.Title = fields["path"]
 		result.Params = map[string]string{
 			"type":    strings.ToLower(result.Type),
@@ -175,6 +177,7 @@ func getHttpSearchResult(fields map[string]string, discriminator []string) (sear
 			"path":    fields["path"],
 		}
 	case "operation":
+		result.Domain = fields["api"]
 		result.Title = fmt.Sprintf("%s %s", fields["method"], fields["path"])
 		result.Params = map[string]string{
 			"type":    strings.ToLower(result.Type),
