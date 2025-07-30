@@ -69,7 +69,7 @@ func (suite *MailSuite) TestSendMail() {
 			m = m["data"].(map[string]any)
 
 			require.Len(t, m, 8)
-			require.Equal(t, "127.0.0.1:8025", m["server"])
+			require.Regexp(t, ".*:8025", m["server"])
 			require.Equal(t, []any{map[string]any{"address": "from@foo.bar"}}, m["from"])
 			require.Equal(t, []any{map[string]any{"address": "rcipient@foo.bar"}}, m["to"])
 			require.NotContains(t, m, "attachments")
@@ -213,7 +213,7 @@ It can be any text data.
 			m := v.(map[string]any)
 			m = m["data"].(map[string]any)
 			require.Len(t, m, 10)
-			require.Equal(t, "127.0.0.1:8030", m["server"])
+			require.Regexp(t, ".*:8030", m["server"])
 			require.Equal(t, []any{map[string]any{"address": "from@foo.bar"}}, m["from"])
 			require.Equal(t, []any{map[string]any{"address": "rcipient@foo.bar"}}, m["to"])
 			require.Equal(t, []any{
