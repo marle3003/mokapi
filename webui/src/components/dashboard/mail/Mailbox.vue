@@ -31,7 +31,7 @@ onUnmounted(() => res.close());
 const res = useFetch(
   `/api/services/mail/${props.service.name}/mailboxes/${props.mailboxName}/messages`,
 );
-const messages = ref<Message[]>()
+const messages = ref<MessageInfo[]>()
 
 watchEffect(() => {
   if (!res.data) {
@@ -41,10 +41,10 @@ watchEffect(() => {
   messages.value = res.data;
 });
 
-function goToMail(msg: Message) {
+function goToMail(msg: MessageInfo) {
   router.push({
     name: "smtpMail",
-    params: { id: msg.data.messageId },
+    params: { id: msg.messageId },
   });
 }
 </script>
@@ -136,13 +136,13 @@ function goToMail(msg: Message) {
           <tbody>
             <tr
               v-for="message in messages"
-              :key="message.data.messageId"
+              :key="message.messageId"
               @click="goToMail(message)"
             >
-              <td>{{ message.data.subject }}</td>
+              <td>{{ message.subject }}</td>
               <td>
                 <ul class="list-unstyled">
-                  <li v-for="addr of message.data.from">
+                  <li v-for="addr of message.from">
                     <strong v-if="addr.name">{{ addr.name }}</strong>
                     <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>
                     <span v-else>{{ addr.address }}</span>
@@ -151,14 +151,14 @@ function goToMail(msg: Message) {
               </td>
               <td>
                 <ul class="list-unstyled">
-                  <li v-for="addr of message.data.to">
+                  <li v-for="addr of message.to">
                     <strong v-if="addr.name">{{ addr.name }}</strong>
                     <span v-if="addr.name"> &lt;{{ addr.address }}&gt;</span>
                     <span v-else>{{ addr.address }}</span>
                   </li>
                 </ul>
               </td>
-              <td class="text-center">{{ format(message.data.date) }}</td>
+              <td class="text-center">{{ format(message.date) }}</td>
             </tr>
           </tbody>
         </table>

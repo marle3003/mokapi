@@ -74,7 +74,10 @@ export default async function() {
                 if (mail == null) {
                     response.statusCode = 404
                 } else {
-                    response.data = mail
+                    response.data = {
+                        service: mailServices[0].name,
+                        data: mail
+                    }
                 }
                 return true
             case 'smtpMailAttachment':
