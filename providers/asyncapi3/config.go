@@ -100,3 +100,15 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 	*c = Config(a)
 	return nil
 }
+
+func (c *Config) HasKafkaServer() bool {
+	if c == nil {
+		return false
+	}
+	for _, server := range c.Servers {
+		if server.Value.Protocol == "kafka" {
+			return true
+		}
+	}
+	return false
+}

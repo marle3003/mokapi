@@ -343,7 +343,7 @@ func (suite *PetStoreSuite) TestSearch_Paging() {
 			evt := items[0].(map[string]interface{})
 			require.Equal(t, "HTTP", evt["type"])
 			require.Equal(t, "Swagger Petstore", evt["title"])
-			require.Equal(t, "Swagger Petstore", evt["domain"])
+			require.NotContains(t, evt, "domain")
 		}),
 	)
 

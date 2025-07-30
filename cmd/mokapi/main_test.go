@@ -59,13 +59,7 @@ api:
     dashboard: true
     search:
         enabled: false
-        analyzer: ngram
-        ngram:
-            min: 3
-            max: 8
-        types:
-            - config
-            - http
+        types: []
 rootCaCert: ""
 rootCaKey: ""
 js:

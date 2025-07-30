@@ -15,6 +15,7 @@ type KafkaLog struct {
 	Partition int                 `json:"partition"`
 	Headers   map[string]LogValue `json:"headers"`
 	Deleted   bool                `json:"deleted"`
+	Api       string              `json:"api"`
 }
 
 type LogValue struct {
@@ -23,5 +24,9 @@ type LogValue struct {
 }
 
 func (l *KafkaLog) Title() string {
-	return l.Key.Value
+	if l.Key.Value != "" {
+		return l.Key.Value
+	} else {
+		return string(l.Key.Binary)
+	}
 }

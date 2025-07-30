@@ -36,7 +36,6 @@ func TestIndex_Http(t *testing.T) {
 				require.Equal(t,
 					search.ResultItem{
 						Type:      "HTTP",
-						Domain:    "foo",
 						Title:     "foo",
 						Fragments: []string{"<mark>foo</mark>"},
 						Params: map[string]string{
@@ -52,13 +51,12 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("My petstore API", "", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{Query: "pet", Limit: 10})
+				r, err := app.Search(search.Request{Query: "pet*", Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
 						Type:      "HTTP",
-						Domain:    "My petstore API",
 						Title:     "My petstore API",
 						Fragments: []string{"My <mark>petstore</mark> API"},
 						Params: map[string]string{
@@ -67,6 +65,16 @@ func TestIndex_Http(t *testing.T) {
 						},
 					},
 					r.Results[0])
+			},
+		},
+		{
+			name: "mailpiece should not match mailbox",
+			test: func(t *testing.T, app *runtime.App) {
+				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("mailbox", "", ""))
+				app.AddHttp(toConfig(cfg))
+				r, err := app.Search(search.Request{Query: "mailpiece", Limit: 10})
+				require.NoError(t, err)
+				require.Len(t, r.Results, 0)
 			},
 		},
 		{
@@ -80,9 +88,8 @@ func TestIndex_Http(t *testing.T) {
 				require.Equal(t,
 					search.ResultItem{
 						Type:      "HTTP",
-						Domain:    "foo",
 						Title:     "foo",
-						Fragments: []string{"<mark>1.0</mark>"},
+						Fragments: []string{"<mark>1</mark><mark>.</mark><mark>0</mark>"},
 						Params: map[string]string{
 							"type":    "http",
 							"service": "foo",
@@ -131,7 +138,6 @@ func TestIndex_Http(t *testing.T) {
 				require.Equal(t,
 					search.ResultItem{
 						Type:      "HTTP",
-						Domain:    "foo",
 						Title:     "foo",
 						Fragments: []string{"a <mark>description</mark>"},
 						Params: map[string]string{
@@ -139,7 +145,7 @@ func TestIndex_Http(t *testing.T) {
 							"service": "foo",
 						},
 					},
-					r.Results[0])
+					r.Results[1])
 				require.Equal(t,
 					search.ResultItem{
 						Type:      "HTTP",
@@ -152,7 +158,7 @@ func TestIndex_Http(t *testing.T) {
 							"path":    "/pets",
 						},
 					},
-					r.Results[1])
+					r.Results[0])
 			},
 		},
 		{
@@ -188,22 +194,34 @@ func TestIndex_Http(t *testing.T) {
 			},
 		},
 		{
-			name: "Search by api",
+			name: "Search by api field",
 			test: func(t *testing.T, app *runtime.App) {
-				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
+				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("Petstore", "", ""),
+					openapitest.WithPath("/pets", openapitest.NewPath(
+						openapitest.WithPathInfo("", "path"),
+						openapitest.WithOperation("get", openapitest.NewOperation(
+							openapitest.WithHeaderParam("foo", true, openapitest.WithParamInfo("parameter")),
+						)),
+					)),
+				)
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{Params: map[string]string{"api": "foo"}, Limit: 10})
+				// search response should only have one the root OpenAPI object
+				r, err := app.Search(search.Request{Query: "Petstore", Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
+
+				// search by api should return all items in the OpenAPI
+				r, err = app.Search(search.Request{Params: map[string]string{"api": "Petstore"}, Limit: 10})
+				require.NoError(t, err)
+				require.Len(t, r.Results, 3)
 				require.Equal(t,
 					search.ResultItem{
 						Type:      "HTTP",
-						Domain:    "foo",
-						Title:     "foo",
-						Fragments: []string{"<mark>foo</mark>"},
+						Title:     "Petstore",
+						Fragments: []string{"<mark>Petstore</mark>"},
 						Params: map[string]string{
 							"type":    "http",
-							"service": "foo",
+							"service": "Petstore",
 						},
 					},
 					r.Results[0])
@@ -220,7 +238,6 @@ func TestIndex_Http(t *testing.T) {
 				require.Equal(t,
 					search.ResultItem{
 						Type:      "HTTP",
-						Domain:    "foo bar",
 						Title:     "foo bar",
 						Fragments: []string{"<mark>foo</mark> <mark>bar</mark>"},
 						Params: map[string]string{
@@ -242,12 +259,7 @@ func TestIndex_Http(t *testing.T) {
 				&static.Config{
 					Api: static.Api{
 						Search: static.Search{
-							Enabled:  true,
-							Analyzer: "ngram",
-							Ngram: static.NgramAnalyzer{
-								Min: 3,
-								Max: 5,
-							},
+							Enabled: true,
 						},
 					},
 				})

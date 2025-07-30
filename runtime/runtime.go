@@ -49,7 +49,7 @@ func New(cfg *static.Config) *App {
 		Events:    em,
 		Configs:   map[string]*dynamic.Config{},
 		http:      NewHttpStore(cfg, index, em),
-		Kafka:     &KafkaStore{monitor: m, cfg: cfg, events: em},
+		Kafka:     &KafkaStore{monitor: m, cfg: cfg, index: index, events: em},
 		Mqtt:      &MqttStore{monitor: m, cfg: cfg, sm: em},
 		Ldap:      &LdapStore{cfg: cfg, events: em},
 		Mail:      &MailStore{cfg: cfg, sm: em},

@@ -22,7 +22,7 @@ export function useEvents() {
     }
 
     function fetchById(id: string){
-        const event = ref<ServiceEvent>()
+        const event = ref<ServiceEvent | null>()
         const isLoading = ref<Boolean>()
         const response = useFetch(`/api/events/${id}`)
         watchEffect(() =>{

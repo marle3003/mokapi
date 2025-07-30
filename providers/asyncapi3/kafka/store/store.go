@@ -301,6 +301,7 @@ func (s *Store) getBrokerByHost(addr string) *Broker {
 }
 
 func (s *Store) log(log *KafkaLog, traits events.Traits) {
+	log.Api = s.cluster
 	s.eh.Push(
 		log,
 		traits.WithNamespace("kafka").WithName(s.cluster),

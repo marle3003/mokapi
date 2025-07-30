@@ -34,10 +34,6 @@ func NewConfig() *Config {
 	cfg.Api.Port = "8080"
 	cfg.Api.Dashboard = true
 	cfg.Api.Search.Enabled = false
-	cfg.Api.Search.Analyzer = "ngram"
-	cfg.Api.Search.Ngram.Min = 3
-	cfg.Api.Search.Ngram.Max = 8
-	cfg.Api.Search.Types = []string{"config", "http"}
 
 	cfg.Providers.File.SkipPrefix = []string{"_"}
 	cfg.Event.Store = map[string]Store{"default": {Size: 100}}
@@ -65,10 +61,8 @@ type Api struct {
 }
 
 type Search struct {
-	Enabled  bool
-	Analyzer string
-	Ngram    NgramAnalyzer
-	Types    []string
+	Enabled bool
+	Types   []string
 }
 
 type NgramAnalyzer struct {

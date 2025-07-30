@@ -137,6 +137,69 @@ func TestKafkaServer_Update(t *testing.T) {
 			},
 		},
 		{
+			"remove broker but still has one",
+			func(t *testing.T, m *KafkaManager) {
+				port := try.GetFreePort()
+				addr1 := fmt.Sprintf("127.0.0.1:%v", port)
+				cfg := asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("foo", "kafka", addr1),
+					asyncapi3test.WithTitle("foo"),
+				)
+				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
+
+				// wait for kafka start
+				time.Sleep(500 * time.Millisecond)
+
+				client := kafkatest.NewClient(addr1, "test")
+				defer client.Close()
+
+				r, err := client.Metadata(0, &metaData.Request{})
+				require.NoError(t, err)
+				require.Len(t, r.Brokers, 1)
+
+				addr2 := fmt.Sprintf("127.0.0.1:%v", try.GetFreePort())
+				cfg = asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("foo", "kafka", addr1),
+					asyncapi3test.WithServer("bar", "kafka", addr2),
+					asyncapi3test.WithTitle("foo"),
+				)
+				m.UpdateConfig(dynamic.ConfigEvent{
+					Config: &dynamic.Config{
+						Data: cfg,
+						Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")},
+					}},
+				)
+
+				// wait for new kafka server start
+				time.Sleep(500 * time.Millisecond)
+
+				client2 := kafkatest.NewClient(addr2, "test")
+				defer client2.Close()
+
+				r, err = client2.Metadata(0, &metaData.Request{})
+				require.NoError(t, err)
+				require.Len(t, r.Brokers, 2)
+
+				cfg = asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("bar", "kafka", addr2),
+					asyncapi3test.WithTitle("foo"),
+				)
+				m.UpdateConfig(dynamic.ConfigEvent{
+					Config: &dynamic.Config{
+						Data: cfg,
+						Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")},
+					}},
+				)
+
+				r, err = client.Metadata(0, &metaData.Request{})
+				require.EqualError(t, err, "EOF")
+
+				r, err = client2.Metadata(0, &metaData.Request{})
+				require.NoError(t, err)
+				require.Len(t, r.Brokers, 1)
+			},
+		},
+		{
 			"change broker name",
 			func(t *testing.T, m *KafkaManager) {
 				port := try.GetFreePort()

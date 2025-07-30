@@ -36,7 +36,7 @@ func TestIndex_Http(t *testing.T) {
 				require.Equal(t, "My API", r.Results[0].Domain)
 				require.Equal(t, "foo", r.Results[0].Title)
 				require.Equal(t, []string{"<mark>foo</mark>"}, r.Results[0].Fragments)
-				require.Equal(t, "event", r.Results[0].Params["type"])
+				require.Equal(t, "test", r.Results[0].Params["namespace"])
 				require.NotEmpty(t, r.Results[0].Params["id"])
 			},
 		},
@@ -60,7 +60,37 @@ func TestIndex_Http(t *testing.T) {
 				require.Equal(t, "My API", r.Results[0].Domain)
 				require.Equal(t, "foo", r.Results[0].Title)
 				require.Equal(t, []string{"<mark>event</mark>"}, r.Results[0].Fragments)
-				require.Equal(t, "event", r.Results[0].Params["type"])
+				require.Equal(t, "test", r.Results[0].Params["namespace"])
+				require.NotEmpty(t, r.Results[0].Params["id"])
+			},
+		},
+		{
+			name: "when event is removed, it is also removed from index",
+			test: func(t *testing.T, app *runtime.App) {
+				trait := events.NewTraits().WithNamespace("test")
+
+				app.Events.SetStore(1, trait)
+				err := app.Events.Push(&eventstest.Event{
+					Name: "foo",
+					Api:  "My API",
+				}, trait)
+				require.NoError(t, err)
+
+				err = app.Events.Push(&eventstest.Event{
+					Name: "bar",
+					Api:  "My API",
+				}, trait)
+				require.NoError(t, err)
+
+				r, err := app.Search(search.Request{Params: map[string]string{"type": "event"}, Limit: 10})
+				require.NoError(t, err)
+				require.Len(t, r.Results, 1)
+
+				require.Equal(t, "Event", r.Results[0].Type)
+				require.Equal(t, "My API", r.Results[0].Domain)
+				require.Equal(t, "bar", r.Results[0].Title)
+				require.Equal(t, []string{"<mark>event</mark>"}, r.Results[0].Fragments)
+				require.Equal(t, "test", r.Results[0].Params["namespace"])
 				require.NotEmpty(t, r.Results[0].Params["id"])
 			},
 		},
@@ -75,12 +105,7 @@ func TestIndex_Http(t *testing.T) {
 				&static.Config{
 					Api: static.Api{
 						Search: static.Search{
-							Enabled:  true,
-							Analyzer: "ngram",
-							Ngram: static.NgramAnalyzer{
-								Min: 3,
-								Max: 5,
-							},
+							Enabled: true,
 						},
 					},
 				})

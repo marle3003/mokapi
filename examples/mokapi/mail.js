@@ -2,8 +2,8 @@ import {metrics} from "./metrics.js";
 
 export let mails = [
     {
-        from: [{ name: 'Alice', address: 'alice@mokapi.io' }],
-        to: [{ name: 'Bob', address: 'bob@mokapi.io'},{address: 'carol@mokapi.io'}],
+        from: [{name: 'Alice', address: 'alice@mokapi.io'}],
+        to: [{name: 'Bob', address: 'bob@mokapi.io'}, {address: 'carol@mokapi.io'}],
         date: '2023-02-23T08:49:25+01:00',
         contentType: 'text/html',
         encoding: 'quoted-printable',
@@ -35,7 +35,7 @@ export let mails = [
                 disposition: 'inline',
                 contentId: 'icon.png',
                 size: 372,
-                data: open('icon.png', { as: 'binary' })
+                data: open('icon.png', {as: 'binary'})
             }
         ],
         duration: 30016,

@@ -75,58 +75,63 @@ components:
     SmtpMessage:
       type: object
       properties:
-        server:
+        service:
           type: string
-        sender:
-          anyOf:
-            - type: "null"
-            - $ref: '#/components/schemas/SmtpAddress'
-        from:
-          type: array
-          items:
-            $ref: '#/components/schemas/SmtpAddress'
-        to:
-          type: array
-          items:
-            $ref: '#/components/schemas/SmtpAddress'
-        replyTo:
-          type: array
-          items:
-            $ref: '#/components/schemas/SmtpAddress'
-        cc:
-          type: array
-          items:
-            $ref: '#/components/schemas/SmtpAddress'
-        bcc:
-          type: array
-          items:
-            $ref: '#/components/schemas/SmtpAddress'
-        messageId:
-          type: string
-        inReplyTo:
-          type: string
-        date:
-          type: string
-          format: datetime
-        subject:
-          type: string
-        contentType:
-          type: string
-        contentTransferEncoding:
-          type: string
-        body:
-          type: string
-        size:
-          type: integer
-        attachments:
-          type: array
-          items:
-            $ref: '#/components/schemas/SmtpAttachment'
-        headers:
+        data:
           type: object
-          additionalProperties:
-            type: string
-      additionalProperties: false
+          properties:
+            server:
+              type: string
+            sender:
+              anyOf:
+                - type: "null"
+                - $ref: '#/components/schemas/SmtpAddress'
+            from:
+              type: array
+              items:
+                $ref: '#/components/schemas/SmtpAddress'
+            to:
+              type: array
+              items:
+                $ref: '#/components/schemas/SmtpAddress'
+            replyTo:
+              type: array
+              items:
+                $ref: '#/components/schemas/SmtpAddress'
+            cc:
+              type: array
+              items:
+                $ref: '#/components/schemas/SmtpAddress'
+            bcc:
+              type: array
+              items:
+                $ref: '#/components/schemas/SmtpAddress'
+            messageId:
+              type: string
+            inReplyTo:
+              type: string
+            date:
+              type: string
+              format: datetime
+            subject:
+              type: string
+            contentType:
+              type: string
+            contentTransferEncoding:
+              type: string
+            body:
+              type: string
+            size:
+              type: integer
+            attachments:
+              type: array
+              items:
+                $ref: '#/components/schemas/SmtpAttachment'
+            headers:
+              type: object
+              additionalProperties:
+                type: string
+          additionalProperties: false
     SmtpAddress:
       type: object
       properties:

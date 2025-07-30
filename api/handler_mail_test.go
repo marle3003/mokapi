@@ -132,9 +132,6 @@ func TestHandler_Smtp(t *testing.T) {
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{})
 				app.Mail.Set("foo", &runtime.MailInfo{
-					Config: &mail.Config{
-						Info: mail.Info{Name: "foo"},
-					},
 					Store: &mail.Store{
 						Mailboxes: map[string]*mail.Mailbox{
 							"alice@foo.bar": {Username: "alice", Password: "foo"},
@@ -157,9 +154,6 @@ func TestHandler_Smtp(t *testing.T) {
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{})
 				app.Mail.Set("foo", &runtime.MailInfo{
-					Config: &mail.Config{
-						Info: mail.Info{Name: "foo"},
-					},
 					Store: &mail.Store{
 						Mailboxes: map[string]*mail.Mailbox{
 							"alice@foo.bar": {
@@ -181,9 +175,6 @@ func TestHandler_Smtp(t *testing.T) {
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{})
 				app.Mail.Set("foo", &runtime.MailInfo{
-					Config: &mail.Config{
-						Info: mail.Info{Name: "foo"},
-					},
 					Store: &mail.Store{
 						Mailboxes: map[string]*mail.Mailbox{
 							"alice@foo.bar": {
@@ -219,9 +210,6 @@ func TestHandler_Smtp(t *testing.T) {
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{})
 				app.Mail.Set("foo", &runtime.MailInfo{
-					Config: &mail.Config{
-						Info: mail.Info{Name: "foo"},
-					},
 					Store: &mail.Store{
 						Mailboxes: map[string]*mail.Mailbox{
 							"alice@foo.bar": {
@@ -268,10 +256,9 @@ func TestHandler_Smtp(t *testing.T) {
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{})
 				app.Mail.Set("foo", &runtime.MailInfo{
-					Config: &mail.Config{
-						Info: mail.Info{Name: "foo"},
-					},
+					Config: &mail.Config{},
 					Store: &mail.Store{
+						Name: "foo",
 						Mailboxes: map[string]*mail.Mailbox{
 							"alice@foo.bar": {
 								Folders: map[string]*mail.Folder{
@@ -301,16 +288,13 @@ func TestHandler_Smtp(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services/mail/messages/foo-1@mokapi.io",
 			contentType:  "application/json",
-			responseBody: fmt.Sprintf(`{"from":[{"address":"bob@foo.bar"}],"to":[{"address":"alice@foo.bar"}],"messageId":"foo-1@mokapi.io","date":"%v","subject":"Hello Alice","contentType":"text/plain","body":"foobar","size":10}`, now.Format(time.RFC3339Nano)),
+			responseBody: fmt.Sprintf(`{"service":"foo","data":{"from":[{"address":"bob@foo.bar"}],"to":[{"address":"alice@foo.bar"}],"messageId":"foo-1@mokapi.io","date":"%v","subject":"Hello Alice","contentType":"text/plain","body":"foobar","size":10}}`, now.Format(time.RFC3339Nano)),
 		},
 		{
 			name: "get smtp mail attachment content",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{})
 				app.Mail.Set("foo", &runtime.MailInfo{
-					Config: &mail.Config{
-						Info: mail.Info{Name: "foo"},
-					},
 					Store: &mail.Store{
 						Mailboxes: map[string]*mail.Mailbox{
 							"alice@foo.bar": {

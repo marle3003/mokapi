@@ -53,7 +53,20 @@ declare interface SmtpEventData {
     actions: Action[]
 }
 
-declare interface Mail {
+declare interface MessageInfo {
+    messageId: string
+    subject: string
+    from: MailAddress[]
+    to: MailAddress[]
+    date: string
+}
+
+declare interface Message {
+    service: string
+    data: MessageData
+}
+
+declare interface MessageData {
     sender: MailAddress
     from: MailAddress[]
 	to: MailAddress[]

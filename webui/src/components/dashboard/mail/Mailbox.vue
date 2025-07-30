@@ -31,7 +31,7 @@ onUnmounted(() => res.close());
 const res = useFetch(
   `/api/services/mail/${props.service.name}/mailboxes/${props.mailboxName}/messages`,
 );
-const messages = ref<Mail[]>()
+const messages = ref<MessageInfo[]>()
 
 watchEffect(() => {
   if (!res.data) {
@@ -41,10 +41,10 @@ watchEffect(() => {
   messages.value = res.data;
 });
 
-function goToMail(data: Mail) {
+function goToMail(msg: MessageInfo) {
   router.push({
     name: "smtpMail",
-    params: { id: data.messageId },
+    params: { id: msg.messageId },
   });
 }
 </script>

@@ -74,7 +74,10 @@ export default async function() {
                 if (mail == null) {
                     response.statusCode = 404
                 } else {
-                    response.data = mail
+                    response.data = {
+                        service: mailServices[0].name,
+                        data: mail
+                    }
                 }
                 return true
             case 'smtpMailAttachment':
@@ -159,32 +162,7 @@ export default async function() {
                 response.body = resp.body
                 return true
             case 'search':
-                response.data = {
-                    results: [
-                        {
-                            type: 'HTTP',
-                            domain: 'Swagger Petstore',
-                            title: "POST  /pet",
-                            fragments: ['<mark>Everything</mark>', 'store'],
-                            params: {
-                                type: 'http',
-                                service: 'Swagger Petstore',
-                                path: '/pet',
-                                method: 'post'
-                            }
-                        },
-                        {
-                            type: 'Config',
-                            domain: 'FILE',
-                            title: "file://root/path/to/my/foo/file.json",
-                            fragments: ['<mark>foo</mark> bar'],
-                            params: {
-                                type: 'config',
-                                id: 'b6fea8ac-56c7-4e73-a9c0-6887640bdca8'
-                            }
-                        }],
-                    total: 2
-                }
+                response.data = getSearchResults()
         }
     }, {tags: {name: "dashboard"}})
 
@@ -402,5 +380,97 @@ const jobConfig = {
         time: '2025-05-01T08:49:25.482366+01:00',
         data: "import { every } from 'mokapi'; export default function() { every('1s', function() {}); }",
         filename: 'cron.js'
+    }
+}
+
+function getSearchResults() {
+    return {
+        results: [
+            {
+                type: 'HTTP',
+                title: "Swagger Petstore",
+                fragments: ['<mark>Everything</mark>', 'store'],
+                params: {
+                    type: 'http',
+                    service: 'Swagger Petstore',
+                 }
+            },
+            {
+                type: 'HTTP',
+                domain: 'Swagger Petstore',
+                title: "/pet",
+                fragments: ['<mark>Everything</mark>', 'store'],
+                params: {
+                    type: 'http',
+                    service: 'Swagger Petstore',
+                    path: '/pet',
+                }
+            },
+            {
+                type: 'HTTP',
+                domain: 'Swagger Petstore',
+                title: "POST  /pet",
+                fragments: ['<mark>Everything</mark>', 'store'],
+                params: {
+                    type: 'http',
+                    service: 'Swagger Petstore',
+                    path: '/pet',
+                    method: 'post'
+                }
+            },
+            {
+                type: 'Event',
+                domain: 'Swagger Petstore',
+                title: "POST http://127.0.0.1:18080/pet",
+                fragments: [],
+                params: {
+                    type: 'event',
+                    namespace: 'http',
+                    id: '4242'
+                }
+            },
+            {
+                type: 'Config',
+                domain: 'FILE',
+                title: "file://root/path/to/my/foo/file.json",
+                fragments: ['<mark>foo</mark> bar'],
+                params: {
+                    type: 'config',
+                    id: 'b6fea8ac-56c7-4e73-a9c0-6887640bdca8'
+                }
+            },
+            {
+                type: 'KAFKA',
+                title: "Kafka World",
+                fragments: ['To ours <mark>significant</mark> why upon tomorrow'],
+                params: {
+                    type: 'kafka',
+                    service: 'Kafka World'
+                }
+            },
+            {
+                type: 'KAFKA',
+                domain: 'Kafka World',
+                title: "mokapi.shop.products",
+                fragments: ['Though literature second <mark>anywhere fortnightly</mark>'],
+                params: {
+                    type: 'kafka',
+                    service: 'Kafka World',
+                    topic: 'mokapi.shop.products'
+                }
+            },
+            {
+                type: 'Event',
+                domain: 'Kafka World - mokapi.shop.products',
+                title: "GGOEWXXX0827",
+                fragments: null,
+                params: {
+                    type: 'event',
+                    namespace: 'kafka',
+                    id: '123456'
+                }
+            }
+        ],
+        total: 8
     }
 }

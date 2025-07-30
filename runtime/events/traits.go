@@ -20,6 +20,10 @@ func (t Traits) WithNamespace(ns string) Traits {
 	return t.With(namespace, ns)
 }
 
+func (t Traits) GetNamespace() string {
+	return t.Get(namespace)
+}
+
 func (t Traits) WithName(v string) Traits {
 	return t.With(name, v)
 }

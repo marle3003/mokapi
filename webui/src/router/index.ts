@@ -12,15 +12,21 @@ export function useRoute() {
     operation: route.params.operation?.toString()
   }
 
-  function service(service: Service, type: string): RouteLocationRaw{
+  function service(service: Service | string, type: string): RouteLocationRaw{
+    let name;
+    if (typeof service === 'string') {
+      name = service
+    } else {
+      name = service.name
+    }
     return {
         name: `${type}Service`,
-        params: { service: service.name },
+        params: { service: name },
         query: { refresh: route.query.refresh }
     }
   }
 
-  function path(service: Service, path: HttpPath): RouteLocationRaw {
+  function httpPath(service: Service, path: HttpPath): RouteLocationRaw {
     return {
       name: 'httpEndpoint',
       params: { service: service.name, endpoint: path.path.substring(1).split('/') },
@@ -28,7 +34,7 @@ export function useRoute() {
     }
   }
 
-  function operation(service: Service, path: HttpPath, operation: HttpOperation){
+  function httpOperation(service: Service, path: HttpPath, operation: HttpOperation){
     const endpoint = path.path.substring(1).split('/')
     endpoint.push(operation.method)
 
@@ -39,7 +45,7 @@ export function useRoute() {
     }
   }
 
-  return {service, path, operation, context, router}
+  return {service, httpPath, httpOperation, context, router, ...route}
 }
 
 const dashboardView = () => import('@/views/DashboardView.vue')
@@ -156,6 +162,12 @@ const router = createRouter({
             {
               path: '/dashboard/kafka/service/:service/topic/:topic',
               name: 'kafkaTopic',
+              component: dashboardView,
+              meta: {service: 'kafka'}
+            },
+            {
+              path: '/dashboard/kafka/messages/:id',
+              name: 'kafkaMessage',
               component: dashboardView,
               meta: {service: 'kafka'}
             }

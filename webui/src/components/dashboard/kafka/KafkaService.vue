@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Ref, onUnmounted } from 'vue'
+import { type Ref, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useService } from '@/composables/services'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
@@ -9,10 +9,19 @@ import KafkaMessagesCard from './KafkaMessagesCard.vue'
 import KafkaTopic from './KafkaTopic.vue'
 import Servers from './Servers.vue'
 import ConfigCard from '../ConfigCard.vue'
+import Message from './Message.vue'
 
 const {fetchService} = useService()
 const serviceName = useRoute().params.service?.toString()
-const {service, close} = <{service: Ref<KafkaService | null>, close: () => void}>fetchService(serviceName, 'kafka')
+
+let service: Ref<KafkaService | null>
+if (serviceName){
+    const result = <{service: Ref<KafkaService | null>, close: () => void}>fetchService(serviceName, 'kafka')
+    service = result.service
+    onUnmounted(() => {
+        result.close()
+    })
+}
 
 onUnmounted(() => {
     close()
@@ -48,4 +57,5 @@ onUnmounted(() => {
   <div v-if="$route.name == 'kafkaTopic'">
       <kafka-topic></kafka-topic>
   </div>
+  <message v-if="$route.name == 'kafkaMessage'"></message>
 </template>
