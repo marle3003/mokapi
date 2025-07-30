@@ -21,8 +21,7 @@ func (e *ErrNotEnabled) Error() string {
 }
 
 type Request struct {
-	Query  string
-	Params map[string]string
-	Index  int
-	Limit  int
+	QueryText string
+	Index     int
+	Limit     int
 }

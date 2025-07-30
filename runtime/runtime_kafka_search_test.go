@@ -33,7 +33,7 @@ func TestIndex_Kafka(t *testing.T) {
 				_, err := app.Kafka.Add(toConfig(cfg), enginetest.NewEngine())
 				require.NoError(t, err)
 
-				r, err := app.Search(search.Request{Query: "Test", Limit: 10})
+				r, err := app.Search(search.Request{QueryText: "Test", Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
@@ -61,7 +61,7 @@ func TestIndex_Kafka(t *testing.T) {
 				_, err := app.Kafka.Add(toConfig(cfg), enginetest.NewEngine())
 				require.NoError(t, err)
 
-				r, err := app.Search(search.Request{Query: "description", Limit: 10})
+				r, err := app.Search(search.Request{QueryText: "description", Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
 				require.Equal(t,

@@ -31,7 +31,7 @@ func TestIndex_Config(t *testing.T) {
 					Config: cfg,
 					Event:  dynamic.Create,
 				})
-				r, err := app.Search(search.Request{Query: "name", Limit: 10})
+				r, err := app.Search(search.Request{QueryText: "name", Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
 				require.Equal(t,

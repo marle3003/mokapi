@@ -30,7 +30,7 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{Query: "foo", Limit: 10})
+				r, err := app.Search(search.Request{QueryText: "foo", Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
@@ -51,7 +51,7 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("My petstore API", "", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{Query: "pet*", Limit: 10})
+				r, err := app.Search(search.Request{QueryText: "pet*", Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
@@ -72,7 +72,7 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("mailbox", "", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{Query: "mailpiece", Limit: 10})
+				r, err := app.Search(search.Request{QueryText: "mailpiece", Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 0)
 			},
@@ -82,7 +82,7 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "1.0", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{Query: "1.0", Limit: 10})
+				r, err := app.Search(search.Request{QueryText: "1.0", Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
@@ -106,7 +106,7 @@ func TestIndex_Http(t *testing.T) {
 					openapitest.WithPath("/pets", openapitest.NewPath()),
 				)
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{Query: "pets", Limit: 10})
+				r, err := app.Search(search.Request{QueryText: "pets", Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
@@ -132,7 +132,7 @@ func TestIndex_Http(t *testing.T) {
 					openapitest.WithPath("/pets", openapitest.NewPath(openapitest.WithPathInfo("", "a description"))),
 				)
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{Query: "description", Limit: 10})
+				r, err := app.Search(search.Request{QueryText: "description", Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 2)
 				require.Equal(t,
@@ -174,7 +174,7 @@ func TestIndex_Http(t *testing.T) {
 					)),
 				)
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{Query: "\"parameter description\"", Limit: 10})
+				r, err := app.Search(search.Request{QueryText: "\"parameter description\"", Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
@@ -206,12 +206,12 @@ func TestIndex_Http(t *testing.T) {
 				)
 				app.AddHttp(toConfig(cfg))
 				// search response should only have one the root OpenAPI object
-				r, err := app.Search(search.Request{Query: "Petstore", Limit: 10})
+				r, err := app.Search(search.Request{QueryText: "Petstore", Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
 
 				// search by api should return all items in the OpenAPI
-				r, err = app.Search(search.Request{Params: map[string]string{"api": "Petstore"}, Limit: 10})
+				r, err = app.Search(search.Request{QueryText: "api:Petstore", Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 3)
 				require.Equal(t,
@@ -232,7 +232,7 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo bar", "", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{Params: map[string]string{"api": "foo bar"}, Limit: 10})
+				r, err := app.Search(search.Request{QueryText: "api:\"foo bar\"", Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
@@ -246,6 +246,58 @@ func TestIndex_Http(t *testing.T) {
 						},
 					},
 					r.Results[0])
+			},
+		},
+		{
+			name: "Search by api field",
+			test: func(t *testing.T, app *runtime.App) {
+				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("Petstore", "", ""),
+					openapitest.WithPath("/pets", openapitest.NewPath(
+						openapitest.WithPathInfo("", "path"),
+						openapitest.WithOperation("get", openapitest.NewOperation(
+							openapitest.WithHeaderParam("foo", true, openapitest.WithParamInfo("parameter")),
+						)),
+					)),
+				)
+				app.AddHttp(toConfig(cfg))
+				// search response should only have one the root OpenAPI object
+				r, err := app.Search(search.Request{QueryText: "Petstore", Limit: 10})
+				require.NoError(t, err)
+				require.Len(t, r.Results, 1)
+
+				// search by api should return all items in the OpenAPI
+				r, err = app.Search(search.Request{QueryText: "api:Petstore", Limit: 10})
+				require.NoError(t, err)
+				require.Len(t, r.Results, 3)
+				require.Equal(t,
+					search.ResultItem{
+						Type:      "HTTP",
+						Title:     "Petstore",
+						Fragments: []string{"<mark>Petstore</mark>"},
+						Params: map[string]string{
+							"type":    "http",
+							"service": "Petstore",
+						},
+					},
+					r.Results[0])
+			},
+		},
+		{
+			name: "Search fuzzy",
+			test: func(t *testing.T, app *runtime.App) {
+				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("Petstore", "", ""),
+					openapitest.WithPath("/pets", openapitest.NewPath(
+						openapitest.WithPathInfo("", "path"),
+						openapitest.WithOperation("get", openapitest.NewOperation(
+							openapitest.WithHeaderParam("foo", true, openapitest.WithParamInfo("parameter")),
+						)),
+					)),
+				)
+				app.AddHttp(toConfig(cfg))
+				// search response should only have one the root OpenAPI object
+				r, err := app.Search(search.Request{QueryText: "pest~", Limit: 10})
+				require.NoError(t, err)
+				require.Len(t, r.Results, 2)
 			},
 		},
 	}

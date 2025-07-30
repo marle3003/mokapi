@@ -10,6 +10,7 @@ const queryText = ref<string>(route.query.q?.toString() ?? '')
 const pageIndex = ref(getIndex())
 const result = ref<SearchResult>();
 const maxVisiblePages = 10  // max pages in pagination
+const showTips = ref(false)
 
 const pageNumber = computed(() => {
   if (!result.value) {
@@ -177,12 +178,33 @@ async function search() {
             <div class="container text-center">
               <div class="row justify-content-md-center">
                 <div class="col-6 col-auto">
-                  <div class="input-group mb-3">
+                  <div class="input-group">
                     <input type="text" class="form-control" placeholder="Search" aria-label="Search" aria-describedby="search-icon" v-model="queryText" @keypress="search_keypressed">
                     <button class="btn btn-outline-secondary" type="button" @click="search_clicked">
                       <i class="bi bi-search"></i>
                     </button>
                   </div>
+                  <div class="text-start mt-1 mb-2">
+                  <a href="#" @click.prevent="showTips = !showTips" class="small">
+                    {{ showTips ? 'Search Tips ▲' : 'Search Tips ▼' }}
+                  </a>
+
+                  <div v-if="showTips" class="alert alert-light border mt-2 small">
+                    <ul class="mb-0">
+                      <li><code>name:petstore</code> – Find "petstore" in the name field</li>
+                      <li><code>type:event</code> – Find events like HTTP requests, Kafka messages, mails, etc</li>
+                      <li><code>+petstore -kafka</code> – Must include "petstore", exclude "kafka"</li>
+                      <li><code>"Swagger Petstore"</code> – Match exact phrase</li>
+                      <li><code>pet*</code> – Wildcard (matches "pet", "pets", "petstore")</li>
+                      <li><code>pet~</code> – Fuzzy match (e.g., "pets", "pest")</li>
+                      <li><code>path:/pets^2 description:dog</code> – Boost matches in path field</li>
+                      <li><code>(get OR post) AND pets</code> – Combine multiple terms logically</li>
+                    </ul>
+                    <div class="mt-2 text-muted" v-if="false">
+                      Learn more about Mokapi's search <a href="/docs/guides/dashboard" target="_blank">here</a>
+                    </div>
+                  </div>
+                </div>
                 </div>
               </div>
             </div>

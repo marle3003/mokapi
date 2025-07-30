@@ -17,9 +17,13 @@ import (
 	"mokapi/config/static"
 	"mokapi/runtime/events"
 	"mokapi/runtime/search"
+	"regexp"
+	"slices"
 
 	"strings"
 )
+
+var fieldsNotIncludedInAll = []string{"api"}
 
 func newIndex(cfg *static.Config) bleve.Index {
 	if !cfg.Api.Search.Enabled {
@@ -90,15 +94,17 @@ func (a *App) Search(r search.Request) (search.Result, error) {
 		return result, &search.ErrNotEnabled{}
 	}
 
+	queryText, params := parseQuery(r.QueryText)
+
 	var clauses []query.Query
-	if r.Query == "" {
+	if queryText == "" {
 		clauses = append(clauses, bleve.NewMatchAllQuery())
 	} else {
-		q := bleve.NewQueryStringQuery(r.Query)
+		q := bleve.NewQueryStringQuery(queryText)
 		clauses = append(clauses, q)
 	}
 
-	for k, v := range r.Params {
+	for k, v := range params {
 		term := bleve.NewMatchPhraseQuery(v)
 		term.SetField(k)
 		clauses = append(clauses, term)
@@ -164,4 +170,25 @@ func getSearchFields(doc index.Document) map[string]string {
 		m[field.Name()] = string(field.Value())
 	})
 	return m
+}
+
+func parseQuery(query string) (string, map[string]string) {
+	re := regexp.MustCompile(`([\w.]+):("[^"]+"|\S+)`)
+
+	params := make(map[string]string)
+	matches := re.FindAllStringSubmatch(query, -1)
+
+	s := query
+	for _, m := range matches {
+		key := m[1]
+		if !slices.Contains(fieldsNotIncludedInAll, key) {
+			continue
+		}
+		value := strings.Trim(m[2], `"`)
+		params[key] = value
+		s = strings.Replace(s, m[0], "", 1)
+	}
+
+	s = strings.TrimSpace(s)
+	return s, params
 }
