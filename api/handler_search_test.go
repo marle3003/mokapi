@@ -26,11 +26,16 @@ func TestHandler_SearchQuery(t *testing.T) {
 		app          func() *runtime.App
 		requestUrl   string
 		responseBody string
+		response     []try.ResponseCondition
 	}{
 		{
-			name:         "empty search query",
-			requestUrl:   "/api/search/query",
-			responseBody: `{"results":[{"type":"HTTP","title":"foo","params":{"service":"foo","type":"http"}}],"total":1}`,
+			name:       "empty search query",
+			requestUrl: "/api/search/query",
+			response: []try.ResponseCondition{
+				try.HasStatusCode(200),
+				try.HasHeader("Content-Type", "application/json"),
+				try.HasBody(`{"results":[{"type":"HTTP","title":"foo","params":{"service":"foo","type":"http"}}],"total":1}`),
+			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
 					Enabled: true,
@@ -43,9 +48,13 @@ func TestHandler_SearchQuery(t *testing.T) {
 			},
 		},
 		{
-			name:         "search with query text",
-			requestUrl:   "/api/search/query?queryText=foo",
-			responseBody: `{"results":[{"type":"HTTP","title":"foo","fragments":["\u003cmark\u003efoo\u003c/mark\u003e"],"params":{"service":"foo","type":"http"}}],"total":1}`,
+			name:       "search with query text",
+			requestUrl: "/api/search/query?q=foo",
+			response: []try.ResponseCondition{
+				try.HasStatusCode(200),
+				try.HasHeader("Content-Type", "application/json"),
+				try.HasBody(`{"results":[{"type":"HTTP","title":"foo","fragments":["\u003cmark\u003efoo\u003c/mark\u003e"],"params":{"service":"foo","type":"http"}}],"total":1}`),
+			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
 					Enabled: true,
@@ -58,9 +67,34 @@ func TestHandler_SearchQuery(t *testing.T) {
 			},
 		},
 		{
-			name:         "search with param",
-			requestUrl:   "/api/search/query?queryText=api=foo",
-			responseBody: `{"results":[{"type":"HTTP","title":"foo","fragments":["\u003cmark\u003efoo\u003c/mark\u003e"],"params":{"service":"foo","type":"http"}}],"total":1}`,
+			name:       "search with param",
+			requestUrl: "/api/search/query?q=api=foo",
+			response: []try.ResponseCondition{
+				try.HasStatusCode(200),
+				try.HasHeader("Content-Type", "application/json"),
+				try.HasBody(`{"results":[{"type":"HTTP","title":"foo","fragments":["\u003cmark\u003efoo\u003c/mark\u003e"],"params":{"service":"foo","type":"http"}}],"total":1}`),
+			},
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
+					Enabled: true,
+				}}})
+
+				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
+				app.AddHttp(toConfig(cfg))
+				cfg = openapitest.NewConfig("3.0", openapitest.WithInfo("bar", "", ""))
+				app.AddHttp(toConfig(cfg))
+
+				return app
+			},
+		},
+		{
+			name:       "limit is not a number",
+			requestUrl: "/api/search/query?limit=foo",
+			response: []try.ResponseCondition{
+				try.HasStatusCode(400),
+				try.HasHeader("Content-Type", "application/json"),
+				try.HasBody(`{"message":"invalid query parameter 'limit': must be a number"}`),
+			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
 					Enabled: true,
@@ -90,9 +124,8 @@ func TestHandler_SearchQuery(t *testing.T) {
 				nil,
 				"",
 				h,
-				try.HasStatusCode(200),
-				try.HasHeader("Content-Type", "application/json"),
-				try.HasBody(tc.responseBody))
+				tc.response...,
+			)
 		})
 	}
 }

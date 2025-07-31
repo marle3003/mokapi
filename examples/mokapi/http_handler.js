@@ -162,7 +162,22 @@ export default async function() {
                 response.body = resp.body
                 return true
             case 'search':
-                response.data = getSearchResults()
+                switch (request.query.q) {
+                    case 'bad':
+                        response.statusCode = 400
+                        response.data = { message: 'invalid query parameter \'limit\': must be a number'}
+                        break
+                    case 'error':
+                        response.statusCode = 500
+                        response.data = { message: 'an internal error'}
+                        break
+                    case 'empty':
+                        response.data = { results: [], total: 0}
+                        break
+                    default:
+                        response.data = getSearchResults()
+                        break
+                }
         }
     }, {tags: {name: "dashboard"}})
 
