@@ -3,11 +3,13 @@ import { usePrettyDates } from '@/composables/usePrettyDate';
 import router from '@/router';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { transformPath } from '@/composables/fetch';
 
 const route = useRoute()
 const { format } = usePrettyDates()
 const queryText = ref<string>(route.query.q?.toString() ?? '')
 const pageIndex = ref(getIndex())
+const errorMessage = ref<string | undefined>()
 const result = ref<SearchResult>();
 const maxVisiblePages = 10  // max pages in pagination
 const showTips = ref(false)
@@ -43,7 +45,7 @@ watch(queryText, async () => {
   }
   // debounced
   clearTimeout(timeout)
-  timeout = setTimeout(async () => {await search()}, 300)
+  timeout = setTimeout(async () => { await search() }, 300)
 })
 
 function navigateToSearchResult(result: any) {
@@ -145,23 +147,24 @@ function pageIndex_click(index: number) {
 }
 
 async function search() {
-  let path = `/api/search/query?queryText=${queryText.value}`
+  let path = `/api/search/query?q=${queryText.value}`
   if (pageIndex.value !== 0) {
     path += `&index=${pageIndex.value}`
   }
-  const res = await fetch(path)
+  errorMessage.value = undefined
+  const res = await fetch(transformPath(path))
     .then(async (res) => {
         if (!res.ok) {
-            let text = await res.text()
-            throw new Error(res.statusText + ': ' + text)
+            const data = await res.json()
+            throw new Error(data.message)
         }
         return res.json()
     })
     .then(res => {
       return res
     })
-    .catch((err) => {
-        console.error(err)
+    .catch((s) => {
+      errorMessage.value = s
     })
   result.value = res
 }
@@ -201,7 +204,7 @@ async function search() {
                       <li><code>(get OR post) AND pets</code> – Combine multiple terms logically</li>
                     </ul>
                     <div class="mt-2 text-muted" v-if="false">
-                      Learn more about Mokapi's search <a href="/docs/guides/dashboard" target="_blank">here</a>
+                      Learn more about Mokapi's search <a href="/docs/guides/dashboard">here</a>
                     </div>
                   </div>
                 </div>
@@ -211,13 +214,13 @@ async function search() {
           </div>
         </section>
       </div>
-      <div class="card-group" v-if="result?.results">
+      <div class="card-group" v-if="result || errorMessage">
         <div class="card">
           <div class="card-body">
             <div class="container">
                 <div class="row justify-content-md-center">
                   <div class="col-6 col-auto">
-                    <div class="list-group search-results">
+                    <div class="list-group search-results" v-if="result && result.total > 0">
                       <div class="list-group-item" v-for="result of result.results">
                         <div class="mb-1 config">
                           <div class="mb-1">
@@ -231,6 +234,14 @@ async function search() {
                          </a>
                         <p class="fragments mb-1" style="font-size: 14px" v-html="result.fragments?.join(' ... ')"></p>
                       </div>
+                    </div>
+                    <!-- Error Alert -->
+                    <div v-if="errorMessage" class="alert alert-danger mb-0" role="alert">
+                      {{ errorMessage }}
+                    </div>
+                    <!-- No results message -->
+                    <div v-else-if="!errorMessage && result && result.total === 0">
+                      No results found
                     </div>
                   </div>
                 </div>

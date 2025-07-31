@@ -538,7 +538,7 @@ paths:
       operationId: search
       parameters:
         - in: query
-          name: queryText
+          name: q
           schema:
             type: string
         - in: query
@@ -556,17 +556,31 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/SearchResult'
+        "400":
+          description: bad search request
+          $ref: '#/components/responses/Error'
+        "500":
+          description: search request error
+          $ref: '#/components/responses/Error'
+
 components:
+  responses:
+    Error:
+      description: error response
+      content:
+        'application/json':
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
     FakerTree:
-      type: ['object', 'null']
+      type: [ 'object', 'null' ]
       properties:
         name:
           type: string
         value:
           type: string
         nodes:
-          type: ['array', 'null']
+          type: [ 'array', 'null' ]
           items:
             $ref: '#/components/schemas/FakerTree'
     SearchResult:
@@ -584,11 +598,11 @@ components:
         type:
           type: string
         domain:
-          type: [string, 'null']
+          type: [ string, 'null' ]
         title:
           type: string
         fragments:
-          type: [array, 'null']
+          type: [ array, 'null' ]
           items:
             type: string
         params:
@@ -596,7 +610,7 @@ components:
           additionalProperties:
             type: string
         time:
-          type: [string, 'null']
+          type: [ string, 'null' ]
           format: date-time
     ServiceInfo:
       type: object
@@ -627,3 +641,8 @@ components:
                 type: string
               value:
                 type: integer
+    Error:
+      type: object
+      properties:
+        message:
+          type: string

@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-const queryText = "querytext"
+const queryText = "q"
 const searchLimit = "limit"
 const searchIndex = "index"
 

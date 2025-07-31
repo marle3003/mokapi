@@ -192,7 +192,12 @@ func writeError(w http.ResponseWriter, err error, status int) {
 		http.Error(w, err.Error(), status)
 		return
 	}
-	http.Error(w, string(data), status)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_, err = w.Write(data)
+	if err != nil {
+		log.Errorf("write response body failed: %v", err)
+	}
 }
 
 func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
@@ -266,14 +271,14 @@ func getPageInfo(r *http.Request) (index int, limit int, err error) {
 	if sIndex != "" {
 		index, err = strconv.Atoi(sIndex)
 		if err != nil {
-			err = fmt.Errorf("invalid index value: %s", err)
+			err = fmt.Errorf("invalid query parameter 'index': must be a number")
 		}
 	}
 	sLimit := getQueryParamInsensitive(r.URL.Query(), searchLimit)
 	if sLimit != "" {
 		limit, err = strconv.Atoi(sLimit)
 		if err != nil {
-			err = fmt.Errorf("invalid limit value: %s", err)
+			err = fmt.Errorf("invalid query parameter 'limit': must be a number")
 		}
 	}
 	return
