@@ -4,12 +4,14 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"mokapi/runtime/search"
+	"reflect"
 	"time"
 )
 
 type eventIndex struct {
 	Type          string `json:"type"`
 	Discriminator string `json:"discriminator"`
+	Api           string `json:"api"`
 	Title         string `json:"_title" index:"false" store:"true"`
 	Event         *Event `json:"event"`
 	Time          string `json:"_time"`
@@ -23,6 +25,7 @@ func (m *StoreManager) addToIndex(event *Event) {
 	data := eventIndex{
 		Type:          "event",
 		Discriminator: fmt.Sprintf("event_%s", event.Traits.String()),
+		Api:           getApiFromEvent(event),
 		Event:         event,
 		Title:         event.Data.Title(),
 		Time:          event.Time.Format(time.RFC3339),
@@ -56,4 +59,12 @@ func GetSearchResult(fields map[string]string, _ []string) (search.ResultItem, e
 	}
 
 	return result, nil
+}
+
+func getApiFromEvent(event *Event) string {
+	f := reflect.ValueOf(event.Data).Elem().FieldByName("Api")
+	if f.IsValid() {
+		return f.String()
+	}
+	return ""
 }

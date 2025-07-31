@@ -559,9 +559,6 @@ paths:
         "400":
           description: bad search request
           $ref: '#/components/responses/Error'
-        "500":
-          description: search request error
-          $ref: '#/components/responses/Error'
 
 components:
   responses:

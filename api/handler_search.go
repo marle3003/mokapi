@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/pkg/errors"
 	"mokapi/runtime/search"
 	"net/http"
 	"net/url"
@@ -28,11 +27,7 @@ func (h *handler) getSearchResults(w http.ResponseWriter, r *http.Request) {
 
 	results, err := h.app.Search(sr)
 	if err != nil {
-		if errors.Is(err, &search.ErrNotEnabled{}) {
-			writeError(w, err, http.StatusBadRequest)
-		} else {
-			writeError(w, err, http.StatusInternalServerError)
-		}
+		writeError(w, err, http.StatusBadRequest)
 	} else {
 		writeJsonBody(w, results)
 	}

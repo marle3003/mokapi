@@ -45,6 +45,7 @@ type httpOperationSearchIndexData struct {
 	Method        string                         `json:"method"`
 	Summary       string                         `json:"summary"`
 	Description   string                         `json:"description"`
+	OperationId   string                         `json:"operationId"`
 	Tags          []string                       `json:"tags"`
 	Parameters    []httpParameterSearchIndexData `json:"parameters"`
 	RequestBody   string                         `json:"request_body"`
@@ -116,6 +117,7 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 				Method:        method,
 				Summary:       op.Summary,
 				Description:   op.Description,
+				OperationId:   op.OperationId,
 				Tags:          op.Tags,
 				Parameters:    pathData.Parameters,
 			}

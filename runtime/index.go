@@ -116,6 +116,11 @@ func (a *App) Search(r search.Request) (search.Result, error) {
 	sr.From = r.Limit * r.Index
 	sr.SortBy([]string{"-_score", "_id"})
 	sr.Highlight = bleve.NewHighlightWithStyle(html.Name)
+
+	// facets
+	typeFacet := bleve.NewFacetRequest("type", 6)
+	sr.AddFacet("type", typeFacet)
+
 	searchResult, err := a.index.Search(sr)
 	if err != nil {
 		return result, err
@@ -161,6 +166,16 @@ func (a *App) Search(r search.Request) (search.Result, error) {
 		}
 		result.Results = append(result.Results, item)
 	}
+
+	for name, facet := range searchResult.Facets {
+		for _, term := range facet.Terms.Terms() {
+			if result.Facets == nil {
+				result.Facets = map[string][]string{}
+			}
+			result.Facets[name] = append(result.Facets[name], term.Term)
+		}
+	}
+
 	return result, nil
 }
 

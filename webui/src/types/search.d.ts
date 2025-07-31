@@ -1,6 +1,7 @@
 interface SearchResult {
     results: SearchItem[]
     total: number
+    searchTimeMs: number
 }
 
 interface SearchItem {

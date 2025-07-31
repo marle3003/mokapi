@@ -1,8 +1,9 @@
 package search
 
 type Result struct {
-	Results []ResultItem `json:"results"`
-	Total   uint64       `json:"total"`
+	Results []ResultItem        `json:"results"`
+	Facets  map[string][]string `json:"facets,omitempty"`
+	Total   uint64              `json:"total"`
 }
 
 type ResultItem struct {

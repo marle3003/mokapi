@@ -34,7 +34,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 			response: []try.ResponseCondition{
 				try.HasStatusCode(200),
 				try.HasHeader("Content-Type", "application/json"),
-				try.HasBody(`{"results":[{"type":"HTTP","title":"foo","params":{"service":"foo","type":"http"}}],"total":1}`),
+				try.HasBody(`{"results":[{"type":"HTTP","title":"foo","params":{"service":"foo","type":"http"}}],"facets":{"type":["http"]},"total":1}`),
 			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
@@ -53,7 +53,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 			response: []try.ResponseCondition{
 				try.HasStatusCode(200),
 				try.HasHeader("Content-Type", "application/json"),
-				try.HasBody(`{"results":[{"type":"HTTP","title":"foo","fragments":["\u003cmark\u003efoo\u003c/mark\u003e"],"params":{"service":"foo","type":"http"}}],"total":1}`),
+				try.HasBody(`{"results":[{"type":"HTTP","title":"foo","fragments":["\u003cmark\u003efoo\u003c/mark\u003e"],"params":{"service":"foo","type":"http"}}],"facets":{"type":["http"]},"total":1}`),
 			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
@@ -72,7 +72,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 			response: []try.ResponseCondition{
 				try.HasStatusCode(200),
 				try.HasHeader("Content-Type", "application/json"),
-				try.HasBody(`{"results":[{"type":"HTTP","title":"foo","fragments":["\u003cmark\u003efoo\u003c/mark\u003e"],"params":{"service":"foo","type":"http"}}],"total":1}`),
+				try.HasBody(`{"results":[{"type":"HTTP","title":"foo","fragments":["\u003cmark\u003efoo\u003c/mark\u003e"],"params":{"service":"foo","type":"http"}}],"facets":{"type":["http"]},"total":1}`),
 			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
