@@ -1,9 +1,9 @@
 package search
 
 type Result struct {
-	Results []ResultItem        `json:"results"`
-	Facets  map[string][]string `json:"facets,omitempty"`
-	Total   uint64              `json:"total"`
+	Results []ResultItem            `json:"results"`
+	Facets  map[string][]FacetValue `json:"facets,omitempty"`
+	Total   uint64                  `json:"total"`
 }
 
 type ResultItem struct {
@@ -25,4 +25,10 @@ type Request struct {
 	QueryText string
 	Index     int
 	Limit     int
+	Facets    map[string]string
+}
+
+type FacetValue struct {
+	Value string `json:"value"`
+	Count int    `json:"count"`
 }

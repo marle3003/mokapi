@@ -4,6 +4,7 @@ dn: uid=awilliams,dc=mokapi,dc=io
 cn: Alice Williams
 uid: awilliams
 userPassword: foo123
+objectSid:: AQUAAAAAAAUVAAAAF8sUcR3r8QcekDXQw9wAAA==
 
 dn: uid=bmiller,dc=mokapi,dc=io
 cn: Bob Miller

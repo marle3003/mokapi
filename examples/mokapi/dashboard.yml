@@ -549,6 +549,14 @@ paths:
           name: index
           schema:
             type: integer
+        - in: query
+          name: type
+          schema:
+            type: array
+            items:
+              type: string
+          style: matrix
+          explode: true
       responses:
         "200":
           description: search results
@@ -587,6 +595,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SearchItem'
+        facets:
+          type: [object, 'null']
+          additionalProperties:
+            type: array
+            items:
+              $ref: '#/components/schemas/SearchFacet'
         total:
           type: integer
     SearchItem:
@@ -609,6 +623,13 @@ components:
         time:
           type: [ string, 'null' ]
           format: date-time
+    SearchFacet:
+      type: object
+      properties:
+        value:
+          type: string
+        count:
+          type: integer
     ServiceInfo:
       type: object
       properties:

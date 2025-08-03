@@ -2,7 +2,7 @@
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import router from '@/router';
 import { computed, onMounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, type RouteLocationRaw } from 'vue-router';
 import { transformPath } from '@/composables/fetch';
 
 const route = useRoute()
@@ -13,6 +13,7 @@ const errorMessage = ref<string | undefined>()
 const result = ref<SearchResult>();
 const maxVisiblePages = 10  // max pages in pagination
 const showTips = ref(false)
+const facets = ref<{ [name: string]: string | undefined}>({})
 
 const pageNumber = computed(() => {
   if (!result.value) {
@@ -97,6 +98,14 @@ function title(result: SearchItem) {
 }
 
 onMounted(async () => {
+  for (const param in route.query) {
+    if (param === 'q') {
+      continue
+    }
+    if (route.query[param]) {
+      facets.value[param] = route.query[param].toString()
+    }
+  }
   if (queryText.value !== '') {
     await search()
   }
@@ -126,13 +135,25 @@ function search_clicked() {
   if (index === 0) {
     index = undefined
   }
-  router.replace({
+
+  const to: RouteLocationRaw = {
     query: {
       ...route.query,
       q: q,
       index: index
     }
-  })
+  }
+
+  for (const name in facets.value) {
+    if (facets.value[name] === '') {
+      to.query![name] = undefined
+    }
+    else {
+      to.query![name] = facets.value[name]
+    }
+  }
+
+  router.replace(to)
 }
 
 function search_keypressed(event: KeyboardEvent) {
@@ -151,6 +172,14 @@ async function search() {
   if (pageIndex.value !== 0) {
     path += `&index=${pageIndex.value}`
   }
+
+  for (const facetName in facets.value) {
+    const v = facets.value[facetName]
+    if (v !== '') {
+      path += `&${facetName}=${v}`
+    }
+  }
+
   errorMessage.value = undefined
   const res = await fetch(transformPath(path))
     .then(async (res) => {
@@ -167,6 +196,18 @@ async function search() {
       errorMessage.value = s
     })
   result.value = res
+
+  for (const facetName in result.value?.facets) {
+    if (!facets.value[facetName]) {
+      facets.value[facetName] = ''
+    }
+  }
+}
+function facetTitle(s: string) {
+  switch (s) {
+    case 'type': return 'Type';
+    default: return `title for '${s}' not defined`
+  }
 }
 </script>
 
@@ -212,32 +253,49 @@ async function search() {
                 </div>
               </div>
             </div>
-            <div v-if="result || errorMessage" class="row justify-content-md-center">
-              <div v-if="result && result.total > 0" class="col-6 col-auto">
-                <h3 class="mt-1 mb-3 fs-6">{{ result.total }} results for "{{ queryText }}""</h3>
-                <div class="list-group search-results">
-                  <div class="list-group-item" v-for="result of result.results">
-                    <div class="mb-1 config">
-                      <div class="mb-1">
-                        <span class="badge bg-secondary api">{{ result.type }}</span>
-                        <span v-if="result.domain" class="ps-2">{{ result.domain }}</span>
-                      </div>
-                      <small v-if="result.time" class="text-muted">{{ format(result.time) }}</small>
+          </div>
+          <div class="row justify-content-md-center ps-0 mb-2" v-if="result">
+            <div class="col-6 col-auto">
+               <h3 v-if="result.total <= 10" class="mt-1 mb-3 fs-6">Showing <strong>{{ result.total }}</strong> results</h3>
+               <h3 v-else class="mt-1 mb-3 fs-6">Showing <strong>{{ result.results.length }}</strong> of {{ result.total }} results</h3>
+            </div>
+          </div>
+          <div class="row justify-content-md-center ps-0 mb-2" v-if="result">
+            <div class="col-6 col-auto">
+              <div class="row">
+                <div v-for="name in Object.keys(result.facets)" :key="name" class="col-auto">
+                    <select class="form-select form-select-sm" :aria-label="name" v-model="facets[name]" @change="search_clicked">
+                      <option value="">{{ facetTitle(name) }}</option>
+                      <option v-for="v in result.facets[name]" :value="v.value">{{ v.value }} ({{ v.count }})</option>
+                    </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-if="result || errorMessage" class="row justify-content-md-center ps-0 mt-3">
+            <div v-if="result && result.total > 0" class="col-6 col-auto">
+              <div class="list-group search-results">
+                <div class="list-group-item" v-for="result of result.results">
+                  <div class="mb-1 config">
+                    <div class="mb-1">
+                      <span class="badge bg-secondary api">{{ result.type }}</span>
+                      <span v-if="result.domain" class="ps-2">{{ result.domain }}</span>
                     </div>
-                      <a @click="navigateToSearchResult(result)">
-                      <h3 v-html="title(result)"></h3>
-                      </a>
-                    <p class="fragments mb-1" style="font-size: 14px" v-html="result.fragments?.join(' ... ')"></p>
+                    <small v-if="result.time" class="text-muted">{{ format(result.time) }}</small>
                   </div>
+                    <a @click="navigateToSearchResult(result)">
+                    <h3 v-html="title(result)"></h3>
+                    </a>
+                  <p class="fragments mb-1" style="font-size: 14px" v-html="result.fragments?.join(' ... ')"></p>
                 </div>
-                <!-- Error Alert -->
-                <div v-if="errorMessage" class="alert alert-danger mb-0" role="alert">
-                  {{ errorMessage }}
-                </div>
-                <!-- No results message -->
-                <div v-else-if="!errorMessage && result && result.total === 0">
-                  No results found
-                </div>
+              </div>
+              <!-- Error Alert -->
+              <div v-if="errorMessage" class="alert alert-danger mb-0" role="alert">
+                {{ errorMessage }}
+              </div>
+              <!-- No results message -->
+              <div v-else-if="!errorMessage && result && result.total === 0">
+                No results found
               </div>
             </div>
             <div class="row justify-content-md-center" v-if="pageNumber > 1">
@@ -275,7 +333,7 @@ async function search() {
 }
 .form-control {
   border-left-width: 0;
-  padding-left: 6px;
+  padding-left: 8px;
 }
 .form-control:focus, .form-control:focus-visible {
   box-shadow: none;

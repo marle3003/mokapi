@@ -482,6 +482,9 @@ function getSearchResults() {
                 }
             }
         ],
+        facets: {
+            type: [{value: 'HTTP', count: 3}, {value: 'Kafka', count: 2}, {value: 'Event', count: 2}, {value: 'Config', count: 1}]
+        },
         total: 8
     }
 }

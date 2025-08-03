@@ -78,7 +78,7 @@ func (s *KafkaStore) addToIndex(cfg *asyncapi3.Config) {
 		})
 	}
 
-	add(s.index, cfg.Info.Name, c)
+	add(s.index, fmt.Sprintf("kafka_%s", cfg.Info.Name), c)
 
 	for name, topic := range cfg.Channels {
 		if topic == nil || topic.Value == nil {
@@ -120,7 +120,7 @@ func (s *KafkaStore) addToIndex(cfg *asyncapi3.Config) {
 				Payload:     p,
 			})
 		}
-		id := fmt.Sprintf("%s_%s", cfg.Info.Name, name)
+		id := fmt.Sprintf("kafka_%s_%s", cfg.Info.Name, name)
 		add(s.index, id, t)
 	}
 }

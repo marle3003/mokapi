@@ -73,7 +73,7 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 		Servers:       cfg.Servers,
 	}
 
-	add(s.index, cfg.Info.Name, c)
+	add(s.index, fmt.Sprintf("http_%s", cfg.Info.Name), c)
 
 	for path, p := range cfg.Paths {
 		if p.Value == nil {
@@ -104,10 +104,10 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 			})
 		}
 
-		add(s.index, fmt.Sprintf("%s_%s", cfg.Info.Name, path), pathData)
+		add(s.index, fmt.Sprintf("http_%s_%s", cfg.Info.Name, path), pathData)
 
 		for method, op := range p.Value.Operations() {
-			id := fmt.Sprintf("%s_%s_%s", cfg.Info.Name, path, method)
+			id := fmt.Sprintf("http_%s_%s_%s", cfg.Info.Name, path, method)
 
 			opData := httpOperationSearchIndexData{
 				Type:          "http",

@@ -47,5 +47,19 @@ func TestIndex(t *testing.T) {
 	require.Len(t, result.Results, 4)
 	require.Len(t, result.Facets, 1)
 	require.Contains(t, result.Facets, "type")
-	require.Equal(t, []string{"http", "event"}, result.Facets["type"])
+	require.Equal(t, []search.FacetValue{{Value: "HTTP", Count: 3}, {Value: "Event", Count: 1}}, result.Facets["type"])
+
+	result, err = app.Search(search.Request{
+		QueryText: "api:Petstore",
+		Index:     0,
+		Limit:     10,
+		Facets: map[string]string{
+			"type": "HTTP",
+		},
+	})
+	require.NoError(t, err)
+	require.Len(t, result.Results, 3)
+	require.Len(t, result.Facets, 1)
+	require.Contains(t, result.Facets, "type")
+	require.Equal(t, []search.FacetValue{{Value: "HTTP", Count: 3}, {Value: "Event", Count: 1}}, result.Facets["type"])
 }
