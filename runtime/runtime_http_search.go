@@ -45,6 +45,7 @@ type httpOperationSearchIndexData struct {
 	Method        string                         `json:"method"`
 	Summary       string                         `json:"summary"`
 	Description   string                         `json:"description"`
+	OperationId   string                         `json:"operationId"`
 	Tags          []string                       `json:"tags"`
 	Parameters    []httpParameterSearchIndexData `json:"parameters"`
 	RequestBody   string                         `json:"request_body"`
@@ -72,7 +73,7 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 		Servers:       cfg.Servers,
 	}
 
-	add(s.index, cfg.Info.Name, c)
+	add(s.index, fmt.Sprintf("http_%s", cfg.Info.Name), c)
 
 	for path, p := range cfg.Paths {
 		if p.Value == nil {
@@ -103,10 +104,10 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 			})
 		}
 
-		add(s.index, fmt.Sprintf("%s_%s", cfg.Info.Name, path), pathData)
+		add(s.index, fmt.Sprintf("http_%s_%s", cfg.Info.Name, path), pathData)
 
 		for method, op := range p.Value.Operations() {
-			id := fmt.Sprintf("%s_%s_%s", cfg.Info.Name, path, method)
+			id := fmt.Sprintf("http_%s_%s_%s", cfg.Info.Name, path, method)
 
 			opData := httpOperationSearchIndexData{
 				Type:          "http",
@@ -116,6 +117,7 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 				Method:        method,
 				Summary:       op.Summary,
 				Description:   op.Description,
+				OperationId:   op.OperationId,
 				Tags:          op.Tags,
 				Parameters:    pathData.Parameters,
 			}

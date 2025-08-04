@@ -65,6 +65,22 @@ func TestIndex_Http(t *testing.T) {
 			},
 		},
 		{
+			name: "Search by type without value",
+			test: func(t *testing.T, app *runtime.App) {
+				trait := events.NewTraits().WithNamespace("test")
+
+				app.Events.SetStore(10, trait)
+				err := app.Events.Push(&eventstest.Event{
+					Name: "foo",
+					Api:  "My API",
+				}, trait)
+				require.NoError(t, err)
+
+				_, err = app.Search(search.Request{QueryText: "type:", Limit: 10})
+				require.Error(t, err)
+			},
+		},
+		{
 			name: "when event is removed, it is also removed from index",
 			test: func(t *testing.T, app *runtime.App) {
 				trait := events.NewTraits().WithNamespace("test")

@@ -167,10 +167,6 @@ export default async function() {
                         response.statusCode = 400
                         response.data = { message: 'invalid query parameter \'limit\': must be a number'}
                         break
-                    case 'error':
-                        response.statusCode = 500
-                        response.data = { message: 'an internal error'}
-                        break
                     case 'empty':
                         response.data = { results: [], total: 0}
                         break
@@ -486,6 +482,9 @@ function getSearchResults() {
                 }
             }
         ],
+        facets: {
+            type: [{value: 'HTTP', count: 3}, {value: 'Kafka', count: 2}, {value: 'Event', count: 2}, {value: 'Config', count: 1}]
+        },
         total: 8
     }
 }

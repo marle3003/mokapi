@@ -110,3 +110,10 @@ i.icon {
 .api {
   background-color: #7e708bff !important;
 }
+.form-select {
+  border-radius: 6px;
+}
+.form-select:focus {
+  border-color: var(--form-color-border-active);
+  box-shadow: 0 0 0 0.2rem rgba(234, 186, 171, 0.25)
+}

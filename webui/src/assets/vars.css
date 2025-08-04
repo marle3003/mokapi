@@ -53,6 +53,8 @@
 
     --icon-color: #eabaabff;
 
+    --form-color-border-active: #eabaabff;
+
     --link-color: #eabaabff;;
     --link-color-active: #eabaabff;
  
@@ -66,7 +68,7 @@
     --code-tabs-color: #d3d4d5;
     --code-tabs-color-active: #eabaabff;
 
-    --table-header-color: var(--text-color);
+    --table-header-color: var(--color-text);
     --table-border-color: rgba(255, 255, 255, 0.1);
 
     --datatable-color: var(--color-text);

@@ -139,6 +139,30 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
+			name: "default settings",
+			cfg:  &Config{},
+			test: func(t *testing.T, c *mail.Config) {
+				require.NotNil(t, c)
+				require.Equal(t, &mail.Settings{
+					MaxRecipients:     0,
+					AutoCreateMailbox: false,
+					MaxInboxMails:     0,
+				}, c.Settings)
+			},
+		},
+		{
+			name: "set settings",
+			cfg: &Config{
+				AutoCreateMailbox: false,
+				MaxRecipients:     10,
+			},
+			test: func(t *testing.T, c *mail.Config) {
+				require.NotNil(t, c)
+				require.Equal(t, false, c.Settings.AutoCreateMailbox)
+				require.Equal(t, 10, c.Settings.MaxRecipients)
+			},
+		},
+		{
 			name: "rules",
 			cfg: &Config{
 				Rules: []Rule{

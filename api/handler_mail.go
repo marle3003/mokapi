@@ -213,6 +213,8 @@ func (h *handler) handleMailService(w http.ResponseWriter, r *http.Request) {
 	if s.Store.Settings != nil {
 		result.Settings.MaxRecipients = s.Store.Settings.MaxRecipients
 		result.Settings.AutoCreateMailbox = s.Store.Settings.AutoCreateMailbox
+	} else {
+		result.Settings.AutoCreateMailbox = true
 	}
 
 	for mName, m := range s.Store.Mailboxes {

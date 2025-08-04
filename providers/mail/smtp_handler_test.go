@@ -147,6 +147,33 @@ func TestHandler_ServeSMTP(t *testing.T) {
 			},
 		},
 		{
+			name:   "no rcpt is valid",
+			config: &mail.Config{Settings: &mail.Settings{AutoCreateMailbox: false}},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
+				ctx := smtp.NewClientContext(context.Background(), "")
+				r := sendRcpt(t, h, ctx)
+				require.Equal(t, smtp.AddressRejected.StatusCode, r.Result.StatusCode)
+				require.Equal(t, smtp.AddressRejected.EnhancedStatusCode, r.Result.EnhancedStatusCode)
+				require.Equal(t, "Unknown mailbox bob@foo.bar", r.Result.Message)
+			},
+		},
+		{
+			name: "rcpt is not valid against rule",
+			config: &mail.Config{
+				Settings: &mail.Settings{AutoCreateMailbox: true},
+				Rules: map[string]*mail.Rule{
+					"rcpt": {Recipient: mail.NewRuleExpr("^support"), Action: mail.Allow},
+				},
+			},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
+				ctx := smtp.NewClientContext(context.Background(), "")
+				r := sendRcpt(t, h, ctx)
+				require.Equal(t, smtp.AddressRejected.StatusCode, r.Result.StatusCode)
+				require.Equal(t, smtp.AddressRejected.EnhancedStatusCode, r.Result.EnhancedStatusCode)
+				require.Equal(t, "Recipient bob@foo.bar does not match allow rule: ^support", r.Result.Message)
+			},
+		},
+		{
 			name:   "max recipients valid",
 			config: &mail.Config{Settings: &mail.Settings{AutoCreateMailbox: true, MaxRecipients: 5}},
 			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
@@ -207,7 +234,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
-				require.Equal(t, "sender alice@foo.bar does not match allow rule: .*@mokapi.io", r.Result.Message)
+				require.Equal(t, "Sender alice@foo.bar does not match allow rule: .*@mokapi.io", r.Result.Message)
 			},
 		},
 		{
@@ -220,7 +247,7 @@ func TestHandler_ServeSMTP(t *testing.T) {
 			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
 				r := sendMail(t, h, ctx)
-				require.Equal(t, "sender alice@foo.bar does match deny rule: @foo.bar", r.Result.Message)
+				require.Equal(t, "Sender alice@foo.bar does match deny rule: @foo.bar", r.Result.Message)
 				require.Equal(t, smtp.StatusCode(550), r.Result.StatusCode)
 				require.Equal(t, smtp.EnhancedStatusCode{5, 1, 0}, r.Result.EnhancedStatusCode)
 			},
@@ -243,6 +270,66 @@ func TestHandler_ServeSMTP(t *testing.T) {
 				require.Equal(t, "custom error message", r.Result.Message)
 				require.Equal(t, smtp.StatusCode(500), r.Result.StatusCode)
 				require.Equal(t, smtp.EnhancedStatusCode{5, 1, 2}, r.Result.EnhancedStatusCode)
+			},
+		},
+		{
+			name: "deny subject",
+			config: &mail.Config{Rules: map[string]*mail.Rule{
+				"foo": {
+					Subject: mail.NewRuleExpr("^Hello"),
+					Action:  mail.Deny,
+				}}},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
+				ctx := smtp.NewClientContext(context.Background(), "")
+				r := sendMailWithSubjectAndBody(t, h, "Hello World", "", ctx)
+				require.Equal(t, "Subject Hello World does match deny rule: ^Hello", r.Result.Message)
+				require.Equal(t, smtp.StatusCode(550), r.Result.StatusCode)
+				require.Equal(t, smtp.EnhancedStatusCode{5, 7, 1}, r.Result.EnhancedStatusCode)
+			},
+		},
+		{
+			name: "allow subject",
+			config: &mail.Config{Rules: map[string]*mail.Rule{
+				"foo": {
+					Subject: mail.NewRuleExpr("^Hello"),
+					Action:  mail.Allow,
+				}}},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
+				ctx := smtp.NewClientContext(context.Background(), "")
+				r := sendMailWithSubjectAndBody(t, h, "foo", "", ctx)
+				require.Equal(t, "Subject foo does not match allow rule: ^Hello", r.Result.Message)
+				require.Equal(t, smtp.StatusCode(550), r.Result.StatusCode)
+				require.Equal(t, smtp.EnhancedStatusCode{5, 7, 1}, r.Result.EnhancedStatusCode)
+			},
+		},
+		{
+			name: "deny body",
+			config: &mail.Config{Rules: map[string]*mail.Rule{
+				"foo": {
+					Body:   mail.NewRuleExpr("^Hello"),
+					Action: mail.Deny,
+				}}},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
+				ctx := smtp.NewClientContext(context.Background(), "")
+				r := sendMailWithSubjectAndBody(t, h, "Hello World", "Hello", ctx)
+				require.Equal(t, "Body Hello does match deny rule: ^Hello", r.Result.Message)
+				require.Equal(t, smtp.StatusCode(550), r.Result.StatusCode)
+				require.Equal(t, smtp.EnhancedStatusCode{5, 7, 1}, r.Result.EnhancedStatusCode)
+			},
+		},
+		{
+			name: "allow body",
+			config: &mail.Config{Rules: map[string]*mail.Rule{
+				"foo": {
+					Body:   mail.NewRuleExpr("^Hello"),
+					Action: mail.Allow,
+				}}},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
+				ctx := smtp.NewClientContext(context.Background(), "")
+				r := sendMailWithSubjectAndBody(t, h, "Hello World", "foo", ctx)
+				require.Equal(t, "Body foo does not match allow rule: ^Hello", r.Result.Message)
+				require.Equal(t, smtp.StatusCode(550), r.Result.StatusCode)
+				require.Equal(t, smtp.EnhancedStatusCode{5, 7, 1}, r.Result.EnhancedStatusCode)
 			},
 		},
 	}
@@ -291,6 +378,22 @@ func sendData(t *testing.T, h smtp.Handler, ctx context.Context) *smtp.DataRespo
 		To:      []smtp.Address{{Address: "bob@foo.bar"}},
 		Date:    time.Now(),
 		Subject: "A mail message",
+	}, ctx))
+	return expectDataesponse(t, rr.Response)
+}
+
+func sendMailWithSubjectAndBody(t *testing.T, h smtp.Handler, subject, body string, ctx context.Context) *smtp.DataResponse {
+	r := sendMail(t, h, ctx)
+	require.Equal(t, smtp.Ok, r.Result)
+	rcpt := sendRcpt(t, h, ctx)
+	require.Equal(t, smtp.Ok, rcpt.Result)
+	rr := smtptest.NewRecorder()
+	h.ServeSMTP(rr, smtp.NewDataRequest(&smtp.Message{
+		From:    []smtp.Address{{Address: "alice@foo.bar"}},
+		To:      []smtp.Address{{Address: "bob@foo.bar"}},
+		Date:    time.Now(),
+		Subject: subject,
+		Body:    body,
 	}, ctx))
 	return expectDataesponse(t, rr.Response)
 }

@@ -11,6 +11,7 @@ import (
 	_ "github.com/blevesearch/bleve/v2/analysis/token/ngram"
 	"github.com/blevesearch/bleve/v2/analysis/token/porter"
 	"github.com/blevesearch/bleve/v2/analysis/tokenizer/unicode"
+	bleveSearch "github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
 	index "github.com/blevesearch/bleve_index_api"
 	log "github.com/sirupsen/logrus"
@@ -110,12 +111,21 @@ func (a *App) Search(r search.Request) (search.Result, error) {
 		clauses = append(clauses, term)
 	}
 
+	qFacetsValues := make([]query.Query, len(clauses))
+	copy(qFacetsValues, clauses)
+	for name, val := range r.Facets {
+		facet := bleve.NewMatchPhraseQuery(val)
+		facet.SetField(name)
+		clauses = append(clauses, facet)
+	}
+
 	q := bleve.NewConjunctionQuery(clauses...)
 	sr := bleve.NewSearchRequest(q)
 	sr.Size = r.Limit
 	sr.From = r.Limit * r.Index
 	sr.SortBy([]string{"-_score", "_id"})
 	sr.Highlight = bleve.NewHighlightWithStyle(html.Name)
+
 	searchResult, err := a.index.Search(sr)
 	if err != nil {
 		return result, err
@@ -161,6 +171,18 @@ func (a *App) Search(r search.Request) (search.Result, error) {
 		}
 		result.Results = append(result.Results, item)
 	}
+
+	// get facet values
+	q = bleve.NewConjunctionQuery(qFacetsValues...)
+	sr = bleve.NewSearchRequest(q)
+	sr.Size = 0
+	sr.AddFacet("type", bleve.NewFacetRequest("type", 6))
+	searchResult, err = a.index.Search(sr)
+	if err != nil {
+		return result, err
+	}
+	result.Facets = getFacets(searchResult)
+
 	return result, nil
 }
 
@@ -191,4 +213,44 @@ func parseQuery(query string) (string, map[string]string) {
 
 	s = strings.TrimSpace(s)
 	return s, params
+}
+
+func getFacets(sr *bleve.SearchResult) map[string][]search.FacetValue {
+	if sr.Facets == nil {
+		return nil
+	}
+
+	m := make(map[string][]search.FacetValue)
+	for name, facet := range sr.Facets {
+		var selectFunc func(*bleveSearch.TermFacet) search.FacetValue
+		switch name {
+		case "type":
+			selectFunc = getTypeFacet
+		default:
+			log.Warnf("unknown facet: %s", name)
+			continue
+		}
+		for _, term := range facet.Terms.Terms() {
+			m[name] = append(m[name], selectFunc(term))
+		}
+	}
+	return m
+}
+
+func getTypeFacet(term *bleveSearch.TermFacet) search.FacetValue {
+	facet := search.FacetValue{Count: term.Count}
+	switch term.Term {
+	case "http":
+		facet.Value = "HTTP"
+	case "kafka":
+		facet.Value = "Kafka"
+	case "event":
+		facet.Value = "Event"
+	case "config":
+		facet.Value = "Config"
+	default:
+		log.Errorf("unknown facet type: %s", term.Term)
+		facet.Value = term.Term
+	}
+	return facet
 }

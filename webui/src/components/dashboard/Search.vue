@@ -2,7 +2,7 @@
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import router from '@/router';
 import { computed, onMounted, ref, watch } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, type RouteLocationRaw } from 'vue-router';
 import { transformPath } from '@/composables/fetch';
 
 const route = useRoute()
@@ -13,6 +13,7 @@ const errorMessage = ref<string | undefined>()
 const result = ref<SearchResult>();
 const maxVisiblePages = 10  // max pages in pagination
 const showTips = ref(false)
+const facets = ref<{ [name: string]: string | undefined}>({})
 
 const pageNumber = computed(() => {
   if (!result.value) {
@@ -40,12 +41,12 @@ const pageRange = computed(() => {
 })
 let timeout: number;
 watch(queryText, async () => {
-  if (!queryText.value || queryText.value.length < 3) {
+  if (!queryText.value || queryText.value.length < 3 || queryText.value.endsWith(':')) {
     return
   }
   // debounced
   clearTimeout(timeout)
-  timeout = setTimeout(async () => { await search() }, 300)
+  timeout = setTimeout(async () => { await search() }, 500)
 })
 
 function navigateToSearchResult(result: any) {
@@ -97,6 +98,14 @@ function title(result: SearchItem) {
 }
 
 onMounted(async () => {
+  for (const param in route.query) {
+    if (param === 'q') {
+      continue
+    }
+    if (route.query[param]) {
+      facets.value[param] = route.query[param].toString()
+    }
+  }
   if (queryText.value !== '') {
     await search()
   }
@@ -126,13 +135,25 @@ function search_clicked() {
   if (index === 0) {
     index = undefined
   }
-  router.replace({
+
+  const to: RouteLocationRaw = {
     query: {
       ...route.query,
       q: q,
       index: index
     }
-  })
+  }
+
+  for (const name in facets.value) {
+    if (facets.value[name] === '') {
+      to.query![name] = undefined
+    }
+    else {
+      to.query![name] = facets.value[name]
+    }
+  }
+
+  router.replace(to)
 }
 
 function search_keypressed(event: KeyboardEvent) {
@@ -151,6 +172,14 @@ async function search() {
   if (pageIndex.value !== 0) {
     path += `&index=${pageIndex.value}`
   }
+
+  for (const facetName in facets.value) {
+    const v = facets.value[facetName]
+    if (v !== '') {
+      path += `&${facetName}=${v}`
+    }
+  }
+
   errorMessage.value = undefined
   const res = await fetch(transformPath(path))
     .then(async (res) => {
@@ -167,110 +196,134 @@ async function search() {
       errorMessage.value = s
     })
   result.value = res
+
+  for (const facetName in result.value?.facets) {
+    if (!facets.value[facetName]) {
+      facets.value[facetName] = ''
+    }
+  }
+}
+function facetTitle(s: string) {
+  switch (s) {
+    case 'type': return 'Type';
+    default: return `title for '${s}' not defined`
+  }
 }
 </script>
 
 <template>
-  <div>
-    <div class="card-group">
-      <section class="card" aria-labelledby="search">
-        <div class="card-body">
-          <div id="search" class="card-title text-center mb-4">
-            <h2 style="margin-block-start: 1rem;font-size: 1.5rem;">Search Dashboard</h2>
+  <div class="card-group">
+    <section class="card" aria-labelledby="search">
+      <div class="card-body">
+        <div id="search" class="card-title text-center mb-4">
+          <h2 style="margin-block-start: 1rem;font-size: 1.5rem;">Search Dashboard</h2>
+        </div>
+        <div class="container">
+          <div class="row justify-content-md-center mb-1">
+            <div class="col-6 col-auto">
+              <div class="input-group">
+                <input type="text" class="form-control" placeholder="Search" aria-label="Search" aria-describedby="search-icon" v-model="queryText" @keypress="search_keypressed">
+                <button class="btn btn-outline-secondary" type="button" @click="search_clicked">
+                  <i class="bi bi-search"></i>
+                </button>
+              </div>
+            </div>
           </div>
-            <div class="container text-center">
-              <div class="row justify-content-md-center">
-                <div class="col-6 col-auto">
-                  <div class="input-group">
-                    <input type="text" class="form-control" placeholder="Search" aria-label="Search" aria-describedby="search-icon" v-model="queryText" @keypress="search_keypressed">
-                    <button class="btn btn-outline-secondary" type="button" @click="search_clicked">
-                      <i class="bi bi-search"></i>
-                    </button>
-                  </div>
-                  <div class="text-start mt-1 mb-2">
-                  <a href="#" @click.prevent="showTips = !showTips" class="small">
-                    {{ showTips ? 'Search Tips ▲' : 'Search Tips ▼' }}
-                  </a>
+          <div class="row justify-content-md-center">
+            <div class="col-6 col-auto text-end">
+              <div>
+                <a href="#" @click.prevent="showTips = !showTips" class="small">
+                  {{ showTips ? 'Search Tips ▲' : 'Search Tips ▼' }}
+                </a>
 
-                  <div v-if="showTips" class="alert alert-light border mt-2 small">
-                    <ul class="mb-0">
-                      <li><code>name:petstore</code> – Find "petstore" in the name field</li>
-                      <li><code>type:event</code> – Find events like HTTP requests, Kafka messages, mails, etc</li>
-                      <li><code>+petstore -kafka</code> – Must include "petstore", exclude "kafka"</li>
-                      <li><code>"Swagger Petstore"</code> – Match exact phrase</li>
-                      <li><code>pet*</code> – Wildcard (matches "pet", "pets", "petstore")</li>
-                      <li><code>pet~</code> – Fuzzy match (e.g., "pets", "pest")</li>
-                      <li><code>path:/pets^2 description:dog</code> – Boost matches in path field</li>
-                      <li><code>(get OR post) AND pets</code> – Combine multiple terms logically</li>
-                    </ul>
-                    <div class="mt-2 text-muted" v-if="false">
-                      Learn more about Mokapi's search <a href="/docs/guides/dashboard">here</a>
-                    </div>
+                <div v-if="showTips" class="alert alert-light border mt-2 small text-start">
+                  <ul class="mb-0">
+                    <li><code>name:petstore</code> – Find "petstore" in the name field</li>
+                    <li><code>type:event</code> – Find events like HTTP requests, Kafka messages, mails, etc</li>
+                    <li><code>+petstore -kafka</code> – Must include "petstore", exclude "kafka"</li>
+                    <li><code>"Swagger Petstore"</code> – Match exact phrase</li>
+                    <li><code>pet*</code> – Wildcard (matches "pet", "pets", "petstore")</li>
+                    <li><code>pet~</code> – Fuzzy match (e.g., "pets", "pest")</li>
+                    <li><code>path:/pets^2 description:dog</code> – Boost matches in path field</li>
+                    <li><code>(get OR post) AND pets</code> – Combine multiple terms logically</li>
+                  </ul>
+                  <div class="mt-2 text-muted" v-if="false">
+                    Learn more about Mokapi's search <a href="/docs/guides/dashboard">here</a>
                   </div>
-                </div>
                 </div>
               </div>
             </div>
           </div>
-        </section>
-      </div>
-      <div class="card-group" v-if="result || errorMessage">
-        <div class="card">
-          <div class="card-body">
-            <div class="container">
-                <div class="row justify-content-md-center">
-                  <div class="col-6 col-auto">
-                    <div class="list-group search-results" v-if="result && result.total > 0">
-                      <div class="list-group-item" v-for="result of result.results">
-                        <div class="mb-1 config">
-                          <div class="mb-1">
-                            <span class="badge bg-secondary api">{{ result.type }}</span>
-                            <span v-if="result.domain" class="ps-2">{{ result.domain }}</span>
-                          </div>
-                          <small v-if="result.time" class="text-muted">{{ format(result.time) }}</small>
-                        </div>
-                         <a @click="navigateToSearchResult(result)">
-                          <h3 v-html="title(result)"></h3>
-                         </a>
-                        <p class="fragments mb-1" style="font-size: 14px" v-html="result.fragments?.join(' ... ')"></p>
-                      </div>
-                    </div>
-                    <!-- Error Alert -->
-                    <div v-if="errorMessage" class="alert alert-danger mb-0" role="alert">
-                      {{ errorMessage }}
-                    </div>
-                    <!-- No results message -->
-                    <div v-else-if="!errorMessage && result && result.total === 0">
-                      No results found
-                    </div>
-                  </div>
+          <div class="row justify-content-md-center ps-0 mb-2" v-if="result">
+            <div class="col-6 col-auto">
+               <h3 v-if="result.total <= 10" class="mt-1 mb-3 fs-6">Showing <strong>{{ result.total }}</strong> results</h3>
+               <h3 v-else class="mt-1 mb-3 fs-6">Showing <strong>{{ result.results.length }}</strong> of {{ result.total }} results</h3>
+            </div>
+          </div>
+          <div class="row justify-content-md-center ps-0 mb-2" v-if="result">
+            <div class="col-6 col-auto">
+              <div class="row">
+                <div v-for="name in Object.keys(result.facets)" :key="name" class="col-auto">
+                    <select class="form-select form-select-sm" :aria-label="name" v-model="facets[name]" @change="search_clicked">
+                      <option value="">{{ facetTitle(name) }}</option>
+                      <option v-for="v in result.facets[name]" :value="v.value">{{ v.value }} ({{ v.count }})</option>
+                    </select>
                 </div>
-                <div class="row justify-content-md-center" v-if="pageNumber > 1">
-                  <div class="col-6 col-auto">
-                    <nav aria-label="Page navigation">
-                      <ul class="pagination justify-content-center">
-                        <li class="page-item" v-if="pageIndex > 0">
-                          <a class="page-link" aria-label="Previous" @click="pageIndex_click(pageIndex - 1)">
-                            <span aria-hidden="true">&laquo;</span>
-                          </a>
-                        </li>
-                        <li v-for="index in pageRange" :key="index" class="page-item" :class="index === pageIndex + 1 ? 'active' : ''">
-                          <a class="page-link" @click="pageIndex_click(index - 1)">{{ index }}</a>
-                        </li>
-                        <li class="page-item" v-if="pageIndex + 1 < pageNumber">
-                          <a class="page-link" aria-label="Next" @click="pageIndex_click(pageIndex + 1)">
-                            <span aria-hidden="true">&raquo;</span>
-                          </a>
-                        </li>
-                      </ul>
-                    </nav>
+              </div>
+            </div>
+          </div>
+          <div v-if="result || errorMessage" class="row justify-content-md-center ps-0 mt-3">
+            <div v-if="result && result.total > 0" class="col-6 col-auto">
+              <div class="list-group search-results">
+                <div class="list-group-item" v-for="result of result.results">
+                  <div class="mb-1 config">
+                    <div class="mb-1">
+                      <span class="badge bg-secondary api">{{ result.type }}</span>
+                      <span v-if="result.domain" class="ps-2">{{ result.domain }}</span>
+                    </div>
+                    <small v-if="result.time" class="text-muted">{{ format(result.time) }}</small>
                   </div>
+                    <a @click="navigateToSearchResult(result)">
+                    <h3 v-html="title(result)"></h3>
+                    </a>
+                  <p class="fragments mb-1" style="font-size: 14px" v-html="result.fragments?.join(' ... ')"></p>
                 </div>
+              </div>
+              <!-- Error Alert -->
+              <div v-if="errorMessage" class="alert alert-danger mb-0" role="alert">
+                {{ errorMessage }}
+              </div>
+              <!-- No results message -->
+              <div v-else-if="!errorMessage && result && result.total === 0">
+                No results found
+              </div>
+            </div>
+            <div class="row justify-content-md-center" v-if="pageNumber > 1">
+              <div class="col-6 col-auto">
+                <nav aria-label="Page navigation">
+                  <ul class="pagination justify-content-center">
+                    <li class="page-item" v-if="pageIndex > 0">
+                      <a class="page-link" aria-label="Previous" @click="pageIndex_click(pageIndex - 1)">
+                        <span aria-hidden="true">&laquo;</span>
+                      </a>
+                    </li>
+                    <li v-for="index in pageRange" :key="index" class="page-item" :class="index === pageIndex + 1 ? 'active' : ''">
+                      <a class="page-link" @click="pageIndex_click(index - 1)">{{ index }}</a>
+                    </li>
+                    <li class="page-item" v-if="pageIndex + 1 < pageNumber">
+                      <a class="page-link" aria-label="Next" @click="pageIndex_click(pageIndex + 1)">
+                        <span aria-hidden="true">&raquo;</span>
+                      </a>
+                    </li>
+                  </ul>
+                </nav>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
+  </div>
 </template>
 
 <style scoped>
@@ -280,7 +333,7 @@ async function search() {
 }
 .form-control {
   border-left-width: 0;
-  padding-left: 6px;
+  padding-left: 8px;
 }
 .form-control:focus, .form-control:focus-visible {
   box-shadow: none;

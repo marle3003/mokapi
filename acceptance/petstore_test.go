@@ -327,7 +327,7 @@ func (suite *PetStoreSuite) TestKafka3_Consume() {
 func (suite *PetStoreSuite) TestSearch_Paging() {
 	time.Sleep(3 * time.Second)
 
-	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%v/api/search/query?q=api:%%22Swagger%%20Petstore%%22", suite.cfg.Api.Port),
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%v/api/search/query?q=api:%%22Swagger%%20Petstore%%22%%20type:http", suite.cfg.Api.Port),
 		nil,
 		try.HasStatusCode(http.StatusOK),
 		try.AssertBody(func(t *testing.T, body string) {
@@ -347,7 +347,7 @@ func (suite *PetStoreSuite) TestSearch_Paging() {
 		}),
 	)
 
-	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%v/api/search/query?q=api:%%22Swagger%%20Petstore%%22&index=1", suite.cfg.Api.Port),
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%v/api/search/query?q=api:%%22Swagger%%20Petstore%%22%%20type:http&index=1", suite.cfg.Api.Port),
 		nil,
 		try.HasStatusCode(http.StatusOK),
 		try.AssertBody(func(t *testing.T, body string) {

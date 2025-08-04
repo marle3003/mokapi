@@ -70,22 +70,22 @@
               <ul>
                 <li>
                   <router-link :to="{ path: '/docs/resources/tutorials/get-started-with-rest-api' }">
-                    Get started with REST API
+                    Mock and Test REST APIs Using OpenAPI with Mokapi
                   </router-link>
                 </li>
                 <li>
                   <router-link :to="{ path: '/docs/resources/tutorials/get-started-with-kafka' }">
-                    Get started with Kafka
+                    Simulate Kafka Topics with AsyncAPI and Mokapi for Reliable Event Testing
                   </router-link>
                 </li>
                 <li>
-                  <router-link :to="{ path: '/docs/resources/blogs/automation-testing-in-agile-development' }">
-                    Automation Testing in Agile Development
+                  <router-link :to="{ path: '/docs/resources/blogs/testing-email-workflows-with-playwright-and-mokapi' }">
+                    Test Email Workflows with a Mock SMTP Server Using Mokapi and Playwright
                   </router-link>
                 </li>
                 <li>
-                  <router-link :to="{ path: '/docs/resources/blogs/contract-testing' }">
-                    Contract Testing
+                  <router-link :to="{ path: '/docs/resources/tutorials/mock-ldap-authentication-in-node' }">
+                    Mock LDAP Authentication in Node.js for Seamless Testing with Mokapi
                   </router-link>
                 </li>
               </ul>
