@@ -273,11 +273,11 @@ function hasTouchSupport() {
             <div class="col">
               <div class="card h-100">
                 <div class="card-body">
-                  <h3 class="card-title mt-3">
+                  <h3 class="card-title">
                     <i class="icon me-2 bi-globe"></i>
-                    <span>Get started with mock REST API</span>
+                    <span>Mock and Test REST APIs Using OpenAPI with Mokapi</span>
                   </h3>
-                  <p class="mt-3">This tutorial will show you how to mock a REST API using an OpenAPI specification.</p>
+                  <p class="mt-3">In this tutorial, you will learn how to mock an OpenAPI specification with Mokapi, how to configure Mokapi, and how to run it in a Docker container.</p>
                   <a href="docs/resources/tutorials/get-started-with-rest-api" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
                 </div>
               </div>
@@ -287,7 +287,7 @@ function hasTouchSupport() {
                 <div class="card-body">
                   <h3 class="card-title">
                     <i class="icon me-2 bi-lightning"></i>
-                    <span>Get started with mock Kafka topic</span>
+                    <span>Simulate Kafka Topics with AsyncAPI and Mokapi for Reliable Event Testing</span>
                   </h3>
                   <p class="mt-4">Learn how to mock a Kafka Topic and verify that your producer generates valid messages according your AsyncAPI specification.</p>
                   <a href="docs/resources/tutorials/get-started-with-kafka" class="btn btn-outline-primary btn-sm">Read Tutorial</a>
@@ -299,7 +299,7 @@ function hasTouchSupport() {
                 <div class="card-body">
                   <h3 class="card-title">
                     <i class="icon me-2 bi-person-check"></i>
-                    <span>Mock LDAP Authentication in Node.js</span>
+                    <span>Mock LDAP Authentication in Node.js for Seamless Testing with Mokapi</span>
                   </h3>
                   <p class="mt-4">Learn how to mock LDAP authentication using Mokapi and a Node.js backend. Step-by-step guide with code examples for testing LDAP login without a real server!</p>
                   <a href="docs/resources/tutorials/mock-ldap-authentication-in-node" class="btn btn-outline-primary btn-sm">Read Tutorial</a>

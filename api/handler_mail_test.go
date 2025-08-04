@@ -46,7 +46,7 @@ func TestHandler_Smtp(t *testing.T) {
 			responseBody: `[{"name":"foo","description":"bar","version":"2.1","type":"mail"}]`,
 		},
 		{
-			name: "/api/services/mail",
+			name: "get /api/services/mail",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{})
 				app.Mail.Set("foo", &runtime.MailInfo{
@@ -57,7 +57,7 @@ func TestHandler_Smtp(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services/mail/foo",
 			contentType:  "application/json",
-			responseBody: `{"name":"foo","settings":{"maxRecipients":0,"autoCreateMailbox":false}}`,
+			responseBody: `{"name":"foo","settings":{"maxRecipients":0,"autoCreateMailbox":true}}`,
 		},
 		{
 			name: "get smtp service",
@@ -77,7 +77,7 @@ func TestHandler_Smtp(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services/mail/foo",
 			contentType:  "application/json",
-			responseBody: `{"name":"foo","mailboxes":[{"name":"alice@foo.bar","username":"alice","password":"foo","numMessages":0}],"configs":[{"id":"64613435-3062-6462-3033-316532633233","url":"file://foo.yml","provider":"test","time":"2023-12-27T13:01:30Z"}],"settings":{"maxRecipients":0,"autoCreateMailbox":false}}`,
+			responseBody: `{"name":"foo","mailboxes":[{"name":"alice@foo.bar","username":"alice","password":"foo","numMessages":0}],"configs":[{"id":"64613435-3062-6462-3033-316532633233","url":"file://foo.yml","provider":"test","time":"2023-12-27T13:01:30Z"}],"settings":{"maxRecipients":0,"autoCreateMailbox":true}}`,
 		},
 		{
 			name: "get smtp service with mailbox",
@@ -101,7 +101,7 @@ func TestHandler_Smtp(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services/mail/foo",
 			contentType:  "application/json",
-			responseBody: `{"name":"foo","mailboxes":[{"name":"alice@foo.bar","username":"alice","password":"foo","numMessages":0}],"settings":{"maxRecipients":0,"autoCreateMailbox":false}}`,
+			responseBody: `{"name":"foo","mailboxes":[{"name":"alice@foo.bar","username":"alice","password":"foo","numMessages":0}],"settings":{"maxRecipients":0,"autoCreateMailbox":true}}`,
 		},
 		{
 			name: "get smtp service with rules",
@@ -125,7 +125,7 @@ func TestHandler_Smtp(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services/mail/foo",
 			contentType:  "application/json",
-			responseBody: `{"name":"foo","rules":[{"name":"foo","sender":"alice@foo.bar","recipient":"alice@foo.bar","subject":"foo","body":"bar","action":"deny"}],"settings":{"maxRecipients":0,"autoCreateMailbox":false}}`,
+			responseBody: `{"name":"foo","rules":[{"name":"foo","sender":"alice@foo.bar","recipient":"alice@foo.bar","subject":"foo","body":"bar","action":"deny"}],"settings":{"maxRecipients":0,"autoCreateMailbox":true}}`,
 		},
 		{
 			name: "get smtp mailboxes",

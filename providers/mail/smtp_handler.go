@@ -112,7 +112,7 @@ func (h *Handler) serveRcpt(rw smtp.ResponseWriter, r *smtp.RcptRequest, ctx *sm
 		return
 	}
 
-	res := h.config.Rules.RunSender(r.To)
+	res := h.config.Rules.runRcpt(r.To)
 	if res != nil {
 		h.writeRuleResponse(rw, r, res)
 		return

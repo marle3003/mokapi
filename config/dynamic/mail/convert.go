@@ -37,6 +37,11 @@ func (c *Config) Convert() *mail.Config {
 		}
 	}
 
+	result.Settings = &mail.Settings{
+		AutoCreateMailbox: c.AutoCreateMailbox,
+		MaxRecipients:     c.MaxRecipients,
+	}
+
 	for _, mb := range c.Mailboxes {
 		m := &mail.MailboxConfig{
 			Username: mb.Username,

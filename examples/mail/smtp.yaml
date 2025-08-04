@@ -1,6 +1,6 @@
 smtp: '1.0'
 info:
-  title: Mokapi's Mail Server
+  title: Mokapi's Mail Server Legacy
 servers:
   - url: smtps://127.0.0.1:2525
 mailboxes:
