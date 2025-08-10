@@ -21,7 +21,6 @@ func NewImapServer(port string, handler imap.Handler, store *cert.Store, tlsMode
 			TlsMode: tlsMode,
 			TLSConfig: &tls.Config{
 				GetCertificate:     store.GetCertificate,
-				ServerName:         "mail.mokapi.local",
 				InsecureSkipVerify: true,
 			},
 		},

@@ -62,7 +62,7 @@ func (c *conn) serve() {
 
 			exts := []string{"AUTH LOGIN PLAIN"}
 			if c.server.TLSConfig != nil {
-				if _, ok := c.conn.(*tls.Conn); !ok {
+				if c.canStartTLS() {
 					exts = append(exts, "STARTTLS")
 				}
 			}
@@ -354,4 +354,9 @@ func (c *conn) close() {
 
 func clientDisconnected(err error) bool {
 	return err == io.EOF || errors.Is(err, net.ErrClosed) || errors.Is(err, syscall.ECONNRESET)
+}
+
+func (c *conn) canStartTLS() bool {
+	_, isTLS := c.conn.(*tls.Conn)
+	return !isTLS && c.server.TLSConfig != nil
 }

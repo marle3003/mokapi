@@ -6,6 +6,7 @@ import (
 	"mokapi/server/cert"
 	"net"
 	"net/textproto"
+	"strings"
 	"time"
 )
 
@@ -112,4 +113,74 @@ func (c *Client) ensureConn() error {
 
 	}
 	return nil
+}
+
+func (c *Client) Write(line string, expectCode int) ([]string, error) {
+	err := c.ensureConn()
+	if err != nil {
+		return nil, err
+	}
+
+	err = c.conn.tpc.PrintfLine(line)
+	if err != nil {
+		return nil, err
+	}
+
+	_, line, err = c.conn.tpc.ReadResponse(expectCode)
+	lines := strings.Split(line, "\n")
+	return lines, err
+}
+
+func (c *Client) Dial() (string, error) {
+	var err error
+	backoff := 50 * time.Millisecond
+	if c.conn == nil {
+		for i := 0; i < 10; i++ {
+			d := &net.Dialer{}
+			var co net.Conn
+			co, err = d.Dial("tcp", c.Addr)
+			if err != nil {
+				time.Sleep(backoff)
+				continue
+			}
+			c.conn = &conn{
+				conn: co,
+				tpc:  textproto.NewConn(co),
+			}
+			break
+		}
+	}
+	if err != nil {
+		return "", err
+	}
+
+	_, msg, err := c.conn.tpc.ReadResponse(220)
+	return msg, err
+}
+
+func (c *Client) DialTls(cfg *tls.Config) (string, error) {
+	var err error
+	backoff := 50 * time.Millisecond
+	if c.conn == nil {
+		for i := 0; i < 10; i++ {
+			d := &net.Dialer{}
+			var tlsConn *tls.Conn
+			tlsConn, err = tls.DialWithDialer(d, "tcp", c.Addr, cfg)
+			if err != nil {
+				time.Sleep(backoff)
+				continue
+			}
+			c.conn = &conn{
+				conn: tlsConn,
+				tpc:  textproto.NewConn(tlsConn),
+			}
+			break
+		}
+	}
+	if err != nil {
+		return "", err
+	}
+
+	_, msg, err := c.conn.tpc.ReadResponse(220)
+	return msg, err
 }

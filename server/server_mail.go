@@ -10,6 +10,7 @@ import (
 	"mokapi/runtime"
 	"mokapi/server/cert"
 	"mokapi/server/service"
+	"mokapi/smtp"
 	"net"
 	"sync"
 )
@@ -89,7 +90,7 @@ func (m *MailManager) startServers(cfg *runtime.MailInfo) error {
 			}
 
 			log.Infof("adding new SMTP host on :%v", port)
-			s := service.NewSmtpServer(port, h, m.certStore)
+			s := service.NewSmtpServer(port, h, m.certStore, smtp.StartTls)
 			s.Start()
 			servers[port] = s
 		case "smtps":
@@ -103,8 +104,8 @@ func (m *MailManager) startServers(cfg *runtime.MailInfo) error {
 			}
 
 			log.Infof("adding new SMTPS host on %v", port)
-			s := service.NewSmtpServer(port, h, m.certStore)
-			s.StartTls()
+			s := service.NewSmtpServer(port, h, m.certStore, smtp.Implicit)
+			s.Start()
 			servers[port] = s
 		case "imap":
 			if port == "" {
