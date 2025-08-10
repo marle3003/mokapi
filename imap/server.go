@@ -12,9 +12,18 @@ import (
 
 var ErrServerClosed = errors.New("imap: Server closed")
 
+const (
+	None     TlsMode = iota
+	StartTls TlsMode = iota
+	Implicit TlsMode = iota
+)
+
+type TlsMode int
+
 type Server struct {
 	Addr      string
 	TLSConfig *tls.Config
+	TlsMode   TlsMode
 	Handler   Handler
 
 	mu         sync.Mutex
@@ -46,6 +55,10 @@ func (s *Server) Serve(l net.Listener) error {
 				return ErrServerClosed
 			}
 			return fmt.Errorf("imap: %v", err)
+		}
+
+		if s.TlsMode == Implicit {
+			c = tls.Server(c, s.TLSConfig)
 		}
 
 		ic := conn{

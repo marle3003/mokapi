@@ -50,6 +50,45 @@ func TestSearch_Response(t *testing.T) {
 			},
 		},
 		{
+			name:    "search with UID",
+			request: "SEARCH UID 10849681",
+			response: []string{
+				"* SEARCH 1",
+				"A0002 OK SEARCH completed",
+			},
+			handler: func(t *testing.T) imap.Handler {
+				return &imaptest.Handler{
+					SearchFunc: func(request *imap.SearchRequest) (*imap.SearchResponse, error) {
+						require.False(t, request.IsUid, "IsUid should be false")
+						require.True(t, request.Criteria.UID.Contains(10849681))
+						set := &imap.IdSet{}
+						set.AddId(1)
+
+						return &imap.SearchResponse{All: set}, nil
+					},
+				}
+			},
+		},
+		{
+			name:    "UID search",
+			request: "UID SEARCH",
+			response: []string{
+				"* SEARCH 1",
+				"A0002 OK SEARCH completed",
+			},
+			handler: func(t *testing.T) imap.Handler {
+				return &imaptest.Handler{
+					SearchFunc: func(request *imap.SearchRequest) (*imap.SearchResponse, error) {
+						require.True(t, request.IsUid, "IsUid should be true")
+						set := &imap.IdSet{}
+						set.AddId(1)
+
+						return &imap.SearchResponse{All: set}, nil
+					},
+				}
+			},
+		},
+		{
 			name:    "search specific all with result",
 			request: "SEARCH ALL",
 			response: []string{

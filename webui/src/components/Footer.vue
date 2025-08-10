@@ -98,18 +98,23 @@
               <h3>Links</h3>
               <ul>
                 <li>
-                  <a href="https://github.com/marle3003/mokapi">
+                  <a href="https://github.com/marle3003/mokapi" target="_blank">
                     Docker
                   </a>
                 </li>
                 <li>
-                  <a href="https://www.npmjs.com/package/go-mokapi">
+                  <a href="https://www.npmjs.com/package/go-mokapi" target="_blank">
                     NPM
                   </a>
                 </li>
                 <li>
-                  <a href="https://github.com/marle3003/mokapi">
+                  <a href="https://github.com/marle3003/mokapi" target="_blank">
                     GitHub
+                  </a>
+                </li>
+                <li>
+                  <a href="https://mokapi.myspreadshop.ch/" target="_blank" rel="noopener noreferrer" >
+                    Merchandise Store
                   </a>
                 </li>
               </ul>

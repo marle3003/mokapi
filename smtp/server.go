@@ -14,6 +14,14 @@ import (
 
 var ErrServerClosed = errors.New("SMTP: Server closed")
 
+const (
+	None     TlsMode = iota
+	StartTls TlsMode = iota
+	Implicit TlsMode = iota
+)
+
+type TlsMode int
+
 type atomicBool int32
 
 func (a *atomicBool) isSet() bool { return atomic.LoadInt32((*int32)(a)) != 0 }
@@ -54,6 +62,7 @@ type Server struct {
 	Addr      string
 	Handler   Handler
 	TLSConfig *tls.Config
+	TlsMode   TlsMode
 
 	mu         sync.Mutex
 	closeChan  chan bool
@@ -77,21 +86,6 @@ func (s *Server) ListenAndServe() error {
 	return s.Serve(s.listener)
 }
 
-func (s *Server) ListenAndServeTLS() error {
-	if s.inShutdown.isSet() {
-		return ErrServerClosed
-	}
-
-	var err error
-	s.mu.Lock()
-	s.listener, err = tls.Listen("tcp", s.Addr, s.TLSConfig)
-	s.mu.Unlock()
-	if err != nil {
-		return err
-	}
-	return s.Serve(s.listener)
-}
-
 func (s *Server) Serve(l net.Listener) error {
 	closeCh := s.getCloseChan()
 	for {
@@ -104,6 +98,10 @@ func (s *Server) Serve(l net.Listener) error {
 				log.Errorf("smtp: accept error: %v", err)
 				continue
 			}
+		}
+
+		if s.TlsMode == Implicit {
+			rw = tls.Server(rw, s.TLSConfig)
 		}
 
 		conn := conn{

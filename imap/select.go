@@ -273,6 +273,10 @@ func (c *Client) Close() error {
 	return d.EndCmd(tag)
 }
 
+func (c *Client) Disconnect() error {
+	return c.conn.Close()
+}
+
 func isNum(s string) bool {
 	return s[0] >= '0' && s[0] <= '9'
 }

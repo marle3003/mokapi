@@ -10,6 +10,7 @@ import (
 	"mokapi/runtime/events/eventstest"
 	"mokapi/smtp"
 	"testing"
+	"time"
 )
 
 func TestImapHandler(t *testing.T) {
@@ -1115,6 +1116,141 @@ func TestImapHandler(t *testing.T) {
 				require.Len(t, f.Messages, 1)
 				require.Equal(t, "1", f.Messages[0].MessageId)
 				require.Equal(t, []imap.Flag{imap.FlagSeen}, f.Messages[0].Flags)
+			},
+		},
+		{
+			name: "IDLE append",
+			cfg: &mail.Config{
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
+						Username: "alice",
+						Password: "foo",
+					},
+				},
+			},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, ctx context.Context) {
+				_ = h.Login("alice", "foo", ctx)
+				_, err := h.Select("Inbox", false, ctx)
+				require.NoError(t, err)
+
+				done := make(chan struct{})
+				r := &imaptest.UpdateRecorder{}
+				err = h.Idle(r, done, ctx)
+				require.NoError(t, err)
+
+				err = h.Append("Inbox", &smtp.Message{MessageId: "1"}, imap.AppendOptions{Flags: []imap.Flag{imap.FlagSeen}}, ctx)
+				require.NoError(t, err)
+
+				require.Len(t, r.Messages, 1)
+				require.Equal(t, []any{uint32(1)}, r.Messages[0])
+
+				close(done)
+				time.Sleep(time.Millisecond * 100)
+
+				err = h.Append("Inbox", &smtp.Message{MessageId: "2"}, imap.AppendOptions{Flags: []imap.Flag{imap.FlagSeen}}, ctx)
+				require.NoError(t, err)
+
+				require.Len(t, r.Messages, 1)
+			},
+		},
+		{
+			name: "IDLE change message flag",
+			cfg: &mail.Config{
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
+						Username: "alice",
+						Password: "foo",
+					},
+				},
+			},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, ctx context.Context) {
+				_ = h.Login("alice", "foo", ctx)
+				_, err := h.Select("Inbox", false, ctx)
+				require.NoError(t, err)
+
+				err = h.Append("Inbox", &smtp.Message{MessageId: "1"}, imap.AppendOptions{Flags: []imap.Flag{imap.FlagSeen}}, ctx)
+				require.NoError(t, err)
+
+				done := make(chan struct{})
+				r := &imaptest.UpdateRecorder{}
+				err = h.Idle(r, done, ctx)
+				require.NoError(t, err)
+
+				err = h.Store(&imap.StoreRequest{
+					Sequence: imap.IdSet{Ids: []imap.Set{imap.IdNum(1)}},
+					Action:   "add",
+					Flags:    []imap.Flag{imap.FlagSeen},
+				}, &imaptest.FetchRecorder{}, ctx)
+
+				require.Len(t, r.Messages, 1)
+				require.Equal(t, []any{uint32(1), []imap.Flag{imap.FlagSeen}}, r.Messages[0])
+
+				close(done)
+				time.Sleep(time.Millisecond * 100)
+
+				err = h.Store(&imap.StoreRequest{
+					Sequence: imap.IdSet{Ids: []imap.Set{imap.IdNum(1)}},
+					Action:   "add",
+					Flags:    []imap.Flag{imap.FlagDeleted},
+				}, &imaptest.FetchRecorder{}, ctx)
+
+				require.Len(t, r.Messages, 1)
+			},
+		},
+		{
+			name: "IDLE expunge",
+			cfg: &mail.Config{
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"alice@mokapi.io": {
+						Username: "alice",
+						Password: "foo",
+					},
+				},
+			},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, ctx context.Context) {
+				_ = h.Login("alice", "foo", ctx)
+				_, err := h.Select("Inbox", false, ctx)
+				require.NoError(t, err)
+
+				mb := s.Mailboxes["alice@mokapi.io"]
+				mb.Folders["INBOX"].Messages = []*mail.Mail{
+					{
+						Message:  &smtp.Message{},
+						UId:      1,
+						Received: time.Time{},
+					},
+					{
+						Message:  &smtp.Message{},
+						UId:      2,
+						Flags:    []imap.Flag{imap.FlagDeleted},
+						Received: time.Time{},
+					},
+					{
+						Message:  &smtp.Message{},
+						UId:      3,
+						Flags:    []imap.Flag{imap.FlagDeleted},
+						Received: time.Time{},
+					},
+				}
+
+				done := make(chan struct{})
+				r := &imaptest.UpdateRecorder{}
+				err = h.Idle(r, done, ctx)
+				require.NoError(t, err)
+
+				err = h.Expunge(&imap.IdSet{Ids: []imap.Set{imap.IdNum(2), imap.IdNum(3)}}, &imaptest.ExpungeRecorder{}, ctx)
+
+				require.Len(t, r.Messages, 2)
+				require.Equal(t, []any{uint32(2)}, r.Messages[0])
+				require.Equal(t, []any{uint32(2)}, r.Messages[0])
+
+				close(done)
+				time.Sleep(time.Millisecond * 100)
+
+				mb.Folders["INBOX"].Messages[0].Flags = []imap.Flag{imap.FlagDeleted}
+				err = h.Expunge(&imap.IdSet{Ids: []imap.Set{imap.IdNum(1)}}, &imaptest.ExpungeRecorder{}, ctx)
+
+				require.Len(t, r.Messages, 2)
 			},
 		},
 	}

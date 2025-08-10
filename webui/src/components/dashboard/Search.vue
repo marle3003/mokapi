@@ -256,7 +256,7 @@ function facetTitle(s: string) {
           </div>
           <div class="row justify-content-md-center ps-0 mb-2" v-if="result">
             <div class="col-6 col-auto">
-               <h3 v-if="result.total <= 10" class="mt-1 mb-3 fs-6">Showing <strong>{{ result.total }}</strong> results</h3>
+               <h3 v-if="result.total <= 10" class="mt-1 mb-3 fs-6">Showing <strong>{{ result.total }}</strong> {{ result.total === 1 ? "result" : "results" }}</h3>
                <h3 v-else class="mt-1 mb-3 fs-6">Showing <strong>{{ result.results.length }}</strong> of {{ result.total }} results</h3>
             </div>
           </div>

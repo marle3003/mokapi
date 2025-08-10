@@ -1,9 +1,13 @@
 package imap_test
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"github.com/stretchr/testify/require"
+	"mokapi/config/static"
 	"mokapi/imap"
+	"mokapi/server/cert"
 	"mokapi/try"
 	"testing"
 )
@@ -57,6 +61,36 @@ func TestServer(t *testing.T) {
 			tc.test(t, c)
 		})
 	}
+}
+
+func TestServer_Tls(t *testing.T) {
+	p := try.GetFreePort()
+	store, err := cert.NewStore(&static.Config{})
+	require.NoError(t, err)
+
+	s := &imap.Server{
+		Addr:    fmt.Sprintf(":%v", p),
+		TlsMode: imap.Implicit,
+		TLSConfig: &tls.Config{
+			GetCertificate: store.GetCertificate,
+		},
+	}
+
+	go func() {
+		err := s.ListenAndServe()
+		require.ErrorIs(t, err, imap.ErrServerClosed)
+	}()
+
+	c := imap.NewClient(fmt.Sprintf("localhost:%v", p))
+	rootCAs := x509.NewCertPool()
+	rootCAs.AddCert(cert.DefaultRootCert())
+	cfg := &tls.Config{
+		RootCAs: rootCAs,
+	}
+	res, err := c.DialTls(cfg)
+	require.NoError(t, err)
+	// should not contain StartTls
+	require.Equal(t, []string{"IMAP4rev1", "SASL-IR", "AUTH=PLAIN"}, res)
 }
 
 func mustDial(t *testing.T, c *imap.Client) {

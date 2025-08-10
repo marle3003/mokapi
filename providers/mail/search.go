@@ -21,7 +21,11 @@ func (h *Handler) Search(req *imap.SearchRequest, ctx context.Context) (*imap.Se
 	for i, m := range f.Messages {
 		msn := uint32(i + 1)
 		if match(msn, m, req.Criteria) {
-			set.AddId(msn)
+			if req.IsUid {
+				set.AddId(m.UId)
+			} else {
+				set.AddId(msn)
+			}
 		}
 	}
 
@@ -34,6 +38,10 @@ func match(msn uint32, m *Mail, criteria *imap.SearchCriteria) bool {
 	}
 
 	if criteria.Seq != nil && !criteria.Seq.Contains(msn) {
+		return false
+	}
+
+	if criteria.UID != nil && !criteria.UID.Contains(m.UId) {
 		return false
 	}
 

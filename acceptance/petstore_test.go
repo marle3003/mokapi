@@ -187,6 +187,14 @@ func (suite *PetStoreSuite) TestGetOrderById() {
 		try.HasBody(`{"id":12545,"petId":20895,"quantity":16,"shipDate":"2027-11-26T16:57:16Z","status":"approved","complete":true}`))
 }
 
+func (suite *PetStoreSuite) TestTls() {
+	try.GetRequest(suite.T(), "https://localhost:18443/store/order/10",
+		map[string]string{"Accept": "application/json"},
+		try.HasStatusCode(http.StatusOK),
+		try.IsTls("localhost"),
+	)
+}
+
 func (suite *PetStoreSuite) TestKafka_TopicConfig() {
 	c := kafkatest.NewClient("127.0.0.1:19092", "test")
 	defer c.Close()

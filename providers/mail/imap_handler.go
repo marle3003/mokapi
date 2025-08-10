@@ -3,6 +3,7 @@ package mail
 import (
 	"context"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"mokapi/imap"
 	"mokapi/smtp"
 	"slices"
@@ -90,7 +91,7 @@ func (h *Handler) Store(req *imap.StoreRequest, res imap.FetchResponse, ctx cont
 	mb.m.Lock()
 	defer mb.m.Unlock()
 
-	do := func(action string, flags []imap.Flag, m *Mail) {
+	do := func(msn uint32, m *Mail, action string, flags []imap.Flag) {
 		switch action {
 		case "add":
 			for _, f := range flags {
@@ -106,11 +107,16 @@ func (h *Handler) Store(req *imap.StoreRequest, res imap.FetchResponse, ctx cont
 		case "replace":
 			m.Flags = flags
 		}
+		for _, w := range folder.writers {
+			if err := w.WriteMessageFlags(msn, m.Flags); err != nil {
+				log.Errorf("mailbox \"%s\" write error: %v", folder.Name, err)
+			}
+		}
 	}
 
 	if req.Sequence.IsUid {
-		doMessagesByUid(&req.Sequence, folder, func(m *Mail) {
-			do(req.Action, req.Flags, m)
+		doMessagesByUid(&req.Sequence, folder, func(msn uint32, m *Mail) {
+			do(msn, m, req.Action, req.Flags)
 			if !req.Silent {
 				w := res.NewMessage(m.UId)
 				w.WriteFlags(m.Flags...)
@@ -118,8 +124,8 @@ func (h *Handler) Store(req *imap.StoreRequest, res imap.FetchResponse, ctx cont
 			}
 		})
 	} else {
-		doMessagesByMsn(&req.Sequence, folder, func(msn int, m *Mail) {
-			do(req.Action, req.Flags, m)
+		doMessagesByMsn(&req.Sequence, folder, func(msn uint32, m *Mail) {
+			do(msn, m, req.Action, req.Flags)
 			if !req.Silent {
 				w := res.NewMessage(uint32(msn))
 				w.WriteFlags(m.Flags...)
@@ -145,21 +151,26 @@ func (h *Handler) Expunge(id *imap.IdSet, w imap.ExpungeWriter, ctx context.Cont
 		}
 
 		msn := uint32(i + 1)
-		var err error
-		if id == nil {
-			err = w.Write(msn)
-		} else {
-			if id.IsUid && id.Contains(m.UId) {
-				err = w.Write(m.UId)
-			} else if id.Contains(msn) {
-				err = w.Write(msn)
-			} else {
-				slice = append(slice, m)
+		if id == nil || (id.IsUid && id.Contains(m.UId)) || (!id.IsUid && id.Contains(msn)) {
+			n := msn
+			if id != nil && id.IsUid {
+				n = m.UId
 			}
+			err := w.Write(n)
+			if err != nil {
+				return err
+			}
+			// For idle, sequence numbers shift after each EXPUNGE.
+			msnIdle := uint32(len(slice) + 1)
+			for _, idle := range folder.writers {
+				if err = idle.WriteExpunge(msnIdle); err != nil {
+					log.Errorf("mailbox \"%s\" write error: %v", folder.Name, err)
+				}
+			}
+		} else {
+			slice = append(slice, m)
 		}
-		if err != nil {
-			return err
-		}
+
 	}
 	folder.Messages = slice
 	return nil
@@ -222,12 +233,12 @@ func (h *Handler) Copy(set *imap.IdSet, dest string, w imap.CopyWriter, ctx cont
 	c := &imap.Copy{UIDValidity: d.UidValidity(), SourceUIDs: *set}
 	if set.IsUid {
 		c.DestUIDs.IsUid = true
-		doMessagesByUid(set, source, func(m *Mail) {
+		doMessagesByUid(set, source, func(msn uint32, m *Mail) {
 			d.Copy(m)
 			c.DestUIDs.Append(imap.IdNum(m.UId))
 		})
 	} else {
-		doMessagesByMsn(set, source, func(msn int, m *Mail) {
+		doMessagesByMsn(set, source, func(msn uint32, m *Mail) {
 			d.Copy(m)
 			c.DestUIDs.Append(imap.IdNum(msn))
 		})
@@ -256,14 +267,14 @@ func (h *Handler) Move(set *imap.IdSet, dest string, w imap.MoveWriter, ctx cont
 	c := &imap.Copy{UIDValidity: d.UidValidity(), SourceUIDs: *set}
 	if set.IsUid {
 		c.DestUIDs.IsUid = true
-		doMessagesByUid(set, source, func(m *Mail) {
+		doMessagesByUid(set, source, func(msn uint32, m *Mail) {
 			source.Remove(m)
 			m = d.Copy(m)
 			c.DestUIDs.Append(imap.IdNum(m.UId))
 			_ = w.WriteExpunge(m.UId)
 		})
 	} else {
-		doMessagesByMsn(set, source, func(msn int, m *Mail) {
+		doMessagesByMsn(set, source, func(msn uint32, m *Mail) {
 			source.Remove(m)
 			m = d.Copy(m)
 			c.DestUIDs.Append(imap.IdNum(msn))
@@ -334,6 +345,22 @@ func (h *Handler) Append(mailbox string, message *smtp.Message, opt imap.AppendO
 	if !opt.Date.IsZero() {
 		m.Date = opt.Date
 	}
+
+	return nil
+}
+
+func (h *Handler) Idle(w imap.UpdateWriter, done chan struct{}, ctx context.Context) error {
+	_, f := getContext(ctx)
+
+	if f.writers == nil {
+		f.writers = map[imap.UpdateWriter]imap.UpdateWriter{}
+	}
+
+	f.writers[w] = w
+	go func() {
+		<-done
+		delete(f.writers, w)
+	}()
 
 	return nil
 }

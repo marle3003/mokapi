@@ -5,10 +5,12 @@ import (
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	engine "mokapi/engine/common"
+	"mokapi/imap"
 	"mokapi/providers/mail"
 	"mokapi/runtime"
 	"mokapi/server/cert"
 	"mokapi/server/service"
+	"mokapi/smtp"
 	"net"
 	"sync"
 )
@@ -88,7 +90,7 @@ func (m *MailManager) startServers(cfg *runtime.MailInfo) error {
 			}
 
 			log.Infof("adding new SMTP host on :%v", port)
-			s := service.NewSmtpServer(port, h, m.certStore)
+			s := service.NewSmtpServer(port, h, m.certStore, smtp.StartTls)
 			s.Start()
 			servers[port] = s
 		case "smtps":
@@ -102,8 +104,8 @@ func (m *MailManager) startServers(cfg *runtime.MailInfo) error {
 			}
 
 			log.Infof("adding new SMTPS host on %v", port)
-			s := service.NewSmtpServer(port, h, m.certStore)
-			s.StartTls()
+			s := service.NewSmtpServer(port, h, m.certStore, smtp.Implicit)
+			s.Start()
 			servers[port] = s
 		case "imap":
 			if port == "" {
@@ -116,7 +118,21 @@ func (m *MailManager) startServers(cfg *runtime.MailInfo) error {
 			}
 
 			log.Infof("adding new IMAP host on %v", port)
-			s := service.NewImapServer(port, h)
+			s := service.NewImapServer(port, h, m.certStore, imap.StartTls)
+			s.Start()
+			servers[port] = s
+		case "imaps":
+			if port == "" {
+				port = "993"
+			}
+
+			addr := fmt.Sprintf(":%v", port)
+			if _, ok = servers[addr]; ok {
+				continue
+			}
+
+			log.Infof("adding new IMAPS host on %v", port)
+			s := service.NewImapServer(port, h, m.certStore, imap.Implicit)
 			s.Start()
 			servers[port] = s
 		}

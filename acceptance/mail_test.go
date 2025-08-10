@@ -1,12 +1,16 @@
 package acceptance
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
 	"mokapi/server/cert"
 	"mokapi/smtp/smtptest"
 	"mokapi/try"
+	"net"
+	"os"
+	"path"
 	"testing"
 )
 
@@ -14,7 +18,13 @@ type MailSuite struct{ BaseSuite }
 
 func (suite *MailSuite) SetupSuite() {
 	cfg := static.NewConfig()
+	wd, err := os.Getwd()
+	require.NoError(suite.T(), err)
+	cfg.ConfigFile = path.Join(wd, "mokapi.yaml")
 	cfg.Providers.File.Directories = []string{"./mail"}
+	cfg.Certificates.Static = []static.Certificate{
+		{Cert: "./mail/mail.mokapi.local.pem"},
+	}
 	suite.initCmd(cfg)
 }
 
@@ -237,4 +247,53 @@ It can be any text data.
 			require.Greater(t, m["size"], float64(0))
 		}),
 	)
+}
+
+func (suite *MailSuite) TestCustomServerCertificate() {
+	conn, err := net.Dial("tcp", "localhost:8993")
+	require.NoError(suite.T(), err)
+	defer func() { _ = conn.Close() }()
+
+	// Upgrade to TLS
+	tlsConn := tls.Client(conn, &tls.Config{
+		// triggers hostname verification
+		ServerName:         "mail.mokapi.local",
+		InsecureSkipVerify: true,
+	})
+	defer func() { _ = tlsConn.Close() }()
+
+	err = tlsConn.Handshake()
+	require.NoError(suite.T(), err)
+
+	// Get server certificate
+	state := tlsConn.ConnectionState()
+	require.Len(suite.T(), state.PeerCertificates, 1)
+	c := state.PeerCertificates[0]
+
+	require.Equal(suite.T(), "mail.mokapi.local", c.Subject.CommonName)
+}
+
+func (suite *MailSuite) TestDynamicServerCertificate() {
+	conn, err := net.Dial("tcp", "localhost:8994")
+	require.NoError(suite.T(), err)
+	defer func() { _ = conn.Close() }()
+
+	// Upgrade to TLS
+	tlsConn := tls.Client(conn, &tls.Config{
+		// triggers hostname verification
+		ServerName:         "imap.mokapi.local",
+		InsecureSkipVerify: true,
+	})
+	defer func() { _ = tlsConn.Close() }()
+
+	err = tlsConn.Handshake()
+	require.NoError(suite.T(), err)
+
+	// Get server certificate
+	state := tlsConn.ConnectionState()
+	// root CA is included
+	require.Greater(suite.T(), len(state.PeerCertificates), 1)
+	c := state.PeerCertificates[0]
+
+	require.Equal(suite.T(), "imap.mokapi.local", c.Subject.CommonName)
 }

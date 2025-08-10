@@ -69,6 +69,8 @@ event:
     store:
         default:
             size: 100
+certificates:
+    static: []
 `, out)
 			},
 		},

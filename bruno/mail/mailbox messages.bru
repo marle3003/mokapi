@@ -5,14 +5,19 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/services/mail/{{mailServerName}}/mailboxes/:mailbox/folders/:folder
+  url: {{baseUrl}}/services/mail/{{mailServerName}}/mailboxes/:mailbox/messages
   body: none
   auth: inherit
 }
 
+params:query {
+  ~folder: 
+  ~index: 
+  ~limit: 
+}
+
 params:path {
-  folder: INBOX
-  mailbox: alice@mokapi.io
+  mailbox: bob@mokapi.io
 }
 
 settings {

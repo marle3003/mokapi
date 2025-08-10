@@ -5,6 +5,12 @@ servers:
   smtps:
     host: localhost:8025
     protocol: smtps
+  customImaps:
+    host: mail.mokapi.local:8993
+    protocol: imaps
+  dynamicImaps:
+    host: imap.mokapi.local:8994
+    protocol: imaps
 rules:
   allowSender:
     sender: .*@foo.bar

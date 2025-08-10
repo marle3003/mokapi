@@ -24,6 +24,7 @@ type Config struct {
 	Features         []string          `json:"-" yaml:"-" explode:"feature"`
 	Version          bool              `json:"-" yaml:"-" aliases:"v"`
 	Event            Event             `json:"event" yaml:"event"`
+	Certificates     CertificateStore  `json:"certificates" yaml:"certificates"`
 	Args             []string          `json:"args" yaml:"-" aliases:"args"` // positional arguments
 }
 
@@ -166,6 +167,15 @@ type Store struct {
 }
 
 type Configs []string
+
+type CertificateStore struct {
+	Static []Certificate
+}
+
+type Certificate struct {
+	Cert tls.FileOrContent `yaml:"cert" json:"cert"`
+	Key  tls.FileOrContent `yaml:"key" json:"key"`
+}
 
 func (c *Configs) UnmarshalJSON(b []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(b))

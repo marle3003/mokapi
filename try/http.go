@@ -140,6 +140,14 @@ func BodyContainsData(expected map[string]interface{}) ResponseCondition {
 	}
 }
 
+func IsTls(commonName string) ResponseCondition {
+	return func(t *testing.T, tr *TestResponse) {
+		require.NotNil(t, tr.res.TLS)
+		require.Len(t, tr.res.TLS.PeerCertificates, 2)
+		require.Equal(t, commonName, tr.res.TLS.PeerCertificates[0].Subject.CommonName)
+	}
+}
+
 func (tr *TestResponse) GetBody() []byte {
 	if tr.body != nil {
 		return tr.body

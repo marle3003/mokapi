@@ -56,6 +56,35 @@ func (c *Client) Dial() ([]string, error) {
 	return c.readGreetings(d)
 }
 
+func (c *Client) DialTls(cfg *tls.Config) ([]string, error) {
+	var err error
+	backoff := 50 * time.Millisecond
+	if c.conn == nil {
+		for i := 0; i < 10; i++ {
+			d := &net.Dialer{Timeout: c.Timeout}
+			c.conn, err = tls.DialWithDialer(d, "tcp", c.Addr, cfg)
+			if err != nil {
+				time.Sleep(backoff)
+				continue
+			}
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = c.conn.SetDeadline(time.Now().Add(time.Second * 5))
+	if err != nil {
+		return nil, fmt.Errorf("unable to set deadline: %v", err)
+	}
+	c.tpc = textproto.NewConn(c.conn)
+	d := &Decoder{}
+	d.msg, err = c.tpc.ReadLine()
+
+	return c.readGreetings(d)
+}
+
 func (c *Client) Capability() ([]string, error) {
 	tag := c.nextTag()
 	err := c.tpc.PrintfLine("%s CAPABILITY", tag)

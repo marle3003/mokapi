@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"mokapi/config/static"
+	"path"
 )
 
 type Store struct {
@@ -52,11 +53,99 @@ func NewStore(config *static.Config) (*Store, error) {
 		return nil, err
 	}
 
+	for _, ci := range config.Certificates.Static {
+		bCert, err := ci.Cert.Read(path.Dir(config.ConfigFile))
+		if err != nil {
+			return nil, err
+		}
+
+		var c *tls.Certificate
+		// key is in the PEM file
+		if ci.Key == "" {
+			c, err = decodePem(bCert)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			var bKey []byte
+			bKey, err = ci.Key.Read(path.Dir(config.ConfigFile))
+			if err != nil {
+				return nil, err
+			}
+			var p tls.Certificate
+			p, err = tls.X509KeyPair(bCert, bKey)
+			c = &p
+		}
+
+		if c == nil {
+			continue
+		}
+
+		cer, _ := x509.ParseCertificate(c.Certificate[0])
+		store.AddCertificate(cer.Subject.CommonName, c)
+		for _, n := range cer.DNSNames {
+			store.AddCertificate(n, c)
+		}
+	}
+
 	return store, nil
 }
 
 func (store *Store) AddCertificate(domain string, certificate *tls.Certificate) {
 	store.Certificates[domain] = certificate
+}
+
+func decodePem(data []byte) (*tls.Certificate, error) {
+	var cert *x509.Certificate
+	var key interface{}
+
+	rest := data
+	for {
+		var block *pem.Block
+		block, rest = pem.Decode(rest)
+		if block == nil {
+			break
+		}
+
+		switch block.Type {
+		case "CERTIFICATE":
+			parsedCert, err := x509.ParseCertificate(block.Bytes)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse certificate: %v", err)
+			}
+			cert = parsedCert
+
+		case "RSA PRIVATE KEY":
+			parsedKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse RSA private key: %v", err)
+			}
+			key = parsedKey
+
+		case "EC PRIVATE KEY":
+			parsedKey, err := x509.ParseECPrivateKey(block.Bytes)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse EC private key: %v", err)
+			}
+			key = parsedKey
+
+		case "PRIVATE KEY": // PKCS#8
+			parsedKey, err := x509.ParsePKCS8PrivateKey(block.Bytes)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse PKCS#8 private key: %v", err)
+			}
+			key = parsedKey
+		}
+	}
+
+	if cert == nil || key == nil {
+		return nil, fmt.Errorf("certificate or private key not found in PEM")
+	}
+
+	return &tls.Certificate{
+		Certificate: [][]byte{cert.Raw},
+		PrivateKey:  key,
+	}, nil
 }
 
 func DefaultRootCert() *x509.Certificate {

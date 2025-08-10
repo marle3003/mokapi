@@ -11,6 +11,12 @@ export default function() {
                 subject: 'A test mail',
                 contentType: 'text/html',
                 body: '<h1>Hello Bob</h1> How you\'re doing?'
+            },
+            {
+                plain: {
+                    username: 'alice@mokapi.io',
+                    password: ''
+                }
             }
         )
     }catch (e) {

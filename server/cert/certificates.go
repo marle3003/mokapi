@@ -30,9 +30,18 @@ func (store *Store) GetOrCreate(info *tls.ClientHelloInfo) (*tls.Certificate, er
 
 func (store *Store) createTlsCertificate(info *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	serverName := info.ServerName
-	host, _, _ := net.SplitHostPort(info.Conn.LocalAddr().String())
 	if len(serverName) == 0 {
-		serverName = host
+		host, _, _ := net.SplitHostPort(info.Conn.LocalAddr().String())
+		ip := net.ParseIP(host)
+		if ip != nil && ip.IsLoopback() {
+			serverName = "localhost"
+		} else {
+			serverName = host
+		}
+	}
+	ips, err := getAllIPs()
+	if err != nil {
+		return nil, err
 	}
 
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128) // 2^128
@@ -45,21 +54,20 @@ func (store *Store) createTlsCertificate(info *tls.ClientHelloInfo) (*tls.Certif
 		Subject: pkix.Name{
 			CommonName: serverName,
 		},
-		DNSNames:              []string{info.ServerName},
-		NotBefore:             time.Now(),
-		NotAfter:              time.Now().AddDate(10, 0, 0),
-		SubjectKeyId:          []byte{1, 2, 3, 4, 5, 6},
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
-		IPAddresses:           []net.IP{net.ParseIP(host)},
-		BasicConstraintsValid: true,
+		DNSNames:     []string{serverName},
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().AddDate(10, 0, 0),
+		SubjectKeyId: []byte{1, 2, 3, 4, 5, 6},
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		IPAddresses:  ips,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	return &tls.Certificate{
-		Certificate: [][]byte{cert},
+		Certificate: [][]byte{cert, store.CaCert.Raw},
 		PrivateKey:  key,
 	}, nil
 }
@@ -76,4 +84,41 @@ func (store *Store) CreateCertificate(template x509.Certificate) (cert []byte, p
 	}
 
 	return
+}
+
+func getAllIPs() ([]net.IP, error) {
+	var ips []net.IP
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+	for _, iface := range ifaces {
+		// Skip down interfaces
+		if iface.Flags&net.FlagUp == 0 {
+			continue
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			continue
+		}
+		for _, addr := range addrs {
+			var ip net.IP
+			switch v := addr.(type) {
+			case *net.IPNet:
+				ip = v.IP
+			case *net.IPAddr:
+				ip = v.IP
+			}
+			if ip == nil {
+				continue
+			}
+			if ip.IsMulticast() || ip.IsUnspecified() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+				continue
+			}
+			if ip.To4() != nil || ip.IsGlobalUnicast() {
+				ips = append(ips, ip)
+			}
+		}
+	}
+	return ips, nil
 }
