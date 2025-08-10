@@ -130,7 +130,10 @@ Explore tutorials that walk you through mocking different protocols and scenario
 
 # ☕ Support
 
-If you find Mokapi helpful, consider supporting the project:
+Show your love for Mokapi and support the project by grabbing some cool merch!  
+[Visit the Mokapi Merchandise Store](https://mokapi.myspreadshop.ch) 🔥
+
+If you like Mokapi, consider buying me a coffee:
 
 <a href="https://www.buymeacoffee.com/mokapi" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 
