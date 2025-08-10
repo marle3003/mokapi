@@ -12,6 +12,7 @@ const SearchDateLayout = "2-Jan-2006"
 
 type SearchRequest struct {
 	Criteria *SearchCriteria
+	IsUid    bool
 }
 
 type SearchCriteria struct {
@@ -50,6 +51,7 @@ type SearchResponse struct {
 func (c *conn) handleSearch(tag string, d *Decoder, isUid bool) error {
 	r := &SearchRequest{
 		Criteria: &SearchCriteria{},
+		IsUid:    isUid,
 	}
 
 	for {
@@ -208,6 +210,12 @@ func readAtomSearchKey(criteria *SearchCriteria, d *Decoder) error {
 			return err
 		}
 		criteria.Text = append(criteria.Text, value)
+	case "UID":
+		set, err := d.SP().Sequence()
+		if err != nil {
+			return err
+		}
+		criteria.UID = &set
 	default:
 		set, err := parseSequence(key)
 		if err != nil {

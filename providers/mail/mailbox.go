@@ -2,6 +2,7 @@ package mail
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"mokapi/imap"
 	"mokapi/smtp"
 	"slices"
@@ -32,6 +33,8 @@ type Folder struct {
 
 	mb       *Mailbox
 	maxMails int
+
+	writers map[imap.UpdateWriter]imap.UpdateWriter
 
 	// next available UID for new messages
 	uidNext uint32
@@ -256,6 +259,13 @@ func (f *Folder) Append(msg *smtp.Message) *Mail {
 	}
 
 	f.Messages = append(f.Messages, m)
+
+	for _, w := range f.writers {
+		if err := w.WriteNumMessages(uint32(len(f.Messages))); err != nil {
+			log.Errorf("mailbox \"%s\" write error: %v", f.Name, err)
+		}
+	}
+
 	return m
 }
 

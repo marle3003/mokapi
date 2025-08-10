@@ -19,32 +19,33 @@ func (h *Handler) Fetch(req *imap.FetchRequest, res imap.FetchResponse, ctx cont
 	}
 
 	if req.Sequence.IsUid {
-		doMessagesByUid(&req.Sequence, f, func(m *Mail) {
+		doMessagesByUid(&req.Sequence, f, func(msn uint32, m *Mail) {
 			w := res.NewMessage(m.UId)
 			writeMessage(m, req.Options, w)
 		})
 	} else {
-		doMessagesByMsn(&req.Sequence, f, func(msn int, m *Mail) {
-			w := res.NewMessage(uint32(msn))
+		doMessagesByMsn(&req.Sequence, f, func(msn uint32, m *Mail) {
+			w := res.NewMessage(msn)
 			writeMessage(m, req.Options, w)
 		})
 	}
 	return nil
 }
 
-func doMessagesByUid(set *imap.IdSet, folder *Folder, action func(m *Mail)) {
-	for _, msg := range folder.Messages {
+func doMessagesByUid(set *imap.IdSet, folder *Folder, action func(msn uint32, m *Mail)) {
+	for i, msg := range folder.Messages {
+		msn := i + 1
 		if set.Contains(msg.UId) {
-			action(msg)
+			action(uint32(msn), msg)
 		}
 	}
 }
 
-func doMessagesByMsn(set *imap.IdSet, folder *Folder, action func(msn int, m *Mail)) {
+func doMessagesByMsn(set *imap.IdSet, folder *Folder, action func(msn uint32, m *Mail)) {
 	for i, msg := range folder.Messages {
 		msn := i + 1
 		if set.Contains(uint32(msn)) {
-			action(msn, msg)
+			action(uint32(msn), msg)
 		}
 	}
 }
