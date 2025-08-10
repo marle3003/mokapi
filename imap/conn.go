@@ -66,13 +66,10 @@ func (c *conn) readCmd() error {
 	d := Decoder{msg: param}
 
 	// missing feature
-	// - UID search
-	// - idle
 	// - ID
 	// - namespace
 	// - sort
 	// - thread
-	// - append
 
 	var res *response
 	switch cmd {
@@ -127,6 +124,8 @@ func (c *conn) readCmd() error {
 		res = &response{
 			status: ok,
 		}
+	case "IDLE":
+		err = c.handleIdle(tag)
 	default:
 		log.Errorf("imap: unknown command: %v", line)
 		res = &response{

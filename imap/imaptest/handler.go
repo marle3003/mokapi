@@ -25,6 +25,7 @@ type Handler struct {
 	UnsubscribeFunc func(mailbox string, session map[string]interface{}) error
 	SearchFunc      func(request *imap.SearchRequest) (*imap.SearchResponse, error)
 	AppendFunc      func(mailbox string, msg *smtp.Message, opt imap.AppendOptions) error
+	IdleFunc        func(w imap.UpdateWriter, done chan struct{}, session map[string]interface{}) error
 }
 
 func (h *Handler) Login(username, password string, _ context.Context) error {
@@ -48,7 +49,7 @@ func (h *Handler) Unselect(_ context.Context) error {
 		h.ensureSession()
 		return h.UnselectFunc(h.session)
 	}
-	panic("unselect not implemented")
+	return nil
 }
 
 func (h *Handler) List(ref, pattern string, flags []imap.MailboxFlags, _ context.Context) ([]imap.ListEntry, error) {
@@ -80,7 +81,7 @@ func (h *Handler) Expunge(set *imap.IdSet, w imap.ExpungeWriter, _ context.Conte
 		h.ensureSession()
 		return h.ExpungeFunc(set, w, h.session)
 	}
-	panic("EXPUNGE not implemented")
+	return nil
 }
 
 func (h *Handler) Create(name string, opt *imap.CreateOptions, _ context.Context) error {
@@ -167,4 +168,12 @@ func (h *Handler) ensureSession() {
 	if h.session == nil {
 		h.session = map[string]interface{}{}
 	}
+}
+
+func (h *Handler) Idle(w imap.UpdateWriter, done chan struct{}, _ context.Context) error {
+	if h.IdleFunc != nil {
+		h.ensureSession()
+		return h.IdleFunc(w, done, h.session)
+	}
+	panic("IDLE not implemented")
 }

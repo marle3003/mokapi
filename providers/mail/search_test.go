@@ -101,6 +101,66 @@ func TestImapHandler_Search(t *testing.T) {
 			},
 		},
 		{
+			name: "Search Uid Number: 10849681",
+			cfg:  cfg,
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, ctx context.Context) {
+				_ = h.Login("alice", "foo", ctx)
+				_, err := h.Select("Inbox", false, ctx)
+				require.NoError(t, err)
+
+				addMail(s, &mail.Mail{
+					UId:     uint32(10849681),
+					Message: &smtp.Message{},
+					Flags:   []imap.Flag{imap.FlagSeen},
+				})
+				addMail(s, &mail.Mail{
+					UId:     uint32(1084962),
+					Message: &smtp.Message{},
+					Flags:   []imap.Flag{imap.FlagSeen},
+				})
+
+				set := &imap.IdSet{}
+				set.AddId(10849681)
+				res, err := h.Search(&imap.SearchRequest{
+					Criteria: &imap.SearchCriteria{
+						UID: set,
+					},
+				}, ctx)
+				require.NoError(t, err)
+				r, ok := res.All.Nums()
+				require.True(t, ok)
+				require.Equal(t, []uint32{1}, r)
+			},
+		},
+		{
+			name: "UID Search Uid Number: 10849681",
+			cfg:  cfg,
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, ctx context.Context) {
+				_ = h.Login("alice", "foo", ctx)
+				_, err := h.Select("Inbox", false, ctx)
+				require.NoError(t, err)
+
+				addMail(s, &mail.Mail{
+					UId:     uint32(10849681),
+					Message: &smtp.Message{},
+					Flags:   []imap.Flag{imap.FlagSeen},
+				})
+
+				set := &imap.IdSet{}
+				set.AddId(10849681)
+				res, err := h.Search(&imap.SearchRequest{
+					IsUid: true,
+					Criteria: &imap.SearchCriteria{
+						UID: set,
+					},
+				}, ctx)
+				require.NoError(t, err)
+				r, ok := res.All.Nums()
+				require.True(t, ok)
+				require.Equal(t, []uint32{10849681}, r)
+			},
+		},
+		{
 			name: "Search flag \\Answered",
 			cfg:  cfg,
 			test: func(t *testing.T, h *mail.Handler, s *mail.Store, ctx context.Context) {

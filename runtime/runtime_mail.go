@@ -267,6 +267,10 @@ func (h *mailHandler) Append(mailbox string, msg *smtp.Message, opt imap.AppendO
 	return h.next.Append(mailbox, msg, opt, ctx)
 }
 
+func (h *mailHandler) Idle(w imap.UpdateWriter, done chan struct{}, ctx context.Context) error {
+	return h.next.Idle(w, done, ctx)
+}
+
 func getSmtpConfig(c *dynamic.Config) *mail.Config {
 	return c.Data.(*mail.Config)
 }

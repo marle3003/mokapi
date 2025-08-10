@@ -37,6 +37,7 @@ type Handler interface {
 	Unsubscribe(mailbox string, ctx context.Context) error
 	Search(request *SearchRequest, ctx context.Context) (*SearchResponse, error)
 	Append(mailbox string, msg *smtp.Message, opt AppendOptions, ctx context.Context) error
+	Idle(w UpdateWriter, done chan struct{}, ctx context.Context) error
 }
 
 type Flag string
