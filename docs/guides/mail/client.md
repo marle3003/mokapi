@@ -1,6 +1,19 @@
 ---
 title: Email Client Documentation
 description: Setting up a mocked email account within a mail client using Mokapi.
+thunderbird:
+  - title: Add Your Email Account in Thunderbird
+    description: Enter your full name and mocked email address to begin setting up your account.
+    img: /mail/thunderbird/create-account.png
+  - title: Configure IMAP Server Settings in Thunderbird
+    description: Specify the incoming IMAP server hostname, port, and connection security for your mocked mailbox.
+    img: /mail/thunderbird/imap-settings.png
+  - title: Configure SMTP Server Settings in Thunderbird
+    description: Enter the outgoing SMTP server details, including hostname, port, and authentication method.
+    img: /mail/thunderbird/smtp-settings.png
+  - title: Enter Your Email Account Password
+    description: Provide the password for your mocked mailbox to complete the Thunderbird account setup.
+    img: /mail/thunderbird/account-password.png
 ---
 
 # Email Client Account Configuration
@@ -60,12 +73,9 @@ Example (Thunderbird):
 2. Enter bob@mokapi.io as the email address. 
 3. When the client attempts to find settings, select Manual config to adjust them.
 
-## 2. Enter Account Details
+{{ carousel key="thunderbird" }}
 
-Once you have reached the manual configuration screen, enter the following details for Bob’s account:
-
-
-After you have entered these values, save your settings by clicking Done or Finish. Your email
+After you have entered all values, save your settings by clicking Done, Finish or Continue. Your email
 client should now be able to connect to the mocked IMAP and SMTP services provided by Mokapi.
 
 ## 3. Sending a Test Email to Alice
