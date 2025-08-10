@@ -131,20 +131,20 @@ certificates:
 Instead of connecting to localhost, choose a custom domain name and map it to 127.0.0.1 in your hosts file.
 
 **macOS/Linux:**
-```
+```bash
 sudo nano /etc/hosts
 127.0.0.1   mail.mokapi.local
 ```
 
 **Windows:**
-```
+```bash
 notepad C:\Windows\System32\drivers\etc\hosts
 127.0.0.1   mail.mokapi.local
 ```
 
 Then update the Mokapi configuration to use the domain and the secure IMAP port:
 
-```
+```yaml
 servers:
   imap:
     host: mail.mokapi.local:993
