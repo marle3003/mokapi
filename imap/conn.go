@@ -28,8 +28,8 @@ func (c *conn) serve() {
 	defer func() {
 		r := recover()
 		if r != nil {
-			log.Debugf("smtp panic: %v", string(debug.Stack()))
-			log.Errorf("smtp panic: %v", r)
+			log.Debugf("imap panic: %v", string(debug.Stack()))
+			log.Errorf("imap panic: %v", r)
 		}
 		cancel()
 	}()

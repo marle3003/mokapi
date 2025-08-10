@@ -35,6 +35,7 @@
         "index": "guides/mail/overview.md",
         "items": {
           "Quick Start": "guides/mail/quick-start.md",
+          "Client": "guides/mail/client.md",
           "Rules": "guides/mail/rules.md"
         }
       }
