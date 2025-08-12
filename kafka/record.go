@@ -121,7 +121,8 @@ func (rb *RecordBatch) WriteTo(e *Encoder, version int16, tag kafkaTag) {
 
 	if len(rb.Records) == 0 {
 		if isCompact {
-			e.writeUVarInt(0)
+			// compact encoding: N = 0 (empty record batch), writes 0x01
+			e.writeUVarInt(uint64(1))
 		} else {
 			e.writeInt32(0)
 		}

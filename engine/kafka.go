@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"maps"
 	"math/rand"
 	"mokapi/engine/common"
 	"mokapi/kafka"
@@ -16,6 +17,7 @@ import (
 	"mokapi/schema/encoding"
 	"mokapi/schema/json/generator"
 	"mokapi/schema/json/schema"
+	"slices"
 	"strings"
 	"time"
 )
@@ -165,24 +167,38 @@ func (c *KafkaClient) getPartition(t *store.Topic, partition int) (*store.Partit
 }
 
 func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[string]interface{}, topic *asyncapi3.Channel, config *asyncapi3.Config) (rb kafka.RecordBatch, err error) {
-	n := len(topic.Messages)
-	if n == 0 {
-		err = fmt.Errorf("message configuration missing")
-		return
+	contentType := config.DefaultContentType
+	var payload *asyncapi3.SchemaRef
+	keySchema := &asyncapi3.SchemaRef{
+		Value: &asyncapi3.MultiSchemaFormat{
+			Schema: &schema.Schema{Type: schema.Types{"string"}, Pattern: "[a-z]{9}"},
+		},
 	}
+	var headerSchema *schema.Schema
 
-	msg, err := selectMessage(value, topic.Name, config)
-	if err != nil {
-		return
-	}
+	if len(topic.Messages) > 0 {
+		var msg *asyncapi3.Message
+		msg, err = selectMessage(value, topic, config)
+		if err != nil {
+			return
+		}
+		payload = msg.Payload
 
-	keySchema := msg.Bindings.Kafka.Key
-	if keySchema == nil {
-		// use default key schema
-		keySchema = &asyncapi3.SchemaRef{
-			Value: &asyncapi3.MultiSchemaFormat{
-				Schema: &schema.Schema{Type: schema.Types{"string"}, Pattern: "[a-z]{9}"},
-			},
+		if msg.Bindings.Kafka.Key != nil {
+			keySchema = msg.Bindings.Kafka.Key
+		}
+
+		if msg.ContentType != "" {
+			contentType = msg.ContentType
+		}
+
+		if msg.Headers != nil {
+			var ok bool
+			headerSchema, ok = msg.Headers.Value.Schema.(*schema.Schema)
+			if !ok {
+				err = fmt.Errorf("currently only json schema supported")
+				return
+			}
 		}
 	}
 
@@ -194,16 +210,13 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 	}
 
 	if value == nil {
-		value, err = createValue(msg.Payload)
+		value, err = createValue(payload)
 		if err != nil {
 			return rb, fmt.Errorf("unable to generate kafka value: %v", err)
 		}
 	}
 
-	contentType := config.DefaultContentType
-	if msg.ContentType != "" {
-		contentType = msg.ContentType
-	} else if contentType == "" {
+	if contentType == "" {
 		// set default: https://github.com/asyncapi/spec/issues/319
 		contentType = "application/json"
 	}
@@ -212,7 +225,7 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 	if b, ok := value.([]byte); ok {
 		v = b
 	} else {
-		v, err = marshal(value, msg.Payload, contentType)
+		v, err = marshal(value, payload, contentType)
 		if err != nil {
 			return
 		}
@@ -229,16 +242,7 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 	}
 
 	var recordHeaders []kafka.RecordHeader
-	var hs *schema.Schema
-	if msg.Headers != nil {
-		var ok bool
-		hs, ok = msg.Headers.Value.Schema.(*schema.Schema)
-		if !ok {
-			err = fmt.Errorf("currently only json schema supported")
-			return
-		}
-	}
-	recordHeaders, err = getHeaders(headers, hs)
+	recordHeaders, err = getHeaders(headers, headerSchema)
 	if err != nil {
 		return
 	}
@@ -352,22 +356,24 @@ func marshalKey(key interface{}, r *asyncapi3.SchemaRef) ([]byte, error) {
 	}
 }
 
-func selectMessage(value any, topic string, cfg *asyncapi3.Config) (*asyncapi3.Message, error) {
+func selectMessage(value any, topic *asyncapi3.Channel, cfg *asyncapi3.Config) (*asyncapi3.Message, error) {
 	noOperationDefined := true
 
 	// first try to get send operation
-	for name, op := range cfg.Operations {
+	for _, op := range cfg.Operations {
 		if op.Value == nil || op.Value.Channel.Value == nil {
 			continue
 		}
-		if op.Value.Channel.Value.Name == topic && op.Value.Action == "send" {
+		if op.Value.Channel.Value == topic && op.Value.Action == "send" {
 			noOperationDefined = false
+			var messages []*asyncapi3.MessageRef
 			if len(op.Value.Messages) == 0 {
-				log.Warnf("no message defined for operation %s", name)
+				messages = slices.Collect(maps.Values(op.Value.Channel.Value.Messages))
+			} else {
+				messages = op.Value.Messages
 			}
-			for _, msg := range op.Value.Messages {
+			for _, msg := range messages {
 				if msg.Value == nil {
-					log.Errorf("no message defined for operation %s", name)
 					continue
 				}
 				if valueMatchMessagePayload(value, msg.Value) {
@@ -378,18 +384,20 @@ func selectMessage(value any, topic string, cfg *asyncapi3.Config) (*asyncapi3.M
 	}
 
 	// second, try to get receive operation
-	for name, op := range cfg.Operations {
+	for _, op := range cfg.Operations {
 		if op.Value == nil || op.Value.Channel.Value == nil {
 			continue
 		}
-		if op.Value.Channel.Value.Name == topic && op.Value.Action == "receive" {
+		if op.Value.Channel.Value == topic && op.Value.Action == "receive" {
 			noOperationDefined = false
+			var messages []*asyncapi3.MessageRef
 			if len(op.Value.Messages) == 0 {
-				log.Errorf("no message defined for operation %s", name)
+				messages = slices.Collect(maps.Values(op.Value.Channel.Value.Messages))
+			} else {
+				messages = op.Value.Messages
 			}
-			for _, msg := range op.Value.Messages {
+			for _, msg := range messages {
 				if msg.Value == nil {
-					log.Warnf("no message defined for operation %s", name)
 					continue
 				}
 				if valueMatchMessagePayload(value, msg.Value) {
@@ -404,13 +412,13 @@ func selectMessage(value any, topic string, cfg *asyncapi3.Config) (*asyncapi3.M
 	}
 
 	if value != nil {
-		return nil, fmt.Errorf("no matching 'send' or 'receive' operation found for value: %v", value)
+		return nil, fmt.Errorf("no message configuration matches the message value for topic '%s' and value: %v", topic.GetName(), value)
 	}
-	return nil, fmt.Errorf("no matching 'send' or 'receive' operation defined")
+	return nil, fmt.Errorf("no message ")
 }
 
 func valueMatchMessagePayload(value any, msg *asyncapi3.Message) bool {
-	if value == nil {
+	if value == nil || msg.Payload == nil {
 		return true
 	}
 

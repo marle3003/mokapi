@@ -3,7 +3,6 @@ package engine_test
 import (
 	"bytes"
 	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
 	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
@@ -16,6 +15,7 @@ import (
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/runtime"
+	"mokapi/schema/json/generator"
 	"mokapi/schema/json/schema/schematest"
 	"net/url"
 	"testing"
@@ -499,7 +499,7 @@ func TestKafkaClient(t *testing.T) {
 						produce({ topic: 'foo', messages: [{ data: 12 }] })
 					}
 				`))
-				require.EqualError(t, err, "producing kafka message to 'foo' failed: no matching 'send' or 'receive' operation found for value: 12 at mokapi/js/kafka.(*Module).Produce-fm (native)")
+				require.EqualError(t, err, "producing kafka message to 'foo' failed: no message configuration matches the message value for topic 'foo' and value: 12 at mokapi/js/kafka.(*Module).Produce-fm (native)")
 
 				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
@@ -508,7 +508,7 @@ func TestKafkaClient(t *testing.T) {
 
 				// logs
 				require.Len(t, hook.Entries, 2)
-				require.Equal(t, "js error: producing kafka message to 'foo' failed: no matching 'send' or 'receive' operation found for value: 12 in test.js", hook.LastEntry().Message)
+				require.Equal(t, "js error: producing kafka message to 'foo' failed: no message configuration matches the message value for topic 'foo' and value: 12 in test.js", hook.LastEntry().Message)
 			},
 		},
 		{
@@ -566,11 +566,91 @@ func TestKafkaClient(t *testing.T) {
 				require.Contains(t, msg, "kafka topic 'retry' not found. Retry in 1s")
 			},
 		},
+		{
+			name: "channel does not define a message",
+			cfg: func() *asyncapi3.Config {
+				ch := asyncapi3test.NewChannel()
+
+				return asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "", ""),
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("sendAction",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+					),
+				)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ topic: 'foo', messages: [{ data: 'foo' }] })
+					}
+				`))
+
+				require.NoError(t, err)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Equal(t, "gbrmarxhk", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `"foo"`, kafka.BytesToString(b.Records[0].Value))
+
+				err = e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ topic: 'foo', messages: [{  }] })
+					}
+				`))
+
+				require.NoError(t, err)
+				b, errCode = app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(1, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Equal(t, "ijbptapwy", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `""`, kafka.BytesToString(b.Records[0].Value))
+			},
+		},
+		{
+			name: "no payload is defined and produce with value and nil",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage()
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ topic: 'foo', messages: [{ data: 'foo' }] })
+					}
+				`))
+
+				require.NoError(t, err)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Equal(t, "gbrmarxhk", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `"foo"`, kafka.BytesToString(b.Records[0].Value))
+
+				err = e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ topic: 'foo', messages: [{  }] })
+					}
+				`))
+
+				require.NoError(t, err)
+				b, errCode = app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(1, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Equal(t, "ijbptapwy", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `""`, kafka.BytesToString(b.Records[0].Value))
+			},
+		},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			gofakeit.Seed(11)
+			generator.Seed(11)
 
 			app := runtime.New(&static.Config{})
 			e := enginetest.NewEngine(

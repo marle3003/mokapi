@@ -1,7 +1,6 @@
 package createTopics
 
 import (
-	"math"
 	"mokapi/kafka"
 )
 
@@ -14,13 +13,15 @@ func init() {
 		&Request{},
 		&Response{},
 		5,
-		math.MaxInt16,
+		5,
 	)
 }
 
 type Request struct {
-	Topics    []Topic          `kafka:""`
-	TagFields map[int64]string `kafka:"type=TAG_BUFFER,min=5"`
+	Topics       []Topic          `kafka:""`
+	TimeoutMs    int32            `kafka:""`
+	ValidateOnly bool             `kafka:"min=1"`
+	TagFields    map[int64]string `kafka:"type=TAG_BUFFER,min=5"`
 }
 
 type Topic struct {
@@ -29,8 +30,6 @@ type Topic struct {
 	ReplicationFactor int16            `kafka:""`
 	Assignments       []Assignment     `kafka:""`
 	Configs           []Config         `kafka:""`
-	TimeoutMs         int32            `kafka:""`
-	ValidateOnly      bool             `kafka:"min=1"`
 	TagFields         map[int64]string `kafka:"type=TAG_BUFFER,min=5"`
 }
 

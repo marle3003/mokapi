@@ -35,7 +35,7 @@ func NewEncoder(w buffer.Buffer) *Encoder {
 }
 
 func newEncodeFunc(t reflect.Type, version int16, tag kafkaTag) encodeFunc {
-	if reflect.PtrTo(t).Implements(writerTo) {
+	if reflect.PointerTo(t).Implements(writerTo) {
 		return func(e *Encoder, v reflect.Value) {
 			v.Addr().Interface().(WriterTo).WriteTo(e, version, tag)
 		}
@@ -129,10 +129,10 @@ func newStructEncodeFunc(t reflect.Type, version int16, _ kafkaTag) encodeFunc {
 }
 
 func (e *Encoder) encodeCompactArray(v reflect.Value, encodeElem encodeFunc) {
-	len := v.Len()
-	e.writeUVarInt(uint64(len + 1))
+	n := v.Len()
+	e.writeUVarInt(uint64(n + 1))
 
-	for i := 0; i < len; i++ {
+	for i := 0; i < n; i++ {
 		item := v.Index(i)
 		encodeElem(e, item)
 	}
@@ -214,9 +214,9 @@ func (e *Encoder) encodeInt64(v reflect.Value) {
 }
 
 func (e *Encoder) writeCompactBytes(b []byte) {
-	len := len(b)
-	e.writeUVarInt(uint64(len) + 1)
-	e.Write(b)
+	n := len(b)
+	e.writeUVarInt(uint64(n) + 1)
+	_, _ = e.Write(b)
 }
 
 func (e *Encoder) writeNullBytes(b []byte) {
@@ -224,7 +224,7 @@ func (e *Encoder) writeNullBytes(b []byte) {
 		e.writeInt32(-1)
 	} else {
 		e.writeInt32(int32(len(b)))
-		e.Write(b)
+		_, _ = e.Write(b)
 	}
 }
 
@@ -233,7 +233,7 @@ func (e *Encoder) writeCompactNullBytes(b []byte) {
 		e.writeUVarInt(0)
 	} else {
 		e.writeUVarInt(uint64(len(b)) + 1)
-		e.Write(b)
+		_, _ = e.Write(b)
 	}
 }
 
@@ -242,7 +242,7 @@ func (e *Encoder) writeVarNullBytes(b []byte) {
 		e.writeVarInt(-1)
 	} else {
 		e.writeVarInt(int64(len(b)))
-		e.Write(b)
+		_, _ = e.Write(b)
 	}
 }
 
@@ -250,15 +250,15 @@ func (e *Encoder) writeVarNullBytesFrom(b Bytes) {
 	if b == nil {
 		e.writeVarInt(-1)
 	} else {
-		b.Seek(0, io.SeekStart)
+		_, _ = b.Seek(0, io.SeekStart)
 		e.writeVarInt(int64(b.Size()))
-		io.Copy(e, b)
+		_, _ = io.Copy(e, b)
 	}
 }
 
 func (e *Encoder) writeBytes(b []byte) {
 	e.writeInt32(int32(len(b)))
-	e.Write(b)
+	_, _ = e.Write(b)
 }
 
 func (e *Encoder) writeCompactString(s string) {
@@ -386,5 +386,5 @@ func (e *Encoder) writeUVarInt(i uint64) {
 }
 
 func (e *Encoder) encodeTagBuffer(_ reflect.Value) {
-	e.writeUVarInt(0)
+	_, _ = e.writer.Write([]byte{0})
 }

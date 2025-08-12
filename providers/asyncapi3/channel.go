@@ -105,3 +105,13 @@ func (c *Channel) UnmarshalJSON(b []byte) error {
 	*c = Channel(a)
 	return nil
 }
+
+func (c *Channel) GetName() string {
+	if c.Address != "" {
+		return c.Address
+	}
+	if c.Name != "" {
+		return c.Name
+	}
+	return c.Title
+}

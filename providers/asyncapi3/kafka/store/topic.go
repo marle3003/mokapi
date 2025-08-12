@@ -48,6 +48,7 @@ func newTopic(name string, channel *asyncapi3.Channel, ops []*asyncapi3.Operatio
 }
 
 func (t *Topic) update(config *asyncapi3.Channel, s *Store) {
+	t.Config = config
 	numPartitions := config.Bindings.Kafka.Partitions
 
 	for i, p := range t.Partitions {
