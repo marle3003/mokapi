@@ -74,3 +74,47 @@ func TestConfig_Convert(t *testing.T) {
 	require.Equal(t, channel, op.Channel.Value)
 	require.Equal(t, "Inform about environmental lighting conditions of a particular streetlight.", op.Summary)
 }
+
+func TestConfig_ConvertNoOperationId(t *testing.T) {
+	s := `
+asyncapi: '2.6.0'
+info:
+  title: Streetlights API
+channels:
+  foo:
+    publish:
+      message:
+        payload:
+          schema:
+            type: string
+  bar:
+    publish:
+      message:
+        payload:
+          schema:
+            type: string
+`
+	var old *Config
+	err := yaml.Unmarshal([]byte(s), &old)
+	require.NoError(t, err)
+	cfg, err := old.Convert()
+	require.NoError(t, err)
+
+	require.Len(t, cfg.Channels, 2)
+	require.Contains(t, cfg.Channels, "foo")
+	require.Contains(t, cfg.Channels, "bar")
+
+	require.Len(t, cfg.Channels["foo"].Value.Messages, 1)
+	require.Contains(t, cfg.Channels["foo"].Value.Messages, "publish")
+	require.Len(t, cfg.Channels["bar"].Value.Messages, 1)
+	require.Contains(t, cfg.Channels["bar"].Value.Messages, "publish")
+
+	require.Len(t, cfg.Operations, 2)
+	require.Contains(t, cfg.Operations, "foo_send_publish")
+	require.Contains(t, cfg.Operations, "bar_send_publish")
+
+	require.Len(t, cfg.Operations["foo_send_publish"].Value.Messages, 1)
+	require.Equal(t, cfg.Channels["foo"].Value.Messages["publish"], cfg.Operations["foo_send_publish"].Value.Messages[0])
+	require.Len(t, cfg.Operations["bar_send_publish"].Value.Messages, 1)
+	require.Equal(t, cfg.Channels["bar"].Value.Messages["publish"], cfg.Operations["bar_send_publish"].Value.Messages[0])
+}

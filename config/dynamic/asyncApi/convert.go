@@ -132,9 +132,15 @@ func convertChannel(name string, c *Channel, config *asyncapi3.Config) (*asyncap
 }
 
 func addOperation(msgName, action string, op *Operation, ch *asyncapi3.ChannelRef, msg *asyncapi3.MessageRef, config *asyncapi3.Config) {
-	name := fmt.Sprintf("%s_%s", action, msgName)
+	var opName string
+	if msgName == "publish" || msgName == "subscribe" {
+		opName = fmt.Sprintf("%s_%s_%s", ch.Value.GetName(), action, msgName)
+	} else {
+		opName = fmt.Sprintf("%s_%s", action, msgName)
+	}
+
 	if len(op.OperationId) > 0 {
-		name = op.OperationId
+		opName = op.OperationId
 	}
 
 	result := &asyncapi3.Operation{
@@ -150,7 +156,7 @@ func addOperation(msgName, action string, op *Operation, ch *asyncapi3.ChannelRe
 		config.Operations = map[string]*asyncapi3.OperationRef{}
 	}
 
-	config.Operations[name] = &asyncapi3.OperationRef{Value: result}
+	config.Operations[opName] = &asyncapi3.OperationRef{Value: result}
 }
 
 func addMessage(target *asyncapi3.Channel, msg *asyncapi3.MessageRef, opId, ref, opName string) string {

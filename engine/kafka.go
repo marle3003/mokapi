@@ -167,24 +167,38 @@ func (c *KafkaClient) getPartition(t *store.Topic, partition int) (*store.Partit
 }
 
 func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[string]interface{}, topic *asyncapi3.Channel, config *asyncapi3.Config) (rb kafka.RecordBatch, err error) {
-	n := len(topic.Messages)
-	if n == 0 {
-		err = fmt.Errorf("message configuration missing")
-		return
+	contentType := config.DefaultContentType
+	var payload *asyncapi3.SchemaRef
+	keySchema := &asyncapi3.SchemaRef{
+		Value: &asyncapi3.MultiSchemaFormat{
+			Schema: &schema.Schema{Type: schema.Types{"string"}, Pattern: "[a-z]{9}"},
+		},
 	}
+	var headerSchema *schema.Schema
 
-	msg, err := selectMessage(value, topic, config)
-	if err != nil {
-		return
-	}
+	if len(topic.Messages) > 0 {
+		var msg *asyncapi3.Message
+		msg, err = selectMessage(value, topic, config)
+		if err != nil {
+			return
+		}
+		payload = msg.Payload
 
-	keySchema := msg.Bindings.Kafka.Key
-	if keySchema == nil {
-		// use default key schema
-		keySchema = &asyncapi3.SchemaRef{
-			Value: &asyncapi3.MultiSchemaFormat{
-				Schema: &schema.Schema{Type: schema.Types{"string"}, Pattern: "[a-z]{9}"},
-			},
+		if msg.Bindings.Kafka.Key != nil {
+			keySchema = msg.Bindings.Kafka.Key
+		}
+
+		if msg.ContentType != "" {
+			contentType = msg.ContentType
+		}
+
+		if msg.Headers != nil {
+			var ok bool
+			headerSchema, ok = msg.Headers.Value.Schema.(*schema.Schema)
+			if !ok {
+				err = fmt.Errorf("currently only json schema supported")
+				return
+			}
 		}
 	}
 
@@ -196,16 +210,13 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 	}
 
 	if value == nil {
-		value, err = createValue(msg.Payload)
+		value, err = createValue(payload)
 		if err != nil {
 			return rb, fmt.Errorf("unable to generate kafka value: %v", err)
 		}
 	}
 
-	contentType := config.DefaultContentType
-	if msg.ContentType != "" {
-		contentType = msg.ContentType
-	} else if contentType == "" {
+	if contentType == "" {
 		// set default: https://github.com/asyncapi/spec/issues/319
 		contentType = "application/json"
 	}
@@ -214,7 +225,7 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 	if b, ok := value.([]byte); ok {
 		v = b
 	} else {
-		v, err = marshal(value, msg.Payload, contentType)
+		v, err = marshal(value, payload, contentType)
 		if err != nil {
 			return
 		}
@@ -231,16 +242,7 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 	}
 
 	var recordHeaders []kafka.RecordHeader
-	var hs *schema.Schema
-	if msg.Headers != nil {
-		var ok bool
-		hs, ok = msg.Headers.Value.Schema.(*schema.Schema)
-		if !ok {
-			err = fmt.Errorf("currently only json schema supported")
-			return
-		}
-	}
-	recordHeaders, err = getHeaders(headers, hs)
+	recordHeaders, err = getHeaders(headers, headerSchema)
 	if err != nil {
 		return
 	}
@@ -410,13 +412,13 @@ func selectMessage(value any, topic *asyncapi3.Channel, cfg *asyncapi3.Config) (
 	}
 
 	if value != nil {
-		return nil, fmt.Errorf("no matching 'send' or 'receive' operation found for value: %v", value)
+		return nil, fmt.Errorf("no message configuration matches the message value for topic '%s' and value: %v", topic.GetName(), value)
 	}
-	return nil, fmt.Errorf("no matching 'send' or 'receive' operation defined")
+	return nil, fmt.Errorf("no message ")
 }
 
 func valueMatchMessagePayload(value any, msg *asyncapi3.Message) bool {
-	if value == nil {
+	if value == nil || msg.Payload == nil {
 		return true
 	}
 
