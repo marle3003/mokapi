@@ -1,0 +1,19 @@
+meta {
+  name: Topics
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/services/kafka/:cluster/topics
+  body: none
+  auth: inherit
+}
+
+params:path {
+  cluster: Kafka World
+}
+
+settings {
+  encodeUrl: true
+}

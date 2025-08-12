@@ -9,6 +9,7 @@ import (
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
+	"mokapi/providers/openapi/openapitest"
 	schematest2 "mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
 	"mokapi/runtime/events/eventstest"
@@ -37,7 +38,7 @@ func TestHandler_Kafka(t *testing.T) {
 		responseBody string
 	}{
 		{
-			name: "get kafka services",
+			name: "get services",
 			app: func() *runtime.App {
 				return runtimetest.NewKafkaApp(
 					asyncapi3test.NewConfig(
@@ -46,6 +47,25 @@ func TestHandler_Kafka(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services",
+			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"kafka"}]`,
+		},
+		{
+			name: "get kafka services",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				_, _ = app.Kafka.Add(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					),
+				}, enginetest.NewEngine())
+				app.AddHttp(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("http.yaml")},
+					Data: openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "bar", "1.0")),
+				})
+				return app
+			},
+			requestUrl:   "http://foo.api/api/services/kafka",
 			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"kafka"}]`,
 		},
 		{

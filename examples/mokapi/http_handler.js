@@ -39,6 +39,12 @@ export default async function() {
             case 'serviceMail':
                 response.data = mailServices[0]
                 return true
+            case 'clusters':
+                response.data = clusters.map(x => getInfo(x, 'kafka'))
+                return
+            case 'topics':
+                response.data = clusters[0].topics
+                return
             case 'mailboxes':
                 response.data = mailServices[0].mailboxes
                 return true
@@ -374,7 +380,7 @@ function getInfo(config, type) {
         type: type
     }
     if (config.contact) {
-        config.contact = {
+        info.contact = {
             name: config.contact.name,
             email: config.contact.email,
             url: config.contact.url

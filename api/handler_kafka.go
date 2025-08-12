@@ -128,8 +128,11 @@ func getKafkaServices(store *runtime.KafkaStore, m *monitor.Monitor) []interface
 	return result
 }
 
-func (h *handler) getKafkaService(w http.ResponseWriter, r *http.Request) {
+func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(r.URL.Path, "/")
+	if len(segments) == 4 { // path = /api/services/kafka
+		h.app.Kafka.List()
+	}
 	name := segments[4]
 
 	if s := h.app.Kafka.Get(name); s != nil {

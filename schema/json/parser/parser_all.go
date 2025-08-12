@@ -8,9 +8,7 @@ import (
 
 func (p *Parser) ParseAll(s *schema.Schema, data interface{}, evaluated map[string]bool) (interface{}, error) {
 	if m, ok := data.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
-		p2 := *p
-		p2.ValidateAdditionalProperties = true
-		return p2.parseAllObject(m, s, evaluated)
+		return p.parseAllObject(m, s, evaluated)
 	}
 
 	allOfError := &ErrorComposition{

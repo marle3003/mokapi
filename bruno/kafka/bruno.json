@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Mokapi Kafka",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

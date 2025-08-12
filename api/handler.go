@@ -114,8 +114,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getServices(w, r)
 	case strings.HasPrefix(p, "/api/services/http/"):
 		h.getHttpService(w, r, h.app.Monitor)
-	case strings.HasPrefix(p, "/api/services/kafka/"):
-		h.getKafkaService(w, r)
+	case strings.HasPrefix(p, "/api/services/kafka"):
+		h.handleKafka(w, r)
 	case strings.HasPrefix(p, "/api/services/mail/"):
 		h.handleMailService(w, r)
 	case strings.HasPrefix(p, "/api/services/ldap/"):

@@ -35,6 +35,7 @@ components:
           type: string
         numMessages:
           type: integer
+      additionalProperties: false
     MailboxDetails:
       $ref: '#/components/schemas/Mailbox'
       type: object

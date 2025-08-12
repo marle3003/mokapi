@@ -28,7 +28,7 @@ components:
           $ref: '#/components/schemas/Contact'
         type:
           type: string
-          enum: ["http", "kafka", "smtp", "ldap"]
+          enum: ["http", "kafka", "mail", "ldap"]
         metrics:
           $ref: '#/components/schemas/Metrics'
     Contact:

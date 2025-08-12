@@ -1,4 +1,42 @@
 components:
+  pathItems:
+    Clusters:
+      get:
+        summary: Returns a list of Kafka clusters.
+        operationId: clusters
+        responses:
+          '200':
+            description: The list of Kafka clusters
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      description:
+                        type: string
+                      version:
+                        type: string
+                      contact:
+                        $ref: './common.yml#/components/schemas/Contact'
+                    additionalProperties: false
+
+    Topics:
+      get:
+        summary: Returns the list of topics that belongs to the specified Kafka cluster
+        operationId: topics
+        responses:
+          '200':
+            description: The list of topics
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Topic'
   schemas:
     KafkaInfo:
       allOf:
