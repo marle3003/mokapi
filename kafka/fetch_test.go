@@ -18,7 +18,7 @@ func TestFetch_Response(t *testing.T) {
 		test     func(t *testing.T, b []byte, err error)
 	}{
 		{
-			name: "v9",
+			name: "v12",
 			response: &kafka.Response{
 				Header: &kafka.Header{
 					ApiKey:        kafka.Fetch,
@@ -104,6 +104,55 @@ func TestFetch_Response(t *testing.T) {
 				require.Equal(t, []byte{0x0}, b[137:138]) // tagged fields partitions
 				require.Equal(t, []byte{0x0}, b[138:139]) // tagged fields topics
 				require.Equal(t, []byte{0x0}, b[139:140]) // tagged fields response
+			},
+		},
+		{
+			name: "v12 empty topic",
+			response: &kafka.Response{
+				Header: &kafka.Header{
+					ApiKey:        kafka.Fetch,
+					ApiVersion:    int16(12),
+					CorrelationId: int32(0),
+				},
+				Message: &fetch.Response{
+					Topics: []fetch.ResponseTopic{
+						{
+							Name: "foo",
+							Partitions: []fetch.ResponsePartition{
+								{
+									Index:     0,
+									RecordSet: kafka.RecordBatch{},
+								},
+							},
+						},
+					},
+				},
+			},
+			test: func(t *testing.T, b []byte, err error) {
+				require.NoError(t, err)
+				require.Len(t, b, 64)
+				require.Equal(t, []byte{0x0, 0x0, 0x0, 0x3c}, b[0:4])                      // length 64
+				require.Equal(t, []byte{0x0, 0x0, 0x0, 0x0}, b[4:8])                       // correlation ID
+				require.Equal(t, []byte{0x0}, b[8:9])                                      // tagged fields
+				require.Equal(t, []byte{0x0, 0x0, 0x0, 0x0}, b[9:13])                      // throttle time
+				require.Equal(t, []byte{0x0, 0x0}, b[13:15])                               // error code
+				require.Equal(t, []byte{0x0, 0x0, 0x0, 0x0}, b[15:19])                     // session id
+				require.Equal(t, []byte{0x2}, b[19:20])                                    // topic length
+				require.Equal(t, []byte{0x4}, b[20:21])                                    // topic name length
+				require.Equal(t, []byte{0x66, 0x6f, 0x6f}, b[21:24])                       // topic name
+				require.Equal(t, []byte{0x2}, b[24:25])                                    // partition length
+				require.Equal(t, []byte{0x0, 0x0, 0x0, 0x0}, b[25:29])                     // partition index
+				require.Equal(t, []byte{0x0, 0x0}, b[29:31])                               // error code
+				require.Equal(t, []byte{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, b[31:39]) // high watermark
+				require.Equal(t, []byte{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, b[39:47]) // last stable offset
+				require.Equal(t, []byte{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}, b[47:55]) // log start offset
+				require.Equal(t, []byte{0x1}, b[55:56])                                    // aborted transactions length
+				require.Equal(t, []byte{0x0, 0x0, 0x0, 0x0}, b[56:60])                     // preferred read replica
+				require.Equal(t, []byte{0x1}, b[60:61])                                    // message set size
+
+				require.Equal(t, []byte{0x0}, b[61:62]) // tagged fields partitions
+				require.Equal(t, []byte{0x0}, b[62:63]) // tagged fields topics
+				require.Equal(t, []byte{0x0}, b[63:64]) // tagged fields response
 			},
 		},
 	}

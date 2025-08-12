@@ -802,7 +802,7 @@ func TestParse_Number(t *testing.T) {
 			s:      "3.612",
 			schema: schematest.New("number", schematest.WithFormat("float"), schematest.WithMinimum(3.7)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/format: number '3.612' does not match format 'float'")
+				require.EqualError(t, err, "error count 1:\n\t- #/minimum: number 3.612 is less than minimum value of 3.7")
 			},
 		},
 		{
@@ -827,7 +827,7 @@ func TestParse_Number(t *testing.T) {
 			s:      "3.612",
 			schema: schematest.New("number", schematest.WithFormat("float"), schematest.WithMaximum(3.6)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/format: number '3.612' does not match format 'float'")
+				require.EqualError(t, err, "error count 1:\n\t- #/maximum: number 3.612 exceeds maximum value of 3.6")
 			},
 		},
 		{

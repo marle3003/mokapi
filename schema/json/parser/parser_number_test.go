@@ -2,6 +2,7 @@ package parser_test
 
 import (
 	"github.com/stretchr/testify/require"
+	"math"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
@@ -37,9 +38,9 @@ func TestParse_Number(t *testing.T) {
 		{
 			name: "float but double",
 			s:    schematest.New("number", schematest.WithFormat("float")),
-			d:    -3942.2,
+			d:    math.MaxFloat64,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/format: number '-3942.2' does not match format 'float'")
+				require.EqualError(t, err, "error count 1:\n\t- #/format: number '1.7976931348623157e+308' does not match format 'float'")
 			},
 		},
 		{

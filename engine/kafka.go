@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"maps"
 	"math/rand"
 	"mokapi/engine/common"
 	"mokapi/kafka"
@@ -16,6 +17,7 @@ import (
 	"mokapi/schema/encoding"
 	"mokapi/schema/json/generator"
 	"mokapi/schema/json/schema"
+	"slices"
 	"strings"
 	"time"
 )
@@ -171,7 +173,7 @@ func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[stri
 		return
 	}
 
-	msg, err := selectMessage(value, topic.Name, config)
+	msg, err := selectMessage(value, topic, config)
 	if err != nil {
 		return
 	}
@@ -352,22 +354,24 @@ func marshalKey(key interface{}, r *asyncapi3.SchemaRef) ([]byte, error) {
 	}
 }
 
-func selectMessage(value any, topic string, cfg *asyncapi3.Config) (*asyncapi3.Message, error) {
+func selectMessage(value any, topic *asyncapi3.Channel, cfg *asyncapi3.Config) (*asyncapi3.Message, error) {
 	noOperationDefined := true
 
 	// first try to get send operation
-	for name, op := range cfg.Operations {
+	for _, op := range cfg.Operations {
 		if op.Value == nil || op.Value.Channel.Value == nil {
 			continue
 		}
-		if op.Value.Channel.Value.Name == topic && op.Value.Action == "send" {
+		if op.Value.Channel.Value == topic && op.Value.Action == "send" {
 			noOperationDefined = false
+			var messages []*asyncapi3.MessageRef
 			if len(op.Value.Messages) == 0 {
-				log.Warnf("no message defined for operation %s", name)
+				messages = slices.Collect(maps.Values(op.Value.Channel.Value.Messages))
+			} else {
+				messages = op.Value.Messages
 			}
-			for _, msg := range op.Value.Messages {
+			for _, msg := range messages {
 				if msg.Value == nil {
-					log.Errorf("no message defined for operation %s", name)
 					continue
 				}
 				if valueMatchMessagePayload(value, msg.Value) {
@@ -378,18 +382,20 @@ func selectMessage(value any, topic string, cfg *asyncapi3.Config) (*asyncapi3.M
 	}
 
 	// second, try to get receive operation
-	for name, op := range cfg.Operations {
+	for _, op := range cfg.Operations {
 		if op.Value == nil || op.Value.Channel.Value == nil {
 			continue
 		}
-		if op.Value.Channel.Value.Name == topic && op.Value.Action == "receive" {
+		if op.Value.Channel.Value == topic && op.Value.Action == "receive" {
 			noOperationDefined = false
+			var messages []*asyncapi3.MessageRef
 			if len(op.Value.Messages) == 0 {
-				log.Errorf("no message defined for operation %s", name)
+				messages = slices.Collect(maps.Values(op.Value.Channel.Value.Messages))
+			} else {
+				messages = op.Value.Messages
 			}
-			for _, msg := range op.Value.Messages {
+			for _, msg := range messages {
 				if msg.Value == nil {
-					log.Warnf("no message defined for operation %s", name)
 					continue
 				}
 				if valueMatchMessagePayload(value, msg.Value) {

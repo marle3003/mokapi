@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"math"
 	"mokapi/schema/json/schema"
 	"strconv"
 )
@@ -17,9 +18,7 @@ func (p *Parser) ParseNumber(i interface{}, s *schema.Schema) (v interface{}, er
 		if !p.SkipValidationFormatKeyword {
 			switch s.Format {
 			case "float":
-				f32 := float32(v)
-
-				if float64(f32) != v {
+				if v > math.MaxFloat32 || v < -math.MaxFloat32 {
 					return 0, &ErrorDetail{
 						Message: fmt.Sprintf("number '%v' does not match format 'float'", i),
 						Field:   "format",
