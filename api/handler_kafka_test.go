@@ -66,7 +66,7 @@ func TestHandler_Kafka(t *testing.T) {
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/kafka",
-			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"kafka"}]`,
+			responseBody: `[{"name":"foo","description":"bar","version":"1.0"}]`,
 		},
 		{
 			name: "get kafka services with contact",

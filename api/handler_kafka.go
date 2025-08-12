@@ -16,6 +16,13 @@ type kafkaSummary struct {
 	service
 }
 
+type cluster struct {
+	Name        string   `json:"name"`
+	Description string   `json:"description,omitempty"`
+	Contact     *contact `json:"contact,omitempty"`
+	Version     string   `json:"version,omitempty"`
+}
+
 type kafka struct {
 	Name        string           `json:"name"`
 	Description string           `json:"description"`
@@ -131,7 +138,26 @@ func getKafkaServices(store *runtime.KafkaStore, m *monitor.Monitor) []interface
 func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 	segments := strings.Split(r.URL.Path, "/")
 	if len(segments) == 4 { // path = /api/services/kafka
-		h.app.Kafka.List()
+		var clusters []cluster
+		for _, k := range h.app.Kafka.List() {
+			var c *contact
+			if k.Info.Contact != nil {
+				c = &contact{
+					Name:  k.Info.Contact.Name,
+					Url:   k.Info.Contact.Url,
+					Email: k.Info.Contact.Email,
+				}
+			}
+			clusters = append(clusters, cluster{
+				Name:        k.Info.Name,
+				Description: k.Info.Description,
+				Contact:     c,
+				Version:     k.Info.Version,
+			})
+		}
+		w.Header().Set("Content-Type", "application/json")
+		writeJsonBody(w, clusters)
+		return
 	}
 	name := segments[4]
 
