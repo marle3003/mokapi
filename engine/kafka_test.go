@@ -610,6 +610,42 @@ func TestKafkaClient(t *testing.T) {
 				require.Equal(t, `""`, kafka.BytesToString(b.Records[0].Value))
 			},
 		},
+		{
+			name: "no payload is defined and produce with value and nil",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage()
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ topic: 'foo', messages: [{ data: 'foo' }] })
+					}
+				`))
+
+				require.NoError(t, err)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Equal(t, "gbrmarxhk", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `"foo"`, kafka.BytesToString(b.Records[0].Value))
+
+				err = e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ topic: 'foo', messages: [{  }] })
+					}
+				`))
+
+				require.NoError(t, err)
+				b, errCode = app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(1, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Equal(t, "ijbptapwy", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `""`, kafka.BytesToString(b.Records[0].Value))
+			},
+		},
 	}
 
 	for _, tc := range testcases {
