@@ -1,17 +1,17 @@
 meta {
-  name: Topics
+  name: Cluster
   type: http
-  seq: 4
+  seq: 3
 }
 
 get {
-  url: {{baseUrl}}/services/kafka/:cluster/topics
+  url: {{baseUrl}}/services/kafka/:clusterName
   body: none
   auth: inherit
 }
 
 params:path {
-  cluster: Kafka World
+  clusterName: Kafka World
 }
 
 settings {

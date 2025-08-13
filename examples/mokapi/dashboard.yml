@@ -255,8 +255,14 @@ paths:
           description: mail attachment not found
   /api/services/kafka:
     $ref: './kafka.yml#/components/pathItems/Clusters'
-  /api/services/kafka/{name}/topics:
+  /api/services/kafka/{cluster}/topics:
     $ref: './kafka.yml#/components/pathItems/Topics'
+  /api/services/kafka/{cluster}/topics/{topic}:
+    $ref: './kafka.yml#/components/pathItems/Topic'
+  /api/services/kafka/{cluster}/topics/{topic}/partitions:
+    $ref: './kafka.yml#/components/pathItems/Partitions'
+  /api/services/kafka/{cluster}/topics/{topic}/partitions/{partitionId}:
+    $ref: './kafka.yml#/components/pathItems/Partition'
 
   /api/services/kafka/{name}/groups:
     get:

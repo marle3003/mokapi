@@ -45,6 +45,72 @@ export default async function() {
             case 'topics':
                 response.data = clusters[0].topics
                 return
+            case 'topic':
+                response.data = clusters[0].topics.find(x => x.name === request.path.topic)
+                if (response.data === undefined) {
+                    response.statusCode = 404
+                }
+                return
+            case 'produceTopic': {
+                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+                if (!topic) {
+                    response.statusCode = 404
+                } else {
+                    response.data = {
+                        offsets: [
+                            {
+                                partition: 0,
+                                offset: 1234,
+                            }
+                        ]
+                    }
+                }
+                return
+            }
+            case 'partitions': {
+                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+                if (!topic) {
+                    response.statusCode = 404
+                    return
+                }
+                response.data = topic.partitions
+                return
+            }
+            case 'partition': {
+                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+                if (!topic) {
+                    response.statusCode = 404
+                    return
+                }
+                const id = request.path.partitionId
+                if (id >= topic.partitions.length) {
+                    response.statusCode = 404
+                } else {
+                    response.data = topic.partitions[id]
+                }
+                return
+            }
+            case 'producePartition': {
+                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+                if (!topic) {
+                    response.statusCode = 404
+                    return
+                }
+                const id = request.path.partitionId
+                if (id >= topic.partitions.length) {
+                    response.statusCode = 404
+                } else {
+                    response.data = {
+                        offsets: [
+                            {
+                                partition: id,
+                                offset: 1234,
+                            }
+                        ]
+                    }
+                }
+                return
+            }
             case 'mailboxes':
                 response.data = mailServices[0].mailboxes
                 return true

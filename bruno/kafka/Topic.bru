@@ -1,16 +1,17 @@
 meta {
-  name: Topics
+  name: Topic
   type: http
-  seq: 4
+  seq: 5
 }
 
 get {
-  url: {{baseUrl}}/services/kafka/:cluster/topics
+  url: {{baseUrl}}/services/kafka/:cluster/topics/:topic
   body: none
   auth: inherit
 }
 
 params:path {
+  topic: mokapi.shop.products
   cluster: Kafka World
 }
 

@@ -28,6 +28,12 @@ components:
       get:
         summary: Returns the list of topics that belongs to the specified Kafka cluster
         operationId: topics
+        parameters:
+          - in: path
+            name: cluster
+            required: true
+            schema:
+              type: string
         responses:
           '200':
             description: The list of topics
@@ -37,6 +43,132 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/Topic'
+    Topic:
+      parameters:
+        - in: path
+          name: cluster
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: topic
+          required: true
+          schema:
+            type: string
+      get:
+        summary: Return the topic with the given topic name
+        operationId: topic
+        responses:
+          '200':
+            description: The topic.
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Topic'
+      post:
+        summary: Produce messages to a topic, the partition will be chosen randomly
+        operationId: produceTopic
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  records:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Record'
+        responses:
+          '200':
+            description: List of partitions and offsets the messages were published to.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    offsets:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ProducedRecord'
+    Partitions:
+      get:
+        summary: Return the list of partitions that belong to the specified topic.
+        operationId: partitions
+        parameters:
+          - in: path
+            name: cluster
+            required: true
+            schema:
+              type: string
+          - in: path
+            name: topic
+            required: true
+            schema:
+              type: string
+        responses:
+          '200':
+            description: The list of partitions.
+            content:
+              application/json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Partition'
+    Partition:
+      parameters:
+        - in: path
+          name: cluster
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: topic
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: partitionId
+          required: true
+          schema:
+            type: integer
+      get:
+        summary: Return the partition with the given partition id.
+        operationId: partition
+        responses:
+          '200':
+            description: The list of partitions.
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Partition'
+      post:
+        summary: Produce messages to specified partition of the topic.
+        operationId: producePartition
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  records:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Record'
+        responses:
+          '200':
+            description: List of partitions and offsets the messages were published to.
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    offsets:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/ProducedRecord'
+
   schemas:
     KafkaInfo:
       allOf:
@@ -199,3 +331,19 @@ components:
         type: boolean
       keySchemaValidation:
         type: boolean
+    Record:
+      type: object
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+    ProducedRecord:
+      type: object
+      properties:
+        partition:
+          type: integer
+        offset:
+          type: integer
+        error:
+          type: string
