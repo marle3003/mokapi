@@ -263,6 +263,10 @@ paths:
     $ref: './kafka.yml#/components/pathItems/Partitions'
   /api/services/kafka/{cluster}/topics/{topic}/partitions/{partitionId}:
     $ref: './kafka.yml#/components/pathItems/Partition'
+  /api/services/kafka/{cluster}/topics/{topic}/partitions/{partitionId}/offsets:
+    $ref: './kafka.yml#/components/pathItems/Offsets'
+  /api/services/kafka/{cluster}/topics/{topic}/partitions/{partitionId}/offsets/{offset}:
+    $ref: './kafka.yml#/components/pathItems/Offset'
 
   /api/services/kafka/{name}/groups:
     get:

@@ -24,10 +24,20 @@ body:json {
     "records": [
       {
         "key": "foo",
-        "value": "bar"
+        "value": "{{encoded}}"
       }
     ]
   }
+}
+
+vars:pre-request {
+  value: mokapi
+}
+
+script:pre-request {
+  const value = bru.getVar("value")
+  const encoded = Buffer.from(value).toString("base64");
+  bru.setVar("encoded", encoded);
 }
 
 settings {

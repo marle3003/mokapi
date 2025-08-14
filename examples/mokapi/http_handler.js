@@ -111,6 +111,24 @@ export default async function() {
                 }
                 return
             }
+            case 'offsets': {
+                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+                if (!topic) {
+                    response.statusCode = 404
+                    return
+                }
+                const id = request.path.partitionId
+                if (id >= topic.partitions.length) {
+                    response.statusCode = 404
+                } else {
+                    const events = getEvents({topic: topic.name}).filter(x => x.data.partition === id)
+                    response.data = events.map(x =>  ({
+                        key: x.data.key.binary,
+                        value: x.data.message.binary
+                    }))
+                }
+                return
+            }
             case 'mailboxes':
                 response.data = mailServices[0].mailboxes
                 return true

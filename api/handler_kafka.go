@@ -2,8 +2,9 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
-	"mokapi/kafka"
+	"mokapi/media"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime"
@@ -14,6 +15,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 type kafkaSummary struct {
@@ -114,22 +117,11 @@ type bindings struct {
 }
 
 type produceRequest struct {
-	Records []record `json:"records"`
-}
-
-type record struct {
-	Key   string `json:"key"`
-	Value string `json:"value"`
+	Records []store.Record `json:"records"`
 }
 
 type produceResponse struct {
-	Offsets []writtenRecord `json:"offsets"`
-}
-
-type writtenRecord struct {
-	Partition int    `json:"partition"`
-	Offset    int64  `json:"offset"`
-	Error     string `json:"error"`
+	Offsets []store.RecordResult `json:"offsets"`
 }
 
 func getKafkaServices(store *runtime.KafkaStore, m *monitor.Monitor) []interface{} {
@@ -209,23 +201,23 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		} else if r.Method == "POST" {
-			t := k.Store.Topic(topicName)
-			if t == nil {
-				w.WriteHeader(http.StatusNotFound)
-			} else {
-
+			records, err := getProduceRecords(r)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
 			}
-			produce(w, r, func(k *kafka.Record) writtenRecord {
-				p, re := t.Write(k)
-				wr := writtenRecord{
-					Partition: p,
-					Offset:    k.Offset,
+			c := store.NewClient(k.Store, h.app.Monitor.Kafka)
+			ct := media.ParseContentType(r.Header.Get("Content-Type"))
+			result, err := c.Write(topicName, records, &ct)
+			if err != nil {
+				if errors.Is(err, store.TopicNotFound) || errors.Is(err, store.PartitionNotFound) {
+					http.Error(w, err.Error(), http.StatusNotFound)
+				} else {
+					http.Error(w, err.Error(), http.StatusBadRequest)
 				}
-				if re != nil {
-					wr.Error = re.BatchIndexErrorMessage
-				}
-				return wr
-			})
+			}
+			w.Header().Set("Content-Type", "application/json")
+			writeJsonBody(w, produceResponse{Offsets: result})
 			return
 		}
 	// /api/services/kafka/{cluster}/topics/{topic}/partitions
@@ -272,17 +264,27 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			writeJsonBody(w, newPartition(k.Store, p))
 		} else {
-			produce(w, r, func(k *kafka.Record) writtenRecord {
-				re, _ := t.WritePartition(id, k)
-				wr := writtenRecord{
-					Partition: id,
-					Offset:    k.Offset,
+			records, err := getProduceRecords(r)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			for _, record := range records {
+				record.Partition = id
+			}
+			c := store.NewClient(k.Store, h.app.Monitor.Kafka)
+			ct := media.ParseContentType(r.Header.Get("Content-Type"))
+			result, err := c.Write(topicName, records, &ct)
+			if err != nil {
+				if errors.Is(err, store.TopicNotFound) || errors.Is(err, store.PartitionNotFound) {
+					http.Error(w, err.Error(), http.StatusNotFound)
+				} else {
+					http.Error(w, err.Error(), http.StatusBadRequest)
 				}
-				if re != nil {
-					wr.Error = re.BatchIndexErrorMessage
-				}
-				return wr
-			})
+			}
+			w.Header().Set("Content-Type", "application/json")
+			writeJsonBody(w, produceResponse{Offsets: result})
+			return
 		}
 		return
 	}
@@ -535,29 +537,15 @@ func getKafkaClusters(app *runtime.App) []cluster {
 	return clusters
 }
 
-func produce(w http.ResponseWriter, r *http.Request, write func(*kafka.Record) writtenRecord) {
+func getProduceRecords(r *http.Request) ([]store.Record, error) {
 	var pr produceRequest
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
-		w.WriteHeader(400)
-		_, _ = w.Write([]byte("error reading body"))
-		return
+		return nil, fmt.Errorf("error reading body")
 	}
 	err = json.Unmarshal(b, &pr)
 	if err != nil {
-		w.WriteHeader(400)
-		_, _ = w.Write([]byte("error parsing json body"))
-		return
+		return nil, fmt.Errorf("error parsing body")
 	}
-	res := produceResponse{}
-	for _, recReq := range pr.Records {
-		rec := &kafka.Record{
-			Key:   kafka.NewBytes([]byte(recReq.Key)),
-			Value: kafka.NewBytes([]byte(recReq.Value)),
-		}
-		wr := write(rec)
-		res.Offsets = append(res.Offsets, wr)
-	}
-	w.Header().Set("Content-Type", "application/json")
-	writeJsonBody(w, res)
+	return pr.Records, nil
 }

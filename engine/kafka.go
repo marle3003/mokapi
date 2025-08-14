@@ -3,7 +3,6 @@ package engine
 import (
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"maps"
 	"math/rand"
 	"mokapi/engine/common"
@@ -20,6 +19,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type KafkaClient struct {
