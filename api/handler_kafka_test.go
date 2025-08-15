@@ -495,7 +495,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 					"http://foo.api/api/services/kafka/foo/topics/topic-1",
 					map[string]string{"Content-Type": "application/vnd.mokapi.kafka.binary+json"},
 					`{
-"records": [{"key": "Zm9v", "value": "YmFy"}]
+"records": [{"key": "foo", "value": "YmFy"}]
 }`,
 					api,
 					try.HasStatusCode(http.StatusOK),

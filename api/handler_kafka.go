@@ -121,7 +121,13 @@ type produceRequest struct {
 }
 
 type produceResponse struct {
-	Offsets []store.RecordResult `json:"offsets"`
+	Offsets []recordResult `json:"offsets"`
+}
+
+type recordResult struct {
+	Partition int
+	Offset    int64
+	Error     string
 }
 
 func getKafkaServices(store *runtime.KafkaStore, m *monitor.Monitor) []interface{} {
@@ -216,8 +222,16 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 				}
 			}
+			res := produceResponse{}
+			for _, rec := range result {
+				res.Offsets = append(res.Offsets, recordResult{
+					Partition: rec.Partition,
+					Offset:    rec.Offset,
+					Error:     rec.Error,
+				})
+			}
 			w.Header().Set("Content-Type", "application/json")
-			writeJsonBody(w, produceResponse{Offsets: result})
+			writeJsonBody(w, res)
 			return
 		}
 	// /api/services/kafka/{cluster}/topics/{topic}/partitions
@@ -282,8 +296,16 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 					http.Error(w, err.Error(), http.StatusBadRequest)
 				}
 			}
+			res := produceResponse{}
+			for _, rec := range result {
+				res.Offsets = append(res.Offsets, recordResult{
+					Partition: rec.Partition,
+					Offset:    rec.Offset,
+					Error:     rec.Error,
+				})
+			}
 			w.Header().Set("Content-Type", "application/json")
-			writeJsonBody(w, produceResponse{Offsets: result})
+			writeJsonBody(w, res)
 			return
 		}
 		return
@@ -625,4 +647,19 @@ func getProduceRecords(r *http.Request) ([]store.Record, error) {
 		return nil, fmt.Errorf("error parsing body")
 	}
 	return pr.Records, nil
+}
+
+func (r *recordResult) MarshalJSON() ([]byte, error) {
+	aux := &struct {
+		Partition int     `json:"partition"`
+		Offset    int64   `json:"offset"`
+		Error     *string `json:"error,omitempty"`
+	}{
+		Partition: r.Partition,
+		Offset:    r.Offset,
+	}
+	if r.Error != "" {
+		aux.Error = &r.Error
+	}
+	return json.Marshal(aux)
 }

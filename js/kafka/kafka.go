@@ -2,12 +2,13 @@ package kafka
 
 import (
 	"fmt"
-	"github.com/dop251/goja"
-	log "github.com/sirupsen/logrus"
 	"mokapi/engine/common"
 	"mokapi/js/eventloop"
 	"mokapi/js/util"
 	"time"
+
+	"github.com/dop251/goja"
+	log "github.com/sirupsen/logrus"
 )
 
 type Module struct {
@@ -158,7 +159,12 @@ func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 				if goja.IsUndefined(headers) || goja.IsNull(headers) {
 					continue
 				}
-				message.Headers = headers.Export().(map[string]interface{})
+				message.Headers = map[string]string{}
+				if header, ok := headers.Export().(map[string]any); ok {
+					for k, v := range header {
+						message.Headers[k] = v.(string)
+					}
+				}
 			case "messages":
 				records := params.Get(k).Export().([]interface{})
 				for _, item := range records {
@@ -194,8 +200,11 @@ func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 						r.Data = d
 					}
 					if h, ok := rec["headers"]; ok {
-						if header, ok := h.(map[string]interface{}); ok {
-							r.Headers = header
+						r.Headers = map[string]string{}
+						if header, ok := h.(map[string]any); ok {
+							for k, v := range header {
+								r.Headers[k] = v.(string)
+							}
 						}
 					}
 					if p, ok := rec["partition"]; ok {

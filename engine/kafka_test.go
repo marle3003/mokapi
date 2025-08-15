@@ -3,9 +3,6 @@ package engine_test
 import (
 	"bytes"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"github.com/sirupsen/logrus/hooks/test"
-	"github.com/stretchr/testify/require"
 	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
@@ -20,6 +17,10 @@ import (
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestKafkaClient(t *testing.T) {
@@ -486,6 +487,7 @@ func TestKafkaClient(t *testing.T) {
 				msg := asyncapi3test.NewMessage(
 					asyncapi3test.WithPayload(schematest.New("string")),
 					asyncapi3test.WithKey(schematest.New("string")),
+					asyncapi3test.WithContentType("application/json"),
 				)
 				return createCfg("foo", msg)
 			},
@@ -499,7 +501,7 @@ func TestKafkaClient(t *testing.T) {
 						produce({ topic: 'foo', messages: [{ data: 12 }] })
 					}
 				`))
-				require.EqualError(t, err, "producing kafka message to 'foo' failed: no message configuration matches the message value for topic 'foo' and value: 12 at mokapi/js/kafka.(*Module).Produce-fm (native)")
+				require.EqualError(t, err, "produce kafka message to 'foo' failed: validation error: invalid message: error count 1:\n\t- #/type: invalid type, expected string but got number at mokapi/js/kafka.(*Module).Produce-fm (native)")
 
 				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
@@ -508,7 +510,7 @@ func TestKafkaClient(t *testing.T) {
 
 				// logs
 				require.Len(t, hook.Entries, 2)
-				require.Equal(t, "js error: producing kafka message to 'foo' failed: no message configuration matches the message value for topic 'foo' and value: 12 in test.js", hook.LastEntry().Message)
+				require.Equal(t, "js error: produce kafka message to 'foo' failed: validation error: invalid message: error count 1:\n\t- #/type: invalid type, expected string but got number in test.js", hook.LastEntry().Message)
 			},
 		},
 		{

@@ -20,13 +20,15 @@ var PartitionNotFound = errors.New("partition not found")
 type Record struct {
 	Key       any
 	Value     any
-	Headers   map[string]interface{}
+	Headers   map[string]string
 	Partition int
 }
 
 type RecordResult struct {
 	Partition int
 	Offset    int64
+	Key       []byte
+	Value     []byte
 	Error     string
 }
 
@@ -54,7 +56,7 @@ func (c *Client) Write(topic string, records []Record, ct *media.ContentType) ([
 		if err != nil || p == nil {
 			return nil, PartitionNotFound
 		}
-		key, err := c.parse(r.Key, ct)
+		key, err := c.parseKey(r.Key)
 		if err != nil {
 			result = append(result, RecordResult{
 				Partition: -1,
@@ -70,12 +72,17 @@ func (c *Client) Write(topic string, records []Record, ct *media.ContentType) ([
 				Error:     err.Error(),
 			})
 		}
-		b := kafka.RecordBatch{Records: []*kafka.Record{
-			{
-				Key:   kafka.NewBytes(key),
-				Value: kafka.NewBytes(value),
-			},
-		}}
+		rec := &kafka.Record{
+			Key:   kafka.NewBytes(key),
+			Value: kafka.NewBytes(value),
+		}
+		for name, val := range r.Headers {
+			rec.Headers = append(rec.Headers, kafka.RecordHeader{
+				Key:   name,
+				Value: []byte(val),
+			})
+		}
+		b := kafka.RecordBatch{Records: []*kafka.Record{rec}}
 		offset, res, err := p.Write(b)
 		if err != nil {
 			result = append(result, RecordResult{
@@ -93,6 +100,8 @@ func (c *Client) Write(topic string, records []Record, ct *media.ContentType) ([
 			} else {
 				result = append(result, RecordResult{
 					Offset:    offset,
+					Key:       kafka.Read(b.Records[0].Key),
+					Value:     kafka.Read(b.Records[0].Value),
 					Partition: p.Index,
 				})
 				c.store.UpdateMetrics(c.monitor, t, p, b)
@@ -138,13 +147,9 @@ func (c *Client) Read(topic string, partition int, offset int64, ct *media.Conte
 		}
 	case "application/json", "":
 		for _, r := range b.Records {
-			var key any
-			err := json.Unmarshal(kafka.Read(r.Key), &key)
-			if err != nil {
-				return nil, fmt.Errorf("parse record key as JSON failed: %v", err)
-			}
+			key := string(kafka.Read(r.Key))
 			var val any
-			err = json.Unmarshal(kafka.Read(r.Value), &val)
+			err := json.Unmarshal(kafka.Read(r.Value), &val)
 			if err != nil {
 				return nil, fmt.Errorf("parse record value as JSON failed: %v", err)
 			}
@@ -187,8 +192,25 @@ func (c *Client) parse(v any, ct *media.ContentType) ([]byte, error) {
 	case "application/json":
 		b, _ := json.Marshal(v)
 		return b, nil
+	default:
+		switch vt := v.(type) {
+		case []byte:
+			return vt, nil
+		case string:
+			return []byte(vt), nil
+		}
 	}
 	return nil, fmt.Errorf("unknown content type: %v", ct)
+}
+
+func (c *Client) parseKey(v any) ([]byte, error) {
+	switch vt := v.(type) {
+	case []byte:
+		return vt, nil
+	case string:
+		return []byte(vt), nil
+	}
+	return nil, fmt.Errorf("key not supported: %v", v)
 }
 
 func (r *Record) UnmarshalJSON(b []byte) error {
@@ -203,19 +225,4 @@ func (r *Record) UnmarshalJSON(b []byte) error {
 	}
 	*r = Record(a)
 	return nil
-}
-
-func (r *RecordResult) MarshalJSON() ([]byte, error) {
-	aux := &struct {
-		Partition int     `json:"partition"`
-		Offset    int64   `json:"offset"`
-		Error     *string `json:"error,omitempty"`
-	}{
-		Partition: r.Partition,
-		Offset:    r.Offset,
-	}
-	if r.Error != "" {
-		aux.Error = &r.Error
-	}
-	return json.Marshal(aux)
 }

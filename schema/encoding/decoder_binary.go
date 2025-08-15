@@ -2,10 +2,11 @@ package encoding
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mime/multipart"
 	"mokapi/media"
 	"net/http"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type BinaryDecoder struct {

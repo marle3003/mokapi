@@ -71,7 +71,7 @@ type KafkaMessage struct {
 	Key       interface{}
 	Value     []byte
 	Data      interface{}
-	Headers   map[string]interface{}
+	Headers   map[string]string
 	Partition int
 }
 

@@ -6,7 +6,6 @@ import (
 	"maps"
 	"math/rand"
 	"mokapi/engine/common"
-	"mokapi/kafka"
 	"mokapi/media"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/kafka/store"
@@ -17,7 +16,6 @@ import (
 	"mokapi/schema/json/generator"
 	"mokapi/schema/json/schema"
 	"slices"
-	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -34,65 +32,88 @@ func NewKafkaClient(app *runtime.App) *KafkaClient {
 }
 
 func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-	t, config, err := c.tryGet(args.Cluster, args.Topic, args.Retry)
+	k, t, err := c.tryGet(args.Cluster, args.Topic, args.Retry)
 	if err != nil {
 		return nil, err
 	}
 
+	client := store.NewClient(k.Store, c.app.Monitor.Kafka)
 	var produced []common.KafkaMessageResult
+	json := media.ParseContentType("application/json")
 	for _, r := range args.Messages {
-		p, err := c.getPartition(t, r.Partition)
-		if err != nil {
-			return nil, err
-		}
-
-		v := r.Data
+		var ct *media.ContentType
+		value := r.Data
 		if r.Value != nil {
-			v = r.Value
+			value = r.Value
+			ct = &media.ContentType{}
+		} else {
+			ct = &json
 		}
 
-		rb, err := c.createRecordBatch(r.Key, v, r.Headers, t.Config, config)
-		if err != nil {
-			return nil, fmt.Errorf("producing kafka message to '%v' failed: %w", t.Name, err)
+		keySchema := &asyncapi3.SchemaRef{
+			Value: &asyncapi3.MultiSchemaFormat{
+				Schema: &schema.Schema{Type: schema.Types{"string"}, Pattern: "[a-z]{9}"},
+			},
 		}
-
-		_, records, err := p.Write(rb)
-		if err != nil {
-			var sb strings.Builder
-			for _, r := range records {
-				sb.WriteString(fmt.Sprintf("%v: %v\n", r.BatchIndex, r.BatchIndexErrorMessage))
+		var payload *asyncapi3.SchemaRef
+		msg, err := selectMessage(value, t.Config, k.Config)
+		if msg != nil {
+			if msg.Bindings.Kafka.Key != nil {
+				keySchema = msg.Bindings.Kafka.Key
 			}
-			return nil, fmt.Errorf("produce kafka message to '%v' failed: %w \n%v", t.Name, err, sb.String())
+			payload = msg.Payload
 		}
-		t.Store().UpdateMetrics(c.app.Monitor.Kafka, t, p, rb)
 
-		h := map[string]string{}
-		for _, v := range rb.Records[0].Headers {
-			h[v.Key] = string(v.Value)
+		if r.Key == nil {
+			r.Key, err = createValue(keySchema)
+			if err != nil {
+				return nil, fmt.Errorf("unable to generate kafka key: %v", err)
+			}
+		}
+
+		if value == nil {
+			value, err = createValue(payload)
+			if err != nil {
+				return nil, fmt.Errorf("unable to generate kafka value: %v", err)
+			}
+		}
+
+		rec, err := client.Write(t.Name, []store.Record{{
+			Key:       r.Key,
+			Value:     value,
+			Headers:   r.Headers,
+			Partition: r.Partition,
+		}}, ct)
+		if err != nil {
+			return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
+		}
+
+		if rec[0].Error != "" {
+			return nil, fmt.Errorf("produce kafka message to '%v' failed: %s", t.Name, rec[0].Error)
 		}
 
 		produced = append(produced, common.KafkaMessageResult{
-			Key:       kafka.BytesToString(rb.Records[0].Key),
-			Value:     kafka.BytesToString(rb.Records[0].Value),
-			Offset:    rb.Records[0].Offset,
-			Headers:   h,
-			Partition: p.Index,
+			Key:       string(rec[0].Key),
+			Value:     string(rec[0].Value),
+			Offset:    rec[0].Offset,
+			Headers:   r.Headers,
+			Partition: rec[0].Partition,
 		})
 	}
 
 	return &common.KafkaProduceResult{
-		Cluster:  config.Info.Name,
+		Cluster:  k.Info.Name,
 		Topic:    t.Name,
 		Messages: produced,
 	}, nil
 
 }
 
-func (c *KafkaClient) tryGet(cluster string, topic string, retry common.KafkaProduceRetry) (t *store.Topic, config *asyncapi3.Config, err error) {
+func (c *KafkaClient) tryGet(cluster string, topic string, retry common.KafkaProduceRetry) (k *runtime.KafkaInfo, t *store.Topic, err error) {
 	count := 0
 	backoff := retry.InitialRetryTime
 	for {
-		t, config, err = c.get(cluster, topic)
+		k, t, err = c.get(cluster, topic)
 		ambiguous := &ambiguousError{}
 		if err == nil || errors.As(err, &ambiguous) {
 			return
@@ -107,7 +128,7 @@ func (c *KafkaClient) tryGet(cluster string, topic string, retry common.KafkaPro
 	}
 }
 
-func (c *KafkaClient) get(cluster string, topic string) (t *store.Topic, config *asyncapi3.Config, err error) {
+func (c *KafkaClient) get(cluster string, topic string) (k *runtime.KafkaInfo, t *store.Topic, err error) {
 	if len(cluster) == 0 {
 		if len(topic) == 0 {
 			clusters := c.app.Kafka.List()
@@ -120,13 +141,13 @@ func (c *KafkaClient) get(cluster string, topic string) (t *store.Topic, config 
 				err = newAmbiguousError("ambiguous topic %v. Specify the cluster", topic)
 				return
 			}
-			return topics[0], clusters[0].Config, nil
+			return clusters[0], topics[0], nil
 		}
 
 		var topics []*store.Topic
 		for _, v := range c.app.Kafka.List() {
 			if t := v.Topic(topic); t != nil {
-				config = v.Config
+				k = v
 				if len(cluster) == 0 {
 					cluster = v.Info.Name
 				}
@@ -140,8 +161,7 @@ func (c *KafkaClient) get(cluster string, topic string) (t *store.Topic, config 
 			t = topics[0]
 		}
 	} else {
-		if k := c.app.Kafka.Get(cluster); k != nil {
-			config = k.Config
+		if k = c.app.Kafka.Get(cluster); k != nil {
 			t = k.Topic(topic)
 		} else {
 			return nil, nil, fmt.Errorf("kafka cluster '%v' not found", cluster)
@@ -165,119 +185,6 @@ func (c *KafkaClient) getPartition(t *store.Topic, partition int) (*store.Partit
 	}
 
 	return t.Partition(partition), nil
-}
-
-func (c *KafkaClient) createRecordBatch(key, value interface{}, headers map[string]interface{}, topic *asyncapi3.Channel, config *asyncapi3.Config) (rb kafka.RecordBatch, err error) {
-	contentType := config.DefaultContentType
-	var payload *asyncapi3.SchemaRef
-	keySchema := &asyncapi3.SchemaRef{
-		Value: &asyncapi3.MultiSchemaFormat{
-			Schema: &schema.Schema{Type: schema.Types{"string"}, Pattern: "[a-z]{9}"},
-		},
-	}
-	var headerSchema *schema.Schema
-
-	if len(topic.Messages) > 0 {
-		var msg *asyncapi3.Message
-		msg, err = selectMessage(value, topic, config)
-		if err != nil {
-			return
-		}
-		payload = msg.Payload
-
-		if msg.Bindings.Kafka.Key != nil {
-			keySchema = msg.Bindings.Kafka.Key
-		}
-
-		if msg.ContentType != "" {
-			contentType = msg.ContentType
-		}
-
-		if msg.Headers != nil {
-			var ok bool
-			headerSchema, ok = msg.Headers.Value.Schema.(*schema.Schema)
-			if !ok {
-				err = fmt.Errorf("currently only json schema supported")
-				return
-			}
-		}
-	}
-
-	if key == nil {
-		key, err = createValue(keySchema)
-		if err != nil {
-			return rb, fmt.Errorf("unable to generate kafka key: %v", err)
-		}
-	}
-
-	if value == nil {
-		value, err = createValue(payload)
-		if err != nil {
-			return rb, fmt.Errorf("unable to generate kafka value: %v", err)
-		}
-	}
-
-	if contentType == "" {
-		// set default: https://github.com/asyncapi/spec/issues/319
-		contentType = "application/json"
-	}
-
-	var v []byte
-	if b, ok := value.([]byte); ok {
-		v = b
-	} else {
-		v, err = marshal(value, payload, contentType)
-		if err != nil {
-			return
-		}
-	}
-
-	var k []byte
-	if b, ok := key.([]byte); ok {
-		k = b
-	} else {
-		k, err = marshalKey(key, keySchema)
-		if err != nil {
-			return
-		}
-	}
-
-	var recordHeaders []kafka.RecordHeader
-	recordHeaders, err = getHeaders(headers, headerSchema)
-	if err != nil {
-		return
-	}
-
-	rb = kafka.RecordBatch{Records: []*kafka.Record{
-		{
-			Key:     kafka.NewBytes(k),
-			Value:   kafka.NewBytes(v),
-			Headers: recordHeaders,
-		},
-	}}
-	return
-}
-
-// todo: only specified headers should be written
-func getHeaders(headers map[string]interface{}, r *schema.Schema) ([]kafka.RecordHeader, error) {
-	var result []kafka.RecordHeader
-	for k, v := range headers {
-		var headerSchema *schema.Schema
-		if r != nil && r.Type.IsObject() {
-			headerSchema = r.Properties.Get(k)
-
-		}
-
-		b, err := encoding.NewEncoder(headerSchema).Write(v, media.Any)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result, kafka.RecordHeader{
-			Key:   k,
-			Value: b,
-		})
-	}
-	return result, nil
 }
 
 func createValue(r *asyncapi3.SchemaRef) (value interface{}, err error) {
