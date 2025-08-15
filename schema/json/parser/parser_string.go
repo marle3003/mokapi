@@ -2,8 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"mokapi/schema/json/schema"
 	"mokapi/version"
 	"net"
@@ -12,6 +10,9 @@ import (
 	"regexp/syntax"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
 )
 
 func (p *Parser) ParseString(data interface{}, schema *schema.Schema) (interface{}, error) {
@@ -144,8 +145,6 @@ func validateString(str string, s *schema.Schema, skipValidationFormatKeyword bo
 				Message: fmt.Sprintf("string '%v' does not match regex pattern '%v'", str, s.Pattern),
 				Field:   "pattern",
 			}
-		} else {
-			fmt.Sprintf("")
 		}
 	}
 

@@ -1,6 +1,10 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"mokapi/media"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime"
@@ -8,15 +12,25 @@ import (
 	"mokapi/runtime/monitor"
 	"net/http"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 type kafkaSummary struct {
 	service
 }
 
-type kafka struct {
+type cluster struct {
+	Name        string   `json:"name"`
+	Description string   `json:"description,omitempty"`
+	Contact     *contact `json:"contact,omitempty"`
+	Version     string   `json:"version,omitempty"`
+}
+
+type kafkaInfo struct {
 	Name        string           `json:"name"`
 	Description string           `json:"description"`
 	Version     string           `json:"version"`
@@ -102,6 +116,20 @@ type bindings struct {
 	KeySchemaValidation   bool  `json:"keySchemaValidation,omitempty"`
 }
 
+type produceRequest struct {
+	Records []store.Record `json:"records"`
+}
+
+type produceResponse struct {
+	Offsets []recordResult `json:"offsets"`
+}
+
+type recordResult struct {
+	Partition int
+	Offset    int64
+	Error     string
+}
+
 func getKafkaServices(store *runtime.KafkaStore, m *monitor.Monitor) []interface{} {
 	list := store.List()
 	result := make([]interface{}, 0, len(list))
@@ -128,23 +156,242 @@ func getKafkaServices(store *runtime.KafkaStore, m *monitor.Monitor) []interface
 	return result
 }
 
-func (h *handler) getKafkaService(w http.ResponseWriter, r *http.Request) {
-	segments := strings.Split(r.URL.Path, "/")
-	name := segments[4]
-
-	if s := h.app.Kafka.Get(name); s != nil {
-		k := getKafka(s)
-		k.Metrics = h.app.Monitor.FindAll(metrics.ByNamespace("kafka"), metrics.ByLabel("service", name))
-
+func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
+	segments := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	switch {
+	// /api/services/kafka
+	case len(segments) == 3:
 		w.Header().Set("Content-Type", "application/json")
-		writeJsonBody(w, k)
-	} else {
-		w.WriteHeader(404)
+		writeJsonBody(w, getKafkaClusters(h.app))
+		return
+	// /api/services/kafka/{cluster}
+	case len(segments) == 4:
+		name := segments[3]
+		if s := h.app.Kafka.Get(name); s != nil {
+			k := getKafka(s)
+			k.Metrics = h.app.Monitor.FindAll(metrics.ByNamespace("kafka"), metrics.ByLabel("service", name))
+
+			w.Header().Set("Content-Type", "application/json")
+			writeJsonBody(w, k)
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+		}
+		return
+	// /api/services/kafka/{cluster}/topics
+	case len(segments) == 5 && segments[4] == "topics":
+		k := h.app.Kafka.Get(segments[3])
+		if k == nil {
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			w.Header().Set("Content-Type", "application/json")
+			writeJsonBody(w, getTopics(k))
+		}
+		return
+	// /api/services/kafka/{cluster}/topics/{topic}
+	case len(segments) == 6 && segments[4] == "topics":
+		k := h.app.Kafka.Get(segments[3])
+		if k == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		topicName := segments[5]
+
+		if r.Method == "GET" {
+			t := getTopic(k, topicName)
+			if t == nil {
+				w.WriteHeader(http.StatusNotFound)
+				return
+			} else {
+				w.Header().Set("Content-Type", "application/json")
+				writeJsonBody(w, t)
+				return
+			}
+		} else if r.Method == "POST" {
+			records, err := getProduceRecords(r)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			c := store.NewClient(k.Store, h.app.Monitor.Kafka)
+			ct := media.ParseContentType(r.Header.Get("Content-Type"))
+			result, err := c.Write(topicName, records, &ct)
+			if err != nil {
+				if errors.Is(err, store.TopicNotFound) || errors.Is(err, store.PartitionNotFound) {
+					http.Error(w, err.Error(), http.StatusNotFound)
+				} else {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+				}
+			}
+			res := produceResponse{}
+			for _, rec := range result {
+				res.Offsets = append(res.Offsets, recordResult{
+					Partition: rec.Partition,
+					Offset:    rec.Offset,
+					Error:     rec.Error,
+				})
+			}
+			w.Header().Set("Content-Type", "application/json")
+			writeJsonBody(w, res)
+			return
+		}
+	// /api/services/kafka/{cluster}/topics/{topic}/partitions
+	case len(segments) == 7 && segments[6] == "partitions":
+		k := h.app.Kafka.Get(segments[3])
+		if k == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		topicName := segments[5]
+		t := k.Store.Topic(topicName)
+		if t == nil {
+			w.WriteHeader(http.StatusNotFound)
+		} else {
+			w.Header().Set("Content-Type", "application/json")
+			writeJsonBody(w, getPartitions(k, t))
+		}
+		return
+	// /api/services/kafka/{cluster}/topics/{topic}/partitions/{id}
+	case len(segments) == 8 && segments[6] == "partitions":
+		k := h.app.Kafka.Get(segments[3])
+		if k == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		topicName := segments[5]
+		t := k.Store.Topic(topicName)
+		if t == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		idValue := segments[7]
+		id, err := strconv.Atoi(idValue)
+		if err != nil {
+			http.Error(w, "error partition ID is not an integer", http.StatusBadRequest)
+			return
+		}
+		p := t.Partition(id)
+		if p == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		if r.Method == "GET" {
+			w.Header().Set("Content-Type", "application/json")
+			writeJsonBody(w, newPartition(k.Store, p))
+		} else {
+			records, err := getProduceRecords(r)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			for _, record := range records {
+				record.Partition = id
+			}
+			c := store.NewClient(k.Store, h.app.Monitor.Kafka)
+			ct := media.ParseContentType(r.Header.Get("Content-Type"))
+			result, err := c.Write(topicName, records, &ct)
+			if err != nil {
+				if errors.Is(err, store.TopicNotFound) || errors.Is(err, store.PartitionNotFound) {
+					http.Error(w, err.Error(), http.StatusNotFound)
+				} else {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+				}
+			}
+			res := produceResponse{}
+			for _, rec := range result {
+				res.Offsets = append(res.Offsets, recordResult{
+					Partition: rec.Partition,
+					Offset:    rec.Offset,
+					Error:     rec.Error,
+				})
+			}
+			w.Header().Set("Content-Type", "application/json")
+			writeJsonBody(w, res)
+			return
+		}
+		return
+	// /api/services/kafka/{cluster}/topics/{topic}/partitions/{id}/offsets
+	case len(segments) == 9 && segments[8] == "offsets":
+		k := h.app.Kafka.Get(segments[3])
+		if k == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		topicName := segments[5]
+		idValue := segments[7]
+		id, err := strconv.Atoi(idValue)
+		if err != nil {
+			http.Error(w, fmt.Errorf("error partition ID is not an integer").Error(), http.StatusBadRequest)
+			return
+		}
+		offsetValue := r.URL.Query().Get("offset")
+		offset := -1
+		if offsetValue != "" {
+			offset, err = strconv.Atoi(offsetValue)
+			if err != nil {
+				http.Error(w, fmt.Errorf("error offset is not an integer").Error(), http.StatusBadRequest)
+				return
+			}
+		}
+
+		c := store.NewClient(k.Store, h.app.Monitor.Kafka)
+		ct := media.ParseContentType(r.Header.Get("Accept"))
+		records, err := c.Read(topicName, id, int64(offset), &ct)
+		if err != nil {
+			if errors.Is(err, store.TopicNotFound) || errors.Is(err, store.PartitionNotFound) {
+				http.Error(w, err.Error(), http.StatusNotFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+			}
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		writeJsonBody(w, records)
+		return
+	// /api/services/kafka/{cluster}/topics/{topic}/partitions/{id}/offsets/0
+	case len(segments) == 10 && segments[8] == "offsets":
+		k := h.app.Kafka.Get(segments[3])
+		if k == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		topicName := segments[5]
+		idValue := segments[7]
+		id, err := strconv.Atoi(idValue)
+		if err != nil {
+			http.Error(w, fmt.Errorf("error partition ID is not an integer").Error(), http.StatusBadRequest)
+			return
+		}
+		offsetValue := segments[9]
+		offset, err := strconv.Atoi(offsetValue)
+		if err != nil {
+			http.Error(w, fmt.Errorf("error offset is not an integer").Error(), http.StatusBadRequest)
+			return
+		}
+
+		c := store.NewClient(k.Store, h.app.Monitor.Kafka)
+		ct := media.ParseContentType(r.Header.Get("Accept"))
+		records, err := c.Read(topicName, id, int64(offset), &ct)
+		if err != nil {
+			if errors.Is(err, store.TopicNotFound) || errors.Is(err, store.PartitionNotFound) {
+				http.Error(w, err.Error(), http.StatusNotFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+			}
+			return
+		}
+		if len(records) == 0 {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		writeJsonBody(w, records[0])
+		return
 	}
+	w.WriteHeader(http.StatusBadRequest)
 }
 
-func getKafka(info *runtime.KafkaInfo) kafka {
-	k := kafka{
+func getKafka(info *runtime.KafkaInfo) kafkaInfo {
+	k := kafkaInfo{
 		Name:        info.Config.Info.Name,
 		Description: info.Config.Info.Description,
 		Version:     info.Config.Info.Version,
@@ -186,20 +433,7 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 		return strings.Compare(k.Servers[i].Name, k.Servers[j].Name) < 0
 	})
 
-	for name, ch := range info.Config.Channels {
-		if ch.Value == nil {
-			continue
-		}
-		addr := ch.Value.Address
-		if addr == "" {
-			addr = name
-		}
-		t := info.Store.Topic(addr)
-		k.Topics = append(k.Topics, newTopic(info.Store, t, ch.Value, info.Config))
-	}
-	sort.Slice(k.Topics, func(i, j int) bool {
-		return strings.Compare(k.Topics[i].Name, k.Topics[j].Name) < 0
-	})
+	k.Topics = getTopics(info)
 
 	for _, g := range info.Store.Groups() {
 		k.Groups = append(k.Groups, newGroup(g))
@@ -211,6 +445,44 @@ func getKafka(info *runtime.KafkaInfo) kafka {
 	k.Configs = getConfigs(info.Configs())
 
 	return k
+}
+
+func getTopics(info *runtime.KafkaInfo) []topic {
+	topics := make([]topic, 0, len(info.Config.Channels))
+	for name, ch := range info.Config.Channels {
+		if ch.Value == nil {
+			continue
+		}
+		addr := ch.Value.Address
+		if addr == "" {
+			addr = name
+		}
+		t := info.Store.Topic(addr)
+		topics = append(topics, newTopic(info.Store, t, ch.Value, info.Config))
+	}
+	sort.Slice(topics, func(i, j int) bool {
+		return strings.Compare(topics[i].Name, topics[j].Name) < 0
+	})
+	return topics
+}
+
+func getTopic(info *runtime.KafkaInfo, name string) *topic {
+	for n, ch := range info.Config.Channels {
+		if ch.Value == nil {
+			continue
+		}
+		addr := ch.Value.Address
+		if addr == "" {
+			addr = n
+		}
+		if addr == name {
+			t := info.Store.Topic(addr)
+			r := newTopic(info.Store, t, ch.Value, info.Config)
+			return &r
+		}
+
+	}
+	return nil
 }
 
 func newTopic(s *store.Store, t *store.Topic, ch *asyncapi3.Channel, cfg *asyncapi3.Config) topic {
@@ -277,6 +549,17 @@ func newTopic(s *store.Store, t *store.Topic, ch *asyncapi3.Channel, cfg *asynca
 	return result
 }
 
+func getPartitions(info *runtime.KafkaInfo, t *store.Topic) []partition {
+	var partitions []partition
+	for _, p := range t.Partitions {
+		partitions = append(partitions, newPartition(info.Store, p))
+	}
+	sort.Slice(partitions, func(i, j int) bool {
+		return partitions[i].Id < partitions[j].Id
+	})
+	return partitions
+}
+
 func newGroup(g *store.Group) group {
 	grp := group{
 		Name:        g.Name,
@@ -330,4 +613,53 @@ func newBroker(b *store.Broker) broker {
 		Name: b.Name,
 		Addr: b.Addr(),
 	}
+}
+
+func getKafkaClusters(app *runtime.App) []cluster {
+	var clusters []cluster
+	for _, k := range app.Kafka.List() {
+		var c *contact
+		if k.Info.Contact != nil {
+			c = &contact{
+				Name:  k.Info.Contact.Name,
+				Url:   k.Info.Contact.Url,
+				Email: k.Info.Contact.Email,
+			}
+		}
+		clusters = append(clusters, cluster{
+			Name:        k.Info.Name,
+			Description: k.Info.Description,
+			Contact:     c,
+			Version:     k.Info.Version,
+		})
+	}
+	return clusters
+}
+
+func getProduceRecords(r *http.Request) ([]store.Record, error) {
+	var pr produceRequest
+	b, err := io.ReadAll(r.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading body")
+	}
+	err = json.Unmarshal(b, &pr)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing body")
+	}
+	return pr.Records, nil
+}
+
+func (r *recordResult) MarshalJSON() ([]byte, error) {
+	aux := &struct {
+		Partition int     `json:"partition"`
+		Offset    int64   `json:"offset"`
+		Error     *string `json:"error,omitempty"`
+	}{
+		Partition: r.Partition,
+		Offset:    r.Offset,
+	}
+	if r.Error != "" {
+		aux.Error = &r.Error
+	}
+	return json.Marshal(aux)
 }

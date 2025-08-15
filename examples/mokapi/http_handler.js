@@ -5,6 +5,7 @@ import { services as mailServices, mailEvents, getMail, getAttachment } from 'ma
 import { server as ldapServers, searches } from 'ldap.js'
 import { metrics } from 'metrics.js'
 import { get, post, fetch } from 'mokapi/http'
+import { base64 } from 'mokapi/encoding';
 
 const configs = {}
 const jobs = []
@@ -39,6 +40,132 @@ export default async function() {
             case 'serviceMail':
                 response.data = mailServices[0]
                 return true
+            case 'clusters':
+                response.data = clusters.map(x => getInfo(x, 'kafka'))
+                return
+            case 'topics':
+                response.data = clusters[0].topics
+                return
+            case 'topic':
+                response.data = clusters[0].topics.find(x => x.name === request.path.topic)
+                if (response.data === undefined) {
+                    response.statusCode = 404
+                }
+                return
+            case 'produceTopic': {
+                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+                if (!topic) {
+                    response.statusCode = 404
+                } else {
+                    response.data = {
+                        offsets: [
+                            {
+                                partition: 0,
+                                offset: 1234,
+                            }
+                        ]
+                    }
+                }
+                return
+            }
+            case 'partitions': {
+                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+                if (!topic) {
+                    response.statusCode = 404
+                    return
+                }
+                response.data = topic.partitions
+                return
+            }
+            case 'partition': {
+                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+                if (!topic) {
+                    response.statusCode = 404
+                    return
+                }
+                const id = request.path.partitionId
+                if (id >= topic.partitions.length) {
+                    response.statusCode = 404
+                } else {
+                    response.data = topic.partitions[id]
+                }
+                return
+            }
+            case 'producePartition': {
+                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+                if (!topic) {
+                    response.statusCode = 404
+                    return
+                }
+                const id = request.path.partitionId
+                if (id >= topic.partitions.length) {
+                    response.statusCode = 404
+                } else {
+                    response.data = {
+                        offsets: [
+                            {
+                                partition: id,
+                                offset: 1234,
+                            }
+                        ]
+                    }
+                }
+                return
+            }
+            case 'offsets': {
+                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+                if (!topic) {
+                    response.statusCode = 404
+                    return
+                }
+                const id = request.path.partitionId
+                if (id >= topic.partitions.length) {
+                    response.statusCode = 404
+                } else {
+                    const events = getEvents({topic: topic.name}).filter(x => x.data.partition === id)
+                    if (request.header['Accept'] === 'application/json') {
+                        response.data = events.map(x =>  ({
+                            key: x.data.key.value,
+                            value: JSON.parse(x.data.message.value)
+                        }))
+                    } else {
+                        response.data = events.map(x => ({
+                            key: base64.encode(x.data.key.value),
+                            value: base64.encode(x.data.message.value)
+                        }))
+                    }
+                }
+                return
+            }
+            case 'offset': {
+                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+                if (!topic) {
+                    response.statusCode = 404
+                    return
+                }
+                const id = request.path.partitionId
+                if (id >= topic.partitions.length) {
+                    response.statusCode = 404
+                } else {
+                    const events = getEvents({topic: topic.name}).filter(x => x.data.partition === id && x.data.offset === request.path.offset)
+                    if (events.length === 0) {
+                        response.statusCode = 404
+                        return
+                    }
+                    if (request.header['Accept'] === 'application/json') {
+                        response.data = {
+                            key: events[0].data.key.value,
+                            value: JSON.parse(events[0].data.message.value)
+                        }
+                    } else {
+                        response.data = {
+                            key: base64.encode(events[0].data.key.value),
+                            value: base64.encode(events[0].data.message.value)
+                        }
+                    }
+                }
+                return
+            }
             case 'mailboxes':
                 response.data = mailServices[0].mailboxes
                 return true
@@ -374,7 +501,7 @@ function getInfo(config, type) {
         type: type
     }
     if (config.contact) {
-        config.contact = {
+        info.contact = {
             name: config.contact.name,
             email: config.contact.email,
             url: config.contact.url

@@ -1,9 +1,14 @@
 package store
 
 import (
+	"fmt"
+	"math/rand"
+	"mokapi/kafka"
+	"mokapi/kafka/produce"
 	"mokapi/providers/asyncapi3"
 	"mokapi/runtime/events"
 	"mokapi/schema/json/schema"
+	"time"
 )
 
 type Topic struct {
@@ -74,4 +79,25 @@ func (t *Topic) log(r *KafkaLog, traits events.Traits) {
 
 func (t *Topic) Store() *Store {
 	return t.s
+}
+
+func (t *Topic) Write(record *kafka.Record) (partition int, recordError *produce.RecordError) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	index := r.Intn(len(t.Partitions))
+	_, errs, _ := t.Partitions[index].Write(kafka.RecordBatch{Records: []*kafka.Record{record}})
+	if errs == nil {
+		return index, nil
+	}
+	return index, &errs[0]
+}
+
+func (t *Topic) WritePartition(partition int, record *kafka.Record) (recordError *produce.RecordError, err error) {
+	if partition >= len(t.Partitions) {
+		return nil, fmt.Errorf("partition out of range")
+	}
+	_, errs, _ := t.Partitions[partition].Write(kafka.RecordBatch{Records: []*kafka.Record{record}})
+	if errs == nil {
+		return nil, nil
+	}
+	return &errs[0], nil
 }

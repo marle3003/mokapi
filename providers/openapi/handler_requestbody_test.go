@@ -1,9 +1,11 @@
 package openapi_test
 
 import (
+	"bytes"
 	"github.com/blevesearch/bleve/v2"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
+	"io"
 	engine2 "mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/openapi"
@@ -163,6 +165,52 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 			check: func(t *testing.T, r *engine2.EventRequest) {
 			},
 		},
+		{
+			name: "no request body specified but request contains body",
+			config: openapitest.NewConfig("3.0.0",
+				openapitest.WithServer("http://localhost", ""),
+				openapitest.WithPath("/foo", openapitest.NewPath(
+					openapitest.WithOperation("post",
+						openapitest.NewOperation(
+							openapitest.WithResponse(200),
+						)),
+				)),
+			),
+			fn: func(t *testing.T, handler http.Handler) {
+				spy := &spyBody{Reader: bytes.NewBufferString(`{"foo": "abc","bar": 12}`)}
+
+				r := httptest.NewRequest("post", "http://localhost/foo", spy)
+				r.Header.Set("Content-Type", "application/json")
+				rr := httptest.NewRecorder()
+
+				handler.ServeHTTP(rr, r)
+
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.True(t, spy.readCalled, "server needs to read body")
+			},
+			check: func(t *testing.T, r *engine2.EventRequest) {
+			},
+		},
+		{
+			name: "send request body to undefined endpoint",
+			config: openapitest.NewConfig("3.0.0",
+				openapitest.WithServer("http://localhost", ""),
+			),
+			fn: func(t *testing.T, handler http.Handler) {
+				spy := &spyBody{Reader: bytes.NewBufferString(`{"foo": "abc","bar": 12}`)}
+
+				r := httptest.NewRequest("post", "http://localhost/foo", spy)
+				r.Header.Set("Content-Type", "application/json")
+				rr := httptest.NewRecorder()
+
+				handler.ServeHTTP(rr, r)
+
+				require.Equal(t, http.StatusNotFound, rr.Code)
+				require.True(t, spy.readCalled, "server needs to read body")
+			},
+			check: func(t *testing.T, r *engine2.EventRequest) {
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -186,4 +234,18 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 		})
 
 	}
+}
+
+type spyBody struct {
+	io.Reader
+	readCalled bool
+}
+
+func (s *spyBody) Read(p []byte) (n int, err error) {
+	s.readCalled = true
+	return s.Reader.Read(p)
+}
+
+func (s *spyBody) Close() error {
+	return nil
 }

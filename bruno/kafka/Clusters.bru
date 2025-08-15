@@ -1,0 +1,15 @@
+meta {
+  name: Clusters
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/services/kafka
+  body: none
+  auth: inherit
+}
+
+settings {
+  encodeUrl: true
+}

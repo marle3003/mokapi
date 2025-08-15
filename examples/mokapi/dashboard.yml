@@ -28,7 +28,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ServiceInfo'
+                  $ref: 'common.yml#/components/schemas/Service'
   /api/services/http/{name}:
     get:
       summary: Information about the http service
@@ -253,6 +253,21 @@ paths:
               schema: {}
         "404":
           description: mail attachment not found
+  /api/services/kafka:
+    $ref: './kafka.yml#/components/pathItems/Clusters'
+  /api/services/kafka/{cluster}/topics:
+    $ref: './kafka.yml#/components/pathItems/Topics'
+  /api/services/kafka/{cluster}/topics/{topic}:
+    $ref: './kafka.yml#/components/pathItems/Topic'
+  /api/services/kafka/{cluster}/topics/{topic}/partitions:
+    $ref: './kafka.yml#/components/pathItems/Partitions'
+  /api/services/kafka/{cluster}/topics/{topic}/partitions/{partitionId}:
+    $ref: './kafka.yml#/components/pathItems/Partition'
+  /api/services/kafka/{cluster}/topics/{topic}/partitions/{partitionId}/offsets:
+    $ref: './kafka.yml#/components/pathItems/Offsets'
+  /api/services/kafka/{cluster}/topics/{topic}/partitions/{partitionId}/offsets/{offset}:
+    $ref: './kafka.yml#/components/pathItems/Offset'
+
   /api/services/kafka/{name}/groups:
     get:
       summary: list of kafka groups
@@ -630,35 +645,6 @@ components:
           type: string
         count:
           type: integer
-    ServiceInfo:
-      type: object
-      properties:
-        name:
-          type: string
-        description:
-          type: string
-        contact:
-          type: object
-          properties:
-            name:
-              type: string
-            url:
-              type: string
-            email:
-              type: string
-        version:
-          type: string
-        type:
-          type: string
-        metrics:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-              value:
-                type: integer
     Error:
       type: object
       properties:

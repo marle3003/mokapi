@@ -1,13 +1,14 @@
 package js_test
 
 import (
-	r "github.com/stretchr/testify/require"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/jstest"
 	"testing"
 	"time"
+
+	r "github.com/stretchr/testify/require"
 )
 
 func TestScript_Kafka_Produce(t *testing.T) {
@@ -123,7 +124,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			test: func(t *testing.T, host *enginetest.Host) {
 				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					msg := args.Messages[0]
-					r.Equal(t, map[string]interface{}{"foo": "bar"}, msg.Headers)
+					r.Equal(t, map[string]string{"foo": "bar"}, msg.Headers)
 					return &common.KafkaProduceResult{}, nil
 				}
 
@@ -145,7 +146,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 					msg := args.Messages[0]
 					r.Equal(t, "key1", msg.Key)
 					r.Equal(t, []byte("hello world"), msg.Value)
-					r.Equal(t, map[string]interface{}{"system-id": "foo"}, msg.Headers)
+					r.Equal(t, map[string]string{"system-id": "foo"}, msg.Headers)
 					r.Equal(t, msg.Partition, 12)
 					return &common.KafkaProduceResult{}, nil
 				}

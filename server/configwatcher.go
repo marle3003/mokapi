@@ -66,7 +66,7 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 			return nil, err
 		}
 		e = &entry{config: c}
-		w.configs[u.String()] = e
+		w.configs[getConfigKey(u)] = e
 		c.Listeners.Add("ConfigWatcher", w.configChanged)
 		parse = true
 	} else {
@@ -171,7 +171,7 @@ func (w *ConfigWatcher) addOrUpdate(evt dynamic.ConfigEvent) error {
 			current = current.Inner()
 		}
 		if ok {
-			key := e.config.Info.Url.String()
+			key := getConfigKey(e.config.Info.Url)
 			delete(w.configs, key)
 			dynamic.Wrap(c.Info, e.config)
 			w.configs[key] = e
@@ -180,7 +180,7 @@ func (w *ConfigWatcher) addOrUpdate(evt dynamic.ConfigEvent) error {
 
 	if !ok {
 		e = &entry{config: c}
-		w.configs[c.Info.Url.String()] = e
+		w.configs[getConfigKey(c.Info.Url)] = e
 		c.Listeners.Add("ConfigWatcher", w.configChanged)
 	} else if bytes.Equal(e.config.Info.Checksum, c.Info.Checksum) {
 		log.Debugf("Checksum not changed. Skip reloading %v (%s)", e.config.Info.Url.String(), evt.Event)
@@ -205,7 +205,7 @@ func (w *ConfigWatcher) configChanged(evt dynamic.ConfigEvent) {
 	}
 
 	w.m.Lock()
-	e := w.configs[evt.Config.Info.Url.String()]
+	e := w.configs[getConfigKey(evt.Config.Info.Url)]
 	if e == nil {
 		// config deleted
 		log.Debugf("received a change event for deleted config: %v", evt.Config.Info.Url.String())
@@ -234,6 +234,7 @@ func (w *ConfigWatcher) configChanged(evt dynamic.ConfigEvent) {
 	}
 
 	if err = dynamic.Validate(c); err != nil {
+		e.m.Unlock()
 		log.Infof("skipping file %v: %v", c.Info.Path(), err)
 		return
 	}
@@ -247,9 +248,10 @@ func (w *ConfigWatcher) configChanged(evt dynamic.ConfigEvent) {
 
 func (w *ConfigWatcher) remove(evt dynamic.ConfigEvent) {
 	w.m.Lock()
-	e := w.configs[evt.Config.Info.Url.String()]
+	key := getConfigKey(evt.Config.Info.Url)
+	e := w.configs[key]
 	e.m.Lock()
-	delete(w.configs, evt.Config.Info.Url.String())
+	delete(w.configs, key)
 	w.m.Unlock()
 
 	log.Debugf("removing %v", evt.Config.Info.Url.String())
@@ -266,7 +268,7 @@ func (w *ConfigWatcher) remove(evt dynamic.ConfigEvent) {
 }
 
 func (w *ConfigWatcher) getConfig(u *url.URL) (*entry, bool) {
-	if e, ok := w.configs[u.String()]; ok {
+	if e, ok := w.configs[getConfigKey(u)]; ok {
 		return e, true
 	}
 
@@ -276,4 +278,13 @@ func (w *ConfigWatcher) getConfig(u *url.URL) (*entry, bool) {
 		}
 	}
 	return nil, false
+}
+
+func getConfigKey(u *url.URL) string {
+	if u.Scheme == "file" || u.Host == "" {
+		// Ensures the behavior is always the same for files,
+		// otherwise it is sometimes file:/ or file:///
+		u.OmitHost = true
+	}
+	return u.String()
 }

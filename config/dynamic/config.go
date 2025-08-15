@@ -111,6 +111,9 @@ func Wrap(i ConfigInfo, c *Config) {
 }
 
 func Validate(c *Config) error {
+	if c.Data == nil {
+		return nil
+	}
 	if v, ok := c.Data.(Validator); ok {
 		return v.Validate()
 	}
@@ -118,11 +121,11 @@ func Validate(c *Config) error {
 }
 
 func (r *Refs) List(recursive bool) []*Config {
-	max := 20
+	m := 20
 	if !recursive {
-		max = 1
+		m = 1
 	}
-	return r.list(max)
+	return r.list(m)
 }
 
 func (r *Refs) list(max int) []*Config {

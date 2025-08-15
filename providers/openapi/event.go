@@ -35,7 +35,7 @@ func EventRequestFromContext(ctx context.Context) *common.EventRequest {
 	return e
 }
 
-func NewEventRequest(r *http.Request) (*common.EventRequest, context.Context) {
+func NewEventRequest(r *http.Request, contentType media.ContentType) (*common.EventRequest, context.Context) {
 	ctx := r.Context()
 	endpointPath := ctx.Value("endpointPath").(string)
 	op, _ := OperationFromContext(ctx)
@@ -80,6 +80,9 @@ func NewEventRequest(r *http.Request) (*common.EventRequest, context.Context) {
 			}
 		}
 	}
+
+	// Accept header is defined in the response object and not as parameter
+	req.Header["Accept"] = contentType.String()
 
 	return req, context.WithValue(ctx, eventKey, req)
 }

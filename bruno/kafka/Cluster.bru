@@ -1,0 +1,19 @@
+meta {
+  name: Cluster
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/services/kafka/:clusterName
+  body: none
+  auth: inherit
+}
+
+params:path {
+  clusterName: Kafka World
+}
+
+settings {
+  encodeUrl: true
+}

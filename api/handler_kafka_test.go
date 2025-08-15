@@ -5,10 +5,12 @@ import (
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
-	kafka2 "mokapi/kafka"
+	"mokapi/kafka"
+	"mokapi/media"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
+	"mokapi/providers/openapi/openapitest"
 	schematest2 "mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
 	"mokapi/runtime/events/eventstest"
@@ -19,6 +21,8 @@ import (
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestHandler_Kafka(t *testing.T) {
@@ -37,7 +41,7 @@ func TestHandler_Kafka(t *testing.T) {
 		responseBody string
 	}{
 		{
-			name: "get kafka services",
+			name: "get services",
 			app: func() *runtime.App {
 				return runtimetest.NewKafkaApp(
 					asyncapi3test.NewConfig(
@@ -47,6 +51,28 @@ func TestHandler_Kafka(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services",
 			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"kafka"}]`,
+		},
+		{
+			name: "get kafka services",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				_, _ = app.Kafka.Add(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+						asyncapi3test.WithContact("mokapi", "https://mokapi.io", "info@mokapi.io"),
+					),
+				}, enginetest.NewEngine())
+				app.AddHttp(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("http.yaml")},
+					Data: openapitest.NewConfig("3.0",
+						openapitest.WithInfo("foo", "bar", "1.0"),
+					),
+				})
+				return app
+			},
+			requestUrl:   "http://foo.api/api/services/kafka",
+			responseBody: `[{"name":"foo","description":"bar","contact":{"name":"mokapi","url":"https://mokapi.io","email":"info@mokapi.io"},"version":"1.0"}]`,
 		},
 		{
 			name: "get kafka services with contact",
@@ -72,7 +98,7 @@ func TestHandler_Kafka(t *testing.T) {
 				}
 				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
 
-				app.Kafka.Add(cfg, enginetest.NewEngine())
+				_, _ = app.Kafka.Add(cfg, enginetest.NewEngine())
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
@@ -222,7 +248,7 @@ func TestHandler_Kafka(t *testing.T) {
 							RebalanceTimeoutMs: 0,
 							Members: map[string]*store.Member{
 								"m1": {
-									Client: &kafka2.ClientContext{
+									Client: &kafka.ClientContext{
 										Addr:                  "192.168.0.100",
 										ClientId:              "client1",
 										ClientSoftwareName:    "mokapi",
@@ -232,7 +258,7 @@ func TestHandler_Kafka(t *testing.T) {
 									Partitions: map[string][]int{"topic": {1, 2, 5}},
 								},
 								"m2": {
-									Client: &kafka2.ClientContext{
+									Client: &kafka.ClientContext{
 										Addr:                  "192.168.0.200",
 										ClientId:              "client2",
 										ClientSoftwareName:    "mokapi",
@@ -290,6 +316,417 @@ func TestHandler_Kafka(t *testing.T) {
 				try.HasStatusCode(200),
 				try.HasHeader("Content-Type", "application/json"),
 				try.HasBody(tc.responseBody))
+		})
+	}
+}
+
+func TestHandler_KafkaAPI(t *testing.T) {
+	testcases := []struct {
+		name string
+		app  func() *runtime.App
+		test func(t *testing.T, app *runtime.App, api http.Handler)
+	}{
+		{
+			name: "get kafka topics but empty",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				_, _ = app.Kafka.Add(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					),
+				}, enginetest.NewEngine())
+				return app
+			},
+			test: func(t *testing.T, app *runtime.App, api http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/topics",
+					nil,
+					"",
+					api,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`[]`),
+				)
+			},
+		},
+		{
+			name: "get kafka topics with one topic",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				_, _ = app.Kafka.Add(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+						asyncapi3test.WithChannel("topic-1",
+							asyncapi3test.WithChannelDescription("foobar"),
+							asyncapi3test.WithMessage("foo"),
+						),
+					),
+				}, enginetest.NewEngine())
+				return app
+			},
+			test: func(t *testing.T, app *runtime.App, api http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/topics",
+					nil,
+					"",
+					api,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`[{"name":"topic-1","description":"foobar","partitions":[{"id":0,"startOffset":0,"offset":0,"leader":{"name":"broker-1","addr":"localhost:9092"},"segments":0}],"messages":{"foo":{"name":"foo","payload":null,"contentType":"application/json"}},"bindings":{"partitions":1,"valueSchemaValidation":true}}]`),
+				)
+			},
+		},
+		{
+			name: "get specific kafka topic",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				_, _ = app.Kafka.Add(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+						asyncapi3test.WithChannel("topic-1",
+							asyncapi3test.WithChannelDescription("foobar"),
+							asyncapi3test.WithMessage("foo"),
+						),
+					),
+				}, enginetest.NewEngine())
+				return app
+			},
+			test: func(t *testing.T, app *runtime.App, api http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/topics/topic-1",
+					nil,
+					"",
+					api,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`{"name":"topic-1","description":"foobar","partitions":[{"id":0,"startOffset":0,"offset":0,"leader":{"name":"broker-1","addr":"localhost:9092"},"segments":0}],"messages":{"foo":{"name":"foo","payload":null,"contentType":"application/json"}},"bindings":{"partitions":1,"valueSchemaValidation":true}}`),
+				)
+			},
+		},
+		{
+			name: "get specific kafka topic but not found",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				_, _ = app.Kafka.Add(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+						asyncapi3test.WithChannel("topic-1",
+							asyncapi3test.WithChannelDescription("foobar"),
+							asyncapi3test.WithMessage("foo"),
+						),
+					),
+				}, enginetest.NewEngine())
+				return app
+			},
+			test: func(t *testing.T, app *runtime.App, api http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/topics/foo",
+					nil,
+					"",
+					api,
+					try.HasStatusCode(404),
+				)
+			},
+		},
+		{
+			name: "produce kafka message into topic",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				_, _ = app.Kafka.Add(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+						asyncapi3test.WithChannel("topic-1",
+							asyncapi3test.WithChannelDescription("foobar"),
+							asyncapi3test.WithMessage("foo"),
+						),
+					),
+				}, enginetest.NewEngine())
+				return app
+			},
+			test: func(t *testing.T, app *runtime.App, api http.Handler) {
+				try.Handler(t,
+					http.MethodPost,
+					"http://foo.api/api/services/kafka/foo/topics/topic-1",
+					map[string]string{"Content-Type": "application/json"},
+					`{
+"records": [{"key": "foo", "value": "bar"}]
+}`,
+					api,
+					try.HasStatusCode(http.StatusOK),
+					try.HasBody(`{"offsets":[{"partition":0,"offset":0}]}`),
+				)
+
+				require.Equal(t, float64(1), app.Monitor.Kafka.Messages.WithLabel("foo", "topic-1").Value())
+			},
+		},
+		{
+			name: "produce kafka message into topic using binary",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				_, _ = app.Kafka.Add(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+						asyncapi3test.WithChannel("topic-1",
+							asyncapi3test.WithChannelDescription("foobar"),
+							asyncapi3test.WithMessage("foo"),
+						),
+					),
+				}, enginetest.NewEngine())
+				return app
+			},
+			test: func(t *testing.T, app *runtime.App, api http.Handler) {
+				try.Handler(t,
+					http.MethodPost,
+					"http://foo.api/api/services/kafka/foo/topics/topic-1",
+					map[string]string{"Content-Type": "application/vnd.mokapi.kafka.binary+json"},
+					`{
+"records": [{"key": "foo", "value": "YmFy"}]
+}`,
+					api,
+					try.HasStatusCode(http.StatusOK),
+					try.HasBody(`{"offsets":[{"partition":0,"offset":0}]}`),
+				)
+
+				s := app.Kafka.Get("foo").Store
+				b, errCode := s.Topic("topic-1").Partitions[0].Read(0, 100)
+				require.Equal(t, kafka.None, errCode)
+				require.Equal(t, "foo", string(kafka.Read(b.Records[0].Key)))
+				require.Equal(t, "bar", string(kafka.Read(b.Records[0].Value)))
+
+				require.Equal(t, float64(1), app.Monitor.Kafka.Messages.WithLabel("foo", "topic-1").Value())
+			},
+		},
+		{
+			name: "produce invalid kafka message into topic",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				_, _ = app.Kafka.Add(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+						asyncapi3test.WithChannel("topic-1",
+							asyncapi3test.WithChannelDescription("foobar"),
+							asyncapi3test.WithMessage("foo",
+								asyncapi3test.WithContentType("application/json"),
+								asyncapi3test.WithPayload(schematest.New("string")),
+							),
+						),
+					),
+				}, enginetest.NewEngine())
+				return app
+			},
+			test: func(t *testing.T, app *runtime.App, api http.Handler) {
+				try.Handler(t,
+					http.MethodPost,
+					"http://foo.api/api/services/kafka/foo/topics/topic-1",
+					map[string]string{"Content-Type": "application/json"},
+					`{
+"records": [{"key": "foo", "value": 123 }]
+}`,
+					api,
+					try.HasStatusCode(http.StatusOK),
+					try.HasBody(`{"offsets":[{"partition":-1,"offset":-1,"error":"validation error: invalid message: error count 1:\n\t- #/type: invalid type, expected string but got number"}]}`),
+				)
+
+				require.Equal(t, float64(0), app.Monitor.Kafka.Messages.WithLabel("foo", "topic-1").Value())
+			},
+		},
+		{
+			name: "get kafka partitions",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				_, _ = app.Kafka.Add(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+						asyncapi3test.WithChannel("topic-1",
+							asyncapi3test.WithChannelDescription("foobar"),
+							asyncapi3test.WithMessage("foo"),
+						),
+					),
+				}, enginetest.NewEngine())
+				return app
+			},
+			test: func(t *testing.T, app *runtime.App, api http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/topics/topic-1/partitions",
+					nil,
+					"",
+					api,
+					try.HasStatusCode(http.StatusOK),
+					try.HasBody(`[{"id":0,"startOffset":0,"offset":0,"leader":{"name":"broker-1","addr":"localhost:9092"},"segments":0}]`),
+				)
+			},
+		},
+		{
+			name: "get specific kafka partition",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				_, _ = app.Kafka.Add(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+						asyncapi3test.WithChannel("topic-1",
+							asyncapi3test.WithChannelDescription("foobar"),
+							asyncapi3test.WithMessage("foo"),
+						),
+					),
+				}, enginetest.NewEngine())
+				return app
+			},
+			test: func(t *testing.T, app *runtime.App, api http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/topics/topic-1/partitions/0",
+					nil,
+					"",
+					api,
+					try.HasStatusCode(http.StatusOK),
+					try.HasBody(`{"id":0,"startOffset":0,"offset":0,"leader":{"name":"broker-1","addr":"localhost:9092"},"segments":0}`),
+				)
+			},
+		},
+		{
+			name: "produce kafka message into specific partition",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				_, _ = app.Kafka.Add(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+						asyncapi3test.WithChannel("topic-1",
+							asyncapi3test.WithChannelDescription("foobar"),
+							asyncapi3test.WithMessage("foo"),
+						),
+					),
+				}, enginetest.NewEngine())
+				return app
+			},
+			test: func(t *testing.T, app *runtime.App, api http.Handler) {
+				try.Handler(t,
+					http.MethodPost,
+					"http://foo.api/api/services/kafka/foo/topics/topic-1/partitions/0",
+					map[string]string{"Content-Type": "application/json"},
+					`{
+"records": [{"key": "foo", "value": "bar"}]
+}`,
+					api,
+					try.HasStatusCode(http.StatusOK),
+					try.HasBody(`{"offsets":[{"partition":0,"offset":0}]}`),
+				)
+
+				require.Equal(t, float64(1), app.Monitor.Kafka.Messages.WithLabel("foo", "topic-1").Value())
+			},
+		},
+		{
+			name: "get records",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				_, _ = app.Kafka.Add(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+						asyncapi3test.WithChannel("topic-1",
+							asyncapi3test.WithChannelDescription("foobar"),
+							asyncapi3test.WithMessage("foo"),
+						),
+					),
+				}, enginetest.NewEngine())
+
+				c := store.NewClient(app.Kafka.Get("foo").Store, app.Monitor.Kafka)
+				ct := media.ParseContentType("application/json")
+				c.Write("topic-1", []store.Record{
+					{
+						Key:   "foo",
+						Value: map[string]interface{}{"value": "bar"},
+					},
+				}, &ct)
+
+				return app
+			},
+			test: func(t *testing.T, app *runtime.App, api http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/topics/topic-1/partitions/0/offsets",
+					nil,
+					"",
+					api,
+					try.HasStatusCode(http.StatusOK),
+					try.HasBody(`[{"Key":"foo","Value":{"value":"bar"},"Headers":null,"Partition":0}]`),
+				)
+			},
+		},
+		{
+			name: "get specific record",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				_, _ = app.Kafka.Add(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+						asyncapi3test.WithChannel("topic-1",
+							asyncapi3test.WithChannelDescription("foobar"),
+							asyncapi3test.WithMessage("foo"),
+						),
+					),
+				}, enginetest.NewEngine())
+
+				c := store.NewClient(app.Kafka.Get("foo").Store, app.Monitor.Kafka)
+				ct := media.ParseContentType("application/json")
+				c.Write("topic-1", []store.Record{
+					{
+						Key:   "foo",
+						Value: map[string]interface{}{"value": "bar"},
+					},
+				}, &ct)
+
+				return app
+			},
+			test: func(t *testing.T, app *runtime.App, api http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/topics/topic-1/partitions/0/offsets/0",
+					nil,
+					"",
+					api,
+					try.HasStatusCode(http.StatusOK),
+					try.HasBody(`{"Key":"foo","Value":{"value":"bar"},"Headers":null,"Partition":0}`),
+				)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			app := tc.app()
+			h := New(app, static.Api{})
+			tc.test(t, app, h)
 		})
 	}
 }

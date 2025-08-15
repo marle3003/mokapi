@@ -1,0 +1,35 @@
+meta {
+  name: Topic Produce
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/services/kafka/:cluster/topics/:topic
+  body: json
+  auth: inherit
+}
+
+params:path {
+  topic: mokapi.shop.products
+  cluster: Kafka World
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "records": [
+      {
+        "key": "foo",
+        "value": "bar"
+      }
+    ]
+  }
+}
+
+settings {
+  encodeUrl: true
+}

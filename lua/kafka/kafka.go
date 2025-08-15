@@ -1,13 +1,14 @@
 package kafka
 
 import (
-	log "github.com/sirupsen/logrus"
-	lua "github.com/yuin/gopher-lua"
-	luar "layeh.com/gopher-luar"
 	"mokapi/engine/common"
 	"mokapi/lua/convert"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+	lua "github.com/yuin/gopher-lua"
+	luar "layeh.com/gopher-luar"
 )
 
 type Module struct {
@@ -19,7 +20,7 @@ type produceOptions struct {
 	Partition int
 	Key       interface{}
 	Value     interface{}
-	Headers   map[string]interface{}
+	Headers   map[string]string
 	Timeout   int
 }
 

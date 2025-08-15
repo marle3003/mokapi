@@ -1,0 +1,25 @@
+meta {
+  name: Offset
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/services/kafka/:cluster/topics/:topic/partitions/0/offsets/0
+  body: none
+  auth: inherit
+}
+
+params:path {
+  topic: mokapi.shop.products
+  cluster: Kafka World
+}
+
+headers {
+  Accept: application/json
+  ~Accept: application/vnd.mokapi.kafka.binary+json
+}
+
+settings {
+  encodeUrl: true
+}
