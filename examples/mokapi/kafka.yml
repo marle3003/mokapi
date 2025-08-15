@@ -164,6 +164,14 @@ components:
                     type: array
                     items:
                       $ref: '#/components/schemas/Record'
+            application/vnd.mokapi.kafka.binary+json:
+              schema:
+                type: object
+                properties:
+                  records:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Record'
         responses:
           '200':
             description: List of partitions and offsets the records were published to.
@@ -216,7 +224,12 @@ components:
                 schema:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Partition'
+                    $ref: '#/components/schemas/Record'
+              application/vnd.mokapi.kafka.binary+json:
+                schema:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Record'
     Offset:
       parameters:
         - in: path
@@ -234,9 +247,14 @@ components:
           required: true
           schema:
             type: integer
+        - in: path
+          name: offset
+          required: true
+          schema:
+            type: integer
       get:
         summary: Return published record in partition with the specified offset.
-        operationId: partition
+        operationId: offset
         responses:
           '200':
             description: The record.
@@ -244,6 +262,14 @@ components:
               application/json:
                 schema:
                   $ref: '#/components/schemas/Record'
+              application/vnd.mokapi.kafka.binary+json:
+                schema:
+                  type: object
+                  properties:
+                    records:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/Record'
 
   schemas:
     KafkaInfo:
@@ -410,11 +436,8 @@ components:
     Record:
       type: object
       properties:
-        key:
-          type: string
-        value:
-          description: base64 encoded value
-          type: string
+        key: {}
+        value: {}
     ProducedRecord:
       type: object
       properties:

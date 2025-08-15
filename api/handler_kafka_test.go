@@ -6,6 +6,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
+	"mokapi/media"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
@@ -635,6 +636,84 @@ func TestHandler_KafkaAPI(t *testing.T) {
 				)
 
 				require.Equal(t, float64(1), app.Monitor.Kafka.Messages.WithLabel("foo", "topic-1").Value())
+			},
+		},
+		{
+			name: "get records",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				_, _ = app.Kafka.Add(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+						asyncapi3test.WithChannel("topic-1",
+							asyncapi3test.WithChannelDescription("foobar"),
+							asyncapi3test.WithMessage("foo"),
+						),
+					),
+				}, enginetest.NewEngine())
+
+				c := store.NewClient(app.Kafka.Get("foo").Store, app.Monitor.Kafka)
+				ct := media.ParseContentType("application/json")
+				c.Write("topic-1", []store.Record{
+					{
+						Key:   "foo",
+						Value: map[string]interface{}{"value": "bar"},
+					},
+				}, &ct)
+
+				return app
+			},
+			test: func(t *testing.T, app *runtime.App, api http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/topics/topic-1/partitions/0/offsets",
+					nil,
+					"",
+					api,
+					try.HasStatusCode(http.StatusOK),
+					try.HasBody(`[{"Key":"foo","Value":{"value":"bar"},"Headers":null,"Partition":0}]`),
+				)
+			},
+		},
+		{
+			name: "get specific record",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				_, _ = app.Kafka.Add(&dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+						asyncapi3test.WithServer("broker-1", "kafka", "localhost:9092"),
+						asyncapi3test.WithChannel("topic-1",
+							asyncapi3test.WithChannelDescription("foobar"),
+							asyncapi3test.WithMessage("foo"),
+						),
+					),
+				}, enginetest.NewEngine())
+
+				c := store.NewClient(app.Kafka.Get("foo").Store, app.Monitor.Kafka)
+				ct := media.ParseContentType("application/json")
+				c.Write("topic-1", []store.Record{
+					{
+						Key:   "foo",
+						Value: map[string]interface{}{"value": "bar"},
+					},
+				}, &ct)
+
+				return app
+			},
+			test: func(t *testing.T, app *runtime.App, api http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/topics/topic-1/partitions/0/offsets/0",
+					nil,
+					"",
+					api,
+					try.HasStatusCode(http.StatusOK),
+					try.HasBody(`{"Key":"foo","Value":{"value":"bar"},"Headers":null,"Partition":0}`),
+				)
 			},
 		},
 	}

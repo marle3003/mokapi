@@ -7,6 +7,7 @@ import (
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"strconv"
+	"strings"
 )
 
 const marshalError = "encoding data to '%v' failed: %w"
@@ -41,7 +42,7 @@ func (e *Encoder) Write(v interface{}, contentType media.ContentType) ([]byte, e
 	}
 	var b []byte
 	switch {
-	case contentType.Subtype == "json" || contentType.Subtype == "problem+json":
+	case contentType.Subtype == "json" || strings.HasSuffix(contentType.Subtype, "+json"):
 		b, err = json.Marshal(i)
 	default:
 		var s string

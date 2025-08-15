@@ -5,6 +5,7 @@ import { services as mailServices, mailEvents, getMail, getAttachment } from 'ma
 import { server as ldapServers, searches } from 'ldap.js'
 import { metrics } from 'metrics.js'
 import { get, post, fetch } from 'mokapi/http'
+import { base64 } from 'mokapi/encoding';
 
 const configs = {}
 const jobs = []
@@ -122,10 +123,46 @@ export default async function() {
                     response.statusCode = 404
                 } else {
                     const events = getEvents({topic: topic.name}).filter(x => x.data.partition === id)
-                    response.data = events.map(x =>  ({
-                        key: x.data.key.binary,
-                        value: x.data.message.binary
-                    }))
+                    if (request.header['Accept'] === 'application/json') {
+                        response.data = events.map(x =>  ({
+                            key: x.data.key.value,
+                            value: JSON.parse(x.data.message.value)
+                        }))
+                    } else {
+                        response.data = events.map(x => ({
+                            key: base64.encode(x.data.key.value),
+                            value: base64.encode(x.data.message.value)
+                        }))
+                    }
+                }
+                return
+            }
+            case 'offset': {
+                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+                if (!topic) {
+                    response.statusCode = 404
+                    return
+                }
+                const id = request.path.partitionId
+                if (id >= topic.partitions.length) {
+                    response.statusCode = 404
+                } else {
+                    const events = getEvents({topic: topic.name}).filter(x => x.data.partition === id && x.data.offset === request.path.offset)
+                    if (events.length === 0) {
+                        response.statusCode = 404
+                        return
+                    }
+                    if (request.header['Accept'] === 'application/json') {
+                        response.data = {
+                            key: events[0].data.key.value,
+                            value: JSON.parse(events[0].data.message.value)
+                        }
+                    } else {
+                        response.data = {
+                            key: base64.encode(events[0].data.key.value),
+                            value: base64.encode(events[0].data.message.value)
+                        }
+                    }
                 }
                 return
             }

@@ -51,10 +51,7 @@ func (c *Client) Write(topic string, records []Record, ct *media.ContentType) ([
 	var result []RecordResult
 	for _, r := range records {
 		p, err := c.getPartition(t, r.Partition)
-		if err != nil {
-			return nil, PartitionNotFound
-		}
-		if p == nil {
+		if err != nil || p == nil {
 			return nil, PartitionNotFound
 		}
 		key, err := c.parse(r.Key, ct)
@@ -104,6 +101,64 @@ func (c *Client) Write(topic string, records []Record, ct *media.ContentType) ([
 	}
 
 	return result, nil
+}
+
+func (c *Client) Read(topic string, partition int, offset int64, ct *media.ContentType) ([]Record, error) {
+	t := c.store.Topic(topic)
+	if t == nil {
+		return nil, TopicNotFound
+	}
+	p := t.Partition(partition)
+	if p == nil {
+		return nil, PartitionNotFound
+	}
+
+	if offset < 0 {
+		offset = p.Head
+	}
+
+	// read max 6MB
+	b, errCode := p.Read(offset, 6e+6)
+	if errCode != kafka.None {
+		return nil, fmt.Errorf("read records failed: %v", errCode.String())
+	}
+
+	records := []Record{}
+	switch ct.Key() {
+	case "application/vnd.mokapi.kafka.binary+json":
+		for _, r := range b.Records {
+			var bKey []byte
+			base64.StdEncoding.Encode(bKey, kafka.Read(r.Key))
+			var bValue []byte
+			base64.StdEncoding.Encode(bValue, kafka.Read(r.Value))
+			records = append(records, Record{
+				Key:   string(bKey),
+				Value: string(bValue),
+			})
+		}
+	case "application/json", "":
+		for _, r := range b.Records {
+			var key any
+			err := json.Unmarshal(kafka.Read(r.Key), &key)
+			if err != nil {
+				return nil, fmt.Errorf("parse record key as JSON failed: %v", err)
+			}
+			var val any
+			err = json.Unmarshal(kafka.Read(r.Value), &val)
+			if err != nil {
+				return nil, fmt.Errorf("parse record value as JSON failed: %v", err)
+			}
+
+			records = append(records, Record{
+				Key:   key,
+				Value: val,
+			})
+		}
+	default:
+		return nil, fmt.Errorf("unknown content type: %v", ct)
+	}
+
+	return records, nil
 }
 
 func (c *Client) getPartition(t *Topic, id int) (*Partition, error) {

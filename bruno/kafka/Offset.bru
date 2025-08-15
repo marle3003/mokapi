@@ -1,11 +1,11 @@
 meta {
-  name: Offsets
+  name: Offset
   type: http
-  seq: 10
+  seq: 11
 }
 
 get {
-  url: {{baseUrl}}/services/kafka/:cluster/topics/:topic/partitions/0/offsets
+  url: {{baseUrl}}/services/kafka/:cluster/topics/:topic/partitions/0/offsets/0
   body: none
   auth: inherit
 }

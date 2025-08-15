@@ -252,8 +252,8 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 		idValue := segments[7]
 		id, err := strconv.Atoi(idValue)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			_, _ = w.Write([]byte("error partition ID is not an integer"))
+			http.Error(w, "error partition ID is not an integer", http.StatusBadRequest)
+			return
 		}
 		p := t.Partition(id)
 		if p == nil {
@@ -286,6 +286,83 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 			writeJsonBody(w, produceResponse{Offsets: result})
 			return
 		}
+		return
+	// /api/services/kafka/{cluster}/topics/{topic}/partitions/{id}/offsets
+	case len(segments) == 9 && segments[8] == "offsets":
+		k := h.app.Kafka.Get(segments[3])
+		if k == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		topicName := segments[5]
+		idValue := segments[7]
+		id, err := strconv.Atoi(idValue)
+		if err != nil {
+			http.Error(w, fmt.Errorf("error partition ID is not an integer").Error(), http.StatusBadRequest)
+			return
+		}
+		offsetValue := r.URL.Query().Get("offset")
+		offset := -1
+		if offsetValue != "" {
+			offset, err = strconv.Atoi(offsetValue)
+			if err != nil {
+				http.Error(w, fmt.Errorf("error offset is not an integer").Error(), http.StatusBadRequest)
+				return
+			}
+		}
+
+		c := store.NewClient(k.Store, h.app.Monitor.Kafka)
+		ct := media.ParseContentType(r.Header.Get("Accept"))
+		records, err := c.Read(topicName, id, int64(offset), &ct)
+		if err != nil {
+			if errors.Is(err, store.TopicNotFound) || errors.Is(err, store.PartitionNotFound) {
+				http.Error(w, err.Error(), http.StatusNotFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+			}
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		writeJsonBody(w, records)
+		return
+	// /api/services/kafka/{cluster}/topics/{topic}/partitions/{id}/offsets/0
+	case len(segments) == 10 && segments[8] == "offsets":
+		k := h.app.Kafka.Get(segments[3])
+		if k == nil {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		topicName := segments[5]
+		idValue := segments[7]
+		id, err := strconv.Atoi(idValue)
+		if err != nil {
+			http.Error(w, fmt.Errorf("error partition ID is not an integer").Error(), http.StatusBadRequest)
+			return
+		}
+		offsetValue := segments[9]
+		offset, err := strconv.Atoi(offsetValue)
+		if err != nil {
+			http.Error(w, fmt.Errorf("error offset is not an integer").Error(), http.StatusBadRequest)
+			return
+		}
+
+		c := store.NewClient(k.Store, h.app.Monitor.Kafka)
+		ct := media.ParseContentType(r.Header.Get("Accept"))
+		records, err := c.Read(topicName, id, int64(offset), &ct)
+		if err != nil {
+			if errors.Is(err, store.TopicNotFound) || errors.Is(err, store.PartitionNotFound) {
+				http.Error(w, err.Error(), http.StatusNotFound)
+			} else {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+			}
+			return
+		}
+		if len(records) == 0 {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		writeJsonBody(w, records[0])
 		return
 	}
 	w.WriteHeader(http.StatusBadRequest)

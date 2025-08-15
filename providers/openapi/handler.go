@@ -72,7 +72,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request, ctx := NewEventRequest(r)
+	request, ctx := NewEventRequest(r, contentType)
 	r = r.WithContext(ctx)
 
 	if op.RequestBody != nil {
@@ -88,8 +88,8 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		// not reading the request body can cause a couple of problems
-		// Go’s HTTP server uses connection pooling by default
+		// Not reading the request body can cause a couple of problems.
+		// Go’s HTTP server uses connection pooling by default.
 		// If you don’t read and fully consume (or close) the request body, the remaining unread bytes will stay in the TCP buffer.
 		_, _ = io.Copy(io.Discard, r.Body)
 	}
@@ -307,8 +307,8 @@ endpointLoop:
 		r = r.WithContext(ctx)
 	}
 
-	// not reading the request body can cause a couple of problems
-	// Go’s HTTP server uses connection pooling by default
+	// Not reading the request body can cause a couple of problems.
+	// Go’s HTTP server uses connection pooling by default.
 	// If you don’t read and fully consume (or close) the request body, the remaining unread bytes will stay in the TCP buffer.
 	_, _ = io.Copy(io.Discard, r.Body)
 

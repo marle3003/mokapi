@@ -1,5 +1,5 @@
 import { metrics } from 'metrics.js'
-import { base64} from 'mokapi/encoding';
+import { base64 } from 'mokapi/encoding';
 
 const Product = {
     type: 'object',
