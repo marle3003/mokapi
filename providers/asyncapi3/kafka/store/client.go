@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"mokapi/config/dynamic"
 	"mokapi/kafka"
@@ -18,10 +19,10 @@ var TopicNotFound = errors.New("topic not found")
 var PartitionNotFound = errors.New("partition not found")
 
 type Record struct {
-	Key       any
-	Value     any
-	Headers   map[string]string
-	Partition int
+	Key       any               `json:"key"`
+	Value     any               `json:"value"`
+	Headers   map[string]string `json:"headers,omitempty"`
+	Partition int               `json:"partition"`
 }
 
 type RecordResult struct {
@@ -133,8 +134,8 @@ func (c *Client) Read(topic string, partition int, offset int64, ct *media.Conte
 	}
 
 	records := []Record{}
-	switch ct.Key() {
-	case "application/vnd.mokapi.kafka.binary+json":
+	switch {
+	case ct.Key() == "application/vnd.mokapi.kafka.binary+json":
 		for _, r := range b.Records {
 			var bKey []byte
 			base64.StdEncoding.Encode(bKey, kafka.Read(r.Key))
@@ -145,7 +146,7 @@ func (c *Client) Read(topic string, partition int, offset int64, ct *media.Conte
 				Value: string(bValue),
 			})
 		}
-	case "application/json", "":
+	case ct.Key() == "application/json", ct.IsAny():
 		for _, r := range b.Records {
 			key := string(kafka.Read(r.Key))
 			var val any
@@ -161,6 +162,10 @@ func (c *Client) Read(topic string, partition int, offset int64, ct *media.Conte
 		}
 	default:
 		return nil, fmt.Errorf("unknown content type: %v", ct)
+	}
+
+	if len(records) > 0 {
+		log.Info("")
 	}
 
 	return records, nil
