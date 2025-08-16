@@ -18,7 +18,7 @@ runs:
       run: docker build --build-arg VERSION=${{ inputs.version }} -t ${{ inputs.image-name }} -t mokapi/mokapi:alpha -f ./images/alpha.Dockerfile .
       shell: bash
     - name: Save Image to file
-      run: docker save ${{ inputs.image-name }} > /tmp/mokapi.tar
+      run: docker save -o /tmp/mokapi.tar ${{ inputs.image-name }} mokapi/mokapi:alpha
       shell: bash
     - name: Upload image
       uses: actions/upload-artifact@v4
