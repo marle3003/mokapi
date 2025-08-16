@@ -673,7 +673,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 					"",
 					api,
 					try.HasStatusCode(http.StatusOK),
-					try.HasBody(`[{"Key":"foo","Value":{"value":"bar"},"Headers":null,"Partition":0}]`),
+					try.HasBody(`[{"key":"foo","value":{"value":"bar"},"partition":0}]`),
 				)
 			},
 		},
@@ -712,7 +712,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 					"",
 					api,
 					try.HasStatusCode(http.StatusOK),
-					try.HasBody(`{"Key":"foo","Value":{"value":"bar"},"Headers":null,"Partition":0}`),
+					try.HasBody(`{"key":"foo","value":{"value":"bar"},"partition":0}`),
 				)
 			},
 		},
