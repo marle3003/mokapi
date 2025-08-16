@@ -15,7 +15,7 @@ runs:
   using: "composite"
   steps:
     - name: Build docker alpha image
-      run: docker build --build-arg VERSION=${{ inputs.version }} -t ${{ inputs.image-name }} -f ./images/alpha.Dockerfile .
+      run: docker build --build-arg VERSION=${{ inputs.version }} -t ${{ inputs.image-name }} -t mokapi/mokapi:alpha -f ./images/alpha.Dockerfile .
       shell: bash
     - name: Save Image to file
       run: docker save ${{ inputs.image-name }} > /tmp/mokapi.tar
