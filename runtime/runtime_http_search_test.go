@@ -47,6 +47,19 @@ func TestIndex_Http(t *testing.T) {
 			},
 		},
 		{
+			name: "config should be remove from index",
+			test: func(t *testing.T, app *runtime.App) {
+				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
+				app.AddHttp(toConfig(cfg))
+				r, err := app.Search(search.Request{QueryText: "foo", Limit: 10})
+				require.NoError(t, err)
+				require.Len(t, r.Results, 1)
+				app.RemoveHttp(toConfig(cfg))
+				r, err = app.Search(search.Request{QueryText: "foo", Limit: 10})
+				require.Len(t, r.Results, 0)
+			},
+		},
+		{
 			name: "Search by substring",
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("My petstore API", "", ""))

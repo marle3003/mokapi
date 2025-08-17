@@ -3,12 +3,14 @@ package acceptance
 import (
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
 	"mokapi/server/cert"
 	"mokapi/smtp/smtptest"
 	"mokapi/try"
 	"net"
+	"net/http"
 	"os"
 	"path"
 	"testing"
@@ -25,6 +27,7 @@ func (suite *MailSuite) SetupSuite() {
 	cfg.Certificates.Static = []static.Certificate{
 		{Cert: "./mail/mail.mokapi.local.pem"},
 	}
+	cfg.Api.Search.Enabled = true
 	suite.initCmd(cfg)
 }
 
@@ -149,6 +152,21 @@ func (suite *MailSuite) TestSendMail() {
 	//w.Close()
 	//c.Quit()
 	//require.NoError(suite.T(), err)
+}
+
+func (suite *MailSuite) TestSearch() {
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%v/api/search/query?q=Mokapi%%20MailServer", suite.cfg.Api.Port),
+		nil,
+		try.HasStatusCode(http.StatusOK),
+		try.AssertBody(func(t *testing.T, body string) {
+			var data map[string]any
+			err := json.Unmarshal([]byte(body), &data)
+			require.NoError(t, err)
+			require.NotNil(t, data)
+
+			require.Equal(t, float64(5), data["total"])
+		}),
+	)
 }
 
 func (suite *MailSuite) TestSendMail_OldFormat() {

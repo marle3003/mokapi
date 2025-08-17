@@ -130,7 +130,13 @@ func (s *KafkaStore) Remove(c *dynamic.Config) {
 
 	name := cfg.Info.Name
 	ki := s.infos[name]
-	ki.Remove(c)
+
+	if s.cfg.Api.Search.Enabled {
+		s.removeFromIndex(ki.Config)
+	}
+	delete(ki.configs, c.Info.Url.String())
+	ki.update()
+
 	if len(ki.configs) == 0 {
 		s.m.RUnlock()
 		s.m.Lock()
@@ -220,11 +226,6 @@ func IsAsyncApiConfig(c *dynamic.Config) (*asyncapi3.Config, bool) {
 	}
 
 	return cfg, true
-}
-
-func (c *KafkaInfo) Remove(cfg *dynamic.Config) {
-	delete(c.configs, cfg.Info.Url.String())
-	c.update()
 }
 
 func getKafkaConfig(c *dynamic.Config) (*asyncapi3.Config, error) {

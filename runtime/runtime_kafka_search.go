@@ -171,3 +171,11 @@ func getSchema(s *asyncapi3.SchemaRef) (*schema.IndexData, error) {
 		return nil, fmt.Errorf("unsupported schema type: %T", v)
 	}
 }
+
+func (s *KafkaStore) removeFromIndex(cfg *asyncapi3.Config) {
+	_ = s.index.Delete(fmt.Sprintf("kafka_%s", cfg.Info.Name))
+
+	for name := range cfg.Channels {
+		_ = s.index.Delete(fmt.Sprintf("kafka_%s_%s", cfg.Info.Name, name))
+	}
+}

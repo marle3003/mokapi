@@ -50,6 +50,23 @@ func TestIndex_Kafka(t *testing.T) {
 			},
 		},
 		{
+			name: "config should be removed from index",
+			test: func(t *testing.T, app *runtime.App) {
+				cfg := asyncapi3test.NewConfig(asyncapi3test.WithInfo("Kafka Test server", "", ""))
+				_, err := app.Kafka.Add(toConfig(cfg), enginetest.NewEngine())
+				require.NoError(t, err)
+
+				r, err := app.Search(search.Request{QueryText: "Test", Limit: 10})
+				require.NoError(t, err)
+				require.Len(t, r.Results, 1)
+
+				app.Kafka.Remove(toConfig(cfg))
+				r, err = app.Search(search.Request{QueryText: "Test", Limit: 10})
+				require.NoError(t, err)
+				require.Len(t, r.Results, 0)
+			},
+		},
+		{
 			name: "Search topic",
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := asyncapi3test.NewConfig(

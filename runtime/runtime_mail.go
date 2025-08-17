@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"context"
+	"github.com/blevesearch/bleve/v2"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
@@ -27,6 +28,7 @@ type MailStore struct {
 	m     sync.RWMutex
 	cfg   *static.Config
 	sm    *events.StoreManager
+	index bleve.Index
 }
 
 type MailInfo struct {
@@ -83,6 +85,10 @@ func (s *MailStore) Add(c *dynamic.Config) *MailInfo {
 		mi.AddConfig(c)
 	}
 
+	if s.cfg.Api.Search.Enabled {
+		s.addToIndex(mi.Config)
+	}
+
 	return mi
 }
 
@@ -103,7 +109,13 @@ func (s *MailStore) Remove(c *dynamic.Config) {
 	cfg := c.Data.(*mail.Config)
 	name := cfg.Info.Name
 	mi := s.infos[name]
-	mi.Remove(c)
+	if s.cfg.Api.Search.Enabled {
+		s.removeFromIndex(mi.Config)
+	}
+
+	delete(mi.configs, c.Info.Url.String())
+	mi.update()
+
 	if len(mi.configs) == 0 {
 		s.m.RUnlock()
 		s.m.Lock()
@@ -175,11 +187,6 @@ func (c *MailInfo) Configs() []*dynamic.Config {
 		r = append(r, config)
 	}
 	return r
-}
-
-func (c *MailInfo) Remove(cfg *dynamic.Config) {
-	delete(c.configs, cfg.Info.Url.String())
-	c.update()
 }
 
 type mailHandler struct {
