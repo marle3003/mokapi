@@ -340,7 +340,7 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 			if errors.Is(err, store.TopicNotFound) || errors.Is(err, store.PartitionNotFound) {
 				http.Error(w, err.Error(), http.StatusNotFound)
 			} else {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 			return
 		}

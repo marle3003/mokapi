@@ -78,10 +78,15 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 			}
 		}
 
+		var headers []store.RecordHeader
+		for hk, hv := range r.Headers {
+			headers = append(headers, store.RecordHeader{Name: hk, Value: hv})
+		}
+
 		rec, err := client.Write(t.Name, []store.Record{{
 			Key:       r.Key,
 			Value:     value,
-			Headers:   r.Headers,
+			Headers:   headers,
 			Partition: r.Partition,
 		}}, ct)
 		if err != nil {
@@ -208,60 +213,6 @@ func createValue(r *asyncapi3.SchemaRef) (value interface{}, err error) {
 	}
 
 	return
-}
-
-func marshal(value interface{}, r *asyncapi3.SchemaRef, contentType string) ([]byte, error) {
-	var s asyncapi3.Schema
-	if r != nil && r.Value != nil && r.Value.Schema != nil {
-		s = r.Value.Schema
-	} else {
-		s = &schema.Schema{}
-	}
-
-	switch v := s.(type) {
-	case *schema.Schema:
-		return encoding.NewEncoder(v).Write(value, media.ParseContentType(contentType))
-	case *openapi.Schema:
-		return v.Marshal(value, media.ParseContentType(contentType))
-	case *avro.Schema:
-		jsSchema := v.Convert()
-		return encoding.NewEncoder(jsSchema).Write(value, media.ParseContentType(contentType))
-	default:
-		return nil, fmt.Errorf("schema format not supported: %v", r.Value.Format)
-	}
-}
-
-func marshalKey(key interface{}, r *asyncapi3.SchemaRef) ([]byte, error) {
-	var s asyncapi3.Schema
-	if r != nil && r.Value != nil && r.Value.Schema != nil {
-		s = r.Value.Schema
-	} else {
-		s = &schema.Schema{}
-	}
-
-	switch v := s.(type) {
-	case *schema.Schema:
-		if v.IsObject() || v.IsArray() {
-			return encoding.NewEncoder(v).Write(key, media.ParseContentType("application/json"))
-		} else {
-			return []byte(fmt.Sprintf("%v", key)), nil
-		}
-	case *openapi.Schema:
-		if v.Type.IsObject() || v.Type.IsArray() {
-			return v.Marshal(key, media.ParseContentType("application/json"))
-		} else {
-			return []byte(fmt.Sprintf("%v", key)), nil
-		}
-	case *avro.Schema:
-		jsSchema := v.Convert()
-		if jsSchema.IsObject() || jsSchema.IsArray() {
-			return encoding.NewEncoder(jsSchema).Write(key, media.ParseContentType("application/json"))
-		} else {
-			return []byte(fmt.Sprintf("%v", key)), nil
-		}
-	default:
-		return nil, fmt.Errorf("schema format not supported: %v", r.Value.Format)
-	}
 }
 
 func selectMessage(value any, topic *asyncapi3.Channel, cfg *asyncapi3.Config) (*asyncapi3.Message, error) {

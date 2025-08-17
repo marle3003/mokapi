@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"mokapi/config/dynamic"
 	"mokapi/kafka"
@@ -19,10 +18,16 @@ var TopicNotFound = errors.New("topic not found")
 var PartitionNotFound = errors.New("partition not found")
 
 type Record struct {
-	Key       any               `json:"key"`
-	Value     any               `json:"value"`
-	Headers   map[string]string `json:"headers,omitempty"`
-	Partition int               `json:"partition"`
+	Offset    int64          `json:"offset"`
+	Key       any            `json:"key"`
+	Value     any            `json:"value"`
+	Headers   []RecordHeader `json:"headers,omitempty"`
+	Partition int            `json:"partition"`
+}
+
+type RecordHeader struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
 }
 
 type RecordResult struct {
@@ -30,6 +35,7 @@ type RecordResult struct {
 	Offset    int64
 	Key       []byte
 	Value     []byte
+	Headers   []RecordHeader
 	Error     string
 }
 
@@ -77,10 +83,10 @@ func (c *Client) Write(topic string, records []Record, ct *media.ContentType) ([
 			Key:   kafka.NewBytes(key),
 			Value: kafka.NewBytes(value),
 		}
-		for name, val := range r.Headers {
+		for _, h := range r.Headers {
 			rec.Headers = append(rec.Headers, kafka.RecordHeader{
-				Key:   name,
-				Value: []byte(val),
+				Key:   h.Name,
+				Value: []byte(h.Value),
 			})
 		}
 		b := kafka.RecordBatch{Records: []*kafka.Record{rec}}
@@ -99,12 +105,19 @@ func (c *Client) Write(topic string, records []Record, ct *media.ContentType) ([
 					Error:     res[0].BatchIndexErrorMessage,
 				})
 			} else {
-				result = append(result, RecordResult{
+				rr := RecordResult{
 					Offset:    offset,
 					Key:       kafka.Read(b.Records[0].Key),
 					Value:     kafka.Read(b.Records[0].Value),
 					Partition: p.Index,
-				})
+				}
+				for _, h := range b.Records[0].Headers {
+					rr.Headers = append(rr.Headers, RecordHeader{
+						Name:  h.Key,
+						Value: string(h.Value),
+					})
+				}
+				result = append(result, rr)
 				c.store.UpdateMetrics(c.monitor, t, p, b)
 			}
 		}
@@ -134,38 +147,48 @@ func (c *Client) Read(topic string, partition int, offset int64, ct *media.Conte
 	}
 
 	records := []Record{}
+	var getValue func(value []byte) (any, error)
 	switch {
 	case ct.Key() == "application/vnd.mokapi.kafka.binary+json":
-		for _, r := range b.Records {
-			var bKey []byte
-			base64.StdEncoding.Encode(bKey, kafka.Read(r.Key))
-			var bValue []byte
-			base64.StdEncoding.Encode(bValue, kafka.Read(r.Value))
-			records = append(records, Record{
-				Key:   string(bKey),
-				Value: string(bValue),
-			})
+		getValue = func(value []byte) (any, error) {
+			return base64.StdEncoding.EncodeToString(value), nil
 		}
 	case ct.Key() == "application/json", ct.IsAny():
-		for _, r := range b.Records {
-			key := string(kafka.Read(r.Key))
+		getValue = func(value []byte) (any, error) {
 			var val any
-			err := json.Unmarshal(kafka.Read(r.Value), &val)
+			err := json.Unmarshal(value, &val)
 			if err != nil {
 				return nil, fmt.Errorf("parse record value as JSON failed: %v", err)
 			}
-
-			records = append(records, Record{
-				Key:   key,
-				Value: val,
-			})
+			return val, nil
 		}
+
 	default:
 		return nil, fmt.Errorf("unknown content type: %v", ct)
 	}
 
-	if len(records) > 0 {
-		log.Info("")
+	for _, r := range b.Records {
+		key := string(kafka.Read(r.Key))
+		val, err := getValue(kafka.Read(r.Value))
+		if err != nil {
+			return nil, err
+		}
+
+		rec := Record{
+			Offset:    r.Offset,
+			Partition: p.Index,
+			Key:       key,
+			Value:     val,
+		}
+
+		for _, h := range r.Headers {
+			rec.Headers = append(rec.Headers, RecordHeader{
+				Name:  h.Key,
+				Value: string(h.Value),
+			})
+		}
+
+		records = append(records, rec)
 	}
 
 	return records, nil
@@ -203,19 +226,24 @@ func (c *Client) parse(v any, ct *media.ContentType) ([]byte, error) {
 			return vt, nil
 		case string:
 			return []byte(vt), nil
+		default:
+			return json.Marshal(v)
 		}
 	}
-	return nil, fmt.Errorf("unknown content type: %v", ct)
 }
 
 func (c *Client) parseKey(v any) ([]byte, error) {
+	if v == nil {
+		return nil, nil
+	}
 	switch vt := v.(type) {
 	case []byte:
 		return vt, nil
 	case string:
 		return []byte(vt), nil
+	default:
+		return json.Marshal(v)
 	}
-	return nil, fmt.Errorf("key not supported: %v", v)
 }
 
 func (r *Record) UnmarshalJSON(b []byte) error {

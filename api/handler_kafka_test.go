@@ -656,7 +656,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 
 				c := store.NewClient(app.Kafka.Get("foo").Store, app.Monitor.Kafka)
 				ct := media.ParseContentType("application/json")
-				c.Write("topic-1", []store.Record{
+				_, _ = c.Write("topic-1", []store.Record{
 					{
 						Key:   "foo",
 						Value: map[string]interface{}{"value": "bar"},
@@ -673,7 +673,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 					"",
 					api,
 					try.HasStatusCode(http.StatusOK),
-					try.HasBody(`[{"key":"foo","value":{"value":"bar"},"partition":0}]`),
+					try.HasBody(`[{"offset":0,"key":"foo","value":{"value":"bar"},"partition":0}]`),
 				)
 			},
 		},
@@ -695,7 +695,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 
 				c := store.NewClient(app.Kafka.Get("foo").Store, app.Monitor.Kafka)
 				ct := media.ParseContentType("application/json")
-				c.Write("topic-1", []store.Record{
+				_, _ = c.Write("topic-1", []store.Record{
 					{
 						Key:   "foo",
 						Value: map[string]interface{}{"value": "bar"},
@@ -712,7 +712,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 					"",
 					api,
 					try.HasStatusCode(http.StatusOK),
-					try.HasBody(`{"key":"foo","value":{"value":"bar"},"partition":0}`),
+					try.HasBody(`{"offset":0,"key":"foo","value":{"value":"bar"},"partition":0}`),
 				)
 			},
 		},

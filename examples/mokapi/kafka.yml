@@ -436,8 +436,22 @@ components:
     Record:
       type: object
       properties:
+        offset:
+          type: integer
         key: {}
         value: {}
+        headers:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              value:
+                type: string
+        partition:
+          type: integer
+
     ProducedRecord:
       type: object
       properties:
