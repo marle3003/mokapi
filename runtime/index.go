@@ -151,6 +151,8 @@ func (a *App) Search(r search.Request) (search.Result, error) {
 			item, err = events.GetSearchResult(fields, discriminators)
 		case "kafka":
 			item, err = getKafkaSearchResult(fields, discriminators)
+		case "mail":
+			item, err = getMailSearchResult(fields, discriminators)
 		default:
 			log.Errorf("unknown discriminator: %s", strings.Join(discriminators, "_"))
 			continue

@@ -194,12 +194,12 @@ func getHttpSearchResult(fields map[string]string, discriminator []string) (sear
 }
 
 func (s *HttpStore) removeFromIndex(cfg *openapi.Config) {
-	_ = s.index.Delete(cfg.Info.Name)
+	_ = s.index.Delete(fmt.Sprintf("http_%s", cfg.Info.Name))
 
 	for path, p := range cfg.Paths {
-		_ = s.index.Delete(fmt.Sprintf("%s_%s", cfg.Info.Name, path))
+		_ = s.index.Delete(fmt.Sprintf("http_%s_%s", cfg.Info.Name, path))
 		for method := range p.Value.Operations() {
-			_ = s.index.Delete(fmt.Sprintf("%s_%s_%s", cfg.Info.Name, path, method))
+			_ = s.index.Delete(fmt.Sprintf("http_%s_%s_%s", cfg.Info.Name, path, method))
 		}
 	}
 }

@@ -113,7 +113,7 @@
                   </a>
                 </li>
                 <li>
-                  <a href="https://mokapi.myspreadshop.ch/" target="_blank" rel="noopener noreferrer" >
+                  <a href="https://mokapi.myspreadshop.ch/" target="_blank" rel="noopener noreferrer" title="Support Mokapi – with code in your heart and style on your sleeve.">
                     Merchandise Store
                   </a>
                 </li>

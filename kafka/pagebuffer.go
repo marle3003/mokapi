@@ -16,6 +16,9 @@ type bytesReader struct {
 }
 
 func NewBytes(b []byte) Bytes {
+	if len(b) == 0 {
+		return nil
+	}
 	r := new(bytesReader)
 	r.Reset(b)
 	return r

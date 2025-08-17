@@ -30,6 +30,9 @@ runs:
       with:
         username: ${{ inputs.docker-username }}
         password: ${{ inputs.docker-password }}
-    - name: Push image to Docker
+    - name: Push image mokapi/mokapi:v-alpha to Docker
       run: docker push ${{ inputs.image-name }}
+      shell: bash
+    - name: Push image mokapi/mokapi:alpha to Docker
+      run: docker push mokapi/mokapi:alpha
       shell: bash
