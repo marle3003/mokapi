@@ -1,7 +1,7 @@
 ---
 title: Testing Kafka Workflows with Playwright and Mokapi
 description: Simulating real message flows end-to-end with Node.js, Kafka topics, and browser-driven tests.
-icon: bi-envelope-paper
+icon: bi-lightning
 tech: kafka
 ---
 
@@ -131,7 +131,7 @@ Now let’s test this workflow with Playwright and Mokapi.
 2. Wait for the backend to publish an event to document.send-event. 
 3. Retrieve the event and assert its contents.
 
-Playwright gives us a handy page.request API for making HTTP calls, so we can interact directly with Mokapi’s REST API.
+We can access Mokapi's REST API either through Playwright's Page object or via fetch.
 
 ```typescript
 import { test, expect } from '@playwright/test';
