@@ -42,12 +42,18 @@ func WithContact(name, url, email string) ConfigOptions {
 
 func WithPath(name string, path *openapi.Path) ConfigOptions {
 	return func(c *openapi.Config) {
+		if path != nil {
+			path.Path = name
+		}
 		c.Paths[name] = &openapi.PathRef{Value: path}
 	}
 }
 
 func WithPathRef(name string, ref *openapi.PathRef) ConfigOptions {
 	return func(c *openapi.Config) {
+		if ref != nil && ref.Value != nil {
+			ref.Value.Path = name
+		}
 		c.Paths[name] = ref
 	}
 }

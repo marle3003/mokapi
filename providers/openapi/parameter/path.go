@@ -4,40 +4,39 @@ import (
 	"fmt"
 	"mokapi/providers/openapi/schema"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
 func parsePath(param *Parameter, route string, r *http.Request) (*RequestParameterValue, error) {
-	path := findPathValue(param, route, r)
-	if len(path) == 0 {
-		// path parameters are always required
-		return nil, fmt.Errorf("parameter is required")
+	v, err := findPathValue(param, route, r)
+	if err != nil {
+		return nil, err
 	}
 
-	rp := &RequestParameterValue{Raw: &path, Value: path}
+	rp := &RequestParameterValue{Raw: &v, Value: v}
 
 	switch param.Style {
 	case "label":
-		if path[0] != '.' {
-			return nil, fmt.Errorf("expected label parameter, got at index 0: '%v'", path[0])
+		if v[0] != '.' {
+			return nil, fmt.Errorf("expected label parameter, got at index 0: '%v'", v[0])
 		}
-		path = path[1:]
+		v = v[1:]
 	case "matrix":
-		if path[0] != ';' {
-			return nil, fmt.Errorf("expected label parameter, got at index 0: '%v'", path[0])
+		if v[0] != ';' {
+			return nil, fmt.Errorf("expected label parameter, got at index 0: '%v'", v[0])
 		}
-		path = path[1:]
+		v = v[1:]
 	}
 
-	var err error
 	if param.Schema != nil {
 		switch {
 		case param.Schema.Type.IsArray():
-			rp.Value, err = parseArray(param, strings.Split(path, ","))
+			rp.Value, err = parseArray(param, strings.Split(v, ","))
 		case param.Schema.Type.IsObject():
-			rp.Value, err = parseObject(param, path, ",", param.IsExplode(), defaultDecode)
+			rp.Value, err = parseObject(param, v, ",", param.IsExplode(), defaultDecode)
 		default:
-			rp.Value, err = p.ParseWith(path, schema.ConvertToJsonSchema(param.Schema))
+			rp.Value, err = p.ParseWith(v, schema.ConvertToJsonSchema(param.Schema))
 		}
 	}
 
@@ -48,13 +47,36 @@ func parsePath(param *Parameter, route string, r *http.Request) (*RequestParamet
 	return rp, nil
 }
 
-func findPathValue(p *Parameter, route string, r *http.Request) string {
-	segments := strings.Split(r.URL.Path, "/")
-	key := fmt.Sprintf("{%v}", p.Name)
-	for i, seg := range strings.Split(route, "/") {
-		if seg == key {
-			return segments[i]
+func findPathValue(p *Parameter, route string, r *http.Request) (string, error) {
+	// Find all {param} names
+	re := regexp.MustCompile(`\{([^}]+)\}`)
+	names := re.FindAllStringSubmatch(route, -1)
+
+	// Replace {param} with regex group
+	pattern := "^" + re.ReplaceAllString(route, `([^/]+)`) + "$"
+	re = regexp.MustCompile(pattern)
+
+	// find the index for the given parameter
+	index := -1
+	for i, name := range names {
+		if name[1] == p.Name {
+			index = i
+			break
 		}
 	}
-	return ""
+	if index == -1 {
+		return "", fmt.Errorf("path parameter %s not found in route %s", p.Name, route)
+	}
+
+	match := re.FindStringSubmatch(r.URL.Path)
+	if match == nil {
+		// path parameters are always required
+		return "", fmt.Errorf("url does not match route")
+	}
+
+	if len(match) < index+1 {
+		return "", fmt.Errorf("parameter is required")
+	}
+
+	return match[index+1], nil
 }

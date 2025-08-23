@@ -2,8 +2,7 @@ package openapi_test
 
 import (
 	"context"
-	"github.com/sirupsen/logrus/hooks/test"
-	"github.com/stretchr/testify/require"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/script"
 	"mokapi/engine/common"
@@ -17,6 +16,9 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestResolveEndpoint(t *testing.T) {
@@ -114,6 +116,21 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 				require.Equal(t, 404, rr.Code)
+				require.Equal(t, "no matching endpoint found: GET http://localhost/foo\n", rr.Body.String())
+			},
+		},
+		//
+		{
+			name: "HTTP method does not match",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusNotFound, openapitest.WithContent("application/json", openapitest.NewContent())))
+				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("POST", "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusMethodNotAllowed, rr.Code)
+				require.Equal(t, "GET", rr.Header().Get("Allow"))
+				require.Equal(t, "Method POST not defined in specification for path /foo\n", rr.Body.String())
 			},
 		},
 		{
@@ -317,7 +334,7 @@ func TestResolveEndpoint(t *testing.T) {
 		// Path parameter
 		//
 		{
-			name: "path is always required",
+			name: "path parameter is always required",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK),
@@ -368,7 +385,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 				require.Equal(t, 400, rr.Code)
-				require.Equal(t, "parse path parameter 'id' failed: parameter is required\n", rr.Body.String())
+				require.Equal(t, "parse path parameter 'id' failed: path parameter id not found in route /foo/bar\n", rr.Body.String())
 			},
 		},
 		//
@@ -620,6 +637,40 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 				require.Equal(t, 200, rr.Code)
+			},
+		},
+		{
+			// Literal/static paths have higher priority than parameterized paths.
+			// /pet/{name}
+			// /pet/findByStatus
+			name: "endpoints overlap",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				byName := openapitest.NewOperation(
+					openapitest.WithOperationParam("name", true, openapitest.WithParamSchema(schematest.New("string"))),
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json", openapitest.NewContent(
+							openapitest.WithSchema(schematest.New("string", schematest.WithConst("Name"))),
+						)),
+					),
+				)
+				find := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json", openapitest.NewContent(
+							openapitest.WithSchema(schematest.New("string", schematest.WithConst("findByStatus"))),
+						)),
+					),
+				)
+				openapitest.AppendPath("/pet/{name}", c, openapitest.WithOperation("get", byName))
+				openapitest.AppendPath("/pet/findByStatus", c, openapitest.WithOperation("get", find))
+				r := httptest.NewRequest("get", "http://localhost/pet/findByStatus", nil)
+				r.Header.Set("accept", "application/json")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, 200, rr.Code)
+				b, err := io.ReadAll(rr.Body)
+				require.NoError(t, err)
+				require.Equal(t, `"findByStatus"`, string(b))
 			},
 		},
 	}

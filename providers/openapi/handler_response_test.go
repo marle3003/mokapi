@@ -1,7 +1,6 @@
 package openapi_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/openapi"
@@ -13,6 +12,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestHandler_Response(t *testing.T) {
@@ -286,6 +287,22 @@ func TestHandler_Response_Context(t *testing.T) {
 			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, `{"id":123}`, rr.Body.String())
+			},
+		},
+		{
+			name: "response reference is nil",
+			opt: openapitest.WithPath("/users",
+				openapitest.NewPath(
+					openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+						openapitest.WithResponseRef(http.StatusOK, nil),
+					))),
+			),
+			req: func() *http.Request {
+				return httptest.NewRequest("get", "http://localhost/users", nil)
+			},
+			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusInternalServerError, rr.Code)
+				require.Equal(t, "response not defined for HTTP status 200\n", rr.Body.String())
 			},
 		},
 	}
