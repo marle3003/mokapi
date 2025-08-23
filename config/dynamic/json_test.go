@@ -1,8 +1,9 @@
 package dynamic
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestSchema_UnmarshalJSON(t *testing.T) {
@@ -70,6 +71,23 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 				err := UnmarshalJSON([]byte(`true`), &b)
 				require.NoError(t, err)
 				require.Equal(t, true, b)
+			},
+		},
+		{
+			name: "bool to interface",
+			test: func(t *testing.T) {
+				var v any
+				err := UnmarshalJSON([]byte(`true`), &v)
+				require.NoError(t, err)
+				require.Equal(t, true, v)
+			},
+		},
+		{
+			name: "bool to string",
+			test: func(t *testing.T) {
+				var s string
+				err := UnmarshalJSON([]byte(`true`), &s)
+				require.EqualError(t, err, "bool is not assignable to string")
 			},
 		},
 		{

@@ -24,7 +24,7 @@ func WithPathInfo(summary, description string) PathOptions {
 }
 
 func AppendPath(path string, config *openapi.Config, opts ...PathOptions) *openapi.Path {
-	e := &openapi.Path{}
+	e := &openapi.Path{Path: path}
 	for _, opt := range opts {
 		opt(e)
 	}
@@ -57,6 +57,7 @@ func WithOperation(method string, op *openapi.Operation) PathOptions {
 		case "TRACE":
 			e.Trace = op
 		}
+		op.Path = e
 	}
 }
 

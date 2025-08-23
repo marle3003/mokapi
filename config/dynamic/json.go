@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"io"
 	"reflect"
 	"strings"
 	"unicode"
+
+	"github.com/pkg/errors"
 )
 
 type decoder struct {
@@ -91,11 +92,13 @@ func value(token json.Token, d *decoder, v reflect.Value) error {
 		return number(t, v)
 	case bool:
 		_, v = indirect(v)
-		if v.Type().AssignableTo(reflect.TypeOf(t)) {
+		vt := reflect.ValueOf(t)
+		if vt.Type().AssignableTo(v.Type()) {
 			v.Set(reflect.ValueOf(t))
 		} else {
-			return fmt.Errorf("bool is not assignable to string")
+			return fmt.Errorf("bool is not assignable to %s", toTypeName(v))
 		}
+
 		return nil
 	case nil:
 		switch v.Kind() {
