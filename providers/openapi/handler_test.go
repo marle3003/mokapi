@@ -130,7 +130,7 @@ func TestResolveEndpoint(t *testing.T) {
 				h(rr, r)
 				require.Equal(t, http.StatusMethodNotAllowed, rr.Code)
 				require.Equal(t, "GET", rr.Header().Get("Allow"))
-				require.Equal(t, "Method POST not defined in specification for path /foo\n", rr.Body.String())
+				require.Equal(t, "Method POST not defined for path /foo\n", rr.Body.String())
 			},
 		},
 		{
