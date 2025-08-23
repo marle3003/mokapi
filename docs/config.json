@@ -206,7 +206,8 @@
           "Bring Your Mock APIs to Life with Mokapi and JavaScript": "resources/blogs/dynamic-mocks-with-javascript.md",
           "Debugging Mokapi Scripts": "resources/blogs/debugging-mokapi-scripts.md",
           "Acceptance Testing with Mokapi: Focus on What Matters": "resources/blogs/acceptance-testing.md",
-          "Testing Email Workflows with Playwright and Mokapi": "resources/blogs/testing-email-workflows-playwright.md"
+          "Testing Email Workflows with Playwright and Mokapi": "resources/blogs/testing-email-workflows-playwright.md",
+          "Testing Kafka Workflows with Playwright and Mokapi": "resources/blogs/testing-kafka-workflows-playwright.md"
         }
       }
     }
