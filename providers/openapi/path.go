@@ -2,11 +2,12 @@ package openapi
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/providers/openapi/parameter"
 	"net/http"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type PathItems map[string]*PathRef
@@ -54,6 +55,8 @@ type Path struct {
 	// parameters can be overridden at the operation level,
 	// but cannot be removed there
 	Parameters parameter.Parameters
+
+	Path string `yaml:"-" json:"-"`
 }
 
 func (r *PathRef) UnmarshalJSON(b []byte) error {
@@ -128,17 +131,22 @@ func (p PathItems) Resolve(token string) (interface{}, error) {
 
 func (p PathItems) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for name, e := range p {
-		if err := e.parse(config, reader); err != nil {
+		if err := e.parse(name, config, reader); err != nil {
 			return fmt.Errorf("parse path '%v' failed: %w", name, err)
 		}
 	}
 	return nil
 }
 
-func (r *PathRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (r *PathRef) parse(name string, config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
+	defer func() {
+		if r.Value != nil {
+			r.Value.Path = name
+		}
+	}()
 
 	if len(r.Ref) > 0 {
 		return dynamic.Resolve(r.Ref, &r.Value, config, reader)

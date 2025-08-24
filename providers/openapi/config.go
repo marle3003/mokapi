@@ -4,13 +4,14 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/media"
 	jsonSchema "mokapi/schema/json/schema"
 	"mokapi/version"
 	"net/http"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 var (
