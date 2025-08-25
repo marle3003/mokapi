@@ -48,6 +48,19 @@ func parsePath(param *Parameter, route string, r *http.Request) (*RequestParamet
 }
 
 func findPathValue(p *Parameter, route string, r *http.Request) (string, error) {
+	requestPath := r.URL.Path
+	if len(requestPath) > 1 {
+		requestPath = strings.TrimRight(requestPath, "/")
+	}
+
+	servicePath, ok := r.Context().Value("servicePath").(string)
+	if ok && servicePath != "/" {
+		requestPath = strings.Replace(requestPath, servicePath, "", 1)
+		if requestPath == "" {
+			requestPath = "/"
+		}
+	}
+
 	// Find all {param} names
 	re := regexp.MustCompile(`\{([^}]+)\}`)
 	names := re.FindAllStringSubmatch(route, -1)
@@ -68,7 +81,7 @@ func findPathValue(p *Parameter, route string, r *http.Request) (string, error) 
 		return "", fmt.Errorf("path parameter %s not found in route %s", p.Name, route)
 	}
 
-	match := re.FindStringSubmatch(r.URL.Path)
+	match := re.FindStringSubmatch(requestPath)
 	if match == nil {
 		// path parameters are always required
 		return "", fmt.Errorf("url does not match route")

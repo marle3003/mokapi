@@ -3,8 +3,6 @@ package openapi_test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/schema/schematest"
@@ -12,6 +10,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 type errReader int
@@ -263,7 +264,7 @@ func TestBodyFromRequest(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result *openapi.Body, err error) {
-				require.EqualError(t, err, "read request body failed: no matching content type for 'application/xml' defined")
+				require.EqualError(t, err, "Unsupported Content-Type: application/xml\nThis operation only accepts: application/json\nPlease set the Content-Type header to one of the supported types.")
 				require.Equal(t, "<root><foo>bar</foo></root>", result.Raw)
 			},
 		},

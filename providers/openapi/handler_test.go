@@ -65,6 +65,26 @@ func TestResolveEndpoint(t *testing.T) {
 			},
 		},
 		{
+			name: "base path with parameters",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				c.Servers[0].Url = "http://localhost/root"
+				op := openapitest.NewOperation(
+					openapitest.WithOperationParam("bar", true),
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json",
+							openapitest.NewContent()),
+					),
+				)
+				openapitest.AppendPath("/foo/{bar}", c, openapitest.WithOperation("get", op))
+
+				r := httptest.NewRequest("get", "http://localhost/root/foo/bar", nil)
+				r = r.WithContext(context.WithValue(r.Context(), "servicePath", "/root"))
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code)
+			},
+		},
+		{
 			// there is no official specification for trailing slash. For ease of use, mokapi considers it equivalent
 			name: "spec define suffix / but request does not",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {

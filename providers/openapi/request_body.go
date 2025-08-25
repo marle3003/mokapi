@@ -2,8 +2,8 @@ package openapi
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"io"
+	"maps"
 	"mime/multipart"
 	"mokapi/config/dynamic"
 	"mokapi/media"
@@ -11,7 +11,10 @@ import (
 	"mokapi/schema/encoding"
 	"mokapi/schema/json/parser"
 	"net/http"
+	"slices"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 var defaultContentType = media.ParseContentType("application/octet-stream")
@@ -58,7 +61,7 @@ func BodyFromRequest(r *http.Request, op *Operation) (body *Body, err error) {
 	contentType := media.ParseContentType(r.Header.Get("content-type"))
 	_, mt := getMedia(contentType, op.RequestBody.Value)
 	if !contentType.IsEmpty() && mt == nil {
-		return noMatch(r, contentType)
+		return noMatch(r, contentType, op)
 	}
 
 	var b *Body
@@ -78,12 +81,14 @@ func BodyFromRequest(r *http.Request, op *Operation) (body *Body, err error) {
 	return b, err
 }
 
-func noMatch(r *http.Request, contentType media.ContentType) (*Body, error) {
+func noMatch(r *http.Request, contentType media.ContentType, op *Operation) (*Body, error) {
 	data, err := io.ReadAll(r.Body)
 	if err != nil {
 		return nil, fmt.Errorf("read request body failed: %w", err)
 	}
-	return &Body{Raw: string(data)}, fmt.Errorf("read request body failed: no matching content type for '%v' defined", contentType.String())
+	supported := slices.Collect(maps.Keys(op.RequestBody.Value.Content))
+	errHttp := newHttpErrorf(http.StatusUnsupportedMediaType, "Unsupported Content-Type: %s\nThis operation only accepts: %s\nPlease set the Content-Type header to one of the supported types.", contentType.String(), strings.Join(supported, ", "))
+	return &Body{Raw: string(data)}, errHttp
 }
 
 func readBodyDetectContentType(r *http.Request, op *Operation) (*Body, error) {
