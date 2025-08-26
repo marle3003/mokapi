@@ -2,7 +2,6 @@ package server_test
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
@@ -15,6 +14,8 @@ import (
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestHttp(t *testing.T) {

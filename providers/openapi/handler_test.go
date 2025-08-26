@@ -710,7 +710,13 @@ func TestResolveEndpoint(t *testing.T) {
 
 			data.test(t, func(rw http.ResponseWriter, r *http.Request) {
 				h := openapi.NewHandler(config, &engine{}, e)
-				h.ServeHTTP(rw, r)
+				err := h.ServeHTTP(rw, r)
+				if err != nil {
+					for k, v := range err.Header {
+						rw.Header()[k] = v
+					}
+					http.Error(rw, err.Message, err.StatusCode)
+				}
 			}, config)
 		})
 
@@ -871,7 +877,13 @@ func TestHandler_Event(t *testing.T) {
 
 			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
 				h := openapi.NewHandler(config, &engine{emit: tc.event}, &events.StoreManager{})
-				h.ServeHTTP(rw, r)
+				err := h.ServeHTTP(rw, r)
+				if err != nil {
+					for k, v := range err.Header {
+						rw.Header()[k] = v
+					}
+					http.Error(rw, err.Message, err.StatusCode)
+				}
 			}, config)
 		})
 
@@ -922,7 +934,13 @@ func TestHandler_Log(t *testing.T) {
 
 			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
 				h := openapi.NewHandler(config, &engine{}, m)
-				h.ServeHTTP(rw, r)
+				err := h.ServeHTTP(rw, r)
+				if err != nil {
+					for k, v := range err.Header {
+						rw.Header()[k] = v
+					}
+					http.Error(rw, err.Message, err.StatusCode)
+				}
 			}, config, m)
 		})
 
@@ -963,7 +981,8 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 
 				h := func(rw http.ResponseWriter, r *http.Request) {
 					h := openapi.NewHandler(config, e, &events.StoreManager{})
-					h.ServeHTTP(rw, r)
+					err = h.ServeHTTP(rw, r)
+					require.Nil(t, err)
 				}
 
 				op := openapitest.NewOperation(

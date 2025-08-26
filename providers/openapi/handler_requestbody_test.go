@@ -2,9 +2,6 @@ package openapi_test
 
 import (
 	"bytes"
-	"github.com/blevesearch/bleve/v2"
-	"github.com/sirupsen/logrus/hooks/test"
-	"github.com/stretchr/testify/require"
 	"io"
 	engine2 "mokapi/engine/common"
 	"mokapi/engine/enginetest"
@@ -16,13 +13,17 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/blevesearch/bleve/v2"
+	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 	testcases := []struct {
 		name   string
 		config *openapi.Config
-		fn     func(t *testing.T, handler http.Handler)
+		fn     func(t *testing.T, handler openapi.Handler)
 		check  func(t *testing.T, r *engine2.EventRequest)
 	}{
 		{
@@ -39,12 +40,13 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 						)),
 				)),
 			),
-			fn: func(t *testing.T, handler http.Handler) {
+			fn: func(t *testing.T, handler openapi.Handler) {
 				r := httptest.NewRequest("post", "http://localhost/foo", strings.NewReader("foo"))
 				r.Header.Set("Content-Type", "text/plain")
 				rr := httptest.NewRecorder()
 
-				handler.ServeHTTP(rr, r)
+				err := handler.ServeHTTP(rr, r)
+				require.Nil(t, err)
 
 				require.Equal(t, 200, rr.Code)
 			},
@@ -66,12 +68,13 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 						)),
 				)),
 			),
-			fn: func(t *testing.T, handler http.Handler) {
+			fn: func(t *testing.T, handler openapi.Handler) {
 				r := httptest.NewRequest("post", "http://localhost/foo", strings.NewReader("foo"))
 				r.Header.Set("Content-Type", "text/plain")
 				rr := httptest.NewRecorder()
 
-				handler.ServeHTTP(rr, r)
+				err := handler.ServeHTTP(rr, r)
+				require.Nil(t, err)
 
 				require.Equal(t, 200, rr.Code)
 			},
@@ -95,12 +98,13 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 						)),
 				)),
 			),
-			fn: func(t *testing.T, handler http.Handler) {
+			fn: func(t *testing.T, handler openapi.Handler) {
 				r := httptest.NewRequest("post", "http://localhost/foo", strings.NewReader("foo"))
 				r.Header.Set("Content-Type", "text/plain")
 				rr := httptest.NewRecorder()
 
-				handler.ServeHTTP(rr, r)
+				err := handler.ServeHTTP(rr, r)
+				require.Nil(t, err)
 
 				require.Equal(t, 200, rr.Code)
 			},
@@ -124,12 +128,13 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 						)),
 				)),
 			),
-			fn: func(t *testing.T, handler http.Handler) {
+			fn: func(t *testing.T, handler openapi.Handler) {
 				r := httptest.NewRequest("post", "http://localhost/foo", strings.NewReader(`{"foo": "abc","bar": 12}`))
 				r.Header.Set("Content-Type", "application/json")
 				rr := httptest.NewRecorder()
 
-				handler.ServeHTTP(rr, r)
+				err := handler.ServeHTTP(rr, r)
+				require.Nil(t, err)
 
 				require.Equal(t, 200, rr.Code)
 			},
@@ -153,12 +158,13 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 						)),
 				)),
 			),
-			fn: func(t *testing.T, handler http.Handler) {
+			fn: func(t *testing.T, handler openapi.Handler) {
 				r := httptest.NewRequest("post", "http://localhost/foo", strings.NewReader(`{"foo": "abc","bar": 12}`))
 				r.Header.Set("Content-Type", "application/json")
 				rr := httptest.NewRecorder()
 
-				handler.ServeHTTP(rr, r)
+				err := handler.ServeHTTP(rr, r)
+				require.Nil(t, err)
 
 				require.Equal(t, http.StatusOK, rr.Code)
 			},
@@ -176,14 +182,15 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 						)),
 				)),
 			),
-			fn: func(t *testing.T, handler http.Handler) {
+			fn: func(t *testing.T, handler openapi.Handler) {
 				spy := &spyBody{Reader: bytes.NewBufferString(`{"foo": "abc","bar": 12}`)}
 
 				r := httptest.NewRequest("post", "http://localhost/foo", spy)
 				r.Header.Set("Content-Type", "application/json")
 				rr := httptest.NewRecorder()
 
-				handler.ServeHTTP(rr, r)
+				err := handler.ServeHTTP(rr, r)
+				require.Nil(t, err)
 
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.True(t, spy.readCalled, "server needs to read body")
@@ -196,16 +203,19 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 			config: openapitest.NewConfig("3.0.0",
 				openapitest.WithServer("http://localhost", ""),
 			),
-			fn: func(t *testing.T, handler http.Handler) {
+			fn: func(t *testing.T, handler openapi.Handler) {
 				spy := &spyBody{Reader: bytes.NewBufferString(`{"foo": "abc","bar": 12}`)}
 
 				r := httptest.NewRequest("post", "http://localhost/foo", spy)
 				r.Header.Set("Content-Type", "application/json")
 				rr := httptest.NewRecorder()
 
-				handler.ServeHTTP(rr, r)
+				err := handler.ServeHTTP(rr, r)
+				require.Equal(t, &openapi.HttpError{
+					StatusCode: http.StatusNotFound,
+					Message:    "no matching endpoint found: POST http://localhost/foo",
+				}, err)
 
-				require.Equal(t, http.StatusNotFound, rr.Code)
 				require.True(t, spy.readCalled, "server needs to read body")
 			},
 			check: func(t *testing.T, r *engine2.EventRequest) {

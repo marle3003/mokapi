@@ -78,15 +78,13 @@ For example, you can dynamically change the response based on query parameters:
 import { on } from 'mokapi';
 
 export default function() {
-    on('http', (request, response): boolean => {
+    on('http', (request, response) => {
         switch (request.path.petId) {
             case 2:
                 response.data.name = 'Betty';
-                return true;
             case 9:
                 response.statusCode = 404;
         }
-        return false;
     });
 }
 ```

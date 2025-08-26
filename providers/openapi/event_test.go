@@ -1,8 +1,6 @@
 package openapi_test
 
 import (
-	"github.com/sirupsen/logrus/hooks/test"
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/media"
 	"mokapi/providers/openapi"
@@ -11,13 +9,16 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEvent(t *testing.T) {
 	testcases := []struct {
 		name   string
 		config *openapi.Config
-		test   func(t *testing.T, h http.Handler)
+		test   func(t *testing.T, h openapi.Handler)
 	}{
 		{
 			name: "use response example (deprecated)",
@@ -35,12 +36,13 @@ func TestEvent(t *testing.T) {
 					)),
 				)),
 			),
-			test: func(t *testing.T, h http.Handler) {
+			test: func(t *testing.T, h openapi.Handler) {
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.Header.Set("Content-Type", "application/json")
 				rr := httptest.NewRecorder()
 
-				h.ServeHTTP(rr, r)
+				err := h.ServeHTTP(rr, r)
+				require.Nil(t, err)
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, `"foo"`, rr.Body.String())
 			},
@@ -71,12 +73,13 @@ func TestEvent(t *testing.T) {
 					)),
 				)),
 			),
-			test: func(t *testing.T, h http.Handler) {
+			test: func(t *testing.T, h openapi.Handler) {
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.Header.Set("Content-Type", "application/json")
 				rr := httptest.NewRecorder()
 
-				h.ServeHTTP(rr, r)
+				err := h.ServeHTTP(rr, r)
+				require.Nil(t, err)
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, `"foo"`, rr.Body.String())
 			},

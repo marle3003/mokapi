@@ -2,9 +2,6 @@ package server
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
-	logtest "github.com/sirupsen/logrus/hooks/test"
-	"github.com/stretchr/testify/require"
 	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
@@ -18,6 +15,10 @@ import (
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	logtest "github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHttpServers_Monitor(t *testing.T) {
@@ -132,7 +133,7 @@ func TestHttpManager_Update(t *testing.T) {
 				require.Equal(t, fmt.Sprintf("adding new HTTP host '' on binding :%v", port), entries[0].Message)
 				require.Equal(t, fmt.Sprintf("adding service 'foo' on binding :%v on path /foo", port), entries[1].Message)
 				require.Equal(t, "processed foo.yml", entries[2].Message)
-				require.Equal(t, fmt.Sprintf("unable to add 'bar' on %v/foo: service 'foo' is already defined on path '/foo'", u), entries[3].Message)
+				require.Equal(t, fmt.Sprintf("adding service 'bar' on binding :%v on path /foo", port), entries[3].Message)
 			},
 		},
 		{
