@@ -198,29 +198,6 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 			check: func(t *testing.T, r *engine2.EventRequest) {
 			},
 		},
-		{
-			name: "send request body to undefined endpoint",
-			config: openapitest.NewConfig("3.0.0",
-				openapitest.WithServer("http://localhost", ""),
-			),
-			fn: func(t *testing.T, handler openapi.Handler) {
-				spy := &spyBody{Reader: bytes.NewBufferString(`{"foo": "abc","bar": 12}`)}
-
-				r := httptest.NewRequest("post", "http://localhost/foo", spy)
-				r.Header.Set("Content-Type", "application/json")
-				rr := httptest.NewRecorder()
-
-				err := handler.ServeHTTP(rr, r)
-				require.Equal(t, &openapi.HttpError{
-					StatusCode: http.StatusNotFound,
-					Message:    "no matching endpoint found: POST http://localhost/foo",
-				}, err)
-
-				require.True(t, spy.readCalled, "server needs to read body")
-			},
-			check: func(t *testing.T, r *engine2.EventRequest) {
-			},
-		},
 	}
 
 	for _, tc := range testcases {

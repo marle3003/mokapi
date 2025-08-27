@@ -9,6 +9,7 @@ import (
 	"maps"
 	"mokapi/lib"
 	"mokapi/providers/openapi"
+	"mokapi/providers/openapi/parameter"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/server/cert"
@@ -73,7 +74,8 @@ func (s *HttpServer) AddOrUpdate(service *HttpService) error {
 	hostname := service.Url.Hostname()
 	host, ok := s.handlers[hostname]
 	if !ok {
-		log.Infof("adding new HTTP host '%v' on binding %v", hostname, s.server.Addr)
+
+		log.Infof("adding new %s host '%s' on binding %s", s.getProto(), hostname, s.server.Addr)
 		host = &HttpHost{Paths: map[string]HttpServices{}}
 		s.handlers[hostname] = host
 	}
@@ -137,7 +139,7 @@ func (s *HttpServer) Start() {
 			err = s.server.ListenAndServe()
 		}
 		if !errors.Is(err, http.ErrServerClosed) {
-			log.Errorf("unable to start http server %v: %v", s.server.Addr, err)
+			log.Errorf("failed to start %s server %s: %s", s.getProto(), s.server.Addr, err)
 		}
 	}()
 }
@@ -145,7 +147,7 @@ func (s *HttpServer) Start() {
 func (s *HttpServer) Stop() {
 	err := s.server.Close()
 	if err != nil {
-		log.Errorf("unable to stop http server %v: %v", s.server.Addr, err)
+		log.Errorf("failed to stop %s server %s: %s", s.getProto(), s.server.Addr, err)
 	}
 }
 
@@ -156,7 +158,7 @@ func (s *HttpServer) CanClose() bool {
 func (s *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = r.WithContext(context.WithValue(r.Context(), "time", time.Now()))
 
-	httpError := s.serve(w, r)
+	httpError := s.dispatchRequest(w, r)
 	if httpError != nil {
 		serveError(w, r, httpError, s.eh)
 	}
@@ -166,7 +168,7 @@ type logHttpRequestContext struct {
 	logged bool
 }
 
-func (s *HttpServer) serve(rw http.ResponseWriter, r *http.Request) *openapi.HttpError {
+func (s *HttpServer) dispatchRequest(rw http.ResponseWriter, r *http.Request) *openapi.HttpError {
 	hostname, _, err := net.SplitHostPort(r.Host)
 	if err != nil {
 		hostname = r.Host
@@ -177,7 +179,7 @@ func (s *HttpServer) serve(rw http.ResponseWriter, r *http.Request) *openapi.Htt
 	var httpError *openapi.HttpError
 	if host, ok := s.handlers[hostname]; ok {
 		services := matchPath(host.Paths, r)
-		httpError = serve(services, rw, r)
+		httpError = s.serve(services, rw, r)
 		if httpError == nil || httpError.StatusCode != http.StatusNotFound {
 			return httpError
 		}
@@ -186,7 +188,7 @@ func (s *HttpServer) serve(rw http.ResponseWriter, r *http.Request) *openapi.Htt
 	// any host
 	if host, ok := s.handlers[""]; ok {
 		services := matchPath(host.Paths, r)
-		httpError = serve(services, rw, r)
+		httpError = s.serve(services, rw, r)
 		if httpError == nil || httpError.StatusCode != http.StatusNotFound {
 			return httpError
 		}
@@ -195,7 +197,7 @@ func (s *HttpServer) serve(rw http.ResponseWriter, r *http.Request) *openapi.Htt
 	// try every host
 	for _, host := range s.handlers {
 		services := matchPath(host.Paths, r)
-		httpError = serve(services, rw, r)
+		httpError = s.serve(services, rw, r)
 		if httpError == nil || httpError.StatusCode != http.StatusNotFound {
 			return httpError
 		}
@@ -211,17 +213,7 @@ func (s *HttpServer) serve(rw http.ResponseWriter, r *http.Request) *openapi.Htt
 	}
 }
 
-func matchPath(paths map[string]HttpServices, r *http.Request) map[string][]*HttpService {
-	results := map[string][]*HttpService{}
-	for path, services := range paths {
-		if strings.HasPrefix(strings.ToLower(r.URL.Path), strings.ToLower(path)) {
-			results[path] = append(results[path], slices.Collect(maps.Values(services))...)
-		}
-	}
-	return results
-}
-
-func serve(services map[string][]*HttpService, rw http.ResponseWriter, r *http.Request) *openapi.HttpError {
+func (s *HttpServer) serve(services map[string][]*HttpService, rw http.ResponseWriter, r *http.Request) *openapi.HttpError {
 	keys := slices.Collect(maps.Keys(services))
 	slices.SortFunc(keys, func(a, b string) int {
 		return cmp.Compare(len(a), len(b))
@@ -235,7 +227,7 @@ func serve(services map[string][]*HttpService, rw http.ResponseWriter, r *http.R
 				ctx := r.Context().Value("logHttpRequestContext").(*logHttpRequestContext)
 				if !ctx.logged {
 					ctx.logged = true
-					log.Infof("processing HTTP request %v %s", r.Method, lib.GetUrl(r))
+					log.Infof("processing %s request %s %s", s.getProto(), r.Method, lib.GetUrl(r))
 				}
 			}
 
@@ -260,8 +252,25 @@ func serve(services map[string][]*HttpService, rw http.ResponseWriter, r *http.R
 	}
 }
 
+func (s *HttpServer) getProto() string {
+	if s.isTls {
+		return "HTTPS"
+	}
+	return "HTTP"
+}
+
+func matchPath(paths map[string]HttpServices, r *http.Request) map[string][]*HttpService {
+	results := map[string][]*HttpService{}
+	for path, services := range paths {
+		if strings.HasPrefix(strings.ToLower(r.URL.Path), strings.ToLower(path)) {
+			results[path] = append(results[path], slices.Collect(maps.Values(services))...)
+		}
+	}
+	return results
+}
+
 func serveError(w http.ResponseWriter, r *http.Request, err error, eh events.Handler) {
-	status := http.StatusNotFound
+	status := http.StatusInternalServerError
 	var msg string
 
 	var hErr *openapi.HttpError
@@ -286,7 +295,7 @@ func serveError(w http.ResponseWriter, r *http.Request, err error, eh events.Han
 		Request: &openapi.HttpRequestLog{
 			Method:      r.Method,
 			Url:         lib.GetUrl(r),
-			ContentType: r.Header.Get("content-type"),
+			ContentType: r.Header.Get("Content-Type"),
 			Body:        string(body),
 		},
 		Response: &openapi.HttpResponseLog{
@@ -294,6 +303,16 @@ func serveError(w http.ResponseWriter, r *http.Request, err error, eh events.Han
 			StatusCode: status,
 			Body:       msg,
 		},
+	}
+
+	for k, v := range r.Header {
+		raw := strings.Join(v, ",")
+		p := openapi.HttpParameter{
+			Name: k,
+			Type: string(parameter.Header),
+			Raw:  &raw,
+		}
+		l.Request.Parameters = append(l.Request.Parameters, p)
 	}
 
 	err = eh.Push(l, events.NewTraits().WithNamespace("http"))

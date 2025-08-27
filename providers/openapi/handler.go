@@ -249,8 +249,14 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *H
 	op, errOpResolve := findOperation(r.Method, requestPath, h.config.Paths)
 	if op != nil {
 		params := append(op.Path.Parameters, op.Parameters...)
+		route := op.Path.Path
+		if len(route) > 1 {
+			// there is no official specification for trailing slash. For ease of use, mokapi considers it equivalent
+			route = strings.TrimRight(route, "/")
+		}
+
 		var rp parameter.RequestParameters
-		rp, errOpResolve = parameter.FromRequest(params, op.Path.Path, r)
+		rp, errOpResolve = parameter.FromRequest(params, route, r)
 
 		if errOpResolve == nil {
 			r = r.WithContext(parameter.NewContext(r.Context(), rp))
@@ -280,7 +286,7 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *H
 		}
 	}
 
-	if ctx, err := NewLogEventContext(
+	/*if ctx, err := NewLogEventContext(
 		r,
 		false,
 		h.eh,
@@ -289,12 +295,12 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *H
 		log.Errorf("unable to log http event: %v", err)
 	} else {
 		r = r.WithContext(ctx)
-	}
+	}*/
 
 	// Not reading the request body can cause a couple of problems.
 	// Go’s HTTP server uses connection pooling by default.
 	// If you don’t read and fully consume (or close) the request body, the remaining unread bytes will stay in the TCP buffer.
-	_, _ = io.Copy(io.Discard, r.Body)
+	//_, _ = io.Copy(io.Discard, r.Body)
 
 	if errOpResolve == nil {
 		return newHttpErrorf(http.StatusNotFound, "no matching endpoint found: %v %v", strings.ToUpper(r.Method), lib.GetUrl(r))

@@ -5,14 +5,17 @@ export function usePrettyHttp() {
         if (statusCode === 'default') {
             return 'default'
         } else {
+            try {
             return `${statusCode} ${http.getStatusText(statusCode)}`
+            } catch (e) {
+                console.error(e)
+                return statusCode.toString()
+            }
         }
     }
     function getClassByStatusCode(statusCode: string) {
-        if (typeof statusCode === 'string') {
-            if (statusCode === 'default') {
-                return 'default'
-            }
+        if (statusCode === 'default') {
+            return 'default'
         }
 
         const value = parseInt(statusCode)

@@ -5,8 +5,6 @@ import (
 	"context"
 	"crypto/sha256"
 	"fmt"
-	"github.com/fsnotify/fsnotify"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"io/fs"
 	"math"
@@ -20,6 +18,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/fsnotify/fsnotify"
+	log "github.com/sirupsen/logrus"
 )
 
 const mokapiIgnoreFile = ".mokapiignore"
@@ -82,6 +83,7 @@ func (p *Provider) Read(u *url.URL) (*dynamic.Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	config.SourceType = dynamic.SourceReference
 
 	p.watchPath(file)
 	return config, nil

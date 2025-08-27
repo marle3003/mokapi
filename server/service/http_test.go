@@ -1,10 +1,14 @@
 package service
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"mokapi/config/static"
 	"mokapi/lib"
 	"mokapi/providers/openapi"
 	"mokapi/runtime/events"
+	"mokapi/server/cert"
 	"mokapi/try"
 	"net/http"
 	"net/http/httptest"
@@ -12,6 +16,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 )
 
@@ -371,6 +377,30 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 				)
 			},
 		},
+		{
+			name: "send request body to undefined endpoint, but the body should be read",
+			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
+				err := s.AddOrUpdate(&HttpService{
+					Url:     mustParseUrl("/foo"),
+					Handler: &testHandler{},
+					Name:    "foo",
+				})
+				require.NoError(t, err)
+
+				spy := &spyBody{Reader: bytes.NewBufferString(`{"foo": "abc","bar": 12}`)}
+
+				try.Request(t,
+					http.MethodPost,
+					fmt.Sprintf("http://localhost:%v/bar", port),
+					nil,
+					spy,
+					try.HasStatusCode(http.StatusNotFound),
+					try.HasBody(fmt.Sprintf("There was no service listening at http://localhost:%s/bar\n", port)),
+				)
+
+				require.True(t, spy.readCalled, "server needs to read body")
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -378,16 +408,74 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 			sm := &events.StoreManager{}
 			sm.SetStore(20, events.NewTraits().WithNamespace("http"))
 
-			server := NewHttpServer("0", sm)
-			s := httptest.NewServer(server)
-			defer s.Close()
+			port := fmt.Sprintf("%v", try.GetFreePort())
+			s := NewHttpServer(port, sm)
+			s.Start()
+			defer s.Stop()
 
-			u, _ := url.Parse(s.URL)
-
-			tc.test(t, server, u.Port(), sm)
+			tc.test(t, s, port, sm)
 		})
 
 	}
+}
+
+func TestHttp(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+	hook := test.NewGlobal()
+
+	sm := &events.StoreManager{}
+	sm.SetStore(20, events.NewTraits().WithNamespace("http"))
+
+	port := fmt.Sprintf("%v", try.GetFreePort())
+	s := NewHttpServer(port, sm)
+	s.Start()
+	defer s.Stop()
+
+	err := s.AddOrUpdate(&HttpService{
+		Url:     mustParseUrl("https://localhost"),
+		Handler: &testHandler{},
+		Name:    "foo",
+	})
+	require.NoError(t, err)
+	require.Len(t, hook.Entries, 2)
+	require.Equal(t, fmt.Sprintf("adding new HTTP host 'localhost' on binding :%s", port), hook.Entries[0].Message)
+	require.Equal(t, fmt.Sprintf("adding service 'foo' on binding :%s on path /", port), hook.Entries[1].Message)
+
+	try.GetRequest(t, fmt.Sprintf("http://localhost:%v", port), map[string]string{}, try.HasStatusCode(200))
+
+	require.Len(t, hook.Entries, 3)
+	require.Equal(t, fmt.Sprintf("processing HTTP request GET http://localhost:%s/", port), hook.Entries[2].Message)
+}
+
+func TestHttpTls(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+	hook := test.NewGlobal()
+
+	sm := &events.StoreManager{}
+	sm.SetStore(20, events.NewTraits().WithNamespace("http"))
+
+	certStore, err := cert.NewStore(&static.Config{})
+	require.NoError(t, err)
+
+	port := fmt.Sprintf("%v", try.GetFreePort())
+	s := NewHttpServerTls(port, certStore, sm)
+	s.Start()
+	defer s.Stop()
+
+	err = s.AddOrUpdate(&HttpService{
+		Url:     mustParseUrl("https://localhost"),
+		Handler: &testHandler{},
+		Name:    "foo",
+	})
+	require.NoError(t, err)
+	require.Len(t, hook.Entries, 2)
+	require.Equal(t, fmt.Sprintf("adding new HTTPS host 'localhost' on binding :%s", port), hook.Entries[0].Message)
+	require.Equal(t, fmt.Sprintf("adding service 'foo' on binding :%s on path /", port), hook.Entries[1].Message)
+
+	try.GetRequest(t, fmt.Sprintf("https://localhost:%v", port), map[string]string{}, try.HasStatusCode(200))
+
+	require.Len(t, hook.Entries, 3)
+	require.Equal(t, fmt.Sprintf("processing HTTPS request GET https://localhost:%s/", port), hook.Entries[2].Message)
 }
 
 func mustParseUrl(s string) *url.URL {
@@ -396,4 +484,18 @@ func mustParseUrl(s string) *url.URL {
 		panic(err)
 	}
 	return u
+}
+
+type spyBody struct {
+	io.Reader
+	readCalled bool
+}
+
+func (s *spyBody) Read(p []byte) (n int, err error) {
+	s.readCalled = true
+	return s.Reader.Read(p)
+}
+
+func (s *spyBody) Close() error {
+	return nil
 }

@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"hash/fnv"
 	"io"
 	"mokapi/config/dynamic"
@@ -16,6 +15,8 @@ import (
 	"os"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Provider struct {
@@ -81,6 +82,9 @@ func New(config static.HttpProvider) *Provider {
 
 func (p *Provider) Read(u *url.URL) (*dynamic.Config, error) {
 	c, _, err := p.readUrl(u)
+	if c != nil {
+		c.SourceType = dynamic.SourceReference
+	}
 	return c, err
 }
 
