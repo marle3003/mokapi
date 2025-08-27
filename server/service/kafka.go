@@ -2,9 +2,10 @@ package service
 
 import (
 	"fmt"
+	"mokapi/kafka"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"mokapi/kafka"
 )
 
 type KafkaBroker struct {

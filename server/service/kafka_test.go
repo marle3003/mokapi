@@ -2,16 +2,17 @@ package service
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/kafka"
 	"mokapi/kafka/apiVersion"
 	"mokapi/kafka/kafkatest"
 	"mokapi/try"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestKafkaBroker(t *testing.T) {
-	//t.Parallel()
+	t.Parallel()
 	port := try.GetFreePort()
 	addr := fmt.Sprintf("127.0.0.1:%v", port)
 	called := false
@@ -30,5 +31,6 @@ func TestKafkaBroker(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, kafka.None, r.ErrorCode)
 	require.True(t, called, "handler should be called")
+	require.Equal(t, fmt.Sprintf(":%v", port), b.Addr())
 
 }
