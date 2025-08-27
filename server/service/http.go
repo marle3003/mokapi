@@ -1,34 +1,34 @@
 package service
 
 import (
+	"cmp"
 	"context"
 	"crypto/tls"
 	"fmt"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"io"
+	"maps"
 	"mokapi/lib"
 	"mokapi/providers/openapi"
+	"mokapi/providers/openapi/parameter"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/server/cert"
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"sync"
 	"time"
 	"unicode"
-)
 
-var (
-	noServiceFound = fmt.Errorf("there was no service listening at")
-	tooManyMatches = fmt.Errorf("please use a specific domain: request could not be uniquely assigned to an API")
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type HttpServer struct {
 	server   *http.Server
-	handlers map[string]map[string]*HttpService // map[host][path]Handler
+	handlers map[string]*HttpHost
 	eh       events.Handler
 	m        sync.RWMutex
 	isTls    bool
@@ -36,15 +36,21 @@ type HttpServer struct {
 
 type HttpService struct {
 	Url        *url.URL
-	Handler    http.Handler
+	Handler    openapi.Handler
 	Name       string
 	IsInternal bool
 }
 
+type HttpHost struct {
+	Paths map[string]HttpServices
+}
+
+type HttpServices map[string]*HttpService
+
 func NewHttpServer(port string, eh events.Handler) *HttpServer {
 	s := &HttpServer{
 		server:   &http.Server{Addr: fmt.Sprintf(":%v", port)},
-		handlers: make(map[string]map[string]*HttpService),
+		handlers: map[string]*HttpHost{},
 		eh:       eh,
 		isTls:    false,
 	}
@@ -66,36 +72,37 @@ func (s *HttpServer) AddOrUpdate(service *HttpService) error {
 	defer s.m.Unlock()
 
 	hostname := service.Url.Hostname()
-	paths, ok := s.handlers[hostname]
+	host, ok := s.handlers[hostname]
 	if !ok {
-		log.Infof("adding new HTTP host '%v' on binding %v", hostname, s.server.Addr)
-		paths = make(map[string]*HttpService)
-		s.handlers[hostname] = paths
+
+		log.Infof("adding new %s host '%s' on binding %s", s.getProto(), hostname, s.server.Addr)
+		host = &HttpHost{Paths: map[string]HttpServices{}}
+		s.handlers[hostname] = host
 	}
 
-	if serviceReg, found := paths[service.Url.Path]; found {
-		if service.Name != serviceReg.Name {
-			return fmt.Errorf("service '%v' is already defined on path '%v'", serviceReg.Name, service.Url.Path)
-		} else {
-			paths[service.Url.Path] = service
-		}
-	} else {
-		path := service.Url.Path
-		if len(path) == 0 {
-			path = "/"
-		}
-		log.Infof("adding service '%v' on binding %v on path %v", service.Name, s.server.Addr, path)
-		paths[service.Url.Path] = service
+	path := service.Url.Path
+	if len(path) == 0 {
+		path = "/"
 	}
 
-	return nil
+	services, ok := host.Paths[path]
+	if !ok {
+		services = HttpServices{}
+		host.Paths[path] = services
+	}
+
+	return services.Add(service, s.server.Addr, path)
 }
 
 func (s *HttpServer) RemoveUrl(u *url.URL) {
 	hostname := u.Hostname()
-	if paths, ok := s.handlers[hostname]; ok {
-		delete(paths, u.Path)
-		if len(paths) == 0 {
+	if host, ok := s.handlers[hostname]; ok {
+		path := u.Path
+		if len(path) == 0 {
+			path = "/"
+		}
+		delete(host.Paths, path)
+		if len(host.Paths) == 0 {
 			delete(s.handlers, hostname)
 		}
 	}
@@ -105,14 +112,18 @@ func (s *HttpServer) Remove(name string) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	for hostname, paths := range s.handlers {
-		for path, service := range paths {
-			if service.Name == name {
+	for hostname, host := range s.handlers {
+		for path, services := range host.Paths {
+			_, ok := services[name]
+			if ok {
 				log.Infof("removing service '%v' on binding %v on path %v", name, s.server.Addr, path)
-				delete(paths, service.Url.Path)
+				delete(services, name)
+			}
+			if len(services) == 0 {
+				delete(host.Paths, path)
 			}
 		}
-		if len(paths) == 0 {
+		if len(host.Paths) == 0 {
 			delete(s.handlers, hostname)
 		}
 	}
@@ -128,7 +139,7 @@ func (s *HttpServer) Start() {
 			err = s.server.ListenAndServe()
 		}
 		if !errors.Is(err, http.ErrServerClosed) {
-			log.Errorf("unable to start http server %v: %v", s.server.Addr, err)
+			log.Errorf("failed to start %s server %s: %s", s.getProto(), s.server.Addr, err)
 		}
 	}()
 }
@@ -136,7 +147,7 @@ func (s *HttpServer) Start() {
 func (s *HttpServer) Stop() {
 	err := s.server.Close()
 	if err != nil {
-		log.Errorf("unable to stop http server %v: %v", s.server.Addr, err)
+		log.Errorf("failed to stop %s server %s: %s", s.getProto(), s.server.Addr, err)
 	}
 }
 
@@ -147,103 +158,161 @@ func (s *HttpServer) CanClose() bool {
 func (s *HttpServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	r = r.WithContext(context.WithValue(r.Context(), "time", time.Now()))
 
-	service, servicePath, err := s.resolveService(r)
-
-	if service != nil {
-		if !service.IsInternal {
-			u := r.URL.String()
-			if r.URL.Host == "" {
-				u = r.Host + u
-				if s.isTls {
-					u = "https://" + u
-				} else {
-					u = "http://" + u
-				}
-			}
-			log.Infof("processing http request %v %s", r.Method, u)
-		}
-
-		if service.Handler == nil {
-			http.Error(w, "handler is nil", 500)
-		} else {
-			r = r.WithContext(context.WithValue(r.Context(), "servicePath", servicePath))
-			service.Handler.ServeHTTP(w, r)
-		}
-	} else {
-		if err == nil {
-			err = noServiceFound
-		}
-		serveError(w, r, err, s.eh)
+	httpError := s.dispatchRequest(w, r)
+	if httpError != nil {
+		serveError(w, r, httpError, s.eh)
 	}
 }
 
-func (s *HttpServer) resolveService(r *http.Request) (*HttpService, string, error) {
-	host, _, err := net.SplitHostPort(r.Host)
+type logHttpRequestContext struct {
+	logged bool
+}
+
+func (s *HttpServer) dispatchRequest(rw http.ResponseWriter, r *http.Request) *openapi.HttpError {
+	hostname, _, err := net.SplitHostPort(r.Host)
 	if err != nil {
-		host = r.Host
+		hostname = r.Host
 	}
 
-	if paths, ok := s.handlers[host]; ok {
-		if matchedService, matchedPath := matchPath(paths, r); matchedService != nil {
-			return matchedService, matchedPath, nil
+	r = r.WithContext(context.WithValue(r.Context(), "logHttpRequestContext", &logHttpRequestContext{logged: false}))
+
+	var httpError *openapi.HttpError
+	if host, ok := s.handlers[hostname]; ok {
+		services := matchPath(host.Paths, r)
+		httpError = s.serve(services, rw, r)
+		if httpError == nil || httpError.StatusCode != http.StatusNotFound {
+			return httpError
 		}
 	}
 
 	// any host
-	if paths, ok := s.handlers[""]; ok {
-		m, p := matchPath(paths, r)
-		return m, p, nil
-	}
-
-	// try every host and check whether only one matches
-	matches := map[string]*HttpService{}
-	for _, paths := range s.handlers {
-		if matchedService, matchedPath := matchPath(paths, r); matchedService != nil {
-			matches[matchedPath] = matchedService
+	if host, ok := s.handlers[""]; ok {
+		services := matchPath(host.Paths, r)
+		httpError = s.serve(services, rw, r)
+		if httpError == nil || httpError.StatusCode != http.StatusNotFound {
+			return httpError
 		}
 	}
-	if len(matches) == 1 {
-		for k, v := range matches {
-			return v, k, nil
+
+	// try every host
+	for _, host := range s.handlers {
+		services := matchPath(host.Paths, r)
+		httpError = s.serve(services, rw, r)
+		if httpError == nil || httpError.StatusCode != http.StatusNotFound {
+			return httpError
 		}
-	} else if len(matches) > 1 {
-		return nil, "", tooManyMatches
 	}
 
-	return nil, "", noServiceFound
+	if httpError != nil {
+		return httpError
+	}
+
+	return &openapi.HttpError{
+		StatusCode: http.StatusNotFound,
+		Message:    fmt.Sprintf("There was no service listening at %s", lib.GetUrl(r)),
+	}
 }
 
-func matchPath(paths map[string]*HttpService, r *http.Request) (matchedService *HttpService, matchedPath string) {
-	for path, handler := range paths {
-		if strings.HasPrefix(strings.ToLower(r.URL.Path), strings.ToLower(path)) {
-			if matchedPath == "" || len(matchedPath) < len(path) {
-				matchedPath = path
-				matchedService = handler
+func (s *HttpServer) serve(services map[string][]*HttpService, rw http.ResponseWriter, r *http.Request) *openapi.HttpError {
+	keys := slices.Collect(maps.Keys(services))
+	slices.SortFunc(keys, func(a, b string) int {
+		return cmp.Compare(len(a), len(b))
+	})
+
+	var httpError *openapi.HttpError
+	for _, key := range keys {
+		r = r.WithContext(context.WithValue(r.Context(), "servicePath", key))
+		for _, service := range services[key] {
+			if !service.IsInternal {
+				ctx := r.Context().Value("logHttpRequestContext").(*logHttpRequestContext)
+				if !ctx.logged {
+					ctx.logged = true
+					log.Infof("processing %s request %s %s", s.getProto(), r.Method, lib.GetUrl(r))
+				}
+			}
+
+			if service.Handler == nil {
+				return &openapi.HttpError{StatusCode: http.StatusInternalServerError, Message: fmt.Sprintf("Handler is nil for %s", lib.GetUrl(r))}
+			}
+
+			httpError = service.Handler.ServeHTTP(rw, r)
+			if httpError == nil || httpError.StatusCode != http.StatusNotFound {
+				return httpError
 			}
 		}
 	}
-	return
+
+	if httpError != nil {
+		return httpError
+	}
+
+	return &openapi.HttpError{
+		StatusCode: http.StatusNotFound,
+		Message:    fmt.Sprintf("There was no service listening at %s", lib.GetUrl(r)),
+	}
+}
+
+func (s *HttpServer) getProto() string {
+	if s.isTls {
+		return "HTTPS"
+	}
+	return "HTTP"
+}
+
+func matchPath(paths map[string]HttpServices, r *http.Request) map[string][]*HttpService {
+	results := map[string][]*HttpService{}
+	for path, services := range paths {
+		if strings.HasPrefix(strings.ToLower(r.URL.Path), strings.ToLower(path)) {
+			results[path] = append(results[path], slices.Collect(maps.Values(services))...)
+		}
+	}
+	return results
 }
 
 func serveError(w http.ResponseWriter, r *http.Request, err error, eh events.Handler) {
-	msg := fmt.Sprintf("%s %v", err.Error(), lib.GetUrl(r))
-	entry := log.WithFields(log.Fields{"url": r.URL, "method": r.Method, "status": http.StatusNotFound})
+	status := http.StatusInternalServerError
+	var msg string
+
+	var hErr *openapi.HttpError
+	if errors.As(err, &hErr) {
+		status = hErr.StatusCode
+		for k, values := range hErr.Header {
+			for _, v := range values {
+				w.Header().Add(k, v)
+			}
+		}
+		msg = hErr.Message
+	} else {
+		msg = fmt.Sprintf("%s %v", err.Error(), lib.GetUrl(r))
+	}
+
+	entry := log.WithFields(log.Fields{"url": r.URL, "method": r.Method, "status": status})
 	entry.Info(msg)
-	http.Error(w, formatMessageForResponse(msg), 404)
+	http.Error(w, formatMessageForResponse(msg), status)
 
 	body, _ := io.ReadAll(r.Body)
 	l := &openapi.HttpLog{
 		Request: &openapi.HttpRequestLog{
 			Method:      r.Method,
 			Url:         lib.GetUrl(r),
-			ContentType: r.Header.Get("content-type"),
+			ContentType: r.Header.Get("Content-Type"),
 			Body:        string(body),
 		},
 		Response: &openapi.HttpResponseLog{
 			Headers:    map[string]string{"Content-Type": w.Header().Get("Content-Type")},
-			StatusCode: 404,
+			StatusCode: status,
 			Body:       msg,
 		},
+	}
+
+	for k, v := range r.Header {
+		raw := strings.Join(v, ",")
+		p := openapi.HttpParameter{
+			Name: k,
+			Type: string(parameter.Header),
+			Raw:  &raw,
+		}
+		l.Request.Parameters = append(l.Request.Parameters, p)
 	}
 
 	err = eh.Push(l, events.NewTraits().WithNamespace("http"))
@@ -263,4 +332,28 @@ func formatMessageForResponse(s string) string {
 	runes := []rune(s)
 	runes[0] = unicode.ToUpper(runes[0])
 	return string(runes)
+}
+
+func (m HttpServices) Add(service *HttpService, addr, path string) error {
+	for _, s := range m {
+		if s.IsInternal {
+			return fmt.Errorf("internal service '%v' is already defined on path '%v'", s.Name, s.Url.Path)
+		}
+	}
+
+	if _, ok := m[service.Name]; !ok {
+		log.Infof("adding service '%v' on binding %v on path %v", service.Name, addr, path)
+	}
+
+	m[service.Name] = service
+	return nil
+}
+
+type StdHandlerAdapter struct {
+	H http.Handler
+}
+
+func (a *StdHandlerAdapter) ServeHTTP(w http.ResponseWriter, r *http.Request) *openapi.HttpError {
+	a.H.ServeHTTP(w, r)
+	return nil
 }

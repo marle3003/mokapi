@@ -7,6 +7,7 @@ import (
 	"io"
 	"maps"
 	"mokapi/engine/common"
+	"mokapi/lib"
 	"mokapi/media"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/runtime/events"
@@ -20,6 +21,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type Handler interface {
+	ServeHTTP(http.ResponseWriter, *http.Request) *HttpError
+}
+
 type operationHandler struct {
 	config *Config
 	next   http.Handler
@@ -31,7 +36,7 @@ type responseHandler struct {
 	eventEmitter common.EventEmitter
 }
 
-func NewHandler(config *Config, eventEmitter common.EventEmitter, eh events.Handler) http.Handler {
+func NewHandler(config *Config, eventEmitter common.EventEmitter, eh events.Handler) Handler {
 	return &operationHandler{
 		config: config,
 		next: &responseHandler{
@@ -228,7 +233,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *HttpError {
 	requestPath := r.URL.Path
 	if len(requestPath) > 1 {
 		requestPath = strings.TrimRight(requestPath, "/")
@@ -244,8 +249,14 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	op, errOpResolve := findOperation(r.Method, requestPath, h.config.Paths)
 	if op != nil {
 		params := append(op.Path.Parameters, op.Parameters...)
+		route := op.Path.Path
+		if len(route) > 1 {
+			// there is no official specification for trailing slash. For ease of use, mokapi considers it equivalent
+			route = strings.TrimRight(route, "/")
+		}
+
 		var rp parameter.RequestParameters
-		rp, errOpResolve = parameter.FromRequest(params, op.Path.Path, r)
+		rp, errOpResolve = parameter.FromRequest(params, route, r)
 
 		if errOpResolve == nil {
 			r = r.WithContext(parameter.NewContext(r.Context(), rp))
@@ -269,13 +280,13 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 			}
 
 			h.next.ServeHTTP(rw, r)
-			return
+			return nil
 		} else {
 			errOpResolve = newHttpError(http.StatusBadRequest, errOpResolve.Error())
 		}
 	}
 
-	if ctx, err := NewLogEventContext(
+	/*if ctx, err := NewLogEventContext(
 		r,
 		false,
 		h.eh,
@@ -284,17 +295,21 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		log.Errorf("unable to log http event: %v", err)
 	} else {
 		r = r.WithContext(ctx)
-	}
+	}*/
 
 	// Not reading the request body can cause a couple of problems.
 	// Go’s HTTP server uses connection pooling by default.
 	// If you don’t read and fully consume (or close) the request body, the remaining unread bytes will stay in the TCP buffer.
-	_, _ = io.Copy(io.Discard, r.Body)
+	//_, _ = io.Copy(io.Discard, r.Body)
 
 	if errOpResolve == nil {
-		writeError(rw, r, newHttpErrorf(http.StatusNotFound, "no matching endpoint found: %v %v", strings.ToUpper(r.Method), r.URL), h.config.Info.Name)
+		return newHttpErrorf(http.StatusNotFound, "no matching endpoint found: %v %v", strings.ToUpper(r.Method), lib.GetUrl(r))
 	} else {
-		writeError(rw, r, errOpResolve, h.config.Info.Name)
+		var httpError *HttpError
+		if errors.As(errOpResolve, &httpError) {
+			return httpError
+		}
+		return newHttpErrorf(http.StatusInternalServerError, errOpResolve.Error())
 	}
 }
 
@@ -302,7 +317,7 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 	message := err.Error()
 	status := http.StatusInternalServerError
 
-	var hErr *httpError
+	var hErr *HttpError
 	if errors.As(err, &hErr) {
 		status = hErr.StatusCode
 		for k, values := range hErr.Header {
@@ -392,7 +407,7 @@ func findOperation(method, requestPath string, paths PathItems) (*Operation, err
 		op := ref.Value.Operation(method)
 		if op == nil {
 			allowed := slices.Collect(maps.Keys(ref.Value.Operations()))
-			lastError = newMethodNotAllowedErrorf(http.StatusMethodNotAllowed, allowed, "Method %s not defined for path %s", method, origRoute)
+			lastError = newMethodNotAllowedErrorf(allowed, "Method %s not defined for path %s", method, origRoute)
 		}
 
 		// Literal/static paths have higher priority than parameterized paths.

@@ -3,7 +3,6 @@ package npm
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/config/static"
@@ -11,6 +10,8 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Provider struct {

@@ -15,6 +15,10 @@ const {formatStatusCode, getClassByStatusCode} = usePrettyHttp()
 const eventData = computed(() => <HttpEventData>prop.event.data)
 const route = useRoute()
 
+const hasOperation = computed(() => {
+    return prop.event.traits.path !== undefined
+})
+
 function operation(){
     const endpoint = prop.event.traits.path.substring(1).split('/')
     endpoint.push(prop.event.traits.method.toLowerCase())
@@ -60,7 +64,7 @@ function operation(){
                     <p class="label">Duration</p>
                     <p>{{ duration(eventData.duration) }}</p>
                 </div>
-                <div class="col">
+                <div class="col" v-if="hasOperation">
                     <p class="label">Specification</p>
                     <router-link :to="operation()">Operation</router-link>
                 </div>

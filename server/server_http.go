@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/engine/common"
@@ -14,6 +13,8 @@ import (
 	"net/url"
 	"slices"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var DefaultHttpPort = 80
@@ -38,13 +39,26 @@ func NewHttpManager(emitter common.EventEmitter, store *cert.Store, app *runtime
 	}
 }
 
-func (m *HttpManager) AddService(name string, u *url.URL, h http.Handler, isInternal bool) error {
+func (m *HttpManager) AddService(name string, u *url.URL, h openapi.Handler) error {
+	server := m.getOrCreateServer(u.Scheme, u.Port())
+	err := server.AddOrUpdate(&service.HttpService{
+		Url:     u,
+		Handler: h,
+		Name:    name,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *HttpManager) AddInternalService(name string, u *url.URL, h http.Handler) error {
 	server := m.getOrCreateServer(u.Scheme, u.Port())
 	err := server.AddOrUpdate(&service.HttpService{
 		Url:        u,
-		Handler:    h,
+		Handler:    &service.StdHandlerAdapter{H: h},
 		Name:       name,
-		IsInternal: isInternal,
+		IsInternal: true,
 	})
 	if err != nil {
 		return err
@@ -92,7 +106,7 @@ func (m *HttpManager) Update(e dynamic.ConfigEvent) {
 			continue
 		}
 
-		err = m.AddService(cfg.Info.Name, u, info.Handler(m.app.Monitor.Http, m.eventEmitter, m.app.Events), false)
+		err = m.AddService(cfg.Info.Name, u, info.Handler(m.app.Monitor.Http, m.eventEmitter, m.app.Events))
 		if err != nil {
 			log.Warnf("unable to add '%v' on %v: %v", cfg.Info.Name, s.Url, err.Error())
 			continue

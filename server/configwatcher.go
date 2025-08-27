@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/config/dynamic/provider/git"
@@ -15,6 +14,8 @@ import (
 	"net/url"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type ConfigWatcher struct {
@@ -65,6 +66,7 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 			w.m.Unlock()
 			return nil, err
 		}
+		c.SourceType = dynamic.SourceReference
 		e = &entry{config: c}
 		w.configs[getConfigKey(u)] = e
 		c.Listeners.Add("ConfigWatcher", w.configChanged)
@@ -74,10 +76,11 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 		parse = c.Data == nil
 	}
 
+	w.m.Unlock()
+
 	if parse {
 		e.m.Lock()
 		defer e.m.Unlock()
-		w.m.Unlock()
 
 		if c.Data == nil {
 			if v != nil {
@@ -93,8 +96,6 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 				return nil, err
 			}
 		}
-	} else {
-		w.m.Unlock()
 	}
 
 	return c, nil
@@ -157,9 +158,9 @@ func (w *ConfigWatcher) AddListener(f func(e dynamic.ConfigEvent)) {
 }
 
 func (w *ConfigWatcher) addOrUpdate(evt dynamic.ConfigEvent) error {
-	w.m.Lock()
-
 	c := evt.Config
+
+	w.m.Lock()
 	e, ok := w.getConfig(c.Info.Url)
 	if !ok && c.Info.Inner() != nil {
 		current := c.Info.Inner()
@@ -182,19 +183,30 @@ func (w *ConfigWatcher) addOrUpdate(evt dynamic.ConfigEvent) error {
 		e = &entry{config: c}
 		w.configs[getConfigKey(c.Info.Url)] = e
 		c.Listeners.Add("ConfigWatcher", w.configChanged)
-	} else if bytes.Equal(e.config.Info.Checksum, c.Info.Checksum) {
-		log.Debugf("Checksum not changed. Skip reloading %v (%s)", e.config.Info.Url.String(), evt.Event)
 		w.m.Unlock()
+		go e.config.Listeners.Invoke(evt)
 		return nil
-	} else {
-		e.config.Raw = c.Raw
-		e.config.Info.Update(c.Info.Checksum)
-		log.Infof("reloading %v", e.config.Info.Url.String())
+	}
+	w.m.Unlock()
+
+	// Update existing entry under e.m
+	e.m.Lock()
+	defer e.m.Unlock()
+
+	// If the file has been previously read as a reference file, we need to trigger listeners
+	if bytes.Equal(e.config.Info.Checksum, c.Info.Checksum) && e.config.SourceType == c.SourceType {
+		log.Debugf("Checksum not changed. Skip reloading %v (%s)", e.config.Info.Url.String(), evt.Event)
+		return nil
 	}
 
-	w.m.Unlock()
-	go e.config.Listeners.Invoke(evt)
+	if e.config.SourceType == c.SourceType {
+		log.Infof("reloading %v", e.config.Info.Url.String())
+	}
+	e.config.Raw = c.Raw
+	e.config.SourceType = c.SourceType
+	e.config.Info.Update(c.Info.Checksum)
 
+	go e.config.Listeners.Invoke(evt)
 	return nil
 }
 
@@ -205,15 +217,15 @@ func (w *ConfigWatcher) configChanged(evt dynamic.ConfigEvent) {
 	}
 
 	w.m.Lock()
-	e := w.configs[getConfigKey(evt.Config.Info.Url)]
-	if e == nil {
+	e, ok := w.getConfig(evt.Config.Info.Url)
+	if e == nil || !ok {
 		// config deleted
 		log.Debugf("received a change event for deleted config: %v", evt.Config.Info.Url.String())
 		w.m.Unlock()
 		return
 	}
-	e.m.Lock()
 	w.m.Unlock()
+	e.m.Lock()
 
 	c := e.config
 	// set config on evt
@@ -235,7 +247,7 @@ func (w *ConfigWatcher) configChanged(evt dynamic.ConfigEvent) {
 
 	if err = dynamic.Validate(c); err != nil {
 		e.m.Unlock()
-		log.Infof("skipping file %v: %v", c.Info.Path(), err)
+		log.Errorf("skipping file %v: %v", c.Info.Path(), err)
 		return
 	}
 
@@ -250,9 +262,14 @@ func (w *ConfigWatcher) remove(evt dynamic.ConfigEvent) {
 	w.m.Lock()
 	key := getConfigKey(evt.Config.Info.Url)
 	e := w.configs[key]
-	e.m.Lock()
 	delete(w.configs, key)
 	w.m.Unlock()
+
+	if e == nil {
+		return
+	}
+
+	e.m.Lock()
 
 	log.Debugf("removing %v", evt.Config.Info.Url.String())
 
@@ -260,6 +277,8 @@ func (w *ConfigWatcher) remove(evt dynamic.ConfigEvent) {
 	for _, r := range e.config.Refs.List(false) {
 		r.Listeners.Remove(e.config.Info.Url.String())
 	}
+
+	e.m.Unlock()
 
 	for _, l := range w.listener {
 		go l(evt)

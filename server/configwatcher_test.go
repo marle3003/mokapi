@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/providers/openapi"
@@ -12,6 +11,8 @@ import (
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestConfigWatcher_Read(t *testing.T) {
@@ -348,6 +349,44 @@ func TestConfigWatcher_Read(t *testing.T) {
 				update.Info.Checksum = []byte{2}
 				ch <- dynamic.ConfigEvent{Name: configPathChild.String(), Config: update, Event: dynamic.Update}
 				time.Sleep(5 * time.Millisecond)
+			},
+		},
+		{
+			name: "reading a referenced file before reading it as main file",
+			test: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				configPath := mustParse("foo://file.yml")
+				var ch chan dynamic.ConfigEvent
+				w.providers["foo"] = &testprovider{
+					read: func(u *url.URL) (*dynamic.Config, error) {
+						c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}}
+						c.Info.Checksum = []byte{1}
+						return c, nil
+					},
+					start: func(configs chan dynamic.ConfigEvent, pool *safe.Pool) error {
+						ch = configs
+						return nil
+					},
+				}
+				pool := safe.NewPool(context.Background())
+				w.Start(pool)
+				defer pool.Stop()
+
+				c, err := w.Read(configPath, nil)
+				require.NoError(t, err)
+				require.NotNil(t, c)
+
+				var mainFile dynamic.ConfigEvent
+				w.AddListener(func(e dynamic.ConfigEvent) {
+					mainFile = e
+				})
+
+				// The listener should be called even checksum matches to the specific w.Read call
+				// otherwise the configuration file will be ignored.
+				ch <- dynamic.ConfigEvent{Name: configPath.String(), Event: dynamic.Create, Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath, Checksum: c.Info.Checksum}}}
+				time.Sleep(5 * time.Millisecond)
+				require.NotNil(t, mainFile)
+				require.Equal(t, c, mainFile.Config)
 			},
 		},
 	}

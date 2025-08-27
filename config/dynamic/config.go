@@ -2,11 +2,12 @@ package dynamic
 
 import (
 	"bytes"
-	"github.com/Masterminds/sprig"
 	"mokapi/sortedmap"
 	"strings"
 	"sync"
 	"text/template"
+
+	"github.com/Masterminds/sprig"
 )
 
 type Event int
@@ -31,13 +32,21 @@ type Validator interface {
 	Validate() error
 }
 
+type SourceType int
+
+const (
+	SourceMain SourceType = iota
+	SourceReference
+)
+
 type Config struct {
-	Info      ConfigInfo
-	Raw       []byte
-	Data      interface{}
-	Refs      Refs
-	Listeners Listeners
-	Scope     Scope
+	Info       ConfigInfo
+	Raw        []byte
+	Data       interface{}
+	Refs       Refs
+	Listeners  Listeners
+	Scope      Scope
+	SourceType SourceType
 }
 
 type Refs struct {

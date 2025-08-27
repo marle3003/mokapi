@@ -2,8 +2,6 @@ package acceptance
 
 import (
 	"context"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"mokapi/api"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
@@ -21,6 +19,9 @@ import (
 	"mokapi/server"
 	"mokapi/server/cert"
 	"mokapi/version"
+
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type Cmd struct {
@@ -67,7 +68,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	})
 
 	if u, err := api.BuildUrl(cfg.Api); err == nil {
-		err = http.AddService("api", u, api.New(app, cfg.Api), true)
+		err = http.AddInternalService("api", u, api.New(app, cfg.Api))
 		if err != nil {
 			return nil, err
 		}
