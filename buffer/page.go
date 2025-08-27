@@ -8,7 +8,9 @@ import (
 const pageSize = 65536
 
 var (
-	pagePool = sync.Pool{New: func() interface{} { return new(page) }}
+	pagePool = sync.Pool{New: func() interface{} {
+		return new(page)
+	}}
 )
 
 type page struct {
