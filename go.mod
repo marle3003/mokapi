@@ -19,7 +19,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/yuin/gopher-lua v1.1.1
 	golang.org/x/net v0.43.0
 	golang.org/x/text v0.28.0
