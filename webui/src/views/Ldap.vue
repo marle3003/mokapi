@@ -27,8 +27,11 @@ useMeta(title, description, "https://mokapi.io/ldap")
         <div class="row hero-title">
           <div class="col-12 col-lg-6">
             <h1>Use Mokapi to Mock an LDAP Server</h1>
-            <div class="badge-list mb-3">
-              <span class="badge">LDAP</span>
+            <div class="badge-list mb-3" role="navigation" aria-label="API type navigation">
+              <a href="/http"><span class="badge bg-secondary" aria-label="Go to HTTP API page">HTTP</span></a>
+              <a href="/kafka"><span class="badge bg-secondary" aria-label="Go to Kafka API page">Kafka</span></a>
+              <span class="badge bg-primary" aria-current="page" aria-label="You are currently on the LDAP API page">LDAP</span>
+              <a href="/mail"><span class="badge bg-secondary" aria-label="Go to Email API page">Email</span></a>
             </div>
             <p class="description">Simulate LDAP directories for testing and development without setting up a real LDAP server.</p>
             <p class="d-none d-md-block">
