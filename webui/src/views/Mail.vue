@@ -202,7 +202,7 @@ function hasTouchSupport() {
               <div class="card-body">
                 <h3><i class="bi bi-chat-text me-2"></i>Newsletter Handling</h3>
                 <p class="card-text pb-5">Simulate batch email sends and validate content, headers, or links in a mock environment.</p>
-                <a href="/resources/tutorials/mock-smtp-server-send-mail-using-node" class="btn btn-outline-primary btn-sm position-absolute" style="bottom:20px;">Try it</a>
+                <a href="/docs/resources/tutorials/mock-smtp-server-send-mail-using-node" class="btn btn-outline-primary btn-sm position-absolute" style="bottom:20px;">Try it</a>
               </div>
             </div>
           </div>
