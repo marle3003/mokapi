@@ -2,11 +2,12 @@ package dynamic_test
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestWrap(t *testing.T) {
@@ -25,6 +26,45 @@ func TestWrap(t *testing.T) {
 
 				require.Equal(t, info.Key(), config.Info.Key())
 				require.Equal(t, inner.Key(), config.Info.Inner().Key())
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test(t)
+		})
+	}
+}
+
+func TestListeners(t *testing.T) {
+	testcases := []struct {
+		name string
+		test func(t *testing.T)
+	}{
+		{
+			name: "listener add and invoke",
+			test: func(t *testing.T) {
+				l := dynamic.Listeners{}
+				called := false
+				l.Add("foo", func(event dynamic.ConfigEvent) {
+					called = true
+				})
+				l.Invoke(dynamic.ConfigEvent{})
+				require.True(t, called)
+			},
+		},
+		{
+			name: "removed listener should not be invoked",
+			test: func(t *testing.T) {
+				l := dynamic.Listeners{}
+				called := false
+				l.Add("foo", func(event dynamic.ConfigEvent) {
+					called = true
+				})
+				l.Remove("foo")
+				l.Invoke(dynamic.ConfigEvent{})
+				require.False(t, called)
 			},
 		},
 	}
@@ -120,6 +160,19 @@ func TestAddRef(t *testing.T) {
 				require.Contains(t, list, child)
 			},
 		},
+		{
+			name: "ref is removed when deleted",
+			test: func(t *testing.T) {
+				parent := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://parent.yaml"))}
+				child := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://child.yaml"))}
+
+				dynamic.AddRef(parent, child)
+
+				child.Listeners.Invoke(dynamic.ConfigEvent{Config: child, Event: dynamic.Delete})
+				list := parent.Refs.List(false)
+				require.Len(t, list, 0)
+			},
+		},
 	}
 
 	t.Parallel()
@@ -190,6 +243,49 @@ func TestValidate(t *testing.T) {
 			tc.test(t)
 		})
 	}
+}
+
+func TestConfigScope(t *testing.T) {
+	testcases := []struct {
+		name string
+		test func(t *testing.T)
+	}{
+		{
+			name: "open and close top scope",
+			test: func(t *testing.T) {
+				c := &dynamic.Config{}
+				c.OpenScope("foo")
+				require.Equal(t, "foo", c.Scope.Name())
+				c.CloseScope()
+				// top scope is never closed
+				require.Equal(t, "foo", c.Scope.Name())
+			},
+		},
+		{
+			name: "open and close sub scope",
+			test: func(t *testing.T) {
+				c := &dynamic.Config{}
+				c.OpenScope("foo")
+				c.OpenScope("bar")
+				require.Equal(t, "bar", c.Scope.Name())
+				c.CloseScope()
+				require.Equal(t, "foo", c.Scope.Name())
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test(t)
+		})
+	}
+}
+
+func TestConfigEventText(t *testing.T) {
+	require.Equal(t, "Create", dynamic.Create.String())
+	require.Equal(t, "Update", dynamic.Update.String())
+	require.Equal(t, "Delete", dynamic.Delete.String())
+	require.Equal(t, "Chmod", dynamic.Chmod.String())
 }
 
 type validatedData struct {

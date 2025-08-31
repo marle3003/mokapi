@@ -2,10 +2,8 @@ package engine_test
 
 import (
 	"fmt"
-	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
-	"mokapi/config/dynamic/script"
 	"mokapi/engine"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
@@ -16,6 +14,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	r "github.com/stretchr/testify/require"
 )
 
 func TestJsScriptEngine(t *testing.T) {
@@ -396,7 +396,7 @@ func newScript(path, src string) dynamic.ConfigEvent {
 	return dynamic.ConfigEvent{Config: &dynamic.Config{
 		Info: dynamic.ConfigInfo{Url: mustParse(path)},
 		Raw:  []byte(src),
-		Data: &script.Script{Code: src, Filename: path},
+		Data: src,
 	}}
 }
 

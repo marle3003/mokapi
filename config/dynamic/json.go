@@ -139,10 +139,8 @@ func object(d *decoder, v reflect.Value) error {
 			return nil
 		}
 		key := token.(string)
-		field, err := getField(v, key)
-		if err != nil {
-			return NewStructuralError(err, offset, d.d)
-		} else if !field.IsValid() {
+		field := getField(v, key)
+		if !field.IsValid() {
 			err = skip(d.d)
 			if err != nil {
 				return err
@@ -310,7 +308,7 @@ func indirect(v reflect.Value) (json.Unmarshaler, reflect.Value) {
 	return nil, v
 }
 
-func getField(v reflect.Value, name string) (reflect.Value, error) {
+func getField(v reflect.Value, name string) reflect.Value {
 	if v.Kind() == reflect.Map {
 		if v.IsNil() {
 			v.Set(reflect.MakeMap(v.Type()))
@@ -323,7 +321,7 @@ func getField(v reflect.Value, name string) (reflect.Value, error) {
 			mv = reflect.New(elemType).Elem()
 			v.SetMapIndex(key, mv)
 		}
-		return mv, nil
+		return mv
 	}
 
 	fieldName := firstLetterToUpper(name)
@@ -339,7 +337,7 @@ func getField(v reflect.Value, name string) (reflect.Value, error) {
 			field.Set(fv)
 		}
 
-		return field, nil
+		return field
 	}
 
 	t := v.Type()
@@ -351,9 +349,9 @@ func getField(v reflect.Value, name string) (reflect.Value, error) {
 			if v2.Kind() == reflect.Ptr {
 				v2 = v2.Elem()
 			}
-			v2, _ = getField(v2, name)
+			v2 = getField(v2, name)
 			if v2.IsValid() {
-				return v2, nil
+				return v2
 			}
 		}
 
@@ -364,11 +362,11 @@ func getField(v reflect.Value, name string) (reflect.Value, error) {
 		info := strings.Split(tag, ",")
 		tagName := info[0]
 		if tagName == name {
-			return v.Field(i), nil
+			return v.Field(i)
 		}
 	}
 
-	return reflect.Value{}, nil
+	return reflect.Value{}
 }
 
 func firstLetterToUpper(s string) string {
