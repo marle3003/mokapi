@@ -64,7 +64,7 @@ func (pb *pageBuffer) Unref() {
 		}
 		pb.length = 0
 		pb.cursor = 0
-		pb.pages = pb.pages[:0]
+		pb.pages = nil
 		pageBufferPool.Put(pb)
 	}
 }

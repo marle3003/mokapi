@@ -29,7 +29,7 @@
   padding-left: 1.5rem;
 }
 .home .hero-title .description {
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   font-size: 1.2rem;
 }
 .home .hero-title img {
@@ -38,7 +38,7 @@
 .home .hero-title .badge-list >:first-child {
   margin-left: 1.5rem;
 }
-.home .hero-title .badge-list > a{
+.home .hero-title .badge-list > a, .home .hero-title .badge-list > span{
   margin-left: 0.5rem;
 }
 .home .hero-title .badge {
@@ -96,10 +96,8 @@
   color: var(--color-text);
   border-color: var(--card-border);
   background-color: var(--card-background);
-  margin: 7px;
 }
 .home .card a {
-  color: var(--card-color);
   text-decoration: none;
 }
 .home .card:hover:has(>a) {
@@ -126,9 +124,7 @@
     padding-bottom: 3rem;
   }
 }
-section.feature h2 {
-  text-align: left;
-}
+
 section.feature img {
   max-width:100%;
   max-height:100%;
