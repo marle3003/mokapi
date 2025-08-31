@@ -380,34 +380,20 @@ code {
 
 blockquote {
   width: 100%;
-  margin: 50px auto;
-  font-family: Open Sans;
-  font-style: italic;
-  padding: 1.2em 30px 1.2em 55px;
-  line-height: 1.75;
-  font-size: 1rem;
-  border-left: 8px solid #eabaabff;
+  margin-top: 2rem;
+  max-width: 700px;
+  padding: 1.5em 2em 1.5em 2em;
+  border-left: 4px solid #eabaabff;
   position: relative;
   background: var(--color-background-soft);
 }
-blockquote:before {
-  content: "\201C";
-  color: #eabaabff;
-  font-size:4em;
-  position: absolute;
-  left: 10px;
-  top:-10px;
-}
-blockquote::after {
-  content: '';
+blockquote span:before {
+  content: '- '
 }
 blockquote span {
+  color: #6c757d;
   display:block;
   font-style: normal;
-  font-weight: bold;
-  margin: 0;
-}
-blockquote p {
   margin: 0;
 }
 

@@ -6,6 +6,7 @@ import { MarkdownItLinks } from '@/composables/mardown-links';
 import { MarkdownItCard } from '@/composables/markdown-card';
 import { MarkdownItCarousel } from './markdown-carousel';
 import yaml from 'js-yaml'
+import { MarkdownItBlockquote } from './mardown-blockquote';
 
 const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
 const metadataRegex = /^---([\s\S]*?)---/;
@@ -22,14 +23,15 @@ export function useMarkdown(content: string | undefined): {content: string | und
 
         if (content) {
             content = new MarkdownIt()
-            .use(MarkdownItHighlightjs)
-            .use(MarkdownItTabs)
-            .use(MarkdownItBox)
-            .use(MarkdownItLinks)
-            .use(MarkdownItCarousel(metadata))
-            .use(MarkdownItCard(metadata))
-            .set({html: true})
-            .render(content)
+                .use(MarkdownItHighlightjs)
+                .use(MarkdownItBlockquote)
+                .use(MarkdownItTabs)
+                .use(MarkdownItBox)
+                .use(MarkdownItLinks)
+                .use(MarkdownItCarousel(metadata))
+                .use(MarkdownItCard(metadata))
+                .set({html: true})
+                .render(content)
         }
 
         return {content, metadata}
