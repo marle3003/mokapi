@@ -22,24 +22,24 @@ useMeta(title, description, "https://mokapi.io/ldap")
 
 <template>
   <main class="home">
-    <section>
+    <section class="py-5">
       <div class="container">
         <div class="row hero-title">
           <div class="col-12 col-lg-6">
-            <h1>Use Mokapi to Mock an LDAP Server</h1>
+            <h1>Mock LDAP Authentication & Directory Services</h1>
             <div class="badge-list mb-3" role="navigation" aria-label="API type navigation">
               <a href="/http"><span class="badge bg-secondary" aria-label="Go to HTTP API page">HTTP</span></a>
               <a href="/kafka"><span class="badge bg-secondary" aria-label="Go to Kafka API page">Kafka</span></a>
               <span class="badge bg-primary" aria-current="page" aria-label="You are currently on the LDAP API page">LDAP</span>
               <a href="/mail"><span class="badge bg-secondary" aria-label="Go to Email API page">Email</span></a>
             </div>
-            <p class="description">Simulate LDAP directories for testing and development without setting up a real LDAP server.</p>
+            <p class="lead description">Simulate LDAP servers and authentication flows—no real server needed. <strong>Free, open-source, and fully under your control.</strong></p>
             <p class="d-none d-md-block">
-              <router-link :to="{ path: '/docs/guides' }">
-                <button type="button" class="btn btn-outline-primary">Guides</button>
+              <router-link :to="{ path: '/docs/guides/ldap' }">
+                <button type="button" class="btn btn-outline-primary">Get Started</button>
               </router-link>
               <router-link :to="{ path: '/docs/resources' }">
-                <button type="button" class="btn btn-outline-primary">Resources</button>
+                <button type="button" class="btn btn-outline-primary">Learn More</button>
               </router-link>
             </p>
           </div>
@@ -50,11 +50,11 @@ useMeta(title, description, "https://mokapi.io/ldap")
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
-                <router-link :to="{ path: '/docs/guides' }">
-                  <button type="button" class="btn btn-outline-primary">Guides</button>
+                <router-link :to="{ path: '/docs/guides/ldap' }">
+                  <button type="button" class="btn btn-outline-primary">Get Started</button>
                 </router-link>
                 <router-link :to="{ path: '/docs/resources' }">
-                  <button type="button" class="btn btn-outline-primary">Resources</button>
+                  <button type="button" class="btn btn-outline-primary">Learn More</button>
                 </router-link>
               </p>
           </div>
@@ -62,39 +62,122 @@ useMeta(title, description, "https://mokapi.io/ldap")
       </div>
     </section>
 
-    <section>
+    <section class="py-5 text-center">
       <div class="container">
-        <h2>Why Choose Mokapi for LDAP?</h2>
-        <div class="row row-cols-1 row-cols-md-2 g-4">
+        <h2>Why Mock LDAP Directory Services?</h2>
+        <p class="lead text-muted mb-0">
+          LDAP powers authentication and user directory systems across enterprises. With Mokapi, simulate LDAP services to speed development, QA, and testing—without needing a real LDAP server.
+        </p>
+      </div>
+    </section>
+
+    <section class="py-5 text-center">
+      <div class="container">
+        <h2>How Mokapi Simplifies LDAP Testing</h2>
+        <div class="row g-4 mt-4">
+          <div class="col-md-4">
+            <i class="bi bi-person-badge display-5 mb-3 icon"></i>
+            <h3 class="h5">Mock LDAP Bind & Search</h3>
+            <p class="text-muted">Simulate authentication and directory queries with ease—no server required.</p>
+          </div>
+          <div class="col-md-4">
+            <i class="bi bi-database display-5 mb-3 icon"></i>
+            <h3 class="h5">Dynamic Directory Responses</h3>
+            <p class="text-muted">Use Mokapi Scripts to return tailored responses—control status, attributes, and edge cases programmatically.</p>
+          </div>
+          <div class="col-md-4">
+            <i class="bi bi-git display-5 mb-3 icon"></i>
+            <h3 class="h5">CI/CD Friendly</h3>
+            <p class="text-muted">Integrate LDAP mocks into your pipelines—test authentication flows reliably and automate your QA.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="py-5">
+      <div class="container">
+        <h2 class="text-center mb-4">Mokapi LDAP Features at a Glance</h2>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+
           <div class="col">
-            <div class="card h-100 position-relative">
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-body">
+                <h3 class="card-title">
+                  <i class="bi bi-file-earmark-code me-2 icon"></i>Configuration as Code
+                </h3>
+                <p>Define LDAP behavior declaratively—keep mocks versioned, reproducible, and shareable.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col">
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-body">
+                <h3 class="card-title">
+                  <i class="bi bi-server me-2 icon"></i>Schema & DN Validation
+                </h3>
+                <p>Ensure attribute consistency and DN formats correct via schema-based mocking.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="col">
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-body">
+                <h3 class="card-title">
+                  <i class="bi bi-plug me-2 icon"></i>Pipeline Integration
+                </h3>
+                <p>Add LDAP mock steps into CI/CD for automated authentication flow testing.</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <section class="py-5">
+      <div class="container">
+        <h2>LDAP Use Cases</h2>
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+          <div class="col">
+            <div class="card h-100 shadow-sm border-0">
                 <div class="card-body">
-                  <h3 class="card-title align-middle"><i class="bi bi-server me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block">Mock LDAP Server</span></h3>
-                  <p class="card-text pb-4">Simulate LDAP directories without setting up a real LDAP server.</p>
+                  <h3 class="card-title">
+                    <i class="bi bi-person-check me-2 icon"></i>
+                    User Authentication
+                  </h3>
+                  <p class="card-text pb-4">Test user login flows without needing a live LDAP server.  
+                    Simulate password policies, multiple attributes, and group-based permissions for realistic scenarios.
+                  </p>
+                  <a href="docs/resources/tutorials/mock-ldap-authentication-in-node" class="btn btn-outline-primary btn-sm">Learn More</a>
                 </div>
             </div>
           </div>
           <div class="col">
             <div class="card h-100">
-                <div class="card-body">
-                  <h3 class="card-title align-middle"><i class="bi bi-shield-check me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block">Schema Validation</span></h3>
-                  <p class="card-text pb-4">Ensure LDAP directory structures conform to the expected schema.</p>
+                <div class="card-body shadow-sm border-0">
+                  <h3 class="card-title">
+                    <i class="bi bi-people me-2 icon"></i>
+                    Directory Testing
+                  </h3>
+                  <p class="card-text pb-4">Mock directory searches, group membership queries, and manage test data easily.<br />
+                  Supports <strong>LDIF import</strong> for quick setup and consistent workflows.</p>
+                  <a href="docs/guides/ldap/quick-start" class="btn btn-outline-primary btn-sm">Test It Out</a>
                 </div>
             </div>
           </div>
           <div class="col">
             <div class="card h-100">
-                <div class="card-body">
-                  <h3 class="card-title align-middle"><i class="bi bi-person-lock me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block">Role-Based Access Testing</span></h3>
-                  <p class="card-text pb-4">Verify authentication and authorization flows with custom LDAP users and groups.</p>
-                </div>
-            </div>
-          </div>
-          <div class="col">
-            <div class="card h-100">
-                <div class="card-body">
-                  <h3 class="card-title align-middle"><i class="bi bi-plug me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block">CI/CD Integration</span></h3>
-                  <p class="card-text pb-4">Automate LDAP testing in your development pipeline.</p>
+                <div class="card-body shadow-sm border-0">
+                  <h3 class="card-title align-middle">
+                    <i class="bi bi-tools me-2 icon"></i>
+                    Edge Case & Error Simulation
+                  </h3>
+                  <p class="card-text pb-4">Create jitter, slow responses, or bind failures to test fault tolerance.  
+                    Simulate network latency, invalid credentials, and unexpected server errors for realistic failure scenarios.
+                  </p>
+                  <a href="docs/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="btn btn-outline-primary btn-sm">Get Started</a>
                 </div>
             </div>
           </div>
@@ -102,46 +185,14 @@ useMeta(title, description, "https://mokapi.io/ldap")
       </div>
     </section>
 
-    <section>
-      <div class="container">
-        <h2>Use Cases</h2>
-        <div class="row row-cols-1 row-cols-md-3 g-3">
-          <div class="col">
-            <div class="card h-100 position-relative">
-                <div class="card-body">
-                  <h3 class="card-title align-middle"><i class="bi bi-person-check me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >LDAP Authentication Mocking</span></h3>
-                  <p class="card-text pb-4">Mock LDAP authentication to simulate login processes in your application, without needing access to a real LDAP server.</p>
-                  <a href="docs/resources/tutorials/mock-ldap-authentication-in-node" class="card-link position-absolute" style="bottom: 15px;">Learn More</a>
-                </div>
-            </div>
-          </div>
-          <div class="col">
-            <div class="card h-100">
-                <div class="card-body">
-                  <h3 class="card-title align-middle"><i class="bi bi-check2-circle me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Use LDIF to build your directory</span></h3>
-                  <p class="card-text pb-4">Easily import LDIF files to create a set of users in your mock LDAP server, streamlining testing with preconfigured data.</p>
-                  <a href="docs/guides/ldap/quick-start" class="card-link position-absolute" style="bottom: 15px;">Try Now</a>
-                </div>
-            </div>
-          </div>
-          <div class="col">
-            <div class="card h-100">
-                <div class="card-body">
-                  <h3 class="card-title align-middle"><i class="bi bi-gear-wide-connected me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >LDAP Mock for Development</span></h3>
-                  <p class="card-text pb-4">Set up an LDAP server mock to mimic real server behavior, ensuring seamless integration and testing without needing an actual LDAP server.</p>
-                  <a href="docs/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="card-link position-absolute" style="bottom: 15px;">Get Started</a>
-                </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section>
+    <section class="py-5">
       <div class="container">
         <div class="row">
           <div class="col-12 justify-content-center">
             <h2>Easy setup of LDAP entries</h2>
+            <p class="lead text-muted mb-4 text-center">
+              Define users and groups with simple LDIF files and load them instantly into your mock directory.
+            </p>
             <div class="justify-content-center">
               <pre v-highlightjs="ldap"><code class="ldif"></code></pre>
             </div>
@@ -149,14 +200,18 @@ useMeta(title, description, "https://mokapi.io/ldap")
           </div>
         </div>
     </section>
-    <section>
+
+    <section class="py-5 text-center">
       <div class="container">
         <div class="row">
           <div class="col-12">
-            <h2>See what's going on</h2>
-              <a href="#ldapdialog" data-bs-toggle="modal" data-bs-target="#ldapdialog">
-                <img src="/dashboard-ldap-mock.png" style="width:100%" alt="Analyze and inspect LDAP queries, search results, and more." />
-              </a>
+            <h2>Inspect Authentication Flows</h2>
+            <p class="lead text-muted mb-4">
+              See real-time LDAP request and response logs to troubleshoot and understand authentication behavior.
+            </p>
+            <a href="#ldapdialog" data-bs-toggle="modal" data-bs-target="#ldapdialog">
+              <img src="/dashboard-ldap-mock.png" style="width:100%" alt="Analyze and inspect LDAP queries, search results, and more." />
+            </a>
           </div>
         </div>
       </div>
