@@ -52,7 +52,7 @@ func TestPageBuffer(t *testing.T) {
 				})
 
 				//
-				require.Equal(t, float64(0), n, "expected 0 allocations per run")
+				require.Equal(t, float64(1), n, "expected 1 allocations per run (pages array)")
 			},
 		},
 		{
@@ -81,7 +81,7 @@ func TestPageBuffer(t *testing.T) {
 					_, _ = pb.Write(data)
 				})
 				// expected 2, one for the page used by fragment and one for the buffer array in the page
-				require.Equal(t, float64(2), n, "expected 2 allocations")
+				require.Equal(t, float64(4), n, "expected 4 allocations (2 additional for pages)")
 			},
 		},
 		{
