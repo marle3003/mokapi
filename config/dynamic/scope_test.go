@@ -1,9 +1,10 @@
 package dynamic_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestScope(t *testing.T) {

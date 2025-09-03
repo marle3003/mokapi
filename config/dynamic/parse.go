@@ -2,13 +2,13 @@ package dynamic
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic/script"
 	"mokapi/version"
 	"net/url"
 	"path/filepath"
 	"reflect"
+
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 type dynamicObject struct {
@@ -70,13 +70,7 @@ func parse(c *Config) (interface{}, error) {
 	case ".json":
 		result, err = parseJson(b, result)
 	case ".lua", ".js", ".cjs", ".mjs", ".ts":
-		if result == nil {
-			result = script.New(name, b)
-		} else {
-			s := result.(*script.Script)
-			s.Code = string(b)
-			s.Filename = name
-		}
+		result = string(b)
 	default:
 		if result != nil {
 			rv := reflect.ValueOf(result)
