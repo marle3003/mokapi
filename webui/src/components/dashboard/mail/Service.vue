@@ -78,13 +78,3 @@ if (serviceName){
   
   <mail v-if="$route.name == 'smtpMail'"></mail>
 </template>
-
-<style>
-.dashboard .card-group .card.configs {
-  margin: 0;
-  border: none;
-}
-.dashboard .card.configs .card-body {
-  padding: 0;
-}
-</style>

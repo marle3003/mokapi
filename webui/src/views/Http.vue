@@ -110,7 +110,7 @@ function getConsoleContent() {
     <section class="py-5 text-center">
       <div class="container">
         <h2>Why Mock HTTP and REST APIs?</h2>
-        <p class="lead text-muted mb-0">
+        <p class="lead mb-0">
           Modern applications rely on many external services. With Mokapi, you can simulate HTTP endpoints and OpenAPI-defined APIs, so your development and testing are never blocked by missing or unstable backends.
         </p>
       </div>
@@ -199,7 +199,7 @@ function getConsoleContent() {
       <div class="container text-center mb-5">
         <div class="row">
           <h2>See Mokapi in Action</h2>
-          <p class="lead text-muted mb-4">Go beyond static mocks—customize, debug, and explore your APIs with powerful built-in tools.</p>
+          <p class="lead mb-4">Go beyond static mocks—customize, debug, and explore your APIs with powerful built-in tools.</p>
         </div>
 
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-3">
@@ -238,7 +238,7 @@ function getConsoleContent() {
       <div class="container">
         <div class="row text-center mb-4">
           <h2>Quick Demo</h2>
-          <p class="lead text-muted mb-0">
+          <p class="lead mb-0">
             See how fast it is to spin up Mokapi with the Swagger Petstore API. 
             Just one command, and your mock server is ready.
           </p>

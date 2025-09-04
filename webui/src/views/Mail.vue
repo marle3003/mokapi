@@ -91,7 +91,7 @@ function hasTouchSupport() {
     <section class="py-5 text-center">
       <div class="container">
         <h2>Why Simulate Email Sending & Receiving?</h2>
-        <p class="lead text-muted mb-0">
+        <p class="lead mb-0">
           Email functionalities like signups, password resets, and notifications are critical. With Mokapi, test them worry-free by mocking SMTP and IMAP servers—without sending real emails.
         </p>
       </div>
@@ -216,7 +216,7 @@ function hasTouchSupport() {
         <div class="row">
           <div class="col-12 justify-content-center">
             <h2>Easy setup of your fake SMTP server</h2>
-            <p class="lead text-muted text-center">Create individual inboxes for different workflows or forward all emails into one real inbox.</p>
+            <p class="lead text-center">Create individual inboxes for different workflows or forward all emails into one real inbox.</p>
             <div class="tab justify-content-center">
               <div class="nav code-tabs" id="tab-1" role="tablist">
                 <button class="active" id="tab-1-CLI" data-bs-toggle="tab" data-bs-target="#tabPanel-1-CLI" type="button" role="tab" aria-controls="tabPanel-1-CLI" aria-selected="true">
@@ -245,7 +245,7 @@ function hasTouchSupport() {
         <div class="row">
           <div class="col-12">
             <h2>Inspect Sent Emails</h2>
-            <p class="lead text-muted mb-5 text-center">
+            <p class="lead mb-5 text-center">
               View captured messages and headers with Mokapi’s built-in email dashboard for debugging and testing.
             </p>
             <img src="/dashboard-smtp.png" alt="Mokapi dashboard displaying received emails via the built-in SMTP server." style="width:100%" />

@@ -112,57 +112,81 @@ function hasTouchSupport() {
     <section class="py-5 text-center">
       <div class="container">
         <h2>Build Better Software with Mokapi</h2>
-        <p class="lead text-muted mb-2">
+        <p class="lead mb-2">
           Build and test with confidence, even when APIs are outside your control.
         </p>
-        <p class="lead text-muted mb-0">
+        <p class="lead mb-0">
           Mokapi empowers developers to <strong>mock, simulate, and explore APIs</strong>, 
           automate workflows, and unlock faster feedback—creating stable and reliable development environments.
         </p>
       </div>
     </section>
 
-    <section class="py-5 text-center">
+    <section class="py-5">
       <div class="container">
         <div class="row g-4">
           <div class="col-sm-3">
-            <div class="card h-100 shadow-sm border-0">
-              <router-link :to="{path: '/http'}">
-                <div class="card-body">
-                  <h5 class="card-title fw-bold mb-3">Mock REST APIs</h5>
-                  <p class="card-text">Simulate REST API endpoints and test your app instantly without waiting for external services.</p>
-                </div>
-              </router-link>
+            <div class="card h-100 shadow-sm border-0 accented">
+              <div class="card-inner">
+                <router-link :to="{path: '/http'}">
+                  <div class="card-body">
+                    <h5 class="card-title fw-bold mb-3">Mock REST APIs</h5>
+                    <p class="card-text">Simulate REST API endpoints and test your app instantly without waiting for external services.</p>
+                    <div class="icon-link cta">Learn more 
+                      <i class="bi bi-chevron-right"></i>
+                      <i class="bi bi-arrow-right hover"></i>
+                    </div>
+                  </div>
+                </router-link>
+              </div>
             </div>
           </div>
           <div class="col-sm-3">
-            <div class="card h-100 shadow-sm border-0">
-              <router-link :to="{path: '/kafka'}">
-                <div class="card-body">
-                  <h5 class="card-title fw-bold mb-3">Simulate Kafka Events</h5>
-                  <p class="card-text">Mock Kafka message streams to test event-driven services and microservice integration.</p>
-                </div>
-              </router-link>
+            <div class="card h-100 shadow-sm border-0 accented">
+              <div class="card-inner">
+                <router-link :to="{path: '/kafka'}">
+                  <div class="card-body">
+                    <h5 class="card-title fw-bold mb-3">Simulate Kafka Events</h5>
+                    <p class="card-text">Mock Kafka message streams to test event-driven services and microservice integration.</p>
+                    <div class="icon-link cta">Learn more 
+                      <i class="bi bi-chevron-right"></i>
+                      <i class="bi bi-arrow-right hover"></i>
+                    </div>
+                  </div>
+                </router-link>
+              </div>
             </div>
           </div>
           <div class="col-sm-3">
-            <div class="card h-100 shadow-sm border-0">
-              <router-link :to="{path: '/ldap'}">
-                <div class="card-body">
-                  <h5 class="card-title fw-bold mb-3">Mock LDAP Services</h5>
-                  <p class="card-text">imulate authentication and directory services to test user access and permissions safely.</p>
-                </div>
-              </router-link>
+            <div class="card h-100 shadow-sm border-0 accented">
+              <div class="card-inner">
+                <router-link :to="{path: '/ldap'}">
+                  <div class="card-body">
+                    <h5 class="card-title fw-bold mb-3">Mock LDAP Services</h5>
+                    <p class="card-text">Simulate authentication and directory services to test user access and permissions safely.</p>
+                    <div class="icon-link cta">Learn more 
+                      <i class="bi bi-chevron-right"></i>
+                      <i class="bi bi-arrow-right hover"></i>
+                    </div>
+                  </div>
+                </router-link>
+              </div>
             </div>
           </div>
           <div class="col-sm-3">
-            <div class="card h-100 shadow-sm border-0">
-              <router-link :to="{path: '/mail'}">
-                <div class="card-body">
-                  <h5 class="card-title fw-bold mb-3">SMTP Email Testing</h5>
-                  <p class="card-text">Simulate email sending and test email features without sending real messages.</p>
-                </div>
-              </router-link>
+            <div class="card h-100 shadow-sm border-0 accented">
+              <div class="card-inner">
+                <router-link :to="{path: '/mail'}">
+                  <div class="card-body">
+                    <h5 class="card-title fw-bold mb-3">SMTP Email Testing</h5>
+                    <p class="card-text">Simulate email sending and test email features without sending real messages.</p>
+                    <div class="icon-link cta">Learn more 
+                      <i class="bi bi-chevron-right"></i>
+                      <i class="bi bi-arrow-right hover"></i>
+                    </div>
+                  </div>
+                </router-link>
+              </div>
             </div> 
           </div>
         </div>
@@ -172,10 +196,10 @@ function hasTouchSupport() {
     <section class="py-5 text-center">
       <div class="container">
         <h2 class="mb-3">Prevent Bugs — Reduce Dependencies — Simulate APIs</h2>
-        <p class="lead text-muted mb-3">
+        <p class="lead mb-3">
           Create stable development and test environments to increase speed, accuracy, and efficiency.
         </p>
-        <p class="lead text-muted mb-0">
+        <p class="lead mb-0">
           Mokapi offers a set of powerful features to mock APIs, automate workflows, and generate realistic test data.
         </p>
       </div>
@@ -356,7 +380,7 @@ function hasTouchSupport() {
       <div class="container">
         <div class="row">
           <h2 class="mb-3">See Mokapi in Action</h2>
-          <p class="lead text-muted mb-4 text-center">Explore how easily you can mock APIs and generate realistic data for testing—no backend required.</p>
+          <p class="lead mb-4 text-center">Explore how easily you can mock APIs and generate realistic data for testing—no backend required.</p>
         </div>
 
         <div class="d-flex content align-items-start align-items-stretch">

@@ -97,8 +97,60 @@
   border-color: var(--card-border);
   background-color: var(--card-background);
 }
+[data-theme="light"] .home .card:not(.accented) {
+  border: solid 1px var(--card-border) !important;
+}
+.home .card.accented {
+  background-color: transparent;
+  box-shadow: none !important;
+}
+.card.accented:hover::before {
+  transform: scale(var(--accentedCardScale));
+  box-shadow: var(--accentedCardShadow);
+}
+.card-inner {
+  position: relative;
+  z-index: 1;
+}
+/* Scale only the background "shell" */
+.card.accented::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: var(--card-background);
+  border-radius: inherit;
+  z-index: 0;
+  box-shadow: var(--bs-box-shadow-sm) !important;
+  transition: transform var(--accentedCardTransitionEasing),
+              box-shadow var(--accentedCardTransitionEasing);
+}
+[data-theme="light"] .card.accented::before {
+  border: solid 1px var(--card-border) !important;
+}
+.home .card.accented .cta {
+  color: var(--link-color);
+}
+.home .card:hover.accented .cta {
+  color: var(--color-text);
+}
+.home .card.accented .cta i {
+  font-size: 12px;
+  position: relative;
+  bottom:2px;
+}
+.home .card.accented .cta i.hover {
+  display: none;
+}
+.home .card:hover.accented .cta i.hover {
+  display: inline;
+}
+.home .card:hover.accented .cta i:not(.hover) {
+  display: none;
+}
+
 .home .card a {
   text-decoration: none;
+  color: var(--color-text);
 }
 .home .card:hover:has(>a) {
   border-color: var(--card-border-active);

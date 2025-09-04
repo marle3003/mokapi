@@ -65,7 +65,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
     <section class="py-5 text-center">
       <div class="container">
         <h2>Why Mock LDAP Directory Services?</h2>
-        <p class="lead text-muted mb-0">
+        <p class="lead mb-0">
           LDAP powers authentication and user directory systems across enterprises. With Mokapi, simulate LDAP services to speed development, QA, and testing—without needing a real LDAP server.
         </p>
       </div>
@@ -190,7 +190,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
         <div class="row">
           <div class="col-12 justify-content-center">
             <h2>Easy setup of LDAP entries</h2>
-            <p class="lead text-muted mb-4 text-center">
+            <p class="lead mb-4 text-center">
               Define users and groups with simple LDIF files and load them instantly into your mock directory.
             </p>
             <div class="justify-content-center">
@@ -206,7 +206,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
         <div class="row">
           <div class="col-12">
             <h2>Inspect Authentication Flows</h2>
-            <p class="lead text-muted mb-4">
+            <p class="lead mb-4">
               See real-time LDAP request and response logs to troubleshoot and understand authentication behavior.
             </p>
             <a href="#ldapdialog" data-bs-toggle="modal" data-bs-target="#ldapdialog">
