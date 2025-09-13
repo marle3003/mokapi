@@ -1,3 +1,12 @@
+[data-theme="light"] body:has(.dashboard) {
+  --color-background: rgb(239,239,239);
+  --color-background-soft: rgb(245,245,245);
+  --color-border: rgb(255,255,255);
+  --datatable-background: rgb(245,245,245);
+  --datatable-border-color: rgb(223,223,223);
+  --datatable-background-active: rgb(240, 240, 240);
+}
+
 .dashboard .card-group .card {
   border-color: var(--color-border);
   background-color: var(--color-background-soft);
@@ -6,14 +15,17 @@
   font-weight: 400;
   font-size: 0.9rem;
 }
+[data-theme="light"] .dashboard .card-group .card {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
 .dashboard .card-group .card:first-child{
-  margin-left: 0px;
+  margin-left: 0;
 }  
 .dashboard .card-group:last-child{
   margin-bottom: 50px;
 }
 .dashboard .modal .card-group:last-child{
-  margin-bottom: 0px;
+  margin-bottom: 0;
 }
 .dashboard .card .card-body {
   padding: 0.8rem;

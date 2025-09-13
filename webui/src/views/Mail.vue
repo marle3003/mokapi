@@ -103,19 +103,19 @@ function hasTouchSupport() {
         <div class="row g-4 mt-4">
 
           <div class="col-md-4">
-            <i class="bi bi-envelope-paper display-5 mb-3 icon"></i>
+            <span class="bi bi-envelope-paper display-5 mb-3 icon"></span>
             <h3 class="h5">Mock SMTP & IMAP</h3>
             <p class="text-muted">Simulate sending emails via SMTP and retrieving them via IMAP—all without an actual mail backend.</p>
           </div>
           
           <div class="col-md-4">
-            <i class="bi bi-journal-code display-5 mb-3 icon"></i>
+            <span class="bi bi-journal-code display-5 mb-3 icon"></span>
             <h3 class="h5">Customize Email Content</h3>
             <p class="text-muted">Use Mokapi Scripts to manipulate subject lines, headers, attachments, and test for edge-case conditions.</p>
           </div>
           
           <div class="col-md-4">
-            <i class="bi bi-git display-5 mb-3 icon"></i>
+            <span class="bi bi-git display-5 mb-3 icon"></span>
             <h3 class="h5">CI/CD Friendly</h3>
             <p class="text-muted">Add email validation into pipelines—automate workflows that involve email without flaky external services.</p>
           </div>
@@ -133,7 +133,7 @@ function hasTouchSupport() {
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
                 <h3>
-                  <i class="bi bi-file-code me-2 icon"></i>Easy Mail Configuration
+                  <span class="bi bi-file-code me-2 icon"></span>Easy Mail Configuration
                 </h3>
                 <p class="card-text pb-4">Define email behaviors declaratively—versioned, reproducible, and stored alongside your code.</p>
                 <a href="/docs/guides/mail" class="btn btn-outline-primary btn-sm">Explore</a>
@@ -145,7 +145,7 @@ function hasTouchSupport() {
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
                 <h3>
-                  <i class="bi bi-inbox me-2 icon"></i>Inbox Simulation
+                  <span class="bi bi-inbox me-2 icon"></span>Inbox Simulation
                 </h3>
                 <p class="card-text pb-4">
                   Simulate different inbox states, verify folder structures, and ensure your application 
@@ -160,7 +160,7 @@ function hasTouchSupport() {
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
                 <h3>
-                  <i class="bi bi-plug me-2 icon"></i>Pipeline Integration
+                  <span class="bi bi-plug me-2 icon"></span>Pipeline Integration
                 </h3>
                 <p class="card-text pb-4">Add email mock checks to your CI environments—replace flaky live dependencies with reliable mocks.</p>
                 <a href="docs/resources/blogs/testing-email-workflows-with-playwright-and-mokapi" class="btn btn-outline-primary btn-sm">Read Guide</a>
@@ -180,7 +180,7 @@ function hasTouchSupport() {
           <div class="col">
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
-                <h3><i class="bi bi-person-plus-fill me-2 icon"></i>User Registration</h3>
+                <h3><span class="bi bi-person-plus-fill me-2 icon"></span>User Registration</h3>
                 <p class="card-text">Verify that sign-up confirmation emails are properly generated and formatted.</p>
                 <a href="/docs/resources/blogs/testing-email-workflows-with-playwright-and-mokapi" class="btn btn-outline-primary btn-sm position-absolute" style="bottom:20px;">Read Guide</a>
               </div>
@@ -190,7 +190,7 @@ function hasTouchSupport() {
           <div class="col">
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
-                <h3><i class="bi bi-lock me-2"></i>Password Reset Flow</h3>
+                <h3><span class="bi bi-lock me-2"></span>Password Reset Flow</h3>
                 <p class="card-text">Test reset email workflows reliably, without sending actual messages.</p>
                 <a href="/docs/resources/blogs/testing-email-workflows-with-playwright-and-mokapi" class="btn btn-outline-primary btn-sm position-absolute" style="bottom:20px;">Read Guide</a>
               </div>
@@ -200,7 +200,7 @@ function hasTouchSupport() {
           <div class="col">
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
-                <h3><i class="bi bi-chat-text me-2"></i>Newsletter Handling</h3>
+                <h3><span class="bi bi-chat-text me-2"></span>Newsletter Handling</h3>
                 <p class="card-text pb-5">Simulate batch email sends and validate content, headers, or links in a mock environment.</p>
                 <a href="/docs/resources/tutorials/mock-smtp-server-send-mail-using-node" class="btn btn-outline-primary btn-sm position-absolute" style="bottom:20px;">Try it</a>
               </div>

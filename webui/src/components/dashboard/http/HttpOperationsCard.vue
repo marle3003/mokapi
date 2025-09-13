@@ -53,7 +53,7 @@ function showWarningColumn(){
                         <td><span class="badge operation" :class="operation.method">{{ operation.method.toUpperCase() }}</span></td>
                         <td>{{ operation.summary }}</td>
                         <td>{{ operation.operationId }}</td>
-                        <td v-if="showWarningColumn()"><span v-if="operation.deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> deprecated</span></td>
+                        <td v-if="showWarningColumn()"><span v-if="operation.deprecated"><span class="bi bi-exclamation-triangle-fill yellow"></span> deprecated</span></td>
                     </tr>
                 </tbody>
             </table>

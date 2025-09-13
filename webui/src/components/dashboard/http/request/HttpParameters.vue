@@ -92,7 +92,7 @@ function showWarningColumn(){
                 <td>{{ printType(parameter.schema) }}</td>
                 <td>{{ parameter.required }}</td>
                 <td v-if="showWarningColumn()">
-                    <span v-if="parameter.deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> deprecated</span>
+                    <span v-if="parameter.deprecated"><span class="bi bi-exclamation-triangle-fill yellow"></span> deprecated</span>
                 </td>
                 <td><markdown :source="parameter.description" class="description" :html="true"></markdown></td>
             </tr>
@@ -116,7 +116,7 @@ function showWarningColumn(){
                                             <p>{{ parameter.type }}</p>
                                         </div>
                                         <div class="col">
-                                            <p v-if="parameter.deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> Deprecated</p>
+                                            <p v-if="parameter.deprecated"><span class="bi bi-exclamation-triangle-fill yellow"></span> Deprecated</p>
                                         </div>
                                     </div>
                                     <div class="row mt-2">

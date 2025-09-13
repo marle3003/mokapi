@@ -238,7 +238,7 @@ function facetTitle(s: string) {
               <div class="input-group">
                 <input type="text" class="form-control" placeholder="Search" aria-label="Search" aria-describedby="search-icon" v-model="queryText" @keypress="search_keypressed">
                 <button class="btn btn-outline-secondary" type="button" @click="search_clicked">
-                  <i class="bi bi-search"></i>
+                  <span class="bi bi-search"></span>
                 </button>
               </div>
             </div>

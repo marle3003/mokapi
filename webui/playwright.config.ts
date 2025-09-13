@@ -46,7 +46,20 @@ const config: PlaywrightTestConfig = {
     {
       name: 'chromium',
       use: {
-        ...devices['Desktop Chrome']
+        ...devices['Desktop Chrome'],
+        storageState: {
+          cookies: [],
+          origins: [
+            {
+              origin: 'http://localhost:5173',
+              localStorage: [
+                {
+                  name: 'theme', value: 'dark'
+                }
+              ]
+            }
+          ]
+        },
       }
     },
     // {

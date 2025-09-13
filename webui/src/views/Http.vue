@@ -121,17 +121,17 @@ function getConsoleContent() {
         <h2>How Mokapi Helps You</h2>
         <div class="row g-4 mt-4">
         <div class="col-md-4">
-          <i class="bi bi-diagram-3 display-5 mb-3 icon"></i>
+          <span class="bi bi-diagram-3 display-5 mb-3 icon"></span>
           <h3 class="h5">Mock APIs with OpenAPI</h3>
           <p class="text-muted">Instantly spin up REST API mocks from OpenAPI specifications with validation and auto-generated responses.</p>
         </div>
         <div class="col-md-4">
-          <i class="bi bi-lightning-charge display-5 mb-3 icon"></i>
+          <span class="bi bi-lightning-charge display-5 mb-3 icon"></span>
           <h3 class="h5">Dynamic Responses with Scripts</h3>
           <p class="text-muted">Use Mokapi Scripts to simulate logic, conditional flows, or edge cases without coding a backend.</p>
         </div>
         <div class="col-md-4">
-          <i class="bi bi-git display-5 mb-3 icon"></i>
+          <span class="bi bi-git display-5 mb-3 icon"></span>
           <h3 class="h5">CI/CD Ready</h3>
           <p class="text-muted">Integrate API mocks directly into your pipelines—speed up tests, reduce flakiness, and keep development moving.</p>
         </div>
@@ -147,7 +147,7 @@ function getConsoleContent() {
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
                 <h2 class="card-title align-middle">
-                  <i class="bi bi-code-slash me-2 icon"></i>
+                  <span class="bi bi-code-slash me-2 icon"></span>
                   Configuration as Code
                 </h2>
                 <p class="card-text pb-4">Define HTTP mocks with OpenAPI for consistency, version control, and seamless automation.</p>
@@ -159,7 +159,7 @@ function getConsoleContent() {
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
                 <h2 class="card-title align-middle">
-                  <i class="bi bi-arrow-repeat me-2 icon"></i>
+                  <span class="bi bi-arrow-repeat me-2 icon"></span>
                   <span class="align-middle d-inline-block">Test Without Dependencies</span>
                 </h2>
                 <p class="card-text pb-4">Run faster, more reliable tests by simulating external dependencies in CI/CD pipelines.</p>
@@ -171,7 +171,7 @@ function getConsoleContent() {
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
                 <h2 class="card-title align-middle">
-                  <i class="bi bi-box me-2 icon"></i>
+                  <span class="bi bi-box me-2 icon"></span>
                   Realistic Test Data
                 </h2>
                 <p class="card-text pb-4">Intercept HTTP requests with Mokapi Scripts to simulate delays, failures, and edge cases.</p>
@@ -183,7 +183,7 @@ function getConsoleContent() {
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
                 <h2 class="card-title align-middle">
-                  <i class="bi bi-heart-pulse me-2 icon"></i>
+                  <span class="bi bi-heart-pulse me-2 icon"></span>
                   Debugging &amp; Monitoring
                 </h2>
                 <p class="card-text pb-4">Inspect every request and response in the Mokapi Dashboard, validate against specs, and generate mock data automatically.</p>

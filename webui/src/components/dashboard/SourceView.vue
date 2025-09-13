@@ -131,13 +131,13 @@ function switchCode() {
         <span style="" v-if="!hideContentType">{{ current?.data.contentTypeTitle ?? current?.data.contentType }}</span>
         <span aria-label="Lines of Code" v-if="!source.binary">{{ lines }} lines</span>
         <span aria-label="Size of Code">{{ size }}</span>
-        <span v-if="deprecated"><i class="bi bi-exclamation-triangle-fill yellow"></i> deprecated</span>
+        <span v-if="deprecated"><span class="bi bi-exclamation-triangle-fill yellow"></span> deprecated</span>
         <span v-if="current?.data.description">{{ current?.data.description }}</span>
       </div>
       <div class="controls">
         <a  v-if="url" :href="url">Raw</a>
-        <button type="button" class="btn btn-link" @click="copyToClipboard" title="Copy raw content" aria-label="Copy raw content"><i class="bi bi-copy"></i></button>
-        <button type="button" class="btn btn-link" @click="download" title="Download raw content" aria-label="Download raw content"><i class="bi bi-download"></i></button>
+        <button type="button" class="btn btn-link" @click="copyToClipboard" title="Copy raw content" aria-label="Copy raw content"><span class="bi bi-copy"></span></button>
+        <button type="button" class="btn btn-link" @click="download" title="Download raw content" aria-label="Download raw content"><span class="bi bi-download"></span></button>
       </div>
     </div>
     <section class="source" aria-label="Content" :class="getLanguage(current?.data.contentType!)" v-if="current?.type == 'preview'">

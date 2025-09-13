@@ -200,16 +200,16 @@ function navigateAndClose(params: Record<string, string>) {
         <div class="d-flex ms-auto align-items-center tools d-none">
             <a href="https://github.com/marle3003/mokapi" class="version pe-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
             <button class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
-              <i class="bi bi-search pe-2" title="Search"></i>
+              <span class="bi bi-search pe-2" title="Search"></span>
             </button>
             <button class="btn icon">
-              <i class="bi bi-brightness-high-fill pe-2" @click="switchTheme" v-if="isDark" :title="tooltipDark"></i>
-              <i class="bi bi-moon-fill pe-2" @click="switchTheme" v-if="!isDark" :title="tooltipLight"></i>
+              <span class="bi bi-brightness-high-fill pe-2" @click="switchTheme" v-if="isDark" :title="tooltipDark"></span>
+              <span class="bi bi-moon-fill pe-2" @click="switchTheme" v-if="!isDark" :title="tooltipLight"></span>
             </button>
           </div>
         <button id="navbar-toggler" class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation" @click="visible=!visible">
-          <i class="bi bi-list"></i>
-          <i class="bi bi-x"></i>
+          <span class="bi bi-list"></span>
+          <span class="bi bi-x"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbar">
           <div class="navbar-container">
@@ -233,8 +233,8 @@ function navigateAndClose(params: Record<string, string>) {
                     {{ label }}
                   </router-link>
                   <button type="button" class="btn btn-link d-md-none" :class="isActive(label) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(label)" :aria-expanded="isActive(label)" :aria-controls="getId(label)">
-                    <i class="bi bi-caret-up-fill"></i> 
-                    <i class="bi bi-caret-down-fill"></i> 
+                    <span class="bi bi-caret-up-fill"></span> 
+                    <span class="bi bi-caret-down-fill"></span> 
                   </button>
                 </div>
                 <section class="collapse d-md-none" :class="isActive(label) || isExpanded(item) ? 'show' : ''" :id="getId(<string>label)" :aria-labelledby="'btn'+getId(label)">
@@ -248,8 +248,8 @@ function navigateAndClose(params: Record<string, string>) {
                               {{ k2 }}
                           </button>
                           <button type="button" class="btn btn-link" :class="isActive(label, k2) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k2)" :aria-expanded="isActive(label, k2)" :aria-controls="getId(k2)">
-                              <i class="bi bi-caret-up-fill"></i> 
-                              <i class="bi bi-caret-down-fill"></i> 
+                              <span class="bi bi-caret-up-fill"></span> 
+                              <span class="bi bi-caret-down-fill"></span> 
                           </button>
                         </div>
                       
@@ -264,8 +264,8 @@ function navigateAndClose(params: Record<string, string>) {
                                             {{ k3 }}
                                         </button>
                                         <button type="button" class="btn btn-link" :class="isActive(label, k2, k3) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k3)" :aria-expanded="isActive(label, k2, k3)" :aria-controls="getId(k3)">
-                                            <i class="bi bi-caret-up-fill"></i> 
-                                            <i class="bi bi-caret-down-fill"></i> 
+                                            <span class="bi bi-caret-up-fill"></span> 
+                                            <span class="bi bi-caret-down-fill"></span> 
                                         </button>
                                       </div>
                                     
@@ -297,11 +297,11 @@ function navigateAndClose(params: Record<string, string>) {
           <div class="d-flex ms-auto align-items-center tools">
             <a href="https://github.com/marle3003/mokapi" class="version me-lg-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
             <button class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
-              <i class="bi bi-search pe-2" title="Search"></i>
+              <span class="bi bi-search pe-2" title="Search"></span>
             </button>
             <button class="btn icon" v-if="canSwitchTheme">
-              <i class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark" :title="tooltipDark"></i>
-              <i class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark" :title="tooltipLight"></i>
+              <span class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark" :title="tooltipDark"></span>
+              <span class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark" :title="tooltipLight"></span>
             </button>
           </div>
         </div>
@@ -321,7 +321,7 @@ function navigateAndClose(params: Record<string, string>) {
         <div class="modal-body">
           <form class="d-flex" role="search">
             <div class="input-group mb-3">
-              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <span class="input-group-text"><span class="bi bi-search"></span></span>
               <input type="text" class="form-control" placeholder="Search" aria-label="Search" v-model="query">
             </div>
           </form>
