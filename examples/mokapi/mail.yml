@@ -37,8 +37,14 @@ components:
           type: integer
       additionalProperties: false
     MailboxDetails:
-      $ref: '#/components/schemas/Mailbox'
-      type: object
+      allOf:
+        - $ref: '#/components/schemas/Mailbox'
+        - type: object
+          properties:
+            folders:
+              type: array
+              items:
+                type: string
 
     SmtpRule:
       type: object
