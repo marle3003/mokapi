@@ -75,6 +75,8 @@ async function navigateToSearchResult(result: any) {
         return router.push({ name: 'smtpMailbox', params: { ...{ name: result.params.mailbox },  ...result.params } })
       }
       return router.push({ name: 'mailService', params: result.params })
+    case 'ldap':
+      return router.push({ name: 'ldapService', params: result.params })
     case 'event':
       switch (result.params.namespace) {
         case 'http':
@@ -86,6 +88,8 @@ async function navigateToSearchResult(result: any) {
           const event: ServiceEvent = await res.json();
           const data = event.data as SmtpEventData
           return router.push({ name: 'smtpMail', params: Object.assign(result.params, { id: data.messageId }) })
+        case 'ldap':
+          return router.push({ name: 'ldapRequest', params: result.params })
       }
   }
   console.error(`search result type '${result.type.toLowerCase()}' not supported for navigation`)

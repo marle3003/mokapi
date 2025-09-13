@@ -114,6 +114,10 @@ func getMailSearchResult(fields map[string]string, discriminator []string) (sear
 
 func (s *MailStore) removeFromIndex(cfg *mail.Config) {
 	_ = s.index.Delete(fmt.Sprintf("mail_%s", cfg.Info.Name))
+
+	for name := range cfg.Mailboxes {
+		_ = s.index.Delete(fmt.Sprintf("mail_%s_%s", cfg.Info.Name, name))
+	}
 }
 
 func getMailboxFolders(f *mail.FolderConfig, name string) []mailSearchIndexFolder {

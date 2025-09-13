@@ -628,6 +628,27 @@ function getSearchResults() {
                     namespace: 'mail',
                     id: '8832'
                 }
+            },
+            {
+                type: 'LDAP',
+                domain: 'LDAP Testserver',
+                title: "LDAP Testserver",
+                fragments: ['This is a sample <mark>LDAP</mark> server'],
+                params: {
+                    type: 'ldap',
+                    service: 'LDAP Testserver',
+                }
+            },
+            {
+                type: 'Event',
+                domain: 'LDAP Testserver',
+                title: "Search (objectClass=user)",
+                fragments: ['(objectClass=<mark>user</mark>)'],
+                params: {
+                    type: 'event',
+                    namespace: 'ldap',
+                    id: 'dkads-23124'
+                }
             }
         ],
         facets: {
