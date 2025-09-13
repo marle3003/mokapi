@@ -119,7 +119,7 @@ test('Visit Mail Testserver', async ({ page }) => {
 
         const info = page.getByRole('region', { name: 'Info' })
         await expect(info.getByLabel('Subject')).toHaveText('A test mail')
-        await expect(info.getByLabel('Date')).toHaveText(formatDateTime('2023-02-23 08:49:25'))
+        await expect(info.getByLabel('Date')).toHaveText(formatDateTime('2023-02-23T08:49:25.482366+01:00'))
         await expect(info.getByLabel('From')).toHaveText('Alice <alice@mokapi.io>')
         await expect(info.getByLabel('To')).toHaveText('Bob <bob@mokapi.io>, carol@mokapi.io')
 
