@@ -93,9 +93,9 @@ function operationOrderValue(operation: HttpOperation): number {
                 <thead>
                     <tr>
                         <th scope="col" class="text-left">Path</th>
-                        <th scope="col" class="text-left">Summary</th>
-                        <th scope="col" class="text-left">Operations</th>
-                        <th scope="col" class="text-center" style="width: 15%">Last Request</th>
+                        <th scope="col" class="text-left" style="width: 20%;">Summary</th>
+                        <th scope="col" class="text-left" style="width: 10%">Operations</th>
+                        <th scope="col" class="text-center" style="width: 10%">Last Request</th>
                         <th scope="col" class="text-center" style="width: 10%">Requests / Errors</th>
                     </tr>
                 </thead>

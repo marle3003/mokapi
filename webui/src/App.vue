@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { RouterView } from 'vue-router'
 import Header from './components/Header.vue'
+import { inject } from 'vue';
 
+
+const canSwitchTheme = inject<boolean>('canSwitchTheme')
 var theme = 'light';
-if (import.meta.env.VITE_DASHBOARD === 'true') {
+if (!canSwitchTheme) {
   theme = 'dark'
-}
-if (localStorage.getItem('theme')) {
-    if(localStorage.getItem('theme') == 'dark'){
-        theme = 'dark';
-    }
+} else {
+  const saved = localStorage.getItem('theme')
+  if (saved) {
+      theme = saved;
+  }
 }
 
 document.documentElement.setAttribute('data-theme', theme);

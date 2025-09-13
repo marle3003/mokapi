@@ -45,7 +45,7 @@ function showConfig(config: Config | ConfigRef){
 </script>
 
 <template>
-  <section class="card configs" aria-labelledby="configs">
+  <section class="card" aria-labelledby="configs">
       <div class="card-body">
           <div v-if="!hideTitle" id="configs" class="card-title text-center">{{ title }}</div>
           <table class="table dataTable selectable" style="table-layout: fixed;">

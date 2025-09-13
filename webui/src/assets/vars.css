@@ -64,6 +64,9 @@
     --card-background: rgb(255,255,255,0.04);
     --card-border: rgb(255,255,255,0.1);
     --card-border-active: rgb(255,255,255,0.2);
+    --accentedCardTransitionEasing: 500ms cubic-bezier(0.7, 0, 0, 1);
+    --accentedCardScale: 1.05;
+    --accentedCardShadow: 0;
 
     --code-tabs-color: #d3d4d5;
     --code-tabs-color-active: #eabaabff;
@@ -91,10 +94,10 @@
 
 [data-theme="light"] {
     --color-background: #fff;
-    --color-background-mute: #dfe2ec;
-    --color-background-soft: #f6f8fa;
-    --color-background-light: #dfe2ec;
-    --color-border: #f6f8fcff;
+    --color-background-mute: #f0f2f6;
+    --color-background-soft: #f8fafc;
+    --color-background-light: #e5e9f0;
+    --color-border: #e2e8f0;
 
     --color-text: rgb(3,6,11);
     --color-text-light: rgb(101, 109, 118);
@@ -127,9 +130,10 @@
     --nav-color: var(--color-text);
     --nav-color-active: rgb(8, 109, 215);
 
-    --card-background: rgb(0,0,0,0.01);
-    --card-border: rgb(0,0,0,0.1);
-    --card-border-active: rgb(0,0,0,0.3);
+    --card-background: rgb(255,255,255);
+    --card-border: rgba(0,0,0,0.176);
+    --card-border-active: rgba(0,0,0,0.3);
+    --accentedCardShadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 
     --code-tabs-color: rgb(36, 36, 36);
     --code-tabs-color-active: rgb(8, 109, 215);

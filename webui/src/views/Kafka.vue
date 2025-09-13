@@ -52,7 +52,7 @@ useMeta(title, description, "https://mokapi.io/kafka")
     <section class="py-5 text-center">
       <div class="container">
         <h2>Why Mock Kafka Topics?</h2>
-        <p class="lead text-muted mb-0">
+        <p class="lead mb-0">
           Modern applications rely on Kafka for event-driven architectures. With Mokapi, you can simulate Kafka topics and messages, enabling development and testing without the need for a live Kafka cluster.
         </p>
       </div>
@@ -134,7 +134,7 @@ useMeta(title, description, "https://mokapi.io/kafka")
         <div class="row">
           <div class="col-12">
             <h2>Visualize Kafka Messages</h2>
-            <p class="lead text-muted mb-0 text-center mb-4">Gain insights into your Kafka traffic and consumer groups with the interactive dashboard.</p>
+            <p class="lead mb-0 text-center mb-4">Gain insights into your Kafka traffic and consumer groups with the interactive dashboard.</p>
             
             <a href="#kafkadialog" data-bs-toggle="modal" data-bs-target="#kafkadialog">
               <img src="/kafka-dashboard.png" style="width:100%" alt="Analyze and inspect topics, topics data, consumer groups and more..." />

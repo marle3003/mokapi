@@ -30,6 +30,9 @@ const levels = computed(() => {
   return levels
 })
 const visible = ref(false)
+const canSwitchTheme = computed(() => {
+  return inject<boolean>('canSwitchTheme')
+})
 
 const router = useRouter()
 function switchTheme() {
@@ -298,7 +301,7 @@ function navigateAndClose(params: Record<string, string>) {
             <button class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
               <i class="bi bi-search pe-2" title="Search"></i>
             </button>
-            <button class="btn icon">
+            <button class="btn icon" v-if="canSwitchTheme">
               <i class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark" :title="tooltipDark"></i>
               <i class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark" :title="tooltipLight"></i>
             </button>
