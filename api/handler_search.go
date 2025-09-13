@@ -1,9 +1,11 @@
 package api
 
 import (
+	"mokapi/runtime"
 	"mokapi/runtime/search"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 )
 
@@ -54,8 +56,10 @@ func getQueryParamInsensitive(values url.Values, key string) string {
 func getFacets(query url.Values) map[string]string {
 	facets := make(map[string]string)
 	for key, values := range query {
-		if !searchFacetExcludeQueryParams[key] {
-			facets[key] = values[0]
+		if slices.Contains(runtime.SupportedFacets, key) {
+			if !searchFacetExcludeQueryParams[key] {
+				facets[key] = values[0]
+			}
 		}
 	}
 	return facets

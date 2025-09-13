@@ -37,7 +37,7 @@ func TestIndex_Mail(t *testing.T) {
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
-						Type:      "MAIL",
+						Type:      "Mail",
 						Title:     "foo",
 						Fragments: []string{"<mark>foo</mark>"},
 						Params: map[string]string{
@@ -87,7 +87,7 @@ func TestIndex_Mail(t *testing.T) {
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
-						Type:      "MAIL",
+						Type:      "Mail",
 						Domain:    "foo",
 						Title:     "alice@mokapi.io",
 						Fragments: []string{"<mark>alice</mark>@mokapi.io"},

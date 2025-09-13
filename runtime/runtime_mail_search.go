@@ -85,7 +85,7 @@ func (s *MailStore) addToIndex(cfg *mail.Config) {
 
 func getMailSearchResult(fields map[string]string, discriminator []string) (search.ResultItem, error) {
 	result := search.ResultItem{
-		Type: "MAIL",
+		Type: "Mail",
 	}
 
 	if len(discriminator) == 1 {

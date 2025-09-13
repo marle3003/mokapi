@@ -25,6 +25,7 @@ import (
 )
 
 var fieldsNotIncludedInAll = []string{"api"}
+var SupportedFacets = []string{"type"}
 
 func newIndex(cfg *static.Config) bleve.Index {
 	if !cfg.Api.Search.Enabled {
@@ -246,6 +247,8 @@ func getTypeFacet(term *bleveSearch.TermFacet) search.FacetValue {
 		facet.Value = "HTTP"
 	case "kafka":
 		facet.Value = "Kafka"
+	case "mail":
+		facet.Value = "Mail"
 	case "event":
 		facet.Value = "Event"
 	case "config":

@@ -49,7 +49,7 @@ watch(queryText, async () => {
   timeout = setTimeout(async () => { await search() }, 500)
 })
 
-function navigateToSearchResult(result: any) {
+async function navigateToSearchResult(result: any) {
   switch (result.type.toLowerCase()) {
     case 'http':
       if (result.params.path) {
@@ -70,12 +70,22 @@ function navigateToSearchResult(result: any) {
         return router.push({ name: 'kafkaTopic', params: result.params })
       }
       return router.push({ name: 'kafkaService', params: result.params })
+    case 'mail':
+        if (result.params.mailbox) {
+        return router.push({ name: 'smtpMailbox', params: { ...{ name: result.params.mailbox },  ...result.params } })
+      }
+      return router.push({ name: 'mailService', params: result.params })
     case 'event':
       switch (result.params.namespace) {
         case 'http':
           return router.push({ name: 'httpRequest', params: result.params })
         case 'kafka':
           return router.push({ name: 'kafkaMessage', params: result.params })
+        case 'mail':
+          const res = await fetch(transformPath(`/api/events/${result.params.id}`));
+          const event: ServiceEvent = await res.json();
+          const data = event.data as SmtpEventData
+          return router.push({ name: 'smtpMail', params: Object.assign(result.params, { id: data.messageId }) })
       }
   }
   console.error(`search result type '${result.type.toLowerCase()}' not supported for navigation`)

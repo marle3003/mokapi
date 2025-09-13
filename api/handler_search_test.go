@@ -142,6 +142,36 @@ func TestHandler_SearchQuery(t *testing.T) {
 				return app
 			},
 		},
+		{
+			name:       "search with additional query parameter should not be used as facet",
+			requestUrl: "/api/search/query?q=foo&refresh=20",
+			response: []try.ResponseCondition{
+				try.HasStatusCode(200),
+				try.HasHeader("Content-Type", "application/json"),
+				try.AssertBody(func(t *testing.T, body string) {
+					var result search.Result
+					err := json.Unmarshal([]byte(body), &result)
+					require.NoError(t, err)
+					require.Len(t, result.Facets, 1)
+					require.Equal(t, []search.FacetValue{{Value: "HTTP", Count: 1}, {Value: "Kafka", Count: 1}}, result.Facets["type"])
+					require.Len(t, result.Results, 1)
+					require.Equal(t, result.Results[0].Type, "Kafka")
+				}),
+			},
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
+					Enabled: true,
+				}}})
+
+				h := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
+				app.AddHttp(toConfig(h))
+				k := asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "", ""))
+				_, err := app.Kafka.Add(toConfig(k), enginetest.NewEngine())
+				require.NoError(t, err)
+
+				return app
+			},
+		},
 	}
 
 	t.Parallel()
