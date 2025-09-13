@@ -1,6 +1,7 @@
 import { useDashboard } from '../../components/dashboard'
 import { useTable } from '../../components/table'
 import { test, expect } from '../../models/fixture-dashboard'
+import { formatDateTime } from "../../helpers/format"
 
 test('Visit Mail Testserver', async ({ page }) => {
 
@@ -118,7 +119,7 @@ test('Visit Mail Testserver', async ({ page }) => {
 
         const info = page.getByRole('region', { name: 'Info' })
         await expect(info.getByLabel('Subject')).toHaveText('A test mail')
-        await expect(info.getByLabel('Date')).toHaveText('2023-02-23 08:49:25')
+        await expect(info.getByLabel('Date')).toHaveText(formatDateTime('2023-02-23 08:49:25'))
         await expect(info.getByLabel('From')).toHaveText('Alice <alice@mokapi.io>')
         await expect(info.getByLabel('To')).toHaveText('Bob <bob@mokapi.io>, carol@mokapi.io')
 
