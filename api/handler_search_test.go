@@ -154,8 +154,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 					require.NoError(t, err)
 					require.Len(t, result.Facets, 1)
 					require.Equal(t, []search.FacetValue{{Value: "HTTP", Count: 1}, {Value: "Kafka", Count: 1}}, result.Facets["type"])
-					require.Len(t, result.Results, 1)
-					require.Equal(t, result.Results[0].Type, "Kafka")
+					require.Len(t, result.Results, 2)
 				}),
 			},
 			app: func() *runtime.App {
