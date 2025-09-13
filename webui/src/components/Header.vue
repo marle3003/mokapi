@@ -30,9 +30,7 @@ const levels = computed(() => {
   return levels
 })
 const visible = ref(false)
-const canSwitchTheme = computed(() => {
-  return inject<boolean>('canSwitchTheme')
-})
+const canSwitchTheme = computed(() => inject<boolean>('canSwitchTheme'))
 
 const router = useRouter()
 function switchTheme() {
