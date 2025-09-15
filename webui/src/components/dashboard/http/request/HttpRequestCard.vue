@@ -18,7 +18,7 @@ const selected = reactive({
 })
 
 if (props.operation.requestBody?.contents?.length > 0){
-    selected.content = props.operation.requestBody.contents[0]
+    selected.content = props.operation.requestBody.contents[0]!
 }
 function selectedContentChange(event: any){
     for (let content of props.operation.requestBody.contents){
@@ -52,11 +52,11 @@ const schemes = computed(() => {
 
     const schemes: {[name: string]: HttpSecurityScheme & { name: string} } = {}
     for (let i = 0; i < props.operation.security.length; i++) {
-        const item = props.operation.security[i]
+        const item = props.operation.security[i]!
         const keys = Object.keys(item)
         for (let j = 0; j < keys.length; j++) {
-            const schemeName = keys[j]
-            schemes[`${i}-${j}`] = {  ...item[schemeName], ...{ name: schemeName } }
+            const schemeName = keys[j]!
+            schemes[`${i}-${j}`] = {  ...item[schemeName], ...{ name: schemeName } } as HttpSecurityScheme & { name: string} 
         }
     }
     return schemes
@@ -66,7 +66,7 @@ const hasOneSecurityScheme = computed(() => {
         return false
     }
     if (props.operation.security.length === 1) {
-        return Object.keys(props.operation.security[0]).length === 1
+        return Object.keys(props.operation.security[0]!).length === 1
     }
     return false
 })
@@ -98,7 +98,7 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
                     <p v-if="operation.requestBody.required">Required</p>
 
                     <p class="label" v-if="operation.requestBody.contents.length == 1">Request content type</p>
-                    <p v-if="operation.requestBody.contents.length == 1">{{ operation.requestBody.contents[0].type }}</p>
+                    <p v-if="operation.requestBody.contents.length == 1">{{ operation.requestBody.contents[0]?.type }}</p>
                     
                     <source-view 
                         :source="{ preview: { content: formatSchema(selected.content?.schema), contentType: 'application/json' }}" 
@@ -129,11 +129,11 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
                         <ul id="security-list" class="list-group nav nav-pills" v-if="!hasOneSecurityScheme">
                             <li v-for="(sec, index) of operation.security" class="list-group-item">
                                 <button class="badge" v-for="(name, index2) of Object.keys(sec)" type="button" role="tab"
-                                    :id="`sec-scheme-${index}-${index2}-tab`" :class="getSchemeClass(sec[name]) + (index === 0 && index2 === 0 ? ' active' : '')"
+                                    :id="`sec-scheme-${index}-${index2}-tab`" :class="getSchemeClass(sec[name]!) + (index === 0 && index2 === 0 ? ' active' : '')"
                                     data-bs-toggle="pill" :data-bs-target="`#sec-scheme-${index}-${index2}`"
                                 :aria-controls="`sec-scheme-${index}-${index2}`" :aria-selected="index === 0 && index2 === 0"
                                 >
-                                    {{ name + ' (' + sec[name].configs['type'] + ')' }}
+                                    {{ name + ' (' + sec[name]?.configs['type'] + ')' }}
                                 </button>
                             </li>
                         </ul>

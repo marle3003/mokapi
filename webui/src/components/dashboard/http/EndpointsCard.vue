@@ -107,7 +107,7 @@ function operationOrderValue(operation: HttpOperation): number {
                         </td>
                         <td>
                             <span v-if="path.summary">{{ path.summary }}</span>
-                            <span v-else-if="path.operations.length === 1">{{ path.operations[0].summary }}</span>
+                            <span v-else-if="path.operations.length === 1">{{ path.operations[0]?.summary }}</span>
                         </td>
                         <td>
                             <span v-for="operation in operations(path)" key="operation.method" :title="operation.summary" class="badge operation me-1" :class="operation.method" @click.stop="goToOperation(path, operation)">

@@ -15,7 +15,7 @@ const { sum } = useMetrics()
 function memberInfo(member: KafkaMember): string {
     let addition = ''
     if (props.topicName) {
-        addition = `<p id="${member.name}-partitions" class="label">Partitions</p><p aria-labelledby="${member.name}-partitions">${member.partitions[props.topicName].join(', ')}</p>`
+        addition = `<p id="${member.name}-partitions" class="label">Partitions</p><p aria-labelledby="${member.name}-partitions">${member.partitions[props.topicName]?.join(', ')}</p>`
     } else {
         const topics = Object.keys(member.partitions).sort((x, y) => x.localeCompare(y)).join(',<br />')
         addition = `<p id="${member.name}-topics" class="label">Topics</p><p aria-labelledby="${member.name}-topics">${topics}</p>`

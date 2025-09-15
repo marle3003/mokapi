@@ -46,10 +46,10 @@ const breadcrumb = computed(() => {
   const params: RouteParamsRawGeneric = {}
   for (const [index, name] of levels.entries()) {
     if (index === 0) {
-      current = (<DocConfig>current)[name]
+      current = (<DocConfig>current)[name]!
     }
     else  {
-      const e: DocEntry | string = (<DocEntry>current).items![name]
+      const e: DocEntry | string = (<DocEntry>current).items![name]!
       if (typeof e === 'string') {
         list.push({ label: name, isLast: true })
         break
@@ -97,7 +97,7 @@ onMounted(() => {
   }, 1000)
   if (metadata) {
     const extension = ' | Mokapi ' + levels[0]
-    let title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0])
+    let title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0])!
     if ((title.length + extension.length) <= 70) {
       title +=  ' | Mokapi ' + levels[0]
     }
@@ -115,9 +115,9 @@ function getCanonicalUrl(levels: string[]) {
       return entry.canonical
     }
   }
-  let canonical = 'https://mokapi.io/docs/' + toUrlPath(levels[0])
+  let canonical = 'https://mokapi.io/docs/' + toUrlPath(levels[0]!)
   for (let i = 1; i < levels.length; i++) {
-    canonical += `/${toUrlPath(levels[i])}`
+    canonical += `/${toUrlPath(levels[i]!)}`
   }
   if (isIndex) {
     canonical += '/'
@@ -146,7 +146,7 @@ function formatParam(label: any): string {
     <div style="width: 100%; height: 100%;display: flex;flex-direction: column;" class="doc">
       <div class="d-flex">
         <div class="sidebar d-none d-md-block" v-if="showNavigation">
-          <DocNav :config="nav" :levels="levels" :title="levels[0]"/>
+          <DocNav :config="nav" :levels="levels" :title="levels[0]!"/>
         </div>
         <div class="doc-main" style="flex: 1;margin-bottom: 3rem;" :style="showNavigation ? 'max-width:50em;' : ''">
           <div class="container">

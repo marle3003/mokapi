@@ -8,13 +8,13 @@ const props = defineProps<{
     title: string
 }>()
 
-const root = computed(() => <DocEntry>props.config[props.levels[0]])
+const root = computed(() => <DocEntry>props.config[props.levels[0]!])
 
 function matchLevel(label: any, level: number) {
     if (level > props.levels.length){
         return false
     }
-    return label.toString().toLowerCase() == props.levels[level - 1].toLowerCase()
+    return label.toString().toLowerCase() == props.levels[level - 1]!.toLowerCase()
 }
 
 function formatParam(label: any): string {

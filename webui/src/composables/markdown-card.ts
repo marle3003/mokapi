@@ -21,13 +21,13 @@ export function MarkdownItCard(metadata: any): (md: MarkdownIt, opts: Options) =
             const data: {[key: string]: string} = {}
             for (const match of matches) {
                 const kv = match[0].split('=')
-                data[kv[0]] = kv[1].substring(1, kv[1].length - 1)
+                data[kv[0]!] = kv[1]!.substring(1, kv[1]!.length - 1)
             }
             return data
         }
 
         function text(tokens: Token[], idx: number, options: Options, env: any, slf: Renderer): string {
-            if (tokens[idx].hidden) { return ''; }
+            if (!tokens[idx] || tokens[idx].hidden) { return ''; }
 
             const card = getCard(tokens[idx])
             if (card === null) {

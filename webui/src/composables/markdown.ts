@@ -50,7 +50,7 @@ function replaceImageUrls(data: string) {
             if (imageUrl) {
                 data = data.replace(m[0], `<img${m[1]} src="${imageUrl}"`)
             } else {
-                imageUrl = transformPath(m[2])
+                imageUrl = transformPath(m[2]!)
                 data = data.replace(m[0], `<img${m[1]} src="${imageUrl}"`)
             }
         }
@@ -68,7 +68,7 @@ export function parseMetadata(data: string): DocMeta {
         return {} as DocMeta
     }
   
-    return yaml.load(metadataMatch[1]) as DocMeta
+    return yaml.load(metadataMatch[1]!) as DocMeta
 }
 
 export function transformPath(path: string): string {

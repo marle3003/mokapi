@@ -136,7 +136,7 @@ function showMessage(event: ServiceEvent){
         partition: data.partition,
         offset: data.offset,
         time: format(event.time),
-        topic: event.traits["topic"],
+        topic: event.traits["topic"]!,
         schemaId: data.schemaId,
         deleted: data.deleted
     }
@@ -155,13 +155,13 @@ function getTopic(name: string): KafkaTopic {
     throw new Error(`topic ${name} not found`)
 }
 function getMessageConfig(event: ServiceEvent): KafkaMessage | undefined {
-    const topicName = event.traits["topic"]
+    const topicName = event.traits["topic"]!
     const data = eventData(event)
     const topic = getTopic(topicName)
 
     const keys = Object.keys(topic.messages)
     if (keys.length === 1) {
-        return topic.messages[keys[0]]
+        return topic.messages[keys[0]!]
     }
 
     const messageId = data?.messageId
