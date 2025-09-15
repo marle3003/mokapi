@@ -64,19 +64,19 @@ useMeta(title, description, "https://mokapi.io/kafka")
         <div class="row g-4 mt-4">
           
           <div class="col-md-4">
-            <i class="bi bi-kanban display-5 mb-3 icon"></i>
+            <span class="bi bi-kanban display-5 mb-3 icon"></span>
             <h3 class="h5">AsyncAPI Support</h3>
             <p class="text-muted">Define Kafka topics and message structures with AsyncAPI, and validate messages in real-time.</p>
           </div>
 
           <div class="col-md-4">
-            <i class="bi bi-shield-check display-5 mb-3 icon"></i>
+            <span class="bi bi-shield-check display-5 mb-3 icon"></span>
             <h3 class="h5">Schema Validation</h3>
             <p class="text-muted">Ensure message consistency by validating against JSON Schema and Avro formats.</p>
           </div>
 
           <div class="col-md-4">
-            <i class="bi bi-git display-5 mb-3 icon"></i>
+            <span class="bi bi-git display-5 mb-3 icon"></span>
             <h3 class="h5">CI/CD Ready</h3>
             <p class="text-muted">Integrate Kafka mocks into your pipelines to test event-driven services reliably and accelerate your development workflow.</p>
           </div>
@@ -93,7 +93,7 @@ useMeta(title, description, "https://mokapi.io/kafka")
           <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
                 <h3 class="card-title align-middle">
-                  <i class="bi bi-diagram-3 me-2 icon"></i>
+                  <span class="bi bi-diagram-3 me-2 icon"></span>
                   Test Microservices
                 </h3>
                 <p class="card-text pb-4">Simulate Kafka events to test how microservices respond to different messages and scenarios.</p>
@@ -105,7 +105,7 @@ useMeta(title, description, "https://mokapi.io/kafka")
           <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
                 <h3 class="card-title align-middle">
-                  <i class="bi bi-check2-circle me-2 icon"></i>
+                  <span class="bi bi-check2-circle me-2 icon"></span>
                   Validate Producer Messages
                 </h3>
                 <p class="card-text pb-4">Ensure that producer applications generate valid messages before they reach a real Kafka cluster.</p>
@@ -117,7 +117,7 @@ useMeta(title, description, "https://mokapi.io/kafka")
           <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
                 <h3 class="card-title align-middle">
-                  <i class="bi bi-gear-wide-connected me-2 icon"></i>
+                  <span class="bi bi-gear-wide-connected me-2 icon"></span>
                   Simulate Complex Workflows
                 </h3>
                 <p class="card-text pb-4">Mock complex Kafka message flows to test end-to-end interactions between services.</p>

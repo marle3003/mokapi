@@ -85,7 +85,7 @@ func (s *MailStore) addToIndex(cfg *mail.Config) {
 
 func getMailSearchResult(fields map[string]string, discriminator []string) (search.ResultItem, error) {
 	result := search.ResultItem{
-		Type: "MAIL",
+		Type: "Mail",
 	}
 
 	if len(discriminator) == 1 {
@@ -114,6 +114,10 @@ func getMailSearchResult(fields map[string]string, discriminator []string) (sear
 
 func (s *MailStore) removeFromIndex(cfg *mail.Config) {
 	_ = s.index.Delete(fmt.Sprintf("mail_%s", cfg.Info.Name))
+
+	for name := range cfg.Mailboxes {
+		_ = s.index.Delete(fmt.Sprintf("mail_%s_%s", cfg.Info.Name, name))
+	}
 }
 
 func getMailboxFolders(f *mail.FolderConfig, name string) []mailSearchIndexFolder {

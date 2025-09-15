@@ -133,7 +133,7 @@
 .home .card:hover.accented .cta {
   color: var(--color-text);
 }
-.home .card.accented .cta i {
+.home .card.accented .cta span.bi {
   font-size: 12px;
   position: relative;
   bottom:2px;

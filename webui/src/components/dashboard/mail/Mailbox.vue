@@ -96,7 +96,7 @@ function goToMail(msg: MessageInfo) {
     </section>
   </div>
 
-  <div class="card-group" v-if="mailbox?.folders">
+  <div class="card-group">
     <div class="card">
       <div class="card-body">
         <div class="card-title text-center">Folders</div>

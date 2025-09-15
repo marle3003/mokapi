@@ -48,10 +48,10 @@ function goToTopic(topic: KafkaTopic){
                 <caption class="visually-hidden">Cluster Topics</caption>
                 <thead>
                     <tr>
-                        <th scope="col" class="text-left">Name</th>
-                        <th scope="col" class="text-left">Description</th>
-                        <th scope="col" class="text-center">Last Message</th>
-                        <th scope="col" class="text-center">Messages</th>
+                        <th scope="col" class="text-left" style="width: 30%">Name</th>
+                        <th scope="col" class="text-left"  style="width: 30%">Description</th>
+                        <th scope="col" class="text-center" style="width: 10%">Last Message</th>
+                        <th scope="col" class="text-center" style="width: 10%">Messages</th>
                     </tr>
                 </thead>
                 <tbody>

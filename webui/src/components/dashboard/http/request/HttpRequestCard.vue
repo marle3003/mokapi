@@ -86,9 +86,9 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
             <div class="card-title text-center">Request</div>
 
             <div class="nav card-tabs" role="tablist" data-testid="tabs">
-              <button :class="operation.requestBody ? 'active' : 'disabled'" id="body-tab" data-bs-toggle="tab" data-bs-target="#body" type="button" role="tab" aria-controls="body" aria-selected="true"><i class="bi-file-text me-2" />Body</button>
-              <button :class="operation.parameters ? (operation.requestBody ? '' : 'active') : 'disabled'" id="parameters-tab" data-bs-toggle="tab" data-bs-target="#parameters" type="button" role="tab" aria-controls="parameters" aria-selected="false"><i class="bi-sliders me-2" />Parameters</button>
-              <button :class="operation.security ? (operation.security ? '' : 'active') : 'disabled'" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab" aria-controls="security" aria-selected="false"><i class="bi-shield-lock me-2" /> Security</button>
+              <button :class="operation.requestBody ? 'active' : 'disabled'" id="body-tab" data-bs-toggle="tab" data-bs-target="#body" type="button" role="tab" aria-controls="body" aria-selected="true"><span class="bi-file-text me-2" />Body</button>
+              <button :class="operation.parameters ? (operation.requestBody ? '' : 'active') : 'disabled'" id="parameters-tab" data-bs-toggle="tab" data-bs-target="#parameters" type="button" role="tab" aria-controls="parameters" aria-selected="false"><span class="bi-sliders me-2" />Parameters</button>
+              <button :class="operation.security ? (operation.security ? '' : 'active') : 'disabled'" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab" aria-controls="security" aria-selected="false"><span class="bi-shield-lock me-2" /> Security</button>
             </div>
 
             <div class="tab-content" id="tabRequest">

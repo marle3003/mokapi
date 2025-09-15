@@ -21,7 +21,7 @@ const { attachmentUrl } = useMails()
           <div class="card">
             <div class="card-body d-flex">
               <div class="me-3 d-flex align-items-center">
-                <i class="bi bi-paperclip fs-4"></i>
+                <span class="bi bi-paperclip fs-4"></span>
               </div>
               <div>
                 <p class="fw-semibold" aria-label="Name">{{ attach.name }}</p>

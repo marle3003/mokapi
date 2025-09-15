@@ -23,7 +23,4 @@ app.provide('nav', nav)
 const files =  import.meta.glob('/src/assets/docs/**/*.md', {as: 'raw', eager: true})
 app.provide('files', files)
 
-const isDashboard = import.meta.env.VITE_DASHBOARD === 'true';
-const isDev = import.meta.env.DEV;
-const canSwitchTheme = !isDashboard || isDev;
-app.provide('canSwitchTheme', canSwitchTheme)
+app.provide('canSwitchTheme', true)

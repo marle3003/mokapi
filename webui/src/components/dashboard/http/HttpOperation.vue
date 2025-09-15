@@ -24,7 +24,7 @@ const route = useRoute()
                         <div class="col-6 header">
                             <p class="label">Operation</p>
                             <p>
-                                <i class="bi bi-exclamation-triangle-fill yellow pe-2" style="vertical-align: middle;" v-if="operation.deprecated"></i>
+                                <span class="bi bi-exclamation-triangle-fill yellow pe-2" style="vertical-align: middle;" v-if="operation.deprecated"></span>
                                 <span class="badge operation" :class="operation.method" data-testid="operation">{{ operation.method.toUpperCase() }}</span>
                                 <span class="ps-2" data-testid="path">
                                     <router-link :to="route.httpPath(service, path)">

@@ -48,7 +48,7 @@ function operation(){
                 </div>
                 <div class="col" v-if="eventData.deprecated">
                     <p class="label">Warning</p>
-                    <p><i class="bi bi-exclamation-triangle-fill yellow"></i> Deprecated</p>
+                    <p><span class="bi bi-exclamation-triangle-fill yellow"></span> Deprecated</p>
                 </div>
             </div>
             <div class="row">

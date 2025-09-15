@@ -76,17 +76,17 @@ useMeta(title, description, "https://mokapi.io/ldap")
         <h2>How Mokapi Simplifies LDAP Testing</h2>
         <div class="row g-4 mt-4">
           <div class="col-md-4">
-            <i class="bi bi-person-badge display-5 mb-3 icon"></i>
+            <span class="bi bi-person-badge display-5 mb-3 icon"></span>
             <h3 class="h5">Mock LDAP Bind & Search</h3>
             <p class="text-muted">Simulate authentication and directory queries with ease—no server required.</p>
           </div>
           <div class="col-md-4">
-            <i class="bi bi-database display-5 mb-3 icon"></i>
+            <span class="bi bi-database display-5 mb-3 icon"></span>
             <h3 class="h5">Dynamic Directory Responses</h3>
             <p class="text-muted">Use Mokapi Scripts to return tailored responses—control status, attributes, and edge cases programmatically.</p>
           </div>
           <div class="col-md-4">
-            <i class="bi bi-git display-5 mb-3 icon"></i>
+            <span class="bi bi-git display-5 mb-3 icon"></span>
             <h3 class="h5">CI/CD Friendly</h3>
             <p class="text-muted">Integrate LDAP mocks into your pipelines—test authentication flows reliably and automate your QA.</p>
           </div>
@@ -103,7 +103,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
                 <h3 class="card-title">
-                  <i class="bi bi-file-earmark-code me-2 icon"></i>Configuration as Code
+                  <span class="bi bi-file-earmark-code me-2 icon"></span>Configuration as Code
                 </h3>
                 <p>Define LDAP behavior declaratively—keep mocks versioned, reproducible, and shareable.</p>
               </div>
@@ -114,7 +114,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
                 <h3 class="card-title">
-                  <i class="bi bi-server me-2 icon"></i>Schema & DN Validation
+                  <span class="bi bi-server me-2 icon"></span>Schema & DN Validation
                 </h3>
                 <p>Ensure attribute consistency and DN formats correct via schema-based mocking.</p>
               </div>
@@ -125,7 +125,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
                 <h3 class="card-title">
-                  <i class="bi bi-plug me-2 icon"></i>Pipeline Integration
+                  <span class="bi bi-plug me-2 icon"></span>Pipeline Integration
                 </h3>
                 <p>Add LDAP mock steps into CI/CD for automated authentication flow testing.</p>
               </div>
@@ -144,7 +144,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
             <div class="card h-100 shadow-sm border-0">
                 <div class="card-body">
                   <h3 class="card-title">
-                    <i class="bi bi-person-check me-2 icon"></i>
+                    <span class="bi bi-person-check me-2 icon"></span>
                     User Authentication
                   </h3>
                   <p class="card-text pb-4">Test user login flows without needing a live LDAP server.  
@@ -158,7 +158,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
             <div class="card h-100">
                 <div class="card-body shadow-sm border-0">
                   <h3 class="card-title">
-                    <i class="bi bi-people me-2 icon"></i>
+                    <span class="bi bi-people me-2 icon"></span>
                     Directory Testing
                   </h3>
                   <p class="card-text pb-4">Mock directory searches, group membership queries, and manage test data easily.<br />
@@ -171,7 +171,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
             <div class="card h-100">
                 <div class="card-body shadow-sm border-0">
                   <h3 class="card-title align-middle">
-                    <i class="bi bi-tools me-2 icon"></i>
+                    <span class="bi bi-tools me-2 icon"></span>
                     Edge Case & Error Simulation
                   </h3>
                   <p class="card-text pb-4">Create jitter, slow responses, or bind failures to test fault tolerance.  

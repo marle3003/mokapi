@@ -56,7 +56,7 @@ onMounted(()=> {
             trigger: 'hover',
             html: true,
             placement: 'left',
-            content: () => x.querySelector('span')?.innerHTML ?? '',
+            content: () => x.querySelector('span:not(.bi)')?.innerHTML ?? '',
         })
     })
     dialog = new Modal(groupDialog.value)
@@ -88,12 +88,12 @@ function showGroup(group: KafkaGroup){
         <caption class="visually-hidden">{{ props.topicName ? 'Topic Groups' : 'Cluster Groups' }}</caption>
         <thead>
             <tr>
-                <th scope="col" class="text-left">Name</th>
-                <th scope="col" class="text-left">State</th>
-                <th scope="col" class="text-left">Protocol</th>
-                <th scope="col" class="text-left">Coordinator</th>
-                <th scope="col" class="text-left">Leader</th>
-                <th scope="col" class="text-left">Members</th>
+                <th scope="col" class="text-left" style="width: 20%">Name</th>
+                <th scope="col" class="text-left" style="width: 10%">State</th>
+                <th scope="col" class="text-left" style="width: 10%">Protocol</th>
+                <th scope="col" class="text-left" style="width: 20%">Coordinator</th>
+                <th scope="col" class="text-left" style="width: 20%">Leader</th>
+                <th scope="col" class="text-left" style="width: 20%">Members</th>
                 <th scope="col" class="text-center" v-if="topicName">Lag</th>
             </tr>
         </thead>
@@ -107,7 +107,7 @@ function showGroup(group: KafkaGroup){
                 <td>
                     <ul class="members">
                         <li v-for="member in group.members" class="has-popover">
-                            {{ member.name }} <i class="bi bi-info-circle"></i>
+                            {{ member.name }} <span class="bi bi-info-circle"></span>
                             <span style="display:none" v-html="memberInfo(member)"></span>
                         </li>
                         
@@ -180,7 +180,7 @@ function showGroup(group: KafkaGroup){
                                                 <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical" ref="memberButtonList">
                                                     <button v-for="(member, index) of selectedGroup.members" class="badge member" :class="(index==0 ? ' active' : '')" :id="'v-pills-'+member.name+'-tab'" data-bs-toggle="pill" :data-bs-target="'#v-pills-'+member.name" type="button" role="tab" :aria-controls="'v-pills-'+member.name" :aria-selected="index === 0">
                                                         {{ member.name }}
-                                                        <i class="bi bi-stars" v-if="member.name === selectedGroup.leader"></i>
+                                                        <span class="bi bi-stars" v-if="member.name === selectedGroup.leader"></span>
                                                     </button>
                                                 </div>
                                                 <div class="tab-content ms-3 ps-3 members-tab" style="width: 100%" id="v-pills-tabContent">

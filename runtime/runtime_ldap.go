@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"context"
+	"github.com/blevesearch/bleve/v2"
 	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
@@ -21,6 +22,7 @@ type LdapStore struct {
 	cfg    *static.Config
 	events *events.StoreManager
 	m      sync.RWMutex
+	index  bleve.Index
 }
 
 type LdapInfo struct {
@@ -82,6 +84,10 @@ func (s *LdapStore) Add(c *dynamic.Config, emitter common.EventEmitter) *LdapInf
 		li.AddConfig(c)
 	}
 
+	if s.cfg.Api.Search.Enabled {
+		s.addToIndex(li.Config)
+	}
+
 	return li
 }
 
@@ -102,7 +108,13 @@ func (s *LdapStore) Remove(c *dynamic.Config) {
 	cfg := c.Data.(*directory.Config)
 	name := cfg.Info.Name
 	li := s.infos[name]
-	li.Remove(c)
+	if s.cfg.Api.Search.Enabled {
+		s.removeFromIndex(li.Config)
+	}
+
+	delete(li.configs, c.Info.Url.String())
+	li.update()
+
 	if len(li.configs) == 0 {
 		s.m.RUnlock()
 		s.m.Lock()
@@ -174,11 +186,6 @@ func (h *ldapHandler) ServeLDAP(rw ldap.ResponseWriter, r *ldap.Request) {
 
 	h.next.ServeLDAP(rw, r)
 
-}
-
-func (c *LdapInfo) Remove(cfg *dynamic.Config) {
-	delete(c.configs, cfg.Info.Url.String())
-	c.update()
 }
 
 func IsLdapConfig(c *dynamic.Config) (*directory.Config, bool) {

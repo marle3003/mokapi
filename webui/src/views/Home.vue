@@ -79,7 +79,7 @@ function hasTouchSupport() {
             <div class="card h-100 shadow-sm border-0">
                 <div class="card-body">
                   <h5 class="card-title fw-bold mb-3">
-                    <i class="bi bi-rocket-takeoff me-2 icon"></i>Develop Without Waiting
+                    <span class="bi bi-rocket-takeoff me-2 icon"></span>Develop Without Waiting
                   </h5>
                   <p class="card-text">Build and test instantly, even when external APIs are unavailable or unpredictable.</p>
                 </div>
@@ -89,7 +89,7 @@ function hasTouchSupport() {
             <div class="card h-100 shadow-sm border-0">
                 <div class="card-body">
                   <h5 class="card-title fw-bold mb-3">
-                    <i class="bi bi-check2-square me-2 icon"></i>Test With Confidence
+                    <span class="bi bi-check2-square me-2 icon"></span>Test With Confidence
                   </h5>
                   <p class="card-text">Run realistic tests that match production API behavior.</p>
                 </div>
@@ -99,7 +99,7 @@ function hasTouchSupport() {
             <div class="card h-100 shadow-sm border-0">
                 <div class="card-body">
                   <h5 class="card-title fw-bold mb-3">
-                    <i class="bi bi-gear me-2 icon"></i>Automate Workflows
+                    <span class="bi bi-gear me-2 icon"></span>Automate Workflows
                   </h5>
                   <p class="card-text">Automate API testing in your CI/CD pipelines for faster feedback.</p>
                 </div>
@@ -133,8 +133,8 @@ function hasTouchSupport() {
                     <h5 class="card-title fw-bold mb-3">Mock REST APIs</h5>
                     <p class="card-text">Simulate REST API endpoints and test your app instantly without waiting for external services.</p>
                     <div class="icon-link cta">Learn more 
-                      <i class="bi bi-chevron-right"></i>
-                      <i class="bi bi-arrow-right hover"></i>
+                      <span class="bi bi-chevron-right"></span>
+                      <span class="bi bi-arrow-right hover"></span>
                     </div>
                   </div>
                 </router-link>
@@ -149,8 +149,8 @@ function hasTouchSupport() {
                     <h5 class="card-title fw-bold mb-3">Simulate Kafka Events</h5>
                     <p class="card-text">Mock Kafka message streams to test event-driven services and microservice integration.</p>
                     <div class="icon-link cta">Learn more 
-                      <i class="bi bi-chevron-right"></i>
-                      <i class="bi bi-arrow-right hover"></i>
+                      <span class="bi bi-chevron-right"></span>
+                      <span class="bi bi-arrow-right hover"></span>
                     </div>
                   </div>
                 </router-link>
@@ -165,8 +165,8 @@ function hasTouchSupport() {
                     <h5 class="card-title fw-bold mb-3">Mock LDAP Services</h5>
                     <p class="card-text">Simulate authentication and directory services to test user access and permissions safely.</p>
                     <div class="icon-link cta">Learn more 
-                      <i class="bi bi-chevron-right"></i>
-                      <i class="bi bi-arrow-right hover"></i>
+                      <span class="bi bi-chevron-right"></span>
+                      <span class="bi bi-arrow-right hover"></span>
                     </div>
                   </div>
                 </router-link>
@@ -181,8 +181,8 @@ function hasTouchSupport() {
                     <h5 class="card-title fw-bold mb-3">SMTP Email Testing</h5>
                     <p class="card-text">Simulate email sending and test email features without sending real messages.</p>
                     <div class="icon-link cta">Learn more 
-                      <i class="bi bi-chevron-right"></i>
-                      <i class="bi bi-arrow-right hover"></i>
+                      <span class="bi bi-chevron-right"></span>
+                      <span class="bi bi-arrow-right hover"></span>
                     </div>
                   </div>
                 </router-link>
@@ -325,7 +325,7 @@ function hasTouchSupport() {
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
                 <h3 class="card-title">
-                  <i class="icon me-2 bi-globe"></i>Mock REST APIs with OpenAPI
+                  <span class="icon me-2 bi-globe"></span>Mock REST APIs with OpenAPI
                 </h3>
                 <p>Learn how to mock an OpenAPI spec, configure Mokapi, and run it in Docker. Test REST endpoints without waiting for live APIs.</p>
                 <a href="docs/resources/tutorials/get-started-with-rest-api" class="btn btn-outline-primary btn-sm">Start Tutorial</a>
@@ -338,7 +338,7 @@ function hasTouchSupport() {
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
                 <h3 class="card-title">
-                  <i class="icon me-2 bi-lightning"></i>Simulate Kafka Topics with AsyncAPI
+                  <span class="icon me-2 bi-lightning"></span>Simulate Kafka Topics with AsyncAPI
                 </h3>
                 <p>Test Kafka producers and consumers by mocking topics according to your AsyncAPI spec. Ensure reliable message generation and integration without a live Kafka cluster.</p>
                 <a href="docs/resources/tutorials/get-started-with-kafka" class="btn btn-outline-primary btn-sm">Start Tutorial</a>
@@ -351,7 +351,7 @@ function hasTouchSupport() {
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
                 <h3 class="card-title">
-                  <i class="icon me-2 bi-person-check"></i>Mock LDAP Authentication
+                  <span class="icon me-2 bi-person-check"></span>Mock LDAP Authentication
                 </h3>
                 <p>Step-by-step guide to mock LDAP login using Mokapi and Node.js. Test authentication flows without a real server.</p>
                 <a href="docs/resources/tutorials/mock-ldap-authentication-in-node" class="btn btn-outline-primary btn-sm">Start Tutorial</a>
@@ -364,7 +364,7 @@ function hasTouchSupport() {
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
                 <h3 class="card-title">
-                  <i class="icon me-2 bi-envelope-at-fill"></i>Mock SMTP Email Sending
+                  <span class="icon me-2 bi-envelope-at-fill"></span>Mock SMTP Email Sending
                 </h3>
                 <p>Simulate an SMTP server and send test emails using Node.js. Perfect for validating email workflows without real mail servers.</p>
                 <a href="/docs/resources/tutorials/mock-smtp-server-send-mail-using-node" class="btn btn-outline-primary btn-sm">Start Tutorial</a>

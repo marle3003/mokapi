@@ -25,6 +25,7 @@ import (
 )
 
 var fieldsNotIncludedInAll = []string{"api"}
+var SupportedFacets = []string{"type"}
 
 func newIndex(cfg *static.Config) bleve.Index {
 	if !cfg.Api.Search.Enabled {
@@ -153,6 +154,8 @@ func (a *App) Search(r search.Request) (search.Result, error) {
 			item, err = getKafkaSearchResult(fields, discriminators)
 		case "mail":
 			item, err = getMailSearchResult(fields, discriminators)
+		case "ldap":
+			item, err = getLdapSearchResult(fields, discriminators)
 		default:
 			log.Errorf("unknown discriminator: %s", strings.Join(discriminators, "_"))
 			continue
@@ -246,6 +249,8 @@ func getTypeFacet(term *bleveSearch.TermFacet) search.FacetValue {
 		facet.Value = "HTTP"
 	case "kafka":
 		facet.Value = "Kafka"
+	case "mail":
+		facet.Value = "Mail"
 	case "event":
 		facet.Value = "Event"
 	case "config":
