@@ -27,7 +27,7 @@ watchEffect(() => {
   if (!event.value) {
     return
   }
-  const { service } = <{service: Ref<KafkaService | null>, close: () => void}>fetchService(event.value?.traits.name, 'kafka')
+  const { service } = <{service: Ref<KafkaService | null>, close: () => void}>fetchService(event.value?.traits.name!, 'kafka')
   if (!service.value) {
     return null
   }

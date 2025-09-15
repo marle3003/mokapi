@@ -3,11 +3,12 @@ package smtp_test
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/smtp"
 	"mokapi/smtp/smtptest"
 	"net/textproto"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestServer(t *testing.T) {
@@ -231,7 +232,7 @@ func testSendLoginShort(t *testing.T, conn *textproto.Conn) {
 	mustReadLine(t, conn, fmt.Sprintf("334 %v", e))
 
 	password := base64.StdEncoding.EncodeToString([]byte("bar"))
-	mustSendLine(t, conn, password)
+	mustSendLine(t, conn, "%s", password)
 
 	mustReadLine(t, conn, "235 [2 0 0] Authentication succeeded")
 }
@@ -242,13 +243,13 @@ func testSendLoginLong(t *testing.T, conn *textproto.Conn) {
 	e := base64.StdEncoding.EncodeToString([]byte("Username:"))
 	mustReadLine(t, conn, fmt.Sprintf("334 %v", e))
 	username := base64.StdEncoding.EncodeToString([]byte("foo"))
-	mustSendLine(t, conn, username)
+	mustSendLine(t, conn, "%s", username)
 
 	e = base64.StdEncoding.EncodeToString([]byte("Password:"))
 	mustReadLine(t, conn, fmt.Sprintf("334 %v", e))
 
 	password := base64.StdEncoding.EncodeToString([]byte("foo"))
-	mustSendLine(t, conn, password)
+	mustSendLine(t, conn, "%s", password)
 
 	mustReadLine(t, conn, "235 [2 0 0] Authentication succeeded")
 }
@@ -281,7 +282,7 @@ func mustSendLine(t *testing.T, conn *textproto.Conn, format string, args ...int
 
 func mustSendLines(t *testing.T, conn *textproto.Conn, lines ...string) {
 	for _, line := range lines {
-		err := conn.PrintfLine(line)
+		err := conn.PrintfLine("%s", line)
 		require.NoError(t, err)
 	}
 }

@@ -23,7 +23,7 @@ function filename() {
     let ext = '.dat'
     if (selected.value) {   
         if (types[selected.value.contentType]) {
-            ext = types[selected.value.contentType]
+            ext = types[selected.value.contentType]!
         }
     }
 
@@ -31,12 +31,12 @@ function filename() {
 }
 
 // select first message
-const first = messages(props.topic)[0]
-selected.value = props.topic.messages[first]
+const first = messages(props.topic)[0]!
+selected.value = props.topic.messages[first]!
 
 function selectedMessageChange(event: any){
     for (const messageId in props.topic.messages){
-        const msg = props.topic.messages[messageId]
+        const msg = props.topic.messages[messageId]!
         if (msg.name == event.target.value){
             selected.value = msg
         }

@@ -245,7 +245,7 @@ const router = createRouter({
         if (typeof to.params.pathMatch === 'string') {
           return `/docs/resources/${to.params.pathMatch}`
         }
-        return `/docs/resources/${to.params.pathMatch.join('/')}`
+        return `/docs/resources/${to.params.pathMatch!.join('/')}`
       }
     },
     {

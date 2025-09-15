@@ -2,13 +2,13 @@ package dynamic_test
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
-	"mokapi/config/dynamic/script"
 	"net/url"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParse(t *testing.T) {
@@ -145,8 +145,7 @@ func TestParse(t *testing.T) {
 
 				err := dynamic.Parse(c, &dynamictest.Reader{})
 				require.NoError(t, err)
-				require.IsType(t, &script.Script{}, c.Data)
-				require.Equal(t, `print("Hello World")`, c.Data.(*script.Script).Code)
+				require.Equal(t, `print("Hello World")`, c.Data)
 			},
 		},
 		{
@@ -159,8 +158,7 @@ func TestParse(t *testing.T) {
 
 				err := dynamic.Parse(c, &dynamictest.Reader{})
 				require.NoError(t, err)
-				require.IsType(t, &script.Script{}, c.Data)
-				require.Equal(t, `console.log('Hello World')`, c.Data.(*script.Script).Code)
+				require.Equal(t, `console.log('Hello World')`, c.Data)
 			},
 		},
 		{
@@ -173,8 +171,7 @@ func TestParse(t *testing.T) {
 
 				err := dynamic.Parse(c, &dynamictest.Reader{})
 				require.NoError(t, err)
-				require.IsType(t, &script.Script{}, c.Data)
-				require.Equal(t, `console.log('Hello World')`, c.Data.(*script.Script).Code)
+				require.Equal(t, `console.log('Hello World')`, c.Data)
 			},
 		},
 		{

@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
@@ -12,6 +11,8 @@ import (
 	"mokapi/try"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestLdapDirectory(t *testing.T) {
@@ -51,7 +52,7 @@ func TestLdapDirectory(t *testing.T) {
 					}),
 				})
 
-				c := ldap.NewClient(fmt.Sprintf(app.Ldap.Get("foo").Address))
+				c := ldap.NewClient(app.Ldap.Get("foo").Address)
 				err := c.Dial()
 				require.NoError(t, err)
 				_, err = c.Bind("", "")

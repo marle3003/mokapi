@@ -209,7 +209,7 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 		} else if r.Method == "POST" {
 			records, err := getProduceRecords(r)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				writeError(w, err, http.StatusBadRequest)
 				return
 			}
 			c := store.NewClient(k.Store, h.app.Monitor.Kafka)
@@ -217,9 +217,9 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 			result, err := c.Write(topicName, records, &ct)
 			if err != nil {
 				if errors.Is(err, store.TopicNotFound) || errors.Is(err, store.PartitionNotFound) {
-					http.Error(w, err.Error(), http.StatusNotFound)
+					writeError(w, err, http.StatusNotFound)
 				} else {
-					http.Error(w, err.Error(), http.StatusBadRequest)
+					writeError(w, err, http.StatusBadRequest)
 				}
 			}
 			res := produceResponse{}
@@ -266,7 +266,7 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 		idValue := segments[7]
 		id, err := strconv.Atoi(idValue)
 		if err != nil {
-			http.Error(w, "error partition ID is not an integer", http.StatusBadRequest)
+			writeError(w, fmt.Errorf("error partition ID is not an integer"), http.StatusBadRequest)
 			return
 		}
 		p := t.Partition(id)
@@ -280,7 +280,7 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 		} else {
 			records, err := getProduceRecords(r)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				writeError(w, err, http.StatusBadRequest)
 				return
 			}
 			for _, record := range records {
@@ -291,9 +291,9 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 			result, err := c.Write(topicName, records, &ct)
 			if err != nil {
 				if errors.Is(err, store.TopicNotFound) || errors.Is(err, store.PartitionNotFound) {
-					http.Error(w, err.Error(), http.StatusNotFound)
+					writeError(w, err, http.StatusNotFound)
 				} else {
-					http.Error(w, err.Error(), http.StatusBadRequest)
+					writeError(w, err, http.StatusBadRequest)
 				}
 			}
 			res := produceResponse{}
@@ -320,7 +320,7 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 		idValue := segments[7]
 		id, err := strconv.Atoi(idValue)
 		if err != nil {
-			http.Error(w, fmt.Errorf("error partition ID is not an integer").Error(), http.StatusBadRequest)
+			writeError(w, fmt.Errorf("error partition ID is not an integer"), http.StatusBadRequest)
 			return
 		}
 		offsetValue := r.URL.Query().Get("offset")
@@ -328,7 +328,7 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 		if offsetValue != "" {
 			offset, err = strconv.Atoi(offsetValue)
 			if err != nil {
-				http.Error(w, fmt.Errorf("error offset is not an integer").Error(), http.StatusBadRequest)
+				writeError(w, fmt.Errorf("error offset is not an integer"), http.StatusBadRequest)
 				return
 			}
 		}
@@ -338,9 +338,9 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 		records, err := c.Read(topicName, id, int64(offset), &ct)
 		if err != nil {
 			if errors.Is(err, store.TopicNotFound) || errors.Is(err, store.PartitionNotFound) {
-				http.Error(w, err.Error(), http.StatusNotFound)
+				writeError(w, err, http.StatusNotFound)
 			} else {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				writeError(w, err, http.StatusInternalServerError)
 			}
 			return
 		}
@@ -358,13 +358,13 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 		idValue := segments[7]
 		id, err := strconv.Atoi(idValue)
 		if err != nil {
-			http.Error(w, fmt.Errorf("error partition ID is not an integer").Error(), http.StatusBadRequest)
+			writeError(w, fmt.Errorf("error partition ID is not an integer"), http.StatusBadRequest)
 			return
 		}
 		offsetValue := segments[9]
 		offset, err := strconv.Atoi(offsetValue)
 		if err != nil {
-			http.Error(w, fmt.Errorf("error offset is not an integer").Error(), http.StatusBadRequest)
+			writeError(w, fmt.Errorf("error offset is not an integer"), http.StatusBadRequest)
 			return
 		}
 
@@ -373,9 +373,9 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 		records, err := c.Read(topicName, id, int64(offset), &ct)
 		if err != nil {
 			if errors.Is(err, store.TopicNotFound) || errors.Is(err, store.PartitionNotFound) {
-				http.Error(w, err.Error(), http.StatusNotFound)
+				writeError(w, err, http.StatusNotFound)
 			} else {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				writeError(w, err, http.StatusBadRequest)
 			}
 			return
 		}

@@ -37,7 +37,7 @@ func TestIndex_Mail(t *testing.T) {
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
-						Type:      "MAIL",
+						Type:      "Mail",
 						Title:     "foo",
 						Fragments: []string{"<mark>foo</mark>"},
 						Params: map[string]string{
@@ -53,14 +53,24 @@ func TestIndex_Mail(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := &mail.Config{
 					Info: mail.Info{Name: "foo"},
+					Mailboxes: map[string]*mail.MailboxConfig{
+						"alice@mokapi.io": {
+							Username:    "username",
+							Password:    "password",
+							Description: "mailbox description",
+							Folders: map[string]*mail.FolderConfig{
+								"inbox": {Flags: []string{string(imap.Trash)}},
+							},
+						},
+					},
 				}
 				app.Mail.Add(toConfig(cfg))
-				r, err := app.Search(search.Request{QueryText: "foo", Limit: 10})
+				r, err := app.Search(search.Request{Limit: 10})
 				require.NoError(t, err)
-				require.Len(t, r.Results, 1)
+				require.Len(t, r.Results, 2)
 
 				app.Mail.Remove(toConfig(cfg))
-				r, err = app.Search(search.Request{QueryText: "foo", Limit: 10})
+				r, err = app.Search(search.Request{Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 0)
 			},
@@ -87,7 +97,7 @@ func TestIndex_Mail(t *testing.T) {
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
-						Type:      "MAIL",
+						Type:      "Mail",
 						Domain:    "foo",
 						Title:     "alice@mokapi.io",
 						Fragments: []string{"<mark>alice</mark>@mokapi.io"},

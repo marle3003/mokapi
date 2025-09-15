@@ -22,7 +22,7 @@ type configType struct {
 	checkVersion func(version version.Version) bool
 }
 
-func AnyVersion(v version.Version) bool {
+func AnyVersion(_ version.Version) bool {
 	return true
 }
 

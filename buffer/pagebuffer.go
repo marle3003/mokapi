@@ -8,7 +8,9 @@ import (
 )
 
 var (
-	pageBufferPool = sync.Pool{New: func() interface{} { return new(pageBuffer) }}
+	pageBufferPool = sync.Pool{New: func() interface{} {
+		return new(pageBuffer)
+	}}
 )
 
 type refCounter uint32
@@ -78,12 +80,12 @@ func (pb *pageBuffer) Write(b []byte) (n int, err error) {
 		available := pageSize - tail.Size()
 
 		if len(b) <= available {
-			tail.Write(b)
+			_, _ = tail.Write(b)
 			pb.length += len(b)
 			break
 		}
 
-		tail.Write(b[:available])
+		_, _ = tail.Write(b[:available])
 		b = b[available:]
 		pb.length += available
 		pb.addPage()

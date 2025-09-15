@@ -6,6 +6,7 @@ import { MarkdownItLinks } from '@/composables/mardown-links';
 import { MarkdownItCard } from '@/composables/markdown-card';
 import { MarkdownItCarousel } from './markdown-carousel';
 import yaml from 'js-yaml'
+import { MarkdownItBlockquote } from './mardown-blockquote';
 
 const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
 const metadataRegex = /^---([\s\S]*?)---/;
@@ -22,14 +23,15 @@ export function useMarkdown(content: string | undefined): {content: string | und
 
         if (content) {
             content = new MarkdownIt()
-            .use(MarkdownItHighlightjs)
-            .use(MarkdownItTabs)
-            .use(MarkdownItBox)
-            .use(MarkdownItLinks)
-            .use(MarkdownItCarousel(metadata))
-            .use(MarkdownItCard(metadata))
-            .set({html: true})
-            .render(content)
+                .use(MarkdownItHighlightjs)
+                .use(MarkdownItBlockquote)
+                .use(MarkdownItTabs)
+                .use(MarkdownItBox)
+                .use(MarkdownItLinks)
+                .use(MarkdownItCarousel(metadata))
+                .use(MarkdownItCard(metadata))
+                .set({html: true})
+                .render(content)
         }
 
         return {content, metadata}
@@ -50,7 +52,7 @@ function replaceImageUrls(data: string) {
             if (imageUrl) {
                 data = data.replace(m[0], `<img${m[1]} src="${imageUrl}"`)
             } else {
-                imageUrl = transformPath(m[2])
+                imageUrl = transformPath(m[2]!)
                 data = data.replace(m[0], `<img${m[1]} src="${imageUrl}"`)
             }
         }
@@ -68,7 +70,7 @@ export function parseMetadata(data: string): DocMeta {
         return {} as DocMeta
     }
   
-    return yaml.load(metadataMatch[1]) as DocMeta
+    return yaml.load(metadataMatch[1]!) as DocMeta
 }
 
 export function transformPath(path: string): string {

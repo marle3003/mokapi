@@ -51,7 +51,7 @@ func New(cfg *static.Config) *App {
 		http:      NewHttpStore(cfg, index, em),
 		Kafka:     &KafkaStore{monitor: m, cfg: cfg, index: index, events: em},
 		Mqtt:      &MqttStore{monitor: m, cfg: cfg, sm: em},
-		Ldap:      &LdapStore{cfg: cfg, events: em},
+		Ldap:      &LdapStore{cfg: cfg, events: em, index: index},
 		Mail:      &MailStore{cfg: cfg, sm: em, index: index},
 		cfg:       cfg,
 		index:     index,

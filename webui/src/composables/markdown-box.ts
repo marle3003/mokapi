@@ -30,7 +30,7 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
         }
 
         var u = v[2]
-        if (u.endsWith('.md')) {
+        if (u?.endsWith('.md')) {
             u = new URL(u.replace('.md', ''), document.location.href).toString()
         }
 
@@ -54,7 +54,7 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
     }
 
     function fenceGroup(tokens: Token[], idx: number, options: Options, env: any, slf: Renderer): string {
-        if (tokens[idx].hidden) { return ''; }
+        if (!tokens[idx] || tokens[idx].hidden) { return ''; }
 
         const name = getAlertName(tokens[idx])
         if (name == null) {
@@ -63,7 +63,7 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
         
         var alert = ''
         for (let i = idx; i < tokens.length; i++) {
-            const token = tokens[i]
+            const token = tokens[i]!
             const name = getAlertName(token)
             if (name == null) { 
                 break;
@@ -74,7 +74,7 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
 
             const url = getUrl(token)
 
-            if (showTitle(tokens[i])) {
+            if (showTitle(token)) {
                 let title = getTitle(token)
                 let heading = ''
                 if (!title) {
@@ -86,13 +86,13 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
                 let icon = ''
                 switch (name) {
                     case 'tip':
-                        icon = '<i class="bi bi-lightbulb me-1"></i>'
+                        icon = '<span class="bi bi-lightbulb me-1"></span>'
                         break
                     case 'warning':
-                        icon = '<i class="bi bi-exclamation-triangle me-2"></i>'
+                        icon = '<span class="bi bi-exclamation-triangle me-2"></span>'
                         break
                     case 'info':
-                        icon = '<i class="bi bi-info-circle me-1"></i>'
+                        icon = '<span class="bi bi-info-circle me-1"></span>'
                         break
                 }
 
@@ -115,4 +115,4 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
     }
 
     md.renderer.rules.fence = fenceGroup
-};
+}

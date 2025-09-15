@@ -52,7 +52,7 @@ func (e *Encoder) SequenceSet(set IdSet) *Encoder {
 }
 
 func (e *Encoder) WriteTo(tpc *textproto.Conn) error {
-	return tpc.PrintfLine(string(e.buf))
+	return tpc.PrintfLine("%s", string(e.buf))
 }
 
 func (e *Encoder) String() string {

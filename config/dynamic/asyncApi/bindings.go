@@ -1,6 +1,7 @@
 package asyncApi
 
 import (
+	"encoding/json"
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/providers/asyncapi3"
@@ -82,11 +83,20 @@ func (b *BrokerBindings) UnmarshalYAML(value *yaml.Node) error {
 		return err
 	}
 
-	b.LogRetentionBytes, err = getInt64(m, "log.retention.bytes")
+	return b.set(m)
+}
+
+func (b *BrokerBindings) UnmarshalJSON(data []byte) error {
+	m := make(map[string]interface{})
+	err := json.Unmarshal(data, &m)
 	if err != nil {
 		return err
 	}
-	b.LogRetentionMs, err = getInt64(m, "log.retention.ms")
+	return b.set(m)
+}
+
+func (b *BrokerBindings) set(m map[string]interface{}) (err error) {
+	b.LogRetentionBytes, err = getInt64(m, "log.retention.bytes")
 	if err != nil {
 		return err
 	}
@@ -118,8 +128,7 @@ func (b *BrokerBindings) UnmarshalYAML(value *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-
-	return nil
+	return
 }
 
 func (t *TopicBindings) UnmarshalYAML(value *yaml.Node) error {
@@ -128,7 +137,19 @@ func (t *TopicBindings) UnmarshalYAML(value *yaml.Node) error {
 	if err != nil {
 		return err
 	}
+	return t.set(m)
+}
 
+func (t *TopicBindings) UnmarshalJSON(data []byte) error {
+	m := make(map[string]interface{})
+	err := json.Unmarshal(data, &m)
+	if err != nil {
+		return err
+	}
+	return t.set(m)
+}
+
+func (t *TopicBindings) set(m map[string]interface{}) (err error) {
 	if _, ok := m["partitions"]; !ok {
 		// default
 		t.Partitions = 1
@@ -158,12 +179,11 @@ func (t *TopicBindings) UnmarshalYAML(value *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	t.ValueSchemaValidation, err = getBool(m, "confluent.key.schema.validation")
+	t.KeySchemaValidation, err = getBool(m, "confluent.key.schema.validation")
 	if err != nil {
 		return err
 	}
-
-	return nil
+	return
 }
 
 func getMs(m map[string]interface{}, baseKey string) (int64, error) {
@@ -188,6 +208,8 @@ func getInt(m map[string]interface{}, keys ...string) (int, error) {
 		switch v := i.(type) {
 		case int:
 			return v, nil
+		case float64:
+			return int(v), nil
 		default:
 			return 0, fmt.Errorf("cannot unmarshal %T to int", i)
 		}
@@ -203,6 +225,8 @@ func getInt64(m map[string]interface{}, keys ...string) (int64, error) {
 			return int64(v), nil
 		case int64:
 			return v, nil
+		case float64:
+			return int64(v), nil
 		default:
 			return 0, fmt.Errorf("cannot unmarshal %T to int64", i)
 		}
@@ -210,8 +234,8 @@ func getInt64(m map[string]interface{}, keys ...string) (int64, error) {
 	return 0, nil
 }
 
-func getBool(m map[string]interface{}, keys ...string) (bool, error) {
-	i := getValue(m, keys...)
+func getBool(m map[string]interface{}, key string) (bool, error) {
+	i := getValue(m, key)
 	if i != nil {
 		switch v := i.(type) {
 		case bool:

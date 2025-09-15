@@ -88,7 +88,7 @@ function getStatus(action: Action) {
         <tbody>
             <template v-for="(action, index) of actions">
                 <tr data-bs-toggle="collapse" :data-bs-target="'#action_'+index" aria-expanded=false>
-                    <td><i class="bi bi-chevron-right"></i><i class="bi bi-chevron-down"></i></td>
+                    <td><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></td>
                     <td :set="status = getStatus(action)">
                         <span class="badge bg-danger me-2" v-if="status === 'error'">Error</span>
                         <span class="badge bg-warning me-2" v-else-if="status === 'warning'">Warning</span>
@@ -128,10 +128,10 @@ function getStatus(action: Action) {
                                 <ul class="list-group">
                                     <li v-for="log in action.logs" class="list-group-item">
                                         <span class="text-body log">
-                                            <i class="bi bi-exclamation-triangle-fill text-warning" v-if="log.level == 'warn'"></i>
-                                            <i class="bi bi-x-circle-fill text-danger" v-else-if="log.level == 'error'"></i>
-                                            <i class="bi bi-bug-fill text-info" v-else-if="log.level == 'debug'"></i>
-                                            <i class="bi bi-chat-dots text-primary" v-else></i>
+                                            <span class="bi bi-exclamation-triangle-fill text-warning" v-if="log.level == 'warn'"></span>
+                                            <span class="bi bi-x-circle-fill text-danger" v-else-if="log.level == 'error'"></span>
+                                            <span class="bi bi-bug-fill text-info" v-else-if="log.level == 'debug'"></span>
+                                            <span class="bi bi-chat-dots text-primary" v-else></span>
                                             <span class="ms-2" v-html="parseUrls(log.message)"></span>
                                         </span>
                                     </li>
@@ -141,7 +141,7 @@ function getStatus(action: Action) {
                             <h5>
                                 Tags
                                 <a href="/docs/javascript-api/mokapi/eventhandler/eventargs" class="ms-1" title="Learn how to define tags for your event handler" rel="noopener">
-                                    <i class="bi bi-question-circle" aria-hidden="true"></i>
+                                    <span class="bi bi-question-circle" aria-hidden="true"></span>
                                 </a>
                             </h5>
                             <table class="table dataTable">
@@ -219,7 +219,7 @@ tr[aria-expanded=false] .bi-chevron-down{
     border-color: var(--color-button-link);
     box-shadow: none;
 }
-h5 i {
+h5 span.bi {
     font-size: 0.8rem;
     vertical-align: top;
 }

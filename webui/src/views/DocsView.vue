@@ -46,10 +46,10 @@ const breadcrumb = computed(() => {
   const params: RouteParamsRawGeneric = {}
   for (const [index, name] of levels.entries()) {
     if (index === 0) {
-      current = (<DocConfig>current)[name]
+      current = (<DocConfig>current)[name]!
     }
     else  {
-      const e: DocEntry | string = (<DocEntry>current).items![name]
+      const e: DocEntry | string = (<DocEntry>current).items![name]!
       if (typeof e === 'string') {
         list.push({ label: name, isLast: true })
         break
@@ -97,7 +97,7 @@ onMounted(() => {
   }, 1000)
   if (metadata) {
     const extension = ' | Mokapi ' + levels[0]
-    let title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0])
+    let title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0])!
     if ((title.length + extension.length) <= 70) {
       title +=  ' | Mokapi ' + levels[0]
     }
@@ -115,9 +115,9 @@ function getCanonicalUrl(levels: string[]) {
       return entry.canonical
     }
   }
-  let canonical = 'https://mokapi.io/docs/' + toUrlPath(levels[0])
+  let canonical = 'https://mokapi.io/docs/' + toUrlPath(levels[0]!)
   for (let i = 1; i < levels.length; i++) {
-    canonical += `/${toUrlPath(levels[i])}`
+    canonical += `/${toUrlPath(levels[i]!)}`
   }
   if (isIndex) {
     canonical += '/'
@@ -146,7 +146,7 @@ function formatParam(label: any): string {
     <div style="width: 100%; height: 100%;display: flex;flex-direction: column;" class="doc">
       <div class="d-flex">
         <div class="sidebar d-none d-md-block" v-if="showNavigation">
-          <DocNav :config="nav" :levels="levels" :title="levels[0]"/>
+          <DocNav :config="nav" :levels="levels" :title="levels[0]!"/>
         </div>
         <div class="doc-main" style="flex: 1;margin-bottom: 3rem;" :style="showNavigation ? 'max-width:50em;' : ''">
           <div class="container">
@@ -380,34 +380,20 @@ code {
 
 blockquote {
   width: 100%;
-  margin: 50px auto;
-  font-family: Open Sans;
-  font-style: italic;
-  padding: 1.2em 30px 1.2em 55px;
-  line-height: 1.75;
-  font-size: 1rem;
-  border-left: 8px solid #eabaabff;
+  margin-top: 2rem;
+  max-width: 700px;
+  padding: 1.5em 2em 1.5em 2em;
+  border-left: 4px solid #eabaabff;
   position: relative;
   background: var(--color-background-soft);
 }
-blockquote:before {
-  content: "\201C";
-  color: #eabaabff;
-  font-size:4em;
-  position: absolute;
-  left: 10px;
-  top:-10px;
-}
-blockquote::after {
-  content: '';
+blockquote span:before {
+  content: '- '
 }
 blockquote span {
+  color: #6c757d;
   display:block;
   font-style: normal;
-  font-weight: bold;
-  margin: 0;
-}
-blockquote p {
   margin: 0;
 }
 

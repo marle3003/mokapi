@@ -309,7 +309,7 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *H
 		if errors.As(errOpResolve, &httpError) {
 			return httpError
 		}
-		return newHttpErrorf(http.StatusInternalServerError, errOpResolve.Error())
+		return newHttpErrorf(http.StatusInternalServerError, "%s", errOpResolve.Error())
 	}
 }
 
@@ -329,9 +329,9 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 
 	logMessage := fmt.Sprintf("HTTP request failed with status code %d: %s %s: %s", status, r.Method, r.URL.String(), err.Error())
 	if status == http.StatusInternalServerError {
-		log.Errorf(logMessage)
+		log.Error(logMessage)
 	} else {
-		log.Infof(logMessage)
+		log.Info(logMessage)
 	}
 	if m, ok := monitor.HttpFromContext(r.Context()); ok {
 		endpointPath := r.Context().Value("endpointPath")
@@ -369,7 +369,7 @@ func (h *responseHandler) serveSecurity(r *http.Request, requirements []Security
 			err := scheme.Serve(r)
 			var notSupported *NotSupportedSecuritySchemeError
 			if errors.As(err, &notSupported) {
-				log.Warnf(notSupported.Error())
+				log.Warn(notSupported.Error())
 			} else if err != nil {
 				reqError = errors.Join(reqError, fmt.Errorf("security scheme name '%s' type '%s': %w", name, getSecuritySchemeType(scheme), err))
 			}

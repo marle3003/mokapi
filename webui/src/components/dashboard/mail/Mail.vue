@@ -12,7 +12,7 @@ const { fetchMail } = useMails()
 const { format } = usePrettyDates()
 const route = useRoute()
 const messageId = route.params.id as string
-const { mail, isLoading: isLoading } = fetchMail(messageId)
+const { mail, isLoading } = fetchMail(messageId)
 </script>
 
 <template>

@@ -6,9 +6,10 @@ import { useRoute, useRouter } from 'vue-router';
 const files = inject<Record<string, string>>('files')!
 
 const nav = inject<DocConfig>('nav')!
-const exampleFiles = (<DocEntry>nav['Resources'].items!['Examples']).items ?? {}
-const tutorialsFiles = (<DocEntry>nav['Resources'].items!['Tutorials']).items ?? {}
-const blogFiles = (<DocEntry>nav['Resources'].items!['Blogs']).items ?? {}
+const resources = nav['Resources']!
+const exampleFiles = (<DocEntry>resources.items!['Examples']).items ?? {}
+const tutorialsFiles = (<DocEntry>resources.items!['Tutorials']).items ?? {}
+const blogFiles = (<DocEntry>resources.items!['Blogs']).items ?? {}
 const type = ref<string>('all')
 const tech = ref<string>('all')
 
@@ -23,17 +24,17 @@ const items = computed(() => {
     const items = []
     for (const key in exampleFiles) {
         const file = exampleFiles[key]
-        const meta = parseMetadata(files[`/src/assets/docs/${file}`])
+        const meta = parseMetadata(files[`/src/assets/docs/${file}`]!)
         items.push({ key: key, meta: meta, tag: 'example', level2: 'examples' })
     }
     for (const key in tutorialsFiles) {
         const file = tutorialsFiles[key]
-        const meta = parseMetadata(files[`/src/assets/docs/${file}`])
+        const meta = parseMetadata(files[`/src/assets/docs/${file}`]!)
         items.push({ key: key, meta: meta, tag: 'tutorial', level2: 'tutorials' })
     }
     for (const key in blogFiles) {
         const file = blogFiles[key]
-        const meta = parseMetadata(files[`/src/assets/docs/${file}`])
+        const meta = parseMetadata(files[`/src/assets/docs/${file}`]!)
         items.push({ key: key, meta: meta, tag: 'blog', level2: 'blogs' })
     }
 
@@ -170,7 +171,7 @@ function setType(s: string) {
                         <div class="card-body">
                             <div class="card-tag" :class="item.tag">{{ item.tag }}</div>
                             <h3 class="card-title">
-                                <i class="bi me-2 icon " :class="item.meta.icon" style="font-size:20px;" v-if="item.meta.icon"></i>
+                                <span class="bi me-2 icon " :class="item.meta.icon" style="font-size:20px;" v-if="item.meta.icon"></span>
                                 <span>{{ item.meta.title }}</span>
                             </h3>
                             <div class="card-text">{{ item.meta.description }}</div>
