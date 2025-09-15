@@ -39,14 +39,18 @@ export default function() {
 				err = s.Run()
 				r.NoError(t, err)
 
-				time.Sleep(2 * time.Second)
 				var calledAt time.Time
-				err = s.RunFunc(func(vm *goja.Runtime) {
-					v := vm.Get("calledAt")
-					err = vm.ExportTo(v, &calledAt)
-					r.NoError(t, err)
-				})
-				time.Sleep(1 * time.Second)
+				deadline := time.Now().Add(5 * time.Second)
+				for time.Now().Before(deadline) {
+					_ = s.RunFunc(func(vm *goja.Runtime) {
+						v := vm.Get("calledAt")
+						_ = vm.ExportTo(v, &calledAt)
+					})
+					if !calledAt.IsZero() {
+						break
+					}
+					time.Sleep(100 * time.Millisecond)
+				}
 				r.False(t, calledAt.IsZero(), "calledAt should not be zero")
 				r.Greater(t, calledAt.Sub(startTime), time.Second, "code should wait for a second")
 			},
