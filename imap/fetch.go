@@ -240,7 +240,7 @@ func (c *Client) Fetch(set IdSet, options FetchOptions) (*FetchCommand, error) {
 func (c *Client) FetchRaw(fetch string) (*FetchCommand, error) {
 	tag := c.nextTag()
 
-	err := c.tpc.PrintfLine(fmt.Sprintf("%s %s", tag, fetch))
+	err := c.tpc.PrintfLine("%s %s", tag, fetch)
 	if err != nil {
 		return nil, err
 	}

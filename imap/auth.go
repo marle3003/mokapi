@@ -2,7 +2,6 @@ package imap
 
 import (
 	"encoding/base64"
-	"fmt"
 	"mokapi/sasl"
 	"strings"
 )
@@ -49,7 +48,7 @@ func (c *conn) handleAuth(_, param string) *response {
 			break
 		}
 
-		err = c.tpc.PrintfLine(fmt.Sprintf("+ %s", challenge))
+		err = c.tpc.PrintfLine("+ %s", challenge)
 		if err != nil {
 			return &response{
 				status: bad,
