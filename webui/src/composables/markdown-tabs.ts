@@ -26,7 +26,7 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
     }
 
     function fenceGroup(tokens: Token[], idx: number, options: Options, env: any, slf: Renderer): string {
-        if (tokens[idx].hidden) { return '' }
+        if (!tokens[idx] || tokens[idx].hidden) { return '' }
 
         const tabName = getTabName(tokens[idx]);
         if (tabName == null || tabName == '') {
@@ -36,7 +36,7 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
         
         var tabs = '', contents = ''
         for (let i = idx; i < tokens.length; i++) {
-            const token = tokens[i];
+            const token = tokens[i]!;
             let tabName = getTabName(token);
             if (tabName == null || tabName == '') { 
                 break;

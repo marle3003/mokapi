@@ -10,7 +10,7 @@ import Markdown from 'vue3-markdown-it'
 
 const { fetchService } = useService()
 const route = useRoute()
-const serviceName = route.params.service?.toString()
+const serviceName = route.params.service!.toString()
 const topicName = route.params.topic?.toString()
 const { service, close } = <{service: Ref<KafkaService | null>, close: () => void}>fetchService(serviceName, 'kafka')
 function topic() {
