@@ -1,15 +1,15 @@
 package engine
 
 import (
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/script"
 	"mokapi/config/static"
 	"mokapi/engine/common"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"mokapi/runtime/metrics"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Options func(e *Engine)
@@ -56,7 +56,7 @@ func NewEngine(opts ...Options) *Engine {
 }
 
 func (e *Engine) AddScript(evt dynamic.ConfigEvent) error {
-	if _, ok := evt.Config.Data.(*script.Script); !ok {
+	if _, ok := evt.Config.Data.(string); !ok {
 		return nil
 	}
 

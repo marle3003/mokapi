@@ -259,7 +259,7 @@ func (c *Config) patchComponents(patch *Config) {
 	}
 }
 
-func (b BrokerBindings) Patch(patch BrokerBindings) {
+func (b *BrokerBindings) Patch(patch BrokerBindings) {
 	for k, v := range patch.Config {
 		if c, ok := b.Config[k]; !ok || len(c) == 0 {
 			b.Config[k] = v

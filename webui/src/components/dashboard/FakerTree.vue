@@ -75,13 +75,13 @@ function handleScroll(event: WheelEvent) {
         <template v-slot:node="{ node }">
           <div class="rich-media-node">
             <span v-html="node.name"></span>
-            <i v-if="node.custom" class="bi bi-person-fill-gear" title="customized node"></i>
+            <span v-if="node.custom" class="bi bi-person-fill-gear" title="customized node"></span>
           </div>
         </template>
       </vue-tree>
       <div class="info" style="">
         <router-link :to="{ path: '/docs/guides/get-started/test-data' }">
-          <i class="bi bi-question-circle-fill"></i>
+          <span class="bi bi-question-circle-fill"></span>
         </router-link>
       </div>
     </div>
@@ -132,7 +132,7 @@ function handleScroll(event: WheelEvent) {
     width: 80%;
     overflow-wrap: break-word;
   }
-  .rich-media-node i {
+  .rich-media-node span.bi {
     position: absolute;
     top: 0;
     right: 5px;

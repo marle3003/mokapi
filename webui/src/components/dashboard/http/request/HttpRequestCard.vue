@@ -18,7 +18,7 @@ const selected = reactive({
 })
 
 if (props.operation.requestBody?.contents?.length > 0){
-    selected.content = props.operation.requestBody.contents[0]
+    selected.content = props.operation.requestBody.contents[0]!
 }
 function selectedContentChange(event: any){
     for (let content of props.operation.requestBody.contents){
@@ -52,11 +52,11 @@ const schemes = computed(() => {
 
     const schemes: {[name: string]: HttpSecurityScheme & { name: string} } = {}
     for (let i = 0; i < props.operation.security.length; i++) {
-        const item = props.operation.security[i]
+        const item = props.operation.security[i]!
         const keys = Object.keys(item)
         for (let j = 0; j < keys.length; j++) {
-            const schemeName = keys[j]
-            schemes[`${i}-${j}`] = {  ...item[schemeName], ...{ name: schemeName } }
+            const schemeName = keys[j]!
+            schemes[`${i}-${j}`] = {  ...item[schemeName], ...{ name: schemeName } } as HttpSecurityScheme & { name: string} 
         }
     }
     return schemes
@@ -66,7 +66,7 @@ const hasOneSecurityScheme = computed(() => {
         return false
     }
     if (props.operation.security.length === 1) {
-        return Object.keys(props.operation.security[0]).length === 1
+        return Object.keys(props.operation.security[0]!).length === 1
     }
     return false
 })
@@ -86,9 +86,9 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
             <div class="card-title text-center">Request</div>
 
             <div class="nav card-tabs" role="tablist" data-testid="tabs">
-              <button :class="operation.requestBody ? 'active' : 'disabled'" id="body-tab" data-bs-toggle="tab" data-bs-target="#body" type="button" role="tab" aria-controls="body" aria-selected="true"><i class="bi-file-text me-2" />Body</button>
-              <button :class="operation.parameters ? (operation.requestBody ? '' : 'active') : 'disabled'" id="parameters-tab" data-bs-toggle="tab" data-bs-target="#parameters" type="button" role="tab" aria-controls="parameters" aria-selected="false"><i class="bi-sliders me-2" />Parameters</button>
-              <button :class="operation.security ? (operation.security ? '' : 'active') : 'disabled'" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab" aria-controls="security" aria-selected="false"><i class="bi-shield-lock me-2" /> Security</button>
+              <button :class="operation.requestBody ? 'active' : 'disabled'" id="body-tab" data-bs-toggle="tab" data-bs-target="#body" type="button" role="tab" aria-controls="body" aria-selected="true"><span class="bi-file-text me-2" />Body</button>
+              <button :class="operation.parameters ? (operation.requestBody ? '' : 'active') : 'disabled'" id="parameters-tab" data-bs-toggle="tab" data-bs-target="#parameters" type="button" role="tab" aria-controls="parameters" aria-selected="false"><span class="bi-sliders me-2" />Parameters</button>
+              <button :class="operation.security ? (operation.security ? '' : 'active') : 'disabled'" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab" aria-controls="security" aria-selected="false"><span class="bi-shield-lock me-2" /> Security</button>
             </div>
 
             <div class="tab-content" id="tabRequest">
@@ -98,7 +98,7 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
                     <p v-if="operation.requestBody.required">Required</p>
 
                     <p class="label" v-if="operation.requestBody.contents.length == 1">Request content type</p>
-                    <p v-if="operation.requestBody.contents.length == 1">{{ operation.requestBody.contents[0].type }}</p>
+                    <p v-if="operation.requestBody.contents.length == 1">{{ operation.requestBody.contents[0]?.type }}</p>
                     
                     <source-view 
                         :source="{ preview: { content: formatSchema(selected.content?.schema), contentType: 'application/json' }}" 
@@ -129,11 +129,11 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
                         <ul id="security-list" class="list-group nav nav-pills" v-if="!hasOneSecurityScheme">
                             <li v-for="(sec, index) of operation.security" class="list-group-item">
                                 <button class="badge" v-for="(name, index2) of Object.keys(sec)" type="button" role="tab"
-                                    :id="`sec-scheme-${index}-${index2}-tab`" :class="getSchemeClass(sec[name]) + (index === 0 && index2 === 0 ? ' active' : '')"
+                                    :id="`sec-scheme-${index}-${index2}-tab`" :class="getSchemeClass(sec[name]!) + (index === 0 && index2 === 0 ? ' active' : '')"
                                     data-bs-toggle="pill" :data-bs-target="`#sec-scheme-${index}-${index2}`"
                                 :aria-controls="`sec-scheme-${index}-${index2}`" :aria-selected="index === 0 && index2 === 0"
                                 >
-                                    {{ name + ' (' + sec[name].configs['type'] + ')' }}
+                                    {{ name + ' (' + sec[name]?.configs['type'] + ')' }}
                                 </button>
                             </li>
                         </ul>

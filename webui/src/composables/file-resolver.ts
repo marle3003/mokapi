@@ -9,17 +9,17 @@ export function useFileResolver() {
         if (!level1) {
             return { file: null, levels: [] }
         }
-        let file: DocEntry | string
-        ({ name: level1, file} = select(config, level1))
+        let file: DocEntry | undefined | string;
+        ({ name: level1, file: file} = select(config, level1))
         if (!file) {
             return { file, levels: [] }
         }
 
         const levels = [ level1 ]
-        let isIndex = false
+        let isIndex: boolean | undefined = false
         for (let index = 2; index <= MAX_LEVEL; index++) {
             let level = <string>route.params[`level${index}`];
-            if (typeof file === 'string') {
+            if (!file || typeof file === 'string') {
                 break
             }
             ({ level: level, file, isIndex } = getLevel(level, file))
@@ -41,11 +41,13 @@ export function useFileResolver() {
                     file = file.index
                 } else {
                     // get first element as 'index' file
-                    level = Object.keys(file.items)[0];
-                    ({ file } = find(level, <DocEntry>file))
+                    level = Object.keys(file.items)[0]!;
+                    const found = find(level, <DocEntry>file)
+                    return { level, file: found.file }
                 }
             } else{
-                ({ name: level, file } = find(level,  <DocEntry>file))
+                const found = find(level,  <DocEntry>file)
+                return { level: found.name, file: found.file }
             }
         }
         return { level, file, isIndex }

@@ -45,3 +45,6 @@ The numbers of milliseconds to keep a segment before deleting it.
 
 ### confluent.value.schema.validation
 Skip validation of Kafka messages. Default value is *true*
+
+### confluent.key.schema.validation
+Skip validation of Kafka message keys. Default value is *true*

@@ -3,8 +3,9 @@ package dynamic
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 type StructuralError struct {
@@ -18,22 +19,6 @@ type StructuralError struct {
 type SemanticError struct {
 	Fields  []string
 	Message string
-}
-
-func NewStructuralError(err error, offset int64, d *json.Decoder) error {
-	var errType *json.UnmarshalTypeError
-	if errors.As(err, &errType) {
-		if len(errType.Field) == 0 {
-			return err
-		}
-		return &StructuralError{Value: errType.Value, Fields: []string{errType.Field}, Offset: offset, d: d}
-	}
-	var semantic *StructuralError
-	if errors.As(err, &semantic) {
-		return semantic
-	}
-
-	return &StructuralError{Message: err.Error(), Offset: offset, d: d}
 }
 
 func NewStructuralErrorWithField(err error, offset int64, d *json.Decoder, field string) error {

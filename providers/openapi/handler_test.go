@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/script"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/openapi"
@@ -1101,7 +1100,7 @@ func newScript(path, src string) dynamic.ConfigEvent {
 	return dynamic.ConfigEvent{Config: &dynamic.Config{
 		Info: dynamic.ConfigInfo{Url: mustParse(path)},
 		Raw:  []byte(src),
-		Data: &script.Script{Code: src, Filename: path},
+		Data: src,
 	}}
 }
 

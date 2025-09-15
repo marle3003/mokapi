@@ -136,7 +136,7 @@ function showMessage(event: ServiceEvent){
         partition: data.partition,
         offset: data.offset,
         time: format(event.time),
-        topic: event.traits["topic"],
+        topic: event.traits["topic"]!,
         schemaId: data.schemaId,
         deleted: data.deleted
     }
@@ -155,13 +155,13 @@ function getTopic(name: string): KafkaTopic {
     throw new Error(`topic ${name} not found`)
 }
 function getMessageConfig(event: ServiceEvent): KafkaMessage | undefined {
-    const topicName = event.traits["topic"]
+    const topicName = event.traits["topic"]!
     const data = eventData(event)
     const topic = getTopic(topicName)
 
     const keys = Object.keys(topic.messages)
     if (keys.length === 1) {
-        return topic.messages[keys[0]]
+        return topic.messages[keys[0]!]
     }
 
     const messageId = data?.messageId
@@ -254,7 +254,7 @@ function formatHeaderValue(v: KafkaHeaderValue) {
                                         <div class="tab-pane fade show active" id="detail-data" role="tabpanel">
                                             <div class="row" v-if="message.deleted"><div class="col">                            
                                             <div class="alert alert-primary d-flex align-items-center" role="alert">
-                                                <i class="bi bi-info-circle-fill me-2" style="font-size: 1rem;"></i>
+                                                <span class="bi bi-info-circle-fill me-2" style="font-size: 1rem;"></span>
                                                 <div>Message deleted due to retention or log rolling.</div>
                                             </div>
                                         </div></div>

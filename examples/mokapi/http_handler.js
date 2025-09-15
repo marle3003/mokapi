@@ -607,10 +607,52 @@ function getSearchResults() {
                     namespace: 'kafka',
                     id: '123456'
                 }
+            },
+            {
+                type: 'Mail',
+                domain: 'Mail Testserver',
+                title: "Mail Testserver",
+                fragments: ['This is a sample <mark>smtp</mark> server'],
+                params: {
+                    type: 'mail',
+                    service: 'Mail Testserver',
+                }
+            },
+            {
+                type: 'Event',
+                domain: 'Mail Testserver',
+                title: "A test mail",
+                fragments: ['message <mark>from Alice</mark>'],
+                params: {
+                    type: 'event',
+                    namespace: 'mail',
+                    id: '8832'
+                }
+            },
+            {
+                type: 'LDAP',
+                domain: 'LDAP Testserver',
+                title: "LDAP Testserver",
+                fragments: ['This is a sample <mark>LDAP</mark> server'],
+                params: {
+                    type: 'ldap',
+                    service: 'LDAP Testserver',
+                }
+            },
+            {
+                type: 'Event',
+                domain: 'LDAP Testserver',
+                title: "Search (objectClass=user)",
+                fragments: ['(objectClass=<mark>user</mark>)'],
+                params: {
+                    type: 'event',
+                    namespace: 'ldap',
+                    id: 'dkads-23124'
+                }
             }
         ],
         facets: {
-            type: [{value: 'HTTP', count: 3}, {value: 'Kafka', count: 2}, {value: 'Event', count: 2}, {value: 'Config', count: 1}]
+            type: [{value: 'HTTP', count: 3}, {value: 'Kafka', count: 2}, {value: 'Mail', count: 1}, {value: 'Event', count: 2}, {value: 'Config', count: 1}]
         },
         total: 8
     }

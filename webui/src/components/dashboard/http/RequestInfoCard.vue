@@ -15,11 +15,11 @@ const {formatStatusCode, getClassByStatusCode} = usePrettyHttp()
 const eventData = computed(() => <HttpEventData>prop.event.data)
 const route = useRoute()
 
-const hasOperation = computed(() => {
-    return prop.event.traits.path !== undefined
-})
+const operationRoute = computed(() => {
+    if (!prop.event.traits.path || !prop.event.traits.method) {
+        return undefined
+    }
 
-function operation(){
     const endpoint = prop.event.traits.path.substring(1).split('/')
     endpoint.push(prop.event.traits.method.toLowerCase())
 
@@ -28,7 +28,7 @@ function operation(){
         params: { service: prop.event.traits.name, endpoint: endpoint },
         query: { refresh: route.query.refresh }
     }
-}
+})
 </script>
 
 <template>
@@ -48,7 +48,7 @@ function operation(){
                 </div>
                 <div class="col" v-if="eventData.deprecated">
                     <p class="label">Warning</p>
-                    <p><i class="bi bi-exclamation-triangle-fill yellow"></i> Deprecated</p>
+                    <p><span class="bi bi-exclamation-triangle-fill yellow"></span> Deprecated</p>
                 </div>
             </div>
             <div class="row">
@@ -64,9 +64,9 @@ function operation(){
                     <p class="label">Duration</p>
                     <p>{{ duration(eventData.duration) }}</p>
                 </div>
-                <div class="col" v-if="hasOperation">
+                <div class="col" v-if="operationRoute">
                     <p class="label">Specification</p>
-                    <router-link :to="operation()">Operation</router-link>
+                    <router-link :to="operationRoute">Operation</router-link>
                 </div>
             </div>
             <div class="row">

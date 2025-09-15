@@ -248,7 +248,7 @@ function mousemove(e: MouseEvent) {
         }
 
         for (let i = startIndex; i <= endIndex; i++) {
-            const el = parent.children[i]
+            const el = parent.children[i]!
             el.classList.add('selection')
             const childOffset = el.getAttribute('data-offset')
             const spanText = <HTMLElement>text.value?.querySelector(`[data-offset="${childOffset}"]`)

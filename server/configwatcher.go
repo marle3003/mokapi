@@ -184,18 +184,18 @@ func (w *ConfigWatcher) addOrUpdate(evt dynamic.ConfigEvent) error {
 		w.configs[getConfigKey(c.Info.Url)] = e
 		c.Listeners.Add("ConfigWatcher", w.configChanged)
 		w.m.Unlock()
-		go e.config.Listeners.Invoke(evt)
+		invokeListeners(evt)
 		return nil
 	}
 	w.m.Unlock()
 
 	// Update existing entry under e.m
 	e.m.Lock()
-	defer e.m.Unlock()
 
 	// If the file has been previously read as a reference file, we need to trigger listeners
 	if bytes.Equal(e.config.Info.Checksum, c.Info.Checksum) && e.config.SourceType == c.SourceType {
 		log.Debugf("Checksum not changed. Skip reloading %v (%s)", e.config.Info.Url.String(), evt.Event)
+		e.m.Unlock()
 		return nil
 	}
 
@@ -205,8 +205,11 @@ func (w *ConfigWatcher) addOrUpdate(evt dynamic.ConfigEvent) error {
 	e.config.Raw = c.Raw
 	e.config.SourceType = c.SourceType
 	e.config.Info.Update(c.Info.Checksum)
+	evt.Config = e.config
 
-	go e.config.Listeners.Invoke(evt)
+	e.m.Unlock()
+
+	invokeListeners(evt)
 	return nil
 }
 
@@ -306,4 +309,18 @@ func getConfigKey(u *url.URL) string {
 		u.OmitHost = true
 	}
 	return u.String()
+}
+
+func invokeListeners(e dynamic.ConfigEvent) {
+	i := 0
+	for it := e.Config.Listeners.Iter(); it.Next(); {
+		if i == 0 {
+			// run parser (ConfigWatcher, first listener) synchronously
+			// this ensures config is parsed before other listeners are called
+			it.Value()(e)
+		} else {
+			go it.Value()(e)
+		}
+		i++
+	}
 }

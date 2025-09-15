@@ -27,7 +27,7 @@ function setOpenGraphMeta(property: string, content: string) {
     if (!meta) {
         meta = document.createElement('meta')
         meta.setAttribute('property', property)
-        document.getElementsByTagName('head')[0].prepend(meta);
+        document.getElementsByTagName('head')[0]!.prepend(meta);
     }
     meta.content = content;
 }
@@ -37,7 +37,7 @@ function setDescription(description: string) {
     if (!meta) {
         meta = document.createElement('meta')
         meta.name = 'description'
-        document.getElementsByTagName('head')[0].prepend(meta);
+        document.getElementsByTagName('head')[0]!.prepend(meta);
     }
     meta.content = description;
 }
@@ -47,7 +47,7 @@ function setCanonical(href: string) {
     if (!canonical) {
         canonical = document.createElement('link') as HTMLLinkElement;
         canonical.rel = 'canonical'
-        document.getElementsByTagName('head')[0].appendChild(canonical);
+        document.getElementsByTagName('head')[0]!.appendChild(canonical);
     }
     canonical.href = href;
     

@@ -2,11 +2,8 @@ package js_test
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus/hooks/test"
-	r "github.com/stretchr/testify/require"
 	"io"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/script"
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/engine/enginetest"
@@ -18,6 +15,9 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/sirupsen/logrus/hooks/test"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestScript_Http_Get(t *testing.T) {
@@ -444,7 +444,7 @@ export default function() {
 					Url: mustParse("test.ts"),
 				},
 				Raw:  []byte(tc.code),
-				Data: &script.Script{Filename: "test.ts"},
+				Data: "",
 			}})
 			r.NoError(t, err)
 			r.Len(t, hook.Entries, 3)

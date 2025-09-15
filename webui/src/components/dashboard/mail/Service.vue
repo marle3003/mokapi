@@ -74,17 +74,7 @@ if (serviceName){
         <mails :service="service" />
       </div>
   </div>
-  <Mailbox v-if="$route.name === 'smtpMailbox' && service" :service="service" :mailbox-name="$route.params.name.toString()" />
+  <Mailbox v-if="$route.name === 'smtpMailbox' && service" :service="service" :mailbox-name="$route.params.name!.toString()" />
   
   <mail v-if="$route.name == 'smtpMail'"></mail>
 </template>
-
-<style>
-.dashboard .card-group .card.configs {
-  margin: 0;
-  border: none;
-}
-.dashboard .card.configs .card-body {
-  padding: 0;
-}
-</style>

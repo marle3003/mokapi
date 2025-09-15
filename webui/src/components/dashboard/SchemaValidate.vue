@@ -82,14 +82,14 @@ function setExample() {
     }
 
     if (state.source.preview) {
-        state.source.preview.content = example.data[0].value
+        state.source.preview.content = example.data[0]!.value
     }
     if (state.source.binary) {
         let index = 0
         if (example.data.length > 1) {
             index = 1
         }
-        state.source.binary.content = example.data[index].value
+        state.source.binary.content = example.data[index]!.value
     }
     example.next()
 }
@@ -145,11 +145,11 @@ function validate() {
                 return
             }
             if (state.view === 'preview' && state.source.binary) {
-                const v = atob(examples[0].value)
+                const v = atob(examples[0]!.value)
                 state.source.binary.content = v
             } else if (state.source.preview) {
-                const v = atob(examples[0].value)
-                state.source.preview.content = formatLanguage(v, examples[0].contentType)
+                const v = atob(examples[0]!.value)
+                state.source.preview.content = formatLanguage(v, examples[0]!.contentType)
             }
         }    
     })
@@ -219,9 +219,9 @@ function formatResultItem(result: any): [string, number] {
                     <div class="modal-footer justify-content-between">
                         <span class="float-start">
                             <span  class="status" role="status">
-                                <span v-if="state.validating" class="loading"><i class="bi bi-arrow-repeat spin"></i> Validating...</span>
-                                <i v-else-if="state.errors.length == 0 && state.result == null && state.validated" class="valid bi bi-check-circle-fill fade-in"> Valid</i>
-                                <i v-else-if="state.validated" class="failed bi bi-x-circle-fill fade-in"> Failed</i>
+                                <span v-if="state.validating" class="loading"><span class="bi bi-arrow-repeat spin"></span> Validating...</span>
+                                <span v-else-if="state.errors.length == 0 && state.result == null && state.validated" class="valid bi bi-check-circle-fill fade-in"> Valid</span>
+                                <span v-else-if="state.validated" class="failed bi bi-x-circle-fill fade-in"> Failed</span>
                             </span>
                         </span>
                         <div class="float-end">

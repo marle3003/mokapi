@@ -3,10 +3,11 @@ package service
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"mokapi/server/cert"
 	"mokapi/smtp"
+
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type SmtpServer struct {

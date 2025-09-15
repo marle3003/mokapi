@@ -65,8 +65,8 @@ function switchTheme() {
     <section class="card" aria-label="Mail Body">
       <div class="card-body">
         <div class="float-end tools">
-          <i class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark"></i>
-          <i class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark"></i>
+          <span class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark"></span>
+          <span class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark"></span>
         </div>
         <div class="row">
           <p class="col">
@@ -92,7 +92,7 @@ function switchTheme() {
     padding: 0;
     margin: 0;
   }
-  .tools i {
+  .tools span.bi {
     cursor: pointer;
   }
 </style>

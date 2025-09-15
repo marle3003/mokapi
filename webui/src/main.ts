@@ -17,8 +17,10 @@ router.isReady().then(() =>{
 })
 
 const config =  import.meta.glob('/src/assets/docs/config.json', {as: 'raw', eager: true})
-const nav: DocConfig = JSON.parse(config['/src/assets/docs/config.json'])
+const nav: DocConfig = JSON.parse(config['/src/assets/docs/config.json']!)
 app.provide('nav', nav)
 
 const files =  import.meta.glob('/src/assets/docs/**/*.md', {as: 'raw', eager: true})
 app.provide('files', files)
+
+app.provide('canSwitchTheme', true)
