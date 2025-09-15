@@ -2,11 +2,12 @@ package store
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
 	"mokapi/kafka/produce"
 	"mokapi/runtime/monitor"
 	"mokapi/schema/json/parser"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
@@ -29,7 +30,7 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 
 			if topic == nil {
 				s := fmt.Sprintf("kafka: produce unknown topic %v", rt.Name)
-				log.Errorf(s)
+				log.Error(s)
 				resPartition.ErrorCode = kafka.UnknownTopicOrPartition
 				resPartition.ErrorMessage = s
 			} else if err := validateProducer(topic, ctx); err != nil {
