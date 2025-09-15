@@ -103,19 +103,19 @@ function hasTouchSupport() {
         <div class="row g-4 mt-4">
 
           <div class="col-md-4">
-            <span class="bi bi-envelope-paper display-5 mb-3 icon"></span>
+            <span class="bi bi-envelope-paper display-5 mb-3 d-block icon"></span>
             <h3 class="h5">Mock SMTP & IMAP</h3>
             <p class="text-muted">Simulate sending emails via SMTP and retrieving them via IMAP—all without an actual mail backend.</p>
           </div>
           
           <div class="col-md-4">
-            <span class="bi bi-journal-code display-5 mb-3 icon"></span>
+            <span class="bi bi-journal-code display-5 mb-3 d-block icon"></span>
             <h3 class="h5">Customize Email Content</h3>
             <p class="text-muted">Use Mokapi Scripts to manipulate subject lines, headers, attachments, and test for edge-case conditions.</p>
           </div>
           
           <div class="col-md-4">
-            <span class="bi bi-git display-5 mb-3 icon"></span>
+            <span class="bi bi-git display-5 mb-3 d-block icon"></span>
             <h3 class="h5">CI/CD Friendly</h3>
             <p class="text-muted">Add email validation into pipelines—automate workflows that involve email without flaky external services.</p>
           </div>

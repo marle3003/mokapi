@@ -71,39 +71,24 @@ function hasTouchSupport() {
         </div>
       </div>
     </section>
-
-    <section class="py-5 text-center">
-      <div class="container">
-        <div class="row g-4">
-          <div class="col-sm-4">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-body">
-                  <h5 class="card-title fw-bold mb-3">
-                    <span class="bi bi-rocket-takeoff me-2 icon"></span>Develop Without Waiting
-                  </h5>
-                  <p class="card-text">Build and test instantly, even when external APIs are unavailable or unpredictable.</p>
-                </div>
-            </div>
+    
+     <section class="py-5">
+      <div class="container text-center">
+        <div class="row g-4 mt-4">
+          <div class="col-md-4">
+            <span class="bi bi-rocket-takeoff display-5 mb-3 d-block icon"></span>
+            <h3 class="h5">Develop Without Waiting</h3>
+            <p class="text-muted">Build and test instantly, even when external APIs are unavailable or unpredictable.</p>
           </div>
-          <div class="col-sm-4">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-body">
-                  <h5 class="card-title fw-bold mb-3">
-                    <span class="bi bi-check2-square me-2 icon"></span>Test With Confidence
-                  </h5>
-                  <p class="card-text">Run realistic tests that match production API behavior.</p>
-                </div>
-            </div>
+          <div class="col-md-4">
+            <span class="bi bi-check2-square display-5 mb-3 d-block icon"></span>
+            <h3 class="h5">Test With Confidence</h3>
+            <p class="text-muted">Run realistic tests that match production API behavior.</p>
           </div>
-          <div class="col-sm-4">
-            <div class="card h-100 shadow-sm border-0">
-                <div class="card-body">
-                  <h5 class="card-title fw-bold mb-3">
-                    <span class="bi bi-gear me-2 icon"></span>Automate Workflows
-                  </h5>
-                  <p class="card-text">Automate API testing in your CI/CD pipelines for faster feedback.</p>
-                </div>
-            </div>
+          <div class="col-md-4">
+            <span class="bi bi-gear display-5 mb-3 d-block icon"></span>
+            <h3 class="h5">Automate Workflows</h3>
+            <p class="text-muted">Automate API testing in your CI/CD pipelines for faster feedback.</p>
           </div>
         </div>
       </div>

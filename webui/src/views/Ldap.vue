@@ -76,17 +76,17 @@ useMeta(title, description, "https://mokapi.io/ldap")
         <h2>How Mokapi Simplifies LDAP Testing</h2>
         <div class="row g-4 mt-4">
           <div class="col-md-4">
-            <span class="bi bi-person-badge display-5 mb-3 icon"></span>
+            <span class="bi bi-person-badge display-5 mb-3 d-block icon"></span>
             <h3 class="h5">Mock LDAP Bind & Search</h3>
             <p class="text-muted">Simulate authentication and directory queries with ease—no server required.</p>
           </div>
           <div class="col-md-4">
-            <span class="bi bi-database display-5 mb-3 icon"></span>
+            <span class="bi bi-database display-5 mb-3 d-block icon"></span>
             <h3 class="h5">Dynamic Directory Responses</h3>
             <p class="text-muted">Use Mokapi Scripts to return tailored responses—control status, attributes, and edge cases programmatically.</p>
           </div>
           <div class="col-md-4">
-            <span class="bi bi-git display-5 mb-3 icon"></span>
+            <span class="bi bi-git display-5 mb-3 d-block icon"></span>
             <h3 class="h5">CI/CD Friendly</h3>
             <p class="text-muted">Integrate LDAP mocks into your pipelines—test authentication flows reliably and automate your QA.</p>
           </div>

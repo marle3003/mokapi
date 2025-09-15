@@ -121,17 +121,17 @@ function getConsoleContent() {
         <h2>How Mokapi Helps You</h2>
         <div class="row g-4 mt-4">
         <div class="col-md-4">
-          <span class="bi bi-diagram-3 display-5 mb-3 icon"></span>
+          <span class="bi bi-diagram-3 display-5 mb-3 d-block icon"></span>
           <h3 class="h5">Mock APIs with OpenAPI</h3>
           <p class="text-muted">Instantly spin up REST API mocks from OpenAPI specifications with validation and auto-generated responses.</p>
         </div>
         <div class="col-md-4">
-          <span class="bi bi-lightning-charge display-5 mb-3 icon"></span>
+          <span class="bi bi-lightning-charge display-5 mb-3 d-block icon"></span>
           <h3 class="h5">Dynamic Responses with Scripts</h3>
           <p class="text-muted">Use Mokapi Scripts to simulate logic, conditional flows, or edge cases without coding a backend.</p>
         </div>
         <div class="col-md-4">
-          <span class="bi bi-git display-5 mb-3 icon"></span>
+          <span class="bi bi-git display-5 mb-3 d-block icon"></span>
           <h3 class="h5">CI/CD Ready</h3>
           <p class="text-muted">Integrate API mocks directly into your pipelines—speed up tests, reduce flakiness, and keep development moving.</p>
         </div>

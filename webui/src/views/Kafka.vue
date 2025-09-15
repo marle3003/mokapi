@@ -64,19 +64,19 @@ useMeta(title, description, "https://mokapi.io/kafka")
         <div class="row g-4 mt-4">
           
           <div class="col-md-4">
-            <span class="bi bi-kanban display-5 mb-3 icon"></span>
+            <span class="bi bi-kanban display-5 mb-3 d-block icon"></span>
             <h3 class="h5">AsyncAPI Support</h3>
             <p class="text-muted">Define Kafka topics and message structures with AsyncAPI, and validate messages in real-time.</p>
           </div>
 
           <div class="col-md-4">
-            <span class="bi bi-shield-check display-5 mb-3 icon"></span>
+            <span class="bi bi-shield-check display-5 mb-3 d-block icon"></span>
             <h3 class="h5">Schema Validation</h3>
             <p class="text-muted">Ensure message consistency by validating against JSON Schema and Avro formats.</p>
           </div>
 
           <div class="col-md-4">
-            <span class="bi bi-git display-5 mb-3 icon"></span>
+            <span class="bi bi-git display-5 mb-3 d-block icon"></span>
             <h3 class="h5">CI/CD Ready</h3>
             <p class="text-muted">Integrate Kafka mocks into your pipelines to test event-driven services reliably and accelerate your development workflow.</p>
           </div>
