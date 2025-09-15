@@ -86,13 +86,13 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
                 let icon = ''
                 switch (name) {
                     case 'tip':
-                        icon = '<i class="bi bi-lightbulb me-1"></i>'
+                        icon = '<span class="bi bi-lightbulb me-1"></span>'
                         break
                     case 'warning':
-                        icon = '<i class="bi bi-exclamation-triangle me-2"></i>'
+                        icon = '<span class="bi bi-exclamation-triangle me-2"></span>'
                         break
                     case 'info':
-                        icon = '<i class="bi bi-info-circle me-1"></i>'
+                        icon = '<span class="bi bi-info-circle me-1"></span>'
                         break
                 }
 
@@ -115,4 +115,4 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
     }
 
     md.renderer.rules.fence = fenceGroup
-};
+}

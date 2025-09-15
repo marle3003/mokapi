@@ -37,7 +37,9 @@ Imagine this workflow:
 - Our **test** (written in Playwright) acts as the foreign system:
   1. It produces a command message to `document.send-command` using Mokapi’s REST API.
   2. It waits for the backend to process the command.
-  3. It retrieves the resulting event from `document.send-event` and verifies the contents (such as `documentId` and `status`).  
+  3. It retrieves the resulting event from `document.send-event` and verifies the contents (such as `documentId` and `status`).
+
+<img src="/kafka-workflow.png" alt="Sequence diagram of Kafka workflow testing with Mokapi, Playwright, and a backend service" title="Kafka workflow testing with Mokapi and Playwright">
 
 This mirrors what happens in production: a message-driven workflow across multiple services. The only difference is
 that for testing, Kafka itself is mocked by Mokapi.

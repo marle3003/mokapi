@@ -2,11 +2,12 @@ package service
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/mqtt"
 	"mokapi/mqtt/mqtttest"
 	"mokapi/try"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestMqttBroker(t *testing.T) {
@@ -16,7 +17,7 @@ func TestMqttBroker(t *testing.T) {
 	called := false
 	handler := mqtt.HandlerFunc(func(rw mqtt.MessageWriter, req *mqtt.Message) {
 		called = true
-		rw.Write(&mqtt.Message{
+		_ = rw.Write(&mqtt.Message{
 			Header: &mqtt.Header{
 				Type: mqtt.CONNACK,
 			},
@@ -48,4 +49,5 @@ func TestMqttBroker(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.True(t, called, "handler should be called")
+	require.Equal(t, fmt.Sprintf(":%v", port), b.Addr())
 }

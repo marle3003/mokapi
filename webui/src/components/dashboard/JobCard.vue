@@ -113,8 +113,8 @@ function getStatus(data: JobExecution) {
         <table class="table dataTable events" data-testid="requests">
             <thead>
                 <tr>
-                    <th scope="col" class="text-left" style="width: 30px;"></th>
-                    <th scope="col" class="text-left" style="width: 30px;">Status</th>
+                    <th scope="col" class="text-left" style="width: 15px;"></th>
+                    <th scope="col" class="text-left" style="width: 80px;">Status</th>
                     <th scope="col" class="text-left" style="width: 50%">Name</th>
                     <th scope="col" class="text-left">Schedule</th>
                     <th scope="col" class="text-center" style="width:15%">Time</th>
@@ -124,7 +124,7 @@ function getStatus(data: JobExecution) {
             <tbody>
                 <template v-for="(event, index) of events" >
                     <tr data-bs-toggle="collapse" :data-bs-target="'#event_'+index" aria-expanded="false" :set="data = eventData(event)" >
-                        <td><i class="bi bi-chevron-right"></i><i class="bi bi-chevron-down"></i></td>
+                        <td style="padding-left: 5px;"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></td>
                         <td :set="status = getStatus(data!)">
                             <span class="badge bg-danger me-2" v-if="status === 'error'">Error</span>
                             <span class="badge bg-warning me-2" v-else-if="status === 'warning'">Warning</span>
@@ -167,10 +167,10 @@ function getStatus(data: JobExecution) {
                                 <ul class="list-group">
                                     <li v-for="log in data.logs" class="list-group-item">
                                         <span class="text-body log">
-                                            <i class="bi bi-exclamation-triangle-fill text-warning" v-if="log.level == 'warn'"></i>
-                                            <i class="bi bi-x-circle-fill text-danger" v-else-if="log.level == 'error'"></i>
-                                            <i class="bi bi-bug-fill text-info" v-else-if="log.level == 'debug'"></i>
-                                            <i class="bi bi-chat-dots text-primary" v-else></i>
+                                            <span class="bi bi-exclamation-triangle-fill text-warning" v-if="log.level == 'warn'"></span>
+                                            <span class="bi bi-x-circle-fill text-danger" v-else-if="log.level == 'error'"></span>
+                                            <span class="bi bi-bug-fill text-info" v-else-if="log.level == 'debug'"></span>
+                                            <span class="bi bi-chat-dots text-primary" v-else></span>
                                             <span class="ms-2" v-html="parseUrls(log.message)"></span>
                                         </span>
                                     </li>
@@ -184,7 +184,7 @@ function getStatus(data: JobExecution) {
                                 <h5>
                                     Tags
                                     <a href="/docs/javascript-api/mokapi/eventhandler/scheduledeventargs" class="ms-1" title="Learn how to define tags for your job" rel="noopener">
-                                        <i class="bi bi-question-circle" aria-hidden="true"></i>
+                                        <span class="bi bi-question-circle" aria-hidden="true"></span>
                                     </a>
                                 </h5>
                                 <table class="table dataTable">
@@ -243,7 +243,7 @@ tr[aria-expanded=false] .bi-chevron-down{
 .log {
     font-family: 'Fira Code', monospace;
 }
-h5 i {
+h5 span.bi {
     font-size: 0.8rem;
     vertical-align: top;
 }

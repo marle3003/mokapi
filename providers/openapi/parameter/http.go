@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/providers/openapi/schema"
 	"mokapi/schema/json/parser"
 	"net/http"
 	"regexp"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const requestKey = "requestParameters"

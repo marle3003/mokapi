@@ -16,7 +16,7 @@ var (
 type Version struct {
 	Major int
 	Minor int
-	Build int
+	Patch int
 }
 
 func New(s string) Version {
@@ -26,11 +26,11 @@ func New(s string) Version {
 }
 
 func (v *Version) IsEqual(v2 Version) bool {
-	return v.Major == v2.Major && v.Minor == v2.Minor && v.Build == v2.Build
+	return v.Major == v2.Major && v.Minor == v2.Minor && v.Patch == v2.Patch
 }
 
 func (v *Version) IsLower(v2 Version) bool {
-	return v.Major < v2.Major || v.Minor < v2.Minor || v.Build < v2.Build
+	return v.Major < v2.Major || v.Minor < v2.Minor || v.Patch < v2.Patch
 }
 
 func (v *Version) IsSupported(versions ...Version) bool {
@@ -47,21 +47,16 @@ func (v *Version) IsEmpty() bool {
 }
 
 func (v *Version) String() string {
-	return fmt.Sprintf("%v.%v.%v", v.Major, v.Minor, v.Build)
+	return fmt.Sprintf("%v.%v.%v", v.Major, v.Minor, v.Patch)
 }
 
 func (v *Version) parse(s string) {
 	numbers := strings.Split(s, ".")
-	if len(numbers) == 0 {
+	i, err := strconv.Atoi(numbers[0])
+	if err != nil {
 		return
 	}
-	if len(numbers) > 0 {
-		i, err := strconv.Atoi(numbers[0])
-		if err != nil {
-			return
-		}
-		v.Major = i
-	}
+	v.Major = i
 	if len(numbers) > 1 {
 		i, err := strconv.Atoi(numbers[1])
 		if err != nil {
@@ -74,7 +69,7 @@ func (v *Version) parse(s string) {
 		if err != nil {
 			return
 		}
-		v.Build = i
+		v.Patch = i
 	}
 }
 

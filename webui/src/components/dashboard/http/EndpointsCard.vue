@@ -83,6 +83,14 @@ function operationOrderValue(operation: HttpOperation): number {
         default: return 20
     }
 }
+const hasDeprecated = computed(() => {
+    for (const p of paths.value) {
+        if (allOperationsDeprecated(p)) {
+            return true;
+        }
+    }
+    return false;
+})
 </script>
 
 <template>
@@ -92,17 +100,20 @@ function operationOrderValue(operation: HttpOperation): number {
             <table class="table dataTable selectable" data-testid="endpoints">
                 <thead>
                     <tr>
+                        <th v-if="hasDeprecated" scope="col" class="text-center" style="width: 5px"></th>
                         <th scope="col" class="text-left">Path</th>
-                        <th scope="col" class="text-left">Summary</th>
-                        <th scope="col" class="text-left">Operations</th>
-                        <th scope="col" class="text-center" style="width: 15%">Last Request</th>
+                        <th scope="col" class="text-left" style="width: 20%;">Summary</th>
+                        <th scope="col" class="text-left" style="width: 10%">Operations</th>
+                        <th scope="col" class="text-center" style="width: 10%">Last Request</th>
                         <th scope="col" class="text-center" style="width: 10%">Requests / Errors</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="path in paths" :key="path.path" @click="goToPath(path)">
+                        <td style="padding-left:0;">
+                            <span class="bi bi-exclamation-triangle-fill yellow pe-1" v-if="allOperationsDeprecated(path)"></span>
+                        </td>
                         <td>
-                            <i class="bi bi-exclamation-triangle-fill yellow pe-1" v-if="allOperationsDeprecated(path)"></i>
                             {{ path.path }}
                         </td>
                         <td>
@@ -111,7 +122,7 @@ function operationOrderValue(operation: HttpOperation): number {
                         </td>
                         <td>
                             <span v-for="operation in operations(path)" key="operation.method" :title="operation.summary" class="badge operation me-1" :class="operation.method" @click.stop="goToOperation(path, operation)">
-                                {{ operation.method.toUpperCase() }} <i class="bi bi-exclamation-triangle-fill yellow" style="vertical-align: middle;" v-if="operation.deprecated"></i>
+                                {{ operation.method.toUpperCase() }} <span class="bi bi-exclamation-triangle-fill yellow" style="vertical-align: middle;" v-if="operation.deprecated"></span>
                             </span>
                         </td>
                         <td class="text-center">{{ lastRequest(path) }}</td>

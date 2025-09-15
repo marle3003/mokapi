@@ -1,6 +1,7 @@
 package parameter_test
 
 import (
+	"context"
 	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema/schematest"
 	"net/http"
@@ -266,6 +267,43 @@ func TestParsePath(t *testing.T) {
 			test: func(t *testing.T, result parameter.RequestParameters, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex"}, result[parameter.Path]["foo"].Value)
+			},
+		},
+		{
+			name: "path parameter and base path",
+			param: &parameter.Parameter{
+				Name:    "foo",
+				Type:    parameter.Path,
+				Schema:  schematest.New("string"),
+				Style:   "",
+				Explode: explode(false),
+			},
+			route: "/{foo}",
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "https://foo.bar/mokapi/foo/bar", nil)
+				return r.WithContext(context.WithValue(r.Context(), "servicePath", "/mokapi/foo"))
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "bar", result[parameter.Path]["foo"].Value)
+			},
+		},
+		{
+			name: "path parameter and trailing slash in request",
+			param: &parameter.Parameter{
+				Name:    "foo",
+				Type:    parameter.Path,
+				Schema:  schematest.New("string"),
+				Style:   "",
+				Explode: explode(false),
+			},
+			route: "/{foo}",
+			request: func() *http.Request {
+				return httptest.NewRequest(http.MethodGet, "https://foo.bar/bar/", nil)
+			},
+			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "bar", result[parameter.Path]["foo"].Value)
 			},
 		},
 	}

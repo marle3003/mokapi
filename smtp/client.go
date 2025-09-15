@@ -121,7 +121,7 @@ func (c *Client) Write(line string, expectCode int) ([]string, error) {
 		return nil, err
 	}
 
-	err = c.conn.tpc.PrintfLine(line)
+	err = c.conn.tpc.PrintfLine("%s", line)
 	if err != nil {
 		return nil, err
 	}

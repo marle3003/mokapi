@@ -6,7 +6,7 @@ test.describe('Visit Swagger Petstore', () => {
 
     const service = {
         paths: [
-            { path: '/pet', summary: 'Everything about your Pets', method: 'POST', lastRequest: formatTimestamp(1652235690), requests: '2 / 1' },
+            { path: '/pet', summary: 'Everything about your Pets', method: 'POST', lastRequest: formatTimestamp(1652235690), requests: '2 / 1' , hasWarning: true},
             { path: '/pet/{petId}', summary: '', method: 'GET POST', lastRequest: '-', requests: '0 / 0' },
             { path: '/pet/findByStatus', summary: 'Finds Pets by status', method: 'GET', lastRequest: formatTimestamp(1652237690), requests: '2 / 0' }
         ],
@@ -37,11 +37,14 @@ test.describe('Visit Swagger Petstore', () => {
         const endpoints = http.endpoints.locator('tbody tr')
         for (const [i, path] of service.paths.entries()) {
             const cells = endpoints.nth(i).getByRole('cell')
-            await expect(cells.nth(0)).toHaveText(path.path)
-            await expect(cells.nth(1)).toHaveText(path.summary)
-            await expect(cells.nth(2)).toHaveText(path.method, {ignoreCase: false})
-            await expect(cells.nth(3)).toHaveText(path.lastRequest)
-            await expect(cells.nth(4)).toHaveText(path.requests)
+            if (path.hasWarning) {
+                await expect(cells.nth(0).locator('span.bi')).toBeVisible()
+            }
+            await expect(cells.nth(1)).toHaveText(path.path)
+            await expect(cells.nth(2)).toHaveText(path.summary)
+            await expect(cells.nth(3)).toHaveText(path.method, {ignoreCase: false})
+            await expect(cells.nth(4)).toHaveText(path.lastRequest)
+            await expect(cells.nth(5)).toHaveText(path.requests)
         }
 
         // requests

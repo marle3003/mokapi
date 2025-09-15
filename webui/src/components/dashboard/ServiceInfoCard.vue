@@ -36,7 +36,7 @@ const developer = computed(() => {
                             </li>
                             <li>
                                 <a v-if="service.contact.email" :href="'mailto:'+service.contact.email" :title="'Send email to '+developer" data-testid="service-mail">
-                                    <i class="bi bi-envelope"></i>
+                                    <span class="bi bi-envelope"></span>
                                 </a>
                             </li>
                         </ul>
@@ -64,7 +64,7 @@ ul.contact li {
     display: inline;
     padding-right: 0.5em;
 }
-ul.contact li i {
+ul.contact li span.bi {
     vertical-align:middle;
 }
 </style>

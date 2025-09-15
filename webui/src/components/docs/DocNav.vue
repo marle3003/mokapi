@@ -74,8 +74,8 @@ function isExpanded(item: DocEntry | string) {
                   {{ k1 }}
                 </button>
                 <button type="button" class="btn btn-link" :class="isActive(k1) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k1)" :aria-expanded="isActive(k1) || isExpanded(level1)" :aria-controls="getId(k1)">
-                  <i class="bi bi-caret-up-fill"></i> 
-                  <i class="bi bi-caret-down-fill"></i> 
+                  <span class="bi bi-caret-up-fill"></span> 
+                  <span class="bi bi-caret-down-fill"></span> 
                 </button>
               </div>
 
@@ -90,8 +90,8 @@ function isExpanded(item: DocEntry | string) {
                                     {{ k2 }}
                                 </button>
                                 <button type="button" class="btn btn-link" :class="isActive(k1, k2) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k2)" :aria-expanded="isActive(k1, k2)" :aria-controls="getId(k2)">
-                                    <i class="bi bi-caret-up-fill"></i> 
-                                    <i class="bi bi-caret-down-fill"></i> 
+                                    <span class="bi bi-caret-up-fill"></span> 
+                                    <span class="bi bi-caret-down-fill"></span> 
                                 </button>
                               </div>
                             

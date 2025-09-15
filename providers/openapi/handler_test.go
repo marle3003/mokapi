@@ -4,7 +4,6 @@ import (
 	"context"
 	"io"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/script"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/openapi"
@@ -62,6 +61,26 @@ func TestResolveEndpoint(t *testing.T) {
 				h(rr, r)
 				require.Equal(t, 200, rr.Code)
 				require.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+			},
+		},
+		{
+			name: "base path with parameters",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				c.Servers[0].Url = "http://localhost/root"
+				op := openapitest.NewOperation(
+					openapitest.WithOperationParam("bar", true),
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json",
+							openapitest.NewContent()),
+					),
+				)
+				openapitest.AppendPath("/foo/{bar}", c, openapitest.WithOperation("get", op))
+
+				r := httptest.NewRequest("get", "http://localhost/root/foo/bar", nil)
+				r = r.WithContext(context.WithValue(r.Context(), "servicePath", "/root"))
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code)
 			},
 		},
 		{
@@ -690,7 +709,13 @@ func TestResolveEndpoint(t *testing.T) {
 
 			data.test(t, func(rw http.ResponseWriter, r *http.Request) {
 				h := openapi.NewHandler(config, &engine{}, e)
-				h.ServeHTTP(rw, r)
+				err := h.ServeHTTP(rw, r)
+				if err != nil {
+					for k, v := range err.Header {
+						rw.Header()[k] = v
+					}
+					http.Error(rw, err.Message, err.StatusCode)
+				}
 			}, config)
 		})
 
@@ -834,6 +859,31 @@ func TestHandler_Event(t *testing.T) {
 				return nil
 			},
 		},
+		{
+			name: "path parameter with trailing slash in route",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json", openapitest.NewContent()),
+					))
+				openapitest.AppendPath("/foo/{id}/", c,
+					openapitest.WithOperation(http.MethodPost, op),
+					openapitest.WithPathParam("id", openapitest.WithParamSchema(schematest.New("string"))),
+				)
+				r := httptest.NewRequest("post", "http://localhost/foo/123", strings.NewReader(`{ "foo": "bar" }`))
+				r.Header.Set("Content-Type", "application/json")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, `"123"`, rr.Body.String())
+			},
+			event: func(event string, args ...interface{}) []*common.Action {
+				req := args[0].(*common.EventRequest)
+				res := args[1].(*common.EventResponse)
+				res.Data = req.Path["id"]
+				return nil
+			},
+		},
 	}
 
 	t.Parallel()
@@ -851,7 +901,13 @@ func TestHandler_Event(t *testing.T) {
 
 			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
 				h := openapi.NewHandler(config, &engine{emit: tc.event}, &events.StoreManager{})
-				h.ServeHTTP(rw, r)
+				err := h.ServeHTTP(rw, r)
+				if err != nil {
+					for k, v := range err.Header {
+						rw.Header()[k] = v
+					}
+					http.Error(rw, err.Message, err.StatusCode)
+				}
 			}, config)
 		})
 
@@ -902,7 +958,13 @@ func TestHandler_Log(t *testing.T) {
 
 			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
 				h := openapi.NewHandler(config, &engine{}, m)
-				h.ServeHTTP(rw, r)
+				err := h.ServeHTTP(rw, r)
+				if err != nil {
+					for k, v := range err.Header {
+						rw.Header()[k] = v
+					}
+					http.Error(rw, err.Message, err.StatusCode)
+				}
 			}, config, m)
 		})
 
@@ -943,7 +1005,8 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 
 				h := func(rw http.ResponseWriter, r *http.Request) {
 					h := openapi.NewHandler(config, e, &events.StoreManager{})
-					h.ServeHTTP(rw, r)
+					err = h.ServeHTTP(rw, r)
+					require.Nil(t, err)
 				}
 
 				op := openapitest.NewOperation(
@@ -1037,7 +1100,7 @@ func newScript(path, src string) dynamic.ConfigEvent {
 	return dynamic.ConfigEvent{Config: &dynamic.Config{
 		Info: dynamic.ConfigInfo{Url: mustParse(path)},
 		Raw:  []byte(src),
-		Data: &script.Script{Code: src, Filename: path},
+		Data: src,
 	}}
 }
 

@@ -171,7 +171,7 @@ function setType(s: string) {
                         <div class="card-body">
                             <div class="card-tag" :class="item.tag">{{ item.tag }}</div>
                             <h3 class="card-title">
-                                <i class="bi me-2 icon " :class="item.meta.icon" style="font-size:20px;" v-if="item.meta.icon"></i>
+                                <span class="bi me-2 icon " :class="item.meta.icon" style="font-size:20px;" v-if="item.meta.icon"></span>
                                 <span>{{ item.meta.title }}</span>
                             </h3>
                             <div class="card-text">{{ item.meta.description }}</div>

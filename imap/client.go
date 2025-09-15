@@ -122,7 +122,7 @@ func (c *Client) Capability() ([]string, error) {
 
 func (c *Client) SendRawLines(lines []string) (string, error) {
 	for _, line := range lines {
-		err := c.tpc.PrintfLine(line)
+		err := c.tpc.PrintfLine("%s", line)
 		if err != nil {
 			return "", err
 		}
@@ -153,7 +153,7 @@ func (c *Client) Send(line string) ([]string, error) {
 }
 
 func (c *Client) SendRaw(line string) (string, error) {
-	err := c.tpc.PrintfLine(line)
+	err := c.tpc.PrintfLine("%s", line)
 	if err != nil {
 		return "", err
 	}
@@ -202,7 +202,7 @@ func (c *Client) PlainAuth(identity, username, password string) error {
 		return err
 	}
 	if !strings.Contains(res, "OK") {
-		return fmt.Errorf(res)
+		return fmt.Errorf("%s", res)
 	}
 	return nil
 }

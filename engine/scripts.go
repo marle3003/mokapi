@@ -3,7 +3,6 @@ package engine
 import (
 	"fmt"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/script"
 	"mokapi/config/static"
 	"mokapi/engine/common"
 	"mokapi/js"
@@ -30,13 +29,14 @@ func NewDefaultScriptLoader(config *static.Config) ScriptLoader {
 }
 
 func (l *DefaultScriptLoader) Load(file *dynamic.Config, host common.Host) (common.Script, error) {
-	s := file.Data.(*script.Script)
-	switch filepath.Ext(s.Filename) {
+	s := file.Data.(string)
+	filename := file.Info.Path()
+	switch filepath.Ext(filename) {
 	case ".js", ".cjs", ".mjs", ".ts":
 		return js.New(file, host, l.config.Js)
 	case ".lua":
-		return lua.New(getScriptPath(file.Info.Url), s.Code, host)
+		return lua.New(getScriptPath(file.Info.Url), s, host)
 	default:
-		return nil, fmt.Errorf("unsupported script %v", s.Filename)
+		return nil, fmt.Errorf("unsupported script %v", filename)
 	}
 }

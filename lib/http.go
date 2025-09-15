@@ -10,7 +10,7 @@ func GetUrl(r *http.Request) string {
 		return r.URL.String()
 	}
 	var sb strings.Builder
-	if strings.HasPrefix(r.Proto, "HTTPS") {
+	if r.TLS != nil {
 		sb.WriteString("https://")
 	} else {
 		sb.WriteString("http://")

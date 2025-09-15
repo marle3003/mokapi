@@ -48,7 +48,7 @@ const operationRoute = computed(() => {
                 </div>
                 <div class="col" v-if="eventData.deprecated">
                     <p class="label">Warning</p>
-                    <p><i class="bi bi-exclamation-triangle-fill yellow"></i> Deprecated</p>
+                    <p><span class="bi bi-exclamation-triangle-fill yellow"></span> Deprecated</p>
                 </div>
             </div>
             <div class="row">
@@ -64,9 +64,9 @@ const operationRoute = computed(() => {
                     <p class="label">Duration</p>
                     <p>{{ duration(eventData.duration) }}</p>
                 </div>
-                <div class="col">
+                <div class="col" v-if="operationRoute">
                     <p class="label">Specification</p>
-                    <router-link v-if="operationRoute" :to="operationRoute">Operation</router-link>
+                    <router-link :to="operationRoute">Operation</router-link>
                 </div>
             </div>
             <div class="row">

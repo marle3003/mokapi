@@ -5,12 +5,13 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type TestResponse struct {
@@ -28,20 +29,26 @@ func GetRequest(t *testing.T, url string, headers map[string]string, conditions 
 		req.Header.Set(k, v)
 	}
 
-	client := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{
-				InsecureSkipVerify: true,
-				VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
-					for _, rawCert := range rawCerts {
-						c, _ := x509.ParseCertificate(rawCert)
-						if c.Issuer.CommonName == "Mokapi MockServer" {
-							return nil
-						}
-					}
-					return fmt.Errorf("unknown certificate")
-				}},
-		}}
+	client := newClient()
+
+	res, err := client.Do(req)
+	require.NoError(t, err)
+
+	tr := &TestResponse{res: res}
+	for _, cond := range conditions {
+		cond(t, tr)
+	}
+}
+
+func Request(t *testing.T, method, url string, headers map[string]string, body io.Reader, conditions ...ResponseCondition) {
+	req, err := http.NewRequest(method, url, body)
+	require.NoError(t, err)
+
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
+
+	client := newClient()
 
 	res, err := client.Do(req)
 	require.NoError(t, err)
@@ -158,4 +165,22 @@ func (tr *TestResponse) GetBody() []byte {
 		return []byte(err.Error())
 	}
 	return tr.body
+}
+
+func newClient() *http.Client {
+	return &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+				VerifyPeerCertificate: func(rawCerts [][]byte, verifiedChains [][]*x509.Certificate) error {
+					for _, rawCert := range rawCerts {
+						c, _ := x509.ParseCertificate(rawCert)
+						if c.Issuer.CommonName == "Mokapi MockServer" {
+							return nil
+						}
+					}
+					return fmt.Errorf("unknown certificate")
+				}},
+		},
+	}
 }

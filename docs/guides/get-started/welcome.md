@@ -27,14 +27,21 @@ cards:
 
 Welcome to Mokapi! Mokapi is a powerful, flexible platform for building, testing, and monitoring API-driven applications. This guide will help you quickly understand how to get started with Mokapi and introduce you to its key features.
 
-## What is Mokapi
+## Build Better Software with Mokapi
 
-Mokapi is an API testing tool designed to integrate with your existing systems. With Mokapi, you can create mock APIs based on your OpenAPI or AsyncAPI specifications, simulate real-world interactions, and validate your APIs in an easy-to-use, intuitive environment.
+Modern applications rely on dozens of APIs—many of them outside your control. That creates friction: slow testing, fragile pipelines, and blocked teams.
 
-- <p><strong>API Mocking:</strong><br />Mock APIs based on your specifications to simulate endpoints and responses.</p>
-- <p><strong>Schema Validation:</strong><br />Ensure your APIs conform to predefined schemas to avoid costly integration errors.</p>
-- <p><strong>Interactive Dashboard:</strong><br />Analyze and inspect all requests and responses in the dashboard to gather insights on how your mocked APIs are used.</p>
-- <p><strong>Testing & Debugging:</strong><br />Run tests against your mocked APIs and monitor their behavior.</p>
+Mokapi was created to remove those barriers.
+It empowers developers to mock, simulate, and explore APIs with ease, so you can:
+
+- **Develop without waiting** for external systems to be ready.
+- **Test with confidence** against realistic API behavior.
+- **Automate your workflows with CI/CD pipelines that stay reliable.**
+- **Stay future-proof** by safely integrating with tools like Dependabot or Renovate.
+
+Mokapi is more than just a mocking tool—it’s a way to unlock faster feedback, smoother collaboration, and higher quality software.
+
+> Because building and testing great software shouldn’t depend on systems you can’t control.
 
 ## Why Choose Mokapi?
 

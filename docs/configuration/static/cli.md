@@ -74,7 +74,7 @@ The parameter `--configfile` provides the ability to define all parameters in a 
 ```bash
 mokapi --providers-file file:///tmp/file.json
 mokapi --providers-git-rootCaCert=/path/to/caCert.pem
-mokapi ---cli-input=/path/to/config.json
+mokapi --cli-input=/path/to/config.json
 ```
 
 ## Positional Arguments

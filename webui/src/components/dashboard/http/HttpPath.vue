@@ -38,7 +38,7 @@ onUnmounted(() => {
                         <div class="col-6 header mb-3">
                             <p class="label">Path</p>
                             <p data-testid="path">
-                                <i class="bi bi-exclamation-triangle-fill yellow pe-2" v-if="allOperationsDeprecated()"></i>
+                                <span class="bi bi-exclamation-triangle-fill yellow pe-2" v-if="allOperationsDeprecated()"></span>
                                 {{ path.path }}
                             </p>
                         </div>

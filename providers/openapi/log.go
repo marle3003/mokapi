@@ -51,7 +51,7 @@ func NewLogEventContext(r *http.Request, deprecated bool, eh events.Handler, tra
 		Request: &HttpRequestLog{
 			Method:      r.Method,
 			Url:         lib.GetUrl(r),
-			ContentType: r.Header.Get("content-type"),
+			ContentType: r.Header.Get("Content-Type"),
 		},
 		Response:   &HttpResponseLog{Headers: make(map[string]string)},
 		Deprecated: deprecated,

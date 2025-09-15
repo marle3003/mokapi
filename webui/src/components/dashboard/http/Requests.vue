@@ -76,8 +76,8 @@ onUnmounted(() => {
                 </thead>
                 <tbody>
                     <tr v-for="event in events!" :key="event.id" @click="goToRequest(event)">
-                        <td v-if="hasDeprecatedRequests">
-                            <i class="bi bi-exclamation-triangle-fill yellow warning" v-if="eventData(event).deprecated" title="deprecated"></i>
+                        <td v-if="hasDeprecatedRequests" style="padding-left:0;">
+                            <span class="bi bi-exclamation-triangle-fill yellow warning" v-if="eventData(event).deprecated" title="deprecated"></span>
                         </td>
                         <td class="text-left">
                             <span class="badge operation" :class="eventData(event).request.method.toLowerCase()">

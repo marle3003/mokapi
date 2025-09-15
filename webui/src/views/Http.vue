@@ -11,11 +11,9 @@ const script = `import { on } from 'mokapi'
 export default function() {
     on('http', function(request, response) {
         if (request.operationId === 'time') {
-            response.data = new Date().toISOString()
-            return true
+            response.data = new Date().toISOString();
         }
-        return false
-    })
+    });
 }
 `
 function time(d: dayjs.Dayjs) {
@@ -40,8 +38,8 @@ INFO[${time(dayjs().second(1))}] adding service Swagger Petstore - OpenAPI 3.0 o
 INFO[${time(dayjs().second(2))}] Processing http request GET http://localhost/api/v3/pet/4
 `
 
-const title = `Mock REST APIs with OpenAPI | Mokapi API Prototyping Tool`
-const description = `Develop and test faster with powerful, customizable REST API mocks — no more waiting for real APIs!`
+const title = `HTTP & OpenAPI Mocking Made Simple`
+const description = `Simulate HTTP and REST APIs from OpenAPI specs. Speed up development, automate tests, and reduce dependencies with Mokapi.`
 useMeta(title, description, "https://mokapi.io/http")
 
 const dialog = ref<Modal>()
@@ -70,21 +68,25 @@ function getConsoleContent() {
 
 <template>
   <main class="home">
-    <section>
+    <section class="py-5">
       <div class="container">
         <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6 px-0">
-            <h1>Bring Your REST API Specs to Life</h1>
-            <div class="badge-list mb-3">
-              <span class="badge">HTTP</span>
+            <h1>Mock and Simulate HTTP & OpenAPI APIs with Mokapi</h1>
+            <div class="badge-list mb-3" role="navigation" aria-label="API type navigation">
+              <span class="badge bg-primary" aria-current="page" aria-label="You are currently on the HTTP API page">HTTP</span>
+              <a href="/kafka"><span class="badge bg-secondary" aria-label="Go to Kafka API page">Kafka</span></a>
+              <a href="/ldap"><span class="badge bg-secondary" aria-label="Go to LDAP API page">LDAP</span></a>
+              <a href="/mail"><span class="badge bg-secondary" aria-label="Go to Email API page">Email</span></a>
             </div>
-            <p class="description">{{ description }}</p>
+            <p class="lead description">Create realistic HTTP mocks from your <strong>OpenAPI specifications</strong>. 
+              Develop and test without waiting for real backends—fast, reliable, and under your control.</p>
             <p class="d-none d-md-block">
-              <router-link :to="{ path: '/docs/guides' }">
-                <button type="button" class="btn btn-outline-primary">Guides</button>
+              <router-link :to="{ path: '/docs/guides/http' }">
+                <button type="button" class="btn btn-outline-primary">Get Started</button>
               </router-link>
               <router-link :to="{ path: '/docs/resources/tutorials/get-started-with-rest-api' }">
-                <button type="button" class="btn btn-outline-primary">Resources</button>
+                <button type="button" class="btn btn-outline-primary">Learn More</button>
               </router-link>
             </p>
           </div>
@@ -93,104 +95,168 @@ function getConsoleContent() {
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
-                <router-link :to="{ path: '/docs/guides' }">
-                  <button type="button" class="btn btn-outline-primary">Guides</button>
+                <router-link :to="{ path: '/docs/guides/http' }">
+                  <button type="button" class="btn btn-outline-primary">Get Started</button>
                 </router-link>
                 <router-link :to="{ path: '/docs/resources' }">
-                  <button type="button" class="btn btn-outline-primary">Resources</button>
+                  <button type="button" class="btn btn-outline-primary">Learn More</button>
                 </router-link>
               </p>
           </div>
         </div>
       </div>
     </section>
-    <section>
+
+    <section class="py-5 text-center">
       <div class="container">
+        <h2>Why Mock HTTP and REST APIs?</h2>
+        <p class="lead mb-0">
+          Modern applications rely on many external services. With Mokapi, you can simulate HTTP endpoints and OpenAPI-defined APIs, so your development and testing are never blocked by missing or unstable backends.
+        </p>
+      </div>
+    </section>
+
+    <section class="py-5">
+      <div class="container text-center">
+        <h2>How Mokapi Helps You</h2>
+        <div class="row g-4 mt-4">
+        <div class="col-md-4">
+          <span class="bi bi-diagram-3 display-5 mb-3 icon"></span>
+          <h3 class="h5">Mock APIs with OpenAPI</h3>
+          <p class="text-muted">Instantly spin up REST API mocks from OpenAPI specifications with validation and auto-generated responses.</p>
+        </div>
+        <div class="col-md-4">
+          <span class="bi bi-lightning-charge display-5 mb-3 icon"></span>
+          <h3 class="h5">Dynamic Responses with Scripts</h3>
+          <p class="text-muted">Use Mokapi Scripts to simulate logic, conditional flows, or edge cases without coding a backend.</p>
+        </div>
+        <div class="col-md-4">
+          <span class="bi bi-git display-5 mb-3 icon"></span>
+          <h3 class="h5">CI/CD Ready</h3>
+          <p class="text-muted">Integrate API mocks directly into your pipelines—speed up tests, reduce flakiness, and keep development moving.</p>
+        </div>
+      </div>
+      </div>
+    </section>
+
+    <section class="py-5">
+      <div class="container">
+        <h2>Explore Mokapi Features</h2>
         <div class="row row-cols-1 row-cols-md-2 g-4">
           <div class="col">
-            <div class="card h-100 position-relative">
-                <div class="card-body">
-                  <h2 class="card-title align-middle"><i class="bi bi-code-slash me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Configuration as Code</span></h2>
-                  <p class="card-text pb-4">Mock any HTTP API using OpenAPI, ensuring consistency, version control, and seamless automation.</p>
-                  <a href="/docs/configuration" class="card-link position-absolute" style="bottom: 15px;">Overview</a>
-                </div>
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-body">
+                <h2 class="card-title align-middle">
+                  <span class="bi bi-code-slash me-2 icon"></span>
+                  Configuration as Code
+                </h2>
+                <p class="card-text pb-4">Define HTTP mocks with OpenAPI for consistency, version control, and seamless automation.</p>
+                <a href="/docs/configuration" class="card-link position-absolute" style="bottom:15px;">Overview</a>
+              </div>
             </div>
           </div>
           <div class="col">
-            <div class="card h-100">
-                <div class="card-body">
-                  <h2 class="card-title align-middle"><i class="bi bi-arrow-repeat me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Test Without Dependencies</span></h2>
-                  <p class="card-text pb-4">Focus on testing your system while simulating external dependencies, enabling faster, more reliable test scenarios.</p>
-                  <a href="/docs/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="card-link position-absolute" style="bottom: 15px;">Run Mokapi in GitHub Actions</a>
-                </div>
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-body">
+                <h2 class="card-title align-middle">
+                  <span class="bi bi-arrow-repeat me-2 icon"></span>
+                  <span class="align-middle d-inline-block">Test Without Dependencies</span>
+                </h2>
+                <p class="card-text pb-4">Run faster, more reliable tests by simulating external dependencies in CI/CD pipelines.</p>
+                <a href="/docs/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="card-link position-absolute" style="bottom:15px;">Run Mokapi in GitHub Actions</a>
+              </div>
             </div>
           </div>
           <div class="col">
-            <div class="card h-100">
-                <div class="card-body">
-                  <h2 class="card-title align-middle"><i class="bi bi-box me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Realistic Test Data</span></h2>
-                  <p class="card-text pb-4">Easily intercept HTTP requests with Mokapi Scripts to simulate latencies, timeouts, and edge cases, optimizing your workflow for real-world scenarios.</p>
-                  <a href="/docs/guides/get-started/test-data" class="card-link position-absolute" style="bottom: 15px;">Start Mocking with Real Data</a>
-                </div>
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-body">
+                <h2 class="card-title align-middle">
+                  <span class="bi bi-box me-2 icon"></span>
+                  Realistic Test Data
+                </h2>
+                <p class="card-text pb-4">Intercept HTTP requests with Mokapi Scripts to simulate delays, failures, and edge cases.</p>
+                <a href="/docs/guides/get-started/test-data" class="card-link position-absolute" style="bottom:15px;">Start Mocking with Real Data</a>
+              </div>
             </div>
           </div>
           <div class="col">
-            <div class="card h-100">
-                <div class="card-body">
-                  <h2 class="card-title align-middle"><i class="bi bi-heart-pulse me-2 align-middle d-inline-block icon" style="font-size:24px"></i><span class="align-middle d-inline-block" >Debugging & Monitoring</span></h2>
-                  <p class="card-text pb-4">Inspect and analyze every request and response. Validate data against the specification and generate random data to enhance your testing process.</p>
-                  <a href="/docs/guides/get-started/dashboard" class="card-link position-absolute" style="bottom: 15px;">Explore Mokapi Dashboard</a>
-                </div>
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-body">
+                <h2 class="card-title align-middle">
+                  <span class="bi bi-heart-pulse me-2 icon"></span>
+                  Debugging &amp; Monitoring
+                </h2>
+                <p class="card-text pb-4">Inspect every request and response in the Mokapi Dashboard, validate against specs, and generate mock data automatically.</p>
+                <a href="/docs/guides/get-started/dashboard" class="card-link position-absolute" style="bottom:15px;">Explore Mokapi Dashboard</a>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </section>
-    <section class="d-none d-md-block">
-      <div class="console-container">
-        <div class="terminal-header">
-          <span class="buttons">
-              <span class="red"></span>
-              <span class="yellow"></span>
-              <span class="green"></span>
-          </span>
-          <span class="terminal-title">Mokapi Terminal</span>
+
+    <section class="py-5">
+      <div class="container text-center mb-5">
+        <div class="row">
+          <h2>See Mokapi in Action</h2>
+          <p class="lead mb-4">Go beyond static mocks—customize, debug, and explore your APIs with powerful built-in tools.</p>
         </div>
-        <div class="terminal-body" v-html="getConsoleContent()" title="Mock the Swagger Petstore API and log incoming requests to the console"></div>
-      </div>
-    </section>
-    <section class="feature">
-      <div class="container">
-        <div class="row pb-4 pb-lg-5 mb-lg-5">
-          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center">
+
+        <div class="row pb-4 pb-lg-5 mb-lg-5 mt-3">
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-2 order-lg-1">
             <div class="text-lg-start text-center">
-              <h2>Customize API Responses</h2>
-              <p>With Mokapi Scripts, you can quickly customize the API responses to match your exact test conditions. Here's a simple example of how to use event handlers to manipulate API behavior.</p>
+              <h3>Customize API Responses</h3>
+              <p>With Mokapi Scripts, you can quickly customize API responses to match your exact test conditions. Use event handlers to simulate logic, errors, or edge cases without coding a backend.</p>
               <router-link :to="{ path: '/docs/javascript-api' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Get Started with Mokapi Scripts</button>
               </router-link>
             </div>
           </div>
-          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center">
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-1 order-lg-2 text-start">
             <pre v-highlightjs="script"><code class="javascript"></code></pre>
           </div>
         </div>
-        <div class="row pb-4 pb-lg-5 mb-lg-5">
+
+        <div class="row">
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center">
+            <img src="/http.png" @click="showImage($event.target)" alt="Mokapi's dashboard with an overview of all mocked APIs including metrics and logs." style="width:100%" />
+          </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center">
             <div class="text-lg-start text-center">
-              <h2>Monitor and Analyze API Requests</h2>
+              <h3>Monitor and Analyze API Requests</h3>
               <p>Mokapi’s interactive dashboard provides real-time insights into every request and response. With visual tracking, detailed logs, and performance analytics, you can quickly understand what's going on with your mocks and optimize your testing process.</p>
-              <router-link :to="{ path: '/docs/javascript-api' }">
+              <router-link :to="{ path: '/docs/guides/get-started/dashboard' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Explore the Dashboard</button>
               </router-link>
             </div>
           </div>
-          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center">
-            <img src="/http.png" @click="showImage($event.target)" alt="Mokapi's dashboard with an overview of all mocked APIs including metrics and logs." style="width:100%" />
-          </div>
         </div>
       </div>
     </section>
+
+    <section class="d-none d-md-block py-5">
+      <div class="container">
+        <div class="row text-center mb-4">
+          <h2>Quick Demo</h2>
+          <p class="lead mb-0">
+            See how fast it is to spin up Mokapi with the Swagger Petstore API. 
+            Just one command, and your mock server is ready.
+          </p>
+        </div>
+        <div class="console-container">
+          <div class="terminal-header">
+            <span class="buttons">
+                <span class="red"></span>
+                <span class="yellow"></span>
+                <span class="green"></span>
+            </span>
+            <span class="terminal-title">Mokapi Terminal</span>
+          </div>
+          <div class="terminal-body" v-html="getConsoleContent()" title="Mock the Swagger Petstore API and log incoming requests to the console"></div>
+        </div>
+      </div>
+    </section>
+
   </main>
   <Footer></Footer>
   <div class="modal fade" id="imageDialog" tabindex="-1" aria-hidden="true">

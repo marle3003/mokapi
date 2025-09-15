@@ -26,10 +26,10 @@ onMounted(()=> {
         <caption class="visually-hidden">Cluster Brokers</caption>
         <thead>
             <tr>
-                <th scope="col" class="text-left">Name</th>
-                <th scope="col" class="text-left">Host</th>
-                <th scope="col" class="text-left">Tags</th>
-                <th scope="col" class="text-left w-50">Description</th>
+                <th scope="col" class="text-left" style="width: 20%">Name</th>
+                <th scope="col" class="text-left" style="width: 20%">Host</th>
+                <th scope="col" class="text-left" style="width: 20%">Tags</th>
+                <th scope="col" class="text-left w-50" style="width: 40%">Description</th>
             </tr>
         </thead>
         <tbody>

@@ -1,8 +1,6 @@
 package runtime
 
 import (
-	"github.com/blevesearch/bleve/v2"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/engine/common"
@@ -13,6 +11,9 @@ import (
 	"path/filepath"
 	"sort"
 	"sync"
+
+	"github.com/blevesearch/bleve/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 type HttpStore struct {
@@ -31,7 +32,7 @@ type HttpInfo struct {
 
 type httpHandler struct {
 	http *monitor.Http
-	next http.Handler
+	next openapi.Handler
 }
 
 func NewHttpStore(cfg *static.Config, index bleve.Index, em *events.StoreManager) *HttpStore {
@@ -140,7 +141,7 @@ func (s *HttpStore) Remove(c *dynamic.Config) {
 	}
 }
 
-func (c *HttpInfo) Handler(http *monitor.Http, emitter common.EventEmitter, eh events.Handler) http.Handler {
+func (c *HttpInfo) Handler(http *monitor.Http, emitter common.EventEmitter, eh events.Handler) openapi.Handler {
 	cfg := c.Config
 	h := openapi.NewHandler(cfg, emitter, eh)
 	return &httpHandler{http: http, next: h}
@@ -186,10 +187,10 @@ func (c *HttpInfo) Configs() []*dynamic.Config {
 	return r
 }
 
-func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+func (h *httpHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *openapi.HttpError {
 	ctx := monitor.NewHttpContext(r.Context(), h.http)
 
-	h.next.ServeHTTP(rw, r.WithContext(ctx))
+	return h.next.ServeHTTP(rw, r.WithContext(ctx))
 }
 
 func IsHttpConfig(c *dynamic.Config) (*openapi.Config, bool) {
