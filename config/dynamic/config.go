@@ -111,6 +111,13 @@ func (l *Listeners) Invoke(e ConfigEvent) {
 	}
 }
 
+func (l *Listeners) Iter() *sortedmap.Iterator[string, ConfigListener] {
+	if l.list == nil {
+		return &sortedmap.Iterator[string, ConfigListener]{}
+	}
+	return l.list.Iter()
+}
+
 func Wrap(i ConfigInfo, c *Config) {
 	inner := c.Info
 	i.Checksum = inner.Checksum

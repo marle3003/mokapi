@@ -82,14 +82,14 @@ function setExample() {
     }
 
     if (state.source.preview) {
-        state.source.preview.content = example.data[0].value
+        state.source.preview.content = example.data[0]!.value
     }
     if (state.source.binary) {
         let index = 0
         if (example.data.length > 1) {
             index = 1
         }
-        state.source.binary.content = example.data[index].value
+        state.source.binary.content = example.data[index]!.value
     }
     example.next()
 }
@@ -145,11 +145,11 @@ function validate() {
                 return
             }
             if (state.view === 'preview' && state.source.binary) {
-                const v = atob(examples[0].value)
+                const v = atob(examples[0]!.value)
                 state.source.binary.content = v
             } else if (state.source.preview) {
-                const v = atob(examples[0].value)
-                state.source.preview.content = formatLanguage(v, examples[0].contentType)
+                const v = atob(examples[0]!.value)
+                state.source.preview.content = formatLanguage(v, examples[0]!.contentType)
             }
         }    
     })

@@ -37,7 +37,7 @@ for (let response of responses.value) {
     if (!response.contents) {
         continue
     }
-    selected.contents[response.statusCode] = response.contents[0]
+    selected.contents[response.statusCode] = response.contents[0]!
 }
 
 function selectedContentChange(event: any, statusCode: number | string){
@@ -84,18 +84,18 @@ const name = computed(() => {
                             </ul>
                             <div class="tab-content" id="pills-tabContent">
                                 <div v-if="response.contents" class="tab-pane fade" :class="response.contents ? 'show active' : ''" id="pills-body" role="tabpanel" aria-labelledby="pills-body-tab">
-                                    <source-view 
-                                        :source="{ preview: { content: formatSchema(selected.contents[response.statusCode].schema), contentType: 'application/json' }}" 
-                                        :deprecated="selected.contents[response.statusCode].schema.deprecated" 
+                                    <source-view
+                                        :source="{ preview: { content: formatSchema(selected.contents[response.statusCode]?.schema), contentType: 'application/json' }}" 
+                                        :deprecated="selected.contents[response.statusCode]?.schema.deprecated" 
                                         :hide-content-type="true"
                                         :height="250" class="mb-2">
                                     </source-view>
                                     <div class="row">
                                         <div class="col-auto pe-2 mt-1">
-                                            <schema-expand :schema="selected.contents[response.statusCode].schema" />
+                                            <schema-expand :schema="selected.contents[response.statusCode]!.schema" />
                                         </div>
                                         <div class="col-auto px-2 mt-1">
-                                            <schema-validate :source="{ preview: { content: '', contentType: selected.contents[response.statusCode].type }}" :schema="{schema: selected.contents[response.statusCode].schema, format: 'application/vnd.oai.openapi+json;version=3.0.0'}" :name="name" />
+                                            <schema-validate :source="{ preview: { content: '', contentType: selected.contents[response.statusCode]!.type }}" :schema="{schema: selected.contents[response.statusCode]!.schema, format: 'application/vnd.oai.openapi+json;version=3.0.0'}" :name="name" />
                                         </div>
                                         <div class="col-auto px-2 mt-1">
                                             <select v-if="response.contents.length > 0" class="form-select form-select-sm" aria-label="Response content type" @change="selectedContentChange($event, response.statusCode)">

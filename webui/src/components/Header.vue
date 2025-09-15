@@ -77,7 +77,7 @@ function matchLevel(label: any, level: number) {
     if (level > levels.value.length){
         return false
     }
-    return label.toString().toLowerCase() == levels.value[level - 1].toLowerCase()
+    return label.toString().toLowerCase() == levels.value[level - 1]!.toLowerCase()
 }
 function getId(name: any) {
     return name.toString().replaceAll("/", "-").replaceAll(" ", "-")
@@ -171,7 +171,7 @@ onMounted(() => {
   const modalEl = document.getElementById('search-docs')!;
   modalEl.addEventListener('shown.bs.modal', () => {
     const inputs = modalEl.getElementsByTagName('input')
-    inputs[0].focus()
+    inputs[0]!.focus()
   })
 })
 
