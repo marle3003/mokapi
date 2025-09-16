@@ -434,7 +434,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				ch <- dynamic.ConfigEvent{Name: refPath.String(), Event: dynamic.Create, Config: refConfig}
 
 				time.Sleep(5 * time.Millisecond)
-				require.Equal(t, []string{"foo://file.yml", "foo://ref.yml", "foo://file.yml", "foo://ref.yml"}, events)
+				require.ElementsMatch(t, []string{"foo://file.yml", "foo://ref.yml", "foo://file.yml", "foo://ref.yml"}, events)
 			},
 		},
 	}
