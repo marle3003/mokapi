@@ -389,6 +389,54 @@ func TestConfigWatcher_Read(t *testing.T) {
 				require.Equal(t, c, mainFile.Config)
 			},
 		},
+		{
+			name: "provider triggers main file and then referenced file",
+			test: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				mainPath := mustParse("foo://file.yml")
+				mainConfig := &dynamic.Config{Info: dynamic.ConfigInfo{Url: mainPath, Checksum: []byte{1}}}
+				refPath := mustParse("foo://ref.yml")
+				refConfig := &dynamic.Config{Info: dynamic.ConfigInfo{Url: refPath, Checksum: []byte{1}}}
+
+				var ch chan dynamic.ConfigEvent
+				w.providers["foo"] = &testprovider{
+					read: func(u *url.URL) (*dynamic.Config, error) {
+						c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}}
+						c.Info.Checksum = []byte{1}
+						return c, nil
+					},
+					start: func(configs chan dynamic.ConfigEvent, pool *safe.Pool) error {
+						ch = configs
+						return nil
+					},
+				}
+				pool := safe.NewPool(context.Background())
+				w.Start(pool)
+				defer pool.Stop()
+
+				var events []string
+				w.AddListener(func(e dynamic.ConfigEvent) {
+					events = append(events, e.Config.Info.Path())
+				})
+
+				ch <- dynamic.ConfigEvent{Name: mainPath.String(), Event: dynamic.Create, Config: mainConfig}
+				c, err := w.Read(refPath, nil)
+				require.NoError(t, err)
+				require.NotNil(t, c)
+				dynamic.AddRef(mainConfig, c)
+
+				ch <- dynamic.ConfigEvent{Name: refPath.String(), Event: dynamic.Create, Config: refConfig}
+
+				time.Sleep(5 * time.Millisecond)
+				require.Equal(t, []string{"foo://file.yml", "foo://ref.yml"}, events)
+
+				refConfig.Info.Checksum = []byte{2}
+				ch <- dynamic.ConfigEvent{Name: refPath.String(), Event: dynamic.Create, Config: refConfig}
+
+				time.Sleep(5 * time.Millisecond)
+				require.Equal(t, []string{"foo://file.yml", "foo://ref.yml", "foo://file.yml", "foo://ref.yml"}, events)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -465,9 +513,12 @@ func TestConfigWatcher_Start(t *testing.T) {
 		},
 	}
 
+	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			tc.f(t)
 		})
 	}

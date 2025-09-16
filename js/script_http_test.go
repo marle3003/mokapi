@@ -424,15 +424,17 @@ func TestMaxRedirects(t *testing.T) {
 	testcases := []struct {
 		name string
 		code string
-	}{{
-		name: "max redirects 0",
-		code: fmt.Sprintf(`import http from 'mokapi/http'
+	}{
+		{
+			name: "max redirects 0",
+			code: fmt.Sprintf(`import http from 'mokapi/http'
 export default function() {
 	const res = http.get('%s', { maxRedirects: 0 });
 	console.log(res.headers.Location[0]); 
 }
 `, server.URL),
-	}}
+		},
+	}
 
 	hook := test.NewGlobal()
 	for _, tc := range testcases {
