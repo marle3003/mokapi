@@ -513,12 +513,9 @@ func TestConfigWatcher_Start(t *testing.T) {
 		},
 	}
 
-	t.Parallel()
+	// no parallel git provider is not thread-safe
 	for _, tc := range testcases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
 			tc.f(t)
 		})
 	}
