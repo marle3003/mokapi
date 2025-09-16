@@ -74,7 +74,14 @@ func AddRef(parent, ref *Config) {
 	if !added {
 		return
 	}
+	checksum := ref.Info.Checksum
 	ref.Listeners.Add(parent.Info.Url.String(), func(e ConfigEvent) {
+		// event Create is used for reading first time
+		if bytes.Equal(e.Config.Info.Checksum, checksum) && e.Event == Create {
+			return
+		}
+		e.Config.Info.Checksum = checksum
+
 		parent.Info.Time = ref.Info.Time
 		parent.Listeners.Invoke(ConfigEvent{Event: Update, Config: parent, Name: parent.Info.Path()})
 		if e.Event == Delete {

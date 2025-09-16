@@ -97,12 +97,13 @@ func TestAddRef(t *testing.T) {
 			name: "ref updates parent time",
 			test: func(t *testing.T) {
 				parent := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://parent.yaml"))}
-				ref := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://ref.yaml"))}
+				child := &dynamic.Config{Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("file://ref.yaml"))}
 				d, _ := time.Parse(time.RFC3339, "2006-01-02T15:04:05Z")
-				ref.Info.Time = d
+				child.Info.Time = d
 
-				dynamic.AddRef(parent, ref)
-				ref.Listeners.Invoke(dynamic.ConfigEvent{Config: ref})
+				dynamic.AddRef(parent, child)
+				child.Info.Checksum = []byte{1}
+				child.Listeners.Invoke(dynamic.ConfigEvent{Config: child})
 
 				require.Equal(t, d, parent.Info.Time)
 			},
