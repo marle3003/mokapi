@@ -6,15 +6,9 @@ import (
 )
 
 func GetFreePort() int {
-	addr, err := net.ResolveTCPAddr("tcp", "localhost:")
-	if err != nil {
-		panic(err)
-	}
+	addr, _ := net.ResolveTCPAddr("tcp", "localhost:")
 
-	l, err := net.ListenTCP("tcp", addr)
-	if err != nil {
-		panic(err)
-	}
+	l, _ := net.ListenTCP("tcp", addr)
 	defer func() { _ = l.Close() }()
 	return l.Addr().(*net.TCPAddr).Port
 }
