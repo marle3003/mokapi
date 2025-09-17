@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
 	"mokapi/server/cert"
@@ -14,6 +15,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 )
 
 type MailSuite struct{ BaseSuite }
@@ -161,10 +163,10 @@ func (suite *MailSuite) TestSearch() {
 		try.AssertBody(func(t *testing.T, body string) {
 			var data map[string]any
 			err := json.Unmarshal([]byte(body), &data)
-			require.NoError(t, err)
-			require.NotNil(t, data)
+			assert.NoError(t, err)
+			assert.NotNil(t, data)
 
-			require.Equal(t, float64(5), data["total"])
+			assert.Equal(t, float64(5), data["total"])
 		}),
 	)
 }
@@ -220,15 +222,15 @@ It can be any text data.
 		try.AssertBody(func(t *testing.T, body string) {
 			var v any
 			err = json.Unmarshal([]byte(body), &v)
-			require.NoError(suite.T(), err)
+			assert.NoError(suite.T(), err)
 			a := v.([]any)
 			m := a[0].(map[string]any)
-			require.Len(t, m, 5)
-			require.NotEmpty(t, m["messageId"])
-			require.NotEmpty(t, m["date"])
-			require.Equal(t, []any{map[string]any{"address": "from@foo.bar"}}, m["from"])
-			require.Equal(t, []any{map[string]any{"address": "rcipient@foo.bar"}}, m["to"])
-			require.Equal(t, "Example multipart/mixed message", m["subject"])
+			assert.Len(t, m, 5)
+			assert.NotEmpty(t, m["messageId"])
+			assert.NotEmpty(t, m["date"])
+			assert.Equal(t, []any{map[string]any{"address": "from@foo.bar"}}, m["from"])
+			assert.Equal(t, []any{map[string]any{"address": "rcipient@foo.bar"}}, m["to"])
+			assert.Equal(t, "Example multipart/mixed message", m["subject"])
 			messageId = m["messageId"].(string)
 		}),
 	)
@@ -237,38 +239,46 @@ It can be any text data.
 		try.AssertBody(func(t *testing.T, body string) {
 			var v any
 			err = json.Unmarshal([]byte(body), &v)
-			require.NoError(suite.T(), err)
+			assert.NoError(suite.T(), err)
 			m := v.(map[string]any)
 			m = m["data"].(map[string]any)
-			require.Len(t, m, 10)
-			require.Regexp(t, ".*:8030", m["server"])
-			require.Equal(t, []any{map[string]any{"address": "from@foo.bar"}}, m["from"])
-			require.Equal(t, []any{map[string]any{"address": "rcipient@foo.bar"}}, m["to"])
-			require.Equal(t, []any{
+			assert.Len(t, m, 10)
+			assert.Regexp(t, ".*:8030", m["server"])
+			assert.Equal(t, []any{map[string]any{"address": "from@foo.bar"}}, m["from"])
+			assert.Equal(t, []any{map[string]any{"address": "rcipient@foo.bar"}}, m["to"])
+			assert.Equal(t, []any{
 				map[string]any{
 					"contentType": "text/plain",
 					"name":        "example.txt",
 					"size":        float64(64),
 				},
 			}, m["attachments"])
-			require.NotContains(t, m, "sender")
-			require.NotContains(t, m, "replyTo")
-			require.NotContains(t, m, "cc")
-			require.NotContains(t, m, "bcc")
-			require.NotEmpty(t, m["messageId"])
-			require.NotContains(t, m, "inReplyTo")
-			require.NotEmpty(t, m["date"])
-			require.Equal(t, "Example multipart/mixed message", m["subject"])
-			require.Equal(t, "text/plain; charset=\"UTF-8\"", m["contentType"])
-			require.NotContains(t, m, "contentTransferEncoding")
-			require.Equal(t, "Hello Bob,\n\nThis is the plain text part of the email.\n", m["body"])
-			require.Greater(t, m["size"], float64(0))
+			assert.NotContains(t, m, "sender")
+			assert.NotContains(t, m, "replyTo")
+			assert.NotContains(t, m, "cc")
+			assert.NotContains(t, m, "bcc")
+			assert.NotEmpty(t, m["messageId"])
+			assert.NotContains(t, m, "inReplyTo")
+			assert.NotEmpty(t, m["date"])
+			assert.Equal(t, "Example multipart/mixed message", m["subject"])
+			assert.Equal(t, "text/plain; charset=\"UTF-8\"", m["contentType"])
+			assert.NotContains(t, m, "contentTransferEncoding")
+			assert.Equal(t, "Hello Bob,\n\nThis is the plain text part of the email.\n", m["body"])
+			assert.Greater(t, m["size"], float64(0))
 		}),
 	)
 }
 
 func (suite *MailSuite) TestCustomServerCertificate() {
-	conn, err := net.Dial("tcp", "localhost:8993")
+	var conn net.Conn
+	var err error
+	for attempt := 1; attempt <= 10; attempt++ {
+		conn, err = net.Dial("tcp", "localhost:8993")
+		if err == nil {
+			break
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
 	require.NoError(suite.T(), err)
 	defer func() { _ = conn.Close() }()
 

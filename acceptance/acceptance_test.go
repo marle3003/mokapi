@@ -5,7 +5,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"mokapi/config/static"
 	"testing"
-	"time"
 )
 
 func TestAcceptance(t *testing.T) {
@@ -27,9 +26,6 @@ func (suite *BaseSuite) initCmd(cfg *static.Config) {
 	cmd, err := Start(cfg)
 	require.NoError(suite.T(), err)
 	suite.cmd = cmd
-
-	// wait for server start
-	time.Sleep(2 * time.Second)
 }
 
 func (suite *BaseSuite) TearDownSuite() {
