@@ -1,19 +1,15 @@
 package file
 
 import (
+	"fmt"
 	"net/url"
-	"os"
 	"path/filepath"
 )
 
 func ParseUrl(path string) (*url.URL, error) {
-	if !filepath.IsAbs(path) {
-		wd, err := os.Getwd()
-		if err != nil {
-			return nil, err
-		}
-		path = filepath.Join(wd, path)
+	abs, err := filepath.Abs(path)
+	if err != nil {
+		return nil, err
 	}
-
-	return url.ParseRequestURI("file:" + path)
+	return url.ParseRequestURI(fmt.Sprintf("file:%v", abs))
 }
