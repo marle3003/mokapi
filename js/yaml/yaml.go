@@ -19,8 +19,8 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 		host: host,
 	}
 	obj := module.Get("exports").(*goja.Object)
-	obj.Set("parse", f.Parse)
-	obj.Set("stringify", f.Stringify)
+	_ = obj.Set("parse", f.Parse)
+	_ = obj.Set("stringify", f.Stringify)
 }
 
 func (m *Module) Parse(s string) (interface{}, error) {

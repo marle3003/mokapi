@@ -1,4 +1,4 @@
-package ldap_test
+package process_test
 
 import (
 	"github.com/dop251/goja"
@@ -8,44 +8,45 @@ import (
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/eventloop"
-	"mokapi/js/ldap"
-	"mokapi/js/require"
+	"mokapi/js/process"
 	"testing"
 )
 
-func TestLdap(t *testing.T) {
+func TestProcess(t *testing.T) {
 	testcases := []struct {
 		name string
+		env  map[string]string
 		test func(t *testing.T, vm *goja.Runtime, host *enginetest.Host)
 	}{
 		{
-			name: "ResultCode",
+			name: "env exists",
+			env: map[string]string{
+				"foo": "bar",
+			},
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				host.KafkaClientTest = &enginetest.KafkaClient{ProduceFunc: func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					return &common.KafkaProduceResult{}, nil
 				}}
 
 				v, err := vm.RunString(`
-					const ldap = require("mokapi/ldap")
-					ldap.ResultCode.SizeLimitExceeded
+					process.env.foo
 				`)
 				r.NoError(t, err)
-				r.Equal(t, int64(4), v.Export())
+				r.Equal(t, "bar", v.Export())
 			},
 		},
 		{
-			name: "SearchScope",
+			name: "env does not exist",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				host.KafkaClientTest = &enginetest.KafkaClient{ProduceFunc: func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					return &common.KafkaProduceResult{}, nil
 				}}
 
 				v, err := vm.RunString(`
-					const ldap = require("mokapi/ldap")
-					ldap.SearchScope.WholeSubtree
+					process.env.foo
 				`)
 				r.NoError(t, err)
-				r.Equal(t, int64(3), v.Export())
+				r.Equal(t, nil, v.Export())
 			},
 		},
 	}
@@ -55,10 +56,11 @@ func TestLdap(t *testing.T) {
 			vm := goja.New()
 			host := &enginetest.Host{}
 			js.EnableInternal(vm, host, &eventloop.EventLoop{}, &dynamic.Config{})
-			req, err := require.NewRegistry()
-			r.NoError(t, err)
-			req.Enable(vm)
-			req.RegisterNativeModule("mokapi/ldap", ldap.Require)
+
+			for name, value := range tc.env {
+				t.Setenv(name, value)
+			}
+			process.Enable(vm)
 
 			tc.test(t, vm, host)
 		})
