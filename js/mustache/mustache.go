@@ -15,7 +15,7 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 		rt: vm,
 	}
 	obj := module.Get("exports").(*goja.Object)
-	obj.Set("render", f.Render)
+	_ = obj.Set("render", f.Render)
 }
 
 func (m *Module) Render(template string, scopeValue goja.Value) string {

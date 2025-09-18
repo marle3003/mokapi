@@ -1,4 +1,4 @@
-package ldap_test
+package mustache_test
 
 import (
 	"github.com/dop251/goja"
@@ -8,44 +8,29 @@ import (
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/eventloop"
-	"mokapi/js/ldap"
+	"mokapi/js/mustache"
 	"mokapi/js/require"
 	"testing"
 )
 
-func TestLdap(t *testing.T) {
+func TestMustache(t *testing.T) {
 	testcases := []struct {
 		name string
 		test func(t *testing.T, vm *goja.Runtime, host *enginetest.Host)
 	}{
 		{
-			name: "ResultCode",
+			name: "render",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				host.KafkaClientTest = &enginetest.KafkaClient{ProduceFunc: func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					return &common.KafkaProduceResult{}, nil
 				}}
 
 				v, err := vm.RunString(`
-					const ldap = require("mokapi/ldap")
-					ldap.ResultCode.SizeLimitExceeded
+					const m = require("mokapi/mustache")
+					m.render('{{ foo }}', {'foo': 'bar'})
 				`)
 				r.NoError(t, err)
-				r.Equal(t, int64(4), v.Export())
-			},
-		},
-		{
-			name: "SearchScope",
-			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				host.KafkaClientTest = &enginetest.KafkaClient{ProduceFunc: func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					return &common.KafkaProduceResult{}, nil
-				}}
-
-				v, err := vm.RunString(`
-					const ldap = require("mokapi/ldap")
-					ldap.SearchScope.WholeSubtree
-				`)
-				r.NoError(t, err)
-				r.Equal(t, int64(3), v.Export())
+				r.Equal(t, "bar", v.Export())
 			},
 		},
 	}
@@ -59,7 +44,7 @@ func TestLdap(t *testing.T) {
 			req, err := require.NewRegistry()
 			r.NoError(t, err)
 			req.Enable(vm)
-			req.RegisterNativeModule("mokapi/ldap", ldap.Require)
+			req.RegisterNativeModule("mokapi/mustache", mustache.Require)
 
 			tc.test(t, vm, host)
 		})
