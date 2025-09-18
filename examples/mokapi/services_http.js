@@ -73,6 +73,29 @@ const pet = {
     xml: {name: "Pet"}
 }
 
+const book = {
+    type: "object",
+    properties: {
+        id: {
+            type: "string",
+            example: 1
+        },
+        title: {
+            type: "string",
+            example: "The Hobbit"
+        },
+        author: {
+            type: "string",
+            example: "J.R.R. Tolkien"
+        },
+        year: {
+            type: "integer",
+            example: 1937
+        }
+    },
+    required: ["id", "title", "author"]
+}
+
 export const configs = {
     'b6fea8ac-56c7-4e73-a9c0-6887640bdca8': {
         id: 'b6fea8ac-56c7-4e73-a9c0-6887640bdca8',
@@ -111,7 +134,7 @@ export let apps = [
             name: "Swagger Petstore Team",
             email: "petstore@petstore.com"
         },
-        metrics: metrics.filter(x => x.name.startsWith("http")),
+        metrics: metrics.filter(x => x.name.startsWith("http") && x.name.includes('service="Swagger Petstore"')),
         servers: [
             {
                 url: "http://localhost:8080",
@@ -465,6 +488,70 @@ export let apps = [
         ],
         configs: [
             configs['b6fea8ac-56c7-4e73-a9c0-6887640bdca8']
+        ]
+    },
+    {
+        name: "Books API",
+        description: "A simple API to manage books in a library",
+        version: "1.0.0",
+        metrics: metrics.filter(x => x.name.startsWith("http") && x.name.includes('service="Books API"')),
+        servers: [
+            {
+                url: "https://api.example.com/v1",
+            }
+        ],
+        paths: [
+            {
+                path: "/books",
+                operations: [
+                    {
+                        method: "get",
+                        summary: "Add a new pet to the store",
+                        operationId: "listBooks",
+                        responses: [
+                            {
+                                statusCode: 200,
+                                description: "A list of books",
+                                contents: [
+                                    {
+                                        type: "application/json",
+                                        schema: {
+                                            type: "array",
+                                            items: book
+                                        }
+                                    }
+                                ]
+                            },
+                        ],
+                    },
+                    {
+                        method: "post",
+                        summary: "Add a new book",
+                        operationId: "addBook",
+                        requestBody: {
+                            required: true,
+                            contents: [
+                                {
+                                    type: "application/json",
+                                    schema: book
+                                }
+                            ]
+                        },
+                        responses: [
+                            {
+                                statusCode: 201,
+                                description: "The created book",
+                                contents: [
+                                    {
+                                        type: "application/json",
+                                        schema: book
+                                    }
+                                ]
+                            },
+                        ],
+                    }
+                ]
+            },
         ]
     }
 ]

@@ -110,7 +110,7 @@ const hasDeprecated = computed(() => {
                 </thead>
                 <tbody>
                     <tr v-for="path in paths" :key="path.path" @click="goToPath(path)">
-                        <td style="padding-left:0;">
+                        <td v-if="hasDeprecated" style="padding-left:0;">
                             <span class="bi bi-exclamation-triangle-fill yellow pe-1" v-if="allOperationsDeprecated(path)"></span>
                         </td>
                         <td>
