@@ -22,7 +22,6 @@ import (
 	"mokapi/server"
 	"mokapi/server/cert"
 	"mokapi/version"
-	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"strings"
