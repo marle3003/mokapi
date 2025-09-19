@@ -24,7 +24,7 @@
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "dayjs": "^1.11.18",
-    "del-cli": "^6.0.0",
+    "del-cli": "^7.0.0",
     "fuse.js": "^7.1.0",
     "http-status-codes": "^2.3.0",
     "js-yaml": "^4.1.0",
