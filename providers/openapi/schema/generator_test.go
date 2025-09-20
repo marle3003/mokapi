@@ -527,7 +527,7 @@ func TestGeneratorArray(t *testing.T) {
 				schematest.WithItems("integer", schematest.WithFormat("int32"), schematest.WithMinimum(0), schematest.WithMaximum(3)),
 			),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "can not fill array with unique items: schema type=array minItems=5 maxItems=10 unique-items items=schema type=integer format=int32 minimum=0 maximum=3")
+				require.EqualError(t, err, "can not fill array with unique items: schema type=array minItems=5 maxItems=10 unique-items items=(schema type=integer format=int32 minimum=0 maximum=3)")
 			},
 		},
 		{
@@ -756,7 +756,7 @@ func TestGenerator_AllOf(t *testing.T) {
 				),
 			)),
 			test: func(t *testing.T, result interface{}, err error) {
-				require.EqualError(t, err, "generate random data for schema failed: all of schema type=integer, schema type=object properties=[bar] required=[bar]: no shared types found")
+				require.EqualError(t, err, "generate random data for schema failed: all of (schema type=integer, schema type=object properties=[bar] required=[bar]): no shared types found")
 				require.Nil(t, result)
 			},
 		},
@@ -778,7 +778,7 @@ func TestGenerator_AllOf(t *testing.T) {
 				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
 			)),
 			test: func(t *testing.T, result interface{}, err error) {
-				require.EqualError(t, err, "generate random data for schema failed: schema type=object properties=[a] required=[a]: can not fill array with unique items: schema type=array unique-items items=schema type=integer minimum=0 maximum=3 minItems=5")
+				require.EqualError(t, err, "generate random data for schema failed: schema type=object properties=[a] required=[a]: can not fill array with unique items: schema type=array unique-items items=(schema type=integer minimum=0 maximum=3 minItems=5)")
 				require.Nil(t, result)
 			},
 		},
