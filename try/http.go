@@ -35,7 +35,7 @@ func GetRequest(t *testing.T, url string, headers map[string]string, conditions 
 
 	var lastErr error
 	const (
-		maxAttempts = 20
+		maxAttempts = 10
 		delay       = 200 * time.Millisecond
 	)
 

@@ -18,6 +18,8 @@ type LdapSuite struct {
 
 func (suite *LdapSuite) SetupSuite() {
 	cfg := static.NewConfig()
+	port := try.GetFreePort()
+	cfg.Api.Port = fmt.Sprintf("%v", port)
 	cfg.Providers.File.Directories = []string{"./ldap"}
 	suite.initCmd(cfg)
 	// ensure scripts are executed
