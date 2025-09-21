@@ -127,6 +127,13 @@ func TestEngine_Scheduler(t *testing.T) {
 				r.Equal(t, "Error: script error at test.js:5:13(3)", exec.Error.Message)
 			},
 		},
+		{
+			name: "unsupported script should not return error",
+			test: func(t *testing.T, e *engine.Engine, c *metrics.Counter, sm *events.StoreManager) {
+				err := e.AddScript(newScript("test.png", ""))
+				r.NoError(t, err)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

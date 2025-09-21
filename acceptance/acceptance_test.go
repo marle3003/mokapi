@@ -1,7 +1,6 @@
 package acceptance
 
 import (
-	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"mokapi/config/static"
@@ -22,7 +21,6 @@ type BaseSuite struct {
 
 func (suite *BaseSuite) initCmd(cfg *static.Config) {
 	//logrus.SetOutput(io.Discard)
-	log.SetLevel(log.DebugLevel)
 
 	suite.cfg = cfg
 	cmd, err := Start(cfg)

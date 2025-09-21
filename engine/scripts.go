@@ -1,7 +1,7 @@
 package engine
 
 import (
-	"fmt"
+	"errors"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/engine/common"
@@ -9,6 +9,8 @@ import (
 	"mokapi/lua"
 	"path/filepath"
 )
+
+var UnsupportedError = errors.New("unsupported script")
 
 type ScriptLoader interface {
 	Load(file *dynamic.Config, host common.Host) (common.Script, error)
@@ -37,6 +39,6 @@ func (l *DefaultScriptLoader) Load(file *dynamic.Config, host common.Host) (comm
 	case ".lua":
 		return lua.New(getScriptPath(file.Info.Url), s, host)
 	default:
-		return nil, fmt.Errorf("unsupported script %v", filename)
+		return nil, UnsupportedError
 	}
 }

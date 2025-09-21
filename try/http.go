@@ -77,7 +77,7 @@ func GetRequest(t *testing.T, url string, headers map[string]string, conditions 
 	}
 
 	// fail test if we never satisfied conditions
-	require.NoError(t, lastErr, "failed after retries")
+	require.NoError(t, lastErr, "conditions not met after %d attempts", maxAttempts)
 	t.Fatalf("conditions not met after %d attempts", maxAttempts)
 }
 

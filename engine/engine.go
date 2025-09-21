@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"github.com/pkg/errors"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/engine/common"
@@ -67,16 +68,22 @@ func (e *Engine) AddScript(evt dynamic.ConfigEvent) error {
 	e.addOrUpdate(host)
 	e.scripts[host.name] = host
 
-	log.Infof("executing script %v", evt.Config.Info.Url)
 	if e.parallel {
 		go func() {
 			err := e.run(host)
 			if err != nil {
+				if errors.Is(err, UnsupportedError) {
+					return
+				}
 				log.Errorf("error executing script %v: %v", evt.Config.Info.Url, err)
 			}
 		}()
 	} else {
-		return e.run(host)
+		err := e.run(host)
+		if errors.Is(err, UnsupportedError) {
+			return nil
+		}
+		return err
 	}
 
 	return nil
