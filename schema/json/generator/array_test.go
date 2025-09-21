@@ -1,7 +1,6 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
@@ -13,6 +12,34 @@ func TestArray(t *testing.T) {
 		req  *Request
 		test func(t *testing.T, v interface{}, err error)
 	}{
+		{
+			name: "minItems and maxItems",
+			req: &Request{
+				Path: []string{"people"},
+				Schema: schematest.New("array",
+					schematest.WithItems("string"),
+					schematest.WithMinItems(4),
+					schematest.WithMaxItems(6),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []any{"lx0+fjywXKo", "jxkDng", "hbEO6wpu", "qosamhfi", "JUOvtsQ WavQ", ""}, v)
+			},
+		},
+		{
+			name: "minItems > maxItems",
+			req: &Request{
+				Path: []string{"people"},
+				Schema: schematest.New("array",
+					schematest.WithMinItems(3),
+					schematest.WithMaxItems(2),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "minItems must be less than maxItems")
+			},
+		},
 		{
 			name: "array with example",
 			req: &Request{
@@ -115,11 +142,72 @@ func TestArray(t *testing.T) {
 				}, v)
 			},
 		},
+		{
+			name: "contains",
+			req: &Request{
+				Path: []string{"people"},
+				Schema: schematest.New("array",
+					schematest.WithContains(schematest.New("string")),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []any{
+					"qwCrwMfkOjo", "gPSz",
+				}, v)
+			},
+		},
+		{
+			name: "contains with minContains",
+			req: &Request{
+				Path: []string{"people"},
+				Schema: schematest.New("array",
+					schematest.WithContains(schematest.New("string")),
+					schematest.WithMinContains(3),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []any{
+					"qwCrwMfkOjo", int64(6259110876194170218), "gPSz", "gPNseoOLAIqos", "qa6WoJUOvts",
+				}, v)
+			},
+		},
+		{
+			name: "contains with maxContains",
+			req: &Request{
+				Path: []string{"people"},
+				Schema: schematest.New("array",
+					schematest.WithContains(schematest.New("string")),
+					schematest.WithMaxContains(3),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []any{
+					"qwCrwMfkOjo", "gPSz",
+				}, v)
+			},
+		},
+		{
+			name: "contains with minContains but maxItems is lower",
+			req: &Request{
+				Path: []string{"people"},
+				Schema: schematest.New("array",
+					schematest.WithContains(schematest.New("string")),
+					schematest.WithMinContains(3),
+					schematest.WithMaxItems(2),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "minContains must be less than maxItems")
+			},
+		},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			gofakeit.Seed(1234567)
+			Seed(1234567)
 
 			v, err := New(tc.req)
 			tc.test(t, v, err)

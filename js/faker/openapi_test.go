@@ -702,7 +702,7 @@ required: ['foo', 'bar', 'baz']
 				r.Contains(t, m, "foo")
 				r.Contains(t, m, "bar")
 				r.Contains(t, m, "baz")
-				r.Equal(t, map[string]any{"bar": "ZuoWq vY5elXhlD", "baz": []any{2.3090412168364615e+307, "lYehCIA", map[string]any{"caravan": true, "hail": 2.536044080333601e+307, "mob": int64(-287411453310397474), "scale": true}, false}, "foo": int64(6224634831868504800), "woman": false}, v.Export())
+				r.Equal(t, map[string]any{"bar": int64(6224634831868504800), "baz": "ZuoWq vY5elXhlD", "foo": true}, v.Export())
 			},
 		},
 		{

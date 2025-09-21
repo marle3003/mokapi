@@ -76,6 +76,12 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 	length := minItems
 	if maxItems-minItems > 0 {
 		length = gofakeit.Number(minItems, maxItems)
+	} else if minItems > maxItems {
+		if s.MinItems != nil {
+			return nil, errors.New("minItems must be less than maxItems")
+		} else if s.MinContains != nil {
+			return nil, errors.New("minContains must be less than maxItems")
+		}
 	}
 
 	var containsFaker *faker

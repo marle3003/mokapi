@@ -191,11 +191,20 @@ func firstLetterToLower(s string) string {
 func numProperties(min, max int, s *schema.Schema) int {
 	if s.MinProperties != nil {
 		min = *s.MinProperties
-	} else {
+	} else if s.Required != nil {
 		min = len(s.Required)
 	}
 	if s.MaxProperties != nil {
 		max = *s.MaxProperties
+	} else if s.Required != nil {
+		if len(s.Required) > max {
+			max = len(s.Required)
+		} else {
+			n := gofakeit.Float32Range(0, 1)
+			if n < 0.8 {
+				max = len(s.Required)
+			}
+		}
 	}
 	if min == max {
 		return min

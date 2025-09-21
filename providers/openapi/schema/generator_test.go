@@ -611,7 +611,7 @@ func TestGeneratorObject(t *testing.T) {
 		},
 		{
 			name: "dictionary",
-			exp:  map[string]interface{}{"bunch": "lRf", "child": "", "gang": "ezlYehCIA0OS", "growth": "Jgmr9arWgSf", "hall": "Gj", "shower": "lnzbhmhDhXgaq", "uncle": "W", "woman": "Y5elX"},
+			exp:  map[string]interface{}{"bunch": "Pevuwy", "gang": "", "growth": "NrLJgmr9arW", "hall": "JKqGj", "woman": "x?vY5elXhlD4ez"},
 			schema: schematest.New("object",
 				schematest.WithAdditionalProperties(schematest.New("string"))),
 		},

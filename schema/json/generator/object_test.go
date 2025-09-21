@@ -83,29 +83,26 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"brace": map[string]interface{}{
-							"age": int64(65), "gender": "male",
-						},
 						"collection": map[string]interface{}{
-							"age": int64(84), "gender": "female",
-						},
-						"comb": map[string]interface{}{
 							"age": int64(5), "gender": "male",
 						},
-						"company": map[string]interface{}{
-							"age": int64(51), "gender": "female",
-						},
-						"luck": map[string]interface{}{
-							"age": int64(55), "gender": "male",
-						},
-						"person": map[string]interface{}{
-							"age": int64(53), "gender": "female",
-						},
-						"problem": map[string]interface{}{
+						"comb": map[string]interface{}{
 							"age": int64(85), "gender": "male",
 						},
-						"sunshine": map[string]interface{}{
+						"company": map[string]interface{}{
+							"age": int64(41), "gender": "male",
+						},
+						"luck": map[string]interface{}{
 							"age": int64(10), "gender": "female",
+						},
+						"person": map[string]interface{}{
+							"age": int64(55), "gender": "male",
+						},
+						"problem": map[string]interface{}{
+							"age": int64(53), "gender": "female",
+						},
+						"sunshine": map[string]interface{}{
+							"age": int64(51), "gender": "female",
 						},
 					},
 
@@ -158,7 +155,7 @@ func TestObject(t *testing.T) {
 			},
 		},
 		{
-			name: "object no properties",
+			name: "object no properties with examples",
 			req: &Request{
 				Schema: schematest.New("object",
 					schematest.WithExamples(map[string]interface{}{"foo": "bar"}),
@@ -187,6 +184,41 @@ func TestObject(t *testing.T) {
 				require.Equal(t,
 					map[string]interface{}{
 						"foo": "bar",
+					},
+					v)
+			},
+		},
+		{
+			name: "object no properties with required properties",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithRequired("foo", "bar"),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]interface{}{
+						"foo": int64(5155350187252080587),
+						"bar": int64(-4567356855949603266),
+					},
+					v)
+			},
+		},
+		{
+			name: "object with properties and additional required properties",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithProperty("foo", schematest.New("string")),
+					schematest.WithRequired("bar"),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]interface{}{
+						"foo": "FqwCrwMfkOjojx",
+						"bar": 1.6043524827049678e+308,
 					},
 					v)
 			},
