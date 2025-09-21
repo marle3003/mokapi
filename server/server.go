@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	log "github.com/sirupsen/logrus"
 	"mokapi/engine"
 	"mokapi/runtime"
@@ -36,20 +35,14 @@ func NewServer(pool *safe.Pool, app *runtime.App, watcher *ConfigWatcher,
 	}
 }
 
-func (s *Server) StartAsync(ctx context.Context) {
-	go func() {
-		s.Start(ctx)
-	}()
-}
-
-func (s *Server) Start(ctx context.Context) error {
+func (s *Server) Start() error {
 	s.engine.Start()
 	if err := s.watcher.Start(s.pool); err != nil {
 		return err
 	}
 	s.app.Monitor.Start(s.pool)
 
-	<-ctx.Done()
+	<-s.stopChan
 	log.Debug("stopping server")
 	s.pool.Stop()
 	s.kafka.Stop()
@@ -57,11 +50,10 @@ func (s *Server) Start(ctx context.Context) error {
 	s.mail.Stop()
 	s.ldap.Stop()
 	s.engine.Close()
-	s.stopChan <- true
 
 	return nil
 }
 
 func (s *Server) Close() {
-	<-s.stopChan
+	close(s.stopChan)
 }

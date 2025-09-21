@@ -77,8 +77,6 @@ func main() {
 		log.WithField("error", err).Error("error creating server")
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-
 	exitChannel := make(chan os.Signal, 1)
 	signal.Notify(exitChannel, os.Interrupt)
 	signal.Notify(exitChannel, syscall.SIGTERM)
@@ -86,12 +84,11 @@ func main() {
 	go func() {
 		<-exitChannel
 		fmt.Println("Shutting down")
-		cancel()
 		s.Close()
 		os.Exit(0)
 	}()
 
-	err = s.Start(ctx)
+	err = s.Start()
 	if err != nil {
 		log.Error(err)
 	}

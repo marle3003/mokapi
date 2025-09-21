@@ -28,7 +28,6 @@ type Cmd struct {
 	App *runtime.App
 
 	server *server.Server
-	cancel context.CancelFunc
 }
 
 func Start(cfg *static.Config) (*Cmd, error) {
@@ -77,19 +76,21 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	}
 
 	pool := safe.NewPool(context.Background())
-	ctx, cancel := context.WithCancel(context.Background())
 	s := server.NewServer(pool, app, watcher, kafka, http, mailManager, ldap, scriptEngine)
-	s.StartAsync(ctx)
+	go func() {
+		err := s.Start()
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	return &Cmd{
 		App:    app,
 		server: s,
-		cancel: cancel,
 	}, nil
 }
 
 func (cmd *Cmd) Stop() {
-	cmd.cancel()
 	cmd.server.Close()
 }
 
