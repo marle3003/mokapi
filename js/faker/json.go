@@ -24,7 +24,7 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
 				for _, t := range arr {
 					tn, ok := t.(string)
 					if !ok {
-						return nil, fmt.Errorf("unexpected type: %v", util.JsType(t))
+						return nil, fmt.Errorf("unexpected type for 'type': %v", util.JsType(t))
 					}
 					s.Type = append(s.Type, tn)
 				}
@@ -38,7 +38,7 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
 			if enums, ok := i.([]interface{}); ok {
 				s.Enum = enums
 			} else {
-				return nil, fmt.Errorf("unexpected type for 'enum': %v", util.JsType(i))
+				return nil, fmt.Errorf("unexpected type for 'enum': got %s, expected Array", util.JsType(i))
 			}
 		case "const":
 			c := obj.Get(k).Export()
@@ -48,47 +48,101 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
 		case "examples":
 			i := obj.Get(k).Export()
 			if examples, ok := i.([]interface{}); ok {
-				for _, item := range examples {
-					s.Examples = append(s.Examples, jsonSchema.Example{Value: item})
+				for _, e := range examples {
+					s.Examples = append(s.Examples, jsonSchema.Example{Value: e})
 				}
 			} else {
-				return nil, fmt.Errorf("unexpected type for 'examples': %v", util.JsType(i))
+				return nil, fmt.Errorf("unexpected type for 'enum': got %s, expected Array", util.JsType(i))
 			}
 		case "multipleOf":
-			f := obj.Get(k).ToFloat()
+			val := obj.Get(k)
+			t := val.ExportType()
+			var f float64
+			switch t.Kind() {
+			case reflect.Float64:
+				f = val.ToFloat()
+			case reflect.Int64:
+				f = float64(val.ToInteger())
+			default:
+				return nil, fmt.Errorf("unexpected type for 'multipleOf': got %s, expected Number", util.JsType(val))
+			}
 			s.MultipleOf = &f
 		case "maximum":
-			f := obj.Get(k).ToFloat()
+			val := obj.Get(k)
+			t := val.ExportType()
+			var f float64
+			switch t.Kind() {
+			case reflect.Float64:
+				f = val.ToFloat()
+			case reflect.Int64:
+				f = float64(val.ToInteger())
+			default:
+				return nil, fmt.Errorf("unexpected type for 'maximum': got %s, expected Number", util.JsType(val))
+			}
 			s.Maximum = &f
 		case "exclusiveMaximum":
-			ex := obj.Get(k)
-			kind := ex.ExportType().Kind()
-			if kind != reflect.Float64 && kind != reflect.Int64 {
-				return nil, fmt.Errorf("unexpected type for 'exclusiveMaximum': %v", util.JsType(ex.Export()))
+			val := obj.Get(k)
+			kind := val.ExportType().Kind()
+			if kind == reflect.Float64 || kind == reflect.Int64 {
+				s.ExclusiveMaximum = jsonSchema.NewUnionTypeA[float64, bool](val.ToFloat())
+			} else if kind == reflect.Bool {
+				s.ExclusiveMaximum = jsonSchema.NewUnionTypeB[float64, bool](val.ToBoolean())
+			} else {
+				return nil, fmt.Errorf("unexpected type for 'exclusiveMaximum': got %s, expected Number or Boolean", util.JsType(val))
 			}
-			f := obj.Get(k).ToFloat()
-			s.ExclusiveMaximum = jsonSchema.NewUnionTypeA[float64, bool](f)
 		case "minimum":
-			f := obj.Get(k).ToFloat()
+			val := obj.Get(k)
+			t := val.ExportType()
+			var f float64
+			switch t.Kind() {
+			case reflect.Float64:
+				f = val.ToFloat()
+			case reflect.Int64:
+				f = float64(val.ToInteger())
+			default:
+				return nil, fmt.Errorf("unexpected type for 'minimum': got %s, expected Number", util.JsType(val))
+			}
 			s.Minimum = &f
 		case "exclusiveMinimum":
-			ex := obj.Get(k)
-			kind := ex.ExportType().Kind()
-			if kind != reflect.Float64 && kind != reflect.Int64 {
-				return nil, fmt.Errorf("unexpected type for 'exclusiveMinimum': %v", util.JsType(ex.Export()))
+			val := obj.Get(k)
+			kind := val.ExportType().Kind()
+			if kind == reflect.Float64 || kind == reflect.Int64 {
+				s.ExclusiveMinimum = jsonSchema.NewUnionTypeA[float64, bool](val.ToFloat())
+			} else if kind == reflect.Bool {
+				s.ExclusiveMinimum = jsonSchema.NewUnionTypeB[float64, bool](val.ToBoolean())
+			} else {
+				return nil, fmt.Errorf("unexpected type for 'exclusiveMinimum': got %s, expected Number or Boolean", util.JsType(val))
 			}
-			f := ex.ToFloat()
-			s.ExclusiveMinimum = jsonSchema.NewUnionTypeA[float64, bool](f)
 		case "maxLength":
-			i := int(obj.Get(k).ToInteger())
-			s.MaxLength = &i
+			i := obj.Get(k).Export()
+			if n64, ok := i.(int64); ok {
+				n := int(n64)
+				s.MaxLength = &n
+			} else {
+				return nil, fmt.Errorf("unexpected type for 'maxLength': got %s, expected Number", util.JsType(i))
+			}
 		case "minLength":
-			i := int(obj.Get(k).ToInteger())
-			s.MinLength = &i
+			i := obj.Get(k).Export()
+			if n64, ok := i.(int64); ok {
+				n := int(n64)
+				s.MinLength = &n
+			} else {
+				return nil, fmt.Errorf("unexpected type for 'minLength': got %s, expected Number", util.JsType(i))
+			}
 		case "pattern":
-			s.Pattern = obj.Get(k).String()
+			i := obj.Get(k).Export()
+			if str, ok := i.(string); ok {
+				s.Pattern = str
+			} else {
+				return nil, fmt.Errorf("unexpected type for 'pattern': got %s, expected String", util.JsType(i))
+			}
 		case "format":
-			s.Format = obj.Get(k).String()
+			i := obj.Get(k).Export()
+			if str, ok := i.(string); ok {
+				s.Format = str
+			} else {
+				return nil, fmt.Errorf("unexpected type for 'format': got %s, expected String", util.JsType(i))
+			}
 		case "items":
 			items, err := ToJsonSchema(obj.Get(k), rt)
 			if err != nil {
@@ -96,24 +150,60 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
 			}
 			s.Items = items
 		case "maxItems":
-			i := int(obj.Get(k).ToInteger())
-			s.MaxItems = &i
+			i := obj.Get(k).Export()
+			if n64, ok := i.(int64); ok {
+				n := int(n64)
+				s.MaxItems = &n
+			} else {
+				return nil, fmt.Errorf("unexpected type for 'maxItems': got %s, expected Integer", util.JsType(i))
+			}
 		case "minItems":
-			i := int(obj.Get(k).ToInteger())
-			s.MinItems = &i
+			i := obj.Get(k).Export()
+			if n64, ok := i.(int64); ok {
+				n := int(n64)
+				s.MinItems = &n
+			} else {
+				return nil, fmt.Errorf("unexpected type for 'minItems': got %s, expected Integer", util.JsType(i))
+			}
 		case "uniqueItems":
-			s.UniqueItems = obj.Get(k).ToBoolean()
+			i := obj.Get(k).Export()
+			if b, ok := i.(bool); ok {
+				s.UniqueItems = &b
+			} else {
+				return nil, fmt.Errorf("unexpected type for 'uniqueItems': got %s, expected Boolean", util.JsType(i))
+			}
+		case "contains":
+			contains, err := ToJsonSchema(obj.Get(k), rt)
+			if err != nil {
+				return nil, err
+			}
+			s.Contains = contains
 		case "maxContains":
-			i := int(obj.Get(k).ToInteger())
-			s.MaxContains = &i
+			i := obj.Get(k).Export()
+			if n64, ok := i.(int64); ok {
+				n := int(n64)
+				s.MaxContains = &n
+			} else {
+				return nil, fmt.Errorf("unexpected type for 'maxContains': got %s, expected Integer", util.JsType(i))
+			}
 		case "minContains":
-			i := int(obj.Get(k).ToInteger())
-			s.MinContains = &i
+			i := obj.Get(k).Export()
+			if n64, ok := i.(int64); ok {
+				n := int(n64)
+				s.MinContains = &n
+			} else {
+				return nil, fmt.Errorf("unexpected type for 'minContains': got %s, expected Integer", util.JsType(i))
+			}
 		case "x-shuffleItems":
 			s.ShuffleItems = obj.Get(k).ToBoolean()
 		case "properties":
 			s.Properties = &jsonSchema.Schemas{}
-			propsObj := obj.Get(k).ToObject(rt)
+			val := obj.Get(k)
+			t := val.ExportType()
+			if t.Kind() != reflect.Map {
+				return nil, fmt.Errorf("unexpected type for 'properties': got %s, expected Object", util.JsType(val))
+			}
+			propsObj := val.ToObject(rt)
 			for _, name := range propsObj.Keys() {
 				prop, err := ToJsonSchema(propsObj.Get(name), rt)
 				if err != nil {
@@ -122,11 +212,21 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
 				s.Properties.Set(name, prop)
 			}
 		case "maxProperties":
-			i := int(obj.Get(k).ToInteger())
-			s.MaxProperties = &i
+			i := obj.Get(k).Export()
+			if n64, ok := i.(int64); ok {
+				n := int(n64)
+				s.MaxProperties = &n
+			} else {
+				return nil, fmt.Errorf("unexpected type for 'maxProperties': got %s, expected Integer", util.JsType(i))
+			}
 		case "minProperties":
-			i := int(obj.Get(k).ToInteger())
-			s.MinProperties = &i
+			i := obj.Get(k).Export()
+			if n64, ok := i.(int64); ok {
+				n := int(n64)
+				s.MinProperties = &n
+			} else {
+				return nil, fmt.Errorf("unexpected type for 'minProperties': got %s, expected Integer", util.JsType(i))
+			}
 		case "required":
 			i := obj.Get(k).Export()
 			if arr, ok := i.([]interface{}); ok {
@@ -138,7 +238,7 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
 					s.Required = append(s.Required, req)
 				}
 			} else {
-				return nil, fmt.Errorf("unexpected type for 'required': %v", util.JsType(i))
+				return nil, fmt.Errorf("unexpected type for 'required': got %s, expected Array", util.JsType(i))
 			}
 		}
 	}

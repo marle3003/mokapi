@@ -492,7 +492,7 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			name: "unique items",
-			schema: schematest.New("array", schematest.WithMinItems(5), schematest.WithMaxItems(10), schematest.WithUniqueItems(),
+			schema: schematest.New("array", schematest.WithMinItems(5), schematest.WithMaxItems(10), schematest.WithUniqueItems(true),
 				schematest.WithItems("integer", schematest.WithFormat("int32"), schematest.WithMinimum(0), schematest.WithMaximum(10)),
 			),
 			test: func(t *testing.T, i interface{}, err error) {
@@ -502,7 +502,7 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			name: "unique and shuffle items",
-			schema: schematest.New("array", schematest.WithMinItems(2), schematest.WithMaxItems(5), schematest.WithUniqueItems(), schematest.WithShuffleItems(),
+			schema: schematest.New("array", schematest.WithMinItems(2), schematest.WithMaxItems(5), schematest.WithUniqueItems(true), schematest.WithShuffleItems(),
 				schematest.WithItems("integer", schematest.WithFormat("int32"), schematest.WithMinimum(0), schematest.WithMaximum(10)),
 			),
 			test: func(t *testing.T, i interface{}, err error) {
@@ -512,7 +512,7 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			name: "enum ignores items config",
-			schema: schematest.New("array", schematest.WithMinItems(5), schematest.WithMaxItems(10), schematest.WithUniqueItems(),
+			schema: schematest.New("array", schematest.WithMinItems(5), schematest.WithMaxItems(10), schematest.WithUniqueItems(true),
 				schematest.WithEnumValues([]interface{}{1, 2, 3}, []interface{}{3, 2, 1}),
 				schematest.WithItems("integer", schematest.WithFormat("int32"), schematest.WithMinimum(0), schematest.WithMaximum(3)),
 			),
@@ -523,7 +523,7 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			name: "unique items with error",
-			schema: schematest.New("array", schematest.WithMinItems(5), schematest.WithMaxItems(10), schematest.WithUniqueItems(),
+			schema: schematest.New("array", schematest.WithMinItems(5), schematest.WithMaxItems(10), schematest.WithUniqueItems(true),
 				schematest.WithItems("integer", schematest.WithFormat("int32"), schematest.WithMinimum(0), schematest.WithMaximum(3)),
 			),
 			test: func(t *testing.T, i interface{}, err error) {
@@ -532,7 +532,7 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			name: "unique items with enum",
-			schema: schematest.New("array", schematest.WithMinItems(5), schematest.WithMaxItems(10), schematest.WithUniqueItems(),
+			schema: schematest.New("array", schematest.WithMinItems(5), schematest.WithMaxItems(10), schematest.WithUniqueItems(true),
 				schematest.WithItems("integer",
 					schematest.WithFormat("int32"),
 					schematest.WithEnumValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
@@ -544,7 +544,7 @@ func TestGeneratorArray(t *testing.T) {
 		},
 		{
 			name: "unique items with enum and shuffle",
-			schema: schematest.New("array", schematest.WithMinItems(5), schematest.WithMaxItems(10), schematest.WithUniqueItems(), schematest.WithShuffleItems(),
+			schema: schematest.New("array", schematest.WithMinItems(5), schematest.WithMaxItems(10), schematest.WithUniqueItems(true), schematest.WithShuffleItems(),
 				schematest.WithItems("integer", schematest.WithFormat("int32"), schematest.WithEnumValues(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
 			),
 			test: func(t *testing.T, i interface{}, err error) {
@@ -611,7 +611,7 @@ func TestGeneratorObject(t *testing.T) {
 		},
 		{
 			name: "dictionary",
-			exp:  map[string]interface{}{"bunch": "Pevuwy", "gang": "", "growth": "NrLJgmr9arW", "hall": "JKqGj", "woman": "x?vY5elXhlD4ez"},
+			exp:  map[string]interface{}{"bunch": "lRf", "child": "", "gang": "ezlYehCIA0OS", "growth": "Jgmr9arWgSf", "hall": "Gj", "shower": "lnzbhmhDhXgaq", "uncle": "W", "woman": "Y5elX"},
 			schema: schematest.New("object",
 				schematest.WithAdditionalProperties(schematest.New("string"))),
 		},
@@ -765,7 +765,7 @@ func TestGenerator_AllOf(t *testing.T) {
 			schema: schematest.New("", schematest.AllOf(
 				schematest.New("object", schematest.WithProperty("a",
 					schematest.New("array",
-						schematest.WithUniqueItems(),
+						schematest.WithUniqueItems(true),
 						schematest.WithItems(
 							"integer",
 							schematest.WithMinItems(5),

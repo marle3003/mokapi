@@ -29,7 +29,7 @@ func (r *resolver) resolveArray(req *Request) (*faker, error) {
 		if s.Items.Ref != "" {
 			path = append(path, getPathFromRef(s.Items.Ref))
 		}
-		if len(s.Items.Enum) > 0 && s.UniqueItems {
+		if len(s.Items.Enum) > 0 && s.UniqueItems != nil && *s.UniqueItems {
 			index := gofakeit.Number(0, len(s.Items.Enum)-1)
 			item = newFaker(func() (any, error) {
 				index = (index + 1) % len(s.Items.Enum)
@@ -70,21 +70,54 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 	minItems := 0
 	if s.MinItems != nil {
 		minItems = *s.MinItems
+	} else if s.MinContains != nil {
+		minItems = *s.MinContains
 	}
 	length := minItems
 	if maxItems-minItems > 0 {
 		length = gofakeit.Number(minItems, maxItems)
 	}
 
+	var containsFaker *faker
+	containsNum := 0
+	shuffleItems := s.ShuffleItems
+	if s.Contains != nil {
+		minContains := 1
+		if s.MinContains != nil {
+			minContains = *s.MinContains
+		}
+		maxContains := length
+		if s.MaxContains != nil {
+			maxContains = *s.MaxContains
+		}
+		if err := validateContainsNum(minContains, maxContains); err != nil {
+			return nil, err
+		}
+		containsFaker = newFaker(func() (any, error) {
+			return fakeBySchema(r.WithSchema(s.Contains))
+		})
+		containsNum = gofakeit.Number(minContains, maxContains)
+		// Shuffle the array so the contains items are randomly distributed.
+		shuffleItems = true
+	}
+
 	arr := make([]interface{}, 0, length)
 	for i := 0; i < length; i++ {
 		r.Context.Snapshot()
+
+		var nextItem *faker
+		if containsFaker != nil && i < containsNum {
+			nextItem = containsFaker
+		} else {
+			nextItem = fakeItem
+		}
+
 		var v interface{}
 		var err error
-		if s.UniqueItems {
-			v, err = nextUnique(arr, fakeItem.fake)
+		if s.UniqueItems != nil && *s.UniqueItems {
+			v, err = nextUnique(arr, nextItem.fake)
 		} else {
-			v, err = fakeItem.fake()
+			v, err = nextItem.fake()
 		}
 		if err != nil {
 			return nil, fmt.Errorf("%v: %v", err, s)
@@ -93,7 +126,7 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 		r.Context.Restore()
 	}
 
-	if s.ShuffleItems {
+	if shuffleItems {
 		r.g.rand.Shuffle(len(arr), func(i, j int) { arr[i], arr[j] = arr[j], arr[i] })
 	}
 
@@ -150,4 +183,17 @@ func findWithPlural(req *Request) (*faker, error) {
 		return newFakerWithFallback(n, req), nil
 	}
 	return nil, NotSupported
+}
+
+func validateContainsNum(min, max int) error {
+	if min > max {
+		return fmt.Errorf("invalid minContains '%v' and maxContains '%v'", min, max)
+	}
+	if min < 0 {
+		return fmt.Errorf("invalid minContains '%v': must be a non-negative number", min)
+	}
+	if max < 0 {
+		return fmt.Errorf("invalid maxContains '%v': must be a non-negative number", min)
+	}
+	return nil
 }

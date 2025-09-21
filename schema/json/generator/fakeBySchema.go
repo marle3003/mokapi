@@ -78,15 +78,29 @@ func fakeBySchema(r *Request) (interface{}, error) {
 		return nil, fmt.Errorf("unsupported schema: %s", s)
 	}
 
-	i, _ := gofakeit.Weighted(types, weightTypes)
-	s = &schema.Schema{Type: schema.Types{i.(string)}}
-	return fakeBySchema(r.WithSchema(s))
+	// Non-applicable keywords (minLength, multipleOf) are only considered when a type is defined.
+	// First, we try to infer the type by non-applicable keywords. If no clear hint is available,
+	// we choose a random type and set it to a copy of the current schema.
+	i := inferTypeFromKeywords(s)
+	if i == "" {
+		w, _ := gofakeit.Weighted(types, weightTypes)
+		i = w.(string)
+	}
+	var c schema.Schema
+	if s != nil {
+		c = *s
+		c.Type = schema.Types{i}
+	} else {
+		c = schema.Schema{Type: schema.Types{i}}
+	}
+	return fakeBySchema(r.WithSchema(&c))
 }
 
 func fakeObject(r *Request) (interface{}, error) {
 	s := r.Schema
 	if s.Properties == nil {
 		s.Properties = &schema.Schemas{LinkedHashMap: sortedmap.LinkedHashMap[string, *schema.Schema]{}}
+
 		length := numProperties(0, 10, s)
 
 		if length == 0 {
@@ -94,7 +108,12 @@ func fakeObject(r *Request) (interface{}, error) {
 		}
 
 		for i := 0; i < length; i++ {
-			name := fakeDictionaryKey()
+			var name string
+			if i < len(s.Required) {
+				name = s.Required[i]
+			} else {
+				name = fakeDictionaryKey()
+			}
 			s.Properties.Set(name, nil)
 		}
 	}
@@ -131,4 +150,38 @@ func selectExample(r *Request) (any, error) {
 		}
 	}
 	return nil, NoMatchFound
+}
+
+func inferTypeFromKeywords(s *schema.Schema) string {
+	if s == nil {
+		return ""
+	}
+
+	// Strings
+	if s.MinLength != nil || s.MaxLength != nil || s.Pattern != "" || s.Format != "" {
+		return "string"
+	}
+
+	// Numbers
+	if s.MultipleOf != nil || s.Minimum != nil || s.Maximum != nil ||
+		s.ExclusiveMinimum != nil || s.ExclusiveMaximum != nil {
+		return "number"
+	}
+
+	// Arrays
+	if s.Items != nil || s.PrefixItems != nil || s.Contains != nil ||
+		s.MinItems != nil || s.MaxItems != nil || s.UniqueItems != nil || s.UnevaluatedItems != nil {
+		return "array"
+	}
+
+	// Objects
+	if (s.Properties != nil && s.Properties.Len() > 0) || len(s.Required) > 0 ||
+		len(s.PatternProperties) > 0 || s.MinProperties != nil ||
+		s.MaxProperties != nil || s.AdditionalProperties != nil ||
+		s.DependentSchemas != nil || s.DependentRequired != nil ||
+		s.UnevaluatedProperties != nil {
+		return "object"
+	}
+
+	return "" // no clear hint
 }

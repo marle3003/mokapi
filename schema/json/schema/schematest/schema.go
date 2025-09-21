@@ -100,7 +100,8 @@ func WithRequired(names ...string) SchemaOptions {
 
 func WithUniqueItems() SchemaOptions {
 	return func(s *schema.Schema) {
-		s.UniqueItems = true
+		b := true
+		s.UniqueItems = &b
 	}
 }
 

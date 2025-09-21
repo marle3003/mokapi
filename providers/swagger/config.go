@@ -84,7 +84,7 @@ type Parameter struct {
 	AllowEmptyValue  bool           `yaml:"allowEmptyValue,omitempty" json:"allowEmptyValue,omitempty"`
 	Required         bool           `yaml:"required,omitempty" json:"required,omitempty"`
 	Deprecated       bool           `yaml:"deprecated" json:"deprecated"`
-	UniqueItems      bool           `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
+	UniqueItems      *bool          `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
 	ExclusiveMin     bool           `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
 	ExclusiveMax     bool           `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
 	Schema           *schema.Schema `yaml:"schema,omitempty" json:"schema,omitempty"`

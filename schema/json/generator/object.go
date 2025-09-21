@@ -144,6 +144,17 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 		}
 		fakes.Set(it.Key(), f)
 	}
+
+	for _, name := range s.Required {
+		if _, ok := fakes.Get(name); !ok {
+			f, err := r.resolve(req.With(append(req.Path, name), nil, req.examples), false)
+			if err != nil {
+				return nil, err
+			}
+			fakes.Set(name, f)
+		}
+	}
+
 	return fakes, nil
 }
 
@@ -180,6 +191,8 @@ func firstLetterToLower(s string) string {
 func numProperties(min, max int, s *schema.Schema) int {
 	if s.MinProperties != nil {
 		min = *s.MinProperties
+	} else {
+		min = len(s.Required)
 	}
 	if s.MaxProperties != nil {
 		max = *s.MaxProperties

@@ -197,9 +197,9 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			name: "UniqueItems",
-			s:    schematest.New("array", schematest.WithUniqueItems()),
+			s:    schematest.New("array", schematest.WithUniqueItems(true)),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
-				require.Equal(t, true, s.UniqueItems)
+				require.Equal(t, true, *s.UniqueItems)
 			},
 		},
 		{

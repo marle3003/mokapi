@@ -358,20 +358,20 @@ func TestSchema_Patch(t *testing.T) {
 			name: "patch exclusive uniqueItems",
 			schemas: []*schema.Schema{
 				{},
-				{UniqueItems: true},
+				{UniqueItems: toBoolP(true)},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.True(t, result.UniqueItems)
+				require.True(t, *result.UniqueItems)
 			},
 		},
 		{
 			name: "patch overwrite uniqueItems",
 			schemas: []*schema.Schema{
-				{UniqueItems: true},
-				{UniqueItems: false},
+				{UniqueItems: toBoolP(true)},
+				{UniqueItems: toBoolP(false)},
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.False(t, result.UniqueItems)
+				require.False(t, *result.UniqueItems)
 			},
 		},
 		{

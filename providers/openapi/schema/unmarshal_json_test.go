@@ -1180,7 +1180,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 		{
 			name: "not uniqueItems",
 			s:    `["foo", "foo"]`,
-			schema: schematest.New("array", schematest.WithUniqueItems(),
+			schema: schematest.New("array", schematest.WithUniqueItems(true),
 				schematest.WithItems("string"),
 			),
 			test: func(t *testing.T, i interface{}, err error) {
@@ -1190,7 +1190,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 		{
 			name: "uniqueItems",
 			s:    `["foo", "bar"]`,
-			schema: schematest.New("array", schematest.WithUniqueItems(),
+			schema: schematest.New("array", schematest.WithUniqueItems(true),
 				schematest.WithItems("string"),
 			),
 			test: func(t *testing.T, i interface{}, err error) {

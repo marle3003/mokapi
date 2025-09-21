@@ -83,26 +83,29 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
+						"brace": map[string]interface{}{
+							"age": int64(65), "gender": "male",
+						},
 						"collection": map[string]interface{}{
-							"age": int64(5), "gender": "male",
+							"age": int64(84), "gender": "female",
 						},
 						"comb": map[string]interface{}{
-							"age": int64(85), "gender": "male",
+							"age": int64(5), "gender": "male",
 						},
 						"company": map[string]interface{}{
-							"age": int64(41), "gender": "male",
+							"age": int64(51), "gender": "female",
 						},
 						"luck": map[string]interface{}{
-							"age": int64(10), "gender": "female",
-						},
-						"person": map[string]interface{}{
 							"age": int64(55), "gender": "male",
 						},
-						"problem": map[string]interface{}{
+						"person": map[string]interface{}{
 							"age": int64(53), "gender": "female",
 						},
+						"problem": map[string]interface{}{
+							"age": int64(85), "gender": "male",
+						},
 						"sunshine": map[string]interface{}{
-							"age": int64(51), "gender": "female",
+							"age": int64(10), "gender": "female",
 						},
 					},
 

@@ -82,7 +82,7 @@ func (s *Schema) String() string {
 	if s.MaxProperties != nil {
 		sb.WriteString(fmt.Sprintf(" maxProperties=%v", *s.MaxProperties))
 	}
-	if s.UniqueItems {
+	if s.UniqueItems != nil && *s.UniqueItems {
 		sb.WriteString(" unique-items")
 	}
 
