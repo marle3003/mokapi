@@ -29,6 +29,7 @@ func (suite *LdapSuite) SetupSuite() {
 
 func (suite *LdapSuite) TearDownSuite() {
 	suite.Client.Close()
+	suite.BaseSuite.TearDownSuite()
 }
 
 func (suite *LdapSuite) AfterTest(_, _ string) {
