@@ -142,13 +142,15 @@ func TestPerson(t *testing.T) {
 					),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{
-					map[string]interface{}{"name": "Gabriel Adams"},
-					map[string]interface{}{"name": "Ella Torres"},
-					map[string]interface{}{"name": "Penelope Jackson"},
-					map[string]interface{}{"name": "Michael Carter"},
+					map[string]any{"name": "Gabriel Adams"},
+					map[string]any{"name": "Ella Torres"},
+					map[string]any{"name": "Penelope Jackson"},
+					map[string]any{"name": "Michael Carter"},
+					map[string]any{"name": "Jackson Green"},
+					map[string]any{"name": "Liam Gonzalez"},
 				},
 					v)
 			},
@@ -290,28 +292,16 @@ func TestPerson(t *testing.T) {
 					),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{
-					map[string]interface{}{
-						"firstname": "Zoey",
-						"title":     "Prof.",
-					},
-					map[string]interface{}{
-						"firstname": "Dylan",
-						"title":     "Dr.",
-					},
-					map[string]interface{}{
-						"firstname": "Hannah",
-						"title":     "Ms.",
-					},
-					map[string]interface{}{
-						"firstname": "Olivia",
-						"title":     "Mrs."},
-					map[string]interface{}{
-						"firstname": "Audrey",
-						"title":     "Mrs.",
-					},
+					map[string]any{"firstname": "Gabriel", "title": "Dr."},
+					map[string]any{"firstname": "Ella", "title": "Miss"},
+					map[string]any{"firstname": "Penelope", "title": "Ms."},
+					map[string]any{"firstname": "Michael", "title": "Rev."},
+					map[string]any{"firstname": "Jackson", "title": "Mx."},
+					map[string]any{"firstname": "Liam", "title": "Prof."},
+					map[string]any{"firstname": "Thomas", "title": "Mr."},
 				}, v)
 			},
 		},
@@ -331,44 +321,17 @@ func TestPerson(t *testing.T) {
 					),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{
-					map[string]interface{}{
-						"firstname": "Gabriel",
-						"lastname":  "Clark",
-						"sex":       "male",
-						"username":  "gclark",
-						"alias":     "G. Clark",
-					},
-					map[string]interface{}{
-						"firstname": "Ella",
-						"lastname":  "Adams",
-						"sex":       "female",
-						"username":  "eadams",
-						"alias":     "E. Adams",
-					},
-					map[string]interface{}{
-						"firstname": "Penelope",
-						"lastname":  "Torres",
-						"sex":       "female",
-						"username":  "ptorres",
-						"alias":     "P. Torres",
-					},
-					map[string]interface{}{
-						"firstname": "Michael",
-						"lastname":  "Jackson",
-						"sex":       "male",
-						"username":  "mjackson",
-						"alias":     "M. Jackson",
-					},
-					map[string]interface{}{
-						"firstname": "Jackson",
-						"lastname":  "Carter",
-						"sex":       "male",
-						"username":  "jcarter",
-						"alias":     "J. Carter",
-					}}, v)
+				require.Equal(t, []any{
+					map[string]any{"alias": "H. Robinson", "firstname": "Hudson", "lastname": "Robinson", "sex": "male", "username": "hrobinson"},
+					map[string]any{"alias": "J. Nelson", "firstname": "Jayden", "lastname": "Nelson", "sex": "male", "username": "jnelson"},
+					map[string]any{"alias": "A. Walker", "firstname": "Aria", "lastname": "Walker", "sex": "female", "username": "awalker"},
+					map[string]any{"alias": "M. Johnson", "firstname": "Maverick", "lastname": "Johnson", "sex": "male", "username": "mjohnson"},
+					map[string]any{"alias": "E. Mitchell", "firstname": "Emilia", "lastname": "Mitchell", "sex": "female", "username": "emitchell"},
+					map[string]any{"alias": "E. Lopez", "firstname": "Elizabeth", "lastname": "Lopez", "sex": "female", "username": "elopez"},
+					map[string]any{"alias": "I. Martinez", "firstname": "Isabella", "lastname": "Martinez", "sex": "female", "username": "imartinez"},
+				}, v)
 			},
 		},
 		{

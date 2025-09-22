@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/jinzhu/inflection"
+	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"reflect"
 )
@@ -29,7 +30,7 @@ func (r *resolver) resolveArray(req *Request) (*faker, error) {
 		if s.Items.Ref != "" {
 			path = append(path, getPathFromRef(s.Items.Ref))
 		}
-		if len(s.Items.Enum) > 0 && s.UniqueItems != nil && *s.UniqueItems {
+		if len(s.Items.Enum) > 0 && (s.UniqueItems != nil && *s.UniqueItems) {
 			index := gofakeit.Number(0, len(s.Items.Enum)-1)
 			item = newFaker(func() (any, error) {
 				index = (index + 1) % len(s.Items.Enum)
@@ -63,24 +64,60 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 		s = &schema.Schema{}
 	}
 
-	maxItems := 5
-	if s.MaxItems != nil {
-		maxItems = *s.MaxItems
-	}
 	minItems := 0
 	if s.MinItems != nil {
 		minItems = *s.MinItems
 	} else if s.MinContains != nil {
 		minItems = *s.MinContains
 	}
-	length := minItems
-	if maxItems-minItems > 0 {
-		length = gofakeit.Number(minItems, maxItems)
-	} else if minItems > maxItems {
+
+	maxItems := minItems + 5
+	if s.MaxItems != nil {
+		maxItems = *s.MaxItems
+	}
+
+	if maxItems < minItems {
 		if s.MinItems != nil {
-			return nil, errors.New("minItems must be less than maxItems")
+			return nil, errors.New("invalid schema: minItems must be less than maxItems")
 		} else if s.MinContains != nil {
-			return nil, errors.New("minContains must be less than maxItems")
+			return nil, errors.New("invalid schema: minContains must be less than maxItems")
+		}
+		return nil, fmt.Errorf("invalid schema: maxItems must be greater than minItems")
+	}
+
+	length := gofakeit.Number(minItems, maxItems)
+	if s.Items != nil && s.Items.Boolean != nil && !*s.Items.Boolean {
+		// disallows extra items in the tuple.
+		length = 0
+	}
+
+	prefixItems := make([]any, 0, len(s.PrefixItems))
+	containsMatches := 0
+	for _, ps := range s.PrefixItems {
+		r.Context.Snapshot()
+
+		prefixItem := newFaker(func() (any, error) {
+			return fakeBySchema(r.WithSchema(ps))
+		})
+
+		var v interface{}
+		var err error
+		if s.UniqueItems != nil && *s.UniqueItems {
+			v, err = nextUnique(prefixItems, prefixItem.fake)
+		} else {
+			v, err = prefixItem.fake()
+		}
+		if err != nil {
+			return nil, fmt.Errorf("%v: %v", err, s)
+		}
+		prefixItems = append(prefixItems, v)
+		r.Context.Restore()
+
+		if s.Contains != nil {
+			p := parser.Parser{Schema: ps}
+			if _, err = p.Parse(v); err == nil {
+				containsMatches++
+			}
 		}
 	}
 
@@ -102,41 +139,65 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 		containsFaker = newFaker(func() (any, error) {
 			return fakeBySchema(r.WithSchema(s.Contains))
 		})
-		containsNum = gofakeit.Number(minContains, maxContains)
+		containsNum = gofakeit.Number(minContains, maxContains) - containsNum
 		// Shuffle the array so the contains items are randomly distributed.
 		shuffleItems = true
 	}
 
-	arr := make([]interface{}, 0, length)
-	for i := 0; i < length; i++ {
-		r.Context.Snapshot()
+	length = length - len(prefixItems)
+	if length > 0 {
+		arr := make([]any, 0, length)
+		for i := 0; i < length; i++ {
+			var nextItem *faker
+			if containsFaker != nil && i < containsNum {
+				nextItem = containsFaker
+			} else {
+				nextItem = fakeItem
+			}
 
-		var nextItem *faker
-		if containsFaker != nil && i < containsNum {
-			nextItem = containsFaker
-		} else {
-			nextItem = fakeItem
+			var v any
+			var err error
+			attempt := 0
+			for {
+				if attempt >= 10 {
+					return nil, fmt.Errorf("failed to generate valid array: reached maximum of value maxContains %d within 10 attempts", *s.MaxContains)
+				}
+				attempt++
+				r.Context.Snapshot()
+				if s.UniqueItems != nil && *s.UniqueItems {
+					v, err = nextUnique(arr, nextItem.fake)
+				} else {
+					v, err = nextItem.fake()
+				}
+				if s.Contains != nil && s.MaxContains != nil {
+					p := parser.Parser{Schema: s.Contains}
+					if _, errContains := p.Parse(v); errContains == nil {
+						if containsMatches+1 > *s.MaxContains {
+							r.Context.Restore()
+							continue
+						} else {
+							containsMatches++
+						}
+					}
+				}
+				r.Context.Restore()
+				break
+			}
+			if err != nil {
+				return nil, fmt.Errorf("%v: %v", err, s)
+			}
+			arr = append(arr, v)
 		}
 
-		var v interface{}
-		var err error
-		if s.UniqueItems != nil && *s.UniqueItems {
-			v, err = nextUnique(arr, nextItem.fake)
-		} else {
-			v, err = nextItem.fake()
+		if shuffleItems {
+			r.g.rand.Shuffle(len(arr), func(i, j int) { arr[i], arr[j] = arr[j], arr[i] })
 		}
-		if err != nil {
-			return nil, fmt.Errorf("%v: %v", err, s)
-		}
-		arr = append(arr, v)
-		r.Context.Restore()
+
+		result := append(prefixItems, arr...)
+		return result, nil
+	} else {
+		return prefixItems, nil
 	}
-
-	if shuffleItems {
-		r.g.rand.Shuffle(len(arr), func(i, j int) { arr[i], arr[j] = arr[j], arr[i] })
-	}
-
-	return arr, nil
 }
 
 func nextUnique(arr []interface{}, fakeItem func() (interface{}, error)) (interface{}, error) {

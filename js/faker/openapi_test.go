@@ -480,7 +480,7 @@ minItems: 3,
 })
 				`)
 				r.NoError(t, err)
-				r.Equal(t, []any{true, int64(6224634831868504800), "ZuoWq vY5elXhlD", []any{2.3090412168364615e+307, "lYehCIA", map[string]any{"caravan": true, "hail": 2.536044080333601e+307, "mob": int64(-287411453310397474), "scale": true}, false}, false}, v.Export())
+				r.Equal(t, []any{true, int64(6224634831868504800), "ZuoWq vY5elXhlD", []interface{}{2.3090412168364615e+307, "lYehCIA", map[string]interface{}{"caravan": true, "hail": 2.536044080333601e+307, "mob": int64(-287411453310397474), "scale": true}, false}, false, []interface{}{true, int64(1769588974883905016), 7.53537259781811e+307}, false, "LWxKt"}, v.Export())
 			},
 		},
 		{
@@ -562,7 +562,7 @@ minContains: 4
 })
 				`)
 				r.NoError(t, err)
-				r.Equal(t, []any{"LWxKt", "wYx?vY5elXhlD", "VhgPevuwyrNrL", "lVeCZKW1JKqG", "idZ"}, v.Export())
+				r.Equal(t, []any{"LWxKt", "wYx?vY5elXhlD", "VhgPevuwyrNrL", 3.411011869388561e+307, 6.118679555323457e+307, "lVeCZKW1JKqG", true, []interface{}{}, "idZ"}, v.Export())
 			},
 		},
 		{

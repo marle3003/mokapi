@@ -477,7 +477,7 @@ func TestGeneratorArray(t *testing.T) {
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int32(1), int32(8), int32(8), int32(6), int32(7)}, i)
+				require.Equal(t, []interface{}{int32(8), int32(8), int32(6), int32(7), int32(1), int32(8), int32(9), int32(5), int32(3), int32(1)}, i)
 			},
 		},
 		{
@@ -681,7 +681,7 @@ func TestGenerator_AnyOf(t *testing.T) {
 				require.NoError(t, err)
 				b, err := json.Marshal(o)
 				require.NoError(t, err)
-				require.Equal(t, `[{"bar":4},{"bar":3}]`, string(b))
+				require.Equal(t, `[{"bar":4}]`, string(b))
 			},
 		},
 	}
