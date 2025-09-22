@@ -1,8 +1,6 @@
 package file_test
 
 import (
-	"github.com/dop251/goja"
-	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/enginetest"
@@ -14,6 +12,9 @@ import (
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"testing"
+
+	"github.com/dop251/goja"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestModule_Open(t *testing.T) {
@@ -40,7 +41,7 @@ func TestModule_Open(t *testing.T) {
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				host.OpenFunc = func(file, hint string) (*dynamic.Config, error) {
 					return &dynamic.Config{
-						Data: openapitest.NewConfig("2.0.0",
+						Data: openapitest.NewConfig("3.0.0",
 							openapitest.WithComponentSchema("Foo", schematest.New("string")),
 						),
 					}, nil
@@ -93,9 +94,10 @@ func TestModule_Open(t *testing.T) {
 			loop := eventloop.New(vm)
 			defer loop.Stop()
 			loop.StartLoop()
-			js.EnableInternal(vm, host, loop, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
+			source := &dynamic.Config{Info: dynamictest.NewConfigInfo()}
+			js.EnableInternal(vm, host, loop, source)
 			reg.Enable(vm)
-			file.Enable(vm, host)
+			file.Enable(vm, host, source)
 
 			tc.test(t, vm, host)
 		})

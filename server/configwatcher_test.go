@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestConfigWatcher_Read(t *testing.T) {
@@ -42,7 +43,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				})
 
 				pool := safe.NewPool(context.Background())
-				w.Start(pool)
+				_ = w.Start(pool)
 				defer pool.Stop()
 
 				c := try.GetConfig(t, ch, 1*time.Second)
@@ -132,7 +133,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				})
 
 				pool := safe.NewPool(context.Background())
-				w.Start(pool)
+				_ = w.Start(pool)
 				defer pool.Stop()
 
 				c, err := w.Read(configPath, nil)
@@ -161,7 +162,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 					},
 				}
 				pool := safe.NewPool(context.Background())
-				w.Start(pool)
+				_ = w.Start(pool)
 				defer pool.Stop()
 
 				ch <- dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath}, Raw: []byte("foobar")}}
@@ -227,6 +228,37 @@ func TestConfigWatcher_Read(t *testing.T) {
 			},
 		},
 		{
+			name: "read explicit while implicit is reading",
+			test: func(t *testing.T) {
+				w := NewConfigWatcher(&static.Config{})
+				configPath := mustParse("file.yml")
+				configPath.Scheme = "foo"
+				var ch chan dynamic.ConfigEvent
+				w.providers["foo"] = &testprovider{
+					start: func(configs chan dynamic.ConfigEvent, pool *safe.Pool) error {
+						ch = configs
+						return nil
+					},
+					read: func(u *url.URL) (*dynamic.Config, error) {
+						require.Equal(t, configPath, u)
+						return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &slow{}}, nil
+					},
+				}
+				pool := safe.NewPool(context.Background())
+				_ = w.Start(pool)
+				defer pool.Stop()
+				dynamic.Register("test", nil, &slowUnmarshal{})
+
+				ch <- dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath}, Raw: []byte("test: 1.0")}}
+
+				time.Sleep(time.Duration(500) * time.Millisecond)
+
+				c, err := w.Read(configPath, nil)
+				require.NoError(t, err)
+				require.NotNil(t, c.Data)
+			},
+		},
+		{
 			name: "should not invoke listeners when content is unknown",
 			test: func(t *testing.T) {
 				w := NewConfigWatcher(&static.Config{})
@@ -241,7 +273,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 				}
 
 				pool := safe.NewPool(context.Background())
-				w.Start(pool)
+				_ = w.Start(pool)
 				defer pool.Stop()
 
 				ch := make(chan dynamic.ConfigEvent, 1)
@@ -279,7 +311,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 					},
 				}
 				pool := safe.NewPool(context.Background())
-				w.Start(pool)
+				_ = w.Start(pool)
 				defer pool.Stop()
 
 				c, err := w.Read(configPath, nil)
@@ -320,7 +352,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 					},
 				}
 				pool := safe.NewPool(context.Background())
-				w.Start(pool)
+				_ = w.Start(pool)
 				defer pool.Stop()
 
 				parent, err := w.Read(configPathParent, nil)
@@ -369,7 +401,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 					},
 				}
 				pool := safe.NewPool(context.Background())
-				w.Start(pool)
+				_ = w.Start(pool)
 				defer pool.Stop()
 
 				c, err := w.Read(configPath, nil)
@@ -411,7 +443,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 					},
 				}
 				pool := safe.NewPool(context.Background())
-				w.Start(pool)
+				_ = w.Start(pool)
 				defer pool.Stop()
 
 				var events []string
@@ -656,16 +688,6 @@ func TestConfigWatcher_Wrapping(t *testing.T) {
 	}
 }
 
-type data struct {
-	User        string
-	calledParse bool
-}
-
-func (d *data) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
-	d.calledParse = true
-	return nil
-}
-
 type parseError struct{}
 
 func (d *parseError) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
@@ -675,8 +697,8 @@ func (d *parseError) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
 type slow struct{}
 
 func (d *slow) Parse(config *dynamic.Config, _ dynamic.Reader) error {
-	config.Data = "foo"
 	time.Sleep(5 * time.Second)
+	config.Data = "foo"
 	return nil
 }
 
@@ -705,4 +727,19 @@ func mustParse(s string) *url.URL {
 		panic(err)
 	}
 	return u
+}
+
+type slowUnmarshal struct{}
+
+func (s *slowUnmarshal) UnmarshalYAML(node *yaml.Node) error {
+	time.Sleep(5 * time.Second)
+
+	type alias slowUnmarshal
+	tmp := alias(*s)
+	err := node.Decode(&tmp)
+	if err != nil {
+		return err
+	}
+	*s = slowUnmarshal(tmp)
+	return nil
 }

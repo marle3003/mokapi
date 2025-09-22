@@ -3,13 +3,20 @@ package generator
 import (
 	"errors"
 	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
+	"regexp/syntax"
 	"slices"
 	"strings"
 	"unicode"
+
+	"github.com/brianvoe/gofakeit/v6"
+)
+
+var (
+	numPatternProperties     = []interface{}{0, 1, 2, 3, 4, 5}
+	weightsPatternProperties = []float32{0.1, 3, 2, 1, 0.5, 0.5}
 )
 
 func (r *resolver) resolveObject(req *Request) (*faker, error) {
@@ -30,7 +37,7 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 	case !s.HasProperties() && s.AdditionalProperties != nil:
 		fakes, err = r.fakeDictionary(req)
 		resetStore = true
-	case !s.HasProperties():
+	case !s.HasProperties() && s.PatternProperties == nil:
 		if len(s.Examples) > 0 {
 			return fakeByExample(req)
 		}
@@ -108,41 +115,70 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 		req.Path = append(req.Path, domain)
 	}
 
-	for it := s.Properties.Iter(); it.Next(); {
-		prop := append(req.Path, it.Key())
-		ex := propertyFromExample(it.Key(), req)
-		f, err := r.resolve(req.With(prop, it.Value(), ex), fallback)
-		if err != nil {
-			var guard *RecursionGuard
-			if errors.As(err, &guard) {
-				if !slices.Contains(req.Schema.Required, it.Key()) {
-					continue
+	if s.Properties != nil {
+		for it := s.Properties.Iter(); it.Next(); {
+			prop := append(req.Path, it.Key())
+			ex := propertyFromExample(it.Key(), req)
+			f, err := r.resolve(req.With(prop, it.Value(), ex), fallback)
+			if err != nil {
+				var guard *RecursionGuard
+				if errors.As(err, &guard) {
+					if !slices.Contains(req.Schema.Required, it.Key()) {
+						continue
+					}
 				}
-			}
-			if errors.Is(err, NoMatchFound) {
-				if domain != "" {
-					f, err = r.resolve(req.With([]string{domain, it.Key()}, it.Value(), ex), true)
-					if err != nil {
+				if errors.Is(err, NoMatchFound) {
+					if domain != "" {
+						f, err = r.resolve(req.With([]string{domain, it.Key()}, it.Value(), ex), true)
+						if err != nil {
+							return nil, err
+						}
+					} else {
 						return nil, err
 					}
 				} else {
 					return nil, err
 				}
-			} else {
-				return nil, err
+			}
+
+			if !slices.Contains(s.Required, it.Key()) && !req.Context.Has(it.Key()) {
+				fakes.Set(it.Key(), newFaker(func() (any, error) {
+					n := gofakeit.Float32Range(0, 1)
+					if n > 0.7 {
+						return nil, nil
+					}
+					return f.fake()
+				}))
+			}
+			fakes.Set(it.Key(), f)
+		}
+	}
+
+	if s.PatternProperties != nil {
+		for pattern, prop := range s.PatternProperties {
+			if !strings.HasPrefix(pattern, "^") {
+				pattern = "[a-zA-z0-9]*" + pattern
+			}
+			if !strings.HasSuffix(pattern, "$") {
+				pattern = pattern + "[a-zA-z0-9]*"
+			}
+			re, err := syntax.Parse(pattern, syntax.Perl)
+			if err != nil {
+				return nil, fmt.Errorf("could not parse regex string: %v", pattern)
+			}
+			n := numPatterProperties()
+			for i := 0; i < n; i++ {
+				gen := regexGenerator{ra: req.g.rand}
+				gen.regexGenerate(re, len(pattern)*100)
+				propName := gen.sb.String()
+				ex := propertyFromExample(propName, req)
+				f, err := r.resolve(req.With(append(req.Path), prop, ex), fallback)
+				if err != nil {
+					return nil, err
+				}
+				fakes.Set(propName, f)
 			}
 		}
-
-		if !slices.Contains(s.Required, it.Key()) && !req.Context.Has(it.Key()) {
-			fakes.Set(it.Key(), newFaker(func() (any, error) {
-				n := gofakeit.Float32Range(0, 1)
-				if n > 0.7 {
-					return nil, nil
-				}
-				return f.fake()
-			}))
-		}
-		fakes.Set(it.Key(), f)
 	}
 
 	for _, name := range s.Required {
@@ -211,6 +247,14 @@ func numProperties(min, max int, s *schema.Schema) int {
 	} else {
 		return gofakeit.Number(min, max)
 	}
+}
+
+func numPatterProperties() int {
+	n, err := gofakeit.Weighted(numPatternProperties, weightsPatternProperties)
+	if err != nil {
+		return 1
+	}
+	return n.(int)
 }
 
 func isKnownDomain(r *Request) bool {

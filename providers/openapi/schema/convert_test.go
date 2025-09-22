@@ -1,11 +1,12 @@
 package schema_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	jsonSchema "mokapi/schema/json/schema"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestConvert(t *testing.T) {

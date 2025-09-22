@@ -2,11 +2,13 @@ package faker
 
 import (
 	"fmt"
-	"github.com/dop251/goja"
 	"mokapi/js/util"
 	"mokapi/providers/openapi/schema"
 	jsonSchema "mokapi/schema/json/schema"
 	"reflect"
+	"strconv"
+
+	"github.com/dop251/goja"
 )
 
 func isOpenApiSchema(o *goja.Object) bool {
@@ -205,6 +207,21 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Schema, error) {
 			} else {
 				return nil, fmt.Errorf("unexpected type for 'uniqueItems': got %s, expected Boolean", util.JsType(i))
 			}
+		case "prefixItems":
+			val := obj.Get(k)
+			if val.ExportType().Kind() != reflect.Slice {
+				return nil, fmt.Errorf("unexpected type for 'prefixItems': got %s, expected Array", util.JsType(val))
+			}
+			arr := val.ToObject(rt)
+			length := int(arr.Get("length").ToInteger())
+			for i := 0; i < length; i++ {
+				item := arr.Get(strconv.Itoa(i))
+				pi, err := ToOpenAPISchema(item, rt)
+				if err != nil {
+					return nil, err
+				}
+				s.PrefixItems = append(s.PrefixItems, pi)
+			}
 		case "contains":
 			contains, err := ToOpenAPISchema(obj.Get(k), rt)
 			if err != nil {
@@ -259,6 +276,21 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Schema, error) {
 				s.MinProperties = &n
 			} else {
 				return nil, fmt.Errorf("unexpected type for 'minProperties': got %s, expected Integer", util.JsType(i))
+			}
+		case "patternProperties":
+			s.PatternProperties = map[string]*schema.Schema{}
+			val := obj.Get(k)
+			t := val.ExportType()
+			if t.Kind() != reflect.Map {
+				return nil, fmt.Errorf("unexpected type for 'properties': got %s, expected Object", util.JsType(val))
+			}
+			propsObj := val.ToObject(rt)
+			for _, name := range propsObj.Keys() {
+				prop, err := ToOpenAPISchema(propsObj.Get(name), rt)
+				if err != nil {
+					return nil, err
+				}
+				s.PatternProperties[name] = prop
 			}
 		case "required":
 			i := obj.Get(k).Export()

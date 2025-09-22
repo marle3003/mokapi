@@ -237,7 +237,7 @@ func formatError(input []byte, err error) error {
 func getConfigType(data map[string]string) *configType {
 	for _, ct := range configTypes {
 		if s, ok := data[ct.header]; ok {
-			if ct.checkVersion(version.New(s)) {
+			if ct.checkVersion == nil || ct.checkVersion(version.New(s)) {
 				return ct
 			}
 		}
@@ -257,6 +257,6 @@ func reset(c *Config) {
 
 type EmptyReader struct{}
 
-func (e *EmptyReader) Read(u *url.URL, v any) (*Config, error) {
+func (e *EmptyReader) Read(u *url.URL, _ any) (*Config, error) {
 	return nil, fmt.Errorf("not found %v", u.String())
 }

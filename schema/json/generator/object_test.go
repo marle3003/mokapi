@@ -1,9 +1,10 @@
 package generator
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestObject(t *testing.T) {
@@ -219,6 +220,25 @@ func TestObject(t *testing.T) {
 					map[string]interface{}{
 						"foo": "FqwCrwMfkOjojx",
 						"bar": 1.6043524827049678e+308,
+					},
+					v)
+			},
+		},
+		{
+			name: "patternProperties",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithPatternProperty("^S_", schematest.New("string")),
+					schematest.WithPatternProperty("^I_", schematest.New("integer")),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]interface{}{
+						"S_8wEl7": "MfkOjojxkDng",
+						"S_Q":     "hbEO6wpu",
+						"I_Z":     int64(2148128501994420408),
 					},
 					v)
 			},

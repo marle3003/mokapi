@@ -2,17 +2,25 @@ package faker
 
 import (
 	"fmt"
-	"github.com/dop251/goja"
 	"mokapi/js/util"
 	jsonSchema "mokapi/schema/json/schema"
 	"reflect"
+	"strconv"
+
+	"github.com/dop251/goja"
 )
 
 func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
 	s := &jsonSchema.Schema{}
 
-	if v.ExportType().Kind() != reflect.Map {
-		return nil, fmt.Errorf("expect JSON schema but got: %T", v.Export())
+	switch v.ExportType().Kind() {
+	case reflect.Map:
+		break
+	case reflect.Bool:
+		b := v.ToBoolean()
+		return &jsonSchema.Schema{Boolean: &b}, nil
+	default:
+		return nil, fmt.Errorf("expect JSON schema but got: %v", util.JsType(v.Export()))
 	}
 
 	obj := v.ToObject(rt)
@@ -172,6 +180,21 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
 			} else {
 				return nil, fmt.Errorf("unexpected type for 'uniqueItems': got %s, expected Boolean", util.JsType(i))
 			}
+		case "prefixItems":
+			val := obj.Get(k)
+			if val.ExportType().Kind() != reflect.Slice {
+				return nil, fmt.Errorf("unexpected type for 'prefixItems': got %s, expected Array", util.JsType(val))
+			}
+			arr := val.ToObject(rt)
+			length := int(arr.Get("length").ToInteger())
+			for i := 0; i < length; i++ {
+				item := arr.Get(strconv.Itoa(i))
+				pi, err := ToJsonSchema(item, rt)
+				if err != nil {
+					return nil, err
+				}
+				s.PrefixItems = append(s.PrefixItems, pi)
+			}
 		case "contains":
 			contains, err := ToJsonSchema(obj.Get(k), rt)
 			if err != nil {
@@ -226,6 +249,21 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
 				s.MinProperties = &n
 			} else {
 				return nil, fmt.Errorf("unexpected type for 'minProperties': got %s, expected Integer", util.JsType(i))
+			}
+		case "patternProperties":
+			s.PatternProperties = map[string]*jsonSchema.Schema{}
+			val := obj.Get(k)
+			t := val.ExportType()
+			if t.Kind() != reflect.Map {
+				return nil, fmt.Errorf("unexpected type for 'properties': got %s, expected Object", util.JsType(val))
+			}
+			propsObj := val.ToObject(rt)
+			for _, name := range propsObj.Keys() {
+				prop, err := ToJsonSchema(propsObj.Get(name), rt)
+				if err != nil {
+					return nil, err
+				}
+				s.PatternProperties[name] = prop
 			}
 		case "required":
 			i := obj.Get(k).Export()
