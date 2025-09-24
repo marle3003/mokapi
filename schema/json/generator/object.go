@@ -8,6 +8,7 @@ import (
 	"mokapi/sortedmap"
 	"regexp/syntax"
 	"slices"
+	"sort"
 	"strings"
 	"unicode"
 
@@ -224,7 +225,15 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 	}
 
 	if s.PatternProperties != nil {
-		for pattern, prop := range s.PatternProperties {
+		// Collect and sort keys to get a fixed order of iteration
+		keys := make([]string, 0, len(s.PatternProperties))
+		for k := range s.PatternProperties {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+
+		for _, pattern := range keys {
+			prop := s.PatternProperties[pattern]
 			if !strings.HasPrefix(pattern, "^") {
 				pattern = "[a-zA-z0-9]*" + pattern
 			}
@@ -236,6 +245,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 				return nil, fmt.Errorf("could not parse regex string: %v", pattern)
 			}
 			n := numPatterProperties()
+			fmt.Printf("numPatterProperties: %v\n", n)
 			for i := 0; i < n; i++ {
 				gen := regexGenerator{ra: req.g.rand}
 				gen.regexGenerate(re, len(pattern)*100)

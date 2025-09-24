@@ -286,9 +286,8 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"S_8wEl7": "MfkOjojxkDng",
-						"S_Q":     "hbEO6wpu",
-						"I_Z":     int64(2148128501994420408),
+						"I_8wEl7": int64(1725511503074869948),
+						"S_Z":     "fkOjoj",
 					},
 					v)
 			},
