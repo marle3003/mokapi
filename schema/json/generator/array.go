@@ -3,11 +3,12 @@ package generator
 import (
 	"errors"
 	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/jinzhu/inflection"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"reflect"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/jinzhu/inflection"
 )
 
 func (r *resolver) resolveArray(req *Request) (*faker, error) {
@@ -155,38 +156,36 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 				nextItem = fakeItem
 			}
 
-			var v any
-			var err error
-			attempt := 0
-			for {
-				if attempt >= 10 {
-					return nil, fmt.Errorf("failed to generate valid array: reached maximum of value maxContains %d within 10 attempts", *s.MaxContains)
-				}
-				attempt++
+			err := fakeWithRetries(10, func() error {
+				var v any
+				var err error
 				r.Context.Snapshot()
 				if s.UniqueItems != nil && *s.UniqueItems {
 					v, err = nextUnique(arr, nextItem.fake)
 				} else {
 					v, err = nextItem.fake()
 				}
+				if err != nil {
+					return err
+				}
 				if s.Contains != nil && s.MaxContains != nil {
 					p := parser.Parser{Schema: s.Contains}
 					if _, errContains := p.Parse(v); errContains == nil {
 						if containsMatches+1 > *s.MaxContains {
 							r.Context.Restore()
-							continue
+							return fmt.Errorf("reached maximum of value maxContains=%d", *s.MaxContains)
 						} else {
 							containsMatches++
 						}
 					}
 				}
 				r.Context.Restore()
-				break
-			}
+				arr = append(arr, v)
+				return nil
+			})
 			if err != nil {
-				return nil, fmt.Errorf("%v: %v", err, s)
+				return nil, fmt.Errorf("failed to generate valid array: %w", err)
 			}
-			arr = append(arr, v)
 		}
 
 		if shuffleItems {

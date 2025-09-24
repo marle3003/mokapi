@@ -2,10 +2,11 @@ package generator
 
 import (
 	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
 	"mokapi/schema/json/schema"
 	"strconv"
 	"strings"
+
+	"github.com/brianvoe/gofakeit/v6"
 )
 
 func addresses() []*Node {
@@ -96,25 +97,32 @@ func fakeStreet(r *Request) (any, error) {
 
 func fakeCity(r *Request) (any, error) {
 	var v interface{}
+	var err error
 	s := r.Schema
 	if s.IsAny() || s.IsString() {
 		v = gofakeit.City()
 	} else if s.IsInteger() {
-		v = newPostCode(s)
+		v, err = newPostCode(s)
 	} else {
 		return nil, NotSupported
+	}
+	if err != nil {
+		return nil, err
 	}
 	r.Context.Values["city"] = v
 	return v, nil
 }
 
 func fakePostcode(r *Request) (any, error) {
-	return newPostCode(r.Schema), nil
+	return newPostCode(r.Schema)
 }
 
-func newPostCode(s *schema.Schema) any {
+func newPostCode(s *schema.Schema) (any, error) {
 	if s == nil || s.IsAny() {
 		s = &schema.Schema{Type: []string{"string"}}
+	}
+	if s.Pattern != "" {
+		return nil, NotSupported
 	}
 	minLength := 4
 	maxLength := 6
@@ -144,15 +152,15 @@ func newPostCode(s *schema.Schema) any {
 	code := gofakeit.Numerify(strings.Repeat("#", n))
 	if s.IsInteger() {
 		codeN, _ := strconv.ParseInt(code, 10, 32)
-		return int(codeN)
+		return int(codeN), nil
 	} else if s.IsNumber() {
 		codeN, _ := strconv.ParseInt(code, 10, 32)
-		return float64(codeN)
+		return float64(codeN), nil
 	}
-	return code
+	return code, nil
 }
 
-func fakeAddress(r *Request) (interface{}, error) {
+func fakeAddress(_ *Request) (interface{}, error) {
 	addr := gofakeit.Address()
 	return map[string]interface{}{
 		"address":   addr.Address,
@@ -173,12 +181,12 @@ func fakeHouseNumber(r *Request) (any, error) {
 	return gofakeit.StreetNumber(), nil
 }
 
-func fakeFloor(r *Request) (any, error) {
+func fakeFloor(_ *Request) (any, error) {
 	index := gofakeit.Number(0, len(floor)-1)
 	return floor[index], nil
 }
 
-func fakeRoom(r *Request) (any, error) {
+func fakeRoom(_ *Request) (any, error) {
 	index := gofakeit.Number(0, len(room)-1)
 	return room[index], nil
 }

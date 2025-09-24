@@ -1,10 +1,10 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestAddress(t *testing.T) {
@@ -51,6 +51,17 @@ func TestAddress(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "229109", v)
+			},
+		},
+		{
+			name: "zip with pattern should use pattern",
+			request: &Request{
+				Path:   []string{"zip"},
+				Schema: schematest.New("string", schematest.WithPattern("[0-9]{4}")),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "8029", v)
 			},
 		},
 		{
@@ -235,7 +246,7 @@ func TestAddress(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			gofakeit.Seed(1234567)
+			Seed(1234567)
 
 			v, err := New(tc.request)
 			tc.test(t, v, err)

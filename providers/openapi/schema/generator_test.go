@@ -2,13 +2,14 @@ package schema_test
 
 import (
 	"encoding/json"
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/schema/json/generator"
 	jsonSchema "mokapi/schema/json/schema"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/stretchr/testify/require"
 )
 
 func toFloatP(f float64) *float64 { return &f }
@@ -527,7 +528,7 @@ func TestGeneratorArray(t *testing.T) {
 				schematest.WithItems("integer", schematest.WithFormat("int32"), schematest.WithMinimum(0), schematest.WithMaximum(3)),
 			),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "can not fill array with unique items: schema type=array minItems=5 maxItems=10 unique-items items=(schema type=integer format=int32 minimum=0 maximum=3)")
+				require.EqualError(t, err, "failed to generate valid array: reached attempt limit (10) caused by: can not fill array with unique items")
 			},
 		},
 		{
@@ -611,7 +612,7 @@ func TestGeneratorObject(t *testing.T) {
 		},
 		{
 			name: "dictionary",
-			exp:  map[string]interface{}{"bunch": "Pevuwy", "gang": "", "growth": "NrLJgmr9arW", "hall": "JKqGj", "woman": "x?vY5elXhlD4ez"},
+			exp:  map[string]interface{}{"bunch": "Pevuwy", "growth": "NrLJgmr9arW", "hall": "JKqGj", "woman": "x?vY5elXhlD4ez"},
 			schema: schematest.New("object",
 				schematest.WithAdditionalProperties(schematest.New("string"))),
 		},
@@ -766,9 +767,9 @@ func TestGenerator_AllOf(t *testing.T) {
 				schematest.New("object", schematest.WithProperty("a",
 					schematest.New("array",
 						schematest.WithUniqueItems(true),
+						schematest.WithMinItems(5),
 						schematest.WithItems(
 							"integer",
-							schematest.WithMinItems(5),
 							schematest.WithMinimum(0),
 							schematest.WithMaximum(3),
 						)),
@@ -778,7 +779,7 @@ func TestGenerator_AllOf(t *testing.T) {
 				schematest.New("object", schematest.WithProperty("bar", schematest.New("number"))),
 			)),
 			test: func(t *testing.T, result interface{}, err error) {
-				require.EqualError(t, err, "generate random data for schema failed: schema type=object properties=[a] required=[a]: can not fill array with unique items: schema type=array unique-items items=(schema type=integer minimum=0 maximum=3 minItems=5)")
+				require.EqualError(t, err, "generate random data for schema failed: schema type=object properties=[a] required=[a]: failed to generate valid object: reached attempt limit (10) caused by: failed to generate valid array: reached attempt limit (10) caused by: can not fill array with unique items")
 				require.Nil(t, result)
 			},
 		},

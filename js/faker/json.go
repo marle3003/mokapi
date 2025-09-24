@@ -255,7 +255,7 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
 			val := obj.Get(k)
 			t := val.ExportType()
 			if t.Kind() != reflect.Map {
-				return nil, fmt.Errorf("unexpected type for 'properties': got %s, expected Object", util.JsType(val))
+				return nil, fmt.Errorf("unexpected type for 'patternProperties': got %s, expected Object", util.JsType(val))
 			}
 			propsObj := val.ToObject(rt)
 			for _, name := range propsObj.Keys() {
@@ -265,6 +265,12 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
 				}
 				s.PatternProperties[name] = prop
 			}
+		case "additionalProperties":
+			items, err := ToJsonSchema(obj.Get(k), rt)
+			if err != nil {
+				return nil, fmt.Errorf("parse 'additionalProperties' failed: %w", err)
+			}
+			s.AdditionalProperties = items
 		case "required":
 			i := obj.Get(k).Export()
 			if arr, ok := i.([]interface{}); ok {

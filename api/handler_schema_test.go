@@ -3,9 +3,6 @@ package api
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/brianvoe/gofakeit/v6"
-	log "github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/openapi/openapitest"
@@ -20,6 +17,11 @@ import (
 	"mokapi/try"
 	"net/http"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v6"
+	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestHandler_Schema_Example_Query(t *testing.T) {
@@ -404,7 +406,18 @@ func TestHandler_Schema_Example(t *testing.T) {
 }`,
 					h,
 					try.HasStatusCode(200),
-					try.HasBody(`[{"contentType":"application/json","value":"eyJjYXRlZ29yeSI6IlBlb3BsZSIsImRlc2NyaXB0aW9uIjoiTXVjaCB0ZXJyaWJseSBvdmVyIHBvc2UgcGxhY2Ugc3ByaW50IGl0IGNoaWxkIGlzIGpveW91c2x5IHRoYXQgSSB3aG9tIG1hbmdvIHRoZW4gb2YgY2VydGFpbiB3ZWVrbHkgbWluZSBpbiBhbm51YWxseSBmcm9jayBub3cgYm9hcmQuIiwiZmVhdHVyZXMiOiJpUnpvb0IyIiwiaWQiOiJmNWUzMTU4Ny00NjhjLTRmZTYtYWZlNC0zZTZmYzhkYWU2MzEiLCJrZXl3b3JkcyI6IlR1cVRrd3MiLCJuYW1lIjoiWmVwaHlyWm9uZSIsInByaWNlIjo1NDYwNDkuMzksInN1YmNhdGVnb3J5Ijoic2dCLHZ2ZVdhIiwidXJsIjoiaHR0cHM6Ly93d3cuZGlzdHJpY3RnZW5lcmF0ZS5vcmcvaG9saXN0aWMvc3luZXJnaWVzIn0="}]`),
+					try.AssertBody(func(t *testing.T, body string) {
+						var data any
+						err := json.Unmarshal([]byte(body), &data)
+						assert.NoError(t, err)
+						arr := data.([]interface{})
+						assert.Len(t, arr, 1)
+						m := arr[0].(map[string]any)
+						assert.Equal(t, "application/json", m["contentType"])
+						b, err := base64.StdEncoding.DecodeString(m["value"].(string))
+						assert.NoError(t, err)
+						assert.Equal(t, `{"category":"People","description":"Much terribly over pose place sprint it child is joyously that I whom mango then of certain weekly mine in annually frock now board.","features":"iRzooB2","name":"ZephyrZone","price":546049.39,"subcategory":"sgB,vveWa","url":"https://www.districtgenerate.org/holistic/synergies"}`, string(b))
+					}),
 				)
 			},
 		},

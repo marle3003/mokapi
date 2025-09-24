@@ -40,6 +40,38 @@ func TestObject(t *testing.T) {
 			},
 		},
 		{
+			name: "with one property is required",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithProperty("name", nil),
+					schematest.WithProperty("foo", nil),
+					schematest.WithRequired("name"),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"name": "Ink", "foo": int64(5155350187252080587)}, v)
+			},
+		},
+		{
+			name: "with required and maxProperties",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithProperty("name", nil),
+					schematest.WithProperty("foo", nil),
+					schematest.WithProperty("bar", nil),
+					schematest.WithProperty("yuh", nil),
+					schematest.WithProperty("zzz", nil),
+					schematest.WithRequired("name"),
+					schematest.WithMaxProperties(3),
+				),
+			},
+			test: func(t *testing.T, v any, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]any{"name": "Ink", "foo": int64(5155350187252080587), "zzz": false}, v)
+			},
+		},
+		{
 			name: "no additional properties",
 			req: &Request{
 				Schema: schematest.New("object",
@@ -54,7 +86,7 @@ func TestObject(t *testing.T) {
 			},
 		},
 		{
-			name: "with additional properties",
+			name: "with additional properties true should not create additional properties because users do not expect this",
 			req: &Request{
 				Schema: schematest.New("object",
 					schematest.WithProperty("name", schematest.New("string")),
@@ -68,6 +100,38 @@ func TestObject(t *testing.T) {
 			},
 		},
 		{
+			name: "with additional properties string but maxProperties=1 should not create additional properties",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithRequired("name"),
+					schematest.WithAdditionalProperties(schematest.New("string")),
+					schematest.WithMaxProperties(1),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"name": "Velvet"}, v)
+			},
+		},
+		{
+			name: "additionalProperties string",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithAdditionalProperties(schematest.New("string")),
+					schematest.WithMaxProperties(3),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]interface{}{
+						"company": "+fjywXKo", "luck": "hbEO6wpu", "sunshine": "jxkDng",
+					},
+					v)
+			},
+		},
+		{
 			name: "with additional properties specific",
 			req: &Request{
 				Schema: schematest.New("object",
@@ -78,36 +142,22 @@ func TestObject(t *testing.T) {
 							schematest.WithRequired("age", "gender"),
 						),
 					),
+					schematest.WithMaxProperties(3),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t,
-					map[string]interface{}{
-						"collection": map[string]interface{}{
-							"age": int64(5), "gender": "male",
-						},
-						"comb": map[string]interface{}{
-							"age": int64(85), "gender": "male",
-						},
-						"company": map[string]interface{}{
-							"age": int64(41), "gender": "male",
-						},
-						"luck": map[string]interface{}{
-							"age": int64(10), "gender": "female",
-						},
-						"person": map[string]interface{}{
-							"age": int64(55), "gender": "male",
-						},
-						"problem": map[string]interface{}{
-							"age": int64(53), "gender": "female",
-						},
-						"sunshine": map[string]interface{}{
-							"age": int64(51), "gender": "female",
-						},
+				require.Equal(t, map[string]any{
+					"company": map[string]any{
+						"age": int64(81), "gender": "female",
 					},
-
-					v)
+					"luck": map[string]any{
+						"age": int64(52), "gender": "female",
+					},
+					"sunshine": map[string]any{
+						"age": int64(69), "gender": "female",
+					},
+				}, v)
 			},
 		},
 		{
@@ -253,6 +303,7 @@ func TestObject(t *testing.T) {
 						schematest.WithProperty("country", schematest.New("string",
 							schematest.WithConst("Slovenia")),
 						),
+						schematest.WithRequired("country"),
 					)),
 					schematest.WithThen(schematest.NewTypes(nil,
 						schematest.WithProperty("postal_code", schematest.New("string",
@@ -266,9 +317,90 @@ func TestObject(t *testing.T) {
 				require.Equal(t,
 					map[string]interface{}{
 						"country":     "Slovenia",
-						"postal_code": "29109",
+						"postal_code": "80291-0936",
 					},
 					v)
+			},
+		},
+		{
+			name: "if but maxProperties should return empty object",
+			req: &Request{
+				Path: []string{"address"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("country", schematest.New("string")),
+					schematest.WithIf(schematest.NewTypes(nil,
+						schematest.WithProperty("country", schematest.New("string",
+							schematest.WithConst("Slovenia")),
+						),
+						schematest.WithRequired("country"),
+					)),
+					schematest.WithThen(schematest.NewTypes(nil,
+						schematest.WithProperty("postal_code", schematest.New("string",
+							schematest.WithPattern("[0-9]{5}(-[0-9]{4})?"))),
+						schematest.WithRequired("postal_code"),
+					)),
+					schematest.WithMaxProperties(1),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]interface{}{},
+					v)
+			},
+		},
+		{
+			name: "if with maxProperties but country is required",
+			req: &Request{
+				Path: []string{"address"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("country", schematest.New("string",
+						// set const value to force the error
+						schematest.WithConst("Slovenia"),
+					)),
+					schematest.WithIf(schematest.NewTypes(nil,
+						schematest.WithProperty("country", schematest.New("string",
+							schematest.WithConst("Slovenia")),
+						),
+						schematest.WithRequired("country"),
+					)),
+					schematest.WithThen(schematest.NewTypes(nil,
+						schematest.WithProperty("postal_code", schematest.New("string",
+							schematest.WithPattern("[0-9]{5}(-[0-9]{4})?"))),
+						schematest.WithRequired("postal_code"),
+					)),
+					schematest.WithRequired("country"),
+					schematest.WithMaxProperties(1),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "failed to generate valid object: reached attempt limit (10) caused by: conditional schema could not be applied: reached attempt limit (10) caused by: reached maximum of value maxProperties=1")
+			},
+		},
+		{
+			name: "if with maxProperties but country is required first try with Slovenia (random value) fails",
+			req: &Request{
+				Path: []string{"address"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("country", schematest.New("string")),
+					schematest.WithIf(schematest.NewTypes(nil,
+						schematest.WithProperty("country", schematest.New("string",
+							schematest.WithConst("Slovenia")),
+						),
+						schematest.WithRequired("country"),
+					)),
+					schematest.WithThen(schematest.NewTypes(nil,
+						schematest.WithProperty("postal_code", schematest.New("string",
+							schematest.WithPattern("[0-9]{5}(-[0-9]{4})?"))),
+						schematest.WithRequired("postal_code"),
+					)),
+					schematest.WithRequired("country"),
+					schematest.WithMaxProperties(1),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]any{"country": "Tuvalu"}, v)
 			},
 		},
 		{
@@ -281,6 +413,7 @@ func TestObject(t *testing.T) {
 						schematest.WithProperty("country", schematest.New("string",
 							schematest.WithConst("Canada")),
 						),
+						schematest.WithRequired("country"),
 					)),
 					schematest.WithElse(schematest.NewTypes(nil,
 						schematest.WithProperty("postal_code", schematest.New("string",

@@ -1,10 +1,13 @@
 package acceptance
 
 import (
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
+	"io"
 	"mokapi/config/static"
 	"testing"
+
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 func TestAcceptance(t *testing.T) {
@@ -20,7 +23,7 @@ type BaseSuite struct {
 }
 
 func (suite *BaseSuite) initCmd(cfg *static.Config) {
-	//logrus.SetOutput(io.Discard)
+	logrus.SetOutput(io.Discard)
 
 	suite.cfg = cfg
 	cmd, err := Start(cfg)

@@ -1,10 +1,11 @@
 package generator
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestArray(t *testing.T) {
@@ -39,6 +40,41 @@ func TestArray(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.EqualError(t, err, "invalid schema: minItems must be less than maxItems")
+			},
+		},
+		{
+			name: "unique items",
+			req: &Request{
+				Path: []string{"people"},
+				Schema: schematest.New("array",
+					schematest.WithItems("integer",
+						schematest.WithMinimum(1),
+						schematest.WithMaximum(10),
+					),
+					schematest.WithMinItems(3),
+					schematest.WithUniqueItems(),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []any{int64(6), int64(5), int64(10), int64(8), int64(1)}, v)
+			},
+		},
+		{
+			name: "unique items but not possible",
+			req: &Request{
+				Path: []string{"people"},
+				Schema: schematest.New("array",
+					schematest.WithItems("integer",
+						schematest.WithMinimum(1),
+						schematest.WithMaximum(3),
+					),
+					schematest.WithMinItems(5),
+					schematest.WithUniqueItems(),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "failed to generate valid array: reached attempt limit (10) caused by: can not fill array with unique items")
 			},
 		},
 		{
@@ -220,7 +256,7 @@ func TestArray(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "failed to generate valid array: reached maximum of value maxContains 1 within 10 attempts")
+				require.EqualError(t, err, "failed to generate valid array: reached attempt limit (10) caused by: reached maximum of value maxContains=1")
 			},
 		},
 		{

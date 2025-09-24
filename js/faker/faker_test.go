@@ -1,9 +1,6 @@
 package faker_test
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/dop251/goja"
-	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/enginetest"
@@ -13,6 +10,10 @@ import (
 	"mokapi/js/require"
 	"mokapi/schema/json/generator"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/dop251/goja"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestModule(t *testing.T) {
@@ -131,7 +132,7 @@ func TestModule(t *testing.T) {
 							}
 						},
 					)
-				    m.fake({ properties: { foo: {}, bar: {} } })
+				    m.fake({ properties: { foo: {}, bar: {} }, required: ['foo', 'bar'] })
 				`)
 				r.NoError(t, err)
 				r.Equal(t, map[string]interface{}{"bar": "hello Carol", "foo": "hello"}, v.Export())

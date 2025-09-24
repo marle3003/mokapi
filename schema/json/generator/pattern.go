@@ -2,11 +2,12 @@ package generator
 
 import (
 	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
 	"math"
 	"math/rand"
 	"regexp/syntax"
 	"strings"
+
+	"github.com/brianvoe/gofakeit/v6"
 )
 
 func fakePattern(r *Request) (interface{}, error) {
@@ -23,20 +24,20 @@ func fakePattern(r *Request) (interface{}, error) {
 		}
 	}()
 
-	g := regexGenerator{ra: r.g.rand}
-	g.regexGenerate(re, len(s.Pattern)*100)
+	reg := regexGenerator{ra: r.g.rand}
+	reg.regexGenerate(re, len(s.Pattern)*100)
 	if s.MinLength != nil {
-		min := *s.MinLength
-		max := min + 100
+		minLength := *s.MinLength
+		maxLength := minLength + 100
 		if s.MaxLength != nil {
-			max = *s.MaxLength
+			maxLength = *s.MaxLength
 		}
-		err = g.refill(min, max)
+		err = reg.refill(minLength, maxLength)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("cannot generate value for pattern %v and minimum length %v", s.Pattern, *s.MinLength)
 	}
-	return g.sb.String(), nil
+	return reg.sb.String(), nil
 }
 
 type regexGenerator struct {

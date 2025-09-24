@@ -239,10 +239,6 @@ func TestConfigWatcher_Read(t *testing.T) {
 						ch = configs
 						return nil
 					},
-					read: func(u *url.URL) (*dynamic.Config, error) {
-						require.Equal(t, configPath, u)
-						return &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &slow{}}, nil
-					},
 				}
 				pool := safe.NewPool(context.Background())
 				_ = w.Start(pool)
@@ -251,7 +247,7 @@ func TestConfigWatcher_Read(t *testing.T) {
 
 				ch <- dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: configPath}, Raw: []byte("test: 1.0")}}
 
-				time.Sleep(time.Duration(500) * time.Millisecond)
+				time.Sleep(500 * time.Millisecond)
 
 				c, err := w.Read(configPath, nil)
 				require.NoError(t, err)

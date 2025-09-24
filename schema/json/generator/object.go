@@ -29,77 +29,155 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 		}
 	}
 
-	var fakes *sortedmap.LinkedHashMap[string, *faker]
-	var err error
-	resetStore := false
-
-	switch {
-	case !s.HasProperties() && s.AdditionalProperties != nil:
-		fakes, err = r.fakeDictionary(req)
-		resetStore = true
-	case !s.HasProperties() && s.PatternProperties == nil:
+	if !s.HasProperties() && s.PatternProperties == nil && s.AdditionalProperties == nil {
 		if len(s.Examples) > 0 {
 			return fakeByExample(req)
 		}
 		match := findBestMatch(g.root, req)
 		return newFakerWithFallback(match, req), nil
-	default:
-		fakes, err = r.fakeObject(req)
 	}
+
+	var fakes *sortedmap.LinkedHashMap[string, *faker]
+	var err error
+	resetStore := false
+
+	fakes, err = r.fakeObject(req)
 
 	if err != nil {
 		return nil, err
 	}
 
 	fake := func() (interface{}, error) {
-		m := map[string]interface{}{}
+		var propNames []string
+		props := map[string]interface{}{}
 		var sorted []string
 		sorted, err = topologicalSort(fakes)
 		if err != nil {
 			return nil, err
 		}
 
-		for _, key := range sorted {
-			if resetStore {
-				req.Context.Snapshot()
+		var result map[string]interface{}
+		err = fakeWithRetries(10, func() error {
+			for _, key := range sorted {
+				if resetStore {
+					req.Context.Snapshot()
+				}
+				f := fakes.Lookup(key)
+				props[key], err = f.fake()
+				if !slices.Contains(s.Required, key) {
+					propNames = append(propNames, key)
+				}
+				if err != nil {
+					return err
+				}
+				if resetStore {
+					req.Context.Restore()
+				}
 			}
-			f := fakes.Lookup(key)
-			m[key], err = f.fake()
-			if err != nil {
-				return nil, err
-			}
-			if resetStore {
-				req.Context.Restore()
-			}
-		}
 
-		if s.If != nil {
-			p := parser.Parser{}
-			_, err := p.ParseWith(m, s.If)
-			var cond *schema.Schema
-			if err == nil && s.Then != nil {
-				cond = s.Then
-			} else if err != nil && s.Else != nil {
-				cond = s.Else
+			result = map[string]interface{}{}
+			for _, key := range s.Required {
+				result[key] = props[key]
 			}
-			if cond != nil {
-				f, err := r.resolve(req.WithSchema(cond), true)
-				if err != nil {
-					return nil, err
+
+			minProps := 0
+			if s.MinProperties != nil {
+				minProps = *s.MinProperties
+				if minProps-len(s.Required) < 0 {
+					return fmt.Errorf("invalid schema: minProperties must be at least the number of required properties")
 				}
-				v, err := f.fake()
-				if err != nil {
-					return nil, err
+			}
+			maxProps := -1
+			if s.MaxProperties != nil {
+				maxProps = *s.MaxProperties
+				if maxProps-len(s.Required) < 0 {
+					return fmt.Errorf("invalid schema: maxProperties must be at least the number of required properties")
 				}
-				if m2, ok := v.(map[string]interface{}); ok {
-					for key, val := range m2 {
-						m[key] = val
+			}
+
+			// using array to loop to get predictable result for tests
+			// shuffle propNames to get random optional properties
+			req.g.rand.Shuffle(len(propNames), func(i, j int) { propNames[i], propNames[j] = propNames[j], propNames[i] })
+			for _, k := range propNames {
+				n := len(result)
+				if n >= minProps {
+					n := gofakeit.Float32Range(0, 1)
+					if n > 0.85 {
+						continue
 					}
 				}
+				if maxProps >= 0 && n >= maxProps {
+					break
+				}
+				result[k] = props[k]
 			}
+
+			if s.If != nil {
+				numOfRemovableProperties := len(result) - len(s.Required)
+				p := parser.Parser{}
+				conditionApplied := false
+				for ; numOfRemovableProperties >= 0; numOfRemovableProperties-- {
+					err = fakeWithRetries(10, func() error {
+						var condResult map[string]any
+
+						_, err = p.ParseWith(result, s.If)
+						var cond *schema.Schema
+						if err == nil && s.Then != nil {
+							cond = s.Then
+						} else if err != nil && s.Else != nil {
+							cond = s.Else
+						}
+						if cond != nil {
+							var f *faker
+							f, err = r.resolve(req.WithSchema(cond), true)
+							if err != nil {
+								return err
+							}
+							var v any
+							v, err = f.fake()
+							if err != nil {
+								return err
+							}
+							if m, ok := v.(map[string]any); ok {
+								condResult = m
+							}
+						}
+
+						newLength := len(result) + len(condResult)
+						if s.MaxProperties == nil || newLength <= *s.MaxProperties {
+							for k, v := range condResult {
+								result[k] = v
+							}
+							return nil
+						}
+						return fmt.Errorf("reached maximum of value maxProperties=%d", *s.MaxProperties)
+					})
+
+					if err == nil {
+						conditionApplied = true
+						break
+					}
+
+					// remove one optional property to try conditional again
+					for k := range result {
+						if slices.Contains(s.Required, k) {
+							continue
+						}
+						delete(result, k)
+						break
+					}
+				}
+				if !conditionApplied {
+					return fmt.Errorf("conditional schema could not be applied: %w", err)
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate valid object: %w", err)
 		}
 
-		return m, nil
+		return result, nil
 	}
 
 	return newFaker(fake), nil
@@ -141,15 +219,6 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 				}
 			}
 
-			if !slices.Contains(s.Required, it.Key()) && !req.Context.Has(it.Key()) {
-				fakes.Set(it.Key(), newFaker(func() (any, error) {
-					n := gofakeit.Float32Range(0, 1)
-					if n > 0.7 {
-						return nil, nil
-					}
-					return f.fake()
-				}))
-			}
 			fakes.Set(it.Key(), f)
 		}
 	}
@@ -178,6 +247,21 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 				}
 				fakes.Set(propName, f)
 			}
+		}
+	}
+
+	if s.AdditionalProperties != nil && s.AdditionalProperties.Boolean == nil {
+		// if additionalProperties=false no additional properties is allowed
+		// if additionalProperties=true we don't add random properties, it is not expected by users
+
+		length := numProperties(1, 10, req.Schema)
+		for i := 0; i < length; i++ {
+			f, err := r.resolve(req.WithSchema(req.Schema.AdditionalProperties), true)
+			if err != nil {
+				return nil, err
+			}
+			key := fakeDictionaryKey()
+			fakes.Set(key, f)
 		}
 	}
 
@@ -390,7 +474,10 @@ func fakeByExample(r *Request) (*faker, error) {
 	if !ok {
 		return nil, NoMatchFound
 	}
-	m := v.(map[string]any)
+	m, ok := v.(map[string]any)
+	if !ok {
+		return nil, NoMatchFound
+	}
 	f := func() (any, error) {
 		return m, nil
 	}

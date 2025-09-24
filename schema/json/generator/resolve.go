@@ -2,13 +2,14 @@ package generator
 
 import (
 	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"net/url"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/brianvoe/gofakeit/v6"
 )
 
 type resolver struct {
@@ -61,11 +62,20 @@ func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
 			return r.oneOf(req)
 		}
 
-		if s.IsObject() || s.HasProperties() {
+		inferType := inferTypeFromKeywords(s)
+		switch {
+		case s.IsObject() && s.IsArray():
+			n := gofakeit.Number(0, 1)
+			if n == 0 {
+				return r.resolveObject(req)
+			}
+			return r.resolveArray(req)
+		case s.IsObject() || inferType == "object":
 			return r.resolveObject(req)
-		} else if s.IsArray() {
+		case s.IsArray() || inferType == "array":
 			return r.resolveArray(req)
 		}
+
 	}
 
 	path := tokenize(req.Path)

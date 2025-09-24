@@ -413,6 +413,44 @@ func TestFaker_Schema(t *testing.T) {
 			},
 		},
 		{
+			name:   "patternProperties",
+			schema: "{ patternProperties: { '^S_': { type: 'string' } }, type: 'object' }",
+			test: func(t *testing.T, v goja.Value, err error) {
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{"S_4VX": "Ozw"}, v.Export())
+			},
+		},
+		{
+			name:   "invalid patternProperties type",
+			schema: "{ patternProperties: 'foo' }",
+			test: func(t *testing.T, v goja.Value, err error) {
+				r.EqualError(t, err, "unexpected type for 'patternProperties': got String, expected Object at mokapi/js/faker.(*Module).Fake-fm (native)")
+			},
+		},
+		{
+			name:   "additionalProperties false",
+			schema: "{ additionalProperties: false }",
+			test: func(t *testing.T, v goja.Value, err error) {
+				r.NoError(t, err)
+				r.Equal(t, map[string]interface{}{}, v.Export())
+			},
+		},
+		{
+			name:   "additionalProperties with type string",
+			schema: "{ additionalProperties: { type: 'string' }, maxProperties: 3 }",
+			test: func(t *testing.T, v goja.Value, err error) {
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{"bunch": "", "gang": "x?vY5elXhlD4ez", "woman": "zw"}, v.Export())
+			},
+		},
+		{
+			name:   "invalid additionalProperties type",
+			schema: "{ additionalProperties: 'foo' }",
+			test: func(t *testing.T, v goja.Value, err error) {
+				r.EqualError(t, err, "parse 'additionalProperties' failed: expect JSON schema but got: String at mokapi/js/faker.(*Module).Fake-fm (native)")
+			},
+		},
+		{
 			name:   "required",
 			schema: "{ required: ['foo', 'bar', 'baz'] }",
 			test: func(t *testing.T, v goja.Value, err error) {
@@ -430,24 +468,8 @@ func TestFaker_Schema(t *testing.T) {
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
 				m := v.Export()
-				r.Contains(t, m, "foo")
 				r.Contains(t, m, "bar")
 				r.Equal(t, map[string]any{"bar": 1.1291386311317026e+308, "foo": "XidZuoWq "}, m)
-			},
-		},
-		{
-			name:   "invalid required type",
-			schema: "{ required: 'foo' }",
-			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'required': got String, expected Array at mokapi/js/faker.(*Module).Fake-fm (native)")
-			},
-		},
-		{
-			name:   "patternProperties",
-			schema: "{ patternProperties: { '^S_': { type: 'string' } }, type: 'object' }",
-			test: func(t *testing.T, v goja.Value, err error) {
-				r.NoError(t, err)
-				r.Equal(t, map[string]any{"S_4VX": "Ozw"}, v.Export())
 			},
 		},
 		{

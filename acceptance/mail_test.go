@@ -4,8 +4,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
 	"mokapi/server/cert"
 	"mokapi/smtp/smtptest"
@@ -16,6 +14,9 @@ import (
 	"path"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type MailSuite struct{ BaseSuite }

@@ -5,13 +5,14 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/stretchr/testify/require"
 )
@@ -62,6 +63,7 @@ func GetRequest(t *testing.T, url string, headers map[string]string, conditions 
 
 			cond(condT, tr)
 			if condT.Failed() {
+				fmt.Printf("Attempt %d failed: %s\n", attempt, url)
 				ok = false
 				break
 			}
