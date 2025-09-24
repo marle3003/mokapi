@@ -19,6 +19,7 @@ import (
 	"mokapi/providers/swagger"
 	"mokapi/runtime"
 	"mokapi/safe"
+	"mokapi/schema/json/generator"
 	"mokapi/server"
 	"mokapi/server/cert"
 	"mokapi/version"
@@ -61,6 +62,7 @@ func main() {
 	}
 
 	feature.Enable(cfg.Features)
+	generator.SetConfig(cfg.DataGen)
 
 	fmt.Printf(logo, version.BuildVersion, strings.Repeat(" ", 17-len(versionString)))
 
