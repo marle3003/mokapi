@@ -16,6 +16,7 @@ import (
 	"mokapi/providers/swagger"
 	"mokapi/runtime"
 	"mokapi/safe"
+	"mokapi/schema/json/generator"
 	"mokapi/server"
 	"mokapi/server/cert"
 	"mokapi/version"
@@ -41,6 +42,7 @@ func Start(cfg *static.Config) (*Cmd, error) {
 
 	registerDynamicTypes()
 	app := runtime.New(cfg)
+	generator.SetConfig(cfg.DataGen)
 
 	watcher := server.NewConfigWatcher(cfg)
 
