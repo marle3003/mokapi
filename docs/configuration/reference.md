@@ -367,11 +367,11 @@ event:
 
 Controls the probability of skipping optional properties in the data generator.
 Possible values:
-- always 
-- often 
-- sometimes 
-- rarely 
-- any floating-point number between 0.0 and 1.0 (e.g., 0.25)
+- always = 1.0
+- often = 0.85
+- sometimes = 0.5
+- rarely = 0.15
+- any floating-point number between 0.0 and 1.0
 
 ```bash tab=CLI
 --data-gen-optionalProperties sometimes

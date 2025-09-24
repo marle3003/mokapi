@@ -670,6 +670,21 @@ providers:
 				require.Equal(t, 0.3, cfg.DataGen.OptionalPropertiesProbability())
 			},
 		},
+		{
+			name: "data-gen env var",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				err := os.Setenv("MOKAPI_DATA_GEN_OPTIONALPROPERTIES", "sometimes")
+				require.NoError(t, err)
+				defer os.Unsetenv("MOKAPI_DATA_GEN_OPTIONALPROPERTIES")
+
+				cfg := static.Config{}
+				err = decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, 0.5, cfg.DataGen.OptionalPropertiesProbability())
+			},
+		},
 	}
 
 	for _, tc := range testcases {
