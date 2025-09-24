@@ -365,6 +365,8 @@ event:
     "<api-name>": 250
 ```
 
+## Data Generator
+
 Controls the probability of skipping optional properties in the data generator.
 Possible values:
 - always = 1.0
