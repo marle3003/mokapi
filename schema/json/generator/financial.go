@@ -1,9 +1,13 @@
 package generator
 
 import (
+	"fmt"
+	"mokapi/schema/json/schema"
+	"strconv"
+	"strings"
+
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/brianvoe/gofakeit/v6/data"
-	"mokapi/schema/json/schema"
 )
 
 type currency struct {
@@ -41,6 +45,17 @@ func financials() []*Node {
 				{
 					Name: "amount",
 					Fake: fakePriceValue,
+				},
+			},
+		},
+		{
+			Name:       "creditcard",
+			Fake:       fakeCreditCard,
+			Attributes: []string{"creditcard", "credit"},
+			Children: []*Node{
+				{
+					Name: "card",
+					Fake: fakeCreditCard,
 				},
 			},
 		},
@@ -97,4 +112,42 @@ func fakePriceValue(r *Request) (any, error) {
 	}
 	min, max := getRangeWithDefault(0, 1000000, s)
 	return gofakeit.Price(min, max), nil
+}
+
+func fakeCreditCard(r *Request) (any, error) {
+	s := r.Schema
+
+	if s != nil && len(s.Pattern) > 0 {
+		return nil, NotSupported
+	}
+
+	minLength := 15
+	maxLength := 19
+	if s != nil {
+		if s.MinLength != nil {
+			minLength = *s.MinLength
+		}
+		if s.MaxLength != nil {
+			maxLength = *s.MaxLength
+		}
+		if s.Minimum != nil {
+			minLength = len(strconv.Itoa(int(*s.Minimum)))
+		}
+		if s.Maximum != nil {
+			maxLength = len(strconv.Itoa(int(*s.Maximum)))
+		}
+	}
+	n := gofakeit.Number(minLength, maxLength) - 1
+	// major industry identifier
+	mii := gofakeit.Number(1, 9)
+	result := fmt.Sprintf("%d%s", mii, gofakeit.Numerify(strings.Repeat("#", n)))
+
+	if s.IsString() {
+		return result, nil
+	}
+	if s.IsInteger() || s.IsNumber() {
+		return strconv.Atoi(result)
+	}
+
+	return nil, NotSupported
 }

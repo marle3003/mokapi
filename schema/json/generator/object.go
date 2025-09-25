@@ -102,8 +102,8 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 			for _, k := range propNames {
 				n := len(result)
 				if n >= minProps {
-					n := gofakeit.Float32Range(0, 1)
-					if n > 0.85 {
+					n := gofakeit.Float64Range(0, 1)
+					if n > req.g.cfg.OptionalPropertiesProbability() {
 						continue
 					}
 				}
@@ -113,65 +113,92 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 				result[k] = props[k]
 			}
 
-			if s.If != nil {
-				numOfRemovableProperties := len(result) - len(s.Required)
-				p := parser.Parser{}
-				conditionApplied := false
-				for ; numOfRemovableProperties >= 0; numOfRemovableProperties-- {
-					err = fakeWithRetries(10, func() error {
-						var condResult map[string]any
+			changed := true
+			for changed {
+				changed = false
 
-						_, err = p.ParseWith(result, s.If)
-						var cond *schema.Schema
-						if err == nil && s.Then != nil {
-							cond = s.Then
-						} else if err != nil && s.Else != nil {
-							cond = s.Else
-						}
-						if cond != nil {
-							var f *faker
-							f, err = r.resolve(req.WithSchema(cond), true)
-							if err != nil {
-								return err
+				// apply if-then-else
+				if s.If != nil {
+					numOfRemovableProperties := len(result) - len(s.Required)
+					p := parser.Parser{}
+					conditionApplied := false
+					for ; numOfRemovableProperties >= 0; numOfRemovableProperties-- {
+						err = fakeWithRetries(10, func() error {
+							var condResult map[string]any
+
+							_, err = p.ParseWith(result, s.If)
+							var cond *schema.Schema
+							if err == nil && s.Then != nil {
+								cond = s.Then
+							} else if err != nil && s.Else != nil {
+								cond = s.Else
 							}
-							var v any
-							v, err = f.fake()
-							if err != nil {
-								return err
+							if cond != nil {
+								var f *faker
+								f, err = r.resolve(req.WithSchema(cond), true)
+								if err != nil {
+									return err
+								}
+								var v any
+								v, err = f.fake()
+								if err != nil {
+									return err
+								}
+								if m, ok := v.(map[string]any); ok {
+									condResult = m
+								}
 							}
-							if m, ok := v.(map[string]any); ok {
-								condResult = m
+
+							newLength := len(result) + len(condResult)
+							if s.MaxProperties == nil || newLength <= *s.MaxProperties {
+								for k, v := range condResult {
+									result[k] = v
+								}
+								return nil
 							}
+							return fmt.Errorf("reached maximum of value maxProperties=%d", *s.MaxProperties)
+						})
+
+						if err == nil {
+							conditionApplied = true
+							break
 						}
 
-						newLength := len(result) + len(condResult)
-						if s.MaxProperties == nil || newLength <= *s.MaxProperties {
-							for k, v := range condResult {
-								result[k] = v
+						// remove one optional property to try conditional again
+						for k := range result {
+							if slices.Contains(s.Required, k) {
+								continue
 							}
-							return nil
+							delete(result, k)
+							break
 						}
-						return fmt.Errorf("reached maximum of value maxProperties=%d", *s.MaxProperties)
-					})
-
-					if err == nil {
-						conditionApplied = true
-						break
 					}
-
-					// remove one optional property to try conditional again
-					for k := range result {
-						if slices.Contains(s.Required, k) {
-							continue
-						}
-						delete(result, k)
-						break
+					if !conditionApplied {
+						return fmt.Errorf("conditional schema could not be applied: %w", err)
 					}
 				}
-				if !conditionApplied {
-					return fmt.Errorf("conditional schema could not be applied: %w", err)
+
+				// apply dependentRequired
+				for name, list := range s.DependentRequired {
+					if _, ok := result[name]; ok {
+						newLength := len(result) + len(list)
+						if s.MaxProperties == nil || newLength <= *s.MaxProperties {
+							for _, required := range list {
+								if _, ok = result[required]; !ok {
+									result[required] = props[required]
+									changed = true
+								}
+							}
+						} else if !slices.Contains(s.Required, name) {
+							delete(result, name)
+							changed = true
+						} else {
+							return fmt.Errorf("cannot apply dependentRequired for '%s': maxProperties=%d was exceeded", name, *s.MaxProperties)
+						}
+					}
 				}
 			}
+
 			return nil
 		})
 		if err != nil {
@@ -193,22 +220,27 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 	if !isKnownDomain(req) {
 		req.Path = append(req.Path, domain)
 	}
+	propertyNameParser := propertyNamesParser(s)
 
 	if s.Properties != nil {
 		for it := s.Properties.Iter(); it.Next(); {
-			prop := append(req.Path, it.Key())
-			ex := propertyFromExample(it.Key(), req)
+			propName := it.Key()
+			if _, err := propertyNameParser.Parse(propName); err != nil {
+				continue
+			}
+			prop := append(req.Path, propName)
+			ex := propertyFromExample(propName, req)
 			f, err := r.resolve(req.With(prop, it.Value(), ex), fallback)
 			if err != nil {
 				var guard *RecursionGuard
 				if errors.As(err, &guard) {
-					if !slices.Contains(req.Schema.Required, it.Key()) {
+					if !slices.Contains(req.Schema.Required, propName) {
 						continue
 					}
 				}
 				if errors.Is(err, NoMatchFound) {
 					if domain != "" {
-						f, err = r.resolve(req.With([]string{domain, it.Key()}, it.Value(), ex), true)
+						f, err = r.resolve(req.With([]string{domain, propName}, it.Value(), ex), true)
 						if err != nil {
 							return nil, err
 						}
@@ -220,7 +252,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 				}
 			}
 
-			fakes.Set(it.Key(), f)
+			fakes.Set(propName, f)
 		}
 	}
 
@@ -255,6 +287,9 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 				if err != nil {
 					return nil, err
 				}
+				if _, err = propertyNameParser.Parse(propName); err != nil {
+					continue
+				}
 				fakes.Set(propName, f)
 			}
 		}
@@ -270,7 +305,10 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 			if err != nil {
 				return nil, err
 			}
-			key := fakeDictionaryKey()
+			key, err := newPropertyName(propertyNameParser)
+			if err != nil {
+				continue
+			}
 			fakes.Set(key, f)
 		}
 	}
@@ -291,20 +329,32 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 func (r *resolver) fakeDictionary(req *Request) (*sortedmap.LinkedHashMap[string, *faker], error) {
 	length := numProperties(1, 10, req.Schema)
 	fakes := &sortedmap.LinkedHashMap[string, *faker]{}
+	propertyNameParser := propertyNamesParser(req.Schema)
 	for i := 0; i < length; i++ {
 		f, err := r.resolve(req.WithSchema(req.Schema.AdditionalProperties), true)
 		if err != nil {
 			return nil, err
 		}
-		key := fakeDictionaryKey()
+		key, err := newPropertyName(propertyNameParser)
+		if err != nil {
+			continue
+		}
 		fakes.Set(key, f)
 	}
 	return fakes, nil
 }
 
-func fakeDictionaryKey() string {
+func newPropertyName(propertyNameParser *parser.Parser) (string, error) {
 	key := gofakeit.Noun()
-	return firstLetterToLower(key)
+	if _, err := propertyNameParser.Parse(key); err != nil {
+		var v any
+		v, err = New(NewRequest(nil, propertyNameParser.Schema, nil))
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("%v", v), nil
+	}
+	return firstLetterToLower(key), nil
 }
 
 func firstLetterToLower(s string) string {
@@ -526,4 +576,14 @@ func examples(s *schema.Schema) []any {
 		result = append(result, e.Value)
 	}
 	return result
+}
+
+func propertyNamesParser(s *schema.Schema) *parser.Parser {
+	p := &parser.Parser{}
+	if s == nil || s.PropertyNames == nil {
+		p.Schema = &schema.Schema{Type: schema.Types{"string"}}
+	} else {
+		p.Schema = s.PropertyNames
+	}
+	return p
 }

@@ -2,9 +2,10 @@ package generator
 
 import (
 	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
+
+	"github.com/brianvoe/gofakeit/v6"
 )
 
 func fakeBySchemaNode() *Node {
@@ -100,7 +101,7 @@ func fakeObject(r *Request) (interface{}, error) {
 	s := r.Schema
 	if s.Properties == nil {
 		s.Properties = &schema.Schemas{LinkedHashMap: sortedmap.LinkedHashMap[string, *schema.Schema]{}}
-
+		propertyNameParser := propertyNamesParser(s)
 		length := numProperties(0, 10, s)
 
 		if length == 0 {
@@ -112,7 +113,11 @@ func fakeObject(r *Request) (interface{}, error) {
 			if i < len(s.Required) {
 				name = s.Required[i]
 			} else {
-				name = fakeDictionaryKey()
+				var err error
+				name, err = newPropertyName(propertyNameParser)
+				if err != nil {
+					continue
+				}
 			}
 			s.Properties.Set(name, nil)
 		}
@@ -179,7 +184,7 @@ func inferTypeFromKeywords(s *schema.Schema) string {
 		len(s.PatternProperties) > 0 || s.MinProperties != nil ||
 		s.MaxProperties != nil || s.AdditionalProperties != nil ||
 		s.DependentSchemas != nil || s.DependentRequired != nil ||
-		s.UnevaluatedProperties != nil {
+		s.UnevaluatedProperties != nil || s.PropertyNames != nil {
 		return "object"
 	}
 

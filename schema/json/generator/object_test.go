@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"mokapi/config/static"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
@@ -9,9 +10,10 @@ import (
 
 func TestObject(t *testing.T) {
 	testcases := []struct {
-		name string
-		req  *Request
-		test func(t *testing.T, v interface{}, err error)
+		name               string
+		req                *Request
+		optionalProperties string
+		test               func(t *testing.T, v interface{}, err error)
 	}{
 		{
 			name: "object",
@@ -293,6 +295,70 @@ func TestObject(t *testing.T) {
 			},
 		},
 		{
+			name: "dependentRequired should add required property",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithProperty("credit_card", schematest.New("string")),
+					schematest.WithProperty("billing_address", schematest.New("string")),
+					schematest.WithRequired("name", "credit_card"),
+					schematest.WithDependentRequired("credit_card", "billing_address"),
+				),
+			},
+			optionalProperties: "0",
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]interface{}{
+						"name":            "Ink",
+						"credit_card":     "6910936489301180573",
+						"billing_address": "EO6",
+					},
+					v)
+			},
+		},
+		{
+			name: "dependentRequired should remove optional property to satisfy maxProperties",
+			req: &Request{
+				Schema: schematest.New("object",
+					// order of properties is relevant. generator will add name and credit_card but not
+					// billing_address because maxProperties=2 and then will remove credit_card
+					// because dependentRequired will exceed maxProperties
+					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithProperty("billing_address", schematest.New("string")),
+					schematest.WithProperty("credit_card", schematest.New("string")),
+					schematest.WithDependentRequired("credit_card", "billing_address"),
+					schematest.WithMaxProperties(2),
+				),
+			},
+			optionalProperties: "1",
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]interface{}{
+						"name": "Ink",
+					},
+					v)
+			},
+		},
+		{
+			name: "dependentRequired not possible",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithProperty("credit_card", schematest.New("string")),
+					schematest.WithProperty("billing_address", schematest.New("string")),
+					schematest.WithRequired("name", "credit_card"),
+					schematest.WithDependentRequired("credit_card", "billing_address"),
+					schematest.WithMaxProperties(2),
+				),
+			},
+			optionalProperties: "1",
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "failed to generate valid object: reached attempt limit (10) caused by: cannot apply dependentRequired for 'credit_card': maxProperties=2 was exceeded")
+			},
+		},
+		{
 			name: "if-then",
 			req: &Request{
 				Path: []string{"address"},
@@ -436,6 +502,13 @@ func TestObject(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			Seed(1234567)
+
+			if tc.optionalProperties != "" {
+				SetConfig(static.DataGen{
+					OptionalProperties: tc.optionalProperties,
+				})
+				defer SetConfig(static.DataGen{})
+			}
 
 			v, err := New(tc.req)
 			tc.test(t, v, err)

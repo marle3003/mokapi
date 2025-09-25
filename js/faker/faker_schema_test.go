@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
+	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/eventloop"
@@ -24,9 +25,10 @@ func TestFaker_Schema(t *testing.T) {
 	}
 
 	testcases := []struct {
-		name   string
-		schema string
-		test   func(t *testing.T, v goja.Value, err error)
+		name               string
+		schema             string
+		optionalProperties string
+		test               func(t *testing.T, v goja.Value, err error)
 	}{
 		{
 			name:   "type",
@@ -451,6 +453,88 @@ func TestFaker_Schema(t *testing.T) {
 			},
 		},
 		{
+			name:   "properties, patternProperties and additionalProperties",
+			schema: "{ properties: { builtin: { type: 'number' } }, patternProperties: { '^S_': { type: 'string' }, '^I_': { type: 'integer' } }, additionalProperties: { type: 'string' } }",
+			test: func(t *testing.T, v goja.Value, err error) {
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{
+					"I_4VX":    int64(4336346668576341540),
+					"S_kY9X3W": "m",
+					"builtin":  5.544677937412537e+307,
+					"group":    "CKu",
+					"ocean":    "LJgmr9arWgSfi",
+					"party":    "m",
+					"sock":     "hlD4ezlYehCIA0O",
+					"time":     "jLWxKtR4",
+				}, v.Export())
+			},
+		},
+		{
+			name:   "propertyNames with only capital letter at the beginning",
+			schema: "{ propertyNames: { pattern: '^[A-Z][A-Za-z0-9_]*$' }, minProperties: 4, maxProperties: 4 }",
+			test: func(t *testing.T, v goja.Value, err error) {
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{
+					"Gt8":     "X",
+					"Jd":      "D4ezlYehCIA0O",
+					"MTgAEPI": int64(-3961972703762434141),
+					"PgmZE3":  false,
+				}, v.Export())
+			},
+		},
+		{
+			name:   "invalid propertyNames type",
+			schema: "{ propertyNames: 'foo' }",
+			test: func(t *testing.T, v goja.Value, err error) {
+				r.EqualError(t, err, "parse 'propertyNames' failed: expect JSON schema but got: String at mokapi/js/faker.(*Module).Fake-fm (native)")
+			},
+		},
+		{
+			name: "dependentRequired",
+			// to force taking into account dependentRequired,
+			optionalProperties: "0",
+			schema: `{ 
+  properties: {
+    name: { type: 'string' },
+    credit_card: { type: 'string' },
+    billing_address: { type: 'string' }
+  },
+  required: ['name','credit_card'],
+  dependentRequired: {
+    credit_card: ['billing_address']
+  }
+}`,
+			test: func(t *testing.T, v goja.Value, err error) {
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{
+					"name":            "TerraCove",
+					"credit_card":     "3645994899536906",
+					"billing_address": "hgPevuwyr",
+				}, v.Export())
+			},
+		},
+		{
+			name:   "invalid dependentRequired type",
+			schema: "{ dependentRequired: 'foo' }",
+			test: func(t *testing.T, v goja.Value, err error) {
+				r.EqualError(t, err, "unexpected type for 'dependentRequired': got String, expected Object at mokapi/js/faker.(*Module).Fake-fm (native)")
+			},
+		},
+		{
+			name:   "invalid dependentRequired type not array",
+			schema: "{ dependentRequired: { foo: 123 } }",
+			test: func(t *testing.T, v goja.Value, err error) {
+				r.EqualError(t, err, "unexpected type for 'dependentRequired.foo': got Integer, expected Array at mokapi/js/faker.(*Module).Fake-fm (native)")
+			},
+		},
+		{
+			name:   "invalid dependentRequired type not string array",
+			schema: "{ dependentRequired: { foo: [123] } }",
+			test: func(t *testing.T, v goja.Value, err error) {
+				r.EqualError(t, err, "unexpected type for 'dependentRequired.foo[0]': got Integer, expected String at mokapi/js/faker.(*Module).Fake-fm (native)")
+			},
+		},
+		{
 			name:   "required",
 			schema: "{ required: ['foo', 'bar', 'baz'] }",
 			test: func(t *testing.T, v goja.Value, err error) {
@@ -483,6 +567,13 @@ func TestFaker_Schema(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
+			if tc.optionalProperties != "" {
+				generator.SetConfig(static.DataGen{
+					OptionalProperties: tc.optionalProperties,
+				})
+				defer generator.SetConfig(static.DataGen{})
+			}
+
 			reg, err := require.NewRegistry()
 			reg.RegisterNativeModule("faker", faker.Require)
 			r.NoError(t, err)

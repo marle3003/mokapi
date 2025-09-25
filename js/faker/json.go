@@ -271,6 +271,34 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
 				return nil, fmt.Errorf("parse 'additionalProperties' failed: %w", err)
 			}
 			s.AdditionalProperties = items
+		case "propertyNames":
+			names, err := ToJsonSchema(obj.Get(k), rt)
+			if err != nil {
+				return nil, fmt.Errorf("parse 'propertyNames' failed: %w", err)
+			}
+			s.PropertyNames = names
+		case "dependentRequired":
+			s.DependentRequired = map[string][]string{}
+			val := obj.Get(k)
+			t := val.ExportType()
+			if t.Kind() != reflect.Map {
+				return nil, fmt.Errorf("unexpected type for 'dependentRequired': got %s, expected Object", util.JsType(val))
+			}
+			propsObj := val.ToObject(rt)
+			for _, name := range propsObj.Keys() {
+				vList := propsObj.Get(name).Export()
+				list, ok := vList.([]interface{})
+				if !ok {
+					return nil, fmt.Errorf("unexpected type for 'dependentRequired.%s': got %s, expected Array", name, util.JsType(vList))
+				}
+				for i, required := range list {
+					if str, ok := required.(string); ok {
+						s.DependentRequired[name] = append(s.DependentRequired[name], str)
+					} else {
+						return nil, fmt.Errorf("unexpected type for 'dependentRequired.%s[%d]': got %s, expected String", name, i, util.JsType(required))
+					}
+				}
+			}
 		case "required":
 			i := obj.Get(k).Export()
 			if arr, ok := i.([]interface{}); ok {
