@@ -52,16 +52,6 @@ func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
 	}
 
 	if s != nil {
-		switch {
-		case len(s.AnyOf) > 0:
-			i := gofakeit.Number(0, len(s.AnyOf)-1)
-			return r.resolve(req.WithSchema(s.AnyOf[i]), fallback)
-		case len(s.AllOf) > 0:
-			return r.allOf(req)
-		case len(s.OneOf) > 0:
-			return r.oneOf(req)
-		}
-
 		inferType := inferTypeFromKeywords(s)
 		switch {
 		case s.IsObject() && s.IsArray():
@@ -74,6 +64,16 @@ func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
 			return r.resolveObject(req)
 		case s.IsArray() || inferType == "array":
 			return r.resolveArray(req)
+		default:
+			switch {
+			case len(s.AnyOf) > 0:
+				i := gofakeit.Number(0, len(s.AnyOf)-1)
+				return r.resolve(req.WithSchema(s.AnyOf[i]), fallback)
+			case len(s.AllOf) > 0:
+				return r.allOf(req)
+			case len(s.OneOf) > 0:
+				return r.oneOf(req)
+			}
 		}
 
 	}

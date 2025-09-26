@@ -240,6 +240,44 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 				}
 			}
 
+			if s.AnyOf != nil {
+				isOneValid := false
+				p := parser.Parser{}
+				for _, as := range s.AnyOf {
+					p.Schema = as
+					if _, err = p.Parse(result); err == nil {
+						isOneValid = true
+						break
+					}
+				}
+				if !isOneValid {
+					err = fakeWithRetries(10, func() error {
+						i := gofakeit.Number(0, len(s.AnyOf)-1)
+						as := applyObject(s.AnyOf[i], s)
+						var resultAny any
+						resultAny, err = New(req.WithSchema(as))
+						if m, ok := resultAny.(map[string]any); ok {
+
+							newLength := len(result) + len(m)
+							if s.MaxProperties == nil || newLength <= *s.MaxProperties {
+								for k, v := range m {
+									result[k] = v
+								}
+								changed = true
+								return nil
+							}
+							return fmt.Errorf("reached maximum of value maxProperties=%d", *s.MaxProperties)
+
+						} else {
+							return fmt.Errorf("invalid conditional schema: got %s, expected Object", as.Type)
+						}
+					})
+					if err != nil {
+						return fmt.Errorf("cannot apply one schema of 'anyOf': %w", err)
+					}
+				}
+			}
+
 			return nil
 		})
 		if err != nil {
