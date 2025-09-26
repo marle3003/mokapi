@@ -326,6 +326,21 @@ func ToOpenAPISchema(v goja.Value, rt *goja.Runtime) (*schema.Schema, error) {
 					}
 				}
 			}
+		case "dependentSchemas":
+			s.DependentSchemas = map[string]*schema.Schema{}
+			val := obj.Get(k)
+			t := val.ExportType()
+			if t.Kind() != reflect.Map {
+				return nil, fmt.Errorf("unexpected type for 'dependentSchemas': got %s, expected Object", util.JsType(val))
+			}
+			propsObj := val.ToObject(rt)
+			for _, name := range propsObj.Keys() {
+				ds, err := ToOpenAPISchema(propsObj.Get(name), rt)
+				if err != nil {
+					return nil, err
+				}
+				s.DependentSchemas[name] = ds
+			}
 		case "required":
 			i := obj.Get(k).Export()
 			if arr, ok := i.([]interface{}); ok {

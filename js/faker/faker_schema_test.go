@@ -534,6 +534,7 @@ func TestFaker_Schema(t *testing.T) {
 				r.EqualError(t, err, "unexpected type for 'dependentRequired.foo[0]': got Integer, expected String at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
+
 		{
 			name:   "required",
 			schema: "{ required: ['foo', 'bar', 'baz'] }",
@@ -544,6 +545,41 @@ func TestFaker_Schema(t *testing.T) {
 				r.Contains(t, m, "bar")
 				r.Contains(t, m, "baz")
 				r.Equal(t, map[string]any{"bar": int64(6224634831868504800), "baz": "ZuoWq vY5elXhlD", "foo": true}, m)
+			},
+		},
+		{
+			name: "dependentSchemas",
+			// to force taking into account dependentRequired,
+			optionalProperties: "0",
+			schema: `{ 
+  properties: {
+    name: { type: 'string' },
+    credit_card: { type: 'string' },
+  },
+  required: ['name','credit_card'],
+  dependentSchemas: {
+    credit_card: {
+		properties: {
+		  billing_address: { type: 'string' },
+        },
+        required: ['billing_address']
+	}
+  }
+}`,
+			test: func(t *testing.T, v goja.Value, err error) {
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{
+					"name":            "TerraCove",
+					"credit_card":     "3645994899536906",
+					"billing_address": "hgPevuwyr",
+				}, v.Export())
+			},
+		},
+		{
+			name:   "invalid dependentSchemas type",
+			schema: "{ dependentSchemas: 'foo' }",
+			test: func(t *testing.T, v goja.Value, err error) {
+				r.EqualError(t, err, "unexpected type for 'dependentSchemas': got String, expected Object at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{

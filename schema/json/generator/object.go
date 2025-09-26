@@ -81,41 +81,46 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 				result[key] = props[key]
 			}
 
-			minProps := 0
-			if s.MinProperties != nil {
-				minProps = *s.MinProperties
-				if minProps-len(s.Required) < 0 {
-					return fmt.Errorf("invalid schema: minProperties must be at least the number of required properties")
-				}
-			}
-			maxProps := -1
-			if s.MaxProperties != nil {
-				maxProps = *s.MaxProperties
-				if maxProps-len(s.Required) < 0 {
-					return fmt.Errorf("invalid schema: maxProperties must be at least the number of required properties")
-				}
-			}
-
-			// using array to loop to get predictable result for tests
-			// shuffle propNames to get random optional properties
-			req.g.rand.Shuffle(len(propNames), func(i, j int) { propNames[i], propNames[j] = propNames[j], propNames[i] })
-			for _, k := range propNames {
-				n := len(result)
-				if n >= minProps {
-					n := gofakeit.Float64Range(0, 1)
-					if n > req.g.cfg.OptionalPropertiesProbability() {
-						continue
-					}
-				}
-				if maxProps >= 0 && n >= maxProps {
-					break
-				}
-				result[k] = props[k]
-			}
-
 			changed := true
+			attempts := 0
 			for changed {
 				changed = false
+				if attempts >= 10 {
+					return fmt.Errorf("cannot satisfy conditions")
+				}
+				attempts++
+
+				minProps := 0
+				if s.MinProperties != nil {
+					minProps = *s.MinProperties
+					if minProps-len(s.Required) < 0 {
+						return fmt.Errorf("invalid schema: minProperties must be at least the number of required properties")
+					}
+				}
+				maxProps := -1
+				if s.MaxProperties != nil {
+					maxProps = *s.MaxProperties
+					if maxProps-len(s.Required) < 0 {
+						return fmt.Errorf("invalid schema: maxProperties must be at least the number of required properties")
+					}
+				}
+
+				// using array to loop to get predictable result for tests
+				// shuffle propNames to get random optional properties
+				req.g.rand.Shuffle(len(propNames), func(i, j int) { propNames[i], propNames[j] = propNames[j], propNames[i] })
+				for _, k := range propNames {
+					n := len(result)
+					if n >= minProps {
+						n := gofakeit.Float64Range(0, 1)
+						if n > req.g.cfg.OptionalPropertiesProbability() {
+							continue
+						}
+					}
+					if maxProps >= 0 && n >= maxProps {
+						break
+					}
+					result[k] = props[k]
+				}
 
 				// apply if-then-else
 				if s.If != nil {
@@ -146,6 +151,8 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 								}
 								if m, ok := v.(map[string]any); ok {
 									condResult = m
+								} else {
+									return fmt.Errorf("invalid conditional schema: got %s, expected Object", cond.Type)
 								}
 							}
 
@@ -170,6 +177,7 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 								continue
 							}
 							delete(result, k)
+							changed = true
 							break
 						}
 					}
@@ -194,6 +202,39 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 							changed = true
 						} else {
 							return fmt.Errorf("cannot apply dependentRequired for '%s': maxProperties=%d was exceeded", name, *s.MaxProperties)
+						}
+					}
+				}
+
+				// apply dependentSchemas
+				for name, ds := range s.DependentSchemas {
+					if _, ok := result[name]; ok {
+						var f *faker
+						f, err = r.resolve(req.WithSchema(ds), true)
+						if err != nil {
+							return err
+						}
+						var v any
+						v, err = f.fake()
+						if err != nil {
+							return err
+						}
+						if m, ok := v.(map[string]any); ok {
+							newLength := len(result) + len(m)
+							if s.MaxProperties == nil || newLength <= *s.MaxProperties {
+								for propKey, propValue := range m {
+									if _, ok = result[propKey]; !ok {
+										result[propKey] = propValue
+										changed = true
+									}
+								}
+								return nil
+							} else if !slices.Contains(s.Required, name) {
+								delete(result, name)
+								changed = true
+							} else {
+								return fmt.Errorf("cannot apply dependentSchemas for '%s': maxProperties=%d was exceeded", name, *s.MaxProperties)
+							}
 						}
 					}
 				}

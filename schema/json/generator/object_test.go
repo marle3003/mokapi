@@ -336,7 +336,8 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"name": "Ink",
+						"name":            "Ink",
+						"billing_address": "ojxkDngPNseoO",
 					},
 					v)
 			},
@@ -356,6 +357,55 @@ func TestObject(t *testing.T) {
 			optionalProperties: "1",
 			test: func(t *testing.T, v interface{}, err error) {
 				require.EqualError(t, err, "failed to generate valid object: reached attempt limit (10) caused by: cannot apply dependentRequired for 'credit_card': maxProperties=2 was exceeded")
+			},
+		},
+		{
+			name: "dependentSchemas should add required property",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithProperty("credit_card", schematest.New("string")),
+					schematest.WithRequired("name", "credit_card"),
+					schematest.WithDependentSchemas("credit_card",
+						schematest.NewTypes(nil,
+							schematest.WithProperty("billing_address", schematest.New("string")),
+							schematest.WithRequired("billing_address"),
+						),
+					),
+				),
+			},
+			optionalProperties: "0",
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]interface{}{
+						"name":            "Ink",
+						"credit_card":     "6910936489301180573",
+						"billing_address": "EO6",
+					},
+					v)
+			},
+		},
+		{
+			name: "dependentRequired not possible",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithProperty("credit_card", schematest.New("string")),
+					schematest.WithProperty("billing_address", schematest.New("string")),
+					schematest.WithRequired("name", "credit_card"),
+					schematest.WithDependentSchemas("credit_card",
+						schematest.NewTypes(nil,
+							schematest.WithProperty("billing_address", schematest.New("string")),
+							schematest.WithRequired("billing_address"),
+						),
+					),
+					schematest.WithMaxProperties(2),
+				),
+			},
+			optionalProperties: "1",
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "failed to generate valid object: reached attempt limit (10) caused by: cannot apply dependentSchemas for 'credit_card': maxProperties=2 was exceeded")
 			},
 		},
 		{
@@ -388,7 +438,27 @@ func TestObject(t *testing.T) {
 			},
 		},
 		{
-			name: "if but maxProperties should return empty object",
+			name: "if-then but not object",
+			req: &Request{
+				Path: []string{"address"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("country", schematest.New("string", schematest.WithConst("Slovenia"))),
+					schematest.WithIf(schematest.NewTypes(nil,
+						schematest.WithProperty("country", schematest.New("string",
+							schematest.WithConst("Slovenia")),
+						),
+						schematest.WithRequired("country"),
+					)),
+					schematest.WithThen(schematest.New("string")),
+					schematest.WithMinProperties(1),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "failed to generate valid object: reached attempt limit (10) caused by: cannot satisfy conditions")
+			},
+		},
+		{
+			name: "if-then but maxProperties should take different country",
 			req: &Request{
 				Path: []string{"address"},
 				Schema: schematest.New("object",
@@ -407,10 +477,10 @@ func TestObject(t *testing.T) {
 					schematest.WithMaxProperties(1),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t,
-					map[string]interface{}{},
+					map[string]any{"country": "Bouvet Island"},
 					v)
 			},
 		},
