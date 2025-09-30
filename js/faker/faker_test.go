@@ -176,7 +176,7 @@ func TestModule(t *testing.T) {
 					m.fake({ type: 'object', properties: { foo: { type: 'string' }, bar: { type: 'string' }}, required: ['foo', 'bar','x', 'y', 'z'] } )
 				`)
 				r.NoError(t, err)
-				r.Equal(t, map[string]any{"bar": "", "foo": "XidZuoWq ", "x": int64(6892487422858870876), "y": int64(8673350504153079445), "z": 5.544677937412537e+307}, v.Export())
+				r.Equal(t, map[string]any{"bar": "", "foo": "XidZuoWq ", "x": int64(-117432), "y": int64(995706), "z": -383134.1033810867}, v.Export())
 			},
 		},
 	}

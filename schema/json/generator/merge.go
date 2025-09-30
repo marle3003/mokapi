@@ -1,13 +1,54 @@
 package generator
 
 import (
+	"fmt"
 	"math/big"
 	"mokapi/schema/json/schema"
 	"slices"
 )
 
-func mergeSchema(base, s *schema.Schema) *schema.Schema {
+// given any schemas, return one schema with all constraints applied.
+func intersectSchemas(schemas ...*schema.Schema) (*schema.Schema, error) {
+	result := &schema.Schema{}
+	var err error
+	for _, s := range schemas {
+		result, err = intersectSchema(result, s)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
+}
+
+// given two schemas, return one schema with both constraints applied.
+func intersectSchema(base, s *schema.Schema) (*schema.Schema, error) {
+	if base == nil {
+		return s, nil
+	}
+	if s == nil {
+		return base, nil
+	}
+
 	result := base.Clone()
+	// additionalProperties only recognizes properties declared in the same subschema as itself,
+	// so we reset this
+	result.AdditionalProperties = nil
+
+	var err error
+
+	if len(base.Type) > 0 && len(s.Type) > 0 {
+		result.Type = nil
+		for _, t := range s.Type {
+			if slices.Contains(base.Type, t) {
+				result.Type = append(result.Type, t)
+			}
+		}
+		if len(result.Type) == 0 {
+			return nil, fmt.Errorf("no shared types found: %s and %s", base.Type, s.Type)
+		}
+	} else if len(s.Type) > 0 {
+		result.Type = s.Type
+	}
 
 	result.Enum = append(result.Enum, s.Enum...)
 	if s.Const != nil {
@@ -76,7 +117,10 @@ func mergeSchema(base, s *schema.Schema) *schema.Schema {
 		if result.Items == nil {
 			result.Items = s.Items
 		} else {
-			result.Items = mergeSchema(result.Items, s.Items)
+			result.Items, err = intersectSchema(result.Items, s.Items)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	if s.PrefixItems != nil {
@@ -86,14 +130,20 @@ func mergeSchema(base, s *schema.Schema) *schema.Schema {
 		if result.UnevaluatedItems == nil {
 			result.UnevaluatedItems = s.UnevaluatedItems
 		} else {
-			result.UnevaluatedItems = mergeSchema(result.UnevaluatedItems, s.UnevaluatedItems)
+			result.UnevaluatedItems, err = intersectSchema(result.UnevaluatedItems, s.UnevaluatedItems)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	if s.Contains != nil {
 		if result.Contains == nil {
 			result.Contains = s.Contains
 		} else {
-			result.Contains = mergeSchema(result.Contains, s.Contains)
+			result.Contains, err = intersectSchema(result.Contains, s.Contains)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 
@@ -117,7 +167,10 @@ func mergeSchema(base, s *schema.Schema) *schema.Schema {
 		} else {
 			for it := s.Properties.Iter(); it.Next(); {
 				resultVal := result.Properties.Get(it.Key())
-				merged := mergeSchema(resultVal, it.Value())
+				merged, err := intersectSchema(resultVal, it.Value())
+				if err != nil {
+					return nil, err
+				}
 				result.Properties.Set(it.Key(), merged)
 			}
 		}
@@ -128,8 +181,10 @@ func mergeSchema(base, s *schema.Schema) *schema.Schema {
 			result.PatternProperties = s.PatternProperties
 		} else {
 			for k, v := range s.PatternProperties {
-				merged := mergeSchema(result.PatternProperties[k], v)
-				result.PatternProperties[k] = merged
+				result.PatternProperties[k], err = intersectSchema(result.PatternProperties[k], v)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 	}
@@ -139,10 +194,10 @@ func mergeSchema(base, s *schema.Schema) *schema.Schema {
 
 	for _, req := range s.Required {
 		if !slices.Contains(result.Required, req) {
-			result.Type = append(result.Type, req)
+			result.Required = append(result.Required, req)
 		}
 	}
-	return result
+	return result, nil
 }
 
 func mergeMin(a, b *int) *int {

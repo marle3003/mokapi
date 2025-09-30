@@ -70,7 +70,11 @@ func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
 				i := gofakeit.Number(0, len(s.AnyOf)-1)
 				return r.resolve(req.WithSchema(s.AnyOf[i]), fallback)
 			case len(s.AllOf) > 0:
-				return r.allOf(req)
+				allOf, err := intersectSchemas(s.AllOf...)
+				if err != nil {
+					return nil, fmt.Errorf("generate random data for schema failed: %w", err)
+				}
+				return r.resolve(req.WithSchema(allOf), fallback)
 			case len(s.OneOf) > 0:
 				return r.oneOf(req)
 			}

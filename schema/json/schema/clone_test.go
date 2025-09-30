@@ -244,7 +244,7 @@ func TestSchema_Clone(t *testing.T) {
 					schematest.WithThen(schematest.New("string")),
 					schematest.WithElse(schematest.New("string")),
 					schematest.Any(schematest.New("string")),
-					schematest.One(schematest.New("string")),
+					schematest.WithOneOf(schematest.New("string")),
 					schematest.WithAllOf(schematest.New("string")),
 				)
 				s2 := s.Clone()

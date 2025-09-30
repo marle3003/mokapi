@@ -52,7 +52,7 @@ func TestObject(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Ink", "foo": int64(5155350187252080587)}, v)
+				require.Equal(t, map[string]interface{}{"name": "Ink", "foo": int64(-724202)}, v)
 			},
 		},
 		{
@@ -70,7 +70,7 @@ func TestObject(t *testing.T) {
 			},
 			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]any{"name": "Ink", "foo": int64(5155350187252080587), "zzz": false}, v)
+				require.Equal(t, map[string]any{"name": "Ink", "foo": int64(-724202), "zzz": false}, v)
 			},
 		},
 		{
@@ -190,11 +190,11 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"brace":      9.489807638481764e+307,
-						"collection": int64(2116312089470753225),
+						"brace":      55776.1449323867,
+						"collection": int64(237568),
 						"comb":       false,
 						"company":    "Redfin",
-						"luck":       int64(-7574890634918414754),
+						"luck":       int64(-927794),
 						"person": map[string]interface{}{
 							"email":     "oliver.nelson@globalfacilitate.com",
 							"firstname": "Oliver",
@@ -252,8 +252,8 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"foo": int64(5155350187252080587),
-						"bar": int64(-4567356855949603266),
+						"foo": int64(-724202),
+						"bar": int64(-253907),
 					},
 					v)
 			},
@@ -271,7 +271,7 @@ func TestObject(t *testing.T) {
 				require.Equal(t,
 					map[string]interface{}{
 						"foo": "FqwCrwMfkOjojx",
-						"bar": 1.6043524827049678e+308,
+						"bar": 784901.3845489756,
 					},
 					v)
 			},
@@ -288,7 +288,7 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"I_8wEl7": int64(1725511503074869948),
+						"I_8wEl7": int64(549789),
 						"S_Z":     "fkOjoj",
 					},
 					v)

@@ -74,7 +74,7 @@ func TestArray(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "failed to generate valid array: reached attempt limit (10) caused by: can not fill array with unique items")
+				require.EqualError(t, err, "failed to generate valid array: reached attempt limit (10) caused by: cannot fill array with unique items")
 			},
 		},
 		{
@@ -210,7 +210,7 @@ func TestArray(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []any{
-					"qwCrwMfkOjo", int64(6259110876194170218), "gPSz", "gPNseoOLAIqos", "qa6WoJUOvts",
+					"qwCrwMfkOjo", int64(-703102), "gPSz", "gPNseoOLAIqos", "qa6WoJUOvts",
 				}, v)
 			},
 		},
@@ -273,7 +273,7 @@ func TestArray(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []any{1.0858618837067628e+308, "qwCrwMfkOjo", "Street", "SE"}, v)
+				require.Equal(t, []any{208061.4456926526, "qwCrwMfkOjo", "Street", "SE"}, v)
 			},
 		},
 		{
@@ -291,7 +291,7 @@ func TestArray(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []any{1.0858618837067628e+308, "qwCrwMfkOjo", "Street", "SE"}, v)
+				require.Equal(t, []any{208061.4456926526, "qwCrwMfkOjo", "Street", "SE"}, v)
 			},
 		},
 	}
