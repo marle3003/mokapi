@@ -3,6 +3,7 @@ package generator
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
@@ -58,6 +59,7 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 		}
 
 		var result map[string]interface{}
+		p := parser.Parser{Schema: s, ValidateAdditionalProperties: true}
 		err = fakeWithRetries(10, func() error {
 			for _, key := range sorted {
 				if resetStore {
@@ -109,6 +111,10 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 				// shuffle propNames to get random optional properties
 				req.g.rand.Shuffle(len(propNames), func(i, j int) { propNames[i], propNames[j] = propNames[j], propNames[i] })
 				for _, k := range propNames {
+					if _, ok := result[k]; ok {
+						continue
+					}
+
 					n := len(result)
 					if n >= minProps {
 						n := gofakeit.Float64Range(0, 1)
@@ -123,67 +129,9 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 				}
 
 				// apply if-then-else
-				if s.If != nil {
-					numOfRemovableProperties := len(result) - len(s.Required)
-					p := parser.Parser{}
-					conditionApplied := false
-					for ; numOfRemovableProperties >= 0; numOfRemovableProperties-- {
-						err = fakeWithRetries(10, func() error {
-							var condResult map[string]any
-
-							_, err = p.ParseWith(result, s.If)
-							var cond *schema.Schema
-							if err == nil && s.Then != nil {
-								cond = s.Then
-							} else if err != nil && s.Else != nil {
-								cond = s.Else
-							}
-							if cond != nil {
-								var f *faker
-								f, err = r.resolve(req.WithSchema(cond), true)
-								if err != nil {
-									return err
-								}
-								var v any
-								v, err = f.fake()
-								if err != nil {
-									return err
-								}
-								if m, ok := v.(map[string]any); ok {
-									condResult = m
-								} else {
-									return fmt.Errorf("invalid conditional schema: got %s, expected Object", cond.Type)
-								}
-							}
-
-							newLength := len(result) + len(condResult)
-							if s.MaxProperties == nil || newLength <= *s.MaxProperties {
-								for k, v := range condResult {
-									result[k] = v
-								}
-								return nil
-							}
-							return fmt.Errorf("reached maximum of value maxProperties=%d", *s.MaxProperties)
-						})
-
-						if err == nil {
-							conditionApplied = true
-							break
-						}
-
-						// remove one optional property to try conditional again
-						for k := range result {
-							if slices.Contains(s.Required, k) {
-								continue
-							}
-							delete(result, k)
-							changed = true
-							break
-						}
-					}
-					if !conditionApplied {
-						return fmt.Errorf("conditional schema could not be applied: %w", err)
-					}
+				err = applyConditional(req, result, &changed)
+				if err != nil {
+					return err
 				}
 
 				// apply dependentRequired
@@ -238,47 +186,24 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 						}
 					}
 				}
-			}
 
-			if s.AnyOf != nil {
-				isOneValid := false
-				p := parser.Parser{}
-				for _, as := range s.AnyOf {
-					p.Schema = as
-					if _, err = p.Parse(result); err == nil {
-						isOneValid = true
-						break
-					}
+				err = applyObjectAnyOf(req, result, &changed)
+				if err != nil {
+					return err
 				}
-				if !isOneValid {
-					err = fakeWithRetries(10, func() error {
-						i := gofakeit.Number(0, len(s.AnyOf)-1)
-						as := applyObject(s.AnyOf[i], s)
-						var resultAny any
-						resultAny, err = New(req.WithSchema(as))
-						if m, ok := resultAny.(map[string]any); ok {
-
-							newLength := len(result) + len(m)
-							if s.MaxProperties == nil || newLength <= *s.MaxProperties {
-								for k, v := range m {
-									result[k] = v
-								}
-								changed = true
-								return nil
-							}
-							return fmt.Errorf("reached maximum of value maxProperties=%d", *s.MaxProperties)
-
-						} else {
-							return fmt.Errorf("invalid conditional schema: got %s, expected Object", as.Type)
-						}
-					})
-					if err != nil {
-						return fmt.Errorf("cannot apply one schema of 'anyOf': %w", err)
-					}
+				err = applyObjectAllOf(req, result, &changed)
+				if err != nil {
+					return err
+				}
+				err = applyOneOf(req, result, &changed)
+				if err != nil {
+					return err
 				}
 			}
 
-			return nil
+			_, err = p.Parse(result)
+
+			return err
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate valid object: %w", err)
@@ -665,4 +590,227 @@ func propertyNamesParser(s *schema.Schema) *parser.Parser {
 		p.Schema = s.PropertyNames
 	}
 	return p
+}
+
+func applyConditional(req *Request, result map[string]any, changed *bool) error {
+	if req.Schema.If == nil {
+		return nil
+	}
+	s := req.Schema
+	var err error
+
+	numOfRemovableProperties := len(result) - len(s.Required)
+	p := parser.Parser{}
+	conditionApplied := false
+	for ; numOfRemovableProperties >= 0; numOfRemovableProperties-- {
+		err = fakeWithRetries(10, func() error {
+			var condResult map[string]any
+
+			_, err = p.ParseWith(result, s.If)
+			var cond *schema.Schema
+			if err == nil && s.Then != nil {
+				cond = s.Then
+			} else if err != nil && s.Else != nil {
+				cond = s.Else
+			}
+			if cond != nil {
+				var v any
+				v, err = New(req.WithSchema(cond))
+				if err != nil {
+					return err
+				}
+				if m, ok := v.(map[string]any); ok {
+					condResult = m
+				} else {
+					return fmt.Errorf("invalid conditional schema: got %s, expected Object", cond.Type)
+				}
+			}
+
+			newLength := len(result) + len(condResult)
+			if s.MaxProperties == nil || newLength <= *s.MaxProperties {
+				for k, v := range condResult {
+					result[k] = v
+				}
+				return nil
+			}
+			return fmt.Errorf("reached maximum of value maxProperties=%d", *s.MaxProperties)
+		})
+
+		if err == nil {
+			conditionApplied = true
+			break
+		}
+
+		// remove one optional property to try conditional again
+		for k := range result {
+			if slices.Contains(s.Required, k) {
+				continue
+			}
+			delete(result, k)
+			*changed = true
+			break
+		}
+	}
+	if !conditionApplied {
+		return fmt.Errorf("conditional schema could not be applied: %w", err)
+	}
+	return nil
+}
+
+func applyObjectAnyOf(req *Request, result map[string]any, changed *bool) error {
+	base := req.Schema
+	if base.AnyOf == nil || len(base.AnyOf) == 0 {
+		return nil
+	}
+
+	var err error
+	isOneValid := false
+	p := parser.Parser{}
+	for _, as := range base.AnyOf {
+		p.Schema = as
+		if _, err = p.Parse(result); err == nil {
+			isOneValid = true
+			break
+		}
+	}
+	if !isOneValid {
+		err = fakeWithRetries(10, func() error {
+			i := gofakeit.Number(0, len(base.AnyOf)-1)
+			as, err := extendBranchWithBase(base.AnyOf[i], base)
+			if err != nil {
+				return fmt.Errorf("cannot extend anyOf: %w", err)
+			}
+			var resultAny any
+			resultAny, err = New(req.WithSchema(as))
+			if m, ok := resultAny.(map[string]any); ok {
+
+				newLength := len(result) + len(m)
+				if base.MaxProperties == nil || newLength <= *base.MaxProperties {
+					for k, v := range m {
+						result[k] = v
+					}
+					*changed = true
+					return nil
+				}
+				return fmt.Errorf("reached maximum of value maxProperties=%d", *base.MaxProperties)
+
+			} else {
+				return fmt.Errorf("invalid conditional schema: got %s, expected Object", as.Type)
+			}
+		})
+		if err != nil {
+			return fmt.Errorf("cannot apply one schema of 'anyOf': %w", err)
+		}
+	}
+
+	return nil
+}
+
+func applyObjectAllOf(req *Request, result map[string]any, changed *bool) error {
+	base := req.Schema
+	if base.AllOf == nil || len(base.AllOf) == 0 {
+		return nil
+	}
+
+	intersection, err := intersectSchemas(base.AllOf...)
+	if err != nil {
+		return err
+	}
+
+	p := parser.Parser{Schema: intersection}
+	if _, err = p.Parse(result); err == nil {
+		return nil
+	}
+	as, err := extendBranchWithBase(intersection, base)
+	if err != nil {
+		return fmt.Errorf("cannot extend allOf: %w", err)
+	}
+
+	err = fakeWithRetries(10, func() error {
+		var resultAll any
+		resultAll, err = New(req.WithSchema(as))
+		if m, ok := resultAll.(map[string]any); ok {
+
+			newLength := len(result) + len(m)
+			if base.MaxProperties == nil || newLength <= *base.MaxProperties {
+				for k, v := range m {
+					result[k] = v
+				}
+				*changed = true
+				return nil
+			}
+			return fmt.Errorf("reached maximum of value maxProperties=%d", *base.MaxProperties)
+
+		} else {
+			return fmt.Errorf("invalid conditional schema: got %s, expected Object", as.Type)
+		}
+	})
+	if err != nil {
+		return fmt.Errorf("cannot apply one schema of 'allOf': %w", err)
+	}
+
+	return nil
+}
+
+func applyOneOf(req *Request, result map[string]any, changed *bool) error {
+	base := req.Schema
+	if base.OneOf == nil || len(base.OneOf) == 0 {
+		return nil
+	}
+	p := parser.Parser{Schema: base, ValidateAdditionalProperties: true}
+	if _, err := p.Parse(result); err == nil {
+		return nil
+	}
+
+	index := gofakeit.Number(0, len(base.OneOf)-1)
+	var err error
+	for i := 0; i < len(base.OneOf); i++ {
+
+		selected := selectIndexAndSubtractOthers(index, base.OneOf...)
+		selected, err = extendBranchWithBase(selected, base)
+
+		err = fakeWithRetries(10, func() error {
+			var resultOne any
+			resultOne, err = New(req.WithSchema(selected))
+			if m, ok := resultOne.(map[string]any); ok {
+				var temp = maps.Clone(result)
+				for k, v := range m {
+					temp[k] = v
+				}
+
+				for idx, one := range base.OneOf {
+					if idx == index {
+						continue
+					}
+					_, err = p.ParseWith(temp, one)
+					if err == nil {
+						return fmt.Errorf("data is valid against more of the given oneOf subschemas")
+					}
+				}
+
+				newLength := len(result) + len(m)
+				if base.MaxProperties == nil || newLength <= *base.MaxProperties {
+					for k, v := range m {
+						result[k] = v
+					}
+					*changed = true
+					return nil
+				}
+				return fmt.Errorf("reached maximum of value maxProperties=%d", *base.MaxProperties)
+
+			} else {
+				return fmt.Errorf("invalid conditional schema: got %s, expected Object", selected.Type)
+			}
+		})
+		if err == nil {
+			return nil
+		}
+		index = (index + 1) % len(base.OneOf)
+
+	}
+	if err != nil {
+		return fmt.Errorf("cannot apply one of the subschemas in 'oneOf': %w", err)
+	}
+
+	return nil
 }

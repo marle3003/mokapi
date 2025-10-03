@@ -121,7 +121,7 @@ func NewAny(schemas ...*schema.Schema) *schema.Schema {
 	return s
 }
 
-func One(schemas ...*schema.Schema) SchemaOptions {
+func WithOneOf(schemas ...*schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
 		for _, one := range schemas {
 			s.OneOf = append(s.OneOf, one)

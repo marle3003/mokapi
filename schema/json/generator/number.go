@@ -2,10 +2,16 @@ package generator
 
 import (
 	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
 	"math"
 	"mokapi/schema/json/schema"
 	"strings"
+
+	"github.com/brianvoe/gofakeit/v6"
+)
+
+const (
+	defaultMin = -1e6
+	defaultMax = 1e6
 )
 
 const smallestFloat = 1e-15
@@ -49,29 +55,26 @@ func fakeYear(r *Request) (interface{}, error) {
 func fakeInteger(s *schema.Schema) (any, error) {
 	hasRange := hasNumberRange(s)
 	if !hasRange && s.MultipleOf == nil {
-		if s.Format == "int32" {
-			return int64(gofakeit.Int32()), nil
-		}
-		return gofakeit.Int64(), nil
+		return int64(gofakeit.Number(defaultMin, defaultMax)), nil
 	}
 	if hasRange {
-		min, max := getRange(s)
-		if err := validateRange(min, max); err != nil {
+		minValue, maxValue := getRangeWithDefault(s, defaultMin, defaultMax)
+		if err := validateRange(minValue, maxValue); err != nil {
 			return nil, fmt.Errorf("%w in %s", err, s)
 		}
 		if s.MultipleOf != nil {
-			v, err := randomMultiple(int(min), int(max), int(*s.MultipleOf))
+			v, err := randomMultiple(int(minValue), int(maxValue), int(*s.MultipleOf))
 			if err != nil {
 				return nil, err
 			}
 			return int64(v), nil
 		}
-		v := int64(math.Round(gofakeit.Float64Range(min, max)))
+		v := int64(math.Round(gofakeit.Float64Range(minValue, maxValue)))
 		return v, nil
 	}
-	min := 0
-	max := 10000
-	n := gofakeit.Number(min, max)
+	minValue := 0
+	maxValue := 100
+	n := gofakeit.Number(minValue, maxValue)
 	v := n * int(*s.MultipleOf)
 	return int64(v), nil
 }
@@ -81,7 +84,7 @@ func fakeIntegerWithRange(s *schema.Schema, min, max int) (any, error) {
 		return gofakeit.Number(min, max), nil
 	}
 
-	minValue, maxValue := getRangeWithDefault(float64(min), float64(max), s)
+	minValue, maxValue := getRangeWithDefault(s, float64(min), float64(max))
 	if err := validateRange(minValue, maxValue); err != nil {
 		return nil, fmt.Errorf("%w in %s", err, s)
 	}
@@ -107,6 +110,24 @@ func fakeIntegerWithRange(s *schema.Schema, min, max int) (any, error) {
 }
 
 func fakeNumber(r *Request) (interface{}, error) {
+	n, err := newNumber(r)
+	if err != nil {
+		return nil, err
+	}
+	if shouldEnsureDecimalPart(r.Schema) && isInteger(n) {
+		switch n.(type) {
+		case float64:
+			frac := r.g.rand.Float64()
+			return n.(float64) + frac, nil
+		case float32:
+			frac := r.g.rand.Float32()
+			return n.(float32) + frac, nil
+		}
+	}
+	return n, nil
+}
+
+func newNumber(r *Request) (interface{}, error) {
 	s := r.Schema
 	if s == nil {
 		return gofakeit.Float64(), nil
@@ -138,17 +159,17 @@ func fakeNumber(r *Request) (interface{}, error) {
 	hasRange := hasNumberRange(s)
 	if !hasRange && s.MultipleOf == nil {
 		if s.Format == "float" {
-			return gofakeit.Float32(), nil
+			return float32(gofakeit.Float64Range(defaultMin, defaultMax)), nil
 		}
-		return gofakeit.Float64(), nil
+		return gofakeit.Float64Range(defaultMin, defaultMax), nil
 	}
 	if hasRange {
-		min, max := getRange(s)
-		if err := validateRange(min, max); err != nil {
+		minValue, maxValue := getRangeWithDefault(s, defaultMin, defaultMax)
+		if err := validateRange(minValue, maxValue); err != nil {
 			return nil, fmt.Errorf("%w in %s", err, s)
 		}
 		if s.MultipleOf != nil {
-			v, err := randomFloatMultiple(min, max, *s.MultipleOf)
+			v, err := randomFloatMultiple(minValue, maxValue, *s.MultipleOf)
 			if err != nil {
 				return nil, err
 			}
@@ -157,15 +178,15 @@ func fakeNumber(r *Request) (interface{}, error) {
 			}
 			return v, nil
 		}
-		v := gofakeit.Float64Range(min, max)
+		v := gofakeit.Float64Range(minValue, maxValue)
 		if s.Format == "float" {
 			return float32(v), nil
 		}
 		return v, nil
 	}
-	min := 0
-	max := 10000
-	n := gofakeit.Number(min, max)
+	minValue := 0
+	maxValue := 100
+	n := gofakeit.Number(minValue, maxValue)
 	v := float64(n) * *s.MultipleOf
 	if s.Format == "float" {
 		return float32(v), nil
@@ -174,40 +195,11 @@ func fakeNumber(r *Request) (interface{}, error) {
 }
 
 func fakeAge(r *Request) (interface{}, error) {
-	min, max := getRangeWithDefault(0, 50, r.Schema)
-
-	if r.Schema.IsNumber() {
-		return gofakeit.Float64Range(min, max), nil
-	} else {
-		return gofakeit.Number(int(min), int(max)), nil
-	}
+	minValue, maxValue := getRangeWithDefault(r.Schema, 0, 100)
+	return int64(gofakeit.Number(int(minValue), int(maxValue))), nil
 }
 
-func getRange(s *schema.Schema) (float64, float64) {
-	var min float64
-	var max float64
-	if len(s.Type) == 1 && s.Type[0] == "integer" {
-		if s.Format == "int32" {
-			min = math.MinInt32
-			max = math.MaxInt32
-		} else {
-			min = math.MinInt64
-			max = math.MaxInt64
-		}
-	} else if len(s.Type) == 1 && s.Type[0] == "number" {
-		if s.Format == "float" {
-			max = math.MaxFloat32
-			min = -math.MaxFloat32
-		} else {
-			max = math.MaxFloat64
-			min = -math.MaxFloat64
-		}
-	}
-
-	return getRangeWithDefault(min, max, s)
-}
-
-func getRangeWithDefault(min, max float64, s *schema.Schema) (float64, float64) {
+func getRangeWithDefault(s *schema.Schema, min, max float64) (float64, float64) {
 	if s == nil {
 		return min, max
 	}
@@ -278,4 +270,38 @@ func validateRange(min, max float64) error {
 		return fmt.Errorf("invalid minimum '%v' and maximum '%v'", min, max)
 	}
 	return nil
+}
+
+func shouldEnsureDecimalPart(s *schema.Schema) bool {
+	if s == nil || s.Not == nil {
+		return false
+	}
+	if s.Not.IsInteger() && schemaNoConstraintsForType(s.Not, "integer") {
+		return true
+	}
+	if s.Not.AnyOf == nil {
+		return false
+	}
+	for _, as := range s.Not.AnyOf {
+		if shouldEnsureDecimalPart(as) {
+			return true
+		}
+	}
+	return false
+}
+
+func isInteger(n any) bool {
+	switch t := n.(type) {
+	case int, int64:
+		return true
+	case float64:
+		_, frac := math.Modf(t)
+		// Some values that look like integers may not be stored exactly as such (e.g. 2.0000000000000004).
+		return math.Abs(frac) < 1e-9
+	case float32:
+		_, frac := math.Modf(float64(t))
+		return math.Abs(frac) > 1e-6 // slightly looser than float64
+	default:
+		return false
+	}
 }

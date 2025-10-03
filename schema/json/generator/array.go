@@ -210,7 +210,7 @@ func nextUnique(arr []interface{}, fakeItem func() (interface{}, error)) (interf
 		}
 	}
 
-	return nil, fmt.Errorf("can not fill array with unique items")
+	return nil, fmt.Errorf("cannot fill array with unique items")
 }
 
 func contains(s []interface{}, v interface{}) bool {

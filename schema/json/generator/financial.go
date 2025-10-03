@@ -110,8 +110,8 @@ func fakePriceValue(r *Request) (any, error) {
 	if s.IsInteger() {
 		return fakeIntegerWithRange(s, 0, 1000000)
 	}
-	min, max := getRangeWithDefault(0, 1000000, s)
-	return gofakeit.Price(min, max), nil
+	minValue, maxValue := getRangeWithDefault(s, 0, 1000000)
+	return gofakeit.Price(minValue, maxValue), nil
 }
 
 func fakeCreditCard(r *Request) (any, error) {

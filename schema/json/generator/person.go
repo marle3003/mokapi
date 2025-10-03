@@ -2,10 +2,11 @@ package generator
 
 import (
 	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
 	"math"
 	"strings"
 	"time"
+
+	"github.com/brianvoe/gofakeit/v6"
 )
 
 var personal = []*Node{
@@ -284,8 +285,8 @@ func fakeGender(r *Request) (any, error) {
 }
 
 func fakePersonAge(r *Request) (any, error) {
-	min, max := getRangeWithDefault(1, 100, r.Schema)
-	return gofakeit.Number(int(min), int(max)), nil
+	minValue, maxValue := getRangeWithDefault(r.Schema, 1, 100)
+	return gofakeit.Number(int(minValue), int(maxValue)), nil
 }
 
 func fakePerson(r *Request) (any, error) {
@@ -307,15 +308,15 @@ func fakePhone(r *Request) (any, error) {
 
 	countryCode := gofakeit.IntRange(1, 999)
 	countryCodeLen := len(fmt.Sprintf("%v", countryCode))
-	max := 15 - countryCodeLen
-	min := 4
+	maxValue := 15 - countryCodeLen
+	minValue := 4
 	if s != nil && s.MinLength != nil {
-		min = *s.MinLength - countryCodeLen - 1
+		minValue = *s.MinLength - countryCodeLen - 1
 	}
 	if s != nil && s.MaxLength != nil {
-		max = *s.MaxLength - countryCodeLen - 1
+		maxValue = *s.MaxLength - countryCodeLen - 1
 	}
-	nationalCodeLen := gofakeit.IntRange(min, max)
+	nationalCodeLen := gofakeit.IntRange(minValue, maxValue)
 	return fmt.Sprintf("+%v%v", countryCode, gofakeit.Numerify(strings.Repeat("#", nationalCodeLen))), nil
 }
 
@@ -362,7 +363,7 @@ func fakeDateInPastWithMinYear(r *Request, minYear int) (any, error) {
 	return d.Format("2006-01-02"), nil
 }
 
-func fakeContactType(r *Request) (any, error) {
+func fakeContactType(_ *Request) (any, error) {
 	index := gofakeit.Number(0, len(contactTypes)-1)
 	return contactTypes[index], nil
 }

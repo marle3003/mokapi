@@ -260,7 +260,16 @@ func TestHandler_Schema_Example(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"contentType":"application/json","value":"MS40NDcwMTYyNDY3NTgxMDU4ZSszMDg="}]`))
+					try.AssertBody(func(t *testing.T, body string) {
+						var data []map[string]string
+						err := json.Unmarshal([]byte(body), &data)
+						require.NoError(t, err)
+						b, err := base64.StdEncoding.DecodeString(data[0]["value"])
+						require.NoError(t, err)
+						require.Equal(t, "609859.0117483337", string(b))
+
+					}),
+					try.HasBody(`[{"contentType":"application/json","value":"NjA5ODU5LjAxMTc0ODMzMzc="}]`))
 			},
 		},
 		{
