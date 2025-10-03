@@ -2,6 +2,8 @@ package generator
 
 import (
 	"mokapi/schema/json/schema"
+	"net/url"
+	"strings"
 )
 
 type Request struct {
@@ -14,6 +16,16 @@ type Request struct {
 }
 
 func NewRequest(path []string, s *schema.Schema, ctx map[string]any) *Request {
+	if ctx == nil {
+		ctx = make(map[string]any)
+	}
+	if len(path) == 0 && s != nil && s.Id != "" {
+		u, _ := url.Parse(s.Id)
+		if u != nil {
+			path = append(path, strings.Split(u.Path, "/")...)
+		}
+	}
+
 	return &Request{
 		Path:    path,
 		Schema:  s,
