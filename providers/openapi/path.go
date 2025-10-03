@@ -3,7 +3,6 @@ package openapi
 import (
 	"fmt"
 	"mokapi/config/dynamic"
-	"mokapi/providers/openapi/parameter"
 	"net/http"
 	"strings"
 
@@ -50,11 +49,15 @@ type Path struct {
 	// A definition of a TRACE operation on this path.
 	Trace *Operation
 
+	Query *Operation
+
+	AdditionalOperations map[string]*Operation `yaml:"additionalOperations" json:"additionalOperations"`
+
 	// A list of parameters that are applicable for all
 	// the operations described under this path. These
 	// parameters can be overridden at the operation level,
 	// but cannot be removed there
-	Parameters parameter.Parameters
+	Parameters Parameters
 
 	Path string `yaml:"-" json:"-"`
 }
@@ -69,6 +72,10 @@ func (r *PathRef) UnmarshalYAML(node *yaml.Node) error {
 
 func (p *Path) Operations() map[string]*Operation {
 	m := make(map[string]*Operation)
+	for name, op := range p.AdditionalOperations {
+		m[name] = op
+	}
+
 	if p.Get != nil {
 		m[http.MethodGet] = p.Get
 	}
@@ -93,11 +100,15 @@ func (p *Path) Operations() map[string]*Operation {
 	if p.Trace != nil {
 		m[http.MethodTrace] = p.Trace
 	}
+	if p.Query != nil {
+		m["QUERY"] = p.Query
+	}
 	return m
 }
 
 func (p *Path) Operation(method string) *Operation {
-	switch strings.ToUpper(method) {
+	method = strings.ToUpper(method)
+	switch method {
 	case http.MethodGet:
 		return p.Get
 	case http.MethodPost:
@@ -114,6 +125,12 @@ func (p *Path) Operation(method string) *Operation {
 		return p.Options
 	case http.MethodTrace:
 		return p.Trace
+	case "QUERY":
+		return p.Query
+	default:
+		if op, ok := p.AdditionalOperations[method]; ok {
+			return op
+		}
 	}
 
 	return nil
@@ -189,6 +206,14 @@ func (p *Path) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	}
 	if err := p.Trace.parse(p, config, reader); err != nil {
 		return fmt.Errorf("parse operation 'TRACE' failed: %w", err)
+	}
+	if err := p.Query.parse(p, config, reader); err != nil {
+		return fmt.Errorf("parse operation 'QUERY' failed: %w", err)
+	}
+	for name, op := range p.AdditionalOperations {
+		if err := op.parse(p, config, reader); err != nil {
+			return fmt.Errorf("parse operation '%s' failed: %w", name, err)
+		}
 	}
 
 	return nil

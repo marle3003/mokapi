@@ -1,4 +1,4 @@
-package parameter
+package openapi
 
 import (
 	"errors"

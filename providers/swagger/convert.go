@@ -5,7 +5,6 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/media"
 	"mokapi/providers/openapi"
-	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
 	jsonSchema "mokapi/schema/json/schema"
 	"mokapi/version"
@@ -262,10 +261,10 @@ func convertRef(ref string) string {
 	return ref
 }
 
-func convertParameter(p *Parameter) *parameter.Ref {
-	return &parameter.Ref{Value: &parameter.Parameter{
+func convertParameter(p *Parameter) *openapi.ParameterRef {
+	return &openapi.ParameterRef{Value: &openapi.Parameter{
 		Name: p.Name,
-		Type: parameter.Location(p.In),
+		Type: openapi.Location(p.In),
 		Schema: &schema.Schema{
 			Type:             jsonSchema.Types{p.Type},
 			Format:           p.Format,

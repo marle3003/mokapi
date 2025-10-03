@@ -1,4 +1,4 @@
-package parameter
+package openapi
 
 func (p *Parameters) Patch(patch Parameters) {
 Loop:
@@ -13,7 +13,7 @@ Loop:
 	}
 }
 
-func (r *Ref) Patch(patch *Ref) {
+func (r *ParameterRef) Patch(patch *ParameterRef) {
 	if r.Value == nil {
 		r.Value = patch.Value
 		return
