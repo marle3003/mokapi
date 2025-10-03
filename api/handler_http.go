@@ -1,7 +1,7 @@
 package api
 
 import (
-	"mokapi/providers/openapi/parameter"
+	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema"
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
@@ -265,7 +265,7 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 	writeJsonBody(w, result)
 }
 
-func getParameters(params parameter.Parameters) (result []param) {
+func getParameters(params openapi.Parameters) (result []param) {
 	for _, p := range params {
 		if p.Value == nil {
 			continue

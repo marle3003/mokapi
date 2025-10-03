@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi"
-	"mokapi/providers/openapi/parameter"
 	"mokapi/version"
 	"net/http"
 	"testing"
@@ -171,7 +170,7 @@ func TestConvert(t *testing.T) {
 			test: func(t *testing.T, config *openapi.Config) {
 				require.Contains(t, config.Paths, "/foo/{id}")
 				p := config.Paths["/foo/{id}"].Value
-				require.Equal(t, parameter.Path, p.Parameters[0].Value.Type)
+				require.Equal(t, openapi.ParameterPath, p.Parameters[0].Value.Type)
 				require.Equal(t, "id", p.Parameters[0].Value.Name)
 				require.True(t, p.Parameters[0].Value.Required)
 				require.Equal(t, "integer", p.Parameters[0].Value.Schema.Type.String())

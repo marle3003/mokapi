@@ -3,7 +3,6 @@ package openapitest
 import (
 	"mokapi/media"
 	"mokapi/providers/openapi"
-	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
 )
 
@@ -26,7 +25,7 @@ func WithResponseHeader(name, description string, s *schema.Schema) ResponseOpti
 		}
 		o.Headers[name] = &openapi.HeaderRef{
 			Value: &openapi.Header{
-				Parameter: parameter.Parameter{
+				Parameter: openapi.Parameter{
 					Name:        name,
 					Description: description,
 					Schema:      s,

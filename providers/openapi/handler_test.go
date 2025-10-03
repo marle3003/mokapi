@@ -350,6 +350,34 @@ func TestResolveEndpoint(t *testing.T) {
 			},
 		},
 		//
+		// QUERY
+		//
+		{
+			name: "QUERY request",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
+				openapitest.AppendPath("/foo", c, openapitest.WithOperation("QUERY", op))
+				r := httptest.NewRequest("QUERY", "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, 200, rr.Code)
+			},
+		},
+		//
+		// LINK
+		//
+		{
+			name: "custom request method",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
+				openapitest.AppendPath("/foo", c, openapitest.WithOperation("LINK", op))
+				r := httptest.NewRequest("LINK", "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, 200, rr.Code)
+			},
+		},
+		//
 		// Path parameter
 		//
 		{

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"mokapi/engine/common"
 	"mokapi/lib"
-	"mokapi/providers/openapi/parameter"
 	"mokapi/runtime/events"
 	"net/http"
 	"strings"
@@ -59,34 +58,37 @@ func NewLogEventContext(r *http.Request, deprecated bool, eh events.Handler, tra
 		Path:       traits.Get("path"),
 	}
 
-	params, _ := parameter.FromContext(r.Context())
+	params, _ := FromContext(r.Context())
 	if params != nil {
-		for t, values := range params {
-			for k, v := range values {
-				value, _ := json.Marshal(v.Value)
-				l.Request.Parameters = append(l.Request.Parameters, HttpParameter{
-					Name:  k,
-					Type:  string(t),
-					Value: string(value),
-					Raw:   v.Raw,
-				})
-			}
+		l.Request.setParams("path", params.Path)
+		l.Request.setParams("query", params.Query)
+		l.Request.setParams("header", params.Header)
+		l.Request.setParams("cookie", params.Cookie)
+		if params.QueryString != nil {
+			value, _ := json.Marshal(params.QueryString.Value)
+			l.Request.Parameters = append(l.Request.Parameters, HttpParameter{
+				Type:  "querystring",
+				Value: string(value),
+				Raw:   params.QueryString.Raw,
+			})
 		}
 	}
+
 	for k, v := range r.Header {
 		raw := strings.Join(v, ",")
-		p := HttpParameter{
-			Name: k,
-			Type: string(parameter.Header),
-			Raw:  &raw,
+		param := HttpParameter{
+			Name:  k,
+			Type:  string(ParameterHeader),
+			Value: raw,
+			Raw:   &raw,
 		}
 		if params != nil {
-			if pp, ok := params[parameter.Header][k]; ok {
-				val, _ := json.Marshal(pp.Value)
-				p.Value = string(val)
+			if pp, ok := params.Header[k]; ok {
+				val, _ := json.Marshal(pp)
+				param.Value = string(val)
 			}
 		}
-		l.Request.Parameters = append(l.Request.Parameters, p)
+		l.Request.Parameters = append(l.Request.Parameters, param)
 	}
 
 	err := eh.Push(l, traits.WithNamespace("http"))
@@ -105,4 +107,16 @@ func LogEventFromContext(ctx context.Context) (*HttpLog, bool) {
 
 func (l *HttpLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Method, l.Request.Url)
+}
+
+func (l *HttpRequestLog) setParams(name string, params map[string]RequestParameterValue) {
+	for k, v := range params {
+		value, _ := json.Marshal(v.Value)
+		l.Parameters = append(l.Parameters, HttpParameter{
+			Name:  k,
+			Type:  name,
+			Value: string(value),
+			Raw:   v.Raw,
+		})
+	}
 }
