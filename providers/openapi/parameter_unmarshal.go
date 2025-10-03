@@ -1,4 +1,4 @@
-package parameter
+package openapi
 
 import (
 	"encoding/json"
@@ -20,7 +20,7 @@ func (p *Parameter) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
-func (r *Ref) UnmarshalYAML(node *yaml.Node) error {
+func (r *ParameterRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.UnmarshalYaml(node, &r.Value)
 }
 
@@ -38,6 +38,6 @@ func (p *Parameter) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (r *Ref) UnmarshalJSON(b []byte) error {
+func (r *ParameterRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
 }

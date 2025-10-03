@@ -1,8 +1,8 @@
-package parameter_test
+package openapi_test
 
 import (
 	"github.com/stretchr/testify/require"
-	"mokapi/providers/openapi/parameter"
+	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema/schematest"
 	"net/http"
 	"net/http/httptest"
@@ -12,16 +12,16 @@ import (
 func TestParseQuery(t *testing.T) {
 	testcases := []struct {
 		name    string
-		params  parameter.Parameters
+		params  openapi.Parameters
 		request func() *http.Request
-		test    func(t *testing.T, result parameter.RequestParameters, err error)
+		test    func(t *testing.T, result *openapi.RequestParameters, err error)
 	}{
 		{
 			name: "integer",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name:   "id",
-					Type:   parameter.Query,
+					Type:   openapi.ParameterQuery,
 					Schema: schematest.New("integer"),
 					Style:  "form",
 				}},
@@ -29,17 +29,17 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?id=5", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(5), result[parameter.Query]["id"].Value)
+				require.Equal(t, int64(5), result.Query["id"].Value)
 			},
 		},
 		{
 			name: "string with whitespace",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name:   "foo",
-					Type:   parameter.Query,
+					Type:   openapi.ParameterQuery,
 					Schema: schematest.New("string"),
 					Style:  "form",
 				}},
@@ -47,17 +47,17 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?foo=Hello%20World", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Hello World", result[parameter.Query]["foo"].Value)
+				require.Equal(t, "Hello World", result.Query["foo"].Value)
 			},
 		},
 		{
 			name: "no query parameter",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name:    "id",
-					Type:    parameter.Query,
+					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("integer"),
 					Style:   "form",
 					Explode: explode(false),
@@ -66,19 +66,19 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Len(t, result[parameter.Query], 1)
-				require.Nil(t, result[parameter.Query]["id"].Value)
-				require.Nil(t, result[parameter.Query]["id"].Raw)
+				require.Len(t, result.Query, 1)
+				require.Nil(t, result.Query["id"].Value)
+				require.Nil(t, result.Query["id"].Raw)
 			},
 		},
 		{
 			name: "no query parameter but required",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name:     "id",
-					Type:     parameter.Query,
+					Type:     openapi.ParameterQuery,
 					Schema:   schematest.New("integer"),
 					Required: true,
 					Style:    "form",
@@ -87,17 +87,16 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.EqualError(t, err, "parse query parameter 'id' failed: parameter is required")
-				require.Len(t, result[parameter.Query], 0)
 			},
 		},
 		{
 			name: "integer array as form and explode",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name:    "id",
-					Type:    parameter.Query,
+					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "form",
 					Explode: explode(true),
@@ -106,17 +105,17 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?id=3&id=4&id=5", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int64(3), int64(4), int64(5)}, result[parameter.Query]["id"].Value)
+				require.Equal(t, []interface{}{int64(3), int64(4), int64(5)}, result.Query["id"].Value)
 			},
 		},
 		{
 			name: "integer array as form and not explode",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name:    "id",
-					Type:    parameter.Query,
+					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "form",
 					Explode: explode(false),
@@ -125,17 +124,17 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?id=3,4,5", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int64(3), int64(4), int64(5)}, result[parameter.Query]["id"].Value)
+				require.Equal(t, []interface{}{int64(3), int64(4), int64(5)}, result.Query["id"].Value)
 			},
 		},
 		{
 			name: "integer array space delimited and explode",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name:    "id",
-					Type:    parameter.Query,
+					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "spaceDelimited",
 					Explode: explode(true),
@@ -144,17 +143,17 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?id=3&id=4&id=5", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int64(3), int64(4), int64(5)}, result[parameter.Query]["id"].Value)
+				require.Equal(t, []interface{}{int64(3), int64(4), int64(5)}, result.Query["id"].Value)
 			},
 		},
 		{
 			name: "integer array space delimited and not explode",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name:    "id",
-					Type:    parameter.Query,
+					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "spaceDelimited",
 					Explode: explode(false),
@@ -163,17 +162,17 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?id=3%204%205", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int64(3), int64(4), int64(5)}, result[parameter.Query]["id"].Value)
+				require.Equal(t, []interface{}{int64(3), int64(4), int64(5)}, result.Query["id"].Value)
 			},
 		},
 		{
 			name: "integer array pipe delimited and explode",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name:    "id",
-					Type:    parameter.Query,
+					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "pipeDelimited",
 					Explode: explode(true),
@@ -182,17 +181,17 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?id=3&id=4&id=5", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int64(3), int64(4), int64(5)}, result[parameter.Query]["id"].Value)
+				require.Equal(t, []interface{}{int64(3), int64(4), int64(5)}, result.Query["id"].Value)
 			},
 		},
 		{
 			name: "integer array pipe delimited and not explode",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name:    "id",
-					Type:    parameter.Query,
+					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "pipeDelimited",
 					Explode: explode(false),
@@ -201,17 +200,17 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?id=3|4|5", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int64(3), int64(4), int64(5)}, result[parameter.Query]["id"].Value)
+				require.Equal(t, []interface{}{int64(3), int64(4), int64(5)}, result.Query["id"].Value)
 			},
 		},
 		{
 			name: "object explode",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name: "id",
-					Type: parameter.Query,
+					Type: openapi.ParameterQuery,
 					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithProperty("firstName", schematest.New("string")),
@@ -225,17 +224,17 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?role=admin&firstName=Alex&msg=Hello%20World&foo=foo%26bar", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex", "msg": "Hello World", "foo": "foo&bar"}, result[parameter.Query]["id"].Value)
+				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex", "msg": "Hello World", "foo": "foo&bar"}, result.Query["id"].Value)
 			},
 		},
 		{
 			name: "object explode and required but no query",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name: "id",
-					Type: parameter.Query,
+					Type: openapi.ParameterQuery,
 					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithProperty("firstName", schematest.New("string")),
@@ -248,17 +247,16 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.EqualError(t, err, "parse query parameter 'id' failed: parameter is required")
-				require.Len(t, result[parameter.Query], 0)
 			},
 		},
 		{
 			name: "object not explode and required but no query",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name: "id",
-					Type: parameter.Query,
+					Type: openapi.ParameterQuery,
 					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithProperty("firstName", schematest.New("string")),
@@ -271,17 +269,16 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.EqualError(t, err, "parse query parameter 'id' failed: parameter is required")
-				require.Len(t, result[parameter.Query], 0)
 			},
 		},
 		{
 			name: "free form object explode",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name: "id",
-					Type: parameter.Query,
+					Type: openapi.ParameterQuery,
 					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 					),
@@ -292,17 +289,17 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?role=admin&firstName=Alex", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex"}, result[parameter.Query]["id"].Value)
+				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex"}, result.Query["id"].Value)
 			},
 		},
 		{
 			name: "not free form object explode but with extra property",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name: "id",
-					Type: parameter.Query,
+					Type: openapi.ParameterQuery,
 					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithFreeForm(false),
@@ -314,16 +311,16 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?role=admin&firstName=Alex", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.EqualError(t, err, "parse query parameter 'id' failed: property 'firstName' not defined in schema: schema type=object properties=[role] free-form=false")
 			},
 		},
 		{
 			name: "dictionary explode",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name:    "id",
-					Type:    parameter.Query,
+					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("object", schematest.WithAdditionalProperties(schematest.New("string"))),
 					Style:   "form",
 					Explode: explode(true),
@@ -332,17 +329,17 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?role=admin&firstName=Alex", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex"}, result[parameter.Query]["id"].Value)
+				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex"}, result.Query["id"].Value)
 			},
 		},
 		{
 			name: "object",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name: "id",
-					Type: parameter.Query,
+					Type: openapi.ParameterQuery,
 					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithProperty("firstName", schematest.New("string")),
@@ -354,17 +351,17 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?id=role,admin,firstName,Alex", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex"}, result[parameter.Query]["id"].Value)
+				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex"}, result.Query["id"].Value)
 			},
 		},
 		{
 			name: "deepObject",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name: "id",
-					Type: parameter.Query,
+					Type: openapi.ParameterQuery,
 					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithProperty("firstName", schematest.New("string")),
@@ -376,17 +373,17 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?id[role]=admin&id[firstName]=Alex&id[lastName]=Smith", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex", "lastName": "Smith"}, result[parameter.Query]["id"].Value)
+				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex", "lastName": "Smith"}, result.Query["id"].Value)
 			},
 		},
 		{
 			name: "deepObject but not free-form",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name: "id",
-					Type: parameter.Query,
+					Type: openapi.ParameterQuery,
 					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithProperty("firstName", schematest.New("string")),
@@ -399,17 +396,16 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?id[role]=admin&id[firstName]=Alex&id[lastName]=Smith", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.EqualError(t, err, "parse query parameter 'id' failed: property 'lastName' not defined in schema: schema type=object properties=[role, firstName] free-form=false")
-				require.Len(t, result[parameter.Query], 0)
 			},
 		},
 		{
 			name: "deepObject invalid format",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name: "id",
-					Type: parameter.Query,
+					Type: openapi.ParameterQuery,
 					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithProperty("age", schematest.New("integer")),
@@ -421,17 +417,16 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?id[role]=admin&id[age]=foo&id[lastName]=Smith", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.EqualError(t, err, "parse query parameter 'id' failed: error count 1:\n\t- #/type: invalid type, expected integer but got string")
-				require.Len(t, result[parameter.Query], 0)
 			},
 		},
 		{
 			name: "deepObject required but no query",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name: "id",
-					Type: parameter.Query,
+					Type: openapi.ParameterQuery,
 					Schema: schematest.New("object",
 						schematest.WithProperty("role", schematest.New("string")),
 						schematest.WithProperty("firstName", schematest.New("string")),
@@ -444,17 +439,16 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.EqualError(t, err, "parse query parameter 'id' failed: parameter is required")
-				require.Len(t, result[parameter.Query], 0)
 			},
 		},
 		{
 			name: "boolean value true",
-			params: parameter.Parameters{
-				{Value: &parameter.Parameter{
+			params: openapi.Parameters{
+				{Value: &openapi.Parameter{
 					Name:     "enabled",
-					Type:     parameter.Query,
+					Type:     openapi.ParameterQuery,
 					Schema:   schematest.New("boolean"),
 					Required: true,
 				}},
@@ -462,10 +456,10 @@ func TestParseQuery(t *testing.T) {
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodGet, "https://foo.bar?enabled=true", nil)
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Equal(t, true, result[parameter.Query]["enabled"].Value)
-				require.Equal(t, "true", *(result[parameter.Query]["enabled"].Raw))
+				require.Equal(t, true, result.Query["enabled"].Value)
+				require.Equal(t, "true", *(result.Query["enabled"].Raw))
 			},
 		},
 	}
@@ -473,7 +467,7 @@ func TestParseQuery(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			r, err := parameter.FromRequest(tc.params, "", tc.request())
+			r, err := openapi.FromRequest(tc.params, "", tc.request())
 			tc.test(t, r, err)
 		})
 

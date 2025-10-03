@@ -1,4 +1,4 @@
-package parameter_test
+package openapi_test
 
 import (
 	"encoding/json"
@@ -7,14 +7,14 @@ import (
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
-	"mokapi/providers/openapi/parameter"
+	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"net/url"
 	"testing"
 )
 
-func TestHeader_UnmarshalJSON(t *testing.T) {
+func TestParameterHeader_UnmarshalJSON(t *testing.T) {
 	testcases := []struct {
 		name string
 		test func(t *testing.T)
@@ -22,7 +22,7 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 		{
 			name: "name",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := json.Unmarshal([]byte(`{ "name": "foo" }`), &param)
 				require.NoError(t, err)
 				require.Equal(t, "foo", param.Name)
@@ -31,16 +31,16 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 		{
 			name: "type",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := json.Unmarshal([]byte(`{ "in": "cookie" }`), &param)
 				require.NoError(t, err)
-				require.Equal(t, parameter.Cookie, param.Type)
+				require.Equal(t, openapi.ParameterCookie, param.Type)
 			},
 		},
 		{
 			name: "description",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := json.Unmarshal([]byte(`{ "description": "foo" }`), &param)
 				require.NoError(t, err)
 				require.Equal(t, "foo", param.Description)
@@ -49,7 +49,7 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 		{
 			name: "required",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := json.Unmarshal([]byte(`{ "required": true  }`), &param)
 				require.NoError(t, err)
 				require.True(t, param.Required)
@@ -58,7 +58,7 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 		{
 			name: "deprecated",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := json.Unmarshal([]byte(`{ "deprecated": true  }`), &param)
 				require.NoError(t, err)
 				require.True(t, param.Deprecated)
@@ -67,7 +67,7 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 		{
 			name: "style",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := json.Unmarshal([]byte(`{ "style": "simple"  }`), &param)
 				require.NoError(t, err)
 				require.Equal(t, "simple", param.Style)
@@ -76,7 +76,7 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 		{
 			name: "explode",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := json.Unmarshal([]byte(`{ "explode": false  }`), &param)
 				require.NoError(t, err)
 				require.NotNil(t, param.Explode)
@@ -86,7 +86,7 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 		{
 			name: "default explode when style is form",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := json.Unmarshal([]byte(`{ "style": "form" }`), &param)
 				require.NoError(t, err)
 				require.Nil(t, param.Explode)
@@ -96,7 +96,7 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 		{
 			name: "default explode when style is not form",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := json.Unmarshal([]byte(`{ "style": "simple" }`), &param)
 				require.NoError(t, err)
 				require.Nil(t, param.Explode)
@@ -106,7 +106,7 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 		{
 			name: "schema",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := json.Unmarshal([]byte(`{ "schema": {}  }`), &param)
 				require.NoError(t, err)
 				require.NotNil(t, param.Schema)
@@ -115,7 +115,7 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 		{
 			name: "reference",
 			test: func(t *testing.T) {
-				ref := &parameter.Ref{}
+				ref := &openapi.ParameterRef{}
 				err := json.Unmarshal([]byte(`{ "$ref": "foo.yml"  }`), &ref)
 				require.NoError(t, err)
 				require.Equal(t, "foo.yml", ref.Ref)
@@ -124,7 +124,7 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 		{
 			name: "value",
 			test: func(t *testing.T) {
-				ref := &parameter.Ref{}
+				ref := &openapi.ParameterRef{}
 				err := json.Unmarshal([]byte(`{ "description": "foo"  }`), &ref)
 				require.NoError(t, err)
 				require.Equal(t, "foo", ref.Value.Description)
@@ -133,7 +133,7 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 		{
 			name: "set default style",
 			test: func(t *testing.T) {
-				ref := &parameter.Ref{}
+				ref := &openapi.ParameterRef{}
 				err := json.Unmarshal([]byte(`{ "in": "query" }`), &ref)
 				require.NoError(t, err)
 				require.Equal(t, "form", ref.Value.Style)
@@ -151,7 +151,7 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 	}
 }
 
-func TestHeader_UnmarshalYAML(t *testing.T) {
+func TestParameterHeader_UnmarshalYAML(t *testing.T) {
 	testcases := []struct {
 		name string
 		test func(t *testing.T)
@@ -159,7 +159,7 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 		{
 			name: "name",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := yaml.Unmarshal([]byte(`name: foo`), &param)
 				require.NoError(t, err)
 				require.Equal(t, "foo", param.Name)
@@ -168,16 +168,16 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 		{
 			name: "type",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := yaml.Unmarshal([]byte(`in: cookie`), &param)
 				require.NoError(t, err)
-				require.Equal(t, parameter.Cookie, param.Type)
+				require.Equal(t, openapi.ParameterCookie, param.Type)
 			},
 		},
 		{
 			name: "description",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := yaml.Unmarshal([]byte(`description: foo`), &param)
 				require.NoError(t, err)
 				require.Equal(t, "foo", param.Description)
@@ -186,7 +186,7 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 		{
 			name: "required",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := yaml.Unmarshal([]byte(`required: true`), &param)
 				require.NoError(t, err)
 				require.True(t, param.Required)
@@ -195,7 +195,7 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 		{
 			name: "deprecated",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := yaml.Unmarshal([]byte(`deprecated: true`), &param)
 				require.NoError(t, err)
 				require.True(t, param.Deprecated)
@@ -204,7 +204,7 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 		{
 			name: "style",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := yaml.Unmarshal([]byte(`style: simple`), &param)
 				require.NoError(t, err)
 				require.Equal(t, "simple", param.Style)
@@ -213,7 +213,7 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 		{
 			name: "explode",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := yaml.Unmarshal([]byte(`explode: false`), &param)
 				require.NoError(t, err)
 				require.NotNil(t, param.Explode)
@@ -223,7 +223,7 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 		{
 			name: "default explode when style is form",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := yaml.Unmarshal([]byte(`style: form`), &param)
 				require.NoError(t, err)
 				require.Nil(t, param.Explode)
@@ -233,7 +233,7 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 		{
 			name: "default explode when style is not form",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := yaml.Unmarshal([]byte(`style: simple`), &param)
 				require.NoError(t, err)
 				require.Nil(t, param.Explode)
@@ -243,7 +243,7 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 		{
 			name: "schema",
 			test: func(t *testing.T) {
-				param := &parameter.Parameter{}
+				param := &openapi.Parameter{}
 				err := yaml.Unmarshal([]byte(`schema: {}`), &param)
 				require.NoError(t, err)
 				require.NotNil(t, param.Schema)
@@ -252,7 +252,7 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 		{
 			name: "reference",
 			test: func(t *testing.T) {
-				ref := &parameter.Ref{}
+				ref := &openapi.ParameterRef{}
 				err := yaml.Unmarshal([]byte(`$ref: foo.yml`), &ref)
 				require.NoError(t, err)
 				require.Equal(t, "foo.yml", ref.Ref)
@@ -261,7 +261,7 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 		{
 			name: "value",
 			test: func(t *testing.T) {
-				ref := &parameter.Ref{}
+				ref := &openapi.ParameterRef{}
 				err := yaml.Unmarshal([]byte(`description: foo`), &ref)
 				require.NoError(t, err)
 				require.Equal(t, "foo", ref.Value.Description)
@@ -270,7 +270,7 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 		{
 			name: "set default style",
 			test: func(t *testing.T) {
-				ref := &parameter.Ref{}
+				ref := &openapi.ParameterRef{}
 				err := yaml.Unmarshal([]byte(`in: query`), &ref)
 				require.NoError(t, err)
 				require.Equal(t, "form", ref.Value.Style)
@@ -288,7 +288,7 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 	}
 }
 
-func TestHeader_Parse(t *testing.T) {
+func TestParameterHeader_Parse(t *testing.T) {
 	testcases := []struct {
 		name string
 		test func(t *testing.T)
@@ -299,7 +299,7 @@ func TestHeader_Parse(t *testing.T) {
 				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
 					return nil, nil
 				})
-				param := parameter.Parameters{nil}
+				param := openapi.Parameters{nil}
 				c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}
 				err := param.Parse(c, reader)
 				require.NoError(t, err)
@@ -309,10 +309,10 @@ func TestHeader_Parse(t *testing.T) {
 			name: "reference",
 			test: func(t *testing.T) {
 				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
-					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &parameter.Parameter{Description: "foo"}}
+					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &openapi.Parameter{Description: "foo"}}
 					return cfg, nil
 				})
-				param := parameter.Parameters{&parameter.Ref{Reference: dynamic.Reference{Ref: "foo.yml"}}}
+				param := openapi.Parameters{&openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml"}}}
 				err := param.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}, reader)
 				require.NoError(t, err)
 				require.Equal(t, "foo", param[0].Value.Description)
@@ -325,7 +325,7 @@ func TestHeader_Parse(t *testing.T) {
 					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: schematest.New("string")}
 					return cfg, nil
 				})
-				param := parameter.Parameters{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Schema{Ref: "foo.yml"}}}}
+				param := openapi.Parameters{&openapi.ParameterRef{Value: &openapi.Parameter{Schema: &schema.Schema{Ref: "foo.yml"}}}}
 				err := param.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}, reader)
 				require.NoError(t, err)
 				require.Equal(t, "string", param[0].Value.Schema.Type.String())
@@ -337,7 +337,7 @@ func TestHeader_Parse(t *testing.T) {
 				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
-				param := parameter.Parameters{&parameter.Ref{Reference: dynamic.Reference{Ref: "foo.yml"}}}
+				param := openapi.Parameters{&openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml"}}}
 				err := param.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}, reader)
 				require.EqualError(t, err, "parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
@@ -348,7 +348,7 @@ func TestHeader_Parse(t *testing.T) {
 				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
-				param := parameter.Parameters{&parameter.Ref{Value: &parameter.Parameter{Schema: &schema.Schema{Ref: "foo.yml"}}}}
+				param := openapi.Parameters{&openapi.ParameterRef{Value: &openapi.Parameter{Schema: &schema.Schema{Ref: "foo.yml"}}}}
 				err := param.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: param}, reader)
 				require.EqualError(t, err, "parse parameter index '0' failed: parse schema failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
@@ -366,11 +366,12 @@ func TestHeader_Parse(t *testing.T) {
 }
 
 func TestLocation_String(t *testing.T) {
-	testcases := map[parameter.Location]string{
-		parameter.Header: "header",
-		parameter.Cookie: "cookie",
-		parameter.Path:   "path",
-		parameter.Query:  "query",
+	testcases := map[openapi.Location]string{
+		openapi.ParameterHeader:      "header",
+		openapi.ParameterCookie:      "cookie",
+		openapi.ParameterPath:        "path",
+		openapi.ParameterQuery:       "query",
+		openapi.ParameterQueryString: "querystring",
 	}
 
 	for k, v := range testcases {
@@ -381,104 +382,104 @@ func TestLocation_String(t *testing.T) {
 func TestParameters_Patch(t *testing.T) {
 	testcases := []struct {
 		name    string
-		configs []parameter.Parameters
-		test    func(t *testing.T, result parameter.Parameters)
+		configs []openapi.Parameters
+		test    func(t *testing.T, result openapi.Parameters)
 	}{
 		{
 			name: "add parameter",
-			configs: []parameter.Parameters{
+			configs: []openapi.Parameters{
 				{},
-				{&parameter.Ref{Value: &parameter.Parameter{Description: "foo"}}},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Description: "foo"}}},
 			},
-			test: func(t *testing.T, result parameter.Parameters) {
+			test: func(t *testing.T, result openapi.Parameters) {
 				require.Len(t, result, 1)
 				require.Equal(t, "foo", result[0].Value.Description)
 			},
 		},
 		{
 			name: "patch type",
-			configs: []parameter.Parameters{
-				{&parameter.Ref{Value: &parameter.Parameter{Type: parameter.Header}}},
-				{&parameter.Ref{Value: &parameter.Parameter{Type: parameter.Cookie}}},
+			configs: []openapi.Parameters{
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Type: openapi.ParameterHeader}}},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Type: openapi.ParameterCookie}}},
 			},
-			test: func(t *testing.T, result parameter.Parameters) {
+			test: func(t *testing.T, result openapi.Parameters) {
 				require.Len(t, result, 1)
-				require.Equal(t, parameter.Cookie, result[0].Value.Type)
+				require.Equal(t, openapi.ParameterCookie, result[0].Value.Type)
 			},
 		},
 		{
 			name: "set schema",
-			configs: []parameter.Parameters{
-				{&parameter.Ref{Value: &parameter.Parameter{}}},
-				{&parameter.Ref{Value: &parameter.Parameter{Schema: schematest.New("string")}}},
+			configs: []openapi.Parameters{
+				{&openapi.ParameterRef{Value: &openapi.Parameter{}}},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Schema: schematest.New("string")}}},
 			},
-			test: func(t *testing.T, result parameter.Parameters) {
+			test: func(t *testing.T, result openapi.Parameters) {
 				require.Len(t, result, 1)
 				require.Equal(t, "string", result[0].Value.Schema.Type.String())
 			},
 		},
 		{
 			name: "patch schema",
-			configs: []parameter.Parameters{
-				{&parameter.Ref{Value: &parameter.Parameter{Schema: schematest.New("number")}}},
-				{&parameter.Ref{Value: &parameter.Parameter{Schema: schematest.New("string")}}},
+			configs: []openapi.Parameters{
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Schema: schematest.New("number")}}},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Schema: schematest.New("string")}}},
 			},
-			test: func(t *testing.T, result parameter.Parameters) {
+			test: func(t *testing.T, result openapi.Parameters) {
 				require.Len(t, result, 1)
 				require.Equal(t, "[number, string]", result[0].Value.Schema.Type.String())
 			},
 		},
 		{
 			name: "patch required",
-			configs: []parameter.Parameters{
-				{&parameter.Ref{Value: &parameter.Parameter{Required: true}}},
-				{&parameter.Ref{Value: &parameter.Parameter{Required: false}}},
+			configs: []openapi.Parameters{
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Required: true}}},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Required: false}}},
 			},
-			test: func(t *testing.T, result parameter.Parameters) {
+			test: func(t *testing.T, result openapi.Parameters) {
 				require.Len(t, result, 1)
 				require.False(t, result[0].Value.Required)
 			},
 		},
 		{
 			name: "patch description",
-			configs: []parameter.Parameters{
-				{&parameter.Ref{Value: &parameter.Parameter{Description: "foo"}}},
-				{&parameter.Ref{Value: &parameter.Parameter{Description: "bar"}}},
+			configs: []openapi.Parameters{
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Description: "foo"}}},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Description: "bar"}}},
 			},
-			test: func(t *testing.T, result parameter.Parameters) {
+			test: func(t *testing.T, result openapi.Parameters) {
 				require.Len(t, result, 1)
 				require.Equal(t, "bar", result[0].Value.Description)
 			},
 		},
 		{
 			name: "patch deprecated",
-			configs: []parameter.Parameters{
-				{&parameter.Ref{Value: &parameter.Parameter{}}},
-				{&parameter.Ref{Value: &parameter.Parameter{Deprecated: true}}},
+			configs: []openapi.Parameters{
+				{&openapi.ParameterRef{Value: &openapi.Parameter{}}},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Deprecated: true}}},
 			},
-			test: func(t *testing.T, result parameter.Parameters) {
+			test: func(t *testing.T, result openapi.Parameters) {
 				require.Len(t, result, 1)
 				require.True(t, result[0].Value.Deprecated)
 			},
 		},
 		{
 			name: "patch style",
-			configs: []parameter.Parameters{
-				{&parameter.Ref{Value: &parameter.Parameter{Style: "foo"}}},
-				{&parameter.Ref{Value: &parameter.Parameter{Style: "bar"}}},
+			configs: []openapi.Parameters{
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Style: "foo"}}},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Style: "bar"}}},
 			},
-			test: func(t *testing.T, result parameter.Parameters) {
+			test: func(t *testing.T, result openapi.Parameters) {
 				require.Len(t, result, 1)
 				require.Equal(t, "bar", result[0].Value.Style)
 			},
 		},
 		{
 			name: "patch explode",
-			configs: []parameter.Parameters{
-				{&parameter.Ref{Value: &parameter.Parameter{}}},
-				{&parameter.Ref{Value: &parameter.Parameter{Explode: explode(true)}}},
+			configs: []openapi.Parameters{
+				{&openapi.ParameterRef{Value: &openapi.Parameter{}}},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Explode: explode(true)}}},
 			},
-			test: func(t *testing.T, result parameter.Parameters) {
+			test: func(t *testing.T, result openapi.Parameters) {
 				require.Len(t, result, 1)
 				require.True(t, *result[0].Value.Explode)
 			},

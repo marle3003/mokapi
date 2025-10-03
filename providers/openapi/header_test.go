@@ -9,7 +9,6 @@ import (
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
-	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema/schematest"
 	"net/http"
 	"net/url"
@@ -27,7 +26,7 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 				header := &openapi.Header{}
 				err := json.Unmarshal([]byte(`{  }`), &header)
 				require.NoError(t, err)
-				require.Equal(t, parameter.Header, header.Type)
+				require.Equal(t, openapi.ParameterHeader, header.Type)
 			},
 		},
 		{
@@ -36,7 +35,7 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 				header := &openapi.Header{}
 				err := json.Unmarshal([]byte(`{ "in": "cookie" }`), &header)
 				require.NoError(t, err)
-				require.Equal(t, parameter.Header, header.Type)
+				require.Equal(t, openapi.ParameterHeader, header.Type)
 			},
 		},
 		{
@@ -134,7 +133,7 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 				header := &openapi.Header{}
 				err := yaml.Unmarshal([]byte(`{}`), &header)
 				require.NoError(t, err)
-				require.Equal(t, parameter.Header, header.Type)
+				require.Equal(t, openapi.ParameterHeader, header.Type)
 			},
 		},
 		{
@@ -143,7 +142,7 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 				header := &openapi.Header{}
 				err := yaml.Unmarshal([]byte(`in: cookie }`), &header)
 				require.NoError(t, err)
-				require.Equal(t, parameter.Header, header.Type)
+				require.Equal(t, openapi.ParameterHeader, header.Type)
 			},
 		},
 		{
@@ -326,7 +325,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 						"post", openapitest.NewOperation(
 							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
 								Headers: map[string]*openapi.HeaderRef{
-									"foo": {Value: &openapi.Header{Parameter: parameter.Parameter{Description: "foo"}}},
+									"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
 								},
 							}}),
 						),
@@ -346,7 +345,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 						"post", openapitest.NewOperation(
 							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
 								Headers: map[string]*openapi.HeaderRef{
-									"foo": {Value: &openapi.Header{Parameter: parameter.Parameter{Description: "foo"}}},
+									"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
 								},
 							}}),
 						),
@@ -357,7 +356,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 						"post", openapitest.NewOperation(
 							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
 								Headers: map[string]*openapi.HeaderRef{
-									"foo": {Value: &openapi.Header{Parameter: parameter.Parameter{Description: "bar"}}},
+									"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "bar"}}},
 								},
 							}}),
 						),
@@ -388,7 +387,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 						"post", openapitest.NewOperation(
 							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
 								Headers: map[string]*openapi.HeaderRef{
-									"foo": {Value: &openapi.Header{Parameter: parameter.Parameter{Description: "foo"}}},
+									"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
 								},
 							}}),
 						),
@@ -419,7 +418,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 						"post", openapitest.NewOperation(
 							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
 								Headers: map[string]*openapi.HeaderRef{
-									"foo": {Value: &openapi.Header{Parameter: parameter.Parameter{Description: "foo"}}},
+									"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
 								},
 							}}),
 						),
@@ -439,7 +438,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 						"post", openapitest.NewOperation(
 							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
 								Headers: map[string]*openapi.HeaderRef{
-									"foo": {Value: &openapi.Header{Parameter: parameter.Parameter{Description: "foo"}}},
+									"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
 								},
 							}}),
 						),
@@ -470,7 +469,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 						"post", openapitest.NewOperation(
 							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
 								Headers: map[string]*openapi.HeaderRef{
-									"foo": {Value: &openapi.Header{Parameter: parameter.Parameter{Description: "foo"}}},
+									"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
 								},
 							}}),
 						),

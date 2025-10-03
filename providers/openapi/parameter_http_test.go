@@ -1,4 +1,4 @@
-package parameter
+package openapi
 
 import (
 	"github.com/stretchr/testify/require"
@@ -14,31 +14,31 @@ func TestParseParam(t *testing.T) {
 		request *http.Request
 		route   string
 		params  Parameters
-		test    func(t *testing.T, p RequestParameters)
+		test    func(t *testing.T, p *RequestParameters)
 	}{
 		{
 			name:    "path parameter",
 			request: &http.Request{URL: &url.URL{Path: "/api/v1/channels/test/messages/123456743/test"}},
 			route:   "/api/v1/channels/{channel}/messages/{id}/test",
 			params: Parameters{
-				&Ref{Value: &Parameter{
+				&ParameterRef{Value: &Parameter{
 					Name:     "channel",
-					Type:     Path,
+					Type:     ParameterPath,
 					Schema:   schematest.New("string"),
 					Required: true,
 				}},
-				&Ref{Value: &Parameter{
+				&ParameterRef{Value: &Parameter{
 					Name:     "id",
-					Type:     Path,
+					Type:     ParameterPath,
 					Schema:   schematest.New("integer", schematest.WithFormat("int64")),
 					Required: true,
 				}},
 			},
-			test: func(t *testing.T, p RequestParameters) {
-				require.Contains(t, p[Path], "channel")
-				require.Equal(t, "test", p[Path]["channel"].Value)
-				require.Contains(t, p[Path], "id")
-				require.Equal(t, int64(123456743), p[Path]["id"].Value)
+			test: func(t *testing.T, p *RequestParameters) {
+				require.Contains(t, p.Path, "channel")
+				require.Equal(t, "test", p.Path["channel"].Value)
+				require.Contains(t, p.Path, "id")
+				require.Equal(t, int64(123456743), p.Path["id"].Value)
 			},
 		},
 		{
@@ -46,17 +46,17 @@ func TestParseParam(t *testing.T) {
 			request: &http.Request{URL: &url.URL{Path: "/api/v1/search", RawQuery: "limit=10"}},
 			route:   "/api/v1/search",
 			params: Parameters{
-				&Ref{
+				&ParameterRef{
 					Value: &Parameter{
 						Name:   "limit",
-						Type:   Query,
+						Type:   ParameterQuery,
 						Schema: schematest.New("integer"),
 					},
 				},
 			},
-			test: func(t *testing.T, p RequestParameters) {
-				require.Contains(t, p[Query], "limit")
-				require.Equal(t, int64(10), p[Query]["limit"].Value)
+			test: func(t *testing.T, p *RequestParameters) {
+				require.Contains(t, p.Query, "limit")
+				require.Equal(t, int64(10), p.Query["limit"].Value)
 			},
 		},
 	}
@@ -67,9 +67,9 @@ func TestParseParam(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			p, err := FromRequest(tc.params, tc.route, tc.request)
+			params, err := FromRequest(tc.params, tc.route, tc.request)
 			require.NoError(t, err)
-			tc.test(t, p)
+			tc.test(t, params)
 		})
 	}
 }

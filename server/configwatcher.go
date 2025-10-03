@@ -12,7 +12,6 @@ import (
 	"mokapi/config/static"
 	"mokapi/safe"
 	"net/url"
-	"strings"
 	"sync"
 	"time"
 
@@ -74,12 +73,6 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 	}
 
 	w.m.Unlock()
-
-	if c.Data == nil && v == nil {
-		if strings.HasSuffix(c.Info.Url.String(), "mobilecodeservice-mailpiece-label.yaml") {
-			log.Info("NIL")
-		}
-	}
 
 	if c.Data == nil {
 		e.m.Lock()

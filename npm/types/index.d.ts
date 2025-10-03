@@ -151,6 +151,9 @@ export interface HttpRequest {
     /** Object contains cookie parameters specified by OpenAPI cookie parameters. */
     readonly cookie: { [key: string]: any };
 
+    /** Object contains querystring parameters specified by OpenAPI querystring parameters. */
+    readonly querystring: any;
+
     /** Path value specified by the OpenAPI path */
     readonly key: string;
 
