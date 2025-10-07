@@ -9,7 +9,6 @@ import (
 	"mokapi/engine/common"
 	"mokapi/lib"
 	"mokapi/media"
-	"mokapi/providers/openapi/parameter"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"net/http"
@@ -256,11 +255,11 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *H
 			route = strings.TrimRight(route, "/")
 		}
 
-		var rp parameter.RequestParameters
-		rp, errOpResolve = parameter.FromRequest(params, route, r)
+		var rp *RequestParameters
+		rp, errOpResolve = FromRequest(params, route, r)
 
 		if errOpResolve == nil {
-			r = r.WithContext(parameter.NewContext(r.Context(), rp))
+			r = r.WithContext(NewContext(r.Context(), rp))
 			r = r.WithContext(NewOperationContext(r.Context(), op))
 			r = r.WithContext(context.WithValue(r.Context(), "endpointPath", op.Path.Path))
 

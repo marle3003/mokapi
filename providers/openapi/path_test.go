@@ -9,7 +9,6 @@ import (
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
-	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema/schematest"
 	"net/http"
 	"net/url"
@@ -254,6 +253,15 @@ func TestPath_UnmarshalYAML(t *testing.T) {
 			},
 		},
 		{
+			name: "path custom method",
+			test: func(t *testing.T) {
+				p := &openapi.Path{}
+				err := yaml.Unmarshal([]byte(`additionalOperations: { LINK: {} }`), &p)
+				require.NoError(t, err)
+				require.NotNil(t, p.AdditionalOperations["LINK"])
+			},
+		},
+		{
 			name: "path parameters",
 			test: func(t *testing.T) {
 				p := &openapi.Path{}
@@ -359,6 +367,40 @@ func TestPath_Operations(t *testing.T) {
 				require.Len(t, ops, 2)
 				require.Contains(t, ops, http.MethodPut)
 				require.Contains(t, ops, http.MethodTrace)
+			},
+		},
+		{
+			name: "query",
+			test: func(t *testing.T) {
+				p := &openapi.Path{Query: &openapi.Operation{}}
+				ops := p.Operations()
+				require.Len(t, ops, 1)
+				require.Contains(t, ops, "QUERY")
+			},
+		},
+		{
+			name: "custom LINK",
+			test: func(t *testing.T) {
+				p := &openapi.Path{AdditionalOperations: map[string]*openapi.Operation{"LINK": {}}}
+				ops := p.Operations()
+				require.Len(t, ops, 1)
+				require.Contains(t, ops, "LINK")
+			},
+		},
+		{
+			name: "get operation custom LINK",
+			test: func(t *testing.T) {
+				p := &openapi.Path{AdditionalOperations: map[string]*openapi.Operation{"LINK": {}}}
+				op := p.Operation("link")
+				require.NotNil(t, op)
+			},
+		},
+		{
+			name: "get operation but not defined",
+			test: func(t *testing.T) {
+				p := &openapi.Path{AdditionalOperations: map[string]*openapi.Operation{"LINK": {}}}
+				op := p.Operation("not")
+				require.Nil(t, op)
 			},
 		},
 	}
@@ -469,7 +511,7 @@ func TestPath_Parse(t *testing.T) {
 				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithPathParamRef(&parameter.Ref{Reference: dynamic.Reference{Ref: "foo.yml"}}),
+						openapitest.WithPathParamRef(&openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml"}}),
 					)),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)

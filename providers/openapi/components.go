@@ -3,22 +3,21 @@ package openapi
 import (
 	"fmt"
 	"mokapi/config/dynamic"
-	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
 )
 
 type Components struct {
-	Schemas         *schema.Schemas `yaml:"schemas,omitempty" json:"schemas,omitempty"`
-	Responses       ResponseBodies  `yaml:"responses,omitempty" json:"responses,omitempty"`
-	RequestBodies   RequestBodies   `yaml:"requestBodies,omitempty" json:"requestBodies,omitempty"`
-	Parameters      Parameters      `yaml:"parameters,omitempty" json:"parameters,omitempty"`
-	Examples        Examples        `yaml:"examples,omitempty" json:"examples,omitempty"`
-	Headers         Headers         `yaml:"headers,omitempty" json:"headers,omitempty"`
-	PathItems       PathItems       `yaml:"pathItems,omitempty" json:"pathItems,omitempty"`
-	SecuritySchemes SecuritySchemes `yaml:"securitySchemes,omitempty" json:"securitySchemes,omitempty"`
+	Schemas         *schema.Schemas     `yaml:"schemas,omitempty" json:"schemas,omitempty"`
+	Responses       ResponseBodies      `yaml:"responses,omitempty" json:"responses,omitempty"`
+	RequestBodies   RequestBodies       `yaml:"requestBodies,omitempty" json:"requestBodies,omitempty"`
+	Parameters      ComponentParameters `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	Examples        Examples            `yaml:"examples,omitempty" json:"examples,omitempty"`
+	Headers         Headers             `yaml:"headers,omitempty" json:"headers,omitempty"`
+	PathItems       PathItems           `yaml:"pathItems,omitempty" json:"pathItems,omitempty"`
+	SecuritySchemes SecuritySchemes     `yaml:"securitySchemes,omitempty" json:"securitySchemes,omitempty"`
 }
 
-type Parameters map[string]*parameter.Ref
+type ComponentParameters map[string]*ParameterRef
 
 func (c *Components) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if err := c.Schemas.Parse(config, reader); err != nil {
@@ -46,7 +45,7 @@ func (c *Components) parse(config *dynamic.Config, reader dynamic.Reader) error 
 	return nil
 }
 
-func (p Parameters) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (p ComponentParameters) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for name, param := range p {
 		if err := param.Parse(config, reader); err != nil {
 			return fmt.Errorf("parse parameter '%v' failed: %w", name, err)
@@ -93,7 +92,7 @@ func (c *Components) patch(patch Components) {
 	}
 }
 
-func (p Parameters) patch(patch Parameters) {
+func (p ComponentParameters) patch(patch ComponentParameters) {
 	for name, param := range patch {
 		if p1, ok := p[name]; ok {
 			p1.Patch(param)

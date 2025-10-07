@@ -1,4 +1,4 @@
-package parameter
+package openapi
 
 import (
 	"fmt"
@@ -7,15 +7,14 @@ import (
 )
 
 const (
-	Path   Location = "path"
-	Query  Location = "query"
-	Header Location = "header"
-	Cookie Location = "cookie"
+	ParameterPath        Location = "path"
+	ParameterQuery       Location = "query"
+	ParameterHeader      Location = "header"
+	ParameterCookie      Location = "cookie"
+	ParameterQueryString Location = "querystring"
 )
 
-type Parameters []*Ref
-
-type Ref struct {
+type ParameterRef struct {
 	dynamic.Reference
 	Value *Parameter
 }
@@ -48,7 +47,11 @@ type Parameter struct {
 	// specifies whether arrays and objects should generate separate
 	// parameters for each array item or object property
 	Explode *bool `yaml:"explode" json:"explode"`
+
+	Content Content `yaml:"content" json:"content"`
 }
+
+type Parameters []*ParameterRef
 
 type Location string
 
@@ -69,13 +72,13 @@ func (p *Parameter) IsExplode() bool {
 func (p *Parameter) SetDefaultStyle() {
 	if p.Style == "" {
 		switch p.Type {
-		case Query:
+		case ParameterQuery:
 			p.Style = "form"
-		case Path:
+		case ParameterPath:
 			p.Style = "simple"
-		case Header:
+		case ParameterHeader:
 			p.Style = "simple"
-		case Cookie:
+		case ParameterCookie:
 			p.Style = "form"
 		}
 	}
@@ -91,7 +94,7 @@ func (p Parameters) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	return nil
 }
 
-func (r *Ref) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (r *ParameterRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}

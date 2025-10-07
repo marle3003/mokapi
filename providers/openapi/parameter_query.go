@@ -1,4 +1,4 @@
-package parameter
+package openapi
 
 import (
 	"fmt"
@@ -87,7 +87,7 @@ func parseQueryObject(param *Parameter, u *url.URL) (string, interface{}, error)
 	return "", nil, fmt.Errorf("unsupported style '%v', explode '%v'", param.Style, param.IsExplode())
 }
 
-func parseQueryArray(p *Parameter, u *url.URL) (*string, interface{}, error) {
+func parseQueryArray(p *Parameter, u *url.URL) (*string, any, error) {
 	var raw string
 	var values []string
 	if u.Query().Has(p.Name) {

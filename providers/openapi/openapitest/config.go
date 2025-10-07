@@ -2,7 +2,6 @@ package openapitest
 
 import (
 	"mokapi/providers/openapi"
-	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
 	"mokapi/version"
 )
@@ -106,14 +105,14 @@ func WithComponentRequestBodyRef(name string, r *openapi.RequestBodyRef) ConfigO
 	}
 }
 
-func WithComponentParameter(name string, p *parameter.Parameter) ConfigOptions {
-	return WithComponentParameterRef(name, &parameter.Ref{Value: p})
+func WithComponentParameter(name string, p *openapi.Parameter) ConfigOptions {
+	return WithComponentParameterRef(name, &openapi.ParameterRef{Value: p})
 }
 
-func WithComponentParameterRef(name string, r *parameter.Ref) ConfigOptions {
+func WithComponentParameterRef(name string, r *openapi.ParameterRef) ConfigOptions {
 	return func(c *openapi.Config) {
 		if c.Components.Parameters == nil {
-			c.Components.Parameters = openapi.Parameters{}
+			c.Components.Parameters = openapi.ComponentParameters{}
 		}
 		c.Components.Parameters[name] = r
 	}

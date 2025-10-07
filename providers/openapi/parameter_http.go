@@ -1,4 +1,4 @@
-package parameter
+package openapi
 
 import (
 	"context"
@@ -20,81 +20,88 @@ var p = parser.Parser{
 	ConvertStringToBoolean: true,
 }
 
-type RequestParameters map[Location]RequestParameter
-
-func newRequestParameters() RequestParameters {
-	p := make(RequestParameters)
-	p[Path] = make(RequestParameter)
-	p[Query] = make(RequestParameter)
-	p[Header] = make(RequestParameter)
-	p[Cookie] = make(RequestParameter)
-	return p
+type RequestParameters struct {
+	Path        map[string]RequestParameterValue
+	Query       map[string]RequestParameterValue
+	Header      map[string]RequestParameterValue
+	Cookie      map[string]RequestParameterValue
+	QueryString *RequestParameterValue
 }
 
-type RequestParameter map[string]RequestParameterValue
-
 type RequestParameterValue struct {
-	Value interface{}
+	Value any
 	Raw   *string
 }
 
 type decoder func(string) (string, error)
 
-func NewContext(ctx context.Context, rp RequestParameters) context.Context {
+func NewContext(ctx context.Context, rp *RequestParameters) context.Context {
 	return context.WithValue(ctx, requestKey, rp)
 }
 
-func FromContext(ctx context.Context) (RequestParameters, bool) {
-	rp, ok := ctx.Value(requestKey).(RequestParameters)
+func FromContext(ctx context.Context) (*RequestParameters, bool) {
+	rp, ok := ctx.Value(requestKey).(*RequestParameters)
 	return rp, ok
 }
 
-func FromRequest(params Parameters, route string, r *http.Request) (RequestParameters, error) {
-	parameters := newRequestParameters()
+func FromRequest(params Parameters, route string, r *http.Request) (*RequestParameters, error) {
+	parameters := &RequestParameters{
+		Path:   make(map[string]RequestParameterValue),
+		Query:  make(map[string]RequestParameterValue),
+		Header: make(map[string]RequestParameterValue),
+		Cookie: make(map[string]RequestParameterValue),
+	}
 
 	for _, ref := range params {
 		if ref.Value == nil {
 			continue
 		}
-		p := ref.Value
+		pv := ref.Value
 		var v *RequestParameterValue
 		var err error
-		var store RequestParameter
-		switch p.Type {
-		case Cookie:
-			v, err = parseCookie(p, r)
-			store = parameters[Cookie]
+		switch pv.Type {
+		case ParameterCookie:
+			v, err = parseCookie(pv, r)
 			if err != nil {
-				err = fmt.Errorf("parse cookie parameter '%v' failed: %w", p.Name, err)
+				return nil, fmt.Errorf("parse cookie parameter '%v' failed: %w", pv.Name, err)
 			}
-		case Path:
-			v, err = parsePath(p, route, r)
-			store = parameters[Path]
+			if v != nil {
+				parameters.Cookie[pv.Name] = *v
+			}
+		case ParameterPath:
+			v, err = parsePath(pv, route, r)
 			if err != nil {
 				if strings.Contains(route, "?") {
-					err = fmt.Errorf("parse path parameter '%v' failed: %w. the path contains a quotation mark ('?'), which suggests query parameters are incorrectly included in the path. query parameters should be defined separately in the 'parameters' section", p.Name, err)
+					return nil, fmt.Errorf("parse path parameter '%v' failed: %w. the path contains a quotation mark ('?'), which suggests query parameters are incorrectly included in the path. query parameters should be defined separately in the 'parameters' section", pv.Name, err)
 				} else {
-					err = fmt.Errorf("parse path parameter '%v' failed: %w", p.Name, err)
+					return nil, fmt.Errorf("parse path parameter '%v' failed: %w", pv.Name, err)
 				}
 			}
-		case Query:
-			v, err = parseQuery(p, r.URL)
-			store = parameters[Query]
-			if err != nil {
-				err = fmt.Errorf("parse query parameter '%v' failed: %w", p.Name, err)
+			if v != nil {
+				parameters.Path[pv.Name] = *v
 			}
-		case Header:
-			v, err = parseHeader(p, r)
-			store = parameters[Header]
+		case ParameterQuery:
+			v, err = parseQuery(pv, r.URL)
 			if err != nil {
-				err = fmt.Errorf("parse header parameter '%v' failed: %w", p.Name, err)
+				return nil, fmt.Errorf("parse query parameter '%v' failed: %w", pv.Name, err)
 			}
-		}
-		if err != nil {
-			return nil, err
-		}
-		if store != nil && v != nil {
-			store[p.Name] = *v
+			if v != nil {
+				parameters.Query[pv.Name] = *v
+			}
+		case ParameterHeader:
+			v, err = parseHeader(pv, r)
+			if err != nil {
+				return nil, fmt.Errorf("parse header parameter '%v' failed: %w", pv.Name, err)
+			}
+			if v != nil {
+				parameters.Header[pv.Name] = *v
+			}
+		case ParameterQueryString:
+			v, err = parseQueryString(pv, r)
+			if err != nil {
+				return nil, fmt.Errorf("parse querystring parameter '%v' failed: %w", pv.Name, err)
+			}
+			parameters.QueryString = v
 		}
 	}
 
@@ -141,7 +148,7 @@ func parseExplodeObject(param *Parameter, value, separator string, decode decode
 	return m, nil
 }
 
-func parseUnExplodeObject(param *Parameter, value, separator string) (map[string]interface{}, error) {
+func parseUnExplodeObject(param *Parameter, value, _ string) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
 	elements := strings.Split(value, ",")
 	i := 0
@@ -177,14 +184,14 @@ func defaultDecode(s string) (string, error) {
 	return s, nil
 }
 
-func validate(route string, params RequestParameters) {
+func validate(route string, params *RequestParameters) {
 	re := regexp.MustCompile(`\{([^}]+)}`)
 	matches := re.FindAllStringSubmatch(route, -1)
 
 	var err error
 	for _, match := range matches {
 		if len(match) > 1 {
-			if _, found := params[Path][match[1]]; !found {
+			if _, found := params.Path[match[1]]; !found {
 				err = errors.Join(err, fmt.Errorf("invalid path parameter '%v'", match[1]))
 			}
 		}

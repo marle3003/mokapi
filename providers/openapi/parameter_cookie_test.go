@@ -1,8 +1,8 @@
-package parameter_test
+package openapi_test
 
 import (
 	"github.com/stretchr/testify/require"
-	"mokapi/providers/openapi/parameter"
+	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema/schematest"
 	"net/http"
 	"net/http/httptest"
@@ -12,14 +12,14 @@ import (
 func TestFromRequest_Cookie(t *testing.T) {
 	testcases := []struct {
 		name    string
-		params  parameter.Parameters
+		params  openapi.Parameters
 		request func() *http.Request
-		test    func(t *testing.T, result parameter.RequestParameters, err error)
+		test    func(t *testing.T, result *openapi.RequestParameters, err error)
 	}{
 		{
 			name: "simple cookie",
-			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type:   parameter.Cookie,
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Type:   openapi.ParameterCookie,
 				Name:   "debug",
 				Schema: schematest.New("integer", schematest.WithEnumValues(0, 1)),
 			}}},
@@ -31,17 +31,17 @@ func TestFromRequest_Cookie(t *testing.T) {
 				})
 				return r
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				cookie := result[parameter.Cookie]["debug"]
+				cookie := result.Cookie["debug"]
 				require.Equal(t, int64(1), cookie.Value)
 				require.Equal(t, "1", *cookie.Raw)
 			},
 		},
 		{
 			name: "cookie without schema",
-			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type: parameter.Cookie,
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Type: openapi.ParameterCookie,
 				Name: "debug",
 			}}},
 			request: func() *http.Request {
@@ -52,17 +52,17 @@ func TestFromRequest_Cookie(t *testing.T) {
 				})
 				return r
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				cookie := result[parameter.Cookie]["debug"]
+				cookie := result.Cookie["debug"]
 				require.Equal(t, "1", cookie.Value)
 				require.Equal(t, "1", *cookie.Raw)
 			},
 		},
 		{
 			name: "not required cookie and not sent",
-			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type:     parameter.Cookie,
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Type:     openapi.ParameterCookie,
 				Name:     "debug",
 				Required: false,
 				Schema:   schematest.New("integer", schematest.WithEnumValues(0, 1)),
@@ -71,15 +71,15 @@ func TestFromRequest_Cookie(t *testing.T) {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
 				return r
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				require.Len(t, result[parameter.Cookie], 0)
+				require.Len(t, result.Cookie, 0)
 			},
 		},
 		{
 			name: "required cookie but not sent",
-			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type:     parameter.Cookie,
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Type:     openapi.ParameterCookie,
 				Name:     "debug",
 				Required: true,
 				Schema:   schematest.New("integer", schematest.WithEnumValues(0, 1)),
@@ -88,15 +88,14 @@ func TestFromRequest_Cookie(t *testing.T) {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
 				return r
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.EqualError(t, err, "parse cookie parameter 'debug' failed: parameter is required")
-				require.Len(t, result[parameter.Cookie], 0)
 			},
 		},
 		{
 			name: "required cookie but empty",
-			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type:     parameter.Cookie,
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Type:     openapi.ParameterCookie,
 				Name:     "debug",
 				Required: true,
 				Schema:   schematest.New("integer", schematest.WithEnumValues(0, 1)),
@@ -109,15 +108,14 @@ func TestFromRequest_Cookie(t *testing.T) {
 				})
 				return r
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.EqualError(t, err, "parse cookie parameter 'debug' failed: parameter is required")
-				require.Len(t, result[parameter.Cookie], 0)
 			},
 		},
 		{
 			name: "invalid value",
-			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type:   parameter.Cookie,
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Type:   openapi.ParameterCookie,
 				Name:   "debug",
 				Schema: schematest.New("integer", schematest.WithEnumValues(0, 1)),
 			}}},
@@ -129,15 +127,14 @@ func TestFromRequest_Cookie(t *testing.T) {
 				})
 				return r
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.EqualError(t, err, "parse cookie parameter 'debug' failed: error count 1:\n\t- #/type: invalid type, expected integer but got string")
-				require.Len(t, result[parameter.Cookie], 0)
 			},
 		},
 		{
 			name: "array",
-			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type:   parameter.Cookie,
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Type:   openapi.ParameterCookie,
 				Name:   "foo",
 				Schema: schematest.New("array", schematest.WithItems("integer")),
 			}}},
@@ -149,17 +146,17 @@ func TestFromRequest_Cookie(t *testing.T) {
 				})
 				return r
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				cookie := result[parameter.Cookie]["foo"]
+				cookie := result.Cookie["foo"]
 				require.Equal(t, []interface{}{int64(1), int64(2), int64(3)}, cookie.Value)
 				require.Equal(t, "1,2,3", *cookie.Raw)
 			},
 		},
 		{
 			name: "array invalid value",
-			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type:   parameter.Cookie,
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Type:   openapi.ParameterCookie,
 				Name:   "foo",
 				Schema: schematest.New("array", schematest.WithItems("integer")),
 			}}},
@@ -171,15 +168,14 @@ func TestFromRequest_Cookie(t *testing.T) {
 				})
 				return r
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.EqualError(t, err, "parse cookie parameter 'foo' failed: error count 1:\n\t- #/items/1/type: invalid type, expected integer but got string")
-				require.Len(t, result[parameter.Cookie], 0)
 			},
 		},
 		{
 			name: "object",
-			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type: parameter.Cookie,
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Type: openapi.ParameterCookie,
 				Name: "foo",
 				Schema: schematest.New("object",
 					schematest.WithProperty("role", schematest.New("string")),
@@ -194,17 +190,17 @@ func TestFromRequest_Cookie(t *testing.T) {
 				})
 				return r
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				cookie := result[parameter.Cookie]["foo"]
+				cookie := result.Cookie["foo"]
 				require.Equal(t, map[string]interface{}{"firstName": "Alex", "role": "admin"}, cookie.Value)
 				require.Equal(t, "role,admin,firstName,Alex", *cookie.Raw)
 			},
 		},
 		{
 			name: "object not all properties defined",
-			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type: parameter.Cookie,
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Type: openapi.ParameterCookie,
 				Name: "foo",
 				Schema: schematest.New("object",
 					schematest.WithProperty("role", schematest.New("string")),
@@ -218,17 +214,17 @@ func TestFromRequest_Cookie(t *testing.T) {
 				})
 				return r
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
-				cookie := result[parameter.Cookie]["foo"]
+				cookie := result.Cookie["foo"]
 				require.Equal(t, map[string]interface{}{"role": "admin"}, cookie.Value)
 				require.Equal(t, "role,admin,firstName,Alex", *cookie.Raw)
 			},
 		},
 		{
 			name: "object invalid property pairs",
-			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type: parameter.Cookie,
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Type: openapi.ParameterCookie,
 				Name: "foo",
 				Schema: schematest.New("object",
 					schematest.WithProperty("role", schematest.New("string")),
@@ -243,15 +239,14 @@ func TestFromRequest_Cookie(t *testing.T) {
 				})
 				return r
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.EqualError(t, err, "parse cookie parameter 'foo' failed: invalid number of property pairs")
-				require.Len(t, result[parameter.Cookie], 0)
 			},
 		},
 		{
 			name: "object invalid property",
-			params: parameter.Parameters{{Value: &parameter.Parameter{
-				Type: parameter.Cookie,
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Type: openapi.ParameterCookie,
 				Name: "foo",
 				Schema: schematest.New("object",
 					schematest.WithProperty("role", schematest.New("string")),
@@ -266,9 +261,8 @@ func TestFromRequest_Cookie(t *testing.T) {
 				})
 				return r
 			},
-			test: func(t *testing.T, result parameter.RequestParameters, err error) {
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.EqualError(t, err, "parse cookie parameter 'foo' failed: parse property 'age' failed: error count 1:\n\t- #/type: invalid type, expected number but got string")
-				require.Len(t, result[parameter.Cookie], 0)
 			},
 		},
 	}
@@ -277,7 +271,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			r, err := parameter.FromRequest(tc.params, "", tc.request())
+			r, err := openapi.FromRequest(tc.params, "", tc.request())
 			tc.test(t, r, err)
 		})
 	}

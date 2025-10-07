@@ -9,7 +9,6 @@ import (
 	"mokapi/media"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
-	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema/schematest"
 	"net/http"
 	"net/url"
@@ -391,11 +390,11 @@ func TestPetStore_Paramters(t *testing.T) {
 	params := endpoint.Value.Delete.Parameters
 	require.Len(t, params, 2)
 	require.Equal(t, "api_key", params[0].Value.Name)
-	require.Equal(t, parameter.Header, params[0].Value.Type)
+	require.Equal(t, openapi.ParameterHeader, params[0].Value.Type)
 	require.Equal(t, "string", params[0].Value.Schema.Type.String())
 
 	require.Equal(t, "petId", params[1].Value.Name)
-	require.Equal(t, parameter.Path, params[1].Value.Type)
+	require.Equal(t, openapi.ParameterPath, params[1].Value.Type)
 	require.Equal(t, "Pet id to delete", params[1].Value.Description)
 	require.True(t, params[1].Value.Required)
 	require.Equal(t, "integer", params[1].Value.Schema.Type.String())

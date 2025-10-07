@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
-	"mokapi/providers/openapi/parameter"
 )
 
 type Headers map[string]*HeaderRef
@@ -16,7 +15,7 @@ type HeaderRef struct {
 }
 
 type Header struct {
-	parameter.Parameter
+	Parameter
 }
 
 func (r *HeaderRef) UnmarshalJSON(b []byte) error {
@@ -30,7 +29,7 @@ func (h *Header) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	header.Type = parameter.Header
+	header.Type = ParameterHeader
 	*h = Header(header)
 	return nil
 }
@@ -46,7 +45,7 @@ func (h *Header) UnmarshalYAML(node *yaml.Node) error {
 	if err != nil {
 		return err
 	}
-	header.Type = parameter.Header
+	header.Type = ParameterHeader
 	*h = Header(header)
 	return nil
 }
