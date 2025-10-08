@@ -3,8 +3,6 @@ package openapi_test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
@@ -13,6 +11,9 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestPath_UnmarshalJSON(t *testing.T) {
@@ -567,6 +568,24 @@ func TestConfig_Patch_Path(t *testing.T) {
 				require.Len(t, result.Paths, 1)
 				require.Contains(t, result.Paths, "/foo")
 				require.Nil(t, result.Paths["/foo"].Value)
+			},
+		},
+		{
+			name: "left path ref is nil",
+			configs: []*openapi.Config{
+				{Paths: map[string]*openapi.PathRef{"/foo": nil}},
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.NewPath(
+						openapitest.WithOperation(
+							"post", openapitest.NewOperation(),
+						),
+					),
+				)),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				require.Len(t, result.Paths, 1)
+				require.Contains(t, result.Paths, "/foo")
+				require.NotNil(t, result.Paths["/foo"].Value.Post)
 			},
 		},
 		{

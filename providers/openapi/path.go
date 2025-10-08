@@ -177,8 +177,8 @@ func (p *Path) parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 
-	for _, p := range p.Parameters {
-		if err := p.Parse(config, reader); err != nil {
+	for _, param := range p.Parameters {
+		if err := param.Parse(config, reader); err != nil {
 			return err
 		}
 	}
@@ -221,8 +221,8 @@ func (p *Path) parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 func (p PathItems) patch(patch PathItems) {
 	for path, v := range patch {
-		if e, ok := p[path]; ok {
-			e.patch(v)
+		if r, ok := p[path]; ok && r != nil {
+			r.patch(v)
 		} else {
 			p[path] = v
 		}
