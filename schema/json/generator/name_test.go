@@ -147,7 +147,7 @@ func TestName(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "EchoValley", v)
+				require.Equal(t, map[string]interface{}{"name": "Ink", "tag": map[string]interface{}{"name": "MirageStream"}}, v)
 			},
 		},
 	}
