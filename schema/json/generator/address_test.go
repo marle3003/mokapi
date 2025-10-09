@@ -242,6 +242,34 @@ func TestAddress(t *testing.T) {
 				}, v)
 			},
 		},
+		{
+			name: "houseNumber",
+			request: &Request{
+				Path: []string{"address"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("houseNumber", schematest.New("string")),
+					schematest.WithRequired("houseNumber"),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"houseNumber": "27"}, v)
+			},
+		},
+		{
+			name: "houseNumber",
+			request: &Request{
+				Path: []string{"address"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("houseNumber", schematest.New("integer", schematest.WithMinimum(110))),
+					schematest.WithRequired("houseNumber"),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"houseNumber": int64(7291)}, v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
