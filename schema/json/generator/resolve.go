@@ -22,6 +22,13 @@ func resolve(req *Request, fallback bool) (*faker, error) {
 }
 
 func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
+	if len(req.Path) == 0 && req.Schema != nil && req.Schema.Id != "" {
+		u, _ := url.Parse(req.Schema.Id)
+		if u != nil {
+			req.Path = append(req.Path, strings.Split(u.Path, "/")...)
+		}
+	}
+
 	if f, ok := useFromContext(req); ok {
 		return f, nil
 	}

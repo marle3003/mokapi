@@ -60,6 +60,17 @@ func TestMarshal_Xml(t *testing.T) {
 			},
 		},
 		{
+			name: "root name from $id",
+			data: func() interface{} {
+				return 4
+			},
+			schema: schematest.New("integer", schematest.WithId("/foo")),
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "<foo>4</foo>", s)
+			},
+		},
+		{
 			name: "namespace",
 			data: func() interface{} {
 				return 4

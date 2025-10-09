@@ -296,6 +296,24 @@ func TestHandler_Http(t *testing.T) {
 			requestUrl:   "http://foo.api/api/services/http/foo",
 			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"responses":[{"statusCode":"200","description":"foo description","contents":[{"type":"application/json","schema":{"type":"string","default":"foobar"}}]}]}]}]`,
 		},
+		{
+			name: "tags",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
+							openapitest.WithOperation("get", openapitest.NewOperation(
+								openapitest.WithTagName("foo"),
+							)),
+						)),
+						openapitest.WithTag("foo", "sum", "desc"),
+					),
+				)
+			},
+			requestUrl:   "http://foo.api/api/services/http/foo",
+			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"tags":["foo"]}]}],"tags":[{"name":"foo","summary":"sum","description":"desc","parent":"","kind":""}]`,
+		},
 	}
 
 	t.Parallel()

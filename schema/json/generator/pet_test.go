@@ -189,6 +189,24 @@ func TestPet(t *testing.T) {
 				require.Equal(t, map[string]interface{}{"name": "Betty", "owner": map[string]interface{}{"name": "Gabriel Adams"}}, v)
 			},
 		},
+		{
+			name: "pet with category",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithId("/pet"),
+					schematest.WithProperty("name", nil),
+					schematest.WithProperty("category", schematest.New("object",
+						schematest.WithProperty("name", schematest.New("string")),
+						schematest.WithRequired("name"),
+					)),
+					schematest.WithRequired("name", "category"),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]any{"category": map[string]interface{}{"name": "ferret"}, "name": "Betty"}, v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

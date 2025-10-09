@@ -160,6 +160,8 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 				var v any
 				var err error
 				r.Context.Snapshot()
+				defer r.Context.Restore()
+
 				if s.UniqueItems != nil && *s.UniqueItems {
 					v, err = nextUnique(arr, nextItem.fake)
 				} else {
@@ -172,14 +174,14 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 					p := parser.Parser{Schema: s.Contains}
 					if _, errContains := p.Parse(v); errContains == nil {
 						if containsMatches+1 > *s.MaxContains {
-							r.Context.Restore()
+
 							return fmt.Errorf("reached maximum of value maxContains=%d", *s.MaxContains)
 						} else {
 							containsMatches++
 						}
 					}
 				}
-				r.Context.Restore()
+
 				arr = append(arr, v)
 				return nil
 			})

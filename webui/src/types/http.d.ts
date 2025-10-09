@@ -1,6 +1,7 @@
 declare interface HttpService extends Service {
     paths: HttpPath[]
     servers: HttpServer[]
+    tags: HttpTag[]
 }
 
 declare interface HttpPath {
@@ -20,6 +21,7 @@ declare interface HttpOperation {
     requestBody: HttpRequestBody
     responses: HttpResponse[]
     security: HttpSecurity[]
+    tags: string[]
 }
 
 declare interface HttpParameter {
@@ -107,6 +109,14 @@ declare interface HttpSecurity {
 declare interface HttpSecurityScheme {
     scopes: string[]
     configs: { [ name: string ]: any }
+}
+
+declare interface HttpTag {
+    name: string
+    summary?: string
+    description?: string
+    parent?: string
+    kind?: string
 }
 
 
