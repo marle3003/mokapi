@@ -151,6 +151,7 @@ export let apps = [
                         summary: "Add a new pet to the store",
                         operationId: "addPet",
                         deprecated: true,
+                        tags: ["pet", "post"],
                         parameters: [
                             {
                                 type: "query",
@@ -266,6 +267,7 @@ export let apps = [
                     {
                         method: "post",
                         summary: "Updates a pet in the store with form data",
+                        tags: ["pet", "post"],
                         parameters: [
                             {
                                 name: "petId",
@@ -325,6 +327,7 @@ export let apps = [
                     {
                         method: "get",
                         summary: "Returns a single pet",
+                        tags: ["pet"],
                         parameters: [
                             {
                                 name: "petId",
@@ -359,6 +362,7 @@ export let apps = [
                         summary: "Finds Pets by status",
                         description: "Multiple status values can be provided with comma separated strings",
                         operationId: "findPetsByStatus",
+                        tags: ["pet"],
                         parameters: [
                             {
                                 name: "status",
@@ -444,6 +448,7 @@ export let apps = [
                     {
                         method: "post",
                         summary: "A long path example",
+                        tags: ["custom", "post"],
                         requestBody: {
                             description: "Create a new pet in the store",
                             contents: [
@@ -484,6 +489,16 @@ export let apps = [
                         ]
                     }
                 ]
+            }
+        ],
+        tags: [
+            {
+                name: "pet",
+                summary: "Everything about your Pets"
+            },
+            {
+                name: "custom",
+                summary: "Access to Petstore orders"
             }
         ],
         configs: [

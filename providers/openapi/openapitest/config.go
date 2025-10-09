@@ -39,6 +39,23 @@ func WithContact(name, url, email string) ConfigOptions {
 	}
 }
 
+func WithTag(name, summary, description string) ConfigOptions {
+	return func(c *openapi.Config) {
+		var tag *openapi.Tag
+		for _, t := range c.Tags {
+			if t.Name == name {
+				tag = t
+			}
+		}
+		if tag == nil {
+			tag = &openapi.Tag{Name: name}
+			c.Tags = append(c.Tags, tag)
+		}
+		tag.Summary = summary
+		tag.Description = description
+	}
+}
+
 func WithPath(name string, path *openapi.Path) ConfigOptions {
 	return func(c *openapi.Config) {
 		if path != nil {

@@ -57,6 +57,8 @@ type Config struct {
 	Components Components `yaml:"components,omitempty" json:"components,omitempty"`
 
 	ExternalDocs *ExternalDocs `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
+
+	Tags []*Tag `yaml:"tags,omitempty" json:"tags,omitempty"`
 }
 
 type ExternalDocs struct {
@@ -138,6 +140,20 @@ func (c *Config) Patch(patch *Config) {
 	} else {
 		for _, v := range patch.Security {
 			c.Security = append(c.Security, v)
+		}
+	}
+
+	for _, pt := range patch.Tags {
+		var st *Tag
+		for _, tag := range c.Tags {
+			if tag.Name == pt.Name {
+				st = tag
+			}
+		}
+		if st == nil {
+			c.Tags = append(c.Tags, pt)
+		} else {
+			st.patch(pt)
 		}
 	}
 }

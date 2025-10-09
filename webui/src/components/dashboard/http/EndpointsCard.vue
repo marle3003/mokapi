@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useMetrics } from '@/composables/metrics';
 import { usePrettyDates } from '@/composables/usePrettyDate';
-import { type PropType, computed } from 'vue';
+import { type PropType, computed, onMounted, ref, watch } from 'vue';
 import { useRouter, useRoute } from '@/router';
 
 const route = useRoute()
@@ -12,12 +12,54 @@ const {format} = usePrettyDates()
 const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },
 })
+const tags = ref(['__all']);
+const allTags = computed(() => {
+    if (!props.service.tags) {
+        return [];
+    }
+    const result = props.service.tags;
+    const names = Object.assign({}, ... result.map(x => {return {[x.name]: x.name}}));
+    
+    for (const path of props.service.paths) {
+        for (const op of path.operations) {
+            if (!op.tags) {
+                continue;
+            }
+            for (const tag of op.tags) {
+                if (!names[tag]) {
+                    result.push({name: tag});
+                    names[tag] = tag;
+                }
+            }
+        }
+    }
+    return result;
+})
+
+onMounted(() => {
+    const s = localStorage.getItem(`http-${props.service.name}-tags`)
+    if (s && s !== '') {
+        const saved = JSON.parse(s)
+        tags.value = saved
+    }
+})
 
 const paths = computed(() => {
     if (!props.service.paths) {
         return []
     }
-    return props.service.paths.sort(comparePath)
+    let result = props.service.paths.sort(comparePath)
+    if (!tags.value.includes('__all')) {
+        result = result.filter((p) => {
+            for (const o of p.operations) {
+                if (o.tags && o.tags.some(t => tags.value.some(x => x == t))) {
+                    return true
+                }
+            }
+            return false;
+        })
+    }
+    return result;
 })
 
 function comparePath(p1: HttpPath, p2: HttpPath) {
@@ -65,7 +107,18 @@ function operations(path: HttpPath) {
     if (!path || !path.operations) {
         return []
     }
-    return path.operations.sort(function (o1, o2) {
+
+    let result = path.operations
+    if (!tags.value.includes('__all')) {
+        result = result.filter((o) => {
+            if (o.tags && o.tags.some(t => tags.value.some(x => x == t))) {
+                return true;
+            }
+            return false;
+        })
+    }
+
+    return result.sort(function (o1, o2) {
         return operationOrderValue(o1)- (operationOrderValue(o2))
     })
 }
@@ -91,12 +144,57 @@ const hasDeprecated = computed(() => {
     }
     return false;
 })
+function toggleTag(name: string) {
+    if (name === '__all') {
+        if (tags.value.includes('__all')) {
+            tags.value = []
+        } else {
+            tags.value = ['__all']
+        }
+    } else {
+        if (tags.value.includes('__all')) {
+            tags.value = allTags.value.map(x => x.name)
+        }
+
+        const i = tags.value.indexOf(name)
+        if (i === -1) {
+            tags.value.push(name)
+        } else {
+            tags.value.splice(i, 1)
+        }
+
+        tags.value = tags.value.filter((t) => t !== '__all')
+    }
+
+    localStorage.setItem(`http-${props.service.name}-tags`, JSON.stringify(tags.value))
+}
 </script>
 
 <template>
     <div class="card">
         <div class="card-body">
-            <div class="card-title text-center">Endpoints</div>
+            <div class="card-title text-center">Paths</div>
+
+            <div class="text-center mt-3 mb-2" v-if="allTags.length > 1">
+
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input tag-checkbox" type="checkbox" id="all" 
+                      value="all" @change="toggleTag('__all')"
+                      :checked="tags.includes('__all')"
+                    >
+                    <label class="form-check-label" for="all">All</label>
+                </div>
+
+                <div class="form-check form-check-inline" v-for="tag in allTags" :title="tag.summary">
+                    <input class="form-check-input tag-checkbox" type="checkbox" :id="tag.name" 
+                      :value="tag.name" @change="toggleTag(tag.name)"
+                      :checked="tags.includes(tag.name) || tags.includes('__all')"
+                    >
+                    <label class="form-check-label" :for="tag.name">{{ tag.name }}</label>
+                </div>
+
+            </div>
+
             <table class="table dataTable selectable" data-testid="endpoints">
                 <thead>
                     <tr>
@@ -104,7 +202,7 @@ const hasDeprecated = computed(() => {
                         <th scope="col" class="text-left">Path</th>
                         <th scope="col" class="text-left" style="width: 20%;">Summary</th>
                         <th scope="col" class="text-left" style="width: 10%">Operations</th>
-                        <th scope="col" class="text-center" style="width: 10%">Last Request</th>
+                        <th scope="col" class="text-center" style="width: 15%">Last Request</th>
                         <th scope="col" class="text-center" style="width: 10%">Requests / Errors</th>
                     </tr>
                 </thead>

@@ -41,7 +41,6 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 
 	var fakes *sortedmap.LinkedHashMap[string, *faker]
 	var err error
-	resetStore := false
 
 	fakes, err = r.fakeObject(req)
 
@@ -62,9 +61,6 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 		p := parser.Parser{Schema: s, ValidateAdditionalProperties: true}
 		err = fakeWithRetries(10, func() error {
 			for _, key := range sorted {
-				if resetStore {
-					req.Context.Snapshot()
-				}
 				f := fakes.Lookup(key)
 				props[key], err = f.fake()
 				if !slices.Contains(s.Required, key) {
@@ -72,9 +68,6 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 				}
 				if err != nil {
 					return err
-				}
-				if resetStore {
-					req.Context.Restore()
 				}
 			}
 

@@ -26,8 +26,15 @@ func marshalXml(i interface{}, r *Schema) ([]byte, error) {
 		u, _ := url.Parse(r.Ref)
 		seg := strings.Split(u.Fragment, "/")
 		name = seg[len(seg)-1]
-	} else {
-		return nil, fmt.Errorf("root element name is undefined: reference name of schema and attribute xml.name is empty")
+	} else if r.Id != "" {
+		u, _ := url.Parse(r.Id)
+		seg := strings.Split(u.Path, "/")
+		if len(seg) > 0 {
+			name = seg[len(seg)-1]
+		}
+	}
+	if name == "" {
+		return nil, fmt.Errorf("root element name is undefined: reference name of schema, attribute xml.name and $id is empty")
 	}
 
 	if i == nil {
