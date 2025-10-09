@@ -64,6 +64,20 @@ func TestResolveEndpoint(t *testing.T) {
 			},
 		},
 		{
+			name: "server url with slash suffix",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				c.Servers[0].Url = "http://localhost/root/"
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
+				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/root/foo", nil)
+				r = r.WithContext(context.WithValue(r.Context(), "servicePath", "/root/"))
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, 200, rr.Code)
+				require.Equal(t, "application/json", rr.Header().Get("Content-Type"))
+			},
+		},
+		{
 			name: "base path with parameters",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				c.Servers[0].Url = "http://localhost/root"

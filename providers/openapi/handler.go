@@ -240,6 +240,7 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *H
 
 	servicePath, ok := r.Context().Value("servicePath").(string)
 	if ok && servicePath != "/" {
+		servicePath = strings.TrimRight(servicePath, "/")
 		requestPath = strings.Replace(requestPath, servicePath, "", 1)
 		if requestPath == "" {
 			requestPath = "/"
