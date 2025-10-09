@@ -34,7 +34,7 @@ func TestMarshal_Xml(t *testing.T) {
 			},
 			schema: schematest.New("integer"),
 			test: func(t *testing.T, s string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/xml' failed: root element name is undefined: reference name of schema and attribute xml.name is empty")
+				require.EqualError(t, err, "encoding data to 'application/xml' failed: root element name is undefined: reference name of schema, attribute xml.name and $id is empty")
 			},
 		},
 		{
