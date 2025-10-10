@@ -2,11 +2,12 @@ package swagger
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi"
 	"mokapi/version"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestConvert(t *testing.T) {
@@ -485,6 +486,22 @@ func TestConvert(t *testing.T) {
 				security := config.Paths["/pet"].Value.Get.Security
 				require.Len(t, security, 1)
 				require.Equal(t, openapi.SecurityRequirement{"foo": nil}, security[0])
+			},
+		},
+		{
+			name:   "tags",
+			config: `{"swagger": "2.0", "tags": [ { "name": "foo" } ] }`,
+			test: func(t *testing.T, config *openapi.Config) {
+				require.Len(t, config.Tags, 1)
+				require.Equal(t, "foo", config.Tags[0].Name)
+			},
+		},
+		{
+			name:   "tags in operation",
+			config: `{"swagger": "2.0", "paths": { "/pet": { "get": { "tags": [ "foo", "bar" ] } } } }`,
+			test: func(t *testing.T, config *openapi.Config) {
+				require.Len(t, config.Paths["/pet"].Value.Get.Tags, 2)
+				require.Equal(t, []string{"foo", "bar"}, config.Paths["/pet"].Value.Get.Tags)
 			},
 		},
 	}
