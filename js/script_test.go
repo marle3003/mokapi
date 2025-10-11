@@ -165,7 +165,7 @@ export default function() {
 		r.NoError(t, err)
 		v, err := s.RunDefault()
 		r.NoError(t, err)
-		r.Equal(t, "Zm9vYmFy", v.Export())
+		r.Equal(t, map[string]interface{}{"foo": "bar"}, v.Export())
 		s.Close()
 	})
 }
