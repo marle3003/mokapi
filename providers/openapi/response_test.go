@@ -3,18 +3,20 @@ package openapi_test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/media"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/schema/schematest"
+	"mokapi/sortedmap"
 	"net/http"
 	"net/url"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestResponse_UnmarshalJSON(t *testing.T) {
@@ -396,11 +398,43 @@ func TestResponse_Parse(t *testing.T) {
 }
 
 func TestConfig_Patch_Response(t *testing.T) {
+	getResponses := func(m map[string]*openapi.ResponseRef) sortedmap.LinkedHashMap[string, *openapi.ResponseRef] {
+		r := sortedmap.LinkedHashMap[string, *openapi.ResponseRef]{}
+		for k, v := range m {
+			r.Set(k, v)
+		}
+		return r
+	}
+
 	testcases := []struct {
 		name    string
 		configs []*openapi.Config
 		test    func(t *testing.T, result *openapi.Config)
 	}{
+		{
+			name: "patch is nil",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.NewPath(openapitest.WithOperation(
+						"post", openapitest.NewOperation(
+							openapitest.WithResponse(200, openapitest.WithResponseDescription("foo"))),
+					),
+					))),
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.NewPath(openapitest.WithOperation(
+						"post", &openapi.Operation{
+							Responses: &openapi.Responses{LinkedHashMap: getResponses(map[string]*openapi.ResponseRef{
+								"200": nil,
+							})},
+						}),
+					),
+				)),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				require.Equal(t, "foo", res.Description)
+			},
+		},
 		{
 			name: "add response",
 			configs: []*openapi.Config{

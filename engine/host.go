@@ -79,11 +79,12 @@ func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*common.Acti
 		}
 		sh.startEventHandler(action.AppendLog)
 		start := time.Now()
+		logs := len(action.Logs)
 
 		if b, err := eh.handler(args...); err != nil {
 			log.Errorf("unable to execute event handler: %v", err)
 			action.Error = &common.Error{Message: err.Error()}
-		} else if !b {
+		} else if !b && logs == len(action.Logs) {
 			sh.Unlock()
 			continue
 		} else {
@@ -334,6 +335,10 @@ func (sh *scriptHost) Lock() {
 
 func (sh *scriptHost) Unlock() {
 	sh.m.Unlock()
+}
+
+func (sh *scriptHost) Store() common.Store {
+	return sh.engine.store
 }
 
 func getScriptPath(u *url.URL) string {

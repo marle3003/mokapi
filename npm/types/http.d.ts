@@ -86,13 +86,25 @@ export function del(url: string, body?: JSONValue, args?: Args): Response;
  */
 export function options(url: string, body?: JSONValue, args?: Args): Response;
 
+export function fetch(url: string, args: FetchOptions): Promise<Response>
+
+export interface FetchOptions {
+    method: string
+    body: any
+}
+
 /**
  * Request arguments.
  * Used to add headers to a request.
  */
 export interface Args {
     /** Request headers. */
-    header?: { [name: string]: string };
+    headers?: { [name: string]: string };
+    /**
+     * The number of redirects to follow for this request.
+     * @default 5
+     **/
+    maxRedirects: number
 }
 
 /**
