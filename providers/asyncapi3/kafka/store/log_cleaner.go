@@ -2,6 +2,7 @@ package store
 
 import (
 	log "github.com/sirupsen/logrus"
+	"sort"
 	"time"
 )
 
@@ -46,23 +47,46 @@ func (s *Store) cleanLog(b *Broker) {
 
 				// check rolling
 				if segment.Closed.IsZero() && now.After(segment.Opened.Add(rollingTime)) {
-					p.addSegment()
+					// Close the current segment.
+					// Segment creation is lazy — it happens when a write comes in.
+					segment.Closed = now
 				}
 
 				// check retention
 				if segment.Size > 0 && !segment.Closed.IsZero() && now.After(segment.Closed.Add(retentionTime)) {
 					log.Infof(
-						"kafka: deleting segment with offset [%v:%v] from partition %v topic %q",
+						"kafka: deleting segment with offset [%v:%v] from partition %v topic '%s'",
 						segment.Head, segment.Tail, p.Index, topic.Name)
 					p.removeSegment(segment)
 				}
 			}
 
 			if retentionBytes > 0 && partitionSize >= retentionBytes {
-				log.Infof("kafka: maximum partition size reached. cleanup partition %v from topic %q",
-					p.Index, topic.Name)
-				p.removeClosedSegments()
+				deleteSegmentsUntilLogIsWithinLimit(p)
 			}
+		}
+	}
+}
+
+func deleteSegmentsUntilLogIsWithinLimit(p *Partition) {
+	// Build a slice of segments
+	var segments []*Segment
+	for _, s := range p.Segments {
+		if !s.Closed.IsZero() {
+			segments = append(segments, s)
+		}
+	}
+
+	// Sort by oldest first (e.g., Head offset)
+	sort.Slice(segments, func(i, j int) bool {
+		return segments[i].Head < segments[j].Head
+	})
+
+	for _, s := range segments {
+		if !s.Closed.IsZero() {
+			log.Infof("kafka: maximum partition size reached. deleting segment [%v:%v] from partition %v of topic '%s'",
+				s.Head, s.Tail, p.Index, p.Topic.Name)
+			p.removeSegment(s)
 		}
 	}
 }

@@ -143,6 +143,8 @@ func resolvePath(path string, v interface{}) (interface{}, error) {
 	cursor := v
 	var err error
 	for _, t := range tokens[1:] {
+		t = strings.ReplaceAll(t, "~1", "/")
+		t = strings.ReplaceAll(t, "~0", "~")
 		if r, ok := cursor.(PathResolver); ok {
 			cursor, err = r.Resolve(t)
 			if err != nil {

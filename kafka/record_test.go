@@ -41,6 +41,40 @@ func TestRecord_ReadFrom(t *testing.T) {
 			},
 		},
 		{
+			name: "one record v1",
+			data: []byte{
+				0, 0, 0, 58, // length
+				0, 0, 0, 0, 0, 0, 0, 12, // offset
+				0, 0, 0, 1, // batch length
+				0, 0, 0, 0, // crc
+				1,                              // magic
+				0,                              // attributes
+				0, 0, 1, 125, 158, 189, 76, 76, // timestamp
+
+				0, 0, 0, 3, // key length
+				'f', 'o', 'o', // key
+				0, 0, 0, 3, // value length
+				'b', 'a', 'r', // value
+			},
+			test: func(t *testing.T, d *Decoder) {
+				batch := RecordBatch{}
+				err := batch.ReadFrom(d, 0, kafkaTag{})
+				require.NoError(t, err)
+				require.Len(t, batch.Records, 1)
+				record := batch.Records[0]
+				require.Equal(t, int64(12), record.Offset)
+				var b [3]byte
+				record.Key.Read(b[:])
+				require.Equal(t, "foo", string(b[:]))
+				record.Value.Read(b[:])
+				require.Equal(t, "bar", string(b[:]))
+				y, m, day := record.Time.Date()
+				require.Equal(t, 2021, y)
+				require.Equal(t, time.December, m)
+				require.Equal(t, 9, day)
+			},
+		},
+		{
 			name: "one record v2",
 			data: []byte{
 				0, 0, 0, 81, // length

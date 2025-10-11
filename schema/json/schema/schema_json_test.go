@@ -189,7 +189,7 @@ func TestSchemaJson(t *testing.T) {
 			data: `{"uniqueItems": true}`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
-				require.Equal(t, true, s.UniqueItems)
+				require.Equal(t, true, *s.UniqueItems)
 			},
 		},
 		{

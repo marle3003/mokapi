@@ -32,7 +32,13 @@ export default async function() {
                 response.data = getServices()
                 return true
             case 'serviceHttp':
-                response.data = httpServices[0]
+                const name = request.path['name']
+                const service = httpServices.find(x => x.name === name)
+                if (service) {
+                    response.data = service
+                } else{
+                    response.statusCode = 404
+                }
                 return true
             case 'serviceKafka':
                 response.data = clusters[0]

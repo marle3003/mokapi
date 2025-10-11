@@ -2,7 +2,6 @@ package mokapi
 
 import (
 	"fmt"
-	"github.com/dop251/goja"
 	"mokapi/engine/common"
 	"mokapi/js/eventloop"
 	"mokapi/js/faker"
@@ -10,6 +9,8 @@ import (
 	"mokapi/providers/openapi/schema"
 	"os"
 	"time"
+
+	"github.com/dop251/goja"
 )
 
 type Module struct {
@@ -28,16 +29,17 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 		loop: loop,
 	}
 	obj := module.Get("exports").(*goja.Object)
-	obj.Set("sleep", f.Sleep)
-	obj.Set("every", f.Every)
-	obj.Set("cron", f.Cron)
-	obj.Set("on", f.On)
-	obj.Set("env", f.Env)
-	obj.Set("encoding", f.Marshal)
-	obj.Set("date", f.Date)
-	obj.Set("marshal", f.Marshal)
-	obj.Set("patch", patch)
-	obj.Set("Delete", Delete)
+	_ = obj.Set("sleep", f.Sleep)
+	_ = obj.Set("every", f.Every)
+	_ = obj.Set("cron", f.Cron)
+	_ = obj.Set("on", f.On)
+	_ = obj.Set("env", f.Env)
+	_ = obj.Set("encoding", f.Marshal)
+	_ = obj.Set("date", f.Date)
+	_ = obj.Set("marshal", f.Marshal)
+	_ = obj.Set("patch", patch)
+	_ = obj.Set("Delete", Delete)
+	_ = obj.Set("shared", NewSharedMemory(host.Store()))
 }
 
 func (m *Module) Sleep(i interface{}) {

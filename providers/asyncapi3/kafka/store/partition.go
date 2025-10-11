@@ -245,7 +245,7 @@ func (p *Partition) addSegment() *Segment {
 
 	now := time.Now()
 
-	if active, ok := p.Segments[p.ActiveSegment]; ok {
+	if active, ok := p.Segments[p.ActiveSegment]; ok && active.Closed.IsZero() {
 		active.Closed = now
 	}
 	p.ActiveSegment = p.Offset()
@@ -277,8 +277,12 @@ func (s *Segment) record(offset int64) *kafka.Record {
 func (s *Segment) delete() {
 	for _, r := range s.Log {
 		log.Debugf("delete record: %v", r.Data.Offset)
-		_ = r.Data.Key.Close()
-		_ = r.Data.Value.Close()
+		if r.Data.Key != nil {
+			_ = r.Data.Key.Close()
+		}
+		if r.Data.Value != nil {
+			_ = r.Data.Value.Close()
+		}
 		r.Log.Deleted = true
 	}
 }

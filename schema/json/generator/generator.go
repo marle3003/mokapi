@@ -3,6 +3,7 @@ package generator
 import (
 	"github.com/brianvoe/gofakeit/v6"
 	"math/rand"
+	"mokapi/config/static"
 	"time"
 )
 
@@ -11,6 +12,7 @@ var weightTypes = []float32{1, 1, 1, 1, 0.2, 0.2, 0.05}
 
 type generator struct {
 	rand *rand.Rand
+	cfg  static.DataGen
 
 	root *Node
 }
@@ -22,6 +24,10 @@ func init() {
 		rand: rand.New(rand.NewSource(time.Now().Unix())),
 		root: buildTree(),
 	}
+}
+
+func SetConfig(cfg static.DataGen) {
+	g.cfg = cfg
 }
 
 func New(r *Request) (interface{}, error) {

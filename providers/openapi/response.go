@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/media"
 	"mokapi/sortedmap"
 	"net/http"
 	"strconv"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Responses struct {
@@ -239,7 +240,7 @@ func (r *Responses) patch(patch *Responses) {
 
 	for it := patch.Iter(); it.Next(); {
 		res := it.Value()
-		if res.Value == nil {
+		if res == nil || res.Value == nil {
 			continue
 		}
 		statusCode := it.Key()

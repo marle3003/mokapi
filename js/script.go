@@ -2,8 +2,6 @@ package js
 
 import (
 	"fmt"
-	"github.com/dop251/goja"
-	"github.com/pkg/errors"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	engine "mokapi/engine/common"
@@ -24,6 +22,9 @@ import (
 	"reflect"
 	"strings"
 	"sync"
+
+	"github.com/dop251/goja"
+	"github.com/pkg/errors"
 )
 
 var (
@@ -152,7 +153,7 @@ func (s *Script) ensureRuntime() error {
 
 	registry.Enable(s.runtime)
 	console.Enable(s.runtime)
-	file.Enable(s.runtime, s.host)
+	file.Enable(s.runtime, s.host, s.file)
 	process.Enable(s.runtime)
 
 	prg, err := registry.GetProgram(s.file)

@@ -89,7 +89,7 @@ func (p *Parser) ParseArray(data interface{}, s *schema.Schema, evaluated map[in
 		}
 	}
 
-	if s.UniqueItems {
+	if s.UniqueItems != nil && *s.UniqueItems {
 		var unique []interface{}
 		for i, item := range result {
 			for _, u := range unique {

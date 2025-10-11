@@ -1,10 +1,11 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCurrency(t *testing.T) {
@@ -109,6 +110,34 @@ func TestCurrency(t *testing.T) {
 					"currency":     "MAD",
 					"currencyName": "Morocco Dirham",
 					"amount":       609591.63,
+				}, v)
+			},
+		},
+		{
+			name: "credit_card",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithProperty("credit_card", schematest.New("number")),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{
+					"credit_card": float64(2291093648930118),
+				}, v)
+			},
+		},
+		{
+			name: "creditCard",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithProperty("creditCard", schematest.New("number")),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{
+					"creditCard": float64(2291093648930118),
 				}, v)
 			},
 		},

@@ -2,6 +2,7 @@ package static_test
 
 import (
 	"encoding/json"
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 	"mokapi/config/decoders"
 	"mokapi/config/dynamic/provider/file/filetest"
@@ -604,6 +605,84 @@ providers:
 				require.NoError(t, err)
 				err = cfg.Parse()
 				require.Equal(t, "C:\\bar", cfg.Providers.File.Filenames[0])
+			},
+		},
+		{
+			name: "not defined data-gen optional properties",
+			test: func(t *testing.T) {
+				hook := test.NewGlobal()
+
+				os.Args = append(os.Args, "mokapi.exe")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.Equal(t, 0.85, cfg.DataGen.OptionalPropertiesProbability())
+				require.Len(t, hook.Entries, 0)
+			},
+		},
+		{
+			name: "data-gen optional properties",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "--data-gen-optionalProperties", "often")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.Equal(t, 0.85, cfg.DataGen.OptionalPropertiesProbability())
+			},
+		},
+		{
+			name: "data-gen optional properties always",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "--data-gen-optionalProperties", "always")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.Equal(t, 1.0, cfg.DataGen.OptionalPropertiesProbability())
+			},
+		},
+		{
+			name: "data-gen optional properties sometimes",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "--data-gen-optionalProperties", "sometimes")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.Equal(t, 0.5, cfg.DataGen.OptionalPropertiesProbability())
+			},
+		},
+		{
+			name: "data-gen optional properties 0.3",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe", "--data-gen-optionalProperties", "0.3")
+
+				cfg := static.Config{}
+				err := decoders.Load([]decoders.ConfigDecoder{decoders.NewFlagDecoder()}, &cfg)
+				require.NoError(t, err)
+				err = cfg.Parse()
+				require.Equal(t, 0.3, cfg.DataGen.OptionalPropertiesProbability())
+			},
+		},
+		{
+			name: "data-gen env var",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				err := os.Setenv("MOKAPI_DATA_GEN_OPTIONALPROPERTIES", "sometimes")
+				require.NoError(t, err)
+				defer os.Unsetenv("MOKAPI_DATA_GEN_OPTIONALPROPERTIES")
+
+				cfg := static.Config{}
+				err = decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, 0.5, cfg.DataGen.OptionalPropertiesProbability())
 			},
 		},
 	}

@@ -44,12 +44,12 @@ func fakePet(r *Request) (any, error) {
 }
 
 func fakePetName(r *Request) (any, error) {
-	if v, ok := r.Context.Values["name"]; ok {
+	if v, ok := r.Context.Values["pet"]; ok {
 		return v, nil
 	}
 
 	v := gofakeit.PetName()
-	r.Context.Values["name"] = v
+	r.Context.Values["pet"] = v
 	return v, nil
 }
 

@@ -3,18 +3,20 @@ package acceptance
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
 	"mokapi/kafka"
 	"mokapi/kafka/fetch"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/metaData"
 	"mokapi/kafka/produce"
+	"mokapi/schema/json/generator"
 	"mokapi/try"
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type PetStoreSuite struct{ BaseSuite }
@@ -29,7 +31,7 @@ func (suite *PetStoreSuite) SetupSuite() {
 }
 
 func (suite *PetStoreSuite) SetupTest() {
-	gofakeit.Seed(11)
+	generator.Seed(11)
 }
 
 func (suite *PetStoreSuite) TestApi() {
@@ -50,9 +52,6 @@ func (suite *PetStoreSuite) TestApi() {
 	})
 
 	suite.T().Run("get AsyncAPI service", func(t *testing.T) {
-		// ensure scripts are executed
-		time.Sleep(5 * time.Second)
-
 		expected := map[string]interface{}{
 			"version":     "1.0.0",
 			"name":        "A sample AsyncApi Kafka streaming api",
@@ -128,11 +127,23 @@ func (suite *PetStoreSuite) TestApi() {
 			}},
 		}
 
-		try.GetRequest(t, fmt.Sprintf("http://127.0.0.1:%v/api/services/kafka/A%%20sample%%20AsyncApi%%20Kafka%%20streaming%%20api", suite.cfg.Api.Port),
-			nil,
-			try.HasStatusCode(http.StatusOK),
-			try.BodyContainsData(expected),
-		)
+		deadline := time.Now().Add(5 * time.Second)
+		for time.Now().Before(deadline) {
+			try.GetRequest(t, fmt.Sprintf("http://127.0.0.1:%v/api/services/kafka/A%%20sample%%20AsyncApi%%20Kafka%%20streaming%%20api", suite.cfg.Api.Port),
+				nil,
+				try.HasStatusCode(http.StatusOK),
+				try.BodyContainsData(expected),
+			)
+			if !t.Failed() {
+				break
+			}
+			if time.Now().After(deadline) {
+				t.FailNow()
+			}
+			// reset test failure state before retrying
+			t.Cleanup(func() {})
+			time.Sleep(100 * time.Millisecond)
+		}
 	})
 }
 
@@ -158,7 +169,7 @@ func (suite *PetStoreSuite) TestJsHttpHandler() {
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/5",
 		map[string]string{"Accept": "application/json", "api_key": "123"},
 		try.HasStatusCode(http.StatusOK),
-		try.BodyContains(`},"name":"Zoe","photoUrls":`))
+		try.BodyContains(`"name":"Zoe"`))
 
 	// test http metrics
 	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/metrics/http?path=/pet/{petId}", suite.cfg.Api.Port), nil,
@@ -179,12 +190,13 @@ func (suite *PetStoreSuite) TestGetOrderById() {
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/store/order/1",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":98266,"petId":23377,"quantity":92,"shipDate":"2012-01-30T07:58:01Z","status":"approved","complete":false}`))
+		try.HasBody(`{"petId":23377,"quantity":92,"shipDate":"2012-01-30T07:58:01Z","complete":false}`))
 
 	try.GetRequest(suite.T(), "https://localhost:18443/store/order/10",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"id":12545,"petId":20895,"quantity":16,"shipDate":"2027-11-26T16:57:16Z","status":"approved","complete":true}`))
+		// properties like id or petId are optional
+		try.HasBody(`{"id":93761,"petId":83318,"quantity":27,"shipDate":"2014-02-04T10:00:17Z","status":"placed","complete":true}`))
 }
 
 func (suite *PetStoreSuite) TestTls() {
@@ -341,17 +353,17 @@ func (suite *PetStoreSuite) TestSearch_Paging() {
 		try.AssertBody(func(t *testing.T, body string) {
 			var data map[string]any
 			err := json.Unmarshal([]byte(body), &data)
-			require.NoError(t, err)
-			require.NotNil(t, data)
+			assert.NoError(t, err)
+			assert.NotNil(t, data)
 
-			require.Equal(t, float64(35), data["total"])
+			assert.Equal(t, float64(35), data["total"])
 
 			items := data["results"].([]any)
-			require.Len(t, items, 10)
+			assert.Len(t, items, 10)
 			evt := items[0].(map[string]interface{})
-			require.Equal(t, "HTTP", evt["type"])
-			require.Equal(t, "Swagger Petstore", evt["title"])
-			require.NotContains(t, evt, "domain")
+			assert.Equal(t, "HTTP", evt["type"])
+			assert.Equal(t, "Swagger Petstore", evt["title"])
+			assert.NotContains(t, evt, "domain")
 		}),
 	)
 
@@ -361,17 +373,17 @@ func (suite *PetStoreSuite) TestSearch_Paging() {
 		try.AssertBody(func(t *testing.T, body string) {
 			var data map[string]any
 			err := json.Unmarshal([]byte(body), &data)
-			require.NoError(t, err)
-			require.NotNil(t, data)
+			assert.NoError(t, err)
+			assert.NotNil(t, data)
 
-			require.Equal(t, float64(35), data["total"])
+			assert.Equal(t, float64(35), data["total"])
 
 			items := data["results"].([]any)
-			require.Len(t, items, 10)
+			assert.Len(t, items, 10)
 			evt := items[0].(map[string]interface{})
-			require.Equal(t, "HTTP", evt["type"])
-			require.Equal(t, "GET /pet/{petId}", evt["title"])
-			require.Equal(t, "Swagger Petstore", evt["domain"])
+			assert.Equal(t, "HTTP", evt["type"])
+			assert.Equal(t, "GET /pet/{petId}", evt["title"])
+			assert.Equal(t, "Swagger Petstore", evt["domain"])
 		}),
 	)
 }

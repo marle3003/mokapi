@@ -85,18 +85,19 @@ func (p *Parser) parse(data interface{}, s *schema.Schema) (interface{}, error) 
 		return nil, err
 	}
 
-	switch {
-	case len(s.AnyOf) > 0:
+	if len(s.AnyOf) > 0 {
 		v, err = p.ParseAny(s, v, evaluatedProperties)
 		if err != nil {
 			return nil, err
 		}
-	case len(s.AllOf) > 0:
+	}
+	if len(s.AllOf) > 0 {
 		v, err = p.ParseAll(s, v, evaluatedProperties)
 		if err != nil {
 			return nil, err
 		}
-	case len(s.OneOf) > 0:
+	}
+	if len(s.OneOf) > 0 {
 		v, err = p.ParseOne(s, v, evaluatedProperties)
 		if err != nil {
 			return nil, err

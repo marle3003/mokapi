@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/pkg/errors"
 	"mokapi/config/dynamic"
-	"mokapi/providers/openapi/parameter"
 	"net/http"
 	"strconv"
 )
@@ -37,7 +36,7 @@ type Operation struct {
 	// will override it but can never remove it. The list MUST NOT include
 	// duplicated parameters. A unique parameter is defined by a combination
 	// of a name and location
-	Parameters parameter.Parameters
+	Parameters Parameters
 
 	RequestBody *RequestBodyRef `yaml:"requestBody" json:"requestBody"`
 

@@ -66,6 +66,34 @@ func TestResolve(t *testing.T) {
 			},
 		},
 		{
+			name: "resolve local containing a slash",
+			test: func(t *testing.T) {
+				s := struct {
+					Foo map[string]string
+				}{Foo: map[string]string{"/bar": "bar"}}
+				result := ""
+
+				err := dynamic.Resolve("#/foo/~1bar", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+
+				require.NoError(t, err)
+				require.Equal(t, "bar", result)
+			},
+		},
+		{
+			name: "resolve local containing a ~",
+			test: func(t *testing.T) {
+				s := struct {
+					Foo map[string]string
+				}{Foo: map[string]string{"~bar": "bar"}}
+				result := ""
+
+				err := dynamic.Resolve("#/foo/~0bar", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+
+				require.NoError(t, err)
+				require.Equal(t, "bar", result)
+			},
+		},
+		{
 			name: "resolve local map entry not found",
 			test: func(t *testing.T) {
 				s := map[string]string{}

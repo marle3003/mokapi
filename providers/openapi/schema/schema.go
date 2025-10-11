@@ -45,7 +45,7 @@ type Schema struct {
 	MinContains      *int      `yaml:"minContains,omitempty" json:"minContains,omitempty"`
 	MinItems         *int      `yaml:"minItems,omitempty" json:"minItems,omitempty"`
 	MaxItems         *int      `yaml:"maxItems,omitempty" json:"maxItems,omitempty"`
-	UniqueItems      bool      `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
+	UniqueItems      *bool     `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
 	ShuffleItems     bool      `yaml:"x-shuffleItems,omitempty" json:"x-shuffleItems,omitempty"`
 
 	// Object
@@ -273,7 +273,7 @@ func (s *Schema) String() string {
 	if s.MaxProperties != nil {
 		sb.WriteString(fmt.Sprintf(" maxProperties=%v", *s.MaxProperties))
 	}
-	if s.UniqueItems {
+	if s.UniqueItems != nil && *s.UniqueItems {
 		sb.WriteString(" unique-items")
 	}
 

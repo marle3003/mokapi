@@ -364,3 +364,24 @@ event:
   store:
     "<api-name>": 250
 ```
+
+## Data Generator
+
+Controls the probability of skipping optional properties in the data generator.
+Possible values:
+- always = 1.0
+- often = 0.85
+- sometimes = 0.5
+- rarely = 0.15
+- any floating-point number between 0.0 and 1.0
+
+```bash tab=CLI
+--data-gen-optionalProperties sometimes
+```
+```bash tab=Env
+MOKAPI_DATA_GEN_OPTIONALPROPERTIES=sometimes
+```
+```yaml tab=File (YAML)
+data-gen:
+  optionalProperties: sometimes
+```

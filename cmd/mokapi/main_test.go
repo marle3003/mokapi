@@ -71,6 +71,8 @@ event:
             size: 100
 certificates:
     static: []
+data-gen:
+    optionalProperties: "0.85"
 `, out)
 			},
 		},

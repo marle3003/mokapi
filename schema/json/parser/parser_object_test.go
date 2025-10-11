@@ -1,12 +1,13 @@
 package parser_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"mokapi/sortedmap"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParser_ParseObject(t *testing.T) {
@@ -94,7 +95,7 @@ func TestParser_ParseObject(t *testing.T) {
 			},
 		},
 		{
-			name: "additional properties false error",
+			name: "pattern properties with additional properties false should return error when not matching",
 			data: map[string]interface{}{"foo": "bar"},
 			schema: schematest.New("object",
 				schematest.WithPatternProperty("^S_", schematest.New("string")),
@@ -102,6 +103,18 @@ func TestParser_ParseObject(t *testing.T) {
 			),
 			test: func(t *testing.T, v interface{}, err error) {
 				require.EqualError(t, err, "error count 1:\n\t- #/additionalProperties: property 'foo' not defined and the schema does not allow additional properties")
+			},
+		},
+		{
+			name: "pattern properties with additional properties valid",
+			data: map[string]interface{}{"S_123": "bar"},
+			schema: schematest.New("object",
+				schematest.WithPatternProperty("^S_", schematest.New("string")),
+				schematest.WithFreeForm(false),
+			),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"S_123": "bar"}, v)
 			},
 		},
 		{

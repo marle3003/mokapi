@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"mokapi/config/tls"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -25,6 +27,7 @@ type Config struct {
 	Version          bool              `json:"-" yaml:"-" aliases:"v"`
 	Event            Event             `json:"event" yaml:"event"`
 	Certificates     CertificateStore  `json:"certificates" yaml:"certificates"`
+	DataGen          DataGen           `json:"data-gen" yaml:"data-gen" name:"data-gen"`
 	Args             []string          `json:"args" yaml:"-" aliases:"args"` // positional arguments
 }
 
@@ -38,6 +41,7 @@ func NewConfig() *Config {
 
 	cfg.Providers.File.SkipPrefix = []string{"_"}
 	cfg.Event.Store = map[string]Store{"default": {Size: 100}}
+	cfg.DataGen.OptionalProperties = "0.85"
 	return cfg
 }
 
@@ -177,6 +181,10 @@ type Certificate struct {
 	Key  tls.FileOrContent `yaml:"key" json:"key"`
 }
 
+type DataGen struct {
+	OptionalProperties string `yaml:"optionalProperties" json:"optionalProperties"`
+}
+
 func (c *Configs) UnmarshalJSON(b []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(b))
 	token, err := dec.Token()
@@ -229,4 +237,31 @@ func (c *Config) Parse() error {
 		}
 	}
 	return nil
+}
+
+func (d *DataGen) OptionalPropertiesProbability() float64 {
+	defaultValue := 0.85
+
+	if d.OptionalProperties == "" {
+		return defaultValue
+	}
+
+	switch strings.ToLower(d.OptionalProperties) {
+	case "always":
+		return 1.0
+	case "never":
+		return 0.0
+	case "often":
+		return 0.85
+	case "sometimes":
+		return 0.5
+	case "rarely":
+		return 0.15
+	}
+	f, err := strconv.ParseFloat(d.OptionalProperties, 64)
+	if err != nil {
+		log.Warnf("Invalid data generator optional properties value '%v': using %v", d.OptionalProperties, defaultValue)
+		return defaultValue
+	}
+	return f
 }

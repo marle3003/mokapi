@@ -3,8 +3,6 @@ package js_test
 import (
 	"errors"
 	"fmt"
-	"github.com/dop251/goja"
-	r "github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/jstest"
@@ -12,6 +10,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/dop251/goja"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestScript(t *testing.T) {
@@ -119,8 +120,8 @@ func TestScript(t *testing.T) {
 	})
 	t.Run("access process environment variable", func(t *testing.T) {
 		t.Parallel()
-		os.Setenv("MOKAPI_IS_AWESOME", "true")
-		defer os.Unsetenv("MOKAPI_IS_AWESOME")
+		_ = os.Setenv("MOKAPI_IS_AWESOME", "true")
+		defer func() { _ = os.Unsetenv("MOKAPI_IS_AWESOME") }()
 
 		s, err := jstest.New(jstest.WithSource(`export default function() { return process.env['MOKAPI_IS_AWESOME'] }`), js.WithHost(&enginetest.Host{}))
 		r.NoError(t, err)
@@ -151,6 +152,20 @@ export default function() {
 		v, err := s.RunDefault()
 		r.NoError(t, err)
 		r.Equal(t, "Zm9vYmFy", v.String())
+		s.Close()
+	})
+	t.Run("JSON", func(t *testing.T) {
+		t.Parallel()
+		src := `
+export default function() {
+	return JSON.parse(JSON.stringify({foo: 'bar'}));
+}
+`
+		s, err := jstest.New(jstest.WithPathSource("test.ts", src), js.WithHost(&enginetest.Host{}))
+		r.NoError(t, err)
+		v, err := s.RunDefault()
+		r.NoError(t, err)
+		r.Equal(t, map[string]interface{}{"foo": "bar"}, v.Export())
 		s.Close()
 	})
 }

@@ -83,9 +83,9 @@ func WithMaxContains(n int) SchemaOptions {
 	}
 }
 
-func WithUniqueItems() SchemaOptions {
+func WithUniqueItems(b bool) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.UniqueItems = true
+		s.UniqueItems = &b
 	}
 }
 
@@ -162,19 +162,19 @@ func WithPropertyNames(propSchema *schema.Schema) SchemaOptions {
 
 func Any(schemas ...*schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
-		for _, any := range schemas {
-			s.AnyOf = append(s.AnyOf, any)
+		for _, a := range schemas {
+			s.AnyOf = append(s.AnyOf, a)
 		}
 	}
 }
 
 func NewAny(schemas ...*schema.Schema) *schema.Schema {
 	s := &schema.Schema{}
-	for _, any := range schemas {
-		if any == nil {
+	for _, a := range schemas {
+		if a == nil {
 			s.AnyOf = append(s.AnyOf, nil)
 		} else {
-			s.AnyOf = append(s.AnyOf, any)
+			s.AnyOf = append(s.AnyOf, a)
 		}
 	}
 	return s

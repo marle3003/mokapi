@@ -1,11 +1,12 @@
 package parser_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParser_ParseAll(t *testing.T) {
@@ -290,6 +291,31 @@ func TestParser_ParseAll(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"city": "Washington", "something that doesn't belong": "hi!", "state": "DC", "street_address": "1600 Pennsylvania Avenue NW", "type": "business"}, v)
+			},
+		},
+		{
+			name: "json-schema.org extending closed schema",
+			schema: schematest.NewTypes(nil,
+				schematest.WithAllOf(
+					schematest.New("object",
+						schematest.WithProperty("street_address", schematest.New("string")),
+						schematest.WithProperty("city", schematest.New("string")),
+						schematest.WithProperty("state", schematest.New("string")),
+						schematest.WithRequired("street_address", "city", "state"),
+						schematest.WithFreeForm(false),
+					),
+				),
+				schematest.WithProperty("type", schematest.New("string", schematest.WithEnumValues("residential", "business"))),
+				schematest.WithRequired("type"),
+			),
+			data: map[string]interface{}{
+				"street_address": "1600 Pennsylvania Avenue NW",
+				"city":           "Washington",
+				"state":          "DC",
+				"type":           "residential",
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/additionalProperties: property 'type' not defined and the schema does not allow additional properties")
 			},
 		},
 	}

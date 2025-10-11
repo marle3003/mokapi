@@ -1,10 +1,11 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAllOf(t *testing.T) {
@@ -22,7 +23,7 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(-3600881594791838082), v)
+				require.Equal(t, int64(122317), v)
 			},
 		},
 		{
@@ -36,6 +37,19 @@ func TestAllOf(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(6), v)
+			},
+		},
+		{
+			name: "string and maxLength",
+			req: &Request{
+				Schema: schematest.NewAllOf(
+					schematest.New("string"),
+					schematest.NewTypes(nil, schematest.WithMaxLength(5)),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "Fq", v)
 			},
 		},
 		{
@@ -61,7 +75,7 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(-3600881594791838082), v)
+				require.Equal(t, int64(122317), v)
 			},
 		},
 		{
@@ -74,7 +88,7 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "lx0+fjywXKo", v)
+				require.Equal(t, true, v)
 			},
 		},
 		{
@@ -155,7 +169,7 @@ func TestAllOf(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "generate random data for schema failed: all of schema type=[integer, string], schema type=[number, boolean]: no shared types found")
+				require.EqualError(t, err, "generate random data for schema failed: no shared types found: [integer, string] and [number, boolean]")
 			},
 		},
 		{
@@ -176,6 +190,27 @@ func TestAllOf(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"bar": "foo", "foo": "yuh"}, v)
+			},
+		},
+		{
+			name: "example from json-schema.org extending closed schemas",
+			req: &Request{
+				Schema: schematest.NewTypes(nil,
+					schematest.WithAllOf(
+						schematest.New("object",
+							schematest.WithProperty("street_address", schematest.New("string")),
+							schematest.WithProperty("city", schematest.New("string")),
+							schematest.WithProperty("state", schematest.New("string")),
+							schematest.WithRequired("street_address", "city", "state"),
+							schematest.WithFreeForm(false),
+						),
+					),
+					schematest.WithProperty("type", schematest.NewTypes(nil, schematest.WithEnumValues("residential", "business"))),
+					schematest.WithRequired("type"),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "failed to generate valid object: reached attempt limit (10) caused by: error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/additionalProperties: property 'type' not defined and the schema does not allow additional properties")
 			},
 		},
 	}

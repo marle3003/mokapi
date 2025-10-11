@@ -13,13 +13,14 @@ type EventResponse struct {
 }
 
 type EventRequest struct {
-	Method string                 `json:"method"`
-	Url    Url                    `json:"url"`
-	Body   interface{}            `json:"body"`
-	Path   map[string]interface{} `json:"path"`
-	Query  map[string]interface{} `json:"query"`
-	Header map[string]interface{} `json:"header"`
-	Cookie map[string]interface{} `json:"cookie"`
+	Method      string                 `json:"method"`
+	Url         Url                    `json:"url"`
+	Body        interface{}            `json:"body"`
+	Path        map[string]interface{} `json:"path"`
+	Query       map[string]interface{} `json:"query"`
+	Header      map[string]interface{} `json:"header"`
+	Cookie      map[string]interface{} `json:"cookie"`
+	QueryString any                    `json:"querystring"`
 
 	Key         string `json:"key"`
 	OperationId string `json:"operationId"`

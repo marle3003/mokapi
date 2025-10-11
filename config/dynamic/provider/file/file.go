@@ -202,12 +202,10 @@ func (p *Provider) readFile(path string) (*dynamic.Config, error) {
 		data = data[3:]
 	}
 
-	abs, err := filepath.Abs(path)
+	u, err := ParseUrl(path)
 	if err != nil {
 		return nil, err
 	}
-	u, _ := url.Parse(fmt.Sprintf("file:%v", abs))
-
 	h := sha256.New()
 	if _, err := io.Copy(h, bytes.NewReader(data)); err != nil {
 		return nil, err

@@ -9,7 +9,6 @@ import (
 	"maps"
 	"mokapi/lib"
 	"mokapi/providers/openapi"
-	"mokapi/providers/openapi/parameter"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/server/cert"
@@ -309,7 +308,7 @@ func serveError(w http.ResponseWriter, r *http.Request, err error, eh events.Han
 		raw := strings.Join(v, ",")
 		p := openapi.HttpParameter{
 			Name: k,
-			Type: string(parameter.Header),
+			Type: string(openapi.ParameterHeader),
 			Raw:  &raw,
 		}
 		l.Request.Parameters = append(l.Request.Parameters, p)

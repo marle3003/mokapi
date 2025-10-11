@@ -392,20 +392,20 @@ func TestSchema_Patch(t *testing.T) {
 			name: "patch exclusive uniqueItems",
 			schemas: []*schema.Schema{
 				{},
-				schematest.New("", schematest.WithUniqueItems()),
+				schematest.New("", schematest.WithUniqueItems(true)),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.True(t, result.UniqueItems)
+				require.True(t, *result.UniqueItems)
 			},
 		},
 		{
 			name: "patch overwrite uniqueItems",
 			schemas: []*schema.Schema{
-				schematest.New("", schematest.WithUniqueItems()),
-				schematest.New(""),
+				schematest.New("", schematest.WithUniqueItems(true)),
+				schematest.New("", schematest.WithUniqueItems(false)),
 			},
 			test: func(t *testing.T, result *schema.Schema) {
-				require.False(t, result.UniqueItems)
+				require.False(t, *result.UniqueItems)
 			},
 		},
 		{

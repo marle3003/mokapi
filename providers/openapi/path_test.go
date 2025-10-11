@@ -3,17 +3,17 @@ package openapi_test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
-	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema/schematest"
 	"net/http"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestPath_UnmarshalJSON(t *testing.T) {
@@ -254,6 +254,15 @@ func TestPath_UnmarshalYAML(t *testing.T) {
 			},
 		},
 		{
+			name: "path custom method",
+			test: func(t *testing.T) {
+				p := &openapi.Path{}
+				err := yaml.Unmarshal([]byte(`additionalOperations: { LINK: {} }`), &p)
+				require.NoError(t, err)
+				require.NotNil(t, p.AdditionalOperations["LINK"])
+			},
+		},
+		{
 			name: "path parameters",
 			test: func(t *testing.T) {
 				p := &openapi.Path{}
@@ -359,6 +368,40 @@ func TestPath_Operations(t *testing.T) {
 				require.Len(t, ops, 2)
 				require.Contains(t, ops, http.MethodPut)
 				require.Contains(t, ops, http.MethodTrace)
+			},
+		},
+		{
+			name: "query",
+			test: func(t *testing.T) {
+				p := &openapi.Path{Query: &openapi.Operation{}}
+				ops := p.Operations()
+				require.Len(t, ops, 1)
+				require.Contains(t, ops, "QUERY")
+			},
+		},
+		{
+			name: "custom LINK",
+			test: func(t *testing.T) {
+				p := &openapi.Path{AdditionalOperations: map[string]*openapi.Operation{"LINK": {}}}
+				ops := p.Operations()
+				require.Len(t, ops, 1)
+				require.Contains(t, ops, "LINK")
+			},
+		},
+		{
+			name: "get operation custom LINK",
+			test: func(t *testing.T) {
+				p := &openapi.Path{AdditionalOperations: map[string]*openapi.Operation{"LINK": {}}}
+				op := p.Operation("link")
+				require.NotNil(t, op)
+			},
+		},
+		{
+			name: "get operation but not defined",
+			test: func(t *testing.T) {
+				p := &openapi.Path{AdditionalOperations: map[string]*openapi.Operation{"LINK": {}}}
+				op := p.Operation("not")
+				require.Nil(t, op)
 			},
 		},
 	}
@@ -469,7 +512,7 @@ func TestPath_Parse(t *testing.T) {
 				})
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithPathParamRef(&parameter.Ref{Reference: dynamic.Reference{Ref: "foo.yml"}}),
+						openapitest.WithPathParamRef(&openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml"}}),
 					)),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
@@ -525,6 +568,24 @@ func TestConfig_Patch_Path(t *testing.T) {
 				require.Len(t, result.Paths, 1)
 				require.Contains(t, result.Paths, "/foo")
 				require.Nil(t, result.Paths["/foo"].Value)
+			},
+		},
+		{
+			name: "left path ref is nil",
+			configs: []*openapi.Config{
+				{Paths: map[string]*openapi.PathRef{"/foo": nil}},
+				openapitest.NewConfig("1.0", openapitest.WithPath(
+					"/foo", openapitest.NewPath(
+						openapitest.WithOperation(
+							"post", openapitest.NewOperation(),
+						),
+					),
+				)),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				require.Len(t, result.Paths, 1)
+				require.Contains(t, result.Paths, "/foo")
+				require.NotNil(t, result.Paths["/foo"].Value.Post)
 			},
 		},
 		{

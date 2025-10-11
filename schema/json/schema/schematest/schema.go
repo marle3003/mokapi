@@ -100,7 +100,8 @@ func WithRequired(names ...string) SchemaOptions {
 
 func WithUniqueItems() SchemaOptions {
 	return func(s *schema.Schema) {
-		s.UniqueItems = true
+		b := true
+		s.UniqueItems = &b
 	}
 }
 
@@ -118,6 +119,14 @@ func NewAny(schemas ...*schema.Schema) *schema.Schema {
 		s.AnyOf = append(s.AnyOf, a)
 	}
 	return s
+}
+
+func WithOneOf(schemas ...*schema.Schema) SchemaOptions {
+	return func(s *schema.Schema) {
+		for _, one := range schemas {
+			s.OneOf = append(s.OneOf, one)
+		}
+	}
 }
 
 func NewOneOf(schemas ...*schema.Schema) *schema.Schema {

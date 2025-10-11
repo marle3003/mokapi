@@ -31,14 +31,14 @@ func (rb *RecordBatch) readFromV1(d *Decoder) error {
 		keyLength := d.ReadInt32()
 		if keyLength > 0 {
 			d.writeTo(pb, int(keyLength))
-			r.Key = pb.Slice(keyOffset, int(keyLength))
+			r.Key = pb.Slice(keyOffset, keyOffset+int(keyLength))
 		}
 
 		valueOffset := pb.Size()
 		valueLength := d.ReadInt32()
 		if valueLength > 0 {
 			d.writeTo(pb, int(valueLength))
-			r.Value = pb.Slice(valueOffset, int(valueLength))
+			r.Value = pb.Slice(valueOffset, valueOffset+int(valueLength))
 		}
 
 		rb.Records = append(rb.Records, &r)

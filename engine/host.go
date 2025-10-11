@@ -3,7 +3,6 @@ package engine
 import (
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/engine/common"
@@ -14,6 +13,8 @@ import (
 	"path/filepath"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type eventHandler struct {
@@ -65,6 +66,7 @@ func (sh *scriptHost) Run() (err error) {
 			return
 		}
 	}
+	log.Infof("executing script %v", sh.file.Info.Url)
 	return sh.script.Run()
 }
 
@@ -77,11 +79,12 @@ func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*common.Acti
 		}
 		sh.startEventHandler(action.AppendLog)
 		start := time.Now()
+		logs := len(action.Logs)
 
 		if b, err := eh.handler(args...); err != nil {
 			log.Errorf("unable to execute event handler: %v", err)
 			action.Error = &common.Error{Message: err.Error()}
-		} else if !b {
+		} else if !b && logs == len(action.Logs) {
 			sh.Unlock()
 			continue
 		} else {
@@ -332,6 +335,10 @@ func (sh *scriptHost) Lock() {
 
 func (sh *scriptHost) Unlock() {
 	sh.m.Unlock()
+}
+
+func (sh *scriptHost) Store() common.Store {
+	return sh.engine.store
 }
 
 func getScriptPath(u *url.URL) string {
