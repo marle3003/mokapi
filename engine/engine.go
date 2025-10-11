@@ -57,6 +57,7 @@ func NewEngine(opts ...Options) *Engine {
 		scripts:   make(map[string]*scriptHost),
 		scheduler: NewDefaultScheduler(),
 		logger:    newLogger(log.StandardLogger()),
+		store:     &Store{data: make(map[string]any)},
 	}
 	for _, opt := range opts {
 		opt(e)

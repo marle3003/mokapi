@@ -145,17 +145,19 @@ func TestModule_Shared(t *testing.T) {
 				_, err := vm1.RunString(`
 					const m = require('mokapi');
 					m.shared.set('foo', 123);
+					m.shared.set('1', '-');
 				`)
 				r.NoError(t, err)
 
 				v, err := vm2.RunString(`
 					const m = require('mokapi');
 					m.shared.set('bar', undefined);
+					m.shared.set('100', '-');
 					m.shared.keys();
 				`)
 				r.NoError(t, err)
 
-				r.Equal(t, []string{"foo", "bar"}, v.Export())
+				r.Equal(t, []string{"1", "100", "bar", "foo"}, v.Export())
 			},
 		},
 		{

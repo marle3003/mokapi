@@ -2,6 +2,7 @@ package mokapi
 
 import (
 	"mokapi/engine/common"
+	"sort"
 	"sync"
 )
 
@@ -70,10 +71,11 @@ func (m *SharedMemory) Update(key string, fn func(v any) any) any {
 func (m *SharedMemory) Keys() []string {
 	m.m.RLock()
 	defer m.m.RUnlock()
-	var keys []string
+	keys := make([]string, 0, len(m.data))
 	for k := range m.data {
 		keys = append(keys, k)
 	}
+	sort.Strings(keys)
 	return keys
 }
 

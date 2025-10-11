@@ -141,6 +141,9 @@ func (h *Host) KafkaClient() common.KafkaClient {
 }
 
 func (h *Host) Store() common.Store {
+	if h.StoreTest == nil {
+		h.StoreTest = &Store{data: make(map[string]any)}
+	}
 	return h.StoreTest
 }
 
