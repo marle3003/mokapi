@@ -1,9 +1,10 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
 	"mokapi/schema/json/schema"
 	"time"
+
+	"github.com/brianvoe/gofakeit/v6"
 )
 
 var (
@@ -73,6 +74,8 @@ func fakeFormat(s *schema.Schema) (interface{}, error) {
 		return date().Format("2006-01-02"), nil
 	case "date-time":
 		return date().Format(time.RFC3339), nil
+	case "time":
+		return date().Format("15:04:05Z07:00"), nil
 	case "password":
 		return gofakeit.Generate("{password}"), nil
 	case "email":
