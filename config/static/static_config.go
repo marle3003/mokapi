@@ -12,14 +12,12 @@ import (
 )
 
 type Config struct {
-	Log              *MokApiLog        `json:"log" yaml:"log"`
-	ConfigFile       string            `json:"-" yaml:"-"`
+	Log              MokApiLog         `json:"log" yaml:"log"`
+	ConfigFile       string            `json:"-" yaml:"-" flag:"-"`
 	Providers        Providers         `json:"providers" yaml:"providers"`
 	Api              Api               `json:"api" yaml:"api"`
-	RootCaCert       tls.FileOrContent `json:"rootCaCert" yaml:"rootCaCert"`
-	RootCaKey        tls.FileOrContent `json:"rootCaKey" yaml:"rootCaKey"`
-	Services         Services          `json:"-" yaml:"-"`
-	Js               JsConfig          `json:"js" yaml:"js"`
+	RootCaCert       tls.FileOrContent `json:"rootCaCert" yaml:"rootCaCert" name:"root-ca-cert"`
+	RootCaKey        tls.FileOrContent `json:"rootCaKey" yaml:"rootCaKey" name:"root-ca-cert"`
 	Configs          Configs           `json:"configs" yaml:"configs" explode:"config"`
 	Help             bool              `json:"-" yaml:"-" aliases:"h"`
 	GenerateSkeleton interface{}       `json:"-" yaml:"-" flag:"generate-cli-skeleton"`
@@ -33,7 +31,7 @@ type Config struct {
 
 func NewConfig() *Config {
 	cfg := &Config{}
-	cfg.Log = &MokApiLog{Level: "info", Format: "text"}
+	cfg.Log = MokApiLog{Level: "info", Format: "text"}
 
 	cfg.Api.Port = "8080"
 	cfg.Api.Dashboard = true
@@ -67,25 +65,19 @@ type Api struct {
 
 type Search struct {
 	Enabled bool
-	Types   []string
-}
-
-type NgramAnalyzer struct {
-	Min int
-	Max int
 }
 
 type FileProvider struct {
 	Filenames   []string `explode:"filename"`
 	Directories []string `explode:"directory"`
-	SkipPrefix  []string `flag:"skip-prefix"`
+	SkipPrefix  []string `yaml:"skipPrefix" json:"skipPrefix" flag:"skip-prefix"`
 	Include     []string
 }
 
 type GitProvider struct {
 	Urls         []string `explode:"url"`
-	PullInterval string   `yaml:"pullInterval" name:"pull-interval"`
-	TempDir      string   `yaml:"tempDir" name:"temp-dir"`
+	PullInterval string   `yaml:"pullInterval" json:"pullInterval" name:"pull-interval"`
+	TempDir      string   `yaml:"tempDir" json:"tempDir" name:"temp-dir"`
 
 	Repositories []GitRepo `explode:"repository"`
 }
@@ -93,11 +85,11 @@ type GitProvider struct {
 type GitRepo struct {
 	Url string
 	// Specifies an allow list of files to include in mokapi
-	Files []string
+	Files []string `explode:"file"`
 	// Specifies an array of filenames pr pattern to include in mokapi
 	Include      []string
 	Auth         *GitAuth
-	PullInterval string `yaml:"pullInterval"`
+	PullInterval string `yaml:"pullInterval" name:"pull-interval"`
 }
 
 type GitAuth struct {
@@ -112,15 +104,15 @@ type GitHubAuth struct {
 
 type HttpProvider struct {
 	Urls          []string `explode:"url"`
-	PollInterval  string   `yaml:"pollInterval" flag:"poll-interval"`
-	PollTimeout   string   `yaml:"pollTimeout" flag:"poll-timeout"`
+	PollInterval  string   `yaml:"pollInterval" name:"poll-interval"`
+	PollTimeout   string   `yaml:"pollTimeout" name:"poll-timeout"`
 	Proxy         string
 	TlsSkipVerify bool              `yaml:"tlsSkipVerify" flag:"tls-skip-verify"`
 	Ca            tls.FileOrContent `yaml:"ca"`
 }
 
 type NpmProvider struct {
-	GlobalFolders []string     `yaml:"globalFolders" flag:"global-folders"`
+	GlobalFolders []string     `yaml:"globalFolders" name:"global-folders" explode:"global-folders"`
 	Packages      []NpmPackage `explode:"package"`
 }
 
@@ -130,36 +122,6 @@ type NpmPackage struct {
 	Files []string `explode:"file"`
 	// Specifies an array of filenames pr pattern to include in mokapi
 	Include []string
-}
-
-type Services map[string]*Service
-
-func (s Services) GetByName(name string) *Service {
-	key := strings.ReplaceAll(name, " ", "-")
-	key = strings.ToLower(key)
-	return s[key]
-}
-
-type Service struct {
-	Config ServiceConfig
-	Http   *HttpService
-}
-
-type ServiceConfig struct {
-	File string
-	Url  string
-}
-
-type HttpService struct {
-	Servers []HttpServer
-}
-
-type HttpServer struct {
-	Url string
-}
-
-type JsConfig struct {
-	GlobalFolders []string
 }
 
 type Event struct {
@@ -182,7 +144,7 @@ type Certificate struct {
 }
 
 type DataGen struct {
-	OptionalProperties string `yaml:"optionalProperties" json:"optionalProperties"`
+	OptionalProperties string `yaml:"optionalProperties" json:"optionalProperties" name:"optional-properties"`
 }
 
 func (c *Configs) UnmarshalJSON(b []byte) error {
