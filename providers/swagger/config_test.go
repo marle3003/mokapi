@@ -2,9 +2,10 @@ package swagger
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestSchema_UnmarshalJSON(t *testing.T) {
@@ -44,6 +45,25 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			test: func(t *testing.T, c *Config, err error) {
 				require.EqualError(t, err, "structural error at definitions.Foo.properties.value.items: expected object but received an array")
 				require.Equal(t, int64(65), err.(*dynamic.StructuralError).Offset)
+			},
+		},
+		{
+			name: "tags",
+			s:    `{ "tags": [{ "name": "foo" }]}`,
+			test: func(t *testing.T, c *Config, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Tags, 1)
+				require.Equal(t, "foo", c.Tags[0].Name)
+			},
+		},
+		{
+			name: "tags in operation",
+			s:    `{ "paths": {"/foo": { "get": { "tags": ["foo", "bar"] } }} }`,
+			test: func(t *testing.T, c *Config, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Paths, 1)
+				require.Len(t, c.Paths["/foo"].Get.Tags, 2)
+				require.Equal(t, []string{"foo", "bar"}, c.Paths["/foo"].Get.Tags)
 			},
 		},
 	}

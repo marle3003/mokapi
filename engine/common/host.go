@@ -45,6 +45,8 @@ type Host interface {
 
 	Lock()
 	Unlock()
+
+	Store() Store
 }
 
 type Logger interface {
@@ -167,4 +169,9 @@ func (e *JobExecution) Title() string {
 type FakerNode interface {
 	Name() string
 	Fake(r *generator.Request) (interface{}, error)
+}
+
+type Store interface {
+	Get(string) any
+	Set(string, any)
 }

@@ -71,6 +71,14 @@ func (c *converter) Convert() (*openapi.Config, error) {
 		result.Security = append(result.Security, req)
 	}
 
+	for _, tag := range c.config.Tags {
+		result.Tags = append(result.Tags, &openapi.Tag{
+			Name:         tag.Name,
+			Description:  tag.Description,
+			ExternalDocs: tag.ExternalDocs,
+		})
+	}
+
 	return result, nil
 }
 
@@ -253,9 +261,9 @@ var refMappings = map[string]string{
 }
 
 func convertRef(ref string) string {
-	for old, new := range refMappings {
+	for old, m := range refMappings {
 		if strings.HasPrefix(ref, old) {
-			ref = strings.Replace(ref, old, new, 1)
+			ref = strings.Replace(ref, old, m, 1)
 		}
 	}
 	return ref

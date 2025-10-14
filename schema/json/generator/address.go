@@ -85,6 +85,12 @@ func addresses() []*Node {
 			Name:       "house",
 			Attributes: []string{"house", "building"},
 			Fake:       fakeHouseNumber,
+			Children: []*Node{
+				{
+					Name: "number",
+					Fake: fakeHouseNumber,
+				},
+			},
 		},
 	}
 }
@@ -176,7 +182,14 @@ func fakeAddress(_ *Request) (interface{}, error) {
 
 func fakeHouseNumber(r *Request) (any, error) {
 	if r.Schema.IsNumber() || r.Schema.IsString() {
-		return fakeIntegerWithRange(r.Schema, 1, 100)
+		n, err := fakeIntegerWithRange(r.Schema, 1, 100)
+		if err != nil {
+			return nil, err
+		}
+		if r.Schema.IsString() {
+			return fmt.Sprintf("%v", n), nil
+		}
+		return n, nil
 	}
 	return gofakeit.StreetNumber(), nil
 }

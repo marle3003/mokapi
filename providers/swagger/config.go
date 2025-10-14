@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema"
 	"mokapi/sortedmap"
 	"net/http"
 	"strconv"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
@@ -28,6 +29,7 @@ type Config struct {
 	ExternalDocs        *openapi.ExternalDocs      `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 	SecurityDefinitions map[string]*SecurityScheme `yaml:"securityDefinitions,omitempty" json:"securityDefinitions,omitempty"`
 	Security            []SecurityRequirement      `yaml:"security" json:"security"`
+	Tags                []Tag                      `yaml:"tags,omitempty" json:"tags,omitempty"`
 }
 
 type PathItems map[string]*PathItem
@@ -102,6 +104,12 @@ type Parameter struct {
 
 type Header struct {
 	Parameter
+}
+
+type Tag struct {
+	Name         string                `yaml:"name" json:"name"`
+	Description  string                `yaml:"description,omitempty" json:"description,omitempty"`
+	ExternalDocs *openapi.ExternalDocs `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 }
 
 func (p *PathItem) Operations() map[string]*Operation {

@@ -1,11 +1,12 @@
 package engine_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/engine"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestEventHandler(t *testing.T) {
@@ -41,6 +42,26 @@ export default () => {
 	on('http', () => {
 		console.log('a log message from event handler')
 	}, { track: true })
+}
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				return evt.Emit("http")
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				require.NoError(t, err)
+				require.Len(t, actions, 1)
+				require.Len(t, actions[0].Logs, 1)
+				require.Equal(t, "a log message from event handler", actions[0].Logs[0].Message)
+				require.Equal(t, "log", actions[0].Logs[0].Level)
+			},
+		},
+		{
+			name: "calling console.log tracks the event handler",
+			script: `import { on } from 'mokapi'
+export default () => {
+	on('http', () => {
+		console.log('a log message from event handler')
+	})
 }
 `,
 			run: func(evt common.EventEmitter) []*common.Action {

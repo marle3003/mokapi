@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"github.com/pkg/errors"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/engine/common"
@@ -9,6 +8,8 @@ import (
 	"mokapi/runtime/events"
 	"mokapi/runtime/metrics"
 	"sync"
+
+	"github.com/pkg/errors"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -27,6 +28,12 @@ type Engine struct {
 	cfgEvent    static.Event
 	jobCounter  *metrics.Counter
 	sm          *events.StoreManager
+	store       *Store
+}
+
+type Store struct {
+	data map[string]any
+	mu   sync.RWMutex
 }
 
 func New(reader dynamic.Reader, app *runtime.App, config *static.Config, parallel bool) *Engine {
@@ -41,6 +48,7 @@ func New(reader dynamic.Reader, app *runtime.App, config *static.Config, paralle
 		cfgEvent:    config.Event,
 		jobCounter:  app.Monitor.JobCounter,
 		sm:          app.Events,
+		store:       &Store{data: make(map[string]any)},
 	}
 }
 
@@ -49,6 +57,7 @@ func NewEngine(opts ...Options) *Engine {
 		scripts:   make(map[string]*scriptHost),
 		scheduler: NewDefaultScheduler(),
 		logger:    newLogger(log.StandardLogger()),
+		store:     &Store{data: make(map[string]any)},
 	}
 	for _, opt := range opts {
 		opt(e)
@@ -152,4 +161,16 @@ func (e *Engine) Scripts() int {
 
 func (e *Engine) IsLevelEnabled(level string) bool {
 	return e.logger.IsLevelEnabled(level)
+}
+
+func (s *Store) Get(key string) any {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.data[key]
+}
+
+func (s *Store) Set(key string, value any) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.data[key] = value
 }

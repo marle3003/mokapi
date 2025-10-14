@@ -130,7 +130,10 @@ export type HttpEventHandler = (request: HttpRequest, response: HttpResponse) =>
  * https://mokapi.io/docs/javascript-api/mokapi/eventhandler/httprequest
  */
 export interface HttpRequest {
-    /** Request method. */
+    /**
+     * Request method.
+     * @example GET
+     * */
     readonly method: string;
 
     /** Represents a parsed URL. */
@@ -539,3 +542,99 @@ export function patch(target: any, patch: any): any;
  * // result: { name: "foo" }
  */
 export const Delete: unique symbol;
+
+export interface SharedMemory {
+    /**
+     * Returns the value associated with the given key.
+     * @param key The key to retrieve.
+     * @returns The stored value, or `undefined` if not found.
+     */
+    get<T = any>(key: string): T | undefined
+
+    /**
+     * Sets a value for the given key.
+     * If the key already exists, its value will be replaced.
+     * @param key The key to store the value under.
+     * @param value The value to store.
+     */
+    set<T = any>(key: string, value: T): void
+
+    /**
+     * Updates a value atomically using an updater function.
+     * The current value is passed into the updater function.
+     * The returned value is stored and also returned by this method.
+     *
+     * Example:
+     * ```js
+     * mokapi.shared.update("requests", count => (count ?? 0) + 1)
+     * ```
+     *
+     * @param key The key to update.
+     * @param updater Function that receives the current value and returns the new value.
+     * @returns The new value after update.
+     */
+    update<T = any>(key: string, updater: (value: T | undefined) => T): T
+
+    /**
+     * Checks if the given key exists in shared memory.
+     * @param key The key to check.
+     * @returns `true` if the key exists, otherwise `false`.
+     */
+    has(key: string): boolean
+
+    /**
+     * Removes the specified key and its value from shared memory.
+     * @param key The key to remove.
+     */
+    delete(key: string): void
+
+    /**
+     * Removes all stored entries from shared memory.
+     * Use with caution — this clears all shared state.
+     */
+    clear(): void
+
+    /**
+     * Returns a list of all stored keys.
+     * @returns An array of key names.
+     */
+    keys(): string[]
+
+    /**
+     * Creates or returns a namespaced shared memory store.
+     * Namespaces help avoid key collisions between unrelated scripts.
+     *
+     * Example:
+     * ```js
+     * const petstore = mokapi.shared.namespace("petstore")
+     * petstore.set("sessions", [])
+     * ```
+     *
+     * @param name The namespace identifier.
+     * @returns A `SharedMemory` object scoped to the given namespace.
+     */
+    namespace(name: string): SharedMemory
+}
+
+/**
+ * Shared memory API for Mokapi scripts.
+ *
+ * The `mokapi.shared` object provides a way to persist and share
+ * data between multiple scripts running in the same Mokapi instance.
+ *
+ * Values are stored in memory and shared across all scripts.
+ * This allows you to coordinate state, cache data, or simulate
+ * application-level variables without using global variables.
+ * All values are persisted for the lifetime of the Mokapi process.
+ *
+ * Example:
+ * ```js
+ * // Increment a shared counter
+ * mokapi.shared.update("counter", c => (c ?? 0) + 1)
+ *
+ * // Retrieve the current counter value
+ * const count = mokapi.shared.get("counter")
+ * mokapi.log(`Current counter: ${count}`)
+ * ```
+ */
+export const shared: SharedMemory

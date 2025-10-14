@@ -27,6 +27,12 @@ type Host struct {
 	OnFunc             func(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
 	FindFakerNodeFunc  func(name string) *generator.Node
 	m                  sync.Mutex
+	StoreTest          *Store
+}
+
+type Store struct {
+	data map[string]any
+	m    sync.RWMutex
 }
 
 type HttpClient struct {
@@ -103,7 +109,7 @@ func (h *Host) On(event string, do func(args ...interface{}) (bool, error), tags
 	}
 }
 
-func (h *Host) Cancel(jobId int) error {
+func (h *Host) Cancel(_ int) error {
 	return nil
 }
 
@@ -126,12 +132,19 @@ func (h *Host) Unlock() {
 	h.m.Unlock()
 }
 
-func (h *Host) HttpClient(opts common.HttpClientOptions) common.HttpClient {
+func (h *Host) HttpClient(_ common.HttpClientOptions) common.HttpClient {
 	return h.HttpClientTest
 }
 
 func (h *Host) KafkaClient() common.KafkaClient {
 	return h.KafkaClientTest
+}
+
+func (h *Host) Store() common.Store {
+	if h.StoreTest == nil {
+		h.StoreTest = &Store{data: make(map[string]any)}
+	}
+	return h.StoreTest
 }
 
 func (c *HttpClient) Do(request *http.Request) (*http.Response, error) {
@@ -159,4 +172,22 @@ func mustParse(s string) *url.URL {
 		panic(err)
 	}
 	return u
+}
+
+func (s *Store) Get(name string) any {
+	s.m.RLock()
+	defer s.m.RUnlock()
+	if s.data == nil {
+		return nil
+	}
+	return s.data[name]
+}
+
+func (s *Store) Set(name string, value any) {
+	s.m.Lock()
+	defer s.m.Unlock()
+	if s.data == nil {
+		s.data = map[string]any{name: value}
+	}
+	s.data[name] = value
 }
