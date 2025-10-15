@@ -1,8 +1,13 @@
 package faker
 
 import (
-	"github.com/dop251/goja"
+	"fmt"
+	"mokapi/js/util"
 	"mokapi/schema/json/generator"
+	"reflect"
+	"strconv"
+
+	"github.com/dop251/goja"
 )
 
 type Node struct {
@@ -12,8 +17,6 @@ type Node struct {
 	dependsOn  goja.Value
 
 	m       *Module
-	test    func(r *generator.Request) bool
-	fake    func(r *generator.Request) (interface{}, error)
 	restore []func()
 }
 
@@ -47,7 +50,9 @@ func (n *Node) Get(key string) goja.Value {
 				return v.String()
 			})
 		}
-		return n.children
+		return n.attributes
+	case "weight":
+		return n.m.vm.ToValue(n.origNode.Weight)
 	case "dependsOn":
 		if n.dependsOn == nil {
 			n.dependsOn = newJsArray[string](&dependsOn{n: n}, n.m.vm, func(v goja.Value) string {
@@ -60,6 +65,8 @@ func (n *Node) Get(key string) goja.Value {
 			n.Restore()
 			return goja.Undefined()
 		})
+	case "fake":
+		return n.m.vm.ToValue(n.origNode.Fake)
 	}
 	return goja.Undefined()
 }
@@ -77,20 +84,108 @@ func (n *Node) Set(key string, val goja.Value) bool {
 		})
 		return true
 	case "attributes":
-		values, ok := val.Export().([]string)
-		if ok {
-			old := n.origNode.Attributes
-			n.origNode.Attributes = values
-			n.restore = append(n.restore, func() {
-				n.origNode.Attributes = old
-			})
+		if val.ExportType().Kind() != reflect.Slice {
+			s := fmt.Sprintf("unexpected type for 'children': got %s, expected Array", util.JsType(val))
+			panic(n.m.vm.ToValue(s))
 		}
+		arr := val.ToObject(n.m.vm)
+		length := int(arr.Get("length").ToInteger())
+		old := n.origNode.Attributes
+		for i := 0; i < length; i++ {
+			item := arr.Get(strconv.Itoa(i))
+			if attr, ok := item.Export().(string); !ok {
+				s := fmt.Sprintf("unexpected type for 'attributes[%d]': got %s, expected Array", i, util.JsType(val))
+				panic(n.m.vm.ToValue(s))
+			} else {
+				n.origNode.Attributes = append(n.origNode.Attributes, attr)
+			}
+		}
+		n.restore = append(n.restore, func() {
+			n.origNode.Attributes = old
+		})
+		return true
+	case "weight":
+		t := val.ExportType()
+		var f float64
+		switch t.Kind() {
+		case reflect.Float64:
+			f = val.ToFloat()
+		case reflect.Int64:
+			f = float64(val.ToInteger())
+		default:
+			s := fmt.Sprintf("unexpected type for 'weight': got %s, expected Number", util.JsType(val))
+			panic(n.m.vm.ToValue(s))
+		}
+		old := n.origNode.Weight
+		n.origNode.Weight = f
+		n.restore = append(n.restore, func() {
+			n.origNode.Weight = old
+		})
+	case "dependsOn":
+		if val.ExportType().Kind() != reflect.Slice {
+			s := fmt.Sprintf("unexpected type for 'dependsOn': got %s, expected Array", util.JsType(val))
+			panic(n.m.vm.ToValue(s))
+		}
+		arr := val.ToObject(n.m.vm)
+		length := int(arr.Get("length").ToInteger())
+		old := n.origNode.DependsOn
+		for i := 0; i < length; i++ {
+			item := arr.Get(strconv.Itoa(i))
+			if attr, ok := item.Export().(string); !ok {
+				s := fmt.Sprintf("unexpected type for 'dependsOn[%d]': got %s, expected Array", i, util.JsType(val))
+				panic(n.m.vm.ToValue(s))
+			} else {
+				n.origNode.DependsOn = append(n.origNode.DependsOn, attr)
+			}
+		}
+		n.restore = append(n.restore, func() {
+			n.origNode.Attributes = old
+		})
+		return true
+	case "children":
+		if val.ExportType().Kind() != reflect.Slice {
+			s := fmt.Sprintf("unexpected type for 'children': got %s, expected Array", util.JsType(val))
+			panic(n.m.vm.ToValue(s))
+		}
+		arr := val.ToObject(n.m.vm)
+		length := int(arr.Get("length").ToInteger())
+		old := n.origNode.Children
+		for i := 0; i < length; i++ {
+			item := arr.Get(strconv.Itoa(i))
+			n.origNode.Children = append(n.origNode.Children, convertToNode(item, n.m))
+		}
+		n.restore = append(n.restore, func() {
+			n.origNode.Children = old
+		})
+		return true
+	case "fake":
+		f, ok := goja.AssertFunction(val)
+		if !ok {
+			s := fmt.Sprintf("unexpected type for 'fake': got %s, expected function", util.JsType(val))
+			panic(n.m.vm.ToValue(s))
+		}
+		old := n.origNode.Fake
+		n.origNode.Fake = func(r *generator.Request) (interface{}, error) {
+			n.m.host.Lock()
+			defer n.m.host.Unlock()
+
+			param := n.m.vm.ToValue(r)
+			v, err := f(goja.Undefined(), param)
+			if err != nil {
+				return nil, err
+			}
+			return v.Export(), err
+		}
+		n.restore = append(n.restore, func() {
+			n.origNode.Fake = old
+		})
+		return true
 	}
 	return false
 }
 
-func (n *Node) Delete(key string) bool {
-	return true
+func (n *Node) Delete(_ string) bool {
+	return false
 }
 
 func (n *Node) Has(key string) bool {
@@ -147,7 +242,7 @@ type attributes struct {
 }
 
 func (a *attributes) Len() int {
-	return len(a.n.origNode.Children)
+	return len(a.n.origNode.Attributes)
 }
 
 func (a *attributes) Get(i int) string {
