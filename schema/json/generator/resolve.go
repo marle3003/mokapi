@@ -2,13 +2,14 @@ package generator
 
 import (
 	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"net/url"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/brianvoe/gofakeit/v6"
 )
 
 type resolver struct {
@@ -21,6 +22,13 @@ func resolve(req *Request, fallback bool) (*faker, error) {
 }
 
 func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
+	if len(req.Path) == 0 && req.Schema != nil && req.Schema.Id != "" {
+		u, _ := url.Parse(req.Schema.Id)
+		if u != nil {
+			req.Path = append(req.Path, strings.Split(u.Path, "/")...)
+		}
+	}
+
 	if f, ok := useFromContext(req); ok {
 		return f, nil
 	}
@@ -51,21 +59,34 @@ func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
 	}
 
 	if s != nil {
+		inferType := inferTypeFromKeywords(s)
 		switch {
-		case len(s.AnyOf) > 0:
-			i := gofakeit.Number(0, len(s.AnyOf)-1)
-			return r.resolve(req.WithSchema(s.AnyOf[i]), fallback)
-		case len(s.AllOf) > 0:
-			return r.allOf(req)
-		case len(s.OneOf) > 0:
-			return r.oneOf(req)
+		case s.IsObject() && s.IsArray():
+			n := gofakeit.Number(0, 1)
+			if n == 0 {
+				return r.resolveObject(req)
+			}
+			return r.resolveArray(req)
+		case s.IsObject() || inferType == "object":
+			return r.resolveObject(req)
+		case s.IsArray() || inferType == "array":
+			return r.resolveArray(req)
+		default:
+			switch {
+			case len(s.AnyOf) > 0:
+				i := gofakeit.Number(0, len(s.AnyOf)-1)
+				return r.resolve(req.WithSchema(s.AnyOf[i]), fallback)
+			case len(s.AllOf) > 0:
+				allOf, err := intersectSchemas(s.AllOf...)
+				if err != nil {
+					return nil, fmt.Errorf("generate random data for schema failed: %w", err)
+				}
+				return r.resolve(req.WithSchema(allOf), fallback)
+			case len(s.OneOf) > 0:
+				return r.oneOf(req)
+			}
 		}
 
-		if s.IsObject() || s.HasProperties() {
-			return r.resolveObject(req)
-		} else if s.IsArray() {
-			return r.resolveArray(req)
-		}
 	}
 
 	path := tokenize(req.Path)

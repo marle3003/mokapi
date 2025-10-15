@@ -1,11 +1,12 @@
 package parser_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func toBoolP(b bool) *bool { return &b }

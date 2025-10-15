@@ -1,7 +1,7 @@
 package api
 
 import (
-	"mokapi/providers/openapi/parameter"
+	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema"
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
@@ -21,6 +21,7 @@ type httpInfo struct {
 	Contact     *contact         `json:"contact,omitempty"`
 	Servers     []server         `json:"servers,omitempty"`
 	Paths       []pathItem       `json:"paths,omitempty"`
+	Tags        []tag            `json:"tags,omitempty"`
 	Metrics     []metrics.Metric `json:"metrics,omitempty"`
 	Configs     []config         `json:"configs,omitempty"`
 }
@@ -42,6 +43,7 @@ type operation struct {
 	Parameters  []param               `json:"parameters,omitempty"`
 	Responses   []response            `json:"responses,omitempty"`
 	Security    []securityRequirement `json:"security,omitempty"`
+	Tags        []string              `json:"tags,omitempty"`
 }
 
 type param struct {
@@ -89,6 +91,14 @@ type securityRequirement map[string]securityScheme
 type securityScheme struct {
 	Scopes  []string    `json:"scopes"`
 	Configs interface{} `json:"configs"`
+}
+
+type tag struct {
+	Name        string `yaml:"name" json:"name"`
+	Summary     string `yaml:"summary" json:"summary"`
+	Description string `yaml:"description" json:"description"`
+	Parent      string `yaml:"parent" json:"parent"`
+	Kind        string `yaml:"kind" json:"kind"`
 }
 
 func getHttpServices(list []*runtime.HttpInfo, m *monitor.Monitor) []interface{} {
@@ -147,10 +157,10 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 		}
 	}
 
-	for _, s := range s.Servers {
+	for _, item := range s.Servers {
 		result.Servers = append(result.Servers, server{
-			Url:         s.Url,
-			Description: s.Description,
+			Url:         item.Url,
+			Description: item.Description,
 		})
 	}
 
@@ -177,6 +187,7 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 				Description: o.Description,
 				OperationId: o.OperationId,
 				Deprecated:  o.Deprecated,
+				Tags:        o.Tags,
 			}
 			if o.RequestBody != nil && o.RequestBody.Value != nil {
 				op.RequestBody = &requestBody{
@@ -259,13 +270,23 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 		result.Paths = append(result.Paths, pi)
 	}
 
+	for _, t := range s.Tags {
+		result.Tags = append(result.Tags, tag{
+			Name:        t.Name,
+			Summary:     t.Summary,
+			Description: t.Description,
+			Parent:      t.Parent,
+			Kind:        t.Kind,
+		})
+	}
+
 	result.Configs = getConfigs(s.Configs())
 
 	w.Header().Set("Content-Type", "application/json")
 	writeJsonBody(w, result)
 }
 
-func getParameters(params parameter.Parameters) (result []param) {
+func getParameters(params openapi.Parameters) (result []param) {
 	for _, p := range params {
 		if p.Value == nil {
 			continue

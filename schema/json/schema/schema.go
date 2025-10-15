@@ -45,7 +45,7 @@ type Schema struct {
 	MinContains      *int      `yaml:"minContains,omitempty" json:"minContains,omitempty"`
 	MaxItems         *int      `yaml:"maxItems,omitempty" json:"maxItems,omitempty"`
 	MinItems         *int      `yaml:"minItems,omitempty" json:"minItems,omitempty"`
-	UniqueItems      bool      `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
+	UniqueItems      *bool     `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
 	ShuffleItems     bool      `yaml:"x-shuffleItems,omitempty" json:"x-shuffleItems,omitempty"`
 
 	// Objects

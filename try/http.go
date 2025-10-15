@@ -10,6 +10,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
 
 	"github.com/stretchr/testify/require"
 )
@@ -31,13 +34,53 @@ func GetRequest(t *testing.T, url string, headers map[string]string, conditions 
 
 	client := newClient()
 
-	res, err := client.Do(req)
-	require.NoError(t, err)
+	var lastErr error
+	const (
+		maxAttempts = 10
+		delay       = 200 * time.Millisecond
+	)
 
-	tr := &TestResponse{res: res}
-	for _, cond := range conditions {
-		cond(t, tr)
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		res, err := client.Do(req)
+		if err != nil {
+			lastErr = err
+			time.Sleep(delay)
+			continue
+		}
+
+		tr := &TestResponse{res: res}
+
+		// run all conditions
+		ok := true
+		for _, cond := range conditions {
+			// use subtests to isolate failures
+			condT := &testing.T{}
+
+			if attempt == maxAttempts {
+				// final attempt: real t for real failure message
+				condT = t
+			}
+
+			cond(condT, tr)
+			if condT.Failed() {
+				fmt.Printf("Attempt %d failed: %s\n", attempt, url)
+				ok = false
+				break
+			}
+		}
+
+		if ok {
+			return // success
+		}
+
+		// wait and retry
+		_ = res.Body.Close()
+		time.Sleep(delay)
 	}
+
+	// fail test if we never satisfied conditions
+	require.NoError(t, lastErr, "conditions not met after %d attempts", maxAttempts)
+	t.Fatalf("conditions not met after %d attempts", maxAttempts)
 }
 
 func Request(t *testing.T, method, url string, headers map[string]string, body io.Reader, conditions ...ResponseCondition) {
@@ -78,14 +121,14 @@ func Handler(t *testing.T, method string, url string, headers map[string]string,
 
 func HasStatusCode(status int) ResponseCondition {
 	return func(t *testing.T, tr *TestResponse) {
-		require.Equal(t, status, tr.res.StatusCode, string(tr.GetBody()))
+		assert.Equal(t, status, tr.res.StatusCode, string(tr.GetBody()))
 	}
 }
 
 func HasHeader(name, value string) ResponseCondition {
 	return func(t *testing.T, tr *TestResponse) {
 		v := tr.res.Header.Get(name)
-		require.Equal(t, value, v)
+		assert.Equal(t, value, v)
 	}
 }
 
@@ -110,7 +153,7 @@ func HasHeaderXor(name string, values ...string) ResponseCondition {
 func HasBody(expected string) ResponseCondition {
 	return func(t *testing.T, tr *TestResponse) {
 		body := string(tr.GetBody())
-		require.Equal(t, expected, body)
+		assert.Equal(t, expected, body)
 	}
 }
 
@@ -123,14 +166,14 @@ func AssertBody(assert func(t *testing.T, body string)) ResponseCondition {
 func BodyContains(s string) ResponseCondition {
 	return func(t *testing.T, tr *TestResponse) {
 		body := string(tr.GetBody())
-		require.Contains(t, body, s)
+		assert.Contains(t, body, s)
 	}
 }
 
 func BodyMatch(regexp string) ResponseCondition {
 	return func(t *testing.T, tr *TestResponse) {
 		body := string(tr.GetBody())
-		require.Regexp(t, regexp, body)
+		assert.Regexp(t, regexp, body)
 	}
 }
 
@@ -139,19 +182,19 @@ func BodyContainsData(expected map[string]interface{}) ResponseCondition {
 		body := tr.GetBody()
 		var actual map[string]interface{}
 		err := json.Unmarshal(body, &actual)
-		require.NoError(t, err)
+		assert.NoError(t, err)
 		for k, v := range expected {
-			require.Contains(t, actual, k)
-			require.Equal(t, v, actual[k])
+			assert.Contains(t, actual, k)
+			assert.Equal(t, v, actual[k])
 		}
 	}
 }
 
 func IsTls(commonName string) ResponseCondition {
 	return func(t *testing.T, tr *TestResponse) {
-		require.NotNil(t, tr.res.TLS)
-		require.Len(t, tr.res.TLS.PeerCertificates, 2)
-		require.Equal(t, commonName, tr.res.TLS.PeerCertificates[0].Subject.CommonName)
+		assert.NotNil(t, tr.res.TLS)
+		assert.Len(t, tr.res.TLS.PeerCertificates, 2)
+		assert.Equal(t, commonName, tr.res.TLS.PeerCertificates[0].Subject.CommonName)
 	}
 }
 

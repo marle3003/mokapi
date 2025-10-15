@@ -56,10 +56,8 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 	w.m.Lock()
 
 	var err error
-	var parse bool
 	var c *dynamic.Config
 	e, exists := w.getConfig(u)
-
 	if !exists {
 		c, err = p.Read(u)
 		if err != nil {
@@ -70,15 +68,13 @@ func (w *ConfigWatcher) Read(u *url.URL, v any) (*dynamic.Config, error) {
 		e = &entry{config: c}
 		w.configs[getConfigKey(u)] = e
 		c.Listeners.Add("ConfigWatcher", w.configChanged)
-		parse = true
 	} else {
 		c = e.config
-		parse = c.Data == nil && v != nil
 	}
 
 	w.m.Unlock()
 
-	if parse {
+	if c.Data == nil {
 		e.m.Lock()
 		defer e.m.Unlock()
 

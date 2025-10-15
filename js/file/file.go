@@ -2,22 +2,25 @@ package file
 
 import (
 	"encoding/json"
-	"github.com/dop251/goja"
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
+
+	"github.com/dop251/goja"
 )
 
 type Module struct {
-	host common.Host
-	rt   *goja.Runtime
+	host   common.Host
+	rt     *goja.Runtime
+	parent *dynamic.Config
 }
 
-func Enable(rt *goja.Runtime, host common.Host) {
+func Enable(rt *goja.Runtime, host common.Host, parent *dynamic.Config) {
 	r := &Module{
-		host: host,
-		rt:   rt,
+		host:   host,
+		rt:     rt,
+		parent: parent,
 	}
-	rt.Set("open", r.open)
+	_ = rt.Set("open", r.open)
 }
 
 func (o *Module) open(file string, args map[string]interface{}) (any, error) {
@@ -25,6 +28,7 @@ func (o *Module) open(file string, args map[string]interface{}) (any, error) {
 	if err != nil {
 		return "", err
 	}
+	dynamic.AddRef(o.parent, f)
 	switch args["as"] {
 	case "binary":
 		return f.Raw, nil

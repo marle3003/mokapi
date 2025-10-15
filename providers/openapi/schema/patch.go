@@ -91,7 +91,9 @@ func (s *Schema) Patch(patch *Schema) {
 		s.Items.Patch(patch.Items)
 	}
 
-	s.UniqueItems = patch.UniqueItems
+	if patch.UniqueItems != nil {
+		s.UniqueItems = patch.UniqueItems
+	}
 
 	if patch.MinItems != nil {
 		s.MinItems = patch.MinItems

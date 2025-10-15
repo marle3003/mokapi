@@ -31,11 +31,11 @@ export let metrics = [
         value: 0
     },
     {
-        name: 'http_request_timestamp{service="Swagger Petstore,endpoint="/pet"}"',
+        name: 'http_request_timestamp{service="Swagger Petstore",endpoint="/pet"}"',
         value: 1652235690
     },
     {
-        name: 'http_request_timestamp{service="Swagger Petstore,endpoint="/pet/findByStatus"}"',
+        name: 'http_request_timestamp{service="Swagger Petstore",endpoint="/pet/findByStatus"}"',
         value: 1652237690
     },
     {

@@ -73,6 +73,29 @@ const pet = {
     xml: {name: "Pet"}
 }
 
+const book = {
+    type: "object",
+    properties: {
+        id: {
+            type: "string",
+            example: 1
+        },
+        title: {
+            type: "string",
+            example: "The Hobbit"
+        },
+        author: {
+            type: "string",
+            example: "J.R.R. Tolkien"
+        },
+        year: {
+            type: "integer",
+            example: 1937
+        }
+    },
+    required: ["id", "title", "author"]
+}
+
 export const configs = {
     'b6fea8ac-56c7-4e73-a9c0-6887640bdca8': {
         id: 'b6fea8ac-56c7-4e73-a9c0-6887640bdca8',
@@ -111,7 +134,7 @@ export let apps = [
             name: "Swagger Petstore Team",
             email: "petstore@petstore.com"
         },
-        metrics: metrics.filter(x => x.name.startsWith("http")),
+        metrics: metrics.filter(x => x.name.startsWith("http") && x.name.includes('service="Swagger Petstore"')),
         servers: [
             {
                 url: "http://localhost:8080",
@@ -128,6 +151,7 @@ export let apps = [
                         summary: "Add a new pet to the store",
                         operationId: "addPet",
                         deprecated: true,
+                        tags: ["pet", "post"],
                         parameters: [
                             {
                                 type: "query",
@@ -243,6 +267,7 @@ export let apps = [
                     {
                         method: "post",
                         summary: "Updates a pet in the store with form data",
+                        tags: ["pet", "post"],
                         parameters: [
                             {
                                 name: "petId",
@@ -302,6 +327,7 @@ export let apps = [
                     {
                         method: "get",
                         summary: "Returns a single pet",
+                        tags: ["pet"],
                         parameters: [
                             {
                                 name: "petId",
@@ -336,6 +362,7 @@ export let apps = [
                         summary: "Finds Pets by status",
                         description: "Multiple status values can be provided with comma separated strings",
                         operationId: "findPetsByStatus",
+                        tags: ["pet"],
                         parameters: [
                             {
                                 name: "status",
@@ -421,6 +448,7 @@ export let apps = [
                     {
                         method: "post",
                         summary: "A long path example",
+                        tags: ["custom", "post"],
                         requestBody: {
                             description: "Create a new pet in the store",
                             contents: [
@@ -463,8 +491,82 @@ export let apps = [
                 ]
             }
         ],
+        tags: [
+            {
+                name: "pet",
+                summary: "Everything about your Pets"
+            },
+            {
+                name: "custom",
+                summary: "Access to Petstore orders"
+            }
+        ],
         configs: [
             configs['b6fea8ac-56c7-4e73-a9c0-6887640bdca8']
+        ]
+    },
+    {
+        name: "Books API",
+        description: "A simple API to manage books in a library",
+        version: "1.0.0",
+        metrics: metrics.filter(x => x.name.startsWith("http") && x.name.includes('service="Books API"')),
+        servers: [
+            {
+                url: "https://api.example.com/v1",
+            }
+        ],
+        paths: [
+            {
+                path: "/books",
+                operations: [
+                    {
+                        method: "get",
+                        summary: "Add a new pet to the store",
+                        operationId: "listBooks",
+                        responses: [
+                            {
+                                statusCode: 200,
+                                description: "A list of books",
+                                contents: [
+                                    {
+                                        type: "application/json",
+                                        schema: {
+                                            type: "array",
+                                            items: book
+                                        }
+                                    }
+                                ]
+                            },
+                        ],
+                    },
+                    {
+                        method: "post",
+                        summary: "Add a new book",
+                        operationId: "addBook",
+                        requestBody: {
+                            required: true,
+                            contents: [
+                                {
+                                    type: "application/json",
+                                    schema: book
+                                }
+                            ]
+                        },
+                        responses: [
+                            {
+                                statusCode: 201,
+                                description: "The created book",
+                                contents: [
+                                    {
+                                        type: "application/json",
+                                        schema: book
+                                    }
+                                ]
+                            },
+                        ],
+                    }
+                ]
+            },
         ]
     }
 ]

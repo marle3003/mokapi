@@ -134,6 +134,22 @@ func TestName(t *testing.T) {
 				require.Equal(t, "EchoValley", v)
 			},
 		},
+		{
+			name: "nested name",
+			req: &Request{
+				Path: []string{"name"},
+				Schema: schematest.New("object",
+					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithProperty("tag", schematest.New("object",
+						schematest.WithProperty("name", schematest.New("string")),
+					)),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"name": "Ink", "tag": map[string]interface{}{"name": "MirageStream"}}, v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

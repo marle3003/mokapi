@@ -1,6 +1,8 @@
 package generator
 
 import (
+	"fmt"
+
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
@@ -40,4 +42,20 @@ func newFakerWithFallback(n *Node, r *Request) *faker {
 
 func newFaker(f fakeFunc) *faker {
 	return &faker{fake: f}
+}
+
+func fakeWithRetries(attempts int, fake func() error) error {
+	attempt := 0
+	var err error
+	for {
+		if attempt >= attempts {
+			return fmt.Errorf("reached attempt limit (%d) caused by: %w", attempts, err)
+		}
+
+		err = fake()
+		if err == nil {
+			return nil
+		}
+		attempt++
+	}
 }

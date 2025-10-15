@@ -20,6 +20,10 @@ function comparePath(o1: HttpOperation, o2: HttpOperation) {
 const route = useRoute()
 const router = useRouter()
 function goToOperation(operation: HttpOperation){
+    if (getSelection()?.toString()) {
+        return
+    }
+
     router.push(route.httpOperation(props.service, props.path, operation))
 }
 function showWarningColumn(){

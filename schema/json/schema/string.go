@@ -9,42 +9,30 @@ func (s *Schema) String() string {
 	var sb strings.Builder
 
 	if s.Boolean != nil {
-		return fmt.Sprintf("%v", s.Boolean)
+		if *s.Boolean {
+			return "schema (always valid)"
+		}
+		return "schema (always invalid)"
 	}
 
 	if len(s.AnyOf) > 0 {
 		sb.WriteString("any of ")
-		for _, i := range s.AnyOf {
-			if sb.Len() > 7 {
-				sb.WriteString(", ")
-			}
-			sb.WriteString(i.String())
-		}
+		sb.WriteString(subSchemaString(s.AnyOf))
 		return sb.String()
 	}
 	if len(s.AllOf) > 0 {
 		sb.WriteString("all of ")
-		for _, r := range s.AllOf {
-			if sb.Len() > 7 {
-				sb.WriteString(", ")
-			}
-			sb.WriteString(r.String())
-		}
+		sb.WriteString(subSchemaString(s.AllOf))
 		return sb.String()
 	}
 	if len(s.OneOf) > 0 {
 		sb.WriteString("one of ")
-		for _, r := range s.OneOf {
-			if sb.Len() > 7 {
-				sb.WriteString(", ")
-			}
-			sb.WriteString(r.String())
-		}
+		sb.WriteString(subSchemaString(s.OneOf))
 		return sb.String()
 	}
 
 	if len(s.Type) > 0 {
-		sb.WriteString(fmt.Sprintf("schema type=%v", s.Type.String()))
+		sb.WriteString(fmt.Sprintf("type=%v", s.Type.String()))
 	}
 
 	if len(s.Format) > 0 {
@@ -94,11 +82,11 @@ func (s *Schema) String() string {
 	if s.MaxProperties != nil {
 		sb.WriteString(fmt.Sprintf(" maxProperties=%v", *s.MaxProperties))
 	}
-	if s.UniqueItems {
+	if s.UniqueItems != nil && *s.UniqueItems {
 		sb.WriteString(" unique-items")
 	}
 
-	if s.IsObject() && s.Properties != nil {
+	if s.Properties != nil {
 		var sbProp strings.Builder
 		for _, p := range s.Properties.Keys() {
 			if sbProp.Len() > 0 {
@@ -116,8 +104,11 @@ func (s *Schema) String() string {
 	}
 
 	if s.IsArray() && s.Items != nil {
-		sb.WriteString(" items=")
-		sb.WriteString(fmt.Sprintf("%v", s.Items))
+		sb.WriteString(fmt.Sprintf(" items=(%v)", s.Items))
+	}
+
+	if s.Not != nil {
+		sb.WriteString(fmt.Sprintf(" not (%v)", s.Not))
 	}
 
 	if len(s.Title) > 0 {
@@ -132,8 +123,21 @@ func (s *Schema) String() string {
 
 	str := sb.String()
 	if string(str[0]) == " " {
-		return str[1:]
+		str = str[1:]
 	}
 
-	return str
+	return "schema " + str
+}
+
+func subSchemaString(subs []*Schema) string {
+	var sb strings.Builder
+	sb.WriteString("(")
+	for i, sub := range subs {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		sb.WriteString(sub.String())
+	}
+	sb.WriteString(")")
+	return sb.String()
 }

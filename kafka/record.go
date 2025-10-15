@@ -44,9 +44,7 @@ func (rb *RecordBatch) ReadFrom(d *Decoder, version int16, tag kafkaTag) error {
 	d.reader = io.MultiReader(bytes.NewReader(b), d.reader)
 
 	switch magic {
-	case 0:
-		return rb.readFromV0(d)
-	case 1:
+	case 0, 1:
 		return rb.readFromV1(d)
 	case 2:
 		return rb.readFromV2(d)

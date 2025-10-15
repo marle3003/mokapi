@@ -28,7 +28,7 @@ RUN go test -v ./...
 
 RUN go build -o mokapi -ldflags="-X mokapi/version.BuildVersion=$VERSION -X mokapi/version.BuildTime=$BUILD_TIME" ./cmd/mokapi
 
-FROM alpine
+FROM alpine:3.22.1@sha256:4bcff63911fcb4448bd4fdacec207030997caf25e9bea4045fa6c8c44de311d1
 
 COPY --from=gobuild /go/src/github.com/mokapi/mokapi /usr/local/bin/mokapi
 

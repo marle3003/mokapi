@@ -73,12 +73,14 @@ func (p *Parser) parseLinkedMap(m *sortedmap.LinkedHashMap[string, interface{}],
 		for it := m.Iter(); it.Next(); {
 			key := it.Key()
 			value := it.Value()
-			if pErr := p.ValidatePatternProperty(key, value, s.PatternProperties); pErr != nil {
+			if match, pErr := p.ValidatePatternProperty(key, value, s.PatternProperties); pErr != nil {
 				err = append(err, wrapErrorDetail(pErr, &ErrorDetail{
 					Field: "patternProperties",
 				}))
+			} else if match {
+				obj.Set(key, value)
+				evaluated[key] = true
 			}
-			evaluated[key] = true
 		}
 	}
 
@@ -196,13 +198,15 @@ func (p *Parser) parseMap(v reflect.Value, s *schema.Schema, evaluated map[strin
 	if len(s.PatternProperties) > 0 {
 		for _, vk := range v.MapKeys() {
 			key := vk.String()
-			value := v.MapIndex(vk)
-			if pErr := p.ValidatePatternProperty(key, value.Interface(), s.PatternProperties); pErr != nil {
+			value := v.MapIndex(vk).Interface()
+			if match, pErr := p.ValidatePatternProperty(key, value, s.PatternProperties); pErr != nil {
 				err = append(err, wrapErrorDetail(pErr, &ErrorDetail{
 					Field: "patternProperties",
 				}))
+			} else if match {
+				obj.Set(key, value)
+				evaluated[key] = true
 			}
-			evaluated[key] = true
 		}
 	}
 
@@ -367,7 +371,7 @@ func (p *Parser) validateObject(obj *sortedmap.LinkedHashMap[string, interface{}
 	return nil
 }
 
-func (p *Parser) ValidatePatternProperty(name string, value interface{}, patternProperties map[string]*schema.Schema) error {
+func (p *Parser) ValidatePatternProperty(name string, value interface{}, patternProperties map[string]*schema.Schema) (bool, error) {
 	for pattern, s := range patternProperties {
 		regex, err := regexp.Compile(pattern)
 		if err != nil {
@@ -378,18 +382,19 @@ func (p *Parser) ValidatePatternProperty(name string, value interface{}, pattern
 			} else {
 				msg = err.Error()
 			}
-			return &ErrorDetail{
+			return false, &ErrorDetail{
 				Message: fmt.Sprintf("validate string '%s' with regex pattern '%s' failed: error parsing regex: %s", name, pattern, msg),
 				Field:   pattern,
 			}
 		}
 		if regex.MatchString(name) {
 			if _, err := p.parse(value, s); err != nil {
-				return wrapErrorDetail(err, &ErrorDetail{
+				return true, wrapErrorDetail(err, &ErrorDetail{
 					Field: pattern,
 				})
 			}
+			return true, nil
 		}
 	}
-	return nil
+	return false, nil
 }

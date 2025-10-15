@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"mokapi/engine/common"
 	"mokapi/media"
-	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
 	"mokapi/schema/json/generator"
 	"net/http"
@@ -44,10 +43,10 @@ func NewEventRequest(r *http.Request, contentType media.ContentType) (*common.Ev
 		Key:         endpointPath,
 		OperationId: op.OperationId,
 		Method:      r.Method,
-		Path:        make(map[string]interface{}),
-		Query:       make(map[string]interface{}),
-		Header:      make(map[string]interface{}),
-		Cookie:      make(map[string]interface{}),
+		Path:        make(map[string]any),
+		Query:       make(map[string]any),
+		Header:      make(map[string]any),
+		Cookie:      make(map[string]any),
 	}
 
 	req.Url = common.Url{
@@ -63,22 +62,21 @@ func NewEventRequest(r *http.Request, contentType media.ContentType) (*common.Ev
 		req.Url.Scheme = "http"
 	}
 
-	// Mokapi's goal is to provide better APIs
-	// Therefore, we only add headers that defined in specification
-	params, _ := parameter.FromContext(ctx)
-	for t, values := range params {
-		for k, v := range values {
-			switch t {
-			case parameter.Path:
-				req.Path[k] = v.Value
-			case parameter.Query:
-				req.Query[k] = v.Value
-			case parameter.Header:
-				req.Header[k] = v.Value
-			case parameter.Cookie:
-				req.Cookie[k] = v.Value
-			}
+	setParam := func(target map[string]any, params map[string]RequestParameterValue) {
+		for k, v := range params {
+			target[k] = v.Value
 		}
+	}
+
+	// Mokapi's goal is to provide better APIs.
+	// Therefore, we only add headers that are defined in the specification
+	params, _ := FromContext(ctx)
+	setParam(req.Path, params.Path)
+	setParam(req.Query, params.Query)
+	setParam(req.Header, params.Header)
+	setParam(req.Cookie, params.Cookie)
+	if params.QueryString != nil {
+		req.QueryString = params.QueryString
 	}
 
 	// Accept header is defined in the response object and not as parameter

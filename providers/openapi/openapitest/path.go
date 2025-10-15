@@ -2,7 +2,6 @@ package openapitest
 
 import (
 	"mokapi/providers/openapi"
-	"mokapi/providers/openapi/parameter"
 	"strings"
 )
 
@@ -56,6 +55,13 @@ func WithOperation(method string, op *openapi.Operation) PathOptions {
 			e.Options = op
 		case "TRACE":
 			e.Trace = op
+		case "QUERY":
+			e.Query = op
+		default:
+			if e.AdditionalOperations == nil {
+				e.AdditionalOperations = make(map[string]*openapi.Operation)
+			}
+			e.AdditionalOperations[method] = op
 		}
 		op.Path = e
 	}
@@ -63,12 +69,12 @@ func WithOperation(method string, op *openapi.Operation) PathOptions {
 
 func WithPathParam(name string, opts ...ParamOptions) PathOptions {
 	return func(e *openapi.Path) {
-		e.Parameters = append(e.Parameters, &parameter.Ref{
+		e.Parameters = append(e.Parameters, &openapi.ParameterRef{
 			Value: newParam(name, true, "path", opts...)})
 	}
 }
 
-func WithPathParamRef(ref *parameter.Ref) PathOptions {
+func WithPathParamRef(ref *openapi.ParameterRef) PathOptions {
 	return func(e *openapi.Path) {
 		e.Parameters = append(e.Parameters, ref)
 	}

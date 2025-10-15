@@ -14,6 +14,10 @@ type Request struct {
 }
 
 func NewRequest(path []string, s *schema.Schema, ctx map[string]any) *Request {
+	if ctx == nil {
+		ctx = make(map[string]any)
+	}
+
 	return &Request{
 		Path:    path,
 		Schema:  s,

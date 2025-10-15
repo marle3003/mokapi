@@ -5,7 +5,6 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/media"
 	"mokapi/providers/openapi"
-	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
 	jsonSchema "mokapi/schema/json/schema"
 	"mokapi/version"
@@ -70,6 +69,14 @@ func (c *converter) Convert() (*openapi.Config, error) {
 			req[k] = v
 		}
 		result.Security = append(result.Security, req)
+	}
+
+	for _, tag := range c.config.Tags {
+		result.Tags = append(result.Tags, &openapi.Tag{
+			Name:         tag.Name,
+			Description:  tag.Description,
+			ExternalDocs: tag.ExternalDocs,
+		})
 	}
 
 	return result, nil
@@ -254,18 +261,18 @@ var refMappings = map[string]string{
 }
 
 func convertRef(ref string) string {
-	for old, new := range refMappings {
+	for old, m := range refMappings {
 		if strings.HasPrefix(ref, old) {
-			ref = strings.Replace(ref, old, new, 1)
+			ref = strings.Replace(ref, old, m, 1)
 		}
 	}
 	return ref
 }
 
-func convertParameter(p *Parameter) *parameter.Ref {
-	return &parameter.Ref{Value: &parameter.Parameter{
+func convertParameter(p *Parameter) *openapi.ParameterRef {
+	return &openapi.ParameterRef{Value: &openapi.Parameter{
 		Name: p.Name,
-		Type: parameter.Location(p.In),
+		Type: openapi.Location(p.In),
 		Schema: &schema.Schema{
 			Type:             jsonSchema.Types{p.Type},
 			Format:           p.Format,

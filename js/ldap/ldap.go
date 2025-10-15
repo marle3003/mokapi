@@ -37,6 +37,6 @@ var (
 
 func Require(_ *goja.Runtime, module *goja.Object) {
 	obj := module.Get("exports").(*goja.Object)
-	obj.Set("SearchScope", scope)
-	obj.Set("ResultCode", code)
+	_ = obj.Set("SearchScope", scope)
+	_ = obj.Set("ResultCode", code)
 }

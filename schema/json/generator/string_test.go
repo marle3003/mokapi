@@ -1,10 +1,11 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/stretchr/testify/require"
 )
 
 func TestStringFormat(t *testing.T) {
@@ -31,6 +32,16 @@ func TestStringFormat(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "2007-08-26T07:02:11Z", v)
+			},
+		},
+		{
+			name: "time",
+			req: &Request{
+				Schema: schematest.New("string", schematest.WithFormat("time")),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "07:02:11Z", v)
 			},
 		},
 		{

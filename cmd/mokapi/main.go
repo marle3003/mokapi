@@ -19,10 +19,10 @@ import (
 	"mokapi/providers/swagger"
 	"mokapi/runtime"
 	"mokapi/safe"
+	"mokapi/schema/json/generator"
 	"mokapi/server"
 	"mokapi/server/cert"
 	"mokapi/version"
-	_ "net/http/pprof"
 	"os"
 	"os/signal"
 	"strings"
@@ -62,6 +62,7 @@ func main() {
 	}
 
 	feature.Enable(cfg.Features)
+	generator.SetConfig(cfg.DataGen)
 
 	fmt.Printf(logo, version.BuildVersion, strings.Repeat(" ", 17-len(versionString)))
 
@@ -78,8 +79,6 @@ func main() {
 		log.WithField("error", err).Error("error creating server")
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-
 	exitChannel := make(chan os.Signal, 1)
 	signal.Notify(exitChannel, os.Interrupt)
 	signal.Notify(exitChannel, syscall.SIGTERM)
@@ -87,12 +86,11 @@ func main() {
 	go func() {
 		<-exitChannel
 		fmt.Println("Shutting down")
-		cancel()
 		s.Close()
 		os.Exit(0)
 	}()
 
-	err = s.Start(ctx)
+	err = s.Start()
 	if err != nil {
 		log.Error(err)
 	}

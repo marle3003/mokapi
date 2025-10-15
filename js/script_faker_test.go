@@ -2,13 +2,14 @@ package js_test
 
 import (
 	"encoding/json"
-	"github.com/brianvoe/gofakeit/v6"
-	r "github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/jstest"
 	"mokapi/schema/json/generator"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v6"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestScript_Faker(t *testing.T) {
@@ -41,7 +42,7 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				r.Equal(t, 1.4470162467581058e+308, v.Export())
+				r.Equal(t, 609859.0117483337, v.Export())
 			},
 		},
 		{
@@ -81,7 +82,7 @@ func TestScript_Faker(t *testing.T) {
 					js.WithHost(host))
 				r.NoError(t, err)
 				_, err = s.RunDefault()
-				r.EqualError(t, err, "unexpected type for 'exclusiveMinimum': String at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "unexpected type for 'exclusiveMinimum': got String, expected Number or Boolean at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -108,7 +109,7 @@ func TestScript_Faker(t *testing.T) {
 					js.WithHost(host))
 				r.NoError(t, err)
 				_, err = s.RunDefault()
-				r.EqualError(t, err, "unexpected type for 'exclusiveMaximum': String at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "unexpected type for 'exclusiveMaximum': got String, expected Number or Boolean at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{

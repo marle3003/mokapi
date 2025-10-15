@@ -255,7 +255,7 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			s:    `{ "uniqueItems": true }`,
 			test: func(t *testing.T, r *schema.Schema, err error) {
 				require.NoError(t, err)
-				require.True(t, r.UniqueItems)
+				require.True(t, *r.UniqueItems)
 			},
 		},
 		{
@@ -445,7 +445,7 @@ items:
 uniqueItems: true
 `,
 			fn: func(t *testing.T, r *schema.Schema) {
-				require.True(t, r.UniqueItems)
+				require.True(t, *r.UniqueItems)
 			},
 		},
 		{

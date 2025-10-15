@@ -9,7 +9,6 @@ import (
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
-	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"net/url"
@@ -302,13 +301,13 @@ func TestComponents_Parse(t *testing.T) {
 					cfg := &dynamic.Config{
 						Info: dynamic.ConfigInfo{Url: u},
 						Data: openapitest.NewConfig("3.0",
-							openapitest.WithComponentParameter("foo", &parameter.Parameter{Description: "foo"}),
+							openapitest.WithComponentParameter("foo", &openapi.Parameter{Description: "foo"}),
 						),
 					}
 					return cfg, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithComponentParameterRef("foo", &parameter.Ref{Reference: dynamic.Reference{Ref: "foo.yml#/components/parameters/foo"}}),
+					openapitest.WithComponentParameterRef("foo", &openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml#/components/parameters/foo"}}),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -322,7 +321,7 @@ func TestComponents_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TESTING ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithComponentParameterRef("foo", &parameter.Ref{Reference: dynamic.Reference{Ref: "foo.yml#/components/parameters/foo"}}),
+					openapitest.WithComponentParameterRef("foo", &openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml#/components/parameters/foo"}}),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse components failed: parse parameter 'foo' failed: resolve reference 'foo.yml#/components/parameters/foo' failed: TESTING ERROR")
@@ -368,7 +367,7 @@ func TestComponents_Parse(t *testing.T) {
 					cfg := &dynamic.Config{
 						Info: dynamic.ConfigInfo{Url: u},
 						Data: openapitest.NewConfig("3.0",
-							openapitest.WithComponentHeader("foo", &openapi.Header{Parameter: parameter.Parameter{Description: "foo"}}),
+							openapitest.WithComponentHeader("foo", &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}),
 						),
 					}
 					return cfg, nil
@@ -478,8 +477,8 @@ func TestConfig_Patch_Components(t *testing.T) {
 		{
 			name: "add parameter",
 			configs: []*openapi.Config{
-				{Components: openapi.Components{Parameters: map[string]*parameter.Ref{}}},
-				openapitest.NewConfig("1.0", openapitest.WithComponentParameter("foo", &parameter.Parameter{Description: "foo"})),
+				{Components: openapi.Components{Parameters: map[string]*openapi.ParameterRef{}}},
+				openapitest.NewConfig("1.0", openapitest.WithComponentParameter("foo", &openapi.Parameter{Description: "foo"})),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Equal(t, "foo", result.Components.Parameters["foo"].Value.Description)
@@ -488,8 +487,8 @@ func TestConfig_Patch_Components(t *testing.T) {
 		{
 			name: "patch parameter",
 			configs: []*openapi.Config{
-				openapitest.NewConfig("1.0", openapitest.WithComponentParameter("foo", &parameter.Parameter{Description: "foo"})),
-				openapitest.NewConfig("1.0", openapitest.WithComponentParameter("foo", &parameter.Parameter{Description: "bar"})),
+				openapitest.NewConfig("1.0", openapitest.WithComponentParameter("foo", &openapi.Parameter{Description: "foo"})),
+				openapitest.NewConfig("1.0", openapitest.WithComponentParameter("foo", &openapi.Parameter{Description: "bar"})),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Equal(t, "bar", result.Components.Parameters["foo"].Value.Description)
@@ -519,7 +518,7 @@ func TestConfig_Patch_Components(t *testing.T) {
 			name: "add header",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0"),
-				openapitest.NewConfig("1.0", openapitest.WithComponentHeader("foo", &openapi.Header{Parameter: parameter.Parameter{Description: "foo"}})),
+				openapitest.NewConfig("1.0", openapitest.WithComponentHeader("foo", &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}})),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Equal(t, "foo", result.Components.Headers["foo"].Value.Description)
@@ -528,8 +527,8 @@ func TestConfig_Patch_Components(t *testing.T) {
 		{
 			name: "patch header",
 			configs: []*openapi.Config{
-				openapitest.NewConfig("1.0", openapitest.WithComponentHeader("foo", &openapi.Header{Parameter: parameter.Parameter{Description: "foo"}})),
-				openapitest.NewConfig("1.0", openapitest.WithComponentHeader("foo", &openapi.Header{Parameter: parameter.Parameter{Description: "bar"}})),
+				openapitest.NewConfig("1.0", openapitest.WithComponentHeader("foo", &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}})),
+				openapitest.NewConfig("1.0", openapitest.WithComponentHeader("foo", &openapi.Header{Parameter: openapi.Parameter{Description: "bar"}})),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Equal(t, "bar", result.Components.Headers["foo"].Value.Description)

@@ -36,7 +36,11 @@ test.describe('Dashboard', () => {
         })
 
         await test.step("service table HTTP",async () => {
-            const httpCells = dashboard.http.serviceList.getByRole('cell')
+            const rows = dashboard.http.serviceList.locator('tbody tr')
+            let httpCells = rows.nth(0).getByRole('cell')
+            await expect(httpCells.nth(0)).toHaveText('Books API')
+
+            httpCells = rows.nth(1).getByRole('cell')
             await expect(httpCells.nth(0)).toHaveText('Swagger Petstore')
             await expect(httpCells.nth(1)).toHaveText('This is a sample server Petstore server. You can find out more about at http://swagger.io')
             await expect(httpCells.nth(1).locator('a')).toHaveAttribute('href', 'http://swagger.io')

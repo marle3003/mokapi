@@ -1,11 +1,12 @@
 package schema_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	jsonSchema "mokapi/schema/json/schema"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestConvert(t *testing.T) {
@@ -197,9 +198,9 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			name: "UniqueItems",
-			s:    schematest.New("array", schematest.WithUniqueItems()),
+			s:    schematest.New("array", schematest.WithUniqueItems(true)),
 			test: func(t *testing.T, s *jsonSchema.Schema) {
-				require.Equal(t, true, s.UniqueItems)
+				require.Equal(t, true, *s.UniqueItems)
 			},
 		},
 		{

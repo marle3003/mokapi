@@ -3,7 +3,6 @@ package openapitest
 import (
 	"mokapi/media"
 	"mokapi/providers/openapi"
-	"mokapi/providers/openapi/parameter"
 	"mokapi/providers/openapi/schema"
 	"strconv"
 )
@@ -37,17 +36,17 @@ func WithResponseRef(status int, ref *openapi.ResponseRef) OperationOptions {
 	}
 }
 
-type ParamOptions func(p *parameter.Parameter)
+type ParamOptions func(p *openapi.Parameter)
 
 func WithOperationParam(name string, required bool, opts ...ParamOptions) OperationOptions {
 	return func(o *openapi.Operation) {
 
-		o.Parameters = append(o.Parameters, &parameter.Ref{
-			Value: newParam(name, required, parameter.Path, opts...)})
+		o.Parameters = append(o.Parameters, &openapi.ParameterRef{
+			Value: newParam(name, required, openapi.ParameterPath, opts...)})
 	}
 }
 
-func WithOperationParamRef(ref *parameter.Ref) OperationOptions {
+func WithOperationParamRef(ref *openapi.ParameterRef) OperationOptions {
 	return func(o *openapi.Operation) {
 
 		o.Parameters = append(o.Parameters, ref)
@@ -57,27 +56,27 @@ func WithOperationParamRef(ref *parameter.Ref) OperationOptions {
 func WithQueryParam(name string, required bool, opts ...ParamOptions) OperationOptions {
 	return func(o *openapi.Operation) {
 
-		o.Parameters = append(o.Parameters, &parameter.Ref{
-			Value: newParam(name, required, parameter.Query, opts...)})
+		o.Parameters = append(o.Parameters, &openapi.ParameterRef{
+			Value: newParam(name, required, openapi.ParameterQuery, opts...)})
 	}
 }
 
 func WithCookieParam(name string, required bool, opts ...ParamOptions) OperationOptions {
 	return func(o *openapi.Operation) {
-		o.Parameters = append(o.Parameters, &parameter.Ref{
-			Value: newParam(name, required, parameter.Cookie, opts...)})
+		o.Parameters = append(o.Parameters, &openapi.ParameterRef{
+			Value: newParam(name, required, openapi.ParameterCookie, opts...)})
 	}
 }
 
 func WithHeaderParam(name string, required bool, opts ...ParamOptions) OperationOptions {
 	return func(o *openapi.Operation) {
-		o.Parameters = append(o.Parameters, &parameter.Ref{
-			Value: newParam(name, required, parameter.Header, opts...)})
+		o.Parameters = append(o.Parameters, &openapi.ParameterRef{
+			Value: newParam(name, required, openapi.ParameterHeader, opts...)})
 	}
 }
 
 func WithParamInfo(description string) ParamOptions {
-	return func(p *parameter.Parameter) {
+	return func(p *openapi.Parameter) {
 		p.Description = description
 	}
 }
@@ -99,8 +98,8 @@ func WithRequestBody(description string, required bool, opts ...RequestBodyOptio
 	}
 }
 
-func newParam(name string, required bool, t parameter.Location, opts ...ParamOptions) *parameter.Parameter {
-	p := &parameter.Parameter{
+func newParam(name string, required bool, t openapi.Location, opts ...ParamOptions) *openapi.Parameter {
+	p := &openapi.Parameter{
 		Name:     name,
 		Type:     t,
 		Required: required,
@@ -137,7 +136,7 @@ func WithRequestContent(mediaType string, content *openapi.MediaType) RequestBod
 }
 
 func WithParamSchema(s *schema.Schema) ParamOptions {
-	return func(p *parameter.Parameter) {
+	return func(p *openapi.Parameter) {
 		p.Schema = s
 	}
 }
@@ -151,5 +150,11 @@ func WithSecurity(s map[string][]string) OperationOptions {
 func WithGlobalSecurity(s map[string][]string) ConfigOptions {
 	return func(c *openapi.Config) {
 		c.Security = append(c.Security, s)
+	}
+}
+
+func WithTagName(name string) OperationOptions {
+	return func(o *openapi.Operation) {
+		o.Tags = append(o.Tags, name)
 	}
 }
