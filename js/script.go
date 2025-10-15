@@ -3,7 +3,6 @@ package js
 import (
 	"fmt"
 	"mokapi/config/dynamic"
-	"mokapi/config/static"
 	engine "mokapi/engine/common"
 	"mokapi/js/console"
 	"mokapi/js/encoding"
@@ -39,16 +38,14 @@ type Script struct {
 	runtime  *goja.Runtime
 	host     engine.Host
 	file     *dynamic.Config
-	config   static.JsConfig
 	loop     *eventloop.EventLoop
 	registry *require.Registry
 }
 
-func New(file *dynamic.Config, host engine.Host, config static.JsConfig) (*Script, error) {
+func New(file *dynamic.Config, host engine.Host) (*Script, error) {
 	s := &Script{
-		host:   host,
-		file:   file,
-		config: config,
+		host: host,
+		file: file,
 	}
 
 	var err error
