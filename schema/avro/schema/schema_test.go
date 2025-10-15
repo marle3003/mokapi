@@ -71,6 +71,14 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 				require.Equal(t, "string", s.Type[0].(*schema.Schema).Type[0])
 			},
 		},
+		{
+			name:  "aliases",
+			input: `{ "aliases": ["LinkedLongs"] }`,
+			test: func(t *testing.T, s *schema.Schema, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []string{"LinkedLongs"}, s.Aliases)
+			},
+		},
 	}
 
 	t.Parallel()

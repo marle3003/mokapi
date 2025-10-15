@@ -66,7 +66,7 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 	case *openApiSchema.Schema:
 		s = openApiSchema.ConvertToJsonSchema(t)
 	case *avro.Schema:
-		s = t.Convert()
+		s = avro.ConvertToJsonSchema(t)
 	default:
 		var ok bool
 		s, ok = t.(*jsonSchema.Schema)
@@ -151,7 +151,7 @@ func encodeExample(v interface{}, schema interface{}, schemaFormat string, conte
 		case *avro.Schema:
 			switch {
 			case ct.Subtype == "json":
-				data, err = encoding.NewEncoder(t.Convert()).Write(v, ct)
+				data, err = encoding.NewEncoder(avro.ConvertToJsonSchema(t)).Write(v, ct)
 			case ct.Key() == "avro/binary" || ct.Key() == "application/avro" || ct.Key() == "application/octet-stream":
 				data, err = t.Marshal(v)
 			default:
