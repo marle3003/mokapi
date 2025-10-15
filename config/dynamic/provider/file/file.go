@@ -83,6 +83,7 @@ func (p *Provider) Read(u *url.URL) (*dynamic.Config, error) {
 	if err != nil {
 		return nil, err
 	}
+	config.Info.Url = u
 	config.SourceType = dynamic.SourceReference
 
 	p.watchPath(file)
