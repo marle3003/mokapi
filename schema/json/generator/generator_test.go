@@ -49,6 +49,13 @@ func TestFakeNotDefined(t *testing.T) {
 	gofakeit.Seed(1234567)
 
 	root := generator.FindByName(generator.RootName)
+	require.NotNil(t, root)
+
+	children := root.Children
+	defer func() {
+		root.Children = children
+	}()
+
 	root.Children = []*generator.Node{
 		{
 			Name: "test",
