@@ -175,7 +175,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 				require.Equal(t, 500, rr.Code)
-				require.Equal(t, "neither success response (HTTP 2xx) nor 'default' response found\n", rr.Body.String())
+				require.Equal(t, "resolve success response failed for 'GET /foo': neither success response (HTTP 2xx) nor 'default' response found\n", rr.Body.String())
 			},
 		},
 		{
@@ -187,7 +187,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 				require.Equal(t, 500, rr.Code)
-				require.Equal(t, "neither success response (HTTP 2xx) nor 'default' response found\n", rr.Body.String())
+				require.Equal(t, "resolve success response failed for 'GET /foo': neither success response (HTTP 2xx) nor 'default' response found\n", rr.Body.String())
 			},
 		},
 		{
@@ -1121,7 +1121,7 @@ func TestHandler_Parameter(t *testing.T) {
 
 			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
 				h := openapi.NewHandler(config, &engine{emit: tc.event}, &events.StoreManager{})
-				h.ServeHTTP(rw, r)
+				_ = h.ServeHTTP(rw, r)
 			}, config)
 		})
 	}

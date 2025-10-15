@@ -32,6 +32,17 @@ func TestFindByName(t *testing.T) {
 			},
 		},
 		{
+			name: "absolute /street",
+			test: func(t *testing.T) {
+				n := generator.FindByName("/street")
+				require.NotNil(t, n)
+				require.Equal(t, "street", n.Name)
+				v, err := n.Fake(generator.NewRequest(nil, nil, nil))
+				require.NoError(t, err)
+				require.Equal(t, "75220 Forestborough", v)
+			},
+		},
+		{
 			name: "absolute /house/number",
 			test: func(t *testing.T) {
 				n := generator.FindByName("/house/number")

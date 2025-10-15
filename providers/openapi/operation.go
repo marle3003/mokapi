@@ -2,10 +2,11 @@ package openapi
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"mokapi/config/dynamic"
 	"net/http"
 	"strconv"
+
+	"github.com/pkg/errors"
 )
 
 var NoSuccessResponse = errors.New("neither success response (HTTP 2xx) nor 'default' response found")
@@ -50,6 +51,9 @@ type Operation struct {
 }
 
 func (o *Operation) getFirstSuccessResponse() (int, *Response, error) {
+	if o.Responses == nil {
+		return 0, nil, NoSuccessResponse
+	}
 	for it := o.Responses.Iter(); it.Next(); {
 		status := it.Key()
 		i, err := strconv.Atoi(status)

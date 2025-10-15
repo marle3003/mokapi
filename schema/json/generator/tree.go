@@ -43,7 +43,10 @@ func (n *Node) findByName(name string) *Node {
 		if v[0] == "" {
 			for _, child := range n.Children {
 				if child.Name == v[1] {
-					return child.findByName(strings.Join(v[1:], "/"))
+					if len(v) > 2 {
+						return child.findByName(strings.Join(v[2:], "/"))
+					}
+					return child
 				}
 			}
 		} else {
