@@ -211,44 +211,46 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 			op.Parameters = getParameters(p.Value.Parameters)
 			op.Parameters = append(op.Parameters, getParameters(o.Parameters)...)
 
-			for it := o.Responses.Iter(); it.Next(); {
-				statusCode := it.Key()
-				r := it.Value()
-				if r.Value == nil {
-					continue
-				}
-				res := response{
-					StatusCode:  statusCode,
-					Description: r.Value.Description,
-				}
-				if len(r.Description) > 0 {
-					res.Description = r.Description
-				}
-
-				for ct, r := range r.Value.Content {
-					res.Contents = append(res.Contents, mediaType{
-						Type:   ct,
-						Schema: r.Schema,
-					})
-				}
-				for name, h := range r.Value.Headers {
-					if h.Value == nil {
+			if o.Responses != nil {
+				for it := o.Responses.Iter(); it.Next(); {
+					statusCode := it.Key()
+					r := it.Value()
+					if r.Value == nil {
 						continue
 					}
-
-					hi := header{
-						Name:        name,
-						Description: h.Value.Description,
-						Schema:      h.Value.Schema,
+					res := response{
+						StatusCode:  statusCode,
+						Description: r.Value.Description,
 					}
-					if len(h.Description) > 0 {
-						hi.Description = h.Description
+					if len(r.Description) > 0 {
+						res.Description = r.Description
 					}
 
-					res.Headers = append(res.Headers, hi)
+					for ct, r := range r.Value.Content {
+						res.Contents = append(res.Contents, mediaType{
+							Type:   ct,
+							Schema: r.Schema,
+						})
+					}
+					for name, h := range r.Value.Headers {
+						if h.Value == nil {
+							continue
+						}
+
+						hi := header{
+							Name:        name,
+							Description: h.Value.Description,
+							Schema:      h.Value.Schema,
+						}
+						if len(h.Description) > 0 {
+							hi.Description = h.Description
+						}
+
+						res.Headers = append(res.Headers, hi)
+					}
+
+					op.Responses = append(op.Responses, res)
 				}
-
-				op.Responses = append(op.Responses, res)
 			}
 
 			requirements := append(o.Security, s.Security...)
