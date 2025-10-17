@@ -95,6 +95,9 @@ function errors(path: HttpPath){
 }
 
 function allOperationsDeprecated(path: HttpPath): boolean{
+    if (!path.operations) {
+        return false;
+    }
     for (var op of path.operations){
         if (!op.deprecated){
             return false

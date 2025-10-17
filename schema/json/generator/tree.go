@@ -3,8 +3,10 @@ package generator
 import (
 	"errors"
 	"fmt"
-	"github.com/jinzhu/inflection"
 	"mokapi/schema/json/parser"
+	"strings"
+
+	"github.com/jinzhu/inflection"
 )
 
 var NoMatchFound = errors.New("no match found")
@@ -36,6 +38,28 @@ func FindByName(name string) *Node {
 }
 
 func (n *Node) findByName(name string) *Node {
+	v := strings.Split(name, "/")
+	if len(v) > 1 {
+		if v[0] == "" {
+			for _, child := range n.Children {
+				if child.Name == v[1] {
+					if len(v) > 2 {
+						return child.findByName(strings.Join(v[2:], "/"))
+					}
+					return child
+				}
+			}
+		} else {
+			found := FindByName(v[0])
+			if found == nil {
+				return nil
+			}
+			return found.findByName(strings.Join(v[1:], "/"))
+		}
+
+		return nil
+	}
+
 	for _, child := range n.Children {
 		if child.Name == name {
 			return child

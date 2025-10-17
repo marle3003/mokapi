@@ -1,9 +1,6 @@
 package faker_test
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/dop251/goja"
-	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/enginetest"
@@ -13,6 +10,10 @@ import (
 	"mokapi/js/require"
 	"mokapi/schema/json/generator"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/dop251/goja"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestTree(t *testing.T) {
@@ -194,6 +195,59 @@ func TestTree(t *testing.T) {
 			},
 		},
 		{
+			name: "set children",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				root := generator.NewNode("root")
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					if name == "root" {
+						return root
+					}
+					return nil
+				}
+
+				_, err := vm.RunString(`
+					const m = require('faker');
+					const root = m.findByName('root');
+					root.children = [{
+						name: 'foo',
+					}];
+				`)
+				r.NoError(t, err)
+				r.Equal(t, []string{"foo"}, getNames(root.Children))
+
+				cleanup(host)
+				r.Equal(t, []string{}, getNames(root.Children))
+			},
+		},
+		{
+			name: "access and set children",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				root := generator.NewNode("root")
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					if name == "root" {
+						return root
+					}
+					return nil
+				}
+
+				v, err := vm.RunString(`
+					const m = require('faker');
+					const root = m.findByName('root');
+					const children = root.children
+					root.children = [{
+						name: 'foo',
+					}];
+					children[0].name
+				`)
+				r.NoError(t, err)
+				r.Equal(t, "foo", v.Export())
+				r.Equal(t, []string{"foo"}, getNames(root.Children))
+
+				cleanup(host)
+				r.Equal(t, []string{}, getNames(root.Children))
+			},
+		},
+		{
 			name: "set child using index operator",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				root := generator.NewNode("root")
@@ -213,6 +267,33 @@ func TestTree(t *testing.T) {
 				`)
 				r.NoError(t, err)
 				r.Equal(t, []string{"foo"}, getNames(root.Children))
+
+				cleanup(host)
+				r.Equal(t, []string{}, getNames(root.Children))
+			},
+		},
+		{
+			name: "set child using index operator with children",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				root := generator.NewNode("root")
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					if name == "root" {
+						return root
+					}
+					return nil
+				}
+
+				_, err := vm.RunString(`
+					const m = require('faker');
+					const root = m.findByName('root');
+					root.children[0] = {
+						name: 'foo',
+						children: [{ name: 'bar' }]
+					};
+				`)
+				r.NoError(t, err)
+				r.Equal(t, []string{"foo"}, getNames(root.Children))
+				r.Equal(t, []string{"bar"}, getNames(root.Children[0].Children))
 
 				cleanup(host)
 				r.Equal(t, []string{}, getNames(root.Children))

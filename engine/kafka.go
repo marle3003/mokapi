@@ -206,7 +206,7 @@ func createValue(r *asyncapi3.SchemaRef) (value interface{}, err error) {
 	case *openapi.Schema:
 		value, err = openapi.CreateValue(v)
 	case *avro.Schema:
-		jsSchema := v.Convert()
+		jsSchema := avro.ConvertToJsonSchema(v)
 		value, err = generator.New(&generator.Request{Schema: jsSchema})
 	default:
 		err = fmt.Errorf("schema format not supported: %v", r.Value.Format)
@@ -289,7 +289,7 @@ func valueMatchMessagePayload(value any, msg *asyncapi3.Message) bool {
 		_, err := v.Marshal(value, media.ParseContentType("application/json"))
 		return err == nil
 	case *avro.Schema:
-		jsSchema := v.Convert()
+		jsSchema := avro.ConvertToJsonSchema(v)
 		_, err := encoding.NewEncoder(jsSchema).Write(value, media.ParseContentType("application/json"))
 		return err == nil
 	default:

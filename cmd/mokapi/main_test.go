@@ -34,7 +34,7 @@ providers:
     file:
         filenames: []
         directories: []
-        skipprefix:
+        skipPrefix:
             - _
         include: []
     git:
@@ -59,11 +59,8 @@ api:
     dashboard: true
     search:
         enabled: false
-        types: []
 rootCaCert: ""
 rootCaKey: ""
-js:
-    globalfolders: []
 configs: []
 event:
     store:
@@ -83,7 +80,7 @@ data-gen:
 				require.Equal(t, `file:
     filenames: []
     directories: []
-    skipprefix:
+    skipPrefix:
         - _
     include: []
 git:

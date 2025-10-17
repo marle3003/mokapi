@@ -2,12 +2,13 @@ package faker
 
 import (
 	"fmt"
-	"github.com/dop251/goja"
 	"mokapi/engine/common"
 	"mokapi/js/util"
 	"mokapi/providers/openapi/schema"
 	"mokapi/schema/json/generator"
 	"reflect"
+
+	"github.com/dop251/goja"
 )
 
 type Module struct {
@@ -23,9 +24,9 @@ func Require(rt *goja.Runtime, module *goja.Object) {
 		host: host,
 	}
 	obj := module.Get("exports").(*goja.Object)
-	obj.Set("fake", f.Fake)
-	obj.Set("findByName", f.FindByName)
-	obj.Set("ROOT_NAME", generator.RootName)
+	_ = obj.Set("fake", f.Fake)
+	_ = obj.Set("findByName", f.FindByName)
+	_ = obj.Set("ROOT_NAME", generator.RootName)
 }
 
 func (m *Module) Fake(v goja.Value) interface{} {

@@ -21,7 +21,6 @@ import (
 	"mokapi/server/cert"
 	"mokapi/version"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -33,10 +32,6 @@ type Cmd struct {
 
 func Start(cfg *static.Config) (*Cmd, error) {
 	log.SetLevel(log.DebugLevel)
-
-	if len(cfg.Services) > 0 {
-		return nil, errors.New("static configuration Services are no longer supported. Use patching instead.")
-	}
 
 	feature.Enable(cfg.Features)
 

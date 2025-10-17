@@ -186,7 +186,13 @@ func (s *Schema) fromMap(m map[string]interface{}) error {
 		case "doc":
 			s.Doc = v.(string)
 		case "aliases":
-			s.Aliases = v.([]string)
+			if items, ok := v.([]any); ok {
+				for _, a := range items {
+					s.Aliases = append(s.Aliases, a.(string))
+				}
+			} else {
+				return fmt.Errorf("cannot unmarshal schema aliases")
+			}
 		case "fields":
 			fields := v.([]interface{})
 			for _, field := range fields {

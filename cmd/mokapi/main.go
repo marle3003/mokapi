@@ -66,11 +66,6 @@ func main() {
 
 	fmt.Printf(logo, version.BuildVersion, strings.Repeat(" ", 17-len(versionString)))
 
-	if len(cfg.Services) > 0 {
-		fmt.Println("static configuration Services are no longer supported. Use patching instead.")
-		return
-	}
-
 	configureLogging(cfg)
 	registerDynamicTypes()
 
@@ -139,19 +134,17 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 func configureLogging(cfg *static.Config) {
 	stdlog.SetFlags(stdlog.Lshortfile | stdlog.LstdFlags)
 
-	if cfg.Log != nil {
-		level, err := log.ParseLevel(cfg.Log.Level)
-		if err != nil {
-			log.WithField("logLevel", cfg.Log.Level).Errorf("error parsing log level: %v", err.Error())
-		}
-		log.SetLevel(level)
+	level, err := log.ParseLevel(cfg.Log.Level)
+	if err != nil {
+		log.WithField("logLevel", cfg.Log.Level).Errorf("error parsing log level: %v", err.Error())
+	}
+	log.SetLevel(level)
 
-		if strings.ToLower(cfg.Log.Format) == "json" {
-			log.SetFormatter(&log.JSONFormatter{})
-		} else {
-			formatter := &log.TextFormatter{DisableColors: false, FullTimestamp: true, DisableSorting: true}
-			log.SetFormatter(formatter)
-		}
+	if strings.ToLower(cfg.Log.Format) == "json" {
+		log.SetFormatter(&log.JSONFormatter{})
+	} else {
+		formatter := &log.TextFormatter{DisableColors: false, FullTimestamp: true, DisableSorting: true}
+		log.SetFormatter(formatter)
 	}
 }
 

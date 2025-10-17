@@ -227,6 +227,26 @@ func TestConvert(t *testing.T) {
 				require.Equal(t, []interface{}{"foo", "bar", "yuh"}, f2.AnyOf[0].Enum)
 			},
 		},
+		{
+			name: "loop",
+			s: &Schema{
+				Type: []interface{}{"record"},
+				Name: "List",
+				Fields: []*Schema{
+					{
+						Name: "next",
+						Type: []interface{}{"null", "List"},
+					},
+				},
+			},
+			test: func(t *testing.T, js *json.Schema) {
+				require.Equal(t, "object", js.Type.String())
+				require.Equal(t, 1, js.Properties.Len())
+				anyOf := js.Properties.Get("next").AnyOf
+				require.Equal(t, "schema type=null", anyOf[0].String())
+				require.Equal(t, js, anyOf[1])
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -236,7 +256,7 @@ func TestConvert(t *testing.T) {
 			err := tc.s.Parse(&dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: tc.s}, &dynamictest.Reader{})
 			require.NoError(t, err)
 
-			js := tc.s.Convert()
+			js := ConvertToJsonSchema(tc.s)
 			tc.test(t, js)
 		})
 	}
