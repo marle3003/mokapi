@@ -77,10 +77,9 @@ func NewLogEventContext(r *http.Request, deprecated bool, eh events.Handler, tra
 	for k, v := range r.Header {
 		raw := strings.Join(v, ",")
 		param := HttpParameter{
-			Name:  k,
-			Type:  string(ParameterHeader),
-			Value: raw,
-			Raw:   &raw,
+			Name: k,
+			Type: string(ParameterHeader),
+			Raw:  &raw,
 		}
 		if params != nil {
 			if pp, ok := params.Header[k]; ok {
