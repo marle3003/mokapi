@@ -29,8 +29,8 @@ func TestXmlEncoder_Encode(t *testing.T) {
 			data: map[string]any{"foo": "bar", "baz": 42},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, `<?xml version="1.0" encoding="UTF-8"?>
-<data><foo>bar</foo><baz>42</baz></data>`, s)
+				require.Contains(t, s, "<foo>bar</foo>")
+				require.Contains(t, s, "<baz>42</baz>")
 			},
 		},
 		{

@@ -116,12 +116,9 @@ func TestCommand(t *testing.T) {
 		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
 			var cmd *Command
 			var args []string
 			root := tc.cmd()
