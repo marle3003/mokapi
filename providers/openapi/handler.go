@@ -69,7 +69,12 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 
 	status, res, err := op.getFirstSuccessResponse()
 	if err != nil {
-		writeError(rw, r, err, h.config.Info.Name)
+		writeError(
+			rw,
+			r,
+			fmt.Errorf("resolve success response failed for '%s %s': %w", r.Method, op.Path.Path, err),
+			h.config.Info.Name,
+		)
 		return
 	} else if res == nil {
 		writeError(rw, r, fmt.Errorf("response not defined for HTTP status %v", status), h.config.Info.Name)

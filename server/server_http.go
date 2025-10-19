@@ -3,7 +3,6 @@ package server
 import (
 	"fmt"
 	"mokapi/config/dynamic"
-	"mokapi/config/static"
 	"mokapi/engine/common"
 	"mokapi/providers/openapi"
 	"mokapi/runtime"
@@ -26,7 +25,6 @@ type HttpManager struct {
 	eventEmitter common.EventEmitter
 	certStore    *cert.Store
 	app          *runtime.App
-	services     static.Services
 	m            sync.RWMutex
 }
 

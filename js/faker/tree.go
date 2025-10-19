@@ -2,9 +2,12 @@ package faker
 
 import (
 	"fmt"
-	"github.com/dop251/goja"
 	"mokapi/js/util"
 	"mokapi/schema/json/generator"
+	"reflect"
+	"strconv"
+
+	"github.com/dop251/goja"
 )
 
 type converter[T any] func(v goja.Value) T
@@ -15,10 +18,6 @@ func (m *Module) FindByName(name string) goja.Value {
 		return nil
 	}
 	return NewNode(m, n)
-}
-
-func (n *Node) Fake(r *generator.Request) (interface{}, error) {
-	return n.fake(r)
 }
 
 func convertToNode(v goja.Value, m *Module) *generator.Node {
@@ -49,6 +48,18 @@ func convertToNode(v goja.Value, m *Module) *generator.Node {
 			case "dependsOn":
 				i := obj.Get(k).Export()
 				n.Attributes = toStringArray(i)
+			case "children":
+				val := obj.Get(k)
+				if val.ExportType().Kind() != reflect.Slice {
+					s := fmt.Sprintf("unexpected type for 'children': got %s, expected Array", util.JsType(val))
+					panic(m.vm.ToValue(s))
+				}
+				arr := val.ToObject(m.vm)
+				length := int(arr.Get("length").ToInteger())
+				for i := 0; i < length; i++ {
+					item := arr.Get(strconv.Itoa(i))
+					n.Children = append(n.Children, convertToNode(item, m))
+				}
 			}
 		}
 		if n.Name == "" {

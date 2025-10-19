@@ -1,0 +1,82 @@
+{
+  "$id": "/schemas/pet",
+  "type": "object",
+  "required": ["name", "photoUrls"],
+  "properties": {
+    "id": {
+      "type": "integer",
+      "format": "int64"
+    },
+    "category": {
+      "$ref": "#/$defs/category"
+    },
+    "name":{
+      "type"  :  "string",
+    "example": "doggie"
+    },
+    "photoUrls": {
+      "type": "array",
+      "items": {
+        "type"  :  "string"
+      },
+      "xml": {
+        "name": "photoUrl",
+        "wrapped": true
+      }
+    },
+    "tags": {
+        "type": "array",
+        "items":  {
+          "$ref": "#/$defs/tag"
+        },
+        "xml": {
+          "name": "tag",
+          "wrapped": true
+        }
+      },
+    "status": {
+      "type": "string",
+      "description": "pet status in the store",
+      "enum": [
+        "available",
+        "pending",
+        "sold"
+      ]
+    }
+  },
+  "xml": {
+    "name": "Pet"
+  },
+  "$defs": {
+    "category": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "xml": {
+        "name": "Category"
+      }
+    },
+    "tag": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "xml": {
+        "name": "Tag"
+      }
+    }
+  }
+}

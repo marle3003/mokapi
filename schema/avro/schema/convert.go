@@ -5,11 +5,25 @@ import (
 	"mokapi/sortedmap"
 )
 
-func (s *Schema) Convert() *json.Schema {
+type JsonSchemaConverter struct {
+	history map[*Schema]*json.Schema
+}
+
+func ConvertToJsonSchema(s *Schema) *json.Schema {
+	c := &JsonSchemaConverter{history: make(map[*Schema]*json.Schema)}
+	return c.Convert(s)
+}
+
+func (c *JsonSchemaConverter) Convert(s *Schema) *json.Schema {
+	if js, ok := c.history[s]; ok {
+		return js
+	}
+
 	js := &json.Schema{
 		Title:       s.fullname,
 		Description: s.Doc,
 	}
+	c.history[s] = js
 
 	if len(s.Type) > 1 {
 		for _, t := range s.Type {
@@ -17,7 +31,7 @@ func (s *Schema) Convert() *json.Schema {
 			case string:
 				name := getFullname(s, v)
 				if named, ok := table[name]; ok {
-					js.AnyOf = append(js.AnyOf, named.Convert())
+					js.AnyOf = append(js.AnyOf, c.Convert(named))
 				} else {
 					jsAny := &json.Schema{Type: json.Types{getJsonType(v)}}
 					if v == "int" {
@@ -26,7 +40,7 @@ func (s *Schema) Convert() *json.Schema {
 					js.AnyOf = append(js.AnyOf, jsAny)
 				}
 			case *Schema:
-				js.AnyOf = append(js.AnyOf, v.Convert())
+				js.AnyOf = append(js.AnyOf, c.Convert(v))
 			}
 		}
 		return js
@@ -35,7 +49,7 @@ func (s *Schema) Convert() *json.Schema {
 		if str, ok := s.Type[0].(string); ok {
 			name := getFullname(s, str)
 			if named, ok := table[name]; ok {
-				js.AnyOf = append(js.AnyOf, named.Convert())
+				js.AnyOf = append(js.AnyOf, c.Convert(named))
 			} else {
 				jsType := getJsonType(str)
 				js.Type = append(js.Type, jsType)
@@ -44,14 +58,14 @@ func (s *Schema) Convert() *json.Schema {
 				}
 			}
 		} else if wrapped, ok := s.Type[0].(*Schema); ok {
-			js.AnyOf = append(js.AnyOf, wrapped.Convert())
+			js.AnyOf = append(js.AnyOf, c.Convert(wrapped))
 		}
 	}
 
 	if len(s.Fields) > 0 {
 		js.Properties = &json.Schemas{LinkedHashMap: sortedmap.LinkedHashMap[string, *json.Schema]{}}
 		for _, f := range s.Fields {
-			js.Properties.Set(f.Name, f.Convert())
+			js.Properties.Set(f.Name, c.Convert(f))
 		}
 	}
 
@@ -60,11 +74,11 @@ func (s *Schema) Convert() *json.Schema {
 	}
 
 	if s.Items != nil {
-		js.Items = s.Items.Convert()
+		js.Items = c.Convert(s.Items)
 	}
 
 	if s.Values != nil {
-		js.AdditionalProperties = s.Values.Convert()
+		js.AdditionalProperties = c.Convert(s.Values)
 	}
 
 	if len(s.Type) == 1 && s.Type[0] == "fixed" {
