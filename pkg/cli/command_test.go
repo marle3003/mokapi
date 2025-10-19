@@ -21,7 +21,7 @@ func TestCommand(t *testing.T) {
 		{
 			name: "--help",
 			cmd: func() *Command {
-				c := &Command{Name: "foo", EnvPrefix: "Mokapi"}
+				c := &Command{Name: "foo", envPrefix: "Mokapi"}
 				c.Flags().Bool("help", false, "")
 				return c
 			},
@@ -35,7 +35,7 @@ func TestCommand(t *testing.T) {
 		{
 			name: "-h",
 			cmd: func() *Command {
-				c := &Command{Name: "foo", EnvPrefix: "Mokapi"}
+				c := &Command{Name: "foo", envPrefix: "Mokapi"}
 				c.Flags().BoolShort("help", "h", false, "")
 				return c
 			},
@@ -49,7 +49,7 @@ func TestCommand(t *testing.T) {
 		{
 			name: "bind to config",
 			cmd: func() *Command {
-				c := &Command{Config: cfg, EnvPrefix: "Mokapi"}
+				c := &Command{Config: cfg, envPrefix: "Mokapi"}
 				c.Flags().Bool("flag", false, "")
 				return c
 			},
@@ -63,7 +63,7 @@ func TestCommand(t *testing.T) {
 		{
 			name: "--count",
 			cmd: func() *Command {
-				c := &Command{Config: cfg, EnvPrefix: "Mokapi"}
+				c := &Command{Config: cfg, envPrefix: "Mokapi"}
 				c.Flags().Int("count", 12, "")
 				return c
 			},
@@ -76,7 +76,7 @@ func TestCommand(t *testing.T) {
 		{
 			name: "--count default",
 			cmd: func() *Command {
-				c := &Command{Config: cfg, EnvPrefix: "Mokapi"}
+				c := &Command{Config: cfg, envPrefix: "Mokapi"}
 				c.Flags().Int("count", 12, "")
 				return c
 			},
@@ -89,7 +89,7 @@ func TestCommand(t *testing.T) {
 		{
 			name: "--skip-prefix",
 			cmd: func() *Command {
-				c := &Command{Config: cfg, EnvPrefix: "Mokapi"}
+				c := &Command{Config: cfg, envPrefix: "Mokapi"}
 				c.Flags().StringSlice("skip-prefix", []string{"_"}, "", false)
 				return c
 			},
@@ -103,7 +103,7 @@ func TestCommand(t *testing.T) {
 		{
 			name: "--skip-prefix default",
 			cmd: func() *Command {
-				c := &Command{Config: cfg, EnvPrefix: "Mokapi"}
+				c := &Command{Config: cfg, envPrefix: "Mokapi"}
 				c.Flags().StringSlice("skip-prefix", []string{"_"}, "", false)
 				return c
 			},
