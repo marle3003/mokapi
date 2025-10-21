@@ -16,6 +16,72 @@ func TestServer_Select(t *testing.T) {
 		test    func(t *testing.T, c *imap.Client)
 	}{
 		{
+			name: "select inbox raw",
+			handler: &imaptest.Handler{
+				SelectFunc: func(mailbox string, readonly bool, session map[string]interface{}) (*imap.Selected, error) {
+					require.False(t, readonly)
+					return &imap.Selected{
+						NumMessages: 172,
+						NumRecent:   1,
+						FirstUnseen: 12,
+						UIDValidity: 3857529045,
+						UIDNext:     4392,
+						Flags:       []imap.Flag{imap.FlagAnswered, imap.FlagFlagged, imap.FlagDeleted, imap.FlagSeen, imap.FlagDraft},
+					}, nil
+				},
+			},
+			test: func(t *testing.T, c *imap.Client) {
+				_, err := c.Dial()
+				require.NoError(t, err)
+				err = c.PlainAuth("", "bob", "password")
+				require.NoError(t, err)
+				res, err := c.Send("SELECT INBOX")
+				require.NoError(t, err)
+				require.Equal(t, []string{
+					"* 172 EXISTS",
+					"* 1 RECENT",
+					"* OK [UNSEEN 12] Message 12 is first unseen",
+					"* OK [UIDVALIDITY 3857529045] UIDs valid",
+					"* OK [UIDNEXT 4392] Predicted next UID",
+					"* FLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft)",
+					"A0002 OK [READ-WRITE] SELECT completed",
+				}, res)
+			},
+		},
+		{
+			name: "examine inbox raw",
+			handler: &imaptest.Handler{
+				SelectFunc: func(mailbox string, readonly bool, session map[string]interface{}) (*imap.Selected, error) {
+					require.True(t, readonly)
+					return &imap.Selected{
+						NumMessages: 172,
+						NumRecent:   1,
+						FirstUnseen: 12,
+						UIDValidity: 3857529045,
+						UIDNext:     4392,
+						Flags:       []imap.Flag{imap.FlagAnswered, imap.FlagFlagged, imap.FlagDeleted, imap.FlagSeen, imap.FlagDraft},
+					}, nil
+				},
+			},
+			test: func(t *testing.T, c *imap.Client) {
+				_, err := c.Dial()
+				require.NoError(t, err)
+				err = c.PlainAuth("", "bob", "password")
+				require.NoError(t, err)
+				res, err := c.Send("EXAMINE INBOX")
+				require.NoError(t, err)
+				require.Equal(t, []string{
+					"* 172 EXISTS",
+					"* 1 RECENT",
+					"* OK [UNSEEN 12] Message 12 is first unseen",
+					"* OK [UIDVALIDITY 3857529045] UIDs valid",
+					"* OK [UIDNEXT 4392] Predicted next UID",
+					"* FLAGS (\\Answered \\Flagged \\Deleted \\Seen \\Draft)",
+					"A0002 OK [READ-ONLY] SELECT completed",
+				}, res)
+			},
+		},
+		{
 			name: "select inbox",
 			handler: &imaptest.Handler{
 				SelectFunc: func(mailbox string, readonly bool, session map[string]interface{}) (*imap.Selected, error) {
