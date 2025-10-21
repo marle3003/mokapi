@@ -22,7 +22,7 @@ func TestServer(t *testing.T) {
 			test: func(t *testing.T, c *imap.Client) {
 				caps, err := c.Dial()
 				require.NoError(t, err)
-				require.Equal(t, []string{"IMAP4rev1", "SASL-IR", "AUTH=PLAIN"}, caps)
+				require.Equal(t, []string{"IMAP4rev1", "AUTH=PLAIN", "SASL-IR"}, caps)
 			},
 		},
 		{
@@ -41,7 +41,7 @@ func TestServer(t *testing.T) {
 				require.NoError(t, err)
 				caps, err := c.Capability()
 				require.NoError(t, err)
-				require.Equal(t, []string{"IMAP4rev1", "SASL-IR", "AUTH=PLAIN"}, caps)
+				require.Equal(t, []string{"IMAP4rev1", "AUTH=PLAIN", "SASL-IR"}, caps)
 			},
 		},
 	}
@@ -90,7 +90,7 @@ func TestServer_Tls(t *testing.T) {
 	res, err := c.DialTls(cfg)
 	require.NoError(t, err)
 	// should not contain StartTls
-	require.Equal(t, []string{"IMAP4rev1", "SASL-IR", "AUTH=PLAIN"}, res)
+	require.Equal(t, []string{"IMAP4rev1", "AUTH=PLAIN", "SASL-IR"}, res)
 }
 
 func mustDial(t *testing.T, c *imap.Client) {

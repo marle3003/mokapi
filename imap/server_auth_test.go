@@ -91,7 +91,7 @@ func TestServer_Auth(t *testing.T) {
 				secret = base64.StdEncoding.EncodeToString([]byte(secret))
 				r, err = c.SendRaw(secret)
 				require.NoError(t, err)
-				require.Equal(t, "A1 OK Authenticated", r)
+				require.Equal(t, "A1 OK [IMAP4rev1 IDLE MOVE UIDPLUS UNSELECT] Logged in", r)
 			},
 		},
 		{
@@ -105,7 +105,7 @@ func TestServer_Auth(t *testing.T) {
 				require.NoError(t, err)
 				lines, err := c.Send("CAPABILITY")
 				require.NoError(t, err)
-				require.Equal(t, "* CAPABILITY IMAP4rev1 SASL-IR UIDPLUS MOVE UNSELECT", lines[0])
+				require.Equal(t, "* CAPABILITY IMAP4rev1 IDLE MOVE UIDPLUS UNSELECT", lines[0])
 				require.Equal(t, "A0002 OK CAPABILITY completed", lines[1])
 			},
 		},
