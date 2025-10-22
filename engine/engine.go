@@ -7,6 +7,7 @@ import (
 	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"mokapi/runtime/metrics"
+	"sort"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -163,6 +164,10 @@ func (e *Engine) IsLevelEnabled(level string) bool {
 	return e.logger.IsLevelEnabled(level)
 }
 
+func NewStore() *Store {
+	return &Store{data: make(map[string]any)}
+}
+
 func (s *Store) Get(key string) any {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -173,4 +178,62 @@ func (s *Store) Set(key string, value any) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.data[key] = value
+}
+
+func (s *Store) Has(key string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	_, ok := s.data[key]
+	return ok
+}
+
+func (s *Store) Delete(key string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.data, key)
+}
+
+func (s *Store) Clear() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.data = make(map[string]any)
+}
+
+func (s *Store) Keys() []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	keys := make([]string, 0, len(s.data))
+	for k := range s.data {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func (s *Store) Update(key string, fn func(v any) any) any {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	v := fn(s.data[key])
+	s.data[key] = v
+	return v
+}
+
+func (s *Store) Namespace(name string) common.Store {
+	s.mu.Lock()
+	v, ok := s.data[name]
+	s.mu.Unlock()
+	if ok {
+		ns, ok := v.(*Store)
+
+		if !ok {
+			return nil
+		}
+		return ns
+	}
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	ns := &Store{data: make(map[string]any)}
+	s.data[name] = ns
+	return ns
 }

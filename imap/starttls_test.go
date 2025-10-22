@@ -30,7 +30,7 @@ func TestServer_StartTLS(t *testing.T) {
 			test: func(t *testing.T, c *imap.Client) {
 				caps, err := c.Dial()
 				require.NoError(t, err)
-				require.Equal(t, []string{"IMAP4rev1", "SASL-IR", "STARTTLS", "AUTH=PLAIN"}, caps)
+				require.Equal(t, []string{"IMAP4rev1", "STARTTLS", "AUTH=PLAIN", "SASL-IR"}, caps)
 			},
 		},
 		{

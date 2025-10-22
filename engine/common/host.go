@@ -174,4 +174,10 @@ type FakerNode interface {
 type Store interface {
 	Get(string) any
 	Set(string, any)
+	Has(string) bool
+	Delete(string)
+	Clear()
+	Update(key string, fn func(v any) any) any
+	Keys() []string
+	Namespace(name string) Store
 }

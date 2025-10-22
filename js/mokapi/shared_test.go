@@ -3,6 +3,7 @@ package mokapi_test
 import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
+	"mokapi/engine"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/eventloop"
@@ -15,7 +16,7 @@ import (
 )
 
 func TestModule_Shared(t *testing.T) {
-	vmFactory := func(reg *require.Registry, store *enginetest.Store) func() *goja.Runtime {
+	vmFactory := func(reg *require.Registry, store *engine.Store) func() *goja.Runtime {
 		return func() *goja.Runtime {
 			vm := goja.New()
 			vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
@@ -218,7 +219,7 @@ func TestModule_Shared(t *testing.T) {
 			reg.RegisterNativeModule("mokapi", mokapi.Require)
 			r.NoError(t, err)
 
-			tc.test(t, vmFactory(reg, &enginetest.Store{}))
+			tc.test(t, vmFactory(reg, engine.NewStore()))
 		})
 	}
 }

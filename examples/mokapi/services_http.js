@@ -775,5 +775,50 @@ export let events = [
                 }
             ]
         }
+    },
+    {
+        id: "a5409fc1-6a5a-4c0b-be39-a6b80885e41b",
+        traits: {
+            namespace: "http",
+            name: "Swagger Petstore",
+            path: "/requestWithParams",
+            method: 'GET'
+        },
+        time: '2023-02-13T10:05:25.583366+01:00',
+        data: {
+            request: {
+                method: "GET",
+                url: "http://127.0.0.1:18080/requestWithParams",
+                contentType: "application/json",
+                parameters: [
+                    {
+                        name: "foo",
+                        type: "query",
+                        value: `"bar"`,
+                        raw: "bar"
+                    },
+                    {
+                        name: "debug",
+                        type: "header",
+                        value: `{"foo":"bar"}`,
+                        raw: "bar"
+                    },
+                    {
+                        name: "noSpec",
+                        type: "header",
+                        raw: "bar"
+                    }
+                ]
+            },
+            response: {
+                statusCode: 500,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: `{"id": 0,"category": {"id": 0,"name": "string"},"name": "doggie","photoUrls": ["string"],"tags":[{"id": 0,"name": "string"}],"status": "available"}`,
+                size: 512
+            },
+            duration: 133,
+        }
     }
 ]

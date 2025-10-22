@@ -183,13 +183,6 @@ func (c *Client) StartTLS() error {
 	return nil
 }
 
-func (c *Client) Login(username, password string) (string, error) {
-	c.tpc.PrintfLine("A%v AUTHENTICATE PLAIN", c.nextTag())
-	r, err := c.tpc.ReadLine()
-
-	return r, err
-}
-
 func (c *Client) PlainAuth(identity, username, password string) error {
 	_, err := c.send("AUTHENTICATE PLAIN")
 	saslClient := sasl.NewPlainClient(identity, username, password)

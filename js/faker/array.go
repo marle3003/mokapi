@@ -1,8 +1,9 @@
 package faker
 
 import (
-	"github.com/dop251/goja"
 	"strconv"
+
+	"github.com/dop251/goja"
 )
 
 type TrackObject[T any] interface {
@@ -133,4 +134,8 @@ func (a *TrackArray[T]) Keys() []string {
 	}
 	keys = append(keys, "length")
 	return keys
+}
+
+func (a *TrackArray[T]) Export() any {
+	return a.array
 }

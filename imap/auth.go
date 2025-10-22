@@ -2,6 +2,7 @@ package imap
 
 import (
 	"encoding/base64"
+	"fmt"
 	"mokapi/sasl"
 	"strings"
 )
@@ -74,9 +75,11 @@ func (c *conn) handleAuth(_, param string) *response {
 
 	c.state = AuthenticatedState
 
+	caps := c.getCapabilities()
 	return &response{
 		status: ok,
-		text:   "Authenticated",
+		code:   responseCode(fmt.Sprintf("%s", caps)),
+		text:   "Logged in",
 	}
 }
 
@@ -95,9 +98,13 @@ func (c *conn) handleLogin(tag, param string) error {
 	if err != nil {
 		return err
 	}
+
+	c.state = AuthenticatedState
+
+	caps := c.getCapabilities()
 	return c.writeResponse(tag, &response{
 		status: ok,
-		code:   readWrite,
-		text:   "SELECT completed",
+		code:   responseCode(fmt.Sprintf("%s", caps)),
+		text:   "Logged in",
 	})
 }

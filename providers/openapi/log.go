@@ -8,6 +8,7 @@ import (
 	"mokapi/lib"
 	"mokapi/runtime/events"
 	"net/http"
+	"net/textproto"
 	"strings"
 )
 
@@ -74,6 +75,10 @@ func NewLogEventContext(r *http.Request, deprecated bool, eh events.Handler, tra
 		}
 	}
 
+	var parsedHeaders = map[string]bool{}
+	if params != nil {
+		parsedHeaders = getParsedHeaders(params.Header)
+	}
 	for k, v := range r.Header {
 		raw := strings.Join(v, ",")
 		param := HttpParameter{
@@ -81,13 +86,12 @@ func NewLogEventContext(r *http.Request, deprecated bool, eh events.Handler, tra
 			Type: string(ParameterHeader),
 			Raw:  &raw,
 		}
-		if params != nil {
-			if pp, ok := params.Header[k]; ok {
-				val, _ := json.Marshal(pp)
-				param.Value = string(val)
-			}
+
+		if _, ok := parsedHeaders[k]; ok {
+			continue
 		}
 		l.Request.Parameters = append(l.Request.Parameters, param)
+
 	}
 
 	err := eh.Push(l, traits.WithNamespace("http"))
@@ -118,4 +122,12 @@ func (l *HttpRequestLog) setParams(name string, params map[string]RequestParamet
 			Raw:   v.Raw,
 		})
 	}
+}
+
+func getParsedHeaders(headers map[string]RequestParameterValue) map[string]bool {
+	result := map[string]bool{}
+	for k := range headers {
+		result[textproto.CanonicalMIMEHeaderKey(k)] = true
+	}
+	return result
 }

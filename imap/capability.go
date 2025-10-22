@@ -14,17 +14,18 @@ const (
 	uidPlus  capability = "UIDPLUS"
 	move     capability = "MOVE"
 	unselect capability = "UNSELECT"
+	idle     capability = "IDLE"
 )
 
 type capabilities []capability
 
 func (c capabilities) String() string {
 	var sb strings.Builder
-	for i, cap := range c {
+	for i, e := range c {
 		if i > 0 {
 			sb.WriteString(" ")
 		}
-		sb.WriteString(string(cap))
+		sb.WriteString(string(e))
 	}
 	return sb.String()
 }
@@ -50,16 +51,16 @@ func (c *conn) handleCapability() *response {
 }
 
 func (c *conn) getCapabilities() capabilities {
-	caps := capabilities{imap4rev1Cap, saslIrCap}
+	caps := capabilities{imap4rev1Cap}
 	if c.canStartTLS() {
 		caps = append(caps, startTLSCap)
 	}
 	if c.canAuth() {
-		caps = append(caps, authPlainCap)
+		caps = append(caps, authPlainCap, saslIrCap)
 	}
 
 	if c.state == AuthenticatedState || c.state == SelectedState {
-		caps = append(caps, uidPlus, move, unselect)
+		caps = append(caps, idle, move, uidPlus, unselect)
 	}
 
 	return caps

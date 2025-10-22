@@ -14,8 +14,9 @@ type Selected struct {
 	UIDValidity uint32
 	UIDNext     uint32
 
-	conn *conn
-	tag  string
+	readonly bool
+	conn     *conn
+	tag      string
 }
 
 func (c *conn) handleSelect(tag, param string, readonly bool) error {
@@ -60,6 +61,7 @@ func (c *conn) handleSelect(tag, param string, readonly bool) error {
 			text:   "No such mailbox, can't access mailbox",
 		})
 	}
+	selected.readonly = readonly
 	c.state = SelectedState
 	selected.tag = tag
 	selected.conn = c
@@ -104,10 +106,14 @@ func (s *Selected) write() error {
 	if err := s.writeFlags(); err != nil {
 		return err
 	}
+	code := readWrite
+	if s.readonly {
+		code = readOnly
+	}
 
 	return s.conn.writeResponse(s.tag, &response{
 		status: ok,
-		code:   readWrite,
+		code:   code,
 		text:   "SELECT completed",
 	})
 }

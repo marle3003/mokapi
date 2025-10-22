@@ -34,7 +34,7 @@ func TestImapServer(t *testing.T) {
 			test: func(t *testing.T, c *imap.Client) {
 				res, err := c.Dial()
 				require.NoError(t, err)
-				require.Equal(t, []string{"IMAP4rev1", "SASL-IR", "STARTTLS", "AUTH=PLAIN"}, res)
+				require.Equal(t, []string{"IMAP4rev1", "STARTTLS", "AUTH=PLAIN", "SASL-IR"}, res)
 			},
 		},
 		{
@@ -54,7 +54,7 @@ func TestImapServer(t *testing.T) {
 
 				res, err := c.DialTls(cfg)
 				require.NoError(t, err)
-				require.Equal(t, []string{"IMAP4rev1", "SASL-IR", "AUTH=PLAIN"}, res)
+				require.Equal(t, []string{"IMAP4rev1", "AUTH=PLAIN", "SASL-IR"}, res)
 			},
 		},
 	}

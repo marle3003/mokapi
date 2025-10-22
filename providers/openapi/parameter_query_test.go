@@ -1,12 +1,13 @@
 package openapi_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema/schematest"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseQuery(t *testing.T) {
@@ -32,6 +33,7 @@ func TestParseQuery(t *testing.T) {
 			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
 				require.Equal(t, int64(5), result.Query["id"].Value)
+				require.Equal(t, "5", *result.Query["id"].Raw)
 			},
 		},
 		{
@@ -108,6 +110,7 @@ func TestParseQuery(t *testing.T) {
 			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{int64(3), int64(4), int64(5)}, result.Query["id"].Value)
+				require.Equal(t, "3,4,5", *result.Query["id"].Raw)
 			},
 		},
 		{
@@ -227,6 +230,7 @@ func TestParseQuery(t *testing.T) {
 			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"role": "admin", "firstName": "Alex", "msg": "Hello World", "foo": "foo&bar"}, result.Query["id"].Value)
+				require.Equal(t, "role=admin&firstName=Alex&msg=Hello%20World&foo=foo%26bar", *result.Query["id"].Raw)
 			},
 		},
 		{

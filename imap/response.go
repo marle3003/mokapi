@@ -15,6 +15,7 @@ const (
 
 	alert     responseCode = "ALERT"
 	readWrite responseCode = "READ-WRITE"
+	readOnly  responseCode = "READ-ONLY"
 	cannot    responseCode = "CANNOT"
 )
 

@@ -2,99 +2,45 @@ package mokapi
 
 import (
 	"mokapi/engine/common"
-	"sort"
-	"sync"
 )
 
 type SharedMemory struct {
-	data  map[string]any
-	clear func()
-	m     sync.RWMutex
+	store common.Store
 }
 
 func NewSharedMemory(store common.Store) *SharedMemory {
-	v := store.Get("shared-memory")
-	var data map[string]any
-	if v != nil {
-		data = v.(map[string]any)
-	} else {
-		data = make(map[string]any)
-		store.Set("shared-memory", data)
-	}
-
-	return &SharedMemory{data: data}
+	return &SharedMemory{store: store}
 }
 
 func (m *SharedMemory) Get(key string) any {
-	m.m.RLock()
-	defer m.m.RUnlock()
-
-	return m.data[key]
+	return m.store.Get(key)
 }
 
 func (m *SharedMemory) Has(key string) bool {
-	m.m.RLock()
-	defer m.m.RUnlock()
-
-	_, b := m.data[key]
-	return b
+	return m.store.Has(key)
 }
 
 func (m *SharedMemory) Set(key string, value any) {
-	m.m.Lock()
-	defer m.m.Unlock()
-	m.data[key] = value
+	m.store.Set(key, value)
 }
 
 func (m *SharedMemory) Delete(key string) {
-	m.m.Lock()
-	defer m.m.Unlock()
-	delete(m.data, key)
+	m.store.Delete(key)
 }
 
 func (m *SharedMemory) Clear() {
-	m.m.Lock()
-	defer m.m.Unlock()
-	for k := range m.data {
-		delete(m.data, k)
-	}
+	m.store.Clear()
 }
 
 func (m *SharedMemory) Update(key string, fn func(v any) any) any {
-	m.m.Lock()
-	defer m.m.Unlock()
-	v := fn(m.data[key])
-	m.data[key] = v
-	return v
+	return m.store.Update(key, fn)
 }
 
 func (m *SharedMemory) Keys() []string {
-	m.m.RLock()
-	defer m.m.RUnlock()
-	keys := make([]string, 0, len(m.data))
-	for k := range m.data {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
+	return m.store.Keys()
 }
 
 func (m *SharedMemory) Namespace(name string) *SharedMemory {
-	m.m.Lock()
-	v, ok := m.data[name]
-	m.m.Unlock()
-	if ok {
-		ns, ok := v.(*SharedMemory)
-
-		if !ok {
-			return nil
-		}
-		return ns
-	}
-
-	m.m.Lock()
-	defer m.m.Unlock()
-	ns := &SharedMemory{data: make(map[string]any)}
-	m.data[name] = ns
-	return ns
+	s := m.store.Namespace(name)
+	return &SharedMemory{store: s}
 }

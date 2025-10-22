@@ -32,18 +32,23 @@ import ConfigCard from '@/components/dashboard/ConfigCard.vue'
 import FakerTree from '@/components/dashboard/FakerTree.vue'
 
 import '@/assets/dashboard.css'
-import { onMounted, onUnmounted, ref, watchEffect, type Ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watchEffect, type Ref } from 'vue'
 
 import { useMeta } from '@/composables/meta'
 import Config from '@/components/dashboard/Config.vue'
 import { useFetch, type Response } from '@/composables/fetch'
 import { useRoute } from 'vue-router'
 import { useMetrics } from '../composables/metrics'
+import { useRefreshManager } from '@/composables/refresh-manager'
 
 const appInfo = useAppInfo()
 const configs: Ref<Response | undefined> = ref<Response>()
 
 const { query, sum } = useMetrics()
+const { progress, start, isActive } = useRefreshManager();
+const transitionRefresh = computed(() => {
+    return progress.value > 0.1 && progress.value < 99.9;
+})
 const count = ref<number>(0)
 const response = query('app')
 watchEffect(() => {
@@ -69,6 +74,7 @@ onMounted(() => {
     if (route.name === 'configs' && configs.value == null) {
         configs.value = useFetch('/api/configs')
     }
+    start();
 })
 
 function isServiceAvailable(service: string): boolean{
@@ -95,6 +101,14 @@ useMeta('Dashboard | mokapi.io', description, '')
 </script>
 
 <template>
+    <div v-if="isActive" class="position-fixed top-0 start-0 w-100" style="height: 2px; z-index: 1000;">
+        <div class="refresh-progress-bar h-100" :style="{
+                width: progress + '%',
+                height: '3px',
+                transition: transitionRefresh ? 'width 0.12s linear' : 'none'
+            }">
+        </div>
+    </div>
     <main>
         <div class="dashboard">
             <h1 class="visually-hidden">Dashboard</h1>
@@ -241,3 +255,10 @@ useMeta('Dashboard | mokapi.io', description, '')
         <loading v-if="isInitLoading()"></loading>
     </main>
 </template>
+
+<style scoped>
+.refresh-progress-bar {
+  box-shadow: 0 0 4px rgba(0, 123, 255, 0.4);
+  background-color: var(--color-refresh-background);
+}
+</style>

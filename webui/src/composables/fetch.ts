@@ -1,5 +1,5 @@
 import { reactive } from 'vue'
-import router from '@/router';
+import { useRefreshManager } from './refresh-manager';
 
 export interface Response {
     data: any
@@ -12,10 +12,10 @@ export interface Response {
 }
 
 const cache: { [name: string]: Response } = {}
+const manager = useRefreshManager();
 
 export function useFetch(path: string, options?: RequestInit, doRefresh: boolean = true, useCache: boolean = true): Response {
     path = transformPath(path)
-    const route = router.currentRoute.value
     const cached = cache[path]
     const response: Response = cached || reactive({
         data: null,
@@ -67,14 +67,13 @@ export function useFetch(path: string, options?: RequestInit, doRefresh: boolean
             })
     }
 
-    const refresh = Number(route.query.refresh)
-    if (refresh && doRefresh){
-        const timer = setInterval(doFetch, refresh * 1000)
+    if (doRefresh){
+        manager.add(path, doFetch)
         response.close = function() {
             response.refs--
             if (response.refs == 0) {
-             clearInterval(timer)
-             delete cache[path]
+                manager.remove(path)
+                delete cache[path]
             }
         }
     }
