@@ -271,6 +271,25 @@ const router = createRouter({
   ]
 })
 
+router.afterEach((to, from) => {
+  if (!to.path.startsWith('/dashboard')) {
+    return
+  }
+        
+  const hadRefresh = !!from.query.refresh;
+  const hasRefresh = !!to.query.refresh;
+
+  if (hadRefresh && !hasRefresh) {
+    router.replace({
+      ...to,
+      query: {
+        ...to.query,
+        refresh: from.query.refresh
+      }
+    });
+  }
+});
+
 export default router
 
 export function useRouter() {

@@ -32,6 +32,8 @@
     --color-button-text-hover: #353e5bff;
     --color-button-border-hover: #a5899fff;
 
+    --color-refresh-background: #eabaabff;
+
     --color-text: #d3d4d5;
     --color-text-light: #a0a1a7;
 
@@ -98,6 +100,8 @@
     --color-background-soft: #f8fafc;
     --color-background-light: #e5e9f0;
     --color-border: #e2e8f0;
+
+    --color-refresh-background: rgb(8, 109, 215);
 
     --color-text: rgb(3,6,11);
     --color-text-light: rgb(101, 109, 118);
