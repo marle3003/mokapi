@@ -109,7 +109,7 @@ func TestHandler_Events(t *testing.T) {
 							"actions":    interface{}(nil),
 							"api":        "",
 							"deprecated": false,
-							"duration":   0,
+							"duration":   float64(0),
 							"path":       "",
 							"request": map[string]interface{}{
 								"method": "get",
