@@ -1,12 +1,13 @@
 package openapi_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema/schematest"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestFromRequest_Header(t *testing.T) {
@@ -26,6 +27,25 @@ func TestFromRequest_Header(t *testing.T) {
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
 				r.Header.Set("debug", "1")
+				return r
+			},
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
+				require.NoError(t, err)
+				cookie := result.Header["debug"]
+				require.Equal(t, int64(1), cookie.Value)
+				require.Equal(t, "1", *cookie.Raw)
+			},
+		},
+		{
+			name: "header are case insensitive",
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Type:   openapi.ParameterHeader,
+				Name:   "debug",
+				Schema: schematest.New("integer", schematest.WithEnumValues(0, 1)),
+			}}},
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
+				r.Header.Set("Debug", "1")
 				return r
 			},
 			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
@@ -233,6 +253,23 @@ func TestFromRequest_Header(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.EqualError(t, err, "parse header parameter 'foo' failed: parse property 'age' failed: error count 1:\n\t- #/type: invalid type, expected number but got string")
+			},
+		},
+		{
+			name: "string",
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Type:   openapi.ParameterHeader,
+				Name:   "foo",
+				Schema: schematest.New("string"),
+			}}},
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
+				r.Header.Set("foo", "bar")
+				return r
+			},
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "bar", result.Header["foo"].Value)
 			},
 		},
 	}
