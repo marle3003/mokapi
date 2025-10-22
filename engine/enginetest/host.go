@@ -3,6 +3,7 @@ package enginetest
 import (
 	"fmt"
 	"mokapi/config/dynamic"
+	"mokapi/engine"
 	"mokapi/engine/common"
 	"mokapi/schema/json/generator"
 	"net/http"
@@ -27,12 +28,7 @@ type Host struct {
 	OnFunc             func(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
 	FindFakerNodeFunc  func(name string) *generator.Node
 	m                  sync.Mutex
-	StoreTest          *Store
-}
-
-type Store struct {
-	data map[string]any
-	m    sync.RWMutex
+	StoreTest          *engine.Store
 }
 
 type HttpClient struct {
@@ -142,7 +138,7 @@ func (h *Host) KafkaClient() common.KafkaClient {
 
 func (h *Host) Store() common.Store {
 	if h.StoreTest == nil {
-		h.StoreTest = &Store{data: make(map[string]any)}
+		h.StoreTest = engine.NewStore()
 	}
 	return h.StoreTest
 }
@@ -172,22 +168,4 @@ func mustParse(s string) *url.URL {
 		panic(err)
 	}
 	return u
-}
-
-func (s *Store) Get(name string) any {
-	s.m.RLock()
-	defer s.m.RUnlock()
-	if s.data == nil {
-		return nil
-	}
-	return s.data[name]
-}
-
-func (s *Store) Set(name string, value any) {
-	s.m.Lock()
-	defer s.m.Unlock()
-	if s.data == nil {
-		s.data = map[string]any{name: value}
-	}
-	s.data[name] = value
 }
