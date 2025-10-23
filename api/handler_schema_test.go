@@ -247,7 +247,7 @@ func TestHandler_Schema_Example(t *testing.T) {
 			},
 		},
 		{
-			name: "string or number",
+			name: "string or integer",
 			app: &runtime.App{
 				Monitor: monitor.New(),
 			},
@@ -256,7 +256,7 @@ func TestHandler_Schema_Example(t *testing.T) {
 					http.MethodGet,
 					"http://foo.api/api/schema/example",
 					nil,
-					`{"name": "", "schema": {"type": ["string","number"]}}`,
+					`{"name": "", "schema": {"type": ["string","integer"]}}`,
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
@@ -266,10 +266,10 @@ func TestHandler_Schema_Example(t *testing.T) {
 						require.NoError(t, err)
 						b, err := base64.StdEncoding.DecodeString(data[0]["value"])
 						require.NoError(t, err)
-						require.Equal(t, "609859.0117483337", string(b))
+						require.Equal(t, "-168643", string(b))
 
 					}),
-					try.HasBody(`[{"contentType":"application/json","value":"NjA5ODU5LjAxMTc0ODMzMzc="}]`))
+					try.HasBody(`[{"contentType":"application/json","value":"LTE2ODY0Mw=="}]`))
 			},
 		},
 		{

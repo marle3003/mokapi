@@ -281,10 +281,10 @@ func TestFaker_Schema(t *testing.T) {
 		},
 		{
 			name:   "minItems",
-			schema: "{ minItems: 3, }",
+			schema: "{ minItems: 3, items: { type: 'string' } }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, []any{true, int64(-354976), "ZuoWq vY5elXhlD", []interface{}{-743110.6375100765, "lYehCIA", map[string]interface{}{"caravan": true, "hail": -717855.7306413883, "mob": int64(-679449), "scale": true}, false}, false, []interface{}{true, int64(859972), -161661.97092417115}, false, "LWxKt"}, v.Export())
+				r.Equal(t, []interface{}{"", "idZ", "wYx?vY5elXhlD", "VhgPevuwyrNrL", "lVeCZKW1JKqG", "sffl", "tR", "h"}, v.Export())
 			},
 		},
 		{
@@ -326,10 +326,10 @@ func TestFaker_Schema(t *testing.T) {
 		},
 		{
 			name:   "contains",
-			schema: "{ contains: { type: 'string' } }",
+			schema: "{ contains: { const: 'foo' }, items: { type: 'string' } }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, []any{[]any{true, int64(859972), -161661.97092417115}, "wYx?vY5elXhlD", []any{-743110.6375100765, "lYehCIA", map[string]any{"caravan": true, "hail": -717855.7306413883, "mob": int64(-679449), "scale": true}, false}, false, "idZ"}, v.Export())
+				r.Equal(t, []any{"VhgPevuwyrNrL", "foo", "idZ", "wYx?vY5elXhlD", "foo"}, v.Export())
 			},
 		},
 		{
@@ -356,10 +356,10 @@ func TestFaker_Schema(t *testing.T) {
 		},
 		{
 			name:   "maxContains",
-			schema: "{ contains: { type: 'string' }, maxContains: 2 }",
+			schema: "{ contains: { type: 'string' }, maxContains: 2, items: { type: 'string' } }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, []any{" vY5elXhlD4ezl", -859791.1845789105, 326768.021588166, int64(628235), "idZ"}, v.Export())
+				r.Equal(t, []any{"wYx?vY5elXhlD", "idZ"}, v.Export())
 			},
 		},
 		{
@@ -401,10 +401,10 @@ func TestFaker_Schema(t *testing.T) {
 		},
 		{
 			name:   "minProperties",
-			schema: "{ minProperties: 3 }",
+			schema: "{ minProperties: 3, additionalProperties: { type: 'string' } }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, map[string]any{"bunch": 326768.021588166, "gang": int64(628235), "growth": " vY5elXhlD4ezl", "woman": -859791.1845789105}, v.Export())
+				r.Equal(t, map[string]any{"bunch": "VhgPevuwyrNrL", "gang": "lVeCZKW1JKqG", "growth": "sffl", "woman": "wYx?vY5elXhlD"}, v.Export())
 			},
 		},
 		{
@@ -454,13 +454,13 @@ func TestFaker_Schema(t *testing.T) {
 		},
 		{
 			name:   "properties, patternProperties and additionalProperties",
-			schema: "{ properties: { builtin: { type: 'number' } }, patternProperties: { '^S_': { type: 'string' }, '^I_': { type: 'integer' } }, additionalProperties: { type: 'string' } }",
+			schema: "{ properties: { builtin: { type: 'integer' } }, patternProperties: { '^S_': { type: 'string' }, '^I_': { type: 'integer' } }, additionalProperties: { type: 'string' } }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
 				r.Equal(t, map[string]any{
 					"I_4VX":    int64(-908662),
 					"S_kY9X3W": "m",
-					"builtin":  -383134.1033810867,
+					"builtin":  int64(-86829),
 					"group":    "CKu",
 					"ocean":    "LJgmr9arWgSfi",
 					"party":    "m",
@@ -584,12 +584,12 @@ func TestFaker_Schema(t *testing.T) {
 		},
 		{
 			name:   "required but not defined in properties",
-			schema: "{ properties: { foo: { type: 'string' } }, required: ['bar'] }",
+			schema: "{ properties: { foo: { type: 'string' }}, additionalProperties: { type: 'string' }, required: ['bar'] }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
 				m := v.Export()
 				r.Contains(t, m, "bar")
-				r.Equal(t, map[string]any{"bar": 256208.42538087885, "foo": "XidZuoWq "}, m)
+				r.Equal(t, map[string]any{"bar": "Pevuwy", "woman": "q vY5elXhlD4ez"}, m)
 			},
 		},
 		{

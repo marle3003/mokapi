@@ -173,10 +173,10 @@ func TestModule(t *testing.T) {
 			test: func(t *testing.T, vm *goja.Runtime, _ *enginetest.Host) {
 				v, err := vm.RunString(`
 					const m = require('faker')
-					m.fake({ type: 'object', properties: { foo: { type: 'string' }, bar: { type: 'string' }}, required: ['foo', 'bar','x', 'y', 'z'] } )
+					m.fake({ type: 'object', properties: { foo: { type: 'string' }, bar: { type: 'string' }}, additionalProperties: { type: 'string' }, required: ['foo', 'bar','x', 'y', 'z'] } )
 				`)
 				r.NoError(t, err)
-				r.Equal(t, map[string]any{"bar": "", "foo": "XidZuoWq ", "x": int64(-117432), "y": int64(995706), "z": -383134.1033810867}, v.Export())
+				r.Equal(t, map[string]any{"bar": "vm", "bunch": "LJgmr9arWgSfi", "foo": "Yx?vY5", "gang": "jLWxKtR4", "growth": "m", "woman": "hlD4ezlYehCIA0O", "x": "CKu", "y": "gaqpsEbkw", "z": "LuvMVE6iIqk"}, v.Export())
 			},
 		},
 	}
