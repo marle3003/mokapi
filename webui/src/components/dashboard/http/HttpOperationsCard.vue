@@ -8,6 +8,9 @@ const props = defineProps({
 })
 
 const operations = computed(() => {
+    if (!props.path.operations) {
+        return [];
+    }
     return props.path.operations.sort(comparePath)
 })
 
