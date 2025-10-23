@@ -13,7 +13,7 @@ const props = defineProps({
 const route = useRoute()
 
 function allOperationsDeprecated(): boolean{
-    if (!props.path){
+    if (!props.path || !props.path.operations){
         return false
     }
     for (var op of props.path.operations){
