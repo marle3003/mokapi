@@ -87,7 +87,7 @@ const events = computed<ServiceEvent[]>(() => {
         case 'Multi':
             result = result.filter(x => x.traits.name && filter.service.value.includes(x.traits.name));
     }
-    const custom = filter.method.custom?.split(' ');
+    const custom = filter.method.custom?.toUpperCase().split(' ');
     switch (filter.method.state) {
         case 'Single':
             if (filter.method.value[0] === 'CUSTOM') {
