@@ -291,12 +291,14 @@ function getFilterCacheKey() {
                             </div>
                         </div>
                         <div class="col">
-                            <select class="form-select form-select-sm" v-model="service" aria-label="Service" v-if="filter.service.state === 'Single'" id="service-single">
-                                <option v-for="service of services">{{ service.name }}</option>
-                            </select>
-                            <div class="form-check" v-for="s of services" v-if="filter.service.state === 'Multi'">
-                                <input class="form-check-input" name="service" :value="s.name" v-model="service" type="checkbox" :id="getId(s.name)">
-                                <label class="form-check-label" :for="getId(s.name)">{{ s.name }}</label>
+                            <div class="row me-0">
+                                <select class="form-select form-select-sm" v-model="service" aria-label="Service" v-if="filter.service.state === 'Single'" id="service-single">
+                                    <option v-for="service of services">{{ service.name }}</option>
+                                </select>
+                                <div class="form-check" v-for="s of services" v-if="filter.service.state === 'Multi'">
+                                    <input class="form-check-input" name="service" :value="s.name" v-model="service" type="checkbox" :id="getId(s.name)">
+                                    <label class="form-check-label" :for="getId(s.name)">{{ s.name }}</label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -309,7 +311,7 @@ function getFilterCacheKey() {
                             </div>
                         </div>
                         <div class="col">
-                            <div class="row ms-0 me-0">
+                            <div class="row me-0">
                                 <select class="form-select form-select-sm" v-model="method" aria-label="Method" v-if="filter.method.state === 'Single'" id="method-single">
                                     <option v-for="method of methods">{{ method }}</option>
                                 </select>
@@ -318,7 +320,7 @@ function getFilterCacheKey() {
                                     <label class="form-check-label" :for="getId(m)">{{ m }}</label>
                                 </div>
                             </div>
-                            <div class="row mt-2 me-1" v-if="filter.method.value.includes('CUSTOM')">
+                            <div class="row mt-2 me-0" v-if="filter.method.checkbox && filter.method.value.includes('CUSTOM')">
                                 <input type="text" class="form-control form-control-sm" id="method-custom" v-model="filter.method.custom" placeholder="LINK CONNECT...">
                             </div>
                         </div>
