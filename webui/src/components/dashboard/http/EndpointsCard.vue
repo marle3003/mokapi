@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useMetrics } from '@/composables/metrics';
 import { usePrettyDates } from '@/composables/usePrettyDate';
-import { type PropType, computed, onMounted, ref, watch } from 'vue';
+import { type PropType, computed, onMounted, ref } from 'vue';
 import { useRouter, useRoute } from '@/router';
 
 const route = useRoute()

@@ -1,32 +1,64 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useEvents } from '@/composables/events'
-import { type PropType, onUnmounted, computed } from 'vue'
+import { onUnmounted, computed, useTemplateRef, onMounted, reactive, watch, ref,  } from 'vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { usePrettyHttp } from '@/composables/http'
+import { Modal } from 'bootstrap'
+import { useService } from '@/composables/services'
 
 const props = defineProps({
-    service: { type: Object as PropType<HttpService> },
+    serviceName: { type: String, required: false},
     path: { type: String, required: false},
     method: { type: String, required: false}
 })
 
-const labels = []
-if (props.service){
-    labels.push({ name: 'name', value: props.service!.name })
+const labels = ref<any[]>([])
+if (props.serviceName){
+    labels.value.push({ name: 'name', value: props.serviceName })
     if (props.path){
-        labels.push({ name: 'path', value: props.path })
+        labels.value.push({ name: 'path', value: props.path })
     }
     if (props.method) {
-        labels.push({ name: 'method', value: props.method })
+        labels.value.push({ name: 'method', value: props.method })
     }
 }
 
 const router = useRouter()
 const { fetch } = useEvents()
-const { events, close } = fetch('http', ...labels)
+const { fetchServices } = useService()
+const { events: data, close } = fetch('http', ...labels.value)
 const { format, duration } = usePrettyDates()
 const { formatStatusCode } = usePrettyHttp()
+const { services, close: closeServices } = fetchServices('http', true);
+const dialogRef = useTemplateRef('dialogRef')
+let dialog: Modal | undefined;
+type CheckboxFilter = 'Not' | 'Single' | 'Multi'
+interface Filter {
+    service: FilterItem
+    method: FilterItem & { custom?: string}
+}
+interface FilterItem {
+    checkbox: boolean
+    state: CheckboxFilter
+    value: string[]
+}
+const filter = reactive<Filter>({
+    service: { state: 'Not', checkbox: false, value: [] },
+    method: { state: 'Not', checkbox: false, value: ['GET']}
+})
+
+onMounted(() => {
+    dialog = Modal.getOrCreateInstance(dialogRef.value!);
+    const s = localStorage.getItem(`http-requests-${getFilterCacheKey()}`)
+    console.log('load ' +props.serviceName)
+    console.log(s)
+    if (s && s !== '') {
+        const saved = JSON.parse(s)
+        Object.assign(filter, saved)
+        console.log(filter)
+    }
+})
 
 function goToRequest(event: ServiceEvent){
     if (getSelection()?.toString()) {
@@ -42,6 +74,48 @@ function eventData(event: ServiceEvent): HttpEventData{
     return <HttpEventData>event.data
 }
 
+watch(filter, () => {
+    localStorage.setItem(`http-requests-${getFilterCacheKey()}`, JSON.stringify(filter))
+})
+
+const events = computed<ServiceEvent[]>(() => {
+    let result = data.value;;
+    switch (filter.service.state) {
+        case 'Single':
+            result = result.filter(x => x.traits.name === filter.service.value[0]);
+            break;
+        case 'Multi':
+            result = result.filter(x => x.traits.name && filter.service.value.includes(x.traits.name));
+    }
+    const custom = filter.method.custom?.split(' ');
+    switch (filter.method.state) {
+        case 'Single':
+            if (filter.method.value[0] === 'CUSTOM') {
+                result = result.filter(x => custom?.includes((x.data as HttpEventData).request.method));
+            } else {
+                result = result.filter(x => filter.method.value[0] === (x.data as HttpEventData).request.method);
+            }
+            break;
+        case 'Multi':
+            result = result.filter(x => {
+                const method = (x.data as HttpEventData).request.method;
+                for (const m of filter.method.value) {
+                    if (m === 'CUSTOM') {
+                        if (custom?.includes(method)) {
+                            return true;
+                        }
+                    }else {
+                        if (m === method) {
+                            return true;
+                        } 
+                    }
+                }
+                return false;
+            })
+    }
+    return result
+})
+
 const hasDeprecatedRequests = computed(() => {
     if (!events.value) {
         return false
@@ -54,15 +128,120 @@ const hasDeprecatedRequests = computed(() => {
     return false    
 })
 
+const service = computed({
+    get: function() {
+        if (filter.service.state === 'Single') {
+            if (filter.service.value?.length === 0) {
+                return services.value?.[0]?.name
+            } else {
+                return filter.service.value[0]
+            }
+        }
+        return filter.service.value
+    },
+    set: function(val: any) {
+        if (filter.service.state === 'Single') {
+            if (!val) {
+                filter.service.value = []
+            } else {
+                filter.service.value = [val]
+            }
+        } else {
+           filter.service.value = val
+        }
+    }
+})
+const methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS', 'TRACE', 'QUERY', 'CUSTOM']
+const method = computed({
+    get: function() {
+        if (filter.method.state === 'Single') {
+            if (filter.method.value?.length === 0) {
+                return methods[0]
+            } else {
+                return filter.method.value[0]
+            }
+        }
+        return filter.method.value
+    },
+    set: function(val: any) {
+        if (filter.method.state === 'Single') {
+            if (!val) {
+                filter.method.value = []
+            } else {
+                filter.method.value = [val]
+            }
+        } else {
+           filter.method.value = val
+        }
+    }
+})
+
 onUnmounted(() => {
     close()
+    closeServices()
 })
+function showDialog() {
+    dialog?.show()
+}
+function changeCheckbox(fi: FilterItem) {
+    switch (fi.state) {
+        case 'Not':
+            fi.state = 'Single';
+            fi.checkbox = true
+            break;
+        case 'Single':
+            fi.state = 'Multi';
+            fi.checkbox = true
+            break;
+        case 'Multi':
+            fi.state = 'Not';
+            fi.checkbox = false
+            break;
+    }
+}
+function getId(s: string) {
+    return s.replaceAll(' ', '-').toLowerCase()
+}
+const activeFiltersCount = computed(() => {
+    let counter = 0;
+    if (filter.service.state !== 'Not') {
+        counter++;
+    }
+    if (filter.method.state !== 'Not') {
+        counter++;
+    }
+    return counter;
+})
+function getFilterCacheKey() {
+    if (!props.serviceName) {
+        return 'filter'
+    }
+    if (!props.path) {
+        return 'filter-' + props.serviceName
+    }
+    return `filter-${props.serviceName}-${props.path}-${props.method}`
+}
 </script>
 
 <template>
     <div class="card">
         <div class="card-body">
-            <div class="card-title text-center">Recent Requests</div>
+            <div class="row justify-content-end mb-1">
+                <div class="col-4">
+                    <h6 class="card-title text-center">Recent Requests</h6>
+                </div>
+                <div class="col-4 d-flex justify-content-end">
+                    <button class="btn btn-outline-primary position-relative" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;" @click="showDialog">
+                    <i class="bi bi-funnel"></i> Filter
+
+                    <span v-if="activeFiltersCount > 0"
+                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                        {{ activeFiltersCount }}
+                    </span>
+                </button>
+                </div>
+            </div>
+            
             <table class="table dataTable selectable" data-testid="requests">
                 <thead>
                     <tr>
@@ -95,10 +274,67 @@ onUnmounted(() => {
             </table>
         </div>
     </div>
+
+    <div class="modal fade" tabindex="-1"  aria-hidden="true" ref="dialogRef">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title">Filter</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" v-model="filter.service.checkbox" id="service" @change="changeCheckbox(filter.service)">
+                                <label class="form-check-label" for="service">API Name</label>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <select class="form-select form-select-sm" v-model="service" aria-label="Service" v-if="filter.service.state === 'Single'" id="service-single">
+                                <option v-for="service of services">{{ service.name }}</option>
+                            </select>
+                            <div class="form-check" v-for="s of services" v-if="filter.service.state === 'Multi'">
+                                <input class="form-check-input" name="service" :value="s.name" v-model="service" type="checkbox" :id="getId(s.name)">
+                                <label class="form-check-label" :for="getId(s.name)">{{ s.name }}</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" v-model="filter.method.checkbox" id="method" @change="changeCheckbox(filter.method)">
+                                <label class="form-check-label" for="method">Method</label>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="row ms-0 me-0">
+                                <select class="form-select form-select-sm" v-model="method" aria-label="Method" v-if="filter.method.state === 'Single'" id="method-single">
+                                    <option v-for="method of methods">{{ method }}</option>
+                                </select>
+                                <div class="form-check" v-for="m of methods" v-if="filter.method.state === 'Multi'">
+                                    <input class="form-check-input" name="method" :value="m" v-model="method" type="checkbox" :id="getId(m)">
+                                    <label class="form-check-label" :for="getId(m)">{{ m }}</label>
+                                </div>
+                            </div>
+                            <div class="row mt-2 me-1" v-if="filter.method.value.includes('CUSTOM')">
+                                <input type="text" class="form-control form-control-sm" id="method-custom" v-model="filter.method.custom" placeholder="LINK CONNECT...">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
 
 <style scoped>
 .warning:empty {
     padding: 0;
+}
+.modal-dialog-scrollable .modal-body {
+  min-height: calc(100vh - 200px); /* header + footer spacing */
 }
 </style>
