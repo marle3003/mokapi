@@ -35,28 +35,31 @@ const dialogRef = useTemplateRef('dialogRef')
 let dialog: Modal | undefined;
 type CheckboxFilter = 'Not' | 'Single' | 'Multi'
 interface Filter {
-    service: FilterItem
-    method: FilterItem & { custom?: string}
+    service: MultiFilterItem
+    method: MultiFilterItem & { custom?: string}
+    url: FilterItem
 }
 interface FilterItem {
+    checkbox: boolean
+    value: any
+}
+interface MultiFilterItem {
     checkbox: boolean
     state: CheckboxFilter
     value: string[]
 }
 const filter = reactive<Filter>({
     service: { state: 'Not', checkbox: false, value: [] },
-    method: { state: 'Not', checkbox: false, value: ['GET']}
+    method: { state: 'Not', checkbox: false, value: ['GET']},
+    url: { checkbox: false, value: null}
 })
 
 onMounted(() => {
     dialog = Modal.getOrCreateInstance(dialogRef.value!);
     const s = localStorage.getItem(`http-requests-${getFilterCacheKey()}`)
-    console.log('load ' +props.serviceName)
-    console.log(s)
     if (s && s !== '') {
         const saved = JSON.parse(s)
         Object.assign(filter, saved)
-        console.log(filter)
     }
 })
 
@@ -112,6 +115,12 @@ const events = computed<ServiceEvent[]>(() => {
                 }
                 return false;
             })
+    }
+    if (filter.url.value && filter.url.value['test']) {
+        result = result.filter(x => {
+            const data = x.data as HttpEventData
+            return filter.url.value.test(data.request.url)
+        })
     }
     return result
 })
@@ -183,7 +192,7 @@ onUnmounted(() => {
 function showDialog() {
     dialog?.show()
 }
-function changeCheckbox(fi: FilterItem) {
+function changeCheckbox(fi: MultiFilterItem) {
     switch (fi.state) {
         case 'Not':
             fi.state = 'Single';
@@ -210,6 +219,10 @@ const activeFiltersCount = computed(() => {
     if (filter.method.state !== 'Not') {
         counter++;
     }
+    if (filter.url.checkbox && filter.url.value) {
+        console.log(filter.url.value)
+        counter++;
+    }
     return counter;
 })
 function getFilterCacheKey() {
@@ -221,6 +234,31 @@ function getFilterCacheKey() {
     }
     return `filter-${props.serviceName}-${props.path}-${props.method}`
 }
+const regexInput = ref('')
+const regexError = ref<any>(null)
+let debounceTimer: number | null = null
+watch(regexInput, (value) => {
+    if (debounceTimer) {
+        clearTimeout(debounceTimer)
+    }
+
+    try {
+        const v = value.trim();
+        if (!v) {
+            filter.url.value = null
+            regexError.value = null
+            return
+        }
+        filter.url.value = new RegExp(v)
+        regexError.value = null
+    } catch (error) {
+        debounceTimer = setTimeout(() => {
+            regexError.value = error
+            filter.url.value = null
+        }, 1500)
+    }
+    
+})
 </script>
 
 <template>
@@ -323,6 +361,25 @@ function getFilterCacheKey() {
                             <div class="row mt-2 me-0" v-if="filter.method.checkbox && filter.method.value.includes('CUSTOM')">
                                 <input type="text" class="form-control form-control-sm" id="method-custom" v-model="filter.method.custom" placeholder="LINK CONNECT...">
                             </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" v-model="filter.url.checkbox" id="url">
+                                <label class="form-check-label" for="url">URL</label>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="row me-0" v-if="filter.url.checkbox">
+                                <input type="text" class="form-control form-control-sm" id="method-custom" v-model="regexInput" placeholder="Regex" :class="{ 'is-invalid': regexError }">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="invalid-feedback" v-if="regexError" style="display: inline;">
+                            Invalid regular expression: {{ regexError }}
                         </div>
                     </div>
 
