@@ -220,7 +220,6 @@ const activeFiltersCount = computed(() => {
         counter++;
     }
     if (filter.url.checkbox && filter.url.value) {
-        console.log(filter.url.value)
         counter++;
     }
     return counter;
