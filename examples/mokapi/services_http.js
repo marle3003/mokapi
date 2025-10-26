@@ -588,7 +588,7 @@ export let events = [
                 url: "http://127.0.0.1:18080/pet",
                 parameters: [
                     {
-                        name: 'Acceot-Encoding',
+                        name: 'Accept-Encoding',
                         type: 'header',
                         raw: 'gzip, deflate'
                     }
@@ -625,7 +625,7 @@ export let events = [
                             url: "http://127.0.0.1:18080/pet",
                             parameters: [
                                 {
-                                    name: 'Acceot-Encoding',
+                                    name: 'Accept-Encoding',
                                     type: 'header',
                                     raw: 'gzip, deflate'
                                 }

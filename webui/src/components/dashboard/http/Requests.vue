@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useEvents } from '@/composables/events'
-import { onUnmounted, computed, useTemplateRef, onMounted, reactive, watch, ref,  } from 'vue'
+import { onUnmounted, computed, useTemplateRef, onMounted, reactive, watch, ref, type ComponentPublicInstance  } from 'vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { usePrettyHttp } from '@/composables/http'
 import { Modal } from 'bootstrap'
 import { useService } from '@/composables/services'
+import RegexInput from '@/components/RegexInput.vue'
 
 const props = defineProps({
     serviceName: { type: String, required: false},
@@ -33,11 +34,14 @@ const { formatStatusCode } = usePrettyHttp()
 const { services, close: closeServices } = fetchServices('http', true);
 const dialogRef = useTemplateRef('dialogRef')
 let dialog: Modal | undefined;
+const urlValue = useTemplateRef<ComponentPublicInstance<typeof RegexInput>>('urlValue');
+const headerValueRefs = ref<any[]>([])
 type CheckboxFilter = 'Not' | 'Single' | 'Multi'
 interface Filter {
     service: MultiFilterItem
     method: MultiFilterItem & { custom?: string}
     url: FilterItem
+    headers: FilterItem
 }
 interface FilterItem {
     checkbox: boolean
@@ -51,7 +55,8 @@ interface MultiFilterItem {
 const filter = reactive<Filter>({
     service: { state: 'Not', checkbox: false, value: [] },
     method: { state: 'Not', checkbox: false, value: ['GET']},
-    url: { checkbox: false, value: null}
+    url: { checkbox: false, value: null},
+    headers: { checkbox: false, value: [{ name: '', value: '' }]}
 })
 
 onMounted(() => {
@@ -116,12 +121,25 @@ const events = computed<ServiceEvent[]>(() => {
                 return false;
             })
     }
-    if (filter.url.value && filter.url.value['test']) {
+    if (urlValue.value?.regex) {
         result = result.filter(x => {
             const data = x.data as HttpEventData
-            return filter.url.value.test(data.request.url)
+            return urlValue.value?.regex.test(data.request.url)
         })
     }
+    
+    if (filter.headers.checkbox && headerFilter.value?.length > 0) {
+        result = result.filter(x => {
+            const data = x.data as HttpEventData
+            for (const filter of headerFilter.value) {
+                if (!filter(data)) {
+                    return false
+                }
+            }
+            return true
+        })
+    }
+
     return result
 })
 
@@ -222,6 +240,9 @@ const activeFiltersCount = computed(() => {
     if (filter.url.checkbox && filter.url.value) {
         counter++;
     }
+    if (filter.headers.checkbox && filter.headers.value.length > 1) {
+        counter++;
+    }
     return counter;
 })
 function getFilterCacheKey() {
@@ -233,30 +254,83 @@ function getFilterCacheKey() {
     }
     return `filter-${props.serviceName}-${props.path}-${props.method}`
 }
-const regexInput = ref('')
-const regexError = ref<any>(null)
-let debounceTimer: number | null = null
-watch(regexInput, (value) => {
-    if (debounceTimer) {
-        clearTimeout(debounceTimer)
+function onHeaderInput(index: number) {
+  const last = filter.headers.value[filter.headers.value.length - 1]
+
+  // If currently editing the last row and it has a name → add new empty row
+  if (index === filter.headers.value.length - 1 && last.name.trim() !== '') {
+    filter.headers.value.push({ name: '', value: '' })
+  }
+
+  // Optional: remove rows where both fields are empty (except last)
+  for (let i = 0; i < filter.headers.value.length - 1; i++) {
+    const hf = filter.headers.value[i]
+    if (!hf.name?.trim() && !hf.value?.trim()) {
+      filter.headers.value.splice(i, 1)
+      break
+    }
+  }
+}
+function removeHeaderFilter(index: number) {
+  filter.headers.value.splice(index, 1)
+
+  // Ensure at least one empty placeholder row
+  const last = filter.headers.value[filter.headers.value.length - 1]
+  if (last && last.name) {
+    filter.headers.value.push({ name: '', value: '' })
+  }
+}
+const headerErrors = computed(() => {
+    const result = []
+    for (const ref of headerValueRefs.value) {
+        if (ref.regexError) {
+            result.push(ref.regexError)
+        }
+    }
+    return result
+})
+const headerFilter = computed(() => {
+    const result: ((data: HttpEventData) => boolean)[] = []
+    if (!headerValueRefs.value) {
+        return result;
     }
 
-    try {
-        const v = value.trim();
-        if (!v) {
-            filter.url.value = null
-            regexError.value = null
-            return
+    for (let i = 0; i < filter.headers.value.length - 1; i++) {
+        if (headerValueRefs.value[i]?.regexError) {
+            continue
         }
-        filter.url.value = new RegExp(v)
-        regexError.value = null
-    } catch (error) {
-        debounceTimer = setTimeout(() => {
-            regexError.value = error
-            filter.url.value = null
-        }, 1500)
+        const fh = filter.headers.value[i];
+        result.push((data: HttpEventData) => {
+            const params = data.request.parameters
+            if (!params) {
+                return false
+            }
+
+            for (const param of params) {
+                if (param.type !== 'header') {
+                    continue
+                }
+                const name = fh.name?.toLowerCase();
+                if (!name) {
+                    const regex = headerValueRefs.value[i].regex
+                    if (regex && regex.test(param.raw)) {
+                        return true
+                    }
+                } else if (param.name.toLowerCase() === name) {
+                    if (!fh.value) {
+                        return true
+                    } else {
+                        const regex = headerValueRefs.value[i].regex
+                        if (regex && regex.test(param.raw)) {
+                            return true
+                        }
+                    }
+                }
+            }
+            return false
+        })
     }
-    
+    return result
 })
 </script>
 
@@ -313,15 +387,17 @@ watch(regexInput, (value) => {
     </div>
 
     <div class="modal fade" tabindex="-1"  aria-hidden="true" ref="dialogRef">
-        <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
                     <h6 class="modal-title">Filter</h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col">
+
+                    <!-- API Name -->
+                    <div class="row mb-3" v-if="serviceName === undefined">
+                        <div class="col-4">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" v-model="filter.service.checkbox" id="service" @change="changeCheckbox(filter.service)">
                                 <label class="form-check-label" for="service">API Name</label>
@@ -340,8 +416,9 @@ watch(regexInput, (value) => {
                         </div>
                     </div>
 
+                    <!-- Method -->
                     <div class="row mb-3">
-                        <div class="col">
+                        <div class="col-4">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" v-model="filter.method.checkbox" id="method" @change="changeCheckbox(filter.method)">
                                 <label class="form-check-label" for="method">Method</label>
@@ -363,22 +440,60 @@ watch(regexInput, (value) => {
                         </div>
                     </div>
 
-                    <div class="row">
-                        <div class="col">
+                    <!-- URL -->
+                    <div class="row" :class="{ 'mb-3': !urlValue?.regexError }">
+                        <div class="col-4">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" v-model="filter.url.checkbox" id="url">
                                 <label class="form-check-label" for="url">URL</label>
                             </div>
                         </div>
-                        <div class="col">
-                            <div class="row me-0" v-if="filter.url.checkbox">
-                                <input type="text" class="form-control form-control-sm" id="method-custom" v-model="regexInput" placeholder="Regex" :class="{ 'is-invalid': regexError }">
+                        <div class="col" v-if="filter.url.checkbox">
+                            <div class="row me-0">
+                                <RegexInput v-model="filter.url.value" ref="urlValue" placeholder="[Regex]" />
                             </div>
                         </div>
                     </div>
-                    <div class="row mb-3">
-                        <div class="invalid-feedback" v-if="regexError" style="display: inline;">
-                            Invalid regular expression: {{ regexError }}
+                    <div class="row mb-3" v-if="urlValue?.regexError">
+                        <div class="invalid-feedback" style="display: inline;">
+                            Invalid regular expression: {{ urlValue?.regexError }}
+                        </div>
+                    </div>
+
+                    <!-- Headers -->
+                    <div class="row" :class="{ 'mb-3': headerErrors.length == 0 }">
+                        <div class="col-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" v-model="filter.headers.checkbox" id="headers">
+                                <label class="form-check-label" for="url">Request Header</label>
+                            </div>
+                        </div>
+                        <div class="col" v-if="filter.headers.checkbox">
+                            <div  v-for="(hf, i) in filter.headers.value">
+                                <div class="row me-0":class="{ 'mb-2': i < filter.headers.value.length - 1 }" >
+                                    <div class="col ps-0 pe-1">
+                                        <input type="text" class="form-control form-control-sm" id="header-name" v-model="hf.name" placeholder="Name" @input="onHeaderInput(i)">
+                                    </div>
+                                    <div class="col ps-1 pe-0">
+                                        <RegexInput v-model="hf.value" :ref="el => headerValueRefs[i] = el" placeholder="Value [Regex]" @input="onHeaderInput(i)" />
+                                    </div>
+                                    <div class="col-1">
+                                        <button v-if="i < filter.headers.value.length -1"
+                                            class="btn btn-outline-danger btn-sm"
+                                            @click="removeHeaderFilter(i)">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3" v-if="headerErrors.length > 0">
+                        <div class="invalid-feedback" style="display: inline;">
+                            Invalid regular expression:
+                            <ul>
+                                <li v-for="err in headerErrors">{{ err }}</li>
+                            </ul>
                         </div>
                     </div>
 
