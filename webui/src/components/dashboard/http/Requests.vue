@@ -35,13 +35,19 @@ const { services, close: closeServices } = fetchServices('http', true);
 const dialogRef = useTemplateRef('dialogRef')
 let dialog: Modal | undefined;
 const urlValue = useTemplateRef<ComponentPublicInstance<typeof RegexInput>>('urlValue');
-const headerValueRefs = ref<any[]>([])
+const requestHeaderValueRefs = ref<any[]>([])
+const responseHeaderValueRefs = ref<any[]>([])
 type CheckboxFilter = 'Not' | 'Single' | 'Multi'
 interface Filter {
     service: MultiFilterItem
     method: MultiFilterItem & { custom?: string}
     url: FilterItem
-    headers: FilterItem
+    request: {
+        headers: FilterItem
+    }
+    response: {
+        headers: FilterItem
+    }
 }
 interface FilterItem {
     checkbox: boolean
@@ -56,7 +62,12 @@ const filter = reactive<Filter>({
     service: { state: 'Not', checkbox: false, value: [] },
     method: { state: 'Not', checkbox: false, value: ['GET']},
     url: { checkbox: false, value: null},
-    headers: { checkbox: false, value: [{ name: '', value: '' }]}
+    request: {
+        headers: { checkbox: false, value: [{ name: '', value: '' }]}
+    },
+    response: {
+         headers: { checkbox: false, value: [{ name: '', value: '' }]}
+    }
 })
 
 onMounted(() => {
@@ -64,7 +75,12 @@ onMounted(() => {
     const s = localStorage.getItem(`http-requests-${getFilterCacheKey()}`)
     if (s && s !== '') {
         const saved = JSON.parse(s)
-        Object.assign(filter, saved)
+        type Key = keyof Filter
+        for (const key in filter) {
+            if (saved[key] !== undefined) {
+                filter[key as Key] = saved[key]
+            }
+        }
     }
 })
 
@@ -128,10 +144,22 @@ const events = computed<ServiceEvent[]>(() => {
         })
     }
     
-    if (filter.headers.checkbox && headerFilter.value?.length > 0) {
+    if (filter.request.headers.checkbox && requestHeaderFilter.value?.length > 0) {
         result = result.filter(x => {
             const data = x.data as HttpEventData
-            for (const filter of headerFilter.value) {
+            for (const filter of requestHeaderFilter.value) {
+                if (!filter(data)) {
+                    return false
+                }
+            }
+            return true
+        })
+    }
+
+    if (filter.response.headers.checkbox && responseHeaderFilter.value?.length > 0) {
+        result = result.filter(x => {
+            const data = x.data as HttpEventData
+            for (const filter of responseHeaderFilter.value) {
                 if (!filter(data)) {
                     return false
                 }
@@ -240,7 +268,10 @@ const activeFiltersCount = computed(() => {
     if (filter.url.checkbox && filter.url.value) {
         counter++;
     }
-    if (filter.headers.checkbox && filter.headers.value.length > 1) {
+    if (filter.request.headers.checkbox && filter.request.headers.value.length > 1) {
+        counter++;
+    }
+    if (filter.response.headers.checkbox && filter.response.headers.value.length > 1) {
         counter++;
     }
     return counter;
@@ -254,65 +285,76 @@ function getFilterCacheKey() {
     }
     return `filter-${props.serviceName}-${props.path}-${props.method}`
 }
-function onHeaderInput(index: number) {
-  const last = filter.headers.value[filter.headers.value.length - 1]
+function onHeaderInput(headers: FilterItem, index: number) {
+    const last = headers.value[headers.value.length - 1]
 
-  // If currently editing the last row and it has a name → add new empty row
-  if (index === filter.headers.value.length - 1 && last.name.trim() !== '') {
-    filter.headers.value.push({ name: '', value: '' })
-  }
-
-  // Optional: remove rows where both fields are empty (except last)
-  for (let i = 0; i < filter.headers.value.length - 1; i++) {
-    const hf = filter.headers.value[i]
-    if (!hf.name?.trim() && !hf.value?.trim()) {
-      filter.headers.value.splice(i, 1)
-      break
+    // If currently editing the last row and it has a name → add new empty row
+    if (index === headers.value?.length - 1 && (last.name?.trim() !== '' || last.value?.trim())) {
+        headers.value.push({ name: '', value: '' })
     }
-  }
+
+    for (let i = 0; i < headers.value.length - 1; i++) {
+        const hf = headers.value[i]
+        if (!hf.name?.trim() && !hf.value?.trim()) {
+        headers.value.splice(i, 1)
+        break
+        }
+    }
 }
-function removeHeaderFilter(index: number) {
-  filter.headers.value.splice(index, 1)
+function removeHeaderFilter(headers: FilterItem, index: number) {
+  headers.value.splice(index, 1)
 
   // Ensure at least one empty placeholder row
-  const last = filter.headers.value[filter.headers.value.length - 1]
+  const last = headers.value[headers.value.length - 1]
   if (last && last.name) {
-    filter.headers.value.push({ name: '', value: '' })
+    headers.value.push({ name: '', value: '' })
   }
 }
-const headerErrors = computed(() => {
+const requestHeaderErrors = computed(() => {
     const result = []
-    for (const ref of headerValueRefs.value) {
-        if (ref.regexError) {
+    for (const ref of requestHeaderValueRefs.value) {
+        if (ref && ref.regexError) {
             result.push(ref.regexError)
         }
     }
     return result
 })
-const headerFilter = computed(() => {
+const responseHeaderErrors = computed(() => {
+    const result: string[] = []
+    if (!filter.response.headers.checkbox) {
+        return result
+    }
+    for (const ref of responseHeaderValueRefs.value) {
+        if (ref && ref.regexError) {
+            result.push(ref.regexError)
+        }
+    }
+    return result
+})
+const requestHeaderFilter = computed(() => {
     const result: ((data: HttpEventData) => boolean)[] = []
-    if (!headerValueRefs.value) {
+    if (!requestHeaderValueRefs.value) {
         return result;
     }
 
-    for (let i = 0; i < filter.headers.value.length - 1; i++) {
-        if (headerValueRefs.value[i]?.regexError) {
+    for (let i = 0; i < filter.request.headers.value.length - 1; i++) {
+        if (requestHeaderValueRefs.value[i]?.regexError) {
             continue
         }
-        const fh = filter.headers.value[i];
+        const fh = filter.request.headers.value[i];
         result.push((data: HttpEventData) => {
             const params = data.request.parameters
             if (!params) {
                 return false
             }
 
+            const name = fh.name?.toLowerCase();
             for (const param of params) {
                 if (param.type !== 'header') {
                     continue
                 }
-                const name = fh.name?.toLowerCase();
                 if (!name) {
-                    const regex = headerValueRefs.value[i].regex
+                    const regex = requestHeaderValueRefs.value[i].regex
                     if (regex && regex.test(param.raw)) {
                         return true
                     }
@@ -320,8 +362,49 @@ const headerFilter = computed(() => {
                     if (!fh.value) {
                         return true
                     } else {
-                        const regex = headerValueRefs.value[i].regex
+                        const regex = requestHeaderValueRefs.value[i].regex
                         if (regex && regex.test(param.raw)) {
+                            return true
+                        }
+                    }
+                }
+            }
+            return false
+        })
+    }
+    return result
+})
+const responseHeaderFilter = computed(() => {
+    const result: ((data: HttpEventData) => boolean)[] = []
+    if (!responseHeaderValueRefs.value) {
+        return result;
+    }
+
+    for (let i = 0; i < filter.response.headers.value.length - 1; i++) {
+        if (responseHeaderValueRefs.value[i]?.regexError) {
+            continue
+        }
+        const fh = filter.response.headers.value[i];
+        result.push((data: HttpEventData) => {
+            const headers = data.response.headers
+            if (!headers) {
+                return false
+            }
+
+            const name = fh.name?.toLowerCase();
+            for (const fieldName in headers) {
+                
+                if (!name) {
+                    const regex = responseHeaderValueRefs.value[i].regex
+                    if (regex && regex.test(headers[name])) {
+                        return true
+                    }
+                } else if (fieldName.toLowerCase() === name) {
+                    if (!fh.value) {
+                        return true
+                    } else {
+                        const regex = responseHeaderValueRefs.value[i].regex
+                        if (regex && regex.test(headers[fieldName])) {
                             return true
                         }
                     }
@@ -460,27 +543,27 @@ const headerFilter = computed(() => {
                         </div>
                     </div>
 
-                    <!-- Headers -->
-                    <div class="row" :class="{ 'mb-3': headerErrors.length == 0 }">
+                    <!-- Request Headers -->
+                    <div class="row" :class="{ 'mb-3': requestHeaderErrors.length == 0 }">
                         <div class="col-4">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" v-model="filter.headers.checkbox" id="headers">
-                                <label class="form-check-label" for="url">Request Header</label>
+                                <input class="form-check-input" type="checkbox" v-model="filter.request.headers.checkbox" id="request-headers">
+                                <label class="form-check-label" for="request-headers">Request Header</label>
                             </div>
                         </div>
-                        <div class="col" v-if="filter.headers.checkbox">
-                            <div  v-for="(hf, i) in filter.headers.value">
-                                <div class="row me-0":class="{ 'mb-2': i < filter.headers.value.length - 1 }" >
+                        <div class="col" v-if="filter.request.headers.checkbox">
+                            <div  v-for="(hf, i) in filter.request.headers.value">
+                                <div class="row me-0":class="{ 'mb-2': i < filter.request.headers.value.length - 1 }" >
                                     <div class="col ps-0 pe-1">
-                                        <input type="text" class="form-control form-control-sm" id="header-name" v-model="hf.name" placeholder="Name" @input="onHeaderInput(i)">
+                                        <input type="text" class="form-control form-control-sm" id="reqeuest-header-name" v-model="hf.name" placeholder="Name" @input="onHeaderInput(filter.request.headers, i)">
                                     </div>
                                     <div class="col ps-1 pe-0">
-                                        <RegexInput v-model="hf.value" :ref="el => headerValueRefs[i] = el" placeholder="Value [Regex]" @input="onHeaderInput(i)" />
+                                        <RegexInput v-model="hf.value" :ref="el => requestHeaderValueRefs[i] = el" placeholder="Value [Regex]" @input="onHeaderInput(filter.request.headers, i)" />
                                     </div>
                                     <div class="col-1">
-                                        <button v-if="i < filter.headers.value.length -1"
+                                        <button v-if="i < filter.request.headers.value.length -1"
                                             class="btn btn-outline-danger btn-sm"
-                                            @click="removeHeaderFilter(i)">
+                                            @click="removeHeaderFilter(filter.request.headers, i)">
                                             <i class="bi bi-x"></i>
                                         </button>
                                     </div>
@@ -488,11 +571,48 @@ const headerFilter = computed(() => {
                             </div>
                         </div>
                     </div>
-                    <div class="row mb-3" v-if="headerErrors.length > 0">
+                    <div class="row mb-3" v-if="requestHeaderErrors.length > 0">
                         <div class="invalid-feedback" style="display: inline;">
                             Invalid regular expression:
                             <ul>
-                                <li v-for="err in headerErrors">{{ err }}</li>
+                                <li v-for="err in requestHeaderErrors">{{ err }}</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Response Headers -->
+                    <div class="row" :class="{ 'mb-3': responseHeaderErrors.length == 0 }">
+                        <div class="col-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" v-model="filter.response.headers.checkbox" id="response-headers">
+                                <label class="form-check-label" for="response-headers">Response Header</label>
+                            </div>
+                        </div>
+                        <div class="col" v-if="filter.response.headers.checkbox">
+                            <div  v-for="(hf, i) in filter.response.headers.value">
+                                <div class="row me-0":class="{ 'mb-2': i < filter.response.headers.value.length - 1 }" >
+                                    <div class="col ps-0 pe-1">
+                                        <input type="text" class="form-control form-control-sm" id="response-header-name" v-model="hf.name" placeholder="Name" @input="onHeaderInput(filter.response.headers, i)">
+                                    </div>
+                                    <div class="col ps-1 pe-0">
+                                        <RegexInput v-model="hf.value" :ref="el => responseHeaderValueRefs[i] = el" placeholder="Value [Regex]" @input="onHeaderInput(filter.response.headers, i)" />
+                                    </div>
+                                    <div class="col-1">
+                                        <button v-if="i < filter.response.headers.value.length -1"
+                                            class="btn btn-outline-danger btn-sm"
+                                            @click="removeHeaderFilter(filter.response.headers, i)">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3" v-if="responseHeaderErrors.length > 0">
+                        <div class="invalid-feedback" style="display: inline;">
+                            Invalid regular expression:
+                            <ul>
+                                <li v-for="err in responseHeaderErrors">{{ err }}</li>
                             </ul>
                         </div>
                     </div>
