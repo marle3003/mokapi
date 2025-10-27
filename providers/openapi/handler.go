@@ -153,9 +153,6 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// todo: only specified headers should be written
 	for k, v := range response.Headers {
 		rw.Header().Add(k, v)
-		if logHttp != nil {
-			logHttp.Response.Headers[k] = v
-		}
 	}
 
 	if len(res.Content) == 0 {

@@ -27,13 +27,24 @@ function renderJsonValue(value: any) {
         return value
     }
 }
+const useValueSwitcher = computed(() => {
+    for (const p of props.parameters) {
+        if (!p.value) {
+            continue;
+        }
+        if (p.value != p.raw) {
+            return true
+        }
+    }
+    return false;
+})
 </script>
 
 <template>
     <table class="table table.sm dataTable">
         <thead>
             <tr>
-                <th scope="col" style="width:40px"></th>
+                <th scope="col" style="width:40px" v-if="useValueSwitcher"></th>
                 <th scope="col" class="text-left w-20">Name</th>
                 <th scope="col" class="text-left" style="width:100px;">Type</th>
                 <th scope="col" class="text-center" style="width: 130px;">OpenAPI</th>
@@ -42,8 +53,8 @@ function renderJsonValue(value: any) {
         </thead>
         <tbody>
             <tr v-for="p in sorted">
-                <td>
-                    <button class="btn btn-sm btn-outline-secondary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .25rem; --bs-btn-font-size: .75rem;"
+                <td v-if="useValueSwitcher">
+                    <button v-if="p.value !== p.raw" class="btn btn-sm btn-outline-secondary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .25rem; --bs-btn-font-size: .75rem;"
                         @click="showRaw[p.name] = !showRaw[p.name]">
                         <i v-if="showRaw[p.name]" class="bi bi-layout-text-sidebar" title="Show parsed value"></i>
                         <i v-else class="bi bi-code" title="Show raw value"></i>
