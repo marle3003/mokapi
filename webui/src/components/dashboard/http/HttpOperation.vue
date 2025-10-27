@@ -71,7 +71,7 @@ const route = useRoute()
             <http-response-card  :service="service" :path="path" :operation="operation" />
         </div>
         <div class="card-group">
-            <requests :service="service" :path="path.path" :method="operation.method.toUpperCase()" />
+            <requests :service-name="service.name" :path="path.path" :method="operation.method.toUpperCase()" />
         </div>
     </div>
 </template>

@@ -32,6 +32,10 @@
   margin-bottom: 0;
   color: var(--color-text);
 }
+.dashboard .card .card-body h6.card-title {
+  font-size: 0.9rem;
+  font-weight: 400;
+}
 .dashboard .card-text {
   font-size: 2.25rem;
 }

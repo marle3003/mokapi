@@ -186,7 +186,12 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 				return nil
 			})
 			if err != nil {
-				return nil, fmt.Errorf("failed to generate valid array: %w", err)
+				if minItems < length {
+					length--
+					i--
+				} else {
+					return nil, fmt.Errorf("failed to generate valid array: %w", err)
+				}
 			}
 		}
 

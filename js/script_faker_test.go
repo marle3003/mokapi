@@ -32,17 +32,17 @@ func TestScript_Faker(t *testing.T) {
 			},
 		},
 		{
-			name: "fake string or number",
+			name: "fake string or integer",
 			test: func(t *testing.T, host *enginetest.Host) {
 				s, err := jstest.New(jstest.WithSource(`import faker from 'mokapi/faker'
 						 export default function() {
-						 	return faker.fake({ type: ['string', 'number'] })
+						 	return faker.fake({ type: ['string', 'integer'] })
 						 }`),
 					js.WithHost(host))
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				r.Equal(t, 609859.0117483337, v.Export())
+				r.Equal(t, int64(-168643), v.Export())
 			},
 		},
 		{

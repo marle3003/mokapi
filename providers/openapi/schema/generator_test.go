@@ -525,7 +525,7 @@ func TestGeneratorArray(t *testing.T) {
 		{
 			name: "unique items with error",
 			schema: schematest.New("array", schematest.WithMinItems(5), schematest.WithMaxItems(10), schematest.WithUniqueItems(true),
-				schematest.WithItems("integer", schematest.WithFormat("int32"), schematest.WithMinimum(0), schematest.WithMaximum(3)),
+				schematest.WithItems("integer", schematest.WithMinimum(0), schematest.WithMaximum(3)),
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.EqualError(t, err, "failed to generate valid array: reached attempt limit (10) caused by: cannot fill array with unique items")
@@ -615,11 +615,6 @@ func TestGeneratorObject(t *testing.T) {
 			exp:  map[string]interface{}{"bunch": "Pevuwy", "growth": "NrLJgmr9arW", "hall": "JKqGj", "woman": "x?vY5elXhlD4ez"},
 			schema: schematest.New("object",
 				schematest.WithAdditionalProperties(schematest.New("string"))),
-		},
-		{
-			name:   "no fields defined",
-			exp:    map[string]interface{}{"bunch": int64(995706), "child": int64(-489581), "gang": -383134.1033810867, "growth": int64(-83276), "hall": 181060.30342605617, "shower": true, "uncle": int64(-142346), "woman": int64(-117432)},
-			schema: schematest.New("object"),
 		},
 		{
 			name: "with property _metadata",

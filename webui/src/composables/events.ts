@@ -9,7 +9,7 @@ export function useEvents() {
             url += `&${label.name}=${label.value}`
         }
         const res = useFetch(url)
-        const events = ref<ServiceEvent[]>()
+        const events = ref<ServiceEvent[]>([])
 
         watchEffect(() => {
             if (!res.data){
