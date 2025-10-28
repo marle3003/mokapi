@@ -354,7 +354,7 @@ const requestHeaderFilter = computed(() => {
                     continue
                 }
                 if (!name) {
-                    const regex = requestHeaderValueRefs.value[i].regex
+                    const regex = requestHeaderValueRefs.value[i]?.regex
                     if (regex && regex.test(param.raw)) {
                         return true
                     }
@@ -362,7 +362,7 @@ const requestHeaderFilter = computed(() => {
                     if (!fh.value) {
                         return true
                     } else {
-                        const regex = requestHeaderValueRefs.value[i].regex
+                        const regex = requestHeaderValueRefs.value[i]?.regex
                         if (regex && regex.test(param.raw)) {
                             return true
                         }
