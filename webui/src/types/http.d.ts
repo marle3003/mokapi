@@ -41,6 +41,7 @@ declare interface HttpEventData {
     duration: number
     deprecated: boolean
     actions: Action[]
+    clientIP: string
 }
 
 declare interface HttpEventRequest {

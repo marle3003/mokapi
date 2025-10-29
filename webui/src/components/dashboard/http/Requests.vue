@@ -4,7 +4,7 @@ import { useEvents } from '@/composables/events'
 import { onUnmounted, computed, useTemplateRef, onMounted, reactive, watch, ref, type ComponentPublicInstance  } from 'vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { usePrettyHttp } from '@/composables/http'
-import { Modal } from 'bootstrap'
+import { Modal, Tooltip } from 'bootstrap'
 import { useService } from '@/composables/services'
 import RegexInput from '@/components/RegexInput.vue'
 
@@ -48,10 +48,12 @@ interface Filter {
     response: {
         headers: FilterItem
     }
+    clientIP: FilterItem
 }
 interface FilterItem {
     checkbox: boolean
     value: any
+    title?: string
 }
 interface MultiFilterItem {
     checkbox: boolean
@@ -67,7 +69,11 @@ const filter = reactive<Filter>({
     },
     response: {
          headers: { checkbox: false, value: [{ name: '', value: '' }]}
-    }
+    },
+    clientIP: { checkbox: false, value: '', title: `<b>IP Filter Options:</b><br>
+          &bull; Multiple entries (comma-separated): 192.168.0.1,10.0.0.1<br>
+          &bull; Negation: -127.0.0.1<br>
+          &bull; CIDR notation: 192.168.0.0/24` }
 })
 
 onMounted(() => {
@@ -82,6 +88,10 @@ onMounted(() => {
             }
         }
     }
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+    tooltipTriggerList.forEach(el => new Tooltip(el, {
+        trigger: 'hover'
+    }))
 })
 
 function goToRequest(event: ServiceEvent){
@@ -167,6 +177,38 @@ const events = computed<ServiceEvent[]>(() => {
                 }
             }
             return true
+        })
+    }
+    if (filter.clientIP.checkbox && filter.clientIP.value.length > 0) {
+        const values = (filter.clientIP.value as string).split(',').map(x => x.trim()).filter(x => x.length > 0)
+        result = result.filter(x => {
+            const data = x.data as HttpEventData
+
+            let matched = false;
+
+            for (let value of values) {
+                let not = false
+                if (value[0] === '-') {
+                    not = true
+                    value = value.substring(1)
+                }
+                let isMatch = false
+                if (value.includes('/')) {
+                    isMatch = cidrMatch(data.clientIP, value)
+                } else {
+                    isMatch = data.clientIP === value
+                }
+
+                if (not && isMatch) {
+                    // Negated value matches → reject immediately
+                    return false
+                }
+                if (!not && isMatch) {
+                    // Normal value matches → mark as matched
+                    matched = true;
+                }
+            }
+            return matched || values.every(v => v[0] === '-')
         })
     }
 
@@ -275,6 +317,9 @@ const activeFiltersCount = computed(() => {
     }
     if (filter.response.headers.checkbox && filter.response.headers.value.length > 1) {
         counter++;
+    }
+    if (filter.clientIP.checkbox && filter.clientIP.value.length > 0) {
+        counter++
     }
     return counter;
 })
@@ -417,6 +462,30 @@ const responseHeaderFilter = computed(() => {
     }
     return result
 })
+function ipToInt(ip: string): number {
+    return ip
+        .split('.')
+        .map((octet) => parseInt(octet, 10))
+        .reduce((acc, octet) => (acc << 8) + octet, 0);
+}
+
+function cidrMatch(ip: string, cidr: string): boolean {
+    const parts: string[] = cidr.split('/');
+    if (parts.length !== 2) {
+        return false
+    }
+
+    const [range, bitsStr] = parts;
+    const bits: number = parseInt(bitsStr!, 10);
+
+    if (isNaN(bits) || bits < 0 || bits > 32) {
+        return false
+    }
+
+    const mask: number = ~(2 ** (32 - bits) - 1);
+
+    return (ipToInt(ip) & mask) === (ipToInt(range!) & mask);
+}
 </script>
 
 <template>
@@ -616,6 +685,23 @@ const responseHeaderFilter = computed(() => {
                             <ul>
                                 <li v-for="err in responseHeaderErrors">{{ err }}</li>
                             </ul>
+                        </div>
+                    </div>
+
+                    <!-- Client IP -->
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="form-check" data-bs-toggle="tooltip" data-bs-delay='{"show": 200, "hide": 100}' :title="filter.clientIP.title" data-bs-offset="[-150, 0]" data-bs-html="true">
+                                <input class="form-check-input" type="checkbox" v-model="filter.clientIP.checkbox" id="clientIP">
+                                <label class="form-check-label" for="clientIP">Client IP</label>
+                            </div>
+                        </div>
+                        <div class="col" v-show="filter.clientIP.checkbox">
+                             <div class="col ps-0 pe-1"  data-bs-toggle="tooltip" data-bs-delay='{"show": 200, "hide": 100}' :title="filter.clientIP.title" data-bs-html="true">
+                                <div class="row me-0">
+                                    <input type="text" class="form-control form-control-sm" id="clientIP" v-model="filter.clientIP.value">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
