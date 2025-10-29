@@ -154,7 +154,9 @@ func (s *SharedArray) SetLen(n int) bool {
 			tail[j] = nil
 		}
 		s.array = s.array[:n]
-		s.update(s.array)
+		if s.update != nil {
+			s.update(s.array)
+		}
 	}
 	return true
 }
@@ -167,7 +169,9 @@ func (s *SharedArray) expand(newLen int) {
 	} else {
 		s.array = s.array[:newLen]
 	}
-	s.update(s.array)
+	if s.update != nil {
+		s.update(s.array)
+	}
 }
 
 func (s *SharedArray) Export() any {
