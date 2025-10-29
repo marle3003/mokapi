@@ -47,6 +47,7 @@ interface Filter {
     }
     response: {
         headers: FilterItem
+        statusCode: FilterItem
     }
     clientIP: FilterItem
 }
@@ -68,25 +69,26 @@ const filter = reactive<Filter>({
         headers: { checkbox: false, value: [{ name: '', value: '' }]}
     },
     response: {
-         headers: { checkbox: false, value: [{ name: '', value: '' }]}
+         headers: { checkbox: false, value: [{ name: '', value: '' }]},
+         statusCode: { checkbox: false, value: '', title: `<b>Status Code Filter:</b><br>
+            &bull; Multiple entries (comma-separated): 200, 404<br>
+            &bull; Negation: prefix with '-' (e.g., -501)<br>
+            &bull; Range: start-end (e.g., 200-300)`
+        }
     },
     clientIP: { checkbox: false, value: '', title: `<b>IP Filter Options:</b><br>
           &bull; Multiple entries (comma-separated): 192.168.0.1,10.0.0.1<br>
-          &bull; Negation: -127.0.0.1<br>
+          &bull; Negation: prefix with '-' (e.g.,  -127.0.0.1)<br>
           &bull; CIDR notation: 192.168.0.0/24` }
-})
+    }
+)
 
 onMounted(() => {
     dialog = Modal.getOrCreateInstance(dialogRef.value!);
     const s = localStorage.getItem(`http-requests-${getFilterCacheKey()}`)
     if (s && s !== '') {
         const saved = JSON.parse(s)
-        type Key = keyof Filter
-        for (const key in filter) {
-            if (saved[key] !== undefined) {
-                filter[key as Key] = saved[key]
-            }
-        }
+        mergeDeep(filter, saved)
     }
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
     tooltipTriggerList.forEach(el => new Tooltip(el, {
@@ -211,6 +213,44 @@ const events = computed<ServiceEvent[]>(() => {
             return matched || values.every(v => v[0] === '-')
         })
     }
+    if (filter.response.statusCode.checkbox && filter.response.statusCode.value.length > 0) {
+        const values = (filter.response.statusCode.value as string).split(',').map(x => x.trim()).filter(x => x.length > 0)
+        result = result.filter(x => {
+            const data = x.data as HttpEventData
+
+            let matched = false;
+
+            for (let value of values) {
+                let not = false
+                if (value[0] === '-') {
+                    not = true
+                    value = value.substring(1)
+                }
+                let isMatch = false
+                if (value.includes('-')) {
+                    const parts = value.split('-').map(x => x.trim())
+                    if (parts.length !== 2) {
+                        continue
+                    }
+                    const min = parseInt(parts[0]!)
+                    const max = parseInt(parts[1]!)
+                    isMatch = data.response.statusCode >= min && data.response.statusCode <= max
+                } else {
+                    isMatch = data.response.statusCode.toString() === value
+                }
+
+                if (not && isMatch) {
+                    // Negated value matches → reject immediately
+                    return false
+                }
+                if (!not && isMatch) {
+                    // Normal value matches → mark as matched
+                    matched = true;
+                }
+            }
+            return matched || values.every(v => v[0] === '-')
+        })
+    }
 
     return result
 })
@@ -317,6 +357,9 @@ const activeFiltersCount = computed(() => {
     }
     if (filter.response.headers.checkbox && filter.response.headers.value.length > 1) {
         counter++;
+    }
+    if (filter.response.statusCode.checkbox && filter.response.statusCode.value.length > 0) {
+        counter++
     }
     if (filter.clientIP.checkbox && filter.clientIP.value.length > 0) {
         counter++
@@ -486,6 +529,28 @@ function cidrMatch(ip: string, cidr: string): boolean {
 
     return (ipToInt(ip) & mask) === (ipToInt(range!) & mask);
 }
+function mergeDeep<T>(target: T, source: Partial<T>): T {
+    for (const key in source) {
+        const sourceValue = source[key];
+        const targetValue = target[key];
+
+        if (
+            sourceValue &&
+            typeof sourceValue === 'object' &&
+            !Array.isArray(sourceValue) &&
+            targetValue &&
+            typeof targetValue === 'object' &&
+            !Array.isArray(targetValue)
+        ) {
+            // Nested object: recurse
+            mergeDeep(targetValue, sourceValue);
+        } else if (sourceValue !== undefined) {
+            // Primitive or array: overwrite
+            target[key] = sourceValue as any;
+        }
+    }
+    return target;
+}
 </script>
 
 <template>
@@ -648,6 +713,23 @@ function cidrMatch(ip: string, cidr: string): boolean {
                             <ul>
                                 <li v-for="err in requestHeaderErrors">{{ err }}</li>
                             </ul>
+                        </div>
+                    </div>
+
+                    <!-- Response Status Code -->
+                    <div class="row mb-3">
+                        <div class="col-4">
+                            <div class="form-check" data-bs-toggle="tooltip" data-bs-delay='{"show": 200, "hide": 100}' :title="filter.response.statusCode.title" data-bs-offset="[-150, 0]" data-bs-html="true">
+                                <input class="form-check-input" type="checkbox" v-model="filter.response.statusCode.checkbox" id="statusCode">
+                                <label class="form-check-label" for="statusCode">Status Code</label>
+                            </div>
+                        </div>
+                        <div class="col" v-show="filter.response.statusCode.checkbox">
+                             <div class="col ps-0 pe-1"  data-bs-toggle="tooltip" data-bs-delay='{"show": 200, "hide": 100}' :title="filter.response.statusCode.title" data-bs-html="true">
+                                <div class="row me-0">
+                                    <input type="text" class="form-control form-control-sm" id="statusCode" v-model="filter.response.statusCode.value">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
