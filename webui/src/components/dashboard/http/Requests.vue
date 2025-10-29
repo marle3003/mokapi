@@ -104,12 +104,14 @@ watch(filter, () => {
 
 const events = computed<ServiceEvent[]>(() => {
     let result = data.value;;
-    switch (filter.service.state) {
-        case 'Single':
-            result = result.filter(x => x.traits.name === filter.service.value[0]);
-            break;
-        case 'Multi':
-            result = result.filter(x => x.traits.name && filter.service.value.includes(x.traits.name));
+    if (props.serviceName === undefined) {
+        switch (filter.service.state) {
+            case 'Single':
+                result = result.filter(x => x.traits.name === filter.service.value[0]);
+                break;
+            case 'Multi':
+                result = result.filter(x => x.traits.name && filter.service.value.includes(x.traits.name));
+        }
     }
     const custom = filter.method.custom?.toUpperCase().split(' ');
     switch (filter.method.state) {

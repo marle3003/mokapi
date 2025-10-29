@@ -104,6 +104,7 @@ type HttpClient interface {
 
 type HttpClientOptions struct {
 	MaxRedirects int
+	Timeout      time.Duration
 }
 
 type Action struct {
