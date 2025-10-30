@@ -22,6 +22,7 @@ type Host struct {
 	DebugFunc          func(args ...interface{})
 	IsLevelEnabledFunc func(level string) bool
 	HttpClientTest     *HttpClient
+	HttpClientFunc     func(opts common.HttpClientOptions) common.HttpClient
 	KafkaClientTest    *KafkaClient
 	EveryFunc          func(every string, do func(), opt common.JobOptions)
 	CronFunc           func(every string, do func(), opt common.JobOptions)
@@ -128,7 +129,10 @@ func (h *Host) Unlock() {
 	h.m.Unlock()
 }
 
-func (h *Host) HttpClient(_ common.HttpClientOptions) common.HttpClient {
+func (h *Host) HttpClient(opts common.HttpClientOptions) common.HttpClient {
+	if h.HttpClientFunc != nil {
+		return h.HttpClientFunc(opts)
+	}
 	return h.HttpClientTest
 }
 

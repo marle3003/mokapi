@@ -77,7 +77,7 @@ onUnmounted(() => {
             <http-operations-card :service="service" :path="path" />
         </div>
         <div class="card-group">
-            <requests :service="service" :path="path.path" />
+            <requests :service-name="service.name" :path="path.path" />
         </div>
     </div>
 </template>

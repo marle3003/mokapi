@@ -4,8 +4,9 @@ import { computed, ref, type PropType } from 'vue';
 const props = defineProps({
     parameters: { type: Object as PropType<HttpEventParameter[]>, required: true },
 })
+const value = ref<string | undefined>();
 const sorted = computed(() => {
-    return props.parameters.sort((p1, p2) => {
+    const result = props.parameters.sort((p1, p2) => {
         if (p1.value && p2.value) {
             return p1.name.localeCompare(p2.name)
         }
@@ -13,7 +14,11 @@ const sorted = computed(() => {
             return -1
         }
         return 1
-    })
+    });
+    return result.map(p => ({
+        ...p,
+        rendered: renderJsonValue(p.value)
+    }))
 })
 const showRaw = ref<{[name: string]: boolean}>({})
 function renderJsonValue(value: any) {
@@ -27,13 +32,24 @@ function renderJsonValue(value: any) {
         return value
     }
 }
+const useValueSwitcher = computed(() => {
+    for (const p of sorted.value) {
+        if (!p.value) {
+            continue;
+        }
+        if (p.rendered != p.raw) {
+            return true
+        }
+    }
+    return false;
+})
 </script>
 
 <template>
     <table class="table table.sm dataTable">
         <thead>
             <tr>
-                <th scope="col" style="width:40px"></th>
+                <th scope="col" style="width:40px" v-if="useValueSwitcher"></th>
                 <th scope="col" class="text-left w-20">Name</th>
                 <th scope="col" class="text-left" style="width:100px;">Type</th>
                 <th scope="col" class="text-center" style="width: 130px;">OpenAPI</th>
@@ -42,8 +58,8 @@ function renderJsonValue(value: any) {
         </thead>
         <tbody>
             <tr v-for="p in sorted">
-                <td>
-                    <button class="btn btn-sm btn-outline-secondary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .25rem; --bs-btn-font-size: .75rem;"
+                <td v-if="useValueSwitcher">
+                    <button v-if="p.value && p.rendered !== p.raw" class="btn btn-sm btn-outline-secondary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .25rem; --bs-btn-font-size: .75rem;"
                         @click="showRaw[p.name] = !showRaw[p.name]">
                         <i v-if="showRaw[p.name]" class="bi bi-layout-text-sidebar" title="Show parsed value"></i>
                         <i v-else class="bi bi-code" title="Show raw value"></i>
@@ -52,7 +68,7 @@ function renderJsonValue(value: any) {
                 <td class="align-middle">{{ p.name }}</td>
                 <td class="align-middle">{{ p.type }}</td>
                 <td class="text-center align-middle">{{ p.value ? 'yes' : 'no' }}</td>
-                <td class="align-middle">{{ p.value ? (showRaw[p.name] ? p.raw : renderJsonValue(p.value)) : p.raw }}</td>
+                <td class="align-middle">{{ p.value ? (showRaw[p.name] ? p.raw : p.rendered) : p.raw }}</td>
             </tr>
         </tbody>
     </table>

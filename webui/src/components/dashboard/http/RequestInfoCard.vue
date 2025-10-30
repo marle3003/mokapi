@@ -34,8 +34,8 @@ const operationRoute = computed(() => {
 <template>
     <div class="card">
         <div class="card-body">
-            <div class="row">
-                <div class="col header">
+            <div class="row mb-2">
+                <div class="col-10 header">
                     <p class="label">URL</p>
                     <p>
                         <span class="badge operation" :class="eventData.request.method.toLowerCase()">{{ eventData.request.method }}</span>
@@ -46,13 +46,9 @@ const operationRoute = computed(() => {
                     <p class="label">Time</p>
                     <p>{{ format(event.time) }}</p>
                 </div>
-                <div class="col" v-if="eventData.deprecated">
-                    <p class="label">Warning</p>
-                    <p><span class="bi bi-exclamation-triangle-fill yellow"></span> Deprecated</p>
-                </div>
             </div>
-            <div class="row">
-                <div class="col">
+            <div class="row mb-2">
+                <div class="col-2">
                     <p class="label">Status</p>
                     <p>
                         <span class="badge status-code" :class="getClassByStatusCode(eventData.response.statusCode.toString())">
@@ -60,19 +56,27 @@ const operationRoute = computed(() => {
                         </span>
                     </p>
                 </div>
-                <div class="col">
+                <div class="col-2">
+                    <p class="label">Size</p>
+                    <p>{{ formatBytes(eventData.response.size) }}</p>
+                </div>
+                <div class="col-2">
                     <p class="label">Duration</p>
                     <p>{{ duration(eventData.duration) }}</p>
+                </div>
+                <div class="col-2">
+                    <p class="label">Client IP</p>
+                    <p>{{ eventData.clientIP }}</p>
                 </div>
                 <div class="col" v-if="operationRoute">
                     <p class="label">Specification</p>
                     <router-link :to="operationRoute">Operation</router-link>
                 </div>
             </div>
-            <div class="row">
+            <div class="row" v-if="eventData.deprecated">
                 <div class="col">
-                    <p class="label">Size</p>
-                    <p>{{ formatBytes(eventData.response.size) }}</p>
+                    <p class="label">Warning</p>
+                    <p><span class="bi bi-exclamation-triangle-fill yellow"></span> Deprecated</p>
                 </div>
             </div>
         </div>

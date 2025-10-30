@@ -7,7 +7,7 @@ table.dataTable {
     table-layout: fixed;
 }
 table.dataTable th {
-    background-color: var(---datatable-background);
+    background-color: var(--datatable-background);
     color: var(--datatable-header-color);
 }
 table.dataTable td {
@@ -17,8 +17,8 @@ table.dataTable td {
 table.dataTable th {
     padding: 3px 0 3px 12px;
     border-color: var(--datatable-border-color);
-    border-top-width: 0px;
-    border-bottom-width: 2px;
+    border-top-width: 0;
+    border-bottom-width: 3px;
     font-weight: 500;
 }
 table.dataTable td{

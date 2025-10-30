@@ -94,7 +94,7 @@ function endpointNotFoundMessage(msg: string | undefined) {
             <config-card :configs="service.configs" />
         </div>
         <div class="card-group">
-            <requests :service="service" />
+            <requests :service-name="service.name" />
         </div>
         
     </div>

@@ -52,7 +52,7 @@ func TestModule_Shared(t *testing.T) {
 				`)
 				r.NoError(t, err)
 
-				r.Equal(t, "hello world", v.Export())
+				r.Equal(t, "hello world", mokapi.Export(v))
 			},
 		},
 		{
@@ -77,7 +77,7 @@ func TestModule_Shared(t *testing.T) {
 				`)
 				r.NoError(t, err)
 
-				r.Equal(t, map[string]any{"bar": false, "test": true}, v.Export())
+				r.Equal(t, map[string]any{"bar": false, "test": true}, mokapi.Export(v))
 			},
 		},
 		{
@@ -102,7 +102,7 @@ func TestModule_Shared(t *testing.T) {
 					m.shared.get('bar')
 				`)
 				r.NoError(t, err)
-				r.Equal(t, nil, v.Export())
+				r.Equal(t, nil, mokapi.Export(v))
 
 				_, err = vm1.RunString(`
 					m.shared.set('bar', 123)
@@ -113,7 +113,7 @@ func TestModule_Shared(t *testing.T) {
 					m.shared.get('bar')
 				`)
 				r.NoError(t, err)
-				r.Equal(t, int64(123), v.Export())
+				r.Equal(t, int64(123), mokapi.Export(v))
 			},
 		},
 		{
@@ -134,7 +134,7 @@ func TestModule_Shared(t *testing.T) {
 				`)
 				r.NoError(t, err)
 
-				r.Equal(t, int64(2), v.Export())
+				r.Equal(t, int64(2), mokapi.Export(v))
 			},
 		},
 		{
@@ -158,7 +158,7 @@ func TestModule_Shared(t *testing.T) {
 				`)
 				r.NoError(t, err)
 
-				r.Equal(t, []string{"1", "100", "bar", "foo"}, v.Export())
+				r.Equal(t, []string{"1", "100", "bar", "foo"}, mokapi.Export(v))
 			},
 		},
 		{
@@ -181,7 +181,7 @@ func TestModule_Shared(t *testing.T) {
 				`)
 				r.NoError(t, err)
 
-				r.Equal(t, int64(123), v.Export())
+				r.Equal(t, int64(123), mokapi.Export(v))
 			},
 		},
 		{
@@ -204,7 +204,72 @@ func TestModule_Shared(t *testing.T) {
 				`)
 				r.NoError(t, err)
 
-				r.Equal(t, map[string]any{"bar": "123"}, v.Export())
+				r.Equal(t, map[string]any{"bar": "123"}, mokapi.Export(v))
+			},
+		},
+		{
+			name: "update with array",
+			test: func(t *testing.T, newVm func() *goja.Runtime) {
+				vm1 := newVm()
+
+				v, err := vm1.RunString(`
+					const m = require('mokapi');
+					const foo = m.shared.update('foo', (v) => v ?? { items: [] });
+					foo.items.push(123)
+					foo
+				`)
+				r.NoError(t, err)
+				m := map[string]interface{}{}
+				err = vm1.ExportTo(v, &m)
+				r.Equal(t, map[string]any{"items": []any{int64(123)}}, mokapi.Export(v))
+			},
+		},
+		{
+			name: "enumerate object",
+			test: func(t *testing.T, newVm func() *goja.Runtime) {
+				vm1 := newVm()
+
+				v, err := vm1.RunString(`
+					const m = require('mokapi');
+					const foo = m.shared.update('foo', (v) => v ?? { foo: 'bar' });
+					const result = []
+					for (let k in foo) {
+						result.push(k)
+					}
+					result
+				`)
+				r.NoError(t, err)
+				r.Equal(t, []any{"foo"}, mokapi.Export(v))
+			},
+		},
+		{
+			name: "spread object",
+			test: func(t *testing.T, newVm func() *goja.Runtime) {
+				vm1 := newVm()
+
+				v, err := vm1.RunString(`
+					const m = require('mokapi');
+					const shared = m.shared.update('foo', (v) => v ?? { foo: 'bar' });
+					const { foo } = shared
+					foo
+				`)
+				r.NoError(t, err)
+				r.Equal(t, "bar", mokapi.Export(v))
+			},
+		},
+		{
+			name: "splice array",
+			test: func(t *testing.T, newVm func() *goja.Runtime) {
+				vm1 := newVm()
+
+				v, err := vm1.RunString(`
+					const m = require('mokapi');
+					const shared = m.shared.update('foo', (v) => v ?? { items: [1,2,3] });
+					shared.items.splice(1, 1)
+					shared.items
+				`)
+				r.NoError(t, err)
+				r.Equal(t, []any{int64(1), int64(3)}, mokapi.Export(v))
 			},
 		},
 	}

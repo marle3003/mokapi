@@ -20,6 +20,10 @@ type Parser struct {
 	SkipValidationFormatKeyword bool
 }
 
+type Exportable interface {
+	Export() any
+}
+
 func (p *Parser) ParseWith(data interface{}, schema *schema.Schema) (interface{}, error) {
 	v, err := p.parse(data, schema)
 	if err != nil {
@@ -42,6 +46,11 @@ func (p *Parser) parse(data interface{}, s *schema.Schema) (interface{}, error) 
 	if s == nil {
 		return data, nil
 	}
+
+	if e, ok := data.(Exportable); ok {
+		data = e.Export()
+	}
+
 	if s.Boolean != nil {
 		if *s.Boolean {
 			return data, nil

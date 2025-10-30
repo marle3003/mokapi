@@ -310,7 +310,7 @@ func (sh *scriptHost) KafkaClient() common.KafkaClient {
 
 func (sh *scriptHost) HttpClient(opts common.HttpClientOptions) common.HttpClient {
 	return &http.Client{
-		Timeout: time.Second * 30,
+		Timeout: opts.Timeout,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if l := len(via); l > opts.MaxRedirects {
 				log.Warnf("Stopped after %d redirects, original URL was %s", opts.MaxRedirects, via[0].URL)

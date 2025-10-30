@@ -588,7 +588,7 @@ export let events = [
                 url: "http://127.0.0.1:18080/pet",
                 parameters: [
                     {
-                        name: 'Acceot-Encoding',
+                        name: 'Accept-Encoding',
                         type: 'header',
                         raw: 'gzip, deflate'
                     }
@@ -625,7 +625,7 @@ export let events = [
                             url: "http://127.0.0.1:18080/pet",
                             parameters: [
                                 {
-                                    name: 'Acceot-Encoding',
+                                    name: 'Accept-Encoding',
                                     type: 'header',
                                     raw: 'gzip, deflate'
                                 }
@@ -642,7 +642,8 @@ export let events = [
                         })
                     ]
                 }
-            ]
+            ],
+            clientIP: '127.0.0.1'
         },
     },
     {
@@ -691,7 +692,8 @@ export let events = [
                         message: 'An example script error message'
                     }
                 }
-            ]
+            ],
+            clientIP: '127.0.0.1'
         }
     },
     {
@@ -735,7 +737,8 @@ export let events = [
                         event: "http"
                     }
                 }
-            ]
+            ],
+            clientIP: '127.0.0.1'
         }
     },
     {
@@ -773,7 +776,8 @@ export let events = [
                         event: "http"
                     }
                 }
-            ]
+            ],
+            clientIP: '127.0.0.1'
         }
     },
     {
@@ -819,6 +823,7 @@ export let events = [
                 size: 512
             },
             duration: 133,
+            clientIP: '192.0.1.127'
         }
     }
 ]
