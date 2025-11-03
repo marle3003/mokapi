@@ -172,6 +172,10 @@ func (p *Parser) parseType(data interface{}, s *schema.Schema, typeName string, 
 		data, err = p.ParseArray(data, s, evaluatedItems)
 	case "object":
 		data, err = p.parseObject(data, s, evaluatedProperties)
+	case "null":
+		if data != nil {
+			return nil, fmt.Errorf("expected null, but got %s", toType(data))
+		}
 	}
 
 	if s.Const != nil {
