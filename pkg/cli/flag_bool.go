@@ -38,11 +38,8 @@ func (fs *FlagSet) Bool(name string, defaultValue bool, usage string) {
 
 func (fs *FlagSet) BoolShort(name string, short string, defaultValue bool, usage string) {
 	v := &boolFlag{value: defaultValue}
-	f := &Flag{Value: &boolFlag{}, Usage: usage, DefaultValue: v.String()}
-	fs.setFlag(name, f)
-	if short != "" {
-		fs.setFlag(short, f)
-	}
+	f := &Flag{Value: &boolFlag{}, Name: name, Shorthand: short, Usage: usage, DefaultValue: v.String()}
+	fs.setFlag(f)
 }
 
 func (fs *FlagSet) GetBool(name string) bool {

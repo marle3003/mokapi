@@ -40,11 +40,8 @@ func (fs *FlagSet) Int(name string, defaultValue int, usage string) {
 
 func (fs *FlagSet) IntShort(name string, short string, defaultValue int, usage string) {
 	v := &intFlag{value: defaultValue}
-	f := &Flag{Value: v, Usage: usage, DefaultValue: v.String()}
-	fs.setFlag(name, f)
-	if short != "" {
-		fs.setFlag(short, f)
-	}
+	f := &Flag{Name: name, Shorthand: short, Value: v, Usage: usage, DefaultValue: v.String()}
+	fs.setFlag(f)
 }
 
 func (fs *FlagSet) GetInt(name string) int {

@@ -20,6 +20,10 @@ type ReadFileFS func(path string) ([]byte, error)
 
 var readFile ReadFileFS = os.ReadFile
 
+func SetReadFileFS(f ReadFileFS) {
+	readFile = f
+}
+
 func readConfigFileFromFlags(flags map[string][]string, element interface{}) (string, error) {
 	var filename string
 	if len(filename) == 0 {
@@ -44,9 +48,9 @@ func readConfigFileFromFlags(flags map[string][]string, element interface{}) (st
 		for _, name := range fileNames {
 			path := filepath.Join(dir, name)
 			if err := readConfigFile(path, element); err == nil {
-				return filename, nil
+				return path, nil
 			} else if !os.IsNotExist(err) {
-				return filename, err
+				return path, err
 			}
 		}
 	}

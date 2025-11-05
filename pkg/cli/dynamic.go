@@ -6,7 +6,7 @@ import (
 )
 
 var regexIndex = regexp.MustCompile(`\[<.*>]`)
-var regexString = regexp.MustCompile(`<.*>`)
+var regexKey = regexp.MustCompile(`<.*>`)
 
 func (fs *FlagSet) DynamicInt(name string, defaultValue int, usage string) {
 	v := &intFlag{value: defaultValue}
@@ -49,7 +49,7 @@ func (fs *FlagSet) DynamicStringSlice(name string, defaultValue []string, usage 
 
 func convertToPattern(s string) *regexp.Regexp {
 	pattern := regexIndex.ReplaceAllString(s, "\\[[0-9]+]")
-	pattern = regexString.ReplaceAllString(pattern, "[a-zA-Z]+")
+	pattern = regexKey.ReplaceAllString(pattern, "[a-zA-Z]+")
 	regex, err := regexp.Compile(fmt.Sprintf("^%s$", pattern))
 	if err != nil {
 		panic(fmt.Errorf("invalid regex pattern: %s", pattern))
