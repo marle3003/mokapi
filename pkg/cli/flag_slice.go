@@ -33,11 +33,8 @@ func (fs *FlagSet) StringSlice(name string, defaultValue []string, usage string,
 
 func (fs *FlagSet) StringSliceShort(name string, short string, defaultValue []string, usage string, explode bool) {
 	v := &stringSliceFlag{value: defaultValue, explode: explode}
-	f := &Flag{Value: v, Usage: usage, DefaultValue: v.String()}
-	fs.setFlag(name, f)
-	if short != "" {
-		fs.setFlag(short, f)
-	}
+	f := &Flag{Name: name, Shorthand: short, Value: v, Usage: usage, DefaultValue: v.String()}
+	fs.setFlag(f)
 }
 
 func (fs *FlagSet) GetStringSlice(name string) []string {
@@ -50,30 +47,4 @@ func (fs *FlagSet) GetStringSlice(name string) []string {
 		panic(fmt.Sprintf("flag '%s' is not a string slice", name))
 	}
 	return s
-}
-
-type sliceFlag struct {
-	value   []string
-	explode bool
-}
-
-func (f *sliceFlag) Set(values []string) error {
-	return nil
-}
-
-func (f *sliceFlag) Value() any {
-	return f.value
-}
-
-func (f *sliceFlag) String() string {
-	return ""
-}
-
-func (fs *FlagSet) SliceShort(name string, short string, defaultValue []string, usage string, explode bool) {
-	v := &sliceFlag{value: defaultValue, explode: explode}
-	f := &Flag{Value: v, Usage: usage, DefaultValue: ""}
-	fs.setFlag(name, f)
-	if short != "" {
-		fs.setFlag(short, f)
-	}
 }

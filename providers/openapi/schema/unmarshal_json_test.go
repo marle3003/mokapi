@@ -2,7 +2,6 @@ package schema_test
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"math"
 	"mokapi/media"
 	"mokapi/providers/openapi"
@@ -10,6 +9,8 @@ import (
 	"mokapi/providers/openapi/schema/schematest"
 	jsonSchema "mokapi/schema/json/schema"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestRef_Unmarshal_Json(t *testing.T) {
@@ -476,6 +477,23 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
 				require.Nil(t, i)
+			},
+		},
+		{
+			name:   "only nullable set",
+			s:      `{"foo": "bar"}`,
+			schema: schematest.NewTypes(nil, schematest.IsNullable(true)),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": "bar"}, i)
+			},
+		},
+		{
+			name:   "nullable string but got integer",
+			s:      "123",
+			schema: schematest.New("string", schematest.IsNullable(true)),
+			test: func(t *testing.T, i interface{}, err error) {
+				require.EqualError(t, err, "error count 1:\n\t- expected null, but got number")
 			},
 		},
 	}

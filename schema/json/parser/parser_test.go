@@ -143,3 +143,112 @@ func TestParser_NoType(t *testing.T) {
 		})
 	}
 }
+
+func TestParser_Null(t *testing.T) {
+	testcases := []struct {
+		name   string
+		data   interface{}
+		schema *schema.Schema
+		test   func(t *testing.T, v interface{}, err error)
+	}{
+		{
+			name:   "only null valid",
+			data:   nil,
+			schema: schematest.New("null"),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Nil(t, v)
+			},
+		},
+		{
+			name:   "only null not valid",
+			data:   123,
+			schema: schematest.New("null"),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "error count 1:\n\t- expected null, but got integer")
+			},
+		},
+		{
+			name:   "null and string with valid value",
+			data:   "foo",
+			schema: schematest.NewTypes([]string{"null", "string"}),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "foo", v)
+			},
+		},
+		{
+			name:   "null and string with valid null",
+			data:   nil,
+			schema: schematest.NewTypes([]string{"null", "string"}),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Nil(t, v)
+			},
+		},
+		{
+			name:   "null and string with valid null",
+			data:   nil,
+			schema: schematest.NewTypes([]string{"null", "string"}),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Nil(t, v)
+			},
+		},
+		{
+			name:   "null and string not valid",
+			data:   123,
+			schema: schematest.NewTypes([]string{"null", "string"}),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected [null, string] but got integer")
+			},
+		},
+		{
+			name:   "null and object with valid value",
+			data:   map[string]interface{}{"foo": 123},
+			schema: schematest.NewTypes([]string{"null", "object"}),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": 123}, v)
+			},
+		},
+		{
+			name:   "null and object with valid null",
+			data:   nil,
+			schema: schematest.NewTypes([]string{"null", "object"}),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Nil(t, v)
+			},
+		},
+		{
+			name:   "nullable field",
+			data:   map[string]interface{}{"foo": nil},
+			schema: schematest.New("object", schematest.WithProperty("foo", schematest.NewTypes([]string{"null", "object"}))),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": nil}, v)
+			},
+		},
+		{
+			name:   "null but object",
+			data:   map[string]interface{}{"foo": nil},
+			schema: schematest.New("null"),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected null but got object")
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			p := &parser.Parser{Schema: tc.schema}
+			v, err := p.Parse(tc.data)
+			tc.test(t, v, err)
+		})
+	}
+}

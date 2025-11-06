@@ -3,7 +3,6 @@ package mokapi
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	stdlog "log"
 	"mokapi/api"
 	"mokapi/config/dynamic"
@@ -25,6 +24,8 @@ import (
 	"mokapi/server/cert"
 	"mokapi/version"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const logo = "888b     d888          888             d8888          d8b \n8888b   d8888          888            d88888          Y8P \n88888b.d88888          888           d88P888              \n888Y88888P888  .d88b.  888  888     d88P 888 88888b.  888 \n888 Y888P 888 d88\"\"88b 888 .88P    d88P  888 888 \"88b 888 \n888  Y8P  888 888  888 888888K    d88P   888 888  888 888 \n888   \"   888 Y88..88P 888 \"88b  d8888888888 888 d88P 888 \n888       888  \"Y88P\"  888  888 d88P     888 88888P\"  888 \n        v%s by Marcel Lehmann%s 888          \n        https://mokapi.io                    888          \n                                             888   \n"
@@ -41,9 +42,8 @@ func NewCmdMokapi(ctx context.Context) *cli.Command {
 		Commands: []*cli.Command{
 			NewCmdSampleData(),
 		},
+		EnvPrefix: "MOKAPI_",
 	}
-
-	cmd.SetEnvPrefix("mokapi")
 
 	cmd.Flags().BoolShort("version", "v", false, "Show version information and exit")
 	cmd.Flags().Bool("generate-cli-skeleton", false, "Generates the skeleton configuration file")
@@ -58,14 +58,17 @@ func NewCmdMokapi(ctx context.Context) *cli.Command {
 	cmd.Flags().String("log-format", "text", "Mokapi log format: json|text (default is text)")
 
 	// file provider
+	cmd.Flags().String("providers-file", "", "")
 	cmd.Flags().StringSlice("providers-file-filename", []string{}, "Load the dynamic configuration from files", true)
 	cmd.Flags().StringSlice("providers-file-filenames", []string{}, "Load the dynamic configuration from files", false)
 	cmd.Flags().StringSlice("providers-file-directory", []string{}, "Load the dynamic configuration from directories", true)
 	cmd.Flags().StringSlice("providers-file-directories", []string{}, "Load the dynamic configuration from directories", false)
 	cmd.Flags().StringSlice("providers-file-skip-prefix", []string{"_"}, "", false)
 	cmd.Flags().StringSlice("providers-file-include", []string{}, "", false)
+	cmd.Flags().DynamicStringSlice("providers-file-include[<index>]", []string{}, "", false)
 
 	// git provider
+	cmd.Flags().String("providers-git", "", "")
 	cmd.Flags().StringSlice("providers-git-url", []string{}, "", true)
 	cmd.Flags().StringSlice("providers-git-urls", []string{}, "", false)
 	cmd.Flags().String("providers-git-pull-interval", "3m", "")
@@ -82,6 +85,7 @@ func NewCmdMokapi(ctx context.Context) *cli.Command {
 	cmd.Flags().DynamicString("providers-git-repositories[<index>]-pull-interval", "", "Specifies an array of filenames or pattern to include in mokapi")
 
 	// http provider
+	cmd.Flags().String("providers-http", "", "")
 	cmd.Flags().StringSlice("providers-http-url", []string{}, "", true)
 	cmd.Flags().StringSlice("providers-http-urls", []string{}, "", false)
 	cmd.Flags().String("providers-http-poll-interval", "3m", "")
@@ -91,6 +95,7 @@ func NewCmdMokapi(ctx context.Context) *cli.Command {
 	cmd.Flags().String("providers-http-ca", "", "Certificate authority")
 
 	// npm provider
+	cmd.Flags().String("providers-npm", "", "")
 	cmd.Flags().StringSlice("providers-npm-global-folder", []string{}, "", true)
 	cmd.Flags().StringSlice("providers-npm-global-folders", []string{}, "", false)
 	// npm package

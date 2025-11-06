@@ -23,7 +23,7 @@
     "ace-builds": "^1.43.4",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
-    "dayjs": "^1.11.18",
+    "dayjs": "^1.11.19",
     "del-cli": "^7.0.0",
     "fuse.js": "^7.1.0",
     "http-status-codes": "^2.3.0",
@@ -39,9 +39,9 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
-    "@rushstack/eslint-patch": "^1.14.0",
+    "@rushstack/eslint-patch": "^1.14.1",
     "@types/js-yaml": "^4.0.9",
-    "@types/node": "^24.9.1",
+    "@types/node": "^24.9.2",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.6.0",
@@ -52,7 +52,7 @@
     "prettier": "^3.6.2",
     "typescript": "~5.9.3",
     "vite": "^7.1.12",
-    "vue-tsc": "^3.1.1",
+    "vue-tsc": "^3.1.2",
     "xml2js": "^0.6.2"
   }
 }
