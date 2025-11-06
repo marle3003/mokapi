@@ -82,3 +82,9 @@ const operationRoute = computed(() => {
         </div>
     </div>
 </template>
+
+<style scoped>
+.badge.status-code {
+    line-height: 1.4;
+}
+</style>

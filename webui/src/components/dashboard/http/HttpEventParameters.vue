@@ -107,7 +107,7 @@ function openDialog(p: HttpEventParameter) {
             <div class="row" v-if="!selected?.value">
                 <div class="col">
                     <p class="label">Value</p>
-                    <p>{{ selected?.raw }}</p>
+                    <p class="scrollable">{{ selected?.raw }}</p>
                 </div>
             </div>
             <div class="row" v-if="selected?.value">
@@ -119,8 +119,8 @@ function openDialog(p: HttpEventParameter) {
                                 <button type="button" class="btn btn-link" :class="{ active: dialogShowRaw }" @click="dialogShowRaw = true">Raw</button>
                             </div>
                         </div>
-                        <div class="body">
-                            {{ dialogShowRaw || !selected?.value ? selected?.raw : renderJsonValue(selected?.value) }}
+                        <div class="body scrollable">
+                                {{ dialogShowRaw || !selected?.value ? selected?.raw : renderJsonValue(selected?.value) }}
                         </div>
                     </section>
                 </div>
@@ -169,8 +169,6 @@ function openDialog(p: HttpEventParameter) {
     border-bottom-right-radius: 0 !important;
 }
 .header .controls > button.active {
-    /* background-color: var(--color-button-link-active);
-    color: var(--color-button-text-hover); */
     background-color: var(--color-button-link-active);
     color: var(--color-button-text-hover);
     outline: 1px solid var(--source-border);
@@ -190,5 +188,13 @@ function openDialog(p: HttpEventParameter) {
     border-top: 0;
     border-radius: 0 0 6px 6px;
     padding: 8px;
+}
+.scrollable {
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    white-space: pre-wrap;
+    word-break: break-word;
+    padding-right: 0.5rem;
 }
 </style>
