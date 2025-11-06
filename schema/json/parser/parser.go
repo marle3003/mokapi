@@ -83,10 +83,17 @@ func (p *Parser) parse(data interface{}, s *schema.Schema) (interface{}, error) 
 	}
 
 	for _, typeName := range s.Type {
-		v, err = p.parseType(data, s, typeName, evaluatedProperties, evaluatedItems)
-		if err != nil {
+		vt, errT := p.parseType(data, s, typeName, evaluatedProperties, evaluatedItems)
+		if errT != nil && err != nil && typeName == "null" {
+			// null error has a lower priority.
 			continue
 		}
+		if errT != nil {
+			err = errT
+			continue
+		}
+		v = vt
+		err = nil
 		break
 	}
 
@@ -138,21 +145,21 @@ func (p *Parser) parseType(data interface{}, s *schema.Schema, typeName string, 
 	case []interface{}:
 		if typeName != "array" {
 			return nil, &ErrorDetail{
-				Message: fmt.Sprintf("invalid type, expected %v but got %v", typeName, toType(data)),
+				Message: fmt.Sprintf("invalid type, expected %v but got %v", s.Type, toType(data)),
 				Field:   "type",
 			}
 		}
 	case map[string]interface{}:
 		if typeName != "object" {
 			return nil, &ErrorDetail{
-				Message: fmt.Sprintf("invalid type, expected %v but got %v", typeName, toType(data)),
+				Message: fmt.Sprintf("invalid type, expected %v but got %v", s.Type, toType(data)),
 				Field:   "type",
 			}
 		}
 	case struct{}:
 		if typeName != "object" {
 			return nil, &ErrorDetail{
-				Message: fmt.Sprintf("invalid type, expected %v but got %v", typeName, toType(data)),
+				Message: fmt.Sprintf("invalid type, expected %v but got %v", s.Type, toType(data)),
 				Field:   "type",
 			}
 		}
@@ -174,7 +181,10 @@ func (p *Parser) parseType(data interface{}, s *schema.Schema, typeName string, 
 		data, err = p.parseObject(data, s, evaluatedProperties)
 	case "null":
 		if data != nil {
-			return nil, fmt.Errorf("expected null, but got %s", toType(data))
+			return nil, &ErrorDetail{
+				Message: fmt.Sprintf("invalid type, expected %v but got %v", s.Type, toType(data)),
+				Field:   "type",
+			}
 		}
 	}
 

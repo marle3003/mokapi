@@ -165,7 +165,7 @@ func TestParser_Null(t *testing.T) {
 			data:   123,
 			schema: schematest.New("null"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- expected null, but got integer")
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected null but got integer")
 			},
 		},
 		{
@@ -204,6 +204,14 @@ func TestParser_Null(t *testing.T) {
 			},
 		},
 		{
+			name:   "null and string not valid but different type order",
+			data:   123,
+			schema: schematest.NewTypes([]string{"string", "null"}),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected [string, null] but got integer")
+			},
+		},
+		{
 			name:   "null and object with valid value",
 			data:   map[string]interface{}{"foo": 123},
 			schema: schematest.NewTypes([]string{"null", "object"}),
@@ -219,6 +227,22 @@ func TestParser_Null(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Nil(t, v)
+			},
+		},
+		{
+			name:   "null and object with invalid property",
+			data:   map[string]interface{}{"foo": 123},
+			schema: schematest.NewTypes([]string{"null", "object"}, schematest.WithProperty("foo", schematest.New("string"))),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "error count 1:\n\t- #/foo/type: invalid type, expected string but got integer")
+			},
+		},
+		{
+			name:   "null and object with invalid property but different type order",
+			data:   map[string]interface{}{"foo": 123},
+			schema: schematest.NewTypes([]string{"object", "null"}, schematest.WithProperty("foo", schematest.New("string"))),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "error count 1:\n\t- #/foo/type: invalid type, expected string but got integer")
 			},
 		},
 		{
