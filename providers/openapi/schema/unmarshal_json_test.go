@@ -493,7 +493,7 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 			s:      "123",
 			schema: schematest.New("string", schematest.IsNullable(true)),
 			test: func(t *testing.T, i interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- expected null, but got number")
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected [string, null] but got number")
 			},
 		},
 	}
