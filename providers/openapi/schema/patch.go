@@ -6,6 +6,9 @@ func (s *Schema) Patch(patch *Schema) {
 	if patch == nil {
 		return
 	}
+	if s == patch {
+		return
+	}
 
 	if patch.Id != "" {
 		s.Id = patch.Id
