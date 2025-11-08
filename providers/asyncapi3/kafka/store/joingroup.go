@@ -27,6 +27,7 @@ func (s *Store) joingroup(rw kafka.ResponseWriter, req *kafka.Request) error {
 	data := joindata{
 		client:           ctx,
 		writer:           rw,
+		protocolType:     r.ProtocolType,
 		protocols:        r.Protocols,
 		rebalanceTimeout: int(r.RebalanceTimeoutMs),
 		sessionTimeout:   int(r.SessionTimeoutMs),

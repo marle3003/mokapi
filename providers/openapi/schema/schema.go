@@ -3,10 +3,11 @@ package schema
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/schema/json/schema"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Schema struct {
@@ -338,7 +339,14 @@ func (s *Schema) ConvertTo(i interface{}) (interface{}, error) {
 }
 
 func (s *Schema) UnmarshalJSON(b []byte) error {
-	_ = json.Unmarshal(b, &s.m)
+	m := map[string]json.RawMessage{}
+	_ = json.Unmarshal(b, &m)
+	if s.m == nil {
+		s.m = map[string]bool{}
+	}
+	for k := range m {
+		s.m[k] = true
+	}
 
 	var boolVal bool
 	if err := json.Unmarshal(b, &boolVal); err == nil {
@@ -358,7 +366,14 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 }
 
 func (s *Schema) UnmarshalYAML(node *yaml.Node) error {
-	_ = node.Decode(&s.m)
+	m := map[string]yaml.Node{}
+	_ = node.Decode(&m)
+	if s.m == nil {
+		s.m = map[string]bool{}
+	}
+	for k := range m {
+		s.m[k] = true
+	}
 
 	var boolVal bool
 	if err := node.Decode(&boolVal); err == nil {
