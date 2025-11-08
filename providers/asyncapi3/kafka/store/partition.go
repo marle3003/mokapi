@@ -56,7 +56,7 @@ type WriteArgs struct {
 func newPartition(index int, brokers Brokers, logger LogRecord, trigger Trigger, topic *Topic) *Partition {
 	brokerList := make([]int, 0, len(brokers))
 	for i, b := range brokers {
-		if len(topic.Config.Servers) > 0 {
+		if topic.Config != nil && len(topic.Config.Servers) > 0 {
 			if slices.ContainsFunc(topic.Config.Servers, func(s *asyncapi3.ServerRef) bool {
 				return s.Value == b.config
 			}) {
