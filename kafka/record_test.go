@@ -3,11 +3,12 @@ package kafka
 import (
 	"bufio"
 	"bytes"
-	"github.com/stretchr/testify/require"
 	"mokapi/buffer"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func bytesToString(bytes Bytes) string {

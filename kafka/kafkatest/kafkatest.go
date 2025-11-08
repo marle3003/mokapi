@@ -20,11 +20,11 @@ import (
 	"mokapi/kafka/syncGroup"
 )
 
-func NewRequest(clientId string, version int, msg kafka.Message) *kafka.Request {
+func NewRequest(clientId string, version int16, msg kafka.Message) *kafka.Request {
 	r := &kafka.Request{
 		Header: &kafka.Header{
 			ApiKey:     getApiKey(msg),
-			ApiVersion: int16(version),
+			ApiVersion: version,
 			ClientId:   clientId,
 		},
 		Message: msg,
