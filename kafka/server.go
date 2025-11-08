@@ -97,11 +97,11 @@ func (s *Server) Close() {
 	}
 
 	if s.listener != nil {
-		s.listener.Close()
+		_ = s.listener.Close()
 	}
 	for conn, ctx := range s.activeConn {
 		ctx.Done()
-		conn.Close()
+		_ = conn.Close()
 		delete(s.activeConn, conn)
 	}
 }
@@ -158,7 +158,7 @@ func (s *Server) closeConn(conn net.Conn) {
 		return
 	}
 	ctx.Done()
-	conn.Close()
+	_ = conn.Close()
 	delete(s.activeConn, conn)
 }
 
