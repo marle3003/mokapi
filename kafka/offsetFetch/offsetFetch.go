@@ -54,8 +54,9 @@ type ResponseTopic struct {
 }
 
 type ResponseGroup struct {
-	GroupId string          `kafka:"min=8,compact=8"`
-	Topics  []ResponseTopic `kafka:"min=8,compact=8"`
+	GroupId   string           `kafka:"min=8,compact=8"`
+	Topics    []ResponseTopic  `kafka:"min=8,compact=8"`
+	TagFields map[int64]string `kafka:"type=TAG_BUFFER,min=6"`
 }
 
 type Partition struct {

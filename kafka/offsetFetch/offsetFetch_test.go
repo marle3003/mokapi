@@ -224,7 +224,7 @@ func TestResponse(t *testing.T) {
 	})
 	expected = new(bytes.Buffer)
 	// header
-	_ = binary.Write(expected, binary.BigEndian, int32(52))  // length
+	_ = binary.Write(expected, binary.BigEndian, int32(53))  // length
 	_ = binary.Write(expected, binary.BigEndian, int32(123)) // correlationId
 	_ = binary.Write(expected, binary.BigEndian, int8(0))    // tag buffer
 	// message
@@ -245,6 +245,7 @@ func TestResponse(t *testing.T) {
 	_ = binary.Write(expected, binary.BigEndian, int8(0))            // Partitions tag buffer
 	_ = binary.Write(expected, binary.BigEndian, int16(0))           // ErrorCode
 	_ = binary.Write(expected, binary.BigEndian, int8(0))            // Topics tag buffer
+	_ = binary.Write(expected, binary.BigEndian, int8(0))            // Groups tag buffer
 	_ = binary.Write(expected, binary.BigEndian, int8(0))            // tag buffer
 	require.Equal(t, expected.Bytes(), b)
 }
