@@ -1,7 +1,6 @@
 package store_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/findCoordinator"
@@ -10,6 +9,8 @@ import (
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime/events/eventstest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestFindCoordinator(t *testing.T) {

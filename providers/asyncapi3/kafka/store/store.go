@@ -2,8 +2,6 @@ package store
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"mokapi/engine/common"
 	"mokapi/kafka"
 	"mokapi/kafka/apiVersion"
@@ -27,6 +25,9 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type Store struct {
@@ -147,7 +148,7 @@ func (s *Store) Update(c *asyncapi3.Config) {
 			b.Host = host
 			b.Port = port
 		} else {
-			s.addBroker(n, *server.Value)
+			s.addBroker(n, server.Value)
 		}
 	}
 	for _, b := range s.brokers {
@@ -255,7 +256,7 @@ func (s *Store) deleteTopic(name string) {
 	delete(s.topics, name)
 }
 
-func (s *Store) addBroker(name string, config asyncapi3.Server) {
+func (s *Store) addBroker(name string, config *asyncapi3.Server) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
@@ -302,7 +303,7 @@ func (s *Store) getBrokerByHost(addr string) *Broker {
 
 func (s *Store) log(log *KafkaLog, traits events.Traits) {
 	log.Api = s.cluster
-	s.eh.Push(
+	_ = s.eh.Push(
 		log,
 		traits.WithNamespace("kafka").WithName(s.cluster),
 	)
@@ -332,8 +333,8 @@ func (s *Store) trigger(record *kafka.Record, schemaId int) bool {
 		return false
 	}
 
-	record.Key.Close()
-	record.Value.Close()
+	_ = record.Key.Close()
+	_ = record.Value.Close()
 
 	record.Key = kafka.NewBytes([]byte(r.Key))
 	record.Value = kafka.NewBytes([]byte(r.Value))
