@@ -2,9 +2,10 @@ package kafka
 
 import (
 	"encoding/binary"
-	"github.com/pkg/errors"
 	"io"
 	"reflect"
+
+	"github.com/pkg/errors"
 )
 
 type decodeFunc func(*Decoder, reflect.Value)
@@ -29,10 +30,10 @@ func NewDecoder(reader io.Reader, size int) *Decoder {
 }
 
 func newDecodeFunc(t reflect.Type, version int16, tag kafkaTag) decodeFunc {
-	if reflect.PtrTo(t).Implements(readerFrom) {
+	if reflect.PointerTo(t).Implements(readerFrom) {
 		return func(d *Decoder, v reflect.Value) {
 			i := v.Addr().Interface()
-			i.(ReaderFrom).ReadFrom(d, version, tag)
+			_ = i.(ReaderFrom).ReadFrom(d, version, tag)
 		}
 	}
 
@@ -259,7 +260,7 @@ func (d *Decoder) ReadCompactBytes() []byte {
 	if n := d.ReadUvarint(); n < 1 {
 		return nil
 	} else {
-		b := make([]byte, n)
+		b := make([]byte, n-1)
 		if d.ReadFull(b) {
 			return b
 		} else {
