@@ -29,7 +29,7 @@ import "./mail";
  *   })
  * }
  */
-export function on<T extends keyof EventHandler>(event: T, handler: EventHandler[T], args?: EventArgs): void;
+export function on<T extends keyof EventHandler>(event: T, handler: EventHandler[T], args?: EventArgs): void | Promise<void>;
 
 /**
  * Schedules a new periodic job with interval.
@@ -210,7 +210,7 @@ export interface Url {
  *   })
  * }
  */
-export type KafkaEventHandler = (message: KafkaEventMessage) => void;
+export type KafkaEventHandler = (message: KafkaEventMessage) => void | Promise<void>;
 
 /**
  * KafkaEventMessage is an object used by KafkaEventHandler that contains Kafka-specific message data.
@@ -249,7 +249,7 @@ export interface KafkaEventMessage {
  *   })
  * }
  */
-export type LdapEventHandler = (request: LdapSearchRequest, response: LdapSearchResponse) => void;
+export type LdapEventHandler = (request: LdapSearchRequest, response: LdapSearchResponse) => void | Promise<void>;
 
 /**
  * LdapSearchRequest is an object used by LdapEventHandler that contains request-specific data.
@@ -349,7 +349,7 @@ export enum LdapResultStatus {
     SizeLimitExceeded = 4,
 }
 
-export type SmtpEventHandler = (record: SmtpEventMessage) => void;
+export type SmtpEventHandler = (record: SmtpEventMessage) => void | Promise<void>;
 
 export interface SmtpEventMessage {
     server: string;
@@ -457,7 +457,7 @@ export interface EventArgs {
  *   }, {times: 1, runFirstTimeImmediately: false})
  * }
  */
-export type ScheduledEventHandler = () => void;
+export type ScheduledEventHandler = () => void | Promise<void>;
 
 export interface ScheduledEventArgs {
     /**

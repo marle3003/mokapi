@@ -33,15 +33,16 @@ Provides core functions for scheduling jobs, handling events, and accessing envi
 
 Functions to send HTTP requests within Mokapi scripts.
 
-| Functions                                                                         | Description                   |
-|-----------------------------------------------------------------------------------|-------------------------------|
-| [get( url, \[args\] )](/docs/javascript-api/mokapi-http/get.md)                   | Sends an HTTP GET request.    |
-| [post( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/post.md)       | Sends an HTTP POST request    |
-| [put( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/put.md)         | Sends an HTTP PUT request     |
-| [head( url, \[args\] )](/docs/javascript-api/mokapi-http/head.md)                 | Sends an HTTP HEAD request    |
-| [patch( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/patch.md)     | Sends an HTTP PATCH request   |
-| [delete( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/delete.md)   | Sends an HTTP DELETE request  |
-| [options( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/options.md) | Sends an HTTP OPTIONS request |
+| Functions                                                                         | Description                            |
+|-----------------------------------------------------------------------------------|----------------------------------------|
+| [get( url, \[args\] )](/docs/javascript-api/mokapi-http/get.md)                   | Sends an HTTP GET request.             |
+| [post( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/post.md)       | Sends an HTTP POST request             |
+| [put( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/put.md)         | Sends an HTTP PUT request              |
+| [head( url, \[args\] )](/docs/javascript-api/mokapi-http/head.md)                 | Sends an HTTP HEAD request             |
+| [patch( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/patch.md)     | Sends an HTTP PATCH request            |
+| [delete( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/delete.md)   | Sends an HTTP DELETE request           |
+| [options( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/options.md) | Sends an HTTP OPTIONS request          |
+| [fetch( url, \[opts\] )](/docs/javascript-api/mokapi-http/options.md)             | Create an HTTP request using Fetch API |
 
 ### mokapi/faker (Mock Data Generator)
 

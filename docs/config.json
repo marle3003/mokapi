@@ -110,7 +110,9 @@
           "delete": "javascript-api/mokapi-http/delete.md",
           "options": "javascript-api/mokapi-http/options.md",
           "patch": "javascript-api/mokapi-http/patch.md",
+          "fetch": "javascript-api/mokapi-http/fetch.md",
           "HttpResponse": "javascript-api/mokapi-http/httpresponse.md",
+          "FetchOptions": "javascript-api/mokapi-http/fetchoptions.md",
           "Args": "javascript-api/mokapi-http/args.md"
         }
       },
