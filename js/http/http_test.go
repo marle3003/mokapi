@@ -512,6 +512,40 @@ func TestHttp(t *testing.T) {
 				r.Equal(t, "TEST ERROR", v.Export())
 			},
 		},
+		{
+			name: "fetch method not string",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				_, err := vm.RunString(`
+					const m = require('mokapi/http')
+					const p = m.fetch('https://foo.bar', { method: 12 })
+					let result;
+					p.then(v => result = v).catch(err => result = err)
+				`)
+				r.NoError(t, err)
+				time.Sleep(200 * time.Millisecond)
+
+				v, err := vm.RunString("result")
+				r.NoError(t, err)
+				r.Equal(t, "unexpected type for 'method': got Integer, expected String", v.Export())
+			},
+		},
+		{
+			name: "fetch maxRedirects not number",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				_, err := vm.RunString(`
+					const m = require('mokapi/http')
+					const p = m.fetch('https://foo.bar', { maxRedirects: 'foo' })
+					let result;
+					p.then(v => result = v).catch(err => result = err)
+				`)
+				r.NoError(t, err)
+				time.Sleep(200 * time.Millisecond)
+
+				v, err := vm.RunString("result")
+				r.NoError(t, err)
+				r.Equal(t, "unexpected type for 'maxRedirects': got String, expected Number", v.Export())
+			},
+		},
 	}
 
 	for _, tc := range testcases {
