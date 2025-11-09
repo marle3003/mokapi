@@ -7,6 +7,7 @@ import (
 	"mokapi/engine/common"
 	"mokapi/lib"
 	"mokapi/runtime/events"
+	"net"
 	"net/http"
 	"net/textproto"
 	"strings"
@@ -22,6 +23,7 @@ type HttpLog struct {
 	Actions    []*common.Action `json:"actions"`
 	Api        string           `json:"api"`
 	Path       string           `json:"path"`
+	ClientIP   string           `json:"clientIP"`
 }
 
 type HttpRequestLog struct {
@@ -57,6 +59,7 @@ func NewLogEventContext(r *http.Request, deprecated bool, eh events.Handler, tra
 		Deprecated: deprecated,
 		Api:        traits.GetName(),
 		Path:       traits.Get("path"),
+		ClientIP:   clientIP(r),
 	}
 
 	params, _ := FromContext(r.Context())
@@ -130,4 +133,18 @@ func getParsedHeaders(headers map[string]RequestParameterValue) map[string]bool 
 		result[textproto.CanonicalMIMEHeaderKey(k)] = true
 	}
 	return result
+}
+
+func clientIP(r *http.Request) string {
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		parts := strings.Split(xff, ",")
+		return strings.TrimSpace(parts[0])
+	}
+
+	if realIP := r.Header.Get("X-Real-IP"); realIP != "" {
+		return realIP
+	}
+
+	host, _, _ := net.SplitHostPort(r.RemoteAddr)
+	return host
 }

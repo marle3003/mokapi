@@ -1,6 +1,7 @@
 package apiVersion
 
 import (
+	"math"
 	"mokapi/kafka"
 )
 
@@ -16,7 +17,7 @@ func init() {
 		// https://github.com/a0x8o/kafka/blob/master/clients/src/main/resources/common/message/ApiVersionsResponse.json
 		// Tagged fields are only supported in the body but
 		// not in the header
-		4,
+		math.MaxInt16,
 	)
 }
 

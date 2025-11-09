@@ -2,21 +2,36 @@ package store
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
 	"mokapi/kafka/offsetFetch"
 	"mokapi/schema/json/parser"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func (s *Store) offsetFetch(rw kafka.ResponseWriter, req *kafka.Request) error {
 	r := req.Message.(*offsetFetch.Request)
-	res := &offsetFetch.Response{
-		Topics: make([]offsetFetch.ResponseTopic, 0, len(r.Topics)),
-	}
+	res := &offsetFetch.Response{}
 
 	ctx := kafka.ClientFromContext(req)
 
-	for _, rt := range r.Topics {
+	if req.Header.ApiVersion >= 8 {
+		for _, g := range r.Groups {
+			res.Groups = append(res.Groups, offsetFetch.ResponseGroup{
+				GroupId: g.GroupId,
+				Topics:  s.fetchTopicOffsets(g.GroupId, g.Topics, ctx),
+			})
+		}
+	} else {
+		res.Topics = s.fetchTopicOffsets(r.GroupId, r.Topics, ctx)
+	}
+
+	return rw.Write(res)
+}
+
+func (s *Store) fetchTopicOffsets(groupId string, topics []offsetFetch.RequestTopic, ctx *kafka.ClientContext) []offsetFetch.ResponseTopic {
+	result := make([]offsetFetch.ResponseTopic, 0, len(topics))
+	for _, rt := range topics {
 		topic := s.Topic(rt.Name)
 		resTopic := offsetFetch.ResponseTopic{Name: rt.Name, Partitions: make([]offsetFetch.Partition, 0, len(rt.PartitionIndexes))}
 
@@ -31,14 +46,14 @@ func (s *Store) offsetFetch(rw kafka.ResponseWriter, req *kafka.Request) error {
 				if p == nil {
 					log.Errorf("kafka OffsetFetch: unknown partition %v, topic=%v, client=%v", index, rt.Name, ctx.ClientId)
 					resPartition.ErrorCode = kafka.UnknownTopicOrPartition
-				} else if _, ok := ctx.Member[r.GroupId]; !ok {
+				} else if _, ok := ctx.Member[groupId]; !ok {
 					log.Errorf("kafka OffsetFetch: unknown member topic=%v, client=%v", rt.Name, ctx.ClientId)
 					resPartition.ErrorCode = kafka.UnknownMemberId
 				} else {
 					// todo check partition is assigned to member
-					g, ok := s.Group(r.GroupId)
+					g, ok := s.Group(groupId)
 					if !ok {
-						log.Errorf("kafka OffsetFetch: unkown group name %v, topic=%v, client=%v", r.GroupId, rt.Name, ctx.ClientId)
+						log.Errorf("kafka OffsetFetch: unkown group name %v, topic=%v, client=%v", groupId, rt.Name, ctx.ClientId)
 						resPartition.ErrorCode = kafka.GroupIdNotFound
 					} else {
 						if err, code := validateConsumer(topic, ctx.ClientId, g.Name); err != nil {
@@ -54,10 +69,9 @@ func (s *Store) offsetFetch(rw kafka.ResponseWriter, req *kafka.Request) error {
 			resTopic.Partitions = append(resTopic.Partitions, *resPartition)
 		}
 
-		res.Topics = append(res.Topics, resTopic)
+		result = append(result, resTopic)
 	}
-
-	return rw.Write(res)
+	return result
 }
 
 func validateConsumer(t *Topic, clientId, groupId string) (error, kafka.ErrorCode) {

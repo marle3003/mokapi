@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func parseFlags(args []string, envNamePrefix string) (map[string][]string, error) {
+func parseFlags(args []string, envNamePrefix string, isValidFlag func(name string) bool) (map[string][]string, error) {
 	flags, err := parseArgs(args)
 	if err != nil {
 		return nil, err
@@ -16,6 +16,9 @@ func parseFlags(args []string, envNamePrefix string) (map[string][]string, error
 	// merge maps. env flags does not overwrite cli flags
 	for k, v := range envs {
 		if _, ok := flags[k]; !ok {
+			if !isValidFlag(k) {
+				return nil, fmt.Errorf("unknown environment variable '%s' (value '%s')", k, v)
+			}
 			flags[k] = []string{v}
 		}
 	}

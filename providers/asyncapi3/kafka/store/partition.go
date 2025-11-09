@@ -2,13 +2,16 @@ package store
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
 	"mokapi/kafka/produce"
+	"mokapi/providers/asyncapi3"
 	"mokapi/runtime/events"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Partition struct {
@@ -52,8 +55,16 @@ type WriteArgs struct {
 
 func newPartition(index int, brokers Brokers, logger LogRecord, trigger Trigger, topic *Topic) *Partition {
 	brokerList := make([]int, 0, len(brokers))
-	for i := range brokers {
-		brokerList = append(brokerList, i)
+	for i, b := range brokers {
+		if topic.Config != nil && len(topic.Config.Servers) > 0 {
+			if slices.ContainsFunc(topic.Config.Servers, func(s *asyncapi3.ServerRef) bool {
+				return s.Value == b.config
+			}) {
+				brokerList = append(brokerList, i)
+			}
+		} else {
+			brokerList = append(brokerList, i)
+		}
 	}
 	p := &Partition{
 		Index:    index,

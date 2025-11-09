@@ -588,9 +588,14 @@ export let events = [
                 url: "http://127.0.0.1:18080/pet",
                 parameters: [
                     {
-                        name: 'Acceot-Encoding',
+                        name: 'Accept-Encoding',
                         type: 'header',
                         raw: 'gzip, deflate'
+                    },
+                    {
+                        name: 'LongHeader',
+                        type: 'header',
+                        raw: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.'
                     }
                 ],
                 contentType: "application/xml",
@@ -625,7 +630,7 @@ export let events = [
                             url: "http://127.0.0.1:18080/pet",
                             parameters: [
                                 {
-                                    name: 'Acceot-Encoding',
+                                    name: 'Accept-Encoding',
                                     type: 'header',
                                     raw: 'gzip, deflate'
                                 }
@@ -642,7 +647,8 @@ export let events = [
                         })
                     ]
                 }
-            ]
+            ],
+            clientIP: '127.0.0.1'
         },
     },
     {
@@ -691,7 +697,8 @@ export let events = [
                         message: 'An example script error message'
                     }
                 }
-            ]
+            ],
+            clientIP: '127.0.0.1'
         }
     },
     {
@@ -735,7 +742,8 @@ export let events = [
                         event: "http"
                     }
                 }
-            ]
+            ],
+            clientIP: '127.0.0.1'
         }
     },
     {
@@ -773,7 +781,8 @@ export let events = [
                         event: "http"
                     }
                 }
-            ]
+            ],
+            clientIP: '127.0.0.1'
         }
     },
     {
@@ -819,6 +828,7 @@ export let events = [
                 size: 512
             },
             duration: 133,
+            clientIP: '192.0.1.127'
         }
     }
 ]

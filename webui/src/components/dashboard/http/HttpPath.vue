@@ -13,7 +13,7 @@ const props = defineProps({
 const route = useRoute()
 
 function allOperationsDeprecated(): boolean{
-    if (!props.path){
+    if (!props.path || !props.path.operations){
         return false
     }
     for (var op of props.path.operations){
@@ -77,7 +77,7 @@ onUnmounted(() => {
             <http-operations-card :service="service" :path="path" />
         </div>
         <div class="card-group">
-            <requests :service="service" :path="path.path" />
+            <requests :service-name="service.name" :path="path.path" />
         </div>
     </div>
 </template>

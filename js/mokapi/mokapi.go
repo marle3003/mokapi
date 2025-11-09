@@ -39,7 +39,7 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 	_ = obj.Set("marshal", f.Marshal)
 	_ = obj.Set("patch", patch)
 	_ = obj.Set("Delete", Delete)
-	_ = obj.Set("shared", NewSharedMemory(host.Store()))
+	_ = obj.Set("shared", NewSharedMemory(host.Store(), vm))
 }
 
 func (m *Module) Sleep(i interface{}) {

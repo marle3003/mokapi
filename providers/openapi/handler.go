@@ -106,7 +106,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		// Not reading the request body can cause a couple of problems.
 		// Go’s HTTP server uses connection pooling by default.
 		// If you don’t read and fully consume (or close) the request body, the remaining unread bytes will stay in the TCP buffer.
-		_, _ = io.Copy(io.Discard, r.Body)
+		drainRequestBody(r)
 	}
 
 	if len(op.Security) > 0 {
@@ -153,9 +153,6 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	// todo: only specified headers should be written
 	for k, v := range response.Headers {
 		rw.Header().Add(k, v)
-		if logHttp != nil {
-			logHttp.Response.Headers[k] = v
-		}
 	}
 
 	if len(res.Content) == 0 {
@@ -447,4 +444,18 @@ func extractPathParams(route, path string) (map[string]string, error) {
 	}
 
 	return params, nil
+}
+
+func drainRequestBody(r *http.Request) {
+	done := make(chan struct{})
+	go func() {
+		_, _ = io.Copy(io.Discard, r.Body)
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(10 * time.Second):
+		log.Warnf("timeout reading request body for %s %s", r.Method, lib.GetUrl(r))
+	}
 }

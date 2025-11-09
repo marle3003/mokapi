@@ -105,6 +105,14 @@ export interface Args {
      * @default 5
      **/
     maxRedirects: number
+    /**
+     * Maximum time to wait for the request to complete. Default
+     * timeout is 60 seconds ("60s"). The type can also be a number, in which
+     * case Mokapi interprets it as milliseconds
+     * @example
+     * const res = get(url, { timeout: '5m' })
+     */
+    timeout: number | string
 }
 
 /**

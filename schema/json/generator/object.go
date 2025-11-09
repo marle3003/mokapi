@@ -296,9 +296,9 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 		// if additionalProperties=false no additional properties is allowed
 		// if additionalProperties=true we don't add random properties, it is not expected by users
 
-		length := numProperties(1, 10, req.Schema)
+		length := numProperties(1, 10, s)
 		for i := 0; i < length; i++ {
-			f, err := r.resolve(req.WithSchema(req.Schema.AdditionalProperties), true)
+			f, err := r.resolve(req.WithSchema(s.AdditionalProperties), true)
 			if err != nil {
 				return nil, err
 			}
@@ -312,7 +312,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 
 	for _, name := range s.Required {
 		if _, ok := fakes.Get(name); !ok {
-			f, err := r.resolve(req.With(append(req.Path, name), nil, req.examples), false)
+			f, err := r.resolve(req.With(append(req.Path, name), s.AdditionalProperties, req.examples), false)
 			if err != nil {
 				return nil, err
 			}

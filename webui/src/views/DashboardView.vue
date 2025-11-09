@@ -113,9 +113,9 @@ useMeta('Dashboard | mokapi.io', description, '')
         <div class="dashboard">
             <h1 class="visually-hidden">Dashboard</h1>
             <div class="dashboard-tabs" v-if="appInfo.data">
-                <nav class="navbar navbar-expand-lg pb-1" aria-label="Services">
+                <nav class="navbar navbar-expand pb-1" aria-label="Services">
                     <div>
-                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        <ul class="navbar-nav me-auto mb-0">
                             <li class="nav-item">
                                 <router-link class="nav-link overview" :to="{ name: 'dashboard', query: {refresh: $route.query.refresh} }">Overview</router-link>
                             </li>

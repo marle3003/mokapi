@@ -18,7 +18,7 @@ func init() {
 }
 
 type Request struct {
-	Topics       []Topic          `kafka:""`
+	Topics       []Topic          `kafka:"compact=5"`
 	TimeoutMs    int32            `kafka:""`
 	ValidateOnly bool             `kafka:"min=1"`
 	TagFields    map[int64]string `kafka:"type=TAG_BUFFER,min=5"`
@@ -28,14 +28,14 @@ type Topic struct {
 	Name              string           `kafka:"compact=5"`
 	NumPartitions     int32            `kafka:""`
 	ReplicationFactor int16            `kafka:""`
-	Assignments       []Assignment     `kafka:""`
-	Configs           []Config         `kafka:""`
+	Assignments       []Assignment     `kafka:"compact=5"`
+	Configs           []Config         `kafka:"compact=5"`
 	TagFields         map[int64]string `kafka:"type=TAG_BUFFER,min=5"`
 }
 
 type Assignment struct {
 	Index     int32            `kafka:""`
-	BrokerIds []int32          `kafka:""`
+	BrokerIds []int32          `kafka:"compact=5"`
 	TagFields map[int64]string `kafka:"type=TAG_BUFFER,min=5"`
 }
 
@@ -47,7 +47,7 @@ type Config struct {
 
 type Response struct {
 	ThrottleTimeMs int32            `kafka:"min=2"`
-	Topics         []TopicResponse  `kafka:""`
+	Topics         []TopicResponse  `kafka:"compact=5"`
 	TagFields      map[int64]string `kafka:"type=TAG_BUFFER,min=5"`
 }
 
@@ -57,7 +57,7 @@ type TopicResponse struct {
 	ErrorMessage      string           `kafka:"min=1,compact=5,nullable"`
 	NumPartitions     int32            `kafka:"min=5"`
 	ReplicationFactor int16            `kafka:"min=5"`
-	Configs           []ConfigResponse `kafka:"min=5"`
+	Configs           []ConfigResponse `kafka:"min=5,compact=5"`
 	TagFields         map[int64]string `kafka:"type=TAG_BUFFER,min=5"`
 }
 

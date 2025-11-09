@@ -31,11 +31,8 @@ func (fs *FlagSet) String(name string, defaultValue string, usage string) {
 
 func (fs *FlagSet) StringShort(name string, short string, defaultValue string, usage string) {
 	v := &stringFlag{value: defaultValue}
-	f := &Flag{Value: v, Usage: usage, DefaultValue: defaultValue}
-	fs.setFlag(name, f)
-	if short != "" {
-		fs.setFlag(short, f)
-	}
+	f := &Flag{Name: name, Shorthand: short, Value: v, Usage: usage, DefaultValue: defaultValue}
+	fs.setFlag(f)
 }
 
 func (fs *FlagSet) GetString(name string) string {

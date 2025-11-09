@@ -45,11 +45,11 @@ func newEncodeFunc(t reflect.Type, version int16, tag kafkaTag) encodeFunc {
 	case reflect.Struct:
 		return newStructEncodeFunc(t, version, tag)
 	case reflect.String:
-		if version >= tag.compact && tag.nullable {
+		if version >= tag.compact && version >= tag.nullable {
 			return (*Encoder).encodeCompactNullString
 		} else if version >= tag.compact {
 			return (*Encoder).encodeCompactString
-		} else if tag.nullable {
+		} else if version >= tag.nullable {
 			return (*Encoder).encodeNullString
 		}
 		return (*Encoder).encodeString
@@ -80,11 +80,11 @@ func newEncodeFunc(t reflect.Type, version int16, tag kafkaTag) encodeFunc {
 
 func newBytesEncodeFunc(version int16, tag kafkaTag) encodeFunc {
 	switch {
-	case version >= tag.compact && tag.nullable:
+	case version >= tag.compact && version >= tag.nullable:
 		return (*Encoder).encodeCompactNullBytes
 	case version >= tag.compact:
 		return (*Encoder).encodeCompactBytes
-	case tag.nullable:
+	case version >= tag.nullable:
 		return (*Encoder).encodeNullBytes
 	default:
 		return (*Encoder).encodeBytes

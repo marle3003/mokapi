@@ -767,12 +767,12 @@ func TestResolveEndpoint(t *testing.T) {
 func TestHandler_Event(t *testing.T) {
 	testcases := []struct {
 		name  string
-		test  func(t *testing.T, f http.HandlerFunc, c *openapi.Config)
+		test  func(t *testing.T, f http.HandlerFunc, c *openapi.Config, sm *events.StoreManager)
 		event func(event string, args ...interface{}) []*common.Action
 	}{
 		{
 			name: "no response found",
-			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
 				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
@@ -791,7 +791,7 @@ func TestHandler_Event(t *testing.T) {
 		},
 		{
 			name: "event sets unknown status code",
-			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
 				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
@@ -810,7 +810,7 @@ func TestHandler_Event(t *testing.T) {
 		},
 		{
 			name: "event changes content type",
-			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
 						openapitest.WithContent("application/json", openapitest.NewContent()),
@@ -832,7 +832,7 @@ func TestHandler_Event(t *testing.T) {
 		},
 		{
 			name: "post request using body in event function",
-			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithRequestBody("", true, openapitest.WithRequestContent("application/json",
 						openapitest.NewContent())),
@@ -856,7 +856,7 @@ func TestHandler_Event(t *testing.T) {
 		},
 		{
 			name: "post request without defining requestBody, body should not be available in event",
-			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
 						openapitest.WithContent("application/json", openapitest.NewContent()),
@@ -878,7 +878,7 @@ func TestHandler_Event(t *testing.T) {
 		},
 		{
 			name: "path parameter",
-			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
 						openapitest.WithContent("application/json", openapitest.NewContent()),
@@ -903,7 +903,7 @@ func TestHandler_Event(t *testing.T) {
 		},
 		{
 			name: "path parameter with trailing slash in route",
-			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
 						openapitest.WithContent("application/json", openapitest.NewContent()),
@@ -926,6 +926,60 @@ func TestHandler_Event(t *testing.T) {
 				return nil
 			},
 		},
+		{
+			name: "set response header",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json", openapitest.NewContent()),
+					))
+				openapitest.AppendPath("/foo/{id}/", c,
+					openapitest.WithOperation(http.MethodPost, op),
+					openapitest.WithPathParam("id", openapitest.WithParamSchema(schematest.New("string"))),
+				)
+				r := httptest.NewRequest("post", "http://localhost/foo/123", strings.NewReader(`{ "foo": "bar" }`))
+				r.Header.Set("Content-Type", "application/json")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, "12345", rr.Header().Get("foo"))
+				require.Equal(t, http.Header{"Content-Type": []string{"application/json"}, "Foo": []string{"12345"}}, rr.Header())
+			},
+			event: func(event string, args ...interface{}) []*common.Action {
+				res := args[1].(*common.EventResponse)
+				res.Headers["foo"] = "12345"
+				return nil
+			},
+		},
+		{
+			name: "set response header with cases",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json", openapitest.NewContent()),
+					))
+				openapitest.AppendPath("/foo/{id}/", c,
+					openapitest.WithOperation(http.MethodPost, op),
+					openapitest.WithPathParam("id", openapitest.WithParamSchema(schematest.New("string"))),
+				)
+				r := httptest.NewRequest("post", "http://localhost/foo/123", strings.NewReader(`{ "foo": "bar" }`))
+				r.Header.Set("Content-Type", "application/json")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, "12345", rr.Header().Get("FooBarYuh"))
+				// Go canonicalizes header names automatically.
+				require.Equal(t, http.Header{"Content-Type": []string{"application/json"}, "Foobaryuh": []string{"12345"}}, rr.Header())
+
+				e := sm.GetEvents(events.NewTraits())
+				require.Len(t, e, 1)
+				log := e[0].Data.(*openapi.HttpLog)
+				require.Equal(t, map[string]string{"Content-Type": "application/json", "Foobaryuh": "12345"}, log.Response.Headers)
+			},
+			event: func(event string, args ...interface{}) []*common.Action {
+				res := args[1].(*common.EventResponse)
+				res.Headers["FooBarYuh"] = "12345"
+				return nil
+			},
+		},
 	}
 
 	t.Parallel()
@@ -940,17 +994,23 @@ func TestHandler_Event(t *testing.T) {
 				Servers:    []*openapi.Server{{Url: "http://localhost"}},
 				Components: openapi.Components{},
 			}
+			sm := &events.StoreManager{}
+			sm.SetStore(1, events.NewTraits().WithNamespace("http"))
+			eh := &engine{emit: tc.event}
 
 			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
-				h := openapi.NewHandler(config, &engine{emit: tc.event}, &events.StoreManager{})
-				err := h.ServeHTTP(rw, r)
+				h := openapi.NewHandler(config, eh, sm)
+				ctx, err := openapi.NewLogEventContext(r, false, sm, events.NewTraits())
+				require.NoError(t, err)
+				r = r.WithContext(ctx)
+				httpErr := h.ServeHTTP(rw, r)
 				if err != nil {
-					for k, v := range err.Header {
+					for k, v := range httpErr.Header {
 						rw.Header()[k] = v
 					}
-					http.Error(rw, err.Message, err.StatusCode)
+					http.Error(rw, httpErr.Message, httpErr.StatusCode)
 				}
-			}, config)
+			}, config, sm)
 		})
 
 	}

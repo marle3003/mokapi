@@ -3,7 +3,6 @@ package kafka
 import (
 	"context"
 	"errors"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"mokapi/safe"
 	"net"
@@ -11,6 +10,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var ErrServerClosed = errors.New("kafka: Server closed")
@@ -96,11 +97,11 @@ func (s *Server) Close() {
 	}
 
 	if s.listener != nil {
-		s.listener.Close()
+		_ = s.listener.Close()
 	}
 	for conn, ctx := range s.activeConn {
 		ctx.Done()
-		conn.Close()
+		_ = conn.Close()
 		delete(s.activeConn, conn)
 	}
 }
@@ -133,7 +134,9 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 			continue
 		}
 
-		go func() {
+		// The server guarantees that on a single TCP connection, requests will be processed in the order they are
+		// sent and responses will return in that order as well.
+		func() {
 			defer func() {
 				err := recover()
 				if err != nil {
@@ -155,7 +158,7 @@ func (s *Server) closeConn(conn net.Conn) {
 		return
 	}
 	ctx.Done()
-	conn.Close()
+	_ = conn.Close()
 	delete(s.activeConn, conn)
 }
 

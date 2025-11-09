@@ -57,7 +57,7 @@
 
     --form-color-border-active: #eabaabff;
 
-    --link-color: #eabaabff;;
+    --link-color: #eabaabff;
     --link-color-active: #eabaabff;
  
     --nav-color: #d3d4d5;
@@ -90,6 +90,8 @@
 
     --modal-header-border:  rgba(255, 255, 255, 0.1);
     --modal-footer-border:  rgba(255, 255, 255, 0.1);
+
+    --badge-background: #eabaabff;
 
     --footer-background: #282b33;
 }
@@ -161,6 +163,8 @@
 
     --modal-header-border: rgba(0, 0, 0, 0.1);
     --modal-footer-border: rgba(0, 0, 0, 0.1);
+
+    --badge-background: rgb(8, 109, 215);
 
     --footer-background: rgb(244 244 246);
 }

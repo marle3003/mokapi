@@ -1,6 +1,9 @@
 package schema
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 func (s *Schema) apply(ref *Schema) {
 	if ref == nil {
@@ -108,6 +111,8 @@ func (s *Schema) apply(ref *Schema) {
 	}
 	if !s.isSet("additionalProperties") {
 		s.AdditionalProperties = ref.AdditionalProperties
+	} else {
+		fmt.Print("")
 	}
 	if !s.isSet("unevaluatedProperties") {
 		s.UnevaluatedProperties = ref.UnevaluatedProperties

@@ -288,19 +288,25 @@ function facetTitle(s: string) {
           </div>
           <div v-if="result || errorMessage" class="row justify-content-md-center ps-0 mt-3">
             <div v-if="result && result.total > 0" class="col-6 col-auto">
-              <div class="list-group search-results">
-                <div class="list-group-item" v-for="result of result.results">
-                  <div class="mb-1 config">
-                    <div class="mb-1">
-                      <span class="badge bg-secondary api">{{ result.type }}</span>
-                      <span v-if="result.domain" class="ps-2">{{ result.domain }}</span>
+              <div class="search-results grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                <div 
+                  v-for="result of result.results" 
+                  class="card mb-3"
+                  @click="navigateToSearchResult(result)"
+                >
+                  <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                      <div>
+                        <span class="badge bg-secondary text-uppercase me-2">{{ result.type }}</span>
+                        <span v-if="result.domain">{{ result.domain }}</span>
+                      </div>
+                      <small v-if="result.time">{{ format(result.time) }}</small>
                     </div>
-                    <small v-if="result.time" class="text-muted">{{ format(result.time) }}</small>
+
+                    <h5 class="card-title mb-2" v-html="title(result)"></h5>
+
+                    <p class="card-text small mb-0" v-html="result.fragments?.join(' ... ')"></p>
                   </div>
-                    <a @click="navigateToSearchResult(result)">
-                    <h3 v-html="title(result)"></h3>
-                    </a>
-                  <p class="fragments mb-1" style="font-size: 14px" v-html="result.fragments?.join(' ... ')"></p>
                 </div>
               </div>
               <!-- Error Alert -->
@@ -357,42 +363,40 @@ function facetTitle(s: string) {
 .search-results {
   margin-top: 15px;
 }
-.search-results > div {
-  border: none;
-  background-color: var(--color-background-soft);
-  padding-left: 0;
-  padding-right: 0;
-  padding-bottom: 30px;
+.pagination .page-link {
+  color: var(--link-color)
 }
-.search-results a:hover h3 {
-  background-color: transparent;
+.dashboard .search-results .card {
+  border: 1px solid var(--card-border);
+  border-radius: 0.75rem;
+  transition: box-shadow 0.2s, transform 0.1s;
+  /* background-color: var(--card-background); */
+}
+
+.search-results .card:hover {
   cursor: pointer;
-  color: var(--color-text);
-  text-decoration: underline;
+  transform: translateY(-2px);
 }
-.search-results a:hover h3 {
-  color: var(--link-color);
+
+[data-theme="light"] .search-results .card:hover {
+  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
 }
-.search-results h3 {
-  padding-top: 5px;
-  margin-top: 3px;
+
+.search-results .card-title {
+  font-size: 1.1rem;
 }
-.search-results .config {
-  line-height: 1;
-}
-.page-item {
-  cursor: pointer;
+
+.search-results .badge {
+  font-size: 0.7rem;
+  background-color: var(--badge-background) !important;
 }
 </style>
 
 <style>
-.search-results .fragments mark {
+.search-results mark {
   color: var(--color-text);
-  font-weight: bold;
+  font-weight: 600;
   background-color: unset;
   padding: 0;
-}
-.pagination .page-link {
-  color: var(--link-color)
 }
 </style>

@@ -1,7 +1,6 @@
 package joinGroup
 
 import (
-	"math"
 	"mokapi/kafka"
 )
 
@@ -14,7 +13,7 @@ func init() {
 		&Request{},
 		&Response{},
 		6,
-		math.MaxInt16,
+		6,
 	)
 }
 
@@ -39,10 +38,11 @@ type Response struct {
 	ThrottleTimeMs int32            `kafka:"min=2"`
 	ErrorCode      kafka.ErrorCode  `kafka:""`
 	GenerationId   int32            `kafka:""`
-	ProtocolName   string           `kafka:"compact=6"`
+	ProtocolType   string           `kafka:"min=7,compact=7,nullable=7"`
+	ProtocolName   string           `kafka:"compact=6,nullable=7"`
 	Leader         string           `kafka:"compact=6"`
 	MemberId       string           `kafka:"compact=6"`
-	Members        []Member         `kafka:""`
+	Members        []Member         `kafka:"compact=6"`
 	TagFields      map[int64]string `kafka:"type=TAG_BUFFER,min=6"`
 }
 

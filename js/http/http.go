@@ -4,13 +4,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/dop251/goja"
 	"io"
 	"mokapi/engine/common"
 	"mokapi/js/eventloop"
+	"mokapi/js/util"
 	"mokapi/media"
 	"net/http"
+	"os"
+	"reflect"
 	"strings"
+	"time"
+
+	"github.com/dop251/goja"
 )
 
 type Client interface {
@@ -48,15 +53,15 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 		loop: loop,
 	}
 	obj := module.Get("exports").(*goja.Object)
-	obj.Set("get", f.Get)
-	obj.Set("post", f.Post)
-	obj.Set("put", f.Put)
-	obj.Set("head", f.Head)
-	obj.Set("patch", f.Patch)
-	obj.Set("delete", f.Delete)
-	obj.Set("del", f.Delete)
-	obj.Set("options", f.Options)
-	obj.Set("fetch", f.Fetch)
+	_ = obj.Set("get", f.Get)
+	_ = obj.Set("post", f.Post)
+	_ = obj.Set("put", f.Put)
+	_ = obj.Set("head", f.Head)
+	_ = obj.Set("patch", f.Patch)
+	_ = obj.Set("delete", f.Delete)
+	_ = obj.Set("del", f.Delete)
+	_ = obj.Set("options", f.Options)
+	_ = obj.Set("fetch", f.Fetch)
 }
 
 func (m *Module) Get(url string, args goja.Value) interface{} {
@@ -94,7 +99,7 @@ func (m *Module) Fetch(url string, v goja.Value) *goja.Promise {
 			r := recover()
 			if r != nil {
 				m.loop.Run(func(vm *goja.Runtime) {
-					reject(r)
+					_ = reject(r)
 				})
 			}
 		}()
@@ -115,7 +120,7 @@ func (m *Module) Fetch(url string, v goja.Value) *goja.Promise {
 
 		res := m.doRequest(method, url, body, v)
 		m.loop.Run(func(vm *goja.Runtime) {
-			resolve(res)
+			_ = resolve(res)
 		})
 	}()
 	return p
@@ -127,7 +132,7 @@ func (m *Module) doRequest(method, url string, body interface{}, args goja.Value
 	}
 
 	rArgs := &RequestArgs{Headers: make(map[string]interface{})}
-	maxRedirects := 5
+	opts := common.HttpClientOptions{MaxRedirects: 5}
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
 		params := args.ToObject(m.rt)
 		for _, k := range params.Keys() {
@@ -144,7 +149,21 @@ func (m *Module) doRequest(method, url string, body interface{}, args goja.Value
 					continue
 				}
 				if redirects, ok := v.Export().(int); ok {
-					maxRedirects = redirects
+					opts.MaxRedirects = redirects
+				}
+			case "timeout":
+				v := params.Get(k)
+				switch v.ExportType().Kind() {
+				case reflect.Int64:
+					opts.Timeout = time.Duration(v.ToInteger()) * time.Millisecond
+				case reflect.String:
+					d, err := time.ParseDuration(v.String())
+					if err != nil {
+						panic(m.rt.ToValue(fmt.Sprintf("expected duration for timeout: %s", err.Error())))
+					}
+					opts.Timeout = d
+				default:
+					panic(m.rt.ToValue(fmt.Sprintf("unexpected type for 'timeout': got %s, expected Number or String", util.JsType(v))))
 				}
 			}
 		}
@@ -156,9 +175,12 @@ func (m *Module) doRequest(method, url string, body interface{}, args goja.Value
 		panic(m.rt.ToValue(err.Error()))
 	}
 
-	client := m.host.HttpClient(common.HttpClientOptions{MaxRedirects: maxRedirects})
+	client := m.host.HttpClient(opts)
 	res, err := client.Do(req)
 	if err != nil {
+		if os.IsTimeout(err) {
+			panic(m.rt.ToValue(fmt.Errorf("request to %s %s timed out", method, url)))
+		}
 		panic(m.rt.ToValue(err.Error()))
 	}
 

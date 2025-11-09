@@ -345,7 +345,7 @@ export let events = [
                 binary: base64.encode([0xa, 0x43, 0x61, 0x72, 0x6f, 0x6c, 0x3a].map(x => String.fromCharCode(x)).join(''))
             },
             partition: 0,
-            messageId: 'shopOrder'
+            messageId: 'avro'
         }
     }
  ]

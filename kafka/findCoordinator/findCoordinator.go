@@ -1,7 +1,6 @@
 package findCoordinator
 
 import (
-	"math"
 	"mokapi/kafka"
 )
 
@@ -14,7 +13,7 @@ func init() {
 		&Request{},
 		&Response{},
 		3,
-		math.MaxInt16,
+		3,
 	)
 }
 

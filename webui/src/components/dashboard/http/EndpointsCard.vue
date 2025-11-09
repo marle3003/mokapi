@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useMetrics } from '@/composables/metrics';
 import { usePrettyDates } from '@/composables/usePrettyDate';
-import { type PropType, computed, onMounted, ref, watch } from 'vue';
+import { type PropType, computed, onMounted, ref } from 'vue';
 import { useRouter, useRoute } from '@/router';
 
 const route = useRoute()
@@ -219,7 +219,7 @@ function toggleTag(name: string) {
                         </td>
                         <td>
                             <span v-if="path.summary">{{ path.summary }}</span>
-                            <span v-else-if="path.operations.length === 1">{{ path.operations[0]?.summary }}</span>
+                            <span v-else-if="path.operations && path.operations.length === 1">{{ path.operations[0]?.summary }}</span>
                         </td>
                         <td>
                             <span v-for="operation in operations(path)" key="operation.method" :title="operation.summary" class="badge operation me-1" :class="operation.method" @click.stop="goToOperation(path, operation)">
