@@ -1,12 +1,21 @@
 package schema_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	jsonSchema "mokapi/schema/json/schema"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
+
+func TestSchema_PatchSameSchema(t *testing.T) {
+	// The same scheme is used for a reference ($ref) and should not create
+	// duplicate entries when patching arrays like allOf.
+	s := schematest.NewAllOf(schematest.New("string"))
+	s.Patch(s)
+	require.Len(t, s.AllOf, 1)
+}
 
 func TestSchema_Patch(t *testing.T) {
 	testcases := []struct {

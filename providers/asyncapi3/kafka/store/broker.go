@@ -16,11 +16,13 @@ type Broker struct {
 	Host string
 	Port int
 
+	config          *asyncapi3.Server
 	kafkaConfig     asyncapi3.BrokerBindings
 	stopCleanerChan chan bool
+	topics          map[string]*Topic
 }
 
-func newBroker(id int, name string, config asyncapi3.Server) *Broker {
+func newBroker(id int, name string, config *asyncapi3.Server) *Broker {
 	h, p := parseHostAndPort(config.Host)
 
 	return &Broker{
@@ -28,6 +30,7 @@ func newBroker(id int, name string, config asyncapi3.Server) *Broker {
 		Name:            name,
 		Host:            h,
 		Port:            p,
+		config:          config,
 		kafkaConfig:     config.Bindings.Kafka,
 		stopCleanerChan: make(chan bool, 1),
 	}

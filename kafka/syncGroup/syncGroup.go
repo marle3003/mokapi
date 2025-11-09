@@ -1,7 +1,6 @@
 package syncGroup
 
 import (
-	"math"
 	"mokapi/kafka"
 )
 
@@ -14,7 +13,7 @@ func init() {
 		&Request{},
 		&Response{},
 		4,
-		math.MaxInt16,
+		4,
 	)
 }
 
@@ -25,7 +24,7 @@ type Request struct {
 	GroupInstanceId  string            `kafka:"min=3,compact=4,nullable"`
 	ProtocolType     string            `kafka:"min=5,compact=5,nullable"`
 	ProtocolName     string            `kafka:"min=5,compact=5,nullable"`
-	GroupAssignments []GroupAssignment `kafka:""`
+	GroupAssignments []GroupAssignment `kafka:"compact=4"`
 	TagFields        map[int64]string  `kafka:"type=TAG_BUFFER,min=4"`
 }
 

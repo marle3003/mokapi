@@ -44,7 +44,13 @@ table.dataTable .description p {
     margin: 0 !important;
     line-height: 1.75 !important;
 }
-table .badge {
-    vertical-align: middle;
-    margin-top: -0.5em;
-}
+
+.table-responsive {
+    table.dataTable {
+        table-layout: auto;
+    }
+
+    table.dataTable th, .table.dataTable td {
+        white-space: nowrap;
+    }
+} 

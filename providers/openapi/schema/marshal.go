@@ -48,6 +48,10 @@ type encoder struct {
 }
 
 func (e *encoder) encode(s *Schema) ([]byte, error) {
+	if s == nil {
+		return []byte("null"), nil
+	}
+
 	var b bytes.Buffer
 	if s.Boolean != nil {
 		b.Write([]byte(fmt.Sprintf("%v", *s.Boolean)))

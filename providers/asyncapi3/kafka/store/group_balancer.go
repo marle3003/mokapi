@@ -3,12 +3,13 @@ package store
 import (
 	"bufio"
 	"bytes"
-	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
 	"mokapi/kafka/joinGroup"
 	"mokapi/kafka/syncGroup"
 	"mokapi/providers/asyncapi3"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type groupBalancer struct {
@@ -24,6 +25,7 @@ type groupBalancer struct {
 type joindata struct {
 	client           *kafka.ClientContext
 	writer           kafka.ResponseWriter
+	protocolType     string
 	protocols        []joinGroup.Protocol
 	rebalanceTimeout int
 	sessionTimeout   int
@@ -221,6 +223,7 @@ StopWaitingForConsumers:
 			GenerationId: int32(generation.Id),
 			Leader:       generation.LeaderId,
 			MemberId:     memberId,
+			ProtocolType: j.protocolType,
 			ProtocolName: protocol,
 		})
 	}
@@ -229,6 +232,7 @@ StopWaitingForConsumers:
 		GenerationId: int32(generation.Id),
 		Leader:       generation.LeaderId,
 		MemberId:     generation.LeaderId,
+		ProtocolType: leader.protocolType,
 		ProtocolName: protocol,
 		Members:      members,
 	})
