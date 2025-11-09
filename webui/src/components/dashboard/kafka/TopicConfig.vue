@@ -4,7 +4,7 @@ import SourceView from '../SourceView.vue'
 import SchemaExpand from '../SchemaExpand.vue'
 import SchemaValidate from '../SchemaValidate.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 const props = defineProps<{
     topic: KafkaTopic,
@@ -30,9 +30,19 @@ function filename() {
     return `${props.topic.name}-example${ext}`
 }
 
-// select first message
-const first = messages(props.topic)[0]!
-selected.value = props.topic.messages[first]!
+onMounted(() => {
+    if (!props.topic) {
+        return
+    }
+    const first = messages(props.topic)[0]
+    if (first) {
+        const msg = props.topic.messages[first]
+        if (msg) {
+            selected.value = msg
+        }
+    }
+
+})
 
 function selectedMessageChange(event: any){
     for (const messageId in props.topic.messages){
