@@ -1,7 +1,6 @@
 package heartbeat
 
 import (
-	"math"
 	"mokapi/kafka"
 )
 
@@ -14,7 +13,7 @@ func init() {
 		&Request{},
 		&Response{},
 		4,
-		math.MaxInt16,
+		4,
 	)
 }
 

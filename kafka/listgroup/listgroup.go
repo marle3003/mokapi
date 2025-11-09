@@ -25,7 +25,7 @@ type Request struct {
 type Response struct {
 	ThrottleTimeMs int32            `kafka:"min=1"`
 	ErrorCode      kafka.ErrorCode  `kafka:""`
-	Groups         []Group          `kafka:""`
+	Groups         []Group          `kafka:"compact=3"`
 	TagFields      map[int64]string `kafka:"type=TAG_BUFFER,min=3"`
 }
 

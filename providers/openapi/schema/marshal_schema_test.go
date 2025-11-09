@@ -2,11 +2,12 @@ package schema_test
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	jsonSchema "mokapi/schema/json/schema"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestSchema_Marshal(t *testing.T) {
@@ -15,6 +16,16 @@ func TestSchema_Marshal(t *testing.T) {
 		schema *schema.Schema
 		exp    string
 	}{
+		{
+			name:   "null",
+			schema: nil,
+			exp:    `null`,
+		},
+		{
+			name:   "property schema is null",
+			schema: schematest.New("object", schematest.WithProperty("foo", nil)),
+			exp:    `{"type":"object","properties":{"foo":null}}`,
+		},
 		{
 			name:   "$ref",
 			schema: &schema.Schema{Ref: "#/components/schemas/Foo"},
