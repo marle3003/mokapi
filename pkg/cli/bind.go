@@ -188,9 +188,6 @@ func (f *flagConfigBinder) setMap(ctx *context) error {
 		m.Set(reflect.MakeMap(ctx.element.Type()))
 	}
 
-	i := m.Interface()
-	_ = i
-
 	var key reflect.Value
 	if len(ctx.paths) >= 1 {
 		key = reflect.ValueOf(ctx.paths[0])
@@ -358,6 +355,8 @@ func (f *flagConfigBinder) setJson(element reflect.Value, i interface{}) error {
 	case int64, string, bool:
 		element.Set(reflect.ValueOf(i))
 	case []interface{}:
+		// reset array
+		element.Set(reflect.MakeSlice(element.Type(), 0, len(o)))
 		for _, item := range o {
 			ptr := reflect.New(element.Type().Elem())
 			err := f.setJson(ptr.Elem(), item)
@@ -475,8 +474,13 @@ func (c *context) Next(element reflect.Value) *context {
 
 func getSplitCharsForList(s string) []rune {
 	s = strings.Trim(s, "")
-	if strings.Contains(s, ",") && strings.Contains(s, " ") {
+	if strings.Contains(s, ",") && strings.Contains(s, " ") || isJsonValue(s) {
 		return []rune{' '}
 	}
 	return []rune{' ', ','}
+}
+
+func isJsonValue(s string) bool {
+	return (strings.HasPrefix(s, "[") && strings.HasSuffix(s, "]")) ||
+		(strings.HasPrefix(s, "{") && strings.HasSuffix(s, "}"))
 }

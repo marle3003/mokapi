@@ -2,24 +2,24 @@ package cli
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"os"
 	"reflect"
 	"strings"
 )
 
 type Command struct {
-	Name     string
-	Short    string
-	Long     string
-	Example  string
-	Config   any
-	Commands []*Command
-	Run      func(cmd *Command, args []string) error
+	Name      string
+	Short     string
+	Long      string
+	Example   string
+	Config    any
+	Commands  []*Command
+	Run       func(cmd *Command, args []string) error
+	EnvPrefix string
 
-	envPrefix string
-	args      []string
-	flags     *FlagSet
+	configFile string
+	args       []string
+	flags      *FlagSet
 }
 
 func (c *Command) Execute() error {
@@ -29,21 +29,21 @@ func (c *Command) Execute() error {
 	}
 
 	cmd := c
-	envPrefix := c.envPrefix
+	envPrefix := c.EnvPrefix
 
 	if len(args) > 0 {
 		for _, child := range c.Commands {
 			if child.Name == args[0] {
 				cmd = child
 				args = args[1:]
-				if cmd.envPrefix != "" {
-					envPrefix = cmd.envPrefix
+				if cmd.EnvPrefix != "" {
+					envPrefix = cmd.EnvPrefix
 				}
 			}
 		}
 	}
 
-	m, err := parseFlags(args, envPrefix)
+	m, err := parseFlags(args, envPrefix, c.Flags().IsValidFlag)
 	if err != nil {
 		return err
 	}
@@ -81,16 +81,28 @@ func (c *Command) Execute() error {
 		}
 	}
 
-	for k, v := range cmd.flags.flags {
-		if _, ok := m[k]; !ok && v.DefaultValue != "" {
-			m[k] = []string{v.DefaultValue}
+	defaultValues := map[string][]string{}
+	for _, f := range cmd.flags.flags {
+		if f.DefaultValue == "" {
+			continue
 		}
+		if _, ok := m[f.Name]; ok {
+			continue
+		}
+		if _, ok := m[f.Shorthand]; ok {
+			continue
+		}
+		defaultValues[f.Name] = []string{f.DefaultValue}
 	}
 
 	if cmd.Config != nil {
-		// reset configs, because values or now in flag set
+		// reset configs, because values are now in the flag set
 		clearConfig(cmd.Config)
 		b := flagConfigBinder{}
+		err = b.Decode(defaultValues, cmd.Config)
+		if err != nil {
+			return fmt.Errorf("failed to bind flags to config: %w", err)
+		}
 		err = b.Decode(m, cmd.Config)
 		if err != nil {
 			return fmt.Errorf("failed to bind flags to config: %w", err)
@@ -115,13 +127,8 @@ func (c *Command) Flags() *FlagSet {
 	return c.flags
 }
 
-// SetEnvPrefix defines prefix of the environment variables to be considered
-// With the prefix "mokapi", only environment variables with MOKAPI_ are considered.
-func (c *Command) SetEnvPrefix(in string) {
-	if in != "" {
-		in = in + "_"
-	}
-	c.envPrefix = strings.ToUpper(in)
+func (c *Command) SetConfigFile(file string) {
+	c.configFile = file
 }
 
 func getMapFromConfig(cfg any, flags *FlagSet) (map[string][]string, error) {
@@ -170,18 +177,41 @@ func getMapFrom(v reflect.Value, key string, flags *FlagSet) (map[string][]strin
 		}
 		return result, nil
 	case reflect.Slice:
-		if _, err := flags.GetValue(key); err != nil {
-			var notFound *FlagNotFound
-			if errors.As(err, &notFound) {
-				return nil, nil
+		if _, err := flags.GetValue(key); err == nil {
+			var values []string
+			for i := 0; i < v.Len(); i++ {
+				values = append(values, fmt.Sprintf("%v", v.Index(i)))
 			}
-			return nil, err
+			return map[string][]string{key: values}, nil
 		}
-		var values []string
+		result := map[string][]string{}
 		for i := 0; i < v.Len(); i++ {
-			values = append(values, fmt.Sprintf("%v", v.Index(i)))
+			m, err := getMapFrom(v.Index(i), fmt.Sprintf("%s[%v]", key, i), flags)
+			if err != nil {
+				return nil, err
+			} else if m == nil {
+				continue
+			}
+			for k, val := range m {
+				result[k] = val
+			}
 		}
-		return map[string][]string{key: values}, nil
+		return result, nil
+	case reflect.Map:
+		result := map[string][]string{}
+		for _, k := range v.MapKeys() {
+			m, err := getMapFrom(v.MapIndex(k), fmt.Sprintf("%s-%v", key, k.Interface()), flags)
+			if err != nil {
+				return nil, err
+			} else if m == nil {
+				continue
+			}
+			for k, val := range m {
+				result[k] = val
+			}
+		}
+
+		return result, nil
 	default:
 		if canBeNil(v) && v.IsNil() {
 			return nil, nil

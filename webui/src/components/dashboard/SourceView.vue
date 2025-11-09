@@ -121,7 +121,7 @@ function switchCode() {
 </script>
 
 <template>
-  <section aria-label="Source">
+  <section aria-label="Source" class="source-view">
     <div class="header" v-if="!hideHeader">
       <div class="view controls" v-if="source.preview && source.binary">
         <button ref="preview" type="button" class="btn btn-link active" @click="switchPreview()">JSON</button>
@@ -162,7 +162,7 @@ function switchCode() {
 </template>
 
 <style scoped>
-.header {
+.source-view .header {
   padding: 8px;
   border: 1px solid var(--source-border);
   border-radius: 6px 6px 0 0;
@@ -170,21 +170,21 @@ function switchCode() {
   display: flex;
 
 }
-.header .info span {
+.source-view .header .info span {
   vertical-align: middle;
   line-height: 30px;
 }
-.header .controls {
+.source-view .header .controls {
   border: 1px solid var(--source-border);
   border-radius: 6px;
 }
-.header .view {
+.source-view .header .view {
   margin-right: 7px;
 }
-.header .controls:not(.view) {
+.source-view .header .controls:not(.view) {
   margin-left: auto;
 }
-.header button {
+.source-view .header button {
   background: none !important;
   font-size: 0.9rem;
   vertical-align: middle;
@@ -193,12 +193,12 @@ function switchCode() {
   place-content: center;
   border-right: 1px solid var(--source-border);
 }
-.header button.active {
+.source-view .header button.active {
   background-color: black !important;
   outline: 1px solid var(--source-border);
   border-radius: 6px;
 }
-.header .controls > button, .header .controls > a {
+.source-view .header .controls > button, .header .controls > a {
   padding: 5px 8px;
   height: 28px;
   line-height: 18px;
@@ -207,44 +207,44 @@ function switchCode() {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
 }
-.header .controls > button + button, .header .controls > a + a {
+.source-view .header .controls > button + button, .header .controls > a + a {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
-.header .controls > button:last-child, .header .controls > a:last-child {
+.source-view .header .controls > button:last-child, .header .controls > a:last-child {
   border-top-right-radius: 6px;
   border-bottom-right-radius: 6px;
 }
-.header .controls a {
+.source-view .header .controls a {
   display: inline-block;
   box-sizing: border-box;
   vertical-align: middle;
 }
-.header .controls > *:last-child {
+.source-view .header .controls > *:last-child {
   border-right: 0;
 }
-.header span + span::before {
+.source-view .header span + span::before {
   content: ' · ';
 }
-.header .controls > *:hover:not(.active) {
+.source-view .header .controls > *:hover:not(.active) {
   background-color: var(--source-header-background-active) !important;
 }
-.source {
+.source-view .source {
   border: 1px solid var(--source-border);
   border-top: 0;
   border-radius: 0 0 6px 6px;
   overflow: hidden;
   color: var(--color-text);
 }
-.source pre {
+.source-view .source pre {
   margin-bottom: 0;
   background-color: transparent;
 }
-.source pre .hljs {
+.source-view .source pre .hljs {
   border-radius: 0 0 6px 6px;
   padding-left: 0.5rem;
 }
-.source code {
+.source-view .source code {
   display: inline-block;
   min-width: 100%;
 }

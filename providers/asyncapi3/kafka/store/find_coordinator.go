@@ -2,10 +2,11 @@ package store
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
 	"mokapi/kafka/findCoordinator"
 	"net"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func (s *Store) findCoordinator(rw kafka.ResponseWriter, req *kafka.Request) error {
@@ -29,7 +30,7 @@ func (s *Store) findCoordinator(rw kafka.ResponseWriter, req *kafka.Request) err
 		if g.Coordinator == nil {
 			return writeError(kafka.CoordinatorNotAvailable, fmt.Sprintf("no coordinator for group %v available", r.Key))
 		} else {
-			host := b.Host
+			host := g.Coordinator.Host
 			if len(host) == 0 {
 				var err error
 				host, _, err = net.SplitHostPort(req.Host)
@@ -38,9 +39,9 @@ func (s *Store) findCoordinator(rw kafka.ResponseWriter, req *kafka.Request) err
 				}
 			}
 
-			res.NodeId = int32(b.Id)
+			res.NodeId = int32(g.Coordinator.Id)
 			res.Host = host
-			res.Port = int32(b.Port)
+			res.Port = int32(g.Coordinator.Port)
 		}
 	default:
 		res.ErrorCode = kafka.UnknownServerError

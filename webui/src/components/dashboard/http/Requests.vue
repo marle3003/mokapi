@@ -572,36 +572,38 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                 </div>
             </div>
             
-            <table class="table dataTable selectable" data-testid="requests">
-                <thead>
-                    <tr>
-                        <th v-if="hasDeprecatedRequests" scope="col" class="text-center" style="width: 5px"></th>
-                        <th scope="col" class="text-left" style="width: 5%">Method</th>
-                        <th scope="col" class="text-left" style="width: 60%">URL</th>
-                        <th scope="col" class="text-center"  style="width: 10%">Status Code</th>
-                        <th scope="col" class="text-center" style="width:15%">Time</th>
-                        <th scope="col" class="text-center" style="width: 10%">Duration</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="event in events!" :key="event.id" @click="goToRequest(event)">
-                        <td v-if="hasDeprecatedRequests" style="padding-left:0;">
-                            <span class="bi bi-exclamation-triangle-fill yellow warning" v-if="eventData(event).deprecated" title="deprecated"></span>
-                        </td>
-                        <td class="text-left">
-                            <span class="badge operation" :class="eventData(event).request.method.toLowerCase()">
-                                {{ eventData(event).request.method }}
-                            </span>
-                        </td>
-                        <td>
-                            {{ eventData(event).request.url }}
-                        </td>
-                        <td class="text-center">{{ formatStatusCode(eventData(event).response.statusCode.toString()) }}</td>
-                        <td class="text-center">{{ format(event.time) }}</td>
-                        <td class="text-center">{{ duration(eventData(event).duration) }}</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-responsive">
+                <table class="table dataTable selectable" data-testid="requests">
+                    <thead>
+                        <tr>
+                            <th v-if="hasDeprecatedRequests" scope="col" class="text-center" style="width: 5px;"></th>
+                            <th scope="col" class="text-left" style="width: 80px;">Method</th>
+                            <th scope="col" class="text-left">URL</th>
+                            <th scope="col" class="text-center">Status Code</th>
+                            <th scope="col" class="text-center">Time</th>
+                            <th scope="col" class="text-center">Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="event in events!" :key="event.id" @click="goToRequest(event)">
+                            <td v-if="hasDeprecatedRequests" style="padding-left:0;">
+                                <span class="bi bi-exclamation-triangle-fill yellow warning" v-if="eventData(event).deprecated" title="deprecated"></span>
+                            </td>
+                            <td class="text-left">
+                                <span class="badge operation" :class="eventData(event).request.method.toLowerCase()">
+                                    {{ eventData(event).request.method }}
+                                </span>
+                            </td>
+                            <td>
+                                {{ eventData(event).request.url }}
+                            </td>
+                            <td class="text-center">{{ formatStatusCode(eventData(event).response.statusCode.toString()) }}</td>
+                            <td class="text-center">{{ format(event.time) }}</td>
+                            <td class="text-center">{{ duration(eventData(event).duration) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 

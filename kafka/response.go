@@ -31,7 +31,7 @@ func (r *Response) Read(reader io.Reader) error {
 	if r.Header.Size == 0 {
 		return io.EOF
 	}
-	d.leftSize = int(r.Header.Size) - 4
+	d.leftSize = int(r.Header.Size)
 
 	correlationId := d.ReadInt32()
 	if correlationId != r.Header.CorrelationId {

@@ -126,7 +126,11 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	}
 
 	if s.Nullable {
-		js.Type = append(js.Type, "null")
+		if len(js.Type) > 0 {
+			js.Type = append(js.Type, "null")
+		} else {
+			js.Type = schema.Types{"null", "boolean", "object", "array", "number", "string", "integer"}
+		}
 	}
 
 	js.Examples = s.Examples

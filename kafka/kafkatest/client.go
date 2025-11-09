@@ -31,7 +31,7 @@ type Client struct {
 }
 
 func NewClient(addr, clientId string) *Client {
-	return &Client{Addr: addr, clientId: clientId, Timeout: time.Second * 10}
+	return &Client{Addr: addr, clientId: clientId, Timeout: time.Second * 30}
 }
 
 func (c *Client) Close() {
@@ -69,12 +69,12 @@ func (c *Client) Send(r *kafka.Request) (*kafka.Response, error) {
 	}
 
 	res := kafka.NewResponse(r.Header.ApiKey, r.Header.ApiVersion, r.Header.CorrelationId)
-	c.conn.SetReadDeadline(time.Now().Add(c.Timeout))
+	_ = c.conn.SetReadDeadline(time.Now().Add(c.Timeout))
 	err = res.Read(c.conn)
 	return res, err
 }
 
-func (c *Client) ApiVersion(version int, r *apiVersion.Request) (*apiVersion.Response, error) {
+func (c *Client) ApiVersion(version int16, r *apiVersion.Request) (*apiVersion.Response, error) {
 	res, err := c.Send(NewRequest(c.clientId, version, r))
 	if err != nil {
 		return nil, err
@@ -85,7 +85,7 @@ func (c *Client) ApiVersion(version int, r *apiVersion.Request) (*apiVersion.Res
 	return nil, fmt.Errorf("unexpected response message: %T", res.Message)
 }
 
-func (c *Client) Metadata(version int, r *metaData.Request) (*metaData.Response, error) {
+func (c *Client) Metadata(version int16, r *metaData.Request) (*metaData.Response, error) {
 	res, err := c.Send(NewRequest(c.clientId, version, r))
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (c *Client) Metadata(version int, r *metaData.Request) (*metaData.Response,
 	return nil, fmt.Errorf("unexpected response message: %T", res.Message)
 }
 
-func (c *Client) Produce(version int, r *produce.Request) (*produce.Response, error) {
+func (c *Client) Produce(version int16, r *produce.Request) (*produce.Response, error) {
 	res, err := c.Send(NewRequest(c.clientId, version, r))
 	if err != nil {
 		return nil, err
@@ -107,7 +107,7 @@ func (c *Client) Produce(version int, r *produce.Request) (*produce.Response, er
 	return nil, fmt.Errorf("unexpected response message: %T", res.Message)
 }
 
-func (c *Client) Fetch(version int, r *fetch.Request) (*fetch.Response, error) {
+func (c *Client) Fetch(version int16, r *fetch.Request) (*fetch.Response, error) {
 	res, err := c.Send(NewRequest(c.clientId, version, r))
 	if err != nil {
 		return nil, err
@@ -118,7 +118,7 @@ func (c *Client) Fetch(version int, r *fetch.Request) (*fetch.Response, error) {
 	return nil, fmt.Errorf("unexpected response message: %T", res.Message)
 }
 
-func (c *Client) OffsetFetch(version int, r *offsetFetch.Request) (*offsetFetch.Response, error) {
+func (c *Client) OffsetFetch(version int16, r *offsetFetch.Request) (*offsetFetch.Response, error) {
 	res, err := c.Send(NewRequest(c.clientId, version, r))
 	if err != nil {
 		return nil, err
@@ -129,7 +129,7 @@ func (c *Client) OffsetFetch(version int, r *offsetFetch.Request) (*offsetFetch.
 	return nil, fmt.Errorf("unexpected response message: %T", res.Message)
 }
 
-func (c *Client) Offset(version int, r *offset.Request) (*offset.Response, error) {
+func (c *Client) Offset(version int16, r *offset.Request) (*offset.Response, error) {
 	res, err := c.Send(NewRequest(c.clientId, version, r))
 	if err != nil {
 		return nil, err
@@ -140,7 +140,7 @@ func (c *Client) Offset(version int, r *offset.Request) (*offset.Response, error
 	return nil, fmt.Errorf("unexpected response message: %T", res.Message)
 }
 
-func (c *Client) JoinGroup(version int, r *joinGroup.Request) (*joinGroup.Response, error) {
+func (c *Client) JoinGroup(version int16, r *joinGroup.Request) (*joinGroup.Response, error) {
 	res, err := c.Send(NewRequest(c.clientId, version, r))
 	if err != nil {
 		return nil, err
@@ -151,7 +151,7 @@ func (c *Client) JoinGroup(version int, r *joinGroup.Request) (*joinGroup.Respon
 	return nil, fmt.Errorf("unexpected response message: %T", res.Message)
 }
 
-func (c *Client) SyncGroup(version int, r *syncGroup.Request) (*syncGroup.Response, error) {
+func (c *Client) SyncGroup(version int16, r *syncGroup.Request) (*syncGroup.Response, error) {
 	res, err := c.Send(NewRequest(c.clientId, version, r))
 	if err != nil {
 		return nil, err
@@ -162,7 +162,7 @@ func (c *Client) SyncGroup(version int, r *syncGroup.Request) (*syncGroup.Respon
 	return nil, fmt.Errorf("unexpected response message: %T", reflect.ValueOf(res.Message).Elem().Type())
 }
 
-func (c *Client) Heartbeat(version int, r *heartbeat.Request) (*heartbeat.Response, error) {
+func (c *Client) Heartbeat(version int16, r *heartbeat.Request) (*heartbeat.Response, error) {
 	res, err := c.Send(NewRequest(c.clientId, version, r))
 	if err != nil {
 		return nil, err
@@ -173,7 +173,7 @@ func (c *Client) Heartbeat(version int, r *heartbeat.Request) (*heartbeat.Respon
 	return nil, fmt.Errorf("unexpected response message: %T", res.Message)
 }
 
-func (c *Client) FindCoordinator(version int, r *findCoordinator.Request) (*findCoordinator.Response, error) {
+func (c *Client) FindCoordinator(version int16, r *findCoordinator.Request) (*findCoordinator.Response, error) {
 	res, err := c.Send(NewRequest(c.clientId, version, r))
 	if err != nil {
 		return nil, err
@@ -184,7 +184,7 @@ func (c *Client) FindCoordinator(version int, r *findCoordinator.Request) (*find
 	return nil, fmt.Errorf("unexpected response message: %T", res.Message)
 }
 
-func (c *Client) OffsetCommit(version int, r *offsetCommit.Request) (*offsetCommit.Response, error) {
+func (c *Client) OffsetCommit(version int16, r *offsetCommit.Request) (*offsetCommit.Response, error) {
 	res, err := c.Send(NewRequest(c.clientId, version, r))
 	if err != nil {
 		return nil, err
@@ -195,7 +195,7 @@ func (c *Client) OffsetCommit(version int, r *offsetCommit.Request) (*offsetComm
 	return nil, fmt.Errorf("unexpected response message: %T", res.Message)
 }
 
-func (c *Client) Listgroup(version int, r *listgroup.Request) (*listgroup.Response, error) {
+func (c *Client) Listgroup(version int16, r *listgroup.Request) (*listgroup.Response, error) {
 	res, err := c.Send(NewRequest(c.clientId, version, r))
 	if err != nil {
 		return nil, err
@@ -206,7 +206,7 @@ func (c *Client) Listgroup(version int, r *listgroup.Request) (*listgroup.Respon
 	return nil, fmt.Errorf("unexpected response message: %T", res.Message)
 }
 
-func (c *Client) JoinSyncGroup(member, group string, joinVersion, syncVersion int) error {
+func (c *Client) JoinSyncGroup(member, group string, joinVersion, syncVersion int16) error {
 	join, err := c.JoinGroup(joinVersion, &joinGroup.Request{
 		GroupId:      group,
 		MemberId:     member,

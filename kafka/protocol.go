@@ -79,9 +79,11 @@ type kafkaTag struct {
 	minVersion int16
 	maxVersion int16
 	// version to switch to compact mode (inclusive)
+	// Since there are exceptions (ApiVersion) to the sentence, it contains redundant information:
+	// When a struct is marked as “flexible”, all fields of type string, array, or bytes use the “compact” encoding.
 	compact   int16
 	protoType string
-	nullable  bool
+	nullable  int16
 }
 
 func (t kafkaTag) isValid(version int16) bool {
@@ -185,8 +187,10 @@ func getTag(f reflect.StructField) kafkaTag {
 				t.protoType = kv[1]
 			case "nullable":
 				if len(kv) == 1 {
-					t.nullable = true
-				} // else: parse bool value
+					t.nullable = 0
+				} else if i, err := strconv.Atoi(kv[1]); err == nil {
+					t.nullable = int16(i)
+				}
 			}
 		}
 		return t

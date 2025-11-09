@@ -37,11 +37,8 @@ func (fs *FlagSet) Float(name string, defaultValue float64, usage string) {
 
 func (fs *FlagSet) FloatShort(name string, short string, defaultValue float64, usage string) {
 	v := &floatFlag{value: defaultValue}
-	f := &Flag{Value: v, Usage: usage, DefaultValue: v.String()}
-	fs.setFlag(name, f)
-	if short != "" {
-		fs.setFlag(short, f)
-	}
+	f := &Flag{Name: name, Shorthand: short, Value: v, Usage: usage, DefaultValue: v.String()}
+	fs.setFlag(f)
 }
 
 func (fs *FlagSet) GetFloat(name string) float64 {

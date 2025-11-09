@@ -1,9 +1,6 @@
 package store_test
 
 import (
-	"github.com/sirupsen/logrus"
-	"github.com/sirupsen/logrus/hooks/test"
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
@@ -15,6 +12,10 @@ import (
 	"mokapi/runtime/events/eventstest"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestOffsetFetch(t *testing.T) {
@@ -200,7 +201,7 @@ func TestOffsetFetch(t *testing.T) {
 					asyncapi3test.WithServer("", "kafka", b.Addr),
 					asyncapi3test.WithChannel("foo"),
 				))
-				s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
+				_, _, _ = s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Key:   kafka.NewBytes([]byte("foo")),
@@ -238,6 +239,63 @@ func TestOffsetFetch(t *testing.T) {
 				require.Len(t, r.Topics[0].Partitions, 1)
 
 				p := r.Topics[0].Partitions[0]
+				require.Equal(t, kafka.None, p.ErrorCode)
+				require.Equal(t, int64(0), p.CommittedOffset)
+			},
+		},
+		{
+			"offset fetch with new version fetching offsets for multiple groups",
+			func(t *testing.T, s *store.Store) {
+				b := kafkatest.NewBroker(kafkatest.WithHandler(s))
+				defer b.Close()
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("", "kafka", b.Addr),
+					asyncapi3test.WithChannel("foo"),
+				))
+				_, _, _ = s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
+					Records: []*kafka.Record{
+						{
+							Key:   kafka.NewBytes([]byte("foo")),
+							Value: kafka.NewBytes([]byte("bar")),
+						},
+					},
+				})
+
+				err := b.Client().JoinSyncGroup("foo", "bar", 3, 3)
+				require.NoError(t, err)
+
+				_, err = b.Client().OffsetCommit(2, &offsetCommit.Request{
+					GroupId:  "bar",
+					MemberId: "foo",
+					Topics: []offsetCommit.Topic{
+						{
+							Name:       "foo",
+							Partitions: []offsetCommit.Partition{{}},
+						},
+					},
+				})
+				require.NoError(t, err)
+
+				r, err := b.Client().OffsetFetch(9, &offsetFetch.Request{
+					Groups: []offsetFetch.RequestGroup{
+						{
+							GroupId: "bar",
+							Topics: []offsetFetch.RequestTopic{
+								{
+									Name:             "foo",
+									PartitionIndexes: []int32{0},
+								},
+							},
+						},
+					},
+				})
+				require.NoError(t, err)
+				require.Equal(t, kafka.None, r.ErrorCode)
+				require.Len(t, r.Groups, 1)
+				require.Len(t, r.Groups[0].Topics, 1)
+				require.Len(t, r.Groups[0].Topics[0].Partitions, 1)
+
+				p := r.Groups[0].Topics[0].Partitions[0]
 				require.Equal(t, kafka.None, p.ErrorCode)
 				require.Equal(t, int64(0), p.CommittedOffset)
 			},

@@ -90,9 +90,9 @@ function getStatus(action: Action) {
                 <tr data-bs-toggle="collapse" :data-bs-target="'#action_'+index" aria-expanded=false>
                     <td><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></td>
                     <td :set="status = getStatus(action)">
-                        <span class="badge bg-danger me-2" v-if="status === 'error'">Error</span>
-                        <span class="badge bg-warning me-2" v-else-if="status === 'warning'">Warning</span>
-                        <span class="badge bg-success me-2" v-else>Success</span>
+                        <span class="badge bg-danger" v-if="status === 'error'">Error</span>
+                        <span class="badge bg-warning" v-else-if="status === 'warning'">Warning</span>
+                        <span class="badge bg-success" v-else>Success</span>
                     </td>
                     <td>{{ getName(action) }}</td>
                     <td class="text-center">{{ duration(action.duration) }}</td>
