@@ -47,14 +47,15 @@ type operation struct {
 }
 
 type param struct {
-	Name        string         `json:"name"`
-	Type        string         `json:"type"`
-	Description string         `json:"description,omitempty"`
-	Required    bool           `json:"required"`
-	Deprecated  bool           `json:"deprecated"`
-	Style       string         `json:"style,omitempty"`
-	Exploded    bool           `json:"exploded"`
-	Schema      *schema.Schema `json:"schema"`
+	Name          string         `json:"name"`
+	Type          string         `json:"type"`
+	Description   string         `json:"description,omitempty"`
+	Required      bool           `json:"required"`
+	Deprecated    bool           `json:"deprecated"`
+	Style         string         `json:"style,omitempty"`
+	Exploded      bool           `json:"exploded"`
+	AllowReserved bool           `json:"allowReserved"`
+	Schema        *schema.Schema `json:"schema"`
 }
 
 type response struct {
@@ -295,14 +296,15 @@ func getParameters(params openapi.Parameters) (result []param) {
 		}
 
 		pi := param{
-			Name:        p.Value.Name,
-			Type:        string(p.Value.Type),
-			Description: p.Value.Description,
-			Required:    p.Value.Required,
-			Deprecated:  p.Value.Deprecated,
-			Style:       p.Value.Style,
-			Exploded:    p.Value.IsExplode(),
-			Schema:      p.Value.Schema,
+			Name:          p.Value.Name,
+			Type:          string(p.Value.Type),
+			Description:   p.Value.Description,
+			Required:      p.Value.Required,
+			Deprecated:    p.Value.Deprecated,
+			Style:         p.Value.Style,
+			Exploded:      p.Value.IsExplode(),
+			AllowReserved: p.Value.AllowReserved,
+			Schema:        p.Value.Schema,
 		}
 		if len(p.Description) > 0 {
 			pi.Description = p.Description
