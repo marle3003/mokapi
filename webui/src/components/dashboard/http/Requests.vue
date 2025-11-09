@@ -562,13 +562,13 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                 </div>
                 <div class="col-4 d-flex justify-content-end">
                     <button class="btn btn-outline-primary position-relative" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;" @click="showDialog">
-                    <i class="bi bi-funnel"></i> Filter
+                        <i class="bi bi-funnel"></i> Filter
 
-                    <span v-if="activeFiltersCount > 0"
-                        class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                        {{ activeFiltersCount }}
-                    </span>
-                </button>
+                        <span v-if="activeFiltersCount > 0"
+                            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            {{ activeFiltersCount }}
+                        </span>
+                    </button>
                 </div>
             </div>
             
