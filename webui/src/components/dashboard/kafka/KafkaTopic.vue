@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Ref, onUnmounted } from 'vue'
+import { type Ref, computed, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useService } from '@/composables/services'
 import KafkaGroups from './KafkaGroups.vue'
@@ -13,7 +13,7 @@ const route = useRoute()
 const serviceName = route.params.service!.toString()
 const topicName = route.params.topic?.toString()
 const { service, close } = <{service: Ref<KafkaService | null>, close: () => void}>fetchService(serviceName, 'kafka')
-function topic() {
+const topic = computed(() => {
   if (!service.value) {return null}
   for (let topic of service.value?.topics){
     if (topic.name == topicName) {
@@ -21,21 +21,21 @@ function topic() {
     }
   }
   return null
-}
+})
 onUnmounted(() => {
     close()
 })
 </script>
 
 <template>
-  <div v-if="$route.name == 'kafkaTopic' && service != null">
+  <div v-if="$route.name == 'kafkaTopic' && service != null && topic">
       <div class="card-group">
         <section class="card" aria-label="Info">
             <div class="card-body">
                 <div class="row">
                     <div class="col header mb-3">
                         <p id="topic" class="label">Topic</p>
-                        <p aria-labelledby="topic">{{ topic()?.name }}</p>
+                        <p aria-labelledby="topic">{{ topic.name }}</p>
                     </div>
                     <div class="col header">
                         <p id="cluster" class="label">Cluster</p>
@@ -56,7 +56,7 @@ onUnmounted(() => {
                 <div class="row">
                     <div class="col">
                         <p id="description" class="label">Description</p>
-                        <markdown :source="topic()?.description" aria-labelledby="description" :html="true" />
+                        <markdown :source="topic.description" aria-labelledby="description" :html="true" />
                     </div>
                     
                 </div>
@@ -77,13 +77,13 @@ onUnmounted(() => {
                 <kafka-messages :service="service" :topicName="topicName" />
               </div>
               <div class="tab-pane fade" id="partitions" role="tabpanel" aria-labelledby="partitions-tab">
-                <kafka-partition :topic="topic()!" />
+                <kafka-partition :topic="topic" />
               </div>
               <div class="tab-pane fade" id="groups" role="tabpanel" aria-labelledby="groups-tab">
                 <kafka-groups :service="service" :topicName="topicName"/>
               </div>
               <div class="tab-pane fade" id="configs" role="tabpanel" aria-labelledby="configs-tab">
-                <topic-config v-if="topic()" :topic="topic()!" />
+                <topic-config :topic="topic" />
               </div>
             </div>
           </div>
