@@ -42,7 +42,7 @@ Functions to send HTTP requests within Mokapi scripts.
 | [patch( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/patch.md)     | Sends an HTTP PATCH request            |
 | [delete( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/delete.md)   | Sends an HTTP DELETE request           |
 | [options( url, \[body\], \[args\] )](/docs/javascript-api/mokapi-http/options.md) | Sends an HTTP OPTIONS request          |
-| [fetch( url, \[opts\] )](/docs/javascript-api/mokapi-http/options.md)             | Create an HTTP request using Fetch API |
+| [fetch( url, \[opts\] )](/docs/javascript-api/mokapi-http/fetch.md)               | Create an HTTP request using Fetch API |
 
 ### mokapi/faker (Mock Data Generator)
 

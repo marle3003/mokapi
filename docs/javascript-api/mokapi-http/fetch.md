@@ -2,9 +2,9 @@
 title: Fetch – fetch( url, [opts] )
 description: Use Mokapi's JavaScript API to send HTTP requests. Customize methods, headers, timeouts, and request data for testing and development.
 ---
-# fetch( url, [body], [opts] )
+# fetch( url, [opts] )
 
-The `fetch()` function provides a Promise-based interface for making HTTP requests in Mokapi’s JavaScript environment.  
+The `fetch()` function provides a Promise-based interface for making HTTP requests in Mokapi’s JavaScript environment.
 It works similarly to the browser’s Fetch API.
 
 | Parameter       | Type   | Description                                                                                                      |

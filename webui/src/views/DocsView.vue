@@ -272,12 +272,9 @@ table td {
     line-height: 1.4;
 }
 
-table tbody tr:hover {
-    background-color: var(--color-background-mute);
-}
-
 table.selectable tbody tr:hover {
     cursor: pointer;
+    background-color: var(--color-background-mute);
 }
 
 pre {
