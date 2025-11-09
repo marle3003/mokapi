@@ -30,6 +30,8 @@ type Module struct {
 
 type RequestArgs struct {
 	Headers map[string]interface{}
+	Body    any
+	Method  string
 }
 
 type Response struct {
@@ -92,7 +94,7 @@ func (m *Module) Options(url string, body interface{}, args goja.Value) interfac
 	return m.doRequest(http.MethodOptions, url, body, args)
 }
 
-func (m *Module) Fetch(url string, v goja.Value) *goja.Promise {
+func (m *Module) Fetch(url string, args goja.Value) *goja.Promise {
 	p, resolve, reject := m.rt.NewPromise()
 	go func() {
 		defer func() {
@@ -104,21 +106,20 @@ func (m *Module) Fetch(url string, v goja.Value) *goja.Promise {
 			}
 		}()
 
-		method := http.MethodGet
-		var body interface{}
-		if v != nil {
-			obj := v.ToObject(m.rt)
-			vMethod := obj.Get("method")
-			if vMethod != nil {
-				method = strings.ToUpper(vMethod.String())
-			}
-			vBody := obj.Get("body")
-			if vBody != nil {
-				body = vBody.Export()
+		rArgs := &RequestArgs{Headers: make(map[string]interface{})}
+		opts := common.HttpClientOptions{MaxRedirects: 5}
+		if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
+			var err error
+			rArgs, opts, err = parseArgs(args.ToObject(m.rt))
+			if err != nil {
+				panic(m.rt.ToValue(err.Error()))
 			}
 		}
+		if rArgs.Method == "" {
+			rArgs.Method = http.MethodGet
+		}
 
-		res := m.doRequest(method, url, body, v)
+		res := m.fetch(url, rArgs, opts)
 		m.loop.Run(func(vm *goja.Runtime) {
 			_ = resolve(res)
 		})
@@ -134,42 +135,21 @@ func (m *Module) doRequest(method, url string, body interface{}, args goja.Value
 	rArgs := &RequestArgs{Headers: make(map[string]interface{})}
 	opts := common.HttpClientOptions{MaxRedirects: 5}
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
-		params := args.ToObject(m.rt)
-		for _, k := range params.Keys() {
-			switch k {
-			case "headers":
-				headers := params.Get(k)
-				if goja.IsUndefined(headers) || goja.IsNull(headers) {
-					continue
-				}
-				rArgs.Headers = headers.Export().(map[string]interface{})
-			case "maxRedirects":
-				v := params.Get(k)
-				if goja.IsUndefined(v) || goja.IsNull(v) {
-					continue
-				}
-				if redirects, ok := v.Export().(int); ok {
-					opts.MaxRedirects = redirects
-				}
-			case "timeout":
-				v := params.Get(k)
-				switch v.ExportType().Kind() {
-				case reflect.Int64:
-					opts.Timeout = time.Duration(v.ToInteger()) * time.Millisecond
-				case reflect.String:
-					d, err := time.ParseDuration(v.String())
-					if err != nil {
-						panic(m.rt.ToValue(fmt.Sprintf("expected duration for timeout: %s", err.Error())))
-					}
-					opts.Timeout = d
-				default:
-					panic(m.rt.ToValue(fmt.Sprintf("unexpected type for 'timeout': got %s, expected Number or String", util.JsType(v))))
-				}
-			}
+		var err error
+		rArgs, opts, err = parseArgs(args.ToObject(m.rt))
+		if err != nil {
+			panic(m.rt.ToValue(err.Error()))
 		}
 	}
 
-	req, err := createRequest(method, url, body, rArgs)
+	rArgs.Method = method
+	rArgs.Body = body
+
+	return m.fetch(url, rArgs, opts)
+}
+
+func (m *Module) fetch(url string, args *RequestArgs, opts common.HttpClientOptions) Response {
+	req, err := createRequest(url, args)
 
 	if err != nil {
 		panic(m.rt.ToValue(err.Error()))
@@ -179,7 +159,7 @@ func (m *Module) doRequest(method, url string, body interface{}, args goja.Value
 	res, err := client.Do(req)
 	if err != nil {
 		if os.IsTimeout(err) {
-			panic(m.rt.ToValue(fmt.Errorf("request to %s %s timed out", method, url)))
+			panic(m.rt.ToValue(fmt.Errorf("request to %s %s timed out", args.Method, url)))
 		}
 		panic(m.rt.ToValue(err.Error()))
 	}
@@ -187,13 +167,13 @@ func (m *Module) doRequest(method, url string, body interface{}, args goja.Value
 	return m.parseResponse(res)
 }
 
-func createRequest(method, url string, body interface{}, args *RequestArgs) (*http.Request, error) {
-	r, err := encode(body, args)
+func createRequest(url string, args *RequestArgs) (*http.Request, error) {
+	r, err := encode(args.Body, args)
 	if err != nil {
 		return nil, err
 	}
 
-	req, err := http.NewRequest(method, url, r)
+	req, err := http.NewRequest(args.Method, url, r)
 	if err != nil {
 		return nil, err
 	}
@@ -256,4 +236,57 @@ func (r Response) Json() interface{} {
 		panic(r.rt.ToValue(err.Error()))
 	}
 	return i
+}
+
+func parseArgs(args *goja.Object) (*RequestArgs, common.HttpClientOptions, error) {
+	rArgs := &RequestArgs{Headers: make(map[string]interface{})}
+	opts := common.HttpClientOptions{MaxRedirects: 5}
+
+	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
+		for _, k := range args.Keys() {
+			switch k {
+			case "headers":
+				headers := args.Get(k)
+				if goja.IsUndefined(headers) || goja.IsNull(headers) {
+					continue
+				}
+				rArgs.Headers = headers.Export().(map[string]interface{})
+			case "maxRedirects":
+				v := args.Get(k)
+				if v.ExportType().Kind() != reflect.Int64 {
+					return rArgs, opts, fmt.Errorf("unexpected type for 'maxRedirects': got %s, expected Number", util.JsType(v))
+				}
+				if redirects, ok := v.Export().(int); ok {
+					opts.MaxRedirects = redirects
+				}
+			case "timeout":
+				v := args.Get(k)
+				switch v.ExportType().Kind() {
+				case reflect.Int64:
+					opts.Timeout = time.Duration(v.ToInteger()) * time.Millisecond
+				case reflect.String:
+					d, err := time.ParseDuration(v.String())
+					if err != nil {
+						return rArgs, opts, fmt.Errorf("expected duration for timeout: %w", err)
+					}
+					opts.Timeout = d
+				default:
+					return rArgs, opts, fmt.Errorf("unexpected type for 'timeout': got %s, expected Number or String", util.JsType(v))
+				}
+			case "method":
+				v := args.Get(k)
+				if v.ExportType().Kind() != reflect.String {
+					return rArgs, opts, fmt.Errorf("unexpected type for 'method': got %s, expected String", util.JsType(v))
+				}
+				rArgs.Method = strings.ToUpper(v.String())
+			case "body":
+				v := args.Get(k)
+				if goja.IsUndefined(v) || goja.IsNull(v) {
+					continue
+				}
+				rArgs.Body = v.Export()
+			}
+		}
+	}
+	return rArgs, opts, nil
 }

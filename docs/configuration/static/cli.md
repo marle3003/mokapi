@@ -72,7 +72,7 @@ For some parameters the file name can be specified directly, for others a file U
 The parameter `--configfile` provides the ability to define all parameters in a file.
 
 ```bash
-mokapi --providers-file file:///tmp/file.json
+mokapi --providers-file file:/tmp/file.json
 mokapi --providers-git-rootCaCert=/path/to/caCert.pem
 mokapi --cli-input=/path/to/config.json
 ```

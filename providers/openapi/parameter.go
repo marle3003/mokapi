@@ -48,6 +48,8 @@ type Parameter struct {
 	// parameters for each array item or object property
 	Explode *bool `yaml:"explode" json:"explode"`
 
+	AllowReserved bool `yaml:"allowReserved" json:"allowReserved"`
+
 	Content Content `yaml:"content" json:"content"`
 }
 

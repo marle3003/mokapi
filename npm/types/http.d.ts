@@ -104,7 +104,7 @@ export interface Args {
      * The number of redirects to follow for this request.
      * @default 5
      **/
-    maxRedirects: number
+    maxRedirects?: number
     /**
      * Maximum time to wait for the request to complete. Default
      * timeout is 60 seconds ("60s"). The type can also be a number, in which
@@ -112,7 +112,7 @@ export interface Args {
      * @example
      * const res = get(url, { timeout: '5m' })
      */
-    timeout: number | string
+    timeout?: number | string
 }
 
 /**

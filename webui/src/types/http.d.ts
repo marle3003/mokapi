@@ -32,6 +32,7 @@ declare interface HttpParameter {
     deprecated: boolean
     style: string
     explode?: boolean
+    allowReserved: boolean
     schema: Schema
 }
 

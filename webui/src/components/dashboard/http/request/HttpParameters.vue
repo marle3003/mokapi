@@ -120,17 +120,21 @@ function showWarningColumn(){
                                         </div>
                                     </div>
                                     <div class="row mt-2">
-                                        <div class="col">
+                                        <div class="col-2">
                                             <p class="label">Required</p>
                                             <p>{{ parameter.required }}</p>
                                         </div>
-                                        <div class="col">
+                                        <div class="col-2">
                                             <p class="label">Style</p>
                                             <p>{{ parameter.style ?? 'simple' }}</p>
                                         </div>
-                                        <div class="col">
+                                        <div class="col-2">
                                             <p class="label">Explode</p>
                                             <p>{{ parameter.explode ?? false }}</p>
+                                        </div>
+                                        <div class="col-2">
+                                            <p class="label">Allow Reserved</p>
+                                            <p>{{ parameter.allowReserved ?? false }}</p>
                                         </div>
                                     </div>
                                     <div class="row mt-2">
