@@ -23,6 +23,8 @@ type MailSuite struct{ BaseSuite }
 
 func (suite *MailSuite) SetupSuite() {
 	cfg := static.NewConfig()
+	port := try.GetFreePort()
+	cfg.Api.Port = fmt.Sprintf("%v", port)
 	wd, err := os.Getwd()
 	require.NoError(suite.T(), err)
 	cfg.ConfigFile = path.Join(wd, "mokapi.yaml")
@@ -47,16 +49,16 @@ func (suite *MailSuite) TestSendMail() {
 	require.NoError(suite.T(), err)
 
 	// test mail API
-	try.GetRequest(suite.T(), "http://localhost:8080/api/services/mail/Mokapi%20MailServer/mailboxes", nil,
+	try.GetRequest(suite.T(), fmt.Sprintf("http://localhost:%v/api/services/mail/Mokapi%%20MailServer/mailboxes", suite.cfg.Api.Port), nil,
 		try.HasStatusCode(200),
 		try.HasBody(`[{"name":"rcipient@foo.bar","numMessages":1}]`),
 	)
-	try.GetRequest(suite.T(), "http://localhost:8080/api/services/mail/Mokapi%20MailServer/mailboxes/rcipient@foo.bar", nil,
+	try.GetRequest(suite.T(), fmt.Sprintf("http://localhost:%v/api/services/mail/Mokapi%%20MailServer/mailboxes/rcipient@foo.bar", suite.cfg.Api.Port), nil,
 		try.HasStatusCode(200),
 		try.HasBody(`{"name":"rcipient@foo.bar","numMessages":1,"folders":["INBOX"]}`),
 	)
 	var messageId string
-	try.GetRequest(suite.T(), "http://localhost:8080/api/services/mail/Mokapi%20MailServer/mailboxes/rcipient@foo.bar/messages", nil,
+	try.GetRequest(suite.T(), fmt.Sprintf("http://localhost:%v/api/services/mail/Mokapi%%20MailServer/mailboxes/rcipient@foo.bar/messages", suite.cfg.Api.Port), nil,
 		try.HasStatusCode(200),
 		try.AssertBody(func(t *testing.T, body string) {
 			var v any
@@ -73,7 +75,7 @@ func (suite *MailSuite) TestSendMail() {
 			messageId = m["messageId"].(string)
 		}),
 	)
-	try.GetRequest(suite.T(), "http://localhost:8080/api/services/mail/messages/"+messageId, nil,
+	try.GetRequest(suite.T(), fmt.Sprintf("http://localhost:%v/api/services/mail/messages/%v", suite.cfg.Api.Port, messageId), nil,
 		try.HasStatusCode(200),
 		try.AssertBody(func(t *testing.T, body string) {
 			var v any
@@ -209,16 +211,16 @@ It can be any text data.
 	require.NoError(suite.T(), err)
 
 	// test mail API
-	try.GetRequest(suite.T(), "http://localhost:8080/api/services/mail/Mokapi%20MailServer%20Old/mailboxes", nil,
+	try.GetRequest(suite.T(), fmt.Sprintf("http://localhost:%v/api/services/mail/Mokapi%%20MailServer%%20Old/mailboxes", suite.cfg.Api.Port), nil,
 		try.HasStatusCode(200),
 		try.HasBody(`[{"name":"rcipient@foo.bar","numMessages":1}]`),
 	)
-	try.GetRequest(suite.T(), "http://localhost:8080/api/services/mail/Mokapi%20MailServer%20Old/mailboxes/rcipient@foo.bar", nil,
+	try.GetRequest(suite.T(), fmt.Sprintf("http://localhost:%v/api/services/mail/Mokapi%%20MailServer%%20Old/mailboxes/rcipient@foo.bar", suite.cfg.Api.Port), nil,
 		try.HasStatusCode(200),
 		try.HasBody(`{"name":"rcipient@foo.bar","numMessages":1,"folders":["INBOX"]}`),
 	)
 	var messageId string
-	try.GetRequest(suite.T(), "http://localhost:8080/api/services/mail/Mokapi%20MailServer%20Old/mailboxes/rcipient@foo.bar/messages", nil,
+	try.GetRequest(suite.T(), fmt.Sprintf("http://localhost:%v/api/services/mail/Mokapi%%20MailServer%%20Old/mailboxes/rcipient@foo.bar/messages", suite.cfg.Api.Port), nil,
 		try.HasStatusCode(200),
 		try.AssertBody(func(t *testing.T, body string) {
 			var v any
@@ -235,7 +237,7 @@ It can be any text data.
 			messageId = m["messageId"].(string)
 		}),
 	)
-	try.GetRequest(suite.T(), "http://localhost:8080/api/services/mail/messages/"+messageId, nil,
+	try.GetRequest(suite.T(), fmt.Sprintf("http://localhost:%v/api/services/mail/messages/%v", suite.cfg.Api.Port, messageId), nil,
 		try.HasStatusCode(200),
 		try.AssertBody(func(t *testing.T, body string) {
 			var v any
