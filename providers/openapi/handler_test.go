@@ -2,6 +2,7 @@ package openapi_test
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
@@ -980,6 +981,56 @@ func TestHandler_Event(t *testing.T) {
 				return nil
 			},
 		},
+		{
+			name: "test request parameter",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json", openapitest.NewContent()),
+					),
+					openapitest.WithOperationParam("id", true,
+						openapitest.WithParamSchema(schematest.New("integer"))),
+					openapitest.WithOperationId("foo-operation"),
+				)
+				openapitest.AppendPath("/foo/{id}", c,
+					openapitest.WithOperation(http.MethodGet, op),
+				)
+				r := httptest.NewRequest(http.MethodGet, "http://localhost/foo/123", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				var er *common.EventRequest
+				b := rr.Body.Bytes()
+				err := json.Unmarshal(b, &er)
+				require.NoError(t, err)
+				require.Equal(t, &common.EventRequest{
+					Method: http.MethodGet,
+					Url: common.Url{
+						Scheme: "http",
+						Host:   "localhost",
+						Port:   80,
+						Path:   "/foo/123",
+						Query:  "",
+					},
+					Body:        nil,
+					Path:        map[string]any{"id": float64(123)},
+					Query:       map[string]any{},
+					Header:      map[string]any{"Accept": "application/json"},
+					Cookie:      map[string]any{},
+					QueryString: nil,
+					Api:         "Testing",
+					Key:         "/foo/{id}",
+					OperationId: "foo-operation",
+				}, er)
+			},
+			event: func(event string, args ...interface{}) []*common.Action {
+				req := args[0].(*common.EventRequest)
+				res := args[1].(*common.EventResponse)
+				/*b, _ := json.Marshal(req)
+				res.Body = string(b)*/
+				res.Data = req
+				return nil
+			},
+		},
 	}
 
 	t.Parallel()
@@ -1004,7 +1055,7 @@ func TestHandler_Event(t *testing.T) {
 				require.NoError(t, err)
 				r = r.WithContext(ctx)
 				httpErr := h.ServeHTTP(rw, r)
-				if err != nil {
+				if httpErr != nil {
 					for k, v := range httpErr.Header {
 						rw.Header()[k] = v
 					}

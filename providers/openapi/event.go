@@ -3,7 +3,6 @@ package openapi
 import (
 	"context"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"mokapi/engine/common"
 	"mokapi/media"
@@ -11,7 +10,10 @@ import (
 	"mokapi/schema/json/generator"
 	"net/http"
 	"reflect"
+	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const eventKey = "event"
@@ -34,12 +36,13 @@ func EventRequestFromContext(ctx context.Context) *common.EventRequest {
 	return e
 }
 
-func NewEventRequest(r *http.Request, contentType media.ContentType) (*common.EventRequest, context.Context) {
+func NewEventRequest(r *http.Request, contentType media.ContentType, api string) (*common.EventRequest, context.Context) {
 	ctx := r.Context()
 	endpointPath := ctx.Value("endpointPath").(string)
 	op, _ := OperationFromContext(ctx)
 
 	req := &common.EventRequest{
+		Api:         api,
 		Key:         endpointPath,
 		OperationId: op.OperationId,
 		Method:      r.Method,
@@ -51,10 +54,10 @@ func NewEventRequest(r *http.Request, contentType media.ContentType) (*common.Ev
 
 	req.Url = common.Url{
 		Scheme: "",
-		Host:   r.Host,
 		Path:   r.URL.Path,
 		Query:  r.URL.RawQuery,
 	}
+	req.Url.Host, req.Url.Port = getHostAndPort(r)
 
 	if strings.HasPrefix(r.Proto, "HTTPS") {
 		req.Url.Scheme = "https"
@@ -160,4 +163,29 @@ func getGeneratorContext(r *common.EventRequest) map[string]interface{} {
 		}
 	}
 	return ctx
+}
+
+func getHostAndPort(r *http.Request) (string, int) {
+	// 1. Try to extract from Host header (can include port)
+	host := r.Host
+	portString := ""
+	if strings.Contains(host, ":") {
+		hostAndPort := strings.Split(host, ":")
+		host = hostAndPort[0]
+		portString = hostAndPort[1]
+	} else {
+		// 2. Try from URL
+		portString = r.URL.Port()
+		if portString == "" {
+			// 3. Default based on scheme
+			if r.TLS != nil {
+				portString = "443"
+			} else {
+				portString = "80"
+			}
+		}
+	}
+
+	port, _ := strconv.Atoi(portString)
+	return host, port
 }

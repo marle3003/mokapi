@@ -87,7 +87,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request, ctx := NewEventRequest(r, contentType)
+	request, ctx := NewEventRequest(r, contentType, h.config.Info.Name)
 	r = r.WithContext(ctx)
 
 	if op.RequestBody != nil {
