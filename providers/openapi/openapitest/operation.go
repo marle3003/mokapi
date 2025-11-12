@@ -17,6 +17,12 @@ func NewOperation(opts ...OperationOptions) *openapi.Operation {
 	return o
 }
 
+func WithOperationId(id string) OperationOptions {
+	return func(o *openapi.Operation) {
+		o.OperationId = id
+	}
+}
+
 func WithResponse(status int, opts ...ResponseOptions) OperationOptions {
 	return func(o *openapi.Operation) {
 		r := &openapi.Response{
