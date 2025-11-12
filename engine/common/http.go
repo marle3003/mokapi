@@ -1,6 +1,7 @@
 package common
 
 import (
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -22,6 +23,7 @@ type EventRequest struct {
 	Cookie      map[string]interface{} `json:"cookie"`
 	QueryString any                    `json:"querystring"`
 
+	Api         string `json:"api"`
 	Key         string `json:"key"`
 	OperationId string `json:"operationId"`
 }
@@ -29,12 +31,20 @@ type EventRequest struct {
 type Url struct {
 	Scheme string `json:"scheme"`
 	Host   string `json:"host"`
+	Port   int    `json:"port"`
 	Path   string `json:"path"`
 	Query  string `json:"query"`
 }
 
 func (r *EventRequest) String() string {
-	return r.Method + " " + r.Url.String()
+	s := r.Method + " " + r.Url.String()
+	if r.Api != "" {
+		s += fmt.Sprintf(" [API: %s]", r.Api)
+	}
+	if r.OperationId != "" {
+		s += fmt.Sprintf(" [OperationId: %s]", r.OperationId)
+	}
+	return s
 }
 
 func (u Url) String() string {
@@ -45,7 +55,9 @@ func (u Url) String() string {
 	}
 	sb.WriteString(u.Host)
 	sb.WriteString(u.Path)
-	sb.WriteString("?" + u.Query)
+	if len(u.Query) > 0 {
+		sb.WriteString("?" + u.Query)
+	}
 	return sb.String()
 }
 
@@ -53,7 +65,7 @@ func (r *EventResponse) HasBody() bool {
 	return len(r.Body) > 0 || r.Data != nil
 }
 
-func EventHandler(req *EventRequest, res *EventResponse, resources interface{}) (bool, error) {
+func HttpEventHandler(req *EventRequest, res *EventResponse, resources interface{}) (bool, error) {
 	resource := getResource(req.Url, resources)
 	if resource == nil {
 		return false, nil

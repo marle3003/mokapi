@@ -166,11 +166,10 @@ func (n *Node) Set(key string, val goja.Value) bool {
 		}
 		old := n.origNode.Fake
 		n.origNode.Fake = func(r *generator.Request) (interface{}, error) {
-			n.m.host.Lock()
-			defer n.m.host.Unlock()
-
-			param := n.m.vm.ToValue(r)
-			v, err := f(goja.Undefined(), param)
+			v, err := n.m.loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
+				param := n.m.vm.ToValue(r)
+				return f(goja.Undefined(), param)
+			})
 			if err != nil {
 				return nil, err
 			}

@@ -100,7 +100,7 @@ func (s *Script) RunDefault() (goja.Value, error) {
 			}
 		}
 		return nil, NoDefaultFunction
-	})
+	}, &eventloop.JobContext{})
 
 	if err != nil {
 		return nil, err
@@ -138,7 +138,7 @@ func (s *Script) ensureRuntime() error {
 		return nil
 	}
 	s.runtime = goja.New()
-	s.loop = eventloop.New(s.runtime)
+	s.loop = eventloop.New(s.runtime, s.host)
 
 	s.runtime.SetFieldNameMapper(&customFieldNameMapper{})
 	registry, err := s.getRegistry()
@@ -190,13 +190,13 @@ func (s *Script) processObject(v goja.Value) {
 }
 
 func (s *Script) addHttpEvent(i interface{}) {
-	f := func(args ...interface{}) (bool, error) {
-		if len(args) != 2 {
+	f := func(ctx *engine.EventContext) (bool, error) {
+		if len(ctx.Args) != 2 {
 			return false, fmt.Errorf("expected args: request, response")
 		}
-		req := args[0].(*engine.EventRequest)
-		res := args[1].(*engine.EventResponse)
-		return engine.EventHandler(req, res, i)
+		req := ctx.Args[0].(*engine.EventRequest)
+		res := ctx.Args[1].(*engine.EventResponse)
+		return engine.HttpEventHandler(req, res, i)
 	}
 
 	s.host.On("http", f, nil)

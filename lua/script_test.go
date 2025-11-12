@@ -1,9 +1,10 @@
 package lua
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/common"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestScript(t *testing.T) {
@@ -52,9 +53,9 @@ func TestMokapi_On(t *testing.T) {
 			fnInfo: func(s string) {
 				log = s
 			},
-			fnOn: func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+			fnOn: func(evt string, do common.EventHandler, tags map[string]string) {
 				called = true
-				_, err := do()
+				_, err := do(&common.EventContext{})
 				require.NoError(t, err)
 			},
 		}
@@ -107,7 +108,7 @@ mustache.render("", {})
 type testHost struct {
 	common.Host
 	fnInfo func(s string)
-	fnOn   func(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
+	fnOn   func(event string, do common.EventHandler, tags map[string]string)
 }
 
 func (th *testHost) Info(args ...interface{}) {
@@ -116,13 +117,13 @@ func (th *testHost) Info(args ...interface{}) {
 	}
 }
 
-func (th *testHost) On(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+func (th *testHost) On(event string, do common.EventHandler, tags map[string]string) {
 	if th.fnOn != nil {
 		th.fnOn(event, do, tags)
 	}
 }
 
-func (th *testHost) Produce(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+func (th *testHost) Produce(_ *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 	return nil, nil
 }
 

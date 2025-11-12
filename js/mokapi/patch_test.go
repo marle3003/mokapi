@@ -1,8 +1,6 @@
 package mokapi_test
 
 import (
-	"github.com/dop251/goja"
-	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/enginetest"
@@ -11,6 +9,9 @@ import (
 	"mokapi/js/mokapi"
 	"mokapi/js/require"
 	"testing"
+
+	"github.com/dop251/goja"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestModule_Patch(t *testing.T) {
@@ -197,7 +198,7 @@ func TestModule_Patch(t *testing.T) {
 
 			vm := goja.New()
 			host := &enginetest.Host{}
-			loop := eventloop.New(vm)
+			loop := eventloop.New(vm, host)
 			defer loop.Stop()
 			loop.StartLoop()
 			js.EnableInternal(vm, host, loop, &dynamic.Config{Info: dynamictest.NewConfigInfo()})

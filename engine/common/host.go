@@ -27,13 +27,15 @@ type JobOptions struct {
 
 type Host interface {
 	Logger
+	SetEventLogger(func(level, message string))
+
 	Every(every string, do func(), opt JobOptions) (int, error)
 	Cron(expr string, do func(), opt JobOptions) (int, error)
 	Cancel(jobId int) error
 
 	OpenFile(file string, hint string) (*dynamic.Config, error)
 
-	On(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
+	On(event string, do EventHandler, tags map[string]string)
 
 	KafkaClient() KafkaClient
 	HttpClient(HttpClientOptions) HttpClient
@@ -181,4 +183,11 @@ type Store interface {
 	Update(key string, fn func(v any) any) any
 	Keys() []string
 	Namespace(name string) Store
+}
+
+type EventHandler func(ctx *EventContext) (bool, error)
+
+type EventContext struct {
+	EventLogger func(level, message string)
+	Args        []any
 }

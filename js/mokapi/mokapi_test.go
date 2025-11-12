@@ -1,8 +1,6 @@
 package mokapi_test
 
 import (
-	"github.com/dop251/goja"
-	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/enginetest"
@@ -13,6 +11,9 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/dop251/goja"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestModule(t *testing.T) {
@@ -67,8 +68,8 @@ func TestModule(t *testing.T) {
 		{
 			name: "env",
 			test: func(t *testing.T, vm *goja.Runtime, _ *enginetest.Host) {
-				os.Setenv("mokapi_foo_env_var", "bar")
-				defer os.Unsetenv("mokapi_foo_env_var")
+				_ = os.Setenv("mokapi_foo_env_var", "bar")
+				defer func() { _ = os.Unsetenv("mokapi_foo_env_var") }()
 
 				v, err := vm.RunString(`
 					const m = require('mokapi')
@@ -169,7 +170,7 @@ func TestModule(t *testing.T) {
 			vm := goja.New()
 			vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 			host := &enginetest.Host{}
-			loop := eventloop.New(vm)
+			loop := eventloop.New(vm, host)
 			defer loop.Stop()
 			loop.StartLoop()
 			js.EnableInternal(vm, host, loop, &dynamic.Config{Info: dynamictest.NewConfigInfo()})

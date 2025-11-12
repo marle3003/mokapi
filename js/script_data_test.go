@@ -1,12 +1,13 @@
 package js_test
 
 import (
-	r "github.com/stretchr/testify/require"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/jstest"
 	"testing"
+
+	r "github.com/stretchr/testify/require"
 )
 
 func TestScript_Data(t *testing.T) {
@@ -17,12 +18,12 @@ func TestScript_Data(t *testing.T) {
 		{
 			name: "resource array",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.OnFunc = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
 					r.Equal(t, "http", event)
 					request := &common.EventRequest{}
 					request.Url.Path = "/foo/bar"
 					response := &common.EventResponse{}
-					b, err := do(request, response)
+					b, err := do(&common.EventContext{Args: []any{request, response}})
 					r.NoError(t, err)
 					r.True(t, b)
 					r.Equal(t, []interface{}{int64(1), int64(2), int64(3), int64(4)}, response.Data)
@@ -38,12 +39,12 @@ export const mokapi = {http: {"bar": [1, 2, 3, 4]}}`),
 		{
 			name: "resource absolute precedence ",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.OnFunc = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
 					r.Equal(t, "http", event)
 					request := &common.EventRequest{}
 					request.Url.Path = "/foo/bar"
 					response := &common.EventResponse{}
-					b, err := do(request, response)
+					b, err := do(&common.EventContext{Args: []any{request, response}})
 					r.NoError(t, err)
 					r.True(t, b)
 					r.Equal(t, []interface{}{int64(1), int64(2), int64(3), int64(4)}, response.Data)
@@ -59,12 +60,12 @@ export const mokapi = {"http": {"bar": [5,6], "foo": {"bar": [1, 2, 3, 4]}}}`),
 		{
 			name: "using default function",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.OnFunc = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
 					r.Equal(t, "http", event)
 					request := &common.EventRequest{}
 					request.Url.Path = "/foo/bar"
 					response := &common.EventResponse{}
-					b, err := do(request, response)
+					b, err := do(&common.EventContext{Args: []any{request, response}})
 					r.NoError(t, err)
 					r.True(t, b)
 					r.Equal(t, []interface{}{int64(1), int64(2), int64(3), int64(4)}, response.Data)

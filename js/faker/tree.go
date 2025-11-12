@@ -32,11 +32,10 @@ func convertToNode(v goja.Value, m *Module) *generator.Node {
 			case "fake":
 				fake, _ := goja.AssertFunction(obj.Get(k))
 				n.Fake = func(r *generator.Request) (interface{}, error) {
-					m.host.Lock()
-					defer m.host.Unlock()
-
-					param := m.vm.ToValue(r)
-					v, err := fake(goja.Undefined(), param)
+					v, err := m.loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
+						param := m.vm.ToValue(r)
+						return fake(goja.Undefined(), param)
+					})
 					if err != nil {
 						return nil, err
 					}

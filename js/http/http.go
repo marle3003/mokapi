@@ -41,10 +41,6 @@ type Response struct {
 	Headers    map[string][]string `json:"headers"`
 }
 
-type fetchArgs struct {
-	method string
-}
-
 func Require(vm *goja.Runtime, module *goja.Object) {
 	o := vm.Get("mokapi/internal").(*goja.Object)
 	host := o.Get("host").Export().(common.Host)
@@ -107,7 +103,7 @@ func (m *Module) Fetch(url string, args goja.Value) *goja.Promise {
 		}()
 
 		rArgs := &RequestArgs{Headers: make(map[string]interface{})}
-		opts := common.HttpClientOptions{MaxRedirects: 5}
+		opts := common.HttpClientOptions{MaxRedirects: 5, Timeout: 60 * time.Second}
 		if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
 			var err error
 			rArgs, opts, err = parseArgs(args.ToObject(m.rt))
@@ -133,7 +129,7 @@ func (m *Module) doRequest(method, url string, body interface{}, args goja.Value
 	}
 
 	rArgs := &RequestArgs{Headers: make(map[string]interface{})}
-	opts := common.HttpClientOptions{MaxRedirects: 5}
+	opts := common.HttpClientOptions{MaxRedirects: 5, Timeout: 60 * time.Second}
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
 		var err error
 		rArgs, opts, err = parseArgs(args.ToObject(m.rt))

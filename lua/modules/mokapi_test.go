@@ -1,10 +1,11 @@
 package modules
 
 import (
-	"github.com/stretchr/testify/require"
-	lua "github.com/yuin/gopher-lua"
 	"mokapi/engine/common"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	lua "github.com/yuin/gopher-lua"
 )
 
 func TestMokapi_Every(t *testing.T) {
@@ -98,7 +99,7 @@ func TestMokapi_On(t *testing.T) {
 	t.Run("mokapi.on event", func(t *testing.T) {
 		var event string
 		host := &testHost{
-			fnOn: func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+			fnOn: func(evt string, do common.EventHandler, tags map[string]string) {
 				event = evt
 			},
 		}
@@ -116,9 +117,9 @@ mokapi.on("foo", function() end)
 	})
 
 	t.Run("mokapi.on do returns true", func(t *testing.T) {
-		var fn func(args ...interface{}) (bool, error)
+		var fn common.EventHandler
 		host := &testHost{
-			fnOn: func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+			fnOn: func(evt string, do common.EventHandler, tags map[string]string) {
 				fn = do
 			},
 		}
@@ -132,15 +133,15 @@ mokapi.on("foo", function() return true end)
 `)
 		require.NoError(t, err)
 
-		b, err := fn()
+		b, err := fn(&common.EventContext{})
 		require.NoError(t, err)
 		require.True(t, b)
 	})
 
 	t.Run("mokapi.on do got error", func(t *testing.T) {
-		var fn func(args ...interface{}) (bool, error)
+		var fn common.EventHandler
 		host := &testHost{
-			fnOn: func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+			fnOn: func(evt string, do common.EventHandler, tags map[string]string) {
 				fn = do
 			},
 		}
@@ -158,14 +159,14 @@ end)
 `)
 		require.NoError(t, err)
 
-		_, err = fn()
+		_, err = fn(&common.EventContext{})
 		require.Error(t, err)
 	})
 
 	t.Run("mokapi.on with parameters", func(t *testing.T) {
-		var fn func(args ...interface{}) (bool, error)
+		var fn common.EventHandler
 		host := &testHost{
-			fnOn: func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+			fnOn: func(evt string, do common.EventHandler, tags map[string]string) {
 				fn = do
 			},
 		}
@@ -183,7 +184,7 @@ end)
 		require.NoError(t, err)
 
 		r := &request{}
-		b, err := fn(r)
+		b, err := fn(&common.EventContext{Args: []any{r}})
 		require.NoError(t, err)
 		require.True(t, b)
 	})
@@ -191,7 +192,7 @@ end)
 	t.Run("mokapi.on tags", func(t *testing.T) {
 		var m map[string]string
 		host := &testHost{
-			fnOn: func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+			fnOn: func(evt string, do common.EventHandler, tags map[string]string) {
 				m = tags
 			},
 		}
@@ -209,9 +210,9 @@ mokapi.on("foo", function() return true end, {tags = {tag1 = "foo", tag2 = "bar"
 	})
 
 	t.Run("mokapi.on access variable", func(t *testing.T) {
-		var fn func(args ...interface{}) (bool, error)
+		var fn common.EventHandler
 		host := &testHost{
-			fnOn: func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+			fnOn: func(evt string, do common.EventHandler, tags map[string]string) {
 				fn = do
 			},
 		}
@@ -229,16 +230,16 @@ return true end)
 		require.NoError(t, err)
 
 		r := &request{}
-		b, err := fn(r)
+		b, err := fn(&common.EventContext{Args: []any{r}})
 		require.NoError(t, err)
 		require.True(t, b)
 		require.Equal(t, "bar", r.Data)
 	})
 
 	t.Run("mokapi.on two handlers", func(t *testing.T) {
-		var fns []func(args ...interface{}) (bool, error)
+		var fns []common.EventHandler
 		host := &testHost{
-			fnOn: func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+			fnOn: func(evt string, do common.EventHandler, tags map[string]string) {
 				fns = append(fns, do)
 			},
 		}
@@ -262,7 +263,7 @@ return true end)
 		res := &response{Headers: map[string]interface{}{}}
 
 		for _, fn := range fns {
-			b, err := fn(r, res)
+			b, err := fn(&common.EventContext{Args: []any{r, res}})
 			require.NoError(t, err)
 			require.True(t, b)
 		}
@@ -275,7 +276,7 @@ return true end)
 type testHost struct {
 	common.Host
 	fnInfo  func(s string)
-	fnOn    func(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
+	fnOn    func(event string, do common.EventHandler, tags map[string]string)
 	fnEvery func(every string, do func(), opt common.JobOptions) (int, error)
 }
 
@@ -285,7 +286,7 @@ func (th *testHost) Info(args ...interface{}) {
 	}
 }
 
-func (th *testHost) On(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+func (th *testHost) On(event string, do common.EventHandler, tags map[string]string) {
 	if th.fnOn != nil {
 		th.fnOn(event, do, tags)
 	}

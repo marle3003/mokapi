@@ -1,16 +1,18 @@
 package mokapi_test
 
 import (
-	"github.com/dop251/goja"
-	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
+	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/eventloop"
 	"mokapi/js/mokapi"
 	"mokapi/js/require"
 	"testing"
+
+	"github.com/dop251/goja"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestModule_On(t *testing.T) {
@@ -22,8 +24,8 @@ func TestModule_On(t *testing.T) {
 			name: "register event handler",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var event string
-				var handler func(args ...interface{}) (bool, error)
-				host.OnFunc = func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				var handler common.EventHandler
+				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
 					event = evt
 					handler = do
 				}
@@ -35,7 +37,7 @@ func TestModule_On(t *testing.T) {
 				`)
 				r.NoError(t, err)
 				r.Equal(t, "http", event)
-				b, err := handler()
+				b, err := handler(&common.EventContext{})
 				r.NoError(t, err)
 				r.Equal(t, false, b)
 				v, _ := vm.RunString("result")
@@ -45,8 +47,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "event handler with parameter",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler func(args ...interface{}) (bool, error)
-				host.OnFunc = func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				var handler common.EventHandler
+				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
 					handler = do
 				}
 
@@ -56,7 +58,7 @@ func TestModule_On(t *testing.T) {
 					m.on('http', (param) => result = param === 'foo')
 				`)
 				r.NoError(t, err)
-				b, err := handler("foo")
+				b, err := handler(&common.EventContext{Args: []any{"foo"}})
 				r.NoError(t, err)
 				r.Equal(t, true, b)
 				v, _ := vm.RunString("result")
@@ -66,8 +68,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "event handler changes params",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler func(args ...interface{}) (bool, error)
-				host.OnFunc = func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				var handler common.EventHandler
+				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
 					handler = do
 				}
 
@@ -76,7 +78,7 @@ func TestModule_On(t *testing.T) {
 					m.on('http', (param) => { param['foo'] = false })
 				`)
 				r.NoError(t, err)
-				b, err := handler(map[string]bool{"foo": true})
+				b, err := handler(&common.EventContext{Args: []any{map[string]bool{"foo": true}}})
 				r.NoError(t, err)
 				r.Equal(t, true, b)
 			},
@@ -84,8 +86,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "event handler does not change params",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler func(args ...interface{}) (bool, error)
-				host.OnFunc = func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				var handler common.EventHandler
+				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
 					handler = do
 				}
 
@@ -94,7 +96,7 @@ func TestModule_On(t *testing.T) {
 					m.on('http', (param) => { })
 				`)
 				r.NoError(t, err)
-				b, err := handler(map[string]bool{"foo": true})
+				b, err := handler(&common.EventContext{Args: []any{map[string]bool{"foo": true}}})
 				r.NoError(t, err)
 				r.Equal(t, false, b)
 			},
@@ -102,8 +104,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "event handler does not change params but uses track argument",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler func(args ...interface{}) (bool, error)
-				host.OnFunc = func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				var handler common.EventHandler
+				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
 					handler = do
 				}
 
@@ -112,7 +114,7 @@ func TestModule_On(t *testing.T) {
 					m.on('http', (param) => { }, { track: true })
 				`)
 				r.NoError(t, err)
-				b, err := handler(map[string]bool{"foo": true})
+				b, err := handler(&common.EventContext{Args: []any{map[string]bool{"foo": true}}})
 				r.NoError(t, err)
 				r.Equal(t, true, b)
 			},
@@ -120,8 +122,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "event handler changes params but disables track",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler func(args ...interface{}) (bool, error)
-				host.OnFunc = func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				var handler common.EventHandler
+				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
 					handler = do
 				}
 
@@ -130,7 +132,7 @@ func TestModule_On(t *testing.T) {
 					m.on('http', (param) => { param['foo'] = false }, { track: false })
 				`)
 				r.NoError(t, err)
-				b, err := handler(map[string]bool{"foo": true})
+				b, err := handler(&common.EventContext{Args: []any{map[string]bool{"foo": true}}})
 				r.NoError(t, err)
 				r.Equal(t, false, b)
 			},
@@ -138,8 +140,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "event handler throws error",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler func(args ...interface{}) (bool, error)
-				host.OnFunc = func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				var handler common.EventHandler
+				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
 					handler = do
 				}
 
@@ -148,7 +150,7 @@ func TestModule_On(t *testing.T) {
 					m.on('http', () => { throw new Error('TEST') })
 				`)
 				r.NoError(t, err)
-				_, err = handler()
+				_, err = handler(&common.EventContext{})
 				r.EqualError(t, err, "Error: TEST at <eval>:3:33(3)")
 			},
 		},
@@ -156,7 +158,7 @@ func TestModule_On(t *testing.T) {
 			name: "event handler with tags",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var tags map[string]string
-				host.OnFunc = func(evt string, do func(args ...interface{}) (bool, error), t map[string]string) {
+				host.OnFunc = func(evt string, do common.EventHandler, t map[string]string) {
 					tags = t
 				}
 
@@ -191,8 +193,8 @@ func TestModule_On(t *testing.T) {
 		{
 			name: "async event handler",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
-				var handler func(args ...interface{}) (bool, error)
-				host.OnFunc = func(evt string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				var handler common.EventHandler
+				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
 					handler = do
 				}
 
@@ -214,7 +216,7 @@ func TestModule_On(t *testing.T) {
 				p := &struct {
 					Msg string `json:"msg"`
 				}{}
-				_, err = handler(p)
+				_, err = handler(&common.EventContext{Args: []any{p}})
 				r.NoError(t, err)
 				r.Equal(t, "foo", p.Msg)
 			},
@@ -234,7 +236,7 @@ func TestModule_On(t *testing.T) {
 			vm := goja.New()
 			vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 			host := &enginetest.Host{}
-			loop := eventloop.New(vm)
+			loop := eventloop.New(vm, host)
 			defer loop.Stop()
 			loop.StartLoop()
 			js.EnableInternal(vm, host, loop, &dynamic.Config{Info: dynamictest.NewConfigInfo()})

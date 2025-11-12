@@ -4,9 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/dop251/goja"
+	"mokapi/engine/common"
+	"mokapi/js/eventloop"
 	"mokapi/js/util"
 	"reflect"
+
+	"github.com/dop251/goja"
 )
 
 type onArgs struct {
@@ -21,8 +24,8 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 		panic(m.vm.ToValue(err.Error()))
 	}
 
-	f := func(args ...interface{}) (bool, error) {
-		origin, err := getHashes(args...)
+	f := func(ctx *common.EventContext) (bool, error) {
+		origin, err := getHashes(ctx.Args...)
 		if err != nil {
 			return false, err
 		}
@@ -31,7 +34,7 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 		r, err = m.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
 			call, _ := goja.AssertFunction(do)
 			var params []goja.Value
-			for _, v := range args {
+			for _, v := range ctx.Args {
 				params = append(params, vm.ToValue(v))
 			}
 			v, err := call(goja.Undefined(), params...)
@@ -39,7 +42,7 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 				return nil, err
 			}
 			return v, nil
-		})
+		}, &eventloop.JobContext{EventLogger: ctx.EventLogger})
 
 		if err != nil {
 			return false, err
@@ -53,7 +56,7 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 			return eventArgs.track, nil
 		}
 
-		newHashes, err := getHashes(args...)
+		newHashes, err := getHashes(ctx.Args...)
 		if err != nil {
 			return false, err
 		}

@@ -1,8 +1,9 @@
 package common
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestEventRequest_String(t *testing.T) {
@@ -58,7 +59,7 @@ func TestHttpResource(t *testing.T) {
 				Url: tc.url,
 			}
 			res := &EventResponse{}
-			b, err := EventHandler(req, res, tc.resource)
+			b, err := HttpEventHandler(req, res, tc.resource)
 			tc.test(t, b, res.Data, err)
 		})
 	}
