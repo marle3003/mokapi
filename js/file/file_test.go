@@ -91,7 +91,7 @@ func TestModule_Open(t *testing.T) {
 			vm := goja.New()
 			vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 			host := &enginetest.Host{}
-			loop := eventloop.New(vm)
+			loop := eventloop.New(vm, host)
 			defer loop.Stop()
 			loop.StartLoop()
 			source := &dynamic.Config{Info: dynamictest.NewConfigInfo()}
