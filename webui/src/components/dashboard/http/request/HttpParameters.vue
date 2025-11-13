@@ -30,7 +30,7 @@ const examples = computed(() => {
     return result
 })
 const sortedParameters = computed(() => {
-    props.parameters?.sort((p1, p2) => {
+    return props.parameters?.sort((p1, p2) => {
         const r = getParameterTypeSortOrder(p1.type) - getParameterTypeSortOrder(p2.type)
         if (r !== 0) {
             return r
