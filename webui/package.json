@@ -27,7 +27,7 @@
     "del-cli": "^7.0.0",
     "fuse.js": "^7.1.0",
     "http-status-codes": "^2.3.0",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.1.1",
     "ncp": "^2.0.0",
     "vue": "^3.5.24",
     "vue-router": "^4.6.3",
