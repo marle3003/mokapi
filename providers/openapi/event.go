@@ -20,7 +20,7 @@ const eventKey = "event"
 
 func NewEventResponse(status int, ct media.ContentType) *common.EventResponse {
 	r := &common.EventResponse{
-		Headers:    make(map[string]string),
+		Headers:    make(map[string]any),
 		StatusCode: status,
 	}
 

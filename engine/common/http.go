@@ -2,26 +2,27 @@ package common
 
 import (
 	"fmt"
+	"mokapi/lib"
 	"reflect"
 	"strings"
 )
 
 type EventResponse struct {
-	Headers    map[string]string `json:"headers"`
-	StatusCode int               `json:"statusCode"`
-	Body       string            `json:"body"`
-	Data       interface{}       `json:"data"`
+	Headers    map[string]any `json:"headers"`
+	StatusCode int            `json:"statusCode"`
+	Body       string         `json:"body"`
+	Data       any            `json:"data"`
 }
 
 type EventRequest struct {
-	Method      string                 `json:"method"`
-	Url         Url                    `json:"url"`
-	Body        interface{}            `json:"body"`
-	Path        map[string]interface{} `json:"path"`
-	Query       map[string]interface{} `json:"query"`
-	Header      map[string]interface{} `json:"header"`
-	Cookie      map[string]interface{} `json:"cookie"`
-	QueryString any                    `json:"querystring"`
+	Method      string         `json:"method"`
+	Url         Url            `json:"url"`
+	Body        interface{}    `json:"body"`
+	Path        map[string]any `json:"path"`
+	Query       map[string]any `json:"query"`
+	Header      map[string]any `json:"header"`
+	Cookie      map[string]any `json:"cookie"`
+	QueryString any            `json:"querystring"`
 
 	Api         string `json:"api"`
 	Key         string `json:"key"`
@@ -103,4 +104,27 @@ func getResource(u Url, resources interface{}) interface{} {
 		return nil
 	}
 	return resource.Interface()
+}
+
+func (r *EventResponse) ContentType() (string, error) {
+	if r.Headers == nil {
+		return "", nil
+	}
+	var contentType any
+	for name, v := range r.Headers {
+		if strings.EqualFold(name, "Content-Type") {
+			contentType = v
+		}
+	}
+	if contentType == nil || contentType == "" {
+		return "", nil
+	}
+
+	switch vv := contentType.(type) {
+	case string:
+		return vv, nil
+	default:
+		return "", fmt.Errorf("unexpected type for header 'Content-Type': got %s, expected String", lib.TypeFrom(vv))
+
+	}
 }

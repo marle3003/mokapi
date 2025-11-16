@@ -1025,9 +1025,125 @@ func TestHandler_Event(t *testing.T) {
 			event: func(event string, args ...interface{}) []*common.Action {
 				req := args[0].(*common.EventRequest)
 				res := args[1].(*common.EventResponse)
-				/*b, _ := json.Marshal(req)
-				res.Body = string(b)*/
 				res.Data = req
+				return nil
+			},
+		},
+		{
+			name: "set response Content-Type",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json", openapitest.NewContent()),
+						openapitest.WithContent("text/plain", openapitest.NewContent()),
+					),
+				)
+				openapitest.AppendPath("/foo", c,
+					openapitest.WithOperation(http.MethodGet, op),
+				)
+				r := httptest.NewRequest(http.MethodGet, "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code, rr.Body.String())
+			},
+			event: func(event string, args ...interface{}) []*common.Action {
+				res := args[1].(*common.EventResponse)
+				res.Headers["Content-Type"] = "text/plain"
+				res.Body = "hello world"
+				return nil
+			},
+		},
+		{
+			name: "set response Content-Type not specified",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json", openapitest.NewContent()),
+					),
+				)
+				openapitest.AppendPath("/foo", c,
+					openapitest.WithOperation(http.MethodGet, op),
+				)
+				r := httptest.NewRequest(http.MethodGet, "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusInternalServerError, rr.Code)
+				require.Equal(t, "response has no definition for content type: text/plain\n", rr.Body.String())
+			},
+			event: func(event string, args ...interface{}) []*common.Action {
+				res := args[1].(*common.EventResponse)
+				res.Headers["Content-Type"] = "text/plain"
+				return nil
+			},
+		},
+		{
+			name: "set response Content-Type but wrong type",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json", openapitest.NewContent()),
+					),
+				)
+				openapitest.AppendPath("/foo", c,
+					openapitest.WithOperation(http.MethodGet, op),
+				)
+				r := httptest.NewRequest(http.MethodGet, "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusInternalServerError, rr.Code)
+				require.Equal(t, "unexpected type for header 'Content-Type': got Array, expected String\n", rr.Body.String())
+			},
+			event: func(event string, args ...interface{}) []*common.Action {
+				res := args[1].(*common.EventResponse)
+				res.Headers["Content-Type"] = []string{"text/plain"}
+				return nil
+			},
+		},
+		{
+			name: "set response header array value",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json", openapitest.NewContent()),
+						openapitest.WithResponseHeader("foo", "", schematest.New("array")),
+					),
+				)
+				openapitest.AppendPath("/foo", c,
+					openapitest.WithOperation(http.MethodGet, op),
+				)
+				r := httptest.NewRequest(http.MethodGet, "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, []string{"1", "2"}, rr.Header()["Foo"])
+			},
+			event: func(event string, args ...interface{}) []*common.Action {
+				res := args[1].(*common.EventResponse)
+				res.Headers["foo"] = []any{"1", "2"}
+				return nil
+			},
+		},
+		{
+			name: "set response header invalid",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json", openapitest.NewContent()),
+						openapitest.WithResponseHeader("foo", "", schematest.New("array", schematest.WithItems("integer"))),
+					),
+				)
+				openapitest.AppendPath("/foo", c,
+					openapitest.WithOperation(http.MethodGet, op),
+				)
+				r := httptest.NewRequest(http.MethodGet, "http://localhost/foo", nil)
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusInternalServerError, rr.Code)
+				require.Equal(t, "invalid header data for 'foo': error count 1:\n\t- expected array but got: bar\n", rr.Body.String())
+			},
+			event: func(event string, args ...interface{}) []*common.Action {
+				res := args[1].(*common.EventResponse)
+				res.Headers["foo"] = "bar"
 				return nil
 			},
 		},

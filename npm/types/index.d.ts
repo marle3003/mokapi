@@ -175,7 +175,7 @@ export interface HttpRequest {
  */
 export interface HttpResponse {
     /** Object contains header parameters specified by OpenAPI header parameters. */
-    headers: { [key: string]: string };
+    headers: { [key: string]: any };
 
     /** Specifies the http status used to select the OpenAPI response definition. */
     statusCode: number;
