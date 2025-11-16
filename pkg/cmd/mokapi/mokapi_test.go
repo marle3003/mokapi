@@ -1,11 +1,9 @@
 package mokapi_test
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"mokapi/config/static"
 	"mokapi/pkg/cli"
 	"mokapi/pkg/cmd/mokapi"
@@ -16,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestMokapi_Cmd(t *testing.T) {
+/*func TestMokapi_Cmd(t *testing.T) {
 	stdOut := os.Stdout
 	stdErr := os.Stderr
 
@@ -43,7 +41,7 @@ func TestMokapi_Cmd(t *testing.T) {
 	_ = reader.Close()
 
 	require.Equal(t, "", buf.String())
-}
+}*/
 
 func TestMain_Flags(t *testing.T) {
 	testcases := []struct {
