@@ -1,6 +1,7 @@
 package mokapi_test
 
 import (
+	"encoding/json"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/common"
@@ -243,6 +244,270 @@ func TestModule_On(t *testing.T) {
 			reg.Enable(vm)
 
 			tc.test(t, vm, host)
+		})
+	}
+}
+
+func TestModule_On_Run(t *testing.T) {
+	testcases := []struct {
+		name   string
+		script string
+		logger *enginetest.Logger
+		run    func(evt common.EventEmitter) []*common.Action
+		test   func(t *testing.T, actions []*common.Action, err error)
+	}{
+		{
+			name: "response header using CanonicalHeaderKey",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.headers['content-type'] = 'text/plain'
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.EventResponse{
+					Headers: map[string]any{"Content-Type": "application/json"},
+				}
+				actions := evt.Emit("http", &common.EventRequest{}, res)
+				r.Equal(t, "text/plain", res.Headers["Content-Type"])
+				return actions
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+				r.Nil(t, actions[0].Error)
+
+				var res *common.EventResponse
+				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				r.Len(t, res.Headers, 1)
+				r.Equal(t, "text/plain", res.Headers["Content-Type"])
+			},
+		},
+		{
+			name: "set response data",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.data = { "foo": "bar" }
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.EventResponse{}
+				actions := evt.Emit("http", &common.EventRequest{}, res)
+				r.Equal(t, &map[string]interface{}{"foo": "bar"}, res.Data)
+				return actions
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+				r.Nil(t, actions[0].Error)
+
+				var res *common.EventResponse
+				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				r.Equal(t, map[string]interface{}{"foo": "bar"}, res.Data)
+			},
+		},
+		{
+			name: "set status code",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.statusCode = 201
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.EventResponse{}
+				actions := evt.Emit("http", &common.EventRequest{}, res)
+				r.Equal(t, 201, res.StatusCode)
+				return actions
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+				r.Nil(t, actions[0].Error)
+
+				var res *common.EventResponse
+				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				r.Equal(t, 201, res.StatusCode)
+			},
+		},
+		{
+			name: "set status code but wrong type",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.statusCode = 'foo'
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				return evt.Emit("http", &common.EventRequest{}, &common.EventResponse{})
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+				r.NotNil(t, actions[0].Error)
+				r.Equal(t, actions[0].Error.Message, "statusCode must be a Integer at <eval>:4:6(3)")
+
+				var res *common.EventResponse
+				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				r.Equal(t, 0, res.StatusCode)
+			},
+		},
+		{
+			name: "set body",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.body = 'hello world'
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.EventResponse{}
+				actions := evt.Emit("http", &common.EventRequest{}, res)
+				r.Equal(t, "hello world", res.Body)
+				return actions
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+				r.Nil(t, actions[0].Error)
+
+				var res *common.EventResponse
+				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				r.Equal(t, "hello world", res.Body)
+			},
+		},
+		{
+			name: "set object to body",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.body = { foo: 'bar' }
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				return evt.Emit("http", &common.EventRequest{}, &common.EventResponse{})
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+				r.NotNil(t, actions[0].Error)
+				r.Equal(t, "body must be a String at <eval>:4:6(5)", actions[0].Error.Message)
+
+				var res *common.EventResponse
+				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				r.Equal(t, "", res.Body)
+			},
+		},
+		{
+			name: "set array to data and push item",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.data = [ 1, 2 ]
+	res.data.push(3)
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.EventResponse{}
+				actions := evt.Emit("http", &common.EventRequest{}, res)
+				r.Equal(t, &[]any{int64(1), int64(2), int64(3)}, res.Data)
+				return actions
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+				r.Nil(t, actions[0].Error)
+				var res *common.EventResponse
+				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				r.Equal(t, []any{float64(1), float64(2), float64(3)}, res.Data)
+			},
+		},
+		{
+			name: "set object and change field",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.data = { foo: "bar" }
+	res.data.foo = 'yuh'
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.EventResponse{}
+				actions := evt.Emit("http", &common.EventRequest{}, res)
+				r.Nil(t, actions[0].Error)
+				r.Equal(t, &map[string]any{"foo": "yuh"}, res.Data)
+				return actions
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+
+				var res *common.EventResponse
+				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				r.Equal(t, map[string]any{"foo": "yuh"}, res.Data)
+			},
+		},
+		{
+			name: "change field on given data",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.data.foo = 'yuh'
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.EventResponse{Data: map[string]any{"foo": "bar"}}
+				actions := evt.Emit("http", &common.EventRequest{}, res)
+				r.Nil(t, actions[0].Error)
+				r.Equal(t, map[string]any{"foo": "yuh"}, res.Data)
+				return actions
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+
+				var res *common.EventResponse
+				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				r.Equal(t, map[string]any{"foo": "yuh"}, res.Data)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			reg, err := require.NewRegistry()
+			reg.RegisterNativeModule("mokapi", mokapi.Require)
+			r.NoError(t, err)
+
+			vm := goja.New()
+			vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
+			host := &enginetest.Host{}
+			loop := eventloop.New(vm, host)
+			defer loop.Stop()
+			loop.StartLoop()
+			js.EnableInternal(vm, host, loop, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
+			reg.Enable(vm)
+
+			var runEvent common.EventHandler
+			host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
+				runEvent = do
+			}
+
+			_, err = vm.RunString(tc.script)
+			r.NoError(t, err)
+
+			var actions []*common.Action
+			e := enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
+				ctx := &common.EventContext{
+					Args: args,
+				}
+				_, err := runEvent(ctx)
+				a := &common.Action{}
+				for _, arg := range args {
+					b, _ := json.Marshal(arg)
+					a.Parameters = append(a.Parameters, string(b))
+				}
+				if err != nil {
+					a.Error = &common.Error{Message: err.Error()}
+				}
+				actions = append(actions, a)
+				return actions
+			})
+			tc.run(e)
+
+			tc.test(t, actions, err)
 		})
 	}
 }

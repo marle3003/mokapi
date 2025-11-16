@@ -7,6 +7,7 @@ import (
 	"io"
 	"maps"
 	"mokapi/engine/common"
+	"mokapi/js/util"
 	"mokapi/lib"
 	"mokapi/media"
 	"mokapi/runtime/events"
@@ -151,13 +152,38 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	// todo: only specified headers should be written
-	for k, v := range response.Headers {
-		rw.Header().Add(k, v)
+	for name, v := range response.Headers {
+		switch name {
+		case "Content-Type":
+			rw.Header().Add(name, getHeaderValue(v))
+			continue
+		}
+
+		if header, ok := res.Headers[name]; ok && header.Value != nil {
+			err := header.Value.marshal(v, rw)
+			if err != nil {
+				writeError(rw, r, err, h.config.Info.Name)
+				return
+			}
+		} else {
+			if s, ok := v.(string); ok {
+				rw.Header().Add(name, s)
+			} else if arr, ok := v.([]interface{}); ok {
+				for _, v := range arr {
+					rw.Header().Add(name, fmt.Sprintf("%v", v))
+				}
+			} else {
+				writeError(rw, r,
+					fmt.Errorf("invalid header '%s': expected a string or array of strings, but received %s (no header specification found)", name, util.JsType(v)), h.config.Info.Name)
+				return
+			}
+		}
+
 	}
 
 	if len(res.Content) == 0 {
 		if response.Body == "" {
-			// no response content and no body is defined which means body is empty
+			// no response content and no response body is defined which means body is empty
 			rw.Header().Del("Content-Type")
 			rw.Header().Set("Content-Length", "0")
 		}
@@ -182,8 +208,11 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if ct, ok := response.Headers["Content-Type"]; ok {
+	if ct, err := response.ContentType(); ct != "" {
 		contentType = media.ParseContentType(ct)
+	} else if err != nil {
+		writeError(rw, r, err, h.config.Info.Name)
+		return
 	} else {
 		contentType, _, err = ContentTypeFromRequest(r, res)
 		if err != nil {
@@ -457,5 +486,16 @@ func drainRequestBody(r *http.Request) {
 	case <-done:
 	case <-time.After(10 * time.Second):
 		log.Warnf("timeout reading request body for %s %s", r.Method, lib.GetUrl(r))
+	}
+}
+
+func getHeaderValue(v any) string {
+	switch vv := v.(type) {
+	case string:
+		return vv
+	case []string:
+		return strings.Join(vv, ",")
+	default:
+		return ""
 	}
 }

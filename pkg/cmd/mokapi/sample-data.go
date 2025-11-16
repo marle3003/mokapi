@@ -3,8 +3,6 @@ package mokapi
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
@@ -22,6 +20,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 func NewCmdSampleData() *cli.Command {

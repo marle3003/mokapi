@@ -3,8 +3,11 @@ package openapi
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
+	"mokapi/providers/openapi/schema"
+	"net/http"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Headers map[string]*HeaderRef
@@ -108,4 +111,23 @@ func (h *Header) patch(patch *Header) {
 	} else {
 		h.Schema.Patch(patch.Schema)
 	}
+}
+
+func (h *Header) marshal(v any, rw http.ResponseWriter) error {
+	i, err := p.ParseWith(v, schema.ConvertToJsonSchema(h.Schema))
+	if err != nil {
+		return fmt.Errorf("invalid header data for '%v': %w", h.Name, err)
+	}
+	switch vv := i.(type) {
+	case string:
+		rw.Header().Set(h.Name, vv)
+	case []interface{}:
+
+		for _, item := range vv {
+			rw.Header().Add(h.Name, fmt.Sprintf("%v", item))
+		}
+	default:
+		rw.Header().Set(h.Name, fmt.Sprintf("%v", vv))
+	}
+	return nil
 }

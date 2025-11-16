@@ -1,9 +1,11 @@
 package mokapi_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"mokapi/config/static"
 	"mokapi/pkg/cli"
 	"mokapi/pkg/cmd/mokapi"
@@ -13,6 +15,35 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+func TestMokapi_Cmd(t *testing.T) {
+	stdOut := os.Stdout
+	stdErr := os.Stderr
+
+	reader, writer, err := os.Pipe()
+	require.NoError(t, err)
+	os.Stdout = writer
+	os.Stderr = writer
+	defer func() {
+		os.Stdout = stdOut
+		os.Stderr = stdErr
+	}()
+
+	os.Args = nil
+	os.Args = append(os.Args, "mokapi.exe")
+	os.Args = append(os.Args, []string{"version"}...)
+
+	cmd := mokapi.NewCmdMokapi(context.Background())
+	err = cmd.Execute()
+	require.NoError(t, err)
+
+	_ = writer.Close()
+	var buf bytes.Buffer
+	_, _ = io.Copy(&buf, reader)
+	_ = reader.Close()
+
+	require.Equal(t, "", buf.String())
+}
 
 func TestMain_Flags(t *testing.T) {
 	testcases := []struct {
@@ -510,10 +541,10 @@ func TestMokapi_File(t *testing.T) {
 		test func(t *testing.T)
 	}{
 		{
-			name: "config file://",
+			name: "config parameter with file path as value",
 			test: func(t *testing.T) {
 				path := createTempFile(t, "test.json", `{"openapi": "3.0"}`)
-				c, cfg := newCmd([]string{"--config", fmt.Sprintf("file://%s", path)})
+				c, cfg := newCmd([]string{"--config", fmt.Sprintf("file:%s", path)})
 
 				err := c.Execute()
 				require.NoError(t, err)

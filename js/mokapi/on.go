@@ -7,6 +7,7 @@ import (
 	"mokapi/engine/common"
 	"mokapi/js/eventloop"
 	"mokapi/js/util"
+	"net/http"
 	"reflect"
 
 	"github.com/dop251/goja"
@@ -35,7 +36,7 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 			call, _ := goja.AssertFunction(do)
 			var params []goja.Value
 			for _, v := range ctx.Args {
-				params = append(params, vm.ToValue(v))
+				params = append(params, ArgToJs(v, m.vm))
 			}
 			v, err := call(goja.Undefined(), params...)
 			if err != nil {
@@ -126,4 +127,26 @@ func haveChanges(origin [][]byte, new [][]byte) bool {
 		}
 	}
 	return false
+}
+
+func ArgToJs(arg any, vm *goja.Runtime) goja.Value {
+	switch v := (arg).(type) {
+	case *common.EventResponse:
+		return vm.NewDynamicObject(&Proxy{
+			target: reflect.ValueOf(v),
+			vm:     vm,
+			ToJSValue: func(vm *goja.Runtime, key string, val any) goja.Value {
+				p := NewProxy(val, vm)
+
+				switch key {
+				case "headers":
+					p.KeyNormalizer = http.CanonicalHeaderKey
+				}
+
+				return vm.NewDynamicObject(p)
+			},
+		})
+	default:
+		return vm.ToValue(v)
+	}
 }
