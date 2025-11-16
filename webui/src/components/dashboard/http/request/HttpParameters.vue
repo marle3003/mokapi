@@ -29,13 +29,14 @@ const examples = computed(() => {
     }
     return result
 })
-
-const sortedParameters = props.parameters?.sort((p1, p2) =>{
-    const r = getParameterTypeSortOrder(p1.type) - getParameterTypeSortOrder(p2.type)
-    if (r != 0) {
-        return r
-    }
-    return p1.name.localeCompare(p2.name)
+const sortedParameters = computed(() => {
+    return props.parameters?.sort((p1, p2) => {
+        const r = getParameterTypeSortOrder(p1.type) - getParameterTypeSortOrder(p2.type)
+        if (r !== 0) {
+            return r
+        }
+        return p1.name.localeCompare(p2.name)
+    })
 })
 function getParameterTypeSortOrder(type: string): number{
     switch (type) {
