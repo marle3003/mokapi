@@ -269,7 +269,8 @@ m.on('http', (req, res) => {
 					Headers: map[string]any{"Content-Type": "application/json"},
 				}
 				actions := evt.Emit("http", &common.EventRequest{}, res)
-				r.Equal(t, "text/plain", res.Headers["Content-Type"])
+				ct := res.Headers["Content-Type"].(*string)
+				r.Equal(t, "text/plain", *ct)
 				return actions
 			},
 			test: func(t *testing.T, actions []*common.Action, err error) {
@@ -293,7 +294,7 @@ m.on('http', (req, res) => {
 			run: func(evt common.EventEmitter) []*common.Action {
 				res := &common.EventResponse{}
 				actions := evt.Emit("http", &common.EventRequest{}, res)
-				r.Equal(t, &map[string]interface{}{"foo": "bar"}, res.Data)
+				r.Equal(t, map[string]interface{}{"foo": "bar"}, mokapi.Export(res.Data))
 				return actions
 			},
 			test: func(t *testing.T, actions []*common.Action, err error) {
@@ -342,7 +343,7 @@ m.on('http', (req, res) => {
 			test: func(t *testing.T, actions []*common.Action, err error) {
 				r.NoError(t, err)
 				r.NotNil(t, actions[0].Error)
-				r.Equal(t, actions[0].Error.Message, "statusCode must be a Integer at <eval>:4:6(3)")
+				r.Equal(t, "failed to set statusCode: expected Integer but got String at <eval>:4:6(3)", actions[0].Error.Message)
 
 				var res *common.EventResponse
 				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
@@ -386,7 +387,7 @@ m.on('http', (req, res) => {
 			test: func(t *testing.T, actions []*common.Action, err error) {
 				r.NoError(t, err)
 				r.NotNil(t, actions[0].Error)
-				r.Equal(t, "body must be a String at <eval>:4:6(5)", actions[0].Error.Message)
+				r.Equal(t, "failed to set body: expected String but got Object at <eval>:4:6(5)", actions[0].Error.Message)
 
 				var res *common.EventResponse
 				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
@@ -429,7 +430,7 @@ m.on('http', (req, res) => {
 				res := &common.EventResponse{}
 				actions := evt.Emit("http", &common.EventRequest{}, res)
 				r.Nil(t, actions[0].Error)
-				r.Equal(t, &map[string]any{"foo": "yuh"}, res.Data)
+				r.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 				return actions
 			},
 			test: func(t *testing.T, actions []*common.Action, err error) {
@@ -437,7 +438,7 @@ m.on('http', (req, res) => {
 
 				var res *common.EventResponse
 				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
-				r.Equal(t, map[string]any{"foo": "yuh"}, res.Data)
+				r.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 			},
 		},
 		{
@@ -452,7 +453,7 @@ m.on('http', (req, res) => {
 				res := &common.EventResponse{Data: map[string]any{"foo": "bar"}}
 				actions := evt.Emit("http", &common.EventRequest{}, res)
 				r.Nil(t, actions[0].Error)
-				r.Equal(t, map[string]any{"foo": "yuh"}, res.Data)
+				r.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 				return actions
 			},
 			test: func(t *testing.T, actions []*common.Action, err error) {

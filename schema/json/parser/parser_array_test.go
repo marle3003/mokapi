@@ -1,11 +1,12 @@
 package parser_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParser_Array(t *testing.T) {
@@ -310,6 +311,17 @@ func TestParser_Array(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.EqualError(t, err, "error count 3:\n\t- #/items/1/bar/type: invalid type, expected integer but got string\n\t- #/items/2/foo/minLength: string 'a' is less than minimum of 3\n\t- #/items/2/bar/type: invalid type, expected integer but got string")
+			},
+		},
+		{
+			name: "pointer to array",
+			schema: schematest.New("array",
+				schematest.WithConst([]string{"a", "b", "c"}),
+			),
+			data: &[]string{"a", "b", "c"},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []interface{}{"a", "b", "c"}, v)
 			},
 		},
 	}

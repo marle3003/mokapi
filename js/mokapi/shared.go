@@ -85,6 +85,24 @@ func Export(v any) any {
 	case goja.Value:
 		return Export(val.Export())
 	default:
+		rv := reflect.ValueOf(val)
+		if rv.Kind() == reflect.Ptr {
+			rv = rv.Elem()
+		}
+		if !rv.IsValid() {
+			return nil
+		}
+		v = rv.Interface()
+		switch vv := v.(type) {
+		case []any:
+			for i, e := range vv {
+				vv[i] = Export(e)
+			}
+		case map[string]any:
+			for key, val := range vv {
+				vv[key] = Export(val)
+			}
+		}
 		return v
 	}
 }
@@ -92,6 +110,9 @@ func Export(v any) any {
 // SharedValue represents a Go-managed value that can be shared across
 // multiple Goja runtimes, while maintaining reference identity.
 type SharedValue struct {
+	KeyNormalizer func(string) string
+	ToJSValue     func(vm *goja.Runtime, k string, v goja.Value) goja.Value
+
 	vm     *goja.Runtime
 	source goja.Value
 }
@@ -108,12 +129,19 @@ func (p *SharedValue) Use(vm *goja.Runtime) *SharedValue {
 }
 
 func (p *SharedValue) Get(key string) goja.Value {
+	if p.KeyNormalizer != nil {
+		key = p.KeyNormalizer(key)
+	}
+
 	switch v := p.source.(type) {
 	case *goja.Object:
 		f := v.Get(key)
 		if _, ok := goja.AssertFunction(f); ok {
 			return f
 		} else if _, isObject := f.(*goja.Object); isObject {
+			if p.ToJSValue != nil {
+				return p.ToJSValue(p.vm, key, f)
+			}
 			return p.vm.NewDynamicObject(NewSharedValue(f, p.vm))
 		}
 		return f
@@ -123,6 +151,10 @@ func (p *SharedValue) Get(key string) goja.Value {
 }
 
 func (p *SharedValue) Has(key string) bool {
+	if p.KeyNormalizer != nil {
+		key = p.KeyNormalizer(key)
+	}
+
 	switch v := p.source.(type) {
 	case *goja.Object:
 		return slices.Contains(v.Keys(), key)
@@ -132,6 +164,10 @@ func (p *SharedValue) Has(key string) bool {
 }
 
 func (p *SharedValue) Set(key string, value goja.Value) bool {
+	if p.KeyNormalizer != nil {
+		key = p.KeyNormalizer(key)
+	}
+
 	switch v := p.source.(type) {
 	case *goja.Object:
 		err := v.Set(key, value)
@@ -144,6 +180,10 @@ func (p *SharedValue) Set(key string, value goja.Value) bool {
 }
 
 func (p *SharedValue) Delete(key string) bool {
+	if p.KeyNormalizer != nil {
+		key = p.KeyNormalizer(key)
+	}
+
 	switch v := p.source.(type) {
 	case *goja.Object:
 		err := v.Delete(key)

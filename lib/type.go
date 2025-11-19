@@ -20,6 +20,8 @@ func TypeString(t reflect.Type) string {
 		return "Object"
 	case reflect.String:
 		return "String"
+	case reflect.Ptr:
+		return "*" + TypeString(t.Elem())
 	default:
 		return "Unknown"
 	}

@@ -80,7 +80,7 @@ func TestProxy(t *testing.T) {
 					proxy.foo = 2;
 				`)
 				r.NoError(t, err)
-				r.Equal(t, &T{Foo: 2}, p.Export())
+				r.Equal(t, T{Foo: 2}, p.Export())
 			},
 		},
 		{
@@ -126,7 +126,8 @@ func TestProxy(t *testing.T) {
 					proxy.foo.bar = 1;
 				`)
 				r.NoError(t, err)
-				r.Equal(t, &T{Foo: map[string]any{"BAR": int64(1)}}, p.Export())
+				i := int64(1)
+				r.Equal(t, T{Foo: map[string]any{"BAR": &i}}, p.Export())
 			},
 		},
 		{
@@ -207,6 +208,36 @@ func TestProxy(t *testing.T) {
 				`)
 				r.NoError(t, err)
 				r.Equal(t, int64(2), mokapi.Export(v))
+			},
+		},
+		{
+			name: "assign []string to []any",
+			test: func(t *testing.T, vm *goja.Runtime) {
+				p := mokapi.NewProxy(map[string][]any{"foo": {}}, vm)
+				err := vm.Set("proxy", vm.NewDynamicObject(p))
+				r.NoError(t, err)
+				err = vm.Set("foo", vm.ToValue([]string{"bar", "yuh"}))
+				r.NoError(t, err)
+				_, err = vm.RunString(`
+					proxy.foo = foo
+				`)
+				r.NoError(t, err)
+				r.Equal(t, map[string][]any{"foo": {"bar", "yuh"}}, mokapi.Export(p))
+			},
+		},
+		{
+			name: "assign map[string][]string to map[string][]any",
+			test: func(t *testing.T, vm *goja.Runtime) {
+				p := mokapi.NewProxy(map[string]map[string][]any{"headers": {}}, vm)
+				err := vm.Set("proxy", vm.NewDynamicObject(p))
+				r.NoError(t, err)
+				err = vm.Set("headers", vm.ToValue(map[string][]string{"foo": {"bar", "yuh"}}))
+				r.NoError(t, err)
+				_, err = vm.RunString(`
+					proxy.headers = headers
+				`)
+				r.NoError(t, err)
+				r.Equal(t, map[string]map[string][]any{"headers": {"foo": {"bar", "yuh"}}}, mokapi.Export(p))
 			},
 		},
 	}

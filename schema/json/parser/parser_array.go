@@ -8,6 +8,9 @@ import (
 
 func (p *Parser) ParseArray(data interface{}, s *schema.Schema, evaluated map[int]bool) (interface{}, error) {
 	arr := reflect.ValueOf(data)
+	if arr.Kind() == reflect.Ptr {
+		arr = arr.Elem()
+	}
 	if arr.Kind() != reflect.Slice {
 		return nil, fmt.Errorf("expected array but got: %v", ToString(data))
 	}
