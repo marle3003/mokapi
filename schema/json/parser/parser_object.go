@@ -143,6 +143,9 @@ func (p *Parser) parseStruct(v reflect.Value, s *schema.Schema, evaluated map[st
 	obj := sortedmap.NewLinkedHashMap()
 	for i := 0; i < v.NumField(); i++ {
 		ft := t.Field(i)
+		if ft.PkgPath == "" {
+			continue
+		}
 		name := unTitle(ft.Name)
 		tag := ft.Tag.Get("json")
 		if len(tag) > 0 {

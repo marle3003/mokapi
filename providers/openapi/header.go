@@ -118,7 +118,7 @@ func (h *Header) patch(patch *Header) {
 func (h *Header) marshal(v any, rw http.ResponseWriter) error {
 	i, err := p.ParseWith(v, schema.ConvertToJsonSchema(h.Schema))
 	if err != nil {
-		return fmt.Errorf("invalid header data for '%v': %w", h.Name, err)
+		return err
 	}
 	switch vv := i.(type) {
 	case string:
@@ -200,6 +200,6 @@ func getHeaderValue(value any) ([]string, error) {
 		}
 		return result, nil
 	default:
-		return nil, fmt.Errorf("expected a string or array of strings, but received %s", util.JsType(v))
+		return nil, fmt.Errorf("expected a string or array of strings, but received %s", util.JsType(v.Interface()))
 	}
 }

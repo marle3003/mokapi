@@ -9,6 +9,8 @@ import (
 func (p *Parser) parseBoolean(i interface{}, s *schema.Schema) (bool, error) {
 	var b bool
 	switch v := i.(type) {
+	case *bool:
+		b = *v
 	case bool:
 		b = v
 	case string:

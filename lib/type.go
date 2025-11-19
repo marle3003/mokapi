@@ -16,7 +16,7 @@ func TypeString(t reflect.Type) string {
 		return "Number"
 	case reflect.Bool:
 		return "Boolean"
-	case reflect.Map:
+	case reflect.Map, reflect.Struct:
 		return "Object"
 	case reflect.String:
 		return "String"

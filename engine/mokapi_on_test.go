@@ -6,6 +6,7 @@ import (
 	"mokapi/engine"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
+	"mokapi/js/mokapi"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -35,7 +36,7 @@ export default () => {
 					Headers: map[string]any{"Content-Type": "application/json"},
 				}
 				actions := evt.Emit("http", &common.EventRequest{}, res)
-				require.Equal(t, "text/plain", res.Headers["Content-Type"])
+				require.Equal(t, "text/plain", mokapi.Export(res.Headers["Content-Type"]))
 				return actions
 			},
 			test: func(t *testing.T, actions []*common.Action, _ *test.Hook, err error) {
@@ -111,13 +112,13 @@ export default () => {
 			test: func(t *testing.T, actions []*common.Action, hook *test.Hook, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, actions[0].Error)
-				require.Equal(t, "statusCode must be a Integer at test.js:4:6(3)", actions[0].Error.Message)
+				require.Equal(t, "failed to set statusCode: expected Integer but got String at test.js:4:6(3)", actions[0].Error.Message)
 
 				var res *common.EventResponse
 				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
 				require.Equal(t, 0, res.StatusCode)
 				require.Len(t, hook.Entries, 2)
-				require.Equal(t, "unable to execute event handler: statusCode must be a Integer at test.js:4:6(3)", hook.LastEntry().Message)
+				require.Equal(t, "unable to execute event handler: failed to set statusCode: expected Integer but got String at test.js:4:6(3)", hook.LastEntry().Message)
 			},
 		},
 		{
@@ -159,13 +160,13 @@ export default () => {
 			test: func(t *testing.T, actions []*common.Action, hook *test.Hook, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, actions[0].Error)
-				require.Equal(t, "body must be a String at test.js:4:6(5)", actions[0].Error.Message)
+				require.Equal(t, "failed to set body: expected String but got Object at test.js:4:6(5)", actions[0].Error.Message)
 
 				var res *common.EventResponse
 				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
 				require.Equal(t, "", res.Body)
 				require.Len(t, hook.Entries, 2)
-				require.Equal(t, "unable to execute event handler: body must be a String at test.js:4:6(5)", hook.LastEntry().Message)
+				require.Equal(t, "unable to execute event handler: failed to set body: expected String but got Object at test.js:4:6(5)", hook.LastEntry().Message)
 			},
 		},
 		{
@@ -206,7 +207,7 @@ export default () => {
 				res := &common.EventResponse{}
 				actions := evt.Emit("http", &common.EventRequest{}, res)
 				require.Nil(t, actions[0].Error)
-				require.Equal(t, &map[string]any{"foo": "yuh"}, res.Data)
+				require.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 				return actions
 			},
 			test: func(t *testing.T, actions []*common.Action, hook *test.Hook, err error) {
@@ -214,7 +215,7 @@ export default () => {
 
 				var res *common.EventResponse
 				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
-				require.Equal(t, map[string]any{"foo": "yuh"}, res.Data)
+				require.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 			},
 		},
 		{
@@ -230,7 +231,7 @@ export default () => {
 				res := &common.EventResponse{Data: map[string]any{"foo": "bar"}}
 				actions := evt.Emit("http", &common.EventRequest{}, res)
 				require.Nil(t, actions[0].Error)
-				require.Equal(t, map[string]any{"foo": "yuh"}, res.Data)
+				require.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 				return actions
 			},
 			test: func(t *testing.T, actions []*common.Action, hook *test.Hook, err error) {
@@ -238,7 +239,7 @@ export default () => {
 
 				var res *common.EventResponse
 				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
-				require.Equal(t, map[string]any{"foo": "yuh"}, res.Data)
+				require.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 			},
 		},
 	}

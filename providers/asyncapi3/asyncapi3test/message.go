@@ -2,6 +2,7 @@ package asyncapi3test
 
 import (
 	"mokapi/providers/asyncapi3"
+	openapi "mokapi/providers/openapi/schema"
 	"mokapi/schema/json/schema"
 )
 
@@ -18,6 +19,15 @@ func NewMessage(opts ...MessageOptions) *asyncapi3.Message {
 func WithPayload(s *schema.Schema) MessageOptions {
 	return func(m *asyncapi3.Message) {
 		m.Payload = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{Schema: s}}
+	}
+}
+
+func WithPayloadOpenAPI(s *openapi.Schema) MessageOptions {
+	return func(m *asyncapi3.Message) {
+		m.Payload = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{
+			Schema: s,
+			Format: "application/vnd.oai.openapi+json;version=3.0.0",
+		}}
 	}
 }
 

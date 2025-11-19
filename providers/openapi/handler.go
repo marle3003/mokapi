@@ -184,7 +184,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if ct, err := getContentType(response.Headers); ct != "" {
+	if ct, err := getContentType(response.Headers); ct != "" && err == nil {
 		contentType = media.ParseContentType(ct)
 	} else if err != nil {
 		writeError(rw, r, err, h.config.Info.Name)

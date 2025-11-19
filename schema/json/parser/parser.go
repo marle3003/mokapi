@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
-	"reflect"
 	"unicode"
 )
 
@@ -142,10 +141,6 @@ func (p *Parser) parse(data interface{}, s *schema.Schema) (interface{}, error) 
 }
 
 func (p *Parser) parseType(data interface{}, s *schema.Schema, typeName string, evaluatedProperties map[string]bool, evaluatedItems map[int]bool) (interface{}, error) {
-	v := reflect.ValueOf(data)
-	if v.Kind() == reflect.Ptr {
-		data = v.Elem().Interface()
-	}
 	switch data.(type) {
 	case []interface{}:
 		if typeName != "array" {
