@@ -1091,11 +1091,11 @@ func TestHandler_Event(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 				require.Equal(t, http.StatusInternalServerError, rr.Code)
-				require.Equal(t, "unexpected type for header 'Content-Type': got Array, expected String\n", rr.Body.String())
+				require.Equal(t, "invalid header 'Content-Type': expected a string or array of strings, but received Integer\n", rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
 				res := args[1].(*common.EventResponse)
-				res.Headers["Content-Type"] = []string{"text/plain"}
+				res.Headers["Content-Type"] = 123
 				return nil
 			},
 		},
@@ -1139,7 +1139,7 @@ func TestHandler_Event(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 				require.Equal(t, http.StatusInternalServerError, rr.Code)
-				require.Equal(t, "invalid header data for 'foo': error count 1:\n\t- expected array but got: bar\n", rr.Body.String())
+				require.Equal(t, "invalid header 'foo': error count 1:\n\t- expected array but got: bar\n", rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
 				res := args[1].(*common.EventResponse)

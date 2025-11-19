@@ -10,6 +10,10 @@ import (
 func (p *Parser) ParseInteger(i interface{}, s *schema.Schema) (interface{}, error) {
 	var n int64
 	switch v := i.(type) {
+	case *int:
+		n = int64(*v)
+	case *int64:
+		n = *v
 	case int:
 		n = int64(v)
 	case int64:

@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"mokapi/config/dynamic"
+	"mokapi/js/util"
 	"mokapi/providers/openapi/schema"
 	"net/http"
+	"reflect"
 
 	"gopkg.in/yaml.v3"
 )
@@ -116,7 +118,7 @@ func (h *Header) patch(patch *Header) {
 func (h *Header) marshal(v any, rw http.ResponseWriter) error {
 	i, err := p.ParseWith(v, schema.ConvertToJsonSchema(h.Schema))
 	if err != nil {
-		return fmt.Errorf("invalid header data for '%v': %w", h.Name, err)
+		return err
 	}
 	switch vv := i.(type) {
 	case string:
@@ -130,4 +132,74 @@ func (h *Header) marshal(v any, rw http.ResponseWriter) error {
 		rw.Header().Set(h.Name, fmt.Sprintf("%v", vv))
 	}
 	return nil
+}
+
+func getContentType(headers map[string]any) (string, error) {
+	v, err := getHeaderValue(headers["Content-Type"])
+	if err != nil {
+		return "", fmt.Errorf("invalid header 'Content-Type': %w", err)
+	}
+	if len(v) > 0 {
+		return v[0], nil
+	}
+	return "", nil
+}
+
+func setHeaders(headers map[string]any, definition Headers, rw http.ResponseWriter) error {
+	for name, value := range headers {
+		switch name {
+		case "Content-Type":
+			v, err := getHeaderValue(value)
+			if err != nil {
+				return fmt.Errorf("invalid header '%s': %w", name, err)
+			}
+			if len(v) > 0 {
+				rw.Header().Add(name, v[0])
+			}
+			continue
+		}
+
+		if header, ok := definition[name]; ok && header.Value != nil {
+			err := header.Value.marshal(value, rw)
+			if err != nil {
+				return fmt.Errorf("invalid header '%s': %w", name, err)
+			}
+		} else {
+			v, err := getHeaderValue(value)
+			if err != nil {
+				return fmt.Errorf("invalid header '%s': %w", name, err)
+			}
+			for _, item := range v {
+				rw.Header().Add(name, item)
+			}
+		}
+	}
+	return nil
+}
+
+func getHeaderValue(value any) ([]string, error) {
+	if value == nil {
+		return nil, nil
+	}
+
+	v := reflect.ValueOf(value)
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+	}
+	switch v.Kind() {
+	case reflect.String:
+		return []string{v.String()}, nil
+	case reflect.Slice:
+		var result []string
+		for i := 0; i < v.Len(); i++ {
+			item := v.Index(i)
+			if item.Kind() == reflect.Ptr {
+				item = item.Elem()
+			}
+			result = append(result, item.String())
+		}
+		return result, nil
+	default:
+		return nil, fmt.Errorf("expected a string or array of strings, but received %s", util.JsType(v.Interface()))
+	}
 }

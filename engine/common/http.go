@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	"mokapi/lib"
 	"reflect"
 	"strings"
 )
@@ -104,27 +103,4 @@ func getResource(u Url, resources interface{}) interface{} {
 		return nil
 	}
 	return resource.Interface()
-}
-
-func (r *EventResponse) ContentType() (string, error) {
-	if r.Headers == nil {
-		return "", nil
-	}
-	var contentType any
-	for name, v := range r.Headers {
-		if strings.EqualFold(name, "Content-Type") {
-			contentType = v
-		}
-	}
-	if contentType == nil || contentType == "" {
-		return "", nil
-	}
-
-	switch vv := contentType.(type) {
-	case string:
-		return vv, nil
-	default:
-		return "", fmt.Errorf("unexpected type for header 'Content-Type': got %s, expected String", lib.TypeFrom(vv))
-
-	}
 }

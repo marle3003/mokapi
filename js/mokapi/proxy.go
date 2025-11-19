@@ -148,7 +148,11 @@ func (p *Proxy) Set(key string, value goja.Value) bool {
 	switch target.Kind() {
 	case reflect.Map:
 		key = p.normalizeKey(key)
-		target.SetMapIndex(reflect.ValueOf(key), reflect.ValueOf(value.Export()))
+		v, err := convertTo(target.Type().Elem(), reflect.ValueOf(value.Export()))
+		if err != nil {
+			panic(p.vm.ToValue(err))
+		}
+		target.SetMapIndex(reflect.ValueOf(key), v)
 		return true
 	case reflect.Struct:
 		f := getFieldByTag(target, key, "json")
@@ -222,12 +226,14 @@ func (p *Proxy) Export() any {
 	switch vv := v.(type) {
 	case []any:
 		for i, e := range vv {
-			if pe, ok := e.(*Proxy); ok {
-				vv[i] = pe.Export()
-			}
+			vv[i] = Export(e)
+		}
+	case map[string]any:
+		for key, val := range vv {
+			vv[key] = Export(val)
 		}
 	}
-	return v
+	return Export(v)
 }
 
 func getFieldByTag(structValue reflect.Value, name, tag string) reflect.Value {
@@ -282,27 +288,58 @@ func splice(slice, toAdd reflect.Value, start int, deleteCount int) {
 }
 
 func assignValue(field reflect.Value, value any, fieldName string) error {
-	v := reflect.ValueOf(value)
-	targetType := field.Type()
-	sourceType := v.Type()
+	v, err := convertTo(field.Type(), reflect.ValueOf(value))
+	if err != nil {
+		return fmt.Errorf("failed to set %s: %w", fieldName, err)
+	}
+	field.Set(v)
+	return nil
+}
 
-	if field.Kind() == reflect.Interface && v.Kind() != reflect.Ptr {
-		ptr := reflect.New(v.Type())
-		ptr.Elem().Set(v)
-		v = ptr
+func convertTo(targetType reflect.Type, value reflect.Value) (reflect.Value, error) {
+	if targetType.Kind() == reflect.Interface && value.Kind() != reflect.Ptr {
+		ptr := reflect.New(value.Type())
+		ptr.Elem().Set(value)
+		value = ptr
 	}
 
+	sourceType := value.Type()
 	if sourceType.AssignableTo(targetType) {
-		field.Set(v)
-		return nil
+		return value, nil
 	}
 
 	if sourceType.ConvertibleTo(targetType) {
-		field.Set(v.Convert(targetType))
-		return nil
+		return value.Convert(targetType), nil
 	}
 
-	return fmt.Errorf("%s must be a %s", fieldName, lib.TypeString(field.Type()))
+	if targetType.Kind() == reflect.Slice && sourceType.Kind() == reflect.Slice {
+		result := reflect.MakeSlice(targetType, 0, value.Len())
+		for i := 0; i < value.Len(); i++ {
+			item := value.Index(i)
+			if item.Type().AssignableTo(targetType.Elem()) {
+				result = reflect.Append(result, item)
+			} else if sourceType.ConvertibleTo(targetType) {
+				result = reflect.Append(result, item.Convert(targetType))
+			} else {
+				return reflect.Value{}, fmt.Errorf("items must be a %s", lib.TypeString(targetType.Elem()))
+			}
+		}
+		return result, nil
+	}
+
+	if targetType.Kind() == reflect.Map && sourceType.Kind() == reflect.Map {
+		result := reflect.MakeMap(targetType)
+		for _, key := range value.MapKeys() {
+			item, err := convertTo(targetType.Elem(), value.MapIndex(key))
+			if err != nil {
+				return reflect.Value{}, err
+			}
+			result.SetMapIndex(key, item)
+		}
+		return result, nil
+	}
+
+	return reflect.Value{}, fmt.Errorf("expected %s but got %s", lib.TypeString(targetType), lib.TypeString(sourceType))
 }
 
 func unwrap(v reflect.Value) reflect.Value {

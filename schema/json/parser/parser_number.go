@@ -10,6 +10,10 @@ import (
 func (p *Parser) ParseNumber(i interface{}, s *schema.Schema) (v interface{}, err error) {
 	var f float64
 	switch v := i.(type) {
+	case *float32:
+		f = float64(*v)
+	case *float64:
+		f = *v
 	case float32:
 		f = float64(v)
 	case float64:
