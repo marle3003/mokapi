@@ -87,7 +87,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	request, ctx := NewEventRequest(r, contentType)
+	request, ctx := NewEventRequest(r, contentType, h.config.Info.Name)
 	r = r.WithContext(ctx)
 
 	if op.RequestBody != nil {
@@ -151,13 +151,15 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	// todo: only specified headers should be written
-	for k, v := range response.Headers {
-		rw.Header().Add(k, v)
+	err = setHeaders(response.Headers, res.Headers, rw)
+	if err != nil {
+		writeError(rw, r, err, h.config.Info.Name)
+		return
 	}
 
 	if len(res.Content) == 0 {
 		if response.Body == "" {
-			// no response content and no body is defined which means body is empty
+			// no response content and no response body is defined which means body is empty
 			rw.Header().Del("Content-Type")
 			rw.Header().Set("Content-Length", "0")
 		}
@@ -182,8 +184,11 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if ct, ok := response.Headers["Content-Type"]; ok {
+	if ct, err := getContentType(response.Headers); ct != "" && err == nil {
 		contentType = media.ParseContentType(ct)
+	} else if err != nil {
+		writeError(rw, r, err, h.config.Info.Name)
+		return
 	} else {
 		contentType, _, err = ContentTypeFromRequest(r, res)
 		if err != nil {

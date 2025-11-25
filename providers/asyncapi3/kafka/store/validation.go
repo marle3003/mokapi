@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"mokapi/kafka"
 	"mokapi/media"
@@ -17,6 +16,8 @@ import (
 	"slices"
 	"strconv"
 	"unicode/utf8"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type validator struct {
@@ -81,7 +82,7 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyn
 		case *openapi.Schema:
 			mt := media.ParseContentType(msg.ContentType)
 			if mt.IsXml() {
-				log.Warnf("unsupported payload type: %T", msg.Payload.Value)
+				msgParser = openapi.NewXmlParser(s)
 			} else {
 				msgParser = &parser.Parser{Schema: openapi.ConvertToJsonSchema(s), ConvertToSortedMap: true}
 			}
@@ -152,13 +153,13 @@ func (mv *messageValidator) Validate(record *kafka.Record) (*KafkaLog, error) {
 	}
 
 	if mv.payload != nil {
-		if v, err := mv.payload.Validate(record.Value); err != nil {
+		if _, err := mv.payload.Validate(record.Value); err != nil {
 			err = fmt.Errorf("invalid message: %w", err)
 			return r, err
 		} else {
-			b, _ := json.Marshal(v)
+			b := kafka.Read(record.Value)
 			r.Message.Value = string(b)
-			r.Message.Binary = kafka.Read(record.Value)
+			r.Message.Binary = b
 		}
 	} else {
 		r.Message.Binary = kafka.Read(record.Value)

@@ -121,17 +121,17 @@ func Register(reg ApiReg, req, res Message, flexibleRequest int16, flexibleRespo
 		encoding{
 			func(d *Decoder, version int16) (Message, error) {
 				decode, ok := requestTypes.decode[version]
-				if !ok {
-					return nil, fmt.Errorf("unsupported version %v", version)
-				}
 				msg := reflect.New(tReq).Interface().(Message)
+				if !ok {
+					return msg, fmt.Errorf("%s protocol: unsupported version %v", apitext[reg.ApiKey], version)
+				}
 				decode(d, reflect.ValueOf(msg).Elem())
 				return msg, nil
 			},
 			func(e *Encoder, version int16, msg Message) error {
 				encode, ok := requestTypes.encode[version]
 				if !ok {
-					return fmt.Errorf("unsupported version %v", version)
+					return fmt.Errorf("%s protocol: unsupported version %v", apitext[reg.ApiKey], version)
 				}
 				encode(e, reflect.ValueOf(msg).Elem())
 				return nil
@@ -141,7 +141,7 @@ func Register(reg ApiReg, req, res Message, flexibleRequest int16, flexibleRespo
 			func(d *Decoder, version int16) (Message, error) {
 				decode, ok := responseTypes.decode[version]
 				if !ok {
-					return nil, fmt.Errorf("unsupported version %v", version)
+					return nil, fmt.Errorf("%s protocol: unsupported version %v", apitext[reg.ApiKey], version)
 				}
 				msg := reflect.New(tRes).Interface().(Message)
 				decode(d, reflect.ValueOf(msg).Elem())
@@ -150,7 +150,7 @@ func Register(reg ApiReg, req, res Message, flexibleRequest int16, flexibleRespo
 			func(e *Encoder, version int16, msg Message) error {
 				encode, ok := responseTypes.encode[version]
 				if !ok {
-					return fmt.Errorf("unsupported version %v", version)
+					return fmt.Errorf("%s protocol: unsupported version %v", apitext[reg.ApiKey], version)
 				}
 				encode(e, reflect.ValueOf(msg).Elem())
 				return nil

@@ -29,6 +29,17 @@ const operationRoute = computed(() => {
         query: { refresh: route.query.refresh }
     }
 })
+const apiRoute = computed(() => {
+    if (!prop.event.traits.name) {
+        return undefined
+    }
+
+    return {
+        name: 'httpService',
+        params: { service: prop.event.traits.name },
+        query: { refresh: route.query.refresh }
+    }
+})
 </script>
 
 <template>
@@ -48,7 +59,7 @@ const operationRoute = computed(() => {
                 </div>
             </div>
             <div class="row mb-2">
-                <div class="col-2">
+                <div class="col-1">
                     <p class="label">Status</p>
                     <p>
                         <span class="badge status-code" :class="getClassByStatusCode(eventData.response.statusCode.toString())">
@@ -56,21 +67,25 @@ const operationRoute = computed(() => {
                         </span>
                     </p>
                 </div>
-                <div class="col-2">
+                <div class="col-1">
                     <p class="label">Size</p>
                     <p>{{ formatBytes(eventData.response.size) }}</p>
                 </div>
-                <div class="col-2">
+                <div class="col-1">
                     <p class="label">Duration</p>
                     <p>{{ duration(eventData.duration) }}</p>
                 </div>
-                <div class="col-2">
+                <div class="col-1">
                     <p class="label">Client IP</p>
                     <p>{{ eventData.clientIP }}</p>
                 </div>
-                <div class="col" v-if="operationRoute">
+                <div class="col-1" v-if="operationRoute">
                     <p class="label">Specification</p>
                     <router-link :to="operationRoute">Operation</router-link>
+                </div>
+                <div class="col" v-if="apiRoute">
+                    <p class="label">API</p>
+                    <router-link :to="apiRoute" class="text-truncate">{{ event.traits.name }}</router-link>
                 </div>
             </div>
             <div class="row" v-if="eventData.deprecated">

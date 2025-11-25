@@ -1,12 +1,130 @@
 package schema_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
+
+func TestParseXML(t *testing.T) {
+	testcases := []struct {
+		name string
+		xml  string
+		s    *schema.Schema
+		test func(t *testing.T, v any, err error)
+	}{
+		{
+			name: "value expected in attribute but it is located in child",
+			xml:  `<root><id>123</id></root>`,
+			s: schematest.New("object",
+				schematest.WithProperty(
+					"id",
+					schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: true})),
+				),
+			),
+			test: func(t *testing.T, v any, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]any{"id": int64(123)}, v)
+			},
+		},
+		{
+			name: "value expected in attribute but it is located in child and additionalProperties not allowed",
+			xml:  `<root><id>123</id></root>`,
+			s: schematest.New("object",
+				schematest.WithProperty(
+					"id",
+					schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: true})),
+				),
+				schematest.WithFreeForm(false),
+			),
+			test: func(t *testing.T, v any, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]any{}, v)
+			},
+		},
+		{
+			name: "attribute required but value is located in child",
+			xml:  `<root><id>123</id></root>`,
+			s: schematest.New("object",
+				schematest.WithProperty(
+					"id",
+					schematest.New("integer", schematest.WithXml(&schema.Xml{Attribute: true})),
+				),
+				schematest.WithRequired("id"),
+			),
+			test: func(t *testing.T, v any, err error) {
+				require.EqualError(t, err, "failed to parse XML: required attribute 'id' not found in XML")
+			},
+		},
+		{
+			name: "attribute required using space",
+			xml:  `<root ns:id="123"></root>`,
+			s: schematest.New("object",
+				schematest.WithProperty(
+					"id",
+					schematest.New("integer", schematest.WithXml(&schema.Xml{
+						Attribute: true,
+						Prefix:    "ns",
+					})),
+				),
+				schematest.WithRequired("id"),
+			),
+			test: func(t *testing.T, v any, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]any{"id": int64(123)}, v)
+			},
+		},
+		{
+			name: "attribute required using space but missing",
+			xml:  `<root><foo>bar</foo></root>`,
+			s: schematest.New("object",
+				schematest.WithProperty(
+					"id",
+					schematest.New("integer", schematest.WithXml(&schema.Xml{
+						Attribute: true,
+						Prefix:    "ns",
+					})),
+				),
+				schematest.WithRequired("id"),
+			),
+			test: func(t *testing.T, v any, err error) {
+				require.EqualError(t, err, "failed to parse XML: required attribute 'id' not found in XML")
+			},
+		},
+		{
+			name: "attribute required empty node",
+			xml:  `<root></root>`,
+			s: schematest.New("object",
+				schematest.WithProperty(
+					"id",
+					schematest.New("integer", schematest.WithXml(&schema.Xml{
+						Attribute: true,
+						Prefix:    "ns",
+					})),
+				),
+				schematest.WithRequired("id"),
+			),
+			test: func(t *testing.T, v any, err error) {
+				require.EqualError(t, err, "error count 1:\n\t- #/required: required properties are missing: id")
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			p := schema.NewXmlParser(tc.s)
+			v, err := p.Parse(tc.xml)
+			tc.test(t, v, err)
+		})
+	}
+}
 
 func TestUnmarshalXML(t *testing.T) {
 	testcases := []struct {
@@ -79,6 +197,38 @@ func TestUnmarshalXML(t *testing.T) {
 						schematest.WithProperty("title", schematest.New("string"))))
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"title": "Harry Potter", "author": "J K. Rowling"}, v)
+			},
+		},
+		{
+			name: "object with different XML name",
+			test: func(t *testing.T) {
+				v, err := schema.UnmarshalXML(strings.NewReader("<book><title>Harry Potter</title></book>"),
+					schematest.New("object",
+						schematest.WithProperty(
+							"name",
+							schematest.New("string", schematest.WithXml(&schema.Xml{Name: "title"})),
+						),
+					))
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"name": "Harry Potter"}, v)
+			},
+		},
+		{
+			name: "two properties with misleading name",
+			test: func(t *testing.T) {
+				v, err := schema.UnmarshalXML(strings.NewReader("<root><foo>bar</foo><bar>123</bar></root>"),
+					schematest.New("object",
+						schematest.WithProperty(
+							"foo",
+							schematest.New("integer", schematest.WithXml(&schema.Xml{Name: "bar"})),
+						),
+						schematest.WithProperty(
+							"yuh",
+							schematest.New("string", schematest.WithXml(&schema.Xml{Name: "foo"})),
+						),
+					))
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"foo": 123, "yuh": "bar"}, v)
 			},
 		},
 		{

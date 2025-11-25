@@ -1,8 +1,7 @@
 package js_test
 
 import (
-	"github.com/dop251/goja"
-	r "github.com/stretchr/testify/require"
+	"fmt"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
@@ -11,6 +10,9 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/dop251/goja"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestScript_Mokapi_Date(t *testing.T) {
@@ -297,7 +299,7 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 		{
 			name: "event",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.OnFunc = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
 					r.Equal(t, "http", event)
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -314,7 +316,7 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 		{
 			name: "tags",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.OnFunc = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
 					r.Equal(t, "bar", tags["foo"])
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -345,8 +347,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 		{
 			name: "run function",
 			test: func(t *testing.T, host *enginetest.Host) {
-				var doFunc func(args ...interface{}) (bool, error)
-				host.OnFunc = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				var doFunc common.EventHandler
+				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -360,7 +362,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
-				doFunc(10)
+				_, err = doFunc(&common.EventContext{Args: []any{10}})
+				r.NoError(t, err)
 
 				var v goja.Value
 				err = s.RunFunc(func(vm *goja.Runtime) {
@@ -375,8 +378,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 		{
 			name: "return value default is false",
 			test: func(t *testing.T, host *enginetest.Host) {
-				var doFunc func(args ...interface{}) (bool, error)
-				host.OnFunc = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				var doFunc common.EventHandler
+				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -388,7 +391,7 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
-				b, err := doFunc()
+				b, err := doFunc(&common.EventContext{})
 				r.NoError(t, err)
 				r.False(t, b, "default return value should be false")
 				s.Close()
@@ -397,8 +400,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 		{
 			name: "on error",
 			test: func(t *testing.T, host *enginetest.Host) {
-				var doFunc func(args ...interface{}) (bool, error)
-				host.OnFunc = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				var doFunc common.EventHandler
+				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -410,7 +413,7 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
-				b, err := doFunc()
+				b, err := doFunc(&common.EventContext{})
 				r.EqualError(t, err, "Error: test error at test.js:3:38(3)")
 				r.False(t, b, "return value should be false on error")
 				s.Close()
@@ -425,8 +428,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 					ShipDate: "2022-01-01",
 				}
 
-				var doFunc func(args ...interface{}) (bool, error)
-				host.OnFunc = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				var doFunc common.EventHandler
+				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -440,7 +443,7 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
-				_, err = doFunc(data)
+				_, err = doFunc(&common.EventContext{Args: []any{data}})
 				r.NoError(t, err)
 				s.Close()
 			},
@@ -454,8 +457,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 					Ship_date: "2022-01-01",
 				}
 
-				var doFunc func(args ...interface{}) (bool, error)
-				host.OnFunc = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				var doFunc common.EventHandler
+				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -469,7 +472,7 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
-				_, err = doFunc(data)
+				_, err = doFunc(&common.EventContext{Args: []any{data}})
 				r.NoError(t, err)
 				s.Close()
 			},
@@ -479,8 +482,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 			test: func(t *testing.T, host *enginetest.Host) {
 				data := map[string]string{"foo": "bar"}
 
-				var doFunc func(args ...interface{}) (bool, error)
-				host.OnFunc = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				var doFunc common.EventHandler
+				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -494,7 +497,42 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
-				_, err = doFunc(data)
+				_, err = doFunc(&common.EventContext{Args: []any{data}})
+				r.NoError(t, err)
+				s.Close()
+			},
+		},
+		{
+			name: "logging and async",
+			test: func(t *testing.T, host *enginetest.Host) {
+				var doFunc common.EventHandler
+				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
+					doFunc = do
+				}
+				s, err := jstest.New(jstest.WithSource(
+					`import { on } from 'mokapi'
+						 export default async function() {
+						  	on('http', async function() {
+								msg1 = await getMessage()
+								console.log(msg1)
+							})
+						 }
+						 let getMessage = async () => {
+						 	return new Promise(async (resolve, reject) => {
+	  							setTimeout(() => {
+									resolve('foo');
+								}, 200);
+						 	});
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				err = s.Run()
+				log := ""
+				r.NoError(t, err)
+				_, err = doFunc(&common.EventContext{EventLogger: func(level, message string) {
+					log = fmt.Sprintf("%s %s", level, message)
+				}})
+				r.Equal(t, "log foo", log)
 				r.NoError(t, err)
 				s.Close()
 			},
@@ -519,7 +557,7 @@ func TestScript_Mokapi_On_Kafka(t *testing.T) {
 		{
 			name: "event",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.OnFunc = func(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
 					r.Equal(t, "kafka", event)
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -555,7 +593,7 @@ func TestScript_Mokapi_Env(t *testing.T) {
 		{
 			name: "env",
 			test: func(t *testing.T, host *enginetest.Host) {
-				os.Setenv("foo", "bar")
+				_ = os.Setenv("foo", "bar")
 				s, err := jstest.New(jstest.WithSource(
 					`import { env } from 'mokapi'
 						 export default function() {

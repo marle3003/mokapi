@@ -415,7 +415,7 @@ func (s *Store) UpdateMetrics(m *monitor.Kafka, topic *Topic, partition *Partiti
 func getOperations(channel *asyncapi3.Channel, config *asyncapi3.Config) []*asyncapi3.Operation {
 	var ops []*asyncapi3.Operation
 	for _, op := range config.Operations {
-		if op.Value == nil {
+		if op == nil || op.Value == nil {
 			continue
 		}
 		if op.Value.Channel.Value == channel {

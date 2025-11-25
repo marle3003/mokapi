@@ -91,6 +91,9 @@ function messages(topic: KafkaTopic): string[] {
         return a.localeCompare(b)
     })
 }
+const examplePath = computed(() => {
+    return props.topic.name.split(/[.-_]/).reverse()
+})
 </script>
 
 <template>
@@ -153,7 +156,7 @@ function messages(topic: KafkaTopic): string[] {
                                 <schema-expand :schema="selected.payload" :title="'Value - '+topic.name" :source="{filename: topic.name+'-message.json'}" />
                             </div>
                             <div class="col-auto pe-2 mt-1">
-                                <schema-validate :title="'Value Validator - '+topic.name" :schema="selected.payload" :source="source" />
+                                <schema-validate :title="'Value Validator - '+topic.name" :schema="selected.payload" :source="source" :example="{ path: examplePath }"/>
                             </div>
                         </div>
                     </section>

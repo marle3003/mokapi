@@ -18,7 +18,7 @@ import (
 )
 
 type eventHandler struct {
-	handler func(args ...interface{}) (bool, error)
+	handler common.EventHandler
 	tags    map[string]string
 }
 
@@ -73,19 +73,22 @@ func (sh *scriptHost) Run() (err error) {
 func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*common.Action {
 	var result []*common.Action
 	for _, eh := range sh.events[event] {
-		sh.Lock()
 		action := &common.Action{
 			Tags: eh.tags,
 		}
-		sh.startEventHandler(action.AppendLog)
 		start := time.Now()
 		logs := len(action.Logs)
 
-		if b, err := eh.handler(args...); err != nil {
+		ctx := &common.EventContext{
+			EventLogger: action.AppendLog,
+			Args:        args,
+		}
+
+		if b, err := eh.handler(ctx); err != nil {
 			log.Errorf("unable to execute event handler: %v", err)
 			action.Error = &common.Error{Message: err.Error()}
 		} else if !b && logs == len(action.Logs) {
-			sh.Unlock()
+			//sh.Unlock()
 			continue
 		} else {
 			log.WithField("handler", action).Debug("processed event handler")
@@ -94,8 +97,6 @@ func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*common.Acti
 		action.Duration = time.Now().Sub(start).Milliseconds()
 		action.Parameters = getDeepCopy(args)
 		result = append(result, action)
-		sh.endEventHandler()
-		sh.Unlock()
 	}
 	return result
 }
@@ -147,8 +148,6 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 	counter := 1
 
 	return func() {
-		sh.Lock()
-		defer sh.Unlock()
 		job := sh.jobs[id]
 		var nextRun time.Time
 		if job != nil {
@@ -201,7 +200,7 @@ func (sh *scriptHost) Cancel(jobId int) error {
 	}
 }
 
-func (sh *scriptHost) On(event string, handler func(args ...interface{}) (bool, error), tags map[string]string) {
+func (sh *scriptHost) On(event string, handler common.EventHandler, tags map[string]string) {
 	h := &eventHandler{
 		handler: handler,
 		tags: map[string]string{
@@ -269,6 +268,10 @@ func (sh *scriptHost) Debug(args ...interface{}) {
 	if sh.eventLogger != nil && sh.IsLevelEnabled("debug") {
 		sh.eventLogger("debug", fmt.Sprint(args...))
 	}
+}
+
+func (sh *scriptHost) SetEventLogger(logger func(level, message string)) {
+	sh.eventLogger = logger
 }
 
 func (sh *scriptHost) IsLevelEnabled(level string) bool {

@@ -271,7 +271,7 @@ func TestNode(t *testing.T) {
 			vm := goja.New()
 			vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 			host := &enginetest.Host{}
-			loop := eventloop.New(vm)
+			loop := eventloop.New(vm, host)
 			defer loop.Stop()
 			loop.StartLoop()
 			js.EnableInternal(vm, host, loop, &dynamic.Config{Info: dynamictest.NewConfigInfo()})

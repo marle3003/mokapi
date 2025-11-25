@@ -430,6 +430,29 @@ func TestHandler_Schema_Example(t *testing.T) {
 				)
 			},
 		},
+		{
+			name: "pet with path",
+			app:  &runtime.App{},
+			fn: func(t *testing.T, h http.Handler, app *runtime.App) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/schema/example",
+					nil,
+					`{"path": ["pet", "category", "name"], "schema": {"type": ["string"]}, "contentTypes": ["application/json"]}`,
+					h,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.AssertBody(func(t *testing.T, body string) {
+						var data []map[string]any
+						err := json.Unmarshal([]byte(body), &data)
+						require.NoError(t, err)
+						b, err := base64.StdEncoding.DecodeString(data[0]["value"].(string))
+						require.NoError(t, err)
+						require.Equal(t, `"turtle"`, string(b))
+					}),
+				)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

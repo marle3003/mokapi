@@ -11,7 +11,7 @@ func NewConfig(opts ...ConfigOptions) *asyncapi3.Config {
 		Version:            "2.0.0",
 		Info:               asyncapi3.Info{Name: "test", Version: "1.0"},
 		Servers:            map[string]*asyncapi3.ServerRef{},
-		DefaultContentType: "application/json",
+		DefaultContentType: asyncapi3.DefaultContentType,
 	}
 	for _, opt := range opts {
 		opt(c)

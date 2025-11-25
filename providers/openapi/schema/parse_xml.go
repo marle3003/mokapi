@@ -4,8 +4,13 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"mokapi/schema/json/parser"
 	"strconv"
 )
+
+type XmlParser struct {
+	s *Schema
+}
 
 type node struct {
 	XMLName xml.Name
@@ -14,14 +19,44 @@ type node struct {
 	Nodes   []node     `xml:",any"`
 }
 
-func (n *node) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	n.Attrs = start.Attr
-	type proxy node
-
-	return d.DecodeElement((*proxy)(n), &start)
+func NewXmlParser(s *Schema) *XmlParser {
+	return &XmlParser{s: s}
 }
 
-func UnmarshalXML(r io.Reader, ref *Schema) (interface{}, error) {
+func (p *XmlParser) Parse(v any) (any, error) {
+	var b []byte
+	switch vv := v.(type) {
+	case string:
+		b = []byte(vv)
+	case []byte:
+		b = vv
+	default:
+		return nil, fmt.Errorf("failed to parse XML: unsupported type: %T", v)
+	}
+
+	n := &node{}
+	err := xml.Unmarshal(b, &n)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal XML: %w", err)
+	}
+	data, err := parseXML(n, p.s)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse XML: %w", err)
+	}
+
+	pn := parser.Parser{Schema: ConvertToJsonSchema(p.s), ConvertStringToNumber: true, ConvertStringToBoolean: true}
+	return pn.Parse(data)
+}
+
+func (p *XmlParser) ParseFrom(r io.Reader) (any, error) {
+	b, err := io.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+	return p.Parse(b)
+}
+
+func UnmarshalXML(r io.Reader, s *Schema) (interface{}, error) {
 	b, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
@@ -35,11 +70,19 @@ func UnmarshalXML(r io.Reader, ref *Schema) (interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal xml: %w", err)
 	}
-	return parse(n, ref)
+	return parseXML(n, s)
 }
 
-func parse(n *node, s *Schema) (interface{}, error) {
+func parseXML(n *node, s *Schema) (any, error) {
 	if len(n.Nodes) == 0 && len(n.Attrs) == 0 {
+		if len(n.Content) == 0 {
+			if s.Type.IsObject() {
+				return map[string]any{}, nil
+			}
+			if s.Type.IsArray() {
+				return []any{}, nil
+			}
+		}
 		return parseValue(string(n.Content), s)
 	}
 
@@ -57,31 +100,55 @@ func parse(n *node, s *Schema) (interface{}, error) {
 		return getItems(n, items)
 	}
 
-	m := map[string]interface{}{}
-	for _, child := range n.Nodes {
-		name, prop := getProperty(child.XMLName, s, false)
-		v, err := parse(&child, prop)
-		if err != nil {
-			return nil, err
-		}
-		if _, ok := m[name]; ok {
-			if arr, isArray := m[name].([]interface{}); isArray {
-				m[name] = append(arr, v)
-			} else {
-				m[name] = []interface{}{m[name], v}
+	m := map[string]any{}
+
+	// elements can override attribute values
+	for _, attr := range n.Attrs {
+		name, prop := getProperty(attr.Name, s, true)
+		if prop != nil || s.IsFreeForm() {
+			v, err := parseValue(attr.Value, prop)
+			if err != nil {
+				return nil, err
 			}
-		} else {
 			m[name] = v
 		}
 	}
-	for _, attr := range n.Attrs {
-		name, prop := getProperty(attr.Name, s, true)
-		v, err := parseValue(attr.Value, prop)
-		if err != nil {
-			return nil, err
+
+	for _, child := range n.Nodes {
+		name, prop := getProperty(child.XMLName, s, false)
+		if prop != nil || s.IsFreeForm() {
+			v, err := parseXML(&child, prop)
+			if err != nil {
+				return nil, err
+			}
+			if _, ok := m[name]; ok {
+				if arr, isArray := m[name].([]any); isArray {
+					m[name] = append(arr, v)
+				} else {
+					m[name] = []interface{}{m[name], v}
+				}
+			} else {
+				m[name] = v
+			}
 		}
-		m[name] = v
 	}
+
+	if s != nil {
+		for _, req := range s.Required {
+			prop := s.Properties.Get(req)
+			if prop == nil || prop.Xml == nil {
+				// here we want to verify only XML
+				continue
+			}
+			if prop.Xml.Attribute && !n.hasAttribute(req) {
+				return nil, fmt.Errorf("required attribute '%s' not found in XML", req)
+			}
+			if !prop.Xml.Attribute && n.hasElement(req) {
+				return nil, fmt.Errorf("required element '%s' not found in XML", req)
+			}
+		}
+	}
+
 	return m, nil
 }
 
@@ -142,6 +209,9 @@ func getProperty(name xml.Name, s *Schema, asAttr bool) (string, *Schema) {
 		if x == nil {
 			continue
 		}
+		if asAttr != x.Attribute {
+			continue
+		}
 		if x.Name == name.Local && x.Attribute == asAttr {
 			return it.Key(), prop
 		}
@@ -153,7 +223,7 @@ func getProperty(name xml.Name, s *Schema, asAttr bool) (string, *Schema) {
 func getItems(n *node, ref *Schema) ([]interface{}, error) {
 	var r []interface{}
 	for _, child := range n.Nodes {
-		v, err := parse(&child, ref)
+		v, err := parseXML(&child, ref)
 		if err != nil {
 			return nil, err
 		}
@@ -181,4 +251,22 @@ func isWrapped(ref *Schema) (string, bool) {
 	}
 	x := ref.Xml
 	return x.Name, x.Wrapped
+}
+
+func (n *node) hasAttribute(name string) bool {
+	for _, attr := range n.Attrs {
+		if attr.Name.Local == name {
+			return true
+		}
+	}
+	return false
+}
+
+func (n *node) hasElement(name string) bool {
+	for _, elem := range n.Nodes {
+		if elem.XMLName.Local == name {
+			return true
+		}
+	}
+	return false
 }

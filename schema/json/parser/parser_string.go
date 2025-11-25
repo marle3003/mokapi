@@ -18,6 +18,8 @@ import (
 func (p *Parser) ParseString(data interface{}, schema *schema.Schema) (interface{}, error) {
 	var s string
 	switch v := data.(type) {
+	case *string:
+		s = *v
 	case string:
 		s = v
 	case version.Version:

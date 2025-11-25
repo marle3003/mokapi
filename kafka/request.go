@@ -70,12 +70,20 @@ func (r *Request) Read(reader io.Reader) error {
 	}
 
 	t := ApiTypes[r.Header.ApiKey]
-	if t.MinVersion > r.Header.ApiVersion && t.MaxVersion < r.Header.ApiVersion {
-		return Error{Header: r.Header, Code: UnsupportedVersion, Message: fmt.Sprintf("unsupported api version")}
-	}
-
 	var err error
 	r.Message, err = t.request.decode(d, r.Header.ApiVersion)
+
+	if err != nil && r.Header.ApiKey == ApiVersions {
+		// if the client is ahead with ApiVersion, broker should respond with
+		// version 0, not close connection and read the entire message
+		// to keep the connection synchronized
+		if _, err := io.CopyN(io.Discard, reader, int64(d.leftSize)); err != nil {
+			return fmt.Errorf("failed to read request body: %w", err)
+		}
+
+		return nil
+	}
+
 	return err
 }
 

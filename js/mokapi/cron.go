@@ -2,10 +2,12 @@ package mokapi
 
 import (
 	"fmt"
-	"github.com/dop251/goja"
 	"mokapi/engine/common"
+	"mokapi/js/eventloop"
 	"mokapi/js/util"
 	"reflect"
+
+	"github.com/dop251/goja"
 )
 
 func (m *Module) Cron(expr string, do goja.Value, args goja.Value) (int, error) {
@@ -22,7 +24,7 @@ func (m *Module) Cron(expr string, do goja.Value, args goja.Value) (int, error) 
 				return nil, err
 			}
 			return v, nil
-		})
+		}, &eventloop.JobContext{})
 		if err != nil {
 			panic(m.vm.ToValue(err.Error()))
 		}

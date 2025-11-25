@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"mokapi/config/dynamic"
 	"mokapi/kafka"
+	"mokapi/kafka/produce"
 	"mokapi/media"
 	"mokapi/runtime/monitor"
 	"time"
@@ -18,11 +19,12 @@ var TopicNotFound = errors.New("topic not found")
 var PartitionNotFound = errors.New("partition not found")
 
 type Record struct {
-	Offset    int64          `json:"offset"`
-	Key       any            `json:"key"`
-	Value     any            `json:"value"`
-	Headers   []RecordHeader `json:"headers,omitempty"`
-	Partition int            `json:"partition"`
+	Offset         int64          `json:"offset"`
+	Key            any            `json:"key"`
+	Value          any            `json:"value"`
+	Headers        []RecordHeader `json:"headers,omitempty"`
+	Partition      int            `json:"partition"`
+	SkipValidation bool           `json:"skipValidation,omitempty"`
 }
 
 type RecordHeader struct {
@@ -51,7 +53,7 @@ func NewClient(s *Store, m *monitor.Kafka) *Client {
 	}
 }
 
-func (c *Client) Write(topic string, records []Record, ct *media.ContentType) ([]RecordResult, error) {
+func (c *Client) Write(topic string, records []Record, ct media.ContentType) ([]RecordResult, error) {
 	t := c.store.Topic(topic)
 	if t == nil {
 		return nil, TopicNotFound
@@ -90,7 +92,14 @@ func (c *Client) Write(topic string, records []Record, ct *media.ContentType) ([
 			})
 		}
 		b := kafka.RecordBatch{Records: []*kafka.Record{rec}}
-		offset, res, err := p.Write(b)
+		var write func(batch kafka.RecordBatch) (baseOffset int64, records []produce.RecordError, err error)
+		if r.SkipValidation {
+			write = p.WriteSkipValidation
+		} else {
+			write = p.Write
+		}
+
+		offset, res, err := write(b)
 		if err != nil {
 			result = append(result, RecordResult{
 				Partition: -1,
@@ -146,7 +155,7 @@ func (c *Client) Read(topic string, partition int, offset int64, ct *media.Conte
 		return nil, fmt.Errorf("read records failed: %v", errCode.String())
 	}
 
-	records := []Record{}
+	var records []Record
 	var getValue func(value []byte) (any, error)
 	switch {
 	case ct.Key() == "application/vnd.mokapi.kafka.binary+json":
@@ -205,7 +214,7 @@ func (c *Client) getPartition(t *Topic, id int) (*Partition, error) {
 	return t.Partition(id), nil
 }
 
-func (c *Client) parse(v any, ct *media.ContentType) ([]byte, error) {
+func (c *Client) parse(v any, ct media.ContentType) ([]byte, error) {
 	switch ct.Key() {
 	case "application/vnd.mokapi.kafka.binary+json":
 		s, ok := v.(string)
@@ -218,7 +227,11 @@ func (c *Client) parse(v any, ct *media.ContentType) ([]byte, error) {
 		}
 		return b, err
 	case "application/json":
-		b, _ := json.Marshal(v)
+		b, ok := v.([]byte)
+		if ok {
+			return b, nil
+		}
+		b, _ = json.Marshal(v)
 		return b, nil
 	default:
 		switch vt := v.(type) {

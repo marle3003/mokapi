@@ -20,13 +20,14 @@ type Host struct {
 	WarnFunc           func(args ...interface{})
 	ErrorFunc          func(args ...interface{})
 	DebugFunc          func(args ...interface{})
+	EventLogger        func(level, message string)
 	IsLevelEnabledFunc func(level string) bool
 	HttpClientTest     *HttpClient
 	HttpClientFunc     func(opts common.HttpClientOptions) common.HttpClient
 	KafkaClientTest    *KafkaClient
 	EveryFunc          func(every string, do func(), opt common.JobOptions)
 	CronFunc           func(every string, do func(), opt common.JobOptions)
-	OnFunc             func(event string, do func(args ...interface{}) (bool, error), tags map[string]string)
+	OnFunc             func(event string, do common.EventHandler, tags map[string]string)
 	FindFakerNodeFunc  func(name string) *generator.Node
 	m                  sync.Mutex
 	StoreTest          *engine.Store
@@ -45,11 +46,17 @@ func (h *Host) Info(args ...interface{}) {
 	if h.InfoFunc != nil {
 		h.InfoFunc(args...)
 	}
+	if h.EventLogger != nil {
+		h.EventLogger("log", fmt.Sprint(args...))
+	}
 }
 
 func (h *Host) Warn(args ...interface{}) {
 	if h.WarnFunc != nil {
 		h.WarnFunc(args...)
+	}
+	if h.EventLogger != nil {
+		h.EventLogger("warn", fmt.Sprint(args...))
 	}
 }
 
@@ -57,11 +64,17 @@ func (h *Host) Error(args ...interface{}) {
 	if h.ErrorFunc != nil {
 		h.ErrorFunc(args...)
 	}
+	if h.EventLogger != nil {
+		h.EventLogger("error", fmt.Sprint(args...))
+	}
 }
 
 func (h *Host) Debug(args ...interface{}) {
 	if h.DebugFunc != nil {
 		h.DebugFunc(args...)
+	}
+	if h.EventLogger != nil {
+		h.EventLogger("debug", fmt.Sprint(args...))
 	}
 }
 
@@ -70,6 +83,10 @@ func (h *Host) IsLevelEnabled(level string) bool {
 		return true
 	}
 	return h.IsLevelEnabledFunc(level)
+}
+
+func (h *Host) SetEventLogger(fn func(level, message string)) {
+	h.EventLogger = fn
 }
 
 func (h *Host) OpenFile(file, hint string) (*dynamic.Config, error) {
@@ -100,7 +117,7 @@ func (h *Host) Cron(expr string, do func(), opt common.JobOptions) (int, error) 
 	return 0, nil
 }
 
-func (h *Host) On(event string, do func(args ...interface{}) (bool, error), tags map[string]string) {
+func (h *Host) On(event string, do common.EventHandler, tags map[string]string) {
 	if h.OnFunc != nil {
 		h.OnFunc(event, do, tags)
 	}

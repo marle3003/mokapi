@@ -157,11 +157,16 @@ export interface HttpRequest {
     /** Object contains querystring parameters specified by OpenAPI querystring parameters. */
     readonly querystring: any;
 
+    /** API name where this request is specified */
+    readonly api: string;
+
     /** Path value specified by the OpenAPI path */
     readonly key: string;
 
     /** OperationId defined in OpenAPI */
     readonly operationId: string;
+
+    toString(): string
 }
 
 /**
@@ -170,7 +175,7 @@ export interface HttpRequest {
  */
 export interface HttpResponse {
     /** Object contains header parameters specified by OpenAPI header parameters. */
-    headers: { [key: string]: string };
+    headers: { [key: string]: any };
 
     /** Specifies the http status used to select the OpenAPI response definition. */
     statusCode: number;
@@ -192,11 +197,16 @@ export interface Url {
     /** URL host. */
     readonly host: string;
 
+    /** URL port */
+    readonly port: number;
+
     /** URL path. */
     readonly path: string;
 
     /** URL query string. */
     readonly query: string;
+
+    toString(): string
 }
 
 /**

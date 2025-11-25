@@ -1,11 +1,13 @@
 package eventloop_test
 
 import (
-	"github.com/dop251/goja"
-	"github.com/stretchr/testify/require"
+	"mokapi/engine/enginetest"
 	"mokapi/js/eventloop"
 	"testing"
 	"time"
+
+	"github.com/dop251/goja"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEventLoop(t *testing.T) {
@@ -16,9 +18,11 @@ func TestEventLoop(t *testing.T) {
 		{
 			name: "setTimeout",
 			test: func(t *testing.T, loop *eventloop.EventLoop) {
-				loop.RunSync(func(vm *goja.Runtime) {
+				_, err := loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
 					_ = vm.Set("now", time.Now)
+					return nil, nil
 				})
+				require.NoError(t, err)
 				startTime := time.Now()
 
 				loop.Run(func(vm *goja.Runtime) {
@@ -32,11 +36,12 @@ func TestEventLoop(t *testing.T) {
 
 				time.Sleep(1500 * time.Millisecond)
 				var calledAt time.Time
-				loop.RunSync(func(vm *goja.Runtime) {
+				_, err = loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
 					v := vm.Get("calledAt")
 					err := vm.ExportTo(v, &calledAt)
-					require.NoError(t, err)
+					return v, err
 				})
+				require.NoError(t, err)
 
 				require.False(t, calledAt.IsZero(), "calledAt should not be zero")
 				require.Greater(t, calledAt.Sub(startTime), time.Second, "code should wait for a second")
@@ -54,11 +59,12 @@ func TestEventLoop(t *testing.T) {
 				})
 
 				time.Sleep(500 * time.Millisecond)
-				loop.RunSync(func(vm *goja.Runtime) {
-					_, err := vm.RunString(`
+				_, err := loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
+					return vm.RunString(`
 						clearTimeout(id)`)
-					require.NoError(t, err)
+
 				})
+				require.NoError(t, err)
 				require.False(t, loop.HasJobs())
 			},
 		},
@@ -76,9 +82,10 @@ func TestEventLoop(t *testing.T) {
 
 				time.Sleep(500 * time.Millisecond)
 				var counter int64
-				loop.RunSync(func(vm *goja.Runtime) {
+				_, _ = loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
 					v := vm.Get("counter")
 					counter = v.ToInteger()
+					return nil, nil
 				})
 
 				require.Greater(t, counter, int64(3))
@@ -97,15 +104,16 @@ func TestEventLoop(t *testing.T) {
 				})
 
 				time.Sleep(300 * time.Millisecond)
-				loop.RunSync(func(vm *goja.Runtime) {
-					_, err := vm.RunString("clearInterval(i)")
-					require.NoError(t, err)
+				_, err := loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
+					return vm.RunString("clearInterval(i)")
 				})
+				require.NoError(t, err)
 
 				var counter int64
-				loop.RunSync(func(vm *goja.Runtime) {
+				_, _ = loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
 					v := vm.Get("counter")
 					counter = v.ToInteger()
+					return nil, nil
 				})
 
 				require.LessOrEqual(t, counter, int64(3))
@@ -120,8 +128,9 @@ func TestEventLoop(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
+			h := &enginetest.Host{}
 			vm := goja.New()
-			loop := eventloop.New(vm)
+			loop := eventloop.New(vm, h)
 			loop.StartLoop()
 			defer loop.Stop()
 

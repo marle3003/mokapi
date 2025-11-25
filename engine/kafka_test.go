@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"io"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
+	opSchema "mokapi/providers/openapi/schema"
+	opSchematest "mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
 	"mokapi/schema/json/generator"
 	"mokapi/schema/json/schema/schematest"
@@ -501,7 +504,7 @@ func TestKafkaClient(t *testing.T) {
 						produce({ topic: 'foo', messages: [{ data: 12 }] })
 					}
 				`))
-				require.EqualError(t, err, "produce kafka message to 'foo' failed: validation error: invalid message: error count 1:\n\t- #/type: invalid type, expected string but got number at mokapi/js/kafka.(*Module).Produce-fm (native)")
+				require.EqualError(t, err, "failed to produce message to Kafka topic 'foo': no matching message configuration found for the given value: 12\nhint:\nencoding data to 'application/json' failed: error count 1:\n\t- #/type: invalid type, expected string but got integer\n at mokapi/js/kafka.(*Module).Produce-fm (native)")
 
 				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
@@ -510,7 +513,7 @@ func TestKafkaClient(t *testing.T) {
 
 				// logs
 				require.Len(t, hook.Entries, 2)
-				require.Equal(t, "js error: produce kafka message to 'foo' failed: validation error: invalid message: error count 1:\n\t- #/type: invalid type, expected string but got number in test.js", hook.LastEntry().Message)
+				require.Equal(t, "js error: failed to produce message to Kafka topic 'foo': no matching message configuration found for the given value: 12\nhint:\nencoding data to 'application/json' failed: error count 1:\n\t- #/type: invalid type, expected string but got integer\n in test.js", hook.LastEntry().Message)
 			},
 		},
 		{
@@ -576,10 +579,6 @@ func TestKafkaClient(t *testing.T) {
 				return asyncapi3test.NewConfig(
 					asyncapi3test.WithInfo("foo", "", ""),
 					asyncapi3test.AddChannel("foo", ch),
-					asyncapi3test.WithOperation("sendAction",
-						asyncapi3test.WithOperationAction("send"),
-						asyncapi3test.WithOperationChannel(ch),
-					),
 				)
 			},
 			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
@@ -590,26 +589,7 @@ func TestKafkaClient(t *testing.T) {
 					}
 				`))
 
-				require.NoError(t, err)
-				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
-				require.Equal(t, kafka.None, errCode)
-				require.NotNil(t, b)
-				require.Equal(t, "gbrmarxhk", kafka.BytesToString(b.Records[0].Key))
-				require.Equal(t, `"foo"`, kafka.BytesToString(b.Records[0].Value))
-
-				err = e.AddScript(newScript("test.js", `
-					import { produce } from 'mokapi/kafka'
-					export default function() {
-						produce({ topic: 'foo', messages: [{  }] })
-					}
-				`))
-
-				require.NoError(t, err)
-				b, errCode = app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(1, 1000)
-				require.Equal(t, kafka.None, errCode)
-				require.NotNil(t, b)
-				require.Equal(t, "ijbptapwy", kafka.BytesToString(b.Records[0].Key))
-				require.Equal(t, `""`, kafka.BytesToString(b.Records[0].Value))
+				require.EqualError(t, err, "failed to produce message to Kafka topic 'foo': no 'send' or 'receive' operation defined in specification at mokapi/js/kafka.(*Module).Produce-fm (native)")
 			},
 		},
 		{
@@ -646,6 +626,86 @@ func TestKafkaClient(t *testing.T) {
 				require.NotNil(t, b)
 				require.Equal(t, "ijbptapwy", kafka.BytesToString(b.Records[0].Key))
 				require.Equal(t, `""`, kafka.BytesToString(b.Records[0].Value))
+			},
+		},
+		{
+			name: "content-type is xml with OpenAPI schema using XML",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithContentType("application/xml"),
+
+					asyncapi3test.WithPayloadOpenAPI(opSchematest.New("object",
+						opSchematest.WithXml(&opSchema.Xml{Name: "foo"}),
+						opSchematest.WithProperty(
+							"id",
+							opSchematest.New(
+								"string",
+								opSchematest.WithXml(&opSchema.Xml{Attribute: true}),
+							),
+						),
+						opSchematest.WithRequired("id"),
+					)),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ messages: [{ data: { id: '123456' } }] })
+					}
+				`))
+
+				require.NoError(t, err)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Equal(t, "gbrmarxhk", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `<foo id="123456"></foo>`, kafka.BytesToString(b.Records[0].Value))
+
+				err = e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ topic: 'foo', messages: [{  }] })
+					}
+				`))
+
+				require.NoError(t, err)
+				b, errCode = app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(1, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Equal(t, "ijbptapwy", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `<foo id="98173564-6619-4557-888e-65b16bb5def5"></foo>`, kafka.BytesToString(b.Records[0].Value))
+			},
+		},
+		{
+			name: "content-type is xml with OpenAPI schema using XML but data is not valid",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithContentType("application/xml"),
+
+					asyncapi3test.WithPayloadOpenAPI(opSchematest.New("object",
+						opSchematest.WithXml(&opSchema.Xml{Name: "foo"}),
+						opSchematest.WithProperty(
+							"id",
+							opSchematest.New(
+								"string",
+								opSchematest.WithXml(&opSchema.Xml{Attribute: true}),
+							),
+						),
+						opSchematest.WithRequired("id"),
+					)),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ messages: [{ data: { foo: 'bar' } }] })
+					}
+				`))
+				require.EqualError(t, err, "failed to produce message to Kafka topic 'foo': no matching message configuration found for the given value: {\"foo\":\"bar\"}\nhint:\nencoding data to 'application/xml' failed: error count 1:\n\t- #/required: required properties are missing: id\n at mokapi/js/kafka.(*Module).Produce-fm (native)")
 			},
 		},
 	}
@@ -685,6 +745,10 @@ func getConfig(c *asyncapi3.Config) *dynamic.Config {
 	u, _ := url.Parse("foo.bar")
 	cfg := &dynamic.Config{Data: c}
 	cfg.Info.Url = u
+	err := c.Parse(cfg, &dynamictest.Reader{})
+	if err != nil {
+		panic(err)
+	}
 	return cfg
 }
 

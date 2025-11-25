@@ -87,7 +87,7 @@ func (p *Parser) parseLinkedMap(m *sortedmap.LinkedHashMap[string, interface{}],
 	if !s.IsFreeForm() {
 		var additionalProps []string
 		for it := m.Iter(); it.Next(); {
-			name := fmt.Sprintf("%v", it.Key())
+			name := it.Key()
 			if _, found := obj.Get(name); !found {
 				if s.AdditionalProperties.IsFalse() {
 					if !p.ValidateAdditionalProperties {
@@ -143,6 +143,9 @@ func (p *Parser) parseStruct(v reflect.Value, s *schema.Schema, evaluated map[st
 	obj := sortedmap.NewLinkedHashMap()
 	for i := 0; i < v.NumField(); i++ {
 		ft := t.Field(i)
+		if ft.PkgPath == "" {
+			continue
+		}
 		name := unTitle(ft.Name)
 		tag := ft.Tag.Get("json")
 		if len(tag) > 0 {

@@ -1,4 +1,4 @@
-package schema_test
+package openapi_test
 
 import (
 	"fmt"
@@ -12,6 +12,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 )
+
+func toFloatP(f float64) *float64 { return &f }
 
 func TestRef_Unmarshal_Json(t *testing.T) {
 	testcases := []struct {

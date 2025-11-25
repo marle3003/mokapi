@@ -159,6 +159,7 @@ func TestScript_Faker(t *testing.T) {
 			},
 		},
 		{
+			// Using sync fake and custom node requires to separate them into different JS files
 			name: "find node",
 			test: func(t *testing.T, host *enginetest.Host) {
 				host.FindFakerNodeFunc = func(name string) *generator.Node {
@@ -166,8 +167,49 @@ func TestScript_Faker(t *testing.T) {
 				}
 
 				s, err := jstest.New(jstest.WithSource(
+					`import { findByName } from 'mokapi/faker'
+							export default function() {
+								let root = findByName('root')
+								root.children.push({
+									name: 'foo',
+									fake: (r) => {
+										return 'bar'
+									}
+								})
+							}`), js.WithHost(host))
+				r.NoError(t, err)
+				_, err = s.RunDefault()
+				r.NoError(t, err)
+
+				s, err = jstest.New(jstest.WithSource(
 					`import { fake, findByName } from 'mokapi/faker'
 						 export default function() {
+							return fake({ type: 'object', properties: { foo: { type: 'string'} } })
+						 }`),
+					js.WithHost(host))
+				r.NoError(t, err)
+				v, err := s.RunDefault()
+				r.NoError(t, err)
+				r.Equal(t, map[string]interface{}{
+					"foo": "bar",
+				}, v.Export())
+				r.NoError(t, err)
+				n := generator.FindByName(generator.RootName)
+				err = n.Remove("foo")
+				r.NoError(t, err)
+			},
+		},
+		{
+			// When using fakeAsync both can be in the same JS file
+			name: "find node with async",
+			test: func(t *testing.T, host *enginetest.Host) {
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					return generator.FindByName(name)
+				}
+
+				s, err := jstest.New(jstest.WithSource(
+					`import { fakeAsync, findByName } from 'mokapi/faker'
+						 export default async function() {
 						 	let root = findByName('root')
 							root.children.push({
 								name: 'foo',
@@ -175,7 +217,7 @@ func TestScript_Faker(t *testing.T) {
 									return 'bar'
 								}
 							})
-							return fake({ type: 'object', properties: { foo: { type: 'string'} } })
+							return await fakeAsync({ type: 'object', properties: { foo: { type: 'string'} } })
 						 }`),
 					js.WithHost(host))
 				r.NoError(t, err)

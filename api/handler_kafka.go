@@ -214,7 +214,7 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 			}
 			c := store.NewClient(k.Store, h.app.Monitor.Kafka)
 			ct := media.ParseContentType(r.Header.Get("Content-Type"))
-			result, err := c.Write(topicName, records, &ct)
+			result, err := c.Write(topicName, records, ct)
 			if err != nil {
 				if errors.Is(err, store.TopicNotFound) || errors.Is(err, store.PartitionNotFound) {
 					writeError(w, err, http.StatusNotFound)
@@ -288,7 +288,7 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 			}
 			c := store.NewClient(k.Store, h.app.Monitor.Kafka)
 			ct := media.ParseContentType(r.Header.Get("Content-Type"))
-			result, err := c.Write(topicName, records, &ct)
+			result, err := c.Write(topicName, records, ct)
 			if err != nil {
 				if errors.Is(err, store.TopicNotFound) || errors.Is(err, store.PartitionNotFound) {
 					writeError(w, err, http.StatusNotFound)

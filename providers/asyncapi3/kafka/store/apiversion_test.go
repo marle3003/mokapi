@@ -1,7 +1,6 @@
 package store_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/apiVersion"
@@ -12,6 +11,8 @@ import (
 	"net"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestApiVersion(t *testing.T) {
@@ -54,7 +55,7 @@ func TestApiVersion_Raw(t *testing.T) {
 		}
 	}
 	require.NoError(t, err)
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	r := &kafka.Request{
 		Header: &kafka.Header{
@@ -63,10 +64,12 @@ func TestApiVersion_Raw(t *testing.T) {
 		},
 		Message: &apiVersion.Request{},
 	}
-	r.Write(conn)
+	err = r.Write(conn)
+	require.NoError(t, err)
 
 	buf := make([]byte, 256)
-	conn.Read(buf)
+	_, err = conn.Read(buf)
+	require.NoError(t, err)
 
 	// compare the first few bytes
 	expect := []byte{
@@ -89,4 +92,31 @@ func TestApiVersion_Raw(t *testing.T) {
 	}
 
 	require.Equal(t, expect, buf[0:len(expect)])
+}
+
+func TestApiVersion_Client_Is_Ahead(t *testing.T) {
+	s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{})
+	defer s.Close()
+
+	r := kafkatest.NewRequest("kafkatest", 30, &apiVersion.Request{
+		ClientSwName:    "kafkatest",
+		ClientSwVersion: "1.0",
+	})
+	rr := kafkatest.NewRecorder()
+	s.ServeMessage(rr, r)
+
+	// handler should change the version to zero
+	require.Equal(t, int16(0), r.Header.ApiVersion)
+
+	res, ok := rr.Message.(*apiVersion.Response)
+	require.True(t, ok)
+	require.Equal(t, kafka.UnsupportedVersion, res.ErrorCode)
+	require.Equal(t, len(kafka.ApiTypes), len(res.ApiKeys))
+
+	for _, a := range res.ApiKeys {
+		match, ok := kafka.ApiTypes[a.ApiKey]
+		require.True(t, ok, "api key is defined")
+		require.Equal(t, match.MinVersion, a.MinVersion, "%v min version exp: %v, got: %v", a.ApiKey, match.MinVersion, a.MinVersion)
+		require.Equal(t, match.MaxVersion, a.MaxVersion, "%v max version exp: %v, got: %v", a.ApiKey, match.MaxVersion, a.MaxVersion)
+	}
 }

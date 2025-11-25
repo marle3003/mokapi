@@ -2,9 +2,11 @@ package eventloop
 
 import (
 	"fmt"
-	"github.com/dop251/goja"
+	"mokapi/engine/common"
 	"sync"
 	"time"
+
+	"github.com/dop251/goja"
 )
 
 type timeout struct {
@@ -17,8 +19,15 @@ type interval struct {
 	stop   chan struct{}
 }
 
+type JobFunc func(vm *goja.Runtime) (goja.Value, error)
+
+type JobContext struct {
+	EventLogger func(level, message string)
+}
+
 type EventLoop struct {
-	vm *goja.Runtime
+	vm   *goja.Runtime
+	host common.Host
 
 	exports goja.Value
 
@@ -31,9 +40,10 @@ type EventLoop struct {
 	waitLock sync.Mutex
 }
 
-func New(vm *goja.Runtime) *EventLoop {
+func New(vm *goja.Runtime, host common.Host) *EventLoop {
 	r := &EventLoop{
 		vm:        vm,
+		host:      host,
 		queueChan: make(chan func(), 1),
 		stopChan:  make(chan struct{}, 1),
 	}
@@ -57,21 +67,28 @@ func (loop *EventLoop) Run(fn func(vm *goja.Runtime)) {
 	}
 }
 
-func (loop *EventLoop) RunSync(fn func(vm *goja.Runtime)) {
+func (loop *EventLoop) RunSync(fn func(vm *goja.Runtime) (goja.Value, error)) (goja.Value, error) {
 	done := make(chan struct{})
+	var result goja.Value
+	var err error
 	loop.queueChan <- func() {
-		fn(loop.vm)
+		result, err = fn(loop.vm)
 		done <- struct{}{}
 	}
 
 	<-done
+	return result, err
 }
 
-func (loop *EventLoop) RunAsync(fn func(vm *goja.Runtime) (goja.Value, error)) (goja.Value, error) {
+func (loop *EventLoop) RunAsync(fn JobFunc, ctx *JobContext) (goja.Value, error) {
 	if loop.running {
 		var result goja.Value
 		var err error
 		done := make(chan struct{})
+		if ctx.EventLogger != nil {
+			loop.host.SetEventLogger(ctx.EventLogger)
+			defer loop.host.SetEventLogger(nil)
+		}
 		loop.queueChan <- func() {
 			defer func() {
 				if r := recover(); r != nil {

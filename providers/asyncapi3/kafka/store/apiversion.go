@@ -9,15 +9,23 @@ import (
 func (s *Store) apiversion(rw kafka.ResponseWriter, req *kafka.Request) error {
 	r := req.Message.(*apiVersion.Request)
 
+	res := &apiVersion.Response{
+		ApiKeys: make([]apiVersion.ApiKeyResponse, 0, len(kafka.ApiTypes)),
+	}
+
+	if req.Header.ApiVersion > kafka.ApiTypes[kafka.ApiVersions].MaxVersion {
+		// client is ahead, broker must respond with version 0 and error code
+		// UNSUPPORTED_VERSION
+		req.Header.ApiVersion = 0
+		res.ErrorCode = kafka.UnsupportedVersion
+	}
+
 	if req.Header.ApiVersion >= 3 {
 		client := kafka.ClientFromContext(req)
 		client.ClientSoftwareName = r.ClientSwName
 		client.ClientSoftwareVersion = r.ClientSwVersion
 	}
 
-	res := &apiVersion.Response{
-		ApiKeys: make([]apiVersion.ApiKeyResponse, 0, len(kafka.ApiTypes)),
-	}
 	keys := make([]int, 0, len(kafka.ApiTypes))
 	for k := range kafka.ApiTypes {
 		keys = append(keys, int(k))

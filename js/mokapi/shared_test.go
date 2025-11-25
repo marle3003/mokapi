@@ -21,7 +21,7 @@ func TestModule_Shared(t *testing.T) {
 			vm := goja.New()
 			vm.SetFieldNameMapper(goja.TagFieldNameMapper("json", true))
 			host := &enginetest.Host{StoreTest: store}
-			loop := eventloop.New(vm)
+			loop := eventloop.New(vm, host)
 			defer loop.Stop()
 			loop.StartLoop()
 			js.EnableInternal(vm, host, loop, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
@@ -208,6 +208,40 @@ func TestModule_Shared(t *testing.T) {
 			},
 		},
 		{
+			name: "update with predefined object",
+			test: func(t *testing.T, newVm func() *goja.Runtime) {
+				vm1 := newVm()
+				vm2 := newVm()
+
+				_, err := vm1.RunString(`
+					const m = require('mokapi');
+					const foo = { bar: 123 }
+					m.shared.update('foo', (v) => v ?? foo);
+					foo
+				`)
+				r.NoError(t, err)
+
+				v, err := vm2.RunString(`
+					const m = require('mokapi');
+					const foo = m.shared.update('foo', (v) => v ?? {});
+					foo;
+				`)
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{"bar": int64(123)}, mokapi.Export(v))
+
+				v, err = vm2.RunString(`
+					foo.bar = 789
+				`)
+				r.NoError(t, err)
+
+				v, err = vm1.RunString(`
+					foo
+				`)
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{"bar": int64(789)}, mokapi.Export(v))
+			},
+		},
+		{
 			name: "update with array",
 			test: func(t *testing.T, newVm func() *goja.Runtime) {
 				vm1 := newVm()
@@ -258,7 +292,39 @@ func TestModule_Shared(t *testing.T) {
 			},
 		},
 		{
+			name: "push array",
+			test: func(t *testing.T, newVm func() *goja.Runtime) {
+				vm1 := newVm()
+
+				v, err := vm1.RunString(`
+					const m = require('mokapi');
+					m.shared.set('foo', [1,2])
+					const shared = m.shared.get('foo');
+					shared.push(3)
+					m.shared.get('foo')
+				`)
+				r.NoError(t, err)
+				r.Equal(t, []any{int64(1), int64(2), int64(3)}, mokapi.Export(v))
+			},
+		},
+		{
 			name: "splice array",
+			test: func(t *testing.T, newVm func() *goja.Runtime) {
+				vm1 := newVm()
+
+				v, err := vm1.RunString(`
+					const m = require('mokapi');
+					m.shared.set('foo', [1,2,3])
+					const shared = m.shared.get('foo');
+					shared.splice(1, 1)
+					m.shared.get('foo')
+				`)
+				r.NoError(t, err)
+				r.Equal(t, []any{int64(1), int64(3)}, mokapi.Export(v))
+			},
+		},
+		{
+			name: "splice array using update",
 			test: func(t *testing.T, newVm func() *goja.Runtime) {
 				vm1 := newVm()
 
@@ -270,6 +336,27 @@ func TestModule_Shared(t *testing.T) {
 				`)
 				r.NoError(t, err)
 				r.Equal(t, []any{int64(1), int64(3)}, mokapi.Export(v))
+			},
+		},
+		{
+			name: "delete",
+			test: func(t *testing.T, newVm func() *goja.Runtime) {
+				vm1 := newVm()
+
+				v, err := vm1.RunString(`
+					const m = require('mokapi');
+					m.shared.set('foo', 123);
+					m.shared.keys()
+				`)
+				r.NoError(t, err)
+				r.Equal(t, []string{"foo"}, mokapi.Export(v))
+
+				v, err = vm1.RunString(`
+					m.shared.delete('foo');
+					m.shared.keys()
+				`)
+				r.NoError(t, err)
+				r.Equal(t, []string{}, mokapi.Export(v))
 			},
 		},
 	}

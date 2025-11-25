@@ -2,12 +2,14 @@ package parser
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/sortedmap"
 	"reflect"
 	"sort"
 	"strings"
 	"unicode"
+	"unicode/utf8"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func ToString(i interface{}) string {
@@ -166,6 +168,13 @@ func toType(i interface{}) string {
 
 	switch v.Kind() {
 	case reflect.Slice, reflect.Array:
+		if v.Type().Elem().Kind() == reflect.Uint8 {
+			b := v.Bytes()
+			if utf8.Valid(b) {
+				return "string"
+			}
+			return "bytes"
+		}
 		return "array"
 	case reflect.Struct, reflect.Map:
 		return "object"

@@ -4,9 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/dop251/goja"
+	"mokapi/engine/common"
+	"mokapi/js/eventloop"
 	"mokapi/js/util"
+	"net/http"
 	"reflect"
+
+	"github.com/dop251/goja"
 )
 
 type onArgs struct {
@@ -21,8 +25,8 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 		panic(m.vm.ToValue(err.Error()))
 	}
 
-	f := func(args ...interface{}) (bool, error) {
-		origin, err := getHashes(args...)
+	f := func(ctx *common.EventContext) (bool, error) {
+		origin, err := getHashes(ctx.Args...)
 		if err != nil {
 			return false, err
 		}
@@ -31,15 +35,25 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 		r, err = m.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
 			call, _ := goja.AssertFunction(do)
 			var params []goja.Value
-			for _, v := range args {
-				params = append(params, vm.ToValue(v))
+			for _, v := range ctx.Args {
+				params = append(params, ArgToJs(v, m.vm))
 			}
 			v, err := call(goja.Undefined(), params...)
 			if err != nil {
 				return nil, err
 			}
+			/*for i, param := range params {
+				e := param.Export()
+				if p, ok := e.(*Proxy); ok {
+					rv := reflect.ValueOf(ctx.Args[i])
+					if rv.Kind() != reflect.Ptr {
+						panic(m.vm.ToValue(fmt.Errorf("parameter %v is not a pointer", i)))
+					}
+					rv.Elem().Set(reflect.ValueOf(p.Export()))
+				}
+			}*/
 			return v, nil
-		})
+		}, &eventloop.JobContext{EventLogger: ctx.EventLogger})
 
 		if err != nil {
 			return false, err
@@ -53,7 +67,7 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 			return eventArgs.track, nil
 		}
 
-		newHashes, err := getHashes(args...)
+		newHashes, err := getHashes(ctx.Args...)
 		if err != nil {
 			return false, err
 		}
@@ -123,4 +137,26 @@ func haveChanges(origin [][]byte, new [][]byte) bool {
 		}
 	}
 	return false
+}
+
+func ArgToJs(arg any, vm *goja.Runtime) goja.Value {
+	switch v := (arg).(type) {
+	case *common.EventResponse:
+		return vm.NewDynamicObject(&Proxy{
+			target: reflect.ValueOf(v),
+			vm:     vm,
+			ToJSValue: func(vm *goja.Runtime, key string, val any) goja.Value {
+				p := NewProxy(val, vm)
+
+				switch key {
+				case "headers":
+					p.KeyNormalizer = http.CanonicalHeaderKey
+				}
+
+				return vm.NewDynamicObject(p)
+			},
+		})
+	default:
+		return vm.ToValue(v)
+	}
 }

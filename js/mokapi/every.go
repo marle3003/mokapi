@@ -1,6 +1,8 @@
 package mokapi
 
 import (
+	"mokapi/js/eventloop"
+
 	"github.com/dop251/goja"
 )
 
@@ -18,7 +20,7 @@ func (m *Module) Every(every string, do goja.Value, args goja.Value) (int, error
 				return nil, err
 			}
 			return v, nil
-		})
+		}, &eventloop.JobContext{})
 		if err != nil {
 			panic(m.vm.ToValue(err.Error()))
 		}
