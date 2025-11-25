@@ -9,6 +9,10 @@ func CreateValue(s *Schema) (interface{}, error) {
 		return generator.New(&generator.Request{})
 	}
 	c := &JsonSchemaConverter{}
-	r := c.Convert(s)
-	return generator.New(&generator.Request{Schema: r})
+	r := &generator.Request{Schema: c.Convert(s)}
+	if s.Xml != nil && s.Xml.Name != "" {
+		r.Path = append(r.Path, s.Xml.Name)
+	}
+
+	return generator.New(r)
 }

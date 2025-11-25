@@ -51,17 +51,8 @@ function selectedContentChange(event: any, statusCode: number | string){
         }
     }
 }
-const name = computed(() => {
-    const segments = props.path.path.split('/').reverse()
-    for (const seg of segments) {
-        if (seg === '') {
-            continue
-        }
-        if (!seg.startsWith('{')) {
-            return seg
-        }
-    }
-    return ''
+const examplePath = computed(() => {
+    return props.path.path.split('/').reverse().filter(x => x.startsWith('{'))
 })
 </script>
 
@@ -95,7 +86,7 @@ const name = computed(() => {
                                             <schema-expand :schema="selected.contents[response.statusCode]!.schema" />
                                         </div>
                                         <div class="col-auto px-2 mt-1">
-                                            <schema-validate :source="{ preview: { content: '', contentType: selected.contents[response.statusCode]!.type }}" :schema="{schema: selected.contents[response.statusCode]!.schema, format: 'application/vnd.oai.openapi+json;version=3.0.0'}" :name="name" />
+                                            <schema-validate :source="{ preview: { content: '', contentType: selected.contents[response.statusCode]!.type }}" :schema="{schema: selected.contents[response.statusCode]!.schema, format: 'application/vnd.oai.openapi+json;version=3.0.0'}" :example="{ path: examplePath }" />
                                         </div>
                                         <div class="col-auto px-2 mt-1">
                                             <select v-if="response.contents.length > 0" class="form-select form-select-sm" aria-label="Response content type" @change="selectedContentChange($event, response.statusCode)">

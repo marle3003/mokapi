@@ -632,6 +632,14 @@ func TestGeneratorObject(t *testing.T) {
 				schematest.WithRequired("address"),
 			),
 		},
+		{
+			name: "using XML name",
+			exp:  map[string]any{"name": "John Flores"},
+			schema: schematest.New("object",
+				schematest.WithProperty("name", schematest.New("string")),
+				schematest.WithXml(&schema.Xml{Name: "person"}),
+			),
+		},
 	}
 
 	for _, data := range testdata {

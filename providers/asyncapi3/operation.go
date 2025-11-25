@@ -1,8 +1,9 @@
 package asyncapi3
 
 import (
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
+
+	"gopkg.in/yaml.v3"
 )
 
 type OperationRef struct {
@@ -55,6 +56,10 @@ func (r *OperationTraitRef) UnmarshalJSON(b []byte) error {
 }
 
 func (r *OperationRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
+	if r == nil {
+		return nil
+	}
+
 	if len(r.Ref) > 0 {
 		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
 	}

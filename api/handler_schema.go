@@ -24,6 +24,7 @@ type schemaInfo struct {
 
 type requestExample struct {
 	Name         string
+	Path         []string
 	Format       string
 	Schema       interface{}
 	ContentTypes []string
@@ -61,10 +62,20 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 		re.ContentTypes = []string{"application/json"}
 	}
 
+	req := &generator.Request{}
+	if re.Name != "" {
+		req.Path = []string{re.Name}
+	} else if re.Path != nil {
+		req.Path = re.Path
+	}
+
 	var s *jsonSchema.Schema
 	switch t := re.Schema.(type) {
 	case *openApiSchema.Schema:
 		s = openApiSchema.ConvertToJsonSchema(t)
+		if t.Xml != nil && t.Xml.Name != "" {
+			req.Path = append(req.Path, t.Xml.Name)
+		}
 	case *avro.Schema:
 		s = avro.ConvertToJsonSchema(t)
 	default:
@@ -75,11 +86,9 @@ func (h *handler) getExampleData(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	req.Schema = s
 
-	rnd, err := generator.New(&generator.Request{
-		Path:   []string{re.Name},
-		Schema: s,
-	})
+	rnd, err := generator.New(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -254,6 +263,11 @@ func (r *requestExample) UnmarshalJSON(data []byte) error {
 				return err
 			}
 			r.Name = t.(string)
+		case "path":
+			err = d.Decode(&r.Path)
+			if err != nil {
+				return err
+			}
 		case "format":
 			t, err = d.Token()
 			if err != nil {
@@ -267,6 +281,12 @@ func (r *requestExample) UnmarshalJSON(data []byte) error {
 			}
 		case "contentTypes":
 			err = d.Decode(&r.ContentTypes)
+			if err != nil {
+				return err
+			}
+		default:
+			var discard json.RawMessage
+			err = d.Decode(&discard)
 			if err != nil {
 				return err
 			}

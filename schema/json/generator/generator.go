@@ -1,10 +1,11 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
 	"math/rand"
 	"mokapi/config/static"
 	"time"
+
+	"github.com/brianvoe/gofakeit/v6"
 )
 
 var types = []any{"string", "number", "integer", "boolean", "array", "object", "null"}

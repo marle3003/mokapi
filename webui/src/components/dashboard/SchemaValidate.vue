@@ -17,9 +17,14 @@ declare interface State {
     view: 'preview'  | 'binary'
 }
 
+declare interface ExampleRequest {
+    name?: string
+    path?: string[]
+}
+
 const props = withDefaults(defineProps<{
   schema: SchemaFormat
-  name?: string
+  example?: ExampleRequest
   title?: string
   source: {
         filename?: string
@@ -46,7 +51,8 @@ const state = reactive<State>({
 })
 
 const exampleRequest = {
-    name: props.name,
+    name: props.example?.name,
+    path: props.example?.path,
     schema: props.schema,
     contentTypes: Array()
 }

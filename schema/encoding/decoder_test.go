@@ -2,7 +2,6 @@ package encoding_test
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"io"
 	"mokapi/media"
 	"mokapi/schema/encoding"
@@ -10,6 +9,8 @@ import (
 	"mokapi/schema/json/schema/schematest"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestDecode(t *testing.T) {
@@ -38,7 +39,7 @@ func TestDecode(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, v any, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected object but got array")
+				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected object but got string")
 			},
 		},
 		{
