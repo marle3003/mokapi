@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
+	"mokapi/media"
 	openapi "mokapi/providers/openapi/schema"
 	avro "mokapi/schema/avro/schema"
+	"mokapi/schema/encoding"
 	jsonSchema "mokapi/schema/json/schema"
 	"reflect"
+
+	"gopkg.in/yaml.v3"
 )
 
 type SchemaRef struct {
@@ -90,6 +93,20 @@ func (r *SchemaRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	}
 
 	return r.Value.parse(config, reader)
+}
+
+func (m *MultiSchemaFormat) Marshal(v any, ct media.ContentType) ([]byte, error) {
+	switch s := m.Schema.(type) {
+	case *jsonSchema.Schema:
+		e := encoding.NewEncoder(s)
+		return e.Write(v, ct)
+	case *avro.Schema:
+		return s.Marshal(v)
+	case *openapi.Schema:
+		return s.Marshal(v, ct)
+	default:
+		return nil, fmt.Errorf("unsupported schema type: %T", v)
+	}
 }
 
 func (m *MultiSchemaFormat) parse(config *dynamic.Config, reader dynamic.Reader) error {

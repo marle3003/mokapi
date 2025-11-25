@@ -2,7 +2,6 @@ package store_test
 
 import (
 	"encoding/base64"
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/media"
 	"mokapi/providers/asyncapi3"
@@ -12,6 +11,8 @@ import (
 	"mokapi/runtime/monitor"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestClient(t *testing.T) {
@@ -27,7 +28,7 @@ func TestClient(t *testing.T) {
 				c := store.NewClient(s, monitor)
 				ct := media.ParseContentType("application/json")
 
-				result, err := c.Write("foo", []store.Record{}, &ct)
+				result, err := c.Write("foo", []store.Record{}, ct)
 				require.EqualError(t, err, "topic not found")
 				require.Nil(t, result)
 
@@ -47,7 +48,7 @@ func TestClient(t *testing.T) {
 				ct := media.ParseContentType("application/json")
 				result, err := c.Write("foo", []store.Record{{
 					Partition: 1,
-				}}, &ct)
+				}}, ct)
 				require.EqualError(t, err, "partition not found")
 				require.Nil(t, result)
 
@@ -77,7 +78,7 @@ func TestClient(t *testing.T) {
 					Value: map[string]interface{}{
 						"foo": "foo",
 					},
-				}}, &ct)
+				}}, ct)
 				require.NoError(t, err)
 				require.Len(t, result, 1)
 				require.Equal(t, 0, result[0].Partition)
@@ -108,7 +109,7 @@ func TestClient(t *testing.T) {
 					Value: map[string]interface{}{
 						"foo": "foo",
 					},
-				}}, &ct)
+				}}, ct)
 				require.NoError(t, err)
 				require.Len(t, result, 1)
 				require.Equal(t, 0, result[0].Partition)
@@ -138,7 +139,7 @@ func TestClient(t *testing.T) {
 				result, err := c.Write("foo", []store.Record{{
 					Key:   []byte("12345"),
 					Value: []byte(`{"foo":"bar"}`),
-				}}, &ct)
+				}}, ct)
 				require.NoError(t, err)
 				require.Len(t, result, 1)
 				require.Equal(t, "", result[0].Error)
@@ -195,7 +196,7 @@ func TestClient(t *testing.T) {
 				result, err := c.Write("foo", []store.Record{{
 					Key:   "12345",
 					Value: `{"foo":"bar"}`,
-				}}, &ct)
+				}}, ct)
 				require.NoError(t, err)
 				require.Len(t, result, 1)
 				require.Equal(t, 0, result[0].Partition)
@@ -225,7 +226,7 @@ func TestClient(t *testing.T) {
 				result, err := c.Write("foo", []store.Record{{
 					Key:   "12345",
 					Value: "eyJmb28iOiJiYXIifQ==",
-				}}, &ct)
+				}}, ct)
 				require.NoError(t, err)
 				require.Len(t, result, 1)
 				require.Equal(t, 0, result[0].Partition)
@@ -255,7 +256,7 @@ func TestClient(t *testing.T) {
 				result, err := c.Write("foo", []store.Record{{
 					Key:   1234,
 					Value: `{"foo":"bar"}`,
-				}}, &ct)
+				}}, ct)
 				require.NoError(t, err)
 				require.Len(t, result, 1)
 				require.Equal(t, 0, result[0].Partition)
@@ -287,7 +288,7 @@ func TestClient(t *testing.T) {
 					Key:       1234,
 					Value:     `{"foo":"bar"}`,
 					Partition: 1,
-				}}, &ct)
+				}}, ct)
 				require.NoError(t, err)
 				require.Len(t, result, 1)
 				require.Equal(t, 1, result[0].Partition)
@@ -332,7 +333,7 @@ func TestClient(t *testing.T) {
 					Value:     `{"foo":"bar"}`,
 					Headers:   []store.RecordHeader{{Name: "yuh", Value: "bar"}},
 					Partition: 1,
-				}}, &ct)
+				}}, ct)
 				require.NoError(t, err)
 				require.Len(t, result, 1)
 				require.Equal(t, 1, result[0].Partition)

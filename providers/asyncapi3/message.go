@@ -1,9 +1,10 @@
 package asyncapi3
 
 import (
+	"mokapi/config/dynamic"
+
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-	"mokapi/config/dynamic"
 )
 
 type MessageRef struct {
@@ -109,8 +110,8 @@ func (r *MessageRef) parse(config *dynamic.Config, reader dynamic.Reader) error 
 			r.Value.ContentType = cfg.DefaultContentType
 		}
 		if r.Value.ContentType == "" {
-			log.Warn("content type is missing, using application/json")
-			r.Value.ContentType = "application/json"
+			log.Warnf("content type is missing, using default %s", DefaultContentType)
+			r.Value.ContentType = DefaultContentType
 		}
 	}
 

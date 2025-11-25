@@ -661,7 +661,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 						Key:   "foo",
 						Value: map[string]interface{}{"value": "bar"},
 					},
-				}, &ct)
+				}, ct)
 
 				return app
 			},
@@ -700,7 +700,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 						Key:   "foo",
 						Value: map[string]interface{}{"value": "bar"},
 					},
-				}, &ct)
+				}, ct)
 
 				return app
 			},

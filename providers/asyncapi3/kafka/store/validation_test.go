@@ -1,15 +1,18 @@
 package store_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
+	opSchema "mokapi/providers/openapi/schema"
+	opSchematest "mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime/events"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidation(t *testing.T) {
@@ -34,15 +37,49 @@ func TestValidation(t *testing.T) {
 			),
 			test: func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				p := s.Topic("foo").Partition(0)
-				_, batch, err := p.Write(kafka.RecordBatch{
+				_, recordErrors, err := p.Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
-							Value: kafka.NewBytes([]byte("")),
+							Key:   kafka.NewBytes([]byte("key-foo")),
+							Value: kafka.NewBytes([]byte("foo")),
+						},
+						{
+							Key:   kafka.NewBytes([]byte("key-bar")),
+							Value: kafka.NewBytes([]byte("bar")),
 						},
 					},
 				})
 				require.NoError(t, err)
-				require.Len(t, batch, 0)
+				require.Len(t, recordErrors, 0)
+				e := sm.GetEvents(events.NewTraits())
+				require.Len(t, e, 2)
+				// latest message is first
+				require.Equal(t,
+					&store.KafkaLog{
+						Offset:    1,
+						Key:       store.LogValue{Value: "", Binary: []byte("key-bar")},
+						Message:   store.LogValue{Value: "", Binary: []byte("bar")},
+						SchemaId:  0,
+						MessageId: "foo",
+						Partition: 0,
+						Headers:   map[string]store.LogValue{},
+						Deleted:   false,
+						Api:       "test",
+					},
+					e[0].Data.(*store.KafkaLog))
+				require.Equal(t,
+					&store.KafkaLog{
+						Offset:    0,
+						Key:       store.LogValue{Value: "", Binary: []byte("key-foo")},
+						Message:   store.LogValue{Value: "", Binary: []byte("foo")},
+						SchemaId:  0,
+						MessageId: "foo",
+						Partition: 0,
+						Headers:   map[string]store.LogValue{},
+						Deleted:   false,
+						Api:       "test",
+					},
+					e[1].Data.(*store.KafkaLog))
 			},
 		},
 		{
@@ -119,7 +156,7 @@ func TestValidation(t *testing.T) {
 					Records: []*kafka.Record{
 						{
 							Key:   kafka.NewBytes([]byte("12")),
-							Value: kafka.NewBytes([]byte("foo")),
+							Value: kafka.NewBytes([]byte("\"foo\"")),
 						},
 					},
 				})
@@ -184,6 +221,66 @@ func TestValidation(t *testing.T) {
 				})
 				require.EqualError(t, err, "validation error: invalid key: error count 1:\n\t- #/minimum: integer 64 is less than minimum value of 100")
 				require.Len(t, batch, 1)
+			},
+		},
+		{
+			name: "xml valid",
+			cfg: asyncapi3test.NewConfig(
+				asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithMessage("foo",
+						asyncapi3test.WithPayloadOpenAPI(opSchematest.New(
+							"object",
+							opSchematest.WithXml(&opSchema.Xml{Name: "foo"}),
+							opSchematest.WithProperty("bar", opSchematest.New("number"))),
+						),
+						asyncapi3test.WithContentType("application/xml"),
+					),
+				),
+			),
+			test: func(t *testing.T, s *store.Store, sm *events.StoreManager) {
+				p := s.Topic("foo").Partition(0)
+				_, batch, err := p.Write(kafka.RecordBatch{
+					Records: []*kafka.Record{
+						{
+							Value: kafka.NewBytes([]byte("<foo><bar>123</bar></foo>")),
+						},
+					},
+				})
+				require.NoError(t, err)
+				require.Len(t, batch, 0)
+
+				e := sm.GetEvents(events.NewTraits())
+				require.Len(t, e, 1)
+				require.Equal(t, "<foo><bar>123</bar></foo>", e[0].Data.(*store.KafkaLog).Message.Value)
+			},
+		},
+		{
+			name: "xml invalid",
+			cfg: asyncapi3test.NewConfig(
+				asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithMessage("foo",
+						asyncapi3test.WithPayloadOpenAPI(
+							opSchematest.New(
+								"object",
+								opSchematest.WithXml(&opSchema.Xml{Name: "foo"}),
+								opSchematest.WithProperty("bar", opSchematest.New("number")),
+								opSchematest.WithRequired("bar"),
+							),
+						),
+						asyncapi3test.WithContentType("application/xml"),
+					),
+				),
+			),
+			test: func(t *testing.T, s *store.Store, sm *events.StoreManager) {
+				p := s.Topic("foo").Partition(0)
+				_, _, err := p.Write(kafka.RecordBatch{
+					Records: []*kafka.Record{
+						{
+							Value: kafka.NewBytes([]byte("<foo></foo>")),
+						},
+					},
+				})
+				require.EqualError(t, err, "validation error: invalid message: error count 1:\n\t- #/required: required properties are missing: bar")
 			},
 		},
 	}

@@ -87,7 +87,7 @@ func (p *Parser) parseLinkedMap(m *sortedmap.LinkedHashMap[string, interface{}],
 	if !s.IsFreeForm() {
 		var additionalProps []string
 		for it := m.Iter(); it.Next(); {
-			name := fmt.Sprintf("%v", it.Key())
+			name := it.Key()
 			if _, found := obj.Get(name); !found {
 				if s.AdditionalProperties.IsFalse() {
 					if !p.ValidateAdditionalProperties {

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
@@ -39,15 +40,11 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 
 	client := store.NewClient(k.Store, c.app.Monitor.Kafka)
 	var produced []common.KafkaMessageResult
-	json := media.ParseContentType("application/json")
-	for _, r := range args.Messages {
-		var ct *media.ContentType
-		value := r.Data
-		if r.Value != nil {
-			value = r.Value
-			ct = &media.ContentType{}
-		} else {
-			ct = &json
+	for _, m := range args.Messages {
+		value := m.Data
+		ct := media.ContentType{}
+		if m.Value != nil {
+			value = m.Value
 		}
 
 		keySchema := &asyncapi3.SchemaRef{
@@ -56,16 +53,23 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 			},
 		}
 		var payload *asyncapi3.SchemaRef
-		msg, err := selectMessage(value, t.Config, k.Config)
+		var msg *asyncapi3.Message
+		msg, err = selectMessage(value, t.Config, k.Config)
+		if err != nil {
+			return nil, fmt.Errorf("failed to produce message to Kafka topic '%v': %w", t.Name, err)
+		}
 		if msg != nil {
 			if msg.Bindings.Kafka.Key != nil {
 				keySchema = msg.Bindings.Kafka.Key
 			}
 			payload = msg.Payload
+			ct = media.ParseContentType(msg.ContentType)
+		} else {
+			ct = media.ParseContentType(k.DefaultContentType)
 		}
 
-		if r.Key == nil {
-			r.Key, err = createValue(keySchema)
+		if m.Key == nil {
+			m.Key, err = createValue(keySchema)
 			if err != nil {
 				return nil, fmt.Errorf("unable to generate kafka key: %v", err)
 			}
@@ -78,30 +82,38 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 			}
 		}
 
+		if m.Value == nil && payload != nil {
+			value, err = payload.Value.Marshal(value, ct)
+			if err != nil {
+				return nil, fmt.Errorf("failed to marshal kafka message: %w", err)
+			}
+		}
+
 		var headers []store.RecordHeader
-		for hk, hv := range r.Headers {
+		for hk, hv := range m.Headers {
 			headers = append(headers, store.RecordHeader{Name: hk, Value: hv})
 		}
 
 		rec, err := client.Write(t.Name, []store.Record{{
-			Key:       r.Key,
-			Value:     value,
-			Headers:   headers,
-			Partition: r.Partition,
+			Key:            m.Key,
+			Value:          value,
+			Headers:        headers,
+			Partition:      m.Partition,
+			SkipValidation: m.Value != nil,
 		}}, ct)
 		if err != nil {
-			return nil, fmt.Errorf("produce kafka message to '%v' failed: %w", t.Name, err)
+			return nil, fmt.Errorf("failed to produce message to Kafka topic '%v': %w", t.Name, err)
 		}
 
 		if rec[0].Error != "" {
-			return nil, fmt.Errorf("produce kafka message to '%v' failed: %s", t.Name, rec[0].Error)
+			return nil, fmt.Errorf("failed to produce message to Kafka topic '%v': %s", t.Name, rec[0].Error)
 		}
 
 		produced = append(produced, common.KafkaMessageResult{
 			Key:       string(rec[0].Key),
 			Value:     string(rec[0].Value),
 			Offset:    rec[0].Offset,
-			Headers:   r.Headers,
+			Headers:   m.Headers,
 			Partition: rec[0].Partition,
 		})
 	}
@@ -217,6 +229,7 @@ func createValue(r *asyncapi3.SchemaRef) (value interface{}, err error) {
 
 func selectMessage(value any, topic *asyncapi3.Channel, cfg *asyncapi3.Config) (*asyncapi3.Message, error) {
 	noOperationDefined := true
+	var validationErr error
 
 	// first try to get send operation
 	for _, op := range cfg.Operations {
@@ -235,7 +248,7 @@ func selectMessage(value any, topic *asyncapi3.Channel, cfg *asyncapi3.Config) (
 				if msg.Value == nil {
 					continue
 				}
-				if valueMatchMessagePayload(value, msg.Value) {
+				if validationErr = valueMatchMessagePayload(value, msg.Value); validationErr == nil {
 					return msg.Value, nil
 				}
 			}
@@ -259,7 +272,7 @@ func selectMessage(value any, topic *asyncapi3.Channel, cfg *asyncapi3.Config) (
 				if msg.Value == nil {
 					continue
 				}
-				if valueMatchMessagePayload(value, msg.Value) {
+				if validationErr = valueMatchMessagePayload(value, msg.Value); validationErr == nil {
 					return msg.Value, nil
 				}
 			}
@@ -271,29 +284,39 @@ func selectMessage(value any, topic *asyncapi3.Channel, cfg *asyncapi3.Config) (
 	}
 
 	if value != nil {
-		return nil, fmt.Errorf("no message configuration matches the message value for topic '%s' and value: %v", topic.GetName(), value)
+		switch value.(type) {
+		case string, []byte:
+			break
+		default:
+			b, err := json.Marshal(value)
+			if err == nil {
+				value = string(b)
+			}
+		}
+		return nil, fmt.Errorf("no matching message configuration found for the given value: %v\nhint:\n%w\n", value, validationErr)
 	}
 	return nil, fmt.Errorf("no message ")
 }
 
-func valueMatchMessagePayload(value any, msg *asyncapi3.Message) bool {
+func valueMatchMessagePayload(value any, msg *asyncapi3.Message) error {
 	if value == nil || msg.Payload == nil {
-		return true
+		return nil
 	}
+	ct := media.ParseContentType(msg.ContentType)
 
 	switch v := msg.Payload.Value.Schema.(type) {
 	case *schema.Schema:
-		_, err := encoding.NewEncoder(v).Write(value, media.ParseContentType("application/json"))
-		return err == nil
+		_, err := encoding.NewEncoder(v).Write(value, ct)
+		return err
 	case *openapi.Schema:
-		_, err := v.Marshal(value, media.ParseContentType("application/json"))
-		return err == nil
+		_, err := v.Marshal(value, ct)
+		return err
 	case *avro.Schema:
 		jsSchema := avro.ConvertToJsonSchema(v)
-		_, err := encoding.NewEncoder(jsSchema).Write(value, media.ParseContentType("application/json"))
-		return err == nil
+		_, err := encoding.NewEncoder(jsSchema).Write(value, ct)
+		return err
 	default:
-		return false
+		return nil
 	}
 }
 

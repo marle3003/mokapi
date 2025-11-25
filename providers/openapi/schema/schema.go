@@ -95,7 +95,7 @@ type Schema struct {
 }
 
 func (s *Schema) HasProperties() bool {
-	return s.Properties != nil && s.Properties.Len() > 0
+	return s != nil && s.Properties != nil && s.Properties.Len() > 0
 }
 
 func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
@@ -310,6 +310,9 @@ func (s *Schema) String() string {
 }
 
 func (s *Schema) IsFreeForm() bool {
+	if s == nil {
+		return true
+	}
 	if !s.Type.Includes("object") {
 		return false
 	}

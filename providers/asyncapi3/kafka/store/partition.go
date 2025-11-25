@@ -123,7 +123,15 @@ func (p *Partition) Read(offset int64, maxBytes int) (kafka.RecordBatch, kafka.E
 	}
 }
 
+func (p *Partition) WriteSkipValidation(batch kafka.RecordBatch) (baseOffset int64, records []produce.RecordError, err error) {
+	return p.write(batch, true)
+}
+
 func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, records []produce.RecordError, err error) {
+	return p.write(batch, false)
+}
+
+func (p *Partition) write(batch kafka.RecordBatch, skipValidation bool) (baseOffset int64, records []produce.RecordError, err error) {
 	if p == nil {
 		return 0, nil, fmt.Errorf("partition is nil")
 	}
@@ -139,6 +147,9 @@ func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, records []
 	for _, r := range batch.Records {
 		var result *KafkaLog
 		result, err = p.validator.Validate(r)
+		if skipValidation && err != nil {
+			err = nil
+		}
 		if err != nil {
 			records = append(records, produce.RecordError{BatchIndex: int32(r.Offset), BatchIndexErrorMessage: err.Error()})
 		}
