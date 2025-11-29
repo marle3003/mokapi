@@ -1,5 +1,5 @@
-import { Locator, expect, test } from "playwright/test"
-import { useTable } from '../components/table'
+import { Locator, expect, test, type Page } from "playwright/test"
+import { useTable } from './table'
 import { formatDateTime } from "../helpers/format"
 
 export interface Topic {
@@ -101,7 +101,7 @@ export function useKafkaPartitions(table: Locator) {
     }
 }
 
-export function useKafkaMessages() {
+export function useKafkaMessages(page: Page) {
     return {
         test: async (table: Locator, withTopic: boolean = true) => {
             await test.step('Check messages log', async () => {
@@ -118,6 +118,21 @@ export function useKafkaMessages() {
                     await expect(message.getCellByName('Topic')).toHaveText('mokapi.shop.products')
                 }
                 await expect(message.getCellByName('Time')).toHaveText(formatDateTime('2023-02-13T09:49:25.482366+01:00'))
+
+                await message.click()
+                await expect(page.getByLabel('Kafka Key', { exact: true })).toHaveText('GGOEWXXX0827')
+                await expect(page.getByLabel('Kafka Topic', { exact: true })).toHaveText('mokapi.shop.products')
+                await expect(page.getByLabel('Service Type', { exact: true })).toHaveText('KAFKA')
+                await expect(page.getByLabel('Offset', { exact: true })).toHaveText('0')
+                await expect(page.getByLabel('Partition', { exact: true })).toHaveText('0')
+                await expect(page.getByText('Producer Id', { exact: true })).not.toBeVisible({ timeout: 100 })
+                await expect(page.getByText('Producer Epoch', { exact: true })).not.toBeVisible({ timeout: 100 })
+                await expect(page.getByText('Sequence Number', { exact: true })).not.toBeVisible({ timeout: 100 })
+                await expect(page.getByLabel('Content Type', { exact: true })).toHaveText('application/json')
+                await expect(page.getByLabel('Key Type', { exact: true })).toHaveText('string')
+                await expect(page.getByLabel('Time', { exact: true })).toHaveText('2023-02-13 09:49:25')
+
+                await page.goBack()
         
                 message = messages.getRow(2)
                 await expect(message.getCellByName('Key')).toHaveText('GGOEWXXX0828')
@@ -126,6 +141,21 @@ export function useKafkaMessages() {
                     await expect(message.getCellByName('Topic')).toHaveText('mokapi.shop.products')
                 }
                 await expect(message.getCellByName('Time')).toHaveText(formatDateTime('2023-02-13T09:49:25.482366+01:00'))
+
+                await message.click()
+                await expect(page.getByLabel('Kafka Key', { exact: true })).toHaveText('GGOEWXXX0828')
+                await expect(page.getByLabel('Kafka Topic', { exact: true })).toHaveText('mokapi.shop.products')
+                await expect(page.getByLabel('Service Type', { exact: true })).toHaveText('KAFKA')
+                await expect(page.getByLabel('Offset', { exact: true })).toHaveText('1')
+                await expect(page.getByLabel('Partition', { exact: true })).toHaveText('1')
+                await expect(page.getByLabel('Producer Id', { exact: true })).toHaveText('3')
+                await expect(page.getByLabel('Producer Epoch', { exact: true })).toHaveText('1')
+                await expect(page.getByLabel('Sequence Number', { exact: true })).toHaveText('1')
+                await expect(page.getByLabel('Content Type', { exact: true })).toHaveText('application/json')
+                await expect(page.getByLabel('Key Type', { exact: true })).toHaveText('string')
+                await expect(page.getByLabel('Time', { exact: true })).toHaveText('2023-02-13 09:49:25')
+
+                await page.goBack()
             })
         }
     }

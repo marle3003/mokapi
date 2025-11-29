@@ -361,6 +361,7 @@ func TestProduce(t *testing.T) {
 						asyncapi3test.WithPayload(schematest.New("integer"))),
 				)
 				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("test", "", ""),
 					asyncapi3test.AddChannel("foo", ch),
 					asyncapi3test.WithOperation("foo",
 						asyncapi3test.WithOperationAction("send"),
@@ -369,6 +370,7 @@ func TestProduce(t *testing.T) {
 				))
 				hook := test.NewGlobal()
 				ctx := kafka.NewClientContext(context.Background(), "127.0.0.1:42424")
+				sm.SetStore(5, events.NewTraits().WithNamespace("kafka"))
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("MOKAPITEST1", 3, &initProducerId.Request{}).WithContext(ctx))
@@ -406,6 +408,15 @@ func TestProduce(t *testing.T) {
 				require.Equal(t, "", res.Topics[0].Partitions[0].ErrorMessage)
 
 				require.Equal(t, 0, len(hook.Entries))
+
+				logs := sm.GetEvents(events.NewTraits().WithNamespace("kafka").WithName("test").With("topic", "foo"))
+				require.Len(t, logs, 1)
+				require.Equal(t, `"foo-1"`, string(logs[0].Data.(*store.KafkaLog).Key.Binary))
+				require.Equal(t, "4", string(logs[0].Data.(*store.KafkaLog).Message.Binary))
+				require.Equal(t, int64(0), logs[0].Data.(*store.KafkaLog).Offset)
+				require.Equal(t, int64(1), logs[0].Data.(*store.KafkaLog).ProducerId)
+				require.Equal(t, int16(0), logs[0].Data.(*store.KafkaLog).ProducerEpoch)
+				require.Equal(t, int32(0), logs[0].Data.(*store.KafkaLog).SequenceNumber)
 			},
 		},
 		{
