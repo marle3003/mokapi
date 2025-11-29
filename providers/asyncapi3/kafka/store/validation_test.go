@@ -37,7 +37,7 @@ func TestValidation(t *testing.T) {
 			),
 			test: func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				p := s.Topic("foo").Partition(0)
-				_, recordErrors, err := p.Write(kafka.RecordBatch{
+				wr, err := p.Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Key:   kafka.NewBytes([]byte("key-foo")),
@@ -50,7 +50,7 @@ func TestValidation(t *testing.T) {
 					},
 				})
 				require.NoError(t, err)
-				require.Len(t, recordErrors, 0)
+				require.Len(t, wr.Records, 0)
 				e := sm.GetEvents(events.NewTraits())
 				require.Len(t, e, 2)
 				// latest message is first
@@ -94,15 +94,16 @@ func TestValidation(t *testing.T) {
 			),
 			test: func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				p := s.Topic("foo").Partition(0)
-				_, batch, err := p.Write(kafka.RecordBatch{
+				wr, err := p.Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Value: kafka.NewBytes([]byte("123")),
 						},
 					},
 				})
-				require.EqualError(t, err, "validation error: invalid message: error count 1:\n\t- #/type: invalid type, expected string but got number")
-				require.Len(t, batch, 1)
+				require.NoError(t, err)
+				require.Equal(t, "invalid message: error count 1:\n\t- #/type: invalid type, expected string but got number", wr.Records[0].BatchIndexErrorMessage)
+				require.Len(t, wr.Records, 1)
 			},
 		},
 		{
@@ -120,7 +121,7 @@ func TestValidation(t *testing.T) {
 			),
 			test: func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				p := s.Topic("foo").Partition(0)
-				_, batch, err := p.Write(kafka.RecordBatch{
+				wr, err := p.Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Key: kafka.NewBytes([]byte("foo")),
@@ -128,7 +129,7 @@ func TestValidation(t *testing.T) {
 					},
 				})
 				require.NoError(t, err)
-				require.Len(t, batch, 0)
+				require.Len(t, wr.Records, 0)
 
 				e := sm.GetEvents(events.NewTraits())
 				require.Len(t, e, 1)
@@ -152,7 +153,7 @@ func TestValidation(t *testing.T) {
 			),
 			test: func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				p := s.Topic("foo").Partition(0)
-				_, batch, err := p.Write(kafka.RecordBatch{
+				wr, err := p.Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Key:   kafka.NewBytes([]byte("12")),
@@ -161,7 +162,7 @@ func TestValidation(t *testing.T) {
 					},
 				})
 				require.NoError(t, err)
-				require.Len(t, batch, 0)
+				require.Len(t, wr.Records, 0)
 
 				e := sm.GetEvents(events.NewTraits())
 				require.Len(t, e, 1)
@@ -185,7 +186,7 @@ func TestValidation(t *testing.T) {
 			),
 			test: func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				p := s.Topic("foo").Partition(0)
-				_, batch, err := p.Write(kafka.RecordBatch{
+				wr, err := p.Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Value: kafka.NewBytes([]byte{0, 0, 0, 0, 1, '"', 'f', 'o', 'o', '"'}),
@@ -193,7 +194,7 @@ func TestValidation(t *testing.T) {
 					},
 				})
 				require.NoError(t, err)
-				require.Len(t, batch, 0)
+				require.Len(t, wr.Records, 0)
 
 				e := sm.GetEvents(events.NewTraits())
 				require.Len(t, e, 1)
@@ -212,15 +213,16 @@ func TestValidation(t *testing.T) {
 			),
 			test: func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				p := s.Topic("foo").Partition(0)
-				_, batch, err := p.Write(kafka.RecordBatch{
+				wr, err := p.Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Headers: []kafka.RecordHeader{{Key: "foo", Value: []byte{64}}},
 						},
 					},
 				})
-				require.EqualError(t, err, "validation error: invalid key: error count 1:\n\t- #/minimum: integer 64 is less than minimum value of 100")
-				require.Len(t, batch, 1)
+				require.NoError(t, err)
+				require.Equal(t, "invalid key: error count 1:\n\t- #/minimum: integer 64 is less than minimum value of 100", wr.Records[0].BatchIndexErrorMessage)
+				require.Len(t, wr.Records, 1)
 			},
 		},
 		{
@@ -239,7 +241,7 @@ func TestValidation(t *testing.T) {
 			),
 			test: func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				p := s.Topic("foo").Partition(0)
-				_, batch, err := p.Write(kafka.RecordBatch{
+				wr, err := p.Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Value: kafka.NewBytes([]byte("<foo><bar>123</bar></foo>")),
@@ -247,7 +249,7 @@ func TestValidation(t *testing.T) {
 					},
 				})
 				require.NoError(t, err)
-				require.Len(t, batch, 0)
+				require.Len(t, wr.Records, 0)
 
 				e := sm.GetEvents(events.NewTraits())
 				require.Len(t, e, 1)
@@ -273,14 +275,15 @@ func TestValidation(t *testing.T) {
 			),
 			test: func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				p := s.Topic("foo").Partition(0)
-				_, _, err := p.Write(kafka.RecordBatch{
+				wr, err := p.Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Value: kafka.NewBytes([]byte("<foo></foo>")),
 						},
 					},
 				})
-				require.EqualError(t, err, "validation error: invalid message: error count 1:\n\t- #/required: required properties are missing: bar")
+				require.NoError(t, err)
+				require.Equal(t, "invalid message: error count 1:\n\t- #/required: required properties are missing: bar", wr.Records[0].BatchIndexErrorMessage)
 			},
 		},
 	}
@@ -314,7 +317,7 @@ func TestValidation_Header(t *testing.T) {
 			),
 			test: func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				p := s.Topic("foo").Partition(0)
-				_, batch, err := p.Write(kafka.RecordBatch{
+				wr, err := p.Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Headers: []kafka.RecordHeader{{Key: "foo", Value: []byte{1, 0, 0, 0}}},
@@ -322,7 +325,7 @@ func TestValidation_Header(t *testing.T) {
 					},
 				})
 				require.NoError(t, err)
-				require.Len(t, batch, 0)
+				require.Len(t, wr.Records, 0)
 
 				e := sm.GetEvents(events.NewTraits())
 				require.Len(t, e, 1)
@@ -341,7 +344,7 @@ func TestValidation_Header(t *testing.T) {
 			),
 			test: func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				p := s.Topic("foo").Partition(0)
-				_, batch, err := p.Write(kafka.RecordBatch{
+				wr, err := p.Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Headers: []kafka.RecordHeader{{Key: "foo", Value: []byte{1, 0, 0, 0}}},
@@ -349,7 +352,7 @@ func TestValidation_Header(t *testing.T) {
 					},
 				})
 				require.NoError(t, err)
-				require.Len(t, batch, 0)
+				require.Len(t, wr.Records, 0)
 
 				e := sm.GetEvents(events.NewTraits())
 				require.Len(t, e, 1)
@@ -365,7 +368,7 @@ func TestValidation_Header(t *testing.T) {
 			),
 			test: func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				p := s.Topic("foo").Partition(0)
-				_, batch, err := p.Write(kafka.RecordBatch{
+				wr, err := p.Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Headers: []kafka.RecordHeader{{Key: "foo", Value: []byte{1, 0, 0, 0}}},
@@ -373,7 +376,7 @@ func TestValidation_Header(t *testing.T) {
 					},
 				})
 				require.NoError(t, err)
-				require.Len(t, batch, 0)
+				require.Len(t, wr.Records, 0)
 
 				e := sm.GetEvents(events.NewTraits())
 				require.Len(t, e, 1)
@@ -392,7 +395,7 @@ func TestValidation_Header(t *testing.T) {
 			),
 			test: func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				p := s.Topic("foo").Partition(0)
-				_, batch, err := p.Write(kafka.RecordBatch{
+				wr, err := p.Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Headers: []kafka.RecordHeader{{Key: "foo", Value: []byte{119, 16, 73, 64}}},
@@ -400,7 +403,7 @@ func TestValidation_Header(t *testing.T) {
 					},
 				})
 				require.NoError(t, err)
-				require.Len(t, batch, 0)
+				require.Len(t, wr.Records, 0)
 
 				e := sm.GetEvents(events.NewTraits())
 				require.Len(t, e, 1)

@@ -10,6 +10,7 @@ import (
 	"mokapi/kafka/fetch"
 	"mokapi/kafka/findCoordinator"
 	"mokapi/kafka/heartbeat"
+	"mokapi/kafka/initProducerId"
 	"mokapi/kafka/joinGroup"
 	"mokapi/kafka/listgroup"
 	"mokapi/kafka/metaData"
@@ -70,6 +71,8 @@ func getApiKey(msg kafka.Message) kafka.ApiKey {
 		return kafka.ListGroup
 	case *createTopics.Request, *createTopics.Response:
 		return kafka.CreateTopics
+	case *initProducerId.Request, *initProducerId.Response:
+		return kafka.InitProducerId
 	default:
 		panic(fmt.Sprintf("unknown type: %v", t))
 	}

@@ -1,13 +1,12 @@
 package store_test
 
 import (
-	"github.com/sirupsen/logrus"
-	"github.com/sirupsen/logrus/hooks/test"
-	"github.com/stretchr/testify/require"
+	"context"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/fetch"
+	"mokapi/kafka/initProducerId"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/offset"
 	"mokapi/kafka/produce"
@@ -19,6 +18,10 @@ import (
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestProduce(t *testing.T) {
@@ -139,7 +142,7 @@ func TestProduce(t *testing.T) {
 			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithChannel("foo")))
-				s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []*kafka.Record{
+				_, _ = s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []*kafka.Record{
 					{
 						Key:   kafka.NewBytes([]byte("foo")),
 						Value: kafka.NewBytes([]byte("bar")),
@@ -264,7 +267,7 @@ func TestProduce(t *testing.T) {
 
 				require.Equal(t, 1, len(hook.Entries))
 				require.Equal(t, logrus.ErrorLevel, hook.LastEntry().Level)
-				require.Equal(t, "kafka Produce: invalid producer clientId 'kafkatest' for topic foo: error count 1:\n\t- #/pattern: string 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'", hook.LastEntry().Message)
+				require.Equal(t, "kafka: failed to write to topic 'foo': invalid producer clientId 'kafkatest' for topic foo: error count 1:\n\t- #/pattern: string 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'", hook.LastEntry().Message)
 			},
 		},
 		{
@@ -347,6 +350,178 @@ func TestProduce(t *testing.T) {
 				require.True(t, ok)
 				require.Equal(t, "foo", res.Topics[0].Name)
 				require.Equal(t, kafka.UnknownTopicOrPartition, res.Topics[0].Partitions[0].ErrorCode, "expected no kafka error")
+			},
+		},
+		{
+			"using producer Id",
+			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
+				ch := asyncapi3test.NewChannel(
+					asyncapi3test.WithMessage("foo",
+						asyncapi3test.WithContentType("application/json"),
+						asyncapi3test.WithPayload(schematest.New("integer"))),
+				)
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("foo",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+					),
+				))
+				hook := test.NewGlobal()
+				ctx := kafka.NewClientContext(context.Background(), "127.0.0.1:42424")
+
+				rr := kafkatest.NewRecorder()
+				s.ServeMessage(rr, kafkatest.NewRequest("MOKAPITEST1", 3, &initProducerId.Request{}).WithContext(ctx))
+				producerState := rr.Message.(*initProducerId.Response)
+				rr = kafkatest.NewRecorder()
+				s.ServeMessage(rr, kafkatest.NewRequest("MOKAPITEST1", 3, &produce.Request{
+					Topics: []produce.RequestTopic{
+						{Name: "foo", Partitions: []produce.RequestPartition{
+							{
+								Index: 0,
+								Record: kafka.RecordBatch{
+									Records: []*kafka.Record{
+										{
+											Offset:         0,
+											Time:           time.Now(),
+											Key:            kafka.NewBytes([]byte(`"foo-1"`)),
+											Value:          kafka.NewBytes([]byte(`4`)),
+											Headers:        nil,
+											ProducerId:     producerState.ProducerId,
+											ProducerEpoch:  producerState.ProducerEpoch,
+											SequenceNumber: 0,
+										},
+									},
+								},
+							},
+						},
+						}},
+				}).WithContext(ctx))
+
+				res, ok := rr.Message.(*produce.Response)
+				require.True(t, ok)
+				require.Equal(t, "foo", res.Topics[0].Name)
+				require.Equal(t, kafka.None, res.Topics[0].Partitions[0].ErrorCode, res.Topics[0].Partitions[0].ErrorMessage)
+				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
+				require.Equal(t, "", res.Topics[0].Partitions[0].ErrorMessage)
+
+				require.Equal(t, 0, len(hook.Entries))
+			},
+		},
+		{
+			"using producer Id but invalid sequence number, to high",
+			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
+				ch := asyncapi3test.NewChannel(
+					asyncapi3test.WithMessage("foo",
+						asyncapi3test.WithContentType("application/json"),
+						asyncapi3test.WithPayload(schematest.New("integer"))),
+				)
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("foo",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+					),
+				))
+				hook := test.NewGlobal()
+				ctx := kafka.NewClientContext(context.Background(), "127.0.0.1:42424")
+
+				rr := kafkatest.NewRecorder()
+				s.ServeMessage(rr, kafkatest.NewRequest("MOKAPITEST1", 3, &initProducerId.Request{}).WithContext(ctx))
+				producerState := rr.Message.(*initProducerId.Response)
+				rr = kafkatest.NewRecorder()
+				s.ServeMessage(rr, kafkatest.NewRequest("MOKAPITEST1", 3, &produce.Request{
+					Topics: []produce.RequestTopic{
+						{Name: "foo", Partitions: []produce.RequestPartition{
+							{
+								Index: 0,
+								Record: kafka.RecordBatch{
+									Records: []*kafka.Record{
+										{
+											Offset:         0,
+											Time:           time.Now(),
+											Key:            kafka.NewBytes([]byte(`"foo-1"`)),
+											Value:          kafka.NewBytes([]byte(`4`)),
+											Headers:        nil,
+											ProducerId:     producerState.ProducerId,
+											ProducerEpoch:  producerState.ProducerEpoch,
+											SequenceNumber: 10,
+										},
+									},
+								},
+							},
+						},
+						}},
+				}).WithContext(ctx))
+
+				res, ok := rr.Message.(*produce.Response)
+				require.True(t, ok)
+				require.Equal(t, "foo", res.Topics[0].Name)
+				require.Equal(t, kafka.OutOfOrderSequenceNumber, res.Topics[0].Partitions[0].ErrorCode, res.Topics[0].Partitions[0].ErrorMessage)
+				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
+				require.Equal(t, "expected sequence number 0 but got 10", res.Topics[0].Partitions[0].ErrorMessage)
+				require.Equal(t, "expected sequence number 0 but got 10", res.Topics[0].Partitions[0].RecordErrors[0].BatchIndexErrorMessage)
+
+				require.Equal(t, 1, len(hook.Entries))
+				require.Equal(t, "kafka: failed to write to topic 'foo' partition 0: expected sequence number 0 but got 10", hook.LastEntry().Message)
+			},
+		},
+		{
+			"call produce twice for same sequence number",
+			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
+				ch := asyncapi3test.NewChannel(
+					asyncapi3test.WithMessage("foo",
+						asyncapi3test.WithContentType("application/json"),
+						asyncapi3test.WithPayload(schematest.New("integer"))),
+				)
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("foo",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+					),
+				))
+				hook := test.NewGlobal()
+				ctx := kafka.NewClientContext(context.Background(), "127.0.0.1:42424")
+
+				rr := kafkatest.NewRecorder()
+				s.ServeMessage(rr, kafkatest.NewRequest("MOKAPITEST1", 3, &initProducerId.Request{}).WithContext(ctx))
+				producerState := rr.Message.(*initProducerId.Response)
+				rr = kafkatest.NewRecorder()
+				r := kafkatest.NewRequest("MOKAPITEST1", 3, &produce.Request{
+					Topics: []produce.RequestTopic{
+						{Name: "foo", Partitions: []produce.RequestPartition{
+							{
+								Record: kafka.RecordBatch{
+									Records: []*kafka.Record{
+										{
+											Offset:         0,
+											Time:           time.Now(),
+											Key:            kafka.NewBytes([]byte(`"foo-1"`)),
+											Value:          kafka.NewBytes([]byte(`4`)),
+											ProducerId:     producerState.ProducerId,
+											ProducerEpoch:  producerState.ProducerEpoch,
+											SequenceNumber: 0,
+										},
+									},
+								},
+							},
+						},
+						}},
+				}).WithContext(ctx)
+				s.ServeMessage(rr, r)
+				s.ServeMessage(rr, r)
+
+				res, ok := rr.Message.(*produce.Response)
+				require.True(t, ok)
+				require.Equal(t, "foo", res.Topics[0].Name)
+				require.Equal(t, kafka.DuplicateSequenceNumber, res.Topics[0].Partitions[0].ErrorCode, res.Topics[0].Partitions[0].ErrorMessage)
+				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
+				require.Equal(t, "message sequence number already received: 0", res.Topics[0].Partitions[0].ErrorMessage)
+				require.Equal(t, "message sequence number already received: 0", res.Topics[0].Partitions[0].RecordErrors[0].BatchIndexErrorMessage)
+
+				require.Equal(t, 1, len(hook.Entries))
+				require.Equal(t, "kafka: failed to write to topic 'foo' partition 0: message sequence number already received: 0", hook.LastEntry().Message)
 			},
 		},
 	}

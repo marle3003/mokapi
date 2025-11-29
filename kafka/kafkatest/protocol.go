@@ -2,8 +2,10 @@ package kafkatest
 
 import (
 	"bytes"
+	"encoding/json"
 	"mokapi/kafka"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -28,7 +30,17 @@ func TestRequest(t *testing.T, version int16, msg kafka.Message) {
 	err = r2.Read(b)
 	require.NoError(t, err)
 
-	require.True(t, deepEqual(r1.Message, r2.Message))
+	if deepEqual(r1.Message, r2.Message) {
+		return
+	}
+
+	expected, _ := json.MarshalIndent(r1.Message, "", "")
+	actual, _ := json.MarshalIndent(r2.Message, "", "")
+
+	t.Errorf("Not equal:\n"+
+		"expected: %s\n"+
+		"actual  : %s", strings.ReplaceAll(string(expected), "\n", ""), strings.ReplaceAll(string(actual), "\n", ""))
+	t.FailNow()
 }
 
 func WriteRequest(t *testing.T, version int16, correlationId int32, clientId string, msg kafka.Message) []byte {
@@ -73,7 +85,17 @@ func TestResponse(t *testing.T, version int16, msg kafka.Message) {
 	err = r2.Read(b)
 	require.NoError(t, err)
 
-	require.True(t, deepEqual(r1.Message, r2.Message))
+	if deepEqual(r1.Message, r2.Message) {
+		return
+	}
+
+	expected, _ := json.MarshalIndent(r1.Message, "", "")
+	actual, _ := json.MarshalIndent(r2.Message, "", "")
+
+	t.Errorf("Not equal:\n"+
+		"expected: %s\n"+
+		"actual  : %s", strings.ReplaceAll(string(expected), "\n", ""), strings.ReplaceAll(string(actual), "\n", ""))
+	t.FailNow()
 }
 
 func WriteResponse(t *testing.T, version int16, correlationId int32, msg kafka.Message) []byte {
@@ -148,6 +170,9 @@ func deepEqual(i1, i2 any) bool {
 		}
 		return true
 	default:
-		return i1 == i2
+		if i1 == i2 {
+			return true
+		}
+		return false
 	}
 }

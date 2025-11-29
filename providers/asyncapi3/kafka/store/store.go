@@ -9,6 +9,7 @@ import (
 	"mokapi/kafka/fetch"
 	"mokapi/kafka/findCoordinator"
 	"mokapi/kafka/heartbeat"
+	"mokapi/kafka/initProducerId"
 	"mokapi/kafka/joinGroup"
 	"mokapi/kafka/listgroup"
 	"mokapi/kafka/metaData"
@@ -37,8 +38,15 @@ type Store struct {
 	cluster      string
 	eventEmitter common.EventEmitter
 	eh           events.Handler
+	producers    map[int64]*ProducerState
 
-	m sync.RWMutex
+	nextPID int64
+	m       sync.RWMutex
+}
+
+type ProducerState struct {
+	ProducerId    int64
+	ProducerEpoch int16
 }
 
 func NewEmpty(eventEmitter common.EventEmitter, eh events.Handler) *Store {
@@ -48,6 +56,7 @@ func NewEmpty(eventEmitter common.EventEmitter, eh events.Handler) *Store {
 		groups:       make(map[string]*Group),
 		eventEmitter: eventEmitter,
 		eh:           eh,
+		producers:    make(map[int64]*ProducerState),
 	}
 }
 
@@ -219,6 +228,8 @@ func (s *Store) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
 		err = s.apiversion(rw, req)
 	case *createTopics.Request:
 		err = s.createtopics(rw, req)
+	case *initProducerId.Request:
+		err = s.initProducerID(rw, req)
 	default:
 		err = fmt.Errorf("kafka: unsupported api key: %v", req.Header.ApiKey)
 	}

@@ -54,11 +54,14 @@ func (rb *RecordBatch) ReadFrom(d *Decoder, version int16, tag kafkaTag) error {
 }
 
 type Record struct {
-	Offset  int64          `json:"offset"`
-	Time    time.Time      `json:"time"`
-	Key     Bytes          `json:"key"`
-	Value   Bytes          `json:"value"`
-	Headers []RecordHeader `json:"headers"`
+	Offset         int64          `json:"offset"`
+	Time           time.Time      `json:"time"`
+	Key            Bytes          `json:"key"`
+	Value          Bytes          `json:"value"`
+	Headers        []RecordHeader `json:"headers"`
+	ProducerId     int64          `json:"producerId"`
+	ProducerEpoch  int16          `json:"producerEpoch"`
+	SequenceNumber int32          `json:"sequenceNumber"`
 }
 
 type RecordHeader struct {
@@ -229,4 +232,8 @@ func sizeVarInt(x int64) int {
 	// Kafka-compatible ZigZag
 	i := uint64((x << 1) ^ (x >> 63))
 	return (bits.Len64(i|1) + 6) / 7
+}
+
+func (r *Record) String() string {
+	return ""
 }

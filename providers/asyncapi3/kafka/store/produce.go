@@ -16,6 +16,7 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 	ctx := kafka.ClientFromContext(req)
 
 	m, withMonitor := monitor.KafkaFromContext(req.Context)
+	opts := WriteOptions{}
 
 	for _, rt := range r.Topics {
 		topic := s.Topic(rt.Name)
@@ -29,29 +30,33 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 			}
 
 			if topic == nil {
-				s := fmt.Sprintf("kafka: produce unknown topic %v", rt.Name)
+				s := fmt.Sprintf("kafka: failed to write: %s", rt.Name)
 				log.Error(s)
 				resPartition.ErrorCode = kafka.UnknownTopicOrPartition
 				resPartition.ErrorMessage = s
 			} else if err := validateProducer(topic, ctx); err != nil {
 				resPartition.ErrorCode = kafka.UnknownServerError
 				resPartition.ErrorMessage = fmt.Sprintf("invalid producer clientId '%v' for topic %v: %v", ctx.ClientId, topic.Name, err)
-				log.Errorf("kafka Produce: %v", resPartition.ErrorMessage)
+				log.Errorf("kafka: failed to write to topic '%s': %s", topic.Name, resPartition.ErrorMessage)
 			} else {
 				p := topic.Partition(int(rp.Index))
 				if p == nil {
 					resPartition.ErrorCode = kafka.UnknownTopicOrPartition
 					resPartition.ErrorMessage = fmt.Sprintf("unknown partition %v", rp.Index)
-					log.Errorf("kafka Produce: %v", resPartition.ErrorMessage)
+					log.Errorf("kafka: failed to write to topic '%s': %s", topic.Name, resPartition.ErrorMessage)
 				} else {
-					baseOffset, records, err := p.Write(rp.Record)
+					wr, err := p.write(rp.Record, opts)
 					if err != nil {
-						resPartition.ErrorCode = kafka.InvalidRecord
-						resPartition.ErrorMessage = fmt.Sprintf("invalid message received for topic %v: %v", rt.Name, err)
-						resPartition.RecordErrors = records
-						log.Errorf("kafka Produce: %v", resPartition.ErrorMessage)
+						resPartition.ErrorCode = kafka.UnknownServerError
+						resPartition.ErrorMessage = fmt.Sprintf("failed to write to topic '%v': %v", rt.Name, err.Error())
+						log.Errorf("kafka: failed to write to topic '%s' partition %d: %s", topic.Name, rp.Index, resPartition.ErrorMessage)
+					} else if wr.ErrorCode != kafka.None {
+						resPartition.ErrorCode = wr.ErrorCode
+						resPartition.ErrorMessage = wr.ErrorMessage
+						resPartition.RecordErrors = wr.Records
+						log.Errorf("kafka: failed to write to topic '%s' partition %d: %s", topic.Name, rp.Index, resPartition.ErrorMessage)
 					} else {
-						resPartition.BaseOffset = baseOffset
+						resPartition.BaseOffset = wr.BaseOffset
 						if withMonitor {
 							go s.UpdateMetrics(m, topic, p, rp.Record)
 						}

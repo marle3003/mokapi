@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"mokapi/config/dynamic"
 	"mokapi/kafka"
-	"mokapi/kafka/produce"
 	"mokapi/media"
 	"mokapi/runtime/monitor"
 	"time"
@@ -92,14 +91,14 @@ func (c *Client) Write(topic string, records []Record, ct media.ContentType) ([]
 			})
 		}
 		b := kafka.RecordBatch{Records: []*kafka.Record{rec}}
-		var write func(batch kafka.RecordBatch) (baseOffset int64, records []produce.RecordError, err error)
+		var write func(batch kafka.RecordBatch) (WriteResult, error)
 		if r.SkipValidation {
 			write = p.WriteSkipValidation
 		} else {
 			write = p.Write
 		}
 
-		offset, res, err := write(b)
+		wr, err := write(b)
 		if err != nil {
 			result = append(result, RecordResult{
 				Partition: -1,
@@ -107,15 +106,15 @@ func (c *Client) Write(topic string, records []Record, ct media.ContentType) ([]
 				Error:     err.Error(),
 			})
 		} else {
-			if len(res) > 0 {
+			if len(wr.Records) > 0 {
 				result = append(result, RecordResult{
 					Partition: -1,
 					Offset:    -1,
-					Error:     res[0].BatchIndexErrorMessage,
+					Error:     wr.Records[0].BatchIndexErrorMessage,
 				})
 			} else {
 				rr := RecordResult{
-					Offset:    offset,
+					Offset:    wr.BaseOffset,
 					Key:       kafka.Read(b.Records[0].Key),
 					Value:     kafka.Read(b.Records[0].Value),
 					Partition: p.Index,

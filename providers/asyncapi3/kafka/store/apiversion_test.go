@@ -73,10 +73,10 @@ func TestApiVersion_Raw(t *testing.T) {
 
 	// compare the first few bytes
 	expect := []byte{
-		0, 0, 0, 88, // length
+		0, 0, 0, 0x5e, // length
 		0, 0, 0, 0, // Correlation
 		0, 0, // Error Code
-		0, 0, 0, 13, // length of array
+		0, 0, 0, 14, // length of array
 
 		0, 0, // Produce
 		0, 0, // min

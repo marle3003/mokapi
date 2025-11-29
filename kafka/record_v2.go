@@ -15,10 +15,10 @@ func (rb *RecordBatch) readFromV2(d *Decoder) error {
 	attributes := Attributes(d.ReadInt16())
 	d.ReadInt32() // lastOffsetDelta
 	firstTimestamp := d.ReadInt64()
-	d.ReadInt64() // maxTimestamp
-	d.ReadInt64() // producer ID
-	d.ReadInt16() // producer epoch
-	d.ReadInt32() // baseSequence
+	d.ReadInt64()                  // maxTimestamp
+	producerId := d.ReadInt64()    // producer ID
+	producerEpoch := d.ReadInt16() // producer epoch
+	sequence := d.ReadInt32()      // baseSequence
 	numRecords := d.ReadInt32()
 
 	if attributes.Compression() != 0 {
@@ -29,7 +29,12 @@ func (rb *RecordBatch) readFromV2(d *Decoder) error {
 	defer pb.Unref()
 	rb.Records = make([]*Record, numRecords)
 	for i := range rb.Records {
-		r := &Record{}
+		r := &Record{
+			ProducerId:     producerId,
+			ProducerEpoch:  producerEpoch,
+			SequenceNumber: sequence,
+		}
+		sequence++
 		rb.Records[i] = r
 		d.ReadVarInt() // record size
 		d.ReadInt8()   // attributes

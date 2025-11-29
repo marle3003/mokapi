@@ -31,11 +31,14 @@ func TestRequest(t *testing.T) {
 						Record: kafka.RecordBatch{
 							Records: []*kafka.Record{
 								{
-									Offset:  0,
-									Time:    kafka.ToTime(1657010762684),
-									Key:     kafka.NewBytes([]byte("foo")),
-									Value:   kafka.NewBytes([]byte("bar")),
-									Headers: nil,
+									Offset:         0,
+									Time:           kafka.ToTime(1657010762684),
+									Key:            kafka.NewBytes([]byte("foo")),
+									Value:          kafka.NewBytes([]byte("bar")),
+									ProducerId:     -1,
+									ProducerEpoch:  -1,
+									SequenceNumber: -1,
+									Headers:        nil,
 								},
 							},
 						},
@@ -58,11 +61,14 @@ func TestRequest(t *testing.T) {
 						Record: kafka.RecordBatch{
 							Records: []*kafka.Record{
 								{
-									Offset:  0,
-									Time:    kafka.ToTime(1657010762684),
-									Key:     kafka.NewBytes([]byte("foo")),
-									Value:   kafka.NewBytes([]byte("bar")),
-									Headers: nil,
+									Offset:         0,
+									Time:           kafka.ToTime(1657010762684),
+									Key:            kafka.NewBytes([]byte("foo")),
+									Value:          kafka.NewBytes([]byte("bar")),
+									ProducerId:     -1,
+									ProducerEpoch:  -1,
+									SequenceNumber: -1,
+									Headers:        nil,
 								},
 							},
 						},
@@ -85,11 +91,14 @@ func TestRequest(t *testing.T) {
 						Record: kafka.RecordBatch{
 							Records: []*kafka.Record{
 								{
-									Offset:  0,
-									Time:    kafka.ToTime(1657010762684),
-									Key:     kafka.NewBytes([]byte("foo")),
-									Value:   kafka.NewBytes([]byte("bar")),
-									Headers: nil,
+									Offset:         0,
+									Time:           kafka.ToTime(1657010762684),
+									Key:            kafka.NewBytes([]byte("foo")),
+									Value:          kafka.NewBytes([]byte("bar")),
+									ProducerId:     -1,
+									ProducerEpoch:  -1,
+									SequenceNumber: -1,
+									Headers:        nil,
 								},
 							},
 						},

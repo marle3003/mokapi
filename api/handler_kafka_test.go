@@ -541,7 +541,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 }`,
 					api,
 					try.HasStatusCode(http.StatusOK),
-					try.HasBody(`{"offsets":[{"partition":-1,"offset":-1,"error":"validation error: invalid message: error count 1:\n\t- #/type: invalid type, expected string but got number"}]}`),
+					try.HasBody(`{"offsets":[{"partition":-1,"offset":-1,"error":"invalid message: error count 1:\n\t- #/type: invalid type, expected string but got number"}]}`),
 				)
 
 				require.Equal(t, float64(0), app.Monitor.Kafka.Messages.WithLabel("foo", "topic-1").Value())

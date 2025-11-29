@@ -247,7 +247,7 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 		} else {
 			w.Header().Set("Content-Type", "application/json")
-			writeJsonBody(w, getPartitions(k, t))
+			writeJsonBody(w, getPartitions(t))
 		}
 		return
 	// /api/services/kafka/{cluster}/topics/{topic}/partitions/{id}
@@ -276,7 +276,7 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 		}
 		if r.Method == "GET" {
 			w.Header().Set("Content-Type", "application/json")
-			writeJsonBody(w, newPartition(k.Store, p))
+			writeJsonBody(w, newPartition(p))
 		} else {
 			records, err := getProduceRecords(r)
 			if err != nil {
@@ -458,7 +458,7 @@ func getTopics(info *runtime.KafkaInfo) []topic {
 			addr = name
 		}
 		t := info.Store.Topic(addr)
-		topics = append(topics, newTopic(info.Store, t, ch.Value, info.Config))
+		topics = append(topics, newTopic(t, ch.Value, info.Config))
 	}
 	sort.Slice(topics, func(i, j int) bool {
 		return strings.Compare(topics[i].Name, topics[j].Name) < 0
@@ -477,7 +477,7 @@ func getTopic(info *runtime.KafkaInfo, name string) *topic {
 		}
 		if addr == name {
 			t := info.Store.Topic(addr)
-			r := newTopic(info.Store, t, ch.Value, info.Config)
+			r := newTopic(t, ch.Value, info.Config)
 			return &r
 		}
 
@@ -485,10 +485,10 @@ func getTopic(info *runtime.KafkaInfo, name string) *topic {
 	return nil
 }
 
-func newTopic(s *store.Store, t *store.Topic, ch *asyncapi3.Channel, cfg *asyncapi3.Config) topic {
+func newTopic(t *store.Topic, ch *asyncapi3.Channel, cfg *asyncapi3.Config) topic {
 	var partitions []partition
 	for _, p := range t.Partitions {
-		partitions = append(partitions, newPartition(s, p))
+		partitions = append(partitions, newPartition(p))
 	}
 	sort.Slice(partitions, func(i, j int) bool {
 		return partitions[i].Id < partitions[j].Id
@@ -549,10 +549,10 @@ func newTopic(s *store.Store, t *store.Topic, ch *asyncapi3.Channel, cfg *asynca
 	return result
 }
 
-func getPartitions(info *runtime.KafkaInfo, t *store.Topic) []partition {
+func getPartitions(t *store.Topic) []partition {
 	var partitions []partition
 	for _, p := range t.Partitions {
-		partitions = append(partitions, newPartition(info.Store, p))
+		partitions = append(partitions, newPartition(p))
 	}
 	sort.Slice(partitions, func(i, j int) bool {
 		return partitions[i].Id < partitions[j].Id
@@ -594,13 +594,12 @@ func newGroup(g *store.Group) group {
 	return grp
 }
 
-func newPartition(s *store.Store, p *store.Partition) partition {
-	leader, _ := s.Broker(p.Leader)
+func newPartition(p *store.Partition) partition {
 	return partition{
 		Id:          p.Index,
 		StartOffset: p.StartOffset(),
 		Offset:      p.Offset(),
-		Leader:      newBroker(leader),
+		Leader:      newBroker(p.Leader),
 		Segments:    len(p.Segments),
 	}
 }

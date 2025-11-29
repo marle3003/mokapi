@@ -201,7 +201,7 @@ func TestOffsetFetch(t *testing.T) {
 					asyncapi3test.WithServer("", "kafka", b.Addr),
 					asyncapi3test.WithChannel("foo"),
 				))
-				_, _, _ = s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
+				_, _ = s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Key:   kafka.NewBytes([]byte("foo")),
@@ -252,7 +252,7 @@ func TestOffsetFetch(t *testing.T) {
 					asyncapi3test.WithServer("", "kafka", b.Addr),
 					asyncapi3test.WithChannel("foo"),
 				))
-				_, _, _ = s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
+				_, _ = s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Key:   kafka.NewBytes([]byte("foo")),
