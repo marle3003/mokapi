@@ -130,7 +130,7 @@ export function useKafkaMessages(page: Page) {
                 await expect(page.getByText('Sequence Number', { exact: true })).not.toBeVisible({ timeout: 100 })
                 await expect(page.getByLabel('Content Type', { exact: true })).toHaveText('application/json')
                 await expect(page.getByLabel('Key Type', { exact: true })).toHaveText('string')
-                await expect(page.getByLabel('Time', { exact: true })).toHaveText('2023-02-13 09:49:25')
+                await expect(page.getByLabel('Time', { exact: true })).toHaveText(formatDateTime('2023-02-13 09:49:25'))
 
                 await page.goBack()
         
@@ -153,7 +153,7 @@ export function useKafkaMessages(page: Page) {
                 await expect(page.getByLabel('Sequence Number', { exact: true })).toHaveText('1')
                 await expect(page.getByLabel('Content Type', { exact: true })).toHaveText('application/json')
                 await expect(page.getByLabel('Key Type', { exact: true })).toHaveText('string')
-                await expect(page.getByLabel('Time', { exact: true })).toHaveText('2023-02-13 09:49:25')
+                await expect(page.getByLabel('Time', { exact: true })).toHaveText(formatDateTime('2023-02-13 09:49:25'))
 
                 await page.goBack()
             })
