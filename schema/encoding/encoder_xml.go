@@ -6,6 +6,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"mokapi/schema/json/schema"
+	"mokapi/sortedmap"
 	"net/url"
 	"strings"
 )
@@ -62,6 +63,13 @@ func (x *XmlEncoder) writeXmlElement(name string, data any) error {
 	case map[string]any:
 		for key, item := range t {
 			err = x.writeXmlElement(key, item)
+			if err != nil {
+				return err
+			}
+		}
+	case *sortedmap.LinkedHashMap[string, any]:
+		for it := t.Iter(); it.Next(); {
+			err = x.writeXmlElement(it.Key(), it.Value())
 			if err != nil {
 				return err
 			}

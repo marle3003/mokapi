@@ -44,7 +44,12 @@ func (p *XmlParser) Parse(v any) (any, error) {
 		return nil, fmt.Errorf("failed to parse XML: %w", err)
 	}
 
-	pn := parser.Parser{Schema: ConvertToJsonSchema(p.s), ConvertStringToNumber: true, ConvertStringToBoolean: true}
+	pn := parser.Parser{
+		Schema:                       ConvertToJsonSchema(p.s),
+		ConvertStringToNumber:        true,
+		ConvertStringToBoolean:       true,
+		ValidateAdditionalProperties: true,
+	}
 	return pn.Parse(data)
 }
 
@@ -104,32 +109,34 @@ func parseXML(n *node, s *Schema) (any, error) {
 
 	// elements can override attribute values
 	for _, attr := range n.Attrs {
-		name, prop := getProperty(attr.Name, s, true)
-		if prop != nil || s.IsFreeForm() {
-			v, err := parseValue(attr.Value, prop)
-			if err != nil {
-				return nil, err
-			}
-			m[name] = v
+		name, prop := getProperty(attr.Name, s)
+		if prop != nil && prop.Xml != nil && !prop.Xml.Attribute {
+			continue
 		}
+		v, err := parseValue(attr.Value, prop)
+		if err != nil {
+			return nil, err
+		}
+		m[name] = v
 	}
 
 	for _, child := range n.Nodes {
-		name, prop := getProperty(child.XMLName, s, false)
-		if prop != nil || s.IsFreeForm() {
-			v, err := parseXML(&child, prop)
-			if err != nil {
-				return nil, err
-			}
-			if _, ok := m[name]; ok {
-				if arr, isArray := m[name].([]any); isArray {
-					m[name] = append(arr, v)
-				} else {
-					m[name] = []interface{}{m[name], v}
-				}
+		name, prop := getProperty(child.XMLName, s)
+		if prop != nil && prop.Xml != nil && prop.Xml.Attribute {
+			continue
+		}
+		v, err := parseXML(&child, prop)
+		if err != nil {
+			return nil, err
+		}
+		if _, ok := m[name]; ok {
+			if arr, isArray := m[name].([]any); isArray {
+				m[name] = append(arr, v)
 			} else {
-				m[name] = v
+				m[name] = []interface{}{m[name], v}
 			}
+		} else {
+			m[name] = v
 		}
 	}
 
@@ -182,7 +189,7 @@ func parseValue(s string, ref *Schema) (interface{}, error) {
 	return nil, fmt.Errorf("unknown type: %v", ref.Type)
 }
 
-func getProperty(name xml.Name, s *Schema, asAttr bool) (string, *Schema) {
+func getProperty(name xml.Name, s *Schema) (string, *Schema) {
 	if s == nil || !s.HasProperties() {
 		return name.Local, nil
 	}
@@ -191,7 +198,7 @@ func getProperty(name xml.Name, s *Schema, asAttr bool) (string, *Schema) {
 	if prop != nil {
 		if prop.Xml != nil {
 			x := prop.Xml
-			if len(x.Prefix) > 0 && x.Prefix == name.Space {
+			if x.Prefix == name.Space {
 				return name.Local, prop
 			}
 		} else {
@@ -209,10 +216,7 @@ func getProperty(name xml.Name, s *Schema, asAttr bool) (string, *Schema) {
 		if x == nil {
 			continue
 		}
-		if asAttr != x.Attribute {
-			continue
-		}
-		if x.Name == name.Local && x.Attribute == asAttr {
+		if x.Name == name.Local {
 			return it.Key(), prop
 		}
 	}

@@ -27,7 +27,8 @@ func TestParseXML(t *testing.T) {
 			),
 			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]any{"id": int64(123)}, v)
+				// id is defined and shouldn't be treated as an additional property
+				require.Equal(t, map[string]any{}, v)
 			},
 		},
 		{

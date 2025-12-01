@@ -344,8 +344,12 @@ func (s *Store) trigger(record *kafka.Record, schemaId int) bool {
 		return false
 	}
 
-	_ = record.Key.Close()
-	_ = record.Value.Close()
+	if record.Key != nil {
+		_ = record.Key.Close()
+	}
+	if record.Value != nil {
+		_ = record.Value.Close()
+	}
 
 	record.Key = kafka.NewBytes([]byte(r.Key))
 	record.Value = kafka.NewBytes([]byte(r.Value))

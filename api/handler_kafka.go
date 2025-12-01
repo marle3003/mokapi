@@ -120,11 +120,11 @@ type produceRequest struct {
 	Records []store.Record `json:"records"`
 }
 
-type produceResponse struct {
-	Offsets []recordResult `json:"offsets"`
+type ProduceResponse struct {
+	Offsets []RecordResult `json:"offsets"`
 }
 
-type recordResult struct {
+type RecordResult struct {
 	Partition int
 	Offset    int64
 	Error     string
@@ -222,9 +222,9 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 					writeError(w, err, http.StatusBadRequest)
 				}
 			}
-			res := produceResponse{}
+			res := ProduceResponse{}
 			for _, rec := range result {
-				res.Offsets = append(res.Offsets, recordResult{
+				res.Offsets = append(res.Offsets, RecordResult{
 					Partition: rec.Partition,
 					Offset:    rec.Offset,
 					Error:     rec.Error,
@@ -296,9 +296,9 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 					writeError(w, err, http.StatusBadRequest)
 				}
 			}
-			res := produceResponse{}
+			res := ProduceResponse{}
 			for _, rec := range result {
-				res.Offsets = append(res.Offsets, recordResult{
+				res.Offsets = append(res.Offsets, RecordResult{
 					Partition: rec.Partition,
 					Offset:    rec.Offset,
 					Error:     rec.Error,
@@ -648,7 +648,7 @@ func getProduceRecords(r *http.Request) ([]store.Record, error) {
 	return pr.Records, nil
 }
 
-func (r *recordResult) MarshalJSON() ([]byte, error) {
+func (r *RecordResult) MarshalJSON() ([]byte, error) {
 	aux := &struct {
 		Partition int     `json:"partition"`
 		Offset    int64   `json:"offset"`

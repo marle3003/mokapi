@@ -1,13 +1,14 @@
 package schema_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/sortedmap"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestMarshal_Xml(t *testing.T) {
@@ -34,7 +35,8 @@ func TestMarshal_Xml(t *testing.T) {
 			},
 			schema: schematest.New("integer"),
 			test: func(t *testing.T, s string, err error) {
-				require.EqualError(t, err, "encoding data to 'application/xml' failed: root element name is undefined: reference name of schema, attribute xml.name and $id is empty")
+				require.NoError(t, err)
+				require.Equal(t, "<foo>4</foo>", s)
 			},
 		},
 		{

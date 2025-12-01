@@ -42,7 +42,6 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 	var produced []common.KafkaMessageResult
 	for _, m := range args.Messages {
 		value := m.Data
-		ct := media.ContentType{}
 		if m.Value != nil {
 			value = m.Value
 		}
@@ -52,40 +51,35 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 				Schema: &schema.Schema{Type: schema.Types{"string"}, Pattern: "[a-z]{9}"},
 			},
 		}
-		var payload *asyncapi3.SchemaRef
-		var msg *asyncapi3.Message
-		msg, err = selectMessage(value, t.Config, k.Config)
-		if err != nil {
-			return nil, fmt.Errorf("failed to produce message to Kafka topic '%v': %w", t.Name, err)
-		}
-		if msg != nil {
-			if msg.Bindings.Kafka.Key != nil {
-				keySchema = msg.Bindings.Kafka.Key
+
+		// if m.Value is not used then select Kafka message config by the data which must be valid
+		if m.Value == nil && (value == nil || m.Key == nil) {
+			var payload *asyncapi3.SchemaRef
+			var msg *asyncapi3.Message
+
+			msg, err = selectMessage(value, t.Config, k.Config)
+			if err != nil {
+				return nil, fmt.Errorf("failed to produce message to Kafka topic '%v': %w", t.Name, err)
 			}
-			payload = msg.Payload
-			ct = media.ParseContentType(msg.ContentType)
-		} else {
-			ct = media.ParseContentType(k.DefaultContentType)
+			if msg != nil {
+				if msg.Bindings.Kafka.Key != nil {
+					keySchema = msg.Bindings.Kafka.Key
+				}
+				payload = msg.Payload
+			}
+
+			if value == nil {
+				value, err = createValue(payload)
+				if err != nil {
+					return nil, fmt.Errorf("unable to generate kafka value: %v", err)
+				}
+			}
 		}
 
 		if m.Key == nil {
 			m.Key, err = createValue(keySchema)
 			if err != nil {
 				return nil, fmt.Errorf("unable to generate kafka key: %v", err)
-			}
-		}
-
-		if value == nil {
-			value, err = createValue(payload)
-			if err != nil {
-				return nil, fmt.Errorf("unable to generate kafka value: %v", err)
-			}
-		}
-
-		if m.Value == nil && payload != nil {
-			value, err = payload.Value.Marshal(value, ct)
-			if err != nil {
-				return nil, fmt.Errorf("failed to marshal kafka message: %w", err)
 			}
 		}
 
@@ -100,7 +94,7 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 			Headers:        headers,
 			Partition:      m.Partition,
 			SkipValidation: m.Value != nil,
-		}}, ct)
+		}}, media.ContentType{})
 		if err != nil {
 			return nil, fmt.Errorf("failed to produce message to Kafka topic '%v': %w", t.Name, err)
 		}

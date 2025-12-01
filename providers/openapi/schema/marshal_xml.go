@@ -34,7 +34,9 @@ func marshalXml(i interface{}, r *Schema) ([]byte, error) {
 		}
 	}
 	if name == "" {
-		return nil, fmt.Errorf("root element name is undefined: reference name of schema, attribute xml.name and $id is empty")
+		// if no root name is defined we use a default name because for generic tools, the root name isn’t important
+		// so we can improve the user experience to not hit an error
+		name = "data"
 	}
 
 	if i == nil {
