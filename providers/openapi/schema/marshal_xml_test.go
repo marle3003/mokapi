@@ -36,7 +36,7 @@ func TestMarshal_Xml(t *testing.T) {
 			schema: schematest.New("integer"),
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "<foo>4</foo>", s)
+				require.Equal(t, "<data>4</data>", s)
 			},
 		},
 		{

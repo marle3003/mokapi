@@ -694,6 +694,8 @@ func TestHandler_KafkaAPI(t *testing.T) {
 				require.Equal(t, `{"foo":"bar"}`, string(kafka.Read(b.Records[0].Value)))
 
 				require.Equal(t, float64(1), app.Monitor.Kafka.Messages.WithLabel("foo", "topic-1").Value())
+				p := app.Kafka.Get("foo").Store.Topic("topic-1").Partition(0)
+				require.Equal(t, `{"foo": "bar"}`, string(kafka.Read(p.Segments[p.ActiveSegment].Log[0].Data.Value)))
 			},
 		},
 		{

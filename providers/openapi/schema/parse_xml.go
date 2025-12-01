@@ -194,6 +194,20 @@ func getProperty(name xml.Name, s *Schema) (string, *Schema) {
 		return name.Local, nil
 	}
 
+	for it := s.Properties.Iter(); it.Next(); {
+		prop := it.Value()
+		if prop == nil {
+			continue
+		}
+		x := prop.Xml
+		if x == nil {
+			continue
+		}
+		if x.Name == name.Local {
+			return it.Key(), prop
+		}
+	}
+
 	prop := s.Properties.Get(name.Local)
 	if prop != nil {
 		if prop.Xml != nil {
@@ -205,20 +219,6 @@ func getProperty(name xml.Name, s *Schema) (string, *Schema) {
 			return name.Local, prop
 		}
 
-	}
-
-	for it := s.Properties.Iter(); it.Next(); {
-		prop = it.Value()
-		if prop == nil {
-			continue
-		}
-		x := prop.Xml
-		if x == nil {
-			continue
-		}
-		if x.Name == name.Local {
-			return it.Key(), prop
-		}
 	}
 
 	return name.Local, nil
