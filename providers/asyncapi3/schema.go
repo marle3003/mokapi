@@ -116,14 +116,27 @@ func (m *MultiSchemaFormat) parse(config *dynamic.Config, reader dynamic.Reader)
 	return nil
 }
 
-func (m *MultiSchemaFormat) Resolve(token string) (interface{}, error) {
-	if token == "" {
-		if js, ok := m.Schema.(*jsonSchema.Schema); ok {
-			return js, nil
+func (m *MultiSchemaFormat) ConvertTo(i interface{}) (interface{}, error) {
+	switch i.(type) {
+	case *jsonSchema.Schema:
+		switch s := m.Schema.(type) {
+		case *jsonSchema.Schema:
+			return m.Schema, nil
+		case *openapi.Schema:
+			return openapi.ConvertToJsonSchema(s), nil
+		case *avro.Schema:
+			return avro.ConvertToJsonSchema(s), nil
 		}
-		return m.Schema, nil
+	case *openapi.Schema:
+		if _, ok := m.Schema.(*openapi.Schema); ok {
+			return m.Schema, nil
+		}
+	case *avro.Schema:
+		if _, ok := m.Schema.(*avro.Schema); ok {
+			return m.Schema, nil
+		}
 	}
-	return m, nil
+	return nil, fmt.Errorf("unsupported schema convert %T: %T", m.Schema, i)
 }
 
 func (m *MultiSchemaFormat) UnmarshalJSON(b []byte) error {
