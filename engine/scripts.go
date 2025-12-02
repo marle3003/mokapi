@@ -33,7 +33,14 @@ func NewDefaultScriptLoader(config *static.Config) ScriptLoader {
 func (l *DefaultScriptLoader) Load(file *dynamic.Config, host common.Host) (common.Script, error) {
 	s := file.Data.(string)
 	filename := file.Info.Path()
-	switch filepath.Ext(filename) {
+	if file.Info.Provider == "git" {
+		gitFile := file.Info.Url.Query()["file"]
+		if len(gitFile) > 0 {
+			filename = gitFile[0]
+		}
+	}
+	ext := filepath.Ext(filename)
+	switch ext {
 	case ".js", ".cjs", ".mjs", ".ts":
 		return js.New(file, host)
 	case ".lua":

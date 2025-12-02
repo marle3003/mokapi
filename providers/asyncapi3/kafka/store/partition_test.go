@@ -1,7 +1,6 @@
 package store
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/kafka"
 	"mokapi/providers/asyncapi3"
 	"mokapi/runtime/events"
@@ -9,6 +8,8 @@ import (
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestPartition(t *testing.T) {
@@ -23,7 +24,7 @@ func TestPartition(t *testing.T) {
 	require.Equal(t, 0, p.Index)
 	require.Equal(t, int64(0), p.StartOffset())
 	require.Equal(t, int64(0), p.Offset())
-	require.Equal(t, 1, p.Leader)
+	require.Equal(t, 1, p.Leader.Id)
 	require.Equal(t, []int{}, p.Replicas)
 }
 
@@ -39,7 +40,7 @@ func TestPartition_Write(t *testing.T) {
 		&Topic{},
 	)
 
-	offset, records, err := p.Write(kafka.RecordBatch{
+	wr, err := p.Write(kafka.RecordBatch{
 		Records: []*kafka.Record{
 			{
 				Time:    time.Now(),
@@ -57,8 +58,8 @@ func TestPartition_Write(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Len(t, records, 0)
-	require.Equal(t, int64(0), offset)
+	require.Len(t, wr.Records, 0)
+	require.Equal(t, int64(0), wr.BaseOffset)
 	require.Equal(t, int64(2), p.Offset())
 	require.Equal(t, int64(0), p.StartOffset())
 
@@ -96,7 +97,7 @@ func TestPartition_Read(t *testing.T) {
 		func(record *kafka.Record, schemaId int) bool { return false },
 		&Topic{},
 	)
-	offset, records, err := p.Write(kafka.RecordBatch{
+	wr, err := p.Write(kafka.RecordBatch{
 		Records: []*kafka.Record{
 			{
 				Time:    time.Now(),
@@ -107,8 +108,8 @@ func TestPartition_Read(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	require.Len(t, records, 0)
-	require.Equal(t, int64(0), offset)
+	require.Len(t, wr.Records, 0)
+	require.Equal(t, int64(0), wr.BaseOffset)
 
 	b, errCode := p.Read(1, 1)
 	require.Equal(t, kafka.None, errCode)
@@ -136,7 +137,7 @@ func TestPartition_Read_OutOfOffset(t *testing.T) {
 		func(record *kafka.Record, schemaId int) bool { return false },
 		&Topic{},
 	)
-	_, _, _ = p.Write(kafka.RecordBatch{
+	_, _ = p.Write(kafka.RecordBatch{
 		Records: []*kafka.Record{
 			{
 				Time:    time.Now(),
@@ -173,7 +174,7 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 			},
 		}}
 
-	offset, recordsWithError, err := p.Write(kafka.RecordBatch{
+	wr, err := p.Write(kafka.RecordBatch{
 		Records: []*kafka.Record{
 			{
 				Time:    time.Now(),
@@ -184,15 +185,15 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 		},
 	})
 
-	require.EqualError(t, err, "validation error: invalid message: error count 1:\n\t- #/type: invalid type, expected string but got number")
-	require.Len(t, recordsWithError, 1)
-	require.Equal(t, int32(0), recordsWithError[0].BatchIndex)
-	require.Equal(t, "invalid message: error count 1:\n\t- #/type: invalid type, expected string but got number", recordsWithError[0].BatchIndexErrorMessage)
-	require.Equal(t, int64(0), offset)
+	require.NoError(t, err)
+	require.Len(t, wr.Records, 1)
+	require.Equal(t, int32(0), wr.Records[0].BatchIndex)
+	require.Equal(t, "invalid message: error count 1:\n\t- #/type: invalid type, expected string but got number", wr.Records[0].BatchIndexErrorMessage)
+	require.Equal(t, int64(0), wr.BaseOffset)
 	require.Equal(t, int64(0), p.Offset())
 	require.Equal(t, int64(0), p.StartOffset())
 
-	offset, recordsWithError, err = p.Write(kafka.RecordBatch{
+	wr, err = p.Write(kafka.RecordBatch{
 		Records: []*kafka.Record{
 			{
 				Time:  time.Now(),
@@ -207,8 +208,8 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Len(t, recordsWithError, 0)
-	require.Equal(t, int64(0), offset)
+	require.Len(t, wr.Records, 0)
+	require.Equal(t, int64(0), wr.BaseOffset)
 	require.Equal(t, int64(1), p.Offset())
 	require.Equal(t, int64(0), p.StartOffset())
 	record := p.Segments[p.ActiveSegment].record(0)
@@ -224,7 +225,7 @@ func TestPatition_Retention(t *testing.T) {
 		&Topic{},
 	)
 	require.Equal(t, int64(0), p.Head)
-	offset, records, err := p.Write(kafka.RecordBatch{
+	_, _ = p.Write(kafka.RecordBatch{
 		Records: []*kafka.Record{
 			{
 				Time:    time.Now(),
@@ -234,7 +235,7 @@ func TestPatition_Retention(t *testing.T) {
 			},
 		},
 	})
-	offset, records, err = p.Write(kafka.RecordBatch{
+	wr, err := p.Write(kafka.RecordBatch{
 		Records: []*kafka.Record{
 			{
 				Time:    time.Now(),
@@ -245,8 +246,8 @@ func TestPatition_Retention(t *testing.T) {
 		},
 	})
 	require.NoError(t, err)
-	require.Len(t, records, 0)
-	require.Equal(t, int64(1), offset)
+	require.Len(t, wr.Records, 0)
+	require.Equal(t, int64(1), wr.BaseOffset)
 	require.Equal(t, int64(0), p.Head)
 	require.Equal(t, int64(2), p.Tail)
 

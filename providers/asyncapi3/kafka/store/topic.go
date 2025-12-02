@@ -84,20 +84,20 @@ func (t *Topic) Store() *Store {
 func (t *Topic) Write(record *kafka.Record) (partition int, recordError *produce.RecordError) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	index := r.Intn(len(t.Partitions))
-	_, errs, _ := t.Partitions[index].Write(kafka.RecordBatch{Records: []*kafka.Record{record}})
-	if errs == nil {
+	wr, _ := t.Partitions[index].Write(kafka.RecordBatch{Records: []*kafka.Record{record}})
+	if wr.Records == nil {
 		return index, nil
 	}
-	return index, &errs[0]
+	return index, &wr.Records[0]
 }
 
 func (t *Topic) WritePartition(partition int, record *kafka.Record) (recordError *produce.RecordError, err error) {
 	if partition >= len(t.Partitions) {
 		return nil, fmt.Errorf("partition out of range")
 	}
-	_, errs, _ := t.Partitions[partition].Write(kafka.RecordBatch{Records: []*kafka.Record{record}})
-	if errs == nil {
+	wr, _ := t.Partitions[partition].Write(kafka.RecordBatch{Records: []*kafka.Record{record}})
+	if wr.Records == nil {
 		return nil, nil
 	}
-	return &errs[0], nil
+	return &wr.Records[0], nil
 }

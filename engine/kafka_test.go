@@ -2,6 +2,7 @@ package engine_test
 
 import (
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"io"
 	"mokapi/config/dynamic"
@@ -56,7 +57,7 @@ func TestKafkaClient(t *testing.T) {
 			cfg: func() *asyncapi3.Config {
 				msg := asyncapi3test.NewMessage(
 					asyncapi3test.WithPayload(schematest.New("string")),
-					asyncapi3test.WithKey(schematest.New("string")),
+					asyncapi3test.WithKey(schematest.New("string", schematest.WithMinLength(3))),
 				)
 				return createCfg("foo", msg)
 			},
@@ -72,8 +73,8 @@ func TestKafkaClient(t *testing.T) {
 				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
-				require.Equal(t, "XidZuoWq ", kafka.BytesToString(b.Records[0].Key))
-				require.Equal(t, "\"\"", kafka.BytesToString(b.Records[0].Value))
+				require.Equal(t, "EZyvmtlRf", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `"XidZuoWq "`, kafka.BytesToString(b.Records[0].Value))
 			},
 		},
 		{
@@ -81,7 +82,7 @@ func TestKafkaClient(t *testing.T) {
 			cfg: func() *asyncapi3.Config {
 				msg := asyncapi3test.NewMessage(
 					asyncapi3test.WithPayload(schematest.New("string")),
-					asyncapi3test.WithKey(schematest.New("string")),
+					asyncapi3test.WithKey(schematest.New("string", schematest.WithMinLength(3))),
 				)
 				return createCfg("foo", msg)
 			},
@@ -97,8 +98,8 @@ func TestKafkaClient(t *testing.T) {
 				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
-				require.Equal(t, "XidZuoWq ", kafka.BytesToString(b.Records[0].Key))
-				require.Equal(t, "\"\"", kafka.BytesToString(b.Records[0].Value))
+				require.Equal(t, "EZyvmtlRf", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `"XidZuoWq "`, kafka.BytesToString(b.Records[0].Value))
 			},
 		},
 		{
@@ -223,6 +224,7 @@ func TestKafkaClient(t *testing.T) {
 				_, err = b.Records[0].Value.Read(val)
 				require.NoError(t, err)
 				require.Equal(t, []byte{123, 0, 0, 0}, val)
+				require.Equal(t, 123, int(binary.LittleEndian.Uint32(val)))
 			},
 		},
 		{
@@ -706,6 +708,42 @@ func TestKafkaClient(t *testing.T) {
 					}
 				`))
 				require.EqualError(t, err, "failed to produce message to Kafka topic 'foo': no matching message configuration found for the given value: {\"foo\":\"bar\"}\nhint:\nencoding data to 'application/xml' failed: error count 1:\n\t- #/required: required properties are missing: id\n at mokapi/js/kafka.(*Module).Produce-fm (native)")
+			},
+		},
+		{
+			name: "content-type is xml with OpenAPI schema using XML using value",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithContentType("application/xml"),
+
+					asyncapi3test.WithPayloadOpenAPI(opSchematest.New("object",
+						opSchematest.WithXml(&opSchema.Xml{Name: "foo"}),
+						opSchematest.WithProperty(
+							"id",
+							opSchematest.New(
+								"string",
+								opSchematest.WithXml(&opSchema.Xml{Attribute: true}),
+							),
+						),
+						opSchematest.WithRequired("id"),
+					)),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ messages: [{ value: '<foo>bar</foo>' }] })
+					}
+				`))
+
+				require.NoError(t, err)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Equal(t, "gbrmarxhk", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `<foo>bar</foo>`, kafka.BytesToString(b.Records[0].Value))
 			},
 		},
 	}

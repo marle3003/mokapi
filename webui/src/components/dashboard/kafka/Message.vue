@@ -144,25 +144,37 @@ function key(key: KafkaValue | null): string {
               </p>
             </div>
             <div class="col text-end">
-              <span class="badge bg-secondary" aria-label="Service Type">MAIL</span>
+              <span class="badge bg-secondary" aria-label="Service Type">KAFKA</span>
             </div>
           </div>
-          <div class="row">
-            <div class="col-2 mb-2">
+          <div class="row mb-2">
+            <div class="col-2">
               <p id="message-offset" class="label">Offset</p>
               <p aria-labelledby="message-offset">{{ data.offset }}</p>
             </div>
-            <div class="col-2 mb-2">
+            <div class="col-2">
               <p id="message-partition" class="label">Partition</p>
               <p aria-labelledby="message-partition">{{ data.partition }}</p>
             </div>
-          </div>
-          <div class="row">
-            <div class="col-2 mb-2">
-              <p id="message-cotenttype" class="label">Content Type</p>
-              <p aria-labelledby="message-cotenttype">{{ message?.contentTypeTitle ?? '-' }}</p>
+            <div class="col-2" v-if="data.producerId > 0">
+              <p id="message-producerId" class="label">Producer Id</p>
+              <p aria-labelledby="message-producerId">{{ data.producerId }}</p>
             </div>
-            <div class="col-2 mb-2">
+            <div class="col-2 mb-2" v-if="data.producerId > 0">
+              <p id="message-producerEpoch" class="label">Producer Epoch</p>
+              <p aria-labelledby="message-producerEpoch">{{ data.producerEpoch }}</p>
+            </div>
+            <div class="col-2 mb-2" v-if="data.producerId > 0">
+              <p id="message-sequenceNumber" class="label">Sequence Number</p>
+              <p aria-labelledby="message-sequenceNumber">{{ data.sequenceNumber }}</p>
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-2">
+              <p id="message-contenttype" class="label">Content Type</p>
+              <p aria-labelledby="message-contenttype">{{ message?.contentTypeTitle ?? '-' }}</p>
+            </div>
+            <div class="col-2">
               <p id="message-key-type" class="label">Key Type</p>
               <p aria-labelledby="message-key-type">{{ message?.keyType ?? '-' }}</p>
             </div>

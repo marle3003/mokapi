@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, type PropType } from 'vue'
+import { computed } from 'vue'
 import Markdown from 'vue3-markdown-it'
 
 const props = defineProps<{

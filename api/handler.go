@@ -1,9 +1,9 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io/fs"
 	"mokapi/config/static"
 	"mokapi/runtime"
@@ -15,6 +15,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type handler struct {
@@ -220,12 +222,18 @@ func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 	writeJsonBody(w, i)
 }
 
-func writeJsonBody(w http.ResponseWriter, i interface{}) {
-	b, err := json.Marshal(i)
+func writeJsonBody(w http.ResponseWriter, v interface{}) {
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	err := enc.Encode(v) // includes newline
+
 	if err != nil {
 		writeError(w, err, http.StatusInternalServerError)
 		return
 	}
+
+	b := bytes.TrimSuffix(buf.Bytes(), []byte("\n"))
 	_, err = w.Write(b)
 	if err != nil {
 		log.Errorf("write response body failed: %v", err)

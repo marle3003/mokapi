@@ -2,8 +2,9 @@ package kafka
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const clientKey = "client"

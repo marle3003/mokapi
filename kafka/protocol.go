@@ -24,6 +24,7 @@ const (
 	ListGroup       ApiKey = 16
 	ApiVersions     ApiKey = 18
 	CreateTopics    ApiKey = 19
+	InitProducerId  ApiKey = 22
 )
 
 var apitext = map[ApiKey]string{
@@ -39,6 +40,7 @@ var apitext = map[ApiKey]string{
 	SyncGroup:       "SyncGroup",
 	ApiVersions:     "ApiVersions",
 	CreateTopics:    "CreateTopics",
+	InitProducerId:  "InitProducerId",
 }
 
 var ApiTypes = map[ApiKey]ApiType{}

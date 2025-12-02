@@ -1,8 +1,9 @@
 package asyncapi3
 
 import (
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
+
+	"gopkg.in/yaml.v3"
 )
 
 type ChannelRef struct {
@@ -22,6 +23,7 @@ type Channel struct {
 	Bindings    ChannelBindings          `yaml:"bindings" json:"bindings"`
 
 	ExternalDocs []ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
+	Config       *Config
 }
 
 type ChannelTrait struct {

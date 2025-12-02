@@ -22,12 +22,14 @@ type Partition struct {
 	Tail          int64
 	Topic         *Topic
 
-	Leader   int
+	Leader   *Broker
 	Replicas []int
 
 	validator *validator
 	logger    LogRecord
 	trigger   Trigger
+
+	producers map[int64]*PartitionProducerState
 
 	m sync.RWMutex
 }
@@ -47,39 +49,54 @@ type record struct {
 	Log  *KafkaLog
 }
 
-type WriteOptions func(args *WriteArgs)
-
-type WriteArgs struct {
+type WriteOptions struct {
 	SkipValidation bool
 }
 
+type WriteResult struct {
+	BaseOffset   int64
+	Records      []produce.RecordError
+	ErrorCode    kafka.ErrorCode
+	ErrorMessage string
+}
+
+type PartitionProducerState struct {
+	ProducerId   int64
+	Epoch        int16
+	LastSequence int32
+}
+
 func newPartition(index int, brokers Brokers, logger LogRecord, trigger Trigger, topic *Topic) *Partition {
-	brokerList := make([]int, 0, len(brokers))
+	brokerIds := make([]int, 0, len(brokers))
+	brokerList := make([]*Broker, 0, len(brokers))
 	for i, b := range brokers {
 		if topic.Config != nil && len(topic.Config.Servers) > 0 {
 			if slices.ContainsFunc(topic.Config.Servers, func(s *asyncapi3.ServerRef) bool {
 				return s.Value == b.config
 			}) {
-				brokerList = append(brokerList, i)
+				brokerList = append(brokerList, b)
+				brokerIds = append(brokerIds, i)
 			}
 		} else {
-			brokerList = append(brokerList, i)
+			brokerList = append(brokerList, b)
+			brokerIds = append(brokerIds, i)
 		}
 	}
 	p := &Partition{
-		Index:    index,
-		Head:     0,
-		Tail:     0,
-		Segments: make(map[int64]*Segment),
-		logger:   logger,
-		trigger:  trigger,
-		Topic:    topic,
+		Index:     index,
+		Head:      0,
+		Tail:      0,
+		Segments:  make(map[int64]*Segment),
+		logger:    logger,
+		trigger:   trigger,
+		Topic:     topic,
+		producers: make(map[int64]*PartitionProducerState),
 	}
 	if len(brokerList) > 0 {
 		p.Leader = brokerList[0]
 	}
 	if len(brokerList) > 1 {
-		p.Replicas = brokerList[1:]
+		p.Replicas = brokerIds[1:]
 	} else {
 		p.Replicas = make([]int, 0)
 	}
@@ -107,6 +124,7 @@ func (p *Partition) Read(offset int64, maxBytes int) (kafka.RecordBatch, kafka.E
 
 		for seg.contains(offset) {
 			r := seg.record(offset)
+
 			if baseOffset == 0 {
 				baseOffset = r.Offset
 				baseTime = r.Time
@@ -123,43 +141,79 @@ func (p *Partition) Read(offset int64, maxBytes int) (kafka.RecordBatch, kafka.E
 	}
 }
 
-func (p *Partition) WriteSkipValidation(batch kafka.RecordBatch) (baseOffset int64, records []produce.RecordError, err error) {
-	return p.write(batch, true)
+func (p *Partition) WriteSkipValidation(batch kafka.RecordBatch) (WriteResult, error) {
+	return p.write(batch, WriteOptions{SkipValidation: true})
 }
 
-func (p *Partition) Write(batch kafka.RecordBatch) (baseOffset int64, records []produce.RecordError, err error) {
-	return p.write(batch, false)
+func (p *Partition) Write(batch kafka.RecordBatch) (WriteResult, error) {
+	return p.write(batch, WriteOptions{SkipValidation: false})
 }
 
-func (p *Partition) write(batch kafka.RecordBatch, skipValidation bool) (baseOffset int64, records []produce.RecordError, err error) {
+func (p *Partition) write(batch kafka.RecordBatch, opts WriteOptions) (WriteResult, error) {
 	if p == nil {
-		return 0, nil, fmt.Errorf("partition is nil")
+		return WriteResult{}, fmt.Errorf("partition is nil")
 	}
 
 	p.m.Lock()
 	defer p.m.Unlock()
 
+	result := WriteResult{}
+
 	var writeFuncs []func()
+	var producer *ProducerState
+	sequenceNumber := int32(-1)
 
 	now := time.Now()
-	baseOffset = p.Tail
+	result.BaseOffset = p.Tail
 	var baseTime time.Time
-	for _, r := range batch.Records {
-		var result *KafkaLog
-		result, err = p.validator.Validate(r)
-		if skipValidation && err != nil {
-			err = nil
-		}
-		if err != nil {
-			records = append(records, produce.RecordError{BatchIndex: int32(r.Offset), BatchIndexErrorMessage: err.Error()})
-		}
-		if p.trigger(r, result.SchemaId) {
-			// validate again
-			result, err = p.validator.Validate(r)
+	for i, r := range batch.Records {
+		// validate producer idempotence
+		if r.ProducerId > 0 {
+			if producer == nil {
+				producer = p.Topic.s.producers[r.ProducerId]
+			}
+			state, ok := p.producers[r.ProducerId]
+			if ok {
+				sequenceNumber = state.LastSequence
+			}
+
+			if producer == nil {
+				result.fail(i, kafka.InvalidProducerIdMapping, "unknown producer id")
+				return result, nil
+			} else if producer.ProducerEpoch != r.ProducerEpoch {
+				// this is without transactional produce not possible
+				// due to producer will always get a new producer id
+				// should return PRODUCER_FENCED when record epoch is lower as current known
+				// this should be adjusted when transactional is implemented
+				result.fail(i, kafka.InvalidProducerEpoch, "producer epoch does not match")
+				return result, nil
+			} else if r.SequenceNumber != sequenceNumber+1 {
+				var msg string
+				if r.SequenceNumber <= sequenceNumber {
+					msg = fmt.Sprintf("message sequence number already received: %d", r.SequenceNumber)
+					result.fail(i, kafka.DuplicateSequenceNumber, msg)
+
+				} else {
+					msg = fmt.Sprintf("expected sequence number %d but got %d", sequenceNumber+1, r.SequenceNumber)
+					result.fail(i, kafka.OutOfOrderSequenceNumber, msg)
+				}
+				return result, nil
+			}
+			sequenceNumber++
 		}
 
-		if len(records) > 0 && p.Topic.Config.Bindings.Kafka.ValueSchemaValidation {
-			return p.Tail, records, fmt.Errorf("validation error: %w", err)
+		kLog, err := p.validator.Validate(r)
+		if err != nil && !opts.SkipValidation {
+			result.fail(i, kafka.InvalidRecord, err.Error())
+			return result, nil
+		}
+		if p.trigger(r, kLog.SchemaId) && !opts.SkipValidation {
+			// validate again
+			kLog, err = p.validator.Validate(r)
+			if err != nil {
+				result.fail(i, kafka.InvalidRecord, err.Error())
+				return result, nil
+			}
 		}
 
 		if r.Time.IsZero() {
@@ -181,23 +235,37 @@ func (p *Partition) write(batch kafka.RecordBatch, skipValidation bool) (baseOff
 				segment = p.addSegment()
 			}
 
-			segment.Log = append(segment.Log, &record{Data: r, Log: result})
+			segment.Log = append(segment.Log, &record{Data: r, Log: kLog})
 			segment.Tail++
 			segment.LastWritten = now
-			segment.Size += r.Size(baseOffset, baseTime)
+			segment.Size += r.Size(result.BaseOffset, baseTime)
 			p.Tail++
 
-			result.Partition = p.Index
-			result.Offset = r.Offset
-			p.logger(result, events.NewTraits().With("partition", strconv.Itoa(p.Index)))
+			kLog.Partition = p.Index
+			kLog.Offset = r.Offset
+			p.logger(kLog, events.NewTraits().With("partition", strconv.Itoa(p.Index)))
 		})
+	}
+
+	if len(result.Records) > 0 && p.Topic.Config.Bindings.Kafka.ValueSchemaValidation {
+		return result, nil
 	}
 
 	for _, writeFunc := range writeFuncs {
 		writeFunc()
 	}
 
-	return
+	if sequenceNumber >= 0 && producer != nil {
+		state, ok := p.producers[producer.ProducerId]
+		if !ok {
+			state = &PartitionProducerState{LastSequence: sequenceNumber}
+			p.producers[producer.ProducerId] = state
+		} else {
+			state.LastSequence = sequenceNumber
+		}
+	}
+
+	return result, nil
 }
 
 func (p *Partition) Offset() int64 {
@@ -307,4 +375,13 @@ func (s *Segment) delete() {
 		}
 		r.Log.Deleted = true
 	}
+}
+
+func (r *WriteResult) fail(index int, code kafka.ErrorCode, msg string) {
+	r.ErrorCode = code
+	r.ErrorMessage = msg
+	r.Records = append(r.Records, produce.RecordError{
+		BatchIndex:             int32(index),
+		BatchIndexErrorMessage: msg,
+	})
 }

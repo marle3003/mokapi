@@ -1,7 +1,6 @@
 package store_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/providers/asyncapi3"
@@ -10,6 +9,8 @@ import (
 	"mokapi/runtime/events"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestStore(t *testing.T) {
@@ -123,14 +124,15 @@ func TestStore(t *testing.T) {
 					),
 				))
 
-				_, _, err := s.Topic("foo").Partitions[0].Write(
+				wr, err := s.Topic("foo").Partitions[0].Write(
 					kafka.RecordBatch{Records: []*kafka.Record{
 						{
 							Value: kafka.NewBytes([]byte("123")),
 						},
 					}},
 				)
-				require.EqualError(t, err, "validation error: invalid message: error count 1:\n\t- #/type: invalid type, expected string but got number")
+				require.NoError(t, err)
+				require.Equal(t, "invalid message: error count 1:\n\t- #/type: invalid type, expected string but got number", wr.Records[0].BatchIndexErrorMessage)
 			},
 		},
 	}

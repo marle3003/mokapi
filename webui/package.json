@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@popperjs/core": "^2.11.6",
-    "@ssthouse/vue3-tree-chart": "^0.2.6",
+    "@ssthouse/vue3-tree-chart": "^0.3.0",
     "@types/bootstrap": "^5.2.10",
     "@types/whatwg-mimetype": "^3.0.2",
     "ace-builds": "^1.43.4",
@@ -29,7 +29,7 @@
     "http-status-codes": "^2.3.0",
     "js-yaml": "^4.1.1",
     "ncp": "^2.0.0",
-    "vue": "^3.5.24",
+    "vue": "^3.5.25",
     "vue-router": "^4.6.3",
     "vue3-ace-editor": "^2.2.4",
     "vue3-highlightjs": "^1.0.5",
@@ -38,7 +38,7 @@
     "xml-formatter": "^3.6.7"
   },
   "devDependencies": {
-    "@playwright/test": "^1.56.1",
+    "@playwright/test": "^1.57.0",
     "@rushstack/eslint-patch": "^1.15.0",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^24.10.1",
@@ -47,12 +47,12 @@
     "@vue/eslint-config-typescript": "^14.6.0",
     "@vue/tsconfig": "^0.8.1",
     "eslint": "^9.39.1",
-    "eslint-plugin-vue": "^10.5.1",
+    "eslint-plugin-vue": "^10.6.2",
     "npm-run-all": "^4.1.5",
     "prettier": "^3.6.2",
     "typescript": "~5.9.3",
     "vite": "^7.2.4",
-    "vue-tsc": "^3.1.4",
+    "vue-tsc": "^3.1.5",
     "xml2js": "^0.6.2"
   }
 }

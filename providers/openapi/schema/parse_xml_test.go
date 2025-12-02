@@ -27,7 +27,8 @@ func TestParseXML(t *testing.T) {
 			),
 			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]any{"id": int64(123)}, v)
+				// id is defined and shouldn't be treated as an additional property
+				require.Equal(t, map[string]any{}, v)
 			},
 		},
 		{
@@ -394,13 +395,12 @@ func TestUnmarshalXML_Old(t *testing.T) {
 		{
 			name: "wrapped array",
 			xml:  "<root><books><books>one</books><books>two</books></books></root>",
-			schema: schematest.New("object", schematest.WithProperty("books",
-				schematest.New("array", schematest.WithItems("string"), schematest.WithXml(&schema.Xml{
-					Wrapped: true,
-				})))),
+			schema: schematest.New("array", schematest.WithItems("string"), schematest.WithXml(&schema.Xml{
+				Wrapped: true,
+			})),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"books": []interface{}{"one", "two"}}, i)
+				require.Equal(t, []interface{}{"one", "two"}, i)
 			},
 		},
 		{

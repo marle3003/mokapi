@@ -320,7 +320,10 @@ export let events = [
             },
             partition: 1,
             messageId: 'shopOrder',
-            deleted: true
+            deleted: true,
+            producerId: 3,
+            producerEpoch: 1,
+            sequenceNumber: 1
         }
     },
     {

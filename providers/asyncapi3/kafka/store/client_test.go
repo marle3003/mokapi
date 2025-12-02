@@ -58,18 +58,26 @@ func TestClient(t *testing.T) {
 		},
 		{
 			name: "value as json and random partition",
-			cfg: asyncapi3test.NewConfig(
-				asyncapi3test.WithChannel("foo",
-					asyncapi3test.WithMessage("foo",
-						asyncapi3test.WithContentType("application/json"),
-						asyncapi3test.WithPayload(
-							schematest.New("object",
-								schematest.WithProperty("foo", schematest.New("string")),
-							),
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithContentType("application/json"),
+					asyncapi3test.WithPayload(
+						schematest.New("object",
+							schematest.WithProperty("foo", schematest.New("string")),
 						),
 					),
-				),
-			),
+				)
+				ch := asyncapi3test.NewChannel(asyncapi3test.UseMessage("foo", &asyncapi3.MessageRef{Value: msg}))
+
+				return asyncapi3test.NewConfig(
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("sendAction",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.UseOperationMessage(msg),
+					),
+				)
+			}(),
 			test: func(t *testing.T, s *store.Store, monitor *monitor.Kafka) {
 				c := store.NewClient(s, monitor)
 				ct := media.ParseContentType("application/json")
@@ -90,18 +98,26 @@ func TestClient(t *testing.T) {
 		},
 		{
 			name: "value unspecified",
-			cfg: asyncapi3test.NewConfig(
-				asyncapi3test.WithChannel("foo",
-					asyncapi3test.WithMessage("foo",
-						asyncapi3test.WithContentType("application/json"),
-						asyncapi3test.WithPayload(
-							schematest.New("object",
-								schematest.WithProperty("foo", schematest.New("string")),
-							),
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithContentType("application/json"),
+					asyncapi3test.WithPayload(
+						schematest.New("object",
+							schematest.WithProperty("foo", schematest.New("string")),
 						),
 					),
-				),
-			),
+				)
+				ch := asyncapi3test.NewChannel(asyncapi3test.UseMessage("foo", &asyncapi3.MessageRef{Value: msg}))
+
+				return asyncapi3test.NewConfig(
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("sendAction",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.UseOperationMessage(msg),
+					),
+				)
+			}(),
 			test: func(t *testing.T, s *store.Store, monitor *monitor.Kafka) {
 				c := store.NewClient(s, monitor)
 				ct := media.ParseContentType("")
@@ -112,11 +128,11 @@ func TestClient(t *testing.T) {
 				}}, ct)
 				require.NoError(t, err)
 				require.Len(t, result, 1)
+				require.Equal(t, "", result[0].Error)
 				require.Equal(t, 0, result[0].Partition)
 				require.Equal(t, int64(0), result[0].Offset)
 				require.Nil(t, result[0].Key)
 				require.Equal(t, "{\"foo\":\"foo\"}", string(result[0].Value))
-				require.Equal(t, "", result[0].Error)
 			},
 		},
 		{
@@ -178,32 +194,39 @@ func TestClient(t *testing.T) {
 		},
 		{
 			name: "use string key and value",
-			cfg: asyncapi3test.NewConfig(
-				asyncapi3test.WithChannel("foo",
-					asyncapi3test.WithMessage("foo",
-						asyncapi3test.WithContentType("application/json"),
-						asyncapi3test.WithPayload(
-							schematest.New("object",
-								schematest.WithProperty("foo", schematest.New("string")),
-							),
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithContentType("application/json"),
+					asyncapi3test.WithPayload(
+						schematest.New("object",
+							schematest.WithProperty("foo", schematest.New("string")),
 						),
 					),
-				),
-			),
+				)
+				ch := asyncapi3test.NewChannel(asyncapi3test.UseMessage("foo", &asyncapi3.MessageRef{Value: msg}))
+
+				return asyncapi3test.NewConfig(
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("sendAction",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.UseOperationMessage(msg),
+					),
+				)
+			}(),
 			test: func(t *testing.T, s *store.Store, monitor *monitor.Kafka) {
 				c := store.NewClient(s, monitor)
-				ct := media.ParseContentType("")
 				result, err := c.Write("foo", []store.Record{{
 					Key:   "12345",
 					Value: `{"foo":"bar"}`,
-				}}, ct)
+				}}, media.ParseContentType("application/vnd.mokapi.kafka.json+json"))
 				require.NoError(t, err)
 				require.Len(t, result, 1)
+				require.Equal(t, "", result[0].Error)
 				require.Equal(t, 0, result[0].Partition)
 				require.Equal(t, int64(0), result[0].Offset)
 				require.Equal(t, "12345", string(result[0].Key))
 				require.Equal(t, `{"foo":"bar"}`, string(result[0].Value))
-				require.Equal(t, "", result[0].Error)
 			},
 		},
 		{
@@ -238,66 +261,82 @@ func TestClient(t *testing.T) {
 		},
 		{
 			name: "key as number",
-			cfg: asyncapi3test.NewConfig(
-				asyncapi3test.WithChannel("foo",
-					asyncapi3test.WithMessage("foo",
-						asyncapi3test.WithContentType("application/json"),
-						asyncapi3test.WithPayload(
-							schematest.New("object",
-								schematest.WithProperty("foo", schematest.New("string")),
-							),
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithContentType("application/json"),
+					asyncapi3test.WithPayload(
+						schematest.New("object",
+							schematest.WithProperty("foo", schematest.New("string")),
 						),
 					),
-				),
-			),
+				)
+				ch := asyncapi3test.NewChannel(asyncapi3test.UseMessage("foo", &asyncapi3.MessageRef{Value: msg}))
+
+				return asyncapi3test.NewConfig(
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("sendAction",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.UseOperationMessage(msg),
+					),
+				)
+			}(),
 			test: func(t *testing.T, s *store.Store, monitor *monitor.Kafka) {
 				c := store.NewClient(s, monitor)
-				ct := media.ParseContentType("")
 				result, err := c.Write("foo", []store.Record{{
 					Key:   1234,
 					Value: `{"foo":"bar"}`,
-				}}, ct)
+				}}, media.ParseContentType("application/vnd.mokapi.kafka.json+json"))
 				require.NoError(t, err)
 				require.Len(t, result, 1)
+				require.Equal(t, "", result[0].Error)
 				require.Equal(t, 0, result[0].Partition)
 				require.Equal(t, int64(0), result[0].Offset)
 				require.Equal(t, "1234", string(result[0].Key))
 				require.Equal(t, `{"foo":"bar"}`, string(result[0].Value))
-				require.Equal(t, "", result[0].Error)
 			},
 		},
 		{
 			name: "read with unknown offset (-1) using 2 partitions",
-			cfg: asyncapi3test.NewConfig(
-				asyncapi3test.WithChannel("foo",
-					asyncapi3test.WithMessage("foo",
-						asyncapi3test.WithContentType("application/json"),
-						asyncapi3test.WithPayload(
-							schematest.New("object",
-								schematest.WithProperty("foo", schematest.New("string")),
-							),
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithContentType("application/json"),
+					asyncapi3test.WithPayload(
+						schematest.New("object",
+							schematest.WithProperty("foo", schematest.New("string")),
 						),
 					),
+				)
+				ch := asyncapi3test.NewChannel(
+					asyncapi3test.UseMessage("foo", &asyncapi3.MessageRef{Value: msg}),
 					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 2}),
-				),
-			),
+				)
+
+				return asyncapi3test.NewConfig(
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("sendAction",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.UseOperationMessage(msg),
+					),
+				)
+			}(),
 			test: func(t *testing.T, s *store.Store, monitor *monitor.Kafka) {
 				c := store.NewClient(s, monitor)
-				ct := media.ParseContentType("")
 				result, err := c.Write("foo", []store.Record{{
 					Key:       1234,
 					Value:     `{"foo":"bar"}`,
 					Partition: 1,
-				}}, ct)
+				}}, media.ParseContentType("application/vnd.mokapi.kafka.json+json"))
 				require.NoError(t, err)
 				require.Len(t, result, 1)
+				require.Equal(t, "", result[0].Error)
 				require.Equal(t, 1, result[0].Partition)
 				require.Equal(t, int64(0), result[0].Offset)
 				require.Equal(t, "1234", string(result[0].Key))
 				require.Equal(t, `{"foo":"bar"}`, string(result[0].Value))
-				require.Equal(t, "", result[0].Error)
 
-				ct = media.ParseContentType("application/json")
+				ct := media.ParseContentType("application/json")
 				records, err := c.Read("foo", 1, -1, &ct)
 				require.NoError(t, err)
 				require.Equal(t, []store.Record{
@@ -312,46 +351,52 @@ func TestClient(t *testing.T) {
 		},
 		{
 			name: "using header",
-			cfg: asyncapi3test.NewConfig(
-				asyncapi3test.WithChannel("foo",
-					asyncapi3test.WithMessage("foo",
-						asyncapi3test.WithContentType("application/json"),
-						asyncapi3test.WithPayload(
-							schematest.New("object",
-								schematest.WithProperty("foo", schematest.New("string")),
-							),
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithContentType("application/json"),
+					asyncapi3test.WithPayload(
+						schematest.New("object",
+							schematest.WithProperty("foo", schematest.New("string")),
 						),
 					),
-					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 2}),
-				),
-			),
+				)
+				ch := asyncapi3test.NewChannel(asyncapi3test.UseMessage("foo", &asyncapi3.MessageRef{Value: msg}))
+
+				return asyncapi3test.NewConfig(
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("sendAction",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.UseOperationMessage(msg),
+					),
+				)
+			}(),
 			test: func(t *testing.T, s *store.Store, monitor *monitor.Kafka) {
 				c := store.NewClient(s, monitor)
-				ct := media.ParseContentType("")
 				result, err := c.Write("foo", []store.Record{{
 					Key:       1234,
 					Value:     `{"foo":"bar"}`,
 					Headers:   []store.RecordHeader{{Name: "yuh", Value: "bar"}},
-					Partition: 1,
-				}}, ct)
+					Partition: 0,
+				}}, media.ParseContentType("application/vnd.mokapi.kafka.json+json"))
 				require.NoError(t, err)
+				require.Equal(t, "", result[0].Error)
 				require.Len(t, result, 1)
-				require.Equal(t, 1, result[0].Partition)
+				require.Equal(t, 0, result[0].Partition)
 				require.Equal(t, int64(0), result[0].Offset)
 				require.Equal(t, "1234", string(result[0].Key))
 				require.Equal(t, `{"foo":"bar"}`, string(result[0].Value))
 				require.Equal(t, []store.RecordHeader{{Name: "yuh", Value: "bar"}}, result[0].Headers)
-				require.Equal(t, "", result[0].Error)
 
-				ct = media.ParseContentType("application/json")
-				records, err := c.Read("foo", 1, -1, &ct)
+				ct := media.ParseContentType("application/json")
+				records, err := c.Read("foo", 0, -1, &ct)
 				require.NoError(t, err)
 				require.Equal(t, []store.Record{
 					{
 						Key:       "1234",
 						Value:     map[string]interface{}{"foo": "bar"},
 						Headers:   []store.RecordHeader{{Name: "yuh", Value: "bar"}},
-						Partition: 1,
+						Partition: 0,
 					},
 				}, records)
 			},

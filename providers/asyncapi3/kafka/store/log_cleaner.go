@@ -1,9 +1,10 @@
 package store
 
 import (
-	log "github.com/sirupsen/logrus"
 	"sort"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func (s *Store) cleanLog(b *Broker) {
@@ -37,7 +38,7 @@ func (s *Store) cleanLog(b *Broker) {
 		}
 
 		for _, p := range topic.Partitions {
-			if p.Leader != b.Id {
+			if p.Leader.Id != b.Id {
 				continue
 			}
 

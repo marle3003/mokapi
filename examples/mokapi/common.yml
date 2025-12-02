@@ -96,6 +96,12 @@ components:
                 type: string
         deleted:
           type: boolean
+        producerId:
+          type: number
+        producerEpoch:
+          type: number
+        sequenceNumber:
+          type: number
     KafkaValue:
       type: object
       properties:

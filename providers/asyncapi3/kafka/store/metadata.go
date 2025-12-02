@@ -77,9 +77,13 @@ func (s *Store) metadata(rw kafka.ResponseWriter, req *kafka.Request) error {
 			for _, n := range replicas {
 				nodes = append(nodes, int32(n))
 			}
+			brokerId := -1
+			if p.Leader != nil {
+				brokerId = p.Leader.Id
+			}
 			resTopic.Partitions = append(resTopic.Partitions, metaData.ResponsePartition{
 				PartitionIndex: int32(i),
-				LeaderId:       int32(p.Leader),
+				LeaderId:       int32(brokerId),
 				ReplicaNodes:   nodes,
 				IsrNodes:       nodes,
 			})

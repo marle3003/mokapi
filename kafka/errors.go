@@ -11,23 +11,30 @@ type Error struct {
 type ErrorCode int16
 
 const (
-	UnknownServerError      ErrorCode = -1
-	None                    ErrorCode = 0
-	OffsetOutOfRange        ErrorCode = 1
-	CorruptMessage          ErrorCode = 2
-	UnknownTopicOrPartition ErrorCode = 3
-	CoordinatorNotAvailable ErrorCode = 15
-	NotCoordinator          ErrorCode = 16
-	InvalidTopic            ErrorCode = 17
-	IllegalGeneration       ErrorCode = 22
-	InvalidGroupId          ErrorCode = 24
-	UnknownMemberId         ErrorCode = 25
-	RebalanceInProgress     ErrorCode = 27
-	UnsupportedVersion      ErrorCode = 35
-	TopicAlreadyExists      ErrorCode = 36
-	GroupIdNotFound         ErrorCode = 69
-	MemberIdRequired        ErrorCode = 79
-	InvalidRecord           ErrorCode = 87
+	UnknownServerError          ErrorCode = -1
+	None                        ErrorCode = 0
+	OffsetOutOfRange            ErrorCode = 1
+	CorruptMessage              ErrorCode = 2
+	UnknownTopicOrPartition     ErrorCode = 3
+	CoordinatorNotAvailable     ErrorCode = 15
+	NotCoordinator              ErrorCode = 16
+	InvalidTopic                ErrorCode = 17
+	IllegalGeneration           ErrorCode = 22
+	InvalidGroupId              ErrorCode = 24
+	UnknownMemberId             ErrorCode = 25
+	RebalanceInProgress         ErrorCode = 27
+	UnsupportedVersion          ErrorCode = 35
+	TopicAlreadyExists          ErrorCode = 36
+	UnsupportedForMessageFormat ErrorCode = 43
+	OutOfOrderSequenceNumber    ErrorCode = 45
+	DuplicateSequenceNumber     ErrorCode = 46
+	InvalidProducerEpoch        ErrorCode = 47
+	InvalidProducerIdMapping    ErrorCode = 49
+	UnknownProducerId           ErrorCode = 59
+	GroupIdNotFound             ErrorCode = 69
+	MemberIdRequired            ErrorCode = 79
+	InvalidRecord               ErrorCode = 87
+	ProducerFenced              ErrorCode = 90
 )
 
 var (

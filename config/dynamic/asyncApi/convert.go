@@ -73,6 +73,7 @@ func convertChannels(cfg *asyncapi3.Config, channels map[string]*ChannelRef) err
 			if err != nil {
 				return err
 			}
+			ch.Value.Config = cfg
 			cfg.Channels[name] = ch
 		}
 	}

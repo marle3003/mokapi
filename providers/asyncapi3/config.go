@@ -65,6 +65,7 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		}
 		if ch.Value != nil {
 			ch.Value.Name = name
+			ch.Value.Config = c
 		}
 	}
 

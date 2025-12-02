@@ -248,7 +248,7 @@ func TestHandler_Config(t *testing.T) {
 			test: []try.ResponseCondition{
 				try.HasStatusCode(http.StatusOK),
 				try.HasHeader("Content-Type", "application/json"),
-				try.HasBody(`{"id":"61373430-3061-3131-6663-326332386638","url":"https://git.bar?file=/foo/foo.json\u0026ref=main","provider":"git","time":"2023-12-27T13:01:30Z"}`),
+				try.HasBody(`{"id":"61373430-3061-3131-6663-326332386638","url":"https://git.bar?file=/foo/foo.json&ref=main","provider":"git","time":"2023-12-27T13:01:30Z"}`),
 			},
 		},
 		{

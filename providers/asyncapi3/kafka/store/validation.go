@@ -43,11 +43,7 @@ func newValidator(c *asyncapi3.Channel) *validator {
 
 func (v *validator) Validate(record *kafka.Record) (l *KafkaLog, err error) {
 	if v == nil {
-		return &KafkaLog{
-			Key:     LogValue{Binary: kafka.Read(record.Key)},
-			Message: LogValue{Binary: kafka.Read(record.Value)},
-			Headers: convertHeader(record.Headers),
-		}, nil
+		return newKafkaLog(record), nil
 	}
 
 	for _, val := range v.validators {
@@ -56,11 +52,7 @@ func (v *validator) Validate(record *kafka.Record) (l *KafkaLog, err error) {
 			return
 		}
 	}
-	return &KafkaLog{
-		Key:     LogValue{Binary: kafka.Read(record.Key)},
-		Message: LogValue{Binary: kafka.Read(record.Value)},
-		Headers: convertHeader(record.Headers),
-	}, err
+	return newKafkaLog(record), err
 }
 
 type messageValidator struct {
@@ -142,7 +134,15 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyn
 }
 
 func (mv *messageValidator) Validate(record *kafka.Record) (*KafkaLog, error) {
-	r := &KafkaLog{Key: LogValue{}, Message: LogValue{}, Headers: make(map[string]LogValue), MessageId: mv.messageId}
+	r := &KafkaLog{
+		Key:            LogValue{},
+		Message:        LogValue{},
+		Headers:        make(map[string]LogValue),
+		MessageId:      mv.messageId,
+		ProducerId:     record.ProducerId,
+		ProducerEpoch:  record.ProducerEpoch,
+		SequenceNumber: record.SequenceNumber,
+	}
 
 	if mv.msg != nil && mv.msg.Bindings.Kafka.SchemaIdLocation == "payload" {
 		var err error

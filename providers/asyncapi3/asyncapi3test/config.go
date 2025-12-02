@@ -80,6 +80,7 @@ func WithChannel(name string, opts ...ChannelOptions) ConfigOptions {
 		ch := NewChannel(opts...)
 		ch.Name = name
 		c.Channels[name] = &asyncapi3.ChannelRef{Value: ch}
+		ch.Config = c
 	}
 }
 
@@ -90,6 +91,7 @@ func AddChannel(name string, ch *asyncapi3.Channel) ConfigOptions {
 		}
 		ch.Name = name
 		c.Channels[name] = &asyncapi3.ChannelRef{Value: ch}
+		ch.Config = c
 	}
 }
 

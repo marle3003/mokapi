@@ -4,12 +4,18 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"math/rand"
 	"mokapi/config/dynamic"
 	"mokapi/kafka"
-	"mokapi/kafka/produce"
 	"mokapi/media"
+	"mokapi/providers/asyncapi3"
+	openapi "mokapi/providers/openapi/schema"
 	"mokapi/runtime/monitor"
+	avro "mokapi/schema/avro/schema"
+	"mokapi/schema/encoding"
+	"mokapi/schema/json/schema"
+	"slices"
 	"time"
 
 	"github.com/pkg/errors"
@@ -73,13 +79,14 @@ func (c *Client) Write(topic string, records []Record, ct media.ContentType) ([]
 				Error:     err.Error(),
 			})
 		}
-		value, err := c.parse(r.Value, ct)
+		value, err := c.parse(r.Value, ct, p.Topic.Config)
 		if err != nil {
 			result = append(result, RecordResult{
 				Partition: -1,
 				Offset:    -1,
 				Error:     err.Error(),
 			})
+			continue
 		}
 		rec := &kafka.Record{
 			Key:   kafka.NewBytes(key),
@@ -92,14 +99,14 @@ func (c *Client) Write(topic string, records []Record, ct media.ContentType) ([]
 			})
 		}
 		b := kafka.RecordBatch{Records: []*kafka.Record{rec}}
-		var write func(batch kafka.RecordBatch) (baseOffset int64, records []produce.RecordError, err error)
+		var write func(batch kafka.RecordBatch) (WriteResult, error)
 		if r.SkipValidation {
 			write = p.WriteSkipValidation
 		} else {
 			write = p.Write
 		}
 
-		offset, res, err := write(b)
+		wr, err := write(b)
 		if err != nil {
 			result = append(result, RecordResult{
 				Partition: -1,
@@ -107,15 +114,15 @@ func (c *Client) Write(topic string, records []Record, ct media.ContentType) ([]
 				Error:     err.Error(),
 			})
 		} else {
-			if len(res) > 0 {
+			if len(wr.Records) > 0 {
 				result = append(result, RecordResult{
 					Partition: -1,
 					Offset:    -1,
-					Error:     res[0].BatchIndexErrorMessage,
+					Error:     wr.Records[0].BatchIndexErrorMessage,
 				})
 			} else {
 				rr := RecordResult{
-					Offset:    offset,
+					Offset:    wr.BaseOffset,
 					Key:       kafka.Read(b.Records[0].Key),
 					Value:     kafka.Read(b.Records[0].Value),
 					Partition: p.Index,
@@ -162,7 +169,7 @@ func (c *Client) Read(topic string, partition int, offset int64, ct *media.Conte
 		getValue = func(value []byte) (any, error) {
 			return base64.StdEncoding.EncodeToString(value), nil
 		}
-	case ct.Key() == "application/json", ct.IsAny():
+	case ct.Key() == "application/json":
 		getValue = func(value []byte) (any, error) {
 			var val any
 			err := json.Unmarshal(value, &val)
@@ -171,9 +178,10 @@ func (c *Client) Read(topic string, partition int, offset int64, ct *media.Conte
 			}
 			return val, nil
 		}
-
 	default:
-		return nil, fmt.Errorf("unknown content type: %v", ct)
+		getValue = func(value []byte) (any, error) {
+			return string(value), nil
+		}
 	}
 
 	for _, r := range b.Records {
@@ -214,7 +222,11 @@ func (c *Client) getPartition(t *Topic, id int) (*Partition, error) {
 	return t.Partition(id), nil
 }
 
-func (c *Client) parse(v any, ct media.ContentType) ([]byte, error) {
+func (c *Client) parse(v any, ct media.ContentType, topic *asyncapi3.Channel) ([]byte, error) {
+	if b, ok := v.([]byte); ok {
+		return b, nil
+	}
+
 	switch ct.Key() {
 	case "application/vnd.mokapi.kafka.binary+json":
 		s, ok := v.(string)
@@ -226,19 +238,40 @@ func (c *Client) parse(v any, ct media.ContentType) ([]byte, error) {
 			return nil, fmt.Errorf("decode base64 string failed: %v", v)
 		}
 		return b, err
-	case "application/json":
-		b, ok := v.([]byte)
-		if ok {
-			return b, nil
+	case "application/vnd.mokapi.kafka.xml+json":
+		s, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("expected string: %v", v)
 		}
-		b, _ = json.Marshal(v)
+		return []byte(s), nil
+	case "application/vnd.mokapi.kafka.json+json":
+		s, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("expected string: %v", v)
+		}
+		return []byte(s), nil
+	case "application/json":
+		msg, err := selectMessage(v, topic)
+		if err != nil {
+			return nil, err
+		}
+		if msg != nil && msg.Payload != nil {
+			return msg.Payload.Value.Marshal(v, media.ParseContentType(msg.ContentType))
+		}
+		b, _ := json.Marshal(v)
 		return b, nil
 	default:
+		msg, err := selectMessage(v, topic)
+		if err != nil {
+			return nil, err
+		}
+		if msg != nil && msg.Payload != nil {
+			return msg.Payload.Value.Marshal(v, media.ParseContentType(msg.ContentType))
+		}
+
 		switch vt := v.(type) {
 		case []byte:
 			return vt, nil
-		case string:
-			return []byte(vt), nil
 		default:
 			return json.Marshal(v)
 		}
@@ -271,4 +304,98 @@ func (r *Record) UnmarshalJSON(b []byte) error {
 	}
 	*r = Record(a)
 	return nil
+}
+
+func selectMessage(value any, topic *asyncapi3.Channel) (*asyncapi3.Message, error) {
+	noOperationDefined := true
+	var validationErr error
+	cfg := topic.Config
+
+	// first try to get send operation
+	for _, op := range cfg.Operations {
+		if op.Value == nil || op.Value.Channel.Value == nil {
+			continue
+		}
+		if op.Value.Channel.Value == topic && op.Value.Action == "send" {
+			noOperationDefined = false
+			var messages []*asyncapi3.MessageRef
+			if len(op.Value.Messages) == 0 {
+				messages = slices.Collect(maps.Values(op.Value.Channel.Value.Messages))
+			} else {
+				messages = op.Value.Messages
+			}
+			for _, msg := range messages {
+				if msg.Value == nil {
+					continue
+				}
+				if validationErr = valueMatchMessagePayload(value, msg.Value); validationErr == nil {
+					return msg.Value, nil
+				}
+			}
+		}
+	}
+
+	// second, try to get receive operation
+	for _, op := range cfg.Operations {
+		if op.Value == nil || op.Value.Channel.Value == nil {
+			continue
+		}
+		if op.Value.Channel.Value == topic && op.Value.Action == "receive" {
+			noOperationDefined = false
+			var messages []*asyncapi3.MessageRef
+			if len(op.Value.Messages) == 0 {
+				messages = slices.Collect(maps.Values(op.Value.Channel.Value.Messages))
+			} else {
+				messages = op.Value.Messages
+			}
+			for _, msg := range messages {
+				if msg.Value == nil {
+					continue
+				}
+				if validationErr = valueMatchMessagePayload(value, msg.Value); validationErr == nil {
+					return msg.Value, nil
+				}
+			}
+		}
+	}
+
+	if noOperationDefined {
+		return nil, fmt.Errorf("no 'send' or 'receive' operation defined in specification")
+	}
+
+	if value != nil {
+		switch value.(type) {
+		case string, []byte:
+			break
+		default:
+			b, err := json.Marshal(value)
+			if err == nil {
+				value = string(b)
+			}
+		}
+		return nil, fmt.Errorf("no matching message configuration found for the given value: %v\nhint:\n%w\n", value, validationErr)
+	}
+	return nil, fmt.Errorf("no message ")
+}
+
+func valueMatchMessagePayload(value any, msg *asyncapi3.Message) error {
+	if value == nil || msg.Payload == nil {
+		return nil
+	}
+	ct := media.ParseContentType(msg.ContentType)
+
+	switch v := msg.Payload.Value.Schema.(type) {
+	case *schema.Schema:
+		_, err := encoding.NewEncoder(v).Write(value, ct)
+		return err
+	case *openapi.Schema:
+		_, err := v.Marshal(value, ct)
+		return err
+	case *avro.Schema:
+		jsSchema := avro.ConvertToJsonSchema(v)
+		_, err := encoding.NewEncoder(jsSchema).Write(value, ct)
+		return err
+	default:
+		return nil
+	}
 }

@@ -50,6 +50,16 @@ func TestJsScriptEngine(t *testing.T) {
 		time.Sleep(2 * time.Second)
 		e.Close()
 	})
+	t.Run("script from GIT provider", func(t *testing.T) {
+		t.Parallel()
+		e := enginetest.NewEngine()
+		cfgEvent := newScript("https://foo.bar?file=test.js&ref=develop", `import { on } from 'mokapi';export default function() { on('http', function() {})}`)
+		cfgEvent.Config.Info.Provider = "git"
+		err := e.AddScript(cfgEvent)
+		r.NoError(t, err)
+		r.Equal(t, 1, e.Scripts())
+		e.Close()
+	})
 }
 
 func TestJsEvery(t *testing.T) {

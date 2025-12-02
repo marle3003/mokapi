@@ -2,7 +2,6 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/dynamictest"
@@ -14,6 +13,8 @@ import (
 	"mokapi/try"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestHandler_SearchQuery(t *testing.T) {
@@ -57,7 +58,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 			response: []try.ResponseCondition{
 				try.HasStatusCode(200),
 				try.HasHeader("Content-Type", "application/json"),
-				try.HasBody(`{"results":[{"type":"HTTP","title":"foo","fragments":["\u003cmark\u003efoo\u003c/mark\u003e"],"params":{"service":"foo","type":"http"}}],"facets":{"type":[{"value":"HTTP","count":1}]},"total":1}`),
+				try.HasBody(`{"results":[{"type":"HTTP","title":"foo","fragments":["<mark>foo</mark>"],"params":{"service":"foo","type":"http"}}],"facets":{"type":[{"value":"HTTP","count":1}]},"total":1}`),
 			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
@@ -76,7 +77,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 			response: []try.ResponseCondition{
 				try.HasStatusCode(200),
 				try.HasHeader("Content-Type", "application/json"),
-				try.HasBody(`{"results":[{"type":"HTTP","title":"foo","fragments":["\u003cmark\u003efoo\u003c/mark\u003e"],"params":{"service":"foo","type":"http"}}],"facets":{"type":[{"value":"HTTP","count":1}]},"total":1}`),
+				try.HasBody(`{"results":[{"type":"HTTP","title":"foo","fragments":["<mark>foo</mark>"],"params":{"service":"foo","type":"http"}}],"facets":{"type":[{"value":"HTTP","count":1}]},"total":1}`),
 			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
