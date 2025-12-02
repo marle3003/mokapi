@@ -162,7 +162,7 @@ func (c *Client) Read(topic string, partition int, offset int64, ct *media.Conte
 		return nil, fmt.Errorf("read records failed: %v", errCode.String())
 	}
 
-	var records []Record
+	records := make([]Record, 0)
 	var getValue func(value []byte) (any, error)
 	switch {
 	case ct.Key() == "application/vnd.mokapi.kafka.binary+json":
