@@ -325,6 +325,9 @@ func (sh *scriptHost) HttpClient(opts common.HttpClientOptions) common.HttpClien
 }
 
 func (sh *scriptHost) CanClose() bool {
+	if sh.script == nil {
+		return true
+	}
 	return len(sh.events) == 0 && len(sh.jobs) == 0 && sh.script.CanClose() && len(sh.cleanupFuncs) == 0
 }
 
