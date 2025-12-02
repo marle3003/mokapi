@@ -83,9 +83,10 @@ func (e *Engine) AddScript(evt dynamic.ConfigEvent) error {
 			err := e.run(host)
 			if err != nil {
 				if errors.Is(err, UnsupportedError) {
-					return
+					log.Debugf("script not supported: %v", evt.Config.Info.Url.Path)
+				} else {
+					log.Errorf("error executing script %v: %v", evt.Config.Info.Url, err)
 				}
-				log.Errorf("error executing script %v: %v", evt.Config.Info.Url, err)
 			}
 		}()
 	} else {
@@ -137,9 +138,6 @@ func (e *Engine) addOrUpdate(host *scriptHost) {
 
 func (e *Engine) run(host *scriptHost) error {
 	err := host.Run()
-	if err != nil {
-		return err
-	}
 
 	if host.CanClose() {
 		if e.parallel {
@@ -151,7 +149,7 @@ func (e *Engine) run(host *scriptHost) error {
 		delete(e.scripts, host.name)
 	}
 
-	return nil
+	return err
 }
 
 func (e *Engine) Scripts() int {
