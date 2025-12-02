@@ -748,6 +748,16 @@ func TestHandler_KafkaAPI(t *testing.T) {
 				require.Equal(t, `<data><foo>bar</foo></data>`, string(kafka.Read(b.Records[0].Value)))
 
 				require.Equal(t, float64(1), app.Monitor.Kafka.Messages.WithLabel("foo", "topic-1").Value())
+
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/topics/topic-1/partitions/0/offsets",
+					map[string]string{"Accept": "application/xml"},
+					"",
+					h,
+					try.HasStatusCode(http.StatusOK),
+					try.BodyContains(`[{"offset":0,"key":"foo","value":"<data><foo>bar</foo></data>","partition":0}]`),
+				)
 			},
 		},
 		{
@@ -915,7 +925,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 					"",
 					h,
 					try.HasStatusCode(http.StatusOK),
-					try.HasBody(`[{"offset":0,"key":"foo","value":{"value":"bar"},"partition":0}]`),
+					try.HasBody(`[{"offset":0,"key":"foo","value":"{\"value\":\"bar\"}","partition":0}]`),
 				)
 			},
 		},
@@ -963,7 +973,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 				try.Handler(t,
 					http.MethodGet,
 					"http://foo.api/api/services/kafka/foo/topics/topic-1/partitions/0/offsets/0",
-					nil,
+					map[string]string{"Accept": "application/json"},
 					"",
 					h,
 					try.HasStatusCode(http.StatusOK),

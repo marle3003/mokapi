@@ -169,7 +169,7 @@ func (c *Client) Read(topic string, partition int, offset int64, ct *media.Conte
 		getValue = func(value []byte) (any, error) {
 			return base64.StdEncoding.EncodeToString(value), nil
 		}
-	case ct.Key() == "application/json", ct.IsAny():
+	case ct.Key() == "application/json":
 		getValue = func(value []byte) (any, error) {
 			var val any
 			err := json.Unmarshal(value, &val)
@@ -178,9 +178,10 @@ func (c *Client) Read(topic string, partition int, offset int64, ct *media.Conte
 			}
 			return val, nil
 		}
-
 	default:
-		return nil, fmt.Errorf("unknown content type: %v", ct)
+		getValue = func(value []byte) (any, error) {
+			return string(value), nil
+		}
 	}
 
 	for _, r := range b.Records {
