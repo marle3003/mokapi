@@ -4,8 +4,8 @@ import Footer from '@/components/Footer.vue'
 import { ref, onMounted } from 'vue'
 import { Modal } from 'bootstrap'
 
-const title = 'Mock APIs with Realistic Data | Mokapi Open Source Tool'
-const description = `Mokapi is a developer-friendly open-source API mocking tool that allows you to prototype, test, and demonstrate APIs using realistic data scenarios.`
+const title = 'Mock APIs with Realistic Test Data | Mokapi – Open-Source API Mocking Tool'
+const description = `Mock any external API and test without real dependencies. Mokapi is free, open-source, and build for realistic, spec-driven test data.`
 
 useMeta(title, description, 'https://mokapi.io')
 
@@ -38,14 +38,14 @@ function hasTouchSupport() {
         <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6 px-0">
             
-            <h1>Mock and Take Control of APIs You Don’t Own</h1>
+            <h1>Mock APIs. Test Faster. Ship Better.</h1>
             <div class="badge-list mb-3" role="navigation" aria-label="API type navigation">
               <a href="http"><span class="badge" aria-label="HTTP API Support">HTTP</span></a>
               <a href="kafka"><span class="badge" aria-label="Kafka Support">Kafka</span></a>
               <a href="ldap"><span class="badge" aria-label="LDAP Support">LDAP</span></a>
               <a href="mail"><span class="badge" aria-label="Email Support">Email</span></a>
             </div>
-            <p class="lead description">Build better software by mocking external APIs and testing without dependencies.<br/><b>Free</b>, <b>open-source</b>, and under your control — your data is yours.</p>
+            <p class="lead description">Test without external dependencies and build more reliable software.<br/><b>Free</b>, <b>open-source</b>, and fully under your control.</p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/guides' }">
                 <button type="button" class="btn btn-outline-primary">Get Started</button>
