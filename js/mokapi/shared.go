@@ -51,7 +51,7 @@ func (m *SharedMemory) Update(key string, fn goja.Value) any {
 	p := m.store.Update(key, func(v any) any {
 		var arg goja.Value
 		var sv *SharedValue
-		if sv != nil {
+		if v != nil {
 			sv = v.(*SharedValue)
 			arg = sv.ToValue()
 		}
@@ -64,7 +64,7 @@ func (m *SharedMemory) Update(key string, fn goja.Value) any {
 			panic(m.vm.ToValue(err))
 		}
 		if sv != nil && r == arg {
-			return sv
+			return sv.Use(m.vm)
 		}
 
 		return NewSharedValue(r, m.vm)
