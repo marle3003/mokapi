@@ -201,6 +201,7 @@
           "description": "Explore Mokapi's resources including tutorials, examples, and blog articles. Learn to mock APIs, validate schemas, and streamline your development."
         },
         "items": {
+          "Ensuring API Contract Compliance with Mokapi": "resources/blogs/ensuring-api-contract-compliance-with-mokapi.md",
           "Mock APIs based on OpenAPI and AsyncAPI": "resources/blogs/mock-api-based-on-openapi-asyncapi.md",
           "Automation Testing in Agile Development": "resources/blogs/automation-testing-agile-development.md",
           "Contract Testing": "resources/blogs/contract-testing.md",

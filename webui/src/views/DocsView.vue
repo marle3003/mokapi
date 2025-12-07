@@ -202,17 +202,20 @@ function formatParam(label: any): string {
   font-size: 0.9rem;
 }
 .content {
-  line-height: 1.75;
-  font-size: 1rem;
+  line-height: 1.63;
+  font-size: 1.15rem;
 }
 
 .content h1 {
-  margin-bottom: 2.5rem;
-  margin-top: 1rem;
+  margin-top: 1.2rem;
+  margin-bottom: 1.6rem;
+  font-size: 2.25rem;
 }
 
 .content h2 {
-  margin-bottom: 1.5rem;
+  margin-top: 1.6rem;
+  margin-bottom: 1rem;
+  font-size: 1.8rem;
 }
 
 .content h2 > * {
@@ -225,9 +228,21 @@ function formatParam(label: any): string {
 }
 
 .content h3 {
-  margin-top: 2.5rem;
-  margin-bottom: 1rem;
+  margin-top: 1.3rem;
+  margin-bottom: 0.75rem;
+  font-size: 1.4rem;
 }
+
+.content p {
+  margin-bottom: 20px;
+}
+
+.content ul {
+  padding-left: 1.5rem;
+  margin-top: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
 
 .content a {
   color: var(--color-doc-link);

@@ -29,7 +29,7 @@ import "./mail";
  *   })
  * }
  */
-export function on<T extends keyof EventHandler>(event: T, handler: EventHandler[T], args?: EventArgs): void | Promise<void>;
+export function on<T extends keyof EventHandler>(event: T, handler: EventHandler[T], args?: EventArgs): void;
 
 /**
  * Schedules a new periodic job with interval.
@@ -122,7 +122,7 @@ export interface EventHandler {
  *   })
  * }
  */
-export type HttpEventHandler = (request: HttpRequest, response: HttpResponse) => void;
+export type HttpEventHandler = (request: HttpRequest, response: HttpResponse) => void | Promise<void>;
 
 /**
  * HttpRequest is an object used by HttpEventHandler that contains request-specific
@@ -133,7 +133,7 @@ export interface HttpRequest {
     /**
      * Request method.
      * @example GET
-     * */
+     */
     readonly method: string;
 
     /** Represents a parsed URL. */
@@ -157,15 +157,13 @@ export interface HttpRequest {
     /** Object contains querystring parameters specified by OpenAPI querystring parameters. */
     readonly querystring: any;
 
-    /** API name where this request is specified */
-    readonly api: string;
-
     /** Path value specified by the OpenAPI path */
     readonly key: string;
 
     /** OperationId defined in OpenAPI */
     readonly operationId: string;
 
+    /** Returns a string representing this HttpRequest object.  */
     toString(): string
 }
 
@@ -206,7 +204,8 @@ export interface Url {
     /** URL query string. */
     readonly query: string;
 
-    toString(): string
+    /** Returns a string representing this Url object.  */
+    toString(): string;
 }
 
 /**
@@ -427,12 +426,6 @@ export type DateLayout =
  *
  * Use this to customize how the event appears in the dashboard or to control tracking.
  *
- * @property tags Optional key-value pairs used to label the event in the dashboard.
- *
- * @property track Set to `true` to enable tracking of this event handler in the dashboard.
- *                 If omitted, Mokapi automatically checks whether the response object has
- *                 been modified and tracks the handler only if a change is detected.
- *
  * @example
  * export default function() {
  *   on('http', function(req, res) {
@@ -445,7 +438,7 @@ export type DateLayout =
  */
 export interface EventArgs {
     /**
-     * Adds or overrides existing tags used in dashboard
+     * Adds or overrides existing tags used to label the event in dashboard
      */
     tags?: { [key: string]: string };
 
@@ -458,7 +451,7 @@ export interface EventArgs {
 }
 
 /**
- * cheduledEventArgs is an object used by every and cron function.
+ * ScheduledEventHandler is an object used by every and cron function.
  * https://mokapi.io/docs/javascript-api/mokapi/eventhandler/scheduledeventargs
  * @example
  * export default function() {
@@ -559,7 +552,7 @@ export interface SharedMemory {
      * @param key The key to retrieve.
      * @returns The stored value, or `undefined` if not found.
      */
-    get<T = any>(key: string): T | undefined
+    get(key: string): any;
 
     /**
      * Sets a value for the given key.
@@ -567,7 +560,7 @@ export interface SharedMemory {
      * @param key The key to store the value under.
      * @param value The value to store.
      */
-    set<T = any>(key: string, value: T): void
+    set(key: string, value: any): void;
 
     /**
      * Updates a value atomically using an updater function.
@@ -583,32 +576,32 @@ export interface SharedMemory {
      * @param updater Function that receives the current value and returns the new value.
      * @returns The new value after update.
      */
-    update<T = any>(key: string, updater: (value: T | undefined) => T): T
+    update<T = any>(key: string, updater: (value: T | undefined) => T): T;
 
     /**
      * Checks if the given key exists in shared memory.
      * @param key The key to check.
      * @returns `true` if the key exists, otherwise `false`.
      */
-    has(key: string): boolean
+    has(key: string): boolean;
 
     /**
      * Removes the specified key and its value from shared memory.
      * @param key The key to remove.
      */
-    delete(key: string): void
+    delete(key: string): void;
 
     /**
      * Removes all stored entries from shared memory.
      * Use with caution — this clears all shared state.
      */
-    clear(): void
+    clear(): void;
 
     /**
      * Returns a list of all stored keys.
      * @returns An array of key names.
      */
-    keys(): string[]
+    keys(): string[];
 
     /**
      * Creates or returns a namespaced shared memory store.
@@ -623,7 +616,7 @@ export interface SharedMemory {
      * @param name The namespace identifier.
      * @returns A `SharedMemory` object scoped to the given namespace.
      */
-    namespace(name: string): SharedMemory
+    namespace(name: string): SharedMemory;
 }
 
 /**
@@ -647,4 +640,4 @@ export interface SharedMemory {
  * mokapi.log(`Current counter: ${count}`)
  * ```
  */
-export const shared: SharedMemory
+export const shared: SharedMemory;

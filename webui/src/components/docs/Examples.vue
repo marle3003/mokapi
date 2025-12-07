@@ -39,6 +39,12 @@ const items = computed(() => {
     }
 
     items.sort((x1, x2) => {
+        if (!x1 || !x1.meta || !x1.meta.title) {
+            console.error('missing meta title for ' + x1.key)
+        }
+        if (!x2 || !x2.meta || !x2.meta.title) {
+            console.error('missing meta title for ' + x2.key)
+        }
         return x1.meta.title.localeCompare(x2.meta.title)
     })
     return items

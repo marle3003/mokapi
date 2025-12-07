@@ -42,16 +42,6 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 			if err != nil {
 				return nil, err
 			}
-			/*for i, param := range params {
-				e := param.Export()
-				if p, ok := e.(*Proxy); ok {
-					rv := reflect.ValueOf(ctx.Args[i])
-					if rv.Kind() != reflect.Ptr {
-						panic(m.vm.ToValue(fmt.Errorf("parameter %v is not a pointer", i)))
-					}
-					rv.Elem().Set(reflect.ValueOf(p.Export()))
-				}
-			}*/
 			return v, nil
 		}, &eventloop.JobContext{EventLogger: ctx.EventLogger})
 
