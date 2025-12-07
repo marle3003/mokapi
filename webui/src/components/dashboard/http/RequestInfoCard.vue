@@ -75,7 +75,7 @@ const apiRoute = computed(() => {
                     <p class="label">Duration</p>
                     <p>{{ duration(eventData.duration) }}</p>
                 </div>
-                <div class="col-1">
+                <div class="col-2">
                     <p class="label">Client IP</p>
                     <p>{{ eventData.clientIP }}</p>
                 </div>

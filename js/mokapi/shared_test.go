@@ -9,6 +9,7 @@ import (
 	"mokapi/js/eventloop"
 	"mokapi/js/mokapi"
 	"mokapi/js/require"
+	"mokapi/try"
 	"testing"
 
 	"github.com/dop251/goja"
@@ -308,6 +309,37 @@ func TestModule_Shared(t *testing.T) {
 			},
 		},
 		{
+			name: "set array using index operator",
+			test: func(t *testing.T, newVm func() *goja.Runtime) {
+				vm1 := newVm()
+
+				v, err := vm1.RunString(`
+					const m = require('mokapi');
+					m.shared.set('foo', [1,2])
+					const shared = m.shared.get('foo');
+					shared[1] = 10
+					m.shared.get('foo')
+				`)
+				r.NoError(t, err)
+				r.Equal(t, []any{int64(1), int64(10)}, mokapi.Export(v))
+			},
+		},
+		{
+			name: "get index from array",
+			test: func(t *testing.T, newVm func() *goja.Runtime) {
+				vm1 := newVm()
+
+				v, err := vm1.RunString(`
+					const m = require('mokapi');
+					m.shared.set('foo', [1,2])
+					const shared = m.shared.get('foo');
+					shared[1];
+				`)
+				r.NoError(t, err)
+				r.Equal(t, int64(2), mokapi.Export(v))
+			},
+		},
+		{
 			name: "splice array",
 			test: func(t *testing.T, newVm func() *goja.Runtime) {
 				vm1 := newVm()
@@ -374,4 +406,52 @@ func TestModule_Shared(t *testing.T) {
 			tc.test(t, vmFactory(reg, engine.NewStore()))
 		})
 	}
+}
+
+func TestSharedFromModule(t *testing.T) {
+	// import shared multiple times should not result to illegal runtime error
+
+	host := &enginetest.Host{}
+	host.OpenFunc = func(file, hint string) (*dynamic.Config, error) {
+		return &dynamic.Config{
+			Info: dynamictest.NewConfigInfo(),
+			Raw: []byte(`import { shared } from "mokapi"
+export const store = shared.update('stored', (v) => v ?? [{ foo: 'bar' }]);
+`),
+		}, nil
+	}
+
+	s1, err := js.New(&dynamic.Config{
+		Info: dynamictest.NewConfigInfo(),
+		Raw: []byte(`import { store } from "store.js"
+
+`),
+	}, host)
+	r.NoError(t, err)
+	defer s1.Close()
+
+	err = s1.Run()
+	r.NoError(t, err)
+
+	s2, err := js.New(&dynamic.Config{
+		Info: dynamic.ConfigInfo{Url: try.MustUrl("script1.js")},
+		Raw: []byte(`import { store } from "store.js"
+`),
+	}, host)
+	r.NoError(t, err)
+	defer s2.Close()
+
+	err = s2.Run()
+	r.NoError(t, err)
+
+	s3, err := js.New(&dynamic.Config{
+		Info: dynamic.ConfigInfo{Url: try.MustUrl("script1.js")},
+		Raw: []byte(`import { store } from "store.js"
+`),
+	}, host)
+	r.NoError(t, err)
+	defer s3.Close()
+
+	err = s3.Run()
+	r.NoError(t, err)
 }
