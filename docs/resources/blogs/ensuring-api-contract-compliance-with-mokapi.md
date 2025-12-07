@@ -34,9 +34,6 @@ consumer and a backend service to validate real traffic. Using a small
 JavaScript script, Mokapi can forward requests to your backend and
 validates both requests and responses.
 
-
-    Consumer (Frontend, Playwright, Microservice) → Mokapi → Backend API
-
 ```typescript
 import { on } from 'mokapi';
 import { fetch } from 'mokapi/http';
@@ -264,3 +261,5 @@ Using Mokapi between frontend and backend, between backend services, or inside K
 - a smooth path from mocking to real backend validation
 
 Mokapi ensures your API stays aligned with its specification, no matter how quickly your system evolves.
+
+> *Mokapi becomes your always-on API contract guardian — lightweight, transparent, and spec-driven.*
