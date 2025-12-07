@@ -265,6 +265,7 @@ table {
     text-align: start;
     width: 100%;
     margin-bottom: 20px;
+    font-size: 1rem;
 }
 table.selectable td {
     cursor: pointer;
