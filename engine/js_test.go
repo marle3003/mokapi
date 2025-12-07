@@ -13,7 +13,6 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 
 	r "github.com/stretchr/testify/require"
 )
@@ -23,31 +22,30 @@ func TestJsScriptEngine(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
 		t.Parallel()
 		e := enginetest.NewEngine()
-		err := e.AddScript(newScript("test.js", "export default function(){}"))
+		err := e.AddScript(newScript("valid.js", "export default function(){}"))
 		r.NoError(t, err)
 		r.Equal(t, 0, e.Scripts(), "no events and jobs, script should be closed")
 	})
 	t.Run("blank", func(t *testing.T) {
 		t.Parallel()
 		e := enginetest.NewEngine()
-		err := e.AddScript(newScript("test.js", ""))
+		err := e.AddScript(newScript("blank.js", ""))
 		r.NoError(t, err)
 		r.Equal(t, 0, e.Scripts(), "no events and jobs, script should be closed")
 	})
 	t.Run("typescript", func(t *testing.T) {
 		t.Parallel()
 		e := enginetest.NewEngine()
-		err := e.AddScript(newScript("test.ts", "const msg: string = 'Hello World';"))
+		err := e.AddScript(newScript("typescript.ts", "const msg: string = 'Hello World';"))
 		r.NoError(t, err)
 		r.Equal(t, 0, e.Scripts(), "no events and jobs, script should be closed")
 	})
-	t.Run("typescript async default function", func(t *testing.T) {
+	t.Run("async default function", func(t *testing.T) {
 		t.Parallel()
 		e := enginetest.NewEngine()
-		err := e.AddScript(newScript("test.js", "import { every } from 'mokapi'; export default async function(){ setTimeout(() => { every('1m', function() {}) }, 500)}"))
+		err := e.AddScript(newScript("async.js", "import { every } from 'mokapi'; export default async function(){ setTimeout(() => { every('1m', function() {}) }, 500)}"))
 		r.NoError(t, err)
 		r.Equal(t, 1, e.Scripts())
-		time.Sleep(2 * time.Second)
 		e.Close()
 	})
 	t.Run("script from GIT provider", func(t *testing.T) {
@@ -63,7 +61,7 @@ func TestJsScriptEngine(t *testing.T) {
 	t.Run("example from Mokapi as proxy article", func(t *testing.T) {
 		t.Parallel()
 		e := enginetest.NewEngine()
-		err := e.AddScript(newScript("test.ts", `
+		err := e.AddScript(newScript("proxy.ts", `
 import { on } from 'mokapi';
 import { fetch } from 'mokapi/http';
 
