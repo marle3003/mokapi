@@ -18,4 +18,5 @@ that contains request-specific data such as HTTP headers.
 | header      | object | Object contains header parameters specified by OpenAPI header parameters |
 | cookie      | object | Object contains cookie parameters specified by OpenAPI cookie parameters |
 | body        | any    | Body contains request body specified by OpenAPI request body             |
+| api         | string | The name of the API, as defined in the OpenAPI info.title field          |
 

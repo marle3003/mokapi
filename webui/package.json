@@ -20,7 +20,7 @@
     "@ssthouse/vue3-tree-chart": "^0.3.0",
     "@types/bootstrap": "^5.2.10",
     "@types/whatwg-mimetype": "^3.0.2",
-    "ace-builds": "^1.43.4",
+    "ace-builds": "^1.43.5",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "dayjs": "^1.11.19",
@@ -49,9 +49,9 @@
     "eslint": "^9.39.1",
     "eslint-plugin-vue": "^10.6.2",
     "npm-run-all": "^4.1.5",
-    "prettier": "^3.6.2",
+    "prettier": "^3.7.4",
     "typescript": "~5.9.3",
-    "vite": "^7.2.4",
+    "vite": "^7.2.6",
     "vue-tsc": "^3.1.5",
     "xml2js": "^0.6.2"
   }

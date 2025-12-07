@@ -192,10 +192,16 @@ func (p *Proxy) Keys() []string {
 		t := target.Type()
 		for i := 0; i < t.NumField(); i++ {
 			f := t.Field(i)
-			if f.PkgPath == "" {
+			if f.PkgPath != "" {
 				continue
 			}
-			result = append(result, f.Name)
+			v := f.Tag.Get("json")
+			if v != "" {
+				tagValues := strings.Split(v, ",")
+				result = append(result, tagValues[0])
+			} else {
+				result = append(result, f.Name)
+			}
 		}
 	}
 

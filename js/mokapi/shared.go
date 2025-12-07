@@ -50,8 +50,10 @@ func (m *SharedMemory) Clear() {
 func (m *SharedMemory) Update(key string, fn goja.Value) any {
 	p := m.store.Update(key, func(v any) any {
 		var arg goja.Value
+		var sv *SharedValue
 		if v != nil {
-			arg = v.(*SharedValue).Use(m.vm).ToValue()
+			sv = v.(*SharedValue)
+			arg = sv.ToValue()
 		}
 		call, ok := goja.AssertFunction(fn)
 		if !ok {
@@ -60,6 +62,9 @@ func (m *SharedMemory) Update(key string, fn goja.Value) any {
 		r, err := call(goja.Undefined(), arg)
 		if err != nil {
 			panic(m.vm.ToValue(err))
+		}
+		if sv != nil && r == arg {
+			return sv.Use(m.vm)
 		}
 
 		return NewSharedValue(r, m.vm)
@@ -110,9 +115,6 @@ func Export(v any) any {
 // SharedValue represents a Go-managed value that can be shared across
 // multiple Goja runtimes, while maintaining reference identity.
 type SharedValue struct {
-	KeyNormalizer func(string) string
-	ToJSValue     func(vm *goja.Runtime, k string, v goja.Value) goja.Value
-
 	vm     *goja.Runtime
 	source goja.Value
 }
@@ -125,23 +127,16 @@ func NewSharedValue(v goja.Value, vm *goja.Runtime) *SharedValue {
 }
 
 func (p *SharedValue) Use(vm *goja.Runtime) *SharedValue {
-	return &SharedValue{source: p.source, vm: vm}
+	return NewSharedValue(p.source, vm)
 }
 
 func (p *SharedValue) Get(key string) goja.Value {
-	if p.KeyNormalizer != nil {
-		key = p.KeyNormalizer(key)
-	}
-
 	switch v := p.source.(type) {
 	case *goja.Object:
 		f := v.Get(key)
 		if _, ok := goja.AssertFunction(f); ok {
 			return f
 		} else if _, isObject := f.(*goja.Object); isObject {
-			if p.ToJSValue != nil {
-				return p.ToJSValue(p.vm, key, f)
-			}
 			return p.vm.NewDynamicObject(NewSharedValue(f, p.vm))
 		}
 		return f
@@ -151,10 +146,6 @@ func (p *SharedValue) Get(key string) goja.Value {
 }
 
 func (p *SharedValue) Has(key string) bool {
-	if p.KeyNormalizer != nil {
-		key = p.KeyNormalizer(key)
-	}
-
 	switch v := p.source.(type) {
 	case *goja.Object:
 		return slices.Contains(v.Keys(), key)
@@ -164,10 +155,6 @@ func (p *SharedValue) Has(key string) bool {
 }
 
 func (p *SharedValue) Set(key string, value goja.Value) bool {
-	if p.KeyNormalizer != nil {
-		key = p.KeyNormalizer(key)
-	}
-
 	switch v := p.source.(type) {
 	case *goja.Object:
 		err := v.Set(key, value)
@@ -180,10 +167,6 @@ func (p *SharedValue) Set(key string, value goja.Value) bool {
 }
 
 func (p *SharedValue) Delete(key string) bool {
-	if p.KeyNormalizer != nil {
-		key = p.KeyNormalizer(key)
-	}
-
 	switch v := p.source.(type) {
 	case *goja.Object:
 		err := v.Delete(key)
@@ -209,6 +192,7 @@ func (p *SharedValue) ToValue() goja.Value {
 	if p.source == nil {
 		return goja.Undefined()
 	}
+
 	switch p.source.ExportType().Kind() {
 	case reflect.Map, reflect.Slice:
 		return p.vm.NewDynamicObject(p)
