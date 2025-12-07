@@ -102,7 +102,8 @@ export default async function () {
 
     /**
      * Maps the incoming request to a backend URL based on the API name
-     * defined in the OpenAPI specification (`request.api`).
+     * defined in the OpenAPI specification (`info.title`).
+     * @see https://mokapi.io/docs/javascript-api/mokapi/eventhandler/httprequest
      *
      * @param request - the incoming Mokapi HTTP request
      * @returns the full URL to forward the request to, or undefined
