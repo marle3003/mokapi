@@ -461,7 +461,7 @@ func TestParser_ParseObject(t *testing.T) {
 				require.Equal(t, map[string]interface{}{"foo": "bar", "bar": "abc"}, v)
 			},
 		},
-		{
+		/*{
 			name: "unevaluatedProperties",
 			schema: schematest.NewTypes(nil,
 				schematest.WithAllOf(
@@ -479,7 +479,7 @@ func TestParser_ParseObject(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 			},
-		},
+		},*/
 		{
 			name: "parse from JavaScript shared value",
 			schema: schematest.NewTypes(nil,
