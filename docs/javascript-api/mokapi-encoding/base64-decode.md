@@ -22,6 +22,6 @@ Decodes a string value that is encoded with base-64 to its equivalent unencoded 
 import { base64 } from 'mokapi/encoding'
 
 export default function() {
-    console.log(`The base64 decoded string of 'aGVsbG8gd29ybGQ=' is: ${base.decode('aGVsbG8gd29ybGQ=')}`)
+    console.log(`The base64 decoded string of 'aGVsbG8gd29ybGQ=' is: ${base64.decode('aGVsbG8gd29ybGQ=')}`)
 }
 ```

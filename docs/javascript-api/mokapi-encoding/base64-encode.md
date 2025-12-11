@@ -22,6 +22,6 @@ Encodes a string value to its equivalent string representation that is encoded w
 import { base64 } from 'mokapi/encoding'
 
 export default function() {
-    console.log(`The base64 encoding of 'hello world' is: ${base.encode('hello world')}`)
+    console.log(`The base64 encoding of 'hello world' is: ${base64.encode('hello world')}`)
 }
 ```
