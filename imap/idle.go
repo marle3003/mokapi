@@ -21,7 +21,7 @@ func (c *conn) handleIdle(tag string) error {
 	}
 
 	done := make(chan struct{})
-	err := c.handler.Idle(&idleWriter{}, done, c.ctx)
+	err := c.handler.Idle(newIdleWriter(c.tpc), done, c.ctx)
 	if err != nil {
 		return err
 	}
@@ -57,6 +57,10 @@ type idleWriter struct {
 	tpc *textproto.Conn
 }
 
+func newIdleWriter(tpc *textproto.Conn) *idleWriter {
+	return &idleWriter{tpc: tpc}
+}
+
 func (w *idleWriter) WriteNumMessages(n uint32) error {
 	return w.tpc.PrintfLine("* %v EXISTS", n)
 }
@@ -66,5 +70,5 @@ func (w *idleWriter) WriteMessageFlags(msn uint32, flags []Flag) error {
 }
 
 func (w *idleWriter) WriteExpunge(msn uint32) error {
-	return w.tpc.PrintfLine("%v EXPUNGE", msn)
+	return w.tpc.PrintfLine("* %v EXPUNGE", msn)
 }
