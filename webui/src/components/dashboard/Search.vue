@@ -10,16 +10,16 @@ const { format } = usePrettyDates()
 const queryText = ref<string>(route.query.q?.toString() ?? '')
 const pageIndex = ref(getIndex())
 const errorMessage = ref<string | undefined>()
-const result = ref<SearchResult>();
+const searchResult = ref<SearchResult | undefined>();
 const maxVisiblePages = 10  // max pages in pagination
 const showTips = ref(false)
 const facets = ref<{ [name: string]: string | undefined}>({})
 
 const pageNumber = computed(() => {
-  if (!result.value) {
+  if (!searchResult.value) {
     return 0
   }
-  return Math.ceil(result.value?.total / 10)
+  return Math.ceil(searchResult.value?.total / 10)
 })
 const pageRange = computed(() => {
   const half = Math.floor(maxVisiblePages / 2)
@@ -209,9 +209,9 @@ async function search() {
     .catch((s) => {
       errorMessage.value = s
     })
-  result.value = res
+  searchResult.value = res
 
-  for (const facetName in result.value?.facets) {
+  for (const facetName in searchResult.value?.facets) {
     if (!facets.value[facetName]) {
       facets.value[facetName] = ''
     }
@@ -268,44 +268,44 @@ function facetTitle(s: string) {
               </div>
             </div>
           </div>
-          <div class="row justify-content-md-center ps-0 mb-2" v-if="result">
+          <div class="row justify-content-md-center ps-0 mb-2" v-if="searchResult">
             <div class="col-6 col-auto">
-               <h3 v-if="result.total <= 10" class="mt-1 mb-3 fs-6">Showing <strong>{{ result.total }}</strong> {{ result.total === 1 ? "result" : "results" }}</h3>
-               <h3 v-else class="mt-1 mb-3 fs-6">Showing <strong>{{ result.results.length }}</strong> of {{ result.total }} results</h3>
+               <h3 v-if="searchResult.total <= 10" class="mt-1 mb-3 fs-6">Showing <strong>{{ searchResult.total }}</strong> {{ searchResult.total === 1 ? "result" : "results" }}</h3>
+               <h3 v-else class="mt-1 mb-3 fs-6">Showing <strong>{{ searchResult.results.length }}</strong> of {{ searchResult.total }} results</h3>
             </div>
           </div>
-          <div class="row justify-content-md-center ps-0 mb-2" v-if="result">
+          <div class="row justify-content-md-center ps-0 mb-2" v-if="searchResult">
             <div class="col-6 col-auto">
               <div class="row">
-                <div v-for="name in Object.keys(result.facets)" :key="name" class="col-auto">
+                <div v-for="name in Object.keys(searchResult.facets)" :key="name" class="col-auto">
                     <select class="form-select form-select-sm" :aria-label="name" v-model="facets[name]" @change="search_clicked">
                       <option value="">{{ facetTitle(name) }}</option>
-                      <option v-for="v in result.facets[name]" :value="v.value">{{ v.value }} ({{ v.count }})</option>
+                      <option v-for="v in searchResult.facets[name]" :value="v.value">{{ v.value }} ({{ v.count }})</option>
                     </select>
                 </div>
               </div>
             </div>
           </div>
-          <div v-if="result || errorMessage" class="row justify-content-md-center ps-0 mt-3">
-            <div v-if="result && result.total > 0" class="col-6 col-auto">
+          <div v-if="searchResult || errorMessage" class="row justify-content-md-center ps-0 mt-3">
+            <div v-if="searchResult && searchResult.total > 0" class="col-6 col-auto">
               <div class="search-results grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
                 <div 
-                  v-for="result of result.results" 
+                  v-for="item of searchResult.results" 
                   class="card mb-3"
-                  @click="navigateToSearchResult(result)"
+                  @click="navigateToSearchResult(item)"
                 >
                   <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                       <div>
-                        <span class="badge bg-secondary text-uppercase me-2">{{ result.type }}</span>
-                        <span v-if="result.domain">{{ result.domain }}</span>
+                        <span class="badge bg-secondary text-uppercase me-2">{{ item.type }}</span>
+                        <span v-if="item.domain">{{ item.domain }}</span>
                       </div>
-                      <small v-if="result.time">{{ format(result.time) }}</small>
+                      <small v-if="item.time">{{ format(item.time) }}</small>
                     </div>
 
-                    <h5 class="card-title mb-2" v-html="title(result)"></h5>
+                    <h5 class="card-title mb-2" v-html="title(item)"></h5>
 
-                    <p class="card-text small mb-0" v-html="result.fragments?.join(' ... ')"></p>
+                    <p class="card-text small mb-0" v-html="item.fragments?.join(' ... ')"></p>
                   </div>
                 </div>
               </div>
@@ -314,7 +314,7 @@ function facetTitle(s: string) {
                 {{ errorMessage }}
               </div>
               <!-- No results message -->
-              <div v-else-if="!errorMessage && result && result.total === 0">
+              <div v-else-if="!errorMessage && searchResult && searchResult.total === 0">
                 No results found
               </div>
             </div>
