@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceRoot}/cmd/mokapi/main.go",
+            "program": "${workspaceRoot}/cmd/mokapi",
             "env": {"MOKAPI_Log.Level": "debug", "MOKAPI_Providers.File.Directory": "data", "DEVUSER": "lehmannmar"}, //"MOKAPI_configFile": "config.yml", 
             "args": ["--Log.Format=json", "--Api.Port=8081"],//"--Log.Level=debug", , "--configFile", "config.yml"
             "cwd": "${workspaceRoot}"
