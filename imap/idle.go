@@ -3,6 +3,7 @@ package imap
 import (
 	"io"
 	"net/textproto"
+	"strings"
 )
 
 type UpdateWriter interface {
@@ -39,8 +40,7 @@ func (c *conn) handleIdle(tag string) error {
 		return err
 	}
 
-	_, cmd, _ := parseLine(line)
-	if cmd != "DONE" {
+	if strings.ToUpper(line) != "DONE" {
 		return c.writeResponse(tag, &response{
 			status: bad,
 			text:   "Expected DONE to end IDLE",

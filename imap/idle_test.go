@@ -2,12 +2,13 @@ package imap_test
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/imap"
 	"mokapi/imap/imaptest"
 	"mokapi/try"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestIdle(t *testing.T) {
@@ -62,7 +63,47 @@ func TestIdle(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, "+ idling", res)
 
-				res, err = c.SendRaw("A01 DONE")
+				res, err = c.SendRaw("DONE")
+				require.NoError(t, err)
+				require.Equal(t, "A01 OK IDLE terminated", res)
+			},
+		},
+		{
+			name: "idle and done with lower case",
+			handler: func(t *testing.T) imap.Handler {
+				return &imaptest.Handler{
+					SelectFunc: func(mailbox string, readonly bool, session map[string]interface{}) (*imap.Selected, error) {
+						return &imap.Selected{}, nil
+					},
+					IdleFunc: func(w imap.UpdateWriter, done chan struct{}, session map[string]interface{}) error {
+						session["idle"] = done
+						return nil
+					},
+					UnselectFunc: func(session map[string]interface{}) error {
+						done := session["idle"].(chan struct{})
+						doneClosed := false
+						select {
+						case <-done:
+							doneClosed = true
+						case <-time.After(time.Second):
+						}
+
+						require.True(t, doneClosed, "done is closed")
+						return nil
+					},
+				}
+			},
+			test: func(t *testing.T, c *imap.Client) {
+				err := c.PlainAuth("", "bob", "password")
+				require.NoError(t, err)
+				_, err = c.Select("INBOX", false)
+				require.NoError(t, err)
+
+				res, err := c.SendRaw("A01 idle")
+				require.NoError(t, err)
+				require.Equal(t, "+ idling", res)
+
+				res, err = c.SendRaw("done")
 				require.NoError(t, err)
 				require.Equal(t, "A01 OK IDLE terminated", res)
 			},
@@ -125,7 +166,7 @@ func TestIdle(t *testing.T) {
 			}()
 
 			c := imap.NewClient(fmt.Sprintf("localhost:%v", p))
-			defer c.Close()
+			defer func() { _ = c.Close() }()
 
 			_, err := c.Dial()
 			require.NoError(t, err)
