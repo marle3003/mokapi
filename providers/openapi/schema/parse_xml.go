@@ -171,7 +171,7 @@ func parseValue(s string, ref *Schema) (interface{}, error) {
 		if err != nil {
 			return nil, fmt.Errorf("parse integer failed: %v", s)
 		}
-		return int32(val64), nil
+		return val64, nil
 	}
 
 	if t.IsNumber() {

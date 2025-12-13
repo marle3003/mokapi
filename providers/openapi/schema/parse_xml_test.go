@@ -161,7 +161,7 @@ func TestUnmarshalXML(t *testing.T) {
 			test: func(t *testing.T) {
 				v, err := schema.UnmarshalXML(strings.NewReader("<year>2005</year>"), schematest.New("integer"))
 				require.NoError(t, err)
-				require.Equal(t, 2005, v)
+				require.Equal(t, int64(2005), v)
 			},
 		},
 		{
@@ -229,7 +229,7 @@ func TestUnmarshalXML(t *testing.T) {
 						),
 					))
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": 123, "yuh": "bar"}, v)
+				require.Equal(t, map[string]interface{}{"foo": int64(123), "yuh": "bar"}, v)
 			},
 		},
 		{
@@ -338,7 +338,7 @@ func TestUnmarshalXML(t *testing.T) {
 					),
 				)
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"id": 15, "author": "J K. Rowling", "title": "Harry Potter", "smp": "https://example.com/schema"}, v)
+				require.Equal(t, map[string]interface{}{"id": int64(15), "author": "J K. Rowling", "title": "Harry Potter", "smp": "https://example.com/schema"}, v)
 			},
 		},
 		{
@@ -413,7 +413,7 @@ func TestUnmarshalXML_Old(t *testing.T) {
 				schematest.WithProperty("author", schematest.New("string"))),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"id": 0, "title": "foo", "author": "bar"}, i)
+				require.Equal(t, map[string]interface{}{"id": int64(0), "title": "foo", "author": "bar"}, i)
 			},
 		},
 		{
@@ -426,7 +426,7 @@ func TestUnmarshalXML_Old(t *testing.T) {
 				schematest.WithProperty("author", schematest.New("string", schematest.WithXml(&schema.Xml{Name: "Author"})))),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"id": 0, "title": "foo", "author": "bar"}, i)
+				require.Equal(t, map[string]interface{}{"id": int64(0), "title": "foo", "author": "bar"}, i)
 			},
 		},
 	}
