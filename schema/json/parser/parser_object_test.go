@@ -1,12 +1,14 @@
 package parser_test
 
 import (
+	"mokapi/js/mokapi"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"mokapi/sortedmap"
 	"testing"
 
+	"github.com/dop251/goja"
 	"github.com/stretchr/testify/require"
 )
 
@@ -457,6 +459,61 @@ func TestParser_ParseObject(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"foo": "bar", "bar": "abc"}, v)
+			},
+		},
+		/*{
+			name: "unevaluatedProperties",
+			schema: schematest.NewTypes(nil,
+				schematest.WithAllOf(
+					schematest.New("object",
+						schematest.WithAllOf(schematest.New("object",
+							schematest.WithProperty("city", schematest.New("string")),
+						)),
+					),
+				),
+				schematest.WithProperty("type", schematest.NewTypes(nil, schematest.WithEnumValues("residential", "business"))),
+				schematest.WithRequired("type"),
+				schematest.WithUnevaluatedProperties(schematest.NewBool(false)),
+			),
+			data: map[string]any{"type": "residential", "city": "Washington"},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+			},
+		},*/
+		{
+			name: "parse from JavaScript shared value",
+			schema: schematest.NewTypes(nil,
+				schematest.WithProperty("type", schematest.NewTypes(nil, schematest.WithEnumValues("residential", "business"))),
+				schematest.WithRequired("type"),
+			),
+			data: func() any {
+				vm := goja.New()
+				v := vm.ToValue(map[string]any{"type": "residential"})
+				return mokapi.NewSharedValue(v, vm)
+			}(),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"type": "residential"}, v)
+			},
+		},
+		{
+			name: "parse struct with private fields",
+			schema: schematest.NewTypes(nil,
+				schematest.WithProperty("bar", schematest.New("string")),
+				schematest.WithRequired("bar"),
+			),
+			data: func() any {
+				return &struct {
+					foo string
+					Bar string
+				}{
+					foo: "bar",
+					Bar: "abc",
+				}
+			}(),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]interface{}{"bar": "abc"}, v)
 			},
 		},
 	}

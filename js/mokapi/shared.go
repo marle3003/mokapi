@@ -200,3 +200,8 @@ func (p *SharedValue) ToValue() goja.Value {
 		return p.source
 	}
 }
+
+// Export is used by the json schema parser interface Exportable
+func (p *SharedValue) Export() any {
+	return p.source.Export()
+}
