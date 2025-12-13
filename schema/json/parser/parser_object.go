@@ -10,6 +10,7 @@ import (
 	"regexp/syntax"
 	"sort"
 	"strings"
+	"strconv"
 )
 
 func (p *Parser) parseObject(data interface{}, s *schema.Schema, evaluated map[string]bool) (*sortedmap.LinkedHashMap[string, interface{}], error) {
@@ -386,7 +387,7 @@ func (p *Parser) ValidatePatternProperty(name string, value interface{}, pattern
 				msg = err.Error()
 			}
 			return false, &ErrorDetail{
-				Message: fmt.Sprintf("validate string '%s' with regex pattern '%s' failed: error parsing regex: %s", name, pattern, msg),
+				Message: fmt.Sprintf("validate string %s with regex pattern '%s' failed: error parsing regex: %s", strconv.Quote(name), pattern, msg),
 				Field:   pattern,
 			}
 		}
