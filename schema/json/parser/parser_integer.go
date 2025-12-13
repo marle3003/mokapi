@@ -38,14 +38,14 @@ func (p *Parser) ParseInteger(i interface{}, s *schema.Schema) (interface{}, err
 		}
 		switch s.Format {
 		case "int32":
-			n32, err := strconv.Atoi(v)
+			val64, err := strconv.ParseInt(v, 10, 32)
 			if err != nil {
 				return 0, &ErrorDetail{
 					Message: fmt.Sprintf("invalid type, expected %v but got %v", s.Type, toType(i)),
 					Field:   "type",
 				}
 			}
-			n = int64(n32)
+			n = val64
 		default:
 			var err error
 			n, err = strconv.ParseInt(v, 10, 64)
