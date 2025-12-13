@@ -167,11 +167,11 @@ func parseValue(s string, ref *Schema) (interface{}, error) {
 	t := ref.Type
 
 	if t.IsInteger() {
-		v, err := strconv.Atoi(s)
+		val64, err := strconv.ParseInt(s, 10, 32)
 		if err != nil {
 			return nil, fmt.Errorf("parse integer failed: %v", s)
 		}
-		return v, nil
+		return val64, nil
 	}
 
 	if t.IsNumber() {
