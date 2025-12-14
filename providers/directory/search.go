@@ -573,6 +573,9 @@ func sidToBytes(sid string) ([]byte, error) {
 	if authIdErr != nil {
 		return nil, fmt.Errorf("invalid uint value %v at position: %v", parts[1], 1)
 	}
+	if authId > 255 {
+		return nil, fmt.Errorf("IdentifierAuthority value %v out of byte range (0-255) at position: %v", parts[1], 1)
+	}
 	result = append(result, byte(authId))
 	for i, part := range parts[2:] {
 		val, valErr := strconv.ParseUint(part, 10, 32)
