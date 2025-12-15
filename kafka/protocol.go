@@ -190,8 +190,8 @@ func getTag(f reflect.StructField) kafkaTag {
 			case "nullable":
 				if len(kv) == 1 {
 					t.nullable = 0
-				} else if i, err := strconv.Atoi(kv[1]); err == nil {
-					t.nullable = int16(i)
+				} else if parsed, err := strconv.ParseInt(kv[1], 10, 16); err == nil {
+					t.nullable = int16(parsed)
 				}
 			}
 		}
