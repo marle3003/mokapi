@@ -341,6 +341,36 @@ attributeTypes: ( 1.2.3.4.5.6.7.8 NAME 'objectSid' DESC 'objectSid' EQUALITY act
 				require.Equal(t, "ldap: filter syntax error: invalid SID 'S-1-300-21-1234567890-1234567890-1234567890-1001': IdentifierAuthority value '300' out of byte range (0-255) at position: 1", log.Entries[1].Message)
 			},
 		},
+		{
+			name:  "ldap filter objectSid using AD style wrong format",
+			input: `{ "files": [ "./users.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/users.ldif": {Raw: []byte(`
+dn:
+namingContexts: dc=example_domain_name
+subschemaSubentry: cn=schema
+
+dn: cn=schema
+objectClass: top
+objectClass: subschema
+attributeTypes: ( 1.2.3.4.5.6.7.8 NAME 'objectSid' DESC 'objectSid' EQUALITY activeDirectoryObjectSidMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )
+`)},
+			}},
+			test: func(t *testing.T, h ldap.Handler, log *test.Hook, err error) {
+				require.NoError(t, err)
+
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: fmt.Sprintf("(objectSid=S-1-5-21-foo-1234567890-1234567890-1001)"),
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 0)
+				require.Len(t, log.Entries, 2)
+				require.Equal(t, "ldap: filter syntax error: invalid SID 'S-1-5-21-foo-1234567890-1234567890-1001': invalid uint value 'foo' at position: 3", log.Entries[1].Message)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

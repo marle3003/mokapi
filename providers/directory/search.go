@@ -584,7 +584,7 @@ func sidToBytes(sid string) ([]byte, error) {
 	for i, part := range parts[2:] {
 		val, valErr := strconv.ParseUint(part, 10, 32)
 		if valErr != nil {
-			return nil, fmt.Errorf("invalid uint value '%v' at position: %v", part, i)
+			return nil, fmt.Errorf("invalid uint value '%v' at position: %v", part, i+2)
 		}
 		b := make([]byte, 4)
 		binary.LittleEndian.PutUint32(b, uint32(val))
