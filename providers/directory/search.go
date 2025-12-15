@@ -6,8 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
-	log "github.com/sirupsen/logrus"
 	"math"
 	"mokapi/ldap"
 	"mokapi/runtime/events"
@@ -17,6 +15,9 @@ import (
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/brianvoe/gofakeit/v6"
+	log "github.com/sirupsen/logrus"
 )
 
 type predicate func(entry Entry) bool
@@ -375,7 +376,10 @@ func (p *parser) equal(name, value string) (predicate, error) {
 					return v == s
 				}
 			case "activeDirectoryObjectSidMatch", "0.0.0.0":
-				v, _ := sidToBytes(value)
+				v, err := sidToBytes(value)
+				if err != nil {
+					return nil, fmt.Errorf("invalid SID '%v': %v", value, err)
+				}
 				f = func(s string) bool {
 					b := []byte(s)
 					return bytes.Equal(b, v) || value == s
@@ -571,16 +575,16 @@ func sidToBytes(sid string) ([]byte, error) {
 	}
 	authId, authIdErr := strconv.ParseUint(parts[1], 10, 32)
 	if authIdErr != nil {
-		return nil, fmt.Errorf("invalid uint value %v at position: %v", parts[1], 1)
+		return nil, fmt.Errorf("invalid uint value '%v' at position: %v", parts[1], 1)
 	}
 	if authId > 255 {
-		return nil, fmt.Errorf("IdentifierAuthority value %v out of byte range (0-255) at position: %v", parts[1], 1)
+		return nil, fmt.Errorf("IdentifierAuthority value '%v' out of byte range (0-255) at position: %v", parts[1], 1)
 	}
 	result = append(result, byte(authId))
 	for i, part := range parts[2:] {
 		val, valErr := strconv.ParseUint(part, 10, 32)
 		if valErr != nil {
-			return nil, fmt.Errorf("invalid uint value %v at position: %v", part, i)
+			return nil, fmt.Errorf("invalid uint value '%v' at position: %v", part, i)
 		}
 		b := make([]byte, 4)
 		binary.LittleEndian.PutUint32(b, uint32(val))
