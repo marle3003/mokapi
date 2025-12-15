@@ -2,11 +2,14 @@ package schema_test
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
+	"fmt"
+	"math"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/schema/avro/schema"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParser_Parse_Json(t *testing.T) {
@@ -48,6 +51,14 @@ func TestParser_Parse_Json(t *testing.T) {
 			schema: &schema.Schema{Type: []interface{}{"int"}},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.EqualError(t, err, "invalid type, expected int but got float\nschema path #/type")
+			},
+		},
+		{
+			name:   "not int32",
+			input:  fmt.Sprintf("%v", int64(math.MaxInt32)+1),
+			schema: &schema.Schema{Type: []interface{}{"int"}},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.EqualError(t, err, "integer value 2.147483648e+09 out of bounds for Avro int32\nschema path #/type")
 			},
 		},
 		{

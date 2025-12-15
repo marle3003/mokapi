@@ -50,6 +50,10 @@ func parseType(v interface{}, s *Schema, typeName string) (interface{}, error) {
 			if math.Trunc(val) != val {
 				return 0, Errorf("type", "invalid type, expected %v but got %v", typeName, ToType(v))
 			}
+			// Ensure the value fits in a 32-bit signed integer
+			if val < math.MinInt32 || val > math.MaxInt32 {
+				return 0, Errorf("type", "integer value %v out of bounds for Avro int32", val)
+			}
 			return int(val), nil
 		}
 	case "long":
