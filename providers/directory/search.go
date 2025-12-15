@@ -562,7 +562,10 @@ func sidToBytes(sid string) ([]byte, error) {
 	// Revision
 	rev, revErr := strconv.ParseUint(parts[0], 10, 32)
 	if revErr != nil {
-		return nil, fmt.Errorf("invalid uint value %v at position: %v", parts[0], 0)
+		return nil, fmt.Errorf("invalid SID revision value value '%v' at position: %v", parts[0], 0)
+	}
+	if rev > 255 {
+		return nil, fmt.Errorf("SID revision value '%v' out of byte range (0-255) at position: %v", parts[1], 0)
 	}
 	result = append(result, byte(rev))
 
