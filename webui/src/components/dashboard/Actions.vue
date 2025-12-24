@@ -4,7 +4,6 @@ import type { PropType } from 'vue'
 import { useRoute } from 'vue-router'
 import SourceView from './SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
-import { usePrettyHttp } from '@/composables/http'
 import { usePrettyText } from '@/composables/usePrettyText'
 
 defineProps({
