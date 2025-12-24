@@ -43,6 +43,26 @@ const config: PlaywrightTestConfig = {
 
   /* Configure projects for major browsers */
   projects: [
+     {
+      name: 'dev',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: {
+          cookies: [],
+          origins: [
+            {
+              origin: 'http://localhost:5173',
+              localStorage: [
+                {
+                  name: 'theme', value: 'dark'
+                }
+              ]
+            }
+          ]
+        },
+      },
+      testIgnore: ["/e2e/**/*.website.spec.ts"],
+    },
     {
       name: 'dashboard',
       use: {
@@ -61,7 +81,7 @@ const config: PlaywrightTestConfig = {
           ]
         },
       },
-      testIgnore: ["/e2e/**/*.website.spec.ts", "/e2/dashboard-demo/**/*.spec.ts"],
+      testIgnore: ["/e2e/**/*.website.spec.ts", "/e2e/dashboard-demo/**/*.spec.ts"],
     },
     {
       name: 'website',
@@ -81,7 +101,7 @@ const config: PlaywrightTestConfig = {
           ]
         },
       },
-      testIgnore: ["/e2e/**/*.dashboard.spec.ts", "/e2/dashboard/**/*.spec.ts"],
+      testIgnore: ["/e2e/**/*.dashboard.spec.ts", "/e2e/dashboard/**/*.spec.ts"],
     },
     // {
     //   name: 'firefox',
