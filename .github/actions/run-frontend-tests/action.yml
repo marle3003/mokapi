@@ -34,7 +34,7 @@ runs:
         npm ci
         npm run copy-docs
         npm run build-sitemap
-        npm run build
+        npm run build-dashboard
       shell: bash
     - name: Install Playwright
       working-directory: ./webui
