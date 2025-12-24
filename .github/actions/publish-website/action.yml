@@ -35,8 +35,8 @@ runs:
     - name: Build Demo Dashboard
       working-directory: ./webui/scripts/dashboard-demo
       run: |
-        npm install --save-dev ts-node typescript
-        npx ts-node --esm ci.ts
+        npm install
+        npx ci.ts
       shell: bash
     - name: Stop Mokapi
       if: always()
