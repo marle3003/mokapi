@@ -3,6 +3,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useMetrics } from '@/composables/metrics'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import Markdown from 'vue3-markdown-it'
+import { getRouteName } from '@/composables/dashboard';
 
 const props = defineProps<{
     service: KafkaService,
@@ -30,7 +31,7 @@ function goToTopic(topic: KafkaTopic){
     }
     
     router.push({
-        name: 'kafkaTopic',
+        name: getRouteName('kafkaTopic').value,
         params: {
           service: props.service.name,
           topic: topic.name,
@@ -43,9 +44,8 @@ function goToTopic(topic: KafkaTopic){
 <template>
     <section class="card" aria-labelledby="topics">
         <div class="card-body">
-            <div id="topics" class="card-title text-center">Topics</div>
-            <table class="table dataTable selectable">
-                <caption class="visually-hidden">Cluster Topics</caption>
+            <h2 id="topics" class="card-title text-center">Topics</h2>
+            <table class="table dataTable selectable" aria-labelledby="topics">
                 <thead>
                     <tr>
                         <th scope="col" class="text-left" style="width: 30%">Name</th>

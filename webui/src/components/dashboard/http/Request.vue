@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useEvents } from '@/composables/events'
 import { useRoute } from 'vue-router'
 import RequestInfoCard from './RequestInfoCard.vue'
 import HttpParameters from './HttpEventParameters.vue'
@@ -9,10 +8,11 @@ import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 import { onUnmounted, computed } from 'vue'
 import Actions from '../Actions.vue'
+import { useDashboard } from '@/composables/dashboard'
 
-const { fetchById } = useEvents()
 const eventId = useRoute().params.id as string
-const { event, isLoading, close } = fetchById(eventId)
+const { dashboard } = useDashboard()
+const { event, isLoading, close } = dashboard.value.getEvent(eventId)
 
 function eventData() {
     return <HttpEventData>event.value?.data
@@ -38,34 +38,34 @@ onUnmounted(() => {
             <request-info-card :event="event"></request-info-card>
         </div>
         <div class="card-group" v-if="hasActions">
-            <div class="card">
+            <section class="card" aria-labelledby="actions">
                 <div class="card-body">
-                    <div class="card-title text-center">Event Handlers</div>
+                    <h2 id="actions" class="card-title text-center">Event Handlers</h2>
                     <actions :actions="eventData().actions" />
                 </div>
-            </div>
+            </section>
         </div>
         <div class="card-group">
-            <div class="card">
+            <section class="card" aria-labelledby="request">
                 <div class="card-body">
-                    <div class="card-title text-center">Request</div>
+                    <h2 id="request" class="card-title text-center">Request</h2>
                     <http-parameters :parameters="eventData().request.parameters!" v-if="eventData().request.parameters"></http-parameters>
                     <div  v-if="eventData().request.body">
                         <p class="label mt-4">Body</p>
                         <http-body :content-type="eventData().request.contentType" :body="eventData().request.body"></http-body>
                     </div>
                 </div>
-            </div>
+            </section>
         </div>
         <div class="card-group">
-            <div class="card">
+            <section class="card" aria-labelledby="response">
                 <div class="card-body">
-                    <div class="card-title text-center">Response</div>
+                    <h2 id="response" class="card-title text-center">Response</h2>
                     <http-header :headers="eventData().response.headers"></http-header>
                     <p class="label">Body</p>
                     <http-body :content-type="getResponseContentType()" :body="eventData().response.body"></http-body>
                 </div>
-            </div>
+            </section>
         </div>
     </div>
     <loading v-if="isInitLoading()"></loading>

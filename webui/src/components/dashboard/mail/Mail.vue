@@ -3,16 +3,16 @@ import { useRoute } from "@/router";
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
-import { useMails } from '@/composables/mails'
 import MailBody from './MailBody.vue'
 import MailFooter from './MailFooter.vue'
 import MailAttachments from './MailAttachments.vue'
+import { useDashboard } from "@/composables/dashboard";
 
-const { fetchMail } = useMails()
 const { format } = usePrettyDates()
 const route = useRoute()
 const messageId = route.params.id as string
-const { mail, isLoading } = fetchMail(messageId)
+const { dashboard } = useDashboard()
+const { mail, isLoading } = dashboard.value.getMail(messageId)
 </script>
 
 <template>
@@ -38,7 +38,7 @@ const { mail, isLoading } = fetchMail(messageId)
               <p aria-labelledby="date">{{ format(mail.data.date) }}</p>
             </div>
           </div>
-          <div class="row">
+          <div class="row mt-2">
             <div class="col">
               <p id="from-label" class="label">From</p>
               <ul class="list-unstyled address-list" aria-labelledby="from-label">

@@ -19,8 +19,7 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
         const info = page.getByRole('region', { name: "Info" })
         await expect(info.getByLabel('Name')).toHaveText(cluster.name)
         await expect(info.getByLabel('Version')).toHaveText(cluster.version)
-        await expect(info.getByLabel('Contact').getByTitle('mokapi - Website')).toHaveText(cluster.contact.name)
-        const mailto = info.getByLabel('Contact').getByTitle('Send email to mokapi')
+        const mailto = info.getByLabel('Contact').getByTitle('info@mokapi.io')
         await expect(mailto).toBeVisible()
         await expect(mailto).toHaveAttribute("href", /^mailto:/)
         await expect(info.getByLabel('Type of API')).toHaveText('Kafka')
@@ -28,7 +27,7 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
     })
 
     await test.step('Check broker section', async () => {
-        const brokers = useTable(page.getByRole('region', { name: "Brokers" }).getByRole('table', { name: 'Cluster Brokers' }), ['Name', 'Host', 'Tags', 'Description'])
+        const brokers = useTable(page.getByRole('region', { name: "Brokers" }).getByRole('table', { name: 'Brokers' }), ['Name', 'Host', 'Tags', 'Description'])
         const broker = brokers.getRow(1)
         await expect(broker.getCellByName('Name')).toHaveText(cluster.brokers[0].name)
         await expect(broker.getCellByName('Host')).toHaveText(cluster.brokers[0].url)
@@ -37,7 +36,7 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
     })
 
     await test.step('Check topic section', async () => {
-        const table = page.getByRole('region', { name: "Topics" }).getByRole('table', { name: 'Cluster Topics' })
+        const table = page.getByRole('region', { name: "Topics" }).getByRole('table', { name: 'Topics' })
         await expect(table).toBeVisible()
         const topics = useKafkaTopics(table)
         await topics.testTopic(0, cluster.topics[0])
@@ -45,7 +44,7 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
     })
 
     await test.step('Check groups section', async () => {
-        const table = page.getByRole('region', { name: "Groups" }).getByRole('table', { name: 'Cluster Groups' })
+        const table = page.getByRole('region', { name: "Groups" }).getByRole('table', { name: 'Groups' })
         await expect(table).toBeVisible()
         const groups = useKafkaGroups(table)
         await groups.testGroup(0, cluster.groups[0])
@@ -60,7 +59,7 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
         await expect(config.getCellByName('Last Update')).toHaveText(formatDateTime('2023-02-15T08:49:25.482366+01:00'))
     })
 
-    await useKafkaMessages(page).test(page.getByRole('region', { name: "Recent Messages" }).getByRole('table', { name: 'Cluster Messages' }))
+    await useKafkaMessages(page).test(page.getByRole('region', { name: "Recent Messages" }).getByRole('table', { name: 'Recent Messages' }))
 })
 
 test('Visit Kafka cluster config file', async ({ page, context }) => {

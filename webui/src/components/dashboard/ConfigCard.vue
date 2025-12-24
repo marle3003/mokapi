@@ -6,11 +6,12 @@ import { useRoute } from 'vue-router'
 
 const { format } = usePrettyDates()
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
     configs: Config[] | ConfigRef[] | undefined,
     title?: string,
     hideTitle?: boolean
-}>()
+    useCard?: boolean
+}>(), { useCard: true })
 
 const route = useRoute()
 
@@ -45,10 +46,10 @@ function showConfig(config: Config | ConfigRef){
 </script>
 
 <template>
-  <section class="card" aria-labelledby="configs">
+  <section class="card" aria-labelledby="configs" v-if="useCard">
       <div class="card-body">
-          <div v-if="!hideTitle" id="configs" class="card-title text-center">{{ title }}</div>
-          <table class="table dataTable selectable" style="table-layout: fixed;">
+          <h2 v-if="!hideTitle" id="configs" class="card-title text-center">{{ title }}</h2>
+          <table class="table dataTable selectable" style="table-layout: fixed;" aria-labelledby="configs">
             <caption class="visually-hidden">{{ title }}</caption>
               <thead>
                   <tr>
@@ -67,4 +68,23 @@ function showConfig(config: Config | ConfigRef){
           </table>
       </div>
   </section>
+
+  <table class="table dataTable selectable" style="table-layout: fixed;" aria-labelledby="configs" v-else>
+    <caption class="visually-hidden">{{ title }}</caption>
+        <thead>
+            <tr>
+                <th scope="col" class="text-left col-6 col-md-9">URL</th>
+                <th scope="col" class="text-center col-2">Provider</th>
+                <th scope="col" class="text-center col-2">Last Update</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr scope="row" v-for="config in configs" :key="config.url" @mouseup.left="showConfig(config)" @mousedown.middle="showConfig(config)">
+                <td>{{ config.url }}</td>
+                <td class="text-center">{{ config.provider }}</td>
+                <td class="text-center">{{ format(config.time) }}</td>
+            </tr>
+        </tbody>
+    </table>
+
 </template>

@@ -174,9 +174,9 @@ function toggleTag(name: string) {
 </script>
 
 <template>
-    <div class="card">
+    <section class="card" aria-labelledby="paths">
         <div class="card-body">
-            <div class="card-title text-center">Paths</div>
+            <h2 id="paths" class="card-title text-center">Paths</h2>
 
             <div class="text-center mt-3 mb-2" v-if="allTags.length > 1">
 
@@ -198,7 +198,7 @@ function toggleTag(name: string) {
 
             </div>
 
-            <table class="table dataTable selectable" data-testid="endpoints">
+            <table class="table dataTable selectable" data-testid="endpoints"  aria-labelledby="paths">
                 <thead>
                     <tr>
                         <th v-if="hasDeprecated" scope="col" class="text-center" style="width: 5px"></th>
@@ -212,7 +212,8 @@ function toggleTag(name: string) {
                 <tbody>
                     <tr v-for="path in paths" :key="path.path" @click="goToPath(path)">
                         <td v-if="hasDeprecated" style="padding-left:0;">
-                            <span class="bi bi-exclamation-triangle-fill yellow pe-1" v-if="allOperationsDeprecated(path)"></span>
+                            <span class="bi bi-exclamation-triangle-fill yellow pe-1" v-if="allOperationsDeprecated(path)" aria-hidden="true"></span>
+                            <span class="visually-hidden">Deprecated</span>
                         </td>
                         <td>
                             {{ path.path }}
@@ -236,5 +237,5 @@ function toggleTag(name: string) {
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
 </template>

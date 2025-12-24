@@ -203,7 +203,7 @@ func Test_Offset(t *testing.T) {
 	require.Equal(t, b, buf.Bytes())
 }
 
-func Test_ApiVersion(t *testing.T) {
+func Test_ApiVersion_Version_Newer(t *testing.T) {
 	req := &kafka.Request{
 		Host: "",
 		Header: &kafka.Header{
@@ -213,6 +213,32 @@ func Test_ApiVersion(t *testing.T) {
 			CorrelationId: 0,
 		},
 		Message: &apiVersion.Request{},
+	}
+	var buf bytes.Buffer
+	w := bufio.NewWriter(&buf)
+	err := req.Write(w)
+	require.NoError(t, err)
+	err = w.Flush()
+	require.NoError(t, err)
+
+	r := bufio.NewReader(&buf)
+	result := &kafka.Request{}
+	err = result.Read(r)
+	require.NoError(t, err)
+}
+
+func Test_ApiVersion_Tagged(t *testing.T) {
+	req := &kafka.Request{
+		Host: "",
+		Header: &kafka.Header{
+			Size:          0,
+			ApiKey:        kafka.ApiVersions,
+			ApiVersion:    3,
+			CorrelationId: 0,
+		},
+		Message: &apiVersion.Request{
+			TagFields: map[int64]string{3: "abc"},
+		},
 	}
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)

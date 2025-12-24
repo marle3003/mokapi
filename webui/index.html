@@ -16,6 +16,15 @@
     <meta property="og:image" content="https://mokapi.io/og-logo.png">
     <meta property="og:image:alt" content="Mokapi logo">
     <meta property="og:type" content="website">
+    <script>
+      let theme = localStorage.getItem('theme')
+      if (!theme) {
+        theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', theme);
+      document.documentElement.setAttribute('style', 'color-scheme:'+theme)
+      document.documentElement.setAttribute('data-bs-theme', theme)
+    </script>
   </head>
   <body >
     <div id="app"></div>

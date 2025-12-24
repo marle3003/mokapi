@@ -3,7 +3,6 @@ package mail_test
 import (
 	"context"
 	"encoding/base64"
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/mail"
 	"mokapi/runtime/events/eventstest"
@@ -11,6 +10,8 @@ import (
 	"mokapi/smtp/smtptest"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestHandler_ServeSMTP(t *testing.T) {
@@ -71,11 +72,12 @@ func TestHandler_ServeSMTP(t *testing.T) {
 			},
 		},
 		{
-			name: "mail invalid mailbox",
+			name: "mail unknown mailbox with not allowing unknown mailbox",
 			config: &mail.Config{
 				Mailboxes: map[string]*mail.MailboxConfig{
 					"bob@foo.bar": {},
 				},
+				Settings: &mail.Settings{AllowUnknownSenders: false},
 			},
 			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
 				ctx := smtp.NewClientContext(context.Background(), "")
@@ -83,6 +85,22 @@ func TestHandler_ServeSMTP(t *testing.T) {
 				exp := smtp.AddressRejected
 				exp.Message = "Unknown mailbox alice@foo.bar"
 				require.Equal(t, &exp, r.Result)
+			},
+		},
+		{
+			name: "mail unknown mailbox and allowing unknown mailbox",
+			config: &mail.Config{
+				Mailboxes: map[string]*mail.MailboxConfig{
+					"bob@foo.bar": {},
+				},
+				Settings: &mail.Settings{AllowUnknownSenders: true},
+			},
+			test: func(t *testing.T, h *mail.Handler, s *mail.Store, _ *eventstest.Handler) {
+				ctx := smtp.NewClientContext(context.Background(), "")
+				r := sendMail(t, h, ctx)
+				exp := smtp.Ok
+				exp.Message = "OK"
+				require.Equal(t, exp, r.Result)
 			},
 		},
 		{

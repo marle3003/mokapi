@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { useGuid } from '@/composables/guid'
-import { useExample, type Example } from '@/composables/example'
 import { watch, reactive } from 'vue'
 import '../../ace-editor/ace-config';
 import SourceView from './SourceView.vue'
 import { transformPath } from '@/composables/fetch'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
+import { dashboard } from '@/composables/dashboard';
+import type { Example } from '@/types/dashboard';
 
 declare interface State {
     //content: { preview: string | undefined, binary: string | undefined }
@@ -35,7 +36,6 @@ const props = withDefaults(defineProps<{
     title: 'Data Validator'
 })
 const { createGuid } = useGuid()
-const { fetchExample } = useExample()
 const { formatLanguage } = usePrettyLanguage()
 
 const id = createGuid()
@@ -57,7 +57,7 @@ const exampleRequest = {
     contentTypes: Array()
 }
 
-var example = fetchExample(exampleRequest)
+var example = dashboard.getExample(exampleRequest)
 watch(() => props.schema, (schema) => {
     exampleRequest.schema = schema
 })
@@ -76,7 +76,7 @@ watch(() => props.source, (source) => {
         state.source.binary = { ...props.source.binary }
         exampleRequest.contentTypes.push(state.source.binary.contentType)
     }
-    example = fetchExample(exampleRequest)
+    example = dashboard.getExample(exampleRequest)
 }, { immediate: true})
 
 function setExample() {

@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { useEvents } from '@/composables/events'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import dayjs from 'dayjs'
 import duration from 'dayjs/plugin/duration'
 import { usePrettyText } from '@/composables/usePrettyText'
+import { useDashboard } from '@/composables/dashboard'
 
-const { fetch } = useEvents()
-const { events, close } = fetch('job')
+const { dashboard } = useDashboard()
+const { events, close } = dashboard.value.getEvents('job')
 const { format, duration: prettyDuration } = usePrettyDates()
 const { parseUrls } = usePrettyText()
 const route = useRoute()

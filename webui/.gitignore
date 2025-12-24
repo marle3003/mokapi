@@ -31,3 +31,4 @@ test-results/
 playwright-report/
 src/assets/docs
 public/sitemap.xml
+public/demo/

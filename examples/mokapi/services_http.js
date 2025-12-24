@@ -521,7 +521,7 @@ export let apps = [
                 operations: [
                     {
                         method: "get",
-                        summary: "Add a new pet to the store",
+                        summary: "Get books from the store",
                         operationId: "listBooks",
                         responses: [
                             {

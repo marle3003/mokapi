@@ -3,6 +3,7 @@ import { usePrettyDates } from '@/composables/usePrettyDate'
 import { onMounted, ref } from 'vue'
 import { Modal, Popover, Tab } from 'bootstrap'
 import { useMetrics } from '@/composables/metrics'
+import type { GroupMember } from 'kafkajs';
 
 const props = defineProps<{
     service: KafkaService,
@@ -11,6 +12,7 @@ const props = defineProps<{
 
 const { format } = usePrettyDates()
 const { sum } = useMetrics()
+const activeTab = ref('group')
 
 function memberInfo(member: KafkaMember): string {
     let addition = ''
@@ -24,7 +26,7 @@ function memberInfo(member: KafkaMember): string {
             <p id="${member.name}-address" class="label">Address</p>
             <p aria-labelledby="${member.name}-address">${member.addr}</p>
             <p id="${member.name}-client-software" class="label">Client Software</p>
-            <p aria-labelledby="${member.name}-client-software">${member.clientSoftwareName} ${member.clientSoftwareVersion}</p>
+            <p aria-labelledby="${member.name}-client-software">${getClientSoftware(member)}</p>
             <p id="${member.name}-last-heartbeat" class="label">Last Heartbeat</p>
             <p aria-labelledby="${member.name}-last-heartbeat">${format(member.heartbeat)}</p>
             ${addition}
@@ -81,20 +83,26 @@ function showGroup(group: KafkaGroup){
         new Tab(memberButtonList.value.children[0]).show()
     }
 }
+function getClientSoftware(member: KafkaMember) {
+    let client = `${member.clientSoftwareName} ${member.clientSoftwareVersion}`
+    if (client === ' ') {
+        client = '-'
+    }
+    return client
+}
 </script>
 
 <template>
-    <table class="table dataTable selectable">
-        <caption class="visually-hidden">{{ props.topicName ? 'Topic Groups' : 'Cluster Groups' }}</caption>
+    <table class="table dataTable selectable" :aria-label="props.topicName ? 'Topic Groups' : 'Cluster Groups'">
         <thead>
             <tr>
-                <th scope="col" class="text-left" style="width: 20%">Name</th>
-                <th scope="col" class="text-left" style="width: 10%">State</th>
-                <th scope="col" class="text-left" style="width: 10%">Protocol</th>
-                <th scope="col" class="text-left" style="width: 20%">Coordinator</th>
-                <th scope="col" class="text-left" style="width: 20%">Leader</th>
-                <th scope="col" class="text-left" style="width: 20%">Members</th>
-                <th scope="col" class="text-center" v-if="topicName">Lag</th>
+                <th scope="col" class="text-left col-2">Name</th>
+                <th scope="col" class="text-left col-1">State</th>
+                <th scope="col" class="text-left col-2">Protocol</th>
+                <th scope="col" class="text-left col-2">Coordinator</th>
+                <th scope="col" class="text-left col-2">Leader</th>
+                <th scope="col" class="text-left col-2">Members</th>
+                <th scope="col" class="text-center col-1" v-if="topicName">Lag</th>
             </tr>
         </thead>
         <tbody>
@@ -119,18 +127,22 @@ function showGroup(group: KafkaGroup){
             </tr>
         </tbody>
     </table>
-    <div class="modal fade" id="dialogGroup" ref="groupDialog" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal fade" id="dialogGroup" ref="groupDialog" tabindex="-1" aria-labelledby="dialog-group-title" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
+                <div class="modal-header">
+                    <h6 id="dialog-group-title" class="modal-title">Group Details</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
                 <div class="modal-body">
                     <div class="card-group" >
                         <div class="card">
                             <div class="card-body">
                                 <div class="row">
                                     <ul class="nav nav-pills tab-sm mb-3" role="tablist">
-                                        <li class="nav-link show active" style="padding-left: 12px;" ref="tabDetailGroup" id="detail-group-tab" data-bs-toggle="tab" data-bs-target="#detail-group" type="button" role="tab" aria-controls="detail-group" aria-selected="true">Group</li>
-                                        <li class="nav-link" id="detail-topics-tab" data-bs-toggle="tab" data-bs-target="#detail-topics" type="button" role="tab" aria-controls="detail-topics" aria-selected="false">Topics</li>
-                                        <li class="nav-link" id="detail-members-tab" data-bs-toggle="tab" data-bs-target="#detail-members" type="button" role="tab" aria-controls="detail-members" aria-selected="false">Members</li>
+                                        <li class="nav-link show active" style="padding-left: 12px;" ref="tabDetailGroup" id="detail-group-tab" data-bs-toggle="tab" data-bs-target="#detail-group" type="button" role="tab" aria-controls="detail-group" aria-selected="true" @click="activeTab = 'group'">Group</li>
+                                        <li class="nav-link" id="detail-topics-tab" data-bs-toggle="tab" data-bs-target="#detail-topics" type="button" role="tab" aria-controls="detail-topics" aria-selected="false" @click="activeTab = 'topics'">Topics</li>
+                                        <li class="nav-link" id="detail-members-tab" data-bs-toggle="tab" data-bs-target="#detail-members" type="button" role="tab" aria-controls="detail-members" aria-selected="false" @click="activeTab = 'members'">Members</li>
                                     </ul>
 
                                     <div class="tab-content" v-if="selectedGroup">
@@ -142,7 +154,7 @@ function showGroup(group: KafkaGroup){
                                             <div class="row mb-3">
                                                 <div class="col">
                                                     <p id="dialog-group-state" class="label">State</p>
-                                                    <p aria-labelledby="dialog-group-statet">{{ selectedGroup.state }}</p>
+                                                    <p aria-labelledby="dialog-group-state">{{ selectedGroup.state }}</p>
                                                 </div>
                                                 <div class="col">
                                                     <p id="dialog-group-protocol" class="label">Protocol</p>
@@ -161,8 +173,7 @@ function showGroup(group: KafkaGroup){
                                             </div>
                                         </div>
                                         <div class="tab-pane fade" id="detail-topics" role="tabpanel">
-                                            <table class="table dataTable">
-                                                <caption class="visually-hidden">Topics</caption>
+                                            <table class="table dataTable" aria-label="Topics">
                                                 <thead>
                                                     <tr>
                                                         <th scope="col" class="text-left">Topic</th>
@@ -184,7 +195,7 @@ function showGroup(group: KafkaGroup){
                                                     </button>
                                                 </div>
                                                 <div class="tab-content ms-3 ps-3 members-tab" style="width: 100%" id="v-pills-tabContent">
-                                                    <div v-for="(member, index) of selectedGroup.members" class="tab-pane fade" :class="index==0 ? 'show active' : ''" :id="'v-pills-'+member.name" role="tabpanel" :aria-labelledby="'v-pills-'+member.name+'-tab'">
+                                                    <div v-for="(member, index) of selectedGroup.members" class="tab-pane fade" :class="index==0 && activeTab == 'members' ? 'show active' : ''" :id="'v-pills-'+member.name" role="tabpanel" :aria-labelledby="'v-pills-'+member.name+'-tab'">
                                                         <div class="row mb-3">
                                                             <div class="col">
                                                                 <p id="dialog-group-member-addr" class="label">Address</p>
@@ -192,7 +203,7 @@ function showGroup(group: KafkaGroup){
                                                             </div>
                                                             <div class="col">
                                                                 <p id="dialog-group-member-client-sw" class="label">Client Software</p>
-                                                                <p aria-labelledby="dialog-group-member-client-sw">{{ `${member.clientSoftwareName} ${member.clientSoftwareVersion}` }}</p>
+                                                                <p aria-labelledby="dialog-group-member-client-sw">{{ getClientSoftware(member) }}</p>
                                                             </div>
                                                         </div>
                                                         <div class="row mb-3">
@@ -201,8 +212,7 @@ function showGroup(group: KafkaGroup){
                                                                 <p aria-labelledby="dialog-group-member-heartbeat">{{ format(member.heartbeat) }}</p>
                                                             </div>
                                                         </div>
-                                                        <table class="table dataTable">
-                                                            <caption class="visually-hidden">Member Partitions</caption>
+                                                        <table class="table dataTable" aria-label="Member Partitions">
                                                             <thead>
                                                                 <tr>
                                                                     <th scope="col" class="text-left">Topic</th>
@@ -255,10 +265,12 @@ ul.members li {
     border-color: var(--color-datatable-border);
     border: 0;
     margin-bottom: 15px;
+    color: var(--color-text);
+}
+[data-theme="light"] .members .nav.nav-pills button.badge {
+    color: var(--color-text-light);
 }
 .members .nav.nav-pills button.badge.active {
-    font-size: 0.75rem;
-    border: 0;
     outline-width: 2px;
     outline-style: solid;
 }

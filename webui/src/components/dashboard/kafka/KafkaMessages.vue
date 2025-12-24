@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { useEvents } from '@/composables/events'
 import { onMounted, ref, onUnmounted } from 'vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { Modal, Tab } from 'bootstrap'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import SourceView from '../SourceView.vue'
 import router from '@/router'
+import { getRouteName, useDashboard } from '@/composables/dashboard'
 
 const props = defineProps<{
     service: KafkaService,
@@ -17,11 +17,11 @@ if (props.topicName){
     labels.push({name: 'topic', value: props.topicName})
 }
 
-const { fetch } = useEvents()
 const { format } = usePrettyDates()
 const { formatLanguage } = usePrettyLanguage()
 
-const { events, close } = fetch('kafka', ...labels)
+const { dashboard } = useDashboard()
+const { events, close } = dashboard.value.getEvents('kafka', ...labels)
 const messageDialog = ref<any>(null)
 const tabDetailData = ref<any>(null)
 let dialog:  Modal
@@ -81,8 +81,12 @@ function handleMessageClick(event: ServiceEvent) {
 }
 
 function goToMessage(event: ServiceEvent) {
+    if (getSelection()?.toString()) {
+        return
+    }
+
     router.push({
-        name: 'kafkaMessage',
+        name: getRouteName('kafkaMessage').value,
         params: { id: event.id }
     })
 }
@@ -214,8 +218,7 @@ function formatHeaderValue(v: KafkaHeaderValue) {
 </script>
 
 <template>
-    <table class="table dataTable selectable">
-        <caption class="visually-hidden">{{ props.topicName ? 'Topic Messages' : 'Cluster Messages' }}</caption>
+    <table class="table dataTable selectable" aria-label="Recent Messages">
         <thead>
             <tr>
                 <th scope="col" class="text-left" style="width: 10%">Key</th>

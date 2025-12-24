@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { useEvents } from '@/composables/events';
 import { type PropType, computed, onUnmounted } from 'vue';
 import { usePrettyDates } from '@/composables/usePrettyDate';
+import { getRouteName, useDashboard } from '@/composables/dashboard';
 
 const props = defineProps({
     service: { type: Object as PropType<MailService> },
@@ -15,14 +15,14 @@ if (props.service) {
 }
 
 const router = useRouter()
-const { fetch } = useEvents()
-const { events, close } = fetch('mail', ...labels)
+const { dashboard } = useDashboard()
+const { events, close } = dashboard.value.getEvents('mail', ...labels)
 const { format, duration } = usePrettyDates()
 
 function goToMail(evt: ServiceEvent){
     const data = eventData(evt)
     router.push({
-        name: 'smtpMail',
+        name: getRouteName('smtpMail').value,
         params: {id: data.messageId},
     })
 }
@@ -64,7 +64,7 @@ onUnmounted(() => {
                     <tr v-for="event in filteredEvents" :key="event.id" :set="data = eventData(event)" @click="goToMail(event)">
                         <td>{{ data.subject }}</td>
                         <td>{{ data.from }}</td>
-                        <td>
+                        <td class="address-list">
                             <div v-for="address in data.to">
                             {{ address }}
                             </div>
@@ -77,3 +77,9 @@ onUnmounted(() => {
         </div>
     </div>
 </template>
+
+<style scoped>
+.address-list ul {
+    margin-bottom: 0;
+}
+</style>

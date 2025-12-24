@@ -6,12 +6,15 @@ import Delete from './Delete.vue'
 import ModifyDN from './ModifyDN.vue'
 import Compare from './Compare.vue'
 import { useRoute } from 'vue-router'
-import { useEvents } from '@/composables/events'
 import { computed, onUnmounted } from 'vue'
+import { useDashboard } from '@/composables/dashboard'
+import Message from '@/components/Message.vue'
+import Loading from '@/components/Loading.vue'
+import RequestInfoCard from './RequestInfoCard.vue'
 
-const { fetchById } = useEvents()
 const eventId = useRoute().params.id as string
-const { event, isLoading, close } = fetchById(eventId)
+const { dashboard } = useDashboard()
+const { event, isLoading, close } = dashboard.value.getEvent(eventId)
 
 const data = computed(() => <LdapEventData>event.value?.data)
 
@@ -25,15 +28,20 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <search v-if="event && data.request.operation == 'Search'" :event="event"></search>
-  <modify v-if="event && data.request.operation == 'Modify'" :event="event"></modify>
-  <add v-if="event && data.request.operation == 'Add'" :event="event"></add>
-  <delete v-if="event && data.request.operation == 'Delete'" :event="event"></delete>
-  <ModifyDN v-if="event && data.request.operation == 'ModifyDN'" :event="event"></ModifyDN>
-  <compare v-if="event && data.request.operation == 'Compare'" :event="event"></compare>
+    <div v-if="event">
+        <div class="card-group">
+            <RequestInfoCard :event="event" />
+        </div>
+        <search v-if="event && data.request.operation == 'Search'" :event="event"></search>
+        <modify v-if="event && data.request.operation == 'Modify'" :event="event"></modify>
+        <add v-if="event && data.request.operation == 'Add'" :event="event"></add>
+        <delete v-if="event && data.request.operation == 'Delete'" :event="event"></delete>
+        <ModifyDN v-if="event && data.request.operation == 'ModifyDN'" :event="event"></ModifyDN>
+        <compare v-if="event && data.request.operation == 'Compare'" :event="event"></compare>
+    </div>
 
-  <loading v-if="isInitLoading()"></loading>
+    <Loading v-if="isInitLoading()"></loading>
     <div v-if="!event && !isLoading">
-        <message message="Search request not found"></message>
+        <Message message="Search request not found"></message>
     </div>
 </template>

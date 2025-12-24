@@ -24,7 +24,6 @@ declare interface LdapSearchRequest {
 declare interface LdapSearchResponse {
     results: LdapSearchResult[]
     status: string
-    message: string
 }
 
 declare interface LdapSearchResult {

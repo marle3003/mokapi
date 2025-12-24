@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { type Ref, onUnmounted } from 'vue'
-import { useService } from '@/composables/services'
 import { useRoute } from 'vue-router'
 import Servers from './Servers.vue'
 import Mailboxes from './Mailboxes.vue'
@@ -11,27 +10,28 @@ import Mail from './Mail.vue'
 import Rules from './Rules.vue'
 import ConfigCard from '../ConfigCard.vue'
 import Mailbox from './Mailbox.vue'
+import { useDashboard, getRouteName } from '@/composables/dashboard';
 
-const { fetchService } = useService()
 const route = useRoute()
 const serviceName = route.params.service?.toString()
 let service: Ref<MailService | null>
 if (serviceName){
-    const result = <{service: Ref<MailService | null>, close: () => void}>fetchService(serviceName, 'mail')
-    service = result.service
-    onUnmounted(() => {
-        result.close()
-})
+  const { dashboard } = useDashboard()
+  const result = dashboard.value.getService(serviceName, 'mail')
+  service = result.service as Ref<MailService | null>
+  onUnmounted(() => {
+    result.close()
+  })
 }
 </script>
 
 <template>
-  <div v-if="$route.name == 'mailService' && service != null">
+  <div v-if="$route.name == getRouteName('mailService').value && service != null">
       <div class="card-group">
-          <service-info-card :service="service" type="MAIL" />
+          <service-info-card :service="service" type="Mail" />
       </div>
 
-      <div class="card-group" v-if="$route.name === 'mailService'">
+      <div class="card-group" v-if="$route.name === getRouteName('mailService').value">
         <section class="card">
           <div class="card-body">
             <div class="nav card-tabs" id="myTab" role="tablist">
@@ -63,18 +63,18 @@ if (serviceName){
             </div>
             <div class="tab-content">
               <div class="tab-pane fade" id="configs" role="tabpanel" aria-labelledby="configs-tab">
-                <config-card :configs="service.configs" :hide-title="true" />
+                <config-card :configs="service.configs" :use-card="false" />
               </div>
             </div>
           </div>
         </section>
       </div>
 
-      <div class="card-group"  v-if="$route.name === 'mailService'">
+      <div class="card-group"  v-if="$route.name === getRouteName('mailService').value">
         <mails :service="service" />
       </div>
   </div>
-  <Mailbox v-if="$route.name === 'smtpMailbox' && service" :service="service" :mailbox-name="$route.params.name!.toString()" />
+  <Mailbox v-if="$route.name === getRouteName('smtpMailbox').value && service" :service="service" :mailbox-name="$route.params.name!.toString()" />
   
-  <mail v-if="$route.name == 'smtpMail'"></mail>
+  <mail v-if="$route.name == getRouteName('smtpMail').value"></mail>
 </template>

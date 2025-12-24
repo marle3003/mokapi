@@ -10,7 +10,7 @@ defineProps<{
 <template>
     <section class="card" aria-labelledby="messages">
         <div class="card-body">
-            <div id="messages" class="card-title text-center">Recent Messages</div>
+            <h2 id="messages" class="card-title text-center">Recent Messages</h2>
             <kafka-messages :service="service" :topic-name="topicName" />
         </div>
     </section>

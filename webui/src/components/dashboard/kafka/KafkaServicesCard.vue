@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { useService } from '@/composables/services'
 import { useMetrics } from '@/composables/metrics'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { useRouter, useRoute } from 'vue-router'
 import { onUnmounted } from 'vue'
 import Markdown from 'vue3-markdown-it'
+import { getRouteName, useDashboard } from '@/composables/dashboard';
 
-const { fetchServices } = useService()
 const { sum, max } = useMetrics()
 const { format } = usePrettyDates()
 const route = useRoute()
 const router = useRouter()
-const { services, close } = fetchServices('kafka')
+const { dashboard } = useDashboard();
+const { services, close } = dashboard.value.getServices('kafka')
 
 function lastMessage(service: Service){
     const n = max(service.metrics, 'kafka_message_timestamp')
@@ -31,7 +31,7 @@ function goToService(service: Service){
     }
 
     router.push({
-        name: 'kafkaService',
+        name: getRouteName('kafkaService').value,
         params: {service: service.name},
         query: {refresh: route.query.refresh}
     })
@@ -45,7 +45,7 @@ onUnmounted(() => {
 <template>
     <section class="card" aria-labelledby="clusters" data-testid="kafka-service-list">
         <div class="card-body">
-            <div class="card-title text-center" id="clusters">Kafka Clusters</div>
+            <h2 class="card-title text-center" id="clusters">Kafka Clusters</h2>
             <table class="table dataTable selectable">
                 <caption class="visually-hidden">Kafka Clusters</caption>
                 <thead>

@@ -33,6 +33,11 @@
   margin-bottom: 0;
   color: var(--color-text);
 }
+.dashboard .card .card-body h2.card-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-top: 0;
+}
 .dashboard .card .card-body h6.card-title {
   font-size: 0.9rem;
   font-weight: 400;
@@ -124,10 +129,7 @@
   border-bottom-color: var(--dashboard-nav-border);
   border-bottom: none;
 }
-.dashboard-tabs .nav-link.router-link-exact-active.overview {
-  border-bottom-color: var(--dashboard-nav-border-active);
-}
-.dashboard-tabs .nav-link.router-link-active.overview:hover {
+.dashboard-tabs .nav-link.router-link-active.overview:hover, .dashboard-tabs .nav-link.router-link-exact-active.overview {
   border-bottom: 4px solid;
   margin-bottom: -3px;
   border-bottom-color: var(--dashboard-nav-border-active);

@@ -4,6 +4,7 @@ const props = defineProps<{
     title: string
     value: string | number
     additional?: string
+    additionalLabel?: string
     live?: "off" | "assertive" | "polite" | undefined
 
 }>()
@@ -18,7 +19,7 @@ const labelId = 'metric-'+props.title.replaceAll(' ', '-')
             <div class="card-text" role="status" :aria-live="live ? live : undefined" :aria-labelledby="labelId">
                 {{ value }}
             </div>
-            <div class="card-additional" v-if="additional">{{ additional }}</div>
+            <div class="card-additional" v-if="additional" :aria-label="additionalLabel">{{ additional }}</div>
         </div>
     </div>
 </template>

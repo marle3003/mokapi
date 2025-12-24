@@ -16,10 +16,10 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
         await open()
         await tabs.kafka.click()
 
-        await page.getByRole('table', { name: 'Kafka Clusters' }).getByText(cluster.name).click()
+        await page.getByRole('table', { name: 'Clusters' }).getByText(cluster.name).click()
         await expect(page.getByRole('region', { name: "Info" })).toBeVisible()
 
-        await page.getByRole('table', { name: 'Cluster Topics' }).getByText(topic.name).click()
+        await page.getByRole('table', { name: 'Topics' }).getByText(topic.name).click()
     })
 
     await test.step('Check info section"', async () => {
@@ -31,7 +31,7 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
         await expect(info.getByLabel('Description')).toHaveText(topic.description)
     })
 
-    await useKafkaMessages(page).test(page.getByRole('table', { name: 'Topic Messages' }), false)
+    await useKafkaMessages(page).test(page.getByRole('table', { name: 'Recent Messages' }), false)
 
     const tabList = page.getByRole('region', { name: 'Topic Data' }).getByRole('tablist')
     await test.step('Check partition"', async () => {
@@ -59,7 +59,7 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
         await expect(configs.getByLabel('Name')).toHaveText(topic.messageConfigs[0].name)
         await expect(configs.getByLabel('Summary')).toHaveText(topic.messageConfigs[0].summary)
         await expect(configs.getByLabel('Description')).toHaveText(topic.messageConfigs[0].description)
-        await expect(configs.getByLabel('Content Type')).toHaveText(topic.messageConfigs[0].contentType)
+        await expect(configs.getByLabel('Message Content Type')).toHaveText(topic.messageConfigs[0].contentType)
 
         
 

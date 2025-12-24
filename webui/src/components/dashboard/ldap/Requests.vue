@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { useEvents } from '@/composables/events';
 import { type PropType, onUnmounted } from 'vue';
 import { usePrettyDates } from '@/composables/usePrettyDate';
+import { getRouteName, useDashboard } from '@/composables/dashboard';
 
 const props = defineProps({
     service: { type: Object as PropType<LdapService> },
@@ -14,14 +14,18 @@ if (props.service){
 }
 
 const router = useRouter()
-const { fetch } = useEvents()
-const { events, close } = fetch('ldap', ...labels)
+const { dashboard } = useDashboard();
+const { events, close } = dashboard.value.getEvents('ldap', ...labels)
 const { format, duration } = usePrettyDates()
 let data: LdapEventData
 
 function goToEvent(event: ServiceEvent){
+    if (getSelection()?.toString()) {
+        return
+    }
+
     router.push({
-        name: 'ldapRequest',
+        name: getRouteName('ldapRequest').value,
         params: {id: event.id},
     })
 }
@@ -48,16 +52,16 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <div class="card">
+    <section class="card" aria-labelledby="requests">
         <div class="card-body">
-            <div class="card-title text-center">Recent Searches</div>
-            <table class="table dataTable selectable">
+            <h2 id="requests" class="card-title text-center">Recent Requests</h2>
+            <table class="table dataTable selectable" aria-labelledby="requests">
                 <thead>
                     <tr>
                         <th scope="col" class="text-left" style="width: 10%">Operation</th>
-                        <th scope="col" class="text-left" style="width: 25%">Target DN</th>
+                        <th scope="col" class="text-left" style="width: 25%">DN</th>
                         <th scope="col" class="text-left" style="width: 30%">Filter</th>
-                        <th scope="col" class="text-center"  style="width: 10%">Status Code</th>
+                        <th scope="col" class="text-center"  style="width: 10%">Status</th>
                         <th scope="col" class="text-center" style="width:15%">Time</th>
                         <th scope="col" class="text-center" style="width: 10%">Duration</th>
                     </tr>
@@ -80,5 +84,5 @@ onUnmounted(() => {
                 </tbody>
             </table>
         </div>
-    </div>
+    </section>
 </template>

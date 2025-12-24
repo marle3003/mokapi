@@ -8,13 +8,14 @@ import Fuse from 'fuse.js';
 import { parseMarkdown } from '@/composables/markdown';
 import { Modal } from 'bootstrap';
 
-const isDashboardEnabled = import.meta.env.VITE_DASHBOARD == 'true'
+const isDashboard = import.meta.env.VITE_DASHBOARD == 'true'
+const useDemo = import.meta.env.VITE_DEMO == 'true'
 let appInfo: AppInfoResponse | null = null
 const query = ref('')
 const tooltipDark = 'Switch to light mode';
 const tooltipLight = 'Switch to dark mode';
 
-if (isDashboardEnabled) {
+if (isDashboard) {
   appInfo = useAppInfo()
   onUnmounted(() => {
       appInfo?.close()
@@ -30,7 +31,6 @@ const levels = computed(() => {
   return levels
 })
 const visible = ref(false)
-const canSwitchTheme = computed(() => inject<boolean>('canSwitchTheme'))
 
 const router = useRouter()
 function switchTheme() {
@@ -214,7 +214,7 @@ function navigateAndClose(params: Record<string, string>) {
         <div class="collapse navbar-collapse" id="navbar">
           <div class="navbar-container">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item" v-if="isDashboardEnabled">
+            <li class="nav-item" v-if="isDashboard">
               <router-link class="nav-link" :to="{ name: 'dashboard', query: {refresh: 20} }">Dashboard</router-link>
             </li>
             <li class="nav-item dropdown">
@@ -225,6 +225,9 @@ function navigateAndClose(params: Record<string, string>) {
                 <li><router-link class="dropdown-item" :to="{ path: '/ldap' }">LDAP</router-link></li>
                 <li><router-link class="dropdown-item" :to="{ path: '/mail' }">Email</router-link></li>
               </ul>
+            </li>
+            <li v-if="useDemo">
+              <router-link class="nav-link" :to="{ name: 'dashboard-demo' }">Dashboard</router-link>
             </li>
             <li class="nav-item" v-for="(item, label) of nav">
               <div class="chapter" v-if="hasChildren(item)">
@@ -299,7 +302,7 @@ function navigateAndClose(params: Record<string, string>) {
             <button class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
               <span class="bi bi-search pe-2" title="Search"></span>
             </button>
-            <button class="btn icon" v-if="canSwitchTheme">
+            <button class="btn icon">
               <span class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark" :title="tooltipDark"></span>
               <span class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark" :title="tooltipLight"></span>
             </button>

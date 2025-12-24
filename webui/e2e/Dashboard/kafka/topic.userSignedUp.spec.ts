@@ -16,7 +16,7 @@ test('Visit Kafka topic mokapi.shop.userSignedUp', async ({ page, context }) => 
         await page.getByRole('table', { name: 'Kafka Clusters' }).getByText(cluster.name).click()
         await expect(page.getByRole('region', { name: "Info" })).toBeVisible()
 
-        await page.getByRole('table', { name: 'Cluster Topics' }).getByText(topic.name).click()
+        await page.getByRole('table', { name: 'Topics' }).getByText(topic.name).click()
     })
 
     await test.step('Check info section"', async () => {
@@ -60,7 +60,7 @@ test('Visit Kafka topic mokapi.shop.userSignedUp', async ({ page, context }) => 
 
         await expect(configs.getByLabel('Summary')).not.toBeVisible()
         await expect(configs.getByLabel('Description')).not.toBeVisible()
-        await expect(configs.getByLabel('Content Type')).toHaveText(topic.messageConfigs[1].contentType)
+        await expect(configs.getByLabel('Message Content Type')).toHaveText(topic.messageConfigs[1].contentType)
 
         const { test: testSourceView } = useSourceView(configs.getByRole('tabpanel', { name: 'Value' }))
         await testSourceView({

@@ -71,13 +71,13 @@ export class HttpOperationModel {
     constructor(readonly element: Locator) {
         this.operation = element.getByTestId('operation')
         this.path = element.getByTestId('path')
-        this.operationId = element.getByTestId('operationid')
-        this.service = element.getByTestId('service').getByRole('link')
+        this.operationId = element.getByLabel('Operation ID')
+        this.service = element.getByLabel('Service', { exact: true }).getByRole('link')
         this.type = element.getByTestId('type')
-        this.summary = element.getByTestId('summary')
+        this.summary = element.getByLabel('Summary')
         this.description = element.getByTestId('description')
-        this.request = new HttpOperationRequestModel(element.getByTestId('http-request'))
-        this.response = new HttpOperationResponseModel(element.getByTestId('http-response'))
+        this.request = new HttpOperationRequestModel(element.getByLabel('Request'))
+        this.response = new HttpOperationResponseModel(element.getByLabel('Response'))
     }
 }
 

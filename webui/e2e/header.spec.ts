@@ -6,11 +6,12 @@ test('header in dashboard', async ({ dashboard }) => {
     await test.step("navigation links", async () => {
         const links = dashboard.header.getNavLinks()
         await expect(links.nth(0)).toHaveText('Dashboard')
-        await expect(links.nth(1)).toHaveText('Guides')
-        await expect(links.nth(2)).toHaveText('Configuration')
-        await expect(links.nth(3)).toHaveText('JavaScript API')
-        await expect(links.nth(4)).toHaveText('Resources')
-        await expect(links.nth(5)).toHaveText('References')
+        const startIndex = process.env.CI ? 1 : 2;
+        await expect(links.nth(startIndex)).toHaveText('Guides')
+        await expect(links.nth(startIndex + 1)).toHaveText('Configuration')
+        await expect(links.nth(startIndex + 2)).toHaveText('JavaScript API')
+        await expect(links.nth(startIndex + 3)).toHaveText('Resources')
+        await expect(links.nth(startIndex + 4)).toHaveText('References')
     })
 
     await test.step('version number', async() => {

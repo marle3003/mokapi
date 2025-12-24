@@ -81,43 +81,45 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
 </script>
 
 <template>
-    <div class="card" data-testid="http-request">
+    <section class="card" aria-labelledby="request">
         <div class="card-body">
-            <div class="card-title text-center">Request</div>
+            <h2 id="request" class="card-title text-center">Request</h2>
 
             <div class="nav card-tabs" role="tablist" data-testid="tabs">
-              <button :class="operation.requestBody ? 'active' : 'disabled'" id="body-tab" data-bs-toggle="tab" data-bs-target="#body" type="button" role="tab" aria-controls="body" aria-selected="true"><span class="bi-file-text me-2" />Body</button>
-              <button :class="operation.parameters ? (operation.requestBody ? '' : 'active') : 'disabled'" id="parameters-tab" data-bs-toggle="tab" data-bs-target="#parameters" type="button" role="tab" aria-controls="parameters" aria-selected="false"><span class="bi-sliders me-2" />Parameters</button>
-              <button :class="operation.security ? (operation.security ? '' : 'active') : 'disabled'" id="security-tab" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab" aria-controls="security" aria-selected="false"><span class="bi-shield-lock me-2" /> Security</button>
+              <button :class="operation.requestBody ? 'active' : 'disabled'" id="body-tab" :aria-disabled="!operation.requestBody" data-bs-toggle="tab" data-bs-target="#body" type="button" role="tab" aria-controls="body" aria-selected="true"><span class="bi-file-text me-2" />Body</button>
+              <button :class="operation.parameters ? (operation.requestBody ? '' : 'active') : 'disabled'" id="parameters-tab" :aria-disabled="!operation.parameters" data-bs-toggle="tab" data-bs-target="#parameters" type="button" role="tab" aria-controls="parameters" aria-selected="false"><span class="bi-sliders me-2" />Parameters</button>
+              <button :class="operation.security ? (operation.requestBody || operation.parameters ? '' : 'active') : 'disabled'" id="security-tab" :aria-disabled="!operation.security" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab" aria-controls="security" aria-selected="false"><span class="bi-shield-lock me-2" /> Security</button>
             </div>
 
             <div class="tab-content" id="tabRequest">
-              <div class="tab-pane fade" :class="operation.requestBody ? 'show active' : ''" id="body" role="tabpanel" aria-labelledby="body-tab" v-if="operation.requestBody">
-                    <p class="label" v-if="operation.requestBody.description">Description</p>
-                    <p v-if="operation.requestBody.description">{{  operation.requestBody.description }}</p>
-                    <p v-if="operation.requestBody.required">Required</p>
+                <div class="tab-pane fade" :class="operation.requestBody ? 'show active' : ''" id="body" role="tabpanel" aria-labelledby="body-tab" v-if="operation.requestBody">
+                    <div v-if="operation.requestBody">
+                        <p class="label" v-if="operation.requestBody.description">Description</p>
+                        <p v-if="operation.requestBody.description">{{  operation.requestBody.description }}</p>
+                        <p v-if="operation.requestBody.required">Required</p>
 
-                    <p class="label" v-if="operation.requestBody.contents.length == 1">Request content type</p>
-                    <p v-if="operation.requestBody.contents.length == 1">{{ operation.requestBody.contents[0]?.type }}</p>
-                    
-                    <source-view 
-                        :source="{ preview: { content: formatSchema(selected.content?.schema), contentType: 'application/json' }}" 
-                        :deprecated="selected.content?.schema.deprecated" 
-                        :hide-content-type="true"
-                        :height="250" class="mb-2">
-                    </source-view>
+                        <p class="label" v-if="operation.requestBody.contents.length == 1">Request content type</p>
+                        <p v-if="operation.requestBody.contents.length == 1">{{ operation.requestBody.contents[0]?.type }}</p>
+                        
+                        <source-view 
+                            :source="{ preview: { content: formatSchema(selected.content?.schema), contentType: 'application/json' }}" 
+                            :deprecated="selected.content?.schema.deprecated" 
+                            :hide-content-type="true"
+                            :height="250" class="mb-2">
+                        </source-view>
 
-                    <div class="row">
-                        <div class="col-auto pe-2" v-if="selected.content">
-                            <schema-expand :schema="selected.content.schema" />
-                        </div>
-                        <div class="col-auto px-2" v-if="selected.content">
-                            <schema-validate :source="{ preview: { content: '', contentType: selected.content.type} }" :schema="{schema: selected.content.schema, format: 'application/vnd.oai.openapi+json;version=3.0.0'}" :name="name" />
-                        </div>
-                        <div class="col-auto px-2">
-                            <select v-if="operation.requestBody.contents.length > 1" class="form-select form-select-sm" aria-label="Request content type" @change="selectedContentChange">
-                                <option v-for="content in operation.requestBody.contents">{{ content.type }}</option>
-                            </select>
+                        <div class="row">
+                            <div class="col-auto pe-2" v-if="selected.content">
+                                <schema-expand :schema="selected.content.schema" />
+                            </div>
+                            <div class="col-auto px-2" v-if="selected.content">
+                                <schema-validate :source="{ preview: { content: '', contentType: selected.content.type} }" :schema="{schema: selected.content.schema, format: 'application/vnd.oai.openapi+json;version=3.0.0'}" :name="name" />
+                            </div>
+                            <div class="col-auto px-2">
+                                <select v-if="operation.requestBody.contents.length > 1" class="form-select form-select-sm" aria-label="Request content type" @change="selectedContentChange">
+                                    <option v-for="content in operation.requestBody.contents">{{ content.type }}</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -145,22 +147,22 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
                                 <div v-if="scheme.configs.type.toUpperCase() === 'APIKEY'">
                                     <div class="row">
                                         <div class="col-2">
-                                            <p class="label">Name</p>
-                                            <p>{{ scheme.name }}</p>
+                                            <p :id="`security-${name}-name`" class="label">Name</p>
+                                            <p :aria-labelledby="`security-${name}-name`">{{ scheme.name }}</p>
                                         </div>
                                         <div class="col">
-                                            <p class="label">Type</p>
-                                            <p>{{ scheme.configs.type }}</p>
+                                            <p :id="`security-${name}-type`" class="label">Type</p>
+                                            <p :aria-labelledby="`security-${name}-name`">{{ scheme.configs.type }}</p>
                                         </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-2">
-                                            <p class="label">Parameter Name</p>
-                                            <p>{{ scheme.configs.name }}</p>
+                                            <p :id="`security-${name}-param-name`" class="label">Parameter Name</p>
+                                            <p :aria-labelledby="`security-${name}-param-name`">{{ scheme.configs.name }}</p>
                                         </div>
                                         <div class="col">
-                                            <p class="label">Location</p>
-                                            <p>{{ scheme.configs.in }}</p>
+                                            <p :id="`security-${name}-location`" class="label">Location</p>
+                                            <p :aria-labelledby="`security-${name}-location`">{{ scheme.configs.in }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -168,32 +170,34 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
                                 <div v-if="scheme.configs.type.toUpperCase() === 'OAUTH2'">
                                     <div class="row">
                                         <div class="col-2">
-                                            <p class="label">Name</p>
-                                            <p>{{ scheme.name }}</p>
+                                            <p :id="`security-${name}-name`" class="label">Name</p>
+                                            <p :aria-labelledby="`security-${name}-name`">{{ scheme.name }}</p>
                                         </div>
                                         <div class="col">
-                                            <p class="label">Type</p>
-                                            <p>{{ scheme.configs.type }}</p>
+                                            <p :id="`security-${name}-type`" class="label">Type</p>
+                                            <p :aria-labelledby="`security-${name}-type`">{{ scheme.configs.type }}</p>
                                         </div>
                                     </div>
                                     <div class="row">
                                         <div class="col">
                                             <div v-if="scheme.scopes.length > 0">
-                                                <p class="label">Scopes</p>
-                                                <p>{{ scheme.scopes.join(', ') }}</p>
+                                                <p :id="`security-${name}-scopes`" class="label">Scopes</p>
+                                                <p :aria-labelledby="`security-${name}-scopes`">{{ scheme.scopes.join(', ') }}</p>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="row">
                                         <div class="col">
-                                            <p class="label">Flows</p>
-                                            <table class="table dataTable">
+                                            <p :id="`security-${name}-flows`" class="label">Flows</p>
+                                            <table class="table dataTable" :aria-labelledby="`security-${name}-flows`">
                                                 <thead>
-                                                    <th scope="col" class="text-left" style="width: 15%">Type</th>
-                                                    <th scope="col" class="text-left">Scopes</th>
-                                                    <th scope="col" class="text-left">Authorization URL</th>
-                                                    <th scope="col" class="text-left">Token URL</th>
-                                                    <th scope="col" class="text-left">Refresh URL</th>
+                                                    <tr>
+                                                        <th scope="col" class="text-left" style="width: 15%">Type</th>
+                                                        <th scope="col" class="text-left">Scopes</th>
+                                                        <th scope="col" class="text-left">Authorization URL</th>
+                                                        <th scope="col" class="text-left">Token URL</th>
+                                                        <th scope="col" class="text-left">Refresh URL</th>
+                                                    </tr>
                                                 </thead>
                                                 <tbody>
                                                     <tr v-for="(flow, name) of scheme.configs.flows">
@@ -216,18 +220,18 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
                                 <div v-if="scheme.configs.type.toUpperCase() === 'HTTP' && scheme.configs.scheme.toUpperCase() === 'BASIC'">
                                     <div class="row">
                                         <div class="col-2">
-                                            <p class="label">Name</p>
-                                            <p>{{ scheme.name }}</p>
+                                            <p :id="`security-${name}-name`" class="label">Name</p>
+                                            <p :aria-labelledby="`security-${name}-name`">{{ scheme.name }}</p>
                                         </div>
                                         <div class="col">
-                                            <p class="label">Type</p>
-                                            <p>{{ scheme.configs.type }}</p>
+                                            <p :id="`security-${name}-type`" class="label">Type</p>
+                                            <p :aria-labelledby="`security-${name}-type`">{{ scheme.configs.type }}</p>
                                         </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-2">
-                                            <p class="label">Scheme</p>
-                                            <p>{{ scheme.configs.scheme }}</p>
+                                            <p :id="`security-${name}-scheme`" class="label">Scheme</p>
+                                            <p :aria-labelledby="`security-${name}-scheme`">{{ scheme.configs.scheme }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -235,22 +239,22 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
                                 <div v-if="scheme.configs.type.toUpperCase() === 'HTTP' && scheme.configs.scheme.toUpperCase() === 'BEARER'">
                                     <div class="row">
                                         <div class="col-2">
-                                            <p class="label">Name</p>
-                                            <p>{{ scheme.name }}</p>
+                                            <p :id="`security-${name}-name`" class="label">Name</p>
+                                            <p :aria-labelledby="`security-${name}-name`">{{ scheme.name }}</p>
                                         </div>
                                         <div class="col">
-                                            <p class="label">Type</p>
-                                            <p>{{ scheme.configs.type }}</p>
+                                            <p :id="`security-${name}-type`" class="label">Type</p>
+                                            <p :aria-labelledby="`security-${name}-type`">{{ scheme.configs.type }}</p>
                                         </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-2">
-                                            <p class="label">Scheme</p>
-                                            <p>{{ scheme.configs.scheme }}</p>
+                                            <p :id="`security-${name}-scheme`" class="label">Scheme</p>
+                                            <p :aria-labelledby="`security-${name}-scheme`">{{ scheme.configs.scheme }}</p>
                                         </div>
                                         <div class="col-2">
-                                            <p class="label">Format</p>
-                                            <p>{{ scheme.configs.bearerFormat }}</p>
+                                            <p :id="`security-${name}-format`" class="label">Format</p>
+                                            <p :aria-labelledby="`security-${name}-format`">{{ scheme.configs.bearerFormat }}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -261,7 +265,7 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 </template>
 
 <style>

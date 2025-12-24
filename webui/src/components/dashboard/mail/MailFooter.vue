@@ -14,22 +14,22 @@ defineProps({
       <div class="card-body">
         <div class="row">
           <div class="col">
-            <p class="label">Content-Type</p>
-            <p>{{ contentType }}</p>
+            <p id="content-type" class="label">Content-Type</p>
+            <p aria-labelledby="content-type">{{ contentType }}</p>
           </div>
           <div class="col" v-if="encoding">
-            <p class="label">Encoding</p>
-            <p>{{ encoding }}</p>
+            <p id="encoding" class="label">Encoding</p>
+            <p aria-labelledby="encoding">{{ encoding }}</p>
           </div>
         </div>
-        <div class="row">
+        <div class="row mt-2">
           <div class="col">
-            <p class="label">Message-ID</p>
-            <p>{{ messageId }}</p>
+            <p id="message-id" class="label">Message-ID</p>
+            <p aria-labelledby="message-id">{{ messageId }}</p>
           </div>
           <div class="col" v-if="inReplyTo">
-            <p class="label">In-Reply-To</p>
-            <p>
+            <p id="in-reply-to" class="label">In-Reply-To</p>
+            <p aria-labelledby="in-reply-to">
               <router-link :to="{name: 'smtpMail', params: { id: messageId } }">{{ inReplyTo }}</router-link>
             </p>
           </div>

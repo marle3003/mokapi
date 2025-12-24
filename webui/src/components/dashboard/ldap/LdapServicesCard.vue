@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { useService } from '@/composables/services';
 import { useMetrics } from '@/composables/metrics';
 import { onUnmounted } from 'vue';
 import Markdown from 'vue3-markdown-it'
 import { useRouter, useRoute } from 'vue-router';
 import { usePrettyDates } from '@/composables/usePrettyDate';
+import { getRouteName, useDashboard } from '@/composables/dashboard';
 
-const {fetchServices} = useService()
 const {sum} = useMetrics()
-const {services, close} = fetchServices('ldap')
+const { dashboard } = useDashboard();
+const {services, close} = dashboard.value.getServices('ldap')
 const {format} = usePrettyDates()
 const route = useRoute()
 const router = useRouter()
@@ -26,8 +26,12 @@ function requests(service: Service) {
 }
 
 function goToService(service: Service){
+    if (getSelection()?.toString()) {
+        return
+    }
+
     router.push({
-        name: 'ldapService',
+        name: getRouteName('ldapService').value,
         params: {service: service.name},
         query: {refresh: route.query.refresh}
     })
@@ -41,8 +45,8 @@ onUnmounted(() => {
 <template>
     <div class="card" data-testid="smtp-service-list">
         <div class="card-body">
-            <div class="card-title text-center">LDAP Servers</div>
-            <table class="table dataTable selectable">
+            <h2 id="ldap-servers-title" class="card-title text-center">LDAP Servers</h2>
+            <table class="table dataTable selectable" aria-labelledby="ldap-servers-title">
                 <thead>
                     <tr>
                         <th scope="col" class="text-left w-25">Name</th>

@@ -2,18 +2,16 @@
 import { useRoute } from "@/router";
 import { computed, onUnmounted, watchEffect, ref, type Ref } from "vue";
 import SourceView from '../SourceView.vue'
-import { useEvents } from "@/composables/events";
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
-import { useService } from "@/composables/services";
 import { usePrettyDates } from "@/composables/usePrettyDate";
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
+import { useDashboard } from "@/composables/dashboard";
 
-const { fetchById } = useEvents()
 const eventId = useRoute().params.id as string
-const { event, isLoading, close } = fetchById(eventId)
+const { dashboard } = useDashboard()
+const { event, isLoading, close } = dashboard.value.getEvent(eventId)
 const { formatLanguage } = usePrettyLanguage()
-const { fetchService } = useService()
 const { format } = usePrettyDates()
 
 const topic = ref<KafkaTopic | undefined>()
@@ -27,7 +25,8 @@ watchEffect(() => {
   if (!event.value) {
     return
   }
-  const { service } = <{service: Ref<KafkaService | null>, close: () => void}>fetchService(event.value?.traits.name!, 'kafka')
+  const result = dashboard.value.getService(event.value?.traits.name!, 'kafka')
+  const service = result.service as Ref<KafkaService | null>
   if (!service.value) {
     return null
   }
@@ -129,7 +128,7 @@ function key(key: KafkaValue | null): string {
       <section class="card" aria-label="Meta">
         <div class="card-body">
           <div class="row">
-            <div class="col col-6 header mb-3">
+            <div class="col col-8 header mb-3">
               <label id="message-key" class="label">Kafka Key</label>
               <p aria-labelledby="message-key">
                 {{ key(data.key) }}
@@ -137,8 +136,8 @@ function key(key: KafkaValue | null): string {
             </div>
             <div class="col">
               <label id="message-topic" class="label">Kafka Topic</label>
-              <p aria-labelledby="message-topic">
-                <router-link :to="{ name: 'kafkaTopic', params: { service: event.traits.name, topic: event.traits.topic } }">
+              <p>
+                <router-link :to="{ name: 'kafkaTopic', params: { service: event.traits.name, topic: event.traits.topic } }" aria-labelledby="message-topic">
                   {{ event.traits.topic  }}
                 </router-link>
               </p>
@@ -190,12 +189,12 @@ function key(key: KafkaValue | null): string {
     </div>
 
     <div class="card-group">
-      <div class="card">
+      <section class="card" aria-labelledby="value-title">
         <div class="card-body">
-          <div class="card-title text-center">Value</div>
+          <h2 id="value-title" class="card-title text-center">Value</h2>
             <source-view v-if="message" :source="message.source" :content-type="message.contentType" :content-type-title="message.contentTypeTitle" />
         </div>
-      </div>
+      </section>
     </div>
   </div>
   <loading v-if="isInitLoading()"></loading>

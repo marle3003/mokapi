@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { useService } from '@/composables/services';
 import { useMetrics } from '@/composables/metrics';
 import { onUnmounted } from 'vue';
 import Markdown from 'vue3-markdown-it'
 import { useRouter, useRoute } from 'vue-router';
 import { usePrettyDates } from '@/composables/usePrettyDate';
+import { getRouteName, useDashboard } from '@/composables/dashboard';
 
-const {fetchServices} = useService()
 const {sum} = useMetrics()
-const {services, close} = fetchServices('mail')
+const { dashboard } = useDashboard();
+const {services, close} = dashboard.value.getServices('mail')
 const {format} = usePrettyDates()
 const route = useRoute()
 const router = useRouter()
@@ -26,8 +26,12 @@ function lastMail(service: Service){
 }
 
 function goToService(service: Service){
+    if (getSelection()?.toString()) {
+        return
+    }
+
     router.push({
-        name: 'mailService',
+        name: getRouteName('mailService').value,
         params: {service: service.name},
         query: {refresh: route.query.refresh}
     })
@@ -41,9 +45,8 @@ onUnmounted(() => {
 <template>
     <div class="card" data-testid="mail-service-list">
         <div class="card-body">
-            <div class="card-title text-center">Mail Servers</div>
-            <table class="table dataTable selectable">
-                <caption class="visually-hidden">Mail Servers</caption>
+            <h2 id="mail-servers-title" class="card-title text-center">Mail Servers</h2>
+            <table class="table dataTable selectable" aria-labelledby="mail-servers-title">
                 <thead>
                     <tr>
                         <th scope="col" class="text-left w-25">Name</th>

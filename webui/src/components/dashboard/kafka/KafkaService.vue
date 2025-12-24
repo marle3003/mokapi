@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { type Ref, onMounted, onUnmounted } from 'vue'
+import { type Ref, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useService } from '@/composables/services'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
 import KafkaTopicsCard from './KafkaTopicsCard.vue'
 import KafkaGroupsCard from './KafkaGroupsCard.vue'
@@ -10,14 +9,15 @@ import KafkaTopic from './KafkaTopic.vue'
 import Servers from './Servers.vue'
 import ConfigCard from '../ConfigCard.vue'
 import Message from './Message.vue'
+import { getRouteName, useDashboard } from '@/composables/dashboard';
 
-const {fetchService} = useService()
 const serviceName = useRoute().params.service?.toString()
 
 let service: Ref<KafkaService | null>
 if (serviceName){
-    const result = <{service: Ref<KafkaService | null>, close: () => void}>fetchService(serviceName, 'kafka')
-    service = result.service
+    const { dashboard } = useDashboard()
+    const result = dashboard.value.getService(serviceName, 'kafka')
+    service = result.service as Ref<KafkaService | null>
     onUnmounted(() => {
         result.close()
     })
@@ -29,17 +29,12 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="$route.name == 'kafkaService' && service != null">
+  <div v-if="$route.name == getRouteName('kafkaService').value && service != null">
       <div class="card-group">
           <service-info-card :service="service" type="Kafka" />
       </div>
       <div class="card-group">
-          <section class="card" aria-labelledby="servers">
-              <div class="card-body">
-                  <div id="servers" class="card-title text-center">Brokers</div>
-                  <servers :servers="service.servers" />
-              </div>
-          </section>
+          <servers :servers="service.servers" />
       </div>
       <div class="card-group">
           <kafka-topics-card :service="service" />
@@ -54,8 +49,8 @@ onUnmounted(() => {
           <kafka-messages-card :service="service" />
       </div>
   </div>
-  <div v-if="$route.name == 'kafkaTopic'">
+  <div v-if="$route.name == getRouteName('kafkaTopic').value">
       <kafka-topic></kafka-topic>
   </div>
-  <message v-if="$route.name == 'kafkaMessage'"></message>
+  <message v-if="$route.name == getRouteName('kafkaMessage').value"></message>
 </template>

@@ -18,7 +18,6 @@ const props = withDefaults(defineProps<{
   readonly?: boolean
 }>(), { readonly: true })
 
-const editor = ref()
 const preview = ref<HTMLElement>()
 const binary = ref<HTMLElement>()
 
@@ -55,7 +54,7 @@ const lines = computed(() => {
   if (props.source.binary) {
     content = props.source.binary.content
   }
-  return content!.split('\n').length
+  return content?.split('\n').length ?? 0
 })
 
 const size = computed(() => {
@@ -118,6 +117,11 @@ function switchCode() {
   preview.value?.classList.remove('active')
   emit('switch', 'binary')
 }
+const onEditorInit = (editor: typeof VAceEditor) => {
+  editor.setOptions({
+    readOnly: props.readonly
+  });
+};
 </script>
 
 <template>
@@ -128,7 +132,7 @@ function switchCode() {
         <button ref="binary" type="button" class="btn btn-link" @click="switchCode()">Binary</button>
       </div>
       <div class="info">
-        <span style="" v-if="!hideContentType">{{ current?.data.contentTypeTitle ?? current?.data.contentType }}</span>
+        <span style="" v-if="!hideContentType" aria-label="Content Type">{{ current?.data.contentTypeTitle ?? current?.data.contentType }}</span>
         <span aria-label="Lines of Code" v-if="!source.binary">{{ lines }} lines</span>
         <span aria-label="Size of Code">{{ size }}</span>
         <span v-if="deprecated"><span class="bi bi-exclamation-triangle-fill yellow"></span> deprecated</span>
@@ -140,9 +144,8 @@ function switchCode() {
         <button type="button" class="btn btn-link" @click="download" title="Download raw content" aria-label="Download raw content"><span class="bi bi-download"></span></button>
       </div>
     </div>
-    <section class="source" aria-label="Content" :class="getLanguage(current?.data.contentType!)" v-if="current?.type == 'preview'">
+    <section class="source" aria-label="Content" :class="getLanguage(current?.data.contentType!)" v-if="current?.type == 'preview' && current && current.data.content">
       <v-ace-editor
-        ref="editor"
         :id="getCurrentInstance()?.uid"
         :value="current?.data.content!"
         @update:value="emit('update', { content: $event, type: current?.type! })"
@@ -150,9 +153,7 @@ function switchCode() {
         :theme="theme"
         style="font-size: 16px;"
         :style="`height: ${viewHeight}px`"
-        :options="{
-          readOnly: props.readonly
-        }"
+        @init="onEditorInit"
       />
     </section>
     <section class="source" v-else-if="current?.type == 'binary' && source.binary" :class="'ace-'+theme">

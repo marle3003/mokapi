@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "run-p type-check build-only",
+    "build-dashboard": "vite build --mode dashboard",
     "build-website": "vite build --mode website",
     "preview": "vite preview",
     "test:e2e": "playwright test",
@@ -28,7 +29,10 @@
     "fuse.js": "^7.1.0",
     "http-status-codes": "^2.3.0",
     "js-yaml": "^4.1.1",
+    "kafkajs": "^2.2.4",
+    "ldapts": "^8.0.33",
     "ncp": "^2.0.0",
+    "nodemailer": "^7.0.12",
     "vue": "^3.5.25",
     "vue-router": "^4.6.4",
     "vue3-ace-editor": "^2.2.4",

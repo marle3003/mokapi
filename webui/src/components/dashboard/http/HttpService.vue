@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { type Ref, onUnmounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
-import { useService } from '@/composables/services'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
 import EndpointsCard from './EndpointsCard.vue'
 import HttpPath from './HttpPath.vue'
@@ -12,15 +11,16 @@ import Servers from './Servers.vue'
 import Message from '@/components/Message.vue'
 import ConfigCard from '../ConfigCard.vue'
 import '@/assets/http.css'
+import { getRouteName, useDashboard } from '@/composables/dashboard';
 
-const { fetchService } = useService()
 const route = useRoute()
 const serviceName = route.params.service?.toString()
+const { dashboard } = useDashboard()
 
 let service: Ref<HttpService | null>
 if (serviceName){
-    const result = <{service: Ref<HttpService | null>, close: () => void}>fetchService(serviceName, 'http')
-    service = result.service
+    const result = dashboard.value.getService(serviceName, 'http')
+    service = result.service as Ref<HttpService | null>
     onUnmounted(() => {
         result.close()
     })
@@ -75,17 +75,12 @@ function endpointNotFoundMessage(msg: string | undefined) {
 </script>
 
 <template>
-    <div v-if="$route.name == 'httpService' && service != null">
+    <div v-if="$route.name == getRouteName('httpService').value && service != null">
         <div class="card-group">
             <service-info-card :service="service" type="HTTP" />
         </div>
         <div class="card-group">
-            <div class="card">
-                <div class="card-body">
-                    <div class="card-title text-center">Servers</div>
-                    <servers :servers="service.servers" />
-                </div>
-            </div>
+            <servers :servers="service.servers" />
         </div>
         <div class="card-group">
             <endpoints-card :service="service" />
@@ -98,10 +93,10 @@ function endpointNotFoundMessage(msg: string | undefined) {
         </div>
         
     </div>
-    <request v-if="$route.name == 'httpRequest'"></request>
+    <request v-if="$route.name == getRouteName('httpRequest').value"></request>
     <http-path v-if="service && endpoint && endpoint.path && !endpoint.operation && !endpoint.error" :service="service" :path="endpoint.path" />
     <http-operation v-if="service && endpoint && endpoint.operation" :service="service" :path="endpoint.path" :operation="endpoint.operation" />
-    <div v-if="$route.name == 'httpEndpoint' && endpoint && endpoint.error">
+    <div v-if="$route.name == getRouteName('httpEndpoint').value && endpoint && endpoint.error">
         <message :message="endpointNotFoundMessage(endpoint?.error)"></message>
     </div>
 </template>

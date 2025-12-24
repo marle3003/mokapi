@@ -29,16 +29,17 @@ test('Visit Mail Testserver', async ({ page }) => {
     
         const servers = useTable(table, ['Name', 'Host', 'Protocol', 'Description'])
         let row = servers.getRow(1)
-        await expect(row.getCellByName('Name')).toHaveText('smtp')
-        await expect(row.getCellByName('Host')).toHaveText('localhost:8025')
-        await expect(row.getCellByName('Protocol')).toHaveText('smtp')
-        await expect(row.getCellByName('Description')).toHaveText("Mokapi's SMTP Server")
-        
-        row = servers.getRow(2)
         await expect(row.getCellByName('Name')).toHaveText('imap')
         await expect(row.getCellByName('Host')).toHaveText('localhost:8030')
         await expect(row.getCellByName('Protocol')).toHaveText('imap')
         await expect(row.getCellByName('Description')).toHaveText("Mokapi's IMAP Server")
+        
+        row = servers.getRow(2)
+        await expect(row.getCellByName('Name')).toHaveText('smtp')
+        await expect(row.getCellByName('Host')).toHaveText('localhost:8025')
+        await expect(row.getCellByName('Protocol')).toHaveText('smtp')
+        await expect(row.getCellByName('Description')).toHaveText("Mokapi's SMTP Server")
+
     })
 
     await test.step('Check mailboxes', async () => {
@@ -129,7 +130,7 @@ test('Visit Mail Testserver', async ({ page }) => {
         await expect(body.getByRole('img')).toHaveAttribute('src', /\/attachments\/icon.png$/)
 
         const attachments = page.getByRole('region', { name: 'Attachments' })
-        const foo = attachments.getByRole('listitem', { name: 'foo.txt' })
+        const foo = attachments.getByRole('link', { name: 'foo.txt' })
         await expect(foo.getByLabel('Disposition')).toHaveText('attachment')
         await expect(foo.getByLabel('Size')).toHaveText('34.06 kB')
 
@@ -139,7 +140,7 @@ test('Visit Mail Testserver', async ({ page }) => {
         ])
         await expect(download.suggestedFilename()).toBe('foo.txt')       
 
-        const icon = attachments.getByRole('listitem', { name: 'icon.png' })
+        const icon = attachments.getByRole('link', { name: 'icon.png' })
         await expect(icon.getByLabel('Disposition')).toHaveText('inline')
         await expect(icon.getByLabel('Size')).toHaveText('372 B')
     })

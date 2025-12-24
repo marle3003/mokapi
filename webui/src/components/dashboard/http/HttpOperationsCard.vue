@@ -43,27 +43,29 @@ function showWarningColumn(){
 </script>
 
 <template>
-    <div class="card">
+    <section class="card" aria-labelledby="methods-title">
         <div class="card-body">
-            <div class="card-title text-center">Methods</div>
-            <table class="table dataTable selectable" data-testid="methods">
-                <thead>
-                    <tr>
-                        <th scope="col" class="text-left" style="width: 10%">Method</th>
-                        <th scope="col" class="text-left">Summary</th>
-                        <th scope="col" class="text-left" style="width: 10%">Operation ID</th>
-                        <th scope="col" class="text-left" style="width: 10%"  v-if="showWarningColumn()">Warning</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="operation in operations" :key="path.path" @click="goToOperation(operation)">
-                        <td><span class="badge operation" :class="operation.method">{{ operation.method.toUpperCase() }}</span></td>
-                        <td>{{ operation.summary }}</td>
-                        <td>{{ operation.operationId }}</td>
-                        <td v-if="showWarningColumn()"><span v-if="operation.deprecated"><span class="bi bi-exclamation-triangle-fill yellow"></span> deprecated</span></td>
-                    </tr>
-                </tbody>
-            </table>
+            <h2 id="methods-title" class="card-title text-center">Methods</h2>
+            <div class="table-responsive">
+                <table class="table dataTable selectable" style="table-layout: fixed;" data-testid="methods" aria-labelledby="methods-title">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="text-left col-1">Method</th>
+                            <th scope="col" class="text-left col-2">Operation ID</th>
+                            <th scope="col" class="text-left col-8">Summary</th>
+                            <th scope="col" class="text-left col-1" v-if="showWarningColumn()">Warning</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="operation in operations" :key="path.path" @click="goToOperation(operation)">
+                            <td><span class="badge operation" :class="operation.method">{{ operation.method.toUpperCase() }}</span></td>
+                            <td>{{ operation.operationId }}</td>
+                            <td>{{ operation.summary }}</td>
+                            <td v-if="showWarningColumn()"><span v-if="operation.deprecated"><span class="bi bi-exclamation-triangle-fill yellow"></span> deprecated</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
+    </section>
 </template>

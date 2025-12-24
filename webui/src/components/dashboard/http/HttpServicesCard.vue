@@ -1,16 +1,16 @@
 <script setup lang="ts">
-import { useService } from '@/composables/services';
 import { useMetrics } from '@/composables/metrics';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRoute } from '@/router';
 import Markdown from 'vue3-markdown-it';
 import { onUnmounted } from 'vue';
+import { useDashboard } from '@/composables/dashboard';
 
-const { fetchServices } = useService()
 const { sum, max } = useMetrics()
 const { format } = usePrettyDates()
 const { service, router } = useRoute()
-const { services, close } = fetchServices('http')
+const { dashboard } = useDashboard()
+const { services, close } = dashboard.value.getServices('http')
 
 function lastRequest(s: Service){
     const n = max(s.metrics, 'http_request_timestamp')
@@ -44,8 +44,8 @@ onUnmounted(() => {
 <template>
     <div class="card" data-testid="http-service-list">
         <div class="card-body">
-            <div class="card-title text-center">HTTP APIs</div>
-            <table class="table dataTable selectable">
+            <h2 id="http-apis-title" class="card-title text-center">HTTP APIs</h2>
+            <table class="table dataTable selectable" aria-labelledby="http-apis-title">
                 <thead>
                     <tr>
                         <th scope="col" class="text-left w-25">Name</th>

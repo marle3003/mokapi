@@ -141,7 +141,7 @@ paths:
               schema:
                 $ref: './mail.yml#/components/schemas/MailboxDetails'
         "404":
-          description: mail not found
+          description: mailbox not found
   /api/services/mail/{name}/mailboxes/{mailbox}/messages:
     get:
       summary: Retrieve mailboxes for given mail server
@@ -166,6 +166,8 @@ paths:
                 type: array
                 items:
                   $ref: './mail.yml#/components/schemas/SmtpMessageInfo'
+        "404":
+          description: mailbox not found
   /api/services/mail/messages/{messageId}:
     get:
       summary: Retrieve the mail with the given messageId

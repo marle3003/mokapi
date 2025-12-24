@@ -9,7 +9,7 @@ WORKDIR webui
 COPY ./docs ./src/assets/docs
 
 RUN npm install
-RUN npm run build
+RUN npm run build-dashboard
 
 FROM golang:1.25.5-alpine AS gobuild
 

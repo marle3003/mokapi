@@ -19,18 +19,23 @@ function comparePath(s1: HttpServer, s2: HttpServer) {
 </script>
 
 <template>
-    <table class="table dataTable" data-testid="servers">
-        <thead>
-            <tr>
-                <th scope="col" class="text-left">Url</th>
-                <th scope="col" class="text-left">Description</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr v-for="server in sortedServers" :key="server.url">
-                <td>{{ server.url }}</td>
-                <td><markdown :source="server.description" class="description" :html="true"></markdown></td>
-            </tr>
-        </tbody>
-    </table>
+    <section class="card">
+        <div class="card-body">
+            <h2 id="servers" class="card-title text-center">Servers</h2>
+                <table class="table dataTable" data-testid="servers" aria-labelledby="servers">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="text-left">Url</th>
+                            <th scope="col" class="text-left">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="server in sortedServers" :key="server.url">
+                            <td>{{ server.url }}</td>
+                            <td><markdown :source="server.description" class="description" :html="true"></markdown></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+    </section>
 </template>

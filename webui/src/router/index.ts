@@ -1,4 +1,5 @@
 import Search from '@/components/dashboard/Search.vue'
+import { getRouteName } from '@/composables/dashboard'
 import { createRouter, createWebHistory, useRoute as baseRoute, type RouteLocationRaw, type RouteRecordRaw } from 'vue-router'
 
 let base = document.querySelector("base")?.href ?? '/'
@@ -20,7 +21,7 @@ export function useRoute() {
       name = service.name
     }
     return {
-        name: `${type}Service`,
+        name: getRouteName(`${type}Service`).value,
         params: { service: name },
         query: { refresh: route.query.refresh }
     }
@@ -28,7 +29,7 @@ export function useRoute() {
 
   function httpPath(service: Service, path: HttpPath): RouteLocationRaw {
     return {
-      name: 'httpEndpoint',
+      name: getRouteName('httpEndpoint').value,
       params: { service: service.name, endpoint: path.path.substring(1).split('/') },
       query: { refresh: route.query.refresh }
     }
@@ -39,7 +40,7 @@ export function useRoute() {
     endpoint.push(operation.method)
 
     return {
-        name: 'httpEndpoint',
+        name: getRouteName('httpEndpoint').value,
         params: { service: service.name, endpoint: endpoint },
         query: { refresh: route.query.refresh }
     }
@@ -50,8 +51,147 @@ export function useRoute() {
 
 const dashboardView = () => import('@/views/DashboardView.vue')
 
+function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
+  const getRouteName = (name: string) => mode === 'live' ? name : name + '-demo';
+
+  return {
+    path: mode === 'live' ? '/dashboard' : '/dashboard-demo',
+    name: getRouteName('dashboard'),
+    meta: {
+        mode: mode
+    },
+    component: dashboardView,
+    children: [
+      {
+        path: 'services',
+        name: getRouteName('serviceList'),
+        component: dashboardView
+      },
+      {
+        path: 'search',
+        name: getRouteName('search'),
+        component: Search
+      },
+      {
+        path: 'http',
+        name: getRouteName('http'),
+        component: dashboardView,
+        children: [
+          {
+            path: 'services/:service',
+            name: getRouteName('httpService'),
+            component: dashboardView,
+            meta: {service: 'http'}
+          },
+          {
+            path: 'requests/:id',
+            name: getRouteName('httpRequest'),
+            component: dashboardView,
+            meta: {service: 'http'}
+          },
+          {
+            path: 'services/:service/:endpoint(.*)*',
+            name: getRouteName('httpEndpoint'),
+            component: dashboardView,
+            meta: {service: 'http'}
+          }
+        ]
+      },
+      {
+        path: 'kafka',
+        name: getRouteName('kafka'),
+        component: dashboardView,
+        children: [
+          {
+            path: 'service/:service',
+            name: getRouteName('kafkaService'),
+            component: dashboardView,
+            meta: {service: 'kafka'}
+          },
+          {
+            path: 'service/:service/topic/:topic',
+            name: getRouteName('kafkaTopic'),
+            component: dashboardView,
+            meta: {service: 'kafka'}
+          },
+          {
+            path: 'messages/:id',
+            name: getRouteName('kafkaMessage'),
+            component: dashboardView,
+            meta: {service: 'kafka'}
+          }
+        ]
+      },
+      {
+        path: 'ldap',
+        name: getRouteName('ldap'),
+        component: dashboardView,
+        children: [
+          {
+            path: 'service/:service',
+            name: getRouteName('ldapService'),
+            component: dashboardView,
+            meta: { service: 'ldap' },
+          },
+          {
+            path: 'ldap/requests/:id',
+            name: getRouteName('ldapRequest'),
+            component: dashboardView,
+            meta: { service: 'ldap' }
+          },
+        ]
+      },
+      {
+        path: 'mail',
+        name: getRouteName('mail'),
+        component: dashboardView,
+        children: [
+          {
+            path: 'service/:service',
+            name: getRouteName('mailService'),
+            component: dashboardView,
+            meta: { service: 'mail' },
+          },
+          {
+            path: 'service/:service/maiboxes/:name',
+            name: getRouteName('smtpMailbox'),
+            component: dashboardView,
+            meta: { service: 'mail' }
+          },
+          {
+            path: 'mail/mails/:id',
+            name: getRouteName('smtpMail'),
+            component: dashboardView,
+            meta: { service: 'mail' }
+          },
+        ]
+      },
+      {
+        path: 'jobs',
+        name: getRouteName('jobs'),
+        component: dashboardView,
+      },
+      {
+        path: 'configs',
+        name: getRouteName('configs'),
+        component: dashboardView,
+      },
+      {
+        path: 'config/:id',
+        name: getRouteName('config'),
+        component: dashboardView,
+      },
+      {
+        path: 'tree',
+        name: getRouteName('tree'),
+        component: dashboardView,
+      },
+    ]
+  }
+}
+
 let startPageRoute: RouteRecordRaw
-if (import.meta.env.VITE_DASHBOARD == 'true') {
+if (import.meta.env.VITE_WEBSITE == 'false') {
   startPageRoute = {
     path: '/',
     name: 'home',
@@ -108,137 +248,8 @@ const router = createRouter({
       path: '/mail',
       component: () => import('@/views/Mail.vue')
     },
-    {
-      path: '/dashboard',
-      name: 'dashboard',
-      component: dashboardView,
-      children: [
-        {
-          path: '/services',
-          name: 'serviceList',
-          component: dashboardView
-        },
-        {
-          path: '/dashboard/search',
-          name: 'search',
-          component: Search
-        },
-        {
-          path: '/dashboard/http',
-          name: 'http',
-          component: dashboardView,
-          children: [
-            {
-              path: '/dashboard/http/services/:service',
-              name: 'httpService',
-              component: dashboardView,
-              meta: {service: 'http'}
-            },
-            {
-              path: '/dashboard/http/requests/:id',
-              name: 'httpRequest',
-              component: dashboardView,
-              meta: {service: 'http'}
-            },
-            {
-              path: '/dashboard/http/services/:service/:endpoint(.*)*',
-              name: 'httpEndpoint',
-              component: dashboardView,
-              meta: {service: 'http'}
-            }
-          ]
-        },
-        {
-          path: '/dashboard/kafka',
-          name: 'kafka',
-          component: dashboardView,
-          children: [
-            {
-              path: '/dashboard/kafka/service/:service',
-              name: 'kafkaService',
-              component: dashboardView,
-              meta: {service: 'kafka'}
-            },
-            {
-              path: '/dashboard/kafka/service/:service/topic/:topic',
-              name: 'kafkaTopic',
-              component: dashboardView,
-              meta: {service: 'kafka'}
-            },
-            {
-              path: '/dashboard/kafka/messages/:id',
-              name: 'kafkaMessage',
-              component: dashboardView,
-              meta: {service: 'kafka'}
-            }
-          ]
-        },
-        {
-          path: '/dashboard/ldap',
-          name: 'ldap',
-          component: dashboardView,
-          children: [
-            {
-              path: '/dashboard/ldap/service/:service',
-              name: 'ldapService',
-              component: dashboardView,
-              meta: { service: 'ldap' },
-            },
-            {
-              path: '/dashboard/ldap/requests/:id',
-              name: 'ldapRequest',
-              component: dashboardView,
-              meta: { service: 'ldap' }
-            },
-          ]
-        },
-        {
-          path: '/dashboard/mail',
-          name: 'mail',
-          component: dashboardView,
-          children: [
-            {
-              path: '/dashboard/mail/service/:service',
-              name: 'mailService',
-              component: dashboardView,
-              meta: { service: 'mail' },
-            },
-            {
-              path: '/dashboard/mail/service/:service/maiboxes/:name',
-              name: 'smtpMailbox',
-              component: dashboardView,
-              meta: { service: 'mail' }
-            },
-            {
-              path: '/dashboard/mail/mails/:id',
-              name: 'smtpMail',
-              component: dashboardView,
-              meta: { service: 'mail' }
-            },
-          ]
-        },
-        {
-          path: '/dashboard/jobs',
-          name: 'jobs',
-          component: dashboardView,
-        },
-        {
-          path: '/dashboard/configs',
-          name: 'configs',
-          component: dashboardView,
-        },
-        {
-          path: '/dashboard/config/:id',
-          name: 'config',
-          component: dashboardView,
-        },
-        {
-          path: '/dashboard/tree',
-          name: 'tree',
-          component: dashboardView,
-        },
-      ]
-    },
+    createDashboardRoute('live'),
+    createDashboardRoute('demo'),
     {
       path: '/docs/examples/:pathMatch(.*)*',
       redirect: to => {
@@ -272,7 +283,7 @@ const router = createRouter({
 })
 
 router.afterEach((to, from) => {
-  if (!to.path.startsWith('/dashboard')) {
+  if (!to.path.startsWith('/dashboard') || to.path.startsWith('/dashboard-demo')) {
     return
   }
         

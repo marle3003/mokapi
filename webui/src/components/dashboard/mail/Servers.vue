@@ -1,15 +1,21 @@
 <script setup lang="ts">
-import type { PropType } from 'vue';
+import { computed, type PropType } from 'vue';
 import Markdown from 'vue3-markdown-it'
 
-defineProps({
+const props = defineProps({
     service: { type: Object as PropType<MailService>, required: true },
+})
+
+const servers = computed(() => {
+    if (!props.service.servers) {
+        return undefined
+    }
+    return props.service.servers.sort((x: MailServer, y: MailServer) => x.name.localeCompare(y.name));
 })
 </script>
 
 <template>
-    <table class="table dataTable">
-        <caption class="visually-hidden">Servers</caption>
+    <table class="table dataTable" aria-label="Servers">
         <thead>
             <tr>
                 <th scope="col" class="text-left">Name</th>
@@ -19,7 +25,7 @@ defineProps({
             </tr>
         </thead>
         <tbody>
-            <tr v-for="server in service.servers" :key="server.name">
+            <tr v-for="server in servers" :key="server.name">
                 <td>{{ server.name }}</td>
                 <td>{{ server.host }}</td>
                 <td>{{ server.protocol }}</td>

@@ -237,11 +237,12 @@ folders:
 
 The settings object defines global configuration options that influence server behavior.
 
-| Field Name        | Type    | Default | Description                                                                                                                                                                                        |
-|-------------------|---------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| maxRecipients     | integer | 0       | (Optional) Maximum number of recipients per email. Use 0 for unlimited.                                                                                                                            |
-| autoCreateMailbox | boolean | true    | (Optional) Allow create mailboxes at runtime.                                                                                                                                                      |
-| maxInboxMails     | integer | 100     | (Optional) Maximum number of messages kept in the INBOX folder. Oldest mails are removed when the limit is exceeded. Use 0 to disable the limit and store messages indefinitely (not recommended). |
+| Field Name            | Type    | Default | Description                                                                                                                                                                                        |
+|-----------------------|---------|---------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| maxRecipients         | integer | 0       | (Optional) Maximum number of recipients per email. Use 0 for unlimited.                                                                                                                            |
+| autoCreateMailbox     | boolean | true    | (Optional) Allow create mailboxes at runtime.                                                                                                                                                      |
+| maxInboxMails         | integer | 100     | (Optional) Maximum number of messages kept in the INBOX folder. Oldest mails are removed when the limit is exceeded. Use 0 to disable the limit and store messages indefinitely (not recommended). |
+| AllowUnknownSenders   | boolean | true    | (Optional) If true, the server accepts any MAIL FROM: address, even if it’s not listed in the mailboxes: configuration.                                                                            |
 
 ##### Mailbox Object Example
 
