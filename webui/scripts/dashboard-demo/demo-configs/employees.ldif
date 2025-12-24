@@ -1,0 +1,54 @@
+# Base DN entry for HR example
+dn: dc=hr,dc=example,dc=com
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+o: Example Corp HR
+dc: hr
+
+# Organizational Unit: People
+dn: ou=people,dc=hr,dc=example,dc=com
+ou: people
+objectClass: top
+objectClass: organizationalUnit
+
+# User: Alice Johnson (In 'people' OU)
+dn: uid=ajohnson,ou=people,dc=hr,dc=example,dc=com
+cn: Alice Johnson
+uid: ajohnson
+userPassword: anothersecretpassword456
+givenName: Alice
+sn: Johnson
+title: Regional Manager
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+
+# User: Bob Miller (In 'people' OU)
+dn: uid=bmiller,ou=people,dc=hr,dc=example,dc=com
+cn: Bob Miller
+uid: bmiller
+userPassword: mysecretpassword123
+givenName: Bob
+sn: Miller
+title: Assistant Regional Manager
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+
+# Organizational Unit: Departments (Groups)
+dn: ou=departments,dc=hr,dc=example,dc=com
+ou: departments
+objectClass: top
+objectClass: organizationalUnit
+
+# Group: Sales Department
+dn: cn=Sales,ou=departments,dc=hr,dc=example,dc=com
+cn: Sales
+objectClass: top
+objectClass: groupOfNames
+member: uid=ajohnson,ou=people,dc=hr,dc=example,dc=com
+member: uid=bmiller,ou=people,dc=hr,dc=example,dc=com
+description: The Dunder Mifflin Sales Team.

@@ -4,7 +4,7 @@ import { useSchema } from '@/composables/schema'
 import Markdown from 'vue3-markdown-it'
 import SourceView from '../../SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
-import { dashboard } from '@/composables/dashboard'
+import { useDashboard } from '@/composables/dashboard'
 import type { ExampleResult } from '@/types/dashboard'
 
 const { printType } = useSchema()
@@ -23,7 +23,8 @@ const examples = computed(() => {
             if (!parameter.schema || !opened.value[parameter.name]) {
                 continue;
             }
-            let example = dashboard.getExample({schema: { schema: parameter.schema }, contentTypes: ['text/plain'] })
+            const { dashboard } = useDashboard()
+            let example = dashboard.value.getExample({schema: { schema: parameter.schema }, contentTypes: ['text/plain'] })
             result[parameter.name+parameter.type] = example
         }
     }

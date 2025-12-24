@@ -1,0 +1,33 @@
+mail: '1.0'
+info:
+  title: Mail Server
+  description: Configuration for the internal mail server.
+  version: 1.0.0
+  contact:
+    name: Support Team
+    url: https://support.example.com
+    email: support@example.com
+
+servers:
+  smtp:
+    host: localhost:8025
+    protocol: smtp
+    description: Primary outgoing mail server
+  imap:
+    host: localhost:8143
+    protocol: imap
+    description: IMAP mail server for accessing mails
+
+mailboxes:
+  alice.johnson@example.com:
+    username: alice.johnson
+    password: anothersecretpassword456
+    description: Configuration for Alice Johnson's.
+  
+  bob.miller@example.com:
+    username: bob.miller
+    password: mysecretpassword123
+    description: Configuration for Bob Miller's.
+
+  zzz@example.com:
+    description: TODO remove it

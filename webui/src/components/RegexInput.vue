@@ -8,7 +8,7 @@ const regex = ref<RegExp | undefined>()
 const regexError = ref<any>(null)
 defineExpose({ regex, regexError })
 
-let debounceTimer: number | null = null
+let debounceTimer: ReturnType<typeof setTimeout> | null = null
 watch(model, (value) => {
     if (debounceTimer) {
         clearTimeout(debounceTimer)

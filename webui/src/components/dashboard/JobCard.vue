@@ -47,7 +47,7 @@ const timers = computed(() => {
 let data: JobExecution | null
 let timer: Timer | undefined
 let status: string | null
-let interval: number
+let interval: ReturnType<typeof setInterval>
 
 onMounted(() => {
   interval = setInterval(() => {

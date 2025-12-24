@@ -65,7 +65,7 @@ interface DialogData {
 }
 let message = ref<DialogData | null>(null)
 let data: KafkaEventData | null
-let clickTimeout: number | null = null
+let clickTimeout: ReturnType<typeof setTimeout> | null = null
 
 function handleMessageClick(event: ServiceEvent) {
     if (clickTimeout) {

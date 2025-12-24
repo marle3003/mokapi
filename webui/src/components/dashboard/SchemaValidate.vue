@@ -5,7 +5,7 @@ import '../../ace-editor/ace-config';
 import SourceView from './SourceView.vue'
 import { transformPath } from '@/composables/fetch'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
-import { dashboard } from '@/composables/dashboard';
+import { useDashboard } from '@/composables/dashboard';
 import type { Example } from '@/types/dashboard';
 
 declare interface State {
@@ -57,7 +57,8 @@ const exampleRequest = {
     contentTypes: Array()
 }
 
-var example = dashboard.getExample(exampleRequest)
+const { dashboard } = useDashboard()
+var example = dashboard.value.getExample(exampleRequest)
 watch(() => props.schema, (schema) => {
     exampleRequest.schema = schema
 })
@@ -76,7 +77,7 @@ watch(() => props.source, (source) => {
         state.source.binary = { ...props.source.binary }
         exampleRequest.contentTypes.push(state.source.binary.contentType)
     }
-    example = dashboard.getExample(exampleRequest)
+    example = dashboard.value.getExample(exampleRequest)
 }, { immediate: true})
 
 function setExample() {

@@ -1,0 +1,9 @@
+ldap: 1.0.0
+info:
+  title: HR Employee Directory
+  description: LDAP server for internal employee contact information.
+  version: 1.0.0
+host: :8389
+files:
+  - ./schema.ldif
+  - ./employees.ldif

@@ -39,7 +39,7 @@ const pageRange = computed(() => {
 
   return Array.from({ length: end - start + 1 }, (_, i) => start + i)
 })
-let timeout: number;
+let timeout: ReturnType<typeof setTimeout>;
 watch(queryText, async () => {
   if (!queryText.value || queryText.value.length < 3 || queryText.value.endsWith(':')) {
     return
