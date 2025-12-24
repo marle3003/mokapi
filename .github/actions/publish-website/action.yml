@@ -21,7 +21,7 @@ runs:
   steps:
     - uses: actions/setup-node@v4
       with:
-        node-version: 20
+        node-version: 23.11.1
         registry-url: 'https://registry.npmjs.org'
     - id: release
       uses: pozetroninc/github-action-get-latest-release@master
