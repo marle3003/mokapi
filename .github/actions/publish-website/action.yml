@@ -33,7 +33,7 @@ runs:
       run: docker run --name mokapi --rm -d -p 80:80 -p 8080:8080 -p 9092:9092 -p 8389:8389 -p 8025:8025 --mount type=bind,source=$(pwd)/webui/scripts/dashboard-demo/demo-configs,target=/data --env MOKAPI_Providers_File_Directory=/data ${{ inputs.image-name }}
       shell: bash
     - name: Build Demo Dashboard
-      working-directory: ./webui/scripts/dashboard-demo/demo-configs
+      working-directory: ./webui/scripts/dashboard-demo
       run: node ci.ts
       shell: bash
     - name: Stop Mokapi
