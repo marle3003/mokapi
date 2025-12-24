@@ -44,7 +44,7 @@ const config: PlaywrightTestConfig = {
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'chromium',
+      name: 'dashboard',
       use: {
         ...devices['Desktop Chrome'],
         storageState: {
@@ -60,7 +60,28 @@ const config: PlaywrightTestConfig = {
             }
           ]
         },
-      }
+      },
+      testIgnore: ["/e2e/**/*.website.spec.ts"],
+    },
+    {
+      name: 'website',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: {
+          cookies: [],
+          origins: [
+            {
+              origin: 'http://localhost:5173',
+              localStorage: [
+                {
+                  name: 'theme', value: 'dark'
+                }
+              ]
+            }
+          ]
+        },
+      },
+      testIgnore: ["/e2e/**/*.dashboard.spec.ts"],
     },
     // {
     //   name: 'firefox',
