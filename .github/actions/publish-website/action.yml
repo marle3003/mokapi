@@ -36,7 +36,7 @@ runs:
       working-directory: ./webui/scripts/dashboard-demo
       run: |
         npm install
-        npx ci.ts
+        node ci.ts
       shell: bash
     - name: Stop Mokapi
       if: always()
