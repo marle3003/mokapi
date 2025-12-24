@@ -23,7 +23,6 @@ watchEffect(async () => {
 export const dashboard: Dashboard = {
 
     getServices(type) {
-        console.log(data.value)
         let result = []
         if (demo.value) {
             const response = demo.value['services']

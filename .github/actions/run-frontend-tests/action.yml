@@ -60,3 +60,7 @@ runs:
       with:
         name: mokapi-test-logs
         path: /var/tmp/mokapi.log
+    - name: Stop Mokapi
+      if: always()
+      run: docker stop mokapi || true
+      shell: bash

@@ -303,7 +303,7 @@ if (import.meta.env.VITE_DASHBOARD === 'true') {
   router.addRoute(createDashboardRoute('live'));
 }
 if (import.meta.env.VITE_USE_DEMO === 'true') {
-  createDashboardRoute('demo')
+  router.addRoute(createDashboardRoute('demo'));
 }
 
 

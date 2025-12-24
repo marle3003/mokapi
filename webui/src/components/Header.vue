@@ -10,7 +10,6 @@ import { Modal } from 'bootstrap';
 
 const isDashboard = import.meta.env.VITE_DASHBOARD === 'true'
 const useDemo = import.meta.env.VITE_USE_DEMO === 'true'
-console.log(useDemo);
 let appInfo: AppInfoResponse | null = null
 const query = ref('')
 const tooltipDark = 'Switch to light mode';
