@@ -61,7 +61,7 @@ const config: PlaywrightTestConfig = {
           ]
         },
       },
-      testIgnore: ["/e2e/**/*.website.spec.ts"],
+      testIgnore: ["/e2e/**/*.website.spec.ts", "/e2/dashboard-demo/**/*.spec.ts"],
     },
     {
       name: 'website',
@@ -81,7 +81,7 @@ const config: PlaywrightTestConfig = {
           ]
         },
       },
-      testIgnore: ["/e2e/**/*.dashboard.spec.ts"],
+      testIgnore: ["/e2e/**/*.dashboard.spec.ts", "/e2/dashboard/**/*.spec.ts"],
     },
     // {
     //   name: 'firefox',

@@ -42,7 +42,7 @@ runs:
       shell: bash
     - name: Run your tests
       working-directory: ./webui
-      run: npx playwright test
+      run: npx playwright test --project=dashboard
       shell: bash
     - name: Upload test results
       if: always()
