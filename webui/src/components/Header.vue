@@ -8,6 +8,8 @@ import Fuse from 'fuse.js';
 import { parseMarkdown } from '@/composables/markdown';
 import { Modal } from 'bootstrap';
 
+console.log(import.meta.env);
+
 const isDashboard = import.meta.env.VITE_DASHBOARD === 'true'
 const useDemo = import.meta.env.VITE_USE_DEMO === 'true'
 let appInfo: AppInfoResponse | null = null
