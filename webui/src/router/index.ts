@@ -248,8 +248,6 @@ const router = createRouter({
       path: '/mail',
       component: () => import('@/views/Mail.vue')
     },
-    createDashboardRoute('live'),
-    createDashboardRoute('demo'),
     {
       path: '/docs/examples/:pathMatch(.*)*',
       redirect: to => {
@@ -300,6 +298,14 @@ router.afterEach((to, from) => {
     });
   }
 });
+
+if (import.meta.env.VITE_DASHBOARD === 'true') {
+  router.addRoute(createDashboardRoute('live'));
+}
+if (import.meta.env.VITE_USE_DEMO === 'true') {
+  createDashboardRoute('demo')
+}
+
 
 export default router
 
