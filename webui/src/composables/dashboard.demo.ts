@@ -22,6 +22,19 @@ watchEffect(async () => {
 
 export const dashboard: Dashboard = {
 
+    getAppInfo() {
+        let result = {
+            version: '0.0',
+            activeServices: [],
+            search: { enabled: false }
+        };
+        if (demo.value) {
+            result = demo.value.info;
+        }
+
+        return { data: result, isLoading: false, error: '', close: () => {} };
+    },
+
     getServices(type) {
         let result = []
         if (demo.value) {

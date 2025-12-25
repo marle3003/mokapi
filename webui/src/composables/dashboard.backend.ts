@@ -7,6 +7,10 @@ const { formatLanguage } = usePrettyLanguage();
 
 export const dashboard: Dashboard = {
 
+    getAppInfo() {
+        return useFetch('/api/info')
+    },
+
     getServices(type, doRefresh) {
         const response = useFetch('/api/services', {}, doRefresh)
         const services = ref<Service[]>([])

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useAppInfo, type AppInfoResponse } from '../composables/appInfo'
 import { RouterLink, useRouter } from 'vue-router'
 import { onUnmounted, inject, ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
@@ -7,8 +6,8 @@ import { useFileResolver } from '@/composables/file-resolver';
 import Fuse from 'fuse.js';
 import { parseMarkdown } from '@/composables/markdown';
 import { Modal } from 'bootstrap';
-
-console.log(import.meta.env);
+import type { AppInfoResponse } from '@/types/dashboard';
+import { useDashboard } from '@/composables/dashboard';
 
 const isDashboard = import.meta.env.VITE_DASHBOARD === 'true'
 const useDemo = import.meta.env.VITE_USE_DEMO === 'true'
@@ -18,7 +17,8 @@ const tooltipDark = 'Switch to light mode';
 const tooltipLight = 'Switch to dark mode';
 
 if (isDashboard) {
-  appInfo = useAppInfo()
+  const { dashboard } = useDashboard()
+  appInfo = dashboard.value.getAppInfo()
   onUnmounted(() => {
       appInfo?.close()
   })

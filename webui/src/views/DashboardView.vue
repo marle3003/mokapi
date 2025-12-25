@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useAppInfo } from '@/composables/appInfo'
 import AppStartCard from '../components/dashboard/AppStartCard.vue'
 import MemoryUsageCard from '../components/dashboard/MemoryCard.vue'
 import JobCountCard from '@/components/dashboard/JobCountCard.vue'
@@ -38,20 +37,18 @@ import { useMeta } from '@/composables/meta'
 import Config from '@/components/dashboard/Config.vue'
 import { useFetch, type Response } from '@/composables/fetch'
 import { useRoute } from 'vue-router'
-import { useMetrics } from '../composables/metrics'
 import { useRefreshManager } from '@/composables/refresh-manager'
 import { useDashboard, getRouteName } from '@/composables/dashboard'
 
-const appInfo = useAppInfo()
 const configs: Ref<Response | undefined> = ref<Response>()
 
-const { sum } = useMetrics()
 const { progress, start, isActive } = useRefreshManager();
 const transitionRefresh = computed(() => {
     return progress.value > 0.1 && progress.value < 99.9;
 })
 const count = ref<number>(0);
-const { setMode } = useDashboard();
+const { dashboard, setMode } = useDashboard();
+const appInfo = dashboard.value.getAppInfo()
 
 onUnmounted(() => {
     appInfo.close()

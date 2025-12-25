@@ -9,6 +9,7 @@ export async function collectDashboard() {
   }
 
   const endpoints = {
+    info: '/api/info',
     services: '/api/services',
     metrics: '/api/metrics?q=app',
     'service_Swagger Petstore': '/api/services/http/Swagger%20Petstore',

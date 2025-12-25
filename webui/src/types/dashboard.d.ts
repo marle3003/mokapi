@@ -1,7 +1,10 @@
+import type { AppInfoResponse } from "@/composables/appInfo"
 import type { Response } from "@/composables/fetch"
 import type { Ref } from "vue"
 
 export interface Dashboard {
+    getAppInfo(): AppInfoResponse
+
     getServices(type?: string, doRefresh?: boolean): ServicesResult
     getService(name: string, type: string): ServiceResult
 
@@ -16,6 +19,23 @@ export interface Dashboard {
     getAttachmentUrl(messageId: string, name: string): string
 
     getMetrics(query: string): Response
+}
+
+export interface AppInfo {
+    version: string
+    activeServices: string[]
+    search: Search
+}
+
+export interface Search {
+    enabled: boolean
+}
+
+export interface AppInfoResponse {
+    data: AppInfo
+    isLoading: boolean
+    error: string
+    close: () => void
 }
 
 export interface ServicesResult {
