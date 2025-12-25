@@ -10,6 +10,7 @@ const transporter = nodemailer.createTransport({
 export async function driveMail() {
     await sendNewsletter();
     await sendForgetPassword();
+    transporter.close();
 }
 
 async function sendNewsletter() {
