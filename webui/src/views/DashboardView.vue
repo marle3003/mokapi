@@ -47,7 +47,7 @@ const transitionRefresh = computed(() => {
     return progress.value > 0.1 && progress.value < 99.9;
 })
 const count = ref<number>(0);
-const { dashboard, setMode } = useDashboard();
+const { dashboard, setMode, getMode } = useDashboard();
 const appInfo = dashboard.value.getAppInfo()
 
 onUnmounted(() => {
@@ -104,8 +104,15 @@ useMeta('Dashboard | mokapi.io', description, '')
     </div>
     <main>
         <div class="dashboard">
-            <h1 class="visually-hidden">Dashboard</h1>
-            <div class="dashboard-tabs" v-if="appInfo.data">
+            <h1 v-if="getMode() === 'live'" class="visually-hidden">Dashboard</h1>
+            <div v-else class="header-demo">
+                <h1 style="font-size: 2rem; margin-bottom: 10px;">Demo Dashboard</h1>
+                <p>
+                Get a feel for the interface and explore recorded data.
+                </p>
+            </div>
+
+            <div class="dashboard-tabs" v-if="appInfo.data" :class="{ demo: getMode() === 'demo' }">
                 <nav class="navbar navbar-expand pb-1" aria-label="Services">
                     <div>
                         <ul class="navbar-nav me-auto mb-0">
@@ -140,7 +147,7 @@ useMeta('Dashboard | mokapi.io', description, '')
                     </div>
                 </nav>
             </div>
-            <div v-if="appInfo.data" class="dashboard-content">
+            <div v-if="appInfo.data" class="dashboard-content" :class="{ demo: getMode() === 'demo' }">
                 <div v-if="$route.name === getRouteName('dashboard').value && appInfo.data">
                     <div class="card-group">
                         <app-start-card />
@@ -253,5 +260,21 @@ useMeta('Dashboard | mokapi.io', description, '')
 .refresh-progress-bar {
   box-shadow: 0 0 4px rgba(0, 123, 255, 0.4);
   background-color: var(--color-refresh-background);
+}
+.dashboard-tabs.demo {
+    top: 10rem;
+}
+.dashboard-content.demo {
+    margin-top: 10rem;
+}
+.header-demo {
+    position: fixed;
+    top: 4rem;
+    z-index: 10;
+    width: 100%;
+    padding-top: 15px;
+    padding-left: 8px;
+    padding-bottom: 30px;
+    background-color: var(--color-background);
 }
 </style>

@@ -3,7 +3,6 @@ import { driveHttp } from './drive-http.ts';
 import { driveKafka, closeKafka } from './drive-kafka.ts';
 import { driveMail } from './drive-mail.ts';
 import { driveLdap } from './drive-ldap.ts';
-import whyIsNodeRunning from 'why-is-node-running';
 
 async function main() {
     try {
@@ -21,7 +20,7 @@ async function main() {
         await closeKafka();
     }
 
-    setTimeout(() => whyIsNodeRunning(), 5000);
+    process.exit(0)
 }
 
 main()

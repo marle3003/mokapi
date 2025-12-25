@@ -21,7 +21,11 @@ export function useDashboard() {
         mode.value = m
     }
 
-    return { dashboard, setMode }
+    function getMode(): Mode {
+        return mode.value
+    }
+
+    return { dashboard, setMode, getMode }
 }
 
 export const getRouteName = (name: string) => {
