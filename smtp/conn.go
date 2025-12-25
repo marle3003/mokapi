@@ -5,14 +5,15 @@ import (
 	"crypto/tls"
 	"encoding/base64"
 	"fmt"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"net"
 	"net/textproto"
 	"runtime/debug"
 	"strings"
 	"syscall"
+
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type conn struct {
@@ -338,9 +339,16 @@ func (c *conn) serveStartTls(param string) {
 		write(c.tpc, 550, EnhancedStatusCode{5, 0, 0}, "Handshake error")
 		return
 	}
+
+	// Remove the old raw TCP connection
+	delete(c.server.activeConn, c.conn)
+
 	c.conn = tlsConn
 	c.tpc = textproto.NewConn(c.conn)
 	c.reset()
+
+	// Add the new TLS connection
+	c.server.activeConn[c.conn] = c.ctx
 }
 
 func (c *conn) reset() {

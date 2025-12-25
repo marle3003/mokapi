@@ -39,4 +39,5 @@ export async function driveKafka() {
 export async function closeKafka() {
     await consumer.stop();
     await consumer.disconnect();
+    await producer.disconnect();
 }

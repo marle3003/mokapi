@@ -2,7 +2,7 @@ import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
   host: 'localhost',
-  port: 8025, // Mokapi's SMTP port
+  port: 8025,
   secure: false,
   tls: { rejectUnauthorized: false }
 });
