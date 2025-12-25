@@ -39,6 +39,7 @@ import { useFetch, type Response } from '@/composables/fetch'
 import { useRoute } from 'vue-router'
 import { useRefreshManager } from '@/composables/refresh-manager'
 import { useDashboard, getRouteName } from '@/composables/dashboard'
+import type { AppInfoResponse } from '@/types/dashboard'
 
 const configs: Ref<Response | undefined> = ref<Response>()
 
@@ -49,15 +50,8 @@ const transitionRefresh = computed(() => {
 const count = ref<number>(0);
 const { dashboard, setMode, getMode } = useDashboard();
 
-const appInfo = dashboard.value.getAppInfo()
-onUnmounted(() => {
-    appInfo.close()
-    if (configs.value) {
-        configs.value.close()
-    }
-})
-
 const route = useRoute()
+const appInfo = ref<AppInfoResponse | undefined>()
 onMounted(() => {
     if (route.name === 'configs' && configs.value == null) {
         configs.value = useFetch('/api/configs')
@@ -68,21 +62,28 @@ onMounted(() => {
     if (route.meta.mode) {
         setMode(route.meta.mode as 'live' | 'demo')
     }
+    appInfo.value = dashboard.value.getAppInfo()
+    onUnmounted(() => {
+        appInfo.value?.close()
+        if (configs.value) {
+            configs.value.close()
+        }
+    })
 })
 
 function isServiceAvailable(service: string): boolean{
-    if (!appInfo.data || !appInfo.data.activeServices){
+    if (!appInfo.value?.data || !appInfo.value?.data.activeServices){
         return false
     }
-    return appInfo.data.activeServices.includes(service)
+    return appInfo.value?.data.activeServices.includes(service)
 }
 
 function isAnyServiceAvailable() {
-    return appInfo.data.activeServices && appInfo.data.activeServices.length> 0
+    return appInfo.value?.data.activeServices && appInfo.value?.data.activeServices.length> 0
 }
 
 function isInitLoading() {
-    return appInfo.isLoading && !appInfo.data
+    return appInfo.value?.isLoading && !appInfo.value?.data
 }
 
 function hasJobs() {
@@ -112,7 +113,7 @@ useMeta('Dashboard | mokapi.io', description, '')
                 </p>
             </div>
 
-            <div class="dashboard-tabs" v-if="appInfo.data" :class="{ demo: getMode() === 'demo' }">
+            <div class="dashboard-tabs" v-if="appInfo?.data" :class="{ demo: getMode() === 'demo' }">
                 <nav class="navbar navbar-expand pb-1" aria-label="Services">
                     <div>
                         <ul class="navbar-nav me-auto mb-0">
@@ -140,15 +141,15 @@ useMeta('Dashboard | mokapi.io', description, '')
                             <li class="nav-item">
                                 <router-link class="nav-link" :to="{ name: getRouteName('tree').value }">Faker</router-link>
                             </li>
-                            <li class="nav-item" v-if="appInfo.data.search.enabled">
+                            <li class="nav-item" v-if="appInfo?.data.search.enabled">
                                 <router-link class="nav-link" :to="{ name: getRouteName('search').value }">Search</router-link>
                             </li>
                         </ul>
                     </div>
                 </nav>
             </div>
-            <div v-if="appInfo.data" class="dashboard-content" :class="{ demo: getMode() === 'demo' }">
-                <div v-if="$route.name === getRouteName('dashboard').value && appInfo.data">
+            <div v-if="appInfo?.data" class="dashboard-content" :class="{ demo: getMode() === 'demo' }">
+                <div v-if="$route.name === getRouteName('dashboard').value && appInfo?.data">
                     <div class="card-group">
                         <app-start-card />
                         <memory-usage-card />
@@ -251,7 +252,7 @@ useMeta('Dashboard | mokapi.io', description, '')
             </div>
         </div>
 
-        <message :message="appInfo.error" v-if="!appInfo.data && !appInfo.isLoading"></message>
+        <message :message="appInfo.error" v-if="!appInfo?.data && !appInfo?.isLoading && appInfo?.error"></message>
         <loading v-if="isInitLoading()"></loading>
     </main>
 </template>
