@@ -48,14 +48,16 @@ const transitionRefresh = computed(() => {
 })
 const count = ref<number>(0);
 const { dashboard, setMode, getMode } = useDashboard();
-const appInfo = dashboard.value.getAppInfo()
+if (getMode() === 'live') {
+    const appInfo = dashboard.value.getAppInfo()
 
-onUnmounted(() => {
-    appInfo.close()
-    if (configs.value) {
-        configs.value.close()
-    }
-})
+    onUnmounted(() => {
+        appInfo.close()
+        if (configs.value) {
+            configs.value.close()
+        }
+    })
+}
 
 const route = useRoute()
 onMounted(() => {
