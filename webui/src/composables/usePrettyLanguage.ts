@@ -41,6 +41,8 @@ export function usePrettyLanguage() {
             case 'json':
             case 'problem+json':
                 return 'json'
+            case 'ldif':
+                return 'ldif'
         }
 
         switch (contentType) {
@@ -70,6 +72,8 @@ export function usePrettyLanguage() {
                 return 'text/javascript'
             case '.ts':
                 return 'text/typescript'
+            case '.ldif':
+                return 'application/ldif'
             default:
                 return null
         }
