@@ -23,10 +23,6 @@ const pages = [
     file: './src/views/Ldap.vue',
     url: 'https://mokapi.io/ldap'
   },
-  {
-    file: './src/views/DashboardView.vue',
-    url: 'https://mokapi.io/dashboard-demo'
-  },
 ]
 
 const xmlTemplate = `
