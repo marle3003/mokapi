@@ -33,7 +33,7 @@
     "http-status-codes": "^2.3.0",
     "js-yaml": "^4.1.1",
     "kafkajs": "^2.2.4",
-    "ldapts": "^8.0.33",
+    "ldapts": "^8.0.35",
     "ncp": "^2.0.0",
     "nodemailer": "^7.0.12",
     "vue": "^3.5.26",
