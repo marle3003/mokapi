@@ -697,17 +697,17 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                         </div>
                         <div class="col" v-if="filter.request.headers.checkbox">
                             <div  v-for="(hf, i) in filter.request.headers.value">
-                                <div class="row me-0":class="{ 'mb-2': i < (filter.request.headers.value.length - 1) }" >
+                                <div class="row me-0":class="{ 'mb-2': (i as number) < (filter.request.headers.value.length - 1)}" >
                                     <div class="col ps-0 pe-1">
-                                        <input type="text" class="form-control form-control-sm" id="reqeuest-header-name" v-model="hf.name" placeholder="Name" @input="onHeaderInput(filter.request.headers, i)">
+                                        <input type="text" class="form-control form-control-sm" id="reqeuest-header-name" v-model="hf.name" placeholder="Name" @input="onHeaderInput(filter.request.headers, (i as number) )">
                                     </div>
                                     <div class="col ps-1 pe-0">
-                                        <RegexInput v-model="hf.value" :ref="el => requestHeaderValueRefs[i] = el" placeholder="Value [Regex]" @input="onHeaderInput(filter.request.headers, i)" />
+                                        <RegexInput v-model="hf.value" :ref="el => requestHeaderValueRefs[(i as number) ] = el" placeholder="Value [Regex]" @input="onHeaderInput(filter.request.headers, (i as number) )" />
                                     </div>
                                     <div class="col-1">
-                                        <button v-if="i < filter.request.headers.value.length -1"
+                                        <button v-if="(i as number)  < filter.request.headers.value.length -1"
                                             class="btn btn-outline-danger btn-sm"
-                                            @click="removeHeaderFilter(filter.request.headers, i)">
+                                            @click="removeHeaderFilter(filter.request.headers, (i as number) )">
                                             <i class="bi bi-x"></i>
                                         </button>
                                     </div>
@@ -751,17 +751,17 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                         </div>
                         <div class="col" v-if="filter.response.headers.checkbox">
                             <div  v-for="(hf, i) in filter.response.headers.value">
-                                <div class="row me-0":class="{ 'mb-2': i < filter.response.headers.value.length - 1 }" >
+                                <div class="row me-0":class="{ 'mb-2': (i as number)  < filter.response.headers.value.length - 1 }" >
                                     <div class="col ps-0 pe-1">
-                                        <input type="text" class="form-control form-control-sm" id="response-header-name" v-model="hf.name" placeholder="Name" @input="onHeaderInput(filter.response.headers, i)">
+                                        <input type="text" class="form-control form-control-sm" id="response-header-name" v-model="hf.name" placeholder="Name" @input="onHeaderInput(filter.response.headers, (i as number) )">
                                     </div>
                                     <div class="col ps-1 pe-0">
-                                        <RegexInput v-model="hf.value" :ref="el => responseHeaderValueRefs[i] = el" placeholder="Value [Regex]" @input="onHeaderInput(filter.response.headers, i)" />
+                                        <RegexInput v-model="hf.value" :ref="el => responseHeaderValueRefs[(i as number) ] = el" placeholder="Value [Regex]" @input="onHeaderInput(filter.response.headers, (i as number) )" />
                                     </div>
                                     <div class="col-1">
-                                        <button v-if="i < filter.response.headers.value.length -1"
+                                        <button v-if="(i as number)  < filter.response.headers.value.length -1"
                                             class="btn btn-outline-danger btn-sm"
-                                            @click="removeHeaderFilter(filter.response.headers, i)">
+                                            @click="removeHeaderFilter(filter.response.headers, (i as number) )">
                                             <i class="bi bi-x"></i>
                                         </button>
                                     </div>
