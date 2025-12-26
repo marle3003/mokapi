@@ -12,7 +12,7 @@ const Server = require('./server');
   const browser = await chromium.launch();
 
   async function crawl(url) {
-    if (!url.href.startsWith('http://localhost:8025') || url.href.startsWith('http://localhost:8025/dashboard')) {
+    if (!url.href.startsWith('http://localhost:8025') || url.href === 'http://localhost:8025/dashboard') {
       return
     }
     if (visited.has(url.pathname)) {
