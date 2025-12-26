@@ -1,23 +1,33 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onUnmounted, type Ref } from 'vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { useRouter } from '@/router'
 import { useRoute } from 'vue-router'
+import { getRouteName, useDashboard } from '@/composables/dashboard'
 
 const { format } = usePrettyDates()
 
 const props = withDefaults(defineProps<{
-    configs: Config[] | ConfigRef[] | undefined,
+    configs?: Config[] | ConfigRef[] | null,
     title?: string,
     hideTitle?: boolean
     useCard?: boolean
 }>(), { useCard: true })
 
 const route = useRoute()
+let data: Ref<Config[] | null> | undefined
+console.log(props.configs)
+if (props.configs === undefined) {
+    const result = useDashboard().dashboard.value.getConfigs()
+    data = result.data
+    onUnmounted(() => {
+        result.close();
+    })
+}
 
 const configs = computed(() => {
     if (!props.configs) {
-        return []
+        return data?.value ?? []
     }
     return props.configs.sort(compareConfig)
 })
@@ -37,7 +47,7 @@ function showConfig(config: Config | ConfigRef){
   }
 
   useRouter().push({
-        name: 'config',
+        name: getRouteName('config').value,
         params: { id: config.id },
         query: { refresh: route.query.refresh }
     })

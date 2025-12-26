@@ -19,6 +19,11 @@ export interface Dashboard {
     getAttachmentUrl(messageId: string, name: string): string
 
     getMetrics(query: string): Response
+
+    getConfigs(): ConfigsResult 
+    getConfig(id: string): ConfigResult
+    getConfigData(id: string): ConfigDataResult
+    getConfigDataUrl(id: string): string
 }
 
 export interface AppInfo {
@@ -92,4 +97,23 @@ export interface MailboxMessagesResult {
 export interface MailResult {
     mail: Ref<Message | null>
     isLoading: Ref<boolean>
+}
+
+export interface ConfigsResult {
+    data: Ref<Config[] | null>
+    isLoading: Ref<boolean>
+    close: () => void
+}
+
+export interface ConfigResult {
+    config: Ref<Config | null>
+    isLoading: Ref<boolean>
+    close: () => void
+}
+
+export interface ConfigDataResult {
+    data: Ref<string | null>
+    isLoading: Ref<boolean>
+    filename: Ref<string | undefined>
+    close: () => void
 }

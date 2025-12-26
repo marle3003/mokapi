@@ -9,30 +9,31 @@ export async function collectDashboard() {
   }
 
   const endpoints = {
-    info: '/api/info',
-    services: '/api/services',
-    metrics: '/api/metrics?q=app',
-    'service_Swagger Petstore': '/api/services/http/Swagger%20Petstore',
-    'service_Kafka Order Service API': '/api/services/kafka/Kafka%20Order%20Service%20API',
-    'service_Mail Server': '/api/services/mail/Mail%20Server',
-    'service_HR Employee Directory': '/api/services/ldap/HR%20Employee%20Directory',
-    events: '/api/events',
-    'mailbox_alice.johnson@example.com': '/api/services/mail/Mail%20Server/mailboxes/alice.johnson@example.com',
-    'mailbox_bob.miller@example.com': '/api/services/mail/Mail%20Server/mailboxes/bob.miller@example.com',
+    info: { path: '/api/info', loader: loadJson },
+    services: { path: '/api/services' , loader: loadJson },
+    metrics: { path: '/api/metrics?q=app', loader: loadJson },
+    'service_Swagger Petstore': { path: '/api/services/http/Swagger%20Petstore', loader: loadJson },
+    'service_Kafka Order Service API': { path: '/api/services/kafka/Kafka%20Order%20Service%20API', loader: loadJson },
+    'service_Mail Server': { path: '/api/services/mail/Mail%20Server', loader: loadJson },
+    'service_HR Employee Directory': { path: '/api/services/ldap/HR%20Employee%20Directory', loader: loadJson },
+    events: { path: '/api/events', loader: fetchEvents },
+    'mailbox_alice.johnson@example.com': { path: '/api/services/mail/Mail%20Server/mailboxes/alice.johnson@example.com', loader: loadJson },
+    'mailbox_bob.miller@example.com': { path: '/api/services/mail/Mail%20Server/mailboxes/bob.miller@example.com', loader: loadJson },
+    configs: { path: '/api/configs', loader: loadConfigs }
   }
 
   const snapshot: Record<string, any> = {}
 
-  for (const [key, path] of Object.entries(endpoints)) {
-    const url = baseUrl + path;
-    if (key === 'events') {
-      await fetchEvents(snapshot, url);
-    } else {
-      snapshot[key] = await fetchJson(url);
-    }
+  for (const [key, obj] of Object.entries(endpoints)) {
+    const url = baseUrl + obj.path;
+    await obj.loader(url, key, snapshot);
   }
 
   await fs.writeFile(output + '/dashboard.json', JSON.stringify(snapshot, null, 2));
+}
+
+async function loadJson(url: string, key: string, snapshot: Record<string, any>) {
+  snapshot[key] = await fetchJson(url)
 }
 
 async function fetchJson(url: string): Promise<any> {
@@ -57,9 +58,9 @@ async function directoryExists(path: string) {
   }
 }
 
-async function fetchEvents(snapshot: Record<string, any>, url: string) {
+async function fetchEvents(url: string, key: string, snapshot: Record<string, any>) {
   const events = await fetchJson(url);
-  snapshot['events'] = events;
+  snapshot[key] = events
 
   const mails = [];
   for (const event of events) {
@@ -102,4 +103,18 @@ function getFilenameWithRegex(contentType: string) {
         return match[1];
     }
     return null;
+}
+
+async function loadConfigs(url: string, key: string, snapshot:  Record<string, any>) {
+    const configs = await fetchJson(url);
+    snapshot[key] = configs;
+
+    for (const config of configs) {
+      const url = `${baseUrl}/api/configs/${config.id}`;
+      const cfg = await fetchJson(url);
+      snapshot['config_'+config.id] = cfg;
+
+      const data = await fetchBinary(`${baseUrl}/api/configs/${config.id}/data`);
+      await fs.writeFile(`${output}/${config.id}`, data);
+    }
 }

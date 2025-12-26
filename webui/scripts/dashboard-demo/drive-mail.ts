@@ -9,7 +9,9 @@ const transporter = nodemailer.createTransport({
 
 export async function driveMail() {
     await sendNewsletter();
+    await transporter.close();
     await sendForgetPassword();
+    await transporter.close();
 }
 
 async function sendNewsletter() {
@@ -149,13 +151,6 @@ async function sendNewsletter() {
             user: 'bob.miller',
             pass: 'mysecretpassword123'
         }
-    }, (error, info) => {
-        if (error) {
-            console.error('Error sending email:', error);
-        } else {
-            console.log('Email sent successfully:', info.response);
-        }
-        transporter.close();
     });
 }
 
@@ -230,12 +225,5 @@ async function sendForgetPassword() {
         to: '"Bob Miller" <bob.miller@example.com>',
         subject: 'Reset Your Password',
         html: body,
-    },(error, info) => {
-        if (error) {
-            console.error('Error sending email:', error);
-        } else {
-            console.log('Email sent successfully:', info.response);
-        }
-        transporter.close();
     });
 }

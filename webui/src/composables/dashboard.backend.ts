@@ -157,7 +157,56 @@ export const dashboard: Dashboard = {
     
     getAttachmentUrl(messageId: string, name: string): string {
         return transformPath(`/api/services/mail/messages/${messageId}/attachments/${name}`)
-    }
+    },
+
+    getConfigs() {
+        const response = useFetch('/api/configs')
+        const configs = ref<Config[] | null>(null)
+        const isLoading = ref<boolean>(true)
+
+        watchEffect(() => {
+            configs.value = response.data ? response.data : null
+            isLoading.value = response.isLoading
+        })
+        return {data: configs, isLoading, close: response.close}
+    },
+
+    getConfig(id: string) {
+        const response = useFetch(`/api/configs/${id}`)
+        const config = ref<Config | null>(null)
+        const isLoading = ref<boolean>(true)
+
+        watchEffect(() => {
+            config.value = response.data ? response.data : null
+            isLoading.value = response.isLoading
+        })
+        return {config, isLoading, close: response.close}
+    },
+
+    getConfigData(id) {
+        const response = useFetch(this.getConfigDataUrl(id)); 
+        const data = ref<string | null>(null);
+        const isLoading = ref<boolean>(true);
+        const filename = ref<string | undefined>();
+
+        watchEffect(() => {
+            data.value = response.data ? response.data : null
+            isLoading.value = response.isLoading
+            if (response.header) {
+                const h = response.header.get('Content-Disposition')!
+                const matches = h.match(/filename="([^\"]*)"/)
+                if (matches && matches.length > 1) {
+                    filename.value = matches[1]
+                }
+            }
+        })
+
+        return { data, isLoading, filename, close: response.close }
+    },
+
+    getConfigDataUrl(id: string) {
+        return `/api/configs/${id}/data`
+    },
 }
 
 function compareService(s1: Service, s2: Service) {

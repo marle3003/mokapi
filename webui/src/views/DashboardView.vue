@@ -35,13 +35,10 @@ import { computed, onMounted, onUnmounted, ref, type Ref } from 'vue'
 
 import { useMeta } from '@/composables/meta'
 import Config from '@/components/dashboard/Config.vue'
-import { useFetch, type Response } from '@/composables/fetch'
 import { useRoute } from 'vue-router'
 import { useRefreshManager } from '@/composables/refresh-manager'
 import { useDashboard, getRouteName } from '@/composables/dashboard'
 import type { AppInfoResponse } from '@/types/dashboard'
-
-const configs: Ref<Response | undefined> = ref<Response>()
 
 const { progress, start, isActive } = useRefreshManager();
 const transitionRefresh = computed(() => {
@@ -53,9 +50,6 @@ const { dashboard, setMode, getMode } = useDashboard();
 const route = useRoute()
 const appInfo = ref<AppInfoResponse | undefined>()
 onMounted(() => {
-    if (route.name === 'configs' && configs.value == null) {
-        configs.value = useFetch('/api/configs')
-    }
     if (route.meta.mode === 'live') {
         start();
     }
@@ -65,9 +59,6 @@ onMounted(() => {
     appInfo.value = dashboard.value.getAppInfo()
     onUnmounted(() => {
         appInfo.value?.close()
-        if (configs.value) {
-            configs.value.close()
-        }
     })
 })
 
@@ -138,7 +129,7 @@ useMeta('Dashboard | mokapi.io', description, '')
                             <li class="nav-item">
                                 <router-link class="nav-link" :to="{ name: getRouteName('configs').value }">Configs</router-link>
                             </li>
-                            <li class="nav-item">
+                            <li v-if="getMode() === 'live'" class="nav-item">
                                 <router-link class="nav-link" :to="{ name: getRouteName('tree').value }">Faker</router-link>
                             </li>
                             <li class="nav-item" v-if="appInfo?.data.search.enabled">
@@ -231,7 +222,7 @@ useMeta('Dashboard | mokapi.io', description, '')
 
                 <div v-if="$route.name === getRouteName('configs').value">
                     <div class="card-group">
-                        <config-card v-if="configs" :configs="configs.data" />
+                        <config-card />
                     </div>
                 </div>
                 <div v-if="$route.name === getRouteName('tree').value" >

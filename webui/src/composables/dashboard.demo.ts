@@ -203,7 +203,49 @@ export const dashboard: Dashboard = {
             return '';
         }
         return transformPath(`/demo/${getFilename(attachment.contentType)}`)
-    }
+    },
+
+    getConfigs() {
+        let result = null;
+        if (demo.value) {
+            result = demo.value.configs;
+        }
+
+        return { data: ref<Config[] | null>(result), isLoading: ref<boolean>(false), close: () => {} }
+    },
+
+    getConfig(id: string) {
+        let result = null;
+        if (demo.value) {
+            result = demo.value.configs.find((x: Config) => x.id === id);
+        }
+
+        return { config: ref<Config | null>(result), isLoading: ref<boolean>(false), close: () => {} }
+    },
+
+    getConfigData(id) {
+        let config = null
+        if (demo.value) {
+            config = demo.value.configs.find((x: Config) => x.id === id);
+        }
+
+        const response = useFetch(this.getConfigDataUrl(id));
+        const data = ref<string | null>(null);
+        const isLoading = ref<boolean>(true);
+        const filename = ref<string | undefined>();
+
+        watchEffect(() => {
+            data.value = response.data ? response.data : null;
+            isLoading.value = response.isLoading;
+            filename.value = getFilenameFromUrl(config.url);
+        })
+
+        return { data, isLoading, filename: filename, close: () => {} }
+    },
+
+    getConfigDataUrl(id) {
+        return '/demo/' + id
+    },
 }
 
 function compareService(s1: Service, s2: Service) {
@@ -218,4 +260,8 @@ function getFilename(contentType: string) {
         return match[1];
     }
     return null;
+}
+
+function getFilenameFromUrl(url: string): string {
+  return new URL(url).pathname.split('/').pop()!;
 }
