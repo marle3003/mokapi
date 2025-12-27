@@ -61,7 +61,7 @@ const Server = require('./server');
       throw new Error(`page ${url.href} not found: ${msg}`)
     }
 
-    let p = path.join('../dist', url.pathname)
+    let p = path.join('../dist', decodeURIComponent(url.pathname))
     if (!fs.existsSync(path.dirname(p))){
       fs.mkdirSync(path.dirname(p), { recursive: true });
     }
