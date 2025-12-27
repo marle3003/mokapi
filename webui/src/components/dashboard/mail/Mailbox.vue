@@ -21,15 +21,21 @@ const { format } = usePrettyDates();
 
 onUnmounted(() => close());
 
-function goToMail(msg: MessageInfo) {
+function goToMail(msg: MessageInfo, openInNewTab = false) {
   if (getSelection()?.toString()) {
     return
   }
 
-  router.push({
+  const to = {
     name: getRouteName('smtpMail').value,
     params: { id: msg.messageId },
-  });
+  };
+  if (openInNewTab) {
+    const routeData = router.resolve(to);
+    window.open(routeData.href, '_blank')
+  } else {
+    router.push(to)
+  }
 }
 </script>
 
@@ -121,9 +127,13 @@ function goToMail(msg: MessageInfo) {
               <tr
                 v-for="message in messages"
                 :key="message.messageId"
-                @click="goToMail(message)"
+                @mouseup.left="goToMail(message)" @mousedown.middle="goToMail(message, true)"
               >
-                <td>{{ message.subject }}</td>
+                <td>
+                  <router-link @click.stop class="row-link" :to="{ name: getRouteName('smtpMail').value, params: { id: message.messageId } }">
+                    {{ message.subject }}
+                  </router-link>
+                </td>
                 <td class="address-list">
                   <ul class="list-unstyled">
                     <li v-for="addr of message.from">

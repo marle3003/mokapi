@@ -13,6 +13,7 @@ const Server = require('./server');
 
   async function crawl(url) {
     if (!url.href.startsWith('http://localhost:8025') || url.href === 'http://localhost:8025/dashboard') {
+      console.log('skip ' + url)
       return
     }
     if (visited.has(url.pathname)) {
@@ -21,9 +22,19 @@ const Server = require('./server');
     visited.add(url.pathname)
     console.info(`crawling ${url.href}...`)
     const page = await browser.newPage();
-    await page.goto(url.href, {
+    const response = await page.goto(url.href, {
       waitUntil: 'networkidle',
     });
+
+    if (!response) {
+      throw new Error(`page ${url.href} not found`);
+    }
+
+    const contentType = response.headers()['content-type'] ?? '';
+    if (!contentType.includes('text/html')) {
+      console.log('skip ' + contentType);
+      return
+    }
 
     await page.evaluate(async () => {
       for (const script of document.querySelectorAll('script')) {
@@ -67,7 +78,7 @@ const Server = require('./server');
 
     for (const u of links) {
       try {
-      await crawl(u)
+        await crawl(u)
       } catch (err) {
         if (err.message && err.message.startsWith('page ')) { 
           throw new Error(`crawl link on page ${url} failed: ${err}`)

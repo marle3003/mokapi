@@ -1,40 +1,28 @@
-var http = require('http')
-var fs = require('fs')
-var path = require('path')
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const mime = require('mime-types');
 
 module.exports = class Server {
     server
 
     constructor(baseDir) {
-        this.server = http.Server(function (request, response) {
+        this.server = http.Server(async function (request, response) {
             var filePath = request.url.split('?')[0]
             if (filePath == '') {
                 filePath = 'index.html'
             }
 
-            var extname = path.extname(filePath)
-            var contentType = 'text/html'
-            switch (extname) {
-                case '.js':
-                    contentType = 'text/javascript'
-                    break
-                case '.css':
-                    contentType = 'text/css'
-                    break
-                case '.json':
-                    contentType = 'application/json'
-                    break
-                case '.png':
-                    contentType = 'image/png'
-                    break
-                case '.jpg':
-                    contentType = 'image/jpg';
-                    break
-                case '.wav':
-                    contentType = 'audio/wav'
-                    break
-                case '':
+            var contentType = 'text/html';
+            if (await fileExists(path.join(baseDir, filePath))) {
+                var extname = path.extname(filePath);
+                if (extname !== '') {
+                    contentType = mime.lookup(filePath)
+                } else {
                     filePath = 'index.html'
+                }
+            } else {
+                filePath = 'index.html'
             }
 
             filePath = path.join(baseDir, filePath)
@@ -67,5 +55,14 @@ module.exports = class Server {
 
     close() {
         this.server.close()
+    }
+}
+
+async function fileExists(path) {
+    try {
+        const stats = await fs.promises.stat(path);
+        return stats.isFile();
+    } catch (err) {
+        return false
     }
 }

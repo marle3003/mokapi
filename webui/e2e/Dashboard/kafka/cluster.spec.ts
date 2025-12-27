@@ -55,7 +55,7 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
         const configs = useTable(page.getByRole('region', { name: "Configs" }).getByRole('table', { name: 'Configs' }), ['URL', 'Provider', 'Last Update'])
         const config = configs.getRow(1)
         await expect(config.getCellByName('URL')).toHaveText('https://www.example.com/foo/bar/communication/service/asyncapi.json')
-        await expect(config.getCellByName('Provider')).toHaveText('http')
+        await expect(config.getCellByName('Provider')).toHaveText('HTTP')
         await expect(config.getCellByName('Last Update')).toHaveText(formatDateTime('2023-02-15T08:49:25.482366+01:00'))
     })
 
@@ -73,7 +73,7 @@ test('Visit Kafka cluster config file', async ({ page, context }) => {
     await page.getByRole('table', { name: 'Configs' }).getByText('https://www.example.com/foo/bar/communication/service/asyncapi.json').click()
 
     await expect(page.getByLabel('URL')).toHaveText('https://www.example.com/foo/bar/communication/service/asyncapi.json')
-    await expect(page.getByLabel('Provider')).toHaveText('http')
+    await expect(page.getByLabel('Provider')).toHaveText('HTTP')
     await expect(page.getByLabel('Last Modified')).toHaveText(formatDateTime('2023-02-15T08:49:25.482366+01:00'))
 
     const { test: testSourceView } = useSourceView(page.getByRole('region', { name: 'Content' }))

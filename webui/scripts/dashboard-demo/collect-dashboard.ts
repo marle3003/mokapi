@@ -113,8 +113,13 @@ async function loadConfigs(url: string, key: string, snapshot:  Record<string, a
       const url = `${baseUrl}/api/configs/${config.id}`;
       const cfg = await fetchJson(url);
       snapshot['config_'+config.id] = cfg;
+      const filename = getFilenameFromUrl(cfg.url);
 
       const data = await fetchBinary(`${baseUrl}/api/configs/${config.id}/data`);
-      await fs.writeFile(`${output}/${config.id}`, data);
+      await fs.writeFile(`${output}/${filename}`, data);
     }
+}
+
+function getFilenameFromUrl(url: string): string {
+  return new URL(url).pathname.split('/').pop()!;
 }

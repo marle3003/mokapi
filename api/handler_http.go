@@ -53,7 +53,7 @@ type param struct {
 	Required      bool           `json:"required"`
 	Deprecated    bool           `json:"deprecated"`
 	Style         string         `json:"style,omitempty"`
-	Exploded      bool           `json:"exploded"`
+	Explode       bool           `json:"explode"`
 	AllowReserved bool           `json:"allowReserved"`
 	Schema        *schema.Schema `json:"schema"`
 }
@@ -302,7 +302,7 @@ func getParameters(params openapi.Parameters) (result []param) {
 			Required:      p.Value.Required,
 			Deprecated:    p.Value.Deprecated,
 			Style:         p.Value.Style,
-			Exploded:      p.Value.IsExplode(),
+			Explode:       p.Value.IsExplode(),
 			AllowReserved: p.Value.AllowReserved,
 			Schema:        p.Value.Schema,
 		}

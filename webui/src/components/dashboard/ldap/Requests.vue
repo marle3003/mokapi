@@ -19,15 +19,21 @@ const { events, close } = dashboard.value.getEvents('ldap', ...labels)
 const { format, duration } = usePrettyDates()
 let data: LdapEventData
 
-function goToEvent(event: ServiceEvent){
+function goToEvent(event: ServiceEvent, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
     }
 
-    router.push({
+    const to = {
         name: getRouteName('ldapRequest').value,
         params: {id: event.id},
-    })
+    }
+    if (openInNewTab) {
+        const routeData = router.resolve(to);
+        window.open(routeData.href, '_blank')
+    } else {
+        router.push(to)
+    }
 }
 function eventData(event: ServiceEvent): LdapEventData{
     return <LdapEventData>event.data
@@ -67,9 +73,11 @@ onUnmounted(() => {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="event in events!" :key="event.id" @click="goToEvent(event)" :set="data = eventData(event)">
+                    <tr v-for="event in events!" :key="event.id" @mouseup.left="goToEvent(event)" @mousedown.middle="goToEvent(event, true)" :set="data = eventData(event)">
                         <td>
-                            {{ data.request.operation }}
+                            <router-link @click.stop class="row-link" :to="{ name: getRouteName('ldapRequest').value, params: {id: event.id} }">
+                                {{ eventData(event).request.operation }}
+                            </router-link>
                         </td>
                         <td>
                             {{ targetDn(data) }}

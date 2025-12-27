@@ -80,15 +80,21 @@ function handleMessageClick(event: ServiceEvent) {
     }
 }
 
-function goToMessage(event: ServiceEvent) {
+function goToMessage(event: ServiceEvent, openInNewTab = false) {
     if (getSelection()?.toString()) {
         return
     }
 
-    router.push({
+    const to = {
         name: getRouteName('kafkaMessage').value,
         params: { id: event.id }
-    })
+    }
+    if (openInNewTab) {
+        const routeData = router.resolve(to);
+        window.open(routeData.href, '_blank')
+    } else {
+        router.push(to)
+    }
 }
 
 function showMessage(event: ServiceEvent){
@@ -195,6 +201,7 @@ function getContentType(msg: KafkaMessage): [string, boolean] {
     return [ msg.contentType, false ]
 }
 function key(data: KafkaEventData | null): string {
+    console.log(data?.key)
     if (!data) {
         return ''
     }
@@ -229,8 +236,12 @@ function formatHeaderValue(v: KafkaHeaderValue) {
             </tr>
         </thead>
         <tbody>
-            <tr v-for="event in events" :key="event.id" @click="handleMessageClick(event)" :set="data = eventData(event)" :class="data?.deleted ? 'deleted': ''">
-                <td class="key">{{ key(data) }}</td>
+            <tr v-for="event in events" :key="event.id" @mouseup.left="handleMessageClick(event)" :set="data = eventData(event)" @mousedown.middle="goToMessage(event, true)" :class="data?.deleted ? 'deleted': ''">
+                <td class="key">
+                    <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaMessage').value, params: { id: event.id }}">
+                        {{ key(eventData(event)) }}
+                    </router-link>
+                </td>
                 <td class="message" :title="isAvro(event)? 'Avro content displayed as JSON' : ''">{{ data?.message.value ?? data?.message.binary }}</td>
                 <td v-if="!topicName">{{ event.traits["topic"] }}</td>
                 <td class="text-center">{{ format(event.time) }}</td>

@@ -119,7 +119,7 @@ func TestHandler_Http(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",
-			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"parameters":[{"name":"bar","type":"path","required":true,"deprecated":false,"exploded":false,"allowReserved":false,"schema":{"type":"string"}}]}]}]`,
+			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo/{bar}","operations":[{"method":"get","deprecated":false,"parameters":[{"name":"bar","type":"path","required":true,"deprecated":false,"explode":false,"allowReserved":false,"schema":{"type":"string"}}]}]}]`,
 		},
 		{
 			name: "get http service with requestBody",

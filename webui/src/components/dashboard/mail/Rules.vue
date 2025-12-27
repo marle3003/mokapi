@@ -47,8 +47,12 @@ function showRule(r: SmtpRule) {
       </tr>
     </thead>
     <tbody>
-      <tr v-for="rule in rules" :key="rule.name" @click="showRule(rule)">
-        <td>{{ rule.name }}</td>
+      <tr v-for="rule in rules" :key="rule.name" @mouseup.left="showRule(rule)">
+        <td>
+          <span role="button" @click.stop="showRule(rule)">
+            {{ rule.name }}
+          </span>
+        </td>
         <td>{{ rule.action }}</td>
         <td>{{ rule.sender }}</td>
         <td>{{ rule.recipient }}</td>

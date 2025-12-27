@@ -25,16 +25,21 @@ function requests(service: Service) {
     return sum(service.metrics, 'ldap_requests_total')
 }
 
-function goToService(service: Service){
+function goToService(service: Service, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
     }
 
-    router.push({
+    const to = {
         name: getRouteName('ldapService').value,
         params: {service: service.name},
-        query: {refresh: route.query.refresh}
-    })
+    };
+    if (openInNewTab) {
+        const routeData = router.resolve(to);
+        window.open(routeData.href, '_blank')
+    } else {
+        router.push(to)
+    }
 }
 
 onUnmounted(() => {
@@ -56,8 +61,12 @@ onUnmounted(() => {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="service in services" key="service.name" @click="goToService(service)">
-                        <td>{{ service.name }}</td>
+                    <tr v-for="service in services" key="service.name" @mouseup.left="goToService(service)" @mousedown.middle="goToService(service, true)">
+                        <td>
+                            <router-link @click.stop class="row-link" :to="{ name: getRouteName('ldapService').value, params: {service: service.name} }">
+                                {{ service.name }}
+                            </router-link>
+                        </td>
                         <td><markdown :source="service.description" class="description" :html="true"></markdown></td>
                         <td class="text-center">{{ lastRequest(service) }}</td>
                         <td class="text-center">{{ requests(service) }}</td>

@@ -107,7 +107,11 @@ function getClientSoftware(member: KafkaMember) {
         </thead>
         <tbody>
             <tr v-for="group in getGroups()" :key="group.name" @click="showGroup(group)">
-                <td>{{ group.name }}</td>
+                <td>
+                    <span role="button" @click.stop="showGroup(group)" tabindex="0">
+                        {{ group.name }}
+                    </span>
+                </td>
                 <td>{{ group.state }}</td>
                 <td>{{ group.protocol }}</td>
                 <td>{{ group.coordinator }}</td>

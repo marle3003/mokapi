@@ -25,19 +25,24 @@ function lastMessage(service: Service, topic: KafkaTopic){
     }
     return format(n)
 }
-function goToTopic(topic: KafkaTopic){
+function goToTopic(topic: KafkaTopic, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
     }
-    
-    router.push({
+
+    const to = {
         name: getRouteName('kafkaTopic').value,
         params: {
           service: props.service.name,
           topic: topic.name,
-        },
-        query: {refresh: route.query.refresh}
-    })
+        }
+    }
+    if (openInNewTab) {
+        const routeData = router.resolve(to);
+        window.open(routeData.href, '_blank')
+    } else {
+        router.push(to)
+    }
 }
 </script>
 
@@ -55,8 +60,12 @@ function goToTopic(topic: KafkaTopic){
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="topic in service.topics" :key="topic.name" @click="goToTopic(topic)">
-                        <td>{{ topic.name }}</td>
+                    <tr v-for="topic in service.topics" :key="topic.name" @mouseup.left="goToTopic(topic)" @mousedown.middle="goToTopic(topic, true)">
+                        <td>
+                            <router-link @click.stop class="row-link" :to="{ name: getRouteName('kafkaTopic').value, params: { service: props.service.name, topic: topic.name }}">
+                                {{ topic.name }}
+                            </router-link>
+                        </td>
                         <td><markdown :source="topic.description" class="description" :html="true"></markdown></td>
                         <td class="text-center">{{ lastMessage(service, topic) }}</td>
                         <td class="text-center">{{ messages(service, topic) }}</td>

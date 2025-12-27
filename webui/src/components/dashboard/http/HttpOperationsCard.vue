@@ -22,12 +22,18 @@ function comparePath(o1: HttpOperation, o2: HttpOperation) {
 
 const route = useRoute()
 const router = useRouter()
-function goToOperation(operation: HttpOperation){
+function goToOperation(operation: HttpOperation, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
     }
 
-    router.push(route.httpOperation(props.service, props.path, operation))
+    const to = route.httpOperation(props.service, props.path, operation);
+    if (openInNewTab) {
+    const routeData = router.resolve(to);
+    window.open(routeData.href, '_blank')
+  } else {
+    router.push(to)
+  }
 }
 function showWarningColumn(){
     if (!operations.value){
@@ -57,8 +63,12 @@ function showWarningColumn(){
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="operation in operations" :key="path.path" @click="goToOperation(operation)">
-                            <td><span class="badge operation" :class="operation.method">{{ operation.method.toUpperCase() }}</span></td>
+                        <tr v-for="operation in operations" :key="path.path" @click="goToOperation(operation)" @mousedown.middle="goToOperation(operation, true)">
+                            <td>
+                                <router-link @click.stop :to="route.httpOperation(props.service, props.path, operation)">
+                                    <span class="badge operation" :class="operation.method">{{ operation.method.toUpperCase() }}</span>
+                                </router-link>
+                            </td>
                             <td>{{ operation.operationId }}</td>
                             <td>{{ operation.summary }}</td>
                             <td v-if="showWarningColumn()"><span v-if="operation.deprecated"><span class="bi bi-exclamation-triangle-fill yellow"></span> deprecated</span></td>

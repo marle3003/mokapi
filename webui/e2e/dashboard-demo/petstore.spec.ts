@@ -60,7 +60,7 @@ test('Visit Petstore Demo', async ({ page }) => {
     await test.step('Verify Configs', async () => {
         const table = page.getByRole('table', { name: 'Configs' });
         await expect(await getCellByColumnName(table, 'URL')).toContainText('/webui/scripts/dashboard-demo/demo-configs/petstore.yaml');
-        await expect(await getCellByColumnName(table, 'Provider')).toHaveText('file');
+        await expect(await getCellByColumnName(table, 'Provider')).toHaveText('File');
     });
 
     await test.step('Verify Recent Requests', async () => {

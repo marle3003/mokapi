@@ -1,5 +1,5 @@
 export function useSchema() {
-    function printType(schema: Schema): string {
+    function printType(schema?: Schema): string {
         if (!schema) {
             return ''
         }

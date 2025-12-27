@@ -45,6 +45,18 @@ onUnmounted(() => {
     close()
     closeData()
 })
+const provider = computed(() => {
+    if (!config.value) {
+        return '';
+    }
+    switch (config.value.provider.toLocaleLowerCase()) {
+        case 'file': return 'File';
+        case 'http': return 'HTTP';
+        case 'git': return 'GIT';
+        case 'npm': return 'NPM';
+    }
+    return '';
+})
 </script>
 
 <template>
@@ -65,7 +77,7 @@ onUnmounted(() => {
                         <div class="col">
                             <p id="provider" class="label">Provider</p>
                             <p aria-labelledby="provider">
-                                <a href="/docs/configuration/providers/file">{{ config.provider }}</a>
+                                <a :href="'/docs/configuration/dynamic/' + config.provider">{{ provider }}</a>
                             </p>
                         </div>
                         <div class="col">

@@ -19,12 +19,19 @@ const { dashboard } = useDashboard()
 const { events, close } = dashboard.value.getEvents('mail', ...labels)
 const { format, duration } = usePrettyDates()
 
-function goToMail(evt: ServiceEvent){
+function goToMail(evt: ServiceEvent, openInNewTab = false){
     const data = eventData(evt)
-    router.push({
+
+    const to = {
         name: getRouteName('smtpMail').value,
         params: {id: data.messageId},
-    })
+    }
+    if (openInNewTab) {
+        const routeData = router.resolve(to);
+        window.open(routeData.href, '_blank')
+    } else {
+        router.push(to)
+    }
 }
 function eventData(event: ServiceEvent): SmtpEventData{
     return <SmtpEventData>event.data
@@ -61,8 +68,12 @@ onUnmounted(() => {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="event in filteredEvents" :key="event.id" :set="data = eventData(event)" @click="goToMail(event)">
-                        <td>{{ data.subject }}</td>
+                    <tr v-for="event in filteredEvents" :key="event.id" :set="data = eventData(event)" @mouseup.left="goToMail(event)" @mousedown.middle="goToMail(event, true)">
+                        <td>
+                            <router-link @click.stop class="row-link" :to="{ name: getRouteName('smtpMail').value, params: {id: data.messageId} }">
+                                {{ data.subject }}
+                            </router-link>
+                        </td>
                         <td>{{ data.from }}</td>
                         <td class="address-list">
                             <div v-for="address in data.to">

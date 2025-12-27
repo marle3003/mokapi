@@ -23,7 +23,6 @@ export function useRoute() {
     return {
         name: getRouteName(`${type}Service`).value,
         params: { service: name },
-        query: { refresh: route.query.refresh }
     }
   }
 
@@ -31,7 +30,6 @@ export function useRoute() {
     return {
       name: getRouteName('httpEndpoint').value,
       params: { service: service.name, endpoint: path.path.substring(1).split('/') },
-      query: { refresh: route.query.refresh }
     }
   }
 
@@ -42,7 +40,6 @@ export function useRoute() {
     return {
         name: getRouteName('httpEndpoint').value,
         params: { service: service.name, endpoint: endpoint },
-        query: { refresh: route.query.refresh }
     }
   }
 

@@ -94,15 +94,21 @@ onMounted(() => {
     }))
 })
 
-function goToRequest(event: ServiceEvent){
+function goToRequest(event: ServiceEvent, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
     }
 
-    router.push({
+    const to = {
         name: getRouteName('httpRequest').value,
         params: {id: event.id},
-    })
+    }
+    if (openInNewTab) {
+        const routeData = router.resolve(to);
+        window.open(routeData.href, '_blank')
+    } else {
+        router.push(to)
+    }
 }
 function eventData(event: ServiceEvent): HttpEventData{
     return <HttpEventData>event.data
@@ -591,7 +597,7 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="event in events!" :key="event.id" @click="goToRequest(event)">
+                        <tr v-for="event in events!" :key="event.id" @click="goToRequest(event)" @mousedown.middle="goToRequest(event, true)">
                             <td v-if="hasDeprecatedRequests" style="padding-left:0;">
                                 <span class="bi bi-exclamation-triangle-fill yellow warning" v-if="eventData(event).deprecated" title="deprecated"></span>
                             </td>
@@ -601,7 +607,9 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                                 </span>
                             </td>
                             <td>
-                                {{ eventData(event).request.url }}
+                                <router-link @click.stop class="row-link" :to="{ name: getRouteName('httpRequest').value, params: {id: event.id} }">
+                                    {{ eventData(event).request.url }}
+                                </router-link>
                             </td>
                             <td class="text-center">{{ formatStatusCode(eventData(event).response.statusCode.toString()) }}</td>
                             <td class="text-center">{{ format(event.time) }}</td>

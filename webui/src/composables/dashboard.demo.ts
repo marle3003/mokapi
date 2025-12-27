@@ -224,7 +224,7 @@ export const dashboard: Dashboard = {
     },
 
     getConfigData(id) {
-        let config = null
+        let config = null;
         if (demo.value) {
             config = demo.value.configs.find((x: Config) => x.id === id);
         }
@@ -244,7 +244,11 @@ export const dashboard: Dashboard = {
     },
 
     getConfigDataUrl(id) {
-        return '/demo/' + id
+        let config = null;
+        if (demo.value) {
+            config = demo.value.configs.find((x: Config) => x.id === id);
+        }
+        return '/demo/' + getFilenameFromUrl(config.url)
     },
 }
 

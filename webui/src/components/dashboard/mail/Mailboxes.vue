@@ -31,19 +31,24 @@ const mailboxes = computed(() => {
   return props.service.mailboxes.sort((x, y) => x.name.localeCompare(y.name))
 });
 
-function goToMailbox(mb: SmtpMailbox){
+function goToMailbox(mb: SmtpMailbox, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
     }
     
-    router.push({
+    const to = {
         name: getRouteName('smtpMailbox').value,
         params: {
           service: props.service.name,
           name: mb.name
         },
-        query: {refresh: route.query.refresh}
-    })
+    }
+    if (openInNewTab) {
+      const routeData = router.resolve(to);
+      window.open(routeData.href, '_blank')
+    } else {
+      router.push(to)
+    }
 }
 </script>
 
@@ -59,8 +64,12 @@ function goToMailbox(mb: SmtpMailbox){
             </tr>
         </thead>
         <tbody>
-            <tr v-for="mb in mailboxes" :key="mb.name" @click="goToMailbox(mb)">
-                <td>{{ mb.name }}</td>
+            <tr v-for="mb in mailboxes" :key="mb.name" @mouseup.left="goToMailbox(mb)" @mousedown.middle="goToMailbox(mb, true)">
+                <td>
+                  <router-link @click.stop class="row-link" :to="{ name: getRouteName('smtpMailbox').value, params: { service: props.service.name, name: mb.name } }">
+                    {{ mb.name }}
+                  </router-link>
+                </td>
                 <td>{{ mb.username }}</td>
                 <td>{{ mb.password }}</td>
                 <td v-if="anyDescription"><markdown :source="mb.description" class="description" :html="true"></markdown></td>

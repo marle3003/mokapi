@@ -68,12 +68,18 @@ function comparePath(p1: HttpPath, p2: HttpPath) {
     return name1.localeCompare(name2)
 }
 
-function goToPath(path: HttpPath){
+function goToPath(path: HttpPath, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
     }
 
-    router.push(route.httpPath(props.service, path))
+    const to = route.httpPath(props.service, path);
+    if (openInNewTab) {
+        const routeData = router.resolve(to);
+        window.open(routeData.href, '_blank')
+    } else {
+        router.push(to)
+    }
 }
 function goToOperation(path: HttpPath, operation: HttpOperation){
     router.push(route.httpOperation(props.service, path, operation))
@@ -210,22 +216,26 @@ function toggleTag(name: string) {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="path in paths" :key="path.path" @click="goToPath(path)">
+                    <tr v-for="path in paths" :key="path.path" @mouseup.left="goToPath(path)" @mousedown.middle="goToPath(path, true)">
                         <td v-if="hasDeprecated" style="padding-left:0;">
                             <span class="bi bi-exclamation-triangle-fill yellow pe-1" v-if="allOperationsDeprecated(path)" aria-hidden="true"></span>
                             <span class="visually-hidden">Deprecated</span>
                         </td>
                         <td>
-                            {{ path.path }}
+                            <router-link @click.stop class="row-link" :to="route.httpPath(props.service, path)">
+                                {{ path.path }}
+                            </router-link>
                         </td>
                         <td>
                             <span v-if="path.summary">{{ path.summary }}</span>
                             <span v-else-if="path.operations && path.operations.length === 1">{{ path.operations[0]?.summary }}</span>
                         </td>
                         <td>
-                            <span v-for="operation in operations(path)" key="operation.method" :title="operation.summary" class="badge operation me-1" :class="operation.method" @click.stop="goToOperation(path, operation)">
-                                {{ operation.method.toUpperCase() }} <span class="bi bi-exclamation-triangle-fill yellow" style="vertical-align: middle;" v-if="operation.deprecated"></span>
-                            </span>
+                            <router-link v-for="operation in operations(path)" :key="operation.method" @click.stop class="row-link" :to="route.httpOperation(props.service, path, operation)">
+                                <span :title="operation.summary" class="badge operation me-1" :class="operation.method">
+                                    {{ operation.method.toUpperCase() }} <span class="bi bi-exclamation-triangle-fill yellow" style="vertical-align: middle;" v-if="operation.deprecated"></span>
+                                </span>
+                            </router-link>
                         </td>
                         <td class="text-center">{{ lastRequest(path) }}</td>
                         <td class="text-center">

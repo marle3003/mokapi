@@ -79,17 +79,21 @@ function showWarningColumn(){
     <table class="table dataTable selectable" aria-label="Parameters">
         <thead>
             <tr>
-                <th scope="col" class="text-left">Name</th>
-                <th scope="col" class="text-left">Location</th>
-                <th scope="col" class="text-left">Type</th>
-                <th scope="col" class="text-left">Required</th>
-                <th scope="col" class="text-left" v-if="showWarningColumn()">Warning</th>
-                <th scope="col" class="text-left">Description</th>
+                <th scope="col" class="text-left col-3">Name</th>
+                <th scope="col" class="text-left col-1">Location</th>
+                <th scope="col" class="text-left col-1">Type</th>
+                <th scope="col" class="text-left col-1">Required</th>
+                <th scope="col" class="text-left col-1" v-if="showWarningColumn()">Warning</th>
+                <th scope="col" class="text-left col">Description</th>
             </tr>
         </thead>
         <tbody>
             <tr v-for="(parameter, index) in sortedParameters" :key="'parameter-'+index" @click="opened[parameter.name] = true" data-bs-toggle="modal" :data-bs-target="'#modal-parameter-'+index">
-                <td>{{ parameter.name }}</td>
+                <td>
+                    <span role="button" @click.stop="opened[parameter.name] = true" data-bs-toggle="modal" :data-bs-target="'#modal-parameter-'+index" tabindex="0">
+                    {{ parameter.name }}
+                    </span>
+                </td>
                 <td>{{ parameter.type }}</td>
                 <td>{{ printType(parameter.schema) }}</td>
                 <td>{{ parameter.required }}</td>
@@ -136,11 +140,11 @@ function showWarningColumn(){
                                         </div>
                                         <div class="col-2">
                                             <p id="parameter-explode" class="label">Explode</p>
-                                            <p aria-labelledby="parameter-explode">{{ parameter.explode ?? false }}</p>
+                                            <p aria-labelledby="parameter-explode">{{ parameter.explode }}</p>
                                         </div>
                                         <div class="col-2">
                                             <p id="parameter-reserved" class="label">Allow Reserved</p>
-                                            <p aria-labelledby="parameter-reserved">{{ parameter.allowReserved ?? false }}</p>
+                                            <p aria-labelledby="parameter-reserved">{{ parameter.allowReserved }}</p>
                                         </div>
                                     </div>
                                     <div class="row mt-2">

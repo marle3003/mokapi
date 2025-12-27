@@ -14,7 +14,6 @@ const props = withDefaults(defineProps<{
     useCard?: boolean
 }>(), { useCard: true })
 
-const route = useRoute()
 let data: Ref<Config[] | null> | undefined
 
 if (props.configs === undefined) {
@@ -49,16 +48,27 @@ function gotToConfig(config: Config | ConfigRef, openInNewTab = false){
   const router = useRouter();
   const to = {
     name: getRouteName('config').value,
-    params: { id: config.id },
-    query: { refresh: route.query.refresh }
+    params: { id: config.id }
   }
 
   if (openInNewTab) {
     const routeData = router.resolve(to);
     window.open(routeData.href, '_blank')
   } else {
-    useRouter().push(to)
+    router.push(to)
   }
+}
+function formatProvider(config: ConfigRef) {
+    if (!config) {
+        return '';
+    }
+    switch (config.provider.toLocaleLowerCase()) {
+        case 'file': return 'File';
+        case 'http': return 'HTTP';
+        case 'git': return 'GIT';
+        case 'npm': return 'NPM';
+    }
+    return '';
 }
 </script>
 
@@ -82,7 +92,7 @@ function gotToConfig(config: Config | ConfigRef, openInNewTab = false){
                             {{ config.url }}
                             </router-link>
                       </td>
-                      <td class="text-center">{{ config.provider }}</td>
+                      <td class="text-center">{{ formatProvider(config) }}</td>
                       <td class="text-center">{{ format(config.time) }}</td>
                   </tr>
               </tbody>
@@ -106,18 +116,10 @@ function gotToConfig(config: Config | ConfigRef, openInNewTab = false){
                         {{ config.url }}
                     </router-link>
                 </td>
-                <td class="text-center">{{ config.provider }}</td>
+                <td class="text-center">{{ formatProvider(config) }}</td>
                 <td class="text-center">{{ format(config.time) }}</td>
             </tr>
         </tbody>
     </table>
 
 </template>
-
-<style scoped>
-    .row-link {
-        text-decoration: none;
-        color: inherit;
-    }
-
-</style>
