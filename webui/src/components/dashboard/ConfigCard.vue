@@ -16,7 +16,7 @@ const props = withDefaults(defineProps<{
 
 const route = useRoute()
 let data: Ref<Config[] | null> | undefined
-console.log(props.configs)
+
 if (props.configs === undefined) {
     const result = useDashboard().dashboard.value.getConfigs()
     data = result.data
@@ -40,18 +40,25 @@ function compareConfig(c1: Config | ConfigRef, c2: Config | ConfigRef) {
     return url1.localeCompare(url2)
 }
 
-function showConfig(config: Config | ConfigRef){
+function gotToConfig(config: Config | ConfigRef, openInNewTab = false){
   const selection = getSelection()?.toString()
   if (selection) {
     return
   }
 
-  useRouter().push({
-        name: getRouteName('config').value,
-        params: { id: config.id },
-        query: { refresh: route.query.refresh }
-    })
-    return
+  const router = useRouter();
+  const to = {
+    name: getRouteName('config').value,
+    params: { id: config.id },
+    query: { refresh: route.query.refresh }
+  }
+
+  if (openInNewTab) {
+    const routeData = router.resolve(to);
+    window.open(routeData.href, '_blank')
+  } else {
+    useRouter().push(to)
+  }
 }
 </script>
 
@@ -69,8 +76,12 @@ function showConfig(config: Config | ConfigRef){
                   </tr>
               </thead>
               <tbody>
-                  <tr scope="row" v-for="config in configs" :key="config.url" @mouseup.left="showConfig(config)" @mousedown.middle="showConfig(config)">
-                      <td>{{ config.url }}</td>
+                  <tr scope="row" v-for="config in configs" :key="config.url" @mouseup.left="gotToConfig(config)" @mousedown.middle="gotToConfig(config, true)">
+                      <td>
+                            <router-link @click.stop class="row-link" :to="{ name: getRouteName('config').value, params: { id: config.id } }">
+                            {{ config.url }}
+                            </router-link>
+                      </td>
                       <td class="text-center">{{ config.provider }}</td>
                       <td class="text-center">{{ format(config.time) }}</td>
                   </tr>
@@ -89,8 +100,12 @@ function showConfig(config: Config | ConfigRef){
             </tr>
         </thead>
         <tbody>
-            <tr scope="row" v-for="config in configs" :key="config.url" @mouseup.left="showConfig(config)" @mousedown.middle="showConfig(config)">
-                <td>{{ config.url }}</td>
+            <tr scope="row" v-for="config in configs" :key="config.url" @mouseup.left="gotToConfig(config)" @mousedown.middle="gotToConfig(config, true)">
+                <td>
+                    <router-link @click.stop class="row-link" :to="{ name: getRouteName('config').value, params: { id: config.id } }">
+                        {{ config.url }}
+                    </router-link>
+                </td>
                 <td class="text-center">{{ config.provider }}</td>
                 <td class="text-center">{{ format(config.time) }}</td>
             </tr>
@@ -98,3 +113,11 @@ function showConfig(config: Config | ConfigRef){
     </table>
 
 </template>
+
+<style scoped>
+    .row-link {
+        text-decoration: none;
+        color: inherit;
+    }
+
+</style>
