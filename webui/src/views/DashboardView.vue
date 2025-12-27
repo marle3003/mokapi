@@ -12,6 +12,7 @@ import HttpRequests from '../components/dashboard/http/Requests.vue'
 import KafkaMessageMetricCard from '../components/dashboard/kafka/KafkaMessageMetricCard.vue'
 import KafkaClustersCard from '../components/dashboard/kafka/KafkaServicesCard.vue'
 import KafkaService from '../components/dashboard/kafka/KafkaService.vue'
+import KafkaMessagesCard from '@/components/dashboard/kafka/KafkaMessagesCard.vue'
 
 import LdapServicesCard from '@/components/dashboard/ldap/LdapServicesCard.vue'
 import LdapService from '../components/dashboard/ldap/Service.vue'
@@ -187,6 +188,9 @@ useMeta('Dashboard | mokapi.io', description, '')
                     </div>
                     <div class="card-group"  v-if="isServiceAvailable('kafka')">
                         <kafka-clusters-card />
+                    </div>
+                     <div class="card-group"  v-if="isServiceAvailable('kafka')">
+                        <kafka-messages-card />
                     </div>
                 </div>
 

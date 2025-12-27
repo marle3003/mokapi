@@ -2,7 +2,7 @@
 import KafkaMessages from './KafkaMessages.vue'
 
 defineProps<{
-    service: KafkaService,
+    service?: KafkaService,
     topicName?: string
 }>()
 </script>

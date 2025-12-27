@@ -8,11 +8,14 @@ import router from '@/router'
 import { getRouteName, useDashboard } from '@/composables/dashboard'
 
 const props = defineProps<{
-    service: KafkaService,
+    service?: KafkaService,
     topicName?: string
 }>()
 
-const labels = [{name: 'name', value: props.service!.name}]
+const labels = []
+if (props.service) {
+    labels.push({name: 'name', value: props.service.name})
+}
 if (props.topicName){
     labels.push({name: 'topic', value: props.topicName})
 }
@@ -156,18 +159,36 @@ function showMessage(event: ServiceEvent){
     }
 }
 
-function getTopic(name: string): KafkaTopic {
-    for (const topic of props.service!.topics) {
-        if (topic.name === name) {
-            return topic
+function getTopic(event: ServiceEvent): KafkaTopic | undefined {
+    const topicName = event.traits["topic"]!
+
+    let service = props.service
+     if (!service) {
+        const { services } = dashboard.value.getServices('kafka', false);
+        for (const s of services.value) {
+            console.log(s)
+            if (s.name === event.traits['name']) {
+                service = s as KafkaService
+            }
         }
     }
-    throw new Error(`topic ${name} not found`)
+
+    if (props.service) {
+        for (const topic of props.service.topics) {
+            if (topic.name === topicName) {
+                return topic
+            }
+        }
+    }
+   
+    return undefined
 }
 function getMessageConfig(event: ServiceEvent): KafkaMessage | undefined {
-    const topicName = event.traits["topic"]!
     const data = eventData(event)
-    const topic = getTopic(topicName)
+    const topic = getTopic(event)
+    if (!topic) {
+        return undefined
+    }
 
     const keys = Object.keys(topic.messages)
     if (keys.length === 1) {

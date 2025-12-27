@@ -8,10 +8,9 @@ import { getRouteName, useDashboard } from '@/composables/dashboard';
 
 const { sum, max } = useMetrics()
 const { format } = usePrettyDates()
-const route = useRoute()
 const router = useRouter()
 const { dashboard } = useDashboard();
-const { services, close } = dashboard.value.getServices('kafka')
+const { services, close } = dashboard.value.getServices('kafka');
 
 function lastMessage(service: Service){
     const n = max(service.metrics, 'kafka_message_timestamp')
