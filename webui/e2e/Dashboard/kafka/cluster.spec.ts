@@ -12,7 +12,7 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
         await open()
         await tabs.kafka.click()
 
-        await page.getByRole('table', { name: 'Kafka Clusters' }).getByText(cluster.name).click()
+        await page.getByRole('table', { name: 'Kafka Clusters' }).getByRole('link', { name: cluster.name }).click()
     })
 
     await test.step('Check info section', async () => {
