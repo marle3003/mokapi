@@ -77,7 +77,6 @@ function formatProvider(config: ConfigRef) {
       <div class="card-body">
           <h2 v-if="!hideTitle" id="configs" class="card-title text-center">{{ title }}</h2>
           <table class="table dataTable selectable" style="table-layout: fixed;" aria-labelledby="configs">
-            <caption class="visually-hidden">{{ title }}</caption>
               <thead>
                   <tr>
                       <th scope="col" class="text-left col-6 col-md-9">URL</th>
@@ -101,7 +100,6 @@ function formatProvider(config: ConfigRef) {
   </section>
 
   <table class="table dataTable selectable" style="table-layout: fixed;" aria-labelledby="configs" v-else>
-    <caption class="visually-hidden">{{ title }}</caption>
         <thead>
             <tr>
                 <th scope="col" class="text-left col-6 col-md-9">URL</th>

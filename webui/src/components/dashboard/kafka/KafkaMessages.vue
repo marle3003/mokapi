@@ -267,10 +267,10 @@ function formatHeaderValue(v: KafkaHeaderValue) {
     <table class="table dataTable selectable" aria-label="Recent Messages">
         <thead>
             <tr>
-                <th scope="col" class="text-left" style="width: 10%">Key</th>
-                <th scope="col" class="text-left" >Value</th>
-                <th scope="col" class="text-left" style="width: 10%" v-if="!topicName">Topic</th>
-                <th scope="col" class="text-center" style="width: 10%">Time</th>
+                <th scope="col" class="text-left col-2">Key</th>
+                <th scope="col" class="text-left col-4">Value</th>
+                <th scope="col" class="text-left col-2" v-if="!topicName">Topic</th>
+                <th scope="col" class="text-center col-2">Time</th>
                 
             </tr>
         </thead>

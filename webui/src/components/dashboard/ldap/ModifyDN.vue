@@ -68,7 +68,7 @@ const hasActions = computed(() => {
         <div class="card-group" v-if="hasActions">
             <div class="card">
                 <div class="card-body">
-                    <div class="card-title text-center">Actions</div>
+                    <h2 class="card-title text-center">Actions</h2>
                     <actions :actions="data.data.actions" />
                 </div>
             </div>

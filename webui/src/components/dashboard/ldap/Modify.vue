@@ -54,7 +54,7 @@ const hasActions = computed(() => {
         <div class="card-group">
             <div class="card">
                 <div class="card-body">
-                    <div class="card-title text-center">Modifications</div>
+                    <h2 class="card-title text-center">Modifications</h2>
                     <table class="table dataTable">
                         <thead>
                             <tr>

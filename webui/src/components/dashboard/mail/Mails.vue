@@ -55,7 +55,7 @@ onUnmounted(() => {
 <template>
     <div class="card">
         <div class="card-body">
-            <div class="card-title text-center">Recent Mails</div>
+            <h2 class="card-title text-center">Recent Mails</h2>
             <table class="table dataTable selectable">
                 <caption class="visually-hidden">Recent Mails</caption>
                 <thead>
