@@ -216,7 +216,7 @@ function navigateAndClose(params: Record<string, string>) {
         <div class="collapse navbar-collapse" id="navbar">
           <div class="navbar-container">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item" v-if="isDashboard">
+            <li v-if="isDashboard" class="nav-item">
               <router-link class="nav-link" :to="{ name: 'dashboard', query: {refresh: 20} }">Dashboard</router-link>
             </li>
             <li class="nav-item dropdown">
@@ -228,7 +228,7 @@ function navigateAndClose(params: Record<string, string>) {
                 <li><router-link class="dropdown-item" :to="{ path: '/mail' }">Email</router-link></li>
               </ul>
             </li>
-            <li v-if="useDemo">
+            <li v-if="useDemo" class="nav-item">
               <router-link class="nav-link" :to="{ name: 'dashboard-demo' }">Dashboard</router-link>
             </li>
             <li class="nav-item" v-for="(item, label) of nav">

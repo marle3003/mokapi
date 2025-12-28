@@ -2,10 +2,18 @@ package monitor
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
 	"mokapi/runtime/metrics"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
+
+func TestLdapLabels(t *testing.T) {
+	l := NewLdap()
+	require.Equal(t, "ldap_search_errors_total", l.Errors.Info().String())
+	require.Equal(t, "ldap_requests_total", l.RequestCounter.Info().String())
+	require.Equal(t, "ldap_request_timestamp", l.LastRequest.Info().String())
+}
 
 func TestLdap_Metrics_Bind(t *testing.T) {
 	l := NewLdap()

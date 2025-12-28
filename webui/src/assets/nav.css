@@ -2,7 +2,7 @@
   color: var(--nav-color);
 }
 .nav-link.disabled {
-  color: var(---nav-color);
+  color: var(--nav-color);
 }
 .nav-link:not(.disabled):hover, .nav-link:not(.disabled):focus {
   color: var(--nav-color-active);
@@ -10,4 +10,9 @@
 .nav-pills .nav-link.active, .nav-pills .show > .nav-link {
   color: var(--nav-color-active);
   background-color: var(--color-background);
+}
+
+header .nav-item .nav-link {
+  padding-top: 7px;
+  padding-bottom: 0;
 }

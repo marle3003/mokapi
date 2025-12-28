@@ -15,7 +15,7 @@ type Ldap struct {
 
 func NewLdap() *Ldap {
 	requests := metrics.NewCounterMap(
-		metrics.WithFQName("ldap", "request_total"),
+		metrics.WithFQName("ldap", "requests_total"),
 		metrics.WithLabelNames("service", "operation"))
 	errors := metrics.NewCounterMap(
 		metrics.WithFQName("ldap", "search_errors_total"),
