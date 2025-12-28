@@ -189,9 +189,9 @@ useMeta('Dashboard | mokapi.io', description, '')
                     <div class="card-group"  v-if="isServiceAvailable('kafka')">
                         <kafka-clusters-card />
                     </div>
-                     <!-- <div class="card-group"  v-if="isServiceAvailable('kafka')">
+                    <div class="card-group"  v-if="isServiceAvailable('kafka')">
                         <kafka-messages-card />
-                    </div> -->
+                    </div>
                 </div>
 
                 <div v-if="$route.name === getRouteName('mail').value">

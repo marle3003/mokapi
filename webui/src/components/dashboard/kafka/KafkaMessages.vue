@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, onUnmounted } from 'vue'
+import { onMounted, ref, onUnmounted, computed } from 'vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { Modal, Tab } from 'bootstrap'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
@@ -29,6 +29,27 @@ const messageDialog = ref<any>(null)
 const tabDetailData = ref<any>(null)
 let dialog:  Modal
 let tab: Tab
+
+const messages = computed(() => {
+    const result = [];
+    for (const event of events.value) {
+        const data = eventData(event)
+        if (!data){
+            continue
+        }
+
+        result.push({
+            id: event.id,
+            key: key(data),
+            value: data.message.value ?? data.message.binary,
+            deleted: data.deleted,
+            headers: data.headers,
+            isAvro: isAvro(event),
+            event: event,
+        });
+    }
+    return result;
+})
 
 function eventData(event: ServiceEvent | null): KafkaEventData | null{
     if (!event) {
@@ -67,7 +88,6 @@ interface DialogData {
     deleted: boolean
 }
 let message = ref<DialogData | null>(null)
-let data: KafkaEventData | null
 let clickTimeout: ReturnType<typeof setTimeout> | null = null
 
 function handleMessageClick(event: ServiceEvent) {
@@ -166,7 +186,6 @@ function getTopic(event: ServiceEvent): KafkaTopic | undefined {
      if (!service) {
         const { services } = dashboard.value.getServices('kafka', false);
         for (const s of services.value) {
-            console.log(s)
             if (s.name === event.traits['name']) {
                 service = s as KafkaService
             }
@@ -222,7 +241,6 @@ function getContentType(msg: KafkaMessage): [string, boolean] {
     return [ msg.contentType, false ]
 }
 function key(data: KafkaEventData | null): string {
-    console.log(data?.key)
     if (!data) {
         return ''
     }
@@ -257,15 +275,15 @@ function formatHeaderValue(v: KafkaHeaderValue) {
             </tr>
         </thead>
         <tbody>
-            <tr v-for="event in events" :key="event.id" @mouseup.left="handleMessageClick(event)" :set="data = eventData(event)" @mousedown.middle="goToMessage(event, true)" :class="data?.deleted ? 'deleted': ''">
+            <tr v-for="msg in messages" :key="msg.id" @mouseup.left="handleMessageClick(msg.event)" @mousedown.middle="goToMessage(msg.event, true)" :class="msg.deleted ? 'deleted': ''">
                 <td class="key">
-                    <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaMessage').value, params: { id: event.id }}">
-                        {{ key(eventData(event)) }}
+                    <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaMessage').value, params: { id: msg.id }}">
+                        {{ msg.key }}
                     </router-link>
                 </td>
-                <td class="message" :title="isAvro(event)? 'Avro content displayed as JSON' : ''">{{ data?.message.value ?? data?.message.binary }}</td>
-                <td v-if="!topicName">{{ event.traits["topic"] }}</td>
-                <td class="text-center">{{ format(event.time) }}</td>
+                <td class="message" :title="msg.isAvro ? 'Avro content displayed as JSON' : ''">{{ msg.value }}</td>
+                <td v-if="!topicName">{{ msg.event.traits["topic"] }}</td>
+                <td class="text-center">{{ format(msg.event.time) }}</td>
             </tr>
         </tbody>
     </table>
