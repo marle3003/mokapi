@@ -62,6 +62,21 @@ func fromRequest(r *ldap.SearchRequest) *SearchRequest {
 	}
 }
 
+type BindLog struct {
+	Request  *BindRequest     `json:"request"`
+	Response *Response        `json:"response"`
+	Duration int64            `json:"duration"`
+	Actions  []*common.Action `json:"actions"`
+}
+
+type BindRequest struct {
+	Operation string `json:"operation"`
+	Version   int64  `json:"version"`
+	Name      string `json:"name"`
+	Password  string `json:"password"`
+	Auth      string `json:"auth"`
+}
+
 type AddLog struct {
 	Request  *AddRequest      `json:"request"`
 	Response *Response        `json:"response"`
@@ -82,8 +97,28 @@ type Attribute struct {
 
 type Response struct {
 	Status    string `json:"status"`
-	MatchedDn string `json:"matchedDn"`
+	MatchedDn string `json:"matchedDn,omitempty"`
 	Message   string `json:"message"`
+}
+
+func NewBindLogEvent(req *ldap.BindRequest, res *ldap.BindResponse, eh events.Handler, traits events.Traits) *BindLog {
+	l := &BindLog{
+		Request: &BindRequest{
+			Operation: "Bind",
+			Version:   req.Version,
+			Name:      req.Name,
+			Password:  req.Password,
+			Auth:      "Simple",
+		},
+		Response: &Response{
+			Status:  ldap.StatusText[res.Result],
+			Message: res.Message,
+		},
+		Duration: 0,
+		Actions:  nil,
+	}
+	_ = eh.Push(l, traits.WithNamespace("ldap"))
+	return l
 }
 
 func NewAddLogEvent(req *ldap.AddRequest, res *ldap.AddResponse, eh events.Handler, traits events.Traits) *AddLog {
@@ -263,6 +298,10 @@ func NewCompareLogEvent(req *ldap.CompareRequest, res *ldap.CompareResponse, eh 
 	_ = eh.Push(l, traits.WithNamespace("ldap"))
 
 	return l
+}
+
+func (l *BindLog) Title() string {
+	return fmt.Sprintf("%s %s %s", l.Request.Auth, l.Request.Name, l.Request.Password)
 }
 
 func (l *SearchLog) Title() string {

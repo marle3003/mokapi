@@ -11,6 +11,7 @@ import { useDashboard } from '@/composables/dashboard'
 import Message from '@/components/Message.vue'
 import Loading from '@/components/Loading.vue'
 import RequestInfoCard from './RequestInfoCard.vue'
+import Bind from './Bind.vue'
 
 const eventId = useRoute().params.id as string
 const { dashboard } = useDashboard()
@@ -32,6 +33,7 @@ onUnmounted(() => {
         <div class="card-group">
             <RequestInfoCard :event="event" />
         </div>
+        <Bind v-if="event && data.request.operation == 'Bind'" :event="event"></bind>
         <search v-if="event && data.request.operation == 'Search'" :event="event"></search>
         <modify v-if="event && data.request.operation == 'Modify'" :event="event"></modify>
         <add v-if="event && data.request.operation == 'Add'" :event="event"></add>

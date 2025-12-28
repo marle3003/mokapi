@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { type PropType, computed } from 'vue'
-import { usePrettyBytes } from '@/composables/usePrettyBytes'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 
 const props = defineProps({
@@ -29,7 +28,7 @@ const request = computed(() => {
                 <div class="col-10 header">
                     <p class="label">Operation</p>
                     <p>
-                        <span class="badge operation" :class="data.request.operation.toLowerCase()">{{ data.request.operation }}</span>
+                        <span class="badge ldap operation" :class="data.request.operation.toLowerCase()">{{ data.request.operation }}</span>
                         {{ request }}
                     </p>
                 </div>
@@ -51,9 +50,3 @@ const request = computed(() => {
         </div>
     </div>
 </template>
-
-<style scoped>
-.operation.search {
-    background-color: var(--color-blue);
-}
-</style>

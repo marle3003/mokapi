@@ -7,6 +7,7 @@ import Searches from './Requests.vue'
 import ConfigCard from '../ConfigCard.vue'
 import Request from './Request.vue'
 import { getRouteName, useDashboard } from '@/composables/dashboard';
+import '@/assets/ldap.css'
 
 const route = useRoute()
 const serviceName = route.params.service?.toString()

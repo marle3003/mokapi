@@ -47,7 +47,6 @@ const hasActions = computed(() => {
                         <p class="label">Base DN</p>
                         <p>{{ data.request.baseDN }}</p>
                     </div>
-                    
                 </div>
                 <div class="row">
                     <div class="col-2">

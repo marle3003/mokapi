@@ -10,7 +10,6 @@ const {sum} = useMetrics()
 const { dashboard } = useDashboard();
 const {services, close} = dashboard.value.getServices('ldap')
 const {format} = usePrettyDates()
-const route = useRoute()
 const router = useRouter()
 
 function lastRequest(service: Service){

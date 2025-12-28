@@ -1,6 +1,10 @@
 package ldap
 
-import ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
+import (
+	"fmt"
+
+	ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
+)
 
 type ModifyDNRequest struct {
 	Dn            string
@@ -16,14 +20,51 @@ type ModifyDNResponse struct {
 }
 
 func decodeModifyDNRequest(body *ber.Packet) (*ModifyDNRequest, error) {
-	r := &ModifyDNRequest{
-		Dn:          body.Children[0].Value.(string),
-		NewRdn:      body.Children[1].Value.(string),
-		DeleteOldDn: body.Children[2].Value.(bool),
+	r := &ModifyDNRequest{}
+
+	// 1. Entry (DN)
+	entry, ok := body.Children[0].Value.(string)
+	if !ok {
+		return nil, fmt.Errorf("modifyDN request: entry is not a string")
 	}
-	if len(body.Children) >= 4 {
-		r.NewSuperiorDn = body.Children[3].Value.(string)
+	r.Dn = entry
+
+	// 2. New RDN
+	newRDN, ok := body.Children[1].Value.(string)
+	if !ok {
+		return nil, fmt.Errorf("modifyDN request: newRDN is not a string")
 	}
+	r.NewRdn = newRDN
+
+	// 3. deleteOldRDN
+	deleteOld, ok := body.Children[2].Value.(bool)
+	if !ok {
+		// Some BER implementations decode BOOLEAN as uint8
+		if b, ok2 := body.Children[2].Value.(uint8); ok2 {
+			r.DeleteOldDn = b != 0
+		} else {
+			return nil, fmt.Errorf("modifyDN request: deleteOldRDN not a bool")
+		}
+	} else {
+		r.DeleteOldDn = deleteOld
+	}
+
+	// 4. Optional newSuperior
+	if len(body.Children) == 4 {
+		// newSuperior is tagged with context-specific [0]
+		ns := body.Children[3]
+		if ns.Tag != 0 || ns.ClassType != ber.ClassContext {
+			return nil, fmt.Errorf("modifyDN request: invalid newSuperior tag")
+		}
+
+		newSup, ok := ns.Value.(string)
+		if !ok {
+			newSup = string(ns.Data.Bytes())
+		}
+
+		r.NewSuperiorDn = newSup
+	}
+
 	return r, nil
 }
 

@@ -3,7 +3,6 @@ import { onUnmounted, type PropType } from 'vue'
 import { useRoute } from '@/router';
 import HttpOperationsCard from './HttpOperationsCard.vue';
 import Requests from './Requests.vue';
-import '@/assets/http.css'
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },

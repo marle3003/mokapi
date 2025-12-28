@@ -15,6 +15,20 @@ export async function driveLdap() {
         scope: 'sub'
     });
 
+    await client.add('uid=cbrown,ou=people,dc=hr,dc=example,dc=com',
+        {
+            cn: 'Carol Brown',
+            uid: 'cbrown',
+            userPassword: 'secret790',
+            givenName: 'Carol',
+            sn: 'Brown',
+            objectClass: 'top',
+            objectClass: 'person',
+            objectClass: 'organizationalPerson',
+            objectClass: 'inetOrgPerson'
+        },
+    );
+
     await client.modify('uid=bmiller,ou=people,dc=hr,dc=example,dc=com',
         new Change({ 
             operation: 'add', 
@@ -23,6 +37,12 @@ export async function driveLdap() {
             })
         }),
     );
+
+    await client.compare('uid=bmiller,ou=people,dc=hr,dc=example,dc=com', 'telephoneNumber', '+1 555 123 9876')
+
+    await client.modifyDN('uid=cbrown,ou=people,dc=hr,dc=example,dc=com', 'uid=ctaylor,ou=people,dc=hr,dc=example,dc=com');
+
+    await client.del('uid=ctaylor,ou=people,dc=hr,dc=example,dc=com');
 
     await client.unbind();
 }

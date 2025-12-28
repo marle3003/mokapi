@@ -6,6 +6,7 @@
 
     --color-border: #282b33;
 
+    --color-grey: rgb(108, 117, 125);
     --color-red: rgb(255, 46, 74);
     --color-red-shadow: rgba(255, 46, 74, 0.4);
     --color-blue: rgb(2, 123, 255);
@@ -18,6 +19,7 @@
     --color-yellow-shadow: rgba(255, 193, 7, 0.4);
     --color-purple: rgb(182, 68, 164);
     --color-purpl-shadowe: rgba(182, 68, 164, 0.4);
+    --color-teal: rgb(0, 137, 123);
 
     --color-brand: #d3d4d5;
     --color-brand-hover: #eabaabff;

@@ -2,7 +2,6 @@ package directory_test
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/ldap"
 	"mokapi/ldap/ldaptest"
@@ -10,6 +9,8 @@ import (
 	"mokapi/runtime/events/eventstest"
 	"mokapi/sortedmap"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 var testConfig = &directory.Config{
@@ -67,7 +68,7 @@ func TestDirectory_ServeBind(t *testing.T) {
 					Version: 3,
 					Auth:    3, // sasl
 				}
-				h.ServeLDAP(rr, &ldap.Request{Message: r})
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, r))
 				res := rr.Message.(*ldap.BindResponse)
 				require.Equal(t, ldap.AuthMethodNotSupported, res.Result)
 				require.Equal(t, "", res.MatchedDN)
@@ -83,7 +84,7 @@ func TestDirectory_ServeBind(t *testing.T) {
 					Version: 2,
 					Auth:    ldap.Simple,
 				}
-				h.ServeLDAP(rr, &ldap.Request{Message: r})
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, r))
 				res := rr.Message.(*ldap.BindResponse)
 				require.Equal(t, ldap.ProtocolError, res.Result)
 				require.Equal(t, "", res.MatchedDN)
