@@ -93,6 +93,8 @@ components:
         productId:
           type: string
           description: ID of the product ordered.
+        productName:
+          type: string
         quantity:
           type: integer
           description: Number of items ordered.

@@ -257,7 +257,7 @@ export let clusters = [
 
 export let events = [
      {
-         id: '123456',
+         id: '5d549ffe-97cd-477d-8db6-27ed4963c08d',
          traits: {
              namespace: 'kafka',
              name: 'Kafka World',
@@ -292,7 +292,7 @@ export let events = [
          }
      },
     {
-        id: '323456',
+        id: '670ce171-808c-4f8e-a7cd-209b008aada5',
         traits: {
             namespace: 'kafka',
             name: 'Kafka World',
@@ -327,7 +327,7 @@ export let events = [
         }
     },
     {
-        id: '123602',
+        id: 'cff487df-1fe0-4e1b-b0f6-e599bc61283c',
         traits: {
             namespace: 'kafka',
             name: 'Kafka World',

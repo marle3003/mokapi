@@ -6,34 +6,85 @@ import HttpBody from './HttpBody.vue'
 import HttpHeader from './HttpEventHeader.vue'
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
-import { onUnmounted, computed } from 'vue'
+import { onUnmounted, computed, onMounted } from 'vue'
 import Actions from '../Actions.vue'
 import { useDashboard } from '@/composables/dashboard'
+import { useMeta } from '@/composables/meta'
 
-const eventId = useRoute().params.id as string
-const { dashboard } = useDashboard()
-const { event, isLoading, close } = dashboard.value.getEvent(eventId)
+const route = useRoute();
+const { dashboard, getMode } = useDashboard()
 
-function eventData() {
+const events = computed(() => {
+    return dashboard.value.getEvents('http')
+})
+
+const eventId = computed(() => {
+  const id = route.params.id
+  if (!id) {
+    return undefined
+  }
+
+  if (typeof id === 'string') {
+    if (isNumber(id)) {
+        const index = parseFloat(id);
+        const ev = events.value.events.value[index];
+        return ev?.id ?? null;
+    } else {
+        return id;
+    }
+  }
+  return null
+})
+
+const result = computed(() => {
+  if (!eventId.value) return null
+  return dashboard.value.getEvent(eventId.value)
+})
+
+const event = computed(() => result.value?.event.value ?? null)
+const isLoading = computed(() => result.value?.isLoading ?? false)
+const close = () => result.value?.close?.()
+
+const eventData = computed(() => {
+    if (!event?.value) {
+        return undefined;
+    }
     return <HttpEventData>event.value?.data
-}
+})
 
 function isInitLoading() {
     return isLoading.value && !event.value
 }
 function getResponseContentType(): string {
-    return eventData().response.headers['Content-Type'] ?? ''
+    return eventData.value?.response.headers['Content-Type'] ?? ''
 }
 const hasActions = computed(() => {
-    return eventData().actions?.length > 0
+    if (!eventData.value) {
+        return false
+    }
+    return eventData.value.actions?.length > 0
+})
+onMounted(() => {
+    if (!event.value || getMode() !== 'demo') {
+        return
+    }
+    const id = events.value.events.value.indexOf(event.value)
+    useMeta(
+        `${eventData.value?.request.method} ${eventData.value?.request.url} – HTTP Request Details`,
+        'Inspect full HTTP request and response details including method, URL, headers, parameters, body, status code, response contents, duration, and client IP.',
+        'https://mokapi.io/dashboard-demo/http/requests/' + id
+    )
 })
 onUnmounted(() => {
     close()
 })
+function isNumber(value: string): boolean {
+  return /^[0-9]+$/.test(value);
+}
 </script>
 
 <template>
-    <div v-if="event">
+    <div v-if="event && eventData">
         <div class="card-group">
             <request-info-card :event="event"></request-info-card>
         </div>
@@ -41,7 +92,7 @@ onUnmounted(() => {
             <section class="card" aria-labelledby="actions">
                 <div class="card-body">
                     <h2 id="actions" class="card-title text-center">Event Handlers</h2>
-                    <actions :actions="eventData().actions" />
+                    <actions :actions="eventData.actions" />
                 </div>
             </section>
         </div>
@@ -49,10 +100,10 @@ onUnmounted(() => {
             <section class="card" aria-labelledby="request">
                 <div class="card-body">
                     <h2 id="request" class="card-title text-center">Request</h2>
-                    <http-parameters :parameters="eventData().request.parameters!" v-if="eventData().request.parameters"></http-parameters>
-                    <div  v-if="eventData().request.body">
+                    <http-parameters :parameters="eventData.request.parameters!" v-if="eventData.request.parameters"></http-parameters>
+                    <div  v-if="eventData.request.body">
                         <p class="label mt-4">Body</p>
-                        <http-body :content-type="eventData().request.contentType" :body="eventData().request.body"></http-body>
+                        <http-body :content-type="eventData.request.contentType" :body="eventData.request.body"></http-body>
                     </div>
                 </div>
             </section>
@@ -61,9 +112,9 @@ onUnmounted(() => {
             <section class="card" aria-labelledby="response">
                 <div class="card-body">
                     <h2 id="response" class="card-title text-center">Response</h2>
-                    <http-header :headers="eventData().response.headers"></http-header>
+                    <http-header :headers="eventData.response.headers"></http-header>
                     <p class="label">Body</p>
-                    <http-body :content-type="getResponseContentType()" :body="eventData().response.body"></http-body>
+                    <http-body :content-type="getResponseContentType()" :body="eventData.response.body"></http-body>
                 </div>
             </section>
         </div>

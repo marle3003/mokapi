@@ -22,10 +22,7 @@ export async function driveLdap() {
             userPassword: 'secret790',
             givenName: 'Carol',
             sn: 'Brown',
-            objectClass: 'top',
-            objectClass: 'person',
-            objectClass: 'organizationalPerson',
-            objectClass: 'inetOrgPerson'
+            objectClass: [ 'top', 'person', 'organizationalPerson', 'inetOrgPerson' ]
         },
     );
 

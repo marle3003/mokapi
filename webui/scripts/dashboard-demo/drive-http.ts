@@ -7,5 +7,7 @@ export async function driveHttp() {
       Authorization: 'demo',
       'Content-Type': 'application/json'
     }
-  })
+  });
+
+  await fetch('http://localhost/v2/user/bmiller');
 }

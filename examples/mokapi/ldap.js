@@ -13,7 +13,7 @@ export let server = [
 
 export const searches = [
     {
-        id: "dkads-23124",
+        id: "a1289b9b-aff7-4c53-92a0-808c7ce7d907",
         traits: {
             namespace: "ldap",
             name: "LDAP Testserver"
@@ -56,7 +56,7 @@ export const searches = [
         }
     },
     {
-        id: "dkads-10004",
+        id: "fbe9ade9-2adc-451b-a86b-a900c06c0058",
         traits: {
             namespace: "ldap",
             name: "LDAP Testserver"
@@ -83,7 +83,7 @@ export const searches = [
         }
     },
     {
-        id: "dkads-222",
+        id: "762b4a9e-7f26-4314-8ffd-7ae1922ab330",
         traits: {
             namespace: "ldap",
             name: "LDAP Testserver"
@@ -107,7 +107,7 @@ export const searches = [
         }
     },
     {
-        id: "dwow-12",
+        id: "23636b50-e19b-4acc-afc0-f5918a7d2e64",
         traits: {
             namespace: "ldap",
             name: "LDAP Testserver"
@@ -126,7 +126,7 @@ export const searches = [
         }
     },
     {
-        id: "abc-12",
+        id: "2fa8df80-9b15-427b-9c6d-0503aec06ed3",
         traits: {
             namespace: "ldap",
             name: "LDAP Testserver"
@@ -147,7 +147,7 @@ export const searches = [
         }
     },
     {
-        id: "fpp-12",
+        id: "34cbe69d-948c-43e3-aa19-df83c09116c4",
         traits: {
             namespace: "ldap",
             name: "LDAP Testserver"

@@ -1,18 +1,49 @@
 <script setup lang="ts">
 import { useRoute } from "@/router";
-import { computed, onUnmounted, watchEffect, ref, type Ref } from "vue";
+import { computed, onUnmounted, watchEffect, ref, type Ref, onMounted } from "vue";
 import SourceView from '../SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { usePrettyDates } from "@/composables/usePrettyDate";
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 import { useDashboard } from "@/composables/dashboard";
+import { useMeta } from "@/composables/meta";
 
-const eventId = useRoute().params.id as string
-const { dashboard } = useDashboard()
-const { event, isLoading, close } = dashboard.value.getEvent(eventId)
+const route = useRoute();
+const { dashboard, getMode } = useDashboard()
 const { formatLanguage } = usePrettyLanguage()
 const { format } = usePrettyDates()
+
+const events = computed(() => {
+    return dashboard.value.getEvents('kafka')
+})
+
+const eventId = computed(() => {
+  const id = route.params.id
+  if (!id) {
+    return undefined
+  }
+
+  if (typeof id === 'string') {
+    if (isNumber(id)) {
+        const index = parseFloat(id);
+        const ev = events.value.events.value[index];
+        return ev?.id ?? null;
+    } else {
+        return id;
+    }
+  }
+  return null
+})
+
+const result = computed(() => {
+  if (!eventId.value) return null
+  return dashboard.value.getEvent(eventId.value)
+})
+
+const event = computed(() => result.value?.event.value ?? null)
+const isLoading = computed(() => result.value?.isLoading ?? false)
+const close = () => result.value?.close?.()
 
 const topic = ref<KafkaTopic | undefined>()
 const data = computed(() => {
@@ -74,6 +105,17 @@ const message = computed(() => {
 function isInitLoading() {
   return isLoading.value && !event.value
 }
+onMounted(() => {
+  if (!event.value || getMode() !== 'demo') {
+      return
+  }
+  const id = events.value.events.value.indexOf(event.value)
+  useMeta(
+      `${key(data.value?.key ?? null)} ${event.value.traits['topic']} – Kafka Message Details`,
+      'View detailed information about a Kafka message, including key, value, headers, offset, partition, schema ID, and producer metadata.',
+      'https://mokapi.io//dashboard/kafka/messages/' + id
+  )
+})
 onUnmounted(() => {
   close()
 })
@@ -119,6 +161,9 @@ function key(key: KafkaValue | null): string {
         return atob(key.binary)
     }
     return ''
+}
+function isNumber(value: string): boolean {
+  return /^[0-9]+$/.test(value);
 }
 </script>
 

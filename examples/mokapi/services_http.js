@@ -591,7 +591,7 @@ export let apps = [
 
 export let events = [
     {
-        id: "4242",
+        id: "9e058601-562a-4063-a3b2-066ba624893a",
         traits: {
             namespace: "http",
             name: "Swagger Petstore",

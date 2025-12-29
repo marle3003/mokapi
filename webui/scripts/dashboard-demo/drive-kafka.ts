@@ -23,6 +23,7 @@ export async function driveKafka() {
     const order = {
             orderId: 'a914817b-c5f0-433e-8280-1cd2fe44234e',
             productId: '2adb46de-1c96-4290-a215-9701b0a7900c',
+            productName: 'Wireless Ergonomic Mouse (Black)',
             quantity: 65,
             customerEmail: 'johnnydibbert@feil.org',
             status: 'SHIPPED'
