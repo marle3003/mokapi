@@ -533,6 +533,25 @@ func TestSearch(t *testing.T) {
 				require.Len(t, res.Results, 1)
 			},
 		},
+		{
+			name:  "FilterExtensibleMatch",
+			input: `{ "files": [ "./users.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/users.ldif": {Raw: []byte("dn: cn=user\nuserAccountControl: 512")},
+			}},
+			test: func(t *testing.T, h ldap.Handler, err error) {
+				require.NoError(t, err)
+
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: "(userAccountControl:1.2.840.113556.1.4.803:=512)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 1)
+			},
+		},
 	}
 
 	t.Parallel()

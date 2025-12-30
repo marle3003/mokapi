@@ -40,7 +40,7 @@ const request = computed(() => {
             <div class="row">
                 <div class="col-2">
                     <p class="label">Status</p>
-                    <p>{{ data.response.status }}</p>
+                    <p>{{ data.response?.status ?? '-' }}</p>
                 </div>
                 <div class="col-2">
                     <p class="label">Duration</p>

@@ -20,6 +20,8 @@ userPassword: anothersecretpassword456
 givenName: Alice
 sn: Johnson
 title: Regional Manager
+# NORMAL_ACCOUNT
+userAccountControl: 512
 objectClass: top
 objectClass: person
 objectClass: organizationalPerson
@@ -33,6 +35,7 @@ userPassword: mysecretpassword123
 givenName: Bob
 sn: Miller
 title: Assistant Regional Manager
+userAccountControl: 512
 objectClass: top
 objectClass: person
 objectClass: organizationalPerson

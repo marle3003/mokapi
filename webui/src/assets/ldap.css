@@ -1,4 +1,4 @@
-.operation.bind {
+.operation.bind, .operation.unbind {
     background-color: var(--color-grey);
 }
 .operation.search {

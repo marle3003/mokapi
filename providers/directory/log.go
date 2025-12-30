@@ -69,6 +69,16 @@ type BindLog struct {
 	Actions  []*common.Action `json:"actions"`
 }
 
+type UnbindLog struct {
+	Request  *UnbindRequest   `json:"request"`
+	Duration int64            `json:"duration"`
+	Actions  []*common.Action `json:"actions"`
+}
+
+type UnbindRequest struct {
+	Operation string `json:"operation"`
+}
+
 type BindRequest struct {
 	Operation string `json:"operation"`
 	Version   int64  `json:"version"`
@@ -117,6 +127,12 @@ func NewBindLogEvent(req *ldap.BindRequest, res *ldap.BindResponse, eh events.Ha
 		Duration: 0,
 		Actions:  nil,
 	}
+	_ = eh.Push(l, traits.WithNamespace("ldap"))
+	return l
+}
+
+func NewUnbindEvent(eh events.Handler, traits events.Traits) *UnbindLog {
+	l := &UnbindLog{Request: &UnbindRequest{Operation: "Unbind"}}
 	_ = eh.Push(l, traits.WithNamespace("ldap"))
 	return l
 }
@@ -302,6 +318,10 @@ func NewCompareLogEvent(req *ldap.CompareRequest, res *ldap.CompareResponse, eh 
 
 func (l *BindLog) Title() string {
 	return fmt.Sprintf("%s %s %s", l.Request.Auth, l.Request.Name, l.Request.Password)
+}
+
+func (l *UnbindLog) Title() string {
+	return ""
 }
 
 func (l *SearchLog) Title() string {

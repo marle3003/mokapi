@@ -3,7 +3,7 @@ declare interface LdapService extends Service {
 }
 
 declare interface LdapEventData {
-    request: LdapBindRequest | LdapSearchRequest | LdapModifyRequest | LdapAddRequest | LdapDeleteRequest | LdapModifDNRequest | LdapCompareRequest
+    request: LdapBindRequest | LdapUnbindRequest | LdapSearchRequest | LdapModifyRequest | LdapAddRequest | LdapDeleteRequest | LdapModifDNRequest | LdapCompareRequest
     response: LdapSearchResponse | LdapResponse
     duration: number
     actions: Action[]
@@ -15,6 +15,10 @@ declare interface LdapBindRequest {
     name: string
     password: string
     auth: string
+}
+
+declare interface LdapUnbindRequest {
+    operation: 'Unbind'
 }
 
 declare interface LdapSearchRequest {

@@ -108,7 +108,7 @@ onUnmounted(() => {
                         <td>
                             {{ criteria(data)}}
                         </td>
-                        <td class="text-center">{{ data.response.status }}</td>
+                        <td class="text-center">{{ data.response?.status ?? '-' }}</td>
                         <td class="text-center">{{ format(event.time) }}</td>
                         <td class="text-center">{{ duration(data.duration) }}</td>
                     </tr>

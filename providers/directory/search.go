@@ -170,13 +170,14 @@ func (p *parser) parse(filter string) (predicate, int, error) {
 	var attr *bytes.Buffer
 	var v *bytes.Buffer
 	var op int
+	var rule string
 	for pos := 0; pos < len(filter); pos++ {
 		c := filter[pos]
 		switch {
 		case c == '(':
 			v = bytes.NewBuffer(nil)
 		case c == ')':
-			p, err := p.predicate(op, attr.String(), v.String())
+			p, err := p.predicate(op, attr.String(), v.String(), rule)
 			return p, pos + 1, err
 		case c == '=' && op == 0:
 			op = ldap.FilterEqualityMatch
@@ -206,7 +207,25 @@ func (p *parser) parse(filter string) (predicate, int, error) {
 		case c == '|':
 			fs, n, err := p.parseSet(filter[pos+1:])
 			return or(fs), pos + n + 2, err
+		case c == ':':
+			// We have an extensible match. Now look ahead.
+			// Find the next ':=' which separates rule from value.
+			ruleStart := pos + 1
+			ruleEnd := strings.Index(filter[ruleStart:], ":=")
+			if ruleEnd < 0 {
+				return nil, 0, fmt.Errorf("invalid extensible filter syntax")
+			}
+			ruleEnd += ruleStart
 
+			// Extract matching rule OID
+			rule = filter[ruleStart:ruleEnd]
+
+			// Move parser position to after "rule:="
+			pos = ruleEnd + 1 // because pos++ will run
+
+			op = ldap.FilterExtensibleMatch
+			attr = v // attribute name
+			v = bytes.NewBuffer(nil)
 		default:
 			v.WriteByte(c)
 		}
@@ -230,7 +249,7 @@ func (p *parser) parseSet(filter string) ([]predicate, int, error) {
 	return fs, pos, nil
 }
 
-func (p *parser) predicate(op int, name, value string) (predicate, error) {
+func (p *parser) predicate(op int, name, value, rule string) (predicate, error) {
 	switch op {
 	case ldap.FilterEqualityMatch:
 		if strings.Contains(value, "*") {
@@ -252,6 +271,8 @@ func (p *parser) predicate(op int, name, value string) (predicate, error) {
 			threshold := n / 5
 			return distance <= threshold
 		}), nil
+	case ldap.FilterExtensibleMatch:
+		return p.predicateExtensible(name, rule, value), nil
 	default:
 		return nil, fmt.Errorf("unsupported filter operation for attribute %v: %v", name, op)
 	}
@@ -472,6 +493,25 @@ func (p *parser) check(name string, f func(string) bool) predicate {
 		}
 		return false
 	}
+}
+
+func (p *parser) predicateExtensible(name, rule, value string) predicate {
+	switch rule {
+	case "1.2.840.113556.1.4.803": // bitwise AND
+		mask, _ := strconv.Atoi(value)
+		return func(e Entry) bool {
+			v := e.getInt(name)
+			return v&mask == mask
+		}
+	case "1.2.840.113556.1.4.804": // bitwise OR
+		mask, _ := strconv.Atoi(value)
+		return func(e Entry) bool {
+			v := e.getInt(name)
+			return v&mask != 0
+		}
+	}
+	// fallback: unsupported rule
+	return func(e Entry) bool { return false }
 }
 
 func getPageInfo(controls []ldap.Control, ctx context.Context) (int64, int64) {

@@ -23,15 +23,16 @@ const (
 	compareResponse  = 15
 	abandonRequest   = 16
 
-	FilterAnd            = 0
-	FilterOr             = 1
-	FilterNot            = 2
-	FilterEqualityMatch  = 3
-	FilterSubstrings     = 4
-	FilterGreaterOrEqual = 5
-	FilterLessOrEqual    = 6
-	FilterPresent        = 7
-	FilterApproxMatch    = 8
+	FilterAnd             = 0
+	FilterOr              = 1
+	FilterNot             = 2
+	FilterEqualityMatch   = 3
+	FilterSubstrings      = 4
+	FilterGreaterOrEqual  = 5
+	FilterLessOrEqual     = 6
+	FilterPresent         = 7
+	FilterApproxMatch     = 8
+	FilterExtensibleMatch = 9
 
 	FilterSubstringsStartWith uint8 = 0
 	FilterSubstringsAny       uint8 = 1

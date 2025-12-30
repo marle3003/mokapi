@@ -180,6 +180,20 @@ func (d *Directory) serveModify(rw ldap.ResponseWriter, r *ldap.ModifyRequest, c
 	rw.Write(res)
 }
 
+func (d *Directory) Unbind(ctx context.Context) {
+	m, doMonitor := monitor.LdapFromContext(ctx)
+	if doMonitor {
+		l := NewUnbindEvent(d.eh, events.NewTraits().WithName(d.config.Info.Name))
+		i := ctx.Value("time")
+		if i != nil {
+			t := i.(time.Time)
+			l.Duration = time.Now().Sub(t).Milliseconds()
+		}
+		m.RequestCounter.WithLabel(d.config.Info.Name, "unbind").Add(1)
+		m.LastRequest.WithLabel(d.config.Info.Name).Set(float64(time.Now().Unix()))
+	}
+}
+
 func (d *Directory) serveAdd(rw ldap.ResponseWriter, r *ldap.AddRequest, ctx context.Context) {
 	add := &AddRecord{
 		Dn:         r.Dn,

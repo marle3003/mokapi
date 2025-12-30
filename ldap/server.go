@@ -3,9 +3,6 @@ package ldap
 import (
 	"context"
 	"fmt"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
-	ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
 	"io"
 	"net"
 	"reflect"
@@ -13,6 +10,10 @@ import (
 	"sync"
 	"sync/atomic"
 	"syscall"
+
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
+	ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
 )
 
 var ErrServerClosed = errors.New("ldap: Server closed")
@@ -25,6 +26,7 @@ func (a *atomicBool) setTrue()    { atomic.StoreInt32((*int32)(a), 1) }
 
 type Handler interface {
 	ServeLDAP(ResponseWriter, *Request)
+	Unbind(ctx context.Context)
 }
 
 type HandlerFunc func(rw ResponseWriter, req *Request)
@@ -32,6 +34,8 @@ type HandlerFunc func(rw ResponseWriter, req *Request)
 func (f HandlerFunc) ServeLDAP(rw ResponseWriter, req *Request) {
 	f(rw, req)
 }
+
+func (f HandlerFunc) Unbind(ctx context.Context) {}
 
 type Message interface {
 }
@@ -171,6 +175,7 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 			msg, err = readBindRequest(body)
 		case unbindRequest:
 			log.Debugf("ldap: received unbind request")
+			s.Handler.Unbind(ctx)
 			return
 		case searchRequest:
 			msg, err = decodeSearchRequest(body, controls)

@@ -3,8 +3,9 @@ package ldap
 import (
 	"bytes"
 	"fmt"
-	ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
 	"strings"
+
+	ber "gopkg.in/go-asn1-ber/asn1-ber.v1"
 )
 
 func compileFilter(filter string) (*ber.Packet, int, error) {
@@ -161,6 +162,53 @@ func decompileFilter(p *ber.Packet) (string, error) {
 			}
 		}
 		return fmt.Sprintf("(%v=%v)", p.Children[0].Value.(string), sb.String()), nil
+	case FilterExtensibleMatch:
+		// child tags:
+		// [1] matchingRule (OID)
+		// [2] type (attribute)
+		// [3] matchValue
+		// [4] dnAttributes (boolean)
+		var attr, rule, val string
+		var dnAttr bool
+
+		for _, c := range p.Children {
+			switch c.Tag {
+			case 1: // matchingRule OID
+				rule = getString(c)
+			case 2: // attribute description
+				attr = getString(c)
+			case 3: // matchValue
+				val = getString(c)
+			case 4: // dnAttributes
+				dnAttr = c.Value.(bool)
+			}
+		}
+
+		// Build the filter string in LDAP syntax
+		// Examples:
+		// (attr:rule:=value)
+		// (:rule:=value)
+		// (attr:=value)
+		// (attr:dn:=value) for DN attributes
+		var sb strings.Builder
+		sb.WriteString("(")
+		if attr != "" {
+			sb.WriteString(attr)
+		}
+		sb.WriteString(":")
+
+		if rule != "" {
+			sb.WriteString(rule)
+		}
+		if dnAttr {
+			sb.WriteString(":dn")
+		}
+
+		sb.WriteString(":=")
+		sb.WriteString(val)
+		sb.WriteString(")")
+
+		return sb.String(), nil
 	default:
 		return "", fmt.Errorf("unsupported filter %v requested", p.Tag)
 	}
@@ -183,4 +231,15 @@ func parseUnary(children []*ber.Packet) (string, error) {
 		return "", fmt.Errorf("invalid filter operation")
 	}
 	return decompileFilter(children[0])
+}
+
+func getString(p *ber.Packet) string {
+	switch v := p.Value.(type) {
+	case string:
+		return v
+	case []byte:
+		return string(v)
+	default:
+		return p.Data.String()
+	}
 }
