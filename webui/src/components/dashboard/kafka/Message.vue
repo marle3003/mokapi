@@ -6,7 +6,7 @@ import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { usePrettyDates } from "@/composables/usePrettyDate";
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
-import { useDashboard } from "@/composables/dashboard";
+import { getRouteName, useDashboard } from "@/composables/dashboard";
 import { useMeta } from "@/composables/meta";
 
 const route = useRoute();
@@ -182,7 +182,7 @@ function isNumber(value: string): boolean {
             <div class="col">
               <label id="message-topic" class="label">Kafka Topic</label>
               <p>
-                <router-link :to="{ name: 'kafkaTopic', params: { service: event.traits.name, topic: event.traits.topic } }" aria-labelledby="message-topic">
+                <router-link :to="{ name: getRouteName('kafkaTopic').value, params: { service: event.traits.name, topic: event.traits.topic } }" aria-labelledby="message-topic">
                   {{ event.traits.topic  }}
                 </router-link>
               </p>
