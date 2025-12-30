@@ -8,6 +8,8 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Config struct {
@@ -34,7 +36,7 @@ type Info struct {
 }
 
 func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
-	c.Entries = &sortedmap.LinkedHashMap[string, Entry]{}
+	c.Entries = &sortedmap.LinkedHashMap[string, Entry]{KeyNormalizer: normalizeDN}
 	// copy from old format
 	for k, v := range c.oldEntries {
 		c.Entries.Set(k, v)
@@ -168,11 +170,50 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		}
 	}
 
+	c.rebuildMemberOf()
+
 	return nil
 }
 
 func (c *Config) getSizeLimit() int64 {
 	return c.SizeLimit
+}
+
+func (c *Config) rebuildMemberOf() {
+	// reset entries
+
+	groups := map[string][]string{}
+	for it := c.Entries.Iter(); it.Next(); {
+		groupName := it.Key()
+		for k, v := range it.Value().Attributes {
+			if k == "member" {
+				if _, ok := groups[k]; !ok {
+					groups[k] = []string{}
+				}
+				for _, member := range v {
+					groups[groupName] = append(groups[groupName], member)
+				}
+			}
+			if k == "memberOf" {
+				delete(it.Value().Attributes, "memberOf")
+			}
+		}
+	}
+
+	for group, members := range groups {
+		for _, member := range members {
+			e, ok := c.Entries.Get(member)
+			if !ok {
+				log.Warnf("LDAP: member %s for group %s not found", member, group)
+				continue
+			}
+			if e.Attributes == nil {
+				e.Attributes = map[string][]string{}
+			}
+			e.Attributes["memberOf"] = append(e.Attributes["memberOf"], group)
+			c.Entries.Set(member, e)
+		}
+	}
 }
 
 func (e *Entry) Parse(config *dynamic.Config, reader dynamic.Reader) error {
@@ -208,13 +249,13 @@ func (e *Entry) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	return nil
 }
 
-func formatDN(dn string) string {
+func normalizeDN(dn string) string {
 	result := ""
 	for _, rdn := range strings.Split(dn, ",") {
 		if len(result) > 0 {
 			result += ","
 		}
-		result += strings.TrimSpace(rdn)
+		result += strings.TrimSpace(strings.ToLower(rdn))
 	}
 	return result
 }

@@ -2,11 +2,12 @@ package directory
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/try"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestLdif_Parse(t *testing.T) {
@@ -23,7 +24,7 @@ func TestLdif_Parse(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, ld.Records, 1)
 				require.Equal(t, &AddRecord{
-					Dn: "dc=mokapi,dc=io",
+					Dn: "dc=mokapi, dc=io",
 				}, ld.Records[0])
 			},
 		},
@@ -34,10 +35,10 @@ func TestLdif_Parse(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, ld.Records, 2)
 				require.Equal(t, &AddRecord{
-					Dn: "dc=mokapi,dc=io",
+					Dn: "dc=mokapi, dc=io",
 				}, ld.Records[0])
 				require.Equal(t, &AddRecord{
-					Dn: "ou=Sales,dc=mokapi,dc=io",
+					Dn: "ou=Sales, dc=mokapi, dc=io",
 				}, ld.Records[1])
 			},
 		},
@@ -48,10 +49,10 @@ func TestLdif_Parse(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, ld.Records, 2)
 				require.Equal(t, &AddRecord{
-					Dn: "dc=mokapi,dc=io",
+					Dn: "dc=mokapi, dc=io",
 				}, ld.Records[0])
 				require.Equal(t, &AddRecord{
-					Dn: "ou=Sales,dc=mokapi,dc=io",
+					Dn: "ou=Sales, dc=mokapi, dc=io",
 				}, ld.Records[1])
 			},
 		},
@@ -69,7 +70,7 @@ func TestLdif_Parse(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, ld.Records, 1)
 				require.Equal(t, &AddRecord{
-					Dn:         "dc=mokapi,dc=io",
+					Dn:         "dc=mokapi, dc=io",
 					Attributes: map[string][]string{"description": {"foo bar"}},
 				}, ld.Records[0])
 			},
@@ -81,7 +82,7 @@ func TestLdif_Parse(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, ld.Records, 1)
 				require.Equal(t, &AddRecord{
-					Dn:         "dc=mokapi,dc=io",
+					Dn:         "dc=mokapi, dc=io",
 					Attributes: map[string][]string{"attribute": {"foo"}},
 				}, ld.Records[0])
 			},
@@ -93,7 +94,7 @@ func TestLdif_Parse(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, ld.Records, 1)
 				require.Equal(t, &AddRecord{
-					Dn: "dc=mokapi,dc=io",
+					Dn: "dc=mokapi, dc=io",
 				}, ld.Records[0])
 			},
 		},
@@ -104,7 +105,7 @@ func TestLdif_Parse(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, ld.Records, 1)
 				require.Equal(t, &AddRecord{
-					Dn:         "dc=mokapi,dc=io",
+					Dn:         "dc=mokapi, dc=io",
 					Attributes: map[string][]string{"foo": {"bar"}},
 				}, ld.Records[0])
 			},
@@ -116,7 +117,7 @@ func TestLdif_Parse(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, ld.Records, 1)
 				require.Equal(t, &AddRecord{
-					Dn: "dc=mokapi,dc=io",
+					Dn: "dc=mokapi, dc=io",
 				}, ld.Records[0])
 			},
 		},
@@ -127,7 +128,7 @@ func TestLdif_Parse(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, ld.Records, 1)
 				require.Equal(t, &AddRecord{
-					Dn:         "dc=mokapi,dc=io",
+					Dn:         "dc=mokapi, dc=io",
 					Attributes: map[string][]string{"foo": {""}},
 				}, ld.Records[0])
 			},
@@ -139,7 +140,7 @@ func TestLdif_Parse(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, ld.Records, 1)
 				require.Equal(t, &AddRecord{
-					Dn: "dc=mokapi,dc=io",
+					Dn: "dc=mokapi, dc=io",
 				}, ld.Records[0])
 			},
 		},
@@ -150,7 +151,7 @@ func TestLdif_Parse(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, ld.Records, 1)
 				require.Equal(t, &DeleteRecord{
-					Dn: "dc=mokapi,dc=io",
+					Dn: "dc=mokapi, dc=io",
 				}, ld.Records[0])
 			},
 		},
@@ -161,7 +162,7 @@ func TestLdif_Parse(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, ld.Records, 1)
 				require.Equal(t, &ModifyRecord{
-					Dn: "dc=mokapi,dc=io",
+					Dn: "dc=mokapi, dc=io",
 				}, ld.Records[0])
 			},
 		},
@@ -172,7 +173,7 @@ func TestLdif_Parse(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, ld.Records, 1)
 				require.Equal(t, &ModifyRecord{
-					Dn: "dc=mokapi,dc=io",
+					Dn: "dc=mokapi, dc=io",
 					Actions: []*ModifyAction{
 						{
 							Type:       "add",
@@ -190,7 +191,7 @@ func TestLdif_Parse(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, ld.Records, 1)
 				require.Equal(t, &ModifyRecord{
-					Dn: "dc=mokapi,dc=io",
+					Dn: "dc=mokapi, dc=io",
 					Actions: []*ModifyAction{
 						{
 							Type:       "replace",
@@ -208,7 +209,7 @@ func TestLdif_Parse(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, ld.Records, 1)
 				require.Equal(t, &ModifyRecord{
-					Dn: "dc=mokapi,dc=io",
+					Dn: "dc=mokapi, dc=io",
 					Actions: []*ModifyAction{
 						{
 							Type: "delete",
@@ -232,7 +233,7 @@ func TestLdif_Parse(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, ld.Records, 1)
 				require.Equal(t, &AddRecord{
-					Dn: "dc=mokapi,dc=io",
+					Dn: "dc=mokapi, dc=io",
 					Attributes: map[string][]string{
 						"photo": {"1234"},
 					},
@@ -246,7 +247,7 @@ func TestLdif_Parse(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, ld.Records, 1)
 				require.Equal(t, &AddRecord{
-					Dn: "dc=mokapi,dc=io",
+					Dn: "dc=mokapi, dc=io",
 					Attributes: map[string][]string{
 						"description": {"foobar"},
 					},
@@ -333,7 +334,7 @@ func TestConfig_LDIF(t *testing.T) {
 			test: func(t *testing.T, c *Config, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 3, c.Entries.Len())
-				require.Len(t, c.Entries.Lookup("dc=mokapi,dc=io").Attributes, 0)
+				require.Len(t, c.Entries.Lookup("dc=mokapi, dc=io").Attributes, 0)
 			},
 		},
 		{

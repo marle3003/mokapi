@@ -11,7 +11,7 @@ export async function driveLdap() {
     });
 
     await client.search('dc=hr,dc=example,dc=com', {
-        filter: '(&(objectCategory=user)(memberOf=cn=Sales,ou=departments,dc=hr,dc=example,dc=com))',
+        filter: '(memberOf=cn=Sales,ou=departments,dc=hr,dc=example,dc=com)',
         scope: 'sub'
     });
 

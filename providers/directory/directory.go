@@ -161,6 +161,7 @@ func (d *Directory) serveModify(rw ldap.ResponseWriter, r *ldap.ModifyRequest, c
 		res = &ldap.ModifyResponse{ResultCode: ee.Code, MatchedDn: r.Dn, Message: err.Error()}
 	} else {
 		res = &ldap.ModifyResponse{ResultCode: ldap.Success, MatchedDn: r.Dn}
+		go d.config.rebuildMemberOf()
 	}
 
 	m, doMonitor := monitor.LdapFromContext(ctx)
@@ -211,6 +212,7 @@ func (d *Directory) serveAdd(rw ldap.ResponseWriter, r *ldap.AddRequest, ctx con
 		res = &ldap.AddResponse{ResultCode: ee.Code, Message: err.Error()}
 	} else {
 		res = &ldap.AddResponse{ResultCode: ldap.Success, MatchedDn: r.Dn}
+		go d.config.rebuildMemberOf()
 	}
 
 	m, doMonitor := monitor.LdapFromContext(ctx)
@@ -242,6 +244,7 @@ func (d *Directory) serveDelete(rw ldap.ResponseWriter, r *ldap.DeleteRequest, c
 		res = &ldap.DeleteResponse{ResultCode: ee.Code, MatchedDn: del.Dn, Message: err.Error()}
 	} else {
 		res = &ldap.DeleteResponse{ResultCode: ldap.Success, MatchedDn: del.Dn}
+		go d.config.rebuildMemberOf()
 	}
 
 	m, doMonitor := monitor.LdapFromContext(ctx)
@@ -276,6 +279,7 @@ func (d *Directory) serveModifyDn(rw ldap.ResponseWriter, r *ldap.ModifyDNReques
 		res = &ldap.ModifyDNResponse{ResultCode: ee.Code, MatchedDn: r.Dn, Message: err.Error()}
 	} else {
 		res = &ldap.ModifyDNResponse{ResultCode: ldap.Success, MatchedDn: r.Dn}
+		go d.config.rebuildMemberOf()
 	}
 
 	m, doMonitor := monitor.LdapFromContext(ctx)

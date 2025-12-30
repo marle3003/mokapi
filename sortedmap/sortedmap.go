@@ -11,6 +11,8 @@ import (
 // LinkedHashMap defines the iteration ordering by the order
 // in which keys were inserted into the map
 type LinkedHashMap[K comparable, V any] struct {
+	KeyNormalizer func(K) K
+
 	pairs map[interface{}]*pair[K, V]
 	list  *list.List
 }
@@ -26,11 +28,15 @@ func NewLinkedHashMap() *LinkedHashMap[string, interface{}] {
 }
 
 func (m *LinkedHashMap[K, V]) Set(key K, value V) {
+	nk := key
+	if m.KeyNormalizer != nil {
+		nk = m.KeyNormalizer(key)
+	}
 	m.ensureInit()
-	p, ok := m.pairs[key]
+	p, ok := m.pairs[nk]
 	if !ok {
-		p = &pair[K, V]{key: key, value: value}
-		m.pairs[key] = p
+		p = &pair[K, V]{key: nk, value: value}
+		m.pairs[nk] = p
 		p.element = m.list.PushBack(p)
 	} else {
 		p.value = value
@@ -46,7 +52,11 @@ func (m *LinkedHashMap[K, V]) Len() int {
 
 func (m *LinkedHashMap[K, V]) Get(key K) (V, bool) {
 	if m.pairs != nil {
-		p, ok := m.pairs[key]
+		nk := key
+		if m.KeyNormalizer != nil {
+			nk = m.KeyNormalizer(key)
+		}
+		p, ok := m.pairs[nk]
 		if ok {
 			return p.value, true
 		}
@@ -58,16 +68,24 @@ func (m *LinkedHashMap[K, V]) Del(key K) {
 	if m.pairs == nil {
 		return
 	}
-	p, ok := m.pairs[key]
+	nk := key
+	if m.KeyNormalizer != nil {
+		nk = m.KeyNormalizer(key)
+	}
+	p, ok := m.pairs[nk]
 	if !ok {
 		return
 	}
-	delete(m.pairs, key)
+	delete(m.pairs, nk)
 	m.list.Remove(p.element)
 }
 
 func (m *LinkedHashMap[K, V]) Lookup(key K) V {
-	v, _ := m.Get(key)
+	nk := key
+	if m.KeyNormalizer != nil {
+		nk = m.KeyNormalizer(key)
+	}
+	v, _ := m.Get(nk)
 	return v
 }
 

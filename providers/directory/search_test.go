@@ -552,6 +552,63 @@ func TestSearch(t *testing.T) {
 				require.Len(t, res.Results, 1)
 			},
 		},
+		{
+			name:  "memberOf",
+			input: `{ "files": [ "./users.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/users.ldif": {Raw: []byte("dn: cn=user\n\ndn: cn=group\nmember: cn=user")},
+			}},
+			test: func(t *testing.T, h ldap.Handler, err error) {
+				require.NoError(t, err)
+
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: "(memberOf=cn=group)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 1)
+			},
+		},
+		{
+			name:  "memberOf different cases",
+			input: `{ "files": [ "./users.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/users.ldif": {Raw: []byte("dn: cn=uSEr\n\ndn: cn=group\nmember: cn=UseR")},
+			}},
+			test: func(t *testing.T, h ldap.Handler, err error) {
+				require.NoError(t, err)
+
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: "(memberOf=cn=GRoup)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 1)
+			},
+		},
+		{
+			name:  "memberOf normalize DN",
+			input: `{ "files": [ "./users.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/users.ldif": {Raw: []byte("dn: uid=ff, cn=user\n\ndn: uid=cc,cn=group\nmember: uid=ff,cn=user")},
+			}},
+			test: func(t *testing.T, h ldap.Handler, err error) {
+				require.NoError(t, err)
+
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: "(memberOf=uid=cc, cn=group)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 1)
+			},
+		},
 	}
 
 	t.Parallel()

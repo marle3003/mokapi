@@ -250,6 +250,10 @@ func (p *parser) parseSet(filter string) ([]predicate, int, error) {
 }
 
 func (p *parser) predicate(op int, name, value, rule string) (predicate, error) {
+	if strings.ToLower(name) == "memberof" {
+		value = normalizeDN(value)
+	}
+
 	switch op {
 	case ldap.FilterEqualityMatch:
 		if strings.Contains(value, "*") {
@@ -333,7 +337,7 @@ func (p *parser) substring(name, value string) predicate {
 
 func (p *parser) equal(name, value string) (predicate, error) {
 	f := func(s string) bool {
-		return value == s
+		return strings.ToLower(value) == strings.ToLower(s)
 	}
 
 	if p.s != nil {

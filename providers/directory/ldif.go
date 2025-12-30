@@ -83,7 +83,7 @@ func (l *Ldif) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 		switch kv[0] {
 		case "dn":
-			dn = formatDN(val)
+			dn = val
 			rec = &AddRecord{Dn: dn}
 		case "changetype":
 			switch val {
