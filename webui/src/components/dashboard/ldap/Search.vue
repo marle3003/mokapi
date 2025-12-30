@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import Actions from '../Actions.vue'
+import { Modal } from 'bootstrap';
 
 const props = defineProps<{
    event: ServiceEvent
@@ -34,6 +35,28 @@ function compareResult(r1: LdapSearchResult, r2: LdapSearchResult) {
 
 const hasActions = computed(() => {
     return data.value.data.actions?.length > 0
+})
+
+const selected = ref<{dn: string, keys: string[], attributes: { [name: string]: string[] }} | undefined>()
+const dialogRef = useTemplateRef('dialogRef')
+let dialog: Modal;
+
+function showResult(result: LdapSearchResult) {
+    if (getSelection()?.toString()) {
+        return
+    }
+    selected.value = {
+        dn: result.dn,
+        keys: Object.keys(result.attributes).sort((x: string, y: string) => x.localeCompare(y)),
+        attributes: result.attributes
+    }
+    dialog.show()
+}
+
+onMounted(() => {
+    if (dialogRef.value) {
+        dialog = new Modal(dialogRef.value)
+    }
 })
 </script>
 
@@ -83,20 +106,50 @@ const hasActions = computed(() => {
         <section class="card" aria-labelledby="response">
             <div class="card-body">
                 <h2 id="response" class="card-title text-center">Response</h2>
-                <table class="table dataTable" aria-labelledby="response">
+                <table class="table dataTable selectable" aria-labelledby="response">
                     <thead>
                         <tr>
-                            <th scope="col" class="text-left" style="width: 20%">DN</th>
+                            <th scope="col" class="text-left col">DN</th>
+                            <th scope="col" class="text-center col-2">Attributes</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="item of searchResults" :key="item.dn">
+                        <tr v-for="item of searchResults" :key="item.dn" @click="showResult(item)">
                             <td>{{ item.dn }}</td>
+                            <td class="text-center">{{ Object.keys(item.attributes).length }}</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
+    </div>
+    <div class="modal fade" id="modal-response" tabindex="-1" aria-hidden="true" aria-labelledby="modal-response-title" ref="dialogRef">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" v-if="selected">
+                <div class="modal-header">
+                    <h6 id="modal-response-title" class="modal-title">DN: {{ selected.dn }}</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row p-2">
+                        <table class="table dataTable" aria-labelledby="modal-response-title">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="text-left col-4">Type</th>
+                                    <th scope="col" class="text-left col">Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="name in selected.keys" :key="name">
+                                    <td>{{ name }}</td>
+                                    <td v-html="selected.attributes[name]?.join('<br />')"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 

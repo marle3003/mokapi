@@ -3,7 +3,6 @@ import { usePrettyDates } from '@/composables/usePrettyDate'
 import { onMounted, ref } from 'vue'
 import { Modal, Popover, Tab } from 'bootstrap'
 import { useMetrics } from '@/composables/metrics'
-import type { GroupMember } from 'kafkajs';
 
 const props = defineProps<{
     service: KafkaService,

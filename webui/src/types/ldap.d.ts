@@ -40,7 +40,7 @@ declare interface LdapSearchResponse {
 
 declare interface LdapSearchResult {
     dn: string
-    attributes: { [name: string]: string }
+    attributes: { [name: string]: string[] }
 }
 
 declare interface LdapModifyRequest {
