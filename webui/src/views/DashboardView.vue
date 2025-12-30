@@ -40,12 +40,12 @@ import { useRoute } from 'vue-router'
 import { useRefreshManager } from '@/composables/refresh-manager'
 import { useDashboard, getRouteName } from '@/composables/dashboard'
 import type { AppInfoResponse } from '@/types/dashboard'
+import Tabs from '@/components/dashboard/Tabs.vue'
 
 const { progress, start, isActive } = useRefreshManager();
 const transitionRefresh = computed(() => {
     return progress.value > 0.1 && progress.value < 99.9;
 })
-const count = ref<number>(0);
 const { dashboard, setMode, getMode } = useDashboard();
 
 const route = useRoute()
@@ -78,10 +78,6 @@ function isInitLoading() {
     return appInfo.value?.isLoading && !appInfo.value?.data
 }
 
-function hasJobs() {
-    return count.value > 0
-}
-
 const description = `Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mock APIs are used.`
 useMeta('Dashboard | mokapi.io', description, '')
 </script>
@@ -106,39 +102,7 @@ useMeta('Dashboard | mokapi.io', description, '')
             </div>
 
             <div class="dashboard-tabs" v-if="appInfo?.data" :class="{ demo: getMode() === 'demo' }">
-                <nav class="navbar navbar-expand pb-1" aria-label="Services">
-                    <div>
-                        <ul class="navbar-nav me-auto mb-0">
-                            <li class="nav-item">
-                                <router-link class="nav-link overview" :to="{ name: getRouteName('dashboard').value }">Overview</router-link>
-                            </li>
-                            <li class="nav-item" v-if="isServiceAvailable('http')">
-                                <router-link class="nav-link" :to="{ name: getRouteName('http').value }">HTTP</router-link>
-                            </li>
-                            <li class="nav-item" v-if="isServiceAvailable('kafka')">
-                                <router-link class="nav-link" :to="{ name: getRouteName('kafka').value }">Kafka</router-link>
-                            </li>
-                            <li class="nav-item" v-if="isServiceAvailable('mail')">
-                                <router-link class="nav-link" :to="{ name: getRouteName('mail').value }">Mail</router-link>
-                            </li>
-                            <li class="nav-item" v-if="isServiceAvailable('ldap')">
-                                <router-link class="nav-link" :to="{ name: getRouteName('ldap').value }">LDAP</router-link>
-                            </li>
-                            <li class="nav-item" v-if="hasJobs()">
-                                <router-link class="nav-link" :to="{ name: getRouteName('jobs').value }">Jobs</router-link>
-                            </li>
-                            <li class="nav-item">
-                                <router-link class="nav-link" :to="{ name: getRouteName('configs').value }">Configs</router-link>
-                            </li>
-                            <li v-if="getMode() === 'live'" class="nav-item">
-                                <router-link class="nav-link" :to="{ name: getRouteName('tree').value }">Faker</router-link>
-                            </li>
-                            <li class="nav-item" v-if="appInfo?.data.search.enabled">
-                                <router-link class="nav-link" :to="{ name: getRouteName('search').value }">Search</router-link>
-                            </li>
-                        </ul>
-                    </div>
-                </nav>
+                <tabs :app-info="appInfo.data" />
             </div>
             <div v-if="appInfo?.data" class="dashboard-content" :class="{ demo: getMode() === 'demo' }">
                 <div v-if="$route.name === getRouteName('dashboard').value && appInfo?.data">
