@@ -6,11 +6,6 @@ export async function driveLdap() {
     await client.bind('dc=hr,dc=example,dc=com');
 
     await client.search('dc=hr,dc=example,dc=com', {
-        filter: '(userAccountControl:1.2.840.113556.1.4.803:=512)',
-        scope: 'sub'
-    });
-
-    /*await client.search('dc=hr,dc=example,dc=com', {
         filter: '(uid=ajohnson)',
         scope: 'sub'
     });
@@ -45,6 +40,11 @@ export async function driveLdap() {
     await client.modifyDN('uid=cbrown,ou=people,dc=hr,dc=example,dc=com', 'uid=ctaylor,ou=people,dc=hr,dc=example,dc=com');
 
     await client.del('uid=ctaylor,ou=people,dc=hr,dc=example,dc=com');
-*/
+
+    await client.search('dc=hr,dc=example,dc=com', {
+        filter: '(userAccountControl:1.2.840.113556.1.4.803:=512)',
+        scope: 'sub'
+    });
+
     await client.unbind();
 }
