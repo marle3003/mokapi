@@ -27,7 +27,7 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
     })
 
     await test.step('Check broker section', async () => {
-        const brokers = useTable(page.getByRole('region', { name: "Brokers" }).getByRole('table', { name: 'Brokers' }), ['Name', 'Host', 'Tags', 'Description'])
+        const brokers = useTable(page.getByRole('region', { name: "Brokers" }).getByRole('table', { name: 'Brokers' }), ['Name', 'Host', 'Description', 'Tags'])
         const broker = brokers.getRow(1)
         await expect(broker.getCellByName('Name')).toHaveText(cluster.brokers[0].name)
         await expect(broker.getCellByName('Host')).toHaveText(cluster.brokers[0].url)
