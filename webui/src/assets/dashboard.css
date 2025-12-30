@@ -86,12 +86,25 @@
     width: 90%;
     margin: 0 auto auto;
 }
+.header-demo {
+    position: fixed;
+    top: 4rem;
+    z-index: 10;
+    width: 100%;
+    padding-top: 15px;
+    padding-left: 8px;
+    padding-bottom: 30px;
+    background-color: var(--color-background);
+}
 .dashboard-tabs {
   background-color: var(--color-background);
   width: 100%;
   position: fixed;
   top: 4rem;
   z-index: 10;
+}
+.dashboard-tabs.demo {
+    top: 10rem;
 }
 .dashboard-tabs nav > div {
   border-bottom: 2px solid;
@@ -120,6 +133,9 @@
 }
 .dashboard-content {
   margin-top: 4rem;
+}
+.dashboard-content.demo {
+    margin-top: 10rem;
 }
 .dashboard a {
   text-decoration: none;
@@ -159,4 +175,13 @@
 }
 .tooltip.bs-tooltip-end .tooltip-arrow::before {
     border-right-color: #f8f9fa;
+}
+
+@media only screen and (max-width: 450px)  {
+  .dashboard-tabs.demo {
+    top: 10.8rem;
+}
+  .dashboard-content.demo {
+    margin-top: 10.8rem;
+  }
 }

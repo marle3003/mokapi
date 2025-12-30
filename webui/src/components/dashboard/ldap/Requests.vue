@@ -85,12 +85,12 @@ onUnmounted(() => {
             <table class="table dataTable selectable" aria-labelledby="requests">
                 <thead>
                     <tr>
-                        <th scope="col" class="text-left" style="width: 10%">Operation</th>
-                        <th scope="col" class="text-left" style="width: 25%">DN</th>
-                        <th scope="col" class="text-left" style="width: 30%">Criteria</th>
-                        <th scope="col" class="text-center"  style="width: 10%">Status</th>
-                        <th scope="col" class="text-center" style="width:15%">Time</th>
-                        <th scope="col" class="text-center" style="width: 10%">Duration</th>
+                        <th scope="col" class="text-left col-1">Operation</th>
+                        <th scope="col" class="text-left col">DN</th>
+                        <th scope="col" class="text-left col">Criteria</th>
+                        <th scope="col" class="text-center col-1">Status</th>
+                        <th scope="col" class="text-center col-2">Time</th>
+                        <th scope="col" class="text-center col-1">Duration</th>
                     </tr>
                 </thead>
                 <tbody>

@@ -209,10 +209,10 @@ function toggleTag(name: string) {
                     <tr>
                         <th v-if="hasDeprecated" scope="col" class="text-center" style="width: 5px"></th>
                         <th scope="col" class="text-left">Path</th>
-                        <th scope="col" class="text-left" style="width: 20%;">Summary</th>
-                        <th scope="col" class="text-left" style="width: 10%">Operations</th>
-                        <th scope="col" class="text-center" style="width: 15%">Last Request</th>
-                        <th scope="col" class="text-center" style="width: 10%">Requests / Errors</th>
+                        <th scope="col" class="text-left col-3">Summary</th>
+                        <th scope="col" class="text-left col-1">Operations</th>
+                        <th scope="col" class="text-center col-2">Last Request</th>
+                        <th scope="col" class="text-center col-1">Requests / Errors</th>
                     </tr>
                 </thead>
                 <tbody>

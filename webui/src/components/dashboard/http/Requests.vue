@@ -589,11 +589,11 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                     <thead>
                         <tr>
                             <th v-if="hasDeprecatedRequests" scope="col" class="text-center" style="width: 5px;"></th>
-                            <th scope="col" class="text-left" style="width: 80px;">Method</th>
-                            <th scope="col" class="text-left">URL</th>
-                            <th scope="col" class="text-center">Status Code</th>
-                            <th scope="col" class="text-center">Time</th>
-                            <th scope="col" class="text-center">Duration</th>
+                            <th scope="col" class="text-left col-1">Method</th>
+                            <th scope="col" class="text-left col">URL</th>
+                            <th scope="col" class="text-center col-1">Status Code</th>
+                            <th scope="col" class="text-center col-2">Time</th>
+                            <th scope="col" class="text-center col-1">Duration</th>
                         </tr>
                     </thead>
                     <tbody>

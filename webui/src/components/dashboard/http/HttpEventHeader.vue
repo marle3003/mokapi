@@ -11,8 +11,8 @@ defineProps({
     <table class="table dataTable">
         <thead>
             <tr>
-                <th scope="col" class="text-left w-25">Name</th>
-                <th scope="col" class="text-left">Value</th>
+                <th scope="col" class="text-left col-3">Name</th>
+                <th scope="col" class="text-left col">Value</th>
             </tr>
         </thead>
         <tbody>
@@ -23,9 +23,3 @@ defineProps({
         </tbody>
     </table>
 </template>
-
-<style scoped>
-.w-10{
-    width: 10%;
-}
-</style>

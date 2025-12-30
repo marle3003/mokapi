@@ -79,9 +79,9 @@ function getStatus(action: Action) {
         <thead>
             <tr>
                 <th scope="col" class="text-left" style="width: 30px;"></th>
-                <th scope="col" class="text-left" style="width: 80px;">Status</th>
-                <th scope="col" class="text-left">Name</th>
-                <th scope="col" class="text-center" style="width: 10%">Duration</th>
+                <th scope="col" class="text-left col-1">Status</th>
+                <th scope="col" class="text-left col">Name</th>
+                <th scope="col" class="text-center col-1">Duration</th>
             </tr>
         </thead>
         <tbody>

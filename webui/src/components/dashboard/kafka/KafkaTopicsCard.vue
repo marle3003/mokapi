@@ -53,10 +53,10 @@ function goToTopic(topic: KafkaTopic, openInNewTab = false){
             <table class="table dataTable selectable" aria-labelledby="topics">
                 <thead>
                     <tr>
-                        <th scope="col" class="text-left" style="width: 30%">Name</th>
-                        <th scope="col" class="text-left"  style="width: 30%">Description</th>
-                        <th scope="col" class="text-center" style="width: 10%">Last Message</th>
-                        <th scope="col" class="text-center" style="width: 10%">Messages</th>
+                        <th scope="col" class="text-left col-4">Name</th>
+                        <th scope="col" class="text-left col-4">Description</th>
+                        <th scope="col" class="text-center col-2">Last Message</th>
+                        <th scope="col" class="text-center col-1">Messages</th>
                     </tr>
                 </thead>
                 <tbody>

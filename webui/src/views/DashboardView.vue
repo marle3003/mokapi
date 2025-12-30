@@ -257,20 +257,4 @@ useMeta('Dashboard | mokapi.io', description, '')
   box-shadow: 0 0 4px rgba(0, 123, 255, 0.4);
   background-color: var(--color-refresh-background);
 }
-.dashboard-tabs.demo {
-    top: 10rem;
-}
-.dashboard-content.demo {
-    margin-top: 10rem;
-}
-.header-demo {
-    position: fixed;
-    top: 4rem;
-    z-index: 10;
-    width: 100%;
-    padding-top: 15px;
-    padding-left: 8px;
-    padding-bottom: 30px;
-    background-color: var(--color-background);
-}
 </style>

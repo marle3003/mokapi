@@ -97,7 +97,7 @@ function goToMail(msg: MessageInfo, openInNewTab = false) {
           <table class="table dataTable" aria-labelledby="folders-title">
             <thead>
               <tr>
-                <th scope="col" class="text-left" style="width: 20%">Name</th>
+                <th scope="col" class="text-left">Name</th>
               </tr>
             </thead>
             <tbody>
@@ -117,10 +117,10 @@ function goToMail(msg: MessageInfo, openInNewTab = false) {
           <table class="table dataTable selectable" aria-labelledby="mails-title">
             <thead>
               <tr>
-                <th scope="col" class="text-left" style="width: 20%">Subject</th>
-                <th scope="col" class="text-left" style="width: 20%">From</th>
-                <th scope="col" class="text-left" style="width: 20%">To</th>
-                <th scope="col" class="text-center" style="width: 15%">Date</th>
+                <th scope="col" class="text-left col-4">Subject</th>
+                <th scope="col" class="text-left col-3">From</th>
+                <th scope="col" class="text-left col-3">To</th>
+                <th scope="col" class="text-center col-2">Date</th>
               </tr>
             </thead>
             <tbody>

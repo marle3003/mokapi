@@ -60,11 +60,11 @@ onUnmounted(() => {
                 <caption class="visually-hidden">Recent Mails</caption>
                 <thead>
                     <tr>
-                        <th scope="col" class="text-left" style="width: 35%">Subject</th>
-                        <th scope="col" class="text-left" style="width: 20%">From</th>
-                        <th scope="col" class="text-left" style="width: 20%">To</th>
-                        <th scope="col" class="text-center" style="width:15%">Time</th>
-                        <th scope="col" class="text-center" style="width:10%">Duration</th>
+                        <th scope="col" class="text-left col-4">Subject</th>
+                        <th scope="col" class="text-left col-2">From</th>
+                        <th scope="col" class="text-left col-2">To</th>
+                        <th scope="col" class="text-center col-2">Time</th>
+                        <th scope="col" class="text-center col-1">Duration</th>
                     </tr>
                 </thead>
                 <tbody>

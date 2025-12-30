@@ -38,16 +38,17 @@ const servers = computed(() => {
             <table class="table dataTable" aria-labelledby="servers">
                 <thead>
                     <tr>
-                        <th scope="col" class="text-left" style="width: 20%">Name</th>
-                        <th scope="col" class="text-left" style="width: 20%">Host</th>
-                        <th scope="col" class="text-left" style="width: 20%">Tags</th>
-                        <th scope="col" class="text-left w-50" style="width: 40%">Description</th>
+                        <th scope="col" class="text-left col-2">Name</th>
+                        <th scope="col" class="text-left col-2">Host</th>
+                        <th scope="col" class="text-left col">Description</th>
+                        <th scope="col" class="text-left col-1">Tags</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr v-for="server in servers" :key="server.host">
                         <td>{{ server.name }}</td>
                         <td>{{ server.host }}</td>
+                        <td><markdown :source="server.description" class="description" :html="true"></markdown></td>
                         <td>
                             <ul class="tags">
                                 <li v-for="tag in server.tags" class="has-popover">
@@ -57,7 +58,6 @@ const servers = computed(() => {
                                 
                             </ul>
                         </td>
-                        <td><markdown :source="server.description" class="description" :html="true"></markdown></td>
                     </tr>
                 </tbody>
             </table>
