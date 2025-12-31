@@ -432,7 +432,7 @@ header .container-fluid {
   padding-bottom: 7px;
 }
 
-.nav-item .chapter > div a {
+header .navbar-collapse .nav-item .chapter > div a {
   padding-top: 0;
   padding-bottom: 0;
 }

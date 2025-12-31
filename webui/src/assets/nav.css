@@ -12,11 +12,16 @@
   background-color: var(--color-background);
 }
 
-header .nav-item .nav-link {
+header .navbar-collapse:not(.show) .nav-item .nav-link {
+  padding-top: 7px;
+  padding-bottom: 0px;
+}
+
+header .navbar-collapse.show .nav-item .nav-link {
   padding-top: 7px;
   padding-bottom: 7px;
 }
-.navbar-collapse ul.dropdown-menu {
+header .navbar-collapse ul.dropdown-menu {
   padding-top: 0;
   padding-bottom: 0;
 }
