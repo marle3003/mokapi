@@ -184,7 +184,7 @@ func (c *Config) rebuildMemberOf() {
 
 	groups := map[string][]string{}
 	for it := c.Entries.Iter(); it.Next(); {
-		groupName := it.Key()
+		groupName := it.Value().Dn
 		for k, v := range it.Value().Attributes {
 			if k == "member" {
 				if _, ok := groups[k]; !ok {
