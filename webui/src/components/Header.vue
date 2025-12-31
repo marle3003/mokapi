@@ -535,5 +535,9 @@ header .container-fluid {
     display: flex !important;
     padding-top: 20px;
   }
+  .navbar .collapse .tools > * {
+    padding-right: 0.7rem;
+    font-size: 16px;
+  }
 }
 </style>

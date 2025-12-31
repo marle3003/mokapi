@@ -107,18 +107,18 @@ function getStatus(data: JobExecution) {
 </script>
 
 <template>
-  <div class="card">
+  <section class="card" aria-labelledby="jobs-title">
     <div class="card-body">
-        <div class="card-title text-center">Recent Jobs</div>
-        <table class="table dataTable events" data-testid="requests">
+        <h2 id="jobs-title" class="card-title text-center">Recent Jobs</h2>
+        <table class="table dataTable events" aria-labelledby="jobs-title">
             <thead>
                 <tr>
                     <th scope="col" class="text-left" style="width: 15px;"></th>
-                    <th scope="col" class="text-left" style="width: 80px;">Status</th>
-                    <th scope="col" class="text-left" style="width: 50%">Name</th>
-                    <th scope="col" class="text-left">Schedule</th>
-                    <th scope="col" class="text-center" style="width:15%">Time</th>
-                    <th scope="col" class="text-center" style="width: 15%">Next Run</th>
+                    <th scope="col" class="text-left col-1">Status</th>
+                    <th scope="col" class="text-left col">Name</th>
+                    <th scope="col" class="text-center col-1">Schedule</th>
+                    <th scope="col" class="text-center col-2">Time</th>
+                    <th scope="col" class="text-center col-2">Next Run</th>
                 </tr>
             </thead>
             <tbody>
@@ -131,7 +131,7 @@ function getStatus(data: JobExecution) {
                             <span class="badge bg-success me-2" v-else>Success</span>
                         </td>
                         <td>{{ data!.tags.name }}</td>
-                        <td>{{ data!.schedule }}</td>
+                        <td class="text-center">{{ data!.schedule }}</td>
                         <td class="text-center">{{ format(event.time) }}</td>
                         <td class="text-center" :set="timer = timers[event.id]">
                             <span v-if="timer" :title="format(data!.nextRun)">{{ formatTimer(timer) }}</span>
@@ -215,7 +215,7 @@ function getStatus(data: JobExecution) {
             </tbody>
         </table>
     </div>
-  </div>
+  </section>
 </template>
 
 <style scoped>

@@ -14,5 +14,9 @@
 
 header .nav-item .nav-link {
   padding-top: 7px;
+  padding-bottom: 7px;
+}
+.navbar-collapse ul.dropdown-menu {
+  padding-top: 0;
   padding-bottom: 0;
 }
