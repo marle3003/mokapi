@@ -16,6 +16,10 @@ const Server = require('./server');
       console.log('skip ' + url)
       return
     }
+    if (path.extname(url.pathname) === '.ts') {
+      console.log('skip ' + url);
+      return;
+    }
     if (visited.has(url.pathname)) {
       return
     }
