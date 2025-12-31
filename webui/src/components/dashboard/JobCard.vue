@@ -5,13 +5,12 @@ import { useRoute } from 'vue-router'
 import dayjs from 'dayjs'
 import duration from 'dayjs/plugin/duration'
 import { usePrettyText } from '@/composables/usePrettyText'
-import { useDashboard } from '@/composables/dashboard'
+import { getRouteName, useDashboard } from '@/composables/dashboard'
 
 const { dashboard } = useDashboard()
 const { events, close } = dashboard.value.getEvents('job')
 const { format, duration: prettyDuration } = usePrettyDates()
 const { parseUrls } = usePrettyText()
-const route = useRoute()
 dayjs.extend(duration)
 
 const now = ref(dayjs())
@@ -199,7 +198,7 @@ function getStatus(data: JobExecution) {
                                             <tr>
                                                 <td>{{ key }}</td>
                                                 <td>
-                                                    <router-link v-if="key === 'file' && data.tags.fileKey" :to="{ name: 'config', params: { id: data.tags.fileKey }, query: { refresh: route.query.refresh }}">
+                                                    <router-link v-if="key === 'file' && data.tags.fileKey" :to="{ name: getRouteName('config').value, params: { id: data.tags.fileKey } }">
                                                     {{ value }}
                                                     </router-link>
                                                     <span v-else>{{ value }}</span>

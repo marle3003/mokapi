@@ -5,6 +5,7 @@ import { useRoute } from 'vue-router'
 import SourceView from './SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { usePrettyText } from '@/composables/usePrettyText'
+import { getRouteName } from '@/composables/dashboard'
 
 defineProps({
     actions: { type: Object as PropType<Action[]>, required: true },
@@ -155,7 +156,7 @@ function getStatus(action: Action) {
                                         <tr>
                                             <td>{{ key }}</td>
                                             <td>
-                                                <router-link v-if="key === 'file' && action.tags.fileKey" :to="{ name: 'config', params: { id: action.tags.fileKey }, query: { refresh: route.query.refresh }}">
+                                                <router-link v-if="key === 'file' && action.tags.fileKey" :to="{ name: getRouteName('config').value, params: { id: action.tags.fileKey } }">
                                                 {{ value }}
                                                 </router-link>
                                                 <span v-else>{{ value }}</span>
