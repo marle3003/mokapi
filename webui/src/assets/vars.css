@@ -3,6 +3,9 @@
     --color-background-mute:  #2e2e31;
     --color-background-soft: rgb(40,43,51);
     --color-background-light: #393a40;
+    
+    --color-background-promo: #323743;
+    --color-border-promo: rgba(211, 212, 213, 0.25);
 
     --color-border: #282b33;
 
@@ -104,6 +107,9 @@
     --color-background-soft: #f8fafc;
     --color-background-light: #e5e9f0;
     --color-border: #e2e8f0;
+
+    --color-background-promo: #fff;
+    --color-border-promo: #dee2e6;
 
     --color-refresh-background: rgb(8, 109, 215);
 

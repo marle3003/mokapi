@@ -8,9 +8,11 @@ import { parseMarkdown } from '@/composables/markdown';
 import { Modal } from 'bootstrap';
 import type { AppInfoResponse } from '@/types/dashboard';
 import { useDashboard } from '@/composables/dashboard';
+import { usePromo } from '@/composables/promo';
 
 const isDashboard = import.meta.env.VITE_DASHBOARD === 'true'
 const useDemo = import.meta.env.VITE_USE_DEMO === 'true'
+const promo = usePromo()
 let appInfo: AppInfoResponse | null = null
 const query = ref('')
 const tooltipDark = 'Switch to light mode';
@@ -196,6 +198,15 @@ function navigateAndClose(params: Record<string, string>) {
 
 <template>
   <header>
+<!-- Promotion banner -->
+<div class="promo-banner" v-if="promo.activePromotion.value">
+  <strong>Shop discount!</strong>
+  Get <strong>{{ promo.activePromotion.value.discount }}% off</strong> Mokapi Gear —
+  <span class="d-none d-md-inline">
+    support Mokapi with code in your heart and style on your sleeve.
+  </span>
+  <a href="https://mokapi.myspreadshop.net" class="promo-link ms-2">Visit shop →</a>
+</div>
     <nav class="navbar navbar-expand-lg">
       <div class="container-fluid">
         <a class="navbar-brand" href="./"><img src="/logo-header.svg" height="30" alt="Mokapi home"/></a>
@@ -355,6 +366,29 @@ header {
 }
 header .container-fluid {
   padding: 0;
+}
+.promo-banner {
+  background-color: var(--color-background-promo);
+  border-bottom: 1px solid var(--color-border-promo);
+  color: var(--color-text);
+  text-align: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  margin-bottom: 5px;
+}
+
+.promo-banner strong {
+  font-weight: 600;
+}
+
+.promo-link {
+  color: var(--color-doc-link);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.promo-link:hover {
+  text-decoration: underline;
 }
 .navbar {
   background-color: var(--color-background);
