@@ -1,13 +1,21 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+	"time"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPerson(t *testing.T) {
+	// tests depends on current year so without this, all tests will break in next year
+	isDateString := func(t *testing.T, s any) {
+		_, err := time.Parse("2006-01-02", s.(string))
+		require.NoError(t, err)
+	}
+
 	testcases := []struct {
 		name string
 		req  *Request
@@ -265,7 +273,7 @@ func TestPerson(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "1970-08-26", v)
+				isDateString(t, v)
 			},
 		},
 		{
@@ -276,7 +284,7 @@ func TestPerson(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "1970-08-26", v)
+				isDateString(t, v)
 			},
 		},
 		{
