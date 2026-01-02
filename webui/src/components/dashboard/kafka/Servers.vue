@@ -47,7 +47,7 @@ const servers = computed(() => {
                 <tbody>
                     <tr v-for="server in servers" :key="server.host">
                         <td>{{ server.name }}</td>
-                        <td>{{ server.host }}</td>
+                        <td  v-html="server.host.replace(/([^:]*):(.*)/g, '$1<wbr>:$2')"></td>
                         <td><markdown :source="server.description" class="description" :html="true"></markdown></td>
                         <td>
                             <ul class="tags">

@@ -112,8 +112,8 @@ function getClientSoftware(member: KafkaMember) {
                     </span>
                 </td>
                 <td>{{ group.state }}</td>
-                <td>{{ group.protocol }}</td>
-                <td>{{ group.coordinator }}</td>
+                <td v-html="group.protocol.replace(/([a-z])([A-Z])/g, '$1<wbr>$2')"></td>
+                <td v-html="group.coordinator.replace(/([^:]*):(.*)/g, '$1<wbr>:$2')"></td>
                 <td>{{ group.leader }}</td>
                 <td>
                     <ul class="members">
