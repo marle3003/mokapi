@@ -239,6 +239,16 @@ func useFromContext(r *Request) (*faker, bool) {
 					return v, nil
 				}), true
 			}
+			if arr, ok := v.([]any); ok {
+				if len(arr) > 0 {
+					if _, err := p.Parse(arr[0]); err == nil {
+						return newFaker(func() (any, error) {
+							i := r.g.rand.Intn(len(arr))
+							return arr[i], nil
+						}), true
+					}
+				}
+			}
 		}
 	}
 	return nil, false
