@@ -2,7 +2,6 @@
 import { computed, onUnmounted, type Ref } from 'vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { useRouter } from '@/router'
-import { useRoute } from 'vue-router'
 import { getRouteName, useDashboard } from '@/composables/dashboard'
 
 const { format } = usePrettyDates()
@@ -25,10 +24,14 @@ if (props.configs === undefined) {
 }
 
 const configs = computed(() => {
-    if (!props.configs) {
-        return data?.value ?? []
+    if (props.configs) {
+        return props.configs.sort(compareConfig)
     }
-    return props.configs.sort(compareConfig)
+    if (data && data.value) {
+        console.log('sort')
+        return data.value.sort(compareConfig)
+    }
+    return [];
 })
 
 const title = computed(() => props.title ? props.title : "Configs")
