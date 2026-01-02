@@ -6,7 +6,7 @@
 # modifying the original specification.
 #
 # Learn more about patching:
-# http://localhost:5173/docs/configuration/patching
+# https://mokapi.io/docs/configuration/patching
 openapi: 3.1.0
 info:
   title: Swagger Petstore # title is the patching discriminator
