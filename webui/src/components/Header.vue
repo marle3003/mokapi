@@ -12,7 +12,6 @@ import { usePromo } from '@/composables/promo';
 
 const isDashboard = import.meta.env.VITE_DASHBOARD === 'true'
 const useDemo = import.meta.env.VITE_USE_DEMO === 'true'
-const isPromoEnabled = import.meta.env.VITE_PROMO === 'true'
 const promo = usePromo()
 let appInfo: AppInfoResponse | null = null
 const query = ref('')
@@ -38,6 +37,11 @@ const levels = computed(() => {
 const visible = ref(false)
 
 const router = useRouter()
+const isPromoEnabled = computed(() => {
+  const disabled = ['dashboard', 'dashboard-demo']
+  return !route.matched.some(r => disabled.includes(r.name?.toString() ?? ''));
+})
+
 function switchTheme() {
   let theme = document.documentElement.getAttribute('data-theme');
   theme = theme == 'dark' ? 'light' : 'dark'
