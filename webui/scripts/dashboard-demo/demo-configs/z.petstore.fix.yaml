@@ -1,0 +1,23 @@
+# The official Petstore OpenAPI example contains a few inconsistencies.
+# One of them is that the DELETE /store/order/{orderId} operation
+# does not define a successful (2xx) response.
+#
+# Mokapi’s patching mechanism allows us to fix such issues without
+# modifying the original specification.
+#
+# Learn more about patching:
+# http://localhost:5173/docs/configuration/patching
+openapi: 3.1.0
+info:
+  title: Swagger Petstore # title is the patching discriminator
+paths:
+  /pet/findByStatus:
+    get:
+       parameters:
+        - name: status
+          explode: false # Use comma-separated values as described
+  /store/order/{orderId}:
+    delete:
+      responses:
+        '204':
+          description: Order deleted successfully
