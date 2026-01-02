@@ -94,11 +94,13 @@ useMeta('Dashboard | mokapi.io', description, '')
     <main>
         <div class="dashboard">
             <h1 v-if="getMode() === 'live'" class="visually-hidden">Dashboard</h1>
-            <div v-else class="header-demo">
-                <h1 style="font-size: 2rem; margin-bottom: 10px;">Demo Dashboard</h1>
-                <p>
-                Get a feel for the interface and explore recorded data.
-                </p>
+            <div v-else class="row">
+                <div class="header-demo">
+                    <h1 style="font-size: 2rem; margin-bottom: 10px;">Demo Dashboard</h1>
+                    <p>
+                    Get a feel for the interface and explore recorded data.
+                    </p>
+                </div>
             </div>
 
             <div class="dashboard-tabs" v-if="appInfo?.data" :class="{ demo: getMode() === 'demo' }">

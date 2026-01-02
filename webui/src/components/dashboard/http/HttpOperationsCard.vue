@@ -52,8 +52,8 @@ function showWarningColumn(){
     <section class="card" aria-labelledby="methods-title">
         <div class="card-body">
             <h2 id="methods-title" class="card-title text-center">Methods</h2>
-            <div class="table-responsive">
-                <table class="table dataTable selectable" style="table-layout: fixed;" data-testid="methods" aria-labelledby="methods-title">
+            <div class="table-responsive-sm">
+                <table class="table dataTable selectable" data-testid="methods" aria-labelledby="methods-title">
                     <thead>
                         <tr>
                             <th scope="col" class="text-left col-1">Method</th>

@@ -92,44 +92,46 @@ function getClientSoftware(member: KafkaMember) {
 </script>
 
 <template>
-    <table class="table dataTable selectable" :aria-label="props.topicName ? 'Topic Groups' : 'Cluster Groups'">
-        <thead>
-            <tr>
-                <th scope="col" class="text-left col-2">Name</th>
-                <th scope="col" class="text-left col-1">State</th>
-                <th scope="col" class="text-left col-2">Protocol</th>
-                <th scope="col" class="text-left col-2">Coordinator</th>
-                <th scope="col" class="text-left col-2">Leader</th>
-                <th scope="col" class="text-left col-2">Members</th>
-                <th scope="col" class="text-center col-1" v-if="topicName">Lag</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr v-for="group in getGroups()" :key="group.name" @click="showGroup(group)">
-                <td>
-                    <span role="button" @click.stop="showGroup(group)" tabindex="0">
-                        {{ group.name }}
-                    </span>
-                </td>
-                <td>{{ group.state }}</td>
-                <td v-html="group.protocol.replace(/([a-z])([A-Z])/g, '$1<wbr>$2')"></td>
-                <td v-html="group.coordinator.replace(/([^:]*):(.*)/g, '$1<wbr>:$2')"></td>
-                <td>{{ group.leader }}</td>
-                <td>
-                    <ul class="members">
-                        <li v-for="member in group.members" class="has-popover">
-                            {{ member.name }} <span class="bi bi-info-circle"></span>
-                            <span style="display:none" v-html="memberInfo(member)"></span>
-                        </li>
-                        
-                    </ul>
-                </td>
-                <td v-if="topicName" class="text-center">
-                    {{ sum(service.metrics, 'kafka_consumer_group_lag', { name: 'topic', value: topicName }, { name: 'group', value: group.name }) }}
-                </td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="table-responsive-sm">
+        <table class="table dataTable selectable" :aria-label="props.topicName ? 'Topic Groups' : 'Cluster Groups'">
+            <thead>
+                <tr>
+                    <th scope="col" class="text-left col-2">Name</th>
+                    <th scope="col" class="text-left col-1">State</th>
+                    <th scope="col" class="text-left col-2">Protocol</th>
+                    <th scope="col" class="text-left col-2">Coordinator</th>
+                    <th scope="col" class="text-left col-2">Leader</th>
+                    <th scope="col" class="text-left col-2">Members</th>
+                    <th scope="col" class="text-center col-1" v-if="topicName">Lag</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="group in getGroups()" :key="group.name" @click="showGroup(group)">
+                    <td>
+                        <span role="button" @click.stop="showGroup(group)" tabindex="0">
+                            {{ group.name }}
+                        </span>
+                    </td>
+                    <td>{{ group.state }}</td>
+                    <td v-html="group.protocol.replace(/([a-z])([A-Z])/g, '$1<wbr>$2')"></td>
+                    <td v-html="group.coordinator.replace(/([^:]*):(.*)/g, '$1<wbr>:$2')"></td>
+                    <td>{{ group.leader }}</td>
+                    <td>
+                        <ul class="members">
+                            <li v-for="member in group.members" class="has-popover">
+                                {{ member.name }} <span class="bi bi-info-circle"></span>
+                                <span style="display:none" v-html="memberInfo(member)"></span>
+                            </li>
+                            
+                        </ul>
+                    </td>
+                    <td v-if="topicName" class="text-center">
+                        {{ sum(service.metrics, 'kafka_consumer_group_lag', { name: 'topic', value: topicName }, { name: 'group', value: group.name }) }}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
     <div class="modal fade" id="dialogGroup" ref="groupDialog" tabindex="-1" aria-labelledby="dialog-group-title" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">

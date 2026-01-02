@@ -51,32 +51,34 @@ onUnmounted(() => {
     <div class="card" data-testid="http-service-list">
         <div class="card-body">
             <h2 id="http-apis-title" class="card-title text-center">HTTP APIs</h2>
-            <table class="table dataTable selectable" aria-labelledby="http-apis-title">
-                <thead>
-                    <tr>
-                        <th scope="col" class="text-left w-25">Name</th>
-                        <th scope="col" class="text-left w-50">Description</th>
-                        <th scope="col" class="text-center" style="width:15%">Last Request</th>
-                        <th scope="col" class="text-center">Requests / Errors</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="service in services" key="service.name" @mouseup.left="goToService(service)" @mousedown.middle="goToService(service, true)">
-                        <td>
-                            <router-link @click.stop class="row-link" :to="serviceRoute(service, 'http')">
-                            {{ service.name }}
-                            </router-link>
-                        </td>
-                        <td><markdown :source="service.description" class="description" :html="true"></markdown></td>
-                        <td class="text-center">{{ lastRequest(service) }}</td>
-                        <td class="text-center">
-                            <span>{{ requests(service) }}</span>
-                            <span> / </span>
-                            <span v-bind:class="{'text-danger': errors(service) > 0}">{{ errors(service) }}</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-responsive-sm">
+                <table class="table dataTable selectable" aria-labelledby="http-apis-title">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="text-left w-25">Name</th>
+                            <th scope="col" class="text-left w-50">Description</th>
+                            <th scope="col" class="text-center" style="width:15%">Last Request</th>
+                            <th scope="col" class="text-center">Requests / Errors</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="service in services" key="service.name" @mouseup.left="goToService(service)" @mousedown.middle="goToService(service, true)">
+                            <td>
+                                <router-link @click.stop class="row-link" :to="serviceRoute(service, 'http')">
+                                {{ service.name }}
+                                </router-link>
+                            </td>
+                            <td><markdown :source="service.description" class="description" :html="true"></markdown></td>
+                            <td class="text-center">{{ lastRequest(service) }}</td>
+                            <td class="text-center">
+                                <span>{{ requests(service) }}</span>
+                                <span> / </span>
+                                <span v-bind:class="{'text-danger': errors(service) > 0}">{{ errors(service) }}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </template>

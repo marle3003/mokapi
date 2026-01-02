@@ -35,7 +35,7 @@ const servers = computed(() => {
         <div class="card-body">
             <h2 id="servers" class="card-title text-center">Brokers</h2>
          
-            <table class="table dataTable" aria-labelledby="servers">
+            <table class="table dataTable table-responsive-lg" aria-labelledby="servers">
                 <thead>
                     <tr>
                         <th scope="col" class="text-left col-2">Name</th>
