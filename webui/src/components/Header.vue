@@ -12,6 +12,7 @@ import { usePromo } from '@/composables/promo';
 
 const isDashboard = import.meta.env.VITE_DASHBOARD === 'true'
 const useDemo = import.meta.env.VITE_USE_DEMO === 'true'
+const isPromoEnabled = import.meta.env.VITE_PROMO === 'true'
 const promo = usePromo()
 let appInfo: AppInfoResponse | null = null
 const query = ref('')
@@ -199,7 +200,7 @@ function navigateAndClose(params: Record<string, string>) {
 <template>
   <header>
 <!-- Promotion banner -->
-<div class="promo-banner" v-if="promo.activePromotion.value">
+<div class="promo-banner" v-if="isPromoEnabled && promo.activePromotion.value">
   <strong>Shop discount!</strong>
   Get <strong>{{ promo.activePromotion.value.discount }}% off</strong> Mokapi Gear —
   <span class="d-none d-md-inline">
