@@ -29,6 +29,15 @@ runs:
         repository: marle3003/mokapi
         excludes: prerelease, draft
         token: ${{ inputs.token }}
+    - name: Download image
+      id: download
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ inputs.image-name }}
+        path: /tmp
+    - name: Load image
+      run: docker load --input /tmp/mokapi.tar
+      shell: bash
     - name: Run mokapi image
       run: docker run --name mokapi --rm -d -p 80:80 -p 8080:8080 -p 9092:9092 -p 8389:8389 -p 8025:8025 --mount type=bind,source=$(pwd)/webui/scripts/dashboard-demo/demo-configs,target=/data --env MOKAPI_Providers_File_Directory=/data ${{ inputs.image-name }}
       shell: bash
