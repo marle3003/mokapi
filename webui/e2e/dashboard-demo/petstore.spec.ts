@@ -1,4 +1,4 @@
-import { test, expect } from '../models/fixture-dashboard'
+import { test, expect } from '../models/fixture-website'
 import { getCellByColumnName } from '../helpers/table'
 
 test.use({ colorScheme: 'light' })

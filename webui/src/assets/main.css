@@ -117,3 +117,14 @@ i.icon {
   border-color: var(--form-color-border-active);
   box-shadow: 0 0 0 0.2rem rgba(234, 186, 171, 0.25)
 }
+/* class to disable all animations for Playwright tests */
+.no-motion {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0s !important;
+        transition-duration: 0s !important;
+        animation: none !important;
+        transition: none !important;
+    }
+}
