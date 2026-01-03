@@ -174,13 +174,13 @@ function isNumber(value: string): boolean {
         <div class="card-body">
           <div class="row">
             <div class="col col-8 header mb-3">
-              <label id="message-key" class="label">Kafka Key</label>
+              <p id="message-key" class="label">Kafka Key</p>
               <p aria-labelledby="message-key">
                 {{ key(data.key) }}
               </p>
             </div>
             <div class="col">
-              <label id="message-topic" class="label">Kafka Topic</label>
+              <p id="message-topic" class="label">Kafka Topic</p>
               <p>
                 <router-link :to="{ name: getRouteName('kafkaTopic').value, params: { service: event.traits.name, topic: event.traits.topic } }" aria-labelledby="message-topic">
                   {{ event.traits.topic  }}

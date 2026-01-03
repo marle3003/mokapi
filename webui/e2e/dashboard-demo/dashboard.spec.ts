@@ -23,7 +23,7 @@ test('Visit Dashboard Demo Overview', async ({ page }) => {
 
         const row = table.getByRole('row').filter({ hasText: 'Swagger Petstore' })
         await expect(row).toBeVisible()
-        await expect(await getCellByColumnName(table, 'Requests / Errors', row)).toContainText('2 / 0')
+        await expect(await getCellByColumnName(table, 'Requests / Errors', row)).toHaveText('12 / 0')
     })
 
     await test.step('Verify Kafka Order Service is in the Kafka Clusters table', async() => {
@@ -32,7 +32,7 @@ test('Visit Dashboard Demo Overview', async ({ page }) => {
 
         const row = table.getByRole('row').filter({ hasText: 'Kafka Order Service API' })
         await expect(row).toBeVisible()
-        await expect(await getCellByColumnName(table, 'Messages', row)).toContainText('1')
+        await expect(await getCellByColumnName(table, 'Messages', row)).toHaveText('2')
     })
 
     await test.step('Verify Mail Server is in the Mail table', async() => {
@@ -41,7 +41,7 @@ test('Visit Dashboard Demo Overview', async ({ page }) => {
 
         const row = table.getByRole('row').filter({ hasText: 'Mail Server' })
         await expect(row).toBeVisible()
-        await expect(await getCellByColumnName(table, 'Messages', row)).toContainText('2')
+        await expect(await getCellByColumnName(table, 'Messages', row)).toHaveText('2')
     })
 
     await test.step('Verify LDAP Testserver is in the LDAP table', async() => {
@@ -50,6 +50,6 @@ test('Visit Dashboard Demo Overview', async ({ page }) => {
 
         const row = table.getByRole('row').filter({ hasText: 'HR Employee Directory' })
         await expect(row).toBeVisible()
-        await expect(await getCellByColumnName(table, 'Requests', row)).toContainText('0' /*TODO fix error*/)
+        await expect(await getCellByColumnName(table, 'Requests', row)).toHaveText('10')
     })
 })
