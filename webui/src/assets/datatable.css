@@ -4,7 +4,6 @@ table.dataTable {
     color:var(--datatable-color);
     font-size: 0.9rem;
     background-color: var(--datatable-background);
-    table-layout: fixed;
 }
 table.dataTable th {
     background-color: var(--datatable-background);
@@ -45,6 +44,22 @@ table.dataTable .description p {
     line-height: 1.75 !important;
 }
 
+table.dataTable .row-link {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+}
+
+table.dataTable button.row-link {
+    border-color: transparent;
+    background-color: transparent;
+    padding: 0;
+    margin: 0;
+    text-align: left;
+}
+
 .table-responsive {
     table.dataTable {
         table-layout: auto;
@@ -53,4 +68,4 @@ table.dataTable .description p {
     table.dataTable th, .table.dataTable td {
         white-space: nowrap;
     }
-} 
+}

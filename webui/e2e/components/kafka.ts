@@ -128,7 +128,7 @@ export function useKafkaMessages(page: Page) {
                 await expect(page.getByText('Producer Id', { exact: true })).not.toBeVisible({ timeout: 100 })
                 await expect(page.getByText('Producer Epoch', { exact: true })).not.toBeVisible({ timeout: 100 })
                 await expect(page.getByText('Sequence Number', { exact: true })).not.toBeVisible({ timeout: 100 })
-                await expect(page.getByLabel('Content Type', { exact: true })).toHaveText('application/json')
+                await expect(page.getByRole('region', { name: 'Meta' }).getByLabel('Content Type', { exact: true })).toHaveText('application/json')
                 await expect(page.getByLabel('Key Type', { exact: true })).toHaveText('string')
                 await expect(page.getByLabel('Time', { exact: true })).toHaveText(formatDateTime('2023-02-13T09:49:25.482366+01:00'))
 
@@ -151,7 +151,7 @@ export function useKafkaMessages(page: Page) {
                 await expect(page.getByLabel('Producer Id', { exact: true })).toHaveText('3')
                 await expect(page.getByLabel('Producer Epoch', { exact: true })).toHaveText('1')
                 await expect(page.getByLabel('Sequence Number', { exact: true })).toHaveText('1')
-                await expect(page.getByLabel('Content Type', { exact: true })).toHaveText('application/json')
+                await expect(page.getByRole('region', { name: 'Meta' }).getByLabel('Content Type', { exact: true })).toHaveText('application/json')
                 await expect(page.getByLabel('Key Type', { exact: true })).toHaveText('string')
                 await expect(page.getByLabel('Time', { exact: true })).toHaveText(formatDateTime('2023-02-13T09:49:25.482366+01:00'))
 

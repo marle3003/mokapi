@@ -5,7 +5,7 @@ declare module 'markdown-it-codetabs'
 declare module '@ssthouse/vue3-tree-chart'
 declare module 'highlight.js' {
     export interface HLJS{
-        highlightAuto: function()
+        highlightAuto: () => any
     }
     const hljs: HLJS
     export default hljs

@@ -33,6 +33,11 @@
   margin-bottom: 0;
   color: var(--color-text);
 }
+.dashboard .card .card-body h2.card-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-top: 0;
+}
 .dashboard .card .card-body h6.card-title {
   font-size: 0.9rem;
   font-weight: 400;
@@ -81,12 +86,24 @@
     width: 90%;
     margin: 0 auto auto;
 }
+.header-demo {
+    position: fixed;
+    top: 4rem;
+    z-index: 10;
+    width: 90%;
+    padding-top: 15px;
+    padding-bottom: 30px;
+    background-color: var(--color-background);
+}
 .dashboard-tabs {
   background-color: var(--color-background);
   width: 100%;
   position: fixed;
   top: 4rem;
   z-index: 10;
+}
+.dashboard-tabs.demo {
+    top: 10rem;
 }
 .dashboard-tabs nav > div {
   border-bottom: 2px solid;
@@ -116,18 +133,18 @@
 .dashboard-content {
   margin-top: 4rem;
 }
+.dashboard-content.demo {
+    margin-top: 10rem;
+}
 .dashboard a {
   text-decoration: none;
 }
-.dashboard-tabs .nav-link.router-link-active.overview {
+.dashboard-tabs .nav-item.overview .nav-link.router-link-active {
   color: var(--color-text);
   border-bottom-color: var(--dashboard-nav-border);
   border-bottom: none;
 }
-.dashboard-tabs .nav-link.router-link-exact-active.overview {
-  border-bottom-color: var(--dashboard-nav-border-active);
-}
-.dashboard-tabs .nav-link.router-link-active.overview:hover {
+.dashboard-tabs .nav-item.overview .nav-link.router-link-active:hover, .dashboard-tabs .nav-item.overview .nav-link.router-link-exact-active {
   border-bottom: 4px solid;
   margin-bottom: -3px;
   border-bottom-color: var(--dashboard-nav-border-active);
@@ -157,4 +174,13 @@
 }
 .tooltip.bs-tooltip-end .tooltip-arrow::before {
     border-right-color: #f8f9fa;
+}
+
+@media only screen and (max-width: 450px)  {
+  .dashboard-tabs.demo {
+    top: 10.8rem;
+}
+  .dashboard-content.demo {
+    margin-top: 10.8rem;
+  }
 }

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Modal } from 'bootstrap';
 import { computed, ref, useTemplateRef, type PropType } from 'vue';
-import SourceView from '../SourceView.vue';
 
 const props = defineProps({
     parameters: { type: Object as PropType<HttpEventParameter[]>, required: true },
@@ -63,10 +62,10 @@ function openDialog(p: HttpEventParameter) {
         <thead>
             <tr>
                 <th scope="col" style="width:40px" v-if="useValueSwitcher"></th>
-                <th scope="col" class="text-left w-20">Name</th>
-                <th scope="col" class="text-left" style="width:100px;">Type</th>
-                <th scope="col" class="text-center" style="width: 130px;">OpenAPI</th>
-                <th scope="col" class="text-left" style="width:70%">Value</th>
+                <th scope="col" class="text-left col-1">Type</th>
+                <th scope="col" class="text-left col-3">Name</th>
+                <th scope="col" class="text-left col">Value</th>
+                <th scope="col" class="text-center col-2">OpenAPI Defined</th>
             </tr>
         </thead>
         <tbody>
@@ -78,10 +77,10 @@ function openDialog(p: HttpEventParameter) {
                         <i v-else class="bi bi-code" title="Show raw value"></i>
                     </button>
                 </td>
-                <td class="align-middle">{{ p.name }}</td>
                 <td class="align-middle">{{ p.type }}</td>
-                <td class="text-center align-middle">{{ p.value ? 'yes' : 'no' }}</td>
+                <td class="align-middle">{{ p.name }}</td>
                 <td class="align-middle text-truncate">{{ p.value ? (showRaw[p.name] ? p.raw : p.rendered) : p.raw }}</td>
+                <td class="text-center align-middle">{{ p.value ? 'true' : 'false' }}</td>
             </tr>
         </tbody>
     </table>

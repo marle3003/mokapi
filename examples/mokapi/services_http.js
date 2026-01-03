@@ -156,7 +156,11 @@ export let apps = [
                             {
                                 type: "query",
                                 name: "$format",
-                                schema: {type: "string"}
+                                schema: {type: "string"},
+                                required: false,
+                                deprecated: false,
+                                explode: false,
+                                allowReserved: false
                             }
                         ],
                         requestBody: {
@@ -277,7 +281,10 @@ export let apps = [
                                     type: "integer",
                                     format: "int64"
                                 },
-                                required: true
+                                required: false,
+                                deprecated: false,
+                                explode: false,
+                                allowReserved: false
                             },
                             {
                                 name: "name",
@@ -286,7 +293,10 @@ export let apps = [
                                 schema: {
                                     type: "string"
                                 },
-                                required: false
+                                required: false,
+                                deprecated: false,
+                                explode: false,
+                                allowReserved: false
                             },
                             {
                                 name: "status",
@@ -295,7 +305,10 @@ export let apps = [
                                 schema: {
                                     type: "string"
                                 },
-                                required: false
+                                required: false,
+                                deprecated: false,
+                                explode: false,
+                                allowReserved: false
                             }
                         ],
                         responses: [
@@ -337,7 +350,10 @@ export let apps = [
                                     type: "integer",
                                     format: "int64"
                                 },
-                                required: true
+                                required: false,
+                                deprecated: false,
+                                explode: false,
+                                allowReserved: false
                             }
                         ],
                         responses: [
@@ -377,7 +393,9 @@ export let apps = [
                                         type: "string",
                                         enum: ["available", "pending", "sold"]
                                     }
-                                }
+                                },
+                                deprecated: false,
+                                allowReserved: false
                             }
                         ],
                         responses: [
@@ -521,7 +539,7 @@ export let apps = [
                 operations: [
                     {
                         method: "get",
-                        summary: "Add a new pet to the store",
+                        summary: "Get books from the store",
                         operationId: "listBooks",
                         responses: [
                             {
@@ -573,7 +591,7 @@ export let apps = [
 
 export let events = [
     {
-        id: "4242",
+        id: "9e058601-562a-4063-a3b2-066ba624893a",
         traits: {
             namespace: "http",
             name: "Swagger Petstore",

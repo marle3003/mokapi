@@ -97,13 +97,18 @@ const examplePath = computed(() => {
 </script>
 
 <template>
-    <div class="row" v-if="Object.keys(topic.messages).length > 1">
+    <div class="row" v-if="topic.messages && Object.keys(topic.messages).length > 1">
         <div class="col-auto">
             <div class="label">
                 Messages
             </div>
         </div>
         <hr />
+    </div>
+    <div class="row" v-if="!topic.messages || Object.keys(topic.messages).length == 0">
+        <div class="col-auto">
+            No message defined for this topic.
+        </div>
     </div>
     <div v-if="selected">
         <div class="row">
@@ -133,7 +138,7 @@ const examplePath = computed(() => {
         </div>
         <div class="row mt-2">
             <div class="col">
-                <p id="message-content-type" class="label">Content Type</p>
+                <p id="message-content-type" class="label">Message Content Type</p>
                 <p aria-labelledby="message-content-type">{{ selected.contentType }}</p>
             </div>
             

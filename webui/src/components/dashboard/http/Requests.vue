@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { useEvents } from '@/composables/events'
 import { onUnmounted, computed, useTemplateRef, onMounted, reactive, watch, ref, type ComponentPublicInstance  } from 'vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { usePrettyHttp } from '@/composables/http'
 import { Modal, Tooltip } from 'bootstrap'
-import { useService } from '@/composables/services'
 import RegexInput from '@/components/RegexInput.vue'
+import { getRouteName, useDashboard } from '@/composables/dashboard';
 
 const props = defineProps({
     serviceName: { type: String, required: false},
@@ -26,12 +25,11 @@ if (props.serviceName){
 }
 
 const router = useRouter()
-const { fetch } = useEvents()
-const { fetchServices } = useService()
-const { events: data, close } = fetch('http', ...labels.value)
+const { dashboard } = useDashboard()
+const { events: data, close } = dashboard.value.getEvents('http', ...labels.value)
 const { format, duration } = usePrettyDates()
 const { formatStatusCode } = usePrettyHttp()
-const { services, close: closeServices } = fetchServices('http', true);
+const { services, close: closeServices } = dashboard.value.getServices('http', true);
 const dialogRef = useTemplateRef('dialogRef')
 let dialog: Modal | undefined;
 const urlValue = useTemplateRef<ComponentPublicInstance<typeof RegexInput>>('urlValue');
@@ -96,15 +94,21 @@ onMounted(() => {
     }))
 })
 
-function goToRequest(event: ServiceEvent){
+function goToRequest(event: ServiceEvent, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
     }
 
-    router.push({
-        name: 'httpRequest',
+    const to = {
+        name: getRouteName('httpRequest').value,
         params: {id: event.id},
-    })
+    }
+    if (openInNewTab) {
+        const routeData = router.resolve(to);
+        window.open(routeData.href, '_blank')
+    } else {
+        router.push(to)
+    }
 }
 function eventData(event: ServiceEvent): HttpEventData{
     return <HttpEventData>event.data
@@ -115,14 +119,14 @@ watch(filter, () => {
 })
 
 const events = computed<ServiceEvent[]>(() => {
-    let result = data.value;;
+    let result = data.value;
     if (props.serviceName === undefined) {
         switch (filter.service.state) {
             case 'Single':
-                result = result.filter(x => x.traits.name === filter.service.value[0]);
+                result = result.filter(x => x.traits.name === service.value);
                 break;
             case 'Multi':
-                result = result.filter(x => x.traits.name && filter.service.value.includes(x.traits.name));
+                result = result.filter(x => x.traits.name && service.value?.includes(x.traits.name));
         }
     }
     const custom = filter.method.custom?.toUpperCase().split(' ');
@@ -271,7 +275,8 @@ const service = computed({
     get: function() {
         if (filter.service.state === 'Single') {
             if (filter.service.value?.length === 0) {
-                return services.value?.[0]?.name
+                const items = services.value
+                return items[0]?.name;
             } else {
                 return filter.service.value[0]
             }
@@ -554,18 +559,25 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
 </script>
 
 <template>
-    <div class="card">
+    <section class="card" aria-labelledby="requests">
         <div class="card-body">
             <div class="row justify-content-end mb-1">
                 <div class="col-4">
-                    <h6 class="card-title text-center">Recent Requests</h6>
+                    <h2 id="requests" class="card-title text-center">Recent Requests</h2>
                 </div>
                 <div class="col-4 d-flex justify-content-end">
-                    <button class="btn btn-outline-primary position-relative" style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;" @click="showDialog">
+                    <button class="btn btn-outline-primary position-relative" 
+                        style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;"
+                        @click="showDialog"
+                        :aria-label="activeFiltersCount
+                            ? `Filter (${activeFiltersCount} active filter${activeFiltersCount === 1 ? '' : 's'})`
+                            : 'Filter'"
+                        >
                         <i class="bi bi-funnel"></i> Filter
 
                         <span v-if="activeFiltersCount > 0"
-                            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                            aria-hidden="true">
                             {{ activeFiltersCount }}
                         </span>
                     </button>
@@ -573,19 +585,19 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
             </div>
             
             <div class="table-responsive">
-                <table class="table dataTable selectable" data-testid="requests">
+                <table class="table dataTable selectable" data-testid="requests" aria-labelledby="requests">
                     <thead>
                         <tr>
                             <th v-if="hasDeprecatedRequests" scope="col" class="text-center" style="width: 5px;"></th>
-                            <th scope="col" class="text-left" style="width: 80px;">Method</th>
-                            <th scope="col" class="text-left">URL</th>
-                            <th scope="col" class="text-center">Status Code</th>
-                            <th scope="col" class="text-center">Time</th>
-                            <th scope="col" class="text-center">Duration</th>
+                            <th scope="col" class="text-left col-1">Method</th>
+                            <th scope="col" class="text-left col">URL</th>
+                            <th scope="col" class="text-center col-1">Status Code</th>
+                            <th scope="col" class="text-center col-2">Time</th>
+                            <th scope="col" class="text-center col-1">Duration</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="event in events!" :key="event.id" @click="goToRequest(event)">
+                        <tr v-for="event in events!" :key="event.id" @click="goToRequest(event)" @mousedown.middle="goToRequest(event, true)">
                             <td v-if="hasDeprecatedRequests" style="padding-left:0;">
                                 <span class="bi bi-exclamation-triangle-fill yellow warning" v-if="eventData(event).deprecated" title="deprecated"></span>
                             </td>
@@ -595,7 +607,9 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                                 </span>
                             </td>
                             <td>
-                                {{ eventData(event).request.url }}
+                                <router-link @click.stop class="row-link" :to="{ name: getRouteName('httpRequest').value, params: {id: event.id} }">
+                                    {{ eventData(event).request.url }}
+                                </router-link>
                             </td>
                             <td class="text-center">{{ formatStatusCode(eventData(event).response.statusCode.toString()) }}</td>
                             <td class="text-center">{{ format(event.time) }}</td>
@@ -605,13 +619,13 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                 </table>
             </div>
         </div>
-    </div>
+    </section>
 
-    <div class="modal fade" tabindex="-1"  aria-hidden="true" ref="dialogRef">
+    <div class="modal fade" tabindex="-1"  aria-hidden="true" ref="dialogRef" aria-labelledby="requests-filter-title">
         <div class="modal-dialog modal-lg modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h6 class="modal-title">Filter</h6>
+                    <h6 id="requests-filter-title" class="modal-title">Filter</h6>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
@@ -671,7 +685,7 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                         </div>
                         <div class="col" v-if="filter.url.checkbox">
                             <div class="row me-0">
-                                <RegexInput v-model="filter.url.value" ref="urlValue" placeholder="[Regex]" />
+                                <RegexInput v-model="filter.url.value" ref="urlValue" placeholder="[regex]" aria-label="URL filter. Supports regular expressions." />
                             </div>
                         </div>
                     </div>
@@ -691,17 +705,17 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                         </div>
                         <div class="col" v-if="filter.request.headers.checkbox">
                             <div  v-for="(hf, i) in filter.request.headers.value">
-                                <div class="row me-0":class="{ 'mb-2': i < filter.request.headers.value.length - 1 }" >
+                                <div class="row me-0":class="{ 'mb-2': (i as number) < (filter.request.headers.value.length - 1)}" >
                                     <div class="col ps-0 pe-1">
-                                        <input type="text" class="form-control form-control-sm" id="reqeuest-header-name" v-model="hf.name" placeholder="Name" @input="onHeaderInput(filter.request.headers, i)">
+                                        <input type="text" class="form-control form-control-sm" id="reqeuest-header-name" v-model="hf.name" placeholder="Name" @input="onHeaderInput(filter.request.headers, (i as number) )">
                                     </div>
                                     <div class="col ps-1 pe-0">
-                                        <RegexInput v-model="hf.value" :ref="el => requestHeaderValueRefs[i] = el" placeholder="Value [Regex]" @input="onHeaderInput(filter.request.headers, i)" />
+                                        <RegexInput v-model="hf.value" :ref="el => requestHeaderValueRefs[(i as number) ] = el" placeholder="Value [Regex]" @input="onHeaderInput(filter.request.headers, (i as number) )" />
                                     </div>
                                     <div class="col-1">
-                                        <button v-if="i < filter.request.headers.value.length -1"
+                                        <button v-if="(i as number)  < filter.request.headers.value.length -1"
                                             class="btn btn-outline-danger btn-sm"
-                                            @click="removeHeaderFilter(filter.request.headers, i)">
+                                            @click="removeHeaderFilter(filter.request.headers, (i as number) )">
                                             <i class="bi bi-x"></i>
                                         </button>
                                     </div>
@@ -745,17 +759,17 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                         </div>
                         <div class="col" v-if="filter.response.headers.checkbox">
                             <div  v-for="(hf, i) in filter.response.headers.value">
-                                <div class="row me-0":class="{ 'mb-2': i < filter.response.headers.value.length - 1 }" >
+                                <div class="row me-0":class="{ 'mb-2': (i as number)  < filter.response.headers.value.length - 1 }" >
                                     <div class="col ps-0 pe-1">
-                                        <input type="text" class="form-control form-control-sm" id="response-header-name" v-model="hf.name" placeholder="Name" @input="onHeaderInput(filter.response.headers, i)">
+                                        <input type="text" class="form-control form-control-sm" id="response-header-name" v-model="hf.name" placeholder="Name" @input="onHeaderInput(filter.response.headers, (i as number) )">
                                     </div>
                                     <div class="col ps-1 pe-0">
-                                        <RegexInput v-model="hf.value" :ref="el => responseHeaderValueRefs[i] = el" placeholder="Value [Regex]" @input="onHeaderInput(filter.response.headers, i)" />
+                                        <RegexInput v-model="hf.value" :ref="el => responseHeaderValueRefs[(i as number) ] = el" placeholder="Value [Regex]" @input="onHeaderInput(filter.response.headers, (i as number) )" />
                                     </div>
                                     <div class="col-1">
-                                        <button v-if="i < filter.response.headers.value.length -1"
+                                        <button v-if="(i as number)  < filter.response.headers.value.length -1"
                                             class="btn btn-outline-danger btn-sm"
-                                            @click="removeHeaderFilter(filter.response.headers, i)">
+                                            @click="removeHeaderFilter(filter.response.headers, (i as number) )">
                                             <i class="bi bi-x"></i>
                                         </button>
                                     </div>

@@ -122,8 +122,11 @@ components:
           type: string
         explode:
           type: boolean
+        allowReserved:
+          type: boolean
         schema:
           $ref: 'schema.yml#/components/schemas/Schema'
+      required: [ name, type, required, deprecated, explode, allowReserved ]
     Header:
       type: object
       properties:

@@ -3,6 +3,7 @@ package directory
 import (
 	"fmt"
 	"mokapi/ldap"
+	"strconv"
 )
 
 type EntryError struct {
@@ -82,4 +83,13 @@ func NewEntryError(code uint8, format string, args ...interface{}) *EntryError {
 		Message: fmt.Sprintf(format, args...),
 		Code:    code,
 	}
+}
+
+func (e *Entry) getInt(attr string) int {
+	vals, ok := e.Attributes[attr]
+	if !ok || len(vals) == 0 {
+		return 0
+	}
+	i, _ := strconv.Atoi(vals[0])
+	return i
 }

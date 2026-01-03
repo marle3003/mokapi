@@ -1,13 +1,4 @@
-import { useFetch, type Response } from './fetch'
-
 export function useMetrics() {
-    let responses: Response[] = []
-
-    function query(query: string): Response {
-        const response = useFetch('/api/metrics?q=' + query)
-        responses.push(response)
-        return response
-    }
 
     function max(metrics: Metric[], name: string, ...labels: Label[]): number {
         if (!metrics){
@@ -58,5 +49,5 @@ export function useMetrics() {
         return true
     }
 
-    return {query, sum, max}
+    return {sum, max}
 }

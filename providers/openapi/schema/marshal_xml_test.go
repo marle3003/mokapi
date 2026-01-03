@@ -212,11 +212,24 @@ func TestMarshal_Xml(t *testing.T) {
 				schematest.WithItems("integer"),
 				schematest.WithXml(&schema.Xml{
 					Name:    "foo",
-					Wrapped: true, // without wrapped results in invalid xml when on root
+					Wrapped: true,
 				})),
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, `<foo><foo>1</foo><foo>2</foo><foo>3</foo></foo>`, s)
+			},
+		},
+		{
+			name: "array without XML name",
+			data: func() interface{} {
+				return []interface{}{1, 2, 3}
+			},
+			schema: schematest.New("array",
+				schematest.WithItems("integer", schematest.WithXml(&schema.Xml{Name: "item"})),
+			),
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `<data><item>1</item><item>2</item><item>3</item></data>`, s)
 			},
 		},
 		{
@@ -283,6 +296,23 @@ func TestMarshal_Xml(t *testing.T) {
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, `<foo><foo>bar</foo></foo>`, s)
+			},
+		},
+		{
+			name: "array used in property",
+			data: func() interface{} {
+				return map[string]any{"foo": []any{1, 2, 3}}
+			},
+			schema: schematest.New("object",
+				schematest.WithProperty("foo",
+					schematest.New("array",
+						schematest.WithItems("integer"),
+					),
+				),
+			),
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `<data><foo>1</foo><foo>2</foo><foo>3</foo></data>`, s)
 			},
 		},
 		{

@@ -3,7 +3,6 @@ import { onUnmounted, type PropType } from 'vue'
 import { useRoute } from '@/router';
 import HttpOperationsCard from './HttpOperationsCard.vue';
 import Requests from './Requests.vue';
-import '@/assets/http.css'
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },
@@ -36,15 +35,15 @@ onUnmounted(() => {
                 <div class="card-body">
                     <div class="row">
                         <div class="col-6 header mb-3">
-                            <p class="label">Path</p>
-                            <p data-testid="path">
+                            <p id="path" class="label">Path</p>
+                            <p data-testid="path" aria-labelledby="path">
                                 <span class="bi bi-exclamation-triangle-fill yellow pe-2" v-if="allOperationsDeprecated()"></span>
                                 {{ path.path }}
                             </p>
                         </div>
                         <div class="col">
-                            <p class="label">Service</p>
-                            <p data-testid="service">
+                            <p id="service" class="label">Service</p>
+                            <p data-testid="service" aria-labelledby="service">
                                 <router-link :to="route.service(service, 'http')">
                                 {{ service.name }}
                                 </router-link>

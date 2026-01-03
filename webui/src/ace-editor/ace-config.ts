@@ -1,3 +1,5 @@
+import ace from "ace-builds/src-noconflict/ace";
+
 import 'ace-builds'
 import 'ace-builds/src-noconflict/mode-json'
 import 'ace-builds/src-noconflict/mode-xml'
@@ -5,7 +7,9 @@ import 'ace-builds/src-noconflict/mode-yaml'
 import 'ace-builds/src-noconflict/mode-javascript'
 import '@/ace-editor/ace-theme-mokapi-dark.js'
 import '@/ace-editor/ace-theme-mokapi-light.js'
+import '@/ace-editor/mode-ldif.js'
 
+ace.config.set("useWorker", false);
 
 // ace.config.setModuleUrl('ace/mode/json', modeJsonUrl)
 // ace.config.setModuleUrl('ace/mode/xml', xmlUrl)

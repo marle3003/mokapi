@@ -52,14 +52,14 @@ test.describe('Visit Books API', () => {
             let cells = path.methods.locator('tbody tr').nth(0).getByRole('cell')
             await expect(cells.nth(0)).toHaveText('GET', {ignoreCase: false})
             await expect(cells.nth(0).locator('span')).toHaveClass('badge operation get')
-            await expect(cells.nth(1)).toHaveText('Add a new pet to the store')
-            await expect(cells.nth(2)).toHaveText('listBooks')
+            await expect(cells.nth(1)).toHaveText('listBooks')
+            await expect(cells.nth(2)).toHaveText('Get books from the store')
 
             cells = path.methods.locator('tbody tr').nth(1).getByRole('cell')
             await expect(cells.nth(0)).toHaveText('POST', {ignoreCase: false})
             await expect(cells.nth(0).locator('span')).toHaveClass('badge operation post')
-            await expect(cells.nth(1)).toHaveText('Add a new book')
-            await expect(cells.nth(2)).toHaveText('addBook')
+            await expect(cells.nth(1)).toHaveText('addBook')
+            await expect(cells.nth(2)).toHaveText('Add a new book')
 
             await test.step('visit method post', async () => {
                 await path.clickOperation('POST')

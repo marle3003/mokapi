@@ -1,17 +1,16 @@
 <script setup lang="ts">
-import { useService } from '@/composables/services'
 import { useMetrics } from '@/composables/metrics'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { useRouter, useRoute } from 'vue-router'
 import { onUnmounted } from 'vue'
 import Markdown from 'vue3-markdown-it'
+import { getRouteName, useDashboard } from '@/composables/dashboard';
 
-const { fetchServices } = useService()
 const { sum, max } = useMetrics()
 const { format } = usePrettyDates()
-const route = useRoute()
 const router = useRouter()
-const { services, close } = fetchServices('kafka')
+const { dashboard } = useDashboard();
+const { services, close } = dashboard.value.getServices('kafka');
 
 function lastMessage(service: Service){
     const n = max(service.metrics, 'kafka_message_timestamp')
@@ -25,16 +24,21 @@ function messages(service: Service){
     return sum(service.metrics, 'kafka_messages_total')
 }
 
-function goToService(service: Service){
+function goToService(service: Service, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
     }
 
-    router.push({
-        name: 'kafkaService',
+    const to = {
+        name: getRouteName('kafkaService').value,
         params: {service: service.name},
-        query: {refresh: route.query.refresh}
-    })
+    };
+    if (openInNewTab) {
+        const routeData = router.resolve(to);
+        window.open(routeData.href, '_blank')
+    } else {
+        router.push(to)
+    }
 }
 
 onUnmounted(() => {
@@ -45,7 +49,7 @@ onUnmounted(() => {
 <template>
     <section class="card" aria-labelledby="clusters" data-testid="kafka-service-list">
         <div class="card-body">
-            <div class="card-title text-center" id="clusters">Kafka Clusters</div>
+            <h2 class="card-title text-center" id="clusters">Kafka Clusters</h2>
             <table class="table dataTable selectable">
                 <caption class="visually-hidden">Kafka Clusters</caption>
                 <thead>
@@ -57,8 +61,12 @@ onUnmounted(() => {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="service in services" key="service.name" @click="goToService(service)">
-                        <td>{{ service.name }}</td>
+                    <tr v-for="service in services" key="service.name" @mouseup.left="goToService(service)" @mousedown.middle="goToService(service, true)">
+                        <td>
+                            <router-link @click.stop class="row-link" :to="{ name: getRouteName('kafkaService').value, params: {service: service.name} }">
+                                {{ service.name }}
+                            </router-link>
+                        </td>
                         <td><markdown :source="service.description" class="description" :html="true"></markdown></td>
                         <td class="text-center">{{ lastMessage(service) }}</td>
                         <td class="text-center">{{ messages(service) }}</td>

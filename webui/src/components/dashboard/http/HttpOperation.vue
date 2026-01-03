@@ -21,25 +21,25 @@ const route = useRoute()
             <div class="card">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-6 header">
-                            <p class="label">Operation</p>
-                            <p>
+                        <div class="col-8 header mb-3">
+                            <p id="operation" class="label">Operation</p>
+                            <p aria-labelledby="operation">
                                 <span class="bi bi-exclamation-triangle-fill yellow pe-2" style="vertical-align: middle;" v-if="operation.deprecated"></span>
                                 <span class="badge operation" :class="operation.method" data-testid="operation">{{ operation.method.toUpperCase() }}</span>
-                                <span class="ps-2" data-testid="path">
+                                <span data-testid="path">
                                     <router-link :to="route.httpPath(service, path)">
-                                        {{ path.path }}
+                                        &nbsp;{{ path.path }}
                                     </router-link>
                                 </span>
                             </p>
                         </div>
                         <div class="col">
-                            <p class="label">Operation ID</p>
-                            <p data-testid="operationid">{{ operation.operationId }}</p> 
+                            <p id="operation-id" class="label">Operation ID</p>
+                            <p aria-labelledby="operation-id">{{ operation.operationId }}</p> 
                         </div>
                         <div class="col">
-                            <p class="label">Service</p>
-                            <p data-testid="service">
+                            <p id="service" class="label">Service</p>
+                            <p aria-labelledby="service">
                                 <router-link :to="route.service(service, 'http')">
                                     {{ service.name }}
                                 </router-link>
@@ -54,8 +54,8 @@ const route = useRoute()
                         </div>
                     </div>
                     <div class="row" v-if="operation.summary">
-                        <p class="label">Summary</p>
-                        <p data-testid="summary">{{ operation.summary }}</p>
+                        <p id="summary" class="label">Summary</p>
+                        <p aria-labelledby="summary">{{ operation.summary }}</p>
                     </div>
                     <div class="row" v-if="operation.description">
                         <p class="label">Description</p>

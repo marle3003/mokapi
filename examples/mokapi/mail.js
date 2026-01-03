@@ -104,7 +104,7 @@ export let services = [
 
 export let mailEvents = [
     {
-        id: "8832",
+        id: "273cd167-f5a5-4da1-969e-d44213686491",
         traits: {
             namespace: "mail",
             name: "Mail Testserver",

@@ -11,7 +11,11 @@ import (
 )
 
 func (m *Module) Cron(expr string, do goja.Value, args goja.Value) (int, error) {
-	options, err := getJobOptions(m.vm, args)
+	options, err := getJobOptions(m.vm, args, common.JobOptions{
+		Tags:                  map[string]string{},
+		Times:                 -1,
+		SkipImmediateFirstRun: true,
+	})
 	if err != nil {
 		panic(m.vm.ToValue(err.Error()))
 	}
@@ -33,8 +37,8 @@ func (m *Module) Cron(expr string, do goja.Value, args goja.Value) (int, error) 
 	return m.host.Cron(expr, f, options)
 }
 
-func getJobOptions(vm *goja.Runtime, opt goja.Value) (common.JobOptions, error) {
-	options := common.NewJobOptions()
+func getJobOptions(vm *goja.Runtime, opt goja.Value, defaultOptions common.JobOptions) (common.JobOptions, error) {
+	options := defaultOptions
 
 	if opt != nil && !goja.IsUndefined(opt) && !goja.IsNull(opt) {
 		if opt.ExportType().Kind() != reflect.Map {

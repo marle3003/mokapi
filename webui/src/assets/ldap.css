@@ -1,0 +1,21 @@
+.operation.bind, .operation.unbind {
+    background-color: var(--color-grey);
+}
+.operation.search {
+    background-color: var(--color-blue);
+}
+.operation.add {
+    background-color: var(--color-green);
+}
+.operation.modify {
+    background-color: var(--color-orange);
+}
+.operation.modifydn {
+    background-color: var(--color-purple);
+}
+.operation.delete {
+    background-color: var(--color-red);
+}
+.operation.compare {
+    background-color: var(--color-teal);
+}

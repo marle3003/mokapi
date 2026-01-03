@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { type Ref, computed, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { useService } from '@/composables/services'
 import KafkaGroups from './KafkaGroups.vue'
 import KafkaMessages from './KafkaMessages.vue'
 import KafkaPartition from './KafkaPartition.vue'
 import TopicConfig from './TopicConfig.vue'
 import Markdown from 'vue3-markdown-it'
+import { getRouteName, useDashboard } from '@/composables/dashboard';
 
-const { fetchService } = useService()
 const route = useRoute()
 const serviceName = route.params.service!.toString()
 const topicName = route.params.topic?.toString()
-const { service, close } = <{service: Ref<KafkaService | null>, close: () => void}>fetchService(serviceName, 'kafka')
+const { dashboard } = useDashboard()
+const result = dashboard.value.getService(serviceName, 'kafka')
+const service = result.service as Ref<KafkaService | null>
 const topic = computed(() => {
   if (!service.value) {return null}
   for (let topic of service.value?.topics){
@@ -23,21 +24,21 @@ const topic = computed(() => {
   return null
 })
 onUnmounted(() => {
-    close()
+    result.close()
 })
 </script>
 
 <template>
-  <div v-if="$route.name == 'kafkaTopic' && service != null && topic">
+  <div v-if="$route.name == getRouteName('kafkaTopic').value && service != null && topic">
       <div class="card-group">
         <section class="card" aria-label="Info">
             <div class="card-body">
                 <div class="row">
-                    <div class="col header mb-3">
+                    <div class="col-8 header mb-3">
                         <p id="topic" class="label">Topic</p>
                         <p aria-labelledby="topic">{{ topic.name }}</p>
                     </div>
-                    <div class="col header">
+                    <div class="col">
                         <p id="cluster" class="label">Cluster</p>
                         <p>
                           <router-link :to="{

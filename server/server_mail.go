@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	engine "mokapi/engine/common"
 	"mokapi/imap"
@@ -13,6 +12,8 @@ import (
 	"mokapi/smtp"
 	"net"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type MailServer interface {
@@ -75,10 +76,7 @@ func (m *MailManager) startServers(cfg *runtime.MailInfo) error {
 	}
 	h := cfg.Handler(m.app.Monitor.Mail, m.eventEmitter, m.app.Events)
 	for _, server := range cfg.Servers {
-		_, port, err := net.SplitHostPort(server.Host)
-		if err != nil {
-			return err
-		}
+		_, port, _ := net.SplitHostPort(server.Host)
 
 		switch server.Protocol {
 		case "smtp":

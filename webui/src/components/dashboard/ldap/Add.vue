@@ -1,13 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import Actions from '../Actions.vue'
-import { usePrettyDates } from '@/composables/usePrettyDate';
 
 const props = defineProps<{
    event: ServiceEvent
 }>()
-
-const { format, duration } = usePrettyDates()
 
 const data = computed((): {data: LdapEventData, request: LdapAddRequest, response: LdapResponse} => {
     const data = <LdapEventData>props.event.data
@@ -17,44 +14,17 @@ const data = computed((): {data: LdapEventData, request: LdapAddRequest, respons
 const hasActions = computed(() => {
     return data.value.data.actions?.length > 0
 })
+const attributes = computed(() => {
+    return data.value.request.attributes.sort((x: LdapAttribute, y: LdapAttribute) => x.type.localeCompare(y.type));
+})
 </script>
 
 <template>
     <div v-if="event">
         <div class="card-group">
-            <div class="card">
+            <section class="card" aria-labelledby="request-title">
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col header">
-                            <p class="label">Operation</p>
-                            <p>Add {{ data.request.dn }}</p>
-                        </div>
-                        <div class="col-2">
-                            <p class="label">Time</p>
-                            <p>{{ format(event.time) }}</p>
-                        </div>
-                        <div class="col-2">
-                            <p class="label">Duration</p>
-                            <p>{{ duration(data.data.duration) }}</p>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-2">
-                            <p class="label">Status</p>
-                            <p>{{ data.response.status }}</p>
-                        </div>
-                        <div class="col" v-if="data.response.message">
-                            <p class="label">Message</p>
-                            <p>{{ data.response.message }}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="card-group">
-            <div class="card">
-                <div class="card-body">
-                    <div class="card-title text-center">Modifications</div>
+                    <h2 id="request-title" class="card-title text-center">Request</h2>
                     <table class="table dataTable">
                         <thead>
                             <tr>
@@ -63,7 +33,7 @@ const hasActions = computed(() => {
                             </tr>
                         </thead>
                         <tbody>
-                            <tr v-for="attr of data.request.attributes">
+                            <tr v-for="attr of attributes">
                                 <td>{{ attr.type }}</td>
                                 <td>
                                     <p v-for="v of attr.values">{{ v }}</p>
@@ -72,7 +42,7 @@ const hasActions = computed(() => {
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </section>
         </div>
         <div class="card-group" v-if="hasActions">
             <div class="card">

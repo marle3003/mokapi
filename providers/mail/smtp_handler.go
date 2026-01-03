@@ -2,12 +2,13 @@ package mail
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/engine/common"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/smtp"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Handler struct {
@@ -89,8 +90,10 @@ func (h *Handler) serveMail(rw smtp.ResponseWriter, r *smtp.MailRequest, ctx *sm
 	if len(h.config.Mailboxes) > 0 {
 
 		if m, ok := h.store.Mailboxes[r.From]; !ok {
-			h.writeErrorResponse(rw, r, smtp.AddressRejected, fmt.Sprintf("Unknown mailbox %v", r.From))
-			return
+			if !h.AllowUnknownSenders() {
+				h.writeErrorResponse(rw, r, smtp.AddressRejected, fmt.Sprintf("Unknown mailbox %v", r.From))
+				return
+			}
 		} else if len(m.Username) > 0 && len(ctx.Auth) == 0 {
 			h.writeErrorResponse(rw, r, smtp.AuthRequired, "")
 			return
@@ -150,4 +153,11 @@ func (h *Handler) writeRuleResponse(rw smtp.ResponseWriter, r smtp.Request, resp
 	l := NewLogEvent(nil, clientContext, h.eh, events.NewTraits().WithName(h.config.Info.Name))
 	l.Error = response.Message
 	_ = rw.Write(res)
+}
+
+func (h *Handler) AllowUnknownSenders() bool {
+	if h.config.Settings == nil {
+		return true
+	}
+	return h.config.Settings.AllowUnknownSenders
 }

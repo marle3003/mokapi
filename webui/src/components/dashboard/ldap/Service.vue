@@ -1,28 +1,29 @@
 <script setup lang="ts">
 import { type Ref, onUnmounted } from 'vue'
-import { useService } from '@/composables/services'
 import { useRoute } from 'vue-router'
 import Servers from './Server.vue'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
 import Searches from './Requests.vue'
 import ConfigCard from '../ConfigCard.vue'
 import Request from './Request.vue'
+import { getRouteName, useDashboard } from '@/composables/dashboard';
+import '@/assets/ldap.css'
 
-const {fetchService} = useService()
 const route = useRoute()
 const serviceName = route.params.service?.toString()
 let service: Ref<LdapService | null>
 if (serviceName){
-    const result = <{service: Ref<LdapService | null>, close: () => void}>fetchService(serviceName, 'ldap')
-    service = result.service
-    onUnmounted(() => {
-        result.close()
-})
+  const { dashboard } = useDashboard()
+  const result = dashboard.value.getService(serviceName, 'ldap')
+  service = result.service as Ref<LdapService | null>
+  onUnmounted(() => {
+      result.close()
+  })
 }
 </script>
 
 <template>
-  <div v-if="$route.name == 'ldapService' && service != null">
+  <div v-if="$route.name == getRouteName('ldapService').value && service != null">
       <div class="card-group">
           <service-info-card :service="service" type="LDAP" />
       </div>
@@ -36,5 +37,5 @@ if (serviceName){
         <searches :service="service" />
       </div>
   </div>
-  <request v-if="$route.name == 'ldapRequest'"></request>
+  <request v-if="$route.name == getRouteName('ldapRequest').value"></request>
 </template>

@@ -67,6 +67,12 @@ func WithQueryParam(name string, required bool, opts ...ParamOptions) OperationO
 	}
 }
 
+func WithExplode(explode bool) ParamOptions {
+	return func(p *openapi.Parameter) {
+		p.Explode = &explode
+	}
+}
+
 func WithCookieParam(name string, required bool, opts ...ParamOptions) OperationOptions {
 	return func(o *openapi.Operation) {
 		o.Parameters = append(o.Parameters, &openapi.ParameterRef{

@@ -24,7 +24,11 @@ const { formatSchema } = usePrettyLanguage()
         </thead>
         <tbody>
             <tr v-for="header in headers!" :key="header.name" data-bs-toggle="modal" :data-bs-target="'#modal-'+header.name">
-                <td>{{ header.name }}</td>
+                <td>
+                    <span role="button" @click.stop data-bs-toggle="modal" :data-bs-target="'#modal-'+header.name" :title="'Read more about header '+header.name" tabindex="0">
+                        {{ header.name }}
+                    </span>
+                </td>
                 <td>{{ printType(header.schema) }}</td>
                 <td><markdown :source="header.description" class="description" :html="true"></markdown></td>
             </tr>
@@ -43,7 +47,7 @@ const { formatSchema } = usePrettyLanguage()
                         <div class="codeBlock">
                             <source-view 
                                 :source="{ preview: { content: formatSchema(header.schema), contentType: 'application/json' }}" 
-                                :deprecated="header.schema.deprecated" 
+                                :deprecated="header.schema?.deprecated" 
                                 :hide-content-type="true"
                                 :height="250" class="mb-2">
                             </source-view>

@@ -1,18 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import Markdown from 'vue3-markdown-it'
 
 const props = defineProps<{
     service: Service,
     type?: string
 }>()
-
-const developer = computed(() => {
-    if (!props.service?.contact?.name || props.service?.contact?.name === '') {
-        return 'the developer'
-    }
-    return props.service.contact.name
-})
 </script>
 
 <template>
@@ -30,12 +22,15 @@ const developer = computed(() => {
                     <div class="col-2">
                         <p id="contact" class="label">Contact</p>
                         <ul v-if="service.contact" class="contact" aria-labelledby="contact" data-testid="service-contact">
-                            <li>
-                                <a v-if="service.contact.url" :href="service.contact.url" :title="developer+' - Website'">{{ service.contact.name }}</a>
+                            <li v-if="service.contact.name || service.contact.url">
+                                <a v-if="service.contact.url" :href="service.contact.url">
+                                    <span v-if="service.contact.name">{{ service.contact.name }}</span>
+                                    <i v-else class="bi bi-link"></i>
+                                </a>
                                 <span v-else>{{ service.contact.name }}</span>
                             </li>
                             <li>
-                                <a v-if="service.contact.email" :href="'mailto:'+service.contact.email" :title="'Send email to '+developer" data-testid="service-mail">
+                                <a v-if="service.contact.email" :href="'mailto:'+service.contact.email" :title="service.contact.email" data-testid="service-mail">
                                     <span class="bi bi-envelope"></span>
                                 </a>
                             </li>

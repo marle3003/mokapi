@@ -3,9 +3,13 @@
     --color-background-mute:  #2e2e31;
     --color-background-soft: rgb(40,43,51);
     --color-background-light: #393a40;
+    
+    --color-background-promo: #323743;
+    --color-border-promo: rgba(211, 212, 213, 0.25);
 
     --color-border: #282b33;
 
+    --color-grey: rgb(108, 117, 125);
     --color-red: rgb(255, 46, 74);
     --color-red-shadow: rgba(255, 46, 74, 0.4);
     --color-blue: rgb(2, 123, 255);
@@ -18,6 +22,7 @@
     --color-yellow-shadow: rgba(255, 193, 7, 0.4);
     --color-purple: rgb(182, 68, 164);
     --color-purpl-shadowe: rgba(182, 68, 164, 0.4);
+    --color-teal: rgb(0, 137, 123);
 
     --color-brand: #d3d4d5;
     --color-brand-hover: #eabaabff;
@@ -102,6 +107,9 @@
     --color-background-soft: #f8fafc;
     --color-background-light: #e5e9f0;
     --color-border: #e2e8f0;
+
+    --color-background-promo: #fff;
+    --color-border-promo: #dee2e6;
 
     --color-refresh-background: rgb(8, 109, 215);
 

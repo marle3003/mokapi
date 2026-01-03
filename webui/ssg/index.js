@@ -12,8 +12,13 @@ const Server = require('./server');
   const browser = await chromium.launch();
 
   async function crawl(url) {
-    if (!url.href.startsWith('http://localhost:8025') || url.href.startsWith('http://localhost:8025/dashboard')) {
+    if (!url.href.startsWith('http://localhost:8025') || url.href === 'http://localhost:8025/dashboard') {
+      console.log('skip ' + url)
       return
+    }
+    if (path.extname(url.pathname) === '.ts') {
+      console.log('skip ' + url);
+      return;
     }
     if (visited.has(url.pathname)) {
       return
@@ -21,9 +26,19 @@ const Server = require('./server');
     visited.add(url.pathname)
     console.info(`crawling ${url.href}...`)
     const page = await browser.newPage();
-    await page.goto(url.href, {
+    const response = await page.goto(url.href, {
       waitUntil: 'networkidle',
     });
+
+    if (!response) {
+      throw new Error(`page ${url.href} not found`);
+    }
+
+    const contentType = response.headers()['content-type'] ?? '';
+    if (!contentType.includes('text/html')) {
+      console.log('skip ' + contentType);
+      return
+    }
 
     await page.evaluate(async () => {
       for (const script of document.querySelectorAll('script')) {
@@ -50,7 +65,7 @@ const Server = require('./server');
       throw new Error(`page ${url.href} not found: ${msg}`)
     }
 
-    let p = path.join('../dist', url.pathname)
+    let p = path.join('../dist', decodeURIComponent(url.pathname))
     if (!fs.existsSync(path.dirname(p))){
       fs.mkdirSync(path.dirname(p), { recursive: true });
     }
@@ -67,7 +82,7 @@ const Server = require('./server');
 
     for (const u of links) {
       try {
-      await crawl(u)
+        await crawl(u)
       } catch (err) {
         if (err.message && err.message.startsWith('page ')) { 
           throw new Error(`crawl link on page ${url} failed: ${err}`)

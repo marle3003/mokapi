@@ -57,9 +57,9 @@ const examplePath = computed(() => {
 </script>
 
 <template>
-    <div class="card response" data-testid="http-response">
+    <section class="card response" aria-labelledby="response">
         <div class="card-body">
-            <div class="card-title text-center">Response</div>
+            <h2 id="response" class="card-title text-center">Response</h2>
             <div class="d-flex align-items-start align-items-stretch">
                 <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical">
                     <button v-for="(response, index) of operation.responses" class="badge status-code" :class="getClassByStatusCode(response.statusCode) + (index==0 ? ' active' : '')" :id="'v-pills-'+response.statusCode+'-tab'" data-bs-toggle="pill" :data-bs-target="'#v-pills-'+response.statusCode" type="button" role="tab" :aria-controls="'v-pills-'+response.statusCode" :aria-selected="index === 0">{{ formatStatusCode(response.statusCode) }}</button>
@@ -104,7 +104,7 @@ const examplePath = computed(() => {
                 </div>
             </div>
         </div>
-    </div>
+    </section>
 </template>
 
 <style scoped>

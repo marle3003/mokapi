@@ -2,8 +2,6 @@ package runtime
 
 import (
 	"context"
-	"github.com/blevesearch/bleve/v2"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/engine/common"
@@ -15,6 +13,9 @@ import (
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/blevesearch/bleve/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 type LdapStore struct {
@@ -185,7 +186,13 @@ func (h *ldapHandler) ServeLDAP(rw ldap.ResponseWriter, r *ldap.Request) {
 	r.Context = context.WithValue(r.Context, "time", time.Now())
 
 	h.next.ServeLDAP(rw, r)
+}
 
+func (h *ldapHandler) Unbind(ctx context.Context) {
+	ctx = monitor.NewLdapContext(ctx, h.ldap)
+	ctx = context.WithValue(ctx, "time", time.Now())
+
+	h.next.Unbind(ctx)
 }
 
 func IsLdapConfig(c *dynamic.Config) (*directory.Config, bool) {

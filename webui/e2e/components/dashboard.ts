@@ -10,10 +10,10 @@ export function useDashboard(page: Page) {
 export function useDashboardTabs(page: Page) {
     return {
         overview: page.getByRole('link', { name: 'Overview' }),
-        http: page.getByRole('link', { name: 'HTTP' }),
-        kafka: page.getByRole('link', { name: 'Kafka' }),
-        mail: page.getByRole('link', { name: 'Mail' }),
-        ldap: page.getByRole('link', { name: 'LDAP' }),
-        configs: page.getByRole('link', { name: 'Configs' }),
+        http: page.getByRole('link', { name: 'HTTP', exact: true }),
+        kafka: page.getByRole('link', { name: 'Kafka', exact: true }),
+        mail: page.getByRole('link', { name: 'Mail', exact: true }),
+        ldap: page.getByRole('link', { name: 'LDAP', exact: true }),
+        configs: page.getByRole('link', { name: 'Configs', exact: true }),
     }
 }

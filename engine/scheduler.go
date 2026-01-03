@@ -1,10 +1,11 @@
 package engine
 
 import (
-	"github.com/go-co-op/gocron"
 	"mokapi/engine/common"
 	"sync"
 	"time"
+
+	"github.com/go-co-op/gocron"
 )
 
 type Scheduler interface {
@@ -54,8 +55,8 @@ func (s *DefaultScheduler) Cron(expr string, handler func(), opt common.JobOptio
 	if opt.Times > 0 {
 		s.scheduler.LimitRunsTo(opt.Times)
 	}
-	if opt.SkipImmediateFirstRun {
-		s.scheduler.WaitForSchedule()
+	if !opt.SkipImmediateFirstRun {
+		handler()
 	}
 
 	return s.scheduler.Do(handler)

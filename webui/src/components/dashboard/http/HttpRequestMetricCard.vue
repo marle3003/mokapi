@@ -1,18 +1,18 @@
 <script setup lang="ts">
 import { ref, watchEffect, onUnmounted } from 'vue'
-import { useService } from '@/composables/services';
 import { useMetrics } from '@/composables/metrics';
+import { useDashboard } from '@/composables/dashboard';
 
 defineProps({
     includeError: Boolean,
     onlyError: Boolean
 })
 
-const {fetchServices} = useService()
 const {sum} = useMetrics()
 const requests = ref(0)
 const errors = ref(0)
-const {services, close} = fetchServices('http')
+const { dashboard } = useDashboard()
+const {services, close} = dashboard.value.getServices('http')
 watchEffect(() =>{
     requests.value = 0
     errors.value = 0

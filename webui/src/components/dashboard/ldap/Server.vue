@@ -7,14 +7,23 @@ defineProps({
 </script>
 
 <template>
-    <div class="card">
+    <section class="card" aria-labelledby="servers">
         <div class="card-body">
-            <div class="row">
-                <div class="col">
-                    <p class="label">Address</p>
-                    <p data-testid="address">{{ service.server }}</p>
-                </div>
-            </div>
+            <h2 id="servers" class="card-title text-center">Servers</h2>
+
+            <table class="table dataTable" aria-labelledby="servers">
+                <thead>
+                    <tr>
+                        <th scope="col" class="text-left">Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ service.server }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
         </div>
-    </div>
+    </section>
 </template>

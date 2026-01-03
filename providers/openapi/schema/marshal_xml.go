@@ -1,7 +1,6 @@
 package schema
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/xml"
 	"fmt"
@@ -16,8 +15,7 @@ func marshalXml(i interface{}, r *Schema) ([]byte, error) {
 		return nil, fmt.Errorf("no schema provided")
 	}
 
-	var buffer bytes.Buffer
-	writer := bufio.NewWriter(&buffer)
+	b := &bytes.Buffer{}
 
 	var name string
 	if r.Xml != nil && len(r.Xml.Name) > 0 {
@@ -36,20 +34,23 @@ func marshalXml(i interface{}, r *Schema) ([]byte, error) {
 	if name == "" {
 		// if no root name is defined we use a default name because for generic tools, the root name isn’t important
 		// so we can improve the user experience to not hit an error
-		name = "data"
+		writeXmlStart(b, "data", nil)
 	}
 
 	if i == nil {
-		_, _ = writer.WriteString(fmt.Sprintf("<%v></%v>", name, name))
+		_, _ = b.WriteString(fmt.Sprintf("<%v></%v>", name, name))
 	} else {
-		writeXmlElement(name, i, r, writer)
+		writeXmlElement(name, i, r, b)
 	}
 
-	err := writer.Flush()
-	return buffer.Bytes(), err
+	if name == "" {
+		writeXmlEnd(b, "data")
+	}
+
+	return b.Bytes(), nil
 }
 
-func writeXmlElement(name string, i interface{}, s *Schema, w io.Writer) {
+func writeXmlElement(name string, i interface{}, s *Schema, b *bytes.Buffer) {
 	wrapped := false
 	attrs := &sortedmap.LinkedHashMap[string, string]{}
 	if s != nil && s.Xml != nil {
@@ -72,7 +73,7 @@ func writeXmlElement(name string, i interface{}, s *Schema, w io.Writer) {
 	switch v := i.(type) {
 	case []interface{}:
 		if wrapped {
-			writeXmlStart(w, name, attrs)
+			writeXmlStart(b, name, attrs)
 		}
 		var items *Schema
 		if s != nil {
@@ -82,20 +83,20 @@ func writeXmlElement(name string, i interface{}, s *Schema, w io.Writer) {
 			if item == nil {
 				continue
 			}
-			writeXmlElement(name, item, items, w)
+			writeXmlElement(name, item, items, b)
 		}
 		if wrapped {
-			writeXmlEnd(w, name)
+			writeXmlEnd(b, name)
 		}
 	case map[string]interface{}:
-		writeXmlStart(w, name, attrs)
+		writeXmlStart(b, name, attrs)
 		for name, v := range v {
-			writeXmlElement(name, v, nil, w)
+			writeXmlElement(name, v, nil, b)
 		}
-		writeXmlEnd(w, name)
+		writeXmlEnd(b, name)
 	case *sortedmap.LinkedHashMap[string, interface{}]:
 		attrs.Merge(getAttributes(v, s))
-		writeXmlStart(w, name, attrs)
+		writeXmlStart(b, name, attrs)
 
 		for it := v.Iter(); it.Next(); {
 			if it.Value() == nil {
@@ -111,17 +112,17 @@ func writeXmlElement(name string, i interface{}, s *Schema, w io.Writer) {
 				}
 			}
 
-			writeXmlElement(propName, it.Value(), prop, w)
+			writeXmlElement(propName, it.Value(), prop, b)
 		}
 
-		writeXmlEnd(w, name)
+		writeXmlEnd(b, name)
 	default:
 		if i == nil {
 			return
 		}
-		writeXmlStart(w, name, attrs)
-		writeXmlContent(w, fmt.Sprintf("%v", i))
-		writeXmlEnd(w, name)
+		writeXmlStart(b, name, attrs)
+		writeXmlContent(b, fmt.Sprintf("%v", i))
+		writeXmlEnd(b, name)
 	}
 }
 
@@ -151,10 +152,16 @@ func getAttributes(m *sortedmap.LinkedHashMap[string, interface{}], r *Schema) *
 }
 
 func writeXmlStart(w io.Writer, name string, attrs *sortedmap.LinkedHashMap[string, string]) {
+	if name == "" {
+		return
+	}
+
 	writeString(w, "<"+name)
 
-	for it := attrs.Iter(); it.Next(); {
-		writeString(w, fmt.Sprintf(" %v=\"%v\"", it.Key(), it.Value()))
+	if attrs != nil {
+		for it := attrs.Iter(); it.Next(); {
+			writeString(w, fmt.Sprintf(" %v=\"%v\"", it.Key(), it.Value()))
+		}
 	}
 
 	writeString(w, ">")
@@ -165,6 +172,9 @@ func writeXmlContent(w io.Writer, s string) {
 }
 
 func writeXmlEnd(w io.Writer, name string) {
+	if name == "" {
+		return
+	}
 	writeString(w, fmt.Sprintf("</%v>", name))
 }
 

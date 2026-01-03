@@ -83,9 +83,12 @@ func (e *Engine) AddScript(evt dynamic.ConfigEvent) error {
 			err := e.run(host)
 			if err != nil {
 				if errors.Is(err, UnsupportedError) {
-					log.Debugf("script not supported: %v", evt.Config.Info.Url.Path)
+					log.Debugf(
+						"skipping script execution: JavaScript runner does not support this file type: %s",
+						evt.Config.Info.Url,
+					)
 				} else {
-					log.Errorf("error executing script %v: %v", evt.Config.Info.Url, err)
+					log.Errorf("error executing script %s: %v", evt.Config.Info.Url, err)
 				}
 			}
 		}()

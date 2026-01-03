@@ -2,12 +2,12 @@
 import { type PropType, computed, ref } from 'vue'
 import { useSchema } from '@/composables/schema'
 import Markdown from 'vue3-markdown-it'
-import { useExample, type Response } from '@/composables/example'
 import SourceView from '../../SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
+import { useDashboard } from '@/composables/dashboard'
+import type { ExampleResult } from '@/types/dashboard'
 
 const { printType } = useSchema()
-const { fetchExample } = useExample()
 const { formatSchema } = usePrettyLanguage()
 
 const props = defineProps({
@@ -17,13 +17,14 @@ const props = defineProps({
 const opened = ref<{[name: string]: boolean}>({})
 
 const examples = computed(() => {
-    const result: {[key: string]: Response} = {}
+    const result: {[key: string]: ExampleResult} = {}
     if (props.parameters){
         for (let parameter of props.parameters){
             if (!parameter.schema || !opened.value[parameter.name]) {
                 continue;
             }
-            let example = fetchExample({schema: { schema: parameter.schema }, contentTypes: ['text/plain'] })
+            const { dashboard } = useDashboard()
+            let example = dashboard.value.getExample({schema: { schema: parameter.schema }, contentTypes: ['text/plain'] })
             result[parameter.name+parameter.type] = example
         }
     }
@@ -75,20 +76,24 @@ function showWarningColumn(){
 </script>
 
 <template>
-    <table class="table dataTable selectable">
+    <table class="table dataTable selectable" aria-label="Parameters">
         <thead>
             <tr>
-                <th scope="col" class="text-left">Name</th>
-                <th scope="col" class="text-left">Location</th>
-                <th scope="col" class="text-left">Type</th>
-                <th scope="col" class="text-left">Required</th>
-                <th scope="col" class="text-left" v-if="showWarningColumn()">Warning</th>
-                <th scope="col" class="text-left">Description</th>
+                <th scope="col" class="text-left col-3">Name</th>
+                <th scope="col" class="text-left col-1">Location</th>
+                <th scope="col" class="text-left col-1">Type</th>
+                <th scope="col" class="text-left col-1">Required</th>
+                <th scope="col" class="text-left col-1" v-if="showWarningColumn()">Warning</th>
+                <th scope="col" class="text-left col">Description</th>
             </tr>
         </thead>
         <tbody>
             <tr v-for="(parameter, index) in sortedParameters" :key="'parameter-'+index" @click="opened[parameter.name] = true" data-bs-toggle="modal" :data-bs-target="'#modal-parameter-'+index">
-                <td>{{ parameter.name }}</td>
+                <td>
+                    <span role="button" @click.stop="opened[parameter.name] = true" data-bs-toggle="modal" :data-bs-target="'#modal-parameter-'+index" tabindex="0">
+                    {{ parameter.name }}
+                    </span>
+                </td>
                 <td>{{ parameter.type }}</td>
                 <td>{{ printType(parameter.schema) }}</td>
                 <td>{{ parameter.required }}</td>
@@ -100,21 +105,25 @@ function showWarningColumn(){
         </tbody>
     </table>
     <div v-for="(parameter, index) in parameters" :key="'parameter-'+index">
-        <div class="modal fade" :id="'modal-parameter-'+index" tabindex="-1" aria-hidden="true">
+        <div class="modal fade" :id="'modal-parameter-'+index" tabindex="-1" aria-hidden="true" :aria-labelledby="'modal-parameter-'+index+'title'">
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
+                    <div class="modal-header">
+                        <h6 :id="'modal-parameter-'+index+'title'" class="modal-title">Parameter Details</h6>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
                     <div class="modal-body">
                         <div class="card-group">
                             <div class="card">
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col">
-                                            <p class="label">Name</p>
-                                            <p>{{ parameter.name }}</p>
+                                            <p id="parameter-name" class="label">Name</p>
+                                            <p aria-labelledby="parameter-name">{{ parameter.name }}</p>
                                         </div>
                                         <div class="col">
-                                            <p class="label">Location</p>
-                                            <p>{{ parameter.type }}</p>
+                                            <p id="parameter-location" class="label">Location</p>
+                                            <p aria-labelledby="parameter-location">{{ parameter.type }}</p>
                                         </div>
                                         <div class="col">
                                             <p v-if="parameter.deprecated"><span class="bi bi-exclamation-triangle-fill yellow"></span> Deprecated</p>
@@ -122,25 +131,25 @@ function showWarningColumn(){
                                     </div>
                                     <div class="row mt-2">
                                         <div class="col-2">
-                                            <p class="label">Required</p>
-                                            <p>{{ parameter.required }}</p>
+                                            <p id="parameter-required" class="label">Required</p>
+                                            <p aria-labelledby="parameter-required">{{ parameter.required }}</p>
                                         </div>
                                         <div class="col-2">
-                                            <p class="label">Style</p>
-                                            <p>{{ parameter.style ?? 'simple' }}</p>
+                                            <p id="parameter-style" class="label">Style</p>
+                                            <p aria-labelledby="parameter-style">{{ parameter.style ?? 'simple' }}</p>
                                         </div>
                                         <div class="col-2">
-                                            <p class="label">Explode</p>
-                                            <p>{{ parameter.explode ?? false }}</p>
+                                            <p id="parameter-explode" class="label">Explode</p>
+                                            <p aria-labelledby="parameter-explode">{{ parameter.explode }}</p>
                                         </div>
                                         <div class="col-2">
-                                            <p class="label">Allow Reserved</p>
-                                            <p>{{ parameter.allowReserved ?? false }}</p>
+                                            <p id="parameter-reserved" class="label">Allow Reserved</p>
+                                            <p aria-labelledby="parameter-reserved">{{ parameter.allowReserved }}</p>
                                         </div>
                                     </div>
                                     <div class="row mt-2">
-                                        <p class="label">Description</p>
-                                        <markdown :source="parameter.description" :html="true"></markdown>
+                                        <p id="parameter-description" class="label">Description</p>
+                                        <markdown :source="parameter.description" :html="true" aria-labelledby="parameter-description"></markdown>
                                     </div>
                                     <div class="row">
                                         <ul class="nav nav-pills tab-sm tab-params" role="tabList">

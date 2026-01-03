@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import Markdown from 'vue3-markdown-it'
 import { Popover } from 'bootstrap'
 
-defineProps<{
+const props = defineProps<{
     servers: KafkaServer[],
 }>()
 
@@ -19,36 +19,51 @@ onMounted(()=> {
         })
     })
 })
+
+const servers = computed(() => {
+    if (!props.servers) {
+        return undefined;
+    }
+    return props.servers.sort((x: KafkaServer, y: KafkaServer) => {
+        return x.name.localeCompare(y.name);
+    })
+})
 </script>
 
 <template>
-    <table class="table dataTable">
-        <caption class="visually-hidden">Cluster Brokers</caption>
-        <thead>
-            <tr>
-                <th scope="col" class="text-left" style="width: 20%">Name</th>
-                <th scope="col" class="text-left" style="width: 20%">Host</th>
-                <th scope="col" class="text-left" style="width: 20%">Tags</th>
-                <th scope="col" class="text-left w-50" style="width: 40%">Description</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr v-for="server in servers" :key="server.host">
-                <td>{{ server.name }}</td>
-                <td>{{ server.host }}</td>
-                <td>
-                    <ul class="tags">
-                        <li v-for="tag in server.tags" class="has-popover">
-                            {{ tag.name }}
-                            <span style="display:none">{{ tag.description }}</span>
-                        </li>
-                        
-                    </ul>
-                </td>
-                <td><markdown :source="server.description" class="description" :html="true"></markdown></td>
-            </tr>
-        </tbody>
-    </table>
+    <section class="card" aria-labelledby="servers">
+        <div class="card-body">
+            <h2 id="servers" class="card-title text-center">Brokers</h2>
+         
+            <table class="table dataTable table-responsive-lg" aria-labelledby="servers">
+                <thead>
+                    <tr>
+                        <th scope="col" class="text-left col-2">Name</th>
+                        <th scope="col" class="text-left col-2">Host</th>
+                        <th scope="col" class="text-left col">Description</th>
+                        <th scope="col" class="text-left col-1">Tags</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="server in servers" :key="server.host">
+                        <td>{{ server.name }}</td>
+                        <td  v-html="server.host.replace(/([^:]*):(.*)/g, '$1<wbr>:$2')"></td>
+                        <td><markdown :source="server.description" class="description" :html="true"></markdown></td>
+                        <td>
+                            <ul class="tags">
+                                <li v-for="tag in server.tags" class="has-popover">
+                                    {{ tag.name }}
+                                    <span style="display:none">{{ tag.description }}</span>
+                                </li>
+                                
+                            </ul>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+         </div>
+    </section>
 </template>
 
 <style scoped>

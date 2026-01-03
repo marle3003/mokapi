@@ -22,22 +22,9 @@ const hasActions = computed(() => {
 <template>
     <div v-if="event">
         <div class="card-group">
-            <div class="card">
+            <section class="card" aria-labelledby="request-title">
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col header">
-                            <p class="label">Operation</p>
-                            <p>ModifyDN {{ data.request.dn }}</p>
-                        </div>
-                        <div class="col-2">
-                            <p class="label">Time</p>
-                            <p>{{ format(event.time) }}</p>
-                        </div>
-                        <div class="col-2">
-                            <p class="label">Duration</p>
-                            <p>{{ duration(data.data.duration) }}</p>
-                        </div>
-                    </div>
+                    <h2 id="request-title" class="card-title text-center">Request</h2>
                     <div class="row">
                         <div class="col-2">
                             <p class="label">New RDN</p>
@@ -52,23 +39,13 @@ const hasActions = computed(() => {
                             <p>{{ data.request.newSuperiorDn }}</p>
                         </div>
                     </div>
-                    <div class="row">
-                        <div class="col-2">
-                            <p class="label">Status</p>
-                            <p>{{ data.response.status }}</p>
-                        </div>
-                        <div class="col" v-if="data.response.message">
-                            <p class="label">Message</p>
-                            <p>{{ data.response.message }}</p>
-                        </div>
-                    </div>
                 </div>
-            </div>
+            </section>
         </div>
         <div class="card-group" v-if="hasActions">
             <div class="card">
                 <div class="card-body">
-                    <div class="card-title text-center">Actions</div>
+                    <h2 class="card-title text-center">Actions</h2>
                     <actions :actions="data.data.actions" />
                 </div>
             </div>

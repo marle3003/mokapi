@@ -8,15 +8,16 @@ Schedules a new periodic job with an interval. Interval string
 is a possibly signed sequence of decimal numbers, each with 
 optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
 
-``` box=info
-By default, the first execution happens immediately, check ScheduledEventArgs
-```
+### Behavior
+
+- By default, **`every` jobs run immediately**, then repeat according to the interval.
+- To skip the immediate run, set `SkipImmediateFirstRun: true` in `args`.
 
 | Parameter       | Type     | Description                                                                                                                      |
 |-----------------|----------|----------------------------------------------------------------------------------------------------------------------------------|
 | interval        | string   | Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".                                                                  |
 | handler         | function | The handler function to be executed every `interval`. By default, the first execution happens immediately.                       |
-| args (optional) | object   | [ScheduledEventArgs](/docs/javascript-api/mokapi/eventhandler/scheduledeventargs.md) object contains additional event arguments. | 
+| args (optional) | object   | [ScheduledEventArgs](/docs/javascript-api/mokapi/eventhandler/scheduledeventargs.md) object contains additional event arguments. |
 
 ## Example
 

@@ -43,8 +43,8 @@ const config: PlaywrightTestConfig = {
 
   /* Configure projects for major browsers */
   projects: [
-    {
-      name: 'chromium',
+     {
+      name: 'dev',
       use: {
         ...devices['Desktop Chrome'],
         storageState: {
@@ -60,7 +60,48 @@ const config: PlaywrightTestConfig = {
             }
           ]
         },
-      }
+      },
+      testIgnore: ["/e2e/**/*.website.spec.ts"],
+    },
+    {
+      name: 'dashboard',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: {
+          cookies: [],
+          origins: [
+            {
+              origin: 'http://localhost:5173',
+              localStorage: [
+                {
+                  name: 'theme', value: 'dark'
+                }
+              ]
+            }
+          ]
+        },
+      },
+      testIgnore: ["/e2e/**/*.website.spec.ts", "/e2e/dashboard-demo/**/*.spec.ts"],
+    },
+    {
+      name: 'website',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: {
+          cookies: [],
+          origins: [
+            {
+              origin: 'http://localhost:5173',
+              localStorage: [
+                {
+                  name: 'theme', value: 'dark'
+                }
+              ]
+            }
+          ]
+        },
+      },
+      testIgnore: ["/e2e/**/*.dashboard.spec.ts", "/e2e/dashboard/**/*.spec.ts"],
     },
     // {
     //   name: 'firefox',
@@ -114,7 +155,7 @@ const config: PlaywrightTestConfig = {
      * Use the preview server on CI for more realistic testing.
     Playwright will re-use the local server if there is already a dev-server running.
      */
-    command: process.env.CI ? 'vite preview --port 5173' : 'vite dev',
+    command: process.env.CI ? 'vite preview --mode dashboard --port 5173' : 'vite dev',
     port: 5173,
     reuseExistingServer: !process.env.CI
   }

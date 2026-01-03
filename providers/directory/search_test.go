@@ -282,6 +282,66 @@ objectSid:: AQUAAAAAAAUVAAAAF8sUcR3r8QcekDXQw9wAAA==
 			},
 		},
 		{
+			name:  "ldap filter objectSid using AD style with invalid revision",
+			input: `{ "files": [ "./users.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/users.ldif": {Raw: []byte(`
+dn:
+namingContexts: dc=example_domain_name
+subschemaSubentry: cn=schema
+
+dn: cn=schema
+objectClass: top
+objectClass: subschema
+attributeTypes: ( 1.2.3.4.5.6.7.8 NAME 'objectSid' DESC 'objectSid' EQUALITY activeDirectoryObjectSidMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )
+`)},
+			}},
+			test: func(t *testing.T, h ldap.Handler, log *test.Hook, err error) {
+				require.NoError(t, err)
+
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: fmt.Sprintf("(objectSid=S-foo-5-21-1234567890-1234567890-1234567890-1001)"),
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 0)
+				require.Len(t, log.Entries, 2)
+				require.Equal(t, "ldap: filter syntax error: invalid SID 'S-foo-5-21-1234567890-1234567890-1234567890-1001': invalid SID revision value value 'foo' at position: 0", log.Entries[1].Message)
+			},
+		},
+		{
+			name:  "ldap filter objectSid using AD style with revision to high",
+			input: `{ "files": [ "./users.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/users.ldif": {Raw: []byte(`
+dn:
+namingContexts: dc=example_domain_name
+subschemaSubentry: cn=schema
+
+dn: cn=schema
+objectClass: top
+objectClass: subschema
+attributeTypes: ( 1.2.3.4.5.6.7.8 NAME 'objectSid' DESC 'objectSid' EQUALITY activeDirectoryObjectSidMatch SYNTAX 1.3.6.1.4.1.1466.115.121.1.40 )
+`)},
+			}},
+			test: func(t *testing.T, h ldap.Handler, log *test.Hook, err error) {
+				require.NoError(t, err)
+
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: fmt.Sprintf("(objectSid=S-300-5-21-1234567890-1234567890-1234567890-1001)"),
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 0)
+				require.Len(t, log.Entries, 2)
+				require.Equal(t, "ldap: filter syntax error: invalid SID 'S-300-5-21-1234567890-1234567890-1234567890-1001': SID revision value '5' out of byte range (0-255) at position: 0", log.Entries[1].Message)
+			},
+		},
+		{
 			name:  "ldap filter objectSid using AD style with invalid authId",
 			input: `{ "files": [ "./users.ldif" ] }`,
 			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
@@ -467,6 +527,82 @@ func TestSearch(t *testing.T) {
 				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
 					Scope:  ldap.ScopeWholeSubtree,
 					Filter: "(description~=software developer)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 1)
+			},
+		},
+		{
+			name:  "FilterExtensibleMatch",
+			input: `{ "files": [ "./users.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/users.ldif": {Raw: []byte("dn: cn=user\nuserAccountControl: 512")},
+			}},
+			test: func(t *testing.T, h ldap.Handler, err error) {
+				require.NoError(t, err)
+
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: "(userAccountControl:1.2.840.113556.1.4.803:=512)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 1)
+			},
+		},
+		{
+			name:  "memberOf",
+			input: `{ "files": [ "./users.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/users.ldif": {Raw: []byte("dn: cn=user\n\ndn: cn=group\nmember: cn=user")},
+			}},
+			test: func(t *testing.T, h ldap.Handler, err error) {
+				require.NoError(t, err)
+
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: "(memberOf=cn=group)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 1)
+			},
+		},
+		{
+			name:  "memberOf different cases",
+			input: `{ "files": [ "./users.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/users.ldif": {Raw: []byte("dn: cn=uSEr\n\ndn: cn=group\nmember: cn=UseR")},
+			}},
+			test: func(t *testing.T, h ldap.Handler, err error) {
+				require.NoError(t, err)
+
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: "(memberOf=cn=GRoup)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 1)
+			},
+		},
+		{
+			name:  "memberOf normalize DN",
+			input: `{ "files": [ "./users.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/users.ldif": {Raw: []byte("dn: uid=ff, cn=user\n\ndn: uid=cc,cn=group\nmember: uid=ff,cn=user")},
+			}},
+			test: func(t *testing.T, h ldap.Handler, err error) {
+				require.NoError(t, err)
+
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: "(memberOf=uid=cc, cn=group)",
 				}))
 				res := rr.Message.(*ldap.SearchResponse)
 

@@ -3,10 +3,22 @@ declare interface LdapService extends Service {
 }
 
 declare interface LdapEventData {
-    request: LdapSearchRequest | LdapModifyRequest | LdapAddRequest | LdapDeleteRequest | LdapModifDNRequest | LdapCompareRequest
+    request: LdapBindRequest | LdapUnbindRequest | LdapSearchRequest | LdapModifyRequest | LdapAddRequest | LdapDeleteRequest | LdapModifDNRequest | LdapCompareRequest
     response: LdapSearchResponse | LdapResponse
     duration: number
     actions: Action[]
+}
+
+declare interface LdapBindRequest {
+    operation: 'Bind'
+    version: string
+    name: string
+    password: string
+    auth: string
+}
+
+declare interface LdapUnbindRequest {
+    operation: 'Unbind'
 }
 
 declare interface LdapSearchRequest {
@@ -24,12 +36,11 @@ declare interface LdapSearchRequest {
 declare interface LdapSearchResponse {
     results: LdapSearchResult[]
     status: string
-    message: string
 }
 
 declare interface LdapSearchResult {
     dn: string
-    attributes: { [name: string]: string }
+    attributes: { [name: string]: string[] }
 }
 
 declare interface LdapModifyRequest {

@@ -305,6 +305,33 @@ func TestHandler_Response_Context(t *testing.T) {
 				require.Equal(t, "response not defined for HTTP status 200\n", rr.Body.String())
 			},
 		},
+		{
+			name: "from context and parameter is array ",
+			opt: openapitest.WithPath("/foo",
+				openapitest.NewPath(openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+					openapitest.WithQueryParam(
+						"name",
+						false,
+						openapitest.WithParamSchema(schematest.New("array", schematest.WithItems("string"))),
+						openapitest.WithExplode(true)),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+						openapitest.NewContent(
+							openapitest.WithSchema(
+								schematest.New("array", schematest.WithItems(
+									"object", schematest.WithProperty("name", schematest.New("string"))),
+								),
+							),
+						),
+					),
+					))))),
+			req: func() *http.Request {
+				return httptest.NewRequest("get", "http://localhost/foo?name=foo&name=bar", nil)
+			},
+			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, `[{"name":"foo"},{"name":"bar"},{"name":"bar"},{"name":"foo"},{"name":"foo"}]`, rr.Body.String())
+			},
+		},
 	}
 
 	for _, tc := range testcases {

@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { useService } from '@/composables/services';
 import { useMetrics } from '@/composables/metrics';
 import { onUnmounted } from 'vue';
 import Markdown from 'vue3-markdown-it'
 import { useRouter, useRoute } from 'vue-router';
 import { usePrettyDates } from '@/composables/usePrettyDate';
+import { getRouteName, useDashboard } from '@/composables/dashboard';
 
-const {fetchServices} = useService()
 const {sum} = useMetrics()
-const {services, close} = fetchServices('mail')
+const { dashboard } = useDashboard();
+const {services, close} = dashboard.value.getServices('mail')
 const {format} = usePrettyDates()
 const route = useRoute()
 const router = useRouter()
@@ -25,12 +25,21 @@ function lastMail(service: Service){
     return format(n)
 }
 
-function goToService(service: Service){
-    router.push({
-        name: 'mailService',
+function goToService(service: Service, openInNewTab = false){
+    if (getSelection()?.toString()) {
+        return
+    }
+
+    const to = {
+        name: getRouteName('mailService').value,
         params: {service: service.name},
-        query: {refresh: route.query.refresh}
-    })
+    }
+    if (openInNewTab) {
+        const routeData = router.resolve(to);
+        window.open(routeData.href, '_blank')
+    } else {
+        router.push(to)
+    }
 }
 
 onUnmounted(() => {
@@ -41,9 +50,8 @@ onUnmounted(() => {
 <template>
     <div class="card" data-testid="mail-service-list">
         <div class="card-body">
-            <div class="card-title text-center">Mail Servers</div>
-            <table class="table dataTable selectable">
-                <caption class="visually-hidden">Mail Servers</caption>
+            <h2 id="mail-servers-title" class="card-title text-center">Mail Servers</h2>
+            <table class="table dataTable selectable" aria-labelledby="mail-servers-title">
                 <thead>
                     <tr>
                         <th scope="col" class="text-left w-25">Name</th>
@@ -53,8 +61,12 @@ onUnmounted(() => {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="service in services" key="service.name" @click="goToService(service)">
-                        <td>{{ service.name }}</td>
+                    <tr v-for="service in services" key="service.name" @mouseup.left="goToService(service)" @mousedown.middle="goToService(service, true)">
+                        <td>
+                            <router-link @click.stop class="row-link" :to="{ name: getRouteName('mailService').value, params: {service: service.name} }">
+                                {{ service.name }}
+                            </router-link>
+                        </td>
                         <td><markdown :source="service.description" class="description" :html="true"></markdown></td>
                         <td class="text-center">{{ lastMail(service) }}</td>
                         <td class="text-center">{{ messages(service) }}</td>

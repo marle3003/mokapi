@@ -3,11 +3,13 @@ import { ref, watchEffect, onUnmounted } from 'vue'
 import MetricCard from './MetricCard.vue'
 import {useMetrics} from '../../composables/metrics'
 import { usePrettyBytes } from '@/composables/usePrettyBytes';
+import { useDashboard } from '@/composables/dashboard';
 
-const {query, sum} = useMetrics()
+const {sum} = useMetrics()
 const {format} = usePrettyBytes()
 const memoryUsage = ref('0')
-const response = query('app')
+const { dashboard } = useDashboard()
+const response = dashboard.value.getMetrics('app')
 watchEffect(() => {
     memoryUsage.value = '0'
     if (!response.data){

@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/smtp"
 	"regexp"
+
+	"gopkg.in/yaml.v3"
 )
 
 var serverNamePattern = regexp.MustCompile(`^[A-Za-z0-9_-]+$`)
@@ -42,9 +43,10 @@ type Server struct {
 }
 
 type Settings struct {
-	MaxRecipients     int  `yaml:"maxRecipients" json:"maxRecipients"`
-	AutoCreateMailbox bool `yaml:"autoCreateMailbox" json:"autoCreateMailbox"`
-	MaxInboxMails     int  `yaml:"maxInboxMails" json:"maxInboxMails"`
+	MaxRecipients       int  `yaml:"maxRecipients" json:"maxRecipients"`
+	AutoCreateMailbox   bool `yaml:"autoCreateMailbox" json:"autoCreateMailbox"`
+	MaxInboxMails       int  `yaml:"maxInboxMails" json:"maxInboxMails"`
+	AllowUnknownSenders bool `yaml:"allowUnknownSenders" json:"allowUnknownSenders"`
 }
 
 type MailboxConfig struct {
@@ -125,7 +127,7 @@ func (c *Config) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
 func (c *Config) UnmarshalYAML(value *yaml.Node) error {
 	type alias Config
 	tmp := alias(*c)
-	tmp.Settings = &Settings{AutoCreateMailbox: true}
+	tmp.Settings = &Settings{AutoCreateMailbox: true, AllowUnknownSenders: true}
 	err := value.Decode(&tmp)
 	*c = Config(tmp)
 	return err
@@ -135,7 +137,7 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 	dec := json.NewDecoder(bytes.NewReader(b))
 	type alias Config
 	tmp := alias(*c)
-	tmp.Settings = &Settings{AutoCreateMailbox: true}
+	tmp.Settings = &Settings{AutoCreateMailbox: true, AllowUnknownSenders: true}
 	err := dec.Decode(&tmp)
 	*c = Config(tmp)
 	return err

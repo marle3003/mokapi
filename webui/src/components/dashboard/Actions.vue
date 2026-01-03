@@ -4,8 +4,8 @@ import type { PropType } from 'vue'
 import { useRoute } from 'vue-router'
 import SourceView from './SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
-import { usePrettyHttp } from '@/composables/http'
 import { usePrettyText } from '@/composables/usePrettyText'
+import { getRouteName } from '@/composables/dashboard'
 
 defineProps({
     actions: { type: Object as PropType<Action[]>, required: true },
@@ -80,9 +80,9 @@ function getStatus(action: Action) {
         <thead>
             <tr>
                 <th scope="col" class="text-left" style="width: 30px;"></th>
-                <th scope="col" class="text-left" style="width: 80px;">Status</th>
-                <th scope="col" class="text-left">Name</th>
-                <th scope="col" class="text-center" style="width: 10%">Duration</th>
+                <th scope="col" class="text-left col-1">Status</th>
+                <th scope="col" class="text-left col">Name</th>
+                <th scope="col" class="text-center col-1">Duration</th>
             </tr>
         </thead>
         <tbody>
@@ -156,7 +156,7 @@ function getStatus(action: Action) {
                                         <tr>
                                             <td>{{ key }}</td>
                                             <td>
-                                                <router-link v-if="key === 'file' && action.tags.fileKey" :to="{ name: 'config', params: { id: action.tags.fileKey }, query: { refresh: route.query.refresh }}">
+                                                <router-link v-if="key === 'file' && action.tags.fileKey" :to="{ name: getRouteName('config').value, params: { id: action.tags.fileKey } }">
                                                 {{ value }}
                                                 </router-link>
                                                 <span v-else>{{ value }}</span>

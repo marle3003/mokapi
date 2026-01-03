@@ -69,7 +69,7 @@ function formatParam(label: any): string {
   return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
 }
 
-const state = computed(() => {
+const state = computed<{ [name: string]: boolean }>(() => {
     return {
         tutorial: isTypeAvailable('tutorial'),
         example: isTypeAvailable('example'),
@@ -81,6 +81,15 @@ const state = computed(() => {
         mail: isTechAvailable('mail'),
         core: isTechAvailable('core')
     }
+})
+
+const typeLinks = computed(() => {
+    return [
+        { text: 'All', url: getTypeUrl('all'), disabled: false, isActive: type.value === 'all' },
+        { text: 'Tutorials', url: getTypeUrl('tutorial'), disabled: !state.value.tutorial, isActive: type.value === 'tutorial' },
+        { text: 'Examples', url: getTypeUrl('example'), disabled: !state.value.example, isActive: type.value === 'example' },
+        { text: 'Blogs', url: getTypeUrl('blog'), disabled: !state.value.blog, isActive: type.value === 'blog' }
+    ]
 })
 
 function isTechAvailable(s: string) {
@@ -111,6 +120,19 @@ function isTypeAvailable(type: string) {
     }
     return false
 }
+function getTypeUrl(s: string) {
+    if (s !== 'all' && !state.value[s]) {
+        return undefined
+    }
+    if (!isTechAvailable(tech.value)) {
+        tech.value = 'all'
+    }
+    if (s === 'all') {
+        return router.resolve({ params: { level2: '' } }).href
+    } else {
+        return router.resolve({ params: { level2: s + 's' } }).href
+    }
+}
 function setType(s: string) {
     type.value = s
     if (!isTechAvailable(tech.value)) {
@@ -138,10 +160,11 @@ function setType(s: string) {
             <!-- Filter Control -->
             <div class="filter-controls">
                 <div class="d-none  d-md-flex">
-                    <button class="btn btn-outline-primary filter-button" :class="type === 'all' ? 'active' : ''" @click="setType('all')">All</button>
-                    <button class="btn btn-outline-primary filter-button" :class="type === 'tutorial' ? 'active' : ''" @click="setType('tutorial')" :disabled="!state.tutorial">Tutorials</button>
-                    <button class="btn btn-outline-primary filter-button" :class="type === 'example' ? 'active' : ''" @click="setType('example')" :disabled="!state.example">Examples</button>
-                    <button class="btn btn-outline-primary filter-button" :class="type === 'blog' ? 'active' : ''" @click="setType('blog')" :disabled="!state.blog">Blogs</button>
+                    <a v-for="link of typeLinks" class="btn btn-outline-primary filter-button" :class="{ active: link.isActive, disabled: link.disabled }"
+                        :href="link.url" :aria-disabled="link.disabled"
+                    >
+                        {{ link.text }}
+                    </a>
                 </div>
                 <div class="d-none  d-md-flex">
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'all' ? 'active' : ''" @click="tech = 'all'">All</button>

@@ -22,5 +22,3 @@ app.provide('nav', nav)
 
 const files =  import.meta.glob('/src/assets/docs/**/*.md', {as: 'raw', eager: true})
 app.provide('files', files)
-
-app.provide('canSwitchTheme', true)

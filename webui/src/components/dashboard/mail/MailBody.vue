@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMails } from '@/composables/mails'
+import { useDashboard } from '@/composables/dashboard'
 import { onMounted, ref, watch } from 'vue'
 
 const props = defineProps({
@@ -9,7 +9,7 @@ const props = defineProps({
   }
 )
 
-const { attachmentUrl } = useMails()
+const { dashboard } = useDashboard()
 const isDark = ref<boolean>( document.documentElement.getAttribute('data-theme') == 'dark')
 const mailBodyTheme = localStorage.getItem('mail-body-theme')
 if (mailBodyTheme === 'light') {
@@ -18,7 +18,7 @@ if (mailBodyTheme === 'light') {
 
 function parseHtmlBody(body: string) {
     body = body.replace(/cid:(?<name>[^"]*)/g, function(_: string, name: string){
-      return attachmentUrl(props.messageId, name)
+      return dashboard.value.getAttachmentUrl(props.messageId, name)
     })
     body = `<style>:host{ all: initial; }</style>${body}`
 

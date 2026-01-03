@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useConfig } from '@/composables/configs'
 import { computed, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { usePrettyDates } from '@/composables/usePrettyDate'
@@ -8,18 +7,19 @@ import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 import ConfigCard from '@/components/dashboard/ConfigCard.vue'
 import SourceView from './SourceView.vue'
+import { useDashboard } from '@/composables/dashboard'
 
 const configId = useRoute().params.id as string
-const { fetch, fetchData, getDataUrl } = useConfig()
+const { dashboard } = useDashboard()
+const { config, isLoading, close } = dashboard.value.getConfig(configId);
+const { data, isLoading: isDataLoading, filename, close: closeData } = dashboard.value.getConfigData(configId);
+
 const { format } = usePrettyDates()
 const { getContentType, formatLanguage } = usePrettyLanguage()
 const defaultContentType = 'plain/text'
 
-const { config, isLoading, close } = fetch(configId)
-const responseData = fetchData(configId)
-
 function isInitLoading() {
-    return isLoading.value && !config.value && responseData.isLoading
+    return isLoading.value && !config.value && isDataLoading.value
 }
 
 const contentType = computed(() => {
@@ -34,22 +34,6 @@ const contentType = computed(() => {
     return defaultContentType
 })
 
-const filename = computed(() => {
-    if (responseData.header) {
-        const h = responseData.header.get('Content-Disposition')!
-        const matches = h.match(/filename="([^\"]*)"/)
-        if (matches && matches.length > 1) {
-            return matches[1]
-        }
-    }
-
-    if (!config.value) {
-        return ''
-    }
-    const url = config.value.url
-    return url.substring(url.lastIndexOf('/')+1);
-})
-
 function toString(arg: any): string {
     if (typeof arg === 'string') {
         return arg
@@ -59,7 +43,19 @@ function toString(arg: any): string {
 
 onUnmounted(() => {
     close()
-    responseData.close()
+    closeData()
+})
+const provider = computed(() => {
+    if (!config.value) {
+        return '';
+    }
+    switch (config.value.provider.toLocaleLowerCase()) {
+        case 'file': return 'File';
+        case 'http': return 'HTTP';
+        case 'git': return 'GIT';
+        case 'npm': return 'NPM';
+    }
+    return '';
 })
 </script>
 
@@ -81,7 +77,7 @@ onUnmounted(() => {
                         <div class="col">
                             <p id="provider" class="label">Provider</p>
                             <p aria-labelledby="provider">
-                                <a href="/docs/configuration/providers/file">{{ config.provider }}</a>
+                                <a :href="'/docs/configuration/dynamic/' + config.provider">{{ provider }}</a>
                             </p>
                         </div>
                         <div class="col">
@@ -92,11 +88,11 @@ onUnmounted(() => {
                 </div>
             </div>
         </div>
-        <section class="card-group" v-if="responseData.data" aria-label="Content">
+        <section class="card-group" v-if="data" aria-label="Content">
             <div class="card">
                 <div class="card-body">
                     <div class="row">
-                        <source-view :source="{ preview: { content: formatLanguage(toString(responseData.data), contentType), contentType: contentType }}" :url="getDataUrl(configId)" :filename="filename"  />
+                        <source-view :source="{ preview: { content: formatLanguage(toString(data), contentType), contentType: contentType }}" :url="dashboard.getConfigDataUrl(configId)" :filename="filename"  />
                     </div>
                 </div>
             </div>

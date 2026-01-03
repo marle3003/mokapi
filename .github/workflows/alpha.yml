@@ -74,7 +74,7 @@ jobs:
     name: Publish website
     runs-on: ubuntu-latest
     if: "success()"
-    needs: [ build-alpha ]
+    needs: [ setup, build-alpha ]
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -84,6 +84,7 @@ jobs:
         uses: chetan/git-restore-mtime-action@v2
       - uses: ./.github/actions/publish-website
         with:
+          image-name: ${{ needs.setup.outputs.image-name }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           server: ${{ secrets.FTP_SERVER }}

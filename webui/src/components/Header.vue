@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useAppInfo, type AppInfoResponse } from '../composables/appInfo'
 import { RouterLink, useRouter } from 'vue-router'
 import { onUnmounted, inject, ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
@@ -7,15 +6,21 @@ import { useFileResolver } from '@/composables/file-resolver';
 import Fuse from 'fuse.js';
 import { parseMarkdown } from '@/composables/markdown';
 import { Modal } from 'bootstrap';
+import type { AppInfoResponse } from '@/types/dashboard';
+import { useDashboard } from '@/composables/dashboard';
+import { usePromo } from '@/composables/promo';
 
-const isDashboardEnabled = import.meta.env.VITE_DASHBOARD == 'true'
+const isDashboard = import.meta.env.VITE_DASHBOARD === 'true'
+const useDemo = import.meta.env.VITE_USE_DEMO === 'true'
+const promo = usePromo()
 let appInfo: AppInfoResponse | null = null
 const query = ref('')
 const tooltipDark = 'Switch to light mode';
 const tooltipLight = 'Switch to dark mode';
 
-if (isDashboardEnabled) {
-  appInfo = useAppInfo()
+if (isDashboard) {
+  const { dashboard } = useDashboard()
+  appInfo = dashboard.value.getAppInfo()
   onUnmounted(() => {
       appInfo?.close()
   })
@@ -30,9 +35,13 @@ const levels = computed(() => {
   return levels
 })
 const visible = ref(false)
-const canSwitchTheme = computed(() => inject<boolean>('canSwitchTheme'))
 
 const router = useRouter()
+const isPromoEnabled = computed(() => {
+  const disabled = ['dashboard', 'dashboard-demo']
+  return !route.matched.some(r => disabled.includes(r.name?.toString() ?? ''));
+})
+
 function switchTheme() {
   let theme = document.documentElement.getAttribute('data-theme');
   theme = theme == 'dark' ? 'light' : 'dark'
@@ -194,6 +203,15 @@ function navigateAndClose(params: Record<string, string>) {
 
 <template>
   <header>
+<!-- Promotion banner -->
+<div class="promo-banner" v-if="isPromoEnabled && promo.activePromotion.value">
+  <strong>Shop discount!</strong>
+  Get <strong>{{ promo.activePromotion.value.discount }}% off</strong> Mokapi Gear —
+  <span class="d-none d-md-inline">
+    support Mokapi with code in your heart and style on your sleeve.
+  </span>
+  <a href="https://mokapi.myspreadshop.net" class="promo-link ms-2">Visit shop →</a>
+</div>
     <nav class="navbar navbar-expand-lg">
       <div class="container-fluid">
         <a class="navbar-brand" href="./"><img src="/logo-header.svg" height="30" alt="Mokapi home"/></a>
@@ -214,7 +232,7 @@ function navigateAndClose(params: Record<string, string>) {
         <div class="collapse navbar-collapse" id="navbar">
           <div class="navbar-container">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li class="nav-item" v-if="isDashboardEnabled">
+            <li v-if="isDashboard" class="nav-item">
               <router-link class="nav-link" :to="{ name: 'dashboard', query: {refresh: 20} }">Dashboard</router-link>
             </li>
             <li class="nav-item dropdown">
@@ -225,6 +243,9 @@ function navigateAndClose(params: Record<string, string>) {
                 <li><router-link class="dropdown-item" :to="{ path: '/ldap' }">LDAP</router-link></li>
                 <li><router-link class="dropdown-item" :to="{ path: '/mail' }">Email</router-link></li>
               </ul>
+            </li>
+            <li v-if="useDemo" class="nav-item">
+              <router-link class="nav-link" :to="{ name: 'dashboard-demo' }">Dashboard</router-link>
             </li>
             <li class="nav-item" v-for="(item, label) of nav">
               <div class="chapter" v-if="hasChildren(item)">
@@ -299,7 +320,7 @@ function navigateAndClose(params: Record<string, string>) {
             <button class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
               <span class="bi bi-search pe-2" title="Search"></span>
             </button>
-            <button class="btn icon" v-if="canSwitchTheme">
+            <button class="btn icon">
               <span class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark" :title="tooltipDark"></span>
               <span class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark" :title="tooltipLight"></span>
             </button>
@@ -350,6 +371,29 @@ header {
 }
 header .container-fluid {
   padding: 0;
+}
+.promo-banner {
+  background-color: var(--color-background-promo);
+  border-bottom: 1px solid var(--color-border-promo);
+  color: var(--color-text);
+  text-align: center;
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  margin-bottom: 5px;
+}
+
+.promo-banner strong {
+  font-weight: 600;
+}
+
+.promo-link {
+  color: var(--color-doc-link);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.promo-link:hover {
+  text-decoration: underline;
 }
 .navbar {
   background-color: var(--color-background);
@@ -427,7 +471,7 @@ header .container-fluid {
   padding-bottom: 7px;
 }
 
-.nav-item .chapter > div a {
+header .navbar-collapse .nav-item .chapter > div a {
   padding-top: 0;
   padding-bottom: 0;
 }
@@ -529,6 +573,10 @@ header .container-fluid {
   .navbar .collapse .tools {
     display: flex !important;
     padding-top: 20px;
+  }
+  .navbar .collapse .tools > * {
+    padding-right: 0.7rem;
+    font-size: 16px;
   }
 }
 </style>

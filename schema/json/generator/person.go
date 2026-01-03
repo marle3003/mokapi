@@ -345,7 +345,7 @@ func fakeDateInPastWithMinYear(r *Request, minYear int) (any, error) {
 	year := gofakeit.Number(1940, time.Now().Year())
 	year = int(math.Max(float64(year), float64(minYear)))
 	month := gofakeit.Number(1, 12)
-	if year == time.Now().Year() {
+	if year == now.Year() {
 		month = gofakeit.Number(1, int(now.Month()))
 	}
 

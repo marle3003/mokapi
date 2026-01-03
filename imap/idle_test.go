@@ -178,6 +178,8 @@ func TestIdle(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, "+ idling", res)
 
+				time.Sleep(500 * time.Millisecond)
+
 				res, err = c.ReadLine()
 				require.NoError(t, err)
 				require.Equal(t, "* 10 EXISTS", res)

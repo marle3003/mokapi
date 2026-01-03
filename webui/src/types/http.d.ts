@@ -31,9 +31,9 @@ declare interface HttpParameter {
     required: boolean
     deprecated: boolean
     style: string
-    explode?: boolean
+    explode: boolean
     allowReserved: boolean
-    schema: Schema
+    schema?: Schema
 }
 
 declare interface HttpEventData {

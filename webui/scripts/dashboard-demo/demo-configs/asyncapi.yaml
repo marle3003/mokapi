@@ -1,0 +1,114 @@
+asyncapi: 3.0.0
+info:
+  title: Kafka Order Service API
+  version: 1.0.0
+  description: An API to process customer orders and notify about order status updates using Kafka.
+
+servers:
+  development:
+    host: localhost:9092
+    protocol: kafka
+    description: Local development Kafka broker.
+
+channels:
+  # The "order_events" channel is where order-related messages flow
+  order_events:
+    address: order-topic
+    description: The Kafka topic for order events.
+    messages:
+      OrderCreated:
+        $ref: '#/components/messages/OrderCreated'
+
+operations:
+  # Operation for publishing new orders
+  publishNewOrder:
+    action: send
+    channel:
+      $ref: '#/channels/order_events'
+    messages:
+      - $ref: '#/components/messages/OrderCreated'
+    bindings:
+      kafka:
+        clientId:
+          type: string
+          description: The producer client ID, must be prefixed with 'producer-'.
+          pattern: '^producer-[a-zA-Z0-9-]+$'
+        bindingVersion: 0.4.0
+  
+  # Operation for subscribing to status updates (presumably from another service)
+  receiveOrderStatus:
+    action: receive
+    channel:
+      $ref: '#/channels/order_events'
+    messages:
+      - $ref: '#/components/messages/OrderStatusUpdated'
+    bindings:
+      kafka:
+        groupId:
+          type: string
+          description: The consumer group ID, must adhere to internal naming conventions.
+          pattern: '^order-status-group-[0-9]{3}$'
+        bindingVersion: 0.4.0
+
+components:
+  messages:
+    OrderCreated:
+      name: OrderCreatedEvent
+      title: Order Created Event
+      summary: Notification that a new order has been created.
+      payload:
+        $ref: '#/components/schemas/OrderPayload'
+      examples:
+        - name: new-order-example
+          payload:
+            orderId: "12345"
+            productId: "PROD-ABC"
+            quantity: 2
+            customerEmail: "customer@example.com"
+            status: "CREATED"
+
+    OrderStatusUpdated:
+      name: OrderStatusUpdatedEvent
+      title: Order Status Updated Event
+      summary: Notification about an update in the order status.
+      payload:
+        $ref: '#/components/schemas/OrderPayload'
+      examples:
+        - name: status-update-example
+          payload:
+            orderId: "12345"
+            productId: "PROD-ABC"
+            quantity: 2
+            customerEmail: "customer@example.com"
+            status: "SHIPPED"
+  
+  schemas:
+    OrderPayload:
+      type: object
+      properties:
+        orderId:
+          type: string
+          format: uuid
+          description: Unique ID of the order.
+        productId:
+          type: string
+          description: ID of the product ordered.
+        productName:
+          type: string
+        quantity:
+          type: integer
+          description: Number of items ordered.
+        customerEmail:
+          type: string
+          format: email
+          description: Email address of the customer.
+        status:
+          type: string
+          enum: [CREATED, PROCESSING, SHIPPED, DELIVERED, CANCELLED]
+          description: The current status of the order.
+      required:
+        - orderId
+        - productId
+        - quantity
+        - customerEmail
+        - status

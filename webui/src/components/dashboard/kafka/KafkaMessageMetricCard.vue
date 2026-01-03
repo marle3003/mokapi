@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { ref, watchEffect, onUnmounted, type PropType } from 'vue'
-import MetricCard from './MetricCard.vue'
-import { useService } from '@/composables/services';
+import MetricCard from '../MetricCard.vue'
 import { useMetrics } from '@/composables/metrics';
+import { useDashboard } from '@/composables/dashboard';
 
 const props = defineProps({
     labels: { type: Object as PropType<Label[]> },
 })
 
-const {fetchServices} = useService()
 const {sum} = useMetrics()
 const messages = ref(0)
-const {services, close} = fetchServices('kafka')
+const { dashboard } = useDashboard()
+const {services, close} = dashboard.value.getServices('kafka')
 watchEffect(() =>{
     messages.value = 0
     for (let service of services.value){

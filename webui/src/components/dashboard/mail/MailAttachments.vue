@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useMails } from '@/composables/mails';
+import { useDashboard } from '@/composables/dashboard';
 import { usePrettyBytes } from '@/composables/usePrettyBytes';
 import type { PropType } from 'vue';
 
@@ -10,18 +10,23 @@ defineProps({
 )
 
 const { format } = usePrettyBytes()
-const { attachmentUrl } = useMails()
+const { dashboard } = useDashboard()
 </script>
 
 <template>
-  <section aria-label="Attachments">
+  <section aria-labelledby="attachments-title">
+    <h2 id="attachments-title" class="visually-hidden">Attachments</h2>
+
     <ul class="list-unstyled row row-cols-auto g-3 attachments">
-      <li class="col attachment" v-for="attach of attachments" :key="attach.name" :aria-label="attach.name">
-        <a :href="attachmentUrl(messageId, attach.name)" download>
+      <li class="col attachment" v-for="attach of attachments" :key="attach.name">
+        <a :href="dashboard.getAttachmentUrl(messageId, attach.name)"
+          download
+          :aria-label="`${attach.name}, ${format(attach.size)}, disposition: ${attach.disposition}`"
+          >
           <div class="card">
             <div class="card-body d-flex">
               <div class="me-3 d-flex align-items-center">
-                <span class="bi bi-paperclip fs-4"></span>
+                <span class="bi bi-paperclip fs-4" aria-hidden="true"></span>
               </div>
               <div>
                 <p class="fw-semibold" aria-label="Name">{{ attach.name }}</p>
@@ -34,6 +39,7 @@ const { attachmentUrl } = useMails()
         </a>
       </li>
     </ul>
+
   </section>
 </template>
 

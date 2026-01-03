@@ -68,12 +68,18 @@ function comparePath(p1: HttpPath, p2: HttpPath) {
     return name1.localeCompare(name2)
 }
 
-function goToPath(path: HttpPath){
+function goToPath(path: HttpPath, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
     }
 
-    router.push(route.httpPath(props.service, path))
+    const to = route.httpPath(props.service, path);
+    if (openInNewTab) {
+        const routeData = router.resolve(to);
+        window.open(routeData.href, '_blank')
+    } else {
+        router.push(to)
+    }
 }
 function goToOperation(path: HttpPath, operation: HttpOperation){
     router.push(route.httpOperation(props.service, path, operation))
@@ -174,9 +180,9 @@ function toggleTag(name: string) {
 </script>
 
 <template>
-    <div class="card">
+    <section class="card" aria-labelledby="paths">
         <div class="card-body">
-            <div class="card-title text-center">Paths</div>
+            <h2 id="paths" class="card-title text-center">Paths</h2>
 
             <div class="text-center mt-3 mb-2" v-if="allTags.length > 1">
 
@@ -198,43 +204,50 @@ function toggleTag(name: string) {
 
             </div>
 
-            <table class="table dataTable selectable" data-testid="endpoints">
-                <thead>
-                    <tr>
-                        <th v-if="hasDeprecated" scope="col" class="text-center" style="width: 5px"></th>
-                        <th scope="col" class="text-left">Path</th>
-                        <th scope="col" class="text-left" style="width: 20%;">Summary</th>
-                        <th scope="col" class="text-left" style="width: 10%">Operations</th>
-                        <th scope="col" class="text-center" style="width: 15%">Last Request</th>
-                        <th scope="col" class="text-center" style="width: 10%">Requests / Errors</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="path in paths" :key="path.path" @click="goToPath(path)">
-                        <td v-if="hasDeprecated" style="padding-left:0;">
-                            <span class="bi bi-exclamation-triangle-fill yellow pe-1" v-if="allOperationsDeprecated(path)"></span>
-                        </td>
-                        <td>
-                            {{ path.path }}
-                        </td>
-                        <td>
-                            <span v-if="path.summary">{{ path.summary }}</span>
-                            <span v-else-if="path.operations && path.operations.length === 1">{{ path.operations[0]?.summary }}</span>
-                        </td>
-                        <td>
-                            <span v-for="operation in operations(path)" key="operation.method" :title="operation.summary" class="badge operation me-1" :class="operation.method" @click.stop="goToOperation(path, operation)">
-                                {{ operation.method.toUpperCase() }} <span class="bi bi-exclamation-triangle-fill yellow" style="vertical-align: middle;" v-if="operation.deprecated"></span>
-                            </span>
-                        </td>
-                        <td class="text-center">{{ lastRequest(path) }}</td>
-                        <td class="text-center">
-                            <span>{{ requests(path) }}</span>
-                            <span> / </span>
-                            <span v-bind:class="{'text-danger': errors(path) > 0}">{{ errors(path) }}</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-responsive-sm">
+                <table class="table dataTable selectable" data-testid="endpoints"  aria-labelledby="paths">
+                    <thead>
+                        <tr>
+                            <th v-if="hasDeprecated" scope="col" class="text-center" style="width: 5px"></th>
+                            <th scope="col" class="text-left">Path</th>
+                            <th scope="col" class="text-left col-3">Summary</th>
+                            <th scope="col" class="text-left col-1">Operations</th>
+                            <th scope="col" class="text-center col-2">Last Request</th>
+                            <th scope="col" class="text-center col-1">Requests / Errors</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="path in paths" :key="path.path" @mouseup.left="goToPath(path)" @mousedown.middle="goToPath(path, true)">
+                            <td v-if="hasDeprecated" style="padding-left:0;">
+                                <span class="bi bi-exclamation-triangle-fill yellow pe-1" v-if="allOperationsDeprecated(path)" aria-hidden="true"></span>
+                                <span class="visually-hidden">Deprecated</span>
+                            </td>
+                            <td>
+                                <router-link @click.stop class="row-link" :to="route.httpPath(props.service, path)">
+                                    {{ path.path }}
+                                </router-link>
+                            </td>
+                            <td>
+                                <span v-if="path.summary">{{ path.summary }}</span>
+                                <span v-else-if="path.operations && path.operations.length === 1">{{ path.operations[0]?.summary }}</span>
+                            </td>
+                            <td>
+                                <router-link v-for="operation in operations(path)" :key="operation.method" @click.stop class="row-link" :to="route.httpOperation(props.service, path, operation)">
+                                    <span :title="operation.summary" class="badge operation me-1" :class="operation.method">
+                                        {{ operation.method.toUpperCase() }} <span class="bi bi-exclamation-triangle-fill yellow" style="vertical-align: middle;" v-if="operation.deprecated"></span>
+                                    </span>
+                                </router-link>
+                            </td>
+                            <td class="text-center">{{ lastRequest(path) }}</td>
+                            <td class="text-center">
+                                <span>{{ requests(path) }}</span>
+                                <span> / </span>
+                                <span v-bind:class="{'text-danger': errors(path) > 0}">{{ errors(path) }}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
+    </section>
 </template>

@@ -4,6 +4,7 @@ import { usePrettyBytes } from '@/composables/usePrettyBytes'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { usePrettyHttp } from '@/composables/http'
 import { useRoute } from 'vue-router';
+import { getRouteName } from '@/composables/dashboard';
 
 const prop = defineProps({
     event: { type: Object as PropType<ServiceEvent>, required: true },
@@ -24,9 +25,8 @@ const operationRoute = computed(() => {
     endpoint.push(prop.event.traits.method.toLowerCase())
 
     return {
-        name: 'httpEndpoint',
+        name: getRouteName('httpEndpoint').value,
         params: { service: prop.event.traits.name, endpoint: endpoint },
-        query: { refresh: route.query.refresh }
     }
 })
 const apiRoute = computed(() => {
@@ -35,7 +35,7 @@ const apiRoute = computed(() => {
     }
 
     return {
-        name: 'httpService',
+        name: getRouteName('httpService').value,
         params: { service: prop.event.traits.name },
         query: { refresh: route.query.refresh }
     }
@@ -59,7 +59,7 @@ const apiRoute = computed(() => {
                 </div>
             </div>
             <div class="row mb-2">
-                <div class="col-1">
+                <div class="col-2">
                     <p class="label">Status</p>
                     <p>
                         <span class="badge status-code" :class="getClassByStatusCode(eventData.response.statusCode.toString())">

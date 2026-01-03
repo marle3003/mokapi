@@ -15,7 +15,7 @@
 }
 
 .yaml .ace_tag {
-    color:rgb(126, 231, 135);
+    color:rgb(0, 102, 51);
 }
 .yaml .ace-mokapi-dark {
     color: rgb(165, 214, 255);
@@ -111,4 +111,28 @@
 
 .hex .ace_hex, .hex .ace_hex-alt {
     padding-right: 8px;
+}
+
+/* ldif */
+.ldif .ace-mokapi-dark .ace_keyword {
+    color: rgb(126, 231, 135)
+}
+.ldif .ace-mokapi-light .ace_keyword {
+    color:rgb(0, 102, 51);
+}
+.ldif .ace-mokapi-dark .ace_dn {
+    color: rgb(135, 206, 235);
+    font-weight: bold;
+}
+.ldif .ace-mokapi-light .ace_dn {
+    color:rgb(0, 102, 204);
+    font-weight: bold;
+}
+.ldif .ace-mokapi-dark .ace_comment { 
+    color: rgb(150, 150, 150); 
+    font-style: italic;
+}
+.ldif .ace-mokapi-light .ace_comment { 
+    color: rgb(128, 128, 128); 
+    font-style: italic;
 }
