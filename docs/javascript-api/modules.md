@@ -10,9 +10,10 @@ Mokapi supports importing three types of modules:
 - **Built-in modules**: Provided by Mokapi for various functionalities.
 - **Local filesystem modules**: Custom scripts and Node.js packages.
 - **JSON & YAML modules**: Configuration files converted into JavaScript objects.
+- **Remote modules**: Hosted on a web server or CDN
 
 ``` box=tip
-Mokapi monitors all imported modules with `fsnotify`. If a module is modified, any dependent script is automatically reloaded.
+Mokapi monitors all imported modules with `fsnotify`. If a module is modified, any dependent script that contains a `default` export is automatically reloaded.
 ```
 
 ## Built-in Modules
@@ -26,7 +27,7 @@ import { fake } from 'mokapi/faker'
 
 ## Local Filesystem Modules
 
-You can import files using relative or absolute paths, and Mokapi supports Node.js modules.
+Import files using relative or absolute paths. Node.js resolution rules are supported.
 
 ```javascript
 import { someFunc } from './helpers.js'
@@ -36,7 +37,7 @@ import dateTime from 'date-time' // Requires: npm install date-time
 
 ## JSON & YAML Modules
 
-Mokapi allows importing JSON and YAML files, automatically converting them into JavaScript objects.
+JSON and YAML files can be imported and converted automatically to objects:
 
 ```javascript tab=Javascript
 import users from './users.json'
@@ -56,5 +57,16 @@ console.log(envs[0])
 - integration
 - production
 ```
+
+## Remote Modules
+
+Modules can also be hosted remotely on public web servers, GitHub, or CDNs.
+
+```js
+import { helper } from 'https://example.com/mokapi-helpers.js'
+```
+
+- Mokapi uses its [HTTP provider](/docs/configuration/dynamic/http.md) to load remote modules
+- This allows dynamic updates without restarting Mokapi
 
 By leveraging these module types, you can create flexible, maintainable, and scalable Mokapi scripts.

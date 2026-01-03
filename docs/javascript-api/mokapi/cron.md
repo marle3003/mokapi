@@ -6,9 +6,10 @@ description: Schedules a new periodic job using cron expression.
 
 Schedules a new periodic job using cron expression. 
 
-``` box=info
-By default, the first execution happens immediately, check ScheduledEventArgs
-```
+### Behavior
+
+- By default, **cron jobs wait for the first scheduled tick** before executing.
+- To run the job immediately on creation, set `SkipImmediateFirstRun: false` in `args`.
 
 ## Parameters
 

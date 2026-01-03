@@ -24,6 +24,7 @@ import (
 
 	"github.com/dop251/goja"
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -69,6 +70,10 @@ func (s *Script) Run() error {
 	_, err := s.RunDefault()
 	if err != nil {
 		if errors.Is(err, NoDefaultFunction) {
+			log.Debugf(
+				"skipping JavaScript file %s: no default export (not an executable script)",
+				s.file.Info.Url,
+			)
 			return nil
 		}
 		return err
