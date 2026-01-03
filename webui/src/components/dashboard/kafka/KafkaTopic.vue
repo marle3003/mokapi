@@ -42,7 +42,7 @@ onUnmounted(() => {
                         <p id="cluster" class="label">Cluster</p>
                         <p>
                           <router-link :to="{
-                              name: 'kafkaService',
+                              name: getRouteName('kafkaService').value,
                               params: {service: service.name},
                               query: {refresh: route.query.refresh}
                           }" aria-labelledby="cluster">
