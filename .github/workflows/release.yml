@@ -5,6 +5,10 @@ on:
       - 'v*'
       - '!v*-beta'
 
+permissions:
+  id-token: write # Required for OIDC
+  contents: read
+
 jobs:
   release-linux:
     name: Release
