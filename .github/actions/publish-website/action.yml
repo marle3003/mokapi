@@ -55,6 +55,10 @@ runs:
       working-directory: ./webui
       run: npx playwright install --with-deps
       shell: bash
+    - name: test website
+      working-directory: ./webui
+      run: npx playwright test --project=website
+      shell: bash
     - name: prerender
       working-directory: ./webui/ssg
       run: node index.js
