@@ -167,7 +167,7 @@ test('Visit Mail Server', async ({ page }) => {
 
         await page.getByRole('tab', { name: 'Configs' }).click();
         const table = page.getByRole('table', { name: 'Configs' });
-        await expect(await getCellByColumnName(table, 'URL')).toContainText('/webui/scripts/dashboard-demo/demo-configs/mail.yaml');
+        await expect(await getCellByColumnName(table, 'URL')).toContainText('/mail.yaml');
         await expect(await getCellByColumnName(table, 'Provider')).toHaveText('File');
 
     });

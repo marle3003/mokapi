@@ -34,7 +34,7 @@ test('Visit LDAP Testserver', async ({ page }) => {
     await test.step('Verify Configs', async () => {
 
         const table = page.getByRole('table', { name: 'Configs' });
-        await expect(await getCellByColumnName(table, 'URL')).toContainText('/webui/scripts/dashboard-demo/demo-configs/ldap.yaml');
+        await expect(await getCellByColumnName(table, 'URL')).toContainText('/ldap.yaml');
         await expect(await getCellByColumnName(table, 'Provider')).toHaveText('File');
 
     });
