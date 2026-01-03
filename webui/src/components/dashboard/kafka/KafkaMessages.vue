@@ -275,7 +275,7 @@ function formatHeaderValue(v: KafkaHeaderValue) {
             </tr>
         </thead>
         <tbody>
-            <tr v-for="msg in messages" :key="msg.id" @mouseup.left="handleMessageClick(msg.event)" @mousedown.middle="goToMessage(msg.event, true)" :class="msg.deleted ? 'deleted': ''">
+            <tr v-for="msg in messages" :key="msg.id" @click.left="handleMessageClick(msg.event)" @mousedown.middle="goToMessage(msg.event, true)" :class="msg.deleted ? 'deleted': ''">
                 <td class="key">
                     <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaMessage').value, params: { id: msg.id }}">
                         {{ msg.key }}

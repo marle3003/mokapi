@@ -22,10 +22,6 @@ if (serviceName){
         result.close()
     })
 }
-
-onUnmounted(() => {
-    close()
-})
 </script>
 
 <template>

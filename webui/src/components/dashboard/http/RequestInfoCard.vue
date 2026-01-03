@@ -59,7 +59,7 @@ const apiRoute = computed(() => {
                 </div>
             </div>
             <div class="row mb-2">
-                <div class="col-1">
+                <div class="col-2">
                     <p class="label">Status</p>
                     <p>
                         <span class="badge status-code" :class="getClassByStatusCode(eventData.response.statusCode.toString())">

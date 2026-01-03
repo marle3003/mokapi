@@ -109,110 +109,112 @@ function getStatus(data: JobExecution) {
   <section class="card" aria-labelledby="jobs-title">
     <div class="card-body">
         <h2 id="jobs-title" class="card-title text-center">Recent Jobs</h2>
-        <table class="table dataTable events" aria-labelledby="jobs-title">
-            <thead>
-                <tr>
-                    <th scope="col" class="text-left" style="width: 15px;"></th>
-                    <th scope="col" class="text-left col-1">Status</th>
-                    <th scope="col" class="text-left col">Name</th>
-                    <th scope="col" class="text-center col-1">Schedule</th>
-                    <th scope="col" class="text-center col-2">Time</th>
-                    <th scope="col" class="text-center col-2">Next Run</th>
-                </tr>
-            </thead>
-            <tbody>
-                <template v-for="(event, index) of events" >
-                    <tr data-bs-toggle="collapse" :data-bs-target="'#event_'+index" aria-expanded="false" :set="data = eventData(event)" >
-                        <td style="padding-left: 5px;"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></td>
-                        <td :set="status = getStatus(data!)">
-                            <span class="badge bg-danger me-2" v-if="status === 'error'">Error</span>
-                            <span class="badge bg-warning me-2" v-else-if="status === 'warning'">Warning</span>
-                            <span class="badge bg-success me-2" v-else>Success</span>
-                        </td>
-                        <td>{{ data!.tags.name }}</td>
-                        <td class="text-center">{{ data!.schedule }}</td>
-                        <td class="text-center">{{ format(event.time) }}</td>
-                        <td class="text-center" :set="timer = timers[event.id]">
-                            <span v-if="timer" :title="format(data!.nextRun)">{{ formatTimer(timer) }}</span>
-                            <span v-else-if="data?.nextRun">{{ format(data.nextRun) }}</span>
-                            <span v-else>-</span>
-                        </td>
+        <div class="table-responsive-sm">
+            <table class="table dataTable events" aria-labelledby="jobs-title">
+                <thead>
+                    <tr>
+                        <th scope="col" class="text-left" style="width: 15px;"></th>
+                        <th scope="col" class="text-left col-1">Status</th>
+                        <th scope="col" class="text-left col">Name</th>
+                        <th scope="col" class="text-center col-1">Schedule</th>
+                        <th scope="col" class="text-center col-2">Time</th>
+                        <th scope="col" class="text-center col-2">Next Run</th>
                     </tr>
-                    <tr class="collapse-row" :set="data = eventData(event)">
-                        <td colspan="6" v-if="data" >
-                            <div class="collapse" :id="'event_'+index" style="padding: 2rem;">
-                                <h5>Info</h5>
-                                <div class="mb-3">
-                                    <div class="row">
-                                        <div class="col-3" :set="timer = timers[event.id]">
-                                            <div class="label">Next Run</div>
-                                            <div>
-                                                <span>{{ format(data.nextRun) }}</span>
+                </thead>
+                <tbody>
+                    <template v-for="(event, index) of events" >
+                        <tr data-bs-toggle="collapse" :data-bs-target="'#event_'+index" aria-expanded="false" :set="data = eventData(event)" >
+                            <td style="padding-left: 5px;"><span class="bi bi-chevron-right"></span><span class="bi bi-chevron-down"></span></td>
+                            <td :set="status = getStatus(data!)">
+                                <span class="badge bg-danger me-2" v-if="status === 'error'">Error</span>
+                                <span class="badge bg-warning me-2" v-else-if="status === 'warning'">Warning</span>
+                                <span class="badge bg-success me-2" v-else>Success</span>
+                            </td>
+                            <td>{{ data!.tags.name }}</td>
+                            <td class="text-center">{{ data!.schedule }}</td>
+                            <td class="text-center">{{ format(event.time) }}</td>
+                            <td class="text-center" :set="timer = timers[event.id]">
+                                <span v-if="timer" :title="format(data!.nextRun)">{{ formatTimer(timer) }}</span>
+                                <span v-else-if="data?.nextRun">{{ format(data.nextRun) }}</span>
+                                <span v-else>-</span>
+                            </td>
+                        </tr>
+                        <tr class="collapse-row" :set="data = eventData(event)">
+                            <td colspan="6" v-if="data" >
+                                <div class="collapse" :id="'event_'+index" style="padding: 2rem;">
+                                    <h5>Info</h5>
+                                    <div class="mb-3">
+                                        <div class="row">
+                                            <div class="col-3" :set="timer = timers[event.id]">
+                                                <div class="label">Next Run</div>
+                                                <div>
+                                                    <span>{{ format(data.nextRun) }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-2">
+                                                <div class="label">Runs</div>
+                                                <div v-if="data.maxRuns > 0">{{ data.runs }} / {{ data.maxRuns }}</div>
+                                                <div v-else>{{ data.runs }}</div>
+                                            </div>
+                                            <div class="col-2">
+                                                <div class="label">Duration</div>
+                                                <div>{{ prettyDuration(data!.duration) }}</div>
                                             </div>
                                         </div>
-                                        <div class="col-2">
-                                            <div class="label">Runs</div>
-                                            <div v-if="data.maxRuns > 0">{{ data.runs }} / {{ data.maxRuns }}</div>
-                                            <div v-else>{{ data.runs }}</div>
-                                        </div>
-                                        <div class="col-2">
-                                            <div class="label">Duration</div>
-                                            <div>{{ prettyDuration(data!.duration) }}</div>
-                                        </div>
                                     </div>
+                                    <h5>Logs</h5>
+                                    <div class="mb-3">
+                                    <ul class="list-group">
+                                        <li v-for="log in data.logs" class="list-group-item">
+                                            <span class="text-body log">
+                                                <span class="bi bi-exclamation-triangle-fill text-warning" v-if="log.level == 'warn'"></span>
+                                                <span class="bi bi-x-circle-fill text-danger" v-else-if="log.level == 'error'"></span>
+                                                <span class="bi bi-bug-fill text-info" v-else-if="log.level == 'debug'"></span>
+                                                <span class="bi bi-chat-dots text-primary" v-else></span>
+                                                <span class="ms-2" v-html="parseUrls(log.message)"></span>
+                                            </span>
+                                        </li>
+                                    </ul>
+                                    <p v-if="!data.logs || data.logs.length == 0">This job did not produce any logs. You can use <code>console.log()</code> or <code>console.error()</code> in your script to output information.</p>
                                 </div>
-                                <h5>Logs</h5>
-                                <div class="mb-3">
-                                <ul class="list-group">
-                                    <li v-for="log in data.logs" class="list-group-item">
-                                        <span class="text-body log">
-                                            <span class="bi bi-exclamation-triangle-fill text-warning" v-if="log.level == 'warn'"></span>
-                                            <span class="bi bi-x-circle-fill text-danger" v-else-if="log.level == 'error'"></span>
-                                            <span class="bi bi-bug-fill text-info" v-else-if="log.level == 'debug'"></span>
-                                            <span class="bi bi-chat-dots text-primary" v-else></span>
-                                            <span class="ms-2" v-html="parseUrls(log.message)"></span>
-                                        </span>
-                                    </li>
-                                </ul>
-                                <p v-if="!data.logs || data.logs.length == 0">This job did not produce any logs. You can use <code>console.log()</code> or <code>console.error()</code> in your script to output information.</p>
-                            </div>
-                                <div class="alert alert-danger" role="alert" v-if="data.error">
-                                    <h5 class="alert-heading">Error</h5>
-                                    <p>{{ data.error.message }}</p>
-                                </div>
-                                <h5>
-                                    Tags
-                                    <a href="/docs/javascript-api/mokapi/eventhandler/scheduledeventargs" class="ms-1" title="Learn how to define tags for your job" rel="noopener">
-                                        <span class="bi bi-question-circle" aria-hidden="true"></span>
-                                    </a>
-                                </h5>
-                                <table class="table dataTable">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col" class="text-left">Name</th>
-                                            <th scope="col" class="text-left w-75">Value</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <template v-for="(value, key) of data.tags">
+                                    <div class="alert alert-danger" role="alert" v-if="data.error">
+                                        <h5 class="alert-heading">Error</h5>
+                                        <p>{{ data.error.message }}</p>
+                                    </div>
+                                    <h5>
+                                        Tags
+                                        <a href="/docs/javascript-api/mokapi/eventhandler/scheduledeventargs" class="ms-1" title="Learn how to define tags for your job" rel="noopener">
+                                            <span class="bi bi-question-circle" aria-hidden="true"></span>
+                                        </a>
+                                    </h5>
+                                    <table class="table dataTable">
+                                        <thead>
                                             <tr>
-                                                <td>{{ key }}</td>
-                                                <td>
-                                                    <router-link v-if="key === 'file' && data.tags.fileKey" :to="{ name: getRouteName('config').value, params: { id: data.tags.fileKey } }">
-                                                    {{ value }}
-                                                    </router-link>
-                                                    <span v-else>{{ value }}</span>
-                                                </td>
+                                                <th scope="col" class="text-left">Name</th>
+                                                <th scope="col" class="text-left w-75">Value</th>
                                             </tr>
-                                        </template>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </td>
-                    </tr>
-                </template>
-            </tbody>
-        </table>
+                                        </thead>
+                                        <tbody>
+                                            <template v-for="(value, key) of data.tags">
+                                                <tr>
+                                                    <td>{{ key }}</td>
+                                                    <td>
+                                                        <router-link v-if="key === 'file' && data.tags.fileKey" :to="{ name: getRouteName('config').value, params: { id: data.tags.fileKey } }">
+                                                        {{ value }}
+                                                        </router-link>
+                                                        <span v-else>{{ value }}</span>
+                                                    </td>
+                                                </tr>
+                                            </template>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
     </div>
   </section>
 </template>

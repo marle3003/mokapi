@@ -8,7 +8,9 @@ export function useMeta(title: string, description: string, canonicalUrl: string
 
     document.title = title
     setDescription(description)
-    setCanonical(canonicalUrl)
+    if (canonicalUrl) {
+        setCanonical(canonicalUrl)
+    }
 
     if (!image) {
         image = { url: '/og-logo.png', alt: 'Mokapi logo' }

@@ -35,7 +35,7 @@ const servers = computed(() => {
         <div class="card-body">
             <h2 id="servers" class="card-title text-center">Brokers</h2>
          
-            <table class="table dataTable" aria-labelledby="servers">
+            <table class="table dataTable table-responsive-lg" aria-labelledby="servers">
                 <thead>
                     <tr>
                         <th scope="col" class="text-left col-2">Name</th>
@@ -47,7 +47,7 @@ const servers = computed(() => {
                 <tbody>
                     <tr v-for="server in servers" :key="server.host">
                         <td>{{ server.name }}</td>
-                        <td>{{ server.host }}</td>
+                        <td  v-html="server.host.replace(/([^:]*):(.*)/g, '$1<wbr>:$2')"></td>
                         <td><markdown :source="server.description" class="description" :html="true"></markdown></td>
                         <td>
                             <ul class="tags">

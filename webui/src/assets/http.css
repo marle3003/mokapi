@@ -13,6 +13,9 @@
 .operation.head, .operation.trace {
     background-color: var(--color-yellow);
 }
+[data-theme="light"] .status-code.default {
+    color: #000;
+}
 .status-code.default.active {
     outline-width: 3px;
     outline-color: rgba(107, 107, 107, 0.4) !important;

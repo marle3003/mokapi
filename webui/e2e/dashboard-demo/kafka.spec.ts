@@ -39,7 +39,7 @@ test('Visit Kafka Order Service', async ({ page }) => {
          await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('order-topic');
          await expect(await getCellByColumnName(table, 'Description', rows.nth(0))).toHaveText('The Kafka topic for order events.');
          await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).not.toHaveText('-');
-         await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('1');
+         await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('2');
 
     });
 
@@ -106,7 +106,7 @@ test('Visit Kafka Order Service', async ({ page }) => {
 
         const table = region.getByRole('table', { name: 'Recent Messages' });
         const rows = table.locator('tbody tr');
-        await expect(rows).toHaveCount(1);
+        await expect(rows).toHaveCount(2);
         await expect(await getCellByColumnName(table, 'Key', rows.nth(0))).toHaveText('a914817b-c5f0-433e-8280-1cd2fe44234e');
         await expect(await getCellByColumnName(table, 'Value', rows.nth(0))).toContainText('{"orderId":"a914817b-c5f0-433e-8280-1cd2fe44234e","productId":"2a');
         await expect(await getCellByColumnName(table, 'Topic', rows.nth(0))).toHaveText('order-topic');
@@ -126,36 +126,36 @@ test('Visit Kafka Order Service', async ({ page }) => {
 
         await test.step('Verify Message', async () => {
 
-            await page.getByRole('table', { name: 'Messages' }).locator('tbody tr').click();
+            await page.getByRole('table', { name: 'Recent Messages' }).locator('tbody tr').getByRole('link', { name: 'a914817b-c5f0-433e-8280-1cd2fe44234e' }).click();
             await expect(page.getByLabel('Kafka Key')).toHaveText('a914817b-c5f0-433e-8280-1cd2fe44234e');
             await expect(page.getByLabel('Kafka Topic')).toHaveText('order-topic');
-            await expect(page.getByLabel('Kafka Topic')).toHaveAttribute('href', '/dashboard/kafka/service/Kafka%20Order%20Service%20API/topic/order-topic');
-            await expect(page.getByLabel('Offset')).toHaveText('0');
+            await expect(page.getByLabel('Kafka Topic')).toHaveAttribute('href', '/dashboard-demo/kafka/service/Kafka%20Order%20Service%20API/topic/order-topic');
+            await expect(page.getByLabel('Offset')).toHaveText('1');
             await expect(page.getByRole('region', { name: 'Meta' }).getByLabel('Content Type')).toHaveText('application/json');
             await expect(page.getByLabel('Key Type')).toHaveText('-');
             await expect(page.getByLabel('Key Type')).not.toBeEmpty();
 
             const value = page.getByRole('region', { name: 'Value' });
             await expect(value.getByLabel('Content Type')).toHaveText('application/json');
-            await expect(value.getByLabel('Lines of Code')).toHaveText('7 lines');
-            await expect(value.getByLabel('Size of Code')).toHaveText('196 B');
-            await expect(value.getByLabel('Size of Code')).toHaveText('196 B');
+            await expect(value.getByLabel('Lines of Code')).toHaveText('8 lines');
+            await expect(value.getByLabel('Size of Code')).toHaveText('249 B');
             await expect(value.getByLabel('Content', { exact: true })).toContainText('"orderId": "a914817b-c5f0-433e-8280-1cd2fe44234e",')
 
             await page.goBack();
 
         });
 
-        await test.step('Verify Paritions', async () => {
+        await test.step('Verify Partitions', async () => {
 
             await page.getByRole('tab', { name: 'Partitions' }).click();
             const table = page.getByRole('table', { name: 'Partitions' });
+
             const rows = table.locator('tbody tr');
             await expect(rows).toHaveCount(1);
             await expect(await getCellByColumnName(table, 'ID')).toHaveText('0');
             await expect(await getCellByColumnName(table, 'Leader')).toHaveText('development (localhost:9092)');
             await expect(await getCellByColumnName(table, 'Start Offset')).toHaveText('0');
-            await expect(await getCellByColumnName(table, 'Offset')).toHaveText('1');
+            await expect(await getCellByColumnName(table, 'Offset')).toHaveText('2');
             await expect(await getCellByColumnName(table, 'Segments')).toHaveText('1');
 
         });
@@ -164,6 +164,7 @@ test('Visit Kafka Order Service', async ({ page }) => {
 
             await page.getByRole('tab', { name: 'Groups' }).click();
             const table = page.getByRole('table', { name: 'Groups' });
+
             const rows = table.locator('tbody tr');
             await expect(rows).toHaveCount(1);
             await expect(await getCellByColumnName(table, 'Name')).toHaveText('order-status-group-100');
@@ -185,8 +186,8 @@ test('Visit Kafka Order Service', async ({ page }) => {
             await expect(configs.getByLabel('Summary')).toHaveText('Notification that a new order has been created.');
             await expect(configs.getByLabel('Message Content Type', { exact: true })).toHaveText('application/json');
             const value = configs.getByRole('tabpanel', { name: 'Value'})
-            await expect(value.getByLabel('Lines of Code').nth(0)).toHaveText('41 lines');
-            await expect(value.getByLabel('Size of Code').nth(0)).toHaveText('826 B');
+            await expect(value.getByLabel('Lines of Code').nth(0)).toHaveText('44 lines');
+            await expect(value.getByLabel('Size of Code').nth(0)).toHaveText('877 B');
             await expect(value.getByRole('region', { name: 'Content' }).nth(0)).toContainText(`"type": "object",
   "properties": {`);
 

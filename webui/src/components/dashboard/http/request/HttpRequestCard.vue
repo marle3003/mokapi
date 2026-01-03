@@ -7,6 +7,7 @@ import SourceView from '../../SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { Tooltip } from 'bootstrap';
 
+declare type Tab = 'RequestBody' | 'Parameters' | 'Security'
 const { formatSchema } = usePrettyLanguage()
 
 const props = defineProps<{
@@ -70,6 +71,15 @@ const hasOneSecurityScheme = computed(() => {
     }
     return false
 })
+const activeTab = computed<Tab>(() => {
+    if (props.operation.requestBody) {
+        return 'RequestBody';
+    }
+    if (props.operation.parameters || !props.operation.security) {
+        return 'Parameters';
+    }
+    return 'Security'
+})
 function getSchemeClass(scheme: HttpSecurityScheme) {
     switch (scheme.configs['type']) {
         case 'http':
@@ -86,20 +96,30 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
             <h2 id="request" class="card-title text-center">Request</h2>
 
             <div class="nav card-tabs" role="tablist" data-testid="tabs">
-              <button :class="operation.requestBody ? 'active' : 'disabled'" id="body-tab" :aria-disabled="!operation.requestBody" data-bs-toggle="tab" data-bs-target="#body" type="button" role="tab" aria-controls="body" aria-selected="true"><span class="bi-file-text me-2" />Body</button>
-              <button :class="operation.parameters ? (operation.requestBody ? '' : 'active') : 'disabled'" id="parameters-tab" :aria-disabled="!operation.parameters" data-bs-toggle="tab" data-bs-target="#parameters" type="button" role="tab" aria-controls="parameters" aria-selected="false"><span class="bi-sliders me-2" />Parameters</button>
-              <button :class="operation.security ? (operation.requestBody || operation.parameters ? '' : 'active') : 'disabled'" id="security-tab" :aria-disabled="!operation.security" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab" aria-controls="security" aria-selected="false"><span class="bi-shield-lock me-2" /> Security</button>
+              <button :class="activeTab === 'RequestBody' ? 'active' : 'disabled'" id="body-tab" :aria-disabled="!operation.requestBody" data-bs-toggle="tab" data-bs-target="#body" type="button" role="tab" aria-controls="body" :aria-selected="activeTab === 'RequestBody'"><span class="bi-file-text me-2" />Body</button>
+              <button :class="{ active: activeTab === 'Parameters' }" id="parameters-tab" data-bs-toggle="tab" data-bs-target="#parameters" type="button" role="tab" aria-controls="parameters" :aria-selected="activeTab === 'Parameters'"><span class="bi-sliders me-2" />Parameters</button>
+              <button :class="{ active: activeTab === 'Security', disabled: !operation.security }" id="security-tab" :aria-disabled="!operation.security" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab" aria-controls="security" :aria-selected="activeTab === 'Security'"><span class="bi-shield-lock me-2" /> Security</button>
             </div>
 
             <div class="tab-content" id="tabRequest">
                 <div class="tab-pane fade" :class="operation.requestBody ? 'show active' : ''" id="body" role="tabpanel" aria-labelledby="body-tab" v-if="operation.requestBody">
                     <div v-if="operation.requestBody">
-                        <p class="label" v-if="operation.requestBody.description">Description</p>
-                        <p v-if="operation.requestBody.description">{{  operation.requestBody.description }}</p>
-                        <p v-if="operation.requestBody.required">Required</p>
-
-                        <p class="label" v-if="operation.requestBody.contents.length == 1">Request content type</p>
-                        <p v-if="operation.requestBody.contents.length == 1">{{ operation.requestBody.contents[0]?.type }}</p>
+                        <div class="row mb-2" v-if="operation.requestBody.description">
+                            <div class="col">
+                                <p class="label">Description</p>
+                                <p>{{  operation.requestBody.description }}</p>
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-2">
+                                <p class="label" v-if="operation.requestBody.contents.length == 1">Request content type</p>
+                                <p v-if="operation.requestBody.contents.length == 1">{{ operation.requestBody.contents[0]?.type }}</p>
+                            </div>
+                            <div class="col">
+                                <p class="label">Required</p>
+                                <p>{{ operation.requestBody.required }}</p>
+                            </div>
+                        </div>
                         
                         <source-view 
                             :source="{ preview: { content: formatSchema(selected.content?.schema), contentType: 'application/json' }}" 

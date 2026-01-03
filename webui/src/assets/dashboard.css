@@ -90,9 +90,8 @@
     position: fixed;
     top: 4rem;
     z-index: 10;
-    width: 100%;
+    width: 90%;
     padding-top: 15px;
-    padding-left: 8px;
     padding-bottom: 30px;
     background-color: var(--color-background);
 }

@@ -204,48 +204,50 @@ function toggleTag(name: string) {
 
             </div>
 
-            <table class="table dataTable selectable" data-testid="endpoints"  aria-labelledby="paths">
-                <thead>
-                    <tr>
-                        <th v-if="hasDeprecated" scope="col" class="text-center" style="width: 5px"></th>
-                        <th scope="col" class="text-left">Path</th>
-                        <th scope="col" class="text-left col-3">Summary</th>
-                        <th scope="col" class="text-left col-1">Operations</th>
-                        <th scope="col" class="text-center col-2">Last Request</th>
-                        <th scope="col" class="text-center col-1">Requests / Errors</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="path in paths" :key="path.path" @mouseup.left="goToPath(path)" @mousedown.middle="goToPath(path, true)">
-                        <td v-if="hasDeprecated" style="padding-left:0;">
-                            <span class="bi bi-exclamation-triangle-fill yellow pe-1" v-if="allOperationsDeprecated(path)" aria-hidden="true"></span>
-                            <span class="visually-hidden">Deprecated</span>
-                        </td>
-                        <td>
-                            <router-link @click.stop class="row-link" :to="route.httpPath(props.service, path)">
-                                {{ path.path }}
-                            </router-link>
-                        </td>
-                        <td>
-                            <span v-if="path.summary">{{ path.summary }}</span>
-                            <span v-else-if="path.operations && path.operations.length === 1">{{ path.operations[0]?.summary }}</span>
-                        </td>
-                        <td>
-                            <router-link v-for="operation in operations(path)" :key="operation.method" @click.stop class="row-link" :to="route.httpOperation(props.service, path, operation)">
-                                <span :title="operation.summary" class="badge operation me-1" :class="operation.method">
-                                    {{ operation.method.toUpperCase() }} <span class="bi bi-exclamation-triangle-fill yellow" style="vertical-align: middle;" v-if="operation.deprecated"></span>
-                                </span>
-                            </router-link>
-                        </td>
-                        <td class="text-center">{{ lastRequest(path) }}</td>
-                        <td class="text-center">
-                            <span>{{ requests(path) }}</span>
-                            <span> / </span>
-                            <span v-bind:class="{'text-danger': errors(path) > 0}">{{ errors(path) }}</span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-responsive-sm">
+                <table class="table dataTable selectable" data-testid="endpoints"  aria-labelledby="paths">
+                    <thead>
+                        <tr>
+                            <th v-if="hasDeprecated" scope="col" class="text-center" style="width: 5px"></th>
+                            <th scope="col" class="text-left">Path</th>
+                            <th scope="col" class="text-left col-3">Summary</th>
+                            <th scope="col" class="text-left col-1">Operations</th>
+                            <th scope="col" class="text-center col-2">Last Request</th>
+                            <th scope="col" class="text-center col-1">Requests / Errors</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="path in paths" :key="path.path" @mouseup.left="goToPath(path)" @mousedown.middle="goToPath(path, true)">
+                            <td v-if="hasDeprecated" style="padding-left:0;">
+                                <span class="bi bi-exclamation-triangle-fill yellow pe-1" v-if="allOperationsDeprecated(path)" aria-hidden="true"></span>
+                                <span class="visually-hidden">Deprecated</span>
+                            </td>
+                            <td>
+                                <router-link @click.stop class="row-link" :to="route.httpPath(props.service, path)">
+                                    {{ path.path }}
+                                </router-link>
+                            </td>
+                            <td>
+                                <span v-if="path.summary">{{ path.summary }}</span>
+                                <span v-else-if="path.operations && path.operations.length === 1">{{ path.operations[0]?.summary }}</span>
+                            </td>
+                            <td>
+                                <router-link v-for="operation in operations(path)" :key="operation.method" @click.stop class="row-link" :to="route.httpOperation(props.service, path, operation)">
+                                    <span :title="operation.summary" class="badge operation me-1" :class="operation.method">
+                                        {{ operation.method.toUpperCase() }} <span class="bi bi-exclamation-triangle-fill yellow" style="vertical-align: middle;" v-if="operation.deprecated"></span>
+                                    </span>
+                                </router-link>
+                            </td>
+                            <td class="text-center">{{ lastRequest(path) }}</td>
+                            <td class="text-center">
+                                <span>{{ requests(path) }}</span>
+                                <span> / </span>
+                                <span v-bind:class="{'text-danger': errors(path) > 0}">{{ errors(path) }}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </section>
 </template>

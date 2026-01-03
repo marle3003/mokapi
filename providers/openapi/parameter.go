@@ -86,8 +86,8 @@ func (p *Parameter) SetDefaultStyle() {
 	}
 }
 
-func (p Parameters) Parse(config *dynamic.Config, reader dynamic.Reader) error {
-	for index, param := range p {
+func (p *Parameters) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	for index, param := range *p {
 		if err := param.Parse(config, reader); err != nil {
 			return fmt.Errorf("parse parameter index '%v' failed: %w", index, err)
 		}

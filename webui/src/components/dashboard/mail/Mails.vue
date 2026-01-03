@@ -55,36 +55,37 @@ onUnmounted(() => {
 <template>
     <div class="card">
         <div class="card-body">
-            <h2 class="card-title text-center">Recent Mails</h2>
-            <table class="table dataTable selectable">
-                <caption class="visually-hidden">Recent Mails</caption>
-                <thead>
-                    <tr>
-                        <th scope="col" class="text-left col-4">Subject</th>
-                        <th scope="col" class="text-left col-2">From</th>
-                        <th scope="col" class="text-left col-2">To</th>
-                        <th scope="col" class="text-center col-2">Time</th>
-                        <th scope="col" class="text-center col-1">Duration</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="event in filteredEvents" :key="event.id" :set="data = eventData(event)" @mouseup.left="goToMail(event)" @mousedown.middle="goToMail(event, true)">
-                        <td>
-                            <router-link @click.stop class="row-link" :to="{ name: getRouteName('smtpMail').value, params: {id: data.messageId} }">
-                                {{ data.subject }}
-                            </router-link>
-                        </td>
-                        <td>{{ data.from }}</td>
-                        <td class="address-list">
-                            <div v-for="address in data.to">
-                            {{ address }}
-                            </div>
-                        </td>
-                        <td class="text-center">{{ format(event.time) }}</td>
-                        <td class="text-center">{{ duration(data.duration) }}</td>
-                    </tr>
-                </tbody>
-            </table>
+            <h2 id="mails-title" class="card-title text-center">Recent Mails</h2>
+            <div class="table-responsive-sm">
+                <table class="table dataTable selectable" aria-labelledby="mails-title">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="text-left col-4">Subject</th>
+                            <th scope="col" class="text-left col-2">From</th>
+                            <th scope="col" class="text-left col-2">To</th>
+                            <th scope="col" class="text-center col-2">Time</th>
+                            <th scope="col" class="text-center col-1">Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="event in filteredEvents" :key="event.id" :set="data = eventData(event)" @mouseup.left="goToMail(event)" @mousedown.middle="goToMail(event, true)">
+                            <td>
+                                <router-link @click.stop class="row-link" :to="{ name: getRouteName('smtpMail').value, params: {id: data.messageId} }">
+                                    {{ data.subject }}
+                                </router-link>
+                            </td>
+                            <td>{{ data.from }}</td>
+                            <td class="address-list">
+                                <div v-for="address in data.to">
+                                {{ address }}
+                                </div>
+                            </td>
+                            <td class="text-center">{{ format(event.time) }}</td>
+                            <td class="text-center">{{ duration(data.duration) }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </template>

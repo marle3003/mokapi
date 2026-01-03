@@ -53,6 +53,7 @@ function goToMailbox(mb: SmtpMailbox, openInNewTab = false){
 </script>
 
 <template>
+  <div class="table-responsive-sm">
     <table class="table dataTable selectable" aria-label="Mailboxes">
         <thead>
             <tr>
@@ -77,4 +78,5 @@ function goToMailbox(mb: SmtpMailbox, openInNewTab = false){
             </tr>
         </tbody>
     </table>
+  </div>
 </template>

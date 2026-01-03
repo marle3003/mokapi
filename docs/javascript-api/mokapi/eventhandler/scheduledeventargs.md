@@ -7,11 +7,11 @@ description: ScheduledEventArgs is an object used by every and cron function.
 ScheduledEventArgs is an object used by [every](/docs/javascript-api/mokapi/every.md) and
 [cron](/docs/javascript-api/mokapi/cron.md) function.
 
-| Name                  | Type    | Description                                                                                                                     |
-|-----------------------|---------|---------------------------------------------------------------------------------------------------------------------------------|
-| times                 | number  | Defines the number of times the scheduled function is executed.                                                                 |
-| skipImmediateFirstRun | boolean | Toggles behavior of first execution. If true job does not start immediately but rather wait until the first scheduled interval. |
-| tags                  | object  | Adds or overrides existing tags used in dashboard                                                                               |
+| Name                  | Type     | Default | Description                                                                                                                     |
+|-----------------------|----------|---------|---------------------------------------------------------------------------------------------------------------------------------|
+| times                 | number   | -1      | How many times the job should execute (-1 for unlimited).                                                                       |
+| skipImmediateFirstRun | boolean  |         | Toggles behavior of first execution. If true job does not start immediately but rather wait until the first scheduled interval. |
+| tags                  | object   | {}      | Optional tags for identifying the job.                                                                                          |
 
 ## Examples
 

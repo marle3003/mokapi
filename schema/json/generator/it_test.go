@@ -1,10 +1,12 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+	"time"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIt(t *testing.T) {
@@ -99,6 +101,12 @@ func TestStringHash(t *testing.T) {
 }
 
 func TestUser(t *testing.T) {
+	// tests depends on current year so without this, all tests will break in next year
+	isDateTimeString := func(t *testing.T, s any) {
+		_, err := time.Parse(time.RFC3339, s.(string))
+		require.NoError(t, err)
+	}
+
 	testcases := []struct {
 		name string
 		req  *Request
@@ -141,7 +149,7 @@ func TestUser(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "2024-08-26T07:02:11Z", v)
+				isDateTimeString(t, v)
 			},
 		},
 		{

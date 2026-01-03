@@ -15,22 +15,24 @@ const servers = computed(() => {
 </script>
 
 <template>
-    <table class="table dataTable" aria-label="Servers">
-        <thead>
-            <tr>
-                <th scope="col" class="text-left">Name</th>
-                <th scope="col" class="text-left">Host</th>
-                <th scope="col" class="text-left">Protocol</th>
-                <th scope="col" class="text-left w-50">Description</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr v-for="server in servers" :key="server.name">
-                <td>{{ server.name }}</td>
-                <td>{{ server.host }}</td>
-                <td>{{ server.protocol }}</td>
-                <td><markdown :source="server.description" class="description" :html="true"></markdown></td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="table-responsive-sm">
+        <table class="table dataTable" aria-label="Servers">
+            <thead>
+                <tr>
+                    <th scope="col" class="text-left">Name</th>
+                    <th scope="col" class="text-left">Host</th>
+                    <th scope="col" class="text-left">Protocol</th>
+                    <th scope="col" class="text-left w-50">Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="server in servers" :key="server.name">
+                    <td>{{ server.name }}</td>
+                    <td>{{ server.host }}</td>
+                    <td>{{ server.protocol }}</td>
+                    <td><markdown :source="server.description" class="description" :html="true"></markdown></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </template>

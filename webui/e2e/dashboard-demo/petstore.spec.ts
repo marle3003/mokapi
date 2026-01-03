@@ -59,36 +59,40 @@ test('Visit Petstore Demo', async ({ page }) => {
 
     await test.step('Verify Configs', async () => {
         const table = page.getByRole('table', { name: 'Configs' });
-        await expect(await getCellByColumnName(table, 'URL')).toContainText('/webui/scripts/dashboard-demo/demo-configs/petstore.yaml');
-        await expect(await getCellByColumnName(table, 'Provider')).toHaveText('File');
+        const rows = table.locator('tbody tr');
+        await expect(await getCellByColumnName(table, 'URL', rows.nth(0))).toContainText('/webui/scripts/dashboard-demo/demo-configs/petstore.yaml');
+        await expect(await getCellByColumnName(table, 'Provider', rows.nth(0))).toHaveText('File');
+
+        await expect(await getCellByColumnName(table, 'URL', rows.nth(1))).toContainText('/webui/scripts/dashboard-demo/demo-configs/z.petstore.fix.yaml');
+        await expect(await getCellByColumnName(table, 'Provider', rows.nth(1))).toHaveText('File');
     });
 
     await test.step('Verify Recent Requests', async () => {
         const table = page.getByRole('table', { name: 'Recent Requests' });
         let rows = table.locator('tbody tr');
 
-        await expect(rows).toHaveCount(2);
-        await expect(await getCellByColumnName(table, 'Method', rows.nth(0))).toHaveText('POST');
-        await expect(await getCellByColumnName(table, 'URL', rows.nth(0))).toHaveText('http://localhost/v2/pet');
-        await expect(await getCellByColumnName(table, 'Status Code', rows.nth(0))).toHaveText('200 OK');
+        await expect(rows).toHaveCount(12);
+        await expect(await getCellByColumnName(table, 'Method', rows.nth(10))).toHaveText('POST');
+        await expect(await getCellByColumnName(table, 'URL', rows.nth(10))).toHaveText('http://localhost/v2/pet');
+        await expect(await getCellByColumnName(table, 'Status Code', rows.nth(10))).toHaveText('200 OK');
 
-        await expect(await getCellByColumnName(table, 'Method', rows.nth(1))).toHaveText('GET');
-        await expect(await getCellByColumnName(table, 'URL', rows.nth(1))).toHaveText('http://localhost/v2/pet/10');
-        await expect(await getCellByColumnName(table, 'Status Code', rows.nth(1))).toHaveText('200 OK');
+        await expect(await getCellByColumnName(table, 'Method', rows.nth(11))).toHaveText('GET');
+        await expect(await getCellByColumnName(table, 'URL', rows.nth(11))).toHaveText('http://localhost/v2/pet/10');
+        await expect(await getCellByColumnName(table, 'Status Code', rows.nth(11))).toHaveText('200 OK');
 
         const filter = page.getByRole('region', { name: 'Recent Requests'}).getByRole('button', { name: 'Filter' })
         await filter.click();
         const dialog = page.getByRole('dialog', { name: 'Filter' });
         await expect(dialog).toBeVisible();
         await dialog.getByRole('checkbox', { name: 'Method' }).click();
-        await expect(rows).toHaveCount(1);
+        await expect(rows).toHaveCount(9);
 
         await dialog.getByRole('checkbox', { name: 'Method' }).click();
         await dialog.getByRole('checkbox', { name: 'GET' }).click();
         await expect(rows).toHaveCount(0);
 
         await dialog.getByRole('checkbox', { name: 'Method' }).click();
-        await expect(rows).toHaveCount(2);
+        await expect(rows).toHaveCount(12);
 
         await dialog.getByRole('checkbox', { name: 'URL' }).click();
         await dialog.getByRole('textbox', { name: 'URL filter'}).fill('/pet/10');
