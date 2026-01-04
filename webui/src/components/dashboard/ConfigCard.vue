@@ -79,26 +79,28 @@ function formatProvider(config: ConfigRef) {
   <section class="card" aria-labelledby="configs" v-if="useCard">
       <div class="card-body">
           <h2 v-if="!hideTitle" id="configs" class="card-title text-center">{{ title }}</h2>
-          <table class="table dataTable selectable" style="table-layout: fixed;" aria-labelledby="configs">
-              <thead>
-                  <tr>
-                      <th scope="col" class="text-left col-6 col-md-9">URL</th>
-                      <th scope="col" class="text-center col-2">Provider</th>
-                      <th scope="col" class="text-center col-2">Last Update</th>
-                  </tr>
-              </thead>
-              <tbody>
-                  <tr scope="row" v-for="config in configs" :key="config.url" @mouseup.left="gotToConfig(config)" @mousedown.middle="gotToConfig(config, true)">
-                      <td>
-                            <router-link @click.stop class="row-link" :to="{ name: getRouteName('config').value, params: { id: config.id } }">
-                            {{ config.url }}
-                            </router-link>
-                      </td>
-                      <td class="text-center">{{ formatProvider(config) }}</td>
-                      <td class="text-center">{{ format(config.time) }}</td>
-                  </tr>
-              </tbody>
-          </table>
+          <div class="table-responsive-sm">
+            <table class="table dataTable selectable" aria-labelledby="configs">
+                <thead>
+                    <tr>
+                        <th scope="col" class="text-left col-6 col-md-9">URL</th>
+                        <th scope="col" class="text-center col-2">Provider</th>
+                        <th scope="col" class="text-center col-2">Last Update</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr scope="row" v-for="config in configs" :key="config.url" @mouseup.left="gotToConfig(config)" @mousedown.middle="gotToConfig(config, true)">
+                        <td>
+                                <router-link @click.stop class="row-link" :to="{ name: getRouteName('config').value, params: { id: config.id } }">
+                                {{ config.url }}
+                                </router-link>
+                        </td>
+                        <td class="text-center">{{ formatProvider(config) }}</td>
+                        <td class="text-center">{{ format(config.time) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+          </div>
       </div>
   </section>
 
