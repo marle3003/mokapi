@@ -185,9 +185,10 @@ function formatParam(label: any): string {
 .doc {
   margin-top: 20px;
 }
+
 .sidebar {
   position: sticky;
-  top: 4rem;
+  top: var(--header-height);
   align-self: flex-start;
   width: 290px;
   padding-top: 2rem;

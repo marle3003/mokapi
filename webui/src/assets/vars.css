@@ -1,4 +1,6 @@
 :root{
+    --header-height: 4rem;
+
     --color-background: #323743;
     --color-background-mute:  #2e2e31;
     --color-background-soft: rgb(40,43,51);

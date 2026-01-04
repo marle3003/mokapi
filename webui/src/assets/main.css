@@ -33,6 +33,10 @@ body {
   min-height: 100%;
 }
 
+#app:has(header .promo-banner) {
+  --header-height: calc(4rem + 22px);
+}
+
 main {
   flex: 1;
 }
