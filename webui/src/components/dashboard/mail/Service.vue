@@ -45,23 +45,15 @@ if (serviceName){
               <div class="tab-pane fade show active" id="servers" role="tabpanel" aria-labelledby="servers-tab">
                 <servers :service="service" />
               </div>
-            </div>
-            <div class="tab-content">
               <div class="tab-pane fade" id="mailboxes" role="tabpanel" aria-labelledby="mailboxes-tab">
                 <mailboxes :service="service" />
               </div>
-            </div>
-            <div class="tab-content" v-if="service.rules && service.rules.length > 0">
-              <div class="tab-pane fade" id="rules" role="tabpanel" aria-labelledby="rules-tab">
+              <div v-if="service.rules && service.rules.length > 0" class="tab-pane fade" id="rules" role="tabpanel" aria-labelledby="rules-tab">
                 <rules :rules="service.rules" />
               </div>
-            </div>
-            <div class="tab-content">
               <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
                 <settings :settings="service.settings" />
               </div>
-            </div>
-            <div class="tab-content">
               <div class="tab-pane fade" id="configs-panel" role="tabpanel" aria-labelledby="configs-tab">
                 <config-card :configs="service.configs" :use-card="false" />
               </div>
