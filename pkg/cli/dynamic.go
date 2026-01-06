@@ -8,41 +8,68 @@ import (
 var regexIndex = regexp.MustCompile(`\[<.*>]`)
 var regexKey = regexp.MustCompile(`<.*>`)
 
-func (fs *FlagSet) DynamicInt(name string, defaultValue int, usage string) {
-	v := &intFlag{value: defaultValue}
+func (fs *FlagSet) DynamicInt(name string, usage string) {
 	f := &DynamicFlag{
-		Flag: Flag{
-			Usage:        usage,
-			Value:        v,
-			DefaultValue: v.String(),
-		},
+		Usage:   usage,
 		pattern: convertToPattern(name),
+		setValue: func(name string, value []string) error {
+			f, ok := fs.flags[name]
+			if !ok {
+				v := &intFlag{}
+				if err := v.Set(value); err != nil {
+					return err
+				}
+				f = &Flag{Name: name, Value: v}
+				fs.setFlag(f)
+				return nil
+			} else {
+				return f.Value.Set(value)
+			}
+		},
 	}
 	fs.dynamic = append(fs.dynamic, f)
 }
 
-func (fs *FlagSet) DynamicString(name string, defaultValue string, usage string) {
-	v := &stringFlag{value: defaultValue}
+func (fs *FlagSet) DynamicString(name string, usage string) {
 	f := &DynamicFlag{
-		Flag: Flag{
-			Usage:        usage,
-			Value:        v,
-			DefaultValue: v.String(),
-		},
+		Usage:   usage,
 		pattern: convertToPattern(name),
+		setValue: func(name string, value []string) error {
+			f, ok := fs.flags[name]
+			if !ok {
+				v := &stringFlag{}
+				if err := v.Set(value); err != nil {
+					return err
+				}
+				f = &Flag{Name: name, Value: v}
+				fs.setFlag(f)
+				return nil
+			} else {
+				return f.Value.Set(value)
+			}
+		},
 	}
 	fs.dynamic = append(fs.dynamic, f)
 }
 
-func (fs *FlagSet) DynamicStringSlice(name string, defaultValue []string, usage string, explode bool) {
-	v := &stringSliceFlag{value: defaultValue, explode: explode}
+func (fs *FlagSet) DynamicStringSlice(name string, usage string, explode bool) {
 	f := &DynamicFlag{
-		Flag: Flag{
-			Usage:        usage,
-			Value:        v,
-			DefaultValue: v.String(),
-		},
+		Usage:   usage,
 		pattern: convertToPattern(name),
+		setValue: func(name string, value []string) error {
+			f, ok := fs.flags[name]
+			if !ok {
+				v := &stringSliceFlag{explode: explode}
+				if err := v.Set(value); err != nil {
+					return err
+				}
+				f = &Flag{Name: name, Value: v}
+				fs.setFlag(f)
+				return nil
+			} else {
+				return f.Value.Set(value)
+			}
+		},
 	}
 	fs.dynamic = append(fs.dynamic, f)
 }

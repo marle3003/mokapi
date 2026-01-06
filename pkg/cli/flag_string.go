@@ -6,6 +6,7 @@ import (
 
 type stringFlag struct {
 	value string
+	isSet bool
 }
 
 func (f *stringFlag) Set(values []string) error {
@@ -14,6 +15,7 @@ func (f *stringFlag) Set(values []string) error {
 	}
 
 	f.value = values[0]
+	f.isSet = true
 	return nil
 }
 
@@ -24,6 +26,8 @@ func (f *stringFlag) Value() any {
 func (f *stringFlag) String() string {
 	return f.value
 }
+
+func (f *stringFlag) IsSet() bool { return f.isSet }
 
 func (fs *FlagSet) String(name string, defaultValue string, usage string) {
 	fs.StringShort(name, "", defaultValue, usage)
@@ -36,9 +40,9 @@ func (fs *FlagSet) StringShort(name string, short string, defaultValue string, u
 }
 
 func (fs *FlagSet) GetString(name string) string {
-	v, err := fs.GetValue(name)
-	if err != nil {
-		panic(err)
+	v, ok := fs.GetValue(name)
+	if !ok {
+		panic(FlagNotFound{Name: name})
 	}
 	s, ok := v.(string)
 	if !ok {

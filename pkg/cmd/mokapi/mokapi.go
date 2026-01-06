@@ -37,7 +37,11 @@ func NewCmdMokapi(ctx context.Context) *cli.Command {
 		Long:   `Mokapi is an easy, modern and flexible API mocking tool using Go and Javascript.`,
 		Config: &static.Config{},
 		Run: func(cmd *cli.Command, args []string) error {
-			return runRoot(cmd.Config.(*static.Config), ctx)
+			cfg := cmd.Config.(*static.Config)
+			if err := applyPositionalArgs(cfg, args); err != nil {
+				return err
+			}
+			return runRoot(cfg, ctx)
 		},
 		Commands: []*cli.Command{
 			NewCmdSampleData(),
@@ -45,13 +49,14 @@ func NewCmdMokapi(ctx context.Context) *cli.Command {
 		EnvPrefix: "MOKAPI_",
 	}
 
+	cmd.SetConfigPath(".", "/etc/mokapi")
+
 	cmd.Flags().BoolShort("version", "v", false, "Show version information and exit")
 	cmd.Flags().Bool("generate-cli-skeleton", false, "Generates the skeleton configuration file")
 
 	// config file
-	cmd.Flags().String("config", "", "Path to configuration file (aliases: --config-file, --cli-input)")
-	cmd.Flags().String("config-file", "", "Alias for --config")
-	cmd.Flags().String("cli-input", "", "Alias for --config")
+	cmd.Flags().File("config-file", "Path to configuration file")
+	cmd.Flags().Alias("config-file", "cli-input")
 
 	// logging
 	cmd.Flags().String("log-level", "info", "Mokapi log level (default is info)")
@@ -59,13 +64,13 @@ func NewCmdMokapi(ctx context.Context) *cli.Command {
 
 	// file provider
 	cmd.Flags().String("providers-file", "", "")
-	cmd.Flags().StringSlice("providers-file-filename", []string{}, "Load the dynamic configuration from files", true)
-	cmd.Flags().StringSlice("providers-file-filenames", []string{}, "Load the dynamic configuration from files", false)
+	cmd.Flags().StringSlice("providers-file-filename", nil, "Load the dynamic configuration from files", true)
+	cmd.Flags().StringSlice("providers-file-filenames", nil, "Load the dynamic configuration from files", false)
 	cmd.Flags().StringSlice("providers-file-directory", []string{}, "Load the dynamic configuration from directories", true)
 	cmd.Flags().StringSlice("providers-file-directories", []string{}, "Load the dynamic configuration from directories", false)
 	cmd.Flags().StringSlice("providers-file-skip-prefix", []string{"_"}, "", false)
 	cmd.Flags().StringSlice("providers-file-include", []string{}, "", false)
-	cmd.Flags().DynamicStringSlice("providers-file-include[<index>]", []string{}, "", false)
+	cmd.Flags().DynamicString("providers-file-include[<index>]", "")
 
 	// git provider
 	cmd.Flags().String("providers-git", "", "")
@@ -76,13 +81,13 @@ func NewCmdMokapi(ctx context.Context) *cli.Command {
 	cmd.Flags().StringSlice("providers-git-repository", []string{}, "flag for shorthand syntax", true)
 	cmd.Flags().StringSlice("providers-git-repositories", []string{}, "flag for shorthand syntax", false)
 	// git repository
-	cmd.Flags().DynamicString("providers-git-repositories[<index>]", "", "set indexed repository using shorthand syntax")
-	cmd.Flags().DynamicString("providers-git-repositories[<index>]-url", "", "set URL of the repository")
-	cmd.Flags().DynamicStringSlice("providers-git-repositories[<index>]-file", []string{}, "Specifies an allow list of files to include in mokapi", true)
-	cmd.Flags().DynamicStringSlice("providers-git-repositories[<index>]-files", []string{}, "Specifies an allow list of files to include in mokapi", false)
-	cmd.Flags().DynamicStringSlice("providers-git-repositories[<index>]-include", []string{}, "Specifies an array of filenames or pattern to include in mokapi", false)
-	cmd.Flags().DynamicString("providers-git-repositories[<index>]-auth-github", "", "Specifies an array of filenames or pattern to include in mokapi")
-	cmd.Flags().DynamicString("providers-git-repositories[<index>]-pull-interval", "", "Specifies an array of filenames or pattern to include in mokapi")
+	cmd.Flags().DynamicString("providers-git-repositories[<index>]", "set indexed repository using shorthand syntax")
+	cmd.Flags().DynamicString("providers-git-repositories[<index>]-url", "set URL of the repository")
+	cmd.Flags().DynamicStringSlice("providers-git-repositories[<index>]-file", "Specifies an allow list of files to include in mokapi", true)
+	cmd.Flags().DynamicStringSlice("providers-git-repositories[<index>]-files", "Specifies an allow list of files to include in mokapi", false)
+	cmd.Flags().DynamicStringSlice("providers-git-repositories[<index>]-include", "Specifies an array of filenames or pattern to include in mokapi", false)
+	cmd.Flags().DynamicString("providers-git-repositories[<index>]-auth-github", "Specifies an array of filenames or pattern to include in mokapi")
+	cmd.Flags().DynamicString("providers-git-repositories[<index>]-pull-interval", "Specifies an array of filenames or pattern to include in mokapi")
 
 	// http provider
 	cmd.Flags().String("providers-http", "", "")
@@ -91,7 +96,7 @@ func NewCmdMokapi(ctx context.Context) *cli.Command {
 	cmd.Flags().String("providers-http-poll-interval", "3m", "")
 	cmd.Flags().String("providers-http-poll-timeout", "5s", "")
 	cmd.Flags().String("providers-http-proxy", "", "")
-	cmd.Flags().String("providers-http-tls-skip-verify", "", "")
+	cmd.Flags().Bool("providers-http-tls-skip-verify", false, "")
 	cmd.Flags().String("providers-http-ca", "", "Certificate authority")
 
 	// npm provider
@@ -101,11 +106,11 @@ func NewCmdMokapi(ctx context.Context) *cli.Command {
 	// npm package
 	cmd.Flags().StringSlice("providers-npm-package", []string{}, "flag for shorthand syntax", true)
 	cmd.Flags().StringSlice("providers-npm-packages", []string{}, "flag for shorthand syntax", false)
-	cmd.Flags().DynamicString("providers-npm-packages[<index>]", "", "set indexed repository using shorthand syntax")
-	cmd.Flags().DynamicString("providers-npm-packages[<index>]-name", "", "set URL of the repository")
-	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-file", []string{}, "Specifies an allow list of files to include in mokapi", true)
-	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-files", []string{}, "Specifies an allow list of files to include in mokapi", false)
-	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-include", []string{}, "Specifies an array of filenames or pattern to include in mokapi", false)
+	cmd.Flags().DynamicString("providers-npm-packages[<index>]", "set indexed repository using shorthand syntax")
+	cmd.Flags().DynamicString("providers-npm-packages[<index>]-name", "set URL of the repository")
+	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-file", "Specifies an allow list of files to include in mokapi", true)
+	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-files", "Specifies an allow list of files to include in mokapi", false)
+	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-include", "Specifies an array of filenames or pattern to include in mokapi", false)
 
 	// API
 	cmd.Flags().Int("api-port", 8080, "API port (Default 8080). The API is available on the path /api")
@@ -119,7 +124,7 @@ func NewCmdMokapi(ctx context.Context) *cli.Command {
 
 	cmd.Flags().Int("event-store-default-size", 100, "Sets the default maximum number of events stored for each event type (e.g., HTTP, Kafka), unless overridden individually. (default 100)")
 	cmd.Flags().String("event-store", "", "")
-	cmd.Flags().DynamicInt("event-store-<name>-size", 100, "Overrides the default event store size for a specific API by name.")
+	cmd.Flags().DynamicInt("event-store-<name>-size", "Overrides the default event store size for a specific API by name.")
 
 	cmd.Flags().String("data-gen-optional-properties", "0.85", "")
 
@@ -133,12 +138,6 @@ func NewCmdMokapi(ctx context.Context) *cli.Command {
 
 func runRoot(cfg *static.Config, ctx context.Context) error {
 	versionString := version.BuildVersion
-
-	err := cfg.Parse()
-	if err != nil {
-		log.Errorf("parse config failed: %v", err)
-		return nil
-	}
 
 	/*switch {
 	case viper.GetBool("version"):
@@ -256,4 +255,13 @@ func registerDynamicTypes() {
 	dynamic.Register("mail", func(v version.Version) bool {
 		return true
 	}, &mail2.Config{})
+}
+
+func applyPositionalArgs(cfg *static.Config, args []string) error {
+	cfg.Args = args
+	err := cfg.Parse()
+	if err != nil {
+		return fmt.Errorf("parse config failed: %w", err)
+	}
+	return nil
 }

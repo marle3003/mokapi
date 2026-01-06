@@ -6,6 +6,7 @@ import (
 
 type boolFlag struct {
 	value bool
+	isSet bool
 }
 
 func (b *boolFlag) Set(values []string) error {
@@ -21,11 +22,16 @@ func (b *boolFlag) Set(values []string) error {
 			return fmt.Errorf("flag '%s' is not a bool", s)
 		}
 	}
+	b.isSet = true
 	return nil
 }
 
 func (b *boolFlag) Value() any {
 	return b.value
+}
+
+func (b *boolFlag) IsSet() bool {
+	return b.isSet
 }
 
 func (b *boolFlag) String() string {
@@ -38,14 +44,14 @@ func (fs *FlagSet) Bool(name string, defaultValue bool, usage string) {
 
 func (fs *FlagSet) BoolShort(name string, short string, defaultValue bool, usage string) {
 	v := &boolFlag{value: defaultValue}
-	f := &Flag{Value: &boolFlag{}, Name: name, Shorthand: short, Usage: usage, DefaultValue: v.String()}
+	f := &Flag{Value: v, Name: name, Shorthand: short, Usage: usage, DefaultValue: defaultValue}
 	fs.setFlag(f)
 }
 
 func (fs *FlagSet) GetBool(name string) bool {
-	v, err := fs.GetValue(name)
-	if err != nil {
-		panic(err)
+	v, ok := fs.GetValue(name)
+	if !ok {
+		panic(FlagNotFound{Name: name})
 	}
 	b, ok := v.(bool)
 	if !ok {

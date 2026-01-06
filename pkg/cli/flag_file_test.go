@@ -1,19 +1,43 @@
 package cli_test
 
 import (
-	"fmt"
-	"io/fs"
 	"mokapi/pkg/cli"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 )
 
+type testFileReader struct {
+	files map[string][]byte
+}
+
+func (t *testFileReader) ReadFile(name string) ([]byte, error) {
+	if b, ok := t.files[name]; ok {
+		return b, nil
+	}
+	// if test is executed on windows we get second path
+	name = strings.ReplaceAll(name, "\\", "/")
+	if b, ok := t.files[name]; ok {
+		return b, nil
+	}
+	return nil, os.ErrNotExist
+}
+
+func (t *testFileReader) FileExists(name string) bool {
+	if _, ok := t.files[name]; ok {
+		return true
+	}
+	name = strings.ReplaceAll(name, "\\", "/")
+	_, ok := t.files[name]
+	return ok
+}
+
 func TestFileDecoder_Decode(t *testing.T) {
 	newCmd := func(args []string, cfg any) *cli.Command {
-		c := &cli.Command{EnvPrefix: "Mokapi_"}
+		c := &cli.Command{Name: "foo", EnvPrefix: "Mokapi_"}
 		c.SetArgs(args)
 		c.Config = cfg
 		c.Run = func(cmd *cli.Command, args []string) error {
@@ -27,18 +51,14 @@ func TestFileDecoder_Decode(t *testing.T) {
 		test func(t *testing.T)
 	}{
 		{
-			name: "file in folder mokapi in etc",
+			name: "read existing file",
 			test: func(t *testing.T) {
 				s := &struct{ Name string }{}
-				f := func(path string) ([]byte, error) {
-					// if test is executed on windows we get second path
-					if path == "/etc/mokapi/mokapi.yaml" || path == "\\etc\\mokapi\\mokapi.yaml" {
-						return []byte("name: foobar"), nil
-					}
-					return nil, fs.ErrNotExist
-				}
-				cli.SetReadFileFS(f)
+				cli.SetFileReader(&testFileReader{files: map[string][]byte{
+					"/etc/foo/foo.yaml": []byte("name: foobar"),
+				}})
 				c := newCmd([]string{}, &s)
+				c.SetConfigPath("/etc/foo")
 				c.Flags().String("name", "", "")
 				err := c.Execute()
 				require.NoError(t, err)
@@ -46,23 +66,23 @@ func TestFileDecoder_Decode(t *testing.T) {
 			},
 		},
 		{
-			name: "file does not exist",
+			name: "file does not exist should not return error when not file flag is set",
 			test: func(t *testing.T) {
 				s := &struct{ Name string }{}
-				f := func(path string) ([]byte, error) { return []byte(""), fmt.Errorf("file not found") }
-				cli.SetReadFileFS(f)
+				cli.SetFileReader(&testFileReader{files: map[string][]byte{}})
 				c := newCmd([]string{}, &s)
+				c.SetConfigPath("/etc/foo")
 				err := c.Execute()
-				require.Error(t, err)
+				require.NoError(t, err)
 			},
 		},
 		{
 			name: "empty file",
 			test: func(t *testing.T) {
 				s := &struct{ Name string }{}
-				f := func(path string) ([]byte, error) { return []byte(""), nil }
-				cli.SetReadFileFS(f)
+				cli.SetFileReader(&testFileReader{files: map[string][]byte{"/etc/foo": []byte("")}})
 				c := newCmd([]string{}, &s)
+				c.SetConfigPath("/etc/foo")
 				c.Flags().String("name", "", "")
 				err := c.Execute()
 				require.NoError(t, err)
@@ -71,26 +91,38 @@ func TestFileDecoder_Decode(t *testing.T) {
 		{
 			name: "yaml schema error",
 			test: func(t *testing.T) {
-				s := &struct{ Name int }{}
-				f := func(path string) ([]byte, error) { return []byte("name: {}"), nil }
-				cli.SetReadFileFS(f)
+				s := &struct{ Count string }{}
+				cli.SetFileReader(&testFileReader{files: map[string][]byte{"/etc/foo.yaml": []byte("count: foo")}})
 				c := newCmd([]string{}, &s)
-				c.Flags().String("name", "", "")
+				c.SetConfigPath("/etc")
+				c.Flags().Int("count", 0, "")
 				err := c.Execute()
-				require.EqualError(t, err, "parse file 'mokapi.yaml' failed: cannot unmarshal object into int")
+				require.EqualError(t, err, "failed to set flag count: parsing foo: invalid syntax")
 			},
 		},
 		{
-			name: "temp file with data",
+			name: "use file flag",
 			test: func(t *testing.T) {
 				s := &struct{ Name string }{}
 				path := createTempFile(t, "test.yml", "name: foobar")
 
 				c := newCmd([]string{"--config-file", path}, s)
 				c.Flags().String("name", "", "")
+				c.Flags().File("config-file", "")
 				err := c.Execute()
 				require.NoError(t, err)
 				require.Equal(t, "foobar", s.Name)
+			},
+		},
+		{
+			name: "file does not exist should return error when file flag is set",
+			test: func(t *testing.T) {
+				s := &struct{ Name string }{}
+				cli.SetFileReader(&testFileReader{files: map[string][]byte{}})
+				c := newCmd([]string{"--config-file", "/etc/foo.yaml"}, s)
+				c.Flags().File("config-file", "")
+				err := c.Execute()
+				require.EqualError(t, err, "read config file '/etc/foo.yaml' failed: file does not exist")
 			},
 		},
 		{
@@ -102,7 +134,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 				path := createTempFile(t, "test.yml", "installDir: foobar")
 				c := newCmd([]string{"--config-file", path}, s)
 				c.Flags().String("install-dir", "", "")
-
+				c.Flags().File("config-file", "")
 				err := c.Execute()
 				require.NoError(t, err)
 				require.Equal(t, "foobar", s.InstallDir)
@@ -116,8 +148,8 @@ func TestFileDecoder_Decode(t *testing.T) {
 				}{}
 				path := createTempFile(t, "test.yml", "values: {foo: bar}")
 				c := newCmd([]string{"--config-file", path}, s)
-				c.Flags().DynamicString("values-<key>", "", "")
-
+				c.Flags().DynamicString("values-<key>", "")
+				c.Flags().File("config-file", "")
 				err := c.Execute()
 				require.NoError(t, err)
 				require.Equal(t, map[string]string{"foo": "bar"}, s.Values)
@@ -131,8 +163,8 @@ func TestFileDecoder_Decode(t *testing.T) {
 				}{}
 				path := createTempFile(t, "test.yml", "key: [bar]")
 				c := newCmd([]string{"--config-file", path}, s)
-				c.Flags().DynamicString("key[<index>]", "", "")
-
+				c.Flags().DynamicString("key[<index>]", "")
+				c.Flags().File("config-file", "")
 				err := c.Execute()
 				require.NoError(t, err)
 				require.Equal(t, []string{"bar"}, s.Key)
@@ -146,8 +178,8 @@ func TestFileDecoder_Decode(t *testing.T) {
 				}{}
 				path := createTempFile(t, "test.yml", "values: {foo: [bar]}")
 				c := newCmd([]string{"--config-file", path}, s)
-				c.Flags().DynamicString("values-<key>[<index>]", "", "")
-
+				c.Flags().DynamicString("values-<key>[<index>]", "")
+				c.Flags().File("config-file", "")
 				err := c.Execute()
 				require.NoError(t, err)
 				require.Equal(t, map[string][]string{"foo": {"bar"}}, s.Values)
@@ -165,9 +197,9 @@ func TestFileDecoder_Decode(t *testing.T) {
 				}{}
 				path := createTempFile(t, "test.yml", "values: {foo: {name: Bob, foo: bar}}")
 				c := newCmd([]string{"--config-file", path}, s)
-				c.Flags().DynamicString("values-<key>-name", "", "")
-				c.Flags().DynamicString("values-<key>-foo", "", "")
-
+				c.Flags().DynamicString("values-<key>-name", "")
+				c.Flags().DynamicString("values-<key>-foo", "")
+				c.Flags().File("config-file", "")
 				err := c.Execute()
 				require.NoError(t, err)
 				require.Equal(t, "Bob", s.Values["foo"].Name)
@@ -186,9 +218,9 @@ func TestFileDecoder_Decode(t *testing.T) {
 				}{}
 				path := createTempFile(t, "test.yml", "values: {foo: {name: Bob, foo: bar}}")
 				c := newCmd([]string{"--config-file", path}, s)
-				c.Flags().DynamicString("values-<key>-name", "", "")
-				c.Flags().DynamicString("values-<key>-foo", "", "")
-
+				c.Flags().DynamicString("values-<key>-name", "")
+				c.Flags().DynamicString("values-<key>-foo", "")
+				c.Flags().File("config-file", "")
 				err := c.Execute()
 				require.NoError(t, err)
 				require.Equal(t, "Bob", s.Values["foo"].Name)
@@ -200,7 +232,7 @@ func TestFileDecoder_Decode(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			defer func() {
-				cli.SetReadFileFS(os.ReadFile)
+				cli.SetFileReader(&cli.FileReader{})
 			}()
 
 			tc.test(t)

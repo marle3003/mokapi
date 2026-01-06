@@ -27,7 +27,7 @@ func TestDynamic(t *testing.T) {
 			test: func(t *testing.T) {
 				s := &struct{ Foo []string }{}
 				c := newCmd([]string{"--foo[0]", "bar"}, &s)
-				c.Flags().DynamicString("foo[<index>]", "", "")
+				c.Flags().DynamicString("foo[<index>]", "")
 				err := c.Execute()
 				require.NoError(t, err)
 				require.Equal(t, []string{"bar"}, s.Foo)
@@ -38,7 +38,7 @@ func TestDynamic(t *testing.T) {
 			test: func(t *testing.T) {
 				s := &struct{ Foo []string }{}
 				c := newCmd([]string{"--foo[1]", "bar"}, &s)
-				c.Flags().DynamicString("foo[<index>]", "", "")
+				c.Flags().DynamicString("foo[<index>]", "")
 				err := c.Execute()
 				require.NoError(t, err)
 				require.Equal(t, []string{"", "bar"}, s.Foo)
@@ -49,7 +49,7 @@ func TestDynamic(t *testing.T) {
 			test: func(t *testing.T) {
 				s := &struct{ Foo map[string]string }{}
 				c := newCmd([]string{"--foo-bar", "yuh"}, &s)
-				c.Flags().DynamicString("foo-<key>", "", "")
+				c.Flags().DynamicString("foo-<key>", "")
 				err := c.Execute()
 				require.NoError(t, err)
 				require.Equal(t, map[string]string{"bar": "yuh"}, s.Foo)

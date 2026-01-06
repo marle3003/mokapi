@@ -23,8 +23,7 @@ type PetStoreSuite struct{ BaseSuite }
 
 func (suite *PetStoreSuite) SetupSuite() {
 	cfg := static.NewConfig()
-	port := try.GetFreePort()
-	cfg.Api.Port = fmt.Sprintf("%v", port)
+	cfg.Api.Port = try.GetFreePort()
 	cfg.Providers.File.Directories = []string{"./petstore"}
 	cfg.Api.Search.Enabled = true
 	suite.initCmd(cfg)
@@ -172,7 +171,7 @@ func (suite *PetStoreSuite) TestJsHttpHandler() {
 		try.BodyContains(`"name":"Zoe"`))
 
 	// test http metrics
-	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/metrics/http?path=/pet/{petId}", suite.cfg.Api.Port), nil,
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%d/api/metrics/http?path=/pet/{petId}", suite.cfg.Api.Port), nil,
 		try.BodyContains(`http_requests_total{service=\"Swagger Petstore\",endpoint=\"/pet/{petId}\"}","value":4}`),
 	)
 }
@@ -307,12 +306,12 @@ func (suite *PetStoreSuite) TestKafkaEventAndMetrics() {
 	time.Sleep(3 * time.Second)
 
 	// test kafka metrics
-	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/metrics/kafka", suite.cfg.Api.Port), nil,
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%d/api/metrics/kafka", suite.cfg.Api.Port), nil,
 		try.BodyContains(`kafka_messages_total{service=\"A sample AsyncApi Kafka streaming api\",topic=\"petstore.order-event\"}","value":1}`),
 	)
 
 	// test kafka events, header added by JavaScript event handler
-	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%s/api/events?namespace=kafka", suite.cfg.Api.Port), nil,
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%d/api/events?namespace=kafka", suite.cfg.Api.Port), nil,
 		try.BodyContains(`"headers":{"foo":{"value":"bar","binary":"YmFy"}`),
 		try.BodyContains(`"messageId":"order"`),
 	)

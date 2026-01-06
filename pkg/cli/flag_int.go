@@ -1,12 +1,14 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 )
 
 type intFlag struct {
 	value int
+	isSet bool
 }
 
 func (f *intFlag) Set(values []string) error {
@@ -20,14 +22,20 @@ func (f *intFlag) Set(values []string) error {
 	s := values[0]
 	v, err := strconv.Atoi(s)
 	if err != nil {
-		return err
+		err = errors.Unwrap(err)
+		return fmt.Errorf("parsing %s: %w", s, err)
 	}
 	f.value = v
+	f.isSet = true
 	return nil
 }
 
 func (f *intFlag) Value() any {
 	return f.value
+}
+
+func (f *intFlag) IsSet() bool {
+	return f.isSet
 }
 
 func (f *intFlag) String() string {
@@ -40,14 +48,14 @@ func (fs *FlagSet) Int(name string, defaultValue int, usage string) {
 
 func (fs *FlagSet) IntShort(name string, short string, defaultValue int, usage string) {
 	v := &intFlag{value: defaultValue}
-	f := &Flag{Name: name, Shorthand: short, Value: v, Usage: usage, DefaultValue: v.String()}
+	f := &Flag{Name: name, Shorthand: short, Value: v, Usage: usage, DefaultValue: defaultValue}
 	fs.setFlag(f)
 }
 
 func (fs *FlagSet) GetInt(name string) int {
-	v, err := fs.GetValue(name)
-	if err != nil {
-		panic(err)
+	v, ok := fs.GetValue(name)
+	if !ok {
+		panic(FlagNotFound{Name: name})
 	}
 	b, ok := v.(int)
 	if !ok {

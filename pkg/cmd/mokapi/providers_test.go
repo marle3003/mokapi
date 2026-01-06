@@ -2,13 +2,14 @@ package mokapi_test
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
 	"mokapi/pkg/cli"
 	"mokapi/pkg/cmd/mokapi"
 	"os"
 	"path"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestRoot_Providers_File(t *testing.T) {
@@ -182,6 +183,17 @@ func TestRoot_Providers_File(t *testing.T) {
 			},
 			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {
 				require.Equal(t, []string{"/foo", "/bar"}, cfg.Providers.File.SkipPrefix)
+			},
+		},
+		{
+			name: "skipPrefix single element appends to default value",
+			args: func(t *testing.T) []string {
+				return []string{"--providers-file-skip-prefix", "foo"}
+			},
+			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {
+				require.Len(t, cfg.Providers.File.SkipPrefix, 2)
+				require.Contains(t, cfg.Providers.File.SkipPrefix, "foo")
+				require.Contains(t, cfg.Providers.File.SkipPrefix, "_")
 			},
 		},
 		{

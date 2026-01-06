@@ -55,7 +55,7 @@ func TestMain_Flags(t *testing.T) {
 			test: func(t *testing.T, cfg *static.Config) {
 				require.Equal(t, "info", cfg.Log.Level)
 				require.Equal(t, "text", cfg.Log.Format)
-				require.Equal(t, "8080", cfg.Api.Port)
+				require.Equal(t, 8080, cfg.Api.Port)
 				require.Equal(t, true, cfg.Api.Dashboard)
 				require.Equal(t, []string{"_"}, cfg.Providers.File.SkipPrefix)
 				require.Equal(t, int64(100), cfg.Event.Store["default"].Size)
@@ -231,7 +231,7 @@ func TestStaticConfig(t *testing.T) {
 			name: "file provider include",
 			args: []string{
 				"--providers-file-include",
-				`mokapi/**/*.json mokapi/**/*.yaml "foo bar/**/*.yaml`,
+				`mokapi/**/*.json mokapi/**/*.yaml "foo bar/**/*.yaml"`,
 			},
 			test: func(t *testing.T, cfg *static.Config) {
 				require.Equal(t, []string{"mokapi/**/*.json", "mokapi/**/*.yaml", "foo bar/**/*.yaml"}, cfg.Providers.File.Include)
@@ -261,7 +261,7 @@ func TestStaticConfig(t *testing.T) {
 			name: "file provider include overwrite",
 			args: []string{
 				"--providers-file-include", "foo",
-				"--Providers-file-include[0]", "bar",
+				"--providers-file-include[0]", "bar",
 			},
 			test: func(t *testing.T, cfg *static.Config) {
 				require.Equal(t, []string{"bar"}, cfg.Providers.File.Include)
@@ -448,6 +448,7 @@ func TestStaticConfig(t *testing.T) {
 			cfg := static.NewConfig()
 			cmd.Run = func(cmd *cli.Command, args []string) error {
 				cfg = cmd.Config.(*static.Config)
+				cfg.Args = args
 				return cfg.Parse()
 			}
 			err := cmd.Execute()
@@ -493,7 +494,7 @@ func TestMokapi_Env(t *testing.T) {
 				"MOKAPI_NOT_SUPPORTED": "foo",
 			},
 			test: func(t *testing.T, cfg *static.Config, err error) {
-				require.EqualError(t, err, "unknown environment variable 'not-supported' (value 'foo')")
+				require.EqualError(t, err, "unknown environment variable 'MOKAPI_NOT_SUPPORTED' (value 'foo')")
 			},
 		},
 	}
@@ -554,7 +555,7 @@ func TestMokapi_File(t *testing.T) {
 			name: "configfile json",
 			test: func(t *testing.T) {
 				path := createTempFile(t, "test.json", `{"configs": [ { "openapi": "3.0", "info": { "name": "foo" } } ]}`)
-				c, cfg := newCmd([]string{"--configfile", path})
+				c, cfg := newCmd([]string{"--config-file", path})
 				err := c.Execute()
 				require.NoError(t, err)
 
@@ -573,7 +574,7 @@ func TestMokapi_File(t *testing.T) {
 			},
 		},
 		{
-			name: "configfile yaml",
+			name: "config-file yaml",
 			test: func(t *testing.T) {
 				path := createTempFile(t, "foo.yaml", `
 configs:
@@ -581,7 +582,7 @@ configs:
     info: 
       name: foo
 `)
-				c, cfg := newCmd([]string{"--configfile", path})
+				c, cfg := newCmd([]string{"--config-file", path})
 				err := c.Execute()
 				require.NoError(t, err)
 
@@ -663,7 +664,7 @@ providers:
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			defer func() {
-				cli.SetReadFileFS(os.ReadFile)
+				cli.SetFileReader(&cli.FileReader{})
 			}()
 
 			tc.test(t)
@@ -678,6 +679,7 @@ func TestPositionalArg_Error(t *testing.T) {
 	cfg := static.NewConfig()
 	cmd.Run = func(cmd *cli.Command, args []string) error {
 		cfg = cmd.Config.(*static.Config)
+		cfg.Args = args
 		return cfg.Parse()
 	}
 	err := cmd.Execute()
