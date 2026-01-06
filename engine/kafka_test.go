@@ -529,7 +529,7 @@ func TestKafkaClient(t *testing.T) {
 				hook := test.NewGlobal()
 
 				go func() {
-					time.Sleep(time.Second * 1)
+					time.Sleep(time.Second * 3)
 
 					msg := asyncapi3test.NewMessage(
 						asyncapi3test.WithPayload(schematest.New("string")),
