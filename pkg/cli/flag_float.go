@@ -33,6 +33,10 @@ func (f *floatFlag) IsSet() bool {
 	return f.isSet
 }
 
+func (f *floatFlag) Type() string {
+	return "float"
+}
+
 func (f *floatFlag) String() string {
 	return fmt.Sprintf("%f", f.value)
 }

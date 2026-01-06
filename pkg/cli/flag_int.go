@@ -38,6 +38,10 @@ func (f *intFlag) IsSet() bool {
 	return f.isSet
 }
 
+func (f *intFlag) Type() string {
+	return "int"
+}
+
 func (f *intFlag) String() string {
 	return fmt.Sprintf("%d", f.value)
 }

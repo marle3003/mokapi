@@ -8,6 +8,7 @@ import (
 
 type Command struct {
 	Name      string
+	Use       string
 	Short     string
 	Long      string
 	Example   string

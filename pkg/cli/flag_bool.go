@@ -34,6 +34,10 @@ func (b *boolFlag) IsSet() bool {
 	return b.isSet
 }
 
+func (*boolFlag) Type() string {
+	return "bool"
+}
+
 func (b *boolFlag) String() string {
 	return fmt.Sprintf("%v", b.value)
 }

@@ -29,6 +29,8 @@ func (f *stringFlag) String() string {
 
 func (f *stringFlag) IsSet() bool { return f.isSet }
 
+func (f *stringFlag) Type() string { return "string" }
+
 func (fs *FlagSet) String(name string, defaultValue string, usage string) {
 	fs.StringShort(name, "", defaultValue, usage)
 }

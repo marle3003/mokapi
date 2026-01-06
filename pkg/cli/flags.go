@@ -20,6 +20,7 @@ type Flag struct {
 	Usage        string
 	Value        Value
 	DefaultValue any
+	Aliases      []string
 }
 
 type DynamicFlag struct {
@@ -37,6 +38,7 @@ type Value interface {
 	Value() any
 	String() string
 	IsSet() bool
+	Type() string
 }
 
 func (fs *FlagSet) setFlag(f *Flag) {
@@ -106,6 +108,7 @@ func (fs *FlagSet) Alias(name, alias string) {
 		panic(fmt.Sprintf("flag '%v' does not exist", name))
 	}
 	fs.flags[alias] = f
+	f.Aliases = append(f.Aliases, alias)
 }
 
 func (fs *FlagSet) Visit(fn func(*Flag) error) error {

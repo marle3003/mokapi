@@ -33,6 +33,7 @@ const logo = "888b     d888          888             d8888          d8b \n8888b 
 func NewCmdMokapi(ctx context.Context) *cli.Command {
 	cmd := &cli.Command{
 		Name:   "mokapi",
+		Use:    "mokapi [flags] [CONFIG-URL|DIRECTORY|FILE]...",
 		Short:  "Start Mokapi and serve mocked APIs",
 		Long:   `Mokapi is an easy, modern and flexible API mocking tool using Go and Javascript.`,
 		Config: &static.Config{},
@@ -63,7 +64,7 @@ func NewCmdMokapi(ctx context.Context) *cli.Command {
 	cmd.Flags().String("log-format", "text", "Mokapi log format: json|text (default is text)")
 
 	// file provider
-	cmd.Flags().String("providers-file", "", "")
+	cmd.Flags().String("providers-file", "", "File-based provider using shorthand syntax: `filename=FILE,directory=DIR`")
 	cmd.Flags().StringSlice("providers-file-filename", nil, "Load the dynamic configuration from files", true)
 	cmd.Flags().StringSlice("providers-file-filenames", nil, "Load the dynamic configuration from files", false)
 	cmd.Flags().StringSlice("providers-file-directory", []string{}, "Load the dynamic configuration from directories", true)

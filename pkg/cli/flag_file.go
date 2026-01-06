@@ -24,6 +24,10 @@ func (f *fileFlag) IsSet() bool {
 	return f.isSet
 }
 
+func (f *fileFlag) Type() string {
+	return "file"
+}
+
 func (f *fileFlag) String() string {
 	return fmt.Sprintf("%v", f.value)
 }

@@ -36,6 +36,10 @@ func (f *stringSliceFlag) IsSet() bool {
 	return f.isSet
 }
 
+func (f *stringSliceFlag) Type() string {
+	return "list"
+}
+
 func (f *stringSliceFlag) String() string {
 	return strings.Join(f.value, ",")
 }
