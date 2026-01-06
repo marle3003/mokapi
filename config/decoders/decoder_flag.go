@@ -82,6 +82,13 @@ func (f *FlagDecoder) setValue(ctx *context) error {
 		}
 		ctx.element.SetInt(i)
 		return nil
+	case reflect.Int:
+		i, err := strconv.Atoi(ctx.value[0])
+		if err != nil {
+			return fmt.Errorf("parse int64 failed: %v", err)
+		}
+		ctx.element.SetInt(int64(i))
+		return nil
 	case reflect.Bool:
 		b := false
 		if ctx.value[0] == "" {

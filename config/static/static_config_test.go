@@ -2,13 +2,14 @@ package static_test
 
 import (
 	"encoding/json"
-	"github.com/sirupsen/logrus/hooks/test"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/decoders"
 	"mokapi/config/dynamic/provider/file/filetest"
 	"mokapi/config/static"
 	"os"
 	"testing"
+
+	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestStaticConfig(t *testing.T) {
@@ -177,6 +178,21 @@ func TestStaticConfig(t *testing.T) {
 
 				require.Equal(t, "https://github.com/PATH-TO/REPOSITORY", cfg.Providers.Git.Repositories[0].Url)
 				require.Equal(t, "3m", cfg.Providers.Git.Repositories[0].PullInterval)
+			},
+		},
+		{
+			name: "api port as env var",
+			test: func(t *testing.T) {
+				os.Args = append(os.Args, "mokapi.exe")
+				err := os.Setenv("MOKAPI_API_PORT", "1234")
+				require.NoError(t, err)
+				defer os.Unsetenv("MOKAPI_API_PORT")
+
+				cfg := static.Config{}
+				err = decoders.Load([]decoders.ConfigDecoder{&decoders.FlagDecoder{}}, &cfg)
+				require.NoError(t, err)
+
+				require.Equal(t, 1234, cfg.Api.Port)
 			},
 		},
 		{
