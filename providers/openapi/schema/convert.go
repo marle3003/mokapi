@@ -2,6 +2,8 @@ package schema
 
 import (
 	"mokapi/schema/json/schema"
+	"slices"
+	"strings"
 )
 
 type JsonSchemaConverter struct {
@@ -152,6 +154,20 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 		js.Defs = map[string]*schema.Schema{}
 		for k, v := range s.Defs {
 			js.Defs[k] = ConvertToJsonSchema(v)
+		}
+	}
+
+	n := len(js.Type)
+	js.Type = slices.DeleteFunc(js.Type, func(t string) bool {
+		return strings.ToLower(t) == "file"
+	})
+	if n != len(js.Type) {
+		if js.Format != "" && js.Format != "binary" {
+			js = &schema.Schema{AnyOf: []*schema.Schema{js}}
+			js.AnyOf = append(js.AnyOf, &schema.Schema{Type: schema.Types{"string"}, Format: "binary"})
+		} else {
+			js.Type = append(js.Type, "string")
+			js.Format = "binary"
 		}
 	}
 
