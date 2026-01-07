@@ -47,18 +47,12 @@ func writeCommand(c *Command, f *os.File) error {
 		}
 	}
 
-	flags := map[*Flag]bool{}
-	flagList := []*Flag{}
-	_ = c.Flags().Visit(func(flag *Flag) error {
-		_, ok := flags[flag]
-		if !ok {
-			flags[flag] = true
-			flagList = append(flagList, flag)
-		}
-		return nil
-	})
-	if len(flags) > 0 {
-		s, err := renderlags(flagList)
+	groups, err := groupFlags(c.Flags())
+	if err != nil {
+		return err
+	}
+	if len(groups) > 0 {
+		s, err := renderFlagGroup(groups)
 		if err != nil {
 			return err
 		}
@@ -70,35 +64,65 @@ func writeCommand(c *Command, f *os.File) error {
 	return nil
 }
 
-func renderlags(flags []*Flag) (string, error) {
+type flagGroup struct {
+	Group    string
+	Subgroup string
+	Flags    []*Flag
+}
+
+func groupFlags(flags *FlagSet) ([]flagGroup, error) {
 	type key struct {
 		group    string
 		subgroup string
 	}
 
-	m := map[key][]*Flag{}
-	groups := []key{}
+	mFlags := map[*Flag]bool{}
+	flagList := []*Flag{}
+	_ = flags.Visit(func(flag *Flag) error {
+		_, ok := mFlags[flag]
+		if !ok {
+			mFlags[flag] = true
+			flagList = append(flagList, flag)
+		}
+		return nil
+	})
 
-	for _, f := range flags {
+	m := map[key][]*Flag{}
+	var order []key
+	var groups []flagGroup
+
+	for _, f := range flagList {
 		g, sg := splitFlagName(f.Name)
 		k := key{g, sg}
 		m[k] = append(m[k], f)
-		groups = append(groups, k)
+		order = append(order, k)
 	}
 
+	for _, k := range order {
+		groups = append(groups, flagGroup{
+			Group:    k.group,
+			Subgroup: k.subgroup,
+			Flags:    m[k],
+		})
+	}
+
+	return groups, nil
+}
+
+func renderFlagGroup(groups []flagGroup) (string, error) {
 	var sb strings.Builder
 	currentGroup := ""
 	for _, g := range groups {
 
-		if g.group != currentGroup {
-			if _, err := sb.WriteString(fmt.Sprintf("### %s\n\n", g.group)); err != nil {
+		if g.Group != currentGroup {
+			if _, err := sb.WriteString(fmt.Sprintf("### %s\n\n", g.Group)); err != nil {
 				return "", err
 			}
-			currentGroup = g.group
+			currentGroup = g.Group
 		}
 
-		if g.subgroup != "" {
-			if _, err := sb.WriteString(fmt.Sprintf("#### %s\n\n", g.subgroup)); err != nil {
+		if g.Subgroup != "" {
+			if _, err := sb.WriteString(fmt.Sprintf("#### %s\n\n", g.Subgroup)); err != nil {
 				return "", err
 			}
 		}
@@ -109,7 +133,7 @@ func renderlags(flags []*Flag) (string, error) {
 		); err != nil {
 			return "", err
 		}
-		for _, flag := range m[g] {
+		for _, flag := range g.Flags {
 			short := flag.Shorthand
 			if short == "" {
 				short = "-"
