@@ -18,13 +18,15 @@ type Flag struct {
 	Name         string
 	Shorthand    string
 	Usage        string
+	Description  string
 	Value        Value
 	DefaultValue any
 	Aliases      []string
+	Examples     []Example
 }
 
 type DynamicFlag struct {
-	Usage    string
+	Flag
 	pattern  *regexp.Regexp
 	setValue func(name string, value []string) error
 }
@@ -144,4 +146,29 @@ func (d *DynamicFlag) isValidFlag(flag string) bool {
 
 func (e *FlagNotFound) Error() string {
 	return fmt.Sprintf("flag '%s' not found", e.Name)
+}
+
+type Example struct {
+	Title       string
+	Description string
+	Codes       []Code
+}
+
+type Code struct {
+	Title  string
+	Source string
+}
+
+type FlagBuilder struct {
+	flag *Flag
+}
+
+func (b *FlagBuilder) WithExample(example ...Example) *FlagBuilder {
+	b.flag.Examples = append(b.flag.Examples, example...)
+	return b
+}
+
+func (b *FlagBuilder) WithDescription(description string) *FlagBuilder {
+	b.flag.Description = description
+	return b
 }

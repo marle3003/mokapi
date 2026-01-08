@@ -46,14 +46,15 @@ func (f *intFlag) String() string {
 	return fmt.Sprintf("%d", f.value)
 }
 
-func (fs *FlagSet) Int(name string, defaultValue int, usage string) {
-	fs.IntShort(name, "", defaultValue, usage)
+func (fs *FlagSet) Int(name string, defaultValue int, usage string) *FlagBuilder {
+	return fs.IntShort(name, "", defaultValue, usage)
 }
 
-func (fs *FlagSet) IntShort(name string, short string, defaultValue int, usage string) {
+func (fs *FlagSet) IntShort(name string, short string, defaultValue int, usage string) *FlagBuilder {
 	v := &intFlag{value: defaultValue}
 	f := &Flag{Name: name, Shorthand: short, Value: v, Usage: usage, DefaultValue: defaultValue}
 	fs.setFlag(f)
+	return &FlagBuilder{flag: f}
 }
 
 func (fs *FlagSet) GetInt(name string) int {

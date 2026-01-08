@@ -42,14 +42,15 @@ func (b *boolFlag) String() string {
 	return fmt.Sprintf("%v", b.value)
 }
 
-func (fs *FlagSet) Bool(name string, defaultValue bool, usage string) {
-	fs.BoolShort(name, "", defaultValue, usage)
+func (fs *FlagSet) Bool(name string, defaultValue bool, usage string) *FlagBuilder {
+	return fs.BoolShort(name, "", defaultValue, usage)
 }
 
-func (fs *FlagSet) BoolShort(name string, short string, defaultValue bool, usage string) {
+func (fs *FlagSet) BoolShort(name string, short string, defaultValue bool, usage string) *FlagBuilder {
 	v := &boolFlag{value: defaultValue}
 	f := &Flag{Value: v, Name: name, Shorthand: short, Usage: usage, DefaultValue: defaultValue}
 	fs.setFlag(f)
+	return &FlagBuilder{flag: f}
 }
 
 func (fs *FlagSet) GetBool(name string) bool {

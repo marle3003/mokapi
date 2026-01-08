@@ -8,9 +8,9 @@ import (
 var regexIndex = regexp.MustCompile(`\[<.*>]`)
 var regexKey = regexp.MustCompile(`<.*>`)
 
-func (fs *FlagSet) DynamicInt(name string, usage string) {
+func (fs *FlagSet) DynamicInt(name string, usage string) *FlagBuilder {
 	f := &DynamicFlag{
-		Usage:   usage,
+		Flag:    Flag{Usage: usage},
 		pattern: convertToPattern(name),
 		setValue: func(name string, value []string) error {
 			f, ok := fs.flags[name]
@@ -28,11 +28,12 @@ func (fs *FlagSet) DynamicInt(name string, usage string) {
 		},
 	}
 	fs.dynamic = append(fs.dynamic, f)
+	return &FlagBuilder{flag: &f.Flag}
 }
 
-func (fs *FlagSet) DynamicString(name string, usage string) {
+func (fs *FlagSet) DynamicString(name string, usage string) *FlagBuilder {
 	f := &DynamicFlag{
-		Usage:   usage,
+		Flag:    Flag{Usage: usage},
 		pattern: convertToPattern(name),
 		setValue: func(name string, value []string) error {
 			f, ok := fs.flags[name]
@@ -50,11 +51,12 @@ func (fs *FlagSet) DynamicString(name string, usage string) {
 		},
 	}
 	fs.dynamic = append(fs.dynamic, f)
+	return &FlagBuilder{flag: &f.Flag}
 }
 
-func (fs *FlagSet) DynamicStringSlice(name string, usage string, explode bool) {
+func (fs *FlagSet) DynamicStringSlice(name string, usage string, explode bool) *FlagBuilder {
 	f := &DynamicFlag{
-		Usage:   usage,
+		Flag:    Flag{Usage: usage},
 		pattern: convertToPattern(name),
 		setValue: func(name string, value []string) error {
 			f, ok := fs.flags[name]
@@ -72,6 +74,7 @@ func (fs *FlagSet) DynamicStringSlice(name string, usage string, explode bool) {
 		},
 	}
 	fs.dynamic = append(fs.dynamic, f)
+	return &FlagBuilder{flag: &f.Flag}
 }
 
 func convertToPattern(s string) *regexp.Regexp {

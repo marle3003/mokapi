@@ -44,14 +44,15 @@ func (f *stringSliceFlag) String() string {
 	return strings.Join(f.value, ",")
 }
 
-func (fs *FlagSet) StringSlice(name string, defaultValue []string, usage string, explode bool) {
-	fs.StringSliceShort(name, "", defaultValue, usage, explode)
+func (fs *FlagSet) StringSlice(name string, defaultValue []string, usage string, explode bool) *FlagBuilder {
+	return fs.StringSliceShort(name, "", defaultValue, usage, explode)
 }
 
-func (fs *FlagSet) StringSliceShort(name string, short string, defaultValue []string, usage string, explode bool) {
+func (fs *FlagSet) StringSliceShort(name string, short string, defaultValue []string, usage string, explode bool) *FlagBuilder {
 	v := &stringSliceFlag{value: defaultValue, explode: explode}
 	f := &Flag{Name: name, Shorthand: short, Value: v, Usage: usage, DefaultValue: defaultValue}
 	fs.setFlag(f)
+	return &FlagBuilder{flag: f}
 }
 
 func (fs *FlagSet) GetStringSlice(name string) []string {

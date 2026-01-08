@@ -41,14 +41,15 @@ func (f *floatFlag) String() string {
 	return fmt.Sprintf("%f", f.value)
 }
 
-func (fs *FlagSet) Float(name string, defaultValue float64, usage string) {
-	fs.FloatShort(name, "", defaultValue, usage)
+func (fs *FlagSet) Float(name string, defaultValue float64, usage string) *FlagBuilder {
+	return fs.FloatShort(name, "", defaultValue, usage)
 }
 
-func (fs *FlagSet) FloatShort(name string, short string, defaultValue float64, usage string) {
+func (fs *FlagSet) FloatShort(name string, short string, defaultValue float64, usage string) *FlagBuilder {
 	v := &floatFlag{value: defaultValue}
 	f := &Flag{Name: name, Shorthand: short, Value: v, Usage: usage, DefaultValue: defaultValue}
 	fs.setFlag(f)
+	return &FlagBuilder{flag: f}
 }
 
 func (fs *FlagSet) GetFloat(name string) float64 {

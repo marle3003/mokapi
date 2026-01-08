@@ -31,14 +31,15 @@ func (f *stringFlag) IsSet() bool { return f.isSet }
 
 func (f *stringFlag) Type() string { return "string" }
 
-func (fs *FlagSet) String(name string, defaultValue string, usage string) {
-	fs.StringShort(name, "", defaultValue, usage)
+func (fs *FlagSet) String(name string, defaultValue string, usage string) *FlagBuilder {
+	return fs.StringShort(name, "", defaultValue, usage)
 }
 
-func (fs *FlagSet) StringShort(name string, short string, defaultValue string, usage string) {
+func (fs *FlagSet) StringShort(name string, short string, defaultValue string, usage string) *FlagBuilder {
 	v := &stringFlag{value: defaultValue}
 	f := &Flag{Name: name, Shorthand: short, Value: v, Usage: usage, DefaultValue: defaultValue}
 	fs.setFlag(f)
+	return &FlagBuilder{flag: f}
 }
 
 func (fs *FlagSet) GetString(name string) string {

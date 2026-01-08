@@ -32,8 +32,9 @@ func (f *fileFlag) String() string {
 	return fmt.Sprintf("%v", f.value)
 }
 
-func (fs *FlagSet) File(name string, usage string) {
+func (fs *FlagSet) File(name string, usage string) *FlagBuilder {
 	v := &fileFlag{setConfigFile: fs.setConfigFile}
 	f := &Flag{Name: name, Value: v, Usage: usage}
 	fs.setFlag(f)
+	return &FlagBuilder{flag: f}
 }
