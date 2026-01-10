@@ -5,11 +5,16 @@ import (
 )
 
 type boolFlag struct {
-	value bool
-	isSet bool
+	value  bool
+	isSet  bool
+	source Source
 }
 
-func (b *boolFlag) Set(values []string) error {
+func (b *boolFlag) Set(values []string, source Source) error {
+	if b.source > source {
+		return nil
+	}
+
 	if len(values) == 0 {
 		b.value = true
 	} else {
@@ -23,6 +28,7 @@ func (b *boolFlag) Set(values []string) error {
 		}
 	}
 	b.isSet = true
+	b.source = source
 	return nil
 }
 

@@ -1,7 +1,6 @@
 package mokapi_test
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"mokapi/config/static"
@@ -108,7 +107,7 @@ func TestMain_Flags(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			cmd := mokapi.NewCmdMokapi(context.Background())
+			cmd := mokapi.NewCmdMokapi()
 			cmd.SetArgs(tc.args)
 
 			cfg := static.NewConfig()
@@ -143,34 +142,6 @@ func TestStaticConfig(t *testing.T) {
 			args: []string{"--log-level", "debug"},
 			test: func(t *testing.T, cfg *static.Config) {
 				require.Equal(t, "debug", cfg.Log.Level)
-			},
-		},
-		{
-			name: "--help",
-			args: []string{"--help"},
-			test: func(t *testing.T, cfg *static.Config) {
-				require.Equal(t, true, cfg.Help)
-			},
-		},
-		{
-			name: "-h",
-			args: []string{"-h"},
-			test: func(t *testing.T, cfg *static.Config) {
-				require.Equal(t, true, cfg.Help)
-			},
-		},
-		{
-			name: "--version",
-			args: []string{"--version"},
-			test: func(t *testing.T, cfg *static.Config) {
-				require.Equal(t, true, cfg.Version)
-			},
-		},
-		{
-			name: "-v",
-			args: []string{"-v"},
-			test: func(t *testing.T, cfg *static.Config) {
-				require.Equal(t, true, cfg.Version)
 			},
 		},
 		{
@@ -442,7 +413,7 @@ func TestStaticConfig(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			cmd := mokapi.NewCmdMokapi(context.Background())
+			cmd := mokapi.NewCmdMokapi()
 			cmd.SetArgs(tc.args)
 
 			cfg := static.NewConfig()
@@ -511,7 +482,7 @@ func TestMokapi_Env(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			cmd := mokapi.NewCmdMokapi(context.Background())
+			cmd := mokapi.NewCmdMokapi()
 			cmd.SetArgs([]string{})
 
 			cfg := static.NewConfig()
@@ -527,7 +498,7 @@ func TestMokapi_Env(t *testing.T) {
 
 func TestMokapi_File(t *testing.T) {
 	newCmd := func(args []string) (*cli.Command, *static.Config) {
-		c := mokapi.NewCmdMokapi(context.Background())
+		c := mokapi.NewCmdMokapi()
 		c.SetArgs(args)
 		c.Run = func(cmd *cli.Command, args []string) error {
 			return nil
@@ -673,7 +644,7 @@ providers:
 }
 
 func TestPositionalArg_Error(t *testing.T) {
-	cmd := mokapi.NewCmdMokapi(context.Background())
+	cmd := mokapi.NewCmdMokapi()
 	cmd.SetArgs([]string{"foo://bar"})
 
 	cfg := static.NewConfig()

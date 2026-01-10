@@ -7,6 +7,17 @@ import (
 	"strings"
 )
 
+type Source int
+
+const (
+	SourceDefault Source = iota
+	SourceFile
+	SourceEnv
+	SourceCli
+)
+
+type SourceMap map[string]Source
+
 type FlagSet struct {
 	flags         map[string]*Flag
 	dynamic       []*DynamicFlag
@@ -28,7 +39,7 @@ type Flag struct {
 type DynamicFlag struct {
 	Flag
 	pattern  *regexp.Regexp
-	setValue func(name string, value []string) error
+	setValue func(name string, value []string, source Source) error
 }
 
 type FlagNotFound struct {
@@ -36,7 +47,7 @@ type FlagNotFound struct {
 }
 
 type Value interface {
-	Set([]string) error
+	Set([]string, Source) error
 	Value() any
 	String() string
 	IsSet() bool
@@ -54,13 +65,13 @@ func (fs *FlagSet) setFlag(f *Flag) {
 	fs.orderedFlags[f.Name] = len(fs.flags)
 }
 
-func (fs *FlagSet) setValue(name string, value []string) error {
+func (fs *FlagSet) setValue(name string, value []string, source Source) error {
 	// backwards compatibility
 	name = strings.ReplaceAll(name, ".", "-")
 	if fs.flags != nil {
 		f, ok := fs.flags[name]
 		if ok {
-			err := f.Value.Set(value)
+			err := f.Value.Set(value, source)
 			if err != nil {
 				return fmt.Errorf("failed to set flag %s: %w", name, err)
 			}
@@ -70,7 +81,7 @@ func (fs *FlagSet) setValue(name string, value []string) error {
 	}
 	for _, flag := range fs.dynamic {
 		if flag.isValidFlag(name) {
-			err := flag.setValue(name, value)
+			err := flag.setValue(name, value, source)
 			if err != nil {
 				return fmt.Errorf("failed to set flag %s: %w", name, err)
 			}
@@ -138,6 +149,10 @@ func (fs *FlagSet) Visit(fn func(*Flag) error) error {
 		}
 	}
 	return nil
+}
+
+func (fs *FlagSet) Lookup(name string) *Flag {
+	return fs.flags[name]
 }
 
 func (d *DynamicFlag) isValidFlag(flag string) bool {

@@ -12,18 +12,18 @@ func (fs *FlagSet) DynamicInt(name string, usage string) *FlagBuilder {
 	f := &DynamicFlag{
 		Flag:    Flag{Usage: usage},
 		pattern: convertToPattern(name),
-		setValue: func(name string, value []string) error {
+		setValue: func(name string, value []string, source Source) error {
 			f, ok := fs.flags[name]
 			if !ok {
 				v := &intFlag{}
-				if err := v.Set(value); err != nil {
+				if err := v.Set(value, source); err != nil {
 					return err
 				}
 				f = &Flag{Name: name, Value: v}
 				fs.setFlag(f)
 				return nil
 			} else {
-				return f.Value.Set(value)
+				return f.Value.Set(value, source)
 			}
 		},
 	}
@@ -35,18 +35,18 @@ func (fs *FlagSet) DynamicString(name string, usage string) *FlagBuilder {
 	f := &DynamicFlag{
 		Flag:    Flag{Usage: usage},
 		pattern: convertToPattern(name),
-		setValue: func(name string, value []string) error {
+		setValue: func(name string, value []string, source Source) error {
 			f, ok := fs.flags[name]
 			if !ok {
 				v := &stringFlag{}
-				if err := v.Set(value); err != nil {
+				if err := v.Set(value, source); err != nil {
 					return err
 				}
 				f = &Flag{Name: name, Value: v}
 				fs.setFlag(f)
 				return nil
 			} else {
-				return f.Value.Set(value)
+				return f.Value.Set(value, source)
 			}
 		},
 	}
@@ -58,18 +58,18 @@ func (fs *FlagSet) DynamicStringSlice(name string, usage string, explode bool) *
 	f := &DynamicFlag{
 		Flag:    Flag{Usage: usage},
 		pattern: convertToPattern(name),
-		setValue: func(name string, value []string) error {
+		setValue: func(name string, value []string, source Source) error {
 			f, ok := fs.flags[name]
 			if !ok {
 				v := &stringSliceFlag{explode: explode}
-				if err := v.Set(value); err != nil {
+				if err := v.Set(value, source); err != nil {
 					return err
 				}
 				f = &Flag{Name: name, Value: v}
 				fs.setFlag(f)
 				return nil
 			} else {
-				return f.Value.Set(value)
+				return f.Value.Set(value, source)
 			}
 		},
 	}

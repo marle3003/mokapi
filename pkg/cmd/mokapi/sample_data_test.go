@@ -2,15 +2,15 @@ package mokapi_test
 
 import (
 	"bytes"
-	"context"
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/require"
 	"io"
 	"mokapi/pkg/cmd/mokapi"
 	"mokapi/schema/json/generator"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain_SampleData(t *testing.T) {
@@ -116,8 +116,7 @@ func TestMain_SampleData(t *testing.T) {
 				os.Stderr = stdErr
 			}()
 
-			ctx := context.Background()
-			cmd := mokapi.NewCmdMokapi(ctx)
+			cmd := mokapi.NewCmdMokapi()
 			cmd.SetArgs(tc.args)
 
 			logrus.SetOutput(io.Discard)

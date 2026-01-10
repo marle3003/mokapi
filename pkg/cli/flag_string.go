@@ -5,17 +5,23 @@ import (
 )
 
 type stringFlag struct {
-	value string
-	isSet bool
+	value  string
+	isSet  bool
+	source Source
 }
 
-func (f *stringFlag) Set(values []string) error {
+func (f *stringFlag) Set(values []string, source Source) error {
+	if f.source > source {
+		return nil
+	}
+
 	if len(values) != 1 {
 		return fmt.Errorf("expected 1 value, got %d", len(values))
 	}
 
 	f.value = values[0]
 	f.isSet = true
+	f.source = source
 	return nil
 }
 

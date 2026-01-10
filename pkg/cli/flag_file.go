@@ -6,12 +6,18 @@ type fileFlag struct {
 	value         string
 	isSet         bool
 	setConfigFile func(string)
+	source        Source
 }
 
-func (f *fileFlag) Set(values []string) error {
+func (f *fileFlag) Set(values []string, source Source) error {
+	if f.source > source {
+		return nil
+	}
+
 	if len(values) > 0 {
 		f.value = values[0]
 		f.setConfigFile(f.value)
+		f.source = source
 	}
 	return nil
 }

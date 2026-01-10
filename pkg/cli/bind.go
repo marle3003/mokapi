@@ -14,7 +14,7 @@ import (
 
 type flagConfigBinder struct{}
 
-type context struct {
+type bindContext struct {
 	path    string
 	paths   []string
 	element reflect.Value
@@ -25,7 +25,7 @@ func (f *flagConfigBinder) Decode(flags *FlagSet, element interface{}) error {
 	return flags.Visit(func(flag *Flag) error {
 		paths := ParsePath(flag.Name)
 		v := flag.Value.Value()
-		ctx := &context{path: flag.Name, paths: paths, value: v, element: reflect.ValueOf(element)}
+		ctx := &bindContext{path: flag.Name, paths: paths, value: v, element: reflect.ValueOf(element)}
 		err := f.setValue(ctx)
 		if err != nil {
 			return fmt.Errorf("configuration error '%v' value '%v': %w", flag.Name, v, err)
@@ -34,7 +34,7 @@ func (f *flagConfigBinder) Decode(flags *FlagSet, element interface{}) error {
 	})
 }
 
-func (f *flagConfigBinder) setValue(ctx *context) error {
+func (f *flagConfigBinder) setValue(ctx *bindContext) error {
 	if len(ctx.paths) == 0 {
 		v := reflect.ValueOf(ctx.value)
 		t := ctx.element.Type()
@@ -54,11 +54,13 @@ func (f *flagConfigBinder) setValue(ctx *context) error {
 		}
 		err := ctx.setFieldFromStruct()
 		if err != nil {
-			if arr, ok := ctx.value.([]string); ok {
-				return f.explode(ctx.element, ctx.paths[0], arr)
-			}
-			if s, ok := ctx.value.(string); ok {
-				return f.explode(ctx.element, ctx.paths[0], []string{s})
+			if len(ctx.paths) == 1 {
+				if arr, ok := ctx.value.([]string); ok {
+					return f.explode(ctx.element, ctx.paths[0], arr)
+				}
+				if s, ok := ctx.value.(string); ok {
+					return f.explode(ctx.element, ctx.paths[0], []string{s})
+				}
 			}
 			// skip: field not found
 			return nil
@@ -116,7 +118,7 @@ func ParsePath(key string) []string {
 	return paths
 }
 
-func (f *flagConfigBinder) setArray(ctx *context) error {
+func (f *flagConfigBinder) setArray(ctx *bindContext) error {
 	if len(ctx.paths) > 0 {
 		index, err := f.parseArrayIndex(ctx.paths[0])
 		if err != nil {
@@ -165,7 +167,7 @@ func (f *flagConfigBinder) setArray(ctx *context) error {
 
 		for _, v := range values {
 			ptr := reflect.New(ctx.element.Type().Elem())
-			ctxItem := &context{
+			ctxItem := &bindContext{
 				paths:   ctx.paths,
 				element: ptr,
 				value:   v,
@@ -190,7 +192,7 @@ func (f *flagConfigBinder) parseArrayIndex(path string) (int, error) {
 	return strconv.Atoi(path)
 }
 
-func (f *flagConfigBinder) setMap(ctx *context) error {
+func (f *flagConfigBinder) setMap(ctx *bindContext) error {
 	var values []string
 	if arr, ok := ctx.value.([]string); ok {
 		values = arr
@@ -329,14 +331,14 @@ func (f *flagConfigBinder) convert(value any, target reflect.Value) error {
 				if len(kv) != 2 {
 					return fmt.Errorf("parse shorthand failed: %v", s)
 				}
-				err = f.setValue(&context{paths: []string{kv[0]}, value: kv[1], element: target})
+				err = f.setValue(&bindContext{paths: []string{kv[0]}, value: kv[1], element: target})
 				if err != nil {
 					return err
 				}
 			}
 			return nil
 		} else if kind == reflect.Slice {
-			return f.setValue(&context{paths: []string{}, element: target, value: []string{s}})
+			return f.setValue(&bindContext{paths: []string{}, element: target, value: []string{s}})
 		} else if kind == reflect.String {
 			target.Set(reflect.ValueOf(s))
 			return nil
@@ -424,7 +426,7 @@ func (f *flagConfigBinder) setJson(element reflect.Value, i interface{}) error {
 	return nil
 }
 
-func (c *context) setFieldFromStruct() error {
+func (c *bindContext) setFieldFromStruct() error {
 	name := strings.ToLower(c.paths[0])
 	field := c.element.FieldByNameFunc(func(f string) bool {
 		return strings.ToLower(f) == name
@@ -471,7 +473,7 @@ func (c *context) setFieldFromStruct() error {
 	return fmt.Errorf("no configuration found")
 }
 
-func (c *context) Next(element reflect.Value) *context {
+func (c *bindContext) Next(element reflect.Value) *bindContext {
 	c.paths = c.paths[1:]
 	c.element = element
 	return c

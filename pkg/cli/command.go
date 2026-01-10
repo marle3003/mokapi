@@ -1,7 +1,9 @@
 package cli
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"os"
 	"slices"
 )
@@ -16,12 +18,15 @@ type Command struct {
 	Commands  []*Command
 	Run       func(cmd *Command, args []string) error
 	EnvPrefix string
+	Version   string
 
 	configFileName string
 	configPaths    []string
 	configFile     string
 	args           []string
 	flags          *FlagSet
+	output         io.Writer
+	ctx            context.Context
 }
 
 func (c *Command) Execute() error {
@@ -45,9 +50,31 @@ func (c *Command) Execute() error {
 		}
 	}
 
+	if !cmd.Flags().IsValidFlag("help") {
+		cmd.Flags().Bool("help", false, "Show help information and exit")
+	}
+
+	if cmd.Version != "" {
+		if !cmd.Flags().IsValidFlag("version") {
+			cmd.Flags().Bool("version", false, "Show version information and exit")
+		}
+	}
+
 	positional, err := parseFlags(args, envPrefix, cmd.Flags())
 	if err != nil {
 		return err
+	}
+
+	if cmd.Flags().GetBool("help") {
+		c.printHelp()
+		return nil
+	}
+
+	if cmd.Version != "" {
+		if cmd.Flags().GetBool("version") {
+			fmt.Println(cmd.Version)
+			return nil
+		}
 	}
 
 	if cmd.Config != nil {
@@ -70,6 +97,11 @@ func (c *Command) Execute() error {
 	} else {
 		return fmt.Errorf("no command run specified")
 	}
+}
+
+func (c *Command) ExecuteWithContext(ctx context.Context) error {
+	c.SetContext(ctx)
+	return c.Execute()
 }
 
 func (c *Command) SetArgs(args []string) {
@@ -102,4 +134,16 @@ func (c *Command) SetConfigPath(path ...string) {
 			c.configPaths = append(c.configPaths, p)
 		}
 	}
+}
+
+func (c *Command) SetOutput(writer io.Writer) {
+	c.output = writer
+}
+
+func (c *Command) SetContext(ctx context.Context) {
+	c.ctx = ctx
+}
+
+func (c *Command) Context() context.Context {
+	return c.ctx
 }

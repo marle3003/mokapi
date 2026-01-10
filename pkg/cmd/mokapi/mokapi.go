@@ -30,19 +30,22 @@ import (
 
 const logo = "888b     d888          888             d8888          d8b \n8888b   d8888          888            d88888          Y8P \n88888b.d88888          888           d88P888              \n888Y88888P888  .d88b.  888  888     d88P 888 88888b.  888 \n888 Y888P 888 d88\"\"88b 888 .88P    d88P  888 888 \"88b 888 \n888  Y8P  888 888  888 888888K    d88P   888 888  888 888 \n888   \"   888 Y88..88P 888 \"88b  d8888888888 888 d88P 888 \n888       888  \"Y88P\"  888  888 d88P     888 88888P\"  888 \n        v%s by Marcel Lehmann%s 888          \n        https://mokapi.io                    888          \n                                             888   \n"
 
-func NewCmdMokapi(ctx context.Context) *cli.Command {
+func NewCmdMokapi() *cli.Command {
+	cfg := static.NewConfig()
+
 	cmd := &cli.Command{
-		Name:   "mokapi",
-		Use:    "mokapi [flags] [CONFIG-URL|DIRECTORY|FILE]...",
-		Short:  "Start Mokapi and serve mocked APIs",
-		Long:   `Mokapi is an easy, modern and flexible API mocking tool using Go and Javascript.`,
-		Config: &static.Config{},
+		Name:    "mokapi",
+		Use:     "mokapi [flags] [CONFIG-URL|DIRECTORY|FILE]...",
+		Short:   "Start Mokapi and serve mocked APIs",
+		Long:    `Mokapi is an easy, modern and flexible API mocking tool using Go and Javascript.`,
+		Config:  cfg,
+		Version: version.BuildVersion,
 		Run: func(cmd *cli.Command, args []string) error {
 			cfg := cmd.Config.(*static.Config)
 			if err := applyPositionalArgs(cfg, args); err != nil {
 				return err
 			}
-			return runRoot(cfg, ctx)
+			return runRoot(cmd, cfg)
 		},
 		Commands: []*cli.Command{
 			NewCmdSampleData(),
@@ -52,33 +55,14 @@ func NewCmdMokapi(ctx context.Context) *cli.Command {
 
 	cmd.SetConfigPath(".", "/etc/mokapi")
 
-	cmd.Flags().BoolShort("version", "v", false, "Show version information and exit")
-	cmd.Flags().Bool("generate-cli-skeleton", false, "Generates the skeleton configuration file and exit")
-
-	// config file
-	cmd.Flags().File("config-file", "Read configuration from a file")
-	cmd.Flags().Alias("config-file", "cli-input")
-
-	// logging
-	cmd.Flags().String("log-level", "info", "Set log level (debug|info|warn|error)").WithExample(
-		cli.Example{
-			Codes: []cli.Code{
-				{Title: "Cli", Source: "--log-level=warn"},
-				{Title: "Env", Source: "MOKAPI_LOG_LEVEL=warn"},
-				{Title: "File", Source: "log:\n  level: warn"},
-			},
-		},
-	).WithDescription("The default level of log messages is info. You can set the log level to one of the following, listed in order of least to most information. The level is cumulative: for the debug level, the log file also includes messages at the info, warn, and error levels.\n- Debug\n- Info\n- Warn\n- Error\n")
-	cmd.Flags().String("log-format", "text", "Set log output format (text|json)")
-
 	// file provider
 	cmd.Flags().String("providers-file", "", "File-based provider using shorthand syntax: `filename=FILE,directory=DIR`")
 	cmd.Flags().StringSlice("providers-file-filename", nil, "Load dynamic configuration from a file", true)
 	cmd.Flags().StringSlice("providers-file-filenames", nil, "Load the dynamic configuration from files", false)
 	cmd.Flags().StringSlice("providers-file-directory", []string{}, "Load the dynamic configuration from directories", true)
 	cmd.Flags().StringSlice("providers-file-directories", []string{}, "Load the dynamic configuration from directories", false)
-	cmd.Flags().StringSlice("providers-file-skip-prefix", []string{"_"}, "Ignore files with the given prefix", false)
-	cmd.Flags().StringSlice("providers-file-include", []string{}, "Include only matching files or patterns", false)
+	cmd.Flags().StringSlice("providers-file-skip-prefix", []string{"_"}, "One or more prefixes that indicate whether a file or directory should be skipped.", false)
+	cmd.Flags().StringSlice("providers-file-include", []string{}, "One or more patterns that a file must match, except when empty", false)
 	cmd.Flags().DynamicString("providers-file-include[<index>]", "Set include rule at the specified index")
 
 	// git provider
@@ -106,7 +90,7 @@ func NewCmdMokapi(ctx context.Context) *cli.Command {
 	cmd.Flags().String("providers-http-poll-timeout", "5s", "Timeout for HTTP polling requests")
 	cmd.Flags().String("providers-http-proxy", "", "HTTP proxy URL")
 	cmd.Flags().Bool("providers-http-tls-skip-verify", false, "Skip TLS certificate verification")
-	cmd.Flags().String("providers-http-ca", "", "Custom certificate authority file")
+	cmd.Flags().String("providers-http-ca", "", "Custom certificate authority file (default: system certification pool).")
 
 	// npm provider
 	cmd.Flags().String("providers-npm", "", "Configure an npm-based provider using shorthand syntax")
@@ -140,22 +124,35 @@ func NewCmdMokapi(ctx context.Context) *cli.Command {
 	cmd.Flags().StringSlice("config", []string{}, "Provide inline configuration data", true)
 	cmd.Flags().StringSlice("configs", []string{}, "Provide inline configuration data", false)
 
-	cmd.Flags().BoolShort("help", "h", false, "Show help information")
+	// config file
+	cmd.Flags().File("config-file", "Read configuration from a file")
+	cmd.Flags().Alias("config-file", "cli-input")
+
+	// logging
+	cmd.Flags().String("log-level", "info", "Set log level (debug|info|warn|error)").WithExample(
+		cli.Example{
+			Codes: []cli.Code{
+				{Title: "Cli", Source: "--log-level=warn"},
+				{Title: "Env", Source: "MOKAPI_LOG_LEVEL=warn"},
+				{Title: "File", Source: "log:\n  level: warn"},
+			},
+		},
+	).WithDescription("The default level of log messages is info. You can set the log level to one of the following, listed in order of least to most information. The level is cumulative: for the debug level, the log file also includes messages at the info, warn, and error levels.\n- Debug\n- Info\n- Warn\n- Error\n")
+	cmd.Flags().String("log-format", "text", "Set log output format (text|json)")
+
+	cmd.Flags().String("generate-cli-skeleton", "", "Generate a configuration skeleton and exit. If set without a value, generates the full skeleton. "+
+		"If a value is provided, generates only the specified section (e.g. `providers`).")
 
 	return cmd
 }
 
-func runRoot(cfg *static.Config, ctx context.Context) error {
+func runRoot(cmd *cli.Command, cfg *static.Config) error {
 	versionString := version.BuildVersion
 
-	/*switch {
-	case viper.GetBool("version"):
-		fmt.Println(versionString)
+	if f := cmd.Flags().Lookup("generate-cli-skeleton"); f != nil && f.Value.IsSet() {
+		writeSkeleton(f.Value.String())
 		return nil
-	case viper.GetBool("generate.cli.skeleton"):
-		writeSkeleton(cfg)
-		return nil
-	}*/
+	}
 
 	feature.Enable(cfg.Features)
 	generator.SetConfig(cfg.DataGen)
@@ -176,7 +173,9 @@ func runRoot(cfg *static.Config, ctx context.Context) error {
 		}
 	}()
 
-	<-ctx.Done()
+	if ctx := cmd.Context(); ctx != nil {
+		<-ctx.Done()
+	}
 	s.Close()
 	return nil
 }

@@ -6,11 +6,16 @@ import (
 )
 
 type floatFlag struct {
-	value float64
-	isSet bool
+	value  float64
+	isSet  bool
+	source Source
 }
 
-func (f *floatFlag) Set(values []string) error {
+func (f *floatFlag) Set(values []string, source Source) error {
+	if f.source > source {
+		return nil
+	}
+
 	if len(values) != 1 {
 		return fmt.Errorf("expected 1 value, got %d", len(values))
 	}
@@ -22,6 +27,7 @@ func (f *floatFlag) Set(values []string) error {
 	}
 	f.value = v
 	f.isSet = true
+	f.source = source
 	return nil
 }
 

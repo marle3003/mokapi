@@ -144,7 +144,7 @@ func mapValueToFlags(v reflect.Value, key string, flags *FlagSet) error {
 			for i := 0; i < v.Len(); i++ {
 				values = append(values, fmt.Sprintf("%v", v.Index(i)))
 			}
-			return flags.setValue(key, values)
+			return flags.setValue(key, values, SourceFile)
 		}
 		for i := 0; i < v.Len(); i++ {
 			err := mapValueToFlags(v.Index(i), fmt.Sprintf("%s[%v]", key, i), flags)
@@ -166,7 +166,7 @@ func mapValueToFlags(v reflect.Value, key string, flags *FlagSet) error {
 		if canBeNil(v) && v.IsNil() {
 			return nil
 		}
-		return flags.setValue(key, []string{fmt.Sprintf("%v", v.Interface())})
+		return flags.setValue(key, []string{fmt.Sprintf("%v", v.Interface())}, SourceFile)
 	}
 }
 
@@ -253,10 +253,11 @@ func mapValueToConfig(value interface{}, configElement reflect.Value, format str
 			}
 			configElement.Set(reflect.Append(configElement, ptr.Elem()))
 		} else {
-			arr, ok := value.([]interface{})
+			arr, ok := value.([]any)
 			if !ok {
 				return fmt.Errorf("expected array, got: %v", value)
 			}
+			configElement.Set(reflect.Zero(configElement.Type()))
 			for _, item := range arr {
 				err = mapValueToConfig(item, configElement, format)
 				if err != nil {
@@ -265,7 +266,7 @@ func mapValueToConfig(value interface{}, configElement reflect.Value, format str
 			}
 		}
 	case reflect.Struct:
-		m, ok := value.(map[string]interface{})
+		m, ok := value.(map[string]any)
 		if !ok {
 			return fmt.Errorf("expected object structure, got: %v", value)
 		}

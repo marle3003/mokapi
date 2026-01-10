@@ -1,7 +1,6 @@
 package mokapi_test
 
 import (
-	"context"
 	"mokapi/config/static"
 	"mokapi/pkg/cli"
 	"mokapi/pkg/cmd/mokapi"
@@ -225,7 +224,7 @@ func TestRoot_Providers_File(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			cmd := mokapi.NewCmdMokapi(context.Background())
+			cmd := mokapi.NewCmdMokapi()
 			cmd.SetArgs(tc.args(t))
 
 			cfg := static.NewConfig()
@@ -463,7 +462,7 @@ func TestRoot_Providers_Git(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			cmd := mokapi.NewCmdMokapi(context.Background())
+			cmd := mokapi.NewCmdMokapi()
 			cmd.SetArgs(tc.args(t))
 
 			cfg := static.NewConfig()

@@ -9,9 +9,14 @@ type stringSliceFlag struct {
 	value   []string
 	explode bool
 	isSet   bool
+	source  Source
 }
 
-func (f *stringSliceFlag) Set(values []string) error {
+func (f *stringSliceFlag) Set(values []string, source Source) error {
+	if f.source > source {
+		return nil
+	}
+
 	if len(values) == 1 {
 		if !f.explode {
 			values = splitArrayItems(values[0])
@@ -25,6 +30,7 @@ func (f *stringSliceFlag) Set(values []string) error {
 		f.value = values
 	}
 	f.isSet = true
+	f.source = source
 	return nil
 }
 

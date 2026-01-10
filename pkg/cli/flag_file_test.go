@@ -37,7 +37,7 @@ func (t *testFileReader) FileExists(name string) bool {
 
 func TestFileDecoder_Decode(t *testing.T) {
 	newCmd := func(args []string, cfg any) *cli.Command {
-		c := &cli.Command{Name: "foo", EnvPrefix: "Mokapi_"}
+		c := &cli.Command{Name: "foo"}
 		c.SetArgs(args)
 		c.Config = cfg
 		c.Run = func(cmd *cli.Command, args []string) error {
