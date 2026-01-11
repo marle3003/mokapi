@@ -26,18 +26,20 @@ type FlagSet struct {
 }
 
 type Flag struct {
+	FlagDoc
+
 	Name         string
 	Shorthand    string
-	Usage        string
-	Description  string
 	Value        Value
 	DefaultValue any
 	Aliases      []string
-	Examples     []Example
+	Type         string
 }
 
 type DynamicFlag struct {
 	Flag
+	Name string
+
 	pattern  *regexp.Regexp
 	setValue func(name string, value []string, source Source) error
 }
@@ -46,12 +48,17 @@ type FlagNotFound struct {
 	Name string
 }
 
+type FlagDoc struct {
+	Short    string
+	Long     string
+	Examples []Example
+}
+
 type Value interface {
 	Set([]string, Source) error
 	Value() any
 	String() string
 	IsSet() bool
-	Type() string
 }
 
 func (fs *FlagSet) setFlag(f *Flag) {
@@ -151,8 +158,36 @@ func (fs *FlagSet) Visit(fn func(*Flag) error) error {
 	return nil
 }
 
+// VisitAll in lexicographical order
+func (fs *FlagSet) VisitAll(fn func(*Flag) error) error {
+	flags := make([]*Flag, 0, len(fs.flags)+len(fs.dynamic))
+	for _, flag := range fs.flags {
+		flags = append(flags, flag)
+	}
+	for _, dyn := range fs.dynamic {
+		f := dyn.Flag
+		f.Name = dyn.Name
+		flags = append(flags, &f)
+	}
+	// 1. unused flags first, 2. flags in order of set
+	slices.SortStableFunc(flags, func(f1, f2 *Flag) int {
+		return strings.Compare(f1.Name, f2.Name)
+	})
+	for _, flag := range flags {
+		err := fn(flag)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (fs *FlagSet) Lookup(name string) *Flag {
 	return fs.flags[name]
+}
+
+func (fs *FlagSet) Len() int {
+	return len(fs.flags)
 }
 
 func (d *DynamicFlag) isValidFlag(flag string) bool {
@@ -178,12 +213,17 @@ type FlagBuilder struct {
 	flag *Flag
 }
 
+func (b *FlagBuilder) WithDoc(doc FlagDoc) *FlagBuilder {
+	b.flag.FlagDoc = doc
+	return b
+}
+
 func (b *FlagBuilder) WithExample(example ...Example) *FlagBuilder {
 	b.flag.Examples = append(b.flag.Examples, example...)
 	return b
 }
 
 func (b *FlagBuilder) WithDescription(description string) *FlagBuilder {
-	b.flag.Description = description
+	b.flag.Long = description
 	return b
 }

@@ -59,6 +59,10 @@ func parseFlags(args []string, envNamePrefix string, flags *FlagSet) ([]string, 
 				name = name[0:i]
 				hasValue = true
 				break
+			} else if name[i] == ' ' {
+				value = name[i+1:]
+				name = name[0:i]
+				break
 			}
 		}
 

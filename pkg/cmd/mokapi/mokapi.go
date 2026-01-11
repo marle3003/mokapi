@@ -12,6 +12,7 @@ import (
 	"mokapi/engine"
 	"mokapi/feature"
 	"mokapi/pkg/cli"
+	"mokapi/pkg/cmd/mokapi/flags"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/directory"
 	mail2 "mokapi/providers/mail"
@@ -55,93 +56,62 @@ func NewCmdMokapi() *cli.Command {
 
 	cmd.SetConfigPath(".", "/etc/mokapi")
 
-	// file provider
-	cmd.Flags().String("providers-file", "", "File-based provider using shorthand syntax: `filename=FILE,directory=DIR`")
-	cmd.Flags().StringSlice("providers-file-filename", nil, "Load dynamic configuration from a file", true)
-	cmd.Flags().StringSlice("providers-file-filenames", nil, "Load the dynamic configuration from files", false)
-	cmd.Flags().StringSlice("providers-file-directory", []string{}, "Load the dynamic configuration from directories", true)
-	cmd.Flags().StringSlice("providers-file-directories", []string{}, "Load the dynamic configuration from directories", false)
-	cmd.Flags().StringSlice("providers-file-skip-prefix", []string{"_"}, "One or more prefixes that indicate whether a file or directory should be skipped.", false)
-	cmd.Flags().StringSlice("providers-file-include", []string{}, "One or more patterns that a file must match, except when empty", false)
-	cmd.Flags().DynamicString("providers-file-include[<index>]", "Set include rule at the specified index")
+	flags.RegisterFileProvider(cmd)
 
 	// git provider
-	cmd.Flags().String("providers-git", "", "Configure a Git-based provider using shorthand syntax")
-	cmd.Flags().StringSlice("providers-git-url", []string{}, "Clone configuration from a Git repository", true)
-	cmd.Flags().StringSlice("providers-git-urls", []string{}, "Clone configuration from a Git repository", false)
-	cmd.Flags().String("providers-git-pull-interval", "3m", "Interval for pulling updates from Git repositories")
-	cmd.Flags().String("providers-git-temp-dir", "", "Temporary directory used for Git checkouts")
-	cmd.Flags().StringSlice("providers-git-repository", []string{}, "Configure a Git repository using shorthand syntax", true)
-	cmd.Flags().StringSlice("providers-git-repositories", []string{}, "Configure a Git repository using shorthand syntax", false)
-	// git repository
-	cmd.Flags().DynamicString("providers-git-repositories[<index>]", "Configure the repository at the specified index using shorthand syntax")
-	cmd.Flags().DynamicString("providers-git-repositories[<index>]-url", "Set the repository URL")
-	cmd.Flags().DynamicStringSlice("providers-git-repositories[<index>]-file", "Allow only specific files from the repository", true)
-	cmd.Flags().DynamicStringSlice("providers-git-repositories[<index>]-files", "Allow only specific files from the repository", false)
-	cmd.Flags().DynamicStringSlice("providers-git-repositories[<index>]-include", "Include only matching files or patterns", false)
-	cmd.Flags().DynamicString("providers-git-repositories[<index>]-auth-github", "Authenticate using GitHub credentials")
-	cmd.Flags().DynamicString("providers-git-repositories[<index>]-pull-interval", "Override pull interval for this repository")
-
-	// http provider
-	cmd.Flags().String("providers-http", "", "Configure an HTTP-based provider using shorthand syntax")
-	cmd.Flags().StringSlice("providers-http-url", []string{}, "Fetch configuration from an HTTP endpoint", true)
-	cmd.Flags().StringSlice("providers-http-urls", []string{}, "Fetch configurations from an HTTP endpoints", false)
-	cmd.Flags().String("providers-http-poll-interval", "3m", "Polling interval for HTTP endpoints")
-	cmd.Flags().String("providers-http-poll-timeout", "5s", "Timeout for HTTP polling requests")
-	cmd.Flags().String("providers-http-proxy", "", "HTTP proxy URL")
-	cmd.Flags().Bool("providers-http-tls-skip-verify", false, "Skip TLS certificate verification")
-	cmd.Flags().String("providers-http-ca", "", "Custom certificate authority file (default: system certification pool).")
+	flags.RegisterGitProvider(cmd)
+	flags.RegisterHttpProvider(cmd)
 
 	// npm provider
-	cmd.Flags().String("providers-npm", "", "Configure an npm-based provider using shorthand syntax")
-	cmd.Flags().StringSlice("providers-npm-global-folder", []string{}, "Load configuration from a global npm folder", true)
-	cmd.Flags().StringSlice("providers-npm-global-folders", []string{}, "Load configuration from a global npm folder", false)
+	cmd.Flags().String("providers-npm", "", cli.FlagDoc{Short: "Configure an npm-based provider using shorthand syntax"})
+	cmd.Flags().StringSlice("providers-npm-global-folder", []string{}, true, cli.FlagDoc{Short: "Load configuration from a global npm folder"})
+	cmd.Flags().StringSlice("providers-npm-global-folders", []string{}, false, cli.FlagDoc{Short: "Load configuration from a global npm folder"})
 	// npm package
-	cmd.Flags().StringSlice("providers-npm-package", []string{}, "Configure an npm package using shorthand syntax", true)
-	cmd.Flags().StringSlice("providers-npm-packages", []string{}, "Configure an npm package using shorthand syntax", false)
-	cmd.Flags().DynamicString("providers-npm-packages[<index>]", "Configure the package at the specified index using shorthand syntax")
-	cmd.Flags().DynamicString("providers-npm-packages[<index>]-name", "Set the name of the npm package")
-	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-file", "Allow only specific files from the package", true)
-	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-files", "Allow only specific files from the package", false)
-	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-include", "Include only matching files or patterns from the package", false)
+	cmd.Flags().StringSlice("providers-npm-package", []string{}, true, cli.FlagDoc{Short: "Configure an npm package using shorthand syntax"})
+	cmd.Flags().StringSlice("providers-npm-packages", []string{}, false, cli.FlagDoc{Short: "Configure an npm package using shorthand syntax"})
+	cmd.Flags().DynamicString("providers-npm-packages[<index>]", cli.FlagDoc{Short: "Configure the package at the specified index using shorthand syntax"})
+	cmd.Flags().DynamicString("providers-npm-packages[<index>]-name", cli.FlagDoc{Short: "Set the name of the npm package"})
+	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-file", true, cli.FlagDoc{Short: "Allow only specific files from the package"})
+	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-files", false, cli.FlagDoc{Short: "Allow only specific files from the package"})
+	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-include", false, cli.FlagDoc{Short: "Include only matching files or patterns from the package"})
 
 	// API
-	cmd.Flags().Int("api-port", 8080, "Port for the API server")
-	cmd.Flags().String("api-path", "", "Path prefix for the API and dashboard")
-	cmd.Flags().String("api-base", "", "Base path used when the API is behind a reverse proxy")
-	cmd.Flags().Bool("api-dashboard", true, "Enable the web dashboard")
-	cmd.Flags().Bool("api-search-enabled", false, "Enable search functionality in the dashboard")
+	cmd.Flags().Int("api-port", 8080, cli.FlagDoc{Short: "Port for the API server"})
+	cmd.Flags().String("api-path", "", cli.FlagDoc{Short: "Path prefix for the API and dashboard"})
+	cmd.Flags().String("api-base", "", cli.FlagDoc{Short: "Base path used when the API is behind a reverse proxy"})
+	cmd.Flags().Bool("api-dashboard", true, cli.FlagDoc{Short: "Enable the web dashboard"})
+	cmd.Flags().Bool("api-search-enabled", false, cli.FlagDoc{Short: "Enable search functionality in the dashboard"})
 
-	cmd.Flags().String("root-ca-cert", "", "Root CA certificate used for signing generated certificates")
-	cmd.Flags().String("root-ca-key", "", "Private key of the root CA")
+	cmd.Flags().String("root-ca-cert", "", cli.FlagDoc{Short: "Root CA certificate used for signing generated certificates"})
+	cmd.Flags().String("root-ca-key", "", cli.FlagDoc{Short: "Private key of the root CA"})
 
-	cmd.Flags().Int("event-store-default-size", 100, "Default maximum number of stored events per API")
-	cmd.Flags().String("event-store", "", "Configure event store using shorthand syntax")
-	cmd.Flags().DynamicInt("event-store-<name>-size", "Override event store size for a specific API")
+	cmd.Flags().Int("event-store-default-size", 100, cli.FlagDoc{Short: "Default maximum number of stored events per API"})
+	cmd.Flags().String("event-store", "", cli.FlagDoc{Short: "Configure event store using shorthand syntax"})
+	cmd.Flags().DynamicInt("event-store-<name>-size", cli.FlagDoc{Short: "Override event store size for a specific API"})
 
-	cmd.Flags().String("data-gen-optional-properties", "0.85", "")
+	cmd.Flags().String("data-gen-optional-properties", "0.85", cli.FlagDoc{Short: ""})
 
-	cmd.Flags().StringSlice("config", []string{}, "Provide inline configuration data", true)
-	cmd.Flags().StringSlice("configs", []string{}, "Provide inline configuration data", false)
+	cmd.Flags().StringSlice("config", []string{}, true, cli.FlagDoc{Short: "Provide inline configuration data"})
+	cmd.Flags().StringSlice("configs", []string{}, false, cli.FlagDoc{Short: "Provide inline configuration data"})
 
 	// config file
-	cmd.Flags().File("config-file", "Read configuration from a file")
-	cmd.Flags().Alias("config-file", "cli-input")
+	cmd.Flags().File("cli-input", cli.FlagDoc{Short: "Read configuration from a file"})
+	cmd.Flags().Alias("cli-input", "config-file")
 
 	// logging
-	cmd.Flags().String("log-level", "info", "Set log level (debug|info|warn|error)").WithExample(
+	cmd.Flags().String("log-level", "info", cli.FlagDoc{Short: "Set log level (debug|info|warn|error)"}).WithExample(
 		cli.Example{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--log-level=warn"},
+				{Title: "Cli", Source: "--log-level warn"},
 				{Title: "Env", Source: "MOKAPI_LOG_LEVEL=warn"},
 				{Title: "File", Source: "log:\n  level: warn"},
 			},
 		},
 	).WithDescription("The default level of log messages is info. You can set the log level to one of the following, listed in order of least to most information. The level is cumulative: for the debug level, the log file also includes messages at the info, warn, and error levels.\n- Debug\n- Info\n- Warn\n- Error\n")
-	cmd.Flags().String("log-format", "text", "Set log output format (text|json)")
+	cmd.Flags().String("log-format", "text", cli.FlagDoc{Short: "Set log output format (text|json)"})
 
-	cmd.Flags().String("generate-cli-skeleton", "", "Generate a configuration skeleton and exit. If set without a value, generates the full skeleton. "+
-		"If a value is provided, generates only the specified section (e.g. `providers`).")
+	cmd.Flags().String("generate-cli-skeleton", "", cli.FlagDoc{Short: "Generate a configuration skeleton and exit. If set without a value, generates the full skeleton. " +
+		"If a value is provided, generates only the specified section (e.g. `providers`)."})
 
 	return cmd
 }

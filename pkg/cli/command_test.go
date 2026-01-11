@@ -23,7 +23,7 @@ func TestCommand(t *testing.T) {
 			name: "--foo",
 			cmd: func() *Command {
 				c := &Command{Name: "foo"}
-				c.Flags().Bool("foo", false, "")
+				c.Flags().Bool("foo", false, FlagDoc{})
 				return c
 			},
 			args: []string{"--foo"},
@@ -37,7 +37,7 @@ func TestCommand(t *testing.T) {
 			name: "-f",
 			cmd: func() *Command {
 				c := &Command{Name: "foo"}
-				c.Flags().BoolShort("foo", "f", false, "")
+				c.Flags().BoolShort("foo", "f", false, FlagDoc{})
 				return c
 			},
 			args: []string{"-f"},
@@ -51,7 +51,7 @@ func TestCommand(t *testing.T) {
 			name: "bind to config",
 			cmd: func() *Command {
 				c := &Command{Config: &config{}}
-				c.Flags().Bool("flag", false, "")
+				c.Flags().Bool("flag", false, FlagDoc{})
 				return c
 			},
 			args: []string{"--flag"},
@@ -65,7 +65,7 @@ func TestCommand(t *testing.T) {
 			name: "--count",
 			cmd: func() *Command {
 				c := &Command{Config: &config{}}
-				c.Flags().Int("count", 12, "")
+				c.Flags().Int("count", 12, FlagDoc{})
 				return c
 			},
 			args: []string{"--count", "10"},
@@ -78,7 +78,7 @@ func TestCommand(t *testing.T) {
 			name: "--count default",
 			cmd: func() *Command {
 				c := &Command{Config: &config{}}
-				c.Flags().Int("count", 12, "")
+				c.Flags().Int("count", 12, FlagDoc{})
 				return c
 			},
 			args: []string{},
@@ -91,7 +91,7 @@ func TestCommand(t *testing.T) {
 			name: "--skip-prefix",
 			cmd: func() *Command {
 				c := &Command{Config: &config{}}
-				c.Flags().StringSlice("skip-prefix", []string{"_"}, "", false)
+				c.Flags().StringSlice("skip-prefix", []string{"_"}, false, FlagDoc{})
 				return c
 			},
 			args: []string{"--skip-prefix", "_", "foo_"},
@@ -105,7 +105,7 @@ func TestCommand(t *testing.T) {
 			name: "--skip-prefix default",
 			cmd: func() *Command {
 				c := &Command{Config: &config{}}
-				c.Flags().StringSlice("skip-prefix", []string{"_"}, "", false)
+				c.Flags().StringSlice("skip-prefix", []string{"_"}, false, FlagDoc{})
 				return c
 			},
 			args: []string{},

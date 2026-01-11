@@ -209,15 +209,16 @@ else {
 
 const router = createRouter({
   history: createWebHistory(base),
-  scrollBehavior: (to, from, savedPosition) => {
+  scrollBehavior: async (to, from, savedPosition) => {
     if (savedPosition) {
       return savedPosition
     }
     if (to.hash) {
+      await waitForElement(to.hash)
       // if anchor is set go to element
       return {
         el: to.hash,
-        behavior: 'smooth',
+        behavior: 'smooth' as const,
       }
     }
     // always scroll to top
@@ -308,4 +309,22 @@ export default router
 
 export function useRouter() {
   return router
+}
+
+function waitForElement(selector: string, timeout = 2000) {
+  return new Promise((resolve) => {
+    const start = Date.now()
+
+    const check = () => {
+      if (document.querySelector(selector)) {
+        resolve(true)
+      } else if (Date.now() - start > timeout) {
+        resolve(false)
+      } else {
+        requestAnimationFrame(check)
+      }
+    }
+
+    check()
+  })
 }

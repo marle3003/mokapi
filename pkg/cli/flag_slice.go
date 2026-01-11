@@ -42,21 +42,17 @@ func (f *stringSliceFlag) IsSet() bool {
 	return f.isSet
 }
 
-func (f *stringSliceFlag) Type() string {
-	return "list"
-}
-
 func (f *stringSliceFlag) String() string {
 	return strings.Join(f.value, ",")
 }
 
-func (fs *FlagSet) StringSlice(name string, defaultValue []string, usage string, explode bool) *FlagBuilder {
-	return fs.StringSliceShort(name, "", defaultValue, usage, explode)
+func (fs *FlagSet) StringSlice(name string, defaultValue []string, explode bool, doc FlagDoc) *FlagBuilder {
+	return fs.StringSliceShort(name, "", defaultValue, explode, doc)
 }
 
-func (fs *FlagSet) StringSliceShort(name string, short string, defaultValue []string, usage string, explode bool) *FlagBuilder {
+func (fs *FlagSet) StringSliceShort(name string, short string, defaultValue []string, explode bool, doc FlagDoc) *FlagBuilder {
 	v := &stringSliceFlag{value: defaultValue, explode: explode}
-	f := &Flag{Name: name, Shorthand: short, Value: v, Usage: usage, DefaultValue: defaultValue}
+	f := &Flag{Name: name, Shorthand: short, Value: v, DefaultValue: defaultValue, FlagDoc: doc, Type: "list"}
 	fs.setFlag(f)
 	return &FlagBuilder{flag: f}
 }

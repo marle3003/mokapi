@@ -50,16 +50,6 @@ func (c *Command) Execute() error {
 		}
 	}
 
-	if !cmd.Flags().IsValidFlag("help") {
-		cmd.Flags().Bool("help", false, "Show help information and exit")
-	}
-
-	if cmd.Version != "" {
-		if !cmd.Flags().IsValidFlag("version") {
-			cmd.Flags().Bool("version", false, "Show version information and exit")
-		}
-	}
-
 	positional, err := parseFlags(args, envPrefix, cmd.Flags())
 	if err != nil {
 		return err
@@ -115,6 +105,12 @@ func (c *Command) Flags() *FlagSet {
 			setConfigFile: func(s string) {
 				c.configFile = s
 			},
+		}
+
+		c.Flags().Bool("help", false, FlagDoc{Short: "Show help information and exit"})
+
+		if c.Version != "" {
+			c.Flags().Bool("version", false, FlagDoc{Short: "Show version information and exit"})
 		}
 	}
 	return c.flags

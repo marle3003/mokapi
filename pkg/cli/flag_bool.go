@@ -40,21 +40,17 @@ func (b *boolFlag) IsSet() bool {
 	return b.isSet
 }
 
-func (*boolFlag) Type() string {
-	return "bool"
-}
-
 func (b *boolFlag) String() string {
 	return fmt.Sprintf("%v", b.value)
 }
 
-func (fs *FlagSet) Bool(name string, defaultValue bool, usage string) *FlagBuilder {
-	return fs.BoolShort(name, "", defaultValue, usage)
+func (fs *FlagSet) Bool(name string, defaultValue bool, doc FlagDoc) *FlagBuilder {
+	return fs.BoolShort(name, "", defaultValue, doc)
 }
 
-func (fs *FlagSet) BoolShort(name string, short string, defaultValue bool, usage string) *FlagBuilder {
+func (fs *FlagSet) BoolShort(name string, short string, defaultValue bool, doc FlagDoc) *FlagBuilder {
 	v := &boolFlag{value: defaultValue}
-	f := &Flag{Value: v, Name: name, Shorthand: short, Usage: usage, DefaultValue: defaultValue}
+	f := &Flag{Value: v, Name: name, Shorthand: short, DefaultValue: defaultValue, FlagDoc: doc, Type: "bool"}
 	fs.setFlag(f)
 	return &FlagBuilder{flag: f}
 }

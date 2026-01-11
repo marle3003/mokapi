@@ -44,21 +44,17 @@ func (f *intFlag) IsSet() bool {
 	return f.isSet
 }
 
-func (f *intFlag) Type() string {
-	return "int"
-}
-
 func (f *intFlag) String() string {
 	return fmt.Sprintf("%d", f.value)
 }
 
-func (fs *FlagSet) Int(name string, defaultValue int, usage string) *FlagBuilder {
-	return fs.IntShort(name, "", defaultValue, usage)
+func (fs *FlagSet) Int(name string, defaultValue int, doc FlagDoc) *FlagBuilder {
+	return fs.IntShort(name, "", defaultValue, doc)
 }
 
-func (fs *FlagSet) IntShort(name string, short string, defaultValue int, usage string) *FlagBuilder {
+func (fs *FlagSet) IntShort(name string, short string, defaultValue int, doc FlagDoc) *FlagBuilder {
 	v := &intFlag{value: defaultValue}
-	f := &Flag{Name: name, Shorthand: short, Value: v, Usage: usage, DefaultValue: defaultValue}
+	f := &Flag{Name: name, Shorthand: short, Value: v, DefaultValue: defaultValue, FlagDoc: doc, Type: "int"}
 	fs.setFlag(f)
 	return &FlagBuilder{flag: f}
 }

@@ -30,17 +30,13 @@ func (f *fileFlag) IsSet() bool {
 	return f.isSet
 }
 
-func (f *fileFlag) Type() string {
-	return "file"
-}
-
 func (f *fileFlag) String() string {
 	return fmt.Sprintf("%v", f.value)
 }
 
-func (fs *FlagSet) File(name string, usage string) *FlagBuilder {
+func (fs *FlagSet) File(name string, doc FlagDoc) *FlagBuilder {
 	v := &fileFlag{setConfigFile: fs.setConfigFile}
-	f := &Flag{Name: name, Value: v, Usage: usage}
+	f := &Flag{Name: name, Value: v, FlagDoc: doc, Type: "file"}
 	fs.setFlag(f)
 	return &FlagBuilder{flag: f}
 }

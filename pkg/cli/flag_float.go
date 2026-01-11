@@ -39,21 +39,17 @@ func (f *floatFlag) IsSet() bool {
 	return f.isSet
 }
 
-func (f *floatFlag) Type() string {
-	return "float"
-}
-
 func (f *floatFlag) String() string {
 	return fmt.Sprintf("%f", f.value)
 }
 
-func (fs *FlagSet) Float(name string, defaultValue float64, usage string) *FlagBuilder {
-	return fs.FloatShort(name, "", defaultValue, usage)
+func (fs *FlagSet) Float(name string, defaultValue float64, doc FlagDoc) *FlagBuilder {
+	return fs.FloatShort(name, "", defaultValue, doc)
 }
 
-func (fs *FlagSet) FloatShort(name string, short string, defaultValue float64, usage string) *FlagBuilder {
+func (fs *FlagSet) FloatShort(name string, short string, defaultValue float64, doc FlagDoc) *FlagBuilder {
 	v := &floatFlag{value: defaultValue}
-	f := &Flag{Name: name, Shorthand: short, Value: v, Usage: usage, DefaultValue: defaultValue}
+	f := &Flag{Name: name, Shorthand: short, Value: v, DefaultValue: defaultValue, FlagDoc: doc, Type: "float"}
 	fs.setFlag(f)
 	return &FlagBuilder{flag: f}
 }

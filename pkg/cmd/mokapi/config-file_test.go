@@ -66,10 +66,6 @@ func TestFileDecoder_Decode(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			defer func() {
-				cli.SetFileReader(&cli.FileReader{})
-			}()
-
 			tc.test(t)
 		})
 	}

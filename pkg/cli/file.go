@@ -84,10 +84,8 @@ func readConfigFile(path string, config any) error {
 	}
 	switch filepath.Ext(path) {
 	case ".yaml", ".yml":
-		//err = yaml.Unmarshal(data, config)
 		err = unmarshalYaml(data, config)
 	case ".json":
-		//err = json.Unmarshal(data, config)
 		err = unmarshalJson(data, config)
 	default:
 		err = fmt.Errorf("unsupported file extension: %v", filepath.Ext(path))
@@ -268,6 +266,8 @@ func mapValueToConfig(value interface{}, configElement reflect.Value, format str
 	case reflect.Struct:
 		m, ok := value.(map[string]any)
 		if !ok {
+			i := configElement.Interface()
+			_ = i
 			return fmt.Errorf("expected object structure, got: %v", value)
 		}
 		for k, v := range m {

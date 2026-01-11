@@ -7,7 +7,7 @@ import (
 
 func main() {
 	cmd := mokapi.NewCmdMokapi()
-	err := cmd.GenMarkdown("./docs/cli")
+	err := cmd.GenMarkdown("./docs/configuration/static")
 	if err != nil {
 		fmt.Println(err.Error())
 	}

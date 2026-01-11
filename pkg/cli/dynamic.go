@@ -8,9 +8,10 @@ import (
 var regexIndex = regexp.MustCompile(`\[<.*>]`)
 var regexKey = regexp.MustCompile(`<.*>`)
 
-func (fs *FlagSet) DynamicInt(name string, usage string) *FlagBuilder {
+func (fs *FlagSet) DynamicInt(name string, doc FlagDoc) *FlagBuilder {
 	f := &DynamicFlag{
-		Flag:    Flag{Usage: usage},
+		Name:    name,
+		Flag:    Flag{FlagDoc: doc},
 		pattern: convertToPattern(name),
 		setValue: func(name string, value []string, source Source) error {
 			f, ok := fs.flags[name]
@@ -19,7 +20,7 @@ func (fs *FlagSet) DynamicInt(name string, usage string) *FlagBuilder {
 				if err := v.Set(value, source); err != nil {
 					return err
 				}
-				f = &Flag{Name: name, Value: v}
+				f = &Flag{Name: name, Value: v, Type: "int", FlagDoc: doc}
 				fs.setFlag(f)
 				return nil
 			} else {
@@ -31,9 +32,10 @@ func (fs *FlagSet) DynamicInt(name string, usage string) *FlagBuilder {
 	return &FlagBuilder{flag: &f.Flag}
 }
 
-func (fs *FlagSet) DynamicString(name string, usage string) *FlagBuilder {
+func (fs *FlagSet) DynamicString(name string, doc FlagDoc) *FlagBuilder {
 	f := &DynamicFlag{
-		Flag:    Flag{Usage: usage},
+		Name:    name,
+		Flag:    Flag{FlagDoc: doc},
 		pattern: convertToPattern(name),
 		setValue: func(name string, value []string, source Source) error {
 			f, ok := fs.flags[name]
@@ -42,7 +44,7 @@ func (fs *FlagSet) DynamicString(name string, usage string) *FlagBuilder {
 				if err := v.Set(value, source); err != nil {
 					return err
 				}
-				f = &Flag{Name: name, Value: v}
+				f = &Flag{Name: name, Value: v, Type: "string", FlagDoc: doc}
 				fs.setFlag(f)
 				return nil
 			} else {
@@ -54,9 +56,10 @@ func (fs *FlagSet) DynamicString(name string, usage string) *FlagBuilder {
 	return &FlagBuilder{flag: &f.Flag}
 }
 
-func (fs *FlagSet) DynamicStringSlice(name string, usage string, explode bool) *FlagBuilder {
+func (fs *FlagSet) DynamicStringSlice(name string, explode bool, doc FlagDoc) *FlagBuilder {
 	f := &DynamicFlag{
-		Flag:    Flag{Usage: usage},
+		Name:    name,
+		Flag:    Flag{FlagDoc: doc},
 		pattern: convertToPattern(name),
 		setValue: func(name string, value []string, source Source) error {
 			f, ok := fs.flags[name]
@@ -65,7 +68,7 @@ func (fs *FlagSet) DynamicStringSlice(name string, usage string, explode bool) *
 				if err := v.Set(value, source); err != nil {
 					return err
 				}
-				f = &Flag{Name: name, Value: v}
+				f = &Flag{Name: name, Value: v, Type: "list", FlagDoc: doc}
 				fs.setFlag(f)
 				return nil
 			} else {

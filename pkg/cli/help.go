@@ -21,45 +21,45 @@ func (c *Command) printHelp() {
 		_, _ = fmt.Fprintf(w, "\nUsage:\n  %s\n", c.Use)
 	}
 
-	groups, _ := groupFlags(c.Flags())
-	if len(groups) > 0 {
+	flags := c.Flags()
+	if flags.Len() > 0 {
 		_, _ = fmt.Fprintf(w, "\nFlags:")
 
-		for _, g := range groups {
-			maxNameLen, hasShort := flagsInfo(g.Flags)
-			for _, flag := range g.Flags {
+		maxNameLen, hasShort := flagsInfo(flags)
+		_ = flags.Visit(func(flag *Flag) error {
 
-				_, _ = fmt.Fprintln(w)
-				if hasShort {
-					short := flag.Shorthand
-					if short != "" {
-						short = fmt.Sprintf("-%s,", short)
-					} else {
-						short = strings.Repeat(" ", 3)
-					}
-					_, _ = fmt.Fprintf(w, "  %s", short)
+			_, _ = fmt.Fprintln(w)
+			if hasShort {
+				short := flag.Shorthand
+				if short != "" {
+					short = fmt.Sprintf("-%s,", short)
+				} else {
+					short = strings.Repeat(" ", 3)
 				}
-				_, _ = fmt.Fprintf(w, " --%s", flag.Name)
-				if flag.Usage != "" {
-					space := strings.Repeat(" ", maxNameLen-len(flag.Name))
-					_, _ = fmt.Fprintf(w, " %s  %s", space, flag.Usage)
-				}
+				_, _ = fmt.Fprintf(w, "  %s", short)
+			}
+			_, _ = fmt.Fprintf(w, " --%s", flag.Name)
+			if flag.Short != "" {
+				space := strings.Repeat(" ", maxNameLen-len(flag.Name))
+				_, _ = fmt.Fprintf(w, " %s  %s", space, flag.Short)
 			}
 			_, _ = fmt.Fprintln(w)
-		}
+			return nil
+		})
 	}
 }
 
-func flagsInfo(flag []*Flag) (int, bool) {
+func flagsInfo(flags *FlagSet) (int, bool) {
 	maxNameLen := 0
 	hasShort := false
-	for _, f := range flag {
+	_ = flags.Visit(func(f *Flag) error {
 		if len(f.Name) > maxNameLen {
 			maxNameLen = len(f.Name)
 		}
 		if f.Shorthand != "" {
 			hasShort = true
 		}
-	}
+		return nil
+	})
 	return maxNameLen, hasShort
 }
