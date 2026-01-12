@@ -1,7 +1,3 @@
-# Disable automatic Apache slash redirects
-DirectorySlash Off
-RewriteOptions AllowNoSlash
-
 <IfModule mod_negotiation.c>
   Options -MultiViews
 </IfModule>
