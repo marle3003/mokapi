@@ -51,6 +51,14 @@ runs:
       if: always()
       run: docker stop mokapi || true
       shell: bash
+    - name: Build CLI doc
+      run: go run ./cmd/internal/gen-cli-docs/main.go
+      shell: bash
+    - name: Upload CLI doc
+      uses: actions/upload-artifact@v4
+      with:
+        name: cli.md
+        path: docs/configuration/static/mokapi.md
     - name: build website
       working-directory: ./webui
       run: |
