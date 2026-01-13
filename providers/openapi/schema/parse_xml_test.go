@@ -27,7 +27,8 @@ func TestParseXML(t *testing.T) {
 			),
 			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				// id is defined and shouldn't be treated as an additional property
+				// id is indeed defined as attribute but in the payload as node
+				// so it shouldn't be treated as an additional property
 				require.Equal(t, map[string]any{}, v)
 			},
 		},
@@ -42,8 +43,7 @@ func TestParseXML(t *testing.T) {
 				schematest.WithFreeForm(false),
 			),
 			test: func(t *testing.T, v any, err error) {
-				require.NoError(t, err)
-				require.Equal(t, map[string]any{}, v)
+				require.EqualError(t, err, "failed to parse XML: property 'id' is expected as XML attribute but received as XML node and additionalProperty is not allowed: /root/id")
 			},
 		},
 		{
@@ -297,7 +297,8 @@ func TestUnmarshalXML(t *testing.T) {
 			test: func(t *testing.T) {
 				v, err := schema.UnmarshalXML(strings.NewReader("<person><children><name>bob</name><name>sarah</name></children></person>"),
 					schematest.New("object", schematest.WithProperty("children", schematest.New("array",
-						schematest.WithItems("string"),
+						schematest.WithItems("string", schematest.WithXml(&schema.Xml{Name: "name"})),
+						schematest.WithXml(&schema.Xml{Wrapped: true}),
 					))),
 				)
 				require.NoError(t, err)
@@ -353,6 +354,21 @@ func TestUnmarshalXML(t *testing.T) {
 				)
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{"id": "15", "author": "J K. Rowling", "title": "Harry Potter", "smp": "https://example.com/schema"}, v)
+			},
+		},
+		{
+			name: "books example from swagger",
+			test: func(t *testing.T) {
+				v, err := schema.UnmarshalXML(strings.NewReader(`<root><foo><books>one</books><books>two</books></foo></root>`),
+					schematest.New("object",
+						schematest.WithProperty("foo", schematest.New("object",
+							schematest.WithProperty("books",
+								schematest.New("array", schematest.WithItems("string"))),
+						)),
+					),
+				)
+				require.NoError(t, err)
+				require.Equal(t, map[string]any{"foo": map[string]any{"books": []any{"one", "two"}}}, v)
 			},
 		},
 	}
