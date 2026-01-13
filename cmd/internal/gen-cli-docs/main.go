@@ -1,14 +1,13 @@
 package main
 
 import (
-	"fmt"
 	"mokapi/pkg/cmd/mokapi"
+	"os"
 )
 
 func main() {
-	cmd := mokapi.NewCmdMokapi()
-	err := cmd.GenMarkdown("./docs/configuration/static")
+	err := mokapi.NewGenCliDocCmd().Execute()
 	if err != nil {
-		fmt.Println(err.Error())
+		_, _ = os.Stderr.Write([]byte(err.Error()))
 	}
 }
