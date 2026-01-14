@@ -32,9 +32,18 @@
   # Redirect anything under /docs/guides/smtp to /docs/guides/mail/
   RewriteRule ^docs/guides/smtp/?(.*)$ /docs/guides/mail/$1 [R=301,L]
 
+  # rewrite for bots
+  RewriteCond %{HTTP_USER_AGENT} googlebot|bingbot|Seobility|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora\ link\ preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp|redditbot|applebot|flipboard|tumblr|bitlybot|skypeuripreview|nuzzel|discordbot|google\ page\ speed|qwantify|bitrix\ link\ preview|xing-contenttabreceiver|google-inspectiontool|chrome-lighthouse|telegrambot|amazonbot [NC]
+  RewriteCond %{REQUEST_URI} !\.(html|css|js|less|jpg|png|gif|svg|woff2|xml)$
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  # Only rewrite for bots IF the .html file exists
+  RewriteCond %{REQUEST_FILENAME}.html -f
+  RewriteRule ^(.+)$ $1.html [L]
+
   # rewrite for bots if tailing /
   RewriteCond %{HTTP_USER_AGENT} googlebot|bingbot|Seobility|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora\ link\ preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp|redditbot|applebot|flipboard|tumblr|bitlybot|skypeuripreview|nuzzel|discordbot|google\ page\ speed|qwantify|bitrix\ link\ preview|xing-contenttabreceiver|google-inspectiontool|chrome-lighthouse|telegrambot|amazonbot [NC]
-  RewriteCond %{REQUEST_FILENAME} !^$
+  RewriteCond %{REQUEST_FILENAME} -d
   # url ends with a slash
   RewriteCond %{REQUEST_FILENAME} /$
   # Rewrite /about/ → /about/index.html
@@ -44,14 +53,6 @@
   RewriteCond %{HTTP_USER_AGENT} googlebot|bingbot|Seobility|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora\ link\ preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp|redditbot|applebot|flipboard|tumblr|bitlybot|skypeuripreview|nuzzel|discordbot|google\ page\ speed|qwantify|bitrix\ link\ preview|xing-contenttabreceiver|google-inspectiontool|chrome-lighthouse|telegrambot|amazonbot [NC]
   RewriteCond %{REQUEST_FILENAME} -d
   RewriteRule ^(.+[^/])$ $1/index.html [L]
-
-  # rewrite for bots
-  RewriteCond %{HTTP_USER_AGENT} googlebot|bingbot|Seobility|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora\ link\ preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp|redditbot|applebot|flipboard|tumblr|bitlybot|skypeuripreview|nuzzel|discordbot|google\ page\ speed|qwantify|bitrix\ link\ preview|xing-contenttabreceiver|google-inspectiontool|chrome-lighthouse|telegrambot|amazonbot [NC]
-  RewriteCond %{REQUEST_URI} !\.(html|css|js|less|jpg|png|gif|svg|woff2|xml)$
-  RewriteCond %{REQUEST_FILENAME} !^$
-  # Only rewrite for bots IF the .html file exists
-  RewriteCond %{REQUEST_FILENAME}.html -f
-  RewriteRule ^(.+)$ $1.html [L]
 
   # rewrite for bots for root page
   RewriteCond %{HTTP_USER_AGENT} googlebot|bingbot|Seobility|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora\ link\ preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp|redditbot|applebot|flipboard|tumblr|bitlybot|skypeuripreview|nuzzel|discordbot|google\ page\ speed|qwantify|bitrix\ link\ preview|xing-contenttabreceiver|google-inspectiontool|chrome-lighthouse|telegrambot|amazonbot [NC]
