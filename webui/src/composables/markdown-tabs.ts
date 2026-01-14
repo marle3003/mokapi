@@ -55,11 +55,13 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
                         </div>`
         }
 
-        return `<div class="nav code-tabs" id="tab-${counter}" role="tablist">
-                ${tabs}
-                </div>
-                <div class="tab-content code" id="tabContent-${counter}">
-                ${contents}
+        return `<div class="code">
+                    <div class="nav code-tabs" id="tab-${counter}" role="tablist">
+                        ${tabs}
+                    </div>
+                    <div class="tab-content code" id="tabContent-${counter}">
+                        ${contents}
+                    </div>
                 </div>`
     
     }

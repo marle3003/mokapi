@@ -203,20 +203,16 @@ function formatParam(label: any): string {
   font-size: 0.9rem;
 }
 .content {
-  line-height: 1.63;
-  font-size: 1.15rem;
+  line-height: 1.5rem;
+  font-size: 1rem;
 }
 
 .content h1 {
-  margin-top: 1.2rem;
-  margin-bottom: 1.6rem;
   font-size: 2.25rem;
 }
 
 .content h2 {
-  margin-top: 1.6rem;
-  margin-bottom: 1rem;
-  font-size: 1.8rem;
+  font-size: 1.55rem;
 }
 
 .content h2 > * {
@@ -224,18 +220,20 @@ function formatParam(label: any): string {
   padding-right: 5px;
 }
 
+.content h2 > a {
+  padding-right: 0;
+}
+
 .content h2 > svg path {
   fill: var(--link-color);
 }
 
 .content h3 {
-  margin-top: 1.3rem;
-  margin-bottom: 0.75rem;
   font-size: 1.4rem;
 }
 
 .content p {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .content ul {
@@ -266,7 +264,7 @@ table {
     text-align: start;
     width: 100%;
     margin-bottom: 20px;
-    font-size: 1rem;
+    font-size: 0.9rem;
 }
 table.selectable td {
     cursor: pointer;
@@ -304,7 +302,7 @@ pre {
   margin-bottom: 1rem;
   white-space: pre-wrap;
   word-break: break-all;
-  border-radius: 6px;
+  box-shadow: none;
   line-height: 1.4;
   font-family: Menlo,Monaco,Consolas,"Courier New",monospace !important;
   font-size: 0.85rem;
@@ -325,7 +323,9 @@ code {
   font-size: 1rem;
   margin-bottom: 0.5rem;
 }
-
+.code {
+  background-color: var(--code-background);
+}
 .code-tabs {
   margin-top: 1rem;
 }

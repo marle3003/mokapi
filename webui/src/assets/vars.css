@@ -100,6 +100,8 @@
 
     --badge-background: #eabaabff;
 
+    --code-background: #0d1117;
+
     --footer-background: #282b33;
 }
 
@@ -175,6 +177,8 @@
     --modal-footer-border: rgba(0, 0, 0, 0.1);
 
     --badge-background: rgb(8, 109, 215);
+
+    --code-background: #f6f8fa;
 
     --footer-background: rgb(244 244 246);
 }
