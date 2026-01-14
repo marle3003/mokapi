@@ -24,6 +24,7 @@ runs:
       run: |
         jq '.Configuration.items.Static.items["CLI Flags"] = "configuration/static/mokapi.md"' ./config.json > ./tmp.json
         mv ./tmp.json ./config.json
+      working-directory: ./docs
       shell: bash
     - name: Build docker alpha image
       run: docker build --build-arg VERSION=${{ inputs.version }} -t ${{ inputs.image-name }} -t mokapi/mokapi:alpha -f ./images/alpha.Dockerfile .
