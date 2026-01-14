@@ -271,6 +271,10 @@ table {
 table.selectable td {
     cursor: pointer;
 }
+table td, table th {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
 table thead th {
     color: var(--table-header-color);
     padding: 3px 12px 3px 12px;
