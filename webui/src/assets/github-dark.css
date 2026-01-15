@@ -1,7 +1,6 @@
-:root[data-theme="dark"] {
+/*:root[data-theme="dark"] {*/
   pre code.hljs {
     display: block;
-    padding: 12px;
     line-height: 1.4;
   }
 
@@ -13,7 +12,7 @@
   }
 
   .hljs {
-    color: #BBBBBB;
+    color: #e6edf3;
     background: var(--code-background)
   }
 
@@ -103,4 +102,4 @@
     color: #ffdcd7;
     background-color: #67060c
   }
-}
+/*}*/

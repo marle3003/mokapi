@@ -58,6 +58,7 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
         return `<div class="code">
                     <div class="nav code-tabs" id="tab-${counter}" role="tablist">
                         ${tabs}
+                        <div class="tabs-border"></div>
                     </div>
                     <div class="tab-content code" id="tabContent-${counter}">
                         ${contents}

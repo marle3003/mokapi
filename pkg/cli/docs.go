@@ -138,11 +138,15 @@ func writeFlag(w io.StringWriter, f *Flag, envPrefix string) error {
 			}
 
 			for _, code := range example.Codes {
+				codeType := "bash"
+				if code.Type != "" {
+					codeType = code.Type
+				}
 				var s string
 				if code.Title != "" {
-					s = fmt.Sprintf("```bash tab=%s\n%s\n```\n", code.Title, code.Source)
+					s = fmt.Sprintf("```%s tab=%s\n%s\n```\n", codeType, code.Title, code.Source)
 				} else {
-					s = fmt.Sprintf("```bash\n%s\n```\n", code)
+					s = fmt.Sprintf("```%s\n%s\n```\n", codeType, code)
 				}
 				if _, err := w.WriteString(s); err != nil {
 					return err

@@ -299,7 +299,6 @@ table.selectable tbody tr:hover {
 pre {
   max-width: 760px;
   margin: 0 auto auto;
-  margin-bottom: 1rem;
   white-space: pre-wrap;
   word-break: break-all;
   box-shadow: none;
@@ -315,22 +314,14 @@ pre {
     margin-left: 0;
   }
 }
-code {
+.code pre code.hljs {
   font-family: Menlo,Monaco,Consolas,"Courier New",monospace !important;
+  padding-left: 0 !important;
 }
 
 .content ul li h3 {
   font-size: 1rem;
   margin-bottom: 0.5rem;
-}
-.code {
-  background-color: var(--code-background);
-}
-.code-tabs {
-  margin-top: 1rem;
-}
-.tab-content.code > .tab-pane {
-  margin-bottom: 2rem;
 }
 
 .box {

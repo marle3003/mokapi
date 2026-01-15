@@ -45,7 +45,7 @@
   background-color: rgb(8, 109, 215);
   color: white;
 }
-.home .tab {
+.home .tab, .home .code {
   max-width: 700px;
   margin: 0 auto auto;
 }
@@ -54,11 +54,6 @@
   margin-bottom: 0.2rem;
 }
 .home .code-tabs button {
-  padding: 0.3rem;
-  margin-right: 0.5rem;
-  margin-left: 0.5rem;
-  padding-right: 0.8rem;
-  padding-left: 0.8rem;
   font-size: 1rem;
 }
 .home pre {

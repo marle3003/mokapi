@@ -22,7 +22,7 @@ When set, Mokapi loads dynamic configuration files from the specified path. You 
 			Codes: []cli.Code{
 				{Title: "Cli", Source: "--providers-file directory=/foo,fileSkipPrefix=skip"},
 				{Title: "Env", Source: "MOKAPI_FILE=directory=/foo,fileSkipPrefix=skip"},
-				{Title: "File", Source: "providers:\n  file:\n    directory: /foo\n    fileSkipPrefix: [skip]"},
+				{Title: "File", Source: "providers:\n  file:\n    directory: /foo\n    fileSkipPrefix: [skip]", Type: "yaml"},
 			},
 		},
 	},
@@ -37,7 +37,7 @@ This option can be used multiple times to load additional files.`,
 			Codes: []cli.Code{
 				{Title: "Cli", Source: "--providers-file-filename foobar.yaml"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_FILENAME=foobar.yaml"},
-				{Title: "File", Source: "providers:\n  file:\n    filenames: [foobar.yaml]"},
+				{Title: "File", Source: "providers:\n  file:\n    filenames: [foobar.yaml]", Type: "yaml"},
 			},
 		},
 	},
@@ -52,7 +52,7 @@ This option is equivalent to using providers-file-filename multiple times, but a
 			Codes: []cli.Code{
 				{Title: "Cli", Source: "--providers-file-filenames foo.yaml bar.yaml"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_FILENAMES=foo.yaml bar.yaml"},
-				{Title: "File", Source: "providers:\n  file:\n    filenames: [foo.yaml, bar.yaml]"},
+				{Title: "File", Source: "providers:\n  file:\n    filenames: [foo.yaml, bar.yaml]", Type: "yaml"},
 			},
 		},
 	},
@@ -67,7 +67,7 @@ All supported configuration files in the directory are processed. The directory 
 			Codes: []cli.Code{
 				{Title: "Cli", Source: "--providers-file-directory ./configs"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_DIRECTORY=./configs"},
-				{Title: "File", Source: "providers:\n  file:\n    directories: [./configs]"},
+				{Title: "File", Source: "providers:\n  file:\n    directories: [./configs]", Type: "yaml"},
 			},
 		},
 	},
@@ -82,7 +82,7 @@ All supported configuration files in each directory are processed. Directories a
 			Codes: []cli.Code{
 				{Title: "Cli", Source: "--providers-file-directories ./configs ./data"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_DIRECTORIES=./configs ./data"},
-				{Title: "File", Source: "providers:\n  file:\n    directories: [./configs, ./data]"},
+				{Title: "File", Source: "providers:\n  file:\n    directories: [./configs, ./data]", Type: "yaml"},
 			},
 		},
 	},
@@ -98,7 +98,7 @@ By default, files and directories starting with "_" are skipped.`,
 			Codes: []cli.Code{
 				{Title: "Cli", Source: "--providers-file-skip-prefix skip_"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_SKIP_PREFIX=skip_"},
-				{Title: "File", Source: "providers:\n  file:\n    skipPrefix: [skip_]"},
+				{Title: "File", Source: "providers:\n  file:\n    skipPrefix: [skip_]", Type: "yaml"},
 			},
 		},
 	},
@@ -114,7 +114,7 @@ Patterns typically follow glob-style matching.`,
 			Codes: []cli.Code{
 				{Title: "Cli", Source: "--providers-file-include *.json *.yaml"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_INCLUDE=*.json *.yaml"},
-				{Title: "File", Source: "providers:\n  file:\n    include: [*.json, *.yaml]"},
+				{Title: "File", Source: "providers:\n  file:\n    include: [*.json, *.yaml]", Type: "yaml"},
 			},
 		},
 	},
@@ -128,7 +128,7 @@ This option is mainly intended for advanced use cases or programmatic configurat
 		{
 			Codes: []cli.Code{
 				{Title: "Cli", Source: "--providers-file-include[1] *.yaml"},
-				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_INCLUDE[1]=*.yaml"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_INCLUDE[1]=*.yaml", Type: "yaml"},
 			},
 		},
 	},

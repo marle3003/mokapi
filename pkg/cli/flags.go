@@ -207,6 +207,7 @@ type Example struct {
 type Code struct {
 	Title  string
 	Source string
+	Type   string
 }
 
 type FlagBuilder struct {

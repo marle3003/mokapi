@@ -217,22 +217,26 @@ function hasTouchSupport() {
           <div class="col-12 justify-content-center">
             <h2>Easy setup of your fake SMTP server</h2>
             <p class="lead text-center">Create individual inboxes for different workflows or forward all emails into one real inbox.</p>
-            <div class="tab justify-content-center">
-              <div class="nav code-tabs" id="tab-1" role="tablist">
-                <button class="active" id="tab-1-CLI" data-bs-toggle="tab" data-bs-target="#tabPanel-1-CLI" type="button" role="tab" aria-controls="tabPanel-1-CLI" aria-selected="true">
-                  Configuration
-                </button>
-                <button id="tab-1-File" data-bs-toggle="tab" data-bs-target="#tabPanel-1-File" type="button" role="tab" aria-controls="tabPanel-1-File" aria-selected="false">
-                  Javascript
-                </button>
+
+            <div class="code">
+              <div class="tab justify-content-center">
+                <div class="nav code-tabs" id="tab-1" role="tablist">
+                  <button class="active" id="tab-1-CLI" data-bs-toggle="tab" data-bs-target="#tabPanel-1-CLI" type="button" role="tab" aria-controls="tabPanel-1-CLI" aria-selected="true">
+                    Configuration
+                  </button>
+                  <button id="tab-1-File" data-bs-toggle="tab" data-bs-target="#tabPanel-1-File" type="button" role="tab" aria-controls="tabPanel-1-File" aria-selected="false">
+                    Javascript
+                  </button>
+                  <div class="tabs-border"></div>
+                </div>
               </div>
-            </div>
-            <div class="tab-content code">
-              <div class="tab-pane fade show active" id="tabPanel-1-CLI" role="tabpanel" aria-labelledby="tab-1-CLI">
-                <pre v-highlightjs="config"><code class="application/yaml"></code></pre>
-              </div>
-              <div class="tab-pane fade" id="tabPanel-1-File" role="tabpanel" aria-labelledby="tab-1-File">
-                <pre v-highlightjs="script"><code class="javascript"></code></pre>
+              <div class="tab-content code">
+                <div class="tab-pane fade show active" id="tabPanel-1-CLI" role="tabpanel" aria-labelledby="tab-1-CLI">
+                  <pre v-highlightjs="config"><code class="application/yaml"></code></pre>
+                </div>
+                <div class="tab-pane fade" id="tabPanel-1-File" role="tabpanel" aria-labelledby="tab-1-File">
+                  <pre v-highlightjs="script"><code class="javascript"></code></pre>
+                </div>
               </div>
             </div>
           </div>

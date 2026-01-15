@@ -28,7 +28,6 @@ const configs = computed(() => {
         return props.configs.sort(compareConfig)
     }
     if (data && data.value) {
-        console.log('sort')
         return data.value.sort(compareConfig)
     }
     return [];
