@@ -57,23 +57,9 @@ func NewCmdMokapi() *cli.Command {
 	cmd.SetConfigPath(".", "/etc/mokapi")
 
 	flags.RegisterFileProvider(cmd)
-
-	// git provider
 	flags.RegisterGitProvider(cmd)
 	flags.RegisterHttpProvider(cmd)
-
-	// npm provider
-	cmd.Flags().String("providers-npm", "", cli.FlagDoc{Short: "Configure an npm-based provider using shorthand syntax"})
-	cmd.Flags().StringSlice("providers-npm-global-folder", []string{}, true, cli.FlagDoc{Short: "Load configuration from a global npm folder"})
-	cmd.Flags().StringSlice("providers-npm-global-folders", []string{}, false, cli.FlagDoc{Short: "Load configuration from a global npm folder"})
-	// npm package
-	cmd.Flags().StringSlice("providers-npm-package", []string{}, true, cli.FlagDoc{Short: "Configure an npm package using shorthand syntax"})
-	cmd.Flags().StringSlice("providers-npm-packages", []string{}, false, cli.FlagDoc{Short: "Configure an npm package using shorthand syntax"})
-	cmd.Flags().DynamicString("providers-npm-packages[<index>]", cli.FlagDoc{Short: "Configure the package at the specified index using shorthand syntax"})
-	cmd.Flags().DynamicString("providers-npm-packages[<index>]-name", cli.FlagDoc{Short: "Set the name of the npm package"})
-	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-file", true, cli.FlagDoc{Short: "Allow only specific files from the package"})
-	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-files", false, cli.FlagDoc{Short: "Allow only specific files from the package"})
-	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-include", false, cli.FlagDoc{Short: "Include only matching files or patterns from the package"})
+	flags.RegisterNpmProvider(cmd)
 
 	// API
 	cmd.Flags().Int("api-port", 8080, cli.FlagDoc{Short: "Port for the API server"})
@@ -102,9 +88,9 @@ func NewCmdMokapi() *cli.Command {
 	cmd.Flags().String("log-level", "info", cli.FlagDoc{Short: "Set log level (debug|info|warn|error)"}).WithExample(
 		cli.Example{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--log-level warn"},
+				{Title: "CLI", Source: "--log-level warn"},
 				{Title: "Env", Source: "MOKAPI_LOG_LEVEL=warn"},
-				{Title: "File", Source: "log:\n  level: warn", Type: "yaml"},
+				{Title: "File", Source: "log:\n  level: warn", Language: "yaml"},
 			},
 		},
 	).WithDescription("The default level of log messages is info. You can set the log level to one of the following, listed in order of least to most information. The level is cumulative: for the debug level, the log file also includes messages at the info, warn, and error levels.\n- Debug\n- Info\n- Warn\n- Error\n")

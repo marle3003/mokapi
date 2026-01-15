@@ -205,9 +205,9 @@ type Example struct {
 }
 
 type Code struct {
-	Title  string
-	Source string
-	Type   string
+	Title    string
+	Source   string
+	Language string
 }
 
 type FlagBuilder struct {

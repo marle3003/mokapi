@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, inject, computed  } from 'vue';
+import { onMounted, ref, inject, computed, useTemplateRef, onBeforeUnmount  } from 'vue';
 import { useRoute, type RouteParamsRawGeneric } from 'vue-router';
 import { useMarkdown } from '@/composables/markdown'
 import { useMeta } from '@/composables/meta'
@@ -15,6 +15,7 @@ const nav = inject<DocConfig>('nav')!
 const dialog = ref<Modal>()
 const imageUrl = ref<string>()
 const imageDescription = ref<string>()
+const contentElement = useTemplateRef<HTMLElement>('content')
 
 const route = useRoute()
 const { resolve } = useFileResolver()
@@ -104,6 +105,10 @@ onMounted(() => {
     useMeta(title, metadata.description, getCanonicalUrl(levels), metadata.image)
   }
   dialog.value = new Modal('#imageDialog', {})
+  contentElement.value?.addEventListener('click', copyToClipboard);
+})
+onBeforeUnmount(() => {
+  contentElement.value?.removeEventListener('click', copyToClipboard);
 })
 function toUrlPath(s: string): string {
   return s.replaceAll(/[\s\/]/g, '-').replace('&', '%26')
@@ -139,6 +144,37 @@ function hasTouchSupport() {
 function formatParam(label: any): string {
   return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
 }
+async function copyToClipboard(event: MouseEvent) {
+  const target = event.target as HTMLElement
+  const button = target.closest('[data-copy]')
+  if (!button) {
+      console.log('copy')
+    return
+  }
+
+  const codeBlock = button.closest('.code')
+  if (!codeBlock) {
+    return
+  }
+  const activePane = codeBlock.querySelector('.tab-pane.active')
+  if (!activePane) {
+    return
+  }
+  const codeElement = activePane.querySelector('pre code')
+  if (!codeElement) {
+    return
+  }
+
+  const text = codeElement.textContent ?? ''
+
+  try {
+    await navigator.clipboard.writeText(text)
+    button.classList.add('copied')
+    setTimeout(() => button.classList.remove('copied'), 1500)
+  } catch (err) {
+    console.error('Failed to copy code:', err)
+  }
+}
 </script>
 
 <template>
@@ -158,7 +194,7 @@ function formatParam(label: any): string {
                 </li>
               </ol>
             </nav>
-            <div v-if="content" v-html="content" class="content" @click="showImage($event.target)"></div>
+            <div v-if="content" v-html="content" class="content" @click="showImage($event.target)" ref="content"></div>
             <div v-else-if="component" class="content"><component :is="component" /></div>
             <page-not-found v-else />
           </div>

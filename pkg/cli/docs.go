@@ -42,7 +42,7 @@ func writeCommand(c *Command, f *os.File) error {
 	}
 
 	if c.Use != "" {
-		use := fmt.Sprintf("```bash\n%s\n```", c.Use)
+		use := fmt.Sprintf("```bash tab=Bash\n%s\n```\n\n", c.Use)
 		if _, err := f.WriteString(fmt.Sprintf("## Usage\n\n%s\n\n", use)); err != nil {
 			return err
 		}
@@ -120,10 +120,6 @@ func writeFlag(w io.StringWriter, f *Flag, envPrefix string) error {
 	}
 
 	if len(f.Examples) > 0 {
-		if _, err := w.WriteString("### Examples\n\n"); err != nil {
-			return err
-		}
-
 		for _, example := range f.Examples {
 			if example.Title != "" {
 				if _, err := w.WriteString(fmt.Sprintf("### %s\n\n", example.Title)); err != nil {
@@ -139,8 +135,8 @@ func writeFlag(w io.StringWriter, f *Flag, envPrefix string) error {
 
 			for _, code := range example.Codes {
 				codeType := "bash"
-				if code.Type != "" {
-					codeType = code.Type
+				if code.Language != "" {
+					codeType = code.Language
 				}
 				var s string
 				if code.Title != "" {

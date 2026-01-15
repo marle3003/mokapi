@@ -29,9 +29,9 @@ Additional flags allow you to control polling behavior, repository selection, au
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-git pullInterval=10s,tempDir=/tempdir"},
-				{Title: "Env", Source: "MOKAPI_GIT=pullInterval=10s,tempDir=/tempdir"},
-				{Title: "File", Source: "providers:\n  git:\n    pullInterval: 10s\n    tempDir: /tempdir", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-git pullInterval=10s,tempDir=/tempdir"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT=pullInterval=10s,tempDir=/tempdir"},
+				{Title: "File", Source: "providers:\n  git:\n    pullInterval: 10s\n    tempDir: /tempdir", Language: "yaml"},
 			},
 		},
 	},
@@ -44,9 +44,9 @@ This option can be used multiple times to define additional repositories. Each r
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-git-url https://github.com/foo/foo.git"},
-				{Title: "Env", Source: "MOKAPI_GIT_URL=https://github.com/foo/foo.git"},
-				{Title: "File", Source: "providers:\n  git:\n    urls: https://github.com/foo/foo.git", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-git-url https://github.com/foo/foo.git"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_URL=https://github.com/foo/foo.git"},
+				{Title: "File", Source: "providers:\n  git:\n    urls: https://github.com/foo/foo.git", Language: "yaml"},
 			},
 		},
 	},
@@ -59,9 +59,9 @@ This option is equivalent to using providers-git-url multiple times, but allows 
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-git-urls https://github.com/foo/foo.git https://github.com/bar/bar.git"},
-				{Title: "Env", Source: "MOKAPI_GIT_URLS=https://github.com/foo/foo.git https://github.com/bar/bar.git"},
-				{Title: "File", Source: "providers:\n  git:\n    urls: [https://github.com/foo/foo.git https://github.com/bar/bar.git]", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-git-urls https://github.com/foo/foo.git https://github.com/bar/bar.git"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_URLS=https://github.com/foo/foo.git https://github.com/bar/bar.git"},
+				{Title: "File", Source: "providers:\n  git:\n    urls: [https://github.com/foo/foo.git https://github.com/bar/bar.git]", Language: "yaml"},
 			},
 		},
 	},
@@ -74,8 +74,8 @@ The value must be a valid duration string, such as "30s", "1m", or "5m". Shorter
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-git-pull-interval 10s"},
-				{Title: "Env", Source: "MOKAPI_GIT_PULL_INTERVAL=10s"},
+				{Title: "CLI", Source: "--providers-git-pull-interval 10s"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_PULL_INTERVAL=10s"},
 				{Title: "File", Source: "providers:\n  git:\n    pullInterval: 10s"},
 			},
 		},
@@ -89,9 +89,9 @@ If not set, Mokapi uses a default temporary directory. Setting this option can b
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-git-temp-dir /tempdir"},
-				{Title: "Env", Source: "MOKAPI_GIT_TEMP_DIR=/tempdir"},
-				{Title: "File", Source: "providers:\n  git:\n    tempDir: /tempdir", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-git-temp-dir /tempdir"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_TEMP_DIR=/tempdir"},
+				{Title: "File", Source: "providers:\n  git:\n    tempDir: /tempdir", Language: "yaml"},
 			},
 		},
 	},
@@ -104,9 +104,9 @@ This option allows defining repository-specific settings such as allowed files, 
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-git-repository url=https://github.com/foo/foo.git,include=*.json"},
-				{Title: "Env", Source: "MOKAPI_GIT_REPOSITORY=url=https://github.com/foo/foo.git,tempDir=/tempdir"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - url: https://github.com/foo/foo.git\n       include: *.json", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-git-repository url=https://github.com/foo/foo.git,include=*.json"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORY=url=https://github.com/foo/foo.git,tempDir=/tempdir"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - url: https://github.com/foo/foo.git\n       include: *.json", Language: "yaml"},
 			},
 		},
 	},
@@ -119,9 +119,9 @@ This option is equivalent to using providers-git-repository multiple times, but 
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-git-repositories url=https://github.com/foo/foo.git,include=*.json url=https://github.com/bar/bar.git,include=*.yaml"},
-				{Title: "Env", Source: "MOKAPI_GIT_REPOSITORIES=url=https://github.com/foo/foo.git,include=*.json url=https://github.com/bar/bar.git,include=*.yaml"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - url: https://github.com/foo/foo.git\n       include: [*.json]\n     - url: https://github.com/bar/bar.git\n       include: [*.yaml]", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-git-repositories url=https://github.com/foo/foo.git,include=*.json url=https://github.com/bar/bar.git,include=*.yaml"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES=url=https://github.com/foo/foo.git,include=*.json url=https://github.com/bar/bar.git,include=*.yaml"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - url: https://github.com/foo/foo.git\n       include: [*.json]\n     - url: https://github.com/bar/bar.git\n       include: [*.yaml]", Language: "yaml"},
 			},
 		},
 	},
@@ -134,9 +134,9 @@ This option is mainly intended for advanced or programmatic configurations where
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-git-repositories[0] url=https://github.com/foo/foo.git,include=*.json"},
-				{Title: "Env", Source: "MOKAPI_GIT_REPOSITORIES[0]=url=https://github.com/foo/foo.git,include=*.json"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - url: https://github.com/foo/foo.git\n       include: [*.json]", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-git-repositories[0] url=https://github.com/foo/foo.git,include=*.json"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]=url=https://github.com/foo/foo.git,include=*.json"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - url: https://github.com/foo/foo.git\n       include: [*.json]", Language: "yaml"},
 			},
 		},
 	},
@@ -149,9 +149,9 @@ The repository is cloned and used as a source for configuration files.`,
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-git-repositories[0]-url https://github.com/foo/foo.git"},
-				{Title: "Env", Source: "MOKAPI_GIT_REPOSITORIES[0]_URL=https://github.com/foo/foo.git"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - url: https://github.com/foo/foo.git", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-git-repositories[0]-url https://github.com/foo/foo.git"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_URL=https://github.com/foo/foo.git"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - url: https://github.com/foo/foo.git", Language: "yaml"},
 			},
 		},
 	},
@@ -164,9 +164,9 @@ Only the specified files are considered. This option can be used multiple times 
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-git-repositories[0]-file mokapi/api.json"},
-				{Title: "Env", Source: "MOKAPI_GIT_REPOSITORIES[0]_FILE=mokapi/api.json"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - files: [mokapi/api.json]", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-git-repositories[0]-file mokapi/api.json"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_FILE=mokapi/api.json"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - files: [mokapi/api.json]", Language: "yaml"},
 			},
 		},
 	},
@@ -179,9 +179,9 @@ This option is equivalent to using providers-git-repositories[<index>]-file mult
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-git-repositories[0]-files mokapi/api.json mokapi/handler.js"},
-				{Title: "Env", Source: "MOKAPI_GIT_REPOSITORIES[0]_FILES=mokapi/api.json mokapi/handler.js"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - files: [mokapi/api.json mokapi/handler.js]", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-git-repositories[0]-files mokapi/api.json mokapi/handler.js"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_FILES=mokapi/api.json mokapi/handler.js"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - files: [mokapi/api.json mokapi/handler.js]", Language: "yaml"},
 			},
 		},
 	},
@@ -194,9 +194,9 @@ If at least one include pattern is specified, only files matching one of the pat
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-git-repositories[0]-include mokapi/**/*.json"},
-				{Title: "Env", Source: "MOKAPI_GIT_REPOSITORIES[0]_INCLUDE=mokapi/**/*.json"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - includes: [mokapi/**/*.json]", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-git-repositories[0]-include mokapi/**/*.json"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_INCLUDE=mokapi/**/*.json"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - includes: [mokapi/**/*.json]", Language: "yaml"},
 			},
 		},
 	},
@@ -209,9 +209,9 @@ This option allows accessing private repositories hosted on GitHub by using cred
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-git-repositories[0]-auth-github appId=12345,installationId=123456789,privateKey=2024-2-25.private-key.pem"},
-				{Title: "Env", Source: "MOKAPI_GIT_REPOSITORIES[0]_AUTH_GITHUB=appId=12345,installationId=123456789,privateKey=2024-2-25.private-key.pem"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - auth:\n       github:\n         appId: 12345\n         installationId: 12345\n         privateKey: 2024-2-25.private-key.pem", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-git-repositories[0]-auth-github appId=12345,installationId=123456789,privateKey=2024-2-25.private-key.pem"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_AUTH_GITHUB=appId=12345,installationId=123456789,privateKey=2024-2-25.private-key.pem"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - auth:\n       github:\n         appId: 12345\n         installationId: 12345\n         privateKey: 2024-2-25.private-key.pem", Language: "yaml"},
 			},
 		},
 	},

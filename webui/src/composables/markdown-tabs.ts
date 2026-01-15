@@ -25,46 +25,125 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
         return simple.exec(info)?.slice(1).toString() ?? ''
     }
 
+    function getLanguage(token: Token): string {
+        const info = getInfo(token)
+        const lang = info.split(/\s+/)[0] || 'text'
+        switch (lang) {
+            case 'javascript': return 'JavaScript';
+            case 'typescript': return 'TypeScript';
+            case 'bash': return 'Bash';
+            case 'json': return 'JSON';
+            case 'yaml': return 'YAML'
+            default: return capitalizeFirstLetter(lang);
+        }
+    }
+
+    function capitalizeFirstLetter(val: string) {
+        return val.charAt(0).toUpperCase() + val.slice(1);
+    }
+
+    function hasTab(token: Token): boolean {
+        return !!getTabName(token)
+    }
+
     function fenceGroup(tokens: Token[], idx: number, options: Options, env: any, slf: Renderer): string {
-        if (!tokens[idx] || tokens[idx].hidden) { return '' }
+        const token = tokens[idx]
+        if (!token || token.hidden) return ''
 
-        const tabName = getTabName(tokens[idx]);
-        if (tabName == null || tabName == '') {
-            return defaultRender(tokens, idx, options, env, slf);
+        const explicitTab = hasTab(token)
+
+        if (!explicitTab) {
+            counter++
+
+            const lang = getLanguage(token)
+            const tabName = lang || 'code'
+            const tabId = `tab-${counter}-${tabName}`
+            const tabPanelId = `tabPanel-${counter}-${tabName}`
+
+            return `
+            <div class="code">
+                <div class="nav code-tabs" role="tablist">
+                    <button class="active"
+                            id="${tabId}"
+                            data-bs-toggle="tab"
+                            data-bs-target="#${tabPanelId}"
+                            type="button"
+                            role="tab"
+                            aria-selected="true">
+                        ${tabName}
+                    </button>
+                    <button type="button" class="btn btn-link control" title="Copy content" aria-label="Copy content" data-copy>
+                        <span class="bi bi-copy"></span>
+                    </button>
+                    <div class="tabs-border"></div>
+                </div>
+                <div class="tab-content code">
+                    <div class="tab-pane fade show active"
+                        id="${tabPanelId}"
+                        role="tabpanel"
+                        aria-labelledby="${tabId}">
+                        ${defaultRender(tokens, idx, options, env, slf)}
+                    </div>
+                </div>
+            </div>`
         }
+
+
         counter++
-        
-        var tabs = '', contents = ''
+
+        let tabs = ''
+        let contents = ''
+
         for (let i = idx; i < tokens.length; i++) {
-            const token = tokens[i]!;
-            let tabName = getTabName(token);
-            if (tabName == null || tabName == '') { 
-                break;
+            const t = tokens[i]
+            if (!t) {
+                continue
             }
+            const tabName = getTabName(t)
 
-            token.info = token.info.replace(quote, '').replace(simple, '')
-            token.hidden = true
+            if (!tabName) break
 
-            const tabId = `tab-${counter}-${tabName.toString().replace('.', '-')}`
-            const tabPanelId = `tabPanel-${counter}-${tabName.toString().replace('.', '-')}`
-            const checked = i - idx > 0 ? '' : ' checked'
+            t.info = t.info.replace(quote, '').replace(simple, '')
+            t.hidden = true
 
-            tabs += `<button class="${checked?'active':''}" id="${tabId}" data-bs-toggle="tab" data-bs-target="#${tabPanelId}" type="button" role="tab" aria-controls="${tabPanelId}" aria-selected="${checked}">${tabName}</button>`
-            contents += `<div class="tab-pane fade ${checked ? 'show active':''}" id="${tabPanelId}" role="tabpanel" aria-labelledby="${tabId}">
-                            ${defaultRender(tokens, i, options, env, slf)}
-                        </div>`
+            const safeName = tabName.replace('.', '-')
+            const tabId = `tab-${counter}-${safeName}`
+            const tabPanelId = `tabPanel-${counter}-${safeName}`
+            const active = i === idx
+
+            tabs += `
+                <button class="${active ? 'active' : ''}"
+                        id="${tabId}"
+                        data-bs-toggle="tab"
+                        data-bs-target="#${tabPanelId}"
+                        type="button"
+                        role="tab"
+                        aria-selected="${active}">
+                    ${tabName}
+                </button>`
+
+            contents += `
+                <div class="tab-pane fade ${active ? 'show active' : ''}"
+                    id="${tabPanelId}"
+                    role="tabpanel"
+                    aria-labelledby="${tabId}">
+                    ${defaultRender(tokens, i, options, env, slf)}
+                </div>`
         }
 
-        return `<div class="code">
-                    <div class="nav code-tabs" id="tab-${counter}" role="tablist">
-                        ${tabs}
-                        <div class="tabs-border"></div>
-                    </div>
-                    <div class="tab-content code" id="tabContent-${counter}">
-                        ${contents}
-                    </div>
-                </div>`
-    
+        return `
+            <div class="code">
+                <div class="nav code-tabs" role="tablist">
+                    ${tabs}
+                    <button type="button" class="btn btn-link control" title="Copy content" aria-label="Copy content" data-copy>
+                        <span class="bi bi-copy"></span>
+                    </button>
+                    <div class="tabs-border"></div>
+                </div>
+                <div class="tab-content code">
+                    ${contents}
+                </div>
+            </div>`
     }
 
     md.renderer.rules.fence = fenceGroup

@@ -21,9 +21,9 @@ Additional flags allow you to control polling behavior, timeouts, proxy settings
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-http url=https://foo.bar/file.yaml,proxy=https://proxy.example.com"},
-				{Title: "Env", Source: "MOKAPI_HTTP=url=https://foo.bar/file.yaml,proxy=https://proxy.example.com"},
-				{Title: "File", Source: "providers:\n  http:\n    urls: https://foo.bar/file.yaml\n    proxy: https://proxy.example.com", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-http url=https://foo.bar/file.yaml,proxy=https://proxy.example.com"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_HTTP=url=https://foo.bar/file.yaml,proxy=https://proxy.example.com"},
+				{Title: "File", Source: "providers:\n  http:\n    urls: https://foo.bar/file.yaml\n    proxy: https://proxy.example.com", Language: "yaml"},
 			},
 		},
 	},
@@ -36,9 +36,9 @@ This option can be used multiple times to define additional endpoints. Each endp
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-http-url https://foo.bar/file.yaml"},
-				{Title: "Env", Source: "MOKAPI_HTTP_URL=https://foo.bar/file.yaml"},
-				{Title: "File", Source: "providers:\n  http:\n    urls: https://foo.bar/file.yaml", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-http-url https://foo.bar/file.yaml"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_HTTP_URL=https://foo.bar/file.yaml"},
+				{Title: "File", Source: "providers:\n  http:\n    urls: https://foo.bar/file.yaml", Language: "yaml"},
 			},
 		},
 	},
@@ -51,9 +51,9 @@ This option is equivalent to using providers-http-url multiple times, but allows
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-http-urls https://foo.bar/file1.yaml https://foo.bar/file2.yaml"},
-				{Title: "Env", Source: "MOKAPI_HTTP_URLS=https://foo.bar/file1.yaml https://foo.bar/file2.yaml"},
-				{Title: "File", Source: "providers:\n  http:\n    urls: [https://foo.bar/file1.yaml https://foo.bar/file2.yaml]", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-http-urls https://foo.bar/file1.yaml https://foo.bar/file2.yaml"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_HTTP_URLS=https://foo.bar/file1.yaml https://foo.bar/file2.yaml"},
+				{Title: "File", Source: "providers:\n  http:\n    urls: [https://foo.bar/file1.yaml https://foo.bar/file2.yaml]", Language: "yaml"},
 			},
 		},
 	},
@@ -66,9 +66,9 @@ The value must be a valid duration string, such as "30s", "1m", or "5m". Shorter
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-http-poll-interval 10s"},
-				{Title: "Env", Source: "MOKAPI_HTTP_POLL_INTERVAL=10s"},
-				{Title: "File", Source: "providers:\n  http:\n    pollInterval: 10s", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-http-poll-interval 10s"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_HTTP_POLL_INTERVAL=10s"},
+				{Title: "File", Source: "providers:\n  http:\n    pollInterval: 10s", Language: "yaml"},
 			},
 		},
 	},
@@ -81,9 +81,9 @@ If the request does not complete within this time, it is aborted and retried at 
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-http-poll-timeout 10s"},
-				{Title: "Env", Source: "MOKAPI_HTTP_POLL_TIMEOUT=10s"},
-				{Title: "File", Source: "providers:\n  http:\n    pollTimeout: 10s", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-http-poll-timeout 10s"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_HTTP_POLL_TIMEOUT=10s"},
+				{Title: "File", Source: "providers:\n  http:\n    pollTimeout: 10s", Language: "yaml"},
 			},
 		},
 	},
@@ -96,9 +96,9 @@ This is useful in environments where outbound traffic must go through a proxy se
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-http-proxy http://localhost:3128"},
-				{Title: "Env", Source: "MOKAPI_HTTP_PROXY=http://localhost:3128"},
-				{Title: "File", Source: "providers:\n  http:\n    proxy: http://localhost:3128", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-http-proxy http://localhost:3128"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_HTTP_PROXY=http://localhost:3128"},
+				{Title: "File", Source: "providers:\n  http:\n    proxy: http://localhost:3128", Language: "yaml"},
 			},
 		},
 	},
@@ -112,9 +112,9 @@ However, skipping certificate verification is insecure and should be avoided whe
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-http-tls-skip-verify true\n--providers-http-tls-skip-verify"},
-				{Title: "Env", Source: "MOKAPI_HTTP_TLS_SKIP_VERIFY=true"},
-				{Title: "File", Source: "providers:\n  http:\n    tlsSkipVerify: true", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-http-tls-skip-verify true\n--providers-http-tls-skip-verify"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_HTTP_TLS_SKIP_VERIFY=true"},
+				{Title: "File", Source: "providers:\n  http:\n    tlsSkipVerify: true", Language: "yaml"},
 			},
 		},
 	},
@@ -127,9 +127,9 @@ When set, the provided CA file is used in addition to, or instead of, the system
 	Examples: []cli.Example{
 		{
 			Codes: []cli.Code{
-				{Title: "Cli", Source: "--providers-http-ca /path/to/mycert.pem"},
-				{Title: "Env", Source: "MOKAPI_HTTP_CA=/path/to/mycert.pem"},
-				{Title: "File", Source: "providers:\n  http:\n    ca: /path/to/mycert.pem", Type: "yaml"},
+				{Title: "CLI", Source: "--providers-http-ca /path/to/mycert.pem"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_HTTP_CA=/path/to/mycert.pem"},
+				{Title: "File", Source: "providers:\n  http:\n    ca: /path/to/mycert.pem", Language: "yaml"},
 			},
 		},
 	},
