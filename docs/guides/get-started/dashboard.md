@@ -12,7 +12,7 @@ and ensuring the mock APIs works seamlessly under various scenarios.
 
 The dashboard is available on port 8080 by default. Open `http://localhost:8080` from your browser.
 
-<img src="/dashboard-overview-mock-api.jpg" width="700" alt="Dashboard shows the current mock APIs and runtime metrics of Mokapi." title="" />
+<img src="/dashboard-overview-mock-api.png" class="image-border" width="700" alt="Dashboard shows the current mock APIs and runtime metrics of Mokapi." title="" />
 
 ## Working with Dashboard
 
