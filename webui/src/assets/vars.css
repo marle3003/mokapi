@@ -36,6 +36,7 @@
 
     --color-button-link: #eabaabff;
     --color-button-link-active: #a5899fff;
+    --color-button-link-inactive: #a0a1a7;
     --color-button-text-hover: #353e5bff;
     --color-button-border-hover: #a5899fff;
 
@@ -130,6 +131,7 @@
 
     --color-button-link: rgb(2, 101, 210);
     --color-button-link-active: rgb(8, 109, 215);
+    --color-button-link-inactive: rgb(101, 109, 118);
     --color-button-text-hover: #fff;
     --color-button-border-hover: rgb(8, 109, 215);
 
