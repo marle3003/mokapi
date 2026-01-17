@@ -12,9 +12,25 @@ useMeta(title, description, 'https://mokapi.io')
 const dialog = ref<Modal>()
 const imageUrl = ref<string>()
 const imageDescription = ref<string>()
+const github = ref<{ stars: string | null, release: string | null}>({stars: null, release: null})
 
-onMounted(() => {
+onMounted(async () => {
   dialog.value = new Modal('#imageDialog', {})
+
+  try {
+      const [repoRes, releaseRes] = await Promise.all([
+        fetch('https://api.github.com/repos/marle3003/mokapi'),
+        fetch('https://api.github.com/repos/marle3003/mokapi/releases/latest')
+      ])
+
+      const repo = await repoRes.json()
+      const release = await releaseRes.json()
+
+      github.value.stars = repo.stargazers_count
+      github.value.release = release.tag_name
+    } catch (e) {
+      console.warn('GitHub API unavailable', e)
+    }
 })
 
 function showImage(target: EventTarget | null) {
@@ -45,7 +61,13 @@ function hasTouchSupport() {
               <a href="ldap"><span class="badge" aria-label="LDAP Support">LDAP</span></a>
               <a href="mail"><span class="badge" aria-label="Email Support">Email</span></a>
             </div>
-            <p class="lead description">Test without external dependencies and build more reliable software.<br/><b>Free</b>, <b>open-source</b>, and fully under your control.</p>
+            <p class="lead description">
+              Mokapi is your always-on API contract guardian —
+              lightweight, transparent, and spec-driven.
+              <span class="fst-italic d-block mt-1">
+                Free, open-source, and fully under your control.
+              </span>
+            </p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/guides' }">
                 <button type="button" class="btn btn-outline-primary">Get Started</button>
@@ -57,6 +79,22 @@ function hasTouchSupport() {
           </div>
           <div class="col-12 col-lg-5">
             <img src="/logo.svg" alt="Mokapi logo with an okapi symbol representing friendly and elegant developer tooling" title="Mokapi – the okapi-inspired logo for modern API mocking" class="mx-auto d-block" />
+            <div class="text-center github-meta">
+              <a
+                href="https://github.com/marle3003/mokapi"
+                target="_blank"
+                rel="noopener"
+                aria-label="Mokapi on GitHub"
+              >
+                <span class="bi bi-github release"></span>
+                <span class="release">{{ github.release }}</span>
+                ·
+                <span class="stars">
+                  <span class="bi bi-star-fill"></span>
+                  {{ github.stars }}
+                </span>
+              </a>
+            </div>
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
@@ -71,24 +109,68 @@ function hasTouchSupport() {
         </div>
       </div>
     </section>
+
+    <!-- How Mokapi Fits -->
+    <section class="py-5">
+      <div class="container">
+        <div class="row align-items-center">
+
+          <!-- Image column -->
+          <div class="col-12 col-lg-6 d-flex justify-content-center">
+            <img
+              src="/mokapi-using-as-proxy.png"
+              alt="Diagram showing Mokapi forwarding requests from clients to backends while validating API contracts."
+              class="img-fluid"
+            />
+          </div>
+
+          <!-- Text column -->
+          <div class="col-12 col-lg-6 text-center text-lg-start mb-4 mb-lg-0">
+            <h2>Mock and Simulate APIs Across Protocols</h2>
+            <p class="lead">
+              Mokapi helps you test and develop faster by simulating APIs and services in any environment —
+              locally, in CI pipelines, or in staging and test environments.
+              It supports <strong>HTTP, Kafka, LDAP, SMTP/IMAP</strong>, providing realistic mocks
+              to test workflows, edge cases, and integrations without relying on live systems.
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </section>
     
-     <section class="py-5">
+    <section class="py-5">
       <div class="container text-center">
+
+        <h2 class="h4 mb-2">Why Teams Use Mokapi</h2>
+        <p class="lead fst-italic mb-4">
+          Mokapi helps teams move faster by removing external dependencies from development and testing.
+        </p>
+
         <div class="row g-4 mt-4">
           <div class="col-md-4">
             <span class="bi bi-rocket-takeoff display-5 mb-3 d-block icon"></span>
             <h3 class="h5">Develop Without Waiting</h3>
-            <p class="text-muted">Build and test instantly, even when external APIs are unavailable or unpredictable.</p>
+            <p class="text-muted">
+              Mock HTTP APIs, Kafka topics, LDAP directories, or mail servers
+              so development never blocks on missing or unstable systems.
+            </p>
           </div>
           <div class="col-md-4">
             <span class="bi bi-check2-square display-5 mb-3 d-block icon"></span>
-            <h3 class="h5">Test With Confidence</h3>
-            <p class="text-muted">Run realistic tests that match production API behavior.</p>
+            <h3 class="h5">Test Real Workflows</h3>
+            <p class="text-muted">
+              Simulate realistic system behavior across protocols
+              and validate integrations with confidence.
+            </p>
           </div>
           <div class="col-md-4">
             <span class="bi bi-gear display-5 mb-3 d-block icon"></span>
-            <h3 class="h5">Automate Workflows</h3>
-            <p class="text-muted">Automate API testing in your CI/CD pipelines for faster feedback.</p>
+            <h3 class="h5">Automate Everywhere</h3>
+            <p class="text-muted">
+              Run Mokapi locally, in CI pipelines, or test environments
+              to automate API testing and speed up feedback loops.
+            </p>
           </div>
         </div>
       </div>
@@ -96,27 +178,39 @@ function hasTouchSupport() {
 
     <section class="py-5 text-center">
       <div class="container">
-        <h2>Build Better Software with Mokapi</h2>
-        <p class="lead mb-2">
-          Build and test with confidence, even when APIs are outside your control.
+        <h2>Build Better Software, Faster</h2>
+        <p class="lead mb-3">
+          Mokapi helps teams move quickly without sacrificing confidence or stability.
         </p>
         <p class="lead mb-0">
-          Mokapi empowers developers to <strong>mock, simulate, and explore APIs</strong>, 
-          automate workflows, and unlock faster feedback—creating stable and reliable development environments.
+          By mocking and simulating APIs across protocols, you can automate tests,
+          reduce flaky integrations, and deliver reliable software — even when
+          external systems are unavailable or evolving.
         </p>
       </div>
     </section>
 
     <section class="py-5">
       <div class="container">
+
+        <h2 class="text-center mb-2">Mock More Than Just HTTP</h2>
+        <p class="text-center fst-italic mb-4">
+          Mokapi supports multiple protocols, allowing you to test complete systems —
+          not just individual REST endpoints.
+        </p>
+
         <div class="row g-4">
+
           <div class="col-sm-3">
             <div class="card h-100 shadow-sm border-0 accented">
               <div class="card-inner">
                 <router-link :to="{path: '/http'}">
                   <div class="card-body">
                     <h5 class="card-title fw-bold mb-3">Mock REST APIs</h5>
-                    <p class="card-text">Simulate REST API endpoints and test your app instantly without waiting for external services.</p>
+                    <p class="card-text">
+                      Simulate REST endpoints to develop and test clients
+                      without waiting for real backend services.
+                    </p>
                     <div class="icon-link cta">Learn more 
                       <span class="bi bi-chevron-right"></span>
                       <span class="bi bi-arrow-right hover"></span>
@@ -126,13 +220,17 @@ function hasTouchSupport() {
               </div>
             </div>
           </div>
+
           <div class="col-sm-3">
             <div class="card h-100 shadow-sm border-0 accented">
               <div class="card-inner">
                 <router-link :to="{path: '/kafka'}">
                   <div class="card-body">
                     <h5 class="card-title fw-bold mb-3">Simulate Kafka Events</h5>
-                    <p class="card-text">Mock Kafka message streams to test event-driven services and microservice integration.</p>
+                    <p class="card-text">
+                      Mock Kafka topics and message streams to test
+                      event-driven systems and service interactions.
+                    </p>
                     <div class="icon-link cta">Learn more 
                       <span class="bi bi-chevron-right"></span>
                       <span class="bi bi-arrow-right hover"></span>
@@ -148,7 +246,10 @@ function hasTouchSupport() {
                 <router-link :to="{path: '/ldap'}">
                   <div class="card-body">
                     <h5 class="card-title fw-bold mb-3">Mock LDAP Services</h5>
-                    <p class="card-text">Simulate authentication and directory services to test user access and permissions safely.</p>
+                    <p class="card-text">
+                      Simulate directory and authentication services
+                      to test user access, roles, and permissions safely.
+                    </p>
                     <div class="icon-link cta">Learn more 
                       <span class="bi bi-chevron-right"></span>
                       <span class="bi bi-arrow-right hover"></span>
@@ -164,7 +265,10 @@ function hasTouchSupport() {
                 <router-link :to="{path: '/mail'}">
                   <div class="card-body">
                     <h5 class="card-title fw-bold mb-3">SMTP Email Testing</h5>
-                    <p class="card-text">Simulate email sending and test email features without sending real messages.</p>
+                    <p class="card-text">
+                      Test email workflows by simulating SMTP and IMAP servers
+                      without sending real messages.
+                    </p>
                     <div class="icon-link cta">Learn more 
                       <span class="bi bi-chevron-right"></span>
                       <span class="bi bi-arrow-right hover"></span>
@@ -180,12 +284,16 @@ function hasTouchSupport() {
 
     <section class="py-5 text-center">
       <div class="container">
-        <h2 class="mb-3">Prevent Bugs — Reduce Dependencies — Simulate APIs</h2>
+        <h2 class="mb-3">Built for Reliable Development and Testing</h2>
         <p class="lead mb-3">
-          Create stable development and test environments to increase speed, accuracy, and efficiency.
+          Mocking APIs across protocols is only the beginning.
+          Mokapi is designed to help teams prevent bugs, reduce external dependencies,
+          and create stable development and test environments.
         </p>
         <p class="lead mb-0">
-          Mokapi offers a set of powerful features to mock APIs, automate workflows, and generate realistic test data.
+          This is made possible through powerful core features —
+          including JavaScript-based logic, configuration patching,
+          observability, and realistic data generation.
         </p>
       </div>
     </section>
@@ -193,13 +301,26 @@ function hasTouchSupport() {
     <section class="py-5 text-center feature">
       <div class="container">
 
-        <!-- 1. Customize Mocks with JavaScript -->
+        <h2 class="mb-3">Core Features</h2>
+        <p class="lead fst-italic">
+          Powerful capabilities that make Mokapi flexible, controllable, and reliable in any environment.
+        </p>
+
+        <!-- Control Mock Behavior with JavaScript -->
         <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-2 text-lg-start text-center">
-            <h2>Customize Mocks with JavaScript</h2>
-            <p>Simulate real-world API behavior dynamically. Adjust mocks on the fly and create flexible, rule-based responses that match production environments.</p>
+            <h2>Control Mock Behavior with JavaScript</h2>
+            <p>
+              Use JavaScript to control how your mocks behave at runtime.
+              Respond dynamically to headers, payloads, authentication,
+              or message content — across HTTP, Kafka, LDAP, and mail.
+            </p>
+            <p class="fst-italic">
+              Simulate edge cases, conditional logic, errors, and real-world workflows
+              without changing your API specifications.
+            </p>
             <router-link :to="{ path: '/docs/javascript-api' }">
-              <button type="button" class="btn btn-outline-primary btn-sm">Try JavaScript Mocks</button>
+              <button type="button" class="btn btn-outline-primary btn-sm">Explore JavaScript Mocking</button>
             </router-link>
           </div>
           <div class="col-12 col-lg-6 order-lg-1 d-flex justify-content-center">
@@ -207,11 +328,16 @@ function hasTouchSupport() {
           </div>
         </div>
 
-        <!-- 2. Run Mocks Anywhere -->
+        <!-- Run Mocks Anywhere -->
         <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-1 text-lg-start text-center">
-            <h2>Run Mocks Anywhere—Local, Cloud, or CI/CD</h2>
-            <p>Run Mokapi in any environment—local development, Docker, cloud, or CI/CD pipelines. Test APIs seamlessly, wherever your services are deployed.</p>
+            <h2>Run Mocks Anywhere</h2>
+            <p>
+              Run Mokapi in any environment—local development, Docker, cloud, or CI pipelines. Test APIs seamlessly, wherever your services are deployed.
+            </p>
+            <p class="fst-italic">
+              Ensure consistent testing across local development, CI pipelines, and cloud environments.
+            </p>
             <router-link :to="{ path: '/docs/guides/get-started/running' }">
               <button type="button" class="btn btn-outline-primary btn-sm">Learn How to Run Mokapi</button>
             </router-link>
@@ -222,11 +348,16 @@ function hasTouchSupport() {
         </div>
 
 
-        <!-- 3. Mocks as Code -->
+        <!-- Mocks as Code -->
         <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-2 text-lg-start text-center">
             <h2>Define Mocks as Code</h2>
-            <p>Manage all API mocks, configurations, and behaviors as code. Track changes, simplify audits, and ensure consistency across environments.</p>
+            <p>
+              Manage all API mocks, configurations, and behaviors as code. Track changes, simplify audits, and ensure consistency across environments.
+            </p>
+            <p class="fst-italic">
+              Version-controlled mocks reduce errors, simplify audits, and make collaboration easier.
+            </p>
             <router-link :to="{ path: '/docs/configuration' }">
               <button type="button" class="btn btn-outline-primary btn-sm">Learn More</button>
             </router-link>
@@ -237,11 +368,16 @@ function hasTouchSupport() {
         </div>
 
 
-        <!-- 4. Generate Realistic Test Data -->
+        <!-- Generate Realistic Test Data -->
         <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-1 text-lg-start text-center">
             <h2>Generate Realistic Test Data</h2>
-            <p>Create dynamic, lifelike data for your mocks. Simulate users, transactions, messages, and more to improve testing accuracy.</p>
+            <p>
+              Create dynamic, lifelike data for your mocks. Simulate users, transactions, messages, and more to improve testing accuracy.
+            </p>
+            <p class="fst-italic">
+              Produce lifelike data to catch bugs early and test edge cases that rarely occur in production.
+            </p>
             <router-link :to="{ path: '/docs/guides/get-started/test-data' }">
               <button type="button" class="btn btn-outline-primary btn-sm">Explore Fake Data Features</button>
             </router-link>
@@ -252,13 +388,18 @@ function hasTouchSupport() {
         </div>
 
 
-        <!-- 5. Patch & Merge Configurations -->
+        <!-- Patch Configurations Without Modifying Originals -->
         <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-2 text-lg-start text-center">
-            <h2>Easily Patch & Merge Configurations</h2>
-            <p>Use patch files to modify API specs without touching the original. Apply changes at runtime with hot-reloading for flexible mock management.</p>
+            <h2>Patch Configurations Without Modifying Originals</h2>
+            <p>
+              Use patch files to modify API specs without touching the original. Apply changes at runtime with hot-reloading for flexible mock management.
+            </p>
+            <p class="fst-italic">
+              Easily adapt mocks for specific environments or experiments without breaking the main API spec.
+            </p>
             <router-link :to="{ path: '/docs/configuration/patching' }">
-              <button type="button" class="btn btn-outline-primary btn-sm">Discover Patching</button>
+              <button type="button" class="btn btn-outline-primary btn-sm">Learn About Patching</button>
             </router-link>
           </div>
           <div class="col-12 col-lg-6 order-lg-1 d-flex justify-content-center">
@@ -266,32 +407,28 @@ function hasTouchSupport() {
           </div>
         </div>
 
-
-        <!-- 6. Streamline Testing Workflow -->
-        <div class="row pb-5 align-items-center">
+        <!-- Visualize Your Mock APIs -->
+        <div class="row mt-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-1 text-lg-start text-center">
-            <h2>Streamline Your Testing Workflow</h2>
-            <p>Mock APIs and services quickly, simulate real-world conditions, test edge cases, and validate integrations—without relying on external systems.</p>
-            <router-link :to="{ path: '/docs/resources/blogs/automation-testing-in-agile-development' }">
-              <button type="button" class="btn btn-outline-primary btn-sm">Explore Blog Article</button>
-            </router-link>
+            <h2>Visualize Your Mock APIs</h2>
+            <p>
+              Inspect requests, responses, logs, and generated example data as they happen.
+              Mokapi’s dashboard gives you full visibility into your mocks during development and testing.
+            </p>
+            <p class="fst-italic">
+              Gain real-time insight into requests, responses, and logs, making debugging and validation faster.
+            </p>
+            <div class="d-flex gap-2 justify-content-lg-start justify-content-center flex-wrap">
+              <a href="https://mokapi.io/dashboard-demo" class="btn btn-outline-primary btn-sm">
+                  Live Dashboard Demo
+              </a>
+
+              <router-link :to="{ path: '/docs/guides/get-started/dashboard' }" class="btn btn-outline-primary btn-sm">
+                  How it works
+              </router-link>
+            </div>
           </div>
           <div class="col-12 col-lg-6 order-lg-2 d-flex justify-content-center">
-            <img src="/use-case-mock-api.png" alt="Example of using Mokapi to test a system with realistic data." />
-          </div>
-        </div>
-
-
-        <!-- 7. Visualize Your Mock APIs -->
-        <div class="row mt-5 align-items-center">
-          <div class="col-12 col-lg-6 order-lg-2 text-lg-start text-center">
-            <h2>Visualize Your Mock APIs</h2>
-            <p>View requests, responses, and sample data in real time with Mokapi’s dashboard for easier testing and validation.</p>
-            <router-link :to="{ path: '/docs/guides/get-started/dashboard' }">
-              <button type="button" class="btn btn-outline-primary btn-sm">Mokapi's Dashboard</button>
-            </router-link>
-          </div>
-          <div class="col-12 col-lg-6 order-lg-1 d-flex justify-content-center">
             <img src="/dashboard-overview-mock-api.jpg" alt="Mokapi dashboard showing all mocked APIs with metrics and logs." />
           </div>
         </div>
@@ -302,6 +439,9 @@ function hasTouchSupport() {
     <section class="py-5">
       <div class="container">
         <h2>Use Cases & Tutorials</h2>
+        <p class="lead fst-italic text-center">
+          Explore practical ways to mock APIs and services across protocols. Mokapi fits seamlessly in local development, CI pipelines, or cloud environments.
+        </p>
 
         <div class="row row-cols-1 row-cols-md-2 g-4">
 
@@ -357,6 +497,18 @@ function hasTouchSupport() {
             </div>
           </div>
 
+          <div class="col">
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-body">
+                <h3 class="card-title">
+                  <span class="icon me-2 bi-shield-check"></span>Enforce API Contracts
+                </h3>
+                <p>Validate HTTP requests and responses against OpenAPI specs to catch API issues early in development or testing.</p>
+                <a href="/docs/resources/blogs/ensuring-api-contract-compliance-with-mokapi" class="btn btn-outline-primary btn-sm">Read Blog</a>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </section>
@@ -365,7 +517,7 @@ function hasTouchSupport() {
       <div class="container">
         <div class="row">
           <h2 class="mb-3">See Mokapi in Action</h2>
-          <p class="lead mb-4 text-center">Explore how easily you can mock APIs and generate realistic data for testing—no backend required.</p>
+          <p class="lead fst-italic mb-4 text-center">Explore how easily you can mock APIs and generate realistic data for testing—no backend required.</p>
         </div>
 
         <div class="d-flex content align-items-start align-items-stretch">
@@ -481,15 +633,14 @@ ul.nav-vertical {
 }
 .mokapi-demo button {
   color: var(--bs-card-color);
-  border-color: var(--code-tabs-color);
   background-color: transparent;
   padding: 1.25rem;
   border-radius: 4px;
-
+  border-color: var(--color-button-link-inactive);
 }
 .mokapi-demo button:hover, .mokapi-demo button.active, .mokapi-demo .tab-pane button:not(.collapsed) {
   color: var(--bs-card-color);
-  border-color: var(--code-tabs-color-active);
+  border-color: var(--color-button-link);
 }
 .mokapi-demo button:hover {
   transform: scale(1.01)
