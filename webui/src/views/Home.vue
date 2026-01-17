@@ -34,7 +34,7 @@ onMounted(async () => {
 })
 
 function showImage(target: EventTarget | null) {
-  if (hasTouchSupport() || !target) {
+  if (hasTouchSupport() || !target || !(target instanceof HTMLImageElement)) {
     return
   }
   const element = target as HTMLImageElement
@@ -48,7 +48,7 @@ function hasTouchSupport() {
 </script>
 
 <template>
-  <main class="home">
+  <main class="home" @click="showImage($event.target)">
     <section class="py-5">
       <div class="container">
         <div class="row hero-title justify-content-center">
@@ -126,7 +126,7 @@ function hasTouchSupport() {
 
           <!-- Text column -->
           <div class="col-12 col-lg-6 text-center text-lg-start mb-4 mb-lg-0">
-            <h2>Mock and Simulate APIs Across Protocols</h2>
+            <h2 class="mb-3">Mock and Simulate APIs Across Protocols</h2>
             <p class="lead">
               Mokapi helps you test and develop faster by simulating APIs and services in any environment —
               locally, in CI pipelines, or in staging and test environments.
@@ -142,7 +142,7 @@ function hasTouchSupport() {
     <section class="py-5">
       <div class="container text-center">
 
-        <h2 class="h4 mb-2">Why Teams Use Mokapi</h2>
+        <h2 class="h4 mb-3">Why Teams Use Mokapi</h2>
         <p class="lead fst-italic mb-4">
           Mokapi helps teams move faster by removing external dependencies from development and testing.
         </p>
@@ -178,7 +178,7 @@ function hasTouchSupport() {
 
     <section class="py-5 text-center">
       <div class="container">
-        <h2>Build Better Software, Faster</h2>
+        <h2 class="mb-3">Build Better Software, Faster</h2>
         <p class="lead mb-3">
           Mokapi helps teams move quickly without sacrificing confidence or stability.
         </p>
@@ -193,7 +193,7 @@ function hasTouchSupport() {
     <section class="py-5">
       <div class="container">
 
-        <h2 class="text-center mb-2">Mock More Than Just HTTP</h2>
+        <h2 class="text-center mb-3">Mock More Than Just HTTP</h2>
         <p class="text-center fst-italic mb-4">
           Mokapi supports multiple protocols, allowing you to test complete systems —
           not just individual REST endpoints.
@@ -309,7 +309,7 @@ function hasTouchSupport() {
         <!-- Control Mock Behavior with JavaScript -->
         <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-2 text-lg-start text-center">
-            <h2>Control Mock Behavior with JavaScript</h2>
+            <h3>Control Mock Behavior with JavaScript</h3>
             <p>
               Use JavaScript to control how your mocks behave at runtime.
               Respond dynamically to headers, payloads, authentication,
@@ -331,7 +331,7 @@ function hasTouchSupport() {
         <!-- Run Mocks Anywhere -->
         <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-1 text-lg-start text-center">
-            <h2>Run Mocks Anywhere</h2>
+            <h3>Run Mocks Anywhere</h3>
             <p>
               Run Mokapi in any environment—local development, Docker, cloud, or CI pipelines. Test APIs seamlessly, wherever your services are deployed.
             </p>
@@ -351,7 +351,7 @@ function hasTouchSupport() {
         <!-- Mocks as Code -->
         <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-2 text-lg-start text-center">
-            <h2>Define Mocks as Code</h2>
+            <h3>Define Mocks as Code</h3>
             <p>
               Manage all API mocks, configurations, and behaviors as code. Track changes, simplify audits, and ensure consistency across environments.
             </p>
@@ -371,7 +371,7 @@ function hasTouchSupport() {
         <!-- Generate Realistic Test Data -->
         <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-1 text-lg-start text-center">
-            <h2>Generate Realistic Test Data</h2>
+            <h3>Generate Realistic Test Data</h3>
             <p>
               Create dynamic, lifelike data for your mocks. Simulate users, transactions, messages, and more to improve testing accuracy.
             </p>
@@ -391,7 +391,7 @@ function hasTouchSupport() {
         <!-- Patch Configurations Without Modifying Originals -->
         <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-2 text-lg-start text-center">
-            <h2>Patch Configurations Without Modifying Originals</h2>
+            <h3>Patch Configurations Without Modifying Originals</h3>
             <p>
               Use patch files to modify API specs without touching the original. Apply changes at runtime with hot-reloading for flexible mock management.
             </p>
@@ -410,7 +410,7 @@ function hasTouchSupport() {
         <!-- Visualize Your Mock APIs -->
         <div class="row mt-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-1 text-lg-start text-center">
-            <h2>Visualize Your Mock APIs</h2>
+            <h3>Visualize Your Mock APIs</h3>
             <p>
               Inspect requests, responses, logs, and generated example data as they happen.
               Mokapi’s dashboard gives you full visibility into your mocks during development and testing.
@@ -429,7 +429,7 @@ function hasTouchSupport() {
             </div>
           </div>
           <div class="col-12 col-lg-6 order-lg-2 d-flex justify-content-center">
-            <img src="/dashboard-overview-mock-api.jpg" alt="Mokapi dashboard showing all mocked APIs with metrics and logs." />
+            <img class="image-border" src="/dashboard-overview-mock-api.png" alt="Mokapi dashboard showing all mocked APIs with metrics and logs." />
           </div>
         </div>
 
@@ -438,7 +438,7 @@ function hasTouchSupport() {
 
     <section class="py-5">
       <div class="container">
-        <h2>Use Cases & Tutorials</h2>
+        <h2 class="mb-3">Use Cases & Tutorials</h2>
         <p class="lead fst-italic text-center">
           Explore practical ways to mock APIs and services across protocols. Mokapi fits seamlessly in local development, CI pipelines, or cloud environments.
         </p>
@@ -579,7 +579,7 @@ function hasTouchSupport() {
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content">
         <div class="modal-body">
-          <img :src="imageUrl" style="width:100%" />
+          <img class="image-border" :src="imageUrl" style="width:100%" />
           <div class="pt-2" style="text-align:center; font-size:0.9rem;">
             {{ imageDescription }}
           </div>
