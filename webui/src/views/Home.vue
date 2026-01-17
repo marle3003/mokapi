@@ -119,7 +119,7 @@ function hasTouchSupport() {
           <div class="col-12 col-lg-6 d-flex justify-content-center">
             <img
               src="/mokapi-using-as-proxy.png"
-              alt="Diagram showing Mokapi forwarding requests from clients to backends while validating API contracts."
+              alt="Diagram showing Mokapi acting as a proxy between clients and backends, validating API contracts, and simulating services like HTTP, Kafka, LDAP, or mail servers."
               class="img-fluid"
             />
           </div>
