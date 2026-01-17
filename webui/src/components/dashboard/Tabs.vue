@@ -136,7 +136,7 @@ function updateTabsResponsiveness() {
             <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">{{ tabActive?.text }}</a>
             <ul class="dropdown-menu" ref="dropdownMenu">
               <template v-for="tabItem in tabItems" :key="tabItem.text">
-                <li>
+                <li v-if="tabItem.isVisible">
                   <a :href="router.resolve(tabItem.to).href" class="dropdown-item">
                     {{ tabItem.text }}
                   </a>
