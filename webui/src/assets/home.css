@@ -226,3 +226,7 @@ footer a {
 .github-meta .bi.release {
   margin-right: 0.25rem;
 }
+
+.home img {
+  cursor: pointer;
+}

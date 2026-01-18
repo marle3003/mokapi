@@ -1,14 +1,29 @@
 <script setup lang="ts">
 import { useMeta } from '@/composables/meta'
 import Footer from '@/components/Footer.vue'
+import { ref } from 'vue'
+import { isValidImage } from '@/composables/image-dialog'
+import ImageDialog from '@/components/ImageDialog.vue'
 
 const title = `Mock Kafka Topics with AsyncAPI | Mokapi`
 const description = `Don't wait for producers to send new messages. Create your own sample messages that fit your needs.`
 useMeta(title, description, "https://mokapi.io/kafka")
+
+const image = ref<HTMLImageElement | undefined>();
+const showImageDialog = ref<boolean>(false)
+
+function showImage(evt: MouseEvent) {
+  const [isValid, target] = isValidImage(evt.target)
+  if (!isValid) {
+    return
+  }
+  image.value = target
+  showImageDialog.value = true
+}
 </script>
 
 <template>
-  <main class="home">
+  <main class="home" @click="showImage($event)">
     <section class="py-5">
       <div class="container">
         <div class="row hero-title justify-content-center">
@@ -222,4 +237,5 @@ useMeta(title, description, "https://mokapi.io/kafka")
 
   </main>
   <Footer></Footer>
+  <ImageDialog v-model:show="showImageDialog" v-model:image="image" />
 </template>

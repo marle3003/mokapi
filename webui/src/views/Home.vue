@@ -2,21 +2,19 @@
 import { useMeta } from '@/composables/meta'
 import Footer from '@/components/Footer.vue'
 import { ref, onMounted } from 'vue'
-import { Modal } from 'bootstrap'
+import ImageDialog from '@/components/ImageDialog.vue'
+import { isValidImage } from '@/composables/image-dialog'
 
 const title = 'Mock APIs with Realistic Test Data | Mokapi – Open-Source API Mocking Tool'
 const description = `Mock any external API and test without real dependencies. Mokapi is free, open-source, and build for realistic, spec-driven test data.`
 
 useMeta(title, description, 'https://mokapi.io')
 
-const dialog = ref<Modal>()
-const imageUrl = ref<string>()
-const imageDescription = ref<string>()
+const image = ref<HTMLImageElement | undefined>();
+const showImageDialog = ref<boolean>(false)
 const github = ref<{ stars: string | null, release: string | null}>({stars: null, release: null})
 
 onMounted(async () => {
-  dialog.value = new Modal('#imageDialog', {})
-
   try {
       const [repoRes, releaseRes] = await Promise.all([
         fetch('https://api.github.com/repos/marle3003/mokapi'),
@@ -32,23 +30,18 @@ onMounted(async () => {
       console.warn('GitHub API unavailable', e)
     }
 })
-
-function showImage(target: EventTarget | null) {
-  if (hasTouchSupport() || !target || !(target instanceof HTMLImageElement)) {
+function showImage(evt: MouseEvent) {
+  const [isValid, target] = isValidImage(evt.target)
+  if (!isValid) {
     return
   }
-  const element = target as HTMLImageElement
-  imageUrl.value = element.src
-  imageDescription.value = element.alt
-  dialog.value?.show()
-}
-function hasTouchSupport() {
-  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  image.value = target
+  showImageDialog.value = true
 }
 </script>
 
 <template>
-  <main class="home" @click="showImage($event.target)">
+  <main class="home" @click="showImage($event)">
     <section class="py-5">
       <div class="container">
         <div class="row hero-title justify-content-center">
@@ -429,7 +422,7 @@ function hasTouchSupport() {
             </div>
           </div>
           <div class="col-12 col-lg-6 order-lg-2 d-flex justify-content-center">
-            <img class="image-border" src="/dashboard-overview-mock-api.png" alt="Mokapi dashboard showing all mocked APIs with metrics and logs." />
+            <img class="img-fluid shadow rounded" src="/dashboard-overview-mock-api.png" alt="Mokapi dashboard showing all mocked APIs with metrics and logs." />
           </div>
         </div>
 
@@ -575,18 +568,7 @@ function hasTouchSupport() {
     </section>
   </main>
   <Footer></Footer>
-  <div class="modal fade" id="imageDialog" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-body">
-          <img class="image-border" :src="imageUrl" style="width:100%" />
-          <div class="pt-2" style="text-align:center; font-size:0.9rem;">
-            {{ imageDescription }}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <ImageDialog v-model:show="showImageDialog" v-model:image="image" />
 </template>
 
 <style scoped>
@@ -669,11 +651,5 @@ ul.nav-vertical {
 }
 .tab-content .collapse:hover .overlay {
   display: block !important;
-}
-.image {
-  border-radius: 8px; 
-  box-shadow: 
-    0px 10px 0.5rem rgba(0, 0, 0, 0.3),
-    10px 0px 0.5rem rgba(0, 0, 0, 0.3);
 }
 </style>

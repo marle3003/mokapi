@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import Footer from '@/components/Footer.vue'
+import ImageDialog from '@/components/ImageDialog.vue'
+import { isValidImage } from '@/composables/image-dialog'
 import { useMeta } from '@/composables/meta'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { Modal } from 'bootstrap'
@@ -42,32 +44,25 @@ const title = `HTTP & OpenAPI Mocking Made Simple`
 const description = `Simulate HTTP and REST APIs from OpenAPI specs. Speed up development, automate tests, and reduce dependencies with Mokapi.`
 useMeta(title, description, "https://mokapi.io/http")
 
-const dialog = ref<Modal>()
-const imageUrl = ref<string>()
-const imageDescription = ref<string>()
+const image = ref<HTMLImageElement | undefined>();
+const showImageDialog = ref<boolean>(false)
 
-onMounted(() => {
-  dialog.value = new Modal('#imageDialog', {})
-})
-function showImage(target: EventTarget | null) {
-  if (hasTouchSupport() || !target) {
+function showImage(evt: MouseEvent) {
+  const [isValid, target] = isValidImage(evt.target)
+  if (!isValid) {
     return
   }
-  const element = target as HTMLImageElement
-  imageUrl.value = element.src
-  imageDescription.value = element.alt
-  dialog.value?.show()
+  image.value = target
+  showImageDialog.value = true
 }
-function hasTouchSupport() {
-  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-}
+
 function getConsoleContent() {
   return '<p>' + text.replaceAll(' ', '&nbsp;').split('\n').join('</p><p>') + '</p>'
 }
 </script>
 
 <template>
-  <main class="home">
+  <main class="home" @click="showImage($event)">
     <section class="py-5">
       <div class="container">
         <div class="row hero-title justify-content-center">
@@ -227,7 +222,7 @@ function getConsoleContent() {
 
         <div class="row">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center">
-            <img src="/http.png" @click="showImage($event.target)" alt="Mokapi's dashboard with an overview of all mocked APIs including metrics and logs." style="width:100%" />
+            <img src="/http.png" alt="Mokapi's dashboard with an overview of all mocked APIs including metrics and logs." style="width:100%" />
           </div>
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center">
             <div class="text-lg-start text-center">
@@ -266,18 +261,7 @@ function getConsoleContent() {
 
   </main>
   <Footer></Footer>
-  <div class="modal fade" id="imageDialog" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-      <div class="modal-content">
-        <div class="modal-body">
-          <img :src="imageUrl" style="width:100%" />
-          <div class="pt-2" style="text-align:center; font-size:0.9rem;">
-            {{ imageDescription }}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  <ImageDialog v-model:show="showImageDialog" v-model:image="image" />
 </template>
 
 <style>
