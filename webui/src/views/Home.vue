@@ -197,14 +197,14 @@ function showImage(evt: MouseEvent) {
           <div class="col-sm-3">
             <div class="card h-100 shadow-sm border-0 accented">
               <div class="card-inner">
-                <router-link :to="{path: '/http'}">
-                  <div class="card-body">
+                <router-link :to="{path: '/http'}" class="d-flex flex-column h-100">
+                  <div class="card-body d-flex flex-column">
                     <h5 class="card-title fw-bold mb-3">Mock REST APIs</h5>
                     <p class="card-text">
                       Simulate REST endpoints to develop and test clients
                       without waiting for real backend services.
                     </p>
-                    <div class="icon-link cta">Learn more 
+                    <div class="icon-link cta mt-auto align-self-start">Learn more 
                       <span class="bi bi-chevron-right"></span>
                       <span class="bi bi-arrow-right hover"></span>
                     </div>
@@ -217,14 +217,14 @@ function showImage(evt: MouseEvent) {
           <div class="col-sm-3">
             <div class="card h-100 shadow-sm border-0 accented">
               <div class="card-inner">
-                <router-link :to="{path: '/kafka'}">
-                  <div class="card-body">
+                <router-link :to="{path: '/kafka'}" class="d-flex flex-column h-100">
+                  <div class="card-body d-flex flex-column">
                     <h5 class="card-title fw-bold mb-3">Simulate Kafka Events</h5>
                     <p class="card-text">
                       Mock Kafka topics and message streams to test
                       event-driven systems and service interactions.
                     </p>
-                    <div class="icon-link cta">Learn more 
+                    <div class="icon-link cta mt-auto align-self-start">Learn more 
                       <span class="bi bi-chevron-right"></span>
                       <span class="bi bi-arrow-right hover"></span>
                     </div>
@@ -236,14 +236,14 @@ function showImage(evt: MouseEvent) {
           <div class="col-sm-3">
             <div class="card h-100 shadow-sm border-0 accented">
               <div class="card-inner">
-                <router-link :to="{path: '/ldap'}">
-                  <div class="card-body">
+                <router-link :to="{path: '/ldap'}" class="d-flex flex-column h-100">
+                  <div class="card-body d-flex flex-column">
                     <h5 class="card-title fw-bold mb-3">Mock LDAP Services</h5>
                     <p class="card-text">
                       Simulate directory and authentication services
                       to test user access, roles, and permissions safely.
                     </p>
-                    <div class="icon-link cta">Learn more 
+                    <div class="icon-link cta mt-auto align-self-start">Learn more 
                       <span class="bi bi-chevron-right"></span>
                       <span class="bi bi-arrow-right hover"></span>
                     </div>
@@ -255,14 +255,14 @@ function showImage(evt: MouseEvent) {
           <div class="col-sm-3">
             <div class="card h-100 shadow-sm border-0 accented">
               <div class="card-inner">
-                <router-link :to="{path: '/mail'}">
-                  <div class="card-body">
+                <router-link :to="{path: '/mail'}" class="d-flex flex-column h-100">
+                  <div class="card-body d-flex flex-column">
                     <h5 class="card-title fw-bold mb-3">SMTP Email Testing</h5>
                     <p class="card-text">
                       Test email workflows by simulating SMTP and IMAP servers
                       without sending real messages.
                     </p>
-                    <div class="icon-link cta">Learn more 
+                    <div class="icon-link cta mt-auto align-self-start">Learn more 
                       <span class="bi bi-chevron-right"></span>
                       <span class="bi bi-arrow-right hover"></span>
                     </div>
@@ -312,8 +312,8 @@ function showImage(evt: MouseEvent) {
               Simulate edge cases, conditional logic, errors, and real-world workflows
               without changing your API specifications.
             </p>
-            <router-link :to="{ path: '/docs/javascript-api' }">
-              <button type="button" class="btn btn-outline-primary btn-sm">Explore JavaScript Mocking</button>
+            <router-link :to="{ path: '/docs/javascript-api' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
+              Explore JavaScript Mocking
             </router-link>
           </div>
           <div class="col-12 col-lg-6 order-lg-1 d-flex justify-content-center">
@@ -331,8 +331,8 @@ function showImage(evt: MouseEvent) {
             <p class="fst-italic">
               Ensure consistent testing across local development, CI pipelines, and cloud environments.
             </p>
-            <router-link :to="{ path: '/docs/guides/get-started/running' }">
-              <button type="button" class="btn btn-outline-primary btn-sm">Learn How to Run Mokapi</button>
+            <router-link :to="{ path: '/docs/guides/get-started/running' }" class="btn btn-outline-primary btn-sm">
+              Learn How to Run Mokapi
             </router-link>
           </div>
           <div class="col-12 col-lg-6 order-lg-2 d-flex justify-content-center">
@@ -351,8 +351,8 @@ function showImage(evt: MouseEvent) {
             <p class="fst-italic">
               Version-controlled mocks reduce errors, simplify audits, and make collaboration easier.
             </p>
-            <router-link :to="{ path: '/docs/configuration' }">
-              <button type="button" class="btn btn-outline-primary btn-sm">Learn More</button>
+            <router-link :to="{ path: '/docs/configuration' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
+              Learn More
             </router-link>
           </div>
           <div class="col-12 col-lg-6 order-lg-1 d-flex justify-content-center">
@@ -371,8 +371,8 @@ function showImage(evt: MouseEvent) {
             <p class="fst-italic">
               Produce lifelike data to catch bugs early and test edge cases that rarely occur in production.
             </p>
-            <router-link :to="{ path: '/docs/guides/get-started/test-data' }">
-              <button type="button" class="btn btn-outline-primary btn-sm">Explore Fake Data Features</button>
+            <router-link :to="{ path: '/docs/guides/get-started/test-data' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
+              Explore Fake Data Features
             </router-link>
           </div>
           <div class="col-12 col-lg-6 order-lg-2 d-flex justify-content-center">
@@ -391,8 +391,8 @@ function showImage(evt: MouseEvent) {
             <p class="fst-italic">
               Easily adapt mocks for specific environments or experiments without breaking the main API spec.
             </p>
-            <router-link :to="{ path: '/docs/configuration/patching' }">
-              <button type="button" class="btn btn-outline-primary btn-sm">Learn About Patching</button>
+            <router-link :to="{ path: '/docs/configuration/patching' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
+              Learn About Patching
             </router-link>
           </div>
           <div class="col-12 col-lg-6 order-lg-1 d-flex justify-content-center">
@@ -411,7 +411,7 @@ function showImage(evt: MouseEvent) {
             <p class="fst-italic">
               Gain real-time insight into requests, responses, and logs, making debugging and validation faster.
             </p>
-            <div class="d-flex gap-2 justify-content-lg-start justify-content-center flex-wrap">
+            <div class="d-flex gap-2 justify-content-lg-start justify-content-center flex-wrap mt-3 mb-3">
               <a href="https://mokapi.io/dashboard-demo" class="btn btn-outline-primary btn-sm">
                   Live Dashboard Demo
               </a>
@@ -441,12 +441,12 @@ function showImage(evt: MouseEvent) {
           <!-- REST API Tutorial -->
           <div class="col">
             <div class="card h-100 shadow-sm border-0">
-              <div class="card-body">
+              <div class="card-body d-flex flex-column">
                 <h3 class="card-title">
                   <span class="icon me-2 bi-globe"></span>Mock REST APIs with OpenAPI
                 </h3>
                 <p>Learn how to mock an OpenAPI spec, configure Mokapi, and run it in Docker. Test REST endpoints without waiting for live APIs.</p>
-                <a href="docs/resources/tutorials/get-started-with-rest-api" class="btn btn-outline-primary btn-sm">Start Tutorial</a>
+                <a href="docs/resources/tutorials/get-started-with-rest-api" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
               </div>
             </div>
           </div>
@@ -454,12 +454,12 @@ function showImage(evt: MouseEvent) {
           <!-- Kafka Tutorial -->
           <div class="col">
             <div class="card h-100 shadow-sm border-0">
-              <div class="card-body">
+              <div class="card-body d-flex flex-column">
                 <h3 class="card-title">
                   <span class="icon me-2 bi-lightning"></span>Simulate Kafka Topics with AsyncAPI
                 </h3>
                 <p>Test Kafka producers and consumers by mocking topics according to your AsyncAPI spec. Ensure reliable message generation and integration without a live Kafka cluster.</p>
-                <a href="docs/resources/tutorials/get-started-with-kafka" class="btn btn-outline-primary btn-sm">Start Tutorial</a>
+                <a href="docs/resources/tutorials/get-started-with-kafka" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
               </div>
             </div>
           </div>
@@ -467,12 +467,12 @@ function showImage(evt: MouseEvent) {
           <!-- LDAP Tutorial -->
           <div class="col">
             <div class="card h-100 shadow-sm border-0">
-              <div class="card-body">
+              <div class="card-body d-flex flex-column">
                 <h3 class="card-title">
                   <span class="icon me-2 bi-person-check"></span>Mock LDAP Authentication
                 </h3>
                 <p>Step-by-step guide to mock LDAP login using Mokapi and Node.js. Test authentication flows without a real server.</p>
-                <a href="docs/resources/tutorials/mock-ldap-authentication-in-node" class="btn btn-outline-primary btn-sm">Start Tutorial</a>
+                <a href="docs/resources/tutorials/mock-ldap-authentication-in-node" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
               </div>
             </div>
           </div>
@@ -480,29 +480,33 @@ function showImage(evt: MouseEvent) {
           <!-- SMTP Tutorial -->
           <div class="col">
             <div class="card h-100 shadow-sm border-0">
-              <div class="card-body">
+              <div class="card-body d-flex flex-column">
                 <h3 class="card-title">
                   <span class="icon me-2 bi-envelope-at-fill"></span>Mock SMTP Email Sending
                 </h3>
                 <p>Simulate an SMTP server and send test emails using Node.js. Perfect for validating email workflows without real mail servers.</p>
-                <a href="/docs/resources/tutorials/mock-smtp-server-send-mail-using-node" class="btn btn-outline-primary btn-sm">Start Tutorial</a>
-              </div>
-            </div>
-          </div>
-
-          <div class="col">
-            <div class="card h-100 shadow-sm border-0">
-              <div class="card-body">
-                <h3 class="card-title">
-                  <span class="icon me-2 bi-shield-check"></span>Enforce API Contracts
-                </h3>
-                <p>Validate HTTP requests and responses against OpenAPI specs to catch API issues early in development or testing.</p>
-                <a href="/docs/resources/blogs/ensuring-api-contract-compliance-with-mokapi" class="btn btn-outline-primary btn-sm">Read Blog</a>
+                <a href="/docs/resources/tutorials/mock-smtp-server-send-mail-using-node" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
               </div>
             </div>
           </div>
 
         </div>
+
+        <!-- Enforce API Contracts -->
+        <div class="row justify-content-center g-4 mt-1">
+          <div class="col-md-6 col-lg-6">
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-body d-flex flex-column">
+                <h3 class="card-title">
+                  <span class="icon me-2 bi-shield-check"></span>Enforce API Contracts
+                </h3>
+                <p>Validate HTTP requests and responses against OpenAPI specs to catch API issues early in development or testing.</p>
+                <a href="/docs/resources/blogs/ensuring-api-contract-compliance-with-mokapi" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Read Blog</a>
+              </div>
+            </div>
+          </div>
+        </div> 
+
       </div>
     </section>
     

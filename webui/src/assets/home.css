@@ -107,6 +107,7 @@
 .card-inner {
   position: relative;
   z-index: 1;
+  height: 100%;
 }
 /* Scale only the background "shell" */
 .card.accented::before {
@@ -134,13 +135,13 @@
   position: relative;
   bottom:2px;
 }
-.home .card.accented .cta i.hover {
+.home .card.accented .cta span.hover {
   display: none;
 }
-.home .card:hover.accented .cta i.hover {
+.home .card:hover.accented .cta span.hover {
   display: inline;
 }
-.home .card:hover.accented .cta i:not(.hover) {
+.home .card:hover.accented .cta span:not(.hover) {
   display: none;
 }
 
