@@ -110,7 +110,7 @@ function showImage(evt: MouseEvent) {
               Simulate outgoing and incoming mail to test real user flows without external dependencies.
             </p>
             <p class="fst-italic mb-0">
-              Prevent broken authentication and directory issues before they reach production.
+              Prevent broken email workflows before they reach production.
             </p>
           </div>
 

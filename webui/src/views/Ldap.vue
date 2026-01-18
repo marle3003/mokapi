@@ -296,7 +296,7 @@ function showImage(evt: MouseEvent) {
             <div class="text-center mt-3">
               <router-link
                 :to="{ path: '/docs/guides/ldap/quick-start' }"
-                class="btn btn-outline-primary btn-sm mt-3">
+                class="btn btn-outline-primary btn-lg mt-3">
                 Try LDIF Setup
               </router-link>
             </div>
