@@ -227,6 +227,6 @@ footer a {
   margin-right: 0.25rem;
 }
 
-.home img {
+.home img:not(.no-dialog) {
   cursor: pointer;
 }

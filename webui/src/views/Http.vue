@@ -89,7 +89,7 @@ function getConsoleContent() {
             </p>
           </div>
           <div class="col-12 col-lg-5">
-            <img src="/logo.svg" alt="Mokapi API Mock Tool" class="mx-auto d-block" />
+            <img src="/logo.svg" alt="Mokapi API Mock Tool" class="mx-auto d-block no-dialog" />
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">

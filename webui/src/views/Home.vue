@@ -71,7 +71,7 @@ function showImage(evt: MouseEvent) {
             </p>
           </div>
           <div class="col-12 col-lg-5">
-            <img src="/logo.svg" alt="Mokapi logo with an okapi symbol representing friendly and elegant developer tooling" title="Mokapi – the okapi-inspired logo for modern API mocking" class="mx-auto d-block" />
+            <img src="/logo.svg" alt="Mokapi logo with an okapi symbol representing friendly and elegant developer tooling" title="Mokapi – the okapi-inspired logo for modern API mocking" class="mx-auto d-block no-dialog" />
             <div class="text-center github-meta">
               <a
                 href="https://github.com/marle3003/mokapi"

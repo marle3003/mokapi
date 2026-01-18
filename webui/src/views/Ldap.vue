@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { useMeta } from '@/composables/meta'
 import Footer from '@/components/Footer.vue'
+import { isValidImage } from '@/composables/image-dialog'
+import { ref } from 'vue'
+import ImageDialog from '@/components/ImageDialog.vue'
 
 const ldap = `dn: dc=mokapi,dc=io
 
@@ -18,10 +21,22 @@ userPassword: bar123
 const title = `Create Mock LDAP Servers for Dev & Testing | Mokapi`
 const description = `Develop and test independently from your company's LDAP directory. Simulate any search request to fullfil your requirements to run your app with a fake LDAP server`
 useMeta(title, description, "https://mokapi.io/ldap")
+
+const image = ref<HTMLImageElement | undefined>();
+const showImageDialog = ref<boolean>(false)
+
+function showImage(evt: MouseEvent) {
+  const [isValid, target] = isValidImage(evt.target)
+  if (!isValid) {
+    return
+  }
+  image.value = target
+  showImageDialog.value = true
+}
 </script>
 
 <template>
-  <main class="home">
+  <main class="home" @click="showImage($event)">
     <section class="py-5">
       <div class="container">
         <div class="row hero-title">
@@ -52,9 +67,7 @@ useMeta(title, description, "https://mokapi.io/ldap")
             </p>
           </div>
           <div class="col-12 col-lg-5 justify-content-center">
-            <a href="#dialog" data-bs-toggle="modal" data-bs-target="#dialog">
-              <img src="/logo.svg" alt="Mokapi API Mock Tool" class="mx-auto d-block" />
-            </a>
+            <img src="/logo.svg" alt="Mokapi API Mock Tool" class="mx-auto d-block no-dialog" />
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
@@ -294,4 +307,5 @@ useMeta(title, description, "https://mokapi.io/ldap")
 
   </main>
   <Footer></Footer>
+  <ImageDialog v-model:show="showImageDialog" v-model:image="image" />
 </template>
