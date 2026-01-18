@@ -83,8 +83,9 @@
   margin: 0 0 0.3rem;
 }
 .dashboard {
-    width: 90%;
-    margin: 0 auto auto;
+    padding: 0 2rem;
+    max-width: 1800px;
+    margin: 0 auto;
 }
 .header-demo {
     position: fixed;
