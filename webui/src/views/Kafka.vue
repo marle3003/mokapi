@@ -5,8 +5,8 @@ import { ref } from 'vue'
 import { isValidImage } from '@/composables/image-dialog'
 import ImageDialog from '@/components/ImageDialog.vue'
 
-const title = `Mock Kafka Topics with AsyncAPI | Mokapi`
-const description = `Don't wait for producers to send new messages. Create your own sample messages that fit your needs.`
+const title = `Mock Kafka Topics from AsyncAPI | Mokapi`
+const description = `Mock Kafka topics from AsyncAPI specs. Test event-driven systems with realistic messages without waiting for real producers.`
 useMeta(title, description, "https://mokapi.io/kafka")
 
 const image = ref<HTMLImageElement | undefined>();

@@ -25,8 +25,9 @@ export default function() {
     })
 }
 `
-const description = `Mock SMTP & IMAP servers with Mokapi. Safely test email sending & receiving without real delivery. Prevent accidental emails in testing environments.`
-useMeta('Mock SMTP & IMAP Server | mokapi.io', description, "https://mokapi.io/mail")
+const title = 'Mock SMTP & IMAP Servers | Mokapi'
+const description = `Mock SMTP and IMAP servers to safely test email workflows without real delivery. Prevent accidental emails in test environments.`
+useMeta(title, description, "https://mokapi.io/mail")
 
 const image = ref<HTMLImageElement | undefined>();
 const showImageDialog = ref<boolean>(false)

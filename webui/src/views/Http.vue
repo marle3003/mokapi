@@ -3,10 +3,8 @@ import Footer from '@/components/Footer.vue'
 import ImageDialog from '@/components/ImageDialog.vue'
 import { isValidImage } from '@/composables/image-dialog'
 import { useMeta } from '@/composables/meta'
-import { usePrettyDates } from '@/composables/usePrettyDate'
-import { Modal } from 'bootstrap'
 import dayjs from 'dayjs'
-import { onMounted, ref } from 'vue'
+import { ref } from 'vue'
 
 const script = `import { on } from 'mokapi'
 
@@ -40,8 +38,8 @@ INFO[${time(dayjs().second(1))}] adding service Swagger Petstore - OpenAPI 3.0 o
 INFO[${time(dayjs().second(2))}] Processing http request GET http://localhost/api/v3/pet/4
 `
 
-const title = `HTTP & OpenAPI Mocking Made Simple`
-const description = `Simulate HTTP and REST APIs from OpenAPI specs. Speed up development, automate tests, and reduce dependencies with Mokapi.`
+const title = `Mock HTTP & REST APIs from OpenAPI | Mokapi`
+const description = `Simulate HTTP and REST APIs from OpenAPI specs. Speed up development, automate tests, and remove external dependencies.`
 useMeta(title, description, "https://mokapi.io/http")
 
 const image = ref<HTMLImageElement | undefined>();
