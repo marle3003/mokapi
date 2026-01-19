@@ -5,8 +5,8 @@ import { ref, onMounted } from 'vue'
 import ImageDialog from '@/components/ImageDialog.vue'
 import { isValidImage } from '@/composables/image-dialog'
 
-const title = 'Mock APIs from Specs | REST, Kafka, LDAP & Mail | Mokapi'
-const description = `Mock REST, Kafka, LDAP, and Mail servers from specs. Test real-world systems without external dependencies using a deterministic, CI-friendly setup.`
+const title = 'Mock APIs from Specs | Mokapi'
+const description = `Mock REST, Kafka, LDAP, and Mail servers from specs. Test real-world systems without external dependencies in a deterministic, CI-friendly setup.`
 
 useMeta(title, description, 'https://mokapi.io')
 
