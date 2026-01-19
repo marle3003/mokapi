@@ -4,7 +4,7 @@ description: This page provides information on how to configure Mokapi using CLI
 ---
 # Use Mokapi CLI
 
-This page provides information on how to configure Mokapi using CLI parameters. A list of available parameters can be found [here](/docs/configuration/reference.md)
+This page provides information on how to configure Mokapi using CLI parameters. A list of available parameters can be found [here](/docs/configuration/static/cli-flags)
 
 ## Command structure
 

@@ -114,7 +114,7 @@ Patterns typically follow glob-style matching.`,
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-file-include *.json *.yaml"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_INCLUDE=*.json *.yaml"},
-				{Title: "File", Source: "providers:\n  file:\n    include: [*.json, *.yaml]", Language: "yaml"},
+				{Title: "File", Source: "providers:\n  file:\n    include: ['*.json', '*.yaml']", Language: "yaml"},
 			},
 		},
 	},

@@ -61,28 +61,17 @@ func NewCmdMokapi() *cli.Command {
 	flags.RegisterHttpProvider(cmd)
 	flags.RegisterNpmProvider(cmd)
 
-	// API
-	cmd.Flags().Int("api-port", 8080, cli.FlagDoc{Short: "Port for the API server"})
-	cmd.Flags().String("api-path", "", cli.FlagDoc{Short: "Path prefix for the API and dashboard"})
-	cmd.Flags().String("api-base", "", cli.FlagDoc{Short: "Base path used when the API is behind a reverse proxy"})
-	cmd.Flags().Bool("api-dashboard", true, cli.FlagDoc{Short: "Enable the web dashboard"})
-	cmd.Flags().Bool("api-search-enabled", false, cli.FlagDoc{Short: "Enable search functionality in the dashboard"})
-
-	cmd.Flags().String("root-ca-cert", "", cli.FlagDoc{Short: "Root CA certificate used for signing generated certificates"})
-	cmd.Flags().String("root-ca-key", "", cli.FlagDoc{Short: "Private key of the root CA"})
-
-	cmd.Flags().Int("event-store-default-size", 100, cli.FlagDoc{Short: "Default maximum number of stored events per API"})
-	cmd.Flags().String("event-store", "", cli.FlagDoc{Short: "Configure event store using shorthand syntax"})
-	cmd.Flags().DynamicInt("event-store-<name>-size", cli.FlagDoc{Short: "Override event store size for a specific API"})
-
-	cmd.Flags().String("data-gen-optional-properties", "0.85", cli.FlagDoc{Short: ""})
+	flags.RegisterApiFlags(cmd)
+	flags.RegisterTlsFlags(cmd)
+	flags.RegisterEventStoreFlags(cmd)
+	flags.RegisterDataGeneratorFlags(cmd)
 
 	cmd.Flags().StringSlice("config", []string{}, true, cli.FlagDoc{Short: "Provide inline configuration data"})
 	cmd.Flags().StringSlice("configs", []string{}, false, cli.FlagDoc{Short: "Provide inline configuration data"})
 
 	// config file
-	cmd.Flags().File("cli-input", cli.FlagDoc{Short: "Read configuration from a file"})
-	cmd.Flags().Alias("cli-input", "config-file")
+	cmd.Flags().File("config-file", cliInput)
+	cmd.Flags().Alias("config-file", "cli-input")
 
 	// logging
 	cmd.Flags().String("log-level", "info", cli.FlagDoc{Short: "Set log level (debug|info|warn|error)"}).WithExample(
@@ -228,4 +217,43 @@ func applyPositionalArgs(cfg *static.Config, args []string) error {
 		return fmt.Errorf("parse config failed: %w", err)
 	}
 	return nil
+}
+
+var cliInput = cli.FlagDoc{
+	Short: "Read configuration from a file",
+	Long: `Reads configuration from a file provided via the command line.
+The file content is processed as configuration input and merged with other configuration sources such as inline configuration and environment variables.`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{Title: "CLI", Source: "--cli-input=mokapi.yaml"},
+			},
+		},
+	},
+}
+
+var config = cli.FlagDoc{
+	Short: "Provide inline configuration data",
+	Long: `Provides inline configuration data directly via the command line.
+This option can be used multiple times to supply additional configuration fragments, which are merged with other configuration sources.`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{Title: "CLI", Source: "--config {\"openapi\": \"3.0\", \"info\": { \"title\": \"foo\" } }\n--config file:/path/to/config.yaml"},
+			},
+		},
+	},
+}
+
+var configs = cli.FlagDoc{
+	Short: "Provide inline configuration data",
+	Long: `Provides inline configuration data directly via the command line.
+This option can be used multiple times to supply additional configuration fragments, which are merged with other configuration sources.`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{Title: "CLI", Source: "--configs file:/path/to/config.yaml  file:/path/to/config.yaml"},
+			},
+		},
+	},
 }

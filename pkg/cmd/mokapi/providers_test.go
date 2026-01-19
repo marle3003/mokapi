@@ -33,7 +33,7 @@ func TestRoot_Providers_File(t *testing.T) {
 				return []string{"--providers-file-filename", "foo.yaml,bar.yaml"}
 			},
 			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {
-				require.Equal(t, []string{"foo.yaml,bar.yaml"}, cfg.Providers.File.Filenames)
+				require.Equal(t, []string{"foo.yaml", "bar.yaml"}, cfg.Providers.File.Filenames)
 				require.Equal(t, []string{"foo.yaml,bar.yaml"}, flags.GetStringSlice("providers-file-filename"))
 			},
 		},
@@ -66,7 +66,7 @@ func TestRoot_Providers_File(t *testing.T) {
 				return []string{}
 			},
 			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {
-				require.Equal(t, []string{"foo.yaml,bar.yaml"}, cfg.Providers.File.Filenames)
+				require.Equal(t, []string{"foo.yaml", "bar.yaml"}, cfg.Providers.File.Filenames)
 			},
 		},
 		{

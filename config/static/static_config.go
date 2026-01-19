@@ -14,7 +14,7 @@ import (
 
 type Config struct {
 	Log              MokApiLog         `json:"log" yaml:"log"`
-	ConfigFile       string            `json:"-" yaml:"-" flag:"cli-input"`
+	ConfigFile       string            `json:"-" yaml:"-" flag:"config-file"`
 	Providers        Providers         `json:"providers" yaml:"providers"`
 	Api              Api               `json:"api" yaml:"api"`
 	RootCaCert       tls.FileOrContent `json:"rootCaCert" yaml:"rootCaCert" name:"root-ca-cert"`

@@ -90,6 +90,13 @@ func TestMain_Flags(t *testing.T) {
 			},
 		},
 		{
+			name: "--event-store-default-size 500",
+			args: []string{"--event-store-default-size", "500"},
+			test: func(t *testing.T, cfg *static.Config) {
+				require.Equal(t, static.Store{Size: 500}, cfg.Event.Store["default"])
+			},
+		},
+		{
 			name: "--event-store",
 			args: []string{"--event-store", "foo={\"size\":250}"},
 			test: func(t *testing.T, cfg *static.Config) {
@@ -520,6 +527,20 @@ func TestMokapi_File(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, cfg.Configs, 1)
 				require.Equal(t, "{\"openapi\": \"3.0\"}", cfg.Configs[0])
+			},
+		},
+		{
+			name: "configs parameter with file path as value",
+			test: func(t *testing.T) {
+				path1 := createTempFile(t, "test1.json", `{"openapi": "3.0", "info": {"title": "foo"} }`)
+				path2 := createTempFile(t, "test2.json", `{"openapi": "3.0", "info": {"title": "bar"} }`)
+				c, cfg := newCmd([]string{"--configs", fmt.Sprintf("file:%s file:%s", path1, path2)})
+
+				err := c.Execute()
+				require.NoError(t, err)
+				require.Len(t, cfg.Configs, 2)
+				require.Equal(t, `{"openapi": "3.0", "info": {"title": "foo"} }`, cfg.Configs[0])
+				require.Equal(t, `{"openapi": "3.0", "info": {"title": "bar"} }`, cfg.Configs[1])
 			},
 		},
 		{

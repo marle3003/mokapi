@@ -106,7 +106,7 @@ This option allows defining repository-specific settings such as allowed files, 
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-git-repository url=https://github.com/foo/foo.git,include=*.json"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORY=url=https://github.com/foo/foo.git,tempDir=/tempdir"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - url: https://github.com/foo/foo.git\n       include: *.json", Language: "yaml"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - url: https://github.com/foo/foo.git\n       include: '*.json'", Language: "yaml"},
 			},
 		},
 	},
@@ -121,7 +121,7 @@ This option is equivalent to using providers-git-repository multiple times, but 
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-git-repositories url=https://github.com/foo/foo.git,include=*.json url=https://github.com/bar/bar.git,include=*.yaml"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES=url=https://github.com/foo/foo.git,include=*.json url=https://github.com/bar/bar.git,include=*.yaml"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - url: https://github.com/foo/foo.git\n       include: [*.json]\n     - url: https://github.com/bar/bar.git\n       include: [*.yaml]", Language: "yaml"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - url: https://github.com/foo/foo.git\n       include: ['*.json']\n     - url: https://github.com/bar/bar.git\n       include: ['*.yaml']", Language: "yaml"},
 			},
 		},
 	},
@@ -136,7 +136,7 @@ This option is mainly intended for advanced or programmatic configurations where
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-git-repositories[0] url=https://github.com/foo/foo.git,include=*.json"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]=url=https://github.com/foo/foo.git,include=*.json"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - url: https://github.com/foo/foo.git\n       include: [*.json]", Language: "yaml"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - url: https://github.com/foo/foo.git\n       include: ['*.json']", Language: "yaml"},
 			},
 		},
 	},
@@ -196,7 +196,7 @@ If at least one include pattern is specified, only files matching one of the pat
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-git-repositories[0]-include mokapi/**/*.json"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_INCLUDE=mokapi/**/*.json"},
-				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - includes: [mokapi/**/*.json]", Language: "yaml"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - includes: ['mokapi/**/*.json']", Language: "yaml"},
 			},
 		},
 	},

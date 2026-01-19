@@ -19,6 +19,13 @@ func (c *Command) GenMarkdown(dir string) error {
 	}
 	defer f.Close()
 
+	if _, err = f.WriteString(`---
+title: Mokapi CLI Flags
+description: A complete list of all Mokapi flags, with descriptions, defaults, and examples of how to set the option in config file, environment variables, or CLI.
+---` + "\n\n"); err != nil {
+		return err
+	}
+
 	if err = writeCommand(c, f); err != nil {
 		return err
 	}
@@ -117,6 +124,10 @@ func writeFlag(w io.StringWriter, f *Flag, envPrefix string) error {
 		if _, err := w.WriteString(fmt.Sprintf("| --%s | %s | %s | %s |\n", f.Name, env, f.Type, defaultValue)); err != nil {
 			return err
 		}
+	}
+
+	if _, err := w.WriteString("\n"); err != nil {
+		return err
 	}
 
 	if len(f.Examples) > 0 {

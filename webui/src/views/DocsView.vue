@@ -350,6 +350,9 @@ pre {
     margin-left: 0;
   }
 }
+.code {
+  margin-bottom: 8px;
+}
 .code pre code.hljs {
   font-family: Menlo,Monaco,Consolas,"Courier New",monospace !important;
   padding-left: 0 !important;

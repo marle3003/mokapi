@@ -35,7 +35,7 @@ func (f *flagConfigBinder) Decode(flags *FlagSet, element interface{}) error {
 }
 
 func (f *flagConfigBinder) setValue(ctx *bindContext) error {
-	if len(ctx.paths) == 0 {
+	/*if len(ctx.paths) == 0 {
 		v := reflect.ValueOf(ctx.value)
 		t := ctx.element.Type()
 		if v.Type().AssignableTo(t) {
@@ -45,7 +45,7 @@ func (f *flagConfigBinder) setValue(ctx *bindContext) error {
 			ctx.element.Set(v.Convert(t))
 			return nil
 		}
-	}
+	}*/
 
 	switch ctx.element.Kind() {
 	case reflect.Struct:
@@ -77,8 +77,12 @@ func (f *flagConfigBinder) setValue(ctx *bindContext) error {
 	case reflect.Map:
 		return f.setMap(ctx)
 	case reflect.Bool:
-		if s, ok := ctx.value.(string); ok {
-			b, err := strconv.ParseBool(s)
+		switch v := ctx.value.(type) {
+		case bool:
+			ctx.element.SetBool(v)
+			return nil
+		case string:
+			b, err := strconv.ParseBool(v)
 			if err != nil {
 				return fmt.Errorf("value %v cannot be parsed as bool: %w", ctx.value, err)
 			}
@@ -86,7 +90,22 @@ func (f *flagConfigBinder) setValue(ctx *bindContext) error {
 			return nil
 		}
 		return fmt.Errorf("value %v cannot be parsed as bool", ctx.value)
+	case reflect.String:
+		if s, ok := ctx.value.(string); ok {
+			return f.convert(s, ctx.element)
+		}
+		return fmt.Errorf("expected string but got '%v'", ctx.value)
+	case reflect.Int:
+		if i, ok := ctx.value.(int); ok {
+			ctx.element.SetInt(int64(i))
+			return nil
+		}
+		return fmt.Errorf("expected integer but got '%v'", ctx.value)
 	case reflect.Int64:
+		if i, ok := ctx.value.(int); ok {
+			ctx.element.SetInt(int64(i))
+			return nil
+		}
 		if s, ok := ctx.value.(string); ok {
 			i, err := strconv.ParseInt(s, 10, 64)
 			if err != nil {
@@ -96,6 +115,13 @@ func (f *flagConfigBinder) setValue(ctx *bindContext) error {
 			return nil
 		}
 		return fmt.Errorf("value %v cannot be parsed as integer", ctx.value)
+	case reflect.Interface:
+		if ctx.value == "" {
+			ctx.element.Set(reflect.ValueOf(true))
+		} else {
+			ctx.element.Set(reflect.ValueOf(ctx.value))
+		}
+		return nil
 	default:
 		return fmt.Errorf("unsupported config type: %v", ctx.element.Kind())
 	}
@@ -160,7 +186,7 @@ func (f *flagConfigBinder) setArray(ctx *bindContext) error {
 			values = splitArrayItems(values[0])
 		}
 
-		if len(values) > 1 {
+		if len(values) > 0 {
 			// reset slice; remove default values
 			ctx.element.Set(reflect.MakeSlice(ctx.element.Type(), 0, len(values)))
 		}
@@ -340,8 +366,15 @@ func (f *flagConfigBinder) convert(value any, target reflect.Value) error {
 		} else if kind == reflect.Slice {
 			return f.setValue(&bindContext{paths: []string{}, element: target, value: []string{s}})
 		} else if kind == reflect.String {
-			target.Set(reflect.ValueOf(s))
-			return nil
+			v := reflect.ValueOf(s)
+			t := target.Type()
+			if v.Type().AssignableTo(t) {
+				target.Set(v)
+				return nil
+			} else if v.Type().ConvertibleTo(t) {
+				target.Set(v.Convert(t))
+				return nil
+			}
 		}
 
 		value = s

@@ -68,6 +68,10 @@ func parseFlags(args []string, envNamePrefix string, flags *FlagSet) ([]string, 
 
 		param := strings.ToLower(name)
 		if hasValue {
+			if strings.HasPrefix(param, "no-") {
+				param, value = normalizeNoFlags(param, value)
+			}
+
 			if err := flags.setValue(param, []string{value}, SourceCli); err != nil {
 				return nil, err
 			}
@@ -83,10 +87,28 @@ func parseFlags(args []string, envNamePrefix string, flags *FlagSet) ([]string, 
 			value = args[i]
 		}
 
+		if strings.HasPrefix(param, "no-") {
+			param, value = normalizeNoFlags(param, value)
+		}
+
 		if err := flags.setValue(param, []string{value}, SourceCli); err != nil {
 			return nil, err
 		}
 	}
 
 	return positionalArgs, nil
+}
+
+func normalizeNoFlags(param, value string) (string, string) {
+	param = strings.TrimPrefix(param, "no-")
+	if value != "" {
+		if value == "true" {
+			value = "false"
+		} else {
+			value = "true"
+		}
+	} else {
+		value = "false"
+	}
+	return param, value
 }
