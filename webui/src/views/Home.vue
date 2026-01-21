@@ -187,7 +187,7 @@ function showImage(evt: MouseEvent) {
       <div class="container">
 
         <h2 class="text-center mb-3">Mock More Than Just HTTP</h2>
-        <p class="text-center fst-italic mb-4">
+        <p class="lead fst-italic text-center mb-4">
           Mokapi supports multiple protocols, allowing you to test complete systems —
           not just individual REST endpoints.
         </p>

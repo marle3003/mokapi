@@ -36,7 +36,7 @@ func NewConfig() *Config {
 
 	cfg.Api.Port = 8080
 	cfg.Api.Dashboard = true
-	cfg.Api.Search.Enabled = false
+	cfg.Api.Search.Enabled = true
 
 	cfg.Providers.File.SkipPrefix = []string{"_"}
 	cfg.Event.Store = map[string]Store{"default": {Size: 100}}

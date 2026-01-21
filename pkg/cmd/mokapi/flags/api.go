@@ -7,7 +7,7 @@ func RegisterApiFlags(cmd *cli.Command) {
 	cmd.Flags().String("api-path", "", apiPath)
 	cmd.Flags().String("api-base", "", apiBase)
 	cmd.Flags().Bool("api-dashboard", true, apiDashboard)
-	cmd.Flags().Bool("api-search-enabled", false, apiSearch)
+	cmd.Flags().Bool("api-search-enabled", true, apiSearch)
 }
 
 var apiPort = cli.FlagDoc{
