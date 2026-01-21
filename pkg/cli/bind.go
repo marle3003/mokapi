@@ -35,18 +35,6 @@ func (f *flagConfigBinder) Decode(flags *FlagSet, element interface{}) error {
 }
 
 func (f *flagConfigBinder) setValue(ctx *bindContext) error {
-	/*if len(ctx.paths) == 0 {
-		v := reflect.ValueOf(ctx.value)
-		t := ctx.element.Type()
-		if v.Type().AssignableTo(t) {
-			ctx.element.Set(v)
-			return nil
-		} else if v.Type().ConvertibleTo(t) {
-			ctx.element.Set(v.Convert(t))
-			return nil
-		}
-	}*/
-
 	switch ctx.element.Kind() {
 	case reflect.Struct:
 		if len(ctx.paths) == 0 {
