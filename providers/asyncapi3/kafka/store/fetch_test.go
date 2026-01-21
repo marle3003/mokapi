@@ -21,6 +21,19 @@ func TestFetch(t *testing.T) {
 		test func(t *testing.T, s *store.Store)
 	}{
 		{
+			name: "fetch no topic",
+			test: func(t *testing.T, s *store.Store) {
+				rr := kafkatest.NewRecorder()
+				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &fetch.Request{}))
+
+				res, ok := rr.Message.(*fetch.Response)
+				require.True(t, ok)
+				require.Equal(t, kafka.None, res.ErrorCode)
+				require.Equal(t, 0, len(res.Topics))
+				require.Equal(t, int32(0), res.SessionId)
+			},
+		},
+		{
 			name: "topic not exists",
 			test: func(t *testing.T, s *store.Store) {
 				rr := kafkatest.NewRecorder()

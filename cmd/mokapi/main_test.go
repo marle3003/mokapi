@@ -59,7 +59,7 @@ api:
     base: ""
     dashboard: true
     search:
-        enabled: false
+        enabled: true
 rootCaCert: ""
 rootCaKey: ""
 configs: []

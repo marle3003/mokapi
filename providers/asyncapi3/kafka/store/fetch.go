@@ -1,11 +1,12 @@
 package store
 
 import (
-	log "github.com/sirupsen/logrus"
 	"math"
 	"mokapi/kafka"
 	"mokapi/kafka/fetch"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type fetchData struct {
