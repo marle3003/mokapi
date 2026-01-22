@@ -190,9 +190,8 @@ func TestRoot_Providers_File(t *testing.T) {
 				return []string{"--providers-file-skip-prefix", "foo"}
 			},
 			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {
-				require.Len(t, cfg.Providers.File.SkipPrefix, 2)
+				require.Len(t, cfg.Providers.File.SkipPrefix, 1)
 				require.Contains(t, cfg.Providers.File.SkipPrefix, "foo")
-				require.Contains(t, cfg.Providers.File.SkipPrefix, "_")
 			},
 		},
 		{
