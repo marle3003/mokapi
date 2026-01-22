@@ -19,21 +19,25 @@ func (c *Command) GenMarkdown(dir string) error {
 	}
 	defer f.Close()
 
-	if _, err = f.WriteString(`---
+	return c.WriteMarkdown(f)
+}
+
+func (c *Command) WriteMarkdown(out io.StringWriter) error {
+	if _, err := out.WriteString(`---
 title: Mokapi CLI Flags
 description: A complete list of all Mokapi flags, with descriptions, defaults, and examples of how to set the option in config file, environment variables, or CLI.
 ---` + "\n\n"); err != nil {
 		return err
 	}
 
-	if err = writeCommand(c, f); err != nil {
+	if err := writeCommand(c, out); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func writeCommand(c *Command, f *os.File) error {
+func writeCommand(c *Command, f io.StringWriter) error {
 	if _, err := f.WriteString(fmt.Sprintf("# %s\n\n", c.Name)); err != nil {
 		return err
 	}
