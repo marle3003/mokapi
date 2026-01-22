@@ -17,16 +17,20 @@ func (c *Command) GenMarkdown(dir string) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	return c.WriteMarkdown(f)
 }
 
 func (c *Command) WriteMarkdown(out io.StringWriter) error {
-	if _, err := out.WriteString(`---
-title: Mokapi CLI Flags
-description: A complete list of all Mokapi flags, with descriptions, defaults, and examples of how to set the option in config file, environment variables, or CLI.
----` + "\n\n"); err != nil {
+	if c.Name == "" {
+		return fmt.Errorf("command must specify a name")
+	}
+
+	if _, err := out.WriteString(fmt.Sprintf(`---
+title: %s CLI Flags
+description: A complete list of all %s flags, with descriptions, defaults, and examples of how to set the option in config file, environment variables, or CLI.
+---`+"\n\n", c.Name, c.Name)); err != nil {
 		return err
 	}
 
@@ -42,8 +46,10 @@ func writeCommand(c *Command, f io.StringWriter) error {
 		return err
 	}
 
-	if _, err := f.WriteString(fmt.Sprintf("%s\n\n", c.Short)); err != nil {
-		return err
+	if c.Short != "" {
+		if _, err := f.WriteString(fmt.Sprintf("%s\n\n", c.Short)); err != nil {
+			return err
+		}
 	}
 
 	if c.Long != "" {
@@ -73,7 +79,7 @@ func writeFlag(w io.StringWriter, f *Flag, envPrefix string) error {
 		if _, err := w.WriteString(fmt.Sprintf("%s\n\n", f.Long)); err != nil {
 			return err
 		}
-	} else {
+	} else if f.Short != "" {
 		if _, err := w.WriteString(fmt.Sprintf("%s\n\n", f.Short)); err != nil {
 			return err
 		}
@@ -163,7 +169,7 @@ func writeFlag(w io.StringWriter, f *Flag, envPrefix string) error {
 					return err
 				}
 			}
-			if _, err := w.WriteString("\n\n"); err != nil {
+			if _, err := w.WriteString("\n"); err != nil {
 				return err
 			}
 		}
@@ -180,10 +186,12 @@ func writeFlag(w io.StringWriter, f *Flag, envPrefix string) error {
 			}
 		}
 
+		if _, err := w.WriteString("\n"); err != nil {
+			return err
+		}
 	}
 
-	_, err := w.WriteString("\n")
-	return err
+	return nil
 }
 
 func writeFlags(w io.StringWriter, flags *FlagSet, envPrefix string) error {
@@ -225,7 +233,7 @@ func writeFlags(w io.StringWriter, flags *FlagSet, envPrefix string) error {
 		return err
 	}
 
-	if _, err = w.WriteString("\n\n</div>\n\n"); err != nil {
+	if _, err = w.WriteString("\n</div>\n\n"); err != nil {
 		return err
 	}
 

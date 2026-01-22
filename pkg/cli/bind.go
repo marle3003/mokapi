@@ -103,6 +103,26 @@ func (f *flagConfigBinder) setValue(ctx *bindContext) error {
 			return nil
 		}
 		return fmt.Errorf("value %v cannot be parsed as integer", ctx.value)
+	case reflect.Float32:
+		if i, ok := ctx.value.(float32); ok {
+			ctx.element.SetFloat(float64(i))
+			return nil
+		}
+		if i, ok := ctx.value.(float64); ok {
+			ctx.element.SetFloat(i)
+			return nil
+		}
+		return fmt.Errorf("expected floating number but got '%v'", ctx.value)
+	case reflect.Float64:
+		if i, ok := ctx.value.(float32); ok {
+			ctx.element.SetFloat(float64(i))
+			return nil
+		}
+		if i, ok := ctx.value.(float64); ok {
+			ctx.element.SetFloat(i)
+			return nil
+		}
+		return fmt.Errorf("expected floating number but got '%v'", ctx.value)
 	case reflect.Interface:
 		if ctx.value == "" {
 			ctx.element.Set(reflect.ValueOf(true))

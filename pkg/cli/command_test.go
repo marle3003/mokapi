@@ -1,6 +1,7 @@
-package cli
+package cli_test
 
 import (
+	"mokapi/pkg/cli"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -15,19 +16,19 @@ func TestCommand(t *testing.T) {
 
 	testcases := []struct {
 		name string
-		cmd  func() *Command
+		cmd  func() *cli.Command
 		args []string
-		test func(t *testing.T, cmd *Command, args []string, err error)
+		test func(t *testing.T, cmd *cli.Command, args []string, err error)
 	}{
 		{
 			name: "--foo",
-			cmd: func() *Command {
-				c := &Command{Name: "foo"}
-				c.Flags().Bool("foo", false, FlagDoc{})
+			cmd: func() *cli.Command {
+				c := &cli.Command{Name: "foo"}
+				c.Flags().Bool("foo", false, cli.FlagDoc{})
 				return c
 			},
 			args: []string{"--foo"},
-			test: func(t *testing.T, cmd *Command, args []string, err error) {
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "foo", cmd.Name)
 				require.Equal(t, true, cmd.Flags().GetBool("foo"))
@@ -35,13 +36,13 @@ func TestCommand(t *testing.T) {
 		},
 		{
 			name: "-f",
-			cmd: func() *Command {
-				c := &Command{Name: "foo"}
-				c.Flags().BoolShort("foo", "f", false, FlagDoc{})
+			cmd: func() *cli.Command {
+				c := &cli.Command{Name: "foo"}
+				c.Flags().BoolShort("foo", "f", false, cli.FlagDoc{})
 				return c
 			},
 			args: []string{"-f"},
-			test: func(t *testing.T, cmd *Command, args []string, err error) {
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "foo", cmd.Name)
 				require.Equal(t, true, cmd.Flags().GetBool("foo"))
@@ -49,13 +50,13 @@ func TestCommand(t *testing.T) {
 		},
 		{
 			name: "bind to config",
-			cmd: func() *Command {
-				c := &Command{Config: &config{}}
-				c.Flags().Bool("flag", false, FlagDoc{})
+			cmd: func() *cli.Command {
+				c := &cli.Command{Config: &config{}}
+				c.Flags().Bool("flag", false, cli.FlagDoc{})
 				return c
 			},
 			args: []string{"--flag"},
-			test: func(t *testing.T, cmd *Command, args []string, err error) {
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, true, cmd.Flags().GetBool("flag"))
 				require.Equal(t, true, cmd.Config.(*config).Flag)
@@ -63,56 +64,84 @@ func TestCommand(t *testing.T) {
 		},
 		{
 			name: "--count",
-			cmd: func() *Command {
-				c := &Command{Config: &config{}}
-				c.Flags().Int("count", 12, FlagDoc{})
+			cmd: func() *cli.Command {
+				c := &cli.Command{Config: &config{}}
+				c.Flags().Int("count", 12, cli.FlagDoc{})
 				return c
 			},
 			args: []string{"--count", "10"},
-			test: func(t *testing.T, cmd *Command, args []string, err error) {
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 10, cmd.Flags().GetInt("count"))
 			},
 		},
 		{
 			name: "--count default",
-			cmd: func() *Command {
-				c := &Command{Config: &config{}}
-				c.Flags().Int("count", 12, FlagDoc{})
+			cmd: func() *cli.Command {
+				c := &cli.Command{Config: &config{}}
+				c.Flags().Int("count", 12, cli.FlagDoc{})
 				return c
 			},
 			args: []string{},
-			test: func(t *testing.T, cmd *Command, args []string, err error) {
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12, cmd.Flags().GetInt("count"))
 			},
 		},
 		{
 			name: "--skip-prefix",
-			cmd: func() *Command {
-				c := &Command{Config: &config{}}
-				c.Flags().StringSlice("skip-prefix", []string{"_"}, false, FlagDoc{})
+			cmd: func() *cli.Command {
+				c := &cli.Command{Config: &config{}}
+				c.Flags().StringSlice("skip-prefix", []string{"_"}, false, cli.FlagDoc{})
 				return c
 			},
 			args: []string{"--skip-prefix", "_", "foo_"},
-			test: func(t *testing.T, cmd *Command, args []string, err error) {
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []string{"_", "foo_"}, cmd.Flags().GetStringSlice("skip-prefix"))
-				require.Equal(t, []string{"_", "foo_"}, cmd.Config.(*config).SkipPrefix)
+				require.Equal(t, []string{"foo_"}, cmd.Flags().GetStringSlice("skip-prefix"))
+				require.Equal(t, []string{"foo_"}, cmd.Config.(*config).SkipPrefix)
 			},
 		},
 		{
 			name: "--skip-prefix default",
-			cmd: func() *Command {
-				c := &Command{Config: &config{}}
-				c.Flags().StringSlice("skip-prefix", []string{"_"}, false, FlagDoc{})
+			cmd: func() *cli.Command {
+				c := &cli.Command{Config: &config{}}
+				c.Flags().StringSlice("skip-prefix", []string{"_"}, false, cli.FlagDoc{})
 				return c
 			},
 			args: []string{},
-			test: func(t *testing.T, cmd *Command, args []string, err error) {
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []string{"_"}, cmd.Flags().GetStringSlice("skip-prefix"))
 				require.Equal(t, []string{"_"}, cmd.Config.(*config).SkipPrefix)
+			},
+		},
+		{
+			name: "--skip-prefix=foo",
+			cmd: func() *cli.Command {
+				c := &cli.Command{Config: &config{}}
+				c.Flags().StringSlice("skip-prefix", []string{"_"}, false, cli.FlagDoc{})
+				return c
+			},
+			args: []string{"--skip-prefix=foo"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []string{"foo"}, cmd.Flags().GetStringSlice("skip-prefix"))
+				require.Equal(t, []string{"foo"}, cmd.Config.(*config).SkipPrefix)
+			},
+		},
+		{
+			name: "--no-flag",
+			cmd: func() *cli.Command {
+				c := &cli.Command{Config: &config{}}
+				c.Flags().Bool("flag", true, cli.FlagDoc{})
+				return c
+			},
+			args: []string{"--no-flag"},
+			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, false, cmd.Flags().GetBool("flag"))
+				require.Equal(t, false, cmd.Config.(*config).Flag)
 			},
 		},
 	}
@@ -120,11 +149,11 @@ func TestCommand(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			var cmd *Command
+			var cmd *cli.Command
 			var args []string
 			root := tc.cmd()
 			root.SetArgs(tc.args)
-			root.Run = func(c *Command, a []string) error {
+			root.Run = func(c *cli.Command, a []string) error {
 				cmd = c
 				args = a
 				return nil

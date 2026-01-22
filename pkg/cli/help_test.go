@@ -1,6 +1,7 @@
-package cli
+package cli_test
 
 import (
+	"mokapi/pkg/cli"
 	"strings"
 	"testing"
 
@@ -10,13 +11,13 @@ import (
 func TestHelp(t *testing.T) {
 	testcases := []struct {
 		name string
-		cmd  *Command
+		cmd  *cli.Command
 		test func(t *testing.T, out string)
 	}{
 		{
 			name: "no flags",
-			cmd: func() *Command {
-				c := &Command{}
+			cmd: func() *cli.Command {
+				c := &cli.Command{}
 				return c
 			}(),
 			test: func(t *testing.T, out string) {
@@ -25,8 +26,8 @@ func TestHelp(t *testing.T) {
 		},
 		{
 			name: "Long description",
-			cmd: func() *Command {
-				c := &Command{Long: "Long Description"}
+			cmd: func() *cli.Command {
+				c := &cli.Command{Long: "Long Description"}
 				return c
 			}(),
 			test: func(t *testing.T, out string) {

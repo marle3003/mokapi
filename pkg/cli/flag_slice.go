@@ -17,6 +17,10 @@ func (f *stringSliceFlag) Set(values []string, source Source) error {
 		return nil
 	}
 
+	if !f.isSet {
+		f.value = nil
+	}
+
 	if len(values) == 1 {
 		if !f.explode {
 			values = splitArrayItems(values[0])
