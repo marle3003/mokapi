@@ -10,3 +10,5 @@ declare module 'highlight.js' {
     const hljs: HLJS
     export default hljs
 }
+// todo: remove it after whatwg-mimetype updates its @types/whatwg-mimetype
+declare module 'whatwg-mimetype';

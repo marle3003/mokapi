@@ -1,4 +1,4 @@
-import MIMEType from 'whatwg-mimetype'
+import { MIMEType } from 'whatwg-mimetype'
 import XmlFormatter from 'xml-formatter'
 
 export function usePrettyLanguage() {
