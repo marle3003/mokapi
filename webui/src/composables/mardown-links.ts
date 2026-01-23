@@ -16,7 +16,7 @@ export function MarkdownItLinks(md: MarkdownIt, opts: Options) {
     md.core.ruler.after('inline', 'link', function(state){
         state.tokens.forEach(function (blockToken: Token) {
             if (blockToken.type === 'inline' && blockToken.children) {
-              blockToken.children.forEach(function (token) {
+              blockToken.children.forEach(function (token: Token) {
                 if (token.type == 'link_open' && token.attrs) {
                     for (let attr of token.attrs){
                         if (attr[0] == 'href' && attr[1].endsWith('.md')){
