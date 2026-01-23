@@ -55,6 +55,49 @@ func TestDynamic(t *testing.T) {
 				require.Equal(t, map[string]string{"bar": "yuh"}, s.Foo)
 			},
 		},
+		{
+			name: "dynamic with an array",
+			test: func(t *testing.T) {
+				s := &struct {
+					Foo map[string]map[string][]string
+				}{}
+				c := newCmd([]string{"--foo[0]-bar", "a b c"}, &s)
+				c.Flags().DynamicStringSlice("foo[<key>]-bar", false, cli.FlagDoc{})
+				err := c.Execute()
+				require.NoError(t, err)
+				require.Equal(t, map[string]map[string][]string{
+					"[0]": {"bar": []string{"a", "b", "c"}},
+				}, s.Foo)
+			},
+		},
+		{
+			name: "dynamic with an array and explode",
+			test: func(t *testing.T) {
+				s := &struct {
+					Foo map[string]map[string][]string
+				}{}
+				c := newCmd([]string{"--foo[0]-bar", "a", "--foo[0]-bar", "b"}, &s)
+				c.Flags().DynamicStringSlice("foo[<key>]-bar", true, cli.FlagDoc{})
+				err := c.Execute()
+				require.NoError(t, err)
+				require.Equal(t, map[string]map[string][]string{
+					"[0]": {"bar": []string{"a", "b"}},
+				}, s.Foo)
+			},
+		},
+		{
+			name: "int",
+			test: func(t *testing.T) {
+				s := &struct {
+					Foo []int
+				}{}
+				c := newCmd([]string{"--foo[0]", "12"}, &s)
+				c.Flags().DynamicInt("foo[<index>]", cli.FlagDoc{})
+				err := c.Execute()
+				require.NoError(t, err)
+				require.Equal(t, []int{12}, s.Foo)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
