@@ -205,16 +205,16 @@ function navigateAndClose(params: Record<string, string>) {
   <header>
 <!-- Promotion banner -->
 <div class="promo-banner" v-if="isPromoEnabled && promo.activePromotion.value">
-  <strong>Shop discount!</strong>
-  Get <strong>{{ promo.activePromotion.value.discount }}% off</strong> Mokapi Gear —
-  <span class="d-none d-md-inline">
-    support Mokapi with code in your heart and style on your sleeve.
+  <strong class="d-none d-md-inline">Shop discount!</strong>
+  Get <strong>{{ promo.activePromotion.value.discount }}% off</strong> Mokapi Gear
+  <span class="d-none d-lg-inline">
+    — support Mokapi with code in your heart and style on your sleeve.
   </span>
-  <a href="https://mokapi.myspreadshop.net" class="promo-link ms-2">Visit shop →</a>
+  <a href="https://mokapi.myspreadshop.net" class="promo-link ms-1">Visit shop →</a>
 </div>
     <nav class="navbar navbar-expand-lg">
       <div class="container-fluid">
-        <a class="navbar-brand" href="./"><img src="/logo-header.svg" height="30" alt="Mokapi home"/></a>
+        <a class="navbar-brand" href="./" title="Mokapi home"><img src="/logo-header.svg" height="30" alt="Mokapi home"/></a>
         <div class="d-flex ms-auto align-items-center tools d-none">
             <a href="https://github.com/marle3003/mokapi" class="version pe-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
             <button class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
@@ -366,7 +366,7 @@ header {
     left: 0;
     z-index: 99;
     background-color: var(--color-background);
-    height: 4rem;
+    height: var(--header-height);
     display: block;
 }
 header .container-fluid {
@@ -379,7 +379,6 @@ header .container-fluid {
   text-align: center;
   padding: 0.5rem 1rem;
   font-size: 0.95rem;
-  margin-bottom: 5px;
 }
 
 .promo-banner strong {

@@ -8,43 +8,76 @@ import (
 var regexIndex = regexp.MustCompile(`\[<.*>]`)
 var regexKey = regexp.MustCompile(`<.*>`)
 
-func (fs *FlagSet) DynamicInt(name string, defaultValue int, usage string) {
-	v := &intFlag{value: defaultValue}
+func (fs *FlagSet) DynamicInt(name string, doc FlagDoc) *FlagBuilder {
 	f := &DynamicFlag{
-		Flag: Flag{
-			Usage:        usage,
-			Value:        v,
-			DefaultValue: v.String(),
-		},
+		Name:    name,
+		Flag:    Flag{FlagDoc: doc},
 		pattern: convertToPattern(name),
+		setValue: func(name string, value []string, source Source) error {
+			f, ok := fs.flags[name]
+			if !ok {
+				v := &intFlag{}
+				if err := v.Set(value, source); err != nil {
+					return err
+				}
+				f = &Flag{Name: name, Value: v, Type: "int", FlagDoc: doc}
+				fs.setFlag(f)
+				return nil
+			} else {
+				return f.Value.Set(value, source)
+			}
+		},
 	}
 	fs.dynamic = append(fs.dynamic, f)
+	return &FlagBuilder{flag: &f.Flag}
 }
 
-func (fs *FlagSet) DynamicString(name string, defaultValue string, usage string) {
-	v := &stringFlag{value: defaultValue}
+func (fs *FlagSet) DynamicString(name string, doc FlagDoc) *FlagBuilder {
 	f := &DynamicFlag{
-		Flag: Flag{
-			Usage:        usage,
-			Value:        v,
-			DefaultValue: v.String(),
-		},
+		Name:    name,
+		Flag:    Flag{FlagDoc: doc},
 		pattern: convertToPattern(name),
+		setValue: func(name string, value []string, source Source) error {
+			f, ok := fs.flags[name]
+			if !ok {
+				v := &stringFlag{}
+				if err := v.Set(value, source); err != nil {
+					return err
+				}
+				f = &Flag{Name: name, Value: v, Type: "string", FlagDoc: doc}
+				fs.setFlag(f)
+				return nil
+			} else {
+				return f.Value.Set(value, source)
+			}
+		},
 	}
 	fs.dynamic = append(fs.dynamic, f)
+	return &FlagBuilder{flag: &f.Flag}
 }
 
-func (fs *FlagSet) DynamicStringSlice(name string, defaultValue []string, usage string, explode bool) {
-	v := &stringSliceFlag{value: defaultValue, explode: explode}
+func (fs *FlagSet) DynamicStringSlice(name string, explode bool, doc FlagDoc) *FlagBuilder {
 	f := &DynamicFlag{
-		Flag: Flag{
-			Usage:        usage,
-			Value:        v,
-			DefaultValue: v.String(),
-		},
+		Name:    name,
+		Flag:    Flag{FlagDoc: doc},
 		pattern: convertToPattern(name),
+		setValue: func(name string, value []string, source Source) error {
+			f, ok := fs.flags[name]
+			if !ok {
+				v := &stringSliceFlag{explode: explode}
+				if err := v.Set(value, source); err != nil {
+					return err
+				}
+				f = &Flag{Name: name, Value: v, Type: "list", FlagDoc: doc}
+				fs.setFlag(f)
+				return nil
+			} else {
+				return f.Value.Set(value, source)
+			}
+		},
 	}
 	fs.dynamic = append(fs.dynamic, f)
+	return &FlagBuilder{flag: &f.Flag}
 }
 
 func convertToPattern(s string) *regexp.Regexp {

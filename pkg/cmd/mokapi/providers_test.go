@@ -1,14 +1,14 @@
 package mokapi_test
 
 import (
-	"context"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
 	"mokapi/pkg/cli"
 	"mokapi/pkg/cmd/mokapi"
 	"os"
 	"path"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestRoot_Providers_File(t *testing.T) {
@@ -33,7 +33,7 @@ func TestRoot_Providers_File(t *testing.T) {
 				return []string{"--providers-file-filename", "foo.yaml,bar.yaml"}
 			},
 			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {
-				require.Equal(t, []string{"foo.yaml,bar.yaml"}, cfg.Providers.File.Filenames)
+				require.Equal(t, []string{"foo.yaml", "bar.yaml"}, cfg.Providers.File.Filenames)
 				require.Equal(t, []string{"foo.yaml,bar.yaml"}, flags.GetStringSlice("providers-file-filename"))
 			},
 		},
@@ -66,7 +66,7 @@ func TestRoot_Providers_File(t *testing.T) {
 				return []string{}
 			},
 			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {
-				require.Equal(t, []string{"foo.yaml,bar.yaml"}, cfg.Providers.File.Filenames)
+				require.Equal(t, []string{"foo.yaml", "bar.yaml"}, cfg.Providers.File.Filenames)
 			},
 		},
 		{
@@ -185,6 +185,16 @@ func TestRoot_Providers_File(t *testing.T) {
 			},
 		},
 		{
+			name: "skipPrefix single element appends to default value",
+			args: func(t *testing.T) []string {
+				return []string{"--providers-file-skip-prefix", "foo"}
+			},
+			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {
+				require.Len(t, cfg.Providers.File.SkipPrefix, 1)
+				require.Contains(t, cfg.Providers.File.SkipPrefix, "foo")
+			},
+		},
+		{
 			name: "Include from cli",
 			args: func(t *testing.T) []string {
 				return []string{"--providers-file-include", "foo_,bar_"}
@@ -213,7 +223,7 @@ func TestRoot_Providers_File(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			cmd := mokapi.NewCmdMokapi(context.Background())
+			cmd := mokapi.NewCmdMokapi()
 			cmd.SetArgs(tc.args(t))
 
 			cfg := static.NewConfig()
@@ -451,7 +461,7 @@ func TestRoot_Providers_Git(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			cmd := mokapi.NewCmdMokapi(context.Background())
+			cmd := mokapi.NewCmdMokapi()
 			cmd.SetArgs(tc.args(t))
 
 			cfg := static.NewConfig()

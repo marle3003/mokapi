@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import { useMeta } from '@/composables/meta'
-import { Modal } from 'bootstrap'
 import Footer from '@/components/Footer.vue'
+import { isValidImage } from '@/composables/image-dialog';
+import ImageDialog from '@/components/ImageDialog.vue';
 
-const dialog = ref<Modal>()
-const imageUrl = ref<string>()
 
 const config = `smtp: '1.0'
 info:
@@ -26,28 +25,25 @@ export default function() {
     })
 }
 `
-const description = `Mock SMTP & IMAP servers with Mokapi. Safely test email sending & receiving without real delivery. Prevent accidental emails in testing environments.`
-useMeta('Mock SMTP & IMAP Server | mokapi.io', description, "https://mokapi.io/mail")
+const title = 'Mock SMTP & IMAP Servers | Mokapi'
+const description = `Mock SMTP and IMAP servers to safely test email workflows without real delivery. Prevent accidental emails in test environments.`
+useMeta(title, description, "https://mokapi.io/mail")
 
-onMounted(() => {
-  dialog.value = new Modal('#imageDialog', {})
-})
+const image = ref<HTMLImageElement | undefined>();
+const showImageDialog = ref<boolean>(false)
 
-function showImage(target: EventTarget | null) {
-  if (hasTouchSupport() || !target || !(target instanceof HTMLImageElement)) {
+function showImage(evt: MouseEvent) {
+  const [isValid, target] = isValidImage(evt.target)
+  if (!isValid) {
     return
   }
-  const element = target as HTMLImageElement
-  imageUrl.value = element.src
-  dialog.value?.show()
-}
-function hasTouchSupport() {
-  return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  image.value = target
+  showImageDialog.value = true
 }
 </script>
 
 <template>
-  <main class="home" @click="showImage($event.target)">
+  <main class="home" @click="showImage($event)">
     <section class="py-5">
       <div class="container">
         <div class="row hero-title">
@@ -59,7 +55,14 @@ function hasTouchSupport() {
               <a href="/ldap"><span class="badge bg-secondary" aria-label="Go to LDAP API page">LDAP</span></a>
               <span class="badge bg-primary" aria-current="page" aria-label="You are currently on the Email API page">Email</span>
             </div>
-            <p class="lead description">Simulate sending and receiving emails—no real mail server needed. <strong>Free, open-source, and entirely under your control.</strong></p>
+            <p class="lead description">
+              Test real-world email workflows safely and anywhere.
+              <strong>Deterministic SMTP & IMAP mocking for modern apps.</strong>
+
+              <span class="fst-italic d-block mt-2">
+                Ideal for backend developers, QA engineers, and teams testing email-dependent systems.
+              </span>
+            </p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/docs/guides/mail' }">
                 <button type="button" class="btn btn-outline-primary">Get Started</button>
@@ -70,9 +73,7 @@ function hasTouchSupport() {
             </p>
           </div>
           <div class="col-12 col-lg-5 justify-content-center">
-            <a href="#dialog" data-bs-toggle="modal" data-bs-target="#dialog">
-              <img src="/logo.svg" alt="Mokapi API Mock Tool" class="mx-auto d-block" />
-            </a>
+            <img src="/logo.svg" alt="Mokapi API Mock Tool" class="mx-auto d-block no-dialog" />
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
@@ -90,34 +91,48 @@ function hasTouchSupport() {
 
     <section class="py-5 text-center">
       <div class="container">
-        <h2>Why Simulate Email Sending & Receiving?</h2>
-        <p class="lead mb-0">
-          Email functionalities like signups, password resets, and notifications are critical. With Mokapi, test them worry-free by mocking SMTP and IMAP servers—without sending real emails.
+        <h2>Why Mocking Email Matters</h2>
+        <p class="lead">
+          Email is often the last untested part of an application.
+          Mokapi lets you validate email flows just like any other API or message stream.
         </p>
       </div>
     </section>
 
     <section class="py-5 text-center">
       <div class="container">
-        <h2>How Mokapi Enhances Email Testing</h2>
+        <h2>What You Can Do with Mokapi Mail</h2>
         <div class="row g-4 mt-4">
 
           <div class="col-md-4">
             <span class="bi bi-envelope-paper display-5 mb-3 d-block icon"></span>
             <h3 class="h5">Mock SMTP & IMAP</h3>
-            <p class="text-muted">Simulate sending emails via SMTP and retrieving them via IMAP—all without an actual mail backend.</p>
+            <p>
+              Simulate outgoing and incoming mail to test real user flows without external dependencies.
+            </p>
+            <p class="fst-italic mb-0">
+              Prevent broken email workflows before they reach production.
+            </p>
           </div>
-          
+
           <div class="col-md-4">
-            <span class="bi bi-journal-code display-5 mb-3 d-block icon"></span>
-            <h3 class="h5">Customize Email Content</h3>
-            <p class="text-muted">Use Mokapi Scripts to manipulate subject lines, headers, attachments, and test for edge-case conditions.</p>
+            <span class="bi bi-arrow-right-circle display-5 mb-3 d-block icon"></span>
+            <h3 class="h5">Forward Emails Safely</h3>
+            <p>
+              Send emails to a specific test address instead of the real recipient while preserving all content.
+            </p>
+            <p class="fst-italic mb-0">
+              Perfect for QA, demos, and preventing accidental emails to real customers.
+            </p>
           </div>
           
           <div class="col-md-4">
             <span class="bi bi-git display-5 mb-3 d-block icon"></span>
             <h3 class="h5">CI/CD Friendly</h3>
-            <p class="text-muted">Add email validation into pipelines—automate workflows that involve email without flaky external services.</p>
+            <p>Validate critical workflows automatically on every commit or release.</p>
+            <p class="fst-italic mb-0">
+              Reduce flaky tests and prevent deployment of broken email functionality.
+            </p>
           </div>
 
         </div>
@@ -126,44 +141,50 @@ function hasTouchSupport() {
 
     <section class="py-5">
       <div class="container">
-        <h2 class="text-center mb-4">Mokapi Mail Server Capabilities</h2>
+        <h2 class="text-center mb-4">Core Mail Mocking Features</h2>
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
 
           <div class="col">
             <div class="card h-100 shadow-sm border-0">
-              <div class="card-body">
+              <div class="card-body d-flex flex-column">
                 <h3>
                   <span class="bi bi-file-code me-2 icon"></span>Easy Mail Configuration
                 </h3>
-                <p class="card-text pb-4">Define email behaviors declaratively—versioned, reproducible, and stored alongside your code.</p>
-                <a href="/docs/guides/mail" class="btn btn-outline-primary btn-sm">Explore</a>
+                <p class="card-text pb-1">
+                  Define SMTP and IMAP behavior declaratively.
+                  Versioned, reproducible, and consistent across environments.
+                </p>
+                <a href="/docs/guides/mail" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Explore</a>
               </div>
             </div>
           </div>
 
           <div class="col">
             <div class="card h-100 shadow-sm border-0">
-              <div class="card-body">
+              <div class="card-body d-flex flex-column">
                 <h3>
                   <span class="bi bi-inbox me-2 icon"></span>Inbox Simulation
                 </h3>
-                <p class="card-text pb-4">
-                  Simulate different inbox states, verify folder structures, and ensure your application 
-                  handles real-world mail scenarios reliably.
+                <p class="card-text">
+                  Simulate inbox states, folders, and message retrieval
+                  exactly as real email clients expect.
                 </p>
-                <a href="/docs/guides/mail/client" class="btn btn-outline-primary btn-sm">Try It</a>
+                <a href="/docs/guides/mail/client" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Try It</a>
               </div>
             </div>
           </div>
 
           <div class="col">
             <div class="card h-100 shadow-sm border-0">
-              <div class="card-body">
+              <div class="card-body d-flex flex-column">
                 <h3>
                   <span class="bi bi-plug me-2 icon"></span>Pipeline Integration
                 </h3>
-                <p class="card-text pb-4">Add email mock checks to your CI environments—replace flaky live dependencies with reliable mocks.</p>
-                <a href="docs/resources/blogs/testing-email-workflows-with-playwright-and-mokapi" class="btn btn-outline-primary btn-sm">Read Guide</a>
+                <p class="card-text">
+                  Replace live mail servers in CI with fast,
+                  deterministic email mocks.
+                </p>
+                <a href="docs/resources/blogs/testing-email-workflows-with-playwright-and-mokapi" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Read Guide</a>
               </div>
             </div>
           </div>
@@ -174,35 +195,44 @@ function hasTouchSupport() {
 
     <section class="py-5">
       <div class="container">
-        <h2 class="text-center mb-4">Use Cases</h2>
+        <h2 class="text-center mb-4">Common Email Testing Use Cases</h2>
         <div class="row row-cols-1 row-cols-md-3 g-4">
 
           <div class="col">
             <div class="card h-100 shadow-sm border-0">
-              <div class="card-body">
+              <div class="card-body d-flex flex-column">
                 <h3><span class="bi bi-person-plus-fill me-2 icon"></span>User Registration</h3>
-                <p class="card-text">Verify that sign-up confirmation emails are properly generated and formatted.</p>
-                <a href="/docs/resources/blogs/testing-email-workflows-with-playwright-and-mokapi" class="btn btn-outline-primary btn-sm position-absolute" style="bottom:20px;">Read Guide</a>
+                <p class="card-text pb-1">
+                  Ensure confirmation emails are generated and formatted correctly
+                  before users ever receive them.
+                </p>
+                <a href="/docs/resources/blogs/testing-email-workflows-with-playwright-and-mokapi" class="btn btn-outline-primary btn-sm  mt-auto align-self-start">Read Guide</a>
               </div>
             </div>
           </div>
 
           <div class="col">
             <div class="card h-100 shadow-sm border-0">
-              <div class="card-body">
+              <div class="card-body d-flex flex-column">
                 <h3><span class="bi bi-lock me-2"></span>Password Reset Flow</h3>
-                <p class="card-text">Test reset email workflows reliably, without sending actual messages.</p>
-                <a href="/docs/resources/blogs/testing-email-workflows-with-playwright-and-mokapi" class="btn btn-outline-primary btn-sm position-absolute" style="bottom:20px;">Read Guide</a>
+                <p class="card-text">
+                  Validate reset links, tokens, and expiry handling
+                  without sending real emails.
+                </p>
+                <a href="/docs/resources/blogs/testing-email-workflows-with-playwright-and-mokapi" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Read Guide</a>
               </div>
             </div>
           </div>
 
           <div class="col">
             <div class="card h-100 shadow-sm border-0">
-              <div class="card-body">
+              <div class="card-body d-flex flex-column">
                 <h3><span class="bi bi-chat-text me-2"></span>Newsletter Handling</h3>
-                <p class="card-text pb-5">Simulate batch email sends and validate content, headers, or links in a mock environment.</p>
-                <a href="/docs/resources/tutorials/mock-smtp-server-send-mail-using-node" class="btn btn-outline-primary btn-sm position-absolute" style="bottom:20px;">Try it</a>
+                <p class="card-text">
+                  Test bulk email sending, links, and formatting
+                  in a safe, isolated environment.
+                </p>
+                <a href="/docs/resources/tutorials/mock-smtp-server-send-mail-using-node" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Try it</a>
               </div>
             </div>
           </div>
@@ -215,24 +245,28 @@ function hasTouchSupport() {
       <div class="container">
         <div class="row">
           <div class="col-12 justify-content-center">
-            <h2>Easy setup of your fake SMTP server</h2>
-            <p class="lead text-center">Create individual inboxes for different workflows or forward all emails into one real inbox.</p>
-            <div class="tab justify-content-center">
-              <div class="nav code-tabs" id="tab-1" role="tablist">
-                <button class="active" id="tab-1-CLI" data-bs-toggle="tab" data-bs-target="#tabPanel-1-CLI" type="button" role="tab" aria-controls="tabPanel-1-CLI" aria-selected="true">
-                  Configuration
-                </button>
-                <button id="tab-1-File" data-bs-toggle="tab" data-bs-target="#tabPanel-1-File" type="button" role="tab" aria-controls="tabPanel-1-File" aria-selected="false">
-                  Javascript
-                </button>
+            <h2>Set Up a Fake SMTP Server in Seconds</h2>
+            <p class="lead text-center">Configure inboxes, routing, and forwarding with a simple file or script. No infrastructure required.</p>
+
+            <div class="code">
+              <div class="tab justify-content-center">
+                <div class="nav code-tabs" id="tab-1" role="tablist">
+                  <button class="active" id="tab-1-CLI" data-bs-toggle="tab" data-bs-target="#tabPanel-1-CLI" type="button" role="tab" aria-controls="tabPanel-1-CLI" aria-selected="true">
+                    Configuration
+                  </button>
+                  <button id="tab-1-File" data-bs-toggle="tab" data-bs-target="#tabPanel-1-File" type="button" role="tab" aria-controls="tabPanel-1-File" aria-selected="false">
+                    Javascript
+                  </button>
+                  <div class="tabs-border"></div>
+                </div>
               </div>
-            </div>
-            <div class="tab-content code">
-              <div class="tab-pane fade show active" id="tabPanel-1-CLI" role="tabpanel" aria-labelledby="tab-1-CLI">
-                <pre v-highlightjs="config"><code class="application/yaml"></code></pre>
-              </div>
-              <div class="tab-pane fade" id="tabPanel-1-File" role="tabpanel" aria-labelledby="tab-1-File">
-                <pre v-highlightjs="script"><code class="javascript"></code></pre>
+              <div class="tab-content code">
+                <div class="tab-pane fade show active" id="tabPanel-1-CLI" role="tabpanel" aria-labelledby="tab-1-CLI">
+                  <pre v-highlightjs="config"><code class="application/yaml"></code></pre>
+                </div>
+                <div class="tab-pane fade" id="tabPanel-1-File" role="tabpanel" aria-labelledby="tab-1-File">
+                  <pre v-highlightjs="script"><code class="javascript"></code></pre>
+                </div>
               </div>
             </div>
           </div>
@@ -244,11 +278,11 @@ function hasTouchSupport() {
       <div class="container">
         <div class="row">
           <div class="col-12">
-            <h2>Inspect Sent Emails</h2>
+            <h2>Inspect and Debug Sent Emails</h2>
             <p class="lead mb-5 text-center">
-              View captured messages and headers with Mokapi’s built-in email dashboard for debugging and testing.
+              View captured messages, headers, and attachments directly in Mokapi’s dashboard for fast debugging.
             </p>
-            <img src="/dashboard-smtp.png" alt="Mokapi dashboard displaying received emails via the built-in SMTP server." style="width:100%" />
+            <img src="/dashboard-smtp.png" alt="Mokapi dashboard displaying received emails via the built-in SMTP server." class="img-fluid rounded shadow" />
           </div>
         </div>
       </div>
@@ -256,28 +290,14 @@ function hasTouchSupport() {
 
     <section class="py-5 text-center">
       <div class="container">
-        <h2>Start Mocking Emails Today</h2>
+        <h2>Mock Email Like Any Other Dependency</h2>
         <p class="lead mb-4">
-          Simulate full email flows—without external mail servers. Fast, safe, and open-source email mocking.
+          Test full email workflows without external mail servers.
         </p>
         <a href="/docs/guides/mail" class="btn btn-lg btn-outline-primary">Get Started</a>
       </div>
     </section>
   </main>
   <Footer></Footer>
-  <div class="modal fade" id="imageDialog" tabindex="-1" aria-hidden="true">
-      <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-          <div class="modal-body">
-            <img :src="imageUrl" style="width:100%" />
-          </div>
-        </div>
-      </div>
-    </div>
+  <ImageDialog v-model:show="showImageDialog" v-model:image="image" />
 </template>
-
-<style>
-main img {
-  cursor: pointer;
-}
-</style>

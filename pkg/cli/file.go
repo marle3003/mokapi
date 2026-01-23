@@ -3,71 +3,90 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
-	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
+	"gopkg.in/yaml.v3"
 )
 
 var (
-	searchPaths = []string{".", "/etc/mokapi"}
-	fileNames   = []string{"mokapi.yaml", "mokapi.yml", "mokapi.json"}
+	supportedExts = []string{".yaml", ".yml", ".json"}
 )
 
-type ReadFileFS func(path string) ([]byte, error)
-
-var readFile ReadFileFS = os.ReadFile
-
-func SetReadFileFS(f ReadFileFS) {
-	readFile = f
+type FSReader interface {
+	ReadFile(name string) ([]byte, error)
+	FileExists(name string) bool
 }
 
-func readConfigFileFromFlags(flags map[string][]string, element interface{}) (string, error) {
-	var filename string
-	if len(filename) == 0 {
-		if val, ok := flags["configfile"]; ok {
-			delete(flags, "configfile")
-			filename = val[0]
-		} else if val, ok := flags["config-file"]; ok {
-			delete(flags, "config-file")
-			filename = val[0]
-		} else if val, ok := flags["cli-input"]; ok {
-			delete(flags, "cli-input")
-			filename = val[0]
-		}
+type FileReader struct{}
+
+func (r *FileReader) ReadFile(name string) ([]byte, error) {
+	return os.ReadFile(name)
+}
+
+func (r *FileReader) FileExists(name string) bool {
+	_, err := os.Stat(name)
+	if err != nil {
+		return false
+	}
+	return true
+}
+
+var fileReader FSReader = &FileReader{}
+
+func SetFileReader(r FSReader) {
+	fileReader = r
+}
+
+func (c *Command) readConfigFile() error {
+	file := c.configFile
+	if file == "" {
+		file = c.findConfigFile()
 	}
 
-	if len(filename) > 0 {
-		err := readConfigFile(filename, element)
-		return filename, err
+	if file == "" {
+		return nil
 	}
 
-	for _, dir := range searchPaths {
-		for _, name := range fileNames {
-			path := filepath.Join(dir, name)
-			if err := readConfigFile(path, element); err == nil {
-				return path, nil
-			} else if !os.IsNotExist(err) {
-				return path, err
+	err := readConfigFile(file, c.Config)
+	if err != nil {
+		return fmt.Errorf("read config file '%s' failed: %w", file, err)
+	}
+
+	return mapConfigToFlags(c.Config, c.flags)
+}
+
+func (c *Command) findConfigFile() string {
+	name := c.configFileName
+	if name == "" {
+		name = strings.ToLower(c.Name)
+	}
+
+	for _, dir := range c.configPaths {
+		for _, ext := range supportedExts {
+			path := filepath.Join(dir, fmt.Sprintf("%s%s", name, ext))
+			if fileReader.FileExists(path) {
+				return path
 			}
 		}
 	}
-
-	return "", nil
+	return ""
 }
 
-func readConfigFile(path string, element interface{}) error {
-	data, err := readFile(path)
+func readConfigFile(path string, config any) error {
+	data, err := fileReader.ReadFile(path)
 	if err != nil {
 		return err
 	}
 	switch filepath.Ext(path) {
 	case ".yaml", ".yml":
-		err = unmarshalYaml(data, reflect.ValueOf(element))
+		err = unmarshalYaml(data, config)
 	case ".json":
-		err = unmarshalJson(data, reflect.ValueOf(element))
+		err = unmarshalJson(data, config)
 	default:
 		err = fmt.Errorf("unsupported file extension: %v", filepath.Ext(path))
 	}
@@ -78,61 +97,141 @@ func readConfigFile(path string, element interface{}) error {
 	return nil
 }
 
-func unmarshalYaml(b []byte, element reflect.Value) error {
+func mapConfigToFlags(config any, flags *FlagSet) error {
+	return mapValueToFlags(reflect.ValueOf(config), "", flags)
+}
+
+func mapValueToFlags(v reflect.Value, key string, flags *FlagSet) error {
+	switch v.Kind() {
+	case reflect.Ptr:
+		return mapValueToFlags(v.Elem(), key, flags)
+	case reflect.Struct:
+		t := v.Type()
+		for i := 0; i < v.NumField(); i++ {
+			field := t.Field(i)
+			if !field.IsExported() {
+				continue
+			}
+
+			name := strings.ToLower(field.Name)
+			tag := field.Tag.Get("name")
+			if tag != "" {
+				name = strings.Split(tag, ",")[0]
+			} else {
+				tag = field.Tag.Get("flag")
+				if tag != "" {
+					name = strings.Split(tag, ",")[0]
+				}
+			}
+			if name == "-" {
+				continue
+			}
+			if key != "" {
+				name = key + "-" + name
+			}
+
+			err := mapValueToFlags(v.Field(i), name, flags)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	case reflect.Slice:
+		if _, ok := flags.GetValue(key); ok {
+			var values []string
+			for i := 0; i < v.Len(); i++ {
+				values = append(values, fmt.Sprintf("%v", v.Index(i)))
+			}
+			return flags.setValue(key, values, SourceFile)
+		}
+		for i := 0; i < v.Len(); i++ {
+			err := mapValueToFlags(v.Index(i), fmt.Sprintf("%s[%v]", key, i), flags)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	case reflect.Map:
+		for _, k := range v.MapKeys() {
+			err := mapValueToFlags(v.MapIndex(k), fmt.Sprintf("%s-%v", key, k.Interface()), flags)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	default:
+		if canBeNil(v) && v.IsNil() {
+			return nil
+		}
+		return flags.setValue(key, []string{fmt.Sprintf("%v", v.Interface())}, SourceFile)
+	}
+}
+
+func canBeNil(v reflect.Value) bool {
+	switch v.Kind() {
+	case reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
+		return true
+	default:
+		return false
+	}
+}
+
+func unmarshalYaml(b []byte, config any) error {
 	m := map[string]interface{}{}
 	err := yaml.Unmarshal(b, m)
 	if err != nil {
 		return err
 	}
 
-	return mapConfig(m, element, "yaml")
+	return mapValueToConfig(m, reflect.ValueOf(config), "yaml")
 }
 
-func unmarshalJson(b []byte, element reflect.Value) error {
+func unmarshalJson(b []byte, config any) error {
 	m := map[string]interface{}{}
 	err := json.Unmarshal(b, &m)
 	if err != nil {
 		return err
 	}
 
-	return mapConfig(m, element, "json")
+	return mapValueToConfig(m, reflect.ValueOf(config), "json")
 }
 
 var caser = cases.Title(language.English)
 
-func mapConfig(value interface{}, element reflect.Value, format string) (err error) {
+func mapValueToConfig(value interface{}, configElement reflect.Value, format string) (err error) {
 	defer func() {
 		r := recover()
 		if r != nil {
-			err = fmt.Errorf("cannot unmarshal %v into %v", toTypeName(reflect.ValueOf(value)), toTypeName(element))
+			err = fmt.Errorf("cannot unmarshal %v into %v", toTypeName(reflect.ValueOf(value)), toTypeName(configElement))
 		}
 	}()
 
-	switch element.Type().Kind() {
+	switch configElement.Type().Kind() {
 	case reflect.Pointer:
-		if element.IsNil() {
-			element.Set(reflect.New(element.Type().Elem()))
+		if configElement.IsNil() {
+			configElement.Set(reflect.New(configElement.Type().Elem()))
 		}
-		return mapConfig(value, element.Elem(), format)
+		return mapValueToConfig(value, configElement.Elem(), format)
 	case reflect.Bool, reflect.Int, reflect.Float64:
-		element.Set(reflect.ValueOf(value))
+		configElement.Set(reflect.ValueOf(value))
 	case reflect.Int64:
 		switch i := value.(type) {
 		case int:
-			element.SetInt(int64(i))
+			configElement.SetInt(int64(i))
 		case int64:
-			element.SetInt(i)
+			configElement.SetInt(i)
 		default:
-			return fmt.Errorf("cannot unmarshal %v into %v", toTypeName(reflect.ValueOf(value)), toTypeName(element))
+			return fmt.Errorf("cannot unmarshal %v into %v", toTypeName(reflect.ValueOf(value)), toTypeName(configElement))
 		}
 
 	case reflect.String:
 		if _, ok := value.(string); ok {
-			t := element.Type()
+			t := configElement.Type()
 			if !reflect.TypeOf(value).AssignableTo(t) {
-				element.Set(reflect.ValueOf(value).Convert(t))
+				configElement.Set(reflect.ValueOf(value).Convert(t))
 			} else {
-				element.Set(reflect.ValueOf(value))
+				configElement.Set(reflect.ValueOf(value))
 			}
 		} else {
 			var b []byte
@@ -140,55 +239,58 @@ func mapConfig(value interface{}, element reflect.Value, format string) (err err
 			if err != nil {
 				return
 			}
-			element.Set(reflect.ValueOf(string(b)))
+			configElement.Set(reflect.ValueOf(string(b)))
 		}
 	case reflect.Slice:
 		v := reflect.ValueOf(value)
 		if v.Type().Kind() != reflect.Slice {
-			ptr := reflect.New(element.Type().Elem())
-			err = mapConfig(value, ptr.Elem(), format)
+			ptr := reflect.New(configElement.Type().Elem())
+			err = mapValueToConfig(value, ptr.Elem(), format)
 			if err != nil {
 				return
 			}
-			element.Set(reflect.Append(element, ptr.Elem()))
+			configElement.Set(reflect.Append(configElement, ptr.Elem()))
 		} else {
-			arr, ok := value.([]interface{})
+			arr, ok := value.([]any)
 			if !ok {
 				return fmt.Errorf("expected array, got: %v", value)
 			}
+			configElement.Set(reflect.Zero(configElement.Type()))
 			for _, item := range arr {
-				err = mapConfig(item, element, format)
+				err = mapValueToConfig(item, configElement, format)
 				if err != nil {
 					return
 				}
 			}
 		}
 	case reflect.Struct:
-		m, ok := value.(map[string]interface{})
+		m, ok := value.(map[string]any)
 		if !ok {
+			i := configElement.Interface()
+			_ = i
 			return fmt.Errorf("expected object structure, got: %v", value)
 		}
 		for k, v := range m {
-			f := getFieldByTag(element, k, format)
+			f := getFieldByTag(configElement, k, format)
 			if f.IsValid() {
-				err = mapConfig(v, f, format)
+				err = mapValueToConfig(v, f, format)
 				if err != nil {
 					return
 				}
 				continue
 			}
 			name := caser.String(k)
-			f = element.FieldByNameFunc(func(f string) bool { return f == name })
+			f = configElement.FieldByNameFunc(func(f string) bool { return f == name })
 			if f.IsValid() {
-				err = mapConfig(v, f, format)
+				err = mapValueToConfig(v, f, format)
 				if err != nil {
 					return
 				}
 				continue
 			}
-			f = getFieldByTag(element, k, "explode")
+			f = getFieldByTag(configElement, k, "explode")
 			if f.IsValid() {
-				err = mapConfig(v, f, format)
+				err = mapValueToConfig(v, f, format)
 				if err != nil {
 					return
 				}
@@ -199,19 +301,19 @@ func mapConfig(value interface{}, element reflect.Value, format string) (err err
 		if !ok {
 			return fmt.Errorf("expected object structure, got: %v", value)
 		}
-		if element.IsNil() {
-			element.Set(reflect.MakeMap(element.Type()))
+		if configElement.IsNil() {
+			configElement.Set(reflect.MakeMap(configElement.Type()))
 		}
 		for k, v := range m {
-			ptr := reflect.New(element.Type().Elem())
-			err = mapConfig(v, ptr.Elem(), format)
+			ptr := reflect.New(configElement.Type().Elem())
+			err = mapValueToConfig(v, ptr.Elem(), format)
 			if err != nil {
 				return
 			}
-			element.SetMapIndex(reflect.ValueOf(k), ptr.Elem())
+			configElement.SetMapIndex(reflect.ValueOf(k), ptr.Elem())
 		}
 	default:
-		return fmt.Errorf("type not supported: %v", element.Type().Kind())
+		return fmt.Errorf("type not supported: %v", configElement.Type().Kind())
 	}
 
 	return

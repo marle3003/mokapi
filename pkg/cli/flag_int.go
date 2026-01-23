@@ -1,15 +1,22 @@
 package cli
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 )
 
 type intFlag struct {
-	value int
+	value  int
+	isSet  bool
+	source Source
 }
 
-func (f *intFlag) Set(values []string) error {
+func (f *intFlag) Set(values []string, source Source) error {
+	if f.source > source {
+		return nil
+	}
+
 	if len(values) != 1 {
 		return fmt.Errorf("expected 1 value, got %d", len(values))
 	}
@@ -20,9 +27,12 @@ func (f *intFlag) Set(values []string) error {
 	s := values[0]
 	v, err := strconv.Atoi(s)
 	if err != nil {
-		return err
+		err = errors.Unwrap(err)
+		return fmt.Errorf("parsing %s: %w", s, err)
 	}
 	f.value = v
+	f.isSet = true
+	f.source = source
 	return nil
 }
 
@@ -30,24 +40,29 @@ func (f *intFlag) Value() any {
 	return f.value
 }
 
+func (f *intFlag) IsSet() bool {
+	return f.isSet
+}
+
 func (f *intFlag) String() string {
 	return fmt.Sprintf("%d", f.value)
 }
 
-func (fs *FlagSet) Int(name string, defaultValue int, usage string) {
-	fs.IntShort(name, "", defaultValue, usage)
+func (fs *FlagSet) Int(name string, defaultValue int, doc FlagDoc) *FlagBuilder {
+	return fs.IntShort(name, "", defaultValue, doc)
 }
 
-func (fs *FlagSet) IntShort(name string, short string, defaultValue int, usage string) {
+func (fs *FlagSet) IntShort(name string, short string, defaultValue int, doc FlagDoc) *FlagBuilder {
 	v := &intFlag{value: defaultValue}
-	f := &Flag{Name: name, Shorthand: short, Value: v, Usage: usage, DefaultValue: v.String()}
+	f := &Flag{Name: name, Shorthand: short, Value: v, DefaultValue: defaultValue, FlagDoc: doc, Type: "int"}
 	fs.setFlag(f)
+	return &FlagBuilder{flag: f}
 }
 
 func (fs *FlagSet) GetInt(name string) int {
-	v, err := fs.GetValue(name)
-	if err != nil {
-		panic(err)
+	v, ok := fs.GetValue(name)
+	if !ok {
+		panic(FlagNotFound{Name: name})
 	}
 	b, ok := v.(int)
 	if !ok {

@@ -9,12 +9,12 @@
     padding: 3px 5px
   }
   pre:has(code.hljs) {
-    background: #f6f8fa;
+    background: var(--code-background);
   }
 
   .hljs {
     color: 	#24292e;
-    background: #f6f8fa;
+    background: var(--code-background);
   }
 
   .hljs-doctag,

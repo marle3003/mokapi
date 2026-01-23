@@ -45,7 +45,7 @@ test('Visit Guides', async ({ page, home }) => {
         await expect(page.getByRole('region', { name: 'HTTP' }).getByRole('link', { name: 'Quick Start' })).toBeVisible()
 
         await page.getByRole('button', { name: 'Get Started'}).click()
-        await expect(getStarted.getByRole('link', { name: 'Installation' })).toBeVisible()
+        await expect(getStarted.getByRole('link', { name: 'Installation' })).not.toBeVisible()
     })
 
     await test.step('visit HTTP Quick Start page', async () => {

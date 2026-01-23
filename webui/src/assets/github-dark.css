@@ -1,7 +1,6 @@
-:root[data-theme="dark"] {
+/*:root[data-theme="dark"] {*/
   pre code.hljs {
     display: block;
-    padding: 12px;
     line-height: 1.4;
   }
 
@@ -9,12 +8,12 @@
     padding: 3px 5px
   }
   pre:has(code.hljs) {
-    background: #0d1117;
+    background: var(--code-background);
   }
 
   .hljs {
-    color: #BBBBBB;
-    background: #0d1117
+    color: #e6edf3;
+    background: var(--code-background)
   }
 
   .hljs-doctag,
@@ -103,4 +102,4 @@
     color: #ffdcd7;
     background-color: #67060c
   }
-}
+/*}*/

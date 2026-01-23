@@ -1,4 +1,4 @@
-import { test, expect } from '../models/fixture-dashboard'
+import { test, expect } from '../models/fixture-website'
 import { getCellByColumnName } from '../helpers/table'
 
 test.use({ colorScheme: 'light' })
@@ -60,10 +60,10 @@ test('Visit Petstore Demo', async ({ page }) => {
     await test.step('Verify Configs', async () => {
         const table = page.getByRole('table', { name: 'Configs' });
         const rows = table.locator('tbody tr');
-        await expect(await getCellByColumnName(table, 'URL', rows.nth(0))).toContainText('/webui/scripts/dashboard-demo/demo-configs/petstore.yaml');
+        await expect(await getCellByColumnName(table, 'URL', rows.nth(0))).toContainText('/petstore.yaml');
         await expect(await getCellByColumnName(table, 'Provider', rows.nth(0))).toHaveText('File');
 
-        await expect(await getCellByColumnName(table, 'URL', rows.nth(1))).toContainText('/webui/scripts/dashboard-demo/demo-configs/z.petstore.fix.yaml');
+        await expect(await getCellByColumnName(table, 'URL', rows.nth(1))).toContainText('/z.petstore.fix.yaml');
         await expect(await getCellByColumnName(table, 'Provider', rows.nth(1))).toHaveText('File');
     });
 

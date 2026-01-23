@@ -29,6 +29,15 @@ runs:
         repository: marle3003/mokapi
         excludes: prerelease, draft
         token: ${{ inputs.token }}
+    - name: Download image
+      id: download
+      uses: actions/download-artifact@v4
+      with:
+        name: ${{ env.image-artifact-name }}
+        path: /tmp
+    - name: Load image
+      run: docker load --input /tmp/mokapi.tar
+      shell: bash
     - name: Run mokapi image
       run: docker run --name mokapi --rm -d -p 80:80 -p 8080:8080 -p 9092:9092 -p 8389:8389 -p 8025:8025 --mount type=bind,source=$(pwd)/webui/scripts/dashboard-demo/demo-configs,target=/data --env MOKAPI_Providers_File_Directory=/data ${{ inputs.image-name }}
       shell: bash
@@ -42,11 +51,25 @@ runs:
       if: always()
       run: docker stop mokapi || true
       shell: bash
-    - name: build website
+    - name: build webui
       working-directory: ./webui
       run: |
         npm install
         npm version ${{ steps.release.outputs.release }}
+        npm run build
+      shell: bash
+    - name: Build CLI doc
+      run: go run ./cmd/internal/gen-cli-docs/main.go
+      shell: bash
+    - name: Add CLI Flags nav entry
+      run: |
+         jq '.Configuration.items.Static.items["CLI Flags"] = "configuration/static/mokapi.md"' ./config.json > ./tmp.json
+         mv ./tmp.json ./config.json
+      working-directory: ./docs
+      shell: bash
+    - name: build website
+      working-directory: ./webui
+      run: |
         npm run copy-docs
         npm run build-sitemap
         npm run build-website
@@ -55,6 +78,16 @@ runs:
       working-directory: ./webui
       run: npx playwright install --with-deps
       shell: bash
+    - name: test website
+      working-directory: ./webui
+      run: npx playwright test --project=website
+      shell: bash
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: website-test-report
+        path: webui/playwright-report
     - name: prerender
       working-directory: ./webui/ssg
       run: node index.js

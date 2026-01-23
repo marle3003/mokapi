@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref, inject, computed  } from 'vue';
+import { onMounted, ref, inject, computed, useTemplateRef, onBeforeUnmount  } from 'vue';
 import { useRoute, type RouteParamsRawGeneric } from 'vue-router';
 import { useMarkdown } from '@/composables/markdown'
 import { useMeta } from '@/composables/meta'
@@ -15,6 +15,7 @@ const nav = inject<DocConfig>('nav')!
 const dialog = ref<Modal>()
 const imageUrl = ref<string>()
 const imageDescription = ref<string>()
+const contentElement = useTemplateRef<HTMLElement>('content')
 
 const route = useRoute()
 const { resolve } = useFileResolver()
@@ -104,6 +105,10 @@ onMounted(() => {
     useMeta(title, metadata.description, getCanonicalUrl(levels), metadata.image)
   }
   dialog.value = new Modal('#imageDialog', {})
+  contentElement.value?.addEventListener('click', copyToClipboard);
+})
+onBeforeUnmount(() => {
+  contentElement.value?.removeEventListener('click', copyToClipboard);
 })
 function toUrlPath(s: string): string {
   return s.replaceAll(/[\s\/]/g, '-').replace('&', '%26')
@@ -139,6 +144,37 @@ function hasTouchSupport() {
 function formatParam(label: any): string {
   return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
 }
+async function copyToClipboard(event: MouseEvent) {
+  const target = event.target as HTMLElement
+  const button = target.closest('[data-copy]')
+  if (!button) {
+      console.log('copy')
+    return
+  }
+
+  const codeBlock = button.closest('.code')
+  if (!codeBlock) {
+    return
+  }
+  const activePane = codeBlock.querySelector('.tab-pane.active')
+  if (!activePane) {
+    return
+  }
+  const codeElement = activePane.querySelector('pre code')
+  if (!codeElement) {
+    return
+  }
+
+  const text = codeElement.textContent ?? ''
+
+  try {
+    await navigator.clipboard.writeText(text)
+    button.classList.add('copied')
+    setTimeout(() => button.classList.remove('copied'), 1500)
+  } catch (err) {
+    console.error('Failed to copy code:', err)
+  }
+}
 </script>
 
 <template>
@@ -158,7 +194,7 @@ function formatParam(label: any): string {
                 </li>
               </ol>
             </nav>
-            <div v-if="content" v-html="content" class="content" @click="showImage($event.target)"></div>
+            <div v-if="content" v-html="content" class="content" @click="showImage($event.target)" ref="content"></div>
             <div v-else-if="component" class="content"><component :is="component" /></div>
             <page-not-found v-else />
           </div>
@@ -185,9 +221,10 @@ function formatParam(label: any): string {
 .doc {
   margin-top: 20px;
 }
+
 .sidebar {
   position: sticky;
-  top: 4rem;
+  top: var(--header-height);
   align-self: flex-start;
   width: 290px;
   padding-top: 2rem;
@@ -202,20 +239,16 @@ function formatParam(label: any): string {
   font-size: 0.9rem;
 }
 .content {
-  line-height: 1.63;
-  font-size: 1.15rem;
+  line-height: 1.5rem;
+  font-size: 1rem;
 }
 
 .content h1 {
-  margin-top: 1.2rem;
-  margin-bottom: 1.6rem;
   font-size: 2.25rem;
 }
 
 .content h2 {
-  margin-top: 1.6rem;
-  margin-bottom: 1rem;
-  font-size: 1.8rem;
+  font-size: 1.55rem;
 }
 
 .content h2 > * {
@@ -223,18 +256,20 @@ function formatParam(label: any): string {
   padding-right: 5px;
 }
 
+.content h2 > a {
+  padding-right: 0;
+}
+
 .content h2 > svg path {
   fill: var(--link-color);
 }
 
 .content h3 {
-  margin-top: 1.3rem;
-  margin-bottom: 0.75rem;
   font-size: 1.4rem;
 }
 
 .content p {
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .content ul {
@@ -265,14 +300,18 @@ table {
     text-align: start;
     width: 100%;
     margin-bottom: 20px;
-    font-size: 1rem;
+    font-size: 0.9rem;
 }
 table.selectable td {
     cursor: pointer;
 }
+table td, table th {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
 table thead th {
     color: var(--table-header-color);
-    padding: 3px 0 3px 12px;
+    padding: 3px 12px 3px 12px;
     border-color: var(--table-border-color);
     border-top-width: 0px;
     border-bottom-width: 2px;
@@ -296,10 +335,9 @@ table.selectable tbody tr:hover {
 pre {
   max-width: 760px;
   margin: 0 auto auto;
-  margin-bottom: 1rem;
   white-space: pre-wrap;
   word-break: break-all;
-  border-radius: 6px;
+  box-shadow: none;
   line-height: 1.4;
   font-family: Menlo,Monaco,Consolas,"Courier New",monospace !important;
   font-size: 0.85rem;
@@ -312,20 +350,17 @@ pre {
     margin-left: 0;
   }
 }
-code {
+.code {
+  margin-bottom: 8px;
+}
+.code pre code.hljs {
   font-family: Menlo,Monaco,Consolas,"Courier New",monospace !important;
+  padding-left: 0 !important;
 }
 
 .content ul li h3 {
   font-size: 1rem;
   margin-bottom: 0.5rem;
-}
-
-.code-tabs {
-  margin-top: 1rem;
-}
-.tab-content.code > .tab-pane {
-  margin-bottom: 2rem;
 }
 
 .box {
@@ -486,5 +521,11 @@ blockquote span {
 }
 [data-bs-theme="light"] .carousel-control-next-icon {
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708'/%3e%3c/svg%3e") 
+}
+a[name] {
+  scroll-margin-top: calc(2 * var(--header-height));
+}
+.flags table tr th:nth-child(1){
+  width: 40%;
 }
 </style>

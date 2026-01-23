@@ -5,29 +5,29 @@ export interface Promotion {
   validUntil: string
 }
 
-export const promotions: Promotion[] = [
+export const promotions: Promotion[] = [ 
   {
     enabled: true,
     discount: 25,
     validFrom: '2025-12-29',
-    validUntil: '2026-01-06',
+    validUntil: '2026-01-07', // next date to be valid until midnight
   },
   {
     enabled: true,
     discount: 20,
     validFrom: '2026-01-13',
-    validUntil: '2026-01-18',
+    validUntil: '2026-01-19',
   },
   {
     enabled: true,
     discount: 20,
     validFrom: '2026-01-20',
-    validUntil: '2026-01-25',
+    validUntil: '2026-01-26',
   },
   {
     enabled: true,
     discount: 30,
     validFrom: '2026-01-30',
-    validUntil: '2026-02-01',
+    validUntil: '2026-02-02',
   },
 ]

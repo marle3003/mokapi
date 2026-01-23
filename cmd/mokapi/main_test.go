@@ -2,11 +2,12 @@ package main
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/require"
 	"io"
 	"mokapi/version"
 	"os"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestMain_Skeleton(t *testing.T) {
@@ -53,12 +54,12 @@ providers:
         globalFolders: []
         packages: []
 api:
-    port: "8080"
+    port: 8080
     path: ""
     base: ""
     dashboard: true
     search:
-        enabled: false
+        enabled: true
 rootCaCert: ""
 rootCaKey: ""
 configs: []

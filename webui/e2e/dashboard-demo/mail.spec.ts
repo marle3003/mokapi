@@ -1,4 +1,4 @@
-import { test, expect } from '../models/fixture-dashboard'
+import { test, expect } from '../models/fixture-website'
 import { getCellByColumnName } from '../helpers/table'
 
 test.use({ colorScheme: 'light' })
@@ -166,8 +166,11 @@ test('Visit Mail Server', async ({ page }) => {
     await test.step('Verify Configs', async () => {
 
         await page.getByRole('tab', { name: 'Configs' }).click();
-        const table = page.getByRole('table', { name: 'Configs' });
-        await expect(await getCellByColumnName(table, 'URL')).toContainText('/webui/scripts/dashboard-demo/demo-configs/mail.yaml');
+        const panel = page.getByRole('tabpanel', { name: 'Configs' });
+        await panel.waitFor({ state: 'visible' });
+        
+        const table = panel.getByRole('table', { name: 'Configs' });
+        await expect(await getCellByColumnName(table, 'URL')).toContainText('/mail.yaml');
         await expect(await getCellByColumnName(table, 'Provider')).toHaveText('File');
 
     });

@@ -1,4 +1,6 @@
 :root{
+    --header-height: 4rem;
+
     --color-background: #323743;
     --color-background-mute:  #2e2e31;
     --color-background-soft: rgb(40,43,51);
@@ -34,6 +36,7 @@
 
     --color-button-link: #eabaabff;
     --color-button-link-active: #a5899fff;
+    --color-button-link-inactive: #a0a1a7;
     --color-button-text-hover: #353e5bff;
     --color-button-border-hover: #a5899fff;
 
@@ -75,9 +78,6 @@
     --accentedCardScale: 1.05;
     --accentedCardShadow: 0;
 
-    --code-tabs-color: #d3d4d5;
-    --code-tabs-color-active: #eabaabff;
-
     --table-header-color: var(--color-text);
     --table-border-color: rgba(255, 255, 255, 0.1);
 
@@ -97,6 +97,14 @@
     --modal-footer-border:  rgba(255, 255, 255, 0.1);
 
     --badge-background: #eabaabff;
+
+    --code-background: #0d1117;
+    --code-color: #fff;
+    --code-tabs-color: #d3d4d5;
+    --code-tabs-color-active: #eabaabff;
+    --code-tabs-border-color-active: #eabaabff;
+    --code-tab-border-color: #3c424b;
+    --code-control-color-active: #eabaabff;
 
     --footer-background: #282b33;
 }
@@ -123,6 +131,7 @@
 
     --color-button-link: rgb(2, 101, 210);
     --color-button-link-active: rgb(8, 109, 215);
+    --color-button-link-inactive: rgb(101, 109, 118);
     --color-button-text-hover: #fff;
     --color-button-border-hover: rgb(8, 109, 215);
 
@@ -149,9 +158,6 @@
     --card-border-active: rgba(0,0,0,0.3);
     --accentedCardShadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 
-    --code-tabs-color: rgb(36, 36, 36);
-    --code-tabs-color-active: rgb(8, 109, 215);
-
     --table-header-color: var(--color-text);
     --table-border-color: rgba(0, 0, 0, 0.1);
 
@@ -173,6 +179,14 @@
     --modal-footer-border: rgba(0, 0, 0, 0.1);
 
     --badge-background: rgb(8, 109, 215);
+
+    --code-background: #0d1117;
+    --code-color: rgb(255, 255, 255);;
+    --code-tabs-color: rgb(255,255,255);
+    --code-tabs-color-active: rgb(255, 255, 255);
+    --code-tabs-border-color-active: rgb(8, 109, 215);
+    --code-tab-border-color: #3c424b;
+    --code-control-color-active: rgb(8, 109, 215);
 
     --footer-background: rgb(244 244 246);
 }

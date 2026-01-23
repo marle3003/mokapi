@@ -3,12 +3,21 @@ package cli
 import "fmt"
 
 type fileFlag struct {
-	value string
+	value         string
+	isSet         bool
+	setConfigFile func(string)
+	source        Source
 }
 
-func (f *fileFlag) Set(values []string) error {
+func (f *fileFlag) Set(values []string, source Source) error {
+	if f.source > source {
+		return nil
+	}
+
 	if len(values) > 0 {
 		f.value = values[0]
+		f.setConfigFile(f.value)
+		f.source = source
 	}
 	return nil
 }
@@ -17,24 +26,17 @@ func (f *fileFlag) Value() any {
 	return f.value
 }
 
+func (f *fileFlag) IsSet() bool {
+	return f.isSet
+}
+
 func (f *fileFlag) String() string {
 	return fmt.Sprintf("%v", f.value)
 }
 
-func (fs *FlagSet) File(name string, defaultValue string, usage string) {
-	v := &fileFlag{value: defaultValue}
-	f := &Flag{Name: name, Value: &boolFlag{}, Usage: usage, DefaultValue: v.String()}
+func (fs *FlagSet) File(name string, doc FlagDoc) *FlagBuilder {
+	v := &fileFlag{setConfigFile: fs.setConfigFile}
+	f := &Flag{Name: name, Value: v, FlagDoc: doc, Type: "file"}
 	fs.setFlag(f)
-}
-
-func (fs *FlagSet) GetFile(name string) string {
-	v, err := fs.GetValue(name)
-	if err != nil {
-		panic(err)
-	}
-	s, ok := v.(string)
-	if !ok {
-		panic(fmt.Sprintf("flag '%s' is not a file", name))
-	}
-	return s
+	return &FlagBuilder{flag: f}
 }

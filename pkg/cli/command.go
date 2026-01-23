@@ -1,14 +1,16 @@
 package cli
 
 import (
+	"context"
 	"fmt"
+	"io"
 	"os"
-	"reflect"
-	"strings"
+	"slices"
 )
 
 type Command struct {
 	Name      string
+	Use       string
 	Short     string
 	Long      string
 	Example   string
@@ -16,10 +18,15 @@ type Command struct {
 	Commands  []*Command
 	Run       func(cmd *Command, args []string) error
 	EnvPrefix string
+	Version   string
 
-	configFile string
-	args       []string
-	flags      *FlagSet
+	configFileName string
+	configPaths    []string
+	configFile     string
+	args           []string
+	flags          *FlagSet
+	output         io.Writer
+	ctx            context.Context
 }
 
 func (c *Command) Execute() error {
@@ -43,67 +50,33 @@ func (c *Command) Execute() error {
 		}
 	}
 
-	m, err := parseFlags(args, envPrefix, c.Flags().IsValidFlag)
+	positional, err := parseFlags(args, envPrefix, cmd.Flags())
 	if err != nil {
 		return err
 	}
 
+	if cmd.Flags().GetBool("help") {
+		c.printHelp()
+		return nil
+	}
+
+	if cmd.Version != "" {
+		if cmd.Flags().GetBool("version") {
+			fmt.Println(cmd.Version)
+			return nil
+		}
+	}
+
 	if cmd.Config != nil {
-		var file string
-		file, err = readConfigFileFromFlags(m, cmd.Config)
+		err = c.readConfigFile()
 		if err != nil {
 			return err
 		}
-		if file != "" {
-			var valuesFromConfig map[string][]string
-			valuesFromConfig, err = getMapFromConfig(cmd.Config, cmd.Flags())
-			if err != nil {
-				return fmt.Errorf("reading config file '%s' failed: %w", file, err)
-			}
-			for k, v := range valuesFromConfig {
-				if _, ok := m[k]; !ok {
-					m[k] = v
-				}
-			}
-		}
-	}
-
-	var positional []string
-	for k, v := range m {
-		switch k {
-		case "args":
-			positional = v
-		default:
-			err = cmd.Flags().setValue(k, v)
-			if err != nil {
-				return fmt.Errorf("failed to set flag '%s': %w", k, err)
-			}
-		}
-	}
-
-	defaultValues := map[string][]string{}
-	for _, f := range cmd.flags.flags {
-		if f.DefaultValue == "" {
-			continue
-		}
-		if _, ok := m[f.Name]; ok {
-			continue
-		}
-		if _, ok := m[f.Shorthand]; ok {
-			continue
-		}
-		defaultValues[f.Name] = []string{f.DefaultValue}
 	}
 
 	if cmd.Config != nil {
-		// reset configs, because values are now in the flag set
-		clearConfig(cmd.Config)
 		b := flagConfigBinder{}
-		err = b.Decode(defaultValues, cmd.Config)
-		if err != nil {
-			return fmt.Errorf("failed to bind flags to config: %w", err)
-		}
-		err = b.Decode(m, cmd.Config)
+		err = b.Decode(cmd.Flags(), cmd.Config)
 		if err != nil {
 			return fmt.Errorf("failed to bind flags to config: %w", err)
 		}
@@ -116,120 +89,57 @@ func (c *Command) Execute() error {
 	}
 }
 
+func (c *Command) ExecuteWithContext(ctx context.Context) error {
+	c.SetContext(ctx)
+	return c.Execute()
+}
+
 func (c *Command) SetArgs(args []string) {
 	c.args = args
 }
 
 func (c *Command) Flags() *FlagSet {
 	if c.flags == nil {
-		c.flags = &FlagSet{}
+		c.flags = &FlagSet{
+			orderedFlags: make(map[string]int),
+			setConfigFile: func(s string) {
+				c.configFile = s
+			},
+		}
+
+		c.Flags().Bool("help", false, FlagDoc{Short: "Show help information and exit"})
+
+		if c.Version != "" {
+			c.Flags().Bool("version", false, FlagDoc{Short: "Show version information and exit"})
+		}
 	}
 	return c.flags
+}
+
+func (c *Command) SetConfigName(name string) {
+	c.configFileName = name
 }
 
 func (c *Command) SetConfigFile(file string) {
 	c.configFile = file
 }
 
-func getMapFromConfig(cfg any, flags *FlagSet) (map[string][]string, error) {
-	return getMapFrom(reflect.ValueOf(cfg), "", flags)
-}
-
-func getMapFrom(v reflect.Value, key string, flags *FlagSet) (map[string][]string, error) {
-	switch v.Kind() {
-	case reflect.Ptr:
-		return getMapFrom(v.Elem(), key, flags)
-	case reflect.Struct:
-		t := v.Type()
-		result := map[string][]string{}
-		for i := 0; i < v.NumField(); i++ {
-			field := t.Field(i)
-			if !field.IsExported() {
-				continue
-			}
-
-			name := strings.ToLower(field.Name)
-			tag := field.Tag.Get("name")
-			if tag != "" {
-				name = strings.Split(tag, ",")[0]
-			} else {
-				tag = field.Tag.Get("flag")
-				if tag != "" {
-					name = strings.Split(tag, ",")[0]
-				}
-			}
-			if name == "-" {
-				continue
-			}
-			if key != "" {
-				name = key + "-" + name
-			}
-
-			m, err := getMapFrom(v.Field(i), name, flags)
-			if err != nil {
-				return nil, err
-			} else if m == nil {
-				continue
-			}
-			for k, val := range m {
-				result[k] = val
-			}
+func (c *Command) SetConfigPath(path ...string) {
+	for _, p := range path {
+		if !slices.Contains(c.configPaths, p) {
+			c.configPaths = append(c.configPaths, p)
 		}
-		return result, nil
-	case reflect.Slice:
-		if _, err := flags.GetValue(key); err == nil {
-			var values []string
-			for i := 0; i < v.Len(); i++ {
-				values = append(values, fmt.Sprintf("%v", v.Index(i)))
-			}
-			return map[string][]string{key: values}, nil
-		}
-		result := map[string][]string{}
-		for i := 0; i < v.Len(); i++ {
-			m, err := getMapFrom(v.Index(i), fmt.Sprintf("%s[%v]", key, i), flags)
-			if err != nil {
-				return nil, err
-			} else if m == nil {
-				continue
-			}
-			for k, val := range m {
-				result[k] = val
-			}
-		}
-		return result, nil
-	case reflect.Map:
-		result := map[string][]string{}
-		for _, k := range v.MapKeys() {
-			m, err := getMapFrom(v.MapIndex(k), fmt.Sprintf("%s-%v", key, k.Interface()), flags)
-			if err != nil {
-				return nil, err
-			} else if m == nil {
-				continue
-			}
-			for k, val := range m {
-				result[k] = val
-			}
-		}
-
-		return result, nil
-	default:
-		if canBeNil(v) && v.IsNil() {
-			return nil, nil
-		}
-		return map[string][]string{key: {fmt.Sprintf("%v", v.Interface())}}, nil
 	}
 }
 
-func canBeNil(v reflect.Value) bool {
-	switch v.Kind() {
-	case reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
-		return true
-	default:
-		return false
-	}
+func (c *Command) SetOutput(writer io.Writer) {
+	c.output = writer
 }
 
-func clearConfig(v interface{}) {
-	p := reflect.ValueOf(v).Elem()
-	p.Set(reflect.Zero(p.Type()))
+func (c *Command) SetContext(ctx context.Context) {
+	c.ctx = ctx
+}
+
+func (c *Command) Context() context.Context {
+	return c.ctx
 }

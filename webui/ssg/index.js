@@ -73,12 +73,21 @@ const Server = require('./server');
     let content = await page.content();
     content = content.replace(/http:\/\/localhost:8025/g, '')
 
-    let links = new Set(await page.evaluate(async (url) => {
+    let links = new Set(await page.evaluate(async () => {
       return Array.from(document.querySelectorAll('a'))
-        .map((a) => new URL(a.href))
-        .filter((u) => u.hostname == url.hostname)
-    }, url))
+        .map((a) => a.href)
+    }))
     await page.close()
+
+    links = links.keys()
+      .map(s => {
+        const u = URL.parse(s)
+        if (u === null) {
+          console.log('warning: invalid URL: ' + s)
+        }
+        return u
+      })
+      .filter((u) => u !== null && u.hostname == url.hostname)
 
     for (const u of links) {
       try {

@@ -14,6 +14,18 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - uses: actions/setup-go@v5
+      with:
+        go-version: 1.25.5
+    - name: Build CLI doc
+      run: go run ./cmd/internal/gen-cli-docs/main.go
+      shell: bash
+    - name: Add CLI Flags nav entry
+      run: |
+        jq '.Configuration.items.Static.items["CLI Flags"] = "configuration/static/mokapi.md"' ./config.json > ./tmp.json
+        mv ./tmp.json ./config.json
+      working-directory: ./docs
+      shell: bash
     - name: Build docker alpha image
       run: docker build --build-arg VERSION=${{ inputs.version }} -t ${{ inputs.image-name }} -t mokapi/mokapi:alpha -f ./images/alpha.Dockerfile .
       shell: bash

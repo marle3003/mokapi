@@ -3,13 +3,14 @@ package version
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"strconv"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 var (
-	BuildVersion = ""
+	BuildVersion = "0.0.0"
 	BuildTime    = ""
 )
 

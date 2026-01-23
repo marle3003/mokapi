@@ -451,6 +451,34 @@ func TestConvert(t *testing.T) {
 				require.Equal(t, jsonSchema.Types{"string", "null"}, s.Type)
 			},
 		},
+		{
+			name: "schema type file",
+			s:    schematest.New("file"),
+			test: func(t *testing.T, s *jsonSchema.Schema) {
+				require.Equal(t, jsonSchema.Types{"string"}, s.Type)
+				require.Equal(t, "binary", s.Format)
+			},
+		},
+		{
+			name: "schema type file with format is set",
+			s:    schematest.New("file", schematest.WithFormat("custom")),
+			test: func(t *testing.T, s *jsonSchema.Schema) {
+				require.Nil(t, s.Type)
+				require.Len(t, s.AnyOf, 2)
+				require.Equal(t, "custom", s.AnyOf[0].Format)
+				require.Equal(t, jsonSchema.Types{"string"}, s.AnyOf[1].Type)
+				require.Equal(t, "binary", s.AnyOf[1].Format)
+			},
+		},
+		{
+			name: "schema type array of files",
+			s:    schematest.New("array", schematest.WithItems("file")),
+			test: func(t *testing.T, s *jsonSchema.Schema) {
+				require.Equal(t, jsonSchema.Types{"array"}, s.Type)
+				require.Equal(t, jsonSchema.Types{"string"}, s.Items.Type)
+				require.Equal(t, "binary", s.Items.Format)
+			},
+		},
 	}
 
 	t.Parallel()

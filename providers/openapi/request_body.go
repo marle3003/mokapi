@@ -112,7 +112,23 @@ func readBody(r *http.Request, contentType media.ContentType, mt *MediaType) (*B
 		return nil, err
 	}
 
-	return parseBody(data, contentType, mt)
+	b, err := parseBody(data, contentType, mt)
+	if err != nil {
+		prefix := data
+		if len(prefix) > 256 {
+			prefix = prefix[:256]
+		}
+		requestFromProxy := strings.HasPrefix(string(prefix), fmt.Sprintf("%s http", r.Method))
+		if requestFromProxy && contentType.Type == "multipart" {
+			return b, fmt.Errorf(
+				"%w (request body looks like an embedded HTTP request; multipart requests through HTTP proxies are not supported. "+
+					"Disable the proxy or configure NO_PROXY)",
+				err,
+			)
+		}
+		return b, err
+	}
+	return b, nil
 }
 
 func parseBody(body []byte, contentType media.ContentType, mt *MediaType) (*Body, error) {

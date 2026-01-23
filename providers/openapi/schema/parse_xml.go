@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"mokapi/schema/json/parser"
+	"path"
 	"strconv"
 )
 
@@ -17,6 +18,7 @@ type node struct {
 	Attrs   []xml.Attr `xml:",any,attr"`
 	Content []byte     `xml:",innerxml"`
 	Nodes   []node     `xml:",any"`
+	Path    string
 }
 
 func NewXmlParser(s *Schema) *XmlParser {
@@ -39,7 +41,7 @@ func (p *XmlParser) Parse(v any) (any, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal XML: %w", err)
 	}
-	data, err := parseXML(n, p.s)
+	data, err := parseXML(n, p.s, "/"+xmlNameAsString(n.XMLName))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse XML: %w", err)
 	}
@@ -75,10 +77,10 @@ func UnmarshalXML(r io.Reader, s *Schema) (interface{}, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal xml: %w", err)
 	}
-	return parseXML(n, s)
+	return parseXML(n, s, "/"+xmlNameAsString(n.XMLName))
 }
 
-func parseXML(n *node, s *Schema) (any, error) {
+func parseXML(n *node, s *Schema, xpath string) (any, error) {
 	if len(n.Nodes) == 0 && len(n.Attrs) == 0 {
 		if len(n.Content) == 0 {
 			if s.Type.IsObject() {
@@ -88,10 +90,10 @@ func parseXML(n *node, s *Schema) (any, error) {
 				return []any{}, nil
 			}
 		}
-		return parseValue(string(n.Content), s)
+		return parseValue(string(n.Content), s, xpath)
 	}
 
-	if isArray(n) || (s != nil && s.Type.IsArray()) {
+	if isArray(n, s) {
 		var items *Schema
 		if s != nil {
 			items = s.Items
@@ -102,7 +104,7 @@ func parseXML(n *node, s *Schema) (any, error) {
 			}
 			n = &n.Nodes[0]
 		}
-		return getItems(n, items)
+		return getItems(n, items, xpath)
 	}
 
 	m := map[string]any{}
@@ -113,7 +115,7 @@ func parseXML(n *node, s *Schema) (any, error) {
 		if prop != nil && prop.Xml != nil && !prop.Xml.Attribute {
 			continue
 		}
-		v, err := parseValue(attr.Value, prop)
+		v, err := parseValue(attr.Value, prop, fmt.Sprintf("%s[@%s]", xpath, prop))
 		if err != nil {
 			return nil, err
 		}
@@ -123,20 +125,31 @@ func parseXML(n *node, s *Schema) (any, error) {
 	for _, child := range n.Nodes {
 		name, prop := getProperty(child.XMLName, s)
 		if prop != nil && prop.Xml != nil && prop.Xml.Attribute {
+			if prop.Xml.Attribute && !s.IsFreeForm() {
+				return nil, fmt.Errorf("property '%s' is expected as XML attribute but received as XML node and additionalProperty is not allowed: %v", name, path.Join(xpath, xmlNameAsString(child.XMLName)))
+			}
 			continue
 		}
-		v, err := parseXML(&child, prop)
-		if err != nil {
-			return nil, err
-		}
-		if _, ok := m[name]; ok {
-			if arr, isArray := m[name].([]any); isArray {
-				m[name] = append(arr, v)
+
+		var v any
+		var err error
+		if prop != nil && (prop.Type.IsArray() || prop.Items != nil) {
+			if _, wrapped := isWrapped(prop); wrapped {
+				m[name], err = parseWrappedArray(&child, prop.Items, xpath)
 			} else {
-				m[name] = []interface{}{m[name], v}
+				v, err = parseXML(&child, prop.Items, xpath)
+				m[name], err = appendOrError(m[name], v, err)
 			}
 		} else {
-			m[name] = v
+			v, err = parseXML(&child, prop, xpath)
+			if _, ok := m[name]; ok {
+				m[name], err = appendOrError(m[name], v, err)
+			} else {
+				m[name] = v
+			}
+		}
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -159,7 +172,7 @@ func parseXML(n *node, s *Schema) (any, error) {
 	return m, nil
 }
 
-func parseValue(s string, ref *Schema) (interface{}, error) {
+func parseValue(s string, ref *Schema, xpath string) (interface{}, error) {
 	if ref == nil || ref.Type.IsString() {
 		return s, nil
 	}
@@ -186,7 +199,7 @@ func parseValue(s string, ref *Schema) (interface{}, error) {
 		return s == "true", nil
 	}
 
-	return nil, fmt.Errorf("unknown type: %v", ref.Type)
+	return nil, fmt.Errorf("expected type '%s' for '%s' but got: '%s'", ref.Type, xpath, s)
 }
 
 func getProperty(name xml.Name, s *Schema) (string, *Schema) {
@@ -224,10 +237,10 @@ func getProperty(name xml.Name, s *Schema) (string, *Schema) {
 	return name.Local, nil
 }
 
-func getItems(n *node, ref *Schema) ([]interface{}, error) {
+func getItems(n *node, items *Schema, xpath string) ([]interface{}, error) {
 	var r []interface{}
-	for _, child := range n.Nodes {
-		v, err := parseXML(&child, ref)
+	for i, child := range n.Nodes {
+		v, err := parseXML(&child, items, fmt.Sprintf("%s/%s[%d]", xpath, xmlNameAsString(child.XMLName), i))
 		if err != nil {
 			return nil, err
 		}
@@ -236,17 +249,36 @@ func getItems(n *node, ref *Schema) ([]interface{}, error) {
 	return r, nil
 }
 
-func isArray(n *node) bool {
-	if len(n.Nodes) <= 1 {
-		return false
-	}
-	name := n.Nodes[0].XMLName.Local
-	for _, child := range n.Nodes[1:] {
-		if child.XMLName.Local != name {
+func isArray(n *node, s *Schema) bool {
+	if s == nil {
+		if len(n.Nodes) <= 1 {
 			return false
 		}
+		name := n.Nodes[0].XMLName.Local
+		for _, child := range n.Nodes[1:] {
+			if child.XMLName.Local != name {
+				return false
+			}
+		}
+		return true
 	}
-	return true
+
+	if s.Type.IsArray() || s.Items != nil {
+		return true
+	}
+	return false
+}
+
+func parseWrappedArray(n *node, items *Schema, xpath string) (any, error) {
+	var list []any
+	for _, item := range n.Nodes {
+		v, err := parseXML(&item, items, path.Join(xpath, xmlNameAsString(n.XMLName)))
+		if err != nil {
+			return nil, err
+		}
+		list = append(list, v)
+	}
+	return list, nil
 }
 
 func isWrapped(ref *Schema) (string, bool) {
@@ -273,4 +305,27 @@ func (n *node) hasElement(name string) bool {
 		}
 	}
 	return false
+}
+
+func xmlNameAsString(n xml.Name) string {
+	if n.Space != "" {
+		return fmt.Sprintf("%s:%s", n.Space, n.Local)
+	}
+	return n.Local
+}
+
+func appendOrError(slice any, item any, err error) (any, error) {
+	if err != nil {
+		return slice, err
+	}
+	var list []any
+	if slice != nil {
+		var ok bool
+		list, ok = slice.([]any)
+		if !ok {
+			list = []any{slice}
+		}
+	}
+	list = append(list, item)
+	return list, nil
 }

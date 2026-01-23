@@ -1,4 +1,4 @@
-import { test, expect } from '../models/fixture-dashboard'
+import { test, expect } from '../models/fixture-website'
 import { getCellByColumnName } from '../helpers/table'
 
 test.use({ colorScheme: 'light' })
@@ -95,7 +95,7 @@ test('Visit Kafka Order Service', async ({ page }) => {
 
     await test.step('Verify Configs', async () => {
         const table = page.getByRole('table', { name: 'Configs' });
-        await expect(await getCellByColumnName(table, 'URL')).toContainText('/webui/scripts/dashboard-demo/demo-configs/asyncapi.yaml');
+        await expect(await getCellByColumnName(table, 'URL')).toContainText('/asyncapi.yaml');
         await expect(await getCellByColumnName(table, 'Provider')).toHaveText('File');
     });
 

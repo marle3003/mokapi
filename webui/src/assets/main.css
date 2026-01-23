@@ -7,7 +7,6 @@
 @import './nav.css';
 @import './home.css';
 @import 'ace-mokapi.css';
-@import 'github.css';
 @import 'github-dark.css';
 
 body {
@@ -33,6 +32,10 @@ body {
   min-height: 100%;
 }
 
+#app:has(header .promo-banner) {
+  --header-height: calc(4rem + 22px);
+}
+
 main {
   flex: 1;
 }
@@ -40,6 +43,8 @@ main {
 h1 {
   font-size: 2.3rem;
   font-weight: 700;
+  margin-top: 32px;
+  margin-bottom: 18px;
 }
 
 h2 {
@@ -47,11 +52,15 @@ h2 {
   font-weight: 700;
   margin-block-start: 2.5rem;
   margin-block-end: 1rem;
+  margin-top: 28px;
+  margin-bottom: 16px;
 }
 
 h3 {
   font-size: 1.25rem;
   font-weight: 700;
+  margin-top: 24px;
+  margin-bottom: 14px;
 }
 
 h4 {
@@ -95,10 +104,6 @@ pre{
   background-color: var(--color-doc-link);
 }
 
-[data-theme="light"] .doc .content .hljs{
-  background-color:	#f6f8fa;
-}
-
 pre {
   box-shadow: 0 0.2rem 0.5rem rgba(0, 0, 0, 0.05), 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
 }
@@ -116,4 +121,15 @@ i.icon {
 .form-select:focus {
   border-color: var(--form-color-border-active);
   box-shadow: 0 0 0 0.2rem rgba(234, 186, 171, 0.25)
+}
+/* class to disable all animations for Playwright tests */
+.no-motion {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0s !important;
+        transition-duration: 0s !important;
+        animation: none !important;
+        transition: none !important;
+    }
 }

@@ -60,10 +60,10 @@ Supports JSON Schema, OpenAPI Schema, and Avro Schema formats.`,
 		},
 	}
 
-	sampleDataCommand.Flags().IntShort("count", "n", 1, "Number of samples to generate (default 1)")
-	sampleDataCommand.Flags().String("input-type", "jsonschema", "Type of the input schema: jsonschema|openapi|avro (default: jsonschema)")
+	sampleDataCommand.Flags().IntShort("count", "n", 1, cli.FlagDoc{Short: "Number of samples to generate (default 1)"})
+	sampleDataCommand.Flags().String("input-type", "jsonschema", cli.FlagDoc{Short: "Type of the input schema: jsonschema|openapi|avro (default: jsonschema)"})
 	sampleDataCommand.Flags().StringShort("output", "o", "application/json",
-		"Output format: json, xml, yaml, binary (or full content type, e.g. application/json)")
+		cli.FlagDoc{Short: "Output format: json, xml, yaml, binary (or full content type, e.g. application/json)"})
 
 	return sampleDataCommand
 }

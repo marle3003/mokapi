@@ -31,6 +31,7 @@
 .home .hero-title .description {
   margin-bottom: 1.5rem;
   font-size: 1.2rem;
+  max-width: 42rem;
 }
 .home .hero-title img {
   max-width: 70%;
@@ -45,7 +46,7 @@
   background-color: rgb(8, 109, 215);
   color: white;
 }
-.home .tab {
+.home .tab, .home .code {
   max-width: 700px;
   margin: 0 auto auto;
 }
@@ -54,11 +55,6 @@
   margin-bottom: 0.2rem;
 }
 .home .code-tabs button {
-  padding: 0.3rem;
-  margin-right: 0.5rem;
-  margin-left: 0.5rem;
-  padding-right: 0.8rem;
-  padding-left: 0.8rem;
   font-size: 1rem;
 }
 .home pre {
@@ -111,6 +107,7 @@
 .card-inner {
   position: relative;
   z-index: 1;
+  height: 100%;
 }
 /* Scale only the background "shell" */
 .card.accented::before {
@@ -138,13 +135,13 @@
   position: relative;
   bottom:2px;
 }
-.home .card.accented .cta i.hover {
+.home .card.accented .cta span.hover {
   display: none;
 }
-.home .card:hover.accented .cta i.hover {
+.home .card:hover.accented .cta span.hover {
   display: inline;
 }
-.home .card:hover.accented .cta i:not(.hover) {
+.home .card:hover.accented .cta span:not(.hover) {
   display: none;
 }
 
@@ -213,4 +210,24 @@ footer a {
 .home code {
   font-size: 14px;
   font-family: Menlo,Monaco,Consolas,"Courier New",monospace !important;
+}
+
+.github-meta {
+  font-size: 0.85rem;
+  color: #6c757d;
+  padding-top: 12px;
+}
+.github-meta a {
+  color: inherit;
+  text-decoration: none;
+}
+.github-meta a:hover {
+  color: #24292f;
+}
+.github-meta .bi.release {
+  margin-right: 0.25rem;
+}
+
+.home img:not(.no-dialog) {
+  cursor: pointer;
 }

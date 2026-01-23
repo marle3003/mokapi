@@ -8,48 +8,50 @@ import (
 	"net/url"
 	"reflect"
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 )
 
 type flagConfigBinder struct{}
 
-type context struct {
+type bindContext struct {
 	path    string
 	paths   []string
 	element reflect.Value
-	value   []string
+	value   any
 }
 
-func (f *flagConfigBinder) Decode(flags map[string][]string, element interface{}) error {
-	keys := make([]string, 0, len(flags))
-	for k := range flags {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	for _, name := range keys {
-		paths := ParsePath(name)
-		ctx := &context{path: name, paths: paths, value: flags[name], element: reflect.ValueOf(element)}
+func (f *flagConfigBinder) Decode(flags *FlagSet, element interface{}) error {
+	return flags.Visit(func(flag *Flag) error {
+		paths := ParsePath(flag.Name)
+		v := flag.Value.Value()
+		ctx := &bindContext{path: flag.Name, paths: paths, value: v, element: reflect.ValueOf(element)}
 		err := f.setValue(ctx)
 		if err != nil {
-			return fmt.Errorf("configuration error '%v' value '%v': %w", name, flags[name], err)
+			return fmt.Errorf("configuration error '%v' value '%v': %w", flag.Name, v, err)
 		}
-	}
-
-	return nil
+		return nil
+	})
 }
 
-func (f *flagConfigBinder) setValue(ctx *context) error {
+func (f *flagConfigBinder) setValue(ctx *bindContext) error {
 	switch ctx.element.Kind() {
 	case reflect.Struct:
 		if len(ctx.paths) == 0 {
-			return f.convert(ctx.value[0], ctx.element)
+			return f.convert(ctx.value, ctx.element)
 		}
 		err := ctx.setFieldFromStruct()
 		if err != nil {
-			return f.explode(ctx.element, ctx.paths[0], ctx.value)
+			if len(ctx.paths) == 1 {
+				if arr, ok := ctx.value.([]string); ok {
+					return f.explode(ctx.element, ctx.paths[0], arr)
+				}
+				if s, ok := ctx.value.(string); ok {
+					return f.explode(ctx.element, ctx.paths[0], []string{s})
+				}
+			}
+			// skip: field not found
+			return nil
 		}
 		return f.setValue(ctx)
 	case reflect.Pointer:
@@ -58,42 +60,74 @@ func (f *flagConfigBinder) setValue(ctx *context) error {
 		}
 		ctx.element = ctx.element.Elem()
 		return f.setValue(ctx)
-	case reflect.String:
-		if len(ctx.value) > 1 {
-			return fmt.Errorf("expected a single string, but received multiple values")
-		}
-		s := strings.Trim(ctx.value[0], "\"")
-		ctx.element.SetString(s)
-		return nil
-	case reflect.Int64:
-		i, err := strconv.ParseInt(ctx.value[0], 10, 64)
-		if err != nil {
-			return fmt.Errorf("parse int64 failed: %v", err)
-		}
-		ctx.element.SetInt(i)
-		return nil
-	case reflect.Bool:
-		b := false
-		if ctx.value[0] == "" {
-			b = true
-		} else {
-			var err error
-			b, err = strconv.ParseBool(ctx.value[0])
-			if err != nil {
-				return fmt.Errorf("value %v cannot be parsed as bool: %v", ctx.value[0], err.Error())
-			}
-		}
-		ctx.element.SetBool(b)
-		return nil
 	case reflect.Slice:
 		return f.setArray(ctx)
 	case reflect.Map:
 		return f.setMap(ctx)
+	case reflect.Bool:
+		switch v := ctx.value.(type) {
+		case bool:
+			ctx.element.SetBool(v)
+			return nil
+		case string:
+			b, err := strconv.ParseBool(v)
+			if err != nil {
+				return fmt.Errorf("value %v cannot be parsed as bool: %w", ctx.value, err)
+			}
+			ctx.element.SetBool(b)
+			return nil
+		}
+		return fmt.Errorf("value %v cannot be parsed as bool", ctx.value)
+	case reflect.String:
+		if s, ok := ctx.value.(string); ok {
+			return f.convert(s, ctx.element)
+		}
+		return fmt.Errorf("expected string but got '%v'", ctx.value)
+	case reflect.Int:
+		if i, ok := ctx.value.(int); ok {
+			ctx.element.SetInt(int64(i))
+			return nil
+		}
+		return fmt.Errorf("expected integer but got '%v'", ctx.value)
+	case reflect.Int64:
+		if i, ok := ctx.value.(int); ok {
+			ctx.element.SetInt(int64(i))
+			return nil
+		}
+		if s, ok := ctx.value.(string); ok {
+			i, err := strconv.ParseInt(s, 10, 64)
+			if err != nil {
+				return fmt.Errorf("parse int64 failed: %v", err)
+			}
+			ctx.element.SetInt(i)
+			return nil
+		}
+		return fmt.Errorf("value %v cannot be parsed as integer", ctx.value)
+	case reflect.Float32:
+		if i, ok := ctx.value.(float32); ok {
+			ctx.element.SetFloat(float64(i))
+			return nil
+		}
+		if i, ok := ctx.value.(float64); ok {
+			ctx.element.SetFloat(i)
+			return nil
+		}
+		return fmt.Errorf("expected floating number but got '%v'", ctx.value)
+	case reflect.Float64:
+		if i, ok := ctx.value.(float32); ok {
+			ctx.element.SetFloat(float64(i))
+			return nil
+		}
+		if i, ok := ctx.value.(float64); ok {
+			ctx.element.SetFloat(i)
+			return nil
+		}
+		return fmt.Errorf("expected floating number but got '%v'", ctx.value)
 	case reflect.Interface:
-		if len(ctx.value) == 0 || ctx.value[0] == "" {
+		if ctx.value == "" {
 			ctx.element.Set(reflect.ValueOf(true))
 		} else {
-			ctx.element.Set(reflect.ValueOf(ctx.value[0]))
+			ctx.element.Set(reflect.ValueOf(ctx.value))
 		}
 		return nil
 	default:
@@ -118,7 +152,7 @@ func ParsePath(key string) []string {
 	return paths
 }
 
-func (f *flagConfigBinder) setArray(ctx *context) error {
+func (f *flagConfigBinder) setArray(ctx *bindContext) error {
 	if len(ctx.paths) > 0 {
 		index, err := f.parseArrayIndex(ctx.paths[0])
 		if err != nil {
@@ -146,21 +180,31 @@ func (f *flagConfigBinder) setArray(ctx *context) error {
 
 		return f.setValue(ctx.Next(ctx.element.Index(index)))
 	} else {
-		if len(ctx.value) == 1 {
-			ctx.value = splitArrayItems(ctx.value[0])
+		var values []string
+		if arr, ok := ctx.value.([]string); ok {
+			if arr == nil {
+				return nil
+			}
+			values = arr
+		} else if s, ok := ctx.value.(string); ok {
+			values = []string{s}
 		}
 
-		if len(ctx.value) > 1 {
+		if len(values) == 1 {
+			values = splitArrayItems(values[0])
+		}
+
+		if len(values) > 0 {
 			// reset slice; remove default values
-			ctx.element.Set(reflect.MakeSlice(ctx.element.Type(), 0, len(ctx.value)))
+			ctx.element.Set(reflect.MakeSlice(ctx.element.Type(), 0, len(values)))
 		}
 
-		for _, v := range ctx.value {
+		for _, v := range values {
 			ptr := reflect.New(ctx.element.Type().Elem())
-			ctxItem := &context{
+			ctxItem := &bindContext{
 				paths:   ctx.paths,
 				element: ptr,
-				value:   []string{v},
+				value:   v,
 			}
 			if err := f.setValue(ctxItem); err != nil {
 				return err
@@ -182,7 +226,17 @@ func (f *flagConfigBinder) parseArrayIndex(path string) (int, error) {
 	return strconv.Atoi(path)
 }
 
-func (f *flagConfigBinder) setMap(ctx *context) error {
+func (f *flagConfigBinder) setMap(ctx *bindContext) error {
+	var values []string
+	if arr, ok := ctx.value.([]string); ok {
+		values = arr
+	} else if s, ok := ctx.value.(string); ok {
+		if s == "" {
+			return nil
+		}
+		values = []string{s}
+	}
+
 	m := ctx.element
 	if m.IsNil() {
 		m.Set(reflect.MakeMap(ctx.element.Type()))
@@ -192,13 +246,13 @@ func (f *flagConfigBinder) setMap(ctx *context) error {
 	if len(ctx.paths) >= 1 {
 		key = reflect.ValueOf(ctx.paths[0])
 	} else if len(ctx.paths) == 0 {
-		if len(ctx.value) == 1 {
-			kv := strings.Split(ctx.value[0], "=")
+		if len(values) == 1 {
+			kv := strings.Split(values[0], "=")
 			if len(kv) != 2 {
-				return fmt.Errorf("expected value with key value pair for map like key=value: %s", ctx.value[0])
+				return fmt.Errorf("expected value with key value pair for map like key=value: %s", values[0])
 			}
 			key = reflect.ValueOf(kv[0])
-			ctx.value = []string{kv[1]}
+			ctx.value = kv[1]
 		}
 	}
 
@@ -264,61 +318,79 @@ func getFieldByTag(structValue reflect.Value, name, tag string) reflect.Value {
 	return reflect.Value{}
 }
 
-func (f *flagConfigBinder) convert(s string, v reflect.Value) error {
-	u, err := url.ParseRequestURI(s)
-	if err == nil {
-		switch u.Scheme {
-		case "file":
-			var path string
-			if len(u.Host) > 0 {
-				path = u.Host
-			}
-			if len(u.Path) > 0 {
-				path += u.Path
-			}
-			if len(u.Opaque) > 0 {
-				path = u.Opaque
-			}
-			b, err := readFile(path)
-			if err != nil {
-				return err
-			}
-			// remove bom sequence if present
-			if len(b) >= 4 && bytes.Equal(b[0:3], file.Bom) {
-				b = b[3:]
-			}
-			s = string(b)
-		}
-	}
+func (f *flagConfigBinder) convert(value any, target reflect.Value) error {
+	kind := target.Type().Kind()
 
-	kind := v.Type().Kind()
-	if kind == reflect.Struct {
-		err = f.convertJson(s, v)
+	if s, ok := value.(string); ok {
+		u, err := url.ParseRequestURI(s)
 		if err == nil {
-			return nil
+			switch u.Scheme {
+			case "file":
+				var path string
+				if len(u.Host) > 0 {
+					path = u.Host
+				}
+				if len(u.Path) > 0 {
+					path += u.Path
+				}
+				if len(u.Opaque) > 0 {
+					path = u.Opaque
+				}
+				b, err := fileReader.ReadFile(path)
+				if err != nil {
+					return err
+				}
+				// remove bom sequence if present
+				if len(b) >= 4 && bytes.Equal(b[0:3], file.Bom) {
+					b = b[3:]
+				}
+				s = string(b)
+			}
 		}
+
+		if kind == reflect.Struct {
+			err = f.convertJson(s, target)
+			if err == nil {
+				return nil
+			}
+		}
+
+		if kind == reflect.Struct {
+			if s == "" {
+				return nil
+			}
+			pairs := strings.Split(s, ",")
+			for _, pair := range pairs {
+				kv := strings.Split(pair, "=")
+				if len(kv) != 2 {
+					return fmt.Errorf("parse shorthand failed: %v", s)
+				}
+				err = f.setValue(&bindContext{paths: []string{kv[0]}, value: kv[1], element: target})
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		} else if kind == reflect.Slice {
+			return f.setValue(&bindContext{paths: []string{}, element: target, value: []string{s}})
+		} else if kind == reflect.String {
+			v := reflect.ValueOf(s)
+			t := target.Type()
+			if v.Type().AssignableTo(t) {
+				target.Set(v)
+				return nil
+			} else if v.Type().ConvertibleTo(t) {
+				target.Set(v.Convert(t))
+				return nil
+			}
+		}
+
+		value = s
 	}
 
-	if kind == reflect.Struct {
-		if s == "" {
-			return nil
-		}
-		pairs := strings.Split(s, ",")
-		for _, pair := range pairs {
-			kv := strings.Split(pair, "=")
-			if len(kv) != 2 {
-				return fmt.Errorf("parse shorthand failed: %v", s)
-			}
-			err = f.setValue(&context{paths: []string{kv[0]}, value: []string{kv[1]}, element: v})
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	} else if kind == reflect.Slice {
-		return f.setValue(&context{paths: []string{}, element: v, value: []string{s}})
-	} else if kind == reflect.String {
-		v.Set(reflect.ValueOf(s))
+	v := reflect.ValueOf(value)
+	if v.Type().AssignableTo(target.Type()) {
+		target.Set(v)
 		return nil
 	}
 
@@ -338,12 +410,16 @@ func (f *flagConfigBinder) convertJson(s string, v reflect.Value) error {
 func splitArrayItems(s string) []string {
 	quoted := false
 	splitC := getSplitCharsForList(s)
-	return strings.FieldsFunc(s, func(r rune) bool {
+	items := strings.FieldsFunc(s, func(r rune) bool {
 		if r == '"' {
 			quoted = !quoted
 		}
 		return !quoted && slices.Contains(splitC, r)
 	})
+	for i, item := range items {
+		items[i] = strings.Trim(item, "\"")
+	}
+	return items
 }
 
 func (f *flagConfigBinder) setJson(element reflect.Value, i interface{}) error {
@@ -391,19 +467,7 @@ func (f *flagConfigBinder) setJson(element reflect.Value, i interface{}) error {
 	return nil
 }
 
-func invertFlag(value string) (string, error) {
-	flag := false
-	if value != "" {
-		b, err := strconv.ParseBool(value)
-		if err != nil {
-			return "", fmt.Errorf("value %v cannot be parsed as bool: %v", value, err.Error())
-		}
-		flag = !b
-	}
-	return fmt.Sprintf("%v", flag), nil
-}
-
-func (c *context) setFieldFromStruct() error {
+func (c *bindContext) setFieldFromStruct() error {
 	name := strings.ToLower(c.paths[0])
 	field := c.element.FieldByNameFunc(func(f string) bool {
 		return strings.ToLower(f) == name
@@ -411,22 +475,6 @@ func (c *context) setFieldFromStruct() error {
 	if field.IsValid() {
 		c.Next(field)
 		return nil
-	}
-
-	if c.paths[0] == "no" && len(c.paths) == 2 {
-		name = strings.ToLower(c.paths[1])
-		field = c.element.FieldByNameFunc(func(f string) bool {
-			return strings.ToLower(f) == c.paths[1]
-		})
-		if field.IsValid() {
-			value, err := invertFlag(c.value[0])
-			if err != nil {
-				return err
-			}
-			c.value = []string{value}
-			c.Next(field)
-			return nil
-		}
 	}
 
 	for i := 0; i < c.element.NumField(); i++ {
@@ -466,7 +514,7 @@ func (c *context) setFieldFromStruct() error {
 	return fmt.Errorf("no configuration found")
 }
 
-func (c *context) Next(element reflect.Value) *context {
+func (c *bindContext) Next(element reflect.Value) *bindContext {
 	c.paths = c.paths[1:]
 	c.element = element
 	return c

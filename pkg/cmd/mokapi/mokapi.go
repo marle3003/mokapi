@@ -12,6 +12,7 @@ import (
 	"mokapi/engine"
 	"mokapi/feature"
 	"mokapi/pkg/cli"
+	"mokapi/pkg/cmd/mokapi/flags"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/directory"
 	mail2 "mokapi/providers/mail"
@@ -30,14 +31,22 @@ import (
 
 const logo = "888b     d888          888             d8888          d8b \n8888b   d8888          888            d88888          Y8P \n88888b.d88888          888           d88P888              \n888Y88888P888  .d88b.  888  888     d88P 888 88888b.  888 \n888 Y888P 888 d88\"\"88b 888 .88P    d88P  888 888 \"88b 888 \n888  Y8P  888 888  888 888888K    d88P   888 888  888 888 \n888   \"   888 Y88..88P 888 \"88b  d8888888888 888 d88P 888 \n888       888  \"Y88P\"  888  888 d88P     888 88888P\"  888 \n        v%s by Marcel Lehmann%s 888          \n        https://mokapi.io                    888          \n                                             888   \n"
 
-func NewCmdMokapi(ctx context.Context) *cli.Command {
+func NewCmdMokapi() *cli.Command {
+	cfg := static.NewConfig()
+
 	cmd := &cli.Command{
-		Name:   "mokapi",
-		Short:  "Start Mokapi and serve mocked APIs",
-		Long:   `Mokapi is an easy, modern and flexible API mocking tool using Go and Javascript.`,
-		Config: &static.Config{},
+		Name:    "mokapi",
+		Use:     "mokapi [flags] [CONFIG-URL|DIRECTORY|FILE]...",
+		Short:   "Start Mokapi and serve mocked APIs",
+		Long:    `Mokapi is an easy, modern and flexible API mocking tool using Go and Javascript.`,
+		Config:  cfg,
+		Version: version.BuildVersion,
 		Run: func(cmd *cli.Command, args []string) error {
-			return runRoot(cmd.Config.(*static.Config), ctx)
+			cfg := cmd.Config.(*static.Config)
+			if err := applyPositionalArgs(cfg, args); err != nil {
+				return err
+			}
+			return runRoot(cmd, cfg)
 		},
 		Commands: []*cli.Command{
 			NewCmdSampleData(),
@@ -45,109 +54,50 @@ func NewCmdMokapi(ctx context.Context) *cli.Command {
 		EnvPrefix: "MOKAPI_",
 	}
 
-	cmd.Flags().BoolShort("version", "v", false, "Show version information and exit")
-	cmd.Flags().Bool("generate-cli-skeleton", false, "Generates the skeleton configuration file")
+	cmd.SetConfigPath(".", "/etc/mokapi")
+
+	flags.RegisterFileProvider(cmd)
+	flags.RegisterGitProvider(cmd)
+	flags.RegisterHttpProvider(cmd)
+	flags.RegisterNpmProvider(cmd)
+
+	flags.RegisterApiFlags(cmd)
+	flags.RegisterTlsFlags(cmd)
+	flags.RegisterEventStoreFlags(cmd)
+	flags.RegisterDataGeneratorFlags(cmd)
+
+	cmd.Flags().StringSlice("config", []string{}, true, cli.FlagDoc{Short: "Provide inline configuration data"})
+	cmd.Flags().StringSlice("configs", []string{}, false, cli.FlagDoc{Short: "Provide inline configuration data"})
 
 	// config file
-	cmd.Flags().String("config", "", "Path to configuration file (aliases: --config-file, --cli-input)")
-	cmd.Flags().String("config-file", "", "Alias for --config")
-	cmd.Flags().String("cli-input", "", "Alias for --config")
+	cmd.Flags().File("config-file", cliInput)
+	cmd.Flags().Alias("config-file", "cli-input")
 
 	// logging
-	cmd.Flags().String("log-level", "info", "Mokapi log level (default is info)")
-	cmd.Flags().String("log-format", "text", "Mokapi log format: json|text (default is text)")
+	cmd.Flags().String("log-level", "info", cli.FlagDoc{Short: "Set log level (debug|info|warn|error)"}).WithExample(
+		cli.Example{
+			Codes: []cli.Code{
+				{Title: "CLI", Source: "--log-level warn"},
+				{Title: "Env", Source: "MOKAPI_LOG_LEVEL=warn"},
+				{Title: "File", Source: "log:\n  level: warn", Language: "yaml"},
+			},
+		},
+	).WithDescription("The default level of log messages is info. You can set the log level to one of the following, listed in order of least to most information. The level is cumulative: for the debug level, the log file also includes messages at the info, warn, and error levels.\n- Debug\n- Info\n- Warn\n- Error\n")
+	cmd.Flags().String("log-format", "text", cli.FlagDoc{Short: "Set log output format (text|json)"})
 
-	// file provider
-	cmd.Flags().String("providers-file", "", "")
-	cmd.Flags().StringSlice("providers-file-filename", []string{}, "Load the dynamic configuration from files", true)
-	cmd.Flags().StringSlice("providers-file-filenames", []string{}, "Load the dynamic configuration from files", false)
-	cmd.Flags().StringSlice("providers-file-directory", []string{}, "Load the dynamic configuration from directories", true)
-	cmd.Flags().StringSlice("providers-file-directories", []string{}, "Load the dynamic configuration from directories", false)
-	cmd.Flags().StringSlice("providers-file-skip-prefix", []string{"_"}, "", false)
-	cmd.Flags().StringSlice("providers-file-include", []string{}, "", false)
-	cmd.Flags().DynamicStringSlice("providers-file-include[<index>]", []string{}, "", false)
-
-	// git provider
-	cmd.Flags().String("providers-git", "", "")
-	cmd.Flags().StringSlice("providers-git-url", []string{}, "", true)
-	cmd.Flags().StringSlice("providers-git-urls", []string{}, "", false)
-	cmd.Flags().String("providers-git-pull-interval", "3m", "")
-	cmd.Flags().String("providers-git-temp-dir", "", "")
-	cmd.Flags().StringSlice("providers-git-repository", []string{}, "flag for shorthand syntax", true)
-	cmd.Flags().StringSlice("providers-git-repositories", []string{}, "flag for shorthand syntax", false)
-	// git repository
-	cmd.Flags().DynamicString("providers-git-repositories[<index>]", "", "set indexed repository using shorthand syntax")
-	cmd.Flags().DynamicString("providers-git-repositories[<index>]-url", "", "set URL of the repository")
-	cmd.Flags().DynamicStringSlice("providers-git-repositories[<index>]-file", []string{}, "Specifies an allow list of files to include in mokapi", true)
-	cmd.Flags().DynamicStringSlice("providers-git-repositories[<index>]-files", []string{}, "Specifies an allow list of files to include in mokapi", false)
-	cmd.Flags().DynamicStringSlice("providers-git-repositories[<index>]-include", []string{}, "Specifies an array of filenames or pattern to include in mokapi", false)
-	cmd.Flags().DynamicString("providers-git-repositories[<index>]-auth-github", "", "Specifies an array of filenames or pattern to include in mokapi")
-	cmd.Flags().DynamicString("providers-git-repositories[<index>]-pull-interval", "", "Specifies an array of filenames or pattern to include in mokapi")
-
-	// http provider
-	cmd.Flags().String("providers-http", "", "")
-	cmd.Flags().StringSlice("providers-http-url", []string{}, "", true)
-	cmd.Flags().StringSlice("providers-http-urls", []string{}, "", false)
-	cmd.Flags().String("providers-http-poll-interval", "3m", "")
-	cmd.Flags().String("providers-http-poll-timeout", "5s", "")
-	cmd.Flags().String("providers-http-proxy", "", "")
-	cmd.Flags().String("providers-http-tls-skip-verify", "", "")
-	cmd.Flags().String("providers-http-ca", "", "Certificate authority")
-
-	// npm provider
-	cmd.Flags().String("providers-npm", "", "")
-	cmd.Flags().StringSlice("providers-npm-global-folder", []string{}, "", true)
-	cmd.Flags().StringSlice("providers-npm-global-folders", []string{}, "", false)
-	// npm package
-	cmd.Flags().StringSlice("providers-npm-package", []string{}, "flag for shorthand syntax", true)
-	cmd.Flags().StringSlice("providers-npm-packages", []string{}, "flag for shorthand syntax", false)
-	cmd.Flags().DynamicString("providers-npm-packages[<index>]", "", "set indexed repository using shorthand syntax")
-	cmd.Flags().DynamicString("providers-npm-packages[<index>]-name", "", "set URL of the repository")
-	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-file", []string{}, "Specifies an allow list of files to include in mokapi", true)
-	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-files", []string{}, "Specifies an allow list of files to include in mokapi", false)
-	cmd.Flags().DynamicStringSlice("providers-npm-packages[<index>]-include", []string{}, "Specifies an array of filenames or pattern to include in mokapi", false)
-
-	// API
-	cmd.Flags().Int("api-port", 8080, "API port (Default 8080). The API is available on the path /api")
-	cmd.Flags().String("api-path", "", "The path prefix where dashboard is served (default empty)")
-	cmd.Flags().String("api-base", "", "The base path of the dashboard useful in case of url rewriting (default empty)")
-	cmd.Flags().Bool("api-dashboard", true, "Activate dashboard (default true). The dashboard is available at the same port as the API but on the path / by default.")
-	cmd.Flags().Bool("api-search-enabled", false, "enables search feature")
-
-	cmd.Flags().String("root-ca-cert", "", "CA Certificate for signing certificate generated at runtime")
-	cmd.Flags().String("root-ca-key", "", "Private Key of CA for signing certificate generated at runtime")
-
-	cmd.Flags().Int("event-store-default-size", 100, "Sets the default maximum number of events stored for each event type (e.g., HTTP, Kafka), unless overridden individually. (default 100)")
-	cmd.Flags().String("event-store", "", "")
-	cmd.Flags().DynamicInt("event-store-<name>-size", 100, "Overrides the default event store size for a specific API by name.")
-
-	cmd.Flags().String("data-gen-optional-properties", "0.85", "")
-
-	cmd.Flags().StringSlice("config", []string{}, "plain configuration data as argument", true)
-	cmd.Flags().StringSlice("configs", []string{}, "plain configuration data as argument", false)
-
-	cmd.Flags().BoolShort("help", "h", false, "Show help information")
+	cmd.Flags().String("generate-cli-skeleton", "", cli.FlagDoc{Short: "Generate a configuration skeleton and exit. If set without a value, generates the full skeleton. " +
+		"If a value is provided, generates only the specified section (e.g. `providers`)."})
 
 	return cmd
 }
 
-func runRoot(cfg *static.Config, ctx context.Context) error {
+func runRoot(cmd *cli.Command, cfg *static.Config) error {
 	versionString := version.BuildVersion
 
-	err := cfg.Parse()
-	if err != nil {
-		log.Errorf("parse config failed: %v", err)
+	if f := cmd.Flags().Lookup("generate-cli-skeleton"); f != nil && f.Value.IsSet() {
+		writeSkeleton(f.Value.String())
 		return nil
 	}
-
-	/*switch {
-	case viper.GetBool("version"):
-		fmt.Println(versionString)
-		return nil
-	case viper.GetBool("generate.cli.skeleton"):
-		writeSkeleton(cfg)
-		return nil
-	}*/
 
 	feature.Enable(cfg.Features)
 	generator.SetConfig(cfg.DataGen)
@@ -168,7 +118,9 @@ func runRoot(cfg *static.Config, ctx context.Context) error {
 		}
 	}()
 
-	<-ctx.Done()
+	if ctx := cmd.Context(); ctx != nil {
+		<-ctx.Done()
+	}
 	s.Close()
 	return nil
 }
@@ -256,4 +208,52 @@ func registerDynamicTypes() {
 	dynamic.Register("mail", func(v version.Version) bool {
 		return true
 	}, &mail2.Config{})
+}
+
+func applyPositionalArgs(cfg *static.Config, args []string) error {
+	cfg.Args = args
+	err := cfg.Parse()
+	if err != nil {
+		return fmt.Errorf("parse config failed: %w", err)
+	}
+	return nil
+}
+
+var cliInput = cli.FlagDoc{
+	Short: "Read configuration from a file",
+	Long: `Reads configuration from a file provided via the command line.
+The file content is processed as configuration input and merged with other configuration sources such as inline configuration and environment variables.`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{Title: "CLI", Source: "--cli-input=mokapi.yaml"},
+			},
+		},
+	},
+}
+
+var config = cli.FlagDoc{
+	Short: "Provide inline configuration data",
+	Long: `Provides inline configuration data directly via the command line.
+This option can be used multiple times to supply additional configuration fragments, which are merged with other configuration sources.`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{Title: "CLI", Source: "--config {\"openapi\": \"3.0\", \"info\": { \"title\": \"foo\" } }\n--config file:/path/to/config.yaml"},
+			},
+		},
+	},
+}
+
+var configs = cli.FlagDoc{
+	Short: "Provide inline configuration data",
+	Long: `Provides inline configuration data directly via the command line.
+This option can be used multiple times to supply additional configuration fragments, which are merged with other configuration sources.`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{Title: "CLI", Source: "--configs file:/path/to/config.yaml  file:/path/to/config.yaml"},
+			},
+		},
+	},
 }

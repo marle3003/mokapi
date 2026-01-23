@@ -23,8 +23,7 @@ type MailSuite struct{ BaseSuite }
 
 func (suite *MailSuite) SetupSuite() {
 	cfg := static.NewConfig()
-	port := try.GetFreePort()
-	cfg.Api.Port = fmt.Sprintf("%v", port)
+	cfg.Api.Port = try.GetFreePort()
 	wd, err := os.Getwd()
 	require.NoError(suite.T(), err)
 	cfg.ConfigFile = path.Join(wd, "mokapi.yaml")

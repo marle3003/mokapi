@@ -2,13 +2,14 @@ package acceptance
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
 	"mokapi/ldap"
 	"mokapi/runtime/metrics"
 	"mokapi/try"
 	"net/http"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 type LdapSuite struct {
@@ -18,8 +19,7 @@ type LdapSuite struct {
 
 func (suite *LdapSuite) SetupSuite() {
 	cfg := static.NewConfig()
-	port := try.GetFreePort()
-	cfg.Api.Port = fmt.Sprintf("%v", port)
+	cfg.Api.Port = try.GetFreePort()
 	cfg.Providers.File.Directories = []string{"./ldap"}
 	suite.initCmd(cfg)
 	// ensure scripts are executed

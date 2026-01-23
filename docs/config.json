@@ -48,7 +48,7 @@
       "Static": {
         "expanded": true,
         "items": {
-          "CLI": "configuration/static/cli.md"
+          "CLI Usage": "configuration/static/cli.md"
         }
       },
       "Dynamic": {

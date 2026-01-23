@@ -1,7 +1,6 @@
 package api_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/api"
 	"mokapi/config/static"
 	"mokapi/providers/openapi"
@@ -11,6 +10,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestHandler_ServeHTTP(t *testing.T) {
@@ -57,7 +58,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"","buildTime":"","search":{"enabled":false}}`))
+					try.HasBody(`{"version":"0.0.0","buildTime":"","search":{"enabled":false}}`))
 			},
 		},
 		{
@@ -120,7 +121,7 @@ func TestHandler_Api_Info(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"","buildTime":"","activeServices":["http"],"search":{"enabled":false}}`))
+					try.HasBody(`{"version":"0.0.0","buildTime":"","activeServices":["http"],"search":{"enabled":false}}`))
 			},
 		},
 		{
@@ -135,7 +136,7 @@ func TestHandler_Api_Info(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"","buildTime":"","activeServices":["kafka"],"search":{"enabled":false}}`))
+					try.HasBody(`{"version":"0.0.0","buildTime":"","activeServices":["kafka"],"search":{"enabled":false}}`))
 			},
 		},
 		{
@@ -150,7 +151,7 @@ func TestHandler_Api_Info(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"","buildTime":"","activeServices":["mail"],"search":{"enabled":false}}`))
+					try.HasBody(`{"version":"0.0.0","buildTime":"","activeServices":["mail"],"search":{"enabled":false}}`))
 			},
 		},
 		{
@@ -165,7 +166,7 @@ func TestHandler_Api_Info(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"version":"","buildTime":"","activeServices":["ldap"],"search":{"enabled":false}}`))
+					try.HasBody(`{"version":"0.0.0","buildTime":"","activeServices":["ldap"],"search":{"enabled":false}}`))
 			},
 		},
 	}
@@ -204,5 +205,5 @@ func TestHandler_SearchEnabled(t *testing.T) {
 		h,
 		try.HasStatusCode(200),
 		try.HasHeader("Content-Type", "application/json"),
-		try.HasBody(`{"version":"","buildTime":"","search":{"enabled":true}}`))
+		try.HasBody(`{"version":"0.0.0","buildTime":"","search":{"enabled":true}}`))
 }

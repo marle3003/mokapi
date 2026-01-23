@@ -14,7 +14,7 @@ import (
 
 type Config struct {
 	Log              MokApiLog         `json:"log" yaml:"log"`
-	ConfigFile       string            `json:"-" yaml:"-" flag:"-"`
+	ConfigFile       string            `json:"-" yaml:"-" flag:"config-file"`
 	Providers        Providers         `json:"providers" yaml:"providers"`
 	Api              Api               `json:"api" yaml:"api"`
 	RootCaCert       tls.FileOrContent `json:"rootCaCert" yaml:"rootCaCert" name:"root-ca-cert"`
@@ -34,9 +34,9 @@ func NewConfig() *Config {
 	cfg := &Config{}
 	cfg.Log = MokApiLog{Level: "info", Format: "text"}
 
-	cfg.Api.Port = "8080"
+	cfg.Api.Port = 8080
 	cfg.Api.Dashboard = true
-	cfg.Api.Search.Enabled = false
+	cfg.Api.Search.Enabled = true
 
 	cfg.Providers.File.SkipPrefix = []string{"_"}
 	cfg.Event.Store = map[string]Store{"default": {Size: 100}}
@@ -57,7 +57,7 @@ type Providers struct {
 }
 
 type Api struct {
-	Port      string
+	Port      int
 	Path      string
 	Base      string
 	Dashboard bool
@@ -69,8 +69,8 @@ type Search struct {
 }
 
 type FileProvider struct {
-	Filenames   []string `explode:"filename"`
-	Directories []string `explode:"directory"`
+	Filenames   []string `aliases:"filename" explode:"filename"`
+	Directories []string `aliases:"directory" explode:"directory"`
 	SkipPrefix  []string `yaml:"skipPrefix" json:"skipPrefix" flag:"skip-prefix"`
 	Include     []string
 }
