@@ -17,6 +17,11 @@ runs:
     - uses: actions/setup-go@v5
       with:
         go-version: 1.25.5
+    - name: Create directory and file
+      run: |
+        mkdir -p webui/dist
+        touch webui/dist/.tmp
+      shell: bash
     - name: Build CLI doc
       run: go run ./cmd/internal/gen-cli-docs/main.go
       shell: bash
