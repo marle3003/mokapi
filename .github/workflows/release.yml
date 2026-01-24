@@ -52,8 +52,6 @@ jobs:
           TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
       - name: Publish npm
         run: task publish-npm-package VERSION=${GITHUB_REF##*/v}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   release-windows:
     runs-on: windows-latest
