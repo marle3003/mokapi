@@ -1,17 +1,21 @@
 <script setup lang="ts">
 import { usePrettyDates } from '@/composables/usePrettyDate'
-import { onMounted, ref } from 'vue'
-import { Modal, Popover, Tab } from 'bootstrap'
+import { computed, onMounted } from 'vue'
+import { Popover } from 'bootstrap'
 import { useMetrics } from '@/composables/metrics'
+import { useKafka } from '@/composables/kafka';
+import { useRouter } from '@/router';
+import { getRouteName } from '@/composables/dashboard';
 
 const props = defineProps<{
     service: KafkaService,
     topicName?: string
 }>()
 
+const router = useRouter()
 const { format } = usePrettyDates()
 const { sum } = useMetrics()
-const activeTab = ref('group')
+const { clientSoftware } = useKafka();
 
 function memberInfo(member: KafkaMember): string {
     let addition = ''
@@ -25,14 +29,14 @@ function memberInfo(member: KafkaMember): string {
             <p id="${member.name}-address" class="label">Address</p>
             <p aria-labelledby="${member.name}-address">${member.addr}</p>
             <p id="${member.name}-client-software" class="label">Client Software</p>
-            <p aria-labelledby="${member.name}-client-software">${getClientSoftware(member)}</p>
+            <p aria-labelledby="${member.name}-client-software">${clientSoftware(member)}</p>
             <p id="${member.name}-last-heartbeat" class="label">Last Heartbeat</p>
             <p aria-labelledby="${member.name}-last-heartbeat">${format(member.heartbeat)}</p>
             ${addition}
             </div>`
 }
 
-function getGroups(): KafkaGroup[] {
+const groups = computed(() => {
     if (!props.topicName) {
         return props.service.groups
     }
@@ -47,7 +51,7 @@ function getGroups(): KafkaGroup[] {
         }
     }
     return result
-}
+})
 
 onMounted(()=> {
     const elements = document.querySelectorAll('.has-popover')
@@ -60,34 +64,26 @@ onMounted(()=> {
             content: () => x.querySelector('span:not(.bi)')?.innerHTML ?? '',
         })
     })
-    dialog = new Modal(groupDialog.value)
-    tab = new Tab(tabDetailGroup.value)
 })
 
-const groupDialog = ref<any>(null)
-const tabDetailGroup = ref<any>(null)
-const memberButtonList = ref<any>(null)
-let dialog:  Modal
-let tab: Tab
-let selectedGroup = ref<KafkaGroup | null>(null)
-function showGroup(group: KafkaGroup){
+function goToGroup(group: KafkaGroup, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
     }
 
-    selectedGroup.value = group
-    tab.show()
-    dialog.show()
-    if (group.members.length > 0 && memberButtonList.value) {
-        new Tab(memberButtonList.value.children[0]).show()
+    const to = {
+        name: getRouteName('kafkaGroup').value,
+        params: {
+          service: props.service.name,
+          group: group.name,
+        }
     }
-}
-function getClientSoftware(member: KafkaMember) {
-    let client = `${member.clientSoftwareName} ${member.clientSoftwareVersion}`
-    if (client === ' ') {
-        client = '-'
+    if (openInNewTab) {
+        const routeData = router.resolve(to);
+        window.open(routeData.href, '_blank')
+    } else {
+        router.push(to)
     }
-    return client
 }
 </script>
 
@@ -106,11 +102,11 @@ function getClientSoftware(member: KafkaMember) {
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="group in getGroups()" :key="group.name" @click="showGroup(group)">
+                <tr v-for="group in groups" :key="group.name" @click.left="goToGroup(group)" @mousedown.middle="goToGroup(group, true)">
                     <td>
-                        <span role="button" @click.stop="showGroup(group)" tabindex="0">
+                        <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaGroup').value, params: { service: service.name, group: group.name }}">
                             {{ group.name }}
-                        </span>
+                        </router-link>
                     </td>
                     <td>{{ group.state }}</td>
                     <td v-html="group.protocol.replace(/([a-z])([A-Z])/g, '$1<wbr>$2')"></td>
@@ -132,155 +128,4 @@ function getClientSoftware(member: KafkaMember) {
             </tbody>
         </table>
     </div>
-    <div class="modal fade" id="dialogGroup" ref="groupDialog" tabindex="-1" aria-labelledby="dialog-group-title" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h6 id="dialog-group-title" class="modal-title">Group Details</h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="card-group" >
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row">
-                                    <ul class="nav nav-pills tab-sm mb-3" role="tablist">
-                                        <li class="nav-link show active" style="padding-left: 12px;" ref="tabDetailGroup" id="detail-group-tab" data-bs-toggle="tab" data-bs-target="#detail-group" type="button" role="tab" aria-controls="detail-group" aria-selected="true" @click="activeTab = 'group'">Group</li>
-                                        <li class="nav-link" id="detail-topics-tab" data-bs-toggle="tab" data-bs-target="#detail-topics" type="button" role="tab" aria-controls="detail-topics" aria-selected="false" @click="activeTab = 'topics'">Topics</li>
-                                        <li class="nav-link" id="detail-members-tab" data-bs-toggle="tab" data-bs-target="#detail-members" type="button" role="tab" aria-controls="detail-members" aria-selected="false" @click="activeTab = 'members'">Members</li>
-                                    </ul>
-
-                                    <div class="tab-content" v-if="selectedGroup">
-                                        <div class="tab-pane fade show active" id="detail-group" role="tabpanel">
-                                            <div class="row mb-3">
-                                                <p id="dialog-group-name" class="label">Name</p>
-                                                    <p aria-labelledby="dialog-group-name">{{ selectedGroup.name }}</p>
-                                            </div>
-                                            <div class="row mb-3">
-                                                <div class="col">
-                                                    <p id="dialog-group-state" class="label">State</p>
-                                                    <p aria-labelledby="dialog-group-state">{{ selectedGroup.state }}</p>
-                                                </div>
-                                                <div class="col">
-                                                    <p id="dialog-group-protocol" class="label">Protocol</p>
-                                                    <p aria-labelledby="dialog-group-protocol">{{ selectedGroup.protocol }}</p>
-                                                </div>
-                                            </div>
-                                            <div class="row mb-3">
-                                                <div class="col">
-                                                    <p id="dialog-group-coordinator" class="label">Coordinator</p>
-                                                    <p aria-labelledby="dialog-group-coordinator">{{ selectedGroup.coordinator }}</p>
-                                                </div>
-                                                <div class="col">
-                                                    <p id="dialog-group-leader" class="label">Leader</p>
-                                                    <p aria-labelledby="dialog-group-leader">{{ selectedGroup.leader }}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="tab-pane fade" id="detail-topics" role="tabpanel">
-                                            <table class="table dataTable" aria-label="Topics">
-                                                <thead>
-                                                    <tr>
-                                                        <th scope="col" class="text-left">Topic</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr v-for="topicName of selectedGroup.topics" :key="topicName">
-                                                        <td>{{ topicName }}</td>
-                                                    </tr>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <div class="tab-pane fade members" id="detail-members" role="tabpanel">
-                                            <div class="d-flex align-items-start align-items-stretch">
-                                                <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist" aria-orientation="vertical" ref="memberButtonList">
-                                                    <button v-for="(member, index) of selectedGroup.members" class="badge member" :class="(index==0 ? ' active' : '')" :id="'v-pills-'+member.name+'-tab'" data-bs-toggle="pill" :data-bs-target="'#v-pills-'+member.name" type="button" role="tab" :aria-controls="'v-pills-'+member.name" :aria-selected="index === 0">
-                                                        {{ member.name }}
-                                                        <span class="bi bi-stars" v-if="member.name === selectedGroup.leader"></span>
-                                                    </button>
-                                                </div>
-                                                <div class="tab-content ms-3 ps-3 members-tab" style="width: 100%" id="v-pills-tabContent">
-                                                    <div v-for="(member, index) of selectedGroup.members" class="tab-pane fade" :class="index==0 && activeTab == 'members' ? 'show active' : ''" :id="'v-pills-'+member.name" role="tabpanel" :aria-labelledby="'v-pills-'+member.name+'-tab'">
-                                                        <div class="row mb-3">
-                                                            <div class="col">
-                                                                <p id="dialog-group-member-addr" class="label">Address</p>
-                                                                <p aria-labelledby="dialog-group-member-addr">{{ member.addr }}</p>
-                                                            </div>
-                                                            <div class="col">
-                                                                <p id="dialog-group-member-client-sw" class="label">Client Software</p>
-                                                                <p aria-labelledby="dialog-group-member-client-sw">{{ getClientSoftware(member) }}</p>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row mb-3">
-                                                            <div class="col">
-                                                                <p id="dialog-group-member-heartbeat" class="label">Heartbeat</p>
-                                                                <p aria-labelledby="dialog-group-member-heartbeat">{{ format(member.heartbeat) }}</p>
-                                                            </div>
-                                                        </div>
-                                                        <table class="table dataTable" aria-label="Member Partitions">
-                                                            <thead>
-                                                                <tr>
-                                                                    <th scope="col" class="text-left">Topic</th>
-                                                                    <th scope="col" class="text-left">Partitions</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <tr v-for="(partition, topicName) of member.partitions" :key="topicName">
-                                                                    <td>{{ topicName }}</td>
-                                                                    <td>{{ partition.join(', ') }}</td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </template>
-
-<style scoped>
-ul.members {
-    list-style: none; 
-    padding: 0;
-    margin: 0;
-}
-ul.members li {
-    padding-right: 0.5em;
-}
-.tab-pane {
-    padding: 0;
-}
-.members .tab-content.members-tab {
-    border-style: solid;
-    border-width: 0;
-    border-left-width: 2px;
-    border-color: var(--color-datatable-border);
-    min-width: 0;
-}
-.members .nav.nav-pills button.badge {
-    font-size: 0.75rem;
-    border-color: var(--color-datatable-border);
-    border: 0;
-    margin-bottom: 15px;
-    color: var(--color-text);
-}
-[data-theme="light"] .members .nav.nav-pills button.badge {
-    color: var(--color-text-light);
-}
-.members .nav.nav-pills button.badge.active {
-    outline-width: 2px;
-    outline-style: solid;
-}
-.members .tab-pane {
-    padding: 0;
-    margin-top: -5px;
-}
-</style>

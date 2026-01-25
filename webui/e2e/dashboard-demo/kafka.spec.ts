@@ -66,30 +66,54 @@ test('Visit Kafka Order Service', async ({ page }) => {
          await expect(tooltip.getByLabel('Topics')).toHaveText('order-topic');
 
          await rows.nth(0).getByRole('cell').nth(0).click();
-         const dialog = page.getByRole('dialog', { name: 'Group Details' });
-         await expect(dialog).toBeVisible();
-         await expect(dialog.getByLabel('Name')).toHaveText('order-status-group-100');
-         await expect(dialog.getByLabel('State')).toHaveText('Stable');
-         await expect(dialog.getByLabel('Protocol')).toHaveText('RoundRobinAssigner');
-         await expect(dialog.getByLabel('Coordinator')).toHaveText('localhost:9092');
-         await expect(dialog.getByLabel('Leader')).toHaveText(/^producer/);
+         await expect(page.getByLabel('Group Name')).toHaveText('order-status-group-100');
+         await expect(page.getByLabel('State')).toHaveText('Stable');
+         await expect(page.getByLabel('Protocol')).toHaveText('RoundRobinAssigner');
+         await expect(page.getByLabel('Coordinator')).toHaveText('localhost:9092');
+         await expect(page.getByLabel('Leader', { exact: true })).toHaveText(/^producer/);
 
-         await dialog.getByRole('tab', { name: 'Topics' }).click();
-         const topics = dialog.getByRole('table', { name: 'Topics' });
-         await expect(await getCellByColumnName(topics, 'Topic')).toHaveText('order-topic');
+        //  await dialog.getByRole('tab', { name: 'Topics' }).click();
+        //  const topics = dialog.getByRole('table', { name: 'Topics' });
+        //  await expect(await getCellByColumnName(topics, 'Topic')).toHaveText('order-topic');
 
-         await dialog.getByRole('tab', { name: 'Members' }).click();
-         const membersPanel = dialog.getByRole('tabpanel', { name: 'Members' });
-         await expect(membersPanel).toBeVisible();
-         await expect(membersPanel.getByRole('tab', { name: /^producer/ })).toHaveAttribute('aria-selected', 'true');
-         await expect(membersPanel.getByLabel('Address')).not.toBeEmpty();
-         await expect(membersPanel.getByLabel('Client Software')).toHaveText('-');
-         await expect(membersPanel.getByLabel('Heartbeat')).not.toBeEmpty();
-         const memberPartitions = membersPanel.getByRole('table', { name: 'Member Partitions' })
-         await expect(await getCellByColumnName(memberPartitions, 'Topic')).toHaveText('order-topic');
-         await expect(await getCellByColumnName(memberPartitions, 'Partitions')).toHaveText('0');
+        await test.step('Verify Members', async () => {
+        
+            const region = page.getByRole('region', { name: 'Members' });
+            await expect(region).toBeVisible();
 
-         await dialog.getByRole('button', { name: 'Close' }).click();
+            const members = region.getByRole('table', { name: 'Members' });
+            const rows = members.locator('tbody tr');
+            await expect(rows).toHaveCount(1);
+            await expect((await getCellByColumnName(members, 'Group leader', rows.nth(0))).getByLabel('Group leader')).toBeVisible();
+            await expect(await getCellByColumnName(members, 'Name', rows.nth(0))).toHaveText(/^producer/);
+            await expect(await getCellByColumnName(members, 'Address', rows.nth(0))).not.toBeEmpty();
+            await expect(await getCellByColumnName(members, 'Client Software', rows.nth(0))).toHaveText('-');
+            await expect(await getCellByColumnName(members, 'Heartbeat', rows.nth(0))).not.toBeEmpty();
+
+            await test.step('Verify Member', async () => {
+
+                await members.locator('tbody tr').click();
+
+                await expect(page.getByLabel('Member Name')).toHaveText(/^producer/);
+                await expect(page.getByLabel('Address')).not.toBeEmpty();
+                await expect(page.getByLabel('Client Software')).toHaveText('-');
+                await expect(page.getByLabel('Heartbeat')).not.toBeEmpty();
+        
+                const region = page.getByRole('region', { name: 'Partitions' });
+                await expect(region).toBeVisible();
+
+                const table = region.getByRole('table', { name: 'Partitions' });
+                const rows = table.locator('tbody tr');
+                await expect(rows).toHaveCount(1);
+                await expect((await getCellByColumnName(table, 'Topic', rows.nth(0)))).toHaveText('order-topic');
+                await expect(await getCellByColumnName(table, 'Partition', rows.nth(0))).toHaveText('0');
+
+                await page.goBack();
+
+            });
+        });
+
+        await page.goBack();
 
     });
 

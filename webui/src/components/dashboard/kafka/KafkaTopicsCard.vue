@@ -12,7 +12,6 @@ const props = defineProps<{
 const { sum } = useMetrics()
 const { format } = usePrettyDates()
 const router = useRouter()
-const route = useRoute()
 
 function messages(service: Service, topic: KafkaTopic){
     return sum(service.metrics, 'kafka_messages_total{', {name: 'topic', value: topic.name})
