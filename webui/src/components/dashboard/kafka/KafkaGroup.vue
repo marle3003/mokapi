@@ -89,19 +89,19 @@ function goToMember(member: KafkaMember, openInNewTab = false){
                     </div>
                 </div>
                 <div class="row">
-                  <div class="col-2">
+                  <div class="col-3 col-sm-2">
                     <p id="state" class="label">State</p>
                     <p aria-labelledby="state">{{ group.state }}</p>
                   </div>
-                  <div class="col-2">
+                  <div class="col-3 col-sm-2">
                     <p id="protocol" class="label">Protocol</p>
                     <p aria-labelledby="protocol">{{ group.protocol }}</p>
                   </div>
-                  <div class="col-2">
+                  <div class="col-3 col-sm-2">
                     <p id="generation" class="label">Generation</p>
                     <p aria-labelledby="generation">{{ group.generation }}</p>
                   </div>
-                  <div class="col">
+                  <div class="col-3 col-sm-2">
                     <p id="rebalancing" class="label">Last Rebalancing</p>
                     <p aria-labelledby="rebalancing">{{ lastRebalancing }}</p>
                   </div>

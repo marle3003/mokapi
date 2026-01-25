@@ -76,15 +76,15 @@ function gotToMember(memberId: string, groupName: string, openInNewTab = false){
                     </div>
                 </div>
                 <div class="row">
-                  <div class="col-2">
+                  <div class="col-sm-2 col-4">
                     <p id="address" class="label">Address</p>
                     <p aria-labelledby="address">{{ formatAddress(client.address) }}</p>
                   </div>
-                  <div class="col-2">
+                  <div class="col-sm-2 col-4">
                     <p id="address" class="label">Broker</p>
                     <p aria-labelledby="address">{{ formatAddress(client.brokerAddress) }}</p>
                   </div>
-                  <div class="col-2">
+                  <div class="col-sm-2 col-4">
                     <p id="clientSoftware" class="label">Client Software</p>
                     <p aria-labelledby="clientSoftware">{{ clientSoftware(client) }}</p>
                   </div>

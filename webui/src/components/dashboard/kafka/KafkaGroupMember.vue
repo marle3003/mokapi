@@ -15,7 +15,6 @@ interface Partition {
 const route = useRoute();
 const router = useRouter();
 const { format } = usePrettyDates();
-const { clientSoftware } = useKafka();
 const { dashboard } = useDashboard();
 const { sum, value } = useMetrics()
 
@@ -140,7 +139,7 @@ function goToTopic(topicName: string, openInNewTab = false){
                       <p v-else>-</p>
                     </p>
                   </div>
-                  <div class="col-3">
+                  <div class="col-6 col-sm-3">
                     <p id="heartbeat" class="label">Heartbeat</p>
                     <p aria-labelledby="heartbeat">{{ format(member.heartbeat) }}</p>
                   </div>
@@ -152,36 +151,38 @@ function goToTopic(topicName: string, openInNewTab = false){
         <section class="card" aria-labelledby="partitions">
           <div class="card-body">
             <h2 id="partitions" class="card-title text-center">Partitions</h2>
-            <table class="table dataTable selectable" aria-labelledby="partitions">
-              <thead>
-                  <tr>
-                    <th scope="col" class="text-left col-3">Topic</th>
-                    <th scope="col" class="text-center col-1">Partition</th>
-                    <th scope="col" class="text-center col-1">Start Offset</th>
-                    <th scope="col" class="text-center col-1">Offset</th>
-                    <th scope="col" class="text-center col-1">Committed</th>
-                    <th scope="col" class="text-center col-1">Lag</th>
+            <div class="table-responsive-sm">
+              <table class="table dataTable selectable" aria-labelledby="partitions">
+                <thead>
+                    <tr>
+                      <th scope="col" class="text-left col-3">Topic</th>
+                      <th scope="col" class="text-center col-1">Partition</th>
+                      <th scope="col" class="text-center col-1">Start Offset</th>
+                      <th scope="col" class="text-center col-1">Offset</th>
+                      <th scope="col" class="text-center col-1">Committed</th>
+                      <th scope="col" class="text-center col-1">Lag</th>
+                    </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="p in partitions" :key="member.name" @click.left="goToTopic(p.topic)" @mousedown.middle="goToTopic(p.topic, true)">
+                    <td>
+                        <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaTopic').value, params: { service: service.name, topic: p.topic }, hash: '#tab-partitions'}">
+                            {{ p.topic }}
+                        </router-link>
+                    </td>
+                    <td class="text-center">{{ p.index }}</td>
+                    <td class="text-center">{{ partition(p.topic, p.index)?.startOffset ?? '-' }}</td>
+                    <td class="text-center">{{ partition(p.topic, p.index)?.offset ?? '-' }}</td>
+                    <td class="text-center">
+                      {{ value(service.metrics, 'kafka_consumer_group_commit', { name: 'topic', value: p.topic }, { name: 'partition', value: p.index.toString() }, { name: 'group', value: group.name }) }}
+                    </td>
+                    <td class="text-center">
+                      {{ sum(service.metrics, 'kafka_consumer_group_lag', { name: 'topic', value: p.topic }, { name: 'partition', value: p.index.toString() }, { name: 'group', value: group.name }) }}
+                    </td>
                   </tr>
-              </thead>
-              <tbody>
-                <tr v-for="p in partitions" :key="member.name" @click.left="goToTopic(p.topic)" @mousedown.middle="goToTopic(p.topic, true)">
-                  <td>
-                      <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaTopic').value, params: { service: service.name, topic: p.topic }, hash: '#tab-partitions'}">
-                          {{ p.topic }}
-                      </router-link>
-                  </td>
-                  <td class="text-center">{{ p.index }}</td>
-                  <td class="text-center">{{ partition(p.topic, p.index)?.startOffset ?? '-' }}</td>
-                  <td class="text-center">{{ partition(p.topic, p.index)?.offset ?? '-' }}</td>
-                  <td class="text-center">
-                    {{ value(service.metrics, 'kafka_consumer_group_commit', { name: 'topic', value: p.topic }, { name: 'partition', value: p.index.toString() }, { name: 'group', value: group.name }) }}
-                  </td>
-                  <td class="text-center">
-                    {{ sum(service.metrics, 'kafka_consumer_group_lag', { name: 'topic', value: p.topic }, { name: 'partition', value: p.index.toString() }, { name: 'group', value: group.name }) }}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
       </div>

@@ -1,8 +1,6 @@
 <script setup lang="ts">
-import { usePrettyDates } from '@/composables/usePrettyDate'
 import { computed, onMounted } from 'vue'
 import { Popover } from 'bootstrap'
-import { useMetrics } from '@/composables/metrics'
 import { useKafka } from '@/composables/kafka';
 import { useRouter } from '@/router';
 import { getRouteName } from '@/composables/dashboard';
@@ -12,8 +10,6 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
-const { format } = usePrettyDates()
-const { sum } = useMetrics()
 const { clientSoftware, formatAddress } = useKafka();
 
 const clients = computed(() => {
