@@ -369,7 +369,7 @@ func TestProduce(t *testing.T) {
 					),
 				))
 				hook := test.NewGlobal()
-				ctx := kafka.NewClientContext(context.Background(), "127.0.0.1:42424")
+				ctx := kafka.NewClientContext(context.Background(), "127.0.0.1:42424", "127.0.0.1:9092")
 				sm.SetStore(5, events.NewTraits().WithNamespace("kafka"))
 
 				rr := kafkatest.NewRecorder()
@@ -435,7 +435,7 @@ func TestProduce(t *testing.T) {
 					),
 				))
 				hook := test.NewGlobal()
-				ctx := kafka.NewClientContext(context.Background(), "127.0.0.1:42424")
+				ctx := kafka.NewClientContext(context.Background(), "127.0.0.1:42424", "127.0.0.1:9092")
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("MOKAPITEST1", 3, &initProducerId.Request{}).WithContext(ctx))
@@ -493,7 +493,7 @@ func TestProduce(t *testing.T) {
 					),
 				))
 				hook := test.NewGlobal()
-				ctx := kafka.NewClientContext(context.Background(), "127.0.0.1:42424")
+				ctx := kafka.NewClientContext(context.Background(), "127.0.0.1:42424", "127.0.0.1:9092")
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("MOKAPITEST1", 3, &initProducerId.Request{}).WithContext(ctx))

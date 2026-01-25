@@ -39,7 +39,6 @@ declare interface KafkaPartition {
   id: number;
   startOffset: number;
   offset: number;
-  leader: KafkaBroker;
   segments: number;
 }
 
@@ -52,7 +51,6 @@ declare interface KafkaGroup {
   name: string;
   generation: number
   members: KafkaMember[];
-  coordinator: string;
   leader: string;
   state: string;
   protocol: string;
@@ -98,6 +96,7 @@ declare interface KafkaValue {
 declare interface KafkaClient {
   clientId: string
   address: string
+  brokerAddress: string
   clientSoftwareName: string;
   clientSoftwareVersion: string;
   groups: {

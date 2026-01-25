@@ -3,7 +3,7 @@ import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useKafka } from '@/composables/kafka';
 import { useRoute, useRouter } from '@/router';
 import { computed, type Ref } from 'vue';
-import Message from './Message.vue';
+import Message from '../../Message.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -79,6 +79,10 @@ function gotToMember(memberId: string, groupName: string, openInNewTab = false){
                   <div class="col-2">
                     <p id="address" class="label">Address</p>
                     <p aria-labelledby="address">{{ formatAddress(client.address) }}</p>
+                  </div>
+                  <div class="col-2">
+                    <p id="address" class="label">Broker</p>
+                    <p aria-labelledby="address">{{ formatAddress(client.brokerAddress) }}</p>
                   </div>
                   <div class="col-2">
                     <p id="clientSoftware" class="label">Client Software</p>

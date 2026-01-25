@@ -60,7 +60,6 @@ type group struct {
 	Name               string   `json:"name"`
 	Generation         int      `json:"generation"`
 	Members            []member `json:"members"`
-	Coordinator        string   `json:"coordinator"`
 	Leader             string   `json:"leader"`
 	State              string   `json:"state"`
 	AssignmentStrategy string   `json:"protocol"`
@@ -70,6 +69,7 @@ type group struct {
 type client struct {
 	ClientId              string              `json:"clientId"`
 	Address               string              `json:"address"`
+	BrokerAddress         string              `json:"brokerAddress"`
 	ClientSoftwareName    string              `json:"clientSoftwareName"`
 	ClientSoftwareVersion string              `json:"clientSoftwareVersion"`
 	Groups                []clientGroupMember `json:"groups"`
@@ -99,16 +99,10 @@ type topic struct {
 }
 
 type partition struct {
-	Id          int    `json:"id"`
-	StartOffset int64  `json:"startOffset"`
-	Offset      int64  `json:"offset"`
-	Leader      broker `json:"leader"`
-	Segments    int    `json:"segments"`
-}
-
-type broker struct {
-	Name string `json:"name"`
-	Addr string `json:"addr"`
+	Id          int   `json:"id"`
+	StartOffset int64 `json:"startOffset"`
+	Offset      int64 `json:"offset"`
+	Segments    int   `json:"segments"`
 }
 
 type messageConfig struct {
@@ -464,6 +458,7 @@ func getKafka(info *runtime.KafkaInfo) kafkaInfo {
 		c := client{
 			ClientId:              ctx.ClientId,
 			Address:               ctx.Addr,
+			BrokerAddress:         ctx.ServerAddress,
 			ClientSoftwareName:    ctx.ClientSoftwareName,
 			ClientSoftwareVersion: ctx.ClientSoftwareVersion,
 		}
@@ -595,10 +590,9 @@ func getPartitions(t *store.Topic) []partition {
 
 func newGroup(g *store.Group) group {
 	grp := group{
-		Name:        g.Name,
-		Generation:  g.Generation.Id,
-		State:       g.State.String(),
-		Coordinator: g.Coordinator.Addr(),
+		Name:       g.Name,
+		Generation: g.Generation.Id,
+		State:      g.State.String(),
 	}
 	if g.Generation != nil {
 		grp.Leader = g.Generation.LeaderId
@@ -634,18 +628,7 @@ func newPartition(p *store.Partition) partition {
 		Id:          p.Index,
 		StartOffset: p.StartOffset(),
 		Offset:      p.Offset(),
-		Leader:      newBroker(p.Leader),
 		Segments:    len(p.Segments),
-	}
-}
-
-func newBroker(b *store.Broker) broker {
-	if b == nil {
-		return broker{}
-	}
-	return broker{
-		Name: b.Name,
-		Addr: b.Addr(),
 	}
 }
 

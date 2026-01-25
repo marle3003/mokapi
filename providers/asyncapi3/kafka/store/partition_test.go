@@ -24,8 +24,6 @@ func TestPartition(t *testing.T) {
 	require.Equal(t, 0, p.Index)
 	require.Equal(t, int64(0), p.StartOffset())
 	require.Equal(t, int64(0), p.Offset())
-	require.Equal(t, 1, p.Leader.Id)
-	require.Equal(t, []int{}, p.Replicas)
 }
 
 func TestPartition_Write(t *testing.T) {

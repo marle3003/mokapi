@@ -3,14 +3,14 @@ import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRoute, useRouter } from '@/router';
 import { computed, type Ref } from 'vue';
-import Message from './Message.vue';
+import Message from '../../Message.vue';
 import { useKafka } from '@/composables/kafka';
 import { useMetrics } from '@/composables/metrics';
 
 const route = useRoute();
 const router = useRouter();
 const { format } = usePrettyDates();
-const { clientSoftware } = useKafka();
+const { clientSoftware, formatAddress } = useKafka();
 const { dashboard } = useDashboard();
 const { value } = useMetrics();
 
@@ -23,7 +23,7 @@ const group = computed(() => {
   if (!service.value) {
     return null;
   }
-  for (let group of service.value?.groups){
+  for (let group of service.value.groups){
     if (group.name == groupName) {
       return group;
     }
@@ -98,12 +98,8 @@ function goToMember(member: KafkaMember, openInNewTab = false){
                     <p aria-labelledby="protocol">{{ group.protocol }}</p>
                   </div>
                   <div class="col-2">
-                    <p id="leader" class="label">Generation</p>
-                    <p aria-labelledby="leader">{{ group.generation }}</p>
-                  </div>
-                  <div class="col">
-                    <p id="coordinator" class="label">Coordinator</p>
-                    <p aria-labelledby="coordinator">{{ group.coordinator }}</p>
+                    <p id="generation" class="label">Generation</p>
+                    <p aria-labelledby="generation">{{ group.generation }}</p>
                   </div>
                   <div class="col">
                     <p id="rebalancing" class="label">Last Rebalancing</p>
@@ -144,7 +140,7 @@ function goToMember(member: KafkaMember, openInNewTab = false){
                           {{ member.name }}
                       </router-link>
                   </td>
-                  <td>{{ member.addr }}</td>
+                  <td>{{ formatAddress(member.addr) }}</td>
                   <td>{{ clientSoftware(member) }}</td>
                   <td class="text-center">{{ format(member.heartbeat) }}</td>
                 </tr>
@@ -154,7 +150,7 @@ function goToMember(member: KafkaMember, openInNewTab = false){
         </section>
       </div>
   </div>
-  <div v-if="!result.isLoading && !group">
+  <div v-if="!result.isLoading.value && !group">
     <message :message="`Kafka Group ${groupName} not found`"></message>
   </div>
 </template>

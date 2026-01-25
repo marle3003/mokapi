@@ -25,10 +25,9 @@ var states = [...]string{
 }
 
 type Group struct {
-	Name        string
-	Coordinator *Broker
-	State       GroupState
-	Generation  *Generation
+	Name       string
+	State      GroupState
+	Generation *Generation
 
 	// todo add timestamp and metadata to commit
 	Commits map[string]map[int]int64
@@ -38,8 +37,7 @@ type Group struct {
 
 func (s *Store) newGroup(name string, coordinator *Broker) *Group {
 	g := &Group{
-		Name:        name,
-		Coordinator: coordinator,
+		Name: name,
 	}
 	g.balancer = newGroupBalancer(g, coordinator.kafkaConfig, &groupMonitor{cluster: s.cluster, monitor: s.monitor})
 	go g.balancer.run()

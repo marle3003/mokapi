@@ -71,21 +71,14 @@ func (s *Store) metadata(rw kafka.ResponseWriter, req *kafka.Request) error {
 			Name: t.Name,
 		}
 
-		for i, p := range t.Partitions {
-			replicas := p.Replicas
-			nodes := make([]int32, 0, len(replicas))
-			for _, n := range replicas {
-				nodes = append(nodes, int32(n))
-			}
-			brokerId := -1
-			if p.Leader != nil {
-				brokerId = p.Leader.Id
-			}
+		brokerId := -1
+		if b != nil {
+			brokerId = b.Id
+		}
+		for i := range t.Partitions {
 			resTopic.Partitions = append(resTopic.Partitions, metaData.ResponsePartition{
 				PartitionIndex: int32(i),
 				LeaderId:       int32(brokerId),
-				ReplicaNodes:   nodes,
-				IsrNodes:       nodes,
 			})
 		}
 

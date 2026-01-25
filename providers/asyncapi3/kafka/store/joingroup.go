@@ -18,9 +18,6 @@ func (s *Store) joingroup(rw kafka.ResponseWriter, req *kafka.Request) error {
 	}
 
 	g := s.GetOrCreateGroup(r.GroupId, b.Id)
-	if g.Coordinator.Id != b.Id {
-		return rw.Write(&joinGroup.Response{ErrorCode: kafka.NotCoordinator})
-	}
 
 	ctx.AddGroup(g.Name, r.MemberId)
 

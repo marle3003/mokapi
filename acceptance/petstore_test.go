@@ -120,8 +120,8 @@ func (suite *PetStoreSuite) TestApi() {
 				},
 				"name": "petstore.order-event",
 				"partitions": []interface{}{
-					map[string]interface{}{"id": float64(0), "leader": map[string]interface{}{"addr": "127.0.0.1:19092", "name": "broker"}, "offset": float64(1), "segments": float64(1), "startOffset": float64(0)},
-					map[string]interface{}{"id": float64(1), "leader": map[string]interface{}{"addr": "127.0.0.1:19092", "name": "broker"}, "offset": float64(0), "segments": float64(0), "startOffset": float64(0)},
+					map[string]interface{}{"id": float64(0), "offset": float64(1), "segments": float64(1), "startOffset": float64(0)},
+					map[string]interface{}{"id": float64(1), "offset": float64(0), "segments": float64(0), "startOffset": float64(0)},
 				},
 			}},
 		}

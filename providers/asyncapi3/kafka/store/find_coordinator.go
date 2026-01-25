@@ -26,23 +26,18 @@ func (s *Store) findCoordinator(rw kafka.ResponseWriter, req *kafka.Request) err
 		if b == nil {
 			return writeError(kafka.UnknownServerError, fmt.Sprintf("broker %v not found", req.Host))
 		}
-		g := s.GetOrCreateGroup(r.Key, b.Id)
-		if g.Coordinator == nil {
-			return writeError(kafka.CoordinatorNotAvailable, fmt.Sprintf("no coordinator for group %v available", r.Key))
-		} else {
-			host := g.Coordinator.Host
-			if len(host) == 0 {
-				var err error
-				host, _, err = net.SplitHostPort(req.Host)
-				if err != nil {
-					return writeError(kafka.UnknownServerError, fmt.Sprintf("broker %v not found: %v", req.Host, err))
-				}
+		host := b.Host
+		if len(host) == 0 {
+			var err error
+			host, _, err = net.SplitHostPort(req.Host)
+			if err != nil {
+				return writeError(kafka.UnknownServerError, fmt.Sprintf("broker %v not found: %v", req.Host, err))
 			}
-
-			res.NodeId = int32(g.Coordinator.Id)
-			res.Host = host
-			res.Port = int32(g.Coordinator.Port)
 		}
+
+		res.NodeId = int32(b.Id)
+		res.Host = host
+		res.Port = int32(b.Port)
 	default:
 		res.ErrorCode = kafka.UnknownServerError
 		res.ErrorMessage = fmt.Sprintf("unsupported request key_type=%v", r.KeyType)

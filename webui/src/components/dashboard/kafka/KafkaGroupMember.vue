@@ -4,7 +4,7 @@ import { useKafka } from '@/composables/kafka';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRoute, useRouter } from '@/router';
 import { computed, type Ref } from 'vue';
-import Message from './Message.vue';
+import Message from '../../Message.vue';
 import { useMetrics } from '@/composables/metrics';
 
 interface Partition {

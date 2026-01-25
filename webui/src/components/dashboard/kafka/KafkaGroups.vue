@@ -15,7 +15,7 @@ const props = defineProps<{
 const router = useRouter()
 const { format } = usePrettyDates()
 const { sum } = useMetrics()
-const { clientSoftware } = useKafka();
+const { clientSoftware, formatAddress } = useKafka();
 
 function memberInfo(member: KafkaMember): string {
     let addition = ''
@@ -27,7 +27,7 @@ function memberInfo(member: KafkaMember): string {
     }
     return `<div aria-label="${member.name}">
             <p id="${member.name}-address" class="label">Address</p>
-            <p aria-labelledby="${member.name}-address">${member.addr}</p>
+            <p aria-labelledby="${member.name}-address">${formatAddress(member.addr)}</p>
             <p id="${member.name}-client-software" class="label">Client Software</p>
             <p aria-labelledby="${member.name}-client-software">${clientSoftware(member)}</p>
             <p id="${member.name}-last-heartbeat" class="label">Last Heartbeat</p>
@@ -95,7 +95,6 @@ function goToGroup(group: KafkaGroup, openInNewTab = false){
                     <th scope="col" class="text-left col-2">Name</th>
                     <th scope="col" class="text-left col-1">State</th>
                     <th scope="col" class="text-left col-2">Protocol</th>
-                    <th scope="col" class="text-left col-2">Coordinator</th>
                     <th scope="col" class="text-left col-2">Leader</th>
                     <th scope="col" class="text-left col-2">Members</th>
                     <th scope="col" class="text-center col-1" v-if="topicName">Lag</th>
@@ -110,7 +109,6 @@ function goToGroup(group: KafkaGroup, openInNewTab = false){
                     </td>
                     <td>{{ group.state }}</td>
                     <td v-html="group.protocol.replace(/([a-z])([A-Z])/g, '$1<wbr>$2')"></td>
-                    <td v-html="group.coordinator.replace(/([^:]*):(.*)/g, '$1<wbr>:$2')"></td>
                     <td>{{ group.leader }}</td>
                     <td>
                         <ul class="members">

@@ -52,7 +52,6 @@ test('Visit Kafka Order Service', async ({ page }) => {
          await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('order-status-group-100');
          await expect(await getCellByColumnName(table, 'State', rows.nth(0))).toHaveText('Stable');
          await expect(await getCellByColumnName(table, 'Protocol', rows.nth(0))).toHaveText('RoundRobinAssigner');
-         await expect(await getCellByColumnName(table, 'Coordinator', rows.nth(0))).toHaveText('localhost:9092');
          await expect(await getCellByColumnName(table, 'Leader', rows.nth(0))).toHaveText(/^consumer-1/);
          const members = await getCellByColumnName(table, 'Members', rows.nth(0))
          await expect(members).toHaveText(/^consumer-1/);
@@ -69,7 +68,6 @@ test('Visit Kafka Order Service', async ({ page }) => {
          await expect(page.getByLabel('Group Name')).toHaveText('order-status-group-100');
          await expect(page.getByLabel('State')).toHaveText('Stable');
          await expect(page.getByLabel('Protocol')).toHaveText('RoundRobinAssigner');
-         await expect(page.getByLabel('Coordinator')).toHaveText('localhost:9092');
          await expect(page.getByLabel('Generation', { exact: true })).toHaveText('0');
 
         await test.step('Verify Members', async () => {
@@ -172,7 +170,6 @@ test('Visit Kafka Order Service', async ({ page }) => {
             const rows = table.locator('tbody tr');
             await expect(rows).toHaveCount(1);
             await expect(await getCellByColumnName(table, 'ID')).toHaveText('0');
-            await expect(await getCellByColumnName(table, 'Leader')).toHaveText('development (localhost:9092)');
             await expect(await getCellByColumnName(table, 'Start Offset')).toHaveText('0');
             await expect(await getCellByColumnName(table, 'Offset')).toHaveText('2');
             await expect(await getCellByColumnName(table, 'Segments')).toHaveText('1');
@@ -189,7 +186,6 @@ test('Visit Kafka Order Service', async ({ page }) => {
             await expect(await getCellByColumnName(table, 'Name')).toHaveText('order-status-group-100');
             await expect(await getCellByColumnName(table, 'State')).toHaveText('Stable');
             await expect(await getCellByColumnName(table, 'Protocol')).toHaveText('RoundRobinAssigner');
-            await expect(await getCellByColumnName(table, 'Coordinator')).toHaveText('localhost:9092');
             await expect(await getCellByColumnName(table, 'Leader')).toHaveText(/^consumer-1/);
             await expect(await getCellByColumnName(table, 'Members')).toContainText(/^consumer-1/);
             await expect(await getCellByColumnName(table, 'Lag')).toHaveText('0');

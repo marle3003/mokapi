@@ -23,21 +23,18 @@ export const cluster = {
             partitions: [
                 {
                     id: '0',
-                    leader: 'foo (localhost:9002)',
                     startOffset: '0',
                     offset: '4',
                     segments: '1'
                 },
                 {
                     id: '1',
-                    leader: 'foo (localhost:9002)',
                     startOffset: '0',
                     offset: '3',
                     segments: '1'
                 },
                 {
                     id: '2',
-                    leader: 'foo (localhost:9002)',
                     startOffset: '0',
                     offset: '3',
                     segments: '1'
@@ -65,7 +62,6 @@ export const cluster = {
             partitions: [
                 {
                     id: '0',
-                    leader: 'foo (localhost:9002)',
                     startOffset: '0',
                     offset: '0',
                     segments: '1'
@@ -101,7 +97,6 @@ export const cluster = {
             name: 'foo',
             state: 'Stable',
             protocol: 'Range',
-            coordinator: 'localhost:9092',
             leader: 'julie',
             members: [
                 {
@@ -124,7 +119,6 @@ export const cluster = {
             name: 'bar',
             state: 'Stable',
             protocol: 'Range',
-            coordinator: 'localhost:9092',
             leader: 'george',
             members: [
                 {

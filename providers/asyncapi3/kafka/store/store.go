@@ -302,11 +302,6 @@ func (s *Store) deleteBroker(id int) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	for _, t := range s.topics {
-		for _, p := range t.Partitions {
-			p.removeReplica(id)
-		}
-	}
 	if b, ok := s.brokers[id]; ok {
 		b.stopCleaner()
 	}

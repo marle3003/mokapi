@@ -28,8 +28,6 @@ export interface Group {
     name: string
     state: string
     protocol: string
-    coordinator: string
-    leader:  string
     members: {
         name: string
         address: string
@@ -43,7 +41,7 @@ export function useKafkaGroups(table: Locator, topic?: string) {
     return {
         async testGroup(row: number, group: Group, lags?: string) {
             await test.step(`Check Kafka group in row ${row}`, async () => {
-                let columns = ['Name', 'State', 'Protocol', 'Coordinator', 'Leader', 'Members']
+                let columns = ['Name', 'State', 'Protocol', 'Leader', 'Members']
                 if (lags) {
                     columns.push('Lag')
                 }
@@ -53,8 +51,6 @@ export function useKafkaGroups(table: Locator, topic?: string) {
                 await expect(g.getCellByName('Name')).toHaveText(group.name)
                 await expect(g.getCellByName('State')).toHaveText(group.state)
                 await expect(g.getCellByName('Protocol')).toHaveText(group.protocol)
-                await expect(g.getCellByName('Coordinator')).toHaveText(group.coordinator)
-                await expect(g.getCellByName('Leader')).toHaveText(group.leader)
                 if (lags) {
                     await expect(g.getCellByName('Lag')).toHaveText(lags)
                 }
@@ -79,20 +75,18 @@ export function useKafkaGroups(table: Locator, topic?: string) {
 
 export interface Partition {
     id: string
-    leader: string
     startOffset: string
     offset: string
     segments: string
 }
 
 export function useKafkaPartitions(table: Locator) {
-    const partitions = useTable(table, ['ID', 'Leader', 'Start Offset', 'Offset', 'Segments'])
+    const partitions = useTable(table, ['ID', 'Start Offset', 'Offset', 'Segments'])
     return {
         async testPartition(row: number, partition: Partition) {
             await test.step(`Check Kafka partition in row ${row}`, async () => {
                 const p = partitions.getRow(row + 1)
                 await expect(p.getCellByName('ID')).toHaveText(partition.id)
-                await expect(p.getCellByName('Leader')).toHaveText(partition.leader)
                 await expect(p.getCellByName('Start Offset')).toHaveText(partition.startOffset)
                 await expect(p.getCellByName('Offset')).toHaveText(partition.offset)
                 await expect(p.getCellByName('Segments')).toHaveText(partition.segments)

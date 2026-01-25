@@ -22,8 +22,8 @@ type Partition struct {
 	Tail          int64
 	Topic         *Topic
 
-	Leader   *Broker
-	Replicas []int
+	// only for log cleaner
+	leader *Broker
 
 	validator *validator
 	logger    LogRecord
@@ -93,14 +93,8 @@ func newPartition(index int, brokers Brokers, logger LogRecord, trigger Trigger,
 		producers: make(map[int64]*PartitionProducerState),
 	}
 	if len(brokerList) > 0 {
-		p.Leader = brokerList[0]
+		p.leader = brokerList[0]
 	}
-	if len(brokerList) > 1 {
-		p.Replicas = brokerIds[1:]
-	} else {
-		p.Replicas = make([]int, 0)
-	}
-
 	return p
 }
 
@@ -316,17 +310,6 @@ func (p *Partition) removeSegment(s *Segment) {
 
 	s.delete()
 	delete(p.Segments, s.Head)
-}
-
-func (p *Partition) removeReplica(id int) {
-	i := 0
-	for _, replica := range p.Replicas {
-		if replica != id {
-			p.Replicas[i] = replica
-			i++
-		}
-	}
-	p.Replicas = p.Replicas[:i]
 }
 
 func (p *Partition) addSegment() *Segment {
