@@ -48,8 +48,7 @@
       "Static": {
         "expanded": true,
         "items": {
-          "CLI Usage": "configuration/static/cli.md",
-          "CLI Flags": "configuration/static/mokapi.md"
+          "CLI Usage": "configuration/static/cli.md"
         }
       },
       "Dynamic": {
