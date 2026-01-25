@@ -113,39 +113,41 @@ function goToMember(member: KafkaMember, openInNewTab = false){
         <section class="card" aria-labelledby="members">
           <div class="card-body">
             <h2 id="members" class="card-title text-center">Members</h2>
-            <table class="table dataTable selectable" aria-labelledby="members">
-              <thead>
-                  <tr>
-                    <th scope="col" style="width: 5px;">
-                      <span class="visually-hidden">Group leader</span>
-                    </th>
-                    <th scope="col" class="text-left col-4">Name</th>
-                    <th scope="col" class="text-left col-3">Address</th>
-                    <th scope="col" class="text-left col-3">Client Software</th>
-                    <th scope="col" class="text-center col-2">Heartbeat</th>  
+            <div class="table-responsive-sm">
+              <table class="table dataTable selectable" aria-labelledby="members">
+                <thead>
+                    <tr>
+                      <th scope="col" style="width: 5px;">
+                        <span class="visually-hidden">Group leader</span>
+                      </th>
+                      <th scope="col" class="text-left col-4">Name</th>
+                      <th scope="col" class="text-left col-3">Address</th>
+                      <th scope="col" class="text-left col-3">Client Software</th>
+                      <th scope="col" class="text-center col-2">Heartbeat</th>  
+                    </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="member in group.members" :key="member.name" @click.left="goToMember(member)" @mousedown.middle="goToMember(member, true)">
+                    <td>
+                      <i v-if="group.leader === member.name" 
+                        class="bi bi-star-fill text-warning"
+                        aria-label="Group leader"
+                        title="Group leader"
+                      >
+                      </i>
+                    </td>
+                    <td class="key">
+                        <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaGroupMember').value, params: { service: service.name, group: groupName, member: member.name }}">
+                            {{ member.name }}
+                        </router-link>
+                    </td>
+                    <td>{{ formatAddress(member.addr) }}</td>
+                    <td>{{ clientSoftware(member) }}</td>
+                    <td class="text-center">{{ format(member.heartbeat) }}</td>
                   </tr>
-              </thead>
-              <tbody>
-                <tr v-for="member in group.members" :key="member.name" @click.left="goToMember(member)" @mousedown.middle="goToMember(member, true)">
-                  <td>
-                    <i v-if="group.leader === member.name" 
-                      class="bi bi-star-fill text-warning"
-                      aria-label="Group leader"
-                      title="Group leader"
-                    >
-                    </i>
-                  </td>
-                  <td class="key">
-                      <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaGroupMember').value, params: { service: service.name, group: groupName, member: member.name }}">
-                          {{ member.name }}
-                      </router-link>
-                  </td>
-                  <td>{{ formatAddress(member.addr) }}</td>
-                  <td>{{ clientSoftware(member) }}</td>
-                  <td class="text-center">{{ format(member.heartbeat) }}</td>
-                </tr>
-              </tbody>
-            </table>
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
       </div>
