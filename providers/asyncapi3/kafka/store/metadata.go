@@ -10,7 +10,7 @@ func (s *Store) metadata(rw kafka.ResponseWriter, req *kafka.Request) error {
 	r := req.Message.(*metaData.Request)
 
 	brokers := s.Brokers()
-	ctx := kafka.ClientFromContext(req)
+	ctx := kafka.ClientFromContext(req.Context)
 	ctx.AllowAutoTopicCreation = r.AllowAutoTopicCreation
 
 	res := &metaData.Response{

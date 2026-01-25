@@ -7,7 +7,7 @@ import (
 
 func (s *Store) syncgroup(rw kafka.ResponseWriter, req *kafka.Request) error {
 	r := req.Message.(*syncGroup.Request)
-	ctx := kafka.ClientFromContext(req)
+	ctx := kafka.ClientFromContext(req.Context)
 
 	if len(r.MemberId) == 0 {
 		return rw.Write(&syncGroup.Response{ErrorCode: kafka.MemberIdRequired})

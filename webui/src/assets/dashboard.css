@@ -91,7 +91,7 @@
     position: fixed;
     top: 4rem;
     z-index: 10;
-    width: 90%;
+    width: 100%;
     padding-top: 15px;
     padding-bottom: 30px;
     background-color: var(--color-background);

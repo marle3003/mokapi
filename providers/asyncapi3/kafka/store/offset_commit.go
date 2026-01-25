@@ -2,11 +2,12 @@ package store
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
 	"mokapi/kafka/offsetCommit"
 	"mokapi/runtime/monitor"
 	"strconv"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func (s *Store) offsetCommit(rw kafka.ResponseWriter, req *kafka.Request) error {
@@ -15,7 +16,7 @@ func (s *Store) offsetCommit(rw kafka.ResponseWriter, req *kafka.Request) error 
 		Topics: make([]offsetCommit.ResponseTopic, 0, len(r.Topics)),
 	}
 
-	ctx := kafka.ClientFromContext(req)
+	ctx := kafka.ClientFromContext(req.Context)
 
 	for _, rt := range r.Topics {
 		log.Infof("kafa OffsetCommit: topic %v, client=%v", rt.Name, ctx.ClientId)
@@ -82,4 +83,5 @@ func (s *Store) processMetricsOffsetCommit(ctx context.Context, g *Group, topic 
 
 	lag := float64(partition.Offset() - g.Commits[topic][partition.Index])
 	m.Lags.WithLabel(s.cluster, g.Name, topic, strconv.Itoa(partition.Index)).Set(lag)
+	m.Commits.WithLabel(s.cluster, g.Name, topic, strconv.Itoa(partition.Index)).Set(float64(g.Commits[topic][partition.Index]))
 }

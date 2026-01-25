@@ -10,6 +10,8 @@ import Servers from './Servers.vue'
 import ConfigCard from '../ConfigCard.vue'
 import KafkaGroup from './KafkaGroup.vue'
 import KafkaGroupMember from './KafkaGroupMember.vue'
+import KafkaClients from './KafkaClients.vue'
+import KafkaClient from './KafkaClient.vue'
 import Message from './Message.vue'
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 
@@ -41,6 +43,9 @@ if (serviceName){
           <kafka-groups-card :service="service" />
       </div>
       <div class="card-group">
+          <kafka-clients :service="service" />
+      </div>
+      <div class="card-group">
             <config-card :configs="service.configs" />
       </div>
       <div class="card-group">
@@ -55,6 +60,9 @@ if (serviceName){
   </div>
   <div v-if="$route.name == getRouteName('kafkaGroupMember').value">
       <kafka-group-member></kafka-group-member>
+  </div>
+  <div v-if="$route.name == getRouteName('kafkaClient').value">
+      <kafka-client></kafka-client>
   </div>
   <message v-if="$route.name == getRouteName('kafkaMessage').value"></message>
 </template>

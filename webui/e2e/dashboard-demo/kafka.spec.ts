@@ -53,9 +53,9 @@ test('Visit Kafka Order Service', async ({ page }) => {
          await expect(await getCellByColumnName(table, 'State', rows.nth(0))).toHaveText('Stable');
          await expect(await getCellByColumnName(table, 'Protocol', rows.nth(0))).toHaveText('RoundRobinAssigner');
          await expect(await getCellByColumnName(table, 'Coordinator', rows.nth(0))).toHaveText('localhost:9092');
-         await expect(await getCellByColumnName(table, 'Leader', rows.nth(0))).toHaveText(/^producer/);
+         await expect(await getCellByColumnName(table, 'Leader', rows.nth(0))).toHaveText(/^consumer-1/);
          const members = await getCellByColumnName(table, 'Members', rows.nth(0))
-         await expect(members).toHaveText(/^producer/);
+         await expect(members).toHaveText(/^consumer-1/);
 
          await members.hover();
          const tooltip = page.getByRole('tooltip')
@@ -70,11 +70,7 @@ test('Visit Kafka Order Service', async ({ page }) => {
          await expect(page.getByLabel('State')).toHaveText('Stable');
          await expect(page.getByLabel('Protocol')).toHaveText('RoundRobinAssigner');
          await expect(page.getByLabel('Coordinator')).toHaveText('localhost:9092');
-         await expect(page.getByLabel('Leader', { exact: true })).toHaveText(/^producer/);
-
-        //  await dialog.getByRole('tab', { name: 'Topics' }).click();
-        //  const topics = dialog.getByRole('table', { name: 'Topics' });
-        //  await expect(await getCellByColumnName(topics, 'Topic')).toHaveText('order-topic');
+         await expect(page.getByLabel('Generation', { exact: true })).toHaveText('0');
 
         await test.step('Verify Members', async () => {
         
@@ -85,7 +81,7 @@ test('Visit Kafka Order Service', async ({ page }) => {
             const rows = members.locator('tbody tr');
             await expect(rows).toHaveCount(1);
             await expect((await getCellByColumnName(members, 'Group leader', rows.nth(0))).getByLabel('Group leader')).toBeVisible();
-            await expect(await getCellByColumnName(members, 'Name', rows.nth(0))).toHaveText(/^producer/);
+            await expect(await getCellByColumnName(members, 'Name', rows.nth(0))).toHaveText(/^consumer-1/);
             await expect(await getCellByColumnName(members, 'Address', rows.nth(0))).not.toBeEmpty();
             await expect(await getCellByColumnName(members, 'Client Software', rows.nth(0))).toHaveText('-');
             await expect(await getCellByColumnName(members, 'Heartbeat', rows.nth(0))).not.toBeEmpty();
@@ -94,9 +90,8 @@ test('Visit Kafka Order Service', async ({ page }) => {
 
                 await members.locator('tbody tr').click();
 
-                await expect(page.getByLabel('Member Name')).toHaveText(/^producer/);
-                await expect(page.getByLabel('Address')).not.toBeEmpty();
-                await expect(page.getByLabel('Client Software')).toHaveText('-');
+                await expect(page.getByLabel('Member Name')).toHaveText(/^consumer-1/);
+                await expect(page.getByLabel('Client')).toHaveText(/^consumer-1/);
                 await expect(page.getByLabel('Heartbeat')).not.toBeEmpty();
         
                 const region = page.getByRole('region', { name: 'Partitions' });
@@ -195,8 +190,8 @@ test('Visit Kafka Order Service', async ({ page }) => {
             await expect(await getCellByColumnName(table, 'State')).toHaveText('Stable');
             await expect(await getCellByColumnName(table, 'Protocol')).toHaveText('RoundRobinAssigner');
             await expect(await getCellByColumnName(table, 'Coordinator')).toHaveText('localhost:9092');
-            await expect(await getCellByColumnName(table, 'Leader')).toHaveText(/^producer/);
-            await expect(await getCellByColumnName(table, 'Members')).toContainText(/^producer/);
+            await expect(await getCellByColumnName(table, 'Leader')).toHaveText(/^consumer-1/);
+            await expect(await getCellByColumnName(table, 'Members')).toContainText(/^consumer-1/);
             await expect(await getCellByColumnName(table, 'Lag')).toHaveText('0');
 
         });

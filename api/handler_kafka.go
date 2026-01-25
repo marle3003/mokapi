@@ -40,6 +40,7 @@ type kafkaInfo struct {
 	Groups      []group          `json:"groups,omitempty"`
 	Metrics     []metrics.Metric `json:"metrics,omitempty"`
 	Configs     []config         `json:"configs,omitempty"`
+	Clients     []client         `json:"clients,omitempty"`
 }
 
 type kafkaServer struct {
@@ -57,6 +58,7 @@ type kafkaServerTag struct {
 
 type group struct {
 	Name               string   `json:"name"`
+	Generation         int      `json:"generation"`
 	Members            []member `json:"members"`
 	Coordinator        string   `json:"coordinator"`
 	Leader             string   `json:"leader"`
@@ -65,8 +67,22 @@ type group struct {
 	Topics             []string `json:"topics"`
 }
 
+type client struct {
+	ClientId              string              `json:"clientId"`
+	Address               string              `json:"address"`
+	ClientSoftwareName    string              `json:"clientSoftwareName"`
+	ClientSoftwareVersion string              `json:"clientSoftwareVersion"`
+	Groups                []clientGroupMember `json:"groups"`
+}
+
+type clientGroupMember struct {
+	MemberId string `json:"memberId"`
+	Group    string `json:"group"`
+}
+
 type member struct {
 	Name                  string           `json:"name"`
+	ClientId              string           `json:"clientId"`
 	Addr                  string           `json:"addr"`
 	ClientSoftwareName    string           `json:"clientSoftwareName"`
 	ClientSoftwareVersion string           `json:"clientSoftwareVersion"`
@@ -444,6 +460,23 @@ func getKafka(info *runtime.KafkaInfo) kafkaInfo {
 
 	k.Configs = getConfigs(info.Configs())
 
+	for _, ctx := range info.Store.Clients() {
+		c := client{
+			ClientId:              ctx.ClientId,
+			Address:               ctx.Addr,
+			ClientSoftwareName:    ctx.ClientSoftwareName,
+			ClientSoftwareVersion: ctx.ClientSoftwareVersion,
+		}
+		for groupName, memberId := range ctx.Member {
+			c.Groups = append(c.Groups, clientGroupMember{
+				MemberId: memberId,
+				Group:    groupName,
+			})
+		}
+
+		k.Clients = append(k.Clients, c)
+	}
+
 	return k
 }
 
@@ -563,6 +596,7 @@ func getPartitions(t *store.Topic) []partition {
 func newGroup(g *store.Group) group {
 	grp := group{
 		Name:        g.Name,
+		Generation:  g.Generation.Id,
 		State:       g.State.String(),
 		Coordinator: g.Coordinator.Addr(),
 	}
@@ -573,6 +607,7 @@ func newGroup(g *store.Group) group {
 		for id, m := range g.Generation.Members {
 			grp.Members = append(grp.Members, member{
 				Name:                  id,
+				ClientId:              m.Client.ClientId,
 				Addr:                  m.Client.Addr,
 				ClientSoftwareName:    m.Client.ClientSoftwareName,
 				ClientSoftwareVersion: m.Client.ClientSoftwareVersion,

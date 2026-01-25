@@ -2,7 +2,6 @@ package store_test
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
@@ -11,8 +10,11 @@ import (
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestMetadata(t *testing.T) {
@@ -55,7 +57,7 @@ func TestMetadata(t *testing.T) {
 				require.Len(t, res.Topics[0].Partitions[0].IsrNodes, 0)
 				require.False(t, res.Topics[0].IsInternal)
 
-				require.False(t, kafka.ClientFromContext(r).AllowAutoTopicCreation)
+				require.False(t, kafka.ClientFromContext(r.Context).AllowAutoTopicCreation)
 			},
 		},
 		{
@@ -110,7 +112,7 @@ func TestMetadata(t *testing.T) {
 				})
 				s.ServeMessage(rr, r)
 
-				require.True(t, kafka.ClientFromContext(r).AllowAutoTopicCreation)
+				require.True(t, kafka.ClientFromContext(r.Context).AllowAutoTopicCreation)
 			},
 		},
 		{
@@ -190,7 +192,7 @@ func TestMetadata(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{})
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 			defer s.Close()
 			tc.fn(t, s)
 		})

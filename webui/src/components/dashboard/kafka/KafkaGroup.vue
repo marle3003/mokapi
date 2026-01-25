@@ -5,12 +5,14 @@ import { useRoute, useRouter } from '@/router';
 import { computed, type Ref } from 'vue';
 import Message from './Message.vue';
 import { useKafka } from '@/composables/kafka';
+import { useMetrics } from '@/composables/metrics';
 
 const route = useRoute();
 const router = useRouter();
 const { format } = usePrettyDates();
 const { clientSoftware } = useKafka();
 const { dashboard } = useDashboard();
+const { value } = useMetrics();
 
 const serviceName = route.params.service!.toString();
 const groupName = route.params.group?.toString();
@@ -27,6 +29,16 @@ const group = computed(() => {
     }
   }
   return null;
+})
+const lastRebalancing = computed(() => {
+  if (!service.value || !groupName) {
+    return '-'
+  }
+  const timestamp = value(service.value.metrics, 'kafka_rebalance_timestamp', { name: 'group', value: groupName });
+  if (!timestamp) {
+    return '-'
+  }
+  return format(timestamp)
 })
 
 function goToMember(member: KafkaMember, openInNewTab = false){
@@ -85,13 +97,17 @@ function goToMember(member: KafkaMember, openInNewTab = false){
                     <p id="protocol" class="label">Protocol</p>
                     <p aria-labelledby="protocol">{{ group.protocol }}</p>
                   </div>
-                  <div class="col-3">
-                    <p id="leader" class="label">Leader</p>
-                    <p aria-labelledby="leader">{{ group.leader }}</p>
+                  <div class="col-2">
+                    <p id="leader" class="label">Generation</p>
+                    <p aria-labelledby="leader">{{ group.generation }}</p>
                   </div>
                   <div class="col">
                     <p id="coordinator" class="label">Coordinator</p>
                     <p aria-labelledby="coordinator">{{ group.coordinator }}</p>
+                  </div>
+                  <div class="col">
+                    <p id="rebalancing" class="label">Last Rebalancing</p>
+                    <p aria-labelledby="rebalancing">{{ lastRebalancing }}</p>
                   </div>
                 </div>
             </div>

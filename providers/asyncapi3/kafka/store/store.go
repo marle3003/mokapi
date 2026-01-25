@@ -39,6 +39,8 @@ type Store struct {
 	eventEmitter common.EventEmitter
 	eh           events.Handler
 	producers    map[int64]*ProducerState
+	monitor      *monitor.Kafka
+	clients      map[string]*kafka.ClientContext
 
 	nextPID int64
 	m       sync.RWMutex
@@ -57,11 +59,13 @@ func NewEmpty(eventEmitter common.EventEmitter, eh events.Handler) *Store {
 		eventEmitter: eventEmitter,
 		eh:           eh,
 		producers:    make(map[int64]*ProducerState),
+		clients:      make(map[string]*kafka.ClientContext),
 	}
 }
 
-func New(config *asyncapi3.Config, eventEmitter common.EventEmitter, eh events.Handler) *Store {
+func New(config *asyncapi3.Config, eventEmitter common.EventEmitter, eh events.Handler, monitor *monitor.Kafka) *Store {
 	s := NewEmpty(eventEmitter, eh)
+	s.monitor = monitor
 	s.Update(config)
 	return s
 }
@@ -137,7 +141,7 @@ func (s *Store) GetOrCreateGroup(name string, brokerId int) *Group {
 		return g
 	}
 
-	g := NewGroup(name, b)
+	g := s.newGroup(name, b)
 	s.groups[name] = g
 	return g
 }
@@ -201,6 +205,22 @@ func (s *Store) Update(c *asyncapi3.Config) {
 
 func (s *Store) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
 	var err error
+
+	client := kafka.ClientFromContext(req.Context)
+	if client != nil {
+		if _, ok := s.clients[client.ClientId]; !ok {
+			s.m.Lock()
+			s.clients[client.ClientId] = client
+			s.m.Unlock()
+			client.Close = func() {
+				s.m.Lock()
+				defer s.m.Unlock()
+
+				delete(s.clients, client.ClientId)
+			}
+		}
+	}
+
 	switch req.Message.(type) {
 	case *produce.Request:
 		err = s.produce(rw, req)
@@ -438,4 +458,12 @@ func getOperations(channel *asyncapi3.Channel, config *asyncapi3.Config) []*asyn
 		}
 	}
 	return ops
+}
+
+func (s *Store) Clients() []kafka.ClientContext {
+	var result []kafka.ClientContext
+	for _, c := range s.clients {
+		result = append(result, *c)
+	}
+	return result
 }

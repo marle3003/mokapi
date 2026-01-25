@@ -13,7 +13,7 @@ import (
 func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 	r := req.Message.(*produce.Request)
 	res := &produce.Response{}
-	ctx := kafka.ClientFromContext(req)
+	ctx := kafka.ClientFromContext(req.Context)
 
 	m, withMonitor := monitor.KafkaFromContext(req.Context)
 	opts := WriteOptions{}

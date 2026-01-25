@@ -50,8 +50,8 @@ func (c *ClientContext) GetOrCreateMemberId(groupName string) string {
 	return memberId
 }
 
-func ClientFromContext(req *Request) *ClientContext {
-	return req.Context.Value(clientKey).(*ClientContext)
+func ClientFromContext(ctx context.Context) *ClientContext {
+	return ctx.Value(clientKey).(*ClientContext)
 }
 
 func NewClientContext(ctx context.Context, addr string) context.Context {

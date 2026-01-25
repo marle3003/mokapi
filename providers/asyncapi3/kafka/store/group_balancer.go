@@ -18,8 +18,9 @@ type groupBalancer struct {
 	sync  chan syncdata
 	stop  chan bool
 
-	joins  []joindata
-	config asyncapi3.BrokerBindings
+	joins   []joindata
+	config  asyncapi3.BrokerBindings
+	monitor *groupMonitor
 }
 
 type joindata struct {
@@ -49,13 +50,14 @@ type groupAssignment struct {
 	raw      []byte
 }
 
-func newGroupBalancer(group *Group, config asyncapi3.BrokerBindings) *groupBalancer {
+func newGroupBalancer(group *Group, config asyncapi3.BrokerBindings, monitor *groupMonitor) *groupBalancer {
 	return &groupBalancer{
-		group:  group,
-		join:   make(chan joindata),
-		sync:   make(chan syncdata),
-		stop:   make(chan bool, 1),
-		config: config,
+		group:   group,
+		join:    make(chan joindata),
+		sync:    make(chan syncdata),
+		stop:    make(chan bool, 1),
+		config:  config,
+		monitor: monitor,
 	}
 }
 
@@ -132,6 +134,10 @@ func (b *groupBalancer) run() {
 					for topicName, partitions := range assign.topics {
 						b.group.Generation.Members[memberName].Partitions[topicName] = partitions
 					}
+				}
+
+				if b.monitor != nil {
+					b.monitor.LastRebalancing(b.group.Name, time.Now())
 				}
 
 				log.Infof("kafka: received assignments from leader '%v' for group '%v'", s.client.ClientId, b.group.Name)

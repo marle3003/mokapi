@@ -541,7 +541,7 @@ func TestProduce(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			sm := &events.StoreManager{}
-			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), sm)
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), sm, monitor.NewKafka())
 			defer s.Close()
 			tc.fn(t, s, sm)
 		})
@@ -555,7 +555,7 @@ func TestProduceTriggersEvent(t *testing.T) {
 	s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
 		triggerCount++
 		return nil
-	}), sm)
+	}), sm, monitor.NewKafka())
 	defer s.Close()
 
 	s.Update(asyncapi3test.NewConfig(

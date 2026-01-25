@@ -159,6 +159,10 @@ func (s *Server) closeConn(conn net.Conn) {
 	}
 	ctx.Done()
 	_ = conn.Close()
+	client := ClientFromContext(ctx)
+	if client != nil && client.Close != nil {
+		client.Close()
+	}
 	delete(s.activeConn, conn)
 }
 
@@ -183,7 +187,7 @@ func (s *Server) getCloseChan() chan bool {
 }
 
 func (s *Server) handleMessage(rw ResponseWriter, req *Request) {
-	client := ClientFromContext(req)
+	client := ClientFromContext(req.Context)
 	client.Heartbeat = time.Now()
 	client.ClientId = req.Header.ClientId
 

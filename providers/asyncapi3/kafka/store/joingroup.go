@@ -7,7 +7,7 @@ import (
 
 func (s *Store) joingroup(rw kafka.ResponseWriter, req *kafka.Request) error {
 	r := req.Message.(*joinGroup.Request)
-	ctx := kafka.ClientFromContext(req)
+	ctx := kafka.ClientFromContext(req.Context)
 
 	b := s.getBrokerByHost(req.Host)
 	if b == nil {

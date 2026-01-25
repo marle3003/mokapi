@@ -1,8 +1,6 @@
 package runtime
 
 import (
-	"github.com/blevesearch/bleve/v2"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/static"
@@ -15,6 +13,9 @@ import (
 	"path/filepath"
 	"sort"
 	"sync"
+
+	"github.com/blevesearch/bleve/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 type KafkaStore struct {
@@ -96,7 +97,7 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*Kafka
 		s.events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
 		s.events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
 
-		ki = NewKafkaInfo(c, store.New(cfg, emitter, s.events), s.updateEventStore)
+		ki = NewKafkaInfo(c, store.New(cfg, emitter, s.events, s.monitor.Kafka), s.updateEventStore)
 		s.infos[cfg.Info.Name] = ki
 	} else {
 		ki.AddConfig(c)

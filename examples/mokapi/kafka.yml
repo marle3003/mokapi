@@ -357,6 +357,8 @@ components:
       properties:
         name:
           type: string
+        generation:
+          type: integer
         members:
           type: array
           items:

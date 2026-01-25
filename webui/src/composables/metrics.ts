@@ -49,5 +49,23 @@ export function useMetrics() {
         return true
     }
 
-    return {sum, max}
+    function value(metrics: Metric[], name: string, ...labels: Label[]): number | undefined {
+        if (!metrics){
+            return 0
+        }
+
+        for (let metric of metrics) {
+            if (!metric.name.startsWith(name)) {
+                continue
+            }
+            
+            if (labels.length == 0 || matchLabels(metric, labels)){
+                const n = Number(metric.value)
+                return n
+            }
+        }  
+        return undefined
+    }
+
+    return {sum, max, value}
 }

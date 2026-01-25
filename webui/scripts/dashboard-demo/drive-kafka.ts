@@ -1,12 +1,17 @@
 import { Kafka } from 'kafkajs';
 
-const kafka = new Kafka({
+const producerClient = new Kafka({
   clientId: 'producer-1',
   brokers: ['localhost:9092']
 });
 
-const consumer = kafka.consumer({ groupId: 'order-status-group-100' });
-const producer = kafka.producer();
+const consumerClient = new Kafka({
+  clientId: 'consumer-1',
+  brokers: ['localhost:9092']
+});
+
+const consumer = consumerClient.consumer({ groupId: 'order-status-group-100' });
+const producer = producerClient.producer();
 
 export async function driveKafka() {
   await consumer.connect();

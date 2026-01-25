@@ -1,16 +1,17 @@
 package store
 
 import (
-	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
 	"mokapi/kafka/offset"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func (s *Store) offset(rw kafka.ResponseWriter, req *kafka.Request) error {
 	r := req.Message.(*offset.Request)
 	res := &offset.Response{Topics: make([]offset.ResponseTopic, 0)}
 
-	ctx := kafka.ClientFromContext(req)
+	ctx := kafka.ClientFromContext(req.Context)
 
 	for _, rt := range r.Topics {
 		topic := s.Topic(rt.Name)

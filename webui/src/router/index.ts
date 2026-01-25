@@ -128,6 +128,12 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             name: getRouteName('kafkaMessage'),
             component: dashboardView,
             meta: {service: 'kafka'}
+          },
+          {
+            path: 'service/:service/clients/:clientId',
+            name: getRouteName('kafkaClient'),
+            component: dashboardView,
+            meta: {service: 'kafka'}
           }
         ]
       },

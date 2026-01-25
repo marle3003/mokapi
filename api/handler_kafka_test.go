@@ -166,7 +166,7 @@ func TestHandler_Kafka(t *testing.T) {
 						),
 					),
 				)
-				s := store.New(c, enginetest.NewEngine(), &eventstest.Handler{})
+				s := store.New(c, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 
 				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", &runtime.KafkaInfo{
 					Config: c,
@@ -189,7 +189,7 @@ func TestHandler_Kafka(t *testing.T) {
 						),
 					),
 				)
-				s := store.New(c, enginetest.NewEngine(), &eventstest.Handler{})
+				s := store.New(c, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 
 				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", &runtime.KafkaInfo{
 					Config: c,
@@ -222,7 +222,7 @@ func TestHandler_Kafka(t *testing.T) {
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
-			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","host":"foo.bar","protocol":"kafka","description":""}],"groups":[{"name":"foo","members":null,"coordinator":"foo.bar:9092","leader":"","state":"PreparingRebalance","protocol":"range","topics":null}]}`,
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","host":"foo.bar","protocol":"kafka","description":""}],"groups":[{"name":"foo","generation":3,"members":null,"coordinator":"foo.bar:9092","leader":"","state":"PreparingRebalance","protocol":"range","topics":null}]}`,
 		},
 		{
 			name: "get specific with group containing members",
@@ -278,7 +278,7 @@ func TestHandler_Kafka(t *testing.T) {
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
-			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","host":"foo.bar","protocol":"kafka","description":""}],"groups":[{"name":"foo","members":[{"name":"m1","addr":"192.168.0.100","clientSoftwareName":"mokapi","clientSoftwareVersion":"1.0","heartbeat":"2024-04-22T15:04:05+07:00","partitions":{"topic":[1,2,5]}},{"name":"m2","addr":"192.168.0.200","clientSoftwareName":"mokapi","clientSoftwareVersion":"1.0","heartbeat":"2024-04-22T15:04:10+07:00","partitions":{"topic":[3,4,6]}}],"coordinator":"foo.bar:9092","leader":"m1","state":"PreparingRebalance","protocol":"range","topics":null}]}`,
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","host":"foo.bar","protocol":"kafka","description":""}],"groups":[{"name":"foo","generation":3,"members":[{"name":"m1","clientId":"client1","addr":"192.168.0.100","clientSoftwareName":"mokapi","clientSoftwareVersion":"1.0","heartbeat":"2024-04-22T15:04:05+07:00","partitions":{"topic":[1,2,5]}},{"name":"m2","clientId":"client2","addr":"192.168.0.200","clientSoftwareName":"mokapi","clientSoftwareVersion":"1.0","heartbeat":"2024-04-22T15:04:10+07:00","partitions":{"topic":[3,4,6]}}],"coordinator":"foo.bar:9092","leader":"m1","state":"PreparingRebalance","protocol":"range","topics":null}]}`,
 		},
 		{
 			name: "get specific with topic and openapi schema",
@@ -1061,12 +1061,12 @@ func TestHandler_Kafka_Metrics(t *testing.T) {
 func getKafkaInfo(config *asyncapi3.Config) *runtime.KafkaInfo {
 	return &runtime.KafkaInfo{
 		Config: config,
-		Store:  store.New(config, enginetest.NewEngine(), &eventstest.Handler{}),
+		Store:  store.New(config, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka()),
 	}
 }
 
 func getKafkaInfoWithGroup(config *asyncapi3.Config, group *store.Group) *runtime.KafkaInfo {
-	s := store.New(config, enginetest.NewEngine(), &eventstest.Handler{})
+	s := store.New(config, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 	g := s.GetOrCreateGroup(group.Name, 0)
 	group.Coordinator, _ = s.Broker(0)
 	*g = *group

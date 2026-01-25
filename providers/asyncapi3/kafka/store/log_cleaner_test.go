@@ -1,16 +1,18 @@
 package store_test
 
 import (
-	"github.com/sirupsen/logrus/hooks/test"
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCleaner(t *testing.T) {
@@ -33,7 +35,7 @@ func TestCleaner(t *testing.T) {
 					),
 					asyncapi3test.WithChannel("foo"),
 				)
-				s := store.New(cfg, enginetest.NewEngine(), &eventstest.Handler{})
+				s := store.New(cfg, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 
 				topic := s.Topic("foo")
 				require.NotNil(t, topic)
@@ -71,7 +73,7 @@ func TestCleaner(t *testing.T) {
 					),
 					asyncapi3test.WithChannel("foo"),
 				)
-				s := store.New(cfg, enginetest.NewEngine(), &eventstest.Handler{})
+				s := store.New(cfg, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 
 				topic := s.Topic("foo")
 				require.NotNil(t, topic)

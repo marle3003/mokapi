@@ -2,6 +2,7 @@ declare interface KafkaService extends Service {
   topics: KafkaTopic[];
   groups: KafkaGroup[];
   servers: KafkaServer[];
+  clients: KafkaClient[];
 }
 
 declare interface KafkaServer {
@@ -49,6 +50,7 @@ declare interface KafkaBroker {
 
 declare interface KafkaGroup {
   name: string;
+  generation: number
   members: KafkaMember[];
   coordinator: string;
   leader: string;
@@ -59,6 +61,7 @@ declare interface KafkaGroup {
 
 declare interface KafkaMember {
   name: string;
+  clientId: string
   addr: string;
   clientSoftwareName: string;
   clientSoftwareVersion: string;
@@ -90,4 +93,15 @@ declare interface KafkaHeaderValue {
 declare interface KafkaValue {
   value?: string
   binary?: string
+}
+
+declare interface KafkaClient {
+  clientId: string
+  address: string
+  clientSoftwareName: string;
+  clientSoftwareVersion: string;
+  groups: {
+    memberId: string
+    group: string
+  }[]
 }

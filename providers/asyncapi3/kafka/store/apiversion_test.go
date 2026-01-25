@@ -8,6 +8,7 @@ import (
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
 	"net"
 	"testing"
 	"time"
@@ -16,7 +17,7 @@ import (
 )
 
 func TestApiVersion(t *testing.T) {
-	s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{})
+	s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 	defer s.Close()
 
 	rr := kafkatest.NewRecorder()
@@ -39,7 +40,7 @@ func TestApiVersion(t *testing.T) {
 }
 
 func TestApiVersion_Raw(t *testing.T) {
-	s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{})
+	s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 	defer s.Close()
 	b := kafkatest.NewBroker(kafkatest.WithHandler(s))
 	defer b.Close()
@@ -95,7 +96,7 @@ func TestApiVersion_Raw(t *testing.T) {
 }
 
 func TestApiVersion_Client_Is_Ahead(t *testing.T) {
-	s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{})
+	s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 	defer s.Close()
 
 	r := kafkatest.NewRequest("kafkatest", 30, &apiVersion.Request{

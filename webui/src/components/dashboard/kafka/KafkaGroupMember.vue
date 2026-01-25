@@ -5,6 +5,7 @@ import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRoute, useRouter } from '@/router';
 import { computed, type Ref } from 'vue';
 import Message from './Message.vue';
+import { useMetrics } from '@/composables/metrics';
 
 interface Partition {
   index: number, 
@@ -16,6 +17,7 @@ const router = useRouter();
 const { format } = usePrettyDates();
 const { clientSoftware } = useKafka();
 const { dashboard } = useDashboard();
+const { sum, value } = useMetrics()
 
 const serviceName = route.params.service!.toString();
 const groupName = route.params.group?.toString();
@@ -67,6 +69,13 @@ const partitions = computed(() => {
   })
   return result;
 })
+function partition(topicName: string, partition: number): KafkaPartition | undefined {
+  const topic = service.value?.topics.find(t => t.name === topicName);
+  if (!topic) {
+    return undefined;
+  }
+  return topic.partitions[partition];
+}
 function goToTopic(topicName: string, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
@@ -119,13 +128,17 @@ function goToTopic(topicName: string, openInNewTab = false){
                     </div>
                 </div>
                 <div class="row">
-                  <div class="col-2">
-                    <p id="address" class="label">Address</p>
-                    <p aria-labelledby="address">{{ member.addr }}</p>
-                  </div>
-                  <div class="col-2">
-                    <p id="clientSoftware" class="label">Client Software</p>
-                    <p aria-labelledby="clientSoftware">{{ clientSoftware(member) }}</p>
+                  <div class="col-6">
+                    <p id="address" class="label">Client</p>
+                    <p aria-labelledby="address">
+                      <router-link v-if="member.clientId" :to="{
+                          name: getRouteName('kafkaClient').value,
+                          params: {service: service.name, clientId: member.clientId},
+                        }" aria-labelledby="group">
+                        {{ member.clientId }}
+                      </router-link>
+                      <p v-else>-</p>
+                    </p>
                   </div>
                   <div class="col-3">
                     <p id="heartbeat" class="label">Heartbeat</p>
@@ -144,16 +157,28 @@ function goToTopic(topicName: string, openInNewTab = false){
                   <tr>
                     <th scope="col" class="text-left col-3">Topic</th>
                     <th scope="col" class="text-center col-1">Partition</th>
+                    <th scope="col" class="text-center col-1">Start Offset</th>
+                    <th scope="col" class="text-center col-1">Offset</th>
+                    <th scope="col" class="text-center col-1">Committed</th>
+                    <th scope="col" class="text-center col-1">Lag</th>
                   </tr>
               </thead>
               <tbody>
-                <tr v-for="partition in partitions" :key="member.name" @click.left="goToTopic(partition.topic)" @mousedown.middle="goToTopic(partition.topic, true)">
+                <tr v-for="p in partitions" :key="member.name" @click.left="goToTopic(p.topic)" @mousedown.middle="goToTopic(p.topic, true)">
                   <td>
-                      <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaTopic').value, params: { service: service.name, topic: partition.topic }, hash: '#tab-partitions'}">
-                          {{ partition.topic }}
+                      <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaTopic').value, params: { service: service.name, topic: p.topic }, hash: '#tab-partitions'}">
+                          {{ p.topic }}
                       </router-link>
                   </td>
-                  <td class="text-center">{{ partition.index }}</td>
+                  <td class="text-center">{{ p.index }}</td>
+                  <td class="text-center">{{ partition(p.topic, p.index)?.startOffset ?? '-' }}</td>
+                  <td class="text-center">{{ partition(p.topic, p.index)?.offset ?? '-' }}</td>
+                  <td class="text-center">
+                    {{ value(service.metrics, 'kafka_consumer_group_commit', { name: 'topic', value: p.topic }, { name: 'partition', value: p.index.toString() }, { name: 'group', value: group.name }) }}
+                  </td>
+                  <td class="text-center">
+                    {{ sum(service.metrics, 'kafka_consumer_group_lag', { name: 'topic', value: p.topic }, { name: 'partition', value: p.index.toString() }, { name: 'group', value: group.name }) }}
+                  </td>
                 </tr>
               </tbody>
             </table>

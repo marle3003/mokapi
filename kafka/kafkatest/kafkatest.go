@@ -31,7 +31,7 @@ func NewRequest(clientId string, version int16, msg kafka.Message) *kafka.Reques
 		Message: msg,
 		Context: kafka.NewClientContext(context.Background(), "127.0.0.1:42424"),
 	}
-	ctx := kafka.ClientFromContext(r)
+	ctx := kafka.ClientFromContext(r.Context)
 	ctx.ClientId = clientId
 	return r
 }

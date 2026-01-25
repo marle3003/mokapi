@@ -9,6 +9,7 @@ import (
 	opSchema "mokapi/providers/openapi/schema"
 	opSchematest "mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime/events"
+	"mokapi/runtime/monitor"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
@@ -293,7 +294,7 @@ func TestValidation(t *testing.T) {
 			sm := &events.StoreManager{}
 			sm.SetStore(5, events.NewTraits().WithNamespace("kafka"))
 
-			s := store.New(tc.cfg, enginetest.NewEngine(), sm)
+			s := store.New(tc.cfg, enginetest.NewEngine(), sm, monitor.NewKafka())
 			tc.test(t, s, sm)
 		})
 	}
@@ -417,7 +418,7 @@ func TestValidation_Header(t *testing.T) {
 			sm := &events.StoreManager{}
 			sm.SetStore(5, events.NewTraits().WithNamespace("kafka"))
 
-			s := store.New(tc.cfg, enginetest.NewEngine(), sm)
+			s := store.New(tc.cfg, enginetest.NewEngine(), sm, monitor.NewKafka())
 			tc.test(t, s, sm)
 		})
 	}
