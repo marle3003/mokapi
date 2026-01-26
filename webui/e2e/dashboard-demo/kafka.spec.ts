@@ -185,7 +185,7 @@ test('Visit Kafka Order Service', async ({ page }) => {
 
             await test.step('Verify Producer Script', async () => {
                 await page.getByLabel('Client').getByRole('link').click();
-                await expect(page.getByLabel('URL')).toHaveText(/demo-configs\/kafka.ts$/);
+                await expect(page.getByLabel('URL')).toHaveText(/kafka.ts$/);
 
                 await page.goBack();
             })
