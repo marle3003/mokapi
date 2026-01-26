@@ -48,6 +48,9 @@ type RecordResult struct {
 }
 
 type Client struct {
+	ClientId   string
+	ScriptFile string
+
 	store   *Store
 	monitor *monitor.Kafka
 }
@@ -99,14 +102,12 @@ func (c *Client) Write(topic string, records []Record, ct media.ContentType) ([]
 			})
 		}
 		b := kafka.RecordBatch{Records: []*kafka.Record{rec}}
-		var write func(batch kafka.RecordBatch) (WriteResult, error)
-		if r.SkipValidation {
-			write = p.WriteSkipValidation
-		} else {
-			write = p.Write
-		}
 
-		wr, err := write(b)
+		wr, err := p.write(b, WriteOptions{
+			SkipValidation: r.SkipValidation,
+			ClientId:       c.ClientId,
+			ScriptFile:     c.ScriptFile,
+		})
 		if err != nil {
 			result = append(result, RecordResult{
 				Partition: -1,

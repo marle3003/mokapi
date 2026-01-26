@@ -79,6 +79,8 @@ declare interface KafkaEventData {
   producerId: number
   producerEpoch: number
   sequenceNumber: number
+  clientId: string
+  script: string
 }
 
 declare interface KafkaHeader { [name: string]: KafkaHeaderValue }

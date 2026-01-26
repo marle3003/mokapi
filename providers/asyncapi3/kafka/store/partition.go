@@ -51,6 +51,8 @@ type record struct {
 
 type WriteOptions struct {
 	SkipValidation bool
+	ClientId       string
+	ScriptFile     string
 }
 
 type WriteResult struct {
@@ -67,19 +69,16 @@ type PartitionProducerState struct {
 }
 
 func newPartition(index int, brokers Brokers, logger LogRecord, trigger Trigger, topic *Topic) *Partition {
-	brokerIds := make([]int, 0, len(brokers))
 	brokerList := make([]*Broker, 0, len(brokers))
-	for i, b := range brokers {
+	for _, b := range brokers {
 		if topic.Config != nil && len(topic.Config.Servers) > 0 {
 			if slices.ContainsFunc(topic.Config.Servers, func(s *asyncapi3.ServerRef) bool {
 				return s.Value == b.config
 			}) {
 				brokerList = append(brokerList, b)
-				brokerIds = append(brokerIds, i)
 			}
 		} else {
 			brokerList = append(brokerList, b)
-			brokerIds = append(brokerIds, i)
 		}
 	}
 	p := &Partition{
@@ -141,6 +140,10 @@ func (p *Partition) WriteSkipValidation(batch kafka.RecordBatch) (WriteResult, e
 
 func (p *Partition) Write(batch kafka.RecordBatch) (WriteResult, error) {
 	return p.write(batch, WriteOptions{SkipValidation: false})
+}
+
+func (p *Partition) WriteWithOptions(batch kafka.RecordBatch, opts WriteOptions) (WriteResult, error) {
+	return p.write(batch, opts)
 }
 
 func (p *Partition) write(batch kafka.RecordBatch, opts WriteOptions) (WriteResult, error) {
@@ -216,6 +219,9 @@ func (p *Partition) write(batch kafka.RecordBatch, opts WriteOptions) (WriteResu
 		if baseTime.IsZero() {
 			baseTime = r.Time
 		}
+
+		kLog.ClientId = opts.ClientId
+		kLog.ScriptFile = opts.ScriptFile
 
 		writeFuncs = append(writeFuncs, func() {
 			r.Offset = p.Tail

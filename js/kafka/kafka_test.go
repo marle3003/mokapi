@@ -1,9 +1,8 @@
 package kafka_test
 
 import (
-	"github.com/dop251/goja"
-	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
@@ -11,6 +10,9 @@ import (
 	"mokapi/js/kafka"
 	"mokapi/js/require"
 	"testing"
+
+	"github.com/dop251/goja"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestKafka(t *testing.T) {
@@ -22,6 +24,8 @@ func TestKafka(t *testing.T) {
 			name: "produce no parameter",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				host.KafkaClientTest = &enginetest.KafkaClient{ProduceFunc: func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					r.Equal(t, "mokapi-script", args.ClientId)
+					r.Equal(t, "64613435-3062-6462-3033-316532633233", args.ScriptFile)
 					return &common.KafkaProduceResult{}, nil
 				}}
 
@@ -81,7 +85,7 @@ func TestKafka(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			vm := goja.New()
 			host := &enginetest.Host{}
-			js.EnableInternal(vm, host, &eventloop.EventLoop{}, &dynamic.Config{})
+			js.EnableInternal(vm, host, &eventloop.EventLoop{}, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
 			req, err := require.NewRegistry()
 			r.NoError(t, err)
 			req.Enable(vm)

@@ -141,7 +141,7 @@ test('Visit Kafka Order Service', async ({ page }) => {
 
         await expect(page.getByLabel('Type of API')).toHaveText('Kafka');
 
-        await test.step('Verify Message', async () => {
+        await test.step('Verify Message 1', async () => {
 
             await page.getByRole('table', { name: 'Recent Messages' }).locator('tbody tr').getByRole('link', { name: 'a914817b-c5f0-433e-8280-1cd2fe44234e' }).click();
             await expect(page.getByLabel('Kafka Key')).toHaveText('a914817b-c5f0-433e-8280-1cd2fe44234e');
@@ -151,12 +151,49 @@ test('Visit Kafka Order Service', async ({ page }) => {
             await expect(page.getByRole('region', { name: 'Meta' }).getByLabel('Content Type')).toHaveText('application/json');
             await expect(page.getByLabel('Key Type')).toHaveText('-');
             await expect(page.getByLabel('Key Type')).not.toBeEmpty();
-
+            await expect(page.getByLabel('Client')).toHaveText('producer-1');
+        
             const value = page.getByRole('region', { name: 'Value' });
             await expect(value.getByLabel('Content Type')).toHaveText('application/json');
             await expect(value.getByLabel('Lines of Code')).toHaveText('8 lines');
             await expect(value.getByLabel('Size of Code')).toHaveText('249 B');
             await expect(value.getByLabel('Content', { exact: true })).toContainText('"orderId": "a914817b-c5f0-433e-8280-1cd2fe44234e",')
+
+            await test.step('Verify Producer', async () => {
+                await page.getByLabel('Client').getByRole('link').click();
+                await expect(page.getByLabel('ClientId')).toHaveText('producer-1');
+                await expect(page.getByLabel('Address')).not.toBeEmpty();
+
+                await page.goBack();
+            })
+
+            await page.goBack();
+
+        });
+
+        await test.step('Verify Message 2', async () => {
+
+            await page.getByRole('table', { name: 'Recent Messages' }).locator('tbody tr').getByRole('link', { name: 'random-message-1' }).click();
+            await expect(page.getByLabel('Kafka Key')).toHaveText('random-message-1');
+            await expect(page.getByLabel('Kafka Topic')).toHaveText('order-topic');
+            await expect(page.getByLabel('Kafka Topic')).toHaveAttribute('href', '/dashboard-demo/kafka/service/Kafka%20Order%20Service%20API/topic/order-topic');
+            await expect(page.getByLabel('Offset')).toHaveText('0');
+            await expect(page.getByRole('region', { name: 'Meta' }).getByLabel('Content Type')).toHaveText('application/json');
+            await expect(page.getByLabel('Key Type')).toHaveText('-');
+            await expect(page.getByLabel('Key Type')).not.toBeEmpty();
+            await expect(page.getByLabel('Client')).toHaveText('mokapi-script');
+        
+            const value = page.getByRole('region', { name: 'Value' });
+            await expect(value.getByLabel('Content Type')).toHaveText('application/json');
+            await expect(value.getByLabel('Lines of Code')).toHaveText('8 lines');
+            await expect(value.getByLabel('Size of Code')).toHaveText('234 B');
+
+            await test.step('Verify Producer Script', async () => {
+                await page.getByLabel('Client').getByRole('link').click();
+                await expect(page.getByLabel('URL')).toHaveText(/demo-configs\/kafka.ts$/);
+
+                await page.goBack();
+            })
 
             await page.goBack();
 

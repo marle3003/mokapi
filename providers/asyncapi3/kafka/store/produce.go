@@ -16,7 +16,9 @@ func (s *Store) produce(rw kafka.ResponseWriter, req *kafka.Request) error {
 	ctx := kafka.ClientFromContext(req.Context)
 
 	m, withMonitor := monitor.KafkaFromContext(req.Context)
-	opts := WriteOptions{}
+	opts := WriteOptions{
+		ClientId: ctx.ClientId,
+	}
 
 	for _, rt := range r.Topics {
 		topic := s.Topic(rt.Name)

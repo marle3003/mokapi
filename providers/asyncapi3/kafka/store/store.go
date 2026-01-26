@@ -329,10 +329,11 @@ func (s *Store) getBrokerByHost(addr string) *Broker {
 
 func (s *Store) log(log *KafkaLog, traits events.Traits) {
 	log.Api = s.cluster
-	_ = s.eh.Push(
-		log,
-		traits.WithNamespace("kafka").WithName(s.cluster),
-	)
+	t := traits.WithNamespace("kafka").WithName(s.cluster)
+	if log.ClientId != "" {
+		t = t.With("clientId", log.ClientId)
+	}
+	_ = s.eh.Push(log, t)
 }
 
 func (s *Store) trigger(record *kafka.Record, schemaId int) bool {

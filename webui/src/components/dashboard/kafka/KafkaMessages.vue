@@ -10,21 +10,28 @@ import { getRouteName, useDashboard } from '@/composables/dashboard'
 const props = defineProps<{
     service?: KafkaService,
     topicName?: string
+    clientId?: string
 }>()
 
-const labels = []
-if (props.service) {
-    labels.push({name: 'name', value: props.service.name})
-}
-if (props.topicName){
-    labels.push({name: 'topic', value: props.topicName})
-}
+const labels = computed(() => {
+    const result = [];
+    if (props.service) {
+        result.push({name: 'name', value: props.service.name})
+    }
+    if (props.topicName){
+        result.push({name: 'topic', value: props.topicName})
+    }
+    if (props.clientId){
+        result.push({name: 'clientId', value: props.clientId})
+    }
+    return result;
+})
 
 const { format } = usePrettyDates()
 const { formatLanguage } = usePrettyLanguage()
 
 const { dashboard } = useDashboard()
-const { events, close } = dashboard.value.getEvents('kafka', ...labels)
+const { events, close } = dashboard.value.getEvents('kafka', ...labels.value)
 const messageDialog = ref<any>(null)
 const tabDetailData = ref<any>(null)
 let dialog:  Modal

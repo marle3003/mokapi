@@ -259,3 +259,31 @@ func TestPatition_Retention(t *testing.T) {
 	require.Len(t, p.Segments, 1)
 	require.Equal(t, int64(2), p.Head)
 }
+
+func TestPartition_Write_Producer_ClientId(t *testing.T) {
+	var logs []*KafkaLog
+	p := newPartition(
+		0,
+		map[int]*Broker{1: {Id: 1}},
+		func(log *KafkaLog, traits events.Traits) {
+			logs = append(logs, log)
+		},
+		func(record *kafka.Record, schemaId int) bool { return false },
+		&Topic{},
+	)
+
+	wr, err := p.WriteWithOptions(kafka.RecordBatch{
+		Records: []*kafka.Record{
+			{
+				Time:    time.Now(),
+				Key:     kafka.NewBytes([]byte(`"foo-1"`)),
+				Value:   kafka.NewBytes([]byte(`"bar-1"`)),
+				Headers: nil,
+			},
+		},
+	}, WriteOptions{ClientId: "foo"})
+	require.NoError(t, err)
+	require.Len(t, wr.Records, 0)
+
+	require.Equal(t, "foo", logs[0].ClientId)
+}

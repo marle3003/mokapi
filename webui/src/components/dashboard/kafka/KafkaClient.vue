@@ -4,6 +4,7 @@ import { useKafka } from '@/composables/kafka';
 import { useRoute, useRouter } from '@/router';
 import { computed, type Ref } from 'vue';
 import Message from '../../Message.vue';
+import KafkaMessagesCard from './KafkaMessagesCard.vue'
 
 const route = useRoute();
 const router = useRouter();
@@ -81,8 +82,8 @@ function gotToMember(memberId: string, groupName: string, openInNewTab = false){
                     <p aria-labelledby="address">{{ formatAddress(client.address) }}</p>
                   </div>
                   <div class="col-sm-2 col-4">
-                    <p id="address" class="label">Broker</p>
-                    <p aria-labelledby="address">{{ formatAddress(client.brokerAddress) }}</p>
+                    <p id="broker" class="label">Broker</p>
+                    <p aria-labelledby="broker">{{ formatAddress(client.brokerAddress) }}</p>
                   </div>
                   <div class="col-sm-2 col-4">
                     <p id="clientSoftware" class="label">Client Software</p>
@@ -116,6 +117,9 @@ function gotToMember(memberId: string, groupName: string, openInNewTab = false){
             </table>
           </div>
         </section>
+      </div>
+      <div class="card-group">
+        <kafka-messages-card :service="service" :client-id="clientId" />
       </div>
   </div>
   <div v-if="!result.isLoading && !client">

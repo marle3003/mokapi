@@ -39,6 +39,9 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 	}
 
 	client := store.NewClient(k.Store, c.app.Monitor.Kafka)
+	client.ClientId = args.ClientId
+	client.ScriptFile = args.ScriptFile
+
 	var produced []common.KafkaMessageResult
 	for _, m := range args.Messages {
 		value := m.Data

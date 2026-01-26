@@ -20,6 +20,8 @@ type KafkaLog struct {
 	SequenceNumber int32               `json:"sequenceNumber"`
 	Deleted        bool                `json:"deleted"`
 	Api            string              `json:"api"`
+	ClientId       string              `json:"clientId"`
+	ScriptFile     string              `json:"script"`
 }
 
 type LogValue struct {
