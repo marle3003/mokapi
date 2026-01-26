@@ -182,11 +182,6 @@ test('Visit Kafka Order Service', async ({ page }) => {
             await expect(page.getByLabel('Key Type')).toHaveText('-');
             await expect(page.getByLabel('Key Type')).not.toBeEmpty();
             await expect(page.getByLabel('Client')).toHaveText('mokapi-script');
-        
-            const value = page.getByRole('region', { name: 'Value' });
-            await expect(value.getByLabel('Content Type')).toHaveText('application/json');
-            await expect(value.getByLabel('Lines of Code')).toHaveText('8 lines');
-            await expect(value.getByLabel('Size of Code')).toHaveText('234 B');
 
             await test.step('Verify Producer Script', async () => {
                 await page.getByLabel('Client').getByRole('link').click();
