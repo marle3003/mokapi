@@ -140,7 +140,11 @@ func mapValueToFlags(v reflect.Value, key string, flags *FlagSet) error {
 		if _, ok := flags.GetValue(key); ok {
 			var values []string
 			for i := 0; i < v.Len(); i++ {
-				values = append(values, fmt.Sprintf("%v", v.Index(i)))
+				s, err := valueToFlagString(v.Index(i))
+				if err != nil {
+					return err
+				}
+				values = append(values, s)
 			}
 			return flags.setValue(key, values, SourceFile)
 		}
@@ -164,10 +168,31 @@ func mapValueToFlags(v reflect.Value, key string, flags *FlagSet) error {
 		if canBeNil(v) && v.IsNil() {
 			return nil
 		}
-		return flags.setValue(key, []string{fmt.Sprintf("%v", v.Interface())}, SourceFile)
+		s, err := valueToFlagString(v)
+		if err != nil {
+			return err
+		}
+		return flags.setValue(key, []string{s}, SourceFile)
 	}
 }
 
+func valueToFlagString(v reflect.Value) (string, error) {
+	if v.Kind() == reflect.Ptr {
+		v = v.Elem()
+		return valueToFlagString(v)
+	}
+
+	switch v.Kind() {
+	case reflect.Struct:
+		b, err := json.Marshal(v.Interface())
+		if err != nil {
+			return "", err
+		}
+		return string(b), nil
+	default:
+		return fmt.Sprintf("%v", v.Interface()), nil
+	}
+}
 func canBeNil(v reflect.Value) bool {
 	switch v.Kind() {
 	case reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:

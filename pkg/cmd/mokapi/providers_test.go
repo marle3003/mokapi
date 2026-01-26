@@ -476,3 +476,59 @@ func TestRoot_Providers_Git(t *testing.T) {
 		})
 	}
 }
+
+func TestRoot_Providers_Npm(t *testing.T) {
+	testcases := []struct {
+		name string
+		args func(t *testing.T) []string
+		test func(t *testing.T, cfg *static.Config)
+	}{
+		{
+			name: "npm packages from file",
+			args: func(t *testing.T) []string {
+				temp := t.TempDir()
+				f := path.Join(temp, "cfg.json")
+				err := os.WriteFile(f, []byte(`{
+"providers": {
+  "npm": {
+    "packages": [
+		{
+			"name": "foo",
+			"files": ["dist/foo.json"]
+		}
+	]
+  }
+}}`), 0644)
+				require.NoError(t, err)
+
+				return []string{"--config-file", f}
+			},
+			test: func(t *testing.T, cfg *static.Config) {
+				require.Equal(t, []static.NpmPackage{
+					{
+						Name:    "foo",
+						Files:   []string{"dist/foo.json"},
+						Include: []string(nil),
+					},
+				}, cfg.Providers.Npm.Packages)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			cmd := mokapi.NewCmdMokapi()
+			cmd.SetArgs(tc.args(t))
+
+			cfg := static.NewConfig()
+			cmd.Run = func(cmd *cli.Command, args []string) error {
+				cfg = cmd.Config.(*static.Config)
+				return nil
+			}
+			err := cmd.Execute()
+			require.NoError(t, err)
+
+			tc.test(t, cfg)
+		})
+	}
+}
