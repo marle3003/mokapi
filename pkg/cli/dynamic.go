@@ -81,7 +81,8 @@ func (fs *FlagSet) DynamicStringSlice(name string, explode bool, doc FlagDoc) *F
 }
 
 func convertToPattern(s string) *regexp.Regexp {
-	pattern := regexIndex.ReplaceAllString(s, "\\[[0-9]+]")
+	// index is either [0] or _0_. The latter is the old version.
+	pattern := regexIndex.ReplaceAllString(s, "(\\[[0-9]+])|(-[0-9]+-?)")
 	pattern = regexKey.ReplaceAllString(pattern, "[a-zA-Z]+")
 	regex, err := regexp.Compile(fmt.Sprintf("^%s$", pattern))
 	if err != nil {

@@ -98,6 +98,19 @@ func TestDynamic(t *testing.T) {
 				require.Equal(t, []int{12}, s.Foo)
 			},
 		},
+		{
+			name: "old style",
+			test: func(t *testing.T) {
+				s := &struct {
+					Foo []int
+				}{}
+				c := newCmd([]string{"--foo-0", "12"}, &s)
+				c.Flags().DynamicInt("foo[<index>]", cli.FlagDoc{})
+				err := c.Execute()
+				require.NoError(t, err)
+				require.Equal(t, []int{12}, s.Foo)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

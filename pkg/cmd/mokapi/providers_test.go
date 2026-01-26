@@ -2,6 +2,7 @@ package mokapi_test
 
 import (
 	"mokapi/config/static"
+	"mokapi/config/tls"
 	"mokapi/pkg/cli"
 	"mokapi/pkg/cmd/mokapi"
 	"os"
@@ -479,6 +480,33 @@ providers:
 				require.Equal(t, &static.GitHubAuth{
 					AppId: 1001042,
 				}, cfg.Providers.Git.Repositories[0].Auth.GitHub)
+			},
+		},
+		{
+			name: "auth github private key from env",
+			args: func(t *testing.T) []string {
+				key := "MOKAPI_Providers_Git_Repositories_1_Auth_GitHub_PrivateKey"
+				err := os.Setenv(key, "-----BEGIN RSA PRIVATE KEY-----")
+				require.NoError(t, err)
+				t.Cleanup(func() {
+					_ = os.Unsetenv(key)
+				})
+
+				temp := t.TempDir()
+				f := path.Join(temp, "cfg.yaml")
+				err = os.WriteFile(f, []byte(`
+providers:
+  git:
+    repositories:
+      - url: foo
+      - url: bar
+`), 0644)
+				require.NoError(t, err)
+
+				return []string{"--config-file", f}
+			},
+			test: func(t *testing.T, cfg *static.Config) {
+				require.Equal(t, tls.FileOrContent("-----BEGIN RSA PRIVATE KEY-----"), cfg.Providers.Git.Repositories[1].Auth.GitHub.PrivateKey)
 			},
 		},
 	}

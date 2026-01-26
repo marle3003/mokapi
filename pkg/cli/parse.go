@@ -11,8 +11,9 @@ func parseFlags(args []string, envNamePrefix string, flags *FlagSet) ([]string, 
 	if envNamePrefix != "" {
 		for _, s := range os.Environ() {
 			kv := strings.SplitN(s, "=", 2)
-			if strings.HasPrefix(strings.ToUpper(kv[0]), envNamePrefix) {
-				key := strings.Replace(kv[0], envNamePrefix, "", 1)
+			key := strings.ToUpper(kv[0])
+			if strings.HasPrefix(key, envNamePrefix) {
+				key = strings.Replace(key, envNamePrefix, "", 1)
 				name := strings.ReplaceAll(strings.ToLower(key), "_", "-")
 				if err := flags.setValue(name, []string{kv[1]}, SourceEnv); err != nil {
 					return nil, fmt.Errorf("unknown environment variable '%s' (value '%s')", kv[0], kv[1])
