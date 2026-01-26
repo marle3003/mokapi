@@ -457,6 +457,30 @@ func TestRoot_Providers_Git(t *testing.T) {
 				}, cfg.Providers.Git.Repositories[0].Auth.GitHub)
 			},
 		},
+		{
+			name: "auth github in config file",
+			args: func(t *testing.T) []string {
+				temp := t.TempDir()
+				f := path.Join(temp, "cfg.yaml")
+				err := os.WriteFile(f, []byte(`
+providers:
+  git:
+    repositories:
+      - url: foo
+        auth:
+          github:
+            appId: 1001042
+`), 0644)
+				require.NoError(t, err)
+
+				return []string{"--config-file", f}
+			},
+			test: func(t *testing.T, cfg *static.Config) {
+				require.Equal(t, &static.GitHubAuth{
+					AppId: 1001042,
+				}, cfg.Providers.Git.Repositories[0].Auth.GitHub)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
