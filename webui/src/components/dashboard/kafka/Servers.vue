@@ -39,7 +39,7 @@ const servers = computed(() => {
                 <thead>
                     <tr>
                         <th scope="col" class="text-left col-2">Name</th>
-                        <th scope="col" class="text-left col-2">Host</th>
+                        <th scope="col" class="text-left col-3">Host</th>
                         <th scope="col" class="text-left col">Description</th>
                         <th scope="col" class="text-left col-1">Tags</th>
                     </tr>

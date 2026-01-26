@@ -82,7 +82,7 @@ function formatProvider(config: ConfigRef) {
             <table class="table dataTable selectable" aria-labelledby="configs">
                 <thead>
                     <tr>
-                        <th scope="col" class="text-left col-6 col-md-9">URL</th>
+                        <th scope="col" class="text-left col-6 col-md-8">URL</th>
                         <th scope="col" class="text-center col-2">Provider</th>
                         <th scope="col" class="text-center col-2">Last Update</th>
                     </tr>

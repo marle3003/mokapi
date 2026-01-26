@@ -429,7 +429,16 @@ func (f *flagConfigBinder) setJson(element reflect.Value, i interface{}) error {
 		i = int64(o)
 		element.Set(reflect.ValueOf(i))
 	case int64, string, bool:
-		element.Set(reflect.ValueOf(i))
+		v := reflect.ValueOf(i)
+		t := element.Type()
+		if v.Type().AssignableTo(t) {
+			element.Set(v)
+			return nil
+		} else if v.Type().ConvertibleTo(t) {
+			element.Set(v.Convert(t))
+			return nil
+		}
+		return fmt.Errorf("value %v can not be set", i)
 	case []interface{}:
 		// reset array
 		element.Set(reflect.MakeSlice(element.Type(), 0, len(o)))
@@ -443,6 +452,13 @@ func (f *flagConfigBinder) setJson(element reflect.Value, i interface{}) error {
 		}
 	case map[string]interface{}:
 		for k, v := range o {
+			if element.Kind() == reflect.Ptr {
+				if element.IsNil() {
+					// allocate a new struct of the pointer's element type
+					element.Set(reflect.New(element.Type().Elem()))
+				}
+				element = element.Elem()
+			}
 			field := element.FieldByNameFunc(func(f string) bool { return strings.ToLower(f) == strings.ToLower(k) })
 			if field.IsValid() {
 				err := f.setJson(field, v)
