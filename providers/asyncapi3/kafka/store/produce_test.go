@@ -130,14 +130,14 @@ func TestProduce(t *testing.T) {
 
 				logs := sm.GetEvents(events.NewTraits().WithNamespace("kafka").WithName("test").With("topic", "foo"))
 				require.Len(t, logs, 2)
-				require.Equal(t, []byte("foo-2"), logs[0].Data.(*store.KafkaLog).Key.Binary)
-				require.Equal(t, []byte("bar-2"), logs[0].Data.(*store.KafkaLog).Message.Binary)
-				require.Equal(t, int64(1), logs[0].Data.(*store.KafkaLog).Offset)
-				require.Equal(t, "kafkatest", logs[0].Data.(*store.KafkaLog).ClientId)
+				require.Equal(t, []byte("foo-2"), logs[0].Data.(*store.KafkaMessageLog).Key.Binary)
+				require.Equal(t, []byte("bar-2"), logs[0].Data.(*store.KafkaMessageLog).Message.Binary)
+				require.Equal(t, int64(1), logs[0].Data.(*store.KafkaMessageLog).Offset)
+				require.Equal(t, "kafkatest", logs[0].Data.(*store.KafkaMessageLog).ClientId)
 				require.Equal(t, "kafkatest", logs[0].Traits.Get("clientId"))
 
-				require.Equal(t, int64(0), logs[1].Data.(*store.KafkaLog).Offset)
-				require.Equal(t, "kafkatest", logs[1].Data.(*store.KafkaLog).ClientId)
+				require.Equal(t, int64(0), logs[1].Data.(*store.KafkaMessageLog).Offset)
+				require.Equal(t, "kafkatest", logs[1].Data.(*store.KafkaMessageLog).ClientId)
 			},
 		},
 		{
@@ -414,12 +414,12 @@ func TestProduce(t *testing.T) {
 
 				logs := sm.GetEvents(events.NewTraits().WithNamespace("kafka").WithName("test").With("topic", "foo"))
 				require.Len(t, logs, 1)
-				require.Equal(t, `"foo-1"`, string(logs[0].Data.(*store.KafkaLog).Key.Binary))
-				require.Equal(t, "4", string(logs[0].Data.(*store.KafkaLog).Message.Binary))
-				require.Equal(t, int64(0), logs[0].Data.(*store.KafkaLog).Offset)
-				require.Equal(t, int64(1), logs[0].Data.(*store.KafkaLog).ProducerId)
-				require.Equal(t, int16(0), logs[0].Data.(*store.KafkaLog).ProducerEpoch)
-				require.Equal(t, int32(0), logs[0].Data.(*store.KafkaLog).SequenceNumber)
+				require.Equal(t, `"foo-1"`, string(logs[0].Data.(*store.KafkaMessageLog).Key.Binary))
+				require.Equal(t, "4", string(logs[0].Data.(*store.KafkaMessageLog).Message.Binary))
+				require.Equal(t, int64(0), logs[0].Data.(*store.KafkaMessageLog).Offset)
+				require.Equal(t, int64(1), logs[0].Data.(*store.KafkaMessageLog).ProducerId)
+				require.Equal(t, int16(0), logs[0].Data.(*store.KafkaMessageLog).ProducerEpoch)
+				require.Equal(t, int32(0), logs[0].Data.(*store.KafkaMessageLog).SequenceNumber)
 			},
 		},
 		{

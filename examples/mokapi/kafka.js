@@ -261,6 +261,7 @@ export let events = [
          traits: {
              namespace: 'kafka',
              name: 'Kafka World',
+             type: 'message',
              topic: 'mokapi.shop.products'
          },
          time: '2023-02-13T09:49:25.482366+01:00',
@@ -296,6 +297,7 @@ export let events = [
         traits: {
             namespace: 'kafka',
             name: 'Kafka World',
+            type: 'message',
             topic: 'mokapi.shop.products'
         },
         time: '2023-02-13T09:49:25.482366+01:00',
@@ -331,6 +333,7 @@ export let events = [
         traits: {
             namespace: 'kafka',
             name: 'Kafka World',
+            type: 'message',
             topic: 'mokapi.shop.avro'
         },
         time: '2025-02-13T09:49:25.482366+01:00',

@@ -30,6 +30,7 @@ type joindata struct {
 	protocols        []joinGroup.Protocol
 	rebalanceTimeout int
 	sessionTimeout   int
+	log              func(data *KafkaRequestLog, clientId string)
 }
 
 type syncdata struct {
@@ -232,6 +233,10 @@ StopWaitingForConsumers:
 			ProtocolType: j.protocolType,
 			ProtocolName: protocol,
 		})
+		go func() {
+			l := newKafkaJoinGroupLog(b.group.Name, j, memberId)
+			j.log(l, j.client.ClientId)
+		}()
 	}
 
 	go b.respond(leader.writer, &joinGroup.Response{
@@ -242,6 +247,10 @@ StopWaitingForConsumers:
 		ProtocolName: protocol,
 		Members:      members,
 	})
+	go func() {
+		l := newKafkaJoinGroupLog(b.group.Name, leader, generation.LeaderId)
+		leader.log(l, leader.client.ClientId)
+	}()
 }
 
 func (b *groupBalancer) sendRebalanceInProgress(w kafka.ResponseWriter) {
@@ -281,4 +290,23 @@ func newGroupAssignment(b []byte) *groupAssignment {
 	g.userData = d.ReadBytes()
 
 	return g
+}
+
+func newKafkaJoinGroupLog(name string, j joindata, memberId string) *KafkaRequestLog {
+	req := &KafkaJoinGroupRequest{
+		KafkaRequestBase: KafkaRequestBase{
+			RequestKey:  kafka.JoinGroup,
+			RequestName: "JoinGroup",
+		},
+		GroupName:    name,
+		MemberId:     memberId,
+		ProtocolType: j.protocolType,
+	}
+	for _, proto := range j.protocols {
+		req.Protocols = append(req.Protocols, proto.Name)
+	}
+
+	return &KafkaRequestLog{
+		Request: req,
+	}
 }

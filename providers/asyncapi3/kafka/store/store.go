@@ -327,9 +327,11 @@ func (s *Store) getBrokerByHost(addr string) *Broker {
 	return nil
 }
 
-func (s *Store) log(log *KafkaLog, traits events.Traits) {
+func (s *Store) log(log *KafkaMessageLog, traits events.Traits) {
 	log.Api = s.cluster
-	t := traits.WithNamespace("kafka").WithName(s.cluster)
+	t := traits.WithNamespace("kafka").
+		WithName(s.cluster).
+		With("type", "message")
 	if log.ClientId != "" {
 		t = t.With("clientId", log.ClientId)
 	}

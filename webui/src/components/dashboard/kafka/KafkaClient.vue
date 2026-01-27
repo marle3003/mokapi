@@ -2,9 +2,10 @@
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useKafka } from '@/composables/kafka';
 import { useRoute, useRouter } from '@/router';
-import { computed, type Ref } from 'vue';
+import { computed } from 'vue';
 import Message from '../../Message.vue';
 import KafkaMessagesCard from './KafkaMessagesCard.vue'
+import KafkaRequests from './KafkaRequests.vue'
 
 const route = useRoute();
 const router = useRouter();
@@ -12,15 +13,21 @@ const { clientSoftware, formatAddress } = useKafka();
 const { dashboard } = useDashboard();
 
 const serviceName = route.params.service!.toString();
-const clientId = route.params.clientId?.toString();
+const clientId = route.params.clientId!.toString();
+const service = computed(() => {
+  const result = dashboard.value.getService(serviceName, 'kafka');
+  if (!result.service.value) {
+    return { service: null, isLoading: result.isLoading }
+  }
+  return { data: result.service.value as KafkaService, isLoading: false }
+})
 
-const result = dashboard.value.getService(serviceName, 'kafka');
-const service = result.service as Ref<KafkaService | null>
+
 const client = computed(() => {
-  if (!service.value) {
+  if (!service.value || !service.value.data) {
     return null;
   }
-  for (let client of service.value?.clients){
+  for (let client of service.value.data.clients){
     if (client.clientId == clientId) {
       return client;
     }
@@ -35,7 +42,7 @@ function gotToMember(memberId: string, groupName: string, openInNewTab = false){
     const to = {
         name: getRouteName('kafkaGroupMember').value,
         params: {
-          service: service.value?.name,
+          service: service.value.data?.name,
           group: groupName,
           member: memberId,
         },
@@ -50,7 +57,7 @@ function gotToMember(memberId: string, groupName: string, openInNewTab = false){
 </script>
 
 <template>
- <div v-if="service && client">
+ <div v-if="service.data && client">
       <div class="card-group">
         <section class="card" aria-label="Info">
             <div class="card-body">
@@ -66,9 +73,9 @@ function gotToMember(memberId: string, groupName: string, openInNewTab = false){
                         <p>
                           <router-link :to="{
                               name: getRouteName('kafkaService').value,
-                              params: {service: service.name},
+                              params: {service: service.data?.name},
                           }" aria-labelledby="cluster">
-                          {{ service.name }}
+                          {{ service.data?.name }}
                         </router-link>
                         </p>
                     </div>
@@ -93,7 +100,7 @@ function gotToMember(memberId: string, groupName: string, openInNewTab = false){
             </div>
           </section>
       </div>
-      <div class="card-group">
+      <div class="card-group" v-if="client.groups?.length > 0">
         <section class="card" aria-labelledby="groups">
           <div class="card-body">
             <h2 id="partitions" class="card-title text-center">Groups</h2>
@@ -107,7 +114,7 @@ function gotToMember(memberId: string, groupName: string, openInNewTab = false){
               <tbody>
                 <tr v-for="g in client.groups" :key="g.memberId" @click.left="gotToMember(g.memberId, g.group)" @mousedown.middle="gotToMember(g.memberId, g.group, true)">
                   <td>
-                      <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaGroupMember').value, params: { service: service.name, group: g.group, member: g.memberId }}">
+                      <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaGroupMember').value, params: { service: service.data.name, group: g.group, member: g.memberId }}">
                           {{ g.memberId }}
                       </router-link>
                   </td>
@@ -119,10 +126,13 @@ function gotToMember(memberId: string, groupName: string, openInNewTab = false){
         </section>
       </div>
       <div class="card-group">
-        <kafka-messages-card :service="service" :client-id="clientId" />
+        <kafka-messages-card :service="service.data" :client-id="clientId" :hide-when-empty="true" />
+      </div>
+      <div class="card-group">
+        <kafka-requests :service="service.data" :client-id="clientId" />
       </div>
   </div>
-  <div v-if="!result.isLoading && !client">
+  <div v-if="!service.isLoading && !client">
     <Message :message="`Kafka client ${clientId} not found`"></message>
   </div>
 </template>

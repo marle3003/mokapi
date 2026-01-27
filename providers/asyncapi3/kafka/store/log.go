@@ -1,13 +1,14 @@
 package store
 
 import (
+	"fmt"
 	"mokapi/kafka"
 	"mokapi/runtime/events"
 )
 
-type LogRecord func(log *KafkaLog, traits events.Traits)
+type LogRecord func(log *KafkaMessageLog, traits events.Traits)
 
-type KafkaLog struct {
+type KafkaMessageLog struct {
 	Offset         int64               `json:"offset"`
 	Key            LogValue            `json:"key"`
 	Message        LogValue            `json:"message"`
@@ -29,7 +30,7 @@ type LogValue struct {
 	Binary []byte `json:"binary"`
 }
 
-func (l *KafkaLog) Title() string {
+func (l *KafkaMessageLog) Title() string {
 	if l.Key.Value != "" {
 		return l.Key.Value
 	} else {
@@ -37,8 +38,8 @@ func (l *KafkaLog) Title() string {
 	}
 }
 
-func newKafkaLog(record *kafka.Record) *KafkaLog {
-	return &KafkaLog{
+func newKafkaLog(record *kafka.Record) *KafkaMessageLog {
+	return &KafkaMessageLog{
 		Key:            LogValue{Binary: kafka.Read(record.Key)},
 		Message:        LogValue{Binary: kafka.Read(record.Value)},
 		Headers:        convertHeader(record.Headers),
@@ -46,4 +47,34 @@ func newKafkaLog(record *kafka.Record) *KafkaLog {
 		ProducerEpoch:  record.ProducerEpoch,
 		SequenceNumber: record.SequenceNumber,
 	}
+}
+
+type KafkaRequestData interface {
+	Title() string
+}
+
+type KafkaRequestLog struct {
+	Api     string           `json:"api"`
+	Request KafkaRequestData `json:"request"`
+}
+
+type KafkaRequestBase struct {
+	RequestKey  kafka.ApiKey `json:"requestKey"`
+	RequestName string       `json:"requestName"`
+}
+
+type KafkaJoinGroupRequest struct {
+	KafkaRequestBase
+	GroupName    string   `json:"groupName"`
+	MemberId     string   `json:"memberId"`
+	ProtocolType string   `json:"protocolType"`
+	Protocols    []string `json:"protocols"`
+}
+
+func (l *KafkaRequestLog) Title() string {
+	return l.Request.Title()
+}
+
+func (r *KafkaJoinGroupRequest) Title() string {
+	return fmt.Sprintf("JoinGroup %s", r.GroupName)
 }

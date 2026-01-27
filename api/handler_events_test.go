@@ -274,7 +274,7 @@ func TestHandler_KafkaEvents(t *testing.T) {
 			fn: func(t *testing.T, h http.Handler, sm *events.StoreManager) {
 				sm.SetStore(1, events.NewTraits().WithNamespace("kafka"))
 
-				err := sm.Push(&store.KafkaLog{
+				err := sm.Push(&store.KafkaMessageLog{
 					Offset:         123,
 					Key:            store.LogValue{},
 					Message:        store.LogValue{},

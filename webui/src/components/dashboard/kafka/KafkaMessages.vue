@@ -14,9 +14,13 @@ const props = defineProps<{
     clientId?: string
 }>()
 
+const emit = defineEmits<{
+  (e: "loaded", count: number): void
+}>();
+
 const tags = useLocalStorage<string[]>(`kafka-${props.service?.name}-tags`, ['__all'])
 const labels = computed(() => {
-    const result = [];
+    const result = [{ name: 'type', value: 'message' }];
     if (props.service) {
         result.push({name: 'name', value: props.service.name})
     }
@@ -41,11 +45,15 @@ let tab: Tab
 
 const messages = computed(() => {
     const result = [];
+    emit("loaded", events.value.length);
     for (const event of events.value) {
         const data = eventData(event)
         if (!data){
             continue
         }
+
+        console.log('tags:')
+        console.log(tags.value)
 
         if (props.service && !props.topicName && !tags.value.includes('__all')) {
             const topic = props.service.topics.find(t => t.name === event.traits['topic']);
@@ -70,11 +78,11 @@ const messages = computed(() => {
     return result;
 })
 
-function eventData(event: ServiceEvent | null): KafkaEventData | null{
+function eventData(event: ServiceEvent | null): KafkaMessageData | null{
     if (!event) {
         return null
     }
-    return <KafkaEventData>event.data
+    return event.data as KafkaMessageData
 }
 function isAvro(event: ServiceEvent): boolean {
     const msg = getMessageConfig(event)
@@ -259,7 +267,7 @@ function getContentType(msg: KafkaMessage): [string, boolean] {
 
     return [ msg.contentType, false ]
 }
-function key(data: KafkaEventData | null): string {
+function key(data: KafkaMessageData | null): string {
     if (!data) {
         return ''
     }

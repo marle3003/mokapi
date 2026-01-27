@@ -68,7 +68,9 @@ declare interface KafkaMember {
   partitions: { [topicName: string]: number[] };
 }
 
-declare interface KafkaEventData {
+declare type KafkaEventData = KafkaMessageData | KafkaRequestLog
+
+declare interface KafkaMessageData {
   offset: number;
   key: KafkaValue;
   message: KafkaValue;
@@ -106,4 +108,20 @@ declare interface KafkaClient {
     memberId: string
     group: string
   }[]
+}
+
+declare interface KafkaRequestLog {
+  request: KafkaRequest & KafkaJoinGroupRequest
+}
+
+declare interface KafkaRequest {
+  requestKey: number
+  requestName: string
+}
+
+declare interface KafkaJoinGroupRequest {
+  groupName: string
+  memberId: string
+  protocolType: string
+  protocols: string[]
 }

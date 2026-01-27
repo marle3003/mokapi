@@ -46,7 +46,7 @@ type Segment struct {
 
 type record struct {
 	Data *kafka.Record
-	Log  *KafkaLog
+	Log  *KafkaMessageLog
 }
 
 type WriteOptions struct {

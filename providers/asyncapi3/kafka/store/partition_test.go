@@ -16,7 +16,7 @@ func TestPartition(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(log *KafkaLog, traits events.Traits) {},
+		func(log *KafkaMessageLog, traits events.Traits) {},
 		func(record *kafka.Record, schemaId int) bool { return false },
 		&Topic{},
 	)
@@ -31,7 +31,7 @@ func TestPartition_Write(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(log *KafkaLog, traits events.Traits) {
+		func(log *KafkaMessageLog, traits events.Traits) {
 			logs = append(logs, log.Offset)
 		},
 		func(record *kafka.Record, schemaId int) bool { return false },
@@ -78,7 +78,7 @@ func TestPartition_Read_Empty(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(log *KafkaLog, traits events.Traits) {},
+		func(log *KafkaMessageLog, traits events.Traits) {},
 		func(record *kafka.Record, schemaId int) bool { return false },
 		&Topic{},
 	)
@@ -91,7 +91,7 @@ func TestPartition_Read(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(log *KafkaLog, traits events.Traits) {},
+		func(log *KafkaMessageLog, traits events.Traits) {},
 		func(record *kafka.Record, schemaId int) bool { return false },
 		&Topic{},
 	)
@@ -118,7 +118,7 @@ func TestPartition_Read_OutOfOffset_Empty(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(log *KafkaLog, traits events.Traits) {},
+		func(log *KafkaMessageLog, traits events.Traits) {},
 		func(record *kafka.Record, schemaId int) bool { return false },
 		&Topic{},
 	)
@@ -131,7 +131,7 @@ func TestPartition_Read_OutOfOffset(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(log *KafkaLog, traits events.Traits) {},
+		func(log *KafkaMessageLog, traits events.Traits) {},
 		func(record *kafka.Record, schemaId int) bool { return false },
 		&Topic{},
 	)
@@ -155,7 +155,7 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(log *KafkaLog, _ events.Traits) {
+		func(log *KafkaMessageLog, _ events.Traits) {
 		}, func(record *kafka.Record, schemaId int) bool { return false },
 		&Topic{Config: &asyncapi3.Channel{Bindings: asyncapi3.ChannelBindings{
 			Kafka: asyncapi3.TopicBindings{ValueSchemaValidation: true},
@@ -218,7 +218,7 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 
 func TestPatition_Retention(t *testing.T) {
 	p := newPartition(0, map[int]*Broker{1: {Id: 1}},
-		func(log *KafkaLog, traits events.Traits) {},
+		func(log *KafkaMessageLog, traits events.Traits) {},
 		func(record *kafka.Record, schemaId int) bool { return false },
 		&Topic{},
 	)
@@ -261,11 +261,11 @@ func TestPatition_Retention(t *testing.T) {
 }
 
 func TestPartition_Write_Producer_ClientId(t *testing.T) {
-	var logs []*KafkaLog
+	var logs []*KafkaMessageLog
 	p := newPartition(
 		0,
 		map[int]*Broker{1: {Id: 1}},
-		func(log *KafkaLog, traits events.Traits) {
+		func(log *KafkaMessageLog, traits events.Traits) {
 			logs = append(logs, log)
 		},
 		func(record *kafka.Record, schemaId int) bool { return false },
