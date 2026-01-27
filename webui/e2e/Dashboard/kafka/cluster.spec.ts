@@ -43,9 +43,11 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
         const table = page.getByRole('table', { name: 'Topics' })
         await expect(table).toBeVisible()
         const topics = useKafkaTopics(table)
-        await topics.testTopic(0, cluster.topics[0])
-        await topics.testTopic(0, cluster.topics[0])
+        await topics.testTopic(1, cluster.topics[0])
+        await topics.testTopic(2, cluster.topics[1])
     })
+
+    await useKafkaMessages(page).test(page.getByRole('region', { name: "Recent Messages" }).getByRole('table', { name: 'Recent Messages' }))
 
     await test.step('Check groups section', async () => {
         await page.getByRole('tab', { name: 'Groups' }).click();
@@ -66,8 +68,6 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
         await expect(config.getCellByName('Provider')).toHaveText('HTTP')
         await expect(config.getCellByName('Last Update')).toHaveText(formatDateTime('2023-02-15T08:49:25.482366+01:00'))
     })
-
-    await useKafkaMessages(page).test(page.getByRole('region', { name: "Recent Messages" }).getByRole('table', { name: 'Recent Messages' }))
 })
 
 test('Visit Kafka cluster config file', async ({ page, context }) => {

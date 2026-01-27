@@ -57,8 +57,8 @@ export const cluster = {
         {
             name: 'mokapi.shop.userSignedUp',
             description: 'This channel contains a message per each user who signs up in our application.',
-            lastMessage: formatTimestamp(1652035690),
-            messages: '1',
+            lastMessage: '-',
+            messages: '0',
             partitions: [
                 {
                     id: '0',
@@ -97,38 +97,17 @@ export const cluster = {
             name: 'foo',
             state: 'Stable',
             protocol: 'Range',
-            leader: 'julie',
-            members: [
-                {
-                    name: 'julie',
-                    address: '127.0.0.1:15001',
-                    clientSoftware: 'mokapi 1.0',
-                    lastHeartbeat: formatTimestamp(1654771269),
-                    partitions: { 'mokapi.shop.products': [ 0, 1 ], 'mokapi.shop.userSignedUp': [ 0 ] }
-                },
-                {
-                    name: 'herman',
-                    address: '127.0.0.1:15002',
-                    clientSoftware: 'mokapi 1.0',
-                    lastHeartbeat: formatTimestamp(1654872269),
-                    partitions: { 'mokapi.shop.products': [ 2 ], 'mokapi.shop.userSignedUp': [ ] }
-                }
-            ],
+            generation: '-',
+            lastRebalancing: '-',
+            members: 2,
         },
         {
             name: 'bar',
             state: 'Stable',
             protocol: 'Range',
-            leader: 'george',
-            members: [
-                {
-                    name: 'george',
-                    address: '127.0.0.1:15003',
-                    clientSoftware: 'mokapi 1.0',
-                    lastHeartbeat: formatTimestamp(1654721269),
-                    partitions: { 'mokapi.shop.userSignedUp': [ 0 ] }
-                },
-            ],
+            generation: '-',
+            lastRebalancing: '-',
+            members: 1
         }
     ]
 }
