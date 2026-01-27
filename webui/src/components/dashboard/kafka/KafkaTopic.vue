@@ -29,8 +29,6 @@ const activeTab = ref('tab-messages');
 
 function setTab(tab: string) {
   router.replace( {
-    path: route.path,
-    query: route.query,
     hash: `#${tab}`
   });
 }

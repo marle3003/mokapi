@@ -3,269 +3,277 @@ import { transformPath, useFetch } from "./fetch";
 import type { Dashboard, ExampleRequest, ExampleResult, MailboxMessagesResult, MailboxResult } from "@/types/dashboard";
 import { usePrettyLanguage } from "./usePrettyLanguage";
 
-const { formatLanguage } = usePrettyLanguage();
+export function useDemoDashboard() {
 
-const demo = ref<any>(null);
+    const { formatLanguage } = usePrettyLanguage();
 
-const data = computed(async () => {
-    let res = await fetch(transformPath('/demo/dashboard.json'));
-    if (!res.ok) {
-        let text = await res.text()
-        throw new Error(res.statusText + ': ' + text)
-    }
-    return await res.json()
-})
+    const demo = ref<any>(null);
 
-watchEffect(async () => {
-    demo.value = await data.value;
-})
-
-export const dashboard: Dashboard = {
-
-    getAppInfo() {
-        let result = {
-            version: '0.0',
-            activeServices: [],
-            search: { enabled: false }
-        };
-        if (demo.value) {
-            result = demo.value.info;
+    const data = computed(async () => {
+        let res = await fetch(transformPath('/demo/dashboard.json'));
+        if (!res.ok) {
+            let text = await res.text()
+            throw new Error(res.statusText + ': ' + text)
         }
+        return await res.json()
+    })
 
-        return { data: result, isLoading: false, error: '', close: () => {} };
-    },
+    watchEffect(async () => {
+        demo.value = await data.value;
+    })
 
-    getServices(type) {
-        let result = []
-        if (demo.value) {
-            const response = demo.value['services']
+    const dashboard: Dashboard = {
 
-            if (response) {
-                if (type) {
-                    for (let service of response) {
-                        if (service.type == type){
-                            result.push(service)
+        getAppInfo() {
+            let result = {
+                version: '0.0',
+                activeServices: [],
+                search: { enabled: false }
+            };
+            if (demo.value) {
+                result = demo.value.info;
+            }
+
+            return { data: result, isLoading: false, error: '', close: () => { } };
+        },
+
+        getServices(type) {
+            let result = []
+            if (demo.value) {
+                const response = demo.value['services']
+
+                if (response) {
+                    if (type) {
+                        for (let service of response) {
+                            if (service.type == type) {
+                                result.push(service)
+                            }
+                        }
+                    } else {
+                        result = response
+                    }
+                }
+            }
+
+            const services = ref<Service[]>([])
+            services.value = result.sort(compareService)
+            return { services, close: () => { } }
+        },
+
+        getService(name, type) {
+            let result = null;
+            if (demo.value) {
+                result = demo.value['service_' + name]
+            }
+
+            const service = ref<Service | null>(result)
+            const isLoading = ref<boolean>(false)
+            return { service, isLoading, close: () => { } }
+        },
+
+        getEvents(namespace: string, ...labels: Label[]) {
+            let events = null;
+            if (demo.value) {
+                events = demo.value['events']
+            }
+
+            const result = []
+            if (events) {
+                for (const event of events) {
+                    if (event.traits.namespace !== namespace) {
+                        continue
+                    }
+                    let isValid = true
+                    for (const label of labels) {
+                        if (event.traits[label.name] !== label.value) {
+                            isValid = false
                         }
                     }
-                }else{
-                    result = response
+                    if (isValid) {
+                        result.push(event)
+                    }
                 }
             }
-        }
 
-        const services = ref<Service[]>([])
-        services.value = result.sort(compareService)
-        return { services, close: () => {}}
-    },
+            return { events: ref<ServiceEvent[]>(result), close: () => { } }
+        },
 
-    getService(name, type) {
-        let result = null;
-        if (demo.value) {
-            result = demo.value['service_'+name]
-        }
-
-        const service = ref<Service | null>(result)
-        const isLoading = ref<boolean>(false)
-        return {service, isLoading, close: () => {}} 
-    },
-
-    getEvents(namespace: string, ...labels: Label[]) {
-        let events = null;
-        if (demo.value) {
-            events = demo.value['events']
-        }
-
-        const result = []
-        for (const event of events) {
-            if (event.traits.namespace !== namespace) {
-                continue
-            }
-            let isValid = true
-            for (const label of labels) {
-                if (event.traits[label.name] !== label.value) {
-                    isValid = false
+        getEvent(id: string) {
+            let event = null;
+            if (demo.value) {
+                const events = demo.value['events'];
+                for (const e of events) {
+                    if (e.id === id) {
+                        event = e;
+                    }
                 }
             }
-            if (isValid) {
-                result.push(event)
-            }
-        }
-        
-        return { events: ref<ServiceEvent[]>(result), close: () => {} }
-    },
 
-    getEvent(id: string){
-        let event = null;
-        if (demo.value) {
-            const events = demo.value['events'];
-            for (const e of events) {
-                if (e.id === id) {
-                    event = e;
+            return { event: ref<ServiceEvent | null>(event), isLoading: ref(false), close: () => { } }
+        },
+
+        getMetrics(query) {
+            let metrics = []
+            if (demo.value) {
+                metrics = demo.value['metrics']
+            }
+            return {
+                data: metrics,
+                isLoading: false,
+                error: null,
+                close: () => { },
+                refs: 1,
+                refresh: () => { },
+            }
+        },
+
+        getExample(request: ExampleRequest) {
+            const response = useFetch('/api/schema/example', {
+                method: 'POST',
+                body: JSON.stringify({ name: request.name, schema: request.schema.schema, format: request.schema.format, contentTypes: request.contentTypes }),
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+            },
+                false, false)
+            const res: ExampleResult = reactive({
+                data: [],
+                next: () => response.refresh(),
+                error: null
+            })
+
+            watchEffect(() => {
+                if (response.isLoading) {
+                    return
+                }
+                if (response.error) {
+                    res.error = response.error
+                    res.data = []
+                    return
+                }
+
+                res.data = response.data
+                for (const example of res.data) {
+                    example.value = atob(example.value)
+                    example.value = formatLanguage(example.value, example.contentType!)
+                }
+            })
+            return res
+        },
+
+        getMailbox(service: string, mailbox: string): MailboxResult {
+            let mb = null;
+            if (demo.value) {
+                mb = demo.value[`mailbox_${mailbox}`];
+            }
+            return { mailbox: ref<SmtpMailbox | null>(mb), isLoading: ref(false) }
+        },
+
+        getMailboxMessages(service: string, mailbox: string): MailboxMessagesResult {
+            const result = [];
+            if (demo.value) {
+                for (const mail of demo.value['mails']) {
+                    if (mail.data.to.filter((x: any) => x.address === mailbox).length > 0) {
+                        result.push({
+                            messageId: mail.data.messageId,
+                            subject: mail.data.subject,
+                            from: mail.data.from,
+                            to: mail.data.to,
+                            date: mail.data.date
+                        })
+                    }
                 }
             }
-        }
 
-        return {event: ref<ServiceEvent | null>(event), isLoading: ref(false), close: () => {}}
-    },
+            const messages = ref<MessageInfo[]>(result)
+            const isLoading = ref<boolean>(true)
+            return { messages: messages, isLoading, close: () => { } }
+        },
 
-    getMetrics(query) {
-        let metrics = []
-        if (demo.value) {
-            metrics = demo.value['metrics']
-        }
-        return {
-            data: metrics,
-            isLoading: false,
-            error: null,
-            close: () => {},
-            refs: 1,
-            refresh: () => {},
-        }
-    },
-
-    getExample(request: ExampleRequest) {
-        const response = useFetch('/api/schema/example', {
-            method: 'POST', 
-            body: JSON.stringify({name: request.name, schema: request.schema.schema, format: request.schema.format, contentTypes: request.contentTypes}), 
-            headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}},
-            false, false)
-        const res: ExampleResult =  reactive({
-            data: [],
-            next: () => response.refresh(),
-            error: null
-        })
-
-        watchEffect(() => {
-            if (response.isLoading) {
-                return
-            }
-            if (response.error) {
-                res.error = response.error
-                res.data = []
-                return
+        getMail(messageId: string) {
+            let mail = null;
+            if (demo.value) {
+                mail = demo.value['mails'].find((x: any) => x.data.messageId === messageId);
             }
 
-            res.data = response.data
-            for (const example of res.data) {
-                example.value = atob(example.value)
-                example.value = formatLanguage(example.value, example.contentType!)
+            return { mail: ref<Message | null>(mail), isLoading: ref<boolean>(false) }
+        },
+
+        getAttachmentUrl(messageId: string, name: string): string {
+            const result = this.getMail(messageId)
+            if (!result.mail.value) {
+                return '';
             }
-        })
-        return res
-    },
-
-    getMailbox(service: string, mailbox: string): MailboxResult {
-        let mb = null;
-        if (demo.value) {
-            mb = demo.value[`mailbox_${mailbox}`];
-        }
-        return {mailbox: ref<SmtpMailbox | null>(mb), isLoading: ref(false)}
-    },
-
-    getMailboxMessages(service: string, mailbox: string): MailboxMessagesResult {
-        const result = [];
-        if (demo.value) {
-            for (const mail of demo.value['mails']) {
-                if (mail.data.to.filter((x: any) =>  x.address === mailbox).length > 0) {
-                    result.push({
-                        messageId: mail.data.messageId,
-                        subject: mail.data.subject,
-                        from: mail.data.from,
-                        to: mail.data.to,
-                        date: mail.data.date
-                    })
-                }
+            const mail = result.mail.value;
+            const attachment = mail.data.attachments.find((x: any) => x.name === name);
+            if (!attachment) {
+                return '';
             }
-        }
+            return transformPath(`/demo/${getFilename(attachment.contentType)}`)
+        },
 
-        const messages = ref<MessageInfo[]>(result)
-        const isLoading = ref<boolean>(true)
-        return { messages: messages, isLoading, close: () => {} }
-    },
+        getConfigs() {
+            let result = null;
+            if (demo.value) {
+                result = demo.value.configs;
+            }
 
-    getMail(messageId: string) {
-        let mail = null;
-        if (demo.value) {
-            mail = demo.value['mails'].find((x: any) => x.data.messageId === messageId);
-        }
+            return { data: ref<Config[] | null>(result), isLoading: ref<boolean>(false), close: () => { } }
+        },
 
-        return { mail: ref<Message | null>(mail), isLoading: ref<boolean>(false) }
-    },
+        getConfig(id: string) {
+            let result = null;
+            if (demo.value) {
+                result = demo.value.configs.find((x: Config) => x.id === id);
+            }
 
-    getAttachmentUrl(messageId: string, name: string): string {
-        const result = this.getMail(messageId)
-        if (!result.mail.value) {
-            return '';
-        }
-        const mail = result.mail.value;
-        const attachment = mail.data.attachments.find((x: any) => x.name === name);
-        if (!attachment) {
-            return '';
-        }
-        return transformPath(`/demo/${getFilename(attachment.contentType)}`)
-    },
+            return { config: ref<Config | null>(result), isLoading: ref<boolean>(false), close: () => { } }
+        },
 
-    getConfigs() {
-        let result = null;
-        if (demo.value) {
-            result = demo.value.configs;
-        }
+        getConfigData(id) {
+            let config = null;
+            if (demo.value) {
+                config = demo.value.configs.find((x: Config) => x.id === id);
+            }
 
-        return { data: ref<Config[] | null>(result), isLoading: ref<boolean>(false), close: () => {} }
-    },
+            const response = useFetch(this.getConfigDataUrl(id));
+            const data = ref<string | null>(null);
+            const isLoading = ref<boolean>(true);
+            const filename = ref<string | undefined>();
 
-    getConfig(id: string) {
-        let result = null;
-        if (demo.value) {
-            result = demo.value.configs.find((x: Config) => x.id === id);
-        }
+            watchEffect(() => {
+                data.value = response.data ? response.data : null;
+                isLoading.value = response.isLoading;
+                filename.value = getFilenameFromUrl(config.url);
+            })
 
-        return { config: ref<Config | null>(result), isLoading: ref<boolean>(false), close: () => {} }
-    },
+            return { data, isLoading, filename: filename, close: () => { } }
+        },
 
-    getConfigData(id) {
-        let config = null;
-        if (demo.value) {
-            config = demo.value.configs.find((x: Config) => x.id === id);
-        }
-
-        const response = useFetch(this.getConfigDataUrl(id));
-        const data = ref<string | null>(null);
-        const isLoading = ref<boolean>(true);
-        const filename = ref<string | undefined>();
-
-        watchEffect(() => {
-            data.value = response.data ? response.data : null;
-            isLoading.value = response.isLoading;
-            filename.value = getFilenameFromUrl(config.url);
-        })
-
-        return { data, isLoading, filename: filename, close: () => {} }
-    },
-
-    getConfigDataUrl(id) {
-        let config = null;
-        if (demo.value) {
-            config = demo.value.configs.find((x: Config) => x.id === id);
-        }
-        return '/demo/' + getFilenameFromUrl(config.url)
-    },
-}
-
-function compareService(s1: Service, s2: Service) {
-    const name1 = s1.name.toLowerCase()
-    const name2 = s2.name.toLowerCase()
-    return name1.localeCompare(name2)
-}
-
-function getFilename(contentType: string) {
-    const match = contentType.match(/name=([^;]+)/);
-    if (match && match[1]) {
-        return match[1];
+        getConfigDataUrl(id) {
+            let config = null;
+            if (demo.value) {
+                config = demo.value.configs.find((x: Config) => x.id === id);
+            }
+            return '/demo/' + getFilenameFromUrl(config.url)
+        },
     }
-    return null;
-}
 
-function getFilenameFromUrl(url: string): string {
-  return new URL(url).pathname.split('/').pop()!;
+    function compareService(s1: Service, s2: Service) {
+        const name1 = s1.name.toLowerCase()
+        const name2 = s2.name.toLowerCase()
+        return name1.localeCompare(name2)
+    }
+
+    function getFilename(contentType: string) {
+        const match = contentType.match(/name=([^;]+)/);
+        if (match && match[1]) {
+            return match[1];
+        }
+        return null;
+    }
+
+    function getFilenameFromUrl(url: string): string {
+        return new URL(url).pathname.split('/').pop()!;
+    }
+
+    return dashboard
 }

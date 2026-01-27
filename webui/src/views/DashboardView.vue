@@ -49,7 +49,9 @@ const transitionRefresh = computed(() => {
 const { dashboard, setMode, getMode } = useDashboard();
 
 const route = useRoute()
-const appInfo = ref<AppInfoResponse | undefined>()
+const appInfo = computed(() => {
+    return dashboard.value.getAppInfo()
+})
 onMounted(() => {
     if (route.meta.mode === 'live') {
         start();
@@ -57,7 +59,6 @@ onMounted(() => {
     if (route.meta.mode) {
         setMode(route.meta.mode as 'live' | 'demo')
     }
-    appInfo.value = dashboard.value.getAppInfo()
     onUnmounted(() => {
         appInfo.value?.close()
     })

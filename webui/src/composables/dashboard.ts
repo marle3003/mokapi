@@ -9,14 +9,16 @@ type Mode = 'live' | 'demo'
 
 const mode = ref<Mode>('live')
 
-export function useDashboard() {
-    const dashboard = computed<Dashboard>(() => {
-        if (mode.value === 'live') {
-            return live.dashboard
-        }
-        return demo.dashboard
-    })
+const dashboard = computed<Dashboard>(() => {
+    console.log(mode.value)
+    if (mode.value === 'live') {
+        return live.dashboard
+    }
+    return demo.useDemoDashboard()
+})
 
+export function useDashboard() {
+    
     function setMode(m: Mode) {
         mode.value = m
     }

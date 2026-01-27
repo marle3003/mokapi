@@ -34,8 +34,6 @@ const activeTab = ref('tab-topics');
 
 function setTab(tab: string) {
     router.replace({
-        path: route.path,
-        query: route.query,
         hash: `#${tab}`
     });
 }
