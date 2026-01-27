@@ -208,10 +208,9 @@ func (s *Store) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
 
 	client := kafka.ClientFromContext(req.Context)
 	if client != nil {
+		s.m.Lock()
 		if _, ok := s.clients[client.ClientId]; !ok {
-			s.m.Lock()
 			s.clients[client.ClientId] = client
-			s.m.Unlock()
 			client.Close = func() {
 				s.m.Lock()
 				defer s.m.Unlock()
@@ -219,6 +218,7 @@ func (s *Store) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
 				delete(s.clients, client.ClientId)
 			}
 		}
+		s.m.Unlock()
 	}
 
 	switch req.Message.(type) {
