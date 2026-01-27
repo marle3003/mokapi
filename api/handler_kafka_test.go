@@ -177,6 +177,25 @@ func TestHandler_Kafka(t *testing.T) {
 			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"foo","description":"bar","partitions":[{"id":0,"startOffset":0,"offset":0,"segments":0}],"messages":{"foo":{"name":"foo","payload":{"schema":{"type":"string"}},"contentType":"application/json"}},"bindings":{"partitions":1,"valueSchemaValidation":true}}]}`,
 		},
 		{
+			name: "get specific with topic with tag",
+			app: func() *runtime.App {
+				c := asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithChannel("foo",
+						asyncapi3test.WithChannelTag("env:test", "bar"),
+					),
+				)
+				s := store.New(c, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
+
+				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", &runtime.KafkaInfo{
+					Config: c,
+					Store:  s,
+				}))
+			},
+			requestUrl:   "http://foo.api/api/services/kafka/foo",
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"foo","description":"","partitions":[{"id":0,"startOffset":0,"offset":0,"segments":0}],"bindings":{"partitions":1,"valueSchemaValidation":true},"tags":[{"name":"env:test","description":"bar"}]}]}`,
+		},
+		{
 			name: "get specific with topic and multi schema format",
 			app: func() *runtime.App {
 				c := asyncapi3test.NewConfig(

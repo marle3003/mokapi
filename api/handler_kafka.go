@@ -44,14 +44,14 @@ type kafkaInfo struct {
 }
 
 type kafkaServer struct {
-	Name        string           `json:"name"`
-	Host        string           `json:"host"`
-	Protocol    string           `json:"protocol"`
-	Description string           `json:"description"`
-	Tags        []kafkaServerTag `json:"tags,omitempty"`
+	Name        string     `json:"name"`
+	Host        string     `json:"host"`
+	Protocol    string     `json:"protocol"`
+	Description string     `json:"description"`
+	Tags        []kafkaTag `json:"tags,omitempty"`
 }
 
-type kafkaServerTag struct {
+type kafkaTag struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
@@ -96,6 +96,7 @@ type topic struct {
 	Partitions  []partition              `json:"partitions"`
 	Messages    map[string]messageConfig `json:"messages,omitempty"`
 	Bindings    bindings                 `json:"bindings,omitempty"`
+	Tags        []kafkaTag               `json:"tags,omitempty"`
 }
 
 type partition struct {
@@ -432,7 +433,7 @@ func getKafka(info *runtime.KafkaInfo) kafkaInfo {
 				continue
 			}
 			t := r.Value
-			ks.Tags = append(ks.Tags, kafkaServerTag{
+			ks.Tags = append(ks.Tags, kafkaTag{
 				Name:        t.Name,
 				Description: t.Description,
 			})
@@ -572,6 +573,16 @@ func newTopic(t *store.Topic, ch *asyncapi3.Channel, cfg *asyncapi3.Config) topi
 			result.Messages = map[string]messageConfig{}
 		}
 		result.Messages[messageId] = m
+	}
+
+	for _, tRef := range ch.Tags {
+		if tRef.Value == nil {
+			continue
+		}
+		result.Tags = append(result.Tags, kafkaTag{
+			Name:        tRef.Value.Name,
+			Description: tRef.Value.Description,
+		})
 	}
 
 	return result

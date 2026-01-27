@@ -54,3 +54,14 @@ func AssignToServer(ref string) ChannelOptions {
 		c.Servers = append(c.Servers, &asyncapi3.ServerRef{Reference: dynamic.Reference{Ref: ref}})
 	}
 }
+
+func WithChannelTag(name, description string) ChannelOptions {
+	return func(c *asyncapi3.Channel) {
+		c.Tags = append(c.Tags, &asyncapi3.TagRef{
+			Value: &asyncapi3.Tag{
+				Name:        name,
+				Description: description,
+			},
+		})
+	}
+}

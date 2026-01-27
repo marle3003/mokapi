@@ -87,6 +87,9 @@ const source = computed(() => {
 })
 
 function messages(topic: KafkaTopic): string[] {
+    if (!topic.messages) {
+        return [];
+    }
     return Object.keys(topic.messages).sort((a, b) => {
         return a.localeCompare(b)
     })

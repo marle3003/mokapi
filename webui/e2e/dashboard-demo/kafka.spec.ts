@@ -35,11 +35,20 @@ test('Visit Kafka Order Service', async ({ page }) => {
         await page.getByRole('tab', { name: 'Topics' }).click();
         const table = page.getByRole('table', { name: 'Topics' });
         const rows = table.locator('tbody tr');
-        await expect(rows).toHaveCount(1);
+        await expect(rows).toHaveCount(2);
         await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('order-topic');
         await expect(await getCellByColumnName(table, 'Description', rows.nth(0))).toHaveText('The Kafka topic for order events.');
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).not.toHaveText('-');
         await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('2');
+
+        await test.step('Verify filtering by tags', async () => {
+
+            const tags = page.getByRole('group', { name: 'Filter topics by tags' });
+            await expect(tags.getByRole('checkbox', { name: 'All' })).toBeChecked();
+            await tags.getByRole('checkbox', { name: 'user' }).click();
+            await expect(rows).toHaveCount(1);
+
+        });
 
     });
 
@@ -52,17 +61,9 @@ test('Visit Kafka Order Service', async ({ page }) => {
         await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('order-status-group-100');
         await expect(await getCellByColumnName(table, 'State', rows.nth(0))).toHaveText('Stable');
         await expect(await getCellByColumnName(table, 'Protocol', rows.nth(0))).toHaveText('RoundRobinAssigner');
-        await expect(await getCellByColumnName(table, 'Leader', rows.nth(0))).toHaveText(/^consumer-1/);
-        const members = await getCellByColumnName(table, 'Members', rows.nth(0))
-        await expect(members).toHaveText(/^consumer-1/);
-
-        await members.hover();
-        const tooltip = page.getByRole('tooltip')
-        await expect(tooltip).toBeVisible();
-        await expect(tooltip.getByLabel('Address')).not.toBeEmpty();
-        await expect(tooltip.getByLabel('Client Software')).toHaveText('-');
-        await expect(tooltip.getByLabel('Last Heartbeat')).not.toBeEmpty();
-        await expect(tooltip.getByLabel('Topics')).toHaveText('order-topic');
+        await expect(await getCellByColumnName(table, 'Generation', rows.nth(0))).toHaveText('0');
+        await expect(await getCellByColumnName(table, 'Last Rebalancing', rows.nth(0))).not.toBeEmpty();
+        await expect(await getCellByColumnName(table, 'Members', rows.nth(0))).toHaveText('1');
 
         await rows.nth(0).getByRole('cell').nth(0).click();
         await expect(page.getByLabel('Group Name')).toHaveText('order-status-group-100');
@@ -121,6 +122,7 @@ test('Visit Kafka Order Service', async ({ page }) => {
 
     await test.step('Verify Recent Messages', async () => {
 
+        await page.getByRole('tab', { name: 'Topics' }).click();
         const region = page.getByRole('region', { name: 'Recent Messages' });
         await expect(region).toBeVisible();
 
@@ -222,8 +224,9 @@ test('Visit Kafka Order Service', async ({ page }) => {
             await expect(await getCellByColumnName(table, 'Name')).toHaveText('order-status-group-100');
             await expect(await getCellByColumnName(table, 'State')).toHaveText('Stable');
             await expect(await getCellByColumnName(table, 'Protocol')).toHaveText('RoundRobinAssigner');
-            await expect(await getCellByColumnName(table, 'Leader')).toHaveText(/^consumer-1/);
-            await expect(await getCellByColumnName(table, 'Members')).toContainText(/^consumer-1/);
+            await expect(await getCellByColumnName(table, 'Generation')).toHaveText('0');
+            await expect(await getCellByColumnName(table, 'Last Rebalancing')).not.toBeEmpty();
+            await expect(await getCellByColumnName(table, 'Members')).toHaveText('1')
             await expect(await getCellByColumnName(table, 'Lag')).toHaveText('0');
 
         });

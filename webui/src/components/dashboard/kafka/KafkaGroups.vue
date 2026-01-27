@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { usePrettyDates } from '@/composables/usePrettyDate'
-import { computed, onMounted } from 'vue'
-import { Popover } from 'bootstrap'
+import { computed } from 'vue'
 import { useMetrics } from '@/composables/metrics'
-import { useKafka } from '@/composables/kafka';
 import { useRouter } from '@/router';
 import { getRouteName } from '@/composables/dashboard';
 
@@ -14,27 +12,7 @@ const props = defineProps<{
 
 const router = useRouter()
 const { format } = usePrettyDates()
-const { sum } = useMetrics()
-const { clientSoftware, formatAddress } = useKafka();
-
-function memberInfo(member: KafkaMember): string {
-    let addition = ''
-    if (props.topicName) {
-        addition = `<p id="${member.name}-partitions" class="label">Partitions</p><p aria-labelledby="${member.name}-partitions">${member.partitions[props.topicName]?.join(', ')}</p>`
-    } else {
-        const topics = Object.keys(member.partitions).sort((x, y) => x.localeCompare(y)).join(',<br />')
-        addition = `<p id="${member.name}-topics" class="label">Topics</p><p aria-labelledby="${member.name}-topics">${topics}</p>`
-    }
-    return `<div aria-label="${member.name}">
-            <p id="${member.name}-address" class="label">Address</p>
-            <p aria-labelledby="${member.name}-address">${formatAddress(member.addr)}</p>
-            <p id="${member.name}-client-software" class="label">Client Software</p>
-            <p aria-labelledby="${member.name}-client-software">${clientSoftware(member)}</p>
-            <p id="${member.name}-last-heartbeat" class="label">Last Heartbeat</p>
-            <p aria-labelledby="${member.name}-last-heartbeat">${format(member.heartbeat)}</p>
-            ${addition}
-            </div>`
-}
+const { sum, value } = useMetrics();
 
 const groups = computed(() => {
     if (!props.topicName) {
@@ -52,19 +30,13 @@ const groups = computed(() => {
     }
     return result
 })
-
-onMounted(()=> {
-    const elements = document.querySelectorAll('.has-popover')
-    const popovers = [...elements].map(x => {
-        new Popover(x, {
-            customClass: 'custom-popover',
-            trigger: 'hover',
-            html: true,
-            placement: 'left',
-            content: () => x.querySelector('span:not(.bi)')?.innerHTML ?? '',
-        })
-    })
-})
+function lastRebalancing(group: KafkaGroup) {
+  const timestamp = value(props.service.metrics, 'kafka_rebalance_timestamp', { name: 'group', value: group.name });
+  if (!timestamp) {
+    return '-'
+  }
+  return format(timestamp)
+}
 
 function goToGroup(group: KafkaGroup, openInNewTab = false){
     if (getSelection()?.toString()) {
@@ -95,8 +67,9 @@ function goToGroup(group: KafkaGroup, openInNewTab = false){
                     <th scope="col" class="text-left col-2">Name</th>
                     <th scope="col" class="text-left col-1">State</th>
                     <th scope="col" class="text-left col-2">Protocol</th>
-                    <th scope="col" class="text-left col-2">Leader</th>
-                    <th scope="col" class="text-left col-2">Members</th>
+                    <th scope="col" class="text-center col-2">Generation</th>
+                    <th scope="col" class="text-center col-2">Last Rebalancing</th>
+                    <th scope="col" class="text-center col-2">Members</th>
                     <th scope="col" class="text-center col-1" v-if="topicName">Lag</th>
                 </tr>
             </thead>
@@ -109,16 +82,9 @@ function goToGroup(group: KafkaGroup, openInNewTab = false){
                     </td>
                     <td>{{ group.state }}</td>
                     <td v-html="group.protocol.replace(/([a-z])([A-Z])/g, '$1<wbr>$2')"></td>
-                    <td>{{ group.leader }}</td>
-                    <td>
-                        <ul class="members">
-                            <li v-for="member in group.members" class="has-popover">
-                                {{ member.name }} <span class="bi bi-info-circle"></span>
-                                <span style="display:none" v-html="memberInfo(member)"></span>
-                            </li>
-                            
-                        </ul>
-                    </td>
+                    <td class="text-center">{{ group.generation }}</td>
+                    <td class="text-center">{{ lastRebalancing(group) }}</td>
+                    <td class="text-center">{{ group.members.length }}</td>
                     <td v-if="topicName" class="text-center">
                         {{ sum(service.metrics, 'kafka_consumer_group_lag', { name: 'topic', value: topicName }, { name: 'group', value: group.name }) }}
                     </td>

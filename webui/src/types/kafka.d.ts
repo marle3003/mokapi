@@ -9,10 +9,10 @@ declare interface KafkaServer {
   name: string;
   host: string;
   description: string;
-  tags: KafkaServerTag[]
+  tags: KafkaTag[]
 }
 
-declare interface KafkaServerTag {
+declare interface KafkaTag {
   name: string
   description: string
 }
@@ -22,6 +22,7 @@ declare interface KafkaTopic {
   description: string;
   partitions: KafkaPartition[];
   messages: { [messageId: string]: KafkaMessage }
+  tags: KafkaTag[]
 }
 
 declare interface KafkaMessage {

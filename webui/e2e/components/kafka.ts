@@ -28,20 +28,16 @@ export interface Group {
     name: string
     state: string
     protocol: string
-    members: {
-        name: string
-        address: string
-        clientSoftware: string
-        lastHeartbeat: string
-        partitions: { [topicName: string]: number[] }
-    }[],
+    generation: string
+    lastRebalancing: string
+    members: number
 }
 
 export function useKafkaGroups(table: Locator, topic?: string) {
     return {
         async testGroup(row: number, group: Group, lags?: string) {
             await test.step(`Check Kafka group in row ${row}`, async () => {
-                let columns = ['Name', 'State', 'Protocol', 'Leader', 'Members']
+                let columns = ['Name', 'State', 'Protocol', 'Generation', 'Last Rebalancing', 'Members']
                 if (lags) {
                     columns.push('Lag')
                 }
@@ -53,20 +49,6 @@ export function useKafkaGroups(table: Locator, topic?: string) {
                 await expect(g.getCellByName('Protocol')).toHaveText(group.protocol)
                 if (lags) {
                     await expect(g.getCellByName('Lag')).toHaveText(lags)
-                }
-
-                const page = table.page()
-                for (const [i, member] of group.members.entries()) {
-                    await g.getCellByName('Members').getByRole('listitem').nth(i).hover()
-                    await expect(page.getByRole('tooltip', { name: member.name })).toBeVisible()
-                    await expect(page.getByRole('tooltip', { name: member.name }).getByLabel('Address')).toHaveText(member.address)
-                    await expect(page.getByRole('tooltip', { name: member.name }).getByLabel('Client Software')).toHaveText(member.clientSoftware)
-                    await expect(page.getByRole('tooltip', { name: member.name }).getByLabel('Last Heartbeat')).toHaveText(member.lastHeartbeat)
-                    if (topic) {
-                        await expect(page.getByRole('tooltip', { name: member.name }).getByLabel('Partitions')).toHaveText(member.partitions[topic].join(', '))
-                    }else {
-                        await expect(page.getByRole('tooltip', { name: member.name }).getByLabel('Topics')).toHaveText(Object.keys(member.partitions).join(','))
-                    }
                 }
             })
         }

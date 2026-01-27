@@ -57,7 +57,7 @@ watch(() => route.hash, (hash) => {
                 <div class="card-body">
                     <div class="nav card-tabs" id="myTab" role="tablist">
                         <button :class="{ active: activeTab === 'tab-topics' }" id="topics-tab" type="button" role="tab"
-                            aria-controls="topics" @click="setTab('tab-topics')">
+                            aria-controls="topics-pane" @click="setTab('tab-topics')">
                             Topics
                         </button>
                         <button :class="{ active: activeTab === 'tab-groups' }" id="groups-tab" type="button" role="tab"
@@ -79,9 +79,12 @@ watch(() => route.hash, (hash) => {
                     </div>
                 </div>
                 <div class="tab-content">
-                    <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-topics' }" id="topics"
+                    <div class="tab-pane fade pt-0" :class="{ 'show active': activeTab === 'tab-topics' }" id="topics-pane"
                         role="tabpanel" aria-labelledby="topics-tab">
                         <kafka-topics :service="service" />
+                        <div class="card-group">
+                            <kafka-messages-card :service="service" />
+                        </div>
                     </div>
                     <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-groups' }" id="groups"
                         role="tabpanel" aria-labelledby="groups-tab">
@@ -102,9 +105,6 @@ watch(() => route.hash, (hash) => {
                 </div>
             </section>
         </div>
-        <div class="card-group">
-            <kafka-messages-card :service="service" />
-        </div>
     </div>
     <div v-if="$route.matched.some(route => route.name === getRouteName('kafkaTopic').value)">
         <kafka-topic></kafka-topic>
@@ -120,3 +120,9 @@ watch(() => route.hash, (hash) => {
     </div>
     <message v-if="$route.name == getRouteName('kafkaMessage').value"></message>
 </template>
+
+<style scoped>
+.tab-pane {
+    padding-top: 1;
+}
+</style>
