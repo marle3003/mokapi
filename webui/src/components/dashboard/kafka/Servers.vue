@@ -7,7 +7,7 @@ const props = defineProps<{
     servers: KafkaServer[],
 }>()
 
-onMounted(()=> {
+onMounted(() => {
     const elements = document.querySelectorAll('.has-popover')
     const popovers = [...elements].map(x => {
         new Popover(x, {
@@ -31,47 +31,45 @@ const servers = computed(() => {
 </script>
 
 <template>
-    <section class="card" aria-labelledby="servers">
-        <div class="card-body">
-            <h2 id="servers" class="card-title text-center">Brokers</h2>
-         
-            <table class="table dataTable table-responsive-lg" aria-labelledby="servers">
-                <thead>
-                    <tr>
-                        <th scope="col" class="text-left col-2">Name</th>
-                        <th scope="col" class="text-left col-3">Host</th>
-                        <th scope="col" class="text-left col">Description</th>
-                        <th scope="col" class="text-left col-1">Tags</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr v-for="server in servers" :key="server.host">
-                        <td>{{ server.name }}</td>
-                        <td  v-html="server.host.replace(/([^:]*):(.*)/g, '$1<wbr>:$2')"></td>
-                        <td><markdown :source="server.description" class="description" :html="true"></markdown></td>
-                        <td>
-                            <ul class="tags">
-                                <li v-for="tag in server.tags" class="has-popover">
-                                    {{ tag.name }}
-                                    <span style="display:none">{{ tag.description }}</span>
-                                </li>
-                                
-                            </ul>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+    <div class="table-responsive-sm">
+        <table class="table dataTable table-responsive-lg" aria-label="Servers">
+            <thead>
+                <tr>
+                    <th scope="col" class="text-left col-2">Name</th>
+                    <th scope="col" class="text-left col-3">Host</th>
+                    <th scope="col" class="text-left col">Description</th>
+                    <th scope="col" class="text-left col-1">Tags</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="server in servers" :key="server.host">
+                    <td>{{ server.name }}</td>
+                    <td v-html="server.host.replace(/([^:]*):(.*)/g, '$1<wbr>:$2')"></td>
+                    <td>
+                        <markdown :source="server.description" class="description" :html="true"></markdown>
+                    </td>
+                    <td>
+                        <ul class="tags">
+                            <li v-for="tag in server.tags" class="has-popover">
+                                {{ tag.name }}
+                                <span style="display:none">{{ tag.description }}</span>
+                            </li>
 
-         </div>
-    </section>
+                        </ul>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </template>
 
 <style scoped>
 ul.tags {
-    list-style: none; 
+    list-style: none;
     padding: 0;
     margin: 0;
 }
+
 ul.tags li {
     padding-right: 0.5em;
 }

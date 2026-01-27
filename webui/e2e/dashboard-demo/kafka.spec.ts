@@ -18,57 +18,57 @@ test('Visit Kafka Order Service', async ({ page }) => {
 
     });
 
-    await test.step('Verify Brokers', async () => {
+    await test.step('Verify Servers', async () => {
 
-         await expect(page.getByRole('region', { name: 'Brokers' })).toBeVisible();
-         const table = page.getByRole('table', { name: 'Brokers' });
-         const rows = table.locator('tbody tr');
-         await expect(rows).toHaveCount(1);
-         await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('development');
-         await expect(await getCellByColumnName(table, 'Host', rows.nth(0))).toHaveText('localhost:9092');
-         await expect(await getCellByColumnName(table, 'Description', rows.nth(0))).toHaveText('Local development Kafka broker.');
+        await page.getByRole('tab', { name: 'Servers' }).click();
+        const table = page.getByRole('table', { name: 'Servers' });
+        const rows = table.locator('tbody tr');
+        await expect(rows).toHaveCount(1);
+        await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('development');
+        await expect(await getCellByColumnName(table, 'Host', rows.nth(0))).toHaveText('localhost:9092');
+        await expect(await getCellByColumnName(table, 'Description', rows.nth(0))).toHaveText('Local development Kafka broker.');
 
     });
 
      await test.step('Verify Topics', async () => {
 
-         await expect(page.getByRole('region', { name: 'Topics' })).toBeVisible();
-         const table = page.getByRole('table', { name: 'Topics' });
-         const rows = table.locator('tbody tr');
-         await expect(rows).toHaveCount(1);
-         await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('order-topic');
-         await expect(await getCellByColumnName(table, 'Description', rows.nth(0))).toHaveText('The Kafka topic for order events.');
-         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).not.toHaveText('-');
-         await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('2');
+        await page.getByRole('tab', { name: 'Topics' }).click();
+        const table = page.getByRole('table', { name: 'Topics' });
+        const rows = table.locator('tbody tr');
+        await expect(rows).toHaveCount(1);
+        await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('order-topic');
+        await expect(await getCellByColumnName(table, 'Description', rows.nth(0))).toHaveText('The Kafka topic for order events.');
+        await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).not.toHaveText('-');
+        await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('2');
 
     });
 
     await test.step('Verify Groups', async () => {
 
-         await expect(page.getByRole('region', { name: 'Groups' })).toBeVisible();
-         const table = page.getByRole('table', { name: 'Groups' });
-         const rows = table.locator('tbody tr');
-         await expect(rows).toHaveCount(1);
-         await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('order-status-group-100');
-         await expect(await getCellByColumnName(table, 'State', rows.nth(0))).toHaveText('Stable');
-         await expect(await getCellByColumnName(table, 'Protocol', rows.nth(0))).toHaveText('RoundRobinAssigner');
-         await expect(await getCellByColumnName(table, 'Leader', rows.nth(0))).toHaveText(/^consumer-1/);
-         const members = await getCellByColumnName(table, 'Members', rows.nth(0))
-         await expect(members).toHaveText(/^consumer-1/);
+        await page.getByRole('tab', { name: 'Groups' }).click();
+        const table = page.getByRole('table', { name: 'Groups' });
+        const rows = table.locator('tbody tr');
+        await expect(rows).toHaveCount(1);
+        await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('order-status-group-100');
+        await expect(await getCellByColumnName(table, 'State', rows.nth(0))).toHaveText('Stable');
+        await expect(await getCellByColumnName(table, 'Protocol', rows.nth(0))).toHaveText('RoundRobinAssigner');
+        await expect(await getCellByColumnName(table, 'Leader', rows.nth(0))).toHaveText(/^consumer-1/);
+        const members = await getCellByColumnName(table, 'Members', rows.nth(0))
+        await expect(members).toHaveText(/^consumer-1/);
 
-         await members.hover();
-         const tooltip = page.getByRole('tooltip')
-         await expect(tooltip).toBeVisible();
-         await expect(tooltip.getByLabel('Address')).not.toBeEmpty();
-         await expect(tooltip.getByLabel('Client Software')).toHaveText('-');
-         await expect(tooltip.getByLabel('Last Heartbeat')).not.toBeEmpty();
-         await expect(tooltip.getByLabel('Topics')).toHaveText('order-topic');
+        await members.hover();
+        const tooltip = page.getByRole('tooltip')
+        await expect(tooltip).toBeVisible();
+        await expect(tooltip.getByLabel('Address')).not.toBeEmpty();
+        await expect(tooltip.getByLabel('Client Software')).toHaveText('-');
+        await expect(tooltip.getByLabel('Last Heartbeat')).not.toBeEmpty();
+        await expect(tooltip.getByLabel('Topics')).toHaveText('order-topic');
 
-         await rows.nth(0).getByRole('cell').nth(0).click();
-         await expect(page.getByLabel('Group Name')).toHaveText('order-status-group-100');
-         await expect(page.getByLabel('State')).toHaveText('Stable');
-         await expect(page.getByLabel('Protocol')).toHaveText('RoundRobinAssigner');
-         await expect(page.getByLabel('Generation', { exact: true })).toHaveText('0');
+        await rows.nth(0).getByRole('cell').nth(0).click();
+        await expect(page.getByLabel('Group Name')).toHaveText('order-status-group-100');
+        await expect(page.getByLabel('State')).toHaveText('Stable');
+        await expect(page.getByLabel('Protocol')).toHaveText('RoundRobinAssigner');
+        await expect(page.getByLabel('Generation', { exact: true })).toHaveText('0');
 
         await test.step('Verify Members', async () => {
         
@@ -111,9 +111,12 @@ test('Visit Kafka Order Service', async ({ page }) => {
     });
 
     await test.step('Verify Configs', async () => {
+
+        await page.getByRole('tab', { name: 'Configs' }).click();
         const table = page.getByRole('table', { name: 'Configs' });
         await expect(await getCellByColumnName(table, 'URL')).toContainText('/asyncapi.yaml');
         await expect(await getCellByColumnName(table, 'Provider')).toHaveText('File');
+
     });
 
     await test.step('Verify Recent Messages', async () => {
@@ -133,6 +136,7 @@ test('Visit Kafka Order Service', async ({ page }) => {
 
     await test.step('Visit Kafka Topic', async () => {
 
+        await page.getByRole('tab', { name: 'Topics' }).click();
         await page.getByRole('table', { name: 'Topics' }).getByText('order-topic').click();
         await expect(page.getByLabel('Topic', { exact: true })).toHaveText('order-topic');
         await expect(page.getByLabel('Cluster')).toHaveText('Kafka Order Service API');

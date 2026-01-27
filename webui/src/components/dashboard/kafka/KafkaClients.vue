@@ -22,7 +22,7 @@ const clients = computed(() => {
     })
 })
 
-onMounted(()=> {
+onMounted(() => {
     const elements = document.querySelectorAll('.has-popover')
     const popovers = [...elements].map(x => {
         new Popover(x, {
@@ -35,7 +35,7 @@ onMounted(()=> {
     })
 })
 
-function goToClient(client: KafkaClient, openInNewTab = false){
+function goToClient(client: KafkaClient, openInNewTab = false) {
     if (getSelection()?.toString()) {
         return
     }
@@ -43,8 +43,8 @@ function goToClient(client: KafkaClient, openInNewTab = false){
     const to = {
         name: getRouteName('kafkaClient').value,
         params: {
-          service: props.service.name,
-          clientId: client.clientId,
+            service: props.service.name,
+            clientId: client.clientId,
         }
     }
     if (openInNewTab) {
@@ -57,32 +57,28 @@ function goToClient(client: KafkaClient, openInNewTab = false){
 </script>
 
 <template>
-    <section class="card" aria-labelledby="clients">
-        <div class="card-body">
-            <h2 id="clients" class="card-title text-center">Clients</h2>
-
-                <div class="table-responsive-sm">
-                    <table class="table dataTable selectable" aria-labelledby="clients">
-                        <thead>
-                            <tr>
-                                <th scope="col" class="text-left col-6">ClientId</th>
-                                <th scope="col" class="text-left col-3">Address</th>
-                                <th scope="col" class="text-left col-3">Software</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="c in clients" :key="c.clientId" @click.left="goToClient(c)" @mousedown.middle="goToClient(c, true)">
-                                <td>
-                                    <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaClient').value, params: { service: service.name, clientId: c.clientId }}">
-                                        {{ c.clientId }}
-                                    </router-link>
-                                </td>
-                                <td>{{ formatAddress(c.address) }}</td>
-                                <td>{{ clientSoftware(c) }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-        </div>
-    </section>
+    <div class="table-responsive-sm">
+        <table class="table dataTable selectable" aria-label="Clients">
+            <thead>
+                <tr>
+                    <th scope="col" class="text-left col-6">ClientId</th>
+                    <th scope="col" class="text-left col-3">Address</th>
+                    <th scope="col" class="text-left col-3">Software</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="c in clients" :key="c.clientId" @click.left="goToClient(c)"
+                    @mousedown.middle="goToClient(c, true)">
+                    <td>
+                        <router-link @click.stop class="row-link"
+                            :to="{ name: getRouteName('kafkaClient').value, params: { service: service.name, clientId: c.clientId } }">
+                            {{ c.clientId }}
+                        </router-link>
+                    </td>
+                    <td>{{ formatAddress(c.address) }}</td>
+                    <td>{{ clientSoftware(c) }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </template>

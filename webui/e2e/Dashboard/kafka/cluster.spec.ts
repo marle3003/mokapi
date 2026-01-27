@@ -27,7 +27,9 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
     })
 
     await test.step('Check broker section', async () => {
-        const brokers = useTable(page.getByRole('region', { name: "Brokers" }).getByRole('table', { name: 'Brokers' }), ['Name', 'Host', 'Description', 'Tags'])
+        await page.getByRole('tab', { name: 'Servers' }).click();
+
+        const brokers = useTable(page.getByRole('table', { name: 'Servers' }), ['Name', 'Host', 'Description', 'Tags'])
         const broker = brokers.getRow(1)
         await expect(broker.getCellByName('Name')).toHaveText(cluster.brokers[0].name)
         await expect(broker.getCellByName('Host')).toHaveText(cluster.brokers[0].url)
@@ -36,7 +38,9 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
     })
 
     await test.step('Check topic section', async () => {
-        const table = page.getByRole('region', { name: "Topics" }).getByRole('table', { name: 'Topics' })
+        await page.getByRole('tab', { name: 'Topics' }).click();
+
+        const table = page.getByRole('table', { name: 'Topics' })
         await expect(table).toBeVisible()
         const topics = useKafkaTopics(table)
         await topics.testTopic(0, cluster.topics[0])
@@ -44,7 +48,9 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
     })
 
     await test.step('Check groups section', async () => {
-        const table = page.getByRole('region', { name: "Groups" }).getByRole('table', { name: 'Groups' })
+        await page.getByRole('tab', { name: 'Groups' }).click();
+
+        const table = page.getByRole('table', { name: 'Groups' })
         await expect(table).toBeVisible()
         const groups = useKafkaGroups(table)
         await groups.testGroup(0, cluster.groups[0])
@@ -52,7 +58,9 @@ test('Visit Kafka cluster "Kafka World"', async ({ page }) => {
     })
 
     await test.step('Check config section', async () => {
-        const configs = useTable(page.getByRole('region', { name: "Configs" }).getByRole('table', { name: 'Configs' }), ['URL', 'Provider', 'Last Update'])
+        await page.getByRole('tab', { name: 'Configs' }).click();
+
+        const configs = useTable(page.getByRole('table', { name: 'Configs' }), ['URL', 'Provider', 'Last Update'])
         const config = configs.getRow(1)
         await expect(config.getCellByName('URL')).toHaveText('https://www.example.com/foo/bar/communication/service/asyncapi.json')
         await expect(config.getCellByName('Provider')).toHaveText('HTTP')
@@ -70,6 +78,8 @@ test('Visit Kafka cluster config file', async ({ page, context }) => {
     await tabs.kafka.click()
 
     await page.getByRole('table', { name: 'Kafka Clusters' }).getByText(cluster.name).click()
+
+    await page.getByRole('tab', { name: 'Configs' }).click();
     await page.getByRole('table', { name: 'Configs' }).getByText('https://www.example.com/foo/bar/communication/service/asyncapi.json').click()
 
     await expect(page.getByLabel('URL')).toHaveText('https://www.example.com/foo/bar/communication/service/asyncapi.json')
