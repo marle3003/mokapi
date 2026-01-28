@@ -1,8 +1,6 @@
 package store
 
 import (
-	"bufio"
-	"bytes"
 	"mokapi/kafka"
 	"mokapi/kafka/joinGroup"
 	"mokapi/kafka/syncGroup"
@@ -30,13 +28,17 @@ type joindata struct {
 	protocols        []joinGroup.Protocol
 	rebalanceTimeout int
 	sessionTimeout   int
-	log              func(data *KafkaRequestLog, clientId string)
+	log              func(data *KafkaLog)
 }
 
 type syncdata struct {
-	client  *kafka.ClientContext
-	writer  kafka.ResponseWriter
-	assigns map[string]*groupAssignment
+	client       *kafka.ClientContext
+	writer       kafka.ResponseWriter
+	generationId int32
+	protocolType string
+	protocolName string
+	assigns      map[string]*groupAssignment
+	log          func(data *KafkaLog)
 }
 
 type protocoldata struct {
@@ -122,13 +124,19 @@ func (b *groupBalancer) run() {
 				syncs = append(syncs, s)
 				log.Infof("kafka: group %v state changed from %v to %v", b.group.Name, states[b.group.State], states[Stable])
 				b.group.State = Stable
-				for _, s := range syncs {
-					memberName := s.client.Member[b.group.Name]
+				for _, sync := range syncs {
+					memberName := sync.client.Member[b.group.Name]
 					assign := assigns[memberName]
 					res := &syncGroup.Response{
-						Assignment: assign.raw,
+						ProtocolType: sync.protocolType,
+						ProtocolName: sync.protocolName,
+						Assignment:   assign.raw,
 					}
-					go b.respond(s.writer, res)
+					go b.respond(sync.writer, res)
+					go func() {
+						l := newKafkaSyncGroupLog(b.group.Name, s, memberName, assign, res)
+						sync.log(l)
+					}()
 				}
 
 				for memberName, assign := range assigns {
@@ -236,7 +244,7 @@ StopWaitingForConsumers:
 		go b.respond(j.writer, res)
 		go func() {
 			l := newKafkaJoinGroupLog(b.group.Name, j, memberId, res)
-			j.log(l, j.client.ClientId)
+			j.log(l)
 		}()
 	}
 
@@ -251,7 +259,7 @@ StopWaitingForConsumers:
 	go b.respond(leader.writer, res)
 	go func() {
 		l := newKafkaJoinGroupLog(b.group.Name, leader, generation.LeaderId, res)
-		leader.log(l, leader.client.ClientId)
+		leader.log(l)
 	}()
 }
 
@@ -268,38 +276,8 @@ func (b *groupBalancer) respond(w kafka.ResponseWriter, msg kafka.Message) {
 	}()
 }
 
-func newGroupAssignment(b []byte) *groupAssignment {
-	g := &groupAssignment{}
-	g.raw = b
-	r := bufio.NewReader(bytes.NewReader(b))
-	d := kafka.NewDecoder(r, len(b))
-	g.version = d.ReadInt16()
-
-	g.topics = make(map[string][]int)
-	n := int(d.ReadInt32())
-	for i := 0; i < n; i++ {
-		key := d.ReadString()
-		value := make([]int, 0)
-
-		nPartition := int(d.ReadInt32())
-		for j := 0; j < nPartition; j++ {
-			index := d.ReadInt32()
-			value = append(value, int(index))
-		}
-		g.topics[key] = value
-	}
-
-	g.userData = d.ReadBytes()
-
-	return g
-}
-
-func newKafkaJoinGroupLog(name string, j joindata, memberId string, res *joinGroup.Response) *KafkaRequestLog {
+func newKafkaJoinGroupLog(name string, j joindata, memberId string, res *joinGroup.Response) *KafkaLog {
 	req := &KafkaJoinGroupRequest{
-		KafkaRequestBase: KafkaRequestBase{
-			RequestKey:  kafka.JoinGroup,
-			RequestName: "JoinGroup",
-		},
 		GroupName:    name,
 		MemberId:     memberId,
 		ProtocolType: j.protocolType,
@@ -318,7 +296,36 @@ func newKafkaJoinGroupLog(name string, j joindata, memberId string, res *joinGro
 		r.Members = append(r.Members, m.MemberId)
 	}
 
-	return &KafkaRequestLog{
+	return &KafkaLog{
+		Request:  req,
+		Response: r,
+	}
+}
+
+func newKafkaSyncGroupLog(name string, s syncdata, memberId string, assign *groupAssignment, res *syncGroup.Response) *KafkaLog {
+	req := &KafkaSyncGroupRequest{
+		GroupName:        name,
+		MemberId:         memberId,
+		ProtocolType:     s.protocolType,
+		GroupAssignments: map[string]KafkaSyncGroupAssignment{},
+	}
+	for m, a := range s.assigns {
+		req.GroupAssignments[m] = KafkaSyncGroupAssignment{
+			Version: a.version,
+			Topics:  a.topics,
+		}
+	}
+
+	r := &KafkaSyncGroupResponse{
+		ProtocolType: s.protocolType,
+		ProtocolName: res.ProtocolName,
+		Assignment: KafkaSyncGroupAssignment{
+			Version: assign.version,
+			Topics:  assign.topics,
+		},
+	}
+
+	return &KafkaLog{
 		Request:  req,
 		Response: r,
 	}

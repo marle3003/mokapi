@@ -1,6 +1,8 @@
 package store
 
 import (
+	"bufio"
+	"bytes"
 	"mokapi/kafka"
 	"mokapi/kafka/syncGroup"
 )
@@ -36,8 +38,12 @@ func (s *Store) syncgroup(rw kafka.ResponseWriter, req *kafka.Request) error {
 	}
 
 	data := syncdata{
-		client: ctx,
-		writer: rw,
+		client:       ctx,
+		writer:       rw,
+		protocolType: r.ProtocolType,
+		protocolName: r.ProtocolName,
+		generationId: r.GenerationId,
+		log:          s.logRequest(req.Header),
 	}
 
 	if len(r.GroupAssignments) > 0 {
@@ -51,4 +57,30 @@ func (s *Store) syncgroup(rw kafka.ResponseWriter, req *kafka.Request) error {
 	g.balancer.sync <- data
 
 	return nil
+}
+
+func newGroupAssignment(b []byte) *groupAssignment {
+	g := &groupAssignment{}
+	g.raw = b
+	r := bufio.NewReader(bytes.NewReader(b))
+	d := kafka.NewDecoder(r, len(b))
+	g.version = d.ReadInt16()
+
+	g.topics = make(map[string][]int)
+	n := int(d.ReadInt32())
+	for i := 0; i < n; i++ {
+		key := d.ReadString()
+		value := make([]int, 0)
+
+		nPartition := int(d.ReadInt32())
+		for j := 0; j < nPartition; j++ {
+			index := d.ReadInt32()
+			value = append(value, int(index))
+		}
+		g.topics[key] = value
+	}
+
+	g.userData = d.ReadBytes()
+
+	return g
 }

@@ -20,7 +20,10 @@ table.dataTable th {
     border-bottom-width: 3px;
     font-weight: 500;
 }
-table.dataTable td{
+table.dataTable.compact th {
+    padding-left: 0;
+}
+table.dataTable td {
     border-top-width: 2px;
     border-bottom-width: 2px;
     border-color: var(--datatable-border-color);
@@ -28,6 +31,9 @@ table.dataTable td{
     padding: 4px 0 3px 12px;
     border-left-style: hidden;
     border-right-style: hidden;
+}
+table.dataTable.compact td {
+    padding-left: 0;
 }
 
 table.dataTable tr:hover > td {

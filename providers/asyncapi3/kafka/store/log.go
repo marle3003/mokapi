@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mokapi/kafka"
 	"mokapi/runtime/events"
+	"strings"
 )
 
 type LogRecord func(log *KafkaMessageLog, traits events.Traits)
@@ -53,23 +54,55 @@ type KafkaRequestData interface {
 	Title() string
 }
 
-type KafkaRequestLog struct {
-	Api      string           `json:"api"`
-	Request  KafkaRequestData `json:"request"`
-	Response any              `json:"response"`
+func (s *Store) logRequest(h *kafka.Header) func(log *KafkaLog) {
+	return func(log *KafkaLog) {
+		log.Api = s.cluster
+		log.Header.set(h)
+		t := events.NewTraits().
+			WithNamespace("kafka").
+			WithName(s.cluster).
+			With("type", "request").
+			With("clientId", h.ClientId)
+		_ = s.eh.Push(log, t)
+	}
 }
 
-type KafkaRequestBase struct {
+type KafkaLog struct {
+	Api      string             `json:"api"`
+	Header   KafkaRequestHeader `json:"header"`
+	Request  KafkaRequest       `json:"request"`
+	Response any                `json:"response"`
+}
+
+func (l *KafkaLog) Title() string {
+	return l.Request.Title()
+}
+
+type KafkaRequest interface {
+	Title() string
+}
+
+type KafkaRequestHeader struct {
 	RequestKey  kafka.ApiKey `json:"requestKey"`
 	RequestName string       `json:"requestName"`
+	Version     int16        `json:"version"`
+}
+
+func (h *KafkaRequestHeader) set(header *kafka.Header) {
+	h.RequestKey = header.ApiKey
+	h.RequestName = strings.Split(header.ApiKey.String(), " ")[0]
+	h.Version = header.ApiVersion
 }
 
 type KafkaJoinGroupRequest struct {
-	KafkaRequestBase
 	GroupName    string   `json:"groupName"`
 	MemberId     string   `json:"memberId"`
 	ProtocolType string   `json:"protocolType"`
 	Protocols    []string `json:"protocols"`
+}
+
+func (r *KafkaJoinGroupRequest) Title() string {
+	return fmt.Sprintf("JoinGroup %s", r.GroupName)
 }
 
 type KafkaJoinGroupResponse struct {
@@ -80,10 +113,26 @@ type KafkaJoinGroupResponse struct {
 	Members      []string `json:"members,omitempty"`
 }
 
-func (l *KafkaRequestLog) Title() string {
-	return l.Request.Title()
+type KafkaSyncGroupRequest struct {
+	GroupName        string                              `json:"groupName"`
+	GenerationId     int32                               `json:"generationId"`
+	MemberId         string                              `json:"memberId"`
+	ProtocolType     string                              `json:"protocolType"`
+	ProtocolName     string                              `json:"protocolName"`
+	GroupAssignments map[string]KafkaSyncGroupAssignment `json:"groupAssignments,omitempty"`
 }
 
-func (r *KafkaJoinGroupRequest) Title() string {
-	return fmt.Sprintf("JoinGroup %s", r.GroupName)
+type KafkaSyncGroupAssignment struct {
+	Version int16            `json:"version"`
+	Topics  map[string][]int `json:"topics"`
+}
+
+func (r *KafkaSyncGroupRequest) Title() string {
+	return fmt.Sprintf("SyncGroup %s", r.GroupName)
+}
+
+type KafkaSyncGroupResponse struct {
+	ProtocolType string                   `json:"protocolType"`
+	ProtocolName string                   `json:"protocolName"`
+	Assignment   KafkaSyncGroupAssignment `json:"assignment"`
 }

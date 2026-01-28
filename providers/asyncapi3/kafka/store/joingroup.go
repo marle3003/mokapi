@@ -3,7 +3,6 @@ package store
 import (
 	"mokapi/kafka"
 	"mokapi/kafka/joinGroup"
-	"mokapi/runtime/events"
 )
 
 func (s *Store) joingroup(rw kafka.ResponseWriter, req *kafka.Request) error {
@@ -29,21 +28,11 @@ func (s *Store) joingroup(rw kafka.ResponseWriter, req *kafka.Request) error {
 		protocols:        r.Protocols,
 		rebalanceTimeout: int(r.RebalanceTimeoutMs),
 		sessionTimeout:   int(r.SessionTimeoutMs),
-		log:              s.logJoinGroupRequest,
+		log:              s.logRequest(req.Header),
 	}
 
 	// balancer writes the response
 	g.balancer.join <- data
 
 	return nil
-}
-
-func (s *Store) logJoinGroupRequest(log *KafkaRequestLog, clientId string) {
-	log.Api = s.cluster
-	t := events.NewTraits().
-		WithNamespace("kafka").
-		WithName(s.cluster).
-		With("type", "request").
-		With("clientId", clientId)
-	_ = s.eh.Push(log, t)
 }

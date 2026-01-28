@@ -111,13 +111,15 @@ declare interface KafkaClient {
 }
 
 declare interface KafkaRequestLog {
-  request: KafkaRequest & KafkaJoinGroupRequest
-  response: KafkaJoinGroupResponse
+  header: KafkaRequestHeader
+  request:  KafkaJoinGroupRequest | KafkaSyncGroupRequest
+  response: KafkaJoinGroupResponse | KafkaSyncGroupResponse
 }
 
-declare interface KafkaRequest {
+declare interface KafkaRequestHeader {
   requestKey: number
   requestName: string
+  version: number
 }
 
 declare interface KafkaJoinGroupRequest {
@@ -133,4 +135,25 @@ declare interface KafkaJoinGroupResponse {
   memberId: string
   leaderId: string
   members: string[] | undefined
+}
+
+declare interface KafkaSyncGroupRequest {
+  groupName: string
+  generationId: number
+  memberId: string
+  protocolType: string
+  protocolName: string
+  groupAssignments: { [name: string]: KafkaGroupAssignment }
+}
+
+declare interface KafkaSyncGroupResponse {
+  protocolType: string
+  protocolName: string
+  assignment: KafkaGroupAssignment
+}
+
+declare interface KafkaGroupAssignment {
+  version: number
+  // topic: partition index
+  topics: { [name: string]: int[] }
 }

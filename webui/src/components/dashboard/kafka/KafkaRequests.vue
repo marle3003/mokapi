@@ -1,20 +1,23 @@
 <script setup lang="ts">
-import { useDashboard } from '@/composables/dashboard';
+import { useDashboard, getRouteName } from '@/composables/dashboard';
 import { computed, onUnmounted, type Component } from 'vue';
-import JoinGroupRequest from './requests/JoinGroupRequest.vue';
-import JoinGroupResponse from './requests/JoinGroupResponse.vue';
+import { usePrettyDates } from '@/composables/usePrettyDate';
+import { useRouter } from '@/router';
+import JoinGroupSummary from './requests/JoinGroupSummary.vue';
+import SyncGroupSummary from './requests/SyncGroupSummary.vue';
 
 const props = defineProps<{
   service: KafkaService,
   clientId: string
-}>()
+}>();
 
-const request: { [apiKey: number]: Component } = {
-  11: JoinGroupRequest
+const summary: { [apiKey: number]: Component } = {
+  11: JoinGroupSummary,
+  14: SyncGroupSummary
 };
-const response: { [apiKey: number]: Component } = {
-  11: JoinGroupResponse
-};
+
+const router = useRouter();
+const { format: formatTime } = usePrettyDates();
 
 const labels = computed(() => {
   const result = [{ name: 'type', value: 'request' }];
@@ -53,6 +56,22 @@ function eventData(event: ServiceEvent | null): KafkaRequestLog | null {
   }
   return event.data as KafkaRequestLog
 }
+function goToRequest(event: ServiceEvent, openInNewTab = false) {
+    if (getSelection()?.toString()) {
+        return
+    }
+
+    const to = {
+        name: getRouteName('kafkaRequest').value,
+        params: { service: props.service.name, id: event.id }
+    }
+    if (openInNewTab) {
+        const routeData = router.resolve(to);
+        window.open(routeData.href, '_blank')
+    } else {
+        router.push(to)
+    }
+}
 </script>
 
 <template>
@@ -64,19 +83,24 @@ function eventData(event: ServiceEvent | null): KafkaRequestLog | null {
           <thead>
             <tr>
               <th scope="col" class="text-left col-2">API Key</th>
-              <th scope="col" class="text-left col-2">Request</th>
-              <th scope="col" class="text-left col-2">Response</th>
+              <th scope="col" class="text-left col-2">Version</th>
+              <th scope="col" class="text-left col">Summary</th>
+              <th scope="col" class="text-center col-2">Time</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in requests" :key="row.event.id">
-              <td>{{ row.data.request.requestName }}</td>
+            <tr v-for="row in requests" :key="row.event.id" @click.left="goToRequest(row.event)" @mousedown.middle="goToRequest(row.event, true)">
               <td>
-                <component :is="request[row.data.request.requestKey]" :request="row.data.request"/>
+                <router-link @click.stop class="row-link"
+                    :to="{ name: getRouteName('kafkaRequest').value, params: { service: props.service.name, id: row.event.id } }">
+                    {{ row.data.header.requestName }}
+                </router-link>
               </td>
+              <td>{{ row.data.header.version }}</td>
               <td>
-                <component :is="response[row.data.request.requestKey]" :response="row.data.response"/>
+                <component :is="summary[row.data.header.requestKey]" :request="row.data.request" :response="row.data.response"/>
               </td>
+              <td class="text-center">{{ formatTime(row.event.time) }}</td>
             </tr>
           </tbody>
         </table>

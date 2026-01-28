@@ -15,6 +15,7 @@ import KafkaClient from './KafkaClient.vue'
 import Message from './Message.vue'
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useRouter } from '@/router'
+import Request from './Request.vue'
 
 const route = useRoute();
 const router = useRouter();
@@ -117,6 +118,7 @@ watch(() => route.hash, (hash) => {
         <kafka-client></kafka-client>
     </div>
     <message v-if="$route.name == getRouteName('kafkaMessage').value"></message>
+    <request v-if="$route.name == getRouteName('kafkaRequest').value"></request>
 </template>
 
 <style scoped>

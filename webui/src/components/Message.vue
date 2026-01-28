@@ -10,9 +10,9 @@ const router = useRouter()
 </script>
 
 <template>
-    <div class="position-absolute top-50 start-50 translate-middle">
+    <div class="mx-auto message-container">
         <div class="card-group">
-            <div class="card"  style="width: 400px">
+            <div class="card">
                 <div class="card-body">
                     <div class="row">
                         <div class="col-sm-3">
@@ -38,6 +38,13 @@ const router = useRouter()
 </template>
 
 <style scoped>
+.message-container {
+    width: 400px; 
+    margin-top: 6rem;
+}
+.demo .message-container {
+    margin-top: 12rem;
+}
 .card {
     border-color: var(--color-border);
     background-color: var(--color-background-soft);
