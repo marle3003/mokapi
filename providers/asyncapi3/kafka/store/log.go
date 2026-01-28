@@ -54,8 +54,9 @@ type KafkaRequestData interface {
 }
 
 type KafkaRequestLog struct {
-	Api     string           `json:"api"`
-	Request KafkaRequestData `json:"request"`
+	Api      string           `json:"api"`
+	Request  KafkaRequestData `json:"request"`
+	Response any              `json:"response"`
 }
 
 type KafkaRequestBase struct {
@@ -69,6 +70,14 @@ type KafkaJoinGroupRequest struct {
 	MemberId     string   `json:"memberId"`
 	ProtocolType string   `json:"protocolType"`
 	Protocols    []string `json:"protocols"`
+}
+
+type KafkaJoinGroupResponse struct {
+	GenerationId int32    `json:"generationId"`
+	ProtocolName string   `json:"protocolName"`
+	MemberId     string   `json:"memberId"`
+	LeaderId     string   `json:"leaderId"`
+	Members      []string `json:"members,omitempty"`
 }
 
 func (l *KafkaRequestLog) Title() string {

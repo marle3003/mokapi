@@ -50,7 +50,7 @@ const data = computed(() => {
   if (!event.value) {
     return undefined
   }
-  return <KafkaEventData>event.value?.data
+  return <KafkaMessageData>event.value?.data
 })
 watchEffect(() => {
   if (!event.value) {

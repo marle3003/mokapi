@@ -1,15 +1,19 @@
 <script setup lang="ts">
 import { useDashboard } from '@/composables/dashboard';
 import { computed, onUnmounted, type Component } from 'vue';
-import JoinGroup from './requests/JoinGroup.vue';
+import JoinGroupRequest from './requests/JoinGroupRequest.vue';
+import JoinGroupResponse from './requests/JoinGroupResponse.vue';
 
 const props = defineProps<{
   service: KafkaService,
   clientId: string
 }>()
 
-const rowComponent: { [apiKey: number]: Component } = {
-  11: JoinGroup
+const request: { [apiKey: number]: Component } = {
+  11: JoinGroupRequest
+};
+const response: { [apiKey: number]: Component } = {
+  11: JoinGroupResponse
 };
 
 const labels = computed(() => {
@@ -60,14 +64,18 @@ function eventData(event: ServiceEvent | null): KafkaRequestLog | null {
           <thead>
             <tr>
               <th scope="col" class="text-left col-2">API Key</th>
-              <th scope="col" class="text-left col-2">Details</th>
+              <th scope="col" class="text-left col-2">Request</th>
+              <th scope="col" class="text-left col-2">Response</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="row in requests" :key="row.event.id">
               <td>{{ row.data.request.requestName }}</td>
               <td>
-                <component :is="rowComponent[row.data.request.requestKey]" :request="row.data.request"/>
+                <component :is="request[row.data.request.requestKey]" :request="row.data.request"/>
+              </td>
+              <td>
+                <component :is="response[row.data.request.requestKey]" :response="row.data.response"/>
               </td>
             </tr>
           </tbody>

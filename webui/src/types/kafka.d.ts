@@ -112,6 +112,7 @@ declare interface KafkaClient {
 
 declare interface KafkaRequestLog {
   request: KafkaRequest & KafkaJoinGroupRequest
+  response: KafkaJoinGroupResponse
 }
 
 declare interface KafkaRequest {
@@ -124,4 +125,12 @@ declare interface KafkaJoinGroupRequest {
   memberId: string
   protocolType: string
   protocols: string[]
+}
+
+declare interface KafkaJoinGroupResponse {
+  generationId: number
+  protocolName: string
+  memberId: string
+  leaderId: string
+  members: string[] | undefined
 }

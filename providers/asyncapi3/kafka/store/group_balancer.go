@@ -226,29 +226,31 @@ StopWaitingForConsumers:
 			MemberId: memberId,
 			MetaData: counter[protocol].metadata[memberId],
 		})
-		go b.respond(j.writer, &joinGroup.Response{
+		res := &joinGroup.Response{
 			GenerationId: int32(generation.Id),
 			Leader:       generation.LeaderId,
 			MemberId:     memberId,
 			ProtocolType: j.protocolType,
 			ProtocolName: protocol,
-		})
+		}
+		go b.respond(j.writer, res)
 		go func() {
-			l := newKafkaJoinGroupLog(b.group.Name, j, memberId)
+			l := newKafkaJoinGroupLog(b.group.Name, j, memberId, res)
 			j.log(l, j.client.ClientId)
 		}()
 	}
 
-	go b.respond(leader.writer, &joinGroup.Response{
+	res := &joinGroup.Response{
 		GenerationId: int32(generation.Id),
 		Leader:       generation.LeaderId,
 		MemberId:     generation.LeaderId,
 		ProtocolType: leader.protocolType,
 		ProtocolName: protocol,
 		Members:      members,
-	})
+	}
+	go b.respond(leader.writer, res)
 	go func() {
-		l := newKafkaJoinGroupLog(b.group.Name, leader, generation.LeaderId)
+		l := newKafkaJoinGroupLog(b.group.Name, leader, generation.LeaderId, res)
 		leader.log(l, leader.client.ClientId)
 	}()
 }
@@ -292,7 +294,7 @@ func newGroupAssignment(b []byte) *groupAssignment {
 	return g
 }
 
-func newKafkaJoinGroupLog(name string, j joindata, memberId string) *KafkaRequestLog {
+func newKafkaJoinGroupLog(name string, j joindata, memberId string, res *joinGroup.Response) *KafkaRequestLog {
 	req := &KafkaJoinGroupRequest{
 		KafkaRequestBase: KafkaRequestBase{
 			RequestKey:  kafka.JoinGroup,
@@ -306,7 +308,18 @@ func newKafkaJoinGroupLog(name string, j joindata, memberId string) *KafkaReques
 		req.Protocols = append(req.Protocols, proto.Name)
 	}
 
+	r := &KafkaJoinGroupResponse{
+		GenerationId: res.GenerationId,
+		ProtocolName: res.ProtocolName,
+		MemberId:     res.MemberId,
+		LeaderId:     res.Leader,
+	}
+	for _, m := range res.Members {
+		r.Members = append(r.Members, m.MemberId)
+	}
+
 	return &KafkaRequestLog{
-		Request: req,
+		Request:  req,
+		Response: r,
 	}
 }
