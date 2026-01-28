@@ -1,23 +1,34 @@
 <script setup lang="ts">
-import { ref, watchEffect, onUnmounted, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import MetricCard from './MetricCard.vue'
 import {useMetrics} from '../../composables/metrics'
 import { usePrettyBytes } from '@/composables/usePrettyBytes';
 import { useDashboard } from '@/composables/dashboard';
+import { type Response } from '@/composables/fetch'
 
 const {sum} = useMetrics()
 const {format} = usePrettyBytes()
-const memoryUsage = ref('0')
 const { dashboard } = useDashboard()
+const response = ref<Response | null>(null);
+
 const memory = computed(() => {
-    const response = dashboard.value.getMetrics('app');
-    onUnmounted(response.close())
-    if (!response.data) {
+    if (!response.value?.data) {
         return '0'
     }
-    const bytes = sum(response.data, 'app_memory_usage_bytes')
+    const bytes = sum(response.value.data, 'app_memory_usage_bytes')
     return format(bytes)
 })
+
+watch(
+  () => dashboard.value,
+  (db, _, onCleanup) => {
+    const res = db.getMetrics('app');
+    response.value = res;
+
+    onCleanup(() => res.close());
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
