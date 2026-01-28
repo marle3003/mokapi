@@ -10,7 +10,6 @@ type Mode = 'live' | 'demo'
 const mode = ref<Mode>('live')
 
 const dashboard = computed<Dashboard>(() => {
-    console.log(mode.value)
     if (mode.value === 'live') {
         return live.dashboard
     }

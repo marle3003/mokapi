@@ -52,10 +52,7 @@ const messages = computed(() => {
             continue
         }
 
-        console.log('tags:')
-        console.log(tags.value)
-
-        if (props.service && !props.topicName && !tags.value.includes('__all')) {
+        if (props.service && !props.clientId && !props.topicName && !tags.value.includes('__all')) {
             const topic = props.service.topics.find(t => t.name === event.traits['topic']);
             if (!topic) {
                 continue

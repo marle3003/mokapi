@@ -148,7 +148,6 @@ async function copyToClipboard(event: MouseEvent) {
   const target = event.target as HTMLElement
   const button = target.closest('[data-copy]')
   if (!button) {
-      console.log('copy')
     return
   }
 
