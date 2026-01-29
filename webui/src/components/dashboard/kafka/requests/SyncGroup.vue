@@ -20,7 +20,6 @@ function goToMember(memberId: string, openInNewTab = false) {
     name: getRouteName('kafkaGroupMember').value,
     params: { service: route.params.service, group: props.request.groupName, member: memberId }
   }
-  console.log(to.params)
   if (openInNewTab) {
     const routeData = router.resolve(to);
     window.open(routeData.href, '_blank')

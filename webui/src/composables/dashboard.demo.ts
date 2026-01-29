@@ -35,7 +35,6 @@ export function useDemoDashboard() {
             const services = ref<Service[]>([])
 
             watchEffect(() => {
-                console.log('watch services')
                 if (!db.data) {
                     return
                 }

@@ -3,8 +3,6 @@ import { computed, ref } from "vue";
 import * as live from "./dashboard.backend";
 import * as demo from "./dashboard.demo";
 
-const current = ref<Dashboard>(live.dashboard)
-
 type Mode = 'live' | 'demo'
 
 const mode = ref<Mode>('live')

@@ -39,25 +39,24 @@ import Config from '@/components/dashboard/Config.vue'
 import { useRoute } from 'vue-router'
 import { useRefreshManager } from '@/composables/refresh-manager'
 import { useDashboard, getRouteName } from '@/composables/dashboard'
-import type { AppInfoResponse } from '@/types/dashboard'
 import Tabs from '@/components/dashboard/Tabs.vue'
 
+const route = useRoute()
 const { progress, start, isActive } = useRefreshManager();
 const transitionRefresh = computed(() => {
     return progress.value > 0.1 && progress.value < 99.9;
 })
 const { dashboard, setMode, getMode } = useDashboard();
+if (route.meta.mode) {
+    setMode(route.meta.mode as 'live' | 'demo')
+}
 
-const route = useRoute()
 const appInfo = computed(() => {
     return dashboard.value.getAppInfo()
 })
 onMounted(() => {
     if (route.meta.mode === 'live') {
         start();
-    }
-    if (route.meta.mode) {
-        setMode(route.meta.mode as 'live' | 'demo')
     }
     onUnmounted(() => {
         appInfo.value?.close()

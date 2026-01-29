@@ -18,8 +18,6 @@ const { dashboard } = useDashboard()
 
 const result = ref<ServiceResult | null>(null);
 const service = computed(() => {
-  console.log('result')
-  console.log(result.value?.service)
   if (!result.value) {
     return undefined;
   }
@@ -47,7 +45,6 @@ watch(
   (db, _, onCleanup) => {
     const res = db.getService(serviceName, 'kafka')
     result.value = res;
-    console.log(res)
 
     onCleanup(() => res.close());
   },
