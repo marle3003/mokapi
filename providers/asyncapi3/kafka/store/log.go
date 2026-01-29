@@ -94,6 +94,11 @@ func (h *KafkaRequestHeader) set(header *kafka.Header) {
 	h.Version = header.ApiVersion
 }
 
+type KafkaResponseError struct {
+	ErrorCode    string `json:"errorCode"`
+	ErrorMessage string `json:"errorMessage"`
+}
+
 type KafkaJoinGroupRequest struct {
 	GroupName    string   `json:"groupName"`
 	MemberId     string   `json:"memberId"`
@@ -181,7 +186,22 @@ type KafkaFindCoordinatorResponse struct {
 	Port int    `json:"port"`
 }
 
-type KafkaResponseError struct {
-	ErrorCode    string `json:"errorCode"`
-	ErrorMessage string `json:"errorMessage"`
+type KafkaInitProducerIdRequest struct {
+	TransactionalId      string `json:"transactionalId"`
+	TransactionTimeoutMs int32  `json:"transactionTimeoutMs"`
+	ProducerId           int64  `json:"producerId"`
+	ProducerEpoch        int16  `json:"producerEpoch"`
+	Enable2PC            bool   `json:"enable2PC"`
+}
+
+func (r *KafkaInitProducerIdRequest) Title() string {
+	return "InitProducerId"
+}
+
+type KafkaInitProducerIdResponse struct {
+	KafkaResponseError
+	ProducerId              int64 `json:"producerId"`
+	ProducerEpoch           int16 `json:"producerEpoch"`
+	OngoingTxnProducerId    int64 `json:"ongoingTxnProducerId"`
+	OngoingTxnProducerEpoch int16 `json:"ongoingTxnProducerEpoch"`
 }

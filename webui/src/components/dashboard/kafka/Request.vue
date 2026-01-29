@@ -4,17 +4,20 @@ import Message from '@/components/Message.vue';
 import { useDashboard } from '@/composables/dashboard';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRoute } from '@/router';
-import { computed, onUnmounted, type Component } from 'vue';
+import { computed, ref, watch, type Component } from 'vue';
 import JoinGroup from './requests/JoinGroup.vue';
 import SyncGroup from './requests/SyncGroup.vue';
 import ListOffsets from './requests/ListOffsets.vue';
 import FindCoordinator from './requests/FindCoordinator.vue';
+import type { EventResult } from '@/types/dashboard';
+import InitProducerId from './requests/InitProducerId.vue';
 
 const detail: { [apiKey: number]: Component } = {
     2: ListOffsets,
     10: FindCoordinator,
     11: JoinGroup,
-    14: SyncGroup
+    14: SyncGroup,
+    22: InitProducerId
 };
 
 const route = useRoute();
@@ -32,18 +35,20 @@ const eventId = computed(() => {
     }
     return null
 })
+const data = ref<EventResult | null>(null);
 
-const data = computed(() => {
+watch(() => dashboard.value,
+  (db, _, onCleanup) => {
     if (!eventId.value) {
-        return { event: undefined, isLoading: false };
+        return
     }
-    const event = dashboard.value.getEvent(eventId.value);
-    onUnmounted(event.close);
-    if (!event.event) {
-        return { event: undefined, isLoading: event.isLoading.value };
-    }
-    return { event: event.event.value, isLoading: event.isLoading.value };
-})
+    const res = db.getEvent(eventId.value);
+    data.value = res;
+
+    onCleanup(() => res.close());
+  },
+  { immediate: true }
+);
 
 const eventData = computed(() => {
     if (!data.value || !data.value.event) {
@@ -54,7 +59,7 @@ const eventData = computed(() => {
 </script>
 
 <template>
-    <div v-if="data.event && eventData">
+    <div v-if="data && data.event && eventData">
         <div class="card-group">
             <div class="card">
                 <div class="card-body">
@@ -80,8 +85,8 @@ const eventData = computed(() => {
         <component :is="detail[eventData.header.requestKey]" :version="eventData.header.version"
             :request="eventData.request" :response="eventData.response" />
     </div>
-    <loading v-if="data.isLoading"></loading>
-    <div v-if="!data.event && !data.isLoading">
+    <loading v-if="!data || data.isLoading"></loading>
+    <div v-if="data && !data.event && !data.isLoading">
         <message message="Kafka Request not found"></message>
     </div>
 </template>

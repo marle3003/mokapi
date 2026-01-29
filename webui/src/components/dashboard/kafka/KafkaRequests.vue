@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { useDashboard, getRouteName } from '@/composables/dashboard';
-import { computed, onUnmounted, type Component } from 'vue';
+import { computed, onUnmounted, ref, watch, type Component } from 'vue';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRouter } from '@/router';
 import JoinGroupSummary from './requests/JoinGroupSummary.vue';
 import SyncGroupSummary from './requests/SyncGroupSummary.vue';
 import ListOffsetsSummary from './requests/ListOffsetsSummary.vue';
 import FindCoordinatorSummary from './requests/FindCoordinatorSummary.vue';
+import InitProducerIdSummary from './requests/InitProducerIdSummary.vue';
+import type { EventsResult } from '@/types/dashboard';
 
 const props = defineProps<{
   service: KafkaService,
@@ -17,7 +19,8 @@ const summary: { [apiKey: number]: Component } = {
   2: ListOffsetsSummary,
   10: FindCoordinatorSummary,
   11: JoinGroupSummary,
-  14: SyncGroupSummary
+  14: SyncGroupSummary,
+  22: InitProducerIdSummary
 };
 
 const router = useRouter();
@@ -31,11 +34,15 @@ const labels = computed(() => {
 })
 
 const { dashboard } = useDashboard()
-const { events, close } = dashboard.value.getEvents('kafka', ...labels.value)
+const data = ref<EventsResult | null>(null);
 
 const requests = computed(() => {
+  if (!data.value || !data.value.events) {
+    return [];
+  }
+  const events = data.value.events
   const result = [];
-  for (const event of events.value) {
+  for (const event of events) {
     const data = eventData(event)
     if (!data) {
       continue
@@ -48,6 +55,16 @@ const requests = computed(() => {
   }
   return result
 })
+
+watch(() => dashboard.value,
+  (db, _, onCleanup) => {
+    const res =  db.getEvents('kafka', ...labels.value);
+    data.value = res;
+
+    onCleanup(() => res.close());
+  },
+  { immediate: true }
+);
 
 
 onUnmounted(() => {
@@ -84,7 +101,7 @@ function goToRequest(event: ServiceEvent, openInNewTab = false) {
       <h2 id="requests" class="card-title text-center">Recent Requests</h2>
 
       <p class="text-muted small text-center mb-3">
-        This view highlights requests for producer initialization, group coordination, and offset resolution
+        This view shows requests for producer initialization, group coordination, and offset resolution
       </p>
 
       <div class="table-responsive-sm">

@@ -112,8 +112,8 @@ declare interface KafkaClient {
 
 declare interface KafkaRequestLog {
   header: KafkaRequestHeader
-  request:  KafkaJoinGroupRequest | KafkaSyncGroupRequest | KafkaFindCoordinatorRequest
-  response: KafkaJoinGroupResponse | KafkaSyncGroupResponse | KafkaFindCoordinatorResponse
+  request:  KafkaJoinGroupRequest | KafkaSyncGroupRequest | KafkaFindCoordinatorRequest | KafkaInitProducerIdRequest
+  response: KafkaJoinGroupResponse | KafkaSyncGroupResponse | KafkaFindCoordinatorResponse | KafkaInitProducerIdResponse
 }
 
 declare interface KafkaResponseError {
@@ -194,4 +194,19 @@ declare interface KafkaFindCoordinatorRequest {
 declare interface KafkaFindCoordinatorResponse extends KafkaResponseError {
   host: string
   port: number
+}
+
+declare interface KafkaInitProducerIdRequest {
+  transactionalId: string
+	transactionTimeoutMs: number
+	producerId: number
+	producerEpoch: number
+	enable2PC: boolean
+}
+
+declare interface KafkaInitProducerIdResponse extends KafkaResponseError {
+  producerId: number
+	producerEpoch: number
+	ongoingTxnProducerId: number
+	ongoingTxnProducerEpoch: number
 }

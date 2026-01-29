@@ -24,17 +24,47 @@ func (s *Store) initProducerID(rw kafka.ResponseWriter, req *kafka.Request) erro
 				res.ProducerId = ps.ProducerId
 				res.ProducerEpoch = ps.ProducerEpoch
 			}
-			return rw.Write(res)
-		}
 
-		res.ProducerId = atomic.AddInt64(&s.nextPID, 1)
-		res.ProducerEpoch = 0
-		ps := &ProducerState{ProducerId: res.ProducerId, ProducerEpoch: res.ProducerEpoch}
-		s.producers[res.ProducerId] = ps
+		} else {
+			res.ProducerId = atomic.AddInt64(&s.nextPID, 1)
+			res.ProducerEpoch = 0
+			ps := &ProducerState{ProducerId: res.ProducerId, ProducerEpoch: res.ProducerEpoch}
+			s.producers[res.ProducerId] = ps
+		}
 	} else {
 		res.ErrorCode = kafka.UnsupportedForMessageFormat
 		log.Errorf("kafka: mokapi does not support transactional producer: %s", r.TransactionalId)
 	}
 
+	go func() {
+		s.logRequest(req.Header)(&KafkaRequestLogEvent{
+			Request:  newKafkaInitProducerIdRequest(r),
+			Response: newKafkaInitProducerIdResponse(res),
+		})
+	}()
+
 	return rw.Write(res)
+}
+
+func newKafkaInitProducerIdRequest(req *initProducerId.Request) *KafkaInitProducerIdRequest {
+	return &KafkaInitProducerIdRequest{
+		TransactionalId:      req.TransactionalId,
+		TransactionTimeoutMs: req.TransactionTimeoutMs,
+		ProducerId:           req.ProducerId,
+		ProducerEpoch:        req.ProducerEpoch,
+		Enable2PC:            req.Enable2PC,
+	}
+}
+
+func newKafkaInitProducerIdResponse(res *initProducerId.Response) *KafkaInitProducerIdResponse {
+	r := &KafkaInitProducerIdResponse{
+		ProducerId:              res.ProducerId,
+		ProducerEpoch:           res.ProducerEpoch,
+		OngoingTxnProducerId:    res.OngoingTxnProducerId,
+		OngoingTxnProducerEpoch: res.OngoingTxnProducerEpoch,
+	}
+	if res.ErrorCode != kafka.None {
+		r.ErrorCode = res.ErrorCode.String()
+	}
+	return r
 }

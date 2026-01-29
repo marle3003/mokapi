@@ -11,7 +11,9 @@ const consumerClient = new Kafka({
 });
 
 const consumer = consumerClient.consumer({ groupId: 'order-status-group-100' });
-const producer = producerClient.producer();
+const producer = producerClient.producer({
+  idempotent: true
+});
 
 export async function driveKafka() {
   await consumer.connect();
