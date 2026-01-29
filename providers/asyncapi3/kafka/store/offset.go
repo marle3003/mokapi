@@ -66,5 +66,41 @@ func (s *Store) offset(rw kafka.ResponseWriter, req *kafka.Request) error {
 		})
 	}
 
+	go func() {
+		l := newKafkaListOffsetsLog(r, res)
+		s.logRequest(req.Header)(l)
+	}()
+
 	return rw.Write(res)
+}
+
+func newKafkaListOffsetsLog(req *offset.Request, res *offset.Response) *KafkaLog {
+	reqLog := &KafkaListOffsetsRequest{
+		Topics: make(map[string][]KafkaListOffsetsRequestPartition),
+	}
+	for _, topic := range req.Topics {
+		for _, partition := range topic.Partitions {
+			reqLog.Topics[topic.Name] = append(reqLog.Topics[topic.Name], KafkaListOffsetsRequestPartition{
+				Partition: int(partition.Index),
+				Timestamp: partition.Timestamp,
+			})
+		}
+	}
+
+	resLog := &KafkaListOffsetsResponse{
+		Topics: make(map[string][]KafkaListOffsetsResponsePartition),
+	}
+	for _, topic := range res.Topics {
+		for _, partition := range topic.Partitions {
+			resLog.Topics[topic.Name] = append(resLog.Topics[topic.Name], KafkaListOffsetsResponsePartition{
+				Partition: int(partition.Index),
+				Timestamp: partition.Timestamp,
+			})
+		}
+	}
+
+	return &KafkaLog{
+		Request:  reqLog,
+		Response: resLog,
+	}
 }

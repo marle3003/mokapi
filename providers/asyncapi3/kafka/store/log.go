@@ -136,3 +136,26 @@ type KafkaSyncGroupResponse struct {
 	ProtocolName string                   `json:"protocolName"`
 	Assignment   KafkaSyncGroupAssignment `json:"assignment"`
 }
+
+type KafkaListOffsetsRequest struct {
+	Topics map[string][]KafkaListOffsetsRequestPartition `json:"topics"`
+}
+
+func (r *KafkaListOffsetsRequest) Title() string {
+	return "ListOffsets"
+}
+
+type KafkaListOffsetsRequestPartition struct {
+	Partition int   `json:"partition"`
+	Timestamp int64 `json:"timestamp"`
+}
+
+type KafkaListOffsetsResponse struct {
+	Topics map[string][]KafkaListOffsetsResponsePartition `json:"topics"`
+}
+
+type KafkaListOffsetsResponsePartition struct {
+	Partition int   `json:"partition"`
+	Timestamp int64 `json:"timestamp"`
+	Offset    int64 `json:"offset"`
+}

@@ -157,3 +157,22 @@ declare interface KafkaGroupAssignment {
   // topic: partition index
   topics: { [name: string]: int[] }
 }
+
+declare interface KafkaListOffsetsRequest {
+  topics: { [name: string]: KafkaListOffsetsRequestPartition[] }
+}
+
+declare interface KafkaListOffsetsRequestPartition {
+  partition: number
+  timestamp: number
+}
+
+declare interface KafkaListOffsetsResponse {
+  topics: { [name: string]: KafkaListOffsetsResponsePartition[] }
+}
+
+declare interface KafkaListOffsetsResponsePartition {
+  partition: number
+  timestamp: number
+  offset: number
+}

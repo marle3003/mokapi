@@ -87,7 +87,7 @@ function goToMember(memberId: string, openInNewTab = false) {
         </div>
 
         <div class="table-responsive-sm mt-4">
-          <table class="table dataTable compact selectable" aria-label="requests">
+          <table class="table dataTable compact selectable" aria-label="Members">
             <thead>
               <tr>
                 <th scope="col" class="text-left col-2">Member Id</th>

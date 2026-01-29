@@ -7,7 +7,7 @@ import (
 func init() {
 	kafka.Register(
 		kafka.ApiReg{
-			ApiKey:     kafka.Offset,
+			ApiKey:     kafka.ListOffsets,
 			MinVersion: 0,
 			MaxVersion: 8},
 		&Request{},

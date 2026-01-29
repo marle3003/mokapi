@@ -79,7 +79,7 @@ function goToTopic(topic: string, openInNewTab = false) {
         </div>
 
         <div class="table-responsive-sm mt-2" v-if="request.groupAssignments">
-          <table class="table dataTable compact selectable" aria-label="requests">
+          <table class="table dataTable compact selectable" aria-label="Group Assignments">
             <thead>
               <tr>
                 <th scope="col" class="text-left col-2">Member Id</th>
@@ -130,7 +130,7 @@ function goToTopic(topic: string, openInNewTab = false) {
         </div>
 
         <div class="table-responsive-sm mt-2">
-          <table class="table dataTable compact selectable" aria-label="requests">
+          <table class="table dataTable compact selectable" aria-label="Assignment">
             <thead>
               <tr>
                 <th scope="col" class="text-left col-2">Topic</th>

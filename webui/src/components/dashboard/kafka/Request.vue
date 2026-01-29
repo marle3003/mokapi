@@ -7,10 +7,12 @@ import { useRoute } from '@/router';
 import { computed, onUnmounted, type Component } from 'vue';
 import JoinGroup from './requests/JoinGroup.vue';
 import SyncGroup from './requests/SyncGroup.vue';
+import ListOffsets from './requests/ListOffsets.vue';
 
 const detail: { [apiKey: number]: Component } = {
-  11: JoinGroup,
-  14: SyncGroup
+    2: ListOffsets,
+    11: JoinGroup,
+    14: SyncGroup
 };
 
 const route = useRoute();
@@ -42,10 +44,10 @@ const data = computed(() => {
 })
 
 const eventData = computed(() => {
-  if (!data.value || !data.value.event) {
-    return undefined
-  }
-  return data.value.event.data as KafkaRequestLog
+    if (!data.value || !data.value.event) {
+        return undefined
+    }
+    return data.value.event.data as KafkaRequestLog
 })
 </script>
 
@@ -73,7 +75,8 @@ const eventData = computed(() => {
                 </div>
             </div>
         </div>
-        <component :is="detail[eventData.header.requestKey]" :version="eventData.header.version" :request="eventData.request" :response="eventData.response"/>
+        <component :is="detail[eventData.header.requestKey]" :version="eventData.header.version"
+            :request="eventData.request" :response="eventData.response" />
     </div>
     <loading v-if="data.isLoading"></loading>
     <div v-if="!data.event && !data.isLoading">

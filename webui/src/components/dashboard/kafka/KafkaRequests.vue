@@ -5,6 +5,7 @@ import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRouter } from '@/router';
 import JoinGroupSummary from './requests/JoinGroupSummary.vue';
 import SyncGroupSummary from './requests/SyncGroupSummary.vue';
+import ListOffsetsSummary from './requests/ListOffsetsSummary.vue';
 
 const props = defineProps<{
   service: KafkaService,
@@ -12,6 +13,7 @@ const props = defineProps<{
 }>();
 
 const summary: { [apiKey: number]: Component } = {
+  2: ListOffsetsSummary,
   11: JoinGroupSummary,
   14: SyncGroupSummary
 };
