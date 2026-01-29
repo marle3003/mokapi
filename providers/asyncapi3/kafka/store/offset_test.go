@@ -82,7 +82,7 @@ func TestOffsets(t *testing.T) {
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithChannel("foo")))
-				s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
+				_, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Key:   kafka.NewBytes([]byte("foo")),
@@ -90,6 +90,7 @@ func TestOffsets(t *testing.T) {
 						},
 					},
 				})
+				require.NoError(t, err)
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &offset.Request{
@@ -108,7 +109,7 @@ func TestOffsets(t *testing.T) {
 				require.True(t, ok)
 				p := res.Topics[0].Partitions[0]
 				require.Equal(t, kafka.None, p.ErrorCode)
-				require.Equal(t, kafka.Earliest, p.Timestamp)
+				require.Greater(t, p.Timestamp, int64(0))
 				require.Equal(t, int64(0), p.Offset)
 			},
 		},
@@ -117,7 +118,7 @@ func TestOffsets(t *testing.T) {
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithChannel("foo")))
-				s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
+				_, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Key:   kafka.NewBytes([]byte("foo")),
@@ -125,6 +126,7 @@ func TestOffsets(t *testing.T) {
 						},
 					},
 				})
+				require.NoError(t, err)
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &offset.Request{
@@ -196,7 +198,7 @@ func TestOffsets(t *testing.T) {
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithChannel("foo")))
-				s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
+				_, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Key:   kafka.NewBytes([]byte("foo")),
@@ -204,6 +206,8 @@ func TestOffsets(t *testing.T) {
 						},
 					},
 				})
+				require.NoError(t, err)
+
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 0, &offset.Request{
 					Topics: []offset.RequestTopic{

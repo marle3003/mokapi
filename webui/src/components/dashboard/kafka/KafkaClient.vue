@@ -118,7 +118,11 @@ function gotToMember(memberId: string, groupName: string, openInNewTab = false){
                           {{ g.memberId }}
                       </router-link>
                   </td>
-                  <td class="text-left">{{ g.group }}</td>
+                  <td class="text-left">
+                    <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaGroup').value, params: { service: service.data.name, group: g.group }}">
+                          {{ g.group }}
+                      </router-link>
+                  </td>
                 </tr>
               </tbody>
             </table>

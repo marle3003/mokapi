@@ -20,6 +20,12 @@ func (s *Store) findCoordinator(rw kafka.ResponseWriter, req *kafka.Request) err
 		return rw.Write(res)
 	}
 
+	reqLog := &KafkaFindCoordinatorRequest{
+		Key:     r.Key,
+		KeyType: r.KeyType,
+	}
+	resLog := &KafkaFindCoordinatorResponse{}
+
 	switch r.KeyType {
 	case findCoordinator.KeyTypeGroup:
 		b := s.getBrokerByHost(req.Host)
@@ -37,12 +43,24 @@ func (s *Store) findCoordinator(rw kafka.ResponseWriter, req *kafka.Request) err
 
 		res.NodeId = int32(b.Id)
 		res.Host = host
+		resLog.Host = host
 		res.Port = int32(b.Port)
+		resLog.Port = b.Port
 	default:
 		res.ErrorCode = kafka.UnknownServerError
 		res.ErrorMessage = fmt.Sprintf("unsupported request key_type=%v", r.KeyType)
 		log.Errorf("kafka FindCoordinator: %v", res.ErrorMessage)
+		resLog.ErrorMessage = fmt.Sprintf("unsupported request key_type=%v", r.KeyType)
+		resLog.ErrorCode = kafka.UnknownServerError.String()
 	}
+
+	go func() {
+		l := &KafkaRequestLogEvent{
+			Request:  reqLog,
+			Response: resLog,
+		}
+		s.logRequest(req.Header)(l)
+	}()
 
 	return rw.Write(res)
 }

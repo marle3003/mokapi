@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Ref, computed, onUnmounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import KafkaGroups from './KafkaGroups.vue'
 import KafkaMessages from './KafkaMessages.vue'
@@ -8,14 +8,24 @@ import TopicConfig from './TopicConfig.vue'
 import Markdown from 'vue3-markdown-it'
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useRouter } from '@/router'
+import type { ServiceResult } from '@/types/dashboard'
 
 const route = useRoute();
 const router = useRouter();
 const serviceName = route.params.service!.toString()
 const topicName = route.params.topic?.toString()
 const { dashboard } = useDashboard()
-const result = dashboard.value.getService(serviceName, 'kafka')
-const service = result.service as Ref<KafkaService | null>
+
+const result = ref<ServiceResult | null>(null);
+const service = computed(() => {
+  console.log('result')
+  console.log(result.value?.service)
+  if (!result.value) {
+    return undefined;
+  }
+
+  return result.value.service as KafkaService
+})
 const topic = computed(() => {
   if (!service.value) {return null}
   for (let topic of service.value?.topics){
@@ -32,14 +42,22 @@ function setTab(tab: string) {
     hash: `#${tab}`
   });
 }
+watch(
+  () => dashboard.value,
+  (db, _, onCleanup) => {
+    const res = db.getService(serviceName, 'kafka')
+    result.value = res;
+    console.log(res)
+
+    onCleanup(() => res.close());
+  },
+  { immediate: true }
+);
 watch(() => route.hash, (hash) => {
     activeTab.value = hash ? hash.slice(1) : 'tab-messages'
   },
   { immediate: true }
 )
-onUnmounted(() => {
-    result.close()
-})
 </script>
 
 <template>

@@ -28,7 +28,7 @@ type joindata struct {
 	protocols        []joinGroup.Protocol
 	rebalanceTimeout int
 	sessionTimeout   int
-	log              func(data *KafkaLog)
+	log              func(data *KafkaRequestLogEvent)
 }
 
 type syncdata struct {
@@ -38,7 +38,7 @@ type syncdata struct {
 	protocolType string
 	protocolName string
 	assigns      map[string]*groupAssignment
-	log          func(data *KafkaLog)
+	log          func(data *KafkaRequestLogEvent)
 }
 
 type protocoldata struct {
@@ -276,7 +276,7 @@ func (b *groupBalancer) respond(w kafka.ResponseWriter, msg kafka.Message) {
 	}()
 }
 
-func newKafkaJoinGroupLog(name string, j joindata, memberId string, res *joinGroup.Response) *KafkaLog {
+func newKafkaJoinGroupLog(name string, j joindata, memberId string, res *joinGroup.Response) *KafkaRequestLogEvent {
 	req := &KafkaJoinGroupRequest{
 		GroupName:    name,
 		MemberId:     memberId,
@@ -296,13 +296,13 @@ func newKafkaJoinGroupLog(name string, j joindata, memberId string, res *joinGro
 		r.Members = append(r.Members, m.MemberId)
 	}
 
-	return &KafkaLog{
+	return &KafkaRequestLogEvent{
 		Request:  req,
 		Response: r,
 	}
 }
 
-func newKafkaSyncGroupLog(name string, s syncdata, memberId string, assign *groupAssignment, res *syncGroup.Response) *KafkaLog {
+func newKafkaSyncGroupLog(name string, s syncdata, memberId string, assign *groupAssignment, res *syncGroup.Response) *KafkaRequestLogEvent {
 	req := &KafkaSyncGroupRequest{
 		GroupName:        name,
 		MemberId:         memberId,
@@ -325,7 +325,7 @@ func newKafkaSyncGroupLog(name string, s syncdata, memberId string, assign *grou
 		},
 	}
 
-	return &KafkaLog{
+	return &KafkaRequestLogEvent{
 		Request:  req,
 		Response: r,
 	}

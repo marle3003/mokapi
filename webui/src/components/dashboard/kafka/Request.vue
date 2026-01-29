@@ -8,9 +8,11 @@ import { computed, onUnmounted, type Component } from 'vue';
 import JoinGroup from './requests/JoinGroup.vue';
 import SyncGroup from './requests/SyncGroup.vue';
 import ListOffsets from './requests/ListOffsets.vue';
+import FindCoordinator from './requests/FindCoordinator.vue';
 
 const detail: { [apiKey: number]: Component } = {
     2: ListOffsets,
+    10: FindCoordinator,
     11: JoinGroup,
     14: SyncGroup
 };

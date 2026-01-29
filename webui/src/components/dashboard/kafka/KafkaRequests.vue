@@ -6,6 +6,7 @@ import { useRouter } from '@/router';
 import JoinGroupSummary from './requests/JoinGroupSummary.vue';
 import SyncGroupSummary from './requests/SyncGroupSummary.vue';
 import ListOffsetsSummary from './requests/ListOffsetsSummary.vue';
+import FindCoordinatorSummary from './requests/FindCoordinatorSummary.vue';
 
 const props = defineProps<{
   service: KafkaService,
@@ -14,6 +15,7 @@ const props = defineProps<{
 
 const summary: { [apiKey: number]: Component } = {
   2: ListOffsetsSummary,
+  10: FindCoordinatorSummary,
   11: JoinGroupSummary,
   14: SyncGroupSummary
 };
@@ -80,6 +82,11 @@ function goToRequest(event: ServiceEvent, openInNewTab = false) {
   <section class="card" aria-labelledby="requests">
     <div class="card-body">
       <h2 id="requests" class="card-title text-center">Recent Requests</h2>
+
+      <p class="text-muted small text-center mb-3">
+        This view highlights requests for producer initialization, group coordination, and offset resolution
+      </p>
+
       <div class="table-responsive-sm">
         <table class="table dataTable selectable" aria-label="requests">
           <thead>

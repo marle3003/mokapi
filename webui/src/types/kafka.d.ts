@@ -112,8 +112,13 @@ declare interface KafkaClient {
 
 declare interface KafkaRequestLog {
   header: KafkaRequestHeader
-  request:  KafkaJoinGroupRequest | KafkaSyncGroupRequest
-  response: KafkaJoinGroupResponse | KafkaSyncGroupResponse
+  request:  KafkaJoinGroupRequest | KafkaSyncGroupRequest | KafkaFindCoordinatorRequest
+  response: KafkaJoinGroupResponse | KafkaSyncGroupResponse | KafkaFindCoordinatorResponse
+}
+
+declare interface KafkaResponseError {
+  errorCode: string
+  errorMessage: string
 }
 
 declare interface KafkaRequestHeader {
@@ -175,4 +180,18 @@ declare interface KafkaListOffsetsResponsePartition {
   partition: number
   timestamp: number
   offset: number
+  snapshot: {
+    startOffset: number
+    endOffset: number
+  }
+}
+
+declare interface KafkaFindCoordinatorRequest {
+  key: string
+  keyType: number
+}
+
+declare interface KafkaFindCoordinatorResponse extends KafkaResponseError {
+  host: string
+  port: number
 }

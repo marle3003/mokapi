@@ -60,12 +60,43 @@ export function useMetrics() {
             }
             
             if (labels.length == 0 || matchLabels(metric, labels)){
-                const n = Number(metric.value)
-                return n
+                return Number(metric.value)
             }
         }  
         return undefined
     }
 
-    return {sum, max, value}
+    function filter(metrics: Metric[], name: string, ...labels: Label[]): Metric[] {
+        const result = [];
+        if (!metrics){
+            return [];
+        }
+
+        for (let metric of metrics) {
+            if (!metric.name.startsWith(name)) {
+                continue
+            }
+            
+            if (labels.length == 0 || matchLabels(metric, labels)){
+                result.push(metric)
+            }
+        }  
+        return result;
+    }
+
+    function parseLabels(metric: Metric) {
+        const match = metric.name.match(/\{(.+)}/);
+        if (!match || match.length < 2 || !match[1]) {
+            return {};
+        }
+
+        return Object.fromEntries(
+            Array.from(
+                match[1].matchAll(/(\w+)="([^"]*)"/g),
+                m => [m[1], m[2]]
+            )
+        );
+    }
+
+    return {sum, max, value, filter, parseLabels}
 }

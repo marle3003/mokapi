@@ -276,6 +276,18 @@ func (p *Partition) StartOffset() int64 {
 	return p.Head
 }
 
+func (p *Partition) OffsetTimestamp(offset int64) int64 {
+	s := p.GetSegment(offset)
+	if s == nil {
+		return -1
+	}
+	r := s.record(offset)
+	if r == nil {
+		return -1
+	}
+	return r.Time.Unix()
+}
+
 func (p *Partition) GetSegment(offset int64) *Segment {
 	p.m.RLock()
 	defer p.m.RUnlock()
@@ -349,7 +361,10 @@ func (s *Segment) contains(offset int64) bool {
 }
 
 func (s *Segment) record(offset int64) *kafka.Record {
-	index := offset - s.Head
+	index := int(offset - s.Head)
+	if index < 0 || index >= len(s.Log) {
+		return nil
+	}
 	return s.Log[index].Data
 }
 

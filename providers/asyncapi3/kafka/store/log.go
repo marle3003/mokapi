@@ -54,8 +54,8 @@ type KafkaRequestData interface {
 	Title() string
 }
 
-func (s *Store) logRequest(h *kafka.Header) func(log *KafkaLog) {
-	return func(log *KafkaLog) {
+func (s *Store) logRequest(h *kafka.Header) func(log *KafkaRequestLogEvent) {
+	return func(log *KafkaRequestLogEvent) {
 		log.Api = s.cluster
 		log.Header.set(h)
 		t := events.NewTraits().
@@ -67,14 +67,14 @@ func (s *Store) logRequest(h *kafka.Header) func(log *KafkaLog) {
 	}
 }
 
-type KafkaLog struct {
+type KafkaRequestLogEvent struct {
 	Api      string             `json:"api"`
 	Header   KafkaRequestHeader `json:"header"`
 	Request  KafkaRequest       `json:"request"`
 	Response any                `json:"response"`
 }
 
-func (l *KafkaLog) Title() string {
+func (l *KafkaRequestLogEvent) Title() string {
 	return l.Request.Title()
 }
 
@@ -155,7 +155,33 @@ type KafkaListOffsetsResponse struct {
 }
 
 type KafkaListOffsetsResponsePartition struct {
-	Partition int   `json:"partition"`
-	Timestamp int64 `json:"timestamp"`
-	Offset    int64 `json:"offset"`
+	Partition int                              `json:"partition"`
+	Timestamp int64                            `json:"timestamp"`
+	Offset    int64                            `json:"offset"`
+	Snapshot  KafkaListOffsetsResponseSnapshot `json:"snapshot"`
+}
+
+type KafkaListOffsetsResponseSnapshot struct {
+	StartOffset int64 `json:"startOffset"`
+	EndOffset   int64 `json:"endOffset"`
+}
+
+type KafkaFindCoordinatorRequest struct {
+	Key     string `json:"key"`
+	KeyType int8   `json:"keyType"`
+}
+
+func (r *KafkaFindCoordinatorRequest) Title() string {
+	return "FindCoordinator"
+}
+
+type KafkaFindCoordinatorResponse struct {
+	KafkaResponseError
+	Host string `json:"host"`
+	Port int    `json:"port"`
+}
+
+type KafkaResponseError struct {
+	ErrorCode    string `json:"errorCode"`
+	ErrorMessage string `json:"errorMessage"`
 }
