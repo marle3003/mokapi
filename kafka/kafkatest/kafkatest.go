@@ -50,7 +50,7 @@ func getApiKey(msg kafka.Message) kafka.ApiKey {
 	case *fetch.Request, *fetch.Response:
 		return kafka.Fetch
 	case *offset.Request, *offset.Response:
-		return kafka.Offset
+		return kafka.ListOffsets
 	case *metaData.Request, *metaData.Response:
 		return kafka.Metadata
 	case *offsetCommit.Request, *offsetCommit.Response:

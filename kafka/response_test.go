@@ -3,10 +3,11 @@ package kafka_test
 import (
 	"bufio"
 	"bytes"
-	"github.com/stretchr/testify/require"
 	"mokapi/kafka"
 	"mokapi/kafka/offset"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestResponse_Write(t *testing.T) {
@@ -28,7 +29,7 @@ func TestResponse_Write(t *testing.T) {
 
 	res := &kafka.Response{
 		Header: &kafka.Header{
-			ApiKey:        kafka.Offset,
+			ApiKey:        kafka.ListOffsets,
 			ApiVersion:    int16(0),
 			CorrelationId: int32(0),
 		},
