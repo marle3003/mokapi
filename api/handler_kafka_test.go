@@ -244,6 +244,25 @@ func TestHandler_Kafka(t *testing.T) {
 			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","host":"foo.bar","protocol":"kafka","description":""}],"groups":[{"name":"foo","generation":3,"members":null,"leader":"","state":"PreparingRebalance","protocol":"range","topics":null}]}`,
 		},
 		{
+			name: "get specific with group no generation",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				app.Kafka.Set("foo", getKafkaInfoWithGroup(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("foo", "kafka", "foo.bar"),
+				),
+					&store.Group{
+						Name:    "foo",
+						State:   store.PreparingRebalance,
+						Commits: nil,
+					},
+				))
+				return app
+			},
+			requestUrl:   "http://foo.api/api/services/kafka/foo",
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","host":"foo.bar","protocol":"kafka","description":""}],"groups":[{"name":"foo","generation":-1,"members":null,"leader":"","state":"PreparingRebalance","protocol":"","topics":null}]}`,
+		},
+		{
 			name: "get specific with group containing members",
 			app: func() *runtime.App {
 				mustTime := func(s string) time.Time {

@@ -601,11 +601,11 @@ func getPartitions(t *store.Topic) []partition {
 
 func newGroup(g *store.Group) group {
 	grp := group{
-		Name:       g.Name,
-		Generation: g.Generation.Id,
-		State:      g.State.String(),
+		Name:  g.Name,
+		State: g.State.String(),
 	}
 	if g.Generation != nil {
+		grp.Generation = g.Generation.Id
 		grp.Leader = g.Generation.LeaderId
 		grp.AssignmentStrategy = g.Generation.Protocol
 
@@ -623,6 +623,8 @@ func newGroup(g *store.Group) group {
 		sort.Slice(grp.Members, func(i, j int) bool {
 			return strings.Compare(grp.Members[i].Name, grp.Members[j].Name) < 0
 		})
+	} else {
+		grp.Generation = -1
 	}
 	for topicName := range g.Commits {
 		grp.Topics = append(grp.Topics, topicName)
