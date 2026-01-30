@@ -4,12 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/config"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/transport/client"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/config/static"
@@ -19,6 +13,13 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/transport/client"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	log "github.com/sirupsen/logrus"
 )
 
 type repository struct {
@@ -110,7 +111,7 @@ func (p *Provider) Start(ch chan dynamic.ConfigEvent, pool *safe.Pool) error {
 		pool.Go(func(ctx context.Context) {
 			err := p.initRepository(r, ch, pool)
 			if err != nil {
-				log.Errorf("init git repository failed: %v", err)
+				log.Errorf("init git repository '%v' failed: %v", r.url, err)
 			}
 		})
 	}
