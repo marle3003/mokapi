@@ -72,9 +72,7 @@ func (c *Command) Execute() error {
 		if err != nil {
 			return err
 		}
-	}
 
-	if cmd.Config != nil {
 		b := flagConfigBinder{}
 		err = b.Decode(cmd.Flags(), cmd.Config)
 		if err != nil {
@@ -84,9 +82,8 @@ func (c *Command) Execute() error {
 
 	if cmd.Run != nil {
 		return cmd.Run(cmd, positional)
-	} else {
-		return fmt.Errorf("no command run specified")
 	}
+	return fmt.Errorf("no command run specified")
 }
 
 func (c *Command) ExecuteWithContext(ctx context.Context) error {

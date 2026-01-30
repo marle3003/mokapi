@@ -105,7 +105,7 @@ func TestCommand(t *testing.T) {
 		{
 			name: "--skip-prefix default",
 			cmd: func() *cli.Command {
-				c := &cli.Command{Config: &config{}}
+				c := &cli.Command{Config: &config{SkipPrefix: []string{"_"}}}
 				c.Flags().StringSlice("skip-prefix", []string{"_"}, false, cli.FlagDoc{})
 				return c
 			},

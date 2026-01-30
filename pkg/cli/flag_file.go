@@ -18,6 +18,7 @@ func (f *fileFlag) Set(values []string, source Source) error {
 		f.value = values[0]
 		f.setConfigFile(f.value)
 		f.source = source
+		f.isSet = true
 	}
 	return nil
 }

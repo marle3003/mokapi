@@ -23,6 +23,10 @@ type bindContext struct {
 
 func (f *flagConfigBinder) Decode(flags *FlagSet, element interface{}) error {
 	return flags.Visit(func(flag *Flag) error {
+		if !flag.Value.IsSet() {
+			return nil
+		}
+
 		paths := ParsePath(flag.Name)
 		v := flag.Value.Value()
 		ctx := &bindContext{path: flag.Name, paths: paths, value: v, element: reflect.ValueOf(element)}
@@ -195,6 +199,9 @@ func (f *flagConfigBinder) setArray(ctx *bindContext) error {
 		values = splitArrayItems(values[0])
 	}
 
+	arr := ctx.element.Interface()
+	_ = arr
+
 	for index, v := range values {
 		var ptr reflect.Value
 		if index < ctx.element.Len() {
@@ -220,6 +227,8 @@ func (f *flagConfigBinder) setArray(ctx *bindContext) error {
 			ctx.element.Set(reflect.Append(ctx.element, ptr.Elem()))
 		}
 	}
+
+	arr = ctx.element.Interface()
 
 	return nil
 }

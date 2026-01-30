@@ -158,7 +158,15 @@ providers:
   git:
     repositories:
       - url: https://github.com/foo/foo.git
+        auth:
+          github:
+            appId: 1
+            installationId: 123456
       - url: https://github.com/bar/bar.git
+        auth:
+          github:
+            appId: 2
+            installationId: 823242
 `),
 				}})
 				t.Cleanup(func() {

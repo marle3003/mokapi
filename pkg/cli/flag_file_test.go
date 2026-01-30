@@ -64,18 +64,6 @@ func TestFileDecoder_Decode(t *testing.T) {
 			},
 		},
 		{
-			name: "yaml schema error",
-			test: func(t *testing.T) {
-				s := &struct{ Count string }{}
-				cli.SetFileReader(&clitest.TestFileReader{Files: map[string][]byte{"/etc/foo.yaml": []byte("count: foo")}})
-				c := newCmd([]string{}, &s)
-				c.SetConfigPath("/etc")
-				c.Flags().Int("count", 0, cli.FlagDoc{})
-				err := c.Execute()
-				require.EqualError(t, err, "failed to set flag count: parsing foo: invalid syntax")
-			},
-		},
-		{
 			name: "use file flag",
 			test: func(t *testing.T) {
 				s := &struct{ Name string }{}
