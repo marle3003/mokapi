@@ -13,18 +13,21 @@ func (s *Store) findCoordinator(rw kafka.ResponseWriter, req *kafka.Request) err
 	r := req.Message.(*findCoordinator.Request)
 	res := &findCoordinator.Response{}
 
-	writeError := func(code kafka.ErrorCode, msg string) error {
-		res.ErrorCode = code
-		res.ErrorMessage = msg
-		log.Errorf("kafka FindCoordinator: %v", msg)
-		return rw.Write(res)
-	}
-
 	reqLog := &KafkaFindCoordinatorRequest{
 		Key:     r.Key,
 		KeyType: r.KeyType,
 	}
 	resLog := &KafkaFindCoordinatorResponse{}
+
+	writeError := func(code kafka.ErrorCode, msg string) error {
+		res.ErrorCode = code
+		res.ErrorMessage = msg
+		go func() {
+			s.logRequest(req.Header, reqLog)(newKafkaFindCoordinatorResponse(res))
+		}()
+		log.Errorf("kafka FindCoordinator: %v", msg)
+		return rw.Write(res)
+	}
 
 	switch r.KeyType {
 	case findCoordinator.KeyTypeGroup:
@@ -55,8 +58,20 @@ func (s *Store) findCoordinator(rw kafka.ResponseWriter, req *kafka.Request) err
 	}
 
 	go func() {
-		s.logRequest(req.Header, reqLog)(reqLog)
+		s.logRequest(req.Header, reqLog)(newKafkaFindCoordinatorResponse(res))
 	}()
 
 	return rw.Write(res)
+}
+
+func newKafkaFindCoordinatorResponse(res *findCoordinator.Response) *KafkaFindCoordinatorResponse {
+	r := &KafkaFindCoordinatorResponse{
+		Host: res.Host,
+		Port: int(res.Port),
+	}
+	if res.ErrorCode != kafka.None {
+		r.ErrorCode = res.ErrorCode.String()
+		r.ErrorMessage = res.ErrorMessage
+	}
+	return r
 }
