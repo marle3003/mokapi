@@ -54,10 +54,11 @@ type KafkaRequestData interface {
 	Title() string
 }
 
-func (s *Store) logRequest(h *kafka.Header) func(log *KafkaRequestLogEvent) {
-	return func(log *KafkaRequestLogEvent) {
-		log.Api = s.cluster
-		log.Header.set(h)
+func (s *Store) logRequest(h *kafka.Header, req KafkaRequest) func(res any) {
+	log := &KafkaRequestLogEvent{Api: s.cluster, Request: req}
+	log.Header.set(h)
+	return func(res any) {
+		log.Response = res
 		t := events.NewTraits().
 			WithNamespace("kafka").
 			WithName(s.cluster).
@@ -111,6 +112,7 @@ func (r *KafkaJoinGroupRequest) Title() string {
 }
 
 type KafkaJoinGroupResponse struct {
+	KafkaResponseError
 	GenerationId int32    `json:"generationId"`
 	ProtocolName string   `json:"protocolName"`
 	MemberId     string   `json:"memberId"`
@@ -137,6 +139,7 @@ func (r *KafkaSyncGroupRequest) Title() string {
 }
 
 type KafkaSyncGroupResponse struct {
+	KafkaResponseError
 	ProtocolType string                   `json:"protocolType"`
 	ProtocolName string                   `json:"protocolName"`
 	Assignment   KafkaSyncGroupAssignment `json:"assignment"`

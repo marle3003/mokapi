@@ -28,7 +28,7 @@ type joindata struct {
 	protocols        []joinGroup.Protocol
 	rebalanceTimeout int
 	sessionTimeout   int
-	log              func(data *KafkaRequestLogEvent)
+	log              func(res any)
 }
 
 type syncdata struct {
@@ -38,7 +38,7 @@ type syncdata struct {
 	protocolType string
 	protocolName string
 	assigns      map[string]*groupAssignment
-	log          func(data *KafkaRequestLogEvent)
+	log          func(res any)
 }
 
 type protocoldata struct {
@@ -134,8 +134,7 @@ func (b *groupBalancer) run() {
 					}
 					go b.respond(sync.writer, res)
 					go func() {
-						l := newKafkaSyncGroupLog(b.group.Name, s, memberName, assign, res)
-						sync.log(l)
+						sync.log(newKafkaSyncGroupResponse(res, assign))
 					}()
 				}
 
@@ -243,8 +242,7 @@ StopWaitingForConsumers:
 		}
 		go b.respond(j.writer, res)
 		go func() {
-			l := newKafkaJoinGroupLog(b.group.Name, j, memberId, res)
-			j.log(l)
+			j.log(newKafkaJoinGroupResponse(res))
 		}()
 	}
 
@@ -258,8 +256,7 @@ StopWaitingForConsumers:
 	}
 	go b.respond(leader.writer, res)
 	go func() {
-		l := newKafkaJoinGroupLog(b.group.Name, leader, generation.LeaderId, res)
-		leader.log(l)
+		leader.log(newKafkaJoinGroupResponse(res))
 	}()
 }
 
@@ -276,16 +273,7 @@ func (b *groupBalancer) respond(w kafka.ResponseWriter, msg kafka.Message) {
 	}()
 }
 
-func newKafkaJoinGroupLog(name string, j joindata, memberId string, res *joinGroup.Response) *KafkaRequestLogEvent {
-	req := &KafkaJoinGroupRequest{
-		GroupName:    name,
-		MemberId:     memberId,
-		ProtocolType: j.protocolType,
-	}
-	for _, proto := range j.protocols {
-		req.Protocols = append(req.Protocols, proto.Name)
-	}
-
+func newKafkaJoinGroupResponse(res *joinGroup.Response) *KafkaJoinGroupResponse {
 	r := &KafkaJoinGroupResponse{
 		GenerationId: res.GenerationId,
 		ProtocolName: res.ProtocolName,
@@ -296,37 +284,16 @@ func newKafkaJoinGroupLog(name string, j joindata, memberId string, res *joinGro
 		r.Members = append(r.Members, m.MemberId)
 	}
 
-	return &KafkaRequestLogEvent{
-		Request:  req,
-		Response: r,
-	}
+	return r
 }
 
-func newKafkaSyncGroupLog(name string, s syncdata, memberId string, assign *groupAssignment, res *syncGroup.Response) *KafkaRequestLogEvent {
-	req := &KafkaSyncGroupRequest{
-		GroupName:        name,
-		MemberId:         memberId,
-		ProtocolType:     s.protocolType,
-		GroupAssignments: map[string]KafkaSyncGroupAssignment{},
-	}
-	for m, a := range s.assigns {
-		req.GroupAssignments[m] = KafkaSyncGroupAssignment{
-			Version: a.version,
-			Topics:  a.topics,
-		}
-	}
-
-	r := &KafkaSyncGroupResponse{
-		ProtocolType: s.protocolType,
+func newKafkaSyncGroupResponse(res *syncGroup.Response, assign *groupAssignment) *KafkaSyncGroupResponse {
+	return &KafkaSyncGroupResponse{
+		ProtocolType: res.ProtocolType,
 		ProtocolName: res.ProtocolName,
 		Assignment: KafkaSyncGroupAssignment{
 			Version: assign.version,
 			Topics:  assign.topics,
 		},
-	}
-
-	return &KafkaRequestLogEvent{
-		Request:  req,
-		Response: r,
 	}
 }

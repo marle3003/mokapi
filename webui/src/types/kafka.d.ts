@@ -134,7 +134,7 @@ declare interface KafkaJoinGroupRequest {
   protocols: string[]
 }
 
-declare interface KafkaJoinGroupResponse {
+declare interface KafkaJoinGroupResponse extends KafkaResponseError {
   generationId: number
   protocolName: string
   memberId: string
@@ -151,7 +151,7 @@ declare interface KafkaSyncGroupRequest {
   groupAssignments: { [name: string]: KafkaGroupAssignment }
 }
 
-declare interface KafkaSyncGroupResponse {
+declare interface KafkaSyncGroupResponse extends KafkaResponseError {
   protocolType: string
   protocolName: string
   assignment: KafkaGroupAssignment

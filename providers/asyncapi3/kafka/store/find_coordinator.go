@@ -55,11 +55,7 @@ func (s *Store) findCoordinator(rw kafka.ResponseWriter, req *kafka.Request) err
 	}
 
 	go func() {
-		l := &KafkaRequestLogEvent{
-			Request:  reqLog,
-			Response: resLog,
-		}
-		s.logRequest(req.Header)(l)
+		s.logRequest(req.Header, reqLog)(reqLog)
 	}()
 
 	return rw.Write(res)

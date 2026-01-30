@@ -111,6 +111,7 @@ function goToRequest(event: ServiceEvent, openInNewTab = false) {
               <th scope="col" class="text-left col-2">API Key</th>
               <th scope="col" class="text-left col-2">Version</th>
               <th scope="col" class="text-left col">Summary</th>
+              <th scope="col" class="text-left col">Error</th>
               <th scope="col" class="text-center col-2">Time</th>
             </tr>
           </thead>
@@ -126,6 +127,7 @@ function goToRequest(event: ServiceEvent, openInNewTab = false) {
               <td>
                 <component :is="summary[row.data.header.requestKey]" :request="row.data.request" :response="row.data.response"/>
               </td>
+              <td>{{ row.data.response.errorCode && row.data.response.errorCode !== '' ? row.data.response.errorCode : 'None' }}</td>
               <td class="text-center">{{ formatTime(row.event.time) }}</td>
             </tr>
           </tbody>

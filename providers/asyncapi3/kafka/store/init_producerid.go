@@ -37,10 +37,7 @@ func (s *Store) initProducerID(rw kafka.ResponseWriter, req *kafka.Request) erro
 	}
 
 	go func() {
-		s.logRequest(req.Header)(&KafkaRequestLogEvent{
-			Request:  newKafkaInitProducerIdRequest(r),
-			Response: newKafkaInitProducerIdResponse(res),
-		})
+		s.logRequest(req.Header, newKafkaInitProducerIdRequest(r))(newKafkaInitProducerIdResponse(res))
 	}()
 
 	return rw.Write(res)

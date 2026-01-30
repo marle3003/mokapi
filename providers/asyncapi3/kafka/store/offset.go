@@ -90,11 +90,7 @@ func (s *Store) offset(rw kafka.ResponseWriter, req *kafka.Request) error {
 	}
 
 	go func() {
-		l := &KafkaRequestLogEvent{
-			Request:  reqLog,
-			Response: resLog,
-		}
-		s.logRequest(req.Header)(l)
+		s.logRequest(req.Header, reqLog)(resLog)
 	}()
 
 	return rw.Write(res)
