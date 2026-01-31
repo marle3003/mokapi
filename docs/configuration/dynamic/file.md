@@ -67,7 +67,7 @@ MOKAPI_PROVIDERS_FILE_DIRECTORY=/foobar
 ```
 
 ``` box=tip
-You can define multiple file names or directory using CLI JSON or shorthand syntax, see [CLI](/docs/configuration/static/cli.md)
+You can define multiple file names or directory using CLI JSON or shorthand syntax, see [CLI](/docs/configuration/static/cli-usage.md)
 ```
 
 ``` box=tip
