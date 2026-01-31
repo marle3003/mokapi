@@ -106,7 +106,13 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             meta: {service: 'kafka'}
           },
           {
-            path: 'service/:service/topic/:topic',
+            path: 'service/:service/servers/:server',
+            name: getRouteName('kafkaServer'),
+            component: dashboardView,
+            meta: {service: 'kafka'},
+          },
+          {
+            path: 'service/:service/topics/:topic',
             name: getRouteName('kafkaTopic'),
             component: dashboardView,
             meta: {service: 'kafka'},

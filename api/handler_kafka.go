@@ -47,6 +47,8 @@ type kafkaServer struct {
 	Name        string     `json:"name"`
 	Host        string     `json:"host"`
 	Protocol    string     `json:"protocol"`
+	Title       string     `json:"title"`
+	Summary     string     `json:"summary"`
 	Description string     `json:"description"`
 	Tags        []kafkaTag `json:"tags,omitempty"`
 }
@@ -425,6 +427,8 @@ func getKafka(info *runtime.KafkaInfo) kafkaInfo {
 		ks := kafkaServer{
 			Name:        name,
 			Host:        s.Value.Host,
+			Title:       s.Value.Title,
+			Summary:     s.Value.Summary,
 			Description: s.Value.Description,
 			Protocol:    s.Value.Protocol,
 		}

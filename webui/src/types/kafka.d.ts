@@ -8,6 +8,9 @@ declare interface KafkaService extends Service {
 declare interface KafkaServer {
   name: string;
   host: string;
+  protocol: string
+  title: string
+  summary: string
   description: string;
   tags: KafkaTag[]
 }

@@ -277,7 +277,11 @@ func selectMessage(value any, topic *asyncapi3.Channel, cfg *asyncapi3.Config) (
 	}
 
 	if noOperationDefined {
-		return nil, fmt.Errorf("no 'send' or 'receive' operation defined in specification")
+		for _, msg := range topic.Messages {
+			if validationErr = valueMatchMessagePayload(value, msg.Value); validationErr == nil {
+				return msg.Value, nil
+			}
+		}
 	}
 
 	if value != nil {
@@ -290,9 +294,12 @@ func selectMessage(value any, topic *asyncapi3.Channel, cfg *asyncapi3.Config) (
 				value = string(b)
 			}
 		}
-		return nil, fmt.Errorf("no matching message configuration found for the given value: %v\nhint:\n%w\n", value, validationErr)
+		if validationErr != nil {
+			return nil, fmt.Errorf("no matching message configuration found for the given value: %v\nhint:\n%w\n", value, validationErr)
+		}
+		return nil, nil
 	}
-	return nil, fmt.Errorf("no message ")
+	return nil, fmt.Errorf("channel defines no message schema; define a message payload in the channel or provide an explicit message")
 }
 
 func valueMatchMessagePayload(value any, msg *asyncapi3.Message) error {

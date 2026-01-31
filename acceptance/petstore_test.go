@@ -57,10 +57,12 @@ func (suite *PetStoreSuite) TestApi() {
 			"description": "",
 			"servers": []interface{}{
 				map[string]interface{}{
-					"description": "",
 					"host":        "127.0.0.1:19092",
 					"name":        "broker",
 					"protocol":    "kafka",
+					"title":       "",
+					"summary":     "",
+					"description": "",
 				},
 			},
 

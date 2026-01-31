@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Ref, onUnmounted, ref, watch } from 'vue'
+import { type Ref, computed, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
 import KafkaTopics from './KafkaTopics.vue'
@@ -16,20 +16,34 @@ import Message from './Message.vue'
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useRouter } from '@/router'
 import Request from './Request.vue'
+import type { ServiceResult } from '@/types/dashboard'
+import Server from './Server.vue'
 
 const route = useRoute();
 const router = useRouter();
 const serviceName = route.params.service?.toString()
+let data = ref<ServiceResult | null>(null);
+const { dashboard } = useDashboard();
 
-let service: Ref<KafkaService | null>
-if (serviceName) {
-    const { dashboard } = useDashboard()
-    const result = dashboard.value.getService(serviceName, 'kafka')
-    service = result.service as Ref<KafkaService | null>
-    onUnmounted(() => {
-        result.close()
-    })
-}
+const service = computed(() => {
+    if (!data.value) {
+        return undefined
+    }
+    return data.value.service as KafkaService
+})
+
+watch(() => dashboard.value,
+  (db, _, onCleanup) => {
+    if (!serviceName) {
+        return
+    }
+    const res = db.getService(serviceName, 'kafka');
+    data.value = res;
+
+    onCleanup(() => res.close());
+  },
+  { immediate: true }
+);
 
 const activeTab = ref('tab-topics');
 
@@ -91,7 +105,7 @@ watch(() => route.hash, (hash) => {
                     </div>
                     <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-servers' }" id="servers"
                         role="tabpanel" aria-labelledby="servers-tab">
-                        <servers :servers="service.servers" />
+                        <servers :service-name="service.name" :servers="service.servers" />
                     </div>
                     <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-clients' }" id="clients"
                         role="tabpanel" aria-labelledby="clients-tab">
@@ -116,6 +130,9 @@ watch(() => route.hash, (hash) => {
     </div>
     <div v-if="$route.name == getRouteName('kafkaClient').value">
         <kafka-client></kafka-client>
+    </div>
+    <div v-if="$route.name == getRouteName('kafkaServer').value">
+        <server></server>
     </div>
     <message v-if="$route.name == getRouteName('kafkaMessage').value"></message>
     <request v-if="$route.name == getRouteName('kafkaRequest').value"></request>

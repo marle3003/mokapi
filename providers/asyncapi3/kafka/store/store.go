@@ -51,21 +51,21 @@ type ProducerState struct {
 	ProducerEpoch int16
 }
 
-func NewEmpty(eventEmitter common.EventEmitter, eh events.Handler) *Store {
+func NewEmpty(eventEmitter common.EventEmitter, eh events.Handler, monitor *monitor.Kafka) *Store {
 	return &Store{
 		topics:       make(map[string]*Topic),
 		brokers:      make(map[int]*Broker),
 		groups:       make(map[string]*Group),
 		eventEmitter: eventEmitter,
 		eh:           eh,
+		monitor:      monitor,
 		producers:    make(map[int64]*ProducerState),
 		clients:      make(map[string]*kafka.ClientContext),
 	}
 }
 
 func New(config *asyncapi3.Config, eventEmitter common.EventEmitter, eh events.Handler, monitor *monitor.Kafka) *Store {
-	s := NewEmpty(eventEmitter, eh)
-	s.monitor = monitor
+	s := NewEmpty(eventEmitter, eh, monitor)
 	s.Update(config)
 	return s
 }

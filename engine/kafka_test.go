@@ -591,7 +591,33 @@ func TestKafkaClient(t *testing.T) {
 					}
 				`))
 
-				require.EqualError(t, err, "failed to produce message to Kafka topic 'foo': no 'send' or 'receive' operation defined in specification at mokapi/js/kafka.(*Module).Produce-fm (native)")
+				require.NoError(t, err)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Equal(t, "gbrmarxhk", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `"foo"`, kafka.BytesToString(b.Records[0].Value))
+			},
+		},
+		{
+			name: "channel does not define a message produce without defining a message",
+			cfg: func() *asyncapi3.Config {
+				ch := asyncapi3test.NewChannel()
+
+				return asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "", ""),
+					asyncapi3test.AddChannel("foo", ch),
+				)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ topic: 'foo' })
+					}
+				`))
+
+				require.EqualError(t, err, "failed to produce message to Kafka topic 'foo': channel defines no message schema; define a message payload in the channel or provide an explicit message at mokapi/js/kafka.(*Module).Produce-fm (native)")
 			},
 		},
 		{
