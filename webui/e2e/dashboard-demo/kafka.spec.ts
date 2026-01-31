@@ -152,7 +152,7 @@ test('Visit Kafka Order Service', async ({ page }) => {
             await page.getByRole('table', { name: 'Recent Messages' }).locator('tbody tr').getByRole('link', { name: 'a914817b-c5f0-433e-8280-1cd2fe44234e' }).click();
             await expect(page.getByLabel('Kafka Key')).toHaveText('a914817b-c5f0-433e-8280-1cd2fe44234e');
             await expect(page.getByLabel('Kafka Topic')).toHaveText('order-topic');
-            await expect(page.getByLabel('Kafka Topic')).toHaveAttribute('href', '/dashboard-demo/kafka/service/Kafka%20Order%20Service%20API/topic/order-topic');
+            await expect(page.getByLabel('Kafka Topic')).toHaveAttribute('href', '/dashboard-demo/kafka/service/Kafka%20Order%20Service%20API/topics/order-topic');
             await expect(page.getByLabel('Offset')).toHaveText('1');
             await expect(page.getByRole('region', { name: 'Meta' }).getByLabel('Content Type')).toHaveText('application/json');
             await expect(page.getByLabel('Key Type')).toHaveText('-');
@@ -182,7 +182,7 @@ test('Visit Kafka Order Service', async ({ page }) => {
             await page.getByRole('table', { name: 'Recent Messages' }).locator('tbody tr').getByRole('link', { name: 'random-message-1' }).click();
             await expect(page.getByLabel('Kafka Key')).toHaveText('random-message-1');
             await expect(page.getByLabel('Kafka Topic')).toHaveText('order-topic');
-            await expect(page.getByLabel('Kafka Topic')).toHaveAttribute('href', '/dashboard-demo/kafka/service/Kafka%20Order%20Service%20API/topic/order-topic');
+            await expect(page.getByLabel('Kafka Topic')).toHaveAttribute('href', '/dashboard-demo/kafka/service/Kafka%20Order%20Service%20API/topics/order-topic');
             await expect(page.getByLabel('Offset')).toHaveText('0');
             await expect(page.getByRole('region', { name: 'Meta' }).getByLabel('Content Type')).toHaveText('application/json');
             await expect(page.getByLabel('Key Type')).toHaveText('-');
