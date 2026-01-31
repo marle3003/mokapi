@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/kafka/kafkatest"
@@ -14,6 +13,8 @@ import (
 	"mokapi/try"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestKafkaServer(t *testing.T) {
@@ -52,18 +53,18 @@ func TestKafkaServer_Update(t *testing.T) {
 		{
 			"add another broker",
 			func(t *testing.T, m *KafkaManager) {
-				port := try.GetFreePort()
-				addr := fmt.Sprintf("127.0.0.1:%v", port)
+				port1 := try.GetFreePort()
+				addr1 := fmt.Sprintf("127.0.0.1:%v", port1)
 				cfg := asyncapi3test.NewConfig(
 					asyncapi3test.WithTitle("foo"),
-					asyncapi3test.WithServer("foo", "kafka", addr),
+					asyncapi3test.WithServer("foo", "kafka", addr1),
 				)
 				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
 
-				port = try.GetFreePort()
-				addr = fmt.Sprintf("127.0.0.1:%v", port)
+				port2 := try.GetFreePort()
+				addr2 := fmt.Sprintf("127.0.0.1:%v", port2)
 				cfg.Servers["bar"] = &asyncapi3.ServerRef{Value: &asyncapi3.Server{
-					Host:     addr,
+					Host:     addr2,
 					Protocol: "kafka",
 				}}
 
@@ -72,12 +73,21 @@ func TestKafkaServer_Update(t *testing.T) {
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)
 
-				client := kafkatest.NewClient(addr, "test")
-				defer client.Close()
+				client1 := kafkatest.NewClient(addr1, "test")
+				defer client1.Close()
 
-				r, err := client.Metadata(0, &metaData.Request{})
+				r, err := client1.Metadata(0, &metaData.Request{})
 				require.NoError(t, err)
-				require.Len(t, r.Brokers, 2)
+				require.Len(t, r.Brokers, 1)
+				require.Equal(t, int32(port1), r.Brokers[0].Port)
+
+				client2 := kafkatest.NewClient(addr2, "test")
+				defer client2.Close()
+
+				r, err = client2.Metadata(0, &metaData.Request{})
+				require.NoError(t, err)
+				require.Len(t, r.Brokers, 1)
+				require.Equal(t, int32(port2), r.Brokers[0].Port)
 			},
 		},
 		{
@@ -178,7 +188,7 @@ func TestKafkaServer_Update(t *testing.T) {
 
 				r, err = client2.Metadata(0, &metaData.Request{})
 				require.NoError(t, err)
-				require.Len(t, r.Brokers, 2)
+				require.Len(t, r.Brokers, 1)
 
 				cfg = asyncapi3test.NewConfig(
 					asyncapi3test.WithServer("bar", "kafka", addr2),
