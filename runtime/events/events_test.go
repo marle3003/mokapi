@@ -1,10 +1,11 @@
 package events_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/runtime/events"
 	"mokapi/runtime/events/eventstest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestPush(t *testing.T) {
@@ -120,6 +121,23 @@ func TestPush(t *testing.T) {
 				require.Len(t, evts, 2)
 				require.Equal(t, "3", evts[0].Data.Title())
 				require.Equal(t, "2", evts[1].Data.Title())
+			},
+		},
+		{
+			"get events by traits",
+			func(t *testing.T, sm *events.StoreManager) {
+				sm.SetStore(10, events.NewTraits().WithNamespace("foo").With("name", "bar"))
+				err := sm.Push(nil, events.NewTraits().WithNamespace("foo").With("name", "bar").With("type", "baz").With("client", "client-1"))
+				require.NoError(t, err)
+
+				result := sm.GetEvents(events.NewTraits().WithNamespace("foo").With("name", "bar").With("type", "baz"))
+				require.Len(t, result, 1)
+
+				result = sm.GetEvents(events.NewTraits().WithNamespace("foo").With("type", "baz"))
+				require.Len(t, result, 1)
+
+				result = sm.GetEvents(events.NewTraits().WithNamespace("foo").With("type", "yuh"))
+				require.Len(t, result, 0)
 			},
 		},
 	}

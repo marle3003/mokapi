@@ -23,6 +23,7 @@ import (
 
 func NewRequest(clientId string, version int16, msg kafka.Message) *kafka.Request {
 	r := &kafka.Request{
+		Host: "127.0.0.1:9092",
 		Header: &kafka.Header{
 			ApiKey:     getApiKey(msg),
 			ApiVersion: version,

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"mokapi/kafka"
 	"mokapi/kafka/findCoordinator"
-	"net"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -19,36 +18,13 @@ func (s *Store) findCoordinator(rw kafka.ResponseWriter, req *kafka.Request) err
 	}
 	resLog := &KafkaFindCoordinatorResponse{}
 
-	writeError := func(code kafka.ErrorCode, msg string) error {
-		res.ErrorCode = code
-		res.ErrorMessage = msg
-		go func() {
-			s.logRequest(req.Header, reqLog)(newKafkaFindCoordinatorResponse(res))
-		}()
-		log.Errorf("kafka FindCoordinator: %v", msg)
-		return rw.Write(res)
-	}
-
 	switch r.KeyType {
 	case findCoordinator.KeyTypeGroup:
-		b := s.getBrokerByHost(req.Host)
-		if b == nil {
-			return writeError(kafka.UnknownServerError, fmt.Sprintf("broker %v not found", req.Host))
-		}
-		host := b.Host
-		if len(host) == 0 {
-			var err error
-			host, _, err = net.SplitHostPort(req.Host)
-			if err != nil {
-				return writeError(kafka.UnknownServerError, fmt.Sprintf("broker %v not found: %v", req.Host, err))
-			}
-		}
-
-		res.NodeId = int32(b.Id)
+		host, port := parseHostAndPort(req.Host)
+		// Mokapi does no leader management: always return fixed node id
+		res.NodeId = 0
 		res.Host = host
-		resLog.Host = host
-		res.Port = int32(b.Port)
-		resLog.Port = b.Port
+		res.Port = int32(port)
 	default:
 		res.ErrorCode = kafka.UnknownServerError
 		res.ErrorMessage = fmt.Sprintf("unsupported request key_type=%v", r.KeyType)

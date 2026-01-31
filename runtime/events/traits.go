@@ -81,3 +81,11 @@ func (t Traits) Contains(traits Traits) bool {
 	}
 	return true
 }
+
+func (t Traits) Has(name, value string) bool {
+	v, ok := t[name]
+	if !ok {
+		return false
+	}
+	return v == value
+}

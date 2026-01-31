@@ -148,6 +148,7 @@ func (p *Provider) initRepository(r *repository, ch chan dynamic.ConfigEvent, po
 		return fmt.Errorf("unable to get git worktree: %v", err.Error())
 	}
 
+	r.pullOptions = &git.PullOptions{SingleBranch: true, Depth: 1}
 	ref, err := r.repo.Head()
 	if err != nil {
 		return fmt.Errorf("unable to get git head: %w", err)

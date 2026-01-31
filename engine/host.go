@@ -88,14 +88,13 @@ func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*common.Acti
 			log.Errorf("unable to execute event handler: %v", err)
 			action.Error = &common.Error{Message: err.Error()}
 		} else if !b && logs == len(action.Logs) {
-			//sh.Unlock()
 			continue
 		} else {
 			log.WithField("handler", action).Debug("processed event handler")
 		}
 
-		action.Duration = time.Now().Sub(start).Milliseconds()
 		action.Parameters = getDeepCopy(args)
+		action.Duration = time.Now().Sub(start).Milliseconds()
 		result = append(result, action)
 	}
 	return result
