@@ -96,4 +96,4 @@ To ensure speed and determinism, Mokapi simulates Kafka's application behavior r
 ## Next Steps
 
 - [Quick Start Guide](/docs/guides/kafka/quick-start.md): Learn how to run Mokapi and load your first AsyncAPI file.
-- [Mokapi CLI:](/docs/configuration/static/cli.md): Detailed command-line options and runtime configuration.
+- [Mokapi CLI:](/docs/configuration/static/cli-usage.md): Detailed command-line options and runtime configuration.

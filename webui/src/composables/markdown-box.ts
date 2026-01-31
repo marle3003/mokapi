@@ -48,7 +48,11 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
         do {
             m = link.exec(content)
             if (m) {
-                content = content.replace(m[0], `<a href="${m[2]}">${m[1]}</a>`)
+                var url = m[2]
+                if (url?.endsWith('.md')) {
+                    url = new URL(url.replace('.md', ''), document.location.href).toString()
+                }
+                content = content.replace(m[0], `<a href="${url}">${m[1]}</a>`)
             }
         } while (m)
 
