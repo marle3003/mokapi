@@ -33,6 +33,8 @@ jobs:
         with:
           fetch-depth: 0
           fetch-tags: true
+      - name: Fetch main
+        run: git fetch origin main --tags --force
       - uses: ./.github/actions/build-mokapi-image
         with:
           image-name: ${{ inputs.image-name }}
