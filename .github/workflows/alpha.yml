@@ -42,6 +42,7 @@ jobs:
           echo "New version: $NEW_VERSION"
           echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
           echo "image-name=mokapi/mokapi:$NEW_VERSION-alpha"  >> $GITHUB_OUTPUT
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
 
   build-alpha:
     needs: setup
@@ -52,6 +53,7 @@ jobs:
       artifact-test-report: playwright-report
       report-publish-path: reports/${{ github.ref_name }}
       version: ${{ needs.setup.outputs.version }}
+      latest-tag: ${{ steps.get_version.outputs.latest_tag }}"
 
   publish-image:
     name: Publish docker image
