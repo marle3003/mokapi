@@ -10,6 +10,9 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Fetch main
+      shell: bash
+      run: git fetch origin main --tags --force
     - name: Generate alpha release notes
       shell: bash
       run: |
