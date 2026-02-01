@@ -15,12 +15,6 @@ runs:
       run: |
         mkdir -p releases
         
-        echo "DEBUG: available tags"
-        git tag
-      
-        echo "DEBUG: commits since tag"
-        git log "${{ inputs.latest-tag }}..HEAD" --oneline || true
-        
         {
           echo "# Mokapi Release ${{ inputs.version }}"
           echo
@@ -36,7 +30,7 @@ runs:
           git log "${{ inputs.latest_tag }}..HEAD" \
             --oneline \
             --no-merges \
-            --committer='^(?!github-actions\[bot\]|dependabot\[bot\]).*$'
+            --author='^(?!github-actions\[bot\]|dependabot\[bot\]).*$'
         } > docs/release.md
     - name: Upload UI artifact
       uses: actions/upload-artifact@v4
