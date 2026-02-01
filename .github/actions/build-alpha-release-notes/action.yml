@@ -16,18 +16,18 @@ runs:
         mkdir -p releases
         
         {
-          echo "# Mokapi alpha"
+          echo "# Mokapi Release ${{ inputs.version }}"
           echo
           echo "⚠️ Automatically generated alpha build."
           echo
-          echo "- Base version: ${{ steps.version.outputs.latest_tag }}"
-          echo "- Alpha version: ${{ steps.version.outputs.version }}"
+          echo "- Base version: ${{ inputs.latest_tag }}"
+          echo "- Alpha version: ${{ inputs.version }}"
           echo "- Commit: $(git rev-parse --short HEAD)"
           echo "- Built at: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
           echo
-          echo "## Changes since ${{ steps.version.outputs.latest_tag }}"
+          echo "## Changes since ${{ inputs.latest_tag }}"
           echo
-          git log "${{ steps.version.outputs.latest_tag }}..HEAD" \
+          git log "${{ inputs.latest_tag }}..HEAD" \
             --oneline \
             --no-merges \
             --committer='^(?!github-actions\[bot\]|dependabot\[bot\]).*$'

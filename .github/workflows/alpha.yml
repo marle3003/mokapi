@@ -40,7 +40,7 @@ jobs:
           NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 
           echo "New version: $NEW_VERSION"
-          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "version=$NEW_VERSION-alpha" >> $GITHUB_OUTPUT
           echo "image-name=mokapi/mokapi:$NEW_VERSION-alpha"  >> $GITHUB_OUTPUT
           echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
 
