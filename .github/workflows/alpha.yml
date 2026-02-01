@@ -16,6 +16,7 @@ jobs:
     outputs:
       version: ${{ steps.get_version.outputs.version }}
       image-name: ${{ steps.get_version.outputs.image-name }}
+      latest-tag: ${{ steps.get_version.outputs.latest_tag }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -56,7 +57,7 @@ jobs:
       artifact-test-report: playwright-report
       report-publish-path: reports/${{ github.ref_name }}
       version: ${{ needs.setup.outputs.version }}
-      latest-tag: ${{ needs.setup.outputs.latest_tag }}"
+      latest-tag: ${{ needs.setup.outputs.latest-tag }}"
 
   publish-image:
     name: Publish docker image
