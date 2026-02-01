@@ -20,16 +20,17 @@ runs:
           echo
           echo "⚠️ Automatically generated alpha build."
           echo
-          echo "- Base version: ${{ inputs.latest_tag }}"
+          echo "- Base version: ${{ inputs.latest-tag }}"
           echo "- Alpha version: ${{ inputs.version }}"
           echo "- Commit: $(git rev-parse --short HEAD)"
           echo "- Built at: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
           echo
-          echo "## Changes since ${{ inputs.latest_tag }}"
+          echo "## Changes since ${{ inputs.latest-tag }}"
           echo
-          git log "${{ inputs.latest_tag }}..HEAD" \
+          git log "${{ inputs.latest-tag }}..HEAD" \
             --oneline \
-            --no-merges
+            --no-merges \
+            --author='^(?!github-actions\[bot\]|dependabot\[bot\]).*$'
         } > docs/release.md
     - name: Upload UI artifact
       uses: actions/upload-artifact@v4
