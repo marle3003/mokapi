@@ -15,6 +15,12 @@ runs:
       run: |
         mkdir -p releases
         
+        echo "DEBUG: available tags"
+        git tag
+      
+        echo "DEBUG: commits since tag"
+        git log "${{ inputs.latest-tag }}..HEAD" --oneline || true
+        
         {
           echo "# Mokapi Release ${{ inputs.version }}"
           echo
