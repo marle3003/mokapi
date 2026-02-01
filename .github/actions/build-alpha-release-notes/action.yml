@@ -29,7 +29,7 @@ runs:
           echo
           git log "${{ inputs.latest_tag }}..HEAD" \
             --oneline \
-            --no-merges \
+            --no-merges
         } > docs/release.md
     - name: Upload UI artifact
       uses: actions/upload-artifact@v4
