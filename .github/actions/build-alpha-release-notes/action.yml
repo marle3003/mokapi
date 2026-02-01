@@ -28,7 +28,8 @@ runs:
           echo
           git log "${{ inputs.latest-tag }}..HEAD" \
             --oneline \
-            --no-merges
+            --no-merges \
+            --author='^(?!github-actions\[bot\]|dependabot\[bot\]).*$'
         } > docs/release.md
     - name: Upload UI artifact
       uses: actions/upload-artifact@v4
