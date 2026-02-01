@@ -64,6 +64,9 @@ func NewScript(opts ...Option) (*Script, error) {
 
 func (s *Script) Run() error {
 	if err := s.ensureRuntime(); err != nil {
+		if isClosingError(err) {
+			return nil
+		}
 		return err
 	}
 
@@ -74,6 +77,9 @@ func (s *Script) Run() error {
 				"skipping JavaScript file %s: no default export (not an executable script)",
 				s.file.Info.Url,
 			)
+			return nil
+		}
+		if isClosingError(err) {
 			return nil
 		}
 		return err
@@ -263,4 +269,14 @@ func RegisterNativeModules(registry *require.Registry) {
 	registry.RegisterNativeModule("mokapi/smtp", mail.Require)
 	registry.RegisterNativeModule("mokapi/ldap", ldap.Require)
 	registry.RegisterNativeModule("mokapi/encoding", encoding.Require)
+}
+
+func isClosingError(err error) bool {
+	var ie *goja.InterruptedError
+	if errors.As(err, &ie) {
+		if strings.HasSuffix(ie.String(), "closing") {
+			return true
+		}
+	}
+	return false
 }

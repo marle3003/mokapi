@@ -50,7 +50,7 @@ const route = useRoute()
                             <p data-testid="warning">Deprecated</p>
                         </div>
                         <div class="col text-end">
-                            <span class="badge bg-secondary" data-testid="type">HTTP</span>
+                            <span class="badge bg-secondary" aria-label="Type of API" data-testid="type">HTTP</span>
                         </div>
                     </div>
                     <div class="row" v-if="operation.summary">

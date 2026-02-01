@@ -53,8 +53,8 @@ function setTab(tab: string) {
     });
 }
 watch(() => route.hash, (hash) => {
-    activeTab.value = hash ? hash.slice(1) : 'tab-topics'
-},
+        activeTab.value = hash ? hash.slice(1) : 'tab-topics'
+    },
     { immediate: true }
 )
 </script>
@@ -66,7 +66,7 @@ watch(() => route.hash, (hash) => {
         </div>
 
         <div class="card-group">
-            <section class="card" aria-label="Topic Data">
+            <section class="card" aria-label="Service Data">
                 <div class="card-body">
                     <div class="nav card-tabs" id="myTab" role="tablist">
                         <button :class="{ active: activeTab === 'tab-topics' }" id="topics-tab" type="button" role="tab"
@@ -90,30 +90,30 @@ watch(() => route.hash, (hash) => {
                             Configs
                         </button>
                     </div>
-                </div>
-                <div class="tab-content">
-                    <div class="tab-pane fade pt-0" :class="{ 'show active': activeTab === 'tab-topics' }" id="topics-pane"
-                        role="tabpanel" aria-labelledby="topics-tab">
-                        <kafka-topics :service="service" />
-                        <div class="card-group">
-                            <kafka-messages-card :service="service" />
+                    <div class="tab-content">
+                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-topics' }" id="topics-pane"
+                            role="tabpanel" aria-labelledby="topics-tab">
+                            <kafka-topics :service="service" />
+                            <div class="card-group">
+                                <kafka-messages-card :service="service" />
+                            </div>
                         </div>
-                    </div>
-                    <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-groups' }" id="groups"
-                        role="tabpanel" aria-labelledby="groups-tab">
-                        <kafka-groups :service="service" />
-                    </div>
-                    <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-servers' }" id="servers"
-                        role="tabpanel" aria-labelledby="servers-tab">
-                        <servers :service-name="service.name" :servers="service.servers" />
-                    </div>
-                    <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-clients' }" id="clients"
-                        role="tabpanel" aria-labelledby="clients-tab">
-                        <kafka-clients :service="service" />
-                    </div>
-                    <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-configs' }" id="configs"
-                        role="tabpanel" aria-labelledby="configs-tab">
-                        <configs :configs="service.configs" />
+                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-groups' }" id="groups"
+                            role="tabpanel" aria-labelledby="groups-tab">
+                            <kafka-groups :service="service" />
+                        </div>
+                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-servers' }" id="servers"
+                            role="tabpanel" aria-labelledby="servers-tab">
+                            <servers :service-name="service.name" :servers="service.servers" />
+                        </div>
+                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-clients' }" id="clients"
+                            role="tabpanel" aria-labelledby="clients-tab">
+                            <kafka-clients :service="service" />
+                        </div>
+                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-configs' }" id="configs"
+                            role="tabpanel" aria-labelledby="configs-tab">
+                            <configs :configs="service.configs" />
+                        </div>
                     </div>
                 </div>
             </section>
@@ -140,6 +140,7 @@ watch(() => route.hash, (hash) => {
 
 <style scoped>
 .tab-pane {
-    padding-top: 1;
+    padding: 0;
+    padding-top: 1rem;
 }
 </style>

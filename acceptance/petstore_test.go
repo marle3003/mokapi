@@ -174,7 +174,7 @@ func (suite *PetStoreSuite) TestJsHttpHandler() {
 
 	// test http metrics
 	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%d/api/metrics/http?path=/pet/{petId}", suite.cfg.Api.Port), nil,
-		try.BodyContains(`http_requests_total{service=\"Swagger Petstore\",endpoint=\"/pet/{petId}\"}","value":4}`),
+		try.BodyContains(`http_requests_total{service=\"Swagger Petstore\",endpoint=\"/pet/{petId}\",method=\"GET\"}","value":4}`),
 	)
 }
 

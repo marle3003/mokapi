@@ -32,7 +32,10 @@ function comparePath(s1: HttpServer, s2: HttpServer) {
                     <tbody>
                         <tr v-for="server in sortedServers" :key="server.url">
                             <td>{{ server.url }}</td>
-                            <td><markdown :source="server.description" class="description" :html="true"></markdown></td>
+                            <td>
+                                <markdown v-if="server.description" :source="server.description" class="description" :html="true"></markdown>
+                                <p v-else>-</p>
+                            </td>
                         </tr>
                     </tbody>
                 </table>

@@ -362,18 +362,18 @@ func TestHandler_Http_Metrics(t *testing.T) {
 			name:         "service list with metric",
 			app:          runtimetest.NewHttpApp(openapitest.NewConfig("3.0.0", openapitest.WithInfo("foo", "", ""))),
 			requestUrl:   "http://foo.api/api/services",
-			responseBody: `{"name":"foo","type":"http","metrics":[{"name":"http_requests_total{service=\"foo\",endpoint=\"bar\"}","value":1}]}`,
+			responseBody: `{"name":"foo","type":"http","metrics":[{"name":"http_requests_total{service=\"foo\",endpoint=\"bar\",method=\"GET\"}","value":1}]}`,
 			addMetrics: func(monitor *monitor.Monitor) {
-				monitor.Http.RequestCounter.WithLabel("foo", "bar").Add(1)
+				monitor.Http.RequestCounter.WithLabel("foo", "bar", http.MethodGet).Add(1)
 			},
 		},
 		{
 			name:         "specific with metric",
 			app:          runtimetest.NewHttpApp(openapitest.NewConfig("3.0.0", openapitest.WithInfo("foo", "", ""))),
 			requestUrl:   "http://foo.api/api/services/http/foo",
-			responseBody: `"metrics":[{"name":"http_requests_total{service=\"foo\",endpoint=\"bar\"}","value":1}]`,
+			responseBody: `"metrics":[{"name":"http_requests_total{service=\"foo\",endpoint=\"bar\",method=\"POST\"}","value":1}]`,
 			addMetrics: func(monitor *monitor.Monitor) {
-				monitor.Http.RequestCounter.WithLabel("foo", "bar").Add(1)
+				monitor.Http.RequestCounter.WithLabel("foo", "bar", http.MethodPost).Add(1)
 			},
 		},
 	}

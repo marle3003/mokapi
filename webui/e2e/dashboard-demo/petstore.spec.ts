@@ -23,12 +23,17 @@ test('Visit Petstore Demo', async ({ page }) => {
     });
 
     await test.step('Verify Servers', async () => {
+
+        await page.getByRole('tab', { name: 'Servers' }).click();
         const table = page.getByRole('table', { name: 'Servers'});
         const url = await getCellByColumnName(table, 'Url');
         await expect(url).toHaveText('http://petstore.swagger.io/v2');
+
     });
 
     await test.step('Verify Paths', async () => {
+
+        await page.getByRole('tab', { name: 'Paths' }).click();
         const region = page.getByRole('region', { name: 'Paths' });
         await expect(region).toBeVisible();
 
@@ -42,7 +47,7 @@ test('Visit Petstore Demo', async ({ page }) => {
         const row = table.locator('tbody tr').nth(0);
         await expect(await getCellByColumnName(table, 'Path', row)).toHaveText('/pet');
         await expect(await getCellByColumnName(table, 'Operations', row)).toHaveText('POST PUT');
-        await expect(await getCellByColumnName(table, 'Requests / Errors', row)).toHaveText('1 / 0');
+        await expect(await getCellByColumnName(table, 'Req / Err', row)).toHaveText('1 / 0');
 
         await region.getByRole('checkbox', { name: 'store' }).click();
         await region.getByRole('checkbox', { name: 'user' }).click();
@@ -58,6 +63,8 @@ test('Visit Petstore Demo', async ({ page }) => {
     });
 
     await test.step('Verify Configs', async () => {
+
+        await page.getByRole('tab', { name: 'Configs' }).click();
         const table = page.getByRole('table', { name: 'Configs' });
         const rows = table.locator('tbody tr');
         await expect(await getCellByColumnName(table, 'URL', rows.nth(0))).toContainText('/petstore.yaml');
@@ -65,9 +72,12 @@ test('Visit Petstore Demo', async ({ page }) => {
 
         await expect(await getCellByColumnName(table, 'URL', rows.nth(1))).toContainText('/z.petstore.fix.yaml');
         await expect(await getCellByColumnName(table, 'Provider', rows.nth(1))).toHaveText('File');
+
     });
 
     await test.step('Verify Recent Requests', async () => {
+
+        await page.getByRole('tab', { name: 'Paths' }).click();
         const table = page.getByRole('table', { name: 'Recent Requests' });
         let rows = table.locator('tbody tr');
 
@@ -117,7 +127,21 @@ test('Visit Petstore Demo', async ({ page }) => {
         await expect(rows).toHaveCount(3);
         await expect(await getCellByColumnName(table, 'Method', rows.nth(0))).toHaveText('DELETE');
         await expect(await getCellByColumnName(table, 'Operation ID', rows.nth(0))).toHaveText('deletePet');
-        await expect(await getCellByColumnName(table, 'Summary', rows.nth(0))).toHaveText('	Deletes a pet');
+        await expect(await getCellByColumnName(table, 'Summary', rows.nth(0))).toHaveText('Deletes a pet');
+        await expect(await getCellByColumnName(table, 'Last Request', rows.nth(0))).toHaveText('-');
+        await expect(await getCellByColumnName(table, 'Req / Err', rows.nth(0))).toHaveText('0 / 0');
+
+        await expect(await getCellByColumnName(table, 'Method', rows.nth(1))).toHaveText('GET');
+        await expect(await getCellByColumnName(table, 'Operation ID', rows.nth(1))).toHaveText('getPetById');
+        await expect(await getCellByColumnName(table, 'Summary', rows.nth(1))).toHaveText('Find pet by ID');
+        await expect(await getCellByColumnName(table, 'Last Request', rows.nth(1))).not.toHaveText('-');
+        await expect(await getCellByColumnName(table, 'Req / Err', rows.nth(1))).toHaveText('1 / 0');
+
+        await expect(await getCellByColumnName(table, 'Method', rows.nth(2))).toHaveText('POST');
+        await expect(await getCellByColumnName(table, 'Operation ID', rows.nth(2))).toHaveText('updatePetWithForm');
+        await expect(await getCellByColumnName(table, 'Summary', rows.nth(2))).toHaveText('Updates a pet in the store with form data');
+        await expect(await getCellByColumnName(table, 'Last Request', rows.nth(2))).toHaveText('-');
+        await expect(await getCellByColumnName(table, 'Req / Err', rows.nth(2))).toHaveText('0 / 0');
 
         const requests = page.getByRole('table', { name: 'Recent Requests' });
         await expect(requests.locator('tbody tr')).toHaveCount(1);

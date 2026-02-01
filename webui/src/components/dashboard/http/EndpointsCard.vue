@@ -7,8 +7,8 @@ import { useLocalStorage } from '@/composables/local-storage';
 
 const route = useRoute()
 const router = useRouter()
-const {sum} = useMetrics()
-const {format} = usePrettyDates()
+const { sum } = useMetrics()
+const { format } = usePrettyDates()
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },
@@ -214,7 +214,7 @@ function toggleTag(name: string) {
                             <th scope="col" class="text-left col-3">Summary</th>
                             <th scope="col" class="text-left col-1">Operations</th>
                             <th scope="col" class="text-center col-2">Last Request</th>
-                            <th scope="col" class="text-center col-1">Requests / Errors</th>
+                            <th scope="col" class="text-center col-1" title="Total requests / error responses">Req / Err</th>
                         </tr>
                     </thead>
                     <tbody>
