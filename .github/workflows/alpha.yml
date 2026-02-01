@@ -57,7 +57,7 @@ jobs:
       artifact-test-report: playwright-report
       report-publish-path: reports/${{ github.ref_name }}
       version: ${{ needs.setup.outputs.version }}
-      latest-tag: ${{ needs.setup.outputs.latest-tag }}"
+      latest-tag: ${{ needs.setup.outputs.latest-tag }}
 
   publish-image:
     name: Publish docker image
