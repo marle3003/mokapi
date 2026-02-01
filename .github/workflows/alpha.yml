@@ -21,6 +21,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Ensure all tags are fetched
+      - name: Fetch main
+        shell: bash
+        run: git fetch origin main --tags --force
       - name: get version
         id: get_version
         shell: bash
