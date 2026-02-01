@@ -30,6 +30,9 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       - uses: ./.github/actions/build-mokapi-image
         with:
           image-name: ${{ inputs.image-name }}
