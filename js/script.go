@@ -178,7 +178,10 @@ func EnableInternal(vm *goja.Runtime, host engine.Host, loop *eventloop.EventLoo
 	_ = o.Set("host", host)
 	_ = o.Set("loop", loop)
 	_ = o.Set("file", file)
-	_ = vm.Set("mokapi/internal", o)
+	err := vm.Set("mokapi/internal", o)
+	if err != nil {
+		log.Errorf("js: internal error: %s", err)
+	}
 }
 
 func (s *Script) processObject(v goja.Value) {

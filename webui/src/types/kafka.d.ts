@@ -13,6 +13,7 @@ declare interface KafkaServer {
   summary: string
   description: string;
   tags: KafkaTag[]
+  configs: { [key: string]: any }
 }
 
 declare interface KafkaTag {

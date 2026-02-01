@@ -2,6 +2,8 @@
 import Loading from '@/components/Loading.vue';
 import Message from '@/components/Message.vue';
 import { getRouteName, useDashboard } from '@/composables/dashboard';
+import { usePrettyBytes } from '@/composables/usePrettyBytes';
+import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRoute } from '@/router';
 import type { ServiceResult } from '@/types/dashboard';
 import { computed, ref, watch } from 'vue';
@@ -12,6 +14,8 @@ const { dashboard } = useDashboard()
 const serviceName = route.params.service?.toString();
 const serverName = route.params.server?.toString();
 let data = ref<ServiceResult | null>(null);
+const { format: formatBytes } = usePrettyBytes();
+const { duration } = usePrettyDates();
 
 const service = computed(() => {
     if (!data.value) {
@@ -44,6 +48,23 @@ watch(() => dashboard.value,
     },
     { immediate: true }
 );
+
+function formatValue(value: any, key: string) {
+  switch (key) {
+    case 'log.segment.bytes':
+    case 'log.retention.bytes':
+        return formatBytes(value);
+    case 'log.retention':
+    case 'log.retention.check.interval.ms':
+    case 'log.segment.delete.delay.ms':
+    case 'log.roll':
+    case 'group.initial.rebalance.delay.ms':
+    case 'group.min.session.timeout.ms':
+        return duration(value);
+    default: 
+        return value;
+  }
+}
 </script>
 
 <template>
@@ -56,10 +77,6 @@ watch(() => dashboard.value,
                             <p id="name" class="label">Server Name</p>
                             <p aria-labelledby="name">{{ server.name }}</p>
                         </div>
-                        <div class="col-2">
-                            <p id="protocol" class="label">Protocol</p>
-                            <p aria-labelledby="protocol">{{ server.protocol || '-' }}</p>
-                        </div>
                         <div class="col">
                             <p id="cluster" class="label">Cluster</p>
                             <p>
@@ -70,6 +87,16 @@ watch(() => dashboard.value,
                                     {{ serviceName }}
                                 </router-link>
                             </p>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-2" v-if="server.protocol">
+                            <p id="protocol" class="label">Protocol</p>
+                            <p aria-labelledby="protocol">{{ server.protocol }}</p>
+                        </div>
+                        <div class="col">
+                            <p id="host" class="label">Host</p>
+                            <p aria-labelledby="host">{{ server.host }}</p>
                         </div>
                     </div>
                     <div class="row mb-2" v-if="server.title">
@@ -92,6 +119,31 @@ watch(() => dashboard.value,
                     </div>
                 </div>
             </div>
+        </div>
+
+        <div class="card-group" v-if="server.configs && Object.keys(server.configs).length > 0">
+            <section class="card" aria-labelledby="configs">
+                <div class="card-body">
+                    <h2 id="configs" class="card-title text-center">Bindings</h2>
+
+                    <div class="table-responsive-sm mt-4">
+                        <table class="table dataTable" aria-labelledby="configs">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="text-left col-4">Name</th>
+                                    <th scope="col" class="text-left col">Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="(value, key) in server.configs" :key="key">
+                                    <td>{{ key }}</td>
+                                    <td>{{ formatValue(value, key) }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
         </div>
 
         <div class="card-group" v-if="server.tags && server.tags.length > 0">
