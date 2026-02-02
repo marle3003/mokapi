@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useGuid } from '@/composables/guid';
 import { useMarkdown } from '@/composables/markdown';
 import { computed, inject, ref, watch } from 'vue';
 import { Modal } from 'bootstrap';
@@ -10,8 +9,6 @@ import { useRoute } from '@/router';
 
 const route = useRoute();
 const files = inject<Record<string, string>>('files')!
-const { createGuid } = useGuid();
-const id = createGuid()
 const { dashboard } = useDashboard()
 let appInfo = ref<AppInfoResponse | null>(null)
 
@@ -36,31 +33,25 @@ watch(appInfo, () => {
     return
   }
 
-  if (!version.value) {
-    return
-  }
-  if (dismissedVersion.value === version.value && dismissed.value) {
-    return
-  }
-
-  if (getItemWithExpiry("release-notes-hide")) {
+  if (!version.value || !content) {
     return
   }
   if (import.meta.env.DEV) {
     if (!Object.keys(route.query).find(x => x === 'show-release-notes')) {
       return
     }
-  }
-  if (!content) {
-    return
+  } else {
+    if (dismissedVersion.value === version.value && dismissed.value) {
+      return
+    }
+
+    if (getItemWithExpiry("release-notes-hide")) {
+      return
+    }
   }
 
-  const modalEl = document.getElementById(id)
-  if (modalEl) {
-    const modal = new Modal(modalEl)
-    modal.show()
-    displayed.value = true
-  }
+  openDialog();
+  
 }, { deep: true })
 
 watch(
@@ -73,6 +64,18 @@ watch(
   },
   { immediate: true }
 );
+
+function openDialog() {
+  const modalEl = document.getElementById('release-notes')
+  if (modalEl) {
+    const modal = new Modal(modalEl)
+    modalEl.addEventListener('hidden.bs.modal', event => {
+      setItemWithExpiry("release-notes-hide", "true", 12);
+    })
+    modal.show()
+    displayed.value = true
+  }
+}
 
 function dismiss() {
   dismissed.value = true;
@@ -109,10 +112,11 @@ function getItemWithExpiry(key: string): string | null {
 </script>
 
 <template>
-  <div class="modal fade" :id="id" tabindex="-1" aria-hidden="true" :aria-labelledby="id + 'title'">
+  <div class="modal fade" id="release-notes" tabindex="-1" aria-hidden="true" aria-labelledby="release-notes-title">
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content release">
         <div class="modal-header visually-hidden">
+          <h6 id="release-notes-title" class="modal-title">Release Notes</h6>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body" v-html="content"></div>

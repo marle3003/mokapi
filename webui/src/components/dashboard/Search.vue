@@ -122,6 +122,8 @@ onMounted(async () => {
   }
   if (queryText.value !== '') {
     await search()
+  } else {
+    document.getElementById('search-input')?.focus();
   }
 })
 
@@ -236,7 +238,7 @@ function facetTitle(s: string) {
           <div class="row justify-content-md-center mb-1">
             <div class="col-6 col-auto">
               <div class="input-group">
-                <input type="text" class="form-control" placeholder="Search" aria-label="Search" aria-describedby="search-icon" v-model="queryText" @keypress="search_keypressed">
+                <input type="text" id="search-input" class="form-control" placeholder="Search" aria-label="Search" aria-describedby="search-icon" v-model="queryText" @keypress="search_keypressed">
                 <button class="btn btn-outline-secondary" type="button" @click="search_clicked">
                   <span class="bi bi-search"></span>
                 </button>

@@ -27,7 +27,7 @@ runs:
           git log "${{ inputs.latest-tag }}..HEAD" \
             --oneline \
             --no-merges |
-            grep -v -E 'github-actions\[bot\]|dependabot\[bot\]|test' |
+            grep -v -E 'github-actions\[bot\]|dependabot\[bot\]|test|Bump' |
             sed 's/^[a-f0-9]\{7,40\} //' |  # remove SHA prefix
             awk '!seen[$0]++' |
             sed 's/^/- /'
