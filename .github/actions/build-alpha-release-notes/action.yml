@@ -1,16 +1,16 @@
 name: build-alpha-release-notes
 description: build-alpha-release-notes
 inputs:
-  latest-tag:
-    required: true
-    description: The latest tag
   version:
     required: true
     description: The alpha version
+  latest-tag:
+    description: The latest tag or empty
 runs:
   using: composite
   steps:
     - name: Generate alpha release notes
+      if: inputs.latest-tag != ''
       shell: bash
       run: |
         {

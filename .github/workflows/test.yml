@@ -19,7 +19,6 @@ on:
         description: "The version of mokapi to build"
         type: string
       latest-tag:
-        required: true
         description: "The latest tag"
         type: string
 
