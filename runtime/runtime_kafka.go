@@ -10,6 +10,7 @@ import (
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
+	"mokapi/sortedmap"
 	"path/filepath"
 	"sort"
 	"sync"
@@ -187,19 +188,19 @@ func (c *KafkaInfo) update() {
 		}
 	}
 
-	if len(cfg.Servers) == 0 {
+	if cfg.Servers.Len() == 0 {
 		log.Infof("no servers defined in AsyncAPI spec — using default Mokapi broker for cluster '%s'", cfg.Info.Name)
 		if cfg.Servers == nil {
-			cfg.Servers = make(map[string]*asyncapi3.ServerRef)
+			cfg.Servers = &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{}
 		}
-		cfg.Servers["mokapi"] = &asyncapi3.ServerRef{
+		cfg.Servers.Set("mokapi", &asyncapi3.ServerRef{
 			Value: &asyncapi3.Server{
 				Host:     ":9092",
 				Protocol: "kafka",
 				Title:    "Mokapi Default Broker",
 				Summary:  "Automatically added broker because no servers are defined in the AsyncAPI spec",
 			},
-		}
+		})
 	}
 
 	c.Config = cfg

@@ -1,7 +1,6 @@
 package runtime
 
 import (
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/static"
@@ -14,6 +13,8 @@ import (
 	"path/filepath"
 	"sort"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type MqttStore struct {
@@ -217,7 +218,8 @@ func IsMqttConfig(c *dynamic.Config) (*asyncapi3.Config, bool) {
 }
 
 func hasMqttBroker(c *asyncapi3.Config) bool {
-	for _, server := range c.Servers {
+	for it := c.Servers.Iter(); it.Next(); {
+		server := it.Value()
 		if server.Value.Protocol == "mqtt" {
 			return true
 		}

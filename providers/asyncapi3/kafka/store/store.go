@@ -148,25 +148,29 @@ func (s *Store) GetOrCreateGroup(name string, brokerId int) *Group {
 
 func (s *Store) Update(c *asyncapi3.Config) {
 	s.cluster = c.Info.Name
-	for n, server := range c.Servers {
-		if server.Value.Protocol != "" && server.Value.Protocol != "kafka" {
-			continue
-		}
-		if b := s.getBroker(n); b != nil {
-			host, port := parseHostAndPort(server.Value.Host)
-			if len(host) == 0 {
-				log.Errorf("unable to update broker '%v' to cluster '%v': missing host in url '%v'", n, s.cluster, server.Value.Host)
+	if c.Servers != nil {
+		for it := c.Servers.Iter(); it.Next(); {
+			name := it.Key()
+			server := it.Value()
+			if server.Value.Protocol != "" && server.Value.Protocol != "kafka" {
 				continue
 			}
-			b.Host = host
-			b.Port = port
-		} else {
-			s.addBroker(n, server.Value)
+			if b := s.getBroker(name); b != nil {
+				host, port := parseHostAndPort(server.Value.Host)
+				if len(host) == 0 {
+					log.Errorf("unable to update broker '%v' to cluster '%v': missing host in url '%v'", name, s.cluster, server.Value.Host)
+					continue
+				}
+				b.Host = host
+				b.Port = port
+			} else {
+				s.addBroker(name, server.Value)
+			}
 		}
-	}
-	for _, b := range s.brokers {
-		if _, ok := c.Servers[b.Name]; !ok {
-			s.deleteBroker(b.Id)
+		for _, b := range s.brokers {
+			if _, ok := c.Servers.Get(b.Name); !ok {
+				s.deleteBroker(b.Id)
+			}
 		}
 	}
 
@@ -320,7 +324,7 @@ func (s *Store) getBroker(name string) *Broker {
 func (s *Store) getBrokerByPort(addr string) *Broker {
 	for _, b := range s.brokers {
 		_, p := parseHostAndPort(addr)
-		if b.Port == p {
+		if b.Port == p && b.Host != "" {
 			return b
 		}
 	}

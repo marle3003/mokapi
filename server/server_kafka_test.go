@@ -63,10 +63,10 @@ func TestKafkaServer_Update(t *testing.T) {
 
 				port2 := try.GetFreePort()
 				addr2 := fmt.Sprintf("127.0.0.1:%v", port2)
-				cfg.Servers["bar"] = &asyncapi3.ServerRef{Value: &asyncapi3.Server{
+				cfg.Servers.Set("bar", &asyncapi3.ServerRef{Value: &asyncapi3.Server{
 					Host:     addr2,
 					Protocol: "kafka",
-				}}
+				}})
 
 				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
 
@@ -100,10 +100,10 @@ func TestKafkaServer_Update(t *testing.T) {
 				)
 				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
 
-				cfg.Servers["broker"] = &asyncapi3.ServerRef{Value: &asyncapi3.Server{
+				cfg.Servers.Set("broker", &asyncapi3.ServerRef{Value: &asyncapi3.Server{
 					Host:     addr,
 					Protocol: "kafka",
-				}}
+				}})
 
 				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
 
@@ -139,7 +139,7 @@ func TestKafkaServer_Update(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, r.Brokers, 1)
 
-				delete(cfg.Servers, "")
+				cfg.Servers.Del("")
 				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
 
 				r, err = client.Metadata(0, &metaData.Request{})
@@ -220,11 +220,11 @@ func TestKafkaServer_Update(t *testing.T) {
 				)
 				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Data: cfg, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
 
-				delete(cfg.Servers, "kafka")
-				cfg.Servers["broker"] = &asyncapi3.ServerRef{Value: &asyncapi3.Server{
+				cfg.Servers.Del("kafka")
+				cfg.Servers.Set("broker", &asyncapi3.ServerRef{Value: &asyncapi3.Server{
 					Host:     addr,
 					Protocol: "kafka",
-				}}
+				}})
 
 				// wait for kafka start
 				time.Sleep(500 * time.Millisecond)

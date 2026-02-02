@@ -34,7 +34,7 @@ func TestApp_AddKafka(t *testing.T) {
 				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""))
 				ki, err := app.Kafka.Add(getConfig("foo.bar", c), enginetest.NewEngine())
 				require.Nil(t, err)
-				require.Len(t, ki.Servers, 1)
+				require.Equal(t, ki.Servers.Len(), 1)
 				require.Equal(t,
 					&asyncapi3.Server{
 						Host:     ":9092",
@@ -42,7 +42,7 @@ func TestApp_AddKafka(t *testing.T) {
 						Title:    "Mokapi Default Broker",
 						Summary:  "Automatically added broker because no servers are defined in the AsyncAPI spec",
 					},
-					ki.Servers["mokapi"].Value)
+					ki.Servers.Lookup("mokapi").Value)
 
 				require.Len(t, hook.Entries, 1)
 				require.Equal(t, "no servers defined in AsyncAPI spec — using default Mokapi broker for cluster 'foo'", hook.Entries[0].Message)

@@ -2,6 +2,7 @@ package asyncapi3test
 
 import (
 	"mokapi/providers/asyncapi3"
+	"mokapi/sortedmap"
 )
 
 type ConfigOptions func(c *asyncapi3.Config)
@@ -10,7 +11,7 @@ func NewConfig(opts ...ConfigOptions) *asyncapi3.Config {
 	c := &asyncapi3.Config{
 		Version:            "2.0.0",
 		Info:               asyncapi3.Info{Name: "test", Version: "1.0"},
-		Servers:            map[string]*asyncapi3.ServerRef{},
+		Servers:            &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{},
 		DefaultContentType: asyncapi3.DefaultContentType,
 	}
 	for _, opt := range opts {
@@ -57,7 +58,7 @@ func WithContact(name, url, mail string) ConfigOptions {
 func WithServer(name, protocol, host string, opts ...ServerOptions) ConfigOptions {
 	return func(c *asyncapi3.Config) {
 		if c.Servers == nil {
-			c.Servers = make(map[string]*asyncapi3.ServerRef)
+			c.Servers = &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{}
 		}
 
 		s := &asyncapi3.Server{
@@ -68,7 +69,7 @@ func WithServer(name, protocol, host string, opts ...ServerOptions) ConfigOption
 			opt(s)
 		}
 
-		c.Servers[name] = &asyncapi3.ServerRef{Value: s}
+		c.Servers.Set(name, &asyncapi3.ServerRef{Value: s})
 	}
 }
 

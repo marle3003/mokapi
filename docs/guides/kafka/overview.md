@@ -90,8 +90,26 @@ Use Mokapi Scripts to simulate edge cases that are difficult to trigger in a rea
 
 To ensure speed and determinism, Mokapi simulates Kafka's application behavior rather than its cluster administration:
 
-- <p><strong>Single Stable Broker:</strong><br/>Focuses on message flow rather than leader election, partition replication, or broker coordination.
-- <p><strong>Ephemeral by Design:</strong><br/>Data is kept in-memory to provide lightning-fast feedback loops during development.
+- <p><strong>Single Stable Broker:</strong><br/>Focuses on message flow rather than 
+  leader election, partition replication, or broker coordination.
+- <p><strong>Ephemeral by Design:</strong><br/>Data is kept in-memory to provide 
+  lightning-fast feedback loops during development.
+- <p><strong>Deterministic Broker Address Resolution:</strong><br/>
+  Mokapi resolves the advertised broker address based on the listener port.
+  If multiple AsyncAPI servers share the same port, the first matching server
+  definition is used. AsyncAPI servers are treated as environment-specific
+  configurations rather than simultaneously addressable brokers.</p>
+
+Kafka clients do not transmit the DNS name used to establish a connection.
+When multiple servers share the same listener port, it is therefore not
+possible to determine which server was used at runtime. Mokapi follows
+Kafka’s networking model and applies a deterministic resolution strategy
+instead of guessing.
+
+``` box=tip title=Recommendation
+If you define multiple AsyncAPI servers, use different ports for each server
+or use Mokapi’s [patching](/docs/configuration/patching.md) mechanism.
+```
 
 ## Next Steps
 

@@ -40,10 +40,10 @@ func TestConfig_Convert(t *testing.T) {
 	require.Equal(t, "https://www.apache.org/licenses/LICENSE-2.0", cfg3.Info.License.Url)
 
 	// Server
-	require.Len(t, cfg3.Servers, 1)
-	require.Equal(t, "test.mosquitto.org:{port}", cfg3.Servers["production"].Value.Host)
-	require.Equal(t, "kafka", cfg3.Servers["production"].Value.Protocol)
-	require.Equal(t, "Test broker", cfg3.Servers["production"].Value.Description)
+	require.Equal(t, cfg3.Servers.Len(), 1)
+	require.Equal(t, "test.mosquitto.org:{port}", cfg3.Servers.Lookup("production").Value.Host)
+	require.Equal(t, "kafka", cfg3.Servers.Lookup("production").Value.Protocol)
+	require.Equal(t, "Test broker", cfg3.Servers.Lookup("production").Value.Description)
 
 	// Channel
 	channel := cfg3.Channels["smartylighting/streetlights/1/0/event/{streetlightId}/lighting/measured"].Value
@@ -90,9 +90,9 @@ func TestServer_Convert(t *testing.T) {
 			cfg:  asyncapitest.NewConfig(asyncapitest.WithServer("foo", "kafka", "mokapi-service:9092")),
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
 				require.NoError(t, err)
-				require.Len(t, config.Servers, 1)
-				require.Equal(t, "mokapi-service:9092", config.Servers["foo"].Value.Host)
-				require.Equal(t, "kafka", config.Servers["foo"].Value.Protocol)
+				require.Equal(t, config.Servers.Len(), 1)
+				require.Equal(t, "mokapi-service:9092", config.Servers.Lookup("foo").Value.Host)
+				require.Equal(t, "kafka", config.Servers.Lookup("foo").Value.Protocol)
 			},
 		},
 	}

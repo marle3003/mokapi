@@ -1,10 +1,11 @@
 package asyncapi3_test
 
 import (
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"mokapi/providers/asyncapi3"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestKafkaBindingsServer_Yaml(t *testing.T) {
@@ -24,7 +25,7 @@ servers:
 `,
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Servers["test"].Value.Bindings.Kafka.LogRetentionBytes)
+				require.Equal(t, int64(10), config.Servers.Lookup("test").Value.Bindings.Kafka.LogRetentionBytes)
 			},
 		},
 		{
@@ -51,7 +52,7 @@ servers:
 `,
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Servers["test"].Value.Bindings.Kafka.LogRetentionMs)
+				require.Equal(t, int64(10), config.Servers.Lookup("test").Value.Bindings.Kafka.LogRetentionMs)
 			},
 		},
 		{
@@ -78,7 +79,7 @@ servers:
 `,
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(600000), config.Servers["test"].Value.Bindings.Kafka.LogRetentionMs)
+				require.Equal(t, int64(600000), config.Servers.Lookup("test").Value.Bindings.Kafka.LogRetentionMs)
 			},
 		},
 		{
@@ -105,7 +106,7 @@ servers:
 `,
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(36000000), config.Servers["test"].Value.Bindings.Kafka.LogRetentionMs)
+				require.Equal(t, int64(36000000), config.Servers.Lookup("test").Value.Bindings.Kafka.LogRetentionMs)
 			},
 		},
 		{
@@ -132,7 +133,7 @@ servers:
 `,
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Servers["test"].Value.Bindings.Kafka.LogRetentionCheckIntervalMs)
+				require.Equal(t, int64(10), config.Servers.Lookup("test").Value.Bindings.Kafka.LogRetentionCheckIntervalMs)
 			},
 		},
 		{
@@ -159,7 +160,7 @@ servers:
 `,
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Servers["test"].Value.Bindings.Kafka.LogSegmentDeleteDelayMs)
+				require.Equal(t, int64(10), config.Servers.Lookup("test").Value.Bindings.Kafka.LogSegmentDeleteDelayMs)
 			},
 		},
 		{
@@ -186,7 +187,7 @@ servers:
 `,
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Servers["test"].Value.Bindings.Kafka.LogRollMs)
+				require.Equal(t, int64(10), config.Servers.Lookup("test").Value.Bindings.Kafka.LogRollMs)
 			},
 		},
 		{
@@ -213,7 +214,7 @@ servers:
 `,
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(600000), config.Servers["test"].Value.Bindings.Kafka.LogRollMs)
+				require.Equal(t, int64(600000), config.Servers.Lookup("test").Value.Bindings.Kafka.LogRollMs)
 			},
 		},
 		{
@@ -240,7 +241,7 @@ servers:
 `,
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(36000000), config.Servers["test"].Value.Bindings.Kafka.LogRollMs)
+				require.Equal(t, int64(36000000), config.Servers.Lookup("test").Value.Bindings.Kafka.LogRollMs)
 			},
 		},
 		{
@@ -267,7 +268,7 @@ servers:
 `,
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Servers["test"].Value.Bindings.Kafka.LogSegmentBytes)
+				require.Equal(t, int64(10), config.Servers.Lookup("test").Value.Bindings.Kafka.LogSegmentBytes)
 			},
 		},
 		{
@@ -294,7 +295,7 @@ servers:
 `,
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Servers["test"].Value.Bindings.Kafka.GroupInitialRebalanceDelayMs)
+				require.Equal(t, int64(10), config.Servers.Lookup("test").Value.Bindings.Kafka.GroupInitialRebalanceDelayMs)
 			},
 		},
 		{
@@ -321,7 +322,7 @@ servers:
 `,
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Servers["test"].Value.Bindings.Kafka.GroupMinSessionTimeoutMs)
+				require.Equal(t, int64(10), config.Servers.Lookup("test").Value.Bindings.Kafka.GroupMinSessionTimeoutMs)
 			},
 		},
 		{
@@ -347,7 +348,7 @@ servers:
         schemaRegistryUrl: foo.bar
 `,
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.Equal(t, "foo.bar", config.Servers["test"].Value.Bindings.Kafka.SchemaRegistryUrl)
+				require.Equal(t, "foo.bar", config.Servers.Lookup("test").Value.Bindings.Kafka.SchemaRegistryUrl)
 			},
 		},
 		{
@@ -360,7 +361,7 @@ servers:
         schemaRegistryVendor: foo
 `,
 			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.Equal(t, "foo", config.Servers["test"].Value.Bindings.Kafka.SchemaRegistryVendor)
+				require.Equal(t, "foo", config.Servers.Lookup("test").Value.Bindings.Kafka.SchemaRegistryVendor)
 			},
 		},
 	}

@@ -2,11 +2,12 @@ package runtime
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/providers/asyncapi3"
 	"mokapi/runtime/search"
 	"mokapi/schema/json/schema"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type kafkaSearchIndexData struct {
@@ -65,7 +66,9 @@ func (s *KafkaStore) addToIndex(cfg *asyncapi3.Config) {
 		Description:   cfg.Info.Description,
 		Contact:       cfg.Info.Contact,
 	}
-	for name, server := range cfg.Servers {
+	for it := cfg.Servers.Iter(); it.Next(); {
+		name := it.Key()
+		server := it.Value()
 		if server == nil || server.Value == nil {
 			continue
 		}

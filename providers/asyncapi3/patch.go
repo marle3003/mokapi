@@ -51,14 +51,14 @@ func (l *License) patch(patch *License) {
 }
 
 func (c *Config) patchServer(patch *Config) {
-	if len(c.Servers) == 0 {
+	if c.Servers.Len() == 0 {
 		c.Servers = patch.Servers
 	} else {
-		for name, ps := range patch.Servers {
-			if s, ok := c.Servers[name]; ok {
-				s.patch(ps)
+		for it := patch.Servers.Iter(); it.Next(); {
+			if s, ok := c.Servers.Get(it.Key()); ok {
+				s.patch(it.Value())
 			} else {
-				c.Servers[name] = ps
+				c.Servers.Set(it.Key(), it.Value())
 			}
 		}
 	}

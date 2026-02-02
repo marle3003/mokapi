@@ -21,6 +21,10 @@ func (s *Store) findCoordinator(rw kafka.ResponseWriter, req *kafka.Request) err
 	switch r.KeyType {
 	case findCoordinator.KeyTypeGroup:
 		host, port := parseHostAndPort(req.Host)
+		b := s.getBrokerByPort(req.Host)
+		if b != nil && b.Host != "" {
+			host = b.Host
+		}
 		// Mokapi does no leader management: always return fixed node id
 		res.NodeId = 0
 		res.Host = host

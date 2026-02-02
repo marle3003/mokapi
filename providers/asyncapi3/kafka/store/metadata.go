@@ -21,13 +21,16 @@ func (s *Store) metadata(rw kafka.ResponseWriter, req *kafka.Request) error {
 
 	// Mokapi does no leader management, therefore only the current server is returned as the broker.
 	host, port := parseHostAndPort(req.Host)
+	b := s.getBrokerByPort(req.Host)
+	if b != nil && b.Host != "" {
+		host = b.Host
+	}
 	res.Brokers = append(res.Brokers, metaData.ResponseBroker{
 		NodeId: 0,
 		Host:   host,
 		Port:   int32(port),
 	})
 
-	b := s.getBrokerByPort(req.Host)
 	var getTopic func(string) (*Topic, kafka.ErrorCode)
 
 	if len(r.Topics) > 0 {

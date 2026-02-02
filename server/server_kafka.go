@@ -1,17 +1,18 @@
 package server
 
 import (
-	log "github.com/sirupsen/logrus"
-	"maps"
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
 	"mokapi/providers/asyncapi3"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
 	"mokapi/server/service"
+	"mokapi/sortedmap"
 	"net/url"
 	"slices"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Broker interface {
@@ -55,7 +56,7 @@ func (m *KafkaManager) UpdateConfig(e dynamic.ConfigEvent) {
 			return
 		}
 	}
-	var servers map[string]*asyncapi3.ServerRef
+	var servers *sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]
 	if info != nil {
 		servers = info.Servers
 	}
@@ -98,10 +99,12 @@ func (m *KafkaManager) removeCluster(name string) {
 	delete(m.clusters, name)
 }
 
-func (c *kafkaCluster) updateBrokers(cfg *runtime.KafkaInfo, old map[string]*asyncapi3.ServerRef) {
-	servers := slices.Collect(maps.Values(cfg.Servers))
+func (c *kafkaCluster) updateBrokers(cfg *runtime.KafkaInfo, old *sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]) {
+	servers := cfg.Servers.Values()
 
-	for name, server := range old {
+	for it := old.Iter(); it.Next(); {
+		name := it.Key()
+		server := it.Value()
 		if !slices.ContainsFunc(servers, func(s *asyncapi3.ServerRef) bool {
 			return s.Value != nil && server.Value != nil && s.Value.Host == server.Value.Host
 		}) {
@@ -114,7 +117,9 @@ func (c *kafkaCluster) updateBrokers(cfg *runtime.KafkaInfo, old map[string]*asy
 		}
 	}
 
-	for name, server := range cfg.Servers {
+	for it := cfg.Servers.Iter(); it.Next(); {
+		name := it.Key()
+		server := it.Value()
 		if server == nil || server.Value == nil {
 			continue
 		}

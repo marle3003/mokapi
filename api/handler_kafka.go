@@ -420,7 +420,9 @@ func getKafka(info *runtime.KafkaInfo) kafkaInfo {
 		}
 	}
 
-	for name, s := range info.Servers {
+	for it := info.Servers.Iter(); it.Next(); {
+		name := it.Key()
+		s := it.Value()
 		if s == nil || s.Value == nil {
 			continue
 		}
