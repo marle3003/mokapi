@@ -64,8 +64,6 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-        with:
-          path: src
       - uses: ./.github/actions/publish-test-report
         with:
           artifact-test-report: ${{ inputs.artifact-test-report }}
