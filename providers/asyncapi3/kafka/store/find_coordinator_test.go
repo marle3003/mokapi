@@ -8,6 +8,7 @@ import (
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -65,8 +66,9 @@ func TestFindCoordinator(t *testing.T) {
 				s.ServeMessage(rr, r)
 				res, ok := rr.Message.(*findCoordinator.Response)
 				require.True(t, ok)
-				require.Equal(t, kafka.UnknownServerError, res.ErrorCode)
-				require.Equal(t, "broker 127.0.0.1:9092 not found", res.ErrorMessage)
+				require.Equal(t, kafka.None, res.ErrorCode)
+				require.Equal(t, "127.0.0.1", res.Host)
+				require.Equal(t, int32(9092), res.Port)
 			},
 		},
 		{
@@ -90,6 +92,75 @@ func TestFindCoordinator(t *testing.T) {
 				require.Equal(t, int32(9092), res.Port)
 			},
 		},
+		{
+			"broker without host should use IP",
+			func(t *testing.T, s *store.Store) {
+				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", ":9092")))
+
+				r := kafkatest.NewRequest("kafkatest", 3, &findCoordinator.Request{
+					Key:     "foo",
+					KeyType: findCoordinator.KeyTypeGroup,
+				})
+				r.Host = "127.0.0.1:9092"
+				rr := kafkatest.NewRecorder()
+				s.ServeMessage(rr, r)
+
+				res, ok := rr.Message.(*findCoordinator.Response)
+				require.True(t, ok)
+				require.Equal(t, kafka.None, res.ErrorCode, "expected no kafka error")
+
+				require.Equal(t, "127.0.0.1", res.Host)
+				require.Equal(t, int32(9092), res.Port)
+			},
+		},
+		{
+			"broker with host has priority over broker without host ",
+			func(t *testing.T, s *store.Store) {
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("foo", "kafka", ":9092"),
+					asyncapi3test.WithServer("bar", "kafka", "foo.bar:9092"),
+				))
+
+				r := kafkatest.NewRequest("kafkatest", 3, &findCoordinator.Request{
+					Key:     "foo",
+					KeyType: findCoordinator.KeyTypeGroup,
+				})
+				r.Host = "127.0.0.1:9092"
+				rr := kafkatest.NewRecorder()
+				s.ServeMessage(rr, r)
+
+				res, ok := rr.Message.(*findCoordinator.Response)
+				require.True(t, ok)
+				require.Equal(t, kafka.None, res.ErrorCode, "expected no kafka error")
+
+				require.Equal(t, "foo.bar", res.Host)
+				require.Equal(t, int32(9092), res.Port)
+			},
+		},
+		{
+			"use first broker with matching port",
+			func(t *testing.T, s *store.Store) {
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("foo", "kafka", "mokapi.io:9092"),
+					asyncapi3test.WithServer("bar", "kafka", "foo.bar:9092"),
+				))
+
+				r := kafkatest.NewRequest("kafkatest", 3, &findCoordinator.Request{
+					Key:     "foo",
+					KeyType: findCoordinator.KeyTypeGroup,
+				})
+				r.Host = "127.0.0.1:9092"
+				rr := kafkatest.NewRecorder()
+				s.ServeMessage(rr, r)
+
+				res, ok := rr.Message.(*findCoordinator.Response)
+				require.True(t, ok)
+				require.Equal(t, kafka.None, res.ErrorCode, "expected no kafka error")
+
+				require.Equal(t, "mokapi.io", res.Host)
+				require.Equal(t, int32(9092), res.Port)
+			},
+		},
 	}
 
 	t.Parallel()
@@ -98,7 +169,7 @@ func TestFindCoordinator(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{})
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 			defer s.Close()
 			tc.fn(t, s)
 		})

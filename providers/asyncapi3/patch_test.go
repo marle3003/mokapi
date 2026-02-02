@@ -1,12 +1,13 @@
 package asyncapi3_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestConfig_Patch_Info(t *testing.T) {
@@ -113,9 +114,9 @@ func TestConfig_Patch_Server(t *testing.T) {
 				asyncapi3test.NewConfig(),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Len(t, result.Servers, 1)
-				require.Equal(t, "foo.bar", result.Servers["foo"].Value.Host)
-				require.Equal(t, "description", result.Servers["foo"].Value.Description)
+				require.Equal(t, result.Servers.Len(), 1)
+				require.Equal(t, "foo.bar", result.Servers.Lookup("foo").Value.Host)
+				require.Equal(t, "description", result.Servers.Lookup("foo").Value.Description)
 			},
 		},
 		{
@@ -125,9 +126,9 @@ func TestConfig_Patch_Server(t *testing.T) {
 				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar", asyncapi3test.WithServerDescription("description"))),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Len(t, result.Servers, 1)
-				require.Equal(t, "foo.bar", result.Servers["foo"].Value.Host)
-				require.Equal(t, "description", result.Servers["foo"].Value.Description)
+				require.Equal(t, result.Servers.Len(), 1)
+				require.Equal(t, "foo.bar", result.Servers.Lookup("foo").Value.Host)
+				require.Equal(t, "description", result.Servers.Lookup("foo").Value.Description)
 			},
 		},
 		{
@@ -137,8 +138,8 @@ func TestConfig_Patch_Server(t *testing.T) {
 				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "bar.foo")),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Len(t, result.Servers, 1)
-				require.Equal(t, "bar.foo", result.Servers["foo"].Value.Host)
+				require.Equal(t, result.Servers.Len(), 1)
+				require.Equal(t, "bar.foo", result.Servers.Lookup("foo").Value.Host)
 			},
 		},
 		{
@@ -148,11 +149,11 @@ func TestConfig_Patch_Server(t *testing.T) {
 				asyncapi3test.NewConfig(asyncapi3test.WithServer("bar", "kafka", "bar.foo", asyncapi3test.WithServerDescription("other"))),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Len(t, result.Servers, 2)
-				require.Equal(t, "foo.bar", result.Servers["foo"].Value.Host)
-				require.Equal(t, "description", result.Servers["foo"].Value.Description)
-				require.Equal(t, "bar.foo", result.Servers["bar"].Value.Host)
-				require.Equal(t, "other", result.Servers["bar"].Value.Description)
+				require.Equal(t, result.Servers.Len(), 2)
+				require.Equal(t, "foo.bar", result.Servers.Lookup("foo").Value.Host)
+				require.Equal(t, "description", result.Servers.Lookup("foo").Value.Description)
+				require.Equal(t, "bar.foo", result.Servers.Lookup("bar").Value.Host)
+				require.Equal(t, "other", result.Servers.Lookup("bar").Value.Description)
 			},
 		},
 		{
@@ -162,9 +163,9 @@ func TestConfig_Patch_Server(t *testing.T) {
 				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar", asyncapi3test.WithServerDescription("mokapi"))),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Len(t, result.Servers, 1)
-				require.Equal(t, "foo.bar", result.Servers["foo"].Value.Host)
-				require.Equal(t, "mokapi", result.Servers["foo"].Value.Description)
+				require.Equal(t, result.Servers.Len(), 1)
+				require.Equal(t, "foo.bar", result.Servers.Lookup("foo").Value.Host)
+				require.Equal(t, "mokapi", result.Servers.Lookup("foo").Value.Description)
 			},
 		},
 		{
@@ -174,9 +175,9 @@ func TestConfig_Patch_Server(t *testing.T) {
 				asyncapi3test.NewConfig(asyncapi3test.WithServer("foo", "kafka", "foo.bar", asyncapi3test.WithServerDescription("mokapi"))),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Len(t, result.Servers, 1)
-				require.Equal(t, "foo.bar", result.Servers["foo"].Value.Host)
-				require.Equal(t, "mokapi", result.Servers["foo"].Value.Description)
+				require.Equal(t, result.Servers.Len(), 1)
+				require.Equal(t, "foo.bar", result.Servers.Lookup("foo").Value.Host)
+				require.Equal(t, "mokapi", result.Servers.Lookup("foo").Value.Description)
 			},
 		},
 		{
@@ -187,7 +188,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogRetentionBytes: 1}))),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogRetentionBytes)
+				require.Equal(t, int64(1), result.Servers.Lookup("foo").Value.Bindings.Kafka.LogRetentionBytes)
 			},
 		},
 		{
@@ -201,7 +202,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 				)),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogRetentionBytes)
+				require.Equal(t, int64(1), result.Servers.Lookup("foo").Value.Bindings.Kafka.LogRetentionBytes)
 			},
 		},
 		{
@@ -212,7 +213,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogRetentionMs: 1}))),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogRetentionMs)
+				require.Equal(t, int64(1), result.Servers.Lookup("foo").Value.Bindings.Kafka.LogRetentionMs)
 			},
 		},
 		{
@@ -226,7 +227,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 				)),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogRetentionMs)
+				require.Equal(t, int64(1), result.Servers.Lookup("foo").Value.Bindings.Kafka.LogRetentionMs)
 			},
 		},
 		{
@@ -237,7 +238,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogRetentionCheckIntervalMs: 1}))),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogRetentionCheckIntervalMs)
+				require.Equal(t, int64(1), result.Servers.Lookup("foo").Value.Bindings.Kafka.LogRetentionCheckIntervalMs)
 			},
 		},
 		{
@@ -251,7 +252,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 				)),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogRetentionCheckIntervalMs)
+				require.Equal(t, int64(1), result.Servers.Lookup("foo").Value.Bindings.Kafka.LogRetentionCheckIntervalMs)
 			},
 		},
 		{
@@ -262,7 +263,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogSegmentDeleteDelayMs: 1}))),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogSegmentDeleteDelayMs)
+				require.Equal(t, int64(1), result.Servers.Lookup("foo").Value.Bindings.Kafka.LogSegmentDeleteDelayMs)
 			},
 		},
 		{
@@ -276,7 +277,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 				)),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogSegmentDeleteDelayMs)
+				require.Equal(t, int64(1), result.Servers.Lookup("foo").Value.Bindings.Kafka.LogSegmentDeleteDelayMs)
 			},
 		},
 		{
@@ -287,7 +288,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogRollMs: 1}))),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogRollMs)
+				require.Equal(t, int64(1), result.Servers.Lookup("foo").Value.Bindings.Kafka.LogRollMs)
 			},
 		},
 		{
@@ -301,7 +302,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 				)),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogRollMs)
+				require.Equal(t, int64(1), result.Servers.Lookup("foo").Value.Bindings.Kafka.LogRollMs)
 			},
 		},
 		{
@@ -312,7 +313,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{LogSegmentBytes: 1}))),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogSegmentBytes)
+				require.Equal(t, int64(1), result.Servers.Lookup("foo").Value.Bindings.Kafka.LogSegmentBytes)
 			},
 		},
 		{
@@ -326,7 +327,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 				)),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.LogSegmentBytes)
+				require.Equal(t, int64(1), result.Servers.Lookup("foo").Value.Bindings.Kafka.LogSegmentBytes)
 			},
 		},
 		{
@@ -337,7 +338,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{GroupInitialRebalanceDelayMs: 1}))),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.GroupInitialRebalanceDelayMs)
+				require.Equal(t, int64(1), result.Servers.Lookup("foo").Value.Bindings.Kafka.GroupInitialRebalanceDelayMs)
 			},
 		},
 		{
@@ -351,7 +352,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 				)),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.GroupInitialRebalanceDelayMs)
+				require.Equal(t, int64(1), result.Servers.Lookup("foo").Value.Bindings.Kafka.GroupInitialRebalanceDelayMs)
 			},
 		},
 		{
@@ -362,7 +363,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 					asyncapi3test.WithKafkaServerBinding(asyncapi3.BrokerBindings{GroupMinSessionTimeoutMs: 1}))),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.GroupMinSessionTimeoutMs)
+				require.Equal(t, int64(1), result.Servers.Lookup("foo").Value.Bindings.Kafka.GroupMinSessionTimeoutMs)
 			},
 		},
 		{
@@ -376,7 +377,7 @@ func TestConfig_Patch_Server(t *testing.T) {
 				)),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, int64(1), result.Servers["foo"].Value.Bindings.Kafka.GroupMinSessionTimeoutMs)
+				require.Equal(t, int64(1), result.Servers.Lookup("foo").Value.Bindings.Kafka.GroupMinSessionTimeoutMs)
 			},
 		},
 	}

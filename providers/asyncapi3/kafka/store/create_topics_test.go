@@ -1,7 +1,6 @@
 package store_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/createTopics"
@@ -10,11 +9,14 @@ import (
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateTopic(t *testing.T) {
-	s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{})
+	s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 	defer s.Close()
 
 	rr := kafkatest.NewRecorder()
@@ -35,7 +37,7 @@ func TestCreateTopic(t *testing.T) {
 }
 
 func TestCreateTopic_AlreadyExists(t *testing.T) {
-	s := store.New(asyncapi3test.NewConfig(asyncapi3test.AddChannel("test", &asyncapi3.Channel{})), enginetest.NewEngine(), &eventstest.Handler{})
+	s := store.New(asyncapi3test.NewConfig(asyncapi3test.AddChannel("test", &asyncapi3.Channel{})), enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 	defer s.Close()
 
 	rr := kafkatest.NewRecorder()

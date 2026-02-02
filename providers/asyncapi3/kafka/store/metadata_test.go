@@ -2,7 +2,6 @@ package store_test
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
@@ -11,8 +10,11 @@ import (
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestMetadata(t *testing.T) {
@@ -24,6 +26,7 @@ func TestMetadata(t *testing.T) {
 			"default",
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("Cluster Test", "", ""),
 					asyncapi3test.WithServer("", "kafka", "127.0.0.1:9092"),
 					asyncapi3test.WithChannel("foo"),
 				))
@@ -36,6 +39,7 @@ func TestMetadata(t *testing.T) {
 
 				// controller
 				require.Equal(t, int32(0), res.ControllerId)
+				require.Equal(t, "Cluster Test", res.ClusterId)
 
 				// brokers
 				require.Len(t, res.Brokers, 1)
@@ -55,7 +59,7 @@ func TestMetadata(t *testing.T) {
 				require.Len(t, res.Topics[0].Partitions[0].IsrNodes, 0)
 				require.False(t, res.Topics[0].IsInternal)
 
-				require.False(t, kafka.ClientFromContext(r).AllowAutoTopicCreation)
+				require.False(t, kafka.ClientFromContext(r.Context).AllowAutoTopicCreation)
 			},
 		},
 		{
@@ -110,7 +114,7 @@ func TestMetadata(t *testing.T) {
 				})
 				s.ServeMessage(rr, r)
 
-				require.True(t, kafka.ClientFromContext(r).AllowAutoTopicCreation)
+				require.True(t, kafka.ClientFromContext(r.Context).AllowAutoTopicCreation)
 			},
 		},
 		{
@@ -145,6 +149,7 @@ func TestMetadata(t *testing.T) {
 				))
 				rr := kafkatest.NewRecorder()
 				r := kafkatest.NewRequest("kafkatest", 4, &metaData.Request{})
+				r.Host = "127.0.0.1:9092"
 				s.ServeMessage(rr, r)
 
 				res, ok := rr.Message.(*metaData.Response)
@@ -180,6 +185,14 @@ func TestMetadata(t *testing.T) {
 				res, ok = rr.Message.(*metaData.Response)
 				require.True(t, ok)
 				require.Len(t, res.Topics, 0)
+
+				r = kafkatest.NewRequest("kafkatest", 4, &metaData.Request{})
+				r.Host = "foo.bar:9093"
+				s.ServeMessage(rr, r)
+
+				res, ok = rr.Message.(*metaData.Response)
+				require.True(t, ok)
+				require.Len(t, res.Topics, 0)
 			},
 		},
 	}
@@ -190,7 +203,7 @@ func TestMetadata(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{})
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 			defer s.Close()
 			tc.fn(t, s)
 		})

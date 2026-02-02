@@ -39,28 +39,45 @@ import Config from '@/components/dashboard/Config.vue'
 import { useRoute } from 'vue-router'
 import { useRefreshManager } from '@/composables/refresh-manager'
 import { useDashboard, getRouteName } from '@/composables/dashboard'
-import type { AppInfoResponse } from '@/types/dashboard'
 import Tabs from '@/components/dashboard/Tabs.vue'
+import ReleaseNotes from '@/components/ReleaseNotes.vue'
+import { useRouter } from '@/router'
 
+const route = useRoute()
+const router = useRouter();
 const { progress, start, isActive } = useRefreshManager();
 const transitionRefresh = computed(() => {
     return progress.value > 0.1 && progress.value < 99.9;
 })
 const { dashboard, setMode, getMode } = useDashboard();
+if (route.meta.mode) {
+    setMode(route.meta.mode as 'live' | 'demo')
+}
 
-const route = useRoute()
-const appInfo = ref<AppInfoResponse | undefined>()
+const appInfo = computed(() => {
+    return dashboard.value.getAppInfo()
+})
+
+const shortcutHandler = (e: KeyboardEvent) => {
+    const tag = (e.target as HTMLElement)?.tagName
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || e.isComposing) {
+        return
+    }
+    if (e.key === '/') {
+        router.push({ name: getRouteName('search').value })
+    }
+}
+
 onMounted(() => {
     if (route.meta.mode === 'live') {
         start();
     }
-    if (route.meta.mode) {
-        setMode(route.meta.mode as 'live' | 'demo')
-    }
-    appInfo.value = dashboard.value.getAppInfo()
-    onUnmounted(() => {
-        appInfo.value?.close()
-    })
+    window.addEventListener('keydown', shortcutHandler)
+})
+
+onUnmounted(() => {
+    appInfo.value?.close();
+    window.removeEventListener('keydown', shortcutHandler)
 })
 
 function isServiceAvailable(service: string): boolean{
@@ -94,13 +111,11 @@ useMeta('Dashboard | mokapi.io', description, '')
     <main>
         <div class="dashboard">
             <h1 v-if="getMode() === 'live'" class="visually-hidden">Dashboard</h1>
-            <div v-else class="row">
-                <div class="header-demo">
-                    <h1 style="font-size: 2rem; margin-bottom: 10px;">Demo Dashboard</h1>
-                    <p>
-                    Get a feel for the interface and explore recorded data.
-                    </p>
-                </div>
+            <div v-if="getMode() === 'demo'" class="header-demo">
+                <h1 style="font-size: 2rem; margin-bottom: 10px;">Demo Dashboard</h1>
+                <p>
+                Get a feel for the interface and explore recorded data.
+                </p>
             </div>
 
             <div class="dashboard-tabs" v-if="appInfo?.data" :class="{ demo: getMode() === 'demo' }">
@@ -215,6 +230,7 @@ useMeta('Dashboard | mokapi.io', description, '')
 
         <message :message="appInfo.error" v-if="!appInfo?.data && !appInfo?.isLoading && appInfo?.error"></message>
         <loading v-if="isInitLoading()"></loading>
+        <release-notes v-if="getMode() === 'live'" />
     </main>
 </template>
 

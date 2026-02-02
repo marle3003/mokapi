@@ -9,6 +9,7 @@ import (
 	opSchema "mokapi/providers/openapi/schema"
 	opSchematest "mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime/events"
+	"mokapi/runtime/monitor"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
@@ -55,7 +56,7 @@ func TestValidation(t *testing.T) {
 				require.Len(t, e, 2)
 				// latest message is first
 				require.Equal(t,
-					&store.KafkaLog{
+					&store.KafkaMessageLog{
 						Offset:    1,
 						Key:       store.LogValue{Value: "", Binary: []byte("key-bar")},
 						Message:   store.LogValue{Value: "", Binary: []byte("bar")},
@@ -66,9 +67,9 @@ func TestValidation(t *testing.T) {
 						Deleted:   false,
 						Api:       "test",
 					},
-					e[0].Data.(*store.KafkaLog))
+					e[0].Data.(*store.KafkaMessageLog))
 				require.Equal(t,
-					&store.KafkaLog{
+					&store.KafkaMessageLog{
 						Offset:    0,
 						Key:       store.LogValue{Value: "", Binary: []byte("key-foo")},
 						Message:   store.LogValue{Value: "", Binary: []byte("foo")},
@@ -79,7 +80,7 @@ func TestValidation(t *testing.T) {
 						Deleted:   false,
 						Api:       "test",
 					},
-					e[1].Data.(*store.KafkaLog))
+					e[1].Data.(*store.KafkaMessageLog))
 			},
 		},
 		{
@@ -133,7 +134,7 @@ func TestValidation(t *testing.T) {
 
 				e := sm.GetEvents(events.NewTraits())
 				require.Len(t, e, 1)
-				require.Equal(t, []byte("foo"), e[0].Data.(*store.KafkaLog).Key.Binary)
+				require.Equal(t, []byte("foo"), e[0].Data.(*store.KafkaMessageLog).Key.Binary)
 			},
 		},
 		{
@@ -166,8 +167,8 @@ func TestValidation(t *testing.T) {
 
 				e := sm.GetEvents(events.NewTraits())
 				require.Len(t, e, 1)
-				require.Equal(t, `"12"`, e[0].Data.(*store.KafkaLog).Key.Value)
-				require.Equal(t, `"foo"`, e[0].Data.(*store.KafkaLog).Message.Value)
+				require.Equal(t, `"12"`, e[0].Data.(*store.KafkaMessageLog).Key.Value)
+				require.Equal(t, `"foo"`, e[0].Data.(*store.KafkaMessageLog).Message.Value)
 			},
 		},
 		{
@@ -198,7 +199,7 @@ func TestValidation(t *testing.T) {
 
 				e := sm.GetEvents(events.NewTraits())
 				require.Len(t, e, 1)
-				require.Equal(t, 1, e[0].Data.(*store.KafkaLog).SchemaId)
+				require.Equal(t, 1, e[0].Data.(*store.KafkaMessageLog).SchemaId)
 			},
 		},
 		{
@@ -253,7 +254,7 @@ func TestValidation(t *testing.T) {
 
 				e := sm.GetEvents(events.NewTraits())
 				require.Len(t, e, 1)
-				require.Equal(t, "<foo><bar>123</bar></foo>", e[0].Data.(*store.KafkaLog).Message.Value)
+				require.Equal(t, "<foo><bar>123</bar></foo>", e[0].Data.(*store.KafkaMessageLog).Message.Value)
 			},
 		},
 		{
@@ -293,7 +294,7 @@ func TestValidation(t *testing.T) {
 			sm := &events.StoreManager{}
 			sm.SetStore(5, events.NewTraits().WithNamespace("kafka"))
 
-			s := store.New(tc.cfg, enginetest.NewEngine(), sm)
+			s := store.New(tc.cfg, enginetest.NewEngine(), sm, monitor.NewKafka())
 			tc.test(t, s, sm)
 		})
 	}
@@ -329,7 +330,7 @@ func TestValidation_Header(t *testing.T) {
 
 				e := sm.GetEvents(events.NewTraits())
 				require.Len(t, e, 1)
-				require.Equal(t, "\u0001\u0000\u0000\u0000", e[0].Data.(*store.KafkaLog).Headers["foo"].Value)
+				require.Equal(t, "\u0001\u0000\u0000\u0000", e[0].Data.(*store.KafkaMessageLog).Headers["foo"].Value)
 			},
 		},
 		{
@@ -356,7 +357,7 @@ func TestValidation_Header(t *testing.T) {
 
 				e := sm.GetEvents(events.NewTraits())
 				require.Len(t, e, 1)
-				require.Equal(t, "1", e[0].Data.(*store.KafkaLog).Headers["foo"].Value)
+				require.Equal(t, "1", e[0].Data.(*store.KafkaMessageLog).Headers["foo"].Value)
 			},
 		},
 		{
@@ -380,7 +381,7 @@ func TestValidation_Header(t *testing.T) {
 
 				e := sm.GetEvents(events.NewTraits())
 				require.Len(t, e, 1)
-				require.Equal(t, []byte{1, 0, 0, 0}, e[0].Data.(*store.KafkaLog).Headers["foo"].Binary)
+				require.Equal(t, []byte{1, 0, 0, 0}, e[0].Data.(*store.KafkaMessageLog).Headers["foo"].Binary)
 			},
 		},
 		{
@@ -407,7 +408,7 @@ func TestValidation_Header(t *testing.T) {
 
 				e := sm.GetEvents(events.NewTraits())
 				require.Len(t, e, 1)
-				require.Equal(t, "3.141629934310913", e[0].Data.(*store.KafkaLog).Headers["foo"].Value)
+				require.Equal(t, "3.141629934310913", e[0].Data.(*store.KafkaMessageLog).Headers["foo"].Value)
 			},
 		},
 	}
@@ -417,7 +418,7 @@ func TestValidation_Header(t *testing.T) {
 			sm := &events.StoreManager{}
 			sm.SetStore(5, events.NewTraits().WithNamespace("kafka"))
 
-			s := store.New(tc.cfg, enginetest.NewEngine(), sm)
+			s := store.New(tc.cfg, enginetest.NewEngine(), sm, monitor.NewKafka())
 			tc.test(t, s, sm)
 		})
 	}

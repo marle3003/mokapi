@@ -11,13 +11,18 @@ servers:
     description: Local development Kafka broker.
 
 channels:
-  # The "order_events" channel is where order-related messages flow
   order_events:
     address: order-topic
     description: The Kafka topic for order events.
     messages:
       OrderCreated:
         $ref: '#/components/messages/OrderCreated'
+    tags:
+      - name: order
+  user-events:
+    description: The Kafka topic for user events.
+    tags:
+      - name: user
 
 operations:
   # Operation for publishing new orders

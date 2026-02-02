@@ -50,7 +50,7 @@ const data = computed(() => {
   if (!event.value) {
     return undefined
   }
-  return <KafkaEventData>event.value?.data
+  return <KafkaMessageData>event.value?.data
 })
 watchEffect(() => {
   if (!event.value) {
@@ -200,6 +200,40 @@ function isNumber(value: string): boolean {
               <p id="message-partition" class="label">Partition</p>
               <p aria-labelledby="message-partition">{{ data.partition }}</p>
             </div>
+            <div class="col-2">
+              <p id="message-key-type" class="label">Key Type</p>
+              <p aria-labelledby="message-key-type">{{ message?.keyType ?? '-' }}</p>
+            </div>
+            <div class="col">
+              <p id="message-time" class="label">Time</p>
+              <p aria-labelledby="message-time">{{ format(event.time) }}</p>
+            </div>
+          </div>
+          <div class="row mb-2">
+            <div class="col-2">
+              <p id="clientId" class="label">Client</p>
+              <p aria-labelledby="clientId">
+                <router-link v-if="data.script" :to="{
+                    name: getRouteName('config').value,
+                    params: { id: data.script },
+                  }" aria-labelledby="group">
+                  {{ data.clientId }}
+                </router-link>
+                <router-link v-else-if="data.clientId" :to="{
+                    name: getRouteName('kafkaClient').value,
+                    params: {service: event.traits.name, clientId: data.clientId},
+                  }" aria-labelledby="group">
+                  {{ data.clientId }}
+                </router-link>
+                <span v-else>-</span>
+              </p>
+            </div>
+            <div class="col-2">
+              <p id="message-contenttype" class="label">Content Type</p>
+              <p aria-labelledby="message-contenttype">{{ message?.contentTypeTitle ?? '-' }}</p>
+            </div>
+          </div>
+          <div class="row mb-2">
             <div class="col-2" v-if="data.producerId > 0">
               <p id="message-producerId" class="label">Producer Id</p>
               <p aria-labelledby="message-producerId">{{ data.producerId }}</p>
@@ -211,22 +245,6 @@ function isNumber(value: string): boolean {
             <div class="col-2 mb-2" v-if="data.producerId > 0">
               <p id="message-sequenceNumber" class="label">Sequence Number</p>
               <p aria-labelledby="message-sequenceNumber">{{ data.sequenceNumber }}</p>
-            </div>
-          </div>
-          <div class="row mb-2">
-            <div class="col-2">
-              <p id="message-contenttype" class="label">Content Type</p>
-              <p aria-labelledby="message-contenttype">{{ message?.contentTypeTitle ?? '-' }}</p>
-            </div>
-            <div class="col-2">
-              <p id="message-key-type" class="label">Key Type</p>
-              <p aria-labelledby="message-key-type">{{ message?.keyType ?? '-' }}</p>
-            </div>
-          </div>
-          <div class="row mb-2">
-            <div class="col">
-              <p id="message-time" class="label">Time</p>
-              <p aria-labelledby="message-time">{{ format(event.time) }}</p>
             </div>
           </div>
         </div>

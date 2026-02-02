@@ -1,271 +1,294 @@
-import { computed, reactive, ref, watchEffect } from "vue";
+import { reactive, ref, watchEffect } from "vue";
 import { transformPath, useFetch } from "./fetch";
-import type { Dashboard, ExampleRequest, ExampleResult, MailboxMessagesResult, MailboxResult } from "@/types/dashboard";
-import { usePrettyLanguage } from "./usePrettyLanguage";
+import type { AppInfoResponse, Dashboard, ExampleRequest, ExampleResult, MailboxMessagesResult, MailboxResult } from "@/types/dashboard";
+import type { Response } from "./fetch";
 
-const { formatLanguage } = usePrettyLanguage();
+export function useDemoDashboard() {
 
-const demo = ref<any>(null);
+    const db = useFetch('/demo/dashboard.json', undefined, false);
 
-const data = computed(async () => {
-    let res = await fetch(transformPath('/demo/dashboard.json'));
-    if (!res.ok) {
-        let text = await res.text()
-        throw new Error(res.statusText + ': ' + text)
-    }
-    return await res.json()
-})
+    const dashboard: Dashboard = {
 
-watchEffect(async () => {
-    demo.value = await data.value;
-})
+        getAppInfo() {
+            const response: AppInfoResponse = reactive({
+                data: {
+                    version: '0.0.0',
+                    activeServices: [],
+                    search: { enabled: false }
+                },
+                isLoading: true,
+                error: '',
+                close: () => {},
+            })
 
-export const dashboard: Dashboard = {
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                response.data = db.data.info
+                response.isLoading = db.isLoading
+            })
+            return response
+        },
 
-    getAppInfo() {
-        let result = {
-            version: '0.0',
-            activeServices: [],
-            search: { enabled: false }
-        };
-        if (demo.value) {
-            result = demo.value.info;
-        }
+        getServices(type) {
+            const services = ref<Service[]>([])
 
-        return { data: result, isLoading: false, error: '', close: () => {} };
-    },
-
-    getServices(type) {
-        let result = []
-        if (demo.value) {
-            const response = demo.value['services']
-
-            if (response) {
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                let result = []
                 if (type) {
-                    for (let service of response) {
-                        if (service.type == type){
+                    for (let service of db.data['services']) {
+                        if (service.type == type) {
                             result.push(service)
                         }
                     }
-                }else{
-                    result = response
+                } else {
+                    result = db.data['services']
                 }
-            }
-        }
+                services.value = result.sort(compareService)
+            })
+            return { services, close: () => {} } 
+        },
 
-        const services = ref<Service[]>([])
-        services.value = result.sort(compareService)
-        return { services, close: () => {}}
-    },
+        getService(name) {
+            const service = ref<Service | null>(null)
+            const isLoading = ref<boolean>(true)
 
-    getService(name, type) {
-        let result = null;
-        if (demo.value) {
-            result = demo.value['service_'+name]
-        }
-
-        const service = ref<Service | null>(result)
-        const isLoading = ref<boolean>(false)
-        return {service, isLoading, close: () => {}} 
-    },
-
-    getEvents(namespace: string, ...labels: Label[]) {
-        let events = null;
-        if (demo.value) {
-            events = demo.value['events']
-        }
-
-        const result = []
-        for (const event of events) {
-            if (event.traits.namespace !== namespace) {
-                continue
-            }
-            let isValid = true
-            for (const label of labels) {
-                if (event.traits[label.name] !== label.value) {
-                    isValid = false
+            watchEffect(() => {
+                if (!db.data) {
+                    return
                 }
-            }
-            if (isValid) {
-                result.push(event)
-            }
-        }
-        
-        return { events: ref<ServiceEvent[]>(result), close: () => {} }
-    },
+                service.value = db.data['service_' + name]
+                isLoading.value = db.isLoading
+            })
+            return { service, isLoading, close: () => {} }
+        },
 
-    getEvent(id: string){
-        let event = null;
-        if (demo.value) {
-            const events = demo.value['events'];
-            for (const e of events) {
-                if (e.id === id) {
-                    event = e;
+        getEvents(namespace: string, ...labels: Label[]) {
+            const events = ref<ServiceEvent[]>([])
+            const isLoading = ref<boolean>(true)
+
+            watchEffect(() => {
+                if (!db.data) {
+                    return
                 }
-            }
-        }
-
-        return {event: ref<ServiceEvent | null>(event), isLoading: ref(false), close: () => {}}
-    },
-
-    getMetrics(query) {
-        let metrics = []
-        if (demo.value) {
-            metrics = demo.value['metrics']
-        }
-        return {
-            data: metrics,
-            isLoading: false,
-            error: null,
-            close: () => {},
-            refs: 1,
-            refresh: () => {},
-        }
-    },
-
-    getExample(request: ExampleRequest) {
-        const response = useFetch('/api/schema/example', {
-            method: 'POST', 
-            body: JSON.stringify({name: request.name, schema: request.schema.schema, format: request.schema.format, contentTypes: request.contentTypes}), 
-            headers: {'Content-Type': 'application/json', 'Accept': 'application/json'}},
-            false, false)
-        const res: ExampleResult =  reactive({
-            data: [],
-            next: () => response.refresh(),
-            error: null
-        })
-
-        watchEffect(() => {
-            if (response.isLoading) {
-                return
-            }
-            if (response.error) {
-                res.error = response.error
-                res.data = []
-                return
-            }
-
-            res.data = response.data
-            for (const example of res.data) {
-                example.value = atob(example.value)
-                example.value = formatLanguage(example.value, example.contentType!)
-            }
-        })
-        return res
-    },
-
-    getMailbox(service: string, mailbox: string): MailboxResult {
-        let mb = null;
-        if (demo.value) {
-            mb = demo.value[`mailbox_${mailbox}`];
-        }
-        return {mailbox: ref<SmtpMailbox | null>(mb), isLoading: ref(false)}
-    },
-
-    getMailboxMessages(service: string, mailbox: string): MailboxMessagesResult {
-        const result = [];
-        if (demo.value) {
-            for (const mail of demo.value['mails']) {
-                if (mail.data.to.filter((x: any) =>  x.address === mailbox).length > 0) {
-                    result.push({
-                        messageId: mail.data.messageId,
-                        subject: mail.data.subject,
-                        from: mail.data.from,
-                        to: mail.data.to,
-                        date: mail.data.date
-                    })
+                
+                const result = []
+                 for (const event of db.data['events']) {
+                    if (event.traits.namespace !== namespace) {
+                        continue
+                    }
+                    let isValid = true
+                    for (const label of labels) {
+                        if (event.traits[label.name] !== label.value) {
+                            isValid = false
+                        }
+                    }
+                    if (isValid) {
+                        result.push(event)
+                    }
                 }
+
+                events.value = result
+                isLoading.value = db.isLoading
+            })
+            return { events, isLoading, close: () => {} }
+        },
+
+        getEvent(id: string) {
+            const event = ref<ServiceEvent | null>(null)
+            const isLoading = ref<boolean>(true)
+
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                const events = db.data['events'];
+                for (const e of events) {
+                    if (e.id === id) {
+                        event.value = e;
+                    }
+                }
+                isLoading.value = db.isLoading
+            })
+            return { event, isLoading, close: () => {} }
+        },
+
+        getMetrics(query) {
+            const response: Response = reactive({
+                data: null,
+                isLoading: false,
+                error: null,
+                close: () => {},
+                refs: 1,
+                refresh: () => { },
+            })
+
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                response.data = db.data['metrics']
+                response.isLoading = db.isLoading
+            })
+            return response
+        },
+
+        getExample(request: ExampleRequest) {
+            const response: ExampleResult = {
+                data: [],
+                next: () => {},
+                error: 'Example is not working in demo dashboard',
             }
-        }
+            return response
+        },
 
-        const messages = ref<MessageInfo[]>(result)
-        const isLoading = ref<boolean>(true)
-        return { messages: messages, isLoading, close: () => {} }
-    },
+        getMailbox(service: string, mailbox: string): MailboxResult {
+            const mb = ref<SmtpMailbox | null>(null)
+            const isLoading = ref<boolean>(true)
 
-    getMail(messageId: string) {
-        let mail = null;
-        if (demo.value) {
-            mail = demo.value['mails'].find((x: any) => x.data.messageId === messageId);
-        }
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                mb.value =  db.data[`mailbox_${mailbox}`]
+                isLoading.value = db.isLoading
+            })
+            return { mailbox: mb, isLoading }
+        },
 
-        return { mail: ref<Message | null>(mail), isLoading: ref<boolean>(false) }
-    },
+        getMailboxMessages(service: string, mailbox: string): MailboxMessagesResult {
+            const messages = ref<MessageInfo[]>([])
+            const isLoading = ref<boolean>(true)
 
-    getAttachmentUrl(messageId: string, name: string): string {
-        const result = this.getMail(messageId)
-        if (!result.mail.value) {
-            return '';
-        }
-        const mail = result.mail.value;
-        const attachment = mail.data.attachments.find((x: any) => x.name === name);
-        if (!attachment) {
-            return '';
-        }
-        return transformPath(`/demo/${getFilename(attachment.contentType)}`)
-    },
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
 
-    getConfigs() {
-        let result = null;
-        if (demo.value) {
-            result = demo.value.configs;
-        }
+                const result = [];
+                for (const mail of db.data['mails']) {
+                    if (mail.data.to.filter((x: any) => x.address === mailbox).length > 0) {
+                        result.push({
+                            messageId: mail.data.messageId,
+                            subject: mail.data.subject,
+                            from: mail.data.from,
+                            to: mail.data.to,
+                            date: mail.data.date
+                        })
+                    }
+                }
 
-        return { data: ref<Config[] | null>(result), isLoading: ref<boolean>(false), close: () => {} }
-    },
+                messages.value = result
+                isLoading.value = db.isLoading
+            })
+            return { messages, isLoading, close: () => {} }
+        },
 
-    getConfig(id: string) {
-        let result = null;
-        if (demo.value) {
-            result = demo.value.configs.find((x: Config) => x.id === id);
-        }
+        getMail(messageId: string) {
+            const mail = ref<Message | null>(null)
+            const isLoading = ref<boolean>(true)
 
-        return { config: ref<Config | null>(result), isLoading: ref<boolean>(false), close: () => {} }
-    },
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                mail.value = db.data['mails'].find((x: any) => x.data.messageId === messageId);
+                isLoading.value = db.isLoading
+            })
+            return { mail, isLoading, close: () => {} }
+        },
 
-    getConfigData(id) {
-        let config = null;
-        if (demo.value) {
-            config = demo.value.configs.find((x: Config) => x.id === id);
-        }
+        getAttachmentUrl(messageId: string, name: string): string {
+            const result = this.getMail(messageId)
+            if (!result.mail.value) {
+                return '';
+            }
+            const mail = result.mail.value;
+            const attachment = mail.data.attachments.find((x: any) => x.name === name);
+            if (!attachment) {
+                return '';
+            }
+            return transformPath(`/demo/${getFilename(attachment.contentType)}`)
+        },
 
-        const response = useFetch(this.getConfigDataUrl(id));
-        const data = ref<string | null>(null);
-        const isLoading = ref<boolean>(true);
-        const filename = ref<string | undefined>();
+        getConfigs() {
+            const configs = ref<Config[]>([])
+            const isLoading = ref<boolean>(true)
 
-        watchEffect(() => {
-            data.value = response.data ? response.data : null;
-            isLoading.value = response.isLoading;
-            filename.value = getFilenameFromUrl(config.url);
-        })
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                configs.value = db.data.configs
+                isLoading.value = db.isLoading
+            })
+            return { data: configs, isLoading, close: () => {} }
+        },
 
-        return { data, isLoading, filename: filename, close: () => {} }
-    },
+        getConfig(id: string) {
+            const config = ref<Config | null>(null)
+            const isLoading = ref<boolean>(true)
 
-    getConfigDataUrl(id) {
-        let config = null;
-        if (demo.value) {
-            config = demo.value.configs.find((x: Config) => x.id === id);
-        }
-        return '/demo/' + getFilenameFromUrl(config.url)
-    },
-}
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                config.value =  db.data.configs.find((x: Config) => x.id === id);
+                isLoading.value = db.isLoading
+            })
+            return { config, isLoading, close: () => {} }
+        },
 
-function compareService(s1: Service, s2: Service) {
-    const name1 = s1.name.toLowerCase()
-    const name2 = s2.name.toLowerCase()
-    return name1.localeCompare(name2)
-}
+        getConfigData(id) {
+            const response = useFetch(this.getConfigDataUrl(id));
+            const data = ref<string | null>(null);
+            const isLoading = ref<boolean>(true);
+            const filename = ref<string | undefined>();
 
-function getFilename(contentType: string) {
-    const match = contentType.match(/name=([^;]+)/);
-    if (match && match[1]) {
-        return match[1];
+            watchEffect(() => {
+                let config = null
+                if (db.data) {
+                    config = db.data.configs.find((x: Config) => x.id === id);
+                }
+
+                data.value = response.data ? response.data : null;
+                isLoading.value = response.isLoading;
+                filename.value = getFilenameFromUrl(config?.url);
+            })
+
+            return { data, isLoading, filename: filename, close: () => { } }
+        },
+
+        getConfigDataUrl(id) {
+            let config = null;
+            if (db.data) {
+                config = db.data.configs.find((x: Config) => x.id === id);
+            }
+            return '/demo/' + getFilenameFromUrl(config?.url)
+        },
     }
-    return null;
-}
 
-function getFilenameFromUrl(url: string): string {
-  return new URL(url).pathname.split('/').pop()!;
+    function compareService(s1: Service, s2: Service) {
+        const name1 = s1.name.toLowerCase()
+        const name2 = s2.name.toLowerCase()
+        return name1.localeCompare(name2)
+    }
+
+    function getFilename(contentType: string) {
+        const match = contentType.match(/name=([^;]+)/);
+        if (match && match[1]) {
+            return match[1];
+        }
+        return null;
+    }
+
+    function getFilenameFromUrl(url: string): string {
+        return new URL(url).pathname.split('/').pop()!;
+    }
+
+    return dashboard
 }

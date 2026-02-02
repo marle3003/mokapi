@@ -4,12 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/config"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/transport/client"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/config/static"
@@ -19,6 +13,13 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/transport/client"
+	"github.com/go-git/go-git/v5/plumbing/transport/http"
+	log "github.com/sirupsen/logrus"
 )
 
 type repository struct {
@@ -110,7 +111,7 @@ func (p *Provider) Start(ch chan dynamic.ConfigEvent, pool *safe.Pool) error {
 		pool.Go(func(ctx context.Context) {
 			err := p.initRepository(r, ch, pool)
 			if err != nil {
-				log.Errorf("init git repository failed: %v", err)
+				log.Errorf("init git repository '%v' failed: %v", r.url, err)
 			}
 		})
 	}
@@ -128,9 +129,16 @@ func (p *Provider) initRepository(r *repository, ch chan dynamic.ConfigEvent, po
 		return err
 	}
 
-	r.repo, err = git.PlainClone(r.localPath, false, &git.CloneOptions{
-		URL: r.repoUrl,
-	})
+	options := &git.CloneOptions{
+		URL:          r.repoUrl,
+		Depth:        1,
+		SingleBranch: true,
+	}
+	if r.ref != "" {
+		options.ReferenceName = plumbing.NewBranchReferenceName(r.ref)
+	}
+
+	r.repo, err = git.PlainClone(r.localPath, false, options)
 	if err != nil {
 		return fmt.Errorf("unable to clone git %q: %v", r.repoUrl, err)
 	}
@@ -140,31 +148,7 @@ func (p *Provider) initRepository(r *repository, ch chan dynamic.ConfigEvent, po
 		return fmt.Errorf("unable to get git worktree: %v", err.Error())
 	}
 
-	h, err := r.repo.Head()
-	if err != nil {
-		return fmt.Errorf("unable to get git head: %v", err.Error())
-	}
-
-	r.pullOptions = &git.PullOptions{SingleBranch: true}
-	if len(r.ref) > 0 {
-		ref := plumbing.NewBranchReferenceName(r.ref)
-
-		if h.Name() != ref {
-			r.pullOptions.ReferenceName = ref
-			err = r.repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"}})
-			if errors.Is(err, git.ErrForceNeeded) {
-				err = r.repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"+refs/*:refs/*", "HEAD:refs/heads/HEAD"}})
-			}
-			if err != nil {
-				return fmt.Errorf("git fetch error %v: %v", r.url, err.Error())
-			}
-			err = r.wt.Checkout(&git.CheckoutOptions{Branch: ref})
-			if err != nil && !errors.Is(err, git.NoErrAlreadyUpToDate) {
-				return fmt.Errorf("git checkout error %v: %v", r.url, err.Error())
-			}
-		}
-	}
-
+	r.pullOptions = &git.PullOptions{SingleBranch: true, Depth: 1}
 	ref, err := r.repo.Head()
 	if err != nil {
 		return fmt.Errorf("unable to get git head: %w", err)

@@ -40,33 +40,52 @@ type kafkaInfo struct {
 	Groups      []group          `json:"groups,omitempty"`
 	Metrics     []metrics.Metric `json:"metrics,omitempty"`
 	Configs     []config         `json:"configs,omitempty"`
+	Clients     []client         `json:"clients,omitempty"`
 }
 
 type kafkaServer struct {
-	Name        string           `json:"name"`
-	Host        string           `json:"host"`
-	Protocol    string           `json:"protocol"`
-	Description string           `json:"description"`
-	Tags        []kafkaServerTag `json:"tags,omitempty"`
+	Name        string         `json:"name"`
+	Host        string         `json:"host"`
+	Protocol    string         `json:"protocol"`
+	Title       string         `json:"title"`
+	Summary     string         `json:"summary"`
+	Description string         `json:"description"`
+	Configs     map[string]any `json:"configs,omitempty"`
+	Tags        []kafkaTag     `json:"tags,omitempty"`
 }
 
-type kafkaServerTag struct {
+type kafkaTag struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 
 type group struct {
 	Name               string   `json:"name"`
+	Generation         int      `json:"generation"`
 	Members            []member `json:"members"`
-	Coordinator        string   `json:"coordinator"`
 	Leader             string   `json:"leader"`
 	State              string   `json:"state"`
 	AssignmentStrategy string   `json:"protocol"`
 	Topics             []string `json:"topics"`
 }
 
+type client struct {
+	ClientId              string              `json:"clientId"`
+	Address               string              `json:"address"`
+	BrokerAddress         string              `json:"brokerAddress"`
+	ClientSoftwareName    string              `json:"clientSoftwareName"`
+	ClientSoftwareVersion string              `json:"clientSoftwareVersion"`
+	Groups                []clientGroupMember `json:"groups"`
+}
+
+type clientGroupMember struct {
+	MemberId string `json:"memberId"`
+	Group    string `json:"group"`
+}
+
 type member struct {
 	Name                  string           `json:"name"`
+	ClientId              string           `json:"clientId"`
 	Addr                  string           `json:"addr"`
 	ClientSoftwareName    string           `json:"clientSoftwareName"`
 	ClientSoftwareVersion string           `json:"clientSoftwareVersion"`
@@ -80,19 +99,14 @@ type topic struct {
 	Partitions  []partition              `json:"partitions"`
 	Messages    map[string]messageConfig `json:"messages,omitempty"`
 	Bindings    bindings                 `json:"bindings,omitempty"`
+	Tags        []kafkaTag               `json:"tags,omitempty"`
 }
 
 type partition struct {
-	Id          int    `json:"id"`
-	StartOffset int64  `json:"startOffset"`
-	Offset      int64  `json:"offset"`
-	Leader      broker `json:"leader"`
-	Segments    int    `json:"segments"`
-}
-
-type broker struct {
-	Name string `json:"name"`
-	Addr string `json:"addr"`
+	Id          int   `json:"id"`
+	StartOffset int64 `json:"startOffset"`
+	Offset      int64 `json:"offset"`
+	Segments    int   `json:"segments"`
 }
 
 type messageConfig struct {
@@ -406,7 +420,9 @@ func getKafka(info *runtime.KafkaInfo) kafkaInfo {
 		}
 	}
 
-	for name, s := range info.Servers {
+	for it := info.Servers.Iter(); it.Next(); {
+		name := it.Key()
+		s := it.Value()
 		if s == nil || s.Value == nil {
 			continue
 		}
@@ -414,15 +430,18 @@ func getKafka(info *runtime.KafkaInfo) kafkaInfo {
 		ks := kafkaServer{
 			Name:        name,
 			Host:        s.Value.Host,
+			Title:       s.Value.Title,
+			Summary:     s.Value.Summary,
 			Description: s.Value.Description,
 			Protocol:    s.Value.Protocol,
+			Configs:     s.Value.Bindings.Kafka.Configs(),
 		}
 		for _, r := range s.Value.Tags {
 			if r.Value == nil {
 				continue
 			}
 			t := r.Value
-			ks.Tags = append(ks.Tags, kafkaServerTag{
+			ks.Tags = append(ks.Tags, kafkaTag{
 				Name:        t.Name,
 				Description: t.Description,
 			})
@@ -443,6 +462,24 @@ func getKafka(info *runtime.KafkaInfo) kafkaInfo {
 	})
 
 	k.Configs = getConfigs(info.Configs())
+
+	for _, ctx := range info.Store.Clients() {
+		c := client{
+			ClientId:              ctx.ClientId,
+			Address:               ctx.Addr,
+			BrokerAddress:         ctx.ServerAddress,
+			ClientSoftwareName:    ctx.ClientSoftwareName,
+			ClientSoftwareVersion: ctx.ClientSoftwareVersion,
+		}
+		for groupName, memberId := range ctx.Member {
+			c.Groups = append(c.Groups, clientGroupMember{
+				MemberId: memberId,
+				Group:    groupName,
+			})
+		}
+
+		k.Clients = append(k.Clients, c)
+	}
 
 	return k
 }
@@ -546,6 +583,16 @@ func newTopic(t *store.Topic, ch *asyncapi3.Channel, cfg *asyncapi3.Config) topi
 		result.Messages[messageId] = m
 	}
 
+	for _, tRef := range ch.Tags {
+		if tRef.Value == nil {
+			continue
+		}
+		result.Tags = append(result.Tags, kafkaTag{
+			Name:        tRef.Value.Name,
+			Description: tRef.Value.Description,
+		})
+	}
+
 	return result
 }
 
@@ -562,17 +609,18 @@ func getPartitions(t *store.Topic) []partition {
 
 func newGroup(g *store.Group) group {
 	grp := group{
-		Name:        g.Name,
-		State:       g.State.String(),
-		Coordinator: g.Coordinator.Addr(),
+		Name:  g.Name,
+		State: g.State.String(),
 	}
 	if g.Generation != nil {
+		grp.Generation = g.Generation.Id
 		grp.Leader = g.Generation.LeaderId
 		grp.AssignmentStrategy = g.Generation.Protocol
 
 		for id, m := range g.Generation.Members {
 			grp.Members = append(grp.Members, member{
 				Name:                  id,
+				ClientId:              m.Client.ClientId,
 				Addr:                  m.Client.Addr,
 				ClientSoftwareName:    m.Client.ClientSoftwareName,
 				ClientSoftwareVersion: m.Client.ClientSoftwareVersion,
@@ -583,6 +631,8 @@ func newGroup(g *store.Group) group {
 		sort.Slice(grp.Members, func(i, j int) bool {
 			return strings.Compare(grp.Members[i].Name, grp.Members[j].Name) < 0
 		})
+	} else {
+		grp.Generation = -1
 	}
 	for topicName := range g.Commits {
 		grp.Topics = append(grp.Topics, topicName)
@@ -599,18 +649,7 @@ func newPartition(p *store.Partition) partition {
 		Id:          p.Index,
 		StartOffset: p.StartOffset(),
 		Offset:      p.Offset(),
-		Leader:      newBroker(p.Leader),
 		Segments:    len(p.Segments),
-	}
-}
-
-func newBroker(b *store.Broker) broker {
-	if b == nil {
-		return broker{}
-	}
-	return broker{
-		Name: b.Name,
-		Addr: b.Addr(),
 	}
 }
 

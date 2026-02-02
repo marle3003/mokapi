@@ -1,8 +1,6 @@
 package store
 
 import (
-	"bufio"
-	"bytes"
 	"mokapi/kafka"
 	"mokapi/kafka/joinGroup"
 	"mokapi/kafka/syncGroup"
@@ -18,8 +16,9 @@ type groupBalancer struct {
 	sync  chan syncdata
 	stop  chan bool
 
-	joins  []joindata
-	config asyncapi3.BrokerBindings
+	joins   []joindata
+	config  asyncapi3.BrokerBindings
+	monitor *groupMonitor
 }
 
 type joindata struct {
@@ -29,12 +28,17 @@ type joindata struct {
 	protocols        []joinGroup.Protocol
 	rebalanceTimeout int
 	sessionTimeout   int
+	log              func(res any)
 }
 
 type syncdata struct {
-	client  *kafka.ClientContext
-	writer  kafka.ResponseWriter
-	assigns map[string]*groupAssignment
+	client       *kafka.ClientContext
+	writer       kafka.ResponseWriter
+	generationId int32
+	protocolType string
+	protocolName string
+	assigns      map[string]*groupAssignment
+	log          func(res any)
 }
 
 type protocoldata struct {
@@ -49,13 +53,14 @@ type groupAssignment struct {
 	raw      []byte
 }
 
-func newGroupBalancer(group *Group, config asyncapi3.BrokerBindings) *groupBalancer {
+func newGroupBalancer(group *Group, config asyncapi3.BrokerBindings, monitor *groupMonitor) *groupBalancer {
 	return &groupBalancer{
-		group:  group,
-		join:   make(chan joindata),
-		sync:   make(chan syncdata),
-		stop:   make(chan bool, 1),
-		config: config,
+		group:   group,
+		join:    make(chan joindata),
+		sync:    make(chan syncdata),
+		stop:    make(chan bool, 1),
+		config:  config,
+		monitor: monitor,
 	}
 }
 
@@ -119,19 +124,28 @@ func (b *groupBalancer) run() {
 				syncs = append(syncs, s)
 				log.Infof("kafka: group %v state changed from %v to %v", b.group.Name, states[b.group.State], states[Stable])
 				b.group.State = Stable
-				for _, s := range syncs {
-					memberName := s.client.Member[b.group.Name]
+				for _, sync := range syncs {
+					memberName := sync.client.Member[b.group.Name]
 					assign := assigns[memberName]
 					res := &syncGroup.Response{
-						Assignment: assign.raw,
+						ProtocolType: sync.protocolType,
+						ProtocolName: sync.protocolName,
+						Assignment:   assign.raw,
 					}
-					go b.respond(s.writer, res)
+					go b.respond(sync.writer, res)
+					go func() {
+						sync.log(newKafkaSyncGroupResponse(res, assign))
+					}()
 				}
 
 				for memberName, assign := range assigns {
 					for topicName, partitions := range assign.topics {
 						b.group.Generation.Members[memberName].Partitions[topicName] = partitions
 					}
+				}
+
+				if b.monitor != nil {
+					b.monitor.LastRebalancing(b.group.Name, time.Now())
 				}
 
 				log.Infof("kafka: received assignments from leader '%v' for group '%v'", s.client.ClientId, b.group.Name)
@@ -219,23 +233,31 @@ StopWaitingForConsumers:
 			MemberId: memberId,
 			MetaData: counter[protocol].metadata[memberId],
 		})
-		go b.respond(j.writer, &joinGroup.Response{
+		res := &joinGroup.Response{
 			GenerationId: int32(generation.Id),
 			Leader:       generation.LeaderId,
 			MemberId:     memberId,
 			ProtocolType: j.protocolType,
 			ProtocolName: protocol,
-		})
+		}
+		go b.respond(j.writer, res)
+		go func() {
+			j.log(newKafkaJoinGroupResponse(res))
+		}()
 	}
 
-	go b.respond(leader.writer, &joinGroup.Response{
+	res := &joinGroup.Response{
 		GenerationId: int32(generation.Id),
 		Leader:       generation.LeaderId,
 		MemberId:     generation.LeaderId,
 		ProtocolType: leader.protocolType,
 		ProtocolName: protocol,
 		Members:      members,
-	})
+	}
+	go b.respond(leader.writer, res)
+	go func() {
+		leader.log(newKafkaJoinGroupResponse(res))
+	}()
 }
 
 func (b *groupBalancer) sendRebalanceInProgress(w kafka.ResponseWriter) {
@@ -251,28 +273,27 @@ func (b *groupBalancer) respond(w kafka.ResponseWriter, msg kafka.Message) {
 	}()
 }
 
-func newGroupAssignment(b []byte) *groupAssignment {
-	g := &groupAssignment{}
-	g.raw = b
-	r := bufio.NewReader(bytes.NewReader(b))
-	d := kafka.NewDecoder(r, len(b))
-	g.version = d.ReadInt16()
-
-	g.topics = make(map[string][]int)
-	n := int(d.ReadInt32())
-	for i := 0; i < n; i++ {
-		key := d.ReadString()
-		value := make([]int, 0)
-
-		nPartition := int(d.ReadInt32())
-		for j := 0; j < nPartition; j++ {
-			index := d.ReadInt32()
-			value = append(value, int(index))
-		}
-		g.topics[key] = value
+func newKafkaJoinGroupResponse(res *joinGroup.Response) *KafkaJoinGroupResponse {
+	r := &KafkaJoinGroupResponse{
+		GenerationId: res.GenerationId,
+		ProtocolName: res.ProtocolName,
+		MemberId:     res.MemberId,
+		LeaderId:     res.Leader,
+	}
+	for _, m := range res.Members {
+		r.Members = append(r.Members, m.MemberId)
 	}
 
-	g.userData = d.ReadBytes()
+	return r
+}
 
-	return g
+func newKafkaSyncGroupResponse(res *syncGroup.Response, assign *groupAssignment) *KafkaSyncGroupResponse {
+	return &KafkaSyncGroupResponse{
+		ProtocolType: res.ProtocolType,
+		ProtocolName: res.ProtocolName,
+		Assignment: KafkaSyncGroupAssignment{
+			Version: assign.version,
+			Topics:  assign.topics,
+		},
+	}
 }

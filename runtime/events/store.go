@@ -43,3 +43,15 @@ func (s *store) Events(traits Traits) []Event {
 	}
 	return events
 }
+
+func (s *store) some(traits Traits) bool {
+	if len(traits) == 0 {
+		return true
+	}
+	for key, value := range traits {
+		if s.traits.Has(key, value) {
+			return true
+		}
+	}
+	return true
+}

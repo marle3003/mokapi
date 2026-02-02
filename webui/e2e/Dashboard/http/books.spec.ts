@@ -1,115 +1,151 @@
+import { getCellByColumnName } from '../../helpers/table'
 import { test, expect } from '../../models/fixture-dashboard'
 
 test.describe('Visit Books API', () => {
     test.use({ colorScheme: 'dark' })
 
-    const service = {
-        paths: [
-            { path: '/books', summary: '', method: 'GET POST', lastRequest: '-', requests: '0 / 0' },
-        ],
-    }
-
-    test('Visit overview', async ({ dashboard }) => {
+    test('Verify overview', async ({ dashboard, page }) => {
         await dashboard.open()
-        const http = dashboard.http
-        await http.clickService('Books API')
 
-        // service info
-        await expect(http.serviceInfo.name).toHaveText('Books API')
-        await expect(http.serviceInfo.version).toHaveText('1.0.0')
-        await expect(http.serviceInfo.contact).not.toBeVisible()
-        await expect(http.serviceInfo.description).toHaveText('A simple API to manage books in a library')
+        await page.getByRole('link', { name: 'Books API' }).click();
 
-        // servers
-        const server = http.servers.getByRole('cell')
-        await expect(server.nth(0)).toHaveText('https://api.example.com/v1')
-        await expect(server.nth(1)).toHaveText('')
+        await test.step('Verify service info', async () => {
 
-        // endpoints
-        const endpoints = http.endpoints.locator('tbody tr')
-        for (const [i, path] of service.paths.entries()) {
-            const cells = endpoints.nth(i).getByRole('cell')
-            await expect(cells.nth(0)).toHaveText(path.path)
-            await expect(cells.nth(1)).toHaveText(path.summary)
-            await expect(cells.nth(2)).toHaveText(path.method, {ignoreCase: false})
-            await expect(cells.nth(3)).toHaveText(path.lastRequest)
-            await expect(cells.nth(4)).toHaveText(path.requests)
-        }
-    })
+            const region = page.getByRole('region', { name: 'Info' });
+            await expect(region.getByLabel('Name')).toHaveText('Books API');
+            await expect(region.getByLabel('Version')).toHaveText('1.0.0');
+            await expect(region.getByLabel('Contact')).not.toBeVisible();
+            await expect(region.getByLabel('Description')).toHaveText('A simple API to manage books in a library');
 
-    test('Visit endpoint', async ({ dashboard, page }) => {
-        await dashboard.open()
-        const http = dashboard.http
-        await http.clickService('Books API')
+        });
 
-        await test.step('/books', async () => {
-            await http.clickPath('/books')
-            const path = http.getPathModel()
-            await expect(path.path).toHaveText('/books')
-            await expect(path.service).toHaveText('Books API')
-            await expect(path.type).toHaveText('HTTP')
+        await test.step('Verify servers', async () => {
 
-            let cells = path.methods.locator('tbody tr').nth(0).getByRole('cell')
-            await expect(cells.nth(0)).toHaveText('GET', {ignoreCase: false})
-            await expect(cells.nth(0).locator('span')).toHaveClass('badge operation get')
-            await expect(cells.nth(1)).toHaveText('listBooks')
-            await expect(cells.nth(2)).toHaveText('Get books from the store')
+            await page.getByRole('tab', { name: 'Servers' }).click();
+            const table = page.getByRole('table', { name: 'Servers' });
+            const rows = table.locator('tbody tr');
+            await expect(rows).toHaveCount(1);
+            await expect(await getCellByColumnName(table, 'Url', rows.nth(0))).toHaveText('https://api.example.com/v1');
+            await expect(await getCellByColumnName(table, 'Description', rows.nth(0))).toHaveText('-');
+            
+        });
 
-            cells = path.methods.locator('tbody tr').nth(1).getByRole('cell')
-            await expect(cells.nth(0)).toHaveText('POST', {ignoreCase: false})
-            await expect(cells.nth(0).locator('span')).toHaveClass('badge operation post')
-            await expect(cells.nth(1)).toHaveText('addBook')
-            await expect(cells.nth(2)).toHaveText('Add a new book')
+        await test.step('Verify configs', async () => {
 
-            await test.step('visit method post', async () => {
-                await path.clickOperation('POST')
-                const op = http.getOperationModel()
+            await page.getByRole('tab', { name: 'Configs' }).click();
+            const table = page.getByRole('table', { name: 'Configs' });
+            const rows = table.locator('tbody tr');
+            await expect(rows).toHaveCount(4);
+            await expect(await getCellByColumnName(table, 'URL', rows.nth(0))).toHaveText('file://cron.js');
+            await expect(await getCellByColumnName(table, 'Provider', rows.nth(0))).toHaveText('File');
+            await expect(await getCellByColumnName(table, 'Last Update', rows.nth(0))).not.toBeEmpty();
+            
+        });
 
-                await expect(op.operation).toHaveText('POST', {ignoreCase: false})
-                await expect(op.path).toHaveText('/books')
-                await expect(op.operationId).toHaveText('addBook')
-                await expect(op.service).toHaveText('Books API')
-                await expect(op.type).toHaveText('HTTP')
-                await expect(op.summary).toHaveText('Add a new book')
-                await expect(op.description).not.toBeVisible()
+        await test.step('Verify paths', async () => {
 
-                await test.step("http request", async () => {
-                    await expect(op.request.tabs.locator('.active')).toHaveText('Body')
-                    await expect(op.request.body).not.toHaveText('')
+            await page.getByRole('tab', { name: 'Paths' }).click();
 
-                    await test.step('click expand', async () => {
-                        const expand = op.request.expand
-                        await expand.button.click()
-                        await expect(expand.code).toBeVisible()
-                        await expect(expand.code).not.toHaveText('')
-                        await expand.code.press('Escape', { delay: 500 })
-                        // without a second time, dialog does not disappear
-                        await page.locator('body').press('Escape')
-                        await expect(expand.code).not.toBeVisible()
+            const table = page.getByRole('table', { name: 'Paths' });
+            const rows = table.locator('tbody tr');
+            await expect(rows).toHaveCount(1);
+            await expect(await getCellByColumnName(table, 'Path', rows.nth(0))).toHaveText('/books');
+            await expect(await getCellByColumnName(table, 'Summary', rows.nth(0))).toHaveText('');
+            await expect(await getCellByColumnName(table, 'Operations', rows.nth(0))).toHaveText('GET POST');
+            await expect(await getCellByColumnName(table, 'Last Request', rows.nth(0))).toHaveText('-');
+            await expect(await getCellByColumnName(table, 'Req / Err', rows.nth(0))).toHaveText('0 / 0');
+
+            await test.step('Verify path', async () => {
+
+                await page.getByRole('link', { name: '/books' }).click();
+                await expect(page).toHaveURL(/Books%20API\/books/)
+
+                await expect(page.getByLabel('Path')).toHaveText('/books');
+                await expect(page.getByLabel('Service', { exact: true })).toHaveText('Books API')
+                await expect(page.getByLabel('Type of API')).toHaveText('HTTP')
+
+                await test.step('Verify methods', async () => {
+
+                    const table = page.getByRole('table', { name: 'Methods' });
+                    const rows = table.locator('tbody tr');
+                    await expect(rows).toHaveCount(2);
+                    await expect(await getCellByColumnName(table, 'Method', rows.nth(0))).toHaveText('GET');
+                    await expect(await getCellByColumnName(table, 'Operation ID', rows.nth(0))).toHaveText('listBooks');
+                    await expect(await getCellByColumnName(table, 'Summary', rows.nth(0))).toHaveText('Get books from the store');
+                    await expect(await getCellByColumnName(table, 'Last Request', rows.nth(0))).toHaveText('-');
+                    await expect(await getCellByColumnName(table, 'Req / Err', rows.nth(0))).toHaveText('0 / 0');
+
+                    await expect(await getCellByColumnName(table, 'Method', rows.nth(1))).toHaveText('POST');
+                    await expect(await getCellByColumnName(table, 'Operation ID', rows.nth(1))).toHaveText('	addBook');
+                    await expect(await getCellByColumnName(table, 'Summary', rows.nth(1))).toHaveText('Add a new book');
+                    await expect(await getCellByColumnName(table, 'Last Request', rows.nth(1))).toHaveText('-');
+                    await expect(await getCellByColumnName(table, 'Req / Err', rows.nth(1))).toHaveText('0 / 0');
+
+                    await test.step('Verify method post', async () => {
+
+                        await page.getByRole('link', { name: 'POST', exact: true }).click();
+
+                        await expect(page.getByLabel('Operation', { exact: true })).toHaveText('POST /books');
+                        await expect(page.getByLabel('Operation ID')).toHaveText('addBook');
+                        await expect(page.getByLabel('Service', { exact: true })).toHaveText('Books API');
+                        await expect(page.getByLabel('Type of API')).toHaveText('HTTP');
+                        await expect(page.getByLabel('Summary')).toHaveText('Add a new book');
+                        await expect(page.getByLabel('Description', { exact: true })).not.toBeVisible();
+
+                        await test.step("Verify HTTP request", async () => {
+
+                            const request = page.getByRole('region', { name: 'Request' });
+                            await expect(request.getByLabel('Request content type')).toHaveText('application/json');
+                            await expect(request.getByLabel('Required')).toHaveText('true');
+
+                            await test.step('Verify expand schema', async () => {
+                                
+                                await request.getByRole('button', { name: 'Expand' }).click();
+                                const dialog = page.getByRole('dialog');
+                                await expect(dialog).toBeVisible();
+                                await expect(dialog.getByRole('region', { name: 'Content' })).not.toHaveText('');
+
+                                // first press is effectively a focus reset, not a close.
+                                await page.keyboard.press('Escape', { delay: 500 });
+                                await page.keyboard.press('Escape', { delay: 500 });
+                                await expect(dialog).not.toBeVisible();
+
+                            });
+
+                            await test.step('Verify example', async () => {
+
+                                await request.getByRole('button', { name: 'Example' }).click();
+                                const dialog = page.getByRole('dialog');
+                                await expect(dialog).toBeVisible()
+                                await dialog.getByRole('button', { name: 'Example' }).click();
+                                await expect(dialog.getByRole('region', { name: 'Source' })).toContainText(`"id":`)
+
+                                // first press is effectively a focus reset, not a close.
+                                await page.keyboard.press('Escape', { delay: 500 });
+                                await page.keyboard.press('Escape', { delay: 500 });
+                                await expect(dialog).not.toBeVisible();
+
+                            });
+                        });
+
+                        await test.step("Verify response", async () => {
+
+                            const response = page.getByRole('region', { name: 'Response' });
+                            await expect(response.getByRole('tab', {name: '201 Created'})).toBeVisible();
+                            await expect(response.getByLabel('Description')).toHaveText('The created book');
+
+                            await expect(response.getByRole('tab', {name: 'Body'})).not.toContainClass('disabled');
+                            await expect(response.getByRole('tab', {name: 'Headers'})).toContainClass('disabled');
+
+                        })
+
                     })
+                    
+                });
 
-                    await test.step('click example', async () => {
-                        const example = op.request.example
-                        await example.button.click()
-                        await example.example.click()
-                        await expect(example.code).toBeVisible()
-                        await expect(example.code).toContainText(`"id":`)
-                        await op.request.example.code.press('Escape', { delay: 500 })
-                        // without a second time, dialog does not disappear
-                        await page.locator('body').press('Escape')
-                        await expect(example.code).not.toBeVisible()
-                    })
-                })
 
-                await test.step("http response", async () => {
-                    await expect(op.response.element.getByRole('tab', {name: '201 Created'})).toBeVisible()
-                    await expect(op.response.element.getByTestId('response-description-201')).toHaveText('The created book')
+            });
 
-                    await expect(op.response.element.getByRole('tab', {name: 'Body'})).not.toContainClass('disabled')
-                    await expect(op.response.element.getByRole('tab', {name: 'Headers'})).toContainClass('disabled')
-                })
-
-            })
-        })
+        });
     })
 })

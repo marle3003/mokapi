@@ -2,11 +2,12 @@ package monitor
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
 	"mokapi/runtime/metrics"
 	"mokapi/safe"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestMonitor_Start(t *testing.T) {
@@ -27,7 +28,7 @@ func TestMonitor_FindAll(t *testing.T) {
 	t.Parallel()
 
 	m := New()
-	m.Http.RequestCounter.WithLabel("s", "e").Add(1)
+	m.Http.RequestCounter.WithLabel("s", "e", "m").Add(1)
 	r := m.FindAll(metrics.ByNamespace("http"))
 	require.Len(t, r, 1)
 }

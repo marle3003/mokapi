@@ -1,12 +1,13 @@
 package asyncapi3_test
 
 import (
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/asyncapi3"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestServerTags(t *testing.T) {
@@ -26,8 +27,8 @@ servers:
 `,
 			test: func(t *testing.T, cfg *asyncapi3.Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "foo", cfg.Servers["foo"].Value.Tags[0].Value.Name)
-				require.Equal(t, "bar", cfg.Servers["foo"].Value.Tags[0].Value.Description)
+				require.Equal(t, "foo", cfg.Servers.Lookup("foo").Value.Tags[0].Value.Name)
+				require.Equal(t, "bar", cfg.Servers.Lookup("foo").Value.Tags[0].Value.Description)
 			},
 		},
 		{
@@ -45,8 +46,8 @@ components:
 `,
 			test: func(t *testing.T, cfg *asyncapi3.Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "foo", cfg.Servers["foo"].Value.Tags[0].Value.Name)
-				require.Equal(t, "bar", cfg.Servers["foo"].Value.Tags[0].Value.Description)
+				require.Equal(t, "foo", cfg.Servers.Lookup("foo").Value.Tags[0].Value.Name)
+				require.Equal(t, "bar", cfg.Servers.Lookup("foo").Value.Tags[0].Value.Description)
 			},
 		},
 	}

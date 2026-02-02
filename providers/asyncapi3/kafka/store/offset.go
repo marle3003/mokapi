@@ -1,16 +1,24 @@
 package store
 
 import (
-	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
 	"mokapi/kafka/offset"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func (s *Store) offset(rw kafka.ResponseWriter, req *kafka.Request) error {
 	r := req.Message.(*offset.Request)
 	res := &offset.Response{Topics: make([]offset.ResponseTopic, 0)}
 
-	ctx := kafka.ClientFromContext(req)
+	ctx := kafka.ClientFromContext(req.Context)
+
+	reqLog := &KafkaListOffsetsRequest{
+		Topics: make(map[string][]KafkaListOffsetsRequestPartition),
+	}
+	resLog := &KafkaListOffsetsResponse{
+		Topics: make(map[string][]KafkaListOffsetsResponsePartition),
+	}
 
 	for _, rt := range r.Topics {
 		topic := s.Topic(rt.Name)
@@ -21,6 +29,11 @@ func (s *Store) offset(rw kafka.ResponseWriter, req *kafka.Request) error {
 				Index:     rp.Index,
 				Timestamp: rp.Timestamp,
 			}
+
+			reqLog.Topics[rt.Name] = append(reqLog.Topics[rt.Name], KafkaListOffsetsRequestPartition{
+				Partition: int(rp.Index),
+			})
+
 			if topic == nil {
 				log.Errorf("kafka Offset: unknown topic %v, client=%v", topic, ctx.ClientId)
 				resPartition.ErrorCode = kafka.UnknownTopicOrPartition
@@ -34,8 +47,10 @@ func (s *Store) offset(rw kafka.ResponseWriter, req *kafka.Request) error {
 						switch {
 						case rp.Timestamp == kafka.Earliest || rp.Timestamp == 0:
 							resPartition.Offset = partition.StartOffset()
+							resPartition.Timestamp = partition.OffsetTimestamp(resPartition.Offset)
 						case rp.Timestamp == kafka.Latest:
 							resPartition.Offset = partition.Offset()
+							resPartition.Timestamp = partition.OffsetTimestamp(resPartition.Offset)
 						default:
 							// TODO
 							// look up the offsets for the given partitions by timestamp. The returned offset
@@ -54,9 +69,18 @@ func (s *Store) offset(rw kafka.ResponseWriter, req *kafka.Request) error {
 							resPartition.ErrorCode = kafka.UnknownServerError
 						}
 					}
+					resLog.Topics[rt.Name] = append(resLog.Topics[rt.Name], KafkaListOffsetsResponsePartition{
+						Partition: int(rp.Index),
+						Timestamp: resPartition.Timestamp,
+						Snapshot: KafkaListOffsetsResponseSnapshot{
+							StartOffset: partition.StartOffset(),
+							EndOffset:   partition.Offset(),
+						},
+					})
 				}
 			}
 			resPartitions = append(resPartitions, resPartition)
+
 		}
 
 		res.Topics = append(res.Topics, offset.ResponseTopic{
@@ -64,6 +88,10 @@ func (s *Store) offset(rw kafka.ResponseWriter, req *kafka.Request) error {
 			Partitions: resPartitions,
 		})
 	}
+
+	go func() {
+		s.logRequest(req.Header, reqLog)(resLog)
+	}()
 
 	return rw.Write(res)
 }

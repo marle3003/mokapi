@@ -18,6 +18,9 @@ func RegisterGitProvider(cmd *cli.Command) {
 	cmd.Flags().DynamicStringSlice("providers-git-repositories[<index>]-files", false, providerGitRepositoriesFiles)
 	cmd.Flags().DynamicStringSlice("providers-git-repositories[<index>]-include", false, providerGitRepositoriesInclude)
 	cmd.Flags().DynamicString("providers-git-repositories[<index>]-auth-github", providerGitRepositoriesAuthGitHub)
+	cmd.Flags().DynamicString("providers-git-repositories[<index>]-auth-github-appid", providerGitRepositoriesAuthGitHubAppId)
+	cmd.Flags().DynamicString("providers-git-repositories[<index>]-auth-github-installationid", providerGitRepositoriesAuthGitHubInstallationId)
+	cmd.Flags().DynamicString("providers-git-repositories[<index>]-auth-github-privatekey", providerGitRepositoriesAuthGitHubPrivateKey)
 	cmd.Flags().DynamicString("providers-git-repositories[<index>]-pull-interval", cli.FlagDoc{Short: "Override pull interval for this repository"})
 }
 
@@ -212,6 +215,48 @@ This option allows accessing private repositories hosted on GitHub by using cred
 				{Title: "CLI", Source: "--providers-git-repositories[0]-auth-github appId=12345,installationId=123456789,privateKey=2024-2-25.private-key.pem"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_AUTH_GITHUB=appId=12345,installationId=123456789,privateKey=2024-2-25.private-key.pem"},
 				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - auth:\n       github:\n         appId: 12345\n         installationId: 12345\n         privateKey: 2024-2-25.private-key.pem", Language: "yaml"},
+			},
+		},
+	},
+}
+
+var providerGitRepositoriesAuthGitHubAppId = cli.FlagDoc{
+	Short: "GitHub App ID used for authentication",
+	Long:  `Sets or overrides the GitHub App ID used to authenticate access to the repository at the specified index.`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{Title: "CLI", Source: "--providers-git-repositories[0]-auth-github-appId 12345"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_AUTH_GITHUB_APPID=12345"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - auth:\n       github:\n         appId: 12345", Language: "yaml"},
+			},
+		},
+	},
+}
+
+var providerGitRepositoriesAuthGitHubInstallationId = cli.FlagDoc{
+	Short: "GitHub App installation ID",
+	Long:  `Sets or overrides the GitHub App installation ID used to authenticate access to the repository at the specified index.`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{Title: "CLI", Source: "--providers-git-repositories[0]-auth-github-installationid 123456789"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_AUTH_GITHUB_INSTALLATIONID=123456789"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - auth:\n       github:\n         installationId: 12345\n", Language: "yaml"},
+			},
+		},
+	},
+}
+
+var providerGitRepositoriesAuthGitHubPrivateKey = cli.FlagDoc{
+	Short: "Private key for GitHub App authentication",
+	Long:  `Sets or overrides the private key used for GitHub App authentication for the repository at the specified index.`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{Title: "CLI", Source: "--providers-git-repositories[0]-auth-github-privatekey 2024-2-25.private-key.pem"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_GIT_REPOSITORIES[0]_AUTH_GITHUB_PRIVATEKEY=2024-2-25.private-key.pem"},
+				{Title: "File", Source: "providers:\n  git:\n    repositories:\n     - auth:\n       github:\n         privateKey: 2024-2-25.private-key.pem", Language: "yaml"},
 			},
 		},
 	},

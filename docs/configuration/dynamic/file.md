@@ -22,7 +22,7 @@ MOKAPI_PROVIDERS_FILE_DIRECTORY=/path/to/dynamic/config
 ```
 
 ``` box=tip
-You also can use CLI JSON or shorthand syntax to, see [CLI](/docs/configuration/static/cli.md)
+You also can use CLI JSON or shorthand syntax to, see [CLI](/docs/configuration/static/cli-usage.md)
 ```
 
 ## Provider Configuration
@@ -67,7 +67,7 @@ MOKAPI_PROVIDERS_FILE_DIRECTORY=/foobar
 ```
 
 ``` box=tip
-You can define multiple file names or directory using CLI JSON or shorthand syntax, see [CLI](/docs/configuration/static/cli.md)
+You can define multiple file names or directory using CLI JSON or shorthand syntax, see [CLI](/docs/configuration/static/cli-usage.md)
 ```
 
 ``` box=tip

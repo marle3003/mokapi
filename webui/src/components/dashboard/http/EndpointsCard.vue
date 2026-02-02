@@ -1,18 +1,19 @@
 <script setup lang="ts">
 import { useMetrics } from '@/composables/metrics';
 import { usePrettyDates } from '@/composables/usePrettyDate';
-import { type PropType, computed, onMounted, ref } from 'vue';
+import { type PropType, computed } from 'vue';
 import { useRouter, useRoute } from '@/router';
+import { useLocalStorage } from '@/composables/local-storage';
 
 const route = useRoute()
 const router = useRouter()
-const {sum} = useMetrics()
-const {format} = usePrettyDates()
+const { sum } = useMetrics()
+const { format } = usePrettyDates()
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },
 })
-const tags = ref(['__all']);
+const tags = useLocalStorage<string[]>(`http-${props.service.name}-tags`, ['__all'])
 const allTags = computed(() => {
     if (!props.service.tags) {
         return [];
@@ -34,14 +35,6 @@ const allTags = computed(() => {
         }
     }
     return result;
-})
-
-onMounted(() => {
-    const s = localStorage.getItem(`http-${props.service.name}-tags`)
-    if (s && s !== '') {
-        const saved = JSON.parse(s)
-        tags.value = saved
-    }
 })
 
 const paths = computed(() => {
@@ -80,9 +73,6 @@ function goToPath(path: HttpPath, openInNewTab = false){
     } else {
         router.push(to)
     }
-}
-function goToOperation(path: HttpPath, operation: HttpOperation){
-    router.push(route.httpOperation(props.service, path, operation))
 }
 function lastRequest(path: HttpPath){
     const n = sum(props.service.metrics, 'http_request_timestamp', {name: 'endpoint', value: path.path})
@@ -174,8 +164,6 @@ function toggleTag(name: string) {
 
         tags.value = tags.value.filter((t) => t !== '__all')
     }
-
-    localStorage.setItem(`http-${props.service.name}-tags`, JSON.stringify(tags.value))
 }
 </script>
 
@@ -184,25 +172,38 @@ function toggleTag(name: string) {
         <div class="card-body">
             <h2 id="paths" class="card-title text-center">Paths</h2>
 
-            <div class="text-center mt-3 mb-2" v-if="allTags.length > 1">
+            <fieldset class="text-center mt-3 mb-2" v-if="allTags.length > 1" aria-describedby="tag-help">
+
+                <legend class="visually-hidden">
+                    Filter topics by tags
+                </legend>
+
+                <p id="tag-help" class="visually-hidden">
+                    Select one or more tags to filter the topics. Selecting “All” enables all tags.
+                </p>
+
 
                 <div class="form-check form-check-inline">
                     <input class="form-check-input tag-checkbox" type="checkbox" id="all" 
-                      value="all" @change="toggleTag('__all')"
-                      :checked="tags.includes('__all')"
-                    >
+                      value="all" @change="toggleTag('__all')" :checked="tags.includes('__all')" aria-controls="tag-list">
                     <label class="form-check-label" for="all">All</label>
                 </div>
 
-                <div class="form-check form-check-inline" v-for="tag in allTags" :title="tag.summary">
-                    <input class="form-check-input tag-checkbox" type="checkbox" :id="tag.name" 
-                      :value="tag.name" @change="toggleTag(tag.name)"
-                      :checked="tags.includes(tag.name) || tags.includes('__all')"
-                    >
-                    <label class="form-check-label" :for="tag.name">{{ tag.name }}</label>
+                <div id="tag-list" style="display: inline-block">
+                    <div class="form-check form-check-inline" v-for="tag in allTags" :title="tag.summary">
+                        <input class="form-check-input tag-checkbox" type="checkbox" :id="tag.name" 
+                            :value="tag.name" @change="toggleTag(tag.name)"
+                            :checked="tags.includes(tag.name) || tags.includes('__all')"
+                            :aria-describedby="tag.description ? `desc-${tag.name}` : undefined">
+                        <label class="form-check-label" :for="tag.name">{{ tag.name }}</label>
+
+                        <span v-if="tag.description" :id="`desc-${tag.name}`" class="visually-hidden">
+                            {{ tag.description }}
+                        </span>
+                    </div>
                 </div>
 
-            </div>
+            </fieldset>
 
             <div class="table-responsive-sm">
                 <table class="table dataTable selectable" data-testid="endpoints"  aria-labelledby="paths">
@@ -213,7 +214,7 @@ function toggleTag(name: string) {
                             <th scope="col" class="text-left col-3">Summary</th>
                             <th scope="col" class="text-left col-1">Operations</th>
                             <th scope="col" class="text-center col-2">Last Request</th>
-                            <th scope="col" class="text-center col-1">Requests / Errors</th>
+                            <th scope="col" class="text-center col-1" title="Total requests / error responses">Req / Err</th>
                         </tr>
                     </thead>
                     <tbody>

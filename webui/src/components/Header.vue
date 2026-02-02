@@ -146,6 +146,9 @@ const filtered = computed(() => {
   }
   return result
 })
+onUnmounted(() => {
+  window.removeEventListener('keydown', shortcutHandler)
+})
 
 function getUrlPath(filePath: string, cfg?: DocEntry): string[] | undefined {
   if (cfg) {
@@ -176,12 +179,65 @@ function getUrlPath(filePath: string, cfg?: DocEntry): string[] | undefined {
   return undefined
 }
 
+const SEQ_TIMEOUT = 1000
+let lastKeyTime = 0
+let awaitingSecondKey = false
+let shortcutHandler = (e: KeyboardEvent) => {
+    const tag = (e.target as HTMLElement)?.tagName
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || e.isComposing) {
+        return
+    }
+    if (e.key === '/' && !isDashboardDisplayed()) {
+      document.getElementById('search-button')?.click();
+    }
+
+    const now = Date.now()
+
+    if (e.key === 'g') {
+      awaitingSecondKey = true
+      lastKeyTime = now
+      return
+    }
+
+    if (isDashboard && awaitingSecondKey && now - lastKeyTime < SEQ_TIMEOUT) {
+      awaitingSecondKey = false
+      e.preventDefault()
+      switch (e.key) {
+        case 'd': 
+          router.push({ name: 'dashboard' });
+          return;
+        case 'h':
+          router.push({ name: 'http' });
+          return;
+        case 'k':
+          router.push({ name: 'kafka' });
+          return;
+        case 'l':
+          router.push({ name: 'ldap' });
+          return;
+        case 'm':
+          router.push({ name: 'mail' });
+          return;
+        case 'j':
+          router.push({ name: 'jobs' });
+          return;
+        case 'c':
+          router.push({ name: 'configs' });
+          return;
+      }
+    }
+
+    awaitingSecondKey = false
+  }
+
 onMounted(() => {
   const modalEl = document.getElementById('search-docs')!;
   modalEl.addEventListener('shown.bs.modal', () => {
     const inputs = modalEl.getElementsByTagName('input')
     inputs[0]!.focus()
   })
+
+  window.addEventListener('keydown', shortcutHandler)
 })
 
 
@@ -198,6 +254,9 @@ function navigateAndClose(params: Record<string, string>) {
   modalEl.addEventListener('hidden.bs.modal', () => {
     router.push({ name: 'docs', params: params });
   }, { once: true });
+}
+function isDashboardDisplayed() {
+  return route.matched.some(r => r.name?.toString().startsWith('dashboard'));
 }
 </script>
 
@@ -217,7 +276,7 @@ function navigateAndClose(params: Record<string, string>) {
         <a class="navbar-brand" href="./" title="Mokapi home"><img src="/logo-header.svg" height="30" alt="Mokapi home"/></a>
         <div class="d-flex ms-auto align-items-center tools d-none">
             <a href="https://github.com/marle3003/mokapi" class="version pe-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
-            <button class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
+            <button id="search-button" class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
               <span class="bi bi-search pe-2" title="Search"></span>
             </button>
             <button class="btn icon">

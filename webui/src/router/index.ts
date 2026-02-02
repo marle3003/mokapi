@@ -106,14 +106,44 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             meta: {service: 'kafka'}
           },
           {
-            path: 'service/:service/topic/:topic',
+            path: 'service/:service/servers/:server',
+            name: getRouteName('kafkaServer'),
+            component: dashboardView,
+            meta: {service: 'kafka'},
+          },
+          {
+            path: 'service/:service/topics/:topic',
             name: getRouteName('kafkaTopic'),
+            component: dashboardView,
+            meta: {service: 'kafka'},
+          },
+          {
+            path: 'service/:service/groups/:group',
+            name: getRouteName('kafkaGroup'),
+            component: dashboardView,
+            meta: {service: 'kafka'}
+          },
+          {
+            path: 'service/:service/groups/:group/:member',
+            name: getRouteName('kafkaGroupMember'),
             component: dashboardView,
             meta: {service: 'kafka'}
           },
           {
             path: 'messages/:id',
             name: getRouteName('kafkaMessage'),
+            component: dashboardView,
+            meta: {service: 'kafka'}
+          },
+          {
+            path: 'service/:service/requests/:id',
+            name: getRouteName('kafkaRequest'),
+            component: dashboardView,
+            meta: {service: 'kafka'}
+          },
+          {
+            path: 'service/:service/clients/:clientId',
+            name: getRouteName('kafkaClient'),
             component: dashboardView,
             meta: {service: 'kafka'}
           }

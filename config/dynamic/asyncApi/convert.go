@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mokapi/config/dynamic"
 	"mokapi/providers/asyncapi3"
+	"mokapi/sortedmap"
 	"net/url"
 	"path"
 	"strings"
@@ -316,15 +317,15 @@ func convertServers(cfg *asyncapi3.Config, servers map[string]*ServerRef) {
 		return
 	}
 	if cfg.Servers == nil {
-		cfg.Servers = map[string]*asyncapi3.ServerRef{}
+		cfg.Servers = &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{}
 	}
 
 	for name, orig := range servers {
 		if len(orig.Ref) > 0 {
-			cfg.Servers[name] = &asyncapi3.ServerRef{Reference: dynamic.Reference{Ref: orig.Ref}}
+			cfg.Servers.Set(name, &asyncapi3.ServerRef{Reference: dynamic.Reference{Ref: orig.Ref}})
 		}
 		if orig.Value != nil {
-			cfg.Servers[name] = convertServer(orig.Value)
+			cfg.Servers.Set(name, convertServer(orig.Value))
 		}
 	}
 }

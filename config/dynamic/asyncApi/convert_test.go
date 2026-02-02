@@ -1,21 +1,25 @@
-package asyncApi
+package asyncApi_test
 
 import (
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/dynamictest"
+	"mokapi/providers/asyncapi3"
 	"mokapi/schema/json/schema"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestConfig_Convert(t *testing.T) {
 	b, err := os.ReadFile("./test/streetlight-kafka-2.0.yaml")
 	require.NoError(t, err)
 
-	var cfg *Config
+	var cfg *asyncApi.Config
 	err = yaml.Unmarshal(b, &cfg)
 	require.NoError(t, err)
 
@@ -36,10 +40,10 @@ func TestConfig_Convert(t *testing.T) {
 	require.Equal(t, "https://www.apache.org/licenses/LICENSE-2.0", cfg3.Info.License.Url)
 
 	// Server
-	require.Len(t, cfg3.Servers, 1)
-	require.Equal(t, "test.mosquitto.org:{port}", cfg3.Servers["production"].Value.Host)
-	require.Equal(t, "kafka", cfg3.Servers["production"].Value.Protocol)
-	require.Equal(t, "Test broker", cfg3.Servers["production"].Value.Description)
+	require.Equal(t, cfg3.Servers.Len(), 1)
+	require.Equal(t, "test.mosquitto.org:{port}", cfg3.Servers.Lookup("production").Value.Host)
+	require.Equal(t, "kafka", cfg3.Servers.Lookup("production").Value.Protocol)
+	require.Equal(t, "Test broker", cfg3.Servers.Lookup("production").Value.Description)
 
 	// Channel
 	channel := cfg3.Channels["smartylighting/streetlights/1/0/event/{streetlightId}/lighting/measured"].Value
@@ -75,6 +79,32 @@ func TestConfig_Convert(t *testing.T) {
 	require.Equal(t, "Inform about environmental lighting conditions of a particular streetlight.", op.Summary)
 }
 
+func TestServer_Convert(t *testing.T) {
+	testcases := []struct {
+		name string
+		cfg  *asyncApi.Config
+		test func(t *testing.T, config *asyncapi3.Config, err error)
+	}{
+		{
+			name: "server with url:port",
+			cfg:  asyncapitest.NewConfig(asyncapitest.WithServer("foo", "kafka", "mokapi-service:9092")),
+			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+				require.NoError(t, err)
+				require.Equal(t, config.Servers.Len(), 1)
+				require.Equal(t, "mokapi-service:9092", config.Servers.Lookup("foo").Value.Host)
+				require.Equal(t, "kafka", config.Servers.Lookup("foo").Value.Protocol)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			c, err := tc.cfg.Convert()
+			tc.test(t, c, err)
+		})
+	}
+}
+
 func TestConfig_ConvertNoOperationId(t *testing.T) {
 	s := `
 asyncapi: '2.6.0'
@@ -94,7 +124,7 @@ channels:
           schema:
             type: string
 `
-	var old *Config
+	var old *asyncApi.Config
 	err := yaml.Unmarshal([]byte(s), &old)
 	require.NoError(t, err)
 	cfg, err := old.Convert()

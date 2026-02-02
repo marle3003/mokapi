@@ -1,13 +1,14 @@
 package server
 
 import (
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
 	"mokapi/server/service"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type MqttManager struct {
@@ -96,7 +97,9 @@ func (c *mqttCluster) update(cfg *runtime.MqttInfo, monitor *monitor.Mqtt) {
 func (c *mqttCluster) updateBrokers(cfg *runtime.MqttInfo, monitor *monitor.Mqtt) {
 	brokers := c.brokers
 	c.brokers = make(map[string]Broker)
-	for name, server := range cfg.Servers {
+	for it := cfg.Servers.Iter(); it.Next(); {
+		name := it.Key()
+		server := it.Value()
 		if server == nil || server.Value == nil {
 			continue
 		}

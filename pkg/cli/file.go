@@ -57,7 +57,7 @@ func (c *Command) readConfigFile() error {
 		return fmt.Errorf("read config file '%s' failed: %w", file, err)
 	}
 
-	return mapConfigToFlags(c.Config, c.flags)
+	return nil
 }
 
 func (c *Command) findConfigFile() string {
@@ -95,86 +95,6 @@ func readConfigFile(path string, config any) error {
 		return fmt.Errorf("parse file '%v' failed: %w", path, err)
 	}
 	return nil
-}
-
-func mapConfigToFlags(config any, flags *FlagSet) error {
-	return mapValueToFlags(reflect.ValueOf(config), "", flags)
-}
-
-func mapValueToFlags(v reflect.Value, key string, flags *FlagSet) error {
-	switch v.Kind() {
-	case reflect.Ptr:
-		return mapValueToFlags(v.Elem(), key, flags)
-	case reflect.Struct:
-		t := v.Type()
-		for i := 0; i < v.NumField(); i++ {
-			field := t.Field(i)
-			if !field.IsExported() {
-				continue
-			}
-
-			name := strings.ToLower(field.Name)
-			tag := field.Tag.Get("name")
-			if tag != "" {
-				name = strings.Split(tag, ",")[0]
-			} else {
-				tag = field.Tag.Get("flag")
-				if tag != "" {
-					name = strings.Split(tag, ",")[0]
-				}
-			}
-			if name == "-" {
-				continue
-			}
-			if key != "" {
-				name = key + "-" + name
-			}
-
-			err := mapValueToFlags(v.Field(i), name, flags)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	case reflect.Slice:
-		if _, ok := flags.GetValue(key); ok {
-			var values []string
-			for i := 0; i < v.Len(); i++ {
-				values = append(values, fmt.Sprintf("%v", v.Index(i)))
-			}
-			return flags.setValue(key, values, SourceFile)
-		}
-		for i := 0; i < v.Len(); i++ {
-			err := mapValueToFlags(v.Index(i), fmt.Sprintf("%s[%v]", key, i), flags)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	case reflect.Map:
-		for _, k := range v.MapKeys() {
-			err := mapValueToFlags(v.MapIndex(k), fmt.Sprintf("%s-%v", key, k.Interface()), flags)
-			if err != nil {
-				return err
-			}
-		}
-
-		return nil
-	default:
-		if canBeNil(v) && v.IsNil() {
-			return nil
-		}
-		return flags.setValue(key, []string{fmt.Sprintf("%v", v.Interface())}, SourceFile)
-	}
-}
-
-func canBeNil(v reflect.Value) bool {
-	switch v.Kind() {
-	case reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
-		return true
-	default:
-		return false
-	}
 }
 
 func unmarshalYaml(b []byte, config any) error {

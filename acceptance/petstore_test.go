@@ -57,10 +57,12 @@ func (suite *PetStoreSuite) TestApi() {
 			"description": "",
 			"servers": []interface{}{
 				map[string]interface{}{
-					"description": "",
 					"host":        "127.0.0.1:19092",
 					"name":        "broker",
 					"protocol":    "kafka",
+					"title":       "",
+					"summary":     "",
+					"description": "",
 				},
 			},
 
@@ -120,8 +122,8 @@ func (suite *PetStoreSuite) TestApi() {
 				},
 				"name": "petstore.order-event",
 				"partitions": []interface{}{
-					map[string]interface{}{"id": float64(0), "leader": map[string]interface{}{"addr": "127.0.0.1:19092", "name": "broker"}, "offset": float64(1), "segments": float64(1), "startOffset": float64(0)},
-					map[string]interface{}{"id": float64(1), "leader": map[string]interface{}{"addr": "127.0.0.1:19092", "name": "broker"}, "offset": float64(0), "segments": float64(0), "startOffset": float64(0)},
+					map[string]interface{}{"id": float64(0), "offset": float64(1), "segments": float64(1), "startOffset": float64(0)},
+					map[string]interface{}{"id": float64(1), "offset": float64(0), "segments": float64(0), "startOffset": float64(0)},
 				},
 			}},
 		}
@@ -172,7 +174,7 @@ func (suite *PetStoreSuite) TestJsHttpHandler() {
 
 	// test http metrics
 	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%d/api/metrics/http?path=/pet/{petId}", suite.cfg.Api.Port), nil,
-		try.BodyContains(`http_requests_total{service=\"Swagger Petstore\",endpoint=\"/pet/{petId}\"}","value":4}`),
+		try.BodyContains(`http_requests_total{service=\"Swagger Petstore\",endpoint=\"/pet/{petId}\",method=\"GET\"}","value":4}`),
 	)
 }
 

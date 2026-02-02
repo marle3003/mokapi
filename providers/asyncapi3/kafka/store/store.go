@@ -39,6 +39,8 @@ type Store struct {
 	eventEmitter common.EventEmitter
 	eh           events.Handler
 	producers    map[int64]*ProducerState
+	monitor      *monitor.Kafka
+	clients      map[string]*kafka.ClientContext
 
 	nextPID int64
 	m       sync.RWMutex
@@ -49,19 +51,21 @@ type ProducerState struct {
 	ProducerEpoch int16
 }
 
-func NewEmpty(eventEmitter common.EventEmitter, eh events.Handler) *Store {
+func NewEmpty(eventEmitter common.EventEmitter, eh events.Handler, monitor *monitor.Kafka) *Store {
 	return &Store{
 		topics:       make(map[string]*Topic),
 		brokers:      make(map[int]*Broker),
 		groups:       make(map[string]*Group),
 		eventEmitter: eventEmitter,
 		eh:           eh,
+		monitor:      monitor,
 		producers:    make(map[int64]*ProducerState),
+		clients:      make(map[string]*kafka.ClientContext),
 	}
 }
 
-func New(config *asyncapi3.Config, eventEmitter common.EventEmitter, eh events.Handler) *Store {
-	s := NewEmpty(eventEmitter, eh)
+func New(config *asyncapi3.Config, eventEmitter common.EventEmitter, eh events.Handler, monitor *monitor.Kafka) *Store {
+	s := NewEmpty(eventEmitter, eh, monitor)
 	s.Update(config)
 	return s
 }
@@ -137,32 +141,36 @@ func (s *Store) GetOrCreateGroup(name string, brokerId int) *Group {
 		return g
 	}
 
-	g := NewGroup(name, b)
+	g := s.newGroup(name, b)
 	s.groups[name] = g
 	return g
 }
 
 func (s *Store) Update(c *asyncapi3.Config) {
 	s.cluster = c.Info.Name
-	for n, server := range c.Servers {
-		if server.Value.Protocol != "" && server.Value.Protocol != "kafka" {
-			continue
-		}
-		if b := s.getBroker(n); b != nil {
-			host, port := parseHostAndPort(server.Value.Host)
-			if len(host) == 0 {
-				log.Errorf("unable to update broker '%v' to cluster '%v': missing host in url '%v'", n, s.cluster, server.Value.Host)
+	if c.Servers != nil {
+		for it := c.Servers.Iter(); it.Next(); {
+			name := it.Key()
+			server := it.Value()
+			if server.Value.Protocol != "" && server.Value.Protocol != "kafka" {
 				continue
 			}
-			b.Host = host
-			b.Port = port
-		} else {
-			s.addBroker(n, server.Value)
+			if b := s.getBroker(name); b != nil {
+				host, port := parseHostAndPort(server.Value.Host)
+				if len(host) == 0 {
+					log.Errorf("unable to update broker '%v' to cluster '%v': missing host in url '%v'", name, s.cluster, server.Value.Host)
+					continue
+				}
+				b.Host = host
+				b.Port = port
+			} else {
+				s.addBroker(name, server.Value)
+			}
 		}
-	}
-	for _, b := range s.brokers {
-		if _, ok := c.Servers[b.Name]; !ok {
-			s.deleteBroker(b.Id)
+		for _, b := range s.brokers {
+			if _, ok := c.Servers.Get(b.Name); !ok {
+				s.deleteBroker(b.Id)
+			}
 		}
 	}
 
@@ -201,6 +209,22 @@ func (s *Store) Update(c *asyncapi3.Config) {
 
 func (s *Store) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
 	var err error
+
+	client := kafka.ClientFromContext(req.Context)
+	if client != nil {
+		s.m.Lock()
+		if _, ok := s.clients[client.ClientId]; !ok {
+			s.clients[client.ClientId] = client
+			client.Close = func() {
+				s.m.Lock()
+				defer s.m.Unlock()
+
+				delete(s.clients, client.ClientId)
+			}
+		}
+		s.m.Unlock()
+	}
+
 	switch req.Message.(type) {
 	case *produce.Request:
 		err = s.produce(rw, req)
@@ -282,11 +306,6 @@ func (s *Store) deleteBroker(id int) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	for _, t := range s.topics {
-		for _, p := range t.Partitions {
-			p.removeReplica(id)
-		}
-	}
 	if b, ok := s.brokers[id]; ok {
 		b.stopCleaner()
 	}
@@ -302,22 +321,25 @@ func (s *Store) getBroker(name string) *Broker {
 	return nil
 }
 
-func (s *Store) getBrokerByHost(addr string) *Broker {
+func (s *Store) getBrokerByPort(addr string) *Broker {
 	for _, b := range s.brokers {
 		_, p := parseHostAndPort(addr)
-		if b.Port == p {
+		if b.Port == p && b.Host != "" {
 			return b
 		}
 	}
 	return nil
 }
 
-func (s *Store) log(log *KafkaLog, traits events.Traits) {
+func (s *Store) log(log *KafkaMessageLog, traits events.Traits) {
 	log.Api = s.cluster
-	_ = s.eh.Push(
-		log,
-		traits.WithNamespace("kafka").WithName(s.cluster),
-	)
+	t := traits.WithNamespace("kafka").
+		WithName(s.cluster).
+		With("type", "message")
+	if log.ClientId != "" {
+		t = t.With("clientId", log.ClientId)
+	}
+	_ = s.eh.Push(log, t)
 }
 
 func (s *Store) trigger(record *kafka.Record, schemaId int) bool {
@@ -406,6 +428,15 @@ func parseHostAndPort(s string) (host string, port int) {
 		port = int(p)
 	}
 
+	ip := net.ParseIP(host)
+	if ip != nil && ip.IsLoopback() {
+		if host != "localhost" && host != "127.0.0.1" {
+			// Some Kafka clients still have problems with IPv6 literals.
+			// Docker / CI / older JVMs are safer with IPv4
+			host = "127.0.0.1"
+		}
+	}
+
 	return
 }
 
@@ -438,4 +469,12 @@ func getOperations(channel *asyncapi3.Channel, config *asyncapi3.Config) []*asyn
 		}
 	}
 	return ops
+}
+
+func (s *Store) Clients() []kafka.ClientContext {
+	var result []kafka.ClientContext
+	for _, c := range s.clients {
+		result = append(result, *c)
+	}
+	return result
 }

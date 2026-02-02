@@ -1,8 +1,11 @@
 package store
 
 import (
-	log "github.com/sirupsen/logrus"
 	"mokapi/kafka"
+	"mokapi/runtime/monitor"
+	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type GroupState int
@@ -22,10 +25,9 @@ var states = [...]string{
 }
 
 type Group struct {
-	Name        string
-	Coordinator *Broker
-	State       GroupState
-	Generation  *Generation
+	Name       string
+	State      GroupState
+	Generation *Generation
 
 	// todo add timestamp and metadata to commit
 	Commits map[string]map[int]int64
@@ -33,12 +35,11 @@ type Group struct {
 	balancer *groupBalancer
 }
 
-func NewGroup(name string, coordinator *Broker) *Group {
+func (s *Store) newGroup(name string, coordinator *Broker) *Group {
 	g := &Group{
-		Name:        name,
-		Coordinator: coordinator,
+		Name: name,
 	}
-	g.balancer = newGroupBalancer(g, coordinator.kafkaConfig)
+	g.balancer = newGroupBalancer(g, coordinator.kafkaConfig, &groupMonitor{cluster: s.cluster, monitor: s.monitor})
 	go g.balancer.run()
 	return g
 }
@@ -117,4 +118,13 @@ func newMember(ctx *kafka.ClientContext, sessionTimeout int) *Member {
 		Client:         ctx,
 		SessionTimeout: sessionTimeout,
 	}
+}
+
+type groupMonitor struct {
+	cluster string
+	monitor *monitor.Kafka
+}
+
+func (gm *groupMonitor) LastRebalancing(group string, time time.Time) {
+	gm.monitor.LastRebalancing.WithLabel(gm.cluster, group).Set(float64(time.Unix()))
 }

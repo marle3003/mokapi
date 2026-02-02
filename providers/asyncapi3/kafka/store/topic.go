@@ -73,7 +73,7 @@ func (t *Topic) update(config *asyncapi3.Channel, s *Store) {
 	t.Partitions = t.Partitions[:numPartitions]
 }
 
-func (t *Topic) log(r *KafkaLog, traits events.Traits) {
+func (t *Topic) log(r *KafkaMessageLog, traits events.Traits) {
 	t.logger(r, traits.With("topic", t.Name))
 }
 

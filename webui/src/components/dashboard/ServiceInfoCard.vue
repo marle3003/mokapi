@@ -12,7 +12,7 @@ const props = defineProps<{
             <div class="card-body">
                 <div class="row">
                     <div class="col col-8 header mb-3">
-                        <label id="name" class="label">Name</label>
+                        <p id="name" class="label">Name</p>
                         <p aria-labelledby="name" data-testid="service-name">{{ service.name }}</p>
                     </div>
                     <div class="col">

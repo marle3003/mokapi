@@ -22,8 +22,8 @@ type Partition struct {
 	Tail          int64
 	Topic         *Topic
 
-	Leader   *Broker
-	Replicas []int
+	// only for log cleaner
+	leader *Broker
 
 	validator *validator
 	logger    LogRecord
@@ -46,11 +46,13 @@ type Segment struct {
 
 type record struct {
 	Data *kafka.Record
-	Log  *KafkaLog
+	Log  *KafkaMessageLog
 }
 
 type WriteOptions struct {
 	SkipValidation bool
+	ClientId       string
+	ScriptFile     string
 }
 
 type WriteResult struct {
@@ -67,19 +69,16 @@ type PartitionProducerState struct {
 }
 
 func newPartition(index int, brokers Brokers, logger LogRecord, trigger Trigger, topic *Topic) *Partition {
-	brokerIds := make([]int, 0, len(brokers))
 	brokerList := make([]*Broker, 0, len(brokers))
-	for i, b := range brokers {
+	for _, b := range brokers {
 		if topic.Config != nil && len(topic.Config.Servers) > 0 {
 			if slices.ContainsFunc(topic.Config.Servers, func(s *asyncapi3.ServerRef) bool {
 				return s.Value == b.config
 			}) {
 				brokerList = append(brokerList, b)
-				brokerIds = append(brokerIds, i)
 			}
 		} else {
 			brokerList = append(brokerList, b)
-			brokerIds = append(brokerIds, i)
 		}
 	}
 	p := &Partition{
@@ -93,14 +92,8 @@ func newPartition(index int, brokers Brokers, logger LogRecord, trigger Trigger,
 		producers: make(map[int64]*PartitionProducerState),
 	}
 	if len(brokerList) > 0 {
-		p.Leader = brokerList[0]
+		p.leader = brokerList[0]
 	}
-	if len(brokerList) > 1 {
-		p.Replicas = brokerIds[1:]
-	} else {
-		p.Replicas = make([]int, 0)
-	}
-
 	return p
 }
 
@@ -147,6 +140,10 @@ func (p *Partition) WriteSkipValidation(batch kafka.RecordBatch) (WriteResult, e
 
 func (p *Partition) Write(batch kafka.RecordBatch) (WriteResult, error) {
 	return p.write(batch, WriteOptions{SkipValidation: false})
+}
+
+func (p *Partition) WriteWithOptions(batch kafka.RecordBatch, opts WriteOptions) (WriteResult, error) {
+	return p.write(batch, opts)
 }
 
 func (p *Partition) write(batch kafka.RecordBatch, opts WriteOptions) (WriteResult, error) {
@@ -223,6 +220,9 @@ func (p *Partition) write(batch kafka.RecordBatch, opts WriteOptions) (WriteResu
 			baseTime = r.Time
 		}
 
+		kLog.ClientId = opts.ClientId
+		kLog.ScriptFile = opts.ScriptFile
+
 		writeFuncs = append(writeFuncs, func() {
 			r.Offset = p.Tail
 
@@ -276,6 +276,18 @@ func (p *Partition) StartOffset() int64 {
 	return p.Head
 }
 
+func (p *Partition) OffsetTimestamp(offset int64) int64 {
+	s := p.GetSegment(offset)
+	if s == nil {
+		return -1
+	}
+	r := s.record(offset)
+	if r == nil {
+		return -1
+	}
+	return r.Time.Unix()
+}
+
 func (p *Partition) GetSegment(offset int64) *Segment {
 	p.m.RLock()
 	defer p.m.RUnlock()
@@ -318,17 +330,6 @@ func (p *Partition) removeSegment(s *Segment) {
 	delete(p.Segments, s.Head)
 }
 
-func (p *Partition) removeReplica(id int) {
-	i := 0
-	for _, replica := range p.Replicas {
-		if replica != id {
-			p.Replicas[i] = replica
-			i++
-		}
-	}
-	p.Replicas = p.Replicas[:i]
-}
-
 func (p *Partition) addSegment() *Segment {
 	p.m.RLock()
 	defer p.m.RUnlock()
@@ -360,7 +361,10 @@ func (s *Segment) contains(offset int64) bool {
 }
 
 func (s *Segment) record(offset int64) *kafka.Record {
-	index := offset - s.Head
+	index := int(offset - s.Head)
+	if index < 0 || index >= len(s.Log) {
+		return nil
+	}
 	return s.Log[index].Data
 }
 

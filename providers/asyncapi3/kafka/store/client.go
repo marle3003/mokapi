@@ -48,6 +48,9 @@ type RecordResult struct {
 }
 
 type Client struct {
+	ClientId   string
+	ScriptFile string
+
 	store   *Store
 	monitor *monitor.Kafka
 }
@@ -99,14 +102,12 @@ func (c *Client) Write(topic string, records []Record, ct media.ContentType) ([]
 			})
 		}
 		b := kafka.RecordBatch{Records: []*kafka.Record{rec}}
-		var write func(batch kafka.RecordBatch) (WriteResult, error)
-		if r.SkipValidation {
-			write = p.WriteSkipValidation
-		} else {
-			write = p.Write
-		}
 
-		wr, err := write(b)
+		wr, err := p.write(b, WriteOptions{
+			SkipValidation: r.SkipValidation,
+			ClientId:       c.ClientId,
+			ScriptFile:     c.ScriptFile,
+		})
 		if err != nil {
 			result = append(result, RecordResult{
 				Partition: -1,
@@ -360,7 +361,11 @@ func selectMessage(value any, topic *asyncapi3.Channel) (*asyncapi3.Message, err
 	}
 
 	if noOperationDefined {
-		return nil, fmt.Errorf("no 'send' or 'receive' operation defined in specification")
+		for _, msg := range topic.Messages {
+			if validationErr = valueMatchMessagePayload(value, msg.Value); validationErr == nil {
+				return msg.Value, nil
+			}
+		}
 	}
 
 	if value != nil {
@@ -373,9 +378,12 @@ func selectMessage(value any, topic *asyncapi3.Channel) (*asyncapi3.Message, err
 				value = string(b)
 			}
 		}
-		return nil, fmt.Errorf("no matching message configuration found for the given value: %v\nhint:\n%w\n", value, validationErr)
+		if validationErr != nil {
+			return nil, fmt.Errorf("no matching message configuration found for the given value: %v\nhint:\n%w\n", value, validationErr)
+		}
+		return nil, nil
 	}
-	return nil, fmt.Errorf("no message ")
+	return nil, fmt.Errorf("channel defines no message schema; define a message payload in the channel or provide an explicit message")
 }
 
 func valueMatchMessagePayload(value any, msg *asyncapi3.Message) error {

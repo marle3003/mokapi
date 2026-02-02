@@ -1,8 +1,6 @@
 package runtime
 
 import (
-	"github.com/blevesearch/bleve/v2"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/static"
@@ -12,9 +10,13 @@ import (
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
+	"mokapi/sortedmap"
 	"path/filepath"
 	"sort"
 	"sync"
+
+	"github.com/blevesearch/bleve/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 type KafkaStore struct {
@@ -96,7 +98,7 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*Kafka
 		s.events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
 		s.events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
 
-		ki = NewKafkaInfo(c, store.New(cfg, emitter, s.events), s.updateEventStore)
+		ki = NewKafkaInfo(c, store.NewEmpty(emitter, s.events, s.monitor.Kafka), s.updateEventStore)
 		s.infos[cfg.Info.Name] = ki
 	} else {
 		ki.AddConfig(c)
@@ -184,6 +186,21 @@ func (c *KafkaInfo) update() {
 			log.Infof("applying patch for %s: %s", cfg.Info.Name, k)
 			cfg.Patch(p)
 		}
+	}
+
+	if cfg.Servers.Len() == 0 {
+		log.Infof("no servers defined in AsyncAPI spec — using default Mokapi broker for cluster '%s'", cfg.Info.Name)
+		if cfg.Servers == nil {
+			cfg.Servers = &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{}
+		}
+		cfg.Servers.Set("mokapi", &asyncapi3.ServerRef{
+			Value: &asyncapi3.Server{
+				Host:     ":9092",
+				Protocol: "kafka",
+				Title:    "Mokapi Default Broker",
+				Summary:  "Automatically added broker because no servers are defined in the AsyncAPI spec",
+			},
+		})
 	}
 
 	c.Config = cfg

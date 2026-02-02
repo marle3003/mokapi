@@ -1,7 +1,6 @@
 package store_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
@@ -9,7 +8,10 @@ import (
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestOffsets(t *testing.T) {
@@ -80,7 +82,7 @@ func TestOffsets(t *testing.T) {
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithChannel("foo")))
-				s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
+				_, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Key:   kafka.NewBytes([]byte("foo")),
@@ -88,6 +90,7 @@ func TestOffsets(t *testing.T) {
 						},
 					},
 				})
+				require.NoError(t, err)
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &offset.Request{
@@ -106,7 +109,7 @@ func TestOffsets(t *testing.T) {
 				require.True(t, ok)
 				p := res.Topics[0].Partitions[0]
 				require.Equal(t, kafka.None, p.ErrorCode)
-				require.Equal(t, kafka.Earliest, p.Timestamp)
+				require.Greater(t, p.Timestamp, int64(0))
 				require.Equal(t, int64(0), p.Offset)
 			},
 		},
@@ -115,7 +118,7 @@ func TestOffsets(t *testing.T) {
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithChannel("foo")))
-				s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
+				_, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Key:   kafka.NewBytes([]byte("foo")),
@@ -123,6 +126,7 @@ func TestOffsets(t *testing.T) {
 						},
 					},
 				})
+				require.NoError(t, err)
 
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 3, &offset.Request{
@@ -194,7 +198,7 @@ func TestOffsets(t *testing.T) {
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithChannel("foo")))
-				s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
+				_, err := s.Topic("foo").Partition(0).Write(kafka.RecordBatch{
 					Records: []*kafka.Record{
 						{
 							Key:   kafka.NewBytes([]byte("foo")),
@@ -202,6 +206,8 @@ func TestOffsets(t *testing.T) {
 						},
 					},
 				})
+				require.NoError(t, err)
+
 				rr := kafkatest.NewRecorder()
 				s.ServeMessage(rr, kafkatest.NewRequest("kafkatest", 0, &offset.Request{
 					Topics: []offset.RequestTopic{
@@ -230,7 +236,7 @@ func TestOffsets(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{})
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 			defer s.Close()
 			tc.fn(t, s)
 		})

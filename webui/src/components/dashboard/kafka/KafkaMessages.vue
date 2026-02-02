@@ -6,25 +6,39 @@ import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import SourceView from '../SourceView.vue'
 import router from '@/router'
 import { getRouteName, useDashboard } from '@/composables/dashboard'
+import { useLocalStorage } from '@/composables/local-storage'
 
 const props = defineProps<{
     service?: KafkaService,
     topicName?: string
+    clientId?: string
 }>()
 
-const labels = []
-if (props.service) {
-    labels.push({name: 'name', value: props.service.name})
-}
-if (props.topicName){
-    labels.push({name: 'topic', value: props.topicName})
-}
+const emit = defineEmits<{
+  (e: "loaded", count: number): void
+}>();
+
+const tags = useLocalStorage<string[]>(`kafka-${props.service?.name}-tags`, ['__all'])
+const labels = computed(() => {
+    const result = [];
+    if (props.service) {
+        result.push({name: 'name', value: props.service.name})
+    }
+    if (props.topicName) {
+        result.push({name: 'topic', value: props.topicName})
+    }
+    result.push({ name: 'type', value: 'message' })
+    if (props.clientId){
+        result.push({name: 'clientId', value: props.clientId})
+    }
+    return result;
+})
 
 const { format } = usePrettyDates()
 const { formatLanguage } = usePrettyLanguage()
 
 const { dashboard } = useDashboard()
-const { events, close } = dashboard.value.getEvents('kafka', ...labels)
+const { events, close } = dashboard.value.getEvents('kafka', ...labels.value)
 const messageDialog = ref<any>(null)
 const tabDetailData = ref<any>(null)
 let dialog:  Modal
@@ -32,10 +46,21 @@ let tab: Tab
 
 const messages = computed(() => {
     const result = [];
+    emit("loaded", events.value.length);
     for (const event of events.value) {
         const data = eventData(event)
         if (!data){
             continue
+        }
+
+        if (props.service && !props.clientId && !props.topicName && !tags.value.includes('__all')) {
+            const topic = props.service.topics.find(t => t.name === event.traits['topic']);
+            if (!topic) {
+                continue
+            }
+            if (!topic.tags || !topic.tags.some(tag => tags.value.some(x => x == tag.name))) {
+                continue
+            }
         }
 
         result.push({
@@ -51,11 +76,11 @@ const messages = computed(() => {
     return result;
 })
 
-function eventData(event: ServiceEvent | null): KafkaEventData | null{
+function eventData(event: ServiceEvent | null): KafkaMessageData | null{
     if (!event) {
         return null
     }
-    return <KafkaEventData>event.data
+    return event.data as KafkaMessageData
 }
 function isAvro(event: ServiceEvent): boolean {
     const msg = getMessageConfig(event)
@@ -240,7 +265,7 @@ function getContentType(msg: KafkaMessage): [string, boolean] {
 
     return [ msg.contentType, false ]
 }
-function key(data: KafkaEventData | null): string {
+function key(data: KafkaMessageData | null): string {
     if (!data) {
         return ''
     }

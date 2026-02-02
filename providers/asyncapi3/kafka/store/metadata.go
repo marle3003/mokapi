@@ -10,38 +10,39 @@ func (s *Store) metadata(rw kafka.ResponseWriter, req *kafka.Request) error {
 	r := req.Message.(*metaData.Request)
 
 	brokers := s.Brokers()
-	ctx := kafka.ClientFromContext(req)
+	ctx := kafka.ClientFromContext(req.Context)
 	ctx.AllowAutoTopicCreation = r.AllowAutoTopicCreation
 
 	res := &metaData.Response{
 		Brokers:   make([]metaData.ResponseBroker, 0, len(brokers)),
 		Topics:    make([]metaData.ResponseTopic, 0, len(r.Topics)),
-		ClusterId: "mokapi",
+		ClusterId: s.cluster,
 	}
 
-	for _, b := range brokers {
-		res.Brokers = append(res.Brokers, metaData.ResponseBroker{
-			NodeId: int32(b.Id),
-			Host:   b.Host,
-			Port:   int32(b.Port),
-		})
+	// Mokapi does no leader management, therefore only the current server is returned as the broker.
+	host, port := parseHostAndPort(req.Host)
+	b := s.getBrokerByPort(req.Host)
+	if b != nil && b.Host != "" {
+		host = b.Host
 	}
+	res.Brokers = append(res.Brokers, metaData.ResponseBroker{
+		NodeId: 0,
+		Host:   host,
+		Port:   int32(port),
+	})
 
-	b := s.getBrokerByHost(req.Host)
 	var getTopic func(string) (*Topic, kafka.ErrorCode)
 
 	if len(r.Topics) > 0 {
 		getTopic = func(name string) (*Topic, kafka.ErrorCode) {
 			if kafka.ValidateTopicName(name) != nil {
 				return nil, kafka.InvalidTopic
-			} else {
-				topic := s.Topic(name)
-				if topic != nil && isTopicAvailable(topic, b) {
-					return topic, kafka.None
-				} else {
-					return nil, kafka.UnknownTopicOrPartition
-				}
 			}
+			topic := s.Topic(name)
+			if topic != nil && isTopicAvailable(topic, b) {
+				return topic, kafka.None
+			}
+			return nil, kafka.UnknownTopicOrPartition
 		}
 	} else {
 		topics := make(map[string]*Topic)
@@ -71,21 +72,10 @@ func (s *Store) metadata(rw kafka.ResponseWriter, req *kafka.Request) error {
 			Name: t.Name,
 		}
 
-		for i, p := range t.Partitions {
-			replicas := p.Replicas
-			nodes := make([]int32, 0, len(replicas))
-			for _, n := range replicas {
-				nodes = append(nodes, int32(n))
-			}
-			brokerId := -1
-			if p.Leader != nil {
-				brokerId = p.Leader.Id
-			}
+		for i := range t.Partitions {
 			resTopic.Partitions = append(resTopic.Partitions, metaData.ResponsePartition{
 				PartitionIndex: int32(i),
-				LeaderId:       int32(brokerId),
-				ReplicaNodes:   nodes,
-				IsrNodes:       nodes,
+				LeaderId:       0,
 			})
 		}
 
@@ -101,7 +91,7 @@ func isTopicAvailable(t *Topic, b *Broker) bool {
 	}
 	for _, s := range t.Config.Servers {
 		name := path.Base(s.Ref)
-		if name == b.Name {
+		if b != nil && name == b.Name {
 			return true
 		}
 	}

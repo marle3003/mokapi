@@ -2,6 +2,7 @@ package asyncapi3
 
 import (
 	"mokapi/config/dynamic"
+	"mokapi/sortedmap"
 
 	"gopkg.in/yaml.v3"
 )
@@ -17,7 +18,7 @@ type Config struct {
 	// Default content type to use when encoding/decoding a message's payload.
 	DefaultContentType string `yaml:"defaultContentType" json:"defaultContentType"`
 
-	Servers map[string]*ServerRef `yaml:"servers" json:"servers"`
+	Servers *sortedmap.LinkedHashMap[string, *ServerRef] `yaml:"servers" json:"servers"`
 
 	Channels   map[string]*ChannelRef
 	Operations map[string]*OperationRef `yaml:"operations" json:"operations"`
@@ -47,15 +48,18 @@ type License struct {
 }
 
 func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
-	for _, server := range c.Servers {
-		if len(server.Ref) > 0 {
-			return dynamic.Resolve(server.Ref, &server.Value, config, reader)
-		}
-		if server.Value == nil {
-			return nil
-		}
-		if err := server.parse(config, reader); err != nil {
-			return err
+	if c.Servers != nil {
+		for it := c.Servers.Iter(); it.Next(); {
+			server := it.Value()
+			if len(server.Ref) > 0 {
+				return dynamic.Resolve(server.Ref, &server.Value, config, reader)
+			}
+			if server.Value == nil {
+				return nil
+			}
+			if err := server.parse(config, reader); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -110,7 +114,8 @@ func (c *Config) HasKafkaServer() bool {
 	if c == nil {
 		return false
 	}
-	for _, server := range c.Servers {
+	for it := c.Servers.Iter(); it.Next(); {
+		server := it.Value()
 		if server.Value.Protocol == "kafka" {
 			return true
 		}

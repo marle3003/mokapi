@@ -2,8 +2,6 @@ package asyncapi3_test
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/asyncapi3"
@@ -15,6 +13,9 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestConfig3_Schema(t *testing.T) {
@@ -71,13 +72,13 @@ func TestStreetlightKafka(t *testing.T) {
 	require.Equal(t, "application/json", cfg.DefaultContentType)
 
 	// Server
-	require.Len(t, cfg.Servers, 2)
-	server := cfg.Servers["scram-connections"]
+	require.Equal(t, cfg.Servers.Len(), 2)
+	server := cfg.Servers.Lookup("scram-connections")
 	require.Equal(t, "test.mykafkacluster.org:18092", server.Value.Host)
 	require.Equal(t, "kafka-secure", server.Value.Protocol)
 	require.Equal(t, "Test broker secured with scramSha256", server.Value.Description)
 
-	server = cfg.Servers["mtls-connections"]
+	server = cfg.Servers.Lookup("mtls-connections")
 	require.Equal(t, "test.mykafkacluster.org:28092", server.Value.Host)
 	require.Equal(t, "kafka-secure", server.Value.Protocol)
 	require.Equal(t, "Test broker secured with X509", server.Value.Description)

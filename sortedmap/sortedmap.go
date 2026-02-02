@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 // LinkedHashMap defines the iteration ordering by the order
@@ -90,7 +92,7 @@ func (m *LinkedHashMap[K, V]) Lookup(key K) V {
 }
 
 func (m *LinkedHashMap[K, V]) Iter() *Iterator[K, V] {
-	if m.list == nil {
+	if m == nil || m.list == nil {
 		return &Iterator[K, V]{}
 	}
 	return &Iterator[K, V]{next: m.list.Front()}
@@ -172,4 +174,51 @@ func (m *LinkedHashMap[K, V]) Resolve(token string) (interface{}, error) {
 		}
 	}
 	return nil, fmt.Errorf("unable to resolve %v", token)
+}
+
+func (m *LinkedHashMap[K, V]) UnmarshalJSON(b []byte) error {
+	dec := json.NewDecoder(bytes.NewReader(b))
+	token, err := dec.Token()
+	if err != nil {
+		return err
+	}
+	if delim, ok := token.(json.Delim); ok && delim != '{' {
+		return fmt.Errorf("expected map, got %s", token)
+	}
+	for {
+		token, err = dec.Token()
+		if err != nil {
+			return err
+		}
+		if delim, ok := token.(json.Delim); ok && delim == '}' {
+			return nil
+		}
+
+		v := *new(V)
+		err = dec.Decode(&v)
+		if err != nil {
+			return err
+		}
+		m.Set(token.(K), v)
+	}
+}
+
+func (m *LinkedHashMap[K, V]) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind != yaml.MappingNode {
+		return fmt.Errorf("expected map, got %v", value.Tag)
+	}
+	for i := 0; i < len(value.Content); i += 2 {
+		var key any
+		err := value.Content[i].Decode(&key)
+		if err != nil {
+			return err
+		}
+		v := *new(V)
+		err = value.Content[i+1].Decode(&v)
+		if err != nil {
+			return err
+		}
+		m.Set(key.(K), v)
+	}
+	return nil
 }

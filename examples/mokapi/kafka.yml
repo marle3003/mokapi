@@ -312,6 +312,11 @@ components:
                 type: string
               description:
                 type: string
+              tags:
+                $ref: '#/components/schemas/Tags'
+              configs:
+                additionalProperties:
+                  type: ['number', 'string']
         topics:
           type: array
           items:
@@ -339,6 +344,8 @@ components:
             $ref: '#/components/schemas/MessageConfig'
         bindings:
           $ref: '#/components/schemas/TopicBindings'
+        tags:
+          $ref: '#/components/schemas/Tags'
     Partition:
       type: object
       properties:
@@ -357,6 +364,8 @@ components:
       properties:
         name:
           type: string
+        generation:
+          type: integer
         members:
           type: array
           items:
@@ -461,3 +470,12 @@ components:
           type: integer
         error:
           type: string
+    Tags:
+      type: array
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          description:
+            type: string

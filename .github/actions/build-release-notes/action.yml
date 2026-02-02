@@ -1,0 +1,16 @@
+name: build-release-notes
+description: build-release-notes
+runs:
+  using: composite
+  steps:
+    - name: Write release notes
+      shell: bash
+      run: |
+        VERSION="${{ github.event.release.tag_name }}"
+        BODY="${{ github.event.release.body }}"
+        echo "# Mokapi ${VERSION}\n\n${BODY}" > docs/release.md
+    - name: Upload UI artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-notes
+        path: docs/release.md

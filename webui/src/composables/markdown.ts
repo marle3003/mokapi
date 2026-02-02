@@ -2,11 +2,11 @@ import MarkdownItHighlightjs from 'markdown-it-highlightjs';
 import MarkdownIt from 'markdown-it';
 import { MarkdownItTabs } from '@/composables/markdown-tabs';
 import { MarkdownItBox } from '@/composables/markdown-box';
-import { MarkdownItLinks } from '@/composables/mardown-links';
+import { MarkdownItLinks } from '@/composables/markdown-links';
 import { MarkdownItCard } from '@/composables/markdown-card';
 import { MarkdownItCarousel } from './markdown-carousel';
 import yaml from 'js-yaml'
-import { MarkdownItBlockquote } from './mardown-blockquote';
+import { MarkdownItBlockquote } from './markdown-blockquote';
 
 const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
 const metadataRegex = /^---([\s\S]*?)---/;

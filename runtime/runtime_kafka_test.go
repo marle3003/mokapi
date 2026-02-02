@@ -1,7 +1,6 @@
 package runtime_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
@@ -17,6 +16,9 @@ import (
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestApp_AddKafka(t *testing.T) {
@@ -24,6 +26,28 @@ func TestApp_AddKafka(t *testing.T) {
 		name string
 		test func(t *testing.T, app *runtime.App)
 	}{
+		{
+			name: "add default server if no is specified",
+			test: func(t *testing.T, app *runtime.App) {
+				hook := test.NewGlobal()
+
+				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""))
+				ki, err := app.Kafka.Add(getConfig("foo.bar", c), enginetest.NewEngine())
+				require.Nil(t, err)
+				require.Equal(t, ki.Servers.Len(), 1)
+				require.Equal(t,
+					&asyncapi3.Server{
+						Host:     ":9092",
+						Protocol: "kafka",
+						Title:    "Mokapi Default Broker",
+						Summary:  "Automatically added broker because no servers are defined in the AsyncAPI spec",
+					},
+					ki.Servers.Lookup("mokapi").Value)
+
+				require.Len(t, hook.Entries, 1)
+				require.Equal(t, "no servers defined in AsyncAPI spec — using default Mokapi broker for cluster 'foo'", hook.Entries[0].Message)
+			},
+		},
 		{
 			name: "event store available",
 			test: func(t *testing.T, app *runtime.App) {

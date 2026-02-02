@@ -16,11 +16,15 @@ jobs:
     outputs:
       version: ${{ steps.get_version.outputs.version }}
       image-name: ${{ steps.get_version.outputs.image-name }}
+      latest-tag: ${{ steps.get_version.outputs.latest_tag }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Ensure all tags are fetched
+      - name: Fetch main
+        shell: bash
+        run: git fetch origin main --tags --force
       - name: get version
         id: get_version
         shell: bash
@@ -40,8 +44,9 @@ jobs:
           NEW_VERSION="$MAJOR.$MINOR.$PATCH"
 
           echo "New version: $NEW_VERSION"
-          echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+          echo "version=$NEW_VERSION-alpha" >> $GITHUB_OUTPUT
           echo "image-name=mokapi/mokapi:$NEW_VERSION-alpha"  >> $GITHUB_OUTPUT
+          echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
 
   build-alpha:
     needs: setup
@@ -52,6 +57,7 @@ jobs:
       artifact-test-report: playwright-report
       report-publish-path: reports/${{ github.ref_name }}
       version: ${{ needs.setup.outputs.version }}
+      latest-tag: ${{ needs.setup.outputs.latest-tag }}
 
   publish-image:
     name: Publish docker image

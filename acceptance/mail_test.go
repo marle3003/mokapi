@@ -36,6 +36,8 @@ func (suite *MailSuite) SetupSuite() {
 }
 
 func (suite *MailSuite) TestSendMail() {
+	time.Sleep(2 * time.Second)
+
 	ca := cert.DefaultRootCert()
 
 	err := smtptest.SendMail("from@foo.bar",

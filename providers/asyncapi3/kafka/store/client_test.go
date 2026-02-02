@@ -407,7 +407,7 @@ func TestClient(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			s := store.New(tc.cfg, enginetest.NewEngine(), &eventstest.Handler{})
+			s := store.New(tc.cfg, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 			m := monitor.NewKafka()
 			tc.test(t, s, m)
 		})

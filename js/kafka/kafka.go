@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"fmt"
+	"mokapi/config/dynamic"
 	"mokapi/engine/common"
 	"mokapi/js/eventloop"
 	"mokapi/js/util"
@@ -92,12 +93,17 @@ func (m *Module) ProduceAsync(v goja.Value) interface{} {
 }
 
 func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
-	opt := &common.KafkaProduceArgs{Retry: common.KafkaProduceRetry{
-		MaxRetryTime:     3 * time.Minute,
-		InitialRetryTime: 500 * time.Millisecond,
-		Retries:          10,
-		Factor:           2,
-	}}
+	file := getFile(m.rt)
+	opt := &common.KafkaProduceArgs{
+		ClientId:   "mokapi-script",
+		ScriptFile: file.Info.Key(),
+		Retry: common.KafkaProduceRetry{
+			MaxRetryTime:     3 * time.Minute,
+			InitialRetryTime: 500 * time.Millisecond,
+			Retries:          10,
+			Factor:           2,
+		},
+	}
 
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
 		params := args.ToObject(m.rt)
@@ -264,4 +270,8 @@ func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 
 func (m *Module) warnDeprecatedAttribute(name string) {
 	m.host.Warn(fmt.Sprintf("DEPRECATED: '%v' should not be used anymore: check https://mokapi.io/docs/javascript-api/mokapi-kafka/produceargs for more info in %v", name, m.host.Name()))
+}
+
+func getFile(vm *goja.Runtime) *dynamic.Config {
+	return vm.Get("mokapi/internal").(*goja.Object).Get("file").Export().(*dynamic.Config)
 }

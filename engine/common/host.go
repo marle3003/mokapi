@@ -64,11 +64,13 @@ type KafkaClient interface {
 }
 
 type KafkaProduceArgs struct {
-	Cluster  string
-	Topic    string
-	Messages []KafkaMessage
-	Timeout  int
-	Retry    KafkaProduceRetry
+	Cluster    string
+	Topic      string
+	Messages   []KafkaMessage
+	Timeout    int
+	Retry      KafkaProduceRetry
+	ClientId   string
+	ScriptFile string
 }
 
 type KafkaMessage struct {

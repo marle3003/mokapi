@@ -13,7 +13,7 @@ func (s *Store) offsetFetch(rw kafka.ResponseWriter, req *kafka.Request) error {
 	r := req.Message.(*offsetFetch.Request)
 	res := &offsetFetch.Response{}
 
-	ctx := kafka.ClientFromContext(req)
+	ctx := kafka.ClientFromContext(req.Context)
 
 	if req.Header.ApiVersion >= 8 {
 		for _, g := range r.Groups {

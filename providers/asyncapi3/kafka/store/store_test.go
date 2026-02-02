@@ -7,6 +7,7 @@ import (
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime/events"
+	"mokapi/runtime/monitor"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
@@ -21,7 +22,7 @@ func TestStore(t *testing.T) {
 		{
 			"empty",
 			func(t *testing.T, sm *events.StoreManager) {
-				s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), sm)
+				s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), sm, monitor.NewKafka())
 				defer s.Close()
 				require.Equal(t, 0, len(s.Brokers()))
 				require.Equal(t, 0, len(s.Topics()))
@@ -34,7 +35,7 @@ func TestStore(t *testing.T) {
 			func(t *testing.T, sm *events.StoreManager) {
 				s := store.New(asyncapi3test.NewConfig(
 					asyncapi3test.WithServer("foo", "kafka", "foo:9092"),
-				), enginetest.NewEngine(), sm)
+				), enginetest.NewEngine(), sm, monitor.NewKafka())
 				defer s.Close()
 				require.Equal(t, 1, len(s.Brokers()))
 				require.Equal(t, 0, len(s.Topics()))
@@ -49,7 +50,7 @@ func TestStore(t *testing.T) {
 			func(t *testing.T, sm *events.StoreManager) {
 				s := store.New(asyncapi3test.NewConfig(
 					asyncapi3test.WithChannel("foo"),
-				), enginetest.NewEngine(), sm)
+				), enginetest.NewEngine(), sm, monitor.NewKafka())
 				defer s.Close()
 				require.Equal(t, 0, len(s.Brokers()))
 				require.Equal(t, 1, len(s.Topics()))
@@ -63,7 +64,7 @@ func TestStore(t *testing.T) {
 		{
 			"create topic",
 			func(t *testing.T, sm *events.StoreManager) {
-				s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), sm)
+				s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), sm, monitor.NewKafka())
 				defer s.Close()
 				topic, err := s.NewTopic("foo", asyncapi3test.NewChannel(), []*asyncapi3.Operation{})
 				require.NoError(t, err)
@@ -74,7 +75,7 @@ func TestStore(t *testing.T) {
 		{
 			"create topic, already exists",
 			func(t *testing.T, sm *events.StoreManager) {
-				s := store.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo")), enginetest.NewEngine(), sm)
+				s := store.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo")), enginetest.NewEngine(), sm, monitor.NewKafka())
 				defer s.Close()
 				_, err := s.NewTopic("foo", asyncapi3test.NewChannel(), []*asyncapi3.Operation{})
 				require.Error(t, err, "topic foo already exists")
@@ -83,7 +84,7 @@ func TestStore(t *testing.T) {
 		{
 			"update topic add partition",
 			func(t *testing.T, sm *events.StoreManager) {
-				s := store.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 1}))), enginetest.NewEngine(), sm)
+				s := store.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 1}))), enginetest.NewEngine(), sm, monitor.NewKafka())
 				defer s.Close()
 
 				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 2}))))
@@ -94,7 +95,7 @@ func TestStore(t *testing.T) {
 		{
 			"update topic remove partition",
 			func(t *testing.T, sm *events.StoreManager) {
-				s := store.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 2}))), enginetest.NewEngine(), sm)
+				s := store.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 2}))), enginetest.NewEngine(), sm, monitor.NewKafka())
 				defer s.Close()
 
 				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 1}))))
@@ -112,7 +113,7 @@ func TestStore(t *testing.T) {
 							asyncapi3test.WithContentType("application/json"),
 						),
 					)),
-					enginetest.NewEngine(), sm)
+					enginetest.NewEngine(), sm, monitor.NewKafka())
 				defer s.Close()
 
 				s.Update(asyncapi3test.NewConfig(

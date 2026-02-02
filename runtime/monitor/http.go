@@ -16,13 +16,13 @@ type Http struct {
 func NewHttp() *Http {
 	httpRequestCounter := metrics.NewCounterMap(
 		metrics.WithFQName("http", "requests_total"),
-		metrics.WithLabelNames("service", "endpoint"))
+		metrics.WithLabelNames("service", "endpoint", "method"))
 	httpRequestErrorCounter := metrics.NewCounterMap(
 		metrics.WithFQName("http", "requests_errors_total"),
-		metrics.WithLabelNames("service", "endpoint"))
+		metrics.WithLabelNames("service", "endpoint", "method"))
 	httpLastRequest := metrics.NewGaugeMap(
 		metrics.WithFQName("http", "request_timestamp"),
-		metrics.WithLabelNames("service", "endpoint"))
+		metrics.WithLabelNames("service", "endpoint", "method"))
 
 	return &Http{
 		RequestCounter:      httpRequestCounter,

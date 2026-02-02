@@ -23,15 +23,16 @@ import (
 
 func NewRequest(clientId string, version int16, msg kafka.Message) *kafka.Request {
 	r := &kafka.Request{
+		Host: "127.0.0.1:9092",
 		Header: &kafka.Header{
 			ApiKey:     getApiKey(msg),
 			ApiVersion: version,
 			ClientId:   clientId,
 		},
 		Message: msg,
-		Context: kafka.NewClientContext(context.Background(), "127.0.0.1:42424"),
+		Context: kafka.NewClientContext(context.Background(), "127.0.0.1:42424", "127.0.0.1:9092"),
 	}
-	ctx := kafka.ClientFromContext(r)
+	ctx := kafka.ClientFromContext(r.Context)
 	ctx.ClientId = clientId
 	return r
 }
@@ -50,7 +51,7 @@ func getApiKey(msg kafka.Message) kafka.ApiKey {
 	case *fetch.Request, *fetch.Response:
 		return kafka.Fetch
 	case *offset.Request, *offset.Response:
-		return kafka.Offset
+		return kafka.ListOffsets
 	case *metaData.Request, *metaData.Response:
 		return kafka.Metadata
 	case *offsetCommit.Request, *offsetCommit.Response:

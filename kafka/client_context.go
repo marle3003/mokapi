@@ -28,6 +28,7 @@ type ClientContext struct {
 	Member                 map[string]string
 	Close                  func()
 	AllowAutoTopicCreation bool
+	ServerAddress          string
 }
 
 func (c *ClientContext) AddGroup(groupName, memberId string) {
@@ -50,10 +51,10 @@ func (c *ClientContext) GetOrCreateMemberId(groupName string) string {
 	return memberId
 }
 
-func ClientFromContext(req *Request) *ClientContext {
-	return req.Context.Value(clientKey).(*ClientContext)
+func ClientFromContext(ctx context.Context) *ClientContext {
+	return ctx.Value(clientKey).(*ClientContext)
 }
 
-func NewClientContext(ctx context.Context, addr string) context.Context {
-	return context.WithValue(ctx, clientKey, &ClientContext{Addr: addr, AllowAutoTopicCreation: true, Heartbeat: time.Now()})
+func NewClientContext(ctx context.Context, addr, serverAddress string) context.Context {
+	return context.WithValue(ctx, clientKey, &ClientContext{Addr: addr, ServerAddress: serverAddress, AllowAutoTopicCreation: true, Heartbeat: time.Now()})
 }

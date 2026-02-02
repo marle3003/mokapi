@@ -21,7 +21,7 @@ func (s *Store) apiversion(rw kafka.ResponseWriter, req *kafka.Request) error {
 	}
 
 	if req.Header.ApiVersion >= 3 {
-		client := kafka.ClientFromContext(req)
+		client := kafka.ClientFromContext(req.Context)
 		client.ClientSoftwareName = r.ClientSwName
 		client.ClientSoftwareVersion = r.ClientSwVersion
 	}

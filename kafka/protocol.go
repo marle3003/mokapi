@@ -13,7 +13,7 @@ type ApiKey int16
 const (
 	Produce         ApiKey = 0
 	Fetch           ApiKey = 1
-	Offset          ApiKey = 2
+	ListOffsets     ApiKey = 2
 	Metadata        ApiKey = 3
 	OffsetCommit    ApiKey = 8
 	OffsetFetch     ApiKey = 9
@@ -30,7 +30,7 @@ const (
 var apitext = map[ApiKey]string{
 	Produce:         "Produce",
 	Fetch:           "Fetch",
-	Offset:          "Offset",
+	ListOffsets:     "ListOffsets",
 	Metadata:        "Metadata",
 	OffsetCommit:    "OffsetCommit",
 	OffsetFetch:     "OffsetFetch",

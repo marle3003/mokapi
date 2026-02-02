@@ -25,7 +25,7 @@ type validator struct {
 }
 
 type recordValidator interface {
-	Validate(record *kafka.Record) (*KafkaLog, error)
+	Validate(record *kafka.Record) (*KafkaMessageLog, error)
 }
 
 func newValidator(c *asyncapi3.Channel) *validator {
@@ -41,7 +41,7 @@ func newValidator(c *asyncapi3.Channel) *validator {
 	return v
 }
 
-func (v *validator) Validate(record *kafka.Record) (l *KafkaLog, err error) {
+func (v *validator) Validate(record *kafka.Record) (l *KafkaMessageLog, err error) {
 	if v == nil {
 		return newKafkaLog(record), nil
 	}
@@ -133,8 +133,8 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyn
 	return v
 }
 
-func (mv *messageValidator) Validate(record *kafka.Record) (*KafkaLog, error) {
-	r := &KafkaLog{
+func (mv *messageValidator) Validate(record *kafka.Record) (*KafkaMessageLog, error) {
+	r := &KafkaMessageLog{
 		Key:            LogValue{},
 		Message:        LogValue{},
 		Headers:        make(map[string]LogValue),

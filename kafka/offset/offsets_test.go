@@ -12,7 +12,7 @@ import (
 )
 
 func TestInit(t *testing.T) {
-	reg := kafka.ApiTypes[kafka.Offset]
+	reg := kafka.ApiTypes[kafka.ListOffsets]
 	require.Equal(t, int16(0), reg.MinVersion)
 	require.Equal(t, int16(8), reg.MaxVersion)
 }
@@ -70,13 +70,13 @@ func TestRequest(t *testing.T) {
 	})
 	expected := new(bytes.Buffer)
 	// header
-	_ = binary.Write(expected, binary.BigEndian, int32(43))           // length
-	_ = binary.Write(expected, binary.BigEndian, int16(kafka.Offset)) // ApiKey
-	_ = binary.Write(expected, binary.BigEndian, int16(8))            // ApiVersion
-	_ = binary.Write(expected, binary.BigEndian, int32(123))          // correlationId
-	_ = binary.Write(expected, binary.BigEndian, int16(2))            // ClientId length
-	_ = binary.Write(expected, binary.BigEndian, []byte("me"))        // ClientId
-	_ = binary.Write(expected, binary.BigEndian, int8(0))             // tag buffer
+	_ = binary.Write(expected, binary.BigEndian, int32(43))                // length
+	_ = binary.Write(expected, binary.BigEndian, int16(kafka.ListOffsets)) // ApiKey
+	_ = binary.Write(expected, binary.BigEndian, int16(8))                 // ApiVersion
+	_ = binary.Write(expected, binary.BigEndian, int32(123))               // correlationId
+	_ = binary.Write(expected, binary.BigEndian, int16(2))                 // ClientId length
+	_ = binary.Write(expected, binary.BigEndian, []byte("me"))             // ClientId
+	_ = binary.Write(expected, binary.BigEndian, int8(0))                  // tag buffer
 	// message
 	_ = binary.Write(expected, binary.BigEndian, int32(1))             // ReplicaId
 	_ = binary.Write(expected, binary.BigEndian, int8(0))              // IsolationLevel

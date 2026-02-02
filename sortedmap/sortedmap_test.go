@@ -2,9 +2,11 @@ package sortedmap_test
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"mokapi/sortedmap"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestLinkedHashMap_Empty(t *testing.T) {
@@ -77,4 +79,41 @@ func TestLinkedHashMap_Merge(t *testing.T) {
 
 	m1.Merge(m2)
 	require.Equal(t, map[string]int{"foo": 10, "yuh": 3, "bar": 2}, m1.ToMap())
+}
+
+func TestLinkedHashMap(t *testing.T) {
+	testcases := []struct {
+		name string
+		test func(t *testing.T)
+	}{
+		{
+			name: "json",
+			test: func(t *testing.T) {
+				m := &sortedmap.LinkedHashMap[string, int]{}
+				err := json.Unmarshal([]byte(`{"foo":1}`), m)
+				require.NoError(t, err)
+				require.Equal(t, 1, m.Len())
+				require.Equal(t, 1, m.Lookup("foo"))
+			},
+		},
+		{
+			name: "yaml",
+			test: func(t *testing.T) {
+				m := &sortedmap.LinkedHashMap[string, int]{}
+				err := yaml.Unmarshal([]byte(`foo: 1`), m)
+				require.NoError(t, err)
+				require.Equal(t, 1, m.Len())
+				require.Equal(t, 1, m.Lookup("foo"))
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			tc.test(t)
+		})
+	}
 }
