@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"mokapi/kafka"
 	"mokapi/kafka/findCoordinator"
-	"net"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -12,13 +11,6 @@ import (
 func (s *Store) findCoordinator(rw kafka.ResponseWriter, req *kafka.Request) error {
 	r := req.Message.(*findCoordinator.Request)
 	res := &findCoordinator.Response{}
-
-	writeError := func(code kafka.ErrorCode, msg string) error {
-		res.ErrorCode = code
-		res.ErrorMessage = msg
-		log.Errorf("kafka FindCoordinator: %v", msg)
-		return rw.Write(res)
-	}
 
 	reqLog := &KafkaFindCoordinatorRequest{
 		Key:     r.Key,
@@ -28,24 +20,11 @@ func (s *Store) findCoordinator(rw kafka.ResponseWriter, req *kafka.Request) err
 
 	switch r.KeyType {
 	case findCoordinator.KeyTypeGroup:
-		b := s.getBrokerByHost(req.Host)
-		if b == nil {
-			return writeError(kafka.UnknownServerError, fmt.Sprintf("broker %v not found", req.Host))
-		}
-		host := b.Host
-		if len(host) == 0 {
-			var err error
-			host, _, err = net.SplitHostPort(req.Host)
-			if err != nil {
-				return writeError(kafka.UnknownServerError, fmt.Sprintf("broker %v not found: %v", req.Host, err))
-			}
-		}
-
-		res.NodeId = int32(b.Id)
+		host, port := parseHostAndPort(req.Host)
+		// Mokapi does no leader management: always return fixed node id
+		res.NodeId = 0
 		res.Host = host
-		resLog.Host = host
-		res.Port = int32(b.Port)
-		resLog.Port = b.Port
+		res.Port = int32(port)
 	default:
 		res.ErrorCode = kafka.UnknownServerError
 		res.ErrorMessage = fmt.Sprintf("unsupported request key_type=%v", r.KeyType)
@@ -55,8 +34,20 @@ func (s *Store) findCoordinator(rw kafka.ResponseWriter, req *kafka.Request) err
 	}
 
 	go func() {
-		s.logRequest(req.Header, reqLog)(reqLog)
+		s.logRequest(req.Header, reqLog)(newKafkaFindCoordinatorResponse(res))
 	}()
 
 	return rw.Write(res)
+}
+
+func newKafkaFindCoordinatorResponse(res *findCoordinator.Response) *KafkaFindCoordinatorResponse {
+	r := &KafkaFindCoordinatorResponse{
+		Host: res.Host,
+		Port: int(res.Port),
+	}
+	if res.ErrorCode != kafka.None {
+		r.ErrorCode = res.ErrorCode.String()
+		r.ErrorMessage = res.ErrorMessage
+	}
+	return r
 }

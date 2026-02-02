@@ -12,11 +12,11 @@ export function useDemoDashboard() {
         getAppInfo() {
             const response: AppInfoResponse = reactive({
                 data: {
-                    version: '0.0',
+                    version: '0.0.0',
                     activeServices: [],
                     search: { enabled: false }
                 },
-                isLoading: false,
+                isLoading: true,
                 error: '',
                 close: () => {},
             })

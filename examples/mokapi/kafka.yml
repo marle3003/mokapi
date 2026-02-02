@@ -314,6 +314,9 @@ components:
                 type: string
               tags:
                 $ref: '#/components/schemas/Tags'
+              configs:
+                additionalProperties:
+                  type: ['number', 'string']
         topics:
           type: array
           items:

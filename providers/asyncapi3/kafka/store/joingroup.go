@@ -21,7 +21,7 @@ func (s *Store) joingroup(rw kafka.ResponseWriter, req *kafka.Request) error {
 		log:              s.logRequest(req.Header, reqLog),
 	}
 
-	b := s.getBrokerByHost(req.Host)
+	b := s.getBrokerByPort(req.Host)
 	if b == nil {
 		res := &joinGroup.Response{
 			ErrorCode: kafka.UnknownServerError,

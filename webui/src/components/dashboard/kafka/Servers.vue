@@ -2,10 +2,15 @@
 import { computed, onMounted } from 'vue'
 import Markdown from 'vue3-markdown-it'
 import { Popover } from 'bootstrap'
+import { getRouteName } from '@/composables/dashboard';
+import { useRouter } from '@/router';
 
 const props = defineProps<{
-    servers: KafkaServer[],
+    serviceName: string,
+    servers: KafkaServer[]
 }>()
+
+const router = useRouter();
 
 onMounted(() => {
     const elements = document.querySelectorAll('.has-popover')
@@ -28,11 +33,31 @@ const servers = computed(() => {
         return x.name.localeCompare(y.name);
     })
 })
+
+function goToServer(server: KafkaServer, openInNewTab = false) {
+    if (getSelection()?.toString()) {
+        return
+    }
+
+    const to = {
+        name: getRouteName('kafkaServer').value,
+        params: {
+            service: props.serviceName,
+            server: server.name,
+        }
+    }
+    if (openInNewTab) {
+        const routeData = router.resolve(to);
+        window.open(routeData.href, '_blank')
+    } else {
+        router.push(to)
+    }
+}
 </script>
 
 <template>
     <div class="table-responsive-sm">
-        <table class="table dataTable table-responsive-lg" aria-label="Servers">
+        <table class="table dataTable selectable" aria-label="Servers">
             <thead>
                 <tr>
                     <th scope="col" class="text-left col-2">Name</th>
@@ -42,7 +67,8 @@ const servers = computed(() => {
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="server in servers" :key="server.host">
+                <tr v-for="server in servers" :key="server.host" @mouseup.left="goToServer(server)"
+                            @mousedown.middle="goToServer(server, true)">
                     <td>{{ server.name }}</td>
                     <td v-html="server.host.replace(/([^:]*):(.*)/g, '$1<wbr>:$2')"></td>
                     <td>

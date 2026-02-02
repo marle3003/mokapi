@@ -2,26 +2,27 @@ package monitor
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
 	"mokapi/runtime/metrics"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestHttp_Metrics_Request_Total(t *testing.T) {
 	h := NewHttp()
-	h.RequestCounter.WithLabel("service_a", "endpoint_a").Add(1)
+	h.RequestCounter.WithLabel("service_a", "endpoint_a", "post").Add(1)
 	require.Equal(t, float64(1), h.RequestCounter.Sum())
 }
 
 func TestHttp_Metrics_Request_Errors_Total(t *testing.T) {
 	h := NewHttp()
-	h.RequestErrorCounter.WithLabel("service_a", "endpoint_a").Add(1)
+	h.RequestErrorCounter.WithLabel("service_a", "endpoint_a", "put").Add(1)
 	require.Equal(t, float64(1), h.RequestErrorCounter.Sum())
 }
 
 func TestHttp_Metrics_LastRequest(t *testing.T) {
 	h := NewHttp()
-	h.LastRequest.WithLabel("service_a", "endpoint_a").Set(10)
+	h.LastRequest.WithLabel("service_a", "endpoint_a", "delete").Set(10)
 	require.Equal(t, float64(10), h.LastRequest.Value(metrics.NewQuery(metrics.ByLabel("service", "service_a"))))
 }
 

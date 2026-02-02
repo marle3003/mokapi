@@ -31,7 +31,7 @@ func (s *Store) syncgroup(rw kafka.ResponseWriter, req *kafka.Request) error {
 	data.log = s.logRequest(req.Header, reqLog)
 
 	if len(r.MemberId) != 0 {
-		b := s.getBrokerByHost(req.Host)
+		b := s.getBrokerByPort(req.Host)
 		if b != nil {
 			g := s.GetOrCreateGroup(r.GroupId, b.Id)
 

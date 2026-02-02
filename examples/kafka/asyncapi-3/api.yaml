@@ -1,0 +1,14 @@
+asyncapi: 3.0.0
+info:
+  title: User Service
+  version: 1.0.0
+channels:
+  userSignedUp:
+    address: 'users.signedup'
+    messages:
+      userEvent:
+        payload:
+          type: object
+          properties:
+            id: { type: string, format: uuid }
+            email: { type: string, format: email }

@@ -23,6 +23,7 @@ type FlagSet struct {
 	dynamic       []*DynamicFlag
 	orderedFlags  map[string]int
 	setConfigFile func(string)
+	orderFlag     int
 }
 
 type Flag struct {
@@ -69,7 +70,8 @@ func (fs *FlagSet) setFlag(f *Flag) {
 	if f.Shorthand != "" {
 		fs.flags[f.Shorthand] = f
 	}
-	fs.orderedFlags[f.Name] = len(fs.flags)
+	fs.orderedFlags[f.Name] = fs.orderFlag
+	fs.orderFlag++
 }
 
 func (fs *FlagSet) setValue(name string, value []string, source Source) error {
@@ -82,7 +84,8 @@ func (fs *FlagSet) setValue(name string, value []string, source Source) error {
 			if err != nil {
 				return fmt.Errorf("failed to set flag %s: %w", name, err)
 			}
-			fs.orderedFlags[name] = len(fs.orderedFlags)
+			fs.orderedFlags[name] = fs.orderFlag
+			fs.orderFlag++
 			return nil
 		}
 	}
@@ -92,7 +95,8 @@ func (fs *FlagSet) setValue(name string, value []string, source Source) error {
 			if err != nil {
 				return fmt.Errorf("failed to set flag %s: %w", name, err)
 			}
-			fs.orderedFlags[name] = len(fs.orderedFlags)
+			fs.orderedFlags[name] = fs.orderFlag
+			fs.orderFlag++
 			return nil
 		}
 	}

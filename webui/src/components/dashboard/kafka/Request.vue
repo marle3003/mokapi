@@ -65,18 +65,18 @@ const eventData = computed(() => {
                 <div class="card-body">
                     <div class="row mb-2">
                         <div class="col-3 header">
-                            <p class="label">API Key</p>
-                            <p>
+                            <p id="api-key" class="label">API Key</p>
+                            <p aria-labelledby="api-key">
                                 {{ eventData.header.requestName }} ({{ eventData.header.requestKey }})
                             </p>
                         </div>
                         <div class="col-2 col-sm-7">
-                            <p class="label">Version</p>
-                            <p>{{ eventData.header.version }}</p>
+                            <p id="version" class="label">Version</p>
+                            <p aria-labelledby="version">{{ eventData.header.version }}</p>
                         </div>
                         <div class="col ms-auto">
-                            <p class="label">Time</p>
-                            <p>{{ formatTime(data.event.time) }}</p>
+                            <p id="time" class="label">Time</p>
+                            <p aria-labelledby="time">{{ formatTime(data.event.time) }}</p>
                         </div>
                     </div>
                 </div>

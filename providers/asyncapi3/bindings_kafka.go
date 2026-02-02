@@ -2,11 +2,14 @@ package asyncapi3
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"mokapi/schema/json/schema"
+
+	"gopkg.in/yaml.v3"
 )
 
 type BrokerBindings struct {
+	configs map[string]any
+
 	// LogRetentionBytes the maximum size of the log before deleting it
 	LogRetentionBytes int64
 
@@ -77,53 +80,57 @@ type TopicBindings struct {
 }
 
 func (b *BrokerBindings) UnmarshalYAML(value *yaml.Node) error {
-	m := make(map[string]interface{})
-	err := value.Decode(m)
+	b.configs = make(map[string]any)
+	err := value.Decode(b.configs)
 	if err != nil {
 		return err
 	}
 
-	b.LogRetentionBytes, err = getInt64(m, "log.retention.bytes")
+	b.LogRetentionBytes, err = getInt64(b.configs, "log.retention.bytes")
 	if err != nil {
 		return fmt.Errorf("invalid log.retention.bytes: %w", err)
 	}
-	b.LogRetentionMs, err = getMs(m, "log.retention")
+	b.LogRetentionMs, err = getMs(b.configs, "log.retention")
 	if err != nil {
 		return err
 	}
-	b.LogRetentionCheckIntervalMs, err = getInt64(m, "log.retention.check.interval.ms")
+	b.LogRetentionCheckIntervalMs, err = getInt64(b.configs, "log.retention.check.interval.ms")
 	if err != nil {
 		return fmt.Errorf("invalid log.retention.check.interval.ms: %w", err)
 	}
-	b.LogSegmentDeleteDelayMs, err = getInt64(m, "log.segment.delete.delay.ms")
+	b.LogSegmentDeleteDelayMs, err = getInt64(b.configs, "log.segment.delete.delay.ms")
 	if err != nil {
 		return fmt.Errorf("invalid log.segment.delete.delay.ms: %w", err)
 	}
-	b.LogRollMs, err = getMs(m, "log.roll")
+	b.LogRollMs, err = getMs(b.configs, "log.roll")
 	if err != nil {
 		return err
 	}
-	b.LogSegmentBytes, err = getInt64(m, "log.segment.bytes")
+	b.LogSegmentBytes, err = getInt64(b.configs, "log.segment.bytes")
 	if err != nil {
 		return fmt.Errorf("invalid log.segment.bytes: %w", err)
 	}
-	b.GroupInitialRebalanceDelayMs, err = getInt64(m, "group.initial.rebalance.delay.ms")
+	b.GroupInitialRebalanceDelayMs, err = getInt64(b.configs, "group.initial.rebalance.delay.ms")
 	if err != nil {
 		return fmt.Errorf("invalid group.initial.rebalance.delay.ms: %w", err)
 	}
-	b.GroupMinSessionTimeoutMs, err = getInt64(m, "group.min.session.timeout.ms")
+	b.GroupMinSessionTimeoutMs, err = getInt64(b.configs, "group.min.session.timeout.ms")
 	if err != nil {
 		return fmt.Errorf("invalid group.min.session.timeout.ms: %w", err)
 	}
 
-	if s, ok := m["schemaRegistryUrl"]; ok {
+	if s, ok := b.configs["schemaRegistryUrl"]; ok {
 		b.SchemaRegistryUrl = s.(string)
 	}
-	if s, ok := m["schemaRegistryVendor"]; ok {
+	if s, ok := b.configs["schemaRegistryVendor"]; ok {
 		b.SchemaRegistryVendor = s.(string)
 	}
 
 	return nil
+}
+
+func (b *BrokerBindings) Configs() map[string]any {
+	return b.configs
 }
 
 func (t *TopicBindings) UnmarshalYAML(value *yaml.Node) error {

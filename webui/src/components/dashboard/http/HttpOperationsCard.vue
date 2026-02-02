@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { type PropType, computed } from 'vue';
 import { useRouter, useRoute } from '@/router';
+import { useMetrics } from '@/composables/metrics';
+import { usePrettyDates } from '@/composables/usePrettyDate';
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },
     path: { type: Object as PropType<HttpPath>, required: true }
 })
+
+const { sum } = useMetrics()
+const { format } = usePrettyDates()
 
 const operations = computed(() => {
     if (!props.path.operations) {
@@ -46,6 +51,21 @@ function showWarningColumn(){
     }
     return false
 }
+function lastRequest(op: HttpOperation){
+    const n = sum(props.service.metrics, 'http_request_timestamp', { name: 'endpoint', value: props.path.path }, { name: 'method', value: op.method.toUpperCase() })
+    if (n == 0){
+        return '-'
+    }
+    return format(n)
+}
+
+function requests(op: HttpOperation){
+    return sum(props.service.metrics, 'http_requests_total', { name: 'endpoint', value: props.path.path }, { name: 'method', value: op.method.toUpperCase() })
+}
+
+function errors(op: HttpOperation){
+    return sum(props.service.metrics, 'http_requests_errors_total', { name: 'endpoint', value: props.path.path }, { name: 'method', value: op.method.toUpperCase() })
+}
 </script>
 
 <template>
@@ -58,7 +78,9 @@ function showWarningColumn(){
                         <tr>
                             <th scope="col" class="text-left col-1">Method</th>
                             <th scope="col" class="text-left col-2">Operation ID</th>
-                            <th scope="col" class="text-left col-8">Summary</th>
+                            <th scope="col" class="text-left col">Summary</th>
+                            <th scope="col" class="text-center col-2">Last Request</th>
+                            <th scope="col" class="text-center col-1" title="Total requests / error responses">Req / Err</th>
                             <th scope="col" class="text-left col-1" v-if="showWarningColumn()">Warning</th>
                         </tr>
                     </thead>
@@ -71,6 +93,12 @@ function showWarningColumn(){
                             </td>
                             <td>{{ operation.operationId }}</td>
                             <td>{{ operation.summary }}</td>
+                            <td class="text-center">{{ lastRequest(operation) }}</td>
+                            <td class="text-center">
+                                <span>{{ requests(operation) }}</span>
+                                <span> / </span>
+                                <span v-bind:class="{'text-danger': errors(operation) > 0}">{{ errors(operation) }}</span>
+                            </td>
                             <td v-if="showWarningColumn()"><span v-if="operation.deprecated"><span class="bi bi-exclamation-triangle-fill yellow"></span> deprecated</span></td>
                         </tr>
                     </tbody>

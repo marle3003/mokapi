@@ -40,6 +40,7 @@ import { useRoute } from 'vue-router'
 import { useRefreshManager } from '@/composables/refresh-manager'
 import { useDashboard, getRouteName } from '@/composables/dashboard'
 import Tabs from '@/components/dashboard/Tabs.vue'
+import ReleaseNotes from '@/components/ReleaseNotes.vue'
 
 const route = useRoute()
 const { progress, start, isActive } = useRefreshManager();
@@ -213,6 +214,7 @@ useMeta('Dashboard | mokapi.io', description, '')
 
         <message :message="appInfo.error" v-if="!appInfo?.data && !appInfo?.isLoading && appInfo?.error"></message>
         <loading v-if="isInitLoading()"></loading>
+        <release-notes v-if="getMode() === 'live'" />
     </main>
 </template>
 

@@ -93,7 +93,11 @@ export let clusters = [
                 name: 'Broker',
                 host: 'localhost:9092',
                 tags: [{name: 'env:test', description: 'This environment is for running internal tests'}],
-                description: 'Dashwood contempt on mr unlocked resolved provided of of. Stanhill wondered it it welcomed oh. Hundred no prudent he however smiling at an offence. If earnestly extremity he he propriety something admitting convinced ye.'
+                description: 'Dashwood contempt on mr unlocked resolved provided of of. Stanhill wondered it it welcomed oh. Hundred no prudent he however smiling at an offence. If earnestly extremity he he propriety something admitting convinced ye.',
+                configs: {
+                    'log.retention.bytes': 1024,
+                    'log.retention': 5000,
+                }
             }
         ],
         topics: [

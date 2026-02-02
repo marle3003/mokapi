@@ -2,12 +2,13 @@ package events
 
 import (
 	"fmt"
-	"github.com/blevesearch/bleve/v2"
-	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/blevesearch/bleve/v2"
+	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 type Handler interface {
@@ -92,7 +93,7 @@ func (m *StoreManager) GetEvents(traits Traits) []Event {
 	events := make([]Event, 0)
 
 	for _, s := range m.stores {
-		if len(traits) == 0 || traits.Match(s.traits) || s.traits.Match(traits) {
+		if s.some(traits) {
 			events = append(events, s.Events(traits)...)
 		}
 	}

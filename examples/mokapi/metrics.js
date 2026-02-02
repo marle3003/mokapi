@@ -15,27 +15,27 @@ export let metrics = [
         value:  1
     },
     {
-        name: 'http_requests_total{service="Swagger Petstore",endpoint="/pet"}"',
+        name: 'http_requests_total{service="Swagger Petstore",endpoint="/pet",method="POST"}"',
         value: 2
     },
     {
-        name: 'http_requests_errors_total{service="Swagger Petstore",endpoint="/pet"}"',
+        name: 'http_requests_errors_total{service="Swagger Petstore",endpoint="/pet",method="POST"}"',
         value: 1
     },
     {
-        name: 'http_requests_total{service="Swagger Petstore",endpoint="/pet/findByStatus"}"',
+        name: 'http_requests_total{service="Swagger Petstore",endpoint="/pet/findByStatus",method="GET"}"',
         value: 2
     },
     {
-        name: 'http_requests_errors_total{service="Swagger Petstore",endpoint="/pet/findByStatus"}"',
+        name: 'http_requests_errors_total{service="Swagger Petstore",endpoint="/pet/findByStatus",method="POST"}"',
         value: 0
     },
     {
-        name: 'http_request_timestamp{service="Swagger Petstore",endpoint="/pet"}"',
+        name: 'http_request_timestamp{service="Swagger Petstore",endpoint="/pet",method="POST"}"',
         value: 1652235690
     },
     {
-        name: 'http_request_timestamp{service="Swagger Petstore",endpoint="/pet/findByStatus"}"',
+        name: 'http_request_timestamp{service="Swagger Petstore",endpoint="/pet/findByStatus",method="POST"}"',
         value: 1652237690
     },
     {

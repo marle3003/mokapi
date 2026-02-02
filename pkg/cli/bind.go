@@ -23,6 +23,10 @@ type bindContext struct {
 
 func (f *flagConfigBinder) Decode(flags *FlagSet, element interface{}) error {
 	return flags.Visit(func(flag *Flag) error {
+		if !flag.Value.IsSet() {
+			return nil
+		}
+
 		paths := ParsePath(flag.Name)
 		v := flag.Value.Value()
 		ctx := &bindContext{path: flag.Name, paths: paths, value: v, element: reflect.ValueOf(element)}
@@ -179,39 +183,52 @@ func (f *flagConfigBinder) setArray(ctx *bindContext) error {
 		}
 
 		return f.setValue(ctx.Next(ctx.element.Index(index)))
-	} else {
-		var values []string
-		if arr, ok := ctx.value.([]string); ok {
-			if arr == nil {
-				return nil
-			}
-			values = arr
-		} else if s, ok := ctx.value.(string); ok {
-			values = []string{s}
+	}
+
+	var values []string
+	if arr, ok := ctx.value.([]string); ok {
+		if arr == nil {
+			return nil
+		}
+		values = arr
+	} else if s, ok := ctx.value.(string); ok {
+		values = []string{s}
+	}
+
+	if len(values) == 1 {
+		values = splitArrayItems(values[0])
+	}
+
+	arr := ctx.element.Interface()
+	_ = arr
+
+	for index, v := range values {
+		var ptr reflect.Value
+		if index < ctx.element.Len() {
+			item := ctx.element.Index(index)
+			ptr = reflect.New(ctx.element.Type().Elem())
+			ptr.Elem().Set(item)
+		} else {
+			ptr = reflect.New(ctx.element.Type().Elem())
 		}
 
-		if len(values) == 1 {
-			values = splitArrayItems(values[0])
+		ctxItem := &bindContext{
+			paths:   ctx.paths,
+			element: ptr,
+			value:   v,
+		}
+		if err := f.setValue(ctxItem); err != nil {
+			return err
 		}
 
-		if len(values) > 0 {
-			// reset slice; remove default values
-			ctx.element.Set(reflect.MakeSlice(ctx.element.Type(), 0, len(values)))
-		}
-
-		for _, v := range values {
-			ptr := reflect.New(ctx.element.Type().Elem())
-			ctxItem := &bindContext{
-				paths:   ctx.paths,
-				element: ptr,
-				value:   v,
-			}
-			if err := f.setValue(ctxItem); err != nil {
-				return err
-			}
+		if index < ctx.element.Len() {
+			ctx.element.Index(index).Set(ptr.Elem())
+		} else {
 			ctx.element.Set(reflect.Append(ctx.element, ptr.Elem()))
 		}
 	}
+
+	arr = ctx.element.Interface()
 
 	return nil
 }

@@ -1,21 +1,25 @@
-package asyncApi
+package asyncApi_test
 
 import (
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/asyncApi"
+	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/dynamictest"
+	"mokapi/providers/asyncapi3"
 	"mokapi/schema/json/schema"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestConfig_Convert(t *testing.T) {
 	b, err := os.ReadFile("./test/streetlight-kafka-2.0.yaml")
 	require.NoError(t, err)
 
-	var cfg *Config
+	var cfg *asyncApi.Config
 	err = yaml.Unmarshal(b, &cfg)
 	require.NoError(t, err)
 
@@ -75,6 +79,32 @@ func TestConfig_Convert(t *testing.T) {
 	require.Equal(t, "Inform about environmental lighting conditions of a particular streetlight.", op.Summary)
 }
 
+func TestServer_Convert(t *testing.T) {
+	testcases := []struct {
+		name string
+		cfg  *asyncApi.Config
+		test func(t *testing.T, config *asyncapi3.Config, err error)
+	}{
+		{
+			name: "server with url:port",
+			cfg:  asyncapitest.NewConfig(asyncapitest.WithServer("foo", "kafka", "mokapi-service:9092")),
+			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+				require.NoError(t, err)
+				require.Len(t, config.Servers, 1)
+				require.Equal(t, "mokapi-service:9092", config.Servers["foo"].Value.Host)
+				require.Equal(t, "kafka", config.Servers["foo"].Value.Protocol)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			c, err := tc.cfg.Convert()
+			tc.test(t, c, err)
+		})
+	}
+}
+
 func TestConfig_ConvertNoOperationId(t *testing.T) {
 	s := `
 asyncapi: '2.6.0'
@@ -94,7 +124,7 @@ channels:
           schema:
             type: string
 `
-	var old *Config
+	var old *asyncApi.Config
 	err := yaml.Unmarshal([]byte(s), &old)
 	require.NoError(t, err)
 	cfg, err := old.Convert()

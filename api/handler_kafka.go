@@ -44,11 +44,14 @@ type kafkaInfo struct {
 }
 
 type kafkaServer struct {
-	Name        string     `json:"name"`
-	Host        string     `json:"host"`
-	Protocol    string     `json:"protocol"`
-	Description string     `json:"description"`
-	Tags        []kafkaTag `json:"tags,omitempty"`
+	Name        string         `json:"name"`
+	Host        string         `json:"host"`
+	Protocol    string         `json:"protocol"`
+	Title       string         `json:"title"`
+	Summary     string         `json:"summary"`
+	Description string         `json:"description"`
+	Configs     map[string]any `json:"configs,omitempty"`
+	Tags        []kafkaTag     `json:"tags,omitempty"`
 }
 
 type kafkaTag struct {
@@ -425,8 +428,11 @@ func getKafka(info *runtime.KafkaInfo) kafkaInfo {
 		ks := kafkaServer{
 			Name:        name,
 			Host:        s.Value.Host,
+			Title:       s.Value.Title,
+			Summary:     s.Value.Summary,
 			Description: s.Value.Description,
 			Protocol:    s.Value.Protocol,
+			Configs:     s.Value.Bindings.Kafka.Configs(),
 		}
 		for _, r := range s.Value.Tags {
 			if r.Value == nil {
@@ -601,11 +607,11 @@ func getPartitions(t *store.Topic) []partition {
 
 func newGroup(g *store.Group) group {
 	grp := group{
-		Name:       g.Name,
-		Generation: g.Generation.Id,
-		State:      g.State.String(),
+		Name:  g.Name,
+		State: g.State.String(),
 	}
 	if g.Generation != nil {
+		grp.Generation = g.Generation.Id
 		grp.Leader = g.Generation.LeaderId
 		grp.AssignmentStrategy = g.Generation.Protocol
 
@@ -623,6 +629,8 @@ func newGroup(g *store.Group) group {
 		sort.Slice(grp.Members, func(i, j int) bool {
 			return strings.Compare(grp.Members[i].Name, grp.Members[j].Name) < 0
 		})
+	} else {
+		grp.Generation = -1
 	}
 	for topicName := range g.Commits {
 		grp.Topics = append(grp.Topics, topicName)

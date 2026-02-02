@@ -271,8 +271,8 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *H
 			r = r.WithContext(context.WithValue(r.Context(), "endpointPath", op.Path.Path))
 
 			if m, ok := monitor.HttpFromContext(r.Context()); ok {
-				m.LastRequest.WithLabel(h.config.Info.Name, op.Path.Path).Set(float64(time.Now().Unix()))
-				m.RequestCounter.WithLabel(h.config.Info.Name, op.Path.Path).Add(1)
+				m.LastRequest.WithLabel(h.config.Info.Name, op.Path.Path, r.Method).Set(float64(time.Now().Unix()))
+				m.RequestCounter.WithLabel(h.config.Info.Name, op.Path.Path, r.Method).Add(1)
 			}
 
 			if ctx, err := NewLogEventContext(
@@ -344,11 +344,11 @@ func writeError(rw http.ResponseWriter, r *http.Request, err error, serviceName 
 		endpointPath := r.Context().Value("endpointPath")
 		if endpointPath != nil {
 			endpointPathString := endpointPath.(string)
-			m.RequestErrorCounter.WithLabel(serviceName, endpointPathString).Add(1)
-			m.LastRequest.WithLabel(serviceName, endpointPathString).Set(float64(time.Now().Unix()))
+			m.RequestErrorCounter.WithLabel(serviceName, endpointPathString, r.Method).Add(1)
+			m.LastRequest.WithLabel(serviceName, endpointPathString, r.Method).Set(float64(time.Now().Unix()))
 		} else {
-			m.RequestErrorCounter.WithLabel(serviceName, "").Add(1)
-			m.LastRequest.WithLabel(serviceName, "").Set(float64(time.Now().Unix()))
+			m.RequestErrorCounter.WithLabel(serviceName, "", r.Method).Add(1)
+			m.LastRequest.WithLabel(serviceName, "", r.Method).Set(float64(time.Now().Unix()))
 		}
 	}
 	rw.Header().Add("Content-Type", "text/plain")

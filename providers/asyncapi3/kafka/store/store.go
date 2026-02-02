@@ -51,21 +51,21 @@ type ProducerState struct {
 	ProducerEpoch int16
 }
 
-func NewEmpty(eventEmitter common.EventEmitter, eh events.Handler) *Store {
+func NewEmpty(eventEmitter common.EventEmitter, eh events.Handler, monitor *monitor.Kafka) *Store {
 	return &Store{
 		topics:       make(map[string]*Topic),
 		brokers:      make(map[int]*Broker),
 		groups:       make(map[string]*Group),
 		eventEmitter: eventEmitter,
 		eh:           eh,
+		monitor:      monitor,
 		producers:    make(map[int64]*ProducerState),
 		clients:      make(map[string]*kafka.ClientContext),
 	}
 }
 
 func New(config *asyncapi3.Config, eventEmitter common.EventEmitter, eh events.Handler, monitor *monitor.Kafka) *Store {
-	s := NewEmpty(eventEmitter, eh)
-	s.monitor = monitor
+	s := NewEmpty(eventEmitter, eh, monitor)
 	s.Update(config)
 	return s
 }
@@ -317,7 +317,7 @@ func (s *Store) getBroker(name string) *Broker {
 	return nil
 }
 
-func (s *Store) getBrokerByHost(addr string) *Broker {
+func (s *Store) getBrokerByPort(addr string) *Broker {
 	for _, b := range s.brokers {
 		_, p := parseHostAndPort(addr)
 		if b.Port == p {
@@ -422,6 +422,15 @@ func parseHostAndPort(s string) (host string, port int) {
 			return
 		}
 		port = int(p)
+	}
+
+	ip := net.ParseIP(host)
+	if ip != nil && ip.IsLoopback() {
+		if host != "localhost" && host != "127.0.0.1" {
+			// Some Kafka clients still have problems with IPv6 literals.
+			// Docker / CI / older JVMs are safer with IPv4
+			host = "127.0.0.1"
+		}
 	}
 
 	return

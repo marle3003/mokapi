@@ -10,7 +10,8 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
         noTitleExpre = /noTitle/,
         title = /title=([^\s]*)/,
         titleQuote = /title=\"([^"]*)\"/,
-        url = /url=\[([^\]]*)\]\(([^\)]*)\)/
+        url = /url=\[([^\]]*)\]\(([^\)]*)\)/,
+        link = /\[([^\]]*)\]\(([^\)]*)\)/g
 
     function getInfo(token: Token) {
         return token.info ? unescapeAll(token.info).trim() : ''
@@ -40,6 +41,22 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
     function showTitle(token: Token): boolean {
         var info = getInfo(token)
         return noTitleExpre.exec(info) == null
+    }
+
+    function parseContent(content: string) {
+        var m;
+        do {
+            m = link.exec(content)
+            if (m) {
+                var url = m[2]
+                if (url?.endsWith('.md')) {
+                    url = new URL(url.replace('.md', ''), document.location.href).toString()
+                }
+                content = content.replace(m[0], `<a href="${url}">${m[1]}</a>`)
+            }
+        } while (m)
+
+        return content
     }
 
     function getTitle(token: Token) {
@@ -73,6 +90,7 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
             token.hidden = true
 
             const url = getUrl(token)
+            const content = parseContent(token.content)
 
             if (showTitle(token)) {
                 let title = getTitle(token)
@@ -98,13 +116,13 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
 
                 alert += `<div class="box ${name}" role="alert">
                         <p class="box-heading ${heading}">${icon}${title}</p>
-                        <p class="box-body">${token.content}</p>
+                        <p class="box-body">${content}</p>
                         ${url}
                         </div>`
             }
             else {
                 alert += `<div class="box ${name} no-title" role="alert">
-                        <p class="box-body">${token.content}</p>
+                        <p class="box-body">${content}</p>
                         ${url}
                         </div>`
             }

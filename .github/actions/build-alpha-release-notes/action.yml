@@ -1,0 +1,39 @@
+name: build-alpha-release-notes
+description: build-alpha-release-notes
+inputs:
+  latest-tag:
+    required: true
+    description: The latest tag
+  version:
+    required: true
+    description: The alpha version
+runs:
+  using: composite
+  steps:
+    - name: Generate alpha release notes
+      shell: bash
+      run: |
+        {
+          echo "# Mokapi Release ${{ inputs.version }}"
+          echo
+          echo "⚠️ Automatically generated alpha build."
+          echo
+          echo "- Alpha version: ${{ inputs.version }}"
+          echo "- Commit: $(git rev-parse --short HEAD)"
+          echo "- Built at: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo
+          echo "## Changes since ${{ inputs.latest-tag }}"
+          echo
+          git log "${{ inputs.latest-tag }}..HEAD" \
+            --oneline \
+            --no-merges |
+            grep -v -E 'github-actions\[bot\]|dependabot\[bot\]' |
+            sed 's/^[a-f0-9]\{7,40\} //' |  # remove SHA prefix
+            awk '!seen[$0]++' |
+            sed 's/^/- /'
+        } > docs/release.md
+    - name: Upload UI artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-notes
+        path: docs/release.md

@@ -20,13 +20,14 @@ const emit = defineEmits<{
 
 const tags = useLocalStorage<string[]>(`kafka-${props.service?.name}-tags`, ['__all'])
 const labels = computed(() => {
-    const result = [{ name: 'type', value: 'message' }];
+    const result = [];
     if (props.service) {
         result.push({name: 'name', value: props.service.name})
     }
     if (props.topicName) {
         result.push({name: 'topic', value: props.topicName})
     }
+    result.push({ name: 'type', value: 'message' })
     if (props.clientId){
         result.push({name: 'clientId', value: props.clientId})
     }

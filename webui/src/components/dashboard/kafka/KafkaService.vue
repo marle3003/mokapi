@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Ref, onUnmounted, ref, watch } from 'vue'
+import { type Ref, computed, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
 import KafkaTopics from './KafkaTopics.vue'
@@ -16,20 +16,34 @@ import Message from './Message.vue'
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useRouter } from '@/router'
 import Request from './Request.vue'
+import type { ServiceResult } from '@/types/dashboard'
+import Server from './Server.vue'
 
 const route = useRoute();
 const router = useRouter();
 const serviceName = route.params.service?.toString()
+let data = ref<ServiceResult | null>(null);
+const { dashboard } = useDashboard();
 
-let service: Ref<KafkaService | null>
-if (serviceName) {
-    const { dashboard } = useDashboard()
-    const result = dashboard.value.getService(serviceName, 'kafka')
-    service = result.service as Ref<KafkaService | null>
-    onUnmounted(() => {
-        result.close()
-    })
-}
+const service = computed(() => {
+    if (!data.value) {
+        return undefined
+    }
+    return data.value.service as KafkaService
+})
+
+watch(() => dashboard.value,
+  (db, _, onCleanup) => {
+    if (!serviceName) {
+        return
+    }
+    const res = db.getService(serviceName, 'kafka');
+    data.value = res;
+
+    onCleanup(() => res.close());
+  },
+  { immediate: true }
+);
 
 const activeTab = ref('tab-topics');
 
@@ -39,8 +53,8 @@ function setTab(tab: string) {
     });
 }
 watch(() => route.hash, (hash) => {
-    activeTab.value = hash ? hash.slice(1) : 'tab-topics'
-},
+        activeTab.value = hash ? hash.slice(1) : 'tab-topics'
+    },
     { immediate: true }
 )
 </script>
@@ -52,7 +66,7 @@ watch(() => route.hash, (hash) => {
         </div>
 
         <div class="card-group">
-            <section class="card" aria-label="Topic Data">
+            <section class="card" aria-label="Service Data">
                 <div class="card-body">
                     <div class="nav card-tabs" id="myTab" role="tablist">
                         <button :class="{ active: activeTab === 'tab-topics' }" id="topics-tab" type="button" role="tab"
@@ -76,30 +90,30 @@ watch(() => route.hash, (hash) => {
                             Configs
                         </button>
                     </div>
-                </div>
-                <div class="tab-content">
-                    <div class="tab-pane fade pt-0" :class="{ 'show active': activeTab === 'tab-topics' }" id="topics-pane"
-                        role="tabpanel" aria-labelledby="topics-tab">
-                        <kafka-topics :service="service" />
-                        <div class="card-group">
-                            <kafka-messages-card :service="service" />
+                    <div class="tab-content">
+                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-topics' }" id="topics-pane"
+                            role="tabpanel" aria-labelledby="topics-tab">
+                            <kafka-topics :service="service" />
+                            <div class="card-group">
+                                <kafka-messages-card :service="service" />
+                            </div>
                         </div>
-                    </div>
-                    <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-groups' }" id="groups"
-                        role="tabpanel" aria-labelledby="groups-tab">
-                        <kafka-groups :service="service" />
-                    </div>
-                    <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-servers' }" id="servers"
-                        role="tabpanel" aria-labelledby="servers-tab">
-                        <servers :servers="service.servers" />
-                    </div>
-                    <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-clients' }" id="clients"
-                        role="tabpanel" aria-labelledby="clients-tab">
-                        <kafka-clients :service="service" />
-                    </div>
-                    <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-configs' }" id="configs"
-                        role="tabpanel" aria-labelledby="configs-tab">
-                        <configs :configs="service.configs" />
+                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-groups' }" id="groups"
+                            role="tabpanel" aria-labelledby="groups-tab">
+                            <kafka-groups :service="service" />
+                        </div>
+                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-servers' }" id="servers"
+                            role="tabpanel" aria-labelledby="servers-tab">
+                            <servers :service-name="service.name" :servers="service.servers" />
+                        </div>
+                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-clients' }" id="clients"
+                            role="tabpanel" aria-labelledby="clients-tab">
+                            <kafka-clients :service="service" />
+                        </div>
+                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-configs' }" id="configs"
+                            role="tabpanel" aria-labelledby="configs-tab">
+                            <configs :configs="service.configs" />
+                        </div>
                     </div>
                 </div>
             </section>
@@ -117,12 +131,16 @@ watch(() => route.hash, (hash) => {
     <div v-if="$route.name == getRouteName('kafkaClient').value">
         <kafka-client></kafka-client>
     </div>
+    <div v-if="$route.name == getRouteName('kafkaServer').value">
+        <server></server>
+    </div>
     <message v-if="$route.name == getRouteName('kafkaMessage').value"></message>
     <request v-if="$route.name == getRouteName('kafkaRequest').value"></request>
 </template>
 
 <style scoped>
 .tab-pane {
-    padding-top: 1;
+    padding: 0;
+    padding-top: 1rem;
 }
 </style>

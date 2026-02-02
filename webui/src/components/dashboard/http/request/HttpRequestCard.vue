@@ -106,18 +106,18 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
                     <div v-if="operation.requestBody">
                         <div class="row mb-2" v-if="operation.requestBody.description">
                             <div class="col">
-                                <p class="label">Description</p>
-                                <p>{{  operation.requestBody.description }}</p>
+                                <p id="request-body-description" class="label">Description</p>
+                                <p aria-labelledby="request-body-description">{{  operation.requestBody.description }}</p>
                             </div>
                         </div>
                         <div class="row mb-2">
                             <div class="col-2">
-                                <p class="label" v-if="operation.requestBody.contents.length == 1">Request content type</p>
-                                <p v-if="operation.requestBody.contents.length == 1">{{ operation.requestBody.contents[0]?.type }}</p>
+                                <p id="request-body-content-type" class="label" v-if="operation.requestBody.contents.length == 1">Request content type</p>
+                                <p aria-labelledby="request-body-content-type" v-if="operation.requestBody.contents.length == 1">{{ operation.requestBody.contents[0]?.type }}</p>
                             </div>
                             <div class="col">
-                                <p class="label">Required</p>
-                                <p>{{ operation.requestBody.required }}</p>
+                                <p id="request-body-required" class="label">Required</p>
+                                <p aria-labelledby="request-body-required">{{ operation.requestBody.required }}</p>
                             </div>
                         </div>
                         
