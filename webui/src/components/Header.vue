@@ -7,7 +7,7 @@ import Fuse from 'fuse.js';
 import { parseMarkdown } from '@/composables/markdown';
 import { Modal } from 'bootstrap';
 import type { AppInfoResponse } from '@/types/dashboard';
-import { getRouteName, useDashboard } from '@/composables/dashboard';
+import { useDashboard } from '@/composables/dashboard';
 import { usePromo } from '@/composables/promo';
 
 const isDashboard = import.meta.env.VITE_DASHBOARD === 'true'
