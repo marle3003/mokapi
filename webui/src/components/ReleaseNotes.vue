@@ -47,7 +47,9 @@ watch(appInfo, () => {
     return
   }
   if (import.meta.env.DEV) {
-    return
+    if (!Object.keys(route.query).find(x => x === 'show-release-notes')) {
+      return
+    }
   }
   if (!content) {
     return
@@ -78,7 +80,7 @@ function dismiss() {
 }
 
 function close() {
-  setItemWithExpiry("release-notes-hide", "true", 8);
+  setItemWithExpiry("release-notes-hide", "true", 12);
 }
 
 function setItemWithExpiry(key: string, value: string, hours: number) {

@@ -13,8 +13,6 @@ runs:
     - name: Generate alpha release notes
       shell: bash
       run: |
-        mkdir -p releases
-        
         {
           echo "# Mokapi Release ${{ inputs.version }}"
           echo
