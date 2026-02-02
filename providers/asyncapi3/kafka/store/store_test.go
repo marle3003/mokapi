@@ -40,9 +40,9 @@ func TestStore(t *testing.T) {
 				require.Equal(t, 1, len(s.Brokers()))
 				require.Equal(t, 0, len(s.Topics()))
 				require.Equal(t, 0, len(s.Groups()))
-				b, ok := s.Broker(0)
-				require.Equal(t, true, ok)
-				require.Equal(t, "foo", b.Name)
+				list := s.Brokers()
+				require.Len(t, list, 1)
+				require.Equal(t, "foo", list[0].Name)
 			},
 		},
 		{

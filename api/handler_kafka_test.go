@@ -1105,7 +1105,7 @@ func getKafkaInfo(config *asyncapi3.Config) *runtime.KafkaInfo {
 
 func getKafkaInfoWithGroup(config *asyncapi3.Config, group *store.Group) *runtime.KafkaInfo {
 	s := store.New(config, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
-	g := s.GetOrCreateGroup(group.Name, 0)
+	g := s.GetOrCreateGroup(group.Name, &store.Broker{})
 	*g = *group
 	return &runtime.KafkaInfo{
 		Config: config,

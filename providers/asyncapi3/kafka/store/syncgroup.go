@@ -33,7 +33,7 @@ func (s *Store) syncgroup(rw kafka.ResponseWriter, req *kafka.Request) error {
 	if len(r.MemberId) != 0 {
 		b := s.getBrokerByPort(req.Host)
 		if b != nil {
-			g := s.GetOrCreateGroup(r.GroupId, b.Id)
+			g := s.GetOrCreateGroup(r.GroupId, b)
 
 			if g.State != PreparingRebalance {
 				if g.Generation == nil || g.Generation.Id != int(r.GenerationId) {

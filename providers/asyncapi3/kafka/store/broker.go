@@ -8,7 +8,7 @@ import (
 
 type logCleaner func(broker *Broker)
 
-type Brokers map[int]*Broker
+type Brokers []*Broker
 
 type Broker struct {
 	Id   int

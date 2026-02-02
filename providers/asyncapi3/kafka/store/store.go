@@ -23,6 +23,7 @@ import (
 	"mokapi/runtime/monitor"
 	"net"
 	"net/url"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -32,7 +33,7 @@ import (
 )
 
 type Store struct {
-	brokers      map[int]*Broker
+	brokers      []*Broker
 	topics       map[string]*Topic
 	groups       map[string]*Group
 	cluster      string
@@ -54,7 +55,7 @@ type ProducerState struct {
 func NewEmpty(eventEmitter common.EventEmitter, eh events.Handler, monitor *monitor.Kafka) *Store {
 	return &Store{
 		topics:       make(map[string]*Topic),
-		brokers:      make(map[int]*Broker),
+		brokers:      []*Broker{},
 		groups:       make(map[string]*Group),
 		eventEmitter: eventEmitter,
 		eh:           eh,
@@ -99,11 +100,6 @@ func (s *Store) Topics() []*Topic {
 	return topics
 }
 
-func (s *Store) Broker(id int) (*Broker, bool) {
-	b, ok := s.brokers[id]
-	return b, ok
-}
-
 func (s *Store) Brokers() []*Broker {
 	brokers := make([]*Broker, 0, len(s.brokers))
 	for _, b := range s.brokers {
@@ -128,20 +124,15 @@ func (s *Store) Group(name string) (*Group, bool) {
 	return g, ok
 }
 
-func (s *Store) GetOrCreateGroup(name string, brokerId int) *Group {
+func (s *Store) GetOrCreateGroup(name string, broker *Broker) *Group {
 	s.m.Lock()
 	defer s.m.Unlock()
-
-	b, ok := s.Broker(brokerId)
-	if !ok {
-		panic(fmt.Sprintf("unknown broker id: %v", brokerId))
-	}
 
 	if g, ok := s.groups[name]; ok {
 		return g
 	}
 
-	g := s.newGroup(name, b)
+	g := s.newGroup(name, broker)
 	s.groups[name] = g
 	return g
 }
@@ -168,8 +159,11 @@ func (s *Store) Update(c *asyncapi3.Config) {
 			}
 		}
 		for _, b := range s.brokers {
+			if b == nil {
+				continue
+			}
 			if _, ok := c.Servers.Get(b.Name); !ok {
-				s.deleteBroker(b.Id)
+				s.deleteBroker(b)
 			}
 		}
 	}
@@ -298,18 +292,18 @@ func (s *Store) addBroker(name string, config *asyncapi3.Server) {
 	id := len(s.brokers)
 	b := newBroker(id, name, config)
 
-	s.brokers[id] = b
+	s.brokers = append(s.brokers, b)
 	b.startCleaner(s.cleanLog)
 }
 
-func (s *Store) deleteBroker(id int) {
+func (s *Store) deleteBroker(broker *Broker) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	if b, ok := s.brokers[id]; ok {
-		b.stopCleaner()
-	}
-	delete(s.brokers, id)
+	broker.stopCleaner()
+	s.brokers = slices.DeleteFunc(s.brokers, func(b *Broker) bool {
+		return b.Name == broker.Name
+	})
 }
 
 func (s *Store) getBroker(name string) *Broker {

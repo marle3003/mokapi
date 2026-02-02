@@ -36,7 +36,7 @@ func TestListGroup(t *testing.T) {
 			"with group state",
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithServer("", "kafka", "127.0.0.1")))
-				group := s.GetOrCreateGroup("foo", 0)
+				group := s.GetOrCreateGroup("foo", &store.Broker{})
 				group.State = store.PreparingRebalance
 				g := group.NewGeneration()
 				g.Members[""] = &store.Member{}
@@ -56,8 +56,8 @@ func TestListGroup(t *testing.T) {
 			"filtering",
 			func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithServer("", "kafka", "127.0.0.1")))
-				s.GetOrCreateGroup("foo", 0)
-				group := s.GetOrCreateGroup("bar", 0)
+				s.GetOrCreateGroup("foo", &store.Broker{})
+				group := s.GetOrCreateGroup("bar", &store.Broker{})
 				group.State = store.CompletingRebalance
 				g := group.NewGeneration()
 				g.Members[""] = &store.Member{}
