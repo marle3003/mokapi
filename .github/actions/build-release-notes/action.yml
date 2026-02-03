@@ -7,7 +7,6 @@ runs:
       shell: bash
       run: |
         VERSION="${{ github.event.release.tag_name }}"
-        BODY="${{ github.event.release.body }}"
         printf "# Mokapi %s\n\n%s\n" "$VERSION" "$BODY" > docs/release.md
     - name: Upload UI artifact
       uses: actions/upload-artifact@v4
