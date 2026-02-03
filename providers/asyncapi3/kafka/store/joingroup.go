@@ -37,7 +37,7 @@ func (s *Store) joingroup(rw kafka.ResponseWriter, req *kafka.Request) error {
 		return rw.Write(res)
 	}
 
-	g := s.GetOrCreateGroup(r.GroupId, b.Id)
+	g := s.GetOrCreateGroup(r.GroupId, b)
 
 	ctx.AddGroup(g.Name, r.MemberId)
 

@@ -35,7 +35,7 @@ func TestProduce(t *testing.T) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithServer("foo", "kafka", "127.0.0.1"),
 					asyncapi3test.WithChannel("foo")))
-				g := s.GetOrCreateGroup("foo", 0)
+				g := s.GetOrCreateGroup("foo", &store.Broker{})
 				g.Commit("foo", 0, 0)
 				sm.SetStore(5, events.NewTraits().WithNamespace("kafka"))
 
@@ -564,7 +564,7 @@ func TestProduceTriggersEvent(t *testing.T) {
 	s.Update(asyncapi3test.NewConfig(
 		asyncapi3test.WithServer("foo", "kafka", "127.0.0.1"),
 		asyncapi3test.WithChannel("foo")))
-	g := s.GetOrCreateGroup("foo", 0)
+	g := s.GetOrCreateGroup("foo", &store.Broker{})
 	g.Commit("foo", 0, 0)
 	sm.SetStore(5, events.NewTraits().WithNamespace("kafka"))
 
