@@ -140,17 +140,20 @@ func (p *Provider) initRepository(r *repository, ch chan dynamic.ConfigEvent, po
 
 	r.repo, err = git.PlainClone(r.localPath, false, options)
 	if err != nil {
+		p.cleanup(r)
 		return fmt.Errorf("unable to clone git %q: %v", r.repoUrl, err)
 	}
 
 	r.wt, err = r.repo.Worktree()
 	if err != nil {
+		p.cleanup(r)
 		return fmt.Errorf("unable to get git worktree: %v", err.Error())
 	}
 
 	r.pullOptions = &git.PullOptions{SingleBranch: true, Depth: 1}
 	ref, err := r.repo.Head()
 	if err != nil {
+		p.cleanup(r)
 		return fmt.Errorf("unable to get git head: %w", err)
 	}
 	r.hash = ref.Hash()
@@ -166,6 +169,7 @@ func (p *Provider) initRepository(r *repository, ch chan dynamic.ConfigEvent, po
 		for {
 			select {
 			case <-ctx.Done():
+				p.cleanup(r)
 				return
 			case e := <-chFile:
 				path := e.Name
@@ -196,12 +200,10 @@ func (p *Provider) startFileProvider(dir string, ch chan dynamic.ConfigEvent, po
 	}
 }
 
-func (p *Provider) cleanup() {
-	for _, repo := range p.repositories {
-		err := os.RemoveAll(repo.localPath)
-		if err != nil {
-			log.Debugf("unable to remove temp dir %q: %v", repo.localPath, err.Error())
-		}
+func (p *Provider) cleanup(r *repository) {
+	err := os.RemoveAll(r.localPath)
+	if err != nil {
+		log.Debugf("unable to remove temp dir %q: %v", r.localPath, err.Error())
 	}
 }
 

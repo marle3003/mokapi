@@ -27,6 +27,8 @@ cards:
 
 Welcome to Mokapi! Mokapi is a powerful, flexible platform for building, testing, and monitoring API-driven applications. This guide will help you quickly understand how to get started with Mokapi and introduce you to its key features.
 
+> *Mokapi is your always-on API contract guardian — lightweight, transparent, and spec-driven.*
+
 ## Build Better Software with Mokapi
 
 Modern applications rely on dozens of APIs—many of them outside your control. That creates friction: slow testing, fragile pipelines, and blocked teams.
@@ -55,6 +57,14 @@ Mokapi offers several key benefits:
 - <p><strong>Free and Open-Source:</strong><br />Mokapi is an open-source project, so you can start using it without any licensing fees. It’s free to use and offers transparency, flexibility, and the ability to contribute to the project’s development.</p>
 - <p><strong>Rapid API Prototyping:</strong><br />Use Mokapi for fast prototyping of new APIs and services. Mock APIs before they’re built or deployed to ensure that your development teams can begin their work immediately, even in the absence of a fully functional backend.</p>
 - <p><strong>Collaborative API Development:</strong><br />Mokapi enables teams to collaborate efficiently by providing an easily accessible testing environment. Developers, QA testers, and product teams can work together on mocking and validating APIs in real time.</p>
+
+## Data Privacy and Security
+
+Mokapi is designed as a local, offline-first tool. Your data stays on your machine and under your control at all times.
+
+Mokapi does not require you to create an account or log in. There is no user authentication, tracking, or identity management involved.
+
+Mokapi does not connect to any cloud services and does not sync your data anywhere. API specifications, mock configurations, requests, responses, and generated data remain local unless you explicitly choose to share them yourself.
 
 ## Explore how you can mock your APIs with Mokapi
 

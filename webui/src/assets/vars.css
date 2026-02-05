@@ -106,6 +106,9 @@
     --code-tab-border-color: #3c424b;
     --code-control-color-active: #eabaabff;
 
+    --blockquote-border-color: #eabaabff;
+    --blockquote-background-color: var(--color-background-soft);
+
     --footer-background: #282b33;
 }
 
@@ -187,6 +190,9 @@
     --code-tabs-border-color-active: rgb(8, 109, 215);
     --code-tab-border-color: #3c424b;
     --code-control-color-active: rgb(8, 109, 215);
+
+    --blockquote-border-color: rgb(8, 109, 215);
+    --blockquote-background-color: #f8f9fa;
 
     --footer-background: rgb(244 244 246);
 }

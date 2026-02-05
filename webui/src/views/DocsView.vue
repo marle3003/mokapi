@@ -430,9 +430,9 @@ blockquote {
   margin-top: 2rem;
   max-width: 700px;
   padding: 1.5em 2em 1.5em 2em;
-  border-left: 4px solid #eabaabff;
+  border-left: 4px solid var(--blockquote-border-color);
   position: relative;
-  background: var(--color-background-soft);
+  background-color: var(--blockquote-background-color);
 }
 blockquote span:before {
   content: '- '

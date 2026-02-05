@@ -104,10 +104,10 @@ func (c *Command) Flags() *FlagSet {
 			},
 		}
 
-		c.Flags().Bool("help", false, FlagDoc{Short: "Show help information and exit"})
+		c.Flags().BoolShort("help", "h", false, FlagDoc{Short: "Show help information and exit"})
 
 		if c.Version != "" {
-			c.Flags().Bool("version", false, FlagDoc{Short: "Show version information and exit"})
+			c.Flags().BoolShort("version", "v", false, FlagDoc{Short: "Show version information and exit"})
 		}
 	}
 	return c.flags

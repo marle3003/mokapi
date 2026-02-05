@@ -24,6 +24,27 @@ func TestMain_Skeleton(t *testing.T) {
 			},
 		},
 		{
+			name: "version short",
+			args: []string{"-v"},
+			test: func(t *testing.T, out string) {
+				require.Equal(t, "1.0\n", out)
+			},
+		},
+		{
+			name: "help",
+			args: []string{"--help"},
+			test: func(t *testing.T, out string) {
+				require.Contains(t, out, "Mokapi is an easy, modern and flexible API mocking tool using Go")
+			},
+		},
+		{
+			name: "help short",
+			args: []string{"-h"},
+			test: func(t *testing.T, out string) {
+				require.Contains(t, out, "Mokapi is an easy, modern and flexible API mocking tool using Go")
+			},
+		},
+		{
 			name: "generate-cli-skeleton",
 			args: []string{"--generate-cli-skeleton"},
 			test: func(t *testing.T, out string) {
