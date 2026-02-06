@@ -37,7 +37,7 @@
     "ldapts": "^8.1.6",
     "mime-types": "^3.0.2",
     "ncp": "^2.0.0",
-    "nodemailer": "^7.0.13",
+    "nodemailer": "^8.0.0",
     "vue": "^3.5.27",
     "vue-router": "^5.0.2",
     "vue3-ace-editor": "^2.2.4",
