@@ -177,7 +177,7 @@ async function copyToClipboard(event: MouseEvent) {
 </script>
 
 <template>
-  <main>
+  <main :class="{ 'has-sidebar': showNavigation }">
     <aside class="d-none d-md-block sidebar" v-if="showNavigation">
       <DocNav :config="nav" :levels="levels" :title="levels[0]!"/>
     </aside>
@@ -213,7 +213,7 @@ async function copyToClipboard(event: MouseEvent) {
 </template>
 
 <style>
-main {
+main.has-sidebar {
   display: grid;
   grid-template-columns: 290px auto;
   grid-template-areas: "sd doc";
