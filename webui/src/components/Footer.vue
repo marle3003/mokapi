@@ -128,3 +128,30 @@
     </div>
   </footer>
 </template>
+
+<style>
+footer {
+  grid-area: ft;
+  padding-top: 3rem;
+  padding-bottom: 2rem;
+  background-color: var(--footer-background);
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+footer h3 {
+  font-size: 0.9rem;
+  margin-bottom: 1.2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+footer ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+footer ul li {
+  margin-bottom: 0.5rem;
+}
+footer a {
+  text-decoration: none;
+}
+</style>

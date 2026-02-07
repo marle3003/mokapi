@@ -177,27 +177,23 @@ async function copyToClipboard(event: MouseEvent) {
 </script>
 
 <template>
-  <main class="d-flex">
-    <div style="width: 100%; height: 100%;display: flex;flex-direction: column;" class="doc">
-      <div class="d-flex">
-        <div class="sidebar d-none d-md-block" v-if="showNavigation">
-          <DocNav :config="nav" :levels="levels" :title="levels[0]!"/>
-        </div>
-        <div class="doc-main" style="flex: 1;margin-bottom: 3rem;" :style="showNavigation ? 'max-width:50em;' : ''">
-          <div class="container">
-            <nav aria-label="breadcrumb" v-if="showNavigation">
-              <ol class="breadcrumb">
-                <li class="breadcrumb-item text-truncate" v-for="item of breadcrumb" :class="item.isLast ? 'active' : ''">
-                  <router-link v-if="item.params && !item.isLast" :to="{ name: 'docs', params: item.params }">{{ item.label }}</router-link>
-                  <template v-else>{{ item.label }}</template>
-                </li>
-              </ol>
-            </nav>
-            <div v-if="content" v-html="content" class="content" @click="showImage($event.target)" ref="content"></div>
-            <div v-else-if="component" class="content"><component :is="component" /></div>
-            <page-not-found v-else />
-          </div>
-        </div>
+  <main>
+    <aside class="d-none d-md-block sidebar" v-if="showNavigation">
+      <DocNav :config="nav" :levels="levels" :title="levels[0]!"/>
+    </aside>
+    <div class="container doc-main">
+      <nav aria-label="breadcrumb" v-if="showNavigation">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item text-truncate" v-for="item of breadcrumb" :class="item.isLast ? 'active' : ''">
+            <router-link v-if="item.params && !item.isLast" :to="{ name: 'docs', params: item.params }">{{ item.label }}</router-link>
+            <template v-else>{{ item.label }}</template>
+          </li>
+        </ol>
+      </nav>
+      <div :style="showNavigation ? 'max-width:50em;' : ''">
+        <div v-if="content" v-html="content" class="content" @click="showImage($event.target)" ref="content"></div>
+        <div v-else-if="component" class="content"><component :is="component" /></div>
+        <page-not-found v-else />
       </div>
     </div>
   </main>
@@ -217,25 +213,33 @@ async function copyToClipboard(event: MouseEvent) {
 </template>
 
 <style>
-.doc {
-  margin-top: 20px;
+main {
+  display: grid;
+  grid-template-columns: 290px auto;
+  grid-template-areas: "sd doc";
 }
 
 .sidebar {
+  grid-area: sd;
   position: sticky;
   top: var(--header-height);
-  align-self: flex-start;
-  width: 290px;
+  width: 100%;
+  height: calc(100vh - var(--header-height));
   padding-top: 2rem;
+  overflow-y: auto;
 }
 .doc-main {
- margin-left: 1rem; 
+  grid-area: doc;
+  margin-left: 1rem;
+  padding-top: 2rem;
+  padding-bottom: 3rem;
 }
 .breadcrumb {
-  padding-top: 2rem;
-  padding-bottom: 0.5rem;
   width: 100%; /*calc(100vw - 290px - 2rem);*/
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+}
+ol.breadcrumb {
+  margin-bottom: 0;
 }
 .content {
   line-height: 1.5rem;
@@ -243,6 +247,7 @@ async function copyToClipboard(event: MouseEvent) {
 }
 
 .content h1 {
+  margin-top: 10px;
   font-size: 2.25rem;
 }
 
