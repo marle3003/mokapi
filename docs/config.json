@@ -88,7 +88,7 @@
               {
                 "label": "Overview",
                 "source": "ldap/intro.md",
-                "path": "/docs/ldap/intro"
+                "path": "/docs/ldap/overview"
               },
               {
                 "label": "Quick Start",
@@ -506,7 +506,7 @@
           {
             "label": "Mock LDAP Group Permission in Node",
             "source": "resources/tutorials/mock-ldap-group-permission.md",
-            "path": "/resources/tutorials/mock-ldap-group-permission",
+            "path": "/resources/tutorials/mock-ldap-group-permission-in-node",
             "hideNavigation": true
           },
           {

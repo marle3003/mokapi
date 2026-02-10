@@ -58,11 +58,11 @@ function showImage(evt: MouseEvent) {
               </span>
             </p>
             <p class="d-none d-md-block">
-              <router-link :to="{ path: '/docs/ldap/overview' }">
-                <button type="button" class="btn btn-outline-primary">Get Started</button>
+              <router-link :to="{ path: '/resources/tutorials/mock-ldap-authentication-in-node' }" class="btn btn-primary me-2">
+                Get Started
               </router-link>
-              <router-link :to="{ path: '/resources' }">
-                <button type="button" class="btn btn-outline-primary">Learn More</button>
+              <router-link :to="{ path: '/docs/ldap/overview' }" class="btn btn-primary me-2">
+                Documentation
               </router-link>
             </p>
           </div>
@@ -71,11 +71,11 @@ function showImage(evt: MouseEvent) {
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
-                <router-link :to="{ path: '/docs/ldap/overview' }">
-                  <button type="button" class="btn btn-outline-primary">Get Started</button>
+                <router-link :to="{ path: '/resources/tutorials/mock-ldap-authentication-in-node' }" class="btn btn-primary me-2">
+                  Get Started
                 </router-link>
-                <router-link :to="{ path: '/resources' }">
-                  <button type="button" class="btn btn-outline-primary">Learn More</button>
+                <router-link :to="{ path: '/docs/ldap/overview' }" class="btn btn-primary me-2">
+                  Documentation
                 </router-link>
               </p>
           </div>
@@ -232,7 +232,7 @@ function showImage(evt: MouseEvent) {
                   <p class="card-text pb-4">
                     Test login flows, password policies, and group permissions.
                   </p>
-                  <a href="docs/resources/tutorials/mock-ldap-authentication-in-node" class="btn btn-outline-primary btn-sm">View Tutorial</a>
+                  <a href="resources/tutorials/mock-ldap-authentication-in-node" class="btn btn-outline-primary btn-sm">View Tutorial</a>
                 </div>
             </div>
           </div>

@@ -62,11 +62,11 @@ function showImage(evt: MouseEvent) {
               </span>
             </p>
             <p class="d-none d-md-block">
-              <router-link :to="{ path: '/docs/guides' }">
-                <button type="button" class="btn btn-outline-primary">Get Started</button>
+              <router-link :to="{ path: '/docs/get-started/installation' }" class="btn btn-primary me-2">
+                Get Started
               </router-link>
-              <router-link :to="{ path: '/resources' }">
-                <button type="button" class="btn btn-outline-primary">Learn More</button>
+              <router-link :to="{ path: '/resources' }" class="btn btn-primary me-2">
+                Tutorials
               </router-link>
             </p>
           </div>
@@ -91,11 +91,11 @@ function showImage(evt: MouseEvent) {
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
-                <router-link :to="{ path: '/docs/guides' }">
-                  <button type="button" class="btn btn-outline-primary">Get Started</button>
+                <router-link :to="{ path: '/docs/get-started/installation' }" class="btn btn-primary me-2">
+                  Get Started
                 </router-link>
-                <router-link :to="{ path: '/resources' }">
-                  <button type="button" class="btn btn-outline-primary">Learn More</button>
+                <router-link :to="{ path: '/resources' }" class="btn btn-primary me-2">
+                  Tutorials
                 </router-link>
               </p>
           </div>
@@ -312,7 +312,7 @@ function showImage(evt: MouseEvent) {
               Simulate edge cases, conditional logic, errors, and real-world workflows
               without changing your API specifications.
             </p>
-            <router-link :to="{ path: '/docs/javascript-api' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
+            <router-link :to="{ path: '/docs/javascript-api/overview' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
               Explore JavaScript Mocking
             </router-link>
           </div>
@@ -351,7 +351,7 @@ function showImage(evt: MouseEvent) {
             <p class="fst-italic">
               Version-controlled mocks reduce errors, simplify audits, and make collaboration easier.
             </p>
-            <router-link :to="{ path: '/docs/configuration' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
+            <router-link :to="{ path: '/docs/configuration/overview' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
               Learn More
             </router-link>
           </div>
@@ -446,7 +446,7 @@ function showImage(evt: MouseEvent) {
                   <span class="icon me-2 bi-globe"></span>Mock REST APIs with OpenAPI
                 </h3>
                 <p>Learn how to mock an OpenAPI spec, configure Mokapi, and run it in Docker. Test REST endpoints without waiting for live APIs.</p>
-                <a href="docs/resources/tutorials/get-started-with-rest-api" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
+                <a href="resources/tutorials/get-started-with-rest-api" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
               </div>
             </div>
           </div>
@@ -459,7 +459,7 @@ function showImage(evt: MouseEvent) {
                   <span class="icon me-2 bi-lightning"></span>Simulate Kafka Topics with AsyncAPI
                 </h3>
                 <p>Test Kafka producers and consumers by mocking topics according to your AsyncAPI spec. Ensure reliable message generation and integration without a live Kafka cluster.</p>
-                <a href="docs/resources/tutorials/get-started-with-kafka" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
+                <a href="resources/tutorials/get-started-with-kafka" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
               </div>
             </div>
           </div>
@@ -472,7 +472,7 @@ function showImage(evt: MouseEvent) {
                   <span class="icon me-2 bi-person-check"></span>Mock LDAP Authentication
                 </h3>
                 <p>Step-by-step guide to mock LDAP login using Mokapi and Node.js. Test authentication flows without a real server.</p>
-                <a href="docs/resources/tutorials/mock-ldap-authentication-in-node" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
+                <a href="resources/tutorials/mock-ldap-authentication-in-node" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
               </div>
             </div>
           </div>

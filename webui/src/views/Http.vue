@@ -78,11 +78,11 @@ function getConsoleContent() {
               without waiting for real backends.
             </p>
             <p class="d-none d-md-block">
-              <router-link :to="{ path: '/docs/http/overview' }">
-                <button type="button" class="btn btn-outline-primary">Get Started</button>
+              <router-link :to="{ path: '/resources/tutorials/get-started-with-rest-api' }" class="btn btn-primary me-2">
+                Get Started
               </router-link>
-              <router-link :to="{ path: '/resources/tutorials/get-started-with-rest-api' }">
-                <button type="button" class="btn btn-outline-primary">Learn More</button>
+              <router-link :to="{ path: '/docs/http/overview' }" class="btn btn-primary me-2">
+                Documentation
               </router-link>
             </p>
           </div>
@@ -91,11 +91,11 @@ function getConsoleContent() {
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
-                <router-link :to="{ path: '/docs/http/overview' }">
-                  <button type="button" class="btn btn-outline-primary">Get Started</button>
+                <router-link :to="{ path: '/resources/tutorials/get-started-with-rest-api' }" class="btn btn-primary me-2">
+                  Get Started
                 </router-link>
-                <router-link :to="{ path: '/resources' }">
-                  <button type="button" class="btn btn-outline-primary">Learn More</button>
+                <router-link :to="{ path: '/docs/http/overview' }" class="btn btn-primary me-2">
+                  Documentation
                 </router-link>
               </p>
           </div>
@@ -152,7 +152,7 @@ function getConsoleContent() {
                   Configuration as Code
                 </h3>
                 <p class="card-text pb-4">Define HTTP mocks with OpenAPI for consistency, version control, and seamless automation.</p>
-                <a href="/docs/configuration" class="card-link position-absolute" style="bottom:15px;">Overview</a>
+                <a href="/docs/configuration/overview" class="card-link position-absolute" style="bottom:15px;">Overview</a>
               </div>
             </div>
           </div>
@@ -208,7 +208,7 @@ function getConsoleContent() {
             <div class="text-lg-start text-center">
               <h3>Customize API Responses</h3>
               <p>With Mokapi Scripts, you can quickly customize API responses to match your exact test conditions. Use event handlers to simulate logic, errors, or edge cases without implementing server logic.</p>
-              <router-link :to="{ path: '/docs/javascript-api' }">
+              <router-link :to="{ path: '/docs/javascript-api/overview' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Get Started with Mokapi Scripts</button>
               </router-link>
             </div>

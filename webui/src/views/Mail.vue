@@ -64,11 +64,11 @@ function showImage(evt: MouseEvent) {
               </span>
             </p>
             <p class="d-none d-md-block">
-              <router-link :to="{ path: '/docs/mail/overview' }">
-                <button type="button" class="btn btn-outline-primary">Get Started</button>
+              <router-link :to="{ path: '/resources/tutorials/mock-smtp-server-send-mail-using-node' }" class="btn btn-primary me-2">
+                Get Started
               </router-link>
-              <router-link :to="{ path: '/resources' }">
-                <button type="button" class="btn btn-outline-primary">Learn More</button>
+              <router-link :to="{ path: '/docs/mail/overview' }" class="btn btn-primary me-2">
+                Documentation
               </router-link>
             </p>
           </div>
@@ -77,11 +77,11 @@ function showImage(evt: MouseEvent) {
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
-                <router-link :to="{ path: '/docs/mail/overview' }">
-                  <button type="button" class="btn btn-outline-primary">Get Started</button>
+                <router-link :to="{ path: '/resources/tutorials/mock-smtp-server-send-mail-using-node' }" class="btn btn-primary me-2">
+                  Get Started
                 </router-link>
-                <router-link :to="{ path: '/resources' }">
-                  <button type="button" class="btn btn-outline-primary">Learn More</button>
+                <router-link :to="{ path: '/docs/mail/overview' }" class="btn btn-primary me-2">
+                  Learn More
                 </router-link>
               </p>
           </div>
@@ -184,7 +184,7 @@ function showImage(evt: MouseEvent) {
                   Replace live mail servers in CI with fast,
                   deterministic email mocks.
                 </p>
-                <a href="docs/resources/blogs/testing-email-workflows-with-playwright-and-mokapi" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Read Guide</a>
+                <a href="resources/blogs/testing-email-workflows-with-playwright-and-mokapi" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Read Guide</a>
               </div>
             </div>
           </div>
