@@ -51,25 +51,12 @@ runs:
       if: always()
       run: docker stop mokapi || true
       shell: bash
-    - name: build webui
+    - uses: ./.github/actions/build-cli-flags-doc
+    - name: build website
       working-directory: ./webui
       run: |
         npm install
         npm version ${{ steps.release.outputs.release }}
-        npm run build
-      shell: bash
-    - name: Build CLI doc
-      run: go run ./cmd/internal/gen-cli-docs/main.go
-      shell: bash
-    - name: Add CLI Flags nav entry
-      run: |
-         jq '.Configuration.items.Static.items["CLI Flags"] = "configuration/static/mokapi.md"' ./config.json > ./tmp.json
-         mv ./tmp.json ./config.json
-      working-directory: ./docs
-      shell: bash
-    - name: build website
-      working-directory: ./webui
-      run: |
         npm run copy-docs
         npm run build-sitemap
         npm run build-website
