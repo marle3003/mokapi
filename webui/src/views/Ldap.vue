@@ -58,10 +58,10 @@ function showImage(evt: MouseEvent) {
               </span>
             </p>
             <p class="d-none d-md-block">
-              <router-link :to="{ path: '/docs/guides/ldap' }">
+              <router-link :to="{ path: '/docs/ldap/overview' }">
                 <button type="button" class="btn btn-outline-primary">Get Started</button>
               </router-link>
-              <router-link :to="{ path: '/docs/resources' }">
+              <router-link :to="{ path: '/resources' }">
                 <button type="button" class="btn btn-outline-primary">Learn More</button>
               </router-link>
             </p>
@@ -71,10 +71,10 @@ function showImage(evt: MouseEvent) {
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
-                <router-link :to="{ path: '/docs/guides/ldap' }">
+                <router-link :to="{ path: '/docs/ldap/overview' }">
                   <button type="button" class="btn btn-outline-primary">Get Started</button>
                 </router-link>
-                <router-link :to="{ path: '/docs/resources' }">
+                <router-link :to="{ path: '/resources' }">
                   <button type="button" class="btn btn-outline-primary">Learn More</button>
                 </router-link>
               </p>
@@ -244,7 +244,7 @@ function showImage(evt: MouseEvent) {
                     Directory Testing
                   </h3>
                   <p class="card-text pb-4">Mock searches and group queries using LDIF imports.</p>
-                  <a href="docs/guides/ldap/quick-start" class="btn btn-outline-primary btn-sm">Quick Start</a>
+                  <a href="docs/ldap/quick-start" class="btn btn-outline-primary btn-sm">Quick Start</a>
                 </div>
             </div>
           </div>
@@ -256,7 +256,7 @@ function showImage(evt: MouseEvent) {
                     Edge Case & Error Simulation
                   </h3>
                   <p class="card-text pb-4">Validate authentication behavior before deployment.</p>
-                  <a href="docs/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="btn btn-outline-primary btn-sm">Run in CI/CD</a>
+                  <a href="resources/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="btn btn-outline-primary btn-sm">Run in CI/CD</a>
                 </div>
             </div>
           </div>
@@ -295,7 +295,7 @@ function showImage(evt: MouseEvent) {
 
             <div class="text-center mt-3">
               <router-link
-                :to="{ path: '/docs/guides/ldap/quick-start' }"
+                :to="{ path: '/docs/ldap/quick-start' }"
                 class="btn btn-outline-primary btn-lg mt-3">
                 Try LDIF Setup
               </router-link>

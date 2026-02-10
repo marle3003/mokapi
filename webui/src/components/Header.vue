@@ -9,9 +9,11 @@ import { Modal } from 'bootstrap';
 import type { AppInfoResponse } from '@/types/dashboard';
 import { useDashboard } from '@/composables/dashboard';
 import { usePromo } from '@/composables/promo';
+import NavDocItem from './NavDocItem.vue';
 
 const isDashboard = import.meta.env.VITE_DASHBOARD === 'true'
 const useDemo = import.meta.env.VITE_USE_DEMO === 'true'
+const isWebsite = import.meta.env.VITE_WEBSITE === 'true'
 const promo = usePromo()
 let appInfo: AppInfoResponse | null = null
 const query = ref('')
@@ -29,10 +31,12 @@ if (isDashboard) {
 const isDark = document.documentElement.getAttribute('data-theme') == 'dark';
 const nav = inject<DocConfig>('nav')!
 const route = useRoute()
-const { resolve } = useFileResolver()
-const levels = computed(() => {
-  const { levels } = resolve(nav, route)
-  return levels
+    const { getBreadcrumb, getEntryBySource } = useFileResolver();
+const navHeaders = computed(() => {
+  return Object.keys(nav).map(x => Object.assign({ label: x }, nav[x])) as DocEntry[]
+})
+const breadcrumb = computed(() => {
+  return getBreadcrumb(nav, route)
 })
 const visible = ref(false)
 
@@ -55,41 +59,30 @@ router.beforeEach(() => {
   }
 })
 
-function showInHeader(item: any): boolean{
-  return typeof item !== 'string'
+function hasChildren(item: DocEntry) {
+  if (item.hideInNavigation) {
+    return false
+  }
+  if (!item.items) {
+    return false
+  }
+  return item.items.length > 0
 }
-function formatParam(label: any): string {
-  return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
+function isActive(entry: DocEntry) {
+  if (!breadcrumb.value) {
+    return false
+  }
+  if (entry.type === 'root') {
+    return breadcrumb.value[0]?.label === entry.label
+  }
+  return breadcrumb.value.find(x => x === entry) !== undefined;
 }
-function hasChildren(item: DocEntry | string) {
-    if (typeof item === 'string') { 
-        return false
-    }
-    const entry = <DocEntry>item
-    if ('file' in entry || 'component' in entry) {
-        return false
-    }
-    return true
-}
-function isActive(...levels: any[]) {
-    for (let i = 0; i < levels.length; i++) {
-        if (!matchLevel(levels[i], i + 1)) {
-            return false
-        }
-    }
-    return true
-}
-function matchLevel(label: any, level: number) {
-    if (!levels.value) {
-      return false
-    }
-    if (level > levels.value.length){
-        return false
-    }
-    return label.toString().toLowerCase() == levels.value[level - 1]!.toLowerCase()
-}
-function getId(name: any) {
-    return name.toString().replaceAll("/", "-").replaceAll(" ", "-")
+let docIndex = 0;
+function getId(entry: DocEntry) {
+  if (!entry || !entry.label) {
+    return `doc-${docIndex++}`
+  }
+  return entry.label.toString().replaceAll("/", "-").replaceAll(" ", "-")
 }
 function isExpanded(item: DocEntry | string) {
     if (typeof item === 'string') {
@@ -97,18 +90,8 @@ function isExpanded(item: DocEntry | string) {
     }
     return item.expanded || false
 }
-function showItem(name: string | number, item: DocConfig | DocEntry | string) {
-    if (!levels.value) {
-      return false
-    }
-    if (typeof item == 'string' && levels.value[0] != name) {
-        return true
-    }
-    const entry = <DocEntry>item
-    if ('hideInNavigation' in entry) {
-        return !entry.hideInNavigation
-    }
-    return true
+function showItem(entry: DocEntry) {
+  return !entry.hideInNavigation
 }
 
 const files = inject<Record<string, string>>('files')!
@@ -116,11 +99,10 @@ const files = inject<Record<string, string>>('files')!
 // Transform files into an array of { name, content }
 const documents = Object.entries(files).map(([path, content]) => {
   const doc = parseMarkdown(content)
-  const url = getUrlPath(path.replace('/src/assets/docs/', ''))
   return {
     name: doc.meta.title,
     description: doc.meta.description,
-    path: url,
+    path: getEntryBySource(nav, path.replace('/src/assets/docs/', ''))?.path,
     content: doc.content
   }
 }).filter(doc => doc.path)
@@ -136,10 +118,7 @@ const filtered = computed(() => {
     result = fuse.search(query.value).map(({ item }) => {
       return {
         name: item.name,
-        params: item.path!.reduce((obj, value, index) => {
-          obj[`level${index+1}`] = formatParam(value)
-          return obj
-        }, {} as Record<string, string>),
+        path: item.path,
         description: item.description
       }
     })
@@ -149,35 +128,6 @@ const filtered = computed(() => {
 onUnmounted(() => {
   window.removeEventListener('keydown', shortcutHandler)
 })
-
-function getUrlPath(filePath: string, cfg?: DocEntry): string[] | undefined {
-  if (cfg) {
-    if (!cfg.items) {
-      return undefined
-    }
-    for (const [key, item] of Object.entries(cfg.items)) {
-      if (item === filePath) {
-        return [key]
-      }
-      if (typeof item !== 'string') {
-        const path = getUrlPath(filePath, item)
-        if (path) {
-          path.unshift(key)
-          return path
-        }
-      }
-    }
-  } else {
-    for (const name in nav) {
-      const path = getUrlPath(filePath, nav[name])
-      if (path) {
-        path.unshift(name)
-        return path
-      }
-    }
-  }
-  return undefined
-}
 
 const SEQ_TIMEOUT = 1000
 let lastKeyTime = 0
@@ -241,7 +191,7 @@ onMounted(() => {
 })
 
 
-function navigateAndClose(params: Record<string, string>) {
+function navigateAndClose(path: string) {
   if (document.activeElement instanceof HTMLElement) {
     // remove focus
     document.activeElement.blur();
@@ -252,7 +202,7 @@ function navigateAndClose(params: Record<string, string>) {
   modalInstance?.hide();
 
   modalEl.addEventListener('hidden.bs.modal', () => {
-    router.push({ name: 'docs', params: params });
+    router.push({ path: path });
   }, { once: true });
 }
 function isDashboardDisplayed() {
@@ -271,7 +221,7 @@ function isDashboardDisplayed() {
   </span>
   <a href="https://mokapi.myspreadshop.net" class="promo-link ms-1">Visit shop →</a>
 </div>
-    <nav class="navbar navbar-expand-lg">
+    <nav class="navbar navbar-expand-lg" aria-label="Main">
       <div class="container-fluid">
         <a class="navbar-brand" href="./" title="Mokapi home"><img src="/logo-header.svg" height="30" alt="Mokapi home"/></a>
         <div class="d-flex ms-auto align-items-center tools d-none">
@@ -279,7 +229,7 @@ function isDashboardDisplayed() {
             <button id="search-button" class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
               <span class="bi bi-search pe-2" title="Search"></span>
             </button>
-            <button class="btn icon">
+            <button class="btn icon ms-1">
               <span class="bi bi-brightness-high-fill pe-2" @click="switchTheme" v-if="isDark" :title="tooltipDark"></span>
               <span class="bi bi-moon-fill pe-2" @click="switchTheme" v-if="!isDark" :title="tooltipLight"></span>
             </button>
@@ -290,96 +240,55 @@ function isDashboardDisplayed() {
         </button>
         <div class="collapse navbar-collapse" id="navbar">
           <div class="navbar-container">
-          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-            <li v-if="isDashboard" class="nav-item">
-              <router-link class="nav-link" :to="{ name: 'dashboard', query: {refresh: 20} }">Dashboard</router-link>
-            </li>
-            <li class="nav-item dropdown">
-              <a href="#" class="nav-link dropdown-toggle" role="button" data-bs-toggle="dropdown" aria-expanded="false">Services</a>
-              <ul class="dropdown-menu">
-                <li><router-link class="dropdown-item" :to="{ path: '/http' }">HTTP</router-link></li>
-                <li><router-link class="dropdown-item" :to="{ path: '/kafka' }">Kafka</router-link></li>
-                <li><router-link class="dropdown-item" :to="{ path: '/ldap' }">LDAP</router-link></li>
-                <li><router-link class="dropdown-item" :to="{ path: '/mail' }">Email</router-link></li>
-              </ul>
-            </li>
-            <li v-if="useDemo" class="nav-item">
-              <router-link class="nav-link" :to="{ name: 'dashboard-demo' }">Dashboard</router-link>
-            </li>
-            <li class="nav-item" v-for="(item, label) of nav">
-              <div class="chapter" v-if="hasChildren(item)">
-                <div class="d-flex align-items-center justify-content-between">
-                  <router-link class="nav-link w-100" :to="{ name: 'docs', params: {level1: formatParam(label)} }" v-if="showInHeader(item)">
-                    {{ label }}
-                  </router-link>
-                  <button type="button" class="btn btn-link d-md-none" :class="isActive(label) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(label)" :aria-expanded="isActive(label)" :aria-controls="getId(label)">
-                    <span class="bi bi-caret-up-fill"></span> 
-                    <span class="bi bi-caret-down-fill"></span> 
-                  </button>
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li v-if="isDashboard" class="nav-item">
+                <router-link class="nav-link" :to="{ name: 'dashboard', query: {refresh: 20} }">Dashboard</router-link>
+              </li>
+              <li v-if="isWebsite" class="nav-item">
+                <router-link class="nav-link" :to="{ path: '/http' }">HTTP</router-link>
+              </li>
+              <li v-if="isWebsite" class="nav-item">
+                <router-link class="nav-link" :to="{ path: '/kafka' }">Kafka</router-link>
+              </li>
+              <li v-if="isWebsite" class="nav-item">
+                <router-link class="nav-link" :to="{ path: '/ldap' }">LDAP</router-link>
+              </li>
+              <li v-if="isWebsite" class="nav-item">
+                <router-link class="nav-link" :to="{ path: '/mail' }">Email</router-link>
+              </li>
+              <li v-if="useDemo" class="nav-item">
+                <router-link class="nav-link" :to="{ name: 'dashboard-demo' }">Dashboard</router-link>
+              </li>
+              <li v-if="navHeaders" class="nav-item nav-tree" v-for="root of navHeaders">
+                <div class="chapter" v-if="hasChildren(root)">
+                  <div class="d-flex align-items-center justify-content-between">
+                    <router-link class="nav-link w-100" :to="{ path: root.path || '/'+root.label.toLocaleLowerCase() }">
+                      {{ root.label }}
+                    </router-link>
+                    <button type="button" class="btn btn-link d-md-none" :class="isActive(root) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(root)" :aria-expanded="isActive(root)" :aria-controls="getId(root)">
+                      <span class="bi bi-caret-up-fill"></span> 
+                      <span class="bi bi-caret-down-fill"></span> 
+                    </button>
+                  </div>
+                  <section class="collapse d-md-none" :class="isActive(root) || isExpanded(root) ? 'show' : ''" :id="getId(root)" :aria-labelledby="'btn'+getId(root)">
+                    <ul v-if="hasChildren(root)" class="nav nav-pills flex-column mb-auto">
+                      <li class="nav-item ps-3" v-for="item of root.items">
+                        <nav-doc-item :current="item" :actives="breadcrumb" />
+                      </li>
+                    </ul>
+                  </section>
                 </div>
-                <section class="collapse d-md-none" :class="isActive(label) || isExpanded(item) ? 'show' : ''" :id="getId(<string>label)" :aria-labelledby="'btn'+getId(label)">
-                  <ul v-if="hasChildren(item)" class="nav nav-pills flex-column mb-auto">
-                    <li class="nav-item ps-3" v-for="(level2, k2) of (<DocEntry>item).items">
 
-                      <div v-if="hasChildren(level2)" class="subchapter">
-                        <div class="d-flex align-items-center justify-content-between">
-                          <router-link v-if="(<DocEntry>level2).index" class="nav-link" :class="levels[1] == k2 && levels.length == 2 ? 'active' : ''" :to="{ name: 'docs', params: {level1: formatParam(label), level2: formatParam(k2)} }" :id="'btn'+getId(k2)">{{ k2 }}</router-link>
-                          <button v-else type="button" class="btn btn-link w-100 text-start" :class="isActive(label, k2) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k2)" :aria-expanded="isActive(label, k2)" :aria-controls="getId(k2)">
-                              {{ k2 }}
-                          </button>
-                          <button type="button" class="btn btn-link" :class="isActive(label, k2) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k2)" :aria-expanded="isActive(label, k2)" :aria-controls="getId(k2)">
-                              <span class="bi bi-caret-up-fill"></span> 
-                              <span class="bi bi-caret-down-fill"></span> 
-                          </button>
-                        </div>
-                      
-                          <div class="collapse" :class="isActive(label, k2) ? 'show' : ''" :id="getId(k2)">
-                              <ul class="nav nav-pills flex-column mb-auto">
-                                  <li class="nav-item ps-3" v-for="(level3, k3) of (<DocEntry>level2).items">
-
-                                    <div v-if="hasChildren(level3)" class="subchapter">
-                                      <div class="d-flex align-items-center justify-content-between">
-                                        <router-link v-if="(<DocEntry>level3).index" class="nav-link" :class="levels[2] == k3 && levels.length == 3 ? 'active' : ''" :to="{ name: 'docs', params: {level1: formatParam(label), level2: formatParam(k2), level3: formatParam(k3) } }" :id="'btn'+getId(k3)">{{ k3 }}</router-link>
-                                        <button v-else type="button" class="btn btn-link w-100 text-start" :class="isActive(label, k2, k3) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k3)" :aria-expanded="isActive(label, k2, k3)" :aria-controls="getId(k3)">
-                                            {{ k3 }}
-                                        </button>
-                                        <button type="button" class="btn btn-link" :class="isActive(label, k2, k3) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(k3)" :aria-expanded="isActive(label, k2, k3)" :aria-controls="getId(k3)">
-                                            <span class="bi bi-caret-up-fill"></span> 
-                                            <span class="bi bi-caret-down-fill"></span> 
-                                        </button>
-                                      </div>
-                                    
-                                        <div class="collapse" :class="isActive(label, k2, k3) ? 'show' : ''" :id="getId(k3)">
-                                            <ul class="nav nav-pills flex-column mb-auto">
-                                                <li class="nav-item ps-3" v-for="(_, k4) of (<DocEntry>level3).items">
-                                                    <router-link v-if="k3 != k4" class="nav-link" :class="isActive(label, k2, k3, k4) ? 'active' : ''" :to="{ name: 'docs', params: {level1: formatParam(label), level2: formatParam(k2), level3: formatParam(k3), level4: formatParam(k4)} }">{{ k4 }}</router-link>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                      
-                                    <router-link v-if="k2 != k3 && !hasChildren(level3) && showItem(k3, level3)" class="nav-link" :class="isActive(label, k2, k3) ? 'active' : ''" :to="{ name: 'docs', params: {level1: formatParam(label), level2: formatParam(k2), level3: formatParam(k3)} }">{{ k3 }}</router-link>
-                                  </li>
-                              </ul>
-                          </div>
-                      </div>
-
-                      <router-link v-if="label != k2 && !hasChildren(level2) && showItem(k2, level2)" class="nav-link" :class="isActive(label, k2) ? 'active' : ''" :to="{ name: 'docs', params: {level1: formatParam(label), level2: formatParam(k2)} }">{{ k2 }}</router-link>
-                    </li>
-                  </ul>
-                </section>
-              </div>
-
-            </li>
-          </ul>
-        </div>
+              </li>
+            </ul>
+          </div>
 
           <div class="d-flex ms-auto align-items-center tools">
             <a href="https://github.com/marle3003/mokapi" class="version me-lg-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
             <button class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
               <span class="bi bi-search pe-2" title="Search"></span>
             </button>
-            <button class="btn icon">
+            <button class="btn icon ms-1">
               <span class="bi bi-brightness-high-fill" @click="switchTheme" v-if="isDark" :title="tooltipDark"></span>
               <span class="bi bi-moon-fill" @click="switchTheme" v-if="!isDark" :title="tooltipLight"></span>
             </button>
@@ -406,7 +315,7 @@ function isDashboardDisplayed() {
             </div>
           </form>
           <div class="list-group search-results">
-            <a v-for="item of filtered" class="list-group-item list-group-item-action" @click.prevent="navigateAndClose(item.params)">
+            <a v-for="item of filtered" class="list-group-item list-group-item-action" @click.prevent="navigateAndClose(item.path)">
               <p class="mb-1" style="font-size: 16px; font-weight: bold;">{{ item.name }}</p>
               <p class="mb-1" style="font-size: 14px">{{ item.description }}</p>
             </a>
@@ -524,14 +433,9 @@ header .container-fluid {
 .navbar .nav .nav-link {
   padding-left: 0;
 }
-.nav-item a, .subchapter .btn-link, .nav-item .chapter > div {
+.nav-item a, .nav-item .btn-link {
   padding-top: 7px;
   padding-bottom: 7px;
-}
-
-header .navbar-collapse .nav-item .chapter > div a {
-  padding-top: 0;
-  padding-bottom: 0;
 }
 .nav-item:has(.btn-link) {
     line-height: 1.5;
@@ -636,5 +540,9 @@ header .navbar-collapse .nav-item .chapter > div a {
     padding-right: 0.7rem;
     font-size: 16px;
   }
+}
+.headline > div {
+  padding: 13px 0;
+  font-weight: 600;
 }
 </style>

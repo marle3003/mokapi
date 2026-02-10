@@ -4,22 +4,22 @@ description: Learn how to set up Mokapi to mock APIs and validate requests using
 cards:
   items:
     - title: Run your first mocked REST API
-      href: /docs/guides/get-started/running
+      href: /docs/get-started/running
       description: Learn how to quickly set up and run your first mock REST API and view the results in the Mokapi dashboard.
     - title: Using Mokapi
-      href: /docs/configuration/introduction
+      href: /docs/configuration/overview
       description: Get an overview of Mokapi’s core features, configuration options, and how to patch and use configuration providers effectively.
     - title: Mock Event-Driven APIs with Apache Kafka
-      href: /docs/guides/kafka/quick-start
+      href: /docs/kafka/quick-start
       description: Learn how to mock Kafka topics and simulate event-driven architectures for realistic API testing.
     - title: Mokapi JavaScript API
       href: /docs/javascript-api/overview
       description: Discover how to control and customize your mocked APIs programmatically with Mokapi’s JavaScript API.
     - title: Random Data Generator
-      href: /docs/guides/get-started/test-data
+      href: /docs/get-started/test-data
       description: Explore Mokapi’s random data generator, and learn how to customize the data for your API testing needs.
     - title: Mokapi Dashboard
-      href: /docs/guides/get-started/dashboard
+      href: /docs/get-started/dashboard
       description: Dive into Mokapi’s dashboard to analyze and monitor APIs, requests, and responses in real time for efficient debugging.
 ---
 
@@ -48,7 +48,7 @@ you to:
 
 - <p><strong>Spec-Driven Mocking:</strong><br />Quickly create OpenAPI or AsyncAPI mock servers for REST, SOAP, and event-driven architectures with minimal setup.</p>
 - <p><strong>No-Code Configuration:</strong><br />Jump right in—no complex coding required!</p>
-- <p><strong>Live Monitoring:</strong><br />Use the [Mokapi Dashboard](docs/guides/get-started/dashboard) to track requests and responses in real-time, simplifying your debugging process.</p>
+- <p><strong>Live Monitoring:</strong><br />Use the [Mokapi Dashboard](docs/get-started/dashboard) to track requests and responses in real-time, simplifying your debugging process.</p>
 - <p><strong>Dynamic Test Data:</strong><br />Utilize the built-in random data generator to create realistic payloads tailored to your API needs.</p>
 - <p><strong>Local & Secure:</strong><br />An offline-first tool, Mokapi keeps your data on your machine—no accounts, no cloud syncs, and no identity tracking.</p>
 - <p><strong>Open Source:</strong><br />Free and transparent, explore Mokapi's source code on [GitHub](https://github.com/marle3003/mokapi).</p>

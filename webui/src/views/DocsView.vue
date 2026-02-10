@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, ref, inject, computed, useTemplateRef, onBeforeUnmount  } from 'vue';
-import { useRoute, type RouteParamsRawGeneric } from 'vue-router';
+import { onMounted, ref, inject, computed, useTemplateRef, onBeforeUnmount, watch  } from 'vue';
+import { useRoute } from 'vue-router';
 import { useMarkdown } from '@/composables/markdown'
 import { useMeta } from '@/composables/meta'
 import PageNotFound from './PageNotFound.vue';
@@ -18,70 +18,42 @@ const imageDescription = ref<string>()
 const contentElement = useTemplateRef<HTMLElement>('content')
 
 const route = useRoute()
-const { resolve } = useFileResolver()
-const { file, levels, isIndex } = resolve(nav, route)
+const { resolve, getBreadcrumb } = useFileResolver()
+const current = computed(() => resolve(nav, route))
 
-let data
-let component: any
-let content: string | undefined
-let metadata: DocMeta | undefined
-if (typeof file === 'string'){
-  data = files[`/src/assets/docs/${file}`];
-  ({ content, metadata } = useMarkdown(data))
-} else if (file) {
-  const entry = <DocEntry>file
-  if (entry.component) {
-    // component must be initialized in main.ts
-    component = entry.component
-    metadata = entry as DocMeta
+const data = computed(() => {
+  if (!current.value) {
+    return undefined;
   }
-}
+  const data = files[`/src/assets/docs/${current.value.source}`];
+  console.log(data)
+  return useMarkdown(data)
+})
+
+const metadata = computed(() => {
+  const meta =  data.value?.metadata
+  if (meta) {
+    return meta
+  }
+  return (current.value?.index || current.value) as DocMeta
+})
+
+const component = computed(() => {
+  return current.value?.index?.component
+})
 
 const breadcrumb = computed(() => {
-  if (!file) {
-    return
-  }
-
-  const list = new Array()
-  let current: DocConfig | DocEntry = nav
-  const params: RouteParamsRawGeneric = {}
-  for (const [index, name] of levels.entries()) {
-    if (index === 0) {
-      current = (<DocConfig>current)[name]!
-    }
-    else  {
-      const e: DocEntry | string = (<DocEntry>current).items![name]!
-      if (typeof e === 'string') {
-        list.push({ label: name, isLast: true })
-        break
-      } else {
-        current = e
-      }
-    }
-
-    params['level'+(index+1)] = formatParam(name)
-    const item: { label: string, params?: RouteParamsRawGeneric, isLast: boolean } = { 
-      label: name, 
-      isLast: false
-    }
-    
-    if (index === 0 || (current && current.index)) {
-      // copy the params object and assign
-      item.params = { ...params }
-    }
-    list.push(item)
-  }
-  return list
+  return getBreadcrumb(nav, route)
 })
 
 const showNavigation = computed(() => {
-  if (!file) {
+  if (!current.value) {
     return true
   }
-  if (typeof file === 'string') {
-    return true
+  if (current.value.hideNavigation) {
+    return false
   }
-  return !file.hideNavigation
+  return !current.value.index?.hideNavigation
 })
 
 onMounted(() => {
@@ -96,38 +68,42 @@ onMounted(() => {
       })
     }
   }, 1000)
-  if (metadata) {
-    const extension = ' | Mokapi ' + levels[0]
-    let title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0])!
-    if ((title.length + extension.length) <= 70) {
-      title +=  ' | Mokapi ' + levels[0]
-    }
-    useMeta(title, metadata.description, getCanonicalUrl(levels), metadata.image)
-  }
+  
   dialog.value = new Modal('#imageDialog', {})
   contentElement.value?.addEventListener('click', copyToClipboard);
 })
+
+watch(() => current.value, () => {
+  if (current.value && metadata.value && breadcrumb.value) {
+    let extension = ''
+    if (breadcrumb.value.length >= 3) {
+      extension = ` - ${breadcrumb.value[1]?.label} | Mokapi ${breadcrumb.value[0]?.label}`
+    }
+    else if (breadcrumb.value[0]?.label){
+      extension = ` | Mokapi ${breadcrumb.value[0]?.label}`
+    }
+
+    let title = (metadata.value.title || current.value?.label)!
+    if ((title.length + extension.length) <= 70) {
+      title +=  extension
+    }
+    if (metadata.value) {
+      useMeta(title, metadata.value.description, getCanonicalUrl(current.value), metadata.value.image)
+    }
+  }
+}, { deep: true, immediate: true })
+
 onBeforeUnmount(() => {
   contentElement.value?.removeEventListener('click', copyToClipboard);
 })
-function toUrlPath(s: string): string {
-  return s.replaceAll(/[\s\/]/g, '-').replace('&', '%26')
-}
-function getCanonicalUrl(levels: string[]) {
-  if (file) {
-    const entry = <DocEntry>file
-    if (entry.canonical) {
-      return entry.canonical
-    }
+function getCanonicalUrl(entry: DocEntry) {
+  if (entry.canonical) {
+    return entry.canonical
   }
-  let canonical = 'https://mokapi.io/docs/' + toUrlPath(levels[0]!)
-  for (let i = 1; i < levels.length; i++) {
-    canonical += `/${toUrlPath(levels[i]!)}`
+  if (entry.path) {
+    return 'https://mokapi.io' + entry.path
   }
-  if (isIndex) {
-    canonical += '/'
-  }
-  return canonical.toLowerCase()
+  throw new Error('canonical url')
 }
 function showImage(target: EventTarget | null) {
   if (hasTouchSupport() || !target || !(target instanceof HTMLImageElement)) {
@@ -140,9 +116,6 @@ function showImage(target: EventTarget | null) {
 }
 function hasTouchSupport() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-}
-function formatParam(label: any): string {
-  return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
 }
 async function copyToClipboard(event: MouseEvent) {
   const target = event.target as HTMLElement
@@ -174,24 +147,28 @@ async function copyToClipboard(event: MouseEvent) {
     console.error('Failed to copy code:', err)
   }
 }
+function isLast(breadcrumb: DocEntry[], index: number) {
+  return breadcrumb.length - 1 === index
+}
 </script>
 
 <template>
-  <main :class="{ 'has-sidebar': showNavigation }">
+  <main :class="{ 'has-sidebar': showNavigation, 'resources': route.path.startsWith('/resources') && !route.params.level2, 'resource-article': route.name === 'resources' && route.params.level2 }">
     <aside class="d-none d-md-block sidebar" v-if="showNavigation">
-      <DocNav :config="nav" :levels="levels" :title="levels[0]!"/>
+      <DocNav :config="nav" />
     </aside>
     <div class="container doc-main">
-      <nav aria-label="breadcrumb" v-if="showNavigation">
-        <ol class="breadcrumb">
-          <li class="breadcrumb-item text-truncate" v-for="item of breadcrumb" :class="item.isLast ? 'active' : ''">
-            <router-link v-if="item.params && !item.isLast" :to="{ name: 'docs', params: item.params }">{{ item.label }}</router-link>
+      <!--Breadcrumbs should include only site pages, not logical categories in your IA. -->
+      <!-- <nav aria-label="breadcrumb" v-if="showNavigation">
+        <ol class="breadcrumb" v-if="breadcrumb">
+          <li class="breadcrumb-item text-truncate" v-for="(item, index) of breadcrumb" :class="isLast(breadcrumb, index) ? 'active' : ''">
+            <router-link v-if="item.path && !isLast(breadcrumb, index)" :to="{ path: item.path }">{{ item.label }}</router-link>
             <template v-else>{{ item.label }}</template>
           </li>
         </ol>
-      </nav>
+      </nav> -->
       <div :style="showNavigation ? 'max-width:50em;' : ''">
-        <div v-if="content" v-html="content" class="content" @click="showImage($event.target)" ref="content"></div>
+        <div v-if="data?.content" v-html="data.content" class="content" @click="showImage($event.target)" ref="content"></div>
         <div v-else-if="component" class="content"><component :is="component" /></div>
         <page-not-found v-else />
       </div>
@@ -217,6 +194,14 @@ main.has-sidebar {
   display: grid;
   grid-template-columns: 290px auto;
   grid-template-areas: "sd doc";
+}
+main.resources {
+  margin-inline: auto;
+  max-width: 1200px;
+}
+main.resource-article {
+  margin-inline: auto;
+  max-width: 750px;
 }
 
 .sidebar {
@@ -256,7 +241,7 @@ ol.breadcrumb {
 }
 
 .content h1 {
-  margin-top: 15px;
+  margin-top: 0;
   font-size: 2.25rem;
 }
 

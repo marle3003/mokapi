@@ -60,9 +60,9 @@ const provider = computed(() => {
 </script>
 
 <template>
-  <div v-if="config">
+    <div v-if="config">
         <div class="card-group">
-            <div class="card">
+            <section class="card" aria-label="Info">
                 <div class="card-body">
                     <div class="row">
                         <div class="col-11 header mb-3">
@@ -86,13 +86,15 @@ const provider = computed(() => {
                         </div>
                     </div>
                 </div>
-            </div>
+            </section>
         </div>
         <section class="card-group" v-if="data" aria-label="Content">
             <div class="card">
                 <div class="card-body">
                     <div class="row">
-                        <source-view :source="{ preview: { content: formatLanguage(toString(data), contentType), contentType: contentType }}" :url="dashboard.getConfigDataUrl(configId)" :filename="filename"  />
+                        <source-view
+                            :source="{ preview: { content: formatLanguage(toString(data), contentType), contentType: contentType } }"
+                            :url="dashboard.getConfigDataUrl(configId)" :filename="filename" />
                     </div>
                 </div>
             </div>

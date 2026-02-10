@@ -280,22 +280,32 @@ const router = createRouter({
       path: '/docs/examples/:pathMatch(.*)*',
       redirect: to => {
         if (typeof to.params.pathMatch === 'string') {
-          return `/docs/resources/${to.params.pathMatch}`
+          return `/resources/${to.params.pathMatch}`
         }
-        return `/docs/resources/${to.params.pathMatch!.join('/')}`
+        return `/resources/${to.params.pathMatch!.join('/')}`
       }
     },
     {
       path: '/docs',
       redirect: ({
         name: 'docs',
-        params: {level1: 'guides', level2: 'welcome'}
+        params: { level1: 'welcome' }
       }),
-      name: 'docsStart',
+       children: [
+        {
+          path: ':level1/:level2?/:level3?/:level4?',
+          name: 'docs',
+          component: () => import('@/views/DocsView.vue')
+        },
+      ]
+    },
+    {
+      path: '/resources',
+      component: () => import('@/views/DocsView.vue'),
       children: [
         {
-          path: '/docs/:level1/:level2?/:level3?/:level4?',
-          name: 'docs',
+          path: ':level1/:level2?/:level3?/:level4?',
+          name: 'resources',
           component: () => import('@/views/DocsView.vue')
         },
       ]

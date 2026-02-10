@@ -85,20 +85,22 @@ test('Visit Mail Server', async ({ page }) => {
             await test.step('Verify Mail Reset Your Password', async () => {
 
                 await mails.locator('tbody tr').click();
-                await expect(page.getByLabel('Subject')).toHaveText('Reset Your Password');
-                await expect(page.getByLabel('Service', { exact: true })).toHaveText('Mail Server');
-                await expect(page.getByLabel('Service', { exact: true }).getByRole('link')).toHaveAttribute('href', '/dashboard-demo/mail/service/Mail%20Server');
-                await expect(page.getByLabel('From')).not.toBeEmpty();
-                await expect(page.getByLabel('From')).toHaveText('zzz@example.com');
-                await expect(page.getByLabel('To', { exact: true })).toHaveText('Bob Miller <bob.miller@example.com>');
+                const info = page.getByRole('region', { name: 'Info' })
+                await expect(info.getByLabel('Subject')).toHaveText('Reset Your Password');
+                await expect(info.getByLabel('Service', { exact: true })).toHaveText('Mail Server');
+                await expect(info.getByLabel('Service', { exact: true }).getByRole('link')).toHaveAttribute('href', '/dashboard-demo/mail/service/Mail%20Server');
+                await expect(info.getByLabel('From')).not.toBeEmpty();
+                await expect(info.getByLabel('From')).toHaveText('zzz@example.com');
+                await expect(info.getByLabel('To', { exact: true })).toHaveText('Bob Miller <bob.miller@example.com>');
 
                 const body = page.getByRole('region', { name: 'Body' });
                 await expect(body.getByRole('heading')).toHaveText('Reset Your Password');
                 await expect(body).toContainText('Hello John Doe,');
 
-                await expect(page.getByLabel('Content-Type')).toHaveText('text/html; charset=utf-8');
-                await expect(page.getByLabel('Encoding')).toHaveText('quoted-printable');
-                await expect(page.getByLabel('Message-ID')).not.toBeEmpty();
+                const footer = page.getByRole('region', { name: 'Footer' });
+                await expect(footer.getByLabel('Content-Type')).toHaveText('text/html; charset=utf-8');
+                await expect(footer.getByLabel('Encoding')).toHaveText('quoted-printable');
+                await expect(footer.getByLabel('Message-ID')).not.toBeEmpty();
             });
         });
 
@@ -126,12 +128,13 @@ test('Visit Mail Server', async ({ page }) => {
             await test.step('Verify Mail Check Out Our New Arrivals!', async () => {
 
                 await mails.locator('tbody tr').click();
-                await expect(page.getByLabel('Subject')).toHaveText('Check Out Our New Arrivals!');
-                await expect(page.getByLabel('Service', { exact: true })).toHaveText('Mail Server');
-                await expect(page.getByLabel('Service', { exact: true }).getByRole('link')).toHaveAttribute('href', '/dashboard-demo/mail/service/Mail%20Server');
-                await expect(page.getByLabel('From')).not.toBeEmpty();
-                await expect(page.getByLabel('From')).toHaveText('Bob Miller <bob.miller@example.com>');
-                await expect(page.getByLabel('To', { exact: true })).toHaveText('Alice Johnson <alice.johnson@example.com>');
+                const info = page.getByRole('region', { name: 'Info' })
+                await expect(info.getByLabel('Subject')).toHaveText('Check Out Our New Arrivals!');
+                await expect(info.getByLabel('Service', { exact: true })).toHaveText('Mail Server');
+                await expect(info.getByLabel('Service', { exact: true }).getByRole('link')).toHaveAttribute('href', '/dashboard-demo/mail/service/Mail%20Server');
+                await expect(info.getByLabel('From')).not.toBeEmpty();
+                await expect(info.getByLabel('From')).toHaveText('Bob Miller <bob.miller@example.com>');
+                await expect(info.getByLabel('To', { exact: true })).toHaveText('Alice Johnson <alice.johnson@example.com>');
 
                 const body = page.getByRole('region', { name: 'Body' });
                 await expect(body.getByRole('heading', { level: 1 })).toHaveText('New Arrivals Just Landed!');

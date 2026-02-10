@@ -7,7 +7,7 @@ icon: bi-gear-wide-connected
 
 Integrating Mokapi into a CI/CD pipeline ensures API contracts and Kafka topics interactions are validated before deployment. 
 This helps catch issues early, making the development process more reliable and reducing the risk of breaking changes in production.
-If you haven't installed Mokapi yet, follow the [Installation Guide](/docs/guides/get-started/installation.md) to get started.
+If you haven't installed Mokapi yet, follow the [Installation Guide](/docs/get-started/installation.md) to get started.
 
 This guide explains how to:
  

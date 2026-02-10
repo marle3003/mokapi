@@ -77,16 +77,18 @@ test('Visit Kafka cluster config file', async ({ page, context }) => {
     await open()
     await tabs.kafka.click()
 
-    await page.getByRole('table', { name: 'Kafka Clusters' }).getByText(cluster.name).click()
+    const dashboard = page.getByRole('region', { name: 'Dashboard' });
 
-    await page.getByRole('tab', { name: 'Configs' }).click();
-    await page.getByRole('table', { name: 'Configs' }).getByText('https://www.example.com/foo/bar/communication/service/asyncapi.json').click()
+    await dashboard.getByRole('table', { name: 'Kafka Clusters' }).getByText(cluster.name).click()
 
-    await expect(page.getByLabel('URL')).toHaveText('https://www.example.com/foo/bar/communication/service/asyncapi.json')
-    await expect(page.getByLabel('Provider')).toHaveText('HTTP')
-    await expect(page.getByLabel('Last Modified')).toHaveText(formatDateTime('2023-02-15T08:49:25.482366+01:00'))
+    await dashboard.getByRole('tab', { name: 'Configs' }).click();
+    await dashboard.getByRole('table', { name: 'Configs' }).getByText('https://www.example.com/foo/bar/communication/service/asyncapi.json').click()
 
-    const { test: testSourceView } = useSourceView(page.getByRole('region', { name: 'Content' }))
+    await expect(dashboard.getByLabel('URL')).toHaveText('https://www.example.com/foo/bar/communication/service/asyncapi.json')
+    await expect(dashboard.getByLabel('Provider')).toHaveText('HTTP')
+    await expect(dashboard.getByLabel('Last Modified')).toHaveText(formatDateTime('2023-02-15T08:49:25.482366+01:00'))
+
+    const { test: testSourceView } = useSourceView(dashboard.getByRole('region', { name: 'Content' }))
     await testSourceView({
         lines: '342 lines',
         size: '8.94 kB',

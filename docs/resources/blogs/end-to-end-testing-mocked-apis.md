@@ -21,8 +21,8 @@ Mocking APIs allows you to simulate external systems under controlled conditions
 - 🛠️ Easier testing of error scenarios, timeouts, and edge cases 
 - 🔗 No dependencies on the availability of third-party services
 
-With [Mokapi](https://mokapi.io), you can easily define API mocks using [OpenAPI](/docs/guides/http) or 
-[AsyncAPI](/docs/guides/kafka) specifications, and serve them locally or in your CI environment.
+With [Mokapi](https://mokapi.io), you can easily define API mocks using [OpenAPI](/docs/http/overview.md) or 
+[AsyncAPI](/docs/kafka/overview.md) specifications, and serve them locally or in your CI environment.
 Mokapi even supports dynamic behavior using simple [JavaScripts](/docs/javascript-api/overview.md), helping you create more realistic test scenarios.
 
 ## How Mokapi Fits into Your CI/CD Pipeline
@@ -91,7 +91,7 @@ You can even modify mocks dynamically during a test run with simple [JavaScripts
 ## Local Development and Mokapi
 
 Mokapi isn't just for CI. You can also run it locally during development.
-There are many ways to run Mokapi depending on your setup — learn more in the [Running Mokapi Guide](/docs/guides/get-started/running.md).
+There are many ways to run Mokapi depending on your setup — learn more in the [Running Mokapi Guide](/docs/get-started/running.md).
 
 ## Conclusion
 
@@ -99,10 +99,10 @@ Mocking APIs is a crucial part of building robust, scalable systems. With Mokapi
 development and CI pipelines, leading to faster feedback, fewer bugs, and better products.
 
 **Ready to ship faster, more reliable software?**
-[Get started with Mokapi](/docs/guides/get-started)
+[Get started with Mokapi](/docs/get-started/installation.md)
 
 For a detailed, step-by-step guide on how to use Mokapi in your GitHub Actions workflows, 
-see the [GitHub Actions and Mokapi](/docs/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline).
+see the [GitHub Actions and Mokapi](/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline).
 
 ---
 

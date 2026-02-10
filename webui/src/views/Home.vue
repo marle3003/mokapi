@@ -65,7 +65,7 @@ function showImage(evt: MouseEvent) {
               <router-link :to="{ path: '/docs/guides' }">
                 <button type="button" class="btn btn-outline-primary">Get Started</button>
               </router-link>
-              <router-link :to="{ path: '/docs/resources' }">
+              <router-link :to="{ path: '/resources' }">
                 <button type="button" class="btn btn-outline-primary">Learn More</button>
               </router-link>
             </p>
@@ -94,7 +94,7 @@ function showImage(evt: MouseEvent) {
                 <router-link :to="{ path: '/docs/guides' }">
                   <button type="button" class="btn btn-outline-primary">Get Started</button>
                 </router-link>
-                <router-link :to="{ path: '/docs/resources' }">
+                <router-link :to="{ path: '/resources' }">
                   <button type="button" class="btn btn-outline-primary">Learn More</button>
                 </router-link>
               </p>
@@ -331,7 +331,7 @@ function showImage(evt: MouseEvent) {
             <p class="fst-italic">
               Ensure consistent testing across local development, CI pipelines, and cloud environments.
             </p>
-            <router-link :to="{ path: '/docs/guides/get-started/running' }" class="btn btn-outline-primary btn-sm">
+            <router-link :to="{ path: '/docs/get-started/running' }" class="btn btn-outline-primary btn-sm">
               Learn How to Run Mokapi
             </router-link>
           </div>
@@ -371,7 +371,7 @@ function showImage(evt: MouseEvent) {
             <p class="fst-italic">
               Produce lifelike data to catch bugs early and test edge cases that rarely occur in production.
             </p>
-            <router-link :to="{ path: '/docs/guides/get-started/test-data' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
+            <router-link :to="{ path: '/docs/get-started/test-data' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
               Explore Fake Data Features
             </router-link>
           </div>
@@ -416,7 +416,7 @@ function showImage(evt: MouseEvent) {
                   Live Dashboard Demo
               </a>
 
-              <router-link :to="{ path: '/docs/guides/get-started/dashboard' }" class="btn btn-outline-primary btn-sm">
+              <router-link :to="{ path: '/docs/get-started/dashboard' }" class="btn btn-outline-primary btn-sm">
                   How it works
               </router-link>
             </div>
@@ -485,7 +485,7 @@ function showImage(evt: MouseEvent) {
                   <span class="icon me-2 bi-envelope-at-fill"></span>Mock SMTP Email Sending
                 </h3>
                 <p>Simulate an SMTP server and send test emails using Node.js. Perfect for validating email workflows without real mail servers.</p>
-                <a href="/docs/resources/tutorials/mock-smtp-server-send-mail-using-node" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
+                <a href="/resources/tutorials/mock-smtp-server-send-mail-using-node" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
               </div>
             </div>
           </div>
@@ -501,7 +501,7 @@ function showImage(evt: MouseEvent) {
                   <span class="icon me-2 bi-shield-check"></span>Enforce API Contracts
                 </h3>
                 <p>Validate HTTP requests and responses against OpenAPI specs to catch API issues early in development or testing.</p>
-                <a href="/docs/resources/blogs/ensuring-api-contract-compliance-with-mokapi" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Read Blog</a>
+                <a href="/resources/blogs/ensuring-api-contract-compliance-with-mokapi" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Read Blog</a>
               </div>
             </div>
           </div>
@@ -547,7 +547,7 @@ function showImage(evt: MouseEvent) {
               <div id="collapse-action-init" class="collapse show pt-lg-0 pt-3 position-relative" role="tabpanel" data-bs-parent="#tab-demo" aria-labelledby="heading-action-init">
                 <img class="img-fluid" src="/mokapi-swagger-petstore.gif" alt="Mocking a REST API and Sending HTTP Requests in Action" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
                 <div class="overlay d-none position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"></div>
-                <a class="btn btn-outline-primary position-absolute top-50 start-50 translate-middle opacity-0 hover-visible" href="/docs/resources/tutorials/get-started-with-rest-api">Get Started</a>
+                <a class="btn btn-outline-primary position-absolute top-50 start-50 translate-middle opacity-0 hover-visible" href="/resources/tutorials/get-started-with-rest-api">Get Started</a>
               </div>
 
             </div>
@@ -563,7 +563,7 @@ function showImage(evt: MouseEvent) {
               <div id="collapse-action-mock-data" class="collapse pt-lg-0 pt-3 position-relative" role="tabpanel" data-bs-parent="#tab-demo" aria-labelledby="heading-action-mock-data">
                 <img class="img-fluid" src="/mock-realistic-data.gif" alt="Mokapi uses schema definitions and smart defaults to generate realistic and relevant data." style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
                 <div class="overlay d-none position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"></div>
-                <a class="btn btn-outline-primary position-absolute top-50 start-50 translate-middle opacity-0 hover-visible" href="/docs/guides/get-started/test-data">Learn more</a>
+                <a class="btn btn-outline-primary position-absolute top-50 start-50 translate-middle opacity-0 hover-visible" href="/docs/get-started/test-data">Learn more</a>
               </div>
             </div>
           </div>

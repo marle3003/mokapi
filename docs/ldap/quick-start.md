@@ -9,7 +9,7 @@ Learn how to create your first LDAP mock with Mokapi and begin ensuring the reli
 ## Before you start
 
 There are various ways to run Mokapi depending on your needs. For detailed instructions on how to get Mokapi running on 
-your workstation, refer to the information provided [here](/docs/guides/get-started/running.md).
+your workstation, refer to the information provided [here](/docs/get-started/running.md).
 
 ## Basic structure of an LDAP server configuration
 

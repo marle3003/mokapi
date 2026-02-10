@@ -58,7 +58,7 @@ rpm -i mokapi_{version}_linux_{arch}.rpm
 @tab "Docker"
 
 To get started with Mokapi using Docker, visit [DockerHub](https://hub.docker.com/r/mokapi/mokapi/tags) for a list of available images.
-You can also use a custom base Docker image as demonstrated in [these examples](/docs/resources/examples/mokapi-with-custom-base-image.md).
+You can also use a custom base Docker image as demonstrated in [these examples](/resources/examples/mokapi-with-custom-base-image.md).
 
 ```
 docker pull mokapi/mokapi
@@ -85,5 +85,5 @@ npm install --save-dev @types/mokapi
 
 ## Next steps
 
-- [Create your first Mock](/docs/guides/get-started/running.md)
+- [Create your first Mock](/docs/get-started/running.md)
 - [Install @types/mokapi](https://www.npmjs.com/package/@types/mokapi)
