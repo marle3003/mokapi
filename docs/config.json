@@ -140,6 +140,11 @@
                 "label": "CLI Usage",
                 "source": "configuration/static/cli.md",
                 "path": "/docs/configuration/static/cli-usage"
+              },
+              {
+                "label": "CLI Flags",
+                "source": "configuration/static/mokapi.md",
+                "path": "/docs/configuration/static/cli-flags"
               }
             ]
           },

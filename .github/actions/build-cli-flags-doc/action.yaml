@@ -2,7 +2,7 @@ name: "Build Mokapi CLI Flags doc"
 runs:
   using: composite
   steps:
-    - name: Create directory and file
+    - name: Create dist directory and file
       shell: bash
       run: |
         mkdir -p webui/dist
@@ -10,9 +10,3 @@ runs:
     - name: Build CLI doc
       shell: bash
       run: go run ./cmd/internal/gen-cli-docs/main.go
-    - name: Add CLI Flags nav entry
-      working-directory: ./docs
-      shell: bash
-      run: |
-        jq '.Configuration.items.Static.items["CLI Flags"] = "configuration/static/mokapi.md"' ./config.json > ./tmp.json
-        mv ./tmp.json ./config.json
