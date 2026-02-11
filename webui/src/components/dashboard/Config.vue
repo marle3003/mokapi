@@ -65,12 +65,15 @@ const provider = computed(() => {
             <section class="card" aria-label="Info">
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-11 header mb-3">
+                        <div class="col header mb-3">
                             <p id="url" class="label">URL</p>
                             <p aria-labelledby="url">{{ config.url }}</p>
                         </div>
-                        <div class="col-1 text-end">
-                            <span class="badge bg-secondary">Config</span>
+                        <div class="col text-end">
+                            <span v-if="config.tags" v-for="tag of config.tags" class="badge bg-primary ms-1">
+                                {{ tag }}
+                            </span>
+                            <span class="badge bg-secondary ms-1">Config</span>
                         </div>
                     </div>
                     <div class="row">

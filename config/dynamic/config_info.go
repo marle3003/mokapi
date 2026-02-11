@@ -3,11 +3,12 @@ package dynamic
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 type ConfigInfo struct {
@@ -16,6 +17,7 @@ type ConfigInfo struct {
 	Checksum []byte
 	Time     time.Time
 	inner    *ConfigInfo
+	Tags     []string
 }
 
 func (ci *ConfigInfo) Path() string {
