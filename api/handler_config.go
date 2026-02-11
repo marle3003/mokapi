@@ -2,13 +2,14 @@ package api
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mime"
 	"mokapi/config/dynamic"
 	"net/http"
 	"path/filepath"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type config struct {
@@ -17,6 +18,7 @@ type config struct {
 	Provider string      `json:"provider"`
 	Time     time.Time   `json:"time"`
 	Refs     []configRef `json:"refs,omitempty"`
+	Tags     []string    `json:"tags,omitempty"`
 }
 
 type configRef struct {
@@ -116,5 +118,6 @@ func toConfig(cfg *dynamic.Config) config {
 		Time:     cfg.Info.Time,
 		Provider: cfg.Info.Provider,
 		Refs:     refs,
+		Tags:     cfg.Info.Tags,
 	}
 }

@@ -40,22 +40,22 @@
               <h3>Guides</h3>
               <ul>
                 <li>
-                  <router-link :to="{ path: '/docs/guides/get-started/installation' }">
+                  <router-link :to="{ path: '/docs/get-started/installation' }">
                     Installation
                   </router-link>
                 </li>
                 <li>
-                  <router-link :to="{ path: '/docs/guides/get-started/running' }">
+                  <router-link :to="{ path: '/docs/get-started/running' }">
                     Running
                   </router-link>
                 </li>
                 <li>
-                  <router-link :to="{ path: '/docs/guides/get-started/test-data' }">
+                  <router-link :to="{ path: '/docs/get-started/test-data' }">
                     Test Data
                   </router-link>
                 </li>
                 <li>
-                  <router-link :to="{ path: '/docs/guides/get-started/dashboard' }">
+                  <router-link :to="{ path: '/docs/get-started/dashboard' }">
                     Dashboard
                   </router-link>
                 </li>
@@ -69,22 +69,22 @@
               <h3>Resources & Blogs</h3>
               <ul>
                 <li>
-                  <router-link :to="{ path: '/docs/resources/tutorials/get-started-with-rest-api' }">
+                  <router-link :to="{ path: '/resources/tutorials/get-started-with-rest-api' }">
                     Mock and Test REST APIs Using OpenAPI with Mokapi
                   </router-link>
                 </li>
                 <li>
-                  <router-link :to="{ path: '/docs/resources/tutorials/get-started-with-kafka' }">
+                  <router-link :to="{ path: '/resources/tutorials/get-started-with-kafka' }">
                     Simulate Kafka Topics with AsyncAPI and Mokapi for Reliable Event Testing
                   </router-link>
                 </li>
                 <li>
-                  <router-link :to="{ path: '/docs/resources/blogs/testing-email-workflows-with-playwright-and-mokapi' }">
+                  <router-link :to="{ path: '/resources/blogs/testing-email-workflows-with-playwright-and-mokapi' }">
                     Test Email Workflows with a Mock SMTP Server Using Mokapi and Playwright
                   </router-link>
                 </li>
                 <li>
-                  <router-link :to="{ path: '/docs/resources/tutorials/mock-ldap-authentication-in-node' }">
+                  <router-link :to="{ path: '/resources/tutorials/mock-ldap-authentication-in-node' }">
                     Mock LDAP Authentication in Node.js for Seamless Testing with Mokapi
                   </router-link>
                 </li>
@@ -128,3 +128,30 @@
     </div>
   </footer>
 </template>
+
+<style>
+footer {
+  grid-area: ft;
+  padding-top: 3rem;
+  padding-bottom: 2rem;
+  background-color: var(--footer-background);
+  opacity: 0.8;
+  font-size: 0.9rem;
+}
+footer h3 {
+  font-size: 0.9rem;
+  margin-bottom: 1.2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+footer ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+footer ul li {
+  margin-bottom: 0.5rem;
+}
+footer a {
+  text-decoration: none;
+}
+</style>

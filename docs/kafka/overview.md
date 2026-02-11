@@ -46,7 +46,7 @@ channels:
 ```
 
 ```box=tip
-Ready to dive in? Head over to the Kafka [Quick Start Guide](/docs/guides/kafka/quick-start.md) and run your first
+Ready to dive in? Head over to the Kafka [Quick Start Guide](/docs/kafka/quick-start.md) and run your first
 Kafka mock in seconds.
 ```
 
@@ -113,5 +113,5 @@ or use Mokapi’s [patching](/docs/configuration/patching.md) mechanism.
 
 ## Next Steps
 
-- [Quick Start Guide](/docs/guides/kafka/quick-start.md): Learn how to run Mokapi and load your first AsyncAPI file.
+- [Quick Start Guide](/docs/kafka/quick-start.md): Learn how to run Mokapi and load your first AsyncAPI file.
 - [Mokapi CLI:](/docs/configuration/static/cli-usage.md): Detailed command-line options and runtime configuration.

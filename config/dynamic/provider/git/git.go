@@ -329,6 +329,11 @@ func wrapConfig(c *dynamic.Config, r *repository) {
 		// to query git log takes too long
 		Time: time.Now(),
 	}
+	h, err := r.repo.Head()
+	if err == nil {
+		ref := h.Name()
+		info.Tags = append(info.Tags, ref.Short())
+	}
 
 	dynamic.Wrap(info, c)
 }

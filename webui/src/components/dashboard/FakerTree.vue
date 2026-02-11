@@ -80,7 +80,7 @@ function handleScroll(event: WheelEvent) {
         </template>
       </vue-tree>
       <div class="info" style="">
-        <router-link :to="{ path: '/docs/guides/get-started/test-data' }">
+        <router-link :to="{ path: '/docs/get-started/test-data' }">
           <span class="bi bi-question-circle-fill"></span>
         </router-link>
       </div>

@@ -1,6 +1,6 @@
 import Search from '@/components/dashboard/Search.vue'
 import { getRouteName } from '@/composables/dashboard'
-import { createRouter, createWebHistory, useRoute as baseRoute, type RouteLocationRaw, type RouteRecordRaw, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory, useRoute as baseRoute, type RouteLocationRaw, type RouteRecordRaw } from 'vue-router'
 
 let base = document.querySelector("base")?.href ?? '/'
 base = base.replace(document.location.origin, '')
@@ -299,9 +299,47 @@ const router = createRouter({
       }
     },
     {
-      path: '/:level1/:level2?/:level3?/:level4?',
-      name: 'docs',
+      path: '/docs/resources/:pathMatch(.*)*',
+      redirect: to => {
+        if (typeof to.params.pathMatch === 'string') {
+          return `/resources/${to.params.pathMatch}`
+        }
+        return `/resources/${to.params.pathMatch!.join('/')}`
+      }
+    },
+    {
+      path: '/docs/guides/:pathMatch(.*)*',
+      redirect: to => {
+        if (typeof to.params.pathMatch === 'string') {
+          return `/docs/${to.params.pathMatch}`
+        }
+        return `/docs/${to.params.pathMatch!.join('/')}`
+      }
+    },
+    {
+      path: '/docs',
+      redirect: ({
+        name: 'docs',
+        params: { level1: 'welcome' }
+      }),
+       children: [
+        {
+          path: ':level1/:level2?/:level3?/:level4?',
+          name: 'docs',
+          component: () => import('@/views/DocsView.vue')
+        },
+      ]
+    },
+    {
+      path: '/resources',
       component: () => import('@/views/DocsView.vue'),
+      children: [
+        {
+          path: ':level1/:level2?/:level3?/:level4?',
+          name: 'resources',
+          component: () => import('@/views/DocsView.vue')
+        },
+      ]
     },
     {
       path: '/:pathMatch(.*)*',

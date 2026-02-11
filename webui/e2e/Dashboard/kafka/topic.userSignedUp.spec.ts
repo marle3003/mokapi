@@ -143,7 +143,8 @@ test('Visit Kafka topic mokapi.shop.userSignedUp', async ({ page, context }) => 
 
         await test.step('Go back to cluster view', async () => {
             await page.getByRole('link', { name: 'cluster' }).click()
-            await expect(page.getByLabel('name')).toHaveText(cluster.name)
+            const region = page.getByRole('region', { name: 'Info' });
+            await expect(region.getByLabel('name')).toHaveText(cluster.name)
         })
     })
 })

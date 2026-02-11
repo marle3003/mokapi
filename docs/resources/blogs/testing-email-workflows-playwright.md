@@ -168,4 +168,4 @@ Don’t leave your email experience to chance. Mock it, test it, and ship it wit
 ---
 
 Try the example on GitHub: [mokapi-email-workflow](https://github.com/marle3003/mokapi-email-workflow)\
-Learn more about [Mokapi Mail](/docs/guides/mail)
+Learn more about [Mokapi Mail](/docs/mail/overview.md)

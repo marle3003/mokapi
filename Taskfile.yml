@@ -28,10 +28,12 @@ tasks:
       GOOS: darwin
       GOARCH: arm64
   build-vue-app:
+    deps: [ensure-dist-folder]
     dir: webui
     cmds:
       - npm run clean
       - npm run copy-docs
+      - go run ../cmd/internal/gen-cli-docs/main.go --output-dir ./webui/src/assets/docs/configuration/static
       - npm version {{.VERSION}}
       - npm run build-dashboard
   build-npm-package:
@@ -64,5 +66,9 @@ tasks:
     env:
       GOOS: darwin
       GOARCH: arm64
+  ensure-dist-folder:
+    cmds:
+      - mkdir -p webui/dist
+      - touch webui/dist/.tmp
 
 

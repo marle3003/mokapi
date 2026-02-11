@@ -12,11 +12,12 @@ test('Visit LDAP Testserver', async ({ page }) => {
 
     await test.step('Verify service info', async () => {
 
-        await expect(page.getByLabel('Name')).toHaveText('HR Employee Directory');
-        await expect(page.getByLabel('Version')).toHaveText('1.0.0');
-        await expect(page.getByLabel('Contact')).not.toBeVisible();
-        await expect(page.getByLabel('Type of API')).toHaveText('LDAP');
-        await expect(page.getByLabel('Description')).toHaveText('LDAP server for internal employee contact information.');
+        const info = page.getByRole('region', { name: 'Info' })
+        await expect(info.getByLabel('Name')).toHaveText('HR Employee Directory');
+        await expect(info.getByLabel('Version')).toHaveText('1.0.0');
+        await expect(info.getByLabel('Contact')).not.toBeVisible();
+        await expect(info.getByLabel('Type of API')).toHaveText('LDAP');
+        await expect(info.getByLabel('Description')).toHaveText('LDAP server for internal employee contact information.');
 
     });
 

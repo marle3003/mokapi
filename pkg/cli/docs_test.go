@@ -53,9 +53,9 @@ description: A complete list of all Foo flags, with descriptions, defaults, and 
 
 Show help information and exit
 
-| Flag | Env  | Type | Default |
-|------|------|:----:|:-------:|
-| --help | HELP | bool | false |
+| Flag | Shorthand | Env  | Type | Default |
+|------|:---------:|------|:----:|:-------:|
+| --help | -h | HELP | bool | false |
 
 `, sb.String())
 			},
@@ -103,9 +103,9 @@ description: A complete list of all Foo flags, with descriptions, defaults, and 
 
 Show help information and exit
 
-| Flag | Env  | Type | Default |
-|------|------|:----:|:-------:|
-| --help | HELP | bool | false |
+| Flag | Shorthand | Env  | Type | Default |
+|------|:---------:|------|:----:|:-------:|
+| --help | -h | HELP | bool | false |
 
 `, sb.String())
 			},
@@ -164,9 +164,9 @@ Some long description here
 
 Show help information and exit
 
-| Flag | Env  | Type | Default |
-|------|------|:----:|:-------:|
-| --help | HELP | bool | false |
+| Flag | Shorthand | Env  | Type | Default |
+|------|:---------:|------|:----:|:-------:|
+| --help | -h | HELP | bool | false |
 
 `, "```bash tab=CLI\n--foo bar\n```\n```bash tab=Env\nFOO=bar\n```\n```bash tab=File\nfoo: bar\n```"), sb.String())
 			},

@@ -1,6 +1,6 @@
 /**
  * Mokapi JavaScript API
- * https://mokapi.io/docs/guides/welcome
+ * https://mokapi.io/docs/welcome
  */
 
 import "./faker";

@@ -44,11 +44,11 @@ function showImage(evt: MouseEvent) {
             </p>
             
             <p class="d-none d-md-block">
-              <router-link :to="{ path: '/docs/guides/kafka' }">
-                <button type="button" class="btn btn-outline-primary">Get Started</button>
+              <router-link :to="{ path: '/resources/tutorials/get-started-with-kafka' }" class="btn btn-primary me-2">
+                Get Started
               </router-link>
-              <router-link :to="{ path: '/docs/resources' }">
-                <button type="button" class="btn btn-outline-primary">Learn More</button>
+              <router-link :to="{ path: '/docs/kafka/overview' }" class="btn btn-primary me-2">
+                Documentation
               </router-link>
             </p>
           </div>
@@ -57,11 +57,11 @@ function showImage(evt: MouseEvent) {
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
-                <router-link :to="{ path: 'docs/guides/kafka' }">
-                  <button type="button" class="btn btn-outline-primary">Get Started</button>
+                <router-link :to="{ path: '/resources/tutorials/get-started-with-kafka' }" class="btn btn-primary me-2">
+                  Get Started
                 </router-link>
-                <router-link :to="{ path: '/docs/resources' }">
-                  <button type="button" class="btn btn-outline-primary">Learn More</button>
+                <router-link :to="{ path: '/docs/kafka/overview' }" class="btn btn-primary me-2">
+                  Documentation
                 </router-link>
               </p>
           </div>
@@ -157,7 +157,7 @@ function showImage(evt: MouseEvent) {
                   Simulate incoming Kafka events to verify how services react to
                   different message types and edge cases.
                 </p>
-                <a href="/docs/guides/kafka"
+                <a href="/docs/kafka/overview"
                   class="btn btn-outline-primary btn-sm align-self-start"
                   style="bottom: 15px;">
                   Learn More
@@ -174,7 +174,7 @@ function showImage(evt: MouseEvent) {
                   Ensure producer applications emit valid messages before they reach
                   downstream consumers.
                 </p>
-                <a href="/docs/resources/tutorials/get-started-with-kafka"
+                <a href="/resources/tutorials/get-started-with-kafka"
                   class="btn btn-outline-primary btn-sm align-self-start"
                   style="bottom: 15px;">
                   Start Validating
@@ -191,7 +191,7 @@ function showImage(evt: MouseEvent) {
                   Mock complex message flows across multiple topics to test
                   end-to-end event-driven systems.
                 </p>
-                <a href="/docs/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline"
+                <a href="/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline"
                   class="btn btn-outline-primary btn-sm align-self-start"
                   style="bottom: 15px;">
                   Run Mokapi in CI/CD
@@ -226,7 +226,7 @@ function showImage(evt: MouseEvent) {
           Mock topics, validate events, and test distributed systems faster.
         </p>
 
-        <router-link :to="{ path: '/docs/resources/tutorials/get-started-with-kafka' }">
+        <router-link :to="{ path: '/resources/tutorials/get-started-with-kafka' }">
           <button class="btn btn-primary btn-lg">
             Get Started with Kafka Mocking
           </button>

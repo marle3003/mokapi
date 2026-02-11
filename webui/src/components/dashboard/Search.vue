@@ -267,7 +267,7 @@ function facetTitle(s: string) {
                     <li><code>(get OR post) AND pets</code> – Combine multiple terms logically</li>
                   </ul>
                   <div class="mt-2 text-muted" v-if="false">
-                    Learn more about Mokapi's search <a href="/docs/guides/dashboard">here</a>
+                    Learn more about Mokapi's search <a href="/docs/dashboard">here</a>
                   </div>
                 </div>
               </div>

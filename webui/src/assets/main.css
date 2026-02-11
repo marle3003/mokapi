@@ -27,17 +27,25 @@ body {
 }
 
 #app {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: auto;
+  grid-template-areas:
+    "hd"
+    "main"
+    "ft";
   min-height: 100%;
+}
+
+header {
+  grid-area: hd;
+}
+
+main {
+  grid-area: main;
 }
 
 #app:has(header .promo-banner) {
   --header-height: calc(4rem + 22px);
-}
-
-main {
-  flex: 1;
 }
 
 h1 {

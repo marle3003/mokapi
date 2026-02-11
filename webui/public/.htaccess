@@ -14,23 +14,29 @@
   RewriteCond %{SERVER_PORT} !^443$
   RewriteRule (.+) https://%{HTTP_HOST}/$1 [L,R]
 
-  # Redirect exactly /docs/examples to /docs/resources
-  RewriteRule ^docs/examples/?$ /docs/resources [R=301,L]
+  # Redirect exactly /docs/examples to /resources
+  RewriteRule ^docs/examples/?$ /resources [R=301,L]
 
-  # Redirect anything under /docs/examples/ to /docs/resources/
-  RewriteRule ^docs/examples/(.*)$ /docs/resources/$1 [R=301,L]
+  # Redirect anything under /docs/examples/ to /resources/
+  RewriteRule ^docs/examples/(.*)$ /resources/$1 [R=301,L]
 
-  # Redirect exactly /docs/blogs to /docs/resources
-  RewriteRule ^docs/blogs/?$ /docs/resources/blogs [R=301,L]
+  # Redirect exactly /docs/blogs to /resources
+  RewriteRule ^docs/blogs/?$ /resources/blogs [R=301,L]
 
-  # Redirect anything under /docs/blogs/ to /docs/resources/blogs/
-  RewriteRule ^docs/blogs/(.*)$ /docs/resources/blogs/$1 [R=301,L]
+  # Redirect anything under /docs/blogs/ to /resources/blogs/
+  RewriteRule ^docs/blogs/(.*)$ /resources/blogs/$1 [R=301,L]
+
+  # Redirect anything under /docs/resources/ to /resources/
+  RewriteRule ^docs/resources/(.*)$ /resources/$1 [R=301,L]
+
+  # Redirect anything under /docs/guides/ to /docs/
+  RewriteRule ^docs/guides/(.*)$ /docs/$1 [R=301,L]
 
   # Redirect exactly /smtp to /mail
   RewriteRule ^smtp/?$ /mail [R=301,L]
 
-  # Redirect anything under /docs/guides/smtp to /docs/guides/mail/
-  RewriteRule ^docs/guides/smtp/?(.*)$ /docs/guides/mail/$1 [R=301,L]
+  # Redirect anything under /docs/guides/smtp to /docs/mail/
+  RewriteRule ^docs/guides/smtp/?(.*)$ /docs/mail/$1 [R=301,L]
 
   # rewrite for bots
   RewriteCond %{HTTP_USER_AGENT} googlebot|bingbot|Seobility|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora\ link\ preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp|redditbot|applebot|flipboard|tumblr|bitlybot|skypeuripreview|nuzzel|discordbot|google\ page\ speed|qwantify|bitrix\ link\ preview|xing-contenttabreceiver|google-inspectiontool|chrome-lighthouse|telegrambot|amazonbot [NC]
