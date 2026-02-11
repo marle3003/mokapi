@@ -76,7 +76,10 @@ You can also define multiple file names or directory by separating them with sys
 ```
 
 ### Include
-One or more patterns that a file must match, except when empty. The filter is only applied to files.
+A list of glob patterns that files must match to be processed.
+- Applied only to files (not directories)
+- If empty or omitted, all files are included 
+- If specified, a file must match at least one pattern to be included
 
 ```yaml tab=File (YAML)
 providers:
@@ -89,6 +92,42 @@ providers:
 ```bash tab=Env
 MOKAPI_PROVIDERS_FILE_INCLUDE="*.json *.yaml"
 ```
+
+### Exclude
+A list of glob patterns that files must not match to be processed.
+- Applied only to files (not directories)
+- If empty or omitted, no files are excluded 
+- Exclusion is evaluated after include filtering 
+- If a file matches any exclude pattern, it is skipped
+
+```yaml tab=File (YAML)
+providers:
+  file:
+    exclude: ["debug.json"]
+```
+```bash tab=CLI
+--providers-file-include debug.json
+```
+```bash tab=Env
+MOKAPI_PROVIDERS_FILE_INCLUDE="debug.json"
+```
+
+### Include + Exclude together
+
+When both are set:
+1. Files are first filtered by include 
+2. Matching files are then filtered by exclude
+
+```yaml
+providers:
+  file:
+    include: ["*.json"]
+    exclude: ["debug.json"]
+```
+
+- ✔ config.json → included
+- ✖ debug.json → excluded
+- ✖ config.yaml → not included
 
 ### Ignoring Files and Directories
 You can create a `.mokapiignore` file in your directory to tell

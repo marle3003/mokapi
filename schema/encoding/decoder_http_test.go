@@ -2,10 +2,11 @@ package encoding_test
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/media"
 	"mokapi/schema/encoding"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestFormUrlEncodeDecoder(t *testing.T) {

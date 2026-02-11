@@ -127,7 +127,7 @@ func TestStaticConfig(t *testing.T) {
 			args: []string{`--providers-file={"filename":"foo.yaml","directory":"foo", "skipPrefix":["_"]}`},
 			test: func(t *testing.T, cfg *static.Config) {
 				require.Equal(t, []string{"foo.yaml"}, cfg.Providers.File.Filenames)
-				require.Equal(t, []string{"foo"}, cfg.Providers.File.Directories)
+				require.Equal(t, []static.FileConfig{{Path: "foo"}}, cfg.Providers.File.Directories)
 				require.Equal(t, []string{"_"}, cfg.Providers.File.SkipPrefix)
 			},
 		},
@@ -595,7 +595,7 @@ providers:
 				c, cfg := newCmd([]string{"--cli-input", path})
 				err := c.Execute()
 				require.NoError(t, err)
-				require.Equal(t, []string{"foo"}, cfg.Providers.File.Directories)
+				require.Equal(t, []static.FileConfig{{Path: "foo"}}, cfg.Providers.File.Directories)
 			},
 		},
 		{
@@ -609,7 +609,7 @@ providers:
 				c, cfg := newCmd([]string{"--cli-input", path})
 				err := c.Execute()
 				require.NoError(t, err)
-				require.Equal(t, []string{"/foo", "/bar"}, cfg.Providers.File.Directories)
+				require.Equal(t, []static.FileConfig{{Path: "/foo"}, {Path: "/bar"}}, cfg.Providers.File.Directories)
 			},
 		},
 		{
@@ -619,7 +619,7 @@ providers:
 				c, cfg := newCmd([]string{"--cli-input", path})
 				err := c.Execute()
 				require.NoError(t, err)
-				require.Equal(t, []string{"foo"}, cfg.Providers.File.Directories)
+				require.Equal(t, []static.FileConfig{{Path: "foo"}}, cfg.Providers.File.Directories)
 			},
 		},
 	}

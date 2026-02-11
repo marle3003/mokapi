@@ -59,6 +59,7 @@ providers:
         skipPrefix:
             - _
         include: []
+        exclude: []
     git:
         urls: []
         pullInterval: ""
@@ -105,6 +106,7 @@ data-gen:
     skipPrefix:
         - _
     include: []
+    exclude: []
 git:
     urls: []
     pullInterval: ""

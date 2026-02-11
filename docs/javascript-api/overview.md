@@ -81,6 +81,45 @@ Mokapi provides its own APIs for common tasks:
   import { env } from "mokapi"
   ```
 
+### Improve Startup Performance
+
+Mokapi scans all configured directories at startup to discover API specifications and JavaScript files.
+Starting a JavaScript runtime is memory-intensive, especially in projects with many JavaScript files.
+
+To improve startup time and reduce memory usage, follow these best practices:
+
+#### Use a Single Entry File per Script
+
+Structure your JavaScript so that only entry files export a default function.
+
+```
+mocks/
+└─ api/
+   └─ users/
+      ├─ index.js        # executable script (default export)
+      ├─ handlers.js     # module
+      └─ utils.js        # module
+```
+
+Only index.js should export a default function. All other files should be imported as modules.
+
+#### Configure an Include Filter for JavaScript Files
+
+If a directory contains many JavaScript files (for example helpers or shared modules),
+configure an include filter so Mokapi only considers entry files:
+
+```yaml
+providers:
+  file:
+    directory:
+      - path: ./mocks
+        include:
+          - "**/index.js"
+```
+
+This prevents Mokapi from inspecting every JavaScript file and significantly reduces
+startup time and memory usage.
+
 ## Modules
 
 JavaScript files without a **default export** are treated as **modules**.
