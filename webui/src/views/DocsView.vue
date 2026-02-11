@@ -159,14 +159,14 @@ function isLast(breadcrumb: DocEntry[], index: number) {
     </aside>
     <div class="container doc-main">
       <!--Breadcrumbs should include only site pages, not logical categories in your IA. -->
-      <!-- <nav aria-label="breadcrumb" v-if="showNavigation">
+      <nav aria-label="breadcrumb" v-if="route.name === 'resources' && route.params.level2" class="mb-3">
         <ol class="breadcrumb" v-if="breadcrumb">
           <li class="breadcrumb-item text-truncate" v-for="(item, index) of breadcrumb" :class="isLast(breadcrumb, index) ? 'active' : ''">
             <router-link v-if="item.path && !isLast(breadcrumb, index)" :to="{ path: item.path }">{{ item.label }}</router-link>
             <template v-else>{{ item.label }}</template>
           </li>
         </ol>
-      </nav> -->
+      </nav>
       <div :style="showNavigation ? 'max-width:50em;' : ''">
         <div v-if="data?.content" v-html="data.content" class="content" @click="showImage($event.target)" ref="content"></div>
         <div v-else-if="component" class="content"><component :is="component" /></div>
@@ -216,7 +216,7 @@ main.resource-article {
 .doc-main {
   grid-area: doc;
   margin-left: 1rem;
-  padding-top: 2rem;
+  padding-top: 1rem;
   padding-bottom: 3rem;
 }
 .breadcrumb {
