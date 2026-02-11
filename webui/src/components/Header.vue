@@ -266,8 +266,8 @@ function isDashboardDisplayed() {
                       {{ root.label }}
                     </router-link>
                     <button type="button" class="btn btn-link d-md-none" :class="isActive(root) ? 'child-active' : ''" data-bs-toggle="collapse" :data-bs-target="'#'+getId(root)" :aria-expanded="isActive(root)" :aria-controls="getId(root)">
-                      <span class="bi bi-caret-up-fill"></span> 
-                      <span class="bi bi-caret-down-fill"></span> 
+                      <span class="bi bi-chevron-right"></span>
+                      <span class="bi bi-chevron-down"></span>
                     </button>
                   </div>
                   <section class="collapse d-md-none" :class="isActive(root) || isExpanded(root) ? 'show' : ''" :id="getId(root)" :aria-labelledby="'btn'+getId(root)">

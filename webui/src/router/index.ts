@@ -286,6 +286,24 @@ const router = createRouter({
       }
     },
     {
+      path: '/docs/resources/:pathMatch(.*)*',
+      redirect: to => {
+        if (typeof to.params.pathMatch === 'string') {
+          return `/resources/${to.params.pathMatch}`
+        }
+        return `/resources/${to.params.pathMatch!.join('/')}`
+      }
+    },
+    {
+      path: '/docs/guides/:pathMatch(.*)*',
+      redirect: to => {
+        if (typeof to.params.pathMatch === 'string') {
+          return `/docs/${to.params.pathMatch}`
+        }
+        return `/docs/${to.params.pathMatch!.join('/')}`
+      }
+    },
+    {
       path: '/docs',
       redirect: ({
         name: 'docs',

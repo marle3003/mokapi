@@ -39,12 +39,12 @@ nav.nav-tree {
 
 .nav-tree {
 
-  .chapter ul {
+  .chapter > section >  ul {
     position: relative;
     margin-left: 0.6rem;
   }
 
-  .chapter ul:before {
+  .chapter > section > ul:before {
     content: '';
     background-color: var(--color-background-mute);
     width: 1px;
@@ -61,7 +61,7 @@ nav.nav-tree {
     font-size: var(--bs-nav-link-font-size)
   }
 
-  .chapter .nav-item {
+  .chapter > section > ul > .nav-item {
     padding-left: 12px;
   }
 
@@ -102,11 +102,11 @@ nav.nav-tree {
     color: var(--nav-color-active);
   }
 
-  .nav button[aria-expanded=false] .bi-chevron-down {
+  button[aria-expanded=false] .bi-chevron-down {
     display: none;
   }
 
-  .nav button[aria-expanded=true] .bi-chevron-right {
+  button[aria-expanded=true] .bi-chevron-right {
     display: none;
   }
 
