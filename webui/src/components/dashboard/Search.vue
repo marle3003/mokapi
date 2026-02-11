@@ -123,7 +123,10 @@ onMounted(async () => {
   if (queryText.value !== '') {
     await search()
   } else {
-    document.getElementById('search-input')?.focus();
+    const btn = document.getElementById('search-input');
+    if (btn && getComputedStyle(btn).visibility !== 'hidden') {
+      btn.focus();
+    }
   }
 })
 

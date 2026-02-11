@@ -65,6 +65,7 @@ const shortcutHandler = (e: KeyboardEvent) => {
     }
     if (e.key === '/') {
         router.push({ name: getRouteName('search').value })
+        e.preventDefault();
     }
 }
 
@@ -230,7 +231,6 @@ useMeta('Dashboard | mokapi.io', description, '')
 
         <message :message="appInfo.error" v-if="!appInfo?.data && !appInfo?.isLoading && appInfo?.error"></message>
         <loading v-if="isInitLoading()"></loading>
-        <release-notes v-if="getMode() === 'live'" />
     </main>
 </template>
 

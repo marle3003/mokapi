@@ -24,7 +24,7 @@ const tabItems = computed(() => [
   { text: 'Jobs', isVisible: hasJobs.value, to: { name: getRouteName('jobs').value }  },
   { text: 'Configs', isVisible: true, to: { name: getRouteName('configs').value }  },
   { text: 'Faker', isVisible: getMode() === 'live', to: { name: getRouteName('tree').value }  },
-  { text: 'Search', isVisible: props.appInfo.search.enabled, to: { name: getRouteName('search').value }  },
+  { text: 'Search', isVisible: props.appInfo.search.enabled && getMode() !== 'demo', to: { name: getRouteName('search').value }  },
 ]);
 const route = useRoute();
 const router = useRouter();
