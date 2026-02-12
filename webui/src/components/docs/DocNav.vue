@@ -4,7 +4,6 @@ import { useRoute } from '@/router';
 import { computed } from 'vue';
 import NavDocItem from '../NavDocItem.vue';
 
-
 const props = defineProps<{
   config: DocConfig,
 }>()
@@ -22,38 +21,6 @@ const root = computed(() => {
 const breadcrumb = computed(() => {
   return getBreadcrumb(props.config, route)
 })
-
-function hasChildren(entry: DocEntry) {
-  if (entry.items) {
-    return entry.items.length > 0
-  }
-  return false
-}
-function showItem(entry: DocEntry) {
-  if ('hideInNavigation' in entry) {
-    return !entry.hideInNavigation
-  }
-  return true
-}
-function getId(entry: DocEntry) {
-  let s = entry.path
-  if (!s) {
-    s = entry.label
-  }
-  return s.replaceAll("/", "-").replaceAll(" ", "-")
-}
-function isActive(entry: DocEntry) {
-  if (!breadcrumb.value) {
-    return false
-  }
-  return breadcrumb.value.find(x => x === entry) !== undefined
-}
-function isExpanded(item: DocEntry | string) {
-  if (typeof item === 'string') {
-    return false
-  }
-  return item.expanded || false
-}
 </script>
 
 <template>
