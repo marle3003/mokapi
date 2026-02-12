@@ -1,6 +1,6 @@
 import Search from '@/components/dashboard/Search.vue'
 import { getRouteName } from '@/composables/dashboard'
-import { createRouter, createWebHistory, useRoute as baseRoute, type RouteLocationRaw, type RouteRecordRaw } from 'vue-router'
+import { createRouter, createWebHistory, useRoute as baseRoute, type RouteLocationRaw, type RouteRecordRaw, type MatcherLocation } from 'vue-router'
 
 let base = document.querySelector("base")?.href ?? '/'
 base = base.replace(document.location.origin, '')
@@ -55,7 +55,8 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
     path: mode === 'live' ? '/dashboard' : '/dashboard-demo',
     name: getRouteName('dashboard'),
     meta: {
-        mode: mode
+        mode: mode,
+        title: 'Dashboard'
     },
     component: dashboardView,
     children: [
@@ -67,30 +68,32 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
       {
         path: 'search',
         name: getRouteName('search'),
-        component: Search
+        component: Search,
+        meta: { title: 'Dashboard - Search'}
       },
       {
         path: 'http',
         name: getRouteName('http'),
         component: dashboardView,
+        meta: { title: 'Dashboard - HTTP' },
         children: [
           {
             path: 'services/:service',
             name: getRouteName('httpService'),
             component: dashboardView,
-            meta: {service: 'http'}
+            meta: { service: 'http', title: ({ params }: MatcherLocation) => `Dashboard - HTTP – ${params.service}` }
           },
           {
             path: 'requests/:id',
             name: getRouteName('httpRequest'),
             component: dashboardView,
-            meta: {service: 'http'}
+            meta: { service: 'http', title: ({ params }: MatcherLocation) => `Dashboard - HTTP Request – ${params.id}` }
           },
           {
             path: 'services/:service/:endpoint(.*)*',
             name: getRouteName('httpEndpoint'),
             component: dashboardView,
-            meta: {service: 'http'}
+            meta: { service: 'http', title: ({ params }: MatcherLocation) => `Dashboard - HTTP Endpoint – ${params.service}/${params.endpoint}` }
           }
         ]
       },
@@ -98,54 +101,58 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
         path: 'kafka',
         name: getRouteName('kafka'),
         component: dashboardView,
+        meta: { title: 'Dashboard - Kafka' },
         children: [
           {
             path: 'service/:service',
             name: getRouteName('kafkaService'),
             component: dashboardView,
-            meta: {service: 'kafka'}
+            meta: { service: 'kafka', title: ({ params }: MatcherLocation) => `Dashboard - Kafka – ${params.service}` }
           },
           {
             path: 'service/:service/servers/:server',
             name: getRouteName('kafkaServer'),
             component: dashboardView,
-            meta: {service: 'kafka'},
+            meta: { service: 'kafka', title: ({ params }: MatcherLocation) => `Dashboard - Kafka Server – ${params.server}` },
           },
           {
             path: 'service/:service/topics/:topic',
             name: getRouteName('kafkaTopic'),
             component: dashboardView,
-            meta: {service: 'kafka'},
+            meta: {
+              service: 'kafka',
+              title: ({ params }: MatcherLocation) => `Dashboard - Kafka Topic – ${params.topic}`
+            },
           },
           {
             path: 'service/:service/groups/:group',
             name: getRouteName('kafkaGroup'),
             component: dashboardView,
-            meta: {service: 'kafka'}
+            meta: { service: 'kafka', title: ({ params }: MatcherLocation) => `Dashboard - Kafka Group – ${params.group}` }
           },
           {
             path: 'service/:service/groups/:group/:member',
             name: getRouteName('kafkaGroupMember'),
             component: dashboardView,
-            meta: {service: 'kafka'}
+            meta: { service: 'kafka', title: ({ params }: MatcherLocation) => `Dashboard - Kafka Group Member – ${params.member}` }
           },
           {
             path: 'messages/:id',
             name: getRouteName('kafkaMessage'),
             component: dashboardView,
-            meta: {service: 'kafka'}
+            meta: { service: 'kafka', title: ({ params }: MatcherLocation) => `Dashboard - Kafka Message – ${params.id}` }
           },
           {
             path: 'service/:service/requests/:id',
             name: getRouteName('kafkaRequest'),
             component: dashboardView,
-            meta: {service: 'kafka'}
+            meta: { service: 'kafka', title: ({ params }: MatcherLocation) => `Dashboard - Kafka Request – ${params.id}` }
           },
           {
             path: 'service/:service/clients/:clientId',
             name: getRouteName('kafkaClient'),
             component: dashboardView,
-            meta: {service: 'kafka'}
+            meta: { service: 'kafka', title: ({ params }: MatcherLocation) => `Dashboard - Kafka Client – ${params.clientId}` }
           }
         ]
       },
@@ -153,18 +160,19 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
         path: 'ldap',
         name: getRouteName('ldap'),
         component: dashboardView,
+        meta: { title: 'Dashboard - LDAP' },
         children: [
           {
             path: 'service/:service',
             name: getRouteName('ldapService'),
             component: dashboardView,
-            meta: { service: 'ldap' },
+            meta: { service: 'ldap', title: ({ params }: MatcherLocation) => `Dashboard - LDAP Service – ${params.service}` },
           },
           {
             path: 'ldap/requests/:id',
             name: getRouteName('ldapRequest'),
             component: dashboardView,
-            meta: { service: 'ldap' }
+            meta: { service: 'ldap', title: ({ params }: MatcherLocation) => `Dashboard - LDAP Request – ${params.id}` }
           },
         ]
       },
@@ -172,24 +180,25 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
         path: 'mail',
         name: getRouteName('mail'),
         component: dashboardView,
+        meta: { title: 'Dashboard - Mail' },
         children: [
           {
             path: 'service/:service',
             name: getRouteName('mailService'),
             component: dashboardView,
-            meta: { service: 'mail' },
+            meta: { service: 'mail', title: ({ params }: MatcherLocation) => `Dashboard - Mail Service – ${params.service}` },
           },
           {
             path: 'service/:service/maiboxes/:name',
             name: getRouteName('smtpMailbox'),
             component: dashboardView,
-            meta: { service: 'mail' }
+            meta: { service: 'mail', title: ({ params }: MatcherLocation) => `Dashboard - Mailbox – ${params.name}` }
           },
           {
             path: 'mail/mails/:id',
             name: getRouteName('smtpMail'),
             component: dashboardView,
-            meta: { service: 'mail' }
+            meta: { service: 'mail', title: ({ params }: MatcherLocation) => `Dashboard - Mail – ${params.id}` }
           },
         ]
       },
@@ -197,21 +206,25 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
         path: 'jobs',
         name: getRouteName('jobs'),
         component: dashboardView,
+        meta: { title: 'Dashboard - Jobs' }
       },
       {
         path: 'configs',
         name: getRouteName('configs'),
         component: dashboardView,
+        meta: { title: 'Dashboard - Configs' }
       },
       {
         path: 'config/:id',
         name: getRouteName('config'),
         component: dashboardView,
+        meta: { title: ({ params }: MatcherLocation) => `Dashboard - Config – ${params.id}` }
       },
       {
         path: 'tree',
         name: getRouteName('tree'),
         component: dashboardView,
+        meta: { title: 'Dashboard - Tree' }
       },
     ]
   }
