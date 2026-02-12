@@ -585,6 +585,51 @@ func TestBodyFromRequest_FormUrlEncoded(t *testing.T) {
 				require.Equal(t, map[string]interface{}{"array_name": []interface{}{"value1", "value2"}}, result.Value)
 			},
 		},
+		{
+			name: "property not defined",
+			mt: openapitest.NewContent(
+				openapitest.WithSchema(
+					schematest.New("object",
+						schematest.WithProperty("name", schematest.New("string")),
+					),
+				),
+			),
+			body: "name2=value1",
+			test: func(t *testing.T, result *openapi.Body, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]any{"name2": []string{"value1"}}, result.Value)
+			},
+		},
+		{
+			name: "encoding application/json",
+			mt: openapitest.NewContent(
+				openapitest.WithSchema(
+					schematest.New(
+						"object",
+						schematest.WithProperty(
+							"payload",
+							schematest.New(
+								"object",
+								schematest.WithProperty("text", schematest.New("string")),
+							),
+						),
+					),
+				),
+				openapitest.WithEncoding(
+					"payload",
+					&openapi.Encoding{
+						ContentType: "application/json",
+					},
+				),
+			),
+			body: "payload={\"text\":\"Swagger is awesome\"}",
+			test: func(t *testing.T, result *openapi.Body, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]any{"payload": map[string]any{"text": "Swagger is awesome"}},
+					result.Value)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
