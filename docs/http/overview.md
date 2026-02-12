@@ -2,53 +2,113 @@
 title: How to mock HTTP APIs with Mokapi
 description: Mock any HTTP API with OpenAPI specification
 ---
+
 # Mocking HTTP APIs
 
-Mokapi makes it easy to mock HTTP APIs, enabling developers to test and debug their applications with minimal effort. Whether you need to validate request handling, simulate complex API responses, or troubleshoot edge cases, Mokapi provides a versatile and developer-friendly solution tailored for HTTP API testing.
+## Quick Start: Mock an API in seconds
 
-Designed to integrate seamlessly with your projects, Mokapi lets you create mock APIs using the OpenAPI Specification. It generates dynamic HTTP responses based on your API definitions, eliminating the need for a live server during development. This flexibility empowers developers to experiment, prototype, and troubleshoot more effectively.
+Run this single command to start mocking Swagger's PetStore API:
 
-With Mokapi, you can go beyond basic mocks by writing custom scripts to control the behavior of your APIs. This allows you to simulate a wide range of scenarios, such as conditional responses or stateful interactions. Mokapi also supports fetching API definitions directly from URLs or files, making it simple to get started with existing OpenAPI documents.
-
-By leveraging Mokapi, you can streamline your development workflow, reduce dependencies on external systems, and deliver robust HTTP API integrations with confidence.
-
-Learn how to create your first HTTP API mock with Mokapi and begin ensuring the reliability and robustness of your application.
-
-## Before you start
-
-You can run Mokapi in multiple ways based on your needs. Learn how to configure and launch Mokapi on your local machine by following the instructions [here](/docs/get-started/installation.md).
-
-
-## Launch Mokapi with Swagger's PetStore API
-
-
-To get started quickly, you can use Swagger's PetStore API specification hosted online:
-
-```bash tab=CLI
-mokapi --providers-http-url https://petstore3.swagger.io/api/v3/openapi.json
+```bash
+mokapi https://petstore3.swagger.io/api/v3/openapi.json
 ```
 
-That’s all you need! Open your browser and navigate to http://localhost/api/v3/pet/12 to see Mokapi's generated API response based on the PetStore specification.
+Open your browser and navigate to `http://localhost/api/v3/pet/12`. You'll see a generated response like:
 
-``` box=info
-If you encounter issues fetching the specification file from swagger.io, you might need to configure a proxy server using this command:  
---providers-http-proxy http://proxy.server.com:port
+```json
+{
+  "id": 12,
+  "name": "Bruiser",
+  "category": {
+    "id": 1,
+    "name": "Dogs"
+  },
+  "photoUrls": ["https://example.com/photo1.jpg"],
+  "status": "available"
+}
 ```
 
-## Customizing HTTP Responses with Mokapi
+That's it! Mokapi automatically generates realistic data based on your OpenAPI specification.
 
-For more dynamic control, Mokapi allows you to define custom HTTP responses using Mokapi Scripts. This lets you simulate various scenarios, adjust responses based on request parameters, or handle specific conditions.
+## What You'll Learn
 
-### Example: Custom Response for particular Pet ID
+By the end of this guide, you'll know how to:
+- Launch a mock HTTP API using an OpenAPI specification
+- Customize responses with Mokapi Scripts
+- Work with both OpenAPI 3.0 and Swagger 2.0 specifications
+- Simulate different API scenarios for testing
 
-Create a petstore.ts script to define a custom response for /pet/12:
+## Prerequisites
 
-```typescript tab=petstore.ts (TypeScript)
+Before you start, make sure you have:
+
+- Mokapi installed on your system ([installation guide](/docs/get-started/installation.md))
+- An OpenAPI 3.0 or Swagger 2.0 specification file (or URL)
+- For custom scripts, basic TypeScript or JavaScript knowledge
+
+## Basic Usage
+
+### Using a Remote Specification
+
+Point Mokapi to any publicly accessible OpenAPI specification:
+
+```bash
+mokapi https://petstore3.swagger.io/api/v3/openapi.json
+```
+```text box=tip
+Mokapi supports both simplified syntax (`mokapi &lt;url&gt;`) and
+verbose flags (`mokapi --providers-http-url &lt;url&gt;`). This guide uses the
+simplified syntax for clarity.
+```
+
+**What happens:**
+1. Mokapi downloads the specification
+2. Starts the HTTP server on hosts and ports defined in `servers` specification (default port: 80)
+3. Creates HTTP endpoints for all defined paths
+4. Generates responses matching your schema definitions
+5. Starts a dashboard server on `http://localhost` (default port: 8080)
+
+The dashboard shows all available endpoints, recent requests, and response statistics.
+The API server and dashboard run independently and can use different ports.
+
+**Try it:**
+```bash
+curl http://localhost/api/v3/pet/12
+```
+
+### Using a Local Specification File
+
+```bash
+mokapi /path/to/your/openapi.yaml
+```
+
+This works with both `.json` and `.yaml` files.
+
+### Behind a Proxy?
+
+If you need to fetch specifications through a proxy server:
+
+```bash
+mokapi --providers-http-proxy http://proxy.server.com:8080 -- https://petstore3.swagger.io/api/v3/openapi.json
+```
+
+## Customizing Responses with Mokapi Scripts
+
+To control API behavior, you can create custom scripts that define specific responses, simulate errors, or add conditional logic.
+
+### Example: Custom Response for a Specific Pet
+
+Let's return a specific response when requesting pet ID 12.
+
+**Step 1:** Create a script file `petstore.ts`
+
+```typescript tab=petstore.ts
 import { on } from 'mokapi'
 
 export default function() {
     on('http', (request, response) => {
-        if (request.path.petId === 12) {
+        // Check if the request is for pet ID 12
+        if (request.key === '/pet/{petId}' && request.path.petId === 12) {
             response.data = {
                 id: 12,
                 name: 'Garfield',
@@ -56,68 +116,245 @@ export default function() {
                     id: 3,
                     name: 'Cats'
                 },
-                photoUrls: []
+                photoUrls: [],
+                status: 'available'
             }
+        }
+        // Other pet IDs will receive auto-generated data
+    })
+}
+```
+
+**Step 2:** Start Mokapi with both the spec and your script
+
+```bash
+mokapi https://petstore3.swagger.io/api/v3/openapi.json /path/to/petstore.ts
+```
+
+**Step 3:** Test the result
+
+```bash
+# Request pet 12 - returns your custom "Garfield" response
+curl http://localhost/api/v3/pet/12
+
+# Request pet 99 - returns auto-generated random data
+curl http://localhost/api/v3/pet/99
+```
+
+**Before (without script):**
+```json
+{"id": 12, "name": "RandomName", "category": {"id": 1, "name": "Dogs"}, ...}
+```
+
+**After (with script):**
+```json
+{"id": 12, "name": "Garfield", "category": {"id": 3, "name": "Cats"}, ...}
+```
+
+
+### Testing Error Handling
+
+**Scenario:** Your application needs to handle `404 Not Found` responses gracefully.
+
+With Mokapi Scripts, you can customize responses for specific test scenarios.
+
+```javascript tab=script.js
+import { on } from 'mokapi'
+
+export default function() {
+    on('http', (request, response) => {
+        if (request.path.petId === 999) {
+            response.statusCode = 404
         }
     })
 }
 ```
 
-Start the mock server with the following command, referencing both the API specification and your custom script:
+To run the script, pass it to Mokapi when starting the server:
 
-```bash tab=CLI
-mokapi --providers-http-url https://petstore3.swagger.io/api/v3/openapi.json --providers-file-filename /path/to/petstore.ts
+```bash
+mokapi https://petstore3.swagger.io/api/v3/openapi.json ./script.js
 ```
 
-Now, when you visit [http://localhost/api/v3/pet/12](http://localhost/api/v3/pet/12), Mokapi will return your custom-defined response for Garfield. Requests for other pet IDs will still generate random data based on the API specification.
+You can test the behavior of your mocked API with the request:
 
-For further details on creating dynamic data, see [Test-Data](/docs/get-started/test-data.md).
+```bash
+curl http://localhost/api/v3/pet/999
+```
 
-## Swagger 2.0 support
+### Simulating Network Delays
 
-Mokapi supports the Swagger 2.0 specification, making it easy to work with older API definitions. When you provide a Swagger 2.0 file, Mokapi automatically converts it to OpenAPI 3.0, ensuring compatibility and consistent response generation. This seamless conversion allows you to benefit from OpenAPI 3.0 features while using your existing Swagger 2.0 specifications. Keep this in mind when referencing elements from a Swagger 2.0 file, as the structure and syntax might differ slightly in OpenAPI 3.0.
+**Scenario:** Test how your app behaves with slow API responses.
 
-### Example: Referencing a Schema from Swagger 2.0
+Use Mokapi Scripts to add latency:
 
-Here is a simple Swagger 2.0 specification file:
+```javascript tab=script.js
+import { on, sleep } from 'mokapi'
 
+export default function() {
+    on('http', (request, response) => {
+        if (request.path.petId === 999) {
+            // delay the response by 5 seconds
+            sleep('5s');
+        }
+    })
+}
+```
+
+### Testing Different Data States
+
+**Scenario:** Verify your UI displays different pet statuses correctly.
+
+Mokapi generates varied data on each request - refresh to see different values for enums and optional fields.
+Set specific responses for petId 1 and 2 and for all others Mokapi will respond with random data
+
+```javascript tab=script.js
+import { on, sleep } from 'mokapi'
+
+export default function() {
+    on('http', (request, response) => {
+        switch (request.path.petId) {
+            case 1: // Note: path parameter petId is defined as integer in spec
+                response.data = {
+                    id: 1,
+                    name: 'Max',
+                    photoUrls: []
+                }
+                return
+            case 2:
+                response.data = {
+                    id: 2,
+                    name: 'Bella',
+                    photoUrls: []
+                }
+                return
+        }
+    })
+}
+```
+
+### Example: Stateful Interactions
+
+Simulate creating and retrieving a pet:
+
+```typescript
+import { on } from 'mokapi'
+
+let createdPets = new Map()
+
+export default function() {
+    on('http', (request, response) => {
+        // Handle POST /pet (create)
+        if (request.key === '/pet/{petId}' && request.method === 'POST') {
+            const newPet = request.body
+            createdPets.set(newPet.id, newPet)
+            response.statusCode = 201
+            response.data = newPet
+        }
+        
+        // Handle GET /pet/{petId} (retrieve)
+        if (request.key === '/pet/{petId}' && request.method === 'GET' && createdPets.has(request.path.petId)) {
+            response.data = createdPets.get(request.path.petId)
+        }
+    })
+}
+```
+
+## Understanding Request Matching
+
+When writing Mokapi Scripts, you'll often need to identify which API endpoint was called.
+
+### Using `request.key`
+
+The `request.key` property contains the path pattern from your OpenAPI specification:
+```typescript
+// OpenAPI spec defines: /pet/{petId}
+// User requests: http://localhost/api/v3/pet/12
+
+on('http', (request, response) => {
+    console.log(request.key)        // "/pet/{petId}"
+    console.log(request.url.path)       // "/api/v3/pet/12"
+    console.log(request.operationId) // "getPetById" defined in OpenAPI spec
+})
+```
+
+**Best Practice:** Always check `request.key` to match the correct endpoint:
+```typescript
+// ✅ Reliable - matches the OpenAPI path pattern
+if (request.key === '/pet/{petId}') {
+    // Your logic here
+}
+
+// ❌ Fragile - breaks if base path changes
+if (request.url.path.startsWith('/api/v3/pet/')) {
+    // Your logic here
+}
+```
+
+## Working with Swagger 2.0
+
+Mokapi fully supports Swagger 2.0 specifications. When you provide a Swagger 2.0 file,
+Mokapi automatically converts it to OpenAPI 3.0 internally.
+
+### Schema Reference Translation
+
+**Swagger 2.0:**
 ```yaml
-swagger: '2.0'
-info:
-  title: A Swagger 2.0 specification file
-  version: 1.0.0
-paths:
-  /pets:
-    get:
-      responses: 
-        '200':
-          description: A list of pets.
-          schema:
-            $ref: '#/definitions/Pet'
-definitions: 
+definitions:
   Pet:
     type: object
 ```
 
-In OpenAPI 3.0, you can reference the Pet schema from the Swagger 2.0 specification file as shown below:
-
+**OpenAPI 3.0 (how Mokapi sees it):**
 ```yaml
-openapi: '3.0'
-info:
-  title: A OpenAPI 3.0 specification file
-  version: 1.0.0
-paths:
-  /pets:
-    get:
-      responses: 
-        '200':
-          description: A list of pets.
-          content:
-              application/json:
-                schema:
-                  $ref: 'path/to/swagger.yaml#/components/schemas/Pet'
+components:
+  schemas:
+    Pet:
+      type: object
 ```
 
-Swagger 2.0 uses #/definitions for internal schemas, while OpenAPI 3.0 utilizes #/components/schemas. However, Mokapi automatically resolves these differences for you.
+Mokapi handles this translation automatically - you don't need to modify your specs.
 
-With Mokapi's support for Swagger 2.0, you can modernize your API testing and mocking processes without abandoning your existing specifications. Whether you're transitioning to OpenAPI 3.0 or maintaining legacy systems, Mokapi makes the process seamless and efficient.
+### What This Means for You
+
+**✅ Your Swagger 2.0 specs work immediately** - no conversion needed  
+**✅ Reference resolution handled automatically** - Mokapi translates between formats  
+**✅ Schema paths differ** - Mokapi transforms the path
+
+## Best Practices
+
+### ✅ Start with Auto-Generated Data
+
+Let Mokapi handle the basics. Adjust only data for you specific need.
+
+```javascript
+import { on, sleep } from 'mokapi'
+
+export default function() {
+    on('http', (request, response) => {
+        if (request.key === '/pet/{petId}' && request.path.petId === 10) {
+            // Instead of replacing entire responses, you can modify specific fields:
+            response.data.name = 'Garfield'
+        }
+    })
+}
+```
+
+### ✅ Version Your Specifications
+
+Keep your OpenAPI specs and Mokapi Scripts in version control alongside your code.
+
+### ✅ Use Scripts for Edge Cases
+
+Focus your scripts on:
+- Error scenarios (404, 500, validation errors)
+- Authentication/authorization testing
+- Specific business logic you want to test
+- Stateful workflows
+
+## Next Steps
+
+**Ready for more advanced features?**
+
+- [Test Data Generation](/docs/get-started/test-data.md) - Create realistic, varied test data
+- [Mokapi Scripts Guide](/docs/javascript-api/overview) - Full scripting reference and examples
