@@ -209,8 +209,8 @@ main.resource-article {
   position: sticky;
   top: var(--header-height);
   width: 100%;
-  height: calc(100vh - var(--header-height));
-  padding-top: 2rem;
+  height: calc(100vh - var(--header-height) - 2rem);
+  padding-block: 2rem;
   overflow-y: auto;
 }
 .doc-main {
