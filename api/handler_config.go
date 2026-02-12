@@ -69,7 +69,7 @@ func (h *handler) getConfigData(w http.ResponseWriter, r *http.Request, key stri
 	}
 
 	token := r.Header.Get("If-None-Match")
-	checksum := fmt.Sprintf("%x", c.Info.Checksum)
+	checksum := fmt.Sprintf(`"%x"`, c.Info.Checksum)
 	if token != "" && token == checksum {
 		w.WriteHeader(http.StatusNotModified)
 		return
