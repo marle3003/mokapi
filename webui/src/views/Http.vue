@@ -78,11 +78,11 @@ function getConsoleContent() {
               without waiting for real backends.
             </p>
             <p class="d-none d-md-block">
-              <router-link :to="{ path: '/docs/guides/http' }">
-                <button type="button" class="btn btn-outline-primary">Get Started</button>
+              <router-link :to="{ path: '/resources/tutorials/get-started-with-rest-api' }" class="btn btn-primary me-2">
+                Get Started
               </router-link>
-              <router-link :to="{ path: '/docs/resources/tutorials/get-started-with-rest-api' }">
-                <button type="button" class="btn btn-outline-primary">Learn More</button>
+              <router-link :to="{ path: '/docs/http/overview' }" class="btn btn-primary me-2">
+                Documentation
               </router-link>
             </p>
           </div>
@@ -91,11 +91,11 @@ function getConsoleContent() {
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
-                <router-link :to="{ path: '/docs/guides/http' }">
-                  <button type="button" class="btn btn-outline-primary">Get Started</button>
+                <router-link :to="{ path: '/resources/tutorials/get-started-with-rest-api' }" class="btn btn-primary me-2">
+                  Get Started
                 </router-link>
-                <router-link :to="{ path: '/docs/resources' }">
-                  <button type="button" class="btn btn-outline-primary">Learn More</button>
+                <router-link :to="{ path: '/docs/http/overview' }" class="btn btn-primary me-2">
+                  Documentation
                 </router-link>
               </p>
           </div>
@@ -152,7 +152,7 @@ function getConsoleContent() {
                   Configuration as Code
                 </h3>
                 <p class="card-text pb-4">Define HTTP mocks with OpenAPI for consistency, version control, and seamless automation.</p>
-                <a href="/docs/configuration" class="card-link position-absolute" style="bottom:15px;">Overview</a>
+                <a href="/docs/configuration/overview" class="card-link position-absolute" style="bottom:15px;">Overview</a>
               </div>
             </div>
           </div>
@@ -164,7 +164,7 @@ function getConsoleContent() {
                   <span class="align-middle d-inline-block">Test Without Dependencies</span>
                 </h3>
                 <p class="card-text pb-4">Run faster, more reliable tests by simulating external dependencies in CI/CD pipelines.</p>
-                <a href="/docs/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="card-link position-absolute" style="bottom:15px;">Run Mokapi in GitHub Actions</a>
+                <a href="/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="card-link position-absolute" style="bottom:15px;">Run Mokapi in GitHub Actions</a>
               </div>
             </div>
           </div>
@@ -176,7 +176,7 @@ function getConsoleContent() {
                   Realistic Test Data
                 </h3>
                 <p class="card-text pb-4">Intercept HTTP requests with Mokapi Scripts to simulate delays, failures, and edge cases.</p>
-                <a href="/docs/guides/get-started/test-data" class="card-link position-absolute" style="bottom:15px;">Start Mocking with Real Data</a>
+                <a href="/docs/get-started/test-data" class="card-link position-absolute" style="bottom:15px;">Start Mocking with Real Data</a>
               </div>
             </div>
           </div>
@@ -188,7 +188,7 @@ function getConsoleContent() {
                   Debugging &amp; Monitoring
                 </h3>
                 <p class="card-text pb-4">Inspect every request and response in the Mokapi Dashboard, validate against specs, and generate mock data automatically.</p>
-                <a href="/docs/guides/get-started/dashboard" class="card-link position-absolute" style="bottom:15px;">Explore Mokapi Dashboard</a>
+                <a href="/docs/get-started/dashboard" class="card-link position-absolute" style="bottom:15px;">Explore Mokapi Dashboard</a>
               </div>
             </div>
           </div>
@@ -208,7 +208,7 @@ function getConsoleContent() {
             <div class="text-lg-start text-center">
               <h3>Customize API Responses</h3>
               <p>With Mokapi Scripts, you can quickly customize API responses to match your exact test conditions. Use event handlers to simulate logic, errors, or edge cases without implementing server logic.</p>
-              <router-link :to="{ path: '/docs/javascript-api' }">
+              <router-link :to="{ path: '/docs/javascript-api/overview' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Get Started with Mokapi Scripts</button>
               </router-link>
             </div>
@@ -226,7 +226,7 @@ function getConsoleContent() {
             <div class="text-lg-start text-center">
               <h3>Monitor and Analyze API Requests</h3>
               <p>Mokapi’s interactive dashboard provides real-time insights into every request and response. With visual tracking, detailed logs, and performance analytics, you can quickly understand what's going on with your mocks and optimize your testing process.</p>
-              <router-link :to="{ path: '/docs/guides/get-started/dashboard' }">
+              <router-link :to="{ path: '/docs/get-started/dashboard' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Explore the Dashboard</button>
               </router-link>
             </div>

@@ -65,6 +65,7 @@ const shortcutHandler = (e: KeyboardEvent) => {
     }
     if (e.key === '/') {
         router.push({ name: getRouteName('search').value })
+        e.preventDefault();
     }
 }
 
@@ -109,8 +110,8 @@ useMeta('Dashboard | mokapi.io', description, '')
         </div>
     </div>
     <main>
-        <div class="dashboard">
-            <h1 v-if="getMode() === 'live'" class="visually-hidden">Dashboard</h1>
+        <section class="dashboard" aria-labelledby="dashboard-title">
+            <h1 id="dashboard-title" v-if="getMode() === 'live'" class="visually-hidden">Dashboard</h1>
             <div v-if="getMode() === 'demo'" class="header-demo">
                 <h1 style="font-size: 2rem; margin-bottom: 10px;">Demo Dashboard</h1>
                 <p>
@@ -226,11 +227,10 @@ useMeta('Dashboard | mokapi.io', description, '')
                 <ldap-service v-if="$route.meta.service === 'ldap'" />
                 <config v-if="$route.name === getRouteName('config').value"></config>
             </div>
-        </div>
 
-        <message :message="appInfo.error" v-if="!appInfo?.data && !appInfo?.isLoading && appInfo?.error"></message>
-        <loading v-if="isInitLoading()"></loading>
-        <release-notes v-if="getMode() === 'live'" />
+            <message :message="appInfo.error" v-if="!appInfo?.data && !appInfo?.isLoading && appInfo?.error"></message>
+            <loading v-if="isInitLoading()"></loading>
+        </section>
     </main>
 </template>
 

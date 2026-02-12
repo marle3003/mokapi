@@ -153,5 +153,4 @@ guide you through the process in more detail.
 ## Next Steps
 
 - [Using Mokapi's Dashboard](dashboard.md)
-- [Explore Mokapi Scripts](../../javascript-api/overview.md)
-- [Learn More About Declarative Test Data](../../references/declarative-data.md)
+- [Explore Mokapi Scripts](../javascript-api/overview.md)

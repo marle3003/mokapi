@@ -11,11 +11,13 @@ test('Visit Petstore Demo', async ({ page }) => {
     await page.getByText('Swagger Petstore').click();
 
     await test.step('Verify service info', async () => {
-        await expect(page.getByLabel('Name')).toHaveText('Swagger Petstore');
-        await expect(page.getByLabel('Version')).toHaveText('1.0.0');
-        await expect(page.getByLabel('Version')).toHaveText('1.0.0');
-        await expect(page.getByLabel('Contact').getByRole('link')).toHaveAttribute('href', 'mailto:apiteam@swagger.io');
-        await expect(page.getByLabel('Type of API')).toHaveText('HTTP');
+
+        const info = page.getByRole('region', { name: 'Info' });
+        await expect(info.getByLabel('Name')).toHaveText('Swagger Petstore');
+        await expect(info.getByLabel('Version')).toHaveText('1.0.0');
+        await expect(info.getByLabel('Version')).toHaveText('1.0.0');
+        await expect(info.getByLabel('Contact').getByRole('link')).toHaveAttribute('href', 'mailto:apiteam@swagger.io');
+        await expect(info.getByLabel('Type of API')).toHaveText('HTTP');
 
         const description = page.getByLabel('Description');
         await expect(description).toContainText('This is a sample server Petstore server.');

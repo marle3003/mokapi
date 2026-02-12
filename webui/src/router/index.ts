@@ -243,14 +243,27 @@ const router = createRouter({
     if (savedPosition) {
       return savedPosition
     }
+
     if (to.hash) {
-      await waitForElement(to.hash)
-      // if anchor is set go to element
-      return {
-        el: to.hash,
-        behavior: 'smooth' as const,
+      if (await waitForElement(to.hash) ) {
+        // if anchor is set go to element
+        return {
+          el: to.hash,
+          behavior: 'smooth' as const,
+        }
       }
     }
+
+    const sameRoute =
+      to.path === from.path &&
+      JSON.stringify(to.query) === JSON.stringify(from.query) &&
+      JSON.stringify(to.params) === JSON.stringify(from.params)
+
+    if (sameRoute) {
+      // only hash changed → keep scroll position
+      return false
+    }
+
     // always scroll to top
     return { top: 0 }
   },
@@ -280,22 +293,50 @@ const router = createRouter({
       path: '/docs/examples/:pathMatch(.*)*',
       redirect: to => {
         if (typeof to.params.pathMatch === 'string') {
-          return `/docs/resources/${to.params.pathMatch}`
+          return `/resources/${to.params.pathMatch}`
         }
-        return `/docs/resources/${to.params.pathMatch!.join('/')}`
+        return `/resources/${to.params.pathMatch!.join('/')}`
+      }
+    },
+    {
+      path: '/docs/resources/:pathMatch(.*)*',
+      redirect: to => {
+        if (typeof to.params.pathMatch === 'string') {
+          return `/resources/${to.params.pathMatch}`
+        }
+        return `/resources/${to.params.pathMatch!.join('/')}`
+      }
+    },
+    {
+      path: '/docs/guides/:pathMatch(.*)*',
+      redirect: to => {
+        if (typeof to.params.pathMatch === 'string') {
+          return `/docs/${to.params.pathMatch}`
+        }
+        return `/docs/${to.params.pathMatch!.join('/')}`
       }
     },
     {
       path: '/docs',
       redirect: ({
         name: 'docs',
-        params: {level1: 'guides', level2: 'welcome'}
+        params: { level1: 'welcome' }
       }),
-      name: 'docsStart',
+       children: [
+        {
+          path: ':level1/:level2?/:level3?/:level4?',
+          name: 'docs',
+          component: () => import('@/views/DocsView.vue')
+        },
+      ]
+    },
+    {
+      path: '/resources',
+      component: () => import('@/views/DocsView.vue'),
       children: [
         {
-          path: '/docs/:level1/:level2?/:level3?/:level4?',
-          name: 'docs',
+          path: ':level1/:level2?/:level3?/:level4?',
+          name: 'resources',
           component: () => import('@/views/DocsView.vue')
         },
       ]
@@ -341,17 +382,21 @@ export function useRouter() {
   return router
 }
 
-function waitForElement(selector: string, timeout = 2000) {
-  return new Promise((resolve) => {
+function waitForElement(selector: string, timeout = 2000): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
     const start = Date.now()
 
     const check = () => {
-      if (document.querySelector(selector)) {
-        resolve(true)
-      } else if (Date.now() - start > timeout) {
+      try {
+        if (document.querySelector(selector)) {
+          resolve(true)
+        } else if (Date.now() - start > timeout) {
+          resolve(false)
+        } else {
+          requestAnimationFrame(check)
+        }
+      } catch(e) {
         resolve(false)
-      } else {
-        requestAnimationFrame(check)
       }
     }
 

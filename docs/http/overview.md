@@ -16,7 +16,7 @@ Learn how to create your first HTTP API mock with Mokapi and begin ensuring the 
 
 ## Before you start
 
-You can run Mokapi in multiple ways based on your needs. Learn how to configure and launch Mokapi on your local machine by following the instructions [here](/docs/guides/get-started/installation.md).
+You can run Mokapi in multiple ways based on your needs. Learn how to configure and launch Mokapi on your local machine by following the instructions [here](/docs/get-started/installation.md).
 
 
 ## Launch Mokapi with Swagger's PetStore API
@@ -71,7 +71,7 @@ mokapi --providers-http-url https://petstore3.swagger.io/api/v3/openapi.json --p
 
 Now, when you visit [http://localhost/api/v3/pet/12](http://localhost/api/v3/pet/12), Mokapi will return your custom-defined response for Garfield. Requests for other pet IDs will still generate random data based on the API specification.
 
-For further details on creating dynamic data, see [Test-Data](/docs/guides/get-started/test-data.md).
+For further details on creating dynamic data, see [Test-Data](/docs/get-started/test-data.md).
 
 ## Swagger 2.0 support
 

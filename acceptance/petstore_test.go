@@ -24,7 +24,7 @@ type PetStoreSuite struct{ BaseSuite }
 func (suite *PetStoreSuite) SetupSuite() {
 	cfg := static.NewConfig()
 	cfg.Api.Port = try.GetFreePort()
-	cfg.Providers.File.Directories = []string{"./petstore"}
+	cfg.Providers.File.Directories = []static.FileConfig{{Path: "./petstore"}}
 	cfg.Api.Search.Enabled = true
 	suite.initCmd(cfg)
 }

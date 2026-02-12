@@ -69,7 +69,45 @@
 .tab-pane {
     padding: 0.8rem;
     padding-top: 1.6rem;
- }
+}
+
+.tabs {
+    border: none;
+    padding: 16px 0;
+
+    .nav-tabs {
+        border: none;
+    }
+
+    > .nav-tabs button {
+        border: none;
+        background-color: transparent;
+        padding: 0 8px 4px;
+    }
+
+    > .nav-tabs button[role="tab"].active, > .nav-tabs button[role="tab"]:hover {
+        border-color: var(--code-tabs-border-color-active);
+        border-bottom-width: 3px;
+        border-bottom-style: solid;
+        margin-bottom: -3px;
+    }
+
+    > .nav-tabs .tabs-border {
+        width: 100%;
+        height: 2px;
+        background-color: var(--tabs-border-color);
+        margin: 0 auto;
+    }
+
+    .tab-content {
+        margin-top: 20px;
+    }
+
+    .tab-pane {
+        padding: 0;
+    }
+}
+
 .code {
     background-color: var(--code-background);
     color: var(--code-color);
@@ -123,6 +161,6 @@
 .tabs-border {
     width: 100%;
     height: 3px;
-    background-color: var(--code-tab-border-color);
+    background-color: var(--code-tabs-border-color);
     margin: 0 auto;
 }

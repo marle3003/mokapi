@@ -25,7 +25,7 @@ LDAP server and implement group-based authentication in a Node.js backend.
 Before starting, ensure you have the following:
 
 - Node.js installed
-- Mokapi installed [Installation Guide](/docs/guides/get-started/installation.md)
+- Mokapi installed [Installation Guide](/docs/get-started/installation.md)
 - Basic knowledge of LDAP authentication
 
 ## 1. Create an LDAP Mock Configuration

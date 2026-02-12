@@ -112,7 +112,8 @@ export const configs = {
                 data: 'http://localhost:8090/api/services/http/Swagger%20Petstore',
             }
         ],
-        filename: 'petstore.json'
+        filename: 'petstore.json',
+        tags: ['Tag1', 'Tag2'],
     },
     'b6fea8ac-56c7-4e73-a9c0-4487640bdca8': {
         id: 'b6fea8ac-56c7-4e73-a9c0-4487640bdca8',

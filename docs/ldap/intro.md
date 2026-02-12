@@ -4,13 +4,13 @@ description: Learn how to mock and test LDAP authentication using Mokapi. Simula
 cards:
   items:
     - title: Run your first mocked LDAP
-      href: /docs/guides/ldap/quick-start
+      href: /docs/ldap/quick-start
       description: Learn how to quickly set up and run your first LDAP mock and use ldapsearch tool
     - title: Mock LDAP Authentication in Node.js
-      href: /docs/resources/tutorials/mock-ldap-authentication-in-node
+      href: /resources/tutorials/mock-ldap-authentication-in-node
       description: Learn how to mock LDAP authentication using Mokapi and a Node.js backend. Step-by-step guide with code examples for testing LDAP login without a real server!
     - title: Mocking LDAP using Group Permission
-      href: /docs/resources/tutorials/mock-ldap-group-permission-in-node
+      href: /resources/tutorials/mock-ldap-group-permission-in-node
       description: Learn how to mock LDAP authentication and group permission using a Node.js backend.
 ---
 

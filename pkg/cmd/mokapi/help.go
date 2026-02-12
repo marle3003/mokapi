@@ -2,7 +2,6 @@ package mokapi
 
 import (
 	"fmt"
-	"mokapi/config/decoders"
 	"mokapi/config/static"
 	"reflect"
 	"strings"
@@ -14,7 +13,7 @@ import (
 func writeSkeleton(section string) {
 	var skeleton interface{}
 	if section != "" {
-		paths := decoders.ParsePath(section)
+		paths := parsePath(section)
 		current := reflect.ValueOf(static.NewConfig())
 		for _, path := range paths {
 			if current.Kind() == reflect.Pointer {
@@ -40,4 +39,21 @@ func writeSkeleton(section string) {
 		return
 	}
 	fmt.Print(string(b))
+}
+
+func parsePath(key string) []string {
+	var paths []string
+	split := strings.FieldsFunc(key, func(r rune) bool {
+		return r == '.' || r == '-'
+	})
+
+	for _, v := range split {
+		if strings.HasSuffix(v, "]") {
+			index := strings.Index(v, "[")
+			paths = append(paths, v[:index], v[index:])
+		} else {
+			paths = append(paths, v)
+		}
+	}
+	return paths
 }

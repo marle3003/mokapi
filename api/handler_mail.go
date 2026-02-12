@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"mime"
 	"mokapi/media"
 	"mokapi/providers/mail"
 	"mokapi/runtime"
@@ -14,6 +15,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type mailSummary struct {
@@ -420,7 +423,7 @@ func toMessage(m *smtp.Message) *messageData {
 		MessageId:               m.MessageId,
 		InReplyTo:               m.InReplyTo,
 		Date:                    m.Date,
-		Subject:                 m.Subject,
+		Subject:                 decodeSmtpValue(m.Subject),
 		ContentType:             m.ContentType,
 		ContentTransferEncoding: m.ContentTransferEncoding,
 		Body:                    m.Body,
@@ -453,9 +456,19 @@ func toAddress(list []smtp.Address) []address {
 	var r []address
 	for _, a := range list {
 		r = append(r, address{
-			Name:    a.Name,
+			Name:    decodeSmtpValue(a.Name),
 			Address: a.Address,
 		})
+	}
+	return r
+}
+
+func decodeSmtpValue(s string) string {
+	dec := new(mime.WordDecoder)
+	r, err := dec.DecodeHeader(s)
+	if err != nil {
+		log.Errorf("failed to decode SMTP header: %v", err)
+		return s
 	}
 	return r
 }

@@ -1,223 +1,634 @@
 {
-  "Guides": {
-    "items": {
-      "Welcome": "guides/get-started/welcome.md",
-      "Get Started": {
-        "items": {
-          "Installation": "guides/get-started/installation.md",
-          "Running": "guides/get-started/running.md",
-          "Test Data": "guides/get-started/test-data.md",
-          "Dashboard": "guides/get-started/dashboard.md"
-        }
+  "Docs": {
+    "type": "root",
+    "items": [
+      {
+        "label": "Welcome",
+        "source": "get-started/welcome.md",
+        "path": "/docs/welcome"
       },
-      "HTTP": {
-        "index": "guides/http/overview.md",
-        "items": {
-          "Quick Start": "guides/http/quick-start.md",
-          "HTTPS & TLS": "guides/http/tls.md",
-          "Dashboard": "guides/http/dashboard.md"
-        }
-      },
-      "Kafka": {
-        "index": "guides/kafka/overview.md",
-        "items": {
-          "Quick Start": "guides/kafka/quick-start.md",
-          "Config": "guides/kafka/config.md"
-        }
-      },
-      "LDAP": {
-        "index": "guides/ldap/intro.md",
-        "items": {
-          "Quick Start": "guides/ldap/quick-start.md"
-        }
-      },
-      "Mail": {
-        "index": "guides/mail/overview.md",
-        "items": {
-          "Quick Start": "guides/mail/quick-start.md",
-          "Client": "guides/mail/client.md",
-          "Rules": "guides/mail/rules.md"
-        }
-      }
-    }
-  },
-  "Configuration": {
-    "items": {
-      "Introduction": "configuration/introduction.md",
-      "Patching": "configuration/patching.md",
-      "Static": {
-        "expanded": true,
-        "items": {
-          "CLI Usage": "configuration/static/cli.md"
-        }
-      },
-      "Dynamic": {
-        "expanded": true,
-        "items": {
-          "Overview": "configuration/dynamic/overview.md",
-          "File": "configuration/dynamic/file.md",
-          "HTTP": "configuration/dynamic/http.md",
-          "GIT": "configuration/dynamic/git.md",
-          "NPM": "configuration/dynamic/npm.md"
-        }
-      },
-      "Reference": "configuration/reference.md"
-    }
-  },
-  "JavaScript API": {
-    "items": {
-      "Overview": "javascript-api/overview.md",
-      "Modules": "javascript-api/modules.md",
-      "globals": {
-        "items": {
-          "open": "javascript-api/open.md"
-        }
-      },
-      "mokapi": {
-        "items": {
-          "cron": "javascript-api/mokapi/cron.md",
-          "date": "javascript-api/mokapi/date.md",
-          "env": "javascript-api/mokapi/env.md",
-          "every": "javascript-api/mokapi/every.md",
-          "on": "javascript-api/mokapi/on.md",
-          "sleep": "javascript-api/mokapi/sleep.md",
-          "marshal": "javascript-api/mokapi/marshal.md",
-          "EventHandler": {
-            "index": "javascript-api/mokapi/eventhandler/eventhandler.md",
-            "items": {
-              "EventArgs": "javascript-api/mokapi/eventhandler/eventargs.md",
-              "HttpEventHandler": "javascript-api/mokapi/eventhandler/httpeventhandler.md",
-              "HttpRequest": "javascript-api/mokapi/eventhandler/httprequest.md",
-              "HttpResponse": "javascript-api/mokapi/eventhandler/httpresponse.md",
-              "KafkaEventHandler": "javascript-api/mokapi/eventhandler/kafkaeventhandler.md",
-              "KafkaEventMessage": "javascript-api/mokapi/eventhandler/kafkaeventmessage.md",
-              "ScheduledEventArgs": "javascript-api/mokapi/eventhandler/scheduledeventargs.md"
-            }
+      {
+        "label": "Get Started",
+        "type": "headline",
+        "items": [
+          {
+            "label": "Installation",
+            "source": "get-started/installation.md",
+            "path": "/docs/get-started/installation"
+          },
+          {
+            "label": "Running",
+            "source": "get-started/running.md",
+            "path": "/docs/get-started/running"
+          },
+          {
+            "label": "Test Data",
+            "source": "get-started/test-data.md",
+            "path": "/docs/get-started/test-data"
+          },
+          {
+            "label": "Dashboard",
+            "source":  "get-started/dashboard.md",
+            "path":  "/docs/get-started/dashboard"
           }
-        }
+        ]
       },
-      "mokapi/faker": {
-        "items": {
-          "fake": "javascript-api/mokapi-faker/fake.md"
-        }
+      {
+        "label": "Protocol",
+        "type": "headline",
+        "items": [
+          {
+            "label": "HTTP",
+            "items": [
+              {
+                "label": "Overview",
+                "source": "http/overview.md",
+                "path": "/docs/http/overview"
+              },
+              {
+                "label": "Quick Start",
+                "source": "http/quick-start.md",
+                "path": "/docs/http/quick-start"
+              },
+              {
+                "label": "HTTPS & TLS",
+                "source": "http/tls.md",
+                "path": "/docs/http/tls"
+              },
+              {
+                "label": "Dashboard",
+                "source": "http/dashboard.md",
+                "path": "/docs/http/dashboard"
+              }
+            ]
+          },
+          {
+            "label": "Kafka",
+            "items": [
+              {
+                "label": "Overview",
+                "source": "kafka/overview.md",
+                "path": "/docs/kafka/overview"
+              },
+              {
+                "label": "Quick Start",
+                "source": "kafka/quick-start.md",
+                "path": "/docs/kafka/quick-start"
+              },
+              {
+                "label": "Config",
+                "source": "kafka/config.md",
+                "path": "/docs/kafka/config"
+              }
+            ]
+          },
+          {
+            "label": "LDAP",
+            "items": [
+              {
+                "label": "Overview",
+                "source": "ldap/intro.md",
+                "path": "/docs/ldap/overview"
+              },
+              {
+                "label": "Quick Start",
+                "source": "ldap/quick-start.md",
+                "path": "/docs/ldap/quick-start"
+              }
+            ]
+          },
+          {
+            "label": "Mail",
+            "items": [
+              {
+                "label": "Overview",
+                "source":  "mail/overview.md",
+                "path":  "/docs/mail/overview"
+              },
+              {
+                "label": "Clients",
+                "source":  "mail/client.md",
+                "path":  "/docs/mail/client"
+              },
+              {
+                "label": "Rules",
+                "source":  "mail/rules.md",
+                "path":  "/docs/mail/rules"
+              }
+            ]
+          }
+        ]
       },
-      "mokapi/http": {
-        "items": {
-          "get": "javascript-api/mokapi-http/get.md",
-          "post": "javascript-api/mokapi-http/post.md",
-          "put": "javascript-api/mokapi-http/put.md",
-          "head": "javascript-api/mokapi-http/head.md",
-          "delete": "javascript-api/mokapi-http/delete.md",
-          "options": "javascript-api/mokapi-http/options.md",
-          "patch": "javascript-api/mokapi-http/patch.md",
-          "fetch": "javascript-api/mokapi-http/fetch.md",
-          "HttpResponse": "javascript-api/mokapi-http/httpresponse.md",
-          "FetchOptions": "javascript-api/mokapi-http/fetchoptions.md",
-          "Args": "javascript-api/mokapi-http/args.md"
-        }
+      {
+        "label": "Configuration",
+        "type": "headline",
+        "items": [
+          {
+            "label": "Overview",
+            "source": "configuration/introduction.md",
+            "path": "/docs/configuration/overview"
+          },
+          {
+            "label": "Patching",
+            "source": "configuration/patching.md",
+            "path": "/docs/configuration/patching"
+          },
+          {
+            "label": "Static",
+            "items": [
+              {
+                "label": "CLI Usage",
+                "source": "configuration/static/cli.md",
+                "path": "/docs/configuration/static/cli-usage"
+              },
+              {
+                "label": "CLI Flags",
+                "source": "configuration/static/mokapi.md",
+                "path": "/docs/configuration/static/cli-flags"
+              }
+            ]
+          },
+          {
+            "label": "Dynamic",
+            "items": [
+              {
+                "label": "Overview",
+                "source": "configuration/dynamic/overview.md",
+                "path": "/docs/configuration/dynamic/overview"
+              },
+              {
+                "label": "File",
+                "source": "configuration/dynamic/file.md",
+                "path": "/docs/configuration/dynamic/file"
+              },
+              {
+                "label": "HTTP",
+                "source": "configuration/dynamic/http.md",
+                "path": "/docs/configuration/dynamic/http"
+              },
+              {
+                "label": "GIT",
+                "source": "configuration/dynamic/git.md",
+                "path": "/docs/configuration/dynamic/git"
+              },
+              {
+                "label": "NPM",
+                "source": "configuration/dynamic/npm.md",
+                "path": "/docs/configuration/dynamic/npm"
+              },
+              {
+                "label": "Reference",
+                "source": "configuration/reference.md",
+                "path": "/docs/configuration/reference"
+              }
+            ]
+          }
+        ]
       },
-      "mokapi/kafka": {
-        "items": {
-          "produce": "javascript-api/mokapi-kafka/produce.md",
-          "ProduceArgs": "javascript-api/mokapi-kafka/produceargs.md",
-          "ProduceResult": "javascript-api/mokapi-kafka/produceresult.md",
-          "Message": "javascript-api/mokapi-kafka/message.md",
-          "MessageResult": "javascript-api/mokapi-kafka/messageresult.md",
-          "ProduceRetry": "javascript-api/mokapi-kafka/produceretry.md"
-        }
-      },
-      "mokapi/mustache": {
-        "items": {
-          "render": "javascript-api/mokapi-mustache/render.md"
-        }
-      },
-      "mokapi/yaml": {
-        "items": {
-          "parse": "javascript-api/mokapi-yaml/parse.md",
-          "stringify": "javascript-api/mokapi-yaml/stringify.md"
-        }
-      },
-      "mokapi/encoding": {
-        "items": {
-          "base64 encode": "javascript-api/mokapi-encoding/base64-encode.md",
-          "base64 decode": "javascript-api/mokapi-encoding/base64-decode.md"
-        }
+      {
+        "label": "JavaScript API",
+        "type": "headline",
+        "items": [
+          {
+            "label": "Overview",
+            "source": "javascript-api/overview.md",
+            "path": "/docs/javascript-api/overview"
+          },
+          {
+            "label": "Modules",
+            "source": "javascript-api/modules.md",
+            "path": "/docs/javascript-api/modules"
+          },
+          {
+            "label": "globals",
+            "items": [
+              {
+                "label": "open",
+                "source": "javascript-api/open.md",
+                "path": "/docs/javascript-api/open"
+              }
+            ]
+          },
+          {
+            "label": "mokapi",
+            "items": [
+              {
+                "label": "cron",
+                "source": "javascript-api/mokapi/cron.md",
+                "path": "/docs/javascript-api/mokapi/cron"
+              },
+              {
+                "label": "date",
+                "source": "javascript-api/mokapi/date.md",
+                "path": "/docs/javascript-api/mokapi/date"
+              },
+              {
+                "label": "env",
+                "source": "javascript-api/mokapi/env.md",
+                "path": "/docs/javascript-api/mokapi/env"
+              },
+              {
+                "label": "every",
+                "source": "javascript-api/mokapi/every.md",
+                "path": "/docs/javascript-api/mokapi/every"
+              },
+              {
+                "label": "on",
+                "source": "javascript-api/mokapi/on.md",
+                "path": "/docs/javascript-api/mokapi/on"
+              },
+              {
+                "label": "sleep",
+                "source": "javascript-api/mokapi/sleep.md",
+                "path": "/docs/javascript-api/mokapi/sleep"
+              },
+              {
+                "label": "marshal",
+                "source": "javascript-api/mokapi/marshal.md",
+                "path": "/docs/javascript-api/mokapi/marshal"
+              },
+              {
+                "label": "EventHandler",
+                "items": [
+                  {
+                    "label": "Overview",
+                    "source": "javascript-api/mokapi/eventhandler/eventhandler.md",
+                    "path": "/docs/javascript-api/mokapi/eventhandler/eventhandler"
+                  },
+                  {
+                    "label": "EventArgs",
+                    "source": "javascript-api/mokapi/eventhandler/eventargs.md",
+                    "path": "/docs/javascript-api/mokapi/eventhandler/eventargs"
+                  },
+                  {
+                    "label": "HttpEventHandler",
+                    "source": "javascript-api/mokapi/eventhandler/httpeventhandler.md",
+                    "path": "/docs/javascript-api/mokapi/eventhandler/httpeventhandler"
+                  },
+                  {
+                    "label": "HttpRequest",
+                    "source": "javascript-api/mokapi/eventhandler/httprequest.md",
+                    "path": "/docs/javascript-api/mokapi/eventhandler/httprequest"
+                  },
+                  {
+                    "label": "HttpResponse",
+                    "source": "javascript-api/mokapi/eventhandler/httpresponse.md",
+                    "path": "/docs/javascript-api/mokapi/eventhandler/httpresponse"
+                  },
+                  {
+                    "label": "KafkaEventHandler",
+                    "source": "javascript-api/mokapi/eventhandler/kafkaeventhandler.md",
+                    "path": "/docs/javascript-api/mokapi/eventhandler/kafkaeventhandler"
+                  },
+                  {
+                    "label": "KafkaEventMessage",
+                    "source": "javascript-api/mokapi/eventhandler/kafkaeventmessage.md",
+                    "path": "/docs/javascript-api/mokapi/eventhandler/kafkaeventmessage"
+                  },
+                  {
+                    "label": "KafkaEventMessage",
+                    "source": "javascript-api/mokapi/eventhandler/scheduledeventargs.md",
+                    "path": "/docs/javascript-api/mokapi/eventhandler/scheduledeventargs"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "label": "mokapi/faker",
+            "items": [
+              {
+                "label": "fake",
+                "source": "javascript-api/mokapi-faker/fake.md",
+                "path": "/docs/javascript-api/mokapi-faker/fake"
+              }
+            ]
+          },
+          {
+            "label": "mokapi/http",
+            "items": [
+              {
+                "label": "get",
+                "source": "javascript-api/mokapi-http/get.md",
+                "path": "/docs/javascript-api/mokapi-http/get"
+              },
+              {
+                "label": "post",
+                "source": "javascript-api/mokapi-http/post.md",
+                "path": "/docs/javascript-api/mokapi-http/post"
+              },
+              {
+                "label": "put",
+                "source": "javascript-api/mokapi-http/put.md",
+                "path": "/docs/javascript-api/mokapi-http/put"
+              },
+              {
+                "label": "head",
+                "source": "javascript-api/mokapi-http/head.md",
+                "path": "/docs/javascript-api/mokapi-http/head"
+              },
+              {
+                "label": "delete",
+                "source": "javascript-api/mokapi-http/delete.md",
+                "path": "/docs/javascript-api/mokapi-http/delete"
+              },
+              {
+                "label": "options",
+                "source": "javascript-api/mokapi-http/options.md",
+                "path": "/docs/javascript-api/mokapi-http/options"
+              },
+              {
+                "label": "patch",
+                "source": "javascript-api/mokapi-http/patch.md",
+                "path": "/docs/javascript-api/mokapi-http/patch"
+              },
+              {
+                "label": "fetch",
+                "source": "javascript-api/mokapi-http/fetch.md",
+                "path": "/docs/javascript-api/mokapi-http/fetch"
+              },
+              {
+                "label": "HttpResponse",
+                "source": "javascript-api/mokapi-http/httpresponse.md",
+                "path": "/docs/javascript-api/mokapi-http/httpresponse"
+              },
+              {
+                "label": "FetchOptions",
+                "source": "javascript-api/mokapi-http/fetchoptions.md",
+                "path": "/docs/javascript-api/mokapi-http/fetchoptions"
+              },
+              {
+                "label": "Args",
+                "source": "javascript-api/mokapi-http/args.md",
+                "path": "/docs/javascript-api/mokapi-http/args"
+              }
+            ]
+          },
+          {
+            "label": "mokapi/kafka",
+            "items": [
+              {
+                "label": "produce",
+                "source": "javascript-api/mokapi-kafka/produce.md",
+                "path": "/docs/javascript-api/mokapi-kafka/produce"
+              },
+              {
+                "label": "ProduceArgs",
+                "source": "javascript-api/mokapi-kafka/produceargs.md",
+                "path": "/docs/javascript-api/mokapi-kafka/produceargs"
+              },
+              {
+                "label": "ProduceResult",
+                "source": "javascript-api/mokapi-kafka/produceresult.md",
+                "path": "/docs/javascript-api/mokapi-kafka/produceresult"
+              },
+              {
+                "label": "Message",
+                "source": "javascript-api/mokapi-kafka/message.md",
+                "path": "/docs/javascript-api/mokapi-kafka/message"
+              },
+              {
+                "label": "MessageResult",
+                "source": "javascript-api/mokapi-kafka/messageresult.md",
+                "path": "/docs/javascript-api/mokapi-kafka/messageresult"
+              },
+              {
+                "label": "ProduceRetry",
+                "source": "javascript-api/mokapi-kafka/produceretry.md",
+                "path": "/docs/javascript-api/mokapi-kafka/produceretry"
+              }
+            ]
+          },
+          {
+            "label": "mokapi/mustache",
+            "items": [
+              {
+                "label": "render",
+                "source": "javascript-api/mokapi-mustache/render.md",
+                "path": "/docs/javascript-api/mokapi-mustache/render"
+              }
+            ]
+          },
+          {
+            "label": "mokapi/yaml",
+            "items": [
+              {
+                "label": "parse",
+                "source": "javascript-api/mokapi-yaml/parse.md",
+                "path": "/docs/javascript-api/mokapi-yaml/parse"
+              },
+              {
+                "label": "stringify",
+                "source": "javascript-api/mokapi-yaml/stringify.md",
+                "path": "/docs/javascript-api/mokapi-yaml/stringify"
+              }
+            ]
+          },
+          {
+            "label": "mokapi/encoding",
+            "items": [
+              {
+                "label": "base64 encode",
+                "source": "javascript-api/mokapi-encoding/base64-encode.md",
+                "path": "/docs/javascript-api/mokapi-encoding/base64-encode"
+              },
+              {
+                "label": "base64 decode",
+                "source": "javascript-api/mokapi-encoding/base64-decode.md",
+                "path": "/docs/javascript-api/mokapi-encoding/base64-decode"
+              }
+            ]
+          }
+        ]
       }
-    }
+    ]
   },
   "Resources": {
+    "path": "/resources",
+    "type": "root",
     "index": {
       "component": "examples",
       "hideNavigation": true,
       "hideInNavigation": true,
-      "canonical": "https://mokapi.io/docs/resources",
+      "canonical": "https://mokapi.io/resources",
       "title": "Explore Mokapi Resources: Tutorials, Examples, and Blog Articles",
       "description": "Explore Mokapi's resources including tutorials, examples, and blog articles. Learn to mock APIs, validate schemas, and streamline your development."
     },
-    "items": {
-      "Tutorials": {
+    "items": [
+      {
+        "label": "Tutorials",
+        "path": "/resources/tutorials",
         "index": {
           "component": "examples",
           "hideNavigation": true,
           "hideInNavigation": true,
-          "canonical": "https://mokapi.io/docs/resources/tutorials",
+          "canonical": "https://mokapi.io/resources/tutorials",
           "title": "Explore Mokapi Resources: Tutorials, Examples, and Blog Articles",
           "description": "Explore Mokapi's resources including tutorials, examples, and blog articles. Learn to mock APIs, validate schemas, and streamline your development."
         },
-        "items": {
-          "Get started with REST API": "resources/tutorials/simple-http-api.md",
-          "Mock OpenAPI Authentication API Key & Bearer Token": "resources/tutorials/mock-openapi-auth-apikey-bearer.md",
-          "Mock OpenAPI Authentication OAuth2 and JWT": "resources/tutorials/mock-oauth2-jwt-api.md",
-          "Get started with Kafka": "resources/tutorials/simple-kafka-api.md",
-          "Running Mokapi in a CI/CD Pipeline": "resources/tutorials/running-mokapi-github-action.md",
-          "Mock LDAP Authentication in Node": "resources/tutorials/mock-ldap-authentication.md",
-          "Mock LDAP Group Permission in Node": "resources/tutorials/mock-ldap-group-permission.md",
-          "Mock SMTP Server send Mail using Node": "resources/tutorials/mock-smtp-server-send-mail-using-node.md",
-          "Using Mokapi in Local Tests": "resources/tutorials/mokapi-in-locale-tests.md",
-          "Fullstack Dev Made Easier": "resources/tutorials/fullstack-dev-made-easier.md"
-        }
+        "items": [
+          {
+            "label": "Get started with REST API",
+            "source": "resources/tutorials/simple-http-api.md",
+            "path": "/resources/tutorials/get-started-with-rest-api",
+            "hideNavigation": true
+          },
+          {
+            "label": "Mock OpenAPI Authentication API Key & Bearer Token",
+            "source": "resources/tutorials/mock-openapi-auth-apikey-bearer.md",
+            "path": "/resources/tutorials/mock-openapi-auth-apikey-bearer",
+            "hideNavigation": true
+          },
+          {
+            "label": "Mock OpenAPI Authentication OAuth2 and JWT",
+            "source": "resources/tutorials/mock-oauth2-jwt-api.md",
+            "path": "/resources/tutorials/mock-oauth2-jwt-api",
+            "hideNavigation": true
+          },
+          {
+            "label": "Get started with Kafka",
+            "source": "resources/tutorials/simple-kafka-api.md",
+            "path": "/resources/tutorials/get-started-with-kafka",
+            "hideNavigation": true
+          },
+          {
+            "label": "Running Mokapi in a CI/CD Pipeline",
+            "source": "resources/tutorials/running-mokapi-github-action.md",
+            "path": "/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline",
+            "hideNavigation": true
+          },
+          {
+            "label": "Mock LDAP Authentication in Node",
+            "source": "resources/tutorials/mock-ldap-authentication.md",
+            "path": "/resources/tutorials/mock-ldap-authentication-in-node",
+            "hideNavigation": true
+          },
+          {
+            "label": "Mock LDAP Group Permission in Node",
+            "source": "resources/tutorials/mock-ldap-group-permission.md",
+            "path": "/resources/tutorials/mock-ldap-group-permission-in-node",
+            "hideNavigation": true
+          },
+          {
+            "label": "Mock SMTP Server send Mail using Node",
+            "source": "resources/tutorials/mock-smtp-server-send-mail-using-node.md",
+            "path": "/resources/tutorials/mock-smtp-server-send-mail-using-node",
+            "hideNavigation": true
+          },
+          {
+            "label": "Using Mokapi in Local Tests",
+            "source": "resources/tutorials/mokapi-in-locale-tests.md",
+            "path": "/resources/tutorials/mokapi-in-locale-tests",
+            "hideNavigation": true
+          },
+          {
+            "label": "Fullstack Dev Made Easier",
+            "source": "resources/tutorials/fullstack-dev-made-easier.md",
+            "path": "/resources/tutorials/fullstack-dev-made-easier",
+            "hideNavigation": true
+          }
+        ]
       },
-      "Examples": {
+      {
+        "label": "Examples",
+        "path": "/resources/examples",
         "index": {
           "component": "examples",
           "hideNavigation": true,
           "hideInNavigation": true,
-          "canonical": "https://mokapi.io/docs/resources/examples",
+          "canonical": "https://mokapi.io/resources/examples",
           "title": "Explore Mokapi Resources: Tutorials, Examples, and Blog Articles",
           "description": "Explore Mokapi's resources including tutorials, examples, and blog articles. Learn to mock APIs, validate schemas, and streamline your development."
         },
-        "items": {
-          "Mokapi behind Reverse Proxy": "resources/examples/mokapi-behind-proxy.md",
-          "Mokapi with custom base image": "resources/examples/mokapi-with-custom-base-image.md"
-        }
+        "items": [
+          {
+            "label": "Mokapi behind Reverse Proxy",
+            "source": "resources/examples/mokapi-behind-proxy.md",
+            "path": "/resources/examples/mokapi-behind-proxy",
+            "hideNavigation": true
+          },
+          {
+            "label": "Mokapi with custom base image",
+            "source": "resources/examples/mokapi-with-custom-base-image.md",
+            "path": "/resources/examples/mokapi-with-custom-base-image",
+            "hideNavigation": true
+          }
+        ]
       },
-      "Blogs": {
+      {
+        "label": "Blogs",
+        "path": "/resources/blogs",
         "index": {
           "component": "examples",
           "hideNavigation": true,
           "hideInNavigation": true,
-          "canonical": "https://mokapi.io/docs/resources/blogs",
+          "canonical": "https://mokapi.io/resources/blogs",
           "title": "Explore Mokapi Resources: Tutorials, Examples, and Blog Articles",
           "description": "Explore Mokapi's resources including tutorials, examples, and blog articles. Learn to mock APIs, validate schemas, and streamline your development."
         },
-        "items": {
-          "Ensuring API Contract Compliance with Mokapi": "resources/blogs/ensuring-api-contract-compliance-with-mokapi.md",
-          "Mock APIs based on OpenAPI and AsyncAPI": "resources/blogs/mock-api-based-on-openapi-asyncapi.md",
-          "Automation Testing in Agile Development": "resources/blogs/automation-testing-agile-development.md",
-          "Contract Testing": "resources/blogs/contract-testing.md",
-          "End to End Testing with Mocked APIs": "resources/blogs/end-to-end-testing-mocked-apis.md",
-          "Bring Your Mock APIs to Life with Mokapi and JavaScript": "resources/blogs/dynamic-mocks-with-javascript.md",
-          "Debugging Mokapi Scripts": "resources/blogs/debugging-mokapi-scripts.md",
-          "Acceptance Testing with Mokapi: Focus on What Matters": "resources/blogs/acceptance-testing.md",
-          "Testing Email Workflows with Playwright and Mokapi": "resources/blogs/testing-email-workflows-playwright.md",
-          "Testing Kafka Workflows with Playwright and Mokapi": "resources/blogs/testing-kafka-workflows-playwright.md"
-        }
+        "items": [
+          {
+            "label": "Ensuring API Contract Compliance with Mokapi",
+            "source": "resources/blogs/ensuring-api-contract-compliance-with-mokapi.md",
+            "path": "/resources/blogs/ensuring-api-contract-compliance-with-mokapi",
+            "hideNavigation": true
+          },
+          {
+            "label": "Mock APIs based on OpenAPI and AsyncAPI",
+            "source": "resources/blogs/mock-api-based-on-openapi-asyncapi.md",
+            "path": "/resources/blogs/mock-api-based-on-openapi-asyncapi",
+            "hideNavigation": true
+          },
+          {
+            "label": "Automation Testing in Agile Development",
+            "source": "resources/blogs/automation-testing-agile-development.md",
+            "path": "/resources/blogs/automation-testing-agile-development",
+            "hideNavigation": true
+          },
+          {
+            "label": "Contract Testing",
+            "source": "resources/blogs/contract-testing.md",
+            "path": "/resources/blogs/contract-testing",
+            "hideNavigation": true
+          },
+          {
+            "label": "End to End Testing with Mocked APIs",
+            "source": "resources/blogs/end-to-end-testing-mocked-apis.md",
+            "path": "/resources/blogs/end-to-end-testing-with-mocked-apis",
+            "hideNavigation": true
+          },
+          {
+            "label": "Bring Your Mock APIs to Life with Mokapi and JavaScript",
+            "source": "resources/blogs/dynamic-mocks-with-javascript.md",
+            "path": "/resources/blogs/dynamic-mocks-with-javascript",
+            "hideNavigation": true
+          },
+          {
+            "label": "Debugging Mokapi Scripts",
+            "source": "resources/blogs/debugging-mokapi-scripts.md",
+            "path": "/resources/blogs/debugging-mokapi-scripts",
+            "hideNavigation": true
+          },
+          {
+            "label": "Acceptance Testing with Mokapi: Focus on What Matters",
+            "source": "resources/blogs/acceptance-testing.md",
+            "path": "/resources/blogs/acceptance-testing",
+            "hideNavigation": true
+          },
+          {
+            "label": "Testing Email Workflows with Playwright and Mokapi",
+            "source": "resources/blogs/testing-email-workflows-playwright.md",
+            "path": "/resources/blogs/testing-email-workflows-with-playwright-and-mokapi",
+            "hideNavigation": true
+          },
+          {
+            "label": "Testing Kafka Workflows with Playwright and Mokapi",
+            "source": "resources/blogs/testing-kafka-workflows-playwright.md",
+            "path": "/resources/blogs/testing-kafka-workflows-playwright",
+            "hideNavigation": true
+          }
+        ]
       }
-    }
-  },
-  "References": {
-    "items": {
-      "Declarative Data": "references/declarative-data.md"
-    }
+    ]
   }
 }

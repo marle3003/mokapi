@@ -5,6 +5,13 @@ import { usePrettyBytes } from '@/composables/usePrettyBytes'
 import { VAceEditor } from 'vue3-ace-editor'
 import '@/ace-editor/ace-config'
 import HexEditor from '../HexEditor.vue'
+import { Range } from 'ace-builds'
+import { useRoute, useRouter } from '@/router'
+
+interface AceMouseEvent {
+  domEvent: MouseEvent
+  getDocumentPosition(): { row: number }
+}
 
 const props = withDefaults(defineProps<{
   source: Source
@@ -26,6 +33,8 @@ const emit = defineEmits<{
   (e: 'switch', value: 'preview' | 'binary'): void
 }>()
 
+const route = useRoute();
+const router = useRouter();
 const { getLanguage } = usePrettyLanguage()
 const { format } = usePrettyBytes()
 
@@ -117,11 +126,105 @@ function switchCode() {
   preview.value?.classList.remove('active')
   emit('switch', 'binary')
 }
-const onEditorInit = (editor: typeof VAceEditor) => {
-  editor.setOptions({
+const editor = ref<typeof VAceEditor | null>(null)
+let lineSelectionMarker: number | null = null // persistent marker id
+
+function updateSelectionDirect(startRow: number, endRow: number) {
+  if (!editor.value) return
+  const session = editor.value.session
+
+  if (lineSelectionMarker !== null) {
+    session.removeMarker(lineSelectionMarker)
+  }
+
+  lineSelectionMarker = session.addMarker(
+    new Range(startRow, 0, endRow, Infinity),
+    'marker',
+    'fullLine',
+    false // back layer
+  )
+
+  updateGutterMarker(startRow, endRow);
+}
+
+function updateGutterMarker(startRow: number, endRow: number) {
+  if (!editor.value) return
+
+  const session = editor.value.session
+
+  // remove old annotation for simplicity
+  session.clearAnnotations()
+
+  // prepare annotations array
+  const annotations = []
+  for (let row = startRow; row <= startRow; row++) {
+    annotations.push({
+      row,
+      column: 0,
+      text: `Line ${row+1}`,
+      type: 'info'        // "error" | "warning" | "info"
+    })
+  }
+
+  session.setAnnotations(annotations)
+}
+
+const startRow = ref<number | undefined>()
+
+const onEditorInit = (e: typeof VAceEditor) => {
+  editor.value = e
+  e.setOptions({
     readOnly: props.readonly
   });
+
+  applyHashSelection();
+
+  // Gutter drag logic
+  editor.value.on('guttermousedown', (e: AceMouseEvent) => {
+    let row = e.getDocumentPosition().row
+    let from: number
+    let to: number
+    if (e.domEvent.shiftKey && startRow.value) {
+      from = Math.min(startRow.value, row)
+      to = Math.max(startRow.value, row)
+    } else {
+      from = row
+      to = row
+    }
+
+    // Update URL hash without triggering remount issues
+    let hash = from === to ? `#L${from + 1}` : `#L${from + 1}:L${to + 1}`
+    if (route.hash === hash) {
+      hash = ''
+    }
+    router.replace({ 
+      name: route.name,
+      params: route.params,
+      hash
+    })
+    updateSelectionDirect(from, to)
+  })
 };
+
+// Parse route.hash and update marker
+function applyHashSelection() {
+  if (!editor.value) return
+  const m = route.hash.match(/L([0-9]+)(:L([0-9]+))?/)
+  if (!m) {
+    return
+  }
+
+  startRow.value = Number(m[1]) - 1
+  const endRow = Number(m[3] || m[1]) - 1
+  updateSelectionDirect(startRow.value, endRow)
+}
+
+watch(
+  () => route.hash,
+  () => {
+    applyHashSelection()
+  }
+)
 </script>
 
 <template>
@@ -255,5 +358,33 @@ const onEditorInit = (editor: typeof VAceEditor) => {
 .source .hljs-deletion {
   background-color: transparent;
   color: #C9D1DE;
+}
+.marker, .source-view .ace_marker-layer .ace_selection {
+  position:absolute;
+  background-color: rgba(56, 139, 253, 0.15);
+  z-index:20
+}
+[data-theme="light"] .marker, .source-view .ace_marker-layer .ace_selection {
+  background-color: rgba(9, 105, 218, 0.12);
+}
+.ace_gutter-cell {
+  cursor: pointer;
+}
+.ace_gutter-cell.ace_info,
+.ace_gutter-cell.ace_warning,
+.ace_gutter-cell.ace_error {
+  background-image: none !important;
+}
+.ace_gutter-cell.ace_info .ace_icon::before {
+  font-family: bootstrap-icons;
+  content: "\F5D4";
+  display: inline-block;
+  width: 20px;
+  text-align: center;
+  margin-right: 1px;
+  border: 1px solid black;
+  border-radius: 3px;
+  margin-left: 3px;
+  padding-inline: 1px;
 }
 </style>

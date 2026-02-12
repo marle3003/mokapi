@@ -25,6 +25,10 @@ func ParseDuration(s string) error {
 		return fmt.Errorf("invalid duration format: %s", s)
 	}
 
+	if len(s) == 1 { // only P
+		return fmt.Errorf("invalid duration format: %s", s)
+	}
+
 	for _, char := range s {
 		switch char {
 		case 'P':
@@ -78,7 +82,7 @@ func ParseDuration(s string) error {
 			}
 			num = ""
 		case 'H':
-			if state != parsingUnit {
+			if state != parsingValue {
 				return fmt.Errorf("invalid duration format: %s", s)
 			}
 
@@ -88,7 +92,7 @@ func ParseDuration(s string) error {
 			}
 			num = ""
 		case 'S':
-			if state != parsingUnit {
+			if state != parsingValue {
 				return fmt.Errorf("invalid duration format: %s", s)
 			}
 
@@ -105,6 +109,11 @@ func ParseDuration(s string) error {
 
 			return fmt.Errorf("invalid duration format: %s", s)
 		}
+	}
+
+	// control that all values are analyzed so duration ends with a unit
+	if num != "" {
+		return fmt.Errorf("invalid duration format: %s", s)
 	}
 
 	return nil

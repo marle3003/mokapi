@@ -2,7 +2,7 @@
 title: Introduction to Mokapi Configuration | Static & Dynamic Setup Explained
 description: Discover how to configure Mokapi using static files or dynamic updates. Learn startup options, hot-reloading, and flexible setup for your mocked APIs.
 ---
-# Introduction
+# Configuration
 
 Mokapi has two types of configuration:
 - The startup configuration (referred as the static configuration)

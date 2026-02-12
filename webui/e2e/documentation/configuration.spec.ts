@@ -2,19 +2,22 @@ import { expect, test } from "../models/fixture-website";
 
 test('Visit Configuration', async ({ page, home }) => {
     await home.open()
-    await page.getByRole('navigation').getByRole('link', { name: 'Configuration' }).click()
+    await page.getByRole('navigation').getByRole('link', { name: 'Docs' }).click()
+    await page.getByRole('navigation').getByRole('region', { name: 'Configuration' }).getByRole('link', { name: 'Overview' }).click()
 
     await test.step('meta information are available', async () => {
-        await expect(page).toHaveURL('/docs/configuration')
+        await expect(page).toHaveURL('/docs/configuration/overview')
         await expect(page).toHaveTitle('Introduction to Mokapi Configuration | Static & Dynamic Setup Explained')
         await expect(page.locator('meta[name="description"]')).toHaveAttribute(
             'content',
             'Discover how to configure Mokapi using static files or dynamic updates. Learn startup options, hot-reloading, and flexible setup for your mocked APIs.'
         )
-        await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://mokapi.io/docs/configuration/introduction')
+        await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://mokapi.io/docs/configuration/overview')
     })
 
     await test.step('navigation section providers', async () => {
+        await page.getByRole('button', { name: 'Dynamic' }).click()
+
         const region = page.getByRole('region', { name: 'Dynamic' })
         const link = page.getByRole('link', { name: 'File' })
         await expect(region).toBeVisible()
@@ -30,7 +33,7 @@ test('Visit Configuration', async ({ page, home }) => {
 
         await test.step('meta information are available', async () => {
             await expect(page).toHaveURL('/docs/configuration/dynamic/file')
-            await expect(page).toHaveTitle('File Provider | Mokapi Configuration')
+            await expect(page).toHaveTitle('File Provider - Configuration | Mokapi Docs')
             await expect(page.locator('meta[name="description"]')).toHaveAttribute(
                 'content',
                 'The file provider reads dynamic configuration from a single file or multiple files.'

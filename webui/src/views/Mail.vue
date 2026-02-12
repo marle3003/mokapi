@@ -64,11 +64,11 @@ function showImage(evt: MouseEvent) {
               </span>
             </p>
             <p class="d-none d-md-block">
-              <router-link :to="{ path: '/docs/guides/mail' }">
-                <button type="button" class="btn btn-outline-primary">Get Started</button>
+              <router-link :to="{ path: '/resources/tutorials/mock-smtp-server-send-mail-using-node' }" class="btn btn-primary me-2">
+                Get Started
               </router-link>
-              <router-link :to="{ path: '/docs/resources' }">
-                <button type="button" class="btn btn-outline-primary">Learn More</button>
+              <router-link :to="{ path: '/docs/mail/overview' }" class="btn btn-primary me-2">
+                Documentation
               </router-link>
             </p>
           </div>
@@ -77,11 +77,11 @@ function showImage(evt: MouseEvent) {
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
-                <router-link :to="{ path: '/docs/guides/mail' }">
-                  <button type="button" class="btn btn-outline-primary">Get Started</button>
+                <router-link :to="{ path: '/resources/tutorials/mock-smtp-server-send-mail-using-node' }" class="btn btn-primary me-2">
+                  Get Started
                 </router-link>
-                <router-link :to="{ path: '/docs/resources' }">
-                  <button type="button" class="btn btn-outline-primary">Learn More</button>
+                <router-link :to="{ path: '/docs/mail/overview' }" class="btn btn-primary me-2">
+                  Learn More
                 </router-link>
               </p>
           </div>
@@ -154,7 +154,7 @@ function showImage(evt: MouseEvent) {
                   Define SMTP and IMAP behavior declaratively.
                   Versioned, reproducible, and consistent across environments.
                 </p>
-                <a href="/docs/guides/mail" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Explore</a>
+                <a href="/docs/mail/overview" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Explore</a>
               </div>
             </div>
           </div>
@@ -169,7 +169,7 @@ function showImage(evt: MouseEvent) {
                   Simulate inbox states, folders, and message retrieval
                   exactly as real email clients expect.
                 </p>
-                <a href="/docs/guides/mail/client" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Try It</a>
+                <a href="/docs/mail/client" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Try It</a>
               </div>
             </div>
           </div>
@@ -184,7 +184,7 @@ function showImage(evt: MouseEvent) {
                   Replace live mail servers in CI with fast,
                   deterministic email mocks.
                 </p>
-                <a href="docs/resources/blogs/testing-email-workflows-with-playwright-and-mokapi" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Read Guide</a>
+                <a href="resources/blogs/testing-email-workflows-with-playwright-and-mokapi" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Read Guide</a>
               </div>
             </div>
           </div>
@@ -206,7 +206,7 @@ function showImage(evt: MouseEvent) {
                   Ensure confirmation emails are generated and formatted correctly
                   before users ever receive them.
                 </p>
-                <a href="/docs/resources/blogs/testing-email-workflows-with-playwright-and-mokapi" class="btn btn-outline-primary btn-sm  mt-auto align-self-start">Read Guide</a>
+                <a href="/resources/blogs/testing-email-workflows-with-playwright-and-mokapi" class="btn btn-outline-primary btn-sm  mt-auto align-self-start">Read Guide</a>
               </div>
             </div>
           </div>
@@ -219,7 +219,7 @@ function showImage(evt: MouseEvent) {
                   Validate reset links, tokens, and expiry handling
                   without sending real emails.
                 </p>
-                <a href="/docs/resources/blogs/testing-email-workflows-with-playwright-and-mokapi" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Read Guide</a>
+                <a href="/resources/blogs/testing-email-workflows-with-playwright-and-mokapi" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Read Guide</a>
               </div>
             </div>
           </div>
@@ -232,7 +232,7 @@ function showImage(evt: MouseEvent) {
                   Test bulk email sending, links, and formatting
                   in a safe, isolated environment.
                 </p>
-                <a href="/docs/resources/tutorials/mock-smtp-server-send-mail-using-node" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Try it</a>
+                <a href="/resources/tutorials/mock-smtp-server-send-mail-using-node" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Try it</a>
               </div>
             </div>
           </div>
@@ -294,7 +294,7 @@ function showImage(evt: MouseEvent) {
         <p class="lead mb-4">
           Test full email workflows without external mail servers.
         </p>
-        <a href="/docs/guides/mail" class="btn btn-lg btn-outline-primary">Get Started</a>
+        <a href="/docs/mail/overview" class="btn btn-lg btn-outline-primary">Get Started</a>
       </div>
     </section>
   </main>

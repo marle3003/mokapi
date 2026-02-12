@@ -11,7 +11,7 @@ Mocking APIs is essential for fast development — but static mocks can quickly
 become a bottleneck. Wouldn’t it be better if your mocks could think — 
 reacting to queries, headers, or even generating data on the fly?
 
-That's exactly what [Mokapi Scripts](/docs/javascript-api) are designed for.
+That's exactly what [Mokapi Scripts](/docs/javascript-api/overview.md) are designed for.
 
 With just a few lines of JavaScript, you can control how your mocks behave — 
 making them dynamic, intelligent, and realistic.
@@ -132,9 +132,9 @@ demos and get faster feedback.
 2. Add a Script where you control the response with JavaScript
 3. Run Mokapi — that’s it!
 
-👉 Try the [OpenAPI Mocking Tutorial](/docs/resources/tutorials/get-started-with-rest-api) for a guided walkthrough.
+👉 Try the [OpenAPI Mocking Tutorial](/resources/tutorials/get-started-with-rest-api) for a guided walkthrough.
 
-👉 Check out the [Mokapi Installation Guide](/docs/guides/get-started/installation.md) to get set up in minutes.
+👉 Check out the [Mokapi Installation Guide](/docs/get-started/installation.md) to get set up in minutes.
 
 ## Conclusion
 
@@ -146,9 +146,9 @@ With Mokapi, your mocks behave exactly the way you need them to.
 
 ## Further Reading
 
-- [Debugging Mokapi JavaScript](/docs/resources/blogs/debugging-mokapi-scripts)\
+- [Debugging Mokapi JavaScript](/resources/blogs/debugging-mokapi-scripts)\
   Learn how to debug your JavaScript code inside Mokapi
-- [End-to-End Testing with Mock APIs Using Mokapi](/docs/resources/blogs/end-to-end-testing-with-mocked-apis)\
+- [End-to-End Testing with Mock APIs Using Mokapi](/resources/blogs/end-to-end-testing-with-mocked-apis)\
   Improve your end-to-end tests by mocking APIs with Mokapi.
 
 ---

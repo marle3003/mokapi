@@ -330,6 +330,47 @@ func TestHandler_Smtp(t *testing.T) {
 			contentType:  "text/plain",
 			responseBody: "foobar",
 		},
+		{
+			name: "get SMTP mail with encodings",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{})
+				app.Mail.Set("foo", &runtime.MailInfo{
+					Config: &mail.Config{},
+					Store: &mail.Store{
+						Name: "foo",
+						Mailboxes: map[string]*mail.Mailbox{
+							"alice@foo.bar": {
+								Folders: map[string]*mail.Folder{
+									"Inbox": {
+										Messages: []*mail.Mail{
+											{
+												Message: &smtp.Message{
+													Sender: nil,
+													From:   []smtp.Address{{Address: "bob@foo.bar"}},
+													To: []smtp.Address{
+														{Address: "juergen@example.com", Name: "=?UTF-8?Q?J=C3=BCrgen?="},
+													},
+													MessageId:   "foo-1@mokapi.io",
+													Date:        now,
+													Subject:     "=?UTF-8?Q?=C2=A1Buenos_d=C3=ADas!?= and =?UTF-8?B?bW9rYXBp?=",
+													ContentType: "text/plain",
+													Body:        "foobar",
+													Size:        10,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				})
+				return app
+			},
+			requestUrl:   "http://foo.api/api/services/mail/messages/foo-1@mokapi.io",
+			contentType:  "application/json",
+			responseBody: fmt.Sprintf(`{"service":"foo","data":{"from":[{"address":"bob@foo.bar"}],"to":[{"name":"Jürgen","address":"juergen@example.com"}],"messageId":"foo-1@mokapi.io","date":"%v","subject":"¡Buenos días! and mokapi","contentType":"text/plain","body":"foobar","size":10}}`, now.Format(time.RFC3339Nano)),
+		},
 	}
 
 	t.Parallel()

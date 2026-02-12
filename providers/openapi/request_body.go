@@ -238,11 +238,16 @@ func (d urlValueDecoder) decode(propName string, val interface{}) (interface{}, 
 	values := val.([]string)
 
 	prop := d.mt.Schema.Properties.Get(propName)
+	if prop == nil {
+		return val, nil
+	}
 	switch {
 	case prop.Type.IsOneOf("integer", "number", "string"):
 		return values[0], nil
 	case prop.Type.IsArray():
 		return d.decodeArray(propName, values)
+	case prop.Type.IsObject():
+		return d.decodeObject(propName, values)
 	default:
 		return nil, fmt.Errorf("unsupported type %v", prop.Type)
 	}
@@ -261,6 +266,19 @@ func (d urlValueDecoder) decodeArray(propName string, values []string) (interfac
 	default:
 		return strings.Split(values[0], ","), nil
 	}
+}
+
+func (d urlValueDecoder) decodeObject(propName string, values []string) (interface{}, error) {
+	enc, ok := d.mt.Encoding[propName]
+	if !ok {
+		return nil, fmt.Errorf("behavior not specified for complex serialization without content-type: see https://swagger.io/docs/specification/v3_0/describing-request-body/describing-request-body/")
+	}
+	p := &parser.Parser{Schema: schema.ConvertToJsonSchema(d.mt.Schema.Properties.Get(propName)), ValidateAdditionalProperties: true}
+	opts := []encoding.DecodeOptions{
+		encoding.WithContentType(media.ParseContentType(enc.ContentType)),
+		encoding.WithParser(p),
+	}
+	return encoding.Decode([]byte(strings.Join(values, "&")), opts...)
 }
 
 type multipartForm struct {

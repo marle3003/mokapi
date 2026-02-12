@@ -10,7 +10,7 @@ defineProps({
 
 <template>
   <div class="card-group">
-    <div class="card">
+    <section class="card" aria-label="Footer">
       <div class="card-body">
         <div class="row">
           <div class="col">
@@ -35,6 +35,6 @@ defineProps({
           </div>
           </div>
       </div>
-    </div>
+    </section>
   </div>
 </template>
