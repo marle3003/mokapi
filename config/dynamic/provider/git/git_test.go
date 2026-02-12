@@ -242,20 +242,23 @@ func TestGitFileUpdate(t *testing.T) {
 	require.NoError(t, err)
 
 	// wait init
-	_ = wait(ch, 3*time.Second)
+	e := wait(ch, 3*time.Second)
+	initChecksum := e.Config.Info.Checksum
+	initTime := e.Config.Info.Time
 
 	repo.commit(t, "foo.txt", "bar")
 
 	// git deletes the file first
-	e := wait(ch, 5*time.Second)
+	e = wait(ch, 5*time.Second)
 	require.Equal(t, dynamic.Delete, e.Event)
 	e = wait(ch, 5*time.Second)
 	require.NotNil(t, e.Config)
 	require.Equal(t, []byte("bar"), e.Config.Raw)
+	require.NotEqual(t, initChecksum, e.Config.Info.Checksum)
+	require.Greater(t, e.Config.Info.Time, initTime)
 }
 
-// go-git requires git installed for file:// repositories
-func testGitSimpleUrl(t *testing.T) {
+func TestGitSimpleUrl(t *testing.T) {
 	repo := newGitRepo(t, t.Name())
 	defer func() {
 		err := os.RemoveAll(repo.dir)
@@ -276,7 +279,7 @@ func testGitSimpleUrl(t *testing.T) {
 	case <-time.After(1 * time.Second):
 		t.Fatal("Timeout")
 	case e := <-ch:
-		require.Equal(t, "foo.txt", filepath.Base(e.Config.Info.Url.String()))
+		require.Equal(t, "TestGitSimpleUrl?file=%2Ffoo.txt", filepath.Base(e.Config.Info.Url.String()))
 	}
 }
 
