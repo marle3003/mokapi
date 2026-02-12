@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRoot_Providers_File(t *testing.T) {
+func TestRoot_Providers_Npm(t *testing.T) {
 	testcases := []struct {
 		name string
 		args func(t *testing.T) []string
