@@ -232,7 +232,15 @@ Functions for encoding and decoding data.
 | [base64.encode( input )](/docs/javascript-api/mokapi-encoding/base64-encode.md) | Encodes a string to Base64. |
 | [base64.decode( input )](/docs/javascript-api/mokapi-encoding/base64-decode.md) | Decodes a Base64 string.    |
 
+### mokapi/file
 
+Functions for working with files
+
+| Functions                                                                    | Description                                    |
+|------------------------------------------------------------------------------|------------------------------------------------|
+| [read( path )](/docs/javascript-api/mokapi-file/read.md)                     | Reads the contents of a file.                  |
+| [writeString( path, s )](/docs/javascript-api/mokapi-file/write-string.md)   | Writes a string to a file at the given path.   |
+| [appendString( path, s )](/docs/javascript-api/mokapi-file/append-string.md) | Appends a string to a file at the given path.  |
 
 
 

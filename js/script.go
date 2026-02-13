@@ -269,6 +269,7 @@ func RegisterNativeModules(registry *require.Registry) {
 	registry.RegisterNativeModule("mokapi/smtp", mail.Require)
 	registry.RegisterNativeModule("mokapi/ldap", ldap.Require)
 	registry.RegisterNativeModule("mokapi/encoding", encoding.Require)
+	registry.RegisterNativeModule("mokapi/file", file.Require)
 }
 
 func isClosingError(err error) bool {

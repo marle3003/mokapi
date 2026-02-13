@@ -8,6 +8,8 @@ import (
 	"mokapi/schema/json/generator"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"sync"
 )
 
@@ -31,6 +33,7 @@ type Host struct {
 	FindFakerNodeFunc  func(name string) *generator.Node
 	m                  sync.Mutex
 	StoreTest          *engine.Store
+	CwdFunc            func() string
 }
 
 type HttpClient struct {
@@ -181,6 +184,17 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 
 func (h *Host) AddCleanupFunc(f func()) {
 	h.CleanupFuncs = append(h.CleanupFuncs, f)
+}
+
+func (h *Host) Cwd() string {
+	if h.CwdFunc != nil {
+		return h.CwdFunc()
+	}
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	return filepath.Dir(ex)
 }
 
 func mustParse(s string) *url.URL {

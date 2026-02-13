@@ -11,6 +11,8 @@ import (
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/dop251/goja"
@@ -77,6 +79,66 @@ func TestModule_Open(t *testing.T) {
 				r.Equal(t, map[string]any{"description": "circular reference"}, v.Export())
 			},
 		},
+		{
+			name: "open",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				dir := t.TempDir()
+				err := os.WriteFile(filepath.Join(dir, "foo.txt"), []byte("Hello World"), 0o644)
+				r.NoError(t, err)
+
+				host.CwdFunc = func() string {
+					return dir
+				}
+
+				v, err := vm.RunString(`
+					const m = require("mokapi/file")
+					m.read('foo.txt');
+				`)
+				r.NoError(t, err)
+				r.Equal(t, "Hello World", v.Export(), dir)
+			},
+		},
+		{
+			name: "write file",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				dir := t.TempDir()
+				host.CwdFunc = func() string {
+					return dir
+				}
+
+				_, err := vm.RunString(`
+					const m = require("mokapi/file")
+					m.writeString('foo.txt', 'Hello World');
+				`)
+				r.NoError(t, err)
+
+				b, err := os.ReadFile(filepath.Join(dir, "foo.txt"))
+				r.NoError(t, err)
+				r.Equal(t, "Hello World", string(b), dir)
+			},
+		},
+		{
+			name: "append string to file",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				dir := t.TempDir()
+				err := os.WriteFile(filepath.Join(dir, "foo.txt"), []byte("Hello World"), 0o644)
+				r.NoError(t, err)
+
+				host.CwdFunc = func() string {
+					return dir
+				}
+
+				_, err = vm.RunString(`
+					const m = require("mokapi/file")
+					m.appendString('foo.txt', '!');
+				`)
+				r.NoError(t, err)
+
+				b, err := os.ReadFile(filepath.Join(dir, "foo.txt"))
+				r.NoError(t, err)
+				r.Equal(t, "Hello World!", string(b), dir)
+			},
+		},
 	}
 
 	t.Parallel()
@@ -98,6 +160,7 @@ func TestModule_Open(t *testing.T) {
 			js.EnableInternal(vm, host, loop, source)
 			reg.Enable(vm)
 			file.Enable(vm, host, source)
+			reg.RegisterNativeModule("mokapi/file", file.Require)
 
 			tc.test(t, vm, host)
 		})
