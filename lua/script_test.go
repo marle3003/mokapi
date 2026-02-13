@@ -53,7 +53,7 @@ func TestMokapi_On(t *testing.T) {
 			fnInfo: func(s string) {
 				log = s
 			},
-			fnOn: func(evt string, do common.EventHandler, tags map[string]string) {
+			fnOn: func(evt string, do common.EventHandler, args common.EventArgs) {
 				called = true
 				_, err := do(&common.EventContext{})
 				require.NoError(t, err)
@@ -108,7 +108,7 @@ mustache.render("", {})
 type testHost struct {
 	common.Host
 	fnInfo func(s string)
-	fnOn   func(event string, do common.EventHandler, tags map[string]string)
+	fnOn   func(event string, do common.EventHandler, args common.EventArgs)
 }
 
 func (th *testHost) Info(args ...interface{}) {
@@ -117,9 +117,9 @@ func (th *testHost) Info(args ...interface{}) {
 	}
 }
 
-func (th *testHost) On(event string, do common.EventHandler, tags map[string]string) {
+func (th *testHost) On(event string, do common.EventHandler, args common.EventArgs) {
 	if th.fnOn != nil {
-		th.fnOn(event, do, tags)
+		th.fnOn(event, do, args)
 	}
 }
 

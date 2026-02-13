@@ -17,6 +17,7 @@ type onArgs struct {
 	tags       map[string]string
 	track      bool
 	isTrackSet bool
+	priority   int
 }
 
 func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
@@ -65,7 +66,7 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 		return haveChanges(origin, newHashes), nil
 	}
 
-	m.host.On(event, f, eventArgs.tags)
+	m.host.On(event, f, common.EventArgs{Tags: eventArgs.tags, Priority: eventArgs.priority})
 }
 
 func getOnArgs(vm *goja.Runtime, args goja.Value) (onArgs, error) {
@@ -100,6 +101,15 @@ func getOnArgs(vm *goja.Runtime, args goja.Value) (onArgs, error) {
 				}
 				result.track = v.ToBoolean()
 				result.isTrackSet = true
+			case "priority":
+				v := params.Get(k)
+				if goja.IsUndefined(v) || goja.IsNull(v) {
+					continue
+				}
+				if v.ExportType().Kind() != reflect.Int64 {
+					return onArgs{}, fmt.Errorf("unexpected type for priority: %v", util.JsType(v.Export()))
+				}
+				result.priority = int(v.ToInteger())
 			}
 		}
 		return result, nil
@@ -141,6 +151,11 @@ func ArgToJs(arg any, vm *goja.Runtime) goja.Value {
 				switch key {
 				case "headers":
 					p.KeyNormalizer = http.CanonicalHeaderKey
+				}
+
+				switch val.(type) {
+				case string, int, bool:
+					return p.vm.ToValue(val)
 				}
 
 				return vm.NewDynamicObject(p)

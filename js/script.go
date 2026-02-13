@@ -213,7 +213,7 @@ func (s *Script) addHttpEvent(i interface{}) {
 		return engine.HttpEventHandler(req, res, i)
 	}
 
-	s.host.On("http", f, nil)
+	s.host.On("http", f, engine.EventArgs{})
 }
 
 // customFieldNameMapper default implementation filters out

@@ -18,8 +18,9 @@ import (
 )
 
 type eventHandler struct {
-	handler common.EventHandler
-	tags    map[string]string
+	handler  common.EventHandler
+	tags     map[string]string
+	priority int
 }
 
 type scriptHost struct {
@@ -68,36 +69,6 @@ func (sh *scriptHost) Run() (err error) {
 	}
 	log.Infof("executing script %v", sh.file.Info.Url)
 	return sh.script.Run()
-}
-
-func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*common.Action {
-	var result []*common.Action
-	for _, eh := range sh.events[event] {
-		action := &common.Action{
-			Tags: eh.tags,
-		}
-		start := time.Now()
-		logs := len(action.Logs)
-
-		ctx := &common.EventContext{
-			EventLogger: action.AppendLog,
-			Args:        args,
-		}
-
-		if b, err := eh.handler(ctx); err != nil {
-			log.Errorf("unable to execute event handler: %v", err)
-			action.Error = &common.Error{Message: err.Error()}
-		} else if !b && logs == len(action.Logs) {
-			continue
-		} else {
-			log.WithField("handler", action).Debug("processed event handler")
-		}
-
-		action.Parameters = getDeepCopy(args)
-		action.Duration = time.Now().Sub(start).Milliseconds()
-		result = append(result, action)
-	}
-	return result
 }
 
 func (sh *scriptHost) Every(every string, handler func(), opt common.JobOptions) (int, error) {
@@ -199,7 +170,7 @@ func (sh *scriptHost) Cancel(jobId int) error {
 	}
 }
 
-func (sh *scriptHost) On(event string, handler common.EventHandler, tags map[string]string) {
+func (sh *scriptHost) On(event string, handler common.EventHandler, args common.EventArgs) {
 	h := &eventHandler{
 		handler: handler,
 		tags: map[string]string{
@@ -208,9 +179,10 @@ func (sh *scriptHost) On(event string, handler common.EventHandler, tags map[str
 			"fileKey": sh.file.Info.Key(),
 			"event":   event,
 		},
+		priority: args.Priority,
 	}
 
-	for k, v := range tags {
+	for k, v := range args.Tags {
 		h.tags[k] = v
 	}
 

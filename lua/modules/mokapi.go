@@ -118,7 +118,7 @@ func (m *Mokapi) on(l *lua.LState) int {
 		}
 	}
 
-	m.host.On(evt, fn, args.Tags)
+	m.host.On(evt, fn, common.EventArgs{Tags: args.Tags})
 
 	return 0
 }

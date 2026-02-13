@@ -242,6 +242,44 @@ export default () => {
 				require.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 			},
 		},
+		{
+			name: "order of event handler execution",
+			script: `import { on } from 'mokapi'
+export default () => {
+    let counter = 0
+	on('http', (req, res) => {
+		res.data.foo = 'handler1';
+		res.data.handler1 = counter++ 
+	}, { priority: -1 })
+	on('http', (req, res) => {
+		res.data.foo = 'handler2';
+		res.data.handler2 = counter++ 
+	}, { priority: 10 })
+	on('http', (req, res) => {
+		res.data.foo = 'handler3';
+		res.data.handler3 = counter++ 
+	})
+}
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.EventResponse{Data: map[string]any{"foo": "bar"}}
+				actions := evt.Emit("http", &common.EventRequest{}, res)
+				require.Nil(t, actions[0].Error)
+				require.Equal(t, map[string]any{"foo": "handler1", "handler1": int64(2), "handler2": int64(0), "handler3": int64(1)}, mokapi.Export(res.Data))
+				return actions
+			},
+			test: func(t *testing.T, actions []*common.Action, hook *test.Hook, err error) {
+				require.NoError(t, err)
+
+				var res *common.EventResponse
+				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				require.Equal(t, map[string]any{"foo": "handler2", "handler2": float64(0)}, mokapi.Export(res.Data))
+				err = json.Unmarshal([]byte(actions[1].Parameters[1].(string)), &res)
+				require.Equal(t, map[string]any{"foo": "handler3", "handler2": float64(0), "handler3": float64(1)}, mokapi.Export(res.Data))
+				err = json.Unmarshal([]byte(actions[2].Parameters[1].(string)), &res)
+				require.Equal(t, map[string]any{"foo": "handler1", "handler2": float64(0), "handler3": float64(1), "handler1": float64(2)}, mokapi.Export(res.Data))
+			},
+		},
 	}
 
 	for _, tc := range testcases {

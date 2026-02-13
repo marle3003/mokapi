@@ -99,7 +99,7 @@ func TestMokapi_On(t *testing.T) {
 	t.Run("mokapi.on event", func(t *testing.T) {
 		var event string
 		host := &testHost{
-			fnOn: func(evt string, do common.EventHandler, tags map[string]string) {
+			fnOn: func(evt string, do common.EventHandler, args common.EventArgs) {
 				event = evt
 			},
 		}
@@ -119,7 +119,7 @@ mokapi.on("foo", function() end)
 	t.Run("mokapi.on do returns true", func(t *testing.T) {
 		var fn common.EventHandler
 		host := &testHost{
-			fnOn: func(evt string, do common.EventHandler, tags map[string]string) {
+			fnOn: func(evt string, do common.EventHandler, args common.EventArgs) {
 				fn = do
 			},
 		}
@@ -141,7 +141,7 @@ mokapi.on("foo", function() return true end)
 	t.Run("mokapi.on do got error", func(t *testing.T) {
 		var fn common.EventHandler
 		host := &testHost{
-			fnOn: func(evt string, do common.EventHandler, tags map[string]string) {
+			fnOn: func(evt string, do common.EventHandler, args common.EventArgs) {
 				fn = do
 			},
 		}
@@ -166,7 +166,7 @@ end)
 	t.Run("mokapi.on with parameters", func(t *testing.T) {
 		var fn common.EventHandler
 		host := &testHost{
-			fnOn: func(evt string, do common.EventHandler, tags map[string]string) {
+			fnOn: func(evt string, do common.EventHandler, args common.EventArgs) {
 				fn = do
 			},
 		}
@@ -192,8 +192,8 @@ end)
 	t.Run("mokapi.on tags", func(t *testing.T) {
 		var m map[string]string
 		host := &testHost{
-			fnOn: func(evt string, do common.EventHandler, tags map[string]string) {
-				m = tags
+			fnOn: func(evt string, do common.EventHandler, args common.EventArgs) {
+				m = args.Tags
 			},
 		}
 		l := lua.NewState(lua.Options{IncludeGoStackTrace: true})
@@ -212,7 +212,7 @@ mokapi.on("foo", function() return true end, {tags = {tag1 = "foo", tag2 = "bar"
 	t.Run("mokapi.on access variable", func(t *testing.T) {
 		var fn common.EventHandler
 		host := &testHost{
-			fnOn: func(evt string, do common.EventHandler, tags map[string]string) {
+			fnOn: func(evt string, do common.EventHandler, args common.EventArgs) {
 				fn = do
 			},
 		}
@@ -239,7 +239,7 @@ return true end)
 	t.Run("mokapi.on two handlers", func(t *testing.T) {
 		var fns []common.EventHandler
 		host := &testHost{
-			fnOn: func(evt string, do common.EventHandler, tags map[string]string) {
+			fnOn: func(evt string, do common.EventHandler, args common.EventArgs) {
 				fns = append(fns, do)
 			},
 		}
@@ -276,7 +276,7 @@ return true end)
 type testHost struct {
 	common.Host
 	fnInfo  func(s string)
-	fnOn    func(event string, do common.EventHandler, tags map[string]string)
+	fnOn    func(event string, do common.EventHandler, args common.EventArgs)
 	fnEvery func(every string, do func(), opt common.JobOptions) (int, error)
 }
 
@@ -286,9 +286,9 @@ func (th *testHost) Info(args ...interface{}) {
 	}
 }
 
-func (th *testHost) On(event string, do common.EventHandler, tags map[string]string) {
+func (th *testHost) On(event string, do common.EventHandler, args common.EventArgs) {
 	if th.fnOn != nil {
-		th.fnOn(event, do, tags)
+		th.fnOn(event, do, args)
 	}
 }
 

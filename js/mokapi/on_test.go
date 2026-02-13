@@ -26,7 +26,7 @@ func TestModule_On(t *testing.T) {
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var event string
 				var handler common.EventHandler
-				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
 					event = evt
 					handler = do
 				}
@@ -49,7 +49,7 @@ func TestModule_On(t *testing.T) {
 			name: "event handler with parameter",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var handler common.EventHandler
-				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
 					handler = do
 				}
 
@@ -70,7 +70,7 @@ func TestModule_On(t *testing.T) {
 			name: "event handler changes params",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var handler common.EventHandler
-				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
 					handler = do
 				}
 
@@ -88,7 +88,7 @@ func TestModule_On(t *testing.T) {
 			name: "event handler does not change params",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var handler common.EventHandler
-				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
 					handler = do
 				}
 
@@ -106,7 +106,7 @@ func TestModule_On(t *testing.T) {
 			name: "event handler does not change params but uses track argument",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var handler common.EventHandler
-				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
 					handler = do
 				}
 
@@ -124,7 +124,7 @@ func TestModule_On(t *testing.T) {
 			name: "event handler changes params but disables track",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var handler common.EventHandler
-				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
 					handler = do
 				}
 
@@ -142,7 +142,7 @@ func TestModule_On(t *testing.T) {
 			name: "event handler throws error",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var handler common.EventHandler
-				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
 					handler = do
 				}
 
@@ -159,8 +159,8 @@ func TestModule_On(t *testing.T) {
 			name: "event handler with tags",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var tags map[string]string
-				host.OnFunc = func(evt string, do common.EventHandler, t map[string]string) {
-					tags = t
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
+					tags = args.Tags
 				}
 
 				_, err := vm.RunString(`
@@ -192,10 +192,36 @@ func TestModule_On(t *testing.T) {
 			},
 		},
 		{
+			name: "event handler with priority",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				priority := 0
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
+					priority = args.Priority
+				}
+
+				_, err := vm.RunString(`
+					const m = require('mokapi')
+					m.on('http', () => true, { priority: 100 })
+				`)
+				r.NoError(t, err)
+				r.Equal(t, 100, priority)
+			},
+		},
+		{
+			name: "event handler invalid type for priority",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				_, err := vm.RunString(`
+					const m = require('mokapi')
+					m.on('http', () => true, { priority: 'foo' })
+				`)
+				r.EqualError(t, err, "unexpected type for priority: String at mokapi/js/mokapi.(*Module).On-fm (native)")
+			},
+		},
+		{
 			name: "async event handler",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var handler common.EventHandler
-				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
 					handler = do
 				}
 
@@ -482,7 +508,7 @@ m.on('http', (req, res) => {
 			reg.Enable(vm)
 
 			var runEvent common.EventHandler
-			host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
+			host.OnFunc = func(event string, do common.EventHandler, args common.EventArgs) {
 				runEvent = do
 			}
 

@@ -29,7 +29,7 @@ type Host struct {
 	KafkaClientTest    *KafkaClient
 	EveryFunc          func(every string, do func(), opt common.JobOptions)
 	CronFunc           func(every string, do func(), opt common.JobOptions)
-	OnFunc             func(event string, do common.EventHandler, tags map[string]string)
+	OnFunc             func(event string, do common.EventHandler, args common.EventArgs)
 	FindFakerNodeFunc  func(name string) *generator.Node
 	m                  sync.Mutex
 	StoreTest          *engine.Store
@@ -120,9 +120,9 @@ func (h *Host) Cron(expr string, do func(), opt common.JobOptions) (int, error) 
 	return 0, nil
 }
 
-func (h *Host) On(event string, do common.EventHandler, tags map[string]string) {
+func (h *Host) On(event string, do common.EventHandler, args common.EventArgs) {
 	if h.OnFunc != nil {
-		h.OnFunc(event, do, tags)
+		h.OnFunc(event, do, args)
 	}
 }
 
