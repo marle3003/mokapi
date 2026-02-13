@@ -272,9 +272,9 @@ The `request.key` property contains the path pattern from your OpenAPI specifica
 // User requests: http://localhost/api/v3/pet/12
 
 on('http', (request, response) => {
-    console.log(request.key)        // "/pet/{petId}"
-    console.log(request.url.path)       // "/api/v3/pet/12"
+    console.log(request.key)         // "/pet/{petId}"
     console.log(request.operationId) // "getPetById" defined in OpenAPI spec
+    console.log(request.url.path)    // "/api/v3/pet/12"
 })
 ```
 

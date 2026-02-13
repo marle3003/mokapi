@@ -49,6 +49,8 @@ type Host interface {
 	Unlock()
 
 	Store() Store
+
+	Cwd() string
 }
 
 type Logger interface {
