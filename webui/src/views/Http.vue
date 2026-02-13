@@ -106,7 +106,7 @@ function getConsoleContent() {
     <section class="py-5 text-center">
       <div class="container">
         <h2>Why Mock HTTP and REST APIs?</h2>
-        <p class="lead mb-0">
+        <p class="lead mb-0 text">
           Modern applications depend on many external services.
           Mokapi lets you mock HTTP and OpenAPI-based APIs so development
           and testing are never blocked by missing or unstable backends.
@@ -120,18 +120,18 @@ function getConsoleContent() {
         <div class="row g-4 mt-4">
         <div class="col-md-4">
           <span class="bi bi-diagram-3 display-5 mb-3 d-block icon"></span>
-          <h3 class="h5">Mock APIs with OpenAPI</h3>
+          <h3>Mock APIs with OpenAPI</h3>
           <p>Instantly spin up REST API mocks from OpenAPI specifications with validation and auto-generated responses.</p>
         </div>
         <div class="col-md-4">
           <span class="bi bi-lightning-charge display-5 mb-3 d-block icon"></span>
-          <h3 class="h5">Dynamic Responses with Scripts</h3>
+          <h3>Dynamic Responses with Scripts</h3>
           <p>Use Mokapi Scripts to simulate logic, conditional flows, or edge cases without coding a backend.</p>
         </div>
         <div class="col-md-4">
           <span class="bi bi-git display-5 mb-3 d-block icon"></span>
-          <h3 class="h5">CI/CD Ready</h3>
-          <p>Integrate API mocks directly into your pipelines—speed up tests, reduce flakiness, and keep development moving.</p>
+          <h3>CI/CD Ready</h3>
+          <p>Integrate API mocks directly into your pipelines to accelerate testing, reduce instability, and drive development forward.</p>
         </div>
       </div>
       </div>
@@ -140,7 +140,7 @@ function getConsoleContent() {
     <section class="py-5">
       <div class="container">
         <h2>Explore Mokapi Features</h2>
-        <p class="lead fst-italic text-center mb-4">
+        <p class="lead text-center mb-4 text">
           Advanced capabilities that help you scale, automate, and debug HTTP API testing.
         </p>
         <div class="row row-cols-1 row-cols-md-2 g-4">
@@ -200,7 +200,7 @@ function getConsoleContent() {
       <div class="container text-center mb-5">
         <div class="row">
           <h2>See Mokapi in Action</h2>
-          <p class="lead mb-4">Go beyond static mocks—customize, debug, and explore your APIs with powerful built-in tools.</p>
+          <p class="lead mb-4 text">Go beyond static mocks—customize, debug, and explore your APIs with powerful built-in tools.</p>
         </div>
 
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-3">
@@ -239,7 +239,7 @@ function getConsoleContent() {
       <div class="container">
         <div class="row text-center mb-4">
           <h2>Quick Demo</h2>
-          <p class="lead mb-0">
+          <p class="lead mb-0 text">
             Spin up a fully working HTTP mock from an OpenAPI spec with a single command.
           </p>
         </div>

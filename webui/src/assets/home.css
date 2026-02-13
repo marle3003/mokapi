@@ -15,7 +15,7 @@
 }
 .home h3 {
   line-height: 1.6;
-  font-size: 1.5rem;
+  font-size: 1.3rem;
 }
 .home .hero-title {
   margin-top: 5rem;
@@ -208,4 +208,9 @@ section.feature button {
 
 .home img:not(.no-dialog) {
   cursor: pointer;
+}
+
+.home .text {
+  max-width: 750px;
+  margin-inline: auto;
 }
