@@ -438,6 +438,26 @@
                 "path": "/docs/javascript-api/mokapi-encoding/base64-decode"
               }
             ]
+          },
+          {
+            "label": "mokapi/file",
+            "items": [
+              {
+                "label": "read",
+                "source": "javascript-api/mokapi-file/read.md",
+                "path": "/docs/javascript-api/mokapi-file/read"
+              },
+              {
+                "label": "writeString",
+                "source": "javascript-api/mokapi-file/write-string.md",
+                "path": "/docs/javascript-api/mokapi-file/write-string"
+              },
+              {
+                "label": "appendString",
+                "source": "javascript-api/mokapi-file/append-string.md",
+                "path": "/docs/javascript-api/mokapi-file/append-string"
+              }
+            ]
           }
         ]
       }

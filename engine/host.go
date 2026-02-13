@@ -284,8 +284,8 @@ func (sh *scriptHost) OpenFile(path string, hint string) (*dynamic.Config, error
 			if len(hint) > 0 {
 				path = filepath.Join(hint, path)
 			} else {
-				p := getScriptPath(sh.file.Info.Kernel().Url)
-				path = filepath.Join(filepath.Dir(p), path)
+				cwd := sh.Cwd()
+				path = filepath.Join(cwd, path)
 			}
 		}
 
@@ -344,6 +344,14 @@ func (sh *scriptHost) Unlock() {
 
 func (sh *scriptHost) Store() common.Store {
 	return sh.engine.store
+}
+
+func (sh *scriptHost) Cwd() string {
+	u := sh.file.Info.Kernel().Url
+	if len(u.Path) > 0 {
+		return filepath.Dir(u.Path)
+	}
+	return filepath.Dir(u.Opaque)
 }
 
 func getScriptPath(u *url.URL) string {
