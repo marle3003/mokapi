@@ -111,7 +111,7 @@ export default async function () {
                 return `https://backend1.example.com${request.url.path}?${request.url.query}`;
             }
             case 'backend-2': {
-                return `https://backend1.example.com${request.url.path}?${request.url.query}`;
+                return `https://backend2.example.com${request.url.path}?${request.url.query}`;
             }
             default:
                 return undefined;
