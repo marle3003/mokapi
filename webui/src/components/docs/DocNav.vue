@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useFileResolver } from '@/composables/file-resolver';
 import { useRoute } from '@/router';
-import { computed } from 'vue';
+import { computed, nextTick, useTemplateRef, watch } from 'vue';
 import NavDocItem from '../NavDocItem.vue';
 
 const props = defineProps<{
@@ -21,10 +21,28 @@ const root = computed(() => {
 const breadcrumb = computed(() => {
   return getBreadcrumb(props.config, route)
 })
+
+const sidebar = useTemplateRef('sidebar')
+watch(
+  () => route.fullPath,
+  async () => {
+    await nextTick()
+
+    const el = sidebar.value?.querySelector(
+      `a[href="${route.fullPath}"]`
+    )
+
+    el?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    })
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
-  <nav class="ps-2 pt-3 pt-md-0 pe-2 nav-tree" aria-label="Sidebar">
+  <nav class="ps-2 pt-3 pt-md-0 pe-2 nav-tree" aria-label="Sidebar" ref="sidebar">
     <span v-if="root" class="nav-title px-3">{{ root.label }}</span>
     <hr class="m-2" />
     <ul class="nav nav-pills root flex-column mb-auto px-3" v-if="root?.items">
