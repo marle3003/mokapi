@@ -139,9 +139,8 @@ func TestModule_Open(t *testing.T) {
 				host.CwdFunc = func() string {
 					return dir
 				}
-				f, err := os.OpenFile(filepath.Join(dir, "foo.txt"), os.O_RDWR|os.O_CREATE, os.ModeExclusive)
+				err := os.WriteFile(filepath.Join(dir, "foo.txt"), []byte("initial"), 0444)
 				r.NoError(t, err)
-				defer f.Close()
 
 				_, err = vm.RunString(`
 					const m = require("mokapi/file")
