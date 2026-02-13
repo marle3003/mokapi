@@ -77,7 +77,7 @@ function showImage(evt: MouseEvent) {
           Kafka-based systems are difficult to test reliably.
         </p>
 
-        <p>
+        <p class="text">
           Real Kafka clusters are heavy, slow to spin up, and hard to control in tests.
           Mokapi removes this complexity by simulating Kafka behavior without brokers,
           Zookeeper, or infrastructure setup.
@@ -91,17 +91,17 @@ function showImage(evt: MouseEvent) {
 
         <div class="row g-4 mt-4">
           <div class="col-md-4">
-            <h3 class="h5">1. Define Topics</h3>
+            <h3>1. Define Topics</h3>
             <p>Describe topics and message schemas using AsyncAPI.</p>
           </div>
 
           <div class="col-md-4">
-            <h3 class="h5">2. Run Mokapi</h3>
+            <h3>2. Run Mokapi</h3>
             <p>Start Mokapi locally or in CI to simulate Kafka producers and consumers.</p>
           </div>
 
           <div class="col-md-4">
-            <h3 class="h5">3. Test & Observe</h3>
+            <h3>3. Test & Observe</h3>
             <p>Validate messages and inspect traffic in real time.</p>
           </div>
         </div>
@@ -115,7 +115,7 @@ function showImage(evt: MouseEvent) {
         <div class="row g-4 mt-4">
           <div class="col-md-4">
             <span class="bi bi-kanban display-5 mb-3 d-block icon"></span>
-            <h3 class="h5">AsyncAPI-Based Topics</h3>
+            <h3>AsyncAPI-Based Topics</h3>
             <p>
               Define Kafka topics and payloads declaratively using AsyncAPI,
               ensuring your mocks stay aligned with production contracts.
@@ -124,7 +124,7 @@ function showImage(evt: MouseEvent) {
 
           <div class="col-md-4">
             <span class="bi bi-shield-check display-5 mb-3 d-block icon"></span>
-            <h3 class="h5">Message Validation</h3>
+            <h3>Message Validation</h3>
             <p>
               Catch invalid messages early by validating payloads against JSON Schema
               or Avro before they reach real consumers.
@@ -133,7 +133,7 @@ function showImage(evt: MouseEvent) {
 
           <div class="col-md-4">
             <span class="bi bi-git display-5 mb-3 d-block icon"></span>
-            <h3 class="h5">CI-Friendly Testing</h3>
+            <h3>CI-Friendly Testing</h3>
             <p>
               Replace fragile Kafka test setups with fast, deterministic simulations
               in your CI/CD pipelines.
@@ -152,7 +152,7 @@ function showImage(evt: MouseEvent) {
           <div class="col">
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
-                <h3 class="h5">Test Microservices</h3>
+                <h3>Test Microservices</h3>
                 <p>
                   Simulate incoming Kafka events to verify how services react to
                   different message types and edge cases.
@@ -169,7 +169,7 @@ function showImage(evt: MouseEvent) {
           <div class="col">
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
-                <h3 class="h5">Validate Producers</h3>
+                <h3>Validate Producers</h3>
                 <p>
                   Ensure producer applications emit valid messages before they reach
                   downstream consumers.
@@ -186,7 +186,7 @@ function showImage(evt: MouseEvent) {
           <div class="col">
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body">
-                <h3 class="h5">Simulate Workflows</h3>
+                <h3>Simulate Workflows</h3>
                 <p>
                   Mock complex message flows across multiple topics to test
                   end-to-end event-driven systems.
@@ -207,7 +207,7 @@ function showImage(evt: MouseEvent) {
     <section class="py-5">
       <div class="container text-center">
         <h2>Inspect Kafka Traffic in Real Time</h2>
-        <p class="lead">
+        <p class="lead text">
           Visualize topics, messages, and consumer activity using Mokapi’s dashboard.
         </p>
 
@@ -222,7 +222,7 @@ function showImage(evt: MouseEvent) {
     <section class="py-5 text-center">
       <div class="container">
         <h2>Test Kafka Without Running Kafka</h2>
-        <p class="lead">
+        <p class="lead text">
           Mock topics, validate events, and test distributed systems faster.
         </p>
 

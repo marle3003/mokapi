@@ -92,7 +92,7 @@ function showImage(evt: MouseEvent) {
     <section class="py-5 text-center">
       <div class="container">
         <h2>Why Mocking Email Matters</h2>
-        <p class="lead">
+        <p class="lead text">
           Email is often the last untested part of an application.
           Mokapi lets you validate email flows just like any other API or message stream.
         </p>
@@ -106,7 +106,7 @@ function showImage(evt: MouseEvent) {
 
           <div class="col-md-4">
             <span class="bi bi-envelope-paper display-5 mb-3 d-block icon"></span>
-            <h3 class="h5">Mock SMTP & IMAP</h3>
+            <h3>Mock SMTP & IMAP</h3>
             <p>
               Simulate outgoing and incoming mail to test real user flows without external dependencies.
             </p>
@@ -117,7 +117,7 @@ function showImage(evt: MouseEvent) {
 
           <div class="col-md-4">
             <span class="bi bi-arrow-right-circle display-5 mb-3 d-block icon"></span>
-            <h3 class="h5">Forward Emails Safely</h3>
+            <h3>Forward Emails Safely</h3>
             <p>
               Send emails to a specific test address instead of the real recipient while preserving all content.
             </p>
@@ -128,13 +128,46 @@ function showImage(evt: MouseEvent) {
           
           <div class="col-md-4">
             <span class="bi bi-git display-5 mb-3 d-block icon"></span>
-            <h3 class="h5">CI/CD Friendly</h3>
+            <h3>CI/CD Friendly</h3>
             <p>Validate critical workflows automatically on every commit or release.</p>
             <p class="fst-italic mb-0">
               Reduce flaky tests and prevent deployment of broken email functionality.
             </p>
           </div>
 
+        </div>
+      </div>
+    </section>
+
+    <section class="py-5">
+      <div class="container">
+        <div class="row">
+          <div class="col-12 justify-content-center">
+            <h2>Set Up a Fake SMTP Server in Seconds</h2>
+            <p class="lead text-center text">Configure inboxes, routing, and forwarding with a simple file or script. No infrastructure required.</p>
+
+            <div class="code">
+              <div class="tab justify-content-center">
+                <div class="nav code-tabs" id="tab-1" role="tablist">
+                  <button class="active" id="tab-1-CLI" data-bs-toggle="tab" data-bs-target="#tabPanel-1-CLI" type="button" role="tab" aria-controls="tabPanel-1-CLI" aria-selected="true">
+                    Configuration
+                  </button>
+                  <button id="tab-1-File" data-bs-toggle="tab" data-bs-target="#tabPanel-1-File" type="button" role="tab" aria-controls="tabPanel-1-File" aria-selected="false">
+                    JavaScript
+                  </button>
+                  <div class="tabs-border"></div>
+                </div>
+              </div>
+              <div class="tab-content code">
+                <div class="tab-pane fade show active" id="tabPanel-1-CLI" role="tabpanel" aria-labelledby="tab-1-CLI">
+                  <pre v-highlightjs="config"><code class="application/yaml"></code></pre>
+                </div>
+                <div class="tab-pane fade" id="tabPanel-1-File" role="tabpanel" aria-labelledby="tab-1-File">
+                  <pre v-highlightjs="script"><code class="javascript"></code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -240,46 +273,13 @@ function showImage(evt: MouseEvent) {
         </div>
       </div>
     </section>
-
-    <section class="py-5">
-      <div class="container">
-        <div class="row">
-          <div class="col-12 justify-content-center">
-            <h2>Set Up a Fake SMTP Server in Seconds</h2>
-            <p class="lead text-center">Configure inboxes, routing, and forwarding with a simple file or script. No infrastructure required.</p>
-
-            <div class="code">
-              <div class="tab justify-content-center">
-                <div class="nav code-tabs" id="tab-1" role="tablist">
-                  <button class="active" id="tab-1-CLI" data-bs-toggle="tab" data-bs-target="#tabPanel-1-CLI" type="button" role="tab" aria-controls="tabPanel-1-CLI" aria-selected="true">
-                    Configuration
-                  </button>
-                  <button id="tab-1-File" data-bs-toggle="tab" data-bs-target="#tabPanel-1-File" type="button" role="tab" aria-controls="tabPanel-1-File" aria-selected="false">
-                    Javascript
-                  </button>
-                  <div class="tabs-border"></div>
-                </div>
-              </div>
-              <div class="tab-content code">
-                <div class="tab-pane fade show active" id="tabPanel-1-CLI" role="tabpanel" aria-labelledby="tab-1-CLI">
-                  <pre v-highlightjs="config"><code class="application/yaml"></code></pre>
-                </div>
-                <div class="tab-pane fade" id="tabPanel-1-File" role="tabpanel" aria-labelledby="tab-1-File">
-                  <pre v-highlightjs="script"><code class="javascript"></code></pre>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
     
     <section class="py-5">
       <div class="container">
         <div class="row">
           <div class="col-12">
             <h2>Inspect and Debug Sent Emails</h2>
-            <p class="lead mb-5 text-center">
+            <p class="lead mb-5 text-center text">
               View captured messages, headers, and attachments directly in Mokapi’s dashboard for fast debugging.
             </p>
             <img src="/dashboard-smtp.png" alt="Mokapi dashboard displaying received emails via the built-in SMTP server." class="img-fluid rounded shadow" />
@@ -291,7 +291,7 @@ function showImage(evt: MouseEvent) {
     <section class="py-5 text-center">
       <div class="container">
         <h2>Mock Email Like Any Other Dependency</h2>
-        <p class="lead mb-4">
+        <p class="lead mb-4 text">
           Test full email workflows without external mail servers.
         </p>
         <a href="/docs/mail/overview" class="btn btn-lg btn-outline-primary">Get Started</a>

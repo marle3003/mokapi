@@ -103,7 +103,6 @@ function showImage(evt: MouseEvent) {
       </div>
     </section>
 
-    <!-- How Mokapi Fits -->
     <section class="py-5">
       <div class="container">
         <div class="row align-items-center">
@@ -135,32 +134,32 @@ function showImage(evt: MouseEvent) {
     <section class="py-5">
       <div class="container text-center">
 
-        <h2 class="h4 mb-3">Why Teams Use Mokapi</h2>
-        <p class="lead fst-italic mb-4">
+        <h2 class="mb-3">Why Teams Use Mokapi</h2>
+        <p class="lead fst-italic mb-4 text">
           Mokapi helps teams move faster by removing external dependencies from development and testing.
         </p>
 
         <div class="row g-4 mt-4">
           <div class="col-md-4">
             <span class="bi bi-rocket-takeoff display-5 mb-3 d-block icon"></span>
-            <h3 class="h5">Develop Without Waiting</h3>
-            <p class="text-muted">
+            <h3>Develop Without Waiting</h3>
+            <p>
               Mock HTTP APIs, Kafka topics, LDAP directories, or mail servers
               so development never blocks on missing or unstable systems.
             </p>
           </div>
           <div class="col-md-4">
             <span class="bi bi-check2-square display-5 mb-3 d-block icon"></span>
-            <h3 class="h5">Test Real Workflows</h3>
-            <p class="text-muted">
+            <h3>Test Real Workflows</h3>
+            <p>
               Simulate realistic system behavior across protocols
               and validate integrations with confidence.
             </p>
           </div>
           <div class="col-md-4">
             <span class="bi bi-gear display-5 mb-3 d-block icon"></span>
-            <h3 class="h5">Automate Everywhere</h3>
-            <p class="text-muted">
+            <h3>Automate Everywhere</h3>
+            <p>
               Run Mokapi locally, in CI pipelines, or test environments
               to automate API testing and speed up feedback loops.
             </p>
@@ -175,7 +174,7 @@ function showImage(evt: MouseEvent) {
         <p class="lead mb-3">
           Mokapi helps teams move quickly without sacrificing confidence or stability.
         </p>
-        <p class="lead mb-0">
+        <p class="mb-0 text">
           By mocking and simulating APIs across protocols, you can automate tests,
           reduce flaky integrations, and deliver reliable software — even when
           external systems are unavailable or evolving.
@@ -183,23 +182,23 @@ function showImage(evt: MouseEvent) {
       </div>
     </section>
 
-    <section class="py-5">
+    <section class="py-5 text-center">
       <div class="container">
 
-        <h2 class="text-center mb-3">Mock More Than Just HTTP</h2>
-        <p class="lead fst-italic text-center mb-4">
+        <h2 class="mb-3">Mock More Than Just HTTP</h2>
+        <p class="lead mb-4 text">
           Mokapi supports multiple protocols, allowing you to test complete systems —
           not just individual REST endpoints.
         </p>
 
-        <div class="row g-4">
+        <div class="row g-4 text-start">
 
           <div class="col-sm-3">
             <div class="card h-100 shadow-sm border-0 accented">
               <div class="card-inner">
                 <router-link :to="{path: '/http'}" class="d-flex flex-column h-100">
                   <div class="card-body d-flex flex-column">
-                    <h5 class="card-title fw-bold mb-3">Mock REST APIs</h5>
+                    <h3 class="card-title mt-0 mb-3">Mock REST APIs</h3>
                     <p class="card-text">
                       Simulate REST endpoints to develop and test clients
                       without waiting for real backend services.
@@ -219,7 +218,7 @@ function showImage(evt: MouseEvent) {
               <div class="card-inner">
                 <router-link :to="{path: '/kafka'}" class="d-flex flex-column h-100">
                   <div class="card-body d-flex flex-column">
-                    <h5 class="card-title fw-bold mb-3">Simulate Kafka Events</h5>
+                    <h3 class="card-title mt-0 mb-3">Simulate Kafka Events</h3>
                     <p class="card-text">
                       Mock Kafka topics and message streams to test
                       event-driven systems and service interactions.
@@ -238,7 +237,7 @@ function showImage(evt: MouseEvent) {
               <div class="card-inner">
                 <router-link :to="{path: '/ldap'}" class="d-flex flex-column h-100">
                   <div class="card-body d-flex flex-column">
-                    <h5 class="card-title fw-bold mb-3">Mock LDAP Services</h5>
+                    <h3 class="card-title mt-0 mb-3">Mock LDAP Services</h3>
                     <p class="card-text">
                       Simulate directory and authentication services
                       to test user access, roles, and permissions safely.
@@ -257,7 +256,7 @@ function showImage(evt: MouseEvent) {
               <div class="card-inner">
                 <router-link :to="{path: '/mail'}" class="d-flex flex-column h-100">
                   <div class="card-body d-flex flex-column">
-                    <h5 class="card-title fw-bold mb-3">SMTP Email Testing</h5>
+                    <h3 class="card-title mt-0 mb-3">SMTP Email Testing</h3>
                     <p class="card-text">
                       Test email workflows by simulating SMTP and IMAP servers
                       without sending real messages.
@@ -278,12 +277,12 @@ function showImage(evt: MouseEvent) {
     <section class="py-5 text-center">
       <div class="container">
         <h2 class="mb-3">Built for Reliable Development and Testing</h2>
-        <p class="lead mb-3">
+        <p class="lead mb-3 text">
           Mocking APIs across protocols is only the beginning.
           Mokapi is designed to help teams prevent bugs, reduce external dependencies,
           and create stable development and test environments.
         </p>
-        <p class="lead mb-0">
+        <p class="mb-0 text">
           This is made possible through powerful core features —
           including JavaScript-based logic, configuration patching,
           observability, and realistic data generation.
@@ -295,7 +294,7 @@ function showImage(evt: MouseEvent) {
       <div class="container">
 
         <h2 class="mb-3">Core Features</h2>
-        <p class="lead fst-italic">
+        <p class="lead text">
           Powerful capabilities that make Mokapi flexible, controllable, and reliable in any environment.
         </p>
 
@@ -432,7 +431,7 @@ function showImage(evt: MouseEvent) {
     <section class="py-5">
       <div class="container">
         <h2 class="mb-3">Use Cases & Tutorials</h2>
-        <p class="lead fst-italic text-center">
+        <p class="lead text-center text">
           Explore practical ways to mock APIs and services across protocols. Mokapi fits seamlessly in local development, CI pipelines, or cloud environments.
         </p>
 
@@ -514,7 +513,7 @@ function showImage(evt: MouseEvent) {
       <div class="container">
         <div class="row">
           <h2 class="mb-3">See Mokapi in Action</h2>
-          <p class="lead fst-italic mb-4 text-center">Explore how easily you can mock APIs and generate realistic data for testing—no backend required.</p>
+          <p class="lead mb-4 text-center text">Explore how easily you can mock APIs and generate realistic data for testing</p>
         </div>
 
         <div class="d-flex content align-items-start align-items-stretch">

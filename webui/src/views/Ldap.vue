@@ -87,10 +87,10 @@ function showImage(evt: MouseEvent) {
     <section class="py-5 text-center">
       <div class="container">
         <h2>Why Mock LDAP Directory Services?</h2>
-        <p class="lead fst-italic mb-0">
+        <p class="lead mb-0 text">
           LDAP is critical for authentication, but difficult to test reliably.
         </p>
-        <p class="mt-3">
+        <p class="mt-3 text">
           Mokapi lets you simulate directory services, authentication flows,
           and edge cases without setting up or maintaining a real LDAP server.
         </p>
@@ -100,7 +100,7 @@ function showImage(evt: MouseEvent) {
     <section class="py-5 text-center">
       <div class="container">
         <h2>What You Can Do With Mokapi LDAP</h2>
-        <p class="lead fst-italic mb-4">
+        <p class="lead mb-4 text">
           Supports full LDAP operations including authentication, queries,
           and directory modifications.
         </p>
@@ -108,7 +108,7 @@ function showImage(evt: MouseEvent) {
         <div class="row g-4 mt-4">
           <div class="col-md-4">
             <span class="bi bi-person-badge display-5 mb-3 d-block icon"></span>
-            <h3 class="h5">Test Authentication Flows</h3>
+            <h3>Test Authentication Flows</h3>
             <p>
               Validate login flows exactly as your application expects,
               including credentials, group membership, and permissions.
@@ -116,7 +116,7 @@ function showImage(evt: MouseEvent) {
           </div>
           <div class="col-md-4">
             <span class="bi bi-database display-5 mb-3 d-block icon"></span>
-            <h3 class="h5">Simulate Directory Operations</h3>
+            <h3>Simulate Directory Operations</h3>
              <p>
               Mock realistic directory interactions such as searches,
               updates, and entry management to match real-world usage.
@@ -124,7 +124,7 @@ function showImage(evt: MouseEvent) {
           </div>
           <div class="col-md-4">
             <span class="bi bi-git display-5 mb-3 d-block icon"></span>
-            <h3 class="h5">Control Behavior & Edge Cases</h3>
+            <h3>Control Behavior & Edge Cases</h3>
             <p>
               Simulate failures, invalid credentials, latency, and custom responses
               to test how your system behaves under stress.
@@ -269,7 +269,7 @@ function showImage(evt: MouseEvent) {
         <div class="row">
           <div class="col-12">
             <h2>Inspect Authentication Flows</h2>
-            <p class="lead mb-4">
+            <p class="lead mb-4 text">
               Understand exactly how clients interact with your LDAP mock.
             </p>
             <img src="/dashboard-ldap-mock.png" class="img-fluid rounded shadow" alt="LDAP requests and responses in the Mokapi dashboard" />
@@ -283,10 +283,10 @@ function showImage(evt: MouseEvent) {
         <div class="row">
           <div class="col-12 justify-content-center">
             <h2>Define Realistic LDAP Data with LDIF</h2>
-            <p class="lead mb-2 text-center">
+            <p class="lead mb-2 text-center text">
               Define users, groups, and attributes using standard LDIF files.
             </p>
-            <p class="fst-italic text-center mb-4">
+            <p class="text-center mb-4 text">
               Reuse existing directory data and mirror production-like structures without manual setup.
             </p>
             <div class="mx-auto" style="max-width: 900px;">
