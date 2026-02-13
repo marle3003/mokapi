@@ -73,7 +73,7 @@ func (m *Module) resolve(f *dynamic.Config) (any, error) {
 func (m *Module) Read(path string) (string, error) {
 	p, err := m.resolvePath(path)
 	if err != nil {
-		panic(fmt.Sprintf("failed to write to file: %s", err))
+		return "", err
 	}
 	f, err := os.Open(p)
 	if err != nil {
@@ -88,14 +88,14 @@ func (m *Module) Read(path string) (string, error) {
 	return string(b), nil
 }
 
-func (m *Module) WriteString(path, s string) {
+func (m *Module) WriteString(path, s string) error {
 	p, err := m.resolvePath(path)
 	if err != nil {
 		panic(fmt.Sprintf("failed to write to file: %s", err))
 	}
 	f, err := os.Create(p)
 	if err != nil {
-		panic(fmt.Sprintf("failed to write to file: %s", err))
+		return fmt.Errorf("failed to write to file: %s", err)
 	}
 	defer func() {
 		_ = f.Close()
@@ -103,11 +103,12 @@ func (m *Module) WriteString(path, s string) {
 
 	_, err = f.WriteString(s)
 	if err != nil {
-		panic(fmt.Sprintf("failed to write to file: %s", err))
+		return fmt.Errorf("failed to write to file: %s", err)
 	}
+	return nil
 }
 
-func (m *Module) AppendString(path, s string) {
+func (m *Module) AppendString(path, s string) error {
 	p, err := m.resolvePath(path)
 	if err != nil {
 		panic(fmt.Sprintf("failed to write to file: %s", err))
@@ -115,7 +116,7 @@ func (m *Module) AppendString(path, s string) {
 	f, err := os.OpenFile(p,
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o644)
 	if err != nil {
-		panic(fmt.Sprintf("failed to append to file: %s", err))
+		return fmt.Errorf("failed to append to file: %s", err)
 	}
 	defer func() {
 		_ = f.Close()
@@ -123,8 +124,9 @@ func (m *Module) AppendString(path, s string) {
 
 	_, err = f.WriteString(s)
 	if err != nil {
-		panic(fmt.Sprintf("failed to append string: %v", err))
+		return fmt.Errorf("failed to append string: %v", err)
 	}
+	return nil
 }
 
 func (m *Module) resolvePath(path string) (string, error) {

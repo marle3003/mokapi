@@ -99,6 +99,21 @@ func TestModule_Open(t *testing.T) {
 			},
 		},
 		{
+			name: "open file not exists",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				dir := t.TempDir()
+				host.CwdFunc = func() string {
+					return dir
+				}
+
+				_, err := vm.RunString(`
+					const m = require("mokapi/file")
+					m.read('foo.txt');
+				`)
+				r.ErrorContains(t, err, "foo.txt: no such file or directory")
+			},
+		},
+		{
 			name: "write file",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				dir := t.TempDir()
@@ -115,6 +130,44 @@ func TestModule_Open(t *testing.T) {
 				b, err := os.ReadFile(filepath.Join(dir, "foo.txt"))
 				r.NoError(t, err)
 				r.Equal(t, "Hello World", string(b), dir)
+			},
+		},
+		{
+			name: "write file with error",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				dir := t.TempDir()
+				host.CwdFunc = func() string {
+					return dir
+				}
+				f, err := os.OpenFile(filepath.Join(dir, "foo.txt"), os.O_RDWR|os.O_CREATE, os.ModeExclusive)
+				r.NoError(t, err)
+				defer f.Close()
+
+				_, err = vm.RunString(`
+					const m = require("mokapi/file")
+					m.writeString('foo.txt', 'Hello World');
+				`)
+				r.ErrorContains(t, err, "failed to write to file: open")
+			},
+		},
+		{
+			name: "write file catch error",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				dir := t.TempDir()
+				host.CwdFunc = func() string {
+					return dir
+				}
+				f, err := os.OpenFile(filepath.Join(dir, "foo.txt"), os.O_RDWR|os.O_CREATE, os.ModeExclusive)
+				r.NoError(t, err)
+				defer f.Close()
+
+				_, err = vm.RunString(`
+					const m = require("mokapi/file")
+					try {
+						m.writeString('foo.txt', 'Hello World');
+					} catch {}
+				`)
+				r.NoError(t, err)
 			},
 		},
 		{
