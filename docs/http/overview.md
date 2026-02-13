@@ -317,13 +317,13 @@ Mokapi handles this translation automatically - you don't need to modify your sp
 
 ### What This Means for You
 
-**✅ Your Swagger 2.0 specs work immediately** - no conversion needed  
-**✅ Reference resolution handled automatically** - Mokapi translates between formats  
-**✅ Schema paths differ** - Mokapi transforms the path
+✅ Your Swagger 2.0 specs work immediately - no conversion needed  
+✅ Reference resolution handled automatically - Mokapi translates between formats  
+✅ Schema paths differ - Mokapi transforms the path
 
 ## Best Practices
 
-### ✅ Start with Auto-Generated Data
+### Start with Auto-Generated Data
 
 Let Mokapi handle the basics. Adjust only data for you specific need.
 
@@ -340,11 +340,11 @@ export default function() {
 }
 ```
 
-### ✅ Version Your Specifications
+### Version Your Specifications
 
 Keep your OpenAPI specs and Mokapi Scripts in version control alongside your code.
 
-### ✅ Use Scripts for Edge Cases
+### Use Scripts for Edge Cases
 
 Focus your scripts on:
 - Error scenarios (404, 500, validation errors)
