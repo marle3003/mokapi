@@ -139,12 +139,10 @@ func TestModule_Open(t *testing.T) {
 				host.CwdFunc = func() string {
 					return dir
 				}
-				err := os.WriteFile(filepath.Join(dir, "foo.txt"), []byte("initial"), 0444)
-				r.NoError(t, err)
 
-				_, err = vm.RunString(`
+				_, err := vm.RunString(`
 					const m = require("mokapi/file")
-					m.writeString('foo.txt', 'Hello World');
+					m.writeString('.', 'Hello World');
 				`)
 				r.ErrorContains(t, err, "failed to write to file: open")
 			},
