@@ -347,14 +347,26 @@ This approach:
 ### Example: Modifying a generated response
 
 ```javascript
-import { on, sleep } from 'mokapi'
+import { on } from 'mokapi'
 
 export default function() {
     on('http', (request, response) => {
-        if (request.key === '/pet/{petId}' && request.path.petId === 10) {
+        if (request.key === '/pet/{petId}') {
+
             // Modify only the relevant part of the generated response
-            response.data.name = 'Garfield'
+            if (request.path.petId === 10) {
+                response.data.name = 'Garfield'
+                return
+            }
+            // Safely switch to a different OpenAPI response
+            if (request.path.petId === 11) {
+                response.rebuild(404);
+                response.data.message = 'Pet not found'
+            }
         }
     })
 }
 ```
+
+When switching the response status code, use [response.rebuild()](/docs/javascript-api/mokapi/eventhandler/httpresponse.md) to regenerate
+a valid response based on the OpenAPI specification before modifying specific fields.

@@ -80,8 +80,8 @@ and headers may no longer match the OpenAPI specification.
 
 To address this, `HttpResponse` provides a helper function:
 
-```typescript title=Definition
-function rebuild(statusCode?: number, contentType?: string): void {}
+```typescript tab=Definition
+rebuild(statusCode?: number, contentType?: string): void
 ```
 
 This function rebuilds the entire HTTP response using the OpenAPI response

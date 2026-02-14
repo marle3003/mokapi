@@ -186,6 +186,23 @@ export interface HttpResponse {
 
     /** Data will be encoded with the OpenAPI response definition. */
     data: any;
+
+    /**
+     * Rebuilds the entire HTTP response using the OpenAPI response definition for the given status code and content type
+     * @example
+     * import { on } from 'mokapi'
+     *
+     * export default function() {
+     *     on('http', (request, response) => {
+     *         if (request.path.petId === 10) {
+     *             // Switch to a different OpenAPI response.
+     *             response.rebuild(404, 'application/json')
+     *             response.data.message = 'Pet not found'
+     *         }
+     *     })
+     * }
+     * */
+    rebuild: (statusCode?: number, contentType?: string) => void;
 }
 
 /**
