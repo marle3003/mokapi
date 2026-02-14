@@ -785,7 +785,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "no configuration was found for HTTP status code 415, https://swagger.io/docs/specification/describing-responses\n", rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				r := args[1].(*common.EventResponse)
+				r := args[1].(*common.HttpEventResponse)
 				r.StatusCode = http.StatusUnsupportedMediaType
 				return nil
 			},
@@ -804,7 +804,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "no configuration was found for HTTP status code 415, https://swagger.io/docs/specification/describing-responses\n", rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				r := args[1].(*common.EventResponse)
+				r := args[1].(*common.HttpEventResponse)
 				r.StatusCode = http.StatusUnsupportedMediaType
 				return nil
 			},
@@ -825,7 +825,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "text/plain", rr.Header().Get("Content-Type"))
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				r := args[1].(*common.EventResponse)
+				r := args[1].(*common.HttpEventResponse)
 				r.Headers["Content-Type"] = "text/plain"
 				r.Body = "Hello"
 				return nil
@@ -849,8 +849,8 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, `{"foo":"bar"}`, rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.EventRequest)
-				res := args[1].(*common.EventResponse)
+				req := args[0].(*common.HttpEventRequest)
+				res := args[1].(*common.HttpEventResponse)
 				res.Data = req.Body
 				return nil
 			},
@@ -871,8 +871,8 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "", rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.EventRequest)
-				res := args[1].(*common.EventResponse)
+				req := args[0].(*common.HttpEventRequest)
+				res := args[1].(*common.HttpEventResponse)
 				res.Data = req.Body
 				return nil
 			},
@@ -896,8 +896,8 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, `"123"`, rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.EventRequest)
-				res := args[1].(*common.EventResponse)
+				req := args[0].(*common.HttpEventRequest)
+				res := args[1].(*common.HttpEventResponse)
 				res.Data = req.Path["id"]
 				return nil
 			},
@@ -921,8 +921,8 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, `"123"`, rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.EventRequest)
-				res := args[1].(*common.EventResponse)
+				req := args[0].(*common.HttpEventRequest)
+				res := args[1].(*common.HttpEventResponse)
 				res.Data = req.Path["id"]
 				return nil
 			},
@@ -946,7 +946,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, http.Header{"Content-Type": []string{"application/json"}, "Foo": []string{"12345"}}, rr.Header())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				res := args[1].(*common.EventResponse)
+				res := args[1].(*common.HttpEventResponse)
 				res.Headers["foo"] = "12345"
 				return nil
 			},
@@ -976,7 +976,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, map[string]string{"Content-Type": "application/json", "Foobaryuh": "12345"}, log.Response.Headers)
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				res := args[1].(*common.EventResponse)
+				res := args[1].(*common.HttpEventResponse)
 				res.Headers["FooBarYuh"] = "12345"
 				return nil
 			},
@@ -998,11 +998,11 @@ func TestHandler_Event(t *testing.T) {
 				r := httptest.NewRequest(http.MethodGet, "http://localhost/foo/123", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
-				var er *common.EventRequest
+				var er *common.HttpEventRequest
 				b := rr.Body.Bytes()
 				err := json.Unmarshal(b, &er)
 				require.NoError(t, err)
-				require.Equal(t, &common.EventRequest{
+				require.Equal(t, &common.HttpEventRequest{
 					Method: http.MethodGet,
 					Url: common.Url{
 						Scheme: "http",
@@ -1023,8 +1023,8 @@ func TestHandler_Event(t *testing.T) {
 				}, er)
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.EventRequest)
-				res := args[1].(*common.EventResponse)
+				req := args[0].(*common.HttpEventRequest)
+				res := args[1].(*common.HttpEventResponse)
 				res.Data = req
 				return nil
 			},
@@ -1047,7 +1047,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, http.StatusOK, rr.Code, rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				res := args[1].(*common.EventResponse)
+				res := args[1].(*common.HttpEventResponse)
 				res.Headers["Content-Type"] = "text/plain"
 				res.Body = "hello world"
 				return nil
@@ -1071,7 +1071,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "response has no definition for content type: text/plain\n", rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				res := args[1].(*common.EventResponse)
+				res := args[1].(*common.HttpEventResponse)
 				res.Headers["Content-Type"] = "text/plain"
 				return nil
 			},
@@ -1094,7 +1094,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "invalid header 'Content-Type': expected a string or array of strings, but received Integer\n", rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				res := args[1].(*common.EventResponse)
+				res := args[1].(*common.HttpEventResponse)
 				res.Headers["Content-Type"] = 123
 				return nil
 			},
@@ -1118,7 +1118,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, []string{"1", "2"}, rr.Header()["Foo"])
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				res := args[1].(*common.EventResponse)
+				res := args[1].(*common.HttpEventResponse)
 				res.Headers["foo"] = []any{"1", "2"}
 				return nil
 			},
@@ -1142,7 +1142,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "invalid header 'foo': error count 1:\n\t- expected array but got: bar\n", rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				res := args[1].(*common.EventResponse)
+				res := args[1].(*common.HttpEventResponse)
 				res.Headers["foo"] = "bar"
 				return nil
 			},
@@ -1330,7 +1330,7 @@ func TestHandler_Parameter(t *testing.T) {
 				require.Equal(t, "missing parameter definition for route /foo/{id}: invalid path parameter 'id'", hook.Entries[0].Message)
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.EventRequest)
+				req := args[0].(*common.HttpEventRequest)
 				require.NotContains(t, req.Path, "id")
 				require.Len(t, req.Path, 0)
 				return nil

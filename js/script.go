@@ -208,8 +208,8 @@ func (s *Script) addHttpEvent(i interface{}) {
 		if len(ctx.Args) != 2 {
 			return false, fmt.Errorf("expected args: request, response")
 		}
-		req := ctx.Args[0].(*engine.EventRequest)
-		res := ctx.Args[1].(*engine.EventResponse)
+		req := ctx.Args[0].(*engine.HttpEventRequest)
+		res := ctx.Args[1].(*engine.HttpEventResponse)
 		return engine.HttpEventHandler(req, res, i)
 	}
 

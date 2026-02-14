@@ -141,7 +141,7 @@ func haveChanges(origin [][]byte, new [][]byte) bool {
 
 func ArgToJs(arg any, vm *goja.Runtime) goja.Value {
 	switch v := (arg).(type) {
-	case *common.EventResponse:
+	case *common.HttpEventResponse:
 		return vm.NewDynamicObject(&Proxy{
 			target: reflect.ValueOf(v),
 			vm:     vm,

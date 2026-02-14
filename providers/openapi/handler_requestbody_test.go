@@ -3,7 +3,7 @@ package openapi_test
 import (
 	"bytes"
 	"io"
-	engine2 "mokapi/engine/common"
+	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
@@ -24,7 +24,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 		name   string
 		config *openapi.Config
 		fn     func(t *testing.T, handler openapi.Handler)
-		check  func(t *testing.T, r *engine2.EventRequest)
+		check  func(t *testing.T, r *common.HttpEventRequest)
 	}{
 		{
 			name: "text/plain",
@@ -50,7 +50,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 
 				require.Equal(t, 200, rr.Code)
 			},
-			check: func(t *testing.T, r *engine2.EventRequest) {
+			check: func(t *testing.T, r *common.HttpEventRequest) {
 				require.Equal(t, "foo", r.Body)
 			},
 		},
@@ -78,7 +78,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 
 				require.Equal(t, 200, rr.Code)
 			},
-			check: func(t *testing.T, r *engine2.EventRequest) {
+			check: func(t *testing.T, r *common.HttpEventRequest) {
 				require.Equal(t, "foo", r.Body)
 			},
 		},
@@ -108,7 +108,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 
 				require.Equal(t, 200, rr.Code)
 			},
-			check: func(t *testing.T, r *engine2.EventRequest) {
+			check: func(t *testing.T, r *common.HttpEventRequest) {
 				require.Equal(t, "foo", r.Body)
 			},
 		},
@@ -138,7 +138,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 
 				require.Equal(t, 200, rr.Code)
 			},
-			check: func(t *testing.T, r *engine2.EventRequest) {
+			check: func(t *testing.T, r *common.HttpEventRequest) {
 				require.Equal(t, map[string]interface{}{"bar": float64(12), "foo": "abc"}, r.Body)
 			},
 		},
@@ -168,7 +168,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 
 				require.Equal(t, http.StatusOK, rr.Code)
 			},
-			check: func(t *testing.T, r *engine2.EventRequest) {
+			check: func(t *testing.T, r *common.HttpEventRequest) {
 			},
 		},
 		{
@@ -195,7 +195,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.True(t, spy.readCalled, "server needs to read body")
 			},
-			check: func(t *testing.T, r *engine2.EventRequest) {
+			check: func(t *testing.T, r *common.HttpEventRequest) {
 			},
 		},
 	}
@@ -205,9 +205,9 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			test.NewNullLogger()
 
-			var r *engine2.EventRequest
-			e := enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*engine2.Action {
-				r = args[0].(*engine2.EventRequest)
+			var r *common.HttpEventRequest
+			e := enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
+				r = args[0].(*common.HttpEventRequest)
 				return nil
 			})
 
