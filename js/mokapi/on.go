@@ -122,7 +122,7 @@ func getHashes(args ...any) ([][]byte, error) {
 	for _, arg := range args {
 		b, err := json.Marshal(arg)
 		if err != nil {
-			return nil, fmt.Errorf("unable to marshal arg")
+			return nil, fmt.Errorf("failed to marshal arg: %v", err)
 		}
 		result = append(result, b)
 	}
@@ -151,6 +151,8 @@ func ArgToJs(arg any, vm *goja.Runtime) goja.Value {
 				switch key {
 				case "headers":
 					p.KeyNormalizer = http.CanonicalHeaderKey
+				case "rebuild":
+					return rebuild(vm, v)
 				}
 
 				switch val.(type) {
@@ -164,4 +166,29 @@ func ArgToJs(arg any, vm *goja.Runtime) goja.Value {
 	default:
 		return vm.ToValue(v)
 	}
+}
+
+func rebuild(vm *goja.Runtime, res *common.HttpEventResponse) goja.Value {
+	if res.Rebuild == nil {
+		return vm.ToValue(func() {})
+	}
+	return vm.ToValue(func(statusCode goja.Value, contentType goja.Value) {
+		s := int64(0)
+		c := ""
+		if statusCode != nil {
+			if statusCode.ExportType().Kind() != reflect.Int64 {
+				panic(fmt.Sprintf("response.rebuild failed: statusCode must be a number: got %v", util.JsType(statusCode.Export())))
+			} else {
+				s = statusCode.ToInteger()
+			}
+		}
+		if contentType != nil {
+			if contentType.ExportType().Kind() != reflect.String {
+				panic(fmt.Sprintf("response.rebuild failed: contentType must be a string: got %v", util.JsType(contentType.Export())))
+			} else {
+				c = contentType.String()
+			}
+		}
+		res.Rebuild(int(s), c)
+	})
 }

@@ -3,6 +3,7 @@ package openapi_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
@@ -1249,7 +1250,7 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 			name: "async event handler",
 			test: func(t *testing.T) {
 				e := enginetest.NewEngine()
-				err := e.AddScript(newScript("test.ts", `
+				err := e.AddScript(newScript(fmt.Sprintf("%s.ts", t.Name()), `
 					import {on, sleep} from 'mokapi'
 					export default function() {
 						on('http', async (request, response) => {
@@ -1273,7 +1274,9 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 				}
 
 				h := func(rw http.ResponseWriter, r *http.Request) {
-					h := openapi.NewHandler(config, e, &events.StoreManager{})
+					sm := &events.StoreManager{}
+					sm.SetStore(10, events.NewTraits().WithNamespace("http"))
+					h := openapi.NewHandler(config, e, sm)
 					err = h.ServeHTTP(rw, r)
 					require.Nil(t, err)
 				}
@@ -1289,14 +1292,178 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 				require.Equal(t, `"foo"`, rr.Body.String())
 			},
 		},
+		{
+			name: "rebuild different status code",
+			test: func(t *testing.T) {
+				e := enginetest.NewEngine()
+				err := e.AddScript(newScript(fmt.Sprintf("%s.ts", t.Name()), `
+					import {on, sleep} from 'mokapi'
+					export default function() {
+						on('http', async (request, response) => {
+							response.rebuild(404);
+						});
+					}
+				`))
+				require.NoError(t, err)
+
+				config := &openapi.Config{
+					Info:    openapi.Info{Name: "Testing"},
+					Servers: []*openapi.Server{{Url: "http://localhost"}},
+				}
+
+				h := func(rw http.ResponseWriter, r *http.Request) {
+					sm := &events.StoreManager{}
+					sm.SetStore(10, events.NewTraits().WithNamespace("http"))
+					h := openapi.NewHandler(config, e, sm)
+					err = h.ServeHTTP(rw, r)
+					require.Nil(t, err)
+				}
+
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+						openapitest.NewContent(openapitest.WithSchema(
+							schematest.New(
+								"object",
+								schematest.WithProperty("foo", schematest.New("string")),
+								schematest.WithRequired("foo"),
+							),
+						)),
+					)),
+					openapitest.WithResponse(http.StatusNotFound, openapitest.WithContent("application/json",
+						openapitest.NewContent(openapitest.WithSchema(
+							schematest.New(
+								"object",
+								schematest.WithProperty("message", schematest.New("string")),
+								schematest.WithRequired("message"),
+							),
+						)),
+					)),
+				)
+				openapitest.AppendPath("/foo", config, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				r.Header.Set("accept", "application/json")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusNotFound, rr.Code)
+				require.Contains(t, rr.Body.String(), `{"message":`)
+			},
+		},
+		{
+			name: "rebuild status code not in specification",
+			test: func(t *testing.T) {
+				e := enginetest.NewEngine()
+				err := e.AddScript(newScript(fmt.Sprintf("%s.ts", t.Name()), `
+					import {on, sleep} from 'mokapi'
+					export default function() {
+						on('http', async (request, response) => {
+							response.rebuild(404);
+						});
+					}
+				`))
+				require.NoError(t, err)
+
+				config := &openapi.Config{
+					Info:    openapi.Info{Name: "Testing"},
+					Servers: []*openapi.Server{{Url: "http://localhost"}},
+				}
+
+				sm := &events.StoreManager{}
+				sm.SetStore(10, events.NewTraits().WithNamespace("http"))
+				h := func(rw http.ResponseWriter, r *http.Request) {
+					h := openapi.NewHandler(config, e, sm)
+					err = h.ServeHTTP(rw, r)
+					require.Nil(t, err)
+				}
+
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+						openapitest.NewContent(openapitest.WithSchema(
+							schematest.New(
+								"object",
+								schematest.WithProperty("foo", schematest.New("string")),
+								schematest.WithRequired("foo"),
+							),
+						)),
+					)),
+				)
+				openapitest.AppendPath("/foo", config, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				r.Header.Set("accept", "application/json")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Contains(t, rr.Body.String(), `{"foo":`)
+
+				result := sm.GetEvents(events.NewTraits().WithNamespace("http"))
+				log := result[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "no configuration was found for HTTP status code 404, https://swagger.io/docs/specification/describing-responses", log.Actions[0].Error.Message)
+			},
+		},
+		{
+			name: "rebuild content type not in specification",
+			test: func(t *testing.T) {
+				e := enginetest.NewEngine()
+				err := e.AddScript(newScript(fmt.Sprintf("%s.ts", t.Name()), `
+					import {on, sleep} from 'mokapi'
+					export default function() {
+						on('http', async (request, response) => {
+							response.rebuild(404, 'text/plain');
+						});
+					}
+				`))
+				require.NoError(t, err)
+
+				config := &openapi.Config{
+					Info:    openapi.Info{Name: "Testing"},
+					Servers: []*openapi.Server{{Url: "http://localhost"}},
+				}
+
+				sm := &events.StoreManager{}
+				sm.SetStore(10, events.NewTraits().WithNamespace("http"))
+				h := func(rw http.ResponseWriter, r *http.Request) {
+					h := openapi.NewHandler(config, e, sm)
+					err = h.ServeHTTP(rw, r)
+					require.Nil(t, err)
+				}
+
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+						openapitest.NewContent(openapitest.WithSchema(
+							schematest.New(
+								"object",
+								schematest.WithProperty("foo", schematest.New("string")),
+								schematest.WithRequired("foo"),
+							),
+						)),
+					)),
+					openapitest.WithResponse(http.StatusNotFound, openapitest.WithContent("application/json",
+						openapitest.NewContent(openapitest.WithSchema(
+							schematest.New(
+								"object",
+								schematest.WithProperty("message", schematest.New("string")),
+								schematest.WithRequired("message"),
+							),
+						)),
+					)),
+				)
+				openapitest.AppendPath("/foo", config, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				r.Header.Set("accept", "application/json")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Contains(t, rr.Body.String(), `{"foo":`)
+
+				result := sm.GetEvents(events.NewTraits().WithNamespace("http"))
+				log := result[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "content type 'text/plain' is not specified for HTTP status code 404", log.Actions[0].Error.Message)
+			},
+		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
 			tc.test(t)
 		})
 	}

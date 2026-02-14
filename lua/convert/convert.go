@@ -2,10 +2,11 @@ package convert
 
 import (
 	"fmt"
-	lua "github.com/yuin/gopher-lua"
-	luar "layeh.com/gopher-luar"
 	"mokapi/sortedmap"
 	"reflect"
+
+	lua "github.com/yuin/gopher-lua"
+	luar "layeh.com/gopher-luar"
 )
 
 func FromLua(lv lua.LValue, to interface{}) error {
@@ -100,6 +101,10 @@ func ToLua(l *lua.LState, from interface{}) (lua.LValue, error) {
 			for i := 0; i < v.Type().NumField(); i++ {
 				f := v.Type().Field(i)
 				if !f.IsExported() {
+					continue
+				}
+				tag := f.Tag.Get("json")
+				if tag == "-" {
 					continue
 				}
 				fields = append(fields, reflect.StructField{

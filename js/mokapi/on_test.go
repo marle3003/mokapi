@@ -490,6 +490,118 @@ m.on('http', (req, res) => {
 				r.Equal(t, map[string]any{"foo": "yuh"}, res.Data)
 			},
 		},
+		{
+			name: "rebuild function not defined",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.rebuild();
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.HttpEventResponse{Data: map[string]any{"foo": "bar"}}
+				return evt.Emit("http", &common.HttpEventRequest{}, res)
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+
+				r.Nil(t, actions[0].Error)
+
+				var res *common.HttpEventResponse
+				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				r.Equal(t, map[string]any{"foo": "bar"}, res.Data)
+			},
+		},
+		{
+			name: "rebuild function updates data",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.rebuild();
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.HttpEventResponse{Data: map[string]any{"foo": "bar"}}
+				res.Rebuild = func(statusCode int, contentType string) {
+					res.Data = map[string]any{"foo": "yuh"}
+				}
+				return evt.Emit("http", &common.HttpEventRequest{}, res)
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+
+				r.Nil(t, actions[0].Error)
+
+				var res *common.HttpEventResponse
+				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				r.Equal(t, map[string]any{"foo": "yuh"}, res.Data)
+			},
+		},
+		{
+			name: "rebuild function with parameters",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.rebuild(200, 'application/json');
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.HttpEventResponse{Data: map[string]any{"foo": "bar"}}
+				res.Rebuild = func(statusCode int, contentType string) {
+					res.Data = map[string]any{"statusCode": statusCode, "contentType": contentType}
+				}
+				return evt.Emit("http", &common.HttpEventRequest{}, res)
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+
+				r.Nil(t, actions[0].Error)
+
+				var res *common.HttpEventResponse
+				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				r.Equal(t, map[string]any{"statusCode": float64(200), "contentType": "application/json"}, res.Data)
+			},
+		},
+		{
+			name: "rebuild function wrong type statusCode",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.rebuild({ }, 'application/json');
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.HttpEventResponse{Data: map[string]any{"foo": "bar"}}
+				res.Rebuild = func(statusCode int, contentType string) {}
+				return evt.Emit("http", &common.HttpEventRequest{}, res)
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+
+				r.NotNil(t, actions[0].Error)
+				r.Equal(t, "response.rebuild failed: statusCode must be a number: got Object", actions[0].Error.Message)
+			},
+		},
+		{
+			name: "rebuild function wrong type contentType",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.rebuild(100, 200);
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.HttpEventResponse{Data: map[string]any{"foo": "bar"}}
+				res.Rebuild = func(statusCode int, contentType string) {}
+				return evt.Emit("http", &common.HttpEventRequest{}, res)
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+
+				r.NotNil(t, actions[0].Error)
+				r.Equal(t, "response.rebuild failed: contentType must be a string: got Integer", actions[0].Error.Message)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

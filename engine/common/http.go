@@ -11,6 +11,8 @@ type HttpEventResponse struct {
 	StatusCode int            `json:"statusCode"`
 	Body       string         `json:"body"`
 	Data       any            `json:"data"`
+
+	Rebuild func(statusCode int, contentType string) `json:"-"`
 }
 
 type HttpEventRequest struct {
