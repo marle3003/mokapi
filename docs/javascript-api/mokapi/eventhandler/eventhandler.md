@@ -4,13 +4,21 @@ description: EventHandler is a function that is executed when an event is trigge
 ---
 # EventHandler
 
-EventHandler is a function that is executed when an event is triggered. EventHandler has event-specific parameters like HttpRequest that contains data about an HTTP request.
+An `EventHandler` is a function that is executed whenever a registered event is triggered.
+The parameters passed to the handler depend on the event type (for example, an HTTP event
+provides an `HttpRequest` and `HttpResponse` object).
 
-## Returns
+Multiple handlers can be registered for the same event.
 
-| Type    | Description                                           |
-|---------|-------------------------------------------------------|
-| boolean | Whether Mokapi should log execution of event handler. |
+## Usage
+
+Event handlers are registered using the `on` function.
+The first argument specifies the event type, the second argument is the handler function.
+
+## Example: Handling an HTTP event
+
+The following example registers an HTTP event handler that responds only to a specific
+operation (operationId === 'time').
 
 ```javascript
 import { on } from 'mokapi'

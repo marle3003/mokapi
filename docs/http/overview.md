@@ -321,11 +321,30 @@ Mokapi handles this translation automatically - you don't need to modify your sp
 ✅ Reference resolution handled automatically - Mokapi translates between formats  
 ✅ Schema paths differ - Mokapi transforms the path
 
-## Best Practices
+## Best Practice: Adjust Only What Matters
 
-### Start with Auto-Generated Data
+Mokapi automatically generates a valid HTTP response based on the OpenAPI
+specification, including the status code, headers, and response body.
 
-Let Mokapi handle the basics. Adjust only data for you specific need.
+Event handlers are intended to modify **only the parts of the response that are
+relevant to a specific scenario**.
+
+Instead of constructing the entire response manually, developers can:
+- Override selected fields in `response.data`
+- Adjust headers as needed
+- Explicitly set a different status code (if defined in the OpenAPI specification)
+
+All other parts of the response remain automatically generated and valid.
+
+This approach:
+- Reduces boilerplate code
+- Prevents accidental invalid responses
+- Keeps event handlers focused and maintainable
+- Improves stability when APIs evolve: as response schemas change, event handlers
+  that modify only specific fields continue to work without requiring updates
+  for unrelated fields.
+
+### Example: Modifying a generated response
 
 ```javascript
 import { on, sleep } from 'mokapi'
@@ -333,28 +352,9 @@ import { on, sleep } from 'mokapi'
 export default function() {
     on('http', (request, response) => {
         if (request.key === '/pet/{petId}' && request.path.petId === 10) {
-            // Instead of replacing entire responses, you can modify specific fields:
+            // Modify only the relevant part of the generated response
             response.data.name = 'Garfield'
         }
     })
 }
 ```
-
-### Version Your Specifications
-
-Keep your OpenAPI specs and Mokapi Scripts in version control alongside your code.
-
-### Use Scripts for Edge Cases
-
-Focus your scripts on:
-- Error scenarios (404, 500, validation errors)
-- Authentication/authorization testing
-- Specific business logic you want to test
-- Stateful workflows
-
-## Next Steps
-
-**Ready for more advanced features?**
-
-- [Test Data Generation](/docs/get-started/test-data.md) - Create realistic, varied test data
-- [Mokapi Scripts Guide](/docs/javascript-api/overview) - Full scripting reference and examples

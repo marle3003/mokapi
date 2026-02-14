@@ -157,7 +157,7 @@ export interface HttpRequest {
     /** Object contains querystring parameters specified by OpenAPI querystring parameters. */
     readonly querystring: any;
 
-    /** The title of the API from the OpenAPI specification */
+    /** Name of the API, as defined in the OpenAPI `info.title` field */
     readonly api: string
 
     /** Path value specified by the OpenAPI path */
