@@ -1,8 +1,9 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
 	"math"
+
+	"github.com/brianvoe/gofakeit/v6"
 )
 
 func textNodes() []*Node {
@@ -14,6 +15,10 @@ func textNodes() []*Node {
 		{
 			Name: "category",
 			Fake: fakeCategory,
+		},
+		{
+			Name: "message",
+			Fake: fakeDescription,
 		},
 	}
 }
