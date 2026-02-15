@@ -4,6 +4,7 @@ description: Validate HTTP API requests and responses with Mokapi to catch break
 image:
     url: /mokapi-using-as-proxy.png
     alt: Flow diagram illustrating how Mokapi enforces OpenAPI contracts between clients, Playwright tests, and backend APIs.
+tech: http
 ---
 
 # Ensuring Compliance with the HTTP API Contract Using Mokapi for Request Forwarding and Validation

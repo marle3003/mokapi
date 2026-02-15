@@ -136,3 +136,20 @@ export default function() {
 
 If `response.rebuild()` throws an error, and it is not caught, the current event
 handler is skipped and no response modifications from that handler are applied.
+
+```javascript
+import { on } from 'mokapi'
+import { read, writeString } from 'mokapi'
+
+export default function() {
+    on('http', (request, response) => {
+        let data: { request: HttpRequest, response: HTTPResponse}[] = []
+        try {
+            const s = read('./data.json');
+            data = JSON.parse(s)
+        } catch {}
+        data.push({ request, response })
+        writeString('./data.json', JSON.stringify(data))
+    }, { prriority: -1 })
+}
+```
