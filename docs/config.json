@@ -646,6 +646,12 @@
             "source": "resources/blogs/testing-kafka-workflows-playwright.md",
             "path": "/resources/blogs/testing-kafka-workflows-playwright",
             "hideNavigation": true
+          },
+          {
+            "label": "Record & Replay: API Interactions with Mokapi",
+            "source": "resources/blogs/record-and-replay-api-interactions.md",
+            "path": "/resources/blogs/record-and-replay-api-interactions",
+            "hideNavigation": true
           }
         ]
       }
