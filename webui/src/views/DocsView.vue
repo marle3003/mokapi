@@ -354,6 +354,13 @@ pre {
     margin-left: 0;
   }
 }
+code {
+  background-color: #f1f3f5;
+  color: #e63946;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-weight: 600
+}
 .code {
   margin-bottom: 8px;
 }

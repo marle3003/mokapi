@@ -172,7 +172,7 @@ function setType(s: string) {
         <div class="container">
             <div class="header">
                 <h1>Explore Mokapi Resources</h1>
-                <p>
+                <p class="text">
                     Explore a variety of tutorials, examples, and blog articles to help you make the most of Mokapi. Whether you're 
                     learning to mock APIs, validate schemas, or streamline your development process, our resources are designed to support you every step of the way.
                 </p>
@@ -311,5 +311,9 @@ color: var(--color-button-text-hover);
   border-color: var(--card-border);
   background-color: var(--card-background);
   margin: 7px;
+}
+.examples .text {
+  max-width: 750px;
+  margin-inline: auto;
 }
 </style>
