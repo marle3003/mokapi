@@ -19,6 +19,21 @@ func TestConsole(t *testing.T) {
 		test func(t *testing.T, vm *goja.Runtime, host *enginetest.Host)
 	}{
 		{
+			name: "no parameters",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var logs []any
+				host.InfoFunc = func(args ...interface{}) {
+					logs = args
+				}
+
+				_, err := vm.RunString(`
+					console.log();
+				`)
+				r.NoError(t, err)
+				r.Empty(t, logs)
+			},
+		},
+		{
 			name: "string",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var logs []any
@@ -182,6 +197,51 @@ func TestConsole(t *testing.T) {
 				`)
 				r.NoError(t, err)
 				r.Equal(t, `log an object: {"foo":"bar","message":"hello world"}`, logs[0])
+			},
+		},
+		{
+			name: "log error",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var logs []any
+				host.ErrorFunc = func(args ...interface{}) {
+					logs = args
+				}
+
+				_, err := vm.RunString(`
+					console.error('error');
+				`)
+				r.NoError(t, err)
+				r.Equal(t, "error", logs[0])
+			},
+		},
+		{
+			name: "log warn",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var logs []any
+				host.WarnFunc = func(args ...interface{}) {
+					logs = args
+				}
+
+				_, err := vm.RunString(`
+					console.warn('warn');
+				`)
+				r.NoError(t, err)
+				r.Equal(t, "warn", logs[0])
+			},
+		},
+		{
+			name: "log debug",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var logs []any
+				host.DebugFunc = func(args ...interface{}) {
+					logs = args
+				}
+
+				_, err := vm.RunString(`
+					console.debug('debug');
+				`)
+				r.NoError(t, err)
+				r.Equal(t, "debug", logs[0])
 			},
 		},
 	}

@@ -24,11 +24,11 @@ func Enable(vm *goja.Runtime) {
 		logger: host,
 	}
 	obj := vm.NewObject()
-	obj.Set("log", f.Log)
-	obj.Set("warn", f.Warn)
-	obj.Set("error", f.Error)
-	obj.Set("debug", f.Debug)
-	vm.Set("console", obj)
+	_ = obj.Set("log", f.Log)
+	_ = obj.Set("warn", f.Warn)
+	_ = obj.Set("error", f.Error)
+	_ = obj.Set("debug", f.Debug)
+	_ = vm.Set("console", obj)
 }
 
 func (c *Module) Log(args ...goja.Value) {
