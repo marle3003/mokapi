@@ -26,7 +26,6 @@ const data = computed(() => {
     return undefined;
   }
   const data = files[`/src/assets/docs/${current.value.source}`];
-  console.log(data)
   return useMarkdown(data)
 })
 
@@ -532,5 +531,27 @@ a[name] {
 }
 .flags table tr th:nth-child(1){
   width: 40%;
+}
+
+.content p.subtitle {
+  margin-bottom: 1.6rem;
+  font-size: 1.2rem;
+  font-weight: 400;
+}
+
+.tags {
+  display: flex;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 1.5rem;
+}
+
+.tags li {
+  background: #eef2ff;
+  color: #3730a3;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
 }
 </style>

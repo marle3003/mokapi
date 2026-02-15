@@ -27,6 +27,8 @@ interface DocMeta {
   icon?: string
   tech?: string
   image?: { url: string, alt: string }
+  subtitle?: string
+  tags?: string[]
 }
 
 interface Source {
