@@ -2,9 +2,6 @@ package git
 
 import (
 	"context"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing/object"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/safe"
@@ -14,6 +11,10 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/stretchr/testify/require"
 )
 
 var gitFiles = map[string]struct{}{
@@ -54,6 +55,7 @@ func TestGit(t *testing.T) {
 						require.Equal(t, "https://github.com/marle3003/mokapi-example.git?file=/"+name, c.Config.Info.Path())
 						require.Contains(t, gitFiles, name)
 						require.NotNil(t, c.Config.Info.Checksum)
+						require.Equal(t, []string{"main"}, c.Config.Info.Tags)
 					}
 				}
 				require.Equal(t, 4, count)
@@ -225,8 +227,38 @@ Stop:
 	require.Len(t, files, 1)
 }
 
-// go-git requires git installed for file:// repositories
-func testGitSimpleUrl(t *testing.T) {
+func TestGitFileUpdate(t *testing.T) {
+	repo := newGitRepo(t, t.Name())
+	repo.commit(t, "foo.txt", "foo")
+
+	g := New(static.GitProvider{Urls: []string{repo.url.String()}, PullInterval: "3s"})
+	p := safe.NewPool(context.Background())
+	defer p.Stop()
+
+	ch := make(chan dynamic.ConfigEvent)
+	defer close(ch)
+
+	err := g.Start(ch, p)
+	require.NoError(t, err)
+
+	// wait init
+	e := wait(ch, 3*time.Second)
+	initChecksum := e.Config.Info.Checksum
+	initTime := e.Config.Info.Time
+
+	repo.commit(t, "foo.txt", "bar")
+
+	// git deletes the file first
+	e = wait(ch, 5*time.Second)
+	require.Equal(t, dynamic.Delete, e.Event)
+	e = wait(ch, 5*time.Second)
+	require.NotNil(t, e.Config)
+	require.Equal(t, []byte("bar"), e.Config.Raw)
+	require.NotEqual(t, initChecksum, e.Config.Info.Checksum)
+	require.Greater(t, e.Config.Info.Time, initTime)
+}
+
+func TestGitSimpleUrl(t *testing.T) {
 	repo := newGitRepo(t, t.Name())
 	defer func() {
 		err := os.RemoveAll(repo.dir)
@@ -247,7 +279,7 @@ func testGitSimpleUrl(t *testing.T) {
 	case <-time.After(1 * time.Second):
 		t.Fatal("Timeout")
 	case e := <-ch:
-		require.Equal(t, "foo.txt", filepath.Base(e.Config.Info.Url.String()))
+		require.Equal(t, "TestGitSimpleUrl?file=%2Ffoo.txt", filepath.Base(e.Config.Info.Url.String()))
 	}
 }
 
@@ -329,4 +361,18 @@ func (g *gitTestRepo) commit(t *testing.T, file, content string) {
 	require.NoError(t, err)
 	_, err = w.Commit("added "+file, &git.CommitOptions{Author: &object.Signature{When: ts}})
 	require.NoError(t, err)
+}
+
+func wait(ch chan dynamic.ConfigEvent, timeout time.Duration) *dynamic.ConfigEvent {
+	chTimeout := time.After(timeout)
+Stop:
+	for {
+		select {
+		case <-chTimeout:
+			break Stop
+		case e := <-ch:
+			return &e
+		}
+	}
+	return nil
 }

@@ -37,7 +37,7 @@ func TestHandler_Config(t *testing.T) {
 		panic(err)
 	}
 	checksum := h.Sum(nil)
-	etag := fmt.Sprintf("%x", checksum)
+	etag := fmt.Sprintf(`"%x"`, checksum)
 
 	testcases := []struct {
 		name       string

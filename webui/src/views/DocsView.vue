@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { onMounted, ref, inject, computed, useTemplateRef, onBeforeUnmount  } from 'vue';
-import { useRoute, type RouteParamsRawGeneric } from 'vue-router';
+import { onMounted, ref, inject, computed, useTemplateRef, onBeforeUnmount, watch  } from 'vue';
+import { useRoute } from 'vue-router';
 import { useMarkdown } from '@/composables/markdown'
 import { useMeta } from '@/composables/meta'
 import PageNotFound from './PageNotFound.vue';
@@ -18,70 +18,41 @@ const imageDescription = ref<string>()
 const contentElement = useTemplateRef<HTMLElement>('content')
 
 const route = useRoute()
-const { resolve } = useFileResolver()
-const { file, levels, isIndex } = resolve(nav, route)
+const { resolve, getBreadcrumb } = useFileResolver()
+const current = computed(() => resolve(nav, route))
 
-let data
-let component: any
-let content: string | undefined
-let metadata: DocMeta | undefined
-if (typeof file === 'string'){
-  data = files[`/src/assets/docs/${file}`];
-  ({ content, metadata } = useMarkdown(data))
-} else if (file) {
-  const entry = <DocEntry>file
-  if (entry.component) {
-    // component must be initialized in main.ts
-    component = entry.component
-    metadata = entry as DocMeta
+const data = computed(() => {
+  if (!current.value) {
+    return undefined;
   }
-}
+  const data = files[`/src/assets/docs/${current.value.source}`];
+  return useMarkdown(data)
+})
+
+const metadata = computed(() => {
+  const meta =  data.value?.metadata
+  if (meta) {
+    return meta
+  }
+  return (current.value?.index || current.value) as DocMeta
+})
+
+const component = computed(() => {
+  return current.value?.index?.component
+})
 
 const breadcrumb = computed(() => {
-  if (!file) {
-    return
-  }
-
-  const list = new Array()
-  let current: DocConfig | DocEntry = nav
-  const params: RouteParamsRawGeneric = {}
-  for (const [index, name] of levels.entries()) {
-    if (index === 0) {
-      current = (<DocConfig>current)[name]!
-    }
-    else  {
-      const e: DocEntry | string = (<DocEntry>current).items![name]!
-      if (typeof e === 'string') {
-        list.push({ label: name, isLast: true })
-        break
-      } else {
-        current = e
-      }
-    }
-
-    params['level'+(index+1)] = formatParam(name)
-    const item: { label: string, params?: RouteParamsRawGeneric, isLast: boolean } = { 
-      label: name, 
-      isLast: false
-    }
-    
-    if (index === 0 || (current && current.index)) {
-      // copy the params object and assign
-      item.params = { ...params }
-    }
-    list.push(item)
-  }
-  return list
+  return getBreadcrumb(nav, route)
 })
 
 const showNavigation = computed(() => {
-  if (!file) {
+  if (!current.value) {
     return true
   }
-  if (typeof file === 'string') {
-    return true
+  if (current.value.hideNavigation) {
+    return false
   }
-  return !file.hideNavigation
+  return !current.value.index?.hideNavigation
 })
 
 onMounted(() => {
@@ -96,38 +67,42 @@ onMounted(() => {
       })
     }
   }, 1000)
-  if (metadata) {
-    const extension = ' | Mokapi ' + levels[0]
-    let title = (metadata.title || levels[3] || levels[2] || levels[1] || levels[0])!
-    if ((title.length + extension.length) <= 70) {
-      title +=  ' | Mokapi ' + levels[0]
-    }
-    useMeta(title, metadata.description, getCanonicalUrl(levels), metadata.image)
-  }
+  
   dialog.value = new Modal('#imageDialog', {})
   contentElement.value?.addEventListener('click', copyToClipboard);
 })
+
+watch(() => current.value, () => {
+  if (current.value && metadata.value && breadcrumb.value) {
+    let extension = ''
+    if (breadcrumb.value.length >= 3) {
+      extension = ` - ${breadcrumb.value[1]?.label} | Mokapi ${breadcrumb.value[0]?.label}`
+    }
+    else if (breadcrumb.value[0]?.label){
+      extension = ` | Mokapi ${breadcrumb.value[0]?.label}`
+    }
+
+    let title = (metadata.value.title || current.value?.label)!
+    if ((title.length + extension.length) <= 70) {
+      title +=  extension
+    }
+    if (metadata.value) {
+      useMeta(title, metadata.value.description, getCanonicalUrl(current.value), metadata.value.image)
+    }
+  }
+}, { deep: true, immediate: true })
+
 onBeforeUnmount(() => {
   contentElement.value?.removeEventListener('click', copyToClipboard);
 })
-function toUrlPath(s: string): string {
-  return s.replaceAll(/[\s\/]/g, '-').replace('&', '%26')
-}
-function getCanonicalUrl(levels: string[]) {
-  if (file) {
-    const entry = <DocEntry>file
-    if (entry.canonical) {
-      return entry.canonical
-    }
+function getCanonicalUrl(entry: DocEntry) {
+  if (entry.canonical) {
+    return entry.canonical
   }
-  let canonical = 'https://mokapi.io/docs/' + toUrlPath(levels[0]!)
-  for (let i = 1; i < levels.length; i++) {
-    canonical += `/${toUrlPath(levels[i]!)}`
+  if (entry.path) {
+    return 'https://mokapi.io' + entry.path
   }
-  if (isIndex) {
-    canonical += '/'
-  }
-  return canonical.toLowerCase()
+  throw new Error('canonical url')
 }
 function showImage(target: EventTarget | null) {
   if (hasTouchSupport() || !target || !(target instanceof HTMLImageElement)) {
@@ -140,9 +115,6 @@ function showImage(target: EventTarget | null) {
 }
 function hasTouchSupport() {
   return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-}
-function formatParam(label: any): string {
-  return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
 }
 async function copyToClipboard(event: MouseEvent) {
   const target = event.target as HTMLElement
@@ -174,30 +146,30 @@ async function copyToClipboard(event: MouseEvent) {
     console.error('Failed to copy code:', err)
   }
 }
+function isLast(breadcrumb: DocEntry[], index: number) {
+  return breadcrumb.length - 1 === index
+}
 </script>
 
 <template>
-  <main class="d-flex">
-    <div style="width: 100%; height: 100%;display: flex;flex-direction: column;" class="doc">
-      <div class="d-flex">
-        <div class="sidebar d-none d-md-block" v-if="showNavigation">
-          <DocNav :config="nav" :levels="levels" :title="levels[0]!"/>
-        </div>
-        <div class="doc-main" style="flex: 1;margin-bottom: 3rem;" :style="showNavigation ? 'max-width:50em;' : ''">
-          <div class="container">
-            <nav aria-label="breadcrumb" v-if="showNavigation">
-              <ol class="breadcrumb">
-                <li class="breadcrumb-item text-truncate" v-for="item of breadcrumb" :class="item.isLast ? 'active' : ''">
-                  <router-link v-if="item.params && !item.isLast" :to="{ name: 'docs', params: item.params }">{{ item.label }}</router-link>
-                  <template v-else>{{ item.label }}</template>
-                </li>
-              </ol>
-            </nav>
-            <div v-if="content" v-html="content" class="content" @click="showImage($event.target)" ref="content"></div>
-            <div v-else-if="component" class="content"><component :is="component" /></div>
-            <page-not-found v-else />
-          </div>
-        </div>
+  <main :class="{ 'has-sidebar': showNavigation, 'resources': route.path.startsWith('/resources') && !route.params.level2, 'resource-article': route.name === 'resources' && route.params.level2 }">
+    <aside class="d-none d-md-block sidebar" v-if="showNavigation">
+      <DocNav :config="nav" />
+    </aside>
+    <div class="container doc-main">
+      <!--Breadcrumbs should include only site pages, not logical categories in your IA. -->
+      <nav aria-label="breadcrumb" v-if="route.name === 'resources' && route.params.level2" class="mb-3">
+        <ol class="breadcrumb" v-if="breadcrumb">
+          <li class="breadcrumb-item text-truncate" v-for="(item, index) of breadcrumb" :class="isLast(breadcrumb, index) ? 'active' : ''">
+            <router-link v-if="item.path && !isLast(breadcrumb, index)" :to="{ path: item.path }">{{ item.label }}</router-link>
+            <template v-else>{{ item.label }}</template>
+          </li>
+        </ol>
+      </nav>
+      <div :style="showNavigation ? 'max-width:50em;' : ''">
+        <div v-if="data?.content" v-html="data.content" class="content" @click="showImage($event.target)" ref="content"></div>
+        <div v-else-if="component" class="content"><component :is="component" /></div>
+        <page-not-found v-else />
       </div>
     </div>
   </main>
@@ -217,25 +189,50 @@ async function copyToClipboard(event: MouseEvent) {
 </template>
 
 <style>
-.doc {
-  margin-top: 20px;
+main.has-sidebar {
+  display: grid;
+  grid-template-columns: 290px auto;
+  grid-template-areas: "sd doc";
+}
+main.resources {
+  margin-inline: auto;
+  max-width: 1200px;
+}
+main.resource-article {
+  margin-inline: auto;
+  max-width: 750px;
 }
 
 .sidebar {
+  grid-area: sd;
   position: sticky;
   top: var(--header-height);
-  align-self: flex-start;
-  width: 290px;
-  padding-top: 2rem;
+  width: 100%;
+  height: calc(100vh - var(--header-height) - 2rem);
+  padding-block: 2rem;
+  overflow-y: auto;
 }
 .doc-main {
- margin-left: 1rem; 
+  grid-area: doc;
+  margin-left: 1rem;
+  padding-top: 1rem;
+  padding-bottom: 3rem;
 }
 .breadcrumb {
-  padding-top: 2rem;
-  padding-bottom: 0.5rem;
-  width: 100%; /*calc(100vw - 290px - 2rem);*/
-  font-size: 0.9rem;
+  --bs-breadcrumb-divider: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='currentColor' class='bi bi-chevron-right' viewBox='0 0 16 16'%3E%3Cpath fill-rule='evenodd' d='M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708'/%3E%3C/svg%3E");;
+
+  width: 100%;
+  font-size: 0.85rem;
+}
+ol.breadcrumb {
+  margin-bottom: 0;
+}
+.breadcrumb-item + .breadcrumb-item {
+  padding-left: 4px;
+}
+.breadcrumb-item + .breadcrumb-item::before {
+  line-height: 21px;
+  padding-right: 4px;
 }
 .content {
   line-height: 1.5rem;
@@ -243,6 +240,7 @@ async function copyToClipboard(event: MouseEvent) {
 }
 
 .content h1 {
+  margin-top: 0;
   font-size: 2.25rem;
 }
 
@@ -342,12 +340,26 @@ pre {
   font-size: 0.85rem;
 }
 @media only screen and (max-width: 600px)  {
+  main.has-sidebar {
+    display: grid;
+    grid-template-columns: auto;
+    grid-template-areas: "doc";
+  }
+
+
   pre {
     max-width: 350px !important;
   }
   .doc-main {
     margin-left: 0;
   }
+}
+code {
+  background-color: #f1f3f5;
+  color: #e63946;
+  border-radius: 3px;
+  padding: 2px 6px;
+  font-weight: 600
 }
 .code {
   margin-bottom: 8px;
@@ -430,9 +442,9 @@ blockquote {
   margin-top: 2rem;
   max-width: 700px;
   padding: 1.5em 2em 1.5em 2em;
-  border-left: 4px solid #eabaabff;
+  border-left: 4px solid var(--blockquote-border-color);
   position: relative;
-  background: var(--color-background-soft);
+  background-color: var(--blockquote-background-color);
 }
 blockquote span:before {
   content: '- '
@@ -526,5 +538,27 @@ a[name] {
 }
 .flags table tr th:nth-child(1){
   width: 40%;
+}
+
+.content p.subtitle {
+  margin-bottom: 1.6rem;
+  font-size: 1.2rem;
+  font-weight: 400;
+}
+
+.tags {
+  display: flex;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 1.5rem;
+}
+
+.tags li {
+  background: #eef2ff;
+  color: #3730a3;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
 }
 </style>

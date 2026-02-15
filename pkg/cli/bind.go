@@ -14,6 +14,10 @@ import (
 
 type flagConfigBinder struct{}
 
+type ValueSetter interface {
+	Set(v any) error
+}
+
 type bindContext struct {
 	path    string
 	paths   []string
@@ -376,6 +380,10 @@ func (f *flagConfigBinder) convert(value any, target reflect.Value) error {
 			if s == "" {
 				return nil
 			}
+			err = useValueSetter(target, s)
+			if err == nil {
+				return nil
+			}
 			pairs := strings.Split(s, ",")
 			for _, pair := range pairs {
 				kv := strings.Split(pair, "=")
@@ -455,7 +463,7 @@ func (f *flagConfigBinder) setJson(element reflect.Value, i interface{}) error {
 			element.Set(v.Convert(t))
 			return nil
 		}
-		return fmt.Errorf("value %v can not be set", i)
+		return useValueSetter(element, v.Interface())
 	case []interface{}:
 		// reset array
 		element.Set(reflect.MakeSlice(element.Type(), 0, len(o)))
@@ -564,4 +572,18 @@ func getSplitCharsForList(s string) []rune {
 func isJsonValue(s string) bool {
 	return (strings.HasPrefix(s, "[") && strings.HasSuffix(s, "]")) ||
 		(strings.HasPrefix(s, "{") && strings.HasSuffix(s, "}"))
+}
+
+func useValueSetter(element reflect.Value, v any) error {
+	var target any
+	if element.CanAddr() {
+		target = element.Addr().Interface()
+	} else {
+		target = element.Interface()
+	}
+	vs, ok := target.(ValueSetter)
+	if ok {
+		return vs.Set(v)
+	}
+	return fmt.Errorf("value %v can not be set", v)
 }

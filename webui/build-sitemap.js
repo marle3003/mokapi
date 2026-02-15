@@ -39,34 +39,40 @@ const urlTemplate = `
   <lastmod>%s</lastmod>
 </url>`
 
+function writeItem(item) {
+  let xml = '';
+
+  if (item.path && item.source) {
+    stats = fs.statSync(path.join(docsPath, item.source));
+    const url = `https://mokapi.io${item.path}`;
+    const node = util.format(urlTemplate, url, '0.7', stats.mtime.toISOString())
+    xml += node
+  }
+
+  if (item.items) {
+    for (const child of item.items) {
+      xml += writeItem(child)
+    }
+  }
+  return xml
+}
+
 function writeObject(obj, base) {
 
   let xml = ''
   for (let key in obj) {
+    const item = obj[key];
 
-    let segment = key.split(' ').join('-').split('/').join('-').replace('&', '%26')
-    const urlPath = base + '/' + segment.toLowerCase()
-
-    if (key === 'index') {
-      const url = 'https://mokapi.io/docs' + urlPath.replaceAll('/items', '').replace(/\/index$/, "/")
-      let stats;
-      if (typeof obj['index'] === "string") {
-        stats = fs.statSync(path.join(docsPath, obj["index"]))
-      }
-      else {
-        stats = fs.statSync(docsPath, key.toLowerCase())
-      }
+    if (item.path && item.source) {
+      stats = fs.statSync(path.join(docsPath, item.source));
+      const url = `https://mokapi.io${item.path}`;
       const node = util.format(urlTemplate, url, '0.7', stats.mtime.toISOString())
       xml += node
-    } else {
-      if (typeof obj[key] !== "string") {
-        xml += writeObject(obj[key], urlPath)
-      }
-      else {
-        const stats = fs.statSync(path.join(docsPath, obj[key]))
-        const url = 'https://mokapi.io/docs' + urlPath.replaceAll('/items', '')
-        const node = util.format(urlTemplate, url, '0.7', stats.mtime.toISOString())
-        xml += node
+    }
+
+    if (item.items) {
+      for (const child of item.items) {
+        xml += writeItem(child)
       }
     }
   }

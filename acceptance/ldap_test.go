@@ -20,7 +20,7 @@ type LdapSuite struct {
 func (suite *LdapSuite) SetupSuite() {
 	cfg := static.NewConfig()
 	cfg.Api.Port = try.GetFreePort()
-	cfg.Providers.File.Directories = []string{"./ldap"}
+	cfg.Providers.File.Directories = []static.FileConfig{{Path: "./ldap"}}
 	suite.initCmd(cfg)
 	// ensure scripts are executed
 	time.Sleep(2 * time.Second)

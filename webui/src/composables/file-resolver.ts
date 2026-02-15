@@ -1,80 +1,60 @@
 import type { RouteLocationNormalizedLoaded } from "vue-router"
 
-const MAX_LEVEL = 4
-
 export function useFileResolver() {
-    
-    function resolve(config: DocConfig, route: RouteLocationNormalizedLoaded) {
-        let level1 = <string>route.params.level1
-        if (!level1) {
-            return { file: null, levels: [] }
-        }
-        let file: DocEntry | undefined | string;
-        ({ name: level1, file: file} = select(config, level1))
-        if (!file) {
-            return { file, levels: [] }
-        }
 
-        const levels = [ level1 ]
-        let isIndex: boolean | undefined = false
-        for (let index = 2; index <= MAX_LEVEL; index++) {
-            let level = <string>route.params[`level${index}`];
-            if (!file || typeof file === 'string') {
-                break
-            }
-            ({ level: level, file, isIndex } = getLevel(level, file))
-            if (!level) {
-                break
-            }
-            levels.push(level)
+    function resolve(config: DocConfig, route: RouteLocationNormalizedLoaded): DocEntry | undefined {
+        let path = route.path
+        if (path.endsWith('/')) {
+            path = path.substring(0, path.length-1)
         }
-
-        return { file, levels, isIndex }
+        for (const name of Object.keys(config)) {
+            const entry = getEntries(config[name]!, (e) => e.path?.toLocaleLowerCase() === path)
+            if (entry) {
+                return entry[entry.length-1]
+            }
+        }
+        return undefined
     }
 
-    function getLevel(level: string, file: DocEntry | string) {
-        let isIndex = false
-        if (typeof file !== 'string' && file.items) {
-            if (!level) {
-                if (file.index) {
-                    isIndex = true
-                    file = file.index
-                } else {
-                    // get first element as 'index' file
-                    level = Object.keys(file.items)[0]!;
-                    const found = find(level, <DocEntry>file)
-                    return { level, file: found.file }
+    function getEntries(entry: DocEntry, check: (entry: DocEntry) => boolean): DocEntry[] | undefined {
+        if (check(entry)) {
+            return [entry]
+        }
+
+        if (entry.items) {
+            for (const item of entry.items) {
+                const items = getEntries(item, check)
+                if (!items) {
+                    continue
                 }
-            } else{
-                const found = find(level,  <DocEntry>file)
-                return { level: found.name, file: found.file }
+                return [entry, ...items]
             }
         }
-        return { level, file, isIndex }
+        return undefined
     }
 
-    function find(name: string, config: DocEntry) {
-        name = getField(config.items, name)
-        return { name: name, file: config.items![name] }
-    }
-
-    function select(obj: DocConfig, name: string) {
-        name = getField(obj, name)
-        return { name: name, file: obj[name] }
-    }
-
-    function getField(obj: any, name: string) {
-        const searchFor = name.toLowerCase().replaceAll(/[-]/g, ' ')
-        return Object.keys(obj).find(
-            key => key.toLowerCase().replaceAll(/[\/]/g, ' ') === searchFor)!
-    }
-
-    function isKnown(config: DocConfig, level: string): boolean {
-        if (getField(config, level)) {
-            return true
+    function getBreadcrumb(config: DocConfig, route: RouteLocationNormalizedLoaded): DocEntry[] | undefined {
+        for (const name of Object.keys(config)) {
+            const entries = getEntries(config[name]!, (e) => e.path === route.path)
+            if (entries) {
+                entries[0] = Object.assign({ label: name }, entries[0])
+                return entries
+            }
         }
-        return false
+        return undefined
     }
 
-    return { resolve, isKnown }
+    function getEntryBySource(config: DocConfig, source: string) {
+        for (const name of Object.keys(config)) {
+            const entry = getEntries(config[name]!, (e) => {
+                return e.source === source
+        })
+            if (entry) {
+                return entry[entry.length-1]
+            }
+        }
+        return undefined
+    }
+
+    return { resolve, getBreadcrumb, getEntryBySource }
 }

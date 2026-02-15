@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -92,20 +93,26 @@ func (p *Provider) Read(u *url.URL) (*dynamic.Config, error) {
 
 func (p *Provider) Start(ch chan dynamic.ConfigEvent, pool *safe.Pool) error {
 	p.ch = ch
-	var path []string
+	var files []static.FileConfig
 	if len(p.cfg.Directories) > 0 {
-		path = p.cfg.Directories
+		for _, dir := range p.cfg.Directories {
+			for _, d := range strings.Split(dir.Path, string(os.PathListSeparator)) {
+				files = append(files, static.FileConfig{Path: d, Include: dir.Include, Exclude: dir.Exclude})
+			}
+		}
 
 	} else if len(p.cfg.Filenames) > 0 {
-		path = p.cfg.Filenames
+		for _, file := range p.cfg.Filenames {
+			for _, f := range strings.Split(file, string(os.PathListSeparator)) {
+				files = append(files, static.FileConfig{Path: f})
+			}
+		}
 	}
-	if len(path) > 0 {
+	if len(files) > 0 {
 		pool.Go(func(ctx context.Context) {
-			for _, pathItem := range path {
-				for _, i := range strings.Split(pathItem, string(os.PathListSeparator)) {
-					if err := p.walk(i); err != nil {
-						log.Errorf("file provider: %v", err)
-					}
+			for _, file := range files {
+				if err := p.walk(file); err != nil {
+					log.Errorf("file provider: %v", err)
 				}
 			}
 			p.isInit = false
@@ -118,7 +125,7 @@ func (p *Provider) Start(ch chan dynamic.ConfigEvent, pool *safe.Pool) error {
 
 func (p *Provider) Watch(dir string, pool *safe.Pool) {
 	pool.Go(func(ctx context.Context) {
-		if err := p.walk(dir); err != nil {
+		if err := p.walk(static.FileConfig{Path: dir}); err != nil {
 			log.Errorf("file provider: %v", err)
 		}
 	})
@@ -170,13 +177,30 @@ func (p *Provider) watch(pool *safe.Pool) error {
 	return nil
 }
 
-func (p *Provider) skip(path string, isDir bool) bool {
+func (p *Provider) skip(path string, isDir bool, info static.FileConfig) bool {
 	if p.isWatchPath(path) {
 		return false
 	}
 
-	if !isDir && len(p.cfg.Include) > 0 {
-		return !include(p.cfg.Include, path)
+	if !isDir {
+		inc := p.cfg.Include
+		if len(info.Include) > 0 {
+			inc = append(inc, info.Include...)
+		}
+		if len(inc) > 0 {
+			if !include(inc, path) {
+				return true
+			}
+		}
+		ex := p.cfg.Exclude
+		if len(info.Exclude) > 0 {
+			ex = append(ex, info.Exclude...)
+		}
+		if len(ex) > 0 {
+			if include(ex, path) {
+				return true
+			}
+		}
 	}
 
 	if isMokapiIgnoreFile(path) {
@@ -227,20 +251,20 @@ func (p *Provider) readFile(path string) (*dynamic.Config, error) {
 	}, nil
 }
 
-func (p *Provider) walk(root string) error {
-	p.readMokapiIgnore(root)
+func (p *Provider) walk(fileInfo static.FileConfig) error {
+	p.readMokapiIgnore(fileInfo.Path)
 	walkDir := func(path string, fi fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if fi.IsDir() {
-			if p.skip(path, true) && path != root {
+			if p.skip(path, true, fileInfo) && path != fileInfo.Path {
 				log.Debugf("skip dir: %v", path)
 				return filepath.SkipDir
 			}
 			p.readMokapiIgnore(path)
 			p.watchPath(path)
-		} else if !p.skip(path, false) {
+		} else if !p.skip(path, false, fileInfo) {
 			if c, err := p.readFile(path); err != nil {
 				log.Error(err)
 			} else if len(c.Raw) > 0 {
@@ -254,7 +278,7 @@ func (p *Provider) walk(root string) error {
 		return nil
 	}
 
-	return p.fs.Walk(root, walkDir)
+	return p.fs.Walk(fileInfo.Path, walkDir)
 }
 
 func (p *Provider) readMokapiIgnore(path string) {
@@ -345,10 +369,12 @@ func (p *Provider) processEvents(events []fsnotify.Event) {
 		}
 
 		dir, _ := filepath.Split(evt.Name)
-		if dir == evt.Name && !p.skip(dir, true) {
-			p.watchPath(dir)
-		} else {
-			if !p.skip(evt.Name, false) {
+		isDir := dir == evt.Name
+
+		if !p.skipEvent(e, isDir) {
+			if isDir {
+				p.watchPath(dir)
+			} else {
 				e.Config, err = p.readFile(evt.Name)
 				if err != nil {
 					log.Errorf("unable to read file %v", evt.Name)
@@ -371,11 +397,29 @@ Walk:
 		}
 		doneWalk = append(doneWalk, dir)
 
-		err := p.walk(dir)
+		cfg, err := p.getFileConfig(dir)
+		if err != nil {
+			log.Debugf("skip event: unable to get file config for %v: %v", dir, err)
+		}
+
+		cfg.Path = dir
+		err = p.walk(cfg)
 		if err != nil {
 			log.Errorf("unable to process dir %v: %v", dir, err)
 		}
 	}
+}
+
+func (p *Provider) skipEvent(evt dynamic.ConfigEvent, isDir bool) bool {
+	if p.isWatchPath(evt.Name) {
+		return false
+	}
+	cfg, err := p.getFileConfig(evt.Name)
+	if err != nil {
+		log.Debugf("skip event: unable to get file config for %v: %v", evt.Name, err)
+	}
+
+	return p.skip(evt.Name, isDir, cfg)
 }
 
 func (p *Provider) isWatchPath(path string) bool {
@@ -384,6 +428,15 @@ func (p *Provider) isWatchPath(path string) bool {
 
 	_, ok := p.watched[path]
 	return ok
+}
+
+func (p *Provider) getFileConfig(path string) (static.FileConfig, error) {
+	for _, cfg := range p.cfg.Directories {
+		if isSub(cfg.Path, path) {
+			return cfg, nil
+		}
+	}
+	return static.FileConfig{}, errors.New("directory config not found")
 }
 
 func include(s []string, v string) bool {
@@ -398,4 +451,16 @@ func include(s []string, v string) bool {
 func isMokapiIgnoreFile(path string) bool {
 	name := filepath.Base(path)
 	return name == mokapiIgnoreFile
+}
+
+func isSub(parent, sub string) bool {
+	up := ".." + string(os.PathSeparator)
+	rel, err := filepath.Rel(parent, sub)
+	if err != nil {
+		return false
+	}
+	if !strings.HasPrefix(rel, up) && rel != ".." {
+		return true
+	}
+	return false
 }

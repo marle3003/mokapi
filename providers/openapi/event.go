@@ -18,8 +18,8 @@ import (
 
 const eventKey = "event"
 
-func NewEventResponse(status int, ct media.ContentType) *common.EventResponse {
-	r := &common.EventResponse{
+func NewEventResponse(status int, ct media.ContentType) *common.HttpEventResponse {
+	r := &common.HttpEventResponse{
 		Headers:    make(map[string]any),
 		StatusCode: status,
 	}
@@ -31,17 +31,17 @@ func NewEventResponse(status int, ct media.ContentType) *common.EventResponse {
 	return r
 }
 
-func EventRequestFromContext(ctx context.Context) *common.EventRequest {
-	e := ctx.Value(eventKey).(*common.EventRequest)
+func EventRequestFromContext(ctx context.Context) *common.HttpEventRequest {
+	e := ctx.Value(eventKey).(*common.HttpEventRequest)
 	return e
 }
 
-func NewEventRequest(r *http.Request, contentType media.ContentType, api string) (*common.EventRequest, context.Context) {
+func NewEventRequest(r *http.Request, contentType media.ContentType, api string) (*common.HttpEventRequest, context.Context) {
 	ctx := r.Context()
 	endpointPath := ctx.Value("endpointPath").(string)
 	op, _ := OperationFromContext(ctx)
 
-	req := &common.EventRequest{
+	req := &common.HttpEventRequest{
 		Api:         api,
 		Key:         endpointPath,
 		OperationId: op.OperationId,
@@ -88,7 +88,7 @@ func NewEventRequest(r *http.Request, contentType media.ContentType, api string)
 	return req, context.WithValue(ctx, eventKey, req)
 }
 
-func setResponseData(r *common.EventResponse, m *MediaType, request *common.EventRequest) error {
+func setResponseData(r *common.HttpEventResponse, m *MediaType, request *common.HttpEventRequest) error {
 	if m != nil {
 		if len(m.Examples) > 0 {
 			keys := reflect.ValueOf(m.Examples).MapKeys()
@@ -125,7 +125,7 @@ func setResponseData(r *common.EventResponse, m *MediaType, request *common.Even
 	return nil
 }
 
-func setResponseHeader(r *common.EventResponse, headers Headers) error {
+func setResponseHeader(r *common.HttpEventResponse, headers Headers) error {
 	for k, v := range headers {
 		if v.Value == nil {
 			log.Warnf("header ref not resovled: %v", v.Ref)
@@ -140,7 +140,7 @@ func setResponseHeader(r *common.EventResponse, headers Headers) error {
 	return nil
 }
 
-func getGeneratorContext(r *common.EventRequest) map[string]interface{} {
+func getGeneratorContext(r *common.HttpEventRequest) map[string]interface{} {
 	ctx := map[string]interface{}{}
 	for k, v := range r.Cookie {
 		if v != nil {

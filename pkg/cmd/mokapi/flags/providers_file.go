@@ -11,6 +11,14 @@ func RegisterFileProvider(cmd *cli.Command) {
 	cmd.Flags().StringSlice("providers-file-skip-prefix", []string{"_"}, false, providerFileSkipPrefix)
 	cmd.Flags().StringSlice("providers-file-include", []string{}, false, providerFileInclude)
 	cmd.Flags().DynamicString("providers-file-include[<index>]", providerFileIncludeIndex)
+	cmd.Flags().StringSlice("providers-file-exclude", []string{}, false, providerFileExclude)
+	cmd.Flags().DynamicString("providers-file-exclude[<index>]", providerFileExcludeIndex)
+
+	// directories
+	cmd.Flags().DynamicString("providers-file-directories[<index>]", providerFileDirectoriesIndex)
+	cmd.Flags().DynamicString("providers-file-directories[<index>]-path", providerFileDirectoriesPath)
+	cmd.Flags().DynamicString("providers-file-directories[<index>]-include", providerFileDirectoriesInclude)
+	cmd.Flags().DynamicString("providers-file-directories[<index>]-exclude", providerFileDirectoriesExclude)
 }
 
 var providerFile = cli.FlagDoc{
@@ -129,6 +137,94 @@ This option is mainly intended for advanced use cases or programmatic configurat
 			Codes: []cli.Code{
 				{Title: "CLI", Source: "--providers-file-include[1] *.yaml"},
 				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_INCLUDE[1]=*.yaml"},
+			},
+		},
+	},
+}
+
+var providerFileExclude = cli.FlagDoc{
+	Short: "Exclude files or directories matching patterns",
+	Long: `Defines patterns for files or directories that should be excluded when loading configuration.
+Any file or directory matching one of the exclude patterns is ignored, even if it would otherwise be included. When empty, no files are explicitly excluded.`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{Title: "CLI", Source: "--providers-file-exclude tmp/*"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_EXCLUDE=tmp/*"},
+				{Title: "File", Source: "providers:\n  file:\n    exclude: ['tmp/*']", Language: "yaml"},
+			},
+		},
+	},
+}
+
+var providerFileExcludeIndex = cli.FlagDoc{
+	Short: "Set exclude rule at the specified index",
+	Long: `Sets or overrides an exclude rule at the specified index.
+This option is useful when exclude rules are defined via environment variables or configuration files but need to be adjusted or overridden using CLI arguments.`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{Title: "CLI", Source: "--providers-file-exclude[1] tmp/*"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_EXCLUDE[1]=tmp/*"},
+			},
+		},
+	},
+}
+
+var providerFileDirectoriesIndex = cli.FlagDoc{
+	Short: "Configure the directory at the specified index",
+	Long: `Configures a directory entry at the specified index in the directories list.
+This option allows directory-specific configuration and is mainly intended for advanced or programmatic use cases where precise control over individual directories is required.`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{Title: "CLI", Source: "--providers-file-directories[0]-path ./mocks"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_DIRECTORIES[0]_PATH=./mocks"},
+			},
+		},
+	},
+}
+
+var providerFileDirectoriesPath = cli.FlagDoc{
+	Short: "Set the directory path",
+	Long: `Specifies the filesystem path of the directory to load configuration files from.
+All supported configuration files in this directory are processed, subject to include and exclude rules.
+`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{Title: "CLI", Source: "--providers-file-directories[1]-path ./mocks"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_DIRECTORIES[1]_PATH=./mocks"},
+			},
+		},
+	},
+}
+
+var providerFileDirectoriesInclude = cli.FlagDoc{
+	Short: "Include only matching files or patterns",
+	Long: `Defines include patterns that files in the directory must match to be loaded.
+If at least one include pattern is specified, only files matching one of the patterns are processed. When empty, all supported files are included by default.
+`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{Title: "CLI", Source: "--providers-file-directories[1]-include *index.js"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_DIRECTORIES[1]_INCLUDE=*index.js"},
+			},
+		},
+	},
+}
+
+var providerFileDirectoriesExclude = cli.FlagDoc{
+	Short: "Exclude matching files or patterns",
+	Long: `Defines exclude patterns for files or directories within the specified directory.
+Any file or directory matching one of the exclude patterns is ignored, even if it matches an include rule.
+`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{Title: "CLI", Source: "--providers-file-exclude[1] *.tmp"},
+				{Title: "Env", Source: "MOKAPI_PROVIDERS_FILE_EXCLUDE[1]=*.tmp"},
 			},
 		},
 	},

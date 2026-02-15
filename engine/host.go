@@ -18,8 +18,9 @@ import (
 )
 
 type eventHandler struct {
-	handler common.EventHandler
-	tags    map[string]string
+	handler  common.EventHandler
+	tags     map[string]string
+	priority int
 }
 
 type scriptHost struct {
@@ -66,38 +67,8 @@ func (sh *scriptHost) Run() (err error) {
 			return
 		}
 	}
-	log.Infof("executing script %v", sh.file.Info.Url)
+	log.Infof("executing script %v", sh.name)
 	return sh.script.Run()
-}
-
-func (sh *scriptHost) RunEvent(event string, args ...interface{}) []*common.Action {
-	var result []*common.Action
-	for _, eh := range sh.events[event] {
-		action := &common.Action{
-			Tags: eh.tags,
-		}
-		start := time.Now()
-		logs := len(action.Logs)
-
-		ctx := &common.EventContext{
-			EventLogger: action.AppendLog,
-			Args:        args,
-		}
-
-		if b, err := eh.handler(ctx); err != nil {
-			log.Errorf("unable to execute event handler: %v", err)
-			action.Error = &common.Error{Message: err.Error()}
-		} else if !b && logs == len(action.Logs) {
-			continue
-		} else {
-			log.WithField("handler", action).Debug("processed event handler")
-		}
-
-		action.Parameters = getDeepCopy(args)
-		action.Duration = time.Now().Sub(start).Milliseconds()
-		result = append(result, action)
-	}
-	return result
 }
 
 func (sh *scriptHost) Every(every string, handler func(), opt common.JobOptions) (int, error) {
@@ -199,7 +170,7 @@ func (sh *scriptHost) Cancel(jobId int) error {
 	}
 }
 
-func (sh *scriptHost) On(event string, handler common.EventHandler, tags map[string]string) {
+func (sh *scriptHost) On(event string, handler common.EventHandler, args common.EventArgs) {
 	h := &eventHandler{
 		handler: handler,
 		tags: map[string]string{
@@ -208,9 +179,10 @@ func (sh *scriptHost) On(event string, handler common.EventHandler, tags map[str
 			"fileKey": sh.file.Info.Key(),
 			"event":   event,
 		},
+		priority: args.Priority,
 	}
 
-	for k, v := range tags {
+	for k, v := range args.Tags {
 		h.tags[k] = v
 	}
 
@@ -284,8 +256,8 @@ func (sh *scriptHost) OpenFile(path string, hint string) (*dynamic.Config, error
 			if len(hint) > 0 {
 				path = filepath.Join(hint, path)
 			} else {
-				p := getScriptPath(sh.file.Info.Kernel().Url)
-				path = filepath.Join(filepath.Dir(p), path)
+				cwd := sh.Cwd()
+				path = filepath.Join(cwd, path)
 			}
 		}
 
@@ -344,6 +316,14 @@ func (sh *scriptHost) Unlock() {
 
 func (sh *scriptHost) Store() common.Store {
 	return sh.engine.store
+}
+
+func (sh *scriptHost) Cwd() string {
+	u := sh.file.Info.Kernel().Url
+	if len(u.Path) > 0 {
+		return filepath.Dir(u.Path)
+	}
+	return filepath.Dir(u.Opaque)
 }
 
 func getScriptPath(u *url.URL) string {

@@ -3,11 +3,12 @@ package console
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/dop251/goja"
-	"github.com/sirupsen/logrus"
 	"mokapi/engine/common"
 	"regexp"
 	"strings"
+
+	"github.com/dop251/goja"
+	"github.com/sirupsen/logrus"
 )
 
 type Module struct {
@@ -23,11 +24,11 @@ func Enable(vm *goja.Runtime) {
 		logger: host,
 	}
 	obj := vm.NewObject()
-	obj.Set("log", f.Log)
-	obj.Set("warn", f.Warn)
-	obj.Set("error", f.Error)
-	obj.Set("debug", f.Debug)
-	vm.Set("console", obj)
+	_ = obj.Set("log", f.Log)
+	_ = obj.Set("warn", f.Warn)
+	_ = obj.Set("error", f.Error)
+	_ = obj.Set("debug", f.Debug)
+	_ = vm.Set("console", obj)
 }
 
 func (c *Module) Log(args ...goja.Value) {
@@ -47,37 +48,55 @@ func (c *Module) Debug(args ...goja.Value) {
 }
 
 func (c *Module) log(level logrus.Level, args ...goja.Value) {
-	format := ""
-	if len(args) > 0 {
-		if s, ok := args[0].Export().(string); ok && strings.Contains(s, "%") {
-			format = s
+	if len(args) == 0 {
+		return
+	}
+
+	var out []string
+
+	if format, ok := args[0].Export().(string); ok && strings.Contains(format, "%") {
+		specs := countFormatSpecifiers(format)
+
+		var exported []any
+		for _, arg := range args[1:] {
+			exported = append(exported, export(arg))
+		}
+
+		if specs > 0 && len(exported) >= specs {
+			if s, ok := formatString(format, exported[:specs]...); ok {
+				out = append(out, s)
+
+				// Append remaining args (browser behavior)
+				for _, arg := range exported[specs:] {
+					out = append(out, fmt.Sprintf("%v", arg))
+				}
+
+				goto LOG
+			}
 		}
 	}
 
-	var logArgs []any
+	// Fallback: no formatting or formatting failed
 	for _, arg := range args {
-		logArgs = append(logArgs, c.format(arg))
+		out = append(out, fmt.Sprintf("%v", export(arg)))
 	}
 
-	if format != "" {
-		if s, ok := formatString(format, logArgs[1:]...); ok {
-			logArgs = []any{s}
-		}
-	}
+LOG:
+	msg := strings.Join(out, " ")
 
 	switch level {
 	case logrus.WarnLevel:
-		c.logger.Warn(logArgs...)
+		c.logger.Warn(msg)
 	case logrus.ErrorLevel:
-		c.logger.Error(logArgs...)
+		c.logger.Error(msg)
 	case logrus.DebugLevel:
-		c.logger.Debug(logArgs...)
+		c.logger.Debug(msg)
 	default:
-		c.logger.Info(logArgs...)
+		c.logger.Info(msg)
 	}
 }
 
-func (c *Module) format(v goja.Value) any {
+func export(v goja.Value) any {
 	m, ok := v.(json.Marshaler)
 	if !ok {
 		return v.Export()
@@ -101,4 +120,24 @@ func formatString(format string, args ...any) (string, bool) {
 	}
 
 	return out, true
+}
+
+func countFormatSpecifiers(format string) int {
+	count := 0
+	escaped := false
+
+	for i := 0; i < len(format); i++ {
+		if escaped {
+			escaped = false
+			continue
+		}
+		if format[i] == '%' {
+			if i+1 < len(format) && format[i+1] == '%' {
+				escaped = true
+				continue
+			}
+			count++
+		}
+	}
+	return count
 }

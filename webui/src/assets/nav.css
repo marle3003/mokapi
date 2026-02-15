@@ -1,13 +1,18 @@
 .nav-link {
   color: var(--nav-color);
 }
+
 .nav-link.disabled {
   color: var(--nav-color);
 }
-.nav-link:not(.disabled):hover, .nav-link:not(.disabled):focus {
+
+.nav-link:not(.disabled):hover,
+.nav-link:not(.disabled):focus {
   color: var(--nav-color-active);
 }
-.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
+
+.nav-pills .nav-link.active,
+.nav-pills .show>.nav-link {
   color: var(--nav-color-active);
   background-color: var(--color-background);
 }
@@ -21,7 +26,99 @@ header .navbar-collapse.show .nav-item .nav-link {
   padding-top: 7px;
   padding-bottom: 7px;
 }
+
 header .navbar-collapse ul.dropdown-menu {
   padding-top: 0;
   padding-bottom: 0;
+}
+
+nav.nav-tree {
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.nav-tree {
+
+  .chapter > section >  ul {
+    position: relative;
+    margin-left: 0.6rem;
+  }
+
+  .chapter > section > ul:before {
+    content: '';
+    background-color: var(--color-background-mute);
+    width: 1px;
+    inset-block: 0.25rem;
+    position: absolute;
+  }
+
+  .nav,
+  .nav .btn {
+    font-size: var(--bs-nav-link-font-size)
+  }
+
+  .nav-title {
+    font-size: var(--bs-nav-link-font-size)
+  }
+
+  .chapter > section > ul > .nav-item {
+    padding-left: 12px;
+  }
+
+  .nav-item a,
+  .nav-item .chapter>div {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  .nav-item .chapter>div a, .btn-link {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .nav .nav-link {
+    padding-left: 0;
+  }
+
+  @media only screen and (max-width: 768px) {
+    .nav a {
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+  }
+
+  .nav .active {
+    color: var(--nav-color-active);
+  }
+
+  .nav button {
+    color: var(--color-text);
+    padding-inline: 0;
+    text-decoration: none;
+    border: 0;
+  }
+
+  .nav button:hover {
+    color: var(--nav-color-active);
+  }
+
+  button[aria-expanded=false] .bi-chevron-down {
+    display: none;
+  }
+
+  button[aria-expanded=true] .bi-chevron-right {
+    display: none;
+  }
+
+  .image.shadow {
+    border-radius: 8px;
+    box-shadow:
+      0px 10px 0.5rem rgba(0, 0, 0, 0.3),
+      10px 0px 0.5rem rgba(0, 0, 0, 0.3);
+  }
+
+  .headline>div {
+    padding: 13px 0;
+    font-weight: 600;
+  }
 }

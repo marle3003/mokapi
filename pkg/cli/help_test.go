@@ -21,7 +21,7 @@ func TestHelp(t *testing.T) {
 				return c
 			}(),
 			test: func(t *testing.T, out string) {
-				require.Equal(t, "\nFlags:\n --help   Show help information and exit\n", out)
+				require.Equal(t, "\nFlags:\n  -h, --help   Show help information and exit\n", out)
 			},
 		},
 		{
@@ -31,7 +31,7 @@ func TestHelp(t *testing.T) {
 				return c
 			}(),
 			test: func(t *testing.T, out string) {
-				require.Equal(t, "\n\nLong Description\n\nFlags:\n --help   Show help information and exit\n", out)
+				require.Equal(t, "\n\nLong Description\n\nFlags:\n  -h, --help   Show help information and exit\n", out)
 			},
 		},
 	}

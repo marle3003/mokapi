@@ -1,11 +1,12 @@
 package js_test
 
 import (
-	r "github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/jstest"
 	"testing"
+
+	r "github.com/stretchr/testify/require"
 )
 
 func TestScript_Console(t *testing.T) {
@@ -67,8 +68,7 @@ func TestScript_Console(t *testing.T) {
 				r.NoError(t, err)
 				err = s.Run()
 				r.NoError(t, err)
-				r.Equal(t, `{"foo":123,"bar":"mokapi"}`, log[0])
-				r.Equal(t, "foo", log[1])
+				r.Equal(t, `{"foo":123,"bar":"mokapi"} foo`, log[0])
 			},
 		},
 	}

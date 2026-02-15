@@ -208,12 +208,12 @@ func (s *Script) addHttpEvent(i interface{}) {
 		if len(ctx.Args) != 2 {
 			return false, fmt.Errorf("expected args: request, response")
 		}
-		req := ctx.Args[0].(*engine.EventRequest)
-		res := ctx.Args[1].(*engine.EventResponse)
+		req := ctx.Args[0].(*engine.HttpEventRequest)
+		res := ctx.Args[1].(*engine.HttpEventResponse)
 		return engine.HttpEventHandler(req, res, i)
 	}
 
-	s.host.On("http", f, nil)
+	s.host.On("http", f, engine.EventArgs{})
 }
 
 // customFieldNameMapper default implementation filters out
@@ -269,6 +269,7 @@ func RegisterNativeModules(registry *require.Registry) {
 	registry.RegisterNativeModule("mokapi/smtp", mail.Require)
 	registry.RegisterNativeModule("mokapi/ldap", ldap.Require)
 	registry.RegisterNativeModule("mokapi/encoding", encoding.Require)
+	registry.RegisterNativeModule("mokapi/file", file.Require)
 }
 
 func isClosingError(err error) bool {

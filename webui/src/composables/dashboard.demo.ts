@@ -287,6 +287,9 @@ export function useDemoDashboard() {
     }
 
     function getFilenameFromUrl(url: string): string {
+        if (!url) {
+            return ''
+        }
         return new URL(url).pathname.split('/').pop()!;
     }
 

@@ -54,8 +54,10 @@ func (p *Proxy) Get(key string) goja.Value {
 		v := target.MapIndex(reflect.ValueOf(key))
 		return p.toJSValue(key, v)
 	case reflect.Struct:
-		f := getFieldByTag(target, key, "json")
-		return p.toJSValue(key, f)
+		f := getField(target, key, "json")
+		if f.IsValid() {
+			return p.toJSValue(key, f)
+		}
 	case reflect.Slice:
 		switch key {
 		case "length":
@@ -116,9 +118,8 @@ func (p *Proxy) Get(key string) goja.Value {
 			}
 			return goja.Undefined()
 		}
-	default:
-		return goja.Undefined()
 	}
+	panic(fmt.Sprintf("%s is not defined", key))
 }
 
 func (p *Proxy) Has(key string) bool {
@@ -133,7 +134,7 @@ func (p *Proxy) Has(key string) bool {
 		k := target.MapIndex(reflect.ValueOf(key))
 		return k.IsValid()
 	case reflect.Struct:
-		f := getFieldByTag(target, key, "json")
+		f := getField(target, key, "json")
 		return f.IsValid()
 	default:
 		return false
@@ -155,7 +156,7 @@ func (p *Proxy) Set(key string, value goja.Value) bool {
 		target.SetMapIndex(reflect.ValueOf(key), v)
 		return true
 	case reflect.Struct:
-		f := getFieldByTag(target, key, "json")
+		f := getField(target, key, "json")
 		err := assignValue(f, value.Export(), key)
 		if err != nil {
 			panic(p.vm.ToValue(err))
@@ -216,6 +217,10 @@ func (p *Proxy) normalizeKey(key string) string {
 }
 
 func (p *Proxy) toJSValue(key string, v reflect.Value) goja.Value {
+	if !v.IsValid() {
+		return goja.Undefined()
+	}
+
 	if p.ToJSValue != nil {
 		return p.ToJSValue(p.vm, key, v.Interface())
 	}
@@ -242,10 +247,15 @@ func (p *Proxy) Export() any {
 	return Export(v)
 }
 
-func getFieldByTag(structValue reflect.Value, name, tag string) reflect.Value {
+func getField(structValue reflect.Value, name, tag string) reflect.Value {
+	name = capitalize(name)
 	for i := 0; i < structValue.NumField(); i++ {
-		v := structValue.Type().Field(i).Tag.Get(tag)
-		tagValues := strings.Split(v, ",")
+		f := structValue.Type().Field(i)
+		if f.Name == name {
+			return structValue.Field(i)
+		}
+		t := f.Tag.Get(tag)
+		tagValues := strings.Split(t, ",")
 		for _, tagValue := range tagValues {
 			if tagValue == name {
 				return structValue.Field(i)
@@ -361,4 +371,8 @@ func unwrap(v reflect.Value) reflect.Value {
 			return v
 		}
 	}
+}
+
+func capitalize(s string) string {
+	return strings.ToUpper(s[0:1]) + s[1:]
 }

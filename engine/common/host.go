@@ -25,6 +25,11 @@ type JobOptions struct {
 	Tags                  map[string]string
 }
 
+type EventArgs struct {
+	Tags     map[string]string
+	Priority int
+}
+
 type Host interface {
 	Logger
 	SetEventLogger(func(level, message string))
@@ -35,7 +40,7 @@ type Host interface {
 
 	OpenFile(file string, hint string) (*dynamic.Config, error)
 
-	On(event string, do EventHandler, tags map[string]string)
+	On(event string, do EventHandler, args EventArgs)
 
 	KafkaClient() KafkaClient
 	HttpClient(HttpClientOptions) HttpClient
@@ -49,6 +54,8 @@ type Host interface {
 	Unlock()
 
 	Store() Store
+
+	Cwd() string
 }
 
 type Logger interface {

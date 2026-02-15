@@ -3,6 +3,7 @@ package openapi_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
@@ -785,7 +786,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "no configuration was found for HTTP status code 415, https://swagger.io/docs/specification/describing-responses\n", rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				r := args[1].(*common.EventResponse)
+				r := args[1].(*common.HttpEventResponse)
 				r.StatusCode = http.StatusUnsupportedMediaType
 				return nil
 			},
@@ -804,7 +805,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "no configuration was found for HTTP status code 415, https://swagger.io/docs/specification/describing-responses\n", rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				r := args[1].(*common.EventResponse)
+				r := args[1].(*common.HttpEventResponse)
 				r.StatusCode = http.StatusUnsupportedMediaType
 				return nil
 			},
@@ -825,7 +826,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "text/plain", rr.Header().Get("Content-Type"))
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				r := args[1].(*common.EventResponse)
+				r := args[1].(*common.HttpEventResponse)
 				r.Headers["Content-Type"] = "text/plain"
 				r.Body = "Hello"
 				return nil
@@ -849,8 +850,8 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, `{"foo":"bar"}`, rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.EventRequest)
-				res := args[1].(*common.EventResponse)
+				req := args[0].(*common.HttpEventRequest)
+				res := args[1].(*common.HttpEventResponse)
 				res.Data = req.Body
 				return nil
 			},
@@ -871,8 +872,8 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "", rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.EventRequest)
-				res := args[1].(*common.EventResponse)
+				req := args[0].(*common.HttpEventRequest)
+				res := args[1].(*common.HttpEventResponse)
 				res.Data = req.Body
 				return nil
 			},
@@ -896,8 +897,8 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, `"123"`, rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.EventRequest)
-				res := args[1].(*common.EventResponse)
+				req := args[0].(*common.HttpEventRequest)
+				res := args[1].(*common.HttpEventResponse)
 				res.Data = req.Path["id"]
 				return nil
 			},
@@ -921,8 +922,8 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, `"123"`, rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.EventRequest)
-				res := args[1].(*common.EventResponse)
+				req := args[0].(*common.HttpEventRequest)
+				res := args[1].(*common.HttpEventResponse)
 				res.Data = req.Path["id"]
 				return nil
 			},
@@ -946,7 +947,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, http.Header{"Content-Type": []string{"application/json"}, "Foo": []string{"12345"}}, rr.Header())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				res := args[1].(*common.EventResponse)
+				res := args[1].(*common.HttpEventResponse)
 				res.Headers["foo"] = "12345"
 				return nil
 			},
@@ -976,7 +977,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, map[string]string{"Content-Type": "application/json", "Foobaryuh": "12345"}, log.Response.Headers)
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				res := args[1].(*common.EventResponse)
+				res := args[1].(*common.HttpEventResponse)
 				res.Headers["FooBarYuh"] = "12345"
 				return nil
 			},
@@ -998,11 +999,11 @@ func TestHandler_Event(t *testing.T) {
 				r := httptest.NewRequest(http.MethodGet, "http://localhost/foo/123", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
-				var er *common.EventRequest
+				var er *common.HttpEventRequest
 				b := rr.Body.Bytes()
 				err := json.Unmarshal(b, &er)
 				require.NoError(t, err)
-				require.Equal(t, &common.EventRequest{
+				require.Equal(t, &common.HttpEventRequest{
 					Method: http.MethodGet,
 					Url: common.Url{
 						Scheme: "http",
@@ -1023,8 +1024,8 @@ func TestHandler_Event(t *testing.T) {
 				}, er)
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.EventRequest)
-				res := args[1].(*common.EventResponse)
+				req := args[0].(*common.HttpEventRequest)
+				res := args[1].(*common.HttpEventResponse)
 				res.Data = req
 				return nil
 			},
@@ -1047,7 +1048,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, http.StatusOK, rr.Code, rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				res := args[1].(*common.EventResponse)
+				res := args[1].(*common.HttpEventResponse)
 				res.Headers["Content-Type"] = "text/plain"
 				res.Body = "hello world"
 				return nil
@@ -1071,7 +1072,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "response has no definition for content type: text/plain\n", rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				res := args[1].(*common.EventResponse)
+				res := args[1].(*common.HttpEventResponse)
 				res.Headers["Content-Type"] = "text/plain"
 				return nil
 			},
@@ -1094,7 +1095,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "invalid header 'Content-Type': expected a string or array of strings, but received Integer\n", rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				res := args[1].(*common.EventResponse)
+				res := args[1].(*common.HttpEventResponse)
 				res.Headers["Content-Type"] = 123
 				return nil
 			},
@@ -1118,7 +1119,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, []string{"1", "2"}, rr.Header()["Foo"])
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				res := args[1].(*common.EventResponse)
+				res := args[1].(*common.HttpEventResponse)
 				res.Headers["foo"] = []any{"1", "2"}
 				return nil
 			},
@@ -1142,7 +1143,7 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "invalid header 'foo': error count 1:\n\t- expected array but got: bar\n", rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				res := args[1].(*common.EventResponse)
+				res := args[1].(*common.HttpEventResponse)
 				res.Headers["foo"] = "bar"
 				return nil
 			},
@@ -1249,7 +1250,7 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 			name: "async event handler",
 			test: func(t *testing.T) {
 				e := enginetest.NewEngine()
-				err := e.AddScript(newScript("test.ts", `
+				err := e.AddScript(newScript(fmt.Sprintf("%s.ts", t.Name()), `
 					import {on, sleep} from 'mokapi'
 					export default function() {
 						on('http', async (request, response) => {
@@ -1273,7 +1274,9 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 				}
 
 				h := func(rw http.ResponseWriter, r *http.Request) {
-					h := openapi.NewHandler(config, e, &events.StoreManager{})
+					sm := &events.StoreManager{}
+					sm.SetStore(10, events.NewTraits().WithNamespace("http"))
+					h := openapi.NewHandler(config, e, sm)
 					err = h.ServeHTTP(rw, r)
 					require.Nil(t, err)
 				}
@@ -1289,14 +1292,178 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 				require.Equal(t, `"foo"`, rr.Body.String())
 			},
 		},
+		{
+			name: "rebuild different status code",
+			test: func(t *testing.T) {
+				e := enginetest.NewEngine()
+				err := e.AddScript(newScript(fmt.Sprintf("%s.ts", t.Name()), `
+					import {on, sleep} from 'mokapi'
+					export default function() {
+						on('http', async (request, response) => {
+							response.rebuild(404);
+						});
+					}
+				`))
+				require.NoError(t, err)
+
+				config := &openapi.Config{
+					Info:    openapi.Info{Name: "Testing"},
+					Servers: []*openapi.Server{{Url: "http://localhost"}},
+				}
+
+				h := func(rw http.ResponseWriter, r *http.Request) {
+					sm := &events.StoreManager{}
+					sm.SetStore(10, events.NewTraits().WithNamespace("http"))
+					h := openapi.NewHandler(config, e, sm)
+					err = h.ServeHTTP(rw, r)
+					require.Nil(t, err)
+				}
+
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+						openapitest.NewContent(openapitest.WithSchema(
+							schematest.New(
+								"object",
+								schematest.WithProperty("foo", schematest.New("string")),
+								schematest.WithRequired("foo"),
+							),
+						)),
+					)),
+					openapitest.WithResponse(http.StatusNotFound, openapitest.WithContent("application/json",
+						openapitest.NewContent(openapitest.WithSchema(
+							schematest.New(
+								"object",
+								schematest.WithProperty("message", schematest.New("string")),
+								schematest.WithRequired("message"),
+							),
+						)),
+					)),
+				)
+				openapitest.AppendPath("/foo", config, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				r.Header.Set("accept", "application/json")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusNotFound, rr.Code)
+				require.Contains(t, rr.Body.String(), `{"message":`)
+			},
+		},
+		{
+			name: "rebuild status code not in specification",
+			test: func(t *testing.T) {
+				e := enginetest.NewEngine()
+				err := e.AddScript(newScript(fmt.Sprintf("%s.ts", t.Name()), `
+					import {on, sleep} from 'mokapi'
+					export default function() {
+						on('http', async (request, response) => {
+							response.rebuild(404);
+						});
+					}
+				`))
+				require.NoError(t, err)
+
+				config := &openapi.Config{
+					Info:    openapi.Info{Name: "Testing"},
+					Servers: []*openapi.Server{{Url: "http://localhost"}},
+				}
+
+				sm := &events.StoreManager{}
+				sm.SetStore(10, events.NewTraits().WithNamespace("http"))
+				h := func(rw http.ResponseWriter, r *http.Request) {
+					h := openapi.NewHandler(config, e, sm)
+					err = h.ServeHTTP(rw, r)
+					require.Nil(t, err)
+				}
+
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+						openapitest.NewContent(openapitest.WithSchema(
+							schematest.New(
+								"object",
+								schematest.WithProperty("foo", schematest.New("string")),
+								schematest.WithRequired("foo"),
+							),
+						)),
+					)),
+				)
+				openapitest.AppendPath("/foo", config, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				r.Header.Set("accept", "application/json")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Contains(t, rr.Body.String(), `{"foo":`)
+
+				result := sm.GetEvents(events.NewTraits().WithNamespace("http"))
+				log := result[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "no configuration was found for HTTP status code 404, https://swagger.io/docs/specification/describing-responses", log.Actions[0].Error.Message)
+			},
+		},
+		{
+			name: "rebuild content type not in specification",
+			test: func(t *testing.T) {
+				e := enginetest.NewEngine()
+				err := e.AddScript(newScript(fmt.Sprintf("%s.ts", t.Name()), `
+					import {on, sleep} from 'mokapi'
+					export default function() {
+						on('http', async (request, response) => {
+							response.rebuild(404, 'text/plain');
+						});
+					}
+				`))
+				require.NoError(t, err)
+
+				config := &openapi.Config{
+					Info:    openapi.Info{Name: "Testing"},
+					Servers: []*openapi.Server{{Url: "http://localhost"}},
+				}
+
+				sm := &events.StoreManager{}
+				sm.SetStore(10, events.NewTraits().WithNamespace("http"))
+				h := func(rw http.ResponseWriter, r *http.Request) {
+					h := openapi.NewHandler(config, e, sm)
+					err = h.ServeHTTP(rw, r)
+					require.Nil(t, err)
+				}
+
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+						openapitest.NewContent(openapitest.WithSchema(
+							schematest.New(
+								"object",
+								schematest.WithProperty("foo", schematest.New("string")),
+								schematest.WithRequired("foo"),
+							),
+						)),
+					)),
+					openapitest.WithResponse(http.StatusNotFound, openapitest.WithContent("application/json",
+						openapitest.NewContent(openapitest.WithSchema(
+							schematest.New(
+								"object",
+								schematest.WithProperty("message", schematest.New("string")),
+								schematest.WithRequired("message"),
+							),
+						)),
+					)),
+				)
+				openapitest.AppendPath("/foo", config, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				r.Header.Set("accept", "application/json")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Contains(t, rr.Body.String(), `{"foo":`)
+
+				result := sm.GetEvents(events.NewTraits().WithNamespace("http"))
+				log := result[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "content type 'text/plain' is not specified for HTTP status code 404", log.Actions[0].Error.Message)
+			},
+		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
 			tc.test(t)
 		})
 	}
@@ -1330,7 +1497,7 @@ func TestHandler_Parameter(t *testing.T) {
 				require.Equal(t, "missing parameter definition for route /foo/{id}: invalid path parameter 'id'", hook.Entries[0].Message)
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.EventRequest)
+				req := args[0].(*common.HttpEventRequest)
 				require.NotContains(t, req.Path, "id")
 				require.Len(t, req.Path, 0)
 				return nil

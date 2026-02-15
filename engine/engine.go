@@ -103,16 +103,6 @@ func (e *Engine) AddScript(evt dynamic.ConfigEvent) error {
 	return nil
 }
 
-func (e *Engine) Run(event string, args ...interface{}) []*common.Action {
-	var result []*common.Action
-	for _, s := range e.scripts {
-		actions := s.RunEvent(event, args...)
-		result = append(result, actions...)
-	}
-
-	return result
-}
-
 func (e *Engine) Emit(event string, args ...interface{}) []*common.Action {
 	return e.Run(event, args...)
 }

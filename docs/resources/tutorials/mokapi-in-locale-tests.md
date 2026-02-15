@@ -26,7 +26,7 @@ brew install mokapi
 choco install mokapi
 ```
 
-- On Linux: Follow the installation instructions [here](/docs/guides/get-started/installation.md).
+- On Linux: Follow the installation instructions [here](/docs/get-started/installation.md).
 
 Once Mokapi is installed, you can start it from the command line:
 

@@ -111,6 +111,18 @@ func TestDynamic(t *testing.T) {
 				require.Equal(t, []int{12}, s.Foo)
 			},
 		},
+		{
+			name: "should not match",
+			test: func(t *testing.T) {
+				s := &struct {
+					Foo []int
+				}{}
+				c := newCmd([]string{"--foo[0]-bar", "12"}, &s)
+				c.Flags().DynamicInt("foo[<index>]", cli.FlagDoc{})
+				err := c.Execute()
+				require.EqualError(t, err, "unknown flag 'foo[0]-bar'")
+			},
+		},
 	}
 
 	for _, tc := range testcases {

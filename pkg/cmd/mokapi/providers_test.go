@@ -119,7 +119,7 @@ func TestRoot_Providers_File(t *testing.T) {
 				return []string{}
 			},
 			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {
-				require.Equal(t, []string{"/foo", "/bar"}, cfg.Providers.File.Directories)
+				require.Equal(t, []static.FileConfig{{Path: "/foo"}, {Path: "/bar"}}, cfg.Providers.File.Directories)
 			},
 		},
 		{
@@ -138,7 +138,7 @@ func TestRoot_Providers_File(t *testing.T) {
 				return []string{"--config-file", f}
 			},
 			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {
-				require.Equal(t, []string{"/foo", "/bar"}, cfg.Providers.File.Directories)
+				require.Equal(t, []static.FileConfig{{Path: "/foo"}, {Path: "/bar"}}, cfg.Providers.File.Directories)
 			},
 		},
 		{

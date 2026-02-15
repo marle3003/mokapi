@@ -7,43 +7,67 @@ const files = inject<Record<string, string>>('files')!
 
 const nav = inject<DocConfig>('nav')!
 const resources = nav['Resources']!
-const exampleFiles = (<DocEntry>resources.items!['Examples']).items ?? {}
-const tutorialsFiles = (<DocEntry>resources.items!['Tutorials']).items ?? {}
-const blogFiles = (<DocEntry>resources.items!['Blogs']).items ?? {}
+const exampleFiles = computed(() => {
+    if (!resources.items) {
+        return [] as DocEntry[]
+    }
+    const examples = resources.items.find(x => x.label === 'Examples')
+    if (!examples || !examples.items) {
+        return [] as DocEntry[]
+    }
+    return examples.items
+})
+const tutorialsFiles = computed(() => {
+    if (!resources.items) {
+        return [] as DocEntry[]
+    }
+    const tutorials = resources.items.find(x => x.label === 'Tutorials')
+    if (!tutorials || !tutorials.items) {
+        return [] as DocEntry[]
+    }
+    return tutorials.items
+})
+const blogFiles = computed(() => {
+    if (!resources.items) {
+        return [] as DocEntry[]
+    }
+    const blogs = resources.items.find(x => x.label === 'Blogs')
+    if (!blogs || !blogs.items) {
+        return [] as DocEntry[]
+    }
+    return blogs.items
+})
 const type = ref<string>('all')
 const tech = ref<string>('all')
 
 const router = useRouter()
 const route = useRoute()
-if (route.params.level2) {
-    const level2 = <string>route.params.level2
-    type.value = level2.substring(0, level2.length-1)
+if (route.params.level1) {
+    const level1 = <string>route.params.level1
+    type.value = level1.substring(0, level1.length-1)
 }
 
 const items = computed(() => {
     const items = []
-    for (const key in exampleFiles) {
-        const file = exampleFiles[key]
-        const meta = parseMetadata(files[`/src/assets/docs/${file}`]!)
-        items.push({ key: key, meta: meta, tag: 'example', level2: 'examples' })
+    for (const item of exampleFiles.value) {
+        const meta = parseMetadata(files[`/src/assets/docs/${item.source}`]!)
+        items.push({ label: item, path: item.path, meta: meta, tag: 'example' })
     }
-    for (const key in tutorialsFiles) {
-        const file = tutorialsFiles[key]
-        const meta = parseMetadata(files[`/src/assets/docs/${file}`]!)
-        items.push({ key: key, meta: meta, tag: 'tutorial', level2: 'tutorials' })
+    for (const item of tutorialsFiles.value) {
+        const meta = parseMetadata(files[`/src/assets/docs/${item.source}`]!)
+        items.push({ label: item, path: item.path, meta: meta, tag: 'tutorial' })
     }
-    for (const key in blogFiles) {
-        const file = blogFiles[key]
-        const meta = parseMetadata(files[`/src/assets/docs/${file}`]!)
-        items.push({ key: key, meta: meta, tag: 'blog', level2: 'blogs' })
+    for (const item of blogFiles.value) {
+        const meta = parseMetadata(files[`/src/assets/docs/${item.source}`]!)
+        items.push({ label: item, path: item.path, meta: meta, tag: 'blog' })
     }
 
     items.sort((x1, x2) => {
         if (!x1 || !x1.meta || !x1.meta.title) {
-            console.error('missing meta title for ' + x1.key)
+            console.error('missing meta title for ' + x1.label)
         }
         if (!x2 || !x2.meta || !x2.meta.title) {
-            console.error('missing meta title for ' + x2.key)
+            console.error('missing meta title for ' + x2.label)
         }
         return x1.meta.title.localeCompare(x2.meta.title)
     })
@@ -56,6 +80,7 @@ const filtered = computed(() => {
     }
 
     const filtered = []
+    console.log(type.value)
     for (const item of items.value) {
        if ((type.value === 'all' || type.value === item.tag) && (tech.value === 'all' || tech.value === item.meta.tech || (tech.value === 'core' && !item.meta.tech))) {
         filtered.push(item)
@@ -64,10 +89,6 @@ const filtered = computed(() => {
 
     return filtered
 })
-
-function formatParam(label: any): string {
-  return label.toString().toLowerCase().split(' ').join('-').split('/').join('-')
-}
 
 const state = computed<{ [name: string]: boolean }>(() => {
     return {
@@ -128,9 +149,9 @@ function getTypeUrl(s: string) {
         tech.value = 'all'
     }
     if (s === 'all') {
-        return router.resolve({ params: { level2: '' } }).href
+        return router.resolve({ path: '/resources' }).href
     } else {
-        return router.resolve({ params: { level2: s + 's' } }).href
+        return router.resolve({ name: 'resources', params: { level1: s + 's' } }).href
     }
 }
 function setType(s: string) {
@@ -151,7 +172,7 @@ function setType(s: string) {
         <div class="container">
             <div class="header">
                 <h1>Explore Mokapi Resources</h1>
-                <p>
+                <p class="text">
                     Explore a variety of tutorials, examples, and blog articles to help you make the most of Mokapi. Whether you're 
                     learning to mock APIs, validate schemas, or streamline your development process, our resources are designed to support you every step of the way.
                 </p>
@@ -204,7 +225,7 @@ function setType(s: string) {
                                 <span>{{ item.meta.title }}</span>
                             </h3>
                             <div class="card-text">{{ item.meta.description }}</div>
-                            <router-link class="stretched-link" :to="{ name: 'docs', params: {level2: item.level2, level3: formatParam(item.key)} }"></router-link>
+                            <router-link class="stretched-link" :to="{ path: item.path }"></router-link>
                         </div>
                     </div>
                 </div>
@@ -290,5 +311,9 @@ color: var(--color-button-text-hover);
   border-color: var(--card-border);
   background-color: var(--card-background);
   margin: 7px;
+}
+.examples .text {
+  max-width: 750px;
+  margin-inline: auto;
 }
 </style>

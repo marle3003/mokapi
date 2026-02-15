@@ -26,7 +26,7 @@ func TestModule_On(t *testing.T) {
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var event string
 				var handler common.EventHandler
-				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
 					event = evt
 					handler = do
 				}
@@ -49,7 +49,7 @@ func TestModule_On(t *testing.T) {
 			name: "event handler with parameter",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var handler common.EventHandler
-				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
 					handler = do
 				}
 
@@ -70,7 +70,7 @@ func TestModule_On(t *testing.T) {
 			name: "event handler changes params",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var handler common.EventHandler
-				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
 					handler = do
 				}
 
@@ -88,7 +88,7 @@ func TestModule_On(t *testing.T) {
 			name: "event handler does not change params",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var handler common.EventHandler
-				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
 					handler = do
 				}
 
@@ -106,7 +106,7 @@ func TestModule_On(t *testing.T) {
 			name: "event handler does not change params but uses track argument",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var handler common.EventHandler
-				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
 					handler = do
 				}
 
@@ -124,7 +124,7 @@ func TestModule_On(t *testing.T) {
 			name: "event handler changes params but disables track",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var handler common.EventHandler
-				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
 					handler = do
 				}
 
@@ -142,7 +142,7 @@ func TestModule_On(t *testing.T) {
 			name: "event handler throws error",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var handler common.EventHandler
-				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
 					handler = do
 				}
 
@@ -159,8 +159,8 @@ func TestModule_On(t *testing.T) {
 			name: "event handler with tags",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var tags map[string]string
-				host.OnFunc = func(evt string, do common.EventHandler, t map[string]string) {
-					tags = t
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
+					tags = args.Tags
 				}
 
 				_, err := vm.RunString(`
@@ -192,10 +192,36 @@ func TestModule_On(t *testing.T) {
 			},
 		},
 		{
+			name: "event handler with priority",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				priority := 0
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
+					priority = args.Priority
+				}
+
+				_, err := vm.RunString(`
+					const m = require('mokapi')
+					m.on('http', () => true, { priority: 100 })
+				`)
+				r.NoError(t, err)
+				r.Equal(t, 100, priority)
+			},
+		},
+		{
+			name: "event handler invalid type for priority",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				_, err := vm.RunString(`
+					const m = require('mokapi')
+					m.on('http', () => true, { priority: 'foo' })
+				`)
+				r.EqualError(t, err, "unexpected type for priority: String at mokapi/js/mokapi.(*Module).On-fm (native)")
+			},
+		},
+		{
 			name: "async event handler",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var handler common.EventHandler
-				host.OnFunc = func(evt string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
 					handler = do
 				}
 
@@ -265,10 +291,10 @@ m.on('http', (req, res) => {
 })
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
-				res := &common.EventResponse{
+				res := &common.HttpEventResponse{
 					Headers: map[string]any{"Content-Type": "application/json"},
 				}
-				actions := evt.Emit("http", &common.EventRequest{}, res)
+				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
 				ct := res.Headers["Content-Type"].(*string)
 				r.Equal(t, "text/plain", *ct)
 				return actions
@@ -277,7 +303,7 @@ m.on('http', (req, res) => {
 				r.NoError(t, err)
 				r.Nil(t, actions[0].Error)
 
-				var res *common.EventResponse
+				var res *common.HttpEventResponse
 				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
 				r.Len(t, res.Headers, 1)
 				r.Equal(t, "text/plain", res.Headers["Content-Type"])
@@ -292,8 +318,8 @@ m.on('http', (req, res) => {
 })
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
-				res := &common.EventResponse{}
-				actions := evt.Emit("http", &common.EventRequest{}, res)
+				res := &common.HttpEventResponse{}
+				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
 				r.Equal(t, map[string]interface{}{"foo": "bar"}, mokapi.Export(res.Data))
 				return actions
 			},
@@ -301,7 +327,7 @@ m.on('http', (req, res) => {
 				r.NoError(t, err)
 				r.Nil(t, actions[0].Error)
 
-				var res *common.EventResponse
+				var res *common.HttpEventResponse
 				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
 				r.Equal(t, map[string]interface{}{"foo": "bar"}, res.Data)
 			},
@@ -315,8 +341,8 @@ m.on('http', (req, res) => {
 })
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
-				res := &common.EventResponse{}
-				actions := evt.Emit("http", &common.EventRequest{}, res)
+				res := &common.HttpEventResponse{}
+				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
 				r.Equal(t, 201, res.StatusCode)
 				return actions
 			},
@@ -324,7 +350,7 @@ m.on('http', (req, res) => {
 				r.NoError(t, err)
 				r.Nil(t, actions[0].Error)
 
-				var res *common.EventResponse
+				var res *common.HttpEventResponse
 				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
 				r.Equal(t, 201, res.StatusCode)
 			},
@@ -338,14 +364,14 @@ m.on('http', (req, res) => {
 })
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
-				return evt.Emit("http", &common.EventRequest{}, &common.EventResponse{})
+				return evt.Emit("http", &common.HttpEventRequest{}, &common.HttpEventResponse{})
 			},
 			test: func(t *testing.T, actions []*common.Action, err error) {
 				r.NoError(t, err)
 				r.NotNil(t, actions[0].Error)
 				r.Equal(t, "failed to set statusCode: expected Integer but got String at <eval>:4:6(3)", actions[0].Error.Message)
 
-				var res *common.EventResponse
+				var res *common.HttpEventResponse
 				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
 				r.Equal(t, 0, res.StatusCode)
 			},
@@ -359,8 +385,8 @@ m.on('http', (req, res) => {
 })
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
-				res := &common.EventResponse{}
-				actions := evt.Emit("http", &common.EventRequest{}, res)
+				res := &common.HttpEventResponse{}
+				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
 				r.Equal(t, "hello world", res.Body)
 				return actions
 			},
@@ -368,7 +394,7 @@ m.on('http', (req, res) => {
 				r.NoError(t, err)
 				r.Nil(t, actions[0].Error)
 
-				var res *common.EventResponse
+				var res *common.HttpEventResponse
 				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
 				r.Equal(t, "hello world", res.Body)
 			},
@@ -382,14 +408,14 @@ m.on('http', (req, res) => {
 })
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
-				return evt.Emit("http", &common.EventRequest{}, &common.EventResponse{})
+				return evt.Emit("http", &common.HttpEventRequest{}, &common.HttpEventResponse{})
 			},
 			test: func(t *testing.T, actions []*common.Action, err error) {
 				r.NoError(t, err)
 				r.NotNil(t, actions[0].Error)
 				r.Equal(t, "failed to set body: expected String but got Object at <eval>:4:6(5)", actions[0].Error.Message)
 
-				var res *common.EventResponse
+				var res *common.HttpEventResponse
 				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
 				r.Equal(t, "", res.Body)
 			},
@@ -404,15 +430,15 @@ m.on('http', (req, res) => {
 })
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
-				res := &common.EventResponse{}
-				actions := evt.Emit("http", &common.EventRequest{}, res)
+				res := &common.HttpEventResponse{}
+				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
 				r.Equal(t, &[]any{int64(1), int64(2), int64(3)}, res.Data)
 				return actions
 			},
 			test: func(t *testing.T, actions []*common.Action, err error) {
 				r.NoError(t, err)
 				r.Nil(t, actions[0].Error)
-				var res *common.EventResponse
+				var res *common.HttpEventResponse
 				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
 				r.Equal(t, []any{float64(1), float64(2), float64(3)}, res.Data)
 			},
@@ -427,8 +453,8 @@ m.on('http', (req, res) => {
 })
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
-				res := &common.EventResponse{}
-				actions := evt.Emit("http", &common.EventRequest{}, res)
+				res := &common.HttpEventResponse{}
+				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
 				r.Nil(t, actions[0].Error)
 				r.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 				return actions
@@ -436,7 +462,7 @@ m.on('http', (req, res) => {
 			test: func(t *testing.T, actions []*common.Action, err error) {
 				r.NoError(t, err)
 
-				var res *common.EventResponse
+				var res *common.HttpEventResponse
 				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
 				r.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 			},
@@ -450,8 +476,8 @@ m.on('http', (req, res) => {
 })
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
-				res := &common.EventResponse{Data: map[string]any{"foo": "bar"}}
-				actions := evt.Emit("http", &common.EventRequest{}, res)
+				res := &common.HttpEventResponse{Data: map[string]any{"foo": "bar"}}
+				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
 				r.Nil(t, actions[0].Error)
 				r.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 				return actions
@@ -459,9 +485,121 @@ m.on('http', (req, res) => {
 			test: func(t *testing.T, actions []*common.Action, err error) {
 				r.NoError(t, err)
 
-				var res *common.EventResponse
+				var res *common.HttpEventResponse
 				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
 				r.Equal(t, map[string]any{"foo": "yuh"}, res.Data)
+			},
+		},
+		{
+			name: "rebuild function not defined",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.rebuild();
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.HttpEventResponse{Data: map[string]any{"foo": "bar"}}
+				return evt.Emit("http", &common.HttpEventRequest{}, res)
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+
+				r.Nil(t, actions[0].Error)
+
+				var res *common.HttpEventResponse
+				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				r.Equal(t, map[string]any{"foo": "bar"}, res.Data)
+			},
+		},
+		{
+			name: "rebuild function updates data",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.rebuild();
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.HttpEventResponse{Data: map[string]any{"foo": "bar"}}
+				res.Rebuild = func(statusCode int, contentType string) {
+					res.Data = map[string]any{"foo": "yuh"}
+				}
+				return evt.Emit("http", &common.HttpEventRequest{}, res)
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+
+				r.Nil(t, actions[0].Error)
+
+				var res *common.HttpEventResponse
+				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				r.Equal(t, map[string]any{"foo": "yuh"}, res.Data)
+			},
+		},
+		{
+			name: "rebuild function with parameters",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.rebuild(200, 'application/json');
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.HttpEventResponse{Data: map[string]any{"foo": "bar"}}
+				res.Rebuild = func(statusCode int, contentType string) {
+					res.Data = map[string]any{"statusCode": statusCode, "contentType": contentType}
+				}
+				return evt.Emit("http", &common.HttpEventRequest{}, res)
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+
+				r.Nil(t, actions[0].Error)
+
+				var res *common.HttpEventResponse
+				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				r.Equal(t, map[string]any{"statusCode": float64(200), "contentType": "application/json"}, res.Data)
+			},
+		},
+		{
+			name: "rebuild function wrong type statusCode",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.rebuild({ }, 'application/json');
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.HttpEventResponse{Data: map[string]any{"foo": "bar"}}
+				res.Rebuild = func(statusCode int, contentType string) {}
+				return evt.Emit("http", &common.HttpEventRequest{}, res)
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+
+				r.NotNil(t, actions[0].Error)
+				r.Equal(t, "response.rebuild failed: statusCode must be a number: got Object", actions[0].Error.Message)
+			},
+		},
+		{
+			name: "rebuild function wrong type contentType",
+			script: `
+const m = require('mokapi')
+m.on('http', (req, res) => {
+	res.rebuild(100, 200);
+})
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.HttpEventResponse{Data: map[string]any{"foo": "bar"}}
+				res.Rebuild = func(statusCode int, contentType string) {}
+				return evt.Emit("http", &common.HttpEventRequest{}, res)
+			},
+			test: func(t *testing.T, actions []*common.Action, err error) {
+				r.NoError(t, err)
+
+				r.NotNil(t, actions[0].Error)
+				r.Equal(t, "response.rebuild failed: contentType must be a string: got Integer", actions[0].Error.Message)
 			},
 		},
 	}
@@ -482,7 +620,7 @@ m.on('http', (req, res) => {
 			reg.Enable(vm)
 
 			var runEvent common.EventHandler
-			host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
+			host.OnFunc = func(event string, do common.EventHandler, args common.EventArgs) {
 				runEvent = do
 			}
 

@@ -186,9 +186,8 @@ func mapValueToConfig(value interface{}, configElement reflect.Value, format str
 	case reflect.Struct:
 		m, ok := value.(map[string]any)
 		if !ok {
-			i := configElement.Interface()
-			_ = i
-			return fmt.Errorf("expected object structure, got: %v", value)
+			err = useValueSetter(configElement, value)
+			return err
 		}
 		for k, v := range m {
 			f := getFieldByTag(configElement, k, format)

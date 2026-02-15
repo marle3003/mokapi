@@ -299,7 +299,7 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 		{
 			name: "event",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, args common.EventArgs) {
 					r.Equal(t, "http", event)
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -316,8 +316,8 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 		{
 			name: "tags",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
-					r.Equal(t, "bar", tags["foo"])
+				host.OnFunc = func(event string, do common.EventHandler, args common.EventArgs) {
+					r.Equal(t, "bar", args.Tags["foo"])
 				}
 				s, err := jstest.New(jstest.WithSource(
 					`import { on } from 'mokapi'
@@ -348,7 +348,7 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 			name: "run function",
 			test: func(t *testing.T, host *enginetest.Host) {
 				var doFunc common.EventHandler
-				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, args common.EventArgs) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -379,7 +379,7 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 			name: "return value default is false",
 			test: func(t *testing.T, host *enginetest.Host) {
 				var doFunc common.EventHandler
-				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, args common.EventArgs) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -401,7 +401,7 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 			name: "on error",
 			test: func(t *testing.T, host *enginetest.Host) {
 				var doFunc common.EventHandler
-				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, args common.EventArgs) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -429,7 +429,7 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 				}
 
 				var doFunc common.EventHandler
-				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, args common.EventArgs) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -452,13 +452,13 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 			name: "access kebab case property by bracket notation",
 			test: func(t *testing.T, host *enginetest.Host) {
 				data := &struct {
-					Ship_date string `json:"ship-date"` // can be accessed via obj['ship-date'] in javascript
+					Ship_date string `json:"ship-date"` // can be accessed via obj['ship-date'] in JavaScript
 				}{
 					Ship_date: "2022-01-01",
 				}
 
 				var doFunc common.EventHandler
-				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, args common.EventArgs) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -483,7 +483,7 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 				data := map[string]string{"foo": "bar"}
 
 				var doFunc common.EventHandler
-				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, args common.EventArgs) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -506,7 +506,7 @@ func TestScript_Mokapi_On_Http(t *testing.T) {
 			name: "logging and async",
 			test: func(t *testing.T, host *enginetest.Host) {
 				var doFunc common.EventHandler
-				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, args common.EventArgs) {
 					doFunc = do
 				}
 				s, err := jstest.New(jstest.WithSource(
@@ -557,7 +557,7 @@ func TestScript_Mokapi_On_Kafka(t *testing.T) {
 		{
 			name: "event",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, args common.EventArgs) {
 					r.Equal(t, "kafka", event)
 				}
 				s, err := jstest.New(jstest.WithSource(

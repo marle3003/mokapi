@@ -65,6 +65,7 @@ const shortcutHandler = (e: KeyboardEvent) => {
     }
     if (e.key === '/') {
         router.push({ name: getRouteName('search').value })
+        e.preventDefault();
     }
 }
 
@@ -80,15 +81,15 @@ onUnmounted(() => {
     window.removeEventListener('keydown', shortcutHandler)
 })
 
-function isServiceAvailable(service: string): boolean{
-    if (!appInfo.value?.data || !appInfo.value?.data.activeServices){
+function isServiceAvailable(service: string): boolean {
+    if (!appInfo.value?.data || !appInfo.value?.data.activeServices) {
         return false
     }
     return appInfo.value?.data.activeServices.includes(service)
 }
 
 function isAnyServiceAvailable() {
-    return appInfo.value?.data.activeServices && appInfo.value?.data.activeServices.length> 0
+    return appInfo.value?.data.activeServices && appInfo.value?.data.activeServices.length > 0
 }
 
 function isInitLoading() {
@@ -96,25 +97,34 @@ function isInitLoading() {
 }
 
 const description = `Quickly analyze and inspect all requests and responses in the dashboard to gather insights on how your mock APIs are used.`
-useMeta('Dashboard | mokapi.io', description, '')
+router.afterEach((to) => {
+    const resolver = to.meta.title
+
+    let title =
+        typeof resolver === "function"
+            ? resolver(to)
+            : resolver ?? "Mokapi";
+
+    useMeta(`${title} – Mokapi`, description, '')
+})
 </script>
 
 <template>
     <div v-if="isActive" class="position-fixed top-0 start-0 w-100" style="height: 2px; z-index: 1000;">
         <div class="refresh-progress-bar h-100" :style="{
-                width: progress + '%',
-                height: '3px',
-                transition: transitionRefresh ? 'width 0.12s linear' : 'none'
-            }">
+            width: progress + '%',
+            height: '3px',
+            transition: transitionRefresh ? 'width 0.12s linear' : 'none'
+        }">
         </div>
     </div>
     <main>
-        <div class="dashboard">
-            <h1 v-if="getMode() === 'live'" class="visually-hidden">Dashboard</h1>
+        <section class="dashboard" aria-labelledby="dashboard-title">
+            <h1 id="dashboard-title" v-if="getMode() === 'live'" class="visually-hidden">Dashboard</h1>
             <div v-if="getMode() === 'demo'" class="header-demo">
                 <h1 style="font-size: 2rem; margin-bottom: 10px;">Demo Dashboard</h1>
                 <p>
-                Get a feel for the interface and explore recorded data.
+                    Get a feel for the interface and explore recorded data.
                 </p>
             </div>
 
@@ -134,16 +144,16 @@ useMeta('Dashboard | mokapi.io', description, '')
                         <ldap-search-metric-card v-if="isServiceAvailable('ldap')" />
                         <job-count-card />
                     </div>
-                    <div class="card-group"  v-if="isServiceAvailable('http')">
+                    <div class="card-group" v-if="isServiceAvailable('http')">
                         <http-services-card />
                     </div>
-                    <div class="card-group"  v-if="isServiceAvailable('kafka')">
+                    <div class="card-group" v-if="isServiceAvailable('kafka')">
                         <kafka-clusters-card />
                     </div>
-                    <div class="card-group"  v-if="isServiceAvailable('mail')">
+                    <div class="card-group" v-if="isServiceAvailable('mail')">
                         <mail-services-card />
                     </div>
-                    <div class="card-group"  v-if="isServiceAvailable('ldap')">
+                    <div class="card-group" v-if="isServiceAvailable('ldap')">
                         <ldap-services-card />
                     </div>
 
@@ -155,7 +165,7 @@ useMeta('Dashboard | mokapi.io', description, '')
                         <http-request-card v-if="isServiceAvailable('http')" />
                         <http-request-card v-if="isServiceAvailable('http')" onlyError />
                     </div>
-                    <div class="card-group"  v-if="isServiceAvailable('http')">
+                    <div class="card-group" v-if="isServiceAvailable('http')">
                         <http-services-card />
                     </div>
                     <div class="card-group">
@@ -167,10 +177,10 @@ useMeta('Dashboard | mokapi.io', description, '')
                     <div class="card-group">
                         <kafka-message-metric-card v-if="isServiceAvailable('kafka')" />
                     </div>
-                    <div class="card-group"  v-if="isServiceAvailable('kafka')">
+                    <div class="card-group" v-if="isServiceAvailable('kafka')">
                         <kafka-clusters-card />
                     </div>
-                    <div class="card-group"  v-if="isServiceAvailable('kafka')">
+                    <div class="card-group" v-if="isServiceAvailable('kafka')">
                         <kafka-messages-card />
                     </div>
                 </div>
@@ -179,7 +189,7 @@ useMeta('Dashboard | mokapi.io', description, '')
                     <div class="card-group">
                         <smtp-message-metric-card v-if="isServiceAvailable('mail')" />
                     </div>
-                    <div class="card-group"  v-if="isServiceAvailable('mail')">
+                    <div class="card-group" v-if="isServiceAvailable('mail')">
                         <mail-services-card />
                     </div>
                     <div class="card-group">
@@ -191,7 +201,7 @@ useMeta('Dashboard | mokapi.io', description, '')
                     <div class="card-group">
                         <ldap-search-metric-card v-if="isServiceAvailable('ldap')" />
                     </div>
-                    <div class="card-group"  v-if="isServiceAvailable('ldap')">
+                    <div class="card-group" v-if="isServiceAvailable('ldap')">
                         <ldap-services-card />
                     </div>
                     <div class="card-group">
@@ -210,13 +220,13 @@ useMeta('Dashboard | mokapi.io', description, '')
                         <config-card />
                     </div>
                 </div>
-                <div v-if="$route.name === getRouteName('tree').value" >
+                <div v-if="$route.name === getRouteName('tree').value">
                     <div class="card-group">
                         <faker-tree v-if="$route.name === 'tree'"></faker-tree>
                     </div>
                 </div>
 
-                <div v-if="$route.name === getRouteName('search').value" >
+                <div v-if="$route.name === getRouteName('search').value">
                     <search v-if="$route.name === 'search'"></search>
                 </div>
 
@@ -226,17 +236,16 @@ useMeta('Dashboard | mokapi.io', description, '')
                 <ldap-service v-if="$route.meta.service === 'ldap'" />
                 <config v-if="$route.name === getRouteName('config').value"></config>
             </div>
-        </div>
 
-        <message :message="appInfo.error" v-if="!appInfo?.data && !appInfo?.isLoading && appInfo?.error"></message>
-        <loading v-if="isInitLoading()"></loading>
-        <release-notes v-if="getMode() === 'live'" />
+            <message :message="appInfo.error" v-if="!appInfo?.data && !appInfo?.isLoading && appInfo?.error"></message>
+            <loading v-if="isInitLoading()"></loading>
+        </section>
     </main>
 </template>
 
 <style scoped>
 .refresh-progress-bar {
-  box-shadow: 0 0 4px rgba(0, 123, 255, 0.4);
-  background-color: var(--color-refresh-background);
+    box-shadow: 0 0 4px rgba(0, 123, 255, 0.4);
+    background-color: var(--color-refresh-background);
 }
 </style>

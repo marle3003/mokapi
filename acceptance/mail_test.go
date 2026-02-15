@@ -27,7 +27,7 @@ func (suite *MailSuite) SetupSuite() {
 	wd, err := os.Getwd()
 	require.NoError(suite.T(), err)
 	cfg.ConfigFile = path.Join(wd, "mokapi.yaml")
-	cfg.Providers.File.Directories = []string{"./mail"}
+	cfg.Providers.File.Directories = []static.FileConfig{{Path: "./mail"}}
 	cfg.Certificates.Static = []static.Certificate{
 		{Cert: "./mail/mail.mokapi.local.pem"},
 	}

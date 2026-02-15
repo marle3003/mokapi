@@ -1,10 +1,11 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/stretchr/testify/require"
 )
 
 func TestStringDescription(t *testing.T) {
@@ -35,6 +36,17 @@ func TestStringDescription(t *testing.T) {
 				s := v.(string)
 				require.Less(t, len(s), 51)
 				require.Equal(t, "Say just these run whose foot this least.", v)
+			},
+		},
+		{
+			name: "message",
+			req: &Request{
+				Path:   []string{"message"},
+				Schema: schematest.New("string"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "Ourselves whomever wade regularly you how theirs these tomorrow staff gloves wow then opposite conclude those abroad she stop mob a rubbish mob as.", v)
 			},
 		},
 	}

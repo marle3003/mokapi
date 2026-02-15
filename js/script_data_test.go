@@ -18,11 +18,11 @@ func TestScript_Data(t *testing.T) {
 		{
 			name: "resource array",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, args common.EventArgs) {
 					r.Equal(t, "http", event)
-					request := &common.EventRequest{}
+					request := &common.HttpEventRequest{}
 					request.Url.Path = "/foo/bar"
-					response := &common.EventResponse{}
+					response := &common.HttpEventResponse{}
 					b, err := do(&common.EventContext{Args: []any{request, response}})
 					r.NoError(t, err)
 					r.True(t, b)
@@ -39,11 +39,11 @@ export const mokapi = {http: {"bar": [1, 2, 3, 4]}}`),
 		{
 			name: "resource absolute precedence ",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, args common.EventArgs) {
 					r.Equal(t, "http", event)
-					request := &common.EventRequest{}
+					request := &common.HttpEventRequest{}
 					request.Url.Path = "/foo/bar"
-					response := &common.EventResponse{}
+					response := &common.HttpEventResponse{}
 					b, err := do(&common.EventContext{Args: []any{request, response}})
 					r.NoError(t, err)
 					r.True(t, b)
@@ -60,11 +60,11 @@ export const mokapi = {"http": {"bar": [5,6], "foo": {"bar": [1, 2, 3, 4]}}}`),
 		{
 			name: "using default function",
 			test: func(t *testing.T, host *enginetest.Host) {
-				host.OnFunc = func(event string, do common.EventHandler, tags map[string]string) {
+				host.OnFunc = func(event string, do common.EventHandler, args common.EventArgs) {
 					r.Equal(t, "http", event)
-					request := &common.EventRequest{}
+					request := &common.HttpEventRequest{}
 					request.Url.Path = "/foo/bar"
-					response := &common.EventResponse{}
+					response := &common.HttpEventResponse{}
 					b, err := do(&common.EventContext{Args: []any{request, response}})
 					r.NoError(t, err)
 					r.True(t, b)

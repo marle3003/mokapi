@@ -86,32 +86,32 @@ Mokapi’s dashboard lets you visualize your mock APIs. View requests and respon
 
 Explore tutorials that walk you through mocking different protocols and scenarios:
 
-- 🌍 [Get started with REST API](https://mokapi.io/docs/resources/tutorials/get-started-with-rest-api)\
+- 🌍 [Get started with REST API](https://mokapi.io/resources/tutorials/get-started-with-rest-api)\
   This tutorial will show you how to mock a REST API using an OpenAPI specification.
 
-- ⚡ [Mocking Kafka with AsyncAPI](https://mokapi.io/docs/resources/tutorials/get-started-with-kafka)\
+- ⚡ [Mocking Kafka with AsyncAPI](https://mokapi.io/resources/tutorials/get-started-with-kafka)\
   mocking a Kafka topic using Mokapi and verifying that a producer generates valid messages.
 
-- 👨‍💻 [Mocking LDAP Authentication](https://mokapi.io/docs/resources/tutorials/mock-ldap-authentication-in-node)\
+- 👨‍💻 [Mocking LDAP Authentication](https://mokapi.io/resources/tutorials/mock-ldap-authentication-in-node)\
   Simulate LDAP-based login flows, including group-based permissions.
 
-- 📧 [Mocking SMTP Mail Servers](https://mokapi.io/docs/resources/tutorials/mock-smtp-server-send-mail-using-node)\
+- 📧 [Mocking SMTP Mail Servers](https://mokapi.io/resources/tutorials/mock-smtp-server-send-mail-using-node)\
   Use Mokapi to simulate sending and receiving emails in Node.js apps.
 
-- 🖥️ [End-to-End Testing with Jest and GitHub Actions](https://mokapi.io/docs/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline)\
+- 🖥️ [End-to-End Testing with Jest and GitHub Actions](https://mokapi.io/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline)\
   Integrate Mokapi into your CI pipeline for full-stack E2E testing.
 
-> More examples are available on [mokapi.io/docs/resources](https://mokapi.io/docs/resources)
+> More examples are available on [mokapi.io/resources](https://mokapi.io/resources)
 
 # 📚 Documentation
 
-- [Get Started](https://mokapi.io/docs/guides/welcome)
-- [HTTP](https://mokapi.io/docs/guides/http)
-- [Kafka](https://mokapi.io/docs/guides/kafka)
-- [LDAP](https://mokapi.io/docs/guides/ldap)
-- [SMTP](https://mokapi.io/docs/guides/mail)
-- [Javascript API](https://mokapi.io/docs/javascript-api)
-- [Resources](https://mokapi.io/docs/resources)
+- [Get Started](https://mokapi.io/docs/welcome)
+- [HTTP](https://mokapi.io/docs/http/overview)
+- [Kafka](https://mokapi.io/docs/kafka/overview)
+- [LDAP](https://mokapi.io/docs/ldap/overview)
+- [SMTP](https://mokapi.io/docs/mail/overview)
+- [Javascript API](https://mokapi.io/docs/javascript-api/overview)
+- [Resources](https://mokapi.io/resources)
 
 # ☕ Support
 

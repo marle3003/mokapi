@@ -116,6 +116,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	response := NewEventResponse(status, contentType)
+	setResponseRebuild(response, request, op)
 
 	err = setResponseData(response, mediaType, request)
 	if err != nil {
@@ -462,5 +463,47 @@ func drainRequestBody(r *http.Request) {
 	case <-done:
 	case <-time.After(10 * time.Second):
 		log.Warnf("timeout reading request body for %s %s", r.Method, lib.GetUrl(r))
+	}
+}
+
+func setResponseRebuild(response *common.HttpEventResponse, request *common.HttpEventRequest, op *Operation) {
+	response.Rebuild = func(statusCode int, contentType string) {
+		res := op.Responses.GetResponse(statusCode)
+		if res == nil {
+			res = op.getResponse(0)
+			if res == nil {
+				panic(
+					fmt.Sprintf(
+						"no configuration was found for HTTP status code %v, https://swagger.io/docs/specification/describing-responses",
+						statusCode,
+					),
+				)
+			}
+		}
+		var mediaType *MediaType
+		if contentType != "" {
+			mediaType = res.Content[contentType]
+			if mediaType == nil {
+				panic(fmt.Sprintf("content type '%s' is not specified for HTTP status code %v", contentType, statusCode))
+			}
+		} else {
+			for name, mt := range res.Content {
+				contentType = name
+				mediaType = mt
+			}
+		}
+
+		response.StatusCode = statusCode
+		response.Headers = map[string]any{}
+
+		err := setResponseData(response, mediaType, request)
+		if err != nil {
+			panic(err)
+		}
+
+		err = setResponseHeader(response, res.Headers)
+		if err != nil {
+			panic(err)
+		}
 	}
 }

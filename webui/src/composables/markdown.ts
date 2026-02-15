@@ -7,6 +7,8 @@ import { MarkdownItCard } from '@/composables/markdown-card';
 import { MarkdownItCarousel } from './markdown-carousel';
 import yaml from 'js-yaml'
 import { MarkdownItBlockquote } from './markdown-blockquote';
+import { MarkdownItTabContent } from './markdown-tab-content';
+import { MarkdownItTitle } from './markdown-title';
 
 const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
 const metadataRegex = /^---([\s\S]*?)---/;
@@ -24,8 +26,10 @@ export function useMarkdown(content: string | undefined): {content: string | und
         if (content) {
             content = new MarkdownIt()
                 .use(MarkdownItHighlightjs)
+                .use(MarkdownItTitle(metadata))
                 .use(MarkdownItBlockquote)
                 .use(MarkdownItTabs)
+                .use(MarkdownItTabContent)
                 .use(MarkdownItBox)
                 .use(MarkdownItLinks)
                 .use(MarkdownItCarousel(metadata))
@@ -36,7 +40,7 @@ export function useMarkdown(content: string | undefined): {content: string | und
 
         return {content, metadata}
     } catch (e) {
-        console.error('invalid markdown: '+content)
+        console.error('invalid markdown: '+e)
         return { content: '' }
     }
 }

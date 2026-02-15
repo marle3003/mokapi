@@ -6,14 +6,16 @@ import (
 	"strings"
 )
 
-type EventResponse struct {
+type HttpEventResponse struct {
 	Headers    map[string]any `json:"headers"`
 	StatusCode int            `json:"statusCode"`
 	Body       string         `json:"body"`
 	Data       any            `json:"data"`
+
+	Rebuild func(statusCode int, contentType string) `json:"-"`
 }
 
-type EventRequest struct {
+type HttpEventRequest struct {
 	Method      string         `json:"method"`
 	Url         Url            `json:"url"`
 	Body        interface{}    `json:"body"`
@@ -36,7 +38,7 @@ type Url struct {
 	Query  string `json:"query"`
 }
 
-func (r *EventRequest) String() string {
+func (r *HttpEventRequest) String() string {
 	s := r.Method + " " + r.Url.String()
 	if r.Api != "" {
 		s += fmt.Sprintf(" [API: %s]", r.Api)
@@ -61,11 +63,11 @@ func (u Url) String() string {
 	return sb.String()
 }
 
-func (r *EventResponse) HasBody() bool {
+func (r *HttpEventResponse) HasBody() bool {
 	return len(r.Body) > 0 || r.Data != nil
 }
 
-func HttpEventHandler(req *EventRequest, res *EventResponse, resources interface{}) (bool, error) {
+func HttpEventHandler(req *HttpEventRequest, res *HttpEventResponse, resources interface{}) (bool, error) {
 	resource := getResource(req.Url, resources)
 	if resource == nil {
 		return false, nil

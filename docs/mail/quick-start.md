@@ -64,8 +64,8 @@ You’ll see the received message under Mail → Messages, including its full co
 
 ## What's Next?
 
-- [Test email workflows with Playwright and Mokapi](/docs/resources/blogs/testing-email-workflows-with-playwright-and-mokapi)
-- [Add recipient rules](/docs/guides/mail/rules.md) to allow or deny specific domains
+- [Test email workflows with Playwright and Mokapi](/resources/blogs/testing-email-workflows-with-playwright-and-mokapi)
+- [Add recipient rules](/docs/mail/rules.md) to allow or deny specific domains
 - [Patch the config](/docs/configuration/patching.md) to test different scenarios
 
 > Mokapi gives you full control over your mail simulation environment — ideal for CI pipelines, 

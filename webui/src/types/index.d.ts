@@ -1,18 +1,24 @@
-interface DocConfig{
+interface DocConfig {
   [name: string]: DocEntry
 }
 
 interface DocEntry {
-  expanded?: boolean
-  hideNavigation: boolean
-  hideInNavigation: boolean
-  canonical?: string
-  component?: string
+  label: string
+  source?: string
+  path?: string
   index?: DocEntry
-  items?: {[name: string]: string | DocEntry }
+  items?: DocEntry[]
+  type?: 'headline' | 'root'
+
+  expanded?: boolean
+  hideNavigation?: boolean
+  hideInNavigation?: boolean
+  canonical?: string
+  
+  component?: string
 
   title?: string
-  description: string
+  description?: string
 }
 
 interface DocMeta {
@@ -21,6 +27,8 @@ interface DocMeta {
   icon?: string
   tech?: string
   image?: { url: string, alt: string }
+  subtitle?: string
+  tags?: string[]
 }
 
 interface Source {

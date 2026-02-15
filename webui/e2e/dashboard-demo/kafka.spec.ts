@@ -12,9 +12,10 @@ test('Visit Kafka Order Service', async ({ page }) => {
 
     await test.step('Verify service info', async () => {
 
-        await expect(page.getByLabel('Name')).toHaveText('Kafka Order Service API');
-        await expect(page.getByLabel('Version')).toHaveText('1.0.0');
-        await expect(page.getByLabel('Description')).toHaveText('An API to process customer orders and notify about order status updates using Kafka.')
+        const region = page.getByRole('region', { name: 'Info' });
+        await expect(region.getByLabel('Name')).toHaveText('Kafka Order Service API');
+        await expect(region.getByLabel('Version')).toHaveText('1.0.0');
+        await expect(region.getByLabel('Description')).toHaveText('An API to process customer orders and notify about order status updates using Kafka.')
 
     });
 
@@ -66,10 +67,11 @@ test('Visit Kafka Order Service', async ({ page }) => {
         await expect(await getCellByColumnName(table, 'Members', rows.nth(0))).toHaveText('1');
 
         await rows.nth(0).getByRole('cell').nth(0).click();
-        await expect(page.getByLabel('Group Name')).toHaveText('order-status-group-100');
-        await expect(page.getByLabel('State')).toHaveText('Stable');
-        await expect(page.getByLabel('Protocol')).toHaveText('RoundRobinAssigner');
-        await expect(page.getByLabel('Generation', { exact: true })).toHaveText('0');
+        const region = page.getByRole('region', { name: 'Info' });
+        await expect(region.getByLabel('Group Name')).toHaveText('order-status-group-100');
+        await expect(region.getByLabel('State')).toHaveText('Stable');
+        await expect(region.getByLabel('Protocol')).toHaveText('RoundRobinAssigner');
+        await expect(region.getByLabel('Generation', { exact: true })).toHaveText('0');
 
         await test.step('Verify Members', async () => {
         
@@ -89,9 +91,10 @@ test('Visit Kafka Order Service', async ({ page }) => {
 
                 await members.locator('tbody tr').click();
 
-                await expect(page.getByLabel('Member Name')).toHaveText(/^consumer-1/);
-                await expect(page.getByLabel('Client')).toHaveText(/^consumer-1/);
-                await expect(page.getByLabel('Heartbeat')).not.toBeEmpty();
+                const info = page.getByRole('region', { name: 'Info' });
+                await expect(info.getByLabel('Member Name')).toHaveText(/^consumer-1/);
+                await expect(info.getByLabel('Client')).toHaveText(/^consumer-1/);
+                await expect(info.getByLabel('Heartbeat')).not.toBeEmpty();
         
                 const region = page.getByRole('region', { name: 'Partitions' });
                 await expect(region).toBeVisible();
@@ -140,24 +143,26 @@ test('Visit Kafka Order Service', async ({ page }) => {
 
         await page.getByRole('tab', { name: 'Topics' }).click();
         await page.getByRole('table', { name: 'Topics' }).getByText('order-topic').click();
-        await expect(page.getByLabel('Topic', { exact: true })).toHaveText('order-topic');
-        await expect(page.getByLabel('Cluster')).toHaveText('Kafka Order Service API');
-        await expect(page.getByLabel('Cluster')).toHaveAttribute('href');
-        await expect(page.getByLabel('Description')).toHaveText('The Kafka topic for order events.');
+        const info = page.getByRole('region', { name: 'Info' });
+        await expect(info.getByLabel('Topic', { exact: true })).toHaveText('order-topic');
+        await expect(info.getByLabel('Cluster')).toHaveText('Kafka Order Service API');
+        await expect(info.getByLabel('Cluster')).toHaveAttribute('href');
+        await expect(info.getByLabel('Description')).toHaveText('The Kafka topic for order events.');
 
-        await expect(page.getByLabel('Type of API')).toHaveText('Kafka');
+        await expect(info.getByLabel('Type of API')).toHaveText('Kafka');
 
         await test.step('Verify Message 1', async () => {
 
             await page.getByRole('table', { name: 'Recent Messages' }).locator('tbody tr').getByRole('link', { name: 'a914817b-c5f0-433e-8280-1cd2fe44234e' }).click();
-            await expect(page.getByLabel('Kafka Key')).toHaveText('a914817b-c5f0-433e-8280-1cd2fe44234e');
-            await expect(page.getByLabel('Kafka Topic')).toHaveText('order-topic');
-            await expect(page.getByLabel('Kafka Topic')).toHaveAttribute('href', '/dashboard-demo/kafka/service/Kafka%20Order%20Service%20API/topics/order-topic');
-            await expect(page.getByLabel('Offset')).toHaveText('1');
-            await expect(page.getByRole('region', { name: 'Meta' }).getByLabel('Content Type')).toHaveText('application/json');
-            await expect(page.getByLabel('Key Type')).toHaveText('-');
-            await expect(page.getByLabel('Key Type')).not.toBeEmpty();
-            await expect(page.getByLabel('Client')).toHaveText('producer-1');
+            const meta = page.getByRole('region', { name: 'Meta' });
+            await expect(meta.getByLabel('Kafka Key')).toHaveText('a914817b-c5f0-433e-8280-1cd2fe44234e');
+            await expect(meta.getByLabel('Kafka Topic')).toHaveText('order-topic');
+            await expect(meta.getByLabel('Kafka Topic')).toHaveAttribute('href', '/dashboard-demo/kafka/service/Kafka%20Order%20Service%20API/topics/order-topic');
+            await expect(meta.getByLabel('Offset')).toHaveText('1');
+            await expect(meta.getByLabel('Content Type')).toHaveText('application/json');
+            await expect(meta.getByLabel('Key Type')).toHaveText('-');
+            await expect(meta.getByLabel('Key Type')).not.toBeEmpty();
+            await expect(meta.getByLabel('Client')).toHaveText('producer-1');
         
             const value = page.getByRole('region', { name: 'Value' });
             await expect(value.getByLabel('Content Type')).toHaveText('application/json');
@@ -167,8 +172,9 @@ test('Visit Kafka Order Service', async ({ page }) => {
 
             await test.step('Verify Producer', async () => {
                 await page.getByLabel('Client').getByRole('link').click();
-                await expect(page.getByLabel('ClientId')).toHaveText('producer-1');
-                await expect(page.getByLabel('Address')).not.toBeEmpty();
+                const info = page.getByRole('region', { name: 'Info' });
+                await expect(info.getByLabel('ClientId')).toHaveText('producer-1');
+                await expect(info.getByLabel('Address')).not.toBeEmpty();
 
                 await page.goBack();
             })
@@ -180,18 +186,20 @@ test('Visit Kafka Order Service', async ({ page }) => {
         await test.step('Verify Message 2', async () => {
 
             await page.getByRole('table', { name: 'Recent Messages' }).locator('tbody tr').getByRole('link', { name: 'random-message-1' }).click();
-            await expect(page.getByLabel('Kafka Key')).toHaveText('random-message-1');
-            await expect(page.getByLabel('Kafka Topic')).toHaveText('order-topic');
-            await expect(page.getByLabel('Kafka Topic')).toHaveAttribute('href', '/dashboard-demo/kafka/service/Kafka%20Order%20Service%20API/topics/order-topic');
-            await expect(page.getByLabel('Offset')).toHaveText('0');
-            await expect(page.getByRole('region', { name: 'Meta' }).getByLabel('Content Type')).toHaveText('application/json');
-            await expect(page.getByLabel('Key Type')).toHaveText('-');
-            await expect(page.getByLabel('Key Type')).not.toBeEmpty();
-            await expect(page.getByLabel('Client')).toHaveText('mokapi-script');
+            const meta = page.getByRole('region', { name: 'Meta' });
+            await expect(meta.getByLabel('Kafka Key')).toHaveText('random-message-1');
+            await expect(meta.getByLabel('Kafka Topic')).toHaveText('order-topic');
+            await expect(meta.getByLabel('Kafka Topic')).toHaveAttribute('href', '/dashboard-demo/kafka/service/Kafka%20Order%20Service%20API/topics/order-topic');
+            await expect(meta.getByLabel('Offset')).toHaveText('0');
+            await expect(meta.getByLabel('Content Type')).toHaveText('application/json');
+            await expect(meta.getByLabel('Key Type')).toHaveText('-');
+            await expect(meta.getByLabel('Key Type')).not.toBeEmpty();
+            await expect(meta.getByLabel('Client')).toHaveText('mokapi-script');
 
             await test.step('Verify Producer Script', async () => {
                 await page.getByLabel('Client').getByRole('link').click();
-                await expect(page.getByLabel('URL')).toHaveText(/kafka.ts$/);
+                const info = page.getByRole('region', { name: 'Info' });
+                await expect(info.getByLabel('URL')).toHaveText(/kafka.ts$/);
 
                 await page.goBack();
             })

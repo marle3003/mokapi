@@ -78,11 +78,11 @@ function getConsoleContent() {
               without waiting for real backends.
             </p>
             <p class="d-none d-md-block">
-              <router-link :to="{ path: '/docs/guides/http' }">
-                <button type="button" class="btn btn-outline-primary">Get Started</button>
+              <router-link :to="{ path: '/resources/tutorials/get-started-with-rest-api' }" class="btn btn-primary me-2">
+                Get Started
               </router-link>
-              <router-link :to="{ path: '/docs/resources/tutorials/get-started-with-rest-api' }">
-                <button type="button" class="btn btn-outline-primary">Learn More</button>
+              <router-link :to="{ path: '/docs/http/overview' }" class="btn btn-primary me-2">
+                Documentation
               </router-link>
             </p>
           </div>
@@ -91,11 +91,11 @@ function getConsoleContent() {
           </div>
           <div class="col-12 d-block d-md-none">
             <p style="margin-top: 2rem;">
-                <router-link :to="{ path: '/docs/guides/http' }">
-                  <button type="button" class="btn btn-outline-primary">Get Started</button>
+                <router-link :to="{ path: '/resources/tutorials/get-started-with-rest-api' }" class="btn btn-primary me-2">
+                  Get Started
                 </router-link>
-                <router-link :to="{ path: '/docs/resources' }">
-                  <button type="button" class="btn btn-outline-primary">Learn More</button>
+                <router-link :to="{ path: '/docs/http/overview' }" class="btn btn-primary me-2">
+                  Documentation
                 </router-link>
               </p>
           </div>
@@ -106,7 +106,7 @@ function getConsoleContent() {
     <section class="py-5 text-center">
       <div class="container">
         <h2>Why Mock HTTP and REST APIs?</h2>
-        <p class="lead mb-0">
+        <p class="lead mb-0 text">
           Modern applications depend on many external services.
           Mokapi lets you mock HTTP and OpenAPI-based APIs so development
           and testing are never blocked by missing or unstable backends.
@@ -120,18 +120,18 @@ function getConsoleContent() {
         <div class="row g-4 mt-4">
         <div class="col-md-4">
           <span class="bi bi-diagram-3 display-5 mb-3 d-block icon"></span>
-          <h3 class="h5">Mock APIs with OpenAPI</h3>
+          <h3>Mock APIs with OpenAPI</h3>
           <p>Instantly spin up REST API mocks from OpenAPI specifications with validation and auto-generated responses.</p>
         </div>
         <div class="col-md-4">
           <span class="bi bi-lightning-charge display-5 mb-3 d-block icon"></span>
-          <h3 class="h5">Dynamic Responses with Scripts</h3>
+          <h3>Dynamic Responses with Scripts</h3>
           <p>Use Mokapi Scripts to simulate logic, conditional flows, or edge cases without coding a backend.</p>
         </div>
         <div class="col-md-4">
           <span class="bi bi-git display-5 mb-3 d-block icon"></span>
-          <h3 class="h5">CI/CD Ready</h3>
-          <p>Integrate API mocks directly into your pipelines—speed up tests, reduce flakiness, and keep development moving.</p>
+          <h3>CI/CD Ready</h3>
+          <p>Integrate API mocks directly into your pipelines to accelerate testing, reduce instability, and drive development forward.</p>
         </div>
       </div>
       </div>
@@ -140,7 +140,7 @@ function getConsoleContent() {
     <section class="py-5">
       <div class="container">
         <h2>Explore Mokapi Features</h2>
-        <p class="lead fst-italic text-center mb-4">
+        <p class="lead text-center mb-4 text">
           Advanced capabilities that help you scale, automate, and debug HTTP API testing.
         </p>
         <div class="row row-cols-1 row-cols-md-2 g-4">
@@ -152,7 +152,7 @@ function getConsoleContent() {
                   Configuration as Code
                 </h3>
                 <p class="card-text pb-4">Define HTTP mocks with OpenAPI for consistency, version control, and seamless automation.</p>
-                <a href="/docs/configuration" class="card-link position-absolute" style="bottom:15px;">Overview</a>
+                <a href="/docs/configuration/overview" class="card-link position-absolute" style="bottom:15px;">Overview</a>
               </div>
             </div>
           </div>
@@ -164,7 +164,7 @@ function getConsoleContent() {
                   <span class="align-middle d-inline-block">Test Without Dependencies</span>
                 </h3>
                 <p class="card-text pb-4">Run faster, more reliable tests by simulating external dependencies in CI/CD pipelines.</p>
-                <a href="/docs/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="card-link position-absolute" style="bottom:15px;">Run Mokapi in GitHub Actions</a>
+                <a href="/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline" class="card-link position-absolute" style="bottom:15px;">Run Mokapi in GitHub Actions</a>
               </div>
             </div>
           </div>
@@ -176,7 +176,7 @@ function getConsoleContent() {
                   Realistic Test Data
                 </h3>
                 <p class="card-text pb-4">Intercept HTTP requests with Mokapi Scripts to simulate delays, failures, and edge cases.</p>
-                <a href="/docs/guides/get-started/test-data" class="card-link position-absolute" style="bottom:15px;">Start Mocking with Real Data</a>
+                <a href="/docs/get-started/test-data" class="card-link position-absolute" style="bottom:15px;">Start Mocking with Real Data</a>
               </div>
             </div>
           </div>
@@ -188,7 +188,7 @@ function getConsoleContent() {
                   Debugging &amp; Monitoring
                 </h3>
                 <p class="card-text pb-4">Inspect every request and response in the Mokapi Dashboard, validate against specs, and generate mock data automatically.</p>
-                <a href="/docs/guides/get-started/dashboard" class="card-link position-absolute" style="bottom:15px;">Explore Mokapi Dashboard</a>
+                <a href="/docs/get-started/dashboard" class="card-link position-absolute" style="bottom:15px;">Explore Mokapi Dashboard</a>
               </div>
             </div>
           </div>
@@ -200,7 +200,7 @@ function getConsoleContent() {
       <div class="container text-center mb-5">
         <div class="row">
           <h2>See Mokapi in Action</h2>
-          <p class="lead mb-4">Go beyond static mocks—customize, debug, and explore your APIs with powerful built-in tools.</p>
+          <p class="lead mb-4 text">Go beyond static mocks—customize, debug, and explore your APIs with powerful built-in tools.</p>
         </div>
 
         <div class="row pb-4 pb-lg-5 mb-lg-5 mt-3">
@@ -208,7 +208,7 @@ function getConsoleContent() {
             <div class="text-lg-start text-center">
               <h3>Customize API Responses</h3>
               <p>With Mokapi Scripts, you can quickly customize API responses to match your exact test conditions. Use event handlers to simulate logic, errors, or edge cases without implementing server logic.</p>
-              <router-link :to="{ path: '/docs/javascript-api' }">
+              <router-link :to="{ path: '/docs/javascript-api/overview' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Get Started with Mokapi Scripts</button>
               </router-link>
             </div>
@@ -226,7 +226,7 @@ function getConsoleContent() {
             <div class="text-lg-start text-center">
               <h3>Monitor and Analyze API Requests</h3>
               <p>Mokapi’s interactive dashboard provides real-time insights into every request and response. With visual tracking, detailed logs, and performance analytics, you can quickly understand what's going on with your mocks and optimize your testing process.</p>
-              <router-link :to="{ path: '/docs/guides/get-started/dashboard' }">
+              <router-link :to="{ path: '/docs/get-started/dashboard' }">
                 <button type="button" class="btn btn-outline-primary btn-sm">Explore the Dashboard</button>
               </router-link>
             </div>
@@ -239,7 +239,7 @@ function getConsoleContent() {
       <div class="container">
         <div class="row text-center mb-4">
           <h2>Quick Demo</h2>
-          <p class="lead mb-0">
+          <p class="lead mb-0 text">
             Spin up a fully working HTTP mock from an OpenAPI spec with a single command.
           </p>
         </div>

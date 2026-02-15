@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 )
 
 type Config struct {
@@ -69,10 +70,17 @@ type Search struct {
 }
 
 type FileProvider struct {
-	Filenames   []string `aliases:"filename" explode:"filename"`
-	Directories []string `aliases:"directory" explode:"directory"`
-	SkipPrefix  []string `yaml:"skipPrefix" json:"skipPrefix" flag:"skip-prefix"`
+	Filenames   []string     `aliases:"filename" explode:"filename"`
+	Directories []FileConfig `aliases:"directory" explode:"directory"`
+	SkipPrefix  []string     `yaml:"skipPrefix" json:"skipPrefix" flag:"skip-prefix"`
 	Include     []string
+	Exclude     []string
+}
+
+type FileConfig struct {
+	Path    string
+	Include []string
+	Exclude []string
 }
 
 type GitProvider struct {
@@ -227,4 +235,52 @@ func (d *DataGen) OptionalPropertiesProbability() float64 {
 		return defaultValue
 	}
 	return f
+}
+
+func (fc *FileConfig) UnmarshalYAML(value *yaml.Node) error {
+	if value.Kind == yaml.ScalarNode {
+		fc.Path = value.Value
+		return nil
+	}
+	type alias FileConfig
+	tmp := alias(*fc)
+	err := value.Decode(&tmp)
+	if err != nil {
+		return err
+	}
+	*fc = FileConfig(tmp)
+	return nil
+}
+
+func (fc *FileConfig) UnmarshalJSON(b []byte) error {
+	switch b[0] {
+	case '"':
+		var s string
+		if err := json.Unmarshal(b, &s); err != nil {
+			return err
+		}
+		fc.Path = s
+		return nil
+	case '{':
+		dec := json.NewDecoder(bytes.NewReader(b))
+		type alias FileConfig
+		tmp := alias(*fc)
+		err := dec.Decode(&tmp)
+		if err != nil {
+			return err
+		}
+		*fc = FileConfig(tmp)
+		return nil
+	default:
+		return fmt.Errorf("unexpected JSON type: %s", string(b))
+	}
+}
+
+func (fc *FileConfig) Set(v any) error {
+	switch x := v.(type) {
+	case string:
+		fc.Path = x
+		return nil
+	}
+	return fmt.Errorf("expected string, got %T", v)
 }

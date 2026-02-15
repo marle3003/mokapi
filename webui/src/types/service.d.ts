@@ -39,6 +39,7 @@ declare interface Config {
     provider: string
     time: string
     refs: ConfigRef[]
+    tags?: string[]
 }
 
 declare interface ConfigRef {

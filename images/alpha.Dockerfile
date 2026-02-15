@@ -17,6 +17,9 @@ ARG VERSION=dev
 
 ARG BUILD_TIME=dev
 
+# Install git for GIT tests
+RUN apk add --no-cache git
+
 COPY . /go/src/github.com/mokapi
 
 WORKDIR /go/src/github.com/mokapi

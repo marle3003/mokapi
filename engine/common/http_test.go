@@ -7,7 +7,7 @@ import (
 )
 
 func TestEventRequest_String(t *testing.T) {
-	r := &EventRequest{
+	r := &HttpEventRequest{
 		Method: "GET",
 		Url: Url{
 			Scheme: "https",
@@ -20,7 +20,7 @@ func TestEventRequest_String(t *testing.T) {
 }
 
 func TestEventResponse_HasBody(t *testing.T) {
-	r := &EventResponse{}
+	r := &HttpEventResponse{}
 	require.False(t, r.HasBody())
 	r.Body = "foo"
 	require.True(t, r.HasBody())
@@ -55,10 +55,10 @@ func TestHttpResource(t *testing.T) {
 		tc := tc
 		t.Run(tc.url.String(), func(t *testing.T) {
 			t.Parallel()
-			req := &EventRequest{
+			req := &HttpEventRequest{
 				Url: tc.url,
 			}
-			res := &EventResponse{}
+			res := &HttpEventResponse{}
 			b, err := HttpEventHandler(req, res, tc.resource)
 			tc.test(t, b, res.Data, err)
 		})

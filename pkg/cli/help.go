@@ -26,7 +26,13 @@ func (c *Command) printHelp() {
 		_, _ = fmt.Fprintf(w, "\nFlags:")
 
 		maxNameLen, hasShort := flagsInfo(flags)
+		done := map[string]bool{}
 		_ = flags.Visit(func(flag *Flag) error {
+			// skip aliases and short
+			if done[flag.Name] {
+				return nil
+			}
+			done[flag.Name] = true
 
 			_, _ = fmt.Fprintln(w)
 			if hasShort {
