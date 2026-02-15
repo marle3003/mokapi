@@ -2,7 +2,6 @@
 import { computed, inject, ref  } from 'vue';
 import { parseMetadata } from '@/composables/markdown'
 import { useRoute, useRouter } from 'vue-router';
-import { useFileResolver } from '@/composables/file-resolver';
 
 const files = inject<Record<string, string>>('files')!
 

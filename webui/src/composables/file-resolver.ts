@@ -3,8 +3,12 @@ import type { RouteLocationNormalizedLoaded } from "vue-router"
 export function useFileResolver() {
 
     function resolve(config: DocConfig, route: RouteLocationNormalizedLoaded): DocEntry | undefined {
+        let path = route.path
+        if (path.endsWith('/')) {
+            path = path.substring(0, path.length-1)
+        }
         for (const name of Object.keys(config)) {
-            const entry = getEntries(config[name]!, (e) => e.path?.toLocaleLowerCase() === route.path)
+            const entry = getEntries(config[name]!, (e) => e.path?.toLocaleLowerCase() === path)
             if (entry) {
                 return entry[entry.length-1]
             }
