@@ -1,14 +1,15 @@
 package console_test
 
 import (
-	"github.com/dop251/goja"
-	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/console"
 	"mokapi/js/eventloop"
 	"testing"
+
+	"github.com/dop251/goja"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestConsole(t *testing.T) {
@@ -44,8 +45,7 @@ func TestConsole(t *testing.T) {
 					console.log('hello', 'world');
 				`)
 				r.NoError(t, err)
-				r.Equal(t, "hello", logs[0])
-				r.Equal(t, "world", logs[1])
+				r.Equal(t, "hello world", logs[0])
 			},
 		},
 		{
@@ -121,8 +121,7 @@ func TestConsole(t *testing.T) {
 					console.log('hello %', 123);
 				`)
 				r.NoError(t, err)
-				r.Equal(t, `hello %`, logs[0])
-				r.Equal(t, int64(123), logs[1])
+				r.Equal(t, `hello % 123`, logs[0])
 			},
 		},
 		{
@@ -168,6 +167,21 @@ func TestConsole(t *testing.T) {
 				`)
 				r.NoError(t, err)
 				r.Equal(t, `hello %9.2f`, logs[0])
+			},
+		},
+		{
+			name: "multiple parameters",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var logs []any
+				host.InfoFunc = func(args ...interface{}) {
+					logs = args
+				}
+
+				_, err := vm.RunString(`
+					console.log('log an object:', { foo: 'bar', message: 'hello world' });
+				`)
+				r.NoError(t, err)
+				r.Equal(t, `log an object: {"foo":"bar","message":"hello world"}`, logs[0])
 			},
 		},
 	}
