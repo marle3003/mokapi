@@ -9,7 +9,7 @@ runs:
         VERSION=$(jq -r '.release.tag_name' "$GITHUB_EVENT_PATH")
         BODY=$(jq -r '.release.body' "$GITHUB_EVENT_PATH")
         {
-          echo "# Mokapi $VERSION"
+          echo "## Mokapi $VERSION"
           echo
           echo "$BODY"
         } > docs/release.md
