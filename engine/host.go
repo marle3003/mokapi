@@ -67,7 +67,7 @@ func (sh *scriptHost) Run() (err error) {
 			return
 		}
 	}
-	log.Infof("executing script %v", sh.file.Info.Url)
+	log.Infof("executing script %v", sh.name)
 	return sh.script.Run()
 }
 
