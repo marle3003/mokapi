@@ -129,16 +129,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Download dashboard
-        uses: actions/download-artifact@v4
+      - uses: actions/setup-go@v5
         with:
-          name: dashboard
-          path: webui/dist
+          go-version: 1.25.5
+      - uses: ./.github/actions/build-release-notes
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 23
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm install
       - name: Install taskfile
         run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
-      - name: Build
-        run: task build-vue-app
-        env:
-          CGO_ENABLED: 0
       - name: Publish
         run: task publish-npm-package VERSION=${GITHUB_REF##*/v}
+        env:
+          CGO_ENABLED: 0

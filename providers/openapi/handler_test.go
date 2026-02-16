@@ -1400,6 +1400,64 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 			},
 		},
 		{
+			name: "rebuild different content-type",
+			test: func(t *testing.T) {
+				e := enginetest.NewEngine()
+				err := e.AddScript(newScript(fmt.Sprintf("%s.ts", t.Name()), `
+					import {on, sleep} from 'mokapi'
+					export default function() {
+						on('http', async (request, response) => {
+							response.rebuild(200, 'application/xml');
+						});
+					}
+				`))
+				require.NoError(t, err)
+
+				config := &openapi.Config{
+					Info:    openapi.Info{Name: "Testing"},
+					Servers: []*openapi.Server{{Url: "http://localhost"}},
+				}
+
+				h := func(rw http.ResponseWriter, r *http.Request) {
+					sm := &events.StoreManager{}
+					sm.SetStore(10, events.NewTraits().WithNamespace("http"))
+					h := openapi.NewHandler(config, e, sm)
+					err = h.ServeHTTP(rw, r)
+					require.Nil(t, err)
+				}
+
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json",
+							openapitest.NewContent(openapitest.WithSchema(
+								schematest.New(
+									"object",
+									schematest.WithProperty("foo", schematest.New("string")),
+									schematest.WithRequired("foo"),
+								),
+							)),
+						),
+						openapitest.WithContent("application/xml",
+							openapitest.NewContent(openapitest.WithSchema(
+								schematest.New(
+									"object",
+									schematest.WithProperty("foo", schematest.New("string")),
+									schematest.WithRequired("foo"),
+								),
+							)),
+						),
+					),
+				)
+				openapitest.AppendPath("/foo", config, openapitest.WithOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", nil)
+				r.Header.Set("accept", "application/json")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Contains(t, rr.Body.String(), `<data><foo>`)
+			},
+		},
+		{
 			name: "rebuild content type not in specification",
 			test: func(t *testing.T) {
 				e := enginetest.NewEngine()
