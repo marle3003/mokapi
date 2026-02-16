@@ -501,6 +501,10 @@ func setResponseRebuild(response *common.HttpEventResponse, request *common.Http
 			panic(err)
 		}
 
+		if contentType != "" {
+			response.Headers["Content-Type"] = contentType
+		}
+
 		err = setResponseHeader(response, res.Headers)
 		if err != nil {
 			panic(err)
