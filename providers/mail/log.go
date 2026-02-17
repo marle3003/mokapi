@@ -5,6 +5,8 @@ import (
 	"mokapi/engine/common"
 	"mokapi/runtime/events"
 	"mokapi/smtp"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Log struct {
@@ -27,7 +29,13 @@ func NewLogEvent(msg *smtp.Message, ctx *smtp.ClientContext, eh events.Handler, 
 
 	if msg != nil {
 		event.MessageId = msg.MessageId
-		event.Subject = msg.Subject
+		subject, err := smtp.DecodeHeaderValue(msg.Subject)
+		if err != nil {
+			log.Errorf("failed to decode subject: %v", err)
+			event.Subject = msg.Subject
+		} else {
+			event.Subject = subject
+		}
 	}
 
 	_ = eh.Push(event, traits.WithNamespace("mail"))

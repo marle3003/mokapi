@@ -5,8 +5,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"mime"
 	"mime/multipart"
@@ -18,6 +16,9 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 const DateTimeLayout = "02-Jan-2006 15:04:05 -0700"
@@ -503,4 +504,13 @@ func (a *Attachment) Headers() map[string]string {
 		headers["Content-Description"] = a.ContentDescription
 	}
 	return headers
+}
+
+func DecodeHeaderValue(s string) (string, error) {
+	dec := new(mime.WordDecoder)
+	r, err := dec.DecodeHeader(s)
+	if err != nil {
+		return s, fmt.Errorf("failed to decode SMTP header: %v", err)
+	}
+	return r, nil
 }

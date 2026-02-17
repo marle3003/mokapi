@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"mime"
 	"mokapi/media"
 	"mokapi/providers/mail"
 	"mokapi/runtime"
@@ -413,6 +412,11 @@ func getRejectResponse(r *mail.Rule) *rejectResponse {
 }
 
 func toMessage(m *smtp.Message) *messageData {
+	subject, err := smtp.DecodeHeaderValue(m.Subject)
+	if err != nil {
+		log.Printf("failed to decode subject '%s': %v", m.Subject, err)
+		subject = m.Subject
+	}
 	r := &messageData{
 		Server:                  m.Server,
 		From:                    toAddress(m.From),
@@ -423,7 +427,7 @@ func toMessage(m *smtp.Message) *messageData {
 		MessageId:               m.MessageId,
 		InReplyTo:               m.InReplyTo,
 		Date:                    m.Date,
-		Subject:                 decodeSmtpValue(m.Subject),
+		Subject:                 subject,
 		ContentType:             m.ContentType,
 		ContentTransferEncoding: m.ContentTransferEncoding,
 		Body:                    m.Body,
@@ -455,20 +459,15 @@ func toMessage(m *smtp.Message) *messageData {
 func toAddress(list []smtp.Address) []address {
 	var r []address
 	for _, a := range list {
+		name, err := smtp.DecodeHeaderValue(a.Name)
+		if err != nil {
+			log.Printf("failed to decode address '%v': %v", a.Name, err)
+			name = a.Name
+		}
 		r = append(r, address{
-			Name:    decodeSmtpValue(a.Name),
+			Name:    name,
 			Address: a.Address,
 		})
-	}
-	return r
-}
-
-func decodeSmtpValue(s string) string {
-	dec := new(mime.WordDecoder)
-	r, err := dec.DecodeHeader(s)
-	if err != nil {
-		log.Errorf("failed to decode SMTP header: %v", err)
-		return s
 	}
 	return r
 }
