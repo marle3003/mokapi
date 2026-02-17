@@ -13,8 +13,3 @@ runs:
           echo
           echo "$BODY"
         } > docs/release.md
-    - name: Upload UI artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: release-notes
-        path: docs/release.md
