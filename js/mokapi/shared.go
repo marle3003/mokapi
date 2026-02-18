@@ -86,7 +86,7 @@ func Export(v any) any {
 	case *Proxy:
 		return val.Export()
 	case *SharedValue:
-		return val.source.Export()
+		return Export(val.source)
 	case goja.Value:
 		return Export(val.Export())
 	default:
@@ -136,8 +136,12 @@ func (p *SharedValue) Get(key string) goja.Value {
 		f := v.Get(key)
 		if _, ok := goja.AssertFunction(f); ok {
 			return f
-		} else if _, isObject := f.(*goja.Object); isObject {
-			return p.vm.NewDynamicObject(NewSharedValue(f, p.vm))
+		} else if obj, isObject := f.(*goja.Object); isObject {
+			e := obj.Export()
+			if sv, ok := e.(*SharedValue); ok {
+				return sv.Use(p.vm).ToValue()
+			}
+			return f
 		}
 		return f
 	}
@@ -157,7 +161,8 @@ func (p *SharedValue) Has(key string) bool {
 func (p *SharedValue) Set(key string, value goja.Value) bool {
 	switch v := p.source.(type) {
 	case *goja.Object:
-		err := v.Set(key, value)
+		sv := useValue(value, p.vm)
+		err := v.Set(key, sv)
 		if err != nil {
 			panic(p.vm.ToValue(err))
 		}
@@ -204,4 +209,13 @@ func (p *SharedValue) ToValue() goja.Value {
 // Export is used by the json schema parser interface Exportable
 func (p *SharedValue) Export() any {
 	return p.source.Export()
+}
+
+func useValue(v goja.Value, vm *goja.Runtime) any {
+	switch v.(type) {
+	case *goja.Object:
+		return NewSharedValue(v, vm)
+	default:
+		return v
+	}
 }

@@ -269,7 +269,7 @@ ol.breadcrumb {
   margin-bottom: 12px;
 }
 
-.content ul {
+.content > ul {
   padding-left: 1.5rem;
   margin-top: 1.25rem;
   margin-bottom: 1.5rem;

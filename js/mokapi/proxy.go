@@ -304,6 +304,10 @@ func splice(slice, toAdd reflect.Value, start int, deleteCount int) {
 }
 
 func assignValue(field reflect.Value, value any, fieldName string) error {
+	if value == nil {
+		field.Set(reflect.Zero(field.Type()))
+		return nil
+	}
 	v, err := convertTo(field.Type(), reflect.ValueOf(value))
 	if err != nil {
 		return fmt.Errorf("failed to set %s: %w", fieldName, err)
