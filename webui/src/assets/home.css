@@ -93,10 +93,10 @@
   border-color: var(--card-border);
   background-color: var(--card-background);
 }
-[data-theme="light"] .home .card:not(.accented) {
+[data-theme="light"] .card:not(.accented) {
   border: solid 1px var(--card-border) !important;
 }
-.home .card.accented {
+.card.accented {
   background-color: transparent;
   box-shadow: none !important;
 }
@@ -124,24 +124,24 @@
 [data-theme="light"] .card.accented::before {
   border: solid 1px var(--card-border) !important;
 }
-.home .card.accented .cta {
+.card.accented .cta {
   color: var(--link-color);
 }
-.home .card:hover.accented .cta {
+.card:hover.accented .cta {
   color: var(--color-text);
 }
-.home .card.accented .cta span.bi {
+.card.accented .cta span.bi {
   font-size: 12px;
   position: relative;
   bottom:2px;
 }
-.home .card.accented .cta span.hover {
+.card.accented .cta span.hover {
   display: none;
 }
-.home .card:hover.accented .cta span.hover {
+.card:hover.accented .cta span.hover {
   display: inline;
 }
-.home .card:hover.accented .cta span:not(.hover) {
+.card:hover.accented .cta span:not(.hover) {
   display: none;
 }
 

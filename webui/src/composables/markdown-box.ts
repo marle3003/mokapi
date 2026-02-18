@@ -90,7 +90,7 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
             token.hidden = true
 
             const url = getUrl(token)
-            const content = parseContent(token.content)
+            let content = parseContent(token.content)
 
             if (showTitle(token)) {
                 let title = getTitle(token)
@@ -112,24 +112,53 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
                     case 'info':
                         icon = '<span class="bi bi-info-circle me-1"></span>'
                         break
+                    case 'result':
+                        icon = '<span class="bi bi-check-circle me-1"></span>'
+                        break
+                    case 'tree':
+                        content = parseTree(content)
+                        break
                 }
 
-                alert += `<div class="box ${name}" role="alert">
+                alert += `<div class="box ${name}">
                         <p class="box-heading ${heading}">${icon}${title}</p>
-                        <p class="box-body">${content}</p>
+                        <div class="box-body">${content}</div>
                         ${url}
                         </div>`
             }
             else {
-                alert += `<div class="box ${name} no-title" role="alert">
+                alert += `<div class="box ${name} no-title">
                         <p class="box-body">${content}</p>
                         ${url}
                         </div>`
             }
         }
-
+console.log('alert', alert)
         return alert
     
+    }
+
+    function parseTree(content: string) {
+        let result = '<ul>'
+        const lines = content.split('\n')
+        let level = 0
+        for (const line of lines.filter(l => l.trim().length > 0)) {
+            const m = /^(\s*)/.exec(line)
+            if (m && m[1]) {
+                 const n = m[1].length / 4;
+                 console.log('n', n, 'level', level)
+                 if (n > level) {
+                    result += '<li><ul>'
+                    level = n
+                 } else if (n < level) {
+                    result += '</ul></li>'
+                    level = n
+                 }
+            }
+            result += `<li>${line.trim()}</li>`;
+        }
+        result += '</ul>'
+        return result
     }
 
     md.renderer.rules.fence = fenceGroup
