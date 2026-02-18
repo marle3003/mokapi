@@ -46,7 +46,7 @@ and catches integration bugs early. The workflow is simple:
 
 <img src="/ci-pipeline-flow.png" alt="Typical CI/CD Flow with Mokapi" />
 
-Mokapi runs as a service during your test phase—whether in Docker, Kubernetes, or directly on the CI runner.
+Mokapi runs as a service during your test phase whether in Docker, Kubernetes, or directly on the CI runner.
 Your tests hit the mocked endpoints instead of real APIs, and Mokapi validates every response against your
 specifications.
 
@@ -119,7 +119,7 @@ Return different data based on query parameters, headers, or request body conten
 Force 500 errors, 429 rate limits, or custom error messages to validate error handling
 ```
 
-These capabilities are powered by Mokapi Scripts—lightweight JavaScript modules that let you 
+These capabilities are powered by Mokapi Scripts, lightweight JavaScript modules that let you 
 define custom behavior. Here's a quick example for delay simulation:
 
 ```javascript tab=simulations.js
