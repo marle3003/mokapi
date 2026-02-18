@@ -378,7 +378,7 @@ code {
   padding: 0.6rem;
   padding-bottom: 0;
   margin-top: 2rem;
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
   border-left-width: 0.2rem ;
   border-left-style: solid;
   border-radius: 0.2rem;
@@ -392,6 +392,7 @@ code {
 .box .box-heading {
   margin: -0.6rem -0.6rem 0 -0.6rem;
   padding: 0.3rem 0 0.3rem 1rem;
+  font-weight: 600;
 }
 .box .box-heading:not(.box-custom-heading) {
   text-transform: capitalize;
@@ -430,6 +431,12 @@ code {
 .box.warning .box-heading {
   background-color: var(--color-yellow-shadow);
 }
+.box.result {
+  border-color: rgb(82, 183, 136);
+}
+.box.result .box-heading {
+  background-color: rgba(82, 183, 136, 0.4);
+}
 .anchor {
   display: block;
   position: relative;
@@ -466,7 +473,7 @@ blockquote span {
   border-color: var(--card-border-active);
   cursor: pointer;
 }
-.content a.card .card-title {
+.content .card .card-title {
   font-weight: bold;
 }
 .content li:has(p) {
@@ -569,9 +576,6 @@ a[name] {
   border-left: 3px solid var(--color-green);
   background-color: var(--card-background);
 }
-.box.box.benefits .box-heading {
-  font-weight: 600;
-}
 
 .box.feature {
   margin-top: 1rem;
@@ -583,6 +587,51 @@ a[name] {
 }
 .box.box.feature .box-heading {
   font-size: 1.1rem;
-  font-weight: 600;
+}
+
+.box.tree {
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+  padding: 24px;
+  border: 1px solid var(--card-border);
+  background-color: rgba(22, 27, 34, 0.3);
+  box-shadow: none;
+  border-radius: 6px;
+}
+[data-theme="light"] .box.tree {
+  background-color: rgb(246, 248, 250);
+}
+.box.tree ul {
+  list-style-type: none;
+  margin-bottom: 0;
+}
+.box.tree .box-body {
+  padding-bottom: 0;
+}
+.box.tree ul li {
+  padding-bottom: 0.5rem;
+}
+.box.tree .box-body > ul {
+  padding-left: 0;
+}
+.box.tree  ul li:last-child {
+  padding-bottom: 0;
+}
+
+.content h1 .bi,
+.content h2 .bi,
+.content h3 .bi,
+.content h4 .bi,
+.content h5 .bi {
+  color: var(--color-doc-link)
+}
+
+.card.accented {
+  border: none
+}
+
+.card.accented a {
+  text-decoration: none;
+  color: var(--color-text);
 }
 </style>
