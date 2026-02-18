@@ -561,4 +561,28 @@ a[name] {
   border-radius: 999px;
   font-size: 0.8rem;
 }
+
+.box.benefits {
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+  padding: 24px;
+  border-left: 3px solid var(--color-green);
+  background-color: var(--card-background);
+}
+.box.box.benefits .box-heading {
+  font-weight: 600;
+}
+
+.box.feature {
+  margin-top: 1rem;
+  margin-bottom: 2rem;
+  padding: 24px;
+  border: 2px solid var(--card-border);
+  background-color: var(--card-background);
+  text-align: center;
+}
+.box.box.feature .box-heading {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
 </style>

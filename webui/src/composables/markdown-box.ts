@@ -114,14 +114,14 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
                         break
                 }
 
-                alert += `<div class="box ${name}" role="alert">
+                alert += `<div class="box ${name}">
                         <p class="box-heading ${heading}">${icon}${title}</p>
                         <p class="box-body">${content}</p>
                         ${url}
                         </div>`
             }
             else {
-                alert += `<div class="box ${name} no-title" role="alert">
+                alert += `<div class="box ${name} no-title">
                         <p class="box-body">${content}</p>
                         ${url}
                         </div>`
