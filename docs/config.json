@@ -564,7 +564,7 @@
           {
             "label": "Mokapi behind Reverse Proxy",
             "source": "resources/examples/mokapi-behind-proxy.md",
-            "path": "/resources/examples/mokapi-behind-proxy",
+            "path": "/resources/examples/mokapi-behind-reverse-proxy",
             "hideNavigation": true
           },
           {
