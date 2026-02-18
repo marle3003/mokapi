@@ -144,7 +144,7 @@ console.log('alert', alert)
         let level = 0
         for (const line of lines.filter(l => l.trim().length > 0)) {
             const m = /^(\s*)/.exec(line)
-            if (m) {
+            if (m && m[1]) {
                  const n = m[1].length / 4;
                  console.log('n', n, 'level', level)
                  if (n > level) {
