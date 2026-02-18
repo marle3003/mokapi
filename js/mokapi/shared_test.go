@@ -260,6 +260,57 @@ func TestModule_Shared(t *testing.T) {
 			},
 		},
 		{
+			name: "update object inside array",
+			test: func(t *testing.T, newVm func() *goja.Runtime) {
+				vm1 := newVm()
+				vm2 := newVm()
+
+				v, err := vm1.RunString(`
+					const m = require('mokapi');
+					const foo = m.shared.update('foo', (v) => v ?? { items: [] });
+					foo.items.push({ data: 'foo' })
+				`)
+				r.NoError(t, err)
+
+				v, err = vm2.RunString(`
+					const m = require('mokapi');
+					const foo = m.shared.update('foo', (v) => v ?? { items: [] });
+					foo.items.push({ data: 'bar' })
+					foo
+				`)
+				r.NoError(t, err)
+				m := map[string]interface{}{}
+				err = vm1.ExportTo(v, &m)
+				r.Equal(t, map[string]any{"items": []any{map[string]any{"data": "foo"}, map[string]any{"data": "bar"}}}, mokapi.Export(v))
+			},
+		},
+		{
+			name: "change object inside array",
+			test: func(t *testing.T, newVm func() *goja.Runtime) {
+				vm1 := newVm()
+				vm2 := newVm()
+
+				v, err := vm1.RunString(`
+					const m = require('mokapi');
+					const foo = m.shared.update('foo', (v) => v ?? { items: [] });
+					foo.items.push({ data: 'foo' })
+				`)
+				r.NoError(t, err)
+
+				v, err = vm2.RunString(`
+					const m = require('mokapi');
+					const foo = m.shared.update('foo', (v) => v ?? { items: [] });
+					foo.items.push({ data: 'bar' })
+					foo.items[1].data = 'yuh'
+					foo
+				`)
+				r.NoError(t, err)
+				m := map[string]interface{}{}
+				err = vm1.ExportTo(v, &m)
+				r.Equal(t, map[string]any{"items": []any{map[string]any{"data": "foo"}, map[string]any{"data": "yuh"}}}, mokapi.Export(v))
+			},
+		},
+		{
 			name: "enumerate object",
 			test: func(t *testing.T, newVm func() *goja.Runtime) {
 				vm1 := newVm()
