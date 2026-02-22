@@ -292,6 +292,17 @@ ol.breadcrumb {
   margin-bottom: 1.5rem;
 }
 
+.content .image-with-caption img {
+  margin-bottom: 0;
+}
+
+.content .image-with-caption .image-caption {
+  padding: 12px 16px;
+  text-align: center;
+  font-size: 0.95rem;;
+  color: var(--color-text-light);
+}
+
 table {
     color:var(--color-text);
     text-align: start;

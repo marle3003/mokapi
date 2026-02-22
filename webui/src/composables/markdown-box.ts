@@ -133,7 +133,6 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
                         </div>`
             }
         }
-console.log('alert', alert)
         return alert
     
     }
@@ -146,7 +145,6 @@ console.log('alert', alert)
             const m = /^(\s*)/.exec(line)
             if (m && m[1]) {
                  const n = m[1].length / 4;
-                 console.log('n', n, 'level', level)
                  if (n > level) {
                     result += '<li><ul>'
                     level = n
