@@ -29,6 +29,7 @@ body {
 #app {
   display: grid;
   grid-template-columns: auto;
+  grid-template-rows: 64px auto;
   grid-template-areas:
     "hd"
     "main"
