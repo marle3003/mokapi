@@ -22,6 +22,7 @@ export function useMarkdown(content: string | undefined): {content: string | und
         const metadata = parseMetadata(content)
 
         content = content.replaceAll(/__APP_VERSION__/g, APP_VERSION)
+        content = content.replace(metadataRegex, '')
 
         if (content) {
             content = new MarkdownIt()
@@ -39,7 +40,7 @@ export function useMarkdown(content: string | undefined): {content: string | und
                 .render(content)
         }
 
-        content = replaceImageUrls(content).replace(metadataRegex, '')
+        content = replaceImageUrls(content)
 
         return {content, metadata}
     } catch (e) {

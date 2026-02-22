@@ -16,8 +16,8 @@ cards:
     - title: CI/CD Integration
       href: /resources/blogs/end-to-end-testing-with-mocked-apis
       description: Run Mokapi in GitHub Actions for automated testing workflows
-  
 ---
+
 # Get started with REST API
 
 In this tutorial, you will:
