@@ -4,6 +4,7 @@ description: Learn how to mock a REST API using an OpenAPI specification with Mo
 subtitle: Learn how to mock a REST API using an OpenAPI specification with Mokapi. This tutorial covers basic setup, configuration, and Docker deployment.
 icon: bi-globe
 tech: http
+tags: [HTTP, OpenAPI]
 cards:
   items:
     - title: Dynamic Responses
