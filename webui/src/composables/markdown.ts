@@ -9,6 +9,7 @@ import yaml from 'js-yaml'
 import { MarkdownItBlockquote } from './markdown-blockquote';
 import { MarkdownItTabContent } from './markdown-tab-content';
 import { MarkdownItTitle } from './markdown-title';
+import { MarkdownItTable } from './markdown-table';
 
 const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
 const metadataRegex = /^---([\s\S]*?)---/;
@@ -32,6 +33,7 @@ export function useMarkdown(content: string | undefined): {content: string | und
                 .use(MarkdownItTabContent)
                 .use(MarkdownItBox)
                 .use(MarkdownItLinks)
+                .use(MarkdownItTable)
                 .use(MarkdownItCarousel(metadata))
                 .use(MarkdownItCard(metadata))
                 .set({html: true})
