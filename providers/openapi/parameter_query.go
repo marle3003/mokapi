@@ -27,7 +27,11 @@ func parseQuery(param *Parameter, u *url.URL) (*RequestParameterValue, error) {
 			if param.Required {
 				return nil, fmt.Errorf("parameter is required")
 			}
-			return &RequestParameterValue{}, err
+			v := &RequestParameterValue{}
+			if param.Schema != nil && param.Schema.Default != nil {
+				v.Value = param.Schema.Default
+			}
+			return v, err
 		}
 		raw := u.Query().Get(param.Name)
 		rp := &RequestParameterValue{Raw: &raw}
@@ -46,15 +50,21 @@ func parseQuery(param *Parameter, u *url.URL) (*RequestParameterValue, error) {
 func parseQueryObject(param *Parameter, u *url.URL) (string, interface{}, error) {
 	if param.Style == "form" && param.IsExplode() {
 		raw := u.RawQuery
-		if len(raw) == 0 && param.Required {
-			return "", nil, fmt.Errorf("parameter is required")
+		if len(raw) == 0 {
+			if param.Required {
+				return "", nil, fmt.Errorf("parameter is required")
+			}
+			return "", param.Schema.Default, nil
 		}
 		i, err := parseExplodeObject(param, raw, "&", url.QueryUnescape)
 		return raw, i, err
 	} else if param.Style == "form" {
 		raw := u.Query().Get(param.Name)
-		if len(raw) == 0 && param.Required {
-			return "", nil, fmt.Errorf("parameter is required")
+		if len(raw) == 0 {
+			if param.Required {
+				return "", nil, fmt.Errorf("parameter is required")
+			}
+			return "", param.Schema.Default, nil
 		}
 		i, err := parseUnExplodeObject(param, raw, ",")
 		return raw, i, err
@@ -78,8 +88,11 @@ func parseQueryObject(param *Parameter, u *url.URL) (string, interface{}, error)
 				obj[name] = v
 			}
 		}
-		if len(raw.String()) == 0 && param.Required {
-			return "", nil, fmt.Errorf("parameter is required")
+		if len(raw.String()) == 0 {
+			if param.Required {
+				return "", nil, fmt.Errorf("parameter is required")
+			}
+			return "", param.Schema.Default, nil
 		}
 		return raw.String(), obj, nil
 
@@ -106,8 +119,11 @@ func parseQueryArray(p *Parameter, u *url.URL) (*string, any, error) {
 				values = strings.Split(raw, ",")
 			}
 		}
-
+		i, err := parseArray(p, values)
+		return &raw, i, err
 	}
-	i, err := parseArray(p, values)
-	return &raw, i, err
+	if p.Schema != nil && p.Schema.Default != nil {
+		return nil, p.Schema.Default, nil
+	}
+	return &raw, nil, nil
 }
