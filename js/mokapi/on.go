@@ -15,7 +15,7 @@ import (
 
 type onArgs struct {
 	tags       map[string]string
-	track      bool
+	track      func(args ...goja.Value) (bool, error)
 	isTrackSet bool
 	priority   int
 }
@@ -32,13 +32,14 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 			return false, err
 		}
 
+		var params []goja.Value
+		for _, v := range ctx.Args {
+			params = append(params, ArgToJs(v, m.vm))
+		}
+
 		var r goja.Value
 		r, err = m.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
 			call, _ := goja.AssertFunction(do)
-			var params []goja.Value
-			for _, v := range ctx.Args {
-				params = append(params, ArgToJs(v, m.vm))
-			}
 			v, err := call(goja.Undefined(), params...)
 			if err != nil {
 				return nil, err
@@ -55,7 +56,7 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 		}
 
 		if eventArgs.isTrackSet {
-			return eventArgs.track, nil
+			return eventArgs.track(params...)
 		}
 
 		newHashes, err := getHashes(ctx.Args...)
@@ -96,11 +97,26 @@ func getOnArgs(vm *goja.Runtime, args goja.Value) (onArgs, error) {
 				if goja.IsUndefined(v) || goja.IsNull(v) {
 					continue
 				}
-				if v.ExportType().Kind() != reflect.Bool {
+				if v.ExportType().Kind() == reflect.Bool {
+					result.isTrackSet = true
+					result.track = func(args ...goja.Value) (bool, error) {
+						return v.ToBoolean(), nil
+					}
+				} else if f, ok := goja.AssertFunction(v); ok {
+					result.isTrackSet = true
+					result.track = func(args ...goja.Value) (bool, error) {
+						r, err := f(goja.Undefined(), args...)
+						if err != nil {
+							return true, fmt.Errorf("failed to call track function: %v", err)
+						}
+						if r.ExportType().Kind() == reflect.Bool {
+							return r.ToBoolean(), nil
+						}
+						return true, fmt.Errorf("unexpected return type for track: %v", util.JsType(r.Export()))
+					}
+				} else {
 					return onArgs{}, fmt.Errorf("unexpected type for track: %v", util.JsType(v.Export()))
 				}
-				result.track = v.ToBoolean()
-				result.isTrackSet = true
 			case "priority":
 				v := params.Get(k)
 				if goja.IsUndefined(v) || goja.IsNull(v) {

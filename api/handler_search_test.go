@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
@@ -10,6 +11,7 @@ import (
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime"
 	"mokapi/runtime/search"
+	"mokapi/safe"
 	"mokapi/try"
 	"net/http"
 	"testing"
@@ -180,7 +182,12 @@ func TestHandler_SearchQuery(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			h := New(tc.app(), static.Api{})
+			app := tc.app()
+			pool := safe.NewPool(context.Background())
+			app.Start(pool)
+			defer pool.Stop()
+
+			h := New(app, static.Api{})
 
 			try.Handler(t,
 				http.MethodGet,

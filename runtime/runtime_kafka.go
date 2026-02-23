@@ -10,12 +10,12 @@ import (
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
+	"mokapi/runtime/search"
 	"mokapi/sortedmap"
 	"path/filepath"
 	"sort"
 	"sync"
 
-	"github.com/blevesearch/bleve/v2"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -24,7 +24,7 @@ type KafkaStore struct {
 	monitor *monitor.Monitor
 	cfg     *static.Config
 	events  *events.StoreManager
-	index   bleve.Index
+	index   search.Index
 	m       sync.RWMutex
 }
 

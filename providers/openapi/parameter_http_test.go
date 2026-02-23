@@ -1,11 +1,12 @@
 package openapi
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi/schema/schematest"
 	"net/http"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseParam(t *testing.T) {

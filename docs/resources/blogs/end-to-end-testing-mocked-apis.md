@@ -139,12 +139,12 @@ export default () => {
                     break;
             }
         }
-    })
+    }, { track: true })
     on('http', (request, response) => {
         if (!delay) {
             sleep(delay);
         }
-    }, { track: true } )
+    }, { track: () => delay !== undefined } )
 }
 ```
 

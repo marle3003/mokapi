@@ -1,7 +1,7 @@
 package runtime_test
 
 import (
-	"github.com/stretchr/testify/require"
+	"context"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
@@ -9,7 +9,10 @@ import (
 	"mokapi/providers/mail"
 	"mokapi/runtime"
 	"mokapi/runtime/search"
+	"mokapi/safe"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestIndex_Mail(t *testing.T) {
@@ -70,8 +73,11 @@ func TestIndex_Mail(t *testing.T) {
 				require.Len(t, r.Results, 2)
 
 				app.Mail.Remove(toConfig(cfg))
-				r, err = app.Search(search.Request{Limit: 10})
-				require.NoError(t, err)
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "Test", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 0
+				})
 				require.Len(t, r.Results, 0)
 			},
 		},
@@ -138,6 +144,11 @@ func TestIndex_Mail(t *testing.T) {
 						},
 					},
 				})
+
+			pool := safe.NewPool(context.Background())
+			app.Start(pool)
+			defer pool.Stop()
+
 			tc.test(t, app)
 		})
 	}

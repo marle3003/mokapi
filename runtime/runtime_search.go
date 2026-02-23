@@ -1,7 +1,6 @@
 package runtime
 
 import (
-	"github.com/blevesearch/bleve/v2"
 	"mokapi/config/dynamic"
 	"mokapi/runtime/search"
 	"strings"
@@ -15,8 +14,8 @@ type config struct {
 	Data          string `json:"data"`
 }
 
-func addConfigToIndex(index bleve.Index, cfg *dynamic.Config) error {
-	return index.Index(cfg.Info.Key(), config{
+func (a *App) addConfigToIndex(cfg *dynamic.Config) {
+	a.searchIndex.Add(cfg.Info.Key(), config{
 		Discriminator: "config",
 		Provider:      cfg.Info.Provider,
 		Name:          cfg.Info.Path(),
@@ -25,8 +24,8 @@ func addConfigToIndex(index bleve.Index, cfg *dynamic.Config) error {
 	})
 }
 
-func removeConfigFromIndex(index bleve.Index, cfg *dynamic.Config) {
-	_ = index.Delete(cfg.Info.Key())
+func (a *App) removeConfigFromIndex(cfg *dynamic.Config) {
+	a.searchIndex.Delete(cfg.Info.Key())
 }
 
 func getConfigSearchResult(fields map[string]string, _ []string) (search.ResultItem, error) {

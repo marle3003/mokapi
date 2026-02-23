@@ -1,7 +1,7 @@
 package runtime_test
 
 import (
-	"github.com/stretchr/testify/require"
+	"context"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/providers/openapi/openapitest"
@@ -9,14 +9,21 @@ import (
 	"mokapi/runtime/events"
 	"mokapi/runtime/events/eventstest"
 	"mokapi/runtime/search"
+	"mokapi/safe"
 	"mokapi/try"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestIndex(t *testing.T) {
 	cfg := &static.Config{}
 	cfg.Api.Search.Enabled = true
 	app := runtime.New(cfg)
+
+	pool := safe.NewPool(context.Background())
+	app.Start(pool)
+	defer pool.Stop()
 
 	trait := events.NewTraits().WithNamespace("test")
 	app.Events.SetStore(10, trait)

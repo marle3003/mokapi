@@ -74,6 +74,23 @@ func TestFromRequest_Header(t *testing.T) {
 			},
 		},
 		{
+			name: "with default",
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Type:     openapi.ParameterHeader,
+				Name:     "debug",
+				Required: false,
+				Schema:   schematest.New("integer", schematest.WithDefault(10)),
+			}}},
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
+				return r
+			},
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 10, result.Header["debug"].Value)
+			},
+		},
+		{
 			name: "not required header and not sent",
 			params: openapi.Parameters{{Value: &openapi.Parameter{
 				Type:     openapi.ParameterHeader,

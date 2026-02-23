@@ -9,6 +9,7 @@ import yaml from 'js-yaml'
 import { MarkdownItBlockquote } from './markdown-blockquote';
 import { MarkdownItTabContent } from './markdown-tab-content';
 import { MarkdownItTitle } from './markdown-title';
+import { MarkdownItTable } from './markdown-table';
 import { imageCaption } from './markdown-image';
 import { MarkdownItCtaLinks } from './markdown-cta-links';
 
@@ -34,6 +35,7 @@ export function useMarkdown(content: string | undefined): {content: string | und
                 .use(MarkdownItTabContent)
                 .use(MarkdownItBox)
                 .use(MarkdownItLinks)
+                .use(MarkdownItTable)
                 .use(MarkdownItCarousel(metadata))
                 .use(MarkdownItCard(metadata))
                 .use(MarkdownItCtaLinks(metadata))

@@ -1,7 +1,7 @@
 package runtime_test
 
 import (
-	"github.com/stretchr/testify/require"
+	"context"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/dynamictest"
@@ -10,7 +10,10 @@ import (
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime"
 	"mokapi/runtime/search"
+	"mokapi/safe"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestIndex_Config(t *testing.T) {
@@ -84,6 +87,11 @@ func TestIndex_Config(t *testing.T) {
 				Search: static.Search{
 					Enabled: true,
 				}}})
+
+			pool := safe.NewPool(context.Background())
+			app.Start(pool)
+			defer pool.Stop()
+
 			tc.test(t, app)
 		})
 	}

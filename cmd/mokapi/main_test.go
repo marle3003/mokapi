@@ -82,6 +82,7 @@ api:
     dashboard: true
     search:
         enabled: true
+        indexPath: ""
 rootCaCert: ""
 rootCaKey: ""
 configs: []

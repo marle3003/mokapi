@@ -326,6 +326,26 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
+			name:   "operation parameter type",
+			config: `{"swagger": "2.0","paths": {"/foo": {"get": {"parameters": [{"in":"header","name":"id","type":"string"}]}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
+				require.Contains(t, config.Paths, "/foo")
+				get := config.Paths["/foo"].Value.Get
+				require.Equal(t, "header", get.Parameters[0].Value.Type.String())
+				require.Equal(t, "string", get.Parameters[0].Value.Schema.Type.String())
+			},
+		},
+		{
+			name:   "operation parameter default value",
+			config: `{"swagger": "2.0","paths": {"/foo": {"get": {"parameters": [{"in":"header","name":"id","default":10}]}}}}`,
+			test: func(t *testing.T, config *openapi.Config) {
+				require.Contains(t, config.Paths, "/foo")
+				get := config.Paths["/foo"].Value.Get
+				require.Equal(t, "header", get.Parameters[0].Value.Type.String())
+				require.Equal(t, float64(10), get.Parameters[0].Value.Schema.Default)
+			},
+		},
+		{
 			name:   "operation default response",
 			config: `{"swagger": "2.0", "paths": {"/foo": {"get": {"responses": {   "default": { "description": "default" }  }}}}}`,
 			test: func(t *testing.T, config *openapi.Config) {

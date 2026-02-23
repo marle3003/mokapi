@@ -9,12 +9,12 @@ import (
 	"mokapi/providers/directory"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
+	"mokapi/runtime/search"
 	"path/filepath"
 	"sort"
 	"sync"
 	"time"
 
-	"github.com/blevesearch/bleve/v2"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -23,7 +23,7 @@ type LdapStore struct {
 	cfg    *static.Config
 	events *events.StoreManager
 	m      sync.RWMutex
-	index  bleve.Index
+	index  search.Index
 }
 
 type LdapInfo struct {

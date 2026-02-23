@@ -1,7 +1,7 @@
 package runtime_test
 
 import (
-	"github.com/stretchr/testify/require"
+	"context"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
@@ -9,7 +9,11 @@ import (
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime"
 	"mokapi/runtime/search"
+	"mokapi/safe"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestIndex_Http(t *testing.T) {
@@ -55,8 +59,11 @@ func TestIndex_Http(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
 				app.RemoveHttp(toConfig(cfg))
-				r, err = app.Search(search.Request{QueryText: "foo", Limit: 10})
-				require.Len(t, r.Results, 0)
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "foo", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 0
+				})
 			},
 		},
 		{
@@ -328,7 +335,26 @@ func TestIndex_Http(t *testing.T) {
 						},
 					},
 				})
+
+			pool := safe.NewPool(context.Background())
+			app.Start(pool)
+			defer pool.Stop()
+
 			tc.test(t, app)
 		})
+	}
+}
+
+func waitSearchIndex(t *testing.T, check func() bool) {
+	deadline := time.Now().Add(2 * time.Second)
+
+	for {
+		if check() {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("wait search index reached deadline")
+		}
+		time.Sleep(20 * time.Millisecond)
 	}
 }
