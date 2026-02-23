@@ -3,10 +3,7 @@ import type { RouteLocationNormalizedLoaded } from "vue-router"
 export function useFileResolver() {
 
     function resolve(config: DocConfig, route: RouteLocationNormalizedLoaded): DocEntry | undefined {
-        let path = route.path
-        if (path.endsWith('/')) {
-            path = path.substring(0, path.length-1)
-        }
+        const path = normalizePath(route.path)
         for (const name of Object.keys(config)) {
             const entry = getEntries(config[name]!, (e) => e.path?.toLocaleLowerCase() === path)
             if (entry) {
@@ -34,8 +31,9 @@ export function useFileResolver() {
     }
 
     function getBreadcrumb(config: DocConfig, route: RouteLocationNormalizedLoaded): DocEntry[] | undefined {
+        const path = normalizePath(route.path)
         for (const name of Object.keys(config)) {
-            const entries = getEntries(config[name]!, (e) => e.path === route.path)
+            const entries = getEntries(config[name]!, (e) => e.path === path)
             if (entries) {
                 entries[0] = Object.assign({ label: name }, entries[0])
                 return entries
@@ -54,6 +52,13 @@ export function useFileResolver() {
             }
         }
         return undefined
+    }
+
+    function normalizePath(path: string): string {
+        if (path.endsWith('/')) {
+            path = path.substring(0, path.length-1)
+        }
+        return path
     }
 
     return { resolve, getBreadcrumb, getEntryBySource }

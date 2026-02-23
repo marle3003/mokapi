@@ -20,7 +20,7 @@ export function MarkdownItTitle(meta: DocMeta): (md: MarkdownIt, opts: Options) 
                 if (meta.tags) {
                     html += `<div class="mb-2">`
                     for (const tag of meta.tags) {
-                        html += `<span class="badge text-bg-primary">${md.utils.escapeHtml(tag)}</span>`
+                        html += `<span class="badge text-bg-primary me-1">${md.utils.escapeHtml(tag)}</span>`
                     }
                     html += `</div>`
                 }

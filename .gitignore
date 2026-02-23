@@ -17,6 +17,8 @@
 data/*
 dist/
 bin/*
+obj/
+Debug/
 
 node_modules
 

@@ -46,12 +46,16 @@ export function MarkdownItCard(metadata: any): (md: MarkdownIt, opts: Options) =
             let items = ''
             for (const item of cards.items) {
                 items += `<div class="col">
-                            <a class="card h-100" href="${item.href}">
-                                <div class="card-body">
-                                    <div class="card-title">${item.title}</div>
-                                    <div class="card-text">${item.description}</div>
+                            <div class="card h-100 accented">
+                                <div class="card-inner">
+                                    <a href="${item.href}" class="d-flex flex-column h-100">
+                                        <div class="card-body">
+                                            <div class="card-title">${item.title}</div>
+                                            <div class="card-text">${item.description}</div>
+                                        </div>
+                                    </a>
                                 </div>
-                            </a>
+                            </div>
                         </div>`
             }
 
