@@ -139,6 +139,99 @@ func TestModule_On(t *testing.T) {
 			},
 		},
 		{
+			name: "dynamic track",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var handler common.EventHandler
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
+					handler = do
+				}
+
+				_, err := vm.RunString(`
+					const m = require('mokapi')
+					let nextTrack = true
+					m.on('http', (param) => { param['foo'] = false },
+						{ 
+							track: () => {
+								const track = nextTrack
+								nextTrack = false
+								return track
+							}
+						}
+					)
+				`)
+				r.NoError(t, err)
+
+				// first call
+				b, err := handler(&common.EventContext{Args: []any{map[string]bool{"foo": true}}})
+				r.NoError(t, err)
+				r.True(t, b)
+
+				// second call
+				b, err = handler(&common.EventContext{Args: []any{map[string]bool{"foo": true}}})
+				r.NoError(t, err)
+				r.False(t, b)
+			},
+		},
+		{
+			name: "dynamic track using parameters",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var handler common.EventHandler
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
+					handler = do
+				}
+
+				_, err := vm.RunString(`
+					const m = require('mokapi')
+					let nextTrack = true
+					m.on('http', (param) => { param['foo'] = !param['foo'] },
+						{ 
+							track: (param) => {
+								return param['foo']
+							}
+						}
+					)
+				`)
+				r.NoError(t, err)
+
+				// first call
+				b, err := handler(&common.EventContext{Args: []any{map[string]bool{"foo": false}}})
+				r.NoError(t, err)
+				r.True(t, b)
+
+				// second call
+				b, err = handler(&common.EventContext{Args: []any{map[string]bool{"foo": true}}})
+				r.NoError(t, err)
+				r.False(t, b)
+			},
+		},
+		{
+			name: "dynamic track returning wrong type",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var handler common.EventHandler
+				host.OnFunc = func(evt string, do common.EventHandler, args common.EventArgs) {
+					handler = do
+				}
+
+				_, err := vm.RunString(`
+					const m = require('mokapi')
+					let nextTrack = true
+					m.on('http', (param) => { param['foo'] = !param['foo'] },
+						{ 
+							track: (param) => {
+								return 123
+							}
+						}
+					)
+				`)
+				r.NoError(t, err)
+
+				// first call
+				b, err := handler(&common.EventContext{Args: []any{map[string]bool{"foo": false}}})
+				r.EqualError(t, err, "unexpected return type for track: Integer")
+				r.True(t, b)
+			},
+		},
+		{
 			name: "event handler throws error",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var handler common.EventHandler
