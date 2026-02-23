@@ -8,6 +8,7 @@ func RegisterApiFlags(cmd *cli.Command) {
 	cmd.Flags().String("api-base", "", apiBase)
 	cmd.Flags().Bool("api-dashboard", true, apiDashboard)
 	cmd.Flags().Bool("api-search-enabled", true, apiSearch)
+	cmd.Flags().String("api-search-index-path", "", apiSearchIndexPath)
 }
 
 var apiPort = cli.FlagDoc{
@@ -80,6 +81,43 @@ When enabled, users can search through mocked APIs, resources, and requests dire
 				{Title: "CLI", Source: "--api-search-enabled true\n--api-search-enabled\n--no-api-search-enabled"},
 				{Title: "Env", Source: "MOKAPI_API_SEARCH_ENABLED=true"},
 				{Title: "File", Source: "api:\n  search:\n    enabled: true"},
+			},
+		},
+	},
+}
+
+var apiSearchIndexPath = cli.FlagDoc{
+	Short: "Configure storage location for the dashboard search index",
+	Long: `Controls where Mokapi stores the search index used by the web dashboard.
+
+If not set, the search index is kept entirely in memory.
+This provides fast indexing but increases memory usage.
+
+If set to a filesystem path, the search index is stored on disk using memory-mapped files (mmap),
+which significantly reduces Go heap memory usage and provides more predictable memory behavior.
+
+The search index is always built asynchronously and never blocks startup.`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{
+					Title:  "CLI (in-memory, default)",
+					Source: "--api-search-index-path \"\"",
+				},
+				{
+					Title:  "CLI (temporary on-disk index)",
+					Source: "--api-search-index-path /tmp",
+				},
+				{
+					Title:  "Env",
+					Source: "MOKAPI_API_SEARCH_INDEX_PATH=/tmp",
+				},
+				{
+					Title: "File",
+					Source: `api:
+  search:
+    indexPath: /tmp`,
+				},
 			},
 		},
 	},

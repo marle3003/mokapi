@@ -1,10 +1,11 @@
 package server
 
 import (
-	log "github.com/sirupsen/logrus"
 	"mokapi/engine"
 	"mokapi/runtime"
 	"mokapi/safe"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Server struct {
@@ -36,6 +37,7 @@ func NewServer(pool *safe.Pool, app *runtime.App, watcher *ConfigWatcher,
 }
 
 func (s *Server) Start() error {
+	s.app.Start(s.pool)
 	s.engine.Start()
 	if err := s.watcher.Start(s.pool); err != nil {
 		return err

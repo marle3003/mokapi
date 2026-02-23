@@ -14,7 +14,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/blevesearch/bleve/v2"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 )
@@ -211,9 +210,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 				return nil
 			})
 
-			idx, err := bleve.NewMemOnly(bleve.NewIndexMapping())
-			require.NoError(t, err)
-			store := events.NewStoreManager(idx)
+			store := events.NewStoreManager(&index{})
 			store.SetStore(10, events.NewTraits().WithNamespace("http"))
 
 			tc.fn(t, openapi.NewHandler(tc.config, e, store))
@@ -236,3 +233,9 @@ func (s *spyBody) Read(p []byte) (n int, err error) {
 func (s *spyBody) Close() error {
 	return nil
 }
+
+type index struct{}
+
+func (*index) Add(string, any) {}
+
+func (*index) Delete(string) {}

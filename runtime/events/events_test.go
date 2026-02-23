@@ -145,7 +145,13 @@ func TestPush(t *testing.T) {
 	for _, tc := range testcase {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			tc.f(t, &events.StoreManager{})
+			tc.f(t, events.NewStoreManager(&index{}))
 		})
 	}
 }
+
+type index struct{}
+
+func (*index) Add(string, any) {}
+
+func (*index) Delete(string) {}

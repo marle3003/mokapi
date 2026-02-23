@@ -1162,7 +1162,7 @@ func TestHandler_Event(t *testing.T) {
 				Servers:    []*openapi.Server{{Url: "http://localhost"}},
 				Components: openapi.Components{},
 			}
-			sm := &events.StoreManager{}
+			sm := events.NewStoreManager(&index{})
 			sm.SetStore(1, events.NewTraits().WithNamespace("http"))
 			eh := &engine{emit: tc.event}
 
@@ -1572,7 +1572,7 @@ func TestHandler_Parameter(t *testing.T) {
 			}
 
 			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
-				h := openapi.NewHandler(config, &engine{emit: tc.event}, &events.StoreManager{})
+				h := openapi.NewHandler(config, &engine{emit: tc.event}, events.NewStoreManager(&index{}))
 				_ = h.ServeHTTP(rw, r)
 			}, config)
 		})

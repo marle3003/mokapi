@@ -2,7 +2,6 @@ package events
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/runtime/search"
 	"reflect"
 	"time"
@@ -27,20 +26,13 @@ func (m *StoreManager) addToIndex(event *Event) {
 		Discriminator: fmt.Sprintf("event_%s", event.Traits.String()),
 		Api:           getApiFromEvent(event),
 		Event:         event,
-		Title:         event.Data.Title(),
 		Time:          event.Time.Format(time.RFC3339),
 	}
-
-	if err := m.index.Index(event.Id, data); err != nil {
-		log.Errorf("add '%s' to search index failed: %v", event.Id, err)
+	if event.Data != nil {
+		data.Title = event.Data.Title()
 	}
-}
 
-func (m *StoreManager) removeFromIndex(event *Event) {
-	if m.index == nil {
-		return
-	}
-	_ = m.index.Delete(event.Id)
+	m.index.Add(event.Id, data)
 }
 
 func GetSearchResult(fields map[string]string, _ []string) (search.ResultItem, error) {
@@ -62,6 +54,9 @@ func GetSearchResult(fields map[string]string, _ []string) (search.ResultItem, e
 }
 
 func getApiFromEvent(event *Event) string {
+	if event.Data == nil {
+		return ""
+	}
 	f := reflect.ValueOf(event.Data).Elem().FieldByName("Api")
 	if f.IsValid() {
 		return f.String()

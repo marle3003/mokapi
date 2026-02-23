@@ -1,13 +1,16 @@
 package events_test
 
 import (
-	"github.com/stretchr/testify/require"
+	"context"
 	"mokapi/config/static"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"mokapi/runtime/events/eventstest"
 	"mokapi/runtime/search"
+	"mokapi/safe"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestIndex_Http(t *testing.T) {
@@ -125,6 +128,11 @@ func TestIndex_Http(t *testing.T) {
 						},
 					},
 				})
+
+			pool := safe.NewPool(context.Background())
+			app.Start(pool)
+			defer pool.Stop()
+
 			tc.test(t, app)
 		})
 	}
