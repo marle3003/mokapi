@@ -1,7 +1,7 @@
 ---
 title: "Record & Replay: API Interactions with Mokapi"
-description: Capture real-world API traffic for testing, debugging, and offline development—all with a simple JavaScript script
-subtitle: Capture real-world API traffic for testing, debugging, and offline development—all with a simple JavaScript script
+description: Capture real-world API traffic for testing, debugging, and offline development, all with a simple JavaScript script
+subtitle: Capture real-world API traffic for testing, debugging, and offline development, all with a simple JavaScript script
 tech: http
 tags: ['HTTP']
 ---

@@ -645,4 +645,15 @@ a[name] {
   text-decoration: none;
   color: var(--color-text);
 }
+
+.content .card.cta:hover {
+  background-color: var(--badge-background);
+}
+.content .card.cta .card-title {
+  text-align: center;
+  margin: 0;
+}
+.content .card.cta:hover .card-title {
+  color: #FFF;
+}
 </style>

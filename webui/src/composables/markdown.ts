@@ -10,6 +10,7 @@ import { MarkdownItBlockquote } from './markdown-blockquote';
 import { MarkdownItTabContent } from './markdown-tab-content';
 import { MarkdownItTitle } from './markdown-title';
 import { imageCaption } from './markdown-image';
+import { MarkdownItCtaLinks } from './markdown-cta-links';
 
 const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
 const metadataRegex = /^---([\s\S]*?)---/;
@@ -35,12 +36,13 @@ export function useMarkdown(content: string | undefined): {content: string | und
                 .use(MarkdownItLinks)
                 .use(MarkdownItCarousel(metadata))
                 .use(MarkdownItCard(metadata))
+                .use(MarkdownItCtaLinks(metadata))
                 .use(imageCaption)
                 .set({html: true})
                 .render(content)
         }
 
-        content = replaceImageUrls(content)
+        content = replaceImageUrls(content) 
 
         return {content, metadata}
     } catch (e) {

@@ -588,9 +588,9 @@
         },
         "items": [
           {
-            "label": "Ensuring API Contract Compliance with Mokapi",
+            "label": "Guard Your API Contracts: Catch Breaking Changes Before Production",
             "source": "resources/blogs/ensuring-api-contract-compliance-with-mokapi.md",
-            "path": "/resources/blogs/ensuring-api-contract-compliance-with-mokapi",
+            "path": "/resources/blogs/guard-your-api-contracts",
             "hideNavigation": true
           },
           {
