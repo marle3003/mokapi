@@ -243,6 +243,30 @@ export default () => {
 				require.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 			},
 		},
+		{
+			name: "using Object.assign",
+			script: `import { on } from 'mokapi'
+export default () => {
+	on('http', (req, res) => {
+		res.data = Object.assign(res.data, {foo: 'yuh'})
+	})
+}
+`,
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.HttpEventResponse{Data: map[string]any{"foo": "bar"}}
+				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
+				require.Nil(t, actions[0].Error)
+				require.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
+				return actions
+			},
+			test: func(t *testing.T, actions []*common.Action, hook *test.Hook, err error) {
+				require.NoError(t, err)
+
+				var res *common.HttpEventResponse
+				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				require.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
+			},
+		},
 	}
 
 	for _, tc := range testcases {

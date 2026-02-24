@@ -308,7 +308,11 @@ func assignValue(field reflect.Value, value any, fieldName string) error {
 		field.Set(reflect.Zero(field.Type()))
 		return nil
 	}
-	v, err := convertTo(field.Type(), reflect.ValueOf(value))
+	v := reflect.ValueOf(value)
+	if p, ok := value.(*Proxy); ok {
+		v = p.target
+	}
+	v, err := convertTo(field.Type(), v)
 	if err != nil {
 		return fmt.Errorf("failed to set %s: %w", fieldName, err)
 	}
