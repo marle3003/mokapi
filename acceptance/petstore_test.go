@@ -293,12 +293,16 @@ func (suite *PetStoreSuite) TestEvents() {
 		try.AssertBody(func(t *testing.T, body string) {
 			var data map[string]any
 			err := json.Unmarshal([]byte(body), &data)
-			require.NoError(t, err)
+			assert.NoError(t, err)
 			results := data["results"].([]any)
-			evt := results[0].(map[string]any)
-			require.Equal(t, "Event", evt["type"])
-			require.Equal(t, "GET http://127.0.0.1:18080/user/bob", evt["title"])
-			require.Equal(t, "Swagger Petstore", evt["domain"])
+			assert.NotNil(t, results, "search result should contain results")
+			assert.Greater(t, len(results), 0)
+			evt, ok := results[0].(map[string]any)
+			assert.True(t, ok, "event should be a map[string]any")
+			assert.NotNil(t, evt)
+			assert.Equal(t, "Event", evt["type"])
+			assert.Equal(t, "GET http://127.0.0.1:18080/user/bob", evt["title"])
+			assert.Equal(t, "Swagger Petstore", evt["domain"])
 		}),
 	)
 }
