@@ -8,7 +8,7 @@ tags: ['HTTP']
 
 # Record & Replay: API Interactions with Mokapi
 
-In a [previous article](ensuring-api-contract-compliance-with-mokapi.md), we explored how Mokapi can act as an API 
+In a [previous article](/resources/blogs/guard-your-api-contracts), we explored how Mokapi can act as an API 
 specification guard between services—validating requests and responses against your OpenAPI specs in real-time. 
 But Mokapi's capabilities go far beyond validation. In this article, we'll dive into another powerful use case: 
 recording and replaying API interactions.
