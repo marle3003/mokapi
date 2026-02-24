@@ -11,7 +11,8 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
         title = /title=([^\s]*)/,
         titleQuote = /title=\"([^"]*)\"/,
         url = /url=\[([^\]]*)\]\(([^\)]*)\)/,
-        link = /\[([^\]]*)\]\(([^\)]*)\)/g
+        link = /\[([^\]]*)\]\(([^\)]*)\)/g,
+        emoji = /emoji=([^\s]*)/
 
     function getInfo(token: Token) {
         return token.info ? unescapeAll(token.info).trim() : ''
@@ -70,6 +71,16 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
         return title.exec(info)?.slice(1)[0]
     }
 
+    function getEmoji(token: Token) {
+        var info = getInfo(token) 
+
+        const r = emoji.exec(info)
+        if (r && r.length > 1) {
+            return r.slice(1)[0]
+        }
+        return undefined
+    }
+
     function fenceGroup(tokens: Token[], idx: number, options: Options, env: any, slf: Renderer): string {
         if (!tokens[idx] || tokens[idx].hidden) { return ''; }
 
@@ -118,6 +129,13 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
                     case 'tree':
                         content = parseTree(content)
                         break
+                }
+
+                if (!icon) {
+                    const emoji = getEmoji(token);
+                    if (emoji) {
+                        icon = `<span class="emoji me-1">${emoji}</span>`
+                    }
                 }
 
                 alert += `<div class="box ${name}">

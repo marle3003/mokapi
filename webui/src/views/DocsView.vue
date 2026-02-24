@@ -284,6 +284,10 @@ ol.breadcrumb {
   color: var(--color-doc-link-active);
 }
 
+.content em {
+  color: var(--color-emphasis)
+}
+
 .content img {
   max-width:100%;
   max-height:100%;
@@ -580,6 +584,10 @@ a[name] {
   font-size: 0.8rem;
 }
 
+.box:has(+ .box) {
+  margin-bottom: 0 !important;
+}
+
 .box.benefits {
   margin-top: 1rem;
   margin-bottom: 2rem;
@@ -596,7 +604,7 @@ a[name] {
   background-color: var(--card-background);
   text-align: center;
 }
-.box.box.feature .box-heading {
+.box.feature .box-heading {
   font-size: 1.1rem;
 }
 
@@ -655,5 +663,9 @@ a[name] {
 }
 .content .card.cta:hover .card-title {
   color: #FFF;
+}
+
+.emoji {
+  vertical-align: 0.15em;
 }
 </style>

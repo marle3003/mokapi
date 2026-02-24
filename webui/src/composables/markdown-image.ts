@@ -7,12 +7,13 @@ export function imageCaption(md: MarkdownIt) {
         const token = tokens[idx]
         const alt = token.content
 
-        console.log(token)
-
         let img = '<img '
         let title = ''
         for (const attr of token.attrs || []) {
             if (attr.length === 2) {
+                if (attr[0] === 'alt' && !attr[1]) {
+                    attr[1] = alt
+                }
                 img += ` ${attr[0]}="${attr[1]}"`
                 if (attr[0] === 'title') {
                     title = attr[1]
