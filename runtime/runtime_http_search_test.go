@@ -34,8 +34,14 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{QueryText: "foo", Limit: 10})
-				require.NoError(t, err)
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "foo", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
@@ -71,8 +77,14 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("My petstore API", "", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{QueryText: "pet*", Limit: 10})
-				require.NoError(t, err)
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "pet*", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
@@ -92,8 +104,14 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("mailbox", "", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{QueryText: "mailpiece", Limit: 10})
-				require.NoError(t, err)
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "mailpiece", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 0
+				})
 				require.Len(t, r.Results, 0)
 			},
 		},

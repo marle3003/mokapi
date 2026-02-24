@@ -36,8 +36,13 @@ func TestIndex_Ldap(t *testing.T) {
 					Info: directory.Info{Name: "foo"},
 				}
 				app.Ldap.Add(toConfig(cfg), enginetest.NewEngine())
-				r, err := app.Search(search.Request{QueryText: "foo", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "foo", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
@@ -59,8 +64,13 @@ func TestIndex_Ldap(t *testing.T) {
 					Info: directory.Info{Name: "foo"},
 				}
 				app.Ldap.Add(toConfig(cfg), enginetest.NewEngine())
-				r, err := app.Search(search.Request{Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 
 				app.Ldap.Remove(toConfig(cfg))
@@ -86,8 +96,13 @@ func TestIndex_Ldap(t *testing.T) {
 					Entries: entries,
 				}
 				app.Ldap.Add(toConfig(cfg), enginetest.NewEngine())
-				r, err := app.Search(search.Request{QueryText: "alice", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "alice", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{

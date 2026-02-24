@@ -45,8 +45,13 @@ func TestIndex_Config(t *testing.T) {
 					Config: cfg,
 					Event:  dynamic.Create,
 				})
-				r, err := app.Search(search.Request{QueryText: "name", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "name", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{

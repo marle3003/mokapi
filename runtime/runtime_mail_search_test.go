@@ -35,8 +35,13 @@ func TestIndex_Mail(t *testing.T) {
 					Info: mail.Info{Name: "foo"},
 				}
 				app.Mail.Add(toConfig(cfg))
-				r, err := app.Search(search.Request{QueryText: "foo", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "foo", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
@@ -68,8 +73,14 @@ func TestIndex_Mail(t *testing.T) {
 					},
 				}
 				app.Mail.Add(toConfig(cfg))
-				r, err := app.Search(search.Request{Limit: 10})
-				require.NoError(t, err)
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 2
+				})
 				require.Len(t, r.Results, 2)
 
 				app.Mail.Remove(toConfig(cfg))
@@ -98,8 +109,14 @@ func TestIndex_Mail(t *testing.T) {
 					},
 				}
 				app.Mail.Add(toConfig(cfg))
-				r, err := app.Search(search.Request{QueryText: "alice", Limit: 10})
-				require.NoError(t, err)
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "alice", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{

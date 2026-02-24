@@ -32,8 +32,12 @@ func TestIndex_Http(t *testing.T) {
 				}, trait)
 				require.NoError(t, err)
 
-				r, err := app.Search(search.Request{QueryText: "foo", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "foo", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 
 				require.Equal(t, "Event", r.Results[0].Type)
@@ -56,8 +60,12 @@ func TestIndex_Http(t *testing.T) {
 				}, trait)
 				require.NoError(t, err)
 
-				r, err := app.Search(search.Request{QueryText: "type:event", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "type:event", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 
 				require.Equal(t, "Event", r.Results[0].Type)
@@ -79,7 +87,6 @@ func TestIndex_Http(t *testing.T) {
 					Api:  "My API",
 				}, trait)
 				require.NoError(t, err)
-
 				_, err = app.Search(search.Request{QueryText: "type:", Limit: 10})
 				require.Error(t, err)
 			},

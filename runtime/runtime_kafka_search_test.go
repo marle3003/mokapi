@@ -36,8 +36,12 @@ func TestIndex_Kafka(t *testing.T) {
 				_, err := app.Kafka.Add(toConfig(cfg), enginetest.NewEngine())
 				require.NoError(t, err)
 
-				r, err := app.Search(search.Request{QueryText: "Test", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "Test", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
@@ -59,8 +63,12 @@ func TestIndex_Kafka(t *testing.T) {
 				_, err := app.Kafka.Add(toConfig(cfg), enginetest.NewEngine())
 				require.NoError(t, err)
 
-				r, err := app.Search(search.Request{QueryText: "Test", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "Test", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 
 				app.Kafka.Remove(toConfig(cfg))
@@ -84,8 +92,12 @@ func TestIndex_Kafka(t *testing.T) {
 				_, err := app.Kafka.Add(toConfig(cfg), enginetest.NewEngine())
 				require.NoError(t, err)
 
-				r, err := app.Search(search.Request{QueryText: "description", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "description", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
