@@ -467,6 +467,7 @@ blockquote {
   border-left: 4px solid var(--blockquote-border-color);
   position: relative;
   background-color: var(--blockquote-background-color);
+  font-style: italic;
 }
 blockquote span:before {
   content: '- '
@@ -475,7 +476,9 @@ blockquote span {
   color: #6c757d;
   display:block;
   font-style: normal;
+  font-size: 0.95rem;
   margin: 0;
+  margin-top: 0.5rem;
 }
 
 .content a.card {

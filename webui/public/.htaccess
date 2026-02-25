@@ -42,7 +42,7 @@
   RewriteRule ^smtp/?$ /mail [R=301,L]
 
   # Redirect anything under /docs/guides/smtp to /docs/mail/
-  RewriteRule ^docs/guides/smtp/?(.*)$ /docs/mail/$1 [R=301,L]
+  RewriteRule ^docs/smtp/?(.*)$ /docs/mail/$1 [R=301,L]
 
   RewriteRule ^docs/http/https-&-tls/?$ /docs/http/tls [R=301,L]
   RewriteRule ^resources/blogs/ensuring-api-contract-compliance-with-mokapi$ /resources/blogs/guard-your-api-contracts [R=301,L]
