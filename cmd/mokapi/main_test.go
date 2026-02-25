@@ -83,6 +83,7 @@ api:
     search:
         enabled: true
         indexPath: ""
+        inMemory: false
 rootCaCert: ""
 rootCaKey: ""
 configs: []

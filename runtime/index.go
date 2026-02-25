@@ -95,10 +95,10 @@ func (s *SearchIndex) start(pool *safe.Pool) {
 		panic(err)
 	}
 
-	if s.cfg.IndexPath != "" {
-		indexDir := filepath.Join(s.cfg.IndexPath, "mokapi-bleve-index")
-		_ = os.RemoveAll(indexDir)
-		s.idx, err = bleve.New(indexDir, mapping)
+	if !s.cfg.InMemory {
+		indexPath := getSearchIndexPath(s.cfg)
+		_ = os.RemoveAll(indexPath)
+		s.idx, err = bleve.New(indexPath, mapping)
 	} else {
 		s.idx, err = bleve.NewMemOnly(mapping)
 	}
@@ -128,6 +128,12 @@ initialization:
 				op()
 			case <-ctx.Done():
 				close(s.queue)
+
+				indexPath := getSearchIndexPath(s.cfg)
+				if indexPath != "" {
+					_ = os.RemoveAll(indexPath)
+				}
+
 				return
 			}
 		}
@@ -338,4 +344,16 @@ func getTypeFacet(term *bleveSearch.TermFacet) search.FacetValue {
 		facet.Value = term.Term
 	}
 	return facet
+}
+
+func getSearchIndexPath(cfg static.Search) string {
+	if cfg.InMemory {
+		return ""
+	}
+
+	indexPath := cfg.IndexPath
+	if indexPath == "" {
+		indexPath = os.TempDir()
+	}
+	return filepath.Join(cfg.IndexPath, "mokapi-bleve-index")
 }

@@ -45,7 +45,8 @@ func TestHandler_SearchQuery(t *testing.T) {
 			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
-					Enabled: true,
+					Enabled:  true,
+					InMemory: true,
 				}}})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
@@ -64,7 +65,8 @@ func TestHandler_SearchQuery(t *testing.T) {
 			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
-					Enabled: true,
+					Enabled:  true,
+					InMemory: true,
 				}}})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
@@ -83,7 +85,8 @@ func TestHandler_SearchQuery(t *testing.T) {
 			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
-					Enabled: true,
+					Enabled:  true,
+					InMemory: true,
 				}}})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
@@ -104,7 +107,8 @@ func TestHandler_SearchQuery(t *testing.T) {
 			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
-					Enabled: true,
+					Enabled:  true,
+					InMemory: true,
 				}}})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
@@ -133,7 +137,8 @@ func TestHandler_SearchQuery(t *testing.T) {
 			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
-					Enabled: true,
+					Enabled:  true,
+					InMemory: true,
 				}}})
 
 				h := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
@@ -162,7 +167,8 @@ func TestHandler_SearchQuery(t *testing.T) {
 			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
-					Enabled: true,
+					Enabled:  true,
+					InMemory: true,
 				}}})
 
 				h := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))

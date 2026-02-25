@@ -26,6 +26,17 @@ func TestRoot_Api(t *testing.T) {
 				require.Equal(t, "/tmp", cfg.Api.Search.IndexPath)
 			},
 		},
+		{
+			name: "search in memory",
+			cmd: func(t *testing.T) *cli.Command {
+				cmd := mokapi.NewCmdMokapi()
+				cmd.SetArgs([]string{"--api-search-in-memory"})
+				return cmd
+			},
+			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {
+				require.Equal(t, true, cfg.Api.Search.InMemory)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

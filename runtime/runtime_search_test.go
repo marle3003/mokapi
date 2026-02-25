@@ -94,7 +94,8 @@ func TestIndex_Config(t *testing.T) {
 			t.Parallel()
 			app := runtime.New(&static.Config{Api: static.Api{
 				Search: static.Search{
-					Enabled: true,
+					Enabled:  true,
+					InMemory: true,
 				}}})
 
 			pool := safe.NewPool(context.Background())
