@@ -1,7 +1,7 @@
 package runtime_test
 
 import (
-	"github.com/stretchr/testify/require"
+	"context"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
@@ -9,7 +9,11 @@ import (
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime"
 	"mokapi/runtime/search"
+	"mokapi/safe"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestIndex_Http(t *testing.T) {
@@ -30,8 +34,14 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{QueryText: "foo", Limit: 10})
-				require.NoError(t, err)
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "foo", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
@@ -55,8 +65,11 @@ func TestIndex_Http(t *testing.T) {
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
 				app.RemoveHttp(toConfig(cfg))
-				r, err = app.Search(search.Request{QueryText: "foo", Limit: 10})
-				require.Len(t, r.Results, 0)
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "foo", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 0
+				})
 			},
 		},
 		{
@@ -64,8 +77,14 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("My petstore API", "", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{QueryText: "pet*", Limit: 10})
-				require.NoError(t, err)
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "pet*", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
@@ -85,8 +104,14 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("mailbox", "", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{QueryText: "mailpiece", Limit: 10})
-				require.NoError(t, err)
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "mailpiece", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 0
+				})
 				require.Len(t, r.Results, 0)
 			},
 		},
@@ -95,8 +120,14 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "1.0", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{QueryText: "1.0", Limit: 10})
-				require.NoError(t, err)
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "1.0", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
@@ -119,8 +150,14 @@ func TestIndex_Http(t *testing.T) {
 					openapitest.WithPath("/pets", openapitest.NewPath()),
 				)
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{QueryText: "pets", Limit: 10})
-				require.NoError(t, err)
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "pets", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
@@ -145,8 +182,14 @@ func TestIndex_Http(t *testing.T) {
 					openapitest.WithPath("/pets", openapitest.NewPath(openapitest.WithPathInfo("", "a description"))),
 				)
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{QueryText: "description", Limit: 10})
-				require.NoError(t, err)
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "description", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 2
+				})
 				require.Len(t, r.Results, 2)
 				require.Equal(t,
 					search.ResultItem{
@@ -187,8 +230,14 @@ func TestIndex_Http(t *testing.T) {
 					)),
 				)
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{QueryText: "\"parameter description\"", Limit: 10})
-				require.NoError(t, err)
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "\"parameter description\"", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
@@ -219,8 +268,13 @@ func TestIndex_Http(t *testing.T) {
 				)
 				app.AddHttp(toConfig(cfg))
 				// search response should only have one the root OpenAPI object
-				r, err := app.Search(search.Request{QueryText: "Petstore", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "Petstore", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 
 				// search by api should return all items in the OpenAPI
@@ -245,8 +299,14 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo bar", "", ""))
 				app.AddHttp(toConfig(cfg))
-				r, err := app.Search(search.Request{QueryText: "api:\"foo bar\"", Limit: 10})
-				require.NoError(t, err)
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "api:\"foo bar\"", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
@@ -274,8 +334,13 @@ func TestIndex_Http(t *testing.T) {
 				)
 				app.AddHttp(toConfig(cfg))
 				// search response should only have one the root OpenAPI object
-				r, err := app.Search(search.Request{QueryText: "Petstore", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "Petstore", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 
 				// search by api should return all items in the OpenAPI
@@ -308,8 +373,13 @@ func TestIndex_Http(t *testing.T) {
 				)
 				app.AddHttp(toConfig(cfg))
 				// search response should only have one the root OpenAPI object
-				r, err := app.Search(search.Request{QueryText: "pest~", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "pest~", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 2
+				})
 				require.Len(t, r.Results, 2)
 			},
 		},
@@ -324,11 +394,31 @@ func TestIndex_Http(t *testing.T) {
 				&static.Config{
 					Api: static.Api{
 						Search: static.Search{
-							Enabled: true,
+							Enabled:  true,
+							InMemory: true,
 						},
 					},
 				})
+
+			pool := safe.NewPool(context.Background())
+			app.Start(pool)
+			defer pool.Stop()
+
 			tc.test(t, app)
 		})
+	}
+}
+
+func waitSearchIndex(t *testing.T, check func() bool) {
+	deadline := time.Now().Add(2 * time.Second)
+
+	for {
+		if check() {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("wait search index reached deadline")
+		}
+		time.Sleep(20 * time.Millisecond)
 	}
 }

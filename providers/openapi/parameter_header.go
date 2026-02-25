@@ -14,6 +14,9 @@ func parseHeader(param *Parameter, r *http.Request) (*RequestParameterValue, err
 		if param.Required {
 			return nil, fmt.Errorf("parameter is required")
 		}
+		if param.Schema != nil && param.Schema.Default != nil {
+			return &RequestParameterValue{Value: param.Schema.Default}, nil
+		}
 		return nil, nil
 	}
 

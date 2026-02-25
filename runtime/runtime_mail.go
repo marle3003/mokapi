@@ -2,8 +2,6 @@ package runtime
 
 import (
 	"context"
-	"github.com/blevesearch/bleve/v2"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	engine "mokapi/engine/common"
@@ -11,11 +9,14 @@ import (
 	"mokapi/providers/mail"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
+	"mokapi/runtime/search"
 	"mokapi/smtp"
 	"path/filepath"
 	"sort"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type MailHandler interface {
@@ -28,7 +29,7 @@ type MailStore struct {
 	m     sync.RWMutex
 	cfg   *static.Config
 	sm    *events.StoreManager
-	index bleve.Index
+	index search.Index
 }
 
 type MailInfo struct {

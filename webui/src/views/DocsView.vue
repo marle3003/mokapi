@@ -284,12 +284,27 @@ ol.breadcrumb {
   color: var(--color-doc-link-active);
 }
 
+.content em {
+  color: var(--color-emphasis)
+}
+
 .content img {
   max-width:100%;
   max-height:100%;
   cursor: pointer;
   margin: auto auto;
   margin-bottom: 1.5rem;
+}
+
+.content .image-with-caption img {
+  margin-bottom: 0;
+}
+
+.content .image-with-caption .image-caption {
+  padding: 12px 16px;
+  text-align: center;
+  font-size: 0.95rem;;
+  color: var(--color-text-light);
 }
 
 table {
@@ -452,6 +467,7 @@ blockquote {
   border-left: 4px solid var(--blockquote-border-color);
   position: relative;
   background-color: var(--blockquote-background-color);
+  font-style: italic;
 }
 blockquote span:before {
   content: '- '
@@ -460,7 +476,9 @@ blockquote span {
   color: #6c757d;
   display:block;
   font-style: normal;
+  font-size: 0.95rem;
   margin: 0;
+  margin-top: 0.5rem;
 }
 
 .content a.card {
@@ -569,6 +587,10 @@ a[name] {
   font-size: 0.8rem;
 }
 
+.box:has(+ .box) {
+  margin-bottom: 0 !important;
+}
+
 .box.benefits {
   margin-top: 1rem;
   margin-bottom: 2rem;
@@ -585,7 +607,7 @@ a[name] {
   background-color: var(--card-background);
   text-align: center;
 }
-.box.box.feature .box-heading {
+.box.feature .box-heading {
   font-size: 1.1rem;
 }
 
@@ -633,5 +655,20 @@ a[name] {
 .card.accented a {
   text-decoration: none;
   color: var(--color-text);
+}
+
+.content .card.cta:hover {
+  background-color: var(--badge-background);
+}
+.content .card.cta .card-title {
+  text-align: center;
+  margin: 0;
+}
+.content .card.cta:hover .card-title {
+  color: #FFF;
+}
+
+.emoji {
+  vertical-align: 0.15em;
 }
 </style>

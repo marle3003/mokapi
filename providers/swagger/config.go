@@ -95,9 +95,9 @@ type Parameter struct {
 	MultipleOf       *float64       `yaml:"multipleOf,omitempty" json:"multipleOf,omitempty"`
 	Minimum          *float64       `yaml:"minimum,omitempty" json:"minimum,omitempty"`
 	Maximum          *float64       `yaml:"maximum,omitempty" json:"maximum,omitempty"`
-	MaxLength        *uint64        `yaml:"maxLength,omitempty" json:"maxLength,omitempty"`
+	MaxLength        *int           `yaml:"maxLength,omitempty" json:"maxLength,omitempty"`
 	MaxItems         *int           `yaml:"maxItems,omitempty" json:"maxItems,omitempty"`
-	MinLength        int64          `yaml:"minLength,omitempty" json:"minLength,omitempty"`
+	MinLength        *int           `yaml:"minLength,omitempty" json:"minLength,omitempty"`
 	MinItems         int            `yaml:"minItems,omitempty" json:"minItems,omitempty"`
 	Default          interface{}    `yaml:"default,omitempty" json:"default,omitempty"`
 }

@@ -7,12 +7,12 @@ import (
 	"mokapi/providers/openapi"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
+	"mokapi/runtime/search"
 	"net/http"
 	"path/filepath"
 	"sort"
 	"sync"
 
-	"github.com/blevesearch/bleve/v2"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -20,7 +20,7 @@ type HttpStore struct {
 	infos  map[string]*HttpInfo
 	cfg    *static.Config
 	m      sync.RWMutex
-	index  bleve.Index
+	index  search.Index
 	events *events.StoreManager
 }
 
@@ -35,7 +35,7 @@ type httpHandler struct {
 	next openapi.Handler
 }
 
-func NewHttpStore(cfg *static.Config, index bleve.Index, em *events.StoreManager) *HttpStore {
+func NewHttpStore(cfg *static.Config, index search.Index, em *events.StoreManager) *HttpStore {
 	s := &HttpStore{
 		cfg:    cfg,
 		index:  index,

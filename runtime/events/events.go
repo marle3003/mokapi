@@ -2,11 +2,11 @@ package events
 
 import (
 	"fmt"
+	"mokapi/runtime/search"
 	"sort"
 	"sync"
 	"time"
 
-	"github.com/blevesearch/bleve/v2"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -22,11 +22,11 @@ type EventData interface {
 
 type StoreManager struct {
 	stores []*store
-	index  bleve.Index
+	index  search.Index
 	m      sync.RWMutex
 }
 
-func NewStoreManager(index bleve.Index) *StoreManager {
+func NewStoreManager(index search.Index) *StoreManager {
 	return &StoreManager{index: index}
 }
 
@@ -56,7 +56,7 @@ func (m *StoreManager) Push(data EventData, traits Traits) error {
 
 	removed := bestStore.Push(evt)
 	if removed != nil {
-		m.removeFromIndex(removed)
+		m.index.Delete(removed.Id)
 	}
 
 	return nil

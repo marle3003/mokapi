@@ -57,8 +57,8 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
 
             const lang = getLanguage(token)
             const tabName = lang || 'code'
-            const tabId = `tab-${counter}-${tabName}`
-            const tabPanelId = `tabPanel-${counter}-${tabName}`
+            const tabId = `tab-${counter}-${tabName}`.replace(' ', '-')
+            const tabPanelId = `tabPanel-${counter}-${tabName}`.replace(' ', '-')
 
             return `
             <div class="code">

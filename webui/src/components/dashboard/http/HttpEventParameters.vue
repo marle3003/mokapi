@@ -1,10 +1,16 @@
 <script setup lang="ts">
+import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
 import { Modal } from 'bootstrap';
 import { computed, ref, useTemplateRef, type PropType } from 'vue';
+import SourceView from '../SourceView.vue'
 
 const props = defineProps({
     parameters: { type: Object as PropType<HttpEventParameter[]>, required: true },
+    operation: { type: Object as PropType<HttpOperation> },
 })
+
+const { formatSchema } = usePrettyLanguage()
+
 const sorted = computed(() => {
     const result = props.parameters.sort((p1, p2) => {
         if (p1.value && p2.value) {
@@ -22,7 +28,7 @@ const sorted = computed(() => {
 })
 const showRaw = ref<{[name: string]: boolean}>({})
 const dialogShowRaw = ref(false)
-const selected = ref<HttpEventParameter | undefined>()
+const selected = ref<HttpEventParameter & { schema?: Schema} | undefined>()
 const dialogRef = useTemplateRef('dialogRef')
 const dialog = ref<Modal | undefined>()
 function renderJsonValue(value: any) {
@@ -38,7 +44,7 @@ function renderJsonValue(value: any) {
 }
 const useValueSwitcher = computed(() => {
     for (const p of sorted.value) {
-        if (!p.value) {
+        if (!p.value || !p.raw) {
             continue;
         }
         if (p.rendered != p.raw) {
@@ -48,12 +54,18 @@ const useValueSwitcher = computed(() => {
     return false;
 })
 function openDialog(p: HttpEventParameter) {
-  selected.value = p
+  selected.value = Object.assign(p, { schema: schema(p)})
   dialogShowRaw.value = false
   if (!dialog.value) {
     dialog.value = new Modal(dialogRef.value!)
   }
   dialog.value.show()
+}
+function schema(p: HttpEventParameter) {
+    if (!props.operation) {
+        return undefined
+    }
+    return props.operation.parameters.find(x => x.name === p.name)?.schema
 }
 </script>
 
@@ -71,7 +83,7 @@ function openDialog(p: HttpEventParameter) {
         <tbody>
             <tr v-for="p in sorted"  @click="openDialog(p)" class="table-row-clickable">
                 <td v-if="useValueSwitcher">
-                    <button v-if="p.value && p.rendered !== p.raw" class="btn btn-sm btn-outline-secondary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .25rem; --bs-btn-font-size: .75rem;"
+                    <button v-if="p.value && p.rendered !== p.raw && p.raw" class="btn btn-sm btn-outline-secondary" style="--bs-btn-padding-y: .1rem; --bs-btn-padding-x: .25rem; --bs-btn-font-size: .75rem;"
                         @click.stop="showRaw[p.name] = !showRaw[p.name]">
                         <i v-if="showRaw[p.name]" class="bi bi-layout-text-sidebar" title="Show parsed value"></i>
                         <i v-else class="bi bi-code" title="Show raw value"></i>
@@ -99,17 +111,23 @@ function openDialog(p: HttpEventParameter) {
                     <p>{{ selected?.type }}</p>
                 </div>
                 <div class="col">
-                    <p class="label">OpenAPI</p>
-                    <p>{{ selected?.value ? 'yes' : 'no' }}</p>
+                    <p class="label">OpenAPI Defined</p>
+                    <p>{{ selected?.value ? 'true' : 'false' }}</p>
                 </div>
             </div>
-            <div class="row" v-if="!selected?.value">
+            <div class="row mb-3" v-if="!selected?.value">
                 <div class="col">
                     <p class="label">Value</p>
                     <p class="scrollable">{{ selected?.raw }}</p>
                 </div>
             </div>
-            <div class="row" v-if="selected?.value">
+            <div class="row mb-3" v-else-if="!selected?.raw">
+                <div class="col">
+                    <p class="label">Value</p>
+                    <p class="scrollable">{{ selected?.value }}</p>
+                </div>
+            </div>
+            <div class="row mb-3" v-else>
                 <div class="col">
                     <section>
                         <div class="header">
@@ -122,6 +140,12 @@ function openDialog(p: HttpEventParameter) {
                                 {{ dialogShowRaw || !selected?.value ? selected?.raw : renderJsonValue(selected?.value) }}
                         </div>
                     </section>
+                </div>
+            </div>
+            <div class="row mb-3" v-if="selected?.schema">
+                <div class="col">
+                    <p class="label">Schema</p>
+                    <source-view :source="{preview: { content: formatSchema(selected?.schema), contentType: 'application/json' }}" :hide-content-type="true" />
                 </div>
             </div>
           </div>
@@ -150,9 +174,10 @@ function openDialog(p: HttpEventParameter) {
 .header .controls {
     border: 1px solid var(--source-border);
     border-radius: 6px;
+    line-height: 12px;
 }
 .header .controls > button {
-    font-size: 0.9rem;
+    font-size: 0.7rem;
     vertical-align: middle;
     color: var(--source-header-color);
     display: inline-grid;
@@ -160,8 +185,7 @@ function openDialog(p: HttpEventParameter) {
     border-right: 1px solid var(--source-border);
 }
 .header .controls > button {
-    height: 28px;
-    line-height: 18px;
+    height: 20px;
     position: relative;
     text-decoration: none;
     border-top-right-radius: 0 !important;

@@ -17,6 +17,22 @@ const { dashboard, getMode } = useDashboard()
 
 const data = ref<EventResult | null>(null);
 const events = ref<EventsResult | null>(null);
+const serviceResult = computed(() => {
+    if (!dashboard.value || !data.value || !data.value?.event?.traits.name) {
+        return undefined;
+    }
+    return dashboard.value.getService(data.value.event.traits.name, 'http');
+})
+const operation = computed(() => {
+    if (!serviceResult.value || !serviceResult.value.service.value || !data.value?.event) {
+        return undefined;
+    }
+    const service = serviceResult.value.service.value as HttpService;
+
+    const path = data.value.event.traits.path;
+    const method = data.value.event.traits.method?.toLocaleLowerCase();
+    return service.paths.find(x => x.path === path)?.operations.find(x => x.method === method);
+})
 
 const eventId = computed(() => {
   const id = route.params.id
@@ -107,7 +123,7 @@ function isNumber(value: string): boolean {
             <section class="card" aria-labelledby="request">
                 <div class="card-body">
                     <h2 id="request" class="card-title text-center">Request</h2>
-                    <http-parameters :parameters="eventData.request.parameters!" v-if="eventData.request.parameters"></http-parameters>
+                    <http-parameters :parameters="eventData.request.parameters!" v-if="eventData.request.parameters" :operation="operation"></http-parameters>
                     <div  v-if="eventData.request.body">
                         <p class="label mt-4">Body</p>
                         <http-body :content-type="eventData.request.contentType" :body="eventData.request.body"></http-body>

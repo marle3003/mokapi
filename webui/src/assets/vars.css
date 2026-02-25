@@ -112,6 +112,8 @@
     --blockquote-background-color: var(--color-background-soft);
 
     --footer-background: #282b33;
+
+    --color-emphasis: #f0d6cc;
 }
 
 [data-theme="light"] {
@@ -199,4 +201,6 @@
     --blockquote-background-color: #f8f9fa;
 
     --footer-background: rgb(244 244 246);
+
+    --color-emphasis: rgb(8,109,215);
 }

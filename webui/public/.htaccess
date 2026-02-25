@@ -29,6 +29,12 @@
   # Redirect anything under /docs/resources/ to /resources/
   RewriteRule ^docs/resources/(.*)$ /resources/$1 [R=301,L]
 
+  # Redirect old guides like /docs/guides/http to /docs/http/overview
+  RewriteRule ^docs/guides/http/?$ /docs/http/overview [R=301,L]
+  RewriteRule ^docs/guides/kafka/?$ /docs/kafka/overview [R=301,L]
+  RewriteRule ^docs/guides/ldap/?$ /docs/ldap/overview [R=301,L]
+  RewriteRule ^docs/guides/mail/?$ /docs/mail/overview [R=301,L]
+
   # Redirect anything under /docs/guides/ to /docs/
   RewriteRule ^docs/guides/(.*)$ /docs/$1 [R=301,L]
 
@@ -36,7 +42,11 @@
   RewriteRule ^smtp/?$ /mail [R=301,L]
 
   # Redirect anything under /docs/guides/smtp to /docs/mail/
-  RewriteRule ^docs/guides/smtp/?(.*)$ /docs/mail/$1 [R=301,L]
+  RewriteRule ^docs/smtp/?(.*)$ /docs/mail/$1 [R=301,L]
+
+  RewriteRule ^docs/http/https-&-tls/?$ /docs/http/tls [R=301,L]
+  RewriteRule ^resources/blogs/ensuring-api-contract-compliance-with-mokapi$ /resources/blogs/guard-your-api-contracts [R=301,L]
+  RewriteRule ^resources/blogs/acceptance-testing-with-mokapi:-focus-on-what-matters$ /resources/blogs/acceptance-testing [R=301,L]
 
   # rewrite for bots
   RewriteCond %{HTTP_USER_AGENT} googlebot|bingbot|Seobility|yandex|baiduspider|facebookexternalhit|twitterbot|rogerbot|linkedinbot|embedly|quora\ link\ preview|showyoubot|outbrain|pinterest\/0\.|pinterestbot|slackbot|vkShare|W3C_Validator|whatsapp|redditbot|applebot|flipboard|tumblr|bitlybot|skypeuripreview|nuzzel|discordbot|google\ page\ speed|qwantify|bitrix\ link\ preview|xing-contenttabreceiver|google-inspectiontool|chrome-lighthouse|telegrambot|amazonbot [NC]

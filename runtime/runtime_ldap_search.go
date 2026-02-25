@@ -46,7 +46,7 @@ func (s *LdapStore) addToIndex(cfg *directory.Config) {
 		Server:        cfg.Address,
 	}
 
-	add(s.index, fmt.Sprintf("ldap_%s", cfg.Info.Name), c)
+	s.index.Add(fmt.Sprintf("ldap_%s", cfg.Info.Name), c)
 
 	if cfg.Entries != nil {
 		for it := cfg.Entries.Iter(); it.Next(); {
@@ -63,7 +63,7 @@ func (s *LdapStore) addToIndex(cfg *directory.Config) {
 					Values: values,
 				})
 			}
-			add(s.index, fmt.Sprintf("mail_%s_%s", cfg.Info.Name, e.Dn), se)
+			s.index.Add(fmt.Sprintf("mail_%s_%s", cfg.Info.Name, e.Dn), se)
 		}
 	}
 }
@@ -97,12 +97,12 @@ func getLdapSearchResult(fields map[string]string, discriminator []string) (sear
 }
 
 func (s *LdapStore) removeFromIndex(cfg *directory.Config) {
-	_ = s.index.Delete(fmt.Sprintf("ldap_%s", cfg.Info.Name))
+	s.index.Delete(fmt.Sprintf("ldap_%s", cfg.Info.Name))
 
 	if cfg.Entries != nil {
 		for it := cfg.Entries.Iter(); it.Next(); {
 			e := it.Value()
-			_ = s.index.Delete(fmt.Sprintf("mail_%s_%s", cfg.Info.Name, e.Dn))
+			s.index.Delete(fmt.Sprintf("mail_%s_%s", cfg.Info.Name, e.Dn))
 		}
 	}
 }
