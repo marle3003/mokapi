@@ -104,7 +104,11 @@ func (s *SearchIndex) start(pool *safe.Pool) {
 	}
 
 	if err != nil {
-		log.Error(err)
+		log.Errorf("disabling search due to error: %s", err)
+		s.cfg.Enabled = false
+		close(s.ready)
+		close(s.queue)
+		return
 	}
 
 initialization:
@@ -173,7 +177,7 @@ func (s *SearchIndex) Search(r search.Request) (search.Result, error) {
 
 	<-s.ready
 
-	if s.idx == nil {
+	if s.idx == nil || !s.cfg.Enabled {
 		return result, &search.ErrNotEnabled{}
 	}
 
