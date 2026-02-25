@@ -139,7 +139,8 @@ func TestIndex_Http(t *testing.T) {
 				&static.Config{
 					Api: static.Api{
 						Search: static.Search{
-							Enabled: true,
+							Enabled:  true,
+							InMemory: true,
 						},
 					},
 				})

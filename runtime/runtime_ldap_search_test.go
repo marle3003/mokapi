@@ -137,7 +137,8 @@ func TestIndex_Ldap(t *testing.T) {
 				&static.Config{
 					Api: static.Api{
 						Search: static.Search{
-							Enabled: true,
+							Enabled:  true,
+							InMemory: true,
 						},
 					},
 				})

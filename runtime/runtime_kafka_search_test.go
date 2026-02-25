@@ -124,7 +124,8 @@ func TestIndex_Kafka(t *testing.T) {
 				&static.Config{
 					Api: static.Api{
 						Search: static.Search{
-							Enabled: true,
+							Enabled:  true,
+							InMemory: true,
 						},
 					},
 				})
