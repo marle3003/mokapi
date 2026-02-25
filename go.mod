@@ -5,7 +5,7 @@ go 1.25.5
 require (
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/blevesearch/bleve/v2 v2.5.7
-	github.com/blevesearch/bleve_index_api v1.3.1
+	github.com/blevesearch/bleve_index_api v1.3.2
 	github.com/bradleyfalzon/ghinstallation/v2 v2.17.0
 	github.com/brianvoe/gofakeit/v6 v6.28.0
 	github.com/dop251/goja v0.0.0-20250309171923-bcd7cc6bf64c
