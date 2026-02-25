@@ -1,12 +1,12 @@
 package runtime
 
 import (
-	"github.com/blevesearch/bleve/v2"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
+	"mokapi/runtime/search"
+	"mokapi/safe"
 	"mokapi/version"
 	"sync"
 )
@@ -23,9 +23,9 @@ type App struct {
 	Monitor *monitor.Monitor
 	Events  *events.StoreManager
 
-	m     sync.Mutex
-	cfg   *static.Config
-	index bleve.Index
+	m           sync.Mutex
+	cfg         *static.Config
+	searchIndex *SearchIndex
 
 	Configs map[string]*dynamic.Config
 }
@@ -33,7 +33,7 @@ type App struct {
 func New(cfg *static.Config) *App {
 	m := monitor.New()
 
-	index := newIndex(cfg)
+	index := newSearchIndex(cfg.Api.Search)
 	em := events.NewStoreManager(index)
 
 	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("http"))
@@ -43,21 +43,25 @@ func New(cfg *static.Config) *App {
 	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("job"))
 
 	app := &App{
-		Version:   version.BuildVersion,
-		BuildTime: version.BuildTime,
-		Monitor:   m,
-		Events:    em,
-		Configs:   map[string]*dynamic.Config{},
-		http:      NewHttpStore(cfg, index, em),
-		Kafka:     &KafkaStore{monitor: m, cfg: cfg, index: index, events: em},
-		Mqtt:      &MqttStore{monitor: m, cfg: cfg, sm: em},
-		Ldap:      &LdapStore{cfg: cfg, events: em, index: index},
-		Mail:      &MailStore{cfg: cfg, sm: em, index: index},
-		cfg:       cfg,
-		index:     index,
+		Version:     version.BuildVersion,
+		BuildTime:   version.BuildTime,
+		Monitor:     m,
+		Events:      em,
+		Configs:     map[string]*dynamic.Config{},
+		http:        NewHttpStore(cfg, index, em),
+		Kafka:       &KafkaStore{monitor: m, cfg: cfg, index: index, events: em},
+		Mqtt:        &MqttStore{monitor: m, cfg: cfg, sm: em},
+		Ldap:        &LdapStore{cfg: cfg, events: em, index: index},
+		Mail:        &MailStore{cfg: cfg, sm: em, index: index},
+		cfg:         cfg,
+		searchIndex: index,
 	}
 
 	return app
+}
+
+func (a *App) Start(p *safe.Pool) {
+	go a.searchIndex.start(p)
 }
 
 func (a *App) UpdateConfig(e dynamic.ConfigEvent) {
@@ -74,10 +78,8 @@ func (a *App) UpdateConfig(e dynamic.ConfigEvent) {
 	}
 
 	if a.cfg.Api.Search.Enabled {
-		removeConfigFromIndex(a.index, e.Config)
-		if err := addConfigToIndex(a.index, e.Config); err != nil {
-			log.Errorf("add '%s' to search index failed", e.Config.Info.Path())
-		}
+		a.removeConfigFromIndex(e.Config)
+		a.addConfigToIndex(e.Config)
 	}
 }
 
@@ -112,4 +114,8 @@ func (a *App) RemoveHttp(c *dynamic.Config) {
 
 func (a *App) ListHttp() []*HttpInfo {
 	return a.http.List()
+}
+
+func (a *App) Search(r search.Request) (search.Result, error) {
+	return a.searchIndex.Search(r)
 }

@@ -81,7 +81,7 @@ func (s *KafkaStore) addToIndex(cfg *asyncapi3.Config) {
 		})
 	}
 
-	add(s.index, fmt.Sprintf("kafka_%s", cfg.Info.Name), c)
+	s.index.Add(fmt.Sprintf("kafka_%s", cfg.Info.Name), c)
 
 	for name, topic := range cfg.Channels {
 		if topic == nil || topic.Value == nil {
@@ -124,7 +124,7 @@ func (s *KafkaStore) addToIndex(cfg *asyncapi3.Config) {
 			})
 		}
 		id := fmt.Sprintf("kafka_%s_%s", cfg.Info.Name, name)
-		add(s.index, id, t)
+		s.index.Add(id, t)
 	}
 }
 
@@ -176,9 +176,9 @@ func getSchema(s *asyncapi3.SchemaRef) (*schema.IndexData, error) {
 }
 
 func (s *KafkaStore) removeFromIndex(cfg *asyncapi3.Config) {
-	_ = s.index.Delete(fmt.Sprintf("kafka_%s", cfg.Info.Name))
+	s.index.Delete(fmt.Sprintf("kafka_%s", cfg.Info.Name))
 
 	for name := range cfg.Channels {
-		_ = s.index.Delete(fmt.Sprintf("kafka_%s_%s", cfg.Info.Name, name))
+		s.index.Delete(fmt.Sprintf("kafka_%s_%s", cfg.Info.Name, name))
 	}
 }

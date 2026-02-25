@@ -64,7 +64,7 @@ func (s *MailStore) addToIndex(cfg *mail.Config) {
 		})
 	}
 
-	add(s.index, fmt.Sprintf("mail_%s", cfg.Info.Name), c)
+	s.index.Add(fmt.Sprintf("mail_%s", cfg.Info.Name), c)
 
 	for name, mb := range cfg.Mailboxes {
 		mbi := mailSearchIndexMailbox{
@@ -79,7 +79,7 @@ func (s *MailStore) addToIndex(cfg *mail.Config) {
 		for n, f := range mb.Folders {
 			mbi.Folders = append(mbi.Folders, getMailboxFolders(f, n)...)
 		}
-		add(s.index, fmt.Sprintf("mail_%s_%s", cfg.Info.Name, name), mbi)
+		s.index.Add(fmt.Sprintf("mail_%s_%s", cfg.Info.Name, name), mbi)
 	}
 }
 
@@ -113,10 +113,10 @@ func getMailSearchResult(fields map[string]string, discriminator []string) (sear
 }
 
 func (s *MailStore) removeFromIndex(cfg *mail.Config) {
-	_ = s.index.Delete(fmt.Sprintf("mail_%s", cfg.Info.Name))
+	s.index.Delete(fmt.Sprintf("mail_%s", cfg.Info.Name))
 
 	for name := range cfg.Mailboxes {
-		_ = s.index.Delete(fmt.Sprintf("mail_%s_%s", cfg.Info.Name, name))
+		s.index.Delete(fmt.Sprintf("mail_%s_%s", cfg.Info.Name, name))
 	}
 }
 

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
@@ -10,6 +11,7 @@ import (
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime"
 	"mokapi/runtime/search"
+	"mokapi/safe"
 	"mokapi/try"
 	"net/http"
 	"testing"
@@ -43,7 +45,8 @@ func TestHandler_SearchQuery(t *testing.T) {
 			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
-					Enabled: true,
+					Enabled:  true,
+					InMemory: true,
 				}}})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
@@ -62,7 +65,8 @@ func TestHandler_SearchQuery(t *testing.T) {
 			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
-					Enabled: true,
+					Enabled:  true,
+					InMemory: true,
 				}}})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
@@ -81,7 +85,8 @@ func TestHandler_SearchQuery(t *testing.T) {
 			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
-					Enabled: true,
+					Enabled:  true,
+					InMemory: true,
 				}}})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
@@ -102,7 +107,8 @@ func TestHandler_SearchQuery(t *testing.T) {
 			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
-					Enabled: true,
+					Enabled:  true,
+					InMemory: true,
 				}}})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
@@ -131,7 +137,8 @@ func TestHandler_SearchQuery(t *testing.T) {
 			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
-					Enabled: true,
+					Enabled:  true,
+					InMemory: true,
 				}}})
 
 				h := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
@@ -160,7 +167,8 @@ func TestHandler_SearchQuery(t *testing.T) {
 			},
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
-					Enabled: true,
+					Enabled:  true,
+					InMemory: true,
 				}}})
 
 				h := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
@@ -180,7 +188,12 @@ func TestHandler_SearchQuery(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			h := New(tc.app(), static.Api{})
+			app := tc.app()
+			pool := safe.NewPool(context.Background())
+			app.Start(pool)
+			defer pool.Stop()
+
+			h := New(app, static.Api{})
 
 			try.Handler(t,
 				http.MethodGet,

@@ -1,7 +1,7 @@
 package runtime_test
 
 import (
-	"github.com/stretchr/testify/require"
+	"context"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
@@ -10,7 +10,10 @@ import (
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/runtime"
 	"mokapi/runtime/search"
+	"mokapi/safe"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestIndex_Kafka(t *testing.T) {
@@ -33,8 +36,12 @@ func TestIndex_Kafka(t *testing.T) {
 				_, err := app.Kafka.Add(toConfig(cfg), enginetest.NewEngine())
 				require.NoError(t, err)
 
-				r, err := app.Search(search.Request{QueryText: "Test", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "Test", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
@@ -56,13 +63,20 @@ func TestIndex_Kafka(t *testing.T) {
 				_, err := app.Kafka.Add(toConfig(cfg), enginetest.NewEngine())
 				require.NoError(t, err)
 
-				r, err := app.Search(search.Request{QueryText: "Test", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "Test", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 
 				app.Kafka.Remove(toConfig(cfg))
-				r, err = app.Search(search.Request{QueryText: "Test", Limit: 10})
-				require.NoError(t, err)
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "Test", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 0
+				})
 				require.Len(t, r.Results, 0)
 			},
 		},
@@ -78,8 +92,12 @@ func TestIndex_Kafka(t *testing.T) {
 				_, err := app.Kafka.Add(toConfig(cfg), enginetest.NewEngine())
 				require.NoError(t, err)
 
-				r, err := app.Search(search.Request{QueryText: "description", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "description", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
@@ -106,10 +124,16 @@ func TestIndex_Kafka(t *testing.T) {
 				&static.Config{
 					Api: static.Api{
 						Search: static.Search{
-							Enabled: true,
+							Enabled:  true,
+							InMemory: true,
 						},
 					},
 				})
+
+			pool := safe.NewPool(context.Background())
+			app.Start(pool)
+			defer pool.Stop()
+
 			tc.test(t, app)
 		})
 	}

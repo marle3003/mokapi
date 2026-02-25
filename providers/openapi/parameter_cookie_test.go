@@ -1,12 +1,13 @@
 package openapi_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema/schematest"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestFromRequest_Cookie(t *testing.T) {
@@ -110,6 +111,22 @@ func TestFromRequest_Cookie(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
 				require.EqualError(t, err, "parse cookie parameter 'debug' failed: parameter is required")
+			},
+		},
+		{
+			name: "cookie with default",
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Type:   openapi.ParameterCookie,
+				Name:   "debug",
+				Schema: schematest.New("integer", schematest.WithDefault(10)),
+			}}},
+			request: func() *http.Request {
+				r := httptest.NewRequest(http.MethodGet, "https://foo.bar", nil)
+				return r
+			},
+			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 10, result.Cookie["debug"].Value)
 			},
 		},
 		{

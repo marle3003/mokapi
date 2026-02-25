@@ -1,6 +1,16 @@
 package runtime
 
 import (
+	"context"
+	"mokapi/config/static"
+	"mokapi/runtime/events"
+	"mokapi/runtime/search"
+	"mokapi/safe"
+	"os"
+	"path/filepath"
+	"regexp"
+	"slices"
+
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/custom"
 	"github.com/blevesearch/bleve/v2/analysis/char/asciifolding"
@@ -15,11 +25,6 @@ import (
 	"github.com/blevesearch/bleve/v2/search/query"
 	index "github.com/blevesearch/bleve_index_api"
 	log "github.com/sirupsen/logrus"
-	"mokapi/config/static"
-	"mokapi/runtime/events"
-	"mokapi/runtime/search"
-	"regexp"
-	"slices"
 
 	"strings"
 )
@@ -27,9 +32,25 @@ import (
 var fieldsNotIncludedInAll = []string{"api"}
 var SupportedFacets = []string{"type"}
 
-func newIndex(cfg *static.Config) bleve.Index {
-	if !cfg.Api.Search.Enabled {
-		return nil
+type SearchIndex struct {
+	cfg   static.Search
+	idx   bleve.Index
+	ready chan struct{}
+	queue chan func()
+}
+
+func newSearchIndex(cfg static.Search) *SearchIndex {
+	s := &SearchIndex{cfg: cfg}
+	if cfg.Enabled {
+		s.ready = make(chan struct{})
+		s.queue = make(chan func(), 1000)
+	}
+	return s
+}
+
+func (s *SearchIndex) start(pool *safe.Pool) {
+	if !s.cfg.Enabled {
+		return
 	}
 
 	// 💡 Disable indexing for "_title"
@@ -74,25 +95,85 @@ func newIndex(cfg *static.Config) bleve.Index {
 		panic(err)
 	}
 
-	idx, err := bleve.NewMemOnly(mapping)
+	if !s.cfg.InMemory {
+		indexPath := getSearchIndexPath(s.cfg)
+		_ = os.RemoveAll(indexPath)
+		s.idx, err = bleve.New(indexPath, mapping)
+	} else {
+		s.idx, err = bleve.NewMemOnly(mapping)
+	}
+
 	if err != nil {
 		log.Error(err)
 	}
 
-	return idx
+initialization:
+	for {
+		select {
+		case op := <-s.queue:
+			op()
+		default:
+			close(s.ready)
+			break initialization
+		}
+	}
+
+	pool.Go(func(ctx context.Context) {
+		for {
+			select {
+			case op, ok := <-s.queue:
+				if !ok {
+					return
+				}
+				op()
+			case <-ctx.Done():
+				close(s.queue)
+
+				indexPath := getSearchIndexPath(s.cfg)
+				if indexPath != "" {
+					_ = os.RemoveAll(indexPath)
+				}
+
+				return
+			}
+		}
+	})
 }
 
-func add(index bleve.Index, id string, data any) {
-	err := index.Index(id, data)
+func (s *SearchIndex) Add(id string, data any) {
+	if !s.cfg.Enabled {
+		return
+	}
+	s.queue <- func() {
+		s.add(id, data)
+	}
+}
+
+func (s *SearchIndex) add(id string, data any) {
+	if s.idx == nil {
+		return
+	}
+	err := s.idx.Index(id, data)
 	if err != nil {
 		log.Errorf("add '%s' to search index failed: %v", id, err)
 	}
 }
 
-func (a *App) Search(r search.Request) (search.Result, error) {
+func (s *SearchIndex) Delete(id string) {
+	if !s.cfg.Enabled {
+		return
+	}
+	s.queue <- func() {
+		_ = s.idx.Delete(id)
+	}
+}
+
+func (s *SearchIndex) Search(r search.Request) (search.Result, error) {
 	result := search.Result{}
 
-	if a.index == nil {
+	<-s.ready
+
+	if s.idx == nil {
 		return result, &search.ErrNotEnabled{}
 	}
 
@@ -127,7 +208,7 @@ func (a *App) Search(r search.Request) (search.Result, error) {
 	sr.SortBy([]string{"-_score", "_id"})
 	sr.Highlight = bleve.NewHighlightWithStyle(html.Name)
 
-	searchResult, err := a.index.Search(sr)
+	searchResult, err := s.idx.Search(sr)
 	if err != nil {
 		return result, err
 	}
@@ -136,9 +217,12 @@ func (a *App) Search(r search.Request) (search.Result, error) {
 	for _, hit := range searchResult.Hits {
 		item := search.ResultItem{}
 
-		doc, err := a.index.Document(hit.ID)
+		doc, err := s.idx.Document(hit.ID)
 		if err != nil {
 			return result, err
+		}
+		if doc == nil {
+			continue
 		}
 		fields := getSearchFields(doc)
 
@@ -182,7 +266,7 @@ func (a *App) Search(r search.Request) (search.Result, error) {
 	sr = bleve.NewSearchRequest(q)
 	sr.Size = 0
 	sr.AddFacet("type", bleve.NewFacetRequest("type", 6))
-	searchResult, err = a.index.Search(sr)
+	searchResult, err = s.idx.Search(sr)
 	if err != nil {
 		return result, err
 	}
@@ -260,4 +344,16 @@ func getTypeFacet(term *bleveSearch.TermFacet) search.FacetValue {
 		facet.Value = term.Term
 	}
 	return facet
+}
+
+func getSearchIndexPath(cfg static.Search) string {
+	if cfg.InMemory {
+		return ""
+	}
+
+	indexPath := cfg.IndexPath
+	if indexPath == "" {
+		indexPath = os.TempDir()
+	}
+	return filepath.Join(cfg.IndexPath, "mokapi-bleve-index")
 }

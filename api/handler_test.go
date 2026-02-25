@@ -196,7 +196,7 @@ func TestHandler_NoDashboard(t *testing.T) {
 }
 
 func TestHandler_SearchEnabled(t *testing.T) {
-	h := api.New(runtime.New(&static.Config{}), static.Api{Dashboard: true, Search: static.Search{Enabled: true}})
+	h := api.New(runtime.New(&static.Config{}), static.Api{Dashboard: true, Search: static.Search{Enabled: true, InMemory: true}})
 	try.Handler(t,
 		http.MethodGet,
 		"http://foo.api/api/info",

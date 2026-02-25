@@ -500,7 +500,7 @@ function showImage(evt: MouseEvent) {
                   <span class="icon me-2 bi-shield-check"></span>Enforce API Contracts
                 </h3>
                 <p>Validate HTTP requests and responses against OpenAPI specs to catch API issues early in development or testing.</p>
-                <a href="/resources/blogs/ensuring-api-contract-compliance-with-mokapi" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Read Blog</a>
+                <a href="/resources/blogs/guard-your-api-contracts" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Read Blog</a>
               </div>
             </div>
           </div>

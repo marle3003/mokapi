@@ -1,7 +1,7 @@
 package runtime_test
 
 import (
-	"github.com/stretchr/testify/require"
+	"context"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
@@ -9,7 +9,10 @@ import (
 	"mokapi/providers/mail"
 	"mokapi/runtime"
 	"mokapi/runtime/search"
+	"mokapi/safe"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestIndex_Mail(t *testing.T) {
@@ -32,8 +35,13 @@ func TestIndex_Mail(t *testing.T) {
 					Info: mail.Info{Name: "foo"},
 				}
 				app.Mail.Add(toConfig(cfg))
-				r, err := app.Search(search.Request{QueryText: "foo", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "foo", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
@@ -65,13 +73,22 @@ func TestIndex_Mail(t *testing.T) {
 					},
 				}
 				app.Mail.Add(toConfig(cfg))
-				r, err := app.Search(search.Request{Limit: 10})
-				require.NoError(t, err)
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 2
+				})
 				require.Len(t, r.Results, 2)
 
 				app.Mail.Remove(toConfig(cfg))
-				r, err = app.Search(search.Request{Limit: 10})
-				require.NoError(t, err)
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "Test", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 0
+				})
 				require.Len(t, r.Results, 0)
 			},
 		},
@@ -92,8 +109,14 @@ func TestIndex_Mail(t *testing.T) {
 					},
 				}
 				app.Mail.Add(toConfig(cfg))
-				r, err := app.Search(search.Request{QueryText: "alice", Limit: 10})
-				require.NoError(t, err)
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "alice", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
@@ -134,10 +157,16 @@ func TestIndex_Mail(t *testing.T) {
 				&static.Config{
 					Api: static.Api{
 						Search: static.Search{
-							Enabled: true,
+							Enabled:  true,
+							InMemory: true,
 						},
 					},
 				})
+
+			pool := safe.NewPool(context.Background())
+			app.Start(pool)
+			defer pool.Stop()
+
 			tc.test(t, app)
 		})
 	}

@@ -80,7 +80,6 @@ const filtered = computed(() => {
     }
 
     const filtered = []
-    console.log(type.value)
     for (const item of items.value) {
        if ((type.value === 'all' || type.value === item.tag) && (tech.value === 'all' || tech.value === item.meta.tech || (tech.value === 'core' && !item.meta.tech))) {
         filtered.push(item)

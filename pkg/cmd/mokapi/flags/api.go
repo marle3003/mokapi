@@ -8,6 +8,8 @@ func RegisterApiFlags(cmd *cli.Command) {
 	cmd.Flags().String("api-base", "", apiBase)
 	cmd.Flags().Bool("api-dashboard", true, apiDashboard)
 	cmd.Flags().Bool("api-search-enabled", true, apiSearch)
+	cmd.Flags().String("api-search-index-path", "", apiSearchIndexPath)
+	cmd.Flags().Bool("api-search-in-memory", false, apiSearchInMemory)
 }
 
 var apiPort = cli.FlagDoc{
@@ -80,6 +82,66 @@ When enabled, users can search through mocked APIs, resources, and requests dire
 				{Title: "CLI", Source: "--api-search-enabled true\n--api-search-enabled\n--no-api-search-enabled"},
 				{Title: "Env", Source: "MOKAPI_API_SEARCH_ENABLED=true"},
 				{Title: "File", Source: "api:\n  search:\n    enabled: true"},
+			},
+		},
+	},
+}
+
+var apiSearchIndexPath = cli.FlagDoc{
+	Short: "Set storage location for the dashboard search index",
+	Long: `Defines where Mokapi stores the search index used by the web dashboard.
+
+By default, Mokapi stores the search index in a temporary directory on disk.
+This reduces memory usage and provides predictable memory behavior.
+
+If a file system path is specified, the index will be stored at that location during Mokapi's runtime.
+The index is rebuilt at startup and does not block application startup.`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{
+					Title:  "CLI",
+					Source: "--api-search-index-path /var/lib/mokapi/search",
+				},
+				{
+					Title:  "Env",
+					Source: "MOKAPI_API_SEARCH_INDEX_PATH=/var/lib/mokapi/search",
+				},
+				{
+					Title: "File",
+					Source: `api:
+  search:
+    indexPath: /var/lib/mokapi/search`,
+				},
+			},
+		},
+	},
+}
+
+var apiSearchInMemory = cli.FlagDoc{
+	Short: "Store the dashboard search index entirely in memory",
+	Long: `Forces Mokapi to keep the search index entirely in memory instead of using disk storage.
+
+This provides fast indexing and search performance but increases Go heap memory usage.
+
+This option is recommended only for small projects or development environments.`,
+	Examples: []cli.Example{
+		{
+			Codes: []cli.Code{
+				{
+					Title:  "CLI",
+					Source: "--api-search-in-memory",
+				},
+				{
+					Title:  "Env",
+					Source: "MOKAPI_API_SEARCH_IN_MEMORY=true",
+				},
+				{
+					Title: "File",
+					Source: `api:
+  search:
+    inMemory: true`,
+				},
 			},
 		},
 	},

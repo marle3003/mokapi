@@ -73,7 +73,7 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 		Servers:       cfg.Servers,
 	}
 
-	add(s.index, fmt.Sprintf("http_%s", cfg.Info.Name), c)
+	s.index.Add(fmt.Sprintf("http_%s", cfg.Info.Name), c)
 
 	for path, p := range cfg.Paths {
 		if p.Value == nil {
@@ -104,7 +104,7 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 			})
 		}
 
-		add(s.index, fmt.Sprintf("http_%s_%s", cfg.Info.Name, path), pathData)
+		s.index.Add(fmt.Sprintf("http_%s_%s", cfg.Info.Name, path), pathData)
 
 		for method, op := range p.Value.Operations() {
 			id := fmt.Sprintf("http_%s_%s_%s", cfg.Info.Name, path, method)
@@ -150,7 +150,7 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 				}
 			}
 
-			add(s.index, id, opData)
+			s.index.Add(id, opData)
 		}
 	}
 }
@@ -194,12 +194,12 @@ func getHttpSearchResult(fields map[string]string, discriminator []string) (sear
 }
 
 func (s *HttpStore) removeFromIndex(cfg *openapi.Config) {
-	_ = s.index.Delete(fmt.Sprintf("http_%s", cfg.Info.Name))
+	s.index.Delete(fmt.Sprintf("http_%s", cfg.Info.Name))
 
 	for path, p := range cfg.Paths {
-		_ = s.index.Delete(fmt.Sprintf("http_%s_%s", cfg.Info.Name, path))
+		s.index.Delete(fmt.Sprintf("http_%s_%s", cfg.Info.Name, path))
 		for method := range p.Value.Operations() {
-			_ = s.index.Delete(fmt.Sprintf("http_%s_%s_%s", cfg.Info.Name, path, method))
+			s.index.Delete(fmt.Sprintf("http_%s_%s_%s", cfg.Info.Name, path, method))
 		}
 	}
 }

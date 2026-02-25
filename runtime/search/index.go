@@ -1,5 +1,10 @@
 package search
 
+type Index interface {
+	Add(id string, data any)
+	Delete(id string)
+}
+
 type Result struct {
 	Results []ResultItem            `json:"results"`
 	Facets  map[string][]FacetValue `json:"facets,omitempty"`

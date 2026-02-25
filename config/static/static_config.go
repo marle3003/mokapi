@@ -66,7 +66,9 @@ type Api struct {
 }
 
 type Search struct {
-	Enabled bool
+	Enabled   bool
+	IndexPath string `yaml:"indexPath" json:"indexPath" flag:"index-path"`
+	InMemory  bool   `yaml:"inMemory" json:"inMemory" flag:"in-memory"`
 }
 
 type FileProvider struct {

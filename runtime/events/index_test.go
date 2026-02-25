@@ -1,13 +1,17 @@
 package events_test
 
 import (
-	"github.com/stretchr/testify/require"
+	"context"
 	"mokapi/config/static"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"mokapi/runtime/events/eventstest"
 	"mokapi/runtime/search"
+	"mokapi/safe"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestIndex_Http(t *testing.T) {
@@ -28,8 +32,12 @@ func TestIndex_Http(t *testing.T) {
 				}, trait)
 				require.NoError(t, err)
 
-				r, err := app.Search(search.Request{QueryText: "foo", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "foo", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 
 				require.Equal(t, "Event", r.Results[0].Type)
@@ -52,8 +60,12 @@ func TestIndex_Http(t *testing.T) {
 				}, trait)
 				require.NoError(t, err)
 
-				r, err := app.Search(search.Request{QueryText: "type:event", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "type:event", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				require.Len(t, r.Results, 1)
 
 				require.Equal(t, "Event", r.Results[0].Type)
@@ -75,7 +87,6 @@ func TestIndex_Http(t *testing.T) {
 					Api:  "My API",
 				}, trait)
 				require.NoError(t, err)
-
 				_, err = app.Search(search.Request{QueryText: "type:", Limit: 10})
 				require.Error(t, err)
 			},
@@ -98,8 +109,15 @@ func TestIndex_Http(t *testing.T) {
 				}, trait)
 				require.NoError(t, err)
 
-				r, err := app.Search(search.Request{QueryText: "type:event", Limit: 10})
-				require.NoError(t, err)
+				var r search.Result
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "type:event", Limit: 10})
+					require.NoError(t, err)
+					if len(r.Results) == 0 {
+						return false
+					}
+					return r.Results[0].Title == "bar"
+				})
 				require.Len(t, r.Results, 1)
 
 				require.Equal(t, "Event", r.Results[0].Type)
@@ -121,11 +139,31 @@ func TestIndex_Http(t *testing.T) {
 				&static.Config{
 					Api: static.Api{
 						Search: static.Search{
-							Enabled: true,
+							Enabled:  true,
+							InMemory: true,
 						},
 					},
 				})
+
+			pool := safe.NewPool(context.Background())
+			app.Start(pool)
+			defer pool.Stop()
+
 			tc.test(t, app)
 		})
+	}
+}
+
+func waitSearchIndex(t *testing.T, check func() bool) {
+	deadline := time.Now().Add(2 * time.Second)
+
+	for {
+		if check() {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("wait search index reached deadline")
+		}
+		time.Sleep(20 * time.Millisecond)
 	}
 }

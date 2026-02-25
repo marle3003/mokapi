@@ -136,6 +136,15 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 		return nil, err
 	}
 	http := server.NewHttpManager(scriptEngine, certStore, app)
+	if u, err := api.BuildUrl(cfg.Api); err == nil {
+		err = http.AddInternalService("api", u, api.New(app, cfg.Api))
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
+
 	kafka := server.NewKafkaManager(scriptEngine, app)
 	mqtt := server.NewMqttManager(scriptEngine, app)
 	mailManager := server.NewMailManager(app, scriptEngine, certStore)
@@ -152,15 +161,6 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 		}
 		app.UpdateConfig(e)
 	})
-
-	if u, err := api.BuildUrl(cfg.Api); err == nil {
-		err = http.AddInternalService("api", u, api.New(app, cfg.Api))
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		return nil, err
-	}
 
 	return server.NewServer(pool, app, watcher, kafka, http, mailManager, ldap, scriptEngine), nil
 }

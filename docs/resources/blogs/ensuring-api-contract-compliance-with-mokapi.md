@@ -1,63 +1,77 @@
 ---
-title: Ensure API Contract Compliance with Mokapi Validation
-description: Validate HTTP API requests and responses with Mokapi to catch breaking changes early and keep backend implementations aligned with your OpenAPI spec.
+title: "Guard Your API Contracts: Catch Breaking Changes Before Production"
+description: Stop API drift in its tracks. Use Mokapi as a validation layer to enforce OpenAPI contracts between clients and backends
+subtitle: Stop API drift in its tracks. Use Mokapi as a validation layer to enforce OpenAPI contracts between clients and backends, no matter who's calling or what they're building.
 image:
     url: /mokapi-using-as-proxy.png
     alt: Flow diagram illustrating how Mokapi enforces OpenAPI contracts between clients, Playwright tests, and backend APIs.
 tech: http
+links:
+  items:
+    - title: Get Started with Mokapi
+      href: /docs/get-started/installation
+    - title: Record & Replay API Traffic
+      href: /resources/blogs/record-and-replay-api-interactions
 ---
 
-# Ensuring Compliance with the HTTP API Contract Using Mokapi for Request Forwarding and Validation
+# Guard Your API Contracts: Catch Breaking Changes Before Production
 
-In modern distributed systems, APIs are everywhere — frontend-to-backend,
-backend-to-backend, microservices communicating internally, mobile apps, test
-automation tools, and more. Each interaction relies on a shared API contract,
-often expressed through an OpenAPI specification. Even small
-deviations can introduce bugs, break integrations, or slow down development.
+In modern distributed systems, APIs are everywhere, frontend to backend, service
+to service, mobile apps, test automation, third-party integrations. Each interaction
+relies on a shared API contract, typically expressed through an OpenAPI specification.
+But what happens when that contract drifts?
 
-By placing Mokapi between a client and a backend, you can ensure that every
-**request and response adheres to your OpenAPI specification**. With a few lines
-of JavaScript, Mokapi can forward requests to your backend while validating both
-sides of the interaction. This provides a powerful way to enforce API correctness — 
-whether the client is a browser, Playwright tests, your mobile app, or even
-another backend service.
+A renamed field breaks the mobile app. A missing validation lets bad data into production.
+An unexpected status code crashes the frontend. Small deviations compound into debugging
+nightmares, broken integrations, and slowed development velocity.
 
-In this article, I explore how Mokapi can act as **a contract-enforcing validation layer**
-and why this approach benefits frontend developers, backend teams, QA engineers,
-and platform engineers alike.
+> What if every API interaction was automatically validated against your OpenAPI spec?
+> That's exactly what Mokapi enables, a lightweight validation layer that sits between
+> client and backend, enforcing contract compliance on both sides of every request.
 
-<img src="/mokapi-using-as-proxy.png" alt="Flow diagram illustrating how Mokapi enforces OpenAPI contracts between clients, Playwright tests, and backend APIs.">
+## The Problem: API Drift is Inevitable
 
-## How to Use Mokapi for API Validation with Request Forwarding?
+Even with the best intentions, API contracts drift from reality:
 
-Mokapi cannot only be used for mocking APIs, but it can also sit between any 
-consumer and a backend service to validate real traffic. Using a small
-JavaScript script, Mokapi can forward requests to your backend and
-validates both requests and responses.
+- **Backend changes without updating the spec:** A developer renames a field, changes a response structure, or adds a new required parameter, but forgets to update the OpenAPI documentation.
+- **Frontend assumes behavior that was never specified:** A client sends malformed requests or expects fields that don't exist, and the backend silently accepts it (for now).
+- **Microservices evolve independently:** Service A updates its contract, but Service B keeps calling the old version. Everything works until it doesn't.
+- **Tests pass, but production breaks:** E2E tests mock the API instead of hitting the real backend, masking contract violations until deployment.
+
+The result? Teams spend hours debugging "why is this suddenly broken?" instead of shipping features.
+
+## The Solution: Mokapi as a Contract Guardian
+
+Mokapi can sit between any client and backend to validate every request and response against your OpenAPI specification.
+With a simple JavaScript forwarding script, Mokapi becomes a transparent validation layer that:
+
+- Blocks invalid requests before they reach your backend
+- Validates backend responses before they reach the client
+- Provides clear, actionable error messages when violations occur
+- Works with browsers, test frameworks, mobile apps, and service-to-service traffic
+
+![Flow diagram showing Mokapi positioned between clients and backend APIs, validating requests and responses](/mokapi-using-as-proxy.png "Mokapi validates all traffic against your OpenAPI spec, catching contract violations before they cause problems")
+
+## How It Works: Request Forwarding with Validation
+
+The core concept is simple: Mokapi intercepts HTTP traffic, validates it against your OpenAPI spec,
+forwards valid requests to the backend, validates the response, and only then returns it to the client.
+
+Here's the complete forwarding and validation script:
 
 ```typescript
 import { on } from 'mokapi';
 import { fetch } from 'mokapi/http';
 
 /**
- * This script demonstrates how to forward incoming HTTP requests
- * to a real backend while letting Mokapi validate responses according
- * to your OpenAPI spec.
- *
- * The script listens to all HTTP requests and forwards them based
- * on the `request.api` field. Responses from the backend are
- * validated when possible, and any errors are reported back to
- * the client.
+ * Forward incoming requests to backend services while validating
+ * both requests and responses against OpenAPI specifications.
  */
 export default async function () {
-
-    /**
-     * Register a global HTTP event handler.
-     * This function is called for every incoming request.
-     */
+    
     on('http', async (request, response) => {
 
-        // Determine the backend URL to forward this request to
+        // Map request to backend URL based on OpenAPI spec name
         const url = getForwardUrl(request)
 
         // If no URL could be determined, return an error immediately
@@ -76,7 +90,7 @@ export default async function () {
                 timeout: '30s'
             });
 
-            // Copy status code and headers from the backend response
+            // Copy status code and headers
             response.statusCode = res.statusCode;
             response.headers = res.headers
 
@@ -121,146 +135,108 @@ export default async function () {
 }
 ```
 
-For each interaction, Mokapi performs four important steps:
+### The Four-Step Validation Flow
 
-### 1. Validates incoming requests
+#### <i class="bi bi-1-circle-fill align-baseline"></i> Validate Incoming Request
 
-Mokapi checks every incoming request against your OpenAPI specification:
+Mokapi checks the HTTP method, URL parameters, headers, and request body against your OpenAPI spec.
+Invalid requests are blocked with clear error messages.
 
-- HTTP method
-- URL & parameters
-- headers
-- request body
+#### <i class="bi bi-2-circle-fill align-baseline"></i> Forward Valid Requests
 
-If the client sends anything invalid, Mokapi blocks it and returns a clear 
-validation error.
+Only requests that pass validation are forwarded to the backend. No changes to your backend code
+or infrastructure are required.
 
-### 2. Forwards valid requests to your backend
+#### <i class="bi bi-3-circle-fill align-baseline"></i> Validate Backend Response
 
-If the request is valid, Mokapi forwards it unchanged to the backend using JavaScript.
+Mokapi validates the backend's response, status codes, headers, and response body against the OpenAPI specification.
 
-- No changes are required in your backend.
-- No additional infrastructure is necessary.
+#### <i class="bi bi-4-circle-fill align-baseline"></i> Return Validated Response
 
-### 3. Validates backend responses
+Only responses that match the contract reach the client, guaranteeing end-to-end contract fidelity across every interaction.
 
-Once the backend responds, Mokapi validates the response against the OpenAPI specification:
+## Where to Use Mokapi for Contract Validation
 
-- status codes 
-- headers 
-- response body
+Mokapi's forwarding and validation capabilities work in multiple scenarios across your architecture:
 
-If something doesn't match the contract, Mokapi blocks it and sends a validation error back to the client.
+### Frontend ↔ Backend
 
-### 4. Return the validated response to the client
+Place Mokapi between your frontend and backend to catch contract violations during development:
+- Automatic request and response validation
+- Immediate detection of breaking changes
+- Backend and OpenAPI spec evolve together
+- Fewer "why is the frontend broken?" debugging loops
 
-Only responses that pass validation reach the client, guaranteeing contract fidelity end-to-end.
+### Service ↔ Service
 
-## Where You Can Use Mokapi for Request Forwarding and Validation
+In microservice architectures, API drift between services causes instability. Mokapi provides:
+- Strict contract enforcement between services
+- Early detection of incompatible changes
+- Stable integrations as teams evolve independently
+- Clear validation errors during development and CI
 
-Mokapi’s forwarding and validation capabilities make it useful far beyond local development or Playwright scripting.
+### Playwright Tests ↔ Backend
 
-### Between Frontend and Backend
+One of the most powerful setups: Playwright → Mokapi → Backend
+- CI fails immediately when backend breaks the contract
+- Tests interact with real backend, not mocks
+- Validation errors are clear and actionable
+- Tests stay simpler, no manual validation needed
 
-Placing Mokapi between your frontend and backend ensures:
-- automatic request and response validation 
-- immediate detection of breaking changes 
-- backend and API specification evolve together
-- fewer “why is the frontend broken?” debugging loops
+### Kubernetes Test Environments
 
-Frontend developers can experiment with confidence, knowing the backend
-cannot silently diverge from the published contract.
+Deploy Mokapi as a sidecar or standalone validation layer in preview environments:
+- Consistent contract validation for cluster traffic
+- Early detection before staging deployment
+- No modifications to backend services
+- Integrates with Helm charts and GitOps workflows
 
-### Between Backend Services (Service-to-Service)
+## Why Teams Choose This Approach
 
-In microservice architectures, API drift between services is a frequent cause of instability.
-Routing service-to-service traffic through Mokapi gives you:
-- strict contract enforcement between services 
-- early detection of incompatible changes 
-- stable integrations even as teams evolve independently 
-- clear validation errors during development and CI
+``` box=feature title="Automatic Contract Enforcement"
+Every interaction is validated against your OpenAPI spec. Your backend can no longer silently drift from the contract.
+```
 
-Mokapi becomes a lightweight, spec-driven contract guardian across your backend ecosystem.
+``` box=feature title="Immediate Detection of Breaking Change"
+Issues are caught early, renamed fields, wrong formats, unexpected status codes, mismatched data types before they reach production.
+```
 
-### In Automated Testing (e.g., Playwright)
+``` box=feature title="More Reliable Frontend Development"
+Frontend teams get consistent, validated API responses with fewer sudden breaking changes and a smoother development workflow.
+```
 
-This is one of the most powerful setups.
+``` box=feature title="Better Cross-Team Collaboration"
+Backend developers instantly see contract violations. Frontend engineers get stable APIs. QA gets reliable test environments. Platform teams reduce deployment risk.
+```
 
-    Playwright → Mokapi → Backend
+``` box=feature title="Smooth Mock-to-Real Transition"
+Start with mocked endpoints in early development. Later, simply forward requests to the real backend while keeping validation in place.
+```
 
-Benefits:
-- CI fails immediately when the backend breaks the API contract 
-- tests interact with the real backend, not mocks
-- validation errors are clear and actionable 
-- tests remain simpler — no need to validate everything in Playwright
+``` box=feature title="Actionable Error Messages"
+When validation fails, Mokapi provides clear, detailed error messages showing exactly what doesn't match the spec and why.
+```
 
-Your tests are guaranteed to hit a backend that actually matches the API contract.
+> "Mokapi becomes your always-on API contract guardian, lightweight, transparent, and spec-driven."
 
-### In Kubernetes Test Environments
+## Getting Started
 
-Mokapi can also be used in temporary or preview environments to ensure contract validation across the entire cluster.
+Implementing Mokapi as a validation layer is straightforward:
 
-In Kubernetes, Mokapi can be deployed as:
-- a sidecar container
-- a standalone validation layer in front of backend services
-- a temporary component inside preview environments
+1. **Define your OpenAPI specification** for the API you want to validate
+2. **Create a forwarding script** using the example above, mapping `request.api` to your backend URLs
+3. **Run Mokapi** between your client and backend (locally, in Docker, or in Kubernetes)
+4. **Point your client** at Mokapi instead of directly at the backend
+5. **Watch validation errors surface** in real-time as you develop, test, and deploy
 
-This brings:
-- consistent contract validation for all cluster traffic
-- early detection of breaking API changes before staging
-- contract enforcement without modifying backend services
-- transparent operation — apps talk to Mokapi, Mokapi talks to the backend
+No changes to your backend code. No infrastructure overhaul. Just a transparent validation layer
+that enforces your API contract at runtime.
 
-You can integrate Mokapi into Helm charts, GitOps workflows, or test namespaces.
+## Stop API Drift. Start Enforcing Contracts.
 
-## Why Teams Benefit from Using Mokapi Between Client and Backend
+With Mokapi as a validation layer, you get automatic contract enforcement, early detection of breaking
+changes, and stable multi-team integration, all without touching your backend code.
 
-### Automatic Contract Enforcement
+{{ cta-grid key="links" }}
 
-Every interaction is validated against your OpenAPI specification. Your backend can no longer quietly drift from the contract.
-
-### Immediate Detection of Breaking Changes
-
-Issues are caught early, not just in staging or production, such as:
-  - renamed or missing fields
-  - wrong or inconsistent formats
-  - unexpected status codes
-  - mismatched data types
-
-### More Reliable Frontend Development
-
-Frontend teams get:
-- consistent, validated API responses
-- fewer sudden breaking changes
-- a smoother development workflow
-
-This reduces context-switching and debugging time.
-
-### Better Collaboration Between Teams
-
-With Mokapi validating both sides:
-- backend developers instantly see when they violate the contract
-- frontend engineers get stable, predictable APIs
-- QA gets reliable test environments
-- platform engineers reduce risk during deployments
-
-Mokapi becomes a shared API contract watchdog across the organization.
-
-### Smooth Transition from Mocks to Real Systems
-
-Teams often start with mocked endpoints in early development. Later, they can simply begin forwarding requests to the
-real backend—while keeping validation in place.
-
-## Conclusion
-
-Using Mokapi between frontend and backend, between backend services, or inside Kubernetes environments provides:
-- strong contract enforcement
-- automatic validation for every interaction
-- early detection of breaking changes
-- stable multi-team integration
-- more reliable CI pipelines
-- a smooth path from mocking to real backend validation
-
-Mokapi ensures your API stays aligned with its specification, no matter how quickly your system evolves.
-
-> *Mokapi becomes your always-on API contract guardian — lightweight, transparent, and spec-driven.*
+<p class="text-center text-muted mt-3 pt-3" style="font-size: 0.9rem;">Ready to guard your API contracts? Start validating today.</p>
