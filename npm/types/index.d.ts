@@ -16,7 +16,7 @@ import "./mustache";
 import "./yaml";
 import "./encoding";
 import "./mail";
-import "./file"
+import "./file";
 
 /**
  * Attaches an event handler for the given event.

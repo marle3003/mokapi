@@ -48,16 +48,24 @@ function showImage(evt: MouseEvent) {
           <div class="col-12 col-lg-6 px-0">
             
             <h1>Mock APIs. Test Faster. Ship Better.</h1>
-            <div class="badge-list mb-3" role="navigation" aria-label="API type navigation">
-              <a href="http"><span class="badge" aria-label="HTTP API Support">HTTP</span></a>
-              <a href="kafka"><span class="badge" aria-label="Kafka Support">Kafka</span></a>
-              <a href="ldap"><span class="badge" aria-label="LDAP Support">LDAP</span></a>
-              <a href="mail"><span class="badge" aria-label="Email Support">Email</span></a>
-            </div>
+            <div class="badge-list mb-3" role="list" aria-label="Supported protocols">
+              <router-link :to="{ path: '/http' }">
+                <span class="badge" aria-label="HTTP API Support">HTTP</span>
+              </router-link>
+              <router-link :to="{ path: '/kafka' }">
+                <span class="badge" aria-label="Kafka Support">Kafka</span>
+              </router-link>
+              <router-link :to="{ path: '/ldap' }">
+                <span class="badge" aria-label="LDAP Support">LDAP</span>
+              </router-link>
+              <router-link :to="{ path: '/mail' }">
+                <span class="badge" aria-label="Email Support">Email</span>
+              </router-link>
+            </div>            
             <p class="lead description">
-              Mokapi is your always-on API contract guardian —
-              lightweight, transparent, and spec-driven.
-              <span class="fst-italic d-block mt-1">
+              Develop faster without waiting for backends. Test reliably without 
+              external dependencies. Deploy confidently with contract validation.
+              <span class="fst-italic d-block mt-2" style="font-size: 0.95rem;">
                 Free, open-source, and fully under your control.
               </span>
             </p>
@@ -65,13 +73,19 @@ function showImage(evt: MouseEvent) {
               <router-link :to="{ path: '/docs/get-started/installation' }" class="btn btn-primary me-2">
                 Get Started
               </router-link>
-              <router-link :to="{ path: '/resources' }" class="btn btn-primary me-2">
-                Tutorials
-              </router-link>
+              <a href="#demo" class="btn btn-primary">
+                See Demo
+              </a>
             </p>
           </div>
           <div class="col-12 col-lg-5">
-            <img src="/logo.svg" alt="Mokapi logo with an okapi symbol representing friendly and elegant developer tooling" title="Mokapi – the okapi-inspired logo for modern API mocking" class="mx-auto d-block no-dialog" />
+            <img 
+              src="/logo.svg" 
+              alt="Mokapi logo with an okapi symbol representing friendly and elegant developer tooling" 
+              title="Mokapi – the okapi-inspired logo for modern API mocking" 
+              class="mx-auto d-block no-dialog"
+              loading="eager"
+            />
             <div class="text-center github-meta">
               <a
                 href="https://github.com/marle3003/mokapi"
@@ -94,9 +108,9 @@ function showImage(evt: MouseEvent) {
                 <router-link :to="{ path: '/docs/get-started/installation' }" class="btn btn-primary me-2">
                   Get Started
                 </router-link>
-                <router-link :to="{ path: '/resources' }" class="btn btn-primary me-2">
-                  Tutorials
-                </router-link>
+                <a href="#demo" class="btn btn-primary">
+                  See Demo
+                </a>
               </p>
           </div>
         </div>
@@ -509,7 +523,7 @@ function showImage(evt: MouseEvent) {
       </div>
     </section>
     
-    <section class="py-5 mokapi-demo">
+    <section class="py-5 mokapi-demo" id="demo">
       <div class="container">
         <div class="row">
           <h2 class="mb-3">See Mokapi in Action</h2>
