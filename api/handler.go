@@ -140,6 +140,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.handleFakerTree(w, r)
 	case strings.HasPrefix(p, "/api/search"):
 		h.getSearchResults(w, r)
+	case strings.HasPrefix(p, "/health"):
+		handleHealth(w, r)
 	case h.fileServer != nil:
 		if r.Method != "GET" {
 			http.Error(w, fmt.Sprintf("method %v is not allowed", r.Method), http.StatusMethodNotAllowed)
@@ -290,4 +292,23 @@ func getPageInfo(r *http.Request) (index int, limit int, err error) {
 		}
 	}
 	return
+}
+
+func handleHealth(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+
+	if strings.HasSuffix(r.URL.Path, "/health/live") {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status":"alive"}`))
+	} else if strings.HasSuffix(r.URL.Path, "/health/ready") {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"status":"ready"}`))
+	} else {
+		http.NotFound(w, r)
+	}
 }
