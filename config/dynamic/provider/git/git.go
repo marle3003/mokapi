@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/config"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/transport/client"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
@@ -271,9 +270,9 @@ func pull(r *repository) {
 	if r.repo == nil {
 		return
 	}
-	err := r.repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"refs/*:refs/*", "HEAD:refs/heads/HEAD"}})
+	err := r.repo.Fetch(&git.FetchOptions{})
 	if errors.Is(err, git.ErrForceNeeded) {
-		err = r.repo.Fetch(&git.FetchOptions{RefSpecs: []config.RefSpec{"+refs/*:refs/*", "HEAD:refs/heads/HEAD"}})
+		err = r.repo.Fetch(&git.FetchOptions{})
 	}
 	if err != nil {
 		if !errors.Is(err, git.NoErrAlreadyUpToDate) {
