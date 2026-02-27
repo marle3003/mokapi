@@ -159,6 +159,7 @@ func (s *SearchIndex) add(id string, data any) {
 	if s.idx == nil {
 		return
 	}
+	log.Debugf("adding %s to search index", id)
 	err := s.idx.Index(id, data)
 	if err != nil {
 		log.Errorf("add '%s' to search index failed: %v", id, err)
@@ -170,6 +171,7 @@ func (s *SearchIndex) Delete(id string) {
 		return
 	}
 	s.queue <- func() {
+		log.Debugf("removing %s from search index", id)
 		_ = s.idx.Delete(id)
 	}
 }
