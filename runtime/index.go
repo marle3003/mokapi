@@ -132,6 +132,7 @@ initialization:
 					return
 				}
 				op()
+				log.Debugf("search index: queued ops: %v", len(s.queue))
 			case <-ctx.Done():
 				close(s.queue)
 
