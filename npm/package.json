@@ -5,7 +5,7 @@
   "homepage": "https://mokapi.io",
   "repository": {
     "type": "git",
-    "url": "https://github.com/marle3003/mokapi.git"
+    "url": "git+https://github.com/marle3003/mokapi.git"
   },
   "bin": {
     "mokapi": "bin/mokapi.js"

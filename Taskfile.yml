@@ -47,7 +47,7 @@ tasks:
     dir: npm
     cmds:
       - npm version {{.VERSION}}
-      - npm publish
+      - npm publish --provenance
   npm-build-windows:
     cmds:
       - go build -o ./npm/dist/mokapi-windows-amd64/mokapi.exe -ldflags="-X mokapi/version.BuildVersion={{.VERSION}}" ./cmd/mokapi
