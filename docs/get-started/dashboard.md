@@ -106,12 +106,14 @@ You can find the OpenAPI specification of these endpoints
 | Path                              | Description                            |
 |-----------------------------------|----------------------------------------|
 | /api/info                         | get information about mokapi's runtime |
- | /api/services                     | list of all services                   |
- | /api/services/http/{name}         | Information about the http service     |
- | /api/services/kafka/{name}        | Information about the kafka cluster    |
- | /api/services/mail/{name}         | Information about the smtp server      |
- | /api/services/kafka/{name}/groups | list of kafka groups                   |
- | /api/events                       | list of events                         |
- | /api/events/{id}                  | get event by id                        |
- | /api/metrics                      | get list of metrics                    |
- | /api/schema/example               | returns example for given schema       |
+| /api/services                     | list of all services                   |
+| /api/services/http/{name}         | Information about the http service     |
+| /api/services/kafka/{name}        | Information about the kafka cluster    |
+| /api/services/mail/{name}         | Information about the smtp server      |
+| /api/services/kafka/{name}/groups | list of kafka groups                   |
+| /api/events                       | list of events                         |
+| /api/events/{id}                  | get event by id                        |
+| /api/metrics                      | get list of metrics                    |
+| /api/schema/example               | returns example for given schema       |
+| /health/live                      |                                        |
+| /health/ready                     |                                        |
