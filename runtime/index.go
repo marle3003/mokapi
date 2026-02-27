@@ -116,14 +116,12 @@ initialization:
 		select {
 		case op := <-s.queue:
 			op()
-			log.Debugf("search index: queued ops: %v", len(s.queue))
 		default:
 			close(s.ready)
 			break initialization
 		}
 	}
 
-	log.Debug("search index initialized")
 	pool.Go(func(ctx context.Context) {
 		for {
 			select {
@@ -132,7 +130,6 @@ initialization:
 					return
 				}
 				op()
-				log.Debugf("search index: queued ops: %v", len(s.queue))
 			case <-ctx.Done():
 				close(s.queue)
 
