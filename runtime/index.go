@@ -116,12 +116,14 @@ initialization:
 		select {
 		case op := <-s.queue:
 			op()
+			log.Debugf("search index: queued ops: %v", len(s.queue))
 		default:
 			close(s.ready)
 			break initialization
 		}
 	}
 
+	log.Debug("search index initialized")
 	pool.Go(func(ctx context.Context) {
 		for {
 			select {
@@ -353,10 +355,6 @@ func getTypeFacet(term *bleveSearch.TermFacet) search.FacetValue {
 }
 
 func getSearchIndexPath(cfg static.Search) string {
-	if cfg.InMemory {
-		return ""
-	}
-
 	indexPath := cfg.IndexPath
 	if indexPath == "" {
 		indexPath = os.TempDir()
