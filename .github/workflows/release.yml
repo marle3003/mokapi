@@ -17,6 +17,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: 1.25.5
+      - run: npm install -g npm@latest
       - uses: ./.github/actions/build-release-notes
       - uses: actions/setup-node@v4
         with:
@@ -145,3 +146,4 @@ jobs:
         run: task publish-npm-package VERSION=${GITHUB_REF##*/v}
         env:
           CGO_ENABLED: 0
+          NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
