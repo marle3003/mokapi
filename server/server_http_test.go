@@ -2,11 +2,14 @@ package server_test
 
 import (
 	"fmt"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
+	"mokapi/health"
 	"mokapi/providers/openapi/openapitest"
+	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
 	"mokapi/server"
 	"mokapi/server/cert"
@@ -215,6 +218,47 @@ func TestHttp(t *testing.T) {
 				c := http.Client{}
 				_, err := c.Get(fmt.Sprintf("http://127.0.0.1:%v/foo", server.DefaultHttpPort))
 				require.Error(t, err)
+			},
+		},
+		{
+			name: "new service and healthcheck on same port",
+			test: func(t *testing.T, m *server.HttpManager) {
+				healthCfg := static.Health{Port: server.DefaultHttpPort}
+				u, err := health.BuildUrl(healthCfg)
+				require.NoError(t, err)
+				err = m.AddInternalService("health", u, health.New(healthCfg))
+				require.NoError(t, err)
+
+				m.Update(dynamic.ConfigEvent{
+					Config: &dynamic.Config{
+						Info: dynamictest.NewConfigInfo(),
+						Data: openapitest.NewConfig("3.1.0",
+							openapitest.WithPath("/", openapitest.NewPath(
+								openapitest.WithOperation("GET", openapitest.NewOperation(
+									openapitest.WithResponse(200, openapitest.WithContent(
+										"application/json",
+										openapitest.NewContent(openapitest.WithSchema(schematest.New("string", schematest.WithConst("foo")))),
+									)))),
+							)),
+						),
+					},
+				})
+				waitStartup()
+
+				c := http.Client{}
+				r, err := c.Get(fmt.Sprintf("http://127.0.0.1:%v", server.DefaultHttpPort))
+				require.NoError(t, err)
+				require.Equal(t, http.StatusOK, r.StatusCode)
+				body, err := io.ReadAll(r.Body)
+				require.NoError(t, err)
+				require.Equal(t, `"foo"`, string(body))
+
+				r, err = c.Get(fmt.Sprintf("http://127.0.0.1:%v/health", server.DefaultHttpPort))
+				require.NoError(t, err)
+				require.Equal(t, http.StatusOK, r.StatusCode)
+				body, err = io.ReadAll(r.Body)
+				require.NoError(t, err)
+				require.Equal(t, `{"status":"healthy"}`, string(body))
 			},
 		},
 	}

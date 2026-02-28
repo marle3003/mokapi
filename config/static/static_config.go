@@ -18,6 +18,7 @@ type Config struct {
 	ConfigFile       string            `json:"-" yaml:"-" flag:"config-file"`
 	Providers        Providers         `json:"providers" yaml:"providers"`
 	Api              Api               `json:"api" yaml:"api"`
+	Health           Health            `json:"health" yaml:"health"`
 	RootCaCert       tls.FileOrContent `json:"rootCaCert" yaml:"rootCaCert" name:"root-ca-cert"`
 	RootCaKey        tls.FileOrContent `json:"rootCaKey" yaml:"rootCaKey" name:"root-ca-cert"`
 	Configs          Configs           `json:"configs" yaml:"configs" explode:"config"`
@@ -38,6 +39,10 @@ func NewConfig() *Config {
 	cfg.Api.Port = 8080
 	cfg.Api.Dashboard = true
 	cfg.Api.Search.Enabled = true
+
+	cfg.Health.Enabled = true
+	cfg.Health.Port = 8080
+	cfg.Health.Path = "/health"
 
 	cfg.Providers.File.SkipPrefix = []string{"_"}
 	cfg.Event.Store = map[string]Store{"default": {Size: 100}}
@@ -285,4 +290,11 @@ func (fc *FileConfig) Set(v any) error {
 		return nil
 	}
 	return fmt.Errorf("expected string, got %T", v)
+}
+
+type Health struct {
+	Enabled bool   `yaml:"enabled" json:"enabled"`
+	Path    string `yaml:"path" json:"path"`
+	Port    int    `yaml:"port" json:"port"`
+	Log     bool   `yaml:"log" json:"log"`
 }

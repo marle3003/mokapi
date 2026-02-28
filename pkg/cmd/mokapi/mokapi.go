@@ -11,6 +11,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/feature"
+	"mokapi/health"
 	"mokapi/pkg/cli"
 	"mokapi/pkg/cmd/mokapi/flags"
 	"mokapi/providers/asyncapi3"
@@ -62,6 +63,7 @@ func NewCmdMokapi() *cli.Command {
 	flags.RegisterNpmProvider(cmd)
 
 	flags.RegisterApiFlags(cmd)
+	flags.RegisterHealthFlags(cmd)
 	flags.RegisterTlsFlags(cmd)
 	flags.RegisterEventStoreFlags(cmd)
 	flags.RegisterDataGeneratorFlags(cmd)
@@ -136,13 +138,29 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 		return nil, err
 	}
 	http := server.NewHttpManager(scriptEngine, certStore, app)
+
+	apiHandler := api.New(app, cfg.Api)
 	if u, err := api.BuildUrl(cfg.Api); err == nil {
-		err = http.AddInternalService("api", u, api.New(app, cfg.Api))
+		err = http.AddInternalService("api", u, apiHandler)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		return nil, err
+	}
+	if cfg.Health.Enabled {
+		if u, err := health.BuildUrl(cfg.Health); err == nil {
+			if cfg.Api.Port == cfg.Health.Port {
+				apiHandler.RegisterHealthHandler(u.Path, health.New(cfg.Health))
+			} else {
+				err = http.AddInternalService("health", u, health.New(cfg.Health))
+				if err != nil {
+					return nil, err
+				}
+			}
+		} else {
+			return nil, err
+		}
 	}
 
 	kafka := server.NewKafkaManager(scriptEngine, app)
