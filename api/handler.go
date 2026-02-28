@@ -19,13 +19,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type Handler interface {
+	http.Handler
+	RegisterHealthHandler(path string, h http.Handler)
+}
+
 type handler struct {
-	config     static.Api
-	path       string
-	base       string
-	app        *runtime.App
-	fileServer http.Handler
-	index      string
+	config        static.Api
+	path          string
+	base          string
+	app           *runtime.App
+	fileServer    http.Handler
+	index         string
+	healthPath    string
+	healthHandler http.Handler
 }
 
 type info struct {
@@ -67,7 +74,7 @@ type apiError struct {
 	Message string `json:"message"`
 }
 
-func New(app *runtime.App, config static.Api) http.Handler {
+func New(app *runtime.App, config static.Api) Handler {
 	h := &handler{
 		config: config,
 		path:   config.Path,
@@ -97,6 +104,11 @@ func New(app *runtime.App, config static.Api) http.Handler {
 func BuildUrl(cfg static.Api) (*url.URL, error) {
 	s := fmt.Sprintf("http://:%v%v", cfg.Port, cfg.Path)
 	return url.Parse(s)
+}
+
+func (h *handler) RegisterHealthHandler(path string, handler http.Handler) {
+	h.healthPath = path
+	h.healthHandler = handler
 }
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -140,6 +152,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.handleFakerTree(w, r)
 	case strings.HasPrefix(p, "/api/search"):
 		h.getSearchResults(w, r)
+	case strings.HasPrefix(p, h.healthPath) && h.healthHandler != nil:
+		h.healthHandler.ServeHTTP(w, r)
 	case h.fileServer != nil:
 		if r.Method != "GET" {
 			http.Error(w, fmt.Sprintf("method %v is not allowed", r.Method), http.StatusMethodNotAllowed)

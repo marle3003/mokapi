@@ -314,6 +314,9 @@ table {
     margin-bottom: 20px;
     font-size: 0.9rem;
 }
+.content table tbody td {
+    padding: 4px 0 3px 12px;
+}
 table.selectable td {
     cursor: pointer;
 }

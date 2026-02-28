@@ -133,9 +133,11 @@ initialization:
 			case <-ctx.Done():
 				close(s.queue)
 
-				indexPath := getSearchIndexPath(s.cfg)
-				if indexPath != "" {
-					_ = os.RemoveAll(indexPath)
+				if !s.cfg.InMemory {
+					indexPath := getSearchIndexPath(s.cfg)
+					if indexPath != "" {
+						_ = os.RemoveAll(indexPath)
+					}
 				}
 
 				return
@@ -351,13 +353,9 @@ func getTypeFacet(term *bleveSearch.TermFacet) search.FacetValue {
 }
 
 func getSearchIndexPath(cfg static.Search) string {
-	if cfg.InMemory {
-		return ""
-	}
-
 	indexPath := cfg.IndexPath
 	if indexPath == "" {
 		indexPath = os.TempDir()
 	}
-	return filepath.Join(cfg.IndexPath, "mokapi-bleve-index")
+	return filepath.Join(indexPath, "mokapi-bleve-index")
 }

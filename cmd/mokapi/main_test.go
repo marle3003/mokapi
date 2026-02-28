@@ -84,6 +84,11 @@ api:
         enabled: true
         indexPath: ""
         inMemory: false
+health:
+    enabled: true
+    path: /health
+    port: 8080
+    log: false
 rootCaCert: ""
 rootCaKey: ""
 configs: []

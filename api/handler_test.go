@@ -3,6 +3,7 @@ package api_test
 import (
 	"mokapi/api"
 	"mokapi/config/static"
+	"mokapi/health"
 	"mokapi/providers/openapi"
 	"mokapi/runtime"
 	"mokapi/runtime/runtimetest"
@@ -206,4 +207,57 @@ func TestHandler_SearchEnabled(t *testing.T) {
 		try.HasStatusCode(200),
 		try.HasHeader("Content-Type", "application/json"),
 		try.HasBody(`{"version":"0.0.0","buildTime":"","search":{"enabled":true}}`))
+}
+
+func TestHandler_Health(t *testing.T) {
+	testcases := []struct {
+		name string
+		cfg  *static.Config
+		test func(t *testing.T, h http.Handler)
+	}{
+		{
+			name: "POST is not allowed",
+			cfg:  &static.Config{},
+			test: func(t *testing.T, h http.Handler) {
+				r := httptest.NewRequest(http.MethodPatch, "http://foo.api/health", nil)
+				rr := httptest.NewRecorder()
+				h.ServeHTTP(rr, r)
+				require.Equal(t, http.StatusMethodNotAllowed, rr.Code)
+			},
+		},
+		{
+			name: "GET /health",
+			cfg:  &static.Config{},
+			test: func(t *testing.T, h http.Handler) {
+				r := httptest.NewRequest(http.MethodGet, "http://foo.api/health", nil)
+				rr := httptest.NewRecorder()
+				h.ServeHTTP(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, `{"status":"healthy"}`, rr.Body.String())
+			},
+		},
+		{
+			name: "use path but request does not adapt",
+			cfg:  &static.Config{Api: static.Api{Path: "/foo"}},
+			test: func(t *testing.T, h http.Handler) {
+				r := httptest.NewRequest(http.MethodGet, "http://foo.api/health", nil)
+				rr := httptest.NewRecorder()
+				h.ServeHTTP(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, `{"status":"healthy"}`, rr.Body.String())
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			h := api.New(runtime.New(tc.cfg), tc.cfg.Api)
+			h.RegisterHealthHandler("/health", health.New(static.Health{}))
+			tc.test(t, h)
+		})
+	}
 }
