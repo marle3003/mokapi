@@ -20,7 +20,7 @@ require (
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
 	github.com/yuin/gopher-lua v1.1.1
-	golang.org/x/net v0.50.0
+	golang.org/x/net v0.51.0
 	golang.org/x/text v0.34.0
 	gopkg.in/go-asn1-ber/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d
 	gopkg.in/yaml.v3 v3.0.1
