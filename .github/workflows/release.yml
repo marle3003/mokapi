@@ -146,4 +146,3 @@ jobs:
         run: task publish-npm-package VERSION=${GITHUB_REF##*/v}
         env:
           CGO_ENABLED: 0
-          NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
