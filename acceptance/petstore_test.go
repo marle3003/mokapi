@@ -24,6 +24,7 @@ type PetStoreSuite struct{ BaseSuite }
 func (suite *PetStoreSuite) SetupSuite() {
 	cfg := static.NewConfig()
 	cfg.Api.Port = try.GetFreePort()
+	cfg.Health.Port = cfg.Api.Port
 	cfg.Providers.File.Directories = []static.FileConfig{{Path: "./petstore"}}
 	cfg.Api.Search.Enabled = true
 	suite.initCmd(cfg)
@@ -390,5 +391,12 @@ func (suite *PetStoreSuite) TestSearch_Paging() {
 			assert.Equal(t, "GET /pet/{petId}", evt["title"])
 			assert.Equal(t, "Swagger Petstore", evt["domain"])
 		}),
+	)
+}
+
+func (suite *PetStoreSuite) TestHealth() {
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%v/health", suite.cfg.Api.Port), nil,
+		try.HasStatusCode(http.StatusOK),
+		try.HasBody(`{"status":"healthy"}`),
 	)
 }

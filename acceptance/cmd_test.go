@@ -9,6 +9,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/feature"
+	"mokapi/health"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/directory"
 	mail2 "mokapi/providers/mail"
@@ -63,13 +64,28 @@ func Start(cfg *static.Config) (*Cmd, error) {
 		app.UpdateConfig(e)
 	})
 
+	apiHandler := api.New(app, cfg.Api)
 	if u, err := api.BuildUrl(cfg.Api); err == nil {
-		err = http.AddInternalService("api", u, api.New(app, cfg.Api))
+		err = http.AddInternalService("api", u, apiHandler)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		return nil, err
+	}
+	if cfg.Health.Enabled {
+		if u, err := health.BuildUrl(cfg.Health); err == nil {
+			if cfg.Api.Port == cfg.Health.Port {
+				apiHandler.RegisterHealthHandler(u.Path, health.New(cfg.Health))
+			} else {
+				err = http.AddInternalService("health", u, health.New(cfg.Health))
+				if err != nil {
+					return nil, err
+				}
+			}
+		} else {
+			return nil, err
+		}
 	}
 
 	pool := safe.NewPool(context.Background())

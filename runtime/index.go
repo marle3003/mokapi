@@ -353,10 +353,6 @@ func getTypeFacet(term *bleveSearch.TermFacet) search.FacetValue {
 }
 
 func getSearchIndexPath(cfg static.Search) string {
-	if cfg.InMemory {
-		return ""
-	}
-
 	indexPath := cfg.IndexPath
 	if indexPath == "" {
 		indexPath = os.TempDir()
