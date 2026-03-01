@@ -2,9 +2,6 @@ package server_test
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
-	"github.com/sirupsen/logrus/hooks/test"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/runtime"
@@ -12,6 +9,10 @@ import (
 	"mokapi/server"
 	"testing"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestServer(t *testing.T) {
@@ -29,16 +30,19 @@ func TestServer(t *testing.T) {
 	hook := test.NewGlobal()
 	log.SetLevel(log.DebugLevel)
 	s := server.NewServer(pool, app, watcher, kafka, http, mail, ldap, e)
+	stopped := make(chan bool)
 	go func() {
 		err := s.Start()
 		require.NoError(t, err)
+		close(stopped)
 	}()
 
 	time.Sleep(time.Second)
 
 	s.Close()
 
-	time.Sleep(time.Second)
+	<-stopped
 
 	require.Len(t, hook.Entries, 1)
+	require.Equal(t, "stopping server", hook.Entries[0].Message)
 }
