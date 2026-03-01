@@ -17,7 +17,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: 1.25.5
-      - run: npm install -g npm@latest
       - uses: ./.github/actions/build-release-notes
       - uses: actions/setup-node@v4
         with:
@@ -138,6 +137,7 @@ jobs:
         with:
           node-version: 23
           registry-url: 'https://registry.npmjs.org'
+      - run: npm install npm@latest
       - run: npm install
         working-directory: ./webui
       - name: Install taskfile
