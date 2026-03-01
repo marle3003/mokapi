@@ -22,9 +22,11 @@
   "keywords": [
     "mock",
     "api",
+    "http",
     "kafka",
-    "rest",
-    "http"
+    "ldap",
+    "smtp",
+    "imap"
   ],
   "author": "Marcel Lehmann",
   "license": "MIT",
