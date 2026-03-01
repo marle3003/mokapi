@@ -16,7 +16,7 @@
 # vendor/
 data/*
 dist/
-bin/*
+**/bin/
 obj/
 Debug/
 

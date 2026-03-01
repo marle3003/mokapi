@@ -1,0 +1,19 @@
+{
+  "name": "@go-mokapi/darwin-arm64",
+  "version": "0.36.0",
+  "description": "The macOS ARM 64-bit binary for mokapi, an API mocking tool",
+  "homepage": "https://mokapi.io",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marle3003/mokapi.git"
+  },
+  "author": "Marcel Lehmann",
+  "license": "MIT",
+  "preferUnplugged": true,
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "arm64"
+  ]
+}

@@ -3,30 +3,6 @@
 version: '3'
 
 tasks:
-  default:
-    deps: [build-vue-app]
-    cmds:
-      - task: build-windows
-  build-windows:
-    deps: [build-vue-app]
-    cmds:
-      - go build -o mokapi-windows-amd64.exe -ldflags="-w -s -X 'mokapi/version.BuildVersion=1.0'" ./cmd/mokapi
-    env:
-      GOOS: windows
-      GOARCH: amd64
-  build-linux:
-    deps: [build-vue-app]
-    cmds:
-      - go build -o mokapi-linux-amd64 -ldflags="-X 'mokapi/version.BuildVersion=1.0'" ./cmd/mokapi
-    env:
-      GOOS: linux
-      GOARCH: amd64
-  build-macos:
-    cmds:
-      - go build -o mokapi-darwin-arm64 -ldflags="-X 'mokapi/version.BuildVersion=1.0'" ./cmd/mokapi
-    env:
-      GOOS: darwin
-      GOARCH: arm64
   build-vue-app:
     deps: [ensure-dist-folder]
     dir: webui
@@ -36,36 +12,96 @@ tasks:
       - go run ../cmd/internal/gen-cli-docs/main.go --output-dir ./webui/src/assets/docs/configuration/static
       - npm version {{.VERSION}}
       - npm run build-dashboard
-  build-npm-package:
-    deps: [build-vue-app]
+  publish-all:
+    deps: [ build-vue-app ]
     cmds:
-      - task npm-build-windows VERSION={{.VERSION}}
-      - task npm-build-linux VERSION={{.VERSION}}
-      - task npm-build-macos VERSION={{.VERSION}}
-  publish-npm-package:
-    deps: [build-npm-package]
-    dir: npm
+      - task publish-platform-dependent VERSION={{.VERSION}}
+      - task publish-mokapi VERSION={{.VERSION}}
+  publish-platform-dependent:
+    deps:
+      - publish-mokapi-windows-x64
+      - publish-mokapi-windows-arm64
+      - publish-mokapi-linux-x64
+      - publish-mokapi-linux-arm64
+      - publish-mokapi-macos-x64
+      - publish-mokapi-macos-arm64
+  publish-mokapi:
+    dir: npm/go-mokapi
     cmds:
       - npm version {{.VERSION}}
       - npm publish --provenance
-  npm-build-windows:
+  publish-mokapi-windows-x64:
+    deps: [ build-mokapi-windows-x64 ]
+    dir: npm/@go-mokapi/win32-x64
     cmds:
-      - go build -o ./npm/dist/mokapi-windows-amd64/mokapi.exe -ldflags="-X mokapi/version.BuildVersion={{.VERSION}}" ./cmd/mokapi
+      - npm version {{.VERSION}}
+      - npm publish --provenance --access public
+  build-mokapi-windows-x64:
+    cmds:
+      - go build -o ./npm/@go-mokapi/win32-x64/bin/mokapi.exe -ldflags="-X mokapi/version.BuildVersion={{.VERSION}}" ./cmd/mokapi
     env:
       GOOS: windows
       GOARCH: amd64
-  npm-build-linux:
+  publish-mokapi-windows-arm64:
+    deps: [ build-mokapi-windows-arm64 ]
+    dir: npm/@go-mokapi/win32-arm64
     cmds:
-      - go build -o ./npm/dist/mokapi-linux-amd64/mokapi -ldflags="-X mokapi/version.BuildVersion={{.VERSION}}" ./cmd/mokapi
+      - npm version {{.VERSION}}
+      - npm publish --provenance --access public
+  build-mokapi-windows-arm64:
+    cmds:
+      - go build -o ./npm/@go-mokapi/win32-arm64/bin/mokapi.exe -ldflags="-X mokapi/version.BuildVersion={{.VERSION}}" ./cmd/mokapi
+    env:
+      GOOS: windows
+      GOARCH: arm64
+  publish-mokapi-linux-x64:
+    deps: [ build-mokapi-linux-x64 ]
+    dir: npm/@go-mokapi/linux-x64
+    cmds:
+      - npm version {{.VERSION}}
+      - npm publish --provenance --access public
+  build-mokapi-linux-x64:
+    cmds:
+      - go build -o ./npm/@go-mokapi/linux-x64/bin/mokapi -ldflags="-X mokapi/version.BuildVersion={{.VERSION}}" ./cmd/mokapi
     env:
       GOOS: linux
       GOARCH: amd64
-  npm-build-macos:
+  publish-mokapi-linux-arm64:
+    deps: [ build-mokapi-linux-arm64 ]
+    dir: npm/@go-mokapi/linux-arm64
     cmds:
-      - go build -o ./npm/dist/mokapi-darwin-arm64/mokapi -ldflags="-X mokapi/version.BuildVersion={{.VERSION}}" ./cmd/mokapi
+      - npm version {{.VERSION}}
+      - npm publish --provenance --access public
+  build-mokapi-linux-arm64:
+    cmds:
+      - go build -o ./npm/@go-mokapi/linux-arm64/bin/mokapi -ldflags="-X mokapi/version.BuildVersion={{.VERSION}}" ./cmd/mokapi
+    env:
+      GOOS: linux
+      GOARCH: arm64
+  publish-mokapi-macos-arm64:
+    deps: [ build-mokapi-macos-arm64 ]
+    dir: npm/@go-mokapi/darwin-arm64
+    cmds:
+      - npm version {{.VERSION}}
+      - npm publish --provenance --access public
+  build-mokapi-macos-arm64:
+    cmds:
+      - go build -o ./npm/@go-mokapi/darwin-arm64/bin/mokapi -ldflags="-X mokapi/version.BuildVersion={{.VERSION}}" ./cmd/mokapi
     env:
       GOOS: darwin
       GOARCH: arm64
+  publish-mokapi-macos-x64:
+    deps: [ build-mokapi-macos-x64 ]
+    dir: npm/@go-mokapi/darwin-x64
+    cmds:
+      - npm version {{.VERSION}}
+      - npm publish --provenance --access public
+  build-mokapi-macos-x64:
+    cmds:
+      - go build -o ./npm/@go-mokapi/darwin-x64/bin/mokapi -ldflags="-X mokapi/version.BuildVersion={{.VERSION}}" ./cmd/mokapi
+    env:
+      GOOS: darwin
+      GOARCH: amd64
   ensure-dist-folder:
     cmds:
       - mkdir -p webui/dist

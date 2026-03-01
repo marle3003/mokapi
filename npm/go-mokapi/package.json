@@ -1,6 +1,6 @@
 {
   "name": "go-mokapi",
-  "version": "0.6.0",
+  "version": "0.0.0",
   "description": "Easy and flexible API mocking",
   "homepage": "https://mokapi.io",
   "repository": {
@@ -10,8 +10,14 @@
   "bin": {
     "mokapi": "bin/mokapi.js"
   },
-  "scripts": {
-    "mokapi": "mokapi"
+  "preferUnplugged": true,
+  "optionalDependencies": {
+    "@go-mokapi/darwin-arm64": "*",
+    "@go-mokapi/darwin-x64": "*",
+    "@go-mokapi/linux-arm64": "*",
+    "@go-mokapi/linux-x64": "*",
+    "@go-mokapi/win32-arm64": "*",
+    "@go-mokapi/win32-x64": "*"
   },
   "keywords": [
     "mock",
@@ -22,11 +28,5 @@
   ],
   "author": "Marcel Lehmann",
   "license": "MIT",
-  "types": "index.d.ts",
-  "files": [
-    "bin",
-    "dist",
-    "types",
-    "index.d.ts"
-  ]
+  "types": "index.d.ts"
 }
