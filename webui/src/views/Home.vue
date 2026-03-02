@@ -124,7 +124,7 @@ function showImage(evt: MouseEvent) {
             <div class="text-center">
               <h2 class="mb-3">Try Mokapi in a Second</h2>
               <div class="d-flex justify-content-center flex-wrap">
-                <pre class="quick-start-code"><code>npx mokapi https://petstore31.swagger.io/api/v31/openapi.json</code></pre>
+                <pre class="quick-start-code"><code>npx go-mokapi https://petstore31.swagger.io/api/v31/openapi.json</code></pre>
               </div>
               <p class="text-muted mb-0 quick-start-desc">
                 Instantly mock Swagger's Petstore API and start testing
