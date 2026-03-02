@@ -188,7 +188,7 @@ function isLast(breadcrumb: DocEntry[], index: number) {
   </div>
 </template>
 
-<style>
+<style scoped>
 main.has-sidebar {
   display: grid;
   grid-template-columns: 290px auto;

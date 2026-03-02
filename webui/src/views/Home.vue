@@ -117,11 +117,28 @@ function showImage(evt: MouseEvent) {
       </div>
     </section>
 
+    <section class="py-5 quick-start-section">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-12 col-lg-10">
+            <div class="text-center">
+              <h2 class="mb-3">Try Mokapi in a Second</h2>
+              <div class="d-flex justify-content-center flex-wrap">
+                <pre class="quick-start-code"><code>npx mokapi https://petstore31.swagger.io/api/v31/openapi.json</code></pre>
+              </div>
+              <p class="text-muted mb-0 quick-start-desc">
+                Instantly mock Swagger's Petstore API and start testing
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="py-5">
       <div class="container">
         <div class="row align-items-center">
 
-          <!-- Image column -->
           <div class="col-12 col-lg-6 d-flex justify-content-center">
             <img
               src="/mokapi-using-as-proxy.png"
@@ -130,7 +147,6 @@ function showImage(evt: MouseEvent) {
             />
           </div>
 
-          <!-- Text column -->
           <div class="col-12 col-lg-6 text-center text-lg-start mb-4 mb-lg-0">
             <h2 class="mb-3">Mock and Simulate APIs Across Protocols</h2>
             <p class="lead">
@@ -150,7 +166,7 @@ function showImage(evt: MouseEvent) {
 
         <h2 class="mb-3">Why Teams Use Mokapi</h2>
         <p class="lead fst-italic mb-4 text">
-          Mokapi helps teams move faster by removing external dependencies from development and testing.
+          Stop waiting for backends. Stop fighting flaky external APIs. Start shipping with confidence.
         </p>
 
         <div class="row g-4 mt-4">
@@ -159,23 +175,23 @@ function showImage(evt: MouseEvent) {
             <h3>Develop Without Waiting</h3>
             <p>
               Mock HTTP APIs, Kafka topics, LDAP directories, or mail servers
-              so development never blocks on missing or unstable systems.
+              so development never blocks on missing or unstable backends.
             </p>
           </div>
           <div class="col-md-4">
             <span class="bi bi-check2-square display-5 mb-3 d-block icon"></span>
             <h3>Test Real Workflows</h3>
             <p>
-              Simulate realistic system behavior across protocols
-              and validate integrations with confidence.
+              Simulate edge cases, error conditions, and complex scenarios
+              that are hard or impossible to trigger with live systems.
             </p>
           </div>
           <div class="col-md-4">
             <span class="bi bi-gear display-5 mb-3 d-block icon"></span>
-            <h3>Automate Everywhere</h3>
+            <h3>Ship With Confidence</h3>
             <p>
-              Run Mokapi locally, in CI pipelines, or test environments
-              to automate API testing and speed up feedback loops.
+              Validate API contracts automatically in CI/CD pipelines,
+              catching breaking changes before they reach production.
             </p>
           </div>
         </div>
@@ -184,24 +200,10 @@ function showImage(evt: MouseEvent) {
 
     <section class="py-5 text-center">
       <div class="container">
-        <h2 class="mb-3">Build Better Software, Faster</h2>
-        <p class="lead mb-3">
-          Mokapi helps teams move quickly without sacrificing confidence or stability.
-        </p>
-        <p class="mb-0 text">
-          By mocking and simulating APIs across protocols, you can automate tests,
-          reduce flaky integrations, and deliver reliable software — even when
-          external systems are unavailable or evolving.
-        </p>
-      </div>
-    </section>
-
-    <section class="py-5 text-center">
-      <div class="container">
 
         <h2 class="mb-3">Mock More Than Just HTTP</h2>
         <p class="lead mb-4 text">
-          Mokapi supports multiple protocols, allowing you to test complete systems —
+          Mokapi supports multiple protocols, allowing you to test complete systems,
           not just individual REST endpoints.
         </p>
 
@@ -288,22 +290,6 @@ function showImage(evt: MouseEvent) {
       </div>
     </section>
 
-    <section class="py-5 text-center">
-      <div class="container">
-        <h2 class="mb-3">Built for Reliable Development and Testing</h2>
-        <p class="lead mb-3 text">
-          Mocking APIs across protocols is only the beginning.
-          Mokapi is designed to help teams prevent bugs, reduce external dependencies,
-          and create stable development and test environments.
-        </p>
-        <p class="mb-0 text">
-          This is made possible through powerful core features —
-          including JavaScript-based logic, configuration patching,
-          observability, and realistic data generation.
-        </p>
-      </div>
-    </section>
-
     <section class="py-5 text-center feature">
       <div class="container">
 
@@ -326,53 +312,13 @@ function showImage(evt: MouseEvent) {
               without changing your API specifications.
             </p>
             <router-link :to="{ path: '/docs/javascript-api/overview' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
-              Explore JavaScript Mocking
+              Explore JavaScript API
             </router-link>
           </div>
           <div class="col-12 col-lg-6 order-lg-1 d-flex justify-content-center">
             <img src="/control-mock-api-everything.png" alt="JavaScript code showing how to mock an API realistically" />
           </div>
         </div>
-
-        <!-- Run Mocks Anywhere -->
-        <div class="row pb-5 align-items-center">
-          <div class="col-12 col-lg-6 order-lg-1 text-lg-start text-center">
-            <h3>Run Mocks Anywhere</h3>
-            <p>
-              Run Mokapi in any environment—local development, Docker, cloud, or CI pipelines. Test APIs seamlessly, wherever your services are deployed.
-            </p>
-            <p class="fst-italic">
-              Ensure consistent testing across local development, CI pipelines, and cloud environments.
-            </p>
-            <router-link :to="{ path: '/docs/get-started/running' }" class="btn btn-outline-primary btn-sm">
-              Learn How to Run Mokapi
-            </router-link>
-          </div>
-          <div class="col-12 col-lg-6 order-lg-2 d-flex justify-content-center">
-            <img src="/run-mock-api-anywhere.png" alt="Log output starting Mokapi in a Docker image." />
-          </div>
-        </div>
-
-
-        <!-- Mocks as Code -->
-        <div class="row pb-5 align-items-center">
-          <div class="col-12 col-lg-6 order-lg-2 text-lg-start text-center">
-            <h3>Define Mocks as Code</h3>
-            <p>
-              Manage all API mocks, configurations, and behaviors as code. Track changes, simplify audits, and ensure consistency across environments.
-            </p>
-            <p class="fst-italic">
-              Version-controlled mocks reduce errors, simplify audits, and make collaboration easier.
-            </p>
-            <router-link :to="{ path: '/docs/configuration/overview' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
-              Learn More
-            </router-link>
-          </div>
-          <div class="col-12 col-lg-6 order-lg-1 d-flex justify-content-center">
-            <img src="/mock-api-everything-as-code.png" alt="OpenAPI spec and scripts to generate mock data." />
-          </div>
-        </div>
-
 
         <!-- Generate Realistic Test Data -->
         <div class="row pb-5 align-items-center">
@@ -382,14 +328,53 @@ function showImage(evt: MouseEvent) {
               Create dynamic, lifelike data for your mocks. Simulate users, transactions, messages, and more to improve testing accuracy.
             </p>
             <p class="fst-italic">
-              Produce lifelike data to catch bugs early and test edge cases that rarely occur in production.
+              Produce realistic data to catch bugs early and test edge cases that rarely occur in production.
             </p>
             <router-link :to="{ path: '/docs/get-started/test-data' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
-              Explore Fake Data Features
+              Learn about Fake Data
             </router-link>
           </div>
           <div class="col-12 col-lg-6 order-lg-2 d-flex justify-content-center">
             <img src="/mock-realistic-test-data.png" alt="Mokapi Faker decision tree for generating realistic random data." />
+          </div>
+        </div>
+
+        <!-- Run Mocks Anywhere -->
+        <div class="row pb-5 align-items-center">
+          <div class="col-12 col-lg-6 order-lg-2 text-lg-start text-center">
+            <h3>Run Mocks Anywhere</h3>
+            <p>
+              Run Mokapi in any environment: local development, Docker, cloud, or CI pipelines. Test APIs seamlessly, wherever your services are deployed.
+            </p>
+            <p class="fst-italic">
+              Ensure consistent testing across local development, CI pipelines, and cloud environments.
+            </p>
+            <router-link :to="{ path: '/docs/get-started/running' }" class="btn btn-outline-primary btn-sm">
+              Deployment Options
+            </router-link>
+          </div>
+          <div class="col-12 col-lg-6 order-lg-1 d-flex justify-content-center">
+            <img src="/run-mock-api-anywhere.png" alt="Log output starting Mokapi in a Docker image." />
+          </div>
+        </div>
+
+
+        <!-- Mocks as Code -->
+        <div class="row pb-5 align-items-center">
+          <div class="col-12 col-lg-6 order-lg-1 text-lg-start text-center">
+            <h3>Define Mocks as Code</h3>
+            <p>
+              Manage all API mocks, configurations, and behaviors as code. Track changes, simplify audits, and ensure consistency across environments.
+            </p>
+            <p class="fst-italic">
+              Version-controlled mocks reduce errors, simplify audits, and make collaboration easier.
+            </p>
+            <router-link :to="{ path: '/docs/configuration/overview' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
+              Configuration Guide
+            </router-link>
+          </div>
+          <div class="col-12 col-lg-6 order-lg-2 d-flex justify-content-center">
+            <img src="/mock-api-everything-as-code.png" alt="OpenAPI spec and scripts to generate mock data." />
           </div>
         </div>
 
@@ -471,7 +456,7 @@ function showImage(evt: MouseEvent) {
                 <h3 class="card-title">
                   <span class="icon me-2 bi-lightning"></span>Simulate Kafka Topics with AsyncAPI
                 </h3>
-                <p>Test Kafka producers and consumers by mocking topics according to your AsyncAPI spec. Ensure reliable message generation and integration without a live Kafka cluster.</p>
+                <p>Test Kafka producers and consumers by mocking topics according to your AsyncAPI spec. Ensure reliable message generation without a live Kafka cluster.</p>
                 <a href="resources/tutorials/get-started-with-kafka" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
               </div>
             </div>
@@ -484,7 +469,7 @@ function showImage(evt: MouseEvent) {
                 <h3 class="card-title">
                   <span class="icon me-2 bi-person-check"></span>Mock LDAP Authentication
                 </h3>
-                <p>Step-by-step guide to mock LDAP login using Mokapi and Node.js. Test authentication flows without a real server.</p>
+                <p>Step-by-step guide to mock LDAP login using Mokapi and Node.js. Test authentication flows without a real directory server.</p>
                 <a href="resources/tutorials/mock-ldap-authentication-in-node" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
               </div>
             </div>
@@ -503,18 +488,28 @@ function showImage(evt: MouseEvent) {
             </div>
           </div>
 
-        </div>
-
-        <!-- Enforce API Contracts -->
-        <div class="row justify-content-center g-4 mt-1">
+          <!-- Enforce API Contracts -->
           <div class="col-md-6 col-lg-6">
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body d-flex flex-column">
                 <h3 class="card-title">
                   <span class="icon me-2 bi-shield-check"></span>Enforce API Contracts
                 </h3>
-                <p>Validate HTTP requests and responses against OpenAPI specs to catch API issues early in development or testing.</p>
-                <a href="/resources/blogs/guard-your-api-contracts" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Read Blog</a>
+                <p>Validate HTTP requests and responses against OpenAPI specs to catch breaking changes early in development or testing.</p>
+                <a href="/resources/blogs/guard-your-api-contracts" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Read Article</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Record & Replay API Traffic -->
+          <div class="col-md-6 col-lg-6">
+            <div class="card h-100 shadow-sm border-0">
+              <div class="card-body d-flex flex-column">
+                <h3 class="card-title">
+                  <span class="icon me-2 bi-stopwatch"></span>Record & Replay API Traffic
+                </h3>
+                <p>Capture real API interactions and replay them in tests. Build test suites from actual production behavior.</p>
+                <a href="/resources/blogs/record-and-replay-api-interactions" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Read Article</a>
               </div>
             </div>
           </div>
@@ -621,6 +616,23 @@ function showImage(evt: MouseEvent) {
     display: block !important;
     opacity: 1;
   }
+}
+
+.quick-start-code {
+  background: #1a1a1a;
+  color: #00ff00;
+  padding: 1rem 1.5rem;
+  border-radius: 6px;
+  margin: 0;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.9rem;
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.quick-start-desc {
+  font-size: 0.9rem;
+  margin-top: 0.75rem;
 }
 
 ul.nav-vertical {
