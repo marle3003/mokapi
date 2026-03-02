@@ -1,2 +1,2 @@
 const path = require('path');
-module.exports = path.join(__dirname, 'bin/mokapi');
+module.exports = path.join(__dirname, 'bin/mokapi.exe');
