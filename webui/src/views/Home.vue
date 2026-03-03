@@ -626,8 +626,11 @@ function showImage(evt: MouseEvent) {
   margin: 0;
   font-family: 'JetBrains Mono', 'Courier New', monospace;
   font-size: 0.9rem;
-  overflow-x: auto;
   max-width: 100%;
+}
+
+.quick-start-code code {
+  word-break: break-word;
 }
 
 .quick-start-desc {
