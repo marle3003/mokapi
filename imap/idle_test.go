@@ -148,55 +148,6 @@ func TestIdle(t *testing.T) {
 				require.Equal(t, "A01 BAD Expected DONE to end IDLE", res)
 			},
 		},
-		{
-			name: "send updates while idle",
-			handler: func(t *testing.T) imap.Handler {
-				return &imaptest.Handler{
-					SelectFunc: func(mailbox string, readonly bool, session map[string]interface{}) (*imap.Selected, error) {
-						return &imap.Selected{}, nil
-					},
-					IdleFunc: func(w imap.UpdateWriter, done chan struct{}, session map[string]interface{}) error {
-						session["idle"] = done
-						go func() {
-							err := w.WriteNumMessages(10)
-							require.NoError(t, err)
-							err = w.WriteMessageFlags(20, []imap.Flag{imap.FlagSeen})
-							require.NoError(t, err)
-							err = w.WriteExpunge(1)
-						}()
-						return nil
-					},
-				}
-			},
-			test: func(t *testing.T, c *imap.Client) {
-				err := c.PlainAuth("", "bob", "password")
-				require.NoError(t, err)
-				_, err = c.Select("INBOX", false)
-				require.NoError(t, err)
-
-				res, err := c.SendRaw("A01 IDLE")
-				require.NoError(t, err)
-				require.Equal(t, "+ idling", res)
-
-				time.Sleep(4 * time.Second)
-
-				res, err = c.ReadLine()
-				require.NoError(t, err)
-				require.Equal(t, "* 10 EXISTS", res)
-
-				res, err = c.ReadLine()
-				require.NoError(t, err)
-				require.Equal(t, "* 20 FETCH (\\Seen)", res)
-
-				res, err = c.ReadLine()
-				require.NoError(t, err)
-				require.Equal(t, "* 1 EXPUNGE", res)
-
-				res, err = c.SendRaw("A01 FINISHED")
-				require.NoError(t, err)
-				require.Equal(t, "A01 BAD Expected DONE to end IDLE", res)
-			},
-		},
 	}
 
 	t.Parallel()
@@ -223,6 +174,69 @@ func TestIdle(t *testing.T) {
 			tc.test(t, c)
 		})
 	}
+}
+
+func TestSendUpdatesWhileIdle(t *testing.T) {
+	p := try.GetFreePort()
+	sent := make(chan bool)
+	s := &imap.Server{
+		Addr: fmt.Sprintf(":%v", p),
+		Handler: &imaptest.Handler{
+			SelectFunc: func(mailbox string, readonly bool, session map[string]interface{}) (*imap.Selected, error) {
+				return &imap.Selected{}, nil
+			},
+			IdleFunc: func(w imap.UpdateWriter, done chan struct{}, session map[string]interface{}) error {
+				session["idle"] = done
+				go func() {
+					err := w.WriteNumMessages(10)
+					require.NoError(t, err)
+					err = w.WriteMessageFlags(20, []imap.Flag{imap.FlagSeen})
+					require.NoError(t, err)
+					err = w.WriteExpunge(1)
+					sent <- true
+				}()
+				return nil
+			},
+		},
+	}
+	defer s.Close()
+	go func() {
+		err := s.ListenAndServe()
+		require.ErrorIs(t, err, imap.ErrServerClosed)
+	}()
+
+	c := imap.NewClient(fmt.Sprintf("localhost:%v", p))
+	defer func() { _ = c.Close() }()
+
+	_, err := c.Dial()
+	require.NoError(t, err)
+
+	err = c.PlainAuth("", "bob", "password")
+	require.NoError(t, err)
+	_, err = c.Select("INBOX", false)
+	require.NoError(t, err)
+
+	res, err := c.SendRaw("A01 IDLE")
+	require.NoError(t, err)
+	require.Equal(t, "+ idling", res)
+
+	<-sent
+
+	res, err = c.ReadLine()
+	require.NoError(t, err)
+	require.Equal(t, "* 10 EXISTS", res)
+
+	res, err = c.ReadLine()
+	require.NoError(t, err)
+	require.Equal(t, "* 20 FETCH (\\Seen)", res)
+
+	res, err = c.ReadLine()
+	require.NoError(t, err)
+	require.Equal(t, "* 1 EXPUNGE", res)
+
+	res, err = c.SendRaw("A01 FINISHED")
+	require.NoError(t, err)
+	require.Equal(t, "A01 BAD Expected DONE to end IDLE", res)
 }
 
 func TestIdle_DisconnectWithoutDone(t *testing.T) {
