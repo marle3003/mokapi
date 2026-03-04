@@ -45,22 +45,7 @@ mokapi https://petstore3.swagger.io/api/v3/openapi.json
 
 ### Other Installation Methods
 
-Homebrew (macOS/Linux):
-```
-brew tap marle3003/tap
-brew install mokapi
-```
-
-Chocolatey (Windows):
-```yaml
-choco install mokapi
-```
-
-Docker:
-```
-docker run -p 80:80 -p 8080:8080 mokapi/mokapi:latest \
-  https://petstore3.swagger.io/api/v3/openapi.json
-```
+Check other installation methods [here](https://mokapi.io/docs/get-started/installation)
 
 ## Key Features
 
