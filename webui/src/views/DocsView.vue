@@ -188,7 +188,7 @@ function isLast(breadcrumb: DocEntry[], index: number) {
   </div>
 </template>
 
-<style scoped>
+<style>
 main.has-sidebar {
   display: grid;
   grid-template-columns: 290px auto;
@@ -372,17 +372,17 @@ pre {
     margin-left: 0;
   }
 }
-code {
+.content code {
   background-color: #f1f3f5;
   color: #e63946;
   border-radius: 3px;
   padding: 2px 6px;
   font-weight: 600
 }
-.code {
+.content .code {
   margin-bottom: 8px;
 }
-.code pre code.hljs {
+.content .code pre code.hljs {
   font-family: Menlo,Monaco,Consolas,"Courier New",monospace !important;
   padding-left: 0 !important;
 }
