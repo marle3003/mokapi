@@ -4,6 +4,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/pkg/cli"
 	"mokapi/pkg/cmd/mokapi"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -63,4 +64,26 @@ func TestRoot_Providers_Npm(t *testing.T) {
 			tc.test(t, cfg, cmd.Flags())
 		})
 	}
+}
+
+func TestProviderNpm_Env(t *testing.T) {
+	key := "MOKAPI_PROVIDERS_NPM_GLOBAL_FOLDER"
+	err := os.Setenv(key, "/npm")
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		_ = os.Unsetenv(key)
+	})
+
+	cmd := mokapi.NewCmdMokapi()
+	cmd.SetArgs([]string{})
+
+	cfg := static.NewConfig()
+	cmd.Run = func(cmd *cli.Command, args []string) error {
+		cfg = cmd.Config.(*static.Config)
+		return nil
+	}
+	err = cmd.Execute()
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"/npm"}, cfg.Providers.Npm.GlobalFolders)
 }

@@ -50,6 +50,9 @@ func (f *flagConfigBinder) setValue(ctx *bindContext) error {
 		}
 		err := ctx.setFieldFromStruct()
 		if err != nil {
+			if len(ctx.paths) > 1 {
+				ctx.paths = []string{strings.Join(ctx.paths, "-")}
+			}
 			if len(ctx.paths) == 1 {
 				if arr, ok := ctx.value.([]string); ok {
 					return f.explode(ctx.element, ctx.paths[0], arr)
