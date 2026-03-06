@@ -84,19 +84,27 @@ function setExample() {
     if (example.error) {
         state.errors = example.error
         return
-    }else{
+    } else {
         state.errors = ''
     }
 
     if (state.source.preview) {
-        state.source.preview.content = example.data[0]!.value
+        if (example.data[0]?.error) {
+            state.errors = example.data[0].error
+        } else {
+            state.source.preview.content = example.data[0]!.value
+        }
     }
     if (state.source.binary) {
         let index = 0
         if (example.data.length > 1) {
             index = 1
         }
-        state.source.binary.content = example.data[index]!.value
+        if (example.data[index]?.error) {
+            state.errors = example.data[index]!.error!
+        } else {
+            state.source.binary.content = example.data[index]!.value
+        }
     }
     example.next()
 }
