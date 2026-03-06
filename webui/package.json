@@ -20,7 +20,7 @@
     "@popperjs/core": "^2.11.6",
     "@ssthouse/vue3-tree-chart": "^0.3.0",
     "@types/bootstrap": "^5.2.10",
-    "@types/mokapi": "^0.34.0",
+    "@types/mokapi": "^0.35.0",
     "@types/nodemailer": "^7.0.10",
     "@types/whatwg-mimetype": "^5.0.0",
     "ace-builds": "^1.43.5",
