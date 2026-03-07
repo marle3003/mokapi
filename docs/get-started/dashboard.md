@@ -115,5 +115,3 @@ You can find the OpenAPI specification of these endpoints
 | /api/events/{id}                  | get event by id                        |
 | /api/metrics                      | get list of metrics                    |
 | /api/schema/example               | returns example for given schema       |
-| /health/live                      |                                        |
-| /health/ready                     |                                        |

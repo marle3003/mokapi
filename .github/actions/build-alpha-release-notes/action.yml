@@ -27,12 +27,12 @@ runs:
           git log "${{ inputs.latest-tag }}..HEAD" \
             --oneline \
             --no-merges |
-            grep -v -E 'github-actions\[bot\]|dependabot\[bot\]|test|Bump' |
+            grep -v -E 'github-actions\[bot\]|dependabot\[bot\]|test|Bump|chore' || true |
             sed 's/^[a-f0-9]\{7,40\} //' |  # remove SHA prefix
             awk '!seen[$0]++' |
             sed 's/^/- /'
         } > docs/release.md
-    - name: Upload UI artifact
+    - name: Upload release notes
       uses: actions/upload-artifact@v4
       with:
         name: release-notes

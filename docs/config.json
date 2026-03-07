@@ -182,6 +182,11 @@
                 "path": "/docs/configuration/reference"
               }
             ]
+          },
+          {
+            "label": "Health Check",
+            "source": "configuration/healthcheck.md",
+            "path": "/docs/configuration/health-check"
           }
         ]
       },

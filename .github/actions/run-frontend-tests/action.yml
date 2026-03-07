@@ -27,7 +27,7 @@ runs:
       shell: bash
     - uses: actions/setup-node@v4
       with:
-        node-version: 20
+        node-version: 24
     - name: Install and Build
       working-directory: ./webui
       run: |

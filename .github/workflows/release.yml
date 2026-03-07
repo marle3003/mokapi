@@ -17,11 +17,10 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: 1.25.5
-      - run: npm install -g npm@latest
       - uses: ./.github/actions/build-release-notes
       - uses: actions/setup-node@v4
         with:
-          node-version: 23
+          node-version: 24
           registry-url: 'https://registry.npmjs.org'
       - run: npm install
         working-directory: ./webui
@@ -29,8 +28,6 @@ jobs:
         run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
       - name: Build
         run: task build-vue-app
-        env:
-          CGO_ENABLED: 0
       - name: Upload UI artifact
         uses: actions/upload-artifact@v4
         with:
@@ -87,11 +84,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: 1.25.5
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 23
-          registry-url: 'https://registry.npmjs.org'
-      - run: choco install go-task
       - name: Install goversioninfo
         run: go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@v1.4.0
       - name: Generate Windows metadata (.syso)
@@ -126,7 +118,6 @@ jobs:
           CHOCOLATEY_API_KEY: ${{ secrets.CHOCOLATEY_API_KEY }}
 
   release-npm:
-    needs: build-dashboard
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -136,14 +127,13 @@ jobs:
       - uses: ./.github/actions/build-release-notes
       - uses: actions/setup-node@v4
         with:
-          node-version: 23
+          node-version: 24
           registry-url: 'https://registry.npmjs.org'
       - run: npm install
         working-directory: ./webui
       - name: Install taskfile
         run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
       - name: Publish
-        run: task publish-npm-package VERSION=${GITHUB_REF##*/v}
+        run: task publish-all VERSION=${GITHUB_REF##*/v}
         env:
           CGO_ENABLED: 0
-          NPM_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

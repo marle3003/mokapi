@@ -1,20 +1,13 @@
 <p align="center">
 <a href="https://mokapi.io">
-<img src="logo.svg" alt="Mokapi" title="Mokapi" width="300" />
+<img src="https://raw.githubusercontent.com/marle3003/mokapi/refs/heads/main/logo.svg" alt="Mokapi" title="Mokapi" width="300" />
 </a>
 </p>
-
 <h3 align="center">Mock APIs Across Protocols. Test Faster. Ship Better.</h3>
-
 <p align="center">
-<a href="https://github.com/marle3003/mokapi/releases"><img src="https://img.shields.io/github/release/marle3003/mokapi.svg" alt="Github release"></a>
-<a href="https://github.com/marle3003/mokapi/actions/workflows/test.yml"><img src="https://github.com/marle3003/mokapi/actions/workflows/build.yml/badge.svg" alt="Build status"></a>
-<a href="https://codecov.io/gh/marle3003/mokapi"><img src="https://img.shields.io/codecov/c/gh/marle3003/mokapi/main.svg" alt="Codecov branch"></a>
-<a href="https://github.com/marle3003/mokapi/blob/master/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
-</p>
-<p align="center">
-    <a href="https://github.com/marle3003/mokapi/releases">Download</a> ·
-    <a href="https://mokapi.io/docs/welcome">Documentation</a>
+  <a href="https://www.npmjs.com/package/go-mokapi"><img src="https://img.shields.io/npm/v/go-mokapi.svg" alt="npm version"></a>
+  <a href="https://github.com/marle3003/mokapi/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+  <a href="https://github.com/marle3003/mokapi"><img src="https://img.shields.io/github/stars/marle3003/mokapi?style=social" alt="GitHub stars"></a>
 </p>
 
 ## What is Mokapi?
@@ -42,6 +35,17 @@ Then test your mock:
 ```
 curl http://localhost/api/v3/pet/1 -H 'Accept: application/json'
 ```
+
+Install Globally
+
+```
+npm install -g go-mokapi
+mokapi https://petstore3.swagger.io/api/v3/openapi.json
+```
+
+### Other Installation Methods
+
+Check other installation methods [here](https://mokapi.io/docs/get-started/installation)
 
 ## Key Features
 

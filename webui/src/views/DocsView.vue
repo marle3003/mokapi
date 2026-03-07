@@ -314,6 +314,9 @@ table {
     margin-bottom: 20px;
     font-size: 0.9rem;
 }
+.content table tbody td {
+    padding: 4px 0 3px 12px;
+}
 table.selectable td {
     cursor: pointer;
 }
@@ -369,17 +372,17 @@ pre {
     margin-left: 0;
   }
 }
-code {
+.content code {
   background-color: #f1f3f5;
   color: #e63946;
   border-radius: 3px;
   padding: 2px 6px;
   font-weight: 600
 }
-.code {
+.content .code {
   margin-bottom: 8px;
 }
-.code pre code.hljs {
+.content .code pre code.hljs {
   font-family: Menlo,Monaco,Consolas,"Courier New",monospace !important;
   padding-left: 0 !important;
 }

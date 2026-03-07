@@ -27,6 +27,7 @@ func (suite *PetStoreSuite) SetupSuite() {
 	cfg.Health.Port = cfg.Api.Port
 	cfg.Providers.File.Directories = []static.FileConfig{{Path: "./petstore"}}
 	cfg.Api.Search.Enabled = true
+	cfg.Api.Search.InMemory = true
 	suite.initCmd(cfg)
 }
 

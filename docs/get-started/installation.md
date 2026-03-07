@@ -66,10 +66,11 @@ docker pull mokapi/mokapi
 
 @tab "NPM"
 
-If you prefer to install Mokapi as a Node.js package, use the following command:
+If you prefer to install Mokapi as a Node.js package, install [go-mokapi](https://www.npmjs.com/package/go-mokapi)
+using:
 
 ```bash
-npm install go-mokapi
+npm install -g go-mokapi
 ```
 
 :::
