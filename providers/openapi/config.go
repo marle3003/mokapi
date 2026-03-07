@@ -114,11 +114,13 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 
-	if err := c.Components.parse(config, reader); err != nil {
+	config.Scope.OpenIfNeeded(config.Info.Path())
+
+	if err := c.Paths.parse(config, reader); err != nil {
 		return err
 	}
 
-	if err := c.Paths.parse(config, reader); err != nil {
+	if err := c.Components.parse(config, reader); err != nil {
 		return err
 	}
 

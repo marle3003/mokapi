@@ -1,7 +1,6 @@
 package openapi_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
@@ -9,6 +8,8 @@ import (
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func Test_Parse(t *testing.T) {
@@ -132,17 +133,18 @@ func Test_ParseAndPatch(t *testing.T) {
 			t.Parallel()
 			var target *openapi.Config
 			for _, c := range tc.configs {
-				err := c.Parse(&dynamic.Config{
-					Info: dynamictest.NewConfigInfo(),
-					Data: c,
-				}, &dynamictest.Reader{})
-				require.NoError(t, err)
 				if target == nil {
 					target = c
 				} else {
 					target.Patch(c)
 				}
 			}
+
+			err := target.Parse(&dynamic.Config{
+				Info: dynamictest.NewConfigInfo(),
+				Data: target,
+			}, &dynamictest.Reader{})
+			require.NoError(t, err)
 
 			tc.test(t, target)
 		})

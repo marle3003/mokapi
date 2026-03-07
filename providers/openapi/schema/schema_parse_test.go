@@ -1,13 +1,15 @@
 package schema_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	jsonSchema "mokapi/schema/json/schema"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestJson_Structuring(t *testing.T) {
@@ -164,6 +166,26 @@ func TestJson_Structuring(t *testing.T) {
 				require.NoError(t, err)
 				children := s.Properties.Get("children")
 				require.Equal(t, s, children.Items.Sub)
+			},
+		},
+		{
+			name: "recursion using $def",
+			test: func(t *testing.T) {
+				data := `
+$defs:
+  a:
+    $ref: #/$defs/b
+  b:
+    $ref: '#'
+$ref: '#/$defs/a'
+`
+				var s *schema.Schema
+				err := yaml.Unmarshal([]byte(data), &s)
+				require.NoError(t, err)
+
+				err = s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{})
+				require.NoError(t, err)
+				require.Equal(t, "", s.String())
 			},
 		},
 		{

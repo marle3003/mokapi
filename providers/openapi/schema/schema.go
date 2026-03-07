@@ -91,7 +91,6 @@ type Schema struct {
 
 	Sub *Schema `yaml:"-" json:"-"`
 	m   map[string]bool
-	cm  changeManager
 }
 
 func (s *Schema) HasProperties() bool {
@@ -99,90 +98,125 @@ func (s *Schema) HasProperties() bool {
 }
 
 func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	p := &schemaParser{visited: map[*Schema]bool{}, config: config, reader: reader}
+	return p.parse(s)
+}
+
+type schemaParser struct {
+	visited map[*Schema]bool
+	config  *dynamic.Config
+	reader  dynamic.Reader
+}
+
+func (p *schemaParser) parse(s *Schema) error {
 	if s == nil {
 		return nil
 	}
 
+	if p.visited[s] {
+		return nil
+	}
+	p.visited[s] = true
+
+	if s.Id != "" {
+		p.config.OpenScope(s.Id)
+		defer p.config.CloseScope()
+	} else {
+		p.config.Scope.OpenIfNeeded(p.config.Info.Path())
+	}
+
 	for _, d := range s.Definitions {
-		if err := d.Parse(config, reader); err != nil {
+		if err := p.parse(d); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range s.Defs {
-		if err := d.Parse(config, reader); err != nil {
+		if err := p.parse(d); err != nil {
 			return err
 		}
 	}
 
-	if s.Id != "" {
-		config.OpenScope(s.Id)
-		defer config.CloseScope()
-	} else {
-		config.Scope.OpenIfNeeded(config.Info.Path())
-	}
-
 	if s.Anchor != "" {
-		if err := config.Scope.SetLexical(s.Anchor, s); err != nil {
+		if err := p.config.Scope.SetLexical(s.Anchor, s); err != nil {
 			return err
 		}
 	}
 
 	if s.DynamicAnchor != "" {
-		if err := config.Scope.SetDynamic(s.DynamicAnchor, s); err != nil {
+		if err := p.config.Scope.SetDynamic(s.DynamicAnchor, s); err != nil {
 			return err
 		}
 	}
 
-	if err := s.Items.Parse(config, reader); err != nil {
+	if err := p.parse(s.Items); err != nil {
 		return err
 	}
 
-	if err := s.Properties.Parse(config, reader); err != nil {
-		return err
+	if s.Properties != nil {
+		for it := s.Properties.Iter(); it.Next(); {
+			if err := p.parse(it.Value()); err != nil {
+				return fmt.Errorf("parse schema '%v' failed: %w", it.Key(), err)
+			}
+		}
 	}
 
-	if err := s.AdditionalProperties.Parse(config, reader); err != nil {
+	if err := p.parse(s.AdditionalProperties); err != nil {
 		return err
 	}
 
 	for _, r := range s.AnyOf {
-		if err := r.Parse(config, reader); err != nil {
+		if err := p.parse(r); err != nil {
 			return err
 		}
 	}
 
 	for _, r := range s.AllOf {
-		if err := r.Parse(config, reader); err != nil {
+		if err := p.parse(r); err != nil {
 			return err
 		}
 	}
 
 	for _, r := range s.OneOf {
-		if err := r.Parse(config, reader); err != nil {
+		if err := p.parse(r); err != nil {
 			return err
 		}
 	}
 
 	if s.Ref != "" {
-		err := dynamic.Resolve(s.Ref, &s.Sub, config, reader)
+		err := dynamic.Resolve(s.Ref, &s.Sub, p.config, p.reader)
 		if err != nil {
 			return err
 		}
+
+		scope := s.Ref
+		if s.Sub.Id != "" {
+			scope = s.Sub.Id
+		}
+		p.config.OpenScope(scope)
+		defer p.config.CloseScope()
+
+		// Parse the referenced schema again in the current context.
+		// This ensures nested $ref and $dynamicRef are resolved relative
+		// to the correct dynamic scope.
+		if err = p.parse(s.Sub); err != nil {
+			return err
+		}
+		// Apply the resolved schema as an overlay onto the current schema.
+		// The referenced schema is cloned to preserve the immutability of
+		// the parsed schema graph. Dynamic references may resolve differently
+		// depending on the evaluation context, so shared schema nodes must
+		// never be mutated.
 		s.apply(s.Sub)
-		s.Sub.cm.Subscribe(s.apply)
 	}
 
 	if s.DynamicRef != "" {
-		err := dynamic.ResolveDynamic(s.DynamicRef, &s.Sub, config, reader)
+		err := dynamic.ResolveDynamic(s.DynamicRef, &s.Sub, p.config, p.reader)
 		if err != nil {
 			return err
 		}
 		s.apply(s.Sub)
-		s.Sub.cm.Subscribe(s.apply)
 	}
-
-	s.cm.Notify(s)
 
 	return nil
 }
@@ -306,7 +340,7 @@ func (s *Schema) String() string {
 		sb.WriteString(fmt.Sprintf(" description=%v", s.Description))
 	}
 
-	return sb.String()
+	return strings.TrimSpace(sb.String())
 }
 
 func (s *Schema) IsFreeForm() bool {
