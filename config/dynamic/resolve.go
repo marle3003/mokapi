@@ -2,12 +2,13 @@ package dynamic
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/sortedmap"
 	"net/url"
 	"path/filepath"
 	"reflect"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type PathResolver interface {
@@ -22,11 +23,14 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 	var err error
 
 	fragment := ref[1:]
+	isLocal := true
+	parent := config
 	if !strings.HasPrefix(ref, "#") {
 		fragment, config, err = resolveResource(ref, element, config, reader)
 		if err != nil {
 			return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
 		}
+		isLocal = false
 	}
 
 	err = resolveFragment(fragment, element, config, false)
@@ -34,6 +38,29 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 	if err != nil {
 		return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
 	}
+
+	// Parse the referenced schema again in the current context.
+	// This ensures nested $ref and $dynamicRef are resolved relative
+	// to the correct dynamic scope.
+	// element is **struct
+	p, ok := reflect.ValueOf(element).Elem().Interface().(Parser)
+	if ok {
+		if !isLocal {
+			// set parent scope hierarchy
+			config = &Config{Raw: config.Raw, Data: copyData(config.Data), Info: config.Info}
+			config.Scope.SetParent(parent.Scope)
+		}
+		if !config.EnterRef(ref) {
+			return nil
+		}
+		defer config.LeaveRef(ref)
+
+		err = p.Parse(config, reader)
+		if err != nil {
+			return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
+		}
+	}
+
 	return nil
 }
 
@@ -239,15 +266,6 @@ func resolveResource(ref string, element interface{}, config *Config, reader Rea
 	sub, err := reader.Read(removeFragment(u), data)
 	if err == nil {
 		AddRef(config, sub)
-		if _, ok := sub.Data.(Parser); ok && len(sub.Raw) > 0 {
-			// parse again with parent scope hierarchy
-			sub = &Config{Raw: sub.Raw, Data: copyData(sub.Data), Info: sub.Info}
-			sub.Scope.SetParent(config.Scope)
-			err = Parse(sub, reader)
-			if err != nil {
-				return "", nil, err
-			}
-		}
 	}
 	return u.Fragment, sub, err
 }

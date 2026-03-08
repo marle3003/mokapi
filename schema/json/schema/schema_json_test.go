@@ -2,12 +2,13 @@ package schema_test
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestSchemaJson(t *testing.T) {
@@ -475,17 +476,21 @@ func TestJson_Structuring(t *testing.T) {
 		{
 			name: "recursion",
 			test: func(t *testing.T) {
-				s := schematest.New("object",
+				entry := schematest.New("object",
 					schematest.WithProperty("name", schematest.New("string")),
 					schematest.WithProperty("children",
 						schematest.New("array", schematest.WithItemsRefString("#")),
 					),
 				)
 
-				err := s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{})
+				err := entry.Parse(&dynamic.Config{Data: entry}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
-				children := s.Properties.Get("children")
+				// entry does not contain $ref=#
+				// only the next level is identical
+				children := entry.Properties.Get("children")
+				s := children.Items
+				children = s.Properties.Get("children")
 				require.Equal(t, s, children.Items)
 			},
 		},

@@ -3,8 +3,9 @@ package schema
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Schema struct {
@@ -151,7 +152,14 @@ func (s *Schema) Validate() error {
 }
 
 func (s *Schema) UnmarshalJSON(b []byte) error {
-	_ = json.Unmarshal(b, &s.m)
+	m := map[string]json.RawMessage{}
+	_ = json.Unmarshal(b, &m)
+	if s.m == nil {
+		s.m = map[string]bool{}
+	}
+	for k := range m {
+		s.m[k] = true
+	}
 
 	var boolVal bool
 	if err := json.Unmarshal(b, &boolVal); err == nil {
@@ -176,7 +184,14 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 }
 
 func (s *Schema) UnmarshalYAML(node *yaml.Node) error {
-	_ = node.Decode(&s.m)
+	m := map[string]yaml.Node{}
+	_ = node.Decode(&m)
+	if s.m == nil {
+		s.m = map[string]bool{}
+	}
+	for k := range m {
+		s.m[k] = true
+	}
 
 	var boolVal bool
 	if err := node.Decode(&boolVal); err == nil {
@@ -211,6 +226,18 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		config.Scope.OpenIfNeeded(config.Info.Path())
 	}
 
+	for _, d := range s.Definitions {
+		if err := d.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	for _, d := range s.Defs {
+		if err := d.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
 	if s.Anchor != "" {
 		if err := config.Scope.SetLexical(s.Anchor, s); err != nil {
 			return err
@@ -225,18 +252,6 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 	if err := s.Validate(); err != nil {
 		return err
-	}
-
-	for _, d := range s.Definitions {
-		if err := d.Parse(config, reader); err != nil {
-			return err
-		}
-	}
-
-	for _, d := range s.Defs {
-		if err := d.Parse(config, reader); err != nil {
-			return err
-		}
 	}
 
 	if err := s.Items.Parse(config, reader); err != nil {

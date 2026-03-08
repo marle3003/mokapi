@@ -47,6 +47,7 @@ type Config struct {
 	Listeners  Listeners
 	Scope      Scope
 	SourceType SourceType
+	resolving  map[string]bool
 }
 
 type Refs struct {
@@ -228,4 +229,20 @@ func (c *Config) CloseScope() {
 
 func (e Event) String() string {
 	return EventText[e]
+}
+
+func (c *Config) EnterRef(ref string) bool {
+	if c.resolving == nil {
+		c.resolving = map[string]bool{}
+	}
+
+	if c.resolving[ref] {
+		return false
+	}
+	c.resolving[ref] = true
+	return true
+}
+
+func (c *Config) LeaveRef(ref string) {
+	delete(c.resolving, ref)
 }

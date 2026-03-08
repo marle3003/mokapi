@@ -149,11 +149,13 @@ func (p *schemaParser) parse(s *Schema) error {
 		}
 	}
 
-	if err := p.parse(s.Items); err != nil {
-		return err
+	if !s.skipParse("items") {
+		if err := p.parse(s.Items); err != nil {
+			return err
+		}
 	}
 
-	if s.Properties != nil {
+	if s.Properties != nil && !s.skipParse("properties") {
 		for it := s.Properties.Iter(); it.Next(); {
 			if err := p.parse(it.Value()); err != nil {
 				return fmt.Errorf("parse schema '%v' failed: %w", it.Key(), err)
@@ -161,25 +163,33 @@ func (p *schemaParser) parse(s *Schema) error {
 		}
 	}
 
-	if err := p.parse(s.AdditionalProperties); err != nil {
-		return err
-	}
-
-	for _, r := range s.AnyOf {
-		if err := p.parse(r); err != nil {
+	if !s.skipParse("additionalProperties") {
+		if err := p.parse(s.AdditionalProperties); err != nil {
 			return err
 		}
 	}
 
-	for _, r := range s.AllOf {
-		if err := p.parse(r); err != nil {
-			return err
+	if !s.skipParse("anyOf") {
+		for _, r := range s.AnyOf {
+			if err := p.parse(r); err != nil {
+				return err
+			}
 		}
 	}
 
-	for _, r := range s.OneOf {
-		if err := p.parse(r); err != nil {
-			return err
+	if !s.skipParse("allOf") {
+		for _, r := range s.AllOf {
+			if err := p.parse(r); err != nil {
+				return err
+			}
+		}
+	}
+
+	if !s.skipParse("oneOf") {
+		for _, r := range s.OneOf {
+			if err := p.parse(r); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -189,19 +199,6 @@ func (p *schemaParser) parse(s *Schema) error {
 			return err
 		}
 
-		scope := s.Ref
-		if s.Sub.Id != "" {
-			scope = s.Sub.Id
-		}
-		p.config.OpenScope(scope)
-		defer p.config.CloseScope()
-
-		// Parse the referenced schema again in the current context.
-		// This ensures nested $ref and $dynamicRef are resolved relative
-		// to the correct dynamic scope.
-		if err = p.parse(s.Sub); err != nil {
-			return err
-		}
 		// Apply the resolved schema as an overlay onto the current schema.
 		// The referenced schema is cloned to preserve the immutability of
 		// the parsed schema graph. Dynamic references may resolve differently
@@ -427,4 +424,12 @@ func (s *Schema) UnmarshalYAML(node *yaml.Node) error {
 	a.m = s.m
 	*s = Schema(a)
 	return nil
+}
+
+func (s *Schema) skipParse(name string) bool {
+	if s.Ref != "" {
+		_, ok := s.m[name]
+		return !ok
+	}
+	return false
 }

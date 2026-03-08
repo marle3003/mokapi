@@ -2,13 +2,14 @@ package asyncApi_test
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/providers/asyncapi3"
 	"mokapi/schema/json/schema"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type readFunc func(cfg *dynamic.Config) error
@@ -444,10 +445,8 @@ func TestSchema(t *testing.T) {
 	t.Run("modify file reference direct", func(t *testing.T) {
 		target := &schema.Schema{}
 		message.Payload = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{Schema: &schema.Schema{Ref: "foo.yml"}}}
-		var fooConfig *dynamic.Config
 		reader := &testReader{readFunc: func(file *dynamic.Config) error {
-			file.Data = &schema.Schema{}
-			fooConfig = file
+			file.Data = target
 			return nil
 		}}
 
@@ -455,10 +454,10 @@ func TestSchema(t *testing.T) {
 		require.NoError(t, err)
 
 		// modify
-		fooConfig.Data = target
-		err = fooConfig.Data.(dynamic.Parser).Parse(fooConfig, reader)
+		target = &schema.Schema{Description: "TARGET"}
+		err = config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 
 		require.NoError(t, err)
-		require.Equal(t, target, message.Payload.Value.Schema.(*schema.Schema))
+		require.Equal(t, "TARGET", message.Payload.Value.Schema.(*schema.Schema).Description)
 	})
 }

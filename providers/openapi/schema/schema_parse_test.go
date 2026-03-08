@@ -152,6 +152,36 @@ func TestJson_Structuring(t *testing.T) {
 			},
 		},
 		{
+			name: "$ref using in referenced file",
+			test: func(t *testing.T) {
+				reader := &dynamictest.Reader{
+					Data: map[string]*dynamic.Config{
+						"/bar.json": {
+							Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("/bar.json")),
+							Raw: []byte(`{
+"$defs": { "items": { "type": "integer" } },
+"type": "array",
+"items": { "$ref": "#/$defs/items" }
+}`),
+						},
+					},
+				}
+
+				foo := &dynamic.Config{
+					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("/foo.json")),
+					Data: &schema.Schema{
+						Ref: "/bar.json",
+					},
+				}
+
+				err := foo.Data.(*schema.Schema).Parse(foo, reader)
+				require.NoError(t, err)
+
+				require.NoError(t, err)
+				require.Equal(t, "integer", foo.Data.(*schema.Schema).Items.Type.String())
+			},
+		},
+		{
 			name: "recursion",
 			test: func(t *testing.T) {
 				s := schematest.New("object",
@@ -222,6 +252,40 @@ $ref: '#/$defs/a'
 
 				require.NoError(t, err)
 				require.Equal(t, "string", person.Data.(*schema.Schema).Items.Type.String())
+			},
+		},
+		{
+			name: "parsing twice with $refs",
+			test: func(t *testing.T) {
+				reader := &dynamictest.Reader{
+					Data: map[string]*dynamic.Config{
+						"https://example.com/schemas/foo": {
+							Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/foo")),
+							Raw: []byte(`{
+"$defs": { "items": { "type": "integer" } },
+"type": "array",
+"items": { "$ref": "#/$defs/items" },
+}`),
+						},
+					},
+				}
+
+				person := &dynamic.Config{
+					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/bar")),
+					Data: &schema.Schema{
+						Ref: "https://example.com/schemas/foo",
+					},
+				}
+
+				// 1. parsing
+				err := person.Data.(*schema.Schema).Parse(person, reader)
+				require.NoError(t, err)
+
+				// 2. parsing
+				err = person.Data.(*schema.Schema).Parse(person, reader)
+
+				require.NoError(t, err)
+				require.Equal(t, "integer", person.Data.(*schema.Schema).Items.Type.String())
 			},
 		},
 	}
