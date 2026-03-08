@@ -241,11 +241,13 @@ ol.breadcrumb {
 
 .content h1 {
   margin-top: 0;
-  font-size: 2.25rem;
+  font-size: 2.0rem;
+  font-weight: 900
 }
 
 .content h2 {
-  font-size: 1.55rem;
+  font-size: 1.75rem;
+  font-weight: 700;
 }
 
 .content h2 > * {
@@ -262,7 +264,8 @@ ol.breadcrumb {
 }
 
 .content h3 {
-  font-size: 1.4rem;
+  font-size: 1.25rem;
+  font-weight: 700;;
 }
 
 .content p {
@@ -372,7 +375,7 @@ pre {
     margin-left: 0;
   }
 }
-.content code {
+.content code:not(pre code) {
   background-color: #f1f3f5;
   color: #e63946;
   border-radius: 3px;
