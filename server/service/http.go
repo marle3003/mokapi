@@ -53,7 +53,15 @@ func NewHttpServer(port string, eh events.Handler) *HttpServer {
 		eh:       eh,
 		isTls:    false,
 	}
-	s.server.Handler = s
+	var protocols http.Protocols
+	protocols.SetHTTP1(true)
+	protocols.SetUnencryptedHTTP2(true)
+
+	s.server = &http.Server{
+		Addr:      fmt.Sprintf(":%v", port),
+		Handler:   s,
+		Protocols: &protocols,
+	}
 	return s
 }
 
@@ -61,7 +69,14 @@ func NewHttpServerTls(port string, store *cert.Store, eh events.Handler) *HttpSe
 	s := NewHttpServer(port, eh)
 	s.server.TLSConfig = &tls.Config{
 		GetCertificate: store.GetCertificate,
+		MinVersion:     tls.VersionTLS12,
+		MaxVersion:     tls.VersionTLS13,
 	}
+	var protocols http.Protocols
+	protocols.SetHTTP1(true)
+	protocols.SetHTTP2(true)
+
+	s.server.Protocols = &protocols
 	s.isTls = true
 	return s
 }
