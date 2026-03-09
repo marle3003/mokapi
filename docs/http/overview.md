@@ -56,8 +56,8 @@ Point Mokapi to any publicly accessible OpenAPI specification:
 mokapi https://petstore3.swagger.io/api/v3/openapi.json
 ```
 ```text box=tip
-Mokapi supports both simplified syntax (`mokapi &lt;url&gt;`) and
-verbose flags (`mokapi --providers-http-url &lt;url&gt;`). This guide uses the
+Mokapi supports both simplified syntax (`mokapi <url>`) and
+verbose flags (`mokapi --providers-http-url <url>`). This guide uses the
 simplified syntax for clarity.
 ```
 
