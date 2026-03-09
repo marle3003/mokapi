@@ -23,9 +23,9 @@ func TestEvent(t *testing.T) {
 		{
 			name: "use response example (deprecated)",
 			config: openapitest.NewConfig("3.1.0",
-				openapitest.WithPath("/foo", openapitest.NewPath(
-					openapitest.WithOperation("GET", openapitest.NewOperation(
-						openapitest.WithResponse(200, openapitest.WithContent(
+				openapitest.WithPath("/foo",
+					openapitest.WithOperation("GET",
+						openapitest.WithResponse(200, openapitest.UseContent(
 							"application/json", &openapi.MediaType{
 								Schema:      nil,
 								Example:     &openapi.ExampleValue{Value: "foo"},
@@ -34,7 +34,6 @@ func TestEvent(t *testing.T) {
 							},
 						)),
 					)),
-				)),
 			),
 			test: func(t *testing.T, h openapi.Handler) {
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
@@ -43,16 +42,16 @@ func TestEvent(t *testing.T) {
 
 				err := h.ServeHTTP(rr, r)
 				require.Nil(t, err)
-				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, http.StatusOK, rr.Code, rr.Body.String())
 				require.Equal(t, `"foo"`, rr.Body.String())
 			},
 		},
 		{
 			name: "use response examples",
 			config: openapitest.NewConfig("3.1.0",
-				openapitest.WithPath("/foo", openapitest.NewPath(
-					openapitest.WithOperation("GET", openapitest.NewOperation(
-						openapitest.WithResponse(200, openapitest.WithContent(
+				openapitest.WithPath("/foo",
+					openapitest.WithOperation("GET",
+						openapitest.WithResponse(200, openapitest.UseContent(
 							"application/json", &openapi.MediaType{
 								Schema:  nil,
 								Example: nil,
@@ -71,7 +70,6 @@ func TestEvent(t *testing.T) {
 							},
 						)),
 					)),
-				)),
 			),
 			test: func(t *testing.T, h openapi.Handler) {
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)

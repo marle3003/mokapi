@@ -454,7 +454,7 @@ func TestPath_Parse(t *testing.T) {
 					require.Equal(t, "/foo.yml", u.String())
 					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u},
 						Data: openapitest.NewConfig("3.0",
-							openapitest.WithPath("/foo", target)),
+							openapitest.UsePath("/foo", target)),
 					}
 					return cfg, nil
 				})
@@ -473,7 +473,7 @@ func TestPath_Parse(t *testing.T) {
 					require.Equal(t, "/foo.yml", u.String())
 					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u},
 						Data: openapitest.NewConfig("3.0",
-							openapitest.WithPath("/foo", nil)),
+							openapitest.UsePath("/foo", nil)),
 					}
 					return cfg, nil
 				})
@@ -511,12 +511,12 @@ func TestPath_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithPathParamRef(&openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml"}}),
-					)),
+					openapitest.WithPath("/foo",
+						openapitest.WithPathParamRef("foo.yml"),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
-				require.EqualError(t, err, "parse path '/foo' failed: resolve reference 'foo.yml' failed: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse parameter '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -557,10 +557,10 @@ func TestConfig_Patch_Path(t *testing.T) {
 		{
 			name: "patch both path are nil",
 			configs: []*openapi.Config{
-				openapitest.NewConfig("1.0", openapitest.WithPath(
+				openapitest.NewConfig("1.0", openapitest.UsePath(
 					"/foo", nil,
 				)),
-				openapitest.NewConfig("1.0", openapitest.WithPath(
+				openapitest.NewConfig("1.0", openapitest.UsePath(
 					"/foo", nil,
 				)),
 			},
@@ -575,12 +575,12 @@ func TestConfig_Patch_Path(t *testing.T) {
 			configs: []*openapi.Config{
 				{Paths: map[string]*openapi.PathRef{"/foo": nil}},
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(
-						openapitest.WithOperation(
-							"post", openapitest.NewOperation(),
-						),
+					"/foo",
+					openapitest.WithOperation(
+						"post",
 					),
-				)),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Len(t, result.Paths, 1)
@@ -592,10 +592,10 @@ func TestConfig_Patch_Path(t *testing.T) {
 			name: "patch without path",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(),
+					"/foo", openapitest.WithOperation(
+						"post",
 					),
-					))),
+				)),
 				openapitest.NewConfig("1.0"),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
@@ -609,10 +609,10 @@ func TestConfig_Patch_Path(t *testing.T) {
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0"),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(),
+					"/foo", openapitest.WithOperation(
+						"post",
 					),
-					))),
+				)),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Len(t, result.Paths, 1)
@@ -626,10 +626,10 @@ func TestConfig_Patch_Path(t *testing.T) {
 				openapitest.NewConfig("1.0", openapitest.WithPathRef(
 					"/foo", &openapi.PathRef{})),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(),
+					"/foo", openapitest.WithOperation(
+						"post",
 					),
-					))),
+				)),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Len(t, result.Paths, 1)
@@ -641,9 +641,9 @@ func TestConfig_Patch_Path(t *testing.T) {
 			name: "patch summary and description",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath())),
+					"/foo")),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithPathInfo("foo", "bar")))),
+					"/foo", openapitest.WithPathInfo("foo", "bar"))),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Len(t, result.Paths, 1)
@@ -656,9 +656,9 @@ func TestConfig_Patch_Path(t *testing.T) {
 			name: "add parameters",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath())),
+					"/foo")),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithPathParam("foo")))),
+					"/foo", openapitest.WithPathParam("foo"))),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				e := result.Paths["/foo"].Value
@@ -669,9 +669,9 @@ func TestConfig_Patch_Path(t *testing.T) {
 			name: "patch parameters",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithPathParam("foo")))),
+					"/foo", openapitest.WithPathParam("foo"))),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithPathParam("foo", openapitest.WithParamSchema(schematest.New("number")))))),
+					"/foo", openapitest.WithPathParam("foo", openapitest.WithParamSchema(schematest.New("number"))))),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				e := result.Paths["/foo"].Value

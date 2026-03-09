@@ -1,6 +1,7 @@
 package openapitest
 
 import (
+	"mokapi/config/dynamic"
 	"mokapi/media"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema"
@@ -36,7 +37,21 @@ func WithResponse(status int, opts ...ResponseOptions) OperationOptions {
 	}
 }
 
-func WithResponseRef(status int, ref *openapi.ResponseRef) OperationOptions {
+func UseResponse(status int, r *openapi.Response) OperationOptions {
+	return func(o *openapi.Operation) {
+		o.Responses.Set(strconv.Itoa(status), &openapi.ResponseRef{Value: r})
+	}
+}
+
+func WithResponseRef(status int, ref string) OperationOptions {
+	return func(o *openapi.Operation) {
+		o.Responses.Set(strconv.Itoa(status), &openapi.ResponseRef{
+			Reference: dynamic.Reference{Ref: ref},
+		})
+	}
+}
+
+func UseResponseRef(status int, ref *openapi.ResponseRef) OperationOptions {
 	return func(o *openapi.Operation) {
 		o.Responses.Set(strconv.Itoa(status), ref)
 	}
@@ -52,10 +67,10 @@ func WithOperationParam(name string, required bool, opts ...ParamOptions) Operat
 	}
 }
 
-func WithOperationParamRef(ref *openapi.ParameterRef) OperationOptions {
+func WithOperationParamRef(ref string) OperationOptions {
 	return func(o *openapi.Operation) {
 
-		o.Parameters = append(o.Parameters, ref)
+		o.Parameters = append(o.Parameters, &openapi.ParameterRef{Reference: dynamic.Reference{Ref: ref}})
 	}
 }
 
@@ -106,6 +121,14 @@ func WithRequestBody(description string, required bool, opts ...RequestBodyOptio
 
 		o.RequestBody = &openapi.RequestBodyRef{
 			Value: body,
+		}
+	}
+}
+
+func WithRequestBodyRef(ref string) OperationOptions {
+	return func(o *openapi.Operation) {
+		o.RequestBody = &openapi.RequestBodyRef{
+			Reference: dynamic.Reference{Ref: ref},
 		}
 	}
 }

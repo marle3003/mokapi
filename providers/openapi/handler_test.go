@@ -41,8 +41,8 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "base path",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				c.Servers[0].Url = "http://localhost/root"
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/root/foo", nil)
 				r = r.WithContext(context.WithValue(r.Context(), "servicePath", "/root"))
 				rr := httptest.NewRecorder()
@@ -55,8 +55,8 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "base path single slash",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				c.Servers[0].Url = "http://localhost/root"
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/", c, openapitest.WithOperation("get", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/root", nil)
 				r = r.WithContext(context.WithValue(r.Context(), "servicePath", "/root"))
 				rr := httptest.NewRecorder()
@@ -69,8 +69,8 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "server url with slash suffix",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				c.Servers[0].Url = "http://localhost/root/"
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/root/foo", nil)
 				r = r.WithContext(context.WithValue(r.Context(), "servicePath", "/root/"))
 				rr := httptest.NewRecorder()
@@ -86,11 +86,10 @@ func TestResolveEndpoint(t *testing.T) {
 				op := openapitest.NewOperation(
 					openapitest.WithOperationParam("bar", true),
 					openapitest.WithResponse(http.StatusOK,
-						openapitest.WithContent("application/json",
-							openapitest.NewContent()),
+						openapitest.WithContent("application/json"),
 					),
 				)
-				openapitest.AppendPath("/foo/{bar}", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo/{bar}", c, openapitest.UseOperation("get", op))
 
 				r := httptest.NewRequest("get", "http://localhost/root/foo/bar", nil)
 				r = r.WithContext(context.WithValue(r.Context(), "servicePath", "/root"))
@@ -104,8 +103,8 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "spec define suffix / but request does not",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				c.Servers[0].Url = "http://localhost"
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo/", c, openapitest.WithOperation("get", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo/", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -118,8 +117,8 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "spec define suffix no / but request does",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				c.Servers[0].Url = "http://localhost"
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo/", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -132,8 +131,8 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "both uses trailing slash",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				c.Servers[0].Url = "http://localhost"
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo/", c, openapitest.WithOperation("get", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo/", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo/", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -158,8 +157,8 @@ func TestResolveEndpoint(t *testing.T) {
 		{
 			name: "HTTP method does not match",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusNotFound, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusNotFound, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("POST", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -171,8 +170,8 @@ func TestResolveEndpoint(t *testing.T) {
 		{
 			name: "no success response specified",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusNotFound, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusNotFound, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -184,7 +183,7 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "no response specified",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				op := openapitest.NewOperation()
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -196,8 +195,8 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "no success response specified but default",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				// 0 = default
-				op := openapitest.NewOperation(openapitest.WithResponse(0, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(0, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -207,8 +206,8 @@ func TestResolveEndpoint(t *testing.T) {
 		{
 			name: "with endpoint",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -219,9 +218,9 @@ func TestResolveEndpoint(t *testing.T) {
 		{
 			name: "with multiple success response 1/2",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusNoContent, openapitest.WithContent("application/json", openapitest.NewContent())),
-					openapitest.WithResponse(http.StatusAccepted, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusNoContent, openapitest.WithContent("application/json")),
+					openapitest.WithResponse(http.StatusAccepted, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -231,9 +230,9 @@ func TestResolveEndpoint(t *testing.T) {
 		{
 			name: "with multiple success response 2/2",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusAccepted, openapitest.WithContent("application/json", openapitest.NewContent())),
-					openapitest.WithResponse(http.StatusNoContent, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusAccepted, openapitest.WithContent("application/json")),
+					openapitest.WithResponse(http.StatusNoContent, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -244,7 +243,7 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "empty response body",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusNoContent))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -257,8 +256,8 @@ func TestResolveEndpoint(t *testing.T) {
 		{
 			name: "POST request",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("POST", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("POST", op))
 				r := httptest.NewRequest("POST", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -268,11 +267,11 @@ func TestResolveEndpoint(t *testing.T) {
 		{
 			name: "POST request invalid data",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 					openapitest.WithRequestBody("", true,
 						openapitest.WithRequestContent("application/json",
 							openapitest.NewContent(openapitest.WithSchema(schematest.New("string", schematest.WithMinLength(4)))))))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("POST", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("POST", op))
 				r := httptest.NewRequest("POST", "http://localhost/foo", strings.NewReader(`"foo"`))
 				r.Header.Set("Content-Type", "application/json")
 				rr := httptest.NewRecorder()
@@ -287,8 +286,8 @@ func TestResolveEndpoint(t *testing.T) {
 		{
 			name: "PUT request",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("PUT", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("PUT", op))
 				r := httptest.NewRequest("PUT", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -301,8 +300,8 @@ func TestResolveEndpoint(t *testing.T) {
 		{
 			name: "PATCH request",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("PATCH", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("PATCH", op))
 				r := httptest.NewRequest("PATCH", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -315,8 +314,8 @@ func TestResolveEndpoint(t *testing.T) {
 		{
 			name: "DELETE request",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("DELETE", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("DELETE", op))
 				r := httptest.NewRequest("DELETE", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -329,8 +328,8 @@ func TestResolveEndpoint(t *testing.T) {
 		{
 			name: "HEAD request",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("HEAD", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("HEAD", op))
 				r := httptest.NewRequest("HEAD", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -343,8 +342,8 @@ func TestResolveEndpoint(t *testing.T) {
 		{
 			name: "OPTIONS request",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("OPTIONS", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("OPTIONS", op))
 				r := httptest.NewRequest("OPTIONS", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -357,8 +356,8 @@ func TestResolveEndpoint(t *testing.T) {
 		{
 			name: "TRACE request",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("TRACE", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("TRACE", op))
 				r := httptest.NewRequest("TRACE", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -371,8 +370,8 @@ func TestResolveEndpoint(t *testing.T) {
 		{
 			name: "QUERY request",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("QUERY", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("QUERY", op))
 				r := httptest.NewRequest("QUERY", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -385,8 +384,8 @@ func TestResolveEndpoint(t *testing.T) {
 		{
 			name: "custom request method",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
-				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("LINK", op))
+				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("LINK", op))
 				r := httptest.NewRequest("LINK", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -402,7 +401,7 @@ func TestResolveEndpoint(t *testing.T) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK),
 					openapitest.WithOperationParam("id", false))
-				openapitest.AppendPath("/foo/{id}", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo/{id}", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -416,7 +415,7 @@ func TestResolveEndpoint(t *testing.T) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK),
 					openapitest.WithOperationParam("id", false))
-				openapitest.AppendPath("/foo/{id}/bar", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo/{id}/bar", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -428,9 +427,9 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "with path parameter present",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 					openapitest.WithOperationParam("id", false))
-				openapitest.AppendPath("/foo/{id}", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo/{id}", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo/42", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -443,7 +442,7 @@ func TestResolveEndpoint(t *testing.T) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK),
 					openapitest.WithOperationParam("id", false))
-				openapitest.AppendPath("/foo/bar", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo/bar", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo/bar", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -458,9 +457,9 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "with optional query parameter and not present",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 					openapitest.WithQueryParam("id", false))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -473,7 +472,7 @@ func TestResolveEndpoint(t *testing.T) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK),
 					openapitest.WithQueryParam("id", true))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -485,9 +484,9 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "with required query parameter and present",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 					openapitest.WithQueryParam("id", true))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo?id=42", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -501,9 +500,9 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "with optional query parameter and not present",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 					openapitest.WithCookieParam("id", false))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -516,7 +515,7 @@ func TestResolveEndpoint(t *testing.T) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK),
 					openapitest.WithCookieParam("id", true))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -528,9 +527,9 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "with required query parameter and present",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 					openapitest.WithCookieParam("id", true))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.AddCookie(&http.Cookie{Name: "id", Value: "42"})
 				rr := httptest.NewRecorder()
@@ -545,9 +544,9 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "with optional query parameter and not present",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 					openapitest.WithHeaderParam("id", false))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -560,7 +559,7 @@ func TestResolveEndpoint(t *testing.T) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK),
 					openapitest.WithHeaderParam("id", true))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -572,9 +571,9 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "with required query parameter and present",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 					openapitest.WithHeaderParam("id", true))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.Header.Set("id", "42")
 				rr := httptest.NewRecorder()
@@ -589,9 +588,9 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "with content-type",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 					openapitest.WithHeaderParam("id", true))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.Header.Set("id", "42")
 				r.Header.Set("accept", "application/json")
@@ -605,9 +604,9 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "with content-type extensions",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json;odata=verbose", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json;odata=verbose")),
 					openapitest.WithHeaderParam("id", true))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.Header.Set("id", "42")
 				r.Header.Set("accept", "application/json;odata=verbose")
@@ -621,9 +620,9 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "with content-type extensions",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 					openapitest.WithHeaderParam("id", true))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.Header.Set("id", "42")
 				r.Header.Set("accept", "application/json;odata=verbose")
@@ -637,9 +636,9 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "with content-type extensions exactly",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json;odata=verbose", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json;odata=verbose")),
 					openapitest.WithHeaderParam("id", true))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.Header.Set("id", "42")
 				r.Header.Set("accept", "application/json;odata=verbose")
@@ -653,9 +652,9 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "with content-type multiple accepted",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 					openapitest.WithHeaderParam("id", true))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.Header.Set("id", "42")
 				r.Header.Set("accept", "text/plain,application/json")
@@ -669,9 +668,9 @@ func TestResolveEndpoint(t *testing.T) {
 			name: "with content-type not supported",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("text/plain", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("text/plain")),
 					openapitest.WithHeaderParam("id", true))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.Header.Set("id", "42")
 				r.Header.Set("accept", "application/json")
@@ -692,9 +691,9 @@ func TestResolveEndpoint(t *testing.T) {
 					openapitest.WithOperationParam("petId", true, openapitest.WithParamSchema(schematest.New("integer"))))
 				find := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK),
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/pet/{petId}", c, openapitest.WithOperation("get", byId))
-				openapitest.AppendPath("/pet/findByStatus", c, openapitest.WithOperation("get", find))
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/pet/{petId}", c, openapitest.UseOperation("get", byId))
+				openapitest.AppendPath("/pet/findByStatus", c, openapitest.UseOperation("get", find))
 				r := httptest.NewRequest("get", "http://localhost/pet/findByStatus", nil)
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
@@ -711,21 +710,21 @@ func TestResolveEndpoint(t *testing.T) {
 				byName := openapitest.NewOperation(
 					openapitest.WithOperationParam("name", true, openapitest.WithParamSchema(schematest.New("string"))),
 					openapitest.WithResponse(http.StatusOK,
-						openapitest.WithContent("application/json", openapitest.NewContent(
+						openapitest.WithContent("application/json",
 							openapitest.WithSchema(schematest.New("string", schematest.WithConst("Name"))),
-						)),
+						),
 					),
 				)
 				find := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 					openapitest.WithResponse(http.StatusOK,
-						openapitest.WithContent("application/json", openapitest.NewContent(
+						openapitest.WithContent("application/json",
 							openapitest.WithSchema(schematest.New("string", schematest.WithConst("findByStatus"))),
-						)),
+						),
 					),
 				)
-				openapitest.AppendPath("/pet/{name}", c, openapitest.WithOperation("get", byName))
-				openapitest.AppendPath("/pet/findByStatus", c, openapitest.WithOperation("get", find))
+				openapitest.AppendPath("/pet/{name}", c, openapitest.UseOperation("get", byName))
+				openapitest.AppendPath("/pet/findByStatus", c, openapitest.UseOperation("get", find))
 				r := httptest.NewRequest("get", "http://localhost/pet/findByStatus", nil)
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
@@ -776,8 +775,8 @@ func TestHandler_Event(t *testing.T) {
 			name: "no response found",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
@@ -795,8 +794,8 @@ func TestHandler_Event(t *testing.T) {
 			name: "event sets unknown status code",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
@@ -815,9 +814,9 @@ func TestHandler_Event(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
-						openapitest.WithContent("application/json", openapitest.NewContent()),
-						openapitest.WithContent("text/plain", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+						openapitest.WithContent("application/json"),
+						openapitest.WithContent("text/plain")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
@@ -839,9 +838,9 @@ func TestHandler_Event(t *testing.T) {
 					openapitest.WithRequestBody("", true, openapitest.WithRequestContent("application/json",
 						openapitest.NewContent())),
 					openapitest.WithResponse(http.StatusOK,
-						openapitest.WithContent("application/json", openapitest.NewContent()),
+						openapitest.WithContent("application/json"),
 					))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation(http.MethodPost, op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation(http.MethodPost, op))
 				r := httptest.NewRequest("post", "http://localhost/foo", strings.NewReader(`{ "foo": "bar" }`))
 				r.Header.Set("Content-Type", "application/json")
 				rr := httptest.NewRecorder()
@@ -861,9 +860,9 @@ func TestHandler_Event(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
-						openapitest.WithContent("application/json", openapitest.NewContent()),
+						openapitest.WithContent("application/json"),
 					))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation(http.MethodPost, op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation(http.MethodPost, op))
 				r := httptest.NewRequest("post", "http://localhost/foo", strings.NewReader(`{ "foo": "bar" }`))
 				r.Header.Set("Content-Type", "application/json")
 				rr := httptest.NewRecorder()
@@ -883,10 +882,10 @@ func TestHandler_Event(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
-						openapitest.WithContent("application/json", openapitest.NewContent()),
+						openapitest.WithContent("application/json"),
 					))
 				openapitest.AppendPath("/foo/{id}", c,
-					openapitest.WithOperation(http.MethodPost, op),
+					openapitest.UseOperation(http.MethodPost, op),
 					openapitest.WithPathParam("id", openapitest.WithParamSchema(schematest.New("string"))),
 				)
 				r := httptest.NewRequest("post", "http://localhost/foo/123", strings.NewReader(`{ "foo": "bar" }`))
@@ -908,10 +907,10 @@ func TestHandler_Event(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
-						openapitest.WithContent("application/json", openapitest.NewContent()),
+						openapitest.WithContent("application/json"),
 					))
 				openapitest.AppendPath("/foo/{id}/", c,
-					openapitest.WithOperation(http.MethodPost, op),
+					openapitest.UseOperation(http.MethodPost, op),
 					openapitest.WithPathParam("id", openapitest.WithParamSchema(schematest.New("string"))),
 				)
 				r := httptest.NewRequest("post", "http://localhost/foo/123", strings.NewReader(`{ "foo": "bar" }`))
@@ -933,10 +932,10 @@ func TestHandler_Event(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
-						openapitest.WithContent("application/json", openapitest.NewContent()),
+						openapitest.WithContent("application/json"),
 					))
 				openapitest.AppendPath("/foo/{id}/", c,
-					openapitest.WithOperation(http.MethodPost, op),
+					openapitest.UseOperation(http.MethodPost, op),
 					openapitest.WithPathParam("id", openapitest.WithParamSchema(schematest.New("string"))),
 				)
 				r := httptest.NewRequest("post", "http://localhost/foo/123", strings.NewReader(`{ "foo": "bar" }`))
@@ -957,10 +956,10 @@ func TestHandler_Event(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
-						openapitest.WithContent("application/json", openapitest.NewContent()),
+						openapitest.WithContent("application/json"),
 					))
 				openapitest.AppendPath("/foo/{id}/", c,
-					openapitest.WithOperation(http.MethodPost, op),
+					openapitest.UseOperation(http.MethodPost, op),
 					openapitest.WithPathParam("id", openapitest.WithParamSchema(schematest.New("string"))),
 				)
 				r := httptest.NewRequest("post", "http://localhost/foo/123", strings.NewReader(`{ "foo": "bar" }`))
@@ -987,14 +986,14 @@ func TestHandler_Event(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
-						openapitest.WithContent("application/json", openapitest.NewContent()),
+						openapitest.WithContent("application/json"),
 					),
 					openapitest.WithOperationParam("id", true,
 						openapitest.WithParamSchema(schematest.New("integer"))),
 					openapitest.WithOperationId("foo-operation"),
 				)
 				openapitest.AppendPath("/foo/{id}", c,
-					openapitest.WithOperation(http.MethodGet, op),
+					openapitest.UseOperation(http.MethodGet, op),
 				)
 				r := httptest.NewRequest(http.MethodGet, "http://localhost/foo/123", nil)
 				rr := httptest.NewRecorder()
@@ -1035,12 +1034,12 @@ func TestHandler_Event(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
-						openapitest.WithContent("application/json", openapitest.NewContent()),
-						openapitest.WithContent("text/plain", openapitest.NewContent()),
+						openapitest.WithContent("application/json"),
+						openapitest.WithContent("text/plain"),
 					),
 				)
 				openapitest.AppendPath("/foo", c,
-					openapitest.WithOperation(http.MethodGet, op),
+					openapitest.UseOperation(http.MethodGet, op),
 				)
 				r := httptest.NewRequest(http.MethodGet, "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
@@ -1059,11 +1058,11 @@ func TestHandler_Event(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
-						openapitest.WithContent("application/json", openapitest.NewContent()),
+						openapitest.WithContent("application/json"),
 					),
 				)
 				openapitest.AppendPath("/foo", c,
-					openapitest.WithOperation(http.MethodGet, op),
+					openapitest.UseOperation(http.MethodGet, op),
 				)
 				r := httptest.NewRequest(http.MethodGet, "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
@@ -1082,11 +1081,11 @@ func TestHandler_Event(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
-						openapitest.WithContent("application/json", openapitest.NewContent()),
+						openapitest.WithContent("application/json"),
 					),
 				)
 				openapitest.AppendPath("/foo", c,
-					openapitest.WithOperation(http.MethodGet, op),
+					openapitest.UseOperation(http.MethodGet, op),
 				)
 				r := httptest.NewRequest(http.MethodGet, "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
@@ -1105,12 +1104,12 @@ func TestHandler_Event(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
-						openapitest.WithContent("application/json", openapitest.NewContent()),
+						openapitest.WithContent("application/json"),
 						openapitest.WithResponseHeader("foo", "", schematest.New("array")),
 					),
 				)
 				openapitest.AppendPath("/foo", c,
-					openapitest.WithOperation(http.MethodGet, op),
+					openapitest.UseOperation(http.MethodGet, op),
 				)
 				r := httptest.NewRequest(http.MethodGet, "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
@@ -1129,12 +1128,12 @@ func TestHandler_Event(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
-						openapitest.WithContent("application/json", openapitest.NewContent()),
+						openapitest.WithContent("application/json"),
 						openapitest.WithResponseHeader("foo", "", schematest.New("array", schematest.WithItems("integer"))),
 					),
 				)
 				openapitest.AppendPath("/foo", c,
-					openapitest.WithOperation(http.MethodGet, op),
+					openapitest.UseOperation(http.MethodGet, op),
 				)
 				r := httptest.NewRequest(http.MethodGet, "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
@@ -1193,8 +1192,8 @@ func TestHandler_Log(t *testing.T) {
 			name: "simple",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", op))
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
@@ -1282,8 +1281,8 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 				}
 
 				op := openapitest.NewOperation(
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())))
-				openapitest.AppendPath("/foo", config, openapitest.WithOperation("get", op))
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")))
+				openapitest.AppendPath("/foo", config, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
@@ -1321,25 +1320,25 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
-						openapitest.NewContent(openapitest.WithSchema(
+						openapitest.WithSchema(
 							schematest.New(
 								"object",
 								schematest.WithProperty("foo", schematest.New("string")),
 								schematest.WithRequired("foo"),
 							),
-						)),
+						),
 					)),
 					openapitest.WithResponse(http.StatusNotFound, openapitest.WithContent("application/json",
-						openapitest.NewContent(openapitest.WithSchema(
+						openapitest.WithSchema(
 							schematest.New(
 								"object",
 								schematest.WithProperty("message", schematest.New("string")),
 								schematest.WithRequired("message"),
 							),
-						)),
+						),
 					)),
 				)
-				openapitest.AppendPath("/foo", config, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", config, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
@@ -1377,16 +1376,16 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
-						openapitest.NewContent(openapitest.WithSchema(
+						openapitest.WithSchema(
 							schematest.New(
 								"object",
 								schematest.WithProperty("foo", schematest.New("string")),
 								schematest.WithRequired("foo"),
 							),
-						)),
+						),
 					)),
 				)
-				openapitest.AppendPath("/foo", config, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", config, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
@@ -1429,26 +1428,26 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
 						openapitest.WithContent("application/json",
-							openapitest.NewContent(openapitest.WithSchema(
+							openapitest.WithSchema(
 								schematest.New(
 									"object",
 									schematest.WithProperty("foo", schematest.New("string")),
 									schematest.WithRequired("foo"),
 								),
-							)),
+							),
 						),
 						openapitest.WithContent("application/xml",
-							openapitest.NewContent(openapitest.WithSchema(
+							openapitest.WithSchema(
 								schematest.New(
 									"object",
 									schematest.WithProperty("foo", schematest.New("string")),
 									schematest.WithRequired("foo"),
 								),
-							)),
+							),
 						),
 					),
 				)
-				openapitest.AppendPath("/foo", config, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", config, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
@@ -1486,25 +1485,25 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
-						openapitest.NewContent(openapitest.WithSchema(
+						openapitest.WithSchema(
 							schematest.New(
 								"object",
 								schematest.WithProperty("foo", schematest.New("string")),
 								schematest.WithRequired("foo"),
 							),
-						)),
+						),
 					)),
 					openapitest.WithResponse(http.StatusNotFound, openapitest.WithContent("application/json",
-						openapitest.NewContent(openapitest.WithSchema(
+						openapitest.WithSchema(
 							schematest.New(
 								"object",
 								schematest.WithProperty("message", schematest.New("string")),
 								schematest.WithRequired("message"),
 							),
-						)),
+						),
 					)),
 				)
-				openapitest.AppendPath("/foo", config, openapitest.WithOperation("get", op))
+				openapitest.AppendPath("/foo", config, openapitest.UseOperation("get", op))
 				r := httptest.NewRequest("get", "http://localhost/foo", nil)
 				r.Header.Set("accept", "application/json")
 				rr := httptest.NewRecorder()
@@ -1540,10 +1539,10 @@ func TestHandler_Parameter(t *testing.T) {
 
 				op := openapitest.NewOperation(
 					openapitest.WithResponse(http.StatusOK,
-						openapitest.WithContent("application/json", openapitest.NewContent()),
+						openapitest.WithContent("application/json"),
 					))
 				openapitest.AppendPath("/foo/{id}", c,
-					openapitest.WithOperation(http.MethodPost, op),
+					openapitest.UseOperation(http.MethodPost, op),
 				)
 				r := httptest.NewRequest("post", "http://localhost/foo/123", strings.NewReader(`{ "foo": "bar" }`))
 				r.Header.Set("Content-Type", "application/json")

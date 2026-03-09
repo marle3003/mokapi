@@ -56,12 +56,22 @@ func WithTag(name, summary, description string) ConfigOptions {
 	}
 }
 
-func WithPath(name string, path *openapi.Path) ConfigOptions {
+func WithPath(name string, opts ...PathOptions) ConfigOptions {
 	return func(c *openapi.Config) {
+		path := NewPath(opts...)
 		if path != nil {
 			path.Path = name
 		}
 		c.Paths[name] = &openapi.PathRef{Value: path}
+	}
+}
+
+func UsePath(name string, p *openapi.Path) ConfigOptions {
+	return func(c *openapi.Config) {
+		if p != nil {
+			p.Path = name
+		}
+		c.Paths[name] = &openapi.PathRef{Value: p}
 	}
 }
 

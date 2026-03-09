@@ -35,7 +35,7 @@ func TestHttpServers_Monitor(t *testing.T) {
 	port := try.GetFreePort()
 	u := fmt.Sprintf("http://localhost:%v", port)
 	c := openapitest.NewConfig("3.0", openapitest.WithInfo("test", "1.0", ""), openapitest.WithServer(u, ""))
-	openapitest.AppendPath("/foo", c, openapitest.WithOperation("get", openapitest.NewOperation()))
+	openapitest.AppendPath("/foo", c, openapitest.WithOperation("get"))
 	//c := &openapi.Config{OpenApi: "3.0", Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: url}}}
 	m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}, Data: c}})
 

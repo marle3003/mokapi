@@ -3,8 +3,6 @@ package openapi_test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
@@ -13,6 +11,9 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestOperation_UnmarshalJSON(t *testing.T) {
@@ -209,9 +210,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodGet, &openapi.Operation{}),
-					)),
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodGet),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -226,11 +227,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
+					openapitest.WithPath("/foo",
 						openapitest.WithOperation(http.MethodGet,
-							openapitest.NewOperation(
-								openapitest.WithOperationParamRef(&openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml"}}))),
-					)),
+							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
@@ -243,9 +242,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodPost, &openapi.Operation{}),
-					)),
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodPost),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -260,11 +259,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
+					openapitest.WithPath("/foo",
 						openapitest.WithOperation(http.MethodPost,
-							openapitest.NewOperation(
-								openapitest.WithOperationParamRef(&openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml"}}))),
-					)),
+							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'POST' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
@@ -277,9 +274,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodPut, &openapi.Operation{}),
-					)),
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodPut),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -294,11 +291,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
+					openapitest.WithPath("/foo",
 						openapitest.WithOperation(http.MethodPut,
-							openapitest.NewOperation(
-								openapitest.WithOperationParamRef(&openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml"}}))),
-					)),
+							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'PUT' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
@@ -311,9 +306,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodPatch, &openapi.Operation{}),
-					)),
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodPatch),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -328,11 +323,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
+					openapitest.WithPath("/foo",
 						openapitest.WithOperation(http.MethodPatch,
-							openapitest.NewOperation(
-								openapitest.WithOperationParamRef(&openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml"}}))),
-					)),
+							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'PATCH' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
@@ -345,9 +338,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodDelete, &openapi.Operation{}),
-					)),
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodDelete),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -362,11 +355,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
+					openapitest.WithPath("/foo",
 						openapitest.WithOperation(http.MethodDelete,
-							openapitest.NewOperation(
-								openapitest.WithOperationParamRef(&openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml"}}))),
-					)),
+							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'DELETE' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
@@ -379,9 +370,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodHead, &openapi.Operation{}),
-					)),
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodHead),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -396,11 +387,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
+					openapitest.WithPath("/foo",
 						openapitest.WithOperation(http.MethodHead,
-							openapitest.NewOperation(
-								openapitest.WithOperationParamRef(&openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml"}}))),
-					)),
+							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'HEAD' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
@@ -413,9 +402,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodOptions, &openapi.Operation{}),
-					)),
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodOptions),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -430,11 +419,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
+					openapitest.WithPath("/foo",
 						openapitest.WithOperation(http.MethodOptions,
-							openapitest.NewOperation(
-								openapitest.WithOperationParamRef(&openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml"}}))),
-					)),
+							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'OPTIONS' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
@@ -447,9 +434,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodTrace, &openapi.Operation{}),
-					)),
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodTrace),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -464,11 +451,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
+					openapitest.WithPath("/foo",
 						openapitest.WithOperation(http.MethodTrace,
-							openapitest.NewOperation(
-								openapitest.WithOperationParamRef(&openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml"}}))),
-					)),
+							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'TRACE' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
@@ -481,9 +466,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation("QUERY", &openapi.Operation{}),
-					)),
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation("QUERY"),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -498,11 +483,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
+					openapitest.WithPath("/foo",
 						openapitest.WithOperation("QUERY",
-							openapitest.NewOperation(
-								openapitest.WithOperationParamRef(&openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml"}}))),
-					)),
+							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'QUERY' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
@@ -515,9 +498,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation("LINK", &openapi.Operation{}),
-					)),
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation("LINK"),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -532,11 +515,9 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
+					openapitest.WithPath("/foo",
 						openapitest.WithOperation("LINK",
-							openapitest.NewOperation(
-								openapitest.WithOperationParamRef(&openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml"}}))),
-					)),
+							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'LINK' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
@@ -549,11 +530,11 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodTrace, &openapi.Operation{
+					openapitest.WithPath("/foo",
+						openapitest.UseOperation(http.MethodTrace, &openapi.Operation{
 							RequestBody: &openapi.RequestBodyRef{Value: &openapi.RequestBody{Description: "foo"}},
 						}),
-					)),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -573,11 +554,11 @@ func TestOperation_Parse(t *testing.T) {
 					return cfg, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodTrace, &openapi.Operation{
+					openapitest.WithPath("/foo",
+						openapitest.UseOperation(http.MethodTrace, &openapi.Operation{
 							RequestBody: &openapi.RequestBodyRef{Reference: dynamic.Reference{Ref: "foo.yml#/components/requestBodies/foo"}},
 						}),
-					)),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -592,11 +573,11 @@ func TestOperation_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodTrace, &openapi.Operation{
+					openapitest.WithPath("/foo",
+						openapitest.UseOperation(http.MethodTrace, &openapi.Operation{
 							RequestBody: &openapi.RequestBodyRef{Reference: dynamic.Reference{Ref: "foo.yml#/components/requestBodies/foo"}},
 						}),
-					)),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'TRACE' failed: parse request body failed: resolve reference 'foo.yml#/components/requestBodies/foo' failed: TEST ERROR")
@@ -628,9 +609,9 @@ func TestConfig_Patch_Operation(t *testing.T) {
 			name: "patch path with " + m,
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath())),
+					"/foo")),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(m, openapitest.NewOperation())))),
+					"/foo", openapitest.WithOperation(m))),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Len(t, result.Paths, 1)
@@ -642,11 +623,11 @@ func TestConfig_Patch_Operation(t *testing.T) {
 			name: fmt.Sprintf("patch path %v info", m),
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(m, openapitest.NewOperation())))),
+					"/foo", openapitest.WithOperation(m))),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(m, openapitest.NewOperation(
+					"/foo", openapitest.WithOperation(m,
 						openapitest.WithOperationInfo("foo", "bar", "id", true),
-					))))),
+					))),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Len(t, result.Paths, 1)
@@ -664,9 +645,9 @@ func TestConfig_Patch_Operation(t *testing.T) {
 		name: "patch is nil",
 		configs: []*openapi.Config{
 			openapitest.NewConfig("1.0", openapitest.WithPath(
-				"/foo", openapitest.NewPath(openapitest.WithOperation("get", openapitest.NewOperation())))),
+				"/foo", openapitest.WithOperation("get"))),
 			openapitest.NewConfig("1.0", openapitest.WithPath(
-				"/foo", openapitest.NewPath())),
+				"/foo")),
 		},
 		test: func(t *testing.T, result *openapi.Config) {
 			require.Len(t, result.Paths, 1)

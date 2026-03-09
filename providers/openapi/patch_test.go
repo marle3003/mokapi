@@ -1,11 +1,12 @@
 package openapi_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/schema/schematest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
@@ -18,15 +19,15 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 			name: "description and required",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(),
+					"/foo", openapitest.WithOperation(
+						"post",
 					),
-					))),
+				)),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(openapitest.WithRequestBody("foo", true)),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post", openapitest.WithRequestBody("foo", true)),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Equal(t, "foo", result.Paths["/foo"].Value.Post.RequestBody.Value.Description)
@@ -37,15 +38,15 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 			name: "patch description and required",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(openapitest.WithRequestBody("", false)),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post", openapitest.WithRequestBody("", false)),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(openapitest.WithRequestBody("foo", true)),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post", openapitest.WithRequestBody("foo", true)),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Equal(t, "foo", result.Paths["/foo"].Value.Post.RequestBody.Value.Description)
@@ -56,19 +57,19 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 			name: "patch add content type",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithRequestBody("foo", true,
-								openapitest.WithRequestContent("text/plain", &openapi.MediaType{}))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithRequestBody("foo", true,
+							openapitest.WithRequestContent("text/plain", &openapi.MediaType{}))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithRequestBody("foo", true,
-								openapitest.WithRequestContent("application/json", &openapi.MediaType{}))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithRequestBody("foo", true,
+							openapitest.WithRequestContent("application/json", &openapi.MediaType{}))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				body := result.Paths["/foo"].Value.Post.RequestBody.Value
@@ -80,20 +81,20 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 			name: "add content type schema",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithRequestBody("foo", true,
-								openapitest.WithRequestContent("text/plain", &openapi.MediaType{}))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithRequestBody("foo", true,
+							openapitest.WithRequestContent("text/plain", &openapi.MediaType{}))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithRequestBody("foo", true,
-								openapitest.WithRequestContent("text/plain",
-									openapitest.NewContent(openapitest.WithSchema(schematest.New("number")))))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithRequestBody("foo", true,
+							openapitest.WithRequestContent("text/plain",
+								openapitest.NewContent(openapitest.WithSchema(schematest.New("number")))))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				body := result.Paths["/foo"].Value.Post.RequestBody.Value
@@ -105,21 +106,21 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 			name: "patch content type schema",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithRequestBody("foo", true,
-								openapitest.WithRequestContent("text/plain",
-									openapitest.NewContent(openapitest.WithSchema(schematest.New("number")))))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithRequestBody("foo", true,
+							openapitest.WithRequestContent("text/plain",
+								openapitest.NewContent(openapitest.WithSchema(schematest.New("number")))))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithRequestBody("foo", true,
-								openapitest.WithRequestContent("text/plain",
-									openapitest.NewContent(openapitest.WithSchema(schematest.New("number", schematest.WithFormat("double"))))))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithRequestBody("foo", true,
+							openapitest.WithRequestContent("text/plain",
+								openapitest.NewContent(openapitest.WithSchema(schematest.New("number", schematest.WithFormat("double"))))))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				body := result.Paths["/foo"].Value.Post.RequestBody.Value
@@ -132,20 +133,20 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 			name: "patch content type example",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithRequestBody("foo", true,
-								openapitest.WithRequestContent("text/plain", &openapi.MediaType{}))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithRequestBody("foo", true,
+							openapitest.WithRequestContent("text/plain", &openapi.MediaType{}))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithRequestBody("foo", true,
-								openapitest.WithRequestContent("text/plain",
-									openapitest.NewContent(openapitest.WithExample(12))))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithRequestBody("foo", true,
+							openapitest.WithRequestContent("text/plain",
+								openapitest.NewContent(openapitest.WithExampleValue(12))))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				body := result.Paths["/foo"].Value.Post.RequestBody.Value
@@ -186,16 +187,16 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 			name: "patch operation security",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(),
+					"/foo", openapitest.WithOperation(
+						"post",
 					),
-					))),
+				)),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithSecurity(map[string][]string{"foo": {}})),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithSecurity(map[string][]string{"foo": {}})),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Len(t, result.Paths["/foo"].Value.Post.Security, 1)
@@ -206,18 +207,18 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 			name: "patch operation security add scope",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithSecurity(map[string][]string{"foo": {"foo"}}),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithSecurity(map[string][]string{"foo": {"foo"}}),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithSecurity(map[string][]string{"foo": {"foo", "bar"}})),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithSecurity(map[string][]string{"foo": {"foo", "bar"}})),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Len(t, result.Paths["/foo"].Value.Post.Security, 2)
