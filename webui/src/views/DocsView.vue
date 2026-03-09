@@ -440,7 +440,6 @@ pre {
 }
 .box.warning{
   border-color: var(--bs-warning-border-subtle);
-  /* background-color: #fff3cd; */
   background-color: var(--bs-warning-bg-subtle);
 }
 .box.warning .box-heading {
