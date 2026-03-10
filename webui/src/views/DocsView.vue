@@ -599,6 +599,11 @@ a[name] {
   background-color: var(--card-background);
 }
 
+.box.benefits .box-heading {
+  color: var(--color-green);
+  font-size: 1.1rem;
+}
+
 .box.feature {
   margin-top: 1rem;
   margin-bottom: 2rem;
@@ -682,6 +687,9 @@ pre.simple {
 }
 pre.simple code {
   padding: 0;
+}
+pre.simple:has(+ p) {
+  margin-bottom: 12px;
 }
 pre::before {
     content: attr(data-label);
