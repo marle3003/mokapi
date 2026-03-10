@@ -177,9 +177,9 @@ func (p *Path) parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 
-	for _, param := range p.Parameters {
+	for index, param := range p.Parameters {
 		if err := param.Parse(config, reader); err != nil {
-			return err
+			return fmt.Errorf("parse parameter '%v' failed: %w", index, err)
 		}
 	}
 

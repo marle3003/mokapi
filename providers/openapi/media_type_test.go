@@ -3,8 +3,6 @@ package openapi_test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
@@ -13,6 +11,9 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestMediaType_UnmarshalJSON(t *testing.T) {
@@ -109,12 +110,12 @@ func TestMediaType_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodGet,
 							openapitest.WithResponse(http.StatusOK,
-								openapitest.WithContent("application/json", &openapi.MediaType{}),
-							))),
-					)),
+								openapitest.WithContent("application/json"),
+							)),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -127,12 +128,12 @@ func TestMediaType_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodGet,
 							openapitest.WithResponse(http.StatusOK,
-								openapitest.WithContent("application/json", nil),
-							))),
-					)),
+								openapitest.UseContent("application/json", nil),
+							)),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -145,18 +146,16 @@ func TestMediaType_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodGet,
 							openapitest.WithResponse(http.StatusOK,
 								openapitest.WithContent("application/json",
-									openapitest.NewContent(
-										openapitest.WithSchemaRef("foo.yml"),
-									),
+
+									openapitest.WithSchemaRef("foo.yml"),
 								),
 							),
 						),
-						),
-					)),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse response '200' failed: parse content 'application/json' failed: parse schema failed: resolve reference 'foo.yml' failed: TEST ERROR")
@@ -169,16 +168,15 @@ func TestMediaType_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodGet,
 							openapitest.WithResponse(http.StatusOK,
-								openapitest.WithContent("application/json",
+								openapitest.UseContent("application/json",
 									&openapi.MediaType{Examples: map[string]*openapi.ExampleRef{"foo": {Reference: dynamic.Reference{Ref: "foo.yml"}}}},
 								),
 							),
 						),
-						),
-					)),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse response '200' failed: parse content 'application/json' failed: parse example 'foo' failed: resolve reference 'foo.yml' failed: TEST ERROR")
@@ -206,19 +204,19 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 			name: "patch is nil",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/plain", &openapi.MediaType{})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.WithContent("text/plain")),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", nil)),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", nil)),
 					),
-					))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -231,19 +229,19 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 			name: "add schema",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.WithContent("text/html")),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{Schema: schematest.New("string")})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", &openapi.MediaType{Schema: schematest.New("string")})),
 					),
-					))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -255,19 +253,19 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 			name: "patch schema",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{Schema: schematest.New("string")})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", &openapi.MediaType{Schema: schematest.New("string")})),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{Schema: schematest.New("object")})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", &openapi.MediaType{Schema: schematest.New("object")})),
 					),
-					))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -279,19 +277,19 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 			name: "add example",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.WithContent("text/html")),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{Example: &openapi.ExampleValue{Value: "foo"}})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", &openapi.MediaType{Example: &openapi.ExampleValue{Value: "foo"}})),
 					),
-					))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -303,19 +301,19 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 			name: "patch example",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{Example: &openapi.ExampleValue{Value: "foo"}})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", &openapi.MediaType{Example: &openapi.ExampleValue{Value: "foo"}})),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{Example: &openapi.ExampleValue{Value: "bar"}})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", &openapi.MediaType{Example: &openapi.ExampleValue{Value: "bar"}})),
 					),
-					))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -327,19 +325,19 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 			name: "patch example is nil",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{Example: &openapi.ExampleValue{Value: "foo"}})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", &openapi.MediaType{Example: &openapi.ExampleValue{Value: "foo"}})),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{Example: nil})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", &openapi.MediaType{Example: nil})),
 					),
-					))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -351,21 +349,21 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 			name: "add examples",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.WithContent("text/html")),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{
-								Examples: map[string]*openapi.ExampleRef{"foo": {Value: &openapi.Example{Value: "foo"}}},
-							})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", &openapi.MediaType{
+							Examples: map[string]*openapi.ExampleRef{"foo": {Value: &openapi.Example{Value: "foo"}}},
+						})),
 					),
-					))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -377,23 +375,23 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 			name: "patch examples foo",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{
-								Examples: map[string]*openapi.ExampleRef{"foo": {Value: &openapi.Example{Value: "foo"}}},
-							})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", &openapi.MediaType{
+							Examples: map[string]*openapi.ExampleRef{"foo": {Value: &openapi.Example{Value: "foo"}}},
+						})),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{
-								Examples: map[string]*openapi.ExampleRef{"foo": {Value: &openapi.Example{Value: "bar"}}},
-							})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", &openapi.MediaType{
+							Examples: map[string]*openapi.ExampleRef{"foo": {Value: &openapi.Example{Value: "bar"}}},
+						})),
 					),
-					))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -405,21 +403,21 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 			name: "patch example is nil",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{
-								Examples: map[string]*openapi.ExampleRef{"foo": {Value: &openapi.Example{Value: "foo"}}},
-							})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", &openapi.MediaType{
+							Examples: map[string]*openapi.ExampleRef{"foo": {Value: &openapi.Example{Value: "foo"}}},
+						})),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{Examples: nil})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", &openapi.MediaType{Examples: nil})),
 					),
-					))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -431,23 +429,23 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 			name: "patch examples overwrites example",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{
-								Example: &openapi.ExampleValue{Value: "foo"},
-							})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", &openapi.MediaType{
+							Example: &openapi.ExampleValue{Value: "foo"},
+						})),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{
-								Examples: map[string]*openapi.ExampleRef{"foo": {Value: &openapi.Example{Value: "bar"}}},
-							})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", &openapi.MediaType{
+							Examples: map[string]*openapi.ExampleRef{"foo": {Value: &openapi.Example{Value: "bar"}}},
+						})),
 					),
-					))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -460,23 +458,23 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 			name: "patch example overwrites examples",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{
-								Examples: map[string]*openapi.ExampleRef{"foo": {Value: &openapi.Example{Value: "foo"}}},
-							})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", &openapi.MediaType{
+							Examples: map[string]*openapi.ExampleRef{"foo": {Value: &openapi.Example{Value: "foo"}}},
+						})),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/html", &openapi.MediaType{
-								Example: &openapi.ExampleValue{Value: "bar"},
-							})),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.UseContent("text/html", &openapi.MediaType{
+							Example: &openapi.ExampleValue{Value: "bar"},
+						})),
 					),
-					))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)

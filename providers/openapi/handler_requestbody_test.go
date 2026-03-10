@@ -29,15 +29,14 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 			name: "text/plain",
 			config: openapitest.NewConfig("3.0.0",
 				openapitest.WithServer("http://localhost", ""),
-				openapitest.WithPath("/foo", openapitest.NewPath(
+				openapitest.WithPath("/foo",
 					openapitest.WithOperation("post",
-						openapitest.NewOperation(
-							openapitest.WithRequestBody("", false,
-								openapitest.WithRequestContent(
-									"text/plain", openapitest.NewContent(openapitest.WithSchema(schematest.New("string"))))),
-							openapitest.WithResponse(200),
-						)),
-				)),
+						openapitest.WithRequestBody("", false,
+							openapitest.WithRequestContent(
+								"text/plain", openapitest.NewContent(openapitest.WithSchema(schematest.New("string"))))),
+						openapitest.WithResponse(200),
+					),
+				),
 			),
 			fn: func(t *testing.T, handler openapi.Handler) {
 				r := httptest.NewRequest("post", "http://localhost/foo", strings.NewReader("foo"))
@@ -57,15 +56,14 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 			name: "text/*",
 			config: openapitest.NewConfig("3.0.0",
 				openapitest.WithServer("http://localhost", ""),
-				openapitest.WithPath("/foo", openapitest.NewPath(
+				openapitest.WithPath("/foo",
 					openapitest.WithOperation("post",
-						openapitest.NewOperation(
-							openapitest.WithRequestBody("", false,
-								openapitest.WithRequestContent(
-									"text/*", openapitest.NewContent(openapitest.WithSchema(schematest.New("string"))))),
-							openapitest.WithResponse(200),
-						)),
-				)),
+						openapitest.WithRequestBody("", false,
+							openapitest.WithRequestContent(
+								"text/*", openapitest.NewContent(openapitest.WithSchema(schematest.New("string"))))),
+						openapitest.WithResponse(200),
+					),
+				),
 			),
 			fn: func(t *testing.T, handler openapi.Handler) {
 				r := httptest.NewRequest("post", "http://localhost/foo", strings.NewReader("foo"))
@@ -85,17 +83,16 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 			name: "text/* > */*",
 			config: openapitest.NewConfig("3.0.0",
 				openapitest.WithServer("http://localhost", ""),
-				openapitest.WithPath("/foo", openapitest.NewPath(
+				openapitest.WithPath("/foo",
 					openapitest.WithOperation("post",
-						openapitest.NewOperation(
-							openapitest.WithRequestBody("", false,
-								openapitest.WithRequestContent(
-									"*/*", openapitest.NewContent(openapitest.WithSchema(schematest.New("number")))),
-								openapitest.WithRequestContent(
-									"text/*", openapitest.NewContent(openapitest.WithSchema(schematest.New("string"))))),
-							openapitest.WithResponse(200),
-						)),
-				)),
+						openapitest.WithRequestBody("", false,
+							openapitest.WithRequestContent(
+								"*/*", openapitest.NewContent(openapitest.WithSchema(schematest.New("number")))),
+							openapitest.WithRequestContent(
+								"text/*", openapitest.NewContent(openapitest.WithSchema(schematest.New("string"))))),
+						openapitest.WithResponse(200),
+					),
+				),
 			),
 			fn: func(t *testing.T, handler openapi.Handler) {
 				r := httptest.NewRequest("post", "http://localhost/foo", strings.NewReader("foo"))
@@ -115,17 +112,16 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 			name: "application/json free-form",
 			config: openapitest.NewConfig("3.0.0",
 				openapitest.WithServer("http://localhost", ""),
-				openapitest.WithPath("/foo", openapitest.NewPath(
+				openapitest.WithPath("/foo",
 					openapitest.WithOperation("post",
-						openapitest.NewOperation(
-							openapitest.WithRequestBody("", false,
-								openapitest.WithRequestContent(
-									"application/json", openapitest.NewContent(openapitest.WithSchema(
-										schematest.New("object"),
-									)))),
-							openapitest.WithResponse(200),
-						)),
-				)),
+						openapitest.WithRequestBody("", false,
+							openapitest.WithRequestContent(
+								"application/json", openapitest.NewContent(openapitest.WithSchema(
+									schematest.New("object"),
+								)))),
+						openapitest.WithResponse(200),
+					),
+				),
 			),
 			fn: func(t *testing.T, handler openapi.Handler) {
 				r := httptest.NewRequest("post", "http://localhost/foo", strings.NewReader(`{"foo": "abc","bar": 12}`))
@@ -145,17 +141,16 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 			name: "application/json free-form",
 			config: openapitest.NewConfig("3.0.0",
 				openapitest.WithServer("http://localhost", ""),
-				openapitest.WithPath("/foo", openapitest.NewPath(
+				openapitest.WithPath("/foo",
 					openapitest.WithOperation("post",
-						openapitest.NewOperation(
-							openapitest.WithRequestBody("", false,
-								openapitest.WithRequestContent(
-									"application/json", openapitest.NewContent(openapitest.WithSchema(
-										schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
-									)))),
-							openapitest.WithResponse(200),
-						)),
-				)),
+						openapitest.WithRequestBody("", false,
+							openapitest.WithRequestContent(
+								"application/json", openapitest.NewContent(openapitest.WithSchema(
+									schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
+								)))),
+						openapitest.WithResponse(200),
+					),
+				),
 			),
 			fn: func(t *testing.T, handler openapi.Handler) {
 				r := httptest.NewRequest("post", "http://localhost/foo", strings.NewReader(`{"foo": "abc","bar": 12}`))
@@ -174,12 +169,11 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 			name: "no request body specified but request contains body",
 			config: openapitest.NewConfig("3.0.0",
 				openapitest.WithServer("http://localhost", ""),
-				openapitest.WithPath("/foo", openapitest.NewPath(
+				openapitest.WithPath("/foo",
 					openapitest.WithOperation("post",
-						openapitest.NewOperation(
-							openapitest.WithResponse(200),
-						)),
-				)),
+						openapitest.WithResponse(200),
+					),
+				),
 			),
 			fn: func(t *testing.T, handler openapi.Handler) {
 				spy := &spyBody{Reader: bytes.NewBufferString(`{"foo": "abc","bar": 12}`)}

@@ -2,8 +2,6 @@ package openapi_test
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/media"
@@ -13,6 +11,9 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestResolve(t *testing.T) {
@@ -431,7 +432,7 @@ func TestConfig_Patch(t *testing.T) {
 			name: "patch add path on empty",
 			configs: []*openapi.Config{
 				{},
-				openapitest.NewConfig("1.0", openapitest.WithPath("/foo", openapitest.NewPath())),
+				openapitest.NewConfig("1.0", openapitest.WithPath("/foo")),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Len(t, result.Paths, 1)

@@ -24,7 +24,7 @@ func TestHandler_Security(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
 				op := openapitest.NewOperation(
 					openapitest.WithSecurity(map[string][]string{"foo": {}}),
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 				)
 				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
 					"foo": &openapi.HttpSecurityScheme{
@@ -32,7 +32,7 @@ func TestHandler_Security(t *testing.T) {
 					},
 				}
 
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("GET", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("GET", op))
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
 				r.Header.Set("Authorization", "Basic 123")
 				rr := httptest.NewRecorder()
@@ -56,7 +56,7 @@ func TestHandler_Security(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
 				op := openapitest.NewOperation(
 					openapitest.WithSecurity(map[string][]string{"foo": {}}),
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 				)
 				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
 					"foo": &openapi.HttpSecurityScheme{
@@ -64,7 +64,7 @@ func TestHandler_Security(t *testing.T) {
 					},
 				}
 
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("GET", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("GET", op))
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -81,7 +81,7 @@ func TestHandler_Security(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
 				op := openapitest.NewOperation(
 					openapitest.WithSecurity(map[string][]string{"foo": {}}),
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 				)
 				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
 					"foo": &openapi.HttpSecurityScheme{
@@ -89,7 +89,7 @@ func TestHandler_Security(t *testing.T) {
 					},
 				}
 
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("GET", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("GET", op))
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
 				r.Header.Set("Authorization", "Bearer 123")
 				rr := httptest.NewRecorder()
@@ -114,7 +114,7 @@ func TestHandler_Security(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
 				op := openapitest.NewOperation(
 					openapitest.WithSecurity(map[string][]string{"foo": {}}),
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 				)
 				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
 					"foo": &openapi.ApiKeySecurityScheme{
@@ -123,7 +123,7 @@ func TestHandler_Security(t *testing.T) {
 					},
 				}
 
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("GET", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("GET", op))
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
 				r.Header.Set("X-API-KEY", "123")
 				rr := httptest.NewRecorder()
@@ -148,7 +148,7 @@ func TestHandler_Security(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
 				op := openapitest.NewOperation(
 					openapitest.WithSecurity(map[string][]string{"foo": {}}),
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 				)
 				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
 					"foo": &openapi.ApiKeySecurityScheme{
@@ -157,7 +157,7 @@ func TestHandler_Security(t *testing.T) {
 					},
 				}
 
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("GET", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("GET", op))
 				r := httptest.NewRequest("GET", "http://localhost/foo?apikey=123", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -182,7 +182,7 @@ func TestHandler_Security(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
 				op := openapitest.NewOperation(
 					openapitest.WithSecurity(map[string][]string{"foo": {}}),
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 				)
 				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
 					"foo": &openapi.ApiKeySecurityScheme{
@@ -191,7 +191,7 @@ func TestHandler_Security(t *testing.T) {
 					},
 				}
 
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("GET", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("GET", op))
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
 				r.AddCookie(&http.Cookie{Name: "apikey", Value: "123"})
 				rr := httptest.NewRecorder()
@@ -216,7 +216,7 @@ func TestHandler_Security(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
 				op := openapitest.NewOperation(
 					openapitest.WithSecurity(map[string][]string{"foo": {}}),
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 				)
 				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
 					"foo": &openapi.NotSupportedSecurityScheme{
@@ -224,7 +224,7 @@ func TestHandler_Security(t *testing.T) {
 					},
 				}
 
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("GET", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("GET", op))
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
 				rr := httptest.NewRecorder()
 				h(rr, r)
@@ -236,12 +236,12 @@ func TestHandler_Security(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler) {
 				op := openapitest.NewOperation(
 					openapitest.WithSecurity(map[string][]string{"foo": {}}),
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 				)
 				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
 					"foo": &openapi.OAuth2SecurityScheme{},
 				}
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("GET", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("GET", op))
 
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
 				r.Header.Set("Authorization", "Bearer 123")
@@ -273,7 +273,7 @@ func TestHandler_Security(t *testing.T) {
 							"bar": {},
 						},
 					),
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 				)
 				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
 					"foo": &openapi.OAuth2SecurityScheme{},
@@ -282,7 +282,7 @@ func TestHandler_Security(t *testing.T) {
 						Name: "apikey",
 					},
 				}
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("GET", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("GET", op))
 
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
 				r.Header.Set("Authorization", "Bearer 123")
@@ -306,7 +306,7 @@ func TestHandler_Security(t *testing.T) {
 				op := openapitest.NewOperation(
 					openapitest.WithSecurity(map[string][]string{"foo": {}}),
 					openapitest.WithSecurity(map[string][]string{"bar": {}}),
-					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json", openapitest.NewContent())),
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 				)
 				c.Components.SecuritySchemes = map[string]openapi.SecurityScheme{
 					"foo": &openapi.OAuth2SecurityScheme{},
@@ -315,7 +315,7 @@ func TestHandler_Security(t *testing.T) {
 						Name: "apikey",
 					},
 				}
-				openapitest.AppendPath("/foo", c, openapitest.WithOperation("GET", op))
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("GET", op))
 
 				r := httptest.NewRequest("GET", "http://localhost/foo", nil)
 				r.Header.Set("apikey", "API_KEY_123")

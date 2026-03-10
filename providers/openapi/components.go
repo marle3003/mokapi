@@ -19,37 +19,6 @@ type Components struct {
 
 type ComponentParameters map[string]*ParameterRef
 
-func (c *Components) parse(config *dynamic.Config, reader dynamic.Reader) error {
-	if c.Schemas != nil {
-		for it := c.Schemas.Iter(); it.Next(); {
-			if err := it.Value().Parse(config, reader); err != nil {
-				return fmt.Errorf("parse components failed: parse schema '%s' failed: %w", it.Key(), err)
-			}
-		}
-	}
-
-	if err := c.Responses.parse(config, reader); err != nil {
-		return fmt.Errorf("parse components failed: %w", err)
-	}
-	if err := c.RequestBodies.parse(config, reader); err != nil {
-		return fmt.Errorf("parse components failed: %w", err)
-	}
-	if err := c.Parameters.parse(config, reader); err != nil {
-		return fmt.Errorf("parse components failed: %w", err)
-	}
-	if err := c.Examples.parse(config, reader); err != nil {
-		return fmt.Errorf("parse components failed: %w", err)
-	}
-	if err := c.Headers.parse(config, reader); err != nil {
-		return fmt.Errorf("parse components failed: %w", err)
-	}
-	if err := c.PathItems.parse(config, reader); err != nil {
-		return fmt.Errorf("parse components failed: %w", err)
-	}
-
-	return nil
-}
-
 func (p ComponentParameters) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for name, param := range p {
 		if err := param.Parse(config, reader); err != nil {

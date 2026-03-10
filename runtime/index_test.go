@@ -34,11 +34,11 @@ func TestIndex(t *testing.T) {
 	require.NoError(t, err)
 
 	petstore := openapitest.NewConfig("3.0", openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server. You can find out more about Swagger at https://swagger.io"),
-		openapitest.WithPath("/pet", openapitest.NewPath(
-			openapitest.WithOperation("put", openapitest.NewOperation(
+		openapitest.WithPath("/pet",
+			openapitest.WithOperation("put",
 				openapitest.WithOperationInfo("Update an existing pet.", "Update an existing pet by Id.", "updatePet", false),
-			)),
-		)),
+			),
+		),
 	)
 	app.AddHttp(&dynamic.Config{
 		Info: dynamic.ConfigInfo{Url: try.MustUrl("petstore.yaml"), Provider: "NPM"},
