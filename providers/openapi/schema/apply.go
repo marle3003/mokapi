@@ -55,16 +55,22 @@ func (s *Schema) apply(ref *Schema) {
 	}
 
 	if !s.isSet("items") {
-		s.Items = ref.Items
+		resolved := cloneSchema(ref.Items)
+		s.Items = resolved
 	}
 	if !s.isSet("prefixItems") {
-		s.PrefixItems = ref.PrefixItems
+		for _, pi := range ref.PrefixItems {
+			resolved := cloneSchema(pi)
+			s.PrefixItems = append(s.PrefixItems, resolved)
+		}
 	}
 	if !s.isSet("unevaluatedItems") {
-		s.UnevaluatedItems = ref.UnevaluatedItems
+		resolved := cloneSchema(ref.UnevaluatedItems)
+		s.UnevaluatedItems = resolved
 	}
 	if !s.isSet("contains") {
-		s.Contains = ref.Contains
+		resolved := cloneSchema(ref.Contains)
+		s.Contains = resolved
 	}
 	if !s.isSet("maxContains") {
 		s.MaxContains = ref.MaxContains
@@ -88,11 +94,19 @@ func (s *Schema) apply(ref *Schema) {
 		s.ShuffleItems = ref.ShuffleItems
 	}
 
-	if !s.isSet("properties") {
-		s.Properties = ref.Properties
+	if !s.isSet("properties") && ref.Properties != nil {
+		s.Properties = &Schemas{}
+		for it := ref.Properties.Iter(); it.Next(); {
+			resolved := cloneSchema(it.Value())
+			s.Properties.Set(it.Key(), resolved)
+		}
 	}
 	if !s.isSet("patternProperties") {
-		s.PatternProperties = ref.PatternProperties
+		s.PatternProperties = map[string]*Schema{}
+		for name, pi := range ref.PatternProperties {
+			resolved := cloneSchema(pi)
+			s.PatternProperties[name] = resolved
+		}
 	}
 	if !s.isSet("minProperties") {
 		s.MinProperties = ref.MinProperties
@@ -115,10 +129,12 @@ func (s *Schema) apply(ref *Schema) {
 		fmt.Print("")
 	}
 	if !s.isSet("unevaluatedProperties") {
-		s.UnevaluatedProperties = ref.UnevaluatedProperties
+		resolved := cloneSchema(ref.UnevaluatedProperties)
+		s.UnevaluatedProperties = resolved
 	}
 	if !s.isSet("propertyNames") {
-		s.PropertyNames = ref.PropertyNames
+		resolved := cloneSchema(ref.PropertyNames)
+		s.PropertyNames = resolved
 	}
 
 	if !s.isSet("anyOf") {
@@ -189,4 +205,12 @@ func (s *Schema) isEmpty() bool {
 
 func (s *Schema) isSet(name string) bool {
 	return s.m[name]
+}
+
+func cloneSchema(s *Schema) *Schema {
+	if s == nil {
+		return nil
+	}
+	c := *s
+	return &c
 }

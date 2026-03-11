@@ -218,10 +218,10 @@ func (r *ResponseRef) parse(config *dynamic.Config, reader dynamic.Reader) error
 		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
 	}
 
-	return r.Value.parse(config, reader)
+	return r.Value.Parse(config, reader)
 }
 
-func (r *Response) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (r *Response) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}

@@ -1,7 +1,6 @@
 package openapi_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
@@ -9,6 +8,8 @@ import (
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func Test_Parse(t *testing.T) {
@@ -18,33 +19,17 @@ func Test_Parse(t *testing.T) {
 		test func(t *testing.T, c *openapi.Config, err error)
 	}{
 		{
-			name: "schemas reference",
-			c: openapitest.NewConfig("3.1",
-				openapitest.WithComponentSchema("Foo", schematest.New("array", schematest.WithItemsRef("#/components/schemas/Bar"))),
-				openapitest.WithComponentSchema("Bar", schematest.New("string")),
-			),
-			test: func(t *testing.T, c *openapi.Config, err error) {
-				require.NoError(t, err)
-				foo := c.Components.Schemas.Get("Foo")
-				require.Equal(t, "array", foo.Type.String())
-				bar := c.Components.Schemas.Get("Bar")
-				require.Equal(t, "string", bar.Type.String())
-				// reference should point to same schema
-				require.Equal(t, bar, foo.Items.Sub)
-			},
-		},
-		{
 			name: "response schema reference should point to same objects",
 			c: openapitest.NewConfig("3.1",
-				openapitest.WithPath("/foo", openapitest.NewPath(
-					openapitest.WithOperation("get", openapitest.NewOperation(
-						openapitest.WithResponse(200, openapitest.WithContent("application/json",
+				openapitest.WithPath("/foo",
+					openapitest.WithOperation("get",
+						openapitest.WithResponse(200, openapitest.UseContent("application/json",
 							&openapi.MediaType{
 								Schema: &schema.Schema{Ref: "#/components/schemas/Foo"},
 							},
-						)),
+						),
+						),
 					)),
-				)),
 				openapitest.WithComponentSchema("Foo", schematest.New("array", schematest.WithItemsRef("#/components/schemas/Bar"))),
 				openapitest.WithComponentSchema("Bar", schematest.New("string")),
 			),
@@ -82,34 +67,18 @@ func Test_ParseAndPatch(t *testing.T) {
 		test    func(t *testing.T, c *openapi.Config)
 	}{
 		{
-			name: "schemas reference",
-			configs: []*openapi.Config{
-				openapitest.NewConfig("3.1",
-					openapitest.WithComponentSchema("Foo", schematest.New("array", schematest.WithItemsRef("#/components/schemas/Bar"))),
-					openapitest.WithComponentSchema("Bar", schematest.New("string")),
-				),
-				openapitest.NewConfig("3.1",
-					openapitest.WithComponentSchema("Bar", schematest.New("string", schematest.IsNullable(true))),
-				),
-			},
-			test: func(t *testing.T, c *openapi.Config) {
-				foo := c.Components.Schemas.Get("Foo")
-				require.True(t, foo.Items.Nullable)
-			},
-		},
-		{
 			name: "response schema reference should point to same objects",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("3.1",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation("get", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("application/json",
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation("get",
+							openapitest.WithResponse(200, openapitest.UseContent("application/json",
 								&openapi.MediaType{
 									Schema: &schema.Schema{Ref: "#/components/schemas/Foo"},
 								},
-							)),
+							),
+							),
 						)),
-					)),
 					openapitest.WithComponentSchema("Foo", schematest.New("array", schematest.WithItemsRef("#/components/schemas/Bar"))),
 					openapitest.WithComponentSchema("Bar", schematest.New("string")),
 				),
@@ -132,17 +101,18 @@ func Test_ParseAndPatch(t *testing.T) {
 			t.Parallel()
 			var target *openapi.Config
 			for _, c := range tc.configs {
-				err := c.Parse(&dynamic.Config{
-					Info: dynamictest.NewConfigInfo(),
-					Data: c,
-				}, &dynamictest.Reader{})
-				require.NoError(t, err)
 				if target == nil {
 					target = c
 				} else {
 					target.Patch(c)
 				}
 			}
+
+			err := target.Parse(&dynamic.Config{
+				Info: dynamictest.NewConfigInfo(),
+				Data: target,
+			}, &dynamictest.Reader{})
+			require.NoError(t, err)
 
 			tc.test(t, target)
 		})

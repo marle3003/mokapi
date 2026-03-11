@@ -4,7 +4,7 @@
 </a>
 </p>
 
-<h3 align="center">Your API Mocking Tool for Agile Development</h3>
+<h3 align="center">Mock APIs Across Protocols. Test Faster. Ship Better.</h3>
 
 <p align="center">
 <a href="https://github.com/marle3003/mokapi/releases"><img src="https://img.shields.io/github/release/marle3003/mokapi.svg" alt="Github release"></a>
@@ -17,124 +17,133 @@
     <a href="https://mokapi.io/docs/welcome">Documentation</a>
 </p>
 
-# 🚀 Overview
+## What is Mokapi?
 
-Mokapi is an open-source tool that helps Agile, DevOps, and Continuous 
-Deployment teams design, test, and validate APIs before implementation. 
-It enables rapid prototyping of scenarios—like delayed responses, 
-failures, or edge cases—without needing a live backend. By simulating 
-real-world conditions early, Mokapi improves API quality and reduces 
-the risk of bugs in production.
+Mokapi is an open-source API mocking tool that lets you develop and test without waiting
+for backends. Mock REST APIs, Kafka topics, LDAP directories, and SMTP servers using
+OpenAPI and AsyncAPI specifications.
 
-# ✨ Features
+Perfect for:
+- Frontend developers building UIs before backends exist
+- QA teams testing edge cases, errors, and timeouts
+- DevOps engineers running reliable CI/CD tests without external dependencies
+- API designers prototyping and validating contracts early
 
-- **Multiple Protocol support**: HTTP, HTTPS, Apache Kafka, SMTP, LDAP
-- **Everything as Code**: Reusing, version control, consistency and integrate mocks with your CI/CD.
-- **An embedded JavaScript engine** to control everything - status, headers, delays, errors or other edge cases.
-- **Patch Configuration** changes for mocking needs, rather than changing the original contract
-- **Multiple Provider support**: File, HTTP, GIT, NPM to gather configurations and scripts.
-- **Dashboard** to see what's going on.
+## Quick Start
 
-## 🧩 OpenAPI & AsyncAPI Support
+Try Instantly
 
-Mokapi supports mocking REST APIs using **OpenAPI 2.0 / 3.0 / 3.1** and event-driven systems using **AsyncAPI**.
-
-## 🔧 Spin Up Mokapi
-
-Install and start Mokapi using one of the following methods.
-Replace the URL with your own OpenAPI or AsyncAPI specification.
-
-Windows
-```shell
-choco install mokapi
-mokapi https://petstore31.swagger.io/api/v31/openapi.json
+```
+npx go-mokapi https://petstore3.swagger.io/api/v3/openapi.json
 ```
 
-MacOS
-```shell
-brew tap marle3003/tap 
-brew install mokapi
-mokapi https://petstore31.swagger.io/api/v31/openapi.json
+Then test your mock:
+
+```
+curl http://localhost/api/v3/pet/1 -H 'Accept: application/json'
 ```
 
-Docker
-```shell
-docker run -p 80:80 -p 8080:8080 mokapi/mokapi:latest https://petstore31.swagger.io/api/v31/openapi.json
-```
+## Key Features
 
-# 🎯 Hit Your First Mock
-Once Mokapi is running, you can make requests to your mocked API like so:
-```shell
-curl http://localhost/api/v31/pet/2 -H 'Accept: application/json'
-```
+### Multi-Protocol Support
+Mock HTTP/HTTPS, Apache Kafka, LDAP, and SMTP — all from a single tool.
 
-# 🧩 Customize Your Mock with JavaScript
+### Specification-Driven
+Uses OpenAPI and AsyncAPI specs as the source of truth. Your mocks stay aligned with your API contracts.
 
-Mokapi makes it simple to control responses using embedded JavaScript.
+### Dynamic Behavior with JavaScript
 
-For example, you can dynamically change the response based on query parameters:
-
-```typescript
-import { on } from 'mokapi';
+Control responses, simulate errors, add delays, or create complex workflows using embedded JavaScript:
+```javascript
+import { on } from 'mokapi'
 
 export default function() {
     on('http', (request, response) => {
-        switch (request.path.petId) {
-            case 2:
-                response.data.name = 'Betty';
-            case 9:
-                response.statusCode = 404;
+        // Return 404 for specific IDs
+        if (request.path.petId === '999') {
+            response.statusCode = 404
+            return
         }
-    });
+
+        // Customize response data
+        response.data.name = 'Custom Pet Name'
+    })
 }
 ```
 
-# 🖥️ Dashboard
+### Everything as Code
+Version control your mocks alongside your code. Run them in CI/CD pipelines. No UI configuration required.
 
-Mokapi’s dashboard lets you visualize your mock APIs. View requests and responses in real-time, generate and validate sample data for testing.
+### Configuration Patching
+Override parts of your OpenAPI spec without modifying the original file. Perfect for testing different scenarios.
 
-<img src="webui.png" alt="Mokapi Web UI" title="Mokapi Web UI" />
+### Built-in Dashboard
+Visualize requests, responses, and logs in real-time at http://localhost:8080
+<img src="https://raw.githubusercontent.com/marle3003/mokapi/refs/heads/main/webui.png" alt="Mokapi Web UI" title="Mokapi Web UI" />
 
-# 🧪 Learn by Example
+### Multiple Providers
+Load specs from local files, HTTP URLs, Git repositories, or NPM packages.
+
+## Common Use Cases
+
+### Frontend Development
+Mock backend APIs while building UIs. Test loading states, errors, and edge cases without waiting for real endpoints.
+
+### API Testing
+Simulate timeouts, 500 errors, rate limits, and malformed responses. Test how your application handles failures.
+
+### CI/CD Integration
+Run fast, reliable tests without external dependencies. No flaky tests due to network issues or unavailable services.
+
+### Contract Validation
+Validate that your requests and responses match your OpenAPI specification. Catch breaking changes early.
+
+# Example Tutorials
 
 Explore tutorials that walk you through mocking different protocols and scenarios:
 
-- 🌍 [Get started with REST API](https://mokapi.io/resources/tutorials/get-started-with-rest-api)\
-  This tutorial will show you how to mock a REST API using an OpenAPI specification.
+- [Get started with REST API](https://mokapi.io/resources/tutorials/get-started-with-rest-api)  
+  Mock a REST API using OpenAPI specification
 
-- ⚡ [Mocking Kafka with AsyncAPI](https://mokapi.io/resources/tutorials/get-started-with-kafka)\
-  Mocking a Kafka topic using Mokapi and verifying that a producer generates valid messages.
+- [Mock Kafka with AsyncAPI](https://mokapi.io/resources/tutorials/get-started-with-kafka)  
+  Simulate Kafka topics and validate message producers
 
-- 👨‍💻 [Mocking LDAP Authentication](https://mokapi.io/resources/tutorials/mock-ldap-authentication-in-node)\
-  Simulate LDAP-based login flows, including group-based permissions.
+- [Mock LDAP Authentication](https://mokapi.io/resources/tutorials/mock-ldap-authentication-in-node)\
+  Test authentication flows without a real LDAP server
 
-- 📧 [Mocking SMTP Mail Servers](https://mokapi.io/resources/tutorials/mock-smtp-server-send-mail-using-node)\
-  Use Mokapi to simulate sending and receiving emails in Node.js apps.
+- [Mock SMTP Mail Servers](https://mokapi.io/resources/tutorials/mock-smtp-server-send-mail-using-node)\
+  Test email workflows without sending real messages
 
-- 🖥️ [End-to-End Testing with Jest and GitHub Actions](https://mokapi.io/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline)\
-  Integrate Mokapi into your CI pipeline for full-stack E2E testing.
+- [CI/CD Integration with GitHub Actions](https://mokapi.io/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline)\
+  Run Mokapi in automated test pipelines
 
-> More examples are available on [mokapi.io/resources](https://mokapi.io/resources)
+> More examples [mokapi.io/resources](https://mokapi.io/resources)
 
-# 📚 Documentation
+## Documentation
 
-- [Get Started](https://mokapi.io/docs/welcome)
-- [HTTP](https://mokapi.io/docs/http/overview)
-- [Kafka](https://mokapi.io/docs/kafka/overview)
-- [LDAP](https://mokapi.io/docs/ldap/overview)
-- [SMTP](https://mokapi.io/docs/mail/overview)
-- [Javascript API](https://mokapi.io/docs/javascript-api/overview)
-- [Resources](https://mokapi.io/resources)
+- [Getting Started Guide](https://mokapi.io/docs/welcome)
+- [HTTP/REST API Documentation](https://mokapi.io/docs/http/overview)
+- [Kafka Documentation](https://mokapi.io/docs/kafka/overview)
+- [LDAP Documentation](https://mokapi.io/docs/ldap/overview)
+- [SMTP/Mail Documentation](https://mokapi.io/docs/mail/overview)
+- [JavaScript API Reference](https://mokapi.io/docs/javascript-api/overview)
+- [Configuration Guide](https://mokapi.io/docs/configuration/overview)
 
-# ☕ Support
+## Support the Project
 
-Show your love for Mokapi and support the project by grabbing some cool merch!  
-[Visit the Mokapi Merchandise Store](https://mokapi.myspreadshop.ch) 🔥
-
-If you like Mokapi, consider buying me a coffee:
+If Mokapi helps your team ship faster, consider supporting development:
 
 <a href="https://www.buymeacoffee.com/mokapi" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 
-# 📄 License
+## License
 
-This project is licensed under the MIT License. See the [LICENSE](https://github.com/marle3003/mokapi/blob/main/LICENSE) file for details.
+MIT License - see [LICENSE](https://github.com/marle3003/mokapi/blob/main/LICENSE) for details.
+
+## Links
+
+- Website: [mokapi.io](https://mokapi.io)
+- GitHub: [github.com/marle3003/mokapi](https://github.com/marle3003/mokapi)
+- NPM Package: [npmjs.com/package/go-mokapi](https://npmjs.com/package/go-mokapi)
+- Documentation: [mokapi.io/docs](https://mokapi.io/docs)
+- Tutorials: [mokapi.io/resources/tutorials](https://mokapi.io/resources/tutorials)
+- Blog: [mokapi.io/resources/blogs](https://mokapi.io/resources/blogs)

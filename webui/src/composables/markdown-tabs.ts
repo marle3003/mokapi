@@ -9,6 +9,7 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
         unescapeAll = md.utils.unescapeAll,
         simple = /tab=([^\s]*)/,
         quote = /tab="([^"]*)/,
+        style = /style=([^\s]*)/,
         counter = 0
 
     function getInfo(token: Token) {
@@ -46,6 +47,16 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
         return !!getTabName(token)
     }
 
+    function getStyle(token: Token) {
+        var info = getInfo(token) 
+
+        const r = style.exec(info)
+        if (r && r.length > 1) {
+            return r.slice(1)[0]
+        }
+        return 'default'
+    }
+
     function fenceGroup(tokens: Token[], idx: number, options: Options, env: any, slf: Renderer): string {
         const token = tokens[idx]
         if (!token || token.hidden) return ''
@@ -60,32 +71,42 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
             const tabId = `tab-${counter}-${tabName}`.replace(' ', '-')
             const tabPanelId = `tabPanel-${counter}-${tabName}`.replace(' ', '-')
 
-            return `
-            <div class="code">
-                <div class="nav code-tabs" role="tablist">
-                    <button class="active"
-                            id="${tabId}"
-                            data-bs-toggle="tab"
-                            data-bs-target="#${tabPanelId}"
-                            type="button"
-                            role="tab"
-                            aria-selected="true">
-                        ${tabName}
-                    </button>
-                    <button type="button" class="btn btn-link control" title="Copy content" aria-label="Copy content" data-copy>
-                        <span class="bi bi-copy"></span>
-                    </button>
-                    <div class="tabs-border"></div>
-                </div>
-                <div class="tab-content code">
-                    <div class="tab-pane fade show active"
-                        id="${tabPanelId}"
-                        role="tabpanel"
-                        aria-labelledby="${tabId}">
-                        ${defaultRender(tokens, idx, options, env, slf)}
+            const style = getStyle(token)
+
+            if (style === 'default') {
+                return `
+                <div class="code">
+                    <div class="nav code-tabs" role="tablist">
+                        <button class="active"
+                                id="${tabId}"
+                                data-bs-toggle="tab"
+                                data-bs-target="#${tabPanelId}"
+                                type="button"
+                                role="tab"
+                                aria-selected="true">
+                            ${tabName}
+                        </button>
+                        <button type="button" class="btn btn-link control" title="Copy content" aria-label="Copy content" data-copy>
+                            <span class="bi bi-copy"></span>
+                        </button>
+                        <div class="tabs-border"></div>
                     </div>
-                </div>
-            </div>`
+                    <div class="tab-content code">
+                        <div class="tab-pane fade show active"
+                            id="${tabPanelId}"
+                            role="tabpanel"
+                            aria-labelledby="${tabId}">
+                            ${defaultRender(tokens, idx, options, env, slf)}
+                        </div>
+                    </div>
+                </div>`
+            }
+
+            if (style === 'simple') {
+                return `
+                    <pre class="simple" data-label="${lang}"><code class="hljs">${token.content}</code></pre>
+                `
+            }
         }
 
 

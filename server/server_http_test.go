@@ -57,10 +57,10 @@ func TestHttp(t *testing.T) {
 					Config: &dynamic.Config{
 						Info: dynamictest.NewConfigInfo(),
 						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/", openapitest.NewPath(
-								openapitest.WithOperation("GET", openapitest.NewOperation(
-									openapitest.WithResponse(200))),
-							)),
+							openapitest.WithPath("/",
+								openapitest.WithOperation("GET",
+									openapitest.WithResponse(200)),
+							),
 						),
 					},
 				})
@@ -79,10 +79,10 @@ func TestHttp(t *testing.T) {
 					Config: &dynamic.Config{
 						Info: dynamictest.NewConfigInfo(),
 						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/", openapitest.NewPath(
-								openapitest.WithOperation("GET", openapitest.NewOperation(
-									openapitest.WithResponse(200))),
-							)),
+							openapitest.WithPath("/",
+								openapitest.WithOperation("GET",
+									openapitest.WithResponse(200)),
+							),
 						),
 					},
 				})
@@ -116,10 +116,10 @@ func TestHttp(t *testing.T) {
 					Config: &dynamic.Config{
 						Info: dynamictest.NewConfigInfo(),
 						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/", openapitest.NewPath(
-								openapitest.WithOperation("GET", openapitest.NewOperation(
-									openapitest.WithResponse(200))),
-							)),
+							openapitest.WithPath("/",
+								openapitest.WithOperation("GET",
+									openapitest.WithResponse(200)),
+							),
 							openapitest.WithServer("/", ""),
 						),
 					},
@@ -128,10 +128,10 @@ func TestHttp(t *testing.T) {
 					Config: &dynamic.Config{
 						Info: dynamictest.NewConfigInfo(),
 						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/", openapitest.NewPath(
-								openapitest.WithOperation("GET", openapitest.NewOperation(
-									openapitest.WithResponse(200))),
-							)),
+							openapitest.WithPath("/",
+								openapitest.WithOperation("GET",
+									openapitest.WithResponse(200)),
+							),
 							openapitest.WithServer("/foo", ""),
 						),
 					},
@@ -156,10 +156,10 @@ func TestHttp(t *testing.T) {
 					Config: &dynamic.Config{
 						Info: dynamictest.NewConfigInfo(),
 						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/", openapitest.NewPath(
-								openapitest.WithOperation("GET", openapitest.NewOperation(
-									openapitest.WithResponse(200))),
-							)),
+							openapitest.WithPath("/",
+								openapitest.WithOperation("GET",
+									openapitest.WithResponse(200)),
+							),
 							openapitest.WithServer("/foo", ""),
 						),
 					},
@@ -169,10 +169,10 @@ func TestHttp(t *testing.T) {
 					Config: &dynamic.Config{
 						Info: dynamictest.NewConfigInfo(),
 						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/", openapitest.NewPath(
-								openapitest.WithOperation("GET", openapitest.NewOperation(
-									openapitest.WithResponse(200))),
-							)),
+							openapitest.WithPath("/",
+								openapitest.WithOperation("GET",
+									openapitest.WithResponse(200)),
+							),
 							openapitest.WithServer(fmt.Sprintf("http://:%v/foo", port), ""),
 						),
 					},
@@ -192,10 +192,10 @@ func TestHttp(t *testing.T) {
 					Config: &dynamic.Config{
 						Info: dynamictest.NewConfigInfo(),
 						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/", openapitest.NewPath(
-								openapitest.WithOperation("GET", openapitest.NewOperation(
-									openapitest.WithResponse(200))),
-							)),
+							openapitest.WithPath("/",
+								openapitest.WithOperation("GET",
+									openapitest.WithResponse(200)),
+							),
 							openapitest.WithServer("/foo", ""),
 						),
 					},
@@ -205,10 +205,10 @@ func TestHttp(t *testing.T) {
 					Config: &dynamic.Config{
 						Info: dynamictest.NewConfigInfo(),
 						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/", openapitest.NewPath(
-								openapitest.WithOperation("GET", openapitest.NewOperation(
-									openapitest.WithResponse(200))),
-							)),
+							openapitest.WithPath("/",
+								openapitest.WithOperation("GET",
+									openapitest.WithResponse(200)),
+							),
 							openapitest.WithServer("/foo", ""),
 						),
 					},
@@ -233,13 +233,13 @@ func TestHttp(t *testing.T) {
 					Config: &dynamic.Config{
 						Info: dynamictest.NewConfigInfo(),
 						Data: openapitest.NewConfig("3.1.0",
-							openapitest.WithPath("/", openapitest.NewPath(
-								openapitest.WithOperation("GET", openapitest.NewOperation(
+							openapitest.WithPath("/",
+								openapitest.WithOperation("GET",
 									openapitest.WithResponse(200, openapitest.WithContent(
 										"application/json",
-										openapitest.NewContent(openapitest.WithSchema(schematest.New("string", schematest.WithConst("foo")))),
-									)))),
-							)),
+										openapitest.WithSchema(schematest.New("string", schematest.WithConst("foo")))),
+									)),
+							),
 						),
 					},
 				})

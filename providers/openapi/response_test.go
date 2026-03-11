@@ -309,11 +309,11 @@ func TestResponse_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodGet,
 							openapitest.WithResponse(http.StatusOK),
-						)),
-					)),
+						),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -326,9 +326,9 @@ func TestResponse_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodGet, &openapi.Operation{}),
-					)),
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodGet),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -341,11 +341,11 @@ func TestResponse_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
-							openapitest.WithResponseRef(http.StatusOK, nil),
-						)),
-					)),
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodGet,
+							openapitest.UseResponse(http.StatusOK, nil),
+						),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -358,11 +358,11 @@ func TestResponse_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
-							openapitest.WithResponseRef(http.StatusOK, &openapi.ResponseRef{Reference: dynamic.Reference{Ref: "foo.yml"}}),
-						)),
-					)),
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodGet,
+							openapitest.WithResponseRef(http.StatusOK, "foo.yml"),
+						),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse response '200' failed: resolve reference 'foo.yml' failed: TEST ERROR")
@@ -375,11 +375,11 @@ func TestResponse_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
-							openapitest.WithResponse(http.StatusOK, openapitest.WithResponseHeaderRef("foo", &openapi.HeaderRef{Reference: dynamic.Reference{Ref: "foo.yml"}})),
-						)),
-					)),
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodGet,
+							openapitest.WithResponse(http.StatusOK, openapitest.WithResponseHeaderRef("foo", "foo.yml")),
+						),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse response '200' failed: parse header 'foo' failed: resolve reference 'foo.yml' failed: TEST ERROR")
@@ -415,20 +415,20 @@ func TestConfig_Patch_Response(t *testing.T) {
 			name: "patch is nil",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithResponseDescription("foo"))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.WithResponseDescription("foo"))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
+					"/foo", openapitest.UseOperation(
 						"post", &openapi.Operation{
 							Responses: &openapi.Responses{LinkedHashMap: getResponses(map[string]*openapi.ResponseRef{
 								"200": nil,
 							})},
 						}),
-					),
-				)),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -439,16 +439,16 @@ func TestConfig_Patch_Response(t *testing.T) {
 			name: "add response",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", &openapi.Operation{},
+					"/foo", openapitest.WithOperation(
+						"post",
 					),
-					))),
+				)),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithResponseDescription("foo"))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.WithResponseDescription("foo"))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -459,17 +459,17 @@ func TestConfig_Patch_Response(t *testing.T) {
 			name: "patch response",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(204, openapitest.WithResponseDescription("bar"))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(204, openapitest.WithResponseDescription("bar"))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithResponseDescription("foo"))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.WithResponseDescription("foo"))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(204)
@@ -482,15 +482,15 @@ func TestConfig_Patch_Response(t *testing.T) {
 			name: "patch is nil",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(204, openapitest.WithResponseDescription("bar"))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(204, openapitest.WithResponseDescription("bar"))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", &openapi.Operation{}),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post"),
+				)),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(204)
@@ -501,17 +501,17 @@ func TestConfig_Patch_Response(t *testing.T) {
 			name: "patch response is nil",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(204, openapitest.WithResponseDescription("bar"))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(204, openapitest.WithResponseDescription("bar"))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponseRef(202, &openapi.ResponseRef{}),
-						),
-					)))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.UseResponse(202, nil),
+					),
+				)),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(202)
@@ -522,17 +522,17 @@ func TestConfig_Patch_Response(t *testing.T) {
 			name: "patch description",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200)),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200)),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithResponseDescription("foo"))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.WithResponseDescription("foo"))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -543,17 +543,17 @@ func TestConfig_Patch_Response(t *testing.T) {
 			name: "patch add content type",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/plain", openapitest.NewContent()))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.WithContent("text/plain"))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("application/json", openapitest.NewContent()))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.WithContent("application/json"))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -565,19 +565,18 @@ func TestConfig_Patch_Response(t *testing.T) {
 			name: "add content type schema",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/plain", openapitest.NewContent()))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.WithContent("text/plain"))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/plain",
-								openapitest.NewContent(
-									openapitest.WithSchema(schematest.New("number")))))),
-					),
-					))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.WithContent("text/plain",
+							openapitest.WithSchema(schematest.New("number"))))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -589,21 +588,18 @@ func TestConfig_Patch_Response(t *testing.T) {
 			name: "patch content type schema",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/plain",
-								openapitest.NewContent(
-									openapitest.WithSchema(schematest.New("number")))),
-							),
-						))))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.WithContent("text/plain",
+
+							openapitest.WithSchema(schematest.New("number")))),
+					))),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponse(200, openapitest.WithContent("text/plain",
-								openapitest.NewContent(
-									openapitest.WithSchema(schematest.New("number", schematest.WithFormat("double")))),
-							),
-							)))))),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.WithResponse(200, openapitest.WithContent("text/plain",
+							openapitest.WithSchema(schematest.New("number", schematest.WithFormat("double")))),
+						)))),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)

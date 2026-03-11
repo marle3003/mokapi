@@ -4,28 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/sortedmap"
+
+	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 type Schemas struct {
 	sortedmap.LinkedHashMap[string, *Schema]
-}
-
-func (s *Schemas) Parse(config *dynamic.Config, reader dynamic.Reader) error {
-	if s == nil {
-		return nil
-	}
-
-	for it := s.Iter(); it.Next(); {
-		if err := it.Value().Parse(config, reader); err != nil {
-			return fmt.Errorf("parse schema '%v' failed: %w", it.Key(), err)
-		}
-	}
-
-	return nil
 }
 
 func (s *Schemas) Get(name string) *Schema {

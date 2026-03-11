@@ -241,11 +241,13 @@ ol.breadcrumb {
 
 .content h1 {
   margin-top: 0;
-  font-size: 2.25rem;
+  font-size: 2.0rem;
+  font-weight: 900
 }
 
 .content h2 {
-  font-size: 1.55rem;
+  font-size: 1.75rem;
+  font-weight: 700;
 }
 
 .content h2 > * {
@@ -262,7 +264,8 @@ ol.breadcrumb {
 }
 
 .content h3 {
-  font-size: 1.4rem;
+  font-size: 1.25rem;
+  font-weight: 700;;
 }
 
 .content p {
@@ -372,17 +375,15 @@ pre {
     margin-left: 0;
   }
 }
-code {
-  background-color: #f1f3f5;
+.content code:not(pre code) {
   color: #e63946;
-  border-radius: 3px;
-  padding: 2px 6px;
+
   font-weight: 600
 }
-.code {
+.content .code {
   margin-bottom: 8px;
 }
-.code pre code.hljs {
+.content .code pre code.hljs {
   font-family: Menlo,Monaco,Consolas,"Courier New",monospace !important;
   padding-left: 0 !important;
 }
@@ -393,8 +394,7 @@ code {
 }
 
 .box {
-  padding: 0.6rem;
-  padding-bottom: 0;
+  padding: 16px 20px;
   margin-top: 2rem;
   margin-bottom: 2rem;
   border-left-width: 0.2rem ;
@@ -408,9 +408,9 @@ code {
   padding-left: 0.6rem;
 }
 .box .box-heading {
-  margin: -0.6rem -0.6rem 0 -0.6rem;
-  padding: 0.3rem 0 0.3rem 1rem;
-  font-weight: 600;
+  margin: 0 -0.6rem;
+  padding-left: 1rem;
+  font-weight: 700;
 }
 .box .box-heading:not(.box-custom-heading) {
   text-transform: capitalize;
@@ -425,17 +425,12 @@ code {
   padding: 0.1em;
   border-radius: 0.3em;
 }
-.box.info{
-  border-color: var(--color-blue);
+.box.info, .box.tip{
+  border-color: var(--bs-primary-border-subtle);
+  background-color: var(--bs-primary-bg-subtle);
 }
-.box.info .box-heading {
-  background-color: var(--color-blue-shadow);
-}
-.box.tip{
-  border-color: var(--color-green);
-}
-.box.tip .box-heading {
-  background-color: var(--color-green-shadow);
+.box.info .box-heading, .box.tip .box-heading {
+  color: var(--bs-primary-text-emphasis);
 }
 .box.limitation{
   border-color: var(--color-orange);
@@ -444,16 +439,18 @@ code {
   background-color: var(--color-orange-shadow);
 }
 .box.warning{
-  border-color: var(--color-yellow);
+  border-color: var(--bs-warning-border-subtle);
+  background-color: var(--bs-warning-bg-subtle);
 }
 .box.warning .box-heading {
-  background-color: var(--color-yellow-shadow);
+  color: var(--bs-warning-text-emphasis);
 }
 .box.result {
-  border-color: rgb(82, 183, 136);
+  border-color: var(--bs-success-border-subtle);
+  background-color: var(--bs-success-bg-subtle);
 }
 .box.result .box-heading {
-  background-color: rgba(82, 183, 136, 0.4);
+  color: var(--bs-success-text-emphasis);
 }
 .anchor {
   display: block;
@@ -602,6 +599,11 @@ a[name] {
   background-color: var(--card-background);
 }
 
+.box.benefits .box-heading {
+  color: var(--color-green);
+  font-size: 1.1rem;
+}
+
 .box.feature {
   margin-top: 1rem;
   margin-bottom: 2rem;
@@ -673,5 +675,32 @@ a[name] {
 
 .emoji {
   vertical-align: 0.15em;
+}
+
+pre.simple {
+  padding: 24px;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 0;
+  border: 1px solid #21262d;
+  position: relative;
+}
+pre.simple code {
+  padding: 0;
+}
+pre.simple:has(+ p) {
+  margin-bottom: 12px;
+}
+pre::before {
+    content: attr(data-label);
+    position: absolute;
+    top: 8px;
+    right: 16px;
+    font-size: 11px;
+    color: #6e7681;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
 }
 </style>

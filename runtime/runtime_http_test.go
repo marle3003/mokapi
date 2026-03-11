@@ -1,7 +1,6 @@
 package runtime_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
@@ -15,6 +14,8 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestApp_AddHttp(t *testing.T) {
@@ -36,7 +37,7 @@ func TestApp_AddHttp(t *testing.T) {
 			name: "event store for endpoint available",
 			test: func(t *testing.T, app *runtime.App) {
 				app.AddHttp(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
-					openapitest.WithPath("bar", openapitest.NewPath()))))
+					openapitest.WithPath("bar"))))
 
 				require.NotNil(t, app.GetHttp("foo"))
 				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("http").WithName("foo").With("path", "bar"))
@@ -47,11 +48,11 @@ func TestApp_AddHttp(t *testing.T) {
 			name: "request is counted in monitor",
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.AddHttp(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodGet,
 							openapitest.WithResponse(http.StatusOK),
-						)))),
-				)))
+						))),
+				))
 				m := monitor.NewHttp()
 				h := info.Handler(m, enginetest.NewEngine(), &events.StoreManager{})
 
@@ -66,7 +67,7 @@ func TestApp_AddHttp(t *testing.T) {
 			name: "retrieve configs",
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.AddHttp(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
-					openapitest.WithPath("bar", openapitest.NewPath()))))
+					openapitest.WithPath("bar"))))
 
 				configs := info.Configs()
 				require.Len(t, configs, 1)

@@ -147,7 +147,7 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0",
 					openapitest.WithInfo("foo", "1.0", ""),
-					openapitest.WithPath("/pets", openapitest.NewPath()),
+					openapitest.WithPath("/pets"),
 				)
 				app.AddHttp(toConfig(cfg))
 
@@ -179,7 +179,7 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0",
 					openapitest.WithInfo("foo", "1.0", "a description"),
-					openapitest.WithPath("/pets", openapitest.NewPath(openapitest.WithPathInfo("", "a description"))),
+					openapitest.WithPath("/pets", openapitest.WithPathInfo("", "a description")),
 				)
 				app.AddHttp(toConfig(cfg))
 
@@ -222,12 +222,12 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0",
 					openapitest.WithInfo("foo", "1.0", "a description"),
-					openapitest.WithPath("/pets", openapitest.NewPath(
+					openapitest.WithPath("/pets",
 						openapitest.WithPathInfo("", "a description"),
-						openapitest.WithOperation("get", openapitest.NewOperation(
+						openapitest.WithOperation("get",
 							openapitest.WithHeaderParam("foo", true, openapitest.WithParamInfo("parameter description")),
-						)),
-					)),
+						),
+					),
 				)
 				app.AddHttp(toConfig(cfg))
 
@@ -259,12 +259,12 @@ func TestIndex_Http(t *testing.T) {
 			name: "Search by api field",
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("Petstore", "", ""),
-					openapitest.WithPath("/pets", openapitest.NewPath(
+					openapitest.WithPath("/pets",
 						openapitest.WithPathInfo("", "path"),
-						openapitest.WithOperation("get", openapitest.NewOperation(
+						openapitest.WithOperation("get",
 							openapitest.WithHeaderParam("foo", true, openapitest.WithParamInfo("parameter")),
-						)),
-					)),
+						),
+					),
 				)
 				app.AddHttp(toConfig(cfg))
 				// search response should only have one the root OpenAPI object
@@ -325,12 +325,12 @@ func TestIndex_Http(t *testing.T) {
 			name: "Search by api field",
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("Petstore", "", ""),
-					openapitest.WithPath("/pets", openapitest.NewPath(
+					openapitest.WithPath("/pets",
 						openapitest.WithPathInfo("", "path"),
-						openapitest.WithOperation("get", openapitest.NewOperation(
+						openapitest.WithOperation("get",
 							openapitest.WithHeaderParam("foo", true, openapitest.WithParamInfo("parameter")),
-						)),
-					)),
+						),
+					),
 				)
 				app.AddHttp(toConfig(cfg))
 				// search response should only have one the root OpenAPI object
@@ -364,12 +364,12 @@ func TestIndex_Http(t *testing.T) {
 			name: "Search fuzzy",
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("Petstore", "", ""),
-					openapitest.WithPath("/pets", openapitest.NewPath(
+					openapitest.WithPath("/pets",
 						openapitest.WithPathInfo("", "path"),
-						openapitest.WithOperation("get", openapitest.NewOperation(
+						openapitest.WithOperation("get",
 							openapitest.WithHeaderParam("foo", true, openapitest.WithParamInfo("parameter")),
-						)),
-					)),
+						),
+					),
 				)
 				app.AddHttp(toConfig(cfg))
 				// search response should only have one the root OpenAPI object

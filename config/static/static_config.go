@@ -128,7 +128,7 @@ type HttpProvider struct {
 }
 
 type NpmProvider struct {
-	GlobalFolders []string     `yaml:"globalFolders" name:"global-folders" explode:"global-folders"`
+	GlobalFolders []string     `yaml:"globalFolders" name:"global-folders" explode:"global-folder"`
 	Packages      []NpmPackage `explode:"package"`
 }
 

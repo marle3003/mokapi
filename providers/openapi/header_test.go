@@ -3,8 +3,6 @@ package openapi_test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
@@ -13,6 +11,9 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestHeader_UnmarshalJSON(t *testing.T) {
@@ -241,12 +242,12 @@ func TestHeader_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodGet,
 							openapitest.WithResponse(http.StatusOK,
-								openapitest.WithResponseHeaderRef("foo", nil),
-							))),
-					)),
+								openapitest.UseResponseHeaderRef("foo", nil),
+							)),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -259,12 +260,12 @@ func TestHeader_Parse(t *testing.T) {
 					return nil, nil
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodGet,
 							openapitest.WithResponse(http.StatusOK,
 								openapitest.WithResponseHeader("foo", "foo description", schematest.New("string")),
-							))),
-					)),
+							)),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
@@ -279,12 +280,12 @@ func TestHeader_Parse(t *testing.T) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
-					openapitest.WithPath("/foo", openapitest.NewPath(
-						openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodGet,
 							openapitest.WithResponse(http.StatusOK,
-								openapitest.WithResponseHeaderRef("foo", &openapi.HeaderRef{Reference: dynamic.Reference{Ref: "foo"}}),
-							))),
-					)),
+								openapitest.WithResponseHeaderRef("foo", "foo"),
+							)),
+					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse response '200' failed: parse header 'foo' failed: resolve reference 'foo' failed: TEST ERROR")
@@ -312,25 +313,25 @@ func TestConfig_Patch_Header(t *testing.T) {
 			name: "add header",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
-								Headers: map[string]*openapi.HeaderRef{},
-							}}),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.UseResponse(200, &openapi.Response{
+							Headers: map[string]*openapi.HeaderRef{},
+						}),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
-								Headers: map[string]*openapi.HeaderRef{
-									"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
-								},
-							}}),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.UseResponse(200, &openapi.Response{
+							Headers: map[string]*openapi.HeaderRef{
+								"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
+							},
+						}),
 					),
-					))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -341,27 +342,27 @@ func TestConfig_Patch_Header(t *testing.T) {
 			name: "patch header",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
-								Headers: map[string]*openapi.HeaderRef{
-									"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
-								},
-							}}),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.UseResponse(200, &openapi.Response{
+							Headers: map[string]*openapi.HeaderRef{
+								"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
+							},
+						}),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
-								Headers: map[string]*openapi.HeaderRef{
-									"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "bar"}}},
-								},
-							}}),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.UseResponse(200, &openapi.Response{
+							Headers: map[string]*openapi.HeaderRef{
+								"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "bar"}}},
+							},
+						}),
 					),
-					))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -372,27 +373,27 @@ func TestConfig_Patch_Header(t *testing.T) {
 			name: "source header is nil",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
-								Headers: map[string]*openapi.HeaderRef{
-									"foo": {Value: nil},
-								},
-							}}),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.UseResponse(200, &openapi.Response{
+							Headers: map[string]*openapi.HeaderRef{
+								"foo": {Value: nil},
+							},
+						}),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
-								Headers: map[string]*openapi.HeaderRef{
-									"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
-								},
-							}}),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.UseResponse(200, &openapi.Response{
+							Headers: map[string]*openapi.HeaderRef{
+								"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
+							},
+						}),
 					),
-					))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -403,27 +404,27 @@ func TestConfig_Patch_Header(t *testing.T) {
 			name: "source header value is nil",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
-								Headers: map[string]*openapi.HeaderRef{
-									"foo": {Value: nil},
-								},
-							}}),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.UseResponse(200, &openapi.Response{
+							Headers: map[string]*openapi.HeaderRef{
+								"foo": {Value: nil},
+							},
+						}),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
-								Headers: map[string]*openapi.HeaderRef{
-									"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
-								},
-							}}),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.UseResponse(200, &openapi.Response{
+							Headers: map[string]*openapi.HeaderRef{
+								"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
+							},
+						}),
 					),
-					))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -434,27 +435,27 @@ func TestConfig_Patch_Header(t *testing.T) {
 			name: "patch headers is nil",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
-								Headers: map[string]*openapi.HeaderRef{
-									"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
-								},
-							}}),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.UseResponse(200, &openapi.Response{
+							Headers: map[string]*openapi.HeaderRef{
+								"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
+							},
+						}),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
-								Headers: map[string]*openapi.HeaderRef{
-									"foo": nil,
-								},
-							}}),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.UseResponse(200, &openapi.Response{
+							Headers: map[string]*openapi.HeaderRef{
+								"foo": nil,
+							},
+						}),
 					),
-					))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
@@ -465,27 +466,27 @@ func TestConfig_Patch_Header(t *testing.T) {
 			name: "patch header value is nil",
 			configs: []*openapi.Config{
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
-								Headers: map[string]*openapi.HeaderRef{
-									"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
-								},
-							}}),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.UseResponse(200, &openapi.Response{
+							Headers: map[string]*openapi.HeaderRef{
+								"foo": {Value: &openapi.Header{Parameter: openapi.Parameter{Description: "foo"}}},
+							},
+						}),
 					),
-					))),
+				),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
-					"/foo", openapitest.NewPath(openapitest.WithOperation(
-						"post", openapitest.NewOperation(
-							openapitest.WithResponseRef(200, &openapi.ResponseRef{Value: &openapi.Response{
-								Headers: map[string]*openapi.HeaderRef{
-									"foo": {},
-								},
-							}}),
-						),
+					"/foo", openapitest.WithOperation(
+						"post",
+						openapitest.UseResponse(200, &openapi.Response{
+							Headers: map[string]*openapi.HeaderRef{
+								"foo": {},
+							},
+						}),
 					),
-					))),
+				),
+				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)

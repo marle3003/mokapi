@@ -21,16 +21,12 @@ func TestHandler_Response(t *testing.T) {
 		var opts []openapitest.ResponseOptions
 		if contentType != "" {
 			opts = append(opts, openapitest.WithContent(contentType,
-				openapitest.NewContent(openapitest.WithSchema(s))),
+				openapitest.WithSchema(s)),
 			)
 		}
 
-		op := openapitest.NewOperation(
-			openapitest.WithResponse(http.StatusOK, opts...),
-		)
-
 		return openapitest.NewConfig("3.0",
-			openapitest.WithPath("/foo", openapitest.NewPath(openapitest.WithOperation(http.MethodGet, op))))
+			openapitest.WithPath("/foo", openapitest.WithOperation(http.MethodGet, openapitest.WithResponse(http.StatusOK, opts...))))
 	}
 
 	testcases := []struct {
@@ -206,14 +202,15 @@ func TestHandler_Response_Context(t *testing.T) {
 		{
 			name: "use query data in random response",
 			opt: openapitest.WithPath("/foo",
-				openapitest.NewPath(openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+				openapitest.WithOperation(http.MethodGet,
 					openapitest.WithQueryParam("name", false, openapitest.WithParamSchema(schematest.New("string"))),
 					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
-						openapitest.NewContent(openapitest.WithSchema(
+						openapitest.WithSchema(
 							schematest.New("object", schematest.WithProperty("name", schematest.New("string")))),
-						),
-					)),
-				)))),
+					),
+					),
+				),
+			),
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/foo?name=foo", nil)
 			},
@@ -225,15 +222,14 @@ func TestHandler_Response_Context(t *testing.T) {
 		{
 			name: "use from path parameter",
 			opt: openapitest.WithPath("/users/{id}",
-				openapitest.NewPath(
-					openapitest.WithPathParam("id", openapitest.WithParamSchema(schematest.New("integer"))),
-					openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
-						openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
-							openapitest.NewContent(openapitest.WithSchema(
-								schematest.New("object", schematest.WithProperty("id", schematest.New("integer")))),
-							),
-						)),
-					))),
+				openapitest.WithPathParam("id", openapitest.WithParamSchema(schematest.New("integer"))),
+				openapitest.WithOperation(http.MethodGet,
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+						openapitest.WithSchema(
+							schematest.New("object", schematest.WithProperty("id", schematest.New("integer")))),
+					),
+					),
+				),
 			),
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/users/123", nil)
@@ -246,19 +242,18 @@ func TestHandler_Response_Context(t *testing.T) {
 		{
 			name: "parameter does not match response type",
 			opt: openapitest.WithPath("/users/{id}",
-				openapitest.NewPath(
-					openapitest.WithPathParam("id", openapitest.WithParamSchema(schematest.New("integer"))),
-					openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
-						openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
-							openapitest.NewContent(openapitest.WithSchema(
-								schematest.New("object",
-									schematest.WithProperty("id", schematest.New("string")),
-									schematest.WithRequired("id"),
-								),
+				openapitest.WithPathParam("id", openapitest.WithParamSchema(schematest.New("integer"))),
+				openapitest.WithOperation(http.MethodGet,
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+						openapitest.WithSchema(
+							schematest.New("object",
+								schematest.WithProperty("id", schematest.New("string")),
+								schematest.WithRequired("id"),
 							),
-							),
-						)),
-					))),
+						),
+					),
+					),
+				),
 			),
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/users/123", nil)
@@ -271,15 +266,14 @@ func TestHandler_Response_Context(t *testing.T) {
 		{
 			name: "parameter does not match response type but string to int",
 			opt: openapitest.WithPath("/users/{id}",
-				openapitest.NewPath(
-					openapitest.WithPathParam("id", openapitest.WithParamSchema(schematest.New("string"))),
-					openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
-						openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
-							openapitest.NewContent(openapitest.WithSchema(
-								schematest.New("object", schematest.WithProperty("id", schematest.New("integer")))),
-							),
-						)),
-					))),
+				openapitest.WithPathParam("id", openapitest.WithParamSchema(schematest.New("string"))),
+				openapitest.WithOperation(http.MethodGet,
+					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
+						openapitest.WithSchema(
+							schematest.New("object", schematest.WithProperty("id", schematest.New("integer")))),
+					),
+					),
+				),
 			),
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/users/123", nil)
@@ -292,10 +286,9 @@ func TestHandler_Response_Context(t *testing.T) {
 		{
 			name: "response reference is nil",
 			opt: openapitest.WithPath("/users",
-				openapitest.NewPath(
-					openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
-						openapitest.WithResponseRef(http.StatusOK, nil),
-					))),
+				openapitest.WithOperation(http.MethodGet,
+					openapitest.UseResponse(http.StatusOK, nil),
+				),
 			),
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/users", nil)
@@ -308,22 +301,22 @@ func TestHandler_Response_Context(t *testing.T) {
 		{
 			name: "from context and parameter is array ",
 			opt: openapitest.WithPath("/foo",
-				openapitest.NewPath(openapitest.WithOperation(http.MethodGet, openapitest.NewOperation(
+				openapitest.WithOperation(http.MethodGet,
 					openapitest.WithQueryParam(
 						"name",
 						false,
 						openapitest.WithParamSchema(schematest.New("array", schematest.WithItems("string"))),
 						openapitest.WithExplode(true)),
 					openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json",
-						openapitest.NewContent(
-							openapitest.WithSchema(
-								schematest.New("array", schematest.WithItems(
-									"object", schematest.WithProperty("name", schematest.New("string"))),
-								),
+						openapitest.WithSchema(
+							schematest.New("array", schematest.WithItems(
+								"object", schematest.WithProperty("name", schematest.New("string"))),
 							),
 						),
 					),
-					))))),
+					),
+				),
+			),
 			req: func() *http.Request {
 				return httptest.NewRequest("get", "http://localhost/foo?name=foo&name=bar", nil)
 			},

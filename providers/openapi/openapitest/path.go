@@ -1,6 +1,7 @@
 package openapitest
 
 import (
+	"mokapi/config/dynamic"
 	"mokapi/providers/openapi"
 	"strings"
 )
@@ -36,7 +37,7 @@ func AppendPath(path string, config *openapi.Config, opts ...PathOptions) *opena
 	return e
 }
 
-func WithOperation(method string, op *openapi.Operation) PathOptions {
+func UseOperation(method string, op *openapi.Operation) PathOptions {
 	return func(e *openapi.Path) {
 		switch strings.ToUpper(method) {
 		case "GET":
@@ -67,6 +68,11 @@ func WithOperation(method string, op *openapi.Operation) PathOptions {
 	}
 }
 
+func WithOperation(method string, opts ...OperationOptions) PathOptions {
+	op := NewOperation(opts...)
+	return UseOperation(method, op)
+}
+
 func WithPathParam(name string, opts ...ParamOptions) PathOptions {
 	return func(e *openapi.Path) {
 		e.Parameters = append(e.Parameters, &openapi.ParameterRef{
@@ -74,8 +80,10 @@ func WithPathParam(name string, opts ...ParamOptions) PathOptions {
 	}
 }
 
-func WithPathParamRef(ref *openapi.ParameterRef) PathOptions {
+func WithPathParamRef(ref string) PathOptions {
 	return func(e *openapi.Path) {
-		e.Parameters = append(e.Parameters, ref)
+		e.Parameters = append(e.Parameters, &openapi.ParameterRef{
+			Reference: dynamic.Reference{Ref: ref},
+		})
 	}
 }

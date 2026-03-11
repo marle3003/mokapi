@@ -23,6 +23,11 @@ func (m *MediaType) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if m == nil {
 		return nil
 	}
+
+	scope := m.ContentType.String()
+	config.OpenScope(scope)
+	defer config.CloseScope()
+
 	if err := m.Schema.Parse(config, reader); err != nil {
 		return fmt.Errorf("parse schema failed: %s", err)
 	}

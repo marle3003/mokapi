@@ -175,8 +175,6 @@ func (s *Schema) Patch(patch *Schema) {
 			}
 		}
 	}
-
-	s.cm.Notify(s)
 }
 
 func (x *Xml) patch(patch *Xml) {

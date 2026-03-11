@@ -101,7 +101,8 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
             token.hidden = true
 
             const url = getUrl(token)
-            let content = parseContent(token.content)
+            let content = md.render(token.content)
+            content = parseContent(content)
 
             if (showTitle(token)) {
                 let title = getTitle(token)
@@ -127,7 +128,7 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
                         icon = '<span class="bi bi-check-circle me-1"></span>'
                         break
                     case 'tree':
-                        content = parseTree(content)
+                        content = parseTree(token.content)
                         break
                 }
 

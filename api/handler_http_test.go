@@ -111,10 +111,10 @@ func TestHandler_Http(t *testing.T) {
 				return runtimetest.NewHttpApp(
 					openapitest.NewConfig("3.0.0",
 						openapitest.WithInfo("foo", "", ""),
-						openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
+						openapitest.WithPath("/foo/{bar}",
 							openapitest.WithPathParam("bar", openapitest.WithParamSchema(schematest.New("string"))),
-							openapitest.WithOperation("get", openapitest.NewOperation()),
-						)),
+							openapitest.WithOperation("get"),
+						),
 					),
 				)
 			},
@@ -127,13 +127,13 @@ func TestHandler_Http(t *testing.T) {
 				return runtimetest.NewHttpApp(
 					openapitest.NewConfig("3.0.0",
 						openapitest.WithInfo("foo", "", ""),
-						openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
-							openapitest.WithOperation("get", openapitest.NewOperation(
+						openapitest.WithPath("/foo/{bar}",
+							openapitest.WithOperation("get",
 								openapitest.WithRequestBody("foo", true,
 									openapitest.WithRequestContent("application/json", openapitest.NewContent(openapitest.WithSchema(schematest.New("string")))),
 								),
-							)),
-						))),
+							),
+						)),
 				)
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",
@@ -145,11 +145,11 @@ func TestHandler_Http(t *testing.T) {
 				return runtimetest.NewHttpApp(
 					openapitest.NewConfig("3.0.0",
 						openapitest.WithInfo("foo", "", ""),
-						openapitest.WithPath("/foo", openapitest.NewPath(
-							openapitest.WithOperation("get", openapitest.NewOperation(
+						openapitest.WithPath("/foo",
+							openapitest.WithOperation("get",
 								openapitest.WithSecurity(map[string][]string{"foo": {}}),
-							)),
-						)),
+							),
+						),
 						openapitest.WithComponentSecurity("foo", &openapi.ApiKeySecurityScheme{
 							Type: "apiKey",
 							In:   "header",
@@ -168,9 +168,9 @@ func TestHandler_Http(t *testing.T) {
 					openapitest.NewConfig("3.0.0",
 						openapitest.WithGlobalSecurity(map[string][]string{"foo": {}}),
 						openapitest.WithInfo("foo", "", ""),
-						openapitest.WithPath("/foo", openapitest.NewPath(
-							openapitest.WithOperation("get", openapitest.NewOperation()),
-						)),
+						openapitest.WithPath("/foo",
+							openapitest.WithOperation("get"),
+						),
 						openapitest.WithComponentSecurity("foo", &openapi.ApiKeySecurityScheme{
 							Type: "apiKey",
 							In:   "header",
@@ -188,20 +188,17 @@ func TestHandler_Http(t *testing.T) {
 				return runtimetest.NewHttpApp(
 					openapitest.NewConfig("3.0.0",
 						openapitest.WithInfo("foo", "", ""),
-						openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
-							openapitest.WithOperation("get", openapitest.NewOperation(
+						openapitest.WithPath("/foo/{bar}",
+							openapitest.WithOperation("get",
 								openapitest.WithResponse(http.StatusOK,
 									openapitest.WithResponseDescription("foo description"),
 									openapitest.WithContent(
-										"application/json",
-										openapitest.NewContent(
-											openapitest.WithSchema(schematest.New("string")),
-										),
-									),
+										"application/json", openapitest.WithSchema(schematest.New("string"))),
 									openapitest.WithResponseHeader("foo", "bar", schematest.New("string")),
 								),
-							)),
-						))),
+							),
+						),
+					),
 				)
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",
@@ -220,8 +217,8 @@ func TestHandler_Http(t *testing.T) {
 						},
 						Value: openapitest.NewPath(
 							openapitest.WithPathInfo("foo", "bar"),
-							openapitest.WithOperation("get", openapitest.NewOperation(
-								openapitest.WithResponseRef(http.StatusOK,
+							openapitest.WithOperation("get",
+								openapitest.UseResponseRef(http.StatusOK,
 									&openapi.ResponseRef{
 										Reference: dynamic.Reference{
 											Ref:         "#/components/pathItems/foo",
@@ -229,16 +226,13 @@ func TestHandler_Http(t *testing.T) {
 										},
 										Value: openapitest.NewResponse(openapitest.WithResponseDescription("foo description"),
 											openapitest.WithContent(
-												"application/json",
-												openapitest.NewContent(
-													openapitest.WithSchema(schematest.New("string")),
-												),
+												"application/json", openapitest.WithSchema(schematest.New("string")),
 											),
 											openapitest.WithResponseHeader("foo", "bar", schematest.New("string")),
 										),
 									},
 								),
-							)),
+							),
 						),
 					}),
 				)
@@ -254,19 +248,17 @@ func TestHandler_Http(t *testing.T) {
 				return runtimetest.NewHttpApp(
 					openapitest.NewConfig("3.0.0",
 						openapitest.WithInfo("foo", "", ""),
-						openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
-							openapitest.WithOperation("get", openapitest.NewOperation(
+						openapitest.WithPath("/foo/{bar}",
+							openapitest.WithOperation("get",
 								openapitest.WithResponse(http.StatusOK,
 									openapitest.WithResponseDescription("foo description"),
 									openapitest.WithContent(
-										"application/json",
-										openapitest.NewContent(
-											openapitest.WithSchema(schematest.New("string", schematest.And("number"))),
-										),
+										"application/json", openapitest.WithSchema(schematest.New("string", schematest.And("number"))),
 									),
 								),
-							)),
-						))),
+							),
+						),
+					),
 				)
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",
@@ -278,19 +270,16 @@ func TestHandler_Http(t *testing.T) {
 				return runtimetest.NewHttpApp(
 					openapitest.NewConfig("3.0.0",
 						openapitest.WithInfo("foo", "", ""),
-						openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
-							openapitest.WithOperation("get", openapitest.NewOperation(
+						openapitest.WithPath("/foo/{bar}",
+							openapitest.WithOperation("get",
 								openapitest.WithResponse(http.StatusOK,
 									openapitest.WithResponseDescription("foo description"),
 									openapitest.WithContent(
-										"application/json",
-										openapitest.NewContent(
-											openapitest.WithSchema(schematest.New("string", schematest.WithDefault("foobar"))),
-										),
+										"application/json", openapitest.WithSchema(schematest.New("string", schematest.WithDefault("foobar"))),
 									),
 								),
 							)),
-						))),
+					),
 				)
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",
@@ -302,11 +291,11 @@ func TestHandler_Http(t *testing.T) {
 				return runtimetest.NewHttpApp(
 					openapitest.NewConfig("3.0.0",
 						openapitest.WithInfo("foo", "", ""),
-						openapitest.WithPath("/foo/{bar}", openapitest.NewPath(
-							openapitest.WithOperation("get", openapitest.NewOperation(
+						openapitest.WithPath("/foo/{bar}",
+							openapitest.WithOperation("get",
 								openapitest.WithTagName("foo"),
-							)),
-						)),
+							),
+						),
 						openapitest.WithTag("foo", "sum", "desc"),
 					),
 				)
