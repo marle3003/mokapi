@@ -568,7 +568,9 @@ a[name] {
 .content p.subtitle {
   margin-bottom: 1.6rem;
   font-size: 1.2rem;
-  font-weight: 400;
+  font-weight: 550;
+  line-height: 1.6;
+  color: rgba(var(--bs-secondary-rgb))
 }
 
 .tags {
