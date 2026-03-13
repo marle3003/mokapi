@@ -27,7 +27,7 @@
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "cors": "^2.8.6",
-    "dayjs": "^1.11.19",
+    "dayjs": "^1.11.20",
     "del-cli": "^7.0.0",
     "express": "^5.2.1",
     "fuse.js": "^7.1.0",
