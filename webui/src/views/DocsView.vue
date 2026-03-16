@@ -568,7 +568,9 @@ a[name] {
 .content p.subtitle {
   margin-bottom: 1.6rem;
   font-size: 1.2rem;
-  font-weight: 400;
+  font-weight: 550;
+  line-height: 1.6;
+  color: rgba(var(--bs-secondary-rgb))
 }
 
 .tags {
@@ -597,6 +599,11 @@ a[name] {
   padding: 24px;
   border-left: 3px solid var(--color-green);
   background-color: var(--card-background);
+}
+
+.box.benefits .box-heading {
+  color: var(--color-green);
+  font-size: 1.1rem;
 }
 
 .box.feature {
@@ -682,6 +689,9 @@ pre.simple {
 }
 pre.simple code {
   padding: 0;
+}
+pre.simple:has(+ p) {
+  margin-bottom: 12px;
 }
 pre::before {
     content: attr(data-label);
