@@ -130,6 +130,9 @@ func (d *dynamicObject) UnmarshalJSON(b []byte) error {
 		rt = rt.Elem()
 	}
 	rv := reflect.ValueOf(d.data)
+	if rv.Kind() != reflect.Ptr {
+		return fmt.Errorf("dynamic data must have a pointer to a struct")
+	}
 	if rv.Elem().CanSet() {
 		rv.Elem().Set(reflect.New(rt).Elem())
 	} else {
@@ -163,6 +166,9 @@ func (d *dynamicObject) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		rt = rt.Elem()
 	}
 	rv := reflect.ValueOf(d.data)
+	if rv.Kind() != reflect.Ptr {
+		return fmt.Errorf("dynamic data must have a pointer to a struct")
+	}
 	if rv.Elem().CanSet() {
 		rv.Elem().Set(reflect.New(rt).Elem())
 	} else {
