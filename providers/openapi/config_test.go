@@ -153,12 +153,12 @@ func TestConfig_Parse(t *testing.T) {
 		test   func(t *testing.T, config *openapi.Config, err error)
 	}{
 		{
+			// empty server is handled in runtime after patching
 			name:   "empty server",
 			config: &openapi.Config{},
 			test: func(t *testing.T, config *openapi.Config, err error) {
 				require.NoError(t, err)
-				require.Len(t, config.Servers, 1)
-				require.Equal(t, "/", config.Servers[0].Url)
+				require.Len(t, config.Servers, 0)
 			},
 		},
 		{

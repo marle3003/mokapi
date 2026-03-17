@@ -30,9 +30,7 @@ func (c *converter) Convert() (*openapi.Config, error) {
 
 	if len(c.config.Schemes) == 0 {
 		if len(c.config.Host) == 0 {
-			if c.config.BasePath == "" {
-				result.Servers = append(result.Servers, &openapi.Server{Url: "/"})
-			} else {
+			if c.config.BasePath != "" {
 				result.Servers = append(result.Servers, &openapi.Server{Url: c.config.BasePath})
 			}
 		} else {
