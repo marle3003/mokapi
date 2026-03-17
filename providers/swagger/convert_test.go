@@ -110,6 +110,14 @@ func TestConvert(t *testing.T) {
 			},
 		},
 		{
+			name:   "scheme, host and basePath is empty",
+			config: `{"swagger": "2.0"}`,
+			test: func(t *testing.T, config *openapi.Config) {
+				require.Len(t, config.Servers, 1)
+				require.Equal(t, "/", config.Servers[0].Url)
+			},
+		},
+		{
 			name:   "path ref",
 			config: `{"swagger": "2.0","paths":{"/foo":{"$ref":"./foo.json"}}}`,
 			test: func(t *testing.T, config *openapi.Config) {

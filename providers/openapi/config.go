@@ -114,6 +114,10 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 
+	if len(c.Servers) == 0 {
+		c.Servers = append(c.Servers, &Server{Url: "/"})
+	}
+
 	config.Scope.OpenIfNeeded(config.Info.Path())
 
 	return c.Paths.parse(config, reader)

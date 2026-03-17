@@ -146,6 +146,45 @@ paths:
 	}
 }
 
+func TestConfig_Parse(t *testing.T) {
+	testcases := []struct {
+		name   string
+		config *openapi.Config
+		test   func(t *testing.T, config *openapi.Config, err error)
+	}{
+		{
+			name:   "empty server",
+			config: &openapi.Config{},
+			test: func(t *testing.T, config *openapi.Config, err error) {
+				require.NoError(t, err)
+				require.Len(t, config.Servers, 1)
+				require.Equal(t, "/", config.Servers[0].Url)
+			},
+		},
+		{
+			name:   "one server",
+			config: openapitest.NewConfig("3.1.0", openapitest.WithServer("/foo", "")),
+			test: func(t *testing.T, config *openapi.Config, err error) {
+				require.NoError(t, err)
+				require.Len(t, config.Servers, 1)
+				require.Equal(t, "/foo", config.Servers[0].Url)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			err := tc.config.Parse(&dynamic.Config{
+				Data: tc.config,
+				Info: dynamictest.NewConfigInfo(),
+			}, &dynamictest.Reader{})
+			tc.test(t, tc.config, err)
+		})
+	}
+}
+
 func TestResponses(t *testing.T) {
 	testdata := []struct {
 		name    string
@@ -380,7 +419,7 @@ func TestPetStore_Response(t *testing.T) {
 	require.Nil(t, m)
 }
 
-func TestPetStore_Paramters(t *testing.T) {
+func TestPetStore_Parameters(t *testing.T) {
 	config := &openapi.Config{}
 	err := yaml.Unmarshal([]byte(petstore), &config)
 	require.NoError(t, err)
