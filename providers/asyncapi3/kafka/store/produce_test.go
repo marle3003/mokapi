@@ -218,6 +218,7 @@ func TestProduce(t *testing.T) {
 				require.True(t, ok)
 				require.Equal(t, "foo", res.Topics[0].Name)
 				require.Equal(t, kafka.InvalidRecord, res.Topics[0].Partitions[0].ErrorCode)
+				require.Equal(t, "invalid message: error count 1:\n\t- #/type: invalid type, expected integer but got string", res.Topics[0].Partitions[0].ErrorMessage)
 				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
 			},
 		},

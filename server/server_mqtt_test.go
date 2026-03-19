@@ -2,8 +2,8 @@ package server
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/runtime"
@@ -11,6 +11,8 @@ import (
 	"mokapi/try"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestMqttServer(t *testing.T) {
@@ -29,7 +31,7 @@ func TestMqttServer(t *testing.T) {
 	)
 
 	cfg := &static.Config{}
-	m := NewMqttManager(nil, runtime.New(cfg))
+	m := NewMqttManager(nil, runtime.New(cfg, &dynamictest.Reader{}))
 	defer m.Stop()
 	m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}, Data: c}})
 

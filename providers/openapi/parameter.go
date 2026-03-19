@@ -102,7 +102,12 @@ func (r *ParameterRef) Parse(config *dynamic.Config, reader dynamic.Reader) erro
 	}
 
 	if len(r.Ref) > 0 && r.Value == nil {
-		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
+		var resolved *ParameterRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+			return err
+		}
+		r.Value = resolved.Value
+		return nil
 	}
 
 	if r.Value == nil {

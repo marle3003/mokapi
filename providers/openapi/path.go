@@ -146,16 +146,16 @@ func (p PathItems) Resolve(token string) (interface{}, error) {
 	return nil, nil
 }
 
-func (p PathItems) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (p PathItems) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for name, e := range p {
-		if err := e.parse(name, config, reader); err != nil {
+		if err := e.Parse(name, config, reader); err != nil {
 			return fmt.Errorf("parse path '%v' failed: %w", name, err)
 		}
 	}
 	return nil
 }
 
-func (r *PathRef) parse(name string, config *dynamic.Config, reader dynamic.Reader) error {
+func (r *PathRef) Parse(name string, config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
@@ -166,13 +166,18 @@ func (r *PathRef) parse(name string, config *dynamic.Config, reader dynamic.Read
 	}()
 
 	if len(r.Ref) > 0 {
-		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
+		var resolved *PathRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+			return err
+		}
+		r.Value = resolved.Value
+		return nil
 	}
 
-	return r.Value.parse(config, reader)
+	return r.Value.Parse(config, reader)
 }
 
-func (p *Path) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (p *Path) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if p == nil {
 		return nil
 	}
@@ -183,35 +188,35 @@ func (p *Path) parse(config *dynamic.Config, reader dynamic.Reader) error {
 		}
 	}
 
-	if err := p.Get.parse(p, config, reader); err != nil {
+	if err := p.Get.Parse(p, config, reader); err != nil {
 		return fmt.Errorf("parse operation 'GET' failed: %w", err)
 	}
-	if err := p.Post.parse(p, config, reader); err != nil {
+	if err := p.Post.Parse(p, config, reader); err != nil {
 		return fmt.Errorf("parse operation 'POST' failed: %w", err)
 	}
-	if err := p.Put.parse(p, config, reader); err != nil {
+	if err := p.Put.Parse(p, config, reader); err != nil {
 		return fmt.Errorf("parse operation 'PUT' failed: %w", err)
 	}
-	if err := p.Patch.parse(p, config, reader); err != nil {
+	if err := p.Patch.Parse(p, config, reader); err != nil {
 		return fmt.Errorf("parse operation 'PATCH' failed: %w", err)
 	}
-	if err := p.Delete.parse(p, config, reader); err != nil {
+	if err := p.Delete.Parse(p, config, reader); err != nil {
 		return fmt.Errorf("parse operation 'DELETE' failed: %w", err)
 	}
-	if err := p.Head.parse(p, config, reader); err != nil {
+	if err := p.Head.Parse(p, config, reader); err != nil {
 		return fmt.Errorf("parse operation 'HEAD' failed: %w", err)
 	}
-	if err := p.Options.parse(p, config, reader); err != nil {
+	if err := p.Options.Parse(p, config, reader); err != nil {
 		return fmt.Errorf("parse operation 'OPTIONS' failed: %w", err)
 	}
-	if err := p.Trace.parse(p, config, reader); err != nil {
+	if err := p.Trace.Parse(p, config, reader); err != nil {
 		return fmt.Errorf("parse operation 'TRACE' failed: %w", err)
 	}
-	if err := p.Query.parse(p, config, reader); err != nil {
+	if err := p.Query.Parse(p, config, reader); err != nil {
 		return fmt.Errorf("parse operation 'QUERY' failed: %w", err)
 	}
 	for name, op := range p.AdditionalOperations {
-		if err := op.parse(p, config, reader); err != nil {
+		if err := op.Parse(p, config, reader); err != nil {
 			return fmt.Errorf("parse operation '%s' failed: %w", name, err)
 		}
 	}

@@ -128,7 +128,7 @@ func TestIndex_Kafka(t *testing.T) {
 							InMemory: true,
 						},
 					},
-				})
+				}, &dynamictest.Reader{})
 
 			pool := safe.NewPool(context.Background())
 			app.Start(pool)

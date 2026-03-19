@@ -19,7 +19,7 @@ type Components struct {
 
 type ComponentParameters map[string]*ParameterRef
 
-func (p ComponentParameters) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (p ComponentParameters) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for name, param := range p {
 		if err := param.Parse(config, reader); err != nil {
 			return fmt.Errorf("parse parameter '%v' failed: %w", name, err)

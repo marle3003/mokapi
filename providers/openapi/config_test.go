@@ -397,6 +397,7 @@ func TestConfig_PetStore_Path(t *testing.T) {
 
 	require.True(t, put.Responses.Len() == 3)
 	r := put.Responses.GetResponse(http.StatusBadRequest)
+	require.NotNil(t, r)
 	require.Len(t, r.Content, 0)
 
 }
@@ -496,6 +497,10 @@ func TestConfig_Patch(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			c := tc.configs[0]
+			for _, p := range tc.configs {
+				err := p.Parse(&dynamic.Config{Data: p, Info: dynamictest.NewConfigInfo()}, &dynamictest.Reader{})
+				require.NoError(t, err)
+			}
 			for _, p := range tc.configs[1:] {
 				c.Patch(p)
 			}

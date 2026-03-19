@@ -34,7 +34,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp services",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Config: &mail.Config{Info: mail.Info{Name: "foo", Description: "bar", Version: "2.1"}},
 					Store:  &mail.Store{},
@@ -48,7 +48,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get /api/services/mail",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Config: &mail.Config{Info: mail.Info{Name: "foo"}},
 					Store:  &mail.Store{},
@@ -62,7 +62,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp service",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				cfg := &dynamic.Config{
 					Info: dynamictest.NewConfigInfo(),
 					Data: &mail.Config{
@@ -82,7 +82,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp service with mailbox",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Config: &mail.Config{
 						Info:      mail.Info{Name: "foo"},
@@ -106,7 +106,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp service with rules",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Config: &mail.Config{
 						Info: mail.Info{Name: "foo"},
@@ -130,7 +130,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp mailboxes",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Store: &mail.Store{
 						Mailboxes: map[string]*mail.Mailbox{
@@ -152,7 +152,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp mailbox",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Store: &mail.Store{
 						Mailboxes: map[string]*mail.Mailbox{
@@ -173,7 +173,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp mailbox folder",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Store: &mail.Store{
 						Mailboxes: map[string]*mail.Mailbox{
@@ -208,7 +208,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get messages in mailbox",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Store: &mail.Store{
 						Mailboxes: map[string]*mail.Mailbox{
@@ -254,7 +254,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp mail",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Config: &mail.Config{},
 					Store: &mail.Store{
@@ -293,7 +293,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get smtp mail attachment content",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Store: &mail.Store{
 						Mailboxes: map[string]*mail.Mailbox{
@@ -333,7 +333,7 @@ func TestHandler_Smtp(t *testing.T) {
 		{
 			name: "get SMTP mail with encodings",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				app.Mail.Set("foo", &runtime.MailInfo{
 					Config: &mail.Config{},
 					Store: &mail.Store{
