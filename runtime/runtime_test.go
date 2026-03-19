@@ -1,11 +1,13 @@
 package runtime_test
 
 import (
-	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/runtime"
 	"mokapi/version"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestNew(t *testing.T) {
@@ -13,7 +15,7 @@ func TestNew(t *testing.T) {
 	defer func() {
 		version.BuildVersion = ""
 	}()
-	app := runtime.New(&static.Config{})
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 	require.NotNil(t, app.Monitor)
 	require.Equal(t, "1.0", app.Version)
 	require.Len(t, app.ListHttp(), 0)

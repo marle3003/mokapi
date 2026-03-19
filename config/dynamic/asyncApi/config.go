@@ -2,13 +2,14 @@ package asyncApi
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/providers/asyncapi3"
 	"mokapi/schema/json/schema"
 	"mokapi/version"
 	"net/url"
 	"strconv"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var supportedVersions = []version.Version{
@@ -131,12 +132,12 @@ type MessageBinding struct {
 }
 
 type Components struct {
-	Servers       map[string]*Server              `yaml:"servers" json:"servers"`
-	Channels      map[string]*Channel             `yaml:"channels" json:"channels"`
+	Servers       map[string]*ServerRef           `yaml:"servers" json:"servers"`
+	Channels      map[string]*ChannelRef          `yaml:"channels" json:"channels"`
 	Schemas       map[string]*asyncapi3.SchemaRef `yaml:"schemas" json:"schemas"`
-	Messages      map[string]*Message             `yaml:"messages" json:"messages"`
+	Messages      map[string]*MessageRef          `yaml:"messages" json:"messages"`
 	Parameters    map[string]*ParameterRef        `yaml:"parameters" json:"parameters"`
-	MessageTraits map[string]MessageTraitRef      `yaml:"messageTraits" json:"messageTraits"`
+	MessageTraits map[string]*MessageTraitRef     `yaml:"messageTraits" json:"messageTraits"`
 }
 
 type ParameterRef struct {

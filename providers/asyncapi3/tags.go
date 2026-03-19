@@ -1,8 +1,9 @@
 package asyncapi3
 
 import (
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
+
+	"gopkg.in/yaml.v3"
 )
 
 type TagRef struct {
@@ -26,7 +27,12 @@ func (r *TagRef) UnmarshalJSON(b []byte) error {
 
 func (r *TagRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
+		var resolved *TagRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+			return err
+		}
+		r.Value = resolved.Value
+		return nil
 	}
 
 	if r.Value == nil {
@@ -34,7 +40,7 @@ func (r *TagRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	}
 
 	for _, v := range r.Value.ExternalDocs {
-		if err := v.parse(config, reader); err != nil {
+		if err := v.Parse(config, reader); err != nil {
 			return err
 		}
 	}

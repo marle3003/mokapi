@@ -96,6 +96,20 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			name: "known json without extension",
+			test: func(t *testing.T) {
+				c := &dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: mustUrl("foo")},
+					Raw:  []byte(`{"user": "foo"}`),
+				}
+				dynamic.Register("user", nil, &data{})
+
+				err := dynamic.Parse(c, &dynamictest.Reader{})
+				require.NoError(t, err)
+				require.Equal(t, "foo", c.Data.(*data).User)
+			},
+		},
+		{
 			name: "unknown yaml",
 			test: func(t *testing.T) {
 				c := &dynamic.Config{
@@ -136,6 +150,20 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			name: "known yaml without extension",
+			test: func(t *testing.T) {
+				c := &dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: mustUrl("foo")},
+					Raw:  []byte(`user: foo`),
+				}
+				dynamic.Register("user", nil, &data{})
+
+				err := dynamic.Parse(c, &dynamictest.Reader{})
+				require.NoError(t, err)
+				require.Equal(t, "foo", c.Data.(*data).User)
+			},
+		},
+		{
 			name: "lua",
 			test: func(t *testing.T) {
 				c := &dynamic.Config{
@@ -153,6 +181,19 @@ func TestParse(t *testing.T) {
 			test: func(t *testing.T) {
 				c := &dynamic.Config{
 					Info: dynamic.ConfigInfo{Url: mustUrl("foo.js")},
+					Raw:  []byte(`console.log('Hello World')`),
+				}
+
+				err := dynamic.Parse(c, &dynamictest.Reader{})
+				require.NoError(t, err)
+				require.Equal(t, `console.log('Hello World')`, c.Data)
+			},
+		},
+		{
+			name: "javascript without extension",
+			test: func(t *testing.T) {
+				c := &dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: mustUrl("foo")},
 					Raw:  []byte(`console.log('Hello World')`),
 				}
 
@@ -321,6 +362,7 @@ func TestParse(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			tc.test(t)
+			dynamic.Reset()
 		})
 	}
 }

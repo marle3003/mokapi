@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"mokapi/api"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime"
@@ -131,7 +132,7 @@ func TestHandler_FileServer(t *testing.T) {
 			t.Parallel()
 
 			cfg := &static.Config{}
-			h := api.New(runtime.New(cfg), tc.config)
+			h := api.New(runtime.New(cfg, &dynamictest.Reader{}), tc.config)
 			tc.fn(t, h)
 		})
 	}
@@ -146,7 +147,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service",
 			test: func(t *testing.T) {
 				cfg := &static.Config{}
-				app := runtime.New(cfg)
+				app := runtime.New(cfg, &dynamictest.Reader{})
 				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0", openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."))})
 				h := api.New(app, static.Api{Path: "/mokapi", Dashboard: true})
 				try.Handler(t,
@@ -166,7 +167,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service path without summary and description",
 			test: func(t *testing.T) {
 				cfg := &static.Config{}
-				app := runtime.New(cfg)
+				app := runtime.New(cfg, &dynamictest.Reader{})
 				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
 					openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
 					openapitest.WithPath("/pet/{petId}"),
@@ -190,7 +191,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service path with summary and description",
 			test: func(t *testing.T) {
 				cfg := &static.Config{}
-				app := runtime.New(cfg)
+				app := runtime.New(cfg, &dynamictest.Reader{})
 				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
 					openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
 					openapitest.WithPath("/pet/{petId}",
@@ -216,7 +217,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service path with no summary but description",
 			test: func(t *testing.T) {
 				cfg := &static.Config{}
-				app := runtime.New(cfg)
+				app := runtime.New(cfg, &dynamictest.Reader{})
 				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
 					openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
 					openapitest.WithPath("/pet/{petId}",
@@ -241,7 +242,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service endpoint no summary and no description",
 			test: func(t *testing.T) {
 				cfg := &static.Config{}
-				app := runtime.New(cfg)
+				app := runtime.New(cfg, &dynamictest.Reader{})
 				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
 					openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
 					openapitest.WithPath("/pet/{petId}",
@@ -266,7 +267,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			name: "http service endpoint get right path",
 			test: func(t *testing.T) {
 				cfg := &static.Config{}
-				app := runtime.New(cfg)
+				app := runtime.New(cfg, &dynamictest.Reader{})
 				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
 					openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
 					openapitest.WithPath("/pet/{petId}",

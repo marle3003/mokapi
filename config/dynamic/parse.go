@@ -72,22 +72,17 @@ func parse(c *Config) (interface{}, error) {
 	case ".lua", ".js", ".cjs", ".mjs", ".ts":
 		result = string(b)
 	default:
-		if result != nil {
-			rv := reflect.ValueOf(result)
-			if rv.Kind() == reflect.Pointer || rv.Kind() == reflect.Struct || rv.Kind() == reflect.Slice || rv.Kind() == reflect.Array || rv.Kind() == reflect.Map {
-				// try parse from json and yaml
-				var v interface{}
-				v, err = parseJson(b, result)
-				if err == nil {
-					return v, nil
-				}
-				v, err = parseYaml(b, result)
-				if err == nil {
-					return v, nil
-				}
-				err = nil
-			}
+		// try parse from JSON and YAML
+		var v interface{}
+		v, err = parseJson(b, result)
+		if err == nil {
+			return v, nil
 		}
+		v, err = parseYaml(b, result)
+		if v != nil && err == nil {
+			return v, nil
+		}
+		err = nil
 		result = string(b)
 	}
 
@@ -135,6 +130,9 @@ func (d *dynamicObject) UnmarshalJSON(b []byte) error {
 		rt = rt.Elem()
 	}
 	rv := reflect.ValueOf(d.data)
+	if rv.Kind() != reflect.Ptr {
+		return fmt.Errorf("dynamic data must have a pointer to a struct")
+	}
 	if rv.Elem().CanSet() {
 		rv.Elem().Set(reflect.New(rt).Elem())
 	} else {
@@ -168,6 +166,9 @@ func (d *dynamicObject) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		rt = rt.Elem()
 	}
 	rv := reflect.ValueOf(d.data)
+	if rv.Kind() != reflect.Ptr {
+		return fmt.Errorf("dynamic data must have a pointer to a struct")
+	}
 	if rv.Elem().CanSet() {
 		rv.Elem().Set(reflect.New(rt).Elem())
 	} else {

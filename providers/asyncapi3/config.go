@@ -51,20 +51,14 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if c.Servers != nil {
 		for it := c.Servers.Iter(); it.Next(); {
 			server := it.Value()
-			if len(server.Ref) > 0 {
-				return dynamic.Resolve(server.Ref, &server.Value, config, reader)
-			}
-			if server.Value == nil {
-				return nil
-			}
-			if err := server.parse(config, reader); err != nil {
+			if err := server.Parse(config, reader); err != nil {
 				return err
 			}
 		}
 	}
 
 	for name, ch := range c.Channels {
-		if err := ch.parse(config, reader); err != nil {
+		if err := ch.Parse(config, reader); err != nil {
 			return err
 		}
 		if ch.Value != nil {
@@ -74,7 +68,7 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	}
 
 	for _, op := range c.Operations {
-		if err := op.parse(config, reader); err != nil {
+		if err := op.Parse(config, reader); err != nil {
 			return err
 		}
 	}
