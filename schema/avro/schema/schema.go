@@ -3,9 +3,10 @@ package schema
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 var table = map[string]*Schema{}

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"mokapi/config/dynamic"
 	"mokapi/schema/json/schema"
-	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -98,80 +97,64 @@ func (s *Schema) HasProperties() bool {
 }
 
 func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
-	p := &schemaParser{visited: map[*Schema]bool{}, config: config, reader: reader}
-	return p.parse(s)
-}
-
-type schemaParser struct {
-	visited map[*Schema]bool
-	config  *dynamic.Config
-	reader  dynamic.Reader
-}
-
-func (p *schemaParser) parse(s *Schema) error {
 	if s == nil {
 		return nil
 	}
 
-	if p.visited[s] {
-		return nil
-	}
-	p.visited[s] = true
-
 	if s.Id != "" {
-		p.config.OpenScope(s.Id)
-		defer p.config.CloseScope()
+		config.OpenScope(s.Id)
+		defer config.CloseScope()
 	} else {
-		p.config.Scope.OpenIfNeeded(p.config.Info.Path())
+		config.Scope.OpenIfNeeded(config.Info.Path())
 	}
 
 	for _, d := range s.Definitions {
-		if err := p.parse(d); err != nil {
+		if err := d.Parse(config, reader); err != nil {
 			return err
 		}
 	}
 
 	for _, d := range s.Defs {
-		if err := p.parse(d); err != nil {
+		if err := d.Parse(config, reader); err != nil {
 			return err
 		}
 	}
 
 	if s.Anchor != "" {
-		if err := p.config.Scope.SetLexical(s.Anchor, s); err != nil {
+		if err := config.Scope.SetLexical(s.Anchor, s); err != nil {
 			return err
 		}
 	}
 
 	if s.DynamicAnchor != "" {
-		if err := p.config.Scope.SetDynamic(s.DynamicAnchor, s); err != nil {
+		if err := config.Scope.SetDynamic(s.DynamicAnchor, s); err != nil {
 			return err
 		}
 	}
 
 	if !s.skipParse("items") {
-		if err := p.parse(s.Items); err != nil {
+		if err := s.Items.Parse(config, reader); err != nil {
 			return err
 		}
 	}
 
 	if s.Properties != nil && !s.skipParse("properties") {
 		for it := s.Properties.Iter(); it.Next(); {
-			if err := p.parse(it.Value()); err != nil {
+			if err := it.Value().Parse(config, reader); err != nil {
 				return fmt.Errorf("parse schema '%v' failed: %w", it.Key(), err)
 			}
 		}
 	}
 
 	if !s.skipParse("additionalProperties") {
-		if err := p.parse(s.AdditionalProperties); err != nil {
+		if err := s.AdditionalProperties.Parse(config, reader); err != nil {
 			return err
 		}
 	}
 
 	if !s.skipParse("anyOf") {
 		for _, r := range s.AnyOf {
-			if err := p.parse(r); err != nil {
+			if err := r.Parse(config, reader); err != nil {
 				return err
 			}
 		}
@@ -179,7 +162,7 @@ func (p *schemaParser) parse(s *Schema) error {
 
 	if !s.skipParse("allOf") {
 		for _, r := range s.AllOf {
-			if err := p.parse(r); err != nil {
+			if err := r.Parse(config, reader); err != nil {
 				return err
 			}
 		}
@@ -187,14 +170,14 @@ func (p *schemaParser) parse(s *Schema) error {
 
 	if !s.skipParse("oneOf") {
 		for _, r := range s.OneOf {
-			if err := p.parse(r); err != nil {
+			if err := r.Parse(config, reader); err != nil {
 				return err
 			}
 		}
 	}
 
 	if s.Ref != "" {
-		err := dynamic.Resolve(s.Ref, &s.Sub, p.config, p.reader)
+		err := dynamic.Resolve(s.Ref, &s.Sub, config, reader)
 		if err != nil {
 			return err
 		}
@@ -208,7 +191,7 @@ func (p *schemaParser) parse(s *Schema) error {
 	}
 
 	if s.DynamicRef != "" {
-		err := dynamic.ResolveDynamic(s.DynamicRef, &s.Sub, p.config, p.reader)
+		err := dynamic.ResolveDynamic(s.DynamicRef, &s.Sub, config, reader)
 		if err != nil {
 			return err
 		}
@@ -219,125 +202,7 @@ func (p *schemaParser) parse(s *Schema) error {
 }
 
 func (s *Schema) String() string {
-	var sb strings.Builder
-
-	if s.Boolean != nil {
-		return fmt.Sprintf("%v", s.Boolean)
-	}
-
-	if len(s.AnyOf) > 0 {
-		sb.WriteString("any of ")
-		for _, i := range s.AnyOf {
-			if sb.Len() > 7 {
-				sb.WriteString(", ")
-			}
-			sb.WriteString(i.String())
-		}
-		return sb.String()
-	}
-	if len(s.AllOf) > 0 {
-		sb.WriteString("all of ")
-		for _, i := range s.AllOf {
-			if sb.Len() > 7 {
-				sb.WriteString(", ")
-			}
-			sb.WriteString(i.String())
-		}
-		return sb.String()
-	}
-	if len(s.OneOf) > 0 {
-		sb.WriteString("one of ")
-		for _, i := range s.OneOf {
-			if sb.Len() > 7 {
-				sb.WriteString(", ")
-			}
-			sb.WriteString(i.String())
-		}
-		return sb.String()
-	}
-
-	if len(s.Type) > 0 {
-		sb.WriteString(fmt.Sprintf("schema type=%v", s.Type.String()))
-	}
-
-	if len(s.Format) > 0 {
-		sb.WriteString(fmt.Sprintf(" format=%v", s.Format))
-	}
-	if len(s.Pattern) > 0 {
-		sb.WriteString(fmt.Sprintf(" pattern=%v", s.Pattern))
-	}
-	if s.MinLength != nil {
-		sb.WriteString(fmt.Sprintf(" minLength=%v", *s.MinLength))
-	}
-	if s.MaxLength != nil {
-		sb.WriteString(fmt.Sprintf(" maxLength=%v", *s.MaxLength))
-	}
-
-	if s.ExclusiveMinimum != nil {
-		if s.ExclusiveMinimum.IsA() {
-			sb.WriteString(fmt.Sprintf(" exclusiveMinimum=%v", s.ExclusiveMinimum.Value()))
-		} else if s.ExclusiveMinimum.B {
-			sb.WriteString(fmt.Sprintf(" exclusiveMinimum=%v", *s.Minimum))
-		}
-	} else if s.Minimum != nil {
-		sb.WriteString(fmt.Sprintf(" minimum=%v", *s.Minimum))
-	}
-
-	if s.ExclusiveMaximum != nil {
-		if s.ExclusiveMaximum.IsA() {
-			sb.WriteString(fmt.Sprintf(" exclusiveMaximum=%v", s.ExclusiveMaximum.Value()))
-		} else if s.ExclusiveMaximum.B {
-			sb.WriteString(fmt.Sprintf(" exclusiveMaximum=%v", *s.Maximum))
-		}
-	} else if s.Maximum != nil {
-		sb.WriteString(fmt.Sprintf(" maximum=%v", *s.Maximum))
-	}
-
-	if s.MinItems != nil {
-		sb.WriteString(fmt.Sprintf(" minItems=%v", *s.MinItems))
-	}
-	if s.MaxItems != nil {
-		sb.WriteString(fmt.Sprintf(" maxItems=%v", *s.MaxItems))
-	}
-	if s.MinProperties != nil {
-		sb.WriteString(fmt.Sprintf(" minProperties=%v", *s.MinProperties))
-	}
-	if s.MaxProperties != nil {
-		sb.WriteString(fmt.Sprintf(" maxProperties=%v", *s.MaxProperties))
-	}
-	if s.UniqueItems != nil && *s.UniqueItems {
-		sb.WriteString(" unique-items")
-	}
-
-	if s.Type.Includes("object") && s.Properties != nil {
-		var sbProp strings.Builder
-		for _, p := range s.Properties.Keys() {
-			if sbProp.Len() > 0 {
-				sbProp.WriteString(", ")
-			}
-			sbProp.WriteString(fmt.Sprintf("%v", p))
-		}
-		sb.WriteString(fmt.Sprintf(" properties=[%v]", sbProp.String()))
-	}
-	if len(s.Required) > 0 {
-		sb.WriteString(fmt.Sprintf(" required=%v", s.Required))
-	}
-	if s.Type.Includes("object") && !s.IsFreeForm() {
-		sb.WriteString(" free-form=false")
-	}
-
-	if s.Type.Includes("array") && s.Items != nil {
-		sb.WriteString(" items=")
-		sb.WriteString(s.Items.String())
-	}
-
-	if len(s.Title) > 0 {
-		sb.WriteString(fmt.Sprintf(" title=%v", s.Title))
-	} else if len(s.Description) > 0 {
-		sb.WriteString(fmt.Sprintf(" description=%v", s.Description))
-	}
-
-	return strings.TrimSpace(sb.String())
+	return ConvertToJsonSchema(s).String()
 }
 
 func (s *Schema) IsFreeForm() bool {

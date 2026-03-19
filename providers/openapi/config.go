@@ -116,7 +116,7 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 	config.Scope.OpenIfNeeded(config.Info.Path())
 
-	return c.Paths.parse(config, reader)
+	return c.Paths.Parse(config, reader)
 }
 
 func (c *Config) Patch(patch *Config) {

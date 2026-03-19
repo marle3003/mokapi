@@ -22,6 +22,7 @@ type HttpStore struct {
 	m      sync.RWMutex
 	index  search.Index
 	events *events.StoreManager
+	reader dynamic.Reader
 }
 
 type HttpInfo struct {
@@ -33,15 +34,6 @@ type HttpInfo struct {
 type httpHandler struct {
 	http *monitor.Http
 	next openapi.Handler
-}
-
-func NewHttpStore(cfg *static.Config, index search.Index, em *events.StoreManager) *HttpStore {
-	s := &HttpStore{
-		cfg:    cfg,
-		index:  index,
-		events: em,
-	}
-	return s
 }
 
 func (s *HttpStore) Get(name string) *HttpInfo {
@@ -96,7 +88,7 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 	if s.cfg.Api.Search.Enabled {
 		s.removeFromIndex(cfg)
 	}
-	patchHttp(hc)
+	patchHttp(hc, s.reader)
 
 	for path := range cfg.Paths {
 		if _, ok := hc.seenPaths[path]; ok {
@@ -125,7 +117,7 @@ func (s *HttpStore) Remove(c *dynamic.Config) {
 	}
 	delete(hc.configs, c.Info.Url.String())
 
-	patchHttp(hc)
+	patchHttp(hc, s.reader)
 	if s.cfg.Api.Search.Enabled {
 		s.addToIndex(hc.Config)
 	}
@@ -147,7 +139,7 @@ func (c *HttpInfo) Handler(http *monitor.Http, emitter common.EventEmitter, eh e
 	return &httpHandler{http: http, next: h}
 }
 
-func patchHttp(c *HttpInfo) {
+func patchHttp(c *HttpInfo, reader dynamic.Reader) {
 	if len(c.configs) == 0 {
 		c.Config = nil
 		return
@@ -170,6 +162,13 @@ func patchHttp(c *HttpInfo) {
 		p := getHttpConfig(c.configs[k])
 		log.Infof("applying patch for %s: %s", c.Info.Name, k)
 		r.Patch(p)
+	}
+
+	if len(c.configs) > 1 {
+		err := r.Parse(&dynamic.Config{Data: r}, reader)
+		if err != nil {
+			log.Errorf("failed to parse config: %s", err)
+		}
 	}
 
 	if len(r.Servers) == 0 {

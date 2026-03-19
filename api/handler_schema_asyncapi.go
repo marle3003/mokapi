@@ -55,7 +55,7 @@ func getAsyncApiExample(w http.ResponseWriter, r *http.Request, cfg *asyncapi3.C
 	}
 
 	var s *jsonSchema.Schema
-	switch t := msg.Payload.Value.Schema.(type) {
+	switch t := msg.Payload.Value.(type) {
 	case *openApiSchema.Schema:
 		s = openApiSchema.ConvertToJsonSchema(t)
 	case *avro.Schema:
@@ -79,7 +79,7 @@ func getAsyncApiExample(w http.ResponseWriter, r *http.Request, cfg *asyncapi3.C
 
 	ct := media.ParseContentType(msg.ContentType)
 	var data []byte
-	switch t := msg.Payload.Value.Schema.(type) {
+	switch t := msg.Payload.Value.(type) {
 	case *openApiSchema.Schema:
 		data, err = t.Marshal(rnd, ct)
 	case *avro.Schema:

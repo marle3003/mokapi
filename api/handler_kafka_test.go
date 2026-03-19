@@ -57,7 +57,7 @@ func TestHandler_Kafka(t *testing.T) {
 		{
 			name: "get kafka services",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				_, _ = app.Kafka.Add(&dynamic.Config{
 					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
 					Data: asyncapi3test.NewConfig(
@@ -91,7 +91,7 @@ func TestHandler_Kafka(t *testing.T) {
 		{
 			name: "get specific",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				cfg := &dynamic.Config{
 					Info: dynamictest.NewConfigInfo(),
 					Data: asyncapi3test.NewConfig(
@@ -221,7 +221,7 @@ func TestHandler_Kafka(t *testing.T) {
 		{
 			name: "get specific with group",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				app.Kafka.Set("foo", getKafkaInfoWithGroup(asyncapi3test.NewConfig(
 					asyncapi3test.WithInfo("foo", "bar", "1.0"),
 					asyncapi3test.WithServer("foo", "kafka", "foo.bar"),
@@ -246,7 +246,7 @@ func TestHandler_Kafka(t *testing.T) {
 		{
 			name: "get specific with group no generation",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				app.Kafka.Set("foo", getKafkaInfoWithGroup(asyncapi3test.NewConfig(
 					asyncapi3test.WithInfo("foo", "bar", "1.0"),
 					asyncapi3test.WithServer("foo", "kafka", "foo.bar"),
@@ -273,7 +273,7 @@ func TestHandler_Kafka(t *testing.T) {
 					return t1
 				}
 
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				app.Kafka.Set("foo", getKafkaInfoWithGroup(asyncapi3test.NewConfig(
 					asyncapi3test.WithInfo("foo", "bar", "1.0"),
 					asyncapi3test.WithServer("foo", "kafka", "foo.bar"),
@@ -321,7 +321,7 @@ func TestHandler_Kafka(t *testing.T) {
 		{
 			name: "get specific with topic and openapi schema",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				app.Kafka.Set("foo", getKafkaInfo(asyncapi3test.NewConfig(
 					asyncapi3test.WithInfo("foo", "bar", "1.0"),
 					asyncapi3test.WithChannel("foo",
@@ -369,7 +369,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 		{
 			name: "get kafka topics but empty",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				_, _ = app.Kafka.Add(&dynamic.Config{
 					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
 					Data: asyncapi3test.NewConfig(
@@ -394,7 +394,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 		{
 			name: "get kafka topics with one topic",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				_, _ = app.Kafka.Add(&dynamic.Config{
 					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
 					Data: asyncapi3test.NewConfig(
@@ -424,7 +424,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 		{
 			name: "get specific kafka topic",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				_, _ = app.Kafka.Add(&dynamic.Config{
 					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
 					Data: asyncapi3test.NewConfig(
@@ -454,7 +454,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 		{
 			name: "get specific kafka topic but not found",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				_, _ = app.Kafka.Add(&dynamic.Config{
 					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
 					Data: asyncapi3test.NewConfig(
@@ -482,7 +482,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 		{
 			name: "produce kafka message into topic",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 
 				msg := asyncapi3test.NewMessage(
 					asyncapi3test.WithContentType("application/json"),
@@ -532,7 +532,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 		{
 			name: "produce kafka message into topic using binary",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				_, _ = app.Kafka.Add(&dynamic.Config{
 					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
 					Data: asyncapi3test.NewConfig(
@@ -571,7 +571,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 		{
 			name: "produce invalid kafka message into topic",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 
 				msg := asyncapi3test.NewMessage(
 					asyncapi3test.WithContentType("application/json"),
@@ -627,7 +627,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 		{
 			name: "get kafka partitions",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				_, _ = app.Kafka.Add(&dynamic.Config{
 					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
 					Data: asyncapi3test.NewConfig(
@@ -656,7 +656,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 		{
 			name: "get specific kafka partition",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				_, _ = app.Kafka.Add(&dynamic.Config{
 					Info: dynamic.ConfigInfo{Url: try.MustUrl("kafka.yaml")},
 					Data: asyncapi3test.NewConfig(
@@ -685,7 +685,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 		{
 			name: "produce kafka message into specific partition",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 
 				msg := asyncapi3test.NewMessage(
 					asyncapi3test.WithContentType("application/json"),
@@ -739,7 +739,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 		{
 			name: "produce kafka message into specific partition using XML",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 
 				msg := asyncapi3test.NewMessage(
 					asyncapi3test.WithContentType("application/xml"),
@@ -801,7 +801,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 		{
 			name: "produce kafka message into specific partition using plain XML string",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 
 				msg := asyncapi3test.NewMessage(
 					asyncapi3test.WithContentType("application/xml"),
@@ -853,7 +853,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 		{
 			name: "produce invalid kafka message into specific partition using plain XML string",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 
 				msg := asyncapi3test.NewMessage(
 					asyncapi3test.WithContentType("application/xml"),
@@ -912,7 +912,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 		{
 			name: "get records",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 
 				msg := asyncapi3test.NewMessage(
 					asyncapi3test.WithContentType("application/json"),
@@ -970,7 +970,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 		{
 			name: "get specific record",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 
 				msg := asyncapi3test.NewMessage(
 					asyncapi3test.WithContentType("application/json"),
@@ -1035,7 +1035,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 }
 
 func TestHandler_Kafka_NotFound(t *testing.T) {
-	h := api.New(runtime.New(&static.Config{}), static.Api{})
+	h := api.New(runtime.New(&static.Config{}, &dynamictest.Reader{}), static.Api{})
 
 	try.Handler(t,
 		http.MethodGet,

@@ -47,7 +47,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
 					Enabled:  true,
 					InMemory: true,
-				}}})
+				}}}, &dynamictest.Reader{})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
 				app.AddHttp(toConfig(cfg))
@@ -67,7 +67,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
 					Enabled:  true,
 					InMemory: true,
-				}}})
+				}}}, &dynamictest.Reader{})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
 				app.AddHttp(toConfig(cfg))
@@ -87,7 +87,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
 					Enabled:  true,
 					InMemory: true,
-				}}})
+				}}}, &dynamictest.Reader{})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
 				app.AddHttp(toConfig(cfg))
@@ -109,7 +109,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
 					Enabled:  true,
 					InMemory: true,
-				}}})
+				}}}, &dynamictest.Reader{})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
 				app.AddHttp(toConfig(cfg))
@@ -139,7 +139,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
 					Enabled:  true,
 					InMemory: true,
-				}}})
+				}}}, &dynamictest.Reader{})
 
 				h := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
 				app.AddHttp(toConfig(h))
@@ -169,7 +169,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 				app := runtime.New(&static.Config{Api: static.Api{Search: static.Search{
 					Enabled:  true,
 					InMemory: true,
-				}}})
+				}}}, &dynamictest.Reader{})
 
 				h := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
 				app.AddHttp(toConfig(h))

@@ -30,6 +30,12 @@ func NewBool(b bool) *schema.Schema {
 	return s
 }
 
+func WithDescription(desc string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Description = desc
+	}
+}
+
 func WithProperty(name string, ps *schema.Schema) SchemaOptions {
 	return func(s *schema.Schema) {
 		if s.Properties == nil {
@@ -60,6 +66,12 @@ func WithPatternProperty(pattern string, ps *schema.Schema) SchemaOptions {
 func WithItems(typeName string, opts ...SchemaOptions) SchemaOptions {
 	return func(s *schema.Schema) {
 		s.Items = New(typeName, opts...)
+	}
+}
+
+func WithItemsRef(ref string) SchemaOptions {
+	return func(s *schema.Schema) {
+		s.Items = &schema.Schema{Ref: ref}
 	}
 }
 

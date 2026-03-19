@@ -33,3 +33,7 @@ func Register(header string, checkVersion func(v version.Version) bool, c interf
 		checkVersion: checkVersion,
 		configType:   val.Type()})
 }
+
+func Reset() {
+	configTypes = nil
+}

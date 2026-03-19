@@ -19,7 +19,7 @@ type MediaType struct {
 	Encoding    map[string]*Encoding `yaml:"encoding,omitempty" json:"encoding,omitempty"`
 }
 
-func (m *MediaType) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (m *MediaType) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if m == nil {
 		return nil
 	}
@@ -62,7 +62,7 @@ func (m *MediaType) patch(patch *MediaType) {
 	}
 }
 
-func (m *MediaType) Parse(b []byte, contentType media.ContentType) (interface{}, error) {
+func (m *MediaType) ParseData(b []byte, contentType media.ContentType) (interface{}, error) {
 	if !isDefaultContentType(m.ContentType) {
 		if !contentType.IsDerivedFrom(m.ContentType) {
 			return nil, fmt.Errorf("content type '%v' does not match: %v", m.ContentType, contentType)

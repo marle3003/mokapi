@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/kafka/kafkatest"
 	"mokapi/kafka/metaData"
@@ -33,7 +34,7 @@ func TestKafkaServer(t *testing.T) {
 	)
 
 	cfg := &static.Config{}
-	m := NewKafkaManager(nil, runtime.New(cfg))
+	m := NewKafkaManager(nil, runtime.New(cfg, &dynamictest.Reader{}))
 	defer m.Stop()
 	m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}, Data: c}})
 
@@ -351,7 +352,7 @@ func TestKafkaServer_Update(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := &static.Config{}
-			m := NewKafkaManager(nil, runtime.New(cfg))
+			m := NewKafkaManager(nil, runtime.New(cfg, &dynamictest.Reader{}))
 			defer m.Stop()
 
 			tc.fn(t, m)
