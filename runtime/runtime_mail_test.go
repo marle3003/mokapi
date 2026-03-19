@@ -2,8 +2,8 @@ package runtime_test
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/mail"
@@ -15,6 +15,8 @@ import (
 	"mokapi/smtp/smtptest"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestApp_AddSmtp(t *testing.T) {
@@ -61,7 +63,7 @@ func TestApp_AddSmtp(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := &static.Config{}
-			app := runtime.New(cfg)
+			app := runtime.New(cfg, &dynamictest.Reader{})
 			tc.test(t, app)
 		})
 	}
@@ -128,7 +130,7 @@ func TestApp_AddSmtp_Patching(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := &static.Config{}
-			app := runtime.New(cfg)
+			app := runtime.New(cfg, &dynamictest.Reader{})
 			for _, c := range tc.configs {
 				app.Mail.Add(c)
 			}

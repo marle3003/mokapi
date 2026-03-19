@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/providers/openapi"
@@ -28,7 +29,7 @@ func TestHttpServers_Monitor(t *testing.T) {
 	store, err := cert.NewStore(cfg)
 	require.NoError(t, err)
 
-	app := runtime.New(cfg)
+	app := runtime.New(cfg, &dynamictest.Reader{})
 	m := NewHttpManager(&engine.Engine{}, store, app)
 	defer m.Stop()
 
@@ -172,7 +173,7 @@ func TestHttpManager_Update(t *testing.T) {
 			require.NoError(t, err)
 
 			cfg := &static.Config{}
-			m := NewHttpManager(&engine.Engine{}, store, runtime.New(cfg))
+			m := NewHttpManager(&engine.Engine{}, store, runtime.New(cfg, &dynamictest.Reader{}))
 			defer m.Stop()
 
 			data.test(t, m, hook)

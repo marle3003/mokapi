@@ -12,12 +12,13 @@ import (
 	jsonSchema "mokapi/schema/json/schema"
 	"reflect"
 
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
 type SchemaRef struct {
 	dynamic.Reference
-	Value *MultiSchemaFormat
+	Value Schema
 }
 
 type Schema interface {
@@ -25,8 +26,8 @@ type Schema interface {
 }
 
 type MultiSchemaFormat struct {
-	Format string `yaml:"schemaFormat,omitempty" json:"schemaFormat,omitempty"`
-	Schema Schema `yaml:"schema" json:"schema"`
+	Format string     `yaml:"schemaFormat,omitempty" json:"schemaFormat,omitempty"`
+	Schema *SchemaRef `yaml:"schema" json:"schema"`
 }
 
 func (r *SchemaRef) UnmarshalYAML(node *yaml.Node) error {
@@ -45,7 +46,7 @@ func (r *SchemaRef) UnmarshalYAML(node *yaml.Node) error {
 	var s *jsonSchema.Schema
 	err = node.Decode(&s)
 	if err == nil {
-		r.Value = &MultiSchemaFormat{Schema: s}
+		r.Value = s
 	}
 	return err
 }
@@ -53,8 +54,8 @@ func (r *SchemaRef) UnmarshalYAML(node *yaml.Node) error {
 func (r *SchemaRef) UnmarshalJSON(b []byte) error {
 	d := json.NewDecoder(bytes.NewReader(b))
 
-	err := d.Decode(&r.Ref)
-	if err == nil {
+	err := d.Decode(&r.Reference)
+	if err == nil && len(r.Ref) > 0 {
 		return nil
 	}
 
@@ -70,33 +71,39 @@ func (r *SchemaRef) UnmarshalJSON(b []byte) error {
 	var s *jsonSchema.Schema
 	err = d.Decode(&s)
 	if err == nil {
-		r.Value = &MultiSchemaFormat{Schema: s}
+		r.Value = s
 	}
 	return err
 }
 
 func (r *SchemaRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		err := dynamic.Resolve(r.Ref, &r.Value, config, reader)
+		var resolved *SchemaRef
+		err := dynamic.Resolve(r.Ref, &resolved, config, reader)
 		if err != nil {
-			type t struct {
-				s *jsonSchema.Schema
-			}
-			s := &t{}
-			err = dynamic.Resolve(r.Ref, &s.s, config, reader)
+			s := &SchemaRef{Value: &jsonSchema.Schema{}}
+			err = dynamic.Resolve(r.Ref, &s.Value, config, reader)
 			if err != nil {
 				return err
 			}
-			r.Value = &MultiSchemaFormat{Schema: s.s}
+			r.Value = s.Value
+		} else {
+			r.Value = resolved.Value
 		}
 		return nil
 	}
-
-	return r.Value.parse(config, reader)
+	return r.Value.Parse(config, reader)
 }
 
-func (m *MultiSchemaFormat) Marshal(v any, ct media.ContentType) ([]byte, error) {
-	switch s := m.Schema.(type) {
+func (r *SchemaRef) ConvertTo(i interface{}) (interface{}, error) {
+	if s, ok := r.Value.(*jsonSchema.Schema); ok {
+		return s, nil
+	}
+	return nil, fmt.Errorf("unsupported schema convert %T: %T", r.Value, i)
+}
+
+func (r *SchemaRef) Marshal(v any, ct media.ContentType) ([]byte, error) {
+	switch s := r.Value.(type) {
 	case *jsonSchema.Schema:
 		e := encoding.NewEncoder(s)
 		return e.Write(v, ct)
@@ -104,12 +111,36 @@ func (m *MultiSchemaFormat) Marshal(v any, ct media.ContentType) ([]byte, error)
 		return s.Marshal(v)
 	case *openapi.Schema:
 		return s.Marshal(v, ct)
+	case *SchemaRef:
+		return s.Marshal(v, ct)
+	case *MultiSchemaFormat:
+		return s.Schema.Marshal(v, ct)
 	default:
 		return nil, fmt.Errorf("unsupported schema type: %T", v)
 	}
 }
 
-func (m *MultiSchemaFormat) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (r *SchemaRef) GetSchema() (Schema, error) {
+	if r.Value == nil {
+		return nil, nil
+	}
+
+	switch s := r.Value.(type) {
+	case *jsonSchema.Schema, *avro.Schema, *openapi.Schema:
+		return s, nil
+	case *SchemaRef:
+		return r.Value, nil
+	case *MultiSchemaFormat:
+		return s.Schema.GetSchema()
+	default:
+		return nil, fmt.Errorf("unsupported schema type: %T", s)
+	}
+}
+
+func (m *MultiSchemaFormat) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	if m == nil {
+		return nil
+	}
 	if m.Schema != nil {
 		return m.Schema.Parse(config, reader)
 	}
@@ -119,7 +150,7 @@ func (m *MultiSchemaFormat) parse(config *dynamic.Config, reader dynamic.Reader)
 func (m *MultiSchemaFormat) ConvertTo(i interface{}) (interface{}, error) {
 	switch i.(type) {
 	case *jsonSchema.Schema:
-		switch s := m.Schema.(type) {
+		switch s := m.Schema.Value.(type) {
 		case *jsonSchema.Schema:
 			return m.Schema, nil
 		case *openapi.Schema:
@@ -128,11 +159,11 @@ func (m *MultiSchemaFormat) ConvertTo(i interface{}) (interface{}, error) {
 			return avro.ConvertToJsonSchema(s), nil
 		}
 	case *openapi.Schema:
-		if _, ok := m.Schema.(*openapi.Schema); ok {
+		if _, ok := m.Schema.Value.(*openapi.Schema); ok {
 			return m.Schema, nil
 		}
 	case *avro.Schema:
-		if _, ok := m.Schema.(*avro.Schema); ok {
+		if _, ok := m.Schema.Value.(*avro.Schema); ok {
 			return m.Schema, nil
 		}
 	}
@@ -177,9 +208,22 @@ func (m *MultiSchemaFormat) UnmarshalJSON(b []byte) error {
 		}
 	}
 
-	m.Schema, err = unmarshal(raw, m.Format)
+	ref := &SchemaRef{}
+	err = json.Unmarshal(raw, &ref)
+	if err == nil && ref.Ref != "" {
+		m.Schema = ref
+		return nil
+	}
 
-	return err
+	var s Schema
+	s, err = unmarshal(raw, m.Format)
+	if err != nil {
+		return err
+	}
+	if s != nil {
+		m.Schema = &SchemaRef{Value: s}
+	}
+	return nil
 }
 
 func (m *MultiSchemaFormat) UnmarshalYAML(node *yaml.Node) error {
@@ -202,28 +246,39 @@ func (m *MultiSchemaFormat) UnmarshalYAML(node *yaml.Node) error {
 		return nil
 	}
 
+	if schemaNode.Kind != yaml.MappingNode {
+		return fmt.Errorf("unexpected yaml node kind: %v", node.Kind)
+	}
+
+	ref := &SchemaRef{}
+	err := schemaNode.Decode(&ref)
+	if err == nil && ref.Ref != "" {
+		m.Schema = ref
+		return nil
+	}
+
 	switch {
 	case isOpenApi(format):
 		var s *openapi.Schema
-		err := schemaNode.Decode(&s)
+		err = schemaNode.Decode(&s)
 		if err != nil {
 			return err
 		}
-		m.Schema = s
+		m.Schema = &SchemaRef{Value: s}
 	case isAvro(format):
 		var ref *AvroRef
-		err := schemaNode.Decode(&ref)
+		err = schemaNode.Decode(&ref)
 		if err != nil {
 			return err
 		}
-		m.Schema = ref
+		m.Schema = &SchemaRef{Value: ref}
 	default:
 		var s *jsonSchema.Schema
-		err := schemaNode.Decode(&s)
+		err = schemaNode.Decode(&s)
 		if err != nil {
 			return err
 		}
-		m.Schema = s
+		m.Schema = &SchemaRef{Value: s}
 	}
 
 	return nil
@@ -236,11 +291,36 @@ func (r *SchemaRef) Patch(patch *SchemaRef) {
 	if r.Value == nil {
 		r.Value = patch.Value
 	} else {
-		r.Value.patch(patch.Value)
+		v1 := reflect.ValueOf(r.Value)
+		v2 := reflect.ValueOf(patch.Value)
+
+		// if patch has different schema type then simple overwrite
+		if v1.Type() != v2.Type() {
+			r.Value = patch.Value
+		} else {
+			switch s := r.Value.(type) {
+			case *openapi.Schema:
+				p, ok := patch.Value.(*openapi.Schema)
+				if !ok {
+					log.Errorf("unexpected patch type: %T", patch.Value)
+				} else {
+					s.Patch(p)
+				}
+			case *avro.Schema:
+				log.Errorf("patch not supported for Avro schema")
+			case *jsonSchema.Schema:
+				p, ok := patch.Value.(*jsonSchema.Schema)
+				if !ok {
+					log.Errorf("unexpected patch type: %T", patch.Value)
+				} else {
+					s.Patch(p)
+				}
+			}
+		}
 	}
 }
 
-func (m *MultiSchemaFormat) patch(patch *MultiSchemaFormat) {
+func (m *MultiSchemaFormat) Patch(patch *MultiSchemaFormat) {
 	if patch == nil {
 		return
 	}
@@ -254,19 +334,7 @@ func (m *MultiSchemaFormat) patch(patch *MultiSchemaFormat) {
 	if m.Schema == nil {
 		m.Schema = patch.Schema
 	} else {
-		v1 := reflect.ValueOf(m.Schema)
-		v2 := reflect.ValueOf(patch.Schema)
-
-		// if patch has different schema type then simple overwrite
-		if v1.Type() != v2.Type() {
-			m.Schema = patch.Schema
-		} else {
-			switch s := m.Schema.(type) {
-			case *avro.Schema:
-			case *jsonSchema.Schema:
-				s.Patch(patch.Schema.(*jsonSchema.Schema))
-			}
-		}
+		m.Schema.Patch(patch.Schema)
 	}
 }
 

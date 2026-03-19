@@ -66,7 +66,7 @@ func TestHandler_Http(t *testing.T) {
 		{
 			name: "get http service info",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				cfg := &dynamic.Config{
 					Info: dynamictest.NewConfigInfo(), Data: openapitest.NewConfig("3.0.0",
 						openapitest.WithInfo("foo", "1.0", "bar"),
@@ -328,7 +328,7 @@ func TestHandler_Http(t *testing.T) {
 
 func TestHandler_Http_NotFound(t *testing.T) {
 	cfg := &static.Config{}
-	h := New(runtime.New(cfg), static.Api{})
+	h := New(runtime.New(cfg, &dynamictest.Reader{}), static.Api{})
 
 	try.Handler(t,
 		http.MethodGet,

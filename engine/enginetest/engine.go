@@ -2,6 +2,7 @@ package enginetest
 
 import (
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/engine/common"
@@ -22,7 +23,7 @@ func NewEngine(opts ...engine.Options) *engine.Engine {
 			return loader.Load(file, host)
 		})),
 		engine.WithLogger(&Logger{}),
-		engine.WithApp(runtime.New(&static.Config{})),
+		engine.WithApp(runtime.New(&static.Config{}, &dynamictest.Reader{})),
 	}, opts...)
 	return engine.NewEngine(opts...)
 }

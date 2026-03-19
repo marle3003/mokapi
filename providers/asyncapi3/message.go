@@ -70,54 +70,71 @@ func (r *MessageTraitRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
 }
 
-func (r *MessageRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
-	if len(r.Ref) > 0 {
-		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
+func (r *MessageRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	if r == nil {
+		return nil
 	}
+	if r.Ref != "" {
+		var resolved *MessageRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+			return err
+		}
+		r.Value = resolved.Value
+		return nil
+	}
+	return r.Value.Parse(config, reader)
+}
 
-	if r.Value == nil {
+func (m *Message) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	if m == nil {
 		return nil
 	}
 
-	if r.Value.Payload != nil {
-		if err := r.Value.Payload.Parse(config, reader); err != nil {
+	if m.Payload != nil {
+		if err := m.Payload.Parse(config, reader); err != nil {
 			return err
 		}
 	}
 
-	if r.Value.Headers != nil {
-		if err := r.Value.Headers.Parse(config, reader); err != nil {
+	if m.Headers != nil {
+		if err := m.Headers.Parse(config, reader); err != nil {
 			return err
 		}
 	}
 
-	if r.Value.CorrelationId != nil {
-		if err := r.Value.CorrelationId.parse(config, reader); err != nil {
+	if m.CorrelationId != nil {
+		if err := m.CorrelationId.Parse(config, reader); err != nil {
 			return err
 		}
 	}
 
-	for _, trait := range r.Value.Traits {
-		if err := trait.parse(config, reader); err != nil {
+	for _, trait := range m.Traits {
+		if err := trait.Parse(config, reader); err != nil {
 			return err
 		}
-		r.Value.applyTrait(trait.Value)
+		m.applyTrait(trait.Value)
 	}
 
-	if r.Value.ContentType == "" {
+	if m.ContentType == "" {
 		cfg, ok := config.Data.(*Config)
 		if ok {
-			r.Value.ContentType = cfg.DefaultContentType
+			m.ContentType = cfg.DefaultContentType
 		}
-		if r.Value.ContentType == "" {
+		if m.ContentType == "" {
 			log.Warnf("content type is missing, using default %s", DefaultContentType)
-			r.Value.ContentType = DefaultContentType
+			m.ContentType = DefaultContentType
 		}
 	}
 
-	if r.Value.Bindings.Kafka.Key != nil {
-		err := r.Value.Bindings.Kafka.Key.Parse(config, reader)
+	if m.Bindings.Kafka.Key != nil {
+		err := m.Bindings.Kafka.Key.Parse(config, reader)
 		if err != nil {
+			return err
+		}
+	}
+
+	for _, doc := range m.ExternalDocs {
+		if err := doc.Parse(config, reader); err != nil {
 			return err
 		}
 	}
@@ -125,9 +142,14 @@ func (r *MessageRef) parse(config *dynamic.Config, reader dynamic.Reader) error 
 	return nil
 }
 
-func (r *MessageTraitRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (r *MessageTraitRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
+		var resolved *MessageTraitRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+			return err
+		}
+		r.Value = resolved.Value
+		return nil
 	}
 
 	if r.Value == nil {

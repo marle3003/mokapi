@@ -2,6 +2,7 @@ package runtime_test
 
 import (
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
@@ -52,10 +53,11 @@ func TestApp_AddKafka(t *testing.T) {
 			name: "event store available",
 			test: func(t *testing.T, app *runtime.App) {
 				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""))
-				app.Kafka.Add(getConfig("foo.bar", c), enginetest.NewEngine())
+				_, err := app.Kafka.Add(getConfig("foo.bar", c), enginetest.NewEngine())
+				require.NoError(t, err)
 
 				require.NotNil(t, app.Kafka.Get("foo"))
-				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("kafka").WithName("foo"))
+				err = app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("kafka").WithName("foo"))
 				require.NoError(t, err, "event store should be available")
 			},
 		},
@@ -63,10 +65,11 @@ func TestApp_AddKafka(t *testing.T) {
 			name: "event store for topic available",
 			test: func(t *testing.T, app *runtime.App) {
 				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""), asyncapi3test.WithChannel("bar"))
-				app.Kafka.Add(getConfig("foo.bar", c), enginetest.NewEngine())
+				_, err := app.Kafka.Add(getConfig("foo.bar", c), enginetest.NewEngine())
+				require.NoError(t, err)
 
 				require.NotNil(t, app.Kafka.Get("foo"))
-				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("kafka").WithName("foo").With("path", "bar"))
+				err = app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("kafka").WithName("foo").With("path", "bar"))
 				require.NoError(t, err, "event store should be available")
 			},
 		},
@@ -74,11 +77,13 @@ func TestApp_AddKafka(t *testing.T) {
 			name: "event store for topic available after patching",
 			test: func(t *testing.T, app *runtime.App) {
 				c := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""), asyncapi3test.WithChannel("foo"))
-				app.Kafka.Add(getConfig("foo.bar", c), enginetest.NewEngine())
+				eng := enginetest.NewEngine()
+				_, err := app.Kafka.Add(getConfig("foo.bar", c), eng)
+				require.NoError(t, err)
 
 				patch := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""), asyncapi3test.WithChannel("bar"))
-				ki := app.Kafka.Get(patch.Info.Name)
-				ki.AddConfig(getConfig("foo.patch", patch))
+				_, err = app.Kafka.Add(getConfig("foo.patch", patch), eng)
+				require.NoError(t, err)
 
 				require.NotNil(t, app.Kafka.Get("foo"))
 
@@ -133,7 +138,7 @@ func TestApp_AddKafka(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := &static.Config{}
-			app := runtime.New(cfg)
+			app := runtime.New(cfg, &dynamictest.Reader{})
 			tc.test(t, app)
 		})
 	}
@@ -211,14 +216,43 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 				require.Equal(t, float64(1), v)
 			},
 		},
+		{
+			name: "patching a referenced object",
+			configs: []*dynamic.Config{
+				getConfig("https://a.io/a", asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "foo", ""),
+					asyncapi3test.WithChannel("bar",
+						asyncapi3test.UseMessage("bar", &asyncapi3.MessageRef{Reference: dynamic.Reference{Ref: "#/components/messages/bar"}}),
+					),
+					asyncapi3test.WithComponentMessage("bar", &asyncapi3.Message{
+						Summary: "original",
+					}),
+				)),
+				getConfig("https://mokapi.io/b", asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", ""),
+					asyncapi3test.WithComponentMessage("bar", &asyncapi3.Message{
+						Summary: "patch",
+					}),
+				)),
+			},
+			test: func(t *testing.T, app *runtime.App) {
+				info := app.Kafka.Get("foo")
+				ch := info.Channels["bar"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["bar"]
+				require.NotNil(t, msg)
+				require.Equal(t, "patch", msg.Value.Summary)
+			},
+		},
 	}
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := &static.Config{}
-			app := runtime.New(cfg)
+			app := runtime.New(cfg, &dynamictest.Reader{})
 			for _, c := range tc.configs {
-				app.Kafka.Add(c, enginetest.NewEngine())
+				_, err := app.Kafka.Add(c, enginetest.NewEngine())
+				require.NoError(t, err)
 			}
 			tc.test(t, app)
 		})

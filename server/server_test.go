@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"context"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine"
 	"mokapi/runtime"
@@ -19,7 +20,7 @@ func TestServer(t *testing.T) {
 	pool := safe.NewPool(context.Background())
 	cfg := &static.Config{}
 
-	app := runtime.New(cfg)
+	app := runtime.New(cfg, &dynamictest.Reader{})
 	watcher := server.NewConfigWatcher(cfg)
 	kafka := &server.KafkaManager{}
 	http := &server.HttpManager{}

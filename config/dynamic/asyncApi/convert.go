@@ -70,7 +70,7 @@ func convertChannels(cfg *asyncapi3.Config, channels map[string]*ChannelRef) err
 			cfg.Channels[name] = &asyncapi3.ChannelRef{Reference: dynamic.Reference{Ref: orig.Ref}}
 		}
 		if orig.Value != nil {
-			ch, err := convertChannel(name, orig.Value, cfg)
+			ch, err := convertChannel(name, orig, cfg)
 			if err != nil {
 				return err
 			}
@@ -82,55 +82,61 @@ func convertChannels(cfg *asyncapi3.Config, channels map[string]*ChannelRef) err
 	return nil
 }
 
-func convertChannel(name string, c *Channel, config *asyncapi3.Config) (*asyncapi3.ChannelRef, error) {
-	target := &asyncapi3.Channel{
-		Address:     name,
-		Summary:     "",
-		Description: c.Description,
-		Messages:    map[string]*asyncapi3.MessageRef{},
-		Bindings:    convertChannelBinding(c.Bindings),
-	}
-	ref := &asyncapi3.ChannelRef{Value: target}
+func convertChannel(name string, c *ChannelRef, config *asyncapi3.Config) (*asyncapi3.ChannelRef, error) {
+	result := &asyncapi3.ChannelRef{Reference: dynamic.Reference{Ref: c.Ref}}
 
-	for _, server := range c.Servers {
-		target.Servers = append(
-			target.Servers,
-			&asyncapi3.ServerRef{Reference: dynamic.Reference{
-				Ref: fmt.Sprintf("#/servers/%s", server),
-			}})
-	}
+	if c.Value != nil {
+		target := &asyncapi3.Channel{
+			Address:     name,
+			Summary:     "",
+			Description: c.Value.Description,
+			Messages:    map[string]*asyncapi3.MessageRef{},
+			Bindings:    convertChannelBinding(c.Value.Bindings),
+		}
+		ref := &asyncapi3.ChannelRef{Value: target}
 
-	if err := convertParameters(target, c.Parameters); err != nil {
-		return nil, err
-	}
+		for _, server := range c.Value.Servers {
+			target.Servers = append(
+				target.Servers,
+				&asyncapi3.ServerRef{Reference: dynamic.Reference{
+					Ref: fmt.Sprintf("#/servers/%s", server),
+				}})
+		}
 
-	if c.Publish != nil && c.Subscribe != nil && c.Publish.Message != nil && c.Subscribe.Message != nil {
-		if c.Publish.Message.Ref == c.Subscribe.Message.Ref {
-			msg := convertMessage(c.Publish.Message)
-			msgName := addMessage(target, msg, "", "", c.Publish.Message.Ref)
-			if msgName != "" {
-				addOperation(msgName, "send", c.Publish, ref, msg, config)
-				addOperation(msgName, "receive", c.Subscribe, ref, msg, config)
+		if err := convertParameters(target, c.Value.Parameters); err != nil {
+			return nil, err
+		}
+
+		if c.Value.Publish != nil && c.Value.Subscribe != nil && c.Value.Publish.Message != nil && c.Value.Subscribe.Message != nil {
+			if c.Value.Publish.Message.Ref == c.Value.Subscribe.Message.Ref {
+				msg := convertMessage(c.Value.Publish.Message)
+				msgName := addMessage(target, msg, "", "", c.Value.Publish.Message.Ref)
+				if msgName != "" {
+					addOperation(msgName, "send", c.Value.Publish, ref, msg, config)
+					addOperation(msgName, "receive", c.Value.Subscribe, ref, msg, config)
+				}
+			}
+		} else {
+			if c.Value.Publish != nil {
+				msg := convertMessage(c.Value.Publish.Message)
+				msgName := addMessage(target, msg, c.Value.Publish.OperationId, c.Value.Publish.Message.Ref, "publish")
+				if msgName != "" {
+					addOperation(msgName, "send", c.Value.Publish, ref, msg, config)
+				}
+			}
+			if c.Value.Subscribe != nil {
+				msg := convertMessage(c.Value.Subscribe.Message)
+				msgName := addMessage(target, msg, c.Value.Subscribe.OperationId, c.Value.Subscribe.Message.Ref, "subscribe")
+				if msgName != "" {
+					addOperation(msgName, "receive", c.Value.Subscribe, ref, msg, config)
+				}
 			}
 		}
-	} else {
-		if c.Publish != nil {
-			msg := convertMessage(c.Publish.Message)
-			msgName := addMessage(target, msg, c.Publish.OperationId, c.Publish.Message.Ref, "publish")
-			if msgName != "" {
-				addOperation(msgName, "send", c.Publish, ref, msg, config)
-			}
-		}
-		if c.Subscribe != nil {
-			msg := convertMessage(c.Subscribe.Message)
-			msgName := addMessage(target, msg, c.Subscribe.OperationId, c.Subscribe.Message.Ref, "subscribe")
-			if msgName != "" {
-				addOperation(msgName, "receive", c.Subscribe, ref, msg, config)
-			}
-		}
+
+		result.Value = target
 	}
 
-	return &asyncapi3.ChannelRef{Value: target}, nil
+	return result, nil
 }
 
 func addOperation(msgName, action string, op *Operation, ch *asyncapi3.ChannelRef, msg *asyncapi3.MessageRef, config *asyncapi3.Config) {
@@ -200,16 +206,10 @@ func convertMessage(msg *MessageRef) *asyncapi3.MessageRef {
 		}
 
 		if msg.Value.Payload != nil && msg.Value.Payload.Value != nil {
-			target.Value.Payload = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{
-				Format: msg.Value.Payload.Value.Format,
-				Schema: msg.Value.Payload.Value.Schema,
-			}}
+			target.Value.Payload = msg.Value.Payload
 		}
 		if msg.Value.Headers != nil && msg.Value.Headers.Value != nil {
-			target.Value.Headers = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{
-				Format: msg.Value.Headers.Value.Format,
-				Schema: msg.Value.Headers.Value.Schema,
-			}}
+			target.Value.Headers = msg.Value.Headers
 		}
 		for _, orig := range msg.Value.Traits {
 			trait := &asyncapi3.MessageTraitRef{}
@@ -236,22 +236,9 @@ func convertMessageTrait(trait *MessageTrait) *asyncapi3.MessageTraitRef {
 	}
 
 	if trait.Headers != nil && trait.Headers.Value != nil {
-		target.Headers = &asyncapi3.SchemaRef{
-			Value: &asyncapi3.MultiSchemaFormat{Schema: trait.Headers.Value.Schema, Format: trait.Headers.Value.Format},
-		}
+		target.Headers = trait.Headers
 	}
 	return &asyncapi3.MessageTraitRef{Value: target}
-}
-
-func convertSchema(s *asyncapi3.SchemaRef) *asyncapi3.SchemaRef {
-	if s == nil || s.Value == nil {
-		return nil
-	}
-
-	target := &asyncapi3.SchemaRef{Reference: dynamic.Reference{Ref: s.Ref}}
-	target.Value = &asyncapi3.MultiSchemaFormat{Schema: s.Value.Schema, Format: s.Value.Format}
-
-	return target
 }
 
 func convertParameters(channel *asyncapi3.Channel, params map[string]*ParameterRef) error {
@@ -325,27 +312,33 @@ func convertServers(cfg *asyncapi3.Config, servers map[string]*ServerRef) {
 			cfg.Servers.Set(name, &asyncapi3.ServerRef{Reference: dynamic.Reference{Ref: orig.Ref}})
 		}
 		if orig.Value != nil {
-			cfg.Servers.Set(name, convertServer(orig.Value))
+			cfg.Servers.Set(name, convertServer(orig))
 		}
 	}
 }
 
-func convertServer(s *Server) *asyncapi3.ServerRef {
-	target := &asyncapi3.Server{
-		Protocol:        s.Protocol,
-		Description:     s.Description,
-		ProtocolVersion: s.ProtocolVersion,
-		Bindings:        convertServerBinding(s.Bindings),
+func convertServer(ref *ServerRef) *asyncapi3.ServerRef {
+	result := &asyncapi3.ServerRef{Reference: dynamic.Reference{Ref: ref.Ref}}
+
+	if ref.Value != nil {
+		target := &asyncapi3.Server{
+			Protocol:        ref.Value.Protocol,
+			Description:     ref.Value.Description,
+			ProtocolVersion: ref.Value.ProtocolVersion,
+			Bindings:        convertServerBinding(ref.Value.Bindings),
+		}
+
+		protocol, host, p := resolveServerUrl(ref.Value.Url)
+		if target.Protocol == "" {
+			target.Protocol = protocol
+		}
+		target.Host = host
+		target.Pathname = p
+
+		result.Value = target
 	}
 
-	protocol, host, p := resolveServerUrl(s.Url)
-	if target.Protocol == "" {
-		target.Protocol = protocol
-	}
-	target.Host = host
-	target.Pathname = p
-
-	return &asyncapi3.ServerRef{Value: target}
+	return result
 }
 
 func resolveServerUrl(s string) (protocol, host, path string) {
@@ -380,7 +373,7 @@ func convertServerBinding(b ServerBindings) asyncapi3.ServerBindings {
 func convertMessageBinding(b MessageBinding) asyncapi3.MessageBinding {
 	return asyncapi3.MessageBinding{
 		Kafka: asyncapi3.KafkaMessageBinding{
-			Key: convertSchema(b.Kafka.Key),
+			Key: b.Kafka.Key,
 		},
 	}
 }
@@ -430,7 +423,7 @@ func convertComponents(c *Components, config *asyncapi3.Config) (*asyncapi3.Comp
 		if target.Messages == nil {
 			target.Messages = map[string]*asyncapi3.MessageRef{}
 		}
-		target.Messages[name] = convertMessage(&MessageRef{Value: orig})
+		target.Messages[name] = convertMessage(orig)
 	}
 
 	if c.Schemas != nil {
@@ -438,7 +431,7 @@ func convertComponents(c *Components, config *asyncapi3.Config) (*asyncapi3.Comp
 			if target.Schemas == nil {
 				target.Schemas = map[string]*asyncapi3.SchemaRef{}
 			}
-			target.Schemas[name] = convertSchema(orig)
+			target.Schemas[name] = orig
 		}
 	}
 

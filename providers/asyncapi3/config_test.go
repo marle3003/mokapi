@@ -37,17 +37,16 @@ components:
 	err := yaml.Unmarshal(b, &cfg)
 	require.NoError(t, err)
 
-	multi := cfg.Components.Schemas["Foo"].Value
+	multi := cfg.Components.Schemas["Foo"].Value.(*asyncapi3.MultiSchemaFormat)
 	require.Equal(t, "application/vnd.apache.avro;version=1.9.0", multi.Format)
-	avroSchema := multi.Schema.(*asyncapi3.AvroRef)
+	avroSchema := multi.Schema.Value.(*asyncapi3.AvroRef)
 	require.Equal(t, "record", avroSchema.Type[0])
 
-	multi = cfg.Components.Schemas["FooRef"].Value
+	multi = cfg.Components.Schemas["FooRef"].Value.(*asyncapi3.MultiSchemaFormat)
 	require.Equal(t, "application/vnd.apache.avro;version=1.9.0", multi.Format)
-	avroSchema = multi.Schema.(*asyncapi3.AvroRef)
-	require.Equal(t, "npm://foo.bar", avroSchema.Ref)
+	require.Equal(t, "npm://foo.bar", multi.Schema.Ref)
 
-	jsSchema := cfg.Components.Schemas["Bar"].Value.Schema.(*jsonSchema.Schema)
+	jsSchema := cfg.Components.Schemas["Bar"].Value.(*jsonSchema.Schema)
 	require.Equal(t, "object", jsSchema.Type.String())
 
 	require.Equal(t, "application/json", cfg.DefaultContentType)
@@ -103,16 +102,16 @@ func TestStreetlightKafka(t *testing.T) {
 	require.True(t, strings.HasPrefix(message.Value.Summary, "Inform about environmental"))
 	require.Equal(t, "application/json", message.Value.ContentType)
 	// header from message trait should be applied
-	s := message.Value.Headers.Value.Schema.(*jsonSchema.Schema)
+	s := message.Value.Headers.Value.(*jsonSchema.Schema)
 	require.Equal(t, "integer", s.Properties.Get("my-app-header").Type[0])
 
-	payload := message.Value.Payload.Value.Schema.(*jsonSchema.Schema)
+	payload := message.Value.Payload.Value.(*jsonSchema.Schema)
 	require.Equal(t, "Light intensity measured in lumens.", payload.Properties.Get("lumens").Description)
 
 	// message trait
 	require.Equal(t, "#/components/messageTraits/commonHeaders", message.Value.Traits[0].Ref)
 	trait := message.Value.Traits[0].Value
-	s = trait.Headers.Value.Schema.(*jsonSchema.Schema)
+	s = trait.Headers.Value.(*jsonSchema.Schema)
 	require.Equal(t, "integer", s.Properties.Get("my-app-header").Type[0])
 
 	param := channel.Value.Parameters["streetlightId"]
@@ -146,63 +145,127 @@ func TestConfig_Payload_YAML(t *testing.T) {
 		{
 			name: "just a schema",
 			cfg: `asyncapi: 3.0.0
+channels:
+  foo:
+    messages:
+      msg:
+        $ref: '#/components/messages/msg'
 components:
+  messages:
+    msg:
+      payload:
+        $ref: '#/components/schemas/foo'
   schemas:
     foo:
       type: string`,
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
-				s := cfg.Components.Schemas["foo"].Value.Schema.(*jsonSchema.Schema)
+				ch := cfg.Channels["foo"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["msg"]
+				require.NotNil(t, msg)
+				s := msg.Value.Payload.Value.(*jsonSchema.Schema)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},
 		{
 			name: "MultiSchema: format and schema",
 			cfg: `asyncapi: 3.0.0
+channels:
+  foo:
+    messages:
+      msg:
+        $ref: '#/components/messages/msg'
 components:
+  messages:
+    msg:
+      payload:
+        $ref: '#/components/schemas/foo'
   schemas:
     foo:
       schemaFormat: application/vnd.aai.asyncapi;version=3.0.0
       schema: 
         type: string`,
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
-				require.Equal(t, "application/vnd.aai.asyncapi;version=3.0.0", cfg.Components.Schemas["foo"].Value.Format)
-				s := cfg.Components.Schemas["foo"].Value.Schema.(*jsonSchema.Schema)
+				ch := cfg.Channels["foo"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["msg"]
+				require.NotNil(t, msg)
+				ms := msg.Value.Payload.Value.(*asyncapi3.MultiSchemaFormat)
+				require.NotNil(t, ms)
+				require.Equal(t, "application/vnd.aai.asyncapi;version=3.0.0", ms.Format)
+				s := ms.Schema.Value.(*jsonSchema.Schema)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},
 		{
 			name: "MultiSchema: no format",
 			cfg: `asyncapi: 3.0.0
+channels:
+  foo:
+    messages:
+      msg:
+        $ref: '#/components/messages/msg'
 components:
+  messages:
+    msg:
+      payload:
+        $ref: '#/components/schemas/foo'
   schemas:
     foo:
       schema: 
         type: string`,
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
-				require.Equal(t, "", cfg.Components.Schemas["foo"].Value.Format)
-				s := cfg.Components.Schemas["foo"].Value.Schema.(*jsonSchema.Schema)
+				ch := cfg.Channels["foo"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["msg"]
+				require.NotNil(t, msg)
+				ms := msg.Value.Payload.Value.(*asyncapi3.MultiSchemaFormat)
+				require.NotNil(t, ms)
+				require.Equal(t, "", ms.Format)
+				s := ms.Schema.Value.(*jsonSchema.Schema)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},
 		{
 			name: "ref",
 			cfg: `asyncapi: 3.0.0
+channels:
+  foo:
+    messages:
+      msg:
+        $ref: '#/components/messages/msg'
 components:
+  messages:
+    msg:
+      payload:
+        $ref: '#/components/schemas/foo'
   schemas:
     foo:
       $ref: '#/components/schemas/bar'
     bar:
       type: string`,
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
-				require.Equal(t, "", cfg.Components.Schemas["foo"].Value.Format)
-				s := cfg.Components.Schemas["foo"].Value.Schema.(*jsonSchema.Schema)
+				ch := cfg.Channels["foo"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["msg"]
+				require.NotNil(t, msg)
+				s := msg.Value.Payload.Value.(*jsonSchema.Schema)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},
 		{
 			name: "MultiSchema: ref",
 			cfg: `asyncapi: 3.0.0
+channels:
+  foo:
+    messages:
+      msg:
+        $ref: '#/components/messages/msg'
 components:
+  messages:
+    msg:
+      payload:
+        $ref: '#/components/schemas/foo'
   schemas:
     foo:
       schemaFormat: application/vnd.aai.asyncapi;version=3.0.0
@@ -211,15 +274,30 @@ components:
     bar:
       type: string`,
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
-				require.Equal(t, "application/vnd.aai.asyncapi;version=3.0.0", cfg.Components.Schemas["foo"].Value.Format)
-				s := cfg.Components.Schemas["foo"].Value.Schema.(*jsonSchema.Schema)
+				ch := cfg.Channels["foo"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["msg"]
+				require.NotNil(t, msg)
+				ms := msg.Value.Payload.Value.(*asyncapi3.MultiSchemaFormat)
+				require.NotNil(t, ms)
+				require.Equal(t, "application/vnd.aai.asyncapi;version=3.0.0", ms.Format)
+				s := ms.Schema.Value.(*jsonSchema.Schema)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},
 		{
 			name: "ref to swagger file",
 			cfg: `asyncapi: 3.0.0
+channels:
+  foo:
+    messages:
+      msg:
+        $ref: '#/components/messages/msg'
 components:
+  messages:
+    msg:
+      payload:
+        $ref: '#/components/schemas/foo'
   schemas:
     foo:
       $ref: 'swagger.json#/definitions/foo'`,
@@ -227,15 +305,27 @@ components:
 				return &dynamic.Config{Data: &swagger.Config{Definitions: map[string]*schema.Schema{"foo": schematest.New("string")}}}, nil
 			}),
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
-				require.Equal(t, "", cfg.Components.Schemas["foo"].Value.Format)
-				s := cfg.Components.Schemas["foo"].Value.Schema.(*jsonSchema.Schema)
+				ch := cfg.Channels["foo"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["msg"]
+				require.NotNil(t, msg)
+				s := msg.Value.Payload.Value.(*schema.Schema)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},
 		{
 			name: "MultiSchema: ref to swagger file",
 			cfg: `asyncapi: 3.0.0
+channels:
+  foo:
+    messages:
+      msg:
+        $ref: '#/components/messages/msg'
 components:
+  messages:
+    msg:
+      payload:
+        $ref: '#/components/schemas/foo'
   schemas:
     foo:
       schema:
@@ -244,24 +334,81 @@ components:
 				return &dynamic.Config{Data: &swagger.Config{Definitions: map[string]*schema.Schema{"foo": schematest.New("string")}}}, nil
 			}),
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
-				require.Equal(t, "", cfg.Components.Schemas["foo"].Value.Format)
-				s := cfg.Components.Schemas["foo"].Value.Schema.(*jsonSchema.Schema)
+				ch := cfg.Channels["foo"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["msg"]
+				require.NotNil(t, msg)
+				msf := msg.Value.Payload.Value.(*asyncapi3.MultiSchemaFormat)
+
+				require.Equal(t, "", msf.Format)
+				s := msf.Schema.Value.(*schema.Schema)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},
 		{
 			name: "MultiSchema: OpenAPI",
 			cfg: `asyncapi: 3.0.0
+channels:
+  foo:
+    messages:
+      msg:
+        $ref: '#/components/messages/msg'
 components:
+  messages:
+    msg:
+      payload:
+        $ref: '#/components/schemas/foo'
   schemas:
     foo:
       schemaFormat: application/vnd.oai.openapi;version=3.0.0
       schema:
         type: string`,
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
-				require.Equal(t, "application/vnd.oai.openapi;version=3.0.0", cfg.Components.Schemas["foo"].Value.Format)
-				s := cfg.Components.Schemas["foo"].Value.Schema.(*schema.Schema)
+				ch := cfg.Channels["foo"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["msg"]
+				require.NotNil(t, msg)
+				msf := msg.Value.Payload.Value.(*asyncapi3.MultiSchemaFormat)
+				require.Equal(t, "application/vnd.oai.openapi;version=3.0.0", msf.Format)
+				s := msf.Schema.Value.(*schema.Schema)
 				require.Equal(t, "string", s.Type.String())
+			},
+		},
+		{
+			name: "multiple refs",
+			cfg: `asyncapi: 3.0.0
+channels:
+  foo:
+    messages:
+      msg:
+        payload:
+          $ref: '#/components/schemas/foo'
+components:
+  schemas:
+    foo:
+      schemaFormat: application/vnd.oai.openapi;version=3.0.0
+      schema:
+        $ref: '#/components/schemas/bar'
+    bar:
+      $ref: '#/components/schemas/zzz'
+    zzz:
+      $ref: '#/components/schemas/yuh'
+    yuh:
+      items:
+        $ref: '#/components/schemas/items'
+    items:
+      type: string
+`,
+			test: func(t *testing.T, cfg *asyncapi3.Config) {
+				ch := cfg.Channels["foo"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["msg"]
+				require.NotNil(t, msg)
+				msf := msg.Value.Payload.Value.(*asyncapi3.MultiSchemaFormat)
+				require.Equal(t, "application/vnd.oai.openapi;version=3.0.0", msf.Format)
+				// referenced is schema defines no format => default JSON schema
+				s := msf.Schema.Value.(*jsonSchema.Schema)
+				require.Equal(t, "string", s.Items.Type.String())
 			},
 		},
 	}
@@ -294,7 +441,23 @@ func TestConfig_Payload_JSON(t *testing.T) {
 		{
 			name: "just a schema",
 			cfg: `{"asyncapi": "3.0.0",
+"channels": {
+  "foo": {
+    "messages": {
+      "msg": {
+        "$ref": "#/components/messages/msg"
+      }
+    }
+  }
+},
 "components": {
+  "messages": {
+    "msg": {
+      "payload": {
+        "$ref": "#/components/schemas/foo"
+      }
+    }
+  },
   "schemas": {
     "foo": {
       "type": "string"
@@ -302,14 +465,35 @@ func TestConfig_Payload_JSON(t *testing.T) {
   }
 }}`,
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
-				s := cfg.Components.Schemas["foo"].Value.Schema.(*jsonSchema.Schema)
+				ch := cfg.Channels["foo"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["msg"]
+				require.NotNil(t, msg)
+				s := msg.Value.Payload.Value.(*jsonSchema.Schema)
+				require.NotNil(t, s)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},
 		{
 			name: "MultiSchema: format and schema",
 			cfg: `{"asyncapi": "3.0.0",
+"channels": {
+  "foo": {
+    "messages": {
+      "msg": {
+        "$ref": "#/components/messages/msg"
+      }
+    }
+  }
+},
 "components": {
+  "messages": {
+    "msg": {
+      "payload": {
+        "$ref": "#/components/schemas/foo"
+      }
+    }
+  },
   "schemas": {
     "foo": {
       "schemaFormat": "application/vnd.aai.asyncapi;version=3.0.0",
@@ -320,15 +504,37 @@ func TestConfig_Payload_JSON(t *testing.T) {
   }
 }}`,
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
-				require.Equal(t, "application/vnd.aai.asyncapi;version=3.0.0", cfg.Components.Schemas["foo"].Value.Format)
-				s := cfg.Components.Schemas["foo"].Value.Schema.(*jsonSchema.Schema)
+				ch := cfg.Channels["foo"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["msg"]
+				require.NotNil(t, msg)
+				msf := msg.Value.Payload.Value.(*asyncapi3.MultiSchemaFormat)
+				require.NotNil(t, msf)
+				require.Equal(t, "application/vnd.aai.asyncapi;version=3.0.0", msf.Format)
+				s := msf.Schema.Value.(*jsonSchema.Schema)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},
 		{
 			name: "MultiSchema: no format",
 			cfg: `{"asyncapi": "3.0.0",
+"channels": {
+  "foo": {
+    "messages": {
+      "msg": {
+        "$ref": "#/components/messages/msg"
+      }
+    }
+  }
+},
 "components": {
+  "messages": {
+    "msg": {
+      "payload": {
+        "$ref": "#/components/schemas/foo"
+      }
+    }
+  },
   "schemas": {
     "foo": {
       "schema": { 
@@ -338,15 +544,37 @@ func TestConfig_Payload_JSON(t *testing.T) {
   }
 }}`,
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
-				require.Equal(t, "", cfg.Components.Schemas["foo"].Value.Format)
-				s := cfg.Components.Schemas["foo"].Value.Schema.(*jsonSchema.Schema)
+				ch := cfg.Channels["foo"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["msg"]
+				require.NotNil(t, msg)
+				msf := msg.Value.Payload.Value.(*asyncapi3.MultiSchemaFormat)
+				require.NotNil(t, msf)
+				require.Equal(t, "", msf.Format)
+				s := msf.Schema.Value.(*jsonSchema.Schema)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},
 		{
 			name: "ref",
 			cfg: `{"asyncapi": "3.0.0",
+"channels": {
+  "foo": {
+    "messages": {
+      "msg": {
+        "$ref": "#/components/messages/msg"
+      }
+    }
+  }
+},
 "components": {
+  "messages": {
+    "msg": {
+      "payload": {
+        "$ref": "#/components/schemas/foo"
+      }
+    }
+  },
   "schemas": {
     "foo": {
       "$ref": "#/components/schemas/bar"
@@ -357,15 +585,35 @@ func TestConfig_Payload_JSON(t *testing.T) {
   }
 }}`,
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
-				require.Equal(t, "", cfg.Components.Schemas["foo"].Value.Format)
-				s := cfg.Components.Schemas["foo"].Value.Schema.(*jsonSchema.Schema)
+				ch := cfg.Channels["foo"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["msg"]
+				require.NotNil(t, msg)
+				s := msg.Value.Payload.Value.(*jsonSchema.Schema)
+				require.NotNil(t, s)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},
 		{
 			name: "MultiSchema: ref",
 			cfg: `{"asyncapi": "3.0.0",
+"channels": {
+  "foo": {
+    "messages": {
+      "msg": {
+        "$ref": "#/components/messages/msg"
+      }
+    }
+  }
+},
 "components": {
+  "messages": {
+    "msg": {
+      "payload": {
+        "$ref": "#/components/schemas/foo"
+      }
+    }
+  },
   "schemas": {
     "foo": {
       "schemaFormat": "application/vnd.aai.asyncapi;version=3.0.0",
@@ -379,15 +627,36 @@ func TestConfig_Payload_JSON(t *testing.T) {
   }
 }}`,
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
-				require.Equal(t, "application/vnd.aai.asyncapi;version=3.0.0", cfg.Components.Schemas["foo"].Value.Format)
-				s := cfg.Components.Schemas["foo"].Value.Schema.(*jsonSchema.Schema)
+				ch := cfg.Channels["foo"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["msg"]
+				require.NotNil(t, msg)
+				msf := msg.Value.Payload.Value.(*asyncapi3.MultiSchemaFormat)
+				require.Equal(t, "application/vnd.aai.asyncapi;version=3.0.0", msf.Format)
+				s := msf.Schema.Value.(*jsonSchema.Schema)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},
 		{
 			name: "ref to swagger file",
 			cfg: `{"asyncapi": "3.0.0",
+"channels": {
+  "foo": {
+    "messages": {
+      "msg": {
+        "$ref": "#/components/messages/msg"
+      }
+    }
+  }
+},
 "components": {
+  "messages": {
+    "msg": {
+      "payload": {
+        "$ref": "#/components/schemas/foo"
+      }
+    }
+  },
   "schemas": {
     "foo": {
       "$ref": "swagger.json#/definitions/foo"
@@ -398,15 +667,34 @@ func TestConfig_Payload_JSON(t *testing.T) {
 				return &dynamic.Config{Data: &swagger.Config{Definitions: map[string]*schema.Schema{"foo": schematest.New("string")}}}, nil
 			}),
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
-				require.Equal(t, "", cfg.Components.Schemas["foo"].Value.Format)
-				s := cfg.Components.Schemas["foo"].Value.Schema.(*jsonSchema.Schema)
+				ch := cfg.Channels["foo"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["msg"]
+				require.NotNil(t, msg)
+				s := msg.Value.Payload.Value.(*schema.Schema)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},
 		{
 			name: "MultiSchema: ref to swagger file",
 			cfg: `{"asyncapi": "3.0.0",
+"channels": {
+  "foo": {
+    "messages": {
+      "msg": {
+        "$ref": "#/components/messages/msg"
+      }
+    }
+  }
+},
 "components": {
+  "messages": {
+    "msg": {
+      "payload": {
+        "$ref": "#/components/schemas/foo"
+      }
+    }
+  },
   "schemas": {
     "foo": {
       "schema": {
@@ -419,15 +707,36 @@ func TestConfig_Payload_JSON(t *testing.T) {
 				return &dynamic.Config{Data: &swagger.Config{Definitions: map[string]*schema.Schema{"foo": schematest.New("string")}}}, nil
 			}),
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
-				require.Equal(t, "", cfg.Components.Schemas["foo"].Value.Format)
-				s := cfg.Components.Schemas["foo"].Value.Schema.(*jsonSchema.Schema)
+				ch := cfg.Channels["foo"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["msg"]
+				require.NotNil(t, msg)
+				msf := msg.Value.Payload.Value.(*asyncapi3.MultiSchemaFormat)
+				require.NotNil(t, msf)
+				s := msf.Schema.Value.(*schema.Schema)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},
 		{
 			name: "MultiSchema: OpenAPI",
 			cfg: `{"asyncapi": "3.0.0",
+"channels": {
+  "foo": {
+    "messages": {
+      "msg": {
+        "$ref": "#/components/messages/msg"
+      }
+    }
+  }
+},
 "components": {
+  "messages": {
+    "msg": {
+      "payload": {
+        "$ref": "#/components/schemas/foo"
+      }
+    }
+  },
   "schemas": {
     "foo": {
       "schemaFormat": "application/vnd.oai.openapi;version=3.0.0",
@@ -438,8 +747,14 @@ func TestConfig_Payload_JSON(t *testing.T) {
   }
 }}`,
 			test: func(t *testing.T, cfg *asyncapi3.Config) {
-				require.Equal(t, "application/vnd.oai.openapi;version=3.0.0", cfg.Components.Schemas["foo"].Value.Format)
-				s := cfg.Components.Schemas["foo"].Value.Schema.(*schema.Schema)
+				ch := cfg.Channels["foo"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["msg"]
+				require.NotNil(t, msg)
+				msf := msg.Value.Payload.Value.(*asyncapi3.MultiSchemaFormat)
+				require.NotNil(t, msf)
+				require.Equal(t, "application/vnd.oai.openapi;version=3.0.0", msf.Format)
+				s := msf.Schema.Value.(*schema.Schema)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},

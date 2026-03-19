@@ -18,7 +18,7 @@ func NewMessage(opts ...MessageOptions) *asyncApi.Message {
 
 func WithPayload(s *schema.Schema) MessageOptions {
 	return func(m *asyncApi.Message) {
-		m.Payload = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{Schema: s}}
+		m.Payload = &asyncapi3.SchemaRef{Value: s}
 	}
 }
 

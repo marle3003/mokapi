@@ -96,7 +96,7 @@ func TestIndex_Config(t *testing.T) {
 				Search: static.Search{
 					Enabled:  true,
 					InMemory: true,
-				}}})
+				}}}, &dynamictest.Reader{})
 
 			pool := safe.NewPool(context.Background())
 			app.Start(pool)
