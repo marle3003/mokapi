@@ -167,7 +167,7 @@ func getSchema(s *asyncapi3.SchemaRef) (*schema.IndexData, error) {
 	if s == nil || s.Value == nil {
 		return nil, nil
 	}
-	switch v := s.Value.Schema.(type) {
+	switch v := s.Value.(type) {
 	case *schema.Schema:
 		return schema.NewIndexData(v), nil
 	default:

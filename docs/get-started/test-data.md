@@ -1,22 +1,52 @@
 ---
-title: Mocking APIs with Realistic Test Data
+title: Generate Realistic Test Data
 description: Mokapi generates random realistic test data or lets you customize responses with JavaScript to match your specific use case and scenarios.
+subtitle: Mokapi automatically generates realistic test data from your API specifications. Customize responses with JavaScript or use declarative formats to match your exact testing needs.
+cards:
+  items:
+    - title: Dashboard Guide
+      href: docs/get-started/dashboard
+      description: Learn how to validate and visualize your mock data
+    - title: Write Scripts
+      href: /docs/javascript-api/overview
+      description: Add dynamic behavior to your mocks with JavaScript
+    - title: Configure Mokapi
+      href: /docs/configuration/overview
+      description: Customize ports, providers, and other settings
+    - title: Explore Tutorials
+      href: /resources
+      description: Follow step-by-step guides for REST, Kafka, LDAP, and SMTP
 ---
 
-# Mocking APIs with Realistic Test Data
+# Generate Realistic Test Data
 
 Creating reliable test data is essential for accurate API testing and development.
 Mokapi provides a powerful data generation engine that creates realistic test data
-based on API specifications. You can customize and control the generated data using
-JavaScript scripts or declarative configurations to adapt it to real-world scenarios.
+based on your API specifications.
+
+You have multiple options for controlling generated data:
+
+- **Automatic Generation**  
+  Mokapi analyzes your schema and generates context-aware, realistic data automatically
+- **Declarative Formats**  
+  Use standard formats like `date`, `email`, `uuid` in your schema
+- **JavaScript Customization**  
+  Extend the generator with custom logic for specific fields or patterns
+- **Full Response Control**
+  Write complete response handlers with conditional logic and dynamic behavior
 
 ## Automatic Test Data Generation
 
-By default, Mokapi analyzes your API’s data structure and types to generate meaningful responses.
-Additionally, Mokapi tailors responses based on request parameters, ensuring relevant data is returned.
-For example, if a request filters for available pets, the response will include only pets with the status *available*.
+By default, Mokapi analyzes your API's data structure and types to generate
+meaningful responses. It also tailors responses based on request parameters,
+ensuring relevant data is returned.
 
-```bash tab=/pet/4
+### Context-Aware Generation
+
+For example, if a request filters for available pets, the response includes
+only pets with `status: "available":
+
+```bash tab=Single Pet
 GET http://localhost/api/v3/pet/4
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -39,7 +69,7 @@ Content-Type: application/json
     "status": "pending"
 }
 ```
-```bash tab=/pet/findByStatus
+```bash tab=Filtered List
 GET http://localhost/api/v3/pet/findByStatus?status=available
 HTTP/1.1 200 OK
 Content-Type: application/json
@@ -54,16 +84,56 @@ Content-Type: application/json
 ]
 ```
 
-## Extending Data Generator with JavaScript
+Notice how the status field in the second example matches the query parameter.
+Mokapi understands the request context and generates appropriate data.
 
-Mokapi’s test data engine is highly extensible using JavaScript, allowing you to customize responses 
-based on specific attributes. In the example below, a random value from a predefined list is assigned to the frequency attribute.
+## Declarative Formats in Schema
 
-``` box=info
-It’s recommended to define possible values using an enum in your API specification. This allows Mokapi to randomly 
-select a value from the list and clearly document all available options for your API users. This example demonstrates 
-the flexibility Mokapi offers.
+Use standard OpenAPI formats to generate specific data types automatically. 
+Mokapi recognizes these formats and produces realistic values:
+
+| Format        | Type     | Example Output                                            |
+|---------------|----------|-----------------------------------------------------------|
+| date          | string   | 2017-07-21                                                |
+| time          | string   | 17:32:28Z                                                 |
+| date-time     | string   | 2017-07-21T17:32:28Z                                      |
+| email         | string   | shanellewehner@cruickshank.biz                            |
+| uuid          | string   | dd5742d1-82ad-4d42-8960-cb21bd02f3e7                      |
+| uri           | string   | http://www.regionale-enable.info/virtual/portals/redefine |
+| password      | string   | w*YoR94jFL@X                                              |
+| ipv4          | string   | 68.244.174.93                                             |
+| {zip} {city}  | string   | 82910 San Jose                                            |
+
+### Example Schema
+
+```yaml
+schema:
+  type: object
+  properties:
+    date:
+      type: string
+      format: date # 2017-07-21
+    time:
+      type: string
+      format: date-time # 2017-07-21T17:32:28Z
+    email:
+      type: string
+      format: email # demetrisdach@yost.org
+    guid:
+      type: string
+      format: uuid # dd5742d1-82ad-4d42-8960-cb21bd02f3e7
 ```
+
+This declarative approach requires no JavaScript, just add the `format` field to your schema.
+
+## Customize with JavaScript
+
+For more control, extend Mokapi's data generator with JavaScript. This is useful
+when you need values from a specific list, complex patterns, or custom logic.
+
+### Example: Custom Enum Values
+
+Generate random values from a predefined list:
 
 ```javascript
 import { fake, findByName, ROOT_NAME } from 'mokapi/faker';
@@ -81,12 +151,25 @@ export default function() {
 };
 ```
 
-## Scripting API Behavior
+Now any field named `frequency` will randomly return one of these values.
 
-Mokapi Script allows you to customize API responses and simulate various behaviors, such as returning specific HTTP 
-statuses or producing Kafka messages.
+``` box=tip title="Best Practice: Use Enums in Spec"
+It's recommended to define possible values using `enum` in your OpenAPI 
+specification. This allows Mokapi to randomly select from the list automatically
+and clearly documents all available options for API users. The JavaScript
+approach shown here demonstrates Mokapi's flexibility for cases where
+enum isn't suitable.
+```
 
-Example: A simple time API returning the current timestamp:
+## Full Response Control with Scripts
+
+For complete control over API behavior, use Mokapi Scripts to customize 
+responses, simulate errors, add delays, or implement complex logic.
+
+### Example: Dynamic Time API
+
+Create an API that returns the current timestamp:
+
 ```javascript tab=time.js
 import {on} from 'mokapi'
 
@@ -123,34 +206,22 @@ paths:
                 format: date-time
 ```
 
-## Declarative Test Data Definition
+This script intercepts requests to the `time` operation and returns the current
+timestamp instead of a static mock value.
 
-If you prefer a declarative approach, Mokapi uses formats like dates, emails, or UUIDs directly in your schema:
+## Validate in the Dashboard
 
-```yaml
-schema:
-  type: object
-  properties:
-    date:
-      type: string
-      format: date # 2017-07-21
-    time:
-      type: string
-      format: date-time # 2017-07-21T17:32:28Z
-    email:
-      type: string
-      format: email # demetrisdach@yost.org
-    guid:
-      type: string
-      format: uuid # dd5742d1-82ad-4d42-8960-cb21bd02f3e7
-```
+The Mokapi dashboard lets you:
 
-## Test and Validate in the Dashboard
-In the dashboard, you can easily generate sample data and validate it against your API’s specification. 
-This allows you to ensure your mock data matches the expected structure and behavior. The following chapter will 
-guide you through the process in more detail.
+- **Generate sample data:** See what Mokapi produces for your schemas
+- **Validate against spec:** Ensure mock data matches your OpenAPI definition
+- **Inspect requests:** View generated responses for different request parameters
+- **Test edge cases:** Verify your custom generators work as expected
 
-## Next Steps
+Access the dashboard at `http://localhost:8080` when Mokapi is running.
 
-- [Using Mokapi's Dashboard](dashboard.md)
-- [Explore Mokapi Scripts](../javascript-api/overview.md)
+## What's Next?
+
+Explore related topics to get more out of Mokapi's test data generation:
+
+{{ card-grid key="cards" }}

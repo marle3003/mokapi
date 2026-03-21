@@ -778,7 +778,7 @@ func TestKafkaClient(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			generator.Seed(11)
 
-			app := runtime.New(&static.Config{})
+			app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 			e := enginetest.NewEngine(
 				engine.WithKafkaClient(engine.NewKafkaClient(app)),
 				engine.WithDefaultLogger(),

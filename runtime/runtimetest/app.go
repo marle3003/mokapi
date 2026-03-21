@@ -13,7 +13,7 @@ import (
 
 func NewHttpApp(configs ...*openapi.Config) *runtime.App {
 	cfg := &static.Config{}
-	app := runtime.New(cfg)
+	app := runtime.New(cfg, &dynamictest.Reader{})
 	for i, cfg := range configs {
 		app.AddHttp(&dynamic.Config{
 			Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i))),
@@ -31,7 +31,7 @@ type KafkaInfoOptions func(ki *runtime.KafkaInfo)
 
 func NewKafkaApp(configs ...*asyncapi3.Config) *runtime.App {
 	cfg := &static.Config{}
-	app := runtime.New(cfg)
+	app := runtime.New(cfg, &dynamictest.Reader{})
 	for i, cfg := range configs {
 		_, _ = app.Kafka.Add(&dynamic.Config{
 			Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i))),
@@ -43,7 +43,7 @@ func NewKafkaApp(configs ...*asyncapi3.Config) *runtime.App {
 
 func NewApp(opts ...Options) *runtime.App {
 	cfg := &static.Config{}
-	app := runtime.New(cfg)
+	app := runtime.New(cfg, &dynamictest.Reader{})
 	for _, opt := range opts {
 		opt(app)
 	}

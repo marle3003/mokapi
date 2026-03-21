@@ -1,8 +1,9 @@
 package asyncapi3
 
 import (
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
+
+	"gopkg.in/yaml.v3"
 )
 
 type ExternalDocRef struct {
@@ -23,9 +24,13 @@ func (r *ExternalDocRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
 }
 
-func (r *ExternalDocRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (r *ExternalDocRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
+		var resolved *ExternalDocRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+			return err
+		}
+		r.Value = resolved.Value
 	}
 
 	return nil

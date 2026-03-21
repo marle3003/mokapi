@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"mokapi/api"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/health"
 	"mokapi/providers/openapi"
@@ -83,7 +84,7 @@ func TestHandler_ServeHTTP(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			h := api.New(runtime.New(&static.Config{}), static.Api{Dashboard: true})
+			h := api.New(runtime.New(&static.Config{}, &dynamictest.Reader{}), static.Api{Dashboard: true})
 			tc.test(t, h)
 		})
 	}
@@ -184,7 +185,7 @@ func TestHandler_Api_Info(t *testing.T) {
 }
 
 func TestHandler_NoDashboard(t *testing.T) {
-	h := api.New(runtime.New(&static.Config{}), static.Api{Dashboard: false})
+	h := api.New(runtime.New(&static.Config{}, &dynamictest.Reader{}), static.Api{Dashboard: false})
 	try.Handler(t,
 		http.MethodGet,
 		"http://foo.api",
@@ -197,7 +198,7 @@ func TestHandler_NoDashboard(t *testing.T) {
 }
 
 func TestHandler_SearchEnabled(t *testing.T) {
-	h := api.New(runtime.New(&static.Config{}), static.Api{Dashboard: true, Search: static.Search{Enabled: true, InMemory: true}})
+	h := api.New(runtime.New(&static.Config{}, &dynamictest.Reader{}), static.Api{Dashboard: true, Search: static.Search{Enabled: true, InMemory: true}})
 	try.Handler(t,
 		http.MethodGet,
 		"http://foo.api/api/info",
@@ -255,7 +256,7 @@ func TestHandler_Health(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			h := api.New(runtime.New(tc.cfg), tc.cfg.Api)
+			h := api.New(runtime.New(tc.cfg, &dynamictest.Reader{}), tc.cfg.Api)
 			h.RegisterHealthHandler("/health", health.New(static.Health{}))
 			tc.test(t, h)
 		})

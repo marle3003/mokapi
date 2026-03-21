@@ -27,10 +27,12 @@ type App struct {
 	cfg         *static.Config
 	searchIndex *SearchIndex
 
+	reader dynamic.Reader
+
 	Configs map[string]*dynamic.Config
 }
 
-func New(cfg *static.Config) *App {
+func New(cfg *static.Config, reader dynamic.Reader) *App {
 	m := monitor.New()
 
 	index := newSearchIndex(cfg.Api.Search)
@@ -48,13 +50,14 @@ func New(cfg *static.Config) *App {
 		Monitor:     m,
 		Events:      em,
 		Configs:     map[string]*dynamic.Config{},
-		http:        NewHttpStore(cfg, index, em),
+		http:        &HttpStore{cfg: cfg, index: index, events: em, reader: reader},
 		Kafka:       &KafkaStore{monitor: m, cfg: cfg, index: index, events: em},
 		Mqtt:        &MqttStore{monitor: m, cfg: cfg, sm: em},
 		Ldap:        &LdapStore{cfg: cfg, events: em, index: index},
 		Mail:        &MailStore{cfg: cfg, sm: em, index: index},
 		cfg:         cfg,
 		searchIndex: index,
+		reader:      reader,
 	}
 
 	return app

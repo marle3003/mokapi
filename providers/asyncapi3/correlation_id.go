@@ -1,8 +1,9 @@
 package asyncapi3
 
 import (
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
+
+	"gopkg.in/yaml.v3"
 )
 
 type CorrelationIdRef struct {
@@ -15,9 +16,13 @@ type CorrelationId struct {
 	Location    string `yaml:"location" json:"location"`
 }
 
-func (r *CorrelationIdRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (r *CorrelationIdRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
+		var resolved *CorrelationIdRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+			return err
+		}
+		r.Value = resolved.Value
 	}
 	return nil
 }
