@@ -281,6 +281,12 @@ func parseArgs(args *goja.Object) (*RequestArgs, common.HttpClientOptions, error
 					continue
 				}
 				rArgs.Body = v.Export()
+			case "insecure":
+				v := args.Get(k)
+				if v.ExportType().Kind() != reflect.Bool {
+					return rArgs, opts, fmt.Errorf("unexpected type for 'insecure': got %s, expected Boolean", util.JsType(v))
+				}
+				opts.Insecure = v.ToBoolean()
 			}
 		}
 	}
