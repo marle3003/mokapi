@@ -16,9 +16,17 @@ router.isReady().then(() =>{
     app.mount('#app')
 })
 
-const config =  import.meta.glob('/src/assets/docs/config.json', {as: 'raw', eager: true})
-const nav: DocConfig = JSON.parse(config['/src/assets/docs/config.json']!)
+const config = import.meta.glob('/src/assets/docs/config.json', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
+const nav: DocConfig = JSON.parse(config['/src/assets/docs/config.json']! as string)
 app.provide('nav', nav)
 
-const files =  import.meta.glob('/src/assets/docs/**/*.md', {as: 'raw', eager: true})
+const files = import.meta.glob('/src/assets/docs/**/*.md', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
 app.provide('files', files)
