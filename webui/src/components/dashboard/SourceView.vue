@@ -297,6 +297,12 @@ watch(
   place-content: center;
   border-right: 1px solid var(--source-border);
 }
+.source-view .header .controls > a {
+  font-size: 0.9rem;
+  border-right: 1px solid var(--source-border);
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
 .source-view .header button.active {
   background-color: black !important;
   outline: 1px solid var(--source-border);
