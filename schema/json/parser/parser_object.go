@@ -9,8 +9,8 @@ import (
 	"regexp"
 	"regexp/syntax"
 	"sort"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 func (p *Parser) parseObject(data interface{}, s *schema.Schema, evaluated map[string]bool) (*sortedmap.LinkedHashMap[string, interface{}], error) {
@@ -253,7 +253,11 @@ func (p *Parser) parseMap(v reflect.Value, s *schema.Schema, evaluated map[strin
 			name := fmt.Sprintf("%v", k.Interface())
 			if _, found := obj.Get(name); !found {
 				o := v.MapIndex(k)
-				obj.Set(name, o.Interface())
+				val := o.Interface()
+				if e, ok := val.(Exportable); ok {
+					val = e.Export()
+				}
+				obj.Set(name, val)
 			}
 		}
 	}
