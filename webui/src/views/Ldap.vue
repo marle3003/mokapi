@@ -290,7 +290,7 @@ function showImage(evt: MouseEvent) {
               Reuse existing directory data and mirror production-like structures without manual setup.
             </p>
             <div class="mx-auto" style="max-width: 900px;">
-              <pre v-highlightjs="ldap"><code class="ldif"></code></pre>
+              <pre v-highlightjs><code class="ldif">{{ ldap }}</code></pre>
             </div>
 
             <div class="text-center mt-3">

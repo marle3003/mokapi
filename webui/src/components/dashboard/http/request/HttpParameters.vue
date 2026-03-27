@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { type PropType, computed, ref } from 'vue'
 import { useSchema } from '@/composables/schema'
-import Markdown from 'vue3-markdown-it'
 import SourceView from '../../SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { useDashboard } from '@/composables/dashboard'
 import type { ExampleResult } from '@/types/dashboard'
+import { computed, ref, type PropType } from 'vue'
+import { useMarkdown } from '@/composables/markdown'
 
 const { printType } = useSchema()
 const { formatSchema } = usePrettyLanguage()
@@ -100,7 +100,7 @@ function showWarningColumn(){
                 <td v-if="showWarningColumn()">
                     <span v-if="parameter.deprecated"><span class="bi bi-exclamation-triangle-fill yellow"></span> deprecated</span>
                 </td>
-                <td><markdown :source="parameter.description" class="description" :html="true"></markdown></td>
+                <td><div v-html="useMarkdown(parameter.description).content" class="description"></div></td>
             </tr>
         </tbody>
     </table>
@@ -149,7 +149,7 @@ function showWarningColumn(){
                                     </div>
                                     <div class="row mt-2">
                                         <p id="parameter-description" class="label">Description</p>
-                                        <markdown :source="parameter.description" :html="true" aria-labelledby="parameter-description"></markdown>
+                                        <div v-html="useMarkdown(parameter.description).content" aria-labelledby="parameter-description"></div>
                                     </div>
                                     <div class="row">
                                         <ul class="nav nav-pills tab-sm tab-params" role="tabList">

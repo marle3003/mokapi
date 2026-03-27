@@ -63,7 +63,7 @@ function setTab(tab: string) {
         hash: `#${tab}`
     });
 }
-watch(() => route.hash, (hash) => {
+watch(() => route.hash, (hash: string) => {
         activeTab.value = hash ? hash.slice(1) : 'tab-paths'
     },
     { immediate: true }

@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import { type PropType } from 'vue'
+import { computed, type PropType } from 'vue'
 import { useRoute } from '@/router'
 import HttpRequestCard from './request/HttpRequestCard.vue'
 import HttpResponseCard from './response/HttpResponseCard.vue'
 import Requests from './Requests.vue'
-import Markdown from 'vue3-markdown-it'
+import { useMarkdown } from '@/composables/markdown'
 
-defineProps({
+const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },
     path: { type: Object as PropType<HttpPath>, required: true },
     operation: { type: Object as PropType<HttpOperation>, required: true },
 })
 
 const route = useRoute()
+const description = computed(() => useMarkdown(props.operation.description).content)
 </script>
 
 <template>
@@ -58,8 +59,8 @@ const route = useRoute()
                         <p aria-labelledby="summary">{{ operation.summary }}</p>
                     </div>
                     <div class="row" v-if="operation.description">
-                        <p class="label">Description</p>
-                        <markdown :source="operation.description" data-testid="description" :html="true"></markdown>
+                        <p id="operation-description" class="label">Description</p>
+                        <div aria-labelledby="operation-description" v-html="description"></div>
                     </div>
                 </div>
             </div>

@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import Markdown from 'vue3-markdown-it'
 import SourceView from '../SourceView.vue'
 import SchemaExpand from '../SchemaExpand.vue'
 import SchemaValidate from '../SchemaValidate.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { computed, onMounted, ref } from 'vue'
+import { useMarkdown } from '@/composables/markdown'
 
 const props = defineProps<{
     topic: KafkaTopic,
@@ -136,7 +136,7 @@ const examplePath = computed(() => {
             </div>
             <div class="col" v-if="selected.description">
                 <p id="message-description" class="label">Description</p>
-                <markdown :source="selected.description" aria-labelledby="message-description" :html="true"></markdown>
+                <div v-html="useMarkdown(selected.description).content" aria-labelledby="description"></div>
             </div>
         </div>
         <div class="row mt-2">

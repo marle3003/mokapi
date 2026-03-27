@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useGuid } from '@/composables/guid'
 import { watch, reactive } from 'vue'
-import '../../ace-editor/ace-config';
+import '../../plugins/ace-editor/ace-config';
 import SourceView from './SourceView.vue'
 import { transformPath } from '@/composables/fetch'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage';

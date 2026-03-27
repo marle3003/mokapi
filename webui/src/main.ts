@@ -2,15 +2,14 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import './assets/main.css'
-import VueHighlightJS from 'vue3-highlightjs'
 import ExamplesVue from './components/docs/Examples.vue'
+import hljs from '@/plugins/highlight'
 
 const app = createApp(App)
 // dynamic doc components
 app.component('examples', ExamplesVue)
 
 app.use(router)
-app.use(VueHighlightJS)
 
 router.isReady().then(() =>{
     app.mount('#app')
@@ -30,3 +29,18 @@ const files = import.meta.glob('/src/assets/docs/**/*.md', {
   eager: true,
 })
 app.provide('files', files)
+
+app.directive('highlightjs', {
+  mounted(el) {
+    highlight(el)
+  },
+  updated(el) {
+    highlight(el)
+  }
+})
+
+function highlight(el: HTMLElement) {
+  el.querySelectorAll('pre code').forEach((block) => {
+    hljs.highlightElement(block as HTMLElement)
+  })
+}

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router'
 import { computed, type PropType } from 'vue';
-import Markdown from 'vue3-markdown-it'
 import { getRouteName } from '@/composables/dashboard';
+import { useMarkdown } from '@/composables/markdown';
 
 const props = defineProps({
     service: { type: Object as PropType<MailService>, required: true },
@@ -73,7 +73,7 @@ function goToMailbox(mb: SmtpMailbox, openInNewTab = false){
                 </td>
                 <td>{{ mb.username }}</td>
                 <td>{{ mb.password }}</td>
-                <td v-if="anyDescription"><markdown :source="mb.description" class="description" :html="true"></markdown></td>
+                <td v-if="anyDescription"><div v-html="useMarkdown(mb.description).content" class="description"></div></td>
                 <td class="text-center">{{ mb.numMessages }}</td>
             </tr>
         </tbody>

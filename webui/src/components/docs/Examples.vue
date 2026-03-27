@@ -170,29 +170,18 @@ function setType(s: string) {
     <div class="examples">
         <div class="container">
             <div class="header">
-                <h1>Explore Mokapi Resources</h1>
-                <p class="text">
-                    Explore a variety of tutorials, examples, and blog articles to help you make the most of Mokapi. Whether you're 
-                    learning to mock APIs, validate schemas, or streamline your development process, our resources are designed to support you every step of the way.
-                </p>
+                <h1>Mokapi Resources</h1>
             </div>
 
             <!-- Filter Control -->
             <div class="filter-controls">
                 <div class="d-none  d-md-flex">
-                    <a v-for="link of typeLinks" class="btn btn-outline-primary filter-button" :class="{ active: link.isActive, disabled: link.disabled }"
-                        :href="link.url" :aria-disabled="link.disabled"
-                    >
-                        {{ link.text }}
-                    </a>
-                </div>
-                <div class="d-none  d-md-flex">
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'all' ? 'active' : ''" @click="tech = 'all'">All</button>
+                    <button class="btn btn-outline-primary filter-button" :class="tech === 'core' ? 'active' : ''" @click="tech = 'core'" :disabled="!state.core">Core</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'http' ? 'active' : ''" @click="tech = 'http'" :disabled="!state.http">HTTP</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'kafka' ? 'active' : ''" @click="tech = 'kafka'" :disabled="!state.kafka">Kafka</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'ldap' ? 'active' : ''" @click="tech = 'ldap'" :disabled="!state.ldap">LDAP</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'mail' ? 'active' : ''" @click="tech = 'mail'" :disabled="!state.mail">Mail</button>
-                    <button class="btn btn-outline-primary filter-button" :class="tech === 'core' ? 'active' : ''" @click="tech = 'core'" :disabled="!state.core">Core</button>
                 </div>
                 <div class="d-md-none">
                     <select class="form-select" aria-label="Category" @change="setType((<any>$event).target.value)">

@@ -2,8 +2,8 @@
 import type { PropType } from 'vue'
 import { useSchema } from '@/composables/schema'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
-import Markdown from 'vue3-markdown-it'
 import SourceView from '../../SourceView.vue'
+import { useMarkdown } from '@/composables/markdown'
 
 defineProps({
     headers: { type: Array as PropType<Array<HttpParameter>> },
@@ -30,7 +30,7 @@ const { formatSchema } = usePrettyLanguage()
                     </span>
                 </td>
                 <td>{{ printType(header.schema) }}</td>
-                <td><markdown :source="header.description" class="description" :html="true"></markdown></td>
+                <td><div v-html="useMarkdown(header.description).content" class="description"></div></td>
             </tr>
         </tbody>
     </table>
@@ -42,7 +42,7 @@ const { formatSchema } = usePrettyLanguage()
                         <p class="label">Name</p>
                         <p>{{ header.name }}</p>
                         <p class="label">Description</p>
-                        <markdown :source="header.description"></markdown>
+                        <div v-html="useMarkdown(header.description).content"></div>
                         <p class="label">Schema</p>
                         <div class="codeBlock">
                             <source-view 

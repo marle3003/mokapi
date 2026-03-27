@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import Markdown from 'vue3-markdown-it'
+import { useMarkdown } from '@/composables/markdown';
+import { computed } from 'vue';
+
 
 const props = defineProps<{
     service: Service,
     type?: string
 }>()
+
+const description = computed(() => useMarkdown(props.service.description).content)
 </script>
 
 <template>
@@ -43,7 +47,7 @@ const props = defineProps<{
                 <div class="row">
                     <div class="col">
                         <p id="description" class="label">Description</p>
-                        <markdown :source="service.description" data-testid="service-description" aria-labelledby="description" :html="true"></markdown>
+                        <div aria-labelledby="description" v-html="description"></div>
                     </div>
                 </div>
             </div>

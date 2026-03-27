@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { useMarkdown } from '@/composables/markdown';
 import { computed, type PropType } from 'vue';
-import Markdown from 'vue3-markdown-it'
 
 const props = defineProps({
     service: { type: Object as PropType<MailService>, required: true },
@@ -30,7 +30,7 @@ const servers = computed(() => {
                     <td>{{ server.name }}</td>
                     <td>{{ server.host }}</td>
                     <td>{{ server.protocol }}</td>
-                    <td><markdown :source="server.description" class="description" :html="true"></markdown></td>
+                    <td><div v-html="useMarkdown(server.description).content" class="description"></div></td>
                 </tr>
             </tbody>
         </table>
