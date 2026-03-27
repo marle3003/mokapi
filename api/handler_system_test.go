@@ -1,6 +1,7 @@
 package api
 
 import (
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
@@ -84,7 +85,7 @@ func TestHandler_System(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := &static.Config{}
-			app := runtime.New(cfg)
+			app := runtime.New(cfg, &dynamictest.Reader{})
 
 			h := New(app, static.Api{})
 			tc.fn(t, h, app.Events)

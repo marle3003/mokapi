@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/media"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Content map[string]*MediaType
@@ -75,9 +76,9 @@ func (c *Content) UnmarshalYAML(value *yaml.Node) error {
 }
 
 //goland:noinspection GoMixedReceiverTypes
-func (c Content) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (c Content) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for name, mediaType := range c {
-		if err := mediaType.parse(config, reader); err != nil {
+		if err := mediaType.Parse(config, reader); err != nil {
 			return fmt.Errorf("parse content '%v' failed: %w", name, err)
 		}
 	}

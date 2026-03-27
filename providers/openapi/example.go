@@ -3,8 +3,9 @@ package openapi
 import (
 	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
+
+	"gopkg.in/yaml.v3"
 )
 
 type ExampleValue struct {
@@ -74,7 +75,7 @@ func (e *ExampleValue) UnmarshalYAML(node *yaml.Node) error {
 
 func (e Examples) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for name, ex := range e {
-		if err := ex.parse(config, reader); err != nil {
+		if err := ex.Parse(config, reader); err != nil {
 			return fmt.Errorf("parse example '%v' failed: %w", name, err)
 		}
 	}
@@ -82,19 +83,24 @@ func (e Examples) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	return nil
 }
 
-func (r *ExampleRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (r *ExampleRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref) > 0 {
-		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
+		var resolved *ExampleRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+			return err
+		}
+		r.Value = resolved.Value
+		return nil
 	}
 
-	return r.Value.parse(config, reader)
+	return r.Value.Parse(config, reader)
 }
 
-func (e *Example) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (e *Example) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if e == nil {
 		return nil
 	}

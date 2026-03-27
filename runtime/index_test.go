@@ -3,6 +3,7 @@ package runtime_test
 import (
 	"context"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime"
@@ -19,7 +20,7 @@ import (
 func TestIndex(t *testing.T) {
 	cfg := &static.Config{}
 	cfg.Api.Search.Enabled = true
-	app := runtime.New(cfg)
+	app := runtime.New(cfg, &dynamictest.Reader{})
 
 	pool := safe.NewPool(context.Background())
 	app.Start(pool)

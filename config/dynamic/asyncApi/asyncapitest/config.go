@@ -66,7 +66,7 @@ func WithSchemas(name string, s *schema.Schema) ConfigOptions {
 			c.Components.Schemas = map[string]*asyncapi3.SchemaRef{}
 		}
 		c.Components.Schemas[name] = &asyncapi3.SchemaRef{
-			Value: &asyncapi3.MultiSchemaFormat{Schema: s},
+			Value: s,
 		}
 	}
 }
@@ -77,9 +77,9 @@ func WithMessages(name string, message *asyncApi.Message) ConfigOptions {
 			c.Components = &asyncApi.Components{}
 		}
 		if c.Components.Messages == nil {
-			c.Components.Messages = map[string]*asyncApi.Message{}
+			c.Components.Messages = map[string]*asyncApi.MessageRef{}
 		}
-		c.Components.Messages[name] = message
+		c.Components.Messages[name] = &asyncApi.MessageRef{Value: message}
 	}
 }
 

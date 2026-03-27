@@ -2,10 +2,12 @@ package runtime_test
 
 import (
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
+	"mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"mokapi/runtime/events/eventstest"
@@ -58,7 +60,8 @@ func TestApp_AddHttp(t *testing.T) {
 
 				r := httptest.NewRequest(http.MethodGet, "https://mokapi.io/foo", nil)
 				rr := httptest.NewRecorder()
-				h.ServeHTTP(rr, r)
+				err := h.ServeHTTP(rr, r)
+				require.Nil(t, err)
 
 				require.Equal(t, float64(1), m.RequestCounter.Sum())
 			},
@@ -79,7 +82,7 @@ func TestApp_AddHttp(t *testing.T) {
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := &static.Config{}
-			app := runtime.New(cfg)
+			app := runtime.New(cfg, &dynamictest.Reader{})
 			tc.test(t, app)
 		})
 	}
@@ -169,6 +172,44 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 				require.Len(t, e, 104)
 			},
 		},
+		{
+			name: "patch schema in response using $ref",
+			configs: []*dynamic.Config{
+				newConfig("https://a.io/a", openapitest.NewConfig("3.1.0",
+					openapitest.WithInfo("foo", "", "foo"),
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodGet,
+							openapitest.WithResponse(http.StatusOK,
+								openapitest.WithContent("application/json",
+									openapitest.WithSchema(
+										schematest.NewTypes(nil, schematest.WithRef("#/components/schemas/Foo")),
+									),
+								),
+							),
+						),
+					),
+					openapitest.WithComponentSchema("Foo", schematest.New("string")),
+				),
+				),
+				newConfig("https://a.io/b", openapitest.NewConfig("3.1.0",
+					openapitest.WithInfo("foo", "", "foo"),
+					openapitest.WithComponentSchema("Foo", schematest.New("string", schematest.WithFormat("date-time"))),
+				),
+				),
+			},
+			test: func(t *testing.T, app *runtime.App) {
+				info := app.GetHttp("foo")
+				p := info.Paths["/foo"]
+				require.NotNil(t, p)
+				op := p.Value.Get
+				require.NotNil(t, op)
+				res := op.Responses.GetResponse(http.StatusOK)
+				require.NotNil(t, res)
+				mt := res.Content["application/json"]
+				require.NotNil(t, mt)
+				require.Equal(t, "date-time", mt.Schema.Format)
+			},
+		},
 	}
 	for _, tc := range testcases {
 		tc := tc
@@ -177,7 +218,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 			if cfg == nil {
 				cfg = &static.Config{}
 			}
-			app := runtime.New(cfg)
+			app := runtime.New(cfg, &dynamictest.Reader{})
 			for _, c := range tc.configs {
 				app.AddHttp(c)
 			}

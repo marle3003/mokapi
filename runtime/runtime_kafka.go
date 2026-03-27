@@ -26,6 +26,7 @@ type KafkaStore struct {
 	events  *events.StoreManager
 	index   search.Index
 	m       sync.RWMutex
+	reader  dynamic.Reader
 }
 
 type KafkaInfo struct {
@@ -41,14 +42,13 @@ type KafkaHandler struct {
 	next  kafka.Handler
 }
 
-func NewKafkaInfo(c *dynamic.Config, store *store.Store, updateEventAndMetrics func(info *KafkaInfo)) *KafkaInfo {
+func newKafkaInfo(store *store.Store, updateEventAndMetrics func(info *KafkaInfo)) *KafkaInfo {
 	hc := &KafkaInfo{
 		configs:               map[string]*dynamic.Config{},
 		Store:                 store,
 		seenTopics:            map[string]bool{},
 		updateEventAndMetrics: updateEventAndMetrics,
 	}
-	hc.AddConfig(c)
 	return hc
 }
 
@@ -98,11 +98,10 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*Kafka
 		s.events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
 		s.events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
 
-		ki = NewKafkaInfo(c, store.NewEmpty(emitter, s.events, s.monitor.Kafka), s.updateEventStore)
+		ki = newKafkaInfo(store.NewEmpty(emitter, s.events, s.monitor.Kafka), s.updateEventStore)
 		s.infos[cfg.Info.Name] = ki
-	} else {
-		ki.AddConfig(c)
 	}
+	ki.addConfig(c, s.reader)
 
 	if s.cfg.Api.Search.Enabled {
 		s.addToIndex(ki.Config)
@@ -137,7 +136,7 @@ func (s *KafkaStore) Remove(c *dynamic.Config) {
 		s.removeFromIndex(ki.Config)
 	}
 	delete(ki.configs, c.Info.Url.String())
-	ki.update()
+	ki.update(s.reader)
 
 	if len(ki.configs) == 0 {
 		s.m.RUnlock()
@@ -150,13 +149,13 @@ func (s *KafkaStore) Remove(c *dynamic.Config) {
 	}
 }
 
-func (c *KafkaInfo) AddConfig(config *dynamic.Config) {
+func (c *KafkaInfo) addConfig(config *dynamic.Config, reader dynamic.Reader) {
 	key := config.Info.Url.String()
 	c.configs[key] = config
-	c.update()
+	c.update(reader)
 }
 
-func (c *KafkaInfo) update() {
+func (c *KafkaInfo) update(reader dynamic.Reader) {
 	if len(c.configs) == 0 {
 		c.Config = nil
 		c.Store = nil
@@ -185,6 +184,13 @@ func (c *KafkaInfo) update() {
 		} else {
 			log.Infof("applying patch for %s: %s", cfg.Info.Name, k)
 			cfg.Patch(p)
+		}
+	}
+
+	if len(c.configs) > 1 {
+		err := cfg.Parse(&dynamic.Config{Data: cfg}, reader)
+		if err != nil {
+			log.Errorf("failed to parse config: %s", err)
 		}
 	}
 

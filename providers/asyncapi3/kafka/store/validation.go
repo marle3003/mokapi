@@ -68,22 +68,11 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyn
 
 	var msgParser encoding.Parser
 	if msg.Payload != nil && channel.Bindings.Kafka.ValueSchemaValidation {
-		switch s := msg.Payload.Value.Schema.(type) {
-		case *schema.Schema:
-			msgParser = &parser.Parser{Schema: s, ConvertToSortedMap: true}
-		case *openapi.Schema:
-			mt := media.ParseContentType(msg.ContentType)
-			if mt.IsXml() {
-				msgParser = openapi.NewXmlParser(s)
-			} else {
-				msgParser = &parser.Parser{Schema: openapi.ConvertToJsonSchema(s), ConvertToSortedMap: true}
-			}
-		case *asyncapi3.AvroRef:
-			msgParser = &avro.Parser{Schema: s.Schema}
-		default:
+		var err error
+		msgParser, err = getParser(msg.Payload, msg.ContentType)
+		if err != nil {
 			log.Errorf("unsupported payload type: %T", msg.Payload.Value)
 		}
-
 		if msgParser != nil {
 			v.payload = &schemaValidator{
 				parser:      msgParser,
@@ -94,7 +83,7 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyn
 
 	if msg.Bindings.Kafka.Key != nil && channel.Bindings.Kafka.KeySchemaValidation {
 		var keyParser encoding.Parser
-		switch s := msg.Bindings.Kafka.Key.Value.Schema.(type) {
+		switch s := msg.Bindings.Kafka.Key.Value.(type) {
 		case *schema.Schema:
 			keyParser = &parser.Parser{Schema: s}
 		case *asyncapi3.AvroRef:
@@ -112,7 +101,7 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyn
 
 	if msg.Headers != nil {
 		var headerParser encoding.Parser
-		switch s := msg.Headers.Value.Schema.(type) {
+		switch s := msg.Headers.Value.(type) {
 		case *schema.Schema:
 			headerParser = &parser.Parser{Schema: s}
 		case *asyncapi3.AvroRef:
@@ -252,7 +241,7 @@ func convertHeader(headers []kafka.RecordHeader) map[string]LogValue {
 }
 
 func parseHeader(headers []kafka.RecordHeader, sr *asyncapi3.SchemaRef) (map[string]LogValue, error) {
-	if sr == nil || sr.Value == nil || sr.Value.Schema == nil {
+	if sr == nil || sr.Value == nil {
 		return convertHeader(headers), nil
 	}
 	m := map[string][]byte{}
@@ -261,7 +250,7 @@ func parseHeader(headers []kafka.RecordHeader, sr *asyncapi3.SchemaRef) (map[str
 	}
 
 	result := map[string]LogValue{}
-	switch s := sr.Value.Schema.(type) {
+	switch s := sr.Value.(type) {
 	case *schema.Schema:
 		if s.Properties == nil {
 			return result, fmt.Errorf("invalid header definition: expected object with properties")
@@ -346,4 +335,23 @@ func parseHeader(headers []kafka.RecordHeader, sr *asyncapi3.SchemaRef) (map[str
 		}
 	}
 	return result, nil
+}
+
+func getParser(ref *asyncapi3.SchemaRef, contentType string) (encoding.Parser, error) {
+	switch s := ref.Value.(type) {
+	case *schema.Schema:
+		return &parser.Parser{Schema: s, ConvertToSortedMap: true}, nil
+	case *openapi.Schema:
+		mt := media.ParseContentType(contentType)
+		if mt.IsXml() {
+			return openapi.NewXmlParser(s), nil
+		}
+		return &parser.Parser{Schema: openapi.ConvertToJsonSchema(s), ConvertToSortedMap: true}, nil
+	case *asyncapi3.AvroRef:
+		return &avro.Parser{Schema: s.Schema}, nil
+	case *asyncapi3.MultiSchemaFormat:
+		return getParser(s.Schema, contentType)
+	default:
+		return nil, fmt.Errorf("unsupported payload type: %T", s)
+	}
 }

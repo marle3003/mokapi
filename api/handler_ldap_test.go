@@ -32,7 +32,7 @@ func TestHandler_Ldap(t *testing.T) {
 		{
 			name: "get ldap services",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				app.Ldap.Set("foo", &runtime.LdapInfo{
 					Config: &directory.Config{Info: directory.Info{Name: "foo", Description: "bar", Version: "1.0"}},
 				})
@@ -45,7 +45,7 @@ func TestHandler_Ldap(t *testing.T) {
 		{
 			name: "get ldap service",
 			app: func() *runtime.App {
-				app := runtime.New(&static.Config{})
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				cfg := &dynamic.Config{
 					Info: dynamictest.NewConfigInfo(),
 					Data: &directory.Config{

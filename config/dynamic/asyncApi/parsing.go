@@ -1,8 +1,9 @@
 package asyncApi
 
 import (
-	log "github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
@@ -10,9 +11,11 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		if server == nil || len(server.Ref) == 0 {
 			continue
 		}
-		if err := dynamic.Resolve(server.Ref, &server.Value, config, reader); err != nil {
+		var resolved *ServerRef
+		if err := dynamic.Resolve(server.Ref, &resolved, config, reader); err != nil {
 			return err
 		}
+		server.Value = resolved.Value
 	}
 
 	for _, ch := range c.Channels {
@@ -29,7 +32,12 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 func (r *ChannelRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
+		var resolved *ChannelRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+			return err
+		}
+		r.Value = resolved.Value
+		return nil
 	}
 
 	if r.Value == nil {
@@ -66,9 +74,12 @@ func (o *Operation) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 func (r *MessageRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		if err := dynamic.Resolve(r.Ref, &r.Value, config, reader); err != nil {
+		var resolved *MessageRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
 			return err
 		}
+		r.Value = resolved.Value
+		return nil
 	}
 
 	if r.Value == nil {
@@ -104,9 +115,12 @@ func (r *MessageRef) Parse(config *dynamic.Config, reader dynamic.Reader) error 
 
 func (r *MessageTraitRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		if err := dynamic.Resolve(r.Ref, &r.Value, config, reader); err != nil {
+		var resolved *MessageTraitRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
 			return err
 		}
+		r.Value = resolved.Value
+		return nil
 	}
 
 	if r.Value == nil {
@@ -151,7 +165,11 @@ func (m *Message) applyTrait(trait *MessageTrait) {
 
 func (r *ParameterRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
+		var resolved *ParameterRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+			return err
+		}
+		r.Value = resolved.Value
 	}
 	return nil
 }

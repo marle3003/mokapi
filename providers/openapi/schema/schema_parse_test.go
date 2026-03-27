@@ -215,7 +215,27 @@ $ref: '#/$defs/a'
 
 				err = s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 				require.NoError(t, err)
-				require.Equal(t, "", s.String())
+				require.Equal(t, "empty schema", s.String())
+			},
+		},
+		{
+			name: "self-recursion",
+			test: func(t *testing.T) {
+				data := `
+$defs:
+  a:
+    properties:
+      part:
+        $ref: '#/$defs/a'
+$ref: '#/$defs/a'
+`
+				var s *schema.Schema
+				err := yaml.Unmarshal([]byte(data), &s)
+				require.NoError(t, err)
+
+				err = s.Parse(&dynamic.Config{Data: s}, &dynamictest.Reader{})
+				require.NoError(t, err)
+				require.Equal(t, "schema properties=[part]", s.String())
 			},
 		},
 		{

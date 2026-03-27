@@ -43,12 +43,12 @@ func (p *Parser) Parse(data interface{}) (interface{}, error) {
 }
 
 func (p *Parser) parse(data interface{}, s *schema.Schema) (interface{}, error) {
-	if s == nil {
-		return data, nil
-	}
-
 	if e, ok := data.(Exportable); ok {
 		data = e.Export()
+	}
+
+	if s == nil {
+		return data, nil
 	}
 
 	if s.Boolean != nil {

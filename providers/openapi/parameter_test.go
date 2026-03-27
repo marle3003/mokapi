@@ -3,8 +3,6 @@ package openapi_test
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
@@ -12,6 +10,9 @@ import (
 	"mokapi/providers/openapi/schema/schematest"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestParameterHeader_UnmarshalJSON(t *testing.T) {
@@ -309,7 +310,7 @@ func TestParameterHeader_Parse(t *testing.T) {
 			name: "reference",
 			test: func(t *testing.T) {
 				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
-					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &openapi.Parameter{Description: "foo"}}
+					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u}, Data: &openapi.ParameterRef{Value: &openapi.Parameter{Description: "foo"}}}
 					return cfg, nil
 				})
 				param := openapi.Parameters{&openapi.ParameterRef{Reference: dynamic.Reference{Ref: "foo.yml"}}}

@@ -12,12 +12,13 @@ import (
 )
 
 type ConfigInfo struct {
-	Provider string
-	Url      *url.URL
-	Checksum []byte
-	Time     time.Time
-	inner    *ConfigInfo
-	Tags     []string
+	Provider    string
+	Url         *url.URL
+	Checksum    []byte
+	Time        time.Time
+	inner       *ConfigInfo
+	Tags        []string
+	ContentType string
 }
 
 func (ci *ConfigInfo) Path() string {

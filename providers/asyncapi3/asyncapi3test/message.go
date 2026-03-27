@@ -18,14 +18,14 @@ func NewMessage(opts ...MessageOptions) *asyncapi3.Message {
 
 func WithPayload(s *schema.Schema) MessageOptions {
 	return func(m *asyncapi3.Message) {
-		m.Payload = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{Schema: s}}
+		m.Payload = &asyncapi3.SchemaRef{Value: s}
 	}
 }
 
 func WithPayloadOpenAPI(s *openapi.Schema) MessageOptions {
 	return func(m *asyncapi3.Message) {
 		m.Payload = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{
-			Schema: s,
+			Schema: &asyncapi3.SchemaRef{Value: s},
 			Format: "application/vnd.oai.openapi+json;version=3.0.0",
 		}}
 	}
@@ -35,7 +35,7 @@ func WithPayloadMulti(format string, schema asyncapi3.Schema) MessageOptions {
 	return func(m *asyncapi3.Message) {
 		m.Payload = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{
 			Format: format,
-			Schema: schema,
+			Schema: &asyncapi3.SchemaRef{Value: schema},
 		}}
 	}
 }
@@ -48,7 +48,7 @@ func WithContentType(s string) MessageOptions {
 
 func WithKey(s *schema.Schema) MessageOptions {
 	return func(m *asyncapi3.Message) {
-		m.Bindings.Kafka.Key = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{Schema: s}}
+		m.Bindings.Kafka.Key = &asyncapi3.SchemaRef{Value: s}
 	}
 }
 
@@ -69,6 +69,6 @@ func WithKafkaMessageBinding(b asyncapi3.KafkaMessageBinding) MessageOptions {
 
 func WithHeaders(s *schema.Schema) MessageOptions {
 	return func(m *asyncapi3.Message) {
-		m.Headers = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{Schema: s}}
+		m.Headers = &asyncapi3.SchemaRef{Value: s}
 	}
 }

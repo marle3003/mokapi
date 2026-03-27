@@ -344,6 +344,21 @@ func TestModule_Shared(t *testing.T) {
 			},
 		},
 		{
+			name: "delete field in object",
+			test: func(t *testing.T, newVm func() *goja.Runtime) {
+				vm1 := newVm()
+
+				v, err := vm1.RunString(`
+					const m = require('mokapi');
+					const shared = m.shared.update('foo', (v) => v ?? { foo: 'bar' });
+					delete shared.foo
+					shared
+				`)
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{}, mokapi.Export(v))
+			},
+		},
+		{
 			name: "push array",
 			test: func(t *testing.T, newVm func() *goja.Runtime) {
 				vm1 := newVm()

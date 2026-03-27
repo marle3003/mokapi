@@ -55,9 +55,9 @@ func (h *Header) UnmarshalYAML(node *yaml.Node) error {
 	return nil
 }
 
-func (h Headers) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (h Headers) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	for name, header := range h {
-		if err := header.parse(config, reader); err != nil {
+		if err := header.Parse(config, reader); err != nil {
 			return fmt.Errorf("parse header '%v' failed: %w", name, err)
 		}
 	}
@@ -65,13 +65,18 @@ func (h Headers) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	return nil
 }
 
-func (r *HeaderRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (r *HeaderRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref) > 0 {
-		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
+		var resolved *HeaderRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+			return err
+		}
+		r.Value = resolved.Value
+		return nil
 	}
 	return r.Value.Parse(config, reader)
 }

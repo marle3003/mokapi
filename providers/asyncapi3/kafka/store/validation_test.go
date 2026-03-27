@@ -284,6 +284,7 @@ func TestValidation(t *testing.T) {
 					},
 				})
 				require.NoError(t, err)
+				require.Len(t, wr.Records, 1)
 				require.Equal(t, "invalid message: error count 1:\n\t- #/required: required properties are missing: bar", wr.Records[0].BatchIndexErrorMessage)
 			},
 		},

@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	"mokapi/ldap"
@@ -117,7 +118,7 @@ func TestLdapDirectory(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := &static.Config{}
-			app := runtime.New(cfg)
+			app := runtime.New(cfg, &dynamictest.Reader{})
 			m := NewLdapDirectoryManager(enginetest.NewEngine(), nil, app)
 			defer m.Stop()
 

@@ -1,9 +1,10 @@
 package asyncApi
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
-	"testing"
 )
 
 func TestKafkaBinding(t *testing.T) {
@@ -87,8 +88,8 @@ components:
 `,
 			test: func(t *testing.T, c *Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "payload", c.Components.Messages["foo"].Bindings.Kafka.SchemaIdLocation)
-				require.Equal(t, "4", c.Components.Messages["foo"].Bindings.Kafka.SchemaIdPayloadEncoding)
+				require.Equal(t, "payload", c.Components.Messages["foo"].Value.Bindings.Kafka.SchemaIdLocation)
+				require.Equal(t, "4", c.Components.Messages["foo"].Value.Bindings.Kafka.SchemaIdPayloadEncoding)
 			},
 		},
 	}

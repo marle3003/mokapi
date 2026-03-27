@@ -1,12 +1,13 @@
 package asyncApi_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestConfig_Patch_Info(t *testing.T) {
@@ -400,7 +401,7 @@ func TestConfig_Patch_Message(t *testing.T) {
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
 				msg := result.Channels["foo"].Value.Publish.Message.Value
-				s := msg.Payload.Value.Schema.(*schema.Schema)
+				s := msg.Payload.Value.(*schema.Schema)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},
@@ -428,25 +429,25 @@ func TestConfig_Patch_Components(t *testing.T) {
 			name: "patch add server",
 			configs: []*asyncApi.Config{
 				asyncapitest.NewConfig(),
-				{Components: &asyncApi.Components{Servers: map[string]*asyncApi.Server{"foo": {Protocol: "kafka"}}}},
+				{Components: &asyncApi.Components{Servers: map[string]*asyncApi.ServerRef{"foo": {Value: &asyncApi.Server{Protocol: "kafka"}}}}},
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.Len(t, result.Components.Servers, 1)
 				s := result.Components.Servers["foo"]
-				require.Equal(t, "kafka", s.Protocol)
+				require.Equal(t, "kafka", s.Value.Protocol)
 			},
 		},
 		{
 			name: "patch server",
 			configs: []*asyncApi.Config{
-				{Components: &asyncApi.Components{Servers: map[string]*asyncApi.Server{"foo": {Protocol: "kafka"}}}},
-				{Components: &asyncApi.Components{Servers: map[string]*asyncApi.Server{"foo": {Protocol: "kafka", ProtocolVersion: "1.0"}}}},
+				{Components: &asyncApi.Components{Servers: map[string]*asyncApi.ServerRef{"foo": {Value: &asyncApi.Server{Protocol: "kafka"}}}}},
+				{Components: &asyncApi.Components{Servers: map[string]*asyncApi.ServerRef{"foo": {Value: &asyncApi.Server{Protocol: "kafka", ProtocolVersion: "1.0"}}}}},
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.Len(t, result.Components.Servers, 1)
 				s := result.Components.Servers["foo"]
-				require.Equal(t, "kafka", s.Protocol)
-				require.Equal(t, "1.0", s.ProtocolVersion)
+				require.Equal(t, "kafka", s.Value.Protocol)
+				require.Equal(t, "1.0", s.Value.ProtocolVersion)
 			},
 		},
 		{
@@ -457,7 +458,7 @@ func TestConfig_Patch_Components(t *testing.T) {
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.Len(t, result.Components.Schemas, 1)
-				s := result.Components.Schemas["foo"].Value.Schema.(*schema.Schema)
+				s := result.Components.Schemas["foo"].Value.(*schema.Schema)
 				require.Equal(t, "number", s.Type.String())
 			},
 		},
@@ -469,9 +470,9 @@ func TestConfig_Patch_Components(t *testing.T) {
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.Len(t, result.Components.Schemas, 2)
-				s := result.Components.Schemas["foo"].Value.Schema.(*schema.Schema)
+				s := result.Components.Schemas["foo"].Value.(*schema.Schema)
 				require.Equal(t, "number", s.Type.String())
-				s = result.Components.Schemas["bar"].Value.Schema.(*schema.Schema)
+				s = result.Components.Schemas["bar"].Value.(*schema.Schema)
 				require.Equal(t, "string", s.Type.String())
 			},
 		},
@@ -483,7 +484,7 @@ func TestConfig_Patch_Components(t *testing.T) {
 			},
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.Len(t, result.Components.Schemas, 1)
-				s := result.Components.Schemas["foo"].Value.Schema.(*schema.Schema)
+				s := result.Components.Schemas["foo"].Value.(*schema.Schema)
 				require.Equal(t, "number", s.Type.String())
 				require.Equal(t, "double", s.Format)
 			},
@@ -497,7 +498,7 @@ func TestConfig_Patch_Components(t *testing.T) {
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.Len(t, result.Components.Messages, 1)
 				msg := result.Components.Messages["foo"]
-				require.Equal(t, "name", msg.Name)
+				require.Equal(t, "name", msg.Value.Name)
 			},
 		},
 		{
@@ -509,7 +510,7 @@ func TestConfig_Patch_Components(t *testing.T) {
 			test: func(t *testing.T, result *asyncApi.Config) {
 				require.Len(t, result.Components.Messages, 1)
 				msg := result.Components.Messages["foo"]
-				require.Equal(t, "title", msg.Title)
+				require.Equal(t, "title", msg.Value.Title)
 			},
 		},
 	}

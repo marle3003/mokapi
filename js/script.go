@@ -148,6 +148,17 @@ func (s *Script) ensureRuntime() error {
 	if s.runtime != nil {
 		return nil
 	}
+
+	defer func() {
+		r := recover()
+		if r != nil {
+			// Closing the script may cause errors. runtime = nil => closing
+			if s.runtime != nil {
+				log.Errorf("js: recovered from panic %v: %v", s.file.Info.Path(), r)
+			}
+		}
+	}()
+
 	s.runtime = goja.New()
 	s.loop = eventloop.New(s.runtime, s.host)
 

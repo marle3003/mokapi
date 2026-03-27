@@ -2,6 +2,7 @@ package events_test
 
 import (
 	"context"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
@@ -143,7 +144,7 @@ func TestIndex_Http(t *testing.T) {
 							InMemory: true,
 						},
 					},
-				})
+				}, &dynamictest.Reader{})
 
 			pool := safe.NewPool(context.Background())
 			app.Start(pool)

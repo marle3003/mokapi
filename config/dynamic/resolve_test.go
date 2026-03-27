@@ -2,11 +2,12 @@ package dynamic_test
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"net/url"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestResolve(t *testing.T) {
@@ -112,12 +113,12 @@ func TestResolve(t *testing.T) {
 					Value string
 				}
 				s := map[string]ref{"foo": {Value: "foo"}}
-				result := ""
 
-				err := dynamic.Resolve("#/foo", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				var resolved ref
+				err := dynamic.Resolve("#/foo", &resolved, &dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
-				require.Equal(t, "foo", result)
+				require.Equal(t, "foo", resolved.Value)
 			},
 		},
 		{
@@ -177,12 +178,12 @@ func TestResolve(t *testing.T) {
 				s := struct {
 					Foo ref
 				}{Foo: ref{Value: "foo"}}
-				result := ""
 
-				err := dynamic.Resolve("#/foo", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				var resolved ref
+				err := dynamic.Resolve("#/foo", &resolved, &dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
-				require.Equal(t, "foo", result)
+				require.Equal(t, "foo", resolved.Value)
 			},
 		},
 		{
@@ -195,11 +196,11 @@ func TestResolve(t *testing.T) {
 				s := struct {
 					Foo ref
 				}{Foo: ref{Value: nil}}
-				result := ""
 
-				err := dynamic.Resolve("#/foo", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
-				require.Error(t, err)
-				require.EqualError(t, err, "resolve reference '#/foo' failed: value is null")
+				var resolved ref
+				err := dynamic.Resolve("#/foo", &resolved, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				require.NoError(t, err)
+				require.Nil(t, resolved.Value)
 			},
 		},
 		{
@@ -213,12 +214,12 @@ func TestResolve(t *testing.T) {
 				s := struct {
 					Foo ref
 				}{Foo: ref{Value: &v}}
-				result := ""
 
-				err := dynamic.Resolve("#/foo", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				var resolved ref
+				err := dynamic.Resolve("#/foo", &resolved, &dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
-				require.Equal(t, "foo", result)
+				require.Equal(t, "foo", *resolved.Value.(*string))
 			},
 		},
 		{

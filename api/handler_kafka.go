@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type kafkaSummary struct {
@@ -564,10 +565,26 @@ func newTopic(t *store.Topic, ch *asyncapi3.Channel, cfg *asyncapi3.Config) topi
 		}
 
 		if msg.Payload != nil && msg.Payload.Value != nil {
-			m.Payload = &schemaInfo{Schema: msg.Payload.Value.Schema, Format: msg.Payload.Value.Format}
+			format := ""
+			if msf, ok := msg.Payload.Value.(*asyncapi3.MultiSchemaFormat); ok {
+				format = msf.Format
+			}
+			s, err := msg.Payload.GetSchema()
+			if err != nil {
+				log.Errorf("failed to get schema for message in topic '%s': %v", t.Name, err)
+			}
+			m.Payload = &schemaInfo{Schema: s, Format: format}
 		}
 		if msg.Headers != nil && msg.Headers.Value != nil {
-			m.Header = &schemaInfo{Schema: msg.Headers.Value.Schema, Format: msg.Headers.Value.Format}
+			format := ""
+			if msf, ok := msg.Headers.Value.(*asyncapi3.MultiSchemaFormat); ok {
+				format = msf.Format
+			}
+			s, err := msg.Headers.GetSchema()
+			if err != nil {
+				log.Errorf("failed to get schema for headers in topic '%s': %v", t.Name, err)
+			}
+			m.Header = &schemaInfo{Schema: s, Format: format}
 		}
 
 		if m.ContentType == "" {
@@ -575,7 +592,11 @@ func newTopic(t *store.Topic, ch *asyncapi3.Channel, cfg *asyncapi3.Config) topi
 		}
 
 		if msg.Bindings.Kafka.Key != nil {
-			m.Key = &schemaInfo{Schema: msg.Bindings.Kafka.Key.Value.Schema}
+			s, err := msg.Bindings.Kafka.Key.GetSchema()
+			if err != nil {
+				log.Errorf("failed to get schema for key in topic '%s': %v", t.Name, err)
+			}
+			m.Key = &schemaInfo{Schema: s}
 		}
 		if result.Messages == nil {
 			result.Messages = map[string]messageConfig{}

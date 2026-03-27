@@ -37,10 +37,10 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	feature.Enable(cfg.Features)
 
 	registerDynamicTypes()
-	app := runtime.New(cfg)
-	generator.SetConfig(cfg.DataGen)
 
 	watcher := server.NewConfigWatcher(cfg)
+	app := runtime.New(cfg, watcher)
+	generator.SetConfig(cfg.DataGen)
 
 	certStore, err := cert.NewStore(cfg)
 	if err != nil {

@@ -1,13 +1,14 @@
 package asyncapi3_test
 
 import (
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/asyncapi3"
 	json "mokapi/schema/json/schema"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestOperation(t *testing.T) {
@@ -40,7 +41,7 @@ operations:
 	require.NotNil(t, op.Value)
 	require.Equal(t, "send", op.Value.Action)
 	require.Equal(t, "userSignedUp", op.Value.Channel.Value.Name)
-	require.IsType(t, &json.Schema{}, op.Value.Messages[0].Value.Payload.Value.Schema)
-	js := op.Value.Messages[0].Value.Payload.Value.Schema.(*json.Schema)
+	require.IsType(t, &json.Schema{}, op.Value.Messages[0].Value.Payload.Value)
+	js := op.Value.Messages[0].Value.Payload.Value.(*json.Schema)
 	require.Equal(t, "string", js.Type.String())
 }

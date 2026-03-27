@@ -79,7 +79,17 @@ func (h *handler) getConfigData(w http.ResponseWriter, r *http.Request, key stri
 	ext := filepath.Ext(path)
 	mt := mime.TypeByExtension(filepath.Ext(ext))
 	if mt == "" {
-		mt = "text/plain"
+		if ext == "" {
+			values, err := mime.ExtensionsByType(c.Info.Kernel().ContentType)
+			if err == nil && len(values) > 0 {
+				ext = values[0]
+				path += ext
+				mt = mime.TypeByExtension(filepath.Ext(ext))
+			}
+		}
+		if mt == "" {
+			mt = "text/plain"
+		}
 	}
 	w.Header().Set("Last-Modified", c.Info.Time.UTC().Format(http.TimeFormat))
 	w.Header().Set("Content-Type", mt)

@@ -136,13 +136,6 @@ func get(token string, node interface{}) (interface{}, error) {
 	case reflect.Map:
 		mv := rValue.MapIndex(reflect.ValueOf(token))
 		if mv.IsValid() {
-			v := reflect.Indirect(mv)
-			// if map value is a "ref wrapper" like SchemaRef
-			if v.Kind() == reflect.Struct {
-				if f := v.FieldByName("Value"); f.IsValid() {
-					return f.Interface(), nil
-				}
-			}
 			return mv.Interface(), nil
 		}
 	default:
@@ -272,15 +265,10 @@ func resolveResource(ref string, element interface{}, config *Config, reader Rea
 
 func setResolved(element interface{}, val interface{}) (err error) {
 	v := reflect.ValueOf(val)
+	vElement := reflect.Indirect(reflect.ValueOf(element))
+
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
-	}
-	if v.Kind() == reflect.Struct {
-		fRef := v.FieldByName("Ref")
-		fValue := v.FieldByName("Value")
-		if fRef.IsValid() && fValue.IsValid() {
-			val = fValue.Interface()
-		}
 	}
 
 	if val == nil {
@@ -299,10 +287,9 @@ func setResolved(element interface{}, val interface{}) (err error) {
 		return
 	}
 
-	v2 := reflect.Indirect(reflect.ValueOf(element))
-	if !vCursor.Type().AssignableTo(v2.Type()) && vCursor.Kind() == reflect.Ptr {
+	if !vCursor.Type().AssignableTo(vElement.Type()) && vCursor.Kind() == reflect.Ptr {
 		if c, ok := val.(Converter); ok {
-			if converted, err := c.ConvertTo(v2.Interface()); err == nil {
+			if converted, err := c.ConvertTo(vElement.Interface()); err == nil {
 				vCursor = reflect.ValueOf(converted)
 			} else {
 				vCursor = vCursor.Elem()
@@ -312,11 +299,11 @@ func setResolved(element interface{}, val interface{}) (err error) {
 		}
 	}
 
-	if !vCursor.Type().AssignableTo(v2.Type()) {
-		return fmt.Errorf("expected type %v, got %v", v2.Type(), vCursor.Type())
+	if !vCursor.Type().AssignableTo(vElement.Type()) {
+		return fmt.Errorf("expected type %v, got %v", vElement.Type(), vCursor.Type())
 	}
 
-	v2.Set(vCursor)
+	vElement.Set(vCursor)
 
 	return
 }

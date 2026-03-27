@@ -129,9 +129,10 @@ func runRoot(cmd *cli.Command, cfg *static.Config) error {
 
 func createServer(cfg *static.Config) (*server.Server, error) {
 	pool := safe.NewPool(context.Background())
-	app := runtime.New(cfg)
 
 	watcher := server.NewConfigWatcher(cfg)
+	app := runtime.New(cfg, watcher)
+
 	scriptEngine := engine.New(watcher, app, cfg, true)
 	certStore, err := cert.NewStore(cfg)
 	if err != nil {

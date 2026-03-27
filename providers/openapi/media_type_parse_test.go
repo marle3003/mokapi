@@ -140,7 +140,7 @@ func TestRef_Unmarshal_Json(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			mt := &openapi.MediaType{Schema: tc.schema}
-			i, err := mt.Parse([]byte(tc.data), media.ParseContentType("application/json"))
+			i, err := mt.ParseData([]byte(tc.data), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
 	}
@@ -253,7 +253,7 @@ func TestRef_Unmarshal_Json_Any(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			mt := &openapi.MediaType{Schema: tc.schema}
-			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
+			i, err := mt.ParseData([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
 	}
@@ -507,7 +507,7 @@ func TestRef_Unmarshal_Json_String(t *testing.T) {
 			t.Parallel()
 
 			mt := openapi.MediaType{Schema: tc.schema}
-			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
+			i, err := mt.ParseData([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
 	}
@@ -568,7 +568,7 @@ func TestRef_Unmarshal_Json_OneOf(t *testing.T) {
 		t.Run(tc.s, func(t *testing.T) {
 			t.Parallel()
 			mt := &openapi.MediaType{Schema: tc.schema}
-			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
+			i, err := mt.ParseData([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
 	}
@@ -617,7 +617,7 @@ func TestRef_Unmarshal_Json_AllOf(t *testing.T) {
 			t.Parallel()
 
 			mt := &openapi.MediaType{Schema: tc.schema}
-			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
+			i, err := mt.ParseData([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
 	}
@@ -759,7 +759,7 @@ func TestRef_Unmarshal_Json_Integer(t *testing.T) {
 			t.Parallel()
 
 			mt := &openapi.MediaType{Schema: tc.schema}
-			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
+			i, err := mt.ParseData([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
 	}
@@ -893,7 +893,7 @@ func TestParse_Number(t *testing.T) {
 			t.Parallel()
 
 			mt := &openapi.MediaType{Schema: tc.schema}
-			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
+			i, err := mt.ParseData([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
 	}
@@ -1089,7 +1089,7 @@ func TestRef_Unmarshal_Json_Object(t *testing.T) {
 			t.Parallel()
 
 			mt := &openapi.MediaType{Schema: tc.schema}
-			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
+			i, err := mt.ParseData([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
 	}
@@ -1242,7 +1242,7 @@ func TestRef_Unmarshal_Json_Array(t *testing.T) {
 			t.Parallel()
 
 			mt := &openapi.MediaType{Schema: tc.schema}
-			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
+			i, err := mt.ParseData([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
 	}
@@ -1292,7 +1292,7 @@ func TestRef_Unmarshal_Json_Bool(t *testing.T) {
 			t.Parallel()
 
 			mt := &openapi.MediaType{Schema: tc.schema}
-			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
+			i, err := mt.ParseData([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
 	}
@@ -1330,7 +1330,7 @@ func TestRef_Unmarshal_Json_Errors(t *testing.T) {
 			t.Parallel()
 
 			mt := &openapi.MediaType{Schema: tc.schema}
-			_, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
+			_, err := mt.ParseData([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, err)
 		})
 	}
@@ -1363,7 +1363,7 @@ func TestRef_Unmarshal_Json_Dictionary(t *testing.T) {
 			t.Parallel()
 
 			mt := &openapi.MediaType{Schema: tc.schema}
-			_, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
+			_, err := mt.ParseData([]byte(tc.s), media.ParseContentType("application/json"))
 			require.Equal(t, tc.err, err)
 		})
 	}
@@ -1394,7 +1394,7 @@ func TestRef_Unmarshal_Json_SpecialNames(t *testing.T) {
 			t.Parallel()
 
 			mt := &openapi.MediaType{Schema: tc.schema}
-			i, err := mt.Parse([]byte(tc.s), media.ParseContentType("application/json"))
+			i, err := mt.ParseData([]byte(tc.s), media.ParseContentType("application/json"))
 			tc.test(t, i, err)
 		})
 	}

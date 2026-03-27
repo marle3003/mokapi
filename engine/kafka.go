@@ -50,9 +50,7 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 		}
 
 		keySchema := &asyncapi3.SchemaRef{
-			Value: &asyncapi3.MultiSchemaFormat{
-				Schema: &schema.Schema{Type: schema.Types{"string"}, Pattern: "[a-z]{9}"},
-			},
+			Value: &schema.Schema{Type: schema.Types{"string"}, Pattern: "[a-z]{9}"},
 		}
 
 		// if m.Value is not used then select Kafka message config by the data which must be valid
@@ -203,10 +201,13 @@ func (c *KafkaClient) getPartition(t *store.Topic, partition int) (*store.Partit
 
 func createValue(r *asyncapi3.SchemaRef) (value interface{}, err error) {
 	var s asyncapi3.Schema
-	if r != nil && r.Value != nil && r.Value.Schema != nil {
-		s = r.Value.Schema
+	if r != nil && r.Value != nil {
+		s, err = r.GetSchema()
 	} else {
 		s = &schema.Schema{}
+	}
+	if err != nil {
+		return
 	}
 
 	switch v := s.(type) {
@@ -218,7 +219,7 @@ func createValue(r *asyncapi3.SchemaRef) (value interface{}, err error) {
 		jsSchema := avro.ConvertToJsonSchema(v)
 		value, err = generator.New(&generator.Request{Schema: jsSchema})
 	default:
-		err = fmt.Errorf("schema format not supported: %v", r.Value.Format)
+		err = fmt.Errorf("schema format not supported: %T", r.Value)
 	}
 
 	return
@@ -308,7 +309,7 @@ func valueMatchMessagePayload(value any, msg *asyncapi3.Message) error {
 	}
 	ct := media.ParseContentType(msg.ContentType)
 
-	switch v := msg.Payload.Value.Schema.(type) {
+	switch v := msg.Payload.Value.(type) {
 	case *schema.Schema:
 		_, err := encoding.NewEncoder(v).Write(value, ct)
 		return err

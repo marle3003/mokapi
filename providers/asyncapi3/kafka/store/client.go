@@ -257,7 +257,7 @@ func (c *Client) parse(v any, ct media.ContentType, topic *asyncapi3.Channel) ([
 			return nil, err
 		}
 		if msg != nil && msg.Payload != nil {
-			return msg.Payload.Value.Marshal(v, media.ParseContentType(msg.ContentType))
+			return msg.Payload.Marshal(v, media.ParseContentType(msg.ContentType))
 		}
 		b, _ := json.Marshal(v)
 		return b, nil
@@ -267,7 +267,7 @@ func (c *Client) parse(v any, ct media.ContentType, topic *asyncapi3.Channel) ([
 			return nil, err
 		}
 		if msg != nil && msg.Payload != nil {
-			return msg.Payload.Value.Marshal(v, media.ParseContentType(msg.ContentType))
+			return msg.Payload.Marshal(v, media.ParseContentType(msg.ContentType))
 		}
 
 		switch vt := v.(type) {
@@ -391,8 +391,12 @@ func valueMatchMessagePayload(value any, msg *asyncapi3.Message) error {
 		return nil
 	}
 	ct := media.ParseContentType(msg.ContentType)
+	s, err := msg.Payload.GetSchema()
+	if err != nil {
+		return err
+	}
 
-	switch v := msg.Payload.Value.Schema.(type) {
+	switch v := s.(type) {
 	case *schema.Schema:
 		_, err := encoding.NewEncoder(v).Write(value, ct)
 		return err

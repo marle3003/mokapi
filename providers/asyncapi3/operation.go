@@ -55,50 +55,60 @@ func (r *OperationTraitRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
 }
 
-func (r *OperationRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (r *OperationRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref) > 0 {
-		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
+		var resolved *OperationRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+			return err
+		}
+		r.Value = resolved.Value
+		return nil
 	}
+	return r.Value.Parse(config, reader)
+}
 
-	if r.Value == nil {
+func (o *Operation) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	if o == nil {
 		return nil
 	}
 
-	if len(r.Value.Channel.Ref) > 0 {
-		if err := dynamic.Resolve(r.Value.Channel.Ref, &r.Value.Channel.Value, config, reader); err != nil {
+	if len(o.Channel.Ref) > 0 {
+		var resolved *ChannelRef
+		if err := dynamic.Resolve(o.Channel.Ref, &resolved, config, reader); err != nil {
+			return err
+		}
+		o.Channel.Value = resolved.Value
+	}
+
+	for _, msg := range o.Messages {
+		if err := msg.Parse(config, reader); err != nil {
 			return err
 		}
 	}
 
-	for _, msg := range r.Value.Messages {
-		if err := msg.parse(config, reader); err != nil {
+	for _, trait := range o.Traits {
+		if err := trait.Parse(config, reader); err != nil {
 			return err
 		}
-	}
-
-	for _, trait := range r.Value.Traits {
-		if err := trait.parse(config, reader); err != nil {
-			return err
-		}
-		r.Value.applyTrait(trait.Value)
+		o.applyTrait(trait.Value)
 	}
 
 	return nil
 }
 
-func (r *OperationTraitRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (r *OperationTraitRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
-	}
-
-	if r.Value == nil {
+		var resolved *OperationTraitRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+			return err
+		}
+		r.Value = resolved.Value
 		return nil
 	}
-
 	return nil
 }
 

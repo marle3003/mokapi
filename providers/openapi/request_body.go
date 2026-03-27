@@ -132,7 +132,7 @@ func readBody(r *http.Request, contentType media.ContentType, mt *MediaType) (*B
 }
 
 func parseBody(body []byte, contentType media.ContentType, mt *MediaType) (*Body, error) {
-	v, err := mt.Parse(body, contentType)
+	v, err := mt.ParseData(body, contentType)
 	return &Body{Value: v, Raw: string(body)}, err
 }
 
@@ -172,7 +172,7 @@ func (r RequestBodies) parse(config *dynamic.Config, reader dynamic.Reader) erro
 	}
 
 	for name, body := range r {
-		if err := body.parse(config, reader); err != nil {
+		if err := body.Parse(config, reader); err != nil {
 			return fmt.Errorf("parse request body '%v' failed: %w", name, err)
 		}
 	}
@@ -180,16 +180,21 @@ func (r RequestBodies) parse(config *dynamic.Config, reader dynamic.Reader) erro
 	return nil
 }
 
-func (r *RequestBodyRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (r *RequestBodyRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref) > 0 {
-		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
+		var resolved *RequestBodyRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+			return err
+		}
+		r.Value = resolved.Value
+		return nil
 	}
 
-	return r.Value.Content.parse(config, reader)
+	return r.Value.Content.Parse(config, reader)
 }
 
 func (r RequestBodies) patch(patch RequestBodies) {

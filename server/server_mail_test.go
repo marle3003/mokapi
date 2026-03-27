@@ -205,7 +205,7 @@ func TestSmtp(t *testing.T) {
 			require.NoError(t, err)
 
 			cfg := &static.Config{}
-			m := server.NewMailManager(runtime.New(cfg), enginetest.NewEngine(), certStore)
+			m := server.NewMailManager(runtime.New(cfg, &dynamictest.Reader{}), enginetest.NewEngine(), certStore)
 			defer m.Stop()
 
 			tc.test(t, m)

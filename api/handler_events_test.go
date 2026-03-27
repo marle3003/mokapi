@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/providers/openapi"
@@ -202,7 +203,7 @@ func TestHandler_Events(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := &static.Config{}
-			app := runtime.New(cfg)
+			app := runtime.New(cfg, &dynamictest.Reader{})
 
 			h := New(app, static.Api{})
 			tc.fn(t, h, app.Events)
@@ -330,7 +331,7 @@ func TestHandler_KafkaEvents(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := &static.Config{}
-			app := runtime.New(cfg)
+			app := runtime.New(cfg, &dynamictest.Reader{})
 
 			h := New(app, static.Api{})
 			tc.fn(t, h, app.Events)

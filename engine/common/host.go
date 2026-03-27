@@ -116,6 +116,7 @@ type HttpClient interface {
 type HttpClientOptions struct {
 	MaxRedirects int
 	Timeout      time.Duration
+	Insecure     bool
 }
 
 type Action struct {

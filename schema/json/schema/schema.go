@@ -254,33 +254,45 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return err
 	}
 
-	if err := s.Items.Parse(config, reader); err != nil {
-		return err
-	}
-
-	if err := s.Properties.parse(config, reader); err != nil {
-		return err
-	}
-
-	if err := s.AdditionalProperties.Parse(config, reader); err != nil {
-		return err
-	}
-
-	for _, r := range s.AnyOf {
-		if err := r.Parse(config, reader); err != nil {
+	if !s.skipParse("items") {
+		if err := s.Items.Parse(config, reader); err != nil {
 			return err
 		}
 	}
 
-	for _, r := range s.AllOf {
-		if err := r.Parse(config, reader); err != nil {
+	if !s.skipParse("properties") {
+		if err := s.Properties.parse(config, reader); err != nil {
 			return err
 		}
 	}
 
-	for _, r := range s.OneOf {
-		if err := r.Parse(config, reader); err != nil {
+	if !s.skipParse("additionalProperties") {
+		if err := s.AdditionalProperties.Parse(config, reader); err != nil {
 			return err
+		}
+	}
+
+	if !s.skipParse("anyOf") {
+		for _, r := range s.AnyOf {
+			if err := r.Parse(config, reader); err != nil {
+				return err
+			}
+		}
+	}
+
+	if !s.skipParse("allOf") {
+		for _, r := range s.AllOf {
+			if err := r.Parse(config, reader); err != nil {
+				return err
+			}
+		}
+	}
+
+	if !s.skipParse("oneOf") {
+		for _, r := range s.OneOf {
+			if err := r.Parse(config, reader); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -290,6 +302,12 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		if err != nil {
 			return err
 		}
+
+		// Apply the resolved schema as an overlay onto the current schema.
+		// The referenced schema is cloned to preserve the immutability of
+		// the parsed schema graph. Dynamic references may resolve differently
+		// depending on the evaluation context, so shared schema nodes must
+		// never be mutated.
 		s.apply(r.Schema)
 	}
 
@@ -303,4 +321,12 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	}
 
 	return nil
+}
+
+func (s *Schema) skipParse(name string) bool {
+	if s.Ref != "" {
+		_, ok := s.m[name]
+		return !ok
+	}
+	return false
 }

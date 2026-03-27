@@ -149,6 +149,7 @@ func TestHandler_Config(t *testing.T) {
 			requestUrl: "http://foo.api/api/configs/foo/data",
 			test: []try.ResponseCondition{
 				try.HasStatusCode(http.StatusOK),
+				try.HasHeader("Content-Disposition", "inline; filename=\"foo.yaml\""),
 				try.HasHeader("Last-Modified", "Wed, 27 Dec 2023 13:01:30 GMT"),
 				try.HasHeaderXor("Content-Type", "text/plain", "application/yaml"),
 				try.HasHeader("Cache-Control", "no-cache"),
@@ -173,6 +174,34 @@ func TestHandler_Config(t *testing.T) {
 			requestUrl: "http://foo.api/api/configs/foo/data",
 			test: []try.ResponseCondition{
 				try.HasStatusCode(http.StatusOK),
+				try.HasHeader("Content-Disposition", "inline; filename=\"foo.json\""),
+				try.HasHeader("Last-Modified", "Fri, 22 Dec 2023 13:01:30 GMT"),
+				try.HasHeader("Content-Type", "application/json"),
+				try.HasHeader("Etag", etag),
+				try.HasHeader("Cache-Control", "no-cache"),
+				try.HasBody(`{"foo": "bar"}`),
+			},
+		},
+		{
+			name: "config data: no extension but ContentType in Info is set",
+			app: func() *runtime.App {
+
+				return &runtime.App{Configs: map[string]*dynamic.Config{
+					"foo": {
+						Info: dynamic.ConfigInfo{
+							Url:         mustUrl("https://foo.bar/foo"),
+							Time:        mustTime("2023-12-22T13:01:30+00:00"),
+							Checksum:    checksum,
+							ContentType: "application/json",
+						},
+						Raw: data,
+					},
+				}}
+			},
+			requestUrl: "http://foo.api/api/configs/foo/data",
+			test: []try.ResponseCondition{
+				try.HasStatusCode(http.StatusOK),
+				try.HasHeader("Content-Disposition", "inline; filename=\"foo.json\""),
 				try.HasHeader("Last-Modified", "Fri, 22 Dec 2023 13:01:30 GMT"),
 				try.HasHeader("Content-Type", "application/json"),
 				try.HasHeader("Etag", etag),

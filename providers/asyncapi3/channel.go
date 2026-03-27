@@ -35,29 +35,40 @@ func (r *ChannelRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
 }
 
-func (r *ChannelRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
-	if len(r.Ref) > 0 {
-		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
+func (r *ChannelRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	if r == nil {
+		return nil
 	}
+	if len(r.Ref) > 0 {
+		var resolved *ChannelRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+			return err
+		}
+		r.Value = resolved.Value
+		return nil
+	}
+	return r.Value.Parse(config, reader)
+}
 
-	if r.Value == nil {
+func (c *Channel) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	if c == nil {
 		return nil
 	}
 
-	for _, s := range r.Value.Servers {
-		if err := s.parse(config, reader); err != nil {
+	for _, s := range c.Servers {
+		if err := s.Parse(config, reader); err != nil {
 			return err
 		}
 	}
 
-	for _, msg := range r.Value.Messages {
-		if err := msg.parse(config, reader); err != nil {
+	for _, msg := range c.Messages {
+		if err := msg.Parse(config, reader); err != nil {
 			return err
 		}
 	}
 
-	for _, p := range r.Value.Parameters {
-		if err := p.parse(config, reader); err != nil {
+	for _, p := range c.Parameters {
+		if err := p.Parse(config, reader); err != nil {
 			return err
 		}
 	}

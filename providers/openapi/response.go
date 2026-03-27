@@ -187,7 +187,7 @@ func (r *Responses) parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 	for it := r.Iter(); it.Next(); {
 		res := it.Value()
-		if err := res.parse(config, reader); err != nil {
+		if err := res.Parse(config, reader); err != nil {
 			return fmt.Errorf("parse response '%v' failed: %w", it.Key(), err)
 		}
 	}
@@ -201,7 +201,7 @@ func (r ResponseBodies) parse(config *dynamic.Config, reader dynamic.Reader) err
 	}
 
 	for k, res := range r {
-		if err := res.parse(config, reader); err != nil {
+		if err := res.Parse(config, reader); err != nil {
 			return fmt.Errorf("parse response '%v' failed: %w", k, err)
 		}
 	}
@@ -209,13 +209,18 @@ func (r ResponseBodies) parse(config *dynamic.Config, reader dynamic.Reader) err
 	return nil
 }
 
-func (r *ResponseRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (r *ResponseRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
 
 	if len(r.Ref) > 0 {
-		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
+		var resolved *ResponseRef
+		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+			return err
+		}
+		r.Value = resolved.Value
+		return nil
 	}
 
 	return r.Value.Parse(config, reader)
@@ -226,11 +231,11 @@ func (r *Response) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 
-	if err := r.Headers.parse(config, reader); err != nil {
+	if err := r.Headers.Parse(config, reader); err != nil {
 		return err
 	}
 
-	return r.Content.parse(config, reader)
+	return r.Content.Parse(config, reader)
 }
 
 func (r *Responses) patch(patch *Responses) {

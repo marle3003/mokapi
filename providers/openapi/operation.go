@@ -84,7 +84,7 @@ func (o *Operation) getResponse(statusCode int) *Response {
 	return o.Responses.GetResponse(statusCode)
 }
 
-func (o *Operation) parse(p *Path, config *dynamic.Config, reader dynamic.Reader) error {
+func (o *Operation) Parse(p *Path, config *dynamic.Config, reader dynamic.Reader) error {
 	if o == nil {
 		return nil
 	}
@@ -95,7 +95,7 @@ func (o *Operation) parse(p *Path, config *dynamic.Config, reader dynamic.Reader
 		return err
 	}
 
-	if err := o.RequestBody.parse(config, reader); err != nil {
+	if err := o.RequestBody.Parse(config, reader); err != nil {
 		return fmt.Errorf("parse request body failed: %w", err)
 	}
 
