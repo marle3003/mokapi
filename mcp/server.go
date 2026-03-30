@@ -34,6 +34,8 @@ func NewServer(app *runtime.App) http.Handler {
 
 	svc.registerGetEvents(server)
 
+	svc.registerGetMokapiJsAPI(server)
+
 	return mcp.NewStreamableHTTPHandler(
 		func(*http.Request) *mcp.Server { return server },
 		&mcp.StreamableHTTPOptions{},

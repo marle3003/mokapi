@@ -7,13 +7,14 @@ description: The FetchOptions object defines parameters for the fetch() function
 The `FetchOptions` object defines additional parameters for the [`fetch()`](/docs/javascript-api/mokapi-http/fetch.md) function in the `mokapi/http` module.  
 It allows you to customize request behavior such as HTTP method, headers, body, timeout, and redirect handling.
 
-| Name         | Type           | Description                                                                                                  |
-|--------------|----------------|--------------------------------------------------------------------------------------------------------------|
-| method       | string         | The HTTP method used for the request (e.g. `"GET"`, `"POST"`, `"PUT"`). Defaults to `"GET"`.                 |                                                                 |
-| body         | object         | The request body to send. Automatically serialized to JSON when `Content-Type` is set to `application/json`. |
-| headers      | object         | Key-value pairs representing HTTP headers to include with the request.                                       |
-| maxRedirects | number         | The number of redirects to follow. Default value is 5. A value of 0 (zero) prevents all redirection.         |
-| timeout      | number, string | Maximum time to wait for the request to complete. Default timeout is 60 seconds ("60s")                      |
+| Name         | Type           | Description                                                                                                                                              |
+|--------------|----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| method       | string         | The HTTP method used for the request (e.g. `"GET"`, `"POST"`, `"PUT"`). Defaults to `"GET"`.                                                             |                                                                 |
+| body         | any            | The request body to send. Automatically serialized to JSON when `Content-Type` is set to `application/json`.                                             |
+| headers      | object         | Key-value pairs representing HTTP headers to include with the request.                                                                                   |
+| maxRedirects | number         | The number of redirects to follow. Default value is 5. A value of 0 (zero) prevents all redirection.                                                     |
+| timeout      | number, string | Maximum time to wait for the request to complete. Default timeout is 60 seconds ("60s")                                                                  |
+| insecure     | boolean        | If set to true, TLS certificate verification is skipped. This allows connections to servers with self-signed or invalid certificates. Default is false.  |
 
 ## Example of Accept header
 
