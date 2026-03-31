@@ -17,11 +17,19 @@ Use this to understand:
 - Produce Kafka messages to simulate a Kafka event
 - Scheduled jobs via every() or cron()
 - Utility functions like sleep() and fetch()
+
+When mocking HTTP endpoints:
+1. Identify the API, path, method, and response status
+2. Call the "generate_http_response" tool
+3. Return the generated object directly
+Do NOT:
+- Manually construct response.data
+- Guess response structure
 `,
 	}, s.GetMokapiJsAPI)
 }
 
-func (s *Service) GetMokapiJsAPI(_ context.Context, in any) (map[string]any, error) {
+func (s *Service) GetMokapiJsAPI(_ context.Context, _ any) (map[string]any, error) {
 	return map[string]any{
 		"api": map[string]any{
 
@@ -35,13 +43,105 @@ func (s *Service) GetMokapiJsAPI(_ context.Context, in any) (map[string]any, err
 					"parameters": []any{
 						map[string]any{
 							"name":        "request",
-							"type":        "HttpRequest",
+							"type":        "object",
 							"description": "Contains data of a HTTP request",
+							"properties": map[string]any{
+								"method": map[string]any{
+									"type":        "string",
+									"description": "HTTP request method, such as GET or POST",
+								},
+								"url": map[string]any{
+									"type":        "object",
+									"description": "Parsed URL of the request",
+									"properties": map[string]any{
+										"scheme": map[string]any{
+											"type": "string",
+										},
+										"host": map[string]any{
+											"type": "string",
+										},
+										"port": map[string]any{
+											"type": "integer",
+										},
+										"path": map[string]any{
+											"type": "string",
+										},
+										"query": map[string]any{
+											"type": "string",
+										},
+									},
+								},
+								"key": map[string]any{
+									"type":        "string",
+									"description": "Path value that matched the OpenAPI path template",
+								},
+								"operationId": map[string]any{
+									"type":        "string",
+									"description": "Operation Id defined in the OpenAPI specification",
+								},
+								"path": map[string]any{
+									"type":        "object",
+									"description": "Path parameters defined by the OpenAPI path parameters",
+								},
+								"query": map[string]any{
+									"type":        "object",
+									"description": "Query parameters defined by the OpenAPI query parameters",
+								},
+								"header": map[string]any{
+									"type":        "object",
+									"description": "Header parameters defined by the OpenAPI header parameters",
+								},
+								"cookie": map[string]any{
+									"type":        "object",
+									"description": "Cookie parameters defined by the OpenAPI cookie parameters",
+								},
+								"body": map[string]any{
+									"type":        "any",
+									"description": "Request body parsed according to the OpenAPI request body schema",
+								},
+								"api": map[string]any{
+									"type":        "string",
+									"description": "Name of the API, as defined in the OpenAPI info.title field",
+								},
+							},
+							"examples": []string{
+								"request.body.userId",
+								"request.query.page",
+								"request.path.id",
+								"request.key === '/users/{id}'",
+							},
 						},
 						map[string]any{
 							"name":        "response",
-							"type":        "HttpResponse",
-							"description": "Used to construct the HTTP response",
+							"type":        "object",
+							"description": "Used to define the outgoing HTTP response, including status code, headers, and response body.",
+							"rules": []string{
+								"Use response.data for structured responses (recommended)",
+								"Use response.body only for raw responses",
+								"Do not set both data and body at the same time",
+							},
+							"properties": map[string]any{
+								"statusCode": map[string]any{
+									"type":        "integer",
+									"description": "HTTP status code used to select the OpenAPI response definition",
+								},
+								"headers": map[string]any{
+									"type":        "object",
+									"description": "Response headers defined by the OpenAPI response header parameters",
+								},
+								"body": map[string]any{
+									"type":        "string",
+									"description": "Raw response body. Takes precedence over data. Use body to return a raw response body without OpenAPI encoding and validating.",
+								},
+								"data": map[string]any{
+									"type":        "any",
+									"description": "Response body as data that will be encoded according to the OpenAPI response schema. This data must be valid against the response OpenAPI schema",
+								},
+							},
+							"examples": []string{
+								"response.data = { id: 1 }",
+								"response.statusCode = 400",
+							},
 						},
 						map[string]any{
 							"name":        "args",
@@ -104,104 +204,6 @@ func (s *Service) GetMokapiJsAPI(_ context.Context, in any) (map[string]any, err
 				},
 			},
 			"types": map[string]any{
-				"HttpRequest": map[string]any{
-					"properties": map[string]any{
-						"method": map[string]any{
-							"type":        "string",
-							"description": "HTTP request method, such as GET or POST",
-						},
-						"url": map[string]any{
-							"type":        "object",
-							"description": "Parsed URL of the request",
-							"properties": map[string]any{
-								"scheme": map[string]any{
-									"type": "string",
-								},
-								"host": map[string]any{
-									"type": "string",
-								},
-								"port": map[string]any{
-									"type": "integer",
-								},
-								"path": map[string]any{
-									"type": "string",
-								},
-								"query": map[string]any{
-									"type": "string",
-								},
-							},
-						},
-						"key": map[string]any{
-							"type":        "string",
-							"description": "Path value that matched the OpenAPI path template",
-						},
-						"operationId": map[string]any{
-							"type":        "string",
-							"description": "Operation Id defined in the OpenAPI specification",
-						},
-						"path": map[string]any{
-							"type":        "object",
-							"description": "Path parameters defined by the OpenAPI path parameters",
-						},
-						"query": map[string]any{
-							"type":        "object",
-							"description": "Query parameters defined by the OpenAPI query parameters",
-						},
-						"header": map[string]any{
-							"type":        "object",
-							"description": "Header parameters defined by the OpenAPI header parameters",
-						},
-						"cookie": map[string]any{
-							"type":        "object",
-							"description": "Cookie parameters defined by the OpenAPI cookie parameters",
-						},
-						"body": map[string]any{
-							"type":        "any",
-							"description": "Request body parsed according to the OpenAPI request body schema",
-						},
-						"api": map[string]any{
-							"type":        "string",
-							"description": "Name of the API, as defined in the OpenAPI info.title field",
-						},
-					},
-					"examples": []string{
-						"request.body.userId",
-						"request.query.page",
-						"request.path.id",
-						"request.key === '/users/{id}'",
-					},
-				},
-				"HttpResponse": map[string]any{
-					"type":        "object",
-					"description": "HttpResponse is an object passed to an HttpEventHandler. It is used to define the outgoing HTTP response, including status code, headers, and response body.",
-					"rules": []string{
-						"Use response.data for structured responses (recommended)",
-						"Use response.body only for raw responses",
-						"Do not set both data and body at the same time",
-					},
-					"properties": map[string]any{
-						"statusCode": map[string]any{
-							"type":        "integer",
-							"description": "HTTP status code used to select the OpenAPI response definition",
-						},
-						"headers": map[string]any{
-							"type":        "object",
-							"description": "Response headers defined by the OpenAPI response header parameters",
-						},
-						"body": map[string]any{
-							"type":        "string",
-							"description": "Raw response body. Takes precedence over data. Use body to return a raw response body without OpenAPI encoding and validating.",
-						},
-						"data": map[string]any{
-							"type":        "any",
-							"description": "Response data that will be encoded according to the OpenAPI response schema. Use data to return structured data that should be validated",
-						},
-					},
-					"examples": []string{
-						"response.data = { id: 1 }",
-						"response.statusCode = 400",
-					},
-				},
 				"EventArgs": map[string]any{
 					"type":        "object",
 					"description": "EventArgs is an optional configuration object passed to the on function when registering an event handler. It allows controlling how and when an event handler is executed.",

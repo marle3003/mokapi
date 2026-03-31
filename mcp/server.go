@@ -29,6 +29,9 @@ func NewServer(app *runtime.App) http.Handler {
 	svc.registerListApiTool(server)
 	svc.registerGetSpecTool(server)
 
+	svc.registerGetHttpResponseSchemaTool(server)
+	svc.registerGenerateHttpResponseTool(server)
+
 	svc.registerSendHttpRequest(server)
 	svc.registerProduceKafkaMessage(server)
 
