@@ -1,5 +1,0 @@
-providers:
-  file:
-    filename: 
-      - jwt-api.yaml
-      - jwt-script.js
