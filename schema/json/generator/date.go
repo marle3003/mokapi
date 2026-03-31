@@ -1,8 +1,9 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
 	"time"
+
+	"github.com/brianvoe/gofakeit/v6"
 )
 
 func dates() []*Node {
@@ -155,13 +156,17 @@ func fakeDateWithYearRange(r *Request, min time.Time, maxYear int) (any, error) 
 	year := gofakeit.IntRange(min.Year(), maxYear)
 	minMonth := int(min.Month())
 	month := gofakeit.Number(minMonth, 12)
-	if year == time.Now().Year() {
-		month = gofakeit.Number(minMonth, 12)
-	}
 	minDay := min.Day() + 1
 	if minDay > maxDayInMonth[month-1] {
 		minDay = 1
-		month += 1
+		if month == 12 {
+			month = 1
+			if year == min.Year() {
+				year++
+			}
+		} else {
+			month += 1
+		}
 	}
 	day := gofakeit.Number(minDay, maxDayInMonth[month-1])
 
