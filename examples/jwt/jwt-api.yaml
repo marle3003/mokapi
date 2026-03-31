@@ -1,0 +1,37 @@
+openapi: 3.1.0
+info:
+  title: Secure API
+  version: 1.0.0
+paths:
+  /protected:
+    get:
+      summary: Protected with API Key
+      security:
+        - oauth2Auth: [read, write] # use the same name as under securitySchemes
+      responses:
+        "200":
+          description: Successful response for API Key authentication
+          content:
+            'application/json':
+              schema: {}
+        "401":
+          description: Unauthorized
+          content:
+            'application/json':
+              schema: { }
+        "403":
+          description: Insufficient scope
+          content:
+            'application/json':
+              schema: {}
+components:
+  securitySchemes:
+    oauth2Auth:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://example.com/oauth/authorize
+          tokenUrl: https://example.com/oauth/token
+          scopes:
+            read: Read access
+            write: Write access

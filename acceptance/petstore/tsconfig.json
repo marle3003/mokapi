@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "mokapi": ["../../npm/types/index.d.ts"],
+      "mokapi/*": ["../../npm/types/*"]
+    },
+    "allowSyntheticDefaultImports": true
+  },
+  "include": [
+    "**/*",
+    "../../npm/types/*"
+  ]
+}

@@ -1,0 +1,73 @@
+Index: providers/asyncapi3/kafka/store/client.go
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package store\n\nimport (\n\t\"encoding/base64\"\n\t\"encoding/json\"\n\t\"fmt\"\n\t\"math/rand\"\n\t\"mokapi/config/dynamic\"\n\t\"mokapi/kafka\"\n\t\"mokapi/media\"\n\t\"mokapi/runtime/monitor\"\n\t\"time\"\n\n\t\"github.com/pkg/errors\"\n)\n\nvar TopicNotFound = errors.New(\"topic not found\")\nvar PartitionNotFound = errors.New(\"partition not found\")\n\ntype Record struct {\n\tKey       any\n\tValue     any\n\tHeaders   map[string]interface{}\n\tPartition int\n}\n\ntype RecordResult struct {\n\tPartition int\n\tOffset    int64\n\tError     string\n}\n\ntype Client struct {\n\tstore   *Store\n\tmonitor *monitor.Kafka\n}\n\nfunc NewClient(s *Store, m *monitor.Kafka) *Client {\n\treturn &Client{\n\t\tstore:   s,\n\t\tmonitor: m,\n\t}\n}\n\nfunc (c *Client) Write(topic string, records []Record, ct *media.ContentType) ([]RecordResult, error) {\n\tt := c.store.Topic(topic)\n\tif t == nil {\n\t\treturn nil, TopicNotFound\n\t}\n\n\tvar result []RecordResult\n\tfor _, r := range records {\n\t\tp, err := c.getPartition(t, r.Partition)\n\t\tif err != nil || p == nil {\n\t\t\treturn nil, PartitionNotFound\n\t\t}\n\t\tkey, err := c.parse(r.Key, ct)\n\t\tif err != nil {\n\t\t\tresult = append(result, RecordResult{\n\t\t\t\tPartition: -1,\n\t\t\t\tOffset:    -1,\n\t\t\t\tError:     err.Error(),\n\t\t\t})\n\t\t}\n\t\tvalue, err := c.parse(r.Value, ct)\n\t\tif err != nil {\n\t\t\tresult = append(result, RecordResult{\n\t\t\t\tPartition: -1,\n\t\t\t\tOffset:    -1,\n\t\t\t\tError:     err.Error(),\n\t\t\t})\n\t\t}\n\t\tb := kafka.RecordBatch{Records: []*kafka.Record{\n\t\t\t{\n\t\t\t\tKey:   kafka.NewBytes(key),\n\t\t\t\tValue: kafka.NewBytes(value),\n\t\t\t},\n\t\t}}\n\t\toffset, res, err := p.Write(b)\n\t\tif err != nil {\n\t\t\tresult = append(result, RecordResult{\n\t\t\t\tPartition: -1,\n\t\t\t\tOffset:    -1,\n\t\t\t\tError:     err.Error(),\n\t\t\t})\n\t\t} else {\n\t\t\tif len(res) > 0 {\n\t\t\t\tresult = append(result, RecordResult{\n\t\t\t\t\tPartition: -1,\n\t\t\t\t\tOffset:    -1,\n\t\t\t\t\tError:     res[0].BatchIndexErrorMessage,\n\t\t\t\t})\n\t\t\t} else {\n\t\t\t\tresult = append(result, RecordResult{\n\t\t\t\t\tOffset:    offset,\n\t\t\t\t\tPartition: p.Index,\n\t\t\t\t})\n\t\t\t\tc.store.UpdateMetrics(c.monitor, t, p, b)\n\t\t\t}\n\t\t}\n\t}\n\n\treturn result, nil\n}\n\nfunc (c *Client) Read(topic string, partition int, offset int64, ct *media.ContentType) ([]Record, error) {\n\tt := c.store.Topic(topic)\n\tif t == nil {\n\t\treturn nil, TopicNotFound\n\t}\n\tp := t.Partition(partition)\n\tif p == nil {\n\t\treturn nil, PartitionNotFound\n\t}\n\n\tif offset < 0 {\n\t\toffset = p.Head\n\t}\n\n\t// read max 6MB\n\tb, errCode := p.Read(offset, 6e+6)\n\tif errCode != kafka.None {\n\t\treturn nil, fmt.Errorf(\"read records failed: %v\", errCode.String())\n\t}\n\n\trecords := []Record{}\n\tswitch ct.Key() {\n\tcase \"application/vnd.mokapi.kafka.binary+json\":\n\t\tfor _, r := range b.Records {\n\t\t\tvar bKey []byte\n\t\t\tbase64.StdEncoding.Encode(bKey, kafka.Read(r.Key))\n\t\t\tvar bValue []byte\n\t\t\tbase64.StdEncoding.Encode(bValue, kafka.Read(r.Value))\n\t\t\trecords = append(records, Record{\n\t\t\t\tKey:   string(bKey),\n\t\t\t\tValue: string(bValue),\n\t\t\t})\n\t\t}\n\tcase \"application/json\", \"\":\n\t\tfor _, r := range b.Records {\n\t\t\tvar key any\n\t\t\terr := json.Unmarshal(kafka.Read(r.Key), &key)\n\t\t\tif err != nil {\n\t\t\t\treturn nil, fmt.Errorf(\"parse record key as JSON failed: %v\", err)\n\t\t\t}\n\t\t\tvar val any\n\t\t\terr = json.Unmarshal(kafka.Read(r.Value), &val)\n\t\t\tif err != nil {\n\t\t\t\treturn nil, fmt.Errorf(\"parse record value as JSON failed: %v\", err)\n\t\t\t}\n\n\t\t\trecords = append(records, Record{\n\t\t\t\tKey:   key,\n\t\t\t\tValue: val,\n\t\t\t})\n\t\t}\n\tdefault:\n\t\treturn nil, fmt.Errorf(\"unknown content type: %v\", ct)\n\t}\n\n\treturn records, nil\n}\n\nfunc (c *Client) getPartition(t *Topic, id int) (*Partition, error) {\n\tif id < 0 {\n\t\tr := rand.New(rand.NewSource(time.Now().Unix()))\n\t\tid = r.Intn(len(t.Partitions))\n\t} else if id >= len(t.Partitions) {\n\t\treturn nil, PartitionNotFound\n\t}\n\n\treturn t.Partition(id), nil\n}\n\nfunc (c *Client) parse(v any, ct *media.ContentType) ([]byte, error) {\n\tswitch ct.Key() {\n\tcase \"application/vnd.mokapi.kafka.binary+json\":\n\t\ts, ok := v.(string)\n\t\tif !ok {\n\t\t\treturn nil, fmt.Errorf(\"expected string: %v\", v)\n\t\t}\n\t\tb, err := base64.StdEncoding.DecodeString(s)\n\t\tif err != nil {\n\t\t\treturn nil, fmt.Errorf(\"decode base64 string failed: %v\", v)\n\t\t}\n\t\treturn b, err\n\tcase \"application/json\":\n\t\tb, _ := json.Marshal(v)\n\t\treturn b, nil\n\t}\n\treturn nil, fmt.Errorf(\"unknown content type: %v\", ct)\n}\n\nfunc (r *Record) UnmarshalJSON(b []byte) error {\n\t// set default\n\tr.Partition = -1\n\n\ttype alias Record\n\ta := alias(*r)\n\terr := dynamic.UnmarshalJSON(b, &a)\n\tif err != nil {\n\t\treturn err\n\t}\n\t*r = Record(a)\n\treturn nil\n}\n\nfunc (r *RecordResult) MarshalJSON() ([]byte, error) {\n\taux := &struct {\n\t\tPartition int     `json:\"partition\"`\n\t\tOffset    int64   `json:\"offset\"`\n\t\tError     *string `json:\"error,omitempty\"`\n\t}{\n\t\tPartition: r.Partition,\n\t\tOffset:    r.Offset,\n\t}\n\tif r.Error != \"\" {\n\t\taux.Error = &r.Error\n\t}\n\treturn json.Marshal(aux)\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/providers/asyncapi3/kafka/store/client.go b/providers/asyncapi3/kafka/store/client.go
+--- a/providers/asyncapi3/kafka/store/client.go	(revision 00c8e2c7abff2fc3e2ff441b32723f973a601c23)
++++ b/providers/asyncapi3/kafka/store/client.go	(date 1755268180846)
+@@ -18,10 +18,11 @@
+ var PartitionNotFound = errors.New("partition not found")
+ 
+ type Record struct {
+-	Key       any
+-	Value     any
+-	Headers   map[string]interface{}
+-	Partition int
++	Offset    int64                  `json:"offset"`
++	Key       any                    `json:"key"`
++	Value     any                    `json:"value"`
++	Headers   map[string]interface{} `json:"headers"`
++	Partition int                    `json:"partition"`
+ }
+ 
+ type RecordResult struct {
+@@ -124,34 +125,35 @@
+ 	}
+ 
+ 	records := []Record{}
+-	switch ct.Key() {
+-	case "application/vnd.mokapi.kafka.binary+json":
++	switch {
++	case ct.Key() == "application/vnd.mokapi.kafka.binary+json":
+ 		for _, r := range b.Records {
+ 			var bKey []byte
+ 			base64.StdEncoding.Encode(bKey, kafka.Read(r.Key))
+ 			var bValue []byte
+ 			base64.StdEncoding.Encode(bValue, kafka.Read(r.Value))
+ 			records = append(records, Record{
+-				Key:   string(bKey),
+-				Value: string(bValue),
++				Offset: r.Offset,
++				Key:    string(bKey),
++				Value:  string(bValue),
+ 			})
+ 		}
+-	case "application/json", "":
++	case ct.Key() == "application/json", ct.IsAny():
+ 		for _, r := range b.Records {
+ 			var key any
+-			err := json.Unmarshal(kafka.Read(r.Key), &key)
+-			if err != nil {
+-				return nil, fmt.Errorf("parse record key as JSON failed: %v", err)
++			if r.Key != nil {
++				key = kafka.Read(r.Key)
+ 			}
+ 			var val any
+-			err = json.Unmarshal(kafka.Read(r.Value), &val)
++			err := json.Unmarshal(kafka.Read(r.Value), &val)
+ 			if err != nil {
+ 				return nil, fmt.Errorf("parse record value as JSON failed: %v", err)
+ 			}
+ 
+ 			records = append(records, Record{
+-				Key:   key,
+-				Value: val,
++				Offset: r.Offset,
++				Key:    key,
++				Value:  val,
+ 			})
+ 		}
+ 	default:

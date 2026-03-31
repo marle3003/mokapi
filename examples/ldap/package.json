@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "express": "^4.21.2",
+    "ldapjs": "^3.0.7"
+  }
+}

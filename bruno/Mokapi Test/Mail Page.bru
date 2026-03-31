@@ -1,0 +1,19 @@
+meta {
+  name: Mail Page
+  type: http
+  seq: 1
+}
+
+get {
+  url: https://mokapi.io/mail
+  body: none
+  auth: inherit
+}
+
+headers {
+  USER-AGENT: googlebot
+}
+
+settings {
+  encodeUrl: true
+}
