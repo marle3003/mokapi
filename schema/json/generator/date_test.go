@@ -2,6 +2,7 @@ package generator
 
 import (
 	"mokapi/schema/json/schema/schematest"
+	"strings"
 	"testing"
 	"time"
 
@@ -167,4 +168,11 @@ func TestStringDate(t *testing.T) {
 			tc.test(t, v, err)
 		})
 	}
+}
+
+func TestFakeDateWithYearRange_NewYearsEve(t *testing.T) {
+	r, err := fakeDateWithYearRange(&Request{}, time.Date(2026, 12, 31, 0, 0, 0, 0, time.UTC), 2027)
+	require.NoError(t, err)
+	require.NotEqual(t, "", r)
+	require.True(t, strings.HasPrefix(r.(string), "2027"))
 }
