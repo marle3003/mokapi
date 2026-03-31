@@ -88,7 +88,7 @@ func (s *Service) registerSendHttpRequest(server *mcp.Server) {
 	}
 
 	registerTool(server, &mcp.Tool{
-		Name: "send_http_request",
+		Name: "mokapi_send_http_request",
 		Description: `Send an HTTP request to a mocked API.
 
 Use this tool AFTER retrieving the API specification with 'get_api_spec' to understand available endpoints.

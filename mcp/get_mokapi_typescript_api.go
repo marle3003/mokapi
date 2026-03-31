@@ -29,10 +29,10 @@ func (s *Service) registerGetMokapiTypeScriptApi(server *mcp.Server) {
 	}
 
 	registerTool(server, &mcp.Tool{
-		Name: "get_mokapi_typescript_api",
+		Name: "mokapi_get_typescript_api",
 		Description: `Returns TypeScript definitions for a specific Mokapi package.
 
-Use this tool after selecting a package via "get_mokapi_typescript_api_list".
+Use this tool after selecting a package via "mokapi_get_typescript_api_list".
 
 The returned types define:
 - Event handler signatures

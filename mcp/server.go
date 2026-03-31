@@ -26,18 +26,14 @@ func NewServer(app *runtime.App) http.Handler {
 	}, nil)
 
 	svc := NewService(app)
-	svc.registerListApiTool(server)
 	svc.registerGetSpecTool(server)
 
-	svc.registerGetHttpResponseSchemaTool(server)
 	svc.registerGenerateHttpMockResponseTool(server)
 
 	svc.registerSendHttpRequest(server)
 	svc.registerProduceKafkaMessage(server)
 
 	svc.registerGetEvents(server)
-
-	//svc.registerGetMokapiJsAPI(server)
 
 	svc.registerGetMokapiTypeScriptList(server)
 	svc.registerGetMokapiTypeScriptApi(server)

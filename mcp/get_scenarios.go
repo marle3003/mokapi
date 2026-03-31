@@ -8,7 +8,7 @@ import (
 
 func (s *Service) registerGetScenarios(server *mcp.Server) {
 	registerTool(server, &mcp.Tool{
-		Name: "get_scenarios",
+		Name: "mokapi_get_scenarios",
 		Description: `Lists available scenarios for generating Mokapi scripts.
 
 Use this tool BEFORE calling template tools (e.g., "get_http_mock_template") 

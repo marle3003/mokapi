@@ -55,6 +55,7 @@ func (s *Service) registerGenerateHttpMockResponseTool(server *mcp.Server) {
 				"default": "application/json",
 			},
 		},
+		"required": []string{"apiName", "path", "method", "statusCode"},
 	}
 
 	outputSchema := map[string]any{
@@ -76,7 +77,7 @@ func (s *Service) registerGenerateHttpMockResponseTool(server *mcp.Server) {
 	}
 
 	registerTool(server, &mcp.Tool{
-		Name: "generate_http_mock_response",
+		Name: "mokapi_generate_http_mock_response",
 		Description: `Generate a valid HTTP response for a specific API endpoint.
 
 This tool returns a complete response object that already conforms to the OpenAPI specification.

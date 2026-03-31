@@ -30,7 +30,7 @@ func (s *Service) registerGetHttpMockTemplate(server *mcp.Server) {
 	}
 
 	registerTool(server, &mcp.Tool{
-		Name: "get_http_mock_template",
+		Name: "mokapi_get_http_mock_template",
 		Description: `Templates demonstrate how to implement logic for HTTP mocks.
 
 This tool should be used AFTER calling 'get_scenarios' to find available scenarios.

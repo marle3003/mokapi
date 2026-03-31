@@ -17,14 +17,14 @@ type MokapiPackage struct {
 
 func (s *Service) registerGetMokapiTypeScriptList(server *mcp.Server) {
 	registerTool(server, &mcp.Tool{
-		Name: "get_mokapi_typescript_list",
+		Name: "mokapi_get_typescript_list",
 		Description: `Lists available Mokapi TypeScript API packages.
 
 Use this tool to discover which package to use before requesting detailed type definitions.
 
 Typical workflow:
 1. Call this tool to find the correct package (e.g., mokapi/http)
-2. Call "get_mokapi_typescript_api" with the selected package
+2. Call "mokapi_get_typescript_api" with the selected package
 3. Use the returned types to implement the mock script`,
 	}, s.GetMokapiTypeScriptApi)
 }

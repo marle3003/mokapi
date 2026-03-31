@@ -70,7 +70,7 @@ func (s *Service) registerProduceKafkaMessage(server *mcp.Server) {
 	}
 
 	registerTool(server, &mcp.Tool{
-		Name: "produce_kafka_message",
+		Name: "mokapi_produce_kafka_message",
 		Description: `Produce a message to a Kafka topic.
 
 Use this tool after retrieving the API specification with 'get_api_spec' to understand available topics and message formats.

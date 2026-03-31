@@ -82,7 +82,7 @@ func (s *Service) registerGetEvents(server *mcp.Server) {
 	}
 
 	registerTool(server, &mcp.Tool{
-		Name: "get_events",
+		Name: "mokapi_get_events",
 		Description: `Returns recorded events from Mokapi including HTTP requests/responses and Kafka messages.
 
 Use this tool when the user asks:
