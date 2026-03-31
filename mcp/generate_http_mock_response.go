@@ -12,7 +12,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-type GenerateHttpResponseInput struct {
+type GenerateHttpMockResponseInput struct {
 	ApiName     string `json:"apiName"`
 	Path        string `json:"path"`
 	Method      string `json:"method"`
@@ -20,13 +20,13 @@ type GenerateHttpResponseInput struct {
 	ContentType string `json:"contentType,omitempty"`
 }
 
-type GenerateHttpResponseOutput struct {
+type GenerateHttpMockResponseOutput struct {
 	StatusCode int            `json:"statusCode"`
 	Data       any            `json:"data"`
 	Headers    map[string]any `json:"headers"`
 }
 
-func (s *Service) registerGenerateHttpResponseTool(server *mcp.Server) {
+func (s *Service) registerGenerateHttpMockResponseTool(server *mcp.Server) {
 	inputSchema := map[string]any{
 		"type": "object",
 		"properties": map[string]any{
@@ -76,61 +76,37 @@ func (s *Service) registerGenerateHttpResponseTool(server *mcp.Server) {
 	}
 
 	registerTool(server, &mcp.Tool{
-		Name: "generate_http_response",
+		Name: "generate_http_mock_response",
 		Description: `Generate a valid HTTP response for a specific API endpoint.
 
 This tool returns a complete response object that already conforms to the OpenAPI specification.
 The generated data strictly matches the response schema, including all required fields and correct types.
 
-Use this tool when writing HTTP mock scripts instead of manually constructing response bodies.
-
-The returned object can be used directly in the mock script:
-
-on('http', (request) => {
-return GENERATED_RESPONSE
-})
+Use this tool when writing HTTP mock scripts.
 
 The "data" field is preferred and will be automatically encoded based on the API specification.
 The "body" field is not returned by this tool and should only be used for raw responses.
 
-Rules:
-- Do NOT manually construct complex response objects
-- Always prefer this tool to ensure schema-correct responses
-- The "data" field contains structured data and will be encoded automatically
-- The "statusCode" and "headers" are already set correctly
+Use this tool to:
+- Ensure the response structure matches the OpenAPI definition
+- Avoid manually constructing response data
 
-Example:
-Generated response:
-{
-  "statusCode": 200,
-  "headers": {
-    "Content-Type": "application/json"
-  },
-  "data": {
-    "id": 1,
-    "name": "dog",
-    "status": "available"
-  }
-}
+You can:
+- Modify or replace the returned "data" field
+- Use custom logic to determine the response content
 
-Usage in mock script:
-on('http', (request, response) => {
-  response.statusCode = 200
-  response.headers["Content-Type"] = "application/json"
-  response.data = {
-    "id": 1,
-    "name": "dog",
-    "status": "available"
-  }
-})
+The returned object should be assigned to:
+- response.statusCode
+- response.headers
+- response.data
 `,
 		InputSchema:  inputSchema,
 		OutputSchema: outputSchema,
-	}, s.GetHttpResponseSchema)
+	}, s.GenerateHttpMockResponse)
 }
 
-func (s *Service) GenerateHttpResponse(_ context.Context, in GenerateHttpResponseInput) (GenerateHttpResponseOutput, error) {
-	result := GenerateHttpResponseOutput{StatusCode: in.StatusCode, Headers: make(map[string]any)}
+func (s *Service) GenerateHttpMockResponse(_ context.Context, in GenerateHttpMockResponseInput) (GenerateHttpMockResponseOutput, error) {
+	result := GenerateHttpMockResponseOutput{StatusCode: in.StatusCode, Headers: make(map[string]any)}
 
 	info := s.app.GetHttp(in.ApiName)
 	if info == nil {

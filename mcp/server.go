@@ -30,14 +30,19 @@ func NewServer(app *runtime.App) http.Handler {
 	svc.registerGetSpecTool(server)
 
 	svc.registerGetHttpResponseSchemaTool(server)
-	svc.registerGenerateHttpResponseTool(server)
+	svc.registerGenerateHttpMockResponseTool(server)
 
 	svc.registerSendHttpRequest(server)
 	svc.registerProduceKafkaMessage(server)
 
 	svc.registerGetEvents(server)
 
-	svc.registerGetMokapiJsAPI(server)
+	//svc.registerGetMokapiJsAPI(server)
+
+	svc.registerGetMokapiTypeScriptList(server)
+	svc.registerGetMokapiTypeScriptApi(server)
+	svc.registerGetScenarios(server)
+	svc.registerGetHttpMockTemplate(server)
 
 	return mcp.NewStreamableHTTPHandler(
 		func(*http.Request) *mcp.Server { return server },

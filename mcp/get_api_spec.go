@@ -32,8 +32,7 @@ func (s *Service) registerGetSpecTool(server *mcp.Server) {
 		Name: "get_api_spec",
 		Description: `Get the full API specification for a specific API.
 
-		This tool should be used AFTER calling 'get_api_list' to find available APIs.
-		First use 'get_api_list' to discover API names and types, then call this tool with the exact 'name' and 'type'.
+		This tool should be used AFTER calling 'get_api_list' to find available APIs, then call this tool with the exact 'name' and 'type'.
 
 		Returns the complete specification including endpoints, operations, and schemas.`,
 		InputSchema: inputSchema,

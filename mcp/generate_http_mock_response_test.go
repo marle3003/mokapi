@@ -37,14 +37,14 @@ func TestService_GenerateHttpResponse(t *testing.T) {
 				)),
 			),
 			test: func(t *testing.T, s *mcp.Service) {
-				result, err := s.GenerateHttpResponse(context.Background(), mcp.GenerateHttpResponseInput{
+				result, err := s.GenerateHttpMockResponse(context.Background(), mcp.GenerateHttpMockResponseInput{
 					ApiName:    "foo",
 					Path:       "/foo",
 					Method:     http.MethodGet,
 					StatusCode: http.StatusOK,
 				})
 				require.NoError(t, err)
-				require.Equal(t, mcp.GenerateHttpResponseOutput{
+				require.Equal(t, mcp.GenerateHttpMockResponseOutput{
 					StatusCode: http.StatusOK,
 					Data:       "Ln8rnaRqlL",
 					Headers:    map[string]any{},
