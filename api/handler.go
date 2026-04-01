@@ -22,6 +22,7 @@ import (
 type Handler interface {
 	http.Handler
 	RegisterHealthHandler(path string, h http.Handler)
+	RegisterMcpHandler(path string, h http.Handler)
 }
 
 type handler struct {
@@ -33,6 +34,8 @@ type handler struct {
 	index         string
 	healthPath    string
 	healthHandler http.Handler
+	mcpPath       string
+	mcpHandler    http.Handler
 }
 
 type info struct {
@@ -111,6 +114,11 @@ func (h *handler) RegisterHealthHandler(path string, handler http.Handler) {
 	h.healthHandler = handler
 }
 
+func (h *handler) RegisterMcpHandler(path string, handler http.Handler) {
+	h.mcpPath = path
+	h.mcpHandler = handler
+}
+
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "GET" && r.Method != "POST" {
 		http.Error(w, fmt.Sprintf("method %v is not allowed", r.Method), http.StatusMethodNotAllowed)
@@ -154,6 +162,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getSearchResults(w, r)
 	case strings.HasPrefix(p, h.healthPath) && h.healthHandler != nil:
 		h.healthHandler.ServeHTTP(w, r)
+	case strings.HasPrefix(p, h.mcpPath) && h.mcpHandler != nil:
+		h.mcpHandler.ServeHTTP(w, r)
 	case h.fileServer != nil:
 		if r.Method != "GET" {
 			http.Error(w, fmt.Sprintf("method %v is not allowed", r.Method), http.StatusMethodNotAllowed)

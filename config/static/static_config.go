@@ -19,6 +19,7 @@ type Config struct {
 	Providers        Providers         `json:"providers" yaml:"providers"`
 	Api              Api               `json:"api" yaml:"api"`
 	Health           Health            `json:"health" yaml:"health"`
+	Mcp              Mcp               `json:"mcp" yaml:"mcp"`
 	RootCaCert       tls.FileOrContent `json:"rootCaCert" yaml:"rootCaCert" name:"root-ca-cert"`
 	RootCaKey        tls.FileOrContent `json:"rootCaKey" yaml:"rootCaKey" name:"root-ca-cert"`
 	Configs          Configs           `json:"configs" yaml:"configs" explode:"config"`
@@ -43,6 +44,14 @@ func NewConfig() *Config {
 	cfg.Health.Enabled = true
 	cfg.Health.Port = 8080
 	cfg.Health.Path = "/health"
+
+	cfg.Mcp = Mcp{
+		Server: McpServer{
+			Enabled: false,
+			Port:    8080,
+			Path:    "/mcp",
+		},
+	}
 
 	cfg.Providers.File.SkipPrefix = []string{"_"}
 	cfg.Event.Store = map[string]Store{"default": {Size: 100}}
@@ -297,4 +306,14 @@ type Health struct {
 	Path    string `yaml:"path" json:"path"`
 	Port    int    `yaml:"port" json:"port"`
 	Log     bool   `yaml:"log" json:"log"`
+}
+
+type Mcp struct {
+	Server McpServer `yaml:"server" json:"server"`
+}
+
+type McpServer struct {
+	Enabled bool   `yaml:"enabled" json:"enabled"`
+	Path    string `yaml:"path" json:"path"`
+	Port    int    `yaml:"port" json:"port"`
 }

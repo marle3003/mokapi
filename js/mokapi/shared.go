@@ -5,6 +5,7 @@ import (
 	"mokapi/engine/common"
 	"reflect"
 	"slices"
+	"sync"
 
 	"github.com/dop251/goja"
 )
@@ -117,6 +118,7 @@ func Export(v any) any {
 type SharedValue struct {
 	vm     *goja.Runtime
 	source goja.Value
+	m      sync.RWMutex
 }
 
 func NewSharedValue(v goja.Value, vm *goja.Runtime) *SharedValue {
@@ -131,6 +133,9 @@ func (p *SharedValue) Use(vm *goja.Runtime) *SharedValue {
 }
 
 func (p *SharedValue) Get(key string) goja.Value {
+	p.m.RLock()
+	defer p.m.RUnlock()
+
 	switch v := p.source.(type) {
 	case *goja.Object:
 		f := v.Get(key)
@@ -159,6 +164,9 @@ func (p *SharedValue) Has(key string) bool {
 }
 
 func (p *SharedValue) Set(key string, value goja.Value) bool {
+	p.m.Lock()
+	defer p.m.Unlock()
+
 	switch v := p.source.(type) {
 	case *goja.Object:
 		sv := useValue(value, p.vm)
@@ -172,6 +180,9 @@ func (p *SharedValue) Set(key string, value goja.Value) bool {
 }
 
 func (p *SharedValue) Delete(key string) bool {
+	p.m.Lock()
+	defer p.m.Unlock()
+
 	switch v := p.source.(type) {
 	case *goja.Object:
 		err := v.Delete(key)
@@ -185,6 +196,9 @@ func (p *SharedValue) Delete(key string) bool {
 }
 
 func (p *SharedValue) Keys() []string {
+	p.m.RLock()
+	defer p.m.RUnlock()
+
 	switch v := p.source.(type) {
 	case *goja.Object:
 		return v.Keys()

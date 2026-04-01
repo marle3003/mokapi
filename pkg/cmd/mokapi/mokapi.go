@@ -12,6 +12,7 @@ import (
 	"mokapi/engine"
 	"mokapi/feature"
 	"mokapi/health"
+	"mokapi/mcp"
 	"mokapi/pkg/cli"
 	"mokapi/pkg/cmd/mokapi/flags"
 	"mokapi/providers/asyncapi3"
@@ -134,6 +135,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	app := runtime.New(cfg, watcher)
 
 	scriptEngine := engine.New(watcher, app, cfg, true)
+	app.Engine = scriptEngine
 	certStore, err := cert.NewStore(cfg)
 	if err != nil {
 		return nil, err
@@ -161,6 +163,18 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 			}
 		} else {
 			return nil, err
+		}
+	}
+	if cfg.Mcp.Server.Enabled {
+		if u, err := mcp.BuildUrl(cfg.Mcp.Server); err == nil {
+			if cfg.Api.Port == cfg.Mcp.Server.Port {
+				apiHandler.RegisterMcpHandler(u.Path, mcp.NewServer(app))
+			} else {
+				err = http.AddInternalService("mcp", u, mcp.NewServer(app))
+				if err != nil {
+					return nil, err
+				}
+			}
 		}
 	}
 

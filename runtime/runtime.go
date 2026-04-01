@@ -3,6 +3,7 @@ package runtime
 import (
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
+	"mokapi/engine/common"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/runtime/search"
@@ -22,6 +23,7 @@ type App struct {
 
 	Monitor *monitor.Monitor
 	Events  *events.StoreManager
+	Engine  common.EventEmitter
 
 	m           sync.Mutex
 	cfg         *static.Config

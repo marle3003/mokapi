@@ -15,7 +15,11 @@ func GetUrl(r *http.Request) string {
 	} else {
 		sb.WriteString("http://")
 	}
-	sb.WriteString(r.Host)
+	if r.Host != "" {
+		sb.WriteString(r.Host)
+	} else {
+		sb.WriteString("localhost")
+	}
 	sb.WriteString(r.URL.String())
 	return sb.String()
 }
