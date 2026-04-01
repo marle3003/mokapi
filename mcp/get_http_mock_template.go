@@ -45,7 +45,7 @@ You can:
 
 Typical pattern:
 1. Apply your business logic (e.g., find a resource)
-2. Call generate_http_mock_response with the correct status code
+2. Call mokapi_generate_http_mock_response with the correct status code
 3. Override result.data if needed
 4. Assign result to response
 `,

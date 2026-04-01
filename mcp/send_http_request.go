@@ -91,7 +91,7 @@ func (s *Service) registerSendHttpRequest(server *mcp.Server) {
 		Name: "mokapi_send_http_request",
 		Description: `Send an HTTP request to a mocked API.
 
-Use this tool AFTER retrieving the API specification with 'get_api_spec' to understand available endpoints.
+Use this tool AFTER retrieving the API specification with 'mokapi_get_api_spec' to understand available endpoints.
 
 Supports GET, POST, PUT, PATCH, and DELETE requests.
 Returns the full response including status code, headers, and body.`,

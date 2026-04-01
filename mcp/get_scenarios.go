@@ -11,7 +11,7 @@ func (s *Service) registerGetScenarios(server *mcp.Server) {
 		Name: "mokapi_get_scenarios",
 		Description: `Lists available scenarios for generating Mokapi scripts.
 
-Use this tool BEFORE calling template tools (e.g., "get_http_mock_template") 
+Use this tool BEFORE calling template tools (e.g., "mokapi_get_http_mock_template") 
 to discover supported scenarios.
 
 Typical workflow:

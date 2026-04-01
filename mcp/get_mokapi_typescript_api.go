@@ -2,7 +2,6 @@ package mcp
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -12,8 +11,13 @@ type GetMokapiTypeScriptApiInput struct {
 }
 
 type GetMokapiTypeScriptApiOutput struct {
-	Package string `json:"package"`
-	Types   string `json:"types"`
+	Packages []Package `json:"packages"`
+}
+
+type Package struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Types       string `json:"types"`
 }
 
 func (s *Service) registerGetMokapiTypeScriptApi(server *mcp.Server) {
@@ -22,57 +26,158 @@ func (s *Service) registerGetMokapiTypeScriptApi(server *mcp.Server) {
 		"properties": map[string]any{
 			"package": map[string]any{
 				"type":        "string",
-				"description": "The name of the package to fetch TypeScript definitions for, e.g., 'mokapi/http'",
+				"description": "Filter package by name.",
+				"enum":        []string{"mokapi", "mokapi/http", "mokapi/kafka", "mokapi/faker", "mokapi/file"},
+				"optional":    true,
 			},
 		},
-		"required": []string{"package"},
+	}
+
+	outputSchema := map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"packages": map[string]any{
+				"type":        "array",
+				"description": "The list of packages",
+				"items": map[string]any{
+					"type":        "object",
+					"description": "The package with the TypeScript types",
+					"properties": map[string]any{
+						"name": map[string]any{
+							"type":        "string",
+							"description": "The name of the package",
+							"enum":        []string{"mokapi", "mokapi/http", "mokapi/kafka", "mokapi/faker", "mokapi/file"},
+						},
+						"description": map[string]any{
+							"type":        "string",
+							"description": "The description of the package",
+						},
+						"types": map[string]any{
+							"type":        "string",
+							"description": "The types of the package",
+						},
+					},
+					"required": []any{"name", "description"},
+				},
+			},
+		},
+		"required": []string{"packages"},
 	}
 
 	registerTool(server, &mcp.Tool{
 		Name: "mokapi_get_typescript_api",
 		Description: `Returns TypeScript definitions for a specific Mokapi package.
 
-Use this tool after selecting a package via "mokapi_get_typescript_api_list".
+- DISCOVERY: Call without 'package' to get an overview of all available APIs (names and descriptions). 
+- DETAILS: Call with a specific 'name' to get the full type definitions.
 
 The returned types define:
 - Event handler signatures
 - Request and response structures
 - Available properties
 
-Combine this with "get_scenario" to understand correct usage patterns.`,
-		InputSchema: inputSchema,
+Use the returned types to implement the mock script.
+Combine this with "mokapi_get_scenarios" to understand correct usage patterns.`,
+		InputSchema:  inputSchema,
+		OutputSchema: outputSchema,
 	}, s.GetMokapiTypeScriptApi)
 }
 
 func (s *Service) GetMokapiTypeScriptApi(_ context.Context, in GetMokapiTypeScriptApiInput) (GetMokapiTypeScriptApiOutput, error) {
+	if in.Package == "" {
+		return GetMokapiTypeScriptApiOutput{
+			Packages: []Package{
+				{
+					Name: "mokapi",
+					Description: `Mokapi JavaScript API
+This module exposes the core scripting API for Mokapi.
+It allows you to intercept and manipulate protocol events (HTTP, Kafka, LDAP, SMTP),
+schedule jobs, generate mock data, and share state between scripts.`,
+				},
+				{
+					Name: "mokapi/http",
+					Description: `Utilities for sending HTTP requests and handling HTTP interactions within Mokapi scripts.
+Use these functions to simulate client calls, test API integrations, or trigger endpoints from scripts.`,
+				},
+				{
+					Name: "mokapi/kafka",
+					Description: `Utilities for producing and consuming messages on Kafka topics.
+This package allows you to mock message streams, inspect events, and simulate Kafka-based workflows.`,
+				},
+				{
+					Name: "mokapi/faker",
+					Description: `Generates realistic random test data based on JSON schemas or attribute names.
+Use this to populate mock responses or generate dynamic content for API responses.`,
+				},
+				{
+					Name: "mokapi/file",
+					Description: `File system utilities for reading, writing, and manipulating files within Mokapi scripts.
+Useful for mocking file-based APIs, loading fixtures, or storing script state.`,
+				},
+			},
+		}, nil
+	}
+
 	switch in.Package {
 	case "mokapi":
 		return GetMokapiTypeScriptApiOutput{
-			Package: "mokapi",
-			Types:   pkgMokapi,
+			Packages: []Package{
+				{
+					Name: "mokapi",
+					Description: `Mokapi JavaScript API
+This module exposes the core scripting API for Mokapi.
+It allows you to intercept and manipulate protocol events (HTTP, Kafka, LDAP, SMTP),
+schedule jobs, generate mock data, and share state between scripts.`,
+					Types: pkgMokapi,
+				},
+			},
 		}, nil
 	case "mokapi/http":
 		return GetMokapiTypeScriptApiOutput{
-			Package: "mokapi/http",
-			Types:   pkgHttp,
+			Packages: []Package{
+				{
+					Name: "mokapi/http",
+					Description: `Utilities for sending HTTP requests and handling HTTP interactions within Mokapi scripts.
+Use these functions to simulate client calls, test API integrations, or trigger endpoints from scripts.`,
+					Types: pkgHttp,
+				},
+			},
 		}, nil
 	case "mokapi/kafka":
 		return GetMokapiTypeScriptApiOutput{
-			Package: "mokapi/kafka",
-			Types:   pkgKafka,
+			Packages: []Package{
+				{
+					Name: "mokapi/kafka",
+					Description: `Utilities for producing and consuming messages on Kafka topics.
+This package allows you to mock message streams, inspect events, and simulate Kafka-based workflows.`,
+					Types: pkgKafka,
+				},
+			},
 		}, nil
 	case "mokapi/faker":
 		return GetMokapiTypeScriptApiOutput{
-			Package: "mokapi/faker",
-			Types:   pkgFaker,
+			Packages: []Package{
+				{
+					Name: "mokapi/faker",
+					Description: `Generates realistic random test data based on JSON schemas or attribute names.
+Use this to populate mock responses or generate dynamic content for API responses.`,
+					Types: pkgFaker,
+				},
+			},
 		}, nil
 	case "mokapi/file":
 		return GetMokapiTypeScriptApiOutput{
-			Package: "mokapi/file",
-			Types:   pkgFile,
+			Packages: []Package{
+				{
+					Name: "mokapi/file",
+					Description: `File system utilities for reading, writing, and manipulating files within Mokapi scripts.
+Useful for mocking file-based APIs, loading fixtures, or storing script state.`,
+					Types: pkgFile,
+				},
+			},
 		}, nil
 	}
-	return GetMokapiTypeScriptApiOutput{}, fmt.Errorf("unknown Mokapi package: %s", in.Package)
+	return GetMokapiTypeScriptApiOutput{}, nil
 }
 
 const (

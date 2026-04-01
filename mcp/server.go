@@ -35,7 +35,6 @@ func NewServer(app *runtime.App) http.Handler {
 
 	svc.registerGetEvents(server)
 
-	svc.registerGetMokapiTypeScriptList(server)
 	svc.registerGetMokapiTypeScriptApi(server)
 	svc.registerGetScenarios(server)
 	svc.registerGetHttpMockTemplate(server)

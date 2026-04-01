@@ -31,7 +31,7 @@ func TestServer(t *testing.T) {
 
 	list, err := session.ListTools(ctx, &gomcp.ListToolsParams{})
 	require.NoError(t, err)
-	require.Len(t, list.Tools, 9)
+	require.Len(t, list.Tools, 8)
 	// alphabetical order
 	require.Equal(t, "mokapi_generate_http_mock_response", list.Tools[0].Name)
 	require.Equal(t, "mokapi_get_api_spec", list.Tools[1].Name)
@@ -39,7 +39,6 @@ func TestServer(t *testing.T) {
 	require.Equal(t, "mokapi_get_http_mock_template", list.Tools[3].Name)
 	require.Equal(t, "mokapi_get_scenarios", list.Tools[4].Name)
 	require.Equal(t, "mokapi_get_typescript_api", list.Tools[5].Name)
-	require.Equal(t, "mokapi_get_typescript_list", list.Tools[6].Name)
-	require.Equal(t, "mokapi_produce_kafka_message", list.Tools[7].Name)
-	require.Equal(t, "mokapi_send_http_request", list.Tools[8].Name)
+	require.Equal(t, "mokapi_produce_kafka_message", list.Tools[6].Name)
+	require.Equal(t, "mokapi_send_http_request", list.Tools[7].Name)
 }
