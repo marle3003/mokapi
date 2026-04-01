@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"mokapi/config/dynamic"
@@ -283,8 +284,15 @@ func (sh *scriptHost) KafkaClient() common.KafkaClient {
 }
 
 func (sh *scriptHost) HttpClient(opts common.HttpClientOptions) common.HttpClient {
-	return &http.Client{
-		Timeout: opts.Timeout,
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+
+	if opts.Insecure {
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true}
+	}
+
+	c := &http.Client{
+		Transport: transport,
+		Timeout:   opts.Timeout,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if l := len(via); l > opts.MaxRedirects {
 				log.Warnf("Stopped after %d redirects, original URL was %s", opts.MaxRedirects, via[0].URL)
@@ -293,6 +301,8 @@ func (sh *scriptHost) HttpClient(opts common.HttpClientOptions) common.HttpClien
 			return nil
 		},
 	}
+
+	return c
 }
 
 func (sh *scriptHost) CanClose() bool {

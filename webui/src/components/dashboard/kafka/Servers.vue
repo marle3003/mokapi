@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, onMounted } from 'vue'
-import Markdown from 'vue3-markdown-it'
 import { Popover } from 'bootstrap'
 import { getRouteName } from '@/composables/dashboard';
 import { useRouter } from '@/router';
+import { useMarkdown } from '@/composables/markdown';
 
 const props = defineProps<{
     serviceName: string,
@@ -72,7 +72,7 @@ function goToServer(server: KafkaServer, openInNewTab = false) {
                     <td>{{ server.name }}</td>
                     <td v-html="server.host.replace(/([^:]*):(.*)/g, '$1<wbr>:$2')"></td>
                     <td>
-                        <markdown :source="server.description" class="description" :html="true"></markdown>
+                        <div v-html="useMarkdown(server.description).content" class="description"></div>
                     </td>
                     <td>
                         <ul class="tags">

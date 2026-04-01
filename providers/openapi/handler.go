@@ -455,7 +455,9 @@ func extractPathParams(route, path string) (map[string]string, error) {
 func drainRequestBody(r *http.Request) {
 	done := make(chan struct{})
 	go func() {
-		_, _ = io.Copy(io.Discard, r.Body)
+		if r.Body != nil {
+			_, _ = io.Copy(io.Discard, r.Body)
+		}
 		close(done)
 	}()
 

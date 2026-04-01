@@ -79,7 +79,10 @@ const eventData = computed(() => {
 })
 
 function getResponseContentType(): string {
-    return eventData.value?.response.headers['Content-Type'] ?? ''
+    if (!eventData.value?.response?.headers) {
+        return ''
+    }
+    return eventData.value.response.headers['Content-Type'] ?? ''
 }
 const hasActions = computed(() => {
     if (!eventData.value) {

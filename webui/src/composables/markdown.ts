@@ -1,4 +1,3 @@
-import MarkdownItHighlightjs from 'markdown-it-highlightjs';
 import MarkdownIt from 'markdown-it';
 import { MarkdownItTabs } from '@/composables/markdown-tabs';
 import { MarkdownItBox } from '@/composables/markdown-box';
@@ -12,6 +11,7 @@ import { MarkdownItTitle } from './markdown-title';
 import { MarkdownItTable } from './markdown-table';
 import { imageCaption } from './markdown-image';
 import { MarkdownItCtaLinks } from './markdown-cta-links';
+import hljs from '@/plugins/highlight'
 
 const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
 const metadataRegex = /^---([\s\S]*?)---/;
@@ -27,8 +27,15 @@ export function useMarkdown(content: string | undefined): {content: string | und
         content = content.replace(metadataRegex, '')
 
         if (content) {
-            content = new MarkdownIt()
-                .use(MarkdownItHighlightjs)
+            const md = new MarkdownIt({
+                    highlight: (str, lang): string => {
+                        if (lang && hljs.getLanguage(lang)) {
+
+                            return `<pre class="hljs"><code>${hljs.highlight(str, { language: lang }).value}</code></pre>`
+                        }
+                        return `<pre class="hljs"><code>${md.utils.escapeHtml(str)}</code></pre>`
+                    }
+                })
                 .use(MarkdownItTitle(metadata))
                 .use(MarkdownItBlockquote)
                 .use(MarkdownItTabs)
@@ -41,7 +48,7 @@ export function useMarkdown(content: string | undefined): {content: string | und
                 .use(MarkdownItCtaLinks(metadata))
                 .use(imageCaption)
                 .set({html: true})
-                .render(content)
+            content = md.render(content)
         }
 
         content = replaceImageUrls(content) 

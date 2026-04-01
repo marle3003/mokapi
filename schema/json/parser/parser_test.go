@@ -276,3 +276,60 @@ func TestParser_Null(t *testing.T) {
 		})
 	}
 }
+
+type exportable struct {
+	export func() any
+}
+
+func (e *exportable) Export() any {
+	return e.export()
+}
+
+func TestParser_Exportable(t *testing.T) {
+	testcases := []struct {
+		name   string
+		data   interface{}
+		schema *schema.Schema
+		test   func(t *testing.T, v interface{}, err error)
+	}{
+		{
+			name:   "schema integer",
+			data:   &exportable{export: func() any { return 123 }},
+			schema: schematest.New("integer"),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(123), v)
+			},
+		},
+		{
+			name:   "no schema",
+			data:   &exportable{export: func() any { return 123 }},
+			schema: nil,
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, 123, v)
+			},
+		},
+		{
+			name:   "exportable as additional property",
+			data:   map[string]interface{}{"foo": &exportable{export: func() any { return 123 }}},
+			schema: schematest.New("object"),
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]any{"foo": 123}, v)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			p := &parser.Parser{Schema: tc.schema}
+			v, err := p.Parse(tc.data)
+			tc.test(t, v, err)
+		})
+	}
+}

@@ -267,7 +267,7 @@ export type KafkaEventHandler = (message: KafkaEventMessage) => void | Promise<v
  * https://mokapi.io/docs/javascript-api/mokapi/eventhandler/KafkaEventMessage
  */
 export interface KafkaEventMessage {
-    /** Kafka partition where the message was written to (read-only). */
+    /** Kafka offset of the kafka message */
     readonly offset: number;
 
     /** Kafka message key  */

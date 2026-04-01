@@ -10,7 +10,7 @@ ProduceArgs is an object used by [produce](/docs/javascript-api/mokapi-kafka/pro
 |-----------------------------------|--------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | cluster (optional)                | string | Kafka cluster name. Used when topic name is not unique.                                                                                                           |
 | topic (optional)                  | string | Kafka topic name. If not specified, message will be written to a random topic.                                                                                    |
-| messages                          | array  | An list of [Message](/docs/javascript-api/mokapi-kafka/message.md) contains Kafka messages to produce into given topic                                            |
+| messages                          | array  | A list of [Message](/docs/javascript-api/mokapi-kafka/message.md) contains Kafka messages to produce into given topic                                             |
 | partition (optional, deprecated ) | number | Kafka partition index. If not specified, the message will be written to any partition                                                                             |
 | key (optional, deprecated)        | any    | Kafka message key. If not specified, a random key will be generated based on the topic configuration.                                                             |
 | value (optional, deprecated)      | any    | Kafka message value. If not specified, a random value will be generated based on the topic configuration. Object will be encoded based on the topic configuration |

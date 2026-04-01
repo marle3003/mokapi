@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"mokapi/config/dynamic"
 	"net/http"
@@ -64,6 +65,14 @@ type Path struct {
 
 func (r *PathRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
+}
+
+func (r *PathRef) MarshalJSON() ([]byte, error) {
+	if r.Value != nil {
+		return json.Marshal(r.Value)
+	} else {
+		return json.Marshal(r.Ref)
+	}
 }
 
 func (r *PathRef) UnmarshalYAML(node *yaml.Node) error {
@@ -242,63 +251,71 @@ func (r *PathRef) patch(patch *PathRef) {
 	if r.Value == nil {
 		r.Value = patch.Value
 		return
-	}
-
-	if len(patch.Value.Summary) > 0 {
-		r.Value.Summary = patch.Value.Summary
-	}
-
-	if len(patch.Value.Description) > 0 {
-		r.Value.Description = patch.Value.Description
-	}
-
-	if r.Value.Get == nil {
-		r.Value.Get = patch.Value.Get
 	} else {
-		r.Value.Get.patch(patch.Value.Get)
+		r.Value.patch(patch.Value)
+	}
+}
+
+func (p *Path) patch(patch *Path) {
+	if p == nil || patch == nil {
+		return
 	}
 
-	if r.Value.Post == nil {
-		r.Value.Post = patch.Value.Post
+	if len(patch.Summary) > 0 {
+		p.Summary = patch.Summary
+	}
+
+	if len(patch.Description) > 0 {
+		p.Description = patch.Description
+	}
+
+	if p.Get == nil {
+		p.Get = patch.Get
 	} else {
-		r.Value.Post.patch(patch.Value.Post)
+		p.Get.patch(patch.Get)
 	}
 
-	if r.Value.Put == nil {
-		r.Value.Put = patch.Value.Put
+	if p.Post == nil {
+		p.Post = patch.Post
 	} else {
-		r.Value.Put.patch(patch.Value.Put)
+		p.Post.patch(patch.Post)
 	}
 
-	if r.Value.Patch == nil {
-		r.Value.Patch = patch.Value.Patch
+	if p.Put == nil {
+		p.Put = patch.Put
 	} else {
-		r.Value.Patch.patch(patch.Value.Patch)
+		p.Put.patch(patch.Put)
 	}
 
-	if r.Value.Delete == nil {
-		r.Value.Delete = patch.Value.Delete
+	if p.Patch == nil {
+		p.Patch = patch.Patch
 	} else {
-		r.Value.Delete.patch(patch.Value.Delete)
+		p.Patch.patch(patch.Patch)
 	}
 
-	if r.Value.Head == nil {
-		r.Value.Head = patch.Value.Head
+	if p.Delete == nil {
+		p.Delete = patch.Delete
 	} else {
-		r.Value.Head.patch(patch.Value.Head)
+		p.Delete.patch(patch.Delete)
 	}
 
-	if r.Value.Options == nil {
-		r.Value.Options = patch.Value.Options
+	if p.Head == nil {
+		p.Head = patch.Head
 	} else {
-		r.Value.Options.patch(patch.Value.Options)
+		p.Head.patch(patch.Head)
 	}
 
-	if r.Value.Trace == nil {
-		r.Value.Trace = patch.Value.Trace
+	if p.Options == nil {
+		p.Options = patch.Options
 	} else {
-		r.Value.Trace.patch(patch.Value.Trace)
+		p.Options.patch(patch.Options)
 	}
 
-	r.Value.Parameters.Patch(patch.Value.Parameters)
+	if p.Trace == nil {
+		p.Trace = patch.Trace
+	} else {
+		p.Trace.patch(patch.Trace)
+	}
+
+	p.Parameters.Patch(patch.Parameters)
 }

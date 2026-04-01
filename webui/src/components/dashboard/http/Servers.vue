@@ -1,6 +1,6 @@
 <script setup lang="ts">
+import { useMarkdown } from '@/composables/markdown';
 import { type PropType, computed } from 'vue';
-import Markdown from 'vue3-markdown-it';
 
 const props = defineProps({
     servers: { type: Array as PropType<Array<HttpServer>>, required: true },
@@ -33,7 +33,7 @@ function comparePath(s1: HttpServer, s2: HttpServer) {
                         <tr v-for="server in sortedServers" :key="server.url">
                             <td>{{ server.url }}</td>
                             <td>
-                                <markdown v-if="server.description" :source="server.description" class="description" :html="true"></markdown>
+                                <div v-if="server.description" v-html="useMarkdown(server.description).content" class="description"></div>
                                 <p v-else>-</p>
                             </td>
                         </tr>

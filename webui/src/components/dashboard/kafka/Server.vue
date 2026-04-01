@@ -2,12 +2,12 @@
 import Loading from '@/components/Loading.vue';
 import Message from '@/components/Message.vue';
 import { getRouteName, useDashboard } from '@/composables/dashboard';
+import { useMarkdown } from '@/composables/markdown';
 import { usePrettyBytes } from '@/composables/usePrettyBytes';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRoute } from '@/router';
 import type { ServiceResult } from '@/types/dashboard';
 import { computed, ref, watch } from 'vue';
-import Markdown from 'vue3-markdown-it'
 
 const route = useRoute();
 const { dashboard } = useDashboard()
@@ -114,7 +114,7 @@ function formatValue(value: any, key: string) {
                     <div class="row mb-2" v-if="server.description">
                         <div class="col">
                             <p id="description" class="label">Description</p>
-                            <markdown :source="server.description" aria-labelledby="description" :html="true"></markdown>
+                            <div v-html="useMarkdown(server.description).content" aria-labelledby="description"></div>
                         </div>
                     </div>
                 </div>
@@ -163,7 +163,7 @@ function formatValue(value: any, key: string) {
                                 <tr v-for="tag in server.tags" :key="tag.name">
                                     <td>{{ tag.name }}</td>
                                     <td>
-                                        <markdown :source="tag.description" :html="true"></markdown>
+                                        <div v-html="useMarkdown(tag.description).content"></div>
                                     </td>
                                 </tr>
                             </tbody>

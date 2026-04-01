@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useMetrics } from '@/composables/metrics';
 import { onUnmounted } from 'vue';
-import Markdown from 'vue3-markdown-it'
 import { useRouter, useRoute } from 'vue-router';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { getRouteName, useDashboard } from '@/composables/dashboard';
+import { useMarkdown } from '@/composables/markdown';
 
 const {sum} = useMetrics()
 const { dashboard } = useDashboard();
@@ -67,7 +67,7 @@ onUnmounted(() => {
                                 {{ service.name }}
                             </router-link>
                         </td>
-                        <td><markdown :source="service.description" class="description" :html="true"></markdown></td>
+                        <td><div v-html="useMarkdown(service.description).content" class="description"></div></td>
                         <td class="text-center">{{ lastMail(service) }}</td>
                         <td class="text-center">{{ messages(service) }}</td>
                     </tr>

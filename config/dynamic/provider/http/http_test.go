@@ -3,9 +3,6 @@ package http
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"github.com/sirupsen/logrus/hooks/test"
-	"github.com/stretchr/testify/require"
 	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
@@ -15,6 +12,10 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestProvider_Start(t *testing.T) {
@@ -157,6 +158,28 @@ func TestProvider_Start(t *testing.T) {
 				require.NoError(t, err)
 				time.Sleep(3 * time.Second)
 				require.Equal(t, fmt.Sprintf("request to %v failed: request has timed out", url), hook.LastEntry().Message)
+			},
+		},
+		{
+			name: "content type",
+			init: func() (static.HttpProvider, *httptest.Server) {
+				server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.Header().Set("Content-Type", "application/json")
+					w.WriteHeader(http.StatusOK)
+					_, _ = w.Write([]byte("foo: bar"))
+				}))
+
+				cfg := static.HttpProvider{
+					Urls: []string{server.URL},
+				}
+
+				return cfg, server
+			},
+			test: func(t *testing.T, url string, ch chan dynamic.ConfigEvent, hook *test.Hook, err error) {
+				require.NoError(t, err)
+				c := <-ch
+				require.Equal(t, "foo: bar", string(c.Config.Raw))
+				require.Equal(t, "application/json", c.Config.Info.ContentType)
 			},
 		},
 	}

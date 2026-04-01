@@ -198,6 +198,10 @@ func (p *Provider) readUrl(u *url.URL) (c *dynamic.Config, changed bool, err err
 		Raw: b,
 	}
 
+	if ct := res.Header.Get("Content-Type"); ct != "" {
+		c.Info.ContentType = ct
+	}
+
 	return
 }
 

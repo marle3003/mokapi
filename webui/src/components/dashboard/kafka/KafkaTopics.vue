@@ -2,10 +2,10 @@
 import { useRouter } from 'vue-router'
 import { useMetrics } from '@/composables/metrics'
 import { usePrettyDates } from '@/composables/usePrettyDate'
-import Markdown from 'vue3-markdown-it'
 import { getRouteName } from '@/composables/dashboard';
 import { computed } from 'vue';
 import { useLocalStorage } from '@/composables/local-storage';
+import { useMarkdown } from '@/composables/markdown';
 
 const props = defineProps<{
     service: KafkaService,
@@ -167,7 +167,7 @@ function toggleTag(name: string) {
                                 </router-link>
                             </td>
                             <td>
-                                <markdown :source="topic.description" class="description" :html="true"></markdown>
+                                <div v-html="useMarkdown(topic.description).content" class="description"></div>
                             </td>
                             <td class="text-center">{{ lastMessage(service, topic) }}</td>
                             <td class="text-center">{{ messages(service, topic) }}</td>
