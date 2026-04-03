@@ -62,11 +62,11 @@ runs:
         npm run build-website
       shell: bash
     - name: Install Playwright
-      working-directory: ./tests/e2e
+      working-directory: ./webui
       run: npx playwright install --with-deps
       shell: bash
     - name: test website
-      working-directory: ./tests/e2e
+      working-directory: ./webui
       run: npx playwright test --project=website
       shell: bash
     - name: Upload test results

@@ -23,7 +23,7 @@ runs:
       run: docker load --input /tmp/mokapi.tar
       shell: bash
     - name: Run mokapi image
-      run: docker run --name mokapi --rm -d -p 8090:8090 -p 8091:8091 --mount type=bind,source=$(pwd)/tests/e2e/mocks,target=/data --env MOKAPI_Log_Level=Debug --env MOKAPI_Api_Port=8091 --env MOKAPI_Api_Path=/mokapi --env MOKAPI_Providers_File_Directory=/data ${{ inputs.image-name }}
+      run: docker run --name mokapi --rm -d -p 8090:8090 -p 8091:8091 --mount type=bind,source=$(pwd)/webui/e2e/mocks,target=/data --env MOKAPI_Log_Level=Debug --env MOKAPI_Api_Port=8091 --env MOKAPI_Api_Path=/mokapi --env MOKAPI_Providers_File_Directory=/data ${{ inputs.image-name }}
       shell: bash
     - uses: actions/setup-node@v4
       with:
@@ -37,11 +37,11 @@ runs:
         npm run build-dashboard
       shell: bash
     - name: Install Playwright
-      working-directory: ./tests/e2e
+      working-directory: ./webui
       run: npx playwright install --with-deps
       shell: bash
     - name: Run your tests
-      working-directory: ./tests/e2e
+      working-directory: ./webui
       run: npx playwright test --project=dashboard
       shell: bash
     - name: Upload test results
@@ -49,7 +49,7 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ inputs.artifact-test-report }}
-        path: webui/playwright-report
+        path: ./webui/playwright-report
     - name: Save Mokapi logs
       if: always()
       run: docker logs mokapi > /var/tmp/mokapi.log 2>&1

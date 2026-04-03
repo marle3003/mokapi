@@ -27,3 +27,6 @@ coverage
 src/assets/docs
 public/sitemap.xml
 public/demo/
+
+test-results/
+playwright-report/
