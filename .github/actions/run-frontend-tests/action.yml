@@ -37,11 +37,11 @@ runs:
         npm run build-dashboard
       shell: bash
     - name: Install Playwright
-      working-directory: ./webui
+      working-directory: ./tests/e2e
       run: npx playwright install --with-deps
       shell: bash
     - name: Run your tests
-      working-directory: ./webui
+      working-directory: ./tests/e2e
       run: npx playwright test --project=dashboard
       shell: bash
     - name: Upload test results

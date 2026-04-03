@@ -48,7 +48,6 @@
     "xml-formatter": "^3.7.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.58.2",
     "@rushstack/eslint-patch": "^1.16.1",
     "@types/js-yaml": "^4.0.9",
     "@types/markdown-it-container": "^4.0.0",
@@ -63,7 +62,6 @@
     "prettier": "^3.8.1",
     "typescript": "~5.9.3",
     "vite": "^8.0.1",
-    "vue-tsc": "^3.2.6",
-    "xml2js": "^0.6.2"
+    "vue-tsc": "^3.2.6"
   }
 }
