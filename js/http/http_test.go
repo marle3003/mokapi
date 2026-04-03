@@ -546,6 +546,54 @@ func TestHttp(t *testing.T) {
 				r.Equal(t, "unexpected type for 'maxRedirects': got String, expected Number", v.Export())
 			},
 		},
+		{
+			name: "fetch insecure",
+			client: func(options common.HttpClientOptions) common.HttpClient {
+				return &enginetest.HttpClient{
+					DoFunc: func(request *http.Request) (*http.Response, error) {
+						if !options.Insecure {
+							return nil, fmt.Errorf("expected insecure=true")
+						}
+						return &http.Response{StatusCode: http.StatusOK}, nil
+					},
+				}
+			},
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				_, err := vm.RunString(`
+					const m = require('mokapi/http')
+					const p = m.fetch('https://foo.bar', { insecure: true })
+					let result;
+					p.then(v => result = v).catch(err => result = err)
+				`)
+				r.NoError(t, err)
+				time.Sleep(200 * time.Millisecond)
+
+				v, err := vm.RunString("result")
+				r.NoError(t, err)
+				res, ok := v.Export().(mod.Response)
+				if !ok {
+					r.FailNow(t, v.String())
+				}
+				r.Equal(t, http.StatusOK, res.StatusCode)
+			},
+		},
+		{
+			name: "fetch insecure not boolean",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				_, err := vm.RunString(`
+					const m = require('mokapi/http')
+					const p = m.fetch('https://foo.bar', { insecure: 'foo' })
+					let result;
+					p.then(v => result = v).catch(err => result = err)
+				`)
+				r.NoError(t, err)
+				time.Sleep(200 * time.Millisecond)
+
+				v, err := vm.RunString("result")
+				r.NoError(t, err)
+				r.Equal(t, "unexpected type for 'insecure': got String, expected Boolean", v.Export())
+			},
+		},
 	}
 
 	for _, tc := range testcases {

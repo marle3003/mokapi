@@ -1,15 +1,5 @@
-declare module 'vue3-markdown-it'
-declare module 'vue3-highlightjs'
-declare module 'markdown-it-highlightjs'
 declare module 'markdown-it-codetabs'
 declare module '@ssthouse/vue3-tree-chart'
-declare module 'highlight.js' {
-    export interface HLJS{
-        highlightAuto: () => any
-    }
-    const hljs: HLJS
-    export default hljs
-}
 // todo: remove it after whatwg-mimetype updates its @types/whatwg-mimetype
 declare module 'whatwg-mimetype';
 

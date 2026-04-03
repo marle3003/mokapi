@@ -5,10 +5,10 @@ import KafkaGroups from './KafkaGroups.vue'
 import KafkaMessages from './KafkaMessages.vue'
 import KafkaPartition from './KafkaPartition.vue'
 import TopicConfig from './TopicConfig.vue'
-import Markdown from 'vue3-markdown-it'
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useRouter } from '@/router'
 import type { ServiceResult } from '@/types/dashboard'
+import { useMarkdown } from '@/composables/markdown'
 
 const route = useRoute();
 const router = useRouter();
@@ -85,7 +85,7 @@ watch(() => route.hash, (hash) => {
                 <div class="row">
                     <div class="col">
                         <p id="description" class="label">Description</p>
-                        <markdown :source="topic.description" aria-labelledby="description" :html="true" />
+                        <div v-html="useMarkdown(topic.description).content" aria-labelledby="description"></div>
                     </div>
                     
                 </div>

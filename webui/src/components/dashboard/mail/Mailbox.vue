@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { useRouter } from "vue-router";
+import { useRouter } from 'vue-router';
 import { useRoute } from "@/router";
-import {  onUnmounted, type PropType } from "vue";
-import Markdown from "vue3-markdown-it";
+import {  onUnmounted, type PropType } from 'vue';
 import { usePrettyDates } from "@/composables/usePrettyDate";
 import Message from "@/components/Message.vue";
 import { getRouteName, useDashboard } from "@/composables/dashboard";
+import { useMarkdown } from '@/composables/markdown';
 
 const props = defineProps({
   service: { type: Object as PropType<MailService>, required: true },
@@ -79,11 +79,7 @@ function goToMail(msg: MessageInfo, openInNewTab = false) {
           <div class="row" v-if="mailbox.description">
             <div class="col">
               <p id="mailbox-description" class="label">Description</p>
-              <markdown
-                :source="mailbox.description"
-                aria-labelledby="mailbox-description"
-                :html="true"
-              ></markdown>
+              <div v-html="useMarkdown(service.description).content" aria-labelledby="mailbox-description"></div>
             </div>
           </div>
         </div>

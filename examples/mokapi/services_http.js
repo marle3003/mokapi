@@ -377,7 +377,7 @@ export let apps = [
                     {
                         method: "get",
                         summary: "Finds Pets by status",
-                        description: "Multiple status values can be provided with comma separated strings",
+                        description: "Multiple status values **can** be provided with comma separated strings",
                         operationId: "findPetsByStatus",
                         tags: ["pet"],
                         parameters: [

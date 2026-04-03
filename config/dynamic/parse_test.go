@@ -107,6 +107,7 @@ func TestParse(t *testing.T) {
 				err := dynamic.Parse(c, &dynamictest.Reader{})
 				require.NoError(t, err)
 				require.Equal(t, "foo", c.Data.(*data).User)
+				require.Equal(t, "application/json", c.Info.ContentType)
 			},
 		},
 		{
@@ -161,6 +162,7 @@ func TestParse(t *testing.T) {
 				err := dynamic.Parse(c, &dynamictest.Reader{})
 				require.NoError(t, err)
 				require.Equal(t, "foo", c.Data.(*data).User)
+				require.Equal(t, "application/yaml", c.Info.ContentType)
 			},
 		},
 		{

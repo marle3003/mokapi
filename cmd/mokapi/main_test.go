@@ -89,6 +89,11 @@ health:
     path: /health
     port: 8080
     log: false
+mcp:
+    server:
+        enabled: false
+        path: /mcp
+        port: 8080
 rootCaCert: ""
 rootCaKey: ""
 configs: []

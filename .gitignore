@@ -25,3 +25,5 @@ node_modules
 server/api/dashboard.go
 coverage.txt
 versioninfo.json
+.DS_Store
+Icon

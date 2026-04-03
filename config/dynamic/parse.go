@@ -76,10 +76,12 @@ func parse(c *Config) (interface{}, error) {
 		var v interface{}
 		v, err = parseJson(b, result)
 		if err == nil {
+			c.Info.ContentType = "application/json"
 			return v, nil
 		}
 		v, err = parseYaml(b, result)
 		if v != nil && err == nil {
+			c.Info.ContentType = "application/yaml"
 			return v, nil
 		}
 		err = nil

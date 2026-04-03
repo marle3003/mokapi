@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { useMarkdown } from "@/composables/markdown";
 import { Modal } from "bootstrap";
 import { onMounted, ref, type PropType } from "vue";
-import Markdown from 'vue3-markdown-it'
 
 defineProps({
   rules: { type: Array as PropType<Array<SmtpRule>>, required: true },
@@ -99,12 +99,7 @@ function showRule(r: SmtpRule) {
               <div class="row mb-2" v-if="rule.description">
                 <div class="col">
                   <p id="dlg-rule-description" class="label">Description</p>
-                  <markdown
-                    aria-labelledby="dlg-rule-description"
-                    :source="rule.description"
-                    class="description"
-                    :html="true"
-                  ></markdown>
+                  <div v-html="useMarkdown(rule.description).content" class="description" aria-labelledby="dlg-rule-description"></div>
                 </div>
               </div>
               <div class="row mb-2" v-if="rule.sender">

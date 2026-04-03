@@ -188,25 +188,27 @@ func TestSendUpdatesWhileIdle(t *testing.T) {
 			IdleFunc: func(w imap.UpdateWriter, done chan struct{}, session map[string]interface{}) error {
 				session["idle"] = done
 				go func() {
+					defer close(sent)
+
 					err := w.WriteNumMessages(10)
 					require.NoError(t, err)
 					err = w.WriteMessageFlags(20, []imap.Flag{imap.FlagSeen})
 					require.NoError(t, err)
 					err = w.WriteExpunge(1)
-					sent <- true
 				}()
 				return nil
 			},
 		},
 	}
-	defer s.Close()
 	go func() {
 		err := s.ListenAndServe()
 		require.ErrorIs(t, err, imap.ErrServerClosed)
 	}()
-
 	c := imap.NewClient(fmt.Sprintf("localhost:%v", p))
-	defer func() { _ = c.Close() }()
+	defer func() {
+		_ = c.Close()
+		defer s.Close()
+	}()
 
 	_, err := c.Dial()
 	require.NoError(t, err)
@@ -220,7 +222,11 @@ func TestSendUpdatesWhileIdle(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "+ idling", res)
 
-	<-sent
+	select {
+	case <-sent:
+	case <-time.After(4 * time.Second):
+		t.Fatal("timeout waiting for updates")
+	}
 
 	res, err = c.ReadLine()
 	require.NoError(t, err)

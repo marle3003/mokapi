@@ -82,6 +82,14 @@ func (r *ResponseRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
 }
 
+func (r *ResponseRef) MarshalJSON() ([]byte, error) {
+	if r.Value != nil {
+		return json.Marshal(r.Value)
+	} else {
+		return json.Marshal(r.Ref)
+	}
+}
+
 func (r *Responses) UnmarshalYAML(value *yaml.Node) error {
 	if value.Kind != yaml.MappingNode {
 		return fmt.Errorf("expected openapi.Responses map, got %v", value.Tag)

@@ -3,7 +3,7 @@ import { computed, getCurrentInstance, ref, watch } from 'vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { usePrettyBytes } from '@/composables/usePrettyBytes'
 import { VAceEditor } from 'vue3-ace-editor'
-import '@/ace-editor/ace-config'
+import '@/plugins/ace-editor/ace-config'
 import HexEditor from '../HexEditor.vue'
 import { Range } from 'ace-builds'
 import { useRoute, useRouter } from '@/router'
@@ -296,6 +296,12 @@ watch(
   display: inline-grid;
   place-content: center;
   border-right: 1px solid var(--source-border);
+}
+.source-view .header .controls > a {
+  font-size: 0.9rem;
+  border-right: 1px solid var(--source-border);
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
 }
 .source-view .header button.active {
   background-color: black !important;
