@@ -54,7 +54,7 @@ func TestMain_SampleData(t *testing.T) {
 		},
 		{
 			name: "generate from openapi",
-			args: []string{"sample-data", "../../../acceptance/petstore/openapi.yml#/paths/~1pet/put/requestBody/content/application~1json/schema"},
+			args: []string{"sample-data", "../../../tests/acceptance/petstore/openapi.yml#/paths/~1pet/put/requestBody/content/application~1json/schema"},
 			test: func(t *testing.T, out string) {
 				require.Equal(t, `{"id":37727,"category":{"id":83580,"name":"rabbit"},"name":"Prince of Barkness","photoUrls":[],"tags":[{"id":57421,"name":"Prism"},{"id":69949,"name":"Sol"}],"status":"pending"}`, out)
 			},
