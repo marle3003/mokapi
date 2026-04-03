@@ -12,10 +12,11 @@ require (
 	github.com/evanw/esbuild v0.27.4
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/go-co-op/gocron v1.37.0
-	github.com/go-git/go-git/v5 v5.17.1
+	github.com/go-git/go-git/v5 v5.17.2
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
 	github.com/jinzhu/inflection v1.0.0
+	github.com/modelcontextprotocol/go-sdk v1.4.1
 	github.com/pkg/errors v0.9.1
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
@@ -72,7 +73,6 @@ require (
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/mitchellh/copystructure v1.0.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.0 // indirect
-	github.com/modelcontextprotocol/go-sdk v1.4.1 // indirect
 	github.com/mschoch/smat v0.2.0 // indirect
 	github.com/pjbgf/sha1cd v0.3.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
