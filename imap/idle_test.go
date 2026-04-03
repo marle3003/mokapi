@@ -240,9 +240,9 @@ func TestSendUpdatesWhileIdle(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "* 1 EXPUNGE", res)
 
-	res, err = c.SendRaw("A01 FINISHED")
+	res, err = c.SendRaw("DONE")
 	require.NoError(t, err)
-	require.Equal(t, "A01 BAD Expected DONE to end IDLE", res)
+	require.Equal(t, "A01 OK IDLE terminated", res)
 }
 
 func TestIdle_DisconnectWithoutDone(t *testing.T) {
