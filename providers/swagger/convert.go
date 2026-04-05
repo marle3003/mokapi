@@ -50,6 +50,25 @@ func (c *converter) Convert() (*openapi.Config, error) {
 		result.Paths[path] = converted
 	}
 
+	if len(c.config.Responses) > 0 {
+		result.Components.Responses = map[string]*openapi.ResponseRef{}
+		for name, res := range c.config.Responses {
+			r, err := c.convertResponse(res, c.config.Produces)
+			if err != nil {
+				return nil, err
+			}
+			result.Components.Responses[name] = r
+		}
+	}
+
+	if len(c.config.Parameters) > 0 {
+		result.Components.Parameters = map[string]*openapi.ParameterRef{}
+		for name, param := range c.config.Parameters {
+			p := convertParameter(param)
+			result.Components.Parameters[name] = p
+		}
+	}
+
 	if len(c.config.Definitions) > 0 {
 		result.Components.Schemas = &schema.Schemas{}
 		for k, v := range c.config.Definitions {

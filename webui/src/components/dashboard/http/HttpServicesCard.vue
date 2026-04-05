@@ -2,7 +2,7 @@
 import { useMetrics } from '@/composables/metrics';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRoute } from '@/router';
-import { computed, onUnmounted } from 'vue';
+import { onUnmounted } from 'vue';
 import { useDashboard } from '@/composables/dashboard';
 import { useMarkdown } from '@/composables/markdown';
 
@@ -12,19 +12,19 @@ const { service: serviceRoute, router } = useRoute()
 const { dashboard } = useDashboard()
 const { services, close } = dashboard.value.getServices('http')
 
-function lastRequest(s: Service){
+function lastRequest(s: Service) {
     const n = max(s.metrics, 'http_request_timestamp')
-    if (n == 0){
+    if (n == 0) {
         return '-'
     }
     return format(n)
 }
 
-function requests(s: Service){
+function requests(s: Service) {
     return sum(s.metrics, 'http_requests_total')
 }
 
-function errors(s: Service){
+function errors(s: Service) {
     return sum(s.metrics, 'http_requests_errors_total')
 }
 
@@ -62,18 +62,21 @@ onUnmounted(() => {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="service in services" key="service.name" @mouseup.left="goToService(service)" @mousedown.middle="goToService(service, true)">
+                        <tr v-for="service in services" key="service.name" @mouseup.left="goToService(service)"
+                            @mousedown.middle="goToService(service, true)">
                             <td>
                                 <router-link @click.stop class="row-link" :to="serviceRoute(service, 'http')">
-                                {{ service.name }}
+                                    {{ service.name }}
                                 </router-link>
                             </td>
-                            <td><div v-html="useMarkdown(service.description).content" class="description"></div></td>
+                            <td>
+                                <div v-html="useMarkdown(service.description).content" class="table-markdown"></div>
+                            </td>
                             <td class="text-center">{{ lastRequest(service) }}</td>
                             <td class="text-center">
                                 <span>{{ requests(service) }}</span>
                                 <span> / </span>
-                                <span v-bind:class="{'text-danger': errors(service) > 0}">{{ errors(service) }}</span>
+                                <span v-bind:class="{ 'text-danger': errors(service) > 0 }">{{ errors(service) }}</span>
                             </td>
                         </tr>
                     </tbody>

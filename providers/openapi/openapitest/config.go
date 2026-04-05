@@ -29,6 +29,12 @@ func WithInfo(name, version, description string) ConfigOptions {
 	}
 }
 
+func WithSummary(summary string) ConfigOptions {
+	return func(c *openapi.Config) {
+		c.Info.Summary = summary
+	}
+}
+
 func WithContact(name, url, email string) ConfigOptions {
 	return func(c *openapi.Config) {
 		c.Info.Contact = &openapi.Contact{

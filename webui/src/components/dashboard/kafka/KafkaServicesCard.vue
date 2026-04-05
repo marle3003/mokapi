@@ -67,7 +67,7 @@ onUnmounted(() => {
                                 {{ service.name }}
                             </router-link>
                         </td>
-                        <td><div v-html="useMarkdown(service.description).content"></div></td>
+                        <td><div v-html="useMarkdown(service.description).content" class="table-markdown"></div></td>
                         <td class="text-center">{{ lastMessage(service) }}</td>
                         <td class="text-center">{{ messages(service) }}</td>
                     </tr>

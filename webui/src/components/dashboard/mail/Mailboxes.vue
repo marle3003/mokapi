@@ -73,7 +73,7 @@ function goToMailbox(mb: SmtpMailbox, openInNewTab = false){
                 </td>
                 <td>{{ mb.username }}</td>
                 <td>{{ mb.password }}</td>
-                <td v-if="anyDescription"><div v-html="useMarkdown(mb.description).content" class="description"></div></td>
+                <td v-if="anyDescription"><div v-html="useMarkdown(mb.description).content" class="table-markdown"></div></td>
                 <td class="text-center">{{ mb.numMessages }}</td>
             </tr>
         </tbody>

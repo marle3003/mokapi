@@ -112,6 +112,10 @@ func getHttpServices(list []*runtime.HttpInfo, m *monitor.Monitor) []interface{}
 			Type:        ServiceHttp,
 		}
 
+		if hs.Info.Summary != "" {
+			s.Description = hs.Info.Summary
+		}
+
 		if m != nil {
 			s.Metrics = m.FindAll(metrics.ByNamespace("http"), metrics.ByLabel("service", hs.Info.Name))
 		}

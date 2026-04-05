@@ -4,6 +4,8 @@ type Info struct {
 	// The title of the service
 	Name string `yaml:"title" json:"title"`
 
+	Summary string `yaml:"summary" json:"summary"`
+
 	// A short description of the API. CommonMark syntax MAY be
 	// used for rich text representation.
 	Description string `yaml:"description,omitempty" json:"description,omitempty"`

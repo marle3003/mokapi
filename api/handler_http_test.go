@@ -42,6 +42,19 @@ func TestHandler_Http(t *testing.T) {
 			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"http"}`,
 		},
 		{
+			name: "summary takes precedence over description",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "1.0", "bar"),
+						openapitest.WithSummary("summary"),
+					),
+				)
+			},
+			requestUrl:   "http://foo.api/api/services",
+			responseBody: `[{"name":"foo","description":"summary","version":"1.0","type":"http"}`,
+		},
+		{
 			name: "get http services with contact",
 			app: func() *runtime.App {
 				return runtimetest.NewHttpApp(
