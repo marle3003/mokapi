@@ -72,3 +72,15 @@ func WithHeaders(s *schema.Schema) MessageOptions {
 		m.Headers = &asyncapi3.SchemaRef{Value: s}
 	}
 }
+
+func WithMessageTitle(s string) MessageOptions {
+	return func(m *asyncapi3.Message) {
+		m.Title = s
+	}
+}
+
+func WithMessageSummary(s string) MessageOptions {
+	return func(m *asyncapi3.Message) {
+		m.Summary = s
+	}
+}

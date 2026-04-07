@@ -148,6 +148,7 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 	testcases := []struct {
 		name    string
 		configs []*dynamic.Config
+		reader  dynamic.Reader
 		test    func(t *testing.T, app *runtime.App)
 	}{
 		{
@@ -244,12 +245,86 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 				require.Equal(t, "patch", msg.Value.Summary)
 			},
 		},
+		{
+			name: "using relative file path",
+			reader: &dynamictest.Reader{
+				Data: map[string]*dynamic.Config{
+					"bar.yaml": {
+						Data: &asyncapi3.MessageRef{
+							Value: asyncapi3test.NewMessage(
+								asyncapi3test.WithMessageTitle("original"),
+							),
+						},
+					},
+				},
+			},
+			configs: []*dynamic.Config{
+				getConfig("https://a.io/a", asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "foo", ""),
+					asyncapi3test.WithChannel("bar",
+						asyncapi3test.UseMessage("bar",
+							&asyncapi3.MessageRef{Reference: dynamic.Reference{Ref: "bar.yaml"}},
+						),
+					),
+				)),
+				getConfig("https://mokapi.io/b", asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", ""),
+				)),
+			},
+			test: func(t *testing.T, app *runtime.App) {
+				info := app.Kafka.Get("foo")
+				ch := info.Channels["bar"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["bar"]
+				require.NotNil(t, msg)
+				require.Equal(t, "original", msg.Value.Title)
+			},
+		},
+		{
+			name: "using relative u path",
+			reader: &dynamictest.Reader{
+				Data: map[string]*dynamic.Config{
+					"bar.yaml": {
+						Data: &asyncapi3.MessageRef{
+							Value: asyncapi3test.NewMessage(
+								asyncapi3test.WithMessageTitle("original"),
+							),
+						},
+					},
+				},
+			},
+			configs: []*dynamic.Config{
+				getConfig("https://a.io/a", asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "foo", ""),
+					asyncapi3test.WithChannel("bar",
+						asyncapi3test.UseMessage("bar",
+							&asyncapi3.MessageRef{Reference: dynamic.Reference{Ref: "bar.yaml"}},
+						),
+					),
+				)),
+				getConfig("https://mokapi.io/b", asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", ""),
+				)),
+			},
+			test: func(t *testing.T, app *runtime.App) {
+				info := app.Kafka.Get("foo")
+				ch := info.Channels["bar"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["bar"]
+				require.NotNil(t, msg)
+				require.Equal(t, "original", msg.Value.Title)
+			},
+		},
 	}
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			r := tc.reader
+			if r == nil {
+				r = &dynamictest.Reader{}
+			}
 			cfg := &static.Config{}
-			app := runtime.New(cfg, &dynamictest.Reader{})
+			app := runtime.New(cfg, r)
 			for _, c := range tc.configs {
 				_, err := app.Kafka.Add(c, enginetest.NewEngine())
 				require.NoError(t, err)

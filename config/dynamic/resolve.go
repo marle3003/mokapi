@@ -204,6 +204,10 @@ func resolveUrl(ref string, cfg *Config) (*url.URL, error) {
 	}
 
 	info := cfg.Info.Kernel()
+	if info.Url == nil {
+		return u, nil
+	}
+
 	if len(info.Url.Opaque) > 0 {
 		p := filepath.Join(filepath.Dir(info.Url.Opaque), u.Path)
 		p = fmt.Sprintf("file:%v", p)
