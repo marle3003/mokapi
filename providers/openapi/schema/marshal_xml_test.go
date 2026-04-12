@@ -1,6 +1,7 @@
 package schema_test
 
 import (
+	"mokapi/config/dynamic"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
@@ -55,7 +56,7 @@ func TestMarshal_Xml(t *testing.T) {
 			data: func() interface{} {
 				return 4
 			},
-			schema: &schema.Schema{Ref: "#/components/schemas/foo", Sub: schematest.New("integer")},
+			schema: &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "#/components/schemas/foo"}, Sub: schematest.New("integer")},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "<foo>4</foo>", s)

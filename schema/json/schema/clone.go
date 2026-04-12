@@ -7,8 +7,7 @@ func (s *Schema) Clone() *Schema {
 
 	clone := &Schema{
 		Id:            s.Id,
-		Ref:           s.Ref,
-		DynamicRef:    s.DynamicRef,
+		Reference:     s.Reference,
 		Schema:        s.Schema,
 		Boolean:       s.Boolean,
 		Anchor:        s.Anchor,

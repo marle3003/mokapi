@@ -75,6 +75,9 @@ func AddRef(parent, ref *Config) {
 	if !added {
 		return
 	}
+	if parent.Info.Url == nil {
+		return
+	}
 	checksum := ref.Info.Checksum
 	ref.Listeners.Add(parent.Info.Url.String(), func(e ConfigEvent) {
 		// event Create is used for reading first time

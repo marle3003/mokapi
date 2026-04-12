@@ -1,6 +1,7 @@
 package schema_test
 
 import (
+	"mokapi/config/dynamic"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	jsonSchema "mokapi/schema/json/schema"
@@ -24,7 +25,7 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			name: "ref",
-			s:    &schema.Schema{Ref: "foo.yaml"},
+			s:    &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "foo.yaml"}},
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.Equal(t, "foo.yaml", s.Ref)
 			},
@@ -45,7 +46,7 @@ func TestConvert(t *testing.T) {
 		},
 		{
 			name: "dynamic ref",
-			s:    &schema.Schema{DynamicRef: "foo"},
+			s:    &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{DynamicRef: "foo"}},
 			test: func(t *testing.T, s *jsonSchema.Schema) {
 				require.Equal(t, "foo", s.DynamicRef)
 			},

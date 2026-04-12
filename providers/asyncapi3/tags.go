@@ -7,7 +7,7 @@ import (
 )
 
 type TagRef struct {
-	dynamic.Reference
+	dynamic.Reference[*TagRef]
 	Value *Tag
 }
 
@@ -27,8 +27,8 @@ func (r *TagRef) UnmarshalJSON(b []byte) error {
 
 func (r *TagRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		var resolved *TagRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value

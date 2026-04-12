@@ -7,7 +7,7 @@ import (
 )
 
 type OperationRef struct {
-	dynamic.Reference
+	dynamic.Reference[*OperationRef]
 	Value *Operation
 }
 
@@ -25,7 +25,7 @@ type Operation struct {
 }
 
 type OperationTraitRef struct {
-	dynamic.Reference
+	dynamic.Reference[*OperationTraitRef]
 	Value *OperationTrait
 }
 
@@ -61,8 +61,8 @@ func (r *OperationRef) Parse(config *dynamic.Config, reader dynamic.Reader) erro
 	}
 
 	if len(r.Ref) > 0 {
-		var resolved *OperationRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value
@@ -77,8 +77,9 @@ func (o *Operation) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	}
 
 	if len(o.Channel.Ref) > 0 {
-		var resolved *ChannelRef
-		if err := dynamic.Resolve(o.Channel.Ref, &resolved, config, reader); err != nil {
+		r := dynamic.Reference[ChannelRef]{Ref: o.Channel.Ref}
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		o.Channel.Value = resolved.Value
@@ -102,8 +103,8 @@ func (o *Operation) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 func (r *OperationTraitRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		var resolved *OperationTraitRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value

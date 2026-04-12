@@ -7,7 +7,7 @@ import (
 )
 
 type ExternalDocRef struct {
-	dynamic.Reference
+	dynamic.Reference[*ExternalDocRef]
 	Value *ExternalDoc
 }
 
@@ -26,11 +26,12 @@ func (r *ExternalDocRef) UnmarshalJSON(b []byte) error {
 
 func (r *ExternalDocRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		var resolved *ExternalDocRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value
+		return nil
 	}
 
 	return nil

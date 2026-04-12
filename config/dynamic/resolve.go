@@ -16,34 +16,41 @@ type PathResolver interface {
 }
 
 type Converter interface {
-	ConvertTo(i interface{}) (interface{}, error)
+	ConvertTo(i any) (any, error)
 }
 
-func Resolve(ref string, element interface{}, config *Config, reader Reader) error {
-	var err error
+type FromConverter interface {
+	ConvertFrom(i any) (any, error)
+}
 
-	fragment := ref[1:]
+func resolve[T any](ref string, config *Config, reader Reader) (T, error) {
+	var err error
+	var result T
+
+	var fragment string
 	isLocal := true
 	parent := config
-	if !strings.HasPrefix(ref, "#") {
-		fragment, config, err = resolveResource(ref, element, config, reader)
+	if len(ref) > 0 && !strings.HasPrefix(ref, "#") {
+		fragment, config, err = resolveResource[T](ref, config, reader)
 		if err != nil {
-			return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
+			return result, fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
 		}
 		isLocal = false
+	} else if len(ref) > 0 {
+		fragment = ref[1:]
 	}
 
-	err = resolveFragment(fragment, element, config, false)
+	result, err = resolveFragment[T](fragment, config, false)
 
 	if err != nil {
-		return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
+		return result, fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
 	}
 
 	// Parse the referenced schema again in the current context.
 	// This ensures nested $ref and $dynamicRef are resolved relative
 	// to the correct dynamic scope.
-	// element is **struct
-	p, ok := reflect.ValueOf(element).Elem().Interface().(Parser)
+	v := reflect.ValueOf(result)
+	p, ok := v.Interface().(Parser)
 	if ok {
 		if !isLocal {
 			// set parent scope hierarchy
@@ -51,39 +58,40 @@ func Resolve(ref string, element interface{}, config *Config, reader Reader) err
 			config.Scope.SetParent(parent.Scope)
 		}
 		if !config.EnterRef(ref) {
-			return nil
+			return result, nil
 		}
 		defer config.LeaveRef(ref)
 
 		err = p.Parse(config, reader)
 		if err != nil {
-			return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
+			return result, fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
 		}
 	}
 
-	return nil
+	return result, nil
 }
 
-func ResolveDynamic(ref string, element interface{}, config *Config, reader Reader) error {
+func ResolveDynamic[T any](ref string, config *Config, reader Reader) (T, error) {
 	var err error
+	var result T
 
 	fragment := ref[1:]
 	if !strings.HasPrefix(ref, "#") {
-		fragment, config, err = resolveResource(ref, element, config, reader)
+		fragment, config, err = resolveResource[T](ref, config, reader)
 		if err != nil {
-			return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
+			return result, fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
 		}
 	}
 
-	err = resolveFragment(fragment, element, config, true)
+	result, err = resolveFragment[T](fragment, config, true)
 
 	if err != nil {
-		return fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
+		return result, fmt.Errorf("resolve reference '%v' failed: %w", ref, err)
 	}
-	return nil
+	return result, nil
 }
 
-func resolveFragment(fragment string, resolved interface{}, config *Config, dynamic bool) (err error) {
+func resolveFragment[T any](fragment string, config *Config, dynamic bool) (result T, err error) {
 	val := config.Data
 	if fragment == "" {
 		// resolve to current (root) element
@@ -95,9 +103,53 @@ func resolveFragment(fragment string, resolved interface{}, config *Config, dyna
 		val, err = config.Scope.GetLexical(fragment)
 	}
 	if err != nil {
-		return err
+		return
 	}
-	return setResolved(resolved, val)
+
+	result, err = convertTo[T](val)
+	return
+}
+
+func convertTo[T any](val any) (T, error) {
+	if val == nil {
+		return *new(T), fmt.Errorf("value is null")
+	}
+
+	if p, ok := val.(PathResolver); ok {
+		var err error
+		val, err = p.Resolve("")
+		if err != nil {
+			return *new(T), err
+		}
+	}
+
+	val = convert[T](val)
+
+	// types are identical
+	if v, ok := val.(T); ok {
+		return v, nil
+	}
+
+	valType := reflect.TypeOf(val)
+	targetType := reflect.TypeOf((*T)(nil)).Elem()
+
+	// val is pointer but T not
+	if valType != nil && valType.Kind() == reflect.Ptr && valType.Elem() == targetType {
+		v := reflect.ValueOf(val)
+		if !v.IsNil() {
+			return v.Elem().Interface().(T), nil
+		}
+	}
+
+	// T is pointer but val not
+	if valType != nil && reflect.PointerTo(valType) == targetType {
+		vp := reflect.New(valType)
+		vp.Elem().Set(reflect.ValueOf(val))
+		return vp.Interface().(T), nil
+	}
+
+	var result T
+	return result, fmt.Errorf("expected type %T, got %T", result, val)
 }
 
 func get(token string, node interface{}) (interface{}, error) {
@@ -215,9 +267,13 @@ func resolveUrl(ref string, cfg *Config) (*url.URL, error) {
 			p = fmt.Sprintf("%v#%v", p, u.Fragment)
 		}
 		return url.Parse(p)
-	} else {
-		return info.Url.Parse(ref)
 	}
+
+	refURL := info.Url.ResolveReference(u)
+	if u.Fragment != "" {
+		refURL.Fragment = u.Fragment
+	}
+	return refURL, nil
 }
 
 func getId(v interface{}) string {
@@ -246,7 +302,7 @@ func getId(v interface{}) string {
 	return ""
 }
 
-func resolveResource(ref string, element interface{}, config *Config, reader Reader) (string, *Config, error) {
+func resolveResource[T any](ref string, config *Config, reader Reader) (string, *Config, error) {
 	u, err := resolveUrl(ref, config)
 	if err != nil {
 		return "", nil, err
@@ -257,7 +313,8 @@ func resolveResource(ref string, element interface{}, config *Config, reader Rea
 		val := reflect.ValueOf(config.Data).Elem()
 		data = reflect.New(val.Type()).Interface()
 	} else {
-		data = reflect.ValueOf(element).Elem().Interface()
+		var result T
+		data = result
 	}
 
 	sub, err := reader.Read(removeFragment(u), data)
@@ -265,51 +322,6 @@ func resolveResource(ref string, element interface{}, config *Config, reader Rea
 		AddRef(config, sub)
 	}
 	return u.Fragment, sub, err
-}
-
-func setResolved(element interface{}, val interface{}) (err error) {
-	v := reflect.ValueOf(val)
-	vElement := reflect.Indirect(reflect.ValueOf(element))
-
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-
-	if val == nil {
-		return fmt.Errorf("value is null")
-	}
-
-	if r, ok := val.(PathResolver); ok {
-		if val, err = r.Resolve(""); err != nil {
-			return
-		}
-	}
-
-	vCursor := reflect.ValueOf(val)
-	if reflect.Indirect(vCursor).Kind() == reflect.Map {
-		reflect.Indirect(reflect.ValueOf(element)).Set(reflect.Indirect(vCursor))
-		return
-	}
-
-	if !vCursor.Type().AssignableTo(vElement.Type()) && vCursor.Kind() == reflect.Ptr {
-		if c, ok := val.(Converter); ok {
-			if converted, err := c.ConvertTo(vElement.Interface()); err == nil {
-				vCursor = reflect.ValueOf(converted)
-			} else {
-				vCursor = vCursor.Elem()
-			}
-		} else {
-			vCursor = vCursor.Elem()
-		}
-	}
-
-	if !vCursor.Type().AssignableTo(vElement.Type()) {
-		return fmt.Errorf("expected type %v, got %v", vElement.Type(), vCursor.Type())
-	}
-
-	vElement.Set(vCursor)
-
-	return
 }
 
 func copyData(input interface{}) interface{} {
@@ -327,4 +339,29 @@ func copyData(input interface{}) interface{} {
 	c.Elem().Set(val.Elem())
 
 	return c.Interface()
+}
+
+func convert[T any](val any) any {
+	var target T
+
+	if c, ok := val.(Converter); ok {
+		result, err := c.ConvertTo(target)
+		if err == nil {
+			return result
+		}
+	}
+
+	v := reflect.ValueOf(target)
+	if !v.IsValid() || !v.CanInterface() {
+		return val
+	}
+	c, ok := v.Interface().(FromConverter)
+	if !ok {
+		return val
+	}
+	result, err := c.ConvertFrom(val)
+	if err == nil {
+		return result
+	}
+	return val
 }

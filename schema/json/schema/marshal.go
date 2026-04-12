@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"mokapi/config/dynamic"
 	"reflect"
 	"strings"
 )
@@ -80,6 +81,10 @@ func (e *encoder) encode(r *Schema) ([]byte, error) {
 				bVal = fields.Bytes()
 			case *Schema:
 				bVal, err = e.encode(val)
+			case dynamic.Reference[*Schema]:
+				bVal, err = json.Marshal(val)
+				b.WriteString(strings.Trim(string(bVal), "{}"))
+				continue
 			default:
 				bVal, err = json.Marshal(val)
 			}

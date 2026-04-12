@@ -8,7 +8,7 @@ import (
 )
 
 type MessageRef struct {
-	dynamic.Reference
+	dynamic.Reference[*MessageRef]
 	Value *Message
 }
 
@@ -33,7 +33,7 @@ type Message struct {
 }
 
 type MessageTraitRef struct {
-	dynamic.Reference
+	dynamic.Reference[*MessageTraitRef]
 	Value *MessageTrait
 }
 
@@ -75,8 +75,8 @@ func (r *MessageRef) Parse(config *dynamic.Config, reader dynamic.Reader) error 
 		return nil
 	}
 	if r.Ref != "" {
-		var resolved *MessageRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value
@@ -144,8 +144,8 @@ func (m *Message) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 func (r *MessageTraitRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		var resolved *MessageTraitRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value

@@ -7,7 +7,7 @@ import (
 )
 
 type CorrelationIdRef struct {
-	dynamic.Reference
+	dynamic.Reference[*CorrelationIdRef]
 	Value *CorrelationId
 }
 
@@ -18,11 +18,12 @@ type CorrelationId struct {
 
 func (r *CorrelationIdRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		var resolved *CorrelationIdRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value
+		return nil
 	}
 	return nil
 }

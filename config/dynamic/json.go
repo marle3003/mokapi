@@ -148,6 +148,9 @@ func object(d *decoder, v reflect.Value) error {
 			continue
 		}
 
+		i := v.Interface()
+		_ = i
+
 		offset = d.d.InputOffset()
 		err = unmarshalJSON(d, field)
 		if err != nil {

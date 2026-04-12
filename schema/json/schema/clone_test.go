@@ -1,6 +1,7 @@
 package schema_test
 
 import (
+	"mokapi/config/dynamic"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
@@ -17,14 +18,13 @@ func TestSchema_Clone(t *testing.T) {
 			name: "base",
 			test: func(t *testing.T) {
 				s := &schema.Schema{
-					Id:         "id",
-					Ref:        "ref",
-					DynamicRef: "dynamicRef",
-					Schema:     "schema",
-					Boolean:    toBoolP(true),
-					Anchor:     "anchor",
-					Type:       schema.Types{"object"},
-					Enum:       []any{"one", "two", "three"},
+					Id:        "id",
+					Reference: dynamic.Reference[*schema.Schema]{Ref: "ref", DynamicRef: "dynamicRef"},
+					Schema:    "schema",
+					Boolean:   toBoolP(true),
+					Anchor:    "anchor",
+					Type:      schema.Types{"object"},
+					Enum:      []any{"one", "two", "three"},
 					Const: func() *any {
 						var v any
 						v = "const"

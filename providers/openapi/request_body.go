@@ -22,7 +22,7 @@ var defaultContentType = media.ParseContentType("application/octet-stream")
 type RequestBodies map[string]*RequestBodyRef
 
 type RequestBodyRef struct {
-	dynamic.Reference
+	dynamic.Reference[*RequestBodyRef]
 	Value *RequestBody
 }
 
@@ -186,8 +186,8 @@ func (r *RequestBodyRef) Parse(config *dynamic.Config, reader dynamic.Reader) er
 	}
 
 	if len(r.Ref) > 0 {
-		var resolved *RequestBodyRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value

@@ -70,7 +70,7 @@ type ServerTag struct {
 }
 
 type ServerRef struct {
-	Ref   string
+	dynamic.Reference[*ServerRef]
 	Value *Server
 }
 
@@ -79,7 +79,7 @@ type ServerBindings struct {
 }
 
 type ChannelRef struct {
-	Ref   string
+	dynamic.Reference[*ChannelRef]
 	Value *Channel
 }
 
@@ -109,7 +109,7 @@ type OperationBindings struct {
 }
 
 type MessageRef struct {
-	Ref   string
+	dynamic.Reference[*MessageRef]
 	Value *Message
 }
 
@@ -141,7 +141,7 @@ type Components struct {
 }
 
 type ParameterRef struct {
-	dynamic.Reference
+	dynamic.Reference[*ParameterRef]
 	Value *Parameter
 }
 
@@ -152,7 +152,7 @@ type Parameter struct {
 }
 
 type MessageTraitRef struct {
-	dynamic.Reference
+	dynamic.Reference[*MessageTraitRef]
 	Value *MessageTrait
 }
 

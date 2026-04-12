@@ -3,10 +3,10 @@ package runtime_test
 import (
 	"context"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/asyncApi/asyncapitest"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
+	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime"
 	"mokapi/runtime/search"
@@ -72,7 +72,7 @@ func TestIndex_Config(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				h := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
 				app.AddHttp(toConfig(h))
-				k := asyncapitest.NewConfig(asyncapitest.WithInfo("foo", "", ""))
+				k := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""))
 				_, err := app.Kafka.Add(toConfig(k), enginetest.NewEngine())
 				require.NoError(t, err)
 

@@ -18,7 +18,8 @@ func TestResolve(t *testing.T) {
 		{
 			name: "invalid ref",
 			test: func(t *testing.T) {
-				err := dynamic.Resolve(":80", "", &dynamic.Config{}, &dynamictest.Reader{})
+				r := dynamic.Reference[*ref]{Ref: ":80"}
+				_, err := r.Resolve(&dynamic.Config{}, &dynamictest.Reader{})
 				require.Error(t, err)
 				require.EqualError(t, err, "resolve reference ':80' failed: parse \":80\": missing protocol scheme")
 			},
@@ -30,9 +31,9 @@ func TestResolve(t *testing.T) {
 					Foo string
 				}
 				s := v{Foo: "foo"}
-				var result v
 
-				err := dynamic.Resolve("#/", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[v]{Ref: "#/"}
+				result, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
 				require.Equal(t, s, result)
@@ -44,9 +45,9 @@ func TestResolve(t *testing.T) {
 				s := struct {
 					Foo string
 				}{Foo: "foo"}
-				result := ""
 
-				err := dynamic.Resolve("#/foo", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[string]{Ref: "#/foo"}
+				result, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
 				require.Equal(t, "foo", result)
@@ -58,9 +59,9 @@ func TestResolve(t *testing.T) {
 				s := struct {
 					Foo map[string]string
 				}{Foo: map[string]string{"bar": "bar"}}
-				result := ""
 
-				err := dynamic.Resolve("#/foo/bar", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[string]{Ref: "#/foo/bar"}
+				result, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
 				require.Equal(t, "bar", result)
@@ -72,9 +73,9 @@ func TestResolve(t *testing.T) {
 				s := struct {
 					Foo map[string]string
 				}{Foo: map[string]string{"/bar": "bar"}}
-				result := ""
 
-				err := dynamic.Resolve("#/foo/~1bar", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[string]{Ref: "#/foo/~1bar"}
+				result, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
 				require.Equal(t, "bar", result)
@@ -86,9 +87,9 @@ func TestResolve(t *testing.T) {
 				s := struct {
 					Foo map[string]string
 				}{Foo: map[string]string{"~bar": "bar"}}
-				result := ""
 
-				err := dynamic.Resolve("#/foo/~0bar", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[string]{Ref: "#/foo/~0bar"}
+				result, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
 				require.Equal(t, "bar", result)
@@ -98,9 +99,9 @@ func TestResolve(t *testing.T) {
 			name: "resolve local map entry not found",
 			test: func(t *testing.T) {
 				s := map[string]string{}
-				result := ""
 
-				err := dynamic.Resolve("#/foo", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[string]{Ref: "#/foo"}
+				_, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.Error(t, err)
 				require.EqualError(t, err, "resolve reference '#/foo' failed: path element 'foo' not found")
@@ -114,8 +115,8 @@ func TestResolve(t *testing.T) {
 				}
 				s := map[string]ref{"foo": {Value: "foo"}}
 
-				var resolved ref
-				err := dynamic.Resolve("#/foo", &resolved, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[ref]{Ref: "#/foo"}
+				resolved, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
 				require.Equal(t, "foo", resolved.Value)
@@ -130,9 +131,9 @@ func TestResolve(t *testing.T) {
 				s := struct {
 					Foo n
 				}{Foo: n{Bar: "bar"}}
-				result := ""
 
-				err := dynamic.Resolve("#/foo/bar", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[string]{Ref: "#/foo/bar"}
+				result, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
 				require.Equal(t, "bar", result)
@@ -148,9 +149,9 @@ func TestResolve(t *testing.T) {
 				s := struct {
 					Foo n
 				}{Foo: n{Bar: &v}}
-				result := ""
 
-				err := dynamic.Resolve("#/foo/bar", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[string]{Ref: "#/foo/bar"}
+				result, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
 				require.Equal(t, "bar", result)
@@ -160,9 +161,9 @@ func TestResolve(t *testing.T) {
 			name: "resolve local struct field not found",
 			test: func(t *testing.T) {
 				s := struct{}{}
-				result := ""
 
-				err := dynamic.Resolve("#/foo", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[string]{Ref: "#/foo"}
+				_, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.Error(t, err)
 				require.EqualError(t, err, "resolve reference '#/foo' failed: path element 'foo' not found")
@@ -179,11 +180,11 @@ func TestResolve(t *testing.T) {
 					Foo ref
 				}{Foo: ref{Value: "foo"}}
 
-				var resolved ref
-				err := dynamic.Resolve("#/foo", &resolved, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[*ref]{Ref: "#/foo"}
+				result, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
-				require.Equal(t, "foo", resolved.Value)
+				require.Equal(t, "foo", result.Value)
 			},
 		},
 		{
@@ -197,10 +198,10 @@ func TestResolve(t *testing.T) {
 					Foo ref
 				}{Foo: ref{Value: nil}}
 
-				var resolved ref
-				err := dynamic.Resolve("#/foo", &resolved, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[*ref]{Ref: "#/foo"}
+				result, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 				require.NoError(t, err)
-				require.Nil(t, resolved.Value)
+				require.Nil(t, result.Value)
 			},
 		},
 		{
@@ -215,11 +216,11 @@ func TestResolve(t *testing.T) {
 					Foo ref
 				}{Foo: ref{Value: &v}}
 
-				var resolved ref
-				err := dynamic.Resolve("#/foo", &resolved, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[*ref]{Ref: "#/foo"}
+				result, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
-				require.Equal(t, "foo", *resolved.Value.(*string))
+				require.Equal(t, "foo", *result.Value.(*string))
 			},
 		},
 		{
@@ -231,9 +232,9 @@ func TestResolve(t *testing.T) {
 				s := struct {
 					Foo ref
 				}{Foo: ref{Value: map[string]string{"bar": "bar"}}}
-				result := ""
 
-				err := dynamic.Resolve("#/foo/bar", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[string]{Ref: "#/foo/bar"}
+				result, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
 				require.Equal(t, "bar", result)
@@ -245,9 +246,9 @@ func TestResolve(t *testing.T) {
 				s := struct {
 					Foo int
 				}{Foo: 12}
-				var result float32
 
-				err := dynamic.Resolve("#/foo", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[float32]{Ref: "#/foo"}
+				_, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.Error(t, err)
 				require.EqualError(t, err, "resolve reference '#/foo' failed: expected type float32, got int")
@@ -262,9 +263,9 @@ func TestResolve(t *testing.T) {
 				s := struct {
 					Foo *v
 				}{Foo: &v{Value: "foo"}}
-				var result v
 
-				err := dynamic.Resolve("#/foo", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[v]{Ref: "#/foo"}
+				result, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
 				require.Equal(t, "foo", result.Value)
@@ -276,9 +277,9 @@ func TestResolve(t *testing.T) {
 				s := struct {
 					Foo map[string]string
 				}{Foo: map[string]string{"foo": "foo"}}
-				var result map[string]string
 
-				err := dynamic.Resolve("#/foo", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[map[string]string]{Ref: "#/foo"}
+				result, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
 				require.Contains(t, result, "foo")
@@ -292,9 +293,9 @@ func TestResolve(t *testing.T) {
 				}{Foo: &pathResolver{resolve: func(token string) (interface{}, error) {
 					return "foo", nil
 				}}}
-				var result string
 
-				err := dynamic.Resolve("#/foo", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[string]{Ref: "#/foo"}
+				result, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
 				require.Contains(t, result, "foo")
@@ -308,9 +309,9 @@ func TestResolve(t *testing.T) {
 				}{Foo: &pathResolver{resolve: func(token string) (interface{}, error) {
 					return nil, fmt.Errorf("TEST ERROR")
 				}}}
-				var result string
 
-				err := dynamic.Resolve("#/foo", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[string]{Ref: "#/foo"}
+				_, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.Error(t, err)
 				require.EqualError(t, err, "resolve reference '#/foo' failed: TEST ERROR")
@@ -325,9 +326,9 @@ func TestResolve(t *testing.T) {
 					require.Equal(t, "bar", token)
 					return "foo", nil
 				}}}
-				var result string
 
-				err := dynamic.Resolve("#/foo/bar", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[string]{Ref: "#/foo/bar"}
+				result, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.NoError(t, err)
 				require.Contains(t, result, "foo")
@@ -341,12 +342,32 @@ func TestResolve(t *testing.T) {
 				}{Foo: &pathResolver{resolve: func(token string) (interface{}, error) {
 					return nil, fmt.Errorf("TEST ERROR")
 				}}}
-				var result string
 
-				err := dynamic.Resolve("#/foo/bar", &result, &dynamic.Config{Data: s}, &dynamictest.Reader{})
+				r := dynamic.Reference[string]{Ref: "#/foo/bar"}
+				_, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
 
 				require.Error(t, err)
 				require.EqualError(t, err, "resolve reference '#/foo/bar' failed: TEST ERROR")
+			},
+		},
+		{
+			name: "resolve local reference nested with Converter",
+			test: func(t *testing.T) {
+				s := struct {
+					Foo *converter
+				}{
+					Foo: &converter{
+						convert: func(interface{}) (interface{}, error) {
+							return "foo", nil
+						},
+					},
+				}
+
+				r := dynamic.Reference[string]{Ref: "#/foo"}
+				result, err := r.Resolve(&dynamic.Config{Data: s}, &dynamictest.Reader{})
+
+				require.NoError(t, err)
+				require.Contains(t, result, "foo")
 			},
 		},
 		{
@@ -356,9 +377,9 @@ func TestResolve(t *testing.T) {
 					require.Equal(t, "https://foo.bar", u.String())
 					return &dynamic.Config{Data: "foo"}, nil
 				})
-				result := ""
 
-				err := dynamic.Resolve("https://foo.bar", &result, &dynamic.Config{Info: dynamictest.NewConfigInfo()}, reader)
+				r := dynamic.Reference[string]{Ref: "https://foo.bar"}
+				result, err := r.Resolve(&dynamic.Config{Info: dynamictest.NewConfigInfo()}, reader)
 
 				require.NoError(t, err)
 				require.Equal(t, "foo", result)
@@ -370,9 +391,9 @@ func TestResolve(t *testing.T) {
 				reader := dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					return nil, fmt.Errorf("TESTING ERROR")
 				})
-				result := ""
 
-				err := dynamic.Resolve("https://foo.bar", &result, &dynamic.Config{Info: dynamictest.NewConfigInfo()}, reader)
+				r := dynamic.Reference[string]{Ref: "https://foo.bar"}
+				_, err := r.Resolve(&dynamic.Config{Info: dynamictest.NewConfigInfo()}, reader)
 
 				require.Error(t, err)
 				require.EqualError(t, err, "resolve reference 'https://foo.bar' failed: TESTING ERROR")
@@ -388,10 +409,10 @@ func TestResolve(t *testing.T) {
 				reader := dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					return &dynamic.Config{Data: value{Foo: "foo"}}, nil
 				})
-				result := ""
-
 				cfg := &dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: &value{}}
-				err := dynamic.Resolve("https://foo.bar#/foo", &result, cfg, reader)
+
+				r := dynamic.Reference[string]{Ref: "https://foo.bar#/foo"}
+				result, err := r.Resolve(cfg, reader)
 
 				require.NoError(t, err)
 				require.Equal(t, "foo", result)
@@ -407,10 +428,10 @@ func TestResolve(t *testing.T) {
 				reader := dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
 					return &dynamic.Config{Data: value{Foo: "foo"}}, nil
 				})
-				result := ""
-
 				cfg := &dynamic.Config{Info: dynamictest.NewConfigInfo(), Data: &value{}}
-				err := dynamic.Resolve("https://foo.bar#/bar", &result, cfg, reader)
+
+				r := dynamic.Reference[string]{Ref: "https://foo.bar#/bar"}
+				_, err := r.Resolve(cfg, reader)
 
 				require.Error(t, err)
 				require.EqualError(t, err, "resolve reference 'https://foo.bar#/bar' failed: path element 'bar' not found")
@@ -434,4 +455,12 @@ type pathResolver struct {
 
 func (p *pathResolver) Resolve(token string) (interface{}, error) {
 	return p.resolve(token)
+}
+
+type converter struct {
+	convert func(i interface{}) (interface{}, error)
+}
+
+func (c *converter) ConvertTo(i interface{}) (interface{}, error) {
+	return c.convert(i)
 }

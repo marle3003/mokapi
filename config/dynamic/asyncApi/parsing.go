@@ -7,33 +7,22 @@ import (
 )
 
 func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
-	for _, server := range c.Servers {
-		if server == nil || len(server.Ref) == 0 {
-			continue
-		}
-		var resolved *ServerRef
-		if err := dynamic.Resolve(server.Ref, &resolved, config, reader); err != nil {
-			return err
-		}
-		server.Value = resolved.Value
+	if c == nil {
+		return nil
 	}
 
-	for _, ch := range c.Channels {
-		if ch == nil {
-			continue
-		}
-		if err := ch.Parse(config, reader); err != nil {
-			return err
-		}
+	converted, err := c.Convert()
+	if err != nil {
+		return err
 	}
-
-	return nil
+	config.Data = converted
+	return converted.Parse(config, reader)
 }
 
 func (r *ChannelRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		var resolved *ChannelRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value
@@ -74,8 +63,8 @@ func (o *Operation) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 func (r *MessageRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		var resolved *MessageRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value
@@ -115,8 +104,8 @@ func (r *MessageRef) Parse(config *dynamic.Config, reader dynamic.Reader) error 
 
 func (r *MessageTraitRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		var resolved *MessageTraitRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value
@@ -165,11 +154,12 @@ func (m *Message) applyTrait(trait *MessageTrait) {
 
 func (r *ParameterRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		var resolved *ParameterRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value
+		return nil
 	}
 	return nil
 }
