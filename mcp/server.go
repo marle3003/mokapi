@@ -39,6 +39,8 @@ func NewServer(app *runtime.App) http.Handler {
 	svc.registerGetScenarios(server)
 	svc.registerGetHttpMockTemplate(server)
 
+	svc.registerRunTool(server)
+
 	return mcp.NewStreamableHTTPHandler(
 		func(*http.Request) *mcp.Server { return server },
 		&mcp.StreamableHTTPOptions{},

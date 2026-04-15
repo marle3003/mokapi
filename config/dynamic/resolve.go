@@ -266,6 +266,8 @@ func resolveResource(ref string, element interface{}, config *Config, reader Rea
 func setResolved(element interface{}, val interface{}) (err error) {
 	v := reflect.ValueOf(val)
 	vElement := reflect.Indirect(reflect.ValueOf(element))
+	i := vElement.Interface()
+	_ = i
 
 	if v.Kind() == reflect.Ptr {
 		v = v.Elem()
@@ -303,7 +305,15 @@ func setResolved(element interface{}, val interface{}) (err error) {
 		return fmt.Errorf("expected type %v, got %v", vElement.Type(), vCursor.Type())
 	}
 
+	n1 := fmt.Sprintf("%s.%s", vCursor.Type().PkgPath(), vCursor.Type().Name())
+	_ = n1
+	n2 := fmt.Sprintf("%s.%s", vElement.Type().PkgPath(), vElement.Type().Name())
+	_ = n2
+
+	b := vElement.Type() == vCursor.Type()
+	_ = b
 	vElement.Set(vCursor)
+	i = vElement.Interface()
 
 	return
 }

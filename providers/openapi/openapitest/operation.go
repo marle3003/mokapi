@@ -24,6 +24,12 @@ func WithOperationId(id string) OperationOptions {
 	}
 }
 
+func WithOperationSummary(summary string) OperationOptions {
+	return func(o *openapi.Operation) {
+		o.Summary = summary
+	}
+}
+
 func WithResponse(status int, opts ...ResponseOptions) OperationOptions {
 	return func(o *openapi.Operation) {
 		r := &openapi.Response{

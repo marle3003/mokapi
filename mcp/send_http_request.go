@@ -32,7 +32,7 @@ func (s *Service) registerSendHttpRequest(server *mcp.Server) {
 		"properties": map[string]any{
 			"apiName": map[string]any{
 				"type":        "string",
-				"description": "The name of the API as returned by 'get_api_list'",
+				"description": "The name of the API as returned by 'mokapi_get_api_spec'",
 			},
 			"method": map[string]any{
 				"type":        "string",
