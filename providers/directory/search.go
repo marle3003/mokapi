@@ -22,6 +22,29 @@ import (
 
 type predicate func(entry Entry) bool
 
+func guidFromBytes(b []byte) string {
+	return fmt.Sprintf("%08x-%04x-%04x-%02x%02x-%x",
+		binary.LittleEndian.Uint32(b[0:4]),
+		binary.LittleEndian.Uint16(b[4:6]),
+		binary.LittleEndian.Uint16(b[6:8]),
+		b[8], b[9],
+		b[10:16],
+	)
+}
+
+func updateBaseDnForGuidIfNeeded(msg *ldap.SearchRequest, e *Entry) {
+	binGuid, ok := e.Attributes["objectGUID"]
+	if !ok || len(binGuid) == 0 {
+		return
+	}
+	msgGuid := msg.BaseDN[6 : len(msg.BaseDN)-1]
+	if guidFromBytes([]byte(binGuid[0])) != msgGuid {
+		return
+	}
+	log.Infof("Attributes: %+v", guidFromBytes([]byte(e.Attributes["objectGUID"][0])))
+	msg.BaseDN = e.Dn
+}
+
 func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 	msg := r.Message.(*ldap.SearchRequest)
 	m, doMonitor := monitor.LdapFromContext(r.Context)
@@ -69,6 +92,10 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 
 			switch msg.Scope {
 			case ldap.ScopeBaseObject:
+				// handle Active Directory extended DN (see MS-ADTS for details)
+				if strings.HasPrefix(msg.BaseDN, "<GUID=") {
+					updateBaseDnForGuidIfNeeded(msg, &e)
+				}
 				if e.Dn != msg.BaseDN {
 					continue
 				}
