@@ -10,9 +10,8 @@ import (
 )
 
 type Schema struct {
-	Id         string `yaml:"$id,omitempty" json:"$id,omitempty"`
-	Ref        string `yaml:"$ref,omitempty" json:"$ref,omitempty"`
-	DynamicRef string `yaml:"$dynamicRef,omitempty" json:"$dynamicRef,omitempty"`
+	Id string `yaml:"$id,omitempty" json:"$id,omitempty"`
+	dynamic.Reference[*Schema]
 
 	Schema        string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
 	Boolean       *bool  `yaml:"-" json:"-"`
@@ -176,8 +175,9 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		}
 	}
 
-	if s.Ref != "" {
-		err := dynamic.Resolve(s.Ref, &s.Sub, config, reader)
+	if s.Reference.HasRef() {
+		var err error
+		s.Sub, err = s.Reference.Resolve(config, reader)
 		if err != nil {
 			return err
 		}
@@ -187,14 +187,6 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		// the parsed schema graph. Dynamic references may resolve differently
 		// depending on the evaluation context, so shared schema nodes must
 		// never be mutated.
-		s.apply(s.Sub)
-	}
-
-	if s.DynamicRef != "" {
-		err := dynamic.ResolveDynamic(s.DynamicRef, &s.Sub, config, reader)
-		if err != nil {
-			return err
-		}
 		s.apply(s.Sub)
 	}
 
@@ -253,13 +245,20 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 		return nil
 	}
 
+	r := dynamic.Reference[*Schema]{}
+	err := dynamic.UnmarshalJSON(b, &r)
+	if err != nil {
+		return err
+	}
+
 	type alias Schema
 	a := alias{}
-	err := dynamic.UnmarshalJSON(b, &a)
+	err = dynamic.UnmarshalJSON(b, &a)
 	if err != nil {
 		return err
 	}
 	a.m = s.m
+	a.Reference = r
 	*s = Schema(a)
 	return nil
 }
@@ -280,13 +279,20 @@ func (s *Schema) UnmarshalYAML(node *yaml.Node) error {
 		return nil
 	}
 
+	r := dynamic.Reference[*Schema]{}
+	err := node.Decode(&r)
+	if err != nil {
+		return err
+	}
+
 	type alias Schema
 	a := alias{}
-	err := node.Decode(&a)
+	err = node.Decode(&a)
 	if err != nil {
 		return err
 	}
 	a.m = s.m
+	a.Reference = r
 	*s = Schema(a)
 	return nil
 }

@@ -7,7 +7,7 @@ import (
 )
 
 type ChannelRef struct {
-	dynamic.Reference
+	dynamic.Reference[*ChannelRef]
 	Value *Channel
 }
 
@@ -40,8 +40,8 @@ func (r *ChannelRef) Parse(config *dynamic.Config, reader dynamic.Reader) error 
 		return nil
 	}
 	if len(r.Ref) > 0 {
-		var resolved *ChannelRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value

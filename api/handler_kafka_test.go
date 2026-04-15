@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"mokapi/api"
 	"mokapi/config/dynamic"
-	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
@@ -1098,7 +1097,7 @@ func TestHandler_Kafka_Metrics(t *testing.T) {
 }
 
 func Test_IsAsyncApiConfig(t *testing.T) {
-	v2 := &asyncApi.Config{Info: asyncApi.Info{Name: "foo"}}
+	v2 := &asyncapi3.Config{Info: asyncapi3.Info{Name: "foo"}}
 	_, ok := runtime.IsAsyncApiConfig(&dynamic.Config{Data: v2})
 	require.True(t, ok)
 

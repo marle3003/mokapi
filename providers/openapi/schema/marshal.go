@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"mokapi/config/dynamic"
 	"mokapi/media"
 	"mokapi/schema/encoding"
 	"mokapi/schema/json/parser"
@@ -120,6 +121,10 @@ func (e *encoder) encode(s *Schema) ([]byte, error) {
 			} else {
 				bVal, err = json.Marshal(val.B)
 			}
+		case dynamic.Reference[*Schema]:
+			bVal, err = json.Marshal(val)
+			b.WriteString(strings.Trim(string(bVal), "{}"))
+			continue
 		default:
 			bVal, err = json.Marshal(val)
 		}

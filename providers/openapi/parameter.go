@@ -15,7 +15,7 @@ const (
 )
 
 type ParameterRef struct {
-	dynamic.Reference
+	dynamic.Reference[*ParameterRef]
 	Value *Parameter
 }
 
@@ -102,8 +102,8 @@ func (r *ParameterRef) Parse(config *dynamic.Config, reader dynamic.Reader) erro
 	}
 
 	if len(r.Ref) > 0 && r.Value == nil {
-		var resolved *ParameterRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value

@@ -11,9 +11,8 @@ import (
 type Schema struct {
 	m map[string]bool
 
-	Id         string `yaml:"$id,omitempty" json:"$id,omitempty"`
-	Ref        string `yaml:"$ref,omitempty" json:"$ref,omitempty"`
-	DynamicRef string `yaml:"$dynamicRef,omitempty" json:"$dynamicRef,omitempty"`
+	Id string `yaml:"$id,omitempty" json:"$id,omitempty"`
+	dynamic.Reference[*Schema]
 
 	Schema        string `yaml:"$schema,omitempty" json:"$schema,omitempty"`
 	Boolean       *bool  `yaml:"-" json:"-"`
@@ -167,9 +166,15 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 		return nil
 	}
 
+	r := dynamic.Reference[*Schema]{}
+	err := json.Unmarshal(b, &r)
+	if err != nil {
+		return err
+	}
+
 	type alias Schema
 	a := alias{}
-	err := json.Unmarshal(b, &a)
+	err = json.Unmarshal(b, &a)
 	if typeErr, ok := err.(*json.UnmarshalTypeError); ok {
 		return &UnmarshalError{
 			Value: typeErr.Value,
@@ -179,6 +184,7 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	a.m = s.m
+	a.Reference = r
 	*s = Schema(a)
 	return nil
 }
@@ -199,19 +205,22 @@ func (s *Schema) UnmarshalYAML(node *yaml.Node) error {
 		return nil
 	}
 
+	r := dynamic.Reference[*Schema]{}
+	err := node.Decode(&r)
+	if err != nil {
+		return err
+	}
+
 	type alias Schema
 	a := alias{}
-	err := node.Decode(&a)
+	err = node.Decode(&a)
 	if err != nil {
 		return err
 	}
 	a.m = s.m
+	a.Reference = r
 	*s = Schema(a)
 	return nil
-}
-
-type ref struct {
-	Schema *Schema
 }
 
 func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
@@ -296,9 +305,8 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		}
 	}
 
-	if s.Ref != "" {
-		r := &ref{}
-		err := dynamic.Resolve(s.Ref, &r.Schema, config, reader)
+	if s.Reference.HasRef() {
+		r, err := s.Reference.Resolve(config, reader)
 		if err != nil {
 			return err
 		}
@@ -308,16 +316,7 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		// the parsed schema graph. Dynamic references may resolve differently
 		// depending on the evaluation context, so shared schema nodes must
 		// never be mutated.
-		s.apply(r.Schema)
-	}
-
-	if s.DynamicRef != "" {
-		r := &ref{}
-		err := dynamic.ResolveDynamic(s.DynamicRef, &r.Schema, config, reader)
-		if err != nil {
-			return err
-		}
-		s.apply(r.Schema)
+		s.apply(r)
 	}
 
 	return nil

@@ -223,7 +223,7 @@ func TestHandler_Http(t *testing.T) {
 				c := openapitest.NewConfig("3.0.0",
 					openapitest.WithInfo("foo", "", ""),
 					openapitest.WithPathRef("/foo/{bar}", &openapi.PathRef{
-						Reference: dynamic.Reference{
+						Reference: dynamic.Reference[*openapi.PathRef]{
 							Ref:         "#/components/pathItems/foo",
 							Summary:     "Summary",
 							Description: "Description",
@@ -233,7 +233,7 @@ func TestHandler_Http(t *testing.T) {
 							openapitest.WithOperation("get",
 								openapitest.UseResponseRef(http.StatusOK,
 									&openapi.ResponseRef{
-										Reference: dynamic.Reference{
+										Reference: dynamic.Reference[*openapi.ResponseRef]{
 											Ref:         "#/components/pathItems/foo",
 											Description: "Description",
 										},

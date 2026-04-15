@@ -41,7 +41,7 @@ func WithResponseHeaderRef(name string, ref string) ResponseOptions {
 		if o.Headers == nil {
 			o.Headers = map[string]*openapi.HeaderRef{}
 		}
-		o.Headers[name] = &openapi.HeaderRef{Reference: dynamic.Reference{Ref: ref}}
+		o.Headers[name] = &openapi.HeaderRef{Reference: dynamic.Reference[*openapi.HeaderRef]{Ref: ref}}
 	}
 }
 
@@ -112,7 +112,7 @@ func WithExampleRef(name, ref string) ContentOptions {
 		if c.Examples == nil {
 			c.Examples = map[string]*openapi.ExampleRef{}
 		}
-		c.Examples[name] = &openapi.ExampleRef{Reference: dynamic.Reference{Ref: ref}}
+		c.Examples[name] = &openapi.ExampleRef{Reference: dynamic.Reference[*openapi.ExampleRef]{Ref: ref}}
 	}
 }
 
@@ -122,8 +122,8 @@ func WithSchema(s *schema.Schema) ContentOptions {
 	}
 }
 
-func WithSchemaRef(r string) ContentOptions {
+func WithSchemaRef(ref string) ContentOptions {
 	return func(c *openapi.MediaType) {
-		c.Schema = &schema.Schema{Ref: r}
+		c.Schema = &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: ref}}
 	}
 }

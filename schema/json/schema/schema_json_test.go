@@ -351,10 +351,10 @@ func TestJson_Structuring(t *testing.T) {
 						},
 					},
 				}
-				r := &schema.Schema{}
-				err := dynamic.Resolve("https://example.com/schemas/address#/properties/street_address", &r, &dynamic.Config{Data: &schema.Schema{}}, reader)
+				s := &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schemas/address#/properties/street_address"}}
+				err := s.Parse(&dynamic.Config{Data: &schema.Schema{}}, reader)
 				require.NoError(t, err)
-				require.Equal(t, "string", r.Type.String())
+				require.Equal(t, "string", s.Type.String())
 			},
 		},
 		{
@@ -374,7 +374,7 @@ func TestJson_Structuring(t *testing.T) {
 
 				person := &dynamic.Config{
 					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/person")),
-					Data: &schema.Schema{Ref: "https://example.com/schemas/address#street_address"},
+					Data: &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schemas/address#street_address"}},
 				}
 				person.OpenScope("")
 
@@ -403,7 +403,7 @@ func TestJson_Structuring(t *testing.T) {
 
 				person := &dynamic.Config{
 					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schema/billing-address")),
-					Data: &schema.Schema{Ref: "https://example.com/schema/billing-address#street_address"},
+					Data: &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schema/billing-address#street_address"}},
 				}
 
 				err := person.Data.(*schema.Schema).Parse(person, reader)
@@ -452,11 +452,11 @@ func TestJson_Structuring(t *testing.T) {
 
 				cfg := &dynamic.Config{Data: &schema.Schema{Id: "https://example.com/schemas/customer"}}
 
-				r := &schema.Schema{}
-				err := dynamic.Resolve("/schemas/address", &r, cfg, reader)
+				r := &dynamic.Reference[schema.Schema]{Ref: "/schemas/address"}
+				s, err := r.Resolve(cfg, reader)
 				require.NoError(t, err)
 				require.NotNil(t, r)
-				require.Equal(t, "object", r.Type.String())
+				require.Equal(t, "object", s.Type.String())
 			},
 		},
 		{
@@ -519,15 +519,17 @@ func TestJson_Structuring(t *testing.T) {
 								Type:          schema.Types{"string"},
 							},
 						},
-						Ref: "https://example.com/schemas/list-of-t",
+						Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schemas/list-of-t"},
 					},
 				}
 
-				err := person.Data.(*schema.Schema).Parse(person, reader)
+				s := person.Data.(*schema.Schema)
+				err := s.Parse(person, reader)
 				require.NoError(t, err)
 
 				require.NoError(t, err)
-				require.Equal(t, "string", person.Data.(*schema.Schema).Items.Type.String())
+				require.Nil(t, s.Items.Not, "resolves to the base generic schema")
+				require.Equal(t, "string", s.Items.Type.String())
 			},
 		},
 	}

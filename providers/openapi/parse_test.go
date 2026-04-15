@@ -25,7 +25,7 @@ func Test_Parse(t *testing.T) {
 					openapitest.WithOperation("get",
 						openapitest.WithResponse(200, openapitest.UseContent("application/json",
 							&openapi.MediaType{
-								Schema: &schema.Schema{Ref: "#/components/schemas/Foo"},
+								Schema: &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "#/components/schemas/Foo"}},
 							},
 						),
 						),
@@ -74,7 +74,7 @@ func Test_ParseAndPatch(t *testing.T) {
 						openapitest.WithOperation("get",
 							openapitest.WithResponse(200, openapitest.UseContent("application/json",
 								&openapi.MediaType{
-									Schema: &schema.Schema{Ref: "#/components/schemas/Foo"},
+									Schema: &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "#/components/schemas/Foo"}},
 								},
 							),
 							),

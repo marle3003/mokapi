@@ -13,7 +13,7 @@ import (
 type PathItems map[string]*PathRef
 
 type PathRef struct {
-	dynamic.Reference
+	dynamic.Reference[*PathRef]
 	Value *Path
 }
 
@@ -175,8 +175,8 @@ func (r *PathRef) Parse(name string, config *dynamic.Config, reader dynamic.Read
 	}()
 
 	if len(r.Ref) > 0 {
-		var resolved *PathRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value

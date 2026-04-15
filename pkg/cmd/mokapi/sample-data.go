@@ -223,7 +223,7 @@ func readFromConfig(c *dynamic.Config, inputType *string, r dynamic.Reader) (sch
 		*inputType = "openapi"
 	}
 
-	err = dynamic.Resolve(fmt.Sprintf("#%s", c.Info.Url.Fragment), &schema, c, r)
+	schema, err = (&dynamic.Reference[any]{Ref: fmt.Sprintf("#%s", c.Info.Url.Fragment)}).Resolve(c, r)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to resolve fragment %s: %v", c.Info.Url.Fragment, err)
 	}

@@ -17,7 +17,7 @@ import (
 )
 
 type SchemaRef struct {
-	dynamic.Reference
+	dynamic.Reference[*SchemaRef]
 	Value Schema
 }
 
@@ -78,15 +78,13 @@ func (r *SchemaRef) UnmarshalJSON(b []byte) error {
 
 func (r *SchemaRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		var resolved *SchemaRef
-		err := dynamic.Resolve(r.Ref, &resolved, config, reader)
+		resolved, err := r.Resolve(config, reader)
 		if err != nil {
-			s := &SchemaRef{Value: &jsonSchema.Schema{}}
-			err = dynamic.Resolve(r.Ref, &s.Value, config, reader)
+			ra := dynamic.Reference[Schema]{Ref: r.Ref}
+			r.Value, err = ra.Resolve(config, reader)
 			if err != nil {
 				return err
 			}
-			r.Value = s.Value
 		} else {
 			r.Value = resolved.Value
 		}
@@ -119,6 +117,13 @@ func (r *SchemaRef) Marshal(v any, ct media.ContentType) ([]byte, error) {
 		return nil, fmt.Errorf("unsupported schema type: %T", v)
 	}
 }
+
+//func (r *SchemaRef) ConvertFrom(val any) (any, error) {
+//	if s, ok := val.(Schema); ok {
+//		return &SchemaRef{Value: s}, nil
+//	}
+//	return nil, fmt.Errorf("unsupported type: %T", val)
+//}
 
 func (r *SchemaRef) GetSchema() (Schema, error) {
 	if r.Value == nil {
@@ -380,12 +385,16 @@ func isOpenApi(format string) bool {
 
 type AvroRef struct {
 	*avro.Schema
-	dynamic.Reference
+	dynamic.Reference[*AvroRef]
 }
 
 func (r *AvroRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r.Ref != "" {
-		return dynamic.Resolve(r.Ref, &r.Schema, config, reader)
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
+			return err
+		}
+		r.Schema = resolved.Schema
 	}
 	return nil
 }

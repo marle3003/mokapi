@@ -195,14 +195,14 @@ func TestExample_Parse(t *testing.T) {
 						openapitest.WithOperation(http.MethodGet,
 							openapitest.WithResponse(http.StatusOK,
 								openapitest.UseContent("application/json", &openapi.MediaType{
-									Examples: map[string]*openapi.ExampleRef{"foo": {Reference: dynamic.Reference{Ref: "foo.yml"}}},
+									Examples: map[string]*openapi.ExampleRef{"foo": {Reference: dynamic.Reference[*openapi.ExampleRef]{Ref: "foo.yml"}}},
 								}),
 							),
 						),
 					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
-				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse response '200' failed: parse content 'application/json' failed: parse example 'foo' failed: resolve reference 'foo.yml' failed: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse response '200' failed: parse content 'application/json' failed: parse example 'foo' failed: resolve reference '/foo.yml' failed: TEST ERROR")
 			},
 		},
 		{

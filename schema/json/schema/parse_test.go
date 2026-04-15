@@ -93,7 +93,7 @@ $ref: '#/$defs/a'
 				person := &dynamic.Config{
 					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/bar")),
 					Data: &schema.Schema{
-						Ref: "https://example.com/schemas/foo",
+						Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schemas/foo"},
 					},
 				}
 

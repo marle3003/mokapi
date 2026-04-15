@@ -2,6 +2,7 @@ package schema_test
 
 import (
 	"encoding/json"
+	"mokapi/config/dynamic"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	jsonSchema "mokapi/schema/json/schema"
@@ -28,7 +29,7 @@ func TestSchema_Marshal(t *testing.T) {
 		},
 		{
 			name:   "$ref",
-			schema: &schema.Schema{Ref: "#/components/schemas/Foo"},
+			schema: &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "#/components/schemas/Foo"}},
 			exp:    `{"$ref":"#/components/schemas/Foo"}`,
 		},
 		{

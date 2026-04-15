@@ -2,10 +2,11 @@ package asyncApi_test
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func Test_UnmarshalJSON(t *testing.T) {
@@ -19,7 +20,7 @@ func Test_UnmarshalJSON(t *testing.T) {
 			name:     "ParameterRef $ref",
 			input:    `{"$ref":"foo"}`,
 			target:   &asyncApi.ParameterRef{},
-			expected: &asyncApi.ParameterRef{Reference: dynamic.Reference{Ref: "foo"}},
+			expected: &asyncApi.ParameterRef{Reference: dynamic.Reference[*asyncApi.ParameterRef]{Ref: "foo"}},
 		},
 		{
 			name:     "ParameterRef value",
@@ -31,7 +32,7 @@ func Test_UnmarshalJSON(t *testing.T) {
 			name:     "MessageRef ref",
 			input:    `{"$ref":"foo"}`,
 			target:   &asyncApi.MessageRef{},
-			expected: &asyncApi.MessageRef{Ref: "foo"},
+			expected: &asyncApi.MessageRef{Reference: dynamic.Reference[*asyncApi.MessageRef]{Ref: "foo"}},
 		},
 		{
 			name:     "MessageRef value",
@@ -43,7 +44,7 @@ func Test_UnmarshalJSON(t *testing.T) {
 			name:     "ChannelRef ref",
 			input:    `{"$ref":"foo"}`,
 			target:   &asyncApi.ChannelRef{},
-			expected: &asyncApi.ChannelRef{Ref: "foo"},
+			expected: &asyncApi.ChannelRef{Reference: dynamic.Reference[*asyncApi.ChannelRef]{Ref: "foo"}},
 		},
 		{
 			name:   "ChannelRef value",
@@ -66,7 +67,7 @@ func Test_UnmarshalJSON(t *testing.T) {
 			name:     "ServerRef ref",
 			input:    `{"$ref":"foo"}`,
 			target:   &asyncApi.ServerRef{},
-			expected: &asyncApi.ServerRef{Ref: "foo"},
+			expected: &asyncApi.ServerRef{Reference: dynamic.Reference[*asyncApi.ServerRef]{Ref: "foo"}},
 		},
 		{
 			name:   "ServerRef value",

@@ -3,9 +3,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	logtest "github.com/sirupsen/logrus/hooks/test"
-	"github.com/stretchr/testify/require"
 	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
@@ -15,6 +12,10 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	logtest "github.com/sirupsen/logrus/hooks/test"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConfigWatcher_Openapi(t *testing.T) {
@@ -147,7 +148,7 @@ paths:
 
 				time.Sleep(1 * time.Second)
 
-				require.Equal(t, "parse error /root.yml: parsing file /root.yml: parse path '/users' failed: resolve reference 'paths.yml#/paths/users' failed: parsing file /paths.yml: parse path '/users' failed: parse operation 'GET' failed: parse request body failed: resolve reference 'not_found.yaml' failed: not found: /not_found.yaml", hook.LastEntry().Message)
+				require.Equal(t, "parse error /root.yml: parsing file /root.yml: parse path '/users' failed: resolve reference '/paths.yml#/paths/users' failed: parsing file /paths.yml: parse path '/users' failed: parse operation 'GET' failed: parse request body failed: resolve reference '/not_found.yaml' failed: not found: /not_found.yaml", hook.LastEntry().Message)
 			},
 		},
 	}

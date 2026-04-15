@@ -105,7 +105,7 @@ func (c *converter) Convert() (*openapi.Config, error) {
 
 func (c *converter) convertPath(p *PathItem) (*openapi.PathRef, error) {
 	if len(p.Ref) > 0 {
-		return &openapi.PathRef{Reference: dynamic.Reference{Ref: convertRef(p.Ref)}}, nil
+		return &openapi.PathRef{Reference: dynamic.Reference[*openapi.PathRef]{Ref: convertRef(p.Ref)}}, nil
 	}
 
 	result := &openapi.Path{}
@@ -225,7 +225,7 @@ func (c *converter) convertOperation(o *Operation) (*openapi.Operation, error) {
 
 func (c *converter) convertResponse(r *Response, produces []string) (*openapi.ResponseRef, error) {
 	if len(r.Ref) > 0 {
-		return &openapi.ResponseRef{Reference: dynamic.Reference{Ref: convertRef(r.Ref)}}, nil
+		return &openapi.ResponseRef{Reference: dynamic.Reference[*openapi.ResponseRef]{Ref: convertRef(r.Ref)}}, nil
 	}
 	result := &openapi.Response{
 		Description: r.Description,
@@ -249,7 +249,7 @@ func (c *converter) convertSchema(s *schema.Schema) *schema.Schema {
 	}
 
 	if len(s.Ref) > 0 {
-		return &schema.Schema{Ref: convertRef(s.Ref)}
+		return &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: convertRef(s.Ref)}}
 	}
 
 	if s.Type.IsInteger() && s.Format == "" {

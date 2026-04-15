@@ -3,6 +3,7 @@ package runtime_test
 import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
+	"mokapi/config/dynamic/provider/file"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
@@ -15,6 +16,7 @@ import (
 	"mokapi/runtime/events/eventstest"
 	"mokapi/runtime/monitor"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -148,6 +150,7 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 	testcases := []struct {
 		name    string
 		configs []*dynamic.Config
+		reader  dynamic.Reader
 		test    func(t *testing.T, app *runtime.App)
 	}{
 		{
@@ -222,7 +225,7 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 				getConfig("https://a.io/a", asyncapi3test.NewConfig(
 					asyncapi3test.WithInfo("foo", "foo", ""),
 					asyncapi3test.WithChannel("bar",
-						asyncapi3test.UseMessage("bar", &asyncapi3.MessageRef{Reference: dynamic.Reference{Ref: "#/components/messages/bar"}}),
+						asyncapi3test.UseMessage("bar", &asyncapi3.MessageRef{Reference: dynamic.Reference[*asyncapi3.MessageRef]{Ref: "#/components/messages/bar"}}),
 					),
 					asyncapi3test.WithComponentMessage("bar", &asyncapi3.Message{
 						Summary: "original",
@@ -244,14 +247,87 @@ func TestApp_AddKafka_Patching(t *testing.T) {
 				require.Equal(t, "patch", msg.Value.Summary)
 			},
 		},
+		{
+			name: "using relative file path",
+			reader: dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
+				require.True(t, strings.HasSuffix(u.Path, "path/ref.yaml"))
+				return &dynamic.Config{Data: &asyncapi3.MessageRef{
+					Value: asyncapi3test.NewMessage(
+						asyncapi3test.WithMessageTitle("original"),
+					),
+				},
+				}, nil
+			}),
+			configs: []*dynamic.Config{
+				getFileConfig("path/foo.yaml", asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "foo", ""),
+					asyncapi3test.WithChannel("bar",
+						asyncapi3test.UseMessage("bar",
+							&asyncapi3.MessageRef{Reference: dynamic.Reference[*asyncapi3.MessageRef]{Ref: "ref.yaml"}},
+						),
+					),
+				)),
+				getFileConfig("path/bar.yaml", asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", ""),
+				)),
+			},
+			test: func(t *testing.T, app *runtime.App) {
+				info := app.Kafka.Get("foo")
+				ch := info.Channels["bar"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["bar"]
+				require.NotNil(t, msg)
+				require.NotNil(t, msg.Value)
+				require.Equal(t, "original", msg.Value.Title)
+			},
+		},
+		{
+			name: "using relative URL path",
+			reader: dynamictest.ReaderFunc(func(u *url.URL, v any) (*dynamic.Config, error) {
+				require.Equal(t, "https://a.io/bar.yaml", u.String())
+				return &dynamic.Config{Data: &asyncapi3.MessageRef{
+					Value: asyncapi3test.NewMessage(
+						asyncapi3test.WithMessageTitle("original"),
+					),
+				},
+				}, nil
+			}),
+			configs: []*dynamic.Config{
+				getConfig("https://a.io/a", asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "foo", ""),
+					asyncapi3test.WithChannel("bar",
+						asyncapi3test.UseMessage("bar",
+							&asyncapi3.MessageRef{Reference: dynamic.Reference[*asyncapi3.MessageRef]{Ref: "bar.yaml"}},
+						),
+					),
+				)),
+				getConfig("https://mokapi.io/b", asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", ""),
+				)),
+			},
+			test: func(t *testing.T, app *runtime.App) {
+				info := app.Kafka.Get("foo")
+				ch := info.Channels["bar"]
+				require.NotNil(t, ch)
+				msg := ch.Value.Messages["bar"]
+				require.NotNil(t, msg)
+				require.Equal(t, "original", msg.Value.Title)
+			},
+		},
 	}
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			r := tc.reader
+			if r == nil {
+				r = &dynamictest.Reader{}
+			}
 			cfg := &static.Config{}
-			app := runtime.New(cfg, &dynamictest.Reader{})
+			app := runtime.New(cfg, r)
 			for _, c := range tc.configs {
-				_, err := app.Kafka.Add(c, enginetest.NewEngine())
+				err := c.Data.(dynamic.Parser).Parse(c, r)
+				require.NoError(t, err)
+				_, err = app.Kafka.Add(c, enginetest.NewEngine())
 				require.NoError(t, err)
 			}
 			tc.test(t, app)
@@ -268,6 +344,13 @@ func TestIsAsyncApiConfig(t *testing.T) {
 
 func getConfig(name string, c *asyncapi3.Config) *dynamic.Config {
 	u, _ := url.Parse(name)
+	cfg := &dynamic.Config{Data: c}
+	cfg.Info.Url = u
+	return cfg
+}
+
+func getFileConfig(name string, c *asyncapi3.Config) *dynamic.Config {
+	u, _ := file.ParseUrl(name)
 	cfg := &dynamic.Config{Data: c}
 	cfg.Info.Url = u
 	return cfg

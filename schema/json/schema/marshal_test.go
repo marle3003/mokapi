@@ -2,8 +2,10 @@ package schema
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestRef_MarshalJSON(t *testing.T) {
@@ -51,7 +53,7 @@ func TestSchema_MarshalJSON_Recursion(t *testing.T) {
 			name: "recursion in property",
 			s: func() *Schema {
 				s := &Schema{
-					Ref:        "foo",
+					Reference:  dynamic.Reference[*Schema]{Ref: "foo"},
 					Properties: &Schemas{},
 				}
 				s.Properties.Set("foo", s)
@@ -66,7 +68,7 @@ func TestSchema_MarshalJSON_Recursion(t *testing.T) {
 			name: "recursion in array",
 			s: func() *Schema {
 				s := &Schema{
-					Ref: "foo",
+					Reference: dynamic.Reference[*Schema]{Ref: "foo"},
 				}
 				s.Items = s
 				return s
@@ -80,7 +82,7 @@ func TestSchema_MarshalJSON_Recursion(t *testing.T) {
 			name: "recursion in contains",
 			s: func() *Schema {
 				s := &Schema{
-					Ref: "foo",
+					Reference: dynamic.Reference[*Schema]{Ref: "foo"},
 				}
 				s.Contains = s
 				return s

@@ -1,11 +1,13 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
+	"mokapi/config/dynamic"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v6"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPet(t *testing.T) {
@@ -47,7 +49,7 @@ func TestPet(t *testing.T) {
 			req: &Request{
 				Path: []string{"pet"},
 				Schema: schematest.New("array", schematest.WithItemsNew(
-					&schema.Schema{Ref: "#/components/schemas/Pet", Type: schema.Types{"string"}},
+					&schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "#/components/schemas/Pet"}, Type: schema.Types{"string"}},
 				)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
@@ -109,7 +111,7 @@ func TestPet(t *testing.T) {
 			req: &Request{
 				Path: []string{"pet"},
 				Schema: schematest.New("array", schematest.WithItemsNew(
-					&schema.Schema{Ref: "#/components/schemas/Category", Type: schema.Types{"string"}},
+					&schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "#/components/schemas/Category"}, Type: schema.Types{"string"}},
 				)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
