@@ -22,6 +22,24 @@ import (
 
 type predicate func(entry Entry) bool
 
+var matchingRules = map[string]string{
+	"1.3.6.1.4.1.1466.115.121.1.38": "objectIdentifierMatch",
+	"1.3.6.1.4.1.1466.115.121.1.15": "caseIgnoreMatch",
+	"1.3.6.1.4.1.1466.115.121.1.26": "caseExactMatch",
+	"1.3.6.1.4.1.1466.115.121.1.7":  "booleanMatch",
+	"1.3.6.1.4.1.1466.115.121.1.27": "integerMatch",
+	"1.3.6.1.4.1.1466.115.121.1.12": "distinguishedNameMatch",
+	"1.3.6.1.4.1.1466.115.121.1.24": "generalizedTimeMatch",
+	"1.3.6.1.4.1.1466.115.121.1.5":  "octetStringMatch",
+}
+
+func inferMatchingRule(syntaxOID string) string {
+	if v, ok := matchingRules[syntaxOID]; ok {
+		return v
+	}
+	return "caseExactMatch"
+}
+
 func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 	msg := r.Message.(*ldap.SearchRequest)
 	m, doMonitor := monitor.LdapFromContext(r.Context)
@@ -343,6 +361,9 @@ func (p *parser) equal(name, value string) (predicate, error) {
 	if p.s != nil {
 		t, ok := p.s.AttributeTypes[name]
 		if ok {
+			if t.Equality == "" {
+				t.Equality = inferMatchingRule(t.Syntax)
+			}
 			switch t.Equality {
 			case "caseIgnoreMatch", "2.5.13.2":
 				f = func(s string) bool {
