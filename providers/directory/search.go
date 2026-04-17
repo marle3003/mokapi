@@ -22,6 +22,48 @@ import (
 
 type predicate func(entry Entry) bool
 
+func guidFromBytes(b []byte) string {
+	return fmt.Sprintf("%08x-%04x-%04x-%02x%02x-%x",
+		binary.LittleEndian.Uint32(b[0:4]),
+		binary.LittleEndian.Uint16(b[4:6]),
+		binary.LittleEndian.Uint16(b[6:8]),
+		b[8], b[9],
+		b[10:16],
+	)
+}
+
+func updateBaseDnForGuidIfNeeded(msg *ldap.SearchRequest, e *Entry) {
+	binGuid, ok := e.Attributes["objectGUID"]
+	if !ok || len(binGuid) == 0 {
+		return
+	}
+	msgGuid := msg.BaseDN[6 : len(msg.BaseDN)-1]
+	if guidFromBytes([]byte(binGuid[0])) != msgGuid {
+		return
+	}
+	log.Infof("Attributes: %+v", guidFromBytes([]byte(e.Attributes["objectGUID"][0])))
+	msg.BaseDN = e.Dn
+}
+
+var matchingRules = map[string]string{
+	"1.3.6.1.4.1.1466.115.121.1.38": "objectIdentifierMatch",
+	"1.3.6.1.4.1.1466.115.121.1.15": "caseIgnoreMatch",
+	"1.3.6.1.4.1.1466.115.121.1.26": "caseExactMatch",
+	"1.3.6.1.4.1.1466.115.121.1.7":  "booleanMatch",
+	"1.3.6.1.4.1.1466.115.121.1.27": "integerMatch",
+	"1.3.6.1.4.1.1466.115.121.1.12": "distinguishedNameMatch",
+	"1.3.6.1.4.1.1466.115.121.1.24": "generalizedTimeMatch",
+	"1.3.6.1.4.1.1466.115.121.1.5":  "octetStringMatch",
+}
+
+func inferMatchingRule(syntaxOID string) string {
+	if v, ok := matchingRules[syntaxOID]; ok {
+		return v
+	}
+	return "caseExactMatch"
+}
+
+
 func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 	msg := r.Message.(*ldap.SearchRequest)
 	m, doMonitor := monitor.LdapFromContext(r.Context)
@@ -69,6 +111,10 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 
 			switch msg.Scope {
 			case ldap.ScopeBaseObject:
+				// handle Active Directory extended DN (see MS-ADTS for details)
+				if strings.HasPrefix(msg.BaseDN, "<GUID=") {
+					updateBaseDnForGuidIfNeeded(msg, &e)
+				}
 				if e.Dn != msg.BaseDN {
 					continue
 				}
@@ -78,6 +124,10 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 					continue
 				}
 				if dn := strings.Join(parts[1:], ","); dn != msg.BaseDN {
+					continue
+				}
+			case ldap.ScopeWholeSubtree:
+				if !strings.HasSuffix(strings.ToLower(e.Dn), strings.ToLower(msg.BaseDN)) {
 					continue
 				}
 			}
@@ -343,6 +393,9 @@ func (p *parser) equal(name, value string) (predicate, error) {
 	if p.s != nil {
 		t, ok := p.s.AttributeTypes[name]
 		if ok {
+			if t.Equality == "" {
+				t.Equality = inferMatchingRule(t.Syntax)
+			}
 			switch t.Equality {
 			case "caseIgnoreMatch", "2.5.13.2":
 				f = func(s string) bool {
