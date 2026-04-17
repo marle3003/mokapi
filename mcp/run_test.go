@@ -333,7 +333,7 @@ op.invoke({ path: { foo: 'val1', 'bar': 'val2' }})`,
 op.invoke()`,
 					},
 				)
-				require.EqualError(t, err, "invoke request GET /{foo}/{bar}/pets failed: missing path parameter 'foo'")
+				require.EqualError(t, err, "GoError: invoke request GET /{foo}/{bar}/pets failed: missing path parameter 'foo' at reflect.methodValueCall (native)")
 			},
 		},
 		{
