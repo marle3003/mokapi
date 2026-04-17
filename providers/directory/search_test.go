@@ -609,6 +609,37 @@ func TestSearch(t *testing.T) {
 				require.Len(t, res.Results, 1)
 			},
 		},
+		{
+			name:  "scope whole subtree",
+			input: `{ "files": [ "./users.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/users.ldif": {Raw: []byte(`
+dn: cn=user
+
+dn: id=user1,ou=Sales,dc=example,dc=com
+foo: bar
+
+dn: id=user2,ou=Sales,dc=example,dc=com
+foo: bar
+
+dn: id=user3,ou=Accounting,dc=example,dc=com
+foo: bar
+`)},
+			}},
+			test: func(t *testing.T, h ldap.Handler, err error) {
+				require.NoError(t, err)
+
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					Scope:  ldap.ScopeWholeSubtree,
+					BaseDN: "ou=Sales,dc=example,dc=com",
+					Filter: "(foo=bar)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 2)
+			},
+		},
 	}
 
 	t.Parallel()
