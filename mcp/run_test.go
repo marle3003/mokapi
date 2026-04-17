@@ -23,6 +23,22 @@ func TestService_Run(t *testing.T) {
 		test func(t *testing.T, s *mcp.Service)
 	}{
 		{
+			name: "run JavaScript code",
+			app: runtimetest.NewHttpApp(
+				openapitest.NewConfig("3.1.0"),
+			),
+			test: func(t *testing.T, s *mcp.Service) {
+				r, err := s.GetRunResponse(
+					context.Background(),
+					mcp.RunInput{
+						Code: `1+1`,
+					},
+				)
+				require.NoError(t, err)
+				require.Equal(t, int64(2), r.Result)
+			},
+		},
+		{
 			name: "List APIs skip empty name",
 			app: runtimetest.NewHttpApp(
 				openapitest.NewConfig("3.1.0"),

@@ -72,7 +72,7 @@ Use this tool to:
 Prefer this tool over retrieving full API specifications, as it returns only the computed result.`,
 		InputSchema:  inputSchema,
 		OutputSchema: outputSchema,
-	}, s.GenerateHttpMockResponse)
+	}, s.GetRunResponse)
 
 	server.AddResource(&mcp.Resource{
 		URI:  "api://execute-types",
