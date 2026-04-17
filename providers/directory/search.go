@@ -98,6 +98,10 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 				if dn := strings.Join(parts[1:], ","); dn != msg.BaseDN {
 					continue
 				}
+			case ldap.ScopeWholeSubtree:
+				if !strings.HasSuffix(strings.ToLower(e.Dn), strings.ToLower(msg.BaseDN)) {
+					continue
+				}
 			}
 			if d.skip(&e, msg.BaseDN) {
 				continue
