@@ -63,9 +63,6 @@ func (l *Ldif) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 			}
 			continue
 		}
-		if line[0] == '#' || line[0] == '-' {
-			continue
-		}
 
 		if isMultiLine(i + 1) {
 			parsedLine += trim(line)
@@ -73,6 +70,10 @@ func (l *Ldif) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		} else if parsedLine != "" {
 			line = parsedLine + trim(line)
 			parsedLine = ""
+		}
+
+		if line[0] == '#' || line[0] == '-' {
+			continue
 		}
 
 		kv := strings.SplitN(line, ":", 2)

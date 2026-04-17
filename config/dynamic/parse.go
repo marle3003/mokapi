@@ -69,7 +69,7 @@ func parse(c *Config) (interface{}, error) {
 		result, err = parseYaml(b, result)
 	case ".json":
 		result, err = parseJson(b, result)
-	case ".lua", ".js", ".cjs", ".mjs", ".ts":
+	case ".lua", ".js", ".cjs", ".mjs", ".ts", ".ldif":
 		result = string(b)
 	default:
 		// try parse from JSON and YAML
