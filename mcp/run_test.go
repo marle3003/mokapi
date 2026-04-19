@@ -24,9 +24,7 @@ func TestService_Run(t *testing.T) {
 	}{
 		{
 			name: "run JavaScript code",
-			app: runtimetest.NewHttpApp(
-				openapitest.NewConfig("3.1.0"),
-			),
+			app:  runtimetest.NewApp(),
 			test: func(t *testing.T, s *mcp.Service) {
 				r, err := s.GetRunResponse(
 					context.Background(),
@@ -36,6 +34,20 @@ func TestService_Run(t *testing.T) {
 				)
 				require.NoError(t, err)
 				require.Equal(t, int64(2), r.Result)
+			},
+		},
+		{
+			name: "JSON.parse()",
+			app:  runtimetest.NewApp(),
+			test: func(t *testing.T, s *mcp.Service) {
+				r, err := s.GetRunResponse(
+					context.Background(),
+					mcp.RunInput{
+						Code: `JSON.parse('{"foo":"bar"}')`,
+					},
+				)
+				require.NoError(t, err)
+				require.Equal(t, map[string]any{"foo": "bar"}, r.Result)
 			},
 		},
 		{
@@ -108,6 +120,7 @@ func TestService_Run(t *testing.T) {
 					openapitest.WithInfo("foo", "", ""),
 					openapitest.WithPath("/pets",
 						openapitest.WithOperation(http.MethodGet,
+							openapitest.WithOperationId("pets"),
 							openapitest.WithOperationSummary("GET summary"),
 						),
 						openapitest.WithOperation(http.MethodPut,
@@ -116,7 +129,8 @@ func TestService_Run(t *testing.T) {
 					),
 					openapitest.WithPath("/users",
 						openapitest.WithPathInfo("path summary", ""),
-						openapitest.WithOperation(http.MethodPost),
+						openapitest.WithPathParam("foo"),
+						openapitest.WithOperation(http.MethodPost, openapitest.WithOperationParam("bar", false)),
 					),
 				),
 			),
@@ -129,9 +143,9 @@ func TestService_Run(t *testing.T) {
 				)
 				require.NoError(t, err)
 				require.Equal(t, []mcp.OperationSummary{
-					{Method: "GET", Path: "/pets", Summary: "GET summary"},
-					{Method: "PUT", Path: "/pets", Summary: "PUT summary"},
-					{Method: "POST", Path: "/users", Summary: "path summary"}},
+					{Id: "pets", Method: "GET", Path: "/pets", Summary: "GET summary"},
+					{Id: "put-/pets", Method: "PUT", Path: "/pets", Summary: "PUT summary"},
+					{Id: "post-/users", Method: "POST", Path: "/users", Summary: "path summary", Parameters: []string{"bar", "foo"}}},
 					r.Result)
 			},
 		},
@@ -170,13 +184,13 @@ func TestService_Run(t *testing.T) {
 				r, err := s.GetRunResponse(
 					context.Background(),
 					mcp.RunInput{
-						Code: `mokapi.getApi('foo').getOperationDetails('/pets', 'GET')`,
+						Code: `mokapi.getApi('foo').getOperation('get-/pets')`,
 					},
 				)
 				require.NoError(t, err)
-				require.IsType(t, &mcp.OperationDetails{}, r.Result)
-				op := r.Result.(*mcp.OperationDetails)
-				require.Equal(t, "", op.OperationId)
+				require.IsType(t, &mcp.Operation{}, r.Result)
+				op := r.Result.(*mcp.Operation)
+				require.Equal(t, "get-/pets", op.OperationId)
 				require.Equal(t, "GET", op.Method)
 				require.Equal(t, "/pets", op.Path)
 				require.Equal(t, "GET summary", op.Summary)
@@ -190,6 +204,49 @@ func TestService_Run(t *testing.T) {
 				require.Equal(t, true, op.RequestBody.Required)
 				require.Equal(t, "application/json", op.RequestBody.Contents[0].ContentType)
 				require.Equal(t, "string", op.RequestBody.Contents[0].Schema.Type[0])
+			},
+		},
+		{
+			name: "get API's operation using projection",
+			app: runtimetest.NewHttpApp(
+				openapitest.NewConfig("3.1.0",
+					openapitest.WithInfo("foo", "", ""),
+					openapitest.WithPath("/pets",
+						openapitest.WithOperation(http.MethodGet,
+							openapitest.WithOperationSummary("GET summary"),
+							openapitest.WithHeaderParam("foo", false, openapitest.WithParamSchema(schematest.New("string"))),
+							openapitest.WithRequestBody(
+								"request body description",
+								true,
+								openapitest.WithRequestContent(
+									"application/json",
+									&openapi.MediaType{
+										Schema: schematest.New("string"),
+									},
+								),
+							),
+							openapitest.WithResponse(200,
+								openapitest.WithContent("application/json", openapitest.WithSchema(
+									schematest.New("string"),
+								)),
+							),
+						),
+						openapitest.WithOperation(http.MethodPut,
+							openapitest.WithOperationSummary("PUT summary"),
+						),
+					),
+				),
+			),
+			test: func(t *testing.T, s *mcp.Service) {
+				r, err := s.GetRunResponse(
+					context.Background(),
+					mcp.RunInput{
+						Code: `const op = mokapi.getApi('foo').getOperation('get-/pets')
+const result = { path: op.path, method: op.method }; result`,
+					},
+				)
+				require.NoError(t, err)
+				require.Equal(t, map[string]any{"method": "GET", "path": "/pets"}, r.Result)
 			},
 		},
 		{
@@ -213,7 +270,7 @@ func TestService_Run(t *testing.T) {
 				r, err := s.GetRunResponse(
 					context.Background(),
 					mcp.RunInput{
-						Code: `const op = mokapi.getApi('foo').getOperationDetails('/pets', 'GET')
+						Code: `const op = mokapi.getApi('foo').getOperation('get-/pets')
 op.getResponseSchema(200)`,
 					},
 				)
@@ -247,7 +304,7 @@ op.getResponseSchema(200)`,
 				r, err := s.GetRunResponse(
 					context.Background(),
 					mcp.RunInput{
-						Code: `const op = mokapi.getApi('foo').getOperationDetails('/pets', 'GET')
+						Code: `const op = mokapi.getApi('foo').getOperation('get-/pets')
 op.getResponseSchema(404)`,
 					},
 				)
@@ -265,7 +322,11 @@ op.getResponseSchema(404)`,
 							openapitest.WithResponse(200,
 								openapitest.WithResponseDescription("response description"),
 								openapitest.WithContent("application/json", openapitest.WithSchema(
-									schematest.New("string"),
+									schematest.New("object",
+										schematest.WithProperty("foo", schematest.New("string")),
+										schematest.WithProperty("bar", schematest.New("integer")),
+										schematest.WithRequired("foo", "bar"),
+									),
 								)),
 							),
 						),
@@ -276,7 +337,7 @@ op.getResponseSchema(404)`,
 				r, err := s.GetRunResponse(
 					context.Background(),
 					mcp.RunInput{
-						Code: `const op = mokapi.getApi('foo').getOperationDetails('/pets', 'GET');
+						Code: `const op = mokapi.getApi('foo').getOperation('get-/pets');
 op.invoke()`,
 					},
 				)
@@ -284,7 +345,7 @@ op.invoke()`,
 				require.IsType(t, mcp.InvokeResponse{}, r.Result)
 				res := r.Result.(mcp.InvokeResponse)
 				require.Equal(t, 200, res.StatusCode)
-				require.Equal(t, `"P8"`, res.Body)
+				require.Equal(t, `{"foo":"P8","bar":-804702}`, res.Body)
 				require.Equal(t, map[string][]string{
 					"Content-Type": {"application/json"},
 				}, res.Headers)
@@ -313,7 +374,7 @@ op.invoke()`,
 				r, err := s.GetRunResponse(
 					context.Background(),
 					mcp.RunInput{
-						Code: `const op = mokapi.getApi('foo').getOperationDetails('/{foo}/{bar}/pets', 'GET');
+						Code: `const op = mokapi.getApi('foo').getOperation('get-/{foo}/{bar}/pets');
 op.invoke({ path: { foo: 'val1', 'bar': 'val2' }})`,
 					},
 				)
@@ -345,11 +406,11 @@ op.invoke({ path: { foo: 'val1', 'bar': 'val2' }})`,
 				_, err := s.GetRunResponse(
 					context.Background(),
 					mcp.RunInput{
-						Code: `const op = mokapi.getApi('foo').getOperationDetails('/{foo}/{bar}/pets', 'GET');
+						Code: `const op = mokapi.getApi('foo').getOperation('get-/{foo}/{bar}/pets');
 op.invoke()`,
 					},
 				)
-				require.EqualError(t, err, "GoError: invoke request GET /{foo}/{bar}/pets failed: missing path parameter 'foo' at reflect.methodValueCall (native)")
+				require.EqualError(t, err, "invoke request GET /{foo}/{bar}/pets failed: missing path parameter 'foo'")
 			},
 		},
 		{
@@ -374,7 +435,7 @@ op.invoke()`,
 				r, err := s.GetRunResponse(
 					context.Background(),
 					mcp.RunInput{
-						Code: `const op = mokapi.getApi('foo').getOperationDetails('/pets', 'GET');
+						Code: `const op = mokapi.getApi('foo').getOperation('get-/pets');
 op.invoke({ query: { foo: 'val1' }})`,
 					},
 				)
@@ -405,7 +466,7 @@ op.invoke({ query: { foo: 'val1' }})`,
 				r, err := s.GetRunResponse(
 					context.Background(),
 					mcp.RunInput{
-						Code: `const op = mokapi.getApi('foo').getOperationDetails('/pets', 'GET');
+						Code: `const op = mokapi.getApi('foo').getOperation('get-/pets');
 op.invoke({ header: { foo: ['val1'] }})`,
 					},
 				)

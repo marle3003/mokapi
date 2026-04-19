@@ -11,6 +11,7 @@ import (
 	"mokapi/providers/mail"
 	"mokapi/providers/openapi"
 	"mokapi/runtime"
+	"mokapi/runtime/events"
 )
 
 func NewHttpApp(configs ...*openapi.Config) *runtime.App {
@@ -105,5 +106,14 @@ func WithMail(configs ...*mail.Config) Options {
 func WithMailInfo(name string, mi *runtime.MailInfo) Options {
 	return func(app *runtime.App) {
 		app.Mail.Set(name, mi)
+	}
+}
+
+func WithEvent(traits events.Traits, data events.EventData) Options {
+	return func(app *runtime.App) {
+		err := app.Events.Push(data, traits)
+		if err != nil {
+			panic(err)
+		}
 	}
 }

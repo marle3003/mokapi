@@ -38,17 +38,19 @@ func TestServer(t *testing.T) {
 			test: func(t *testing.T) {
 				list, err := session.ListTools(ctx, &gomcp.ListToolsParams{})
 				require.NoError(t, err)
-				require.Len(t, list.Tools, 9)
+				require.Len(t, list.Tools, 3)
 				// alphabetical order
 				require.Equal(t, "mokapi_execute_code", list.Tools[0].Name)
-				require.Equal(t, "mokapi_generate_http_mock_response", list.Tools[1].Name)
+				require.Equal(t, "mokapi_get_automation_definitions", list.Tools[1].Name)
+				require.Equal(t, "mokapi_get_mock_reference", list.Tools[2].Name)
+				/*require.Equal(t, "mokapi_generate_http_mock_response", list.Tools[1].Name)
 				require.Equal(t, "mokapi_get_api_spec", list.Tools[2].Name)
 				require.Equal(t, "mokapi_get_events", list.Tools[3].Name)
 				require.Equal(t, "mokapi_get_http_mock_template", list.Tools[4].Name)
 				require.Equal(t, "mokapi_get_scenarios", list.Tools[5].Name)
 				require.Equal(t, "mokapi_get_typescript_api", list.Tools[6].Name)
 				require.Equal(t, "mokapi_produce_kafka_message", list.Tools[7].Name)
-				require.Equal(t, "mokapi_send_http_request", list.Tools[8].Name)
+				require.Equal(t, "mokapi_send_http_request", list.Tools[8].Name)*/
 			},
 		},
 		{
@@ -74,7 +76,7 @@ func TestServer(t *testing.T) {
 					Cursor: "",
 				})
 				require.NoError(t, err)
-				require.Contains(t, list.Tools[0].Description, "api://execute-types")
+				require.Contains(t, list.Tools[0].Description, "mokapi_get_automation_definitions")
 			},
 		},
 		{
@@ -82,8 +84,8 @@ func TestServer(t *testing.T) {
 			test: func(t *testing.T) {
 				list, err := session.ListResources(ctx, &gomcp.ListResourcesParams{})
 				require.NoError(t, err)
-				require.Equal(t, "api-docs", list.Resources[0].Name)
-				require.Equal(t, "api://execute-types", list.Resources[0].URI)
+				require.Equal(t, "Automation API Reference", list.Resources[0].Name)
+				require.Equal(t, "mokapi://lib/automation", list.Resources[0].URI)
 			},
 		},
 	}

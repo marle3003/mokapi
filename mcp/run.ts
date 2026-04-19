@@ -8,20 +8,40 @@ interface Mokapi {
 
     /**
      * Returns a specific API by name.
+     * @example
+     * getApi('Swagger Petstore')
      */
     getApi(name: string): Api;
 
     /**
      * Generate a random value from a JSON Schema.
+     * The generated data strictly matches the schema, including all required fields and correct types.
+     * Use this function to create complex random data or writing HTTP mock scripts
+     * @param schema The JSON scheme for which a random value is generated.
      * @example
      * fake({ type: 'string', format: 'email' })
      */
     fake(schema: Schema): any;
+
+    /**
+     * Returns recorded events from Mokapi
+     * Use this function when the user asks:
+     * - What requests were made?
+     * - Why did my request fail?
+     * - Show recent API activity
+     * @param traits Filter events by traits
+     * @param limit Maximum number of events to return, default is 10
+     * @example
+     * getEvents({ apiType: 'http' })
+     */
+    getEvents(traits: HttpTraits, limit?: number): Event[];
 }
+
+type ApiType =  'http' | 'kafka' | 'ldap' | 'mail'
 
 interface ApiSummary {
     name: string;
-    type: 'openapi' | 'asyncapi' | 'ldap' | 'mail';
+    type: ApiType;
 }
 
 interface Api extends ApiSummary {
@@ -30,24 +50,32 @@ interface Api extends ApiSummary {
 
 interface OpenApi {
     /**
-     * Returns operations of this API.
-     * By default, only minimal fields are returned.
+     * Returns all operations of this API.
      */
     getOperations(): OperationSummary[];
 
-    getOperationDetails(path: string, method: string): OperationDetails
+    /**
+     * Returns details about specific operation
+     * Use id from the operation summary list
+     * @param id The id of the operation
+     */
+    getOperation(id: string): OperationDetail
 }
 
 interface OperationSummary {
+    /** generated from method and path if missing in spec */
+    id: string
     method: string;
     path: string;
     summary: string;
+    /** Names of required parameters to help decide if this is the right endpoint */
+    parameters?: string[]
 }
 
-interface OperationDetails {
-    operationId: string;
-    method: string
+interface OperationDetail {
+    id: string;
     path: string
+    method: string
     summary: string
     description: string;
     parameters: RequestParameter[]
@@ -55,6 +83,7 @@ interface OperationDetails {
 
     /**
      * Invoke this operation against the mocked API.
+     * @example operation.invoke({ path: { id: 1 }, body: JSON.stringify({ name: "test" }) })
      */
     invoke(request?: InvokeRequest): InvokeResponse;
 
@@ -99,7 +128,7 @@ interface InvokeRequest {
 interface InvokeResponse {
     statusCode: number;
     headers: Record<string, string[]>;
-    body?: string;
+    body: string
 }
 
 /**
@@ -250,3 +279,45 @@ interface Schema {
 }
 
 type SchemaType = "object" | "array" | "number" | "integer" | "string" | "boolean" | "null";
+
+interface Traits {
+    type: ApiType;
+    name: string;
+}
+
+interface HttpTraits extends Traits {
+    /**
+     * Path value specified by the OpenAPI path
+     * @example /pet/{petId}
+     */
+    path: string
+
+    /**
+     * Request method.
+     * @example GET
+     */
+    method: string
+}
+
+interface Event {
+    /**
+     * ID of the event
+     */
+    id: string;
+
+    /**
+     * List of traits
+     */
+    traits: Traits;
+
+    /**
+     * The data of the event
+     */
+    data: any
+
+    /**
+     * Time of the event in the format RFC3339
+     * @example 2026-07-21T17:32:28Z
+     */
+    time: string
+}
