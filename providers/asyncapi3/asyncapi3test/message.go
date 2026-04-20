@@ -73,6 +73,12 @@ func WithHeaders(s *schema.Schema) MessageOptions {
 	}
 }
 
+func WithMessageName(s string) MessageOptions {
+	return func(m *asyncapi3.Message) {
+		m.Name = s
+	}
+}
+
 func WithMessageTitle(s string) MessageOptions {
 	return func(m *asyncapi3.Message) {
 		m.Title = s
@@ -82,5 +88,11 @@ func WithMessageTitle(s string) MessageOptions {
 func WithMessageSummary(s string) MessageOptions {
 	return func(m *asyncapi3.Message) {
 		m.Summary = s
+	}
+}
+
+func WithMessageDescription(s string) MessageOptions {
+	return func(m *asyncapi3.Message) {
+		m.Description = s
 	}
 }

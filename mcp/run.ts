@@ -11,7 +11,7 @@ interface Mokapi {
      * @example
      * getApi('Swagger Petstore')
      */
-    getApi(name: string): Api;
+    getApi(name: string): OpenApi;
 
     /**
      * Generate a random value from a JSON Schema.
@@ -32,7 +32,7 @@ interface Mokapi {
      * @param traits Filter events by traits
      * @param limit Maximum number of events to return, default is 10
      * @example
-     * getEvents({ apiType: 'http' })
+     * getEvents({ apiType: 'http', name: 'Swagger Petstore', path: '/pets' })
      */
     getEvents(traits: HttpTraits, limit?: number): Event[];
 }
@@ -44,25 +44,23 @@ interface ApiSummary {
     type: ApiType;
 }
 
-interface Api extends ApiSummary {
-    spec: OpenApi
-}
+interface OpenApi extends ApiSummary {
+    servers: { url: string, description: string }
 
-interface OpenApi {
     /**
      * Returns all operations of this API.
      */
-    getOperations(): OperationSummary[];
+    getOperations(): OpenApiOperationSummary[];
 
     /**
      * Returns details about specific operation
      * Use id from the operation summary list
      * @param id The id of the operation
      */
-    getOperation(id: string): OperationDetail
+    getOperation(id: string): OpenApiOperation
 }
 
-interface OperationSummary {
+interface OpenApiOperationSummary {
     /** generated from method and path if missing in spec */
     id: string
     method: string;
@@ -72,7 +70,7 @@ interface OperationSummary {
     parameters?: string[]
 }
 
-interface OperationDetail {
+interface OpenApiOperation {
     id: string;
     path: string
     method: string
@@ -80,17 +78,17 @@ interface OperationDetail {
     description: string;
     parameters: RequestParameter[]
     requestBody: RequestBody
+    /**
+     * List of allowed responses.
+     * IMPORTANT: You must only use these status codes for this operation!
+     */
+    responses: Response[]
 
     /**
      * Invoke this operation against the mocked API.
      * @example operation.invoke({ path: { id: 1 }, body: JSON.stringify({ name: "test" }) })
      */
     invoke(request?: InvokeRequest): InvokeResponse;
-
-    /**
-     * Returns the response schema for a given status code.
-     */
-    getResponseSchema(statusCode: number): Response[];
 }
 
 interface RequestParameter {
@@ -129,6 +127,83 @@ interface InvokeResponse {
     statusCode: number;
     headers: Record<string, string[]>;
     body: string
+}
+
+interface Kafka extends ApiSummary {
+    brokers: { name: string, host: string, description?: string }
+
+    getTopics(): KafkaTopicSummary[]
+    getTopic(topicName: string): KafkaTopic
+}
+
+interface KafkaTopicSummary {
+    /**
+     * The unique name of the topic.
+     */
+    name: string
+    title?: string
+    summary?: string
+}
+
+interface KafkaTopic extends KafkaTopicSummary{
+    description: string
+    /**
+     * List of current partitions and their maximum offsets.
+     * Use this to determine the range for the 'consume' method.
+     */
+    partitions: { index: number, offset: number }
+
+    operations: KafkaOperation[];
+
+    /**
+     * Use 'produce' to send a message to this topic.
+     * Check 'operations' with action 'send' for valid payloads.
+     * @param partition The target partition index. MUST be one of the indices listed in the 'partitions' array.
+     * @param value The message payload. If the operation specifies a JSON schema, provide this as a stringified object.
+     * @param key Optional message key.
+     * @param headers Optional metadata headers.
+     */
+    produce(partition: number, value: string, key?: string, headers?: KafkaHeader): void
+
+    /**
+     * INSPECT: Retrieves a specific record for analysis or verification.
+     * Use this to check if the mock has received or produced a specific message.
+     * @param partition The partition index (see 'partitions' list).
+     * @param startOffset The offset to start reading from (see 'partitions' for max offset).
+     * @param limit The maximum number of records to return in this call.
+     * @returns An array of records found starting from the startOffset.
+     */
+    consume(partition: number, startOffset: number, limit: number): KafkaRecord[]
+}
+
+interface KafkaOperation {
+    action: 'send' | 'receive'
+    title: string
+    summary: string;
+    description: string
+    messages: KafkaMessage[];
+}
+
+interface KafkaMessage {
+    name: string;
+    title: string;
+    summary: string
+    description: string
+    contentType: string
+    payload: Schema;
+    key: Schema
+    headers?: Schema;
+}
+
+interface KafkaHeader {
+    [name: string]: string
+}
+
+interface KafkaRecord {
+    offset: number
+    key: string
+    value: string
+    headers: KafkaHeader
 }
 
 /**
@@ -281,8 +356,8 @@ interface Schema {
 type SchemaType = "object" | "array" | "number" | "integer" | "string" | "boolean" | "null";
 
 interface Traits {
-    type: ApiType;
-    name: string;
+    type?: ApiType;
+    name?: string;
 }
 
 interface HttpTraits extends Traits {
@@ -290,13 +365,13 @@ interface HttpTraits extends Traits {
      * Path value specified by the OpenAPI path
      * @example /pet/{petId}
      */
-    path: string
+    path?: string
 
     /**
      * Request method.
      * @example GET
      */
-    method: string
+    method?: string
 }
 
 interface Event {

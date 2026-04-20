@@ -11,14 +11,14 @@ with the corresponding category and name (e.g., category='types', name='http')
 Overview of TypeScript definitions for mock event handlers.
 - Use these types to ensure correct syntax for "import { ... } from 'mokapi/...'".
 
-| Type                           | Import Statement                      | Parameter Name |
-|--------------------------------|---------------------------------------|----------------|
-| **Core**                       | `import {...} from 'mokapi'`          | mokapi         |
-| **HTTP**                       | `import {...} from 'mokapi/http'`     | http           |
-| **Kafka**                      | `import {...} from 'mokapi/kafka'`    | kafka          |
-| **Faker**                      | `import {...} from 'mokapi/faker'`    | faker          |
-| **Mustache**                   | `import {...} from 'mokapi/mustache'` | mustache       |
-| **Yaml**                       | `import {...} from 'mokapi/yaml'`     | yaml           |
+| Type                           | Description                                                                                                                                                                                         | Import Statement                      | Parameter Name       |
+|--------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|----------------------|
+| **Core**                       | Exposes the core scripting API for Mokapi. It allows you to intercept and manipulate protocol events (HTTP, Kafka, LDAP, SMTP), schedule jobs, generate mock data, and share state between scripts. | `import {...} from 'mokapi'`          | mokapi               |
+| **HTTP**                       | Exposes functions to invoke HTTP request                                                                                                                                                            | `import {...} from 'mokapi/http'`     | http                 |
+| **Kafka**                      | Exposes functions to produce Kafka message                                                                                                                                                          | `import {...} from 'mokapi/kafka'`    | kafka                |
+| **Faker**                      | Exposes functions to generate random data based on JSON schema                                                                                                                                      | `import {...} from 'mokapi/faker'`    | faker                |
+| **Mustache**                   | Exposes to render output based on mustache template                                                                                                                                                 | `import {...} from 'mokapi/mustache'` | mustache             |
+| **Yaml**                       | Exposes functions to parse or stringify YAML files                                                                                                                                                  | `import {...} from 'mokapi/yaml'`     | yaml                 |
 
 ## Scenarios
 

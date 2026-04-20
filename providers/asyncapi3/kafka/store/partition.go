@@ -115,8 +115,8 @@ func (p *Partition) Read(offset int64, maxBytes int) (kafka.RecordBatch, kafka.E
 			return batch, kafka.None
 		}
 
-		for seg.contains(offset) {
-			r := seg.record(offset)
+		for seg.Contains(offset) {
+			r := seg.Record(offset)
 
 			if baseOffset == 0 {
 				baseOffset = r.Offset
@@ -281,7 +281,7 @@ func (p *Partition) OffsetTimestamp(offset int64) int64 {
 	if s == nil {
 		return -1
 	}
-	r := s.record(offset)
+	r := s.Record(offset)
 	if r == nil {
 		return -1
 	}
@@ -356,11 +356,11 @@ func newSegment(offset int64) *Segment {
 	}
 }
 
-func (s *Segment) contains(offset int64) bool {
+func (s *Segment) Contains(offset int64) bool {
 	return offset >= s.Head && offset < s.Tail
 }
 
-func (s *Segment) record(offset int64) *kafka.Record {
+func (s *Segment) Record(offset int64) *kafka.Record {
 	index := int(offset - s.Head)
 	if index < 0 || index >= len(s.Log) {
 		return nil

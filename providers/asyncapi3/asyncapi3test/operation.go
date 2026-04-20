@@ -20,6 +20,24 @@ func WithOperationAction(action string) OperationOptions {
 	}
 }
 
+func WithOperationTitle(title string) OperationOptions {
+	return func(op *asyncapi3.Operation) {
+		op.Title = title
+	}
+}
+
+func WithOperationSummary(summary string) OperationOptions {
+	return func(op *asyncapi3.Operation) {
+		op.Summary = summary
+	}
+}
+
+func WithOperationDescription(description string) OperationOptions {
+	return func(op *asyncapi3.Operation) {
+		op.Description = description
+	}
+}
+
 func UseOperationMessage(msg *asyncapi3.Message) OperationOptions {
 	return func(o *asyncapi3.Operation) {
 		o.Messages = append(o.Messages, &asyncapi3.MessageRef{Value: msg})
