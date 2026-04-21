@@ -19,6 +19,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+const errorHint = `Tip for Correction:
+It seems there is a syntax error or a misunderstanding of the API. 
+To ensure you are using the correct global variables and methods:
+1. Call 'mokapi_get_automation_definitions' without parameters to see the general overview.
+2. Check 'category="core"' to verify the syntax of the global 'mokapi' object.`
+
 type RunInput struct {
 	Code string `json:"code"`
 }
@@ -54,16 +60,15 @@ func (s *Service) registerRunTool(server *mcp.Server) {
 		Name: "mokapi_execute_code",
 		Description: `Executes JavaScript code in a sandboxed Mokapi runtime.
 The last expression in the code is returned as the result.
+Do not guess the API. Always call mokapi_get_automation_definitions first.
 
 MANDATORY WORKFLOW:
 1. FIRST: Call 'mokapi_get_automation_definitions' to get the latest API types.
 2. SECOND: Use this tool to query live API data (endpoints, schemas, events).
-NEVER guess the API structure; always use the definitions as a reference.
 
 Important for Object Returns:
 JavaScript interprets {} at the start of a line as a block, not an object. To return an object literal, wrap it in parentheses ({ ... }) or assign it to a variable and put the variable name in the last line.
 Example: const result = { a: 1 }; result
-
 
 Use this tool to:
 - Explore mocked APIs (OpenAPI, AsyncAPI, LDAP, Mail)
@@ -110,7 +115,11 @@ func (m *mokapi) run(code string) (any, error) {
 	if err != nil {
 		var ex *goja.Exception
 		if errors.As(err, &ex) {
-			return nil, ex.Unwrap()
+			ue := ex.Unwrap()
+			if ue == nil {
+				return nil, fmt.Errorf("%w\n\n%s", err, errorHint)
+			}
+			return nil, ue
 		}
 		return nil, err
 	}

@@ -62,6 +62,25 @@ func TestService_Run(t *testing.T) {
 				require.Len(t, r.Result, 0)
 			},
 		},
+		{
+			name: "script error",
+			app:  runtimetest.NewApp(),
+			test: func(t *testing.T, s *mcp.Service) {
+				_, err := s.GetRunResponse(
+					context.Background(),
+					mcp.RunInput{
+						Code: `okapi.getApis()`,
+					},
+				)
+				require.EqualError(t, err, `ReferenceError: okapi is not defined at mokapi_execute_code.js:1:1(0)
+
+Tip for Correction:
+It seems there is a syntax error or a misunderstanding of the API. 
+To ensure you are using the correct global variables and methods:
+1. Call 'mokapi_get_automation_definitions' without parameters to see the general overview.
+2. Check 'category="core"' to verify the syntax of the global 'mokapi' object.`)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

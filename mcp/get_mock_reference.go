@@ -8,7 +8,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-//go:embed mock_reference.md
+//go:embed data/mock_reference.md
 var mockReference string
 
 type GetMockReferenceInput struct {
@@ -59,7 +59,9 @@ Use this tool to:
 - See how to import and use 'mokapi', 'mokapi/http', or 'mokapi/kafka'.
 - Get boilerplate code for specific use cases (e.g., 'rest-auth').
 
-MANDATORY: Use this before generating a new mock script to ensure correct syntax.`,
+MANDATORY: Use this before generating a new mock script to ensure correct syntax.
+Do NOT use this reference material with tool mokapi_execute_code
+`,
 		InputSchema: inputSchema,
 	}, s.GetMockReference)
 }

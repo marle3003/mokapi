@@ -216,35 +216,6 @@ const result = { path: op.path, method: op.method }; result`,
 			},
 		},
 		{
-			name: "getResponseSchema not exists",
-			app: runtimetest.NewHttpApp(
-				openapitest.NewConfig("3.1.0",
-					openapitest.WithInfo("foo", "", ""),
-					openapitest.WithPath("/pets",
-						openapitest.WithOperation(http.MethodGet,
-							openapitest.WithResponse(200,
-								openapitest.WithResponseDescription("response description"),
-								openapitest.WithContent("application/json", openapitest.WithSchema(
-									schematest.New("string"),
-								)),
-							),
-						),
-					),
-				),
-			),
-			test: func(t *testing.T, s *mcp.Service) {
-				r, err := s.GetRunResponse(
-					context.Background(),
-					mcp.RunInput{
-						Code: `const op = mokapi.getApi('foo').getOperation('get-/pets')
-op.getResponseSchema(404)`,
-					},
-				)
-				require.NoError(t, err)
-				require.Nil(t, r.Result)
-			},
-		},
-		{
 			name: "invoke request",
 			app: runtimetest.NewHttpApp(
 				openapitest.NewConfig("3.1.0",

@@ -259,6 +259,27 @@ func TestService_Run_Kafka(t *testing.T) {
 				require.Equal(t, int64(0), records[0].Offset)
 				require.Equal(t, "foo", records[0].Key)
 				require.Equal(t, `{"foo":"bar"}`, records[0].Value)
+
+				r, err = s.GetRunResponse(
+					context.Background(),
+					mcp.RunInput{
+						Code: `const topic = mokapi.getApi('foo').getTopic('channel-1')
+const p0 = topic.partitions.find(p => p.index === 0);
+let lastMessage = null
+if (p0 && p0.offset > 0) {
+    lastMessage = topic.consume(0, p0.offset - 1, 1);
+}
+lastMessage
+`,
+					},
+				)
+				require.NoError(t, err)
+				require.IsType(t, []mcp.KafkaRecord{}, r.Result)
+				records = r.Result.([]mcp.KafkaRecord)
+				require.Len(t, records, 1)
+				require.Equal(t, int64(0), records[0].Offset)
+				require.Equal(t, "foo", records[0].Key)
+				require.Equal(t, `{"foo":"bar"}`, records[0].Value)
 			},
 		},
 		{

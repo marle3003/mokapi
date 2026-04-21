@@ -8,7 +8,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-//go:embed mocking-types.md
+//go:embed data/mocking-types.md
 var overview string
 
 var mockTypes = map[string]string{
@@ -31,7 +31,7 @@ func addResources(server *mcp.Server) {
 				{
 					URI:      "mokapi://lib/automation",
 					MIMEType: "application/typescript",
-					Text:     automationTypes,
+					Text:     automation,
 				},
 			},
 		}, nil
@@ -82,25 +82,25 @@ Use mokapi://lib/mocking/types to get an overview of all available APIs`,
 	addMockScenarios(server)
 }
 
-//go:embed scenarios.md
+//go:embed data/scenarios.md
 var scenarioOverview string
 
-//go:embed dynamic-path-params.md
+//go:embed data/dynamic-path-params.md
 var dynamicPathParams string
 
-//go:embed conditional-response.md
+//go:embed data/conditional-response.md
 var conditionalResponse string
 
-//go:embed static-error-simulation.md
+//go:embed data/static-error-simulation.md
 var staticErrorSimulation string
 
-//go:embed dynamic-error-simulation.md
+//go:embed data/dynamic-error-simulation.md
 var dynamicErrorSimulation string
 
-//go:embed delay-latency.md
+//go:embed data/delay-latency.md
 var delayLatency string
 
-//go:embed forward-request-to-real-backend.md
+//go:embed data/forward-request-to-real-backend.md
 var forwardRequestToRealBackend string
 
 var scenarios = map[string]string{
