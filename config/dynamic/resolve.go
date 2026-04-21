@@ -19,10 +19,6 @@ type Converter interface {
 	ConvertTo(i any) (any, error)
 }
 
-type FromConverter interface {
-	ConvertFrom(i any) (any, error)
-}
-
 func resolve[T any](ref string, config *Config, reader Reader) (T, error) {
 	var err error
 	var result T
@@ -351,17 +347,5 @@ func convert[T any](val any) any {
 		}
 	}
 
-	v := reflect.ValueOf(target)
-	if !v.IsValid() || !v.CanInterface() {
-		return val
-	}
-	c, ok := v.Interface().(FromConverter)
-	if !ok {
-		return val
-	}
-	result, err := c.ConvertFrom(val)
-	if err == nil {
-		return result
-	}
 	return val
 }

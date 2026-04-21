@@ -11,12 +11,27 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 
-	converted, err := c.Convert()
-	if err != nil {
-		return err
+	for _, server := range c.Servers {
+		if server == nil || len(server.Ref) == 0 {
+			continue
+		}
+		resolved, err := server.Resolve(config, reader)
+		if err != nil {
+			return err
+		}
+		server.Value = resolved.Value
 	}
-	config.Data = converted
-	return converted.Parse(config, reader)
+
+	for _, ch := range c.Channels {
+		if ch == nil {
+			continue
+		}
+		if err := ch.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *ChannelRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {

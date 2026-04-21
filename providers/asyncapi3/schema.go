@@ -118,13 +118,6 @@ func (r *SchemaRef) Marshal(v any, ct media.ContentType) ([]byte, error) {
 	}
 }
 
-//func (r *SchemaRef) ConvertFrom(val any) (any, error) {
-//	if s, ok := val.(Schema); ok {
-//		return &SchemaRef{Value: s}, nil
-//	}
-//	return nil, fmt.Errorf("unsupported type: %T", val)
-//}
-
 func (r *SchemaRef) GetSchema() (Schema, error) {
 	if r.Value == nil {
 		return nil, nil
@@ -134,7 +127,7 @@ func (r *SchemaRef) GetSchema() (Schema, error) {
 	case *jsonSchema.Schema, *avro.Schema, *openapi.Schema:
 		return s, nil
 	case *SchemaRef:
-		return r.Value, nil
+		return s.GetSchema()
 	case *MultiSchemaFormat:
 		return s.Schema.GetSchema()
 	default:

@@ -6,6 +6,10 @@ import (
 )
 
 func (s *Schema) String() string {
+	if s == nil {
+		return ""
+	}
+
 	var sb strings.Builder
 
 	if s.Boolean != nil {

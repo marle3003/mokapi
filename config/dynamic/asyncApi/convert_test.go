@@ -27,7 +27,8 @@ func TestConfig_Convert(t *testing.T) {
 	err = cfg.Parse(c, &dynamictest.Reader{})
 	require.NoError(t, err)
 
-	cfg3 := c.Data.(*asyncapi3.Config)
+	cfg3, err := c.Data.(*asyncApi.Config).Convert()
+	require.NoError(t, err)
 
 	require.Equal(t, "3.0.0", cfg3.Version)
 	require.Equal(t, "urn:example:com:smartylighting:streetlights:server", cfg3.Id)
@@ -211,9 +212,9 @@ func TestConvert(t *testing.T) {
 			c := &dynamic.Config{Data: tc.cfg}
 			err := tc.cfg.Parse(c, &dynamictest.Reader{})
 			require.NoError(t, err)
-			require.IsType(t, &asyncapi3.Config{}, c.Data)
 
-			tc.test(t, c.Data.(*asyncapi3.Config), err)
+			cfg, err := tc.cfg.Convert()
+			tc.test(t, cfg, err)
 		})
 	}
 }

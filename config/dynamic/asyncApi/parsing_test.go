@@ -146,8 +146,12 @@ func TestServerResolve(t *testing.T) {
 			reader := &testReader{readFunc: tc.read}
 			c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: tc.cfg}
 			err := tc.cfg.Parse(c, reader)
-			require.IsType(t, &asyncapi3.Config{}, c.Data)
-			tc.test(t, c.Data.(*asyncapi3.Config), err)
+			if err != nil {
+				tc.test(t, nil, err)
+			} else {
+				cfg, err := tc.cfg.Convert()
+				tc.test(t, cfg, err)
+			}
 		})
 	}
 }
@@ -238,9 +242,12 @@ func TestChannelResolve(t *testing.T) {
 			reader := &testReader{readFunc: tc.read}
 			c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: tc.cfg}
 			err := tc.cfg.Parse(c, reader)
-			require.IsType(t, &asyncapi3.Config{}, c.Data)
-
-			tc.test(t, c.Data.(*asyncapi3.Config), err)
+			if err != nil {
+				tc.test(t, nil, err)
+			} else {
+				cfg, err := tc.cfg.Convert()
+				tc.test(t, cfg, err)
+			}
 		})
 	}
 }
@@ -366,8 +373,12 @@ func TestMessage(t *testing.T) {
 			reader := &testReader{readFunc: tc.read}
 			c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: tc.cfg}
 			err := tc.cfg.Parse(c, reader)
-			require.IsType(t, &asyncapi3.Config{}, c.Data)
-			tc.test(t, c.Data.(*asyncapi3.Config), err)
+			if err != nil {
+				tc.test(t, nil, err)
+			} else {
+				cfg, err := tc.cfg.Convert()
+				tc.test(t, cfg, err)
+			}
 		})
 	}
 }
@@ -402,8 +413,8 @@ func TestSchema(t *testing.T) {
 		c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}
 		err := config.Parse(c, reader)
 		require.NoError(t, err)
-		require.IsType(t, &asyncapi3.Config{}, c.Data)
-		s, err := c.Data.(*asyncapi3.Config).Channels["foo"].Value.Messages["publish"].Value.Payload.GetSchema()
+		cfg, err := config.Convert()
+		s, err := cfg.Channels["foo"].Value.Messages["publish"].Value.Payload.GetSchema()
 		require.NoError(t, err)
 		require.Equal(t, target, s)
 	})

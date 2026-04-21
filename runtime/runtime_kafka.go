@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/static"
 	"mokapi/engine/common"
 	"mokapi/kafka"
@@ -225,13 +226,24 @@ func IsAsyncApiConfig(c *dynamic.Config) (*asyncapi3.Config, bool) {
 	switch v := c.Data.(type) {
 	case *asyncapi3.Config:
 		return v, true
+	case *asyncApi.Config:
+		conv, err := v.Convert()
+		if err != nil {
+			log.Errorf("failed to convert asyncapi 2.0 config: %s", err)
+			return nil, false
+		}
+		return conv, true
 	default:
 		return nil, false
 	}
 }
 
 func getKafkaConfig(c *dynamic.Config) *asyncapi3.Config {
-	return c.Data.(*asyncapi3.Config)
+	cfg, ok := IsAsyncApiConfig(c)
+	if !ok {
+		return nil
+	}
+	return cfg
 }
 
 func (s *KafkaStore) updateEventStore(k *KafkaInfo) {

@@ -2,6 +2,8 @@ package mcp
 
 import (
 	"fmt"
+	"mokapi/engine"
+	"mokapi/engine/common"
 	"mokapi/kafka"
 	"mokapi/runtime"
 	"slices"
@@ -14,7 +16,8 @@ type Kafka struct {
 	Type    string   `json:"type"`
 	Brokers []Broker `json:"brokers"`
 
-	info *runtime.KafkaInfo
+	info   *runtime.KafkaInfo
+	client *engine.KafkaClient
 }
 
 type Broker struct {
@@ -36,7 +39,8 @@ type Topic struct {
 
 	Operations []KafkaOperation `json:"operations,omitempty"`
 
-	info *runtime.KafkaInfo
+	info   *runtime.KafkaInfo
+	client *engine.KafkaClient
 }
 
 type KafkaPartition struct {
@@ -74,9 +78,10 @@ func (m *mokapi) getKafkaApi(name string) any {
 	for _, api := range m.app.Kafka.List() {
 		if api.Info.Name == name {
 			result := &Kafka{
-				Name: name,
-				Type: "kafka",
-				info: api,
+				Name:   name,
+				Type:   "kafka",
+				info:   api,
+				client: engine.NewKafkaClient(m.app),
 			}
 			for it := api.Servers.Iter(); it.Next(); {
 				b := it.Value()
@@ -128,6 +133,7 @@ func (k *Kafka) GetTopic(name string) (Topic, error) {
 		},
 		Description: ch.Value.Description,
 		info:        k.info,
+		client:      k.client,
 	}
 
 	topic := k.info.Store.Topic(name)
@@ -180,45 +186,55 @@ func (k *Kafka) GetTopic(name string) (Topic, error) {
 		t.Operations = append(t.Operations, result)
 	}
 
+	slices.SortStableFunc(t.Operations, func(a, b KafkaOperation) int {
+		r := strings.Compare(a.Action, b.Action)
+		if r != 0 {
+			return r
+		}
+		return strings.Compare(a.Title, b.Title)
+	})
+
 	return t, nil
 }
 
 func (t *Topic) Produce(partition int, value string, key string, headers map[string]string) error {
+	msg := common.KafkaMessage{
+		Value:     []byte(value),
+		Data:      nil,
+		Headers:   headers,
+		Partition: partition,
+	}
+	if key != "" {
+		msg.Key = []byte(key)
+	}
+
+	_, err := t.client.Produce(&common.KafkaProduceArgs{
+		Cluster:  t.info.Info.Name,
+		Topic:    t.Name,
+		Messages: []common.KafkaMessage{msg},
+		Retry: common.KafkaProduceRetry{
+			MaxRetryTime:     3 * time.Minute,
+			InitialRetryTime: 500 * time.Millisecond,
+			Retries:          10,
+			Factor:           2,
+		},
+		ClientId: "mokapi-mcp",
+	})
+	if err != nil {
+		return err
+	}
+
 	topic := t.info.Store.Topic(t.Name)
 	if topic == nil {
 		return fmt.Errorf("topic '%s' not found", t.Name)
 	}
 	p := topic.Partition(partition)
 	if p == nil {
-		return fmt.Errorf("partition '%d' not found", partition)
-	}
-
-	r := &kafka.Record{
-		Time:  time.Now(),
-		Key:   kafka.NewBytes([]byte(key)),
-		Value: kafka.NewBytes([]byte(value)),
-	}
-	if headers != nil {
-		for k, v := range headers {
-			r.Headers = append(r.Headers, kafka.RecordHeader{
-				Key:   k,
-				Value: []byte(v),
-			})
-		}
-	}
-
-	result, err := p.Write(kafka.RecordBatch{
-		Records: []*kafka.Record{r},
-	})
-	if err != nil {
-		return err
-	}
-	if result.ErrorCode != kafka.None {
-		return fmt.Errorf("%d: %s", result.ErrorCode, result.ErrorMessage)
+		return fmt.Errorf("partition '%s' not found", t.Name)
 	}
 	for _, pt := range t.Partitions {
 		if pt.Index == p.Index {
-			pt.Offset += 1
+			pt.Offset = p.Offset()
 		}
 	}
 	return nil

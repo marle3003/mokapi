@@ -210,7 +210,7 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 	require.Equal(t, int64(0), wr.BaseOffset)
 	require.Equal(t, int64(1), p.Offset())
 	require.Equal(t, int64(0), p.StartOffset())
-	r := p.Segments[p.ActiveSegment].record(0)
+	r := p.Segments[p.ActiveSegment].Record(0)
 	require.NotNil(t, r)
 	require.Len(t, r.Headers, 1)
 	require.Equal(t, "bar-1", r.Headers[0].Key)
