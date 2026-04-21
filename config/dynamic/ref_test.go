@@ -2,17 +2,18 @@ package dynamic_test
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 type foo struct {
 	Foo string `yaml:"foo"`
 }
 type ref struct {
-	dynamic.Reference
+	dynamic.Reference[*ref]
 	Value *foo
 }
 
@@ -29,7 +30,7 @@ func TestReference_Unmarshal(t *testing.T) {
 				err := json.Unmarshal([]byte(`{"$ref":"foo","summary":"summary","description":"description"}`), &r)
 				require.NoError(t, err)
 				require.Equal(t, &ref{
-					Reference: dynamic.Reference{
+					Reference: dynamic.Reference[*ref]{
 						Ref:         "foo",
 						Summary:     "summary",
 						Description: "description",
@@ -59,7 +60,7 @@ description: description
 `), &r)
 				require.NoError(t, err)
 				require.Equal(t, &ref{
-					Reference: dynamic.Reference{
+					Reference: dynamic.Reference[*ref]{
 						Ref:         "foo",
 						Summary:     "summary",
 						Description: "description",

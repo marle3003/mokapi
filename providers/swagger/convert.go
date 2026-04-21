@@ -50,6 +50,25 @@ func (c *converter) Convert() (*openapi.Config, error) {
 		result.Paths[path] = converted
 	}
 
+	if len(c.config.Responses) > 0 {
+		result.Components.Responses = map[string]*openapi.ResponseRef{}
+		for name, res := range c.config.Responses {
+			r, err := c.convertResponse(res, c.config.Produces)
+			if err != nil {
+				return nil, err
+			}
+			result.Components.Responses[name] = r
+		}
+	}
+
+	if len(c.config.Parameters) > 0 {
+		result.Components.Parameters = map[string]*openapi.ParameterRef{}
+		for name, param := range c.config.Parameters {
+			p := convertParameter(param)
+			result.Components.Parameters[name] = p
+		}
+	}
+
 	if len(c.config.Definitions) > 0 {
 		result.Components.Schemas = &schema.Schemas{}
 		for k, v := range c.config.Definitions {
@@ -86,7 +105,7 @@ func (c *converter) Convert() (*openapi.Config, error) {
 
 func (c *converter) convertPath(p *PathItem) (*openapi.PathRef, error) {
 	if len(p.Ref) > 0 {
-		return &openapi.PathRef{Reference: dynamic.Reference{Ref: convertRef(p.Ref)}}, nil
+		return &openapi.PathRef{Reference: dynamic.Reference[*openapi.PathRef]{Ref: convertRef(p.Ref)}}, nil
 	}
 
 	result := &openapi.Path{}
@@ -206,7 +225,7 @@ func (c *converter) convertOperation(o *Operation) (*openapi.Operation, error) {
 
 func (c *converter) convertResponse(r *Response, produces []string) (*openapi.ResponseRef, error) {
 	if len(r.Ref) > 0 {
-		return &openapi.ResponseRef{Reference: dynamic.Reference{Ref: convertRef(r.Ref)}}, nil
+		return &openapi.ResponseRef{Reference: dynamic.Reference[*openapi.ResponseRef]{Ref: convertRef(r.Ref)}}, nil
 	}
 	result := &openapi.Response{
 		Description: r.Description,
@@ -230,7 +249,7 @@ func (c *converter) convertSchema(s *schema.Schema) *schema.Schema {
 	}
 
 	if len(s.Ref) > 0 {
-		return &schema.Schema{Ref: convertRef(s.Ref)}
+		return &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: convertRef(s.Ref)}}
 	}
 
 	if s.Type.IsInteger() && s.Format == "" {

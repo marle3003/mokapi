@@ -111,6 +111,18 @@ func TestLdif_Parse(t *testing.T) {
 			},
 		},
 		{
+			name:  "comment",
+			input: "dn: dc=mokapi, dc=io\n# line 1\n line 2\nfoo: bar",
+			test: func(t *testing.T, ld *Ldif, err error) {
+				require.NoError(t, err)
+				require.Len(t, ld.Records, 1)
+				require.Equal(t, &AddRecord{
+					Dn:         "dc=mokapi, dc=io",
+					Attributes: map[string][]string{"foo": {"bar"}},
+				}, ld.Records[0])
+			},
+		},
+		{
 			name:  "version set",
 			input: "version: 1\ndn: dc=mokapi, dc=io",
 			test: func(t *testing.T, ld *Ldif, err error) {

@@ -15,7 +15,7 @@ type ExampleValue struct {
 type Examples map[string]*ExampleRef
 
 type ExampleRef struct {
-	dynamic.Reference
+	dynamic.Reference[*ExampleRef]
 	Value *Example
 }
 
@@ -89,8 +89,8 @@ func (r *ExampleRef) Parse(config *dynamic.Config, reader dynamic.Reader) error 
 	}
 
 	if len(r.Ref) > 0 {
-		var resolved *ExampleRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value
@@ -106,7 +106,13 @@ func (e *Example) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	}
 
 	if e.ExternalValue != "" {
-		return dynamic.Resolve(e.ExternalValue, &e.Value, config, reader)
+		r := dynamic.Reference[string]{Ref: e.ExternalValue}
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
+			return err
+		}
+		e.Value = resolved
+		return nil
 	}
 
 	return nil

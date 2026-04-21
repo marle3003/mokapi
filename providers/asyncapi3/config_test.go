@@ -309,6 +309,7 @@ components:
 				require.NotNil(t, ch)
 				msg := ch.Value.Messages["msg"]
 				require.NotNil(t, msg)
+				require.IsType(t, &schema.Schema{}, msg.Value.Payload.Value)
 				s := msg.Value.Payload.Value.(*schema.Schema)
 				require.Equal(t, "string", s.Type.String())
 			},

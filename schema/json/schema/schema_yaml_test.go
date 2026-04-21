@@ -336,7 +336,7 @@ items:
 								Type:          schema.Types{"string"},
 							},
 						},
-						Ref: "https://example.com/schemas/list-of-t",
+						Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schemas/list-of-t"},
 					},
 				}
 

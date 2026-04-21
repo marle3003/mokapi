@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/base64"
 	"encoding/json"
+	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/openapi/openapitest"
@@ -540,7 +541,7 @@ func TestSchemaInfo_MarshalJSON(t *testing.T) {
 		},
 		{
 			name: "json schema only ref",
-			s:    &schemaInfo{Schema: &jsonSchema.Schema{Ref: "foo/bar"}},
+			s:    &schemaInfo{Schema: &jsonSchema.Schema{Reference: dynamic.Reference[*jsonSchema.Schema]{Ref: "foo/bar"}}},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, `{"schema":{"$ref":"foo/bar"}}`, s)
@@ -549,8 +550,8 @@ func TestSchemaInfo_MarshalJSON(t *testing.T) {
 		{
 			name: "json schema ref and value",
 			s: &schemaInfo{Schema: &jsonSchema.Schema{
-				Ref:  "foo/bar",
-				Type: jsonSchema.Types{"string"},
+				Reference: dynamic.Reference[*jsonSchema.Schema]{Ref: "foo/bar"},
+				Type:      jsonSchema.Types{"string"},
 			}},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)

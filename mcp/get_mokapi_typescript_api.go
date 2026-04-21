@@ -2,6 +2,8 @@ package mcp
 
 import (
 	"context"
+	_ "embed"
+	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -20,7 +22,13 @@ type Package struct {
 	Types       string `json:"types"`
 }
 
+func extractName(uri string) string {
+	parts := strings.Split(uri, "/")
+	return parts[len(parts)-1]
+}
+
 func (s *Service) registerGetMokapiTypeScriptApi(server *mcp.Server) {
+
 	inputSchema := map[string]any{
 		"type": "object",
 		"properties": map[string]any{

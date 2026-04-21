@@ -55,7 +55,7 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
     await test.step('Check config', async () => {
         await tabList.getByRole('tab', { name: 'Configs' }).click()
         const configs = page.getByRole('tabpanel', { name: 'Configs' })
-        await expect(configs.getByLabel('Title')).toHaveText(topic.messageConfigs[0].title)
+        await expect(configs.getByLabel('Title')).toHaveText(topic.messageConfigs[0].title!)
         await expect(configs.getByLabel('Name')).toHaveText(topic.messageConfigs[0].name)
         await expect(configs.getByLabel('Summary')).toHaveText(topic.messageConfigs[0].summary)
         await expect(configs.getByLabel('Description')).toHaveText(topic.messageConfigs[0].description)
@@ -93,6 +93,9 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
         await test.step('Check schema example', async () => {
             await configs.getByRole('button', { name: 'Example & Validate' }).click()
             const dialog = page.getByRole('dialog', { name: 'Value Validator - mokapi.shop.products' })
+
+            await expect(dialog.getByRole('region', { name: 'Content' })).toBeVisible()
+
             await dialog.getByRole('button', { name: 'Example' }).click()
             const { test: testSourceView } = useSourceView(dialog)
             await testSourceView({
@@ -108,6 +111,9 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
         await test.step('Check data validation', async () =>{
             await configs.getByRole('button', { name: 'Example & Validate' }).click()
             const dialog = page.getByRole('dialog', { name: 'Value Validator - mokapi.shop.products' })
+
+            await expect(dialog.getByRole('region', { name: 'Content' })).toBeVisible()
+
             await dialog.getByRole('button', { name: 'Example' }).click()
             // first we try data that are wrong against the schema
             const id = await dialog.locator('.modal-dialog .ace_editor').getAttribute('id')

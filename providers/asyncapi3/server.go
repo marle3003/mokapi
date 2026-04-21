@@ -7,7 +7,7 @@ import (
 )
 
 type ServerRef struct {
-	dynamic.Reference
+	dynamic.Reference[*ServerRef]
 	Value *Server
 }
 
@@ -26,7 +26,7 @@ type Server struct {
 }
 
 type ServerVariableRef struct {
-	dynamic.Reference
+	dynamic.Reference[ServerVariableRef]
 	Value *ServerVariable
 }
 
@@ -39,8 +39,8 @@ type ServerVariable struct {
 
 func (r *ServerRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		var resolved *ServerRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value
@@ -80,7 +80,12 @@ func (r *ServerRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 func (r *ServerVariableRef) parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		return dynamic.Resolve(r.Ref, &r.Value, config, reader)
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
+			return err
+		}
+		r.Value = resolved.Value
+		return nil
 	}
 
 	return nil

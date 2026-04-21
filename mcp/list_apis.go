@@ -1,5 +1,6 @@
 package mcp
 
+/*
 import (
 	"context"
 
@@ -58,7 +59,7 @@ func (s *Service) registerListApiTool(server *mcp.Server) {
 
 	registerTool(server, &mcp.Tool{
 		Name: "get_api_list",
-		Description: `Returns all available APIs with their name and type. 
+		Description: `Returns all available APIs with their name and type.
 		Use this to discover APIs before calling 'get_api_spec' to retrieve detailed specifications.`,
 		InputSchema:  inputSchema,
 		OutputSchema: outputSchema,
@@ -122,3 +123,4 @@ func (s *Service) ListApis(_ context.Context, in ListApisInput) (*ListApiRespons
 
 	return &ListApiResponse{Apis: result}, nil
 }
+*/

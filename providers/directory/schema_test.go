@@ -1,8 +1,9 @@
 package directory
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestAttributeType(t *testing.T) {
@@ -100,6 +101,20 @@ func TestObjectClass(t *testing.T) {
 		{
 			name:  "multiple super",
 			input: "( 1.3.6.1.4.1.99999.1.1    NAME 'customPerson'    SUP ( inetOrgPerson $ device )    STRUCTURAL    MUST ( customID )    MAY ( description ))",
+			test: func(t *testing.T, class *ObjectClass, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "1.3.6.1.4.1.99999.1.1", class.Id)
+				require.Equal(t, []string{"customPerson"}, class.Name)
+				require.Equal(t, "", class.Description)
+				require.Equal(t, []string{"inetOrgPerson", "device"}, class.SuperClass)
+				require.Equal(t, "STRUCTURAL", class.Type)
+				require.Equal(t, []string{"customID"}, class.Must)
+				require.Equal(t, []string{"description"}, class.May)
+			},
+		},
+		{
+			name:  "parentheses are not mandatory when MUST and MAY are only followed by one oid for objectClasses",
+			input: "( 1.3.6.1.4.1.99999.1.1    NAME 'customPerson'    SUP ( inetOrgPerson $ device )    STRUCTURAL    MUST customID    MAY description )",
 			test: func(t *testing.T, class *ObjectClass, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "1.3.6.1.4.1.99999.1.1", class.Id)

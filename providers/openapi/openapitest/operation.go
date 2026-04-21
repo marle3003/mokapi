@@ -24,6 +24,12 @@ func WithOperationId(id string) OperationOptions {
 	}
 }
 
+func WithOperationSummary(summary string) OperationOptions {
+	return func(o *openapi.Operation) {
+		o.Summary = summary
+	}
+}
+
 func WithResponse(status int, opts ...ResponseOptions) OperationOptions {
 	return func(o *openapi.Operation) {
 		r := &openapi.Response{
@@ -46,7 +52,7 @@ func UseResponse(status int, r *openapi.Response) OperationOptions {
 func WithResponseRef(status int, ref string) OperationOptions {
 	return func(o *openapi.Operation) {
 		o.Responses.Set(strconv.Itoa(status), &openapi.ResponseRef{
-			Reference: dynamic.Reference{Ref: ref},
+			Reference: dynamic.Reference[*openapi.ResponseRef]{Ref: ref},
 		})
 	}
 }
@@ -70,7 +76,7 @@ func WithOperationParam(name string, required bool, opts ...ParamOptions) Operat
 func WithOperationParamRef(ref string) OperationOptions {
 	return func(o *openapi.Operation) {
 
-		o.Parameters = append(o.Parameters, &openapi.ParameterRef{Reference: dynamic.Reference{Ref: ref}})
+		o.Parameters = append(o.Parameters, &openapi.ParameterRef{Reference: dynamic.Reference[*openapi.ParameterRef]{Ref: ref}})
 	}
 }
 
@@ -128,7 +134,7 @@ func WithRequestBody(description string, required bool, opts ...RequestBodyOptio
 func WithRequestBodyRef(ref string) OperationOptions {
 	return func(o *openapi.Operation) {
 		o.RequestBody = &openapi.RequestBodyRef{
-			Reference: dynamic.Reference{Ref: ref},
+			Reference: dynamic.Reference[*openapi.RequestBodyRef]{Ref: ref},
 		}
 	}
 }

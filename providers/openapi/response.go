@@ -20,7 +20,7 @@ type Responses struct {
 type ResponseBodies map[string]*ResponseRef
 
 type ResponseRef struct {
-	dynamic.Reference
+	dynamic.Reference[*ResponseRef]
 	Value *Response
 }
 
@@ -223,8 +223,8 @@ func (r *ResponseRef) Parse(config *dynamic.Config, reader dynamic.Reader) error
 	}
 
 	if len(r.Ref) > 0 {
-		var resolved *ResponseRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value

@@ -7,7 +7,7 @@ import (
 )
 
 type ParameterRef struct {
-	dynamic.Reference
+	dynamic.Reference[*ParameterRef]
 	Value *Parameter
 }
 
@@ -29,11 +29,12 @@ func (r *ParameterRef) UnmarshalJSON(b []byte) error {
 
 func (r *ParameterRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
-		var resolved *ParameterRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value
+		return nil
 	}
 
 	return nil

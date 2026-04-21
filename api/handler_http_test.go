@@ -42,6 +42,19 @@ func TestHandler_Http(t *testing.T) {
 			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"http"}`,
 		},
 		{
+			name: "summary takes precedence over description",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "1.0", "bar"),
+						openapitest.WithSummary("summary"),
+					),
+				)
+			},
+			requestUrl:   "http://foo.api/api/services",
+			responseBody: `[{"name":"foo","description":"summary","version":"1.0","type":"http"}`,
+		},
+		{
 			name: "get http services with contact",
 			app: func() *runtime.App {
 				return runtimetest.NewHttpApp(
@@ -210,7 +223,7 @@ func TestHandler_Http(t *testing.T) {
 				c := openapitest.NewConfig("3.0.0",
 					openapitest.WithInfo("foo", "", ""),
 					openapitest.WithPathRef("/foo/{bar}", &openapi.PathRef{
-						Reference: dynamic.Reference{
+						Reference: dynamic.Reference[*openapi.PathRef]{
 							Ref:         "#/components/pathItems/foo",
 							Summary:     "Summary",
 							Description: "Description",
@@ -220,7 +233,7 @@ func TestHandler_Http(t *testing.T) {
 							openapitest.WithOperation("get",
 								openapitest.UseResponseRef(http.StatusOK,
 									&openapi.ResponseRef{
-										Reference: dynamic.Reference{
+										Reference: dynamic.Reference[*openapi.ResponseRef]{
 											Ref:         "#/components/pathItems/foo",
 											Description: "Description",
 										},

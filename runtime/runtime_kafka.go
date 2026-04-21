@@ -81,11 +81,7 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*Kafka
 	if len(s.infos) == 0 {
 		s.infos = make(map[string]*KafkaInfo)
 	}
-	cfg, err := getKafkaConfig(c)
-	if err != nil {
-		return nil, err
-	}
-
+	cfg := getKafkaConfig(c)
 	name := cfg.Info.Name
 	ki, ok := s.infos[name]
 
@@ -124,11 +120,7 @@ func (s *KafkaStore) Set(name string, ki *KafkaInfo) {
 func (s *KafkaStore) Remove(c *dynamic.Config) {
 	s.m.RLock()
 
-	cfg, err := getKafkaConfig(c)
-	if err != nil {
-		return
-	}
-
+	cfg := getKafkaConfig(c)
 	name := cfg.Info.Name
 	ki := s.infos[name]
 
@@ -175,10 +167,7 @@ func (c *KafkaInfo) update(reader dynamic.Reader) {
 
 	cfg := &asyncapi3.Config{}
 	for i, k := range keys {
-		p, err := getKafkaConfig(c.configs[k])
-		if err != nil {
-			log.Errorf("patch %v failed: %v", c.configs[k].Info.Url, err)
-		}
+		p := getKafkaConfig(c.configs[k])
 		if i == 0 {
 			*cfg = *p
 		} else {
@@ -234,30 +223,27 @@ func (h *KafkaHandler) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request)
 }
 
 func IsAsyncApiConfig(c *dynamic.Config) (*asyncapi3.Config, bool) {
-	var cfg *asyncapi3.Config
-	if old, ok := c.Data.(*asyncApi.Config); ok {
-		var err error
-		cfg, err = old.Convert()
+	switch v := c.Data.(type) {
+	case *asyncapi3.Config:
+		return v, true
+	case *asyncApi.Config:
+		conv, err := v.Convert()
 		if err != nil {
+			log.Errorf("failed to convert asyncapi 2.0 config: %s", err)
 			return nil, false
 		}
-	} else {
-		cfg, ok = c.Data.(*asyncapi3.Config)
-		if !ok {
-			return nil, false
-		}
+		return conv, true
+	default:
+		return nil, false
 	}
-
-	return cfg, true
 }
 
-func getKafkaConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
-	if _, ok := c.Data.(*asyncapi3.Config); ok {
-		return c.Data.(*asyncapi3.Config), nil
-	} else {
-		old := c.Data.(*asyncApi.Config)
-		return old.Convert()
+func getKafkaConfig(c *dynamic.Config) *asyncapi3.Config {
+	cfg, ok := IsAsyncApiConfig(c)
+	if !ok {
+		return nil
 	}
+	return cfg
 }
 
 func (s *KafkaStore) updateEventStore(k *KafkaInfo) {

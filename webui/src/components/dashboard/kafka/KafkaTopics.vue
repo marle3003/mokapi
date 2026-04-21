@@ -167,7 +167,7 @@ function toggleTag(name: string) {
                                 </router-link>
                             </td>
                             <td>
-                                <div v-html="useMarkdown(topic.description).content" class="description"></div>
+                                <div v-html="useMarkdown(topic.description).content" class="table-markdown"></div>
                             </td>
                             <td class="text-center">{{ lastMessage(service, topic) }}</td>
                             <td class="text-center">{{ messages(service, topic) }}</td>

@@ -26,22 +26,28 @@ func NewServer(app *runtime.App) http.Handler {
 	}, nil)
 
 	svc := NewService(app)
-	svc.registerGetSpecTool(server)
+	//svc.registerGetSpecTool(server)
 
-	svc.registerGenerateHttpMockResponseTool(server)
+	//svc.registerGenerateHttpMockResponseTool(server)
 
-	svc.registerSendHttpRequest(server)
-	svc.registerProduceKafkaMessage(server)
+	//svc.registerSendHttpRequest(server)
+	//svc.registerProduceKafkaMessage(server)
 
-	svc.registerGetEvents(server)
+	//svc.registerGetEvents(server)
 
-	svc.registerGetMokapiTypeScriptApi(server)
-	svc.registerGetScenarios(server)
-	svc.registerGetHttpMockTemplate(server)
+	//svc.registerGetMokapiTypeScriptApi(server)
+	//svc.registerGetScenarios(server)
+	//svc.registerGetHttpMockTemplate(server)
+
+	svc.registerRunTool(server)
+	svc.registerGetAutomationDefinitions(server)
+	svc.registerGetMockReference(server)
+
+	addResources(server)
 
 	return mcp.NewStreamableHTTPHandler(
 		func(*http.Request) *mcp.Server { return server },
-		&mcp.StreamableHTTPOptions{},
+		&mcp.StreamableHTTPOptions{Stateless: true},
 	)
 }
 

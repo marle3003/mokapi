@@ -20,7 +20,7 @@ type GetApiSpecOutput struct {
 type ApiSpec struct {
 	Name string `json:"name"`
 	Type string `json:"type"`
-	Spec any    `json:"spec"`
+	Spec any    `json:"spec,omitempty"`
 }
 
 func (s *Service) registerGetSpecTool(server *mcp.Server) {
@@ -60,10 +60,11 @@ func (s *Service) registerGetSpecTool(server *mcp.Server) {
 							"enum":        []string{"http", "kafka", "ldap", "mail"},
 						},
 						"spec": map[string]any{
-							"type":        "any",
+							"type":        "object",
 							"description": "The specification of the API (e.g. OpenAPI or AsyncAPI",
 						},
 					},
+					"required": []any{"name", "type"},
 				},
 			},
 		},
@@ -96,7 +97,7 @@ func (s *Service) GetApiSpec(_ context.Context, in GetApiSpecInput) (GetApiSpecO
 		if in.Type == "http" || len(in.Type) == 0 {
 			for _, api := range s.app.ListHttp() {
 				if api.Info.Name == "" {
-					log.Warnf("mcp tool get_api_list: skip empty HTTTP API name")
+					log.Warnf("mcp tool mokapi_get_api_spec: skip empty HTTTP API name")
 					continue
 				}
 				result = append(result, ApiSpec{
@@ -109,7 +110,7 @@ func (s *Service) GetApiSpec(_ context.Context, in GetApiSpecInput) (GetApiSpecO
 		if in.Type == "kafka" || len(in.Type) == 0 {
 			for _, api := range s.app.Kafka.List() {
 				if api.Info.Name == "" {
-					log.Warnf("mcp tool get_api_list: skip empty Kafka API name")
+					log.Warnf("mcp tool mokapi_get_api_spec: skip empty Kafka API name")
 					continue
 				}
 				result = append(result, ApiSpec{
@@ -122,7 +123,7 @@ func (s *Service) GetApiSpec(_ context.Context, in GetApiSpecInput) (GetApiSpecO
 		if in.Type == "ldap" || len(in.Type) == 0 {
 			for _, api := range s.app.Ldap.List() {
 				if api.Info.Name == "" {
-					log.Warnf("mcp tool get_api_list: skip empty LDAP API name")
+					log.Warnf("mcp tool mokapi_get_api_spec: skip empty LDAP API name")
 					continue
 				}
 				result = append(result, ApiSpec{
@@ -135,7 +136,7 @@ func (s *Service) GetApiSpec(_ context.Context, in GetApiSpecInput) (GetApiSpecO
 		if in.Type == "mail" || len(in.Type) == 0 {
 			for _, api := range s.app.Mail.List() {
 				if api.Info.Name == "" {
-					log.Warnf("mcp tool get_api_list: skip empty Mail API name")
+					log.Warnf("mcp tool mokapi_get_api_spec: skip empty Mail API name")
 					continue
 				}
 				result = append(result, ApiSpec{

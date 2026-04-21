@@ -232,7 +232,7 @@ func TestOperation_Parse(t *testing.T) {
 							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
-				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -264,7 +264,7 @@ func TestOperation_Parse(t *testing.T) {
 							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
-				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'POST' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'POST' failed: parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -296,7 +296,7 @@ func TestOperation_Parse(t *testing.T) {
 							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
-				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'PUT' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'PUT' failed: parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -328,7 +328,7 @@ func TestOperation_Parse(t *testing.T) {
 							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
-				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'PATCH' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'PATCH' failed: parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -360,7 +360,7 @@ func TestOperation_Parse(t *testing.T) {
 							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
-				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'DELETE' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'DELETE' failed: parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -392,7 +392,7 @@ func TestOperation_Parse(t *testing.T) {
 							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
-				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'HEAD' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'HEAD' failed: parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -424,7 +424,7 @@ func TestOperation_Parse(t *testing.T) {
 							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
-				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'OPTIONS' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'OPTIONS' failed: parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -456,7 +456,7 @@ func TestOperation_Parse(t *testing.T) {
 							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
-				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'TRACE' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'TRACE' failed: parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -488,7 +488,7 @@ func TestOperation_Parse(t *testing.T) {
 							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
-				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'QUERY' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'QUERY' failed: parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -520,7 +520,7 @@ func TestOperation_Parse(t *testing.T) {
 							openapitest.WithOperationParamRef("foo.yml"))),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
-				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'LINK' failed: parse parameter index '0' failed: resolve reference 'foo.yml' failed: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'LINK' failed: parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR")
 			},
 		},
 		{
@@ -556,7 +556,7 @@ func TestOperation_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPath("/foo",
 						openapitest.UseOperation(http.MethodTrace, &openapi.Operation{
-							RequestBody: &openapi.RequestBodyRef{Reference: dynamic.Reference{Ref: "foo.yml#/components/requestBodies/foo"}},
+							RequestBody: &openapi.RequestBodyRef{Reference: dynamic.Reference[*openapi.RequestBodyRef]{Ref: "foo.yml#/components/requestBodies/foo"}},
 						}),
 					),
 				)
@@ -575,12 +575,12 @@ func TestOperation_Parse(t *testing.T) {
 				config := openapitest.NewConfig("3.0",
 					openapitest.WithPath("/foo",
 						openapitest.UseOperation(http.MethodTrace, &openapi.Operation{
-							RequestBody: &openapi.RequestBodyRef{Reference: dynamic.Reference{Ref: "foo.yml#/components/requestBodies/foo"}},
+							RequestBody: &openapi.RequestBodyRef{Reference: dynamic.Reference[*openapi.RequestBodyRef]{Ref: "foo.yml#/components/requestBodies/foo"}},
 						}),
 					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
-				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'TRACE' failed: parse request body failed: resolve reference 'foo.yml#/components/requestBodies/foo' failed: TEST ERROR")
+				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'TRACE' failed: parse request body failed: resolve reference '/foo.yml#/components/requestBodies/foo' failed: TEST ERROR")
 			},
 		},
 	}

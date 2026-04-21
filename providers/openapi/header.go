@@ -15,7 +15,7 @@ import (
 type Headers map[string]*HeaderRef
 
 type HeaderRef struct {
-	dynamic.Reference
+	dynamic.Reference[*HeaderRef]
 	Value *Header
 }
 
@@ -71,8 +71,8 @@ func (r *HeaderRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	}
 
 	if len(r.Ref) > 0 {
-		var resolved *HeaderRef
-		if err := dynamic.Resolve(r.Ref, &resolved, config, reader); err != nil {
+		resolved, err := r.Resolve(config, reader)
+		if err != nil {
 			return err
 		}
 		r.Value = resolved.Value

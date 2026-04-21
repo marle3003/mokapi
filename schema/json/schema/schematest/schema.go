@@ -1,6 +1,7 @@
 package schematest
 
 import (
+	"mokapi/config/dynamic"
 	"mokapi/schema/json/schema"
 )
 
@@ -45,12 +46,12 @@ func WithProperty(name string, ps *schema.Schema) SchemaOptions {
 	}
 }
 
-func WithPropertyRef(name string, r string) SchemaOptions {
+func WithPropertyRef(name string, ref string) SchemaOptions {
 	return func(s *schema.Schema) {
 		if s.Properties == nil {
 			s.Properties = &schema.Schemas{}
 		}
-		s.Properties.Set(name, &schema.Schema{Ref: r})
+		s.Properties.Set(name, &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: ref}})
 	}
 }
 
@@ -71,7 +72,7 @@ func WithItems(typeName string, opts ...SchemaOptions) SchemaOptions {
 
 func WithItemsRef(ref string) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.Items = &schema.Schema{Ref: ref}
+		s.Items = &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: ref}}
 	}
 }
 
@@ -81,9 +82,9 @@ func WithItemsNew(items *schema.Schema) SchemaOptions {
 	}
 }
 
-func WithItemsRefString(r string) SchemaOptions {
+func WithItemsRefString(ref string) SchemaOptions {
 	return func(s *schema.Schema) {
-		s.Items = &schema.Schema{Ref: r}
+		s.Items = &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: ref}}
 	}
 }
 

@@ -83,7 +83,7 @@ func WithPathParam(name string, opts ...ParamOptions) PathOptions {
 func WithPathParamRef(ref string) PathOptions {
 	return func(e *openapi.Path) {
 		e.Parameters = append(e.Parameters, &openapi.ParameterRef{
-			Reference: dynamic.Reference{Ref: ref},
+			Reference: dynamic.Reference[*openapi.ParameterRef]{Ref: ref},
 		})
 	}
 }

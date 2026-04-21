@@ -32,7 +32,7 @@ func (s *Service) registerGenerateHttpMockResponseTool(server *mcp.Server) {
 		"properties": map[string]any{
 			"apiName": map[string]any{
 				"type":        "string",
-				"description": "The exact name of the API as returned by 'get_api_list'",
+				"description": "The exact name of the API as returned by 'mokapi_get_api_spec'",
 			},
 			"path": map[string]any{
 				"type":        "string",

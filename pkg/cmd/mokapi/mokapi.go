@@ -175,6 +175,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 					return nil, err
 				}
 			}
+			log.Infof("MCP server runs on binding :%d on path %s", cfg.Mcp.Server.Port, cfg.Mcp.Server.Path)
 		}
 	}
 

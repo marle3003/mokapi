@@ -29,10 +29,10 @@ func TestJson_Structuring(t *testing.T) {
 						},
 					},
 				}
-				r := &schema.Schema{}
-				err := dynamic.Resolve("https://example.com/schemas/address#/properties/street_address", &r, &dynamic.Config{Data: &schema.Schema{}}, reader)
+				r := &dynamic.Reference[schema.Schema]{Ref: "https://example.com/schemas/address#/properties/street_address"}
+				s, err := r.Resolve(&dynamic.Config{Data: &schema.Schema{}}, reader)
 				require.NoError(t, err)
-				require.Equal(t, "string", r.Type.String())
+				require.Equal(t, "string", s.Type.String())
 			},
 		},
 		{
@@ -52,7 +52,7 @@ func TestJson_Structuring(t *testing.T) {
 
 				person := &dynamic.Config{
 					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/person")),
-					Data: &schema.Schema{Ref: "https://example.com/schemas/address#street_address"},
+					Data: &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schemas/address#street_address"}},
 				}
 				person.OpenScope("")
 
@@ -81,7 +81,7 @@ func TestJson_Structuring(t *testing.T) {
 
 				person := &dynamic.Config{
 					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schema/billing-address")),
-					Data: &schema.Schema{Ref: "https://example.com/schema/billing-address#street_address"},
+					Data: &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schema/billing-address#street_address"}},
 				}
 
 				err := person.Data.(*schema.Schema).Parse(person, reader)
@@ -130,11 +130,11 @@ func TestJson_Structuring(t *testing.T) {
 
 				cfg := &dynamic.Config{Data: &schema.Schema{Id: "https://example.com/schemas/customer"}}
 
-				r := &schema.Schema{}
-				err := dynamic.Resolve("/schemas/address", &r, cfg, reader)
+				r := &dynamic.Reference[schema.Schema]{Ref: "/schemas/address"}
+				s, err := r.Resolve(cfg, reader)
 				require.NoError(t, err)
 				require.NotNil(t, r)
-				require.Equal(t, "object", r.Type.String())
+				require.Equal(t, "object", s.Type.String())
 			},
 		},
 		{
@@ -170,7 +170,7 @@ func TestJson_Structuring(t *testing.T) {
 				foo := &dynamic.Config{
 					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("/foo.json")),
 					Data: &schema.Schema{
-						Ref: "/bar.json",
+						Reference: dynamic.Reference[*schema.Schema]{Ref: "/bar.json"},
 					},
 				}
 
@@ -263,7 +263,7 @@ $ref: '#/$defs/a'
 								Type:          jsonSchema.Types{"string"},
 							},
 						},
-						Ref: "https://example.com/schemas/list-of-t",
+						Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schemas/list-of-t"},
 					},
 				}
 
@@ -293,7 +293,7 @@ $ref: '#/$defs/a'
 				person := &dynamic.Config{
 					Info: dynamictest.NewConfigInfo(dynamictest.WithUrl("https://example.com/schemas/bar")),
 					Data: &schema.Schema{
-						Ref: "https://example.com/schemas/foo",
+						Reference: dynamic.Reference[*schema.Schema]{Ref: "https://example.com/schemas/foo"},
 					},
 				}
 

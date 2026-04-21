@@ -23,10 +23,11 @@ func TestConfig_Convert(t *testing.T) {
 	err = yaml.Unmarshal(b, &cfg)
 	require.NoError(t, err)
 
-	err = cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{})
+	c := &dynamic.Config{Data: cfg}
+	err = cfg.Parse(c, &dynamictest.Reader{})
 	require.NoError(t, err)
 
-	cfg3, err := cfg.Convert()
+	cfg3, err := c.Data.(*asyncApi.Config).Convert()
 	require.NoError(t, err)
 
 	require.Equal(t, "3.0.0", cfg3.Version)
@@ -149,4 +150,71 @@ channels:
 	require.Equal(t, cfg.Channels["foo"].Value.Messages["publish"], cfg.Operations["foo_send_publish"].Value.Messages[0])
 	require.Len(t, cfg.Operations["bar_send_publish"].Value.Messages, 1)
 	require.Equal(t, cfg.Channels["bar"].Value.Messages["publish"], cfg.Operations["bar_send_publish"].Value.Messages[0])
+}
+
+func TestConvert(t *testing.T) {
+	testcases := []struct {
+		name string
+		cfg  *asyncApi.Config
+		test func(t *testing.T, config *asyncapi3.Config, err error)
+	}{
+		{
+			name: "server ref",
+			cfg: &asyncApi.Config{
+				Servers: map[string]*asyncApi.ServerRef{
+					"foo": {Reference: dynamic.Reference[*asyncApi.ServerRef]{Ref: "#/components/servers/foo"}},
+				},
+				Components: &asyncApi.Components{
+					Servers: map[string]*asyncApi.ServerRef{
+						"foo": {Value: &asyncApi.Server{Url: "foo.bar"}},
+					},
+				},
+			},
+			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+				require.Equal(t, 1, config.Servers.Len())
+				s, _ := config.Servers.Get("foo")
+				require.NotNil(t, s)
+				require.NotNil(t, s.Value)
+				require.Equal(t, "foo.bar", s.Value.Host)
+				require.Equal(t, "#/components/servers/foo", s.Ref)
+			},
+		},
+		{
+			name: "channel ref",
+			cfg: &asyncApi.Config{
+				Channels: map[string]*asyncApi.ChannelRef{
+					"foo": {Reference: dynamic.Reference[*asyncApi.ChannelRef]{Ref: "#/components/channels/foo"}},
+				},
+				Components: &asyncApi.Components{
+					Channels: map[string]*asyncApi.ChannelRef{
+						"foo": {Value: &asyncApi.Channel{
+							Description: "foo",
+						}},
+					},
+				},
+			},
+			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+				require.Len(t, config.Channels, 1)
+				c := config.Channels["foo"]
+				require.NotNil(t, c)
+				require.NotNil(t, c.Value)
+				require.Equal(t, "foo", c.Value.Description)
+				require.Equal(t, "#/components/channels/foo", c.Ref)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			c := &dynamic.Config{Data: tc.cfg}
+			err := tc.cfg.Parse(c, &dynamictest.Reader{})
+			require.NoError(t, err)
+
+			cfg, err := tc.cfg.Convert()
+			tc.test(t, cfg, err)
+		})
+	}
 }

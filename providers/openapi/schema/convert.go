@@ -37,8 +37,6 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 	js := &schema.Schema{
 		Id:                    s.Id,
 		Anchor:                s.Anchor,
-		Ref:                   s.Ref,
-		DynamicRef:            s.DynamicRef,
 		Boolean:               s.Boolean,
 		Type:                  s.Type,
 		Schema:                s.Schema,
@@ -74,6 +72,8 @@ func (c *JsonSchemaConverter) Convert(s *Schema) *schema.Schema {
 		Deprecated:            s.Deprecated,
 	}
 	c.history[s] = js
+	js.Ref = s.Ref
+	js.DynamicRef = s.DynamicRef
 
 	js.Minimum = s.Minimum
 	js.ExclusiveMinimum = s.ExclusiveMinimum

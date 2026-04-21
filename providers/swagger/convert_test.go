@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestConvert(t *testing.T) {
@@ -541,6 +542,68 @@ func TestConvert(t *testing.T) {
 			t.Parallel()
 			c := &Config{}
 			err := json.Unmarshal([]byte(tc.config), &c)
+			require.NoError(t, err)
+			converted, err := Convert(c)
+			require.NoError(t, err)
+			tc.test(t, converted)
+		})
+	}
+}
+
+func TestConvert_YAML(t *testing.T) {
+	testcases := []struct {
+		name   string
+		config string
+		test   func(t *testing.T, config *openapi.Config)
+	}{
+		{
+			name: "description",
+			config: `swagger: '2.0'
+info:
+  description: foo
+`,
+			test: func(t *testing.T, config *openapi.Config) {
+				require.Equal(t, "foo", config.Info.Description)
+			},
+		},
+		{
+			name: "response reference",
+			config: `swagger: '2.0'
+responses:
+  401:
+    description: foo
+`,
+			test: func(t *testing.T, config *openapi.Config) {
+				res, found := config.Components.Responses["401"]
+				require.True(t, found)
+				require.NotNil(t, res.Value)
+				require.Equal(t, "foo", res.Value.Description)
+			},
+		},
+		{
+			name: "parameters reference",
+			config: `swagger: '2.0'
+parameters:
+  foo:
+    name: skip
+`,
+			test: func(t *testing.T, config *openapi.Config) {
+				p, found := config.Components.Parameters["foo"]
+				require.True(t, found)
+				require.NotNil(t, p.Value)
+				require.Equal(t, "skip", p.Value.Name)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			c := &Config{}
+			err := yaml.Unmarshal([]byte(tc.config), &c)
 			require.NoError(t, err)
 			converted, err := Convert(c)
 			require.NoError(t, err)

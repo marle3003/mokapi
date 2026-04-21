@@ -362,23 +362,27 @@ const router = createRouter({
   ]
 })
 
-router.afterEach((to, from) => {
+// add refresh query parameter if clicked link does not have it but current route has it
+router.beforeEach((to, from, next) => {
   if (!to.path.startsWith('/dashboard') || to.path.startsWith('/dashboard-demo')) {
-    return
+    return next()
   }
         
   const hadRefresh = !!from.query.refresh;
   const hasRefresh = !!to.query.refresh;
 
   if (hadRefresh && !hasRefresh) {
-    router.replace({
-      ...to,
+    return next({
+      path: to.path,
       query: {
         ...to.query,
         refresh: from.query.refresh
-      }
-    });
+      },
+      hash: to.hash,
+    })
   }
+
+  next()
 });
 
 if (import.meta.env.VITE_DASHBOARD === 'true') {

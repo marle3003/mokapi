@@ -431,6 +431,32 @@ attributeTypes: ( 1.2.3.4.5.6.7.8 NAME 'objectSid' DESC 'objectSid' EQUALITY act
 				require.Equal(t, "ldap: filter syntax error: invalid SID 'S-1-5-21-foo-1234567890-1234567890-1001': invalid uint value 'foo' at position: 3", log.Entries[1].Message)
 			},
 		},
+		{
+			name:  "no EQUALITY specified",
+			input: `{ "files": [ "./schema.ldif", "./users.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/schema.ldif": {Raw: []byte(`
+dn: 
+subschemaSubentry: cn=schema
+
+dn: cn=schema
+attributeTypes: ( 2.5.4.3 NAME 'cn' DESC 'Common Name' SYNTAX 1.3.6.1.4.1.1466.115.121.1.15 SINGLE-VALUE )
+`)},
+				"file:/users.ldif": {Raw: []byte("dn: cn=user\ncn: UsEr")},
+			}},
+			test: func(t *testing.T, h ldap.Handler, _ *test.Hook, err error) {
+				require.NoError(t, err)
+
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					Scope:  ldap.ScopeWholeSubtree,
+					Filter: "(cn=user)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 1)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -607,6 +633,37 @@ func TestSearch(t *testing.T) {
 				res := rr.Message.(*ldap.SearchResponse)
 
 				require.Len(t, res.Results, 1)
+			},
+		},
+		{
+			name:  "scope whole subtree",
+			input: `{ "files": [ "./users.ldif" ] }`,
+			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
+				"file:/users.ldif": {Raw: []byte(`
+dn: cn=user
+
+dn: id=user1,ou=Sales,dc=example,dc=com
+foo: bar
+
+dn: id=user2,ou=Sales,dc=example,dc=com
+foo: bar
+
+dn: id=user3,ou=Accounting,dc=example,dc=com
+foo: bar
+`)},
+			}},
+			test: func(t *testing.T, h ldap.Handler, err error) {
+				require.NoError(t, err)
+
+				rr := ldaptest.NewRecorder()
+				h.ServeLDAP(rr, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					Scope:  ldap.ScopeWholeSubtree,
+					BaseDN: "ou=Sales,dc=example,dc=com",
+					Filter: "(foo=bar)",
+				}))
+				res := rr.Message.(*ldap.SearchResponse)
+
+				require.Len(t, res.Results, 2)
 			},
 		},
 	}

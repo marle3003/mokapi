@@ -66,24 +66,21 @@ func convertChannels(cfg *asyncapi3.Config, channels map[string]*ChannelRef) err
 		if orig == nil {
 			continue
 		}
-		if len(orig.Ref) > 0 {
-			cfg.Channels[name] = &asyncapi3.ChannelRef{Reference: dynamic.Reference{Ref: orig.Ref}}
+		ch, err := convertChannel(name, orig, cfg)
+		if err != nil {
+			return err
 		}
-		if orig.Value != nil {
-			ch, err := convertChannel(name, orig, cfg)
-			if err != nil {
-				return err
-			}
+		if ch.Value != nil {
 			ch.Value.Config = cfg
-			cfg.Channels[name] = ch
 		}
+		cfg.Channels[name] = ch
 	}
 
 	return nil
 }
 
 func convertChannel(name string, c *ChannelRef, config *asyncapi3.Config) (*asyncapi3.ChannelRef, error) {
-	result := &asyncapi3.ChannelRef{Reference: dynamic.Reference{Ref: c.Ref}}
+	result := &asyncapi3.ChannelRef{Reference: dynamic.Reference[*asyncapi3.ChannelRef]{Ref: c.Ref}}
 
 	if c.Value != nil {
 		target := &asyncapi3.Channel{
@@ -98,7 +95,7 @@ func convertChannel(name string, c *ChannelRef, config *asyncapi3.Config) (*asyn
 		for _, server := range c.Value.Servers {
 			target.Servers = append(
 				target.Servers,
-				&asyncapi3.ServerRef{Reference: dynamic.Reference{
+				&asyncapi3.ServerRef{Reference: dynamic.Reference[*asyncapi3.ServerRef]{
 					Ref: fmt.Sprintf("#/servers/%s", server),
 				}})
 		}
@@ -192,7 +189,7 @@ func convertMessage(msg *MessageRef) *asyncapi3.MessageRef {
 		return nil
 	}
 
-	target := &asyncapi3.MessageRef{Reference: dynamic.Reference{Ref: msg.Ref}}
+	target := &asyncapi3.MessageRef{Reference: dynamic.Reference[*asyncapi3.MessageRef]{Ref: msg.Ref}}
 	if msg.Value != nil {
 		target.Value = &asyncapi3.Message{
 			Title:        msg.Value.Title,
@@ -200,45 +197,42 @@ func convertMessage(msg *MessageRef) *asyncapi3.MessageRef {
 			Summary:      msg.Value.Summary,
 			Description:  msg.Value.Description,
 			ContentType:  msg.Value.ContentType,
-			Payload:      nil,
+			Payload:      msg.Value.Payload,
 			Bindings:     convertMessageBinding(msg.Value.Bindings),
+			Headers:      msg.Value.Headers,
 			ExternalDocs: nil,
 		}
 
-		if msg.Value.Payload != nil && msg.Value.Payload.Value != nil {
-			target.Value.Payload = msg.Value.Payload
-		}
-		if msg.Value.Headers != nil && msg.Value.Headers.Value != nil {
-			target.Value.Headers = msg.Value.Headers
-		}
 		for _, orig := range msg.Value.Traits {
-			trait := &asyncapi3.MessageTraitRef{}
-			if len(orig.Ref) > 0 {
-				trait.Reference = dynamic.Reference{Ref: trait.Ref}
+			trait := convertMessageTrait(orig)
+			if trait != nil {
+				target.Value.Traits = append(target.Value.Traits, trait)
 			}
-			if orig.Value != nil {
-				trait.Value = convertMessageTrait(orig.Value).Value
-			}
-			target.Value.Traits = append(target.Value.Traits, trait)
 		}
 	}
 	return target
 }
 
-func convertMessageTrait(trait *MessageTrait) *asyncapi3.MessageTraitRef {
-	target := &asyncapi3.MessageTrait{
-		Name:        trait.Name,
-		Title:       trait.Title,
-		Summary:     trait.Summary,
-		Description: trait.Description,
-		ContentType: trait.ContentType,
-		Bindings:    convertMessageBinding(trait.Bindings),
+func convertMessageTrait(trait *MessageTraitRef) *asyncapi3.MessageTraitRef {
+	target := &asyncapi3.MessageTraitRef{
+		Reference: dynamic.Reference[*asyncapi3.MessageTraitRef]{Ref: trait.Ref},
 	}
 
-	if trait.Headers != nil && trait.Headers.Value != nil {
-		target.Headers = trait.Headers
+	if trait.Value != nil {
+		target.Value = &asyncapi3.MessageTrait{
+			Name:        trait.Value.Name,
+			Title:       trait.Value.Title,
+			Summary:     trait.Value.Summary,
+			Description: trait.Value.Description,
+			ContentType: trait.Value.ContentType,
+			Bindings:    convertMessageBinding(trait.Value.Bindings),
+		}
+		if trait.Value.Headers != nil && trait.Value.Headers.Value != nil {
+			target.Value.Headers = trait.Value.Headers
+		}
 	}
-	return &asyncapi3.MessageTraitRef{Value: target}
+
+	return target
 }
 
 func convertParameters(channel *asyncapi3.Channel, params map[string]*ParameterRef) error {
@@ -251,7 +245,7 @@ func convertParameters(channel *asyncapi3.Channel, params map[string]*ParameterR
 
 	for name, orig := range params {
 		if len(orig.Ref) > 0 {
-			channel.Parameters[name] = &asyncapi3.ParameterRef{Reference: dynamic.Reference{Ref: orig.Ref}}
+			channel.Parameters[name] = &asyncapi3.ParameterRef{Reference: dynamic.Reference[*asyncapi3.ParameterRef]{Ref: orig.Ref}}
 		}
 		if orig.Value != nil {
 			p, err := convertParameter(name, orig.Value)
@@ -308,17 +302,15 @@ func convertServers(cfg *asyncapi3.Config, servers map[string]*ServerRef) {
 	}
 
 	for name, orig := range servers {
-		if len(orig.Ref) > 0 {
-			cfg.Servers.Set(name, &asyncapi3.ServerRef{Reference: dynamic.Reference{Ref: orig.Ref}})
+		if orig == nil {
+			continue
 		}
-		if orig.Value != nil {
-			cfg.Servers.Set(name, convertServer(orig))
-		}
+		cfg.Servers.Set(name, convertServer(orig))
 	}
 }
 
 func convertServer(ref *ServerRef) *asyncapi3.ServerRef {
-	result := &asyncapi3.ServerRef{Reference: dynamic.Reference{Ref: ref.Ref}}
+	result := &asyncapi3.ServerRef{Reference: dynamic.Reference[*asyncapi3.ServerRef]{Ref: ref.Ref}}
 
 	if ref.Value != nil {
 		target := &asyncapi3.Server{
@@ -440,7 +432,7 @@ func convertComponents(c *Components, config *asyncapi3.Config) (*asyncapi3.Comp
 			target.Parameters = map[string]*asyncapi3.ParameterRef{}
 		}
 		if len(orig.Ref) > 0 {
-			target.Parameters[name] = &asyncapi3.ParameterRef{Reference: dynamic.Reference{Ref: orig.Ref}}
+			target.Parameters[name] = &asyncapi3.ParameterRef{Reference: dynamic.Reference[*asyncapi3.ParameterRef]{Ref: orig.Ref}}
 		}
 		if orig.Value != nil {
 			p, err := convertParameter(name, orig.Value)
@@ -455,12 +447,7 @@ func convertComponents(c *Components, config *asyncapi3.Config) (*asyncapi3.Comp
 		if target.MessageTraits == nil {
 			target.MessageTraits = map[string]*asyncapi3.MessageTraitRef{}
 		}
-		if len(orig.Ref) > 0 {
-			target.MessageTraits[name] = &asyncapi3.MessageTraitRef{Reference: dynamic.Reference{Ref: orig.Ref}}
-		}
-		if orig.Value != nil {
-			target.MessageTraits[name] = convertMessageTrait(orig.Value)
-		}
+		target.MessageTraits[name] = convertMessageTrait(orig)
 	}
 
 	return target, nil
