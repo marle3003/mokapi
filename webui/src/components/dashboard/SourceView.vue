@@ -46,6 +46,7 @@ if (props.source.preview) {
 } else {
   throw new Error('preview and binary not defined')
 }
+console.log(current.value)
 watch(() => props.source, (source) => {
     if (!current.value) {
       return
@@ -247,7 +248,7 @@ watch(
         <button type="button" class="btn btn-link" @click="download" title="Download raw content" aria-label="Download raw content"><span class="bi bi-download"></span></button>
       </div>
     </div>
-    <section class="source" aria-label="Content" :class="getLanguage(current?.data.contentType!)" v-if="current?.type == 'preview' && current && current.data.content">
+    <section class="source" aria-label="Content" :class="getLanguage(current?.data.contentType!)" v-if="current?.type == 'preview' && (current.data.content || !readonly)">
       <v-ace-editor
         :id="getCurrentInstance()?.uid"
         :value="current?.data.content!"
@@ -259,8 +260,8 @@ watch(
         @init="onEditorInit"
       />
     </section>
-    <section class="source" v-else-if="current?.type == 'binary' && source.binary" :class="'ace-'+theme">
-      <HexEditor :data="source.binary.content" :style="`height: ${viewHeight}px`" @update="emit('update', { content: $event, type: 'binary'})" :readonly="readonly" />
+    <section class="source" aria-label="Binary" v-else-if="current?.type == 'binary' && (source.binary || !readonly)" :class="'ace-'+theme">
+      <HexEditor :data="source.binary?.content ?? ''" :style="`height: ${viewHeight}px`" @update="emit('update', { content: $event, type: 'binary'})" :readonly="readonly" />
     </section>
   </section>
 </template>
