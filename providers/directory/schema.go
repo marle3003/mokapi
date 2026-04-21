@@ -3,6 +3,7 @@ package directory
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -164,8 +165,8 @@ func parseObjectClass(input string) (*ObjectClass, error) {
 		`(?:DESC\s+'([^']+)')?\s*` +
 		`(?:SUP\s+(?:([\w\-]+)|\(\s*([^)]+(?:\s+'[^)]+)*)\s*\)))?\s*` +
 		`(STRUCTURAL|ABSTRACT|AUXILIARY)?\s*` +
-		`(?:MUST\s+\(\s*([^()]+)\s*\))?\s*` +
-		`(?:MAY\s+\(\s*([^()]+)\s*\))?\s*` +
+		`(?:MUST\s+\(*\s*([^()]+)\s*\)*)?\s*` +
+		`(?:MAY\s+\(*\s*([^()]+)\s*\)*)?\s*` +
 		`\)`)
 	matches := re.FindStringSubmatch(input)
 
@@ -202,6 +203,10 @@ func parseObjectClass(input string) (*ObjectClass, error) {
 
 	if matches[8] != "" {
 		c.Must = strings.Fields(strings.ReplaceAll(matches[8], "$", " "))
+	}
+	if i := slices.Index(c.Must, "MAY"); i != -1 {
+		c.May = c.Must[i+1:]
+		c.Must = c.Must[:i]
 	}
 	if matches[9] != "" {
 		c.May = strings.Fields(strings.ReplaceAll(matches[9], "$", " "))
