@@ -168,7 +168,6 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	if cfg.Mcp.Server.Enabled {
 		if u, err := mcp.BuildUrl(cfg.Mcp.Server); err == nil {
 			if cfg.Api.Port == cfg.Mcp.Server.Port {
-				log.Infof("MCP server runs on %s:%d", cfg.Mcp.Server.Path, cfg.Mcp.Server.Port)
 				apiHandler.RegisterMcpHandler(u.Path, mcp.NewServer(app))
 			} else {
 				err = http.AddInternalService("mcp", u, mcp.NewServer(app))
@@ -176,6 +175,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 					return nil, err
 				}
 			}
+			log.Infof("MCP server runs on binding :%d on path %s", cfg.Mcp.Server.Port, cfg.Mcp.Server.Path)
 		}
 	}
 
