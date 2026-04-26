@@ -52,6 +52,7 @@ func TestIndex_Ldap(t *testing.T) {
 						Params: map[string]string{
 							"type":    "ldap",
 							"service": "foo",
+							"entries": "0",
 						},
 					},
 					r.Results[0])
@@ -113,6 +114,7 @@ func TestIndex_Ldap(t *testing.T) {
 						Params: map[string]string{
 							"type":    "ldap",
 							"service": "foo",
+							"entry":   "cn=alice,dc=foo,dc=com",
 						},
 					},
 					r.Results[0])

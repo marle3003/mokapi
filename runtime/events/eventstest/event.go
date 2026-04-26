@@ -3,12 +3,17 @@ package eventstest
 import "mokapi/runtime/events"
 
 type Event struct {
-	Name string
-	Api  string `json:"api"`
+	Name          string
+	Api           string            `json:"api"`
+	MetadataField map[string]string `json:"-"`
 }
 
 func (e *Event) Title() string {
 	return e.Name
+}
+
+func (e *Event) Metadata() map[string]string {
+	return e.MetadataField
 }
 
 type Handler struct {
@@ -23,7 +28,7 @@ func (h *Handler) Push(data events.EventData, traits events.Traits) error {
 func (h *Handler) GetEvents(traits events.Traits) []events.Event {
 	var result []events.Event
 	for _, e := range h.Events {
-		if e.Traits.Match(traits) {
+		if traits.Match(e.Traits) {
 			result = append(result, e)
 		}
 	}

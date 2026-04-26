@@ -45,3 +45,7 @@ func NewLogEvent(msg *smtp.Message, ctx *smtp.ClientContext, eh events.Handler, 
 func (l *Log) Title() string {
 	return fmt.Sprintf("%s", l.Subject)
 }
+
+func (l *Log) Metadata() map[string]string {
+	return nil
+}

@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"context"
+	"fmt"
 	"mokapi/config/static"
 	"mokapi/runtime/events"
 	"mokapi/runtime/search"
@@ -62,6 +63,11 @@ func (s *SearchIndex) start(pool *safe.Pool) {
 	docMapping.AddFieldMappingsAt("_title", disableIndex)
 	docMapping.AddFieldMappingsAt("_time", disableIndex)
 	docMapping.AddFieldMappingsAt("discriminator", disableIndex)
+	docMapping.AddFieldMappingsAt("statusCode", bleve.NewNumericFieldMapping())
+
+	metaMapping := bleve.NewDocumentMapping()
+	metaMapping.AddFieldMappingsAt("*", disableIndex)
+	docMapping.AddSubDocumentMapping("meta", metaMapping)
 
 	apiField := bleve.NewTextFieldMapping()
 	apiField.Analyzer = "mokapi_analyzer"
@@ -193,10 +199,19 @@ func (s *SearchIndex) Search(r search.Request) (search.Result, error) {
 		clauses = append(clauses, q)
 	}
 
-	for k, v := range params {
-		term := bleve.NewMatchPhraseQuery(v)
-		term.SetField(k)
-		clauses = append(clauses, term)
+	for _, p := range params {
+		term := bleve.NewMatchPhraseQuery(p.value)
+		term.SetField(p.key)
+		bq := bleve.NewBooleanQuery()
+		switch p.operator {
+		case "+":
+			bq.AddMust(term)
+		case "-":
+			bq.AddMustNot(term)
+		default:
+			bq.AddShould(term)
+		}
+		clauses = append(clauses, bq)
 	}
 
 	qFacetsValues := make([]query.Query, len(clauses))
@@ -284,25 +299,39 @@ func (s *SearchIndex) Search(r search.Request) (search.Result, error) {
 func getSearchFields(doc index.Document) map[string]string {
 	m := make(map[string]string)
 	doc.VisitFields(func(field index.Field) {
-		m[field.Name()] = string(field.Value())
+		var value string
+		switch f := field.(type) {
+		case index.NumericField:
+			v, _ := f.Number()
+			value = fmt.Sprintf("%v", v)
+		default:
+			value = string(field.Value())
+		}
+		m[field.Name()] = value
 	})
 	return m
 }
 
-func parseQuery(query string) (string, map[string]string) {
-	re := regexp.MustCompile(`([\w.]+):("[^"]+"|\S+)`)
+type param struct {
+	key      string
+	value    string
+	operator string
+}
 
-	params := make(map[string]string)
+func parseQuery(query string) (string, []param) {
+	re := regexp.MustCompile(`([+-]?)([\w.]+):("[^"]+"|\S+)`)
+
 	matches := re.FindAllStringSubmatch(query, -1)
 
+	var params []param
 	s := query
 	for _, m := range matches {
-		key := m[1]
+		key := m[2]
 		if !slices.Contains(fieldsNotIncludedInAll, key) {
 			continue
 		}
-		value := strings.Trim(m[2], `"`)
-		params[key] = value
+		value := strings.Trim(m[3], `"`)
+		params = append(params, param{key: key, value: value, operator: m[1]})
 		s = strings.Replace(s, m[0], "", 1)
 	}
 

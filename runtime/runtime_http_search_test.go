@@ -10,6 +10,7 @@ import (
 	"mokapi/runtime"
 	"mokapi/runtime/search"
 	"mokapi/safe"
+	"net/http"
 	"testing"
 	"time"
 
@@ -224,7 +225,7 @@ func TestIndex_Http(t *testing.T) {
 					openapitest.WithInfo("foo", "1.0", "a description"),
 					openapitest.WithPath("/pets",
 						openapitest.WithPathInfo("", "a description"),
-						openapitest.WithOperation("get",
+						openapitest.WithOperation(http.MethodGet,
 							openapitest.WithHeaderParam("foo", true, openapitest.WithParamInfo("parameter description")),
 						),
 					),
@@ -243,13 +244,13 @@ func TestIndex_Http(t *testing.T) {
 					search.ResultItem{
 						Type:      "HTTP",
 						Domain:    "foo",
-						Title:     "GET /pets",
+						Title:     "/pets",
 						Fragments: []string{"<mark>parameter</mark> <mark>description</mark>"},
 						Params: map[string]string{
 							"type":    "http",
 							"service": "foo",
 							"path":    "/pets",
-							"method":  "get",
+							"method":  "GET",
 						},
 					},
 					r.Results[0])

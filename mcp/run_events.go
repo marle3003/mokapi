@@ -32,6 +32,18 @@ func (m *mokapi) getEvents(vTraits goja.Value, vLimit goja.Value) ([]events.Even
 	}
 }
 
+func (m *mokapi) getEvent(id string) (events.Event, error) {
+	if id == "" {
+		return events.Event{}, fmt.Errorf("expected id parameter in GUID format, got '%v'", id)
+	}
+
+	e := m.app.Events.GetEvent(id)
+	if e.Id == "" {
+		return e, fmt.Errorf("event %s not found. Use `mokapi.search('type:event ...')` to search for existing events", id)
+	}
+	return e, nil
+}
+
 func parseTraits(v goja.Value, vm *goja.Runtime) (events.Traits, error) {
 	traits := events.Traits{}
 

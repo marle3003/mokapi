@@ -39,6 +39,10 @@ func (l *KafkaMessageLog) Title() string {
 	}
 }
 
+func (l *KafkaMessageLog) Metadata() map[string]string {
+	return nil
+}
+
 func newKafkaLog(record *kafka.Record) *KafkaMessageLog {
 	return &KafkaMessageLog{
 		Key:            LogValue{Binary: kafka.Read(record.Key)},
@@ -79,8 +83,13 @@ func (l *KafkaRequestLogEvent) Title() string {
 	return l.Request.Title()
 }
 
+func (l *KafkaRequestLogEvent) Metadata() map[string]string {
+	return nil
+}
+
 type KafkaRequest interface {
 	Title() string
+	Metadata() map[string]string
 }
 
 type KafkaRequestHeader struct {
@@ -111,6 +120,10 @@ func (r *KafkaJoinGroupRequest) Title() string {
 	return fmt.Sprintf("JoinGroup %s", r.GroupName)
 }
 
+func (l *KafkaJoinGroupRequest) Metadata() map[string]string {
+	return nil
+}
+
 type KafkaJoinGroupResponse struct {
 	KafkaResponseError
 	GenerationId int32    `json:"generationId"`
@@ -138,6 +151,10 @@ func (r *KafkaSyncGroupRequest) Title() string {
 	return fmt.Sprintf("SyncGroup %s", r.GroupName)
 }
 
+func (r *KafkaSyncGroupRequest) Metadata() map[string]string {
+	return nil
+}
+
 type KafkaSyncGroupResponse struct {
 	KafkaResponseError
 	ProtocolType string                   `json:"protocolType"`
@@ -151,6 +168,10 @@ type KafkaListOffsetsRequest struct {
 
 func (r *KafkaListOffsetsRequest) Title() string {
 	return "ListOffsets"
+}
+
+func (r *KafkaListOffsetsRequest) Metadata() map[string]string {
+	return nil
 }
 
 type KafkaListOffsetsRequestPartition struct {
@@ -183,6 +204,10 @@ func (r *KafkaFindCoordinatorRequest) Title() string {
 	return "FindCoordinator"
 }
 
+func (r *KafkaFindCoordinatorRequest) Metadata() map[string]string {
+	return nil
+}
+
 type KafkaFindCoordinatorResponse struct {
 	KafkaResponseError
 	Host string `json:"host"`
@@ -199,6 +224,10 @@ type KafkaInitProducerIdRequest struct {
 
 func (r *KafkaInitProducerIdRequest) Title() string {
 	return "InitProducerId"
+}
+
+func (r *KafkaInitProducerIdRequest) Metadata() map[string]string {
+	return nil
 }
 
 type KafkaInitProducerIdResponse struct {

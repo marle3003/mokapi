@@ -8,5 +8,36 @@ export function usePrettyText() {
         })
     }
 
-    return { parseUrls }
+    function adaptiveTruncate(s: string, maxLength = 40) {
+        if (s.length <= maxLength) {
+            return s;
+        }
+
+        const segments = s.split('/').filter(Boolean);
+        const isAbsolute = s.startsWith('/');
+
+        if (segments.length > 2) {
+            const start = `${isAbsolute ? '/' : ''}${segments[0]}/.../`
+            let end = segments[segments.length - 1]
+            let n = maxLength - start.length - end.length
+            for (let i = segments.length - 2; i > 0; i--) {
+                n -= segments[i].length + 1
+                console.log(`Checking segment "${segments[i]}", remaining chars: ${n}`)
+                if (n < 0) {
+                    break
+                }
+                end = `${segments[i]}/${end}`
+            }
+            return `${start}${end}`;
+        }
+
+        if (s.length > maxLength) {
+            const charsToKeep = Math.floor((maxLength - 3) / 2);
+            return `${s.substring(0, charsToKeep)}...${s.slice(-charsToKeep)}`;
+        }
+
+        return s;
+    }
+
+    return { parseUrls, adaptiveTruncate }
 }

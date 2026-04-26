@@ -44,7 +44,7 @@ func NewSearchLogEvent(r *ldap.SearchRequest, eh events.Handler, traits events.T
 		Duration: 0,
 		Actions:  nil,
 	}
-	_ = eh.Push(event, traits.WithNamespace("ldap"))
+	_ = eh.Push(event, traits.WithNamespace("ldap").With("operation", "search"))
 	return event
 }
 
@@ -127,13 +127,13 @@ func NewBindLogEvent(req *ldap.BindRequest, res *ldap.BindResponse, eh events.Ha
 		Duration: 0,
 		Actions:  nil,
 	}
-	_ = eh.Push(l, traits.WithNamespace("ldap"))
+	_ = eh.Push(l, traits.WithNamespace("ldap").With("operation", "bind"))
 	return l
 }
 
 func NewUnbindEvent(eh events.Handler, traits events.Traits) *UnbindLog {
 	l := &UnbindLog{Request: &UnbindRequest{Operation: "Unbind"}}
-	_ = eh.Push(l, traits.WithNamespace("ldap"))
+	_ = eh.Push(l, traits.WithNamespace("ldap").With("operation", "unbind"))
 	return l
 }
 
@@ -160,7 +160,7 @@ func NewAddLogEvent(req *ldap.AddRequest, res *ldap.AddResponse, eh events.Handl
 		Duration: 0,
 		Actions:  nil,
 	}
-	_ = eh.Push(l, traits.WithNamespace("ldap"))
+	_ = eh.Push(l, traits.WithNamespace("ldap").With("operation", "add"))
 
 	return l
 }
@@ -209,7 +209,7 @@ func NewModifyLogEvent(req *ldap.ModifyRequest, res *ldap.ModifyResponse, eh eve
 		Duration: 0,
 		Actions:  nil,
 	}
-	_ = eh.Push(l, traits.WithNamespace("ldap"))
+	_ = eh.Push(l, traits.WithNamespace("ldap").With("operation", "modify"))
 
 	return l
 }
@@ -240,7 +240,7 @@ func NewDeleteLogEvent(req *ldap.DeleteRequest, res *ldap.DeleteResponse, eh eve
 		Duration: 0,
 		Actions:  nil,
 	}
-	_ = eh.Push(l, traits.WithNamespace("ldap"))
+	_ = eh.Push(l, traits.WithNamespace("ldap").With("operation", "delete"))
 
 	return l
 }
@@ -277,7 +277,7 @@ func NewModifyDNLogEvent(req *ldap.ModifyDNRequest, res *ldap.ModifyDNResponse, 
 		Duration: 0,
 		Actions:  nil,
 	}
-	_ = eh.Push(l, traits.WithNamespace("ldap"))
+	_ = eh.Push(l, traits.WithNamespace("ldap").With("operation", "modifydn"))
 
 	return l
 }
@@ -311,7 +311,7 @@ func NewCompareLogEvent(req *ldap.CompareRequest, res *ldap.CompareResponse, eh 
 		Duration: 0,
 		Actions:  nil,
 	}
-	_ = eh.Push(l, traits.WithNamespace("ldap"))
+	_ = eh.Push(l, traits.WithNamespace("ldap").With("operation", "compare"))
 
 	return l
 }
@@ -320,30 +320,67 @@ func (l *BindLog) Title() string {
 	return fmt.Sprintf("%s %s %s", l.Request.Auth, l.Request.Name, l.Request.Password)
 }
 
+func (l *BindLog) Metadata() map[string]string {
+	return nil
+}
+
 func (l *UnbindLog) Title() string {
 	return ""
+}
+
+func (l *UnbindLog) Metadata() map[string]string {
+	return nil
 }
 
 func (l *SearchLog) Title() string {
 	return l.Request.Filter
 }
 
+func (l *SearchLog) Metadata() map[string]string {
+	if l.Request.BaseDN != "" {
+		return map[string]string{
+			"baseDn": l.Request.BaseDN,
+		}
+	}
+	return nil
+}
+
 func (l *CompareLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Value)
+}
+
+func (l *CompareLog) Metadata() map[string]string {
+	return nil
 }
 
 func (l *ModifyLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Dn)
 }
 
+func (l *ModifyLog) Metadata() map[string]string {
+	return nil
+}
+
 func (l *ModifyDNLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Dn)
+}
+
+func (l *ModifyDNLog) Metadata() map[string]string {
+	return nil
 }
 
 func (l *DeleteLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Dn)
 }
 
+func (l *DeleteLog) Metadata() map[string]string {
+	return nil
+}
+
 func (l *AddLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Dn)
+}
+
+func (l *AddLog) Metadata() map[string]string {
+	return nil
 }

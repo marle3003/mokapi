@@ -85,6 +85,33 @@ func TestIndex_Config(t *testing.T) {
 				require.Len(t, r.Results, 2)
 			},
 		},
+		{
+			name: "api:foo with operator",
+			test: func(t *testing.T, app *runtime.App) {
+				h := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
+				app.AddHttp(toConfig(h))
+				h = openapitest.NewConfig("3.0", openapitest.WithInfo("bar", "", ""))
+				app.AddHttp(toConfig(h))
+				k := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""))
+				_, err := app.Kafka.Add(toConfig(k), enginetest.NewEngine())
+				require.NoError(t, err)
+
+				var r search.Result
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "+api:foo", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 2
+				})
+				require.Len(t, r.Results, 2)
+				require.Equal(t, "foo", r.Results[0].Title)
+				require.Equal(t, "foo", r.Results[1].Title)
+
+				r, err = app.Search(search.Request{QueryText: "-api:foo", Limit: 10})
+				require.NoError(t, err)
+				require.Len(t, r.Results, 1)
+				require.Equal(t, "bar", r.Results[0].Title)
+			},
+		},
 	}
 
 	t.Parallel()

@@ -548,28 +548,59 @@ function getSearchResults() {
                     type: 'http',
                     service: 'Swagger Petstore',
                     path: '/pet',
+                    methods: 'get,post'
                 }
             },
             {
                 type: 'HTTP',
                 domain: 'Swagger Petstore',
-                title: "POST  /pet",
+                title: "/pet",
                 fragments: ['<mark>Everything</mark>', 'store'],
                 params: {
                     type: 'http',
                     service: 'Swagger Petstore',
                     path: '/pet',
-                    method: 'post'
+                    method: 'post',
+                    statusCode: '200'
+                }
+            },
+             {
+                type: 'HTTP',
+                domain: 'Swagger Petstore',
+                title: "/foo/longTextPathEndpoint/bar/pets",
+                fragments: ['<mark>Everything</mark>', 'store'],
+                params: {
+                    type: 'http',
+                    service: 'Swagger Petstore',
+                    path: '/foo/bar/pets',
+                    method: 'put',
+                    statusCode: '200'
+                }
+            },
+            {
+                type: 'HTTP',
+                domain: 'Swagger Petstore',
+                title: "/customer/foo/bar/test/correspondenceAddress",
+                fragments: ['<mark>Everything</mark>', 'store'],
+                params: {
+                    type: 'http',
+                    service: 'Swagger Petstore',
+                    path: '/customer/foo/bar/test/correspondenceAddress',
+                    method: 'post',
+                    statusCode: '200'
                 }
             },
             {
                 type: 'Event',
                 domain: 'Swagger Petstore',
-                title: "POST http://127.0.0.1:18080/pet",
+                title: "http://127.0.0.1:18080/pet",
                 fragments: [],
+                time: '2025-05-23T08:49:25.482366+01:00',
                 params: {
                     type: 'event',
-                    namespace: 'http',
+                    'traits.namespace': 'http',
+                    'traits.name': 'Swagger Petstore',
+                    'traits.method': 'get',
                     id: '4242'
                 }
             },
@@ -589,7 +620,8 @@ function getSearchResults() {
                 fragments: ['To ours <mark>significant</mark> why upon tomorrow'],
                 params: {
                     type: 'kafka',
-                    service: 'Kafka World'
+                    service: 'Kafka World',
+                    topics: '3'
                 }
             },
             {
@@ -605,12 +637,16 @@ function getSearchResults() {
             },
             {
                 type: 'Event',
-                domain: 'Kafka World - mokapi.shop.products',
+                domain: 'Kafka World',
                 title: "GGOEWXXX0827",
                 fragments: null,
+                time: '2025-05-01T08:49:25.482366+01:00',
                 params: {
                     type: 'event',
-                    namespace: 'kafka',
+                    'traits.namespace': 'kafka',
+                    'traits.name': 'Kafka World',
+                    'traits.topic': 'mokapi.shop.products',
+                    'traits.partition': '0',
                     id: '123456'
                 }
             },
@@ -631,35 +667,39 @@ function getSearchResults() {
                 fragments: ['message <mark>from Alice</mark>'],
                 params: {
                     type: 'event',
-                    namespace: 'mail',
+                    'traits.namespace': 'mail',
+                    'traits.name': 'Mail Testserver',
                     id: '8832'
                 }
             },
             {
                 type: 'LDAP',
-                domain: 'LDAP Testserver',
                 title: "LDAP Testserver",
                 fragments: ['This is a sample <mark>LDAP</mark> server'],
                 params: {
                     type: 'ldap',
                     service: 'LDAP Testserver',
+                    entries: '12'
                 }
             },
             {
                 type: 'Event',
                 domain: 'LDAP Testserver',
-                title: "Search (objectClass=user)",
+                title: "(objectClass=user)",
                 fragments: ['(objectClass=<mark>user</mark>)'],
                 params: {
                     type: 'event',
-                    namespace: 'ldap',
-                    id: 'dkads-23124'
+                    'traits.namespace': 'ldap',
+                    'traits.name': 'LDAP Testserver',
+                    'traits.operation': 'search',
+                    id: 'dkads-23124',
+                    baseDn: 'dc=example,dc=org',
                 }
             }
         ],
         facets: {
             type: [{value: 'HTTP', count: 3}, {value: 'Kafka', count: 2}, {value: 'Mail', count: 1}, {value: 'Event', count: 2}, {value: 'Config', count: 1}]
         },
-        total: 8
+        total: 15
     }
 }

@@ -389,7 +389,7 @@ func (suite *PetStoreSuite) TestSearch_Paging() {
 			assert.Len(t, items, 10)
 			evt := items[0].(map[string]interface{})
 			assert.Equal(t, "HTTP", evt["type"])
-			assert.Equal(t, "GET /pet/{petId}", evt["title"])
+			assert.Equal(t, "/pet/{petId}", evt["title"])
 			assert.Equal(t, "Swagger Petstore", evt["domain"])
 		}),
 	)

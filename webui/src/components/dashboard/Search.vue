@@ -2,8 +2,14 @@
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import router from '@/router';
 import { computed, onMounted, ref, watch } from 'vue';
-import { useRoute, type RouteLocationRaw } from 'vue-router';
+import { useRoute } from 'vue-router';
 import { transformPath } from '@/composables/fetch';
+import { useProgressiveLoading } from '@/composables/useProgressiveLoading';
+import Http from './search/Http.vue';
+import Kafka from './search/Kafka.vue';
+import Event from './search/Event.vue';
+import Ldap from './search/Ldap.vue';
+import Mail from './search/Mail.vue';
 
 const route = useRoute()
 const { format } = usePrettyDates()
@@ -14,6 +20,7 @@ const searchResult = ref<SearchResult | undefined>();
 const maxVisiblePages = 10  // max pages in pagination
 const showTips = ref(false)
 const facets = ref<{ [name: string]: string | undefined}>({})
+const loading = useProgressiveLoading()
 
 const pageNumber = computed(() => {
   if (!searchResult.value) {
@@ -46,7 +53,7 @@ watch(queryText, async () => {
   }
   // debounced
   clearTimeout(timeout)
-  timeout = setTimeout(async () => { await search() }, 500)
+  timeout = setTimeout(async () => { await search() }, 1000)
 })
 
 async function navigateToSearchResult(result: any) {
@@ -113,7 +120,7 @@ function title(result: SearchItem) {
 
 onMounted(async () => {
   for (const param in route.query) {
-    if (param === 'q') {
+    if (param === 'q' || param === 'index') {
       continue
     }
     if (route.query[param]) {
@@ -145,34 +152,34 @@ function getIndex(): number {
   return Number.isNaN(parsed) ? 0 : parsed
 }
 
-function search_clicked() {
-  let q: string | undefined = queryText.value
-  if (q === '') {
-    q = undefined // remove parameter
-  }
-  let index: number | undefined = pageIndex.value
-  if (index === 0) {
-    index = undefined
-  }
+async function search_clicked() {
+  const newQuery = { ...route.query }
 
-  const to: RouteLocationRaw = {
-    query: {
-      ...route.query,
-      q: q,
-      index: index
-    }
+  if (queryText.value) {
+    newQuery.q = queryText.value
+  } else {
+    delete newQuery.q
+  }
+ 
+  if (pageIndex.value) {
+    newQuery.index = pageIndex.value.toString()
+  } else {
+    delete newQuery.index
   }
 
   for (const name in facets.value) {
-    if (facets.value[name] === '') {
-      to.query![name] = undefined
+    if (!facets.value[name]) {
+      delete newQuery[name]
     }
     else {
-      to.query![name] = facets.value[name]
+      newQuery[name] = facets.value[name]
     }
   }
-
-  router.replace(to)
+  const r = await router.replace({ query: newQuery })
+  if (r) {
+    // navigation was redundant, so search manually
+    search()
+  }
 }
 
 function search_keypressed(event: KeyboardEvent) {
@@ -187,6 +194,8 @@ function pageIndex_click(index: number) {
 }
 
 async function search() {
+  loading.start()
+
   let path = `/api/search/query?q=${queryText.value}`
   if (pageIndex.value !== 0) {
     path += `&index=${pageIndex.value}`
@@ -209,6 +218,7 @@ async function search() {
         return res.json()
     })
     .then(res => {
+      loading.stop()
       return res
     })
     .catch((s) => {
@@ -255,24 +265,31 @@ function facetTitle(s: string) {
                   {{ showTips ? 'Search Tips ▲' : 'Search Tips ▼' }}
                 </a>
 
-                <div v-if="showTips" class="alert alert-light border mt-2 small text-start">
-                  <ul class="mb-0">
-                    <li><code>name:petstore</code> – Find "petstore" in the name field</li>
-                    <li><code>type:event</code> – Find events like HTTP requests, Kafka messages, mails, etc</li>
-                    <li><code>+petstore -kafka</code> – Must include "petstore", exclude "kafka"</li>
-                    <li><code>"Swagger Petstore"</code> – Match exact phrase</li>
-                    <li><code>pet*</code> – Wildcard (matches "pet", "pets", "petstore")</li>
-                    <li><code>pet~</code> – Fuzzy match (e.g., "pets", "pest")</li>
-                    <li><code>path:/pets^2 description:dog</code> – Boost matches in path field</li>
-                    <li><code>(get OR post) AND pets</code> – Combine multiple terms logically</li>
+                <div v-if="showTips" class="alert alert-light border mt-2 text-start search-tips">
+                  By default, multiple terms are combined with OR (results contain at least one term). Use prefixes to enforce stricter matches.
+                  <h5>Refine Your Results</h5>
+                  <ul>
+                    <li><code>+petstore -kafka</code> - Must include "petstore", Must Not include "kafka".</li>
+                    <li><code>petstore kafka</code> - Returns results containing "petstore" OR "kafka" (default).</li>
+                    <li><code>"Swagger Petstore"</code> - Matches the exact phrase.</li>
                   </ul>
-                  <div class="mt-2 text-muted" v-if="false">
-                    Learn more about Mokapi's search <a href="/docs/dashboard">here</a>
-                  </div>
+                  <h5>Fields & Logic</h5>
+                  <ul>
+                    <li><code>name:petstore</code> - Search for "petstore" specifically in the name field.</li>
+                    <li><code>+method:GET 404 500</code> - Must be GET and must contain either 404 or 500.</li>
+                    <li><code>+statusCode:>=300</code> - Must be response with status code greater than or equal to 300.</li>
+                    <li><code>path:/pets^2</code> - Boost matches in the path field (scores them higher).</li>
+                  </ul>
+                  <h5>Wildcards & Fuzzy</h5>
+                  <ul>
+                    <li><code>pet*</code> - Wildcard (matches "pet", "pets", "petstore").</li>
+                    <li><code>pet~</code> - Fuzzy match (matches "pets", "pest" or slight typos).</li>
+                  </ul>
                 </div>
               </div>
             </div>
           </div>
+          <div v-if="loading.isLoading" class="row justify-content-md-center ps-0 mb-2">{{ loading.statusText }}</div>
           <div class="row justify-content-md-center ps-0 mb-2" v-if="searchResult">
             <div class="col-6 col-auto">
                <h3 v-if="searchResult.total <= 10" class="mt-1 mb-3 fs-6">Showing <strong>{{ searchResult.total }}</strong> {{ searchResult.total === 1 ? "result" : "results" }}</h3>
@@ -281,7 +298,7 @@ function facetTitle(s: string) {
           </div>
           <div class="row justify-content-md-center ps-0 mb-2" v-if="searchResult">
             <div class="col-6 col-auto">
-              <div class="row">
+              <div class="row" v-if="searchResult && searchResult.facets">
                 <div v-for="name in Object.keys(searchResult.facets)" :key="name" class="col-auto">
                     <select class="form-select form-select-sm" :aria-label="name" v-model="facets[name]" @change="search_clicked">
                       <option value="">{{ facetTitle(name) }}</option>
@@ -299,7 +316,12 @@ function facetTitle(s: string) {
                   class="card mb-3"
                   @click="navigateToSearchResult(item)"
                 >
-                  <div class="card-body">
+                <Http :item="item" v-if="item.params.type === 'http'" />
+                <Kafka :item="item" v-if="item.params.type === 'kafka'" />
+                <Ldap :item="item" v-if="item.params.type === 'ldap'" />
+                <Mail :item="item" v-if="item.params.type === 'mail'" />
+                <Event :item="item" v-if="item.params.type === 'event'" />
+                  <!-- <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                       <div>
                         <span class="badge bg-secondary text-uppercase me-2">{{ item.type }}</span>
@@ -309,9 +331,10 @@ function facetTitle(s: string) {
                     </div>
 
                     <h5 class="card-title mb-2" v-html="title(item)"></h5>
+                    <span class="badge bg-warning text-dark ms-auto">{{ item.params.statusCode }}</span>
 
                     <p class="card-text small mb-0" v-html="item.fragments?.join(' ... ')"></p>
-                  </div>
+                  </div> -->
                 </div>
               </div>
               <!-- Error Alert -->
@@ -369,6 +392,9 @@ function facetTitle(s: string) {
   margin-top: 15px;
 }
 .pagination .page-link {
+  cursor: pointer;
+}
+.pagination .page-item:not(.active) .page-link {
   color: var(--link-color)
 }
 .dashboard .search-results .card {
@@ -394,6 +420,18 @@ function facetTitle(s: string) {
 .search-results .badge {
   font-size: 0.7rem;
   background-color: var(--badge-background) !important;
+}
+.search-tips {
+  font-size: 0.9rem;
+}
+.search-tips h5 {
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
+}
+.search-tips ul {
+  padding-left: 1.5rem;
+  margin-bottom: 0;
 }
 </style>
 

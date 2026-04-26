@@ -19,12 +19,14 @@ func (t *testEvent) Title() string {
 	return t.Name
 }
 
+func (t *testEvent) Metadata() map[string]string { return nil }
+
 func TestEvents(t *testing.T) {
 	testcases := []struct {
 		name string
 		app  *runtime.App
 		code string
-		test func(t *testing.T, evts []events.Event, err error)
+		test func(t *testing.T, result any, err error)
 	}{
 		{
 			name: "without params should not error",
@@ -32,8 +34,10 @@ func TestEvents(t *testing.T) {
 			app: runtimetest.NewApp(
 				runtimetest.WithEvent(events.NewTraits().WithNamespace("http"), &testEvent{Name: "test-1"}),
 			),
-			test: func(t *testing.T, evts []events.Event, err error) {
+			test: func(t *testing.T, result any, err error) {
 				require.NoError(t, err)
+				require.IsType(t, []events.Event{}, result)
+				evts := result.([]events.Event)
 				require.Len(t, evts, 1)
 				require.Equal(t, &testEvent{Name: "test-1"}, evts[0].Data)
 			},
@@ -45,8 +49,10 @@ func TestEvents(t *testing.T) {
 				runtimetest.WithEvent(events.NewTraits().WithNamespace("kafka"), &testEvent{Name: "test-1"}),
 				runtimetest.WithEvent(events.NewTraits().WithNamespace("http"), &testEvent{Name: "test-2"}),
 			),
-			test: func(t *testing.T, evts []events.Event, err error) {
+			test: func(t *testing.T, result any, err error) {
 				require.NoError(t, err)
+				require.IsType(t, []events.Event{}, result)
+				evts := result.([]events.Event)
 				require.Len(t, evts, 1)
 				require.Equal(t, &testEvent{Name: "test-2"}, evts[0].Data)
 			},
@@ -58,8 +64,10 @@ func TestEvents(t *testing.T) {
 				runtimetest.WithEvent(events.NewTraits().WithNamespace("http").WithName("foo"), &testEvent{Name: "test-1"}),
 				runtimetest.WithEvent(events.NewTraits().WithNamespace("http").WithName("bar"), &testEvent{Name: "test-2"}),
 			),
-			test: func(t *testing.T, evts []events.Event, err error) {
+			test: func(t *testing.T, result any, err error) {
 				require.NoError(t, err)
+				require.IsType(t, []events.Event{}, result)
+				evts := result.([]events.Event)
 				require.Len(t, evts, 1)
 				require.Equal(t, &testEvent{Name: "test-2"}, evts[0].Data)
 			},
@@ -71,8 +79,10 @@ func TestEvents(t *testing.T) {
 				runtimetest.WithEvent(events.NewTraits().WithNamespace("http").With("path", "/users"), &testEvent{Name: "test-1"}),
 				runtimetest.WithEvent(events.NewTraits().WithNamespace("http").With("path", "/pets"), &testEvent{Name: "test-2"}),
 			),
-			test: func(t *testing.T, evts []events.Event, err error) {
+			test: func(t *testing.T, result any, err error) {
 				require.NoError(t, err)
+				require.IsType(t, []events.Event{}, result)
+				evts := result.([]events.Event)
 				require.Len(t, evts, 1)
 				require.Equal(t, &testEvent{Name: "test-2"}, evts[0].Data)
 			},
@@ -84,10 +94,25 @@ func TestEvents(t *testing.T) {
 				runtimetest.WithEvent(events.NewTraits().WithNamespace("http").With("method", "GET"), &testEvent{Name: "test-1"}),
 				runtimetest.WithEvent(events.NewTraits().WithNamespace("http").With("method", "POST"), &testEvent{Name: "test-2"}),
 			),
-			test: func(t *testing.T, evts []events.Event, err error) {
+			test: func(t *testing.T, result any, err error) {
 				require.NoError(t, err)
+				require.IsType(t, []events.Event{}, result)
+				evts := result.([]events.Event)
 				require.Len(t, evts, 1)
 				require.Equal(t, &testEvent{Name: "test-2"}, evts[0].Data)
+			},
+		},
+		{
+			name: "get specific event",
+			code: "mokapi.getEvent(mokapi.getEvents({ method: 'GET' })[0].id)",
+			app: runtimetest.NewApp(
+				runtimetest.WithEvent(events.NewTraits().WithNamespace("http").With("method", "GET"), &testEvent{Name: "test-1"}),
+			),
+			test: func(t *testing.T, result any, err error) {
+				require.NoError(t, err)
+				require.IsType(t, events.Event{}, result)
+				evt := result.(events.Event)
+				require.Equal(t, &testEvent{Name: "test-1"}, evt.Data)
 			},
 		},
 	}
@@ -100,9 +125,8 @@ func TestEvents(t *testing.T) {
 				context.Background(),
 				mcp.RunInput{Code: tc.code},
 			)
-			require.IsType(t, []events.Event{}, r.Result)
 
-			tc.test(t, r.Result.([]events.Event), err)
+			tc.test(t, r.Result, err)
 		})
 	}
 }

@@ -51,6 +51,7 @@ func TestIndex_Kafka(t *testing.T) {
 						Params: map[string]string{
 							"type":    "kafka",
 							"service": "Kafka Test server",
+							"topics":  "0",
 						},
 					},
 					r.Results[0])
@@ -86,15 +87,27 @@ func TestIndex_Kafka(t *testing.T) {
 				cfg := asyncapi3test.NewConfig(
 					asyncapi3test.WithInfo("Kafka Test server", "", ""),
 					asyncapi3test.WithChannel("foo",
-						asyncapi3test.WithChannelDescription("description"),
+						asyncapi3test.WithChannelDescription("first"),
 					),
 				)
+
+				second := asyncapi3test.NewChannel(
+					asyncapi3test.WithChannelDescription("second"),
+					asyncapi3test.WithChannelAddress("address-name"),
+				)
+				cfg.Channels["bar"] = &asyncapi3.ChannelRef{Value: second}
+
+				third := asyncapi3test.NewChannel(
+					asyncapi3test.WithChannelDescription("third"),
+				)
+				cfg.Channels["yuh"] = &asyncapi3.ChannelRef{Value: third}
+
 				_, err := app.Kafka.Add(toConfig(cfg), enginetest.NewEngine())
 				require.NoError(t, err)
 
 				var r search.Result
 				waitSearchIndex(t, func() bool {
-					r, err = app.Search(search.Request{QueryText: "description", Limit: 10})
+					r, err = app.Search(search.Request{QueryText: "first", Limit: 10})
 					require.NoError(t, err)
 					return len(r.Results) == 1
 				})
@@ -104,11 +117,45 @@ func TestIndex_Kafka(t *testing.T) {
 						Type:      "Kafka",
 						Domain:    "Kafka Test server",
 						Title:     "Topic foo",
-						Fragments: []string{"<mark>description</mark>"},
+						Fragments: []string{"<mark>first</mark>"},
 						Params: map[string]string{
 							"type":    "kafka",
 							"service": "Kafka Test server",
 							"topic":   "foo",
+						},
+					},
+					r.Results[0])
+
+				r, err = app.Search(search.Request{QueryText: "second", Limit: 10})
+				require.NoError(t, err)
+				require.Len(t, r.Results, 1)
+				require.Equal(t,
+					search.ResultItem{
+						Type:      "Kafka",
+						Domain:    "Kafka Test server",
+						Title:     "Topic address-name",
+						Fragments: []string{"<mark>second</mark>"},
+						Params: map[string]string{
+							"type":    "kafka",
+							"service": "Kafka Test server",
+							"topic":   "address-name",
+						},
+					},
+					r.Results[0])
+
+				r, err = app.Search(search.Request{QueryText: "third", Limit: 10})
+				require.NoError(t, err)
+				require.Len(t, r.Results, 1)
+				require.Equal(t,
+					search.ResultItem{
+						Type:      "Kafka",
+						Domain:    "Kafka Test server",
+						Title:     "Topic yuh",
+						Fragments: []string{"<mark>third</mark>"},
+						Params: map[string]string{
+							"type":    "kafka",
+							"service": "Kafka Test server",
+							"topic":   "yuh",
 						},
 					},
 					r.Results[0])

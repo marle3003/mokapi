@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/textproto"
+	"strconv"
 	"strings"
 )
 
@@ -113,6 +114,15 @@ func LogEventFromContext(ctx context.Context) (*HttpLog, bool) {
 
 func (l *HttpLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Method, l.Request.Url)
+}
+
+func (l *HttpLog) Metadata() map[string]string {
+	if l != nil && l.Response != nil {
+		return map[string]string{
+			"statusCode": strconv.Itoa(l.Response.StatusCode),
+		}
+	}
+	return nil
 }
 
 func (l *HttpRequestLog) setParams(name string, params map[string]RequestParameterValue) {
