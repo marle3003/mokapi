@@ -176,7 +176,14 @@ func (e *JobExecution) AppendLog(level, message string) {
 }
 
 func (e *JobExecution) Title() string {
+	if e.Error != nil {
+		return fmt.Sprintf("Error in: %v", e.Tags["name"])
+	}
 	return e.Tags["name"]
+}
+
+func (e *JobExecution) Domain() string {
+	return "Job Execution"
 }
 
 type FakerNode interface {

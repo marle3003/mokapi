@@ -44,6 +44,35 @@ interface Mokapi {
      * getEvents({ apiType: 'http', name: 'Swagger Petstore', path: '/pets' })
      */
     getEvents(traits: HttpTraits | KafkaTraits, limit?: number): Event[];
+
+    /**
+     * Returns a specific event from Mokapi based on the id
+     * @param id The id of the event
+     * @example
+     * getEvent('6cbca4f8-ea25-4f66-861c-44d8b15321b1')
+     */
+    getEvent(id: string): Event[];
+
+    /**
+     * Advanced Search across all APIs, Topics, and Documentation.
+     * By default, multiple terms are combined with OR (results contain at least one term). Use prefixes to enforce stricter matches.
+     *
+     * QUERY SYNTAX:
+     * - Simple: `petstore` (Search in all fields)
+     *   Type: `type:kafka` (Search only Kafka)
+     * - Exact: `"Swagger Petstore"` (Use quotes for phrases)
+     * - Exclude: `petstore -kafka` (Exclude terms with '-')
+     * - Wildcard: `pet*` (Matches "pet", "pets", "petstore")
+     * - Fuzy: `pet~` (Matches "pets", "pest" or slight typos)
+     * - Fields: `name:petstore`, `path:/pets`, `description:dog`
+     * - Boosting: `path:/pets^2` (Make path matches more important)
+     * - Numeric Ranges: `statusCode:>=200
+     *
+     * @param queryText The search term or complex query string.
+     * @param index Page index for pagination (starts at 0).
+     * @param limit Number of results (default 10).
+     */
+    search(queryText: string, index?: number, limit?: number): SearchResult
 }
 
 type ApiType =  'http' | 'kafka' | 'ldap' | 'mail'
@@ -51,6 +80,33 @@ type ApiType =  'http' | 'kafka' | 'ldap' | 'mail'
 interface ApiSummary {
     name: string;
     type: ApiType;
+}
+
+interface SearchResult {
+    items: SearchResultItem[]
+    total: number
+}
+
+interface SearchResultItem {
+    /** The type of the resource (e.g., 'http', 'kafka', 'event') */
+    type: string
+    /** The name of the API */
+    domain: string
+    /** A human-readable title or summary */
+    title: string
+    /**
+     * Relevant text snippets showing where the match was found.
+     * Useful to see context like 'GET /pets' or 'Topic: orders'.
+     */
+    fragments: string[]
+    /**
+     * Additional context specific to the result type.
+     * - HTTP: includes 'method', 'path', 'service'
+     * - Kafka: includes 'topic', 'service'
+     */
+    metadata: Record<string, string>
+    
+    time?: string
 }
 
 /**
@@ -201,4 +257,5 @@ interface Schema {
 }
 
 type SchemaType = "object" | "array" | "number" | "integer" | "string" | "boolean" | "null";
+
 ```

@@ -4,7 +4,6 @@ import (
 	"context"
 	"mokapi/providers/openapi"
 	"mokapi/runtime/events"
-	"mokapi/runtime/events/eventstest"
 	"net/http/httptest"
 	"testing"
 
@@ -24,7 +23,7 @@ func TestLog(t *testing.T) {
 
 				r = r.WithContext(openapi.NewContext(context.Background(), &openapi.RequestParameters{}))
 
-				ctx, err := openapi.NewLogEventContext(r, false, &eventstest.Handler{}, events.NewTraits())
+				ctx, err := openapi.NewLogEventContext(r, false, events.NewTraits())
 				require.NoError(t, err)
 				require.NotNil(t, ctx)
 
@@ -52,7 +51,7 @@ func TestLog(t *testing.T) {
 				}
 				r = r.WithContext(openapi.NewContext(context.Background(), params))
 
-				ctx, err := openapi.NewLogEventContext(r, false, &eventstest.Handler{}, events.NewTraits())
+				ctx, err := openapi.NewLogEventContext(r, false, events.NewTraits())
 				require.NoError(t, err)
 				require.NotNil(t, ctx)
 
@@ -80,7 +79,7 @@ func TestLog(t *testing.T) {
 				}
 				r = r.WithContext(openapi.NewContext(context.Background(), params))
 
-				ctx, err := openapi.NewLogEventContext(r, false, &eventstest.Handler{}, events.NewTraits())
+				ctx, err := openapi.NewLogEventContext(r, false, events.NewTraits())
 				require.NoError(t, err)
 				require.NotNil(t, ctx)
 

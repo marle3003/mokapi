@@ -6,8 +6,11 @@ import (
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
+	"mokapi/ldap"
+	"mokapi/ldap/ldaptest"
 	"mokapi/providers/directory"
 	"mokapi/runtime"
+	"mokapi/runtime/monitor"
 	"mokapi/runtime/search"
 	"mokapi/safe"
 	"mokapi/sortedmap"
@@ -52,6 +55,7 @@ func TestIndex_Ldap(t *testing.T) {
 						Params: map[string]string{
 							"type":    "ldap",
 							"service": "foo",
+							"entries": "0",
 						},
 					},
 					r.Results[0])
@@ -113,6 +117,7 @@ func TestIndex_Ldap(t *testing.T) {
 						Params: map[string]string{
 							"type":    "ldap",
 							"service": "foo",
+							"entry":   "cn=alice,dc=foo,dc=com",
 						},
 					},
 					r.Results[0])
@@ -148,6 +153,73 @@ func TestIndex_Ldap(t *testing.T) {
 			defer pool.Stop()
 
 			tc.test(t, app)
+		})
+	}
+}
+
+func TestIndex_Ldap_Event(t *testing.T) {
+	api := &directory.Config{Info: directory.Info{Name: "Test LDAP Events"}}
+	cfg := &dynamic.Config{
+		Info: dynamictest.NewConfigInfo(),
+		Data: api,
+	}
+
+	testcases := []struct {
+		name string
+		test func(t *testing.T, h ldap.Handler, app *runtime.App)
+	}{
+		{
+			name: "search event by operation",
+			test: func(t *testing.T, h ldap.Handler, app *runtime.App) {
+				h.ServeLDAP(&ldaptest.ResponseRecorder{}, ldaptest.NewRequest(0, &ldap.SearchRequest{
+					Scope:  ldap.ScopeWholeSubtree,
+					BaseDN: "ou=people,o=search",
+					Filter: "(cn=user)",
+				}))
+
+				r, err := waitSearchResult(t, func() (search.Result, error) {
+					return app.Search(search.Request{QueryText: "+operation:search +type:event", Limit: 10})
+				}, 1)
+
+				require.NoError(t, err)
+				require.Len(t, r.Results, 1)
+				require.Equal(t, "Event", r.Results[0].Type)
+				require.Equal(t, "Test LDAP Events", r.Results[0].Domain)
+				require.Equal(t, "(cn=user)", r.Results[0].Title)
+				require.Len(t, r.Results[0].Fragments, 2)
+				require.Contains(t, r.Results[0].Fragments, "<mark>Search</mark>")
+				require.Contains(t, r.Results[0].Fragments, "<mark>event</mark>")
+				require.Len(t, r.Results[0].Params, 6)
+				require.Equal(t, "event", r.Results[0].Params["type"])
+				require.Equal(t, "ldap", r.Results[0].Params["traits.namespace"])
+				require.Equal(t, "Test LDAP Events", r.Results[0].Params["traits.name"])
+				require.Equal(t, "search", r.Results[0].Params["traits.operation"])
+				require.Equal(t, "ou=people,o=search", r.Results[0].Params["baseDN"])
+				require.Contains(t, r.Results[0].Params, "id")
+				require.NotEmpty(t, r.Results[0].Time)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			app := runtime.New(
+				&static.Config{
+					Api: static.Api{
+						Search: static.Search{
+							Enabled:  true,
+							InMemory: true,
+						},
+					},
+				}, &dynamictest.Reader{})
+
+			info := app.Ldap.Add(cfg, enginetest.NewEngine())
+			pool := safe.NewPool(context.Background())
+			app.Start(pool)
+			defer pool.Stop()
+
+			h := info.Handler(monitor.NewLdap(), app.Events)
+			tc.test(t, h, app)
 		})
 	}
 }

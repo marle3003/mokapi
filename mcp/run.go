@@ -9,6 +9,7 @@ import (
 	"mokapi/js/faker"
 	"mokapi/providers/openapi"
 	"mokapi/runtime"
+	"mokapi/runtime/search"
 	"mokapi/schema/json/generator"
 	"reflect"
 	"slices"
@@ -136,6 +137,8 @@ func (m *mokapi) init(obj *goja.Object) {
 	_ = obj.Set("getApi", m.getApi)
 	_ = obj.Set("fake", m.fake)
 	_ = obj.Set("getEvents", m.getEvents)
+	_ = obj.Set("getEvent", m.getEvent)
+	_ = obj.Set("search", m.search)
 }
 
 func (m *mokapi) getApis() []ApiSummary {
@@ -182,6 +185,50 @@ func (m *mokapi) fake(v goja.Value) (any, error) {
 		return nil, err
 	}
 	return generator.New(&generator.Request{Schema: js})
+}
+
+type SearchResult struct {
+	Items []SearchResultItem `json:"items"`
+	Total uint64             `json:"total"`
+}
+
+type SearchResultItem struct {
+	Type      string            `json:"type"`
+	Domain    string            `json:"domain,omitempty"`
+	Title     string            `json:"title"`
+	Fragments []string          `json:"fragments,omitempty"`
+	Metadata  map[string]string `json:"metadata"`
+	Time      string            `json:"time,omitempty"`
+}
+
+func (m *mokapi) search(queryText string, index int, limit int) (SearchResult, error) {
+	if limit == 0 {
+		limit = 10
+	}
+	r := search.Request{
+		QueryText: queryText,
+		Index:     index,
+		Limit:     limit,
+	}
+
+	sr, err := m.app.Search(r)
+	if err != nil {
+		return SearchResult{}, err
+	}
+	result := SearchResult{
+		Total: sr.Total,
+	}
+	for _, item := range sr.Results {
+		result.Items = append(result.Items, SearchResultItem{
+			Type:      item.Type,
+			Domain:    item.Domain,
+			Title:     item.Title,
+			Fragments: item.Fragments,
+			Metadata:  item.Params,
+			Time:      item.Time,
+		})
+	}
+	return result, nil
 }
 
 type customFieldNameMapper struct {

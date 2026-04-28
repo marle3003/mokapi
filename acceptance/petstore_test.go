@@ -303,8 +303,16 @@ func (suite *PetStoreSuite) TestEvents() {
 			assert.True(t, ok, "event should be a map[string]any")
 			assert.NotNil(t, evt)
 			assert.Equal(t, "Event", evt["type"])
-			assert.Equal(t, "GET http://127.0.0.1:18080/user/bob", evt["title"])
+			assert.Equal(t, "http://127.0.0.1:18080/user/bob", evt["title"])
 			assert.Equal(t, "Swagger Petstore", evt["domain"])
+			params := evt["params"].(map[string]any)
+			assert.Len(t, params, 6)
+			assert.Equal(t, "event", params["type"])
+			assert.Equal(t, "http", params["traits.namespace"])
+			assert.Equal(t, "Swagger Petstore", params["traits.name"])
+			assert.Equal(t, "/user/{username}", params["traits.path"])
+			assert.Equal(t, "GET", params["traits.method"])
+			assert.Equal(t, "Swagger Petstore", params["traits.name"])
 		}),
 	)
 }
@@ -389,7 +397,7 @@ func (suite *PetStoreSuite) TestSearch_Paging() {
 			assert.Len(t, items, 10)
 			evt := items[0].(map[string]interface{})
 			assert.Equal(t, "HTTP", evt["type"])
-			assert.Equal(t, "GET /pet/{petId}", evt["title"])
+			assert.Equal(t, "/pet/{petId}", evt["title"])
 			assert.Equal(t, "Swagger Petstore", evt["domain"])
 		}),
 	)

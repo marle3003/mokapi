@@ -7,6 +7,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime"
 	"mokapi/runtime/search"
@@ -38,6 +39,7 @@ func TestIndex_Config(t *testing.T) {
 				cfg := &dynamic.Config{
 					Info: info,
 					Raw:  []byte(`{"name":"test"}`),
+					Data: &openapi.Config{},
 				}
 
 				app.UpdateConfig(dynamic.ConfigEvent{
@@ -60,8 +62,9 @@ func TestIndex_Config(t *testing.T) {
 						Title:     "file://foo.yml",
 						Fragments: []string{"{&#34;<mark>name</mark>&#34;:&#34;test&#34;}"},
 						Params: map[string]string{
-							"type": "config",
-							"id":   "64613435-3062-6462-3033-316532633233",
+							"type":   "config",
+							"id":     "64613435-3062-6462-3033-316532633233",
+							"source": "OpenAPI",
 						},
 					},
 					r.Results[0])
@@ -83,6 +86,33 @@ func TestIndex_Config(t *testing.T) {
 					return len(r.Results) == 2
 				})
 				require.Len(t, r.Results, 2)
+			},
+		},
+		{
+			name: "api:foo with operator",
+			test: func(t *testing.T, app *runtime.App) {
+				h := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
+				app.AddHttp(toConfig(h))
+				h = openapitest.NewConfig("3.0", openapitest.WithInfo("bar", "", ""))
+				app.AddHttp(toConfig(h))
+				k := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""))
+				_, err := app.Kafka.Add(toConfig(k), enginetest.NewEngine())
+				require.NoError(t, err)
+
+				var r search.Result
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "+api:foo", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 2
+				})
+				require.Len(t, r.Results, 2)
+				require.Equal(t, "foo", r.Results[0].Title)
+				require.Equal(t, "foo", r.Results[1].Title)
+
+				r, err = app.Search(search.Request{QueryText: "-api:foo", Limit: 10})
+				require.NoError(t, err)
+				require.Len(t, r.Results, 1)
+				require.Equal(t, "bar", r.Results[0].Title)
 			},
 		},
 	}
