@@ -39,8 +39,45 @@ func (l *KafkaMessageLog) Title() string {
 	}
 }
 
-func (l *KafkaMessageLog) Metadata() map[string]string {
-	return nil
+type headerIndex struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+func (l *KafkaMessageLog) IndexFields() map[string]any {
+	m := map[string]any{
+		"clientId":  l.ClientId,
+		"offset":    l.Offset,
+		"messageId": l.MessageId,
+		"partition": l.Partition,
+	}
+
+	if l.Key.Value != "" {
+		m["key"] = l.Key.Value
+	} else {
+		m["key"] = string(l.Key.Binary)
+	}
+
+	if l.Message.Value != "" {
+		m["message"] = l.Message.Value
+	} else {
+		m["message"] = string(l.Message.Binary)
+	}
+
+	var headers []headerIndex
+	for k, h := range l.Headers {
+		val := h.Value
+		if val == "" {
+			val = string(h.Binary)
+		}
+		headers = append(headers, headerIndex{
+			Key:   k,
+			Value: val,
+		})
+	}
+	m["headers"] = headers
+
+	return m
 }
 
 func newKafkaLog(record *kafka.Record) *KafkaMessageLog {
@@ -83,13 +120,8 @@ func (l *KafkaRequestLogEvent) Title() string {
 	return l.Request.Title()
 }
 
-func (l *KafkaRequestLogEvent) Metadata() map[string]string {
-	return nil
-}
-
 type KafkaRequest interface {
 	Title() string
-	Metadata() map[string]string
 }
 
 type KafkaRequestHeader struct {
@@ -120,10 +152,6 @@ func (r *KafkaJoinGroupRequest) Title() string {
 	return fmt.Sprintf("JoinGroup %s", r.GroupName)
 }
 
-func (l *KafkaJoinGroupRequest) Metadata() map[string]string {
-	return nil
-}
-
 type KafkaJoinGroupResponse struct {
 	KafkaResponseError
 	GenerationId int32    `json:"generationId"`
@@ -151,10 +179,6 @@ func (r *KafkaSyncGroupRequest) Title() string {
 	return fmt.Sprintf("SyncGroup %s", r.GroupName)
 }
 
-func (r *KafkaSyncGroupRequest) Metadata() map[string]string {
-	return nil
-}
-
 type KafkaSyncGroupResponse struct {
 	KafkaResponseError
 	ProtocolType string                   `json:"protocolType"`
@@ -168,10 +192,6 @@ type KafkaListOffsetsRequest struct {
 
 func (r *KafkaListOffsetsRequest) Title() string {
 	return "ListOffsets"
-}
-
-func (r *KafkaListOffsetsRequest) Metadata() map[string]string {
-	return nil
 }
 
 type KafkaListOffsetsRequestPartition struct {
@@ -204,10 +224,6 @@ func (r *KafkaFindCoordinatorRequest) Title() string {
 	return "FindCoordinator"
 }
 
-func (r *KafkaFindCoordinatorRequest) Metadata() map[string]string {
-	return nil
-}
-
 type KafkaFindCoordinatorResponse struct {
 	KafkaResponseError
 	Host string `json:"host"`
@@ -224,10 +240,6 @@ type KafkaInitProducerIdRequest struct {
 
 func (r *KafkaInitProducerIdRequest) Title() string {
 	return "InitProducerId"
-}
-
-func (r *KafkaInitProducerIdRequest) Metadata() map[string]string {
-	return nil
 }
 
 type KafkaInitProducerIdResponse struct {

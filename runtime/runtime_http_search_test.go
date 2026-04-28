@@ -5,12 +5,14 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
+	"mokapi/engine/enginetest"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime"
 	"mokapi/runtime/search"
 	"mokapi/safe"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
@@ -410,6 +412,79 @@ func TestIndex_Http(t *testing.T) {
 	}
 }
 
+func TestIndex_Http_Event(t *testing.T) {
+	api := openapitest.NewConfig("3.0",
+		openapitest.WithInfo("Test HTTP Events", "", ""),
+		openapitest.WithPath("/foo",
+			openapitest.WithOperation(http.MethodGet,
+				openapitest.WithResponse(http.StatusOK),
+			),
+		),
+	)
+	cfg := &dynamic.Config{
+		Info: dynamictest.NewConfigInfo(),
+		Data: api,
+	}
+
+	testcases := []struct {
+		name string
+		test func(t *testing.T, h openapi.Handler, app *runtime.App)
+	}{
+		{
+			name: "search event by method",
+			test: func(t *testing.T, h openapi.Handler, app *runtime.App) {
+				req := httptest.NewRequest("GET", "http://localhost/foo", nil)
+				w := httptest.NewRecorder()
+				he := h.ServeHTTP(w, req)
+				require.Nil(t, he)
+
+				r, err := waitSearchResult(t, func() (search.Result, error) {
+					return app.Search(search.Request{QueryText: "+method:GET +type:event", Limit: 10})
+				}, 1)
+
+				require.NoError(t, err)
+				require.Len(t, r.Results, 1)
+				require.Equal(t, "Event", r.Results[0].Type)
+				require.Equal(t, "Test HTTP Events", r.Results[0].Domain)
+				require.Equal(t, "http://localhost/foo", r.Results[0].Title)
+				require.Len(t, r.Results[0].Fragments, 2)
+				require.Contains(t, r.Results[0].Fragments, "<mark>GET</mark>")
+				require.Contains(t, r.Results[0].Fragments, "<mark>event</mark>")
+				require.Len(t, r.Results[0].Params, 6)
+				require.Equal(t, "event", r.Results[0].Params["type"])
+				require.Equal(t, "http", r.Results[0].Params["traits.namespace"])
+				require.Equal(t, "Test HTTP Events", r.Results[0].Params["traits.name"])
+				require.Equal(t, "/foo", r.Results[0].Params["traits.path"])
+				require.Equal(t, "GET", r.Results[0].Params["traits.method"])
+				require.Contains(t, r.Results[0].Params, "id")
+				require.NotEmpty(t, r.Results[0].Time)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			app := runtime.New(
+				&static.Config{
+					Api: static.Api{
+						Search: static.Search{
+							Enabled:  true,
+							InMemory: true,
+						},
+					},
+				}, &dynamictest.Reader{})
+
+			app.AddHttp(cfg)
+			pool := safe.NewPool(context.Background())
+			app.Start(pool)
+			defer pool.Stop()
+
+			h := openapi.NewHandler(api, enginetest.NewEngine(), app.Events)
+			tc.test(t, h, app)
+		})
+	}
+}
+
 func waitSearchIndex(t *testing.T, check func() bool) {
 	deadline := time.Now().Add(2 * time.Second)
 
@@ -419,6 +494,24 @@ func waitSearchIndex(t *testing.T, check func() bool) {
 		}
 		if time.Now().After(deadline) {
 			t.Fatal("wait search index reached deadline")
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+}
+
+func waitSearchResult(t *testing.T, f func() (search.Result, error), expectedResults int) (search.Result, error) {
+	deadline := time.Now().Add(2 * time.Second)
+
+	for {
+		r, err := f()
+		if err != nil {
+			return r, err
+		}
+		if len(r.Results) == expectedResults {
+			return r, nil
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("wait search result reached deadline: last search returned %d results, %d was expected", len(r.Results), expectedResults)
 		}
 		time.Sleep(20 * time.Millisecond)
 	}

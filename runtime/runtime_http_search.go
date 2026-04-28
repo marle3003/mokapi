@@ -10,6 +10,9 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+
+	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/mapping"
 )
 
 type httpSearchIndexData struct {
@@ -260,4 +263,15 @@ func (s *HttpStore) removeFromIndex(cfg *openapi.Config) {
 			s.index.Delete(fmt.Sprintf("http_%s_%s_%s", cfg.Info.Name, path, method))
 		}
 	}
+}
+
+func AddMappings(m *mapping.DocumentMapping) {
+	// Statt tief zu verschachteln, mappe den Pfad direkt:
+	statusFieldMapping := bleve.NewNumericFieldMapping()
+	statusFieldMapping.Name = "statusCode"
+	statusFieldMapping.Store = true
+
+	// Direkt auf das oberste Document Mapping anwenden
+	// Bleve sucht im JSON trotzdem nach dem Pfad, indiziert ihn aber flach
+	m.AddFieldMappingsAt("event.data.response.statusCode", statusFieldMapping)
 }

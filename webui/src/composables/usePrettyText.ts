@@ -22,7 +22,6 @@ export function usePrettyText() {
             let n = maxLength - start.length - end.length
             for (let i = segments.length - 2; i > 0; i--) {
                 n -= segments[i].length + 1
-                console.log(`Checking segment "${segments[i]}", remaining chars: ${n}`)
                 if (n < 0) {
                     break
                 }

@@ -594,13 +594,14 @@ function getSearchResults() {
                 type: 'Event',
                 domain: 'Swagger Petstore',
                 title: "http://127.0.0.1:18080/pet",
-                fragments: [],
+                fragments: ['<mark>GET</mark>'],
                 time: '2025-05-23T08:49:25.482366+01:00',
                 params: {
                     type: 'event',
                     'traits.namespace': 'http',
                     'traits.name': 'Swagger Petstore',
-                    'traits.method': 'get',
+                    'traits.path': '/pet',
+                    'traits.method': 'GET',
                     id: '4242'
                 }
             },
@@ -646,6 +647,7 @@ function getSearchResults() {
                     'traits.namespace': 'kafka',
                     'traits.name': 'Kafka World',
                     'traits.topic': 'mokapi.shop.products',
+                    'traits.type': 'message',
                     'traits.partition': '0',
                     id: '123456'
                 }
@@ -664,7 +666,7 @@ function getSearchResults() {
                 type: 'Event',
                 domain: 'Mail Testserver',
                 title: "A test mail",
-                fragments: ['message <mark>from Alice</mark>'],
+                fragments: ['<mark>test</mark> <mark>mail</mark>'],
                 params: {
                     type: 'event',
                     'traits.namespace': 'mail',

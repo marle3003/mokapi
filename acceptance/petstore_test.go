@@ -303,8 +303,16 @@ func (suite *PetStoreSuite) TestEvents() {
 			assert.True(t, ok, "event should be a map[string]any")
 			assert.NotNil(t, evt)
 			assert.Equal(t, "Event", evt["type"])
-			assert.Equal(t, "GET http://127.0.0.1:18080/user/bob", evt["title"])
+			assert.Equal(t, "http://127.0.0.1:18080/user/bob", evt["title"])
 			assert.Equal(t, "Swagger Petstore", evt["domain"])
+			params := evt["params"].(map[string]any)
+			require.Len(t, params, 6)
+			require.Equal(t, "event", params["type"])
+			require.Equal(t, "http", params["traits.namespace"])
+			require.Equal(t, "Swagger Petstore", params["traits.name"])
+			require.Equal(t, "/user/{username}", params["traits.path"])
+			require.Equal(t, "GET", params["traits.method"])
+			require.Equal(t, "Swagger Petstore", params["traits.name"])
 		}),
 	)
 }

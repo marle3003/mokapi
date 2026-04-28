@@ -20,8 +20,8 @@ const title = computed(() => {
 
         <div class="d-flex justify-content-between">
             <h6 class="mb-1">
-                <span class="badge bg-success me-1" v-if="item.params.entry">Topic</span>
-                <span class="badge bg-cluster me-1" v-else>LDAP</span>
+                <span class="badge bg-success me-1" v-if="item.params.entry">Entry</span>
+                <span class="badge bg-directory me-1" v-else>LDAP</span>
                 {{ title }}
             </h6>
         </div>
@@ -38,10 +38,7 @@ const title = computed(() => {
 </template>
 
 <style scoped>
-.bg-topic {
-    background-color: #6f42c1;
-}
-.bg-cluster {
+.bg-directory {
     background-color: #343a40;
 }
 </style>

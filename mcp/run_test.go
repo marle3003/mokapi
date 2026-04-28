@@ -246,7 +246,7 @@ op`},
 				r, err := s.GetRunResponse(
 					context.Background(),
 					mcp.RunInput{
-						Code: `const errors = mokapi.search('+api:"Petstore" +event.data.response.statusCode:>=400 +type:event')
+						Code: `const errors = mokapi.search('+api:"Petstore" +response.statusCode:>=400 +type:event')
 errors.items.map(x => mokapi.getEvent(x.metadata.id))`,
 					},
 				)

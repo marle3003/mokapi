@@ -276,14 +276,21 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *H
 				m.RequestCounter.WithLabel(h.config.Info.Name, op.Path.Path, r.Method).Add(1)
 			}
 
+			traits := events.NewTraits().WithNamespace("http").WithName(h.config.Info.Name).With("path", op.Path.Path).With("method", r.Method)
 			if ctx, err := NewLogEventContext(
 				r,
 				op.Deprecated,
-				h.eh,
-				events.NewTraits().WithName(h.config.Info.Name).With("path", op.Path.Path).With("method", r.Method),
+				traits,
 			); err != nil {
 				log.Errorf("unable to log http event: %v", err)
 			} else {
+				defer func() {
+					l, _ := LogEventFromContext(ctx)
+					err = h.eh.Push(l, traits)
+					if err != nil {
+						log.Errorf("unable to log http event: %v", err)
+					}
+				}()
 				r = r.WithContext(ctx)
 			}
 

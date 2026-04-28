@@ -1167,7 +1167,7 @@ func TestHandler_Event(t *testing.T) {
 
 			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
 				h := openapi.NewHandler(config, eh, sm)
-				ctx, err := openapi.NewLogEventContext(r, false, sm, events.NewTraits())
+				ctx, err := openapi.NewLogEventContext(r, false, events.NewTraits())
 				require.NoError(t, err)
 				r = r.WithContext(ctx)
 				httpErr := h.ServeHTTP(rw, r)
