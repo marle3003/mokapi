@@ -64,6 +64,11 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
 				app.AddHttp(toConfig(cfg))
+				waitSearchIndex(t, func() bool {
+					r, err := app.Search(search.Request{QueryText: "foo", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
 				r, err := app.Search(search.Request{QueryText: "foo", Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
