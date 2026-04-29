@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -21,6 +22,7 @@ type Provider struct {
 
 	reader file.FSReader
 	f      *file.Provider
+	m      sync.Mutex
 }
 
 func New(cfg static.NpmProvider) *Provider {
@@ -72,6 +74,9 @@ func (p *Provider) Read(u *url.URL) (*dynamic.Config, error) {
 }
 
 func (p *Provider) Start(ch chan dynamic.ConfigEvent, pool *safe.Pool) error {
+	p.m.Lock()
+	defer p.m.Unlock()
+
 	workDir, err := p.reader.GetWorkingDir()
 	if err != nil {
 		return err
@@ -116,6 +121,7 @@ func (p *Provider) forward(ch chan dynamic.ConfigEvent, ctx context.Context) {
 				}
 			}
 
+			p.m.Lock()
 			for dir, pkg := range p.config {
 				if strings.HasPrefix(path, dir) {
 					relative := path[len(dir)+1:]
@@ -143,6 +149,7 @@ func (p *Provider) forward(ch chan dynamic.ConfigEvent, ctx context.Context) {
 					ch <- e
 				}
 			}
+			p.m.Unlock()
 		}
 	}
 }
