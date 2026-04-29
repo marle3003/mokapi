@@ -36,6 +36,7 @@ const operation = computed(() => {
 
 const eventId = computed(() => {
   const id = route.params.id
+  console.log('Route param id:', id)
   if (!id) {
     return undefined
   }
@@ -146,7 +147,7 @@ function isNumber(value: string): boolean {
         </div>
     </div>
     <loading v-if="!data || data?.isLoading"></loading>
-    <div v-if="data && !data.event && !data.isLoading">
+    <div v-if="!eventId || (data && !data.event && !data.isLoading)">
         <message message="HTTP Request not found"></message>
     </div>
 </template>

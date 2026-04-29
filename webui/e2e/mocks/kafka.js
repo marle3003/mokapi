@@ -344,7 +344,7 @@ export let events = [
         data: {
             offset: 1,
             key: {
-                value: 'TEST1'
+                binary: 'VEVTVDEgw6Qg8JCAgA=='
             },
             message: {
                 value: JSON.stringify(

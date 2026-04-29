@@ -84,7 +84,7 @@ async function navigateToSearchResult(result: any) {
     case 'ldap':
       return router.push({ name: 'ldapService', params: result.params })
     case 'event':
-      switch (result.params.namespace) {
+      switch (result.params['traits.namespace']) {
         case 'http':
           return router.push({ name: 'httpRequest', params: result.params })
         case 'kafka':

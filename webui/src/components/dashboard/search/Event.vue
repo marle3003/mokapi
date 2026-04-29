@@ -38,6 +38,8 @@ function isMail() {
             <div v-if="item.time" class="text-muted">⏱ {{ format(item.time) }}</div>
             <span v-if="isKafka()" class="fw-semibold text-dark">Message received</span>
             <span v-if="isHttp()" class="fw-semibold text-dark">Request received</span>
+            <span v-if="isMail()" class="fw-semibold text-dark">Mail received</span>
+            <span v-if="isLdap()" class="fw-semibold text-dark">Search received</span>
         </div>
         
         <h6 class="mb-1 mt-1">
