@@ -7,6 +7,7 @@ import SourceView from '../SourceView.vue'
 import router from '@/router'
 import { getRouteName, useDashboard } from '@/composables/dashboard'
 import { useLocalStorage } from '@/composables/local-storage'
+import { usePrettyText } from '@/composables/usePrettyText'
 
 const props = defineProps<{
     service?: KafkaService,
@@ -36,6 +37,7 @@ const labels = computed(() => {
 
 const { format } = usePrettyDates()
 const { formatLanguage } = usePrettyLanguage()
+const { fromBinary } = usePrettyText()
 
 const { dashboard } = useDashboard()
 const { events, close } = dashboard.value.getEvents('kafka', ...labels.value)
@@ -269,11 +271,11 @@ function key(data: KafkaMessageData | null): string {
     if (!data) {
         return ''
     }
-    if (data?.key.value !== '') {
-        return data.key.value!
+    if (data?.key.value) {
+        return data.key.value
     }
     if (data?.key.binary) {
-        return atob(data.key.binary)
+        return fromBinary(data.key.binary)
     }
     return ''
 }
@@ -282,7 +284,7 @@ function formatHeaderValue(v: KafkaHeaderValue) {
         return v.value
     }
     if (v.binary !== '') {
-        return atob(v.binary)
+        return fromBinary(v.binary)
     }
     return ''
 }

@@ -8,11 +8,13 @@ import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 import { getRouteName, useDashboard } from "@/composables/dashboard";
 import { useMeta } from "@/composables/meta";
+import { usePrettyText } from "@/composables/usePrettyText";
 
 const route = useRoute();
 const { dashboard, getMode } = useDashboard()
 const { formatLanguage } = usePrettyLanguage()
 const { format } = usePrettyDates()
+const { fromBinary } = usePrettyText()
 
 const events = computed(() => {
     return dashboard.value.getEvents('kafka')
@@ -155,10 +157,10 @@ function key(key: KafkaValue | null): string {
         return ''
     }
     if (key.value) {
-        return key.value!
+        return key.value
     }
     if (key.binary) {
-        return atob(key.binary)
+        return fromBinary(key.binary)
     }
     return ''
 }
