@@ -116,3 +116,19 @@ func (c *Channel) GetName() string {
 	}
 	return c.Title
 }
+
+func (c *Channel) IsChannelAvailable(protocol string) bool {
+	if len(c.Servers) == 0 {
+		return true
+	}
+
+	for _, v := range c.Servers {
+		if v.Value == nil {
+			continue
+		}
+		if protocol == v.Value.Protocol {
+			return true
+		}
+	}
+	return false
+}

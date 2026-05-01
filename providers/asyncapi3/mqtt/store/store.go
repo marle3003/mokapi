@@ -4,6 +4,7 @@ import (
 	engine "mokapi/engine/common"
 	"mokapi/mqtt"
 	"mokapi/providers/asyncapi3"
+	"mokapi/runtime/events"
 	"mokapi/version"
 	"sync"
 	"time"
@@ -17,41 +18,39 @@ type Store struct {
 	startedQoS bool
 	m          sync.RWMutex
 	close      chan bool
+	eh         events.Handler
+	cfg        *asyncapi3.Config
 }
 
-func New(cfg *asyncapi3.Config, emitter engine.EventEmitter) *Store {
+func New(cfg *asyncapi3.Config, emitter engine.EventEmitter, eh events.Handler) *Store {
 	s := &Store{
 		RetryInterval: 10 * time.Second,
-		close:         make(chan bool, 1),
 		Topics:        make(map[string]*Topic),
+		close:         make(chan bool, 1),
+		cfg:           cfg,
+		eh:            eh,
 	}
 
-	for _, ch := range cfg.Channels {
-		if ch != nil && ch.Value != nil {
-			s.Topics[ch.Value.Name] = &Topic{
-				Name: ch.Value.Name,
-			}
-		}
-	}
+	s.Update(cfg)
 
-	s.Topics["$SYS/broker/version"] = &Topic{
-		Name: "$SYS/broker/version",
-		Retained: &Message{
-			Topic:  "$SYS/broker/version",
-			Data:   []byte("Mokapi " + version.BuildVersion),
-			Retain: true,
-		},
-	}
+	s.addSysTopic("$SYS/broker/version", "Mokapi "+version.BuildVersion)
+	s.addSysTopic("$SYS/broker/uptime", time.Now().Format(time.RFC3339))
 
 	return s
 }
 
 func (s *Store) Update(cfg *asyncapi3.Config) {
 	for _, ch := range cfg.Channels {
+		if ch == nil || ch.Value == nil {
+			continue
+		}
+		if !ch.Value.IsChannelAvailable("mqtt") {
+			continue
+		}
 		if s.Topics == nil {
 			s.Topics = make(map[string]*Topic)
 		}
-		s.Topics[ch.Value.Name] = &Topic{Name: ch.Value.Name}
+		s.Topics[ch.Value.Name] = &Topic{Name: ch.Value.Name, cfg: ch.Value}
 	}
 }
 
@@ -64,7 +63,7 @@ func (s *Store) ServeMessage(rw mqtt.MessageWriter, req *mqtt.Message) {
 	case *mqtt.SubscribeRequest:
 		s.subscribe(rw, msg, ctx)
 	case *mqtt.PublishRequest:
-		s.publish(rw, msg, req.Header.QoS, req.Header.Retain)
+		s.publish(rw, msg, req.Header.QoS, req.Header.Retain, ctx)
 	case *mqtt.UnsubscribeRequest:
 		s.unsubscribe(rw, msg, ctx)
 	case *mqtt.PingRequest:

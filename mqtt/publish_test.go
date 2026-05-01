@@ -76,6 +76,97 @@ func TestPublish_ReadRequest(t *testing.T) {
 	}
 }
 
+func TestPublish_Write(t *testing.T) {
+	testcases := []struct {
+		name string
+		msg  mqtt.Message
+		ctx  *mqtt.ClientContext
+		out  []byte
+	}{
+		{
+			name: "request QoS=0",
+			msg: mqtt.Message{
+				Header: &mqtt.Header{
+					Type: mqtt.PUBLISH,
+				},
+				Payload: &mqtt.PublishRequest{
+					Topic:     "foo",
+					MessageId: uint16(123),
+					Data:      []byte("bar"),
+				},
+			},
+			ctx: &mqtt.ClientContext{},
+			out: []byte{
+				0x30,      // Packet type
+				0x08,      // length
+				0x0, 0x03, // topic length
+				'f', 'o', 'o',
+				'b', 'a', 'r', // data
+			},
+		},
+		{
+			name: "request QoS=1",
+			msg: mqtt.Message{
+				Header: &mqtt.Header{
+					Type: mqtt.PUBLISH,
+					QoS:  1,
+				},
+				Payload: &mqtt.PublishRequest{
+					Topic:     "foo",
+					MessageId: uint16(123),
+					Data:      []byte("bar"),
+				},
+			},
+			ctx: &mqtt.ClientContext{},
+			out: []byte{
+				0x32,      // Packet type
+				0x0a,      // length
+				0x0, 0x03, // topic length
+				'f', 'o', 'o',
+				0x0, 0x7b, // message id
+				'b', 'a', 'r', // data
+			},
+		},
+		{
+			name: "request v5",
+			msg: mqtt.Message{
+				Header: &mqtt.Header{
+					Type: mqtt.PUBLISH,
+					QoS:  1,
+				},
+				Payload: &mqtt.PublishRequest{
+					Topic:     "foo",
+					MessageId: uint16(123),
+					Data:      []byte("bar"),
+				},
+			},
+			ctx: &mqtt.ClientContext{ProtocolVersion: 5},
+			out: []byte{
+				0x32,      // Packet type
+				0x0b,      // length
+				0x0, 0x03, // topic length
+				'f', 'o', 'o',
+				0x0, 0x7b, // message id
+				0x0,           // properties
+				'b', 'a', 'r', // data
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var b bytes.Buffer
+			err := tc.msg.Write(&b, tc.ctx)
+			require.NoError(t, err)
+			require.Equal(t, tc.out, b.Bytes())
+		})
+	}
+}
+
 func TestPublish(t *testing.T) {
 	testcases := []struct {
 		name    string

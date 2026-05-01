@@ -40,8 +40,9 @@ func (c *Client) publish(msg *Message) {
 		if topicMatches(sub.Name, msg.Topic) {
 			effectiveQoS := min(msg.QoS, sub.QoS)
 
-			id := c.nextMessageId()
+			id := uint16(0)
 			if effectiveQoS > 0 {
+				id = c.nextMessageId()
 				c.appendInflight(id, msg)
 			}
 

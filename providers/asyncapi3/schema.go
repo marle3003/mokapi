@@ -9,6 +9,7 @@ import (
 	openapi "mokapi/providers/openapi/schema"
 	avro "mokapi/schema/avro/schema"
 	"mokapi/schema/encoding"
+	"mokapi/schema/json/parser"
 	jsonSchema "mokapi/schema/json/schema"
 	"reflect"
 
@@ -398,4 +399,27 @@ func (r *AvroRef) UnmarshalYAML(node *yaml.Node) error {
 
 func (r *AvroRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Schema)
+}
+
+func (r *SchemaRef) GetParser(contentType string) (encoding.Parser, error) {
+	if r == nil || r.Value == nil {
+		return &encoding.NullParser{}, nil
+	}
+
+	switch s := r.Value.(type) {
+	case *jsonSchema.Schema:
+		return &parser.Parser{Schema: s, ConvertToSortedMap: true}, nil
+	case *openapi.Schema:
+		mt := media.ParseContentType(contentType)
+		if mt.IsXml() {
+			return openapi.NewXmlParser(s), nil
+		}
+		return &parser.Parser{Schema: openapi.ConvertToJsonSchema(s), ConvertToSortedMap: true}, nil
+	case *AvroRef:
+		return &avro.Parser{Schema: s.Schema}, nil
+	case *MultiSchemaFormat:
+		return s.Schema.GetParser(contentType)
+	default:
+		return nil, fmt.Errorf("unsupported payload type: %T", s)
+	}
 }

@@ -1,5 +1,13 @@
 package mqtt
 
+type PublishReason byte
+
+const (
+	PublishSuccess       PublishReason = 0
+	TopicNameInvalid     PublishReason = 144
+	PayloadFormatInvalid PublishReason = 153
+)
+
 type PublishRequest struct {
 	Topic      string
 	MessageId  uint16
@@ -25,19 +33,26 @@ func (r *PublishRequest) Read(d *Decoder, h *Header) {
 
 func (r *PublishRequest) Write(e *Encoder, h *Header) {
 	e.writeString(r.Topic)
-	if r.MessageId > 0 {
+	if h.QoS > 0 {
 		e.writeUInt16(r.MessageId)
 	}
+
+	if e.IsV5() {
+		r.Properties.Write(e)
+	}
+
 	e.Write(r.Data)
 }
 
 type PublishResponse struct {
 	MessageId  uint16
+	ReasonCode PublishReason
 	Properties Properties
 }
 
 func (r *PublishResponse) Read(d *Decoder, h *Header) {
 	r.MessageId = d.ReadUInt16()
+	r.ReasonCode = PublishReason(d.ReadByte())
 
 	if d.IsV5() {
 		r.Properties = Properties{}
@@ -46,9 +61,8 @@ func (r *PublishResponse) Read(d *Decoder, h *Header) {
 }
 
 func (r *PublishResponse) Write(e *Encoder, _ *Header) {
-	if r.MessageId > 0 {
-		e.writeUInt16(r.MessageId)
-	}
+	e.writeUInt16(r.MessageId)
+	e.writeByte(byte(r.ReasonCode))
 	if e.IsV5() {
 		r.Properties.Write(e)
 	}

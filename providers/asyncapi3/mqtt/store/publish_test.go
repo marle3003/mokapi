@@ -7,6 +7,9 @@ import (
 	"mokapi/mqtt/mqtttest"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/mqtt/store"
+	"mokapi/runtime/events"
+	"mokapi/runtime/events/eventstest"
+	"mokapi/schema/json/schema/schematest"
 	"net"
 	"testing"
 	"time"
@@ -17,11 +20,11 @@ import (
 func TestPublish(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, s *store.Store)
+		test func(t *testing.T, s *store.Store, eh events.Handler)
 	}{
 		{
-			name: "publish no consumers",
-			test: func(t *testing.T, s *store.Store) {
+			name: "publish QoS=0",
+			test: func(t *testing.T, s *store.Store, eh events.Handler) {
 				publisher := newClient("publisher", s)
 				defer publisher.close()
 
@@ -42,8 +45,107 @@ func TestPublish(t *testing.T) {
 			},
 		},
 		{
+			name: "publish QoS=1 topic not specified",
+			test: func(t *testing.T, s *store.Store, eh events.Handler) {
+				publisher := newClient("publisher", s)
+				defer publisher.close()
+
+				publisher.connect()
+
+				rr := publisher.send(&mqtt.Message{
+					Header: &mqtt.Header{
+						QoS:    1,
+						Retain: false,
+					},
+					Payload: &mqtt.PublishRequest{
+						MessageId: uint16(123),
+						Topic:     "/foo/bar",
+						Data:      []byte("hello world"),
+					},
+					Context: publisher.ctx,
+				})
+				require.NotNil(t, rr.Message)
+				res := rr.Message.Payload.(*mqtt.PublishResponse)
+				require.Equal(t, uint16(123), res.MessageId)
+				require.Equal(t, mqtt.TopicNameInvalid, res.ReasonCode)
+			},
+		},
+		{
+			name: "publish QoS=1 topic specified",
+			test: func(t *testing.T, s *store.Store, eh events.Handler) {
+				s.Topics = map[string]*store.Topic{
+					"/foo/bar": {},
+				}
+
+				publisher := newClient("publisher", s)
+				defer publisher.close()
+
+				publisher.connect()
+
+				rr := publisher.send(&mqtt.Message{
+					Header: &mqtt.Header{
+						QoS:    1,
+						Retain: false,
+					},
+					Payload: &mqtt.PublishRequest{
+						MessageId: uint16(123),
+						Topic:     "/foo/bar",
+						Data:      []byte("hello world"),
+					},
+					Context: publisher.ctx,
+				})
+				require.NotNil(t, rr.Message)
+				res := rr.Message.Payload.(*mqtt.PublishResponse)
+				require.Equal(t, uint16(123), res.MessageId)
+				require.Equal(t, mqtt.PublishSuccess, res.ReasonCode)
+
+				evts := eh.GetEvents(events.NewTraits().WithNamespace("mqtt"))
+				require.Len(t, evts, 1)
+				d := evts[0].Data.(*store.LogMessage)
+				require.Equal(t, "/foo/bar", d.Topic)
+				require.Equal(t, "publisher", d.ClientId)
+				require.Equal(t, "hello world", d.Value.Value)
+			},
+		},
+		{
+			name: "publish QoS=1 topic specified message not valid",
+			test: func(t *testing.T, s *store.Store, eh events.Handler) {
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithChannel("/foo/bar",
+						asyncapi3test.WithMessage("bar", asyncapi3test.WithPayload(schematest.New("integer"))),
+					),
+				))
+
+				publisher := newClient("publisher", s)
+				defer publisher.close()
+
+				publisher.connect()
+
+				rr := publisher.send(&mqtt.Message{
+					Header: &mqtt.Header{
+						QoS:    1,
+						Retain: false,
+					},
+					Payload: &mqtt.PublishRequest{
+						MessageId: uint16(123),
+						Topic:     "/foo/bar",
+						Data:      []byte("hello world"),
+					},
+					Context: publisher.ctx,
+				})
+				require.NotNil(t, rr.Message)
+				res := rr.Message.Payload.(*mqtt.PublishResponse)
+				require.Equal(t, uint16(123), res.MessageId)
+				require.Equal(t, mqtt.PayloadFormatInvalid, res.ReasonCode)
+			},
+		},
+		{
 			name: "publish with one consumer QoS=1",
-			test: func(t *testing.T, s *store.Store) {
+			test: func(t *testing.T, s *store.Store, eh events.Handler) {
+				s.Topics = map[string]*store.Topic{
+					"/foo/bar": {},
+				}
+
 				publisher := newClient("publisher", s)
 				defer publisher.close()
 				consumer := newClient("consumer", s)
@@ -93,7 +195,7 @@ func TestPublish(t *testing.T) {
 		},
 		{
 			name: "consumer subscribes after published retain message QoS=1",
-			test: func(t *testing.T, s *store.Store) {
+			test: func(t *testing.T, s *store.Store, eh events.Handler) {
 				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/foo/bar")))
 
 				publisher := newClient("publisher", s)
@@ -146,7 +248,7 @@ func TestPublish(t *testing.T) {
 		},
 		{
 			name: "consumer subscribes but is offline when publishing QoS=1",
-			test: func(t *testing.T, s *store.Store) {
+			test: func(t *testing.T, s *store.Store, eh events.Handler) {
 				s.RetryInterval = 500 * time.Millisecond
 				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/foo/bar")))
 
@@ -237,10 +339,11 @@ func TestPublish(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
+			eh := &eventstest.Handler{}
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), eh)
 			defer s.Close()
 
-			tc.test(t, s)
+			tc.test(t, s, eh)
 		})
 	}
 }

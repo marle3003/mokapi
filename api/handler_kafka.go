@@ -424,7 +424,7 @@ func getKafka(info *runtime.KafkaInfo) kafkaInfo {
 	for it := info.Servers.Iter(); it.Next(); {
 		name := it.Key()
 		s := it.Value()
-		if s == nil || s.Value == nil {
+		if s == nil || s.Value == nil || strings.ToLower(s.Value.Protocol) != "kafka" {
 			continue
 		}
 
@@ -489,6 +489,9 @@ func getTopics(info *runtime.KafkaInfo) []topic {
 	topics := make([]topic, 0, len(info.Config.Channels))
 	for name, ch := range info.Config.Channels {
 		if ch.Value == nil {
+			continue
+		}
+		if !ch.Value.IsChannelAvailable("kafka") {
 			continue
 		}
 		addr := ch.Value.Address

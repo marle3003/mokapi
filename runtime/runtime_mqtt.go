@@ -24,6 +24,7 @@ type MqttStore struct {
 	cfg     *static.Config
 	sm      *events.StoreManager
 	m       sync.RWMutex
+	events  *events.StoreManager
 }
 
 type MqttInfo struct {
@@ -96,7 +97,7 @@ func (s *MqttStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*MqttIn
 		s.sm.ResetStores(events.NewTraits().WithNamespace("Mqtt").WithName(cfg.Info.Name))
 		s.sm.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("Mqtt").WithName(cfg.Info.Name))
 
-		ki = NewMqttInfo(c, store.New(cfg, emitter), s.updateEventStore)
+		ki = NewMqttInfo(c, store.New(cfg, emitter, s.events), s.updateEventStore)
 		s.infos[cfg.Info.Name] = ki
 	} else {
 		ki.AddConfig(c)

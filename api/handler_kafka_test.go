@@ -127,6 +127,7 @@ func TestHandler_Kafka(t *testing.T) {
 					Config: asyncapi3test.NewConfig(
 						asyncapi3test.WithInfo("foo", "bar", "1.0"),
 						asyncapi3test.WithServer("foo", "kafka", "foo.bar", asyncapi3test.WithServerDescription("bar")),
+						asyncapi3test.WithServer("bar", "mqtt", "foo.bar", asyncapi3test.WithServerDescription("bar")),
 					),
 					Store: &store.Store{},
 				}))
@@ -164,6 +165,10 @@ func TestHandler_Kafka(t *testing.T) {
 							asyncapi3test.WithPayload(schematest.New("string")),
 							asyncapi3test.WithContentType("application/json"),
 						),
+					),
+					asyncapi3test.WithServer("bar", "mqtt", "foo.bar"),
+					asyncapi3test.WithChannel("bar",
+						asyncapi3test.AssignToServer("#/servers/bar"),
 					),
 				)
 				s := store.New(c, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
