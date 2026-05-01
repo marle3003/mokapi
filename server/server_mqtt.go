@@ -32,9 +32,12 @@ func NewMqttManager(emitter common.EventEmitter, app *runtime.App) *MqttManager 
 }
 
 func (m *MqttManager) UpdateConfig(e dynamic.ConfigEvent) {
-	// todo: should be IsAsyncConfig and HasMqttBrokers
-	cfg, ok := runtime.IsMqttConfig(e.Config)
+	cfg, ok := runtime.HasMqttServer(e.Config)
 	if !ok {
+		if cfg == nil || m.clusters == nil {
+			return
+		}
+		m.removeCluster(cfg.Info.Name)
 		return
 	}
 

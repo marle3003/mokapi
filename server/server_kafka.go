@@ -43,8 +43,12 @@ func NewKafkaManager(emitter common.EventEmitter, app *runtime.App) *KafkaManage
 }
 
 func (m *KafkaManager) UpdateConfig(e dynamic.ConfigEvent) {
-	cfg, ok := runtime.IsAsyncApiConfig(e.Config)
+	cfg, ok := runtime.HasKafkaBroker(e.Config)
 	if !ok {
+		if cfg == nil || m.clusters == nil {
+			return
+		}
+		m.removeCluster(cfg.Info.Name)
 		return
 	}
 

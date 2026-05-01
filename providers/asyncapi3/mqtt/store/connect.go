@@ -1,8 +1,9 @@
 package store
 
 import (
-	log "github.com/sirupsen/logrus"
 	"mokapi/mqtt"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func (s *Store) connect(rw mqtt.MessageWriter, connect *mqtt.ConnectRequest, ctx *mqtt.ClientContext) {
@@ -12,15 +13,18 @@ func (s *Store) connect(rw mqtt.MessageWriter, connect *mqtt.ConnectRequest, ctx
 	}
 
 	if len(connect.ClientId) == 0 || len(connect.ClientId) > 23 {
-		rw.Write(&mqtt.Message{
+		err := rw.Write(&mqtt.Message{
 			Header: &mqtt.Header{
 				Type: mqtt.CONNACK,
 			},
 			Payload: &mqtt.ConnectResponse{
 				SessionPresent: false,
-				ReturnCode:     mqtt.ErrIdentifierRejected,
+				ReasonCode:     mqtt.ErrIdentifierRejected,
 			},
 		})
+		if err != nil {
+			log.Errorf("mqtt: failed to write connect response: %v", err)
+		}
 		return
 	}
 
@@ -28,7 +32,8 @@ func (s *Store) connect(rw mqtt.MessageWriter, connect *mqtt.ConnectRequest, ctx
 	if connect.CleanSession {
 		delete(s.clients, connect.ClientId)
 	}
-	if c, ok := s.clients[connect.ClientId]; ok {
+	c, ok := s.clients[connect.ClientId]
+	if ok {
 		sessionPresent = true
 		c.ctx = ctx
 		go c.ResendInflight(0)
@@ -36,7 +41,12 @@ func (s *Store) connect(rw mqtt.MessageWriter, connect *mqtt.ConnectRequest, ctx
 		if s.clients == nil {
 			s.clients = map[string]*Client{}
 		}
-		s.clients[connect.ClientId] = &Client{Id: connect.ClientId, ctx: ctx}
+		c = &Client{
+			Id:                    connect.ClientId,
+			ctx:                   ctx,
+			SessionExpiryInterval: connect.Properties.SessionExpiryInterval(),
+		}
+		s.clients[connect.ClientId] = c
 	}
 
 	if connect.Topic != "" {
@@ -56,29 +66,38 @@ func (s *Store) connect(rw mqtt.MessageWriter, connect *mqtt.ConnectRequest, ctx
 			s.m.Unlock()
 		} else {
 			log.Infof("mqtt broker: invalid topic %v", connect.Topic)
-			rw.Write(&mqtt.Message{
+			err := rw.Write(&mqtt.Message{
 				Header: &mqtt.Header{
 					Type: mqtt.CONNACK,
 				},
 				Payload: &mqtt.ConnectResponse{
 					SessionPresent: sessionPresent,
-					ReturnCode:     mqtt.ErrUnspecifiedError,
+					ReasonCode:     mqtt.ErrUnspecifiedError,
 				},
 			})
+			if err != nil {
+				log.Errorf("mqtt: failed to write connect response: %v", err)
+			}
 			s.m.Unlock()
 			return
 		}
 	}
 
-	rw.Write(&mqtt.Message{
+	err := rw.Write(&mqtt.Message{
 		Header: &mqtt.Header{
 			Type: mqtt.CONNACK,
 		},
 		Payload: &mqtt.ConnectResponse{
 			SessionPresent: sessionPresent,
-			ReturnCode:     mqtt.Accepted,
+			ReasonCode:     mqtt.Success,
+			Properties: mqtt.Properties{
+				mqtt.SessionExpiryInterval: c.SessionExpiryInterval,
+			},
 		},
 	})
+	if err != nil {
+		log.Errorf("mqtt: failed to write connect response: %v", err)
+	}
 
 	s.startQoS()
 }

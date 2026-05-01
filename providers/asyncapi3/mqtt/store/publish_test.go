@@ -2,7 +2,6 @@ package store_test
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/mqtt"
 	"mokapi/mqtt/mqtttest"
@@ -11,6 +10,8 @@ import (
 	"net"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestPublish(t *testing.T) {
@@ -32,18 +33,16 @@ func TestPublish(t *testing.T) {
 						Retain: false,
 					},
 					Payload: &mqtt.PublishRequest{
-						MessageId: 11,
-						Topic:     "/foo/bar",
-						Data:      []byte("hello world"),
+						Topic: "/foo/bar",
+						Data:  []byte("hello world"),
 					},
 					Context: publisher.ctx,
 				})
-				res := rr.Message.Payload.(*mqtt.PublishResponse)
-				require.Equal(t, int16(11), res.MessageId)
+				require.Nil(t, rr.Message)
 			},
 		},
 		{
-			name: "publish with one consumer QoS=0",
+			name: "publish with one consumer QoS=1",
 			test: func(t *testing.T, s *store.Store) {
 				publisher := newClient("publisher", s)
 				defer publisher.close()
@@ -60,6 +59,7 @@ func TestPublish(t *testing.T) {
 						Topics: []mqtt.SubscribeTopic{
 							{
 								Name: "/foo/bar",
+								QoS:  1,
 							},
 						},
 					},
@@ -69,7 +69,7 @@ func TestPublish(t *testing.T) {
 				// publish
 				publisher.send(&mqtt.Message{
 					Header: &mqtt.Header{
-						QoS:    0,
+						QoS:    1,
 						Retain: false,
 					},
 					Payload: &mqtt.PublishRequest{
@@ -80,19 +80,19 @@ func TestPublish(t *testing.T) {
 					Context: publisher.ctx,
 				})
 
-				consumer.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
+				_ = consumer.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
 				res := &mqtt.Message{}
-				err := res.Read(consumer.conn)
+				err := res.Read(consumer.conn, consumer.clientCtx)
 				require.NoError(t, err)
 				require.NotNil(t, res)
 				pub := res.Payload.(*mqtt.PublishRequest)
-				require.Equal(t, int16(1), pub.MessageId)
+				require.Equal(t, uint16(1), pub.MessageId)
 				require.Equal(t, "/foo/bar", pub.Topic)
 				require.Equal(t, []byte("hello world"), pub.Data)
 			},
 		},
 		{
-			name: "consumer subscribes after published retain message QoS=0",
+			name: "consumer subscribes after published retain message QoS=1",
 			test: func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/foo/bar")))
 
@@ -107,7 +107,7 @@ func TestPublish(t *testing.T) {
 				// publish
 				publisher.send(&mqtt.Message{
 					Header: &mqtt.Header{
-						QoS:    0,
+						QoS:    1,
 						Retain: true,
 					},
 					Payload: &mqtt.PublishRequest{
@@ -126,6 +126,7 @@ func TestPublish(t *testing.T) {
 						Topics: []mqtt.SubscribeTopic{
 							{
 								Name: "/foo/bar",
+								QoS:  1,
 							},
 						},
 					},
@@ -134,65 +135,13 @@ func TestPublish(t *testing.T) {
 
 				consumer.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
 				res := &mqtt.Message{}
-				err := res.Read(consumer.conn)
+				err := res.Read(consumer.conn, consumer.clientCtx)
 				require.NoError(t, err)
 				require.NotNil(t, res)
 				pub := res.Payload.(*mqtt.PublishRequest)
-				require.Equal(t, int16(1), pub.MessageId)
+				require.Equal(t, uint16(1), pub.MessageId)
 				require.Equal(t, "/foo/bar", pub.Topic)
 				require.Equal(t, []byte("hello world"), pub.Data)
-			},
-		},
-		{
-			name: "consumer subscribes but is offline when publishing QoS=0",
-			test: func(t *testing.T, s *store.Store) {
-				s.Update(asyncapi3test.NewConfig(asyncapi3test.WithChannel("/foo/bar")))
-
-				publisher := newClient("publisher", s)
-				defer publisher.close()
-				consumer := newClient("consumer", s)
-				defer consumer.close()
-
-				publisher.connect()
-				consumer.connect()
-
-				// subscribe
-				consumer.send(&mqtt.Message{
-					Payload: &mqtt.SubscribeRequest{
-						MessageId: 1,
-						Topics: []mqtt.SubscribeTopic{
-							{
-								Name: "/foo/bar",
-							},
-						},
-					},
-					Context: consumer.ctx,
-				})
-
-				consumer.close()
-
-				// publish
-				publisher.send(&mqtt.Message{
-					Header: &mqtt.Header{
-						QoS: 0,
-					},
-					Payload: &mqtt.PublishRequest{
-						MessageId: 11,
-						Topic:     "/foo/bar",
-						Data:      []byte("hello world"),
-					},
-					Context: publisher.ctx,
-				})
-
-				time.Sleep(500 * time.Millisecond)
-
-				consumer = newClient("consumer", s)
-				consumer.connect()
-
-				consumer.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
-				res := &mqtt.Message{}
-				err := res.Read(consumer.conn)
-				require.Error(t, err)
 			},
 		},
 		{
@@ -216,7 +165,7 @@ func TestPublish(t *testing.T) {
 						Topics: []mqtt.SubscribeTopic{
 							{
 								Name: "/foo/bar",
-								QoS:  byte(1),
+								QoS:  1,
 							},
 						},
 					},
@@ -248,22 +197,22 @@ func TestPublish(t *testing.T) {
 
 				consumer.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
 				res := &mqtt.Message{}
-				err := res.Read(consumer.conn)
+				err := res.Read(consumer.conn, consumer.clientCtx)
 				require.NoError(t, err)
 				require.NotNil(t, res)
 				pub := res.Payload.(*mqtt.PublishRequest)
-				require.Equal(t, int16(1), pub.MessageId)
+				require.Equal(t, uint16(1), pub.MessageId)
 				require.Equal(t, "/foo/bar", pub.Topic)
 				require.Equal(t, []byte("hello world"), pub.Data)
 
 				// broker should send the message again because no ACK was sent
 				consumer.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
 				res = &mqtt.Message{}
-				err = res.Read(consumer.conn)
+				err = res.Read(consumer.conn, consumer.clientCtx)
 				require.NoError(t, err)
 				require.NotNil(t, res)
 				pub = res.Payload.(*mqtt.PublishRequest)
-				require.Equal(t, int16(1), pub.MessageId)
+				require.Equal(t, uint16(1), pub.MessageId)
 				require.Equal(t, "/foo/bar", pub.Topic)
 				require.Equal(t, []byte("hello world"), pub.Data)
 
@@ -277,7 +226,7 @@ func TestPublish(t *testing.T) {
 				// no further message should be received
 				consumer.conn.SetReadDeadline(time.Now().Add(1 * time.Second))
 				res = &mqtt.Message{}
-				err = res.Read(consumer.conn)
+				err = res.Read(consumer.conn, consumer.clientCtx)
 			},
 		},
 	}
