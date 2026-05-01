@@ -63,7 +63,6 @@ func (s *SearchIndex) start(pool *safe.Pool) {
 	docMapping.AddFieldMappingsAt("_title", disableIndex)
 	docMapping.AddFieldMappingsAt("_time", disableIndex)
 	docMapping.AddFieldMappingsAt("discriminator", disableIndex)
-	docMapping.AddFieldMappingsAt("statusCode", bleve.NewNumericFieldMapping())
 
 	metaMapping := bleve.NewDocumentMapping()
 	metaMapping.AddFieldMappingsAt("*", disableIndex)
@@ -80,6 +79,8 @@ func (s *SearchIndex) start(pool *safe.Pool) {
 	defaultField := bleve.NewTextFieldMapping()
 	defaultField.IncludeTermVectors = true
 	docMapping.AddFieldMappingsAt("*", defaultField)
+
+	AddMappings(docMapping)
 
 	mapping := bleve.NewIndexMapping()
 	mapping.DefaultMapping = docMapping

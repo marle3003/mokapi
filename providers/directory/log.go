@@ -314,73 +314,47 @@ func NewCompareLogEvent(req *ldap.CompareRequest, res *ldap.CompareResponse, eh 
 	_ = eh.Push(l, traits.WithNamespace("ldap").With("operation", "compare"))
 
 	return l
+
 }
 
 func (l *BindLog) Title() string {
 	return fmt.Sprintf("%s %s %s", l.Request.Auth, l.Request.Name, l.Request.Password)
 }
 
-func (l *BindLog) Metadata() map[string]string {
-	return nil
-}
-
 func (l *UnbindLog) Title() string {
 	return ""
-}
-
-func (l *UnbindLog) Metadata() map[string]string {
-	return nil
 }
 
 func (l *SearchLog) Title() string {
 	return l.Request.Filter
 }
 
-func (l *SearchLog) Metadata() map[string]string {
-	if l.Request.BaseDN != "" {
-		return map[string]string{
-			"baseDn": l.Request.BaseDN,
-		}
+func (l *SearchLog) IndexFields() map[string]any {
+	m := map[string]any{
+		"operation":       l.Request.Operation,
+		"request":         l.Request,
+		"response":        l.Response,
+		"metadata.baseDN": l.Request.BaseDN,
 	}
-	return nil
+	return m
 }
 
 func (l *CompareLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Value)
 }
 
-func (l *CompareLog) Metadata() map[string]string {
-	return nil
-}
-
 func (l *ModifyLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Dn)
-}
-
-func (l *ModifyLog) Metadata() map[string]string {
-	return nil
 }
 
 func (l *ModifyDNLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Dn)
 }
 
-func (l *ModifyDNLog) Metadata() map[string]string {
-	return nil
-}
-
 func (l *DeleteLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Dn)
 }
 
-func (l *DeleteLog) Metadata() map[string]string {
-	return nil
-}
-
 func (l *AddLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Dn)
-}
-
-func (l *AddLog) Metadata() map[string]string {
-	return nil
 }

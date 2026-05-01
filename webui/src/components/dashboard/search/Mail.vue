@@ -20,7 +20,7 @@ const title = computed(() => {
 
         <div class="d-flex justify-content-between">
             <h6 class="mb-1">
-                <span class="badge bg-cluster me-1">Mail</span>
+                <span class="badge bg-server me-1">Mail</span>
                 {{ title }}
             </h6>
         </div>
@@ -36,10 +36,7 @@ const title = computed(() => {
 </template>
 
 <style scoped>
-.bg-topic {
-    background-color: #6f42c1;
-}
-.bg-cluster {
+.bg-server {
     background-color: #343a40;
 }
 </style>

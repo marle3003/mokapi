@@ -182,10 +182,6 @@ func (e *JobExecution) Title() string {
 	return e.Tags["name"]
 }
 
-func (e *JobExecution) Metadata() map[string]string {
-	return nil
-}
-
 func (e *JobExecution) Domain() string {
 	return "Job Execution"
 }

@@ -7,6 +7,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/asyncapi3/asyncapi3test"
+	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime"
 	"mokapi/runtime/search"
@@ -38,6 +39,7 @@ func TestIndex_Config(t *testing.T) {
 				cfg := &dynamic.Config{
 					Info: info,
 					Raw:  []byte(`{"name":"test"}`),
+					Data: &openapi.Config{},
 				}
 
 				app.UpdateConfig(dynamic.ConfigEvent{
@@ -60,8 +62,9 @@ func TestIndex_Config(t *testing.T) {
 						Title:     "file://foo.yml",
 						Fragments: []string{"{&#34;<mark>name</mark>&#34;:&#34;test&#34;}"},
 						Params: map[string]string{
-							"type": "config",
-							"id":   "64613435-3062-6462-3033-316532633233",
+							"type":   "config",
+							"id":     "64613435-3062-6462-3033-316532633233",
+							"source": "OpenAPI",
 						},
 					},
 					r.Results[0])

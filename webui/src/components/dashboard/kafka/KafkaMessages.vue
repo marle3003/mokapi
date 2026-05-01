@@ -7,6 +7,7 @@ import SourceView from '../SourceView.vue'
 import router from '@/router'
 import { getRouteName, useDashboard } from '@/composables/dashboard'
 import { useLocalStorage } from '@/composables/local-storage'
+import { usePrettyText } from '@/composables/usePrettyText'
 
 const props = defineProps<{
     service?: KafkaService,
@@ -36,6 +37,7 @@ const labels = computed(() => {
 
 const { format } = usePrettyDates()
 const { formatLanguage } = usePrettyLanguage()
+const { fromBinary } = usePrettyText()
 
 const { dashboard } = useDashboard()
 const { events, close } = dashboard.value.getEvents('kafka', ...labels.value)
@@ -269,11 +271,11 @@ function key(data: KafkaMessageData | null): string {
     if (!data) {
         return ''
     }
-    if (data?.key.value !== '') {
-        return data.key.value!
+    if (data?.key.value) {
+        return data.key.value
     }
     if (data?.key.binary) {
-        return atob(data.key.binary)
+        return fromBinary(data.key.binary)
     }
     return ''
 }
@@ -282,7 +284,7 @@ function formatHeaderValue(v: KafkaHeaderValue) {
         return v.value
     }
     if (v.binary !== '') {
-        return atob(v.binary)
+        return fromBinary(v.binary)
     }
     return ''
 }
@@ -292,22 +294,22 @@ function formatHeaderValue(v: KafkaHeaderValue) {
     <table class="table dataTable selectable" aria-label="Recent Messages">
         <thead>
             <tr>
+                <th scope="col" class="text-left col-2" v-if="!topicName">Topic</th>
                 <th scope="col" class="text-left col-2">Key</th>
                 <th scope="col" class="text-left col-4">Value</th>
-                <th scope="col" class="text-left col-2" v-if="!topicName">Topic</th>
                 <th scope="col" class="text-center col-2">Time</th>
                 
             </tr>
         </thead>
         <tbody>
             <tr v-for="msg in messages" :key="msg.id" @click.left="handleMessageClick(msg.event)" @mousedown.middle="goToMessage(msg.event, true)" :class="msg.deleted ? 'deleted': ''">
+                <td v-if="!topicName">{{ msg.event.traits["topic"] }}</td>
                 <td class="key">
                     <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaMessage').value, params: { id: msg.id }}">
                         {{ msg.key }}
                     </router-link>
                 </td>
                 <td class="message" :title="msg.isAvro ? 'Avro content displayed as JSON' : ''">{{ msg.value }}</td>
-                <td v-if="!topicName">{{ msg.event.traits["topic"] }}</td>
                 <td class="text-center">{{ format(msg.event.time) }}</td>
             </tr>
         </tbody>

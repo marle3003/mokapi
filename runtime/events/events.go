@@ -18,7 +18,6 @@ type Handler interface {
 
 type EventData interface {
 	Title() string
-	Metadata() map[string]string
 }
 
 type StoreManager struct {

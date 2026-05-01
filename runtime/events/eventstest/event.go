@@ -3,17 +3,18 @@ package eventstest
 import "mokapi/runtime/events"
 
 type Event struct {
-	Name          string
-	Api           string            `json:"api"`
-	MetadataField map[string]string `json:"-"`
+	Name string
+	Api  string `json:"api"`
 }
 
 func (e *Event) Title() string {
 	return e.Name
 }
 
-func (e *Event) Metadata() map[string]string {
-	return e.MetadataField
+func (e *Event) IndexFields() map[string]any {
+	return map[string]any{
+		"name": e.Name,
+	}
 }
 
 type Handler struct {

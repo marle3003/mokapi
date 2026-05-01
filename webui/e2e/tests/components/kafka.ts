@@ -81,7 +81,7 @@ export function useKafkaMessages(page: Page) {
     return {
         test: async (table: Locator, withTopic: boolean = true) => {
             await test.step('Check messages log', async () => {
-                let columns = ['Key', 'Value', 'Topic', 'Time']
+                let columns = ['Topic', 'Key', 'Value', 'Time']
                 if (!withTopic) {
                     columns.splice(2,1)
                 }

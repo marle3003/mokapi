@@ -22,7 +22,6 @@ export function usePrettyText() {
             let n = maxLength - start.length - end.length
             for (let i = segments.length - 2; i > 0; i--) {
                 n -= segments[i].length + 1
-                console.log(`Checking segment "${segments[i]}", remaining chars: ${n}`)
                 if (n < 0) {
                     break
                 }
@@ -39,5 +38,14 @@ export function usePrettyText() {
         return s;
     }
 
-    return { parseUrls, adaptiveTruncate }
+    function fromBinary(encoded: string) {
+        return new TextDecoder().decode(base64ToBytes(encoded))
+    }
+
+    function base64ToBytes(base64: string) {
+        const binString = atob(base64);
+        return Uint8Array.from(binString, (m) => m.codePointAt(0)!);
+    }
+
+    return { parseUrls, adaptiveTruncate, fromBinary }
 }

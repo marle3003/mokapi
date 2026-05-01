@@ -38,17 +38,16 @@ function isMail() {
             <div v-if="item.time" class="text-muted">⏱ {{ format(item.time) }}</div>
             <span v-if="isKafka()" class="fw-semibold text-dark">Message received</span>
             <span v-if="isHttp()" class="fw-semibold text-dark">Request received</span>
+            <span v-if="isMail()" class="fw-semibold text-dark">Mail received</span>
+            <span v-if="isLdap()" class="fw-semibold text-dark">Search received</span>
         </div>
         
         <h6 class="mb-1 mt-1">
             <span v-if="isKafka()" class="badge me-2 text-capitalize" :class="item.params['traits.namespace']">{{ item.params['traits.namespace'] }}</span>
-            <span v-if="isHttp()" class="badge me-2 text-uppercase operation" :class="item.params['traits.method']">{{ item.params['traits.method'] }}</span>
+            <span v-if="isHttp()" class="badge me-2 text-uppercase operation" :class="item.params['traits.method'].toLowerCase()">{{ item.params['traits.method'] }}</span>
             <span v-if="isLdap()" class="badge me-2 text-uppercase ldap operation" :class="item.params['traits.operation']">{{ item.params['traits.operation'] }}</span>
             <span>{{ title }}</span>
         </h6>
-        <div class="text-end small" v-if="item.params.statusCode">
-            <span class="badge status-code text-dark" :class="getClassByStatusCode(item.params.statusCode)">{{ formatStatusCode(item.params.statusCode) }}</span>
-        </div>
 
         <div class="text-muted small mb-1">
             <span v-if="item.domain"> {{ item.domain }}</span>

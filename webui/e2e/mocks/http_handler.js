@@ -594,14 +594,15 @@ function getSearchResults() {
                 type: 'Event',
                 domain: 'Swagger Petstore',
                 title: "http://127.0.0.1:18080/pet",
-                fragments: [],
+                fragments: ['<mark>POST</mark>'],
                 time: '2025-05-23T08:49:25.482366+01:00',
                 params: {
                     type: 'event',
                     'traits.namespace': 'http',
                     'traits.name': 'Swagger Petstore',
-                    'traits.method': 'get',
-                    id: '4242'
+                    'traits.path': '/pet',
+                    'traits.method': 'POST',
+                    id: '9e058601-562a-4063-a3b2-066ba624893a'
                 }
             },
             {
@@ -646,8 +647,9 @@ function getSearchResults() {
                     'traits.namespace': 'kafka',
                     'traits.name': 'Kafka World',
                     'traits.topic': 'mokapi.shop.products',
+                    'traits.type': 'message',
                     'traits.partition': '0',
-                    id: '123456'
+                    id: '5d549ffe-97cd-477d-8db6-27ed4963c08d'
                 }
             },
             {
@@ -664,12 +666,13 @@ function getSearchResults() {
                 type: 'Event',
                 domain: 'Mail Testserver',
                 title: "A test mail",
-                fragments: ['message <mark>from Alice</mark>'],
+                fragments: ['<mark>test</mark> <mark>mail</mark>'],
+                time: '2025-05-01T08:49:25.482366+01:00',
                 params: {
                     type: 'event',
                     'traits.namespace': 'mail',
                     'traits.name': 'Mail Testserver',
-                    id: '8832'
+                    id: '273cd167-f5a5-4da1-969e-d44213686491'
                 }
             },
             {
@@ -687,6 +690,7 @@ function getSearchResults() {
                 domain: 'LDAP Testserver',
                 title: "(objectClass=user)",
                 fragments: ['(objectClass=<mark>user</mark>)'],
+                time: '2025-05-01T08:49:25.482366+01:00',
                 params: {
                     type: 'event',
                     'traits.namespace': 'ldap',

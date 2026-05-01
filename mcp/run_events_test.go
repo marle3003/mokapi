@@ -19,8 +19,6 @@ func (t *testEvent) Title() string {
 	return t.Name
 }
 
-func (t *testEvent) Metadata() map[string]string { return nil }
-
 func TestEvents(t *testing.T) {
 	testcases := []struct {
 		name string

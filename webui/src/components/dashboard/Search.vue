@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { usePrettyDates } from '@/composables/usePrettyDate';
 import router from '@/router';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
@@ -10,9 +9,9 @@ import Kafka from './search/Kafka.vue';
 import Event from './search/Event.vue';
 import Ldap from './search/Ldap.vue';
 import Mail from './search/Mail.vue';
+import Config from './search/Config.vue';
 
 const route = useRoute()
-const { format } = usePrettyDates()
 const queryText = ref<string>(route.query.q?.toString() ?? '')
 const pageIndex = ref(getIndex())
 const errorMessage = ref<string | undefined>()
@@ -85,7 +84,7 @@ async function navigateToSearchResult(result: any) {
     case 'ldap':
       return router.push({ name: 'ldapService', params: result.params })
     case 'event':
-      switch (result.params.namespace) {
+      switch (result.params['traits.namespace']) {
         case 'http':
           return router.push({ name: 'httpRequest', params: result.params })
         case 'kafka':
@@ -290,7 +289,7 @@ function facetTitle(s: string) {
             </div>
           </div>
           <div v-if="loading.isLoading" class="row justify-content-md-center ps-0 mb-2">{{ loading.statusText }}</div>
-          <div class="row justify-content-md-center ps-0 mb-2" v-if="searchResult">
+          <div class="row justify-content-md-center ps-0 mb-2" v-if="searchResult && searchResult.results">
             <div class="col-6 col-auto">
                <h3 v-if="searchResult.total <= 10" class="mt-1 mb-3 fs-6">Showing <strong>{{ searchResult.total }}</strong> {{ searchResult.total === 1 ? "result" : "results" }}</h3>
                <h3 v-else class="mt-1 mb-3 fs-6">Showing <strong>{{ searchResult.results.length }}</strong> of {{ searchResult.total }} results</h3>
@@ -316,25 +315,12 @@ function facetTitle(s: string) {
                   class="card mb-3"
                   @click="navigateToSearchResult(item)"
                 >
-                <Http :item="item" v-if="item.params.type === 'http'" />
-                <Kafka :item="item" v-if="item.params.type === 'kafka'" />
-                <Ldap :item="item" v-if="item.params.type === 'ldap'" />
-                <Mail :item="item" v-if="item.params.type === 'mail'" />
-                <Event :item="item" v-if="item.params.type === 'event'" />
-                  <!-- <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                      <div>
-                        <span class="badge bg-secondary text-uppercase me-2">{{ item.type }}</span>
-                        <span v-if="item.domain">{{ item.domain }}</span>
-                      </div>
-                      <small v-if="item.time">{{ format(item.time) }}</small>
-                    </div>
-
-                    <h5 class="card-title mb-2" v-html="title(item)"></h5>
-                    <span class="badge bg-warning text-dark ms-auto">{{ item.params.statusCode }}</span>
-
-                    <p class="card-text small mb-0" v-html="item.fragments?.join(' ... ')"></p>
-                  </div> -->
+                  <Http :item="item" v-if="item.params.type === 'http'" />
+                  <Kafka :item="item" v-if="item.params.type === 'kafka'" />
+                  <Ldap :item="item" v-if="item.params.type === 'ldap'" />
+                  <Mail :item="item" v-if="item.params.type === 'mail'" />
+                  <Config :item="item" v-if="item.params.type === 'config'" />
+                  <Event :item="item" v-if="item.params.type === 'event'" />
                 </div>
               </div>
               <!-- Error Alert -->

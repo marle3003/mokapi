@@ -46,6 +46,12 @@ func (l *Log) Title() string {
 	return fmt.Sprintf("%s", l.Subject)
 }
 
-func (l *Log) Metadata() map[string]string {
-	return nil
+func (l *Log) IndexFields() map[string]any {
+	m := map[string]any{
+		"from":      l.From,
+		"to":        l.To,
+		"messageId": l.MessageId,
+		"subject":   l.Subject,
+	}
+	return m
 }

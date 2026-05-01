@@ -3,14 +3,12 @@ package openapi
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"mokapi/engine/common"
 	"mokapi/lib"
 	"mokapi/runtime/events"
 	"net"
 	"net/http"
 	"net/textproto"
-	"strconv"
 	"strings"
 )
 
@@ -49,7 +47,7 @@ type HttpParameter struct {
 	Raw   *string `json:"raw"`
 }
 
-func NewLogEventContext(r *http.Request, deprecated bool, eh events.Handler, traits events.Traits) (context.Context, error) {
+func NewLogEventContext(r *http.Request, deprecated bool, traits events.Traits) (context.Context, error) {
 	l := &HttpLog{
 		Request: &HttpRequestLog{
 			Method:      r.Method,
@@ -98,10 +96,6 @@ func NewLogEventContext(r *http.Request, deprecated bool, eh events.Handler, tra
 
 	}
 
-	err := eh.Push(l, traits.WithNamespace("http"))
-	if err != nil {
-		return nil, err
-	}
 	ctx := context.WithValue(r.Context(), logKey, l)
 
 	return ctx, nil
@@ -113,16 +107,21 @@ func LogEventFromContext(ctx context.Context) (*HttpLog, bool) {
 }
 
 func (l *HttpLog) Title() string {
-	return fmt.Sprintf("%s %s", l.Request.Method, l.Request.Url)
+	return l.Request.Url
 }
 
-func (l *HttpLog) Metadata() map[string]string {
-	if l != nil && l.Response != nil {
-		return map[string]string{
-			"statusCode": strconv.Itoa(l.Response.StatusCode),
-		}
+func (l *HttpLog) IndexFields() map[string]any {
+	m := map[string]any{
+		"request":  l.Request,
+		"response": l.Response,
 	}
-	return nil
+	if l.Request != nil {
+		m["method"] = l.Request.Method
+	}
+	if l.Response != nil {
+		m["statusCode"] = l.Response.StatusCode
+	}
+	return m
 }
 
 func (l *HttpRequestLog) setParams(name string, params map[string]RequestParameterValue) {
