@@ -3,11 +3,12 @@ package mqtt_test
 import (
 	"bytes"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"mokapi/mqtt"
 	"mokapi/mqtt/mqtttest"
 	"mokapi/try"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestPublish_ReadRequest(t *testing.T) {
@@ -19,7 +20,28 @@ func TestPublish_ReadRequest(t *testing.T) {
 		{
 			name: "publish to foo",
 			in: []byte{
-				0x30,       // flags
+				0x30,       // Protocol Type
+				0x8,        // length
+				0x00, 0x03, // topic length
+				'f', 'o', 'o', // topic
+				'b', 'a', 'r', // Payload
+			},
+			test: func(t *testing.T, r *mqtt.Message, err error) {
+				require.NoError(t, err)
+
+				require.Equal(t, 8, r.Header.Size)
+
+				require.IsType(t, &mqtt.PublishRequest{}, r.Payload)
+				msg := r.Payload.(*mqtt.PublishRequest)
+
+				require.Equal(t, "foo", msg.Topic)
+				require.Equal(t, "bar", string(msg.Data))
+			},
+		},
+		{
+			name: "publish to foo with QoS",
+			in: []byte{
+				0x32,       // Protocol Type
 				0xA,        // length
 				0x00, 0x03, // topic length
 				'f', 'o', 'o', // Payload
@@ -35,8 +57,8 @@ func TestPublish_ReadRequest(t *testing.T) {
 				msg := r.Payload.(*mqtt.PublishRequest)
 
 				require.Equal(t, "foo", msg.Topic)
-				require.Equal(t, int16(10), msg.MessageId)
-				require.Equal(t, []byte("bar"), msg.Data)
+				//require.Equal(t, int16(10), msg.MessageId)
+				require.Equal(t, "bar", string(msg.Data))
 			},
 		},
 	}
@@ -48,7 +70,7 @@ func TestPublish_ReadRequest(t *testing.T) {
 			t.Parallel()
 
 			r := &mqtt.Message{}
-			err := r.Read(bytes.NewReader(tc.in))
+			err := r.Read(bytes.NewReader(tc.in), &mqtt.ClientContext{})
 			tc.test(t, r, err)
 		})
 	}
@@ -78,6 +100,7 @@ func TestPublish(t *testing.T) {
 				r := &mqtt.Message{
 					Header: &mqtt.Header{
 						Type: mqtt.PUBLISH,
+						QoS:  1,
 					},
 					Payload: &mqtt.PublishRequest{
 						Topic:     "foo",
@@ -89,7 +112,7 @@ func TestPublish(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, mqtt.PUBACK, res.Header.Type)
 				msg := res.Payload.(*mqtt.PublishResponse)
-				require.Equal(t, int16(10), msg.MessageId)
+				require.Equal(t, uint16(10), msg.MessageId)
 			},
 		},
 	}

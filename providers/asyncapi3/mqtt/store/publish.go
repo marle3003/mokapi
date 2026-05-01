@@ -1,6 +1,8 @@
 package store
 
-import "mokapi/mqtt"
+import (
+	"mokapi/mqtt"
+)
 
 func (s *Store) publish(rw mqtt.MessageWriter, publish *mqtt.PublishRequest, qos byte, retain bool) {
 	msg := &Message{
@@ -16,14 +18,16 @@ func (s *Store) publish(rw mqtt.MessageWriter, publish *mqtt.PublishRequest, qos
 		}
 	}
 
-	rw.Write(&mqtt.Message{
-		Header: &mqtt.Header{
-			Type: mqtt.PUBACK,
-		},
-		Payload: &mqtt.PublishResponse{
-			MessageId: publish.MessageId,
-		},
-	})
+	if qos == 1 {
+		rw.Write(&mqtt.Message{
+			Header: &mqtt.Header{
+				Type: mqtt.PUBACK,
+			},
+			Payload: &mqtt.PublishResponse{
+				MessageId: publish.MessageId,
+			},
+		})
+	}
 
 	go func() {
 		for _, client := range s.clients {

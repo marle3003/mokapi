@@ -4,6 +4,7 @@ import (
 	engine "mokapi/engine/common"
 	"mokapi/mqtt"
 	"mokapi/providers/asyncapi3"
+	"mokapi/version"
 	"sync"
 	"time"
 )
@@ -22,18 +23,24 @@ func New(cfg *asyncapi3.Config, emitter engine.EventEmitter) *Store {
 	s := &Store{
 		RetryInterval: 10 * time.Second,
 		close:         make(chan bool, 1),
+		Topics:        make(map[string]*Topic),
 	}
 
 	for _, ch := range cfg.Channels {
-		if s.Topics == nil {
-			s.Topics = make(map[string]*Topic)
-		}
-
 		if ch != nil && ch.Value != nil {
 			s.Topics[ch.Value.Name] = &Topic{
 				Name: ch.Value.Name,
 			}
 		}
+	}
+
+	s.Topics["$SYS/broker/version"] = &Topic{
+		Name: "$SYS/broker/version",
+		Retained: &Message{
+			Topic:  "$SYS/broker/version",
+			Data:   []byte("Mokapi " + version.BuildVersion),
+			Retain: true,
+		},
 	}
 
 	return s
@@ -58,6 +65,15 @@ func (s *Store) ServeMessage(rw mqtt.MessageWriter, req *mqtt.Message) {
 		s.subscribe(rw, msg, ctx)
 	case *mqtt.PublishRequest:
 		s.publish(rw, msg, req.Header.QoS, req.Header.Retain)
+	case *mqtt.UnsubscribeRequest:
+		s.unsubscribe(rw, msg, ctx)
+	case *mqtt.PingRequest:
+		_ = rw.Write(&mqtt.Message{
+			Header: &mqtt.Header{
+				Type: mqtt.PINGRESP,
+			},
+			Payload: &mqtt.PingResponse{},
+		})
 	}
 }
 

@@ -12,6 +12,7 @@ import (
 	"mokapi/runtime/monitor"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -199,32 +200,21 @@ func (h *MqttHandler) ServeMessage(rw mqtt.MessageWriter, req *mqtt.Message) {
 	h.next.ServeMessage(rw, req)
 }
 
-func IsMqttConfig(c *dynamic.Config) (*asyncapi3.Config, bool) {
-	var cfg *asyncapi3.Config
-	if old, ok := c.Data.(*asyncApi.Config); ok {
-		var err error
-		cfg, err = old.Convert()
-		if err != nil {
-			return nil, false
+func HasMqttServer(c *dynamic.Config) (*asyncapi3.Config, bool) {
+	cfg, ok := IsAsyncApiConfig(c)
+	if !ok {
+		return nil, false
+	}
+	for it := cfg.Servers.Iter(); it.Next(); {
+		s := it.Value()
+		if s.Value == nil {
+			continue
 		}
-	} else {
-		cfg, ok = c.Data.(*asyncapi3.Config)
-		if !ok {
-			return nil, false
+		if strings.ToLower(s.Value.Protocol) == "mqtt" {
+			return cfg, true
 		}
 	}
-
-	return cfg, hasMqttBroker(cfg)
-}
-
-func hasMqttBroker(c *asyncapi3.Config) bool {
-	for it := c.Servers.Iter(); it.Next(); {
-		server := it.Value()
-		if server.Value.Protocol == "mqtt" {
-			return true
-		}
-	}
-	return false
+	return cfg, false
 }
 
 func (c *MqttInfo) Remove(cfg *dynamic.Config) {

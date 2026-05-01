@@ -5,15 +5,18 @@ import (
 	"mokapi/mqtt"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Client struct {
-	Id           string
-	Clean        bool
-	Subscription map[string]Subscription
+	Id                    string
+	Clean                 bool
+	Subscription          map[string]Subscription
+	SessionExpiryInterval int32
 
 	ctx       *mqtt.ClientContext
-	messageId int16
+	messageId uint16
 	inflight  []*InflightMessage
 	m         sync.Mutex
 }
@@ -25,7 +28,7 @@ type Subscription struct {
 }
 
 type InflightMessage struct {
-	MessageId int16
+	MessageId uint16
 	Message   *Message
 	QoS       byte
 	Retries   int
@@ -34,7 +37,7 @@ type InflightMessage struct {
 
 func (c *Client) publish(msg *Message) {
 	for _, sub := range c.Subscription {
-		if sub.Name == msg.Topic {
+		if topicMatches(sub.Name, msg.Topic) {
 			effectiveQoS := min(msg.QoS, sub.QoS)
 
 			id := c.nextMessageId()
@@ -42,7 +45,7 @@ func (c *Client) publish(msg *Message) {
 				c.appendInflight(id, msg)
 			}
 
-			c.ctx.Send(&mqtt.Message{
+			err := c.ctx.Send(&mqtt.Message{
 				Header: &mqtt.Header{
 					Type:   mqtt.PUBLISH,
 					QoS:    effectiveQoS,
@@ -54,6 +57,9 @@ func (c *Client) publish(msg *Message) {
 					Data:      msg.Data,
 				},
 			})
+			if err != nil {
+				log.Errorf("mqtt: failed to publish msg %d: %v", id, err)
+			}
 		}
 	}
 }
@@ -98,18 +104,19 @@ func (c *Client) ResendInflight(duration time.Duration) {
 	}
 }
 
-func (c *Client) appendInflight(id int16, msg *Message) {
+func (c *Client) appendInflight(id uint16, msg *Message) {
 	c.m.Lock()
 	defer c.m.Unlock()
 
 	c.inflight = append(c.inflight, &InflightMessage{
+		QoS:       msg.QoS,
 		MessageId: id,
 		Message:   msg,
 		SendAt:    time.Now(),
 	})
 }
 
-func (c *Client) nextMessageId() int16 {
+func (c *Client) nextMessageId() uint16 {
 	c.m.Lock()
 	defer c.m.Unlock()
 
