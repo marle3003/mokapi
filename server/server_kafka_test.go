@@ -49,11 +49,11 @@ func TestKafkaServer(t *testing.T) {
 func TestKafkaServer_Update(t *testing.T) {
 	testcases := []struct {
 		name string
-		fn   func(t *testing.T, m *KafkaManager)
+		test func(t *testing.T, m *KafkaManager)
 	}{
 		{
-			"add another broker",
-			func(t *testing.T, m *KafkaManager) {
+			name: "add another broker",
+			test: func(t *testing.T, m *KafkaManager) {
 				port1 := try.GetFreePort()
 				addr1 := fmt.Sprintf("127.0.0.1:%v", port1)
 				cfg := asyncapi3test.NewConfig(
@@ -92,8 +92,8 @@ func TestKafkaServer_Update(t *testing.T) {
 			},
 		},
 		{
-			"add broker",
-			func(t *testing.T, m *KafkaManager) {
+			name: "add broker",
+			test: func(t *testing.T, m *KafkaManager) {
 				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapi3test.NewConfig(
@@ -120,8 +120,8 @@ func TestKafkaServer_Update(t *testing.T) {
 			},
 		},
 		{
-			"remove broker",
-			func(t *testing.T, m *KafkaManager) {
+			name: "remove broker",
+			test: func(t *testing.T, m *KafkaManager) {
 				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapi3test.NewConfig(
@@ -148,8 +148,8 @@ func TestKafkaServer_Update(t *testing.T) {
 			},
 		},
 		{
-			"remove broker but still has one",
-			func(t *testing.T, m *KafkaManager) {
+			name: "remove broker but still has one",
+			test: func(t *testing.T, m *KafkaManager) {
 				port := try.GetFreePort()
 				addr1 := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapi3test.NewConfig(
@@ -211,8 +211,8 @@ func TestKafkaServer_Update(t *testing.T) {
 			},
 		},
 		{
-			"change broker name",
-			func(t *testing.T, m *KafkaManager) {
+			name: "change broker name",
+			test: func(t *testing.T, m *KafkaManager) {
 				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapi3test.NewConfig(
@@ -244,8 +244,8 @@ func TestKafkaServer_Update(t *testing.T) {
 			},
 		},
 		{
-			"add topic",
-			func(t *testing.T, m *KafkaManager) {
+			name: "add topic",
+			test: func(t *testing.T, m *KafkaManager) {
 				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapi3test.NewConfig(
@@ -282,8 +282,8 @@ func TestKafkaServer_Update(t *testing.T) {
 			},
 		},
 		{
-			"remove topic",
-			func(t *testing.T, m *KafkaManager) {
+			name: "remove topic",
+			test: func(t *testing.T, m *KafkaManager) {
 				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapi3test.NewConfig(
@@ -318,8 +318,8 @@ func TestKafkaServer_Update(t *testing.T) {
 			},
 		},
 		{
-			"remove cluster",
-			func(t *testing.T, m *KafkaManager) {
+			name: "remove cluster",
+			test: func(t *testing.T, m *KafkaManager) {
 				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapi3test.NewConfig(
@@ -346,6 +346,48 @@ func TestKafkaServer_Update(t *testing.T) {
 				require.Error(t, err)
 			},
 		},
+		{
+			name: "mqtt topic should not be available",
+			test: func(t *testing.T, m *KafkaManager) {
+				port := try.GetFreePort()
+				addr := fmt.Sprintf("127.0.0.1:%v", port)
+				cfg := asyncapi3test.NewConfig(
+					asyncapi3test.WithTitle("foo"),
+					asyncapi3test.WithServer("mqtt12", "mqtt", addr),
+					asyncapi3test.WithServer("kafka", "kafka", addr),
+					asyncapi3test.WithChannel("foo",
+						asyncapi3test.WithMessage("foo",
+							asyncapi3test.WithPayload(
+								&schema.Schema{Type: schema.Types{"string"}},
+							),
+						),
+						asyncapi3test.AssignToServer("#/servers/mqtt12"),
+					),
+					asyncapi3test.WithChannel("bar",
+						asyncapi3test.WithMessage("bar",
+							asyncapi3test.WithPayload(
+								&schema.Schema{Type: schema.Types{"string"}},
+							),
+						),
+						asyncapi3test.AssignToServer("#/servers/kafka"),
+					),
+				)
+				c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}, Data: cfg}
+				err := cfg.Parse(c, &dynamictest.Reader{})
+				require.NoError(t, err)
+
+				m.UpdateConfig(dynamic.ConfigEvent{Config: c})
+
+				// wait for mqtt start
+				time.Sleep(500 * time.Millisecond)
+
+				client := kafkatest.NewClient(addr, "test")
+				r, err := client.Metadata(0, &metaData.Request{})
+				require.NoError(t, err)
+				require.Len(t, r.Topics, 1)
+				require.Equal(t, "bar", r.Topics[0].Name)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -355,7 +397,7 @@ func TestKafkaServer_Update(t *testing.T) {
 			m := NewKafkaManager(nil, runtime.New(cfg, &dynamictest.Reader{}))
 			defer m.Stop()
 
-			tc.fn(t, m)
+			tc.test(t, m)
 		})
 	}
 }

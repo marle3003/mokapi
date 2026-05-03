@@ -14,6 +14,7 @@ import (
 	"mokapi/sortedmap"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -268,4 +269,21 @@ func (s *KafkaStore) updateEventStore(k *KafkaInfo) {
 		s.events.SetStore(int(eventStore.Size), traits)
 		k.seenTopics[topicName] = true
 	}
+}
+
+func HasKafkaBroker(c *dynamic.Config) (*asyncapi3.Config, bool) {
+	cfg, ok := IsAsyncApiConfig(c)
+	if !ok {
+		return nil, false
+	}
+	for it := cfg.Servers.Iter(); it.Next(); {
+		s := it.Value()
+		if s.Value == nil {
+			continue
+		}
+		if strings.ToLower(s.Value.Protocol) == "kafka" {
+			return cfg, true
+		}
+	}
+	return cfg, false
 }

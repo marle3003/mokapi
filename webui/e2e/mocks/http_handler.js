@@ -1,8 +1,9 @@
 import { on, sleep } from 'mokapi'
-import { clusters, events as kafkaEvents, configs as kafkaConfigs } from 'kafka.js'
+import { clusters as kafkaClusters, events as kafkaEvents, configs as kafkaConfigs } from 'kafka.js'
 import { apps as httpServices, events as httpEvents, configs as httpConfigs } from 'services_http.js'
 import { services as mailServices, mailEvents, getMail, getAttachment } from 'mail.js'
 import { server as ldapServers, searches } from 'ldap.js'
+import { clusters as mqttClusters, events as mqttEvents } from 'mqtt.js'
 import { metrics } from 'metrics.js'
 import { get, post, fetch } from 'mokapi/http'
 import { base64 } from 'mokapi/encoding';
@@ -25,7 +26,7 @@ export default async function() {
         switch (request.operationId) {
             case 'info': {
 
-                response.data = { version: "0.11.0", activeServices: ["http", "kafka", "ldap", "mail"], search: { enabled: true } }
+                response.data = { version: "0.11.0", activeServices: ["http", "kafka", "ldap", "mail", "mqtt"], search: { enabled: true } }
                 return true
             }
             case 'services':
@@ -41,25 +42,25 @@ export default async function() {
                 }
                 return true
             case 'serviceKafka':
-                response.data = clusters[0]
+                response.data = kafkaClusters[0]
                 return true
             case 'serviceMail':
                 response.data = mailServices[0]
                 return true
-            case 'clusters':
-                response.data = clusters.map(x => getInfo(x, 'kafka'))
+            case 'kafkaClusters':
+                response.data = kafkaClusters.map(x => getInfo(x, 'kafka'))
                 return
-            case 'topics':
-                response.data = clusters[0].topics
+            case 'kafkaTopics':
+                response.data = kafkaClusters[0].topics
                 return
-            case 'topic':
-                response.data = clusters[0].topics.find(x => x.name === request.path.topic)
+            case 'kafkaTopic':
+                response.data = kafkaClusters[0].topics.find(x => x.name === request.path.topic)
                 if (response.data === undefined) {
                     response.statusCode = 404
                 }
                 return
-            case 'produceTopic': {
-                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+            case 'kafkaProduceTopic': {
+                const topic = kafkaClusters[0].topics.find(x => x.name === request.path.topic)
                 if (!topic) {
                     response.statusCode = 404
                 } else {
@@ -74,8 +75,8 @@ export default async function() {
                 }
                 return
             }
-            case 'partitions': {
-                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+            case 'kafkaPartitions': {
+                const topic = kafkaClusters[0].topics.find(x => x.name === request.path.topic)
                 if (!topic) {
                     response.statusCode = 404
                     return
@@ -83,8 +84,8 @@ export default async function() {
                 response.data = topic.partitions
                 return
             }
-            case 'partition': {
-                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+            case 'kafkaPartition': {
+                const topic = kafkaClusters[0].topics.find(x => x.name === request.path.topic)
                 if (!topic) {
                     response.statusCode = 404
                     return
@@ -97,8 +98,8 @@ export default async function() {
                 }
                 return
             }
-            case 'producePartition': {
-                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+            case 'kafkaProducePartition': {
+                const topic = kafkaClusters[0].topics.find(x => x.name === request.path.topic)
                 if (!topic) {
                     response.statusCode = 404
                     return
@@ -118,8 +119,8 @@ export default async function() {
                 }
                 return
             }
-            case 'offsets': {
-                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+            case 'kafkaOffsets': {
+                const topic = kafkaClusters[0].topics.find(x => x.name === request.path.topic)
                 if (!topic) {
                     response.statusCode = 404
                     return
@@ -143,8 +144,8 @@ export default async function() {
                 }
                 return
             }
-            case 'offset': {
-                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+            case 'kafkaOffset': {
+                const topic = kafkaClusters[0].topics.find(x => x.name === request.path.topic)
                 if (!topic) {
                     response.statusCode = 404
                     return
@@ -402,11 +403,12 @@ export default async function() {
 
 function getServices() {
     let http = httpServices.map(x => getInfo(x, 'http'))
-    let kafka = clusters.map(x => getInfo(x, 'kafka'))
+    let kafka = kafkaClusters.map(x => getInfo(x, 'kafka'))
     let smtp = mailServices.map(x => getInfo(x, 'mail'))
     let ldap = ldapServers.map(x => getInfo(x, 'ldap'))
+    let mqtt = mqttClusters.map(x => getInfo(x, 'mqtt'))
 
-    return http.concat(kafka).concat(smtp).concat(ldap)
+    return http.concat(kafka).concat(smtp).concat(ldap).concat(mqtt)
 }
 
 function getEvent(id) {
@@ -416,6 +418,11 @@ function getEvent(id) {
         }
     }
     for (const e of kafkaEvents){
+        if (e.id === id){
+            return e
+        }
+    }
+     for (const e of mqttEvents){
         if (e.id === id){
             return e
         }
@@ -446,6 +453,11 @@ function getEvents(traits) {
         }
     }
     for (const e of kafkaEvents){
+        if (matchEvent(e, traits)) {
+            result.push(e)
+        }
+    }
+    for (const e of mqttEvents){
         if (matchEvent(e, traits)) {
             result.push(e)
         }

@@ -5,9 +5,15 @@ test.use({ colorScheme: 'light' })
 // reset storage state
 test.use({ storageState: { cookies: [], origins: [] } });
 
-test('Visit Kafka Order Service', async ({ page }) => {
+test('Visit Kafka Order Service', async ({ page, baseURL }) => {
+    let dashboard = '/dashboard'
+    if (baseURL === 'http://localhost:8080') {
+        await page.goto('/dashboard')
+    } else {
+        dashboard = '/dashboard-demo'
+        await page.goto('/dashboard-demo')
+    }
 
-    await page.goto('/dashboard-demo');
     await page.getByText('Kafka Order Service API').click();
 
     await test.step('Verify service info', async () => {
@@ -157,7 +163,7 @@ test('Visit Kafka Order Service', async ({ page }) => {
             const meta = page.getByRole('region', { name: 'Meta' });
             await expect(meta.getByLabel('Kafka Key')).toHaveText('a914817b-c5f0-433e-8280-1cd2fe44234e');
             await expect(meta.getByLabel('Kafka Topic')).toHaveText('order-topic');
-            await expect(meta.getByLabel('Kafka Topic')).toHaveAttribute('href', '/dashboard-demo/kafka/service/Kafka%20Order%20Service%20API/topics/order-topic');
+            await expect(meta.getByLabel('Kafka Topic')).toHaveAttribute('href', dashboard + '/kafka/service/Kafka%20Order%20Service%20API/topics/order-topic');
             await expect(meta.getByLabel('Offset')).toHaveText('1');
             await expect(meta.getByLabel('Content Type')).toHaveText('application/json');
             await expect(meta.getByLabel('Key Type')).toHaveText('-');
@@ -189,7 +195,7 @@ test('Visit Kafka Order Service', async ({ page }) => {
             const meta = page.getByRole('region', { name: 'Meta' });
             await expect(meta.getByLabel('Kafka Key')).toHaveText('random-message-1');
             await expect(meta.getByLabel('Kafka Topic')).toHaveText('order-topic');
-            await expect(meta.getByLabel('Kafka Topic')).toHaveAttribute('href', '/dashboard-demo/kafka/service/Kafka%20Order%20Service%20API/topics/order-topic');
+            await expect(meta.getByLabel('Kafka Topic')).toHaveAttribute('href', dashboard + '/kafka/service/Kafka%20Order%20Service%20API/topics/order-topic');
             await expect(meta.getByLabel('Offset')).toHaveText('0');
             await expect(meta.getByLabel('Content Type')).toHaveText('application/json');
             await expect(meta.getByLabel('Key Type')).toHaveText('-');

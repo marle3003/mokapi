@@ -9,16 +9,12 @@ import (
 const clientKey = "client"
 
 type ClientContext struct {
-	Addr     string
-	ClientId string
+	Addr            string
+	ClientId        string
+	ProtocolVersion byte
+	ServerAddress   string
 
 	conn net.Conn
-}
-
-type packet struct {
-	header  *Header
-	payload buffer.Buffer
-	retries int
 }
 
 func ClientFromContext(ctx context.Context) *ClientContext {
@@ -30,14 +26,14 @@ func ClientFromContext(ctx context.Context) *ClientContext {
 }
 
 func NewClientContext(ctx context.Context, conn net.Conn) context.Context {
-	return context.WithValue(ctx, clientKey, &ClientContext{Addr: conn.RemoteAddr().String(), conn: conn})
+	return context.WithValue(ctx, clientKey, &ClientContext{Addr: conn.RemoteAddr().String(), ServerAddress: conn.LocalAddr().String(), conn: conn})
 }
 
 func (c *ClientContext) Send(r *Message) error {
 	b := buffer.NewPageBuffer()
 
-	e := NewEncoder(b)
-	r.Payload.Write(e)
+	e := NewEncoder(b, c.ProtocolVersion)
+	r.Payload.Write(e, r.Header)
 
 	r.Header.Size = b.Size()
 

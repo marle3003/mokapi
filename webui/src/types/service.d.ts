@@ -26,7 +26,7 @@ declare interface Label {
 
 declare interface ServiceEvent {
     id: string
-    data: HttpEventData | KafkaEventData | SmtpEventData | LdapEventData | JobExecution
+    data: HttpEventData | KafkaEventData | MqttEventData | SmtpEventData | LdapEventData | JobExecution
     time: string
     traits: Traits
 }

@@ -10,8 +10,11 @@ import (
 	"mokapi/providers/asyncapi3/mqtt/store"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
+	"mokapi/runtime/search"
+	"mokapi/sortedmap"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -23,6 +26,9 @@ type MqttStore struct {
 	cfg     *static.Config
 	sm      *events.StoreManager
 	m       sync.RWMutex
+	events  *events.StoreManager
+	index   search.Index
+	reader  dynamic.Reader
 }
 
 type MqttInfo struct {
@@ -38,14 +44,13 @@ type MqttHandler struct {
 	next mqtt.Handler
 }
 
-func NewMqttInfo(c *dynamic.Config, store *store.Store, updateEventAndMetrics func(info *MqttInfo)) *MqttInfo {
+func newMqttInfo(c *dynamic.Config, store *store.Store, updateEventAndMetrics func(info *MqttInfo)) *MqttInfo {
 	hc := &MqttInfo{
 		configs:               map[string]*dynamic.Config{},
 		Store:                 store,
 		seenTopics:            map[string]bool{},
 		updateEventAndMetrics: updateEventAndMetrics,
 	}
-	hc.AddConfig(c)
 	return hc
 }
 
@@ -92,13 +97,16 @@ func (s *MqttStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*MqttIn
 	}
 
 	if !ok {
-		s.sm.ResetStores(events.NewTraits().WithNamespace("Mqtt").WithName(cfg.Info.Name))
-		s.sm.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("Mqtt").WithName(cfg.Info.Name))
+		s.sm.ResetStores(events.NewTraits().WithNamespace("mqtt").WithName(cfg.Info.Name))
+		s.sm.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("mqtt").WithName(cfg.Info.Name))
 
-		ki = NewMqttInfo(c, store.New(cfg, emitter), s.updateEventStore)
+		ki = newMqttInfo(c, store.New(cfg, emitter, s.events, s.monitor.Mqtt), s.updateEventStore)
 		s.infos[cfg.Info.Name] = ki
-	} else {
-		ki.AddConfig(c)
+	}
+	ki.addConfig(c, s.reader)
+
+	if s.cfg.Api.Search.Enabled {
+		s.addToIndex(ki.Config)
 	}
 
 	return ki, nil
@@ -122,11 +130,17 @@ func (s *MqttStore) Remove(c *dynamic.Config) {
 	if err != nil {
 		return
 	}
-
 	name := cfg.Info.Name
-	ki := s.infos[name]
-	ki.Remove(c)
-	if len(ki.configs) == 0 {
+	mi := s.infos[name]
+
+	if s.cfg.Api.Search.Enabled {
+		s.removeFromIndex(mi.Config)
+	}
+
+	delete(mi.configs, c.Info.Url.String())
+	mi.update(s.reader)
+
+	if len(mi.configs) == 0 {
 		s.m.RUnlock()
 		s.m.Lock()
 		delete(s.infos, name)
@@ -137,13 +151,13 @@ func (s *MqttStore) Remove(c *dynamic.Config) {
 	}
 }
 
-func (c *MqttInfo) AddConfig(config *dynamic.Config) {
+func (c *MqttInfo) addConfig(config *dynamic.Config, reader dynamic.Reader) {
 	key := config.Info.Url.String()
 	c.configs[key] = config
-	c.update()
+	c.update(reader)
 }
 
-func (c *MqttInfo) update() {
+func (c *MqttInfo) update(reader dynamic.Reader) {
 	if len(c.configs) == 0 {
 		c.Config = nil
 		c.Store = nil
@@ -175,6 +189,28 @@ func (c *MqttInfo) update() {
 		}
 	}
 
+	if len(c.configs) > 1 {
+		err := cfg.Parse(&dynamic.Config{Data: cfg}, reader)
+		if err != nil {
+			log.Errorf("failed to parse config: %s", err)
+		}
+	}
+
+	if cfg.Servers.Len() == 0 {
+		log.Infof("no servers defined in AsyncAPI spec — using default Mokapi broker for cluster '%s'", cfg.Info.Name)
+		if cfg.Servers == nil {
+			cfg.Servers = &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{}
+		}
+		cfg.Servers.Set("mokapi", &asyncapi3.ServerRef{
+			Value: &asyncapi3.Server{
+				Host:     ":1883",
+				Protocol: "mqtt",
+				Title:    "Mokapi Default Broker",
+				Summary:  "Automatically added broker because no servers are defined in the AsyncAPI spec",
+			},
+		})
+	}
+
 	c.Config = cfg
 	c.updateEventAndMetrics(c)
 	c.Store.Update(cfg)
@@ -199,37 +235,21 @@ func (h *MqttHandler) ServeMessage(rw mqtt.MessageWriter, req *mqtt.Message) {
 	h.next.ServeMessage(rw, req)
 }
 
-func IsMqttConfig(c *dynamic.Config) (*asyncapi3.Config, bool) {
-	var cfg *asyncapi3.Config
-	if old, ok := c.Data.(*asyncApi.Config); ok {
-		var err error
-		cfg, err = old.Convert()
-		if err != nil {
-			return nil, false
+func HasMqttServer(c *dynamic.Config) (*asyncapi3.Config, bool) {
+	cfg, ok := IsAsyncApiConfig(c)
+	if !ok {
+		return nil, false
+	}
+	for it := cfg.Servers.Iter(); it.Next(); {
+		s := it.Value()
+		if s.Value == nil {
+			continue
 		}
-	} else {
-		cfg, ok = c.Data.(*asyncapi3.Config)
-		if !ok {
-			return nil, false
+		if strings.ToLower(s.Value.Protocol) == "mqtt" {
+			return cfg, true
 		}
 	}
-
-	return cfg, hasMqttBroker(cfg)
-}
-
-func hasMqttBroker(c *asyncapi3.Config) bool {
-	for it := c.Servers.Iter(); it.Next(); {
-		server := it.Value()
-		if server.Value.Protocol == "mqtt" {
-			return true
-		}
-	}
-	return false
-}
-
-func (c *MqttInfo) Remove(cfg *dynamic.Config) {
-	delete(c.configs, cfg.Info.Url.String())
-	c.update()
+	return cfg, false
 }
 
 func getMqttConfig(c *dynamic.Config) (*asyncapi3.Config, error) {

@@ -14,8 +14,8 @@ type Message struct {
 }
 
 type Payload interface {
-	Write(e *Encoder)
-	Read(*Decoder)
+	Write(e *Encoder, h *Header)
+	Read(d *Decoder, h *Header)
 }
 
 type MessageOptions func(*Message)
@@ -25,12 +25,15 @@ func (m *Message) WithContext(ctx context.Context) *Message {
 	return m
 }
 
-func (m *Message) Write(w io.Writer) error {
+func (m *Message) Write(w io.Writer, ctx *ClientContext) error {
 	b := buffer.NewPageBuffer()
 	defer b.Unref()
 
-	e := NewEncoder(b)
-	m.Payload.Write(e)
+	e := NewEncoder(b, ctx.ProtocolVersion)
+	if m.Payload == nil {
+		return fmt.Errorf("mqtt: message has no payload")
+	}
+	m.Payload.Write(e, m.Header)
 
 	m.Header.Size = b.Size()
 	err := m.Header.Write(w)
@@ -42,8 +45,8 @@ func (m *Message) Write(w io.Writer) error {
 	return err
 }
 
-func (m *Message) Read(reader io.Reader) error {
-	d := NewDecoder(reader, 5)
+func (m *Message) Read(reader io.Reader, ctx *ClientContext) error {
+	d := NewDecoder(reader, 5, ctx.ProtocolVersion)
 	m.Header = readHeader(d)
 	if d.err != nil {
 		return d.err
@@ -67,11 +70,17 @@ func (m *Message) Read(reader io.Reader) error {
 		m.Payload = &UnsubscribeRequest{}
 	case UNSUBACK:
 		m.Payload = &UnsubscribeResponse{}
+	case PINGREQ:
+		m.Payload = &PingRequest{}
+	case PINGRESP:
+		m.Payload = &PingResponse{}
+	case DISCONNECT:
+		m.Payload = &DisconnectRequest{}
 	default:
 		return fmt.Errorf("unknown MQTT protocol type %d", m.Header.Type)
 	}
 
-	m.Payload.Read(d)
+	m.Payload.Read(d, m.Header)
 
 	if d.err != nil {
 		return d.err
@@ -79,6 +88,11 @@ func (m *Message) Read(reader io.Reader) error {
 
 	if d.leftSize > 0 {
 		return fmt.Errorf("mqtt: remaining length %d is not zero", d.leftSize)
+	}
+
+	if m.Header.Type == CONNECT {
+		c := m.Payload.(*ConnectRequest)
+		ctx.ProtocolVersion = c.Version
 	}
 
 	return nil

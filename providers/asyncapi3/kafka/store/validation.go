@@ -8,7 +8,6 @@ import (
 	"mokapi/kafka"
 	"mokapi/media"
 	"mokapi/providers/asyncapi3"
-	openapi "mokapi/providers/openapi/schema"
 	avro "mokapi/schema/avro/schema"
 	"mokapi/schema/encoding"
 	"mokapi/schema/json/parser"
@@ -69,7 +68,7 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyn
 	var msgParser encoding.Parser
 	if msg.Payload != nil && channel.Bindings.Kafka.ValueSchemaValidation {
 		var err error
-		msgParser, err = getParser(msg.Payload, msg.ContentType)
+		msgParser, err = msg.Payload.GetParser(msg.ContentType)
 		if err != nil {
 			log.Errorf("unsupported payload type: %T", msg.Payload.Value)
 		}
@@ -335,23 +334,4 @@ func parseHeader(headers []kafka.RecordHeader, sr *asyncapi3.SchemaRef) (map[str
 		}
 	}
 	return result, nil
-}
-
-func getParser(ref *asyncapi3.SchemaRef, contentType string) (encoding.Parser, error) {
-	switch s := ref.Value.(type) {
-	case *schema.Schema:
-		return &parser.Parser{Schema: s, ConvertToSortedMap: true}, nil
-	case *openapi.Schema:
-		mt := media.ParseContentType(contentType)
-		if mt.IsXml() {
-			return openapi.NewXmlParser(s), nil
-		}
-		return &parser.Parser{Schema: openapi.ConvertToJsonSchema(s), ConvertToSortedMap: true}, nil
-	case *asyncapi3.AvroRef:
-		return &avro.Parser{Schema: s.Schema}, nil
-	case *asyncapi3.MultiSchemaFormat:
-		return getParser(s.Schema, contentType)
-	default:
-		return nil, fmt.Errorf("unsupported payload type: %T", s)
-	}
 }

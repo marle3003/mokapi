@@ -1,0 +1,41 @@
+asyncapi: 3.1.0
+info:
+  title: Smart Home MQTT API
+  version: 1.0.0
+  description: Example specification for controlling sensors via MQTT.
+servers:
+  production:
+    host: localhost:1883
+    protocol: mqtt
+    description: Public HiveMQ broker for testing purposes.
+channels:
+  sensorData:
+    address: 'sensors/{sensorId}/data'
+    messages:
+      temperatureUpdate:
+        $ref: '#/components/messages/TemperaturePayload'
+    parameters:
+      sensorId:
+        description: The unique ID of the sensor.
+operations:
+  receiveSensorData:
+    action: receive
+    channel:
+      $ref: '#/channels/sensorData'
+    summary: Receives temperature data from sensors.
+    userBindings:
+      mqtt:
+      qos: 1
+    
+components:
+  messages:
+    TemperaturePayload:
+      payload:
+        type: object
+        properties:
+          temp:
+            type: number
+            description: Temperature in degrees Celsius.
+          timestamp:
+            type: string
+            format: date-time

@@ -33,14 +33,14 @@ func (c *Client) Send(m *mqtt.Message) (*mqtt.Message, error) {
 		return nil, err
 	}
 
-	err := m.Write(c.conn)
+	err := m.Write(c.conn, &mqtt.ClientContext{})
 	if err != nil {
 		return nil, err
 	}
 
-	c.conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
+	_ = c.conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
 	res := &mqtt.Message{}
-	err = res.Read(c.conn)
+	err = res.Read(c.conn, &mqtt.ClientContext{})
 	return res, err
 }
 
@@ -49,7 +49,7 @@ func (c *Client) SendNoResponse(r *mqtt.Message) error {
 		return err
 	}
 
-	return r.Write(c.conn)
+	return r.Write(c.conn, &mqtt.ClientContext{})
 }
 
 func (c *Client) Recv() (*mqtt.Message, error) {
@@ -58,7 +58,7 @@ func (c *Client) Recv() (*mqtt.Message, error) {
 	}
 
 	res := &mqtt.Message{}
-	err := res.Read(c.conn)
+	err := res.Read(c.conn, &mqtt.ClientContext{})
 	return res, err
 }
 

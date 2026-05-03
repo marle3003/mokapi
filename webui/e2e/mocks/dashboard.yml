@@ -63,6 +63,23 @@ paths:
             application/json:
               schema:
                 $ref: 'kafka.yml#/components/schemas/Kafka'
+  /api/services/mqtt/{name}:
+    get:
+      summary: Information about the MQTT cluster
+      operationId: serviceMqtt
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: name of MQTT cluster
+          content:
+            application/json:
+              schema:
+                $ref: 'mqtt.yml#/components/schemas/Mqtt'
   /api/services/mail/{name}:
     get:
       summary: Information about the mail servers
