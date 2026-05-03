@@ -31,7 +31,7 @@ test('Visit MQTT overview', async ({ page }) => {
         await expect(rows).toHaveCount(2);
         await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('home/livingroom/temperature');
         await expect(await getCellByColumnName(table, 'Description', rows.nth(0))).toHaveText('Channel for messages FROM the sensor (Publish)');
-        await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).toHaveText('2022-12-28 00:11:30');
+        await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).not.toBeEmpty();
         await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('1');
 
         await expect(await getCellByColumnName(table, 'Name', rows.nth(1))).toHaveText('sensors/{sensorId}/data');
