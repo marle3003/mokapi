@@ -54,7 +54,7 @@ func New(cfg *static.Config, reader dynamic.Reader) *App {
 		Configs:     map[string]*dynamic.Config{},
 		http:        &HttpStore{cfg: cfg, index: index, events: em, reader: reader},
 		Kafka:       &KafkaStore{monitor: m, cfg: cfg, index: index, events: em, reader: reader},
-		Mqtt:        &MqttStore{monitor: m, cfg: cfg, sm: em, events: em},
+		Mqtt:        &MqttStore{monitor: m, cfg: cfg, index: index, sm: em, events: em, reader: reader},
 		Ldap:        &LdapStore{cfg: cfg, events: em, index: index},
 		Mail:        &MailStore{cfg: cfg, sm: em, index: index},
 		cfg:         cfg,

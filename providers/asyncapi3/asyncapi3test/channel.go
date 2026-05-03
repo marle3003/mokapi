@@ -89,3 +89,14 @@ func WithChannelTag(name, description string) ChannelOptions {
 		})
 	}
 }
+
+func WithParameter(name string, param *asyncapi3.Parameter) ChannelOptions {
+	return func(c *asyncapi3.Channel) {
+		if c.Parameters == nil {
+			c.Parameters = map[string]*asyncapi3.ParameterRef{}
+		}
+		c.Parameters[name] = &asyncapi3.ParameterRef{
+			Value: param,
+		}
+	}
+}

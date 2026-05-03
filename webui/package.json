@@ -39,6 +39,7 @@
     "markdown-it": "^14.1.1",
     "markdown-it-container": "^4.0.0",
     "mime-types": "^3.0.2",
+    "mqtt": "^5.15.1",
     "ncp": "^2.0.0",
     "nodemailer": "^8.0.7",
     "vue": "^3.5.33",

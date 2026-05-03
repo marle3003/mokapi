@@ -56,6 +56,7 @@ var (
 	ServiceKafka serviceType = "kafka"
 	ServiceMail  serviceType = "mail"
 	ServiceLdap  serviceType = "ldap"
+	ServiceMqtt  serviceType = "mqtt"
 )
 
 type service struct {
@@ -138,6 +139,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getHttpService(w, r, h.app.Monitor)
 	case strings.HasPrefix(p, "/api/services/kafka"):
 		h.handleKafka(w, r)
+	case strings.HasPrefix(p, "/api/services/mqtt"):
+		h.handleMqtt(w, r)
 	case strings.HasPrefix(p, "/api/services/mail/"):
 		h.handleMailService(w, r)
 	case strings.HasPrefix(p, "/api/services/ldap/"):
@@ -204,6 +207,7 @@ func (h *handler) getServices(w http.ResponseWriter, _ *http.Request) {
 	services = append(services, getKafkaServices(h.app.Kafka, h.app.Monitor)...)
 	services = append(services, getMailServices(h.app.Mail, h.app.Monitor)...)
 	services = append(services, getLdapServices(h.app.Ldap, h.app.Monitor)...)
+	services = append(services, getMqttServices(h.app.Mqtt, h.app.Monitor)...)
 	slices.SortFunc(services, func(a interface{}, b interface{}) int {
 		return compareService(a, b)
 	})
@@ -241,6 +245,9 @@ func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 	}
 	if len(h.app.Ldap.List()) > 0 {
 		i.ActiveServices = append(i.ActiveServices, "ldap")
+	}
+	if len(h.app.Mqtt.List()) > 0 {
+		i.ActiveServices = append(i.ActiveServices, "mqtt")
 	}
 
 	writeJsonBody(w, i)

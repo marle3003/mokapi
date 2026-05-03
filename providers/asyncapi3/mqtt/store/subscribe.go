@@ -32,6 +32,19 @@ func (s *Store) subscribe(rw mqtt.MessageWriter, subscribe *mqtt.SubscribeReques
 		},
 		Payload: res,
 	})
+
+	reqLog := &SubscribeRequest{
+		MessageId: subscribe.MessageId,
+	}
+	for _, topic := range subscribe.Topics {
+		reqLog.Topics = append(reqLog.Topics, SubscribeTopic{
+			Name: topic.Name,
+			QoS:  topic.QoS,
+		})
+	}
+	resLog := &SubscribeResponse{ReasonCodes: res.ReasonCodes}
+
+	s.logRequest(reqLog, resLog, ctx)
 }
 
 func (s *Store) unsubscribe(rw mqtt.MessageWriter, req *mqtt.UnsubscribeRequest, ctx *mqtt.ClientContext) {

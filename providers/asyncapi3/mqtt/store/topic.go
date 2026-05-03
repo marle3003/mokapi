@@ -2,10 +2,9 @@ package store
 
 import (
 	"fmt"
+	"mokapi/media"
 	"mokapi/providers/asyncapi3"
 	"mokapi/schema/encoding"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type Message struct {
@@ -22,15 +21,16 @@ type Topic struct {
 	cfg *asyncapi3.Channel
 }
 
-func (t *Topic) validate(value []byte) (err error) {
+func (t *Topic) validate(value []byte) (messageId string, err error) {
 	if t.cfg == nil {
 		return
 	}
 
-	for _, msg := range t.cfg.Messages {
+	for id, msg := range t.cfg.Messages {
 		if msg.Value == nil {
 			continue
 		}
+		messageId = id
 		payload := msg.Value.Payload
 		if payload == nil || payload.Value == nil {
 			continue
@@ -39,11 +39,10 @@ func (t *Topic) validate(value []byte) (err error) {
 		var p encoding.Parser
 		p, err = payload.GetParser(msg.Value.ContentType)
 		if err != nil {
-			return err
+			return
 		}
-		var v any
-		v, err = p.Parse(value)
-		log.Infof("%v", v)
+
+		_, err = encoding.Decode(value, encoding.WithContentType(media.ParseContentType(msg.Value.ContentType)), encoding.WithParser(p))
 		if err == nil {
 			return
 		}

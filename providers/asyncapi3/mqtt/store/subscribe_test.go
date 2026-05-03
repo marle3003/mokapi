@@ -7,6 +7,7 @@ import (
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/mqtt/store"
 	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -148,7 +149,7 @@ func TestSubscribe(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{})
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewMqtt())
 			defer s.Close()
 
 			tc.test(t, s)

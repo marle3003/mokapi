@@ -5,9 +5,15 @@ test.use({ colorScheme: 'light' })
 // reset storage state
 test.use({ storageState: { cookies: [], origins: [] } });
 
-test('Visit Petstore Demo', async ({ page }) => {
+test('Visit Petstore Demo', async ({ page, baseURL }) => {
+    let dashboard = '/dashboard'
+    if (baseURL === 'http://localhost:8080') {
+        await page.goto('/dashboard')
+    } else {
+        dashboard = '/dashboard-demo'
+        await page.goto('/dashboard-demo')
+    }
 
-    await page.goto('/dashboard-demo');
     await page.getByText('Swagger Petstore').click();
 
     await test.step('Verify service info', async () => {
@@ -119,7 +125,7 @@ test('Visit Petstore Demo', async ({ page }) => {
 
         await expect(page.getByLabel('Path', { exact: true })).toHaveText('/pet/{petId}')
         await expect(page.getByLabel('Service', { exact: true })).toHaveText('Swagger Petstore')
-        await expect(page.getByLabel('Service', { exact: true }).getByRole('link')).toHaveAttribute('href', '/dashboard-demo/http/services/Swagger%20Petstore')
+        await expect(page.getByLabel('Service', { exact: true }).getByRole('link')).toHaveAttribute('href', dashboard + '/http/services/Swagger%20Petstore')
 
         const region = page.getByRole('region', { name: 'Methods' });
         await expect(region).toBeVisible();

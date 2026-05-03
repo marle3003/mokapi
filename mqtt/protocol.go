@@ -61,8 +61,8 @@ func (h *Header) with(messageType Type, size int) *Header {
 }
 
 type Code struct {
-	Reason string
-	Code   byte
+	Reason string `json:"reason"`
+	Code   byte   `json:"code"`
 }
 
 var (
@@ -70,4 +70,5 @@ var (
 	ErrUnsupportedProtocolVersion = Code{Code: 0x01, Reason: "unacceptable protocol version"}
 	ErrIdentifierRejected         = Code{Code: 0x02, Reason: "identifier rejected"}
 	ErrUnspecifiedError           = Code{Code: 0x80, Reason: "unspecified error"}
+	ErrTopicNameInvalid           = Code{Code: byte(TopicNameInvalid), Reason: "topic name invalid"}
 )

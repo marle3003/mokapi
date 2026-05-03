@@ -7,6 +7,7 @@ import (
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/mqtt/store"
 	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
 	"strings"
 	"testing"
 
@@ -111,7 +112,7 @@ func TestConnect(t *testing.T) {
 					},
 				})
 				res := rr.Message.Payload.(*mqtt.ConnectResponse)
-				require.Equal(t, mqtt.ErrUnspecifiedError, res.ReasonCode)
+				require.Equal(t, mqtt.ErrTopicNameInvalid, res.ReasonCode)
 			},
 		},
 		{
@@ -140,7 +141,7 @@ func TestConnect(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{})
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewMqtt())
 			defer s.Close()
 
 			tc.test(t, s)

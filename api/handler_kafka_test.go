@@ -612,10 +612,10 @@ func TestHandler_KafkaAPI(t *testing.T) {
 					h,
 					try.HasStatusCode(http.StatusOK),
 					try.AssertBody(func(t *testing.T, body string) {
-						var data api.ProduceResponse
+						var data api.KafkaProduceResponse
 						_ = json.Unmarshal([]byte(body), &data)
-						require.Equal(t, api.ProduceResponse{
-							Offsets: []api.RecordResult{
+						require.Equal(t, api.KafkaProduceResponse{
+							Offsets: []api.KafkaRecordResult{
 								{
 									Partition: -1,
 									Offset:    -1,
@@ -897,10 +897,10 @@ func TestHandler_KafkaAPI(t *testing.T) {
 					h,
 					try.HasStatusCode(http.StatusOK),
 					try.AssertBody(func(t *testing.T, body string) {
-						var data api.ProduceResponse
+						var data api.KafkaProduceResponse
 						_ = json.Unmarshal([]byte(body), &data)
-						require.Equal(t, api.ProduceResponse{
-							Offsets: []api.RecordResult{
+						require.Equal(t, api.KafkaProduceResponse{
+							Offsets: []api.KafkaRecordResult{
 								{
 									Partition: -1,
 									Offset:    -1,

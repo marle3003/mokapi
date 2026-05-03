@@ -61,7 +61,7 @@ func TestMqttServer(t *testing.T) {
 				cfg := asyncapi3test.NewConfig(
 					asyncapi3test.WithTitle("foo"),
 					asyncapi3test.WithServer("mqtt12", "mqtt", addr),
-					asyncapi3test.WithServer("kafka", "kafka", addr),
+					asyncapi3test.WithServer("kafka", "kafka", fmt.Sprintf("127.0.0.1:%v", try.GetFreePort())),
 					asyncapi3test.WithChannel("foo",
 						asyncapi3test.WithMessage("foo",
 							asyncapi3test.WithPayload(
@@ -92,10 +92,11 @@ func TestMqttServer(t *testing.T) {
 				defer client.Close()
 				msg, err := client.Send(&mqtt.Message{
 					Header:  &mqtt.Header{Type: mqtt.CONNECT},
-					Payload: &mqtt.ConnectRequest{},
+					Payload: &mqtt.ConnectRequest{ClientId: "client"},
 				})
 				require.NoError(t, err)
 				require.IsType(t, &mqtt.ConnectResponse{}, msg.Payload)
+				require.Equal(t, mqtt.Success.Code, msg.Payload.(*mqtt.ConnectResponse).ReasonCode.Code)
 
 				msg, err = client.Send(&mqtt.Message{
 					Header:  &mqtt.Header{Type: mqtt.PUBLISH, QoS: 1},

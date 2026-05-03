@@ -26,7 +26,7 @@ func TestDisconnect_ReadRequest(t *testing.T) {
 				require.NoError(t, err)
 				require.IsType(t, &mqtt.DisconnectRequest{}, r.Payload)
 				msg := r.Payload.(*mqtt.DisconnectRequest)
-				require.Equal(t, uint8(0), msg.Reason)
+				require.Equal(t, mqtt.DisconnectNormal, msg.Reason)
 			},
 		},
 		{
@@ -45,7 +45,7 @@ func TestDisconnect_ReadRequest(t *testing.T) {
 				require.NoError(t, err)
 				require.IsType(t, &mqtt.DisconnectRequest{}, r.Payload)
 				msg := r.Payload.(*mqtt.DisconnectRequest)
-				require.Equal(t, uint8(128), msg.Reason)
+				require.Equal(t, mqtt.DisconnectReason(128), msg.Reason)
 				require.Equal(t, "foo", msg.Properties.ReasonString())
 			},
 		},

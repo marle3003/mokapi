@@ -9,11 +9,22 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type ClientState uint8
+
+const (
+	ClientConnected ClientState = iota
+	ClientDisconnected
+)
+
 type Client struct {
 	Id                    string
 	Clean                 bool
 	Subscription          map[string]Subscription
 	SessionExpiryInterval int32
+	WillMessage           *Message
+	KeepAlive             int16
+	LastSeen              time.Time
+	State                 ClientState
 
 	ctx       *mqtt.ClientContext
 	messageId uint16
@@ -123,4 +134,20 @@ func (c *Client) nextMessageId() uint16 {
 
 	c.messageId++
 	return c.messageId
+}
+
+func (c *Client) Addr() string {
+	return c.ctx.Addr
+}
+
+func (c *Client) ServerAddress() string {
+	return c.ctx.ServerAddress
+}
+
+func (c *Client) ProtocolVersion() byte {
+	return c.ctx.ProtocolVersion
+}
+
+func (c *Client) Alive() {
+	c.LastSeen = time.Now()
 }

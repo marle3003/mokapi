@@ -1,7 +1,9 @@
 package asyncapi3
 
 import (
+	"fmt"
 	"mokapi/config/dynamic"
+	"regexp"
 
 	"gopkg.in/yaml.v3"
 )
@@ -131,4 +133,53 @@ func (c *Channel) IsChannelAvailable(protocol string) bool {
 		}
 	}
 	return false
+}
+
+func (c *Channel) ResolveAddress() string {
+	if c.Address != "" {
+		return c.Address
+	}
+	return c.Name
+}
+
+// IsNameValid use if channel contains parameters
+func (c *Channel) IsNameValid(topic string) error {
+	address := c.ResolveAddress()
+
+	// Find all {param} names
+	re := regexp.MustCompile(`\{([^}]+)\}`)
+
+	// Replace {param} with regex group
+	pattern := "^" + re.ReplaceAllString(address, `([^/]+)`) + "$"
+	re = regexp.MustCompile(pattern)
+
+	match := re.FindStringSubmatch(topic)
+	if match == nil {
+		return fmt.Errorf("topic name does not match channel address expression")
+	}
+	return nil
+}
+
+func (c *Channel) ExtractParams(topicName string) (map[string]string, error) {
+	// Find all {param} names
+	re := regexp.MustCompile(`\{([^}]+)\}`)
+	names := re.FindAllStringSubmatch(c.ResolveAddress(), -1)
+
+	// Replace {param} with regex group
+	pattern := "^" + re.ReplaceAllString(c.ResolveAddress(), `([^/]+)`) + "$"
+	re = regexp.MustCompile(pattern)
+
+	match := re.FindStringSubmatch(topicName)
+	if match == nil {
+		// path parameters are always required
+		return nil, fmt.Errorf("topic name does not match channel address expression")
+	}
+
+	// Build result map
+	params := map[string]string{}
+	for i, name := range names {
+		params[name[1]] = match[i+1]
+	}
+
+	return params, nil
 }

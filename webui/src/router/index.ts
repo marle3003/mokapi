@@ -203,6 +203,53 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
         ]
       },
       {
+        path: 'mqtt',
+        name: getRouteName('mqtt'),
+        component: dashboardView,
+        meta: { title: 'Dashboard - MQTT' },
+        children: [
+          {
+            path: 'service/:service',
+            name: getRouteName('mqttService'),
+            component: dashboardView,
+            meta: { service: 'mqtt', title: ({ params }: MatcherLocation) => `Dashboard - MQTT – ${params.service}` }
+          },
+          {
+            path: 'service/:service/servers/:server',
+            name: getRouteName('mqttServer'),
+            component: dashboardView,
+            meta: { service: 'mqtt', title: ({ params }: MatcherLocation) => `Dashboard - MQTT Server – ${params.server}` },
+          },
+          {
+            path: 'service/:service/topics/:topic',
+            name: getRouteName('mqttTopic'),
+            component: dashboardView,
+            meta: {
+              service: 'mqtt',
+              title: ({ params }: MatcherLocation) => `Dashboard - MQTT Topic – ${params.topic}`
+            },
+          },
+          {
+            path: 'messages/:id',
+            name: getRouteName('mqttMessage'),
+            component: dashboardView,
+            meta: { service: 'mqtt', title: ({ params }: MatcherLocation) => `Dashboard - MQTT Message – ${params.id}` }
+          },
+          {
+            path: 'service/:service/requests/:id',
+            name: getRouteName('mqttRequest'),
+            component: dashboardView,
+            meta: { service: 'mqtt', title: ({ params }: MatcherLocation) => `Dashboard - MQTT Request – ${params.id}` }
+          },
+          {
+            path: 'service/:service/clients/:clientId',
+            name: getRouteName('mqttClient'),
+            component: dashboardView,
+            meta: { service: 'mqtt', title: ({ params }: MatcherLocation) => `Dashboard - MQTT Client – ${params.clientId}` }
+          }
+        ]
+      },
+      {
         path: 'jobs',
         name: getRouteName('jobs'),
         component: dashboardView,

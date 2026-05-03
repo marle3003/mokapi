@@ -103,6 +103,31 @@ const config: PlaywrightTestConfig = {
       },
       testIgnore: ["/e2e/tests/**/*.dashboard.spec.ts", "/e2e/tests/dashboard/**/*.spec.ts"],
     },
+    {
+      // use this for testing demo-dashboard
+      // setup:
+      // run mokapi in scripts/dashboard-demo/demo-configs
+      // run ci.ts
+      name: 'demo-dashboard',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: 'http://localhost:8080',
+        storageState: {
+          cookies: [],
+          origins: [
+            {
+              origin: 'http://localhost:8080',
+              localStorage: [
+                {
+                  name: 'theme', value: 'dark'
+                }
+              ]
+            }
+          ]
+        },
+      },
+      testMatch: ["/e2e/tests/dashboard-demo/**/*.spec.ts"],
+    },
     // {
     //   name: 'firefox',
     //   use: {

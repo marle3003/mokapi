@@ -1,0 +1,102 @@
+<script setup lang="ts">
+import { computed, onMounted } from 'vue'
+import { Popover } from 'bootstrap'
+import { getRouteName } from '@/composables/dashboard';
+import { useRouter } from '@/router';
+import { useMarkdown } from '@/composables/markdown';
+
+const props = defineProps<{
+    serviceName: string,
+    servers: KafkaServer[]
+}>()
+
+const router = useRouter();
+
+onMounted(() => {
+    const elements = document.querySelectorAll('.has-popover')
+    const popovers = [...elements].map(x => {
+        new Popover(x, {
+            customClass: 'custom-popover',
+            trigger: 'hover',
+            html: true,
+            placement: 'left',
+            content: () => x.querySelector('span')?.innerHTML ?? '',
+        })
+    })
+})
+
+const servers = computed(() => {
+    if (!props.servers) {
+        return undefined;
+    }
+    return props.servers.sort((x: MqttServer, y: MqttServer) => {
+        return x.name.localeCompare(y.name);
+    })
+})
+
+function goToServer(server: MqttServer, openInNewTab = false) {
+    if (getSelection()?.toString()) {
+        return
+    }
+
+    const to = {
+        name: getRouteName('mqttServer').value,
+        params: {
+            service: props.serviceName,
+            server: server.name,
+        }
+    }
+    if (openInNewTab) {
+        const routeData = router.resolve(to);
+        window.open(routeData.href, '_blank')
+    } else {
+        router.push(to)
+    }
+}
+</script>
+
+<template>
+    <div class="table-responsive-sm">
+        <table class="table dataTable selectable" aria-label="Servers">
+            <thead>
+                <tr>
+                    <th scope="col" class="text-left col-2">Name</th>
+                    <th scope="col" class="text-left col-3">Host</th>
+                    <th scope="col" class="text-left col">Description</th>
+                    <th scope="col" class="text-left col-1">Tags</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="server in servers" :key="server.host" @mouseup.left="goToServer(server)"
+                            @mousedown.middle="goToServer(server, true)">
+                    <td>{{ server.name }}</td>
+                    <td v-html="server.host.replace(/([^:]*):(.*)/g, '$1<wbr>:$2')"></td>
+                    <td>
+                        <div v-html="useMarkdown(server.description).content" class="description"></div>
+                    </td>
+                    <td>
+                        <ul class="tags">
+                            <li v-for="tag in server.tags" class="has-popover">
+                                {{ tag.name }}
+                                <span style="display:none">{{ tag.description }}</span>
+                            </li>
+
+                        </ul>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</template>
+
+<style scoped>
+ul.tags {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+ul.tags li {
+    padding-right: 0.5em;
+}
+</style>
