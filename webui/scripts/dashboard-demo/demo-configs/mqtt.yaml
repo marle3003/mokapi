@@ -5,7 +5,7 @@ info:
   description: Example specification for controlling sensors via MQTT.
 servers:
   production:
-    host: localhost:9883
+    host: localhost:1883
     protocol: mqtt
     description: Public HiveMQ broker for testing purposes.
 channels:

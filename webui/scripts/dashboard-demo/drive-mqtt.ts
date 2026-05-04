@@ -1,7 +1,7 @@
 import mqtt from 'mqtt';
 
 export async function driveMqtt(): Promise<void> {
-    const client = mqtt.connect('mqtt://localhost:9883')
+    const client = mqtt.connect('mqtt://localhost:1883')
 
     await new Promise<void>((resolve, reject) => {
         client.on('connect', () => {

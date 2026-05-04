@@ -78,7 +78,7 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
                     const info = page.getByRole('region', { name: 'Info' })
                     await expect(info.getByLabel('Client Id')).toContainText('mqttjs');
                     await expect(info.getByLabel('Address')).not.toBeEmpty();
-                    await expect(info.getByLabel('Broker')).toHaveText('localhost:9883');
+                    await expect(info.getByLabel('Broker')).toHaveText('localhost:1883');
                     await expect(info.getByLabel('Protocol Version')).toHaveText('4 (v3.1.1)');
                     await expect(info.getByLabel('Type of API')).toHaveText('MQTT');
 
