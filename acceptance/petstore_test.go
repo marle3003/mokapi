@@ -28,6 +28,7 @@ func (suite *PetStoreSuite) SetupSuite() {
 	cfg.Providers.File.Directories = []static.FileConfig{{Path: "./petstore"}}
 	cfg.Api.Search.Enabled = true
 	cfg.Api.Search.InMemory = true
+	cfg.Api.Search.NumIndexWorker = 1
 	suite.initCmd(cfg)
 }
 
@@ -220,7 +221,7 @@ func (suite *PetStoreSuite) TestKafka_TopicConfig() {
 	require.Equal(suite.T(), "petstore.order-event", r.Topics[0].Name)
 	require.Len(suite.T(), r.Topics[0].Partitions, 2)
 
-	require.Len(suite.T(), suite.cmd.App.ListHttp(), 1)
+	require.Equal(suite.T(), 1, suite.cmd.App.Http.Len())
 }
 
 func (suite *PetStoreSuite) TestKafka_Produce_InvalidFormat() {

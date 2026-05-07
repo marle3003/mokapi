@@ -282,3 +282,13 @@ func (h *mailHandler) Idle(w imap.UpdateWriter, done chan struct{}, ctx context.
 func getSmtpConfig(c *dynamic.Config) *mail.Config {
 	return c.Data.(*mail.Config)
 }
+
+func (s *MailStore) Len() int {
+	if s == nil {
+		return 0
+	}
+
+	s.m.RLock()
+	defer s.m.RUnlock()
+	return len(s.infos)
+}

@@ -199,3 +199,10 @@ func WithTagName(name string) OperationOptions {
 		o.Tags = append(o.Tags, name)
 	}
 }
+
+func WithOperationErrors(err ...openapi.Error) OperationOptions {
+	return func(o *openapi.Operation) {
+		o.Status = openapi.StatusInvalid
+		o.Errors = append(o.Errors, err...)
+	}
+}

@@ -74,4 +74,21 @@ export let metrics = [
         name: 'ldap_request_timestamp{service="LDAP Testserver"}"',
         value: 1652635690
     },
+    // mqtt
+    {
+        name: 'mqtt_messages_total{service="MQTT Temperature Sensor API",topic="home/livingroom/temperature"}"',
+        value: 1
+    },
+    {
+        name: 'mqtt_message_timestamp{service="MQTT Temperature Sensor API",topic="home/livingroom/temperature"}"',
+        value: 1672182690
+    },
+    {
+        name: 'mqtt_messages_total{service="MQTT Temperature Sensor API",topic="sensors/{sensorId}/data"}"',
+        value: 1
+    },
+    {
+        name: 'mqtt_message_timestamp{service="MQTT Temperature Sensor API",topic="sensors/{sensorId}/data"}"',
+        value: 1771058965
+    },
 ]

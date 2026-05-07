@@ -5,8 +5,12 @@ test.use({ colorScheme: 'light' })
 // reset storage state
 test.use({ storageState: { cookies: [], origins: [] } });
 
-test('Visit Dashboard Demo Overview', async ({ page }) => {
-    await page.goto('/dashboard-demo');
+test('Visit Dashboard Demo Overview', async ({ page, baseURL }) => {
+    if (baseURL === 'http://localhost:8080') {
+        await page.goto('/dashboard')
+    } else {
+        await page.goto('/dashboard-demo')
+    }
 
     await test.step('Verify app metrics', async () => {
         const main = page.locator('main')

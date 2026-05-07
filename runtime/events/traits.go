@@ -2,6 +2,7 @@ package events
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -52,14 +53,19 @@ func (t Traits) String() string {
 		}
 		sb.WriteString("name=" + n)
 	}
-	for k, v := range t {
+	var names []string
+	for k, _ := range t {
 		if k == namespace || k == name {
 			continue
 		}
+		names = append(names, k)
+	}
+	slices.SortFunc(names, strings.Compare)
+	for _, n := range names {
 		if sb.Len() > 0 {
 			sb.WriteString(", ")
 		}
-		sb.WriteString(fmt.Sprintf("%v=%v", k, v))
+		sb.WriteString(fmt.Sprintf("%v=%v", n, t[n]))
 	}
 	return sb.String()
 }

@@ -120,7 +120,7 @@ func TestService_Run_Search(t *testing.T) {
 							},
 						},
 					}, &dynamictest.Reader{})
-				app.AddHttp(&dynamic.Config{
+				app.Http.Add(&dynamic.Config{
 					Info: dynamictest.NewConfigInfo(),
 					Data: openapitest.NewConfig("3.1.0",
 						openapitest.WithInfo("foo", "", ""),
@@ -191,7 +191,7 @@ op`},
 							},
 						},
 					}, &dynamictest.Reader{})
-				app.AddHttp(&dynamic.Config{
+				app.Http.Add(&dynamic.Config{
 					Info: dynamictest.NewConfigInfo(),
 					Data: openapitest.NewConfig("3.1.0",
 						openapitest.WithInfo("Petstore", "", ""),

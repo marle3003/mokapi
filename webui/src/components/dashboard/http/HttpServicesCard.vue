@@ -66,6 +66,7 @@ onUnmounted(() => {
                             @mousedown.middle="goToService(service, true)">
                             <td>
                                 <router-link @click.stop class="row-link" :to="serviceRoute(service, 'http')">
+                                    <i class="bi bi-x-circle-fill red" style="vertical-align: middle;" v-if="service.status !== 'valid'" role="img" aria-label="Service status invalid"></i>
                                     {{ service.name }}
                                 </router-link>
                             </td>

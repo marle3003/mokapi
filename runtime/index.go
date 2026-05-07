@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"sync"
+	"time"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis/analyzer/custom"
@@ -34,17 +36,21 @@ var fieldsNotIncludedInAll = []string{"api"}
 var SupportedFacets = []string{"type"}
 
 type SearchIndex struct {
-	cfg   static.Search
-	idx   bleve.Index
-	ready chan struct{}
-	queue chan func()
+	cfg    static.Search
+	idx    bleve.Index
+	ready  chan struct{}
+	queue  chan indexOp
+	initWG sync.WaitGroup // tracks initial items
 }
 
 func newSearchIndex(cfg static.Search) *SearchIndex {
 	s := &SearchIndex{cfg: cfg}
 	if cfg.Enabled {
 		s.ready = make(chan struct{})
-		s.queue = make(chan func(), 1000)
+		s.queue = make(chan indexOp, 1000)
+		if cfg.NumIndexWorker == 0 {
+			s.cfg.NumIndexWorker = 1
+		}
 	}
 	return s
 }
@@ -118,57 +124,92 @@ func (s *SearchIndex) start(pool *safe.Pool) {
 		return
 	}
 
-initialization:
-	for {
-		select {
-		case op := <-s.queue:
-			op()
-		default:
-			close(s.ready)
-			break initialization
-		}
+	for i := 0; i < 1; i++ {
+		pool.Go(s.runWorker)
 	}
 
-	pool.Go(func(ctx context.Context) {
-		for {
-			select {
-			case op, ok := <-s.queue:
-				if !ok {
-					return
-				}
-				op()
-			case <-ctx.Done():
-				close(s.queue)
+	s.initWG.Wait()
+	// ensure last batch is flushed
+	time.Sleep(500 * time.Millisecond)
+	close(s.ready)
+}
 
-				if !s.cfg.InMemory {
-					indexPath := getSearchIndexPath(s.cfg)
-					if indexPath != "" {
-						_ = os.RemoveAll(indexPath)
-					}
-				}
+type opType int
 
-				return
-			}
-		}
-	})
+const (
+	opAdd opType = iota
+	opDelete
+)
+
+type indexOp struct {
+	id   string
+	data any
+	typ  opType
 }
 
 func (s *SearchIndex) Add(id string, data any) {
 	if !s.cfg.Enabled {
 		return
 	}
-	s.queue <- func() {
-		s.add(id, data)
+
+	s.initWG.Add(1)
+	s.queue <- indexOp{
+		id:   id,
+		data: data,
+		typ:  opAdd,
 	}
 }
 
-func (s *SearchIndex) add(id string, data any) {
-	if s.idx == nil {
-		return
+func (s *SearchIndex) runWorker(ctx context.Context) {
+	batch := s.idx.NewBatch()
+	batchSize := 0
+
+	const maxBatchSize = 100
+	ticker := time.NewTicker(50 * time.Millisecond)
+	defer ticker.Stop()
+
+	flush := func() {
+		if batchSize == 0 {
+			return
+		}
+
+		if err := s.idx.Batch(batch); err != nil {
+			println("batch failed:", err.Error())
+		}
+
+		s.initWG.Add(-batchSize)
+
+		batch = s.idx.NewBatch()
+		batchSize = 0
 	}
-	err := s.idx.Index(id, data)
-	if err != nil {
-		log.Errorf("add '%s' to search index failed: %v", id, err)
+
+	for {
+		select {
+		case op, ok := <-s.queue:
+			if !ok {
+				return
+			}
+
+			if op.typ == opAdd {
+				err := batch.Index(op.id, op.data)
+				if err != nil {
+					log.Errorf("add '%s' to search index failed: %v", op.id, err)
+				}
+			} else if op.typ == opDelete {
+				batch.Delete(op.id)
+			}
+			batchSize++
+
+			if batchSize >= maxBatchSize {
+				flush()
+			}
+
+		case <-ticker.C:
+			flush()
+
+		case <-ctx.Done():
+			return
+		}
 	}
 }
 
@@ -176,8 +217,10 @@ func (s *SearchIndex) Delete(id string) {
 	if !s.cfg.Enabled {
 		return
 	}
-	s.queue <- func() {
-		_ = s.idx.Delete(id)
+	s.initWG.Add(1)
+	s.queue <- indexOp{
+		id:  id,
+		typ: opDelete,
 	}
 }
 

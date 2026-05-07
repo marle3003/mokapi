@@ -1,0 +1,102 @@
+components:
+  schemas:
+    MqttInfo:
+      allOf:
+        - $ref: 'common.yml#/components/schemas/Service'
+        - type: object
+          properties:
+            topics:
+              type: array
+              items:
+                type: string
+    Mqtt:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        version:
+          type: string
+        contact:
+          type: object
+          properties:
+            name:
+              type: string
+            url:
+              type: string
+              format: uri
+            email:
+              type: string
+              format: email
+        servers:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              host:
+                type: string
+              description:
+                type: string
+              tags:
+                $ref: './kafka.yml#/components/schemas/Tags'
+              configs:
+                additionalProperties:
+                  type: ['number', 'string']
+        topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/MqttTopic'
+        metrics:
+          $ref: 'common.yml#/components/schemas/Metrics'
+    MqttTopic:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        messages:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/MqttMessageConfig'
+        bindings:
+          $ref: '#/components/schemas/MqttTopicBindings'
+        tags:
+          $ref: './kafka.yml#/components/schemas/Tags'
+    MqttMessageConfig:
+      type: object
+      properties:
+        name:
+          type: string
+        title:
+          type: string
+        summary:
+          type: string
+        description:
+          type: string
+        key:
+          $ref: 'schema.yml#/components/schemas/Schema'
+        payload:
+          $ref: 'schema.yml#/components/schemas/Schema'
+        header:
+          $ref: 'schema.yml#/components/schemas/Schema'
+        contentType:
+          type: string
+    MqttTopicBindings:
+      partitions:
+        type: integer
+      retentionBytes:
+        type: integer
+      retentionMs:
+        type: integer
+      segmentBytes:
+        type: integer
+      segmentMs:
+        type: integer
+      valueSchemaValidation:
+        type: boolean
+      keySchemaValidation:
+        type: boolean

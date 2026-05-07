@@ -116,3 +116,16 @@ func (c *Config) HasKafkaServer() bool {
 	}
 	return false
 }
+
+func (c *Config) HasMqttServer() bool {
+	if c == nil {
+		return false
+	}
+	for it := c.Servers.Iter(); it.Next(); {
+		server := it.Value()
+		if server.Value.Protocol == "mqtt" {
+			return true
+		}
+	}
+	return false
+}

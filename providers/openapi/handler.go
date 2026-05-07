@@ -67,6 +67,24 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
+	if op.Status == StatusInvalid {
+		msg := "operation status invalid"
+		if len(op.Errors) > 1 {
+			for _, e := range op.Errors {
+				msg = fmt.Sprintf("%s\n", e.Message)
+			}
+		} else if len(op.Errors) > 0 {
+			msg = op.Errors[0].Message
+		}
+		writeError(
+			rw,
+			r,
+			fmt.Errorf("operation could not be executed due to parsing errors: %s", msg),
+			h.config.Info.Name,
+		)
+		return
+	}
+
 	status, res, err := op.getFirstSuccessResponse()
 	if err != nil {
 		writeError(

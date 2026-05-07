@@ -20,10 +20,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type kafkaSummary struct {
-	service
-}
-
 type cluster struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description,omitempty"`
@@ -37,11 +33,11 @@ type kafkaInfo struct {
 	Version     string           `json:"version"`
 	Contact     *contact         `json:"contact,omitempty"`
 	Servers     []kafkaServer    `json:"servers,omitempty"`
-	Topics      []topic          `json:"topics,omitempty"`
+	Topics      []kafkaTopic     `json:"topics,omitempty"`
 	Groups      []group          `json:"groups,omitempty"`
 	Metrics     []metrics.Metric `json:"metrics,omitempty"`
 	Configs     []config         `json:"configs,omitempty"`
-	Clients     []client         `json:"clients,omitempty"`
+	Clients     []kafkaClient    `json:"clients,omitempty"`
 }
 
 type kafkaServer struct {
@@ -61,16 +57,16 @@ type kafkaTag struct {
 }
 
 type group struct {
-	Name               string   `json:"name"`
-	Generation         int      `json:"generation"`
-	Members            []member `json:"members"`
-	Leader             string   `json:"leader"`
-	State              string   `json:"state"`
-	AssignmentStrategy string   `json:"protocol"`
-	Topics             []string `json:"topics"`
+	Name               string        `json:"name"`
+	Generation         int           `json:"generation"`
+	Members            []kafkaMember `json:"members"`
+	Leader             string        `json:"leader"`
+	State              string        `json:"state"`
+	AssignmentStrategy string        `json:"protocol"`
+	Topics             []string      `json:"topics"`
 }
 
-type client struct {
+type kafkaClient struct {
 	ClientId              string              `json:"clientId"`
 	Address               string              `json:"address"`
 	BrokerAddress         string              `json:"brokerAddress"`
@@ -84,7 +80,7 @@ type clientGroupMember struct {
 	Group    string `json:"group"`
 }
 
-type member struct {
+type kafkaMember struct {
 	Name                  string           `json:"name"`
 	ClientId              string           `json:"clientId"`
 	Addr                  string           `json:"addr"`
@@ -94,16 +90,16 @@ type member struct {
 	Partitions            map[string][]int `json:"partitions"`
 }
 
-type topic struct {
+type kafkaTopic struct {
 	Name        string                   `json:"name"`
 	Description string                   `json:"description"`
-	Partitions  []partition              `json:"partitions"`
+	Partitions  []kafkaPartition         `json:"partitions"`
 	Messages    map[string]messageConfig `json:"messages,omitempty"`
-	Bindings    bindings                 `json:"bindings,omitempty"`
+	Bindings    kafkaBindings            `json:"bindings,omitempty"`
 	Tags        []kafkaTag               `json:"tags,omitempty"`
 }
 
-type partition struct {
+type kafkaPartition struct {
 	Id          int   `json:"id"`
 	StartOffset int64 `json:"startOffset"`
 	Offset      int64 `json:"offset"`
@@ -121,7 +117,7 @@ type messageConfig struct {
 	ContentType string      `json:"contentType"`
 }
 
-type bindings struct {
+type kafkaBindings struct {
 	Partitions            int   `json:"partitions,omitempty"`
 	RetentionBytes        int64 `json:"retentionBytes,omitempty"`
 	RetentionMs           int64 `json:"retentionMs,omitempty"`
@@ -131,23 +127,23 @@ type bindings struct {
 	KeySchemaValidation   bool  `json:"keySchemaValidation,omitempty"`
 }
 
-type produceRequest struct {
+type kafkaProduceRequest struct {
 	Records []store.Record `json:"records"`
 }
 
-type ProduceResponse struct {
-	Offsets []RecordResult `json:"offsets"`
+type KafkaProduceResponse struct {
+	Offsets []KafkaRecordResult `json:"offsets"`
 }
 
-type RecordResult struct {
+type KafkaRecordResult struct {
 	Partition int
 	Offset    int64
 	Error     string
 }
 
-func getKafkaServices(store *runtime.KafkaStore, m *monitor.Monitor) []interface{} {
+func getKafkaServices(store *runtime.KafkaStore, m *monitor.Monitor) []service {
 	list := store.List()
-	result := make([]interface{}, 0, len(list))
+	result := make([]service, 0, len(list))
 	for _, hs := range list {
 		s := service{
 			Name:        hs.Info.Name,
@@ -166,7 +162,7 @@ func getKafkaServices(store *runtime.KafkaStore, m *monitor.Monitor) []interface
 			}
 		}
 
-		result = append(result, kafkaSummary{service: s})
+		result = append(result, s)
 	}
 	return result
 }
@@ -237,9 +233,9 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 					writeError(w, err, http.StatusBadRequest)
 				}
 			}
-			res := ProduceResponse{}
+			res := KafkaProduceResponse{}
 			for _, rec := range result {
-				res.Offsets = append(res.Offsets, RecordResult{
+				res.Offsets = append(res.Offsets, KafkaRecordResult{
 					Partition: rec.Partition,
 					Offset:    rec.Offset,
 					Error:     rec.Error,
@@ -311,9 +307,9 @@ func (h *handler) handleKafka(w http.ResponseWriter, r *http.Request) {
 					writeError(w, err, http.StatusBadRequest)
 				}
 			}
-			res := ProduceResponse{}
+			res := KafkaProduceResponse{}
 			for _, rec := range result {
-				res.Offsets = append(res.Offsets, RecordResult{
+				res.Offsets = append(res.Offsets, KafkaRecordResult{
 					Partition: rec.Partition,
 					Offset:    rec.Offset,
 					Error:     rec.Error,
@@ -424,7 +420,7 @@ func getKafka(info *runtime.KafkaInfo) kafkaInfo {
 	for it := info.Servers.Iter(); it.Next(); {
 		name := it.Key()
 		s := it.Value()
-		if s == nil || s.Value == nil {
+		if s == nil || s.Value == nil || strings.ToLower(s.Value.Protocol) != "kafka" {
 			continue
 		}
 
@@ -465,7 +461,7 @@ func getKafka(info *runtime.KafkaInfo) kafkaInfo {
 	k.Configs = getConfigs(info.Configs())
 
 	for _, ctx := range info.Store.Clients() {
-		c := client{
+		c := kafkaClient{
 			ClientId:              ctx.ClientId,
 			Address:               ctx.Addr,
 			BrokerAddress:         ctx.ServerAddress,
@@ -485,10 +481,13 @@ func getKafka(info *runtime.KafkaInfo) kafkaInfo {
 	return k
 }
 
-func getTopics(info *runtime.KafkaInfo) []topic {
-	topics := make([]topic, 0, len(info.Config.Channels))
+func getTopics(info *runtime.KafkaInfo) []kafkaTopic {
+	topics := make([]kafkaTopic, 0, len(info.Config.Channels))
 	for name, ch := range info.Config.Channels {
 		if ch.Value == nil {
+			continue
+		}
+		if !ch.Value.IsChannelAvailable("kafka") {
 			continue
 		}
 		addr := ch.Value.Address
@@ -504,7 +503,7 @@ func getTopics(info *runtime.KafkaInfo) []topic {
 	return topics
 }
 
-func getTopic(info *runtime.KafkaInfo, name string) *topic {
+func getTopic(info *runtime.KafkaInfo, name string) *kafkaTopic {
 	for n, ch := range info.Config.Channels {
 		if ch.Value == nil {
 			continue
@@ -523,8 +522,8 @@ func getTopic(info *runtime.KafkaInfo, name string) *topic {
 	return nil
 }
 
-func newTopic(t *store.Topic, ch *asyncapi3.Channel, cfg *asyncapi3.Config) topic {
-	var partitions []partition
+func newTopic(t *store.Topic, ch *asyncapi3.Channel, cfg *asyncapi3.Config) kafkaTopic {
+	var partitions []kafkaPartition
 	for _, p := range t.Partitions {
 		partitions = append(partitions, newPartition(p))
 	}
@@ -532,11 +531,11 @@ func newTopic(t *store.Topic, ch *asyncapi3.Channel, cfg *asyncapi3.Config) topi
 		return partitions[i].Id < partitions[j].Id
 	})
 
-	result := topic{
+	result := kafkaTopic{
 		Name:        t.Name,
 		Description: ch.Description,
 		Partitions:  partitions,
-		Bindings: bindings{
+		Bindings: kafkaBindings{
 			Partitions:            t.Config.Bindings.Kafka.Partitions,
 			RetentionBytes:        t.Config.Bindings.Kafka.RetentionBytes,
 			RetentionMs:           t.Config.Bindings.Kafka.RetentionMs,
@@ -547,62 +546,7 @@ func newTopic(t *store.Topic, ch *asyncapi3.Channel, cfg *asyncapi3.Config) topi
 		},
 	}
 
-	for messageId, ref := range ch.Messages {
-		if ref.Value == nil {
-			continue
-		}
-		msg := ref.Value
-
-		m := messageConfig{
-			Name:        msg.Name,
-			Title:       msg.Title,
-			Summary:     msg.Summary,
-			Description: msg.Description,
-			ContentType: msg.ContentType,
-		}
-		if m.Name == "" {
-			m.Name = messageId
-		}
-
-		if msg.Payload != nil && msg.Payload.Value != nil {
-			format := ""
-			if msf, ok := msg.Payload.Value.(*asyncapi3.MultiSchemaFormat); ok {
-				format = msf.Format
-			}
-			s, err := msg.Payload.GetSchema()
-			if err != nil {
-				log.Errorf("failed to get schema for message in topic '%s': %v", t.Name, err)
-			}
-			m.Payload = &schemaInfo{Schema: s, Format: format}
-		}
-		if msg.Headers != nil && msg.Headers.Value != nil {
-			format := ""
-			if msf, ok := msg.Headers.Value.(*asyncapi3.MultiSchemaFormat); ok {
-				format = msf.Format
-			}
-			s, err := msg.Headers.GetSchema()
-			if err != nil {
-				log.Errorf("failed to get schema for headers in topic '%s': %v", t.Name, err)
-			}
-			m.Header = &schemaInfo{Schema: s, Format: format}
-		}
-
-		if m.ContentType == "" {
-			m.ContentType = cfg.DefaultContentType
-		}
-
-		if msg.Bindings.Kafka.Key != nil {
-			s, err := msg.Bindings.Kafka.Key.GetSchema()
-			if err != nil {
-				log.Errorf("failed to get schema for key in topic '%s': %v", t.Name, err)
-			}
-			m.Key = &schemaInfo{Schema: s}
-		}
-		if result.Messages == nil {
-			result.Messages = map[string]messageConfig{}
-		}
-		result.Messages[messageId] = m
-	}
+	result.Messages = getMessageConfigs(ch, cfg)
 
 	for _, tRef := range ch.Tags {
 		if tRef.Value == nil {
@@ -617,8 +561,8 @@ func newTopic(t *store.Topic, ch *asyncapi3.Channel, cfg *asyncapi3.Config) topi
 	return result
 }
 
-func getPartitions(t *store.Topic) []partition {
-	var partitions []partition
+func getPartitions(t *store.Topic) []kafkaPartition {
+	var partitions []kafkaPartition
 	for _, p := range t.Partitions {
 		partitions = append(partitions, newPartition(p))
 	}
@@ -639,7 +583,7 @@ func newGroup(g *store.Group) group {
 		grp.AssignmentStrategy = g.Generation.Protocol
 
 		for id, m := range g.Generation.Members {
-			grp.Members = append(grp.Members, member{
+			grp.Members = append(grp.Members, kafkaMember{
 				Name:                  id,
 				ClientId:              m.Client.ClientId,
 				Addr:                  m.Client.Addr,
@@ -665,8 +609,8 @@ func newGroup(g *store.Group) group {
 	return grp
 }
 
-func newPartition(p *store.Partition) partition {
-	return partition{
+func newPartition(p *store.Partition) kafkaPartition {
+	return kafkaPartition{
 		Id:          p.Index,
 		StartOffset: p.StartOffset(),
 		Offset:      p.Offset(),
@@ -696,7 +640,7 @@ func getKafkaClusters(app *runtime.App) []cluster {
 }
 
 func getProduceRecords(r *http.Request) ([]store.Record, error) {
-	var pr produceRequest
+	var pr kafkaProduceRequest
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		return nil, fmt.Errorf("error reading body")
@@ -708,7 +652,7 @@ func getProduceRecords(r *http.Request) ([]store.Record, error) {
 	return pr.Records, nil
 }
 
-func (r *RecordResult) MarshalJSON() ([]byte, error) {
+func (r *KafkaRecordResult) MarshalJSON() ([]byte, error) {
 	aux := &struct {
 		Partition int     `json:"partition"`
 		Offset    int64   `json:"offset"`
@@ -721,4 +665,65 @@ func (r *RecordResult) MarshalJSON() ([]byte, error) {
 		aux.Error = &r.Error
 	}
 	return json.Marshal(aux)
+}
+
+func getMessageConfigs(ch *asyncapi3.Channel, cfg *asyncapi3.Config) map[string]messageConfig {
+	var result map[string]messageConfig
+	for messageId, ref := range ch.Messages {
+		if ref.Value == nil {
+			continue
+		}
+		msg := ref.Value
+
+		m := messageConfig{
+			Name:        msg.Name,
+			Title:       msg.Title,
+			Summary:     msg.Summary,
+			Description: msg.Description,
+			ContentType: msg.ContentType,
+		}
+		if m.Name == "" {
+			m.Name = messageId
+		}
+
+		if msg.Payload != nil && msg.Payload.Value != nil {
+			format := ""
+			if msf, ok := msg.Payload.Value.(*asyncapi3.MultiSchemaFormat); ok {
+				format = msf.Format
+			}
+			s, err := msg.Payload.GetSchema()
+			if err != nil {
+				log.Errorf("failed to get schema for message in topic '%s': %v", ch.Name, err)
+			}
+			m.Payload = &schemaInfo{Schema: s, Format: format}
+		}
+		if msg.Headers != nil && msg.Headers.Value != nil {
+			format := ""
+			if msf, ok := msg.Headers.Value.(*asyncapi3.MultiSchemaFormat); ok {
+				format = msf.Format
+			}
+			s, err := msg.Headers.GetSchema()
+			if err != nil {
+				log.Errorf("failed to get schema for headers in topic '%s': %v", ch.Name, err)
+			}
+			m.Header = &schemaInfo{Schema: s, Format: format}
+		}
+
+		if m.ContentType == "" {
+			m.ContentType = cfg.DefaultContentType
+		}
+
+		if msg.Bindings.Kafka.Key != nil {
+			s, err := msg.Bindings.Kafka.Key.GetSchema()
+			if err != nil {
+				log.Errorf("failed to get schema for key in topic '%s': %v", ch.Name, err)
+			}
+			m.Key = &schemaInfo{Schema: s}
+		}
+		if result == nil {
+			result = map[string]messageConfig{}
+		}
+		result[messageId] = m
+	}
+	return result
 }

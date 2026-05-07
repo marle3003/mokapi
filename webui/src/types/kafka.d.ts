@@ -78,7 +78,7 @@ declare interface KafkaMessageData {
   offset: number;
   key: KafkaValue;
   message: KafkaValue;
-  schemaId: number;
+  schemaId: number
   messageId: string
   partition: number;
   headers: KafkaHeader

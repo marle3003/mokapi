@@ -65,6 +65,6 @@ op
 
 Search for errors (404 or 500) related to the Petstore
 ```typescript
-const errors = mokapi.search('+api:"Petstore" +event.data.response.statusCode:>=400 +type:event')
+const errors = mokapi.search('+api:"Petstore" +response.statusCode:>=400 +type:event')
 errors.items.map(x => mokapi.getEvent(x.metadata.id))
 ```

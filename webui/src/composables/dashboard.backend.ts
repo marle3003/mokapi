@@ -12,7 +12,8 @@ export const dashboard: Dashboard = {
     },
 
     getServices(type, doRefresh) {
-        const response = useFetch('/api/services', {}, doRefresh)
+        const path = type ? `/api/services?type=${type}` : '/api/services'
+        const response = useFetch(path, {}, doRefresh)
         const services = ref<Service[]>([])
 
         watchEffect(() => {
@@ -20,19 +21,7 @@ export const dashboard: Dashboard = {
                 services.value = []
                 return
             }
-    
-            let result = []
-            if (type) {
-                for (let service of response.data) {
-                    if (service.type == type){
-                        result.push(service)
-                    }
-                }
-            }else{
-                result = response.data
-            }
-    
-            services.value = result.sort(compareService)
+            services.value = response.data .sort(compareService)
         })
         return { services, close: response.close }
     },
@@ -49,10 +38,31 @@ export const dashboard: Dashboard = {
         return {service, isLoading, close: response.close} 
     },
 
-    getEvents(namespace: string, ...labels: Label[]) {
-        let url = `/api/events?namespace=${namespace}`
-        for (let label of labels) {
-            url += `&${label.name}=${label.value}`
+    getHttpOperations(serviceName: string, path?: string, method?: string) {
+        let url = `/api/services/http/${serviceName}/operations`
+        if (method) {
+            url += `?method=${method}`
+        }
+        if (path) {
+            const separator = method ? '&' : '?'
+            url += `${separator}path=${path}`
+        }
+        const response = useFetch(url)
+        const operations = ref<HttpOperation[] | null>(null)
+        const isLoading = ref<boolean>(true)
+
+        watchEffect(() => {
+            operations.value = response.data ? response.data : null
+            isLoading.value = response.isLoading
+        })
+        return {operations, isLoading, close: response.close} 
+    },
+
+    getEvents(...labels: Label[]) {
+        let url = `/api/events`
+        for (const [index, label] of labels.entries()) {
+            let separator = index === 0 ? '?' : '&'
+            url += `${separator}${label.name}=${label.value}`
         }
         const res = useFetch(url)
         const events = ref<ServiceEvent[]>([])
@@ -78,8 +88,9 @@ export const dashboard: Dashboard = {
         return {event, isLoading, close: response.close}
     },
 
-    getMetrics(query) {
-        const response = useFetch('/api/metrics?q=' + query)
+    getMetrics(type?: string) {
+        const path = type ? `/api/metrics/${type}` : '/api/metrics'
+        const response = useFetch(path)
         return response
     },
 

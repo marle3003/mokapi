@@ -92,16 +92,16 @@ func TestApp_AddKafka(t *testing.T) {
 				traits := events.NewTraits().WithNamespace("kafka").WithName("foo").With("topic", "foo")
 				_ = app.Events.Push(&eventstest.Event{Name: "bar"}, traits)
 				stores := app.Events.GetStores(traits)
-				require.Len(t, stores, 3, "expected to find two stores for topic foo")
-				require.Equal(t, stores[2].Traits, traits)
-				require.Equal(t, 1, stores[2].NumEvents)
+				require.Len(t, stores, 4, "expected to find two stores for topic foo")
+				require.Equal(t, stores[3].Traits, traits)
+				require.Equal(t, 1, stores[3].NumEvents)
 
 				traits = events.NewTraits().WithNamespace("kafka").WithName("foo").With("topic", "bar")
 				_ = app.Events.Push(&eventstest.Event{Name: "bar"}, traits)
 				stores = app.Events.GetStores(traits)
-				require.Len(t, stores, 3, "expected to find two stores for topic bar")
-				require.Equal(t, stores[2].Traits, traits)
-				require.Equal(t, 1, stores[2].NumEvents)
+				require.Len(t, stores, 4, "expected to find two stores for topic bar")
+				require.Equal(t, stores[3].Traits, traits)
+				require.Equal(t, 1, stores[3].NumEvents)
 			},
 		},
 		{

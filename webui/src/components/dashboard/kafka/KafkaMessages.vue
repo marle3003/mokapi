@@ -21,7 +21,7 @@ const emit = defineEmits<{
 
 const tags = useLocalStorage<string[]>(`kafka-${props.service?.name}-tags`, ['__all'])
 const labels = computed(() => {
-    const result = [];
+    const result = [{ name: 'namespace', value: 'kafka' }];
     if (props.service) {
         result.push({name: 'name', value: props.service.name})
     }
@@ -40,7 +40,7 @@ const { formatLanguage } = usePrettyLanguage()
 const { fromBinary } = usePrettyText()
 
 const { dashboard } = useDashboard()
-const { events, close } = dashboard.value.getEvents('kafka', ...labels.value)
+const { events, close } = dashboard.value.getEvents(...labels.value)
 const messageDialog = ref<any>(null)
 const tabDetailData = ref<any>(null)
 let dialog:  Modal

@@ -83,7 +83,7 @@ export function useKafkaMessages(page: Page) {
             await test.step('Check messages log', async () => {
                 let columns = ['Topic', 'Key', 'Value', 'Time']
                 if (!withTopic) {
-                    columns.splice(2,1)
+                    columns.splice(0,1)
                 }
 
                 const messages = await useTable(table, columns)

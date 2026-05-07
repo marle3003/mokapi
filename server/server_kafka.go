@@ -43,8 +43,12 @@ func NewKafkaManager(emitter common.EventEmitter, app *runtime.App) *KafkaManage
 }
 
 func (m *KafkaManager) UpdateConfig(e dynamic.ConfigEvent) {
-	cfg, ok := runtime.IsAsyncApiConfig(e.Config)
+	cfg, ok := runtime.HasKafkaBroker(e.Config)
 	if !ok {
+		if cfg == nil || m.clusters == nil {
+			return
+		}
+		m.removeCluster(cfg.Info.Name)
 		return
 	}
 
@@ -108,7 +112,7 @@ func (c *kafkaCluster) updateBrokers(cfg *runtime.KafkaInfo, old *sortedmap.Link
 		if !slices.ContainsFunc(servers, func(s *asyncapi3.ServerRef) bool {
 			return s.Value != nil && server.Value != nil && s.Value.Host == server.Value.Host
 		}) {
-			port, _ := getPortFromUrl(server.Value.Host)
+			port, _ := getPortFromUrl(server.Value.Host, "9092")
 			if b, ok := c.brokers[port]; ok {
 				log.Infof("removing kafka broker '%v' on port %v from cluster '%v'", name, b.Addr(), cfg.Info.Name)
 				b.Stop()
@@ -123,7 +127,7 @@ func (c *kafkaCluster) updateBrokers(cfg *runtime.KafkaInfo, old *sortedmap.Link
 		if server == nil || server.Value == nil {
 			continue
 		}
-		port, err := getPortFromUrl(server.Value.Host)
+		port, err := getPortFromUrl(server.Value.Host, "9092")
 		if err != nil {
 			log.Errorf("unable to start broker %v for cluster %v: ", server.Value.Host, cfg.Info.Name)
 			continue
@@ -151,7 +155,7 @@ func (m *KafkaManager) Stop() {
 	}
 }
 
-func getPortFromUrl(urlString string) (string, error) {
+func getPortFromUrl(urlString, defaultPort string) (string, error) {
 	u, err := url.Parse(urlString)
 	if err != nil || len(u.Host) == 0 {
 		u, err = url.Parse("//" + urlString)
@@ -162,7 +166,7 @@ func getPortFromUrl(urlString string) (string, error) {
 
 	port := u.Port()
 	if len(port) == 0 {
-		port = "9092"
+		port = defaultPort
 	}
 
 	return port, nil

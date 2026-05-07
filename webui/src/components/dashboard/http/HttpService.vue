@@ -2,6 +2,7 @@
 import { type Ref, onUnmounted, computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
+import ServiceStatus from '../ServiceStatus.vue'
 import EndpointsCard from './EndpointsCard.vue'
 import HttpPath from './HttpPath.vue'
 import HttpOperation from './HttpOperation.vue'
@@ -87,12 +88,44 @@ function endpointNotFoundMessage(msg: string | undefined) {
     }
     return "not found"
 }
+const status = computed(() => {
+    if (!service.value) {
+        return { status: 'valid', errors: [] }
+    }
+    let status = 'valid'
+    let errors: Error[] = []
+    for (const path of service.value.paths) {
+        if (path.status !== 'valid') {
+            if (status === 'valid') {
+                status = path.status
+            }
+            if (path.errors) {
+                errors.push(...path.errors)
+            }
+        }
+        for (const op of path.operations) {
+            if (op.status === 'valid') {
+                continue
+            }
+            if (status === 'valid') {
+                status = op.status
+            }
+            if (op.errors) {
+                errors.push(...op.errors)
+            }
+        }
+    }
+    return { status, errors }
+})
 </script>
 
 <template>
     <div v-if="$route.name == getRouteName('httpService').value && service != null">
         <div class="card-group">
-            <service-info-card :service="service" type="HTTP" />
+            <service-info-card :service="service" type="HTTP" :status="status.status" />
+        </div>
+        <div class="card-group" v-if="status.status !== 'valid'">
+            <service-status :errors="status.errors" />
         </div>
 
         <div class="card-group">
@@ -138,7 +171,7 @@ function endpointNotFoundMessage(msg: string | undefined) {
     </div>
     <request v-if="$route.name == getRouteName('httpRequest').value"></request>
     <http-path v-if="service && endpoint && endpoint.path && !endpoint.operation && !endpoint.error" :service="service" :path="endpoint.path" />
-    <http-operation v-if="service && endpoint && endpoint.operation" :service="service" :path="endpoint.path" :operation="endpoint.operation" />
+    <http-operation v-if="service && endpoint && endpoint.operation" :service="service" :path="endpoint.path" :method="endpoint.operation.method" />
     <div v-if="$route.name == getRouteName('httpEndpoint').value && endpoint && endpoint.error">
         <message :message="endpointNotFoundMessage(endpoint?.error)"></message>
     </div>

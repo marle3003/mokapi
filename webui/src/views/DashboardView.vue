@@ -3,6 +3,7 @@ import AppStartCard from '../components/dashboard/AppStartCard.vue'
 import MemoryUsageCard from '../components/dashboard/MemoryCard.vue'
 import JobCountCard from '@/components/dashboard/JobCountCard.vue'
 import Search from '../components/dashboard/Search.vue'
+import Events from '../components/dashboard/Events.vue'
 
 import HttpRequestCard from '../components/dashboard/http/HttpRequestMetricCard.vue'
 import HttpServicesCard from '../components/dashboard/http/HttpServicesCard.vue'
@@ -24,6 +25,11 @@ import MailServicesCard from '../components/dashboard/mail/MailServicesCard.vue'
 import MailService from '../components/dashboard/mail/Service.vue'
 import Mails from '@/components/dashboard/mail/Mails.vue'
 
+import MqttMessageMetricCard from '../components/dashboard/mqtt/MqttMessageMetricCard.vue'
+import MqttClustersCard from '../components/dashboard/mqtt/MqttServicesCard.vue'
+import MqttService from '../components/dashboard/mqtt/MqttService.vue'
+import MqttMessagesCard from '@/components/dashboard/mqtt/MqttMessagesCard.vue'
+
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 
@@ -40,7 +46,6 @@ import { useRoute } from 'vue-router'
 import { useRefreshManager } from '@/composables/refresh-manager'
 import { useDashboard, getRouteName } from '@/composables/dashboard'
 import Tabs from '@/components/dashboard/Tabs.vue'
-import ReleaseNotes from '@/components/ReleaseNotes.vue'
 import { useRouter } from '@/router'
 
 const route = useRoute()
@@ -110,7 +115,7 @@ router.afterEach((to) => {
 </script>
 
 <template>
-    <div v-if="isActive" class="position-fixed top-0 start-0 w-100" style="height: 2px; z-index: 1000;">
+    <div v-if="isActive && route.name !== getRouteName('search').value" class="position-fixed top-0 start-0 w-100" style="height: 2px; z-index: 1000;">
         <div class="refresh-progress-bar h-100" :style="{
             width: progress + '%',
             height: '3px',
@@ -140,6 +145,7 @@ router.afterEach((to) => {
                     <div class="card-group">
                         <http-request-card v-if="isServiceAvailable('http')" includeError />
                         <kafka-message-metric-card v-if="isServiceAvailable('kafka')" />
+                        <mqtt-message-metric-card v-if="isServiceAvailable('mqtt')" />
                         <smtp-message-metric-card v-if="isServiceAvailable('mail')" />
                         <ldap-search-metric-card v-if="isServiceAvailable('ldap')" />
                         <job-count-card />
@@ -149,6 +155,9 @@ router.afterEach((to) => {
                     </div>
                     <div class="card-group" v-if="isServiceAvailable('kafka')">
                         <kafka-clusters-card />
+                    </div>
+                    <div class="card-group" v-if="isServiceAvailable('mqtt')">
+                        <mqtt-clusters-card />
                     </div>
                     <div class="card-group" v-if="isServiceAvailable('mail')">
                         <mail-services-card />
@@ -182,6 +191,18 @@ router.afterEach((to) => {
                     </div>
                     <div class="card-group" v-if="isServiceAvailable('kafka')">
                         <kafka-messages-card />
+                    </div>
+                </div>
+
+                <div v-if="$route.name === getRouteName('mqtt').value">
+                    <div class="card-group">
+                        <mqtt-message-metric-card v-if="isServiceAvailable('mqtt')" />
+                    </div>
+                    <div class="card-group" v-if="isServiceAvailable('mqtt')">
+                        <mqtt-clusters-card />
+                    </div>
+                    <div class="card-group" v-if="isServiceAvailable('mqtt')">
+                        <mqtt-messages-card />
                     </div>
                 </div>
 
@@ -230,8 +251,13 @@ router.afterEach((to) => {
                     <search v-if="$route.name === 'search'"></search>
                 </div>
 
+                <div v-if="$route.name === getRouteName('events').value">
+                    <events></events>
+                </div>
+
                 <http-service v-if="$route.meta.service === 'http'" />
                 <kafka-service v-if="$route.meta.service === 'kafka'" />
+                <mqtt-service v-if="$route.meta.service === 'mqtt'" />
                 <mail-service v-if="$route.meta.service === 'mail'" />
                 <ldap-service v-if="$route.meta.service === 'ldap'" />
                 <config v-if="$route.name === getRouteName('config').value"></config>

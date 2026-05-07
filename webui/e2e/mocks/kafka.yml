@@ -3,7 +3,7 @@ components:
     Clusters:
       get:
         summary: Returns a list of Kafka clusters.
-        operationId: clusters
+        operationId: kafkaClusters
         responses:
           '200':
             description: The list of Kafka clusters
@@ -27,7 +27,7 @@ components:
     Topics:
       get:
         summary: Returns the list of topics that belongs to the specified Kafka cluster
-        operationId: topics
+        operationId: kafkaTopics
         parameters:
           - in: path
             name: cluster
@@ -57,7 +57,7 @@ components:
             type: string
       get:
         summary: Return the topic with the given topic name
-        operationId: topic
+        operationId: kafkaTopic
         responses:
           '200':
             description: The topic.
@@ -67,7 +67,7 @@ components:
                   $ref: '#/components/schemas/Topic'
       post:
         summary: Produce messages to a topic, the partition will be chosen randomly
-        operationId: produceTopic
+        operationId: kafkaProduceTopic
         requestBody:
           required: true
           content:
@@ -102,7 +102,7 @@ components:
     Partitions:
       get:
         summary: Return the list of partitions that belong to the specified topic.
-        operationId: partitions
+        operationId: kafkaPartitions
         parameters:
           - in: path
             name: cluster
@@ -142,7 +142,7 @@ components:
             type: integer
       get:
         summary: Return the partition with the given partition id.
-        operationId: partition
+        operationId: kafkaPartition
         responses:
           '200':
             description: The list of partitions.
@@ -152,7 +152,7 @@ components:
                   $ref: '#/components/schemas/Partition'
       post:
         summary: Produce records to specified partition of the topic.
-        operationId: producePartition
+        operationId: kafkaProducePartition
         requestBody:
           required: true
           content:
@@ -203,7 +203,7 @@ components:
             type: integer
       get:
         summary: Return published records in partition.
-        operationId: offsets
+        operationId: kafkaOffsets
         parameters:
           - in: query
             name: offset
@@ -254,7 +254,7 @@ components:
             type: integer
       get:
         summary: Return published record in partition with the specified offset.
-        operationId: offset
+        operationId: kafkaOffset
         responses:
           '200':
             description: The record.

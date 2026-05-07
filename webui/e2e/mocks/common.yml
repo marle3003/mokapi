@@ -9,7 +9,7 @@ components:
           type: array
           items:
             type: string
-            enum: ["http", "kafka", "mail", "ldap"]
+            enum: ["http", "kafka", "mail", "ldap", "mqtt"]
         search:
           type: object
           properties:
@@ -28,9 +28,11 @@ components:
           $ref: '#/components/schemas/Contact'
         type:
           type: string
-          enum: ["http", "kafka", "mail", "ldap"]
+          enum: ["http", "kafka", "mail", "ldap", "mqtt"]
         metrics:
           $ref: '#/components/schemas/Metrics'
+        status:
+          type: string
     Contact:
       type: object
       properties:
@@ -108,4 +110,9 @@ components:
         value:
           type: string
         binary:
+          type: string
+    Error:
+      type: object
+      properties:
+        message:
           type: string

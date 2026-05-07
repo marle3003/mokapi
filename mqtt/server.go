@@ -2,14 +2,15 @@ package mqtt
 
 import (
 	"context"
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"mokapi/safe"
 	"net"
 	"runtime/debug"
 	"sync"
 	"syscall"
+
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 var ErrServerClosed = errors.New("mqtt: Server closed")
@@ -90,7 +91,7 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 	client.conn = conn
 	for {
 		r := &Message{Context: ctx}
-		err := r.Read(conn)
+		err := r.Read(conn, client)
 		if err != nil {
 			switch {
 			case err == io.EOF || errors.Is(err, net.ErrClosed) || errors.Is(err, syscall.ECONNRESET):
@@ -103,6 +104,7 @@ func (s *Server) serve(conn net.Conn, ctx context.Context) {
 
 		res := &messageWriter{
 			conn: conn,
+			ctx:  client,
 		}
 
 		s.Handler.ServeMessage(res, r)
@@ -161,8 +163,6 @@ func (s *Server) trackConn(conn net.Conn) context.Context {
 		s.activeConn = make(map[net.Conn]context.Context)
 	}
 
-	// delete conn struct and implement all in server
-	// NewClientContext(context, net.Conn)
 	ctx := NewClientContext(context.Background(), conn)
 
 	s.activeConn[conn] = ctx
@@ -171,8 +171,9 @@ func (s *Server) trackConn(conn net.Conn) context.Context {
 
 type messageWriter struct {
 	conn net.Conn
+	ctx  *ClientContext
 }
 
 func (mw messageWriter) Write(msg *Message) error {
-	return msg.Write(mw.conn)
+	return msg.Write(mw.conn, mw.ctx)
 }

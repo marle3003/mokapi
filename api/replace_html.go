@@ -2,12 +2,13 @@ package api
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/providers/openapi"
 	"mokapi/runtime"
 	"net/url"
 	"regexp"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -59,7 +60,7 @@ func getHttpMetaInfo(segments []string, app *runtime.App) (title, description st
 		return
 	}
 
-	c := app.GetHttp(name)
+	c := app.Http.Get(name)
 	if c == nil {
 		return
 	}

@@ -46,12 +46,13 @@ func (s *Server) Start() error {
 
 	<-s.stopChan
 	log.Debug("stopping server")
-	s.pool.Stop()
+	s.app.Stop()
 	s.kafka.Stop()
 	s.http.Stop()
 	s.mail.Stop()
 	s.ldap.Stop()
 	s.engine.Close()
+	s.pool.Stop()
 
 	return nil
 }

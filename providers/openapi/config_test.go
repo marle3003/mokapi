@@ -29,7 +29,7 @@ func TestConfig_Validate(t *testing.T) {
 	testdata := []struct {
 		name string
 		data string
-		test func(t *testing.T, err error)
+		test func(t *testing.T, c *openapi.Config, err error)
 	}{
 		{
 			name: "simple valid config 3",
@@ -38,7 +38,7 @@ openapi: 3
 info:
   title: foo
 `,
-			test: func(t *testing.T, err error) {
+			test: func(t *testing.T, _ *openapi.Config, err error) {
 				require.NoError(t, err)
 			},
 		},
@@ -49,7 +49,7 @@ openapi: 3.0
 info:
   title: foo
 `,
-			test: func(t *testing.T, err error) {
+			test: func(t *testing.T, _ *openapi.Config, err error) {
 				require.NoError(t, err)
 			},
 		},
@@ -60,7 +60,7 @@ openapi: 3.1
 info:
   title: foo
 `,
-			test: func(t *testing.T, err error) {
+			test: func(t *testing.T, _ *openapi.Config, err error) {
 				require.NoError(t, err)
 			},
 		},
@@ -71,7 +71,7 @@ openapi: 2
 info:
   title: foo
 `,
-			test: func(t *testing.T, err error) {
+			test: func(t *testing.T, _ *openapi.Config, err error) {
 				require.EqualError(t, err, "not supported version: 2.0.0")
 			},
 		},
@@ -81,7 +81,7 @@ info:
 openapi: 2.0
 info:
 `,
-			test: func(t *testing.T, err error) {
+			test: func(t *testing.T, _ *openapi.Config, err error) {
 				require.EqualError(t, err, "not supported version: 2.0.0\nan openapi title is required")
 			},
 		},
@@ -91,7 +91,7 @@ info:
 openapi: 3.0.3
 info:
 `,
-			test: func(t *testing.T, err error) {
+			test: func(t *testing.T, _ *openapi.Config, err error) {
 				require.EqualError(t, err, "an openapi title is required")
 			},
 		},
@@ -102,7 +102,7 @@ openapi: 3.f
 info:
   title: foo
 `,
-			test: func(t *testing.T, err error) {
+			test: func(t *testing.T, _ *openapi.Config, err error) {
 				require.NoError(t, err)
 			},
 		},
@@ -113,7 +113,7 @@ openapi: ""
 info:
   title: foo
 `,
-			test: func(t *testing.T, err error) {
+			test: func(t *testing.T, _ *openapi.Config, err error) {
 				require.EqualError(t, err, "no OpenApi version defined")
 			},
 		},
@@ -126,8 +126,10 @@ info:
 paths:
   foo: {}
 `,
-			test: func(t *testing.T, err error) {
-				require.EqualError(t, err, "should only have path names that start with `/`: 'foo'")
+			test: func(t *testing.T, c *openapi.Config, err error) {
+				require.NoError(t, err)
+				require.Equal(t, openapi.StatusValidationError, c.Paths["foo"].Value.Status)
+				require.Equal(t, "path should start with `/`", c.Paths["foo"].Value.Errors[0].Message)
 			},
 		},
 	}
@@ -141,7 +143,7 @@ paths:
 			c := &openapi.Config{}
 			err := yaml.Unmarshal([]byte(tc.data), c)
 			require.NoError(t, err)
-			tc.test(t, c.Validate())
+			tc.test(t, c, c.Validate())
 		})
 	}
 }

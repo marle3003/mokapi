@@ -1,19 +1,35 @@
 <script setup lang="ts">
-import { computed, type PropType } from 'vue'
+import { computed, onUnmounted, type PropType, type Ref } from 'vue'
 import { useRoute } from '@/router'
 import HttpRequestCard from './request/HttpRequestCard.vue'
 import HttpResponseCard from './response/HttpResponseCard.vue'
 import Requests from './Requests.vue'
+import ServiceStatus from '../ServiceStatus.vue'
 import { useMarkdown } from '@/composables/markdown'
+import { useDashboard } from '@/composables/dashboard'
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },
     path: { type: Object as PropType<HttpPath>, required: true },
-    operation: { type: Object as PropType<HttpOperation>, required: true },
+    method: { type: Object as PropType<string>, required: true },
+})
+
+const { dashboard } = useDashboard()
+const result = dashboard.value.getHttpOperations(props.service.name, props.path.path, props.method)
+const operations = result.operations as Ref<HttpOperation[] | null>
+onUnmounted(() => {
+    result.close()
+})
+
+const operation = computed(() => {
+    if (!operations.value || operations.value.length === 0){
+        return null
+    }
+    return operations.value[0]
 })
 
 const route = useRoute()
-const description = computed(() => useMarkdown(props.operation.description).content)
+const description = computed(() => useMarkdown(operation.value?.description || '').content)
 </script>
 
 <template>
@@ -62,8 +78,17 @@ const description = computed(() => useMarkdown(props.operation.description).cont
                         <p id="operation-description" class="label">Description</p>
                         <div aria-labelledby="operation-description" v-html="description"></div>
                     </div>
+                    <div class="row" v-if="operation.status !== 'valid'">
+                        <div class="col">
+                            <p id="status" class="label">Status</p>
+                            <div aria-labelledby="status" class="status">{{ operation.status }}</div>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
+        <div class="card-group" v-if="operation.status !== 'valid'">
+            <service-status :errors="operation.errors" />
         </div>
         <div class="card-group">
             <http-request-card :operation="operation" :path="path.path" />

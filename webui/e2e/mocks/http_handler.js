@@ -1,8 +1,9 @@
 import { on, sleep } from 'mokapi'
-import { clusters, events as kafkaEvents, configs as kafkaConfigs } from 'kafka.js'
+import { clusters as kafkaClusters, events as kafkaEvents, configs as kafkaConfigs } from 'kafka.js'
 import { apps as httpServices, events as httpEvents, configs as httpConfigs } from 'services_http.js'
 import { services as mailServices, mailEvents, getMail, getAttachment } from 'mail.js'
 import { server as ldapServers, searches } from 'ldap.js'
+import { clusters as mqttClusters, events as mqttEvents } from 'mqtt.js'
 import { metrics } from 'metrics.js'
 import { get, post, fetch } from 'mokapi/http'
 import { base64 } from 'mokapi/encoding';
@@ -25,12 +26,12 @@ export default async function() {
         switch (request.operationId) {
             case 'info': {
 
-                response.data = { version: "0.11.0", activeServices: ["http", "kafka", "ldap", "mail"], search: { enabled: true } }
-                return true
+                response.data = { version: "0.11.0", activeServices: ["http", "kafka", "ldap", "mail", "mqtt"], search: { enabled: true } }
+                return
             }
             case 'services':
-                response.data = getServices()
-                return true
+                response.data = getServices(request.query['type'])
+                return
             case 'serviceHttp':
                 const name = request.path['name']
                 const service = httpServices.find(x => x.name === name)
@@ -39,27 +40,49 @@ export default async function() {
                 } else{
                     response.statusCode = 404
                 }
-                return true
+                return
+            case 'httpOperations': {
+                const name = request.path['name']
+                const service = httpServices.find(x => x.name === name)
+                if (!service) {
+                    response.statusCode = 404
+                    return
+                }
+                const method = request.query['method']
+                const path = request.query['path']
+                let operations = []
+                for (const p of service.paths) {
+                    if (!path || p.path === path) {
+                        for (const o of p.operations) {
+                            if (!method || o.method.toLowerCase() === method.toLowerCase()) {
+                                operations.push(o)
+                            }
+                        }
+                    }
+                }
+                response.data = operations
+                return
+            }
             case 'serviceKafka':
-                response.data = clusters[0]
-                return true
+                response.data = kafkaClusters[0]
+                return
             case 'serviceMail':
                 response.data = mailServices[0]
-                return true
-            case 'clusters':
-                response.data = clusters.map(x => getInfo(x, 'kafka'))
                 return
-            case 'topics':
-                response.data = clusters[0].topics
+            case 'kafkaClusters':
+                response.data = kafkaClusters.map(x => getInfo(x, 'kafka'))
                 return
-            case 'topic':
-                response.data = clusters[0].topics.find(x => x.name === request.path.topic)
+            case 'kafkaTopics':
+                response.data = kafkaClusters[0].topics
+                return
+            case 'kafkaTopic':
+                response.data = kafkaClusters[0].topics.find(x => x.name === request.path.topic)
                 if (response.data === undefined) {
                     response.statusCode = 404
                 }
                 return
-            case 'produceTopic': {
-                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+            case 'kafkaProduceTopic': {
+                const topic = kafkaClusters[0].topics.find(x => x.name === request.path.topic)
                 if (!topic) {
                     response.statusCode = 404
                 } else {
@@ -74,8 +97,8 @@ export default async function() {
                 }
                 return
             }
-            case 'partitions': {
-                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+            case 'kafkaPartitions': {
+                const topic = kafkaClusters[0].topics.find(x => x.name === request.path.topic)
                 if (!topic) {
                     response.statusCode = 404
                     return
@@ -83,8 +106,8 @@ export default async function() {
                 response.data = topic.partitions
                 return
             }
-            case 'partition': {
-                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+            case 'kafkaPartition': {
+                const topic = kafkaClusters[0].topics.find(x => x.name === request.path.topic)
                 if (!topic) {
                     response.statusCode = 404
                     return
@@ -97,8 +120,8 @@ export default async function() {
                 }
                 return
             }
-            case 'producePartition': {
-                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+            case 'kafkaProducePartition': {
+                const topic = kafkaClusters[0].topics.find(x => x.name === request.path.topic)
                 if (!topic) {
                     response.statusCode = 404
                     return
@@ -118,8 +141,8 @@ export default async function() {
                 }
                 return
             }
-            case 'offsets': {
-                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+            case 'kafkaOffsets': {
+                const topic = kafkaClusters[0].topics.find(x => x.name === request.path.topic)
                 if (!topic) {
                     response.statusCode = 404
                     return
@@ -143,8 +166,8 @@ export default async function() {
                 }
                 return
             }
-            case 'offset': {
-                const topic = clusters[0].topics.find(x => x.name === request.path.topic)
+            case 'kafkaOffset': {
+                const topic = kafkaClusters[0].topics.find(x => x.name === request.path.topic)
                 if (!topic) {
                     response.statusCode = 404
                     return
@@ -174,7 +197,7 @@ export default async function() {
             }
             case 'mailboxes':
                 response.data = mailServices[0].mailboxes
-                return true
+                return
             case 'mailbox':
                 for (const mb of mailServices[0].mailboxes) {
                     if (mb.name === request.path.mailbox) {
@@ -182,11 +205,11 @@ export default async function() {
                             ...mb,
                             folders: mb.folders.map(x => x.name)
                         }
-                        return true
+                        return
                     }
                 }
                 response.statusCode = 404
-                return true
+                return
             case 'smtpMessages':
                 for (const mb of mailServices[0].mailboxes) {
                     if (mb.name === request.path.mailbox) {
@@ -195,11 +218,11 @@ export default async function() {
                             result.push(...f.messages)
                         }
                         response.data = result
-                        return true
+                        return
                     }
                 }
                 response.statusCode = 404
-                return true
+                return
             case 'smtpMail':
             case 'smtpMessage':
                 const messageId = request.path['messageId']
@@ -212,7 +235,7 @@ export default async function() {
                         data: mail
                     }
                 }
-                return true
+                return
             case 'smtpMailAttachment':
             case 'smtpAttachment':
                 const attachment = getAttachment(request.path['messageId'], request.path['name'])
@@ -222,21 +245,25 @@ export default async function() {
                     response.data = attachment.data
                     response.headers['Content-Type'] = attachment.contentType
                 }
-                return true
+                return
             case 'serviceLdap':
                 response.data = ldapServers[0]
-                return true
+                return
             case 'metrics':
-                let q = request.query["query"]
-                if (!q) {
+                let names = request.query['names']
+                if (!names) {
                     response.data = metrics
                 } else{
-                    response.data = metrics.filter(x => x.name.includes(q))
+                    response.data = metrics.filter(x => names.includes(x.name))
                 }
-                return true
+                return
+            case 'metricsType':
+                let type = request.path['type']
+                response.data = metrics.filter(x => x.name.startsWith(type + '_'))
+                return
             case 'events':
                 response.data = getEvents(request.query['traits'])
-                return true
+                return
             case 'event':
                 let id = request.path["id"]
                 let e = getEvent(id)
@@ -245,13 +272,13 @@ export default async function() {
                 }else{
                     response.data = e
                 }
-                return true
+                return
             case 'example': {
                 const res = post(`${apiBaseUrl}/api/schema/example`, request.body)
                 response.statusCode = res.statusCode
                 response.headers = res.headers
                 response.body = res.body
-                return true
+                return
             }
             case 'validate':
                 sleep(1000)
@@ -265,35 +292,35 @@ export default async function() {
                 response.headers = res.headers
                 response.body = res.body
                 response.data = null
-                return true
+                return
             case 'configs':
                 response.data = getConfigs()
-                return true
+                return
             case 'config':
                 const config = getConfig(request.path.id)
                 if (config) {
                     response.data = config
-                    return true
+                    return
                 } else {
                     response.statusCode = 404
                     response.data = ''
-                    return true
+                    return
                 }
             case 'configData':
                 const configData = configs[request.path.id]
                 if (configData) {
                     response.data = configData.data
                     response.headers = configData.headers
-                    return true
+                    return
                 } else {
                     response.statusCode = 404
                     response.data = ''
-                    return true
+                    return
                 }
             case 'fakerTree':
                 const resp = get(`${apiBaseUrl}/mokapi/api/faker/tree`)
                 response.body = resp.body
-                return true
+                return
             case 'search':
                 switch (request.query.q) {
                     case 'bad':
@@ -400,13 +427,25 @@ export default async function() {
         )
 }
 
-function getServices() {
-    let http = httpServices.map(x => getInfo(x, 'http'))
-    let kafka = clusters.map(x => getInfo(x, 'kafka'))
-    let smtp = mailServices.map(x => getInfo(x, 'mail'))
-    let ldap = ldapServers.map(x => getInfo(x, 'ldap'))
+function getServices(type) {
+    const services = []
+    if (!type || type === 'http') {
+        services.push(...httpServices.map(x => getInfo(x, 'http')))
+    }
+    if (!type || type === 'kafka') {
+        services.push(...kafkaClusters.map(x => getInfo(x, 'kafka')))
+    }
+    if (!type || type === 'mail') {
+        services.push(...mailServices.map(x => getInfo(x, 'mail')))
+    }
+    if (!type || type === 'ldap') {
+        services.push(...ldapServers.map(x => getInfo(x, 'ldap')))
+    }
+    if (!type || type === 'mqtt') {
+        services.push(...mqttClusters.map(x => getInfo(x, 'mqtt')))
+    }
 
-    return http.concat(kafka).concat(smtp).concat(ldap)
+    return services
 }
 
 function getEvent(id) {
@@ -416,6 +455,11 @@ function getEvent(id) {
         }
     }
     for (const e of kafkaEvents){
+        if (e.id === id){
+            return e
+        }
+    }
+     for (const e of mqttEvents){
         if (e.id === id){
             return e
         }
@@ -446,6 +490,11 @@ function getEvents(traits) {
         }
     }
     for (const e of kafkaEvents){
+        if (matchEvent(e, traits)) {
+            result.push(e)
+        }
+    }
+    for (const e of mqttEvents){
         if (matchEvent(e, traits)) {
             result.push(e)
         }
@@ -504,7 +553,7 @@ function getInfo(config, type) {
         description: config.description,
         version: config.version,
         metrics: config.metrics,
-        type: type
+        type: type,
     }
     if (config.contact) {
         info.contact = {
@@ -512,6 +561,9 @@ function getInfo(config, type) {
             email: config.contact.email,
             url: config.contact.url
         }
+    }
+    if (config.status) {
+        info.status = config.status
     }
     return info
 }

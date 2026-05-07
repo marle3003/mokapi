@@ -74,7 +74,7 @@ func TestIndex_Config(t *testing.T) {
 			name: "kafka and http indexed",
 			test: func(t *testing.T, app *runtime.App) {
 				h := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
-				app.AddHttp(toConfig(h))
+				app.Http.Add(toConfig(h))
 				k := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""))
 				_, err := app.Kafka.Add(toConfig(k), enginetest.NewEngine())
 				require.NoError(t, err)
@@ -92,9 +92,9 @@ func TestIndex_Config(t *testing.T) {
 			name: "api:foo with operator",
 			test: func(t *testing.T, app *runtime.App) {
 				h := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
-				app.AddHttp(toConfig(h))
+				app.Http.Add(toConfig(h))
 				h = openapitest.NewConfig("3.0", openapitest.WithInfo("bar", "", ""))
-				app.AddHttp(toConfig(h))
+				app.Http.Add(toConfig(h))
 				k := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""))
 				_, err := app.Kafka.Add(toConfig(k), enginetest.NewEngine())
 				require.NoError(t, err)
