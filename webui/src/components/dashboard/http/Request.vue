@@ -37,7 +37,6 @@ const operation = computed(() => {
 
 const eventId = computed(() => {
   const id = route.params.id
-  console.log('Route param id:', id)
   if (!id) {
     return undefined
   }

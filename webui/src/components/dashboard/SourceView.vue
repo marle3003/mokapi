@@ -46,7 +46,6 @@ if (props.source.preview) {
 } else {
   throw new Error('preview and binary not defined')
 }
-console.log(current.value)
 watch(() => props.source, (source) => {
     if (!current.value) {
       return

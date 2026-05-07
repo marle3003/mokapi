@@ -293,7 +293,7 @@ func getOperations(s *runtime.HttpInfo, path, method string) []operation {
 			}
 
 			op := operation{
-				Method:      strings.ToLower(method),
+				Method:      strings.ToLower(m),
 				Path:        ps,
 				Summary:     o.Summary,
 				Description: o.Description,

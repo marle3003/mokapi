@@ -73,7 +73,6 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
     }
 
     function hideIcon(token: Token) {
-        console.log(token)
         var info = getInfo(token) 
 
         const r = hideIconExpr.exec(info)

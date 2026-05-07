@@ -42,7 +42,6 @@ function goToService(service: Service, openInNewTab = false){
 }
 
 onUnmounted(() => {
-    console.log('Closing Kafka services card');
     close()
 })
 </script>
