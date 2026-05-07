@@ -1,3 +1,4 @@
+import Events from '@/components/dashboard/Events.vue'
 import Search from '@/components/dashboard/Search.vue'
 import { getRouteName } from '@/composables/dashboard'
 import { createRouter, createWebHistory, useRoute as baseRoute, type RouteLocationRaw, type RouteRecordRaw, type MatcherLocation } from 'vue-router'
@@ -33,7 +34,7 @@ export function useRoute() {
     }
   }
 
-  function httpOperation(service: Service, path: HttpPath, operation: HttpOperation){
+  function httpOperation(service: Service, path: HttpPath, operation: HttpOperationInfo){
     const endpoint = path.path.substring(1).split('/')
     endpoint.push(operation.method)
 
@@ -64,6 +65,12 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
         path: 'services',
         name: getRouteName('serviceList'),
         component: dashboardView
+      },
+       {
+        path: 'events',
+        name: getRouteName('events'),
+        component: Events,
+        meta: { title: 'Dashboard - Events'}
       },
       {
         path: 'search',
@@ -429,7 +436,7 @@ router.beforeEach((to, from, next) => {
     })
   }
 
-  next()
+  return next()
 });
 
 if (import.meta.env.VITE_DASHBOARD === 'true') {

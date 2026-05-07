@@ -18,10 +18,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type mailSummary struct {
-	service
-}
-
 type mailInfo struct {
 	Name        string       `json:"name"`
 	Description string       `json:"description,omitempty"`
@@ -120,9 +116,9 @@ type attachment struct {
 	ContentId   string `json:"contentId,omitempty"`
 }
 
-func getMailServices(store *runtime.MailStore, m *monitor.Monitor) []interface{} {
+func getMailServices(store *runtime.MailStore, m *monitor.Monitor) []service {
 	list := store.List()
-	result := make([]interface{}, 0, len(list))
+	result := make([]service, 0, len(list))
 	for _, hs := range list {
 		s := service{
 			Name:        hs.Info.Name,
@@ -142,7 +138,7 @@ func getMailServices(store *runtime.MailStore, m *monitor.Monitor) []interface{}
 			s.Metrics = m.FindAll(metrics.ByNamespace("mail"), metrics.ByLabel("service", hs.Info.Name))
 		}
 
-		result = append(result, &mailSummary{service: s})
+		result = append(result, s)
 	}
 	return result
 }

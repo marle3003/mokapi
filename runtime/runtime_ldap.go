@@ -203,3 +203,13 @@ func IsLdapConfig(c *dynamic.Config) (*directory.Config, bool) {
 func getLdapConfig(c *dynamic.Config) *directory.Config {
 	return c.Data.(*directory.Config)
 }
+
+func (s *LdapStore) Len() int {
+	if s == nil {
+		return 0
+	}
+
+	s.m.RLock()
+	defer s.m.RUnlock()
+	return len(s.infos)
+}

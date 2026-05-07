@@ -8,7 +8,9 @@ const interval = computed(() => {
     return Number(route.query.refresh) * 1000
 }) 
 let startTime = Date.now(), timer = ref<ReturnType<typeof setInterval> | undefined>();
-const isActive = computed(() => timer !== undefined)
+const isActive = computed(() => 
+    timer.value !== undefined
+)
 
 export function useRefreshManager() {
 

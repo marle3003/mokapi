@@ -44,7 +44,7 @@ type MqttHandler struct {
 	next mqtt.Handler
 }
 
-func newMqttInfo(c *dynamic.Config, store *store.Store, updateEventAndMetrics func(info *MqttInfo)) *MqttInfo {
+func newMqttInfo(store *store.Store, updateEventAndMetrics func(info *MqttInfo)) *MqttInfo {
 	hc := &MqttInfo{
 		configs:               map[string]*dynamic.Config{},
 		Store:                 store,
@@ -100,7 +100,7 @@ func (s *MqttStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*MqttIn
 		s.sm.ResetStores(events.NewTraits().WithNamespace("mqtt").WithName(cfg.Info.Name))
 		s.sm.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("mqtt").WithName(cfg.Info.Name))
 
-		ki = newMqttInfo(c, store.New(cfg, emitter, s.events, s.monitor.Mqtt), s.updateEventStore)
+		ki = newMqttInfo(store.New(cfg, emitter, s.events, s.monitor.Mqtt), s.updateEventStore)
 		s.infos[cfg.Info.Name] = ki
 	}
 	ki.addConfig(c, s.reader)
@@ -283,4 +283,14 @@ func (s *MqttStore) updateEventStore(k *MqttInfo) {
 		s.sm.SetStore(int(eventStore.Size), traits)
 		k.seenTopics[topicName] = true
 	}
+}
+
+func (s *MqttStore) Len() int {
+	if s == nil {
+		return 0
+	}
+
+	s.m.RLock()
+	defer s.m.RUnlock()
+	return len(s.infos)
 }

@@ -65,7 +65,7 @@ func TestHandler_Kafka(t *testing.T) {
 						asyncapi3test.WithContact("mokapi", "https://mokapi.io", "info@mokapi.io"),
 					),
 				}, enginetest.NewEngine())
-				app.AddHttp(&dynamic.Config{
+				app.Http.Add(&dynamic.Config{
 					Info: dynamic.ConfigInfo{Url: try.MustUrl("http.yaml")},
 					Data: openapitest.NewConfig("3.0",
 						openapitest.WithInfo("foo", "bar", "1.0"),

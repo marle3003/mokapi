@@ -25,7 +25,7 @@ const { format: formatTime } = usePrettyDates();
 const { formatType } = useMqtt()
 
 const labels = computed(() => {
-  const result = [{ name: 'type', value: 'request' }];
+  const result = [{ name: 'namespace', value: 'mqtt' }, { name: 'type', value: 'request' }];
   result.push({ name: 'name', value: props.service.name })
   result.push({ name: 'clientId', value: props.clientId })
   return result;
@@ -56,7 +56,7 @@ const requests = computed(() => {
 
 watch(() => dashboard.value,
   (db, _, onCleanup) => {
-    const res =  db.getEvents('mqtt', ...labels.value);
+    const res =  db.getEvents(...labels.value);
     data.value = res;
 
     onCleanup(() => res.close());

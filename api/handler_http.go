@@ -1,18 +1,17 @@
 package api
 
 import (
+	"fmt"
+	"maps"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema"
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"net/http"
+	"slices"
 	"strings"
 )
-
-type httpSummary struct {
-	service
-}
 
 type httpInfo struct {
 	Name        string           `json:"name"`
@@ -27,14 +26,28 @@ type httpInfo struct {
 }
 
 type pathItem struct {
-	Path        string      `json:"path"`
+	Path        string          `json:"path"`
+	Summary     string          `json:"summary,omitempty"`
+	Description string          `json:"description,omitempty"`
+	Status      string          `json:"status"`
+	Errors      []errorData     `json:"errors,omitempty"`
+	Operations  []operationInfo `json:"operations,omitempty"`
+}
+
+type operationInfo struct {
+	Method      string      `json:"method"`
 	Summary     string      `json:"summary,omitempty"`
 	Description string      `json:"description,omitempty"`
-	Operations  []operation `json:"operations,omitempty"`
+	OperationId string      `json:"operationId,omitempty"`
+	Deprecated  bool        `json:"deprecated"`
+	Tags        []string    `json:"tags,omitempty"`
+	Status      string      `json:"status"`
+	Errors      []errorData `json:"errors,omitempty"`
 }
 
 type operation struct {
 	Method      string                `json:"method"`
+	Path        string                `json:"path"`
 	Summary     string                `json:"summary,omitempty"`
 	Description string                `json:"description,omitempty"`
 	OperationId string                `json:"operationId,omitempty"`
@@ -44,6 +57,12 @@ type operation struct {
 	Responses   []response            `json:"responses,omitempty"`
 	Security    []securityRequirement `json:"security,omitempty"`
 	Tags        []string              `json:"tags,omitempty"`
+	Status      string                `json:"status"`
+	Errors      []errorData           `json:"errors,omitempty"`
+}
+
+type errorData struct {
+	Message string `json:"message"`
 }
 
 type param struct {
@@ -102,14 +121,16 @@ type tag struct {
 	Kind        string `yaml:"kind" json:"kind"`
 }
 
-func getHttpServices(list []*runtime.HttpInfo, m *monitor.Monitor) []interface{} {
-	result := make([]interface{}, 0, len(list))
+func getHttpServices(s *runtime.HttpStore, m *monitor.Monitor) []service {
+	list := s.List()
+	result := make([]service, 0, len(list))
 	for _, hs := range list {
 		s := service{
 			Name:        hs.Info.Name,
 			Description: hs.Info.Description,
 			Version:     hs.Info.Version,
 			Type:        ServiceHttp,
+			Status:      hs.GetStatus().String(),
 		}
 
 		if hs.Info.Summary != "" {
@@ -129,29 +150,49 @@ func getHttpServices(list []*runtime.HttpInfo, m *monitor.Monitor) []interface{}
 			}
 		}
 
-		result = append(result, &httpSummary{service: s})
+		result = append(result, s)
 	}
 	return result
 }
 
-func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *monitor.Monitor) {
-	segments := strings.Split(r.URL.Path, "/")
-	name := segments[4]
+func (h *handler) handleHttp(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/")
+	segments := strings.Split(path, "/")
+	switch {
+	case len(segments) == 4:
+		name := segments[3]
+		if s := h.app.Http.Get(name); s != nil {
+			result := h.getHttpService(s)
+			w.Header().Set("Content-Type", "application/json")
+			writeJsonBody(w, result)
+		} else {
+			w.WriteHeader(404)
+		}
+	case len(segments) == 5 && segments[4] == "operations":
+		name := segments[3]
+		method := r.URL.Query().Get("method")
+		p := r.URL.Query().Get("path")
+		if s := h.app.Http.Get(name); s != nil {
+			result := getOperations(s, p, method)
+			w.Header().Set("Content-Type", "application/json")
+			writeJsonBody(w, result)
 
-	s := h.app.GetHttp(name)
-	if s == nil {
-		w.WriteHeader(404)
-		return
+		} else {
+			w.WriteHeader(404)
+			_, _ = w.Write([]byte(fmt.Sprintf("Not found: %s", name)))
+		}
 	}
+}
 
+func (h *handler) getHttpService(s *runtime.HttpInfo) httpInfo {
 	result := httpInfo{
 		Name:        s.Info.Name,
 		Description: s.Info.Description,
 		Version:     s.Info.Version,
 	}
 
-	if m != nil {
-		result.Metrics = m.FindAll(metrics.ByNamespace("http"), metrics.ByLabel("service", s.Info.Name))
+	if h.app.Monitor != nil {
+		result.Metrics = h.app.Monitor.FindAll(metrics.ByNamespace("http"), metrics.ByLabel("service", s.Info.Name))
 	}
 
 	if s.Info.Contact != nil {
@@ -177,6 +218,7 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 			Path:        path,
 			Summary:     p.Value.Summary,
 			Description: p.Value.Description,
+			Status:      p.Value.Status.String(),
 		}
 		if len(p.Summary) > 0 {
 			pi.Summary = p.Summary
@@ -185,14 +227,80 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 			pi.Description = p.Description
 		}
 
-		for m, o := range p.Value.Operations() {
-			op := operation{
-				Method:      strings.ToLower(m),
+		for _, err := range p.Value.Errors {
+			pi.Errors = append(pi.Errors, errorData{Message: err.Message})
+		}
+
+		for method, o := range p.Value.Operations() {
+			pi.Operations = append(pi.Operations, operationInfo{
+				Method:      strings.ToLower(method),
 				Summary:     o.Summary,
 				Description: o.Description,
 				OperationId: o.OperationId,
 				Deprecated:  o.Deprecated,
 				Tags:        o.Tags,
+				Status:      o.Status.String(),
+				Errors:      getErrors(o.Errors),
+			})
+		}
+		result.Paths = append(result.Paths, pi)
+	}
+
+	for _, t := range s.Tags {
+		result.Tags = append(result.Tags, tag{
+			Name:        t.Name,
+			Summary:     t.Summary,
+			Description: t.Description,
+			Parent:      t.Parent,
+			Kind:        t.Kind,
+		})
+	}
+
+	result.Configs = getConfigs(s.Configs())
+
+	return result
+}
+
+func getOperations(s *runtime.HttpInfo, path, method string) []operation {
+	var paths []string
+	if path != "" {
+		paths = append(paths, path)
+	} else {
+		keys := maps.Keys(s.Paths)
+		paths = slices.Sorted(keys)
+	}
+
+	operations := make([]operation, 0, len(paths))
+	for _, ps := range paths {
+
+		p, ok := s.Paths[ps]
+		if !ok || p.Value == nil {
+			continue
+		}
+
+		var methods []string
+		if method != "" {
+			methods = append(methods, method)
+		} else {
+			keys := maps.Keys(p.Value.Operations())
+			methods = slices.Sorted(keys)
+		}
+
+		for _, m := range methods {
+			o := p.Value.Operation(m)
+			if o == nil {
+				continue
+			}
+
+			op := operation{
+				Method:      strings.ToLower(m),
+				Path:        ps,
+				Summary:     o.Summary,
+				Description: o.Description,
+				OperationId: o.OperationId,
+				Deprecated:  o.Deprecated,
+				Tags:        o.Tags,
+				Status:      o.Status.String(),
 			}
 			if o.RequestBody != nil && o.RequestBody.Value != nil {
 				op.RequestBody = &requestBody{
@@ -201,9 +309,6 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 				}
 				if len(o.RequestBody.Summary) > 0 {
 					op.Summary = o.RequestBody.Summary
-				}
-				if len(o.RequestBody.Description) > 0 {
-					pi.Description = o.RequestBody.Description
 				}
 
 				for ct, rb := range o.RequestBody.Value.Content {
@@ -271,26 +376,16 @@ func (h *handler) getHttpService(w http.ResponseWriter, r *http.Request, m *moni
 				}
 				op.Security = append(op.Security, req)
 			}
+			if o.Errors != nil {
+				for _, err := range o.Errors {
+					op.Errors = append(op.Errors, errorData{Message: err.Message})
+				}
+			}
 
-			pi.Operations = append(pi.Operations, op)
+			operations = append(operations, op)
 		}
-		result.Paths = append(result.Paths, pi)
 	}
-
-	for _, t := range s.Tags {
-		result.Tags = append(result.Tags, tag{
-			Name:        t.Name,
-			Summary:     t.Summary,
-			Description: t.Description,
-			Parent:      t.Parent,
-			Kind:        t.Kind,
-		})
-	}
-
-	result.Configs = getConfigs(s.Configs())
-
-	w.Header().Set("Content-Type", "application/json")
-	writeJsonBody(w, result)
+	return operations
 }
 
 func getParameters(params openapi.Parameters) (result []param) {
@@ -317,4 +412,12 @@ func getParameters(params openapi.Parameters) (result []param) {
 		result = append(result, pi)
 	}
 	return
+}
+
+func getErrors(err []openapi.Error) []errorData {
+	var errData []errorData
+	for _, e := range err {
+		errData = append(errData, errorData{Message: e.Message})
+	}
+	return errData
 }

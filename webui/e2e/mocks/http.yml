@@ -53,49 +53,64 @@ components:
                           type: string
                         operationId:
                           type: string
-                        requestBody:
-                          type: object
-                          properties:
-                            description:
-                              type: string
-                            contents:
-                              type: array
-                              items:
-                                $ref: '#/components/schemas/MediaType'
-                            required:
-                              type: boolean
-                        parameters:
+                        deprecated:
+                          type: boolean
+                        tags:
                           type: array
                           items:
-                            $ref: '#/components/schemas/Parameter'
-                        responses:
+                            type: string
+                        status:
+                          type: string
+                        errors:
                           type: array
                           items:
-                            type: object
-                            properties:
-                              statusCode:
-                                type: [integer, string]
-                              description:
-                                type: string
-                              headers:
-                                type: array
-                                items:
-                                  $ref: '#/components/schemas/Header'
-                              contents:
-                                $ref: '#/components/schemas/MediaTypes'
-                        security:
-                          type: array
-                          items:
-                            type: object
-                            additionalProperties:
-                              type: object
-                              properties:
-                                scopes:
-                                  type: array
-                                  items:
-                                    type: string
-                                configs:
-                                  type: object
+                            $ref: 'common.yml#/components/schemas/Error'
+    Operation:
+      type: object
+      properties:
+        requestBody:
+          type: object
+          properties:
+            description:
+              type: string
+            contents:
+              type: array
+              items:
+                $ref: '#/components/schemas/MediaType'
+            required:
+              type: boolean
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/Parameter'
+        responses:
+          type: array
+          items:
+            type: object
+            properties:
+              statusCode:
+                type: [integer, string]
+              description:
+                type: string
+              headers:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Header'
+              contents:
+                $ref: '#/components/schemas/MediaTypes'
+        security:
+          type: array
+          items:
+            type: object
+            additionalProperties:
+              type: object
+              properties:
+                scopes:
+                  type: array
+                  items:
+                    type: string
+                configs:
+                  type: object
     MediaTypes:
       type: array
       items:

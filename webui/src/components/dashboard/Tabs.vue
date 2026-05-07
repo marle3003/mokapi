@@ -23,6 +23,7 @@ const tabItems = computed(() => [
   { text: 'Mail', isVisible: isServiceAvailable('mail'), to: { name: getRouteName('mail').value }  },
   { text: 'LDAP', isVisible: isServiceAvailable('ldap'), to: { name: getRouteName('ldap').value }  },
   { text: 'Jobs', isVisible: hasJobs.value, to: { name: getRouteName('jobs').value }  },
+  // { text: 'Events', isVisible: true, to: { name: getRouteName('events').value }  },
   { text: 'Configs', isVisible: true, to: { name: getRouteName('configs').value }  },
   { text: 'Faker', isVisible: getMode() === 'live', to: { name: getRouteName('tree').value }  },
   { text: 'Search', isVisible: props.appInfo.search.enabled && getMode() !== 'demo', to: { name: getRouteName('search').value }  },

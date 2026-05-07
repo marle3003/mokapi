@@ -27,11 +27,11 @@ export default async function() {
             case 'info': {
 
                 response.data = { version: "0.11.0", activeServices: ["http", "kafka", "ldap", "mail", "mqtt"], search: { enabled: true } }
-                return true
+                return
             }
             case 'services':
-                response.data = getServices()
-                return true
+                response.data = getServices(request.query['type'])
+                return
             case 'serviceHttp':
                 const name = request.path['name']
                 const service = httpServices.find(x => x.name === name)
@@ -40,13 +40,35 @@ export default async function() {
                 } else{
                     response.statusCode = 404
                 }
-                return true
+                return
+            case 'httpOperations': {
+                const name = request.path['name']
+                const service = httpServices.find(x => x.name === name)
+                if (!service) {
+                    response.statusCode = 404
+                    return
+                }
+                const method = request.query['method']
+                const path = request.query['path']
+                let operations = []
+                for (const p of service.paths) {
+                    if (!path || p.path === path) {
+                        for (const o of p.operations) {
+                            if (!method || o.method.toLowerCase() === method.toLowerCase()) {
+                                operations.push(o)
+                            }
+                        }
+                    }
+                }
+                response.data = operations
+                return
+            }
             case 'serviceKafka':
                 response.data = kafkaClusters[0]
-                return true
+                return
             case 'serviceMail':
                 response.data = mailServices[0]
-                return true
+                return
             case 'kafkaClusters':
                 response.data = kafkaClusters.map(x => getInfo(x, 'kafka'))
                 return
@@ -175,7 +197,7 @@ export default async function() {
             }
             case 'mailboxes':
                 response.data = mailServices[0].mailboxes
-                return true
+                return
             case 'mailbox':
                 for (const mb of mailServices[0].mailboxes) {
                     if (mb.name === request.path.mailbox) {
@@ -183,11 +205,11 @@ export default async function() {
                             ...mb,
                             folders: mb.folders.map(x => x.name)
                         }
-                        return true
+                        return
                     }
                 }
                 response.statusCode = 404
-                return true
+                return
             case 'smtpMessages':
                 for (const mb of mailServices[0].mailboxes) {
                     if (mb.name === request.path.mailbox) {
@@ -196,11 +218,11 @@ export default async function() {
                             result.push(...f.messages)
                         }
                         response.data = result
-                        return true
+                        return
                     }
                 }
                 response.statusCode = 404
-                return true
+                return
             case 'smtpMail':
             case 'smtpMessage':
                 const messageId = request.path['messageId']
@@ -213,7 +235,7 @@ export default async function() {
                         data: mail
                     }
                 }
-                return true
+                return
             case 'smtpMailAttachment':
             case 'smtpAttachment':
                 const attachment = getAttachment(request.path['messageId'], request.path['name'])
@@ -223,21 +245,25 @@ export default async function() {
                     response.data = attachment.data
                     response.headers['Content-Type'] = attachment.contentType
                 }
-                return true
+                return
             case 'serviceLdap':
                 response.data = ldapServers[0]
-                return true
+                return
             case 'metrics':
-                let q = request.query["query"]
-                if (!q) {
+                let names = request.query['names']
+                if (!names) {
                     response.data = metrics
                 } else{
-                    response.data = metrics.filter(x => x.name.includes(q))
+                    response.data = metrics.filter(x => names.includes(x.name))
                 }
-                return true
+                return
+            case 'metricsType':
+                let type = request.path['type']
+                response.data = metrics.filter(x => x.name.startsWith(type + '_'))
+                return
             case 'events':
                 response.data = getEvents(request.query['traits'])
-                return true
+                return
             case 'event':
                 let id = request.path["id"]
                 let e = getEvent(id)
@@ -246,13 +272,13 @@ export default async function() {
                 }else{
                     response.data = e
                 }
-                return true
+                return
             case 'example': {
                 const res = post(`${apiBaseUrl}/api/schema/example`, request.body)
                 response.statusCode = res.statusCode
                 response.headers = res.headers
                 response.body = res.body
-                return true
+                return
             }
             case 'validate':
                 sleep(1000)
@@ -266,35 +292,35 @@ export default async function() {
                 response.headers = res.headers
                 response.body = res.body
                 response.data = null
-                return true
+                return
             case 'configs':
                 response.data = getConfigs()
-                return true
+                return
             case 'config':
                 const config = getConfig(request.path.id)
                 if (config) {
                     response.data = config
-                    return true
+                    return
                 } else {
                     response.statusCode = 404
                     response.data = ''
-                    return true
+                    return
                 }
             case 'configData':
                 const configData = configs[request.path.id]
                 if (configData) {
                     response.data = configData.data
                     response.headers = configData.headers
-                    return true
+                    return
                 } else {
                     response.statusCode = 404
                     response.data = ''
-                    return true
+                    return
                 }
             case 'fakerTree':
                 const resp = get(`${apiBaseUrl}/mokapi/api/faker/tree`)
                 response.body = resp.body
-                return true
+                return
             case 'search':
                 switch (request.query.q) {
                     case 'bad':
@@ -401,14 +427,25 @@ export default async function() {
         )
 }
 
-function getServices() {
-    let http = httpServices.map(x => getInfo(x, 'http'))
-    let kafka = kafkaClusters.map(x => getInfo(x, 'kafka'))
-    let smtp = mailServices.map(x => getInfo(x, 'mail'))
-    let ldap = ldapServers.map(x => getInfo(x, 'ldap'))
-    let mqtt = mqttClusters.map(x => getInfo(x, 'mqtt'))
+function getServices(type) {
+    const services = []
+    if (!type || type === 'http') {
+        services.push(...httpServices.map(x => getInfo(x, 'http')))
+    }
+    if (!type || type === 'kafka') {
+        services.push(...kafkaClusters.map(x => getInfo(x, 'kafka')))
+    }
+    if (!type || type === 'mail') {
+        services.push(...mailServices.map(x => getInfo(x, 'mail')))
+    }
+    if (!type || type === 'ldap') {
+        services.push(...ldapServers.map(x => getInfo(x, 'ldap')))
+    }
+    if (!type || type === 'mqtt') {
+        services.push(...mqttClusters.map(x => getInfo(x, 'mqtt')))
+    }
 
-    return http.concat(kafka).concat(smtp).concat(ldap).concat(mqtt)
+    return services
 }
 
 function getEvent(id) {
@@ -516,7 +553,7 @@ function getInfo(config, type) {
         description: config.description,
         version: config.version,
         metrics: config.metrics,
-        type: type
+        type: type,
     }
     if (config.contact) {
         info.contact = {
@@ -524,6 +561,9 @@ function getInfo(config, type) {
             email: config.contact.email,
             url: config.contact.url
         }
+    }
+    if (config.status) {
+        info.status = config.status
     }
     return info
 }

@@ -17,7 +17,7 @@ const { format } = usePrettyDates()
 const { fromBinary } = usePrettyText()
 
 const events = computed(() => {
-    return dashboard.value.getEvents('mqtt')
+    return dashboard.value.getEvents({ name: 'namespace', value: 'mqtt' })
 })
 
 const eventId = computed(() => {

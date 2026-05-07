@@ -8,11 +8,25 @@ declare interface HttpPath {
     path: string
     summary: string
     description: string
-    operations: HttpOperation[]
+    operations: HttpOperationInfo[]
+    status: string
+    errors?: Error[]
+}
+
+declare interface HttpOperationInfo {
+    method: string
+    summary: string
+    description: string
+    operationId: string
+    deprecated: boolean
+    tags: string[]
+    status: string
+    errors?: Error[]
 }
 
 declare interface HttpOperation {
     method: string
+    path: string
     summary: string
     description: string
     operationId: string
@@ -22,6 +36,8 @@ declare interface HttpOperation {
     responses: HttpResponse[]
     security: HttpSecurity[]
     tags: string[]
+    status: string
+    errors?: Error[]
 }
 
 declare interface HttpParameter {

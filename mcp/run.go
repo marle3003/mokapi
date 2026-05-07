@@ -143,7 +143,7 @@ func (m *mokapi) init(obj *goja.Object) {
 
 func (m *mokapi) getApis() []ApiSummary {
 	var result []ApiSummary
-	for _, api := range m.app.ListHttp() {
+	for _, api := range m.app.Http.List() {
 		if api.Info.Name == "" {
 			log.Warnf("mcp tool mokapi_execute_code: skip empty HTTTP API name")
 			continue

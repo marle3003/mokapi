@@ -27,7 +27,10 @@ const router = useRouter();
 const { format: formatTime } = usePrettyDates();
 
 const labels = computed(() => {
-  const result = [{ name: 'type', value: 'request' }];
+  const result = [
+    { name: 'namespace', value: 'http' },
+    { name: 'type', value: 'request' }
+  ];
   result.push({ name: 'name', value: props.service.name })
   result.push({ name: 'clientId', value: props.clientId })
   return result;
@@ -58,7 +61,7 @@ const requests = computed(() => {
 
 watch(() => dashboard.value,
   (db, _, onCleanup) => {
-    const res =  db.getEvents('kafka', ...labels.value);
+    const res =  db.getEvents(...labels.value);
     data.value = res;
 
     onCleanup(() => res.close());

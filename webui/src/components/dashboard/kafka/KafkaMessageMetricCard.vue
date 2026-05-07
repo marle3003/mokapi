@@ -11,7 +11,7 @@ const props = defineProps({
 const {sum} = useMetrics()
 const messages = ref(0)
 const { dashboard } = useDashboard()
-const {services, close} = dashboard.value.getServices('kafka')
+const { services, close } = dashboard.value.getServices('kafka')
 watchEffect(() =>{
     messages.value = 0
     for (let service of services.value){

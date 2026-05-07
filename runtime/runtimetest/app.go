@@ -41,7 +41,7 @@ func NewApp(opts ...Options) *runtime.App {
 func WithHttp(configs ...*openapi.Config) Options {
 	return func(app *runtime.App) {
 		for i, cfg := range configs {
-			app.AddHttp(&dynamic.Config{
+			app.Http.Add(&dynamic.Config{
 				Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i))),
 				Data: cfg,
 			})

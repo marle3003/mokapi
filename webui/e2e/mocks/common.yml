@@ -31,6 +31,8 @@ components:
           enum: ["http", "kafka", "mail", "ldap", "mqtt"]
         metrics:
           $ref: '#/components/schemas/Metrics'
+        status:
+          type: string
     Contact:
       type: object
       properties:
@@ -108,4 +110,9 @@ components:
         value:
           type: string
         binary:
+          type: string
+    Error:
+      type: object
+      properties:
+        message:
           type: string

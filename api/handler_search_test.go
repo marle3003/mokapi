@@ -50,7 +50,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 				}}}, &dynamictest.Reader{})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 
 				return app
 			},
@@ -70,7 +70,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 				}}}, &dynamictest.Reader{})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 
 				return app
 			},
@@ -90,9 +90,9 @@ func TestHandler_SearchQuery(t *testing.T) {
 				}}}, &dynamictest.Reader{})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 				cfg = openapitest.NewConfig("3.0", openapitest.WithInfo("bar", "", ""))
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 
 				return app
 			},
@@ -112,9 +112,9 @@ func TestHandler_SearchQuery(t *testing.T) {
 				}}}, &dynamictest.Reader{})
 
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 				cfg = openapitest.NewConfig("3.0", openapitest.WithInfo("bar", "", ""))
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 
 				return app
 			},
@@ -142,7 +142,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 				}}}, &dynamictest.Reader{})
 
 				h := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
-				app.AddHttp(toConfig(h))
+				app.Http.Add(toConfig(h))
 				k := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""))
 				_, err := app.Kafka.Add(toConfig(k), enginetest.NewEngine())
 				require.NoError(t, err)
@@ -172,7 +172,7 @@ func TestHandler_SearchQuery(t *testing.T) {
 				}}}, &dynamictest.Reader{})
 
 				h := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
-				app.AddHttp(toConfig(h))
+				app.Http.Add(toConfig(h))
 				k := asyncapi3test.NewConfig(asyncapi3test.WithInfo("foo", "", ""))
 				_, err := app.Kafka.Add(toConfig(k), enginetest.NewEngine())
 				require.NoError(t, err)
@@ -191,7 +191,10 @@ func TestHandler_SearchQuery(t *testing.T) {
 			app := tc.app()
 			pool := safe.NewPool(context.Background())
 			app.Start(pool)
-			defer pool.Stop()
+			defer func() {
+				app.Stop()
+				pool.Stop()
+			}()
 
 			h := New(app, static.Api{})
 

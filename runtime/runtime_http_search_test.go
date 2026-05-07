@@ -36,7 +36,7 @@ func TestIndex_Http(t *testing.T) {
 			name: "Search by name",
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 
 				var r search.Result
 				var err error
@@ -63,7 +63,7 @@ func TestIndex_Http(t *testing.T) {
 			name: "config should be remove from index",
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 				waitSearchIndex(t, func() bool {
 					r, err := app.Search(search.Request{QueryText: "foo", Limit: 10})
 					require.NoError(t, err)
@@ -72,7 +72,7 @@ func TestIndex_Http(t *testing.T) {
 				r, err := app.Search(search.Request{QueryText: "foo", Limit: 10})
 				require.NoError(t, err)
 				require.Len(t, r.Results, 1)
-				app.RemoveHttp(toConfig(cfg))
+				app.Http.Remove(toConfig(cfg))
 				waitSearchIndex(t, func() bool {
 					r, err = app.Search(search.Request{QueryText: "foo", Limit: 10})
 					require.NoError(t, err)
@@ -84,7 +84,7 @@ func TestIndex_Http(t *testing.T) {
 			name: "Search by substring",
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("My petstore API", "", ""))
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 
 				var r search.Result
 				var err error
@@ -111,7 +111,7 @@ func TestIndex_Http(t *testing.T) {
 			name: "mailpiece should not match mailbox",
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("mailbox", "", ""))
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 
 				var r search.Result
 				var err error
@@ -127,7 +127,7 @@ func TestIndex_Http(t *testing.T) {
 			name: "Search by version",
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "1.0", ""))
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 
 				var r search.Result
 				var err error
@@ -157,7 +157,7 @@ func TestIndex_Http(t *testing.T) {
 					openapitest.WithInfo("foo", "1.0", ""),
 					openapitest.WithPath("/pets"),
 				)
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 
 				var r search.Result
 				var err error
@@ -189,7 +189,7 @@ func TestIndex_Http(t *testing.T) {
 					openapitest.WithInfo("foo", "1.0", "a description"),
 					openapitest.WithPath("/pets", openapitest.WithPathInfo("", "a description")),
 				)
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 
 				var r search.Result
 				var err error
@@ -237,7 +237,7 @@ func TestIndex_Http(t *testing.T) {
 						),
 					),
 				)
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 
 				var r search.Result
 				var err error
@@ -274,7 +274,7 @@ func TestIndex_Http(t *testing.T) {
 						),
 					),
 				)
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 				// search response should only have one the root OpenAPI object
 				var r search.Result
 				var err error
@@ -306,7 +306,7 @@ func TestIndex_Http(t *testing.T) {
 			name: "Search by api with space",
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo bar", "", ""))
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 
 				var r search.Result
 				var err error
@@ -340,7 +340,7 @@ func TestIndex_Http(t *testing.T) {
 						),
 					),
 				)
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 				// search response should only have one the root OpenAPI object
 				var r search.Result
 				var err error
@@ -379,7 +379,7 @@ func TestIndex_Http(t *testing.T) {
 						),
 					),
 				)
-				app.AddHttp(toConfig(cfg))
+				app.Http.Add(toConfig(cfg))
 				// search response should only have one the root OpenAPI object
 				var r search.Result
 				var err error
@@ -479,7 +479,7 @@ func TestIndex_Http_Event(t *testing.T) {
 					},
 				}, &dynamictest.Reader{})
 
-			app.AddHttp(cfg)
+			app.Http.Add(cfg)
 			pool := safe.NewPool(context.Background())
 			app.Start(pool)
 			defer pool.Stop()

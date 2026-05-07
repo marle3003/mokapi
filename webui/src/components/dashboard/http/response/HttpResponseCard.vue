@@ -22,6 +22,9 @@ const selected = reactive({
 })
 
 const responses = computed(() => {
+    if (!props.operation.responses){
+        return []
+    }
     return props.operation.responses.sort((r1, r2) => {
         if (typeof r1.statusCode === 'string') {
             return 1

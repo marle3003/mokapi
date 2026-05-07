@@ -3,20 +3,22 @@ import { useRouter } from 'vue-router';
 import { type PropType, onUnmounted } from 'vue';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { getRouteName, useDashboard } from '@/composables/dashboard';
+import { useLdap } from '@/composables/ldap';
 
 const props = defineProps({
     service: { type: Object as PropType<LdapService> },
 })
 
-const labels = []
+const labels = [{ name: 'namespace', value: 'ldap' }]
 if (props.service){
     labels.push({name: 'name', value: props.service!.name})
 }
 
 const router = useRouter()
 const { dashboard } = useDashboard();
-const { events, close } = dashboard.value.getEvents('ldap', ...labels)
+const { events, close } = dashboard.value.getEvents(...labels)
 const { format, duration } = usePrettyDates()
+const { targetDn, criteria } = useLdap()
 let data: LdapEventData
 
 function goToEvent(event: ServiceEvent, openInNewTab = false){
@@ -37,40 +39,6 @@ function goToEvent(event: ServiceEvent, openInNewTab = false){
 }
 function eventData(event: ServiceEvent): LdapEventData{
     return <LdapEventData>event.data
-}
-
-function targetDn(data: LdapEventData) {
-    switch (data.request.operation) {
-        case 'Bind':
-            return data.request.name;
-        case 'Search':
-            return data.request.baseDN
-        case 'Modify':
-        case 'Add':
-        case 'Delete':
-        case 'ModifyDN':
-        case 'Compare':
-            return data.request.dn
-    }
-}
-
-function criteria(data: LdapEventData) {
-    switch (data.request.operation) {
-        case 'Search':
-            return data.request.filter
-        case 'Compare':
-            return `${data.request.attribute} == ${data.request.value}`
-        case 'Modify':
-            const result = []
-            for (const item of data.request.items) {
-                result.push(`${item.modification.toLocaleLowerCase()} ${item.attribute.type}`)
-            }
-            return result.join('<br />')
-        case 'ModifyDN':
-            return data.request.newRdn
-        default:
-            undefined;
-    }
 }
 
 onUnmounted(() => {

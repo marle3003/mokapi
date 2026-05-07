@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/openapi"
@@ -18,6 +19,7 @@ import (
 	"strings"
 	"testing"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 )
@@ -733,6 +735,31 @@ func TestResolveEndpoint(t *testing.T) {
 				b, err := io.ReadAll(rr.Body)
 				require.NoError(t, err)
 				require.Equal(t, `"findByStatus"`, string(b))
+			},
+		},
+		{
+			name: "parse error",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				c.Servers[0].Url = "http://localhost/root"
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(
+						http.StatusOK,
+						openapitest.WithContent(
+							"application/json",
+							openapitest.WithSchemaRef("#/invalid"),
+						),
+					),
+				)
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
+				err := c.Parse(&dynamic.Config{Data: c}, &dynamictest.Reader{})
+				require.NoError(t, err)
+
+				r := httptest.NewRequest("get", "http://localhost/root/foo", nil)
+				r = r.WithContext(context.WithValue(r.Context(), "servicePath", "/root"))
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, 500, rr.Code)
+				require.Equal(t, "operation could not be executed due to parsing errors: parse response '200' failed: parse content 'application/json' failed: parse schema failed: resolve reference '#/invalid' failed: path element 'invalid' not found\n", rr.Body.String())
 			},
 		},
 	}
@@ -1535,6 +1562,7 @@ func TestHandler_Parameter(t *testing.T) {
 		{
 			name: "path parameter missing",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				log.SetLevel(log.WarnLevel)
 				hook := test.NewGlobal()
 
 				op := openapitest.NewOperation(

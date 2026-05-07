@@ -44,6 +44,14 @@ func TestPush(t *testing.T) {
 			},
 		},
 		{
+			"store with empty traits",
+			func(t *testing.T, sm *events.StoreManager) {
+				sm.SetStore(10, events.NewTraits())
+				err := sm.Push(nil, events.NewTraits().With("level", "debug"))
+				require.NoError(t, err)
+			},
+		},
+		{
 			"store matches",
 			func(t *testing.T, sm *events.StoreManager) {
 				sm.SetStore(10, events.NewTraits().WithNamespace("foo"))

@@ -15,7 +15,7 @@ const route = useRoute()
 const { dashboard, getMode } = useDashboard()
 
 const events = computed(() => {
-    return dashboard.value.getEvents('mail')
+    return dashboard.value.getEvents({ name: 'namespace', value: 'mail' })
 })
 
 const id = computed(() => {

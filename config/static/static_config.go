@@ -40,6 +40,7 @@ func NewConfig() *Config {
 	cfg.Api.Port = 8080
 	cfg.Api.Dashboard = true
 	cfg.Api.Search.Enabled = true
+	cfg.Api.Search.NumIndexWorker = 2
 
 	cfg.Health.Enabled = true
 	cfg.Health.Port = 8080
@@ -80,9 +81,10 @@ type Api struct {
 }
 
 type Search struct {
-	Enabled   bool
-	IndexPath string `yaml:"indexPath" json:"indexPath" flag:"index-path"`
-	InMemory  bool   `yaml:"inMemory" json:"inMemory" flag:"in-memory"`
+	Enabled        bool
+	IndexPath      string `yaml:"indexPath" json:"indexPath" flag:"index-path"`
+	InMemory       bool   `yaml:"inMemory" json:"inMemory" flag:"in-memory"`
+	NumIndexWorker int    `yaml:"-" json:"-"`
 }
 
 type FileProvider struct {

@@ -21,7 +21,7 @@ const emit = defineEmits<{
 
 const tags = useLocalStorage<string[]>(`mqtt-${props.service?.name}-tags`, ['__all'])
 const labels = computed(() => {
-    const result = [];
+    const result = [{ name: 'namespace', value: 'mqtt' }];
     if (props.service) {
         result.push({ name: 'name', value: props.service.name })
     }
@@ -40,7 +40,7 @@ const { formatLanguage } = usePrettyLanguage()
 const { fromBinary } = usePrettyText()
 
 const { dashboard } = useDashboard()
-const { events, close } = dashboard.value.getEvents('mqtt', ...labels.value)
+const { events, close } = dashboard.value.getEvents(...labels.value)
 const messageDialog = ref<any>(null)
 const tabDetailData = ref<any>(null)
 let dialog: Modal
@@ -104,7 +104,6 @@ interface DialogData {
     isAvro: boolean
     time: string
     topic: string
-    schemaId: number
 }
 let message = ref<DialogData | null>(null)
 let clickTimeout: ReturnType<typeof setTimeout> | null = null
@@ -184,7 +183,6 @@ function showMessage(event: ServiceEvent) {
         isAvro: isAvro,
         time: format(event.time),
         topic: data.topic,
-        schemaId: data.schemaId,
     }
     if (dialog) {
         tab.show()
@@ -317,12 +315,6 @@ const isTemplateTopic = computed(() => {
 
                                     <div class="tab-content" v-if="message">
                                         <div class="tab-pane fade show active" id="detail-data" role="tabpanel">
-                                            <div class="row mb-3">
-                                                <div class="col" v-if="message.schemaId">
-                                                    <p id="dialog-message-key" class="label">Schema ID</p>
-                                                    <p aria-labelledby="dialog-message-key">{{ message.schemaId }}</p>
-                                                </div>
-                                            </div>
                                             <source-view :source="message.source" :content-type="message.contentType"
                                                 :content-type-title="message.contentTypeTitle" />
                                         </div>

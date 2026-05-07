@@ -14,7 +14,7 @@ const props = defineProps({
     method: { type: String, required: false}
 })
 
-const labels = ref<any[]>([])
+const labels = ref<any[]>([{ name: 'namespace', value: 'http' }])
 if (props.serviceName){
     labels.value.push({ name: 'name', value: props.serviceName })
     if (props.path){
@@ -27,7 +27,7 @@ if (props.serviceName){
 
 const router = useRouter()
 const { dashboard } = useDashboard()
-const { events: data, close } = dashboard.value.getEvents('http', ...labels.value)
+const { events: data, close } = dashboard.value.getEvents(...labels.value)
 const { format, duration } = usePrettyDates()
 const { formatStatusCode } = usePrettyHttp()
 const { adaptiveTruncate } = usePrettyText()

@@ -60,7 +60,7 @@ All mock responses must strictly conform to this schema. Do not omit required fi
 }
 
 func (s *Service) GetHttpResponseSchema(_ context.Context, in GetHttpResponseSchemaInput) (any, error) {
-	info := s.app.GetHttp(in.ApiName)
+	info := s.app.Http.Get(in.ApiName)
 	if info == nil {
 		return nil, fmt.Errorf("http api not found")
 	}

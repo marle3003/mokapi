@@ -54,7 +54,6 @@ declare type MqttEventData = MqttMessageData | MqttRequestLog
 declare interface MqttMessageData {
   topic: string
   message: MqttMessage;
-  schemaId: number;
   messageId: string
   clientId: string
   script: string
