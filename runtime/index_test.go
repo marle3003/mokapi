@@ -41,7 +41,7 @@ func TestIndex(t *testing.T) {
 			),
 		),
 	)
-	app.AddHttp(&dynamic.Config{
+	app.Http.Add(&dynamic.Config{
 		Info: dynamic.ConfigInfo{Url: try.MustUrl("petstore.yaml"), Provider: "NPM"},
 		Data: petStore,
 	})

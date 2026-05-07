@@ -47,7 +47,9 @@ type Operation struct {
 
 	Security []SecurityRequirement `yaml:"security" json:"security"`
 
-	Path *Path `yaml:"-" json:"-"`
+	Path   *Path   `yaml:"-" json:"-"`
+	Status Status  `yaml:"-" json:"-"`
+	Errors []Error `yaml:"-" json:"-"`
 }
 
 func (o *Operation) getFirstSuccessResponse() (int, *Response, error) {

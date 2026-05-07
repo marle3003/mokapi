@@ -87,3 +87,10 @@ func WithPathParamRef(ref string) PathOptions {
 		})
 	}
 }
+
+func WithPathErrors(err ...openapi.Error) PathOptions {
+	return func(p *openapi.Path) {
+		p.Status = openapi.StatusInvalid
+		p.Errors = err
+	}
+}

@@ -66,6 +66,7 @@ type service struct {
 	Version     string           `json:"version,omitempty"`
 	Type        serviceType      `json:"type"`
 	Metrics     []metrics.Metric `json:"metrics,omitempty"`
+	Status      string           `json:"status,omitempty"`
 }
 
 type contact struct {
@@ -105,9 +106,19 @@ func New(app *runtime.App, config static.Api) Handler {
 	return h
 }
 
-func BuildUrl(cfg static.Api) (*url.URL, error) {
-	s := fmt.Sprintf("http://:%v%v", cfg.Port, cfg.Path)
-	return url.Parse(s)
+func BuildUrl(cfg static.Api) ([]*url.URL, error) {
+	var urls []*url.URL
+	u, err := url.Parse(fmt.Sprintf("http://:%v%v", cfg.Port, cfg.Path))
+	if err != nil {
+		return urls, err
+	}
+	urls = append(urls, u)
+	u, err = url.Parse(fmt.Sprintf("http://localhost:%v%v", cfg.Port, cfg.Path))
+	if err != nil {
+		return urls, err
+	}
+	urls = append(urls, u)
+	return urls, nil
 }
 
 func (h *handler) RegisterHealthHandler(path string, handler http.Handler) {
@@ -136,7 +147,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case p == "/api/services":
 		h.getServices(w, r)
 	case strings.HasPrefix(p, "/api/services/http/"):
-		h.getHttpService(w, r, h.app.Monitor)
+		h.handleHttp(w, r)
 	case strings.HasPrefix(p, "/api/services/kafka"):
 		h.handleKafka(w, r)
 	case strings.HasPrefix(p, "/api/services/mqtt"):
@@ -201,14 +212,27 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *handler) getServices(w http.ResponseWriter, _ *http.Request) {
-	services := make([]interface{}, 0)
-	services = append(services, getHttpServices(h.app.ListHttp(), h.app.Monitor)...)
-	services = append(services, getKafkaServices(h.app.Kafka, h.app.Monitor)...)
-	services = append(services, getMailServices(h.app.Mail, h.app.Monitor)...)
-	services = append(services, getLdapServices(h.app.Ldap, h.app.Monitor)...)
-	services = append(services, getMqttServices(h.app.Mqtt, h.app.Monitor)...)
-	slices.SortFunc(services, func(a interface{}, b interface{}) int {
+func (h *handler) getServices(w http.ResponseWriter, r *http.Request) {
+	services := make([]service, 0)
+
+	typ := r.URL.Query().Get("type")
+
+	if typ == "" || typ == "http" {
+		services = append(services, getHttpServices(h.app.Http, h.app.Monitor)...)
+	}
+	if typ == "" || typ == "kafka" {
+		services = append(services, getKafkaServices(h.app.Kafka, h.app.Monitor)...)
+	}
+	if typ == "" || typ == "mail" {
+		services = append(services, getMailServices(h.app.Mail, h.app.Monitor)...)
+	}
+	if typ == "" || typ == "ldap" {
+		services = append(services, getLdapServices(h.app.Ldap, h.app.Monitor)...)
+	}
+	if typ == "" || typ == "mqtt" {
+		services = append(services, getMqttServices(h.app.Mqtt, h.app.Monitor)...)
+	}
+	slices.SortFunc(services, func(a service, b service) int {
 		return compareService(a, b)
 	})
 	w.Header().Set("Content-Type", "application/json")
@@ -234,19 +258,19 @@ func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	i := info{Version: h.app.Version, BuildTime: h.app.BuildTime, Search: searchInfo{Enabled: h.config.Search.Enabled}}
-	if len(h.app.ListHttp()) > 0 {
+	if h.app.Http.Len() > 0 {
 		i.ActiveServices = append(i.ActiveServices, "http")
 	}
-	if len(h.app.Kafka.List()) > 0 {
+	if h.app.Kafka.Len() > 0 {
 		i.ActiveServices = append(i.ActiveServices, "kafka")
 	}
-	if len(h.app.Mail.List()) > 0 {
+	if h.app.Mail.Len() > 0 {
 		i.ActiveServices = append(i.ActiveServices, "mail")
 	}
-	if len(h.app.Ldap.List()) > 0 {
+	if h.app.Ldap.Len() > 0 {
 		i.ActiveServices = append(i.ActiveServices, "ldap")
 	}
-	if len(h.app.Mqtt.List()) > 0 {
+	if h.app.Mqtt.Len() > 0 {
 		i.ActiveServices = append(i.ActiveServices, "mqtt")
 	}
 
@@ -285,22 +309,8 @@ func isImage(path string) bool {
 	}
 }
 
-func compareService(a, b interface{}) int {
-	return strings.Compare(getServiceName(a), getServiceName(b))
-}
-
-func getServiceName(a interface{}) string {
-	switch v := a.(type) {
-	case *httpSummary:
-		return v.Name
-	case *kafkaSummary:
-		return v.Name
-	case *ldapSummary:
-		return v.Name
-	case *mailSummary:
-		return v.Name
-	}
-	return ""
+func compareService(a, b service) int {
+	return strings.Compare(a.Name, b.Name)
 }
 
 func getPageInfo(r *http.Request) (index int, limit int, err error) {

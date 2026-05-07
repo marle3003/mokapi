@@ -191,8 +191,12 @@ func (m *MultiSchemaFormat) UnmarshalJSON(b []byte) error {
 		if delim, ok := token.(json.Delim); ok && delim == '}' {
 			break
 		}
+		s, ok := token.(string)
+		if !ok {
+			return fmt.Errorf("unexpected token %s; expected string", token)
+		}
 
-		switch token.(string) {
+		switch s {
 		case "schemaFormat":
 			token, err = d.Token()
 			if err != nil {

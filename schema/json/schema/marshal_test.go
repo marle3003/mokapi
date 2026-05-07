@@ -92,6 +92,30 @@ func TestSchema_MarshalJSON_Recursion(t *testing.T) {
 				require.Equal(t, `{"$ref":"foo","contains":{"$ref":"foo"}}`, s)
 			},
 		},
+		{
+			name: "definitions",
+			s: func() *Schema {
+				var s *Schema
+				err := json.Unmarshal([]byte(`
+{
+  "definitions": {
+    "Status": {
+      "$id": "status",
+      "description": "a description"
+    }
+  }
+}
+`), &s)
+				if err != nil {
+					panic(err)
+				}
+				return s
+			},
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"definitions":{"Status":{"$id":"status","description":"a description"}}}`, s)
+			},
+		},
 	}
 
 	t.Parallel()

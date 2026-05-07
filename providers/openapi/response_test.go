@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -300,11 +302,11 @@ func TestResponse_GetContent(t *testing.T) {
 func TestResponse_Parse(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T)
+		test func(t *testing.T, log *test.Hook)
 	}{
 		{
 			name: "no refs",
-			test: func(t *testing.T) {
+			test: func(t *testing.T, _ *test.Hook) {
 				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
 					return nil, nil
 				})
@@ -321,7 +323,7 @@ func TestResponse_Parse(t *testing.T) {
 		},
 		{
 			name: "responses is nil",
-			test: func(t *testing.T) {
+			test: func(t *testing.T, _ *test.Hook) {
 				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
 					return nil, nil
 				})
@@ -336,7 +338,7 @@ func TestResponse_Parse(t *testing.T) {
 		},
 		{
 			name: "ResponseRef is nil",
-			test: func(t *testing.T) {
+			test: func(t *testing.T, _ *test.Hook) {
 				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
 					return nil, nil
 				})
@@ -353,11 +355,12 @@ func TestResponse_Parse(t *testing.T) {
 		},
 		{
 			name: "error by resolving response ref",
-			test: func(t *testing.T) {
+			test: func(t *testing.T, log *test.Hook) {
 				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
+					openapitest.WithInfo("HTTP API", "", ""),
 					openapitest.WithPath("/foo",
 						openapitest.WithOperation(http.MethodGet,
 							openapitest.WithResponseRef(http.StatusOK, "foo.yml"),
@@ -365,16 +368,20 @@ func TestResponse_Parse(t *testing.T) {
 					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
-				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse response '200' failed: resolve reference '/foo.yml' failed: TEST ERROR")
+				require.Equal(t, logrus.Fields{"method": "GET", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
+				require.Equal(t, "parse response '200' failed: resolve reference '/foo.yml' failed: TEST ERROR", log.LastEntry().Message)
+				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation(http.MethodGet).Status)
+				require.NoError(t, err)
 			},
 		},
 		{
 			name: "error by resolving header ref",
-			test: func(t *testing.T) {
+			test: func(t *testing.T, log *test.Hook) {
 				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
 					return nil, fmt.Errorf("TEST ERROR")
 				})
 				config := openapitest.NewConfig("3.0",
+					openapitest.WithInfo("HTTP API", "", ""),
 					openapitest.WithPath("/foo",
 						openapitest.WithOperation(http.MethodGet,
 							openapitest.WithResponse(http.StatusOK, openapitest.WithResponseHeaderRef("foo", "foo.yml")),
@@ -382,17 +389,19 @@ func TestResponse_Parse(t *testing.T) {
 					),
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
-				require.EqualError(t, err, "parse path '/foo' failed: parse operation 'GET' failed: parse response '200' failed: parse header 'foo' failed: resolve reference '/foo.yml' failed: TEST ERROR")
+				require.Equal(t, logrus.Fields{"method": "GET", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
+				require.Equal(t, "parse response '200' failed: parse header 'foo' failed: resolve reference '/foo.yml' failed: TEST ERROR", log.LastEntry().Message)
+				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation(http.MethodGet).Status)
+				require.NoError(t, err)
 			},
 		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-			tc.test(t)
+			hook := test.NewGlobal()
+			tc.test(t, hook)
 		})
 	}
 }

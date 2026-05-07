@@ -20,10 +20,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type kafkaSummary struct {
-	service
-}
-
 type cluster struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description,omitempty"`
@@ -145,9 +141,9 @@ type KafkaRecordResult struct {
 	Error     string
 }
 
-func getKafkaServices(store *runtime.KafkaStore, m *monitor.Monitor) []interface{} {
+func getKafkaServices(store *runtime.KafkaStore, m *monitor.Monitor) []service {
 	list := store.List()
-	result := make([]interface{}, 0, len(list))
+	result := make([]service, 0, len(list))
 	for _, hs := range list {
 		s := service{
 			Name:        hs.Info.Name,
@@ -166,7 +162,7 @@ func getKafkaServices(store *runtime.KafkaStore, m *monitor.Monitor) []interface
 			}
 		}
 
-		result = append(result, kafkaSummary{service: s})
+		result = append(result, s)
 	}
 	return result
 }

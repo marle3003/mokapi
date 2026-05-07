@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onUnmounted, type PropType } from 'vue'
+import { computed, onUnmounted, type PropType } from 'vue'
 import { useRoute } from '@/router';
 import HttpOperationsCard from './HttpOperationsCard.vue';
 import Requests from './Requests.vue';
+import ServiceStatus from '../ServiceStatus.vue'
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },
@@ -25,6 +26,22 @@ function allOperationsDeprecated(): boolean{
 
 onUnmounted(() => {
     close()
+})
+const status = computed(() => {
+    let status = props.path.status
+    let errors: Error[] = []
+    for (const op of props.path.operations) {
+        if (op.status === 'valid') {
+            continue
+        }
+        if (status === 'valid') {
+            status = op.status
+        }
+        if (op.errors) {
+            errors.push(...op.errors)
+        }
+    }
+    return { status, errors }
 })
 </script>
 
@@ -69,8 +86,17 @@ onUnmounted(() => {
                             <p>{{ path.description }}</p>
                         </div>
                     </div>
+                    <div class="row" v-if="path.status !== 'valid'">
+                        <div class="col">
+                            <p id="status" class="label">Status</p>
+                            <div aria-labelledby="status" class="status">{{ path.status }}</div>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
+        <div class="card-group" v-if="status.status !== 'valid'">
+            <service-status :errors="status.errors" />
         </div>
         <div class="card-group">
             <http-operations-card :service="service" :path="path" />

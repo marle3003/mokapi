@@ -109,7 +109,7 @@ The returned object should be assigned to:
 func (s *Service) GenerateHttpMockResponse(_ context.Context, in GenerateHttpMockResponseInput) (GenerateHttpMockResponseOutput, error) {
 	result := GenerateHttpMockResponseOutput{StatusCode: in.StatusCode, Headers: make(map[string]any)}
 
-	info := s.app.GetHttp(in.ApiName)
+	info := s.app.Http.Get(in.ApiName)
 	if info == nil {
 		return result, fmt.Errorf("http api not found")
 	}

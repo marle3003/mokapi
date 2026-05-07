@@ -16,7 +16,7 @@ func TestHandler_System(t *testing.T) {
 		fn   func(t *testing.T, h http.Handler, sm *events.StoreManager)
 	}{
 		{
-			name: "no event stores",
+			name: "default store with size 1",
 			fn: func(t *testing.T, h http.Handler, sm *events.StoreManager) {
 				try.Handler(t,
 					http.MethodGet,
@@ -24,7 +24,9 @@ func TestHandler_System(t *testing.T) {
 					nil,
 					"",
 					h,
-					try.HasStatusCode(404))
+					try.HasStatusCode(200),
+					try.HasBody(`[{"traits":{},"size":1,"numEvents":0}]`),
+				)
 			},
 		},
 		{
@@ -40,7 +42,7 @@ func TestHandler_System(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"traits":{"namespace":"foo"},"size":1,"numEvents":0}]`))
+					try.HasBody(`[{"traits":{},"size":1,"numEvents":0},{"traits":{"namespace":"foo"},"size":1,"numEvents":0}]`))
 			},
 		},
 		{
@@ -58,7 +60,7 @@ func TestHandler_System(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"traits":{"namespace":"foo"},"size":1,"numEvents":0},{"traits":{"name":"Kafka Testserver","namespace":"foo"},"size":1,"numEvents":0}]`))
+					try.HasBody(`[{"traits":{},"size":1,"numEvents":0},{"traits":{"namespace":"foo"},"size":1,"numEvents":0},{"traits":{"name":"Kafka Testserver","namespace":"foo"},"size":1,"numEvents":0}]`))
 			},
 		},
 		{
@@ -76,7 +78,7 @@ func TestHandler_System(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"traits":{"namespace":"foo"},"size":1,"numEvents":0},{"traits":{"name":"Kafka Testserver","namespace":"foo"},"size":1,"numEvents":0},{"traits":{"name":"Kafka Testserver","namespace":"foo","topic":"foo"},"size":1,"numEvents":0}]`))
+					try.HasBody(`[{"traits":{},"size":1,"numEvents":0},{"traits":{"namespace":"foo"},"size":1,"numEvents":0},{"traits":{"name":"Kafka Testserver","namespace":"foo"},"size":1,"numEvents":0},{"traits":{"name":"Kafka Testserver","namespace":"foo","topic":"foo"},"size":1,"numEvents":0}]`))
 			},
 		},
 	}
@@ -84,7 +86,7 @@ func TestHandler_System(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := &static.Config{}
+			cfg := &static.Config{Event: static.Event{Store: map[string]static.Store{"default": {Size: 1}}}}
 			app := runtime.New(cfg, &dynamictest.Reader{})
 
 			h := New(app, static.Api{})

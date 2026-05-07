@@ -13,6 +13,7 @@ export async function collectDashboard() {
     services: { path: '/api/services' , loader: loadJson },
     metrics: { path: '/api/metrics?q=app', loader: loadJson },
     'service_Swagger Petstore': { path: '/api/services/http/Swagger%20Petstore', loader: loadJson },
+    'service_Swagger Petstore_operations': { path: '/api/services/http/Swagger%20Petstore/operations', loader: loadJson },
     'service_Kafka Order Service API': { path: '/api/services/kafka/Kafka%20Order%20Service%20API', loader: loadJson },
     'service_Mail Server': { path: '/api/services/mail/Mail%20Server', loader: loadJson },
     'service_HR Employee Directory': { path: '/api/services/ldap/HR%20Employee%20Directory', loader: loadJson },

@@ -6,6 +6,7 @@ import { computed } from 'vue';
 const props = defineProps<{
     service: Service,
     type?: string
+    status?: string
 }>()
 
 const description = computed(() => useMarkdown(props.service.description).content)
@@ -48,6 +49,12 @@ const description = computed(() => useMarkdown(props.service.description).conten
                     <div class="col">
                         <p id="description" class="label">Description</p>
                         <div aria-labelledby="description" v-html="description"></div>
+                    </div>
+                </div>
+                <div class="row" v-if="status">
+                    <div class="col">
+                        <p id="status" class="label">Status</p>
+                        <div aria-labelledby="status" class="status">{{ status }}</div>
                     </div>
                 </div>
             </div>

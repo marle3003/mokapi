@@ -3,6 +3,7 @@ import AppStartCard from '../components/dashboard/AppStartCard.vue'
 import MemoryUsageCard from '../components/dashboard/MemoryCard.vue'
 import JobCountCard from '@/components/dashboard/JobCountCard.vue'
 import Search from '../components/dashboard/Search.vue'
+import Events from '../components/dashboard/Events.vue'
 
 import HttpRequestCard from '../components/dashboard/http/HttpRequestMetricCard.vue'
 import HttpServicesCard from '../components/dashboard/http/HttpServicesCard.vue'
@@ -58,9 +59,7 @@ if (route.meta.mode) {
     setMode(route.meta.mode as 'live' | 'demo')
 }
 
-const appInfo = computed(() => {
-    return dashboard.value.getAppInfo()
-})
+const appInfo = dashboard.value.getAppInfo()
 
 const shortcutHandler = (e: KeyboardEvent) => {
     const tag = (e.target as HTMLElement)?.tagName
@@ -81,7 +80,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-    appInfo.value?.close();
+    appInfo.close();
     window.removeEventListener('keydown', shortcutHandler)
 })
 
@@ -114,7 +113,7 @@ router.afterEach((to) => {
 </script>
 
 <template>
-    <div v-if="isActive" class="position-fixed top-0 start-0 w-100" style="height: 2px; z-index: 1000;">
+    <div v-if="isActive && route.name !== getRouteName('search').value" class="position-fixed top-0 start-0 w-100" style="height: 2px; z-index: 1000;">
         <div class="refresh-progress-bar h-100" :style="{
             width: progress + '%',
             height: '3px',
@@ -248,6 +247,10 @@ router.afterEach((to) => {
 
                 <div v-if="$route.name === getRouteName('search').value">
                     <search v-if="$route.name === 'search'"></search>
+                </div>
+
+                <div v-if="$route.name === getRouteName('events').value">
+                    <events></events>
                 </div>
 
                 <http-service v-if="$route.meta.service === 'http'" />

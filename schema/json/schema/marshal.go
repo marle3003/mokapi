@@ -82,8 +82,12 @@ func (e *encoder) encode(r *Schema) ([]byte, error) {
 			case *Schema:
 				bVal, err = e.encode(val)
 			case dynamic.Reference[*Schema]:
-				bVal, err = json.Marshal(val)
-				b.WriteString(strings.Trim(string(bVal), "{}"))
+				if val.Ref != "" {
+					if b.Len() > 1 {
+						b.Write([]byte{','})
+					}
+					b.WriteString(fmt.Sprintf(`"$ref": "%s"`, val.Ref))
+				}
 				continue
 			default:
 				bVal, err = json.Marshal(val)

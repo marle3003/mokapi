@@ -61,7 +61,7 @@ watch(() => dashboard.value,
     const res1 = db.getEvent(eventId.value);
     data.value = res1;
 
-    const res2 = db.getEvents('http');
+    const res2 = db.getEvents({ name: 'namespace', value: 'http' });
     events.value = res2;
 
     onCleanup(() => {

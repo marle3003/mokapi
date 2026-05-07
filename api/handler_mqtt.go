@@ -10,10 +10,6 @@ import (
 	"strings"
 )
 
-type mqttSummary struct {
-	service
-}
-
 type mqttInfo struct {
 	Name        string           `json:"name"`
 	Description string           `json:"description"`
@@ -58,9 +54,9 @@ type mqttClient struct {
 	ProtocolVersion byte   `json:"protocolVersion"`
 }
 
-func getMqttServices(store *runtime.MqttStore, m *monitor.Monitor) []interface{} {
+func getMqttServices(store *runtime.MqttStore, m *monitor.Monitor) []service {
 	list := store.List()
-	result := make([]interface{}, 0, len(list))
+	result := make([]service, 0, len(list))
 	for _, hs := range list {
 		s := service{
 			Name:        hs.Info.Name,
@@ -79,7 +75,7 @@ func getMqttServices(store *runtime.MqttStore, m *monitor.Monitor) []interface{}
 			}
 		}
 
-		result = append(result, mqttSummary{service: s})
+		result = append(result, s)
 	}
 	return result
 }

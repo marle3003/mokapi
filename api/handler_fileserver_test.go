@@ -148,7 +148,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			test: func(t *testing.T) {
 				cfg := &static.Config{}
 				app := runtime.New(cfg, &dynamictest.Reader{})
-				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0", openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."))})
+				app.Http.Add(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0", openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."))})
 				h := api.New(app, static.Api{Path: "/mokapi", Dashboard: true})
 				try.Handler(t,
 					http.MethodGet,
@@ -168,7 +168,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			test: func(t *testing.T) {
 				cfg := &static.Config{}
 				app := runtime.New(cfg, &dynamictest.Reader{})
-				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
+				app.Http.Add(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
 					openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
 					openapitest.WithPath("/pet/{petId}"),
 				)},
@@ -192,7 +192,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			test: func(t *testing.T) {
 				cfg := &static.Config{}
 				app := runtime.New(cfg, &dynamictest.Reader{})
-				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
+				app.Http.Add(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
 					openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
 					openapitest.WithPath("/pet/{petId}",
 						openapitest.WithPathInfo("foo", "bar"),
@@ -218,7 +218,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			test: func(t *testing.T) {
 				cfg := &static.Config{}
 				app := runtime.New(cfg, &dynamictest.Reader{})
-				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
+				app.Http.Add(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
 					openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
 					openapitest.WithPath("/pet/{petId}",
 						openapitest.WithPathInfo("", "bar"),
@@ -243,7 +243,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			test: func(t *testing.T) {
 				cfg := &static.Config{}
 				app := runtime.New(cfg, &dynamictest.Reader{})
-				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
+				app.Http.Add(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
 					openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
 					openapitest.WithPath("/pet/{petId}",
 						openapitest.WithOperation("GET"),
@@ -268,7 +268,7 @@ func TestOpenGraphInDashboard(t *testing.T) {
 			test: func(t *testing.T) {
 				cfg := &static.Config{}
 				app := runtime.New(cfg, &dynamictest.Reader{})
-				app.AddHttp(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
+				app.Http.Add(&dynamic.Config{Info: dynamic.ConfigInfo{Url: mustParse("https://foo.bar")}, Data: openapitest.NewConfig("3.0",
 					openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server."),
 					openapitest.WithPath("/pet/{petId}",
 						openapitest.WithOperation("GET"),

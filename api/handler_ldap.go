@@ -8,10 +8,6 @@ import (
 	"strings"
 )
 
-type ldapSummary struct {
-	service
-}
-
 type ldapInfo struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description,omitempty"`
@@ -20,9 +16,9 @@ type ldapInfo struct {
 	Configs     []config `json:"configs,omitempty"`
 }
 
-func getLdapServices(store *runtime.LdapStore, m *monitor.Monitor) []interface{} {
+func getLdapServices(store *runtime.LdapStore, m *monitor.Monitor) []service {
 	list := store.List()
-	result := make([]interface{}, 0, len(list))
+	result := make([]service, 0, len(list))
 	for _, hs := range list {
 		s := service{
 			Name:        hs.Info.Name,
@@ -35,7 +31,7 @@ func getLdapServices(store *runtime.LdapStore, m *monitor.Monitor) []interface{}
 			s.Metrics = m.FindAll(metrics.ByNamespace("ldap"), metrics.ByLabel("service", hs.Info.Name))
 		}
 
-		result = append(result, &ldapSummary{service: s})
+		result = append(result, s)
 	}
 	return result
 }

@@ -20,6 +20,12 @@ paths:
     get:
       summary: list of all services
       operationId: services
+      parameters:
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
       responses:
         "200":
           description: the list of services
@@ -46,6 +52,35 @@ paths:
             application/json:
               schema:
                 $ref: 'http.yml#/components/schemas/HttpInfo'
+  /api/services/http/{name}/operations:
+    get:
+      summary: Information about the http service
+      operationId: httpOperations
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: path
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: method
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: http service
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: 'http.yml#/components/schemas/Operation'
   /api/services/kafka/{name}:
     get:
       summary: Information about the kafka cluster
@@ -348,7 +383,26 @@ paths:
       operationId: metrics
       parameters:
         - in: query
-          name: query
+          name: names
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: a list of metrics
+          content:
+            application/json:
+              schema:
+                $ref: 'common.yml#/components/schemas/Metrics'
+  /api/metrics/{type}:
+    get:
+      summary: get list of metrics
+      operationId: metricsType
+      parameters:
+        - in: path
+          name: type
+          required: true
           schema:
             type: string
       responses:
