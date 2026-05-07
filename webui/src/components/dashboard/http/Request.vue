@@ -17,21 +17,22 @@ const { dashboard, getMode } = useDashboard()
 
 const data = ref<EventResult | null>(null);
 const events = ref<EventsResult | null>(null);
-const serviceResult = computed(() => {
-    if (!dashboard.value || !data.value || !data.value?.event?.traits.name) {
-        return undefined;
-    }
-    return dashboard.value.getService(data.value.event.traits.name, 'http');
-})
 const operation = computed(() => {
-    if (!serviceResult.value || !serviceResult.value.service.value || !data.value?.event) {
+    if (!data.value || !data.value?.event) {
         return undefined;
     }
-    const service = serviceResult.value.service.value as HttpService;
 
+    const serviceName = data.value?.event?.traits.name
+    if (!serviceName) {
+        return undefined
+    }
     const path = data.value.event.traits.path;
     const method = data.value.event.traits.method?.toLocaleLowerCase();
-    return service.paths.find(x => x.path === path)?.operations.find(x => x.method === method);
+    const result = dashboard.value.getHttpOperations(serviceName, path, method)
+    if (!result.operations.value || result.operations.value.length === 0) {
+        return undefined
+    }
+    return result.operations.value[0]
 })
 
 const eventId = computed(() => {

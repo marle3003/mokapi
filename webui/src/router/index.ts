@@ -436,7 +436,7 @@ router.beforeEach((to, from, next) => {
     })
   }
 
-  next()
+  return next()
 });
 
 if (import.meta.env.VITE_DASHBOARD === 'true') {

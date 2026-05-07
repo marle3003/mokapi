@@ -59,7 +59,9 @@ if (route.meta.mode) {
     setMode(route.meta.mode as 'live' | 'demo')
 }
 
-const appInfo = dashboard.value.getAppInfo()
+const appInfo = computed(() => {
+    return dashboard.value.getAppInfo()
+})
 
 const shortcutHandler = (e: KeyboardEvent) => {
     const tag = (e.target as HTMLElement)?.tagName
@@ -80,7 +82,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-    appInfo.close();
+    appInfo.value?.close();
     window.removeEventListener('keydown', shortcutHandler)
 })
 
