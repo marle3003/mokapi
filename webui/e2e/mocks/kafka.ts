@@ -213,17 +213,17 @@ export let clusters = [
                 members:[
                     {
                         name: 'julie',
+                        clientId: 'consumer-1',
                         addr: '127.0.0.1:15001',
-                        clientSoftwareName: 'mokapi',
-                        clientSoftwareVersion: '1.0',
+                        software: 'mokapi 1.0',
                         heartbeat: 1654771269,
                         partitions: { 'mokapi.shop.products': [ 0,1 ], 'mokapi.shop.userSignedUp': [ 0 ] }
                     },
                     {
                         name: 'hermann',
+                        clientId: 'consumer-2',
                         addr: '127.0.0.1:15002',
-                        clientSoftwareName: 'mokapi',
-                        clientSoftwareVersion: '1.0',
+                        software: 'mokapi 1.0',
                         heartbeat: 1654872269,
                         partitions: { 'mokapi.shop.products': [ 2 ], 'mokapi.shop.userSignedUp': [ ] }
                     }
@@ -260,9 +260,9 @@ export let clusters = [
                 members: [
                     {
                         name: 'george',
+                        clientId: 'consumer',
                         addr: '127.0.0.1:15003',
-                        clientSoftwareName: 'mokapi',
-                        clientSoftwareVersion: '1.0',
+                        software: 'mokapi 1.0',
                         heartbeat: 1654721269,
                         partitions: { 'mokapi.shop.userSignedUp': [ 0 ] }
                     }
@@ -289,6 +289,32 @@ export let clusters = [
         metrics: metrics.filter(x => x.name.includes("kafka")),
         configs: [
             configs[ 'b6fea8ac-56c7-4e73-a9c0-6337640bdca8' ]
+        ],
+        clients: [
+            {
+                clientId: 'consumer-1',
+                address: '127.0.0.1:15001',
+                software: 'mokapi 1.0',
+                groups: [
+                    { memberId: 'julie', group: 'foo' }
+                ]
+            },
+            {
+                clientId: 'consumer-2',
+                address: '127.0.0.1:15002',
+                software: 'mokapi 1.0',
+                groups: [
+                    { memberId: 'hermann', group: 'foo' }
+                ]
+            },
+            {
+                clientId: 'consumer',
+                address: '127.0.0.1:15003',
+                software: 'mokapi 1.0',
+                groups: [
+                    { memberId: 'george', group: 'bar' }
+                ]
+            }
         ]
     }
 ]

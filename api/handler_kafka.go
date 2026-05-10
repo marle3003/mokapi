@@ -71,10 +71,9 @@ type group struct {
 }
 
 type kafkaClientInfo struct {
-	ClientId              string `json:"clientId"`
-	Address               string `json:"address"`
-	ClientSoftwareName    string `json:"clientSoftwareName"`
-	ClientSoftwareVersion string `json:"clientSoftwareVersion"`
+	ClientId string `json:"clientId"`
+	Address  string `json:"address"`
+	Software string `json:"software"`
 }
 
 type kafkaClient struct {
@@ -89,13 +88,12 @@ type clientGroupMember struct {
 }
 
 type kafkaMember struct {
-	Name                  string           `json:"name"`
-	ClientId              string           `json:"clientId"`
-	Addr                  string           `json:"addr"`
-	ClientSoftwareName    string           `json:"clientSoftwareName"`
-	ClientSoftwareVersion string           `json:"clientSoftwareVersion"`
-	Heartbeat             time.Time        `json:"heartbeat"`
-	Partitions            map[string][]int `json:"partitions"`
+	Name       string           `json:"name"`
+	ClientId   string           `json:"clientId"`
+	Addr       string           `json:"addr"`
+	Software   string           `json:"software"`
+	Heartbeat  time.Time        `json:"heartbeat"`
+	Partitions map[string][]int `json:"partitions"`
 }
 
 type kafkaTopicInfo struct {
@@ -219,6 +217,7 @@ func (h *handler) setupKafka() {
 	r.HandleFunc("/{cluster}/topics/{topic}/partitions/{partition}/offsets", h.getKafkaMessages).Methods(http.MethodGet)
 	r.HandleFunc("/{cluster}/topics/{topic}/partitions/{partition}/offsets/{offset}", h.getKafkaMessage).Methods(http.MethodGet)
 	r.HandleFunc("/{cluster}/groups/{group}", h.getKafkaGroup).Methods(http.MethodGet)
+	r.HandleFunc("/{cluster}/clients/{client}", h.getKafkaClient).Methods(http.MethodGet)
 }
 
 func (h *handler) getKafkaClusters(w http.ResponseWriter, _ *http.Request) {
@@ -287,10 +286,9 @@ func (h *handler) getKafkaInfo(w http.ResponseWriter, r *http.Request) {
 
 	for _, ctx := range ki.Store.Clients() {
 		c := kafkaClientInfo{
-			ClientId:              ctx.ClientId,
-			Address:               ctx.Addr,
-			ClientSoftwareName:    ctx.ClientSoftwareName,
-			ClientSoftwareVersion: ctx.ClientSoftwareVersion,
+			ClientId: ctx.ClientId,
+			Address:  ctx.Addr,
+			Software: getSoftware(ctx.ClientSoftwareName, ctx.ClientSoftwareVersion),
 		}
 
 		k.Clients = append(k.Clients, c)
@@ -453,13 +451,12 @@ func (h *handler) getKafkaGroup(w http.ResponseWriter, r *http.Request) {
 
 		for id, m := range g.Generation.Members {
 			grp.Members = append(grp.Members, kafkaMember{
-				Name:                  id,
-				ClientId:              m.Client.ClientId,
-				Addr:                  m.Client.Addr,
-				ClientSoftwareName:    m.Client.ClientSoftwareName,
-				ClientSoftwareVersion: m.Client.ClientSoftwareVersion,
-				Heartbeat:             m.Client.Heartbeat,
-				Partitions:            m.Partitions,
+				Name:       id,
+				ClientId:   m.Client.ClientId,
+				Addr:       m.Client.Addr,
+				Software:   getSoftware(m.Client.ClientSoftwareName, m.Client.ClientSoftwareVersion),
+				Heartbeat:  m.Client.Heartbeat,
+				Partitions: m.Partitions,
 			})
 		}
 		sort.Slice(grp.Members, func(i, j int) bool {
@@ -476,6 +473,42 @@ func (h *handler) getKafkaGroup(w http.ResponseWriter, r *http.Request) {
 	})
 
 	write(w, grp)
+}
+
+func (h *handler) getKafkaClient(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	ki := h.app.Kafka.Get(vars["cluster"])
+	if ki == nil {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte("kafka cluster not found"))
+		return
+	}
+
+	c, ok := ki.Client(vars["client"])
+	if !ok {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte("kafka client not found"))
+		return
+	}
+
+	client := kafkaClient{
+		kafkaClientInfo: kafkaClientInfo{
+			ClientId: c.ClientId,
+			Address:  c.Addr,
+			Software: getSoftware(c.ClientSoftwareName, c.ClientSoftwareVersion),
+		},
+		BrokerAddress: c.ServerAddress,
+	}
+
+	for groupName, memberId := range c.Member {
+		client.Groups = append(client.Groups, clientGroupMember{
+			MemberId: memberId,
+			Group:    groupName,
+		})
+	}
+
+	write(w, client)
 }
 
 func (h *handler) produceKafkaMessage(w http.ResponseWriter, r *http.Request) {
@@ -599,17 +632,6 @@ func newTopic(t *store.Topic, ki *runtime.KafkaInfo, ch *asyncapi3.Channel, m *m
 	return result
 }
 
-func getPartitions(t *store.Topic) []kafkaPartition {
-	var partitions []kafkaPartition
-	for _, p := range t.Partitions {
-		partitions = append(partitions, newPartition(p))
-	}
-	sort.Slice(partitions, func(i, j int) bool {
-		return partitions[i].Id < partitions[j].Id
-	})
-	return partitions
-}
-
 func getGroupInfos(ki *runtime.KafkaInfo, topic string, m *monitor.Kafka) []kafkaGroupInfo {
 	groups := ki.Groups()
 	var result []kafkaGroupInfo
@@ -679,43 +701,6 @@ func getGroupMetrics(groupName string, ki *runtime.KafkaInfo, m *monitor.Kafka) 
 		}
 	}
 	return result
-}
-
-func newGroup(g *store.Group) group {
-	grp := group{
-		Name:  g.Name,
-		State: g.State.String(),
-	}
-	if g.Generation != nil {
-		grp.Generation = g.Generation.Id
-		grp.Leader = g.Generation.LeaderId
-		grp.Protocol = g.Generation.Protocol
-
-		for id, m := range g.Generation.Members {
-			grp.Members = append(grp.Members, kafkaMember{
-				Name:                  id,
-				ClientId:              m.Client.ClientId,
-				Addr:                  m.Client.Addr,
-				ClientSoftwareName:    m.Client.ClientSoftwareName,
-				ClientSoftwareVersion: m.Client.ClientSoftwareVersion,
-				Heartbeat:             m.Client.Heartbeat,
-				Partitions:            m.Partitions,
-			})
-		}
-		sort.Slice(grp.Members, func(i, j int) bool {
-			return strings.Compare(grp.Members[i].Name, grp.Members[j].Name) < 0
-		})
-	} else {
-		grp.Generation = -1
-	}
-	for topicName := range g.Commits {
-		grp.Topics = append(grp.Topics, topicName)
-	}
-	sort.Slice(grp.Topics, func(i, j int) bool {
-		return strings.Compare(grp.Topics[i], grp.Topics[j]) < 0
-	})
-
-	return grp
 }
 
 func newPartition(p *store.Partition) kafkaPartition {
@@ -869,4 +854,15 @@ func (h *handler) resolveKafkaPartition(w http.ResponseWriter, r *http.Request) 
 	}
 
 	return ki, t, p, true
+}
+
+func getSoftware(name, version string) string {
+	software := ""
+	if name != "" {
+		software = name
+		if version != "" {
+			software += " " + version
+		}
+	}
+	return software
 }

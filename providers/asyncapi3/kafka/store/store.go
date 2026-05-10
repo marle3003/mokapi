@@ -475,3 +475,11 @@ func (s *Store) Clients() []kafka.ClientContext {
 	}
 	return result
 }
+
+func (s *Store) Client(clientId string) (kafka.ClientContext, bool) {
+	c, ok := s.clients[clientId]
+	if !ok {
+		return kafka.ClientContext{}, false
+	}
+	return *c, ok
+}

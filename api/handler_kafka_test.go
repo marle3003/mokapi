@@ -346,7 +346,7 @@ func TestHandler_Kafka(t *testing.T) {
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo/groups/foo",
-			responseBody: `{"name":"foo","generation":3,"state":"PreparingRebalance","protocol":"range","members":[{"name":"m1","clientId":"client1","addr":"192.168.0.100","clientSoftwareName":"mokapi","clientSoftwareVersion":"1.0","heartbeat":"2024-04-22T15:04:05+07:00","partitions":{"topic":[1,2,5]}},{"name":"m2","clientId":"client2","addr":"192.168.0.200","clientSoftwareName":"mokapi","clientSoftwareVersion":"1.0","heartbeat":"2024-04-22T15:04:10+07:00","partitions":{"topic":[3,4,6]}}],"leader":"m1","topics":null,"metrics":{"kafka_rebalance_timestamp":0}}`,
+			responseBody: `{"name":"foo","generation":3,"state":"PreparingRebalance","protocol":"range","members":[{"name":"m1","clientId":"client1","addr":"192.168.0.100","software":"mokapi 1.0","heartbeat":"2024-04-22T15:04:05+07:00","partitions":{"topic":[1,2,5]}},{"name":"m2","clientId":"client2","addr":"192.168.0.200","software":"mokapi 1.0","heartbeat":"2024-04-22T15:04:10+07:00","partitions":{"topic":[3,4,6]}}],"leader":"m1","topics":null,"metrics":{"kafka_rebalance_timestamp":0}}`,
 		},
 		{
 			name: "get topic with openapi schema",

@@ -97,8 +97,7 @@ declare interface KafkaMember {
   name: string;
   clientId: string
   addr: string;
-  clientSoftwareName: string;
-  clientSoftwareVersion: string;
+  software: string;
   heartbeat: number;
   partitions: { [topicName: string]: number[] };
 }
@@ -136,16 +135,14 @@ declare interface KafkaValue {
 declare interface KafkaClientInfo {
   clientId: string
   address: string
-  clientSoftwareName: string;
-  clientSoftwareVersion: string;
+  software: string
 }
 
 declare interface KafkaClient {
   clientId: string
   address: string
   brokerAddress: string
-  clientSoftwareName: string;
-  clientSoftwareVersion: string;
+  software: string
   groups: {
     memberId: string
     group: string

@@ -11,6 +11,7 @@ export interface Dashboard {
     getHttpOperations(serviceName: string, path?: string, method?: string): HttpOperationsResult
     getKafkaTopic(serviceName: string, topicName: string): KafkaTopicResult
     getKafkaGroup(serviceName: string, groupName: string): KafkaGroupResult
+    getKafkaClient(serviceName: string, clientId: string): KafkaClientResult
 
     getEvents(...labels: Label[]): EventsResult
     getEvent(id: string): EventResult

@@ -118,6 +118,20 @@ export function useDemoDashboard() {
             return { group, isLoading, close: () => {} }
         },
 
+        getKafkaClient(serviceName: string, clientId: string) {
+            const client = ref<KafkaClient | null>(null)
+            const isLoading = ref<boolean>(true)
+
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                client.value = db.data['service_' + serviceName + '_client_' + clientId]
+                isLoading.value = db.isLoading
+            })
+            return { client, isLoading, close: () => {} }
+        },
+
         getEvents(...labels: Label[]) {
             const events = ref<ServiceEvent[]>([])
             const isLoading = ref<boolean>(true)

@@ -10,7 +10,7 @@ import { useMetrics } from '@/composables/metrics';
 const route = useRoute();
 const router = useRouter();
 const { format } = usePrettyDates();
-const { clientSoftware, formatAddress } = useKafka();
+const { formatAddress } = useKafka();
 const { dashboard } = useDashboard();
 const { value, filter, parseLabels, } = useMetrics();
 
@@ -191,7 +191,7 @@ const partitions = computed(() => {
                     </router-link>
                   </td>
                   <td>{{ formatAddress(member.addr) }}</td>
-                  <td>{{ clientSoftware(member) }}</td>
+                  <td>{{ member.software || '-' }}</td>
                   <td class="text-center">{{ format(member.heartbeat) }}</td>
                 </tr>
               </tbody>

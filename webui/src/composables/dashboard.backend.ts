@@ -82,6 +82,18 @@ export const dashboard: Dashboard = {
         return {group, isLoading, close: response.close} 
     },
 
+    getKafkaClient(serviceName: string, clientId: string) {
+        const response = useFetch(`/api/services/kafka/${serviceName}/clients/${clientId}`)
+        const client = ref<KafkaClient | null>(null)
+        const isLoading = ref<boolean>(true)
+
+        watchEffect(() => {
+            client.value = response.data ? response.data : null
+            isLoading.value = response.isLoading
+        })
+        return {client, isLoading, close: response.close} 
+    },
+
     getEvents(...labels: Label[]) {
         let url = `/api/events`
         for (const [index, label] of labels.entries()) {

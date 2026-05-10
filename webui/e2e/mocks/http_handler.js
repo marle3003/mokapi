@@ -1,10 +1,10 @@
 import { on, sleep } from 'mokapi'
-import { clusters as kafkaClusters, events as kafkaEvents, configs as kafkaConfigs } from 'kafka.ts'
-import { apps as httpServices, events as httpEvents, configs as httpConfigs } from 'services_http.js'
-import { services as mailServices, mailEvents, getMail, getAttachment } from 'mail.js'
-import { server as ldapServers, searches } from 'ldap.js'
-import { clusters as mqttClusters, events as mqttEvents } from 'mqtt.js'
-import { metrics, sum, max } from 'metrics.ts'
+import { clusters as kafkaClusters, events as kafkaEvents, configs as kafkaConfigs } from './kafka.ts'
+import { apps as httpServices, events as httpEvents, configs as httpConfigs } from './services_http.js'
+import { services as mailServices, mailEvents, getMail, getAttachment } from './mail.js'
+import { server as ldapServers, searches } from './ldap.js'
+import { clusters as mqttClusters, events as mqttEvents } from './mqtt.js'
+import { metrics, sum, max } from './metrics.ts'
 import { get, post, fetch } from 'mokapi/http'
 import { base64 } from 'mokapi/encoding';
 
@@ -127,6 +127,13 @@ export default async function() {
                             protocol: x.protocol,
                             members: x.members.length ?? 0,
                             metrics: x.metrics
+                        }
+                    }),
+                    clients: kafkaClusters[0].clients.map(c => {
+                        return {
+                            clientId: c.clientId,
+                            address: c.address,
+                            software: c.software,
                         }
                     }),
                     configs: kafkaClusters[0].configs.map(c => {
@@ -284,6 +291,9 @@ export default async function() {
                 }
                 return
             }
+            case 'kafkaClient':
+                response.data = kafkaClusters[0].clients.find(x => x.clientId === request.path['clientId'])
+                return
             case 'mailboxes':
                 response.data = mailServices[0].mailboxes
                 return

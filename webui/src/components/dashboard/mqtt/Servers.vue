@@ -7,7 +7,7 @@ import { useMarkdown } from '@/composables/markdown';
 
 const props = defineProps<{
     serviceName: string,
-    servers: KafkaServer[]
+    servers: MqttServer[]
 }>()
 
 const router = useRouter();

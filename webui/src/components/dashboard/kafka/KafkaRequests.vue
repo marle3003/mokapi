@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useDashboard, getRouteName } from '@/composables/dashboard';
-import { computed, onUnmounted, ref, watch, type Component } from 'vue';
+import { computed, ref, watch, type Component } from 'vue';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRouter } from '@/router';
 import JoinGroupSummary from './requests/JoinGroupSummary.vue';
@@ -28,7 +28,7 @@ const { format: formatTime } = usePrettyDates();
 
 const labels = computed(() => {
   const result = [
-    { name: 'namespace', value: 'http' },
+    { name: 'namespace', value: 'kafka' },
     { name: 'type', value: 'request' }
   ];
   result.push({ name: 'name', value: props.service.name })
@@ -68,11 +68,6 @@ watch(() => dashboard.value,
   },
   { immediate: true }
 );
-
-
-onUnmounted(() => {
-  close()
-})
 
 function eventData(event: ServiceEvent | null): KafkaRequestLog | null {
   if (!event) {

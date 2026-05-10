@@ -292,6 +292,28 @@ components:
               application/json:
                 schema:
                   $ref: '#/components/schemas/Group'
+    Client:
+      parameters:
+        - in: path
+          name: cluster
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: clientId
+          required: true
+          schema:
+            type: string
+      get:
+        summary: Return the client with the given client id.
+        operationId: kafkaClient
+        responses:
+          '200':
+            description: The client details.
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Client'
 
   schemas:
     KafkaInfo:
@@ -471,9 +493,7 @@ components:
           type: string
         addr:
           type: string
-        clientSoftwareName:
-          type: string
-        clientSoftwareVersion:
+        software:
           type: string
         heartbeat:
           type: integer
@@ -483,6 +503,26 @@ components:
             type: array
             items:
               type: integer
+    Client:
+      type: object
+      properties:
+        clientId:
+          type: string
+        address:
+          type: string
+        software:
+          type: string
+        brokerAddress:
+          type: string
+        groups:
+          type: array
+          items:
+            type: object
+            properties:
+              memberId:
+                type: string
+              group:
+                type: string
     Broker:
       type: object
       properties:
