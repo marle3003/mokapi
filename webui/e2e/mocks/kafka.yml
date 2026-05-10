@@ -42,7 +42,7 @@ components:
                 schema:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Topic'
+                    $ref: '#/components/schemas/TopicInfo'
     Topic:
       parameters:
         - in: path
@@ -270,17 +270,51 @@ components:
                       type: array
                       items:
                         $ref: '#/components/schemas/Record'
+    Group:
+      parameters:
+        - in: path
+          name: cluster
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: group
+          required: true
+          schema:
+            type: string
+      get:
+        summary: Return the group with the given group id.
+        operationId: kafkaGroup
+        responses:
+          '200':
+            description: The group details.
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Group'
 
   schemas:
     KafkaInfo:
-      allOf:
-        - $ref: 'common.yml#/components/schemas/Service'
-        - type: object
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        version:
+          type: string
+        contact:
+          type: object
           properties:
-            topics:
-              type: array
-              items:
-                type: string
+            name:
+              type: string
+            url:
+              type: string
+              format: uri
+            email:
+              type: string
+              format: email
+
     Kafka:
       type: object
       properties:
@@ -320,19 +354,32 @@ components:
         topics:
           type: array
           items:
-            $ref: '#/components/schemas/Topic'
+            $ref: '#/components/schemas/TopicInfo'
         groups:
           type: array
           items:
-            $ref: '#/components/schemas/Group'
-        metrics:
-          $ref: 'common.yml#/components/schemas/Metrics'
+            $ref: '#/components/schemas/GroupInfo'
+        configs:
+          type: array
+          items:
+            $ref: './common.yml#/components/schemas/ConfigInfo'
+    TopicInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        summary:
+          type: string
+        lastMessageReceived:
+          type: integer
+        messages:
+          type: integer
     Topic:
       type: object
       properties:
         name:
           type: string
-        description:
+        summary:
           type: string
         partitions:
           type: array
@@ -359,6 +406,30 @@ components:
           $ref:  '#/components/schemas/Broker'
         segments:
           type: integer
+    GroupInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        generation:
+          type: integer
+        state:
+          type: string
+        protocol:
+          type: string
+        members:
+          type: integer
+        metrics:
+          type: object
+          properties:
+            kafka_rebalance_timestamp:
+              type: integer
+            topics:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: object
     Group:
       type: object
       properties:
@@ -382,6 +453,17 @@ components:
           type: array
           items:
             type: string
+        metrics:
+          type: object
+          properties:
+            kafka_rebalance_timestamp:
+              type: integer
+            topics:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: object
     Member:
       type: object
       properties:

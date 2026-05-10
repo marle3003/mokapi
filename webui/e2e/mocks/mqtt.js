@@ -1,4 +1,4 @@
-import { metrics } from 'metrics.js';
+import { metrics } from 'metrics.ts';
 import { on } from 'mokapi';
 
 const Measurement = {
@@ -38,7 +38,7 @@ export let clusters = [
     topics: [
       {
         name: 'home/livingroom/temperature',
-        description: 'Channel for messages FROM the sensor (Publish)',
+        summary: 'Channel for messages FROM the sensor (Publish)',
         messages: {
           TemperatureMeasurement: {
             name: 'TemperatureMeasurement',
@@ -97,8 +97,28 @@ export default async function () {
   on('http', function (request, response) {
     switch (request.operationId) {
       case 'serviceMqtt':
-        response.data = clusters[0];
-        return true;
+        response.data = {
+          name: clusters[0].name,
+          description: clusters[0].description,
+          version: clusters[0].version,
+          contact: clusters[0].contact,
+          servers: clusters[0].servers,
+          topics: clusters[0].topics.map(x => {
+              return {
+                  name: x.name,
+                  ...x.title ? { title: x.title } : {},
+                  ...x.summary ? { summary: x.summary } : {},
+                  ...x.description ? { description: x.description } : {},
+                  messages: x.messages,
+                  instances: x.instances,
+                  metrics: {
+                      mqtt_messages_total: metrics.find(m => m.name === `mqtt_messages_total{service="${clusters[0].name}",topic="${x.name}"}`).value,
+                      mqtt_message_timestamp: metrics.find(m => m.name === `mqtt_message_timestamp{service="${clusters[0].name}",topic="${x.name}"}`).value
+                  }
+              }
+          }),
+          clients: clusters[0].clients
+        }
     }
   });
 }

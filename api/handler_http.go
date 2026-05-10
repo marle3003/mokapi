@@ -1,7 +1,6 @@
 package api
 
 import (
-	"fmt"
 	"maps"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema"
@@ -11,18 +10,19 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 type httpInfo struct {
-	Name        string           `json:"name"`
-	Description string           `json:"description,omitempty"`
-	Version     string           `json:"version,omitempty"`
-	Contact     *contact         `json:"contact,omitempty"`
-	Servers     []server         `json:"servers,omitempty"`
-	Paths       []pathItem       `json:"paths,omitempty"`
-	Tags        []tag            `json:"tags,omitempty"`
-	Metrics     []metrics.Metric `json:"metrics,omitempty"`
-	Configs     []config         `json:"configs,omitempty"`
+	Name        string     `json:"name"`
+	Description string     `json:"description,omitempty"`
+	Version     string     `json:"version,omitempty"`
+	Contact     *contact   `json:"contact,omitempty"`
+	Servers     []server   `json:"servers,omitempty"`
+	Paths       []pathItem `json:"paths,omitempty"`
+	Tags        []tag      `json:"tags,omitempty"`
+	Configs     []config   `json:"configs,omitempty"`
 }
 
 type pathItem struct {
@@ -43,6 +43,7 @@ type operationInfo struct {
 	Tags        []string    `json:"tags,omitempty"`
 	Status      string      `json:"status"`
 	Errors      []errorData `json:"errors,omitempty"`
+	Metrics     httpMetrics `json:"metrics"`
 }
 
 type operation struct {
@@ -59,6 +60,7 @@ type operation struct {
 	Tags        []string              `json:"tags,omitempty"`
 	Status      string                `json:"status"`
 	Errors      []errorData           `json:"errors,omitempty"`
+	Metrics     httpMetrics           `json:"metrics"`
 }
 
 type errorData struct {
@@ -121,6 +123,12 @@ type tag struct {
 	Kind        string `yaml:"kind" json:"kind"`
 }
 
+type httpMetrics struct {
+	Requests      float64 `json:"http_requests_total"`
+	RequestErrors float64 `json:"http_requests_errors_total"`
+	LastRequest   float64 `json:"http_request_timestamp"`
+}
+
 func getHttpServices(s *runtime.HttpStore, m *monitor.Monitor) []service {
 	list := s.List()
 	result := make([]service, 0, len(list))
@@ -137,10 +145,6 @@ func getHttpServices(s *runtime.HttpStore, m *monitor.Monitor) []service {
 			s.Description = hs.Info.Summary
 		}
 
-		if m != nil {
-			s.Metrics = m.FindAll(metrics.ByNamespace("http"), metrics.ByLabel("service", hs.Info.Name))
-		}
-
 		if hs.Info.Contact != nil {
 			c := hs.Info.Contact
 			s.Contact = &contact{
@@ -150,38 +154,54 @@ func getHttpServices(s *runtime.HttpStore, m *monitor.Monitor) []service {
 			}
 		}
 
+		s.Metrics = httpMetrics{
+			Requests:      m.Http.RequestCounter.Sum(metrics.NewQuery(metrics.ByLabel("service", hs.Info.Name))),
+			RequestErrors: m.Http.RequestErrorCounter.Sum(metrics.NewQuery(metrics.ByLabel("service", hs.Info.Name))),
+			LastRequest:   m.Http.LastRequest.Max(metrics.NewQuery(metrics.ByLabel("service", hs.Info.Name))),
+		}
+
 		result = append(result, s)
 	}
 	return result
 }
 
-func (h *handler) handleHttp(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/")
-	segments := strings.Split(path, "/")
-	switch {
-	case len(segments) == 4:
-		name := segments[3]
-		if s := h.app.Http.Get(name); s != nil {
-			result := h.getHttpService(s)
-			w.Header().Set("Content-Type", "application/json")
-			writeJsonBody(w, result)
-		} else {
-			w.WriteHeader(404)
-		}
-	case len(segments) == 5 && segments[4] == "operations":
-		name := segments[3]
-		method := r.URL.Query().Get("method")
-		p := r.URL.Query().Get("path")
-		if s := h.app.Http.Get(name); s != nil {
-			result := getOperations(s, p, method)
-			w.Header().Set("Content-Type", "application/json")
-			writeJsonBody(w, result)
+func (h *handler) setupHttp() {
+	r := h.router.PathPrefix("/api/services/http").Subrouter()
 
-		} else {
-			w.WriteHeader(404)
-			_, _ = w.Write([]byte(fmt.Sprintf("Not found: %s", name)))
-		}
+	r.HandleFunc("", h.getHttpServices).Methods(http.MethodGet)
+	r.HandleFunc("/{api}", h.getHttpApi).Methods(http.MethodGet)
+	r.HandleFunc("/{api}/operations", h.getHttpOperations).Methods(http.MethodGet)
+}
+
+func (h *handler) getHttpServices(w http.ResponseWriter, _ *http.Request) {
+	services := getKafkaServices(h.app.Kafka, h.app.Monitor)
+	write(w, services)
+}
+
+func (h *handler) getHttpApi(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	if s := h.app.Http.Get(vars["api"]); s != nil {
+		result := h.getHttpService(s)
+		write(w, result)
+	} else {
+		w.WriteHeader(404)
 	}
+}
+
+func (h *handler) getHttpOperations(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	s := h.app.Http.Get(vars["api"])
+	if s == nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	method := r.URL.Query().Get("method")
+	p := r.URL.Query().Get("path")
+	result := getOperations(s, p, method, h.app.Monitor.Http)
+	write(w, result)
 }
 
 func (h *handler) getHttpService(s *runtime.HttpInfo) httpInfo {
@@ -189,10 +209,6 @@ func (h *handler) getHttpService(s *runtime.HttpInfo) httpInfo {
 		Name:        s.Info.Name,
 		Description: s.Info.Description,
 		Version:     s.Info.Version,
-	}
-
-	if h.app.Monitor != nil {
-		result.Metrics = h.app.Monitor.FindAll(metrics.ByNamespace("http"), metrics.ByLabel("service", s.Info.Name))
 	}
 
 	if s.Info.Contact != nil {
@@ -232,6 +248,24 @@ func (h *handler) getHttpService(s *runtime.HttpInfo) httpInfo {
 		}
 
 		for method, o := range p.Value.Operations() {
+			data := httpMetrics{
+				Requests: h.app.Monitor.Http.RequestCounter.Sum(metrics.NewQuery(
+					metrics.ByLabel("service", s.Info.Name),
+					metrics.ByLabel("endpoint", p.Value.Path),
+					metrics.ByLabel("method", method),
+				)),
+				RequestErrors: h.app.Monitor.Http.RequestErrorCounter.Sum(metrics.NewQuery(
+					metrics.ByLabel("service", s.Info.Name),
+					metrics.ByLabel("endpoint", p.Value.Path),
+					metrics.ByLabel("method", method),
+				)),
+				LastRequest: h.app.Monitor.Http.LastRequest.Max(metrics.NewQuery(
+					metrics.ByLabel("service", s.Info.Name),
+					metrics.ByLabel("endpoint", p.Value.Path),
+					metrics.ByLabel("method", method),
+				)),
+			}
+
 			pi.Operations = append(pi.Operations, operationInfo{
 				Method:      strings.ToLower(method),
 				Summary:     o.Summary,
@@ -241,6 +275,7 @@ func (h *handler) getHttpService(s *runtime.HttpInfo) httpInfo {
 				Tags:        o.Tags,
 				Status:      o.Status.String(),
 				Errors:      getErrors(o.Errors),
+				Metrics:     data,
 			})
 		}
 		result.Paths = append(result.Paths, pi)
@@ -261,7 +296,7 @@ func (h *handler) getHttpService(s *runtime.HttpInfo) httpInfo {
 	return result
 }
 
-func getOperations(s *runtime.HttpInfo, path, method string) []operation {
+func getOperations(s *runtime.HttpInfo, path, method string, monitor *monitor.Http) []operation {
 	var paths []string
 	if path != "" {
 		paths = append(paths, path)
@@ -380,6 +415,24 @@ func getOperations(s *runtime.HttpInfo, path, method string) []operation {
 				for _, err := range o.Errors {
 					op.Errors = append(op.Errors, errorData{Message: err.Message})
 				}
+			}
+
+			op.Metrics = httpMetrics{
+				Requests: monitor.RequestCounter.Sum(metrics.NewQuery(
+					metrics.ByLabel("service", s.Info.Name),
+					metrics.ByLabel("endpoint", p.Value.Path),
+					metrics.ByLabel("method", m),
+				)),
+				RequestErrors: monitor.RequestErrorCounter.Sum(metrics.NewQuery(
+					metrics.ByLabel("service", s.Info.Name),
+					metrics.ByLabel("endpoint", p.Value.Path),
+					metrics.ByLabel("method", m),
+				)),
+				LastRequest: monitor.LastRequest.Max(metrics.NewQuery(
+					metrics.ByLabel("service", s.Info.Name),
+					metrics.ByLabel("endpoint", p.Value.Path),
+					metrics.ByLabel("method", m),
+				)),
 			}
 
 			operations = append(operations, op)

@@ -1,24 +1,17 @@
 <script setup lang="ts">
-import { useMetrics } from '@/composables/metrics';
 import { onUnmounted } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { useRouter } from 'vue-router';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useMarkdown } from '@/composables/markdown';
 
-const {sum} = useMetrics()
 const { dashboard } = useDashboard();
 const {services, close} = dashboard.value.getServices('mail')
 const {format} = usePrettyDates()
-const route = useRoute()
 const router = useRouter()
 
-function messages(service: Service){
-    return sum(service.metrics, 'mail_mails_total')
-}
-
 function lastMail(service: Service){
-    const n = sum(service.metrics, 'mail_mail_timestamp')
+    const n = service.metrics.mail_mail_timestamp
     if (n == 0){
         return '-'
     }
@@ -69,7 +62,7 @@ onUnmounted(() => {
                         </td>
                         <td><div v-html="useMarkdown(service.description).content" class="table-markdown"></div></td>
                         <td class="text-center">{{ lastMail(service) }}</td>
-                        <td class="text-center">{{ messages(service) }}</td>
+                        <td class="text-center">{{ service.metrics.mail_mails_total }}</td>
                     </tr>
                 </tbody>
             </table>

@@ -274,7 +274,11 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *H
 	}
 	op, errOpResolve := findOperation(r.Method, requestPath, h.config.Paths)
 	if op != nil {
-		params := append(op.Path.Parameters, op.Parameters...)
+		var params Parameters
+		if op.Path != nil {
+			params = op.Path.Parameters
+		}
+		params = append(params, op.Parameters...)
 		route := op.Path.Path
 		if len(route) > 1 {
 			// there is no official specification for trailing slash. For ease of use, mokapi considers it equivalent

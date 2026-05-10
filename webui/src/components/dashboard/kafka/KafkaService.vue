@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Ref, computed, onUnmounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
 import KafkaTopics from './KafkaTopics.vue'
@@ -119,8 +119,8 @@ watch(() => route.hash, (hash) => {
             </section>
         </div>
     </div>
-    <div v-if="$route.matched.some(route => route.name === getRouteName('kafkaTopic').value)">
-        <kafka-topic></kafka-topic>
+    <div v-if="service &&$route.matched.some(route => route.name === getRouteName('kafkaTopic').value)">
+        <kafka-topic :service="service"></kafka-topic>
     </div>
     <div v-if="$route.name == getRouteName('kafkaGroup').value">
         <kafka-group></kafka-group>

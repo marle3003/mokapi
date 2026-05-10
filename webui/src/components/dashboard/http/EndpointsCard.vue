@@ -75,19 +75,33 @@ function goToPath(path: HttpPath, openInNewTab = false){
     }
 }
 function lastRequest(path: HttpPath){
-    const n = sum(props.service.metrics, 'http_request_timestamp', {name: 'endpoint', value: path.path})
-    if (n == 0){
+    let lastRequest = 0
+    for (const op of path.operations) {
+        if (op.metrics.http_request_timestamp > lastRequest) {
+            lastRequest = op.metrics.http_request_timestamp
+        }
+    }
+
+    if (lastRequest == 0){
         return '-'
     }
-    return format(n)
+    return format(lastRequest)
 }
 
 function requests(path: HttpPath){
-    return sum(props.service.metrics, 'http_requests_total', {name: 'endpoint', value: path.path})
+    let totalRequests = 0
+    for (const op of path.operations) {
+        totalRequests += op.metrics.http_requests_total
+    }
+    return totalRequests
 }
 
 function errors(path: HttpPath){
-    return sum(props.service.metrics, 'http_requests_errors_total', {name: 'endpoint', value: path.path})
+    let totalErrors = 0
+    for (const op of path.operations) {
+        totalErrors += op.metrics.http_requests_errors_total
+    }
+    return totalErrors
 }
 
 function allOperationsDeprecated(path: HttpPath): boolean{

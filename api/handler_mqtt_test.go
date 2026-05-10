@@ -11,6 +11,8 @@ import (
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/mqtt/store"
 	"mokapi/runtime"
+	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
 	"mokapi/runtime/runtimetest"
 	"mokapi/try"
 	"net/http"
@@ -47,7 +49,7 @@ func TestHandler_Mqtt(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services",
-			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"mqtt"}]`,
+			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"mqtt","metrics":{"mqtt_messages_total":0,"mqtt_message_timestamp":0}}]`,
 		},
 		{
 			name: "get MQTT services",
@@ -70,7 +72,7 @@ func TestHandler_Mqtt(t *testing.T) {
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/mqtt",
-			responseBody: `[{"name":"foo","description":"mqtt","contact":{"name":"mokapi","url":"https://mokapi.io","email":"info@mokapi.io"},"version":"1.0"}]`,
+			responseBody: `[{"name":"foo","description":"mqtt","contact":{"name":"mokapi","url":"https://mokapi.io","email":"info@mokapi.io"},"version":"1.0","type":"mqtt","metrics":{"mqtt_messages_total":0,"mqtt_message_timestamp":0}}]`,
 		},
 		{
 			name: "get specific",
@@ -114,7 +116,7 @@ func TestHandler_Mqtt(t *testing.T) {
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/mqtt/foo/topics",
-			responseBody: `[{"name":"sensors/{sensorId}/data","description":"","messages":null,"instances":[{"name":"sensors/1234z/data","parameters":{"sensorId":"1234z"}}]}]`,
+			responseBody: `[{"name":"sensors/{sensorId}/data","instances":[{"name":"sensors/1234z/data","parameters":{"sensorId":"1234z"}}],"metrics":{"mqtt_messages_total":0,"mqtt_message_timestamp":0}}]`,
 		},
 	}
 
@@ -136,5 +138,69 @@ func TestHandler_Mqtt(t *testing.T) {
 				try.HasHeader("Content-Type", "application/json"),
 				try.HasBody(tc.responseBody))
 		})
+	}
+}
+
+func TestHandler_Mqtt_Metrics(t *testing.T) {
+	testcases := []struct {
+		name         string
+		app          *runtime.App
+		requestUrl   string
+		responseBody string
+		addMetrics   func(monitor *monitor.Monitor)
+	}{
+		{
+			name:         "service list with metric",
+			app:          runtimetest.NewApp(runtimetest.WithMqttInfo("foo", getMqttInfo(asyncapi3test.NewConfig(asyncapi3test.WithTitle("foo"))))),
+			requestUrl:   "http://foo.api/api/services",
+			responseBody: `[{"name":"foo","version":"1.0","type":"mqtt","metrics":{"mqtt_messages_total":1,"mqtt_message_timestamp":12345678}}]`,
+			addMetrics: func(monitor *monitor.Monitor) {
+				monitor.Mqtt.Messages.WithLabel("foo", "topic").Add(1)
+				monitor.Mqtt.LastMessage.WithLabel("foo", "topic").Set(12345678)
+			},
+		},
+		{
+			name: "cluster with metric",
+			app: runtimetest.NewApp(
+				runtimetest.WithMqttInfo("foo", getMqttInfo(
+					asyncapi3test.NewConfig(asyncapi3test.WithTitle("foo"),
+						asyncapi3test.WithChannel("foo"),
+					),
+				))),
+			requestUrl:   "http://foo.api/api/services/mqtt/foo",
+			responseBody: `{"name":"foo","version":"1.0","topics":[{"name":"foo","metrics":{"mqtt_messages_total":1,"mqtt_message_timestamp":12345678}}]}`,
+			addMetrics: func(monitor *monitor.Monitor) {
+				monitor.Mqtt.Messages.WithLabel("foo", "topic").Add(1)
+				monitor.Mqtt.LastMessage.WithLabel("foo", "topic").Set(12345678)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			h := api.New(tc.app, static.Api{})
+			tc.addMetrics(tc.app.Monitor)
+
+			try.Handler(t,
+				http.MethodGet,
+				tc.requestUrl,
+				nil,
+				"",
+				h,
+				try.HasStatusCode(200),
+				try.HasHeader("Content-Type", "application/json"),
+				try.HasBody(tc.responseBody))
+		})
+	}
+}
+
+func getMqttInfo(config *asyncapi3.Config) *runtime.MqttInfo {
+	return &runtime.MqttInfo{
+		Config: config,
+		Store:  store.New(config, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewMqtt()),
 	}
 }

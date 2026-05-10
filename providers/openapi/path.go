@@ -159,15 +159,25 @@ func (p PathItems) Resolve(token string) (interface{}, error) {
 }
 
 func (p PathItems) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	if p == nil {
+		return nil
+	}
+
 	for name, e := range p {
-		if err := e.Parse(name, config, reader); err != nil {
+		if e == nil {
+			continue
+		}
+		if err := e.Parse(config, reader); err != nil {
 			return fmt.Errorf("parse path '%v' failed: %w", name, err)
+		}
+		if e.Value != nil {
+			e.Value.Path = name
 		}
 	}
 	return nil
 }
 
-func (r *PathRef) Parse(name string, config *dynamic.Config, reader dynamic.Reader) error {
+func (r *PathRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
@@ -179,10 +189,6 @@ func (r *PathRef) Parse(name string, config *dynamic.Config, reader dynamic.Read
 		}
 		r.Value = resolved.Value
 		return nil
-	}
-
-	if r.Value != nil {
-		r.Value.Path = name
 	}
 
 	return r.Value.Parse(config, reader)
@@ -200,7 +206,7 @@ func (p *Path) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	}
 
 	for method, op := range p.Operations() {
-		err := op.Parse(p, config, reader)
+		err := op.Parse(config, reader)
 		if err != nil {
 			op.Status = StatusInvalid
 			method = strings.ToUpper(method)
@@ -211,11 +217,13 @@ func (p *Path) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 				WithField("path", p.Path).
 				WithField("namespace", "http").
 				Error(err)
+		} else {
+			op.Path = p
 		}
 	}
 
 	for name, op := range p.AdditionalOperations {
-		if err := op.Parse(p, config, reader); err != nil {
+		if err := op.Parse(config, reader); err != nil {
 			op.Status = StatusInvalid
 			name = strings.ToUpper(name)
 			log.
@@ -224,6 +232,8 @@ func (p *Path) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 				WithField("path", p.Path).
 				WithField("namespace", "http").
 				Error(err)
+		} else {
+			op.Path = p
 		}
 	}
 

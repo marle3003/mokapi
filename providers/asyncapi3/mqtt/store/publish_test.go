@@ -10,6 +10,7 @@ import (
 	"mokapi/providers/asyncapi3/mqtt/store"
 	"mokapi/runtime/events"
 	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"mokapi/schema/json/schema/schematest"
 	"net"
@@ -113,7 +114,7 @@ func TestPublish(t *testing.T) {
 				require.Equal(t, "hello world", d.Message.Value)
 				require.Equal(t, "publisher", d.ClientId)
 
-				require.Equal(t, float64(1), m.Messages.Sum())
+				require.Equal(t, float64(1), m.Messages.Sum(metrics.NewQuery()))
 				require.Equal(t, float64(1), m.Messages.WithLabel("test-server", "/foo/bar").Value())
 				require.Greater(t, m.LastMessage.WithLabel("test-server", "/foo/bar").Value(), float64(1))
 			},
@@ -394,7 +395,7 @@ func TestPublish(t *testing.T) {
 				require.Equal(t, "hello world", d.Message.Value)
 				require.Equal(t, "namespace=mqtt, name=test-server, clientId=publisher, sensorId=1234z, topic=sensors/{sensorId}/data, type=message", evts[0].Traits.String())
 
-				require.Equal(t, float64(1), m.Messages.Sum())
+				require.Equal(t, float64(1), m.Messages.Sum(metrics.NewQuery()))
 				require.Equal(t, float64(1), m.Messages.WithLabel("test-server", "sensors/{sensorId}/data").Value())
 				require.Greater(t, m.LastMessage.WithLabel("test-server", "sensors/{sensorId}/data").Value(), float64(1))
 			},

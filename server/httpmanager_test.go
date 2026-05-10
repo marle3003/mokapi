@@ -10,6 +10,7 @@ import (
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime"
+	"mokapi/runtime/metrics"
 	"mokapi/server/cert"
 	"mokapi/try"
 	"mokapi/version"
@@ -43,7 +44,7 @@ func TestHttpServers_Monitor(t *testing.T) {
 	// give server time to start
 	time.Sleep(time.Second * 1)
 	try.GetRequest(t, u+"/foo", map[string]string{})
-	require.Equal(t, float64(1), app.Monitor.Http.RequestCounter.Sum())
+	require.Equal(t, float64(1), app.Monitor.Http.RequestCounter.Sum(metrics.NewQuery()))
 }
 
 func TestHttpManager_Update(t *testing.T) {

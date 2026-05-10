@@ -58,6 +58,30 @@ export const dashboard: Dashboard = {
         return {operations, isLoading, close: response.close} 
     },
 
+    getKafkaTopic(serviceName: string, topicName: string) {
+        const response = useFetch(`/api/services/kafka/${serviceName}/topics/${topicName}`)
+        const topic = ref<KafkaTopic | null>(null)
+        const isLoading = ref<boolean>(true)
+
+        watchEffect(() => {
+            topic.value = response.data ? response.data : null
+            isLoading.value = response.isLoading
+        })
+        return {topic, isLoading, close: response.close} 
+    },
+
+    getKafkaGroup(serviceName: string, groupName: string) {
+        const response = useFetch(`/api/services/kafka/${serviceName}/groups/${groupName}`)
+        const group = ref<KafkaGroup | null>(null)
+        const isLoading = ref<boolean>(true)
+
+        watchEffect(() => {
+            group.value = response.data ? response.data : null
+            isLoading.value = response.isLoading
+        })
+        return {group, isLoading, close: response.close} 
+    },
+
     getEvents(...labels: Label[]) {
         let url = `/api/events`
         for (const [index, label] of labels.entries()) {

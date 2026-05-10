@@ -86,12 +86,10 @@ func (o *Operation) getResponse(statusCode int) *Response {
 	return o.Responses.GetResponse(statusCode)
 }
 
-func (o *Operation) Parse(p *Path, config *dynamic.Config, reader dynamic.Reader) error {
+func (o *Operation) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if o == nil {
 		return nil
 	}
-
-	o.Path = p
 
 	if err := o.Parameters.Parse(config, reader); err != nil {
 		return err

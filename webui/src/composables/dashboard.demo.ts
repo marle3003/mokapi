@@ -90,6 +90,34 @@ export function useDemoDashboard() {
             return { operations, isLoading, close: () => {} }
         },
 
+        getKafkaTopic(serviceName: string, topicName: string) {
+            const topic = ref<KafkaTopic | null>(null)
+            const isLoading = ref<boolean>(true)
+
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                topic.value = db.data['service_' + serviceName + '_topic_' + topicName]
+                isLoading.value = db.isLoading
+            })
+            return { topic, isLoading, close: () => {} }
+        },
+
+        getKafkaGroup(serviceName: string, groupName: string) {
+            const group = ref<KafkaGroup | null>(null)
+            const isLoading = ref<boolean>(true)
+
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                group.value = db.data['service_' + serviceName + '_group_' + groupName]
+                isLoading.value = db.isLoading
+            })
+            return { group, isLoading, close: () => {} }
+        },
+
         getEvents(...labels: Label[]) {
             const events = ref<ServiceEvent[]>([])
             const isLoading = ref<boolean>(true)

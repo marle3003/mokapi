@@ -11,7 +11,7 @@ import (
 func TestMqtt_Metrics_Messages(t *testing.T) {
 	m := NewMqtt()
 	m.Messages.WithLabel("service_a", "topic_a").Add(1)
-	require.Equal(t, float64(1), m.Messages.Sum())
+	require.Equal(t, float64(1), m.Messages.Sum(metrics.NewQuery()))
 }
 
 func TestMqtt_LastMessage(t *testing.T) {

@@ -30,12 +30,12 @@ test('Visit MQTT overview', async ({ page }) => {
         const rows = table.locator('tbody tr');
         await expect(rows).toHaveCount(2);
         await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('home/livingroom/temperature');
-        await expect(await getCellByColumnName(table, 'Description', rows.nth(0))).toHaveText('Channel for messages FROM the sensor (Publish)');
+        await expect(await getCellByColumnName(table, 'Summary', rows.nth(0))).toHaveText('Channel for messages FROM the sensor (Publish)');
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).not.toBeEmpty();
         await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('1');
 
         await expect(await getCellByColumnName(table, 'Name', rows.nth(1))).toHaveText('sensors/{sensorId}/data');
-        await expect(await getCellByColumnName(table, 'Description', rows.nth(1))).toHaveText('');
+        await expect(await getCellByColumnName(table, 'Summary', rows.nth(1))).toHaveText('');
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(1))).not.toBeEmpty();
         await expect(await getCellByColumnName(table, 'Messages', rows.nth(1))).toHaveText('1');
 
@@ -44,7 +44,7 @@ test('Visit MQTT overview', async ({ page }) => {
             await topics.getByText('home/livingroom/temperature').click();
 
             await expect(page.getByLabel('Topic', { exact: true })).toHaveText('home/livingroom/temperature');
-            await expect(page.getByLabel('Description')).toHaveText('Channel for messages FROM the sensor (Publish)');
+            await expect(page.getByLabel('Summary')).toHaveText('Channel for messages FROM the sensor (Publish)');
             await expect(page.getByLabel('Type of API')).toHaveText('MQTT');
 
             const messages = page.getByRole('table', { name: 'Messages' });
@@ -100,7 +100,9 @@ test('Visit MQTT overview', async ({ page }) => {
             await topics.getByText('sensors/{sensorId}/data').click();
 
             await expect(page.getByLabel('Topic', { exact: true })).toHaveText('sensors/{sensorId}/data');
-            await expect(page.getByLabel('Description')).toHaveText('');
+            await expect(page.getByLabel('Title')).not.toBeVisible();
+            await expect(page.getByLabel('Summary')).not.toBeVisible();
+            await expect(page.getByLabel('Description')).not.toBeVisible();
             await expect(page.getByLabel('Type of API')).toHaveText('MQTT');
 
             const messages = page.getByRole('table', { name: 'Messages' });

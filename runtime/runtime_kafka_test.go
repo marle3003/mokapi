@@ -14,6 +14,7 @@ import (
 	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"net/url"
 	"strings"
@@ -119,7 +120,7 @@ func TestApp_AddKafka(t *testing.T) {
 
 				// wait for update monitor
 				time.Sleep(500 * time.Millisecond)
-				require.Equal(t, float64(1), m.Messages.Sum())
+				require.Equal(t, float64(1), m.Messages.Sum(metrics.NewQuery()))
 			},
 		},
 		{

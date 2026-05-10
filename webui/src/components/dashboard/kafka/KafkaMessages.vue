@@ -11,7 +11,7 @@ import { usePrettyText } from '@/composables/usePrettyText'
 
 const props = defineProps<{
     service?: KafkaService,
-    topicName?: string
+    topic?: KafkaTopic
     clientId?: string
 }>()
 
@@ -25,8 +25,8 @@ const labels = computed(() => {
     if (props.service) {
         result.push({name: 'name', value: props.service.name})
     }
-    if (props.topicName) {
-        result.push({name: 'topic', value: props.topicName})
+    if (props.topic?.name) {
+        result.push({name: 'topic', value: props.topic.name})
     }
     result.push({ name: 'type', value: 'message' })
     if (props.clientId){
@@ -55,7 +55,7 @@ const messages = computed(() => {
             continue
         }
 
-        if (props.service && !props.clientId && !props.topicName && !tags.value.includes('__all')) {
+        if (props.service && !props.clientId && !props.topic?.name && !tags.value.includes('__all')) {
             const topic = props.service.topics.find(t => t.name === event.traits['topic']);
             if (!topic) {
                 continue
@@ -206,39 +206,15 @@ function showMessage(event: ServiceEvent){
     }
 }
 
-function getTopic(event: ServiceEvent): KafkaTopic | undefined {
-    const topicName = event.traits["topic"]!
-
-    let service = props.service
-     if (!service) {
-        const { services } = dashboard.value.getServices('kafka', false);
-        for (const s of services.value) {
-            if (s.name === event.traits['name']) {
-                service = s as KafkaService
-            }
-        }
-    }
-
-    if (props.service) {
-        for (const topic of props.service.topics) {
-            if (topic.name === topicName) {
-                return topic
-            }
-        }
-    }
-   
-    return undefined
-}
 function getMessageConfig(event: ServiceEvent): KafkaMessage | undefined {
     const data = eventData(event)
-    const topic = getTopic(event)
-    if (!topic) {
+    if (!props.topic) {
         return undefined
     }
 
-    const keys = Object.keys(topic.messages)
+    const keys = Object.keys(props.topic.messages)
     if (keys.length === 1) {
-        return topic.messages[keys[0]!]
+        return props.topic.messages[keys[0]!]
     }
 
     const messageId = data?.messageId
@@ -248,9 +224,9 @@ function getMessageConfig(event: ServiceEvent): KafkaMessage | undefined {
         return
     }
 
-    for (const id in topic.messages){
+    for (const id in props.topic.messages){
         if (id === messageId) {
-            return topic.messages[id]
+            return props.topic.messages[id]
         }
     }
     return undefined
@@ -294,7 +270,7 @@ function formatHeaderValue(v: KafkaHeaderValue) {
     <table class="table dataTable selectable" aria-label="Recent Messages">
         <thead>
             <tr>
-                <th scope="col" class="text-left col-2" v-if="!topicName">Topic</th>
+                <th scope="col" class="text-left col-2" v-if="!topic">Topic</th>
                 <th scope="col" class="text-left col-2">Key</th>
                 <th scope="col" class="text-left col-4">Value</th>
                 <th scope="col" class="text-center col-2">Time</th>
@@ -303,7 +279,7 @@ function formatHeaderValue(v: KafkaHeaderValue) {
         </thead>
         <tbody>
             <tr v-for="msg in messages" :key="msg.id" @click.left="handleMessageClick(msg.event)" @mousedown.middle="goToMessage(msg.event, true)" :class="msg.deleted ? 'deleted': ''">
-                <td v-if="!topicName">{{ msg.event.traits["topic"] }}</td>
+                <td v-if="!topic">{{ msg.event.traits["topic"] }}</td>
                 <td class="key">
                     <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaMessage').value, params: { id: msg.id }}">
                         {{ msg.key }}

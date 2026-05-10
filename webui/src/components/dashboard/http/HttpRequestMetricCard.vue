@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { ref, watchEffect, onUnmounted } from 'vue'
-import { useMetrics } from '@/composables/metrics';
+import { computed, ref, watch } from 'vue'
 import { useDashboard } from '@/composables/dashboard';
 
 defineProps({
@@ -8,21 +7,53 @@ defineProps({
     onlyError: Boolean
 })
 
-const {sum} = useMetrics()
-const requests = ref(0)
-const errors = ref(0)
 const { dashboard } = useDashboard()
-const {services, close} = dashboard.value.getServices('http')
-watchEffect(() =>{
-    requests.value = 0
-    errors.value = 0
-    for (let service of services.value){
-        requests.value += sum(service.metrics, 'http_requests_total')
-        errors.value += sum(service.metrics, 'http_requests_errors_total')
+const services = ref<HttpService[] | null>(null)
+watch(
+    () => dashboard.value,
+    (db, _, onCleanup) => {
+        if (!db) {
+            return
+        }
+
+        const res = db.getServices('http')
+
+        const stop = watch(
+            () => res.services.value,
+            (v) => {
+                services.value = v as HttpService[]
+            },
+            { immediate: true }
+        )
+
+        onCleanup(() => {
+            stop();
+            res.close();
+        });
+    }, { immediate: true }
+)
+
+const requests = computed(() => {
+    if (!services.value) {
+        return 0
     }
+
+    let result = 0;
+    for (const service of services.value) {
+        result += service.metrics.http_requests_total || 0
+    }
+    return result;
 })
-onUnmounted(() => {
-    close()
+const errors = computed(() => {
+    if (!services.value) {
+        return 0
+    }
+
+    let result = 0;
+    for (const service of services.value) {
+        result += service.metrics.http_requests_errors_total || 0
+    }
+    return result;
 })
 </script>
 

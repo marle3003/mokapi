@@ -1,10 +1,10 @@
 import { on, sleep } from 'mokapi'
-import { clusters as kafkaClusters, events as kafkaEvents, configs as kafkaConfigs } from 'kafka.js'
+import { clusters as kafkaClusters, events as kafkaEvents, configs as kafkaConfigs } from 'kafka.ts'
 import { apps as httpServices, events as httpEvents, configs as httpConfigs } from 'services_http.js'
 import { services as mailServices, mailEvents, getMail, getAttachment } from 'mail.js'
 import { server as ldapServers, searches } from 'ldap.js'
 import { clusters as mqttClusters, events as mqttEvents } from 'mqtt.js'
-import { metrics } from 'metrics.js'
+import { metrics, sum, max } from 'metrics.ts'
 import { get, post, fetch } from 'mokapi/http'
 import { base64 } from 'mokapi/encoding';
 
@@ -36,7 +36,39 @@ export default async function() {
                 const name = request.path['name']
                 const service = httpServices.find(x => x.name === name)
                 if (service) {
-                    response.data = service
+                    response.data = {
+                        name: service.name,
+                        description: service.description,
+                        version: service.version,
+                        ...service.contact ? { contact: service.contact } : {},
+                        servers: service.servers,
+                        paths: service.paths.map(p => {
+                            return {
+                                path: p.path,
+                                ...p.summary ? { summary: p.summary } : {},
+                                ...p.description ? { description: p.description } : {},
+                                status: p.status,
+                                ...p.errors ? { errors: p.errors } : {},
+                                operations: p.operations.map(o => {
+                                    return {
+                                        method: o.method,
+                                        ...o.summary ? {summary: o.summary} : {},
+                                        ...o.description ? {description: o.description} : {},
+                                        ...o.operationId ? { operationId: o.operationId } : {},
+                                        deprecated: o.deprecated ?? false,
+                                        ...o.tags ? { tags: o.tags } : {},
+                                        status: o.status,
+                                        ...o.errors ? { errors: o.errors } : {},
+                                        metrics: {
+                                            http_requests_total: sum('http_requests_total', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path}, { name: 'method', value: o.method.toUpperCase() }),
+                                            http_requests_errors_total: sum('http_requests_errors_total', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path}, { name: 'method', value: o.method.toUpperCase() }),
+                                            http_request_timestamp: max('http_request_timestamp', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path}, { name: 'method', value: o.method.toUpperCase() })
+                                        }
+                                    }
+                                })
+                            }
+                        }),
+                    }
                 } else{
                     response.statusCode = 404
                 }
@@ -55,7 +87,14 @@ export default async function() {
                     if (!path || p.path === path) {
                         for (const o of p.operations) {
                             if (!method || o.method.toLowerCase() === method.toLowerCase()) {
-                                operations.push(o)
+                                operations.push({
+                                    ...o,
+                                    metrics: {
+                                        http_requests_total: sum('http_requests_total', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path}, { name: 'method', value: o.method.toUpperCase() }),
+                                        http_requests_errors_total: sum('http_requests_errors_total', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path}, { name: 'method', value: o.method.toUpperCase() }),
+                                        http_request_timestamp: max('http_request_timestamp', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path}, { name: 'method', value: o.method.toUpperCase() })
+                                    }
+                                })
                             }
                         }
                     }
@@ -64,7 +103,44 @@ export default async function() {
                 return
             }
             case 'serviceKafka':
-                response.data = kafkaClusters[0]
+                response.data = {
+                    name: kafkaClusters[0].name,
+                    description: kafkaClusters[0].description,
+                    version: kafkaClusters[0].version,
+                    contact: kafkaClusters[0].contact,
+                    servers: kafkaClusters[0].servers,
+                    topics: kafkaClusters[0].topics.map(x => {
+                        return {
+                            name: x.name,
+                            ...x.summary === undefined ? {} : { summary: x.summary },
+                            metrics: {
+                                kafka_messages_total: metrics.find(m => m.name === `kafka_messages_total{service="Kafka World",topic="${x.name}"}`).value,
+                                kafka_message_timestamp: metrics.find(m => m.name === `kafka_message_timestamp{service="Kafka World",topic="${x.name}"}`).value
+                            }
+                        }
+                    }),
+                    groups: kafkaClusters[0].groups.map(x => {
+                        return {
+                            name: x.name,
+                            generation: x.generation,
+                            state: x.state,
+                            protocol: x.protocol,
+                            members: x.members.length ?? 0,
+                            metrics: x.metrics
+                        }
+                    }),
+                    configs: kafkaClusters[0].configs.map(c => {
+                        return {
+                            id: c.id,
+                            url: c.url,
+                            provider: c.provider,
+                            time: c.time
+                        }
+                    })
+                }
+                return
+            case 'kafkaGroup':
+                response.data = kafkaClusters[0].groups.find(x => x.name === request.path['group'])
                 return
             case 'serviceMail':
                 response.data = mailServices[0]
@@ -76,7 +152,20 @@ export default async function() {
                 response.data = kafkaClusters[0].topics
                 return
             case 'kafkaTopic':
-                response.data = kafkaClusters[0].topics.find(x => x.name === request.path.topic)
+                const topic = kafkaClusters[0].topics.find(x => x.name === request.path.topic)
+                response.data = {
+                    ...topic,
+                    groups: kafkaClusters[0].groups.filter(g => g.topics.includes(topic.name)).map(x => {
+                        return {
+                            name: x.name,
+                            generation: x.generation,
+                            state: x.state,
+                            protocol: x.protocol,
+                            members: x.members.length ?? 0,
+                            metrics: x.metrics
+                        }
+                    }),
+                }
                 if (response.data === undefined) {
                     response.statusCode = 404
                 }
@@ -430,19 +519,60 @@ export default async function() {
 function getServices(type) {
     const services = []
     if (!type || type === 'http') {
-        services.push(...httpServices.map(x => getInfo(x, 'http')))
+        services.push(...httpServices.map(x => {
+            return {
+                ...getInfo(x, 'http'),
+                metrics: {
+                    http_requests_total: sum('http_requests_total', { name: 'service', value: x.name }),
+                    http_requests_errors_total: sum('http_requests_errors_total', { name: 'service', value: x.name }),
+                    http_request_timestamp: max('http_request_timestamp', { name: 'service', value: x.name })
+                }
+            }
+        }))
     }
     if (!type || type === 'kafka') {
-        services.push(...kafkaClusters.map(x => getInfo(x, 'kafka')))
+        services.push(...kafkaClusters.map(x => {
+            return {
+                ...getInfo(x, 'kafka'),
+                metrics: {
+                    kafka_messages_total: sum('kafka_messages_total', { name: 'service', value: x.name }),
+                    kafka_message_timestamp: max('kafka_message_timestamp', { name: 'service', value: x.name })
+                }
+            }
+        }))
     }
     if (!type || type === 'mail') {
-        services.push(...mailServices.map(x => getInfo(x, 'mail')))
+        services.push(...mailServices.map(x => {
+            return {
+                ...getInfo(x, 'mail'),
+                metrics: {
+                    mail_mails_total: sum('mail_mails_total', { name: 'service', value: x.name }),
+                    mail_mail_timestamp: max('mail_mail_timestamp', { name: 'service', value: x.name })
+                }
+            }
+        }))
     }
     if (!type || type === 'ldap') {
-        services.push(...ldapServers.map(x => getInfo(x, 'ldap')))
+        services.push(...ldapServers.map(x => {
+            return {
+                ...getInfo(x, 'ldap'),
+                metrics: {
+                    ldap_requests_total: sum('ldap_requests_total', { name: 'service', value: x.name }),
+                    ldap_request_timestamp: max('ldap_request_timestamp', { name: 'service', value: x.name })
+                }
+            }
+        }))
     }
     if (!type || type === 'mqtt') {
-        services.push(...mqttClusters.map(x => getInfo(x, 'mqtt')))
+        services.push(...mqttClusters.map(x => {
+            return {
+                ...getInfo(x, 'mqtt'),
+                metrics: {
+                    mqtt_messages_total: sum('mqtt_messages_total', { name: 'service', value: x.name }),
+                    mqtt_message_timestamp: max('mqtt_message_timestamp', { name: 'service', value: x.name })
+                }
+            }
+        }))
     }
 
     return services
@@ -552,7 +682,6 @@ function getInfo(config, type) {
         name: config.name,
         description: config.description,
         version: config.version,
-        metrics: config.metrics,
         type: type,
     }
     if (config.contact) {

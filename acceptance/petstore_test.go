@@ -55,78 +55,21 @@ func (suite *PetStoreSuite) TestApi() {
 
 	suite.T().Run("get AsyncAPI service", func(t *testing.T) {
 		expected := map[string]interface{}{
-			"version":     "1.0.0",
-			"name":        "A sample AsyncApi Kafka streaming api",
-			"description": "",
+			"version": "1.0.0",
+			"name":    "A sample AsyncApi Kafka streaming api",
 			"servers": []interface{}{
 				map[string]interface{}{
-					"host":        "127.0.0.1:19092",
-					"name":        "broker",
-					"protocol":    "kafka",
-					"title":       "",
-					"summary":     "",
-					"description": "",
+					"host":     "127.0.0.1:19092",
+					"name":     "broker",
+					"protocol": "kafka",
 				},
 			},
 
 			"topics": []interface{}{map[string]interface{}{
-				"bindings":    map[string]interface{}{"partitions": float64(2), "segmentMs": float64(30000), "valueSchemaValidation": true},
-				"description": "",
-				"messages": map[string]interface{}{
-					"order": map[string]interface{}{
-						"name":        "order",
-						"contentType": "application/json",
-						"header": map[string]interface{}{
-							"schema": map[string]interface{}{
-								"properties": map[string]interface{}{
-									"number": map[string]interface{}{
-										"type": "number",
-									}, "test": map[string]interface{}{
-										"type": "string",
-									},
-								}, "type": "object",
-							},
-						},
-						"key": map[string]interface{}{
-							"schema": map[string]interface{}{
-								"type": "string",
-							},
-						},
-						"payload": map[string]interface{}{
-							"schema": map[string]interface{}{
-								"properties": map[string]interface{}{
-									"accepted": map[string]interface{}{
-										"properties": map[string]interface{}{
-											"timestamp": map[string]interface{}{"format": "date-time", "type": "string"},
-										},
-										"type": "object",
-									},
-									"completed": map[string]interface{}{
-										"properties": map[string]interface{}{
-											"timestamp": map[string]interface{}{"format": "date-time", "type": "string"},
-										},
-										"type": "object",
-									},
-									"id": map[string]interface{}{"type": "integer"},
-									"placed": map[string]interface{}{
-										"properties": map[string]interface{}{
-											"petid":     map[string]interface{}{"type": "integer"},
-											"quantity":  map[string]interface{}{"format": "int32", "type": "integer"},
-											"ship-date": map[string]interface{}{"format": "date-time", "type": "string"},
-										},
-										"type": "object",
-									},
-								},
-								"required": []interface{}{"id"},
-								"type":     "object",
-							},
-						},
-					},
-				},
 				"name": "petstore.order-event",
-				"partitions": []interface{}{
-					map[string]interface{}{"id": float64(0), "offset": float64(1), "segments": float64(1), "startOffset": float64(0)},
-					map[string]interface{}{"id": float64(1), "offset": float64(0), "segments": float64(0), "startOffset": float64(0)},
+				"metrics": map[string]interface{}{
+					// skip timestamp check "kafka_message_timestamp"
+					"kafka_messages_total": float64(1),
 				},
 			}},
 		}

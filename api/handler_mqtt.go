@@ -6,21 +6,22 @@ import (
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"net/http"
+	"slices"
 	"sort"
 	"strings"
+
+	"github.com/gorilla/mux"
 )
 
 type mqttInfo struct {
-	Name        string           `json:"name"`
-	Description string           `json:"description"`
-	Version     string           `json:"version"`
-	Contact     *contact         `json:"contact,omitempty"`
-	Servers     []mqttServer     `json:"servers,omitempty"`
-	Topics      []mqttTopic      `json:"topics,omitempty"`
-	Groups      []group          `json:"groups,omitempty"`
-	Metrics     []metrics.Metric `json:"metrics,omitempty"`
-	Configs     []config         `json:"configs,omitempty"`
-	Clients     []mqttClient     `json:"clients,omitempty"`
+	Name        string       `json:"name"`
+	Description string       `json:"description,omitempty"`
+	Version     string       `json:"version"`
+	Contact     *contact     `json:"contact,omitempty"`
+	Servers     []mqttServer `json:"servers,omitempty"`
+	Topics      []mqttTopic  `json:"topics,omitempty"`
+	Configs     []config     `json:"configs,omitempty"`
+	Clients     []mqttClient `json:"clients,omitempty"`
 }
 
 type mqttServer struct {
@@ -36,10 +37,13 @@ type mqttServer struct {
 
 type mqttTopic struct {
 	Name        string                   `json:"name"`
-	Description string                   `json:"description"`
-	Messages    map[string]messageConfig `json:"messages"`
+	Title       string                   `json:"title,omitempty"`
+	Summary     string                   `json:"summary,omitempty"`
+	Description string                   `json:"description,omitempty"`
+	Messages    map[string]messageConfig `json:"messages,omitempty"`
 	Tags        []kafkaTag               `json:"tags,omitempty"`
 	Instances   []mqttTopicInstance      `json:"instances,omitempty"`
+	Metrics     mqttTopicMetrics         `json:"metrics,omitempty"`
 }
 
 type mqttTopicInstance struct {
@@ -54,20 +58,24 @@ type mqttClient struct {
 	ProtocolVersion byte   `json:"protocolVersion"`
 }
 
+type mqttTopicMetrics struct {
+	NumMessages     float64 `json:"mqtt_messages_total"`
+	LastMessageTime float64 `json:"mqtt_message_timestamp"`
+}
+
 func getMqttServices(store *runtime.MqttStore, m *monitor.Monitor) []service {
 	list := store.List()
 	result := make([]service, 0, len(list))
-	for _, hs := range list {
+	for _, mi := range list {
 		s := service{
-			Name:        hs.Info.Name,
-			Description: hs.Info.Description,
-			Version:     hs.Info.Version,
+			Name:        mi.Info.Name,
+			Description: mi.Info.Description,
+			Version:     mi.Info.Version,
 			Type:        ServiceMqtt,
-			Metrics:     m.FindAll(metrics.ByNamespace("mqtt"), metrics.ByLabel("service", hs.Info.Name)),
 		}
 
-		if hs.Info.Contact != nil {
-			c := hs.Info.Contact
+		if mi.Info.Contact != nil {
+			c := mi.Info.Contact
 			s.Contact = &contact{
 				Name:  c.Name,
 				Url:   c.Url,
@@ -75,83 +83,53 @@ func getMqttServices(store *runtime.MqttStore, m *monitor.Monitor) []service {
 			}
 		}
 
+		s.Metrics = mqttTopicMetrics{
+			NumMessages:     m.Mqtt.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name))),
+			LastMessageTime: m.Mqtt.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name))),
+		}
+
 		result = append(result, s)
 	}
 	return result
 }
 
-func (h *handler) handleMqtt(w http.ResponseWriter, r *http.Request) {
-	segments := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+func (h *handler) setupMqtt() {
+	r := h.router.PathPrefix("/api/services/mqtt").Subrouter()
 
-	switch {
-	// /api/services/mqtt
-	case len(segments) == 3:
-		w.Header().Set("Content-Type", "application/json")
-		writeJsonBody(w, getMqttClusters(h.app))
-		return
-	// /api/services/kafka/{cluster}
-	case len(segments) == 4:
-		name := segments[3]
-		if s := h.app.Mqtt.Get(name); s != nil {
-			m := getMqtt(s)
-			m.Metrics = h.app.Monitor.FindAll(metrics.ByNamespace("mqtt"), metrics.ByLabel("service", name))
-
-			w.Header().Set("Content-Type", "application/json")
-			writeJsonBody(w, m)
-		} else {
-			w.WriteHeader(http.StatusNotFound)
-		}
-		return
-	// /api/services/mqtt/{cluster}/topics
-	case len(segments) == 5 && segments[4] == "topics":
-		m := h.app.Mqtt.Get(segments[3])
-		if m == nil {
-			w.WriteHeader(http.StatusNotFound)
-		} else {
-			w.Header().Set("Content-Type", "application/json")
-			writeJsonBody(w, getMqttTopics(m))
-		}
-		return
-	}
+	r.HandleFunc("", h.getMqttClusters).Methods(http.MethodGet)
+	r.HandleFunc("/{cluster}", h.getMqttInfo).Methods(http.MethodGet)
+	r.HandleFunc("/{cluster}/topics", h.getMqttTopics).Methods(http.MethodGet)
 }
 
-func getMqttClusters(app *runtime.App) []cluster {
-	var clusters []cluster
-	for _, k := range app.Mqtt.List() {
-		var c *contact
-		if k.Info.Contact != nil {
-			c = &contact{
-				Name:  k.Info.Contact.Name,
-				Url:   k.Info.Contact.Url,
-				Email: k.Info.Contact.Email,
-			}
-		}
-		clusters = append(clusters, cluster{
-			Name:        k.Info.Name,
-			Description: k.Info.Description,
-			Contact:     c,
-			Version:     k.Info.Version,
-		})
-	}
-	return clusters
+func (h *handler) getMqttClusters(w http.ResponseWriter, _ *http.Request) {
+	services := getMqttServices(h.app.Mqtt, h.app.Monitor)
+	write(w, services)
 }
 
-func getMqtt(info *runtime.MqttInfo) mqttInfo {
+func (h *handler) getMqttInfo(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	mi := h.app.Mqtt.Get(vars["cluster"])
+	if mi == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
 	m := mqttInfo{
-		Name:        info.Config.Info.Name,
-		Description: info.Config.Info.Description,
-		Version:     info.Config.Info.Version,
+		Name:        mi.Config.Info.Name,
+		Description: mi.Config.Info.Description,
+		Version:     mi.Config.Info.Version,
 	}
 
-	if info.Config.Info.Contact != nil {
+	if mi.Config.Info.Contact != nil {
 		m.Contact = &contact{
-			Name:  info.Config.Info.Contact.Name,
-			Url:   info.Config.Info.Contact.Url,
-			Email: info.Config.Info.Contact.Email,
+			Name:  mi.Config.Info.Contact.Name,
+			Url:   mi.Config.Info.Contact.Url,
+			Email: mi.Config.Info.Contact.Email,
 		}
 	}
 
-	for it := info.Servers.Iter(); it.Next(); {
+	for it := mi.Servers.Iter(); it.Next(); {
 		name := it.Key()
 		s := it.Value()
 		if s == nil || s.Value == nil || strings.ToLower(s.Value.Protocol) != "mqtt" {
@@ -183,9 +161,9 @@ func getMqtt(info *runtime.MqttInfo) mqttInfo {
 		return strings.Compare(m.Servers[i].Name, m.Servers[j].Name) < 0
 	})
 
-	m.Topics = getMqttTopics(info)
+	m.Topics = getMqttTopics(mi, h.app.Monitor.Mqtt)
 
-	for _, client := range info.Store.Clients() {
+	for _, client := range mi.Store.Clients() {
 		c := mqttClient{
 			ClientId:        client.Id,
 			Address:         client.Addr(),
@@ -195,14 +173,26 @@ func getMqtt(info *runtime.MqttInfo) mqttInfo {
 		m.Clients = append(m.Clients, c)
 	}
 
-	m.Configs = getConfigs(info.Configs())
+	m.Configs = getConfigs(mi.Configs())
 
-	return m
+	write(w, m)
 }
 
-func getMqttTopics(info *runtime.MqttInfo) []mqttTopic {
-	topics := make([]mqttTopic, 0, len(info.Config.Channels))
-	for name, ch := range info.Config.Channels {
+func (h *handler) getMqttTopics(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	ki := h.app.Mqtt.Get(vars["cluster"])
+	if ki == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	write(w, getMqttTopics(ki, h.app.Monitor.Mqtt))
+}
+
+func getMqttTopics(mi *runtime.MqttInfo, m *monitor.Mqtt) []mqttTopic {
+	topics := make([]mqttTopic, 0, len(mi.Config.Channels))
+	for name, ch := range mi.Config.Channels {
 		if ch.Value == nil {
 			continue
 		}
@@ -214,9 +204,9 @@ func getMqttTopics(info *runtime.MqttInfo) []mqttTopic {
 			addr = ch.Value.Address
 		}
 
-		data := newMqttTopic(addr, ch.Value, info.Config)
+		data := newMqttTopic(addr, ch.Value, mi.Config)
 		if len(ch.Value.Parameters) > 0 {
-			for _, t := range info.Topics {
+			for _, t := range mi.Topics {
 				if err := ch.Value.IsNameValid(t.Name); err == nil {
 					params, _ := ch.Value.ExtractParams(t.Name)
 					data.Instances = append(data.Instances, mqttTopicInstance{
@@ -227,10 +217,15 @@ func getMqttTopics(info *runtime.MqttInfo) []mqttTopic {
 			}
 		}
 
+		data.Metrics = mqttTopicMetrics{
+			NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name))),
+			LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name))),
+		}
+
 		topics = append(topics, data)
 	}
-	sort.Slice(topics, func(i, j int) bool {
-		return strings.Compare(topics[i].Name, topics[j].Name) < 0
+	slices.SortFunc(topics, func(a, b mqttTopic) int {
+		return strings.Compare(a.Name, b.Name)
 	})
 	return topics
 }
@@ -238,6 +233,8 @@ func getMqttTopics(info *runtime.MqttInfo) []mqttTopic {
 func newMqttTopic(name string, ch *asyncapi3.Channel, cfg *asyncapi3.Config) mqttTopic {
 	result := mqttTopic{
 		Name:        name,
+		Title:       ch.Title,
+		Summary:     ch.Summary,
 		Description: ch.Description,
 		Messages:    getMessageConfigs(ch, cfg),
 	}
@@ -251,5 +248,6 @@ func newMqttTopic(name string, ch *asyncapi3.Channel, cfg *asyncapi3.Config) mqt
 			Description: tRef.Value.Description,
 		})
 	}
+
 	return result
 }

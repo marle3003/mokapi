@@ -7,7 +7,6 @@ import (
 	"io/fs"
 	"mokapi/config/static"
 	"mokapi/runtime"
-	"mokapi/runtime/metrics"
 	"mokapi/webui"
 	"net/http"
 	"net/url"
@@ -16,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -36,6 +36,7 @@ type handler struct {
 	healthHandler http.Handler
 	mcpPath       string
 	mcpHandler    http.Handler
+	router        *mux.Router
 }
 
 type info struct {
@@ -60,13 +61,13 @@ var (
 )
 
 type service struct {
-	Name        string           `json:"name"`
-	Description string           `json:"description,omitempty"`
-	Contact     *contact         `json:"contact,omitempty"`
-	Version     string           `json:"version,omitempty"`
-	Type        serviceType      `json:"type"`
-	Metrics     []metrics.Metric `json:"metrics,omitempty"`
-	Status      string           `json:"status,omitempty"`
+	Name        string      `json:"name"`
+	Description string      `json:"description,omitempty"`
+	Contact     *contact    `json:"contact,omitempty"`
+	Version     string      `json:"version,omitempty"`
+	Type        serviceType `json:"type"`
+	Status      string      `json:"status,omitempty"`
+	Metrics     any         `json:"metrics,omitempty"`
 }
 
 type contact struct {
@@ -85,6 +86,7 @@ func New(app *runtime.App, config static.Api) Handler {
 		path:   config.Path,
 		base:   config.Base,
 		app:    app,
+		router: mux.NewRouter(),
 	}
 
 	if config.Dashboard {
@@ -102,6 +104,10 @@ func New(app *runtime.App, config static.Api) Handler {
 
 		h.fileServer = http.FileServer(http.FS(dist))
 	}
+
+	h.setupHttp()
+	h.setupKafka()
+	h.setupMqtt()
 
 	return h
 }
@@ -146,12 +152,6 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getInfo(w, r)
 	case p == "/api/services":
 		h.getServices(w, r)
-	case strings.HasPrefix(p, "/api/services/http/"):
-		h.handleHttp(w, r)
-	case strings.HasPrefix(p, "/api/services/kafka"):
-		h.handleKafka(w, r)
-	case strings.HasPrefix(p, "/api/services/mqtt"):
-		h.handleMqtt(w, r)
 	case strings.HasPrefix(p, "/api/services/mail/"):
 		h.handleMailService(w, r)
 	case strings.HasPrefix(p, "/api/services/ldap/"):
@@ -178,6 +178,8 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.healthHandler.ServeHTTP(w, r)
 	case strings.HasPrefix(p, h.mcpPath) && h.mcpHandler != nil:
 		h.mcpHandler.ServeHTTP(w, r)
+	case strings.HasPrefix(p, "/api/"):
+		h.router.ServeHTTP(w, r)
 	case h.fileServer != nil:
 		if r.Method != "GET" {
 			http.Error(w, fmt.Sprintf("method %v is not allowed", r.Method), http.StatusMethodNotAllowed)
@@ -233,7 +235,7 @@ func (h *handler) getServices(w http.ResponseWriter, r *http.Request) {
 		services = append(services, getMqttServices(h.app.Mqtt, h.app.Monitor)...)
 	}
 	slices.SortFunc(services, func(a service, b service) int {
-		return compareService(a, b)
+		return strings.Compare(a.Name, b.Name)
 	})
 	w.Header().Set("Content-Type", "application/json")
 	writeJsonBody(w, services)
@@ -277,6 +279,11 @@ func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 	writeJsonBody(w, i)
 }
 
+func write(w http.ResponseWriter, data any) {
+	w.Header().Set("Content-Type", "application/json")
+	writeJsonBody(w, data)
+}
+
 func writeJsonBody(w http.ResponseWriter, v interface{}) {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
@@ -307,10 +314,6 @@ func isImage(path string) bool {
 	default:
 		return false
 	}
-}
-
-func compareService(a, b service) int {
-	return strings.Compare(a.Name, b.Name)
 }
 
 func getPageInfo(r *http.Request) (index int, limit int, err error) {

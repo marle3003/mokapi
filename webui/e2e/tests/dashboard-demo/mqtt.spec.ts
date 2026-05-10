@@ -35,7 +35,7 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
         await expect(rows).toHaveCount(1);
 
         await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('sensors/{sensorId}/data');
-        await expect(await getCellByColumnName(table, 'Description', rows.nth(0))).toHaveText('');
+        await expect(await getCellByColumnName(table, 'Summary', rows.nth(0))).toHaveText('');
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).not.toBeEmpty();
         await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('1');
 
@@ -44,7 +44,7 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
             await topics.getByText('sensors/{sensorId}/data').click();
 
             await expect(page.getByLabel('Topic', { exact: true })).toHaveText('sensors/{sensorId}/data');
-            await expect(page.getByLabel('Description')).toHaveText('');
+            await expect(page.getByLabel('Description')).not.toBeVisible();
             await expect(page.getByLabel('Type of API')).toHaveText('MQTT');
 
             const messages = page.getByRole('table', { name: 'Messages' });

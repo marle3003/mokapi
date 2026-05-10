@@ -3,7 +3,7 @@ import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useKafka } from '@/composables/kafka';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRoute, useRouter } from '@/router';
-import { computed, type Ref } from 'vue';
+import { computed, ref, watch, type Ref } from 'vue';
 import Message from '../../Message.vue';
 import { useMetrics } from '@/composables/metrics';
 
@@ -22,21 +22,30 @@ const serviceName = route.params.service!.toString();
 const groupName = route.params.group?.toString();
 const memberName = route.params.member?.toString();
 
-const result = dashboard.value.getService(serviceName, 'kafka');
-const service = result.service as Ref<KafkaService | null>
-const group = computed(() => {
-  if (!service.value) {
-    return null;
-  }
-  for (let group of service.value?.groups){
-    if (group.name == groupName) {
-      return group;
-    }
-  }
-  return null;
-})
+const group = ref<KafkaGroup | null>(null)
+watch(
+  () => dashboard.value,
+  (db, _, onCleanup) => {
+    const res = db.getKafkaGroup(serviceName, groupName)
+    
+    const stop = watch(
+      () => res.group.value,
+      (v) => {
+        group.value = v
+      },
+      { immediate: true }
+    )
+
+    onCleanup(() => {
+      stop();
+      res.close();
+    });
+  },
+  { immediate: true }
+);
+
 const member = computed(() => {
-  if (!service.value || !group.value) {
+  if (!group.value) {
     return null;
   }
   for (let member of group.value.members){
@@ -68,13 +77,6 @@ const partitions = computed(() => {
   })
   return result;
 })
-function partition(topicName: string, partition: number): KafkaPartition | undefined {
-  const topic = service.value?.topics.find(t => t.name === topicName);
-  if (!topic) {
-    return undefined;
-  }
-  return topic.partitions[partition];
-}
 function goToTopic(topicName: string, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
@@ -83,7 +85,7 @@ function goToTopic(topicName: string, openInNewTab = false){
     const to = {
         name: getRouteName('kafkaTopic').value,
         params: {
-          service: service.value?.name,
+          service: serviceName,
           group: groupName,
           topic: topicName,
         },
@@ -99,7 +101,7 @@ function goToTopic(topicName: string, openInNewTab = false){
 </script>
 
 <template>
- <div v-if="service && group && member">
+ <div v-if="group && member">
       <div class="card-group">
         <section class="card" aria-label="Info">
             <div class="card-body">
@@ -116,7 +118,7 @@ function goToTopic(topicName: string, openInNewTab = false){
                         <p>
                           <router-link :to="{
                               name: getRouteName('kafkaGroup').value,
-                              params: {service: service.name, group: groupName},
+                              params: {service: serviceName, group: groupName},
                           }" aria-labelledby="group">
                           {{ groupName }}
                         </router-link>
@@ -132,7 +134,7 @@ function goToTopic(topicName: string, openInNewTab = false){
                     <p aria-labelledby="address">
                       <router-link v-if="member.clientId" :to="{
                           name: getRouteName('kafkaClient').value,
-                          params: {service: service.name, clientId: member.clientId},
+                          params: {service: serviceName, clientId: member.clientId},
                         }" aria-labelledby="group">
                         {{ member.clientId }}
                       </router-link>
@@ -157,8 +159,6 @@ function goToTopic(topicName: string, openInNewTab = false){
                     <tr>
                       <th scope="col" class="text-left col-3">Topic</th>
                       <th scope="col" class="text-center col-1">Partition</th>
-                      <th scope="col" class="text-center col-1">Start Offset</th>
-                      <th scope="col" class="text-center col-1">Offset</th>
                       <th scope="col" class="text-center col-1">Committed</th>
                       <th scope="col" class="text-center col-1">Lag</th>
                     </tr>
@@ -166,18 +166,16 @@ function goToTopic(topicName: string, openInNewTab = false){
                 <tbody>
                   <tr v-for="p in partitions" :key="member.name" @click.left="goToTopic(p.topic)" @mousedown.middle="goToTopic(p.topic, true)">
                     <td>
-                        <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaTopic').value, params: { service: service.name, topic: p.topic }, hash: '#tab-partitions'}">
+                        <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaTopic').value, params: { service: serviceName, topic: p.topic }, hash: '#tab-partitions'}">
                             {{ p.topic }}
                         </router-link>
                     </td>
                     <td class="text-center">{{ p.index }}</td>
-                    <td class="text-center">{{ partition(p.topic, p.index)?.startOffset ?? '-' }}</td>
-                    <td class="text-center">{{ partition(p.topic, p.index)?.offset ?? '-' }}</td>
                     <td class="text-center">
-                      {{ value(service.metrics, 'kafka_consumer_group_commit', { name: 'topic', value: p.topic }, { name: 'partition', value: p.index.toString() }, { name: 'group', value: group.name }) }}
+                      {{ group.metrics.topics[p.topic].find(t => t.partition == p.index)?.kafka_consumer_group_commit ?? '-' }}
                     </td>
                     <td class="text-center">
-                      {{ sum(service.metrics, 'kafka_consumer_group_lag', { name: 'topic', value: p.topic }, { name: 'partition', value: p.index.toString() }, { name: 'group', value: group.name }) }}
+                      {{ group.metrics.topics[p.topic].find(t => t.partition == p.index)?.kafka_consumer_group_lag }}
                     </td>
                   </tr>
                 </tbody>
@@ -187,7 +185,7 @@ function goToTopic(topicName: string, openInNewTab = false){
         </section>
       </div>
   </div>
-  <div v-if="!result.isLoading && !member">
+  <div v-if="group && !member">
     <Message :message="`Kafka group member ${memberName} not found`"></message>
   </div>
 </template>

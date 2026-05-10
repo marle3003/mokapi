@@ -4,7 +4,7 @@ declare interface Service {
     version: string
     contact: Contact | null
     type: string
-    metrics: Metric[]
+    metrics: Record<string, any>
     configs: Config[]
     status?: string
 }

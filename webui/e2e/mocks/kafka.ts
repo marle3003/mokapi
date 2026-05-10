@@ -1,4 +1,4 @@
-import { metrics } from 'metrics.js'
+import { metrics, filter as filterMetrics, parseLabels } from './metrics.ts'
 import { base64 } from 'mokapi/encoding';
 
 const Product = {
@@ -103,7 +103,7 @@ export let clusters = [
         topics: [
             {
                 name: 'mokapi.shop.products',
-                description: 'Though literature second anywhere fortnightly am this either so me.',
+                summary: 'Though literature second anywhere fortnightly am this either so me.',
                 partitions: [
                     {
                         id: 0,
@@ -150,7 +150,7 @@ export let clusters = [
             },
             {
                 name: 'mokapi.shop.userSignedUp',
-                description: 'This channel contains a message per each user who signs up in our application.',
+                summary: 'This channel contains a message per each user who signs up in our application.',
                 partitions: [
                     {
                         id: 0,
@@ -209,6 +209,7 @@ export let clusters = [
         groups: [
             {
                 name: 'foo',
+                generation: 0,
                 members:[
                     {
                         name: 'julie',
@@ -227,14 +228,35 @@ export let clusters = [
                         partitions: { 'mokapi.shop.products': [ 2 ], 'mokapi.shop.userSignedUp': [ ] }
                     }
                 ],
-                coordinator: 'localhost:9092',
                 leader: 'julie',
                 state: 'Stable',
                 protocol: 'Range',
                 topics: [ 'mokapi.shop.products', 'mokapi.shop.userSignedUp' ],
+                metrics: {
+                    kafka_rebalance_timestamp:  metrics.find(m => m.name === `kafka_rebalance_timestamp{service="Kafka World",group="foo"}`)?.value || 0,
+                    topics: {
+                        'mokapi.shop.products': filterMetrics('kafka_consumer_group_commit', {name: 'group', value: 'foo'}, { name: 'topic', value: 'mokapi.shop.products'}).map(m => {
+                            const labels = parseLabels(m)
+                            return { 
+                                partition: labels.partition,
+                                kafka_consumer_group_lag: metrics.find(x => x.name === `kafka_consumer_group_lag{service="Kafka World",group="foo",topic="mokapi.shop.products",partition="${labels.partition}"}`)?.value || 0,
+                                kafka_consumer_group_commit: m.value
+                            }
+                        }),
+                        'mokapi.shop.userSignedUp': filterMetrics('kafka_consumer_group_commit', {name: 'group', value: 'foo'}, { name: 'topic', value: 'mokapi.shop.userSignedUp'}).map(m => {
+                            const labels = parseLabels(m)
+                            return { 
+                                partition: labels.partition,
+                                kafka_consumer_group_lag: metrics.find(x => x.name === `kafka_consumer_group_lag{service="Kafka World",group="foo",topic="mokapi.shop.userSignedUp",partition="${labels.partition}"}`)?.value || 0,
+                                kafka_consumer_group_commit: m.value
+                            }
+                        })
+                    }
+                }
             },
             {
                 name: 'bar',
+                generation: 0,
                 members: [
                     {
                         name: 'george',
@@ -245,11 +267,23 @@ export let clusters = [
                         partitions: { 'mokapi.shop.userSignedUp': [ 0 ] }
                     }
                 ],
-                coordinator: 'localhost:9092',
                 leader: 'george',
                 state: 'Stable',
                 protocol: 'Range',
                 topics: [ 'mokapi.shop.userSignedUp' ],
+                metrics: {
+                    kafka_rebalance_timestamp:  metrics.find(m => m.name === `kafka_rebalance_timestamp{service="Kafka World",group="mokapi.shop.userSignedUp"}`)?.value || 0,
+                    topics: {
+                        'mokapi.shop.userSignedUp': filterMetrics('kafka_consumer_group_commit', {name: 'group', value: 'bar'}, { name: 'topic', value: 'mokapi.shop.userSignedUp'}).map(m => {
+                            const labels = parseLabels(m)
+                            return { 
+                                partition: labels.partition,
+                                kafka_consumer_group_lag: metrics.find(x => x.name === `kafka_consumer_group_lag{service="Kafka World",group="foo",topic="mokapi.shop.userSignedUp",partition="${labels.partition}"}`)?.value || 0,
+                                kafka_consumer_group_commit: m.value
+                            }
+                        })
+                    }
+                }
             },
         ],
         metrics: metrics.filter(x => x.name.includes("kafka")),

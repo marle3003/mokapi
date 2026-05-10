@@ -1,13 +1,9 @@
-import { metrics } from "./metrics.js"
-import { SearchScope, ResultCode } from "mokapi/ldap"
-
 export let server = [
     {
         name: "LDAP Testserver",
         description: "This is a sample LDAP server",
         version: "1.0",
         server: "0.0.0.0:389",
-        metrics: metrics.filter(x => x.name.startsWith("ldap"))
     }
 ]
 

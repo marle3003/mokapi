@@ -16,19 +16,25 @@ type ldapInfo struct {
 	Configs     []config `json:"configs,omitempty"`
 }
 
+type ldapMetrics struct {
+	NumRequests float64 `json:"ldap_requests_total"`
+	LastRequest float64 `json:"ldap_request_timestamp"`
+}
+
 func getLdapServices(store *runtime.LdapStore, m *monitor.Monitor) []service {
 	list := store.List()
 	result := make([]service, 0, len(list))
-	for _, hs := range list {
+	for _, li := range list {
 		s := service{
-			Name:        hs.Info.Name,
-			Description: hs.Info.Description,
-			Version:     hs.Info.Version,
+			Name:        li.Info.Name,
+			Description: li.Info.Description,
+			Version:     li.Info.Version,
 			Type:        ServiceLdap,
 		}
 
-		if m != nil {
-			s.Metrics = m.FindAll(metrics.ByNamespace("ldap"), metrics.ByLabel("service", hs.Info.Name))
+		s.Metrics = ldapMetrics{
+			NumRequests: m.Ldap.RequestCounter.Sum(metrics.NewQuery(metrics.ByLabel("service", li.Info.Name))),
+			LastRequest: m.Ldap.LastRequest.Max(metrics.NewQuery(metrics.ByLabel("service", li.Info.Name))),
 		}
 
 		result = append(result, s)

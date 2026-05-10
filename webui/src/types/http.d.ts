@@ -22,6 +22,11 @@ declare interface HttpOperationInfo {
     tags: string[]
     status: string
     errors?: Error[]
+    metrics: {
+        http_requests_total: number
+        http_requests_errors_total: number
+        http_request_timestamp: number
+    }
 }
 
 declare interface HttpOperation {

@@ -30,7 +30,7 @@ components:
           type: string
           enum: ["http", "kafka", "mail", "ldap", "mqtt"]
         metrics:
-          $ref: '#/components/schemas/Metrics'
+          type: object
         status:
           type: string
     Contact:
@@ -116,3 +116,33 @@ components:
       properties:
         message:
           type: string
+    ConfigInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        provider:
+          type: string
+        time:
+          type: string
+    Config:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        provider:
+          type: string
+        time:
+          type: string
+        refs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConfigInfo'
+        tags:
+          type: array
+          items:
+            type: string

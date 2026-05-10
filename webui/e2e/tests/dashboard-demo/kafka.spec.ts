@@ -44,7 +44,7 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
         const rows = table.locator('tbody tr');
         await expect(rows).toHaveCount(2);
         await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('order-topic');
-        await expect(await getCellByColumnName(table, 'Description', rows.nth(0))).toHaveText('The Kafka topic for order events.');
+        await expect(await getCellByColumnName(table, 'Summary', rows.nth(0))).toHaveText('The Kafka topic for order events.');
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).not.toHaveText('-');
         await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('2');
 
@@ -153,7 +153,7 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
         await expect(info.getByLabel('Topic', { exact: true })).toHaveText('order-topic');
         await expect(info.getByLabel('Cluster')).toHaveText('Kafka Order Service API');
         await expect(info.getByLabel('Cluster')).toHaveAttribute('href');
-        await expect(info.getByLabel('Description')).toHaveText('The Kafka topic for order events.');
+        await expect(info.getByLabel('Summary')).toHaveText('The Kafka topic for order events.');
 
         await expect(info.getByLabel('Type of API')).toHaveText('Kafka');
 
@@ -171,7 +171,7 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
             await expect(meta.getByLabel('Client')).toHaveText('producer-1');
         
             const value = page.getByRole('region', { name: 'Value' });
-            await expect(value.getByLabel('Content Type')).toHaveText('application/json');
+            await expect(value.getByLabel('Content Type', { exact: true })).toHaveText('application/json');
             await expect(value.getByLabel('Lines of Code')).toHaveText('8 lines');
             await expect(value.getByLabel('Size of Code')).toHaveText('249 B');
             await expect(value.getByLabel('Content', { exact: true })).toContainText('"orderId": "a914817b-c5f0-433e-8280-1cd2fe44234e",')

@@ -31,7 +31,33 @@ const { events: data, close } = dashboard.value.getEvents(...labels.value)
 const { format, duration } = usePrettyDates()
 const { formatStatusCode } = usePrettyHttp()
 const { adaptiveTruncate } = usePrettyText()
-const { services, close: closeServices } = dashboard.value.getServices('http', true);
+
+const services = ref<HttpService[] | null>(null)
+watch(
+  () => dashboard.value,
+  (db, _, onCleanup) => {
+    if (props.serviceName) {
+        return
+    }
+
+    const res = db.getServices('http', false)
+    
+    const stop = watch(
+      () => res.services.value,
+      (v) => {
+        services.value = v as HttpService[]
+      },
+      { immediate: true }
+    )
+
+    onCleanup(() => {
+      stop();
+      res.close();
+    });
+  },
+  { immediate: true }
+);
+
 const dialogRef = useTemplateRef('dialogRef')
 let dialog: Modal | undefined;
 const urlValue = useTemplateRef<ComponentPublicInstance<typeof RegexInput>>('urlValue');
@@ -288,6 +314,10 @@ const hasDeprecatedRequests = computed(() => {
 
 const service = computed({
     get: function() {
+        if (!services.value) {
+            return ''
+        }
+
         if (filter.service.state === 'Single') {
             if (filter.service.value?.length === 0) {
                 const items = services.value
@@ -337,7 +367,6 @@ const method = computed({
 
 onUnmounted(() => {
     close()
-    closeServices()
     observer.disconnect()
 })
 function showDialog() {

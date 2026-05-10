@@ -339,6 +339,8 @@ paths:
             application/json:
               schema:
                 $ref: 'kafka.yml#/components/schemas/Kafka'
+  /api/services/kafka/{cluster}/groups/{group}:
+    $ref: './kafka.yml#/components/pathItems/Group'
   /api/events:
     get:
       summary: list of events

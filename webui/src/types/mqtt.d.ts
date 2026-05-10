@@ -22,10 +22,16 @@ declare interface MqttTag {
 
 declare interface MqttTopic {
   name: string;
+  title: string
+  summary: string;
   description: string;
   messages: { [messageId: string]: MqttMessage }
   tags: MqttTag[]
   instances: MqttTopicInstance[]
+  metrics: {
+    mqtt_messages_total: number
+    mqtt_message_timestamp: number
+  }
 }
 
 declare interface MqttTopicInstance {

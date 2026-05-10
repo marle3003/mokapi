@@ -116,26 +116,32 @@ type attachment struct {
 	ContentId   string `json:"contentId,omitempty"`
 }
 
+type mailMetrics struct {
+	NumMails float64 `json:"mail_mails_total"`
+	LastMail float64 `json:"mail_mail_timestamp"`
+}
+
 func getMailServices(store *runtime.MailStore, m *monitor.Monitor) []service {
 	list := store.List()
 	result := make([]service, 0, len(list))
-	for _, hs := range list {
+	for _, mi := range list {
 		s := service{
-			Name:        hs.Info.Name,
-			Description: hs.Info.Description,
+			Name:        mi.Info.Name,
+			Description: mi.Info.Description,
 			Type:        ServiceMail,
-			Version:     hs.Info.Version,
+			Version:     mi.Info.Version,
 		}
-		if hs.Info.Contact != nil {
+		if mi.Info.Contact != nil {
 			s.Contact = &contact{
-				Name:  hs.Info.Contact.Name,
-				Url:   hs.Info.Contact.Url,
-				Email: hs.Info.Contact.Email,
+				Name:  mi.Info.Contact.Name,
+				Url:   mi.Info.Contact.Url,
+				Email: mi.Info.Contact.Email,
 			}
 		}
 
-		if m != nil {
-			s.Metrics = m.FindAll(metrics.ByNamespace("mail"), metrics.ByLabel("service", hs.Info.Name))
+		s.Metrics = mailMetrics{
+			NumMails: m.Mail.Mails.Sum(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name))),
+			LastMail: m.Mail.LastMail.Max(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name))),
 		}
 
 		result = append(result, s)

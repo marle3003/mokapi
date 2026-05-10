@@ -52,7 +52,7 @@ function showWarningColumn(){
     return false
 }
 function lastRequest(op: HttpOperationInfo){
-    const n = sum(props.service.metrics, 'http_request_timestamp', { name: 'endpoint', value: props.path.path }, { name: 'method', value: op.method.toUpperCase() })
+    const n = op.metrics.http_request_timestamp
     if (n == 0){
         return '-'
     }
@@ -60,11 +60,11 @@ function lastRequest(op: HttpOperationInfo){
 }
 
 function requests(op: HttpOperationInfo){
-    return sum(props.service.metrics, 'http_requests_total', { name: 'endpoint', value: props.path.path }, { name: 'method', value: op.method.toUpperCase() })
+    return op.metrics.http_requests_total
 }
 
 function errors(op: HttpOperationInfo){
-    return sum(props.service.metrics, 'http_requests_errors_total', { name: 'endpoint', value: props.path.path }, { name: 'method', value: op.method.toUpperCase() })
+    return op.metrics.http_requests_errors_total
 }
 function operationCssClass(operation: HttpOperationInfo): string {
     if (operation.status === 'valid') {

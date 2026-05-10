@@ -179,14 +179,39 @@ func BodyMatch(regexp string) ResponseCondition {
 
 func BodyContainsData(expected map[string]interface{}) ResponseCondition {
 	return func(t *testing.T, tr *TestResponse) {
+		var test func(expected, actual any)
+		test = func(expected any, actual any) {
+			if actual == nil {
+				assert.Fail(t, "expected a non-nil actual")
+				return
+			}
+			switch e := expected.(type) {
+			case map[string]any:
+				assert.IsType(t, e, actual)
+				m := actual.(map[string]any)
+				for k, v := range e {
+					assert.Contains(t, m, k)
+					if _, ok := m[k]; !ok {
+						continue
+					}
+					test(v, m[k])
+				}
+			case []any:
+				assert.IsType(t, e, actual)
+				assert.Len(t, actual, len(e))
+				for i, v := range e {
+					test(v, actual.([]any)[i])
+				}
+			default:
+				assert.Equal(t, expected, actual)
+			}
+		}
+
 		body := tr.GetBody()
 		var actual map[string]interface{}
 		err := json.Unmarshal(body, &actual)
 		assert.NoError(t, err)
-		for k, v := range expected {
-			assert.Contains(t, actual, k)
-			assert.Equal(t, v, actual[k])
-		}
+		test(expected, actual)
 	}
 }
 

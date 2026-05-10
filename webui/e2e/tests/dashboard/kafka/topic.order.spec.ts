@@ -28,7 +28,15 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
         await expect(info.getByLabel('Topic')).toHaveText(topic.name)
         await expect(info.getByLabel('Cluster')).toHaveText(cluster.name)
         await expect(info.getByLabel('Type of API')).toHaveText('Kafka')
-        await expect(info.getByLabel('Description')).toHaveText(topic.description)
+        if (topic.title) {
+            await expect(info.getByLabel('Title')).toHaveText(topic.title)
+        }
+        if (topic.summary) {
+            await expect(info.getByLabel('Summary')).toHaveText(topic.summary)
+        }
+        if (topic.description) {
+            await expect(info.getByLabel('Description')).toHaveText(topic.description)
+        }
     })
 
     await useKafkaMessages(page).test(page.getByRole('table', { name: 'Recent Messages' }), false)

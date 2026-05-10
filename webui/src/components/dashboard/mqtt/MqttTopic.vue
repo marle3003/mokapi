@@ -80,7 +80,15 @@ watch(() => route.hash, (hash) => {
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col">
+                    <div class="col" v-if="topic.title">
+                        <p id="title" class="label">Title</p>
+                        <div aria-labelledby="title">{{ topic.title }}</div>
+                    </div>
+                    <div class="col" v-if="topic.summary">
+                        <p id="summary" class="label">Summary</p>
+                        <div aria-labelledby="summary">{{ topic.summary }}</div>
+                    </div>
+                    <div class="col" v-if="topic.description">
                         <p id="description" class="label">Description</p>
                         <div v-html="useMarkdown(topic.description).content" aria-labelledby="description"></div>
                     </div>

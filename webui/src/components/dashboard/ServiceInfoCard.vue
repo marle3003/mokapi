@@ -51,7 +51,7 @@ const description = computed(() => useMarkdown(props.service.description).conten
                         <div aria-labelledby="description" v-html="description"></div>
                     </div>
                 </div>
-                <div class="row" v-if="status !== 'valid'">
+                <div class="row" v-if="status && status !== 'valid'">
                     <div class="col">
                         <p id="status" class="label">Status</p>
                         <div aria-labelledby="status" class="status">{{ status }}</div>

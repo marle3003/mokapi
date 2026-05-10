@@ -1,70 +1,100 @@
 components:
   schemas:
     HttpInfo:
-      allOf:
-        - $ref: 'common.yml#/components/schemas/Service'
-        - type: object
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        version:
+          type: string
+        contact:
+          type: object
           properties:
-            servers:
-              type: array
-              items:
-                type: object
-                properties:
-                  url:
-                    type: string
-                  description:
-                    type: string
-            tags:
-              type: array
-              items:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  summary:
-                    type: string
-                  description:
-                    type: string
-                  parent:
-                    type: string
-                  kind:
-                    type: string
-            paths:
-              type: array
-              items:
-                type: object
-                properties:
-                  path:
-                    type: string
-                  summary:
-                    type: string
-                  description:
-                    type: string
-                  operations:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        method:
-                          type: string
-                        summary:
-                          type: string
-                        description:
-                          type: string
-                        operationId:
-                          type: string
-                        deprecated:
-                          type: boolean
-                        tags:
-                          type: array
-                          items:
-                            type: string
-                        status:
-                          type: string
-                        errors:
-                          type: array
-                          items:
-                            $ref: 'common.yml#/components/schemas/Error'
+            name:
+              type: string
+            url:
+              type: string
+              format: uri
+            email:
+              type: string
+              format: email
+        servers:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+              description:
+                type: string
+        tags:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              summary:
+                type: string
+              description:
+                type: string
+              parent:
+                type: string
+              kind:
+                type: string
+        paths:
+          type: array
+          items:
+            type: object
+            properties:
+              path:
+                type: string
+              summary:
+                type: string
+              description:
+                type: string
+              status:
+                type: string
+              errors:
+                type: array
+                items:
+                  $ref: 'common.yml#/components/schemas/Error'
+              operations:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    method:
+                      type: string
+                    summary:
+                      type: string
+                    description:
+                      type: string
+                    operationId:
+                      type: string
+                    deprecated:
+                      type: boolean
+                    tags:
+                      type: array
+                      items:
+                        type: string
+                    status:
+                      type: string
+                    errors:
+                      type: array
+                      items:
+                        $ref: 'common.yml#/components/schemas/Error'
+                metrics:
+                  type: object
+                  properties:
+                    http_requests_total:
+                      type: integer
+                    http_requests_errors_total:
+                      type: integer
+                    request_timestamp:
+                      type: integer
     Operation:
       type: object
       properties:

@@ -16,6 +16,7 @@ import (
 	opSchema "mokapi/providers/openapi/schema"
 	opSchematest "mokapi/providers/openapi/schema/schematest"
 	"mokapi/runtime"
+	"mokapi/runtime/metrics"
 	"mokapi/schema/json/generator"
 	"mokapi/schema/json/schema/schematest"
 	"net/url"
@@ -329,7 +330,7 @@ func TestKafkaClient(t *testing.T) {
 				require.Equal(t, "key2", kafka.BytesToString(b.Records[1].Key))
 				require.Equal(t, `"bar"`, kafka.BytesToString(b.Records[1].Value))
 
-				require.Equal(t, float64(2), app.Monitor.Kafka.Messages.Sum())
+				require.Equal(t, float64(2), app.Monitor.Kafka.Messages.Sum(metrics.NewQuery()))
 			},
 		},
 		{

@@ -11,6 +11,7 @@ import (
 	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"net/http"
 	"net/http/httptest"
@@ -63,7 +64,7 @@ func TestApp_AddHttp(t *testing.T) {
 				err := h.ServeHTTP(rr, r)
 				require.Nil(t, err)
 
-				require.Equal(t, float64(1), m.RequestCounter.Sum())
+				require.Equal(t, float64(1), m.RequestCounter.Sum(metrics.NewQuery()))
 			},
 		},
 		{

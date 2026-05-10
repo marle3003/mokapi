@@ -1,27 +1,21 @@
 <script setup lang="ts">
-import { useMetrics } from '@/composables/metrics'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { useRouter } from 'vue-router'
 import { onUnmounted } from 'vue'
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useMarkdown } from '@/composables/markdown'
 
-const { sum, max } = useMetrics()
 const { format } = usePrettyDates()
 const router = useRouter()
 const { dashboard } = useDashboard();
 const { services, close } = dashboard.value.getServices('kafka');
 
 function lastMessage(service: Service){
-    const n = max(service.metrics, 'kafka_message_timestamp')
+    const n = service.metrics.kafka_message_timestamp
     if (n == 0){
         return '-'
     }
     return format(n)
-}
-
-function messages(service: Service){
-    return sum(service.metrics, 'kafka_messages_total')
 }
 
 function goToService(service: Service, openInNewTab = false){
@@ -68,7 +62,7 @@ onUnmounted(() => {
                         </td>
                         <td><div v-html="useMarkdown(service.description).content" class="table-markdown"></div></td>
                         <td class="text-center">{{ lastMessage(service) }}</td>
-                        <td class="text-center">{{ messages(service) }}</td>
+                        <td class="text-center">{{ service.metrics.kafka_messages_total }}</td>
                     </tr>
                 </tbody>
             </table>

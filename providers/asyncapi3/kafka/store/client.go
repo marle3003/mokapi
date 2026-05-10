@@ -23,6 +23,7 @@ import (
 
 var TopicNotFound = errors.New("topic not found")
 var PartitionNotFound = errors.New("partition not found")
+var OffsetOutOfRange = errors.New("offset out of range")
 
 type Record struct {
 	Offset         int64          `json:"offset"`
@@ -210,6 +211,73 @@ func (c *Client) Read(topic string, partition int, offset int64, ct *media.Conte
 	}
 
 	return records, nil
+}
+
+func (c *Client) Offset(topic string, partition int, offset int64, ct *media.ContentType) (Record, error) {
+	t := c.store.Topic(topic)
+	if t == nil {
+		return Record{}, TopicNotFound
+	}
+	p := t.Partition(partition)
+	if p == nil {
+		return Record{}, PartitionNotFound
+	}
+
+	if offset < 0 {
+		offset = p.Head
+	}
+
+	s := p.GetSegment(offset)
+	if s == nil {
+		return Record{}, OffsetOutOfRange
+	}
+
+	r := s.Record(offset)
+	if r == nil {
+		return Record{}, OffsetOutOfRange
+	}
+
+	var getValue func(value []byte) (any, error)
+	switch {
+	case ct.Key() == "application/vnd.mokapi.kafka.binary+json":
+		getValue = func(value []byte) (any, error) {
+			return base64.StdEncoding.EncodeToString(value), nil
+		}
+	case ct.Key() == "application/json":
+		getValue = func(value []byte) (any, error) {
+			var val any
+			err := json.Unmarshal(value, &val)
+			if err != nil {
+				return nil, fmt.Errorf("parse record value as JSON failed: %v", err)
+			}
+			return val, nil
+		}
+	default:
+		getValue = func(value []byte) (any, error) {
+			return string(value), nil
+		}
+	}
+
+	key := string(kafka.Read(r.Key))
+	val, err := getValue(kafka.Read(r.Value))
+	if err != nil {
+		return Record{}, err
+	}
+
+	rec := Record{
+		Offset:    r.Offset,
+		Partition: p.Index,
+		Key:       key,
+		Value:     val,
+	}
+
+	for _, h := range r.Headers {
+		rec.Headers = append(rec.Headers, RecordHeader{
+			Name:  h.Key,
+			Value: string(h.Value),
+		})
+	}
+	return rec, nil
 }
 
 func (c *Client) getPartition(t *Topic, id int) (*Partition, error) {

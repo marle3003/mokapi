@@ -11,13 +11,13 @@ import (
 func TestHttp_Metrics_Request_Total(t *testing.T) {
 	h := NewHttp()
 	h.RequestCounter.WithLabel("service_a", "endpoint_a", "post").Add(1)
-	require.Equal(t, float64(1), h.RequestCounter.Sum())
+	require.Equal(t, float64(1), h.RequestCounter.Sum(metrics.NewQuery()))
 }
 
 func TestHttp_Metrics_Request_Errors_Total(t *testing.T) {
 	h := NewHttp()
 	h.RequestErrorCounter.WithLabel("service_a", "endpoint_a", "put").Add(1)
-	require.Equal(t, float64(1), h.RequestErrorCounter.Sum())
+	require.Equal(t, float64(1), h.RequestErrorCounter.Sum(metrics.NewQuery()))
 }
 
 func TestHttp_Metrics_LastRequest(t *testing.T) {

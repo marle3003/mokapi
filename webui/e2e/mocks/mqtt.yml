@@ -1,14 +1,26 @@
 components:
   schemas:
     MqttInfo:
-      allOf:
-        - $ref: 'common.yml#/components/schemas/Service'
-        - type: object
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        version:
+          type: string
+        contact:
+          type: object
           properties:
-            topics:
-              type: array
-              items:
-                type: string
+            name:
+              type: string
+            url:
+              type: string
+              format: uri
+            email:
+              type: string
+              format: email
+
     Mqtt:
       type: object
       properties:
