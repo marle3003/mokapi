@@ -330,7 +330,7 @@ lastMessage
 					context.Background(),
 					mcp.RunInput{
 						Code: `const t = mokapi.getApi('foo').getTopic('channel-1')
-t.produce(0, '{"foo":"bar"}', 'foo');
+t.produce(0, {foo: 'bar'}, 'foo');
 t`,
 					},
 				)
@@ -339,6 +339,65 @@ t`,
 				topic := r.Result.(mcp.Topic)
 				require.Len(t, topic.Partitions, 1)
 				require.Equal(t, int64(1), topic.Partitions[0].Offset)
+			},
+		},
+		{
+			name: "produce into topic but invalid message",
+			app: func() *runtime.App {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithMessageName("msg-name-1"),
+					asyncapi3test.WithMessageTitle("msg-title-1"),
+					asyncapi3test.WithMessageSummary("msg-summary-1"),
+					asyncapi3test.WithMessageDescription("msg-description-1"),
+					asyncapi3test.WithContentType("application/json"),
+					asyncapi3test.WithPayload(
+						schematest.New("object",
+							schematest.WithProperty("foo", schematest.New("string")),
+						),
+					),
+				)
+
+				ch := asyncapi3test.NewChannel(
+					asyncapi3test.WithChannelTitle("title-1"),
+					asyncapi3test.WithChannelSummary("channel-1 summary"),
+					asyncapi3test.WithChannelDescription("description"),
+					asyncapi3test.UseMessage("foo", &asyncapi3.MessageRef{Value: msg}),
+				)
+
+				return runtimetest.NewKafkaApp(
+					asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "", ""),
+						asyncapi3test.AddChannel("channel-1", ch),
+						asyncapi3test.WithOperation("publish",
+							asyncapi3test.WithOperationAction("send"),
+							asyncapi3test.WithOperationTitle("op-title-1"),
+							asyncapi3test.WithOperationSummary("op-summary-1"),
+							asyncapi3test.WithOperationDescription("op-description-1"),
+							asyncapi3test.WithOperationChannel(ch),
+							asyncapi3test.UseOperationMessage(msg),
+						),
+						asyncapi3test.WithOperation("consume",
+							asyncapi3test.WithOperationAction("receive"),
+							asyncapi3test.WithOperationChannel(ch),
+							asyncapi3test.UseOperationMessage(msg),
+						),
+					),
+				)
+			}(),
+			test: func(t *testing.T, s *mcp.Service) {
+				_, err := s.GetRunResponse(
+					context.Background(),
+					mcp.RunInput{
+						Code: `const t = mokapi.getApi('foo').getTopic('channel-1')
+t.produce(0, { foo: 123 }, 'foo');
+t`,
+					},
+				)
+				require.EqualError(t, err, `no matching message configuration found for the given value: {"foo":123}
+hint:
+encoding data to 'application/json' failed: error count 1:
+	- #/foo/type: invalid type, expected string but got integer
+`)
 			},
 		},
 	}

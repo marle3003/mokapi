@@ -1,14 +1,14 @@
 package mcp
 
 import (
+	"errors"
 	"fmt"
-	"mokapi/engine"
-	"mokapi/engine/common"
 	"mokapi/kafka"
+	"mokapi/media"
+	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime"
 	"slices"
 	"strings"
-	"time"
 )
 
 type Kafka struct {
@@ -17,7 +17,7 @@ type Kafka struct {
 	Brokers []Broker `json:"brokers"`
 
 	info   *runtime.KafkaInfo
-	client *engine.KafkaClient
+	client *store.Client
 }
 
 type Broker struct {
@@ -40,7 +40,7 @@ type Topic struct {
 	Operations []KafkaOperation `json:"operations,omitempty"`
 
 	info   *runtime.KafkaInfo
-	client *engine.KafkaClient
+	client *store.Client
 }
 
 type KafkaPartition struct {
@@ -77,11 +77,14 @@ type KafkaRecord struct {
 func (m *mokapi) getKafkaApi(name string) any {
 	for _, api := range m.app.Kafka.List() {
 		if api.Info.Name == name {
+			client := store.NewClient(api.Store, m.app.Monitor.Kafka)
+			client.ClientId = "mokapi-mcp"
+
 			result := &Kafka{
 				Name:   name,
 				Type:   "kafka",
 				info:   api,
-				client: engine.NewKafkaClient(m.app),
+				client: client,
 			}
 			for it := api.Servers.Iter(); it.Next(); {
 				b := it.Value()
@@ -197,33 +200,30 @@ func (k *Kafka) GetTopic(name string) (Topic, error) {
 	return t, nil
 }
 
-func (t *Topic) Produce(partition int, value string, key string, headers map[string]string) error {
-	msg := common.KafkaMessage{
-		Value:     []byte(value),
-		Data:      nil,
-		Headers:   headers,
-		Partition: partition,
-	}
-	if key != "" {
-		msg.Key = []byte(key)
+func (t *Topic) Produce(partition int, value any, key string, headers map[string]string) error {
+	var h []store.RecordHeader
+	for hk, hv := range headers {
+		h = append(h, store.RecordHeader{Name: hk, Value: hv})
 	}
 
-	_, err := t.client.Produce(&common.KafkaProduceArgs{
-		Cluster:  t.info.Info.Name,
-		Topic:    t.Name,
-		Messages: []common.KafkaMessage{msg},
-		Retry: common.KafkaProduceRetry{
-			MaxRetryTime:     3 * time.Minute,
-			InitialRetryTime: 500 * time.Millisecond,
-			Retries:          10,
-			Factor:           2,
+	result, err := t.client.Write(t.Name, []store.Record{
+		{
+			Key:       key,
+			Value:     value,
+			Partition: partition,
+			Headers:   h,
 		},
-		ClientId: "mokapi-mcp",
-	})
+	}, media.ContentType{})
+
 	if err != nil {
 		return err
 	}
 
+	if len(result) > 0 && result[0].Error != "" {
+		return errors.New(result[0].Error)
+	}
+
+	// update JS topic and partition
 	topic := t.info.Store.Topic(t.Name)
 	if topic == nil {
 		return fmt.Errorf("topic '%s' not found", t.Name)
@@ -237,6 +237,7 @@ func (t *Topic) Produce(partition int, value string, key string, headers map[str
 			pt.Offset = p.Offset()
 		}
 	}
+
 	return nil
 }
 
