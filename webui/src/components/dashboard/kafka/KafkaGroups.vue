@@ -1,44 +1,32 @@
 <script setup lang="ts">
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { computed } from 'vue'
-import { useMetrics } from '@/composables/metrics'
 import { useRouter } from '@/router';
 import { getRouteName } from '@/composables/dashboard';
 
 const props = defineProps<{
     service: KafkaService,
-    topicName?: string
+    topic?: KafkaTopic
 }>()
 
 const router = useRouter()
 const { format } = usePrettyDates()
-const { sum, value } = useMetrics();
 
 const groups = computed(() => {
-    if (!props.topicName) {
+    if (!props.topic) {
         return props.service.groups
     }
-    if (!props.service.groups) {
-        return []
-    }
-
-    let result = []
-    for (let group of props.service.groups) {
-        if (group.topics?.includes(props.topicName)) {
-            result.push(group)
-        }
-    }
-    return result
+    return props.topic.groups
 })
-function lastRebalancing(group: KafkaGroup) {
-  const timestamp = value(props.service.metrics, 'kafka_rebalance_timestamp', { name: 'group', value: group.name });
+function lastRebalancing(group: KafkaGroupInfo) {
+  const timestamp = group.metrics.kafka_rebalance_timestamp;
   if (!timestamp) {
     return '-'
   }
   return format(timestamp)
 }
 
-function goToGroup(group: KafkaGroup, openInNewTab = false){
+function goToGroup(group: KafkaGroupInfo, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
     }
@@ -57,11 +45,28 @@ function goToGroup(group: KafkaGroup, openInNewTab = false){
         router.push(to)
     }
 }
+function lags(group: KafkaGroupInfo) {
+    if (!props.topic) {
+        return '-'
+    }
+    const topicMetrics = group.metrics.topics[props.topic.name]
+    if (!topicMetrics) {
+        return '-'
+    }
+    let result = 0;
+    for (const partition of topicMetrics) {
+        if (!partition.kafka_consumer_group_lag) {
+            continue
+        }
+        result += partition.kafka_consumer_group_lag
+    }
+    return result
+}
 </script>
 
 <template>
     <div class="table-responsive-sm">
-        <table class="table dataTable selectable" :aria-label="props.topicName ? 'Topic Groups' : 'Cluster Groups'">
+        <table class="table dataTable selectable" :aria-label="props.topic ? 'Topic Groups' : 'Cluster Groups'">
             <thead>
                 <tr>
                     <th scope="col" class="text-left col-2">Name</th>
@@ -70,7 +75,7 @@ function goToGroup(group: KafkaGroup, openInNewTab = false){
                     <th scope="col" class="text-center col-2">Generation</th>
                     <th scope="col" class="text-center col-2">Last Rebalancing</th>
                     <th scope="col" class="text-center col-2">Members</th>
-                    <th scope="col" class="text-center col-1" v-if="topicName">Lag</th>
+                    <th scope="col" class="text-center col-1" v-if="topic">Lag</th>
                 </tr>
             </thead>
             <tbody>
@@ -84,9 +89,9 @@ function goToGroup(group: KafkaGroup, openInNewTab = false){
                     <td v-html="group.protocol.replace(/([a-z])([A-Z])/g, '$1<wbr>$2')"></td>
                     <td class="text-center">{{ group.generation }}</td>
                     <td class="text-center">{{ lastRebalancing(group) }}</td>
-                    <td class="text-center">{{ group.members.length }}</td>
-                    <td v-if="topicName" class="text-center">
-                        {{ sum(service.metrics, 'kafka_consumer_group_lag', { name: 'topic', value: topicName }, { name: 'group', value: group.name }) }}
+                    <td class="text-center">{{ group.members }}</td>
+                    <td v-if="topic" class="text-center">
+                        {{ lags(group) }}
                     </td>
                 </tr>
             </tbody>

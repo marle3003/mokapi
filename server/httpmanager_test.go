@@ -10,6 +10,7 @@ import (
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime"
+	"mokapi/runtime/metrics"
 	"mokapi/server/cert"
 	"mokapi/try"
 	"mokapi/version"
@@ -43,7 +44,7 @@ func TestHttpServers_Monitor(t *testing.T) {
 	// give server time to start
 	time.Sleep(time.Second * 1)
 	try.GetRequest(t, u+"/foo", map[string]string{})
-	require.Equal(t, float64(1), app.Monitor.Http.RequestCounter.Sum())
+	require.Equal(t, float64(1), app.Monitor.Http.RequestCounter.Sum(metrics.NewQuery()))
 }
 
 func TestHttpManager_Update(t *testing.T) {
@@ -63,7 +64,7 @@ func TestHttpManager_Update(t *testing.T) {
 				c := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: "http://:80"}}}
 				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
 
-				list := m.app.ListHttp()
+				list := m.app.Http.List()
 				require.Len(t, list, 1)
 				require.Equal(t, "foo", list[0].Info.Name)
 			},
@@ -78,12 +79,12 @@ func TestHttpManager_Update(t *testing.T) {
 				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: foo, Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}}})
 				m.Update(dynamic.ConfigEvent{Config: &dynamic.Config{Data: bar, Info: dynamic.ConfigInfo{Url: MustParseUrl("bar.yml")}}})
 
-				list := m.app.ListHttp()
+				list := m.app.Http.List()
 				require.Len(t, list, 2)
 			},
 		},
 		{
-			name: "add new host http://:X",
+			name: "add new host",
 			test: func(t *testing.T, m *HttpManager, hook *logtest.Hook) {
 				port := try.GetFreePort()
 				c := &openapi.Config{OpenApi: version.New("3.0"), Info: openapi.Info{Name: "foo"}, Servers: []*openapi.Server{{Url: fmt.Sprintf("http://:%v", port)}}}
@@ -163,20 +164,19 @@ func TestHttpManager_Update(t *testing.T) {
 		},
 	}
 
-	for _, data := range testdata {
-		t.Run(data.name, func(t *testing.T) {
+	for _, tc := range testdata {
+		t.Run(tc.name, func(t *testing.T) {
 			logrus.SetOutput(io.Discard)
 			hook := logtest.NewGlobal()
-			logrus.SetLevel(logrus.DebugLevel)
 
 			store, err := cert.NewStore(&static.Config{})
 			require.NoError(t, err)
 
-			cfg := &static.Config{}
+			cfg := &static.Config{Log: static.MokApiLog{Level: "debug"}}
 			m := NewHttpManager(&engine.Engine{}, store, runtime.New(cfg, &dynamictest.Reader{}))
 			defer m.Stop()
 
-			data.test(t, m, hook)
+			tc.test(t, m, hook)
 		})
 
 	}

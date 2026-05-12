@@ -10,14 +10,14 @@ const props = defineProps<{
 }>()
 
 const router = useRouter()
-const { clientSoftware, formatAddress } = useKafka();
+const { formatAddress } = useKafka();
 
 const clients = computed(() => {
     if (!props.service || !props.service.clients) {
         return []
     }
 
-    return props.service.clients.sort((c1: KafkaClient, c2: KafkaClient) => {
+    return props.service.clients.sort((c1: KafkaClientInfo, c2: KafkaClientInfo) => {
         return c1.clientId.localeCompare(c2.clientId)
     })
 })
@@ -35,7 +35,7 @@ onMounted(() => {
     })
 })
 
-function goToClient(client: KafkaClient, openInNewTab = false) {
+function goToClient(client: KafkaClientInfo, openInNewTab = false) {
     if (getSelection()?.toString()) {
         return
     }
@@ -76,7 +76,7 @@ function goToClient(client: KafkaClient, openInNewTab = false) {
                         </router-link>
                     </td>
                     <td>{{ formatAddress(c.address) }}</td>
-                    <td>{{ clientSoftware(c) }}</td>
+                    <td>{{ c.software || '-' }}</td>
                 </tr>
             </tbody>
         </table>

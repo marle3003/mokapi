@@ -8,7 +8,7 @@ import { usePrettyText } from '@/composables/usePrettyText'
 import { getRouteName, useDashboard } from '@/composables/dashboard'
 
 const { dashboard } = useDashboard()
-const { events, close } = dashboard.value.getEvents('job')
+const { events, close } = dashboard.value.getEvents({ name: 'namespace', value: 'jobs' })
 const { format, duration: prettyDuration } = usePrettyDates()
 const { parseUrls } = usePrettyText()
 dayjs.extend(duration)

@@ -120,17 +120,29 @@ func (m *GaugeMap) Value(query *Query) float64 {
 	return v
 }
 
-func (m *GaugeMap) FindAll(query *Query) []Metric {
+func (m *GaugeMap) FindAll(query *Query) []*Gauge {
 	m.m.Lock()
 	defer m.m.Unlock()
 
-	result := make([]Metric, 0)
+	result := make([]*Gauge, 0)
 	for _, c := range m.gauges {
 		if c.Info().Match(query) {
 			result = append(result, c)
 		}
 	}
 	return result
+}
+
+func (m *GaugeMap) FindOne(query *Query) (*Gauge, bool) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
+	for _, c := range m.gauges {
+		if c.Info().Match(query) {
+			return c, true
+		}
+	}
+	return nil, false
 }
 
 func (m *GaugeMap) Collect(ch chan<- Metric) {
@@ -169,4 +181,20 @@ func (m *GaugeMap) MarshalJSON() ([]byte, error) {
 		result = append(result, g)
 	}
 	return json.Marshal(result)
+}
+
+func (m *GaugeMap) Max(query *Query) float64 {
+	m.m.Lock()
+	defer m.m.Unlock()
+
+	var maxValue float64
+	for _, c := range m.gauges {
+		if c.Info().Match(query) {
+			v := c.Value()
+			if v > maxValue {
+				maxValue = v
+			}
+		}
+	}
+	return maxValue
 }

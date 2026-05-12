@@ -75,7 +75,7 @@ type Response struct {
 }
 
 func (m *mokapi) getHttpApi(name string) any {
-	for _, api := range m.app.ListHttp() {
+	for _, api := range m.app.Http.List() {
 		if api.Info.Name == name {
 			result := &OpenAPI{
 				Name:    name,

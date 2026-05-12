@@ -1,14 +1,17 @@
 package store_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/mqtt"
 	"mokapi/mqtt/mqtttest"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/mqtt/store"
+	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/monitor"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestConnect(t *testing.T) {
@@ -24,7 +27,7 @@ func TestConnect(t *testing.T) {
 					Payload: &mqtt.ConnectRequest{},
 				})
 				res := rr.Message.Payload.(*mqtt.ConnectResponse)
-				require.Equal(t, mqtt.ErrIdentifierRejected, res.ReturnCode)
+				require.Equal(t, mqtt.ErrIdentifierRejected, res.ReasonCode)
 			},
 		},
 		{
@@ -37,7 +40,7 @@ func TestConnect(t *testing.T) {
 					},
 				})
 				res := rr.Message.Payload.(*mqtt.ConnectResponse)
-				require.Equal(t, mqtt.ErrIdentifierRejected, res.ReturnCode)
+				require.Equal(t, mqtt.ErrIdentifierRejected, res.ReasonCode)
 			},
 		},
 		{
@@ -109,7 +112,7 @@ func TestConnect(t *testing.T) {
 					},
 				})
 				res := rr.Message.Payload.(*mqtt.ConnectResponse)
-				require.Equal(t, mqtt.ErrUnspecifiedError, res.ReturnCode)
+				require.Equal(t, mqtt.ErrTopicNameInvalid, res.ReasonCode)
 			},
 		},
 		{
@@ -127,7 +130,7 @@ func TestConnect(t *testing.T) {
 					},
 				})
 				res := rr.Message.Payload.(*mqtt.ConnectResponse)
-				require.Equal(t, mqtt.Accepted, res.ReturnCode)
+				require.Equal(t, mqtt.Success, res.ReasonCode)
 			},
 		},
 	}
@@ -138,7 +141,7 @@ func TestConnect(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine())
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewMqtt())
 			defer s.Close()
 
 			tc.test(t, s)

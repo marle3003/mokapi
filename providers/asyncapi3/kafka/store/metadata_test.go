@@ -2,6 +2,8 @@ package store_test
 
 import (
 	"fmt"
+	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/kafkatest"
@@ -162,11 +164,14 @@ func TestMetadata(t *testing.T) {
 		{
 			"2.2.0 assigning channels to servers",
 			func(t *testing.T, s *store.Store) {
-				s.Update(asyncapi3test.NewConfig(
+				cfg := asyncapi3test.NewConfig(
 					asyncapi3test.WithServer("foo", "kafka", "127.0.0.1:9092"),
 					asyncapi3test.WithServer("bar", "kafka", "127.0.0.1:9093"),
-					asyncapi3test.WithChannel("foo", asyncapi3test.AssignToServer("foo")),
-				))
+					asyncapi3test.WithChannel("foo", asyncapi3test.AssignToServer("#/servers/foo")),
+				)
+				err := cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{})
+				require.NoError(t, err)
+				s.Update(cfg)
 				rr := kafkatest.NewRecorder()
 				r := kafkatest.NewRequest("kafkatest", 4, &metaData.Request{})
 				r.Host = "127.0.0.1:9092"

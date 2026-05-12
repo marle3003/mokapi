@@ -43,6 +43,14 @@ func (i *Info) getLabel(name string) (*Label, bool) {
 	return nil, false
 }
 
+func (i *Info) GetLabel(name string) string {
+	l, ok := i.getLabel(name)
+	if !ok {
+		return ""
+	}
+	return l.Value
+}
+
 func (i *Info) FQName() string {
 	if len(i.Namespace) == 0 {
 		return i.Name

@@ -40,7 +40,7 @@ func TestHandler_Ldap(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services",
 			contentType:  "application/json",
-			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"ldap"}]`,
+			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"ldap","metrics":{"ldap_requests_total":0,"ldap_request_timestamp":0}}]`,
 		},
 		{
 			name: "get ldap service",

@@ -26,7 +26,7 @@ func TestIndex(t *testing.T) {
 	app.Start(pool)
 	defer pool.Stop()
 
-	trait := events.NewTraits().WithNamespace("test")
+	trait := events.NewTraits().WithNamespace("test").WithName("Swagger Petstore")
 	app.Events.SetStore(10, trait)
 	err := app.Events.Push(&eventstest.Event{
 		Name: "foo",
@@ -34,16 +34,16 @@ func TestIndex(t *testing.T) {
 	}, trait)
 	require.NoError(t, err)
 
-	petstore := openapitest.NewConfig("3.0", openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server. You can find out more about Swagger at https://swagger.io"),
+	petStore := openapitest.NewConfig("3.0", openapitest.WithInfo("Swagger Petstore", "1.0", "This is a sample server Petstore server. You can find out more about Swagger at https://swagger.io"),
 		openapitest.WithPath("/pet",
 			openapitest.WithOperation("put",
 				openapitest.WithOperationInfo("Update an existing pet.", "Update an existing pet by Id.", "updatePet", false),
 			),
 		),
 	)
-	app.AddHttp(&dynamic.Config{
+	app.Http.Add(&dynamic.Config{
 		Info: dynamic.ConfigInfo{Url: try.MustUrl("petstore.yaml"), Provider: "NPM"},
-		Data: petstore,
+		Data: petStore,
 	})
 
 	result, err := app.Search(search.Request{

@@ -10,12 +10,14 @@ import (
 	"mokapi/safe"
 	"mokapi/version"
 	"sync"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type App struct {
 	Version   string
 	BuildTime string
-	http      *HttpStore
+	Http      *HttpStore
 	Ldap      *LdapStore
 	Kafka     *KafkaStore
 	Mqtt      *MqttStore
@@ -30,6 +32,7 @@ type App struct {
 	searchIndex *SearchIndex
 
 	reader dynamic.Reader
+	hook   *LogHook
 
 	Configs map[string]*dynamic.Config
 }
@@ -39,12 +42,15 @@ func New(cfg *static.Config, reader dynamic.Reader) *App {
 
 	index := newSearchIndex(cfg.Api.Search)
 	em := events.NewStoreManager(index)
+	configureLogging(cfg)
 
+	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits())
 	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("http"))
 	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("kafka"))
 	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("ldap"))
 	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("mail"))
 	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("job"))
+	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("logs"))
 
 	app := &App{
 		Version:     version.BuildVersion,
@@ -52,9 +58,9 @@ func New(cfg *static.Config, reader dynamic.Reader) *App {
 		Monitor:     m,
 		Events:      em,
 		Configs:     map[string]*dynamic.Config{},
-		http:        &HttpStore{cfg: cfg, index: index, events: em, reader: reader},
+		Http:        &HttpStore{cfg: cfg, index: index, events: em, reader: reader},
 		Kafka:       &KafkaStore{monitor: m, cfg: cfg, index: index, events: em, reader: reader},
-		Mqtt:        &MqttStore{monitor: m, cfg: cfg, sm: em},
+		Mqtt:        &MqttStore{monitor: m, cfg: cfg, index: index, sm: em, events: em, reader: reader},
 		Ldap:        &LdapStore{cfg: cfg, events: em, index: index},
 		Mail:        &MailStore{cfg: cfg, sm: em, index: index},
 		cfg:         cfg,
@@ -69,9 +75,19 @@ func (a *App) Start(p *safe.Pool) {
 	go a.searchIndex.start(p)
 }
 
+func (a *App) Stop() {
+	if a.hook != nil {
+		a.hook.Disable()
+	}
+}
+
+func (a *App) EnableLogHook() {
+	a.hook = NewLogHook(a.Events)
+	log.AddHook(a.hook)
+}
+
 func (a *App) UpdateConfig(e dynamic.ConfigEvent) {
 	a.m.Lock()
-	defer a.m.Unlock()
 
 	if e.Event == dynamic.Delete {
 		delete(a.Configs, e.Config.Info.Key())
@@ -81,6 +97,7 @@ func (a *App) UpdateConfig(e dynamic.ConfigEvent) {
 			a.Configs[r.Info.Key()] = r
 		}
 	}
+	a.m.Unlock()
 
 	if a.cfg.Api.Search.Enabled {
 		a.removeConfigFromIndex(e.Config)
@@ -103,22 +120,6 @@ func (a *App) FindConfig(key string) *dynamic.Config {
 	}
 
 	return nil
-}
-
-func (a *App) AddHttp(c *dynamic.Config) *HttpInfo {
-	return a.http.Add(c)
-}
-
-func (a *App) GetHttp(name string) *HttpInfo {
-	return a.http.Get(name)
-}
-
-func (a *App) RemoveHttp(c *dynamic.Config) {
-	a.http.Remove(c)
-}
-
-func (a *App) ListHttp() []*HttpInfo {
-	return a.http.List()
 }
 
 func (a *App) Search(r search.Request) (search.Result, error) {

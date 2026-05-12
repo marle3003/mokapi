@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { getRouteName } from '@/composables/dashboard';
-import { useRoute, useRouter } from '@/router';
+import { useRoute } from '@/router';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -8,7 +8,6 @@ const props = defineProps<{
   response: KafkaFindCoordinatorResponse
 }>();
 
-const router = useRouter();
 const route = useRoute();
 
 const keyType = computed(() => {

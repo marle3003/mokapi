@@ -45,7 +45,7 @@ func TestIndex_Http(t *testing.T) {
 				require.Equal(t, "My API", r.Results[0].Domain)
 				require.Equal(t, "foo", r.Results[0].Title)
 				require.Equal(t, []string{"<mark>foo</mark>"}, r.Results[0].Fragments)
-				require.Equal(t, "test", r.Results[0].Params["namespace"])
+				require.Equal(t, "test", r.Results[0].Params["traits.namespace"])
 				require.NotEmpty(t, r.Results[0].Params["id"])
 			},
 		},
@@ -73,7 +73,7 @@ func TestIndex_Http(t *testing.T) {
 				require.Equal(t, "My API", r.Results[0].Domain)
 				require.Equal(t, "foo", r.Results[0].Title)
 				require.Equal(t, []string{"<mark>event</mark>"}, r.Results[0].Fragments)
-				require.Equal(t, "test", r.Results[0].Params["namespace"])
+				require.Equal(t, "test", r.Results[0].Params["traits.namespace"])
 				require.NotEmpty(t, r.Results[0].Params["id"])
 			},
 		},
@@ -125,7 +125,7 @@ func TestIndex_Http(t *testing.T) {
 				require.Equal(t, "My API", r.Results[0].Domain)
 				require.Equal(t, "bar", r.Results[0].Title)
 				require.Equal(t, []string{"<mark>event</mark>"}, r.Results[0].Fragments)
-				require.Equal(t, "test", r.Results[0].Params["namespace"])
+				require.Equal(t, "test", r.Results[0].Params["traits.namespace"])
 				require.NotEmpty(t, r.Results[0].Params["id"])
 			},
 		},

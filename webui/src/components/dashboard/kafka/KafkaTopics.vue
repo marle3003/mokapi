@@ -1,17 +1,14 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
-import { useMetrics } from '@/composables/metrics'
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import { getRouteName } from '@/composables/dashboard';
 import { computed } from 'vue';
 import { useLocalStorage } from '@/composables/local-storage';
-import { useMarkdown } from '@/composables/markdown';
 
 const props = defineProps<{
     service: KafkaService,
 }>()
 
-const { sum } = useMetrics()
 const { format } = usePrettyDates()
 const router = useRouter()
 const tags = useLocalStorage<string[]>(`kafka-${props.service.name}-tags`, ['__all'])
@@ -52,24 +49,19 @@ const topics = computed(() => {
     return result;
 })
 
-function compareTopics(t1: KafkaTopic, t2: KafkaTopic) {
+function compareTopics(t1: KafkaTopicInfo, t2: KafkaTopicInfo) {
     const name1 = t1.name.toLowerCase()
     const name2 = t2.name.toLowerCase()
     return name1.localeCompare(name2)
 }
 
-function messages(service: Service, topic: KafkaTopic) {
-    return sum(service.metrics, 'kafka_messages_total{', { name: 'topic', value: topic.name })
-}
-
-function lastMessage(service: Service, topic: KafkaTopic) {
-    const n = sum(service.metrics, 'kafka_message_timestamp{', { name: 'topic', value: topic.name })
-    if (n == 0) {
+function lastMessage(topic: KafkaTopicInfo) {
+    if (!topic.metrics.kafka_message_timestamp || topic.metrics.kafka_message_timestamp == 0) {
         return '-'
     }
-    return format(n)
+    return format(topic.metrics.kafka_message_timestamp)
 }
-function goToTopic(topic: KafkaTopic, openInNewTab = false) {
+function goToTopic(topic: KafkaTopicInfo, openInNewTab = false) {
     if (getSelection()?.toString()) {
         return
     }
@@ -152,7 +144,7 @@ function toggleTag(name: string) {
                     <thead>
                         <tr>
                             <th scope="col" class="text-left col-4">Name</th>
-                            <th scope="col" class="text-left col-4">Description</th>
+                            <th scope="col" class="text-left col-4">Summary</th>
                             <th scope="col" class="text-center col-2">Last Message</th>
                             <th scope="col" class="text-center col-1">Messages</th>
                         </tr>
@@ -167,10 +159,10 @@ function toggleTag(name: string) {
                                 </router-link>
                             </td>
                             <td>
-                                <div v-html="useMarkdown(topic.description).content" class="table-markdown"></div>
+                                <div class="table-markdown">{{ topic.summary }}</div>
                             </td>
-                            <td class="text-center">{{ lastMessage(service, topic) }}</td>
-                            <td class="text-center">{{ messages(service, topic) }}</td>
+                            <td class="text-center">{{ lastMessage(topic) }}</td>
+                            <td class="text-center">{{ topic.metrics.kafka_messages_total }}</td>
                         </tr>
                     </tbody>
                 </table>

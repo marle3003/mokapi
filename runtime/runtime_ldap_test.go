@@ -11,6 +11,7 @@ import (
 	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"net/url"
 	"testing"
@@ -44,7 +45,7 @@ func TestApp_AddLdap(t *testing.T) {
 				rr := ldaptest.NewRecorder()
 				h.ServeLDAP(rr, r)
 
-				require.Equal(t, float64(1), m.RequestCounter.Sum())
+				require.Equal(t, float64(1), m.RequestCounter.Sum(metrics.NewQuery()))
 			},
 		},
 		{

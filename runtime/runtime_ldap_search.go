@@ -8,13 +8,14 @@ import (
 )
 
 type ldapSearchIndexData struct {
-	Type          string `json:"type"`
-	Discriminator string `json:"discriminator"`
-	Api           string `json:"api"`
-	Name          string `json:"name"`
-	Version       string `json:"version"`
-	Server        string `json:"server"`
-	Description   string `json:"description"`
+	Type          string            `json:"type"`
+	Discriminator string            `json:"discriminator"`
+	Api           string            `json:"api"`
+	Name          string            `json:"name"`
+	Version       string            `json:"version"`
+	Server        string            `json:"server"`
+	Description   string            `json:"description"`
+	Meta          map[string]string `json:"meta"`
 }
 
 type ldapSearchIndexEntry struct {
@@ -44,6 +45,9 @@ func (s *LdapStore) addToIndex(cfg *directory.Config) {
 		Version:       cfg.Info.Version,
 		Description:   cfg.Info.Description,
 		Server:        cfg.Address,
+		Meta: map[string]string{
+			"entries": fmt.Sprintf("%d", cfg.Entries.Len()),
+		},
 	}
 
 	s.index.Add(fmt.Sprintf("ldap_%s", cfg.Info.Name), c)
@@ -63,7 +67,7 @@ func (s *LdapStore) addToIndex(cfg *directory.Config) {
 					Values: values,
 				})
 			}
-			s.index.Add(fmt.Sprintf("mail_%s_%s", cfg.Info.Name, e.Dn), se)
+			s.index.Add(fmt.Sprintf("ldap_%s_%s", cfg.Info.Name, e.Dn), se)
 		}
 	}
 }
@@ -79,6 +83,12 @@ func getLdapSearchResult(fields map[string]string, discriminator []string) (sear
 			"type":    strings.ToLower(result.Type),
 			"service": result.Title,
 		}
+		for k, v := range fields {
+			if strings.HasPrefix(k, "meta.") {
+				k = strings.Replace(k, "meta.", "", 1)
+				result.Params[k] = v
+			}
+		}
 		return result, nil
 	}
 
@@ -89,6 +99,7 @@ func getLdapSearchResult(fields map[string]string, discriminator []string) (sear
 		result.Params = map[string]string{
 			"type":    strings.ToLower(result.Type),
 			"service": result.Domain,
+			"entry":   fields["dn"],
 		}
 	default:
 		return result, fmt.Errorf("unsupported search result: %s", strings.Join(discriminator, "_"))

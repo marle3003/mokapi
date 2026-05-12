@@ -75,19 +75,33 @@ function goToPath(path: HttpPath, openInNewTab = false){
     }
 }
 function lastRequest(path: HttpPath){
-    const n = sum(props.service.metrics, 'http_request_timestamp', {name: 'endpoint', value: path.path})
-    if (n == 0){
+    let lastRequest = 0
+    for (const op of path.operations) {
+        if (op.metrics.http_request_timestamp > lastRequest) {
+            lastRequest = op.metrics.http_request_timestamp
+        }
+    }
+
+    if (lastRequest == 0){
         return '-'
     }
-    return format(n)
+    return format(lastRequest)
 }
 
 function requests(path: HttpPath){
-    return sum(props.service.metrics, 'http_requests_total', {name: 'endpoint', value: path.path})
+    let totalRequests = 0
+    for (const op of path.operations) {
+        totalRequests += op.metrics.http_requests_total
+    }
+    return totalRequests
 }
 
 function errors(path: HttpPath){
-    return sum(props.service.metrics, 'http_requests_errors_total', {name: 'endpoint', value: path.path})
+    let totalErrors = 0
+    for (const op of path.operations) {
+        totalErrors += op.metrics.http_requests_errors_total
+    }
+    return totalErrors
 }
 
 function allOperationsDeprecated(path: HttpPath): boolean{
@@ -122,7 +136,7 @@ function operations(path: HttpPath) {
     })
 }
 
-function operationOrderValue(operation: HttpOperation): number {
+function operationOrderValue(operation: HttpOperationInfo): number {
     switch (operation.method.toLowerCase()) {
         case 'get': return 0
         case 'post': return 1
@@ -164,6 +178,21 @@ function toggleTag(name: string) {
 
         tags.value = tags.value.filter((t) => t !== '__all')
     }
+}
+function operationTitle(operation: HttpOperationInfo): string {
+    if (operation.errors && operation.errors.length > 0) {
+        return `${operation.errors.map(x => x.message).join(' ')}`
+    }
+    if (operation.summary) {
+        return operation.summary
+    }
+    return ''
+}
+function operationCssClass(operation: HttpOperationInfo): string {
+    if (operation.status === 'valid') {
+        return operation.method
+    }
+    return 'border border-danger text-danger bg-transparent'
 }
 </script>
 
@@ -234,8 +263,10 @@ function toggleTag(name: string) {
                             </td>
                             <td>
                                 <router-link v-for="operation in operations(path)" :key="operation.method" @click.stop class="row-link" :to="route.httpOperation(props.service, path, operation)">
-                                    <span :title="operation.summary" class="badge operation me-1" :class="operation.method">
-                                        {{ operation.method.toUpperCase() }} <span class="bi bi-exclamation-triangle-fill yellow" style="vertical-align: middle;" v-if="operation.deprecated"></span>
+                                    <span :title="operationTitle(operation)" class="badge operation me-1" :class="operationCssClass(operation)">
+                                        {{ operation.method.toUpperCase() }} 
+                                        <span class="bi bi-exclamation-triangle-fill yellow" style="vertical-align: middle;" v-if="operation.deprecated"></span>
+                                        <span class="bi bi-x-circle-fill red" style="vertical-align: middle;" v-if="operation.status !== 'valid'"></span>
                                     </span>
                                 </router-link>
                             </td>

@@ -81,7 +81,7 @@ func (suite *LdapSuite) TestMetric() {
 	}
 	_, err := suite.Client.Search(search)
 	require.NoError(suite.T(), err)
-	require.Equal(suite.T(), float64(1), suite.cmd.App.Monitor.Ldap.RequestCounter.Sum())
+	require.Equal(suite.T(), float64(1), suite.cmd.App.Monitor.Ldap.RequestCounter.Sum(metrics.NewQuery()))
 	q := metrics.NewQuery(metrics.ByNamespace("ldap"), metrics.ByName("request_timestamp"))
 	require.Greater(suite.T(), suite.cmd.App.Monitor.Ldap.LastRequest.Value(q), float64(1))
 }

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -60,7 +61,9 @@ type Path struct {
 	// but cannot be removed there
 	Parameters Parameters
 
-	Path string `yaml:"-" json:"-"`
+	Path   string  `yaml:"-" json:"-"`
+	Status Status  `yaml:"-" json:"-"`
+	Errors []Error `yaml:"-" json:"-"`
 }
 
 func (r *PathRef) UnmarshalJSON(b []byte) error {
@@ -156,23 +159,28 @@ func (p PathItems) Resolve(token string) (interface{}, error) {
 }
 
 func (p PathItems) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	if p == nil {
+		return nil
+	}
+
 	for name, e := range p {
-		if err := e.Parse(name, config, reader); err != nil {
+		if e == nil {
+			continue
+		}
+		if err := e.Parse(config, reader); err != nil {
 			return fmt.Errorf("parse path '%v' failed: %w", name, err)
+		}
+		if e.Value != nil {
+			e.Value.Path = name
 		}
 	}
 	return nil
 }
 
-func (r *PathRef) Parse(name string, config *dynamic.Config, reader dynamic.Reader) error {
+func (r *PathRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if r == nil {
 		return nil
 	}
-	defer func() {
-		if r.Value != nil {
-			r.Value.Path = name
-		}
-	}()
 
 	if len(r.Ref) > 0 {
 		resolved, err := r.Resolve(config, reader)
@@ -197,36 +205,35 @@ func (p *Path) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		}
 	}
 
-	if err := p.Get.Parse(p, config, reader); err != nil {
-		return fmt.Errorf("parse operation 'GET' failed: %w", err)
+	for method, op := range p.Operations() {
+		err := op.Parse(config, reader)
+		if err != nil {
+			op.Status = StatusInvalid
+			method = strings.ToUpper(method)
+			op.Errors = append(op.Errors, Error{Message: err.Error()})
+			log.
+				WithField("api", getName(config)).
+				WithField("method", method).
+				WithField("path", p.Path).
+				WithField("namespace", "http").
+				Error(err)
+		} else {
+			op.Path = p
+		}
 	}
-	if err := p.Post.Parse(p, config, reader); err != nil {
-		return fmt.Errorf("parse operation 'POST' failed: %w", err)
-	}
-	if err := p.Put.Parse(p, config, reader); err != nil {
-		return fmt.Errorf("parse operation 'PUT' failed: %w", err)
-	}
-	if err := p.Patch.Parse(p, config, reader); err != nil {
-		return fmt.Errorf("parse operation 'PATCH' failed: %w", err)
-	}
-	if err := p.Delete.Parse(p, config, reader); err != nil {
-		return fmt.Errorf("parse operation 'DELETE' failed: %w", err)
-	}
-	if err := p.Head.Parse(p, config, reader); err != nil {
-		return fmt.Errorf("parse operation 'HEAD' failed: %w", err)
-	}
-	if err := p.Options.Parse(p, config, reader); err != nil {
-		return fmt.Errorf("parse operation 'OPTIONS' failed: %w", err)
-	}
-	if err := p.Trace.Parse(p, config, reader); err != nil {
-		return fmt.Errorf("parse operation 'TRACE' failed: %w", err)
-	}
-	if err := p.Query.Parse(p, config, reader); err != nil {
-		return fmt.Errorf("parse operation 'QUERY' failed: %w", err)
-	}
+
 	for name, op := range p.AdditionalOperations {
-		if err := op.Parse(p, config, reader); err != nil {
-			return fmt.Errorf("parse operation '%s' failed: %w", name, err)
+		if err := op.Parse(config, reader); err != nil {
+			op.Status = StatusInvalid
+			name = strings.ToUpper(name)
+			log.
+				WithField("api", getName(config)).
+				WithField("method", name).
+				WithField("path", p.Path).
+				WithField("namespace", "http").
+				Error(err)
+		} else {
+			op.Path = p
 		}
 	}
 

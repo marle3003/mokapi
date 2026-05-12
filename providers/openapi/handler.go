@@ -67,6 +67,24 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
+	if op.Status == StatusInvalid {
+		msg := "operation status invalid"
+		if len(op.Errors) > 1 {
+			for _, e := range op.Errors {
+				msg = fmt.Sprintf("%s\n", e.Message)
+			}
+		} else if len(op.Errors) > 0 {
+			msg = op.Errors[0].Message
+		}
+		writeError(
+			rw,
+			r,
+			fmt.Errorf("operation could not be executed due to parsing errors: %s", msg),
+			h.config.Info.Name,
+		)
+		return
+	}
+
 	status, res, err := op.getFirstSuccessResponse()
 	if err != nil {
 		writeError(
@@ -256,7 +274,11 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *H
 	}
 	op, errOpResolve := findOperation(r.Method, requestPath, h.config.Paths)
 	if op != nil {
-		params := append(op.Path.Parameters, op.Parameters...)
+		var params Parameters
+		if op.Path != nil {
+			params = op.Path.Parameters
+		}
+		params = append(params, op.Parameters...)
 		route := op.Path.Path
 		if len(route) > 1 {
 			// there is no official specification for trailing slash. For ease of use, mokapi considers it equivalent
@@ -276,14 +298,21 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *H
 				m.RequestCounter.WithLabel(h.config.Info.Name, op.Path.Path, r.Method).Add(1)
 			}
 
+			traits := events.NewTraits().WithNamespace("http").WithName(h.config.Info.Name).With("path", op.Path.Path).With("method", r.Method)
 			if ctx, err := NewLogEventContext(
 				r,
 				op.Deprecated,
-				h.eh,
-				events.NewTraits().WithName(h.config.Info.Name).With("path", op.Path.Path).With("method", r.Method),
+				traits,
 			); err != nil {
 				log.Errorf("unable to log http event: %v", err)
 			} else {
+				defer func() {
+					l, _ := LogEventFromContext(ctx)
+					err = h.eh.Push(l, traits)
+					if err != nil {
+						log.Errorf("unable to log http event: %v", err)
+					}
+				}()
 				r = r.WithContext(ctx)
 			}
 

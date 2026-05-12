@@ -32,28 +32,29 @@ func NewMqttManager(emitter common.EventEmitter, app *runtime.App) *MqttManager 
 }
 
 func (m *MqttManager) UpdateConfig(e dynamic.ConfigEvent) {
-	// todo: should be IsAsyncConfig and HasMqttBrokers
-	cfg, ok := runtime.IsMqttConfig(e.Config)
+	cfg, ok := runtime.HasMqttServer(e.Config)
 	if !ok {
+		if cfg == nil || m.clusters == nil {
+			return
+		}
+		m.removeCluster(cfg.Info.Name)
 		return
 	}
 
 	info := m.app.Mqtt.Get(cfg.Info.Name)
-	if e.Event == dynamic.Delete {
+	if e.Event == dynamic.Delete && !info.HasMqttServer() {
 		m.app.Kafka.Remove(e.Config)
 		if info.Config == nil {
 			m.removeCluster(cfg.Info.Name)
 			return
 		}
-	} else if info == nil {
-		var err error
-		info, err = m.app.Mqtt.Add(e.Config, m.emitter)
-		if err != nil {
-			log.Errorf("add MQTT config %v failed: %v", e.Config.Info.Url, err)
-			return
-		}
-	} else {
-		info.AddConfig(e.Config)
+	}
+
+	var err error
+	info, err = m.app.Mqtt.Add(e.Config, m.emitter)
+	if err != nil {
+		log.Errorf("add MQTT config %v failed: %v", e.Config.Info.Url, err)
+		return
 	}
 
 	m.addOrUpdateCluster(info)
@@ -100,10 +101,10 @@ func (c *mqttCluster) updateBrokers(cfg *runtime.MqttInfo, monitor *monitor.Mqtt
 	for it := cfg.Servers.Iter(); it.Next(); {
 		name := it.Key()
 		server := it.Value()
-		if server == nil || server.Value == nil {
+		if server == nil || server.Value == nil || server.Value.Protocol != "mqtt" {
 			continue
 		}
-		port, err := getPortFromUrl(server.Value.Host)
+		port, err := getPortFromUrl(server.Value.Host, "1883")
 		if err != nil {
 			log.Errorf("unable to start MQTT broker %v for cluster %v: ", server.Value.Host, cfg.Info.Name)
 			continue

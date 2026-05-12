@@ -43,6 +43,18 @@ func WithKafkaChannelBinding(bindings asyncapi3.TopicBindings) ChannelOptions {
 	}
 }
 
+func WithChannelAddress(address string) ChannelOptions {
+	return func(c *asyncapi3.Channel) {
+		c.Address = address
+	}
+}
+
+func WithChannelName(name string) ChannelOptions {
+	return func(c *asyncapi3.Channel) {
+		c.Name = name
+	}
+}
+
 func WithChannelTitle(title string) ChannelOptions {
 	return func(c *asyncapi3.Channel) {
 		c.Title = title
@@ -75,5 +87,16 @@ func WithChannelTag(name, description string) ChannelOptions {
 				Description: description,
 			},
 		})
+	}
+}
+
+func WithParameter(name string, param *asyncapi3.Parameter) ChannelOptions {
+	return func(c *asyncapi3.Channel) {
+		if c.Parameters == nil {
+			c.Parameters = map[string]*asyncapi3.ParameterRef{}
+		}
+		c.Parameters[name] = &asyncapi3.ParameterRef{
+			Value: param,
+		}
 	}
 }

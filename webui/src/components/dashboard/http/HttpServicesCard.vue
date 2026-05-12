@@ -1,19 +1,17 @@
 <script setup lang="ts">
-import { useMetrics } from '@/composables/metrics';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRoute } from '@/router';
 import { onUnmounted } from 'vue';
 import { useDashboard } from '@/composables/dashboard';
 import { useMarkdown } from '@/composables/markdown';
 
-const { sum, max } = useMetrics()
 const { format } = usePrettyDates()
 const { service: serviceRoute, router } = useRoute()
 const { dashboard } = useDashboard()
 const { services, close } = dashboard.value.getServices('http')
 
 function lastRequest(s: Service) {
-    const n = max(s.metrics, 'http_request_timestamp')
+    const n = s.metrics.http_request_timestamp
     if (n == 0) {
         return '-'
     }
@@ -21,11 +19,11 @@ function lastRequest(s: Service) {
 }
 
 function requests(s: Service) {
-    return sum(s.metrics, 'http_requests_total')
+    return s.metrics.http_requests_total
 }
 
 function errors(s: Service) {
-    return sum(s.metrics, 'http_requests_errors_total')
+    return s.metrics.http_requests_errors_total
 }
 
 function goToService(s: Service, openInNewTab = false) {
@@ -66,6 +64,7 @@ onUnmounted(() => {
                             @mousedown.middle="goToService(service, true)">
                             <td>
                                 <router-link @click.stop class="row-link" :to="serviceRoute(service, 'http')">
+                                    <i class="bi bi-x-circle-fill red" style="vertical-align: middle;" v-if="service.status !== 'valid'" role="img" aria-label="Service status invalid"></i>
                                     {{ service.name }}
                                 </router-link>
                             </td>

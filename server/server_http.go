@@ -79,9 +79,9 @@ func (m *HttpManager) Update(e dynamic.ConfigEvent) {
 		return
 	}
 
-	info := m.app.GetHttp(cfg.Info.Name)
+	info := m.app.Http.Get(cfg.Info.Name)
 	if e.Event == dynamic.Delete {
-		m.app.RemoveHttp(e.Config)
+		m.app.Http.Remove(e.Config)
 		if info.Config == nil {
 			m.removeService(cfg.Info.Name)
 			m.stopEmptyServers()
@@ -92,7 +92,7 @@ func (m *HttpManager) Update(e dynamic.ConfigEvent) {
 	if info != nil {
 		servers = info.Servers
 	}
-	info = m.app.AddHttp(e.Config)
+	info = m.app.Http.Add(e.Config)
 	if servers != nil {
 		m.cleanupRemovedServers(info, servers)
 	}

@@ -136,7 +136,7 @@ const examplePath = computed(() => {
             </div>
             <div class="col" v-if="selected.description">
                 <p id="message-description" class="label">Description</p>
-                <div v-html="useMarkdown(selected.description).content" aria-labelledby="description"></div>
+                <div v-html="useMarkdown(selected.description).content" aria-labelledby="message-description"></div>
             </div>
         </div>
         <div class="row mt-2">

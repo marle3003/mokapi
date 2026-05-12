@@ -6,6 +6,9 @@ servers:
   broker:
     url: 127.0.0.1:19092
     protocol: kafka
+  mqtt:
+    url: 127.0.0.1:11883
+    protocol: mqtt
 channels:
   petstore.order-event:
     subscribe:

@@ -7,12 +7,17 @@ import (
 )
 
 type Encoder struct {
-	writer io.Writer
-	buffer [32]byte
+	writer          io.Writer
+	buffer          [32]byte
+	protocolVersion byte
 }
 
-func NewEncoder(writer io.Writer) *Encoder {
-	return &Encoder{writer: writer}
+func NewEncoder(writer io.Writer, protocolVersion byte) *Encoder {
+	return &Encoder{writer: writer, protocolVersion: protocolVersion}
+}
+
+func (e *Encoder) IsV5() bool {
+	return e.protocolVersion == 5
 }
 
 func (e *Encoder) writeByte(b byte) {
@@ -26,6 +31,22 @@ func (e *Encoder) writeByte(b byte) {
 func (e *Encoder) writeInt16(i int16) {
 	binary.BigEndian.PutUint16(e.buffer[:2], uint16(i))
 	_, err := e.writer.Write(e.buffer[:2])
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (e *Encoder) writeUInt16(i uint16) {
+	binary.BigEndian.PutUint16(e.buffer[:2], i)
+	_, err := e.writer.Write(e.buffer[:2])
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (e *Encoder) writeInt32(i int32) {
+	binary.BigEndian.PutUint32(e.buffer[:4], uint32(i))
+	_, err := e.writer.Write(e.buffer[:4])
 	if err != nil {
 		panic(err)
 	}
@@ -47,6 +68,23 @@ func (e *Encoder) writeString(s string) {
 			panic(err)
 		}
 		s = s[n:]
+	}
+}
+
+func (e *Encoder) WriteVariableInt(value int) {
+	for {
+		encodedByte := byte(value % 128)
+		value = value / 128
+
+		if value > 0 {
+			encodedByte |= 128
+		}
+
+		e.writeByte(encodedByte)
+
+		if value <= 0 {
+			break
+		}
 	}
 }
 

@@ -95,7 +95,7 @@ func (s *Service) GetApiSpec(_ context.Context, in GetApiSpecInput) (GetApiSpecO
 
 	if in.Name == "" {
 		if in.Type == "http" || len(in.Type) == 0 {
-			for _, api := range s.app.ListHttp() {
+			for _, api := range s.app.Http.List() {
 				if api.Info.Name == "" {
 					log.Warnf("mcp tool mokapi_get_api_spec: skip empty HTTTP API name")
 					continue
@@ -149,7 +149,7 @@ func (s *Service) GetApiSpec(_ context.Context, in GetApiSpecInput) (GetApiSpecO
 	}
 
 	if in.Type == "http" || len(in.Type) == 0 {
-		info := s.app.GetHttp(in.Name)
+		info := s.app.Http.Get(in.Name)
 		if info != nil {
 			result = append(result, ApiSpec{
 				Name: in.Name,

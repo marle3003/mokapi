@@ -5,9 +5,13 @@ test.use({ colorScheme: 'light' })
 // reset storage state
 test.use({ storageState: { cookies: [], origins: [] } });
 
-test('Visit LDAP Testserver', async ({ page }) => {
+test('Visit LDAP Testserver', async ({ page, baseURL }) => {
+    if (baseURL === 'http://localhost:8080') {
+        await page.goto('/dashboard')
+    } else {
+        await page.goto('/dashboard-demo')
+    }
 
-    await page.goto('/dashboard-demo');
     await page.getByRole('cell').getByText('HR Employee Directory').click();
 
     await test.step('Verify service info', async () => {

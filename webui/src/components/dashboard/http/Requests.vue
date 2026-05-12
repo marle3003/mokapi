@@ -6,6 +6,7 @@ import { usePrettyHttp } from '@/composables/http'
 import { Modal, Tooltip } from 'bootstrap'
 import RegexInput from '@/components/RegexInput.vue'
 import { getRouteName, useDashboard } from '@/composables/dashboard';
+import { usePrettyText } from '@/composables/usePrettyText'
 
 const props = defineProps({
     serviceName: { type: String, required: false},
@@ -13,7 +14,7 @@ const props = defineProps({
     method: { type: String, required: false}
 })
 
-const labels = ref<any[]>([])
+const labels = ref<any[]>([{ name: 'namespace', value: 'http' }])
 if (props.serviceName){
     labels.value.push({ name: 'name', value: props.serviceName })
     if (props.path){
@@ -26,15 +27,44 @@ if (props.serviceName){
 
 const router = useRouter()
 const { dashboard } = useDashboard()
-const { events: data, close } = dashboard.value.getEvents('http', ...labels.value)
+const { events: data, close } = dashboard.value.getEvents(...labels.value)
 const { format, duration } = usePrettyDates()
 const { formatStatusCode } = usePrettyHttp()
-const { services, close: closeServices } = dashboard.value.getServices('http', true);
+const { adaptiveTruncate } = usePrettyText()
+
+const services = ref<HttpService[] | null>(null)
+watch(
+  () => dashboard.value,
+  (db, _, onCleanup) => {
+    if (props.serviceName) {
+        return
+    }
+
+    const res = db.getServices('http', false)
+    
+    const stop = watch(
+      () => res.services.value,
+      (v) => {
+        services.value = v as HttpService[]
+      },
+      { immediate: true }
+    )
+
+    onCleanup(() => {
+      stop();
+      res.close();
+    });
+  },
+  { immediate: true }
+);
+
 const dialogRef = useTemplateRef('dialogRef')
 let dialog: Modal | undefined;
 const urlValue = useTemplateRef<ComponentPublicInstance<typeof RegexInput>>('urlValue');
 const requestHeaderValueRefs = ref<any[]>([])
 const responseHeaderValueRefs = ref<any[]>([])
+const urlCell = useTemplateRef<HTMLElement>('urlCell');
+const dynamicLimit = ref(80);
 type CheckboxFilter = 'Not' | 'Single' | 'Multi'
 interface Filter {
     service: MultiFilterItem
@@ -81,6 +111,14 @@ const filter = reactive<Filter>({
     }
 )
 
+const updateLimit = () => {
+  if (urlCell.value) {
+    const width = urlCell.value.offsetWidth;
+    dynamicLimit.value = Math.floor(width / 9);
+  }
+};
+
+const observer = new ResizeObserver(updateLimit);
 onMounted(() => {
     dialog = Modal.getOrCreateInstance(dialogRef.value!);
     const s = localStorage.getItem(`http-requests-${getFilterCacheKey()}`)
@@ -92,6 +130,9 @@ onMounted(() => {
     tooltipTriggerList.forEach(el => new Tooltip(el, {
         trigger: 'hover'
     }))
+    if (urlCell.value) {
+        observer.observe(urlCell.value);
+    }
 })
 
 function goToRequest(event: ServiceEvent, openInNewTab = false){
@@ -273,6 +314,10 @@ const hasDeprecatedRequests = computed(() => {
 
 const service = computed({
     get: function() {
+        if (!services.value) {
+            return ''
+        }
+
         if (filter.service.state === 'Single') {
             if (filter.service.value?.length === 0) {
                 const items = services.value
@@ -322,7 +367,7 @@ const method = computed({
 
 onUnmounted(() => {
     close()
-    closeServices()
+    observer.disconnect()
 })
 function showDialog() {
     dialog?.show()
@@ -590,7 +635,7 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                         <tr>
                             <th v-if="hasDeprecatedRequests" scope="col" class="text-center" style="width: 5px;"></th>
                             <th scope="col" class="text-left col-1">Method</th>
-                            <th scope="col" class="text-left col">URL</th>
+                            <th scope="col" class="text-left col" ref="urlCell">URL</th>
                             <th scope="col" class="text-center col-1">Status Code</th>
                             <th scope="col" class="text-center col-2">Time</th>
                             <th scope="col" class="text-center col-1">Duration</th>
@@ -608,7 +653,7 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                             </td>
                             <td>
                                 <router-link @click.stop class="row-link" :to="{ name: getRouteName('httpRequest').value, params: {id: event.id} }">
-                                    {{ eventData(event).request.url }}
+                                    {{ adaptiveTruncate(eventData(event).request.url, dynamicLimit) }}
                                 </router-link>
                             </td>
                             <td class="text-center">{{ formatStatusCode(eventData(event).response.statusCode.toString()) }}</td>

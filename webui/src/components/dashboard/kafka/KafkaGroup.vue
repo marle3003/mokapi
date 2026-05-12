@@ -2,7 +2,7 @@
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRoute, useRouter } from '@/router';
-import { computed, type Ref } from 'vue';
+import { computed, ref, watch, type Ref } from 'vue';
 import Message from '../../Message.vue';
 import { useKafka } from '@/composables/kafka';
 import { useMetrics } from '@/composables/metrics';
@@ -10,52 +10,47 @@ import { useMetrics } from '@/composables/metrics';
 const route = useRoute();
 const router = useRouter();
 const { format } = usePrettyDates();
-const { clientSoftware, formatAddress } = useKafka();
+const { formatAddress } = useKafka();
 const { dashboard } = useDashboard();
 const { value, filter, parseLabels, } = useMetrics();
 
 const serviceName = route.params.service!.toString();
 const groupName = route.params.group?.toString();
+const group = ref<KafkaGroup | null>(null)
+
+watch(
+  () => dashboard.value,
+  (db, _, onCleanup) => {
+    const res = db.getKafkaGroup(serviceName, groupName)
+
+    const stop = watch(
+      () => res.group.value,
+      (v) => {
+        group.value = v
+      },
+      { immediate: true }
+    )
+
+    onCleanup(() => {
+      stop();
+      res.close();
+    });
+  },
+  { immediate: true }
+);
 
 const result = dashboard.value.getService(serviceName, 'kafka');
 const service = result.service as Ref<KafkaService | null>
-const group = computed(() => {
-  if (!service.value) {
-    return null;
-  }
-  for (let group of service.value.groups) {
-    if (group.name == groupName) {
-      return group;
-    }
-  }
-  return null;
-})
+
 const lastRebalancing = computed(() => {
-  if (!service.value || !groupName) {
+  if (!group.value) {
     return '-'
   }
-  const timestamp = value(service.value.metrics, 'kafka_rebalance_timestamp', { name: 'group', value: groupName });
+  const timestamp = group.value.metrics.kafka_rebalance_timestamp;
   if (!timestamp) {
     return '-'
   }
   return format(timestamp)
-})
-const commits = computed(() => {
-  if (!service.value || !groupName) {
-    return []
-  }
-
-  const result = [];
-  const metrics = filter(service.value?.metrics, 'kafka_consumer_group_commit', { name: 'group', value: groupName });
-  for (const metric of metrics) {
-    const labels = parseLabels(metric)
-    result.push({
-      topic: labels['topic'],
-      partition: labels['partition'],
-      value: metric.value
-    })
-  }
-  return result;
 })
 
 function goToMember(member: KafkaMember, openInNewTab = false) {
@@ -95,6 +90,27 @@ function goToTopic(topic: string, openInNewTab = false) {
     router.push(to)
   }
 }
+const partitions = computed(() => {
+  if (!group.value) {
+    return []
+  }
+  let result: { topic: string, partition: number, commit: number, lag: number }[] = []
+  for (const topic in group.value.metrics.topics) {
+    const topicMetrics = group.value.metrics.topics[topic]
+    for (const partition of topicMetrics) {
+      if (!partition.kafka_consumer_group_commit) {
+        continue
+      }
+      result.push({
+        topic: topic,
+        partition: partition.partition,
+        commit: partition.kafka_consumer_group_commit,
+        lag: partition.kafka_consumer_group_lag
+      })
+    }
+  }
+  return result
+})
 </script>
 
 <template>
@@ -175,7 +191,7 @@ function goToTopic(topic: string, openInNewTab = false) {
                     </router-link>
                   </td>
                   <td>{{ formatAddress(member.addr) }}</td>
-                  <td>{{ clientSoftware(member) }}</td>
+                  <td>{{ member.software || '-' }}</td>
                   <td class="text-center">{{ format(member.heartbeat) }}</td>
                 </tr>
               </tbody>
@@ -194,12 +210,13 @@ function goToTopic(topic: string, openInNewTab = false) {
               <thead>
                 <tr>
                   <th scope="col" class="text-left">Topic</th>
-                  <th scope="col" class="text-center col-4">Partition</th>
-                  <th scope="col" class="text-center col-3">Committed Offset</th>
+                  <th scope="col" class="text-center col-2">Partition</th>
+                  <th scope="col" class="text-center col-2">Committed Offset</th>
+                  <th scope="col" class="text-center col-2">Lag</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="row in commits" :key="`${row.topic}-${row.partition}`" @click.left="goToTopic(row.topic)"
+                <tr v-for="row in partitions" :key="`${row.topic}-${row.partition}`" @click.left="goToTopic(row.topic)"
                   @mousedown.middle="goToTopic(row.topic, true)">
                   <td>
                     <router-link @click.stop class="row-link"
@@ -208,7 +225,8 @@ function goToTopic(topic: string, openInNewTab = false) {
                     </router-link>
                   </td>
                   <td class="text-center">{{ row.partition }}</td>
-                  <td class="text-center">{{ row.value }}</td>
+                  <td class="text-center">{{ row.commit }}</td>
+                  <td class="text-center">{{ row.lag }}</td>
                 </tr>
               </tbody>
             </table>

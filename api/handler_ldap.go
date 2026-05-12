@@ -8,10 +8,6 @@ import (
 	"strings"
 )
 
-type ldapSummary struct {
-	service
-}
-
 type ldapInfo struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description,omitempty"`
@@ -20,22 +16,28 @@ type ldapInfo struct {
 	Configs     []config `json:"configs,omitempty"`
 }
 
-func getLdapServices(store *runtime.LdapStore, m *monitor.Monitor) []interface{} {
+type ldapMetrics struct {
+	NumRequests float64 `json:"ldap_requests_total"`
+	LastRequest float64 `json:"ldap_request_timestamp"`
+}
+
+func getLdapServices(store *runtime.LdapStore, m *monitor.Monitor) []service {
 	list := store.List()
-	result := make([]interface{}, 0, len(list))
-	for _, hs := range list {
+	result := make([]service, 0, len(list))
+	for _, li := range list {
 		s := service{
-			Name:        hs.Info.Name,
-			Description: hs.Info.Description,
-			Version:     hs.Info.Version,
+			Name:        li.Info.Name,
+			Description: li.Info.Description,
+			Version:     li.Info.Version,
 			Type:        ServiceLdap,
 		}
 
-		if m != nil {
-			s.Metrics = m.FindAll(metrics.ByNamespace("ldap"), metrics.ByLabel("service", hs.Info.Name))
+		s.Metrics = ldapMetrics{
+			NumRequests: m.Ldap.RequestCounter.Sum(metrics.NewQuery(metrics.ByLabel("service", li.Info.Name))),
+			LastRequest: m.Ldap.LastRequest.Max(metrics.NewQuery(metrics.ByLabel("service", li.Info.Name))),
 		}
 
-		result = append(result, &ldapSummary{service: s})
+		result = append(result, s)
 	}
 	return result
 }

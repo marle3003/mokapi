@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"errors"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/static"
@@ -14,6 +15,7 @@ import (
 	"mokapi/sortedmap"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -35,6 +37,7 @@ type KafkaInfo struct {
 	configs               map[string]*dynamic.Config
 	seenTopics            map[string]bool
 	updateEventAndMetrics func(k *KafkaInfo)
+	m                     sync.Mutex
 }
 
 type KafkaHandler struct {
@@ -75,15 +78,30 @@ func (s *KafkaStore) List() []*KafkaInfo {
 }
 
 func (s *KafkaStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*KafkaInfo, error) {
+	cfg := getKafkaConfig(c)
+	if cfg == nil {
+		return nil, errors.New("no Kafka config found")
+	}
+
 	s.m.Lock()
-	defer s.m.Unlock()
 
 	if len(s.infos) == 0 {
 		s.infos = make(map[string]*KafkaInfo)
 	}
-	cfg := getKafkaConfig(c)
 	name := cfg.Info.Name
 	ki, ok := s.infos[name]
+	if !ok {
+		log.Debugf("starting Kafka Store with topics: %v", len(cfg.Channels))
+		ki = newKafkaInfo(store.NewEmpty(emitter, s.events, s.monitor.Kafka), s.updateEventStore)
+		log.Debugf("end Kafka Store with topics: %v", len(cfg.Channels))
+		ki.Config = cfg
+		s.infos[cfg.Info.Name] = ki
+	}
+
+	defer s.m.Unlock()
+
+	ki.m.Lock()
+	defer ki.m.Unlock()
 
 	eventStore, hasStoreConfig := s.cfg.Event.Store[name]
 	if !hasStoreConfig {
@@ -93,9 +111,6 @@ func (s *KafkaStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*Kafka
 	if !ok {
 		s.events.ResetStores(events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
 		s.events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("kafka").WithName(cfg.Info.Name))
-
-		ki = newKafkaInfo(store.NewEmpty(emitter, s.events, s.monitor.Kafka), s.updateEventStore)
-		s.infos[cfg.Info.Name] = ki
 	}
 	ki.addConfig(c, s.reader)
 
@@ -268,4 +283,31 @@ func (s *KafkaStore) updateEventStore(k *KafkaInfo) {
 		s.events.SetStore(int(eventStore.Size), traits)
 		k.seenTopics[topicName] = true
 	}
+}
+
+func HasKafkaBroker(c *dynamic.Config) (*asyncapi3.Config, bool) {
+	cfg, ok := IsAsyncApiConfig(c)
+	if !ok {
+		return nil, false
+	}
+	for it := cfg.Servers.Iter(); it.Next(); {
+		s := it.Value()
+		if s.Value == nil {
+			continue
+		}
+		if strings.ToLower(s.Value.Protocol) == "kafka" {
+			return cfg, true
+		}
+	}
+	return cfg, false
+}
+
+func (s *KafkaStore) Len() int {
+	if s == nil {
+		return 0
+	}
+
+	s.m.RLock()
+	defer s.m.RUnlock()
+	return len(s.infos)
 }

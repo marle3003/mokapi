@@ -45,3 +45,13 @@ func NewLogEvent(msg *smtp.Message, ctx *smtp.ClientContext, eh events.Handler, 
 func (l *Log) Title() string {
 	return fmt.Sprintf("%s", l.Subject)
 }
+
+func (l *Log) IndexFields() map[string]any {
+	m := map[string]any{
+		"from":      l.From,
+		"to":        l.To,
+		"messageId": l.MessageId,
+		"subject":   l.Subject,
+	}
+	return m
+}

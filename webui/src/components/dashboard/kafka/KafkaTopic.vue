@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import KafkaGroups from './KafkaGroups.vue'
 import KafkaMessages from './KafkaMessages.vue'
@@ -7,8 +7,11 @@ import KafkaPartition from './KafkaPartition.vue'
 import TopicConfig from './TopicConfig.vue'
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useRouter } from '@/router'
-import type { ServiceResult } from '@/types/dashboard'
 import { useMarkdown } from '@/composables/markdown'
+
+const props = defineProps<{
+    service: KafkaService,
+}>()
 
 const route = useRoute();
 const router = useRouter();
@@ -16,23 +19,7 @@ const serviceName = route.params.service!.toString()
 const topicName = route.params.topic?.toString()
 const { dashboard } = useDashboard()
 
-const result = ref<ServiceResult | null>(null);
-const service = computed(() => {
-  if (!result.value) {
-    return undefined;
-  }
-
-  return result.value.service as KafkaService
-})
-const topic = computed(() => {
-  if (!service.value) {return null}
-  for (let topic of service.value?.topics){
-    if (topic.name == topicName) {
-      return topic
-    }
-  }
-  return null
-})
+const topic = ref<KafkaTopic | null>(null)
 const activeTab = ref('tab-messages');
 
 function setTab(tab: string) {
@@ -43,10 +30,20 @@ function setTab(tab: string) {
 watch(
   () => dashboard.value,
   (db, _, onCleanup) => {
-    const res = db.getService(serviceName, 'kafka')
-    result.value = res;
+    const res = db.getKafkaTopic(serviceName, topicName)
+    
+    const stop = watch(
+      () => res.topic.value,
+      (v) => {
+        topic.value = v
+      },
+      { immediate: true }
+    )
 
-    onCleanup(() => res.close());
+    onCleanup(() => {
+      stop();
+      res.close();
+    });
   },
   { immediate: true }
 );
@@ -58,7 +55,7 @@ watch(() => route.hash, (hash) => {
 </script>
 
 <template>
-  <div v-if="service != null && topic">
+  <div v-if="topic">
       <div class="card-group">
         <section class="card" aria-label="Info">
             <div class="card-body">
@@ -83,11 +80,18 @@ watch(() => route.hash, (hash) => {
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col">
+                    <div class="col" v-if="topic.title">
+                        <p id="title" class="label">Title</p>
+                        <div aria-labelledby="title">{{ topic.title }}</div>
+                    </div>
+                    <div class="col" v-if="topic.summary">
+                        <p id="summary" class="label">Summary</p>
+                        <div aria-labelledby="summary">{{ topic.summary }}</div>
+                    </div>
+                    <div class="col" v-if="topic.description">
                         <p id="description" class="label">Description</p>
                         <div v-html="useMarkdown(topic.description).content" aria-labelledby="description"></div>
                     </div>
-                    
                 </div>
             </div>
           </section>
@@ -138,13 +142,13 @@ watch(() => route.hash, (hash) => {
             </div>
             <div class="tab-content" id="tabTopic">
               <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-messages' }" id="messages" role="tabpanel" aria-labelledby="messages-tab">
-                <kafka-messages :service="service" :topicName="topicName" />
+                <kafka-messages :service="service" :topic="topic" />
               </div>
               <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-partitions' }" id="partitions" role="tabpanel" aria-labelledby="partitions-tab">
                 <kafka-partition :topic="topic" />
               </div>
               <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-groups' }" id="groups" role="tabpanel" aria-labelledby="groups-tab">
-                <kafka-groups :service="service" :topicName="topicName"/>
+                <kafka-groups :service="service" :topic="topic"/>
               </div>
               <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-configs' }" id="configs" role="tabpanel" aria-labelledby="configs-tab">
                 <topic-config :topic="topic" />

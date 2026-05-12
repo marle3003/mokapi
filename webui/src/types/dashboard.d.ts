@@ -8,7 +8,12 @@ export interface Dashboard {
     getServices(type?: string, doRefresh?: boolean): ServicesResult
     getService(name: string, type: string): ServiceResult
 
-    getEvents(namespace: string, ...labels: Label[]): EventsResult
+    getHttpOperations(serviceName: string, path?: string, method?: string): HttpOperationsResult
+    getKafkaTopic(serviceName: string, topicName: string): KafkaTopicResult
+    getKafkaGroup(serviceName: string, groupName: string): KafkaGroupResult
+    getKafkaClient(serviceName: string, clientId: string): KafkaClientResult
+
+    getEvents(...labels: Label[]): EventsResult
     getEvent(id: string): EventResult
 
     getExample(request: ExampleRequest): ExampleResult
@@ -50,6 +55,18 @@ export interface ServicesResult {
 
 export interface ServiceResult {
     service: Ref<Service | null>
+    isLoading: Ref<boolean>
+    close(): void
+}
+
+export interface HttpOperationsResult {
+    operations: Ref<HttpOperation[] | null>
+    isLoading: Ref<boolean>
+    close(): void
+}
+
+export interface KafkaTopicResult {
+    topic: Ref<KafkaTopic | null>
     isLoading: Ref<boolean>
     close(): void
 }

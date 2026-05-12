@@ -10,6 +10,7 @@ import (
 	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"mokapi/smtp"
 	"mokapi/smtp/smtptest"
@@ -45,7 +46,7 @@ func TestApp_AddSmtp(t *testing.T) {
 				rr := smtptest.NewRecorder()
 				h.ServeSMTP(rr, smtp.NewDataRequest(&smtp.Message{}, ctx))
 
-				require.Equal(t, float64(1), m.Mails.Sum())
+				require.Equal(t, float64(1), m.Mails.Sum(metrics.NewQuery()))
 			},
 		},
 		{
