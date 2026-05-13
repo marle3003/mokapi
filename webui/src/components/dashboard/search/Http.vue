@@ -24,6 +24,9 @@ const type = computed(() => {
     return 'api'
 })
 const methods = computed(() => {
+    if (!props.item.params.methods) {
+        return []
+    }
     return props.item.params.methods.split(',')
 })
 </script>
@@ -46,7 +49,7 @@ const methods = computed(() => {
         <div class="text-muted small mb-1">
             <span v-if="type !== 'api'"> {{ item.domain }} &middot; </span>
             <span v-if="type === 'path'">
-                <span v-for="m of methods" :key="m" class="badge operation me-1 text-uppercase" :class="m">{{ m }}</span>
+                <span v-for="m of methods" :key="m" class="badge operation me-1 text-uppercase" :class="m.toLocaleLowerCase()">{{ m }}</span>
                 &middot; 
             </span>
             

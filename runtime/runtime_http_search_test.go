@@ -155,7 +155,7 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0",
 					openapitest.WithInfo("foo", "1.0", ""),
-					openapitest.WithPath("/pets"),
+					openapitest.WithPath("/pets", openapitest.WithOperation(http.MethodGet)),
 				)
 				app.Http.Add(toConfig(cfg))
 
@@ -164,9 +164,9 @@ func TestIndex_Http(t *testing.T) {
 				waitSearchIndex(t, func() bool {
 					r, err = app.Search(search.Request{QueryText: "pets", Limit: 10})
 					require.NoError(t, err)
-					return len(r.Results) == 1
+					return len(r.Results) == 2
 				})
-				require.Len(t, r.Results, 1)
+				require.Len(t, r.Results, 2)
 				require.Equal(t,
 					search.ResultItem{
 						Type:      "HTTP",
@@ -177,6 +177,7 @@ func TestIndex_Http(t *testing.T) {
 							"type":    "http",
 							"service": "foo",
 							"path":    "/pets",
+							"methods": "GET",
 						},
 					},
 					r.Results[0])
