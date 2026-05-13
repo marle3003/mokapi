@@ -155,7 +155,7 @@ func TestIndex_Http(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0",
 					openapitest.WithInfo("foo", "1.0", ""),
-					openapitest.WithPath("/pets"),
+					openapitest.WithPath("/pets", openapitest.WithOperation(http.MethodGet)),
 				)
 				app.Http.Add(toConfig(cfg))
 
@@ -164,10 +164,11 @@ func TestIndex_Http(t *testing.T) {
 				waitSearchIndex(t, func() bool {
 					r, err = app.Search(search.Request{QueryText: "pets", Limit: 10})
 					require.NoError(t, err)
-					return len(r.Results) == 1
+					return len(r.Results) == 2
 				})
-				require.Len(t, r.Results, 1)
-				require.Equal(t,
+				require.Len(t, r.Results, 2)
+				require.Contains(t,
+					r.Results,
 					search.ResultItem{
 						Type:      "HTTP",
 						Domain:    "foo",
@@ -177,9 +178,25 @@ func TestIndex_Http(t *testing.T) {
 							"type":    "http",
 							"service": "foo",
 							"path":    "/pets",
+							"methods": "GET",
 						},
 					},
-					r.Results[0])
+				)
+				require.Contains(t,
+					r.Results,
+					search.ResultItem{
+						Type:      "HTTP",
+						Domain:    "foo",
+						Title:     "/pets",
+						Fragments: []string{"/<mark>pets</mark>"},
+						Params: map[string]string{
+							"type":    "http",
+							"service": "foo",
+							"path":    "/pets",
+							"method":  "GET",
+						},
+					},
+				)
 			},
 		},
 		{
@@ -220,6 +237,7 @@ func TestIndex_Http(t *testing.T) {
 							"type":    "http",
 							"service": "foo",
 							"path":    "/pets",
+							"methods": "",
 						},
 					},
 					r.Results[0])

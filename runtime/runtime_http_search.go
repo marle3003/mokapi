@@ -235,6 +235,7 @@ func getHttpSearchResult(fields map[string]string, discriminator []string) (sear
 			"type":    strings.ToLower(result.Type),
 			"service": result.Domain,
 			"path":    fields["path"],
+			"methods": fields["meta.methods"],
 		}
 	case "operation":
 		result.Domain = fields["api"]
