@@ -167,7 +167,8 @@ func TestIndex_Http(t *testing.T) {
 					return len(r.Results) == 2
 				})
 				require.Len(t, r.Results, 2)
-				require.Equal(t,
+				require.Contains(t,
+					r.Results,
 					search.ResultItem{
 						Type:      "HTTP",
 						Domain:    "foo",
@@ -180,7 +181,22 @@ func TestIndex_Http(t *testing.T) {
 							"methods": "GET",
 						},
 					},
-					r.Results[0])
+				)
+				require.Contains(t,
+					r.Results,
+					search.ResultItem{
+						Type:      "HTTP",
+						Domain:    "foo",
+						Title:     "/pets",
+						Fragments: []string{"/<mark>pets</mark>"},
+						Params: map[string]string{
+							"type":    "http",
+							"service": "foo",
+							"path":    "/pets",
+							"method":  "GET",
+						},
+					},
+				)
 			},
 		},
 		{
