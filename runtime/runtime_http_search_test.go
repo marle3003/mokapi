@@ -237,6 +237,7 @@ func TestIndex_Http(t *testing.T) {
 							"type":    "http",
 							"service": "foo",
 							"path":    "/pets",
+							"methods": "",
 						},
 					},
 					r.Results[0])
