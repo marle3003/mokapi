@@ -54,7 +54,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/markdown-it-container": "^4.0.0",
     "@types/node": "^25.6.2",
-    "@vitejs/plugin-vue": "^6.0.6",
+    "@vitejs/plugin-vue": "^6.0.7",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/eslint-config-typescript": "^14.7.0",
     "@vue/tsconfig": "^0.9.1",
