@@ -12,12 +12,13 @@ type Result struct {
 }
 
 type ResultItem struct {
-	Type      string            `json:"type"`
-	Domain    string            `json:"domain,omitempty"`
-	Title     string            `json:"title"`
-	Fragments []string          `json:"fragments,omitempty"`
-	Params    map[string]string `json:"params"`
-	Time      string            `json:"time,omitempty"`
+	Type        string            `json:"type"`
+	Domain      string            `json:"domain,omitempty"`
+	Title       string            `json:"title"`
+	Description string            `json:"description,omitempty"`
+	Fragments   []string          `json:"fragments,omitempty"`
+	Params      map[string]string `json:"params"`
+	Time        string            `json:"time,omitempty"`
 }
 
 type ErrNotEnabled struct{}

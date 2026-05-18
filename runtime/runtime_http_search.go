@@ -21,6 +21,7 @@ type httpSearchIndexData struct {
 	Api           string            `json:"api"`
 	Name          string            `json:"name"`
 	Version       string            `json:"version"`
+	Summary       string            `json:"summary"`
 	Description   string            `json:"description"`
 	Contact       *openapi.Contact  `json:"contact"`
 	Servers       []*openapi.Server `json:"servers"`
@@ -84,6 +85,7 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 		Api:           cfg.Info.Name,
 		Name:          cfg.Info.Name,
 		Version:       cfg.Info.Version,
+		Summary:       cfg.Info.Summary,
 		Description:   cfg.Info.Description,
 		Contact:       cfg.Info.Contact,
 		Servers:       cfg.Servers,
@@ -220,6 +222,7 @@ func getHttpSearchResult(fields map[string]string, discriminator []string) (sear
 
 	if len(discriminator) == 1 {
 		result.Title = fields["name"]
+		result.Description = BuildDescription(150, fields["summary"], fields["description"])
 		result.Params = map[string]string{
 			"type":    strings.ToLower(result.Type),
 			"service": result.Title,
@@ -231,6 +234,7 @@ func getHttpSearchResult(fields map[string]string, discriminator []string) (sear
 	case "path":
 		result.Domain = fields["api"]
 		result.Title = fields["path"]
+		result.Description = BuildDescription(150, fields["summary"], fields["description"])
 		result.Params = map[string]string{
 			"type":    strings.ToLower(result.Type),
 			"service": result.Domain,
@@ -240,6 +244,7 @@ func getHttpSearchResult(fields map[string]string, discriminator []string) (sear
 	case "operation":
 		result.Domain = fields["api"]
 		result.Title = fields["path"]
+		result.Description = BuildDescription(150, fields["summary"], fields["description"])
 		result.Params = map[string]string{
 			"type":    strings.ToLower(result.Type),
 			"service": result.Domain,
