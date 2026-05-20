@@ -116,10 +116,11 @@ func TestIndex_Kafka(t *testing.T) {
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
-						Type:      "Kafka",
-						Domain:    "Kafka Test server",
-						Title:     "Topic foo",
-						Fragments: []string{"<mark>first</mark>"},
+						Type:        "Kafka",
+						Domain:      "Kafka Test server",
+						Title:       "Topic foo",
+						Description: `first`,
+						Fragments:   []string{"<mark>first</mark>"},
 						Params: map[string]string{
 							"type":    "kafka",
 							"service": "Kafka Test server",
@@ -133,10 +134,11 @@ func TestIndex_Kafka(t *testing.T) {
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
-						Type:      "Kafka",
-						Domain:    "Kafka Test server",
-						Title:     "Topic address-name",
-						Fragments: []string{"<mark>second</mark>"},
+						Type:        "Kafka",
+						Domain:      "Kafka Test server",
+						Title:       "Topic address-name",
+						Description: `second`,
+						Fragments:   []string{"<mark>second</mark>"},
 						Params: map[string]string{
 							"type":    "kafka",
 							"service": "Kafka Test server",
@@ -150,10 +152,11 @@ func TestIndex_Kafka(t *testing.T) {
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
-						Type:      "Kafka",
-						Domain:    "Kafka Test server",
-						Title:     "Topic yuh",
-						Fragments: []string{"<mark>third</mark>"},
+						Type:        "Kafka",
+						Domain:      "Kafka Test server",
+						Title:       "Topic yuh",
+						Description: `third`,
+						Fragments:   []string{"<mark>third</mark>"},
 						Params: map[string]string{
 							"type":    "kafka",
 							"service": "Kafka Test server",

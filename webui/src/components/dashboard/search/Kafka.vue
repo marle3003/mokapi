@@ -32,6 +32,8 @@ const title = computed(() => {
             <span>{{ item.type }}</span>
         </div>
 
+        <div v-if="item.description" class="small">{{ item.description }}</div>
+
         <p class="small mb-0" v-html="item.fragments?.join(' ... ')"></p>
 
     </div>

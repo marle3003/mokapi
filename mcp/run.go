@@ -193,12 +193,13 @@ type SearchResult struct {
 }
 
 type SearchResultItem struct {
-	Type      string            `json:"type"`
-	Domain    string            `json:"domain,omitempty"`
-	Title     string            `json:"title"`
-	Fragments []string          `json:"fragments,omitempty"`
-	Metadata  map[string]string `json:"metadata"`
-	Time      string            `json:"time,omitempty"`
+	Type        string            `json:"type"`
+	Domain      string            `json:"domain,omitempty"`
+	Title       string            `json:"title"`
+	Description string            `json:"description"`
+	Fragments   []string          `json:"fragments,omitempty"`
+	Metadata    map[string]string `json:"metadata"`
+	Time        string            `json:"time,omitempty"`
 }
 
 func (m *mokapi) search(queryText string, index int, limit int) (SearchResult, error) {
@@ -220,12 +221,13 @@ func (m *mokapi) search(queryText string, index int, limit int) (SearchResult, e
 	}
 	for _, item := range sr.Results {
 		result.Items = append(result.Items, SearchResultItem{
-			Type:      item.Type,
-			Domain:    item.Domain,
-			Title:     item.Title,
-			Fragments: item.Fragments,
-			Metadata:  item.Params,
-			Time:      item.Time,
+			Type:        item.Type,
+			Domain:      item.Domain,
+			Title:       item.Title,
+			Description: item.Description,
+			Fragments:   item.Fragments,
+			Metadata:    item.Params,
+			Time:        item.Time,
 		})
 	}
 	return result, nil

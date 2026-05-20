@@ -254,7 +254,7 @@ function facetTitle(s: string) {
 
         <!-- Search Input -->
         <div class="row justify-content-center search-input">
-          <div class="col-8">
+          <div class="col-12 col-lg-8 col-xl-8">
 
             <div class="input-group input-group-lg shadow-sm">
               <input type="text" id="search-input" class="form-control"
@@ -358,7 +358,7 @@ function facetTitle(s: string) {
 
         <!-- Results -->
         <div v-if="searchResult && searchResult.total > 0" class="row justify-content-center">
-          <div class="col-12 col-lg-10 col-xl-8">
+          <div class="col-12 col-lg-8 col-xl-8">
 
             <div class="search-results">
 

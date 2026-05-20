@@ -151,12 +151,13 @@ func TestService_Run_Search(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, mcp.SearchResult{Items: []mcp.SearchResultItem{
 					{
-						Type:      "HTTP",
-						Domain:    "foo",
-						Title:     "/foo/payment/bar",
-						Fragments: []string{"<mark>POST</mark>"},
-						Metadata:  map[string]string{"method": "POST", "path": "/foo/payment/bar", "service": "foo", "type": "http"},
-						Time:      "",
+						Type:        "HTTP",
+						Domain:      "foo",
+						Title:       "/foo/payment/bar",
+						Description: "Payment summary",
+						Fragments:   []string{"<mark>POST</mark>"},
+						Metadata:    map[string]string{"method": "POST", "path": "/foo/payment/bar", "service": "foo", "type": "http"},
+						Time:        "",
 					}}, Total: 1}, r.Result)
 
 				r, err = s.GetRunResponse(

@@ -106,6 +106,8 @@ interface SearchResultItem {
     domain: string
     /** A human-readable title or summary */
     title: string
+    /** A human-readable description */
+    description: string
     /**
      * Relevant text snippets showing where the match was found.
      * Useful to see context like 'GET /pets' or 'Topic: orders'.
