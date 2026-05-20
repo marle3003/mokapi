@@ -235,6 +235,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		} else {
 			body, err = mediaType.Schema.Marshal(response.Data, contentType)
 			if err != nil {
+				err = fmt.Errorf("HTTP body marshalling failed.\n\nBody: %v\n\n%w", lib.PrettyPrint(response.Data), err)
 				writeError(rw, r, err, h.config.Info.Name)
 				return
 			}

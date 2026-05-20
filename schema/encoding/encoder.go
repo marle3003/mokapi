@@ -10,9 +10,6 @@ import (
 	"strings"
 )
 
-const marshalError = "encoding data to '%v' failed: %w"
-const marshalErrorList = "encoding data to '%v' failed:\n%w"
-
 type Encoder struct {
 	r *schema.Schema
 }
@@ -31,15 +28,9 @@ func (e *Encoder) Write(v interface{}, contentType media.ContentType) ([]byte, e
 
 	i, err := p.ParseWith(v, e.r)
 	if err != nil {
-		if uw, ok := err.(interface{ Unwrap() []error }); ok {
-			errs := uw.Unwrap()
-			if len(errs) > 1 {
-				return nil, fmt.Errorf(marshalErrorList, contentType.String(), err)
-			}
-		}
-
-		return nil, fmt.Errorf(marshalError, contentType.String(), err)
+		return nil, err
 	}
+
 	var b []byte
 	switch {
 	case contentType.Subtype == "json" || strings.HasSuffix(contentType.Subtype, "+json"):
@@ -64,7 +55,7 @@ func (e *Encoder) Write(v interface{}, contentType media.ContentType) ([]byte, e
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf(marshalError, contentType.String(), err)
+		return nil, err
 	}
 	return b, nil
 }

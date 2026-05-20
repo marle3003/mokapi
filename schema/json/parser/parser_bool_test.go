@@ -1,11 +1,12 @@
 package parser_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParser_ParseBoolean(t *testing.T) {
@@ -39,7 +40,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   "true",
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected boolean but got string")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/type: invalid type, expected boolean but got string")
 			},
 		},
 		{
@@ -68,7 +69,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   0,
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected boolean but got integer")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/type: invalid type, expected boolean but got integer")
 			},
 		},
 		{
@@ -77,7 +78,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   1,
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected boolean but got integer")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/type: invalid type, expected boolean but got integer")
 			},
 		},
 		{
@@ -85,7 +86,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   []bool{true},
 			schema: schematest.New("boolean"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected boolean but got array")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/type: invalid type, expected boolean but got array")
 			},
 		},
 		{
@@ -93,7 +94,7 @@ func TestParser_ParseBoolean(t *testing.T) {
 			data:   false,
 			schema: schematest.New("boolean", schematest.WithConst(true)),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/const: value 'false' does not match const 'true'")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/const: value 'false' does not match const 'true'")
 			},
 		},
 		{

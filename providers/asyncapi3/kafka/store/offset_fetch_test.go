@@ -359,7 +359,7 @@ func TestOffsetFetch_Validation(t *testing.T) {
 
 				require.Equal(t, 6, len(hook.Entries))
 				require.Equal(t, logrus.ErrorLevel, hook.LastEntry().Level)
-				require.Equal(t, "kafka OffsetFetch: invalid consumer 'kafkatest' for topic foo: invalid clientId: error count 1:\n\t- #/pattern: string 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'", hook.LastEntry().Message)
+				require.Equal(t, "kafka OffsetFetch: invalid consumer 'kafkatest' for topic foo: invalid clientId: Validation error count 1:\n\t- #/pattern: string 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'", hook.LastEntry().Message)
 			},
 		},
 		{
@@ -400,7 +400,7 @@ func TestOffsetFetch_Validation(t *testing.T) {
 
 				require.Equal(t, 6, len(hook.Entries))
 				require.Equal(t, logrus.ErrorLevel, hook.LastEntry().Level)
-				require.Equal(t, "kafka OffsetFetch: invalid consumer 'kafkatest' for topic foo: invalid groupId: error count 1:\n\t- #/pattern: string 'bar' does not match regex pattern '^[A-Z]{10}[0-5]$'", hook.LastEntry().Message)
+				require.Equal(t, "kafka OffsetFetch: invalid consumer 'kafkatest' for topic foo: invalid groupId: Validation error count 1:\n\t- #/pattern: string 'bar' does not match regex pattern '^[A-Z]{10}[0-5]$'", hook.LastEntry().Message)
 			},
 		},
 		{

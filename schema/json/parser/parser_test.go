@@ -64,7 +64,7 @@ func TestParser_NoType(t *testing.T) {
 				schematest.WithMaxLength(10),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/maxLength: string 'foobar1234567' exceeds maximum of 10")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/maxLength: string 'foobar1234567' exceeds maximum of 10")
 			},
 		},
 		{
@@ -72,7 +72,7 @@ func TestParser_NoType(t *testing.T) {
 			data:   nil,
 			schema: schematest.New("string"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected string but got null")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/type: invalid type, expected string but got null")
 			},
 		},
 		{
@@ -89,7 +89,7 @@ func TestParser_NoType(t *testing.T) {
 			data:   "foo",
 			schema: schematest.New("string", schematest.WithConst("bar")),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/const: value 'foo' does not match const 'bar'")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/const: value 'foo' does not match const 'bar'")
 			},
 		},
 		{
@@ -97,7 +97,7 @@ func TestParser_NoType(t *testing.T) {
 			data:   "foo",
 			schema: schematest.New("string", schematest.WithConst(3)),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 2:\n\t- #/const: const value does not match schema\n\t\t- #/const/type: invalid type, expected string but got integer")
+				require.EqualError(t, err, "Validation error count 2:\n\t- #/const: const value does not match schema\n\t\t- #/const/type: invalid type, expected string but got integer")
 			},
 		},
 		{
@@ -105,7 +105,7 @@ func TestParser_NoType(t *testing.T) {
 			data:   "foo",
 			schema: schematest.NewTypes(nil, schematest.WithNot(schematest.New("string"))),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/not: is valid against schema")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/not: is valid against schema")
 			},
 		},
 		{
@@ -126,7 +126,7 @@ func TestParser_NoType(t *testing.T) {
 				),
 			),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/items/0/foo/type: invalid type, expected string but got integer")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/items/0/foo/type: invalid type, expected string but got integer")
 			},
 		},
 	}
@@ -165,7 +165,7 @@ func TestParser_Null(t *testing.T) {
 			data:   123,
 			schema: schematest.New("null"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected null but got integer")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/type: invalid type, expected null but got integer")
 			},
 		},
 		{
@@ -200,7 +200,7 @@ func TestParser_Null(t *testing.T) {
 			data:   123,
 			schema: schematest.NewTypes([]string{"null", "string"}),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected [null, string] but got integer")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/type: invalid type, expected [null, string] but got integer")
 			},
 		},
 		{
@@ -208,7 +208,7 @@ func TestParser_Null(t *testing.T) {
 			data:   123,
 			schema: schematest.NewTypes([]string{"string", "null"}),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected [string, null] but got integer")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/type: invalid type, expected [string, null] but got integer")
 			},
 		},
 		{
@@ -234,7 +234,7 @@ func TestParser_Null(t *testing.T) {
 			data:   map[string]interface{}{"foo": 123},
 			schema: schematest.NewTypes([]string{"null", "object"}, schematest.WithProperty("foo", schematest.New("string"))),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/foo/type: invalid type, expected string but got integer")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/foo/type: invalid type, expected string but got integer")
 			},
 		},
 		{
@@ -242,7 +242,7 @@ func TestParser_Null(t *testing.T) {
 			data:   map[string]interface{}{"foo": 123},
 			schema: schematest.NewTypes([]string{"object", "null"}, schematest.WithProperty("foo", schematest.New("string"))),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/foo/type: invalid type, expected string but got integer")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/foo/type: invalid type, expected string but got integer")
 			},
 		},
 		{
@@ -259,7 +259,7 @@ func TestParser_Null(t *testing.T) {
 			data:   map[string]interface{}{"foo": nil},
 			schema: schematest.New("null"),
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected null but got object")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/type: invalid type, expected null but got object")
 			},
 		},
 	}

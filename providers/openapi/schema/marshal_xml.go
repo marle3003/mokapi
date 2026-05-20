@@ -12,7 +12,7 @@ import (
 
 func marshalXml(i interface{}, r *Schema) ([]byte, error) {
 	if r == nil {
-		return nil, fmt.Errorf("no schema provided")
+		return nil, fmt.Errorf("failed to marshal XML: no schema provided")
 	}
 
 	b := &bytes.Buffer{}

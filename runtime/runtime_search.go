@@ -67,3 +67,61 @@ func getConfigSearchResult(fields map[string]string, _ []string) (search.ResultI
 		},
 	}, nil
 }
+
+func BuildDescription(max int, values ...string) string {
+	seen := map[string]bool{}
+	var parts []string
+
+	for _, v := range values {
+		v = normalize(v)
+
+		if v == "" || seen[v] {
+			continue
+		}
+
+		seen[v] = true
+		parts = append(parts, v)
+	}
+
+	return truncateWords(strings.Join(parts, " "), max)
+}
+
+func truncateWords(s string, max int) string {
+	if len(s) <= max {
+		return s
+	}
+
+	words := strings.Fields(s)
+	var result strings.Builder
+	for _, w := range words {
+		next := w
+		if result.Len() > 0 {
+			next = " " + w
+		}
+
+		if result.Len()+len(next) > max {
+			break
+		}
+		result.WriteString(next)
+	}
+
+	r := result.String()
+	if r != s {
+		r += "..."
+	}
+	return r
+}
+
+func normalize(s string) string {
+	s = strings.TrimSpace(s)
+
+	// Replace line breaks/tabs with spaces
+	s = strings.ReplaceAll(s, "\n", " ")
+	s = strings.ReplaceAll(s, "\r", " ")
+	s = strings.ReplaceAll(s, "\t", " ")
+
+	// Collapse multiple spaces
+	s = strings.Join(strings.Fields(s), " ")
+
+	return s
+}

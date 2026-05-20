@@ -61,7 +61,7 @@ func TestHandler_Response(t *testing.T) {
 			},
 			test: func(t *testing.T, rr *httptest.ResponseRecorder, eh events.Handler) {
 				require.Equal(t, http.StatusInternalServerError, rr.Code)
-				require.Equal(t, "encoding data to 'application/json' failed: error count 1:\n\t- #/format: string 'foo' does not match format 'date'\n", rr.Body.String())
+				require.Equal(t, "HTTP body marshalling failed.\n\nBody: foo\n\nValidation error count 1:\n\t- #/format: string 'foo' does not match format 'date'\n", rr.Body.String())
 			},
 		},
 		{
@@ -118,7 +118,7 @@ func TestHandler_Response(t *testing.T) {
 			},
 			test: func(t *testing.T, rr *httptest.ResponseRecorder, eh events.Handler) {
 				require.Equal(t, http.StatusInternalServerError, rr.Code)
-				require.Equal(t, "encoding data to 'application/octet-stream' failed: not supported encoding of content types 'application/octet-stream', except simple data types\n", rr.Body.String())
+				require.Equal(t, "HTTP body marshalling failed.\n\nBody: {\n  \"foo\": \"bar\"\n}\n\nnot supported encoding of content types 'application/octet-stream', except simple data types\n", rr.Body.String())
 			},
 		},
 		{

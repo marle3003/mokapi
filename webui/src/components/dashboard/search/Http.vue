@@ -56,6 +56,8 @@ const methods = computed(() => {
             {{ item.type }}
         </div>
 
+        <div v-if="item.description" class="small">{{ item.description }}</div>
+
         <p class="small mb-0" v-html="item.fragments?.join(' ... ')"></p>
 
     </div>

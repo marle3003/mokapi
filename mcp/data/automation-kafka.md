@@ -73,6 +73,10 @@ interface KafkaMessage {
     summary: string
     description: string
     contentType: string
+    /**
+     * JSON schema describing the Kafka message payload.
+     * Use fake(payload) to generate valid example data.
+     */
     payload: Schema;
     key: Schema
     headers?: Schema;

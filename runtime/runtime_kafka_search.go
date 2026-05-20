@@ -146,6 +146,7 @@ func getKafkaSearchResult(fields map[string]string, discriminator []string) (sea
 
 	if len(discriminator) == 1 {
 		result.Title = fields["name"]
+		result.Description = BuildDescription(150, fields["description"])
 		result.Params = map[string]string{
 			"type":    strings.ToLower(result.Type),
 			"service": result.Title,
@@ -167,6 +168,7 @@ func getKafkaSearchResult(fields map[string]string, discriminator []string) (sea
 		} else if len(fields["title"]) > 0 {
 			title = fields["title"]
 		}
+		result.Description = BuildDescription(150, fields["summary"], fields["description"])
 		result.Domain = fields["api"]
 		result.Title = fmt.Sprintf("Topic %s", title)
 		result.Params = map[string]string{

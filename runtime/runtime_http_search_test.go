@@ -35,7 +35,7 @@ func TestIndex_Http(t *testing.T) {
 		{
 			name: "Search by name",
 			test: func(t *testing.T, app *runtime.App) {
-				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))
+				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "An API description"))
 				app.Http.Add(toConfig(cfg))
 
 				var r search.Result
@@ -48,9 +48,72 @@ func TestIndex_Http(t *testing.T) {
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
-						Type:      "HTTP",
-						Title:     "foo",
-						Fragments: []string{"<mark>foo</mark>"},
+						Type:        "HTTP",
+						Title:       "foo",
+						Description: "An API description",
+						Fragments:   []string{"<mark>foo</mark>"},
+						Params: map[string]string{
+							"type":    "http",
+							"service": "foo",
+						},
+					},
+					r.Results[0])
+			},
+		},
+		{
+			name: "summary takes precedence over description.",
+			test: func(t *testing.T, app *runtime.App) {
+				cfg := openapitest.NewConfig("3.0",
+					openapitest.WithInfo("foo", "", "An API description"),
+					openapitest.WithSummary("A short summary"),
+				)
+				app.Http.Add(toConfig(cfg))
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "foo", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
+				require.Len(t, r.Results, 1)
+				require.Equal(t,
+					search.ResultItem{
+						Type:        "HTTP",
+						Title:       "foo",
+						Description: "A short summary An API description",
+						Fragments:   []string{"<mark>foo</mark>"},
+						Params: map[string]string{
+							"type":    "http",
+							"service": "foo",
+						},
+					},
+					r.Results[0])
+			},
+		},
+		{
+			name: "truncate summary",
+			test: func(t *testing.T, app *runtime.App) {
+				cfg := openapitest.NewConfig("3.0",
+					openapitest.WithInfo("foo", "", "An API description"),
+					openapitest.WithSummary("Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum."),
+				)
+				app.Http.Add(toConfig(cfg))
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "foo", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 1
+				})
+				require.Len(t, r.Results, 1)
+				require.Equal(t,
+					search.ResultItem{
+						Type:        "HTTP",
+						Title:       "foo",
+						Description: "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam...",
+						Fragments:   []string{"<mark>foo</mark>"},
 						Params: map[string]string{
 							"type":    "http",
 							"service": "foo",
@@ -218,9 +281,10 @@ func TestIndex_Http(t *testing.T) {
 				require.Len(t, r.Results, 2)
 				require.Equal(t,
 					search.ResultItem{
-						Type:      "HTTP",
-						Title:     "foo",
-						Fragments: []string{"a <mark>description</mark>"},
+						Type:        "HTTP",
+						Title:       "foo",
+						Description: "a description",
+						Fragments:   []string{"a <mark>description</mark>"},
 						Params: map[string]string{
 							"type":    "http",
 							"service": "foo",
@@ -229,10 +293,11 @@ func TestIndex_Http(t *testing.T) {
 					r.Results[1])
 				require.Equal(t,
 					search.ResultItem{
-						Type:      "HTTP",
-						Domain:    "foo",
-						Title:     "/pets",
-						Fragments: []string{"a <mark>description</mark>"},
+						Type:        "HTTP",
+						Domain:      "foo",
+						Title:       "/pets",
+						Description: `a description`,
+						Fragments:   []string{"a <mark>description</mark>"},
 						Params: map[string]string{
 							"type":    "http",
 							"service": "foo",
@@ -251,6 +316,7 @@ func TestIndex_Http(t *testing.T) {
 					openapitest.WithPath("/pets",
 						openapitest.WithPathInfo("", "a description"),
 						openapitest.WithOperation(http.MethodGet,
+							openapitest.WithOperationInfo("Summary value", "Description value", "", false),
 							openapitest.WithHeaderParam("foo", true, openapitest.WithParamInfo("parameter description")),
 						),
 					),
@@ -267,10 +333,11 @@ func TestIndex_Http(t *testing.T) {
 				require.Len(t, r.Results, 1)
 				require.Equal(t,
 					search.ResultItem{
-						Type:      "HTTP",
-						Domain:    "foo",
-						Title:     "/pets",
-						Fragments: []string{"<mark>parameter</mark> <mark>description</mark>"},
+						Type:        "HTTP",
+						Domain:      "foo",
+						Title:       "/pets",
+						Description: `Summary value Description value`,
+						Fragments:   []string{"<mark>parameter</mark> <mark>description</mark>"},
 						Params: map[string]string{
 							"type":    "http",
 							"service": "foo",

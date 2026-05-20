@@ -20,7 +20,7 @@ interface Mokapi {
      * @example
      * getApi('Swagger Petstore')
      */
-    getApi(name: string): OpenApi | Kafka;
+    getApi(name: string): Http | Kafka;
 
     /**
      * Generate a random value from a JSON Schema.
@@ -54,8 +54,20 @@ interface Mokapi {
     getEvent(id: string): Event[];
 
     /**
-     * Advanced Search across all APIs, Topics, and Documentation.
-     * By default, multiple terms are combined with OR (results contain at least one term). Use prefixes to enforce stricter matches.
+     * Advanced search across all APIs, topics, documentation, events and logs.
+     * 
+     * Search behavior:
+     * - Multiple search terms are combined with OR by default
+     *   Example: "pet booking"
+     *   → matches results containing either "pet" OR "booking"
+     *
+     * Prefix a term with '+' to require that term to match.
+     *   Example: "+pet booking"
+     *   → matches results containing "pet" AND optionally "booking"
+     *
+     * Multiple '+' terms are combined with AND.
+     *   Example: "+pet +booking"
+     *   → matches results containing both "pet" AND "booking"
      *
      * QUERY SYNTAX:
      * - Simple: `petstore` (Search in all fields)
@@ -94,6 +106,8 @@ interface SearchResultItem {
     domain: string
     /** A human-readable title or summary */
     title: string
+    /** A human-readable description */
+    description: string
     /**
      * Relevant text snippets showing where the match was found.
      * Useful to see context like 'GET /pets' or 'Topic: orders'.

@@ -39,7 +39,7 @@ func TestDecode(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, v any, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected object but got string")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/type: invalid type, expected object but got string")
 			},
 		},
 		{
