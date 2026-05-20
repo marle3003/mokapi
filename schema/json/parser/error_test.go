@@ -2,8 +2,9 @@ package parser
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestError(t *testing.T) {
@@ -19,7 +20,7 @@ func TestError(t *testing.T) {
 					fmt.Errorf("string 'a' is less than minimum of 3"),
 				},
 			},
-			exp: "error count 1:\n\t- string 'a' is less than minimum of 3",
+			exp: "Validation error count 1:\n\t- string 'a' is less than minimum of 3",
 		},
 		{
 			name: "two error",
@@ -29,7 +30,7 @@ func TestError(t *testing.T) {
 					fmt.Errorf("item count 2 exceeds maximum count of 1"),
 				},
 			},
-			exp: "error count 2:\n\t- string 'a' is less than minimum of 3\n\t- item count 2 exceeds maximum count of 1",
+			exp: "Validation error count 2:\n\t- string 'a' is less than minimum of 3\n\t- item count 2 exceeds maximum count of 1",
 		},
 		{
 			name: "error detail",
@@ -42,7 +43,7 @@ func TestError(t *testing.T) {
 					},
 				},
 			},
-			exp: "error count 1:\n\t- string 'a' is less than minimum of 3",
+			exp: "Validation error count 1:\n\t- string 'a' is less than minimum of 3",
 		},
 	}
 

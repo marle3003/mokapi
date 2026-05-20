@@ -109,7 +109,7 @@ func TestParseXML(t *testing.T) {
 				schematest.WithRequired("id"),
 			),
 			test: func(t *testing.T, v any, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/required: required properties are missing: id")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/required: required properties are missing: id")
 			},
 		},
 	}

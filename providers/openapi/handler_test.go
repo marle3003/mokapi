@@ -279,7 +279,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 				require.Equal(t, 500, rr.Code)
-				require.Equal(t, "read request body 'application/json' failed: error count 1:\n\t- #/minLength: string 'foo' is less than minimum of 4\n", rr.Body.String())
+				require.Equal(t, "read request body 'application/json' failed: Validation error count 1:\n\t- #/minLength: string 'foo' is less than minimum of 4\n", rr.Body.String())
 			},
 		},
 		//
@@ -1166,7 +1166,7 @@ func TestHandler_Event(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 				require.Equal(t, http.StatusInternalServerError, rr.Code)
-				require.Equal(t, "invalid header 'foo': error count 1:\n\t- expected array but got: bar\n", rr.Body.String())
+				require.Equal(t, "invalid header 'foo': Validation error count 1:\n\t- expected array but got: bar\n", rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
 				res := args[1].(*common.HttpEventResponse)

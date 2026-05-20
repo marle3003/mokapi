@@ -186,7 +186,7 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, wr.Records, 1)
 	require.Equal(t, int32(0), wr.Records[0].BatchIndex)
-	require.Equal(t, "invalid message: error count 1:\n\t- #/type: invalid type, expected string but got number", wr.Records[0].BatchIndexErrorMessage)
+	require.Equal(t, "Validation error count 1:\n\t- #/type: invalid type, expected string but got number", wr.Records[0].BatchIndexErrorMessage)
 	require.Equal(t, int64(0), wr.BaseOffset)
 	require.Equal(t, int64(0), p.Offset())
 	require.Equal(t, int64(0), p.StartOffset())

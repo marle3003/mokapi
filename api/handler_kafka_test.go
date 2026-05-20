@@ -644,7 +644,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 								{
 									Partition: -1,
 									Offset:    -1,
-									Error:     "no matching message configuration found for the given value: 123\nhint:\nencoding data to 'application/json' failed: error count 1:\n\t- #/type: invalid type, expected string but got number\n",
+									Error:     "Kafka message validation failed:\n\nMessage:\n123\n\nValidation error count 1:\n\t- #/type: invalid type, expected string but got number\n",
 								},
 							},
 						}, data)
@@ -929,7 +929,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 								{
 									Partition: -1,
 									Offset:    -1,
-									Error:     "invalid message: error count 1:\n\t- #/additionalProperties: property 'yuh' not defined and the schema does not allow additional properties",
+									Error:     "Validation error count 1:\n\t- #/additionalProperties: property 'yuh' not defined and the schema does not allow additional properties",
 								},
 							},
 						}, data)
