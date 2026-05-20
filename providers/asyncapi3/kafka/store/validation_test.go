@@ -103,7 +103,7 @@ func TestValidation(t *testing.T) {
 					},
 				})
 				require.NoError(t, err)
-				require.Equal(t, "invalid message: error count 1:\n\t- #/type: invalid type, expected string but got number", wr.Records[0].BatchIndexErrorMessage)
+				require.Equal(t, "Validation error count 1:\n\t- #/type: invalid type, expected string but got number", wr.Records[0].BatchIndexErrorMessage)
 				require.Len(t, wr.Records, 1)
 			},
 		},
@@ -222,7 +222,7 @@ func TestValidation(t *testing.T) {
 					},
 				})
 				require.NoError(t, err)
-				require.Equal(t, "invalid key: error count 1:\n\t- #/minimum: integer 64 is less than minimum value of 100", wr.Records[0].BatchIndexErrorMessage)
+				require.Equal(t, "invalid key: Validation error count 1:\n\t- #/minimum: integer 64 is less than minimum value of 100", wr.Records[0].BatchIndexErrorMessage)
 				require.Len(t, wr.Records, 1)
 			},
 		},
@@ -285,7 +285,7 @@ func TestValidation(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.Len(t, wr.Records, 1)
-				require.Equal(t, "invalid message: error count 1:\n\t- #/required: required properties are missing: bar", wr.Records[0].BatchIndexErrorMessage)
+				require.Equal(t, "Validation error count 1:\n\t- #/required: required properties are missing: bar", wr.Records[0].BatchIndexErrorMessage)
 			},
 		},
 	}

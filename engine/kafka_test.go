@@ -507,7 +507,7 @@ func TestKafkaClient(t *testing.T) {
 						produce({ topic: 'foo', messages: [{ data: 12 }] })
 					}
 				`))
-				require.EqualError(t, err, "failed to produce message to Kafka topic 'foo': no matching message configuration found for the given value: 12\nhint:\nencoding data to 'application/json' failed: error count 1:\n\t- #/type: invalid type, expected string but got integer\n at mokapi/js/kafka.(*Module).Produce-fm (native)")
+				require.EqualError(t, err, "failed to produce message to Kafka topic 'foo': Kafka message validation failed:\n\nMessage:\n12\n\nValidation error count 1:\n\t- #/type: invalid type, expected string but got integer\n at mokapi/js/kafka.(*Module).Produce-fm (native)")
 
 				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
@@ -516,7 +516,7 @@ func TestKafkaClient(t *testing.T) {
 
 				// logs
 				require.Len(t, hook.Entries, 2)
-				require.Equal(t, "js error: failed to produce message to Kafka topic 'foo': no matching message configuration found for the given value: 12\nhint:\nencoding data to 'application/json' failed: error count 1:\n\t- #/type: invalid type, expected string but got integer\n in test.js", hook.LastEntry().Message)
+				require.Equal(t, "js error: failed to produce message to Kafka topic 'foo': Kafka message validation failed:\n\nMessage:\n12\n\nValidation error count 1:\n\t- #/type: invalid type, expected string but got integer\n in test.js", hook.LastEntry().Message)
 			},
 		},
 		{
@@ -734,7 +734,7 @@ func TestKafkaClient(t *testing.T) {
 						produce({ messages: [{ data: { foo: 'bar' } }] })
 					}
 				`))
-				require.EqualError(t, err, "failed to produce message to Kafka topic 'foo': no matching message configuration found for the given value: {\"foo\":\"bar\"}\nhint:\nencoding data to 'application/xml' failed: error count 1:\n\t- #/required: required properties are missing: id\n at mokapi/js/kafka.(*Module).Produce-fm (native)")
+				require.EqualError(t, err, "failed to produce message to Kafka topic 'foo': Kafka message validation failed:\n\nMessage:\n{\"foo\":\"bar\"}\n\nValidation error count 1:\n\t- #/required: required properties are missing: id\n at mokapi/js/kafka.(*Module).Produce-fm (native)")
 			},
 		},
 		{

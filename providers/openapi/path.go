@@ -217,9 +217,8 @@ func (p *Path) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 				WithField("path", p.Path).
 				WithField("namespace", "http").
 				Error(err)
-		} else {
-			op.Path = p
 		}
+		op.Path = p
 	}
 
 	for name, op := range p.AdditionalOperations {

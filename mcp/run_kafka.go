@@ -1,10 +1,10 @@
 package mcp
 
 import (
-	"errors"
 	"fmt"
 	"mokapi/kafka"
 	"mokapi/media"
+	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime"
 	"slices"
@@ -165,25 +165,20 @@ func (k *Kafka) GetTopic(name string) (Topic, error) {
 			Description: op.Value.Description,
 		}
 
-		for _, msg := range op.Value.Messages {
-			if msg.Value == nil {
-				continue
+		if len(op.Value.Messages) > 0 {
+			for _, msg := range op.Value.Messages {
+				if msg.Value == nil {
+					continue
+				}
+				result.Messages = append(result.Messages, getKafkaMessages(msg))
 			}
-			m := KafkaMessage{
-				Name:        msg.Value.Name,
-				Title:       msg.Value.Title,
-				Summary:     msg.Value.Summary,
-				Description: msg.Value.Description,
-				ContentType: msg.Value.ContentType,
-				Headers:     msg.Value.Headers,
+		} else {
+			for _, msg := range ch.Value.Messages {
+				if msg.Value == nil {
+					continue
+				}
+				result.Messages = append(result.Messages, getKafkaMessages(msg))
 			}
-			if msg.Value.Payload != nil {
-				m.Payload = msg.Value.Payload.Value
-			}
-			if msg.Value.Bindings.Kafka.Key != nil {
-				m.Key = msg.Value.Bindings.Kafka.Key
-			}
-			result.Messages = append(result.Messages, m)
 		}
 
 		t.Operations = append(t.Operations, result)
@@ -220,7 +215,7 @@ func (t *Topic) Produce(partition int, value any, key string, headers map[string
 	}
 
 	if len(result) > 0 && result[0].Error != "" {
-		return errors.New(result[0].Error)
+		return fmt.Errorf("%s\nTo create a valid payload:\n1. Select a message from operation.messages\n2. Generate example data:\n\n   const value = mokapi.fake(message.payload)\n\n3. Modify only the required fields if needed.", result[0].Error)
 	}
 
 	// update JS topic and partition
@@ -288,4 +283,22 @@ func (t *Topic) Consume(partition int, startOffset int64, limit int) ([]KafkaRec
 			}
 		}
 	}
+}
+
+func getKafkaMessages(msg *asyncapi3.MessageRef) KafkaMessage {
+	m := KafkaMessage{
+		Name:        msg.Value.Name,
+		Title:       msg.Value.Title,
+		Summary:     msg.Value.Summary,
+		Description: msg.Value.Description,
+		ContentType: msg.Value.ContentType,
+		Headers:     msg.Value.Headers,
+	}
+	if msg.Value.Payload != nil {
+		m.Payload = msg.Value.Payload.Value
+	}
+	if msg.Value.Bindings.Kafka.Key != nil {
+		m.Key = msg.Value.Bindings.Kafka.Key
+	}
+	return m
 }

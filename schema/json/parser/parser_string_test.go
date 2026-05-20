@@ -1,12 +1,13 @@
 package parser_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"mokapi/version"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestParse_String(t *testing.T) {
@@ -50,7 +51,7 @@ func TestParse_String(t *testing.T) {
 			s:    schematest.New("string"),
 			d:    12,
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/type: invalid type, expected string but got integer")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/type: invalid type, expected string but got integer")
 			},
 		},
 		{
@@ -76,7 +77,7 @@ func TestParse_String(t *testing.T) {
 			s:    schematest.New("string", schematest.WithMaxLength(2)),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/maxLength: string 'foo' exceeds maximum of 2")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/maxLength: string 'foo' exceeds maximum of 2")
 			},
 		},
 		{
@@ -93,7 +94,7 @@ func TestParse_String(t *testing.T) {
 			s:    schematest.New("string", schematest.WithMinLength(4)),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/minLength: string 'foo' is less than minimum of 4")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/minLength: string 'foo' is less than minimum of 4")
 			},
 		},
 		{
@@ -110,7 +111,7 @@ func TestParse_String(t *testing.T) {
 			s:    schematest.New("string", schematest.WithPattern("[")),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/pattern: validate string 'foo' with regex pattern '[' failed: error parsing regex: missing closing ]")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/pattern: validate string 'foo' with regex pattern '[' failed: error parsing regex: missing closing ]")
 			},
 		},
 		{
@@ -118,7 +119,7 @@ func TestParse_String(t *testing.T) {
 			s:    schematest.New("string", schematest.WithPattern("[0-9]{4}")),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/pattern: string 'foo' does not match regex pattern '[0-9]{4}'")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/pattern: string 'foo' does not match regex pattern '[0-9]{4}'")
 			},
 		},
 		{
@@ -126,7 +127,7 @@ func TestParse_String(t *testing.T) {
 			s:    schematest.New("string", schematest.WithPattern("[0-9]*"), schematest.WithMaxLength(3)),
 			d:    "1234",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/maxLength: string '1234' exceeds maximum of 3")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/maxLength: string '1234' exceeds maximum of 3")
 			},
 		},
 		{
@@ -143,7 +144,7 @@ func TestParse_String(t *testing.T) {
 			s:    schematest.New("string", schematest.WithFormat("date")),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/format: string 'foo' does not match format 'date'")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/format: string 'foo' does not match format 'date'")
 			},
 		},
 		{
@@ -160,7 +161,7 @@ func TestParse_String(t *testing.T) {
 			s:    schematest.New("string", schematest.WithFormat("date-time")),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/format: string 'foo' does not match format 'date-time'")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/format: string 'foo' does not match format 'date-time'")
 			},
 		},
 		{
@@ -177,7 +178,7 @@ func TestParse_String(t *testing.T) {
 			s:    schematest.New("string", schematest.WithFormat("time")),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/format: string 'foo' does not match format 'time'")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/format: string 'foo' does not match format 'time'")
 			},
 		},
 		{
@@ -194,7 +195,7 @@ func TestParse_String(t *testing.T) {
 			s:    schematest.New("string", schematest.WithFormat("duration")),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/format: string 'foo' does not match format 'duration'")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/format: string 'foo' does not match format 'duration'")
 			},
 		},
 		{
@@ -211,7 +212,7 @@ func TestParse_String(t *testing.T) {
 			s:    schematest.New("string", schematest.WithFormat("email")),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/format: string 'foo' does not match format 'email'")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/format: string 'foo' does not match format 'email'")
 			},
 		},
 		{
@@ -228,7 +229,7 @@ func TestParse_String(t *testing.T) {
 			s:    schematest.New("string", schematest.WithFormat("uuid")),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/format: string 'foo' does not match format 'uuid'")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/format: string 'foo' does not match format 'uuid'")
 			},
 		},
 		{
@@ -245,7 +246,7 @@ func TestParse_String(t *testing.T) {
 			s:    schematest.New("string", schematest.WithFormat("ipv4")),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/format: string 'foo' does not match format 'ipv4'")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/format: string 'foo' does not match format 'ipv4'")
 			},
 		},
 		{
@@ -253,7 +254,7 @@ func TestParse_String(t *testing.T) {
 			s:    schematest.New("string", schematest.WithFormat("ipv4")),
 			d:    "1080:0:0:0:8:800:200C:417A",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/format: string '1080:0:0:0:8:800:200C:417A' does not match format 'ipv4'")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/format: string '1080:0:0:0:8:800:200C:417A' does not match format 'ipv4'")
 			},
 		},
 		{
@@ -270,7 +271,7 @@ func TestParse_String(t *testing.T) {
 			s:    schematest.New("string", schematest.WithFormat("ipv6")),
 			d:    "foo",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/format: string 'foo' does not match format 'ipv6'")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/format: string 'foo' does not match format 'ipv6'")
 			},
 		},
 		{
@@ -278,7 +279,7 @@ func TestParse_String(t *testing.T) {
 			s:    schematest.New("string", schematest.WithFormat("ipv6")),
 			d:    "192.168.1.1",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/format: string '192.168.1.1' does not match format 'ipv6'")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/format: string '192.168.1.1' does not match format 'ipv6'")
 			},
 		},
 		{
@@ -306,7 +307,7 @@ func TestParse_String(t *testing.T) {
 			s:    schematest.New("string", schematest.WithConst("foo")),
 			d:    "bar",
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "error count 1:\n\t- #/const: value 'bar' does not match const 'foo'")
+				require.EqualError(t, err, "Validation error count 1:\n\t- #/const: value 'bar' does not match const 'foo'")
 			},
 		},
 		{

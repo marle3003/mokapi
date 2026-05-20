@@ -218,7 +218,7 @@ func TestProduce(t *testing.T) {
 				require.True(t, ok)
 				require.Equal(t, "foo", res.Topics[0].Name)
 				require.Equal(t, kafka.InvalidRecord, res.Topics[0].Partitions[0].ErrorCode)
-				require.Equal(t, "invalid message: error count 1:\n\t- #/type: invalid type, expected integer but got string", res.Topics[0].Partitions[0].ErrorMessage)
+				require.Equal(t, "Validation error count 1:\n\t- #/type: invalid type, expected integer but got string", res.Topics[0].Partitions[0].ErrorMessage)
 				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
 			},
 		},
@@ -267,11 +267,11 @@ func TestProduce(t *testing.T) {
 				require.Equal(t, "foo", res.Topics[0].Name)
 				require.Equal(t, kafka.UnknownServerError, res.Topics[0].Partitions[0].ErrorCode, "expected kafka error UnknownServerError")
 				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
-				require.Equal(t, "invalid producer clientId 'kafkatest' for topic foo: error count 1:\n\t- #/pattern: string 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'", res.Topics[0].Partitions[0].ErrorMessage)
+				require.Equal(t, "invalid producer clientId 'kafkatest' for topic foo: Validation error count 1:\n\t- #/pattern: string 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'", res.Topics[0].Partitions[0].ErrorMessage)
 
 				require.Equal(t, 1, len(hook.Entries))
 				require.Equal(t, logrus.ErrorLevel, hook.LastEntry().Level)
-				require.Equal(t, "kafka: failed to write to topic 'foo': invalid producer clientId 'kafkatest' for topic foo: error count 1:\n\t- #/pattern: string 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'", hook.LastEntry().Message)
+				require.Equal(t, "kafka: failed to write to topic 'foo': invalid producer clientId 'kafkatest' for topic foo: Validation error count 1:\n\t- #/pattern: string 'kafkatest' does not match regex pattern '^[A-Z]{10}[0-5]$'", hook.LastEntry().Message)
 			},
 		},
 		{

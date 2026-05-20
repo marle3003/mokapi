@@ -133,7 +133,7 @@ func TestStore(t *testing.T) {
 					}},
 				)
 				require.NoError(t, err)
-				require.Equal(t, "invalid message: error count 1:\n\t- #/type: invalid type, expected string but got number", wr.Records[0].BatchIndexErrorMessage)
+				require.Equal(t, "Validation error count 1:\n\t- #/type: invalid type, expected string but got number", wr.Records[0].BatchIndexErrorMessage)
 			},
 		},
 	}

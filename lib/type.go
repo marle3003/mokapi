@@ -1,6 +1,12 @@
 package lib
 
-import "reflect"
+import (
+	"encoding/json"
+	"fmt"
+	"reflect"
+
+	log "github.com/sirupsen/logrus"
+)
 
 func TypeFrom(v interface{}) string {
 	return TypeString(reflect.TypeOf(v))
@@ -25,4 +31,19 @@ func TypeString(t reflect.Type) string {
 	default:
 		return "Unknown"
 	}
+}
+
+func PrettyPrint(v any) string {
+	if v == nil {
+		return "<nil>"
+	}
+	if s, ok := v.(string); ok {
+		return s
+	}
+	b, err := json.MarshalIndent(v, "", "  ")
+	if err == nil {
+		return string(b)
+	}
+	log.Warnf("failed to pretty print %#v: %v", v, err)
+	return fmt.Sprintf("%v", v)
 }

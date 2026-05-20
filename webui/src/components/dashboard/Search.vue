@@ -18,7 +18,7 @@ const errorMessage = ref<string | undefined>()
 const searchResult = ref<SearchResult | undefined>();
 const maxVisiblePages = 10  // max pages in pagination
 const showTips = ref(false)
-const facets = ref<{ [name: string]: string | undefined}>({})
+const facets = ref<{ [name: string]: string | undefined }>({})
 const loading = useProgressiveLoading()
 
 const pageNumber = computed(() => {
@@ -77,8 +77,8 @@ async function navigateToSearchResult(result: any) {
       }
       return router.push({ name: 'kafkaService', params: result.params })
     case 'mail':
-        if (result.params.mailbox) {
-        return router.push({ name: 'smtpMailbox', params: { ...{ name: result.params.mailbox },  ...result.params } })
+      if (result.params.mailbox) {
+        return router.push({ name: 'smtpMailbox', params: { ...{ name: result.params.mailbox }, ...result.params } })
       }
       return router.push({ name: 'mailService', params: result.params })
     case 'ldap':
@@ -105,7 +105,7 @@ function title(result: SearchItem) {
     case "Config":
       const n = result.title.length
       if (n > 55) {
-        return '...' + result.title.slice(n-55)
+        return '...' + result.title.slice(n - 55)
       }
       break
     case "Event":
@@ -159,7 +159,7 @@ async function search_clicked() {
   } else {
     delete newQuery.q
   }
- 
+
   if (pageIndex.value) {
     newQuery.index = pageIndex.value.toString()
   } else {
@@ -210,11 +210,11 @@ async function search() {
   errorMessage.value = undefined
   const res = await fetch(transformPath(path))
     .then(async (res) => {
-        if (!res.ok) {
-            const data = await res.json()
-            throw new Error(data.message)
-        }
-        return res.json()
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.message)
+      }
+      return res.json()
     })
     .then(res => {
       loading.stop()
@@ -243,146 +243,207 @@ function facetTitle(s: string) {
   <div class="card-group">
     <section class="card" aria-labelledby="search">
       <div class="card-body">
-        <div id="search" class="card-title text-center mb-4">
-          <h2 style="margin-block-start: 1rem;font-size: 1.5rem;">Search Dashboard</h2>
-        </div>
-        <div class="container">
-          <div class="row justify-content-md-center mb-1">
-            <div class="col-6 col-auto">
-              <div class="input-group">
-                <input type="text" id="search-input" class="form-control" placeholder="Search" aria-label="Search" aria-describedby="search-icon" v-model="queryText" @keypress="search_keypressed">
-                <button class="btn btn-outline-secondary" type="button" @click="search_clicked">
-                  <span class="bi bi-search"></span>
-                </button>
-              </div>
-            </div>
-          </div>
-          <div class="row justify-content-md-center">
-            <div class="col-6 col-auto text-end">
-              <div>
-                <a href="#" @click.prevent="showTips = !showTips" class="small">
-                  {{ showTips ? 'Search Tips ▲' : 'Search Tips ▼' }}
-                </a>
 
-                <div v-if="showTips" class="alert alert-light border mt-2 text-start search-tips">
-                  By default, multiple terms are combined with OR (results contain at least one term). Use prefixes to enforce stricter matches.
-                  <h5>Refine Your Results</h5>
-                  <ul>
-                    <li><code>+petstore -kafka</code> - Must include "petstore", Must Not include "kafka".</li>
-                    <li><code>petstore kafka</code> - Returns results containing "petstore" OR "kafka" (default).</li>
-                    <li><code>"Swagger Petstore"</code> - Matches the exact phrase.</li>
-                  </ul>
-                  <h5>Fields & Logic</h5>
-                  <ul>
-                    <li><code>name:petstore</code> - Search for "petstore" specifically in the name field.</li>
-                    <li><code>+method:GET 404 500</code> - Must be GET and must contain either 404 or 500.</li>
-                    <li><code>+statusCode:>=300</code> - Must be response with status code greater than or equal to 300.</li>
-                    <li><code>path:/pets^2</code> - Boost matches in the path field (scores them higher).</li>
-                  </ul>
-                  <h5>Wildcards & Fuzzy</h5>
-                  <ul>
-                    <li><code>pet*</code> - Wildcard (matches "pet", "pets", "petstore").</li>
-                    <li><code>pet~</code> - Fuzzy match (matches "pets", "pest" or slight typos).</li>
-                  </ul>
+        <!-- Header -->
+        <div id="search" class="text-center mb-4">
+          <h2 class="fs-4 mt-3 mb-1">Search Dashboard</h2>
+          <p class="text-body-secondary small mb-0">
+            Search APIs, Kafka topics, LDAP, mail servers and configuration.
+          </p>
+        </div>
+
+        <!-- Search Input -->
+        <div class="row justify-content-center search-input">
+          <div class="col-8">
+
+            <div class="input-group input-group-lg shadow-sm">
+              <input type="text" id="search-input" class="form-control"
+                placeholder='Search e.g. "petstore" method:GET status:>=400' aria-label="Search" v-model="queryText"
+                @keypress="search_keypressed">
+
+              <button class="btn btn-primary px-4" type="button" @click="search_clicked">
+                <span class="bi bi-search"></span>
+              </button>
+            </div>
+
+            <!-- Search Toolbar -->
+            <div class="row search-toolbar pt-2">
+
+              <!-- Result Count -->
+              <div class="col-4 d-flex align-items-center">
+                <div class="small text-body-secondary" v-if="searchResult">
+                  <template v-if="searchResult.total <= 10">
+                    Showing
+                    <strong>{{ searchResult.total }}</strong>
+                    {{ searchResult.total === 1 ? 'result' : 'results' }}
+                  </template>
+
+                  <template v-else>
+                    Showing
+                    <strong>{{ searchResult.results.length }}</strong>
+                    of
+                    <strong>{{ searchResult.total }}</strong>
+                    results
+                  </template>
                 </div>
               </div>
-            </div>
-          </div>
-          <div v-if="loading.isLoading" class="row justify-content-md-center ps-0 mb-2">{{ loading.statusText }}</div>
-          <div class="row justify-content-md-center ps-0 mb-2" v-if="searchResult && searchResult.results">
-            <div class="col-6 col-auto">
-               <h3 v-if="searchResult.total <= 10" class="mt-1 mb-3 fs-6">Showing <strong>{{ searchResult.total }}</strong> {{ searchResult.total === 1 ? "result" : "results" }}</h3>
-               <h3 v-else class="mt-1 mb-3 fs-6">Showing <strong>{{ searchResult.results.length }}</strong> of {{ searchResult.total }} results</h3>
-            </div>
-          </div>
-          <div class="row justify-content-md-center ps-0 mb-2" v-if="searchResult">
-            <div class="col-6 col-auto">
-              <div class="row" v-if="searchResult && searchResult.facets">
-                <div v-for="name in Object.keys(searchResult.facets)" :key="name" class="col-auto">
-                    <select class="form-select form-select-sm" :aria-label="name" v-model="facets[name]" @change="search_clicked">
-                      <option value="">{{ facetTitle(name) }}</option>
-                      <option v-for="v in searchResult.facets[name]" :value="v.value">{{ v.value }} ({{ v.count }})</option>
+
+              <!-- Facets -->
+              <div class="col">
+                <div v-if="searchResult?.facets" class="d-flex flex-wrap gap-2">
+                  <div v-for="name in Object.keys(searchResult.facets)" :key="name">
+                    <select class="form-select form-select-sm" :aria-label="name" v-model="facets[name]"
+                      @change="search_clicked">
+                      <option value="">
+                        {{ facetTitle(name) }}
+                      </option>
+
+                      <option v-for="v in searchResult.facets[name]" :value="v.value">
+                        {{ v.value }} ({{ v.count }})
+                      </option>
                     </select>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-          <div v-if="searchResult || errorMessage" class="row justify-content-md-center ps-0 mt-3">
-            <div v-if="searchResult && searchResult.total > 0" class="col-6 col-auto">
-              <div class="search-results grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                <div 
-                  v-for="item of searchResult.results" 
-                  class="card mb-3"
-                  @click="navigateToSearchResult(item)"
-                >
-                  <Http :item="item" v-if="item.params.type === 'http'" />
-                  <Kafka :item="item" v-if="item.params.type === 'kafka'" />
-                  <Ldap :item="item" v-if="item.params.type === 'ldap'" />
-                  <Mail :item="item" v-if="item.params.type === 'mail'" />
-                  <Config :item="item" v-if="item.params.type === 'config'" />
-                  <Event :item="item" v-if="item.params.type === 'event'" />
-                </div>
-              </div>
-              <!-- Error Alert -->
-              <div v-if="errorMessage" class="alert alert-danger mb-0" role="alert">
-                {{ errorMessage }}
-              </div>
-              <!-- No results message -->
-              <div v-else-if="!errorMessage && searchResult && searchResult.total === 0">
-                No results found
+
+              <!-- Search Tips Toggle -->
+              <div class="col-2 d-flex justify-content-end align-items-center">
+                <a href="#" @click.prevent="showTips = !showTips" class="">
+                  <span v-if="showTips">
+                    Search Tips ▲
+                  </span>
+
+                  <span v-else>
+                    Search Tips ▼
+                  </span>
+                </a>
               </div>
             </div>
-            <div class="row justify-content-md-center" v-if="pageNumber > 1">
-              <div class="col-6 col-auto">
-                <nav aria-label="Page navigation">
-                  <ul class="pagination justify-content-center">
-                    <li class="page-item" v-if="pageIndex > 0">
-                      <a class="page-link" aria-label="Previous" @click="pageIndex_click(pageIndex - 1)">
-                        <span aria-hidden="true">&laquo;</span>
-                      </a>
-                    </li>
-                    <li v-for="index in pageRange" :key="index" class="page-item" :class="index === pageIndex + 1 ? 'active' : ''">
-                      <a class="page-link" @click="pageIndex_click(index - 1)">{{ index }}</a>
-                    </li>
-                    <li class="page-item" v-if="pageIndex + 1 < pageNumber">
-                      <a class="page-link" aria-label="Next" @click="pageIndex_click(pageIndex + 1)">
-                        <span aria-hidden="true">&raquo;</span>
-                      </a>
-                    </li>
-                  </ul>
-                </nav>
-              </div>
+
+            <!-- Tips -->
+            <div v-if="showTips" class="alert alert-light border small mt-3 mb-0 search-tips">
+
+              By default, multiple terms are combined with OR (results contain at least one term). Use prefixes to
+              enforce
+              stricter matches.
+              <h5>Refine Your Results</h5>
+              <ul>
+                <li><code>+petstore -kafka</code> - Must include "petstore", Must Not include "kafka".</li>
+                <li><code>petstore kafka</code> - Returns results containing "petstore" OR "kafka" (default).</li>
+                <li><code>"Swagger Petstore"</code> - Matches the exact phrase.</li>
+              </ul>
+              <h5>Fields & Logic</h5>
+              <ul>
+                <li><code>name:petstore</code> - Search for "petstore" specifically in the name field.</li>
+                <li><code>+method:GET 404 500</code> - Must be GET and must contain either 404 or 500.</li>
+                <li><code>+statusCode:>=300</code> - Must be response with status code greater than or equal to 300.
+                </li>
+                <li><code>path:/pets^2</code> - Boost matches in the path field (scores them higher).</li>
+              </ul>
+              <h5>Wildcards & Fuzzy</h5>
+              <ul>
+                <li><code>pet*</code> - Wildcard (matches "pet", "pets", "petstore").</li>
+                <li><code>pet~</code> - Fuzzy match (matches "pets", "pest" or slight typos).</li>
+              </ul>
+
             </div>
+
+            <!-- Loading -->
+            <div v-if="loading.isLoading.value" class="small text-body-secondary mt-3">
+              {{ loading.statusText.value }}
+            </div>
+
           </div>
         </div>
+
+        <!-- Results -->
+        <div v-if="searchResult && searchResult.total > 0" class="row justify-content-center">
+          <div class="col-12 col-lg-10 col-xl-8">
+
+            <div class="search-results">
+
+              <div v-for="item of searchResult.results" class="card result-card mb-3 shadow-sm border-0" role="button"
+                @click="navigateToSearchResult(item)">
+                <Http :item="item" v-if="item.params.type === 'http'" />
+
+                <Kafka :item="item" v-if="item.params.type === 'kafka'" />
+
+                <Ldap :item="item" v-if="item.params.type === 'ldap'" />
+
+                <Mail :item="item" v-if="item.params.type === 'mail'" />
+
+                <Config :item="item" v-if="item.params.type === 'config'" />
+
+                <Event :item="item" v-if="item.params.type === 'event'" />
+              </div>
+
+            </div>
+          </div>
+
+
+          <!-- Empty State -->
+          <div v-if="searchResult && searchResult.total === 0" class="text-center text-body-secondary py-5">
+            <div class="fs-5 mb-2">
+              No results found
+            </div>
+
+            <div class="small">
+              Try different keywords or remove filters.
+            </div>
+          </div>
+
+          <!-- Error -->
+          <div v-if="errorMessage" class="alert alert-danger mt-3">
+            {{ errorMessage }}
+          </div>
+
+        </div>
+
       </div>
     </section>
   </div>
 </template>
 
 <style scoped>
+.search-input {
+  position: sticky;
+  top: 110px;
+  z-index: 1000;
+
+  background: var(--color-background-soft);
+
+  padding-top: 10px;
+}
+
 .input-group-text {
   background-color: var(--bs-body-bg);
   padding-right: 6px;
 }
+
 .form-control {
   border-left-width: 0;
   padding-left: 8px;
 }
-.form-control:focus, .form-control:focus-visible {
+
+.form-control:focus,
+.form-control:focus-visible {
   box-shadow: none;
   border-color: var(--bs-border-color);
   outline: none;
 }
+
 .search-results {
   margin-top: 15px;
 }
+
 .pagination .page-link {
   cursor: pointer;
 }
+
 .pagination .page-item:not(.active) .page-link {
   color: var(--link-color)
 }
+
 .dashboard .search-results .card {
   border: 1px solid var(--card-border);
   border-radius: 0.75rem;
@@ -396,7 +457,7 @@ function facetTitle(s: string) {
 }
 
 [data-theme="light"] .search-results .card:hover {
-  box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
 }
 
 .search-results .card-title {
@@ -407,14 +468,17 @@ function facetTitle(s: string) {
   font-size: 0.7rem;
   background-color: var(--badge-background) !important;
 }
+
 .search-tips {
   font-size: 0.9rem;
 }
+
 .search-tips h5 {
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
   margin-top: 0.5rem;
 }
+
 .search-tips ul {
   padding-left: 1.5rem;
   margin-bottom: 0;

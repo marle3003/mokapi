@@ -25,14 +25,7 @@ func (s *Schema) Marshal(i interface{}, contentType media.ContentType) ([]byte, 
 			}
 		}
 
-		if uw, ok := err.(interface{ Unwrap() []error }); ok {
-			errs := uw.Unwrap()
-			if len(errs) > 1 {
-				return nil, fmt.Errorf("encoding data to '%v' failed:\n %w", contentType.String(), err)
-			}
-		}
-
-		return nil, fmt.Errorf("encoding data to '%v' failed: %w", contentType, err)
+		return nil, err
 	}
 
 	e := encoding.NewEncoder(ConvertToJsonSchema(s))

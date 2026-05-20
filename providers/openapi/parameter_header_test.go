@@ -153,7 +153,7 @@ func TestFromRequest_Header(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
-				require.EqualError(t, err, "parse header parameter 'debug' failed: error count 1:\n\t- #/type: invalid type, expected integer but got string")
+				require.EqualError(t, err, "parse header parameter 'debug' failed: Validation error count 1:\n\t- #/type: invalid type, expected integer but got string")
 			},
 		},
 		{
@@ -188,7 +188,7 @@ func TestFromRequest_Header(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
-				require.EqualError(t, err, "parse header parameter 'foo' failed: error count 1:\n\t- #/items/1/type: invalid type, expected integer but got string")
+				require.EqualError(t, err, "parse header parameter 'foo' failed: Validation error count 1:\n\t- #/items/1/type: invalid type, expected integer but got string")
 			},
 		},
 		{
@@ -269,7 +269,7 @@ func TestFromRequest_Header(t *testing.T) {
 				return r
 			},
 			test: func(t *testing.T, result *openapi.RequestParameters, err error) {
-				require.EqualError(t, err, "parse header parameter 'foo' failed: parse property 'age' failed: error count 1:\n\t- #/type: invalid type, expected number but got string")
+				require.EqualError(t, err, "parse header parameter 'foo' failed: parse property 'age' failed: Validation error count 1:\n\t- #/type: invalid type, expected number but got string")
 			},
 		},
 		{

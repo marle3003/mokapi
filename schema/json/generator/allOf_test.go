@@ -210,7 +210,7 @@ func TestAllOf(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "failed to generate valid object: reached attempt limit (10) caused by: error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/additionalProperties: property 'type' not defined and the schema does not allow additional properties")
+				require.EqualError(t, err, "failed to generate valid object: reached attempt limit (10) caused by: Validation error count 2:\n\t- #/allOf: does not match all schema\n\t\t- #/allOf/0/additionalProperties: property 'type' not defined and the schema does not allow additional properties")
 			},
 		},
 	}
