@@ -20,7 +20,7 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
 	}
 
 	switch v.ExportType().Kind() {
-	case reflect.Map, reflect.Struct, reflect.Ptr:
+	case reflect.Map:
 		break
 	case reflect.Bool:
 		b := v.ToBoolean()
