@@ -2,6 +2,7 @@
 import { usePrettyHttp } from '@/composables/http';
 import { usePrettyText } from '@/composables/usePrettyText';
 import { computed } from 'vue';
+import { useRouter } from 'vue-router';
 
 const props = defineProps<{
     item: SearchItem
@@ -29,10 +30,23 @@ const methods = computed(() => {
     }
     return props.item.params.methods.split(',')
 })
+const route = computed(() => {
+    if (props.item.params.path) {
+        const endpoint = props.item.params.path.split('/')
+        endpoint.shift() // path starts with a slash: remove first empty entry
+        if (props.item.params.method) {
+          endpoint.push(props.item.params.method.toLowerCase())
+        }
+        return { name: 'httpEndpoint', params: { endpoint, ...props.item.params } }
+    }
+    else {
+        return { name: 'httpService', params: props.item.params }
+    }
+})
 </script>
 
 <template>
-    <div class="card-body">
+    <RouterLink class="card-body" :to="route">
 
         <div class="d-flex justify-content-between">
             <h6 class="mb-1">
@@ -60,7 +74,7 @@ const methods = computed(() => {
 
         <p class="small mb-0" v-html="item.fragments?.join(' ... ')"></p>
 
-    </div>
+    </RouterLink>
 </template>
 
 <style scoped>

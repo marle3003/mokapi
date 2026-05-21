@@ -48,10 +48,11 @@ func (l *Log) Title() string {
 
 func (l *Log) IndexFields() map[string]any {
 	m := map[string]any{
-		"from":      l.From,
-		"to":        l.To,
-		"messageId": l.MessageId,
-		"subject":   l.Subject,
+		"from":               l.From,
+		"to":                 l.To,
+		"messageId":          l.MessageId,
+		"subject":            l.Subject,
+		"metadata.messageId": l.MessageId,
 	}
 	return m
 }

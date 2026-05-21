@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { usePrettyHttp } from '@/composables/http';
 import { usePrettyText } from '@/composables/usePrettyText';
 import { computed } from 'vue';
 
@@ -13,10 +12,16 @@ const title = computed(() => {
     let title = props.item.title
     return adaptiveTruncate(title)
 })
+const route = computed(() => {
+    if (props.item.params.mailbox) {
+        return { name: 'smtpMailbox', params: { ...{ name: props.item.params.mailbox }, ...props.item.params } }
+      }
+      return { name: 'mailService', params: props.item.params }
+})
 </script>
 
 <template>
-    <div class="card-body">
+    <RouterLink :to="route" class="card-body">
 
         <div class="d-flex justify-content-between">
             <h6 class="mb-1">
@@ -32,7 +37,7 @@ const title = computed(() => {
 
         <p class="small mb-0" v-html="item.fragments?.join(' ... ')"></p>
 
-    </div>
+    </RouterLink>
 </template>
 
 <style scoped>

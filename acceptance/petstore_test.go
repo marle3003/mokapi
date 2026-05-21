@@ -315,7 +315,7 @@ func (suite *PetStoreSuite) TestSearch_Paging() {
 			assert.NoError(t, err)
 			assert.NotNil(t, data)
 
-			assert.Equal(t, float64(35), data["total"])
+			assert.Equal(t, float64(51), data["total"])
 
 			items := data["results"].([]any)
 			assert.Len(t, items, 10)
@@ -335,13 +335,13 @@ func (suite *PetStoreSuite) TestSearch_Paging() {
 			assert.NoError(t, err)
 			assert.NotNil(t, data)
 
-			assert.Equal(t, float64(35), data["total"])
+			assert.Equal(t, float64(51), data["total"])
 
 			items := data["results"].([]any)
 			assert.Len(t, items, 10)
 			evt := items[0].(map[string]interface{})
 			assert.Equal(t, "HTTP", evt["type"])
-			assert.Equal(t, "/pet/{petId}", evt["title"])
+			assert.Equal(t, "/pet/{petId}/uploadImage", evt["title"])
 			assert.Equal(t, "Swagger Petstore", evt["domain"])
 		}),
 	)

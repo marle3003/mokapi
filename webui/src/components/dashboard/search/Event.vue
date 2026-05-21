@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { usePrettyHttp } from '@/composables/http';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { usePrettyText } from '@/composables/usePrettyText';
 import { computed } from 'vue';
@@ -8,7 +7,6 @@ const props = defineProps<{
     item: SearchItem
 }>()
 
-const { formatStatusCode, getClassByStatusCode } = usePrettyHttp()
 const { adaptiveTruncate } = usePrettyText()
 const { format } = usePrettyDates()
 
@@ -29,10 +27,25 @@ function isLdap() {
 function isMail() {
     return props.item.params['traits.namespace'] === 'mail'
 }
+const route = computed(() => {
+    if (isHttp()) {
+        return { name: 'httpRequest', params: props.item.params }
+    }
+    if (isKafka()) {
+        return { name: 'kafkaMessage', params: props.item.params }
+    }
+    if (isMail()) {
+        return { name: 'smtpMail', params: Object.assign(props.item.params, { id: props.item.params.messageId }) }
+    }
+    if (isLdap()) {
+        return { name: 'ldapRequest', params: props.item.params }
+    }
+    throw new Error('Unknown event type')
+})
 </script>
 
 <template>
-    <div class="card-body">
+    <RouterLink :to="route" class="card-body">
 
         <div class="d-flex justify-content-between align-items-center small">
             <div v-if="item.time" class="text-muted">⏱ {{ format(item.time) }}</div>
@@ -59,7 +72,7 @@ function isMail() {
 
         <p class="small mb-0" v-html="item.fragments?.join(' ... ')"></p>
 
-    </div>
+    </RouterLink>
 </template>
 
 <style scoped>

@@ -349,6 +349,65 @@ func TestIndex_Http(t *testing.T) {
 			},
 		},
 		{
+			name: "Search operation with multiple status",
+			test: func(t *testing.T, app *runtime.App) {
+				cfg := openapitest.NewConfig("3.0",
+					openapitest.WithInfo("foo", "1.0", "a description"),
+					openapitest.WithPath("/pets",
+						openapitest.WithPathInfo("", "a description"),
+						openapitest.WithOperation(http.MethodGet,
+							openapitest.WithOperationInfo("Summary value", "Description value", "", false),
+							openapitest.WithHeaderParam("foo", true, openapitest.WithParamInfo("parameter description")),
+							openapitest.WithResponse(http.StatusOK),
+							openapitest.WithResponse(http.StatusForbidden),
+						),
+					),
+				)
+				app.Http.Add(toConfig(cfg))
+
+				var r search.Result
+				var err error
+				waitSearchIndex(t, func() bool {
+					r, err = app.Search(search.Request{QueryText: "method:get", Limit: 10})
+					require.NoError(t, err)
+					return len(r.Results) == 2
+				})
+				require.Len(t, r.Results, 2)
+				require.Contains(t,
+					r.Results,
+					search.ResultItem{
+						Type:        "HTTP",
+						Domain:      "foo",
+						Title:       "/pets",
+						Description: `Summary value Description value`,
+						Fragments:   []string{"<mark>GET</mark>"},
+						Params: map[string]string{
+							"type":       "http",
+							"service":    "foo",
+							"path":       "/pets",
+							"method":     "GET",
+							"statusCode": "200",
+						},
+					})
+				require.Contains(t,
+					r.Results,
+					search.ResultItem{
+						Type:        "HTTP",
+						Domain:      "foo",
+						Title:       "/pets",
+						Description: `Summary value Description value`,
+						Fragments:   []string{"<mark>GET</mark>"},
+						Params: map[string]string{
+							"type":       "http",
+							"service":    "foo",
+							"path":       "/pets",
+							"method":     "GET",
+							"statusCode": "403",
+						},
+					})
+			},
+		},
+		{
 			name: "Search by api field",
 			test: func(t *testing.T, app *runtime.App) {
 				cfg := openapitest.NewConfig("3.0", openapitest.WithInfo("Petstore", "", ""),
