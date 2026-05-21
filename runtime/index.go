@@ -79,6 +79,7 @@ func (s *SearchIndex) start(pool *safe.Pool) {
 	apiField.IncludeInAll = false // Exclude from default search
 	apiField.Store = true
 	apiField.Index = true
+	apiField.IncludeTermVectors = true
 	docMapping.AddFieldMappingsAt("api", apiField)
 
 	// enable term vectors for all fields, allowing phrase queries (like "Swagger Petstore")
@@ -99,8 +100,10 @@ func (s *SearchIndex) start(pool *safe.Pool) {
 		"tokenizer":    unicode.Name,
 		"char_filters": []any{asciifolding.Name},
 		"token_filters": []any{
-			lowercase.Name,
+			// Bleve token filters run in sequence
+			// camelcase must precede lowercase
 			camelcase.Name,
+			lowercase.Name,
 			stemmer,
 		},
 	})

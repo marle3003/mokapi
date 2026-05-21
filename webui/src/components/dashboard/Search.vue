@@ -55,68 +55,6 @@ watch(queryText, async () => {
   timeout = setTimeout(async () => { await search() }, 1000)
 })
 
-async function navigateToSearchResult(result: any) {
-  switch (result.type.toLowerCase()) {
-    case 'http':
-      if (result.params.path) {
-        const endpoint = result.params.path.split('/')
-        endpoint.shift() // path starts with a slash: remove first empty entry
-        if (result.params.method) {
-          endpoint.push(result.params.method)
-        }
-        return router.push({ name: 'httpEndpoint', params: { endpoint, ...result.params } })
-      }
-      else {
-        return router.push({ name: 'httpService', params: result.params })
-      }
-    case 'config':
-      return router.push({ name: 'config', params: result.params })
-    case 'kafka':
-      if (result.params.topic) {
-        return router.push({ name: 'kafkaTopic', params: result.params })
-      }
-      return router.push({ name: 'kafkaService', params: result.params })
-    case 'mail':
-      if (result.params.mailbox) {
-        return router.push({ name: 'smtpMailbox', params: { ...{ name: result.params.mailbox }, ...result.params } })
-      }
-      return router.push({ name: 'mailService', params: result.params })
-    case 'ldap':
-      return router.push({ name: 'ldapService', params: result.params })
-    case 'event':
-      switch (result.params['traits.namespace']) {
-        case 'http':
-          return router.push({ name: 'httpRequest', params: result.params })
-        case 'kafka':
-          return router.push({ name: 'kafkaMessage', params: result.params })
-        case 'mail':
-          const res = await fetch(transformPath(`/api/events/${result.params.id}`));
-          const event: ServiceEvent = await res.json();
-          const data = event.data as SmtpEventData
-          return router.push({ name: 'smtpMail', params: Object.assign(result.params, { id: data.messageId }) })
-        case 'ldap':
-          return router.push({ name: 'ldapRequest', params: result.params })
-      }
-  }
-  console.error(`search result type '${result.type.toLowerCase()}' not supported for navigation`)
-}
-function title(result: SearchItem) {
-  switch (result.type) {
-    case "Config":
-      const n = result.title.length
-      if (n > 55) {
-        return '...' + result.title.slice(n - 55)
-      }
-      break
-    case "Event":
-      if (result.params.namespace === 'kafka') {
-        return `Key: ${result.title}`
-      }
-      break
-  }
-  return result.title
-}
-
 onMounted(async () => {
   for (const param in route.query) {
     if (param === 'q' || param === 'index') {
@@ -195,15 +133,15 @@ function pageIndex_click(index: number) {
 async function search() {
   loading.start()
 
-  let path = `/api/search/query?q=${queryText.value}`
+  let path = `/api/search/query?q=${encodeURIComponent(queryText.value)}`
   if (pageIndex.value !== 0) {
     path += `&index=${pageIndex.value}`
   }
 
   for (const facetName in facets.value) {
     const v = facets.value[facetName]
-    if (v !== '') {
-      path += `&${facetName}=${v}`
+    if (v) {
+      path += `&${facetName}=${encodeURIComponent(v)}`
     }
   }
 
@@ -362,19 +300,20 @@ function facetTitle(s: string) {
 
             <div class="search-results">
 
-              <div v-for="item of searchResult.results" class="card result-card mb-3 shadow-sm border-0" role="button"
-                @click="navigateToSearchResult(item)">
+              <div v-for="item of searchResult.results" class="card result-card mb-3 shadow-sm border-0">
                 <Http :item="item" v-if="item.params.type === 'http'" />
 
-                <Kafka :item="item" v-if="item.params.type === 'kafka'" />
+                <Kafka :item="item" v-else-if="item.params.type === 'kafka'" />
 
-                <Ldap :item="item" v-if="item.params.type === 'ldap'" />
+                <Ldap :item="item" v-else-if="item.params.type === 'ldap'" />
 
-                <Mail :item="item" v-if="item.params.type === 'mail'" />
+                <Mail :item="item" v-else-if="item.params.type === 'mail'" />
 
-                <Config :item="item" v-if="item.params.type === 'config'" />
+                <Config :item="item" v-else-if="item.params.type === 'config'" />
 
-                <Event :item="item" v-if="item.params.type === 'event'" />
+                <Event :item="item" v-else-if="item.params.type === 'event'" />
+                
+                <div v-else>Search Result Item not defined: {{ item.params.type }}</div>
               </div>
 
             </div>
@@ -395,6 +334,28 @@ function facetTitle(s: string) {
           <!-- Error -->
           <div v-if="errorMessage" class="alert alert-danger mt-3">
             {{ errorMessage }}
+          </div>
+
+          <div class="row justify-content-md-center" v-if="pageNumber > 1">
+            <div class="col-6 col-auto">
+              <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                  <li class="page-item" v-if="pageIndex > 0">
+                    <a class="page-link" aria-label="Previous" @click="pageIndex_click(pageIndex - 1)">
+                      <span aria-hidden="true">&laquo;</span>
+                    </a>
+                  </li>
+                  <li v-for="index in pageRange" :key="index" class="page-item" :class="index === pageIndex + 1 ? 'active' : ''">
+                    <a class="page-link" @click="pageIndex_click(index - 1)">{{ index }}</a>
+                  </li>
+                  <li class="page-item" v-if="pageIndex + 1 < pageNumber">
+                    <a class="page-link" aria-label="Next" @click="pageIndex_click(pageIndex + 1)">
+                      <span aria-hidden="true">&raquo;</span>
+                    </a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
           </div>
 
         </div>
@@ -451,7 +412,7 @@ function facetTitle(s: string) {
   /* background-color: var(--card-background); */
 }
 
-.search-results .card:hover {
+.search-results a.card-body:hover {
   cursor: pointer;
   transform: translateY(-2px);
 }

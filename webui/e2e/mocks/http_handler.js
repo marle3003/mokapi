@@ -864,7 +864,7 @@ function getSearchResults() {
                     type: 'event',
                     'traits.namespace': 'mail',
                     'traits.name': 'Mail Testserver',
-                    id: '273cd167-f5a5-4da1-969e-d44213686491'
+                    messageId: '20230223-084925.763-4196@mokapi.io'
                 }
             },
             {

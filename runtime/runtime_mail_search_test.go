@@ -207,11 +207,12 @@ func TestIndex_Mail_Event(t *testing.T) {
 				require.Len(t, r.Results[0].Fragments, 2)
 				require.Contains(t, r.Results[0].Fragments, "<mark>Test</mark> <mark>Mail</mark>")
 				require.Contains(t, r.Results[0].Fragments, "<mark>event</mark>")
-				require.Len(t, r.Results[0].Params, 4)
+				require.Len(t, r.Results[0].Params, 5)
 				require.Equal(t, "event", r.Results[0].Params["type"])
 				require.Equal(t, "mail", r.Results[0].Params["traits.namespace"])
 				require.Equal(t, "Test Mail Events", r.Results[0].Params["traits.name"])
 				require.Contains(t, r.Results[0].Params, "id")
+				require.Contains(t, r.Results[0].Params, "messageId")
 				require.NotEmpty(t, r.Results[0].Time)
 			},
 		},

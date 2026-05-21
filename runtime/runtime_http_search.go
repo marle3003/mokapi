@@ -193,7 +193,7 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 						Responses:      responses,
 					}
 
-					s.index.Add(id, opData)
+					s.index.Add(fmt.Sprintf("%s_%d", id, statusCode), opData)
 				}
 			} else {
 				opData := httpOperationSearchIndexData{

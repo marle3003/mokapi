@@ -8,7 +8,7 @@ export function usePrettyText() {
         })
     }
 
-    function adaptiveTruncate(s: string, maxLength = 40) {
+    function adaptiveTruncate(s: string, maxLength = 60) {
         if (s.length <= maxLength) {
             return s;
         }
