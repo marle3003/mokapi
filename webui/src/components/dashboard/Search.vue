@@ -397,6 +397,28 @@ function facetTitle(s: string) {
             {{ errorMessage }}
           </div>
 
+          <div class="row justify-content-md-center" v-if="pageNumber > 1">
+            <div class="col-6 col-auto">
+              <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                  <li class="page-item" v-if="pageIndex > 0">
+                    <a class="page-link" aria-label="Previous" @click="pageIndex_click(pageIndex - 1)">
+                      <span aria-hidden="true">&laquo;</span>
+                    </a>
+                  </li>
+                  <li v-for="index in pageRange" :key="index" class="page-item" :class="index === pageIndex + 1 ? 'active' : ''">
+                    <a class="page-link" @click="pageIndex_click(index - 1)">{{ index }}</a>
+                  </li>
+                  <li class="page-item" v-if="pageIndex + 1 < pageNumber">
+                    <a class="page-link" aria-label="Next" @click="pageIndex_click(pageIndex + 1)">
+                      <span aria-hidden="true">&raquo;</span>
+                    </a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+
         </div>
 
       </div>
