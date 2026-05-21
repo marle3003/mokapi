@@ -27,8 +27,14 @@ function isLdap() {
 function isMail() {
     return props.item.params['traits.namespace'] === 'mail'
 }
+function isLog() {
+    return props.item.params['traits.type'] === 'log'
+}
 const route = computed(() => {
     if (isHttp()) {
+        if (isLog()) {
+            return null
+        }
         return { name: 'httpRequest', params: props.item.params }
     }
     if (isKafka()) {
@@ -45,19 +51,19 @@ const route = computed(() => {
 </script>
 
 <template>
-    <RouterLink :to="route" class="card-body">
+    <component :is="!route ? 'span' : 'router-link'" :to="route" class="card-body">
 
         <div class="d-flex justify-content-between align-items-center small">
             <div v-if="item.time" class="text-muted">⏱ {{ format(item.time) }}</div>
             <span v-if="isKafka()" class="fw-semibold text-dark">Message received</span>
-            <span v-if="isHttp()" class="fw-semibold text-dark">Request received</span>
+            <span v-if="isHttp() && !isLog()" class="fw-semibold text-dark">Request received</span>
             <span v-if="isMail()" class="fw-semibold text-dark">Mail received</span>
             <span v-if="isLdap()" class="fw-semibold text-dark">Search received</span>
         </div>
         
         <h6 class="mb-1 mt-1">
             <span v-if="isKafka()" class="badge me-2 text-capitalize" :class="item.params['traits.namespace']">{{ item.params['traits.namespace'] }}</span>
-            <span v-if="isHttp()" class="badge me-2 text-uppercase operation" :class="item.params['traits.method'].toLowerCase()">{{ item.params['traits.method'] }}</span>
+            <span v-if="isHttp() && !isLog()" class="badge me-2 text-uppercase operation" :class="item.params['traits.method'].toLowerCase()">{{ item.params['traits.method'] }}</span>
             <span v-if="isLdap()" class="badge me-2 text-uppercase ldap operation" :class="item.params['traits.operation']">{{ item.params['traits.operation'] }}</span>
             <span>{{ title }}</span>
         </h6>
@@ -67,12 +73,13 @@ const route = computed(() => {
             <span v-if="item.params['traits.topic']"> &middot; Topic {{ item.params['traits.topic'] }}</span>
             <span v-if="item.params['traits.namespace'] == 'kafka'"> &middot; Partition {{ item.params['traits.partition'] }}</span>
             <span v-if="isLdap() && item.params['baseDn']"> &middot; {{ item.params['baseDn'] }}</span>
-            <span> &middot; {{ item.type }}</span>
+            <span v-if="isLog()"> &middot; Log</span>
+            <span v-else> &middot; {{ item.type }}</span>
         </div>
 
         <p class="small mb-0" v-html="item.fragments?.join(' ... ')"></p>
 
-    </RouterLink>
+    </component>
 </template>
 
 <style scoped>

@@ -412,7 +412,7 @@ function facetTitle(s: string) {
   /* background-color: var(--card-background); */
 }
 
-.search-results .card:hover {
+.search-results a.card-body:hover {
   cursor: pointer;
   transform: translateY(-2px);
 }
