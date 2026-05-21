@@ -186,7 +186,7 @@ func TestService_Run_Kafka(t *testing.T) {
 			},
 		},
 		{
-			name: "get topic operation does not define any message",
+			name: "get topic operation not define any message",
 			app: func() *runtime.App {
 				msg := asyncapi3test.NewMessage(
 					asyncapi3test.WithMessageName("msg-name-1"),
