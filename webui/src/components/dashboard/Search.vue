@@ -196,7 +196,7 @@ function facetTitle(s: string) {
 
             <div class="input-group input-group-lg shadow-sm">
               <input type="text" id="search-input" class="form-control"
-                placeholder='Search e.g. "petstore" method:GET status:>=400' aria-label="Search" v-model="queryText"
+                placeholder='Search e.g. "petstore" method:GET statusCode:>=400' aria-label="Search" v-model="queryText"
                 @keypress="search_keypressed">
 
               <button class="btn btn-primary px-4" type="button" @click="search_clicked">
