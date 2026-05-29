@@ -36,7 +36,7 @@
     "js-yaml": "^4.1.1",
     "kafkajs": "^2.2.4",
     "ldapts": "^8.1.8",
-    "markdown-it": "^14.1.1",
+    "markdown-it": "^14.2.0",
     "markdown-it-container": "^4.0.0",
     "mime-types": "^3.0.2",
     "mqtt": "^5.15.1",
