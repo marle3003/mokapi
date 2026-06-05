@@ -263,6 +263,7 @@ func (s *HttpServer) serve(services map[string][]*HttpService, rw http.ResponseW
 	return &openapi.HttpError{
 		StatusCode: http.StatusNotFound,
 		Message:    fmt.Sprintf("There was no service listening at %s", lib.GetUrl(r)),
+		Traits:     events.NewTraits().WithNamespace("http"),
 	}
 }
 
@@ -316,7 +317,9 @@ func serveError(w http.ResponseWriter, r *http.Request, err error, eh events.Han
 			Headers:    map[string]string{"Content-Type": w.Header().Get("Content-Type")},
 			StatusCode: status,
 			Body:       msg,
+			Size:       len([]byte(msg)),
 		},
+		ClientIP: lib.ClientIP(r),
 	}
 
 	for k, v := range r.Header {
@@ -329,7 +332,17 @@ func serveError(w http.ResponseWriter, r *http.Request, err error, eh events.Han
 		l.Request.Parameters = append(l.Request.Parameters, p)
 	}
 
-	err = eh.Push(l, events.NewTraits().WithNamespace("http"))
+	traits := events.NewTraits().WithNamespace("http")
+	if hErr != nil {
+		traits = hErr.Traits
+		l.Api = traits.GetName()
+		l.Path = traits.Get("path")
+		for k, v := range hErr.Header {
+			l.Response.Headers[k] = strings.Join(v, ",")
+		}
+	}
+
+	err = eh.Push(l, traits)
 	if err != nil {
 		log.Errorf("unable to log event: %v", err)
 	}

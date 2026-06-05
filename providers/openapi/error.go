@@ -2,6 +2,7 @@ package openapi
 
 import (
 	"fmt"
+	"mokapi/runtime/events"
 	"net/http"
 )
 
@@ -9,6 +10,8 @@ type HttpError struct {
 	StatusCode int
 	Header     http.Header
 	Message    string
+
+	Traits events.Traits
 }
 
 func (h *HttpError) Error() string {
@@ -37,4 +40,9 @@ func newMethodNotAllowedErrorf(methods []string, format string, args ...interfac
 		},
 		Message: fmt.Sprintf(format, args...),
 	}
+}
+
+func (h *HttpError) WithTraits(t events.Traits) *HttpError {
+	h.Traits = t
+	return h
 }
