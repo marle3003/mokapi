@@ -48,6 +48,9 @@ Let's make this concrete. The workflow looks like this:
 
 Simple enough to follow, but realistic enough to be meaningful. This is the kind of flow you'd find in any document delivery system, order processing pipeline, notification service... you name it.
 
+<img src="/kafka-workflow.png" alt="Sequence diagram of Kafka workflow testing with Mokapi, Playwright, and a backend service" title="Kafka workflow testing with Mokapi and Playwright">
+
+
 ---
 
 ## Step 1: Define Your Topics with AsyncAPI
