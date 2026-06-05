@@ -324,17 +324,29 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *H
 		}
 	}
 
+	record := func(err *HttpError) {
+		if m, ok := monitor.HttpFromContext(r.Context()); ok {
+			path := err.Traits.Get("path")
+			method := err.Traits.Get("method")
+
+			m.LastRequest.WithLabel(h.config.Info.Name, path, method).Set(float64(time.Now().Unix()))
+			m.RequestErrorCounter.WithLabel(h.config.Info.Name, path, method).Add(1)
+		}
+	}
+
 	if errOpResolve == nil {
-		return newHttpErrorf(http.StatusNotFound, "no matching endpoint found: %v %v", strings.ToUpper(r.Method), lib.GetUrl(r)).WithTraits(events.NewTraits().WithNamespace("http").WithName(h.config.Info.Name))
+		return newHttpErrorf(http.StatusNotFound, "no matching endpoint found: %v %v", strings.ToUpper(r.Method), lib.GetUrl(r)).
+			WithTraits(events.NewTraits().WithNamespace("http").WithName(h.config.Info.Name)).
+			WithRecorder(record)
 	} else {
 		var httpError *HttpError
 		if errors.As(errOpResolve, &httpError) {
 			if httpError.Traits.IsEmpty() {
 				httpError.Traits = events.NewTraits().WithNamespace("http").WithName(h.config.Info.Name)
 			}
-			return httpError
+			return httpError.WithRecorder(record)
 		}
-		return newHttpErrorf(http.StatusInternalServerError, "%s", errOpResolve.Error()).WithTraits(events.NewTraits().WithNamespace("http").WithName(h.config.Info.Name))
+		return newHttpErrorf(http.StatusInternalServerError, "%s", errOpResolve.Error()).WithTraits(events.NewTraits().WithNamespace("http").WithName(h.config.Info.Name)).WithRecorder(record)
 	}
 }
 

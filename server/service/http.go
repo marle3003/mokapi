@@ -340,6 +340,7 @@ func serveError(w http.ResponseWriter, r *http.Request, err error, eh events.Han
 		for k, v := range hErr.Header {
 			l.Response.Headers[k] = strings.Join(v, ",")
 		}
+		hErr.Record()
 	}
 
 	err = eh.Push(l, traits)

@@ -176,7 +176,15 @@ const events = computed<ServiceEvent[]>(() => {
             if (filter.method.value[0] === 'CUSTOM') {
                 result = result.filter(x => custom?.includes((x.data as HttpEventData).request.method));
             } else {
-                result = result.filter(x => filter.method.value[0] === (x.data as HttpEventData).request.method);
+                let method = 'GET'
+                // if in multiple mode all methods are unselected, value contains no method
+                if (filter.method.value.length > 0) {
+                    method = filter.method.value[0]
+                }
+                result = result.filter(x => {
+                    console.log((x.data as HttpEventData).request.method)
+                    return method === (x.data as HttpEventData).request.method
+            });
             }
             break;
         case 'Multi':

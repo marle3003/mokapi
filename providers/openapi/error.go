@@ -12,6 +12,8 @@ type HttpError struct {
 	Message    string
 
 	Traits events.Traits
+
+	record func(err *HttpError)
 }
 
 func (h *HttpError) Error() string {
@@ -45,4 +47,15 @@ func newMethodNotAllowedErrorf(methods []string, format string, args ...interfac
 func (h *HttpError) WithTraits(t events.Traits) *HttpError {
 	h.Traits = t
 	return h
+}
+
+func (h *HttpError) WithRecorder(r func(err *HttpError)) *HttpError {
+	h.record = r
+	return h
+}
+
+func (h *HttpError) Record() {
+	if h.record != nil {
+		h.record(h)
+	}
 }
