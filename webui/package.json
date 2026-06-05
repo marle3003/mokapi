@@ -23,7 +23,7 @@
     "@types/mokapi": "^0.35.0",
     "@types/nodemailer": "^8.0.0",
     "@types/whatwg-mimetype": "^5.0.0",
-    "ace-builds": "^1.43.5",
+    "ace-builds": "^1.44.0",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
     "cors": "^2.8.6",
