@@ -49,19 +49,57 @@ interface Event {
     id: string;
 
     /**
+     * The type of event
+     */
+    type: 'http' | 'kafka' | 'log'
+
+    /**
      * List of traits
      */
     traits: Traits;
-
-    /**
-     * The data of the event
-     */
-    data: any
 
     /**
      * Time of the event in the format RFC3339
      * @example 2026-07-21T17:32:28Z
      */
     time: string
+}
+
+interface HttpEvent extends Event {
+    api: string
+    path: string
+    method: string
+    statusCode: number
+    request: {
+        method: string
+        url: string
+        parameters: {
+            name: string
+            type: string
+            value: string
+        }[] 
+        contentType?: string
+        body?: string
+    }
+    response: {
+        statusCode: number
+        headers?: Record<string, string>
+        body: string
+        size: number
+    }
+}
+
+interface KafkaEvent extends Event {
+    api: string
+    topic: string
+    partition: number
+    offset: number
+    key: string
+    message: string
+}
+
+interface LogEvent extends Event {
+    level: string
+    message: string
 }
 ```

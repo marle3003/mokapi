@@ -1,0 +1,271 @@
+openapi: "3.0.0"
+info:
+  title: Coffee Shop API
+  version: "1.0.0"
+  description: API for managing orders at a coffee shop
+
+paths:
+  /menu:
+    get:
+      summary: List all menu items
+      operationId: getMenu
+      tags: [Menu]
+      responses:
+        "200":
+          description: A list of menu items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MenuItem"
+
+  /orders:
+    get:
+      summary: List all orders
+      operationId: getOrders
+      tags: [Orders]
+      parameters:
+        - name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+          description: Filter orders by date (YYYY-MM-DD)
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [pending, preparing, ready, completed, cancelled]
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+    post:
+      summary: Place a new order
+      operationId: placeOrder
+      tags: [Orders]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewOrder"
+      responses:
+        "201":
+          description: Order placed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Invalid request
+
+  /orders/{orderId}:
+    get:
+      summary: Get order by ID
+      operationId: getOrder
+      tags: [Orders]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: Order not found
+
+  /orders/{orderId}/pay:
+    post:
+      summary: Pay for an order
+      operationId: payOrder
+      tags: [Payments]
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Payment"
+      responses:
+        "200":
+          description: Payment successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentResult"
+        "400":
+          description: Payment failed
+
+  /customers:
+    post:
+      summary: Register a new customer
+      operationId: createCustomer
+      tags: [Customers]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewCustomer"
+      responses:
+        "201":
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+components:
+  schemas:
+    MenuItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Flat White
+        category:
+          type: string
+          enum: [coffee, tea, food, cold_drink]
+        price:
+          type: number
+          format: float
+          example: 4.50
+        available:
+          type: boolean
+
+    NewOrder:
+      type: object
+      required: [customerId, items]
+      properties:
+        customerId:
+          type: string
+          format: uuid
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/OrderItem"
+        notes:
+          type: string
+          example: Extra shot please
+
+    OrderItem:
+      type: object
+      required: [menuItemId, quantity]
+      properties:
+        menuItemId:
+          type: string
+          format: uuid
+        quantity:
+          type: integer
+          minimum: 1
+          example: 2
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customerId:
+          type: string
+          format: uuid
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
+        status:
+          type: string
+          enum: [pending, preparing, ready, completed, cancelled]
+        createdAt:
+          type: string
+          format: date-time
+        total:
+          type: number
+          format: float
+
+    Payment:
+      type: object
+      required: [method, amount]
+      properties:
+        method:
+          type: string
+          enum: [card, cash, voucher]
+        amount:
+          type: number
+          format: float
+          example: 9.00
+        voucherCode:
+          type: string
+          description: Required if method is voucher
+
+    PaymentResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        transactionId:
+          type: string
+          format: uuid
+        paidAt:
+          type: string
+          format: date-time
+
+    NewCustomer:
+      type: object
+      required: [name, email, birthdate]
+      properties:
+        name:
+          type: string
+          example: Jane Doe
+        email:
+          type: string
+          format: email
+          example: jane@example.com
+        birthdate:
+          type: string
+          format: date
+          example: "1990-06-15"
+
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        birthdate:
+          type: string
+          format: date
+        memberSince:
+          type: string
+          format: date-time

@@ -106,6 +106,9 @@ func LogEventFromContext(ctx context.Context) (*HttpLog, bool) {
 }
 
 func (l *HttpLog) Title() string {
+	if l.Request == nil {
+		return ""
+	}
 	return l.Request.Url
 }
 

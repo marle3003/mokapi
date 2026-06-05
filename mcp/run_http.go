@@ -6,6 +6,7 @@ import (
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema"
 	"mokapi/runtime"
+	"mokapi/schema/json/generator"
 	"net/http"
 	"net/textproto"
 	"slices"
@@ -71,7 +72,7 @@ type Content struct {
 type Response struct {
 	StatusCode  int       `json:"statusCode"`
 	Description string    `json:"description,omitempty"`
-	Content     []Content `json:"content"`
+	Contents    []Content `json:"contents"`
 }
 
 func (m *mokapi) getHttpApi(name string) any {
@@ -208,7 +209,7 @@ func (o *OpenAPI) GetOperation(id string) (*Operation, error) {
 				r.Responses = append(r.Responses, Response{
 					StatusCode:  status,
 					Description: res.Value.Description,
-					Content:     contents,
+					Contents:    contents,
 				})
 			}
 
@@ -318,4 +319,9 @@ func (r *InvokeResponse) WriteHeader(statusCode int) {
 func (r *InvokeResponse) Write(body []byte) (int, error) {
 	r.Body = string(body)
 	return len(body), nil
+}
+
+func (c *Content) GenerateExample() (any, error) {
+	js := schema.ConvertToJsonSchema(c.Schema)
+	return generator.New(&generator.Request{Schema: js})
 }

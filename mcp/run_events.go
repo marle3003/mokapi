@@ -3,14 +3,52 @@ package mcp
 import (
 	"fmt"
 	"mokapi/js/util"
+	"mokapi/providers/asyncapi3/kafka/store"
+	"mokapi/providers/openapi"
+	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/dop251/goja"
+	log "github.com/sirupsen/logrus"
 )
 
-func (m *mokapi) getEvents(vTraits goja.Value, vLimit goja.Value) ([]events.Event, error) {
+type Event struct {
+	Id     string        `json:"id"`
+	Type   string        `json:"type"`
+	Time   time.Time     `json:"time"`
+	Traits events.Traits `json:"traits"`
+}
+
+type HttpEvent struct {
+	Event
+	Api        string                   `json:"api"`
+	Path       string                   `json:"path"`
+	Method     string                   `json:"method"`
+	StatusCode int                      `json:"statusCode"`
+	Request    *openapi.HttpRequestLog  `json:"request"`
+	Response   *openapi.HttpResponseLog `json:"response"`
+}
+
+type KafkaEvent struct {
+	Event
+	Api       string `json:"api"`
+	Topic     string `json:"topic"`
+	Partition int    `json:"partition"`
+	Offset    int64  `json:"offset"`
+	Key       string `json:"key"`
+	Message   string `json:"message"`
+}
+
+type LogEvent struct {
+	Event
+	Level   string `json:"level"`
+	Message string `json:"message"`
+}
+
+func (m *mokapi) getEvents(vTraits goja.Value, vLimit goja.Value) ([]any, error) {
 	traits, err := parseTraits(vTraits, m.vm)
 	if err != nil {
 		return nil, err
@@ -25,14 +63,19 @@ func (m *mokapi) getEvents(vTraits goja.Value, vLimit goja.Value) ([]events.Even
 		}
 		limit = int(vLimit.ToInteger())
 	}
-	if len(evts) > limit {
-		return evts[0:limit], nil
-	} else {
-		return evts, nil
+	var result []any
+	for i, evt := range evts {
+		if i >= limit {
+			break
+		}
+		e := convertEvent(evt)
+		result = append(result, e)
 	}
+
+	return result, nil
 }
 
-func (m *mokapi) getEvent(id string) (events.Event, error) {
+func (m *mokapi) getEvent(id string) (any, error) {
 	if id == "" {
 		return events.Event{}, fmt.Errorf("expected id parameter in GUID format, got '%v'", id)
 	}
@@ -41,7 +84,7 @@ func (m *mokapi) getEvent(id string) (events.Event, error) {
 	if e.Id == "" {
 		return e, fmt.Errorf("event %s not found. Use `mokapi.search('type:event ...')` to search for existing events", id)
 	}
-	return e, nil
+	return convertEvent(e), nil
 }
 
 func parseTraits(v goja.Value, vm *goja.Runtime) (events.Traits, error) {
@@ -86,4 +129,73 @@ func parseTraits(v goja.Value, vm *goja.Runtime) (events.Traits, error) {
 	}
 
 	return traits, nil
+}
+
+func convertEvent(evt events.Event) any {
+	var item any
+	switch e := evt.Data.(type) {
+	case *openapi.HttpLog:
+		httpEvent := &HttpEvent{
+			Event: Event{
+				Id:   evt.Id,
+				Type: "http",
+				Time: evt.Time,
+			},
+			Api:      e.Api,
+			Path:     e.Path,
+			Request:  e.Request,
+			Response: e.Response,
+		}
+		if e.Request != nil {
+			httpEvent.Method = e.Request.Method
+		}
+		if e.Response != nil {
+			httpEvent.StatusCode = e.Response.StatusCode
+		}
+		item = httpEvent
+	case *store.KafkaMessageLog:
+		kafkaEvent := &KafkaEvent{
+			Event: Event{
+				Id:     evt.Id,
+				Type:   "kafka",
+				Time:   evt.Time,
+				Traits: evt.Traits,
+			},
+			Api:       e.Api,
+			Topic:     evt.Traits.Get("topic"),
+			Partition: e.Partition,
+			Offset:    e.Offset,
+		}
+		if e.Key.Value != "" {
+			kafkaEvent.Key = e.Key.Value
+		} else {
+			kafkaEvent.Key = string(e.Key.Binary)
+		}
+		if e.Message.Value != "" {
+			kafkaEvent.Message = e.Message.Value
+		} else {
+			kafkaEvent.Message = string(e.Message.Value)
+		}
+		item = kafkaEvent
+	case *runtime.LogData:
+		item = &LogEvent{
+			Event: Event{
+				Id:     evt.Id,
+				Type:   "log",
+				Time:   evt.Time,
+				Traits: evt.Traits,
+			},
+			Level:   e.Level,
+			Message: e.Message,
+		}
+	default:
+		log.Errorf("mcp: event type %T not supported", e)
+		item = &Event{
+			Id:     evt.Id,
+			Type:   evt.Traits.GetNamespace(),
+			Time:   evt.Time,
+			Traits: evt.Traits,
+		}
+	}
+	return item
 }

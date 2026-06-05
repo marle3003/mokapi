@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"mokapi/npm/go-mokapi/types"
+	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -151,4 +152,9 @@ Always check a scenario before writing a script from scratch to ensure you follo
 			},
 		}, nil
 	})
+}
+
+func extractName(uri string) string {
+	parts := strings.Split(uri, "/")
+	return parts[len(parts)-1]
 }
