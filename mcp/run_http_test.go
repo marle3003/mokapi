@@ -49,7 +49,7 @@ func TestService_Run_Http(t *testing.T) {
 			name: "get specific HTTP API",
 			app: runtimetest.NewHttpApp(
 				openapitest.NewConfig("3.1.0",
-					openapitest.WithInfo("foo", "", ""),
+					openapitest.WithInfo("foo", "", "description"),
 					openapitest.WithServer("http://localhost/foo", "server description"),
 				),
 				openapitest.NewConfig("3.1.0",
@@ -67,6 +67,7 @@ func TestService_Run_Http(t *testing.T) {
 				require.IsType(t, &mcp.OpenAPI{}, r.Result)
 				api := r.Result.(*mcp.OpenAPI)
 				require.Equal(t, "foo", api.Name)
+				require.Equal(t, "description", api.Description)
 				require.Equal(t, "http", api.Type)
 				require.Equal(t, []mcp.OpenAPIServer{{Url: "http://localhost/foo", Description: "server description"}}, api.Servers)
 			},

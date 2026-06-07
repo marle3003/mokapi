@@ -15,9 +15,10 @@ import (
 )
 
 type OpenAPI struct {
-	Name    string          `json:"name"`
-	Type    string          `json:"type"`
-	Servers []OpenAPIServer `json:"servers"`
+	Name        string          `json:"name"`
+	Description string          `json:"description"`
+	Type        string          `json:"type"`
+	Servers     []OpenAPIServer `json:"servers"`
 
 	info    *runtime.HttpInfo
 	handler openapi.Handler
@@ -75,14 +76,15 @@ type Response struct {
 	Contents    []Content `json:"contents"`
 }
 
-func (m *mokapi) getHttpApi(name string) any {
+func (m *mokapi) getHttpApi(name string) *OpenAPI {
 	for _, api := range m.app.Http.List() {
 		if api.Info.Name == name {
 			result := &OpenAPI{
-				Name:    name,
-				Type:    "http",
-				info:    api,
-				handler: api.Handler(m.app.Monitor.Http, m.app.Engine, m.app.Events),
+				Name:        name,
+				Description: api.Info.Description,
+				Type:        "http",
+				info:        api,
+				handler:     api.Handler(m.app.Monitor.Http, m.app.Engine, m.app.Events),
 			}
 			for _, server := range api.Servers {
 				result.Servers = append(result.Servers, OpenAPIServer{

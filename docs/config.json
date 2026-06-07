@@ -659,6 +659,12 @@
             "hideNavigation": true
           },
           {
+            "label": "Explore and Debug APIs with AI: Mokapi's MCP Server",
+            "source": "resources/blogs/mock-apis-with-mcp.md",
+            "path": "/resources/blogs/mock-apis-with-mcp",
+            "hideNavigation": true
+          },
+          {
             "label": "Building a Virtual Hardware Simulation with Mokapi and JavaScript",
             "source": "resources/blogs/virtual-hardware-simulation.md",
             "path": "/resources/blogs/building-virtual-hardware-simulation",

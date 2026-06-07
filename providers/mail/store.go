@@ -2,11 +2,12 @@ package mail
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/imap"
 	"mokapi/smtp"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const mailboxSize = 100
@@ -62,6 +63,7 @@ func (s *Store) NewMailbox(name string, cfg *MailboxConfig, settings *Settings) 
 	}
 
 	mb := &Mailbox{
+		Name:            name,
 		Username:        cfg.Username,
 		Password:        cfg.Password,
 		Description:     cfg.Description,
