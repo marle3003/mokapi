@@ -11,7 +11,13 @@ import (
 )
 
 func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
-	s := &jsonSchema.Schema{}
+	if v == goja.Undefined() {
+		return nil, nil
+	}
+
+	if s, ok := v.Export().(*jsonSchema.Schema); ok {
+		return s, nil
+	}
 
 	switch v.ExportType().Kind() {
 	case reflect.Map:
@@ -23,22 +29,24 @@ func ToJsonSchema(v goja.Value, rt *goja.Runtime) (*jsonSchema.Schema, error) {
 		return nil, fmt.Errorf("expect JSON schema but got: %v", util.JsType(v.Export()))
 	}
 
+	s := &jsonSchema.Schema{}
 	obj := v.ToObject(rt)
 	for _, k := range obj.Keys() {
 		switch k {
 		case "type":
 			i := obj.Get(k).Export()
-			if arr, ok := i.([]interface{}); ok {
-				for _, t := range arr {
+			switch vv := i.(type) {
+			case string:
+				s.Type = []string{vv}
+			case []any:
+				for _, t := range vv {
 					tn, ok := t.(string)
 					if !ok {
 						return nil, fmt.Errorf("unexpected type for 'type': %v", util.JsType(t))
 					}
 					s.Type = append(s.Type, tn)
 				}
-			} else if t, ok := i.(string); ok {
-				s.Type = []string{t}
-			} else {
+			default:
 				return nil, fmt.Errorf("unexpected type for 'type': %v", util.JsType(i))
 			}
 		case "enum":

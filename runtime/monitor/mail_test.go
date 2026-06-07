@@ -2,14 +2,16 @@ package monitor
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
+	"mokapi/runtime/metrics"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestSmtp_Metrics_Mails(t *testing.T) {
 	s := NewMail()
 	s.Mails.WithLabel("service_a", "sender_a").Add(1)
-	require.Equal(t, float64(1), s.Mails.Sum())
+	require.Equal(t, float64(1), s.Mails.Sum(metrics.NewQuery()))
 }
 
 func TestSmtpContext(t *testing.T) {

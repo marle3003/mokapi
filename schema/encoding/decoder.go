@@ -13,8 +13,12 @@ type Decoder interface {
 }
 
 type Parser interface {
-	Parse(data interface{}) (interface{}, error)
+	Parse(data any) (any, error)
 }
+
+type NullParser struct{}
+
+func (p *NullParser) Parse(data any) (any, error) { return data, nil }
 
 var decoders []Decoder
 

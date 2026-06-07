@@ -1,33 +1,47 @@
 <script setup lang="ts">
-import { ref, watchEffect, onUnmounted, type PropType } from 'vue'
+import { ref, watch, computed } from 'vue'
 import MetricCard from '../MetricCard.vue'
-import { useMetrics } from '@/composables/metrics';
 import { useDashboard } from '@/composables/dashboard';
 
-const props = defineProps({
-    labels: { type: Object as PropType<Label[]> },
-})
-
-const { sum } = useMetrics()
-const messages = ref(0)
 const { dashboard } = useDashboard()
-const {services, close} = dashboard.value.getServices('ldap')
-watchEffect(() =>{
-    messages.value = 0
-    for (let service of services.value){
-        if (props.labels){
-            messages.value += sum(service.metrics, 'ldap_requests_total', ...props.labels)
-        }else {
-            messages.value += sum(service.metrics, 'ldap_requests_total')
+const services = ref<LdapService[] | null>(null)
+watch(
+    () => dashboard.value,
+    (db, _, onCleanup) => {
+        if (!db) {
+            return
         }
-    }
-})
 
-onUnmounted(() => {
-    close()
+        const res = db.getServices('ldap')
+
+        const stop = watch(
+            () => res.services.value,
+            (v) => {
+                services.value = v as LdapService[]
+            },
+            { immediate: true }
+        )
+
+        onCleanup(() => {
+            stop();
+            res.close();
+        });
+    }, { immediate: true }
+)
+
+const sum = computed(() => {
+    if (!services.value) {
+        return 0
+    }
+
+    let result = 0;
+    for (const service of services.value) {
+        result += service.metrics.ldap_requests_total || 0
+    }
+    return result;
 })
 </script>
 
 <template>
-    <metric-card title="LDAP Searches" :value="messages" data-testid="metric-ldap-searches"></metric-card>
+    <metric-card title="LDAP Searches" :value="sum" data-testid="metric-ldap-searches"></metric-card>
 </template>

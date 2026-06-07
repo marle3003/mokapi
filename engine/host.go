@@ -102,8 +102,9 @@ func (sh *scriptHost) Cron(expr string, handler func(), opt common.JobOptions) (
 }
 
 func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule string, id int) func() {
+	name := filepath.Base(sh.name)
 	tags := map[string]string{
-		"name":    sh.name,
+		"name":    name,
 		"file":    sh.name,
 		"fileKey": sh.file.Info.Key(),
 	}

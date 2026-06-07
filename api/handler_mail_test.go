@@ -43,7 +43,7 @@ func TestHandler_Smtp(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services",
 			contentType:  "application/json",
-			responseBody: `[{"name":"foo","description":"bar","version":"2.1","type":"mail"}]`,
+			responseBody: `[{"name":"foo","description":"bar","version":"2.1","type":"mail","metrics":{"mail_mails_total":0,"mail_mail_timestamp":0}}]`,
 		},
 		{
 			name: "get /api/services/mail",

@@ -296,7 +296,7 @@ func selectMessage(value any, topic *asyncapi3.Channel, cfg *asyncapi3.Config) (
 			}
 		}
 		if validationErr != nil {
-			return nil, fmt.Errorf("no matching message configuration found for the given value: %v\nhint:\n%w\n", value, validationErr)
+			return nil, fmt.Errorf("Kafka message validation failed:\n\nMessage:\n%v\n\n%s\n", value, validationErr)
 		}
 		return nil, nil
 	}

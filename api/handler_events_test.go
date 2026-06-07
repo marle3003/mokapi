@@ -95,7 +95,11 @@ func TestHandler_Events(t *testing.T) {
 				}
 				r = r.WithContext(openapi.NewContext(context.Background(), params))
 
-				_, err := openapi.NewLogEventContext(r, false, sm, events.NewTraits().WithNamespace("http"))
+				traits := events.NewTraits().WithNamespace("http")
+				ctx, err := openapi.NewLogEventContext(r, false, traits)
+				require.NoError(t, err)
+				l, _ := openapi.LogEventFromContext(ctx)
+				err = sm.Push(l, traits)
 				require.NoError(t, err)
 				try.Handler(t,
 					http.MethodGet,
@@ -148,7 +152,11 @@ func TestHandler_Events(t *testing.T) {
 				}
 				r = r.WithContext(openapi.NewContext(context.Background(), params))
 
-				_, err := openapi.NewLogEventContext(r, false, sm, events.NewTraits().WithNamespace("http"))
+				traits := events.NewTraits().WithNamespace("http")
+				ctx, err := openapi.NewLogEventContext(r, false, traits)
+				require.NoError(t, err)
+				l, _ := openapi.LogEventFromContext(ctx)
+				err = sm.Push(l, traits)
 				require.NoError(t, err)
 				try.Handler(t,
 					http.MethodGet,

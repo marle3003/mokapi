@@ -8,6 +8,7 @@ interface SearchItem {
     type: string
     domain?: string
     title: string
+    description?: string
     fragments: string[]
     params: { [name: string]: string }
     time?: string

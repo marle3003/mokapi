@@ -4,16 +4,12 @@ import (
 	"fmt"
 	"mokapi/runtime/search"
 	"reflect"
+	"strings"
 	"time"
 )
 
-type eventIndex struct {
-	Type          string `json:"type"`
-	Discriminator string `json:"discriminator"`
-	Api           string `json:"api"`
-	Title         string `json:"_title" index:"false" store:"true"`
-	Event         *Event `json:"event"`
-	Time          string `json:"_time"`
+type IndexFieldsProvider interface {
+	IndexFields() map[string]any
 }
 
 func (m *StoreManager) addToIndex(event *Event) {
@@ -21,15 +17,24 @@ func (m *StoreManager) addToIndex(event *Event) {
 		return
 	}
 
-	data := eventIndex{
-		Type:          "event",
-		Discriminator: fmt.Sprintf("event_%s", event.Traits.String()),
-		Api:           getApiFromEvent(event),
-		Event:         event,
-		Time:          event.Time.Format(time.RFC3339),
+	data := map[string]any{
+		"api":           event.Traits.GetName(),
+		"type":          "event",
+		"discriminator": fmt.Sprintf("event_%s", event.Traits.String()),
+		"domain":        getDomainFromEvent(event),
+		"id":            event.Id,
+		"traits":        event.Traits,
+		"_time":         event.Time.Format(time.RFC3339),
 	}
+
 	if event.Data != nil {
-		data.Title = event.Data.Title()
+		data["_title"] = event.Data.Title()
+
+		if p, ok := event.Data.(IndexFieldsProvider); ok {
+			for k, v := range p.IndexFields() {
+				data[k] = v
+			}
+		}
 	}
 
 	m.index.Add(event.Id, data)
@@ -39,27 +44,43 @@ func GetSearchResult(fields map[string]string, _ []string) (search.ResultItem, e
 	result := search.ResultItem{
 		Type:   "Event",
 		Title:  fields["_title"],
-		Domain: fields["event.data.api"],
+		Domain: fields["domain"],
 		Time:   fields["_time"],
 	}
-	if fields["event.traits.namespace"] == "kafka" {
-		result.Domain = fmt.Sprintf("%s - %s", fields["event.data.api"], fields["event.traits.topic"])
-	}
 	result.Params = map[string]string{
-		"namespace": fields["event.traits.namespace"],
-		"id":        fields["event.id"],
+		"type": "event",
+		"id":   fields["id"],
+	}
+	for k, v := range fields {
+		if strings.HasPrefix(k, "traits.") {
+			result.Params[k] = v
+		} else if strings.HasPrefix(k, "metadata.") {
+			k = strings.Replace(k, "metadata.", "", 1)
+			result.Params[k] = v
+		}
 	}
 
 	return result, nil
 }
 
-func getApiFromEvent(event *Event) string {
+func getDomainFromEvent(event *Event) string {
+	if d, ok := event.Data.(DomainData); ok {
+		return d.Domain()
+	}
+	return getDataField(event, "Api")
+}
+
+type DomainData interface {
+	Domain() string
+}
+
+func getDataField(event *Event, field string) string {
 	if event.Data == nil {
 		return ""
 	}
-	f := reflect.ValueOf(event.Data).Elem().FieldByName("Api")
+	f := reflect.ValueOf(event.Data).Elem().FieldByName(field)
 	if f.IsValid() {
 		return f.String()
 	}
-	return ""
+	return event.Traits.GetName()
 }

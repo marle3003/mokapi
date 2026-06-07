@@ -11,6 +11,7 @@ import (
 	"mokapi/runtime"
 	"mokapi/runtime/events"
 	"mokapi/runtime/events/eventstest"
+	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"net/http"
 	"net/http/httptest"
@@ -28,9 +29,9 @@ func TestApp_AddHttp(t *testing.T) {
 		{
 			name: "event store available",
 			test: func(t *testing.T, app *runtime.App) {
-				app.AddHttp(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))))
+				app.Http.Add(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""))))
 
-				require.NotNil(t, app.GetHttp("foo"))
+				require.NotNil(t, app.Http.Get("foo"))
 				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("http").WithName("foo"))
 				require.NoError(t, err, "event store should be available")
 			},
@@ -38,10 +39,10 @@ func TestApp_AddHttp(t *testing.T) {
 		{
 			name: "event store for endpoint available",
 			test: func(t *testing.T, app *runtime.App) {
-				app.AddHttp(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+				app.Http.Add(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
 					openapitest.WithPath("bar"))))
 
-				require.NotNil(t, app.GetHttp("foo"))
+				require.NotNil(t, app.Http.Get("foo"))
 				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("http").WithName("foo").With("path", "bar"))
 				require.NoError(t, err, "event store should be available")
 			},
@@ -49,7 +50,7 @@ func TestApp_AddHttp(t *testing.T) {
 		{
 			name: "request is counted in monitor",
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.AddHttp(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+				info := app.Http.Add(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
 					openapitest.WithPath("/foo",
 						openapitest.WithOperation(http.MethodGet,
 							openapitest.WithResponse(http.StatusOK),
@@ -63,13 +64,13 @@ func TestApp_AddHttp(t *testing.T) {
 				err := h.ServeHTTP(rr, r)
 				require.Nil(t, err)
 
-				require.Equal(t, float64(1), m.RequestCounter.Sum())
+				require.Equal(t, float64(1), m.RequestCounter.Sum(metrics.NewQuery()))
 			},
 		},
 		{
 			name: "retrieve configs",
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.AddHttp(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+				info := app.Http.Add(newConfig(openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
 					openapitest.WithPath("bar"))))
 
 				configs := info.Configs()
@@ -109,7 +110,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 				newConfig("https://mokapi.io/b", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "bar"))),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.GetHttp("foo")
+				info := app.Http.Get("foo")
 				require.Equal(t, "bar", info.Info.Description)
 				configs := info.Configs()
 				require.Len(t, configs, 2)
@@ -122,7 +123,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 				newConfig("https://mokapi.io/a", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "bar"))),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.GetHttp("foo")
+				info := app.Http.Get("foo")
 				require.Equal(t, "foo", info.Info.Description)
 			},
 		},
@@ -133,7 +134,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 				newConfig("https://mokapi.io/a", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "bar"))),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.GetHttp("foo")
+				info := app.Http.Get("foo")
 				require.Equal(t, "foo", info.Info.Description)
 			},
 		},
@@ -146,7 +147,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 				err := app.Events.Push(&eventstest.Event{Name: "bar"}, events.NewTraits().WithNamespace("http").WithName("foo"))
 				require.NoError(t, err)
 
-				app.AddHttp(
+				app.Http.Add(
 					newConfig("https://mokapi.io/a", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "bar"))),
 				)
 
@@ -198,7 +199,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, app *runtime.App) {
-				info := app.GetHttp("foo")
+				info := app.Http.Get("foo")
 				p := info.Paths["/foo"]
 				require.NotNil(t, p)
 				op := p.Value.Get
@@ -220,7 +221,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 			}
 			app := runtime.New(cfg, &dynamictest.Reader{})
 			for _, c := range tc.configs {
-				app.AddHttp(c)
+				app.Http.Add(c)
 			}
 			tc.test(t, app)
 		})

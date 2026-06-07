@@ -103,7 +103,7 @@ Returns the full response including status code, headers, and body.`,
 func (s *Service) SendHttpRequest(_ context.Context, in SendHttpRequestInput) (SendHttpRequestResponse, error) {
 	result := SendHttpRequestResponse{Headers: make(map[string][]string)}
 
-	info := s.app.GetHttp(in.APIName)
+	info := s.app.Http.Get(in.APIName)
 	if info == nil {
 		return result, fmt.Errorf("API '%s' not found", in.APIName)
 	}

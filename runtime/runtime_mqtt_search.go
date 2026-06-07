@@ -1,0 +1,189 @@
+package runtime
+
+import (
+	"fmt"
+	"mokapi/providers/asyncapi3"
+	"mokapi/runtime/search"
+	"mokapi/schema/json/schema"
+	"strings"
+
+	log "github.com/sirupsen/logrus"
+)
+
+type mqttSearchIndexData struct {
+	Type          string                 `json:"type"`
+	Discriminator string                 `json:"discriminator"`
+	Api           string                 `json:"api"`
+	Name          string                 `json:"name"`
+	Version       string                 `json:"version"`
+	Description   string                 `json:"description"`
+	Contact       *asyncapi3.Contact     `json:"contact"`
+	Servers       []mqttServerSearchData `json:"servers"`
+	Meta          map[string]string      `json:"meta"`
+}
+
+type mqttServerSearchData struct {
+	Name        string `json:"name"`
+	Host        string `json:"host"`
+	Title       string `json:"title"`
+	Summary     string `json:"summary"`
+	Description string `json:"description"`
+}
+
+type mqttTopicSearchIndexData struct {
+	Type          string                       `json:"type"`
+	Discriminator string                       `json:"discriminator"`
+	Api           string                       `json:"api"`
+	ChannelId     string                       `json:"channelId"`
+	Name          string                       `json:"name"`
+	Title         string                       `json:"title"`
+	Address       string                       `json:"address"`
+	Summary       string                       `json:"summary"`
+	Description   string                       `json:"description"`
+	Messages      []mqttMessageSearchIndexData `json:"messages"`
+}
+
+type mqttMessageSearchIndexData struct {
+	MessageId   string            `json:"messageId"`
+	Name        string            `json:"name"`
+	Title       string            `json:"title"`
+	Summary     string            `json:"summary"`
+	Description string            `json:"description"`
+	Headers     *schema.IndexData `json:"headers"`
+	Payload     *schema.IndexData `json:"payload"`
+}
+
+func (s *MqttStore) addToIndex(cfg *asyncapi3.Config) {
+	if cfg == nil || cfg.Info.Name == "" {
+		return
+	}
+
+	c := mqttSearchIndexData{
+		Type:          "mqtt",
+		Discriminator: "mqtt",
+		Api:           cfg.Info.Name,
+		Name:          cfg.Info.Name,
+		Version:       cfg.Info.Version,
+		Description:   cfg.Info.Description,
+		Contact:       cfg.Info.Contact,
+		Meta: map[string]string{
+			"topics": fmt.Sprintf("%d", len(cfg.Channels)),
+		},
+	}
+	for it := cfg.Servers.Iter(); it.Next(); {
+		name := it.Key()
+		server := it.Value()
+		if server == nil || server.Value == nil {
+			continue
+		}
+		c.Servers = append(c.Servers, mqttServerSearchData{
+			Name:        name,
+			Host:        server.Value.Host,
+			Title:       server.Value.Title,
+			Summary:     server.Value.Summary,
+			Description: server.Value.Description,
+		})
+	}
+
+	s.index.Add(fmt.Sprintf("mqtt_%s", cfg.Info.Name), c)
+
+	for name, topic := range cfg.Channels {
+		if topic == nil || topic.Value == nil {
+			continue
+		}
+		topicName := name
+		if topic.Value.Name != "" {
+			topicName = topic.Value.Name
+		}
+		if topic.Value.Address != "" {
+			topicName = topic.Value.Address
+		}
+
+		t := mqttTopicSearchIndexData{
+			Type:          "mqtt",
+			Discriminator: "mqtt_topic",
+			Api:           cfg.Info.Name,
+			ChannelId:     name,
+			Name:          topicName,
+			Title:         topic.Value.Title,
+			Address:       topic.Value.Address,
+			Summary:       topic.Value.Summary,
+			Description:   topic.Value.Description,
+		}
+
+		for messageId, message := range topic.Value.Messages {
+			if message == nil || message.Value == nil {
+				continue
+			}
+			h, err := getSchema(message.Value.Headers)
+			if err != nil {
+				log.Errorf("indexing message for topic '%v' failed for headers: %v", topic.Value.Name, err)
+			}
+			p, err := getSchema(message.Value.Headers)
+			if err != nil {
+				log.Errorf("indexing message for topic '%v' failed for payload: %v", topic.Value.Name, err)
+			}
+
+			t.Messages = append(t.Messages, mqttMessageSearchIndexData{
+				MessageId:   messageId,
+				Name:        message.Value.Name,
+				Title:       message.Value.Title,
+				Summary:     message.Value.Summary,
+				Description: message.Value.Description,
+				Headers:     h,
+				Payload:     p,
+			})
+		}
+		id := fmt.Sprintf("mqtt_%s_%s", cfg.Info.Name, name)
+		s.index.Add(id, t)
+	}
+}
+
+func getMqttSearchResult(fields map[string]string, discriminator []string) (search.ResultItem, error) {
+	result := search.ResultItem{
+		Type: "MQTT",
+	}
+
+	if len(discriminator) == 1 {
+		result.Title = fields["name"]
+		result.Params = map[string]string{
+			"type":    strings.ToLower(result.Type),
+			"service": result.Title,
+		}
+		for k, v := range fields {
+			if strings.HasPrefix(k, "meta.") {
+				k = strings.Replace(k, "meta.", "", 1)
+				result.Params[k] = v
+			}
+		}
+		return result, nil
+	}
+
+	switch discriminator[1] {
+	case "topic":
+		title := fields["channelId"]
+		if len(fields["name"]) > 0 {
+			title = fields["name"]
+		} else if len(fields["title"]) > 0 {
+			title = fields["title"]
+		}
+		result.Domain = fields["api"]
+		result.Title = fmt.Sprintf("Topic %s", title)
+		result.Params = map[string]string{
+			"type":    strings.ToLower(result.Type),
+			"service": result.Domain,
+			"topic":   fields["name"],
+		}
+	default:
+		return result, fmt.Errorf("unsupported search result: %s", strings.Join(discriminator, "_"))
+	}
+	return result, nil
+}
+
+func (s *MqttStore) removeFromIndex(cfg *asyncapi3.Config) {
+	s.index.Delete(fmt.Sprintf("mqtt_%s", cfg.Info.Name))
+
+	for name := range cfg.Channels {
+		s.index.Delete(fmt.Sprintf("mqtt_%s_%s", cfg.Info.Name, name))
+	}
+}

@@ -9,14 +9,14 @@ const props = defineProps({
 })
 let data: SmtpEventData | null
 
-const labels: Label[] = []
+const labels: Label[] = [{ name: 'namespace', value: 'mail' }]
 if (props.service) {
     labels.push({name: 'name', value: props.service!.name})
 }
 
 const router = useRouter()
 const { dashboard } = useDashboard()
-const { events, close } = dashboard.value.getEvents('mail', ...labels)
+const { events, close } = dashboard.value.getEvents(...labels)
 const { format, duration } = usePrettyDates()
 
 function goToMail(evt: ServiceEvent, openInNewTab = false){

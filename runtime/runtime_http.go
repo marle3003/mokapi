@@ -29,6 +29,7 @@ type HttpInfo struct {
 	*openapi.Config
 	configs   map[string]*dynamic.Config
 	seenPaths map[string]bool
+	m         sync.Mutex
 }
 
 type httpHandler struct {
@@ -60,7 +61,6 @@ func (s *HttpStore) List() []*HttpInfo {
 
 func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 	s.m.Lock()
-	defer s.m.Unlock()
 
 	if len(s.infos) == 0 {
 		s.infos = make(map[string]*HttpInfo)
@@ -68,6 +68,19 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 	cfg := c.Data.(*openapi.Config)
 	name := cfg.Info.Name
 	hc, ok := s.infos[name]
+	if !ok {
+		hc = &HttpInfo{
+			Config:    cfg,
+			configs:   map[string]*dynamic.Config{},
+			seenPaths: map[string]bool{},
+		}
+		s.infos[cfg.Info.Name] = hc
+	}
+
+	s.m.Unlock()
+
+	hc.m.Lock()
+	defer hc.m.Unlock()
 
 	store, hasStoreConfig := s.cfg.Event.Store[name]
 	if !hasStoreConfig {
@@ -75,12 +88,6 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 	}
 
 	if !ok {
-		hc = &HttpInfo{
-			configs:   map[string]*dynamic.Config{},
-			seenPaths: map[string]bool{},
-		}
-		s.infos[cfg.Info.Name] = hc
-
 		s.events.ResetStores(events.NewTraits().WithNamespace("http").WithName(name))
 		s.events.SetStore(int(store.Size), events.NewTraits().WithNamespace("http").WithName(name))
 	}
@@ -203,4 +210,14 @@ func IsHttpConfig(c *dynamic.Config) (*openapi.Config, bool) {
 
 func getHttpConfig(c *dynamic.Config) *openapi.Config {
 	return c.Data.(*openapi.Config)
+}
+
+func (s *HttpStore) Len() int {
+	if s == nil {
+		return 0
+	}
+
+	s.m.RLock()
+	defer s.m.RUnlock()
+	return len(s.infos)
 }

@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/base64"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"mime/multipart"
 	"mime/quotedprintable"
@@ -15,6 +14,8 @@ import (
 	"net/textproto"
 	"strings"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type AppendOptions struct {
@@ -36,7 +37,7 @@ func (c *conn) handleAppend(tag string, d *Decoder) error {
 	}
 	d.SP()
 
-	opt := AppendOptions{}
+	opt := AppendOptions{Date: time.Now()}
 	if d.IsList() {
 		err = d.List(func() error {
 			f, err := d.ReadFlag()
@@ -46,6 +47,14 @@ func (c *conn) handleAppend(tag string, d *Decoder) error {
 			opt.Flags = append(opt.Flags, Flag(f))
 			return nil
 		})
+		if err != nil {
+			return err
+		}
+		d.SP()
+	}
+
+	if d.is("\"") {
+		opt.Date, err = d.Date()
 		if err != nil {
 			return err
 		}
@@ -63,7 +72,7 @@ func (c *conn) handleAppend(tag string, d *Decoder) error {
 		return err
 	}
 
-	c.tpc.PrintfLine("+ Ready for literal data")
+	_ = c.tpc.PrintfLine("+ Ready for literal data")
 
 	r := io.LimitReader(c.tpc.R, size)
 	data, err := io.ReadAll(r)

@@ -4,19 +4,19 @@ import { formatDateTime } from "../helpers/format"
 
 export interface Topic {
     name: string
-    description: string
+    summary: string
     lastMessage: string
     messages: string
 }
 
 export function useKafkaTopics(table: Locator) {
-    const topics = useTable(table, ['Name', 'Description', 'Last Message', 'Messages'])
+    const topics = useTable(table, ['Name', 'Summary', 'Last Message', 'Messages'])
     return {
         async testTopic(row: number, topic: Topic) {
             await test.step(`Check Kafka topic in row ${row}`, async () => {
                 const t = topics.getRow(row + 1)
                 await expect(t.getCellByName('Name')).toHaveText(topic.name)
-                await expect(t.getCellByName('Description')).toHaveText(topic.description)
+                await expect(t.getCellByName('Summary')).toHaveText(topic.summary)
                 await expect(t.getCellByName('Last Message')).toHaveText(topic.lastMessage)
                 await expect(t.getCellByName('Messages')).toHaveText(topic.messages)
             })
@@ -81,9 +81,9 @@ export function useKafkaMessages(page: Page) {
     return {
         test: async (table: Locator, withTopic: boolean = true) => {
             await test.step('Check messages log', async () => {
-                let columns = ['Key', 'Value', 'Topic', 'Time']
+                let columns = ['Topic', 'Key', 'Value', 'Time']
                 if (!withTopic) {
-                    columns.splice(2,1)
+                    columns.splice(0,1)
                 }
 
                 const messages = await useTable(table, columns)

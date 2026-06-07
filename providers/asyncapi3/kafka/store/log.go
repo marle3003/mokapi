@@ -39,6 +39,47 @@ func (l *KafkaMessageLog) Title() string {
 	}
 }
 
+type headerIndex struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
+}
+
+func (l *KafkaMessageLog) IndexFields() map[string]any {
+	m := map[string]any{
+		"clientId":  l.ClientId,
+		"offset":    l.Offset,
+		"messageId": l.MessageId,
+		"partition": l.Partition,
+	}
+
+	if l.Key.Value != "" {
+		m["key"] = l.Key.Value
+	} else {
+		m["key"] = string(l.Key.Binary)
+	}
+
+	if l.Message.Value != "" {
+		m["message"] = l.Message.Value
+	} else {
+		m["message"] = string(l.Message.Binary)
+	}
+
+	var headers []headerIndex
+	for k, h := range l.Headers {
+		val := h.Value
+		if val == "" {
+			val = string(h.Binary)
+		}
+		headers = append(headers, headerIndex{
+			Key:   k,
+			Value: val,
+		})
+	}
+	m["headers"] = headers
+
+	return m
+}
+
 func newKafkaLog(record *kafka.Record) *KafkaMessageLog {
 	return &KafkaMessageLog{
 		Key:            LogValue{Binary: kafka.Read(record.Key)},

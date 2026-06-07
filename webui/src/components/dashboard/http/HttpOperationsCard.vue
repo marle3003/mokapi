@@ -19,7 +19,7 @@ const operations = computed(() => {
     return props.path.operations.sort(comparePath)
 })
 
-function comparePath(o1: HttpOperation, o2: HttpOperation) {
+function comparePath(o1: HttpOperationInfo, o2: HttpOperationInfo) {
     const name1 = o1.method.toLowerCase()
     const name2 = o2.method.toLowerCase()
     return name1.localeCompare(name2)
@@ -27,7 +27,7 @@ function comparePath(o1: HttpOperation, o2: HttpOperation) {
 
 const route = useRoute()
 const router = useRouter()
-function goToOperation(operation: HttpOperation, openInNewTab = false){
+function goToOperation(operation: HttpOperationInfo, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
     }
@@ -51,20 +51,32 @@ function showWarningColumn(){
     }
     return false
 }
-function lastRequest(op: HttpOperation){
-    const n = sum(props.service.metrics, 'http_request_timestamp', { name: 'endpoint', value: props.path.path }, { name: 'method', value: op.method.toUpperCase() })
+function lastRequest(op: HttpOperationInfo){
+    const n = op.metrics.http_request_timestamp
     if (n == 0){
         return '-'
     }
     return format(n)
 }
 
-function requests(op: HttpOperation){
-    return sum(props.service.metrics, 'http_requests_total', { name: 'endpoint', value: props.path.path }, { name: 'method', value: op.method.toUpperCase() })
+function requests(op: HttpOperationInfo){
+    return op.metrics.http_requests_total
 }
 
-function errors(op: HttpOperation){
-    return sum(props.service.metrics, 'http_requests_errors_total', { name: 'endpoint', value: props.path.path }, { name: 'method', value: op.method.toUpperCase() })
+function errors(op: HttpOperationInfo){
+    return op.metrics.http_requests_errors_total
+}
+function operationCssClass(operation: HttpOperationInfo): string {
+    if (operation.status === 'valid') {
+        return operation.method
+    }
+    return 'border border-danger text-danger bg-transparent'
+}
+function errorMessages(operation: HttpOperationInfo): string {
+    if (operation.errors && operation.errors.length > 0) {
+        return `${operation.errors.map(x => x.message).join(' ')}`
+    }
+    return ''
 }
 </script>
 
@@ -87,8 +99,11 @@ function errors(op: HttpOperation){
                     <tbody>
                         <tr v-for="operation in operations" :key="path.path" @click="goToOperation(operation)" @mousedown.middle="goToOperation(operation, true)">
                             <td>
-                                <router-link @click.stop :to="route.httpOperation(props.service, props.path, operation)">
-                                    <span class="badge operation" :class="operation.method">{{ operation.method.toUpperCase() }}</span>
+                                <router-link @click.stop :to="route.httpOperation(props.service, props.path, operation)" :title="errorMessages(operation)">
+                                    <span class="badge operation" :class="operationCssClass(operation)">{{ operation.method.toUpperCase() }}
+                                        <span class="bi bi-exclamation-triangle-fill yellow" style="vertical-align: middle;" v-if="operation.deprecated"></span>
+                                        <i class="bi bi-x-circle-fill red" style="vertical-align: middle;" v-if="operation.status !== 'valid'" role="img" aria-label="Operation status invalid"></i>
+                                    </span>
                                 </router-link>
                             </td>
                             <td>{{ operation.operationId }}</td>

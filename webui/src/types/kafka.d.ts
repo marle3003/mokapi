@@ -1,8 +1,8 @@
 declare interface KafkaService extends Service {
-  topics: KafkaTopic[];
-  groups: KafkaGroup[];
+  topics: KafkaTopicInfo[];
+  groups: KafkaGroupInfo[];
   servers: KafkaServer[];
-  clients: KafkaClient[];
+  clients: KafkaClientInfo[];
 }
 
 declare interface KafkaServer {
@@ -18,15 +18,30 @@ declare interface KafkaServer {
 
 declare interface KafkaTag {
   name: string
-  description: string
+  description?: string
+}
+
+declare interface KafkaTopicInfo {
+  name: string;
+  summary?: string;
+  lastMessageReceived?: number
+  messages: number
+  tags: KafkaTag[]
+  metrics: {
+    kafka_messages_total: number
+    kafka_message_timestamp: number
+  }
 }
 
 declare interface KafkaTopic {
   name: string;
+  title: string
+  summary: string;
   description: string;
   partitions: KafkaPartition[];
   messages: { [messageId: string]: KafkaMessage }
   tags: KafkaTag[]
+  groups: KafkaGroupInfo[]
 }
 
 declare interface KafkaMessage {
@@ -52,6 +67,18 @@ declare interface KafkaBroker {
   addr: string;
 }
 
+declare interface KafkaGroupInfo {
+  name: string;
+  generation: number
+  state: string;
+  protocol: string
+  members: number
+  metrics: {
+    kafka_rebalance_timestamp: number
+    topics: Record<string, { partition: number, kafka_consumer_group_lag: number, kafka_consumer_group_commit: number }[]>
+  }
+}
+
 declare interface KafkaGroup {
   name: string;
   generation: number
@@ -60,14 +87,17 @@ declare interface KafkaGroup {
   state: string;
   protocol: string;
   topics: string[] | null;
+  metrics: {
+    kafka_rebalance_timestamp: number
+    topics: Record<string, { partition: number, kafka_consumer_group_lag: number, kafka_consumer_group_commit: number }[]>
+  }
 }
 
 declare interface KafkaMember {
   name: string;
   clientId: string
   addr: string;
-  clientSoftwareName: string;
-  clientSoftwareVersion: string;
+  software: string;
   heartbeat: number;
   partitions: { [topicName: string]: number[] };
 }
@@ -78,7 +108,7 @@ declare interface KafkaMessageData {
   offset: number;
   key: KafkaValue;
   message: KafkaValue;
-  schemaId: number;
+  schemaId: number
   messageId: string
   partition: number;
   headers: KafkaHeader
@@ -102,12 +132,17 @@ declare interface KafkaValue {
   binary?: string
 }
 
+declare interface KafkaClientInfo {
+  clientId: string
+  address: string
+  software: string
+}
+
 declare interface KafkaClient {
   clientId: string
   address: string
   brokerAddress: string
-  clientSoftwareName: string;
-  clientSoftwareVersion: string;
+  software: string
   groups: {
     memberId: string
     group: string

@@ -172,6 +172,9 @@ func (s *Store) Update(c *asyncapi3.Config) {
 		if ch.Value == nil {
 			continue
 		}
+		if !ch.Value.IsChannelAvailable("kafka") {
+			continue
+		}
 
 		if ch.Value.Address != "" {
 			n = ch.Value.Address
@@ -471,4 +474,12 @@ func (s *Store) Clients() []kafka.ClientContext {
 		result = append(result, *c)
 	}
 	return result
+}
+
+func (s *Store) Client(clientId string) (kafka.ClientContext, bool) {
+	c, ok := s.clients[clientId]
+	if !ok {
+		return kafka.ClientContext{}, false
+	}
+	return *c, ok
 }

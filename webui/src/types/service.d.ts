@@ -4,8 +4,9 @@ declare interface Service {
     version: string
     contact: Contact | null
     type: string
-    metrics: Metric[]
+    metrics: Record<string, any>
     configs: Config[]
+    status?: string
 }
 
 declare interface Contact {
@@ -26,7 +27,7 @@ declare interface Label {
 
 declare interface ServiceEvent {
     id: string
-    data: HttpEventData | KafkaEventData | SmtpEventData | LdapEventData | JobExecution
+    data: HttpEventData | KafkaEventData | MqttEventData | SmtpEventData | LdapEventData | JobExecution | LogMessage
     time: string
     traits: Traits
 }
@@ -47,4 +48,13 @@ declare interface ConfigRef {
     url: string
     provider: string
     time: string
+}
+
+declare interface LogMessage {
+    message: string
+    level: string
+}
+
+declare interface Error {
+    message: string
 }

@@ -47,7 +47,9 @@ type Operation struct {
 
 	Security []SecurityRequirement `yaml:"security" json:"security"`
 
-	Path *Path `yaml:"-" json:"-"`
+	Path   *Path   `yaml:"-" json:"-"`
+	Status Status  `yaml:"-" json:"-"`
+	Errors []Error `yaml:"-" json:"-"`
 }
 
 func (o *Operation) getFirstSuccessResponse() (int, *Response, error) {
@@ -84,12 +86,10 @@ func (o *Operation) getResponse(statusCode int) *Response {
 	return o.Responses.GetResponse(statusCode)
 }
 
-func (o *Operation) Parse(p *Path, config *dynamic.Config, reader dynamic.Reader) error {
+func (o *Operation) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if o == nil {
 		return nil
 	}
-
-	o.Path = p
 
 	if err := o.Parameters.Parse(config, reader); err != nil {
 		return err

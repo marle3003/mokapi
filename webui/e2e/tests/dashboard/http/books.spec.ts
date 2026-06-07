@@ -7,7 +7,10 @@ test.describe('Visit Books API', () => {
     test('Verify overview', async ({ dashboard, page }) => {
         await dashboard.open()
 
-        await page.getByRole('link', { name: 'Books API' }).click();
+        const service = page.getByRole('link', { name: 'Books API' })
+        await expect(service.getByRole('img')).toBeVisible();
+
+        await service.click();
 
         await test.step('Verify service info', async () => {
 
@@ -18,6 +21,14 @@ test.describe('Visit Books API', () => {
             await expect(region.getByLabel('Description')).toHaveText('A simple API to manage books in a library');
 
         });
+
+        await test.step('Verify errors', async () => {
+            const region = page.getByRole('region', { name: 'Errors' });
+            await expect(region).toBeVisible();
+            const table = page.getByRole('table', { name: 'Errors' });
+            const rows = table.locator('tbody tr');
+            await expect(await getCellByColumnName(table, 'Message', rows.nth(0))).toHaveText('An example error message for this operation');
+        })
 
         await test.step('Verify servers', async () => {
 
@@ -48,12 +59,20 @@ test.describe('Visit Books API', () => {
 
             const table = page.getByRole('table', { name: 'Paths' });
             const rows = table.locator('tbody tr');
-            await expect(rows).toHaveCount(1);
+            await expect(rows).toHaveCount(2);
             await expect(await getCellByColumnName(table, 'Path', rows.nth(0))).toHaveText('/books');
             await expect(await getCellByColumnName(table, 'Summary', rows.nth(0))).toHaveText('');
             await expect(await getCellByColumnName(table, 'Operations', rows.nth(0))).toHaveText('GET POST');
             await expect(await getCellByColumnName(table, 'Last Request', rows.nth(0))).toHaveText('-');
             await expect(await getCellByColumnName(table, 'Req / Err', rows.nth(0))).toHaveText('0 / 0');
+
+            await expect(await getCellByColumnName(table, 'Path', rows.nth(1))).toHaveText('/users');
+            await expect(await getCellByColumnName(table, 'Summary', rows.nth(1))).toHaveText('Get users from the store');
+            await expect(await getCellByColumnName(table, 'Operations', rows.nth(1))).toHaveText('GET');
+            const operations = await getCellByColumnName(table, 'Operations', rows.nth(1))
+            await expect(operations.getByTitle('An example error message for this operation')).toHaveCSS('border-color', 'rgb(220, 53, 69)');
+            await expect(await getCellByColumnName(table, 'Last Request', rows.nth(1))).toHaveText('-');
+            await expect(await getCellByColumnName(table, 'Req / Err', rows.nth(1))).toHaveText('0 / 0');
 
             await test.step('Verify path', async () => {
 

@@ -5,9 +5,15 @@ test.use({ colorScheme: 'light' })
 // reset storage state
 test.use({ storageState: { cookies: [], origins: [] } });
 
-test('Visit Mail Server', async ({ page }) => {
+test('Visit Mail Server', async ({ page, baseURL }) => {
+    let dashboard = '/dashboard'
+    if (baseURL === 'http://localhost:8080') {
+        await page.goto('/dashboard')
+    } else {
+        dashboard = '/dashboard-demo'
+        await page.goto('/dashboard-demo')
+    }
 
-    await page.goto('/dashboard-demo');
     await page.getByRole('cell').getByText(/^Mail Server$/).click();
 
     await test.step('Verify service info', async () => {
@@ -69,7 +75,7 @@ test('Visit Mail Server', async ({ page }) => {
             await rows.nth(1).click();
             await expect(page.getByLabel('Mailbox Name')).toHaveText('bob.miller@example.com');
             await expect(page.getByLabel('Service', { exact: true })).toHaveText('Mail Server');
-            await expect(page.getByLabel('Service', { exact: true }).getByRole('link')).toHaveAttribute('href', '/dashboard-demo/mail/service/Mail%20Server');
+            await expect(page.getByLabel('Service', { exact: true }).getByRole('link')).toHaveAttribute('href', dashboard + '/mail/service/Mail%20Server');
             await expect(page.getByLabel('Username')).toHaveText('bob.miller');
             await expect(page.getByLabel('Password')).toHaveText('mysecretpassword123');
 
@@ -88,7 +94,7 @@ test('Visit Mail Server', async ({ page }) => {
                 const info = page.getByRole('region', { name: 'Info' })
                 await expect(info.getByLabel('Subject')).toHaveText('Reset Your Password');
                 await expect(info.getByLabel('Service', { exact: true })).toHaveText('Mail Server');
-                await expect(info.getByLabel('Service', { exact: true }).getByRole('link')).toHaveAttribute('href', '/dashboard-demo/mail/service/Mail%20Server');
+                await expect(info.getByLabel('Service', { exact: true }).getByRole('link')).toHaveAttribute('href',  dashboard + '/mail/service/Mail%20Server');
                 await expect(info.getByLabel('From')).not.toBeEmpty();
                 await expect(info.getByLabel('From')).toHaveText('zzz@example.com');
                 await expect(info.getByLabel('To', { exact: true })).toHaveText('Bob Miller <bob.miller@example.com>');
@@ -112,7 +118,7 @@ test('Visit Mail Server', async ({ page }) => {
 
             await expect(page.getByLabel('Mailbox Name')).toHaveText('alice.johnson@example.com');
             await expect(page.getByLabel('Service', { exact: true })).toHaveText('Mail Server');
-            await expect(page.getByLabel('Service', { exact: true }).getByRole('link')).toHaveAttribute('href', '/dashboard-demo/mail/service/Mail%20Server');
+            await expect(page.getByLabel('Service', { exact: true }).getByRole('link')).toHaveAttribute('href',  dashboard + '/mail/service/Mail%20Server');
             await expect(page.getByLabel('Username')).toHaveText('alice.johnson');
             await expect(page.getByLabel('Password')).toHaveText('anothersecretpassword456');
 
@@ -131,7 +137,7 @@ test('Visit Mail Server', async ({ page }) => {
                 const info = page.getByRole('region', { name: 'Info' })
                 await expect(info.getByLabel('Subject')).toHaveText('Check Out Our New Arrivals!');
                 await expect(info.getByLabel('Service', { exact: true })).toHaveText('Mail Server');
-                await expect(info.getByLabel('Service', { exact: true }).getByRole('link')).toHaveAttribute('href', '/dashboard-demo/mail/service/Mail%20Server');
+                await expect(info.getByLabel('Service', { exact: true }).getByRole('link')).toHaveAttribute('href',  dashboard + '/mail/service/Mail%20Server');
                 await expect(info.getByLabel('From')).not.toBeEmpty();
                 await expect(info.getByLabel('From')).toHaveText('Bob Miller <bob.miller@example.com>');
                 await expect(info.getByLabel('To', { exact: true })).toHaveText('Alice Johnson <alice.johnson@example.com>');
@@ -142,10 +148,12 @@ test('Visit Mail Server', async ({ page }) => {
 
                 const attachments = page.getByRole('region', { name: 'Attachments '});
                 await expect(attachments).toBeVisible();
-                await expect(attachments.getByRole('link', { name: 'headerimg' })).toHaveAttribute('href', /\/demo\/header.jpg$/)
-                await expect(attachments.getByRole('link', { name: 'product1' })).toHaveAttribute('href', /\/demo\/product1.jpg$/)
-                await expect(attachments.getByRole('link', { name: 'product2' })).toHaveAttribute('href', /\/demo\/product2.jpg$/)
-                await expect(attachments.getByRole('link', { name: 'product3' })).toHaveAttribute('href', /\/demo\/product3.jpg$/)
+                if (dashboard === 'dashboard-demo') {
+                    await expect(attachments.getByRole('link', { name: 'headerimg' })).toHaveAttribute('href', /\/demo\/header.jpg$/)
+                    await expect(attachments.getByRole('link', { name: 'product1' })).toHaveAttribute('href', /\/demo\/product1.jpg$/)
+                    await expect(attachments.getByRole('link', { name: 'product2' })).toHaveAttribute('href', /\/demo\/product2.jpg$/)
+                    await expect(attachments.getByRole('link', { name: 'product3' })).toHaveAttribute('href', /\/demo\/product3.jpg$/)
+                }
 
                 await expect(page.getByLabel('Content-Type')).toHaveText('text/html');
                 await expect(page.getByLabel('Encoding')).not.toBeVisible();

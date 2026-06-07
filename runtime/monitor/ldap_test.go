@@ -18,7 +18,7 @@ func TestLdapLabels(t *testing.T) {
 func TestLdap_Metrics_Bind(t *testing.T) {
 	l := NewLdap()
 	l.RequestCounter.WithLabel("service_a", "bind").Add(1)
-	require.Equal(t, float64(1), l.RequestCounter.Sum())
+	require.Equal(t, float64(1), l.RequestCounter.Sum(metrics.NewQuery()))
 }
 
 func TestLdap_Search(t *testing.T) {

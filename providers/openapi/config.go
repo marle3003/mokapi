@@ -42,6 +42,14 @@ func init() {
 	}
 }
 
+type Status byte
+
+const (
+	StatusValid Status = iota
+	StatusInvalid
+	StatusValidationError
+)
+
 type Config struct {
 	OpenApi version.Version `yaml:"openapi" json:"openapi"`
 	Info    Info            `yaml:"info" json:"info"`
@@ -59,6 +67,10 @@ type Config struct {
 	ExternalDocs *ExternalDocs `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 
 	Tags []*Tag `yaml:"tags,omitempty" json:"tags,omitempty"`
+}
+
+type Error struct {
+	Message string `yaml:"message" json:"message"`
 }
 
 type ExternalDocs struct {
@@ -92,9 +104,14 @@ func (c *Config) Validate() (err error) {
 		err = errors.Join(err, errors.New("an openapi title is required"))
 	}
 
-	for name := range c.Paths {
+	for name, path := range c.Paths {
 		if !strings.HasPrefix(name, "/") {
-			err = errors.Join(err, fmt.Errorf("should only have path names that start with `/`: '%s'", name))
+			if path.Value == nil {
+				err = errors.Join(err, fmt.Errorf("should only have path names that start with `/`: '%s'", name))
+			} else {
+				path.Value.Status = StatusValidationError
+				path.Value.Errors = append(path.Value.Errors, Error{Message: "path should start with `/`"})
+			}
 		}
 	}
 
@@ -171,4 +188,41 @@ func (c *Config) UnmarshalJSON(b []byte) error {
 	}
 	*c = Config(a)
 	return nil
+}
+
+func (s Status) String() string {
+	switch s {
+	case StatusValid:
+		return "valid"
+	case StatusInvalid:
+		return "invalid"
+	case StatusValidationError:
+		return "validation error"
+	default:
+		return "unknown"
+	}
+}
+
+func getName(cfg *dynamic.Config) string {
+	if c, ok := cfg.Data.(*Config); ok {
+		return c.Info.Name
+	}
+	return ""
+}
+
+func (c *Config) GetStatus() Status {
+	for _, pt := range c.Paths {
+		if pt.Value == nil {
+			continue
+		}
+		if pt.Value.Status != StatusValid {
+			return pt.Value.Status
+		}
+		for _, op := range pt.Value.Operations() {
+			if op.Status != StatusValid {
+				return op.Status
+			}
+		}
+	}
+	return StatusValid
 }

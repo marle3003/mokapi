@@ -18,7 +18,7 @@ const route = useRoute()
 const { dashboard, getMode } = useDashboard()
 
 const events = computed(() => {
-    return dashboard.value.getEvents('ldap')
+    return dashboard.value.getEvents({ name: 'namespace', value: 'ldap' })
 })
 
 const eventId = computed(() => {

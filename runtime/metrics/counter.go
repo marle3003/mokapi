@@ -126,13 +126,15 @@ func (m *CounterMap) Value(query *Query) float64 {
 	return v
 }
 
-func (m *CounterMap) Sum() float64 {
+func (m *CounterMap) Sum(query *Query) float64 {
 	m.m.Lock()
 	defer m.m.Unlock()
 
 	var v float64
 	for _, c := range m.counters {
-		v += c.Value()
+		if c.Info().Match(query) {
+			v += c.Value()
+		}
 	}
 	return v
 }
@@ -153,4 +155,16 @@ func (m *CounterMap) Reset() {
 	for _, c := range m.counters {
 		c.Reset()
 	}
+}
+
+func (m *CounterMap) FindOne(query *Query) (*Counter, bool) {
+	m.m.Lock()
+	defer m.m.Unlock()
+
+	for _, c := range m.counters {
+		if c.Info().Match(query) {
+			return c, true
+		}
+	}
+	return nil, false
 }

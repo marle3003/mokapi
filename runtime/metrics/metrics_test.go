@@ -2,8 +2,9 @@ package metrics
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestCounter_Add(t *testing.T) {
@@ -48,7 +49,7 @@ func TestNewCounterMap(t *testing.T) {
 			f: func(t *testing.T) {
 				c := NewCounterMap(WithName("foo"), WithLabelNames("foo"))
 				c.WithLabel("bar").Add(1)
-				require.Equal(t, 1.0, c.Sum())
+				require.Equal(t, 1.0, c.Sum(NewQuery()))
 			},
 		},
 		{

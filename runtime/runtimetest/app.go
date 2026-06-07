@@ -41,7 +41,7 @@ func NewApp(opts ...Options) *runtime.App {
 func WithHttp(configs ...*openapi.Config) Options {
 	return func(app *runtime.App) {
 		for i, cfg := range configs {
-			app.AddHttp(&dynamic.Config{
+			app.Http.Add(&dynamic.Config{
 				Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i))),
 				Data: cfg,
 			})
@@ -114,6 +114,28 @@ func WithEvent(traits events.Traits, data events.EventData) Options {
 		err := app.Events.Push(data, traits)
 		if err != nil {
 			panic(err)
+		}
+	}
+}
+
+func WithMqttInfo(name string, mi *runtime.MqttInfo) Options {
+	return func(app *runtime.App) {
+		app.Mqtt.Set(name, mi)
+	}
+}
+
+func WithMqtt(configs ...*asyncapi3.Config) Options {
+	return func(app *runtime.App) {
+		for i, cfg := range configs {
+			c := &dynamic.Config{
+				Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i))),
+				Data: cfg,
+			}
+
+			_, err := app.Mqtt.Add(c, app.Engine)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 }

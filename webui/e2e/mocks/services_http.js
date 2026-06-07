@@ -142,10 +142,12 @@ export let apps = [
                 description: "Server is mocked by *mokapi*"
             }
         ],
+        status: 'valid',
         paths: [
             {
                 path: "/pet",
                 summary: "Everything about your Pets",
+                status: 'valid',
                 operations: [
                     {
                         method: "post",
@@ -153,6 +155,7 @@ export let apps = [
                         operationId: "addPet",
                         deprecated: true,
                         tags: ["pet", "post"],
+                        status: 'valid',
                         parameters: [
                             {
                                 type: "query",
@@ -268,11 +271,13 @@ export let apps = [
             },
             {
                 path: "/pet/{petId}",
+                status: 'valid',
                 operations: [
                     {
                         method: "post",
                         summary: "Updates a pet in the store with form data",
                         tags: ["pet", "post"],
+                        status: 'valid',
                         parameters: [
                             {
                                 name: "petId",
@@ -342,6 +347,7 @@ export let apps = [
                         method: "get",
                         summary: "Returns a single pet",
                         tags: ["pet"],
+                        status: 'valid',
                         parameters: [
                             {
                                 name: "petId",
@@ -373,6 +379,7 @@ export let apps = [
             },
             {
                 path: "/pet/findByStatus",
+                status: 'valid',
                 operations: [
                     {
                         method: "get",
@@ -380,6 +387,7 @@ export let apps = [
                         description: "Multiple status values **can** be provided with comma separated strings",
                         operationId: "findPetsByStatus",
                         tags: ["pet"],
+                        status: 'valid',
                         parameters: [
                             {
                                 name: "status",
@@ -463,11 +471,13 @@ export let apps = [
             {
                 path: "/Zorem/ipsum/dolor/sit/amet/consetetur/sadipscing/elitr/sed/diam/nonumy/eirmod",
                 summary: "A long path example",
+                status: 'valid',
                 operations: [
                     {
                         method: "post",
                         summary: "A long path example",
                         tags: ["custom", "post"],
+                        status: 'valid',
                         requestBody: {
                             description: "Create a new pet in the store",
                             contents: [
@@ -534,14 +544,17 @@ export let apps = [
                 url: "https://api.example.com/v1",
             }
         ],
+        status: 'invalid',
         paths: [
             {
                 path: "/books",
+                status: 'valid',
                 operations: [
                     {
                         method: "get",
                         summary: "Get books from the store",
                         operationId: "listBooks",
+                        status: 'valid',
                         responses: [
                             {
                                 statusCode: 200,
@@ -562,6 +575,7 @@ export let apps = [
                         method: "post",
                         summary: "Add a new book",
                         operationId: "addBook",
+                        status: 'valid',
                         requestBody: {
                             required: true,
                             contents: [
@@ -586,6 +600,19 @@ export let apps = [
                     }
                 ]
             },
+            {
+                path: "/users",
+                status: 'valid',
+                operations: [
+                    {
+                        method: "get",
+                        summary: "Get users from the store",
+                        operationId: "listUsers",
+                        status: 'invalid',
+                        errors: [{ message: "An example error message for this operation" }],
+                    }
+                ]
+            }
         ]
     }
 ]

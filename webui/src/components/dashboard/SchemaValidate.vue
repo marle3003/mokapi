@@ -35,7 +35,6 @@ const props = withDefaults(defineProps<{
 }>(), {
     title: 'Data Validator'
 })
-console.log(props)
 const { createGuid } = useGuid()
 const { formatLanguage } = usePrettyLanguage()
 

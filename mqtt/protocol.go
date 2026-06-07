@@ -35,8 +35,8 @@ func readHeader(d *Decoder) *Header {
 	b := d.ReadByte()
 	h.Type = Type(b >> 4)
 	h.Dup = (b>>3)&0x01 > 0
-	h.QoS = (b >> 0x06) >> 1
-	h.Retain = b&0x01 != 0
+	h.QoS = (b >> 1) & 0x03
+	h.Retain = (b & 0x01) > 0
 	h.Size = d.readRemainingLength()
 
 	d.leftSize = h.Size
@@ -61,13 +61,14 @@ func (h *Header) with(messageType Type, size int) *Header {
 }
 
 type Code struct {
-	Reason string
-	Code   byte
+	Reason string `json:"reason"`
+	Code   byte   `json:"code"`
 }
 
 var (
-	Accepted                      = Code{Code: 0x00, Reason: "accepted"}
+	Success                       = Code{Code: 0x00, Reason: "Success"}
 	ErrUnsupportedProtocolVersion = Code{Code: 0x01, Reason: "unacceptable protocol version"}
 	ErrIdentifierRejected         = Code{Code: 0x02, Reason: "identifier rejected"}
 	ErrUnspecifiedError           = Code{Code: 0x80, Reason: "unspecified error"}
+	ErrTopicNameInvalid           = Code{Code: byte(TopicNameInvalid), Reason: "topic name invalid"}
 )

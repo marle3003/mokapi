@@ -2,8 +2,9 @@ package parser
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"strings"
+
+	"github.com/pkg/errors"
 )
 
 type Error struct {
@@ -39,7 +40,7 @@ func (e *Error) Error() string {
 		sb.WriteString(fmt.Sprintf("\t%s", item))
 	}
 
-	return fmt.Sprintf("error count %d:\n%s", len(items), sb.String())
+	return fmt.Sprintf("Validation error count %d:\n%s", len(items), sb.String())
 }
 
 func (e *ErrorList) Error() string {

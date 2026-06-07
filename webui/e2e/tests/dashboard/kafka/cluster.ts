@@ -17,7 +17,9 @@ export const cluster = {
     topics: [
         {
             name: 'mokapi.shop.products',
-            description: 'Though literature second anywhere fortnightly am this either so me.',
+            title: '',
+            summary: 'Though literature second anywhere fortnightly am this either so me.',
+            description: '',
             lastMessage: formatTimestamp(1652135690),
             messages: '10',
             partitions: [
@@ -56,7 +58,9 @@ export const cluster = {
         },
         {
             name: 'mokapi.shop.userSignedUp',
-            description: 'This channel contains a message per each user who signs up in our application.',
+            title: '',
+            summary: 'This channel contains a message per each user who signs up in our application.',
+            description: '',
             lastMessage: '-',
             messages: '0',
             partitions: [
@@ -70,6 +74,7 @@ export const cluster = {
             messageConfigs: [
                 {
                     name: 'second',
+                    title: '',
                     summary: '',
                     description: '',
                     contentType: 'application/json',

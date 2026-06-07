@@ -67,7 +67,72 @@ export function useDemoDashboard() {
             return { service, isLoading, close: () => {} }
         },
 
-        getEvents(namespace: string, ...labels: Label[]) {
+        getHttpOperations(serviceName: string, path?: string, method?: string) {
+            const operations = ref<HttpOperation[] | null>(null)
+            const isLoading = ref<boolean>(true)
+
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                const result = db.data['service_' + serviceName + '_operations']
+                operations.value = result?.filter((op: HttpOperation) => {
+                    if (method && op.method != method) {
+                        return false
+                    }
+                    if (path && op.path != path) {
+                        return false
+                    }
+                    return true
+                }) || []
+                isLoading.value = db.isLoading
+            })
+            return { operations, isLoading, close: () => {} }
+        },
+
+        getKafkaTopic(serviceName: string, topicName: string) {
+            const topic = ref<KafkaTopic | null>(null)
+            const isLoading = ref<boolean>(true)
+
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                topic.value = db.data['service_' + serviceName + '_topic_' + topicName]
+                isLoading.value = db.isLoading
+            })
+            return { topic, isLoading, close: () => {} }
+        },
+
+        getKafkaGroup(serviceName: string, groupName: string) {
+            const group = ref<KafkaGroup | null>(null)
+            const isLoading = ref<boolean>(true)
+
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                group.value = db.data['service_' + serviceName + '_group_' + groupName]
+                isLoading.value = db.isLoading
+            })
+            return { group, isLoading, close: () => {} }
+        },
+
+        getKafkaClient(serviceName: string, clientId: string) {
+            const client = ref<KafkaClient | null>(null)
+            const isLoading = ref<boolean>(true)
+
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                client.value = db.data['service_' + serviceName + '_client_' + clientId]
+                isLoading.value = db.isLoading
+            })
+            return { client, isLoading, close: () => {} }
+        },
+
+        getEvents(...labels: Label[]) {
             const events = ref<ServiceEvent[]>([])
             const isLoading = ref<boolean>(true)
 
@@ -78,9 +143,6 @@ export function useDemoDashboard() {
                 
                 const result = []
                  for (const event of db.data['events']) {
-                    if (event.traits.namespace !== namespace) {
-                        continue
-                    }
                     let isValid = true
                     for (const label of labels) {
                         if (event.traits[label.name] !== label.value) {
@@ -117,7 +179,7 @@ export function useDemoDashboard() {
             return { event, isLoading, close: () => {} }
         },
 
-        getMetrics(query) {
+        getMetrics(type?: string) {
             const response: Response = reactive({
                 data: null,
                 isLoading: false,

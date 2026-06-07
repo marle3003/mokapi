@@ -23,7 +23,7 @@ func TestMqttBroker(t *testing.T) {
 			},
 			Payload: &mqtt.ConnectResponse{
 				SessionPresent: false,
-				ReturnCode:     mqtt.Accepted,
+				ReasonCode:     mqtt.Success,
 			},
 		})
 	})

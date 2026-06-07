@@ -12,20 +12,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type config struct {
-	Id       string      `json:"id"`
-	Url      string      `json:"url"`
-	Provider string      `json:"provider"`
-	Time     time.Time   `json:"time"`
-	Refs     []configRef `json:"refs,omitempty"`
-	Tags     []string    `json:"tags,omitempty"`
-}
-
-type configRef struct {
+type configInfo struct {
 	Id       string    `json:"id"`
 	Url      string    `json:"url"`
 	Provider string    `json:"provider"`
 	Time     time.Time `json:"time"`
+}
+
+type config struct {
+	Id       string       `json:"id"`
+	Url      string       `json:"url"`
+	Provider string       `json:"provider"`
+	Time     time.Time    `json:"time"`
+	Refs     []configInfo `json:"refs,omitempty"`
+	Tags     []string     `json:"tags,omitempty"`
 }
 
 func (h *handler) handleConfig(w http.ResponseWriter, r *http.Request) {
@@ -104,6 +104,19 @@ func (h *handler) getConfigData(w http.ResponseWriter, r *http.Request, key stri
 	}
 }
 
+func getConfigInfos(list []*dynamic.Config) []configInfo {
+	var result []configInfo
+	for _, c := range list {
+		result = append(result, configInfo{
+			Id:       c.Info.Key(),
+			Url:      filepath.ToSlash(c.Info.Path()),
+			Provider: c.Info.Provider,
+			Time:     c.Info.Time,
+		})
+	}
+	return result
+}
+
 func getConfigs(src []*dynamic.Config) (dst []config) {
 	for _, cfg := range src {
 		dst = append(dst, toConfig(cfg))
@@ -112,9 +125,9 @@ func getConfigs(src []*dynamic.Config) (dst []config) {
 }
 
 func toConfig(cfg *dynamic.Config) config {
-	var refs []configRef
+	var refs []configInfo
 	for _, ref := range cfg.Refs.List(false) {
-		refs = append(refs, configRef{
+		refs = append(refs, configInfo{
 			Id:       ref.Info.Key(),
 			Url:      filepath.ToSlash(ref.Info.Path()),
 			Provider: ref.Info.Provider,

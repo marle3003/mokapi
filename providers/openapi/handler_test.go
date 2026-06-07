@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"mokapi/config/dynamic"
+	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/openapi"
@@ -18,6 +19,7 @@ import (
 	"strings"
 	"testing"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/require"
 )
@@ -277,7 +279,7 @@ func TestResolveEndpoint(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 				require.Equal(t, 500, rr.Code)
-				require.Equal(t, "read request body 'application/json' failed: error count 1:\n\t- #/minLength: string 'foo' is less than minimum of 4\n", rr.Body.String())
+				require.Equal(t, "read request body 'application/json' failed: Validation error count 1:\n\t- #/minLength: string 'foo' is less than minimum of 4\n", rr.Body.String())
 			},
 		},
 		//
@@ -735,6 +737,31 @@ func TestResolveEndpoint(t *testing.T) {
 				require.Equal(t, `"findByStatus"`, string(b))
 			},
 		},
+		{
+			name: "parse error",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				c.Servers[0].Url = "http://localhost/root"
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(
+						http.StatusOK,
+						openapitest.WithContent(
+							"application/json",
+							openapitest.WithSchemaRef("#/invalid"),
+						),
+					),
+				)
+				openapitest.AppendPath("/foo", c, openapitest.UseOperation("get", op))
+				err := c.Parse(&dynamic.Config{Data: c}, &dynamictest.Reader{})
+				require.NoError(t, err)
+
+				r := httptest.NewRequest("get", "http://localhost/root/foo", nil)
+				r = r.WithContext(context.WithValue(r.Context(), "servicePath", "/root"))
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, 500, rr.Code)
+				require.Equal(t, "operation could not be executed due to parsing errors: parse response '200' failed: parse content 'application/json' failed: parse schema failed: resolve reference '#/invalid' failed: path element 'invalid' not found\n", rr.Body.String())
+			},
+		},
 	}
 
 	for _, data := range testdata {
@@ -1139,7 +1166,7 @@ func TestHandler_Event(t *testing.T) {
 				rr := httptest.NewRecorder()
 				h(rr, r)
 				require.Equal(t, http.StatusInternalServerError, rr.Code)
-				require.Equal(t, "invalid header 'foo': error count 1:\n\t- expected array but got: bar\n", rr.Body.String())
+				require.Equal(t, "invalid header 'foo': Validation error count 1:\n\t- expected array but got: bar\n", rr.Body.String())
 			},
 			event: func(event string, args ...interface{}) []*common.Action {
 				res := args[1].(*common.HttpEventResponse)
@@ -1167,7 +1194,7 @@ func TestHandler_Event(t *testing.T) {
 
 			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
 				h := openapi.NewHandler(config, eh, sm)
-				ctx, err := openapi.NewLogEventContext(r, false, sm, events.NewTraits())
+				ctx, err := openapi.NewLogEventContext(r, false, events.NewTraits())
 				require.NoError(t, err)
 				r = r.WithContext(ctx)
 				httpErr := h.ServeHTTP(rw, r)
@@ -1535,6 +1562,7 @@ func TestHandler_Parameter(t *testing.T) {
 		{
 			name: "path parameter missing",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
+				log.SetLevel(log.WarnLevel)
 				hook := test.NewGlobal()
 
 				op := openapitest.NewOperation(

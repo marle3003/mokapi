@@ -3,7 +3,7 @@ components:
     Clusters:
       get:
         summary: Returns a list of Kafka clusters.
-        operationId: clusters
+        operationId: kafkaClusters
         responses:
           '200':
             description: The list of Kafka clusters
@@ -27,7 +27,7 @@ components:
     Topics:
       get:
         summary: Returns the list of topics that belongs to the specified Kafka cluster
-        operationId: topics
+        operationId: kafkaTopics
         parameters:
           - in: path
             name: cluster
@@ -42,7 +42,7 @@ components:
                 schema:
                   type: array
                   items:
-                    $ref: '#/components/schemas/Topic'
+                    $ref: '#/components/schemas/TopicInfo'
     Topic:
       parameters:
         - in: path
@@ -57,7 +57,7 @@ components:
             type: string
       get:
         summary: Return the topic with the given topic name
-        operationId: topic
+        operationId: kafkaTopic
         responses:
           '200':
             description: The topic.
@@ -67,7 +67,7 @@ components:
                   $ref: '#/components/schemas/Topic'
       post:
         summary: Produce messages to a topic, the partition will be chosen randomly
-        operationId: produceTopic
+        operationId: kafkaProduceTopic
         requestBody:
           required: true
           content:
@@ -102,7 +102,7 @@ components:
     Partitions:
       get:
         summary: Return the list of partitions that belong to the specified topic.
-        operationId: partitions
+        operationId: kafkaPartitions
         parameters:
           - in: path
             name: cluster
@@ -142,7 +142,7 @@ components:
             type: integer
       get:
         summary: Return the partition with the given partition id.
-        operationId: partition
+        operationId: kafkaPartition
         responses:
           '200':
             description: The list of partitions.
@@ -152,7 +152,7 @@ components:
                   $ref: '#/components/schemas/Partition'
       post:
         summary: Produce records to specified partition of the topic.
-        operationId: producePartition
+        operationId: kafkaProducePartition
         requestBody:
           required: true
           content:
@@ -203,7 +203,7 @@ components:
             type: integer
       get:
         summary: Return published records in partition.
-        operationId: offsets
+        operationId: kafkaOffsets
         parameters:
           - in: query
             name: offset
@@ -254,7 +254,7 @@ components:
             type: integer
       get:
         summary: Return published record in partition with the specified offset.
-        operationId: offset
+        operationId: kafkaOffset
         responses:
           '200':
             description: The record.
@@ -270,17 +270,73 @@ components:
                       type: array
                       items:
                         $ref: '#/components/schemas/Record'
+    Group:
+      parameters:
+        - in: path
+          name: cluster
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: group
+          required: true
+          schema:
+            type: string
+      get:
+        summary: Return the group with the given group id.
+        operationId: kafkaGroup
+        responses:
+          '200':
+            description: The group details.
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Group'
+    Client:
+      parameters:
+        - in: path
+          name: cluster
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: clientId
+          required: true
+          schema:
+            type: string
+      get:
+        summary: Return the client with the given client id.
+        operationId: kafkaClient
+        responses:
+          '200':
+            description: The client details.
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Client'
 
   schemas:
     KafkaInfo:
-      allOf:
-        - $ref: 'common.yml#/components/schemas/Service'
-        - type: object
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        version:
+          type: string
+        contact:
+          type: object
           properties:
-            topics:
-              type: array
-              items:
-                type: string
+            name:
+              type: string
+            url:
+              type: string
+              format: uri
+            email:
+              type: string
+              format: email
+
     Kafka:
       type: object
       properties:
@@ -320,19 +376,32 @@ components:
         topics:
           type: array
           items:
-            $ref: '#/components/schemas/Topic'
+            $ref: '#/components/schemas/TopicInfo'
         groups:
           type: array
           items:
-            $ref: '#/components/schemas/Group'
-        metrics:
-          $ref: 'common.yml#/components/schemas/Metrics'
+            $ref: '#/components/schemas/GroupInfo'
+        configs:
+          type: array
+          items:
+            $ref: './common.yml#/components/schemas/ConfigInfo'
+    TopicInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        summary:
+          type: string
+        lastMessageReceived:
+          type: integer
+        messages:
+          type: integer
     Topic:
       type: object
       properties:
         name:
           type: string
-        description:
+        summary:
           type: string
         partitions:
           type: array
@@ -359,6 +428,30 @@ components:
           $ref:  '#/components/schemas/Broker'
         segments:
           type: integer
+    GroupInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        generation:
+          type: integer
+        state:
+          type: string
+        protocol:
+          type: string
+        members:
+          type: integer
+        metrics:
+          type: object
+          properties:
+            kafka_rebalance_timestamp:
+              type: integer
+            topics:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: object
     Group:
       type: object
       properties:
@@ -382,6 +475,17 @@ components:
           type: array
           items:
             type: string
+        metrics:
+          type: object
+          properties:
+            kafka_rebalance_timestamp:
+              type: integer
+            topics:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: object
     Member:
       type: object
       properties:
@@ -389,9 +493,7 @@ components:
           type: string
         addr:
           type: string
-        clientSoftwareName:
-          type: string
-        clientSoftwareVersion:
+        software:
           type: string
         heartbeat:
           type: integer
@@ -401,6 +503,26 @@ components:
             type: array
             items:
               type: integer
+    Client:
+      type: object
+      properties:
+        clientId:
+          type: string
+        address:
+          type: string
+        software:
+          type: string
+        brokerAddress:
+          type: string
+        groups:
+          type: array
+          items:
+            type: object
+            properties:
+              memberId:
+                type: string
+              group:
+                type: string
     Broker:
       type: object
       properties:

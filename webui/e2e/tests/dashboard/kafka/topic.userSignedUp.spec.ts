@@ -25,7 +25,7 @@ test('Visit Kafka topic mokapi.shop.userSignedUp', async ({ page, context }) => 
         await expect(info.getByLabel('Topic')).toHaveText(topic.name)
         await expect(info.getByLabel('Cluster')).toHaveText(cluster.name)
         await expect(info.getByLabel('Type of API')).toHaveText('Kafka')
-        await expect(info.getByLabel('Description')).toHaveText(topic.description)
+        await expect(info.getByLabel('Summary')).toHaveText(topic.summary)
     })
 
     const tabList = page.getByRole('region', { name: 'Topic Data' }).getByRole('tablist')

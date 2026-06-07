@@ -2,15 +2,16 @@ package monitor
 
 import (
 	"context"
-	"github.com/stretchr/testify/require"
 	"mokapi/runtime/metrics"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestKafka_Metrics_Messages(t *testing.T) {
 	k := NewKafka()
 	k.Messages.WithLabel("service_a", "topic_a").Add(1)
-	require.Equal(t, float64(1), k.Messages.Sum())
+	require.Equal(t, float64(1), k.Messages.Sum(metrics.NewQuery()))
 }
 
 func TestKafka_LastMessage(t *testing.T) {

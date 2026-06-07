@@ -40,9 +40,11 @@ func (m *StoreManager) Push(data EventData, traits Traits) error {
 	score := 0
 	var bestStore *store
 	for _, s := range m.stores {
-		if s.traits.Match(traits) && len(s.traits) > score {
-			bestStore = s
-			score = len(s.traits)
+		if s.traits.Match(traits) {
+			if bestStore == nil || len(s.traits) > score {
+				bestStore = s
+				score = len(s.traits)
+			}
 		}
 	}
 

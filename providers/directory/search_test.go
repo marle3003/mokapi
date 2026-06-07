@@ -10,6 +10,7 @@ import (
 	"mokapi/ldap"
 	"mokapi/ldap/ldaptest"
 	"mokapi/providers/directory"
+	"mokapi/runtime/events"
 	"mokapi/runtime/events/eventstest"
 	"mokapi/try"
 	"strings"
@@ -481,7 +482,7 @@ func TestSearch(t *testing.T) {
 		name   string
 		input  string
 		reader dynamic.Reader
-		test   func(t *testing.T, h ldap.Handler, err error)
+		test   func(t *testing.T, h ldap.Handler, eh events.Handler, err error)
 	}{
 		{
 			name:  "presence",
@@ -489,7 +490,7 @@ func TestSearch(t *testing.T) {
 			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
 				"file:/users.ldif": {Raw: []byte("dn: cn=user\nmail: user@foo.com")},
 			}},
-			test: func(t *testing.T, h ldap.Handler, err error) {
+			test: func(t *testing.T, h ldap.Handler, eh events.Handler, err error) {
 				require.NoError(t, err)
 
 				rr := ldaptest.NewRecorder()
@@ -500,6 +501,10 @@ func TestSearch(t *testing.T) {
 				res := rr.Message.(*ldap.SearchResponse)
 
 				require.Len(t, res.Results, 1)
+
+				evts := eh.GetEvents(events.NewTraits())
+				require.Len(t, evts, 1)
+				require.Equal(t, "search", evts[0].Traits.Get("operation"))
 			},
 		},
 		{
@@ -508,7 +513,7 @@ func TestSearch(t *testing.T) {
 			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
 				"file:/users.ldif": {Raw: []byte("dn: cn=user\ncn: Smith")},
 			}},
-			test: func(t *testing.T, h ldap.Handler, err error) {
+			test: func(t *testing.T, h ldap.Handler, eh events.Handler, err error) {
 				require.NoError(t, err)
 
 				rr := ldaptest.NewRecorder()
@@ -527,7 +532,7 @@ func TestSearch(t *testing.T) {
 			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
 				"file:/users.ldif": {Raw: []byte("dn: cn=user\ndescription: Software Developers")},
 			}},
-			test: func(t *testing.T, h ldap.Handler, err error) {
+			test: func(t *testing.T, h ldap.Handler, eh events.Handler, err error) {
 				require.NoError(t, err)
 
 				rr := ldaptest.NewRecorder()
@@ -546,7 +551,7 @@ func TestSearch(t *testing.T) {
 			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
 				"file:/users.ldif": {Raw: []byte("dn: cn=user\ndescription: Software Developers")},
 			}},
-			test: func(t *testing.T, h ldap.Handler, err error) {
+			test: func(t *testing.T, h ldap.Handler, eh events.Handler, err error) {
 				require.NoError(t, err)
 
 				rr := ldaptest.NewRecorder()
@@ -565,7 +570,7 @@ func TestSearch(t *testing.T) {
 			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
 				"file:/users.ldif": {Raw: []byte("dn: cn=user\nuserAccountControl: 512")},
 			}},
-			test: func(t *testing.T, h ldap.Handler, err error) {
+			test: func(t *testing.T, h ldap.Handler, eh events.Handler, err error) {
 				require.NoError(t, err)
 
 				rr := ldaptest.NewRecorder()
@@ -584,7 +589,7 @@ func TestSearch(t *testing.T) {
 			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
 				"file:/users.ldif": {Raw: []byte("dn: cn=user\n\ndn: cn=group\nmember: cn=user")},
 			}},
-			test: func(t *testing.T, h ldap.Handler, err error) {
+			test: func(t *testing.T, h ldap.Handler, eh events.Handler, err error) {
 				require.NoError(t, err)
 
 				rr := ldaptest.NewRecorder()
@@ -603,7 +608,7 @@ func TestSearch(t *testing.T) {
 			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
 				"file:/users.ldif": {Raw: []byte("dn: cn=uSEr\n\ndn: cn=group\nmember: cn=UseR")},
 			}},
-			test: func(t *testing.T, h ldap.Handler, err error) {
+			test: func(t *testing.T, h ldap.Handler, eh events.Handler, err error) {
 				require.NoError(t, err)
 
 				rr := ldaptest.NewRecorder()
@@ -622,7 +627,7 @@ func TestSearch(t *testing.T) {
 			reader: &dynamictest.Reader{Data: map[string]*dynamic.Config{
 				"file:/users.ldif": {Raw: []byte("dn: uid=ff, cn=user\n\ndn: uid=cc,cn=group\nmember: uid=ff,cn=user")},
 			}},
-			test: func(t *testing.T, h ldap.Handler, err error) {
+			test: func(t *testing.T, h ldap.Handler, eh events.Handler, err error) {
 				require.NoError(t, err)
 
 				rr := ldaptest.NewRecorder()
@@ -652,7 +657,7 @@ dn: id=user3,ou=Accounting,dc=example,dc=com
 foo: bar
 `)},
 			}},
-			test: func(t *testing.T, h ldap.Handler, err error) {
+			test: func(t *testing.T, h ldap.Handler, eh events.Handler, err error) {
 				require.NoError(t, err)
 
 				rr := ldaptest.NewRecorder()
@@ -677,10 +682,12 @@ foo: bar
 			var c *directory.Config
 			err := json.Unmarshal([]byte(tc.input), &c)
 			if err != nil {
-				tc.test(t, nil, err)
+				tc.test(t, nil, nil, err)
 			} else {
 				err = c.Parse(&dynamic.Config{Data: c, Info: dynamic.ConfigInfo{Url: try.MustUrl("file:/foo.yml")}}, tc.reader)
-				tc.test(t, directory.NewHandler(c, enginetest.NewEngine(), &eventstest.Handler{}), err)
+				eh := &eventstest.Handler{}
+				h := directory.NewHandler(c, enginetest.NewEngine(), eh)
+				tc.test(t, h, eh, err)
 			}
 		})
 	}

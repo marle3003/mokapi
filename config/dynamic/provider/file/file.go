@@ -166,7 +166,7 @@ func (p *Provider) watch(pool *safe.Pool) error {
 						events = nil
 						t = nil
 						mu.Unlock()
-						p.processEvents(e)
+						go p.processEvents(e)
 					})
 				}
 				t.Reset(time.Second)

@@ -19,6 +19,7 @@ type kafkaSearchIndexData struct {
 	Description   string                  `json:"description"`
 	Contact       *asyncapi3.Contact      `json:"contact"`
 	Servers       []kafkaServerSearchData `json:"servers"`
+	Meta          map[string]string       `json:"meta"`
 }
 
 type kafkaServerSearchData struct {
@@ -65,6 +66,9 @@ func (s *KafkaStore) addToIndex(cfg *asyncapi3.Config) {
 		Version:       cfg.Info.Version,
 		Description:   cfg.Info.Description,
 		Contact:       cfg.Info.Contact,
+		Meta: map[string]string{
+			"topics": fmt.Sprintf("%d", len(cfg.Channels)),
+		},
 	}
 	for it := cfg.Servers.Iter(); it.Next(); {
 		name := it.Key()
@@ -87,13 +91,20 @@ func (s *KafkaStore) addToIndex(cfg *asyncapi3.Config) {
 		if topic == nil || topic.Value == nil {
 			continue
 		}
+		topicName := name
+		if topic.Value.Name != "" {
+			topicName = topic.Value.Name
+		}
+		if topic.Value.Address != "" {
+			topicName = topic.Value.Address
+		}
 
 		t := kafkaTopicSearchIndexData{
 			Type:          "kafka",
 			Discriminator: "kafka_topic",
 			Api:           cfg.Info.Name,
 			ChannelId:     name,
-			Name:          topic.Value.Name,
+			Name:          topicName,
 			Title:         topic.Value.Title,
 			Address:       topic.Value.Address,
 			Summary:       topic.Value.Summary,
@@ -135,9 +146,16 @@ func getKafkaSearchResult(fields map[string]string, discriminator []string) (sea
 
 	if len(discriminator) == 1 {
 		result.Title = fields["name"]
+		result.Description = BuildDescription(150, fields["description"])
 		result.Params = map[string]string{
 			"type":    strings.ToLower(result.Type),
 			"service": result.Title,
+		}
+		for k, v := range fields {
+			if strings.HasPrefix(k, "meta.") {
+				k = strings.Replace(k, "meta.", "", 1)
+				result.Params[k] = v
+			}
 		}
 		return result, nil
 	}
@@ -150,6 +168,7 @@ func getKafkaSearchResult(fields map[string]string, discriminator []string) (sea
 		} else if len(fields["title"]) > 0 {
 			title = fields["title"]
 		}
+		result.Description = BuildDescription(150, fields["summary"], fields["description"])
 		result.Domain = fields["api"]
 		result.Title = fmt.Sprintf("Topic %s", title)
 		result.Params = map[string]string{

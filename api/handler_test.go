@@ -171,6 +171,21 @@ func TestHandler_Api_Info(t *testing.T) {
 					try.HasBody(`{"version":"0.0.0","buildTime":"","activeServices":["ldap"],"search":{"enabled":false}}`))
 			},
 		},
+		{
+			name: "mqtt active",
+			app:  runtimetest.NewApp(runtimetest.WithMqttInfo("foo", &runtime.MqttInfo{})),
+			fn: func(t *testing.T, h http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/info",
+					nil,
+					"",
+					h,
+					try.HasStatusCode(200),
+					try.HasHeader("Content-Type", "application/json"),
+					try.HasBody(`{"version":"0.0.0","buildTime":"","activeServices":["mqtt"],"search":{"enabled":false}}`))
+			},
+		},
 	}
 
 	t.Parallel()

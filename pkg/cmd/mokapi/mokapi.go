@@ -3,7 +3,6 @@ package mokapi
 import (
 	"context"
 	"fmt"
-	stdlog "log"
 	"mokapi/api"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
@@ -64,6 +63,7 @@ func NewCmdMokapi() *cli.Command {
 	flags.RegisterNpmProvider(cmd)
 
 	flags.RegisterApiFlags(cmd)
+	flags.RegisterMcpFlags(cmd)
 	flags.RegisterHealthFlags(cmd)
 	flags.RegisterTlsFlags(cmd)
 	flags.RegisterEventStoreFlags(cmd)
@@ -107,8 +107,6 @@ func runRoot(cmd *cli.Command, cfg *static.Config) error {
 
 	fmt.Printf(logo, version.BuildVersion, strings.Repeat(" ", 17-len(versionString)))
 
-	configureLogging(cfg)
-
 	s, err := createServer(cfg)
 	if err != nil {
 		log.WithField("error", err).Error("error creating server")
@@ -133,6 +131,7 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 
 	watcher := server.NewConfigWatcher(cfg)
 	app := runtime.New(cfg, watcher)
+	app.EnableLogHook()
 
 	scriptEngine := engine.New(watcher, app, cfg, true)
 	app.Engine = scriptEngine
@@ -143,10 +142,12 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	http := server.NewHttpManager(scriptEngine, certStore, app)
 
 	apiHandler := api.New(app, cfg.Api)
-	if u, err := api.BuildUrl(cfg.Api); err == nil {
-		err = http.AddInternalService("api", u, apiHandler)
-		if err != nil {
-			return nil, err
+	if urls, err := api.BuildUrl(cfg.Api); err == nil {
+		for _, u := range urls {
+			err = http.AddInternalService("api", u, apiHandler)
+			if err != nil {
+				return nil, err
+			}
 		}
 	} else {
 		return nil, err
@@ -197,23 +198,6 @@ func createServer(cfg *static.Config) (*server.Server, error) {
 	})
 
 	return server.NewServer(pool, app, watcher, kafka, http, mailManager, ldap, scriptEngine), nil
-}
-
-func configureLogging(cfg *static.Config) {
-	stdlog.SetFlags(stdlog.Lshortfile | stdlog.LstdFlags)
-
-	level, err := log.ParseLevel(cfg.Log.Level)
-	if err != nil {
-		log.WithField("logLevel", cfg.Log.Level).Errorf("error parsing log level: %v", err.Error())
-	}
-	log.SetLevel(level)
-
-	if strings.ToLower(cfg.Log.Format) == "json" {
-		log.SetFormatter(&log.JSONFormatter{})
-	} else {
-		formatter := &log.TextFormatter{DisableColors: false, FullTimestamp: true, DisableSorting: true}
-		log.SetFormatter(formatter)
-	}
 }
 
 func init() {

@@ -1,4 +1,4 @@
-import { metrics } from 'metrics.js'
+import { metrics, filter as filterMetrics, parseLabels } from './metrics.ts'
 import { base64 } from 'mokapi/encoding';
 
 const Product = {
@@ -103,7 +103,7 @@ export let clusters = [
         topics: [
             {
                 name: 'mokapi.shop.products',
-                description: 'Though literature second anywhere fortnightly am this either so me.',
+                summary: 'Though literature second anywhere fortnightly am this either so me.',
                 partitions: [
                     {
                         id: 0,
@@ -150,7 +150,7 @@ export let clusters = [
             },
             {
                 name: 'mokapi.shop.userSignedUp',
-                description: 'This channel contains a message per each user who signs up in our application.',
+                summary: 'This channel contains a message per each user who signs up in our application.',
                 partitions: [
                     {
                         id: 0,
@@ -209,52 +209,112 @@ export let clusters = [
         groups: [
             {
                 name: 'foo',
+                generation: 0,
                 members:[
                     {
                         name: 'julie',
+                        clientId: 'consumer-1',
                         addr: '127.0.0.1:15001',
-                        clientSoftwareName: 'mokapi',
-                        clientSoftwareVersion: '1.0',
+                        software: 'mokapi 1.0',
                         heartbeat: 1654771269,
                         partitions: { 'mokapi.shop.products': [ 0,1 ], 'mokapi.shop.userSignedUp': [ 0 ] }
                     },
                     {
                         name: 'hermann',
+                        clientId: 'consumer-2',
                         addr: '127.0.0.1:15002',
-                        clientSoftwareName: 'mokapi',
-                        clientSoftwareVersion: '1.0',
+                        software: 'mokapi 1.0',
                         heartbeat: 1654872269,
                         partitions: { 'mokapi.shop.products': [ 2 ], 'mokapi.shop.userSignedUp': [ ] }
                     }
                 ],
-                coordinator: 'localhost:9092',
                 leader: 'julie',
                 state: 'Stable',
                 protocol: 'Range',
                 topics: [ 'mokapi.shop.products', 'mokapi.shop.userSignedUp' ],
+                metrics: {
+                    kafka_rebalance_timestamp:  metrics.find(m => m.name === `kafka_rebalance_timestamp{service="Kafka World",group="foo"}`)?.value || 0,
+                    topics: {
+                        'mokapi.shop.products': filterMetrics('kafka_consumer_group_commit', {name: 'group', value: 'foo'}, { name: 'topic', value: 'mokapi.shop.products'}).map(m => {
+                            const labels = parseLabels(m)
+                            return { 
+                                partition: labels.partition,
+                                kafka_consumer_group_lag: metrics.find(x => x.name === `kafka_consumer_group_lag{service="Kafka World",group="foo",topic="mokapi.shop.products",partition="${labels.partition}"}`)?.value || 0,
+                                kafka_consumer_group_commit: m.value
+                            }
+                        }),
+                        'mokapi.shop.userSignedUp': filterMetrics('kafka_consumer_group_commit', {name: 'group', value: 'foo'}, { name: 'topic', value: 'mokapi.shop.userSignedUp'}).map(m => {
+                            const labels = parseLabels(m)
+                            return { 
+                                partition: labels.partition,
+                                kafka_consumer_group_lag: metrics.find(x => x.name === `kafka_consumer_group_lag{service="Kafka World",group="foo",topic="mokapi.shop.userSignedUp",partition="${labels.partition}"}`)?.value || 0,
+                                kafka_consumer_group_commit: m.value
+                            }
+                        })
+                    }
+                }
             },
             {
                 name: 'bar',
+                generation: 0,
                 members: [
                     {
                         name: 'george',
+                        clientId: 'consumer',
                         addr: '127.0.0.1:15003',
-                        clientSoftwareName: 'mokapi',
-                        clientSoftwareVersion: '1.0',
+                        software: 'mokapi 1.0',
                         heartbeat: 1654721269,
                         partitions: { 'mokapi.shop.userSignedUp': [ 0 ] }
                     }
                 ],
-                coordinator: 'localhost:9092',
                 leader: 'george',
                 state: 'Stable',
                 protocol: 'Range',
                 topics: [ 'mokapi.shop.userSignedUp' ],
+                metrics: {
+                    kafka_rebalance_timestamp:  metrics.find(m => m.name === `kafka_rebalance_timestamp{service="Kafka World",group="mokapi.shop.userSignedUp"}`)?.value || 0,
+                    topics: {
+                        'mokapi.shop.userSignedUp': filterMetrics('kafka_consumer_group_commit', {name: 'group', value: 'bar'}, { name: 'topic', value: 'mokapi.shop.userSignedUp'}).map(m => {
+                            const labels = parseLabels(m)
+                            return { 
+                                partition: labels.partition,
+                                kafka_consumer_group_lag: metrics.find(x => x.name === `kafka_consumer_group_lag{service="Kafka World",group="foo",topic="mokapi.shop.userSignedUp",partition="${labels.partition}"}`)?.value || 0,
+                                kafka_consumer_group_commit: m.value
+                            }
+                        })
+                    }
+                }
             },
         ],
         metrics: metrics.filter(x => x.name.includes("kafka")),
         configs: [
             configs[ 'b6fea8ac-56c7-4e73-a9c0-6337640bdca8' ]
+        ],
+        clients: [
+            {
+                clientId: 'consumer-1',
+                address: '127.0.0.1:15001',
+                software: 'mokapi 1.0',
+                groups: [
+                    { memberId: 'julie', group: 'foo' }
+                ]
+            },
+            {
+                clientId: 'consumer-2',
+                address: '127.0.0.1:15002',
+                software: 'mokapi 1.0',
+                groups: [
+                    { memberId: 'hermann', group: 'foo' }
+                ]
+            },
+            {
+                clientId: 'consumer',
+                address: '127.0.0.1:15003',
+                software: 'mokapi 1.0',
+                groups: [
+                    { memberId: 'george', group: 'bar' }
+                ]
+            }
         ]
     }
 ]
@@ -344,7 +404,7 @@ export let events = [
         data: {
             offset: 1,
             key: {
-                value: 'TEST1'
+                binary: 'VEVTVDEgw6Qg8JCAgA=='
             },
             message: {
                 value: JSON.stringify(

@@ -15,12 +15,10 @@ type ConnectRequest struct {
 	Message      []byte
 	Username     string
 	Password     string
+	Properties   Properties
 }
 
-type ConnectHeader struct {
-}
-
-func (r *ConnectRequest) Read(d *Decoder) {
+func (r *ConnectRequest) Read(d *Decoder, _ *Header) {
 	r.Protocol = d.ReadString()
 	r.Version = d.ReadByte()
 
@@ -32,6 +30,11 @@ func (r *ConnectRequest) Read(d *Decoder) {
 	r.WillFlag = (b>>2)&0x1 > 0
 	r.CleanSession = (b>>1)&0x1 > 0
 	r.KeepAlive = d.ReadInt16()
+
+	if r.Version == 5 {
+		r.Properties = Properties{}
+		r.Properties.Read(d)
+	}
 
 	r.ClientId = d.ReadString()
 
@@ -48,7 +51,7 @@ func (r *ConnectRequest) Read(d *Decoder) {
 	}
 }
 
-func (r *ConnectRequest) Write(e *Encoder) {
+func (r *ConnectRequest) Write(e *Encoder, _ *Header) {
 	e.writeString(r.Protocol)
 	e.writeByte(r.Version)
 	b := byte(0)
@@ -61,7 +64,7 @@ func (r *ConnectRequest) Write(e *Encoder) {
 	if r.WillRetain {
 		b |= 0x1 << 5
 	}
-	b |= (r.WillQoS & 0x03) << 1
+	b |= (r.WillQoS & 0x3) << 3
 	if r.WillFlag {
 		b |= 0x1 << 2
 	}
@@ -70,7 +73,18 @@ func (r *ConnectRequest) Write(e *Encoder) {
 	}
 	e.writeByte(b)
 	e.writeInt16(r.KeepAlive)
+
+	if r.Version == 5 {
+		r.Properties.Write(e)
+	}
+
 	e.writeString(r.ClientId)
+
+	if r.WillFlag {
+		e.writeString(r.Topic)
+		e.writeInt16(int16(len(r.Message)))
+		e.Write(r.Message)
+	}
 
 	if r.HasUsername {
 		e.writeString(r.Username)
@@ -82,21 +96,30 @@ func (r *ConnectRequest) Write(e *Encoder) {
 
 type ConnectResponse struct {
 	SessionPresent bool
-	ReturnCode     Code
+	ReasonCode     Code
+	Properties     Properties
 }
 
-func (r *ConnectResponse) Write(e *Encoder) {
+func (r *ConnectResponse) Write(e *Encoder, _ *Header) {
 	if r.SessionPresent {
-		e.writeByte(0x01)
+		e.writeByte(0x1)
 	} else {
 		e.writeByte(0x0)
 	}
-	e.writeByte(r.ReturnCode.Code)
+	e.writeByte(r.ReasonCode.Code)
+	if e.IsV5() {
+		r.Properties.Write(e)
+	}
 }
 
-func (r *ConnectResponse) Read(d *Decoder) {
-	r.SessionPresent = d.ReadByte() == 0x01
-	r.ReturnCode = Code{
+func (r *ConnectResponse) Read(d *Decoder, _ *Header) {
+	r.SessionPresent = d.ReadByte() == 0x1
+	r.ReasonCode = Code{
 		Code: d.ReadByte(),
+	}
+
+	if d.IsV5() {
+		r.Properties = Properties{}
+		r.Properties.Read(d)
 	}
 }

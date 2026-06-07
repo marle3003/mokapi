@@ -65,10 +65,12 @@ func Start(cfg *static.Config) (*Cmd, error) {
 	})
 
 	apiHandler := api.New(app, cfg.Api)
-	if u, err := api.BuildUrl(cfg.Api); err == nil {
-		err = http.AddInternalService("api", u, apiHandler)
-		if err != nil {
-			return nil, err
+	if urls, err := api.BuildUrl(cfg.Api); err == nil {
+		for _, u := range urls {
+			err = http.AddInternalService("api", u, apiHandler)
+			if err != nil {
+				return nil, err
+			}
 		}
 	} else {
 		return nil, err

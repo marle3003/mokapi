@@ -33,13 +33,20 @@ interface KafkaTopic extends KafkaTopicSummary {
 
     /**
      * Use 'produce' to send a message to this topic.
-     * Check 'operations' with action 'send' for valid payloads.
+     *
+     * Use 'operations' with action 'send' to inspect the expected message schema
+     * and valid payload examples for this topic.
+     * 
+     * Mokapi automatically encodes the payload based on the topic configuration:
+     * - JSON topics expect a JSON-compatible object
+     * - Avro topics expect a value matching the Avro schema
+     * 
      * @param partition The target partition index. MUST be one of the indices listed in the 'partitions' array.
-     * @param value The message payload. If the operation specifies a JSON schema, provide this as a stringified object.
+     * @param value The message payload. Provide a value that matches the topic message schema.
      * @param key Optional message key.
      * @param headers Optional metadata headers.
      */
-    produce(partition: number, value: string, key?: string, headers?: KafkaHeader): void
+    produce(partition: number, value: any, key?: string, headers?: KafkaHeader): void
 
     /**
      * INSPECT: Retrieves a specific record for analysis or verification.
@@ -66,6 +73,10 @@ interface KafkaMessage {
     summary: string
     description: string
     contentType: string
+    /**
+     * JSON schema describing the Kafka message payload.
+     * Use fake(payload) to generate valid example data.
+     */
     payload: Schema;
     key: Schema
     headers?: Schema;
