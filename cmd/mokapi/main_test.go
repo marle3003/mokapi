@@ -91,7 +91,7 @@ health:
     log: false
 mcp:
     server:
-        enabled: false
+        enabled: true
         path: /mcp
         port: 8080
 rootCaCert: ""
