@@ -19,6 +19,12 @@ var automationHttp string
 //go:embed data/automation-kafka.md
 var automationKafka string
 
+//go:embed data/automation-mail.md
+var automationMail string
+
+//go:embed data/automation-ldap.md
+var automationLdap string
+
 //go:embed data/automation-event.md
 var automationEvent string
 
@@ -66,6 +72,10 @@ func (s *Service) GetAutomationDefinitions(_ context.Context, in AutomationDefin
 		text = automationHttp
 	case "kafka":
 		text = automationKafka
+	case "mail":
+		text = automationMail
+	case "ldap":
+		text = automationLdap
 	case "event":
 		text = automationEvent
 	default:

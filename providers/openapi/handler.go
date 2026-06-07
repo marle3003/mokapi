@@ -305,13 +305,13 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *H
 				op.Deprecated,
 				traits,
 			); err != nil {
-				log.Errorf("unable to log http event: %v", err)
+				log.Errorf("failed to log http event: %v", err)
 			} else {
 				defer func() {
 					l, _ := LogEventFromContext(ctx)
 					err = h.eh.Push(l, traits)
 					if err != nil {
-						log.Errorf("unable to log http event: %v", err)
+						log.Errorf("failed to log http event: %v", err)
 					}
 				}()
 				r = r.WithContext(ctx)
@@ -320,34 +320,33 @@ func (h *operationHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *H
 			h.next.ServeHTTP(rw, r)
 			return nil
 		} else {
-			errOpResolve = newHttpError(http.StatusBadRequest, errOpResolve.Error())
+			errOpResolve = newHttpError(http.StatusBadRequest, errOpResolve.Error()).WithTraits(events.NewTraits().WithNamespace("http").WithName(h.config.Info.Name).With("path", op.Path.Path).With("method", r.Method))
 		}
 	}
 
-	/*if ctx, err := NewLogEventContext(
-		r,
-		false,
-		h.eh,
-		events.NewTraits().WithName(h.config.Info.Name).With("path", r.URL.Path).With("method", r.Method),
-	); err != nil {
-		log.Errorf("unable to log http event: %v", err)
-	} else {
-		r = r.WithContext(ctx)
-	}*/
+	record := func(err *HttpError) {
+		if m, ok := monitor.HttpFromContext(r.Context()); ok {
+			path := err.Traits.Get("path")
+			method := err.Traits.Get("method")
 
-	// Not reading the request body can cause a couple of problems.
-	// Go’s HTTP server uses connection pooling by default.
-	// If you don’t read and fully consume (or close) the request body, the remaining unread bytes will stay in the TCP buffer.
-	//_, _ = io.Copy(io.Discard, r.Body)
+			m.LastRequest.WithLabel(h.config.Info.Name, path, method).Set(float64(time.Now().Unix()))
+			m.RequestErrorCounter.WithLabel(h.config.Info.Name, path, method).Add(1)
+		}
+	}
 
 	if errOpResolve == nil {
-		return newHttpErrorf(http.StatusNotFound, "no matching endpoint found: %v %v", strings.ToUpper(r.Method), lib.GetUrl(r))
+		return newHttpErrorf(http.StatusNotFound, "no matching endpoint found: %v %v", strings.ToUpper(r.Method), lib.GetUrl(r)).
+			WithTraits(events.NewTraits().WithNamespace("http").WithName(h.config.Info.Name)).
+			WithRecorder(record)
 	} else {
 		var httpError *HttpError
 		if errors.As(errOpResolve, &httpError) {
-			return httpError
+			if httpError.Traits.IsEmpty() {
+				httpError.Traits = events.NewTraits().WithNamespace("http").WithName(h.config.Info.Name)
+			}
+			return httpError.WithRecorder(record)
 		}
-		return newHttpErrorf(http.StatusInternalServerError, "%s", errOpResolve.Error())
+		return newHttpErrorf(http.StatusInternalServerError, "%s", errOpResolve.Error()).WithTraits(events.NewTraits().WithNamespace("http").WithName(h.config.Info.Name)).WithRecorder(record)
 	}
 }
 

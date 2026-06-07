@@ -49,7 +49,7 @@ func TestService_Run_Http(t *testing.T) {
 			name: "get specific HTTP API",
 			app: runtimetest.NewHttpApp(
 				openapitest.NewConfig("3.1.0",
-					openapitest.WithInfo("foo", "", ""),
+					openapitest.WithInfo("foo", "", "description"),
 					openapitest.WithServer("http://localhost/foo", "server description"),
 				),
 				openapitest.NewConfig("3.1.0",
@@ -67,6 +67,7 @@ func TestService_Run_Http(t *testing.T) {
 				require.IsType(t, &mcp.OpenAPI{}, r.Result)
 				api := r.Result.(*mcp.OpenAPI)
 				require.Equal(t, "foo", api.Name)
+				require.Equal(t, "description", api.Description)
 				require.Equal(t, "http", api.Type)
 				require.Equal(t, []mcp.OpenAPIServer{{Url: "http://localhost/foo", Description: "server description"}}, api.Servers)
 			},
@@ -167,9 +168,9 @@ func TestService_Run_Http(t *testing.T) {
 				require.Len(t, op.Responses, 1)
 				require.Equal(t, http.StatusOK, op.Responses[0].StatusCode)
 				require.Equal(t, "response description", op.Responses[0].Description)
-				require.Len(t, op.Responses[0].Content, 1)
-				require.Equal(t, "application/json", op.Responses[0].Content[0].ContentType)
-				require.Equal(t, "string", op.Responses[0].Content[0].Schema.Type[0])
+				require.Len(t, op.Responses[0].Contents, 1)
+				require.Equal(t, "application/json", op.Responses[0].Contents[0].ContentType)
+				require.Equal(t, "string", op.Responses[0].Contents[0].Schema.Type[0])
 			},
 		},
 		{
@@ -213,6 +214,39 @@ const result = { path: op.path, method: op.method }; result`,
 				)
 				require.NoError(t, err)
 				require.Equal(t, map[string]any{"method": "GET", "path": "/pets"}, r.Result)
+			},
+		},
+		{
+			name: "get example data",
+			app: runtimetest.NewHttpApp(
+				openapitest.NewConfig("3.1.0",
+					openapitest.WithInfo("foo", "", ""),
+					openapitest.WithPath("/pets",
+						openapitest.WithOperation(http.MethodGet,
+							openapitest.WithResponse(200,
+								openapitest.WithResponseDescription("response description"),
+								openapitest.WithContent("application/json", openapitest.WithSchema(
+									schematest.New("object",
+										schematest.WithProperty("foo", schematest.New("string")),
+										schematest.WithProperty("bar", schematest.New("integer")),
+										schematest.WithRequired("foo", "bar"),
+									),
+								)),
+							),
+						),
+					),
+				),
+			),
+			test: func(t *testing.T, s *mcp.Service) {
+				r, err := s.GetRunResponse(
+					context.Background(),
+					mcp.RunInput{
+						Code: `const op = mokapi.getApi('foo').getOperation('get-/pets');
+op.responses[0].contents[0].generateExample()`,
+					},
+				)
+				require.NoError(t, err)
+				require.Equal(t, map[string]any{"bar": int64(-804702), "foo": "P8"}, r.Result)
 			},
 		},
 		{

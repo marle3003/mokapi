@@ -29,8 +29,10 @@ export function useMarkdown(content: string | undefined): {content: string | und
         if (content) {
             const md = new MarkdownIt({
                     highlight: (str, lang): string => {
+                        if (lang === 'typescript') {
+                            lang = 'javascript'
+                        }
                         if (lang && hljs.getLanguage(lang)) {
-
                             return `<pre class="hljs"><code>${hljs.highlight(str, { language: lang }).value}</code></pre>`
                         }
                         return `<pre class="hljs"><code>${md.utils.escapeHtml(str)}</code></pre>`

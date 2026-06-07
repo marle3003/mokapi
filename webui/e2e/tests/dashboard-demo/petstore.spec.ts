@@ -89,28 +89,28 @@ test('Visit Petstore Demo', async ({ page, baseURL }) => {
         const table = page.getByRole('table', { name: 'Recent Requests' });
         let rows = table.locator('tbody tr');
 
-        await expect(rows).toHaveCount(12);
-        await expect(await getCellByColumnName(table, 'Method', rows.nth(10))).toHaveText('POST');
-        await expect(await getCellByColumnName(table, 'URL', rows.nth(10))).toHaveText('http://localhost/v2/pet');
-        await expect(await getCellByColumnName(table, 'Status Code', rows.nth(10))).toHaveText('200 OK');
-
-        await expect(await getCellByColumnName(table, 'Method', rows.nth(11))).toHaveText('GET');
-        await expect(await getCellByColumnName(table, 'URL', rows.nth(11))).toHaveText('http://localhost/v2/pet/10');
+        await expect(rows).toHaveCount(13);
+        await expect(await getCellByColumnName(table, 'Method', rows.nth(11))).toHaveText('POST');
+        await expect(await getCellByColumnName(table, 'URL', rows.nth(11))).toHaveText('http://localhost/v2/pet');
         await expect(await getCellByColumnName(table, 'Status Code', rows.nth(11))).toHaveText('200 OK');
+
+        await expect(await getCellByColumnName(table, 'Method', rows.nth(12))).toHaveText('GET');
+        await expect(await getCellByColumnName(table, 'URL', rows.nth(12))).toHaveText('http://localhost/v2/pet/10');
+        await expect(await getCellByColumnName(table, 'Status Code', rows.nth(12))).toHaveText('200 OK');
 
         const filter = page.getByRole('region', { name: 'Recent Requests'}).getByRole('button', { name: 'Filter' })
         await filter.click();
         const dialog = page.getByRole('dialog', { name: 'Filter' });
         await expect(dialog).toBeVisible();
         await dialog.getByRole('checkbox', { name: 'Method' }).click();
-        await expect(rows).toHaveCount(9);
+        await expect(rows).toHaveCount(10);
 
         await dialog.getByRole('checkbox', { name: 'Method' }).click();
         await dialog.getByRole('checkbox', { name: 'GET' }).click();
         await expect(rows).toHaveCount(0);
 
         await dialog.getByRole('checkbox', { name: 'Method' }).click();
-        await expect(rows).toHaveCount(12);
+        await expect(rows).toHaveCount(13);
 
         await dialog.getByRole('checkbox', { name: 'URL' }).click();
         await dialog.getByRole('textbox', { name: 'URL filter'}).fill('/pet/10');

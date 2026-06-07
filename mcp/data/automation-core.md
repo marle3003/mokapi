@@ -19,8 +19,9 @@ interface Mokapi {
      * Returns a specific API by name.
      * @example
      * getApi('Swagger Petstore')
+     * getApi('Swagger Petstore', 'http')
      */
-    getApi(name: string): Http | Kafka;
+    getApi(name: string, type?: string): Http | Kafka;
 
     /**
      * Generate a random value from a JSON Schema.

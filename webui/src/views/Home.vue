@@ -399,7 +399,7 @@ function showImage(evt: MouseEvent) {
         </div>
 
         <!-- Visualize Your Mock APIs -->
-        <div class="row mt-5 align-items-center">
+        <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-1 text-lg-start text-center">
             <h3>Visualize Your Mock APIs</h3>
             <p>
@@ -420,7 +420,29 @@ function showImage(evt: MouseEvent) {
             </div>
           </div>
           <div class="col-12 col-lg-6 order-lg-2 d-flex justify-content-center">
-            <img class="img-fluid shadow rounded" src="/dashboard-overview-mock-api.png" alt="Mokapi dashboard showing all mocked APIs with metrics and logs." />
+            <img class="img-fluid shadow rounded" style="width:90%" src="/dashboard-overview-mock-api.png" alt="Mokapi dashboard showing all mocked APIs with metrics and logs." />
+          </div>
+        </div>
+
+        <!-- Explore and Debug with AI -->
+        <div class="row mt-5 align-items-center">
+          <div class="col-12 col-lg-6 order-lg-2 text-lg-start text-center">
+            <h3>Explore and Debug with AI</h3>
+            <p>
+              Connect your AI agent directly to a running Mokapi instance via the
+              built-in MCP server. Ask plain questions about your API, debug failed
+              requests, and generate valid test data — without leaving your editor.
+            </p>
+            <p class="fst-italic">
+              Discover endpoints, understand errors, and produce schema-compliant
+              payloads in seconds, all in plain English.
+            </p>
+            <router-link :to="{ path: '/resources/blogs/mock-apis-with-mcp' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
+              Learn about MCP Server
+            </router-link>
+          </div>
+          <div class="col-12 col-lg-6 order-lg-1 d-flex justify-content-center">
+            <img class="img-fluid shadow rounded" style="width:90%" src="/mokapi-mcp-copilot.png" alt="AI agent querying a Mokapi mock server via MCP to explore API endpoints and debug requests." />
           </div>
         </div>
 

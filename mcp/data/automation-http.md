@@ -67,6 +67,13 @@ interface HttpRequestBody {
 interface HttpContent {
     contentType: string
     schema: Schema
+
+    /**
+     * Generates mock data based on the HttpContent schema.
+     * Use this function to generate valid data. You can adjust the value.
+     * @returns {any} The generated example data.
+     */
+    generateExample(): any
 }
 
 interface HttpResponse {
