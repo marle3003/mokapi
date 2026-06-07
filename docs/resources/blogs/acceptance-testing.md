@@ -38,7 +38,7 @@ Think about it this way. A unit test is like checking each ingredient before you
 
 ### They're also executable specifications
 
-Here's what I find genuinely underrated about acceptance tests: they remove ambiguity. Software doesn't handle "probably" or "usually" or "users should mostly be able to." It needs precise, unambiguous instructions.
+Here's what I find really underrated about acceptance tests: they remove ambiguity. Software doesn't handle "probably" or "usually" or "users should mostly be able to." It needs precise, unambiguous instructions.
 
 When you write an acceptance test, you're forced to be specific. You're saying: *in this situation, with this input, here is exactly what should happen.* No wiggle room. No "well, it depends."
 

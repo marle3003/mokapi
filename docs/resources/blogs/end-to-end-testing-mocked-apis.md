@@ -101,7 +101,7 @@ inspecting what requests came in during a test run.
 
 ## Testing Scenarios You Can't Test With a Live API
 
-This is where mocking gets genuinely useful beyond just "removing the external dependency." With Mokapi's
+This is where mocking gets really useful beyond just "removing the external dependency." With Mokapi's
 JavaScript API you can simulate conditions that a real API either can't reproduce on demand or that you'd
 never want to trigger against a live service.
 

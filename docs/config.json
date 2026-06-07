@@ -657,6 +657,12 @@
             "source": "resources/blogs/record-and-replay-api-interactions.md",
             "path": "/resources/blogs/record-and-replay-api-interactions",
             "hideNavigation": true
+          },
+          {
+            "label": "Building a Virtual Hardware Simulation with Mokapi and JavaScript",
+            "source": "resources/blogs/virtual-hardware-simulation.md",
+            "path": "/resources/blogs/building-virtual-hardware-simulation",
+            "hideNavigation": true
           }
         ]
       }

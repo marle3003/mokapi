@@ -10,7 +10,7 @@ tech: mail
 
 ## The Problem With Testing Email
 
-Email is one of those things that's genuinely hard to test well. You can't just assert on a return value.
+Email is one of those things that's really hard to test well. You can't just assert on a return value.
 The email goes out through a third-party SMTP server, lands in a real inbox somewhere, and you have no
 programmatic way to check what arrived.
 
