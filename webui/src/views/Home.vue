@@ -426,21 +426,20 @@ function showImage(evt: MouseEvent) {
           </div>
         </div>
 
-        <!-- Explore and Debug with AI -->
+        <!-- Built-in MCP Server for AI Agents -->
         <div class="row mt-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-2 text-lg-start text-center">
-            <h3>Explore and Debug with AI</h3>
+            <h3>Built-in MCP Server for AI Agents</h3>
             <p>
-              Connect your AI agent directly to a running Mokapi instance via the
-              built-in MCP server. Ask plain questions about your API, debug failed
-              requests, and generate valid test data — without leaving your editor.
+              Connect your AI coding assistant directly to a running Mokapi instance using the 
+              built-in <strong>Model Context Protocol (MCP) server</strong>. Ask plain-text questions about your API, 
+              debug failed requests, and generate valid test data without leaving your editor.
             </p>
             <p class="fst-italic">
-              Discover endpoints, understand errors, and produce schema-compliant
-              payloads in seconds, all in plain English.
+              Let your AI explore endpoints, analyze schema errors, and produce valid mock payloads in seconds.
             </p>
             <router-link :to="{ path: '/resources/blogs/mock-apis-with-mcp' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
-              Learn about MCP Server
+              Explore AI & MCP Features
             </router-link>
           </div>
           <div class="col-12 col-lg-6 order-lg-1 d-flex justify-content-center">
