@@ -18,8 +18,8 @@ uid: bmiller
 userPassword: bar123
 `
 
-const title = `Mock LDAP Servers for Dev & Testing | Mokapi`
-const description = `Mock LDAP servers for development and testing. Simulate searches, binds, and directory changes without connecting to real directories.`
+const title = `Local LDAP Mock Server for Authentication Testing | Mokapi`
+const description = `Spin up a lightweight LDAP mock server instantly. Test authentication flows, directory queries, and user roles locally or in CI without Active Directory.`
 useMeta(title, description, "https://mokapi.io/ldap")
 
 const image = ref<HTMLImageElement | undefined>();
@@ -41,7 +41,7 @@ function showImage(evt: MouseEvent) {
       <div class="container">
         <div class="row hero-title">
           <div class="col-12 col-lg-6">
-            <h1>Mock LDAP Authentication & Directory Services</h1>
+            <h1>Local LDAP Mock Server & Directory Simulation</h1>
             <div class="badge-list mb-3" role="navigation" aria-label="API type navigation">
               <a href="/http"><span class="badge bg-secondary" aria-label="Go to HTTP API page">HTTP</span></a>
               <a href="/kafka"><span class="badge bg-secondary" aria-label="Go to Kafka API page">Kafka</span></a>
@@ -49,8 +49,9 @@ function showImage(evt: MouseEvent) {
               <a href="/mail"><span class="badge bg-secondary" aria-label="Go to Email API page">Email</span></a>
             </div>
             <p class="lead description">
-              Test login flows, directory queries, and edge cases locally and in CI —
-              without Active Directory, OpenLDAP, or infrastructure setup.
+              Mokapi provides a lightweight LDAP mock server to test login flows, directory queries, and
+              authentication edge cases locally and in CI/CD pipelines — without Active Directory, OpenLDAP,
+              or complex infrastructure setup.
 
               <span class="fst-italic d-block mt-2">
                 Ideal for backend developers, QA engineers, and teams testing
@@ -86,29 +87,28 @@ function showImage(evt: MouseEvent) {
 
     <section class="py-5 text-center">
       <div class="container">
-        <h2>Why Mock LDAP Directory Services?</h2>
+        <h2>Why Use an LDAP Mock Server for Testing?</h2>
         <p class="lead mb-0 text">
-          LDAP is critical for authentication, but difficult to test reliably.
+          LDAP is critical for enterprise authentication, but difficult to test reliably in local dev and CI/CD.
         </p>
         <p class="mt-3 text">
-          Mokapi lets you simulate directory services, authentication flows,
-          and edge cases without setting up or maintaining a real LDAP server.
+          Mokapi lets you simulate directory services, user authentication flows, and permission edge cases 
+          instantly. Eliminate the hassle of setting up, configuring, or maintaining a real OpenLDAP or Active Directory instance.
         </p>
       </div>
     </section>
 
     <section class="py-5 text-center">
       <div class="container">
-        <h2>What You Can Do With Mokapi LDAP</h2>
+        <h2>Mokapi LDAP Feature Capabilities</h2>
         <p class="lead mb-4 text">
-          Supports full LDAP operations including authentication, queries,
-          and directory modifications.
+          Execute full LDAP operations including authentication, directory queries, and entry modifications locally.
         </p>
 
         <div class="row g-4 mt-4">
           <div class="col-md-4">
             <span class="bi bi-person-badge display-5 mb-3 d-block icon"></span>
-            <h3>Test Authentication Flows</h3>
+            <h3>LDAP Bind &amp; Authentication Testing</h3>
             <p>
               Validate login flows exactly as your application expects,
               including credentials, group membership, and permissions.
@@ -116,7 +116,7 @@ function showImage(evt: MouseEvent) {
           </div>
           <div class="col-md-4">
             <span class="bi bi-database display-5 mb-3 d-block icon"></span>
-            <h3>Simulate Directory Operations</h3>
+            <h3>LDAP Search &amp; Directory Queries</h3>
              <p>
               Mock realistic directory interactions such as searches,
               updates, and entry management to match real-world usage.
@@ -124,7 +124,7 @@ function showImage(evt: MouseEvent) {
           </div>
           <div class="col-md-4">
             <span class="bi bi-git display-5 mb-3 d-block icon"></span>
-            <h3>Control Behavior & Edge Cases</h3>
+            <h3>Error Simulation &amp; Network Latency</h3>
             <p>
               Simulate failures, invalid credentials, latency, and custom responses
               to test how your system behaves under stress.
@@ -136,7 +136,7 @@ function showImage(evt: MouseEvent) {
 
     <section class="py-5">
       <div class="container">
-        <h2 class="text-center mb-4">Core LDAP Features</h2>
+        <h2 class="text-center mb-4">Advanced LDAP Simulation Capabilities</h2>
         <div class="row row-cols-1 row-cols-md-2 g-4">
 
           <div class="col">
@@ -144,15 +144,13 @@ function showImage(evt: MouseEvent) {
               <div class="card-body">
                 <h3 class="card-title">
                   <span class="bi bi-server me-2 icon"></span>
-                  Full LDAP Server Simulation
+                  100% Protocol Compliance 
                 </h3>
                 <p>
-                  Simulate complete LDAP behavior including authentication,
-                  directory queries, and entry updates.
+                  Simulate full LDAP directory server v3 behavior locally. Handle complex authentication flows, nested group queries, and entry updates seamlessly.
                 </p>
                 <p class="fst-italic">
-                  This allows your application to interact with Mokapi exactly
-                  as it would with a real LDAP server.
+                  This allows your application to interact with Mokapi exactly as it would with a real Active Directory or OpenLDAP server.
                 </p>
               </div>
             </div>
@@ -169,8 +167,7 @@ function showImage(evt: MouseEvent) {
                   against your LDAP schema.
                 </p>
                 <p class="fst-italic mb-0">
-                  Prevent broken authentication and directory issues
-                  before they reach production.
+                   Prevent broken authentication logic, malformed query filters, and directory issues before they hit production.
                 </p>
               </div>
             </div>
@@ -181,11 +178,10 @@ function showImage(evt: MouseEvent) {
               <div class="card-body">
                 <h3 class="card-title">
                   <span class="bi bi-tools me-2 icon"></span>
-                  Dynamic Responses & Edge Cases
+                  Programmable JavaScript Overrides
                 </h3>
                 <p>
-                  Control LDAP responses programmatically to simulate errors,
-                  delays, invalid credentials, or custom logic.
+                  Control LDAP mock server responses programmatically using JavaScript to simulate runtime errors, credential lockouts, or custom routing logic.
                 </p>
                 <p class="fst-italic">
                   Test how your system behaves in real-world and failure scenarios
@@ -200,15 +196,13 @@ function showImage(evt: MouseEvent) {
               <div class="card-body">
                 <h3 class="card-title">
                   <span class="bi bi-git me-2 icon"></span>
-                  Built for CI/CD Pipelines
+                  Automated Integration Testing 
                 </h3>
                 <p>
-                  Run LDAP mocks automatically in CI pipelines and test environments
-                  without external dependencies.
+                  Spin up your LDAP mocks automatically in automated GitHub Actions, GitLab CI, or local Docker testing environments without external infrastructure.
                 </p>
                 <p class="fst-italic">
-                  Catch authentication and authorization issues early,
-                  before they reach production.
+                  Catch deep authentication and authorization bugs early in development, completely offline and independent.
                 </p>
               </div>
             </div>
@@ -309,3 +303,9 @@ function showImage(evt: MouseEvent) {
   <Footer></Footer>
   <ImageDialog v-model:show="showImageDialog" v-model:image="image" />
 </template>
+
+<style scoped>
+.home code.hljs {
+  padding: 12px;
+}
+</style>

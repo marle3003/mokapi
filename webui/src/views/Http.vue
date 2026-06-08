@@ -38,8 +38,8 @@ INFO[${time(dayjs().second(1))}] adding service Swagger Petstore - OpenAPI 3.0 o
 INFO[${time(dayjs().second(2))}] Processing http request GET http://localhost/api/v3/pet/4
 `
 
-const title = `Mock HTTP & REST APIs from OpenAPI | Mokapi`
-const description = `Simulate HTTP and REST APIs from OpenAPI specs. Speed up development, automate tests, and remove external dependencies.`
+const title = `OpenAPI Mock Server & HTTP REST API Mocking | Mokapi`
+const description = `Spin up an open-source HTTP mock server instantly from your OpenAPI specifications. Validate REST requests, simulate edge cases, and automate your testing.`
 useMeta(title, description, "https://mokapi.io/http")
 
 const image = ref<HTMLImageElement | undefined>();
@@ -65,7 +65,7 @@ function getConsoleContent() {
       <div class="container">
         <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6 px-0">
-            <h1>Mock HTTP APIs from OpenAPI Specs</h1>
+            <h1>OpenAPI Mock Server & HTTP API Simulation</h1>
             <div class="badge-list mb-3" role="navigation" aria-label="API type navigation">
               <span class="badge bg-primary" aria-current="page" aria-label="You are currently on the HTTP API page">HTTP</span>
               <a href="/kafka"><span class="badge bg-secondary" aria-label="Go to Kafka API page">Kafka</span></a>
@@ -73,9 +73,9 @@ function getConsoleContent() {
               <a href="/mail"><span class="badge bg-secondary" aria-label="Go to Email API page">Email</span></a>
             </div>
             <p class="lead description">
-              Create realistic HTTP mocks directly from your <strong>OpenAPI specifications</strong>.
-              Validate requests, generate meaningful responses, and test clients
-              without waiting for real backends.
+              Mokapi is an open-source OpenAPI mock server designed to create realistic HTTP and REST
+              mocks directly from your specifications. Validate requests, generate dynamic responses,
+              and test clients locally.
             </p>
             <p class="d-none d-md-block">
               <router-link :to="{ path: '/resources/tutorials/get-started-with-rest-api' }" class="btn btn-primary me-2">
@@ -173,7 +173,7 @@ function getConsoleContent() {
               <div class="card-body">
                 <h3 class="card-title align-middle">
                   <span class="bi bi-box me-2 icon"></span>
-                  Realistic Test Data
+                  Dynamic HTTP Mocking via Scripts
                 </h3>
                 <p class="card-text pb-4">Intercept HTTP requests with Mokapi Scripts to simulate delays, failures, and edge cases.</p>
                 <a href="/docs/get-started/test-data" class="card-link position-absolute" style="bottom:15px;">Start Mocking with Real Data</a>
@@ -185,7 +185,7 @@ function getConsoleContent() {
               <div class="card-body">
                 <h3 class="card-title align-middle">
                   <span class="bi bi-heart-pulse me-2 icon"></span>
-                  Debugging &amp; Monitoring
+                  Real-Time HTTP Traffic Dashboard
                 </h3>
                 <p class="card-text pb-4">Inspect every request and response in the Mokapi Dashboard, validate against specs, and generate mock data automatically.</p>
                 <a href="/docs/get-started/dashboard" class="card-link position-absolute" style="bottom:15px;">Explore Mokapi Dashboard</a>
@@ -214,7 +214,7 @@ function getConsoleContent() {
             </div>
           </div>
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-1 order-lg-2 text-start">
-            <pre v-highlightjs="script"><code class="javascript"></code></pre>
+            <pre v-highlightjs><code class="javascript">{{ script }}</code></pre>
           </div>
         </div>
 
@@ -385,5 +385,8 @@ function getConsoleContent() {
     animation-timing-function: steps(1, end);
     animation-fill-mode: forwards;
   }
+}
+.home code.hljs {
+  padding: 12px;
 }
 </style>
