@@ -20,13 +20,16 @@
     "@go-mokapi/win32-x64": "*"
   },
   "keywords": [
-    "mock",
-    "api",
-    "http",
-    "kafka",
-    "ldap",
-    "smtp",
-    "imap"
+    "mock api",
+    "api mock",
+    "api mocking",
+    "kafka mock",
+    "ldap mock",
+    "smtp mock",
+    "imap mock",
+    "http mock",
+    "openapi",
+    "asyncapi"
   ],
   "author": "Marcel Lehmann",
   "license": "MIT",

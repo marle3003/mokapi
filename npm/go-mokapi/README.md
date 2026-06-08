@@ -1,9 +1,11 @@
 <p align="center">
 <a href="https://mokapi.io">
-<img src="https://raw.githubusercontent.com/marle3003/mokapi/refs/heads/main/logo.svg" alt="Mokapi" title="Mokapi" width="300" />
+<img src="https://raw.githubusercontent.com/marle3003/mokapi/refs/heads/main/logo.svg" alt="Mokapi - Open Source Mock API Server" title="Mokapi" width="300" />
 </a>
 </p>
-<h3 align="center">Mock APIs Across Protocols. Test Faster. Ship Better.</h3>
+
+# The Open-Source Mock API Tool Across Protocols
+
 <p align="center">
   <a href="https://www.npmjs.com/package/go-mokapi"><img src="https://img.shields.io/npm/v/go-mokapi.svg" alt="npm version"></a>
   <a href="https://github.com/marle3003/mokapi/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
@@ -12,9 +14,8 @@
 
 ## What is Mokapi?
 
-Mokapi is an open-source API mocking tool that lets you develop and test without waiting
-for backends. Mock REST APIs, Kafka topics, LDAP directories, and SMTP servers using
-OpenAPI and AsyncAPI specifications.
+Mokapi is an open-source [mock API](https://mokapi.io) tool for development and testing without backend dependencies. Easily mock
+REST APIs, Kafka topics, LDAP directories, and SMTP servers using OpenAPI or AsyncAPI.
 
 Perfect for:
 - Frontend developers building UIs before backends exist
@@ -24,13 +25,13 @@ Perfect for:
 
 ## Quick Start
 
-Try Instantly
+Try the **mock API** instantly:
 
 ```
 npx go-mokapi https://petstore3.swagger.io/api/v3/openapi.json
 ```
 
-Then test your mock:
+Then test your local **mock API**:
 
 ```
 curl http://localhost/api/v3/pet/1 -H 'Accept: application/json'
@@ -49,15 +50,15 @@ Check other installation methods [here](https://mokapi.io/docs/get-started/insta
 
 ## Key Features
 
-### Multi-Protocol Support
+### Multi-Protocol Mock API  Support
 Mock HTTP/HTTPS, Apache Kafka, LDAP, and SMTP — all from a single tool.
 
 ### Specification-Driven
-Uses OpenAPI and AsyncAPI specs as the source of truth. Your mocks stay aligned with your API contracts.
+Uses OpenAPI and AsyncAPI specs as the source of truth. Your **mock API** stays aligned with your API contracts.
 
 ### Dynamic Behavior with JavaScript
 
-Control responses, simulate errors, add delays, or create complex workflows using embedded JavaScript:
+Control responses, simulate errors, add delays, or create complex workflows in your **mock API** using embedded JavaScript:
 ```javascript
 import { on } from 'mokapi'
 
@@ -76,7 +77,7 @@ export default function() {
 ```
 
 ### Everything as Code
-Version control your mocks alongside your code. Run them in CI/CD pipelines. No UI configuration required.
+Version control your **mock API**  alongside your code. Run them in CI/CD pipelines. No UI configuration required.
 
 ### Configuration Patching
 Override parts of your OpenAPI spec without modifying the original file. Perfect for testing different scenarios.
@@ -106,8 +107,8 @@ Validate that your requests and responses match your OpenAPI specification. Catc
 
 Explore tutorials that walk you through mocking different protocols and scenarios:
 
-- [Get started with REST API](https://mokapi.io/resources/tutorials/get-started-with-rest-api)  
-  Mock a REST API using OpenAPI specification
+- [Get started with REST API Mocking](https://mokapi.io/resources/tutorials/get-started-with-rest-api)  
+  Deploy a REST **mock API** using OpenAPI specification
 
 - [Mock Kafka with AsyncAPI](https://mokapi.io/resources/tutorials/get-started-with-kafka)  
   Simulate Kafka topics and validate message producers
@@ -148,6 +149,7 @@ MIT License - see [LICENSE](https://github.com/marle3003/mokapi/blob/main/LICENS
 - Website: [mokapi.io](https://mokapi.io)
 - GitHub: [github.com/marle3003/mokapi](https://github.com/marle3003/mokapi)
 - NPM Package: [npmjs.com/package/go-mokapi](https://npmjs.com/package/go-mokapi)
+- Docker Image: [https://hub.docker.com/r/mokapi/mokapi](https://hub.docker.com/r/mokapi/mokapi)
 - Documentation: [mokapi.io/docs](https://mokapi.io/docs)
 - Tutorials: [mokapi.io/resources/tutorials](https://mokapi.io/resources/tutorials)
 - Blog: [mokapi.io/resources/blogs](https://mokapi.io/resources/blogs)

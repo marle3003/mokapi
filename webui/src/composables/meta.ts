@@ -54,3 +54,28 @@ function setCanonical(href: string) {
     canonical.href = href;
     
 }
+
+export function useSoftwareApplicationMeta(version: string) {
+    var script = document.createElement('script');
+    script.type = 'application/ld+json';
+    script.text = JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Mokapi",
+        "url": "https://mokapi.io",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Windows, macOS, Linux",
+        "description": "An open-source, local-first multi-protocol mock API tool driven by OpenAPI and AsyncAPI specifications to simulate HTTP, Kafka, and other protocols.",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "downloadUrl": "https://github.com/marle3003/mokapi/releases",
+        "softwareVersion": version, 
+        "license": "https://github.com/marle3003/mokapi/blob/main/LICENSE",
+        "features": "HTTP Mocking, Kafka Mocking, OpenAPI Support, AsyncAPI Support, Local-first API Simulation"
+    }) 
+
+    document.head.appendChild(script);
+}

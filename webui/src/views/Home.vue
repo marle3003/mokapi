@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { useMeta } from '@/composables/meta'
+import { useMeta, useSoftwareApplicationMeta } from '@/composables/meta'
 import Footer from '@/components/Footer.vue'
 import { ref, onMounted } from 'vue'
 import ImageDialog from '@/components/ImageDialog.vue'
 import { isValidImage } from '@/composables/image-dialog'
 
-const title = 'Mock APIs from Specs | Mokapi'
-const description = `Mock REST, Kafka, LDAP, and Mail servers to test real-world systems safely, reliably, and without external dependencies.`
+const title = 'Mokapi: Open-Source Mock API Tool & API Simulation'
+const description = `Simulate HTTP and Kafka APIs locally. Mokapi is a powerful, multi-protocol mock API tool driven by OpenAPI and AsyncAPI specs to speed up your testing.`
 
 useMeta(title, description, 'https://mokapi.io')
 
@@ -26,6 +26,8 @@ onMounted(async () => {
 
       github.value.stars = repo.stargazers_count
       github.value.release = release.tag_name
+
+      useSoftwareApplicationMeta(release.tag_name?.substring(1) ?? '0.44.0')
     } catch (e) {
       console.warn('GitHub API unavailable', e)
     }
@@ -47,7 +49,7 @@ function showImage(evt: MouseEvent) {
         <div class="row hero-title justify-content-center">
           <div class="col-12 col-lg-6 px-0">
             
-            <h1>Mock APIs. Test Faster. Ship Better.</h1>
+            <h1>The Open-Source Mock API Tool Across Protocols</h1>
             <div class="badge-list mb-3" role="list" aria-label="Supported protocols">
               <router-link :to="{ path: '/http' }">
                 <span class="badge" aria-label="HTTP API Support">HTTP</span>
@@ -59,12 +61,12 @@ function showImage(evt: MouseEvent) {
                 <span class="badge" aria-label="LDAP Support">LDAP</span>
               </router-link>
               <router-link :to="{ path: '/mail' }">
-                <span class="badge" aria-label="Email Support">Email</span>
+                <span class="badge" aria-label="Email Support">SMTP / IMAP</span>
               </router-link>
             </div>            
             <p class="lead description">
-              Develop faster without waiting for backends. Test reliably without 
-              external dependencies. Deploy confidently with contract validation.
+              Mokapi is an open-source, local-first <strong>mock API tool</strong> to develop and test faster. 
+              Simulate complete environments driven by OpenAPI and AsyncAPI specifications without external dependencies.
               <span class="fst-italic d-block mt-2" style="font-size: 0.95rem;">
                 Free, open-source, and fully under your control.
               </span>
@@ -81,8 +83,8 @@ function showImage(evt: MouseEvent) {
           <div class="col-12 col-lg-5">
             <img 
               src="/logo.svg" 
-              alt="Mokapi logo with an okapi symbol representing friendly and elegant developer tooling" 
-              title="Mokapi – the okapi-inspired logo for modern API mocking" 
+              alt="Mokapi logo - open-source multi-protocol mock API tool" 
+              title="Mokapi – Modern API Mocking" 
               class="mx-auto d-block no-dialog"
               loading="eager"
             />
@@ -122,12 +124,12 @@ function showImage(evt: MouseEvent) {
         <div class="row justify-content-center">
           <div class="col-12 col-lg-10">
             <div class="text-center">
-              <h2 class="mb-3">Try Mokapi in a Second</h2>
+              <h2 class="mb-3">Spin up your Mock API in seconds</h2>
               <div class="d-flex justify-content-center flex-wrap">
-                <pre class="quick-start-code"><code>npx go-mokapi https://petstore31.swagger.io/api/v31/openapi.json</code></pre>
+                <pre class="quick-start-code"><code lang="bash">npx go-mokapi https://petstore31.swagger.io/api/v31/openapi.json</code></pre>
               </div>
               <p class="text-muted mb-0 quick-start-desc">
-                Instantly mock Swagger's Petstore API and start testing
+                Instantly start a <strong>local mock API server</strong> using Swagger's Petstore specification and begin testing.
               </p>
             </div>
           </div>
@@ -148,7 +150,7 @@ function showImage(evt: MouseEvent) {
           </div>
 
           <div class="col-12 col-lg-6 text-center text-lg-start mb-4 mb-lg-0">
-            <h2 class="mb-3">Mock and Simulate APIs Across Protocols</h2>
+            <h2 class="mb-3">Multi-Protocol API Simulation</h2>
             <p class="lead">
               Mokapi helps you test and develop faster by simulating APIs and services in any environment —
               locally, in CI pipelines, or in staging and test environments.
@@ -160,7 +162,99 @@ function showImage(evt: MouseEvent) {
         </div>
       </div>
     </section>
-    
+
+    <section class="py-5 text-center">
+      <div class="container">
+
+        <h2 class="mb-3">Go Beyond HTTP: Native Kafka Mocking</h2>
+        <p class="lead mb-4 text">
+          Mokapi covers your entire architecture. While providing robust multi-protocol mock API tools,
+      it allows you to test complete, distributed systems, not just individual REST endpoints.
+        </p>
+
+        <div class="row g-4 text-start">
+
+          <div class="col-sm-3">
+            <div class="card h-100 shadow-sm border-0 accented">
+              <div class="card-inner">
+                <router-link :to="{path: '/http'}" class="d-flex flex-column h-100">
+                  <div class="card-body d-flex flex-column">
+                    <h3 class="card-title mt-0 mb-3">HTTP & REST API Mocking</h3>
+                    <p class="card-text">
+                      Simulate local REST endpoints driven by OpenAPI to develop and test clients
+                      without waiting for real backend services.
+                    </p>
+                    <div class="icon-link cta mt-auto align-self-start">Learn more 
+                      <span class="bi bi-chevron-right"></span>
+                      <span class="bi bi-arrow-right hover"></span>
+                    </div>
+                  </div>
+                </router-link>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-sm-3">
+            <div class="card h-100 shadow-sm border-0 accented">
+              <div class="card-inner">
+                <router-link :to="{path: '/kafka'}" class="d-flex flex-column h-100">
+                  <div class="card-body d-flex flex-column">
+                    <h3 class="card-title mt-0 mb-3">Kafka Event Mocking & Simulation</h3>
+                    <p class="card-text">
+                      Mock Kafka topics and message streams via AsyncAPI to test
+                      event-driven systems and service interactions locally.
+                    </p>
+                    <div class="icon-link cta mt-auto align-self-start">Learn more 
+                      <span class="bi bi-chevron-right"></span>
+                      <span class="bi bi-arrow-right hover"></span>
+                    </div>
+                  </div>
+                </router-link>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-3">
+            <div class="card h-100 shadow-sm border-0 accented">
+              <div class="card-inner">
+                <router-link :to="{path: '/ldap'}" class="d-flex flex-column h-100">
+                  <div class="card-body d-flex flex-column">
+                    <h3 class="card-title mt-0 mb-3">LDAP Server Mocking</h3>
+                    <p class="card-text">
+                      Simulate directory and authentication services
+                      to test user access, roles, and permissions safely in your environment.
+                    </p>
+                    <div class="icon-link cta mt-auto align-self-start">Learn more 
+                      <span class="bi bi-chevron-right"></span>
+                      <span class="bi bi-arrow-right hover"></span>
+                    </div>
+                  </div>
+                </router-link>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-3">
+            <div class="card h-100 shadow-sm border-0 accented">
+              <div class="card-inner">
+                <router-link :to="{path: '/mail'}" class="d-flex flex-column h-100">
+                  <div class="card-body d-flex flex-column">
+                    <h3 class="card-title mt-0 mb-3">SMTP & IMAP Mail Mocking</h3>
+                    <p class="card-text">
+                      Test full email workflows by simulating local SMTP and IMAP servers
+                      without the risk of sending real messages.
+                    </p>
+                    <div class="icon-link cta mt-auto align-self-start">Learn more 
+                      <span class="bi bi-chevron-right"></span>
+                      <span class="bi bi-arrow-right hover"></span>
+                    </div>
+                  </div>
+                </router-link>
+              </div>
+            </div> 
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="py-5">
       <div class="container text-center">
 
@@ -198,112 +292,20 @@ function showImage(evt: MouseEvent) {
       </div>
     </section>
 
-    <section class="py-5 text-center">
-      <div class="container">
-
-        <h2 class="mb-3">Mock More Than Just HTTP</h2>
-        <p class="lead mb-4 text">
-          Mokapi supports multiple protocols, allowing you to test complete systems,
-          not just individual REST endpoints.
-        </p>
-
-        <div class="row g-4 text-start">
-
-          <div class="col-sm-3">
-            <div class="card h-100 shadow-sm border-0 accented">
-              <div class="card-inner">
-                <router-link :to="{path: '/http'}" class="d-flex flex-column h-100">
-                  <div class="card-body d-flex flex-column">
-                    <h3 class="card-title mt-0 mb-3">Mock REST APIs</h3>
-                    <p class="card-text">
-                      Simulate REST endpoints to develop and test clients
-                      without waiting for real backend services.
-                    </p>
-                    <div class="icon-link cta mt-auto align-self-start">Learn more 
-                      <span class="bi bi-chevron-right"></span>
-                      <span class="bi bi-arrow-right hover"></span>
-                    </div>
-                  </div>
-                </router-link>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-sm-3">
-            <div class="card h-100 shadow-sm border-0 accented">
-              <div class="card-inner">
-                <router-link :to="{path: '/kafka'}" class="d-flex flex-column h-100">
-                  <div class="card-body d-flex flex-column">
-                    <h3 class="card-title mt-0 mb-3">Simulate Kafka Events</h3>
-                    <p class="card-text">
-                      Mock Kafka topics and message streams to test
-                      event-driven systems and service interactions.
-                    </p>
-                    <div class="icon-link cta mt-auto align-self-start">Learn more 
-                      <span class="bi bi-chevron-right"></span>
-                      <span class="bi bi-arrow-right hover"></span>
-                    </div>
-                  </div>
-                </router-link>
-              </div>
-            </div>
-          </div>
-          <div class="col-sm-3">
-            <div class="card h-100 shadow-sm border-0 accented">
-              <div class="card-inner">
-                <router-link :to="{path: '/ldap'}" class="d-flex flex-column h-100">
-                  <div class="card-body d-flex flex-column">
-                    <h3 class="card-title mt-0 mb-3">Mock LDAP Services</h3>
-                    <p class="card-text">
-                      Simulate directory and authentication services
-                      to test user access, roles, and permissions safely.
-                    </p>
-                    <div class="icon-link cta mt-auto align-self-start">Learn more 
-                      <span class="bi bi-chevron-right"></span>
-                      <span class="bi bi-arrow-right hover"></span>
-                    </div>
-                  </div>
-                </router-link>
-              </div>
-            </div>
-          </div>
-          <div class="col-sm-3">
-            <div class="card h-100 shadow-sm border-0 accented">
-              <div class="card-inner">
-                <router-link :to="{path: '/mail'}" class="d-flex flex-column h-100">
-                  <div class="card-body d-flex flex-column">
-                    <h3 class="card-title mt-0 mb-3">SMTP Email Testing</h3>
-                    <p class="card-text">
-                      Test email workflows by simulating SMTP and IMAP servers
-                      without sending real messages.
-                    </p>
-                    <div class="icon-link cta mt-auto align-self-start">Learn more 
-                      <span class="bi bi-chevron-right"></span>
-                      <span class="bi bi-arrow-right hover"></span>
-                    </div>
-                  </div>
-                </router-link>
-              </div>
-            </div> 
-          </div>
-        </div>
-      </div>
-    </section>
-
     <section class="py-5 text-center feature">
       <div class="container">
 
-        <h2 class="mb-3">Core Features</h2>
+        <h2 class="mb-3">Key Capabilities & Specifications</h2>
         <p class="lead text">
           Powerful capabilities that make Mokapi flexible, controllable, and reliable in any environment.
         </p>
 
-        <!-- Control Mock Behavior with JavaScript -->
+        <!-- Dynamic API Mocking via JavaScript -->
         <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-2 text-lg-start text-center">
-            <h3>Control Mock Behavior with JavaScript</h3>
+            <h3>Dynamic API Mocking via JavaScript</h3>
             <p>
-              Use JavaScript to control how your mocks behave at runtime.
+              Use JavaScript for dynamic API mocking to control how your mocks behave at runtime.
               Respond dynamically to headers, payloads, authentication,
               or message content — across HTTP, Kafka, LDAP, and mail.
             </p>
@@ -320,12 +322,12 @@ function showImage(evt: MouseEvent) {
           </div>
         </div>
 
-        <!-- Generate Realistic Test Data -->
+        <!-- Built-in Mock Data Generator -->
         <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-1 text-lg-start text-center">
-            <h3>Generate Realistic Test Data</h3>
+            <h3>Built-in Mock Data Generator</h3>
             <p>
-              Create dynamic, lifelike data for your mocks. Simulate users, transactions, messages, and more to improve testing accuracy.
+              Use the built-in mock data generator to create dynamic, lifelike data for your mocks. Simulate users, transactions, messages, and more to improve testing accuracy.
             </p>
             <p class="fst-italic">
               Produce realistic data to catch bugs early and test edge cases that rarely occur in production.
@@ -339,15 +341,15 @@ function showImage(evt: MouseEvent) {
           </div>
         </div>
 
-        <!-- Run Mocks Anywhere -->
+        <!-- Cloud-Native Deployment & CI/CD Pipelines -->
         <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-2 text-lg-start text-center">
-            <h3>Run Mocks Anywhere</h3>
+            <h3>Cloud-Native Deployment & CI/CD Pipelines</h3>
             <p>
-              Run Mokapi in any environment: local development, Docker, cloud, or CI pipelines. Test APIs seamlessly, wherever your services are deployed.
+              Run Mokapi in any environment: local development, Docker, cloud, or CI/CD pipelines. Test APIs seamlessly, wherever your services are deployed.
             </p>
             <p class="fst-italic">
-              Ensure consistent testing across local development, CI pipelines, and cloud environments.
+              Ensure consistent testing across local development, CI/CD pipelines, and cloud environments.
             </p>
             <router-link :to="{ path: '/docs/get-started/running' }" class="btn btn-outline-primary btn-sm">
               Deployment Options
@@ -359,10 +361,10 @@ function showImage(evt: MouseEvent) {
         </div>
 
 
-        <!-- Mocks as Code -->
+        <!-- Declarative Mocks-as-Code Configuration -->
         <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-1 text-lg-start text-center">
-            <h3>Define Mocks as Code</h3>
+            <h3>Declarative Mocks-as-Code Configuration</h3>
             <p>
               Manage all API mocks, configurations, and behaviors as code. Track changes, simplify audits, and ensure consistency across environments.
             </p>
@@ -379,10 +381,10 @@ function showImage(evt: MouseEvent) {
         </div>
 
 
-        <!-- Patch Configurations Without Modifying Originals -->
+        <!-- Runtime Overrides & API Contract Patching -->
         <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-2 text-lg-start text-center">
-            <h3>Patch Configurations Without Modifying Originals</h3>
+            <h3>Runtime Overrides & API Contract Patching</h3>
             <p>
               Use patch files to modify API specs without touching the original. Apply changes at runtime with hot-reloading for flexible mock management.
             </p>
@@ -398,10 +400,10 @@ function showImage(evt: MouseEvent) {
           </div>
         </div>
 
-        <!-- Visualize Your Mock APIs -->
+        <!-- Real-Time API Mocking Dashboard -->
         <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-1 text-lg-start text-center">
-            <h3>Visualize Your Mock APIs</h3>
+            <h3>Real-Time API Mocking Dashboard</h3>
             <p>
               Inspect requests, responses, logs, and generated example data as they happen.
               Mokapi’s dashboard gives you full visibility into your mocks during development and testing.
@@ -424,21 +426,20 @@ function showImage(evt: MouseEvent) {
           </div>
         </div>
 
-        <!-- Explore and Debug with AI -->
+        <!-- Built-in MCP Server for AI Agents -->
         <div class="row mt-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-2 text-lg-start text-center">
-            <h3>Explore and Debug with AI</h3>
+            <h3>Built-in MCP Server for AI Agents</h3>
             <p>
-              Connect your AI agent directly to a running Mokapi instance via the
-              built-in MCP server. Ask plain questions about your API, debug failed
-              requests, and generate valid test data — without leaving your editor.
+              Connect your AI coding assistant directly to a running Mokapi instance using the 
+              built-in <strong>Model Context Protocol (MCP) server</strong>. Ask plain-text questions about your API, 
+              debug failed requests, and generate valid test data without leaving your editor.
             </p>
             <p class="fst-italic">
-              Discover endpoints, understand errors, and produce schema-compliant
-              payloads in seconds, all in plain English.
+              Let your AI explore endpoints, analyze schema errors, and produce valid mock payloads in seconds.
             </p>
             <router-link :to="{ path: '/resources/blogs/mock-apis-with-mcp' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
-              Learn about MCP Server
+              Explore AI & MCP Features
             </router-link>
           </div>
           <div class="col-12 col-lg-6 order-lg-1 d-flex justify-content-center">
@@ -463,10 +464,10 @@ function showImage(evt: MouseEvent) {
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body d-flex flex-column">
                 <h3 class="card-title">
-                  <span class="icon me-2 bi-globe"></span>Mock REST APIs with OpenAPI
+                  <span class="icon me-2 bi-globe"></span>How to Mock REST APIs with OpenAPI
                 </h3>
                 <p>Learn how to mock an OpenAPI spec, configure Mokapi, and run it in Docker. Test REST endpoints without waiting for live APIs.</p>
-                <a href="resources/tutorials/get-started-with-rest-api" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
+                <a href="/resources/tutorials/get-started-with-rest-api" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
               </div>
             </div>
           </div>
@@ -476,10 +477,10 @@ function showImage(evt: MouseEvent) {
             <div class="card h-100 shadow-sm border-0">
               <div class="card-body d-flex flex-column">
                 <h3 class="card-title">
-                  <span class="icon me-2 bi-lightning"></span>Simulate Kafka Topics with AsyncAPI
+                  <span class="icon me-2 bi-lightning"></span>Kafka Mock Server Simulation via AsyncAPI
                 </h3>
                 <p>Test Kafka producers and consumers by mocking topics according to your AsyncAPI spec. Ensure reliable message generation without a live Kafka cluster.</p>
-                <a href="resources/tutorials/get-started-with-kafka" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
+                <a href="/resources/tutorials/get-started-with-kafka" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
               </div>
             </div>
           </div>
@@ -492,7 +493,7 @@ function showImage(evt: MouseEvent) {
                   <span class="icon me-2 bi-person-check"></span>Mock LDAP Authentication
                 </h3>
                 <p>Step-by-step guide to mock LDAP login using Mokapi and Node.js. Test authentication flows without a real directory server.</p>
-                <a href="resources/tutorials/mock-ldap-authentication-in-node" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
+                <a href="/resources/tutorials/mock-ldap-authentication-in-node" class="btn btn-outline-primary btn-sm mt-auto align-self-start">Start Tutorial</a>
               </div>
             </div>
           </div>
@@ -585,7 +586,7 @@ function showImage(evt: MouseEvent) {
 
               <!-- accordion button -->
               <button class="text-start w-100 mt-3 collapsed" id="heading-action-mock-data" href="#collapse-action-mock-data" data-bs-toggle="collapse" aria-expanded="true" aria-controls="collapse-action-mock-data">
-                <h3>Mock data that actually makes sense</h3>
+                <h3>Generate Mock Data That Makes Sense</h3>
                 <p class="mb-0">Generate realistic responses using schema and smart defaults.</p>
               </button>
 

@@ -27,8 +27,11 @@ cards:
 
 **Welcome to Mokapi!**
 
-Mokapi is your go-to platform for mocking APIs, making it easy to build,
+Mokapi is your go-to platform for [mock api](https://mokapi.io) generation, making it easy to build,
 test, and monitor API-driven applications without the hassle.
+
+It supports high-performance HTTP mocking and local Kafka simulation directly from your OpenAPI and
+AsyncAPI specifications.
 
 > *Think of Mokapi as your ever-reliable API contract guardian—lightweight, transparent, and specification-driven.*
 
