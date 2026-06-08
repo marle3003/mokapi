@@ -1,10 +1,10 @@
 <p align="center">
 <a href="https://mokapi.io">
-<img src="logo.svg" alt="Mokapi" title="Mokapi" width="300" />
+<img src="logo.svg" alt="Mokapi" title="Mokapi - Open Source Mock API Server" width="300" />
 </a>
 </p>
 
-# Mokapi – The Open-Source Mock API Tool Across Protocols
+# The Open-Source Mock API Tool Across Protocols
 
 <p align="center">
 <a href="https://github.com/marle3003/mokapi/releases"><img src="https://img.shields.io/github/release/marle3003/mokapi.svg" alt="Github release"></a>
