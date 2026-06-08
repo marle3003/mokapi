@@ -5,28 +5,38 @@ const util = require('util');
 const pages = [
   {
     file: './src/views/Home.vue',
-    url: 'https://mokapi.io'
+    url: 'https://mokapi.io',
+    priority: '1.0',
+    changefreq: 'daily'
   },
   {
     file: './src/views/Http.vue',
-    url: 'https://mokapi.io/http'
+    url: 'https://mokapi.io/http',
+    priority: '0.8',
+    changefreq: 'weekly'
   },
   {
     file: './src/views/Kafka.vue',
-    url: 'https://mokapi.io/kafka'
+    url: 'https://mokapi.io/kafka',
+    priority: '0.8',
+    changefreq: 'weekly'
   },
   {
     file: './src/views/Mail.vue',
-    url: 'https://mokapi.io/mail'
+    url: 'https://mokapi.io/mail',
+    priority: '0.8',
+    changefreq: 'weekly'
   },
   {
     file: './src/views/Ldap.vue',
-    url: 'https://mokapi.io/ldap'
+    url: 'https://mokapi.io/ldap',
+    priority: '0.8',
+    changefreq: 'weekly'
   },
 ]
 
 const xmlTemplate = `
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1" xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
+<urlset xmlns="http://sitemaps.org">
 %s
 </urlset>
 `
@@ -34,7 +44,7 @@ const xmlTemplate = `
 const urlTemplate = `
 <url>
   <loc>%s</loc>
-  <changefreq>daily</changefreq>
+  <changefreq>%s</changefreq>
   <priority>%s</priority>
   <lastmod>%s</lastmod>
 </url>`
@@ -43,9 +53,21 @@ function writeItem(item) {
   let xml = '';
 
   if (item.path && item.source) {
+    let changefreq = 'daily'
+    let priority = '1.0'
+
+    if (item.path.startsWith('/docs/')) {
+      changefreq = 'weekly'
+      priority = '0.6'
+    }
+    else if (item.path.startsWith('/resources/')) {
+      changefreq = 'monthly'
+      priority = '0.7'
+    }
+
     stats = fs.statSync(path.join(docsPath, item.source));
     const url = `https://mokapi.io${item.path}`;
-    const node = util.format(urlTemplate, url, '0.7', stats.mtime.toISOString())
+    const node = util.format(urlTemplate, url, changefreq, priority, stats.mtime.toISOString())
     xml += node
   }
 
@@ -87,7 +109,7 @@ try {
   // write pages
   for (let page of pages) {
     const stats = fs.statSync(page.file)
-    content += util.format(urlTemplate, page.url, '1.0', stats.mtime.toISOString())
+    content += util.format(urlTemplate, page.url, page.changefreq, page.priority, stats.mtime.toISOString())
   }
 
   // write docs

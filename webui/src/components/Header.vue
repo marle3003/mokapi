@@ -223,7 +223,7 @@ function isDashboardDisplayed() {
 </div>
     <nav class="navbar navbar-expand-lg" aria-label="Main">
       <div class="container-fluid">
-        <a class="navbar-brand" href="./" title="Mokapi home"><img src="/logo-header.svg" height="30" alt="Mokapi home"/></a>
+        <a class="navbar-brand" href="./" title="Mokapi home"><img src="/logo-header.svg" height="30" alt="Mokapi - Open-Source Multi-Protocol Mock API Tool"/></a>
         <div class="d-flex ms-auto align-items-center tools d-none">
             <a href="https://github.com/marle3003/mokapi" class="version pe-2" v-if="appInfo?.data">v{{appInfo.data.version}}</a>
             <button id="search-button" class="btn icon" aria-label="Search" data-bs-toggle="modal" data-bs-target="#search-docs">
