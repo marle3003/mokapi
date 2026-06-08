@@ -42,6 +42,9 @@ const Server = require('./server');
 
     await page.evaluate(async () => {
       for (const script of document.querySelectorAll('script')) {
+        if (script.type === 'application/ld+json') {
+          continue
+        }
         script.remove();
        }
        for (const link of document.querySelectorAll('link'))  {
