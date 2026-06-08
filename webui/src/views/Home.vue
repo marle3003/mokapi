@@ -61,12 +61,12 @@ function showImage(evt: MouseEvent) {
                 <span class="badge" aria-label="LDAP Support">LDAP</span>
               </router-link>
               <router-link :to="{ path: '/mail' }">
-                <span class="badge" aria-label="Email Support">Email</span>
+                <span class="badge" aria-label="Email Support">SMTP / IMAP</span>
               </router-link>
             </div>            
             <p class="lead description">
-              Develop faster without waiting for backends. Test reliably without 
-              external dependencies. Deploy confidently with contract validation.
+              Mokapi is an open-source, local-first <strong>mock API tool</strong> to develop and test faster. 
+              Simulate complete environments driven by OpenAPI and AsyncAPI specifications without external dependencies.
               <span class="fst-italic d-block mt-2" style="font-size: 0.95rem;">
                 Free, open-source, and fully under your control.
               </span>
@@ -83,8 +83,8 @@ function showImage(evt: MouseEvent) {
           <div class="col-12 col-lg-5">
             <img 
               src="/logo.svg" 
-              alt="Mokapi logo with an okapi symbol representing friendly and elegant developer tooling" 
-              title="Mokapi – the okapi-inspired logo for modern API mocking" 
+              alt="Mokapi logo - open-source multi-protocol mock API tool" 
+              title="Mokapi – Modern API Mocking" 
               class="mx-auto d-block no-dialog"
               loading="eager"
             />
