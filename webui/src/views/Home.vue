@@ -168,7 +168,7 @@ function showImage(evt: MouseEvent) {
 
         <h2 class="mb-3">Go Beyond HTTP: Native Kafka Mocking</h2>
         <p class="lead mb-4 text">
-          Mokapi covers your entire architecture. While providing robust multi-protocol mock API tools, 
+          Mokapi covers your entire architecture. While providing robust multi-protocol mock API tools,
       it allows you to test complete, distributed systems, not just individual REST endpoints.
         </p>
 
@@ -181,7 +181,7 @@ function showImage(evt: MouseEvent) {
                   <div class="card-body d-flex flex-column">
                     <h3 class="card-title mt-0 mb-3">HTTP & REST API Mocking</h3>
                     <p class="card-text">
-                      Simulate local REST endpoints driven by OpenAPI to develop and test clients 
+                      Simulate local REST endpoints driven by OpenAPI to develop and test clients
                       without waiting for real backend services.
                     </p>
                     <div class="icon-link cta mt-auto align-self-start">Learn more 
@@ -201,7 +201,7 @@ function showImage(evt: MouseEvent) {
                   <div class="card-body d-flex flex-column">
                     <h3 class="card-title mt-0 mb-3">Kafka Event Mocking & Simulation</h3>
                     <p class="card-text">
-                      Mock Kafka topics and message streams via AsyncAPI to test 
+                      Mock Kafka topics and message streams via AsyncAPI to test
                       event-driven systems and service interactions locally.
                     </p>
                     <div class="icon-link cta mt-auto align-self-start">Learn more 
@@ -220,7 +220,7 @@ function showImage(evt: MouseEvent) {
                   <div class="card-body d-flex flex-column">
                     <h3 class="card-title mt-0 mb-3">LDAP Server Mocking</h3>
                     <p class="card-text">
-                      Simulate directory and authentication services 
+                      Simulate directory and authentication services
                       to test user access, roles, and permissions safely in your environment.
                     </p>
                     <div class="icon-link cta mt-auto align-self-start">Learn more 
@@ -239,7 +239,7 @@ function showImage(evt: MouseEvent) {
                   <div class="card-body d-flex flex-column">
                     <h3 class="card-title mt-0 mb-3">SMTP & IMAP Mail Mocking</h3>
                     <p class="card-text">
-                      Test full email workflows by simulating local SMTP and IMAP servers 
+                      Test full email workflows by simulating local SMTP and IMAP servers
                       without the risk of sending real messages.
                     </p>
                     <div class="icon-link cta mt-auto align-self-start">Learn more 
@@ -401,7 +401,7 @@ function showImage(evt: MouseEvent) {
         </div>
 
         <!-- Real-Time API Mocking Dashboard -->
-        <div class="row mt-5 align-items-center">
+        <div class="row pb-5 align-items-center">
           <div class="col-12 col-lg-6 order-lg-1 text-lg-start text-center">
             <h3>Real-Time API Mocking Dashboard</h3>
             <p>
@@ -422,7 +422,29 @@ function showImage(evt: MouseEvent) {
             </div>
           </div>
           <div class="col-12 col-lg-6 order-lg-2 d-flex justify-content-center">
-            <img class="img-fluid shadow rounded" src="/dashboard-overview-mock-api.png" alt="Mokapi dashboard showing all mocked APIs with metrics and logs." />
+            <img class="img-fluid shadow rounded" style="width:90%" src="/dashboard-overview-mock-api.png" alt="Mokapi dashboard showing all mocked APIs with metrics and logs." />
+          </div>
+        </div>
+
+        <!-- Explore and Debug with AI -->
+        <div class="row mt-5 align-items-center">
+          <div class="col-12 col-lg-6 order-lg-2 text-lg-start text-center">
+            <h3>Explore and Debug with AI</h3>
+            <p>
+              Connect your AI agent directly to a running Mokapi instance via the
+              built-in MCP server. Ask plain questions about your API, debug failed
+              requests, and generate valid test data — without leaving your editor.
+            </p>
+            <p class="fst-italic">
+              Discover endpoints, understand errors, and produce schema-compliant
+              payloads in seconds, all in plain English.
+            </p>
+            <router-link :to="{ path: '/resources/blogs/mock-apis-with-mcp' }" class="btn btn-outline-primary btn-sm mt-3 mb-3">
+              Learn about MCP Server
+            </router-link>
+          </div>
+          <div class="col-12 col-lg-6 order-lg-1 d-flex justify-content-center">
+            <img class="img-fluid shadow rounded" style="width:90%" src="/mokapi-mcp-copilot.png" alt="AI agent querying a Mokapi mock server via MCP to explore API endpoints and debug requests." />
           </div>
         </div>
 

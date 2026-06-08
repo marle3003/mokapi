@@ -6,12 +6,14 @@ Technical reference for exploring the current environment, APIs, and Kafka clust
 
 To see detailed TypeScript interfaces, call this tool with one of the following values for the category parameter:
 
-| Category           | Description                                                             | Parameter Name  |
-|--------------------|-------------------------------------------------------------------------|-----------------|
-| Core Discovery API | Access to the global mokapi object for infrastructure metadata.         | `core`          |
-| HTTP (OpenAPI)     | Interfaces for exploring HTTP endpoints, parameters, and status codes.  | `http`          |
-| Kafka (AsyncAPI)   | Interfaces for inspecting topics, partitions, and message history.      | `kafka`         |
-| Events             | Definitions for debugging activity via getEvents() and traits.          | `event`         |
+| Category           | Description                                                            | Parameter Name |
+|--------------------|------------------------------------------------------------------------|----------------|
+| Core Discovery API | Access to the global mokapi object for infrastructure metadata.        | `core`         |
+| HTTP (OpenAPI)     | Interfaces for exploring HTTP endpoints, parameters, and status codes. | `http`         |
+| Kafka (AsyncAPI)   | Interfaces for inspecting topics, partitions, and message history.     | `kafka`        |
+| Mail               | Interfaces for inspecting mail servers, mailboxes and mail messages    | `mail`         |
+| LDAP               | Interfaces for inspecting LDAP servers and entries                     | `ldap`         |
+| Events             | Definitions for debugging activity via getEvents() and traits.         | `event`        |
 
 ## Examples
 

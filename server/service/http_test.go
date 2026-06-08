@@ -230,6 +230,8 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 						return &openapi.HttpError{
 							StatusCode: http.StatusBadRequest,
 							Header:     map[string][]string{"Foo": {"bar"}},
+							Message:    "Test Error",
+							Traits:     events.NewTraits().WithNamespace("http").WithName("API").With("path", "/foo"),
 						}
 					}},
 					Name: "foo",
@@ -242,6 +244,16 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 					try.HasStatusCode(http.StatusBadRequest),
 					try.HasHeader("Foo", "bar"),
 				)
+
+				evts := sm.GetEvents(events.NewTraits())
+				require.Len(t, evts, 1)
+				require.Equal(t, "namespace=http, name=API, path=/foo", evts[0].Traits.String())
+				require.IsType(t, &openapi.HttpLog{}, evts[0].Data)
+				d := evts[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "API", d.Api)
+				require.Equal(t, "/foo", d.Path)
+				require.Equal(t, map[string]string{"Content-Type": "text/plain; charset=utf-8", "Foo": "bar"}, d.Response.Headers)
+				require.Equal(t, "Test Error", d.Response.Body)
 			},
 		},
 		{

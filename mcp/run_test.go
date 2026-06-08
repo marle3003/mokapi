@@ -256,17 +256,17 @@ errors.items.map(x => mokapi.getEvent(x.metadata.id))`,
 				evts := r.Result.([]any)
 				require.Len(t, evts, 2)
 				evt := evts[0]
-				require.IsType(t, events.Event{}, evt)
-				d1 := evts[0].(events.Event).Data.(*openapi.HttpLog)
-				d2 := evts[1].(events.Event).Data.(*openapi.HttpLog)
-				var evt404 *openapi.HttpLog
-				var evt500 *openapi.HttpLog
-				if d1.Response.StatusCode == http.StatusNotFound {
-					evt404 = d1
-					evt500 = d2
-				} else if d2.Response.StatusCode == http.StatusNotFound {
-					evt404 = d2
-					evt500 = d1
+				require.IsType(t, &mcp.HttpEvent{}, evt)
+				e1 := evts[0].(*mcp.HttpEvent)
+				e2 := evts[1].(*mcp.HttpEvent)
+				var evt404 *mcp.HttpEvent
+				var evt500 *mcp.HttpEvent
+				if e1.Response.StatusCode == http.StatusNotFound {
+					evt404 = e1
+					evt500 = e2
+				} else if e2.Response.StatusCode == http.StatusNotFound {
+					evt404 = e2
+					evt500 = e1
 				}
 
 				require.NotNil(t, evt404)

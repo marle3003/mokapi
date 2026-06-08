@@ -1,68 +1,48 @@
 ---
-title: Bring Your Mock APIs to Life with JavaScript
-description: Tired of static mocks? Mokapi Scripts let you create dynamic, intelligent mock APIs that react to real request data, powered by plain JavaScript.
-subtitle: Tired of static mocks? Mokapi Scripts let you create dynamic, intelligent mock APIs that react to real request data, powered by plain JavaScript.
+title: "From Static to Dynamic: Smarter API Mocks with Mokapi Scripts"
+description: Static mocks always return the same thing. Mokapi Scripts let your mock react to the actual request, in plain JavaScript, no new DSL to learn.
+subtitle: Static mocks return the same response every time. Here's how to write JavaScript handlers that react to real request data, simulate stateful workflows, and behave like a real backend.
 ---
 
-# Bring Your Mock APIs to Life with JavaScript
+# From Static to Dynamic: Smarter API Mocks with Mokapi Scripts
 
-Mocking APIs is essential for fast development, but static mocks can quickly become a bottleneck. What if your mock 
-could think? Reacting to query parameters, headers, or body content. Simulating auth, errors, and pagination. 
-Reflecting state changes across requests.
+## What Static Mocks Can't Do
 
-That's exactly what Mokapi Scripts are designed for. With just a few lines of JavaScript, you can turn a flat 
-JSON file into a dynamic, intelligent mock API.
+Static responses are fine for simple cases. But real development surfaces their limits quickly.
 
-> No backend? No problem. With Mokapi Scripts, your mocks behave exactly the way you need them to, all in 
-> familiar JavaScript or TypeScript, with no new DSL to learn.
+Your frontend needs to handle 403s and 429s, but the mock always returns 200. Admin users should see
+different data than regular users, but the mock only knows one response. After a POST, the next GET
+should reflect the change, but the mock has no memory. Query parameters like `?page=2` or `?name=laptop`
+should produce meaningful results, but the mock ignores them entirely.
 
-## What Are Mokapi Scripts?
+And then there are the flows that depend on sequence. Login, then fetch a profile, then update settings.
+Each step should affect what the next one returns. A static mock can't model that. It just returns the same
+thing every time, regardless of what came before.
 
-Mokapi Scripts are lightweight JavaScript modules that sit alongside your OpenAPI or AsyncAPI specification.
-Instead of returning a fixed response, they let you define behavior, inspecting the incoming request and
-deciding what to send back.
+These aren't edge cases. They're the scenarios you actually need to test.
 
-They're the difference between a mock that says *"here's a user"* and one that says *"here's the right user, 
-given who's asking what role they have, and what they just posted."*
+---
 
-## Why Static Mocks Fall Short
+## What Mokapi Scripts Are
 
-Static responses are fine for trivial cases. But real development quickly surfaces their limits:
+A Mokapi Script is a JavaScript module that sits alongside your OpenAPI or AsyncAPI spec. Instead of
+returning a fixed response, it lets you define behavior: inspect the incoming request, look at the method,
+the path, the query parameters, the headers, the body, and decide what to send back.
 
-- **Role-based responses**  
-  Admin and regular users see different data. A static mock can only show one.
-- **Simulating errors & timeouts**  
-  You need your frontend to handle 403s, 429s, and network failures, but your mock always returns 200.
-- **Stateful workflows**  
-  After a POST, the next GET should reflect the change. Static mocks have no memory.
-- **Dynamic filtering & pagination**    
-  Query parameters like `?page=2` or `?name=laptop` should produce meaningful results.
-- **Sequential request chains**  
-  Login → fetch profile → update settings: static mocks can't model these flows.
-- **Auth & session behavior**  
-  Missing or invalid tokens should behave differently from valid ones in your test environment.
+They're the difference between a mock that says "here's a user" and one that says "here's the right user, given
+who's asking what role they have, and what they just posted."
 
-Dynamic mocks solve all of these. They make your development process more reliable, your test suites more
-realistic, and your feedback loops faster.
+No new DSL to learn. Just JavaScript, or TypeScript if you prefer.
 
-## What You Can Do with Mokapi Scripts
+---
 
-- Return different responses based on query parameters, headers, or body content
-- Simulate authentication, authorization, and role-based access control
-- Generate random, structured, or context-aware dynamic data on the fly
-- Mock complex workflows with conditional logic and stateful behavior
-- Chain requests together to simulate real-world usage patterns
-- Customize error responses, status codes, and artificial delays
-- Mock an HTML login form to simulate an external identity provider
+## A Concrete Example: Dynamic Product Search
 
-## Example: Dynamic Product Search
+Let's build a product list endpoint that actually does something. It should return the full catalog when no
+filter is applied, filter by name when `?name=` is provided, and return a 400 with a custom message when
+`?name=error` is passed to simulate a validation error.
 
-Let's build a realistic product list endpoint. It should:
-- Return the full product catalog when no filter is applied
-- Filter products by name when a ?name= query parameter is provided
-- Return a `400` error with a custom message when `?name=error` is passed
-
-```javascript title=products.js
+```typescript
 import { on } from 'mokapi'
 
 const products = [
@@ -75,59 +55,79 @@ const products = [
 ]
 
 export default () => {
-    on('http', (request, response) => {
-        const nameFilter = request.query.name
+  on('http', (request, response) => {
+    const nameFilter = request.query.name
 
-        if (!nameFilter) {
-            // No filter — return everything
-            response.data = { products: products }
-            return
-        }
+    if (!nameFilter) {
+      response.data = { products: products }
+      return
+    }
 
-        if (nameFilter === 'error') {
-            // Simulate a validation error
-            response.rebuild(400)  
-            response.data.message = 'A custom error message'
-            return
-        }
+    if (nameFilter === 'error') {
+      response.rebuild(400)
+      response.data.message = 'A custom error message'
+      return
+    }
 
-        // Filter products by name (case-insensitive)
-        const matched = products.filter(p =>
-            p.name.toLowerCase().includes(nameFilter.toLowerCase())
-        )
-        
-        response.data = { products: matched }
+    const matched = products.filter(p =>
+      p.name.toLowerCase().includes(nameFilter.toLowerCase())
+    )
+
+    response.data = { products: matched }
   })
 }
 ```
 
-## Use Cases
+A few things worth pointing out. `request.query.name` gives you the query parameter directly, already parsed.
+`response.data` tells Mokapi to validate the response against the schema in your OpenAPI spec before returning
+it. And `response.rebuild(400)` switches the response to the 400 definition from your spec, so the error
+response is also schema-validated.
 
-- **Frontend Development**  
-  Test UI flows with realistic behavior—pagination, filtering, auth, and error states—without waiting for a working backend.
-- **Testing & QA**  
-  Simulate edge cases, failures, and timeouts directly in your mock server. Ideal for automated CI pipelines and manual exploratory testing.
-- **Rapid Prototyping**  
-  Show real-world behavior in demos and prototypes using dynamic data. Build faster, get feedback sooner.
+This is already more useful than any static mock. The same endpoint returns different things based on what
+the request actually contains.
+
+---
+
+## What Else You Can Do
+
+The product search example shows the basics: read the request, decide the response. But the same pattern
+extends to a lot of other scenarios.
+
+**Role-based responses**. Check a header or a token claim and return different data for admin versus regular users.
+The mock behaves the way the real backend would.
+
+**Stateful workflows**. Store state in a JavaScript variable. A POST adds an item, the next GET returns it.
+The mock remembers what happened.
+
+**Auth and session behavior**. Missing or invalid tokens return 401. Expired tokens return a specific error message.
+Valid tokens return the right data. Your frontend can test all of these without a real auth server.
+
+**Simulating errors and delays**. Force a 500, a 429 rate limit, or an artificial delay to test how your application
+handles degraded conditions. No need to break the real backend to test your error handling.
+
+**Mocking an identity provider**. Serve an HTML login form, handle the form submission, issue a redirect with a session
+token. You can simulate an entire OAuth flow without a real identity provider.
+
+---
 
 ## Getting Started
 
-1. **Write your specification**  
-   Start with an OpenAPI spec, or generate one from an existing service. This defines the shape of your API.
-2. **Add a Mokapi Script**  
-   Drop a JavaScript file next to your spec. Register event handlers that inspect the request and set the response however you need.
-3. **Run Mokapi**  
-   That's it. Your dynamic mock is live, validated against your spec, and visible in the Mokapi dashboard.
+First, write your OpenAPI or AsyncAPI spec. This defines the shape of your API: the endpoints, the request formats,
+the response schemas. Mokapi uses this to validate everything that flows through.
 
-## Further Reading
+Second, add a JavaScript file next to your spec. Register an `on('http', ...)` handler, inspect the request, set
+`response.data` to whatever makes sense for that request. That's the whole model.
+
+Third, run Mokapi. Your dynamic mock is live, validated against the spec, and visible in the Mokapi dashboard
+where you can inspect every request and response that came through.
+
+---
+
+## What to Read Next
 
 - [Debugging Mokapi JavaScript](/resources/blogs/debugging-mokapi-scripts)  
-  Learn how to use `console.log`, `console.error`, and event handler tracing to see exactly what your scripts are doing.
-- [End-to-End Testing with Mock APIs Using Mokapi](/resources/blogs/end-to-end-testing-with-mocked-apis)  
-  Improve your end-to-end test suites by replacing live backend dependencies with Mokapi.
-
----
-
-*A shorter summary of this article is also available on [LinkedIn](https://www.linkedin.com/pulse/make-your-mocks-smarter-javascript-mokapi-marcel-lehmann-np3ef/), including a link back here for full details.*
-
----
+  When your handler isn't behaving the way you expect, here's how to use `console.log`, `console.error`, and event handler tracing to see exactly what's happening inside your scripts.
+- [End-to-End Testing with Mock APIs](/resources/blogs/end-to-end-testing-with-mocked-apis)  
+  How to replace live backend dependencies in your test pipeline with Mokapi mocks, so your tests run fast and pass consistently in CI.
+- [Building a Virtual Hardware Simulation with Mokapi](/resources/blogs/building-virtual-hardware-simulation)  
+  A deep dive into what's possible when you combine Mokapi's spec validation with its JavaScript API. Uses a parcel terminal as a case study to show how far you can take dynamic mocking.

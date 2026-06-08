@@ -33,6 +33,10 @@ func (t Traits) GetName() string {
 	return t.Get(name)
 }
 
+func (t Traits) IsEmpty() bool {
+	return len(t) == 0
+}
+
 func (t Traits) With(name, value string) Traits {
 	t[name] = value
 	return t
@@ -54,7 +58,7 @@ func (t Traits) String() string {
 		sb.WriteString("name=" + n)
 	}
 	var names []string
-	for k, _ := range t {
+	for k := range t {
 		if k == namespace || k == name {
 			continue
 		}

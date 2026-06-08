@@ -163,20 +163,58 @@ func (m *mokapi) getApis() []ApiSummary {
 			Type: "kafka",
 		})
 	}
+	for _, api := range m.app.Mail.List() {
+		if api.Info.Name == "" {
+			log.Warnf("mcp tool mokapi_execute_code: skip empty Mail API name")
+			continue
+		}
+		result = append(result, ApiSummary{
+			Name: api.Info.Name,
+			Type: "mail",
+		})
+	}
+	for _, api := range m.app.Ldap.List() {
+		if api.Info.Name == "" {
+			log.Warnf("mcp tool mokapi_execute_code: skip empty Mail API name")
+			continue
+		}
+		result = append(result, ApiSummary{
+			Name: api.Info.Name,
+			Type: "ldap",
+		})
+	}
 	slices.SortStableFunc(result, func(a, b ApiSummary) int {
 		return strings.Compare(a.Name, b.Name)
 	})
 	return result
 }
 
-func (m *mokapi) getApi(name string) any {
-	var api any
-	api = m.getHttpApi(name)
-	if api != nil {
-		return api
+func (m *mokapi) getApi(name string, typeName string) any {
+	if typeName == "" || typeName == "http" {
+		api := m.getHttpApi(name)
+		if api != nil {
+			return api
+		}
 	}
-	api = m.getKafkaApi(name)
-	return api
+	if typeName == "" || typeName == "kafka" {
+		api := m.getKafkaApi(name)
+		if api != nil {
+			return api
+		}
+	}
+	if typeName == "" || typeName == "mail" {
+		api := m.getMailApi(name)
+		if api != nil {
+			return api
+		}
+	}
+	if typeName == "" || typeName == "ldap" {
+		api := m.getLdapApi(name)
+		if api != nil {
+			return api
+		}
+	}
+	return nil
 }
 
 func (m *mokapi) fake(v goja.Value) (any, error) {

@@ -48,7 +48,7 @@ func NewConfig() *Config {
 
 	cfg.Mcp = Mcp{
 		Server: McpServer{
-			Enabled: false,
+			Enabled: true,
 			Port:    8080,
 			Path:    "/mcp",
 		},

@@ -27,7 +27,7 @@ test('Visit Dashboard Demo Overview', async ({ page, baseURL }) => {
 
         const row = table.getByRole('row').filter({ hasText: 'Swagger Petstore' })
         await expect(row).toBeVisible()
-        await expect(await getCellByColumnName(table, 'Requests / Errors', row)).toHaveText('12 / 0')
+        await expect(await getCellByColumnName(table, 'Requests / Errors', row)).toHaveText('12 / 1')
     })
 
     await test.step('Verify Kafka Order Service is in the Kafka Clusters table', async() => {

@@ -2,13 +2,14 @@ package mail
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"mokapi/imap"
 	"mokapi/smtp"
 	"slices"
 	"strings"
 	"sync"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Mailbox struct {
