@@ -28,6 +28,7 @@ export function useMarkdown(content: string | undefined): {content: string | und
 
         if (content) {
             const md = new MarkdownIt({
+                    linkify: true,
                     highlight: (str, lang): string => {
                         if (lang === 'typescript') {
                             lang = 'javascript'
