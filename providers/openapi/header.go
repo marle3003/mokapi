@@ -60,6 +60,9 @@ func (h Headers) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		if err := header.Parse(config, reader); err != nil {
 			return fmt.Errorf("parse header '%v' failed: %w", name, err)
 		}
+		if header != nil && header.Value != nil {
+			header.Value.Name = name
+		}
 	}
 
 	return nil

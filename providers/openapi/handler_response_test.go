@@ -165,6 +165,34 @@ func TestHandler_Response(t *testing.T) {
 				require.Len(t, data.Actions, 1)
 			},
 		},
+		{
+			name: "set response header",
+			config: func() *openapi.Config {
+				return openapitest.NewConfig("3.0",
+					openapitest.WithPath("/foo", openapitest.WithOperation(
+						http.MethodGet,
+						openapitest.WithResponse(http.StatusOK,
+							openapitest.WithResponseHeader("foo", "", schematest.New("string")),
+						),
+					)))
+			}(),
+			handler: func(event string, req *common.HttpEventRequest, res *common.HttpEventResponse) {
+				res.Headers = map[string]interface{}{"foo": "bar"}
+			},
+			req: func() *http.Request {
+				return httptest.NewRequest("get", "http://localhost/foo", nil)
+			},
+			test: func(t *testing.T, rr *httptest.ResponseRecorder, eh events.Handler) {
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, "bar", rr.Header().Get("foo"))
+
+				evt := eh.GetEvents(events.NewTraits())
+				require.Len(t, evt, 1)
+				data := evt[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "bar", data.Response.Headers["Foo"])
+				require.Len(t, data.Actions, 1)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
