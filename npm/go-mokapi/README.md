@@ -1,6 +1,6 @@
 <p align="center">
 <a href="https://mokapi.io">
-<img src="https://raw.githubusercontent.com/marle3003/mokapi/refs/heads/main/logo.svg" alt="Mokapi - Open Source Mock API Server" title="Mokapi" width="300" />
+<img src="https://raw.githubusercontent.com/marle3003/mokapi/refs/heads/main/logo.svg" alt="Mokapi - Open Source Mock API Server" width="300" />
 </a>
 </p>
 

@@ -395,6 +395,31 @@ func TestResponse_Parse(t *testing.T) {
 				require.NoError(t, err)
 			},
 		},
+		{
+			name: "header location",
+			test: func(t *testing.T, log *test.Hook) {
+				reader := dynamictest.ReaderFunc(func(_ *url.URL, _ any) (*dynamic.Config, error) {
+					return nil, nil
+				})
+				config := openapitest.NewConfig("3.0",
+					openapitest.WithInfo("HTTP API", "", ""),
+					openapitest.WithPath("/foo",
+						openapitest.WithOperation(http.MethodGet,
+							openapitest.UseResponse(http.StatusOK, &openapi.Response{
+								Headers: map[string]*openapi.HeaderRef{
+									"Location": {Value: &openapi.Header{}},
+								},
+							}),
+						),
+					),
+				)
+				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
+				require.NoError(t, err)
+				headers := config.Paths["/foo"].Value.Get.Responses.GetResponse(http.StatusOK).Headers
+				require.Contains(t, headers, "Location")
+				require.Equal(t, "Location", headers["Location"].Value.Name)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
