@@ -33,7 +33,7 @@
     "fuse.js": "^7.4.2",
     "highlight.js": "^11.11.1",
     "http-status-codes": "^2.3.0",
-    "js-yaml": "^4.1.1",
+    "js-yaml": "^4.2.0",
     "kafkajs": "^2.2.4",
     "ldapts": "^8.1.8",
     "markdown-it": "^14.2.0",
