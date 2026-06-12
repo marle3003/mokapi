@@ -59,8 +59,8 @@ github.com/blevesearch/zapx/v16 v16.3.4 h1:hDAqA8qusZTNbPEL7//w5P65UZ2de6yhSeUaT
 github.com/blevesearch/zapx/v16 v16.3.4/go.mod h1:zqkPPqs9GS9FzVWzCO3Wf1X044yWAV17+4zb+FTiEHg=
 github.com/blevesearch/zapx/v17 v17.1.2 h1:avbOk2igaASNoiy0BE/jPgcxAnRI2PGeydeP4hg7Ikk=
 github.com/blevesearch/zapx/v17 v17.1.2/go.mod h1:WQObxKrqUX7cd0G1GMvDfc/bmZzQvoy7APOPimx7DiI=
-github.com/bradleyfalzon/ghinstallation/v2 v2.18.0 h1:WPqnN6NS9XvYlOgZQAIseN7Z1uAiE+UxgDKlW7FvFuU=
-github.com/bradleyfalzon/ghinstallation/v2 v2.18.0/go.mod h1:gpoSwwWc4biE49F7n+roCcpkEkZ1Qr9soZ2ESvMiouU=
+github.com/bradleyfalzon/ghinstallation/v2 v2.19.0 h1:KQfD+43pRw9NUJhGycGrFr9vF1MubZacksKol1gomFI=
+github.com/bradleyfalzon/ghinstallation/v2 v2.19.0/go.mod h1:fe5ECIhCdEnxwLiBlNTxx9CP455wt42BELnlDVMvaAA=
 github.com/brianvoe/gofakeit/v6 v6.28.0 h1:Xib46XXuQfmlLS2EXRuJpqcw8St6qSZz75OUo0tgAW4=
 github.com/brianvoe/gofakeit/v6 v6.28.0/go.mod h1:Xj58BMSnFqcn/fAQeSK+/PLtC5kSb7FJIq4JyGa8vEs=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
@@ -111,8 +111,8 @@ github.com/golang/snappy v1.0.0/go.mod h1:/XxbfmMg8lxefKM7IXC3fBNl/7bRcc72aCRzEW
 github.com/google/go-cmp v0.6.0/go.mod h1:17dUlkBOakJ0+DkrSSNjCkIjxS6bF9zb3elmeNGIjoY=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
 github.com/google/go-cmp v0.7.0/go.mod h1:pXiqmnSA92OHEEa9HXL2W4E7lf9JzCmGVUdgjX3N/iU=
-github.com/google/go-github/v84 v84.0.0 h1:I/0Xn5IuChMe8TdmI2bbim5nyhaRFJ7DEdzmD2w+yVA=
-github.com/google/go-github/v84 v84.0.0/go.mod h1:WwYL1z1ajRdlaPszjVu/47x1L0PXukJBn73xsiYrRRQ=
+github.com/google/go-github/v88 v88.0.0 h1:dZA9IKkPK1eXZj4ypngnpRj5FwdpTv4whix2PrQMP7M=
+github.com/google/go-github/v88 v88.0.0/go.mod h1:rufTDgn2N45wjhukLTyxmvc9nilSp3mr3Rgtt6b1MPw=
 github.com/google/go-querystring v1.2.0 h1:yhqkPbu2/OH+V9BfpCVPZkNmUXhb2gBxJArfhIxNtP0=
 github.com/google/go-querystring v1.2.0/go.mod h1:8IFJqpSRITyJ8QhQ13bmbeMBDfmeEJZD5A0egEOmkqU=
 github.com/google/gofuzz v1.2.0 h1:xRy4A+RhZaiKjJ1bPfwQ8sedCA+YS2YcCHW6ec7JMi0=
