@@ -30,7 +30,7 @@
     "dayjs": "^1.11.21",
     "del-cli": "^7.0.0",
     "express": "^5.2.1",
-    "fuse.js": "^7.4.1",
+    "fuse.js": "^7.4.2",
     "highlight.js": "^11.11.1",
     "http-status-codes": "^2.3.0",
     "js-yaml": "^4.1.1",
