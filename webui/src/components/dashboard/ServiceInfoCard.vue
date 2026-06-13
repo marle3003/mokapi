@@ -9,7 +9,7 @@ const props = defineProps<{
     status?: string
 }>()
 
-const description = computed(() => useMarkdown(props.service.description).content)
+const description = computed(() => useMarkdown(props.service.description, true).content)
 </script>
 
 <template>
