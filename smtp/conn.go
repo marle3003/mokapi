@@ -340,6 +340,9 @@ func (c *conn) serveStartTls(param string) {
 		return
 	}
 
+	c.server.mu.Lock()
+	defer c.server.mu.Unlock()
+
 	// Remove the old raw TCP connection
 	delete(c.server.activeConn, c.conn)
 
