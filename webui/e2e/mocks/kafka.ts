@@ -353,7 +353,18 @@ export let events = [
              headers: {
                  foo: { value: 'bar', binary: '' },
                  bar: { value: '', binary: 'dmFsdWUgYXMgYmluYXJ5'}
-             }
+             },
+             actions: [
+                {
+                    duration: 20,
+                    tags: {
+                        name: "kafka",
+                        file: "examples/mokapi/kafka.js",
+                        fileKey: "b6fea8ac-56c7-4e73-a9c0-6337640bdca8",
+                        event: "kafka"
+                    }
+                }
+             ]
          }
      },
     {

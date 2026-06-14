@@ -9,6 +9,8 @@ import Message from '@/components/Message.vue'
 import { getRouteName, useDashboard } from "@/composables/dashboard";
 import { useMeta } from "@/composables/meta";
 import { usePrettyText } from "@/composables/usePrettyText";
+import Actions from '../Actions.vue'
+import MessageHeaderTable from './MessageHeaderTable.vue'
 
 const route = useRoute();
 const { dashboard, getMode } = useDashboard()
@@ -39,7 +41,9 @@ const eventId = computed(() => {
 })
 
 const result = computed(() => {
-  if (!eventId.value) return null
+  if (!eventId.value) {
+    return null
+  }
   return dashboard.value.getEvent(eventId.value)
 })
 
@@ -112,7 +116,7 @@ const message = computed(() => {
 })
 
 function isInitLoading() {
-  return isLoading.value && !event.value
+  return isLoading.value && !result.value
 }
 onMounted(() => {
   if (!event.value || getMode() !== 'demo') {
@@ -174,6 +178,12 @@ function key(key: KafkaValue | null): string {
 function isNumber(value: string): boolean {
   return /^[0-9]+$/.test(value);
 }
+const hasActions = computed(() => {
+    if (!data.value) {
+        return false
+    }
+    return data.value.actions?.length > 0
+})
 </script>
 
 <template>
@@ -262,6 +272,15 @@ function isNumber(value: string): boolean {
       </section>
     </div>
 
+    <div class="card-group" v-if="hasActions">
+      <section class="card" aria-labelledby="actions">
+          <div class="card-body">
+              <h2 id="actions" class="card-title text-center">Event Handlers</h2>
+              <actions :actions="data.actions" />
+          </div>
+      </section>
+    </div>
+
     <div class="card-group">
       <section class="card" aria-labelledby="value-title">
         <div class="card-body">
@@ -271,9 +290,18 @@ function isNumber(value: string): boolean {
         </div>
       </section>
     </div>
+
+    <div class="card-group">
+      <section class="card" aria-labelledby="header-title">
+        <div class="card-body">
+          <h2 id="header-title" class="card-title text-center">Headers</h2>
+          <MessageHeaderTable :headers="data.headers" />
+        </div>
+      </section>
+    </div>
   </div>
   <loading v-if="isInitLoading()"></loading>
-  <div v-if="!event && !isLoading">
-    <message message="Kafka Message not found"></message>
+  <div v-else-if="!result?.event.value">
+      <message message="Kafka Message not found"></message>
   </div>
 </template>

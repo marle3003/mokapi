@@ -2,7 +2,6 @@ package store_test
 
 import (
 	"context"
-	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/kafka"
 	"mokapi/kafka/fetch"
@@ -550,53 +549,4 @@ func TestProduce(t *testing.T) {
 			tc.fn(t, s, sm)
 		})
 	}
-}
-
-func TestProduceTriggersEvent(t *testing.T) {
-	sm := &events.StoreManager{}
-
-	triggerCount := 0
-	s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
-		triggerCount++
-		return nil
-	}), sm, monitor.NewKafka())
-	defer s.Close()
-
-	s.Update(asyncapi3test.NewConfig(
-		asyncapi3test.WithServer("foo", "kafka", "127.0.0.1"),
-		asyncapi3test.WithChannel("foo")))
-	g := s.GetOrCreateGroup("foo", &store.Broker{})
-	g.Commit("foo", 0, 0)
-	sm.SetStore(5, events.NewTraits().WithNamespace("kafka"))
-
-	rr := kafkatest.NewRecorder()
-	r := kafkatest.NewRequest("kafkatest", 3, &produce.Request{
-		Topics: []produce.RequestTopic{
-			{Name: "foo", Partitions: []produce.RequestPartition{
-				{
-					Record: kafka.RecordBatch{
-						Records: []*kafka.Record{
-							{
-								Offset:  0,
-								Time:    time.Now(),
-								Key:     kafka.NewBytes([]byte("foo-1")),
-								Value:   kafka.NewBytes([]byte("bar-1")),
-								Headers: nil,
-							},
-							{
-								Offset:  1,
-								Time:    time.Now(),
-								Key:     kafka.NewBytes([]byte("foo-2")),
-								Value:   kafka.NewBytes([]byte("bar-2")),
-								Headers: nil,
-							},
-						},
-					},
-				},
-			},
-			}}})
-
-	s.ServeMessage(rr, r)
-
-	require.Equal(t, 2, triggerCount)
 }

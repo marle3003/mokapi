@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"mokapi/engine/common"
 	"mokapi/kafka"
 	"mokapi/runtime/events"
 	"strings"
@@ -24,6 +25,7 @@ type KafkaMessageLog struct {
 	Api            string              `json:"api"`
 	ClientId       string              `json:"clientId"`
 	ScriptFile     string              `json:"script"`
+	Actions        []*common.Action    `json:"actions"`
 }
 
 type LogValue struct {
