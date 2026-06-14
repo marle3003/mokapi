@@ -1,44 +1,57 @@
 ---
-title: Producing Orders to AsyncAPI Kafka with Mokapi
-description: Learn how to set up Mokapi to produce orders to an AsyncAPI-defined Kafka instance, including message production, validation, and monitoring.
+title: "Kafka API Mocking: Produce Orders with AsyncAPI & Mokapi"
+description: Learn how to mock a Kafka API using AsyncAPI and Mokapi. Step-by-step guide to simulate order production, message validation, and real-time monitoring.
 ---
-# Producing Orders to AsyncAPI Kafka
+# Producing Mock Orders to an AsyncAPI Kafka Broker
 
 ## Overview
 
-In this guide, you will:
+This guide walks through a complete order workflow using Mokapi as a mock Kafka broker. By the end,
+you'll have:
 
-1. Define a Kafka instance and topics using [AsyncAPI](https://www.asyncapi.com/).
-2. Use Mokapi to simulate the Kafka broker and validate messages against the schema.
-3. Simulate a producer that sends order messages into the Kafka topic.
-4. Simulate a consumer to verify the flow of messages.
+1. Defined a Kafka instance and an `orders` topic using [AsyncAPI](https://www.asyncapi.com/).
+2. Started Mokapi to simulate the broker and validate messages against the schema.
+3. Produced an order message to the topic.
+4. Consumed that message to verify it arrived correctly.
+5. Seen what happens when a message doesn't match the schema.
 
 ## Define the AsyncAPI Specification
 
-Create an AsyncAPI file (asyncapi.yaml) to define the Kafka instance and orders topic.
+Create an AsyncAPI file (`asyncapi.yaml`) describing the Kafka broker and the `orders` topic.
 
 ```yaml
-asyncapi: '2.6.0'
+asyncapi: '3.0.0'
 info:
   title: Orders Kafka Service
   version: 1.0.0
   description: This AsyncAPI document defines the Kafka instance for producing and consuming orders.
 servers:
   mokapi:
-    url: localhost:9092
+    host: 'localhost:9092'
     protocol: kafka
     description: Mock Kafka broker provided by Mokapi.
 channels:
   orders:
+    address: orders
     description: Kafka topic for order messages.
-    publish:
-      summary: Publish an order to the topic.
-      message: 
+    messages:
+      OrderMessage:
         $ref: '#/components/messages/Order'
-    subscribe:
-      summary: Subscribe to orders from the topic.
-      message:
-        $ref: '#/components/messages/Order'
+operations:
+  publishOrder:
+    action: send
+    summary: Publish an order to the topic.
+    channel:
+      $ref: '#/channels/orders'
+    messages:
+      - $ref: '#/channels/orders/messages/OrderMessage'
+  subscribeOrder:
+    action: receive
+    summary: Subscribe to orders from the topic.
+    channel:
+      $ref: '#/channels/orders'
+    messages:
+      - $ref: '#/channels/orders/messages/OrderMessage'
 components:
   messages:
     Order:
@@ -69,24 +82,30 @@ components:
                 quantity:
                   type: integer
                   description: Quantity of the product.
-        required: 
+        required:
           - orderId
 ```
 
-## Simulate the Kafka Instance with Mokapi
+The `required` field ensures every order message includes at least an `orderId`. Mokapi enforces this
+automatically once the broker is running.
 
-Start the Mokapi server with the AsyncAPI file to simulate the Kafka broker.
+## Start Mokapi
+
+Start Mokapi with the AsyncAPI file to simulate the Kafka broker:
 
 ```bash
-mokapi --providers-file-filename asyncapi.yaml
+mokapi asyncapi.yaml
 ```
-You should see output confirming that Mokapi is running a Kafka broker at localhost:9092.
 
+Mokapi's log output will confirm that a Kafka broker is running at `localhost:9092`, ready to accept
+connections from producers and consumers exactly like a real broker.
 
-## Produce Orders to the Kafka Instance
-Use a Kafka producer to send messages to the orders topic.
+## Produce an Order
 
-```c#
+Use a Kafka producer to send a message to the `orders` topic. Here's an example using the Confluent
+.NET client:
+
+```csharp
 using System.Text.Json;
 using Confluent.Kafka;
 
@@ -113,11 +132,14 @@ await producer.ProduceAsync(topic, new Message<string, string> { Key = "foo", Va
 Console.WriteLine("Order sent successfully!");
 ```
 
-## Consume Orders from the Kafka Instance
+Mokapi receives the message, validates it against the `OrderMessage` schema, and stores it on the
+`orders` topic.
 
-To verify the messages, use a Kafka consumer to subscribe to the `orders` topic.
+## Consume the Order
 
-```c#
+To verify the message arrived, subscribe to the `orders` topic with a consumer:
+
+```csharp
 using Confluent.Kafka;
 
 var config = new ConsumerConfig
@@ -136,26 +158,32 @@ while (true)
 }
 ```
 
-While the consumer application can process messages programmatically, Mokapi provides 
-a web-based dashboard to easily monitor and inspect the messages produced to Kafka topics. 
-This can be helpful during development or debugging to ensure that messages are reaching the intended topic.
+Running this alongside the producer should print the order message you just sent.
 
-1. Open the dashboard in your browser, typically available at [http://localhost:8080](http://localhost:8080)
-2. Go to the Kafka tab
-3. Here, you'll see all Kafka topics defined in your AsyncAPI file
+## Monitor Messages in the Dashboard
+
+Instead of writing a consumer just to check that a message arrived, you can use Mokapi's web dashboard
+to inspect Kafka traffic directly. This is often the fastest way to debug message flow during development.
+
+1. Open the dashboard, by default at http://localhost:8080.
+2. Go to the Kafka tab.
+3. Click on the mocked Kafka API.
+4. Select the orders topic to see all messages that have been produced to it, including their key,
+value, and headers.
 
 ## Schema Validation
 
-When using Mokapi, messages produced to the orders topic are validated against the OrderMessage schema defined in the asyncapi.yaml. If a message doesn’t conform to the schema:
+Every message produced to the `orders` topic is validated against the `OrderMessage` schema defined
+in `asyncapi.yaml`. If a message doesn't conform to the schema:
 
-- The message is rejected.
-- Errors are logged by Mokapi.
+- Mokapi rejects the message.
+- Mokapi logs a validation error describing what doesn't match.
 
-### Test Invalid Message
+### Test an Invalid Message
 
-Try sending an invalid message (e.g., missing orderId):
+Send a message that's missing the required `orderId` field:
 
-```c#
+```csharp
 await producer.ProduceAsync(
     topic, 
     new Message<string, string> { 
@@ -164,3 +192,12 @@ await producer.ProduceAsync(
      }
  );
 ```
+
+Mokapi rejects this message because `orderId` is required by the schema. Check Mokapi's logs, you'll
+see a validation error identifying the missing field. The message won't appear on the `orders` topic
+in the dashboard either, since it was never accepted.
+
+## Next Steps
+
+- [Mocking Kafka with AsyncAPI](/docs/kafka/overview.md): Learn more about how Mokapi simulates Kafka.
+- [JavaScript API](/docs/javascript-api/overview.md): Add dynamic behavior, generate test data, or simulate errors with Mokapi Scripts.
