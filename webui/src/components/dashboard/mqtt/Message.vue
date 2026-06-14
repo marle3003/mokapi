@@ -177,8 +177,8 @@ function isNumber(value: string): boolean {
           </div>
           <div class="row mb-2">
             <div class="col-2">
-              <p id="message-time" class="label">Retain</p>
-              <p aria-labelledby="message-time">{{ data.retain }}</p>
+              <p id="message-retain" class="label">Retain</p>
+              <p aria-labelledby="message-retain">{{ data.retain }}</p>
             </div>
             <div class="col">
               <p id="message-time" class="label">Time</p>
