@@ -27,6 +27,7 @@ type Host struct {
 	HttpClientTest     *HttpClient
 	HttpClientFunc     func(opts common.HttpClientOptions) common.HttpClient
 	KafkaClientTest    *KafkaClient
+	MqttClientTest     *MqttClient
 	EveryFunc          func(every string, do func(), opt common.JobOptions)
 	CronFunc           func(every string, do func(), opt common.JobOptions)
 	OnFunc             func(event string, do common.EventHandler, args common.EventArgs)
@@ -43,6 +44,10 @@ type HttpClient struct {
 
 type KafkaClient struct {
 	ProduceFunc func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error)
+}
+
+type MqttClient struct {
+	PublishFunc func(args *common.MqttPublishArgs) (*common.MqttPublishResult, error)
 }
 
 func (h *Host) Info(args ...interface{}) {
@@ -160,6 +165,8 @@ func (h *Host) KafkaClient() common.KafkaClient {
 	return h.KafkaClientTest
 }
 
+func (h *Host) MqttClient() common.MqttClient { return h.MqttClientTest }
+
 func (h *Host) Store() common.Store {
 	if h.StoreTest == nil {
 		h.StoreTest = engine.NewStore()
@@ -178,6 +185,13 @@ func (c *HttpClient) Do(request *http.Request) (*http.Response, error) {
 func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 	if c.ProduceFunc != nil {
 		return c.ProduceFunc(args)
+	}
+	return nil, nil
+}
+
+func (c *MqttClient) Publish(args *common.MqttPublishArgs) (*common.MqttPublishResult, error) {
+	if c.PublishFunc != nil {
+		return c.PublishFunc(args)
 	}
 	return nil, nil
 }

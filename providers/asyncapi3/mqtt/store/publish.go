@@ -1,6 +1,8 @@
 package store
 
 import (
+	"fmt"
+	engine "mokapi/engine/common"
 	"mokapi/mqtt"
 	"mokapi/runtime/events"
 	"time"
@@ -8,50 +10,48 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (s *Store) publish(rw mqtt.MessageWriter, publish *mqtt.PublishRequest, qos byte, retain bool, ctx *mqtt.ClientContext) {
-	client, ok := s.clients[ctx.ClientId]
-	if !ok {
-		panic("client not found")
-	}
-	client.Alive()
+type PublishArgs struct {
+	QoS        byte
+	Retain     bool
+	ClientId   string
+	ScriptFile string
+}
 
+func (s *Store) Publish(publish *mqtt.PublishRequest, args PublishArgs) (mqtt.PublishReason, error) {
 	msg := &Message{
 		Topic:  publish.Topic,
 		Data:   publish.Data,
-		QoS:    qos,
-		Retain: retain,
+		QoS:    args.QoS,
+		Retain: args.Retain,
 	}
 
-	topic, ok := s.getTopic(msg.Topic)
+	topic, ok := s.Topic(msg.Topic)
 	if !ok {
-		log.Infof("mqtt: topic not specified %s", msg.Topic)
-		if qos != 0 {
-			puback(rw, &mqtt.PublishResponse{
-				MessageId:  publish.MessageId,
-				ReasonCode: mqtt.TopicNameInvalid,
-			})
-		}
-		return
+		return mqtt.TopicNameInvalid, fmt.Errorf("topic %s not found", msg.Topic)
 	}
 
 	messageId, err := topic.validate(msg.Data)
 	if err != nil {
-		log.Errorf("mqtt: topic validation error '%s': %s", msg.Topic, err)
-		puback(rw, &mqtt.PublishResponse{
-			MessageId:  publish.MessageId,
-			ReasonCode: mqtt.PayloadFormatInvalid,
-		})
-		return
+		return mqtt.PayloadFormatInvalid, fmt.Errorf("mqtt: topic validation error '%s': %s", msg.Topic, err)
 	}
 
-	if retain {
+	evt := &Event{
+		Api:    s.cfg.Info.Name,
+		Topic:  topic.Name,
+		Value:  string(msg.Data),
+		Retain: args.Retain,
+	}
+	actions := s.eventEmitter.Emit("mqtt", evt)
+	if actions != nil {
+		messageId, err = topic.validate(msg.Data)
+		if err != nil {
+			return mqtt.PayloadFormatInvalid, fmt.Errorf("mqtt: topic validation error '%s': %s", msg.Topic, err)
+		}
+		args.Retain = evt.Retain
+	}
+
+	if args.Retain {
 		topic.Retained = msg
-	}
-
-	if qos == 1 {
-		puback(rw, &mqtt.PublishResponse{
-			MessageId: publish.MessageId,
-		})
 	}
 
 	go func() {
@@ -60,7 +60,38 @@ func (s *Store) publish(rw mqtt.MessageWriter, publish *mqtt.PublishRequest, qos
 		}
 	}()
 
-	s.logMessage(messageId, topic, publish, ctx)
+	s.logMessage(messageId, topic, publish, actions, args)
+	return mqtt.PublishSuccess, nil
+}
+
+func (s *Store) publish(rw mqtt.MessageWriter, publish *mqtt.PublishRequest, qos byte, retain bool, ctx *mqtt.ClientContext) {
+	client, ok := s.clients[ctx.ClientId]
+	if !ok {
+		panic("unknown client")
+	}
+	client.Alive()
+
+	args := PublishArgs{
+		QoS:      qos,
+		Retain:   retain,
+		ClientId: ctx.ClientId,
+	}
+
+	reason, err := s.Publish(publish, args)
+
+	if qos != 0 {
+		res := &mqtt.PublishResponse{
+			MessageId:  publish.MessageId,
+			ReasonCode: reason,
+		}
+		if err != nil {
+			res.Properties = map[byte]any{
+				mqtt.ReasonString: err.Error(),
+			}
+		}
+
+		_ = puback(rw, res)
+	}
 }
 
 func puback(rw mqtt.MessageWriter, payload *mqtt.PublishResponse) error {
@@ -72,7 +103,7 @@ func puback(rw mqtt.MessageWriter, payload *mqtt.PublishResponse) error {
 	})
 }
 
-func (s *Store) getTopic(topic string) (*Topic, bool) {
+func (s *Store) Topic(topic string) (*Topic, bool) {
 	if t, ok := s.Topics[topic]; ok {
 		return t, ok
 	}
@@ -105,7 +136,7 @@ func (s *Store) getTopic(topic string) (*Topic, bool) {
 	return nil, false
 }
 
-func (s *Store) logMessage(messageId string, topic *Topic, publish *mqtt.PublishRequest, ctx *mqtt.ClientContext) {
+func (s *Store) logMessage(messageId string, topic *Topic, publish *mqtt.PublishRequest, actions []*engine.Action, args PublishArgs) {
 	topicName := topic.cfg.ResolveAddress()
 	labels := []string{s.cfg.Info.Name, topicName}
 
@@ -118,7 +149,7 @@ func (s *Store) logMessage(messageId string, topic *Topic, publish *mqtt.Publish
 		WithName(s.cfg.Info.Name).
 		With("topic", topicName).
 		With("type", "message").
-		With("clientId", ctx.ClientId)
+		With("clientId", args.ClientId)
 	if len(topic.cfg.Parameters) > 0 {
 		params, err := topic.cfg.ExtractParams(topic.Name)
 		if err != nil {
@@ -129,7 +160,6 @@ func (s *Store) logMessage(messageId string, topic *Topic, publish *mqtt.Publish
 		}
 	}
 
-	client, _ := s.clients[ctx.ClientId]
 	err := s.eh.Push(&LogMessage{
 		Topic:     topic.Name,
 		MessageId: messageId,
@@ -137,8 +167,10 @@ func (s *Store) logMessage(messageId string, topic *Topic, publish *mqtt.Publish
 			Value:  string(publish.Data),
 			Binary: publish.Data,
 		},
+		Retain:   args.Retain,
 		Api:      s.cfg.Info.Name,
-		ClientId: client.Id,
+		ClientId: args.ClientId,
+		Actions:  actions,
 	}, traits)
 	if err != nil {
 		log.Errorf("mqtt: failed to log message: %s", err)

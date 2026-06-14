@@ -121,7 +121,7 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 
 }
 
-func (c *KafkaClient) tryGet(cluster string, topic string, retry common.KafkaProduceRetry) (k *runtime.KafkaInfo, t *store.Topic, err error) {
+func (c *KafkaClient) tryGet(cluster string, topic string, retry common.RetryArgs) (k *runtime.KafkaInfo, t *store.Topic, err error) {
 	count := 0
 	backoff := retry.InitialRetryTime
 	for {

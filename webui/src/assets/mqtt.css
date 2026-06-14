@@ -1,0 +1,9 @@
+.operation.subscribe {
+    background-color: var(--color-blue);
+}
+.operation.connect {
+    background-color: var(--color-green);
+}
+.operation.disconnect {
+    background-color: var(--color-red);
+}

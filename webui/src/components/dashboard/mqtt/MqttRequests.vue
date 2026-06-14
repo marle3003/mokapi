@@ -110,7 +110,7 @@ function goToRequest(event: ServiceEvent, openInNewTab = false) {
           <tbody>
             <tr v-for="row in requests" :key="row.event.id" @click.left="goToRequest(row.event)" @mousedown.middle="goToRequest(row.event, true)">
               <td>
-                <router-link @click.stop class="row-link"
+                <router-link @click.stop class="badge operation" :class="formatType(row.data.type).toLowerCase()"
                     :to="{ name: getRouteName('mqttRequest').value, params: { service: props.service.name, id: row.event.id } }">
                     {{ formatType(row.data.type) }}
                 </router-link>

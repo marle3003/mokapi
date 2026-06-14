@@ -176,6 +176,10 @@ function isNumber(value: string): boolean {
             </div>
           </div>
           <div class="row mb-2">
+            <div class="col-2">
+              <p id="message-time" class="label">Retain</p>
+              <p aria-labelledby="message-time">{{ data.retain }}</p>
+            </div>
             <div class="col">
               <p id="message-time" class="label">Time</p>
               <p aria-labelledby="message-time">{{ format(event.time) }}</p>

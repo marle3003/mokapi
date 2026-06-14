@@ -284,6 +284,10 @@ func (sh *scriptHost) KafkaClient() common.KafkaClient {
 	return sh.engine.kafkaClient
 }
 
+func (sh *scriptHost) MqttClient() common.MqttClient {
+	return sh.engine.mqttClient
+}
+
 func (sh *scriptHost) HttpClient(opts common.HttpClientOptions) common.HttpClient {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 

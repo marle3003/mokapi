@@ -1,0 +1,58 @@
+asyncapi: 3.0.0
+info:
+  title: Sensor Service
+  version: 1.0.0
+  description: This AsyncAPI document defines the MQTT broker for publishing and subscribing to sensor readings.
+
+servers:
+  mokapi:
+    host: 'localhost:8883'
+    protocol: mqtt
+    description: Mock MQTT broker provided by Mokapi.
+
+channels:
+  temperatureReading:
+    address: 'sensors/temperature'
+    description: Topic for temperature sensor readings.
+    messages:
+      TemperatureEvent:
+        $ref: '#/components/messages/Temperature'
+
+operations:
+  publishTemperature:
+    action: send
+    summary: Publish a temperature reading to the topic.
+    channel:
+      $ref: '#/channels/temperatureReading'
+    messages:
+      - $ref: '#/channels/temperatureReading/messages/TemperatureEvent'
+  subscribeTemperature:
+    action: receive
+    summary: Subscribe to temperature readings from the topic.
+    channel:
+      $ref: '#/channels/temperatureReading'
+    messages:
+      - $ref: '#/channels/temperatureReading/messages/TemperatureEvent'
+
+components:
+  messages:
+    Temperature:
+      name: TemperatureEvent
+      title: A temperature reading
+      payload:
+        type: object
+        properties:
+          sensorId:
+            type: string
+            description: Unique identifier for the sensor.
+          value:
+            type: number
+            format: float
+            description: The measured temperature.
+          unit:
+            type: string
+            enum: [celsius, fahrenheit]
+            description: Unit of measurement.
+        required:
+          - sensorId
+          - value

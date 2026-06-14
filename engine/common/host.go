@@ -43,6 +43,7 @@ type Host interface {
 	On(event string, do EventHandler, args EventArgs)
 
 	KafkaClient() KafkaClient
+	MqttClient() MqttClient
 	HttpClient(HttpClientOptions) HttpClient
 
 	Name() string
@@ -75,7 +76,7 @@ type KafkaProduceArgs struct {
 	Topic      string
 	Messages   []KafkaMessage
 	Timeout    int
-	Retry      KafkaProduceRetry
+	Retry      RetryArgs
 	ClientId   string
 	ScriptFile string
 }
@@ -88,7 +89,7 @@ type KafkaMessage struct {
 	Partition int
 }
 
-type KafkaProduceRetry struct {
+type RetryArgs struct {
 	MaxRetryTime     time.Duration
 	InitialRetryTime time.Duration
 	Factor           int
@@ -117,6 +118,27 @@ type HttpClientOptions struct {
 	MaxRedirects int
 	Timeout      time.Duration
 	Insecure     bool
+}
+
+type MqttClient interface {
+	Publish(args *MqttPublishArgs) (*MqttPublishResult, error)
+}
+
+type MqttPublishArgs struct {
+	Cluster    string
+	Topic      string
+	Value      string
+	Retain     bool
+	Timeout    int
+	Retry      RetryArgs
+	ClientId   string
+	ScriptFile string
+}
+
+type MqttPublishResult struct {
+	Cluster string
+	Topic   string
+	Value   string
 }
 
 type Action struct {

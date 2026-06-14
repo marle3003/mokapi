@@ -12,6 +12,8 @@
 import "./faker";
 import "./global";
 import "./http";
+import "./kafka";
+import "./mqtt";
 import "./mustache";
 import "./yaml";
 import "./encoding";
@@ -115,6 +117,7 @@ export type Interval = string;
 export interface EventHandler {
     http: HttpEventHandler;
     kafka: KafkaEventHandler;
+    mqtt: MqttEventHandler;
     ldap: LdapEventHandler;
     smtp: SmtpEventHandler;
 }
@@ -256,7 +259,7 @@ export interface Url {
  * export default function() {
  *   on('kafka', function(msg) {
  *     // add header 'foo' to every Kafka message
- *     msg.headers = { foo: 'bar' }
+ *     message.headers['correlationId'] = 'abc-123'
  *   })
  * }
  */
@@ -267,17 +270,67 @@ export type KafkaEventHandler = (message: KafkaEventMessage) => void | Promise<v
  * https://mokapi.io/docs/javascript-api/mokapi/eventhandler/KafkaEventMessage
  */
 export interface KafkaEventMessage {
-    /** Kafka offset of the kafka message */
+    /** The name of the API, matching the `info.title` field in the AsyncAPI specification */
+    readonly api: string;
+
+    /**
+     * The name of the Kafka topic where this message originates.
+     */
+    readonly topic: string;
+
+    /**
+     * The partition index within the Kafka topic.
+     */
+    readonly partition: string;
+
+    /**
+     * The unique sequential offset assigned to the message within its partition.
+     */
     readonly offset: number;
 
-    /** Kafka message key  */
+    /**
+     * The key of the Kafka message, used for partitioning and identification.
+     */
     key: string;
 
-    /** Kafka message value */
+    /** The Kafka message value */
     value: string;
 
-    /** Kafka message headers */
+    /** Key-value pairs representing optional Kafka message headers. */
     headers: { [name: string]: string } | null;
+
+    /**
+     * The identifier of the schema used to validate or serialize this message payload.
+     *
+     * @remarks
+     * * This property is **only set** automatically if the schema ID is embedded within the
+     *   message payload itself (matching `SchemaIdLocation: "payload"`).
+     * * If the ID is transmitted via message metadata instead (matching `SchemaIdLocation: "header"`),
+     *   it will **not** populate this field and must instead be extracted manually from the {@link headers} object.
+     */
+    schemaId: number;
+}
+
+export type MqttEventHandler = (message: MqttEventMessage) => void | Promise<void>;
+
+/**
+ * KafkaEventMessage is an object used by KafkaEventHandler that contains Kafka-specific message data.
+ * https://mokapi.io/docs/javascript-api/mokapi/eventhandler/KafkaEventMessage
+ */
+export interface MqttEventMessage {
+    /** The name of the API, matching the `info.title` field in the AsyncAPI specification */
+    readonly api: string;
+
+    /**
+     * The name of the MQTT topic where this message originates.
+     */
+    readonly topic: string;
+
+    /** Specifies whether message should be retained  */
+    retain: boolean;
+
+    /** MQTT message value */
+    value: string;
 }
 
 /**
@@ -518,6 +571,10 @@ export interface TypedEventArgs {
      */
     kafka: KafkaEventArgs;
     /**
+     * Arguments for MQTT event handlers.
+     */
+    mqtt: MqttEventArgs;
+    /**
      * Arguments for LDAP event handlers.
      */
     ldap: LdapEventArgs;
@@ -561,6 +618,24 @@ export interface KafkaEventArgs extends EventArgs {
      *   whether the message was modified or acknowledged by the handler
      */
     track?: boolean | ((message: KafkaEventMessage) => boolean);
+}
+
+/**
+ * Configuration options for MQTT event handlers.
+ *
+ * These arguments control execution behavior such as
+ * priority, tagging, and dashboard tracking.
+ */
+export interface MqttEventArgs extends EventArgs {
+    /**
+     * Controls whether this event handler is tracked in the dashboard.
+     *
+     * - true: always track this handler
+     * - false: never track this handler
+     * - undefined: Mokapi determines tracking automatically based on
+     *   whether the message was modified or acknowledged by the handler
+     */
+    track?: boolean | ((message: MqttEventMessage) => boolean);
 }
 
 /**
@@ -791,7 +866,7 @@ export interface SharedMemory {
  *
  * // Retrieve the current counter value
  * const count = mokapi.shared.get("counter")
- * mokapi.log(`Current counter: ${count}`)
+ * console.log(`Current counter: ${count}`)
  * ```
  */
 export const shared: SharedMemory;

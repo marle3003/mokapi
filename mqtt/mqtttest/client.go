@@ -11,6 +11,7 @@ type Client struct {
 	Timeout time.Duration
 
 	conn net.Conn
+	ctx  *mqtt.ClientContext
 }
 
 func NewClient(addr string) *Client {
@@ -33,14 +34,18 @@ func (c *Client) Send(m *mqtt.Message) (*mqtt.Message, error) {
 		return nil, err
 	}
 
-	err := m.Write(c.conn, &mqtt.ClientContext{})
+	if connect, ok := m.Payload.(*mqtt.ConnectRequest); ok {
+		c.ctx.ProtocolVersion = connect.Version
+	}
+
+	err := m.Write(c.conn, c.ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	_ = c.conn.SetReadDeadline(time.Now().Add(500 * time.Millisecond))
 	res := &mqtt.Message{}
-	err = res.Read(c.conn, &mqtt.ClientContext{})
+	err = res.Read(c.conn, c.ctx)
 	return res, err
 }
 
@@ -49,7 +54,7 @@ func (c *Client) SendNoResponse(r *mqtt.Message) error {
 		return err
 	}
 
-	return r.Write(c.conn, &mqtt.ClientContext{})
+	return r.Write(c.conn, c.ctx)
 }
 
 func (c *Client) Recv() (*mqtt.Message, error) {
@@ -58,7 +63,7 @@ func (c *Client) Recv() (*mqtt.Message, error) {
 	}
 
 	res := &mqtt.Message{}
-	err := res.Read(c.conn, &mqtt.ClientContext{})
+	err := res.Read(c.conn, c.ctx)
 	return res, err
 }
 
@@ -77,6 +82,9 @@ func (c *Client) ensureConnection() error {
 		if err != nil {
 			return err
 		}
+	}
+	if c.ctx == nil {
+		c.ctx = &mqtt.ClientContext{}
 	}
 	return err
 }

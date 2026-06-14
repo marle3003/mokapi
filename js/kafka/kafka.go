@@ -97,7 +97,7 @@ func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 	opt := &common.KafkaProduceArgs{
 		ClientId:   "mokapi-script",
 		ScriptFile: file.Info.Key(),
-		Retry: common.KafkaProduceRetry{
+		Retry: common.RetryArgs{
 			MaxRetryTime:     3 * time.Minute,
 			InitialRetryTime: 500 * time.Millisecond,
 			Retries:          10,

@@ -15,6 +15,7 @@ import Request from './MqttRequest.vue'
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useRouter } from '@/router'
 import type { ServiceResult } from '@/types/dashboard'
+import '@/assets/mqtt.css'
 
 const route = useRoute();
 const router = useRouter();

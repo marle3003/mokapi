@@ -23,6 +23,7 @@ type Engine struct {
 	logger      common.Logger
 	reader      dynamic.Reader
 	kafkaClient common.KafkaClient
+	mqttClient  common.MqttClient
 	m           sync.Mutex
 	loader      ScriptLoader
 	parallel    bool
@@ -44,6 +45,7 @@ func New(reader dynamic.Reader, app *runtime.App, config *static.Config, paralle
 		logger:      newLogger(log.StandardLogger()),
 		reader:      reader,
 		kafkaClient: NewKafkaClient(app),
+		mqttClient:  NewMqttClient(app),
 		parallel:    parallel,
 		loader:      NewDefaultScriptLoader(config),
 		cfgEvent:    config.Event,
