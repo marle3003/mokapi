@@ -165,15 +165,23 @@ and custom modules.
 
 Provides core functions for scheduling jobs, handling events, and accessing environment variables.
 
-| Functions                                                                    | Description                                       |
-|------------------------------------------------------------------------------|---------------------------------------------------|
-| [cron( expression, handler, \[args\] )](/docs/javascript-api/mokapi/cron.md) | Schedules a periodic job using a cron expression. |
-| [date( \[args\] )](/docs/javascript-api/mokapi/date.md)                      | Returns a formatted date string.                  |
-| [env( name )](/docs/javascript-api/mokapi/env.md)                            | Gets the value of an environment variable.        |
-| [every( interval, handler, \[args\] )](/docs/javascript-api/mokapi/every.md) | Runs a periodic job at a fixed interval.          |
-| [on( event, handler, \[args\]](/docs/javascript-api/mokapi/on.md) )          | Registers an event handler.                       |
-| [sleep( time )](/docs/javascript-api/mokapi/sleep.md)                        | Pauses execution                                  |
-| [marshal( value, \[encoding\] )](/docs/javascript-api/mokapi/marshal.md)     | Converts a value to a marshaled string.           |
+| Functions                                                                             | Description                                                 |
+|---------------------------------------------------------------------------------------|-------------------------------------------------------------|
+| [cron( expression, handler, \[args\] )](/docs/javascript-api/mokapi/cron.md)          | Schedules a periodic job using a cron expression.           |
+| [date( \[args\] )](/docs/javascript-api/mokapi/date.md)                               | Returns a formatted date string.                            |
+| [env( name )](/docs/javascript-api/mokapi/env.md)                                     | Gets the value of an environment variable.                  |
+| [every( interval, handler, \[args\] )](/docs/javascript-api/mokapi/every.md)          | Runs a periodic job at a fixed interval.                    |
+| [on( event, handler, \[args\]](/docs/javascript-api/mokapi/on.md) )                   | Registers an event handler.                                 |
+| [sleep( time )](/docs/javascript-api/mokapi/sleep.md)                                 | Pauses execution                                            |
+| [marshal( value, \[encoding\] )](/docs/javascript-api/mokapi/marshal.md)              | Converts a value to a marshaled string.                     |
+| [shared.get( key )](/docs/javascript-api/mokapi/shared/get.md)                        | Returns the value associated with the given key.            |
+| [shared.set( key, value )](/docs/javascript-api/mokapi/shared/set.md)                 | Sets a value for the given key.                             |
+| [shared.update( key, updater )](/docs/javascript-api/mokapi/shared/update.md)         | Updates a value atomically using an updater function.       |
+| [shared.has( key: string )](/docs/javascript-api/mokapi/shared/has.md)                | Checks if the given key exists in shared memory.            |
+| [shared.delete( key: string )](/docs/javascript-api/mokapi/shared/delete.md)          | Removes the specified key and its value from shared memory. |
+| [shared.clear()](/docs/javascript-api/mokapi/shared/clear.md)                         | Removes all stored entries from shared memory.              |
+| [shared.keys()](/docs/javascript-api/mokapi/shared/keys.md)                           | Returns a list of all stored keys.                          |
+| [shared.namespace( name: string )](/docs/javascript-api/mokapi/shared/namespace.md)   | Creates or returns a namespaced shared memory store.        |
 
 ### mokapi/http (HTTP Requests)
 
