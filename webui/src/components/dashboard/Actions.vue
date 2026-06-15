@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { usePrettyDates } from '@/composables/usePrettyDate'
 import type { PropType } from 'vue'
-import { useRoute } from 'vue-router'
 import SourceView from './SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { usePrettyText } from '@/composables/usePrettyText'
@@ -13,7 +12,6 @@ defineProps({
 
 const { formatLanguage } = usePrettyLanguage()
 
-const route = useRoute()
 const { duration } = usePrettyDates()
 const { parseUrls } = usePrettyText()
 let status: string | null
@@ -27,6 +25,26 @@ function getName(action: Action){
     return null
 }
 function formatParameters(action: Action): {name?: string, value: string}[] {
+    switch (action.tags.event) {
+        case 'http':
+            return [
+                {
+                    name: 'request',
+                    value: formatLanguage(action.parameters[0], 'application/json')
+                },
+                {
+                    name: 'response',
+                    value: formatLanguage(action.parameters[1], 'application/json')
+                }
+            ]
+        case 'kafka':
+            return [
+                {
+                    name: 'message',
+                    value: formatLanguage(action.parameters[0], 'application/json')
+                }
+            ]
+    }
     if (action.tags.event === 'http') {
         return [
             {

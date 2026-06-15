@@ -204,6 +204,7 @@ func TestPublish(t *testing.T) {
 				require.Equal(t, mqtt.PUBACK, res.Header.Type)
 				msg := res.Payload.(*mqtt.PublishResponse)
 				require.Equal(t, uint16(10), msg.MessageId)
+				require.Equal(t, mqtt.PublishSuccess, msg.ReasonCode)
 			},
 		},
 	}

@@ -296,6 +296,56 @@
                     "path": "/docs/javascript-api/mokapi/eventhandler/scheduledeventargs"
                   }
                 ]
+              },
+              {
+                "label": "shared",
+                "items": [
+                  {
+                    "label": "Overview",
+                    "source": "javascript-api/mokapi/shared/overview.md",
+                    "path": "/docs/javascript-api/mokapi/shared/overview"
+                  },
+                  {
+                    "label": "get",
+                    "source": "javascript-api/mokapi/shared/get.md",
+                    "path": "/docs/javascript-api/mokapi/shared/get"
+                  },
+                  {
+                    "label": "set",
+                    "source": "javascript-api/mokapi/shared/set.md",
+                    "path": "/docs/javascript-api/mokapi/shared/set"
+                  },
+                  {
+                    "label": "update",
+                    "source": "javascript-api/mokapi/shared/update.md",
+                    "path": "/docs/javascript-api/mokapi/shared/update"
+                  },
+                  {
+                    "label": "has",
+                    "source": "javascript-api/mokapi/shared/has.md",
+                    "path": "/docs/javascript-api/mokapi/shared/has"
+                  },
+                  {
+                    "label": "delete",
+                    "source": "javascript-api/mokapi/shared/delete.md",
+                    "path": "/docs/javascript-api/mokapi/shared/delete"
+                  },
+                  {
+                    "label": "clear",
+                    "source": "javascript-api/mokapi/shared/clear.md",
+                    "path": "/docs/javascript-api/mokapi/shared/clear"
+                  },
+                  {
+                    "label": "keys",
+                    "source": "javascript-api/mokapi/shared/keys.md",
+                    "path": "/docs/javascript-api/mokapi/shared/keys"
+                  },
+                  {
+                    "label": "namespace",
+                    "source": "javascript-api/mokapi/shared/namespace.md",
+                    "path": "/docs/javascript-api/mokapi/shared/namespace"
+                  }
+                ]
               }
             ]
           },

@@ -26,7 +26,7 @@ func TestPublish(t *testing.T) {
 		test func(t *testing.T, s *store.Store, eh events.Handler, m *monitor.Mqtt)
 	}{
 		{
-			name: "publish QoS=0",
+			name: "publish QoS=0 topic not specified",
 			test: func(t *testing.T, s *store.Store, eh events.Handler, m *monitor.Mqtt) {
 				publisher := newClient("publisher", s)
 				defer publisher.close()

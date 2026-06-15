@@ -339,16 +339,19 @@ func (s *Store) log(log *KafkaMessageLog, traits events.Traits) {
 	_ = s.eh.Push(log, t)
 }
 
-func (s *Store) trigger(record *kafka.Record, schemaId int) bool {
+func (s *Store) trigger(topic string, partition int, record *kafka.Record, schemaId int) []*common.Action {
 	h := map[string]string{}
 	for _, v := range record.Headers {
 		h[v.Key] = string(v.Value)
 	}
 
 	r := &EventRecord{
-		Offset:   record.Offset,
-		Headers:  h,
-		SchemaId: schemaId,
+		Api:       s.cluster,
+		Topic:     topic,
+		Partition: partition,
+		Offset:    record.Offset,
+		Headers:   h,
+		SchemaId:  schemaId,
 	}
 
 	if record.Key != nil {
@@ -360,7 +363,7 @@ func (s *Store) trigger(record *kafka.Record, schemaId int) bool {
 
 	actions := s.eventEmitter.Emit("kafka", r)
 	if len(actions) == 0 {
-		return false
+		return nil
 	}
 
 	if record.Key != nil {
@@ -394,7 +397,7 @@ func (s *Store) trigger(record *kafka.Record, schemaId int) bool {
 		}
 	}
 
-	return true
+	return actions
 }
 
 func parseHostAndPort(s string) (host string, port int) {

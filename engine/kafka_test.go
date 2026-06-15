@@ -412,7 +412,7 @@ func TestKafkaClient(t *testing.T) {
 				`))
 				require.NoError(t, err)
 
-				require.Equal(t, `{"offset":0,"key":"XidZuoWq ","value":"\"bar\"","schemaId":0,"headers":{}}`, hook.LastEntry().Message)
+				require.Equal(t, `{"api":"foo","topic":"foo","partition":0,"offset":0,"key":"XidZuoWq ","value":"\"bar\"","schemaId":0,"headers":{}}`, hook.LastEntry().Message)
 
 				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)

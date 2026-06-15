@@ -204,7 +204,8 @@ func (p *Partition) write(batch kafka.RecordBatch, opts WriteOptions) (WriteResu
 			result.fail(i, kafka.InvalidRecord, err.Error())
 			return result, nil
 		}
-		if p.trigger(r, kLog.SchemaId) && !opts.SkipValidation {
+		actions := p.trigger(p.Topic.Name, p.Index, r, kLog.SchemaId)
+		if len(actions) > 0 && !opts.SkipValidation {
 			// validate again
 			kLog, err = p.validator.Validate(r)
 			if err != nil {
@@ -212,6 +213,7 @@ func (p *Partition) write(batch kafka.RecordBatch, opts WriteOptions) (WriteResu
 				return result, nil
 			}
 		}
+		kLog.Actions = actions
 
 		if r.Time.IsZero() {
 			r.Time = now

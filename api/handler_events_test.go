@@ -328,6 +328,7 @@ func TestHandler_KafkaEvents(t *testing.T) {
 							"sequenceNumber": float64(2),
 							"clientId":       "foo",
 							"script":         "123-123",
+							"actions":        nil,
 						},
 							m[0]["data"])
 					}))
