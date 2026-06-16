@@ -113,12 +113,6 @@ Kafka clients don't transmit the DNS name used to establish a connection. When m
 the same listener port, it's therefore not possible to determine at runtime which server was used.
 Mokapi follows Kafka's networking model and applies a deterministic resolution strategy instead of guessing.
 
-Kafka clients do not transmit the DNS name used to establish a connection.
-When multiple servers share the same listener port, it is therefore not
-possible to determine which server was used at runtime. Mokapi follows
-Kafka’s networking model and applies a deterministic resolution strategy
-instead of guessing.
-
 ``` box=tip title=Recommendation
 If you define multiple AsyncAPI servers, use different ports for each server
 or use Mokapi’s [patching](/docs/configuration/patching.md) mechanism.
