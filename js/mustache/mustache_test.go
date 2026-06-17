@@ -1,8 +1,6 @@
 package mustache_test
 
 import (
-	"github.com/dop251/goja"
-	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
@@ -11,6 +9,9 @@ import (
 	"mokapi/js/mustache"
 	"mokapi/js/require"
 	"testing"
+
+	"github.com/dop251/goja"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestMustache(t *testing.T) {
@@ -31,6 +32,36 @@ func TestMustache(t *testing.T) {
 				`)
 				r.NoError(t, err)
 				r.Equal(t, "bar", v.Export())
+			},
+		},
+		{
+			name: "condition false",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				host.KafkaClientTest = &enginetest.KafkaClient{ProduceFunc: func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					return &common.KafkaProduceResult{}, nil
+				}}
+
+				v, err := vm.RunString(`
+					const m = require("mokapi/mustache")
+					m.render('{{ #error }}foo{{ /error }}', {error: undefined})
+				`)
+				r.NoError(t, err)
+				r.Equal(t, "", v.Export())
+			},
+		},
+		{
+			name: "condition true",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				host.KafkaClientTest = &enginetest.KafkaClient{ProduceFunc: func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
+					return &common.KafkaProduceResult{}, nil
+				}}
+
+				v, err := vm.RunString(`
+					const m = require("mokapi/mustache")
+					m.render('{{ #error }}<p>{{ error }}</p>{{ /error }}', {error: 'An error occurred'})
+				`)
+				r.NoError(t, err)
+				r.Equal(t, "<p>An error occurred</p>", v.Export())
 			},
 		},
 	}
