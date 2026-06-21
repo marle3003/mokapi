@@ -27,7 +27,7 @@ export function imageCaption(md: MarkdownIt) {
             return img;
         }
 
-        return `<div class="image-with-caption">
+        return `<div class="image-with-caption text-center mt-4 mb-4">
             ${img}
             <div class="image-caption">${md.utils.escapeHtml(title)}</div>
         </div>`

@@ -96,6 +96,10 @@ export function parseMetadata(data: string): DocMeta {
 }
 
 export function transformPath(path: string): string {
+    if (path.startsWith('//')) {
+        // skip urls having https://
+        return path
+    }
     let base = document.querySelector('base')?.href
     if (base) {
         base = base.substring(0, base.length - 1)

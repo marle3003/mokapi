@@ -300,6 +300,7 @@ ol.breadcrumb {
 }
 
 .content .image-with-caption img {
+  text-align: center;
   margin-bottom: 0;
 }
 

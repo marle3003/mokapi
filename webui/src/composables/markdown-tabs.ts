@@ -35,6 +35,7 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
             case 'bash': return 'Bash';
             case 'json': return 'JSON';
             case 'yaml': return 'YAML'
+            case 'csharp': return 'C#'
             default: return capitalizeFirstLetter(lang);
         }
     }
