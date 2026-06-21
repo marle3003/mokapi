@@ -90,7 +90,8 @@ jobs:
         working-directory: ./cmd/mokapi
         shell: pwsh
         run: |
-          $versionParts = ($env:GITHUB_REF -replace '.*/v', '').Split('.')
+          $tag = '${{ github.event.release.tag_name }}'
+          $versionParts = ($tag -replace '^v', '').Split('.')
           '{}' | Out-File versioninfo.json -NoNewline ascii
           goversioninfo -64 `
             -platform-specific='true' `
@@ -134,6 +135,9 @@ jobs:
       - name: Install taskfile
         run: sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b ~/.local/bin
       - name: Publish
-        run: task publish-all VERSION=${GITHUB_REF##*/v}
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#v}"
+          task publish-all VERSION="$VERSION"
         env:
           CGO_ENABLED: 0
