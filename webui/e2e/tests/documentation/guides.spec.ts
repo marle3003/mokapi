@@ -7,7 +7,7 @@ test('Visit Guides', async ({ page, home }) => {
 
     await test.step('meta information are available', async () => {
         await expect(page).toHaveURL('/docs/welcome')
-        await expect(page).toHaveTitle('Getting Started with Mokapi | Mokapi Docs')
+        await expect(page).toHaveTitle('Mokapi Documentation: Getting Started with API Mocking | Mokapi Docs')
         await expect(page.locator('meta[name="description"]')).toHaveAttribute(
             'content',
             'Learn how to set up Mokapi to mock APIs and validate requests using OpenAPI or AsyncAPI. No account needed—free, open-source, and easy to use.'

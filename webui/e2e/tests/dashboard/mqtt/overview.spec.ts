@@ -6,6 +6,8 @@ test('Visit MQTT overview', async ({ page }) => {
 
     await test.step('Verify Dashboard', async () => {
 
+        const dashboard = page.getByRole('region', { name: 'Dashboard' })
+
         await expect(page.getByLabel('MQTT Messages')).toHaveText('2')
 
         const table = page.getByRole('table', { name: 'MQTT Clusters' });
@@ -13,7 +15,7 @@ test('Visit MQTT overview', async ({ page }) => {
         await expect(rows).toHaveCount(1);
         await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('MQTT Temperature Sensor API');
 
-        await page.getByRole('link', { name: 'MQTT', exact: true }).click()
+        await dashboard.getByRole('link', { name: 'MQTT', exact: true }).click()
         await expect(page.getByRole('table', { name: 'Recent Messages' })).toBeVisible()
 
     })
