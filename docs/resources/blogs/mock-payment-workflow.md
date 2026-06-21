@@ -450,5 +450,5 @@ Maybe it's not as hard as you thought.
 If this pattern resonates, a few other articles go deeper on related pieces:
 
 - [Testing Kafka Workflows with Playwright and Mokapi](testing-kafka-workflows-playwright.md) for more on the Kafka side of this example
-- [Testing Email Workflows with Playwright and Mokapi](testing-email-workflows-playwright.md) for the same pattern applied to email
+- [Testing Email Workflows with Playwright and Mokapi](/resources/blogs/testing-email-workflows-with-playwright-and-mokapi) for the same pattern applied to email
 - [Acceptance Testing with Mokapi](acceptance-testing.md) for the bigger picture on why testing the real flow matters
