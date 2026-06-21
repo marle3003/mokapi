@@ -120,6 +120,9 @@ jobs:
 
   release-npm:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -130,6 +133,7 @@ jobs:
         with:
           node-version: 24
           registry-url: 'https://registry.npmjs.org'
+      - run: npm install -g npm@latest
       - run: npm install
         working-directory: ./webui
       - name: Install taskfile
