@@ -13,18 +13,24 @@ tasks:
       - npm version {{.VERSION}}
       - npm run build-dashboard
   publish-all:
-    deps: [ build-vue-app ]
     cmds:
+      - task build-vue-app VERSION={{.VERSION}}
       - task publish-platform-dependent VERSION={{.VERSION}}
       - task publish-mokapi VERSION={{.VERSION}}
   publish-platform-dependent:
     deps:
-      - publish-mokapi-windows-x64
-      - publish-mokapi-windows-arm64
-      - publish-mokapi-linux-x64
-      - publish-mokapi-linux-arm64
-      - publish-mokapi-macos-x64
-      - publish-mokapi-macos-arm64
+      - task: publish-mokapi-windows-x64
+        vars: { VERSION: "{{.VERSION}}" }
+      - task: publish-mokapi-windows-arm64
+        vars: { VERSION: "{{.VERSION}}" }
+      - task: publish-mokapi-linux-x64
+        vars: { VERSION: "{{.VERSION}}" }
+      - task: publish-mokapi-linux-arm64
+        vars: { VERSION: "{{.VERSION}}" }
+      - task: publish-mokapi-macos-x64
+        vars: { VERSION: "{{.VERSION}}" }
+      - task: publish-mokapi-macos-arm64
+        vars: { VERSION: "{{.VERSION}}" }
   publish-mokapi:
     dir: npm/go-mokapi
     cmds:
