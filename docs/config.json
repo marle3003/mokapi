@@ -83,6 +83,21 @@
             ]
           },
           {
+            "label": "MQTT",
+            "items": [
+              {
+                "label": "Overview",
+                "source": "mqtt/overview.md",
+                "path": "/docs/mqtt/overview"
+              },
+              {
+                "label": "Quick Start",
+                "source": "mqtt/quick-start.md",
+                "path": "/docs/mqtt/quick-start"
+              }
+            ]
+          },
+          {
             "label": "LDAP",
             "items": [
               {
