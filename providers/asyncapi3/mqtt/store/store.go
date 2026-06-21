@@ -14,14 +14,15 @@ import (
 type Store struct {
 	RetryInterval time.Duration
 
-	clients    map[string]*Client
-	Topics     map[string]*Topic
-	startedQoS bool
-	m          sync.RWMutex
-	close      chan bool
-	eh         events.Handler
-	cfg        *asyncapi3.Config
-	monitor    *monitor.Mqtt
+	clients      map[string]*Client
+	Topics       map[string]*Topic
+	startedQoS   bool
+	m            sync.RWMutex
+	close        chan bool
+	eh           events.Handler
+	cfg          *asyncapi3.Config
+	monitor      *monitor.Mqtt
+	eventEmitter engine.EventEmitter
 
 	stopClientCleaner chan bool
 }
@@ -34,6 +35,7 @@ func New(cfg *asyncapi3.Config, emitter engine.EventEmitter, eh events.Handler, 
 		cfg:           cfg,
 		eh:            eh,
 		monitor:       m,
+		eventEmitter:  emitter,
 	}
 
 	s.Update(cfg)

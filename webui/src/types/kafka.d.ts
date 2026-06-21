@@ -118,6 +118,7 @@ declare interface KafkaMessageData {
   sequenceNumber: number
   clientId: string
   script: string
+  actions: Action[]
 }
 
 declare interface KafkaHeader { [name: string]: KafkaHeaderValue }

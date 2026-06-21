@@ -97,6 +97,7 @@ const state = computed<{ [name: string]: boolean }>(() => {
 
         http:  isTechAvailable('http'),
         kafka: isTechAvailable('kafka'),
+        mqtt: isTechAvailable('mqtt'),
         ldap: isTechAvailable('ldap'),
         mail: isTechAvailable('mail'),
         core: isTechAvailable('core')
@@ -180,6 +181,7 @@ function setType(s: string) {
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'core' ? 'active' : ''" @click="tech = 'core'" :disabled="!state.core">Core</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'http' ? 'active' : ''" @click="tech = 'http'" :disabled="!state.http">HTTP</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'kafka' ? 'active' : ''" @click="tech = 'kafka'" :disabled="!state.kafka">Kafka</button>
+                    <button class="btn btn-outline-primary filter-button" :class="tech === 'mqtt' ? 'active' : ''" @click="tech = 'mqtt'" :disabled="!state.mqtt">MQTT</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'ldap' ? 'active' : ''" @click="tech = 'ldap'" :disabled="!state.ldap">LDAP</button>
                     <button class="btn btn-outline-primary filter-button" :class="tech === 'mail' ? 'active' : ''" @click="tech = 'mail'" :disabled="!state.mail">Mail</button>
                 </div>
@@ -196,6 +198,7 @@ function setType(s: string) {
                         <option value="all" selected>All</option>
                         <option value="http" :disabled="!state.http">HTTP</option>
                         <option value="kafka" :disabled="!state.kafka">Kafka</option>
+                        <option value="mqtt" :disabled="!state.mqtt">MQTT</option>
                         <option value="ldap" :disabled="!state.ldap">LDAP</option>
                         <option value="mail" :disabled="!state.mail">Mail</option>
                         <option value="core" :disabled="!state.core">Core</option>

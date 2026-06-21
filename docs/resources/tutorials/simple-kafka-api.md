@@ -14,16 +14,19 @@ cards:
 
 # Get started with Kafka
 
-This tutorial provides a step-by-step guide to mocking a Kafka topic using Mokapi and verifying
-that a producer generates valid messages based on an AsyncAPI specification. This approach enables
-simulation of Kafka environments without requiring a live Kafka cluster.
+By the end of this tutorial you'll have a Kafka broker running entirely in Docker, with no real
+cluster anywhere in sight, validating every message against a schema you define. You'll produce a
+message with a .NET producer, watch Mokapi accept or reject it based on your AsyncAPI spec, and
+consume it back out with a .NET consumer.
 
-In this tutorial, you will:
-- Create an AsyncAPI specification defining a Kafka topic with schema validation
-- Configure and run Mokapi as a mock Kafka broker in Docker
-- Write a .NET producer that sends messages to the mocked topic
-- Verify message validation and monitoring using the Mokapi dashboard
-- Create a .NET consumer to read messages from the mocked topic
+You'll work through six steps:
+
+- Write an AsyncAPI specification defining a Kafka topic with schema validation
+- Run Mokapi as a mock Kafka broker in Docker
+- Produce a message from a .NET producer
+- Watch Mokapi validate it in real time
+- Inspect the message in the Mokapi dashboard
+- Consume the message back out with a .NET consumer
 
 ``` box=tree title="Project Structure"
 📄 kafka.yaml
@@ -41,7 +44,8 @@ You can find the [full working example](https://github.com/marle3003/mokapi/tree
 
 ## <i class="bi bi-1-circle-fill align-baseline"></i> Create AsyncAPI file
 
-Create a file named `kafka.yaml` that defines a Kafka topic with message validation:
+Create a file named `kafka.yaml`. This is the contract Mokapi will enforce: it defines the topic,
+the partitions, and the schema every message must satisfy.
 
 ```yaml
 asyncapi: '2.0.0'
@@ -97,57 +101,52 @@ components:
         - email
 ```
 
-### Specification Breakdown
-- **Topic:** Creates a `users` topic with 2 partitions
-- **Content Type:** Messages must be JSON (`application/json`)
-- **Schema:** Each message must have `id` (UUID), `name` (string), and `email` (string)
-- **Validation:** All three fields are required; missing fields will cause validation errors
-- **Key Type:** Message keys must be strings
+This spec creates a `users` topic with two partitions. Every message must be JSON, must include
+`id` (a UUID), `name`, and `email`, and all three fields are required. Send a message missing
+any of them and Mokapi will reject it, which you'll see for yourself in step four.
 
 ``` box=info title="Message Validation"
-When Mokapi receives an invalid message, it will return the error CORRUPT_MESSAGE and log an error message 
-like: kafka: invalid message received for topic users: missing required field name...
+When Mokapi receives an invalid message, it returns the error <code>CORRUPT_MESSAGE</code> and logs
+something like: <code>kafka: invalid message received for topic users: missing required field name...</code>
 ```
 
-## <i class="bi bi-2-circle-fill align-baseline"></i> Create a Dockerfile
+## <i class="bi bi-2-circle-fill align-baseline"></i> Package Mokapi with Your Spec
 
-Create a `Dockerfile` to configure Mokapi with the AsyncAPI specification:
+Create a `Dockerfile` that bundles Mokapi with the spec you just wrote:
 
 ```dockerfile
 FROM mokapi/mokapi:latest
 
 COPY ./kafka.yaml /demo/
 
-CMD ["--Providers.File.Directory=/demo"]
+CMD ["--providers-file-directory", "/demo"]
 ```
 
-### Dockerfile Breakdown
-- **Base Image:** Uses the official Mokapi Docker image
-- **Copy Specification:** Copies the AsyncAPI specification into the container
-- **Configuration:** Instructs Mokapi to load specifications from the `/demo` directory
+The base image is the official Mokapi container. The `COPY` line bundles your spec into the
+image, and the `CMD` tells Mokapi to load every spec it finds in `/demo` on startup.
 
-## <i class="bi bi-3-circle-fill align-baseline"></i> Start Mokapi
+## <i class="bi bi-3-circle-fill align-baseline"></i> Start the Broker
 
-Build and run the Docker container, exposing the Kafka broker and dashboard ports:
+Build and run the container, exposing both the Kafka protocol port and the dashboard:
 
 ```
 docker run -p 9092:9092 -p 8080:8080 --rm -it $(docker build -q .)
 ```
 
-This command:
-- **Builds** the Docker image from your Dockerfile
-- **Exposes port 9092** for the Kafka broker protocol
-- **Exposes port 8080** for the Mokapi dashboard
-- **Runs interactively** with automatic cleanup when stopped
+Port 9092 is where Kafka clients connect, exactly as they would to a real broker. Port 8080 is
+Mokapi's dashboard, where you'll inspect traffic in a moment. The `--rm` flag cleans up the
+container automatically once you stop it.
 
 ``` box=result title="Mokapi is Running"
 Open your browser and navigate to the Mokapi Dashboard at <code>http://localhost:8080</code> to see your mocked Kafka 
 topic. You can verify the topic configuration, view messages, and monitor producer/consumer activity.
 ```
 
-## <i class="bi bi-4-circle-fill align-baseline"></i> Create a Kafka Producer
+## <i class="bi bi-4-circle-fill align-baseline"></i> Produce a Message
 
-Now you can produce messages to the mocked Kafka topic. Below is an example using C# with the Confluent.Kafka library:
+With the broker running, produce a message using a standard Kafka client. Here's an example in
+C# with Confluent.Kafka, but any Kafka client works exactly the same way since Mokapi speaks the
+real Kafka protocol.
 
 ```csharp
 public class Producer
@@ -176,40 +175,32 @@ public class Producer
 }
 ```
 
-### Producer Code Breakdown
-
-- **Connection:** Connects to the Mokapi broker at `localhost:9092`
-- **Topic & Partition:** Targets the `users` topic, partition 1
-- **Message Key:** Uses `"alice"` as the message key (required by the AsyncAPI spec)
-- **Message Value:** Serializes a JSON object with `id`, `name`, and `email` fields
-- **JSON Format:** Uses camelCase naming to match the AsyncAPI schema
+This connects to Mokapi at `localhost:9092`, same as a real broker. It targets partition 1 of the
+`users` topic, uses `"alice"` as the key, and sends a JSON payload with camelCase fields to match
+the schema. Mokapi validates this message the instant it arrives.
 
 ``` box=info title="Schema Validation"
-Mokapi validates every message against the AsyncAPI schema. If you send a message missing the <code>name</code> field or 
-with an invalid UUID format for <code>id</code>, Mokapi will reject it with a <code>CORRUPT_MESSAGE</code> error.
+Remove the <code>Name</code> field from the payload and run the producer again. Mokapi rejects the
+message with a <code>CORRUPT_MESSAGE</code> error instead of silently accepting bad data, exactly
+as it would reject a message that violates your contract in production.
 ```
 
-## <i class="bi bi-5-circle-fill align-baseline"></i> Verifying Messages with Mokapi
+## <i class="bi bi-5-circle-fill align-baseline"></i> Inspect the Message in the Dashboard
 
-Mokapi provides a comprehensive dashboard to monitor and verify messages sent to mocked Kafka topics.
+Instead of writing a consumer just to confirm your message arrived, check the dashboard first.
 
-### Dashboard Verification Steps
-
-1. **Access the Mokapi Dashboard:** Open your browser and navigate to `http://localhost:8080/dashboard`
-2. **Navigate to the Kafka Section:** In the dashboard, select the Kafka section to view configured topics and their messages
-3. **Verify the Message:** Locate the `users` topic and verify that the message sent by your producer appears as expected. Mokapi displays the message key, value, partition, offset, and validation status
+1. Open http://localhost:8080/dashboard in your browser.
+2. Go to the Kafka section to see your configured topics.
+3. Select the users topic and find the message you just sent. Mokapi shows the key, value, partition, offset, and validation status for every message that's passed through.
 
 ![Mokapi Kafka Dashboard](/docs/resources/tutorials/simple-kafka-example.png "Mokapi Kafka Dashboard displaying validated messages in the users topic")
 
-The dashboard shows:
-- **Message Content:** Full JSON payload with schema validation status
-- **Partition & Offset:** Where the message was stored in the topic
-- **Validation Errors:** Any schema mismatches or missing required fields
-- **Timestamp:** When the message was received by Mokapi
+If you sent the broken message from the previous step too, you'll see it flagged with a
+validation error right there in the dashboard, no log diving required.
 
-## <i class="bi bi-6-circle-fill align-baseline"></i> Create a Kafka Consumer
+## <i class="bi bi-6-circle-fill align-baseline"></i> Consume the Message
 
-Now create a .NET consumer to read messages from the mocked Kafka topic:
+Now read it back out with a consumer:
 
 ```csharp
 public class Consumer
@@ -237,12 +228,9 @@ public class Consumer
 }
 ```
 
-### Consumer Code Breakdown
-- **Connection:** Connects to the Mokapi broker at `localhost:9092`
-- **Consumer Group:** Joins consumer group `"foo"`
-- **Offset Reset:** Starts reading from the earliest available 
-- **Subscribe:** Subscribes to the `users` topic
-- **Consume Loop:** Continuously polls for new messages and prints them to the console
+This joins consumer group `foo`, starts reading from the earliest offset, and subscribes to
+`users`. Run it alongside the producer, and you'll see the message print to the console exactly
+as it was sent.
 
 ``` box=result title="Expected Console Output"
 Consumed message '{"id":"dd5742d1-82ad-4d42-8960-cb21bd02f3e7","name":"Alice","email":"alice@foo.bar"}' offset: 0 partition: 1
@@ -250,6 +238,7 @@ Consumed message '{"id":"dd5742d1-82ad-4d42-8960-cb21bd02f3e7","name":"Alice","e
 
 ## Next Steps
 
-Now that you have a working Kafka mock with producer and consumer, explore these advanced topics:
+You now have a working Kafka mock with a validated producer and a working consumer, all without a
+real cluster anywhere in the picture. From here, explore these advanced topics:
 
 {{ card-grid key="cards" }}

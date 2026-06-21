@@ -1,17 +1,20 @@
 package store
 
 import (
+	"mokapi/engine/common"
 	"mokapi/mqtt"
 	"mokapi/runtime/events"
 )
 
 type LogMessage struct {
-	Topic      string   `json:"topic"`
-	Message    LogValue `json:"message"`
-	MessageId  string   `json:"messageId"`
-	Api        string   `json:"api"`
-	ClientId   string   `json:"clientId"`
-	ScriptFile string   `json:"script"`
+	Topic      string           `json:"topic"`
+	Message    LogValue         `json:"message"`
+	Retain     bool             `json:"retain"`
+	MessageId  string           `json:"messageId"`
+	Api        string           `json:"api"`
+	ClientId   string           `json:"clientId"`
+	ScriptFile string           `json:"script"`
+	Actions    []*common.Action `json:"actions"`
 }
 
 type LogValue struct {

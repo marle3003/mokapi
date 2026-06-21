@@ -1,9 +1,10 @@
 package mustache
 
 import (
-	"github.com/dop251/goja"
-	"mokapi/lib/mustache"
 	"reflect"
+
+	"github.com/cbroglie/mustache"
+	"github.com/dop251/goja"
 )
 
 type Module struct {
@@ -29,7 +30,7 @@ func (m *Module) Render(template string, scopeValue goja.Value) string {
 }
 
 func (m *Module) parseScope(scopeValue goja.Value) interface{} {
-	if scopeValue == nil && goja.IsUndefined(scopeValue) && goja.IsNull(scopeValue) {
+	if scopeValue == nil || goja.IsUndefined(scopeValue) || goja.IsNull(scopeValue) {
 		return nil
 	}
 

@@ -1,6 +1,7 @@
 package store
 
 import (
+	"mokapi/engine/common"
 	"mokapi/kafka"
 	"mokapi/providers/asyncapi3"
 	"mokapi/runtime/events"
@@ -17,7 +18,7 @@ func TestPartition(t *testing.T) {
 		0,
 		[]*Broker{{Id: 1}},
 		func(log *KafkaMessageLog, traits events.Traits) {},
-		func(record *kafka.Record, schemaId int) bool { return false },
+		func(topic string, partition int, record *kafka.Record, schemaId int) []*common.Action { return nil },
 		&Topic{},
 	)
 
@@ -34,7 +35,7 @@ func TestPartition_Write(t *testing.T) {
 		func(log *KafkaMessageLog, traits events.Traits) {
 			logs = append(logs, log.Offset)
 		},
-		func(record *kafka.Record, schemaId int) bool { return false },
+		func(topic string, partition int, record *kafka.Record, schemaId int) []*common.Action { return nil },
 		&Topic{},
 	)
 
@@ -79,7 +80,7 @@ func TestPartition_Read_Empty(t *testing.T) {
 		0,
 		[]*Broker{{Id: 1}},
 		func(log *KafkaMessageLog, traits events.Traits) {},
-		func(record *kafka.Record, schemaId int) bool { return false },
+		func(topic string, partition int, record *kafka.Record, schemaId int) []*common.Action { return nil },
 		&Topic{},
 	)
 	b, errCode := p.Read(0, 1)
@@ -92,7 +93,7 @@ func TestPartition_Read(t *testing.T) {
 		0,
 		[]*Broker{{Id: 1}},
 		func(log *KafkaMessageLog, traits events.Traits) {},
-		func(record *kafka.Record, schemaId int) bool { return false },
+		func(topic string, partition int, record *kafka.Record, schemaId int) []*common.Action { return nil },
 		&Topic{},
 	)
 	wr, err := p.Write(kafka.RecordBatch{
@@ -119,7 +120,7 @@ func TestPartition_Read_OutOfOffset_Empty(t *testing.T) {
 		0,
 		[]*Broker{{Id: 1}},
 		func(log *KafkaMessageLog, traits events.Traits) {},
-		func(record *kafka.Record, schemaId int) bool { return false },
+		func(topic string, partition int, record *kafka.Record, schemaId int) []*common.Action { return nil },
 		&Topic{},
 	)
 	b, errCode := p.Read(10, 1)
@@ -132,7 +133,7 @@ func TestPartition_Read_OutOfOffset(t *testing.T) {
 		0,
 		[]*Broker{{Id: 1}},
 		func(log *KafkaMessageLog, traits events.Traits) {},
-		func(record *kafka.Record, schemaId int) bool { return false },
+		func(topic string, partition int, record *kafka.Record, schemaId int) []*common.Action { return nil },
 		&Topic{},
 	)
 	_, _ = p.Write(kafka.RecordBatch{
@@ -156,7 +157,7 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 		0,
 		[]*Broker{{Id: 1}},
 		func(log *KafkaMessageLog, _ events.Traits) {
-		}, func(record *kafka.Record, schemaId int) bool { return false },
+		}, func(topic string, partition int, record *kafka.Record, schemaId int) []*common.Action { return nil },
 		&Topic{Config: &asyncapi3.Channel{Bindings: asyncapi3.ChannelBindings{
 			Kafka: asyncapi3.TopicBindings{ValueSchemaValidation: true},
 		}}},
@@ -220,7 +221,7 @@ func TestPartition_Write_Value_Validator(t *testing.T) {
 func TestPatition_Retention(t *testing.T) {
 	p := newPartition(0, []*Broker{{Id: 1}},
 		func(log *KafkaMessageLog, traits events.Traits) {},
-		func(record *kafka.Record, schemaId int) bool { return false },
+		func(topic string, partition int, record *kafka.Record, schemaId int) []*common.Action { return nil },
 		&Topic{},
 	)
 	require.Equal(t, int64(0), p.Head)
@@ -269,7 +270,7 @@ func TestPartition_Write_Producer_ClientId(t *testing.T) {
 		func(log *KafkaMessageLog, traits events.Traits) {
 			logs = append(logs, log)
 		},
-		func(record *kafka.Record, schemaId int) bool { return false },
+		func(topic string, partition int, record *kafka.Record, schemaId int) []*common.Action { return nil },
 		&Topic{},
 	)
 

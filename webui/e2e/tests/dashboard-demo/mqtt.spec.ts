@@ -17,7 +17,7 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
         await expect(rows).toHaveCount(1);
         await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('Smart Home MQTT API');
 
-        await page.getByRole('link', { name: 'MQTT', exact: true }).click()
+        await page.getByLabel('Services').getByRole('link', { name: 'MQTT', exact: true }).click()
         await expect(page.getByRole('table', { name: 'Recent Messages' })).toBeVisible()
 
     })

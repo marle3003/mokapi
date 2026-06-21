@@ -83,6 +83,21 @@
             ]
           },
           {
+            "label": "MQTT",
+            "items": [
+              {
+                "label": "Overview",
+                "source": "mqtt/overview.md",
+                "path": "/docs/mqtt/overview"
+              },
+              {
+                "label": "Quick Start",
+                "source": "mqtt/quick-start.md",
+                "path": "/docs/mqtt/quick-start"
+              }
+            ]
+          },
+          {
             "label": "LDAP",
             "items": [
               {
@@ -294,6 +309,56 @@
                     "label": "KafkaEventMessage",
                     "source": "javascript-api/mokapi/eventhandler/scheduledeventargs.md",
                     "path": "/docs/javascript-api/mokapi/eventhandler/scheduledeventargs"
+                  }
+                ]
+              },
+              {
+                "label": "shared",
+                "items": [
+                  {
+                    "label": "Overview",
+                    "source": "javascript-api/mokapi/shared/overview.md",
+                    "path": "/docs/javascript-api/mokapi/shared/overview"
+                  },
+                  {
+                    "label": "get",
+                    "source": "javascript-api/mokapi/shared/get.md",
+                    "path": "/docs/javascript-api/mokapi/shared/get"
+                  },
+                  {
+                    "label": "set",
+                    "source": "javascript-api/mokapi/shared/set.md",
+                    "path": "/docs/javascript-api/mokapi/shared/set"
+                  },
+                  {
+                    "label": "update",
+                    "source": "javascript-api/mokapi/shared/update.md",
+                    "path": "/docs/javascript-api/mokapi/shared/update"
+                  },
+                  {
+                    "label": "has",
+                    "source": "javascript-api/mokapi/shared/has.md",
+                    "path": "/docs/javascript-api/mokapi/shared/has"
+                  },
+                  {
+                    "label": "delete",
+                    "source": "javascript-api/mokapi/shared/delete.md",
+                    "path": "/docs/javascript-api/mokapi/shared/delete"
+                  },
+                  {
+                    "label": "clear",
+                    "source": "javascript-api/mokapi/shared/clear.md",
+                    "path": "/docs/javascript-api/mokapi/shared/clear"
+                  },
+                  {
+                    "label": "keys",
+                    "source": "javascript-api/mokapi/shared/keys.md",
+                    "path": "/docs/javascript-api/mokapi/shared/keys"
+                  },
+                  {
+                    "label": "namespace",
+                    "source": "javascript-api/mokapi/shared/namespace.md",
+                    "path": "/docs/javascript-api/mokapi/shared/namespace"
                   }
                 ]
               }
@@ -517,6 +582,12 @@
             "hideNavigation": true
           },
           {
+            "label": "Get started with MQTT",
+            "source": "resources/tutorials/get-started-mqtt.md",
+            "path": "/resources/tutorials/get-started-with-mqtt",
+            "hideNavigation": true
+          },
+          {
             "label": "Running Mokapi in a CI/CD Pipeline",
             "source": "resources/tutorials/running-mokapi-github-action.md",
             "path": "/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline",
@@ -668,6 +739,12 @@
             "label": "Building a Virtual Hardware Simulation with Mokapi and JavaScript",
             "source": "resources/blogs/virtual-hardware-simulation.md",
             "path": "/resources/blogs/building-virtual-hardware-simulation",
+            "hideNavigation": true
+          },
+          {
+            "label": "Mocking a Payment Service with Mokapi",
+            "source": "resources/blogs/mock-payment-workflow.md",
+            "path": "/resources/blogs/mocking-payment-service-mokapi-playwright",
             "hideNavigation": true
           }
         ]

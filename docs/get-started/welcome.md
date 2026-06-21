@@ -1,74 +1,77 @@
 ---
-title: "Getting Started with Mokapi"
+title: "Mokapi Documentation: Getting Started with API Mocking"
 description: Learn how to set up Mokapi to mock APIs and validate requests using OpenAPI or AsyncAPI. No account needed—free, open-source, and easy to use.
 cards:
   items:
     - title: Run your first mocked REST API
       href: /docs/get-started/running
-      description: Learn how to quickly set up and run your first mock REST API and view the results in the Mokapi dashboard.
+      description: Quickly set up your first mock REST API and view simulated live traffic inside the Mokapi dashboard.
     - title: Using Mokapi
       href: /docs/configuration/overview
-      description: Get an overview of Mokapi’s core features, configuration options, and how to patch and use configuration providers effectively.
+      description: Get a complete overview of core features, configuration options, and how to patch configuration providers effectively.
     - title: Mock Event-Driven APIs with Apache Kafka
       href: /docs/kafka/quick-start
-      description: Learn how to mock Kafka topics and simulate event-driven architectures for realistic API testing.
+      description: Learn how to mock Kafka topics and simulate event-driven architectures for realistic asynchronous testing.
+    - title: Mock MQTT Broker & Topics
+      href: /docs/mqtt/overview
+      description: Learn how to mock MQTT brokers, topics, and pub/sub messages seamlessly from your AsyncAPI specifications.
     - title: Mokapi JavaScript API
       href: /docs/javascript-api/overview
-      description: Discover how to control and customize your mocked APIs programmatically with Mokapi’s JavaScript API.
+      description: Discover how to control, script, and customize your mocked APIs programmatically using JavaScript.
     - title: Random Data Generator
       href: /docs/get-started/test-data
-      description: Explore Mokapi’s random data generator, and learn how to customize the data for your API testing needs.
+      description: Explore the built-in random data engine to dynamically generate realistic payloads for your API testing.
     - title: Mokapi Dashboard
       href: /docs/get-started/dashboard
-      description: Dive into Mokapi’s dashboard to analyze and monitor APIs, requests, and responses in real time for efficient debugging.
+      description: Dive into the real-time UI to analyze, monitor, and debug requests and responses instantly.
 ---
 
 # Mocking APIs with Mokapi
 
 **Welcome to Mokapi!**
 
-Mokapi is your go-to platform for [mock api](https://mokapi.io) generation, making it easy to build,
-test, and monitor API-driven applications without the hassle.
-
-It supports high-performance HTTP mocking and local Kafka simulation directly from your OpenAPI and
-AsyncAPI specifications.
+[Mokapi](https://mokapi.io) makes it easy to build, test, and monitor API-driven applications without infrastructure
+dependencies. The tool supports high-performance HTTP mocking and local Kafka simulation directly from your OpenAPI
+and AsyncAPI specifications.
 
 > *Think of Mokapi as your ever-reliable API contract guardian—lightweight, transparent, and specification-driven.*
 
 ## Build Better Software with Mokapi
 
-In today's world, modern applications rely on multiple external APIs. 
-When these APIs are slow, unreliable, or unavailable, they can impede 
-your development process. Mokapi eliminates these obstacles, enabling
-you to:
+In today's world, modern applications rely on multiple external APIs. When these dependencies are slow, unreliable,
+or unavailable, your development velocity drops. Mokapi eliminates these obstacles, enabling you to:
 
-- **Develop Faster:** Eliminate waiting times by working independently of external systems.
-- **Test with Confidence:** Simulate realistic API behaviors, including edge cases.
-- **Automate Your Pipelines:** Enhance CI/CD reliability with consistent mock responses.
+- **Develop Faster:** Eliminate bottlenecks by coding independently of external upstream systems.
+- **Test with Confidence:** Simulate realistic API behaviors, validation errors, and edge cases.
+- **Automate Your Pipelines:** Enhance CI/CD reliability with consistent, zero-dependency mock responses.
 - **Ensure Compliance:** Seamlessly integrate tools like Dependabot or Renovate for future-proof dependencies.
 
 ## Key Features
 
-- <p><strong>Spec-Driven Mocking:</strong><br />Quickly create OpenAPI or AsyncAPI mock servers for REST, SOAP, and event-driven architectures with minimal setup.</p>
-- <p><strong>No-Code Configuration:</strong><br />Jump right in—no complex coding required!</p>
-- <p><strong>Live Monitoring:</strong><br />Use the [Mokapi Dashboard](docs/get-started/dashboard) to track requests and responses in real-time, simplifying your debugging process.</p>
-- <p><strong>Dynamic Test Data:</strong><br />Utilize the built-in random data generator to create realistic payloads tailored to your API needs.</p>
-- <p><strong>Local & Secure:</strong><br />An offline-first tool, Mokapi keeps your data on your machine—no accounts, no cloud syncs, and no identity tracking.</p>
-- <p><strong>Open Source:</strong><br />Free and transparent, explore Mokapi's source code on [GitHub](https://github.com/marle3003/mokapi).</p>
+- **Spec-Driven Mocking:**  
+  Quickly create OpenAPI or AsyncAPI mock servers for REST, SOAP, Kafka, and MQTT event-driven architectures
+- **No-Code Configuration:**   
+  Jump right in, no complex coding required!
+- **Live Monitoring:**  
+  Use the [Mokapi Dashboard](/docs/get-started/dashboard) to track requests and responses in real-time, simplifying your debugging process.
+- **Dynamic Test Data:**  
+  Utilize the built-in random data generator to create realistic payloads tailored to your schema rules
+- **Local & Secure:**  
+  An offline-first tool, Mokapi keeps your data on your machine—no accounts, no cloud syncs, and no telemetry tracking.
+- **Open Source:**  
+  Free and transparent, explore Mokapi's source code directly on [GitHub](https://github.com/marle3003/mokapi).</p>
 
 ## Data Privacy and Security
 
 Mokapi prioritizes your privacy:
 
-- **Local Control:** Your data remains on your machine at all times.
-- **No Account Needed:** Enjoy a hassle-free experience without the need for user accounts or authentication.
-- **No Cloud Connectivity:** Mokapi operates entirely offline, ensuring your data—including API specifications, mock configurations, requests, and responses—stays private.
+- **Local Control:** Your data remains entirely on your machine at all times.
+- **No Account Required:** Enjoy a hassle-free setup without the need for user accounts, credentials, or authentication.
+- **No Cloud Connectivity:** Mokapi operates fully offline. Your API specifications, mock configurations, and payloads never leave your local environment.
 
-## Explore how you can mock your APIs with Mokapi
+## Explore Mokapi Documentation Guides
 
-Whether you're mocking APIs for local testing or validating event-driven
-systems, Mokapi streamlines the process. With its powerful tools and
-integrations, you can accelerate your development cycle, minimize errors,
-and enhance the quality of your APIs.
+Whether you're mocking APIs for local testing or validating async event-driven
+systems, select a guide below to streamline your workflow:
 
 {{ card-grid key="cards" }}

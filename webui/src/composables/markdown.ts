@@ -16,7 +16,7 @@ import hljs from '@/plugins/highlight'
 const images =  import.meta.glob('/src/assets/docs/**/*.png', {as: 'url', eager: true})
 const metadataRegex = /^---([\s\S]*?)---/;
 
-export function useMarkdown(content: string | undefined): {content: string | undefined, metadata?: DocMeta} {
+export function useMarkdown(content: string | undefined, linkify = false): {content: string | undefined, metadata?: DocMeta} {
     if (!content) {
         return { content }
     }
@@ -28,7 +28,7 @@ export function useMarkdown(content: string | undefined): {content: string | und
 
         if (content) {
             const md = new MarkdownIt({
-                    linkify: true,
+                    linkify: linkify,
                     highlight: (str, lang): string => {
                         if (lang === 'typescript') {
                             lang = 'javascript'
@@ -96,6 +96,10 @@ export function parseMetadata(data: string): DocMeta {
 }
 
 export function transformPath(path: string): string {
+    if (path.startsWith('//')) {
+        // skip urls having https://
+        return path
+    }
     let base = document.querySelector('base')?.href
     if (base) {
         base = base.substring(0, base.length - 1)

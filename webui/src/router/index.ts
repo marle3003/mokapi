@@ -349,6 +349,10 @@ const router = createRouter({
       component: () => import('@/views/Kafka.vue')
     },
     {
+      path: '/mqtt',
+      component: () => import('@/views/Mqtt.vue')
+    },
+    {
       path: '/ldap',
       component: () => import('@/views/Ldap.vue')
     },
