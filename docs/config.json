@@ -582,6 +582,12 @@
             "hideNavigation": true
           },
           {
+            "label": "Get started with MQTT",
+            "source": "resources/tutorials/get-started-mqtt.md",
+            "path": "/resources/tutorials/get-started-with-mqtt",
+            "hideNavigation": true
+          },
+          {
             "label": "Running Mokapi in a CI/CD Pipeline",
             "source": "resources/tutorials/running-mokapi-github-action.md",
             "path": "/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline",
