@@ -165,32 +165,36 @@ export interface ProduceResult {
 }
 
 /**
- * Contains information of the written Kafka message.
+ * Represents the outcome of producing a Kafka message in Mokapi.
+ *
+ * Provides details about the target topic location, message payloads,
+ * and schema validation outcomes.
+ *
  * https://mokapi.io/docs/javascript-api/mokapi-kafka/kafkamessageresult
  */
 export interface MessageResult {
     /**
-     * Kafka partition index in which the message was written.
+     * The zero-based index of the Kafka partition where the message was written.
      */
     readonly partition: number;
 
     /**
-     * Kafka offset of the written message.
+     * The unique sequential identifier (offset) assigned to the message within its partition.
      */
     readonly offset: number;
 
     /**
-     * Kafka written message key.
+     * The key of the written Kafka message, typically used for partitioning.
      */
     readonly key: string;
 
     /**
-     * Kafka written message value.
+     * The main payload data of the written Kafka message.
      */
     readonly value: string;
 
     /**
-     * Kafka written message headers.
+     * Key-value pairs representing the metadata headers attached to the Kafka message.
      */
     readonly headers: { [name: string]: string };
 }
