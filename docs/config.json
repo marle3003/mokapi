@@ -719,6 +719,12 @@
             "source": "resources/blogs/virtual-hardware-simulation.md",
             "path": "/resources/blogs/building-virtual-hardware-simulation",
             "hideNavigation": true
+          },
+          {
+            "label": "Mocking a Payment Service with Mokapi",
+            "source": "resources/blogs/mock-payment-workflow.md",
+            "path": "/resources/blogs/mocking-payment-service-mokapi-playwright",
+            "hideNavigation": true
           }
         ]
       }

@@ -251,6 +251,9 @@ function isDashboardDisplayed() {
                 <router-link class="nav-link" :to="{ path: '/kafka' }">Kafka</router-link>
               </li>
               <li v-if="isWebsite" class="nav-item">
+                <router-link class="nav-link" :to="{ path: '/mqtt' }">MQTT</router-link>
+              </li>
+              <li v-if="isWebsite" class="nav-item">
                 <router-link class="nav-link" :to="{ path: '/ldap' }">LDAP</router-link>
               </li>
               <li v-if="isWebsite" class="nav-item">
