@@ -14,11 +14,13 @@ updates:
       day: "friday"
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: develop
     schedule:
       interval: "weekly"
       day: "friday"
   - package-ecosystem: "docker"
     directory: "/images"
+    target-branch: develop
     schedule:
       interval: "weekly"
       day: "friday"
