@@ -19,7 +19,7 @@ jobs:
       latest-tag: ${{ steps.get_version.outputs.latest_tag }}
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0  # Ensure all tags are fetched
       - name: Fetch main
@@ -66,7 +66,7 @@ jobs:
     needs: [ setup, build-alpha ]
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
       - uses: ./.github/actions/publish-docker-image
@@ -83,11 +83,11 @@ jobs:
     needs: [ setup, build-alpha ]
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
       - name: Restore Timestamps
-        uses: chetan/git-restore-mtime-action@v2
+        uses: chetan/git-restore-mtime-action@d186aca54f8760da4dec55313195e51ed3ebb0b3 # v2
       - uses: ./.github/actions/publish-website
         with:
           image-name: ${{ needs.setup.outputs.image-name }}
