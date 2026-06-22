@@ -11,7 +11,7 @@ runs:
   using: "composite"
   steps:
     - name: Checkout GitHub Pages Branch
-      uses: actions/checkout@v4
+      uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       with:
         ref: gh-pages
         path: gh-pages
@@ -22,7 +22,7 @@ runs:
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
       shell: bash
     - name: Download Report
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: ${{ inputs.artifact-test-report }}
         path: gh-pages/${{ inputs.test-report-path }}

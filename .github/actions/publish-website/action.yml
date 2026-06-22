@@ -19,19 +19,19 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
       with:
         node-version: 24
         registry-url: 'https://registry.npmjs.org'
     - id: release
-      uses: pozetroninc/github-action-get-latest-release@master
+      uses: pozetroninc/github-action-get-latest-release@53d33d213ee71c72360e3c829caf7cee94ec21e2 # master
       with:
         repository: marle3003/mokapi
         excludes: prerelease, draft
         token: ${{ inputs.token }}
     - name: Download image
       id: download
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
       with:
         name: ${{ env.image-artifact-name }}
         path: /tmp
@@ -71,7 +71,7 @@ runs:
       shell: bash
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: website-test-report
         path: webui/playwright-report
