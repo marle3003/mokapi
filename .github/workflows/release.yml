@@ -2,6 +2,15 @@ name: Release
 on:
   release:
     types: [published]
+  # push: tags: ['v*']
+  # Used by: release-npm only
+  # npm provenance requires a Sigstore certificate with a valid
+  # SourceRepositoryRef extension. Fulcio (the Sigstore CA) populates
+  # this field from the OIDC token's ref claim. For release events,
+  # GitHub sets headBranch/ref to the default branch (main), not the tag,
+  # so Fulcio cannot populate SourceRepositoryRef correctly and npm
+  # rejects the provenance bundle. Tag push events set ref to
+  # refs/tags/vX.Y.Z, which Fulcio includes correctly in the certificate.
   push:
     tags:
       - 'v*'
