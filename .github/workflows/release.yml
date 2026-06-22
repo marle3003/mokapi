@@ -29,7 +29,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
         with:
-          go-version: 1.25.5
+          go-version: 1.26.4
       - uses: ./.github/actions/build-release-notes
         env:
           GH_TOKEN: ${{ github.token }}
@@ -75,7 +75,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
       - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
         with:
-          go-version: 1.25.5
+          go-version: 1.26.4
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6
         with:
@@ -100,7 +100,7 @@ jobs:
           path: webui/dist
       - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
         with:
-          go-version: 1.25.5
+          go-version: 1.26.4
       - name: Install goversioninfo
         run: go install github.com/josephspurrier/goversioninfo/cmd/goversioninfo@v1.4.0
       - name: Generate Windows metadata (.syso)
@@ -147,7 +147,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6
         with:
-          go-version: 1.25.5
+          go-version: 1.26.4
       - uses: ./.github/actions/build-release-notes
         env:
           GH_TOKEN: ${{ github.token }}
