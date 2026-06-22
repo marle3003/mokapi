@@ -4,7 +4,6 @@
     "config:best-practices"
   ],
   "baseBranches": ["develop"],
-  "schedule": ["on friday"],
   "packageRules": [
     {
       "matchManagers": ["npm"],
@@ -12,15 +11,13 @@
     },
     {
       "matchUpdateTypes": ["patch", "minor"],
-      "automerge": true
+      "automerge": true,
+      "schedule": ["at any time"]
     },
     {
       "matchUpdateTypes": ["major"],
-      "labels": ["dependency-major"]
-    },
-    {
-      "matchUpdateTypes": ["pin"],
-      "enabled": false
+      "labels": ["dependency-major"],
+      "schedule": ["on friday"]
     }
   ]
 }
