@@ -3,7 +3,9 @@
   "extends": [
     "config:best-practices"
   ],
-  "baseBranches": ["develop"],
+  "baseBranchPatterns": [
+    "develop"
+  ],
   "packageRules": [
     {
       "matchManagers": ["npm"],
