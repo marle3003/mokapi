@@ -8,7 +8,8 @@ require (
 	github.com/blevesearch/bleve_index_api v1.3.12
 	github.com/bradleyfalzon/ghinstallation/v2 v2.19.0
 	github.com/brianvoe/gofakeit/v6 v6.28.0
-	github.com/dop251/goja v0.0.0-20250309171923-bcd7cc6bf64c
+	github.com/cbroglie/mustache v1.4.0
+	github.com/dop251/goja v0.0.0-20260618133527-c9b2ea77db59
 	github.com/evanw/esbuild v0.28.1
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/go-co-op/gocron v1.37.0
@@ -54,11 +55,11 @@ require (
 	github.com/blevesearch/zapx/v15 v15.4.3 // indirect
 	github.com/blevesearch/zapx/v16 v16.3.4 // indirect
 	github.com/blevesearch/zapx/v17 v17.1.2 // indirect
-	github.com/cbroglie/mustache v1.4.0 // indirect
 	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/cyphar/filepath-securejoin v0.6.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2 v1.11.4 // indirect
+	github.com/dlclark/regexp2/v2 v2.2.1 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/go-git/gcfg v1.5.1-0.20230307220236-3a3c6141e376 // indirect
 	github.com/go-git/go-billy/v5 v5.9.0 // indirect
