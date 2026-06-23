@@ -113,7 +113,7 @@ func (suite *MailSuite) TestSendMail() {
 		smtptest.WithSubject("Test Mail"),
 		smtptest.WithRootCa(ca),
 	)
-	require.EqualError(suite.T(), err, "550 [5 1 0] Rule allowSender: Sender from@test.bar does not match allow rule: .*@foo.bar")
+	require.EqualError(suite.T(), err, "550 \"[5 1 0] Rule allowSender: Sender from@test.bar does not match allow rule: .*@foo.bar\"")
 
 	//from := "from@foo.bar"
 	//password := "super_secret_password"
