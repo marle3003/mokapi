@@ -77,7 +77,7 @@ jobs:
         with:
           go-version: 1.26.4
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6
+        uses: goreleaser/goreleaser-action@5daf1e915a5f0af01ddbcd89a43b8061ff4f1a89 # v7
         with:
           version: latest
           args: release --clean
@@ -127,7 +127,7 @@ jobs:
             -product-version="$($versionParts[0]).$($versionParts[1]).$($versionParts[2])"
 
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@e435ccd777264be153ace6237001ef4d979d3a7a # v6
+        uses: goreleaser/goreleaser-action@5daf1e915a5f0af01ddbcd89a43b8061ff4f1a89 # v7
         with:
           version: latest
           args: release -f .goreleaser.windows.yml --clean
