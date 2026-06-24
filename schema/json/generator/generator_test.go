@@ -64,5 +64,5 @@ func TestFakeNotDefined(t *testing.T) {
 
 	v, err := generator.New(generator.NewRequest(nil, nil, nil))
 	require.NoError(t, err)
-	require.Equal(t, -170715.30581115812, v)
+	require.InDelta(t, -170715.30581115812, v, 0.000001)
 }

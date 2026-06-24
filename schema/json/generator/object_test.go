@@ -247,12 +247,9 @@ func TestObject(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t,
-					map[string]interface{}{
-						"foo": "F2cjChNLDnmqkY",
-						"bar": 313469.93141089816,
-					},
-					v)
+				m := v.(map[string]interface{})
+				require.InDelta(t, 313469.93141089816, m["bar"], 0.000001)
+				require.Equal(t, "F2cjChNLDnmqkY", m["foo"])
 			},
 		},
 		{

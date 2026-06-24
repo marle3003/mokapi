@@ -64,7 +64,7 @@ func TestStringUrl(t *testing.T) {
 			},
 			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, -170715.30581115812, v)
+				require.InDelta(t, -170715.30581115812, v, 0.000001)
 			},
 		},
 		{

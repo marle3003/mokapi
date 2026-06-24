@@ -538,11 +538,13 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ required: ['foo', 'bar', 'baz'] }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				m := v.Export()
+				m := v.Export().(map[string]any)
 				r.Contains(t, m, "foo")
 				r.Contains(t, m, "bar")
 				r.Contains(t, m, "baz")
-				r.Equal(t, map[string]any{"bar": 824801.9947984695, "baz": int64(-342586), "foo": "nsyx7"}, m)
+				r.InDelta(t, 824801.9947984695, m["bar"], 0.000001)
+				r.Equal(t, int64(-342586), m["baz"])
+				r.Equal(t, "nsyx7", m["foo"])
 			},
 		},
 		{

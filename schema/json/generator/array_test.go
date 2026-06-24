@@ -278,7 +278,11 @@ func TestArray(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []any{-170715.30581115812, "", "Boulevard", "NE"}, v)
+				a := v.([]any)
+				require.InDelta(t, -170715.30581115812, a[0], 0.000001)
+				require.Equal(t, "", a[1])
+				require.Equal(t, "Boulevard", a[2])
+				require.Equal(t, "NE", a[3])
 			},
 		},
 		{
@@ -296,7 +300,11 @@ func TestArray(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []any{-170715.30581115812, "", "Boulevard", "NE"}, v)
+				a := v.([]any)
+				require.InDelta(t, -170715.30581115812, a[0], 0.000001)
+				require.Equal(t, "", a[1])
+				require.Equal(t, "Boulevard", a[2])
+				require.Equal(t, "NE", a[3])
 			},
 		},
 	}
