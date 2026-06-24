@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,7 +23,7 @@ func TestIt(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "parameter not initialized", v)
+				require.Equal(t, "error", v)
 			},
 		},
 		{
@@ -33,7 +33,7 @@ func TestIt(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "parameter not initialized", v)
+				require.Equal(t, "error", v)
 			},
 		},
 		{
@@ -44,7 +44,7 @@ func TestIt(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "corporatevirtual.com", v)
+				require.Equal(t, "central24-7.biz", v)
 			},
 		},
 	}
@@ -74,7 +74,7 @@ func TestStringHash(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "54686520636f6d70616e7920736d656c6c2eda39a3ee5e6b4b0d3255bfef95601890afd80709", v)
+				require.Equal(t, "50726f74656374207468652068616e6420756e6465722063757465206c6f61642eda39a3ee5e6b4b0d3255bfef95601890afd80709", v)
 			},
 		},
 		{
@@ -84,7 +84,7 @@ func TestStringHash(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "parameter not initialized", v)
+				require.Equal(t, "error", v)
 			},
 		},
 	}
@@ -120,7 +120,7 @@ func TestUser(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Lockman7291", v)
+				require.Equal(t, "Deanna.Elliott", v)
 			},
 		},
 		{
@@ -132,11 +132,11 @@ func TestUser(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"email":     "shanelle.wehner@internationaldeliver.info",
-						"firstname": "Shanelle",
-						"gender":    "male",
-						"lastname":  "Wehner",
-						"username":  "swehner",
+						"email":     "annalise.hermann@salesmorph.name",
+						"firstname": "Annalise",
+						"gender":    "female",
+						"lastname":  "Hermann",
+						"username":  "ahermann",
 					},
 					v)
 			},
@@ -160,7 +160,7 @@ func TestUser(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "F*XR4@jwLY9", v)
+				require.Equal(t, "zPmhSJc2b*Y", v)
 			},
 		},
 	}

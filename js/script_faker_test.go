@@ -8,7 +8,7 @@ import (
 	"mokapi/schema/json/generator"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	r "github.com/stretchr/testify/require"
 )
 
@@ -28,7 +28,7 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				r.Equal(t, "XidZuoWq ", v.String())
+				r.Equal(t, "fnsy", v.String())
 			},
 		},
 		{
@@ -42,7 +42,7 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				r.Equal(t, int64(-168643), v.Export())
+				r.Equal(t, "fg", v.Export())
 			},
 		},
 		{
@@ -69,7 +69,7 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				r.Equal(t, "5", v.String())
+				r.Equal(t, "9", v.String())
 			},
 		},
 		{
@@ -124,7 +124,7 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				r.Equal(t, "bar", v.String())
+				r.Equal(t, "foo", v.String())
 			},
 		},
 		{
@@ -155,7 +155,7 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 				b, err := json.Marshal(v)
 				r.NoError(t, err)
-				r.Equal(t, `{"id":98266}`, string(b))
+				r.Equal(t, `{"id":89589}`, string(b))
 			},
 		},
 		{

@@ -1,12 +1,13 @@
 package js_test
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	r "github.com/stretchr/testify/require"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
 	"mokapi/js/jstest"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v7"
+	r "github.com/stretchr/testify/require"
 )
 
 func Test_Mustache(t *testing.T) {
@@ -54,7 +55,7 @@ func Test_Mustache(t *testing.T) {
 
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				r.Equal(t, "Markus has 7 apples", v.String())
+				r.Equal(t, "Priscilla has 7 apples", v.String())
 			},
 		},
 	}

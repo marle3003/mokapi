@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,10 +29,10 @@ func TestPerson(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
-					"firstname": "Zoey",
-					"lastname":  "Nguyen",
+					"firstname": "Aria",
+					"lastname":  "Hernandez",
 					"gender":    "female",
-					"email":     "zoey.nguyen@internationaldeliver.info",
+					"email":     "aria.hernandez@salesmorph.name",
 				}, v)
 			},
 		},
@@ -45,10 +45,10 @@ func TestPerson(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
-					"firstname": "Zoey",
+					"firstname": "Aria",
 					"gender":    "female",
-					"lastname":  "Nguyen",
-					"email":     "zoey.nguyen@internationaldeliver.info",
+					"lastname":  "Hernandez",
+					"email":     "aria.hernandez@salesmorph.name",
 				}, v)
 			},
 		},
@@ -63,7 +63,7 @@ func TestPerson(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Zoey Nguyen"}, v)
+				require.Equal(t, map[string]interface{}{"name": "Aria Hernandez"}, v)
 			},
 		},
 		{
@@ -80,9 +80,9 @@ func TestPerson(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
-					"firstname": "Zoey",
-					"lastname":  "Nguyen",
-					"name":      "Zoey Nguyen",
+					"firstname": "Aria",
+					"lastname":  "Hernandez",
+					"name":      "Aria Hernandez",
 				}, v)
 			},
 		},
@@ -100,9 +100,9 @@ func TestPerson(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
-					"firstname": "Gabriel",
-					"lastname":  "Clark",
-					"sex":       "male",
+					"firstname": "Emily",
+					"lastname":  "Jones",
+					"sex":       "female",
 				}, v)
 			},
 		},
@@ -126,15 +126,15 @@ func TestPerson(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
 					"contact": map[string]interface{}{
-						"email": "anthony.clark@legacyb2b.net",
-						"phone": "+61350186146"},
-					"email":     "anthony.clark@dynamiccommunities.io",
-					"firstname": "Anthony",
-					"gender":    "male",
-					"lastname":  "Clark",
-					"phone":     "+61810936489301",
-					"sex":       "male",
-					"username":  "aclark",
+						"email": "riley.jones@vicee-markets.com",
+						"phone": "+15144065319"},
+					"email":     "riley.jones@groupschemas.com",
+					"firstname": "Riley",
+					"gender":    "female",
+					"lastname":  "Jones",
+					"phone":     "+20524193600225",
+					"sex":       "female",
+					"username":  "rjones",
 				}, v)
 			},
 		},
@@ -153,12 +153,10 @@ func TestPerson(t *testing.T) {
 			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{
-					map[string]any{"name": "Gabriel Adams"},
-					map[string]any{"name": "Ella Torres"},
-					map[string]any{"name": "Penelope Jackson"},
-					map[string]any{"name": "Michael Carter"},
-					map[string]any{"name": "Jackson Green"},
-					map[string]any{"name": "Liam Gonzalez"},
+					map[string]any{"name": "Emily Nelson"},
+					map[string]any{"name": "Aiden Garcia"},
+					map[string]any{"name": "Sebastian Wright"},
+					map[string]any{"name": "Sophia Wilson"},
 				},
 					v)
 			},
@@ -166,22 +164,17 @@ func TestPerson(t *testing.T) {
 		{
 			name: "persons as any",
 			req: &Request{
-				Path: []string{"persons"},
+				Path:   []string{"persons"},
+				Schema: schematest.NewTypes(nil, schematest.WithMinItems(1)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{
-					map[string]interface{}{
-						"email":     "gabriel.adams@futurecultivate.biz",
-						"firstname": "Gabriel",
-						"gender":    "male",
-						"lastname":  "Adams",
-					},
-					map[string]interface{}{
-						"email":     "penelope.jackson@directembrace.biz",
-						"firstname": "Penelope",
+					map[string]any{
+						"email":     "emily.nelson@directend-to-end.com",
+						"firstname": "Emily",
 						"gender":    "female",
-						"lastname":  "Jackson",
+						"lastname":  "Nelson",
 					},
 				}, v)
 			},
@@ -193,7 +186,7 @@ func TestPerson(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"email": "porterkiehn@gerhold.name", "phone": "+28829109"}, v)
+				require.Equal(t, map[string]interface{}{"email": "kbryant57@berge.biz", "phone": "+992824193"}, v)
 			},
 		},
 		{
@@ -203,7 +196,7 @@ func TestPerson(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "+28829109", v)
+				require.Equal(t, "+992824193", v)
 			},
 		},
 		{
@@ -214,7 +207,7 @@ func TestPerson(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "+28829109", v)
+				require.Equal(t, "+992824193", v)
 			},
 		},
 		{
@@ -225,7 +218,7 @@ func TestPerson(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "+28829109", v)
+				require.Equal(t, "+992824193", v)
 			},
 		},
 		{
@@ -236,7 +229,7 @@ func TestPerson(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, false, v)
+				require.Equal(t, true, v)
 			},
 		},
 		{
@@ -247,7 +240,7 @@ func TestPerson(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "znguyen", v)
+				require.Equal(t, "ahernandez", v)
 			},
 		},
 		{
@@ -262,7 +255,7 @@ func TestPerson(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"firstname": "Zoey", "lastname": "Nguyen"}, v)
+				require.Equal(t, map[string]interface{}{"firstname": "Aria", "lastname": "Hernandez"}, v)
 			},
 		},
 		{
@@ -303,13 +296,11 @@ func TestPerson(t *testing.T) {
 			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{
-					map[string]any{"firstname": "Gabriel", "title": "Dr."},
-					map[string]any{"firstname": "Ella", "title": "Miss"},
-					map[string]any{"firstname": "Penelope", "title": "Ms."},
-					map[string]any{"firstname": "Michael", "title": "Rev."},
-					map[string]any{"firstname": "Jackson", "title": "Mx."},
-					map[string]any{"firstname": "Liam", "title": "Prof."},
-					map[string]any{"firstname": "Thomas", "title": "Mr."},
+					map[string]any{"firstname": "Emily", "title": "Mrs."},
+					map[string]any{"firstname": "Aiden", "title": "Mx."},
+					map[string]any{"firstname": "Sebastian", "title": "Rev."},
+					map[string]any{"firstname": "Sophia", "title": "Dr."},
+					map[string]any{"firstname": "John", "title": "Prof."},
 				}, v)
 			},
 		},
@@ -332,13 +323,11 @@ func TestPerson(t *testing.T) {
 			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []any{
-					map[string]any{"alias": "H. Robinson", "firstname": "Hudson", "lastname": "Robinson", "sex": "male", "username": "hrobinson"},
-					map[string]any{"alias": "J. Nelson", "firstname": "Jayden", "lastname": "Nelson", "sex": "male", "username": "jnelson"},
-					map[string]any{"alias": "A. Walker", "firstname": "Aria", "lastname": "Walker", "sex": "female", "username": "awalker"},
-					map[string]any{"alias": "M. Johnson", "firstname": "Maverick", "lastname": "Johnson", "sex": "male", "username": "mjohnson"},
-					map[string]any{"alias": "E. Mitchell", "firstname": "Emilia", "lastname": "Mitchell", "sex": "female", "username": "emitchell"},
-					map[string]any{"alias": "E. Lopez", "firstname": "Elizabeth", "lastname": "Lopez", "sex": "female", "username": "elopez"},
-					map[string]any{"alias": "I. Martinez", "firstname": "Isabella", "lastname": "Martinez", "sex": "female", "username": "imartinez"},
+					map[string]interface{}{"alias": "L. Jackson", "firstname": "Leah", "lastname": "Jackson", "sex": "female", "username": "ljackson"},
+					map[string]interface{}{"alias": "M. Hernandez", "firstname": "Mia", "lastname": "Hernandez", "sex": "female", "username": "mhernandez"},
+					map[string]interface{}{"alias": "V. Carter", "firstname": "Violet", "lastname": "Carter", "sex": "female", "username": "vcarter"},
+					map[string]interface{}{"alias": "C. Jones", "firstname": "Camila", "lastname": "Jones", "sex": "female", "username": "cjones"},
+					map[string]interface{}{"alias": "W. Anderson", "firstname": "Wyatt", "lastname": "Anderson", "sex": "male", "username": "wanderson"},
 				}, v)
 			},
 		},
@@ -354,7 +343,7 @@ func TestPerson(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"firstname": "Zoey", "fullName": "Zoey Nguyen", "name": "Zoey Nguyen"}, v)
+				require.Equal(t, map[string]interface{}{"firstname": "Aria", "fullName": "Aria Hernandez", "name": "Aria Hernandez"}, v)
 			},
 		},
 
@@ -370,7 +359,7 @@ func TestPerson(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"firstName": "Zoey", "name": "Zoey Nguyen"}, v)
+				require.Equal(t, map[string]interface{}{"firstName": "Aria", "name": "Aria Hernandez"}, v)
 			},
 		},
 		{
@@ -385,7 +374,7 @@ func TestPerson(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"firstName2": "Ann", "name": "Stella Ann Adams"}, v)
+				require.Equal(t, map[string]interface{}{"firstName2": "Drew", "name": "Emily Drew Nelson"}, v)
 			},
 		},
 		{
@@ -398,7 +387,7 @@ func TestPerson(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"Z. Nguyen", "Z. N."}, v)
+				require.Equal(t, []interface{}{"A. Hernandez", "A. H."}, v)
 			},
 		},
 	}

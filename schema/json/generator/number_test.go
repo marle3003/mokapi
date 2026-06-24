@@ -4,7 +4,7 @@ import (
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
 )
 
@@ -24,7 +24,7 @@ func TestNumber(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 6.095916352063622, v)
+				require.Equal(t, 7.509838941801037, v)
 			},
 		},
 		{
@@ -38,7 +38,7 @@ func TestNumber(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 4.2, v)
+				require.Equal(t, float64(0), v)
 			},
 		},
 		{
@@ -50,7 +50,7 @@ func TestNumber(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 165.9, v)
+				require.Equal(t, 18.900000000000002, v)
 			},
 		},
 		{
@@ -63,7 +63,7 @@ func TestNumber(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(6), v)
+				require.Equal(t, int64(8), v)
 			},
 		},
 		{
@@ -77,7 +77,7 @@ func TestNumber(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(3), v)
+				require.Equal(t, int64(0), v)
 			},
 		},
 		{
@@ -89,7 +89,7 @@ func TestNumber(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(237), v)
+				require.Equal(t, int64(27), v)
 				require.Equal(t, 3925, 11775/3)
 			},
 		},
@@ -101,39 +101,40 @@ func TestNumber(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "80291093648", v)
+				require.Equal(t, "13282419360", v)
 			},
 		},
 		{
 			name: "partyNumbers",
 			req: &Request{
-				Path: []string{"partyNumbers"},
+				Path:   []string{"partyNumbers"},
+				Schema: schematest.NewTypes(nil, schematest.WithMinItems(1)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"22910936489", "71180573501"}, v)
+				require.Equal(t, []interface{}{"32824193600"}, v)
 			},
 		},
 		{
 			name: "partyNumbers as array",
 			req: &Request{
 				Path:   []string{"partyNumbers"},
-				Schema: schematest.New("array", schematest.WithItems("string")),
+				Schema: schematest.New("array", schematest.WithItems("string"), schematest.WithMinItems(1)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"22910936489", "71180573501"}, v)
+				require.Equal(t, []interface{}{"32824193600"}, v)
 			},
 		},
 		{
 			name: "partyNumber as array",
 			req: &Request{
 				Path:   []string{"partyNumber"},
-				Schema: schematest.New("array", schematest.WithItems("string")),
+				Schema: schematest.New("array", schematest.WithItems("string"), schematest.WithMinItems(1)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"22910936489", "71180573501"}, v)
+				require.Equal(t, []interface{}{"32824193600"}, v)
 			},
 		},
 		{
@@ -148,7 +149,7 @@ func TestNumber(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Len(t, v, 8)
-				require.Equal(t, "80291093", v)
+				require.Equal(t, "53282419", v)
 			},
 		},
 		{
@@ -159,7 +160,7 @@ func TestNumber(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "44f4ae5d-233e-4f89-ae02-126591065f49", v)
+				require.Equal(t, "ce702a60-0f08-4819-bcd4-0907c044ad5c", v)
 			},
 		},
 		{
@@ -173,7 +174,7 @@ func TestNumber(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "7291093", v)
+				require.Equal(t, "3282", v)
 			},
 		},
 	}
@@ -201,7 +202,7 @@ func TestYear(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(1926), v)
+				require.Equal(t, int64(1929), v)
 			},
 		},
 		{
@@ -212,7 +213,7 @@ func TestYear(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(1926), v)
+				require.Equal(t, int64(1929), v)
 			},
 		},
 		{
@@ -223,7 +224,7 @@ func TestYear(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(2196), v)
+				require.Equal(t, int64(2010), v)
 			},
 		},
 		{
@@ -237,7 +238,7 @@ func TestYear(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(2016), v)
+				require.Equal(t, int64(1995), v)
 			},
 		},
 	}
@@ -266,7 +267,7 @@ func TestQuantity(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(79), v)
+				require.Equal(t, int64(9), v)
 			},
 		},
 		{
@@ -280,7 +281,7 @@ func TestQuantity(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(23), v)
+				require.Equal(t, int64(5), v)
 			},
 		},
 	}

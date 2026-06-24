@@ -1,7 +1,7 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"strings"
 )
 

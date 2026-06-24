@@ -4,7 +4,7 @@ import (
 	"mokapi/schema/json/schema"
 	"time"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 )
 
 var (
@@ -77,21 +77,21 @@ func fakeFormat(s *schema.Schema) (interface{}, error) {
 	case "time":
 		return date().Format("15:04:05Z07:00"), nil
 	case "password":
-		return gofakeit.Generate("{password}"), nil
+		return gofakeit.Generate("{password}")
 	case "email":
-		return gofakeit.Generate("{email}"), nil
+		return gofakeit.Generate("{email}")
 	case "uuid":
-		return gofakeit.Generate("{uuid}"), nil
+		return gofakeit.Generate("{uuid}")
 	case "uri":
-		return gofakeit.Generate("{url}"), nil
+		return gofakeit.Generate("{url}")
 	case "hostname":
-		return gofakeit.Generate("{domainname}"), nil
+		return gofakeit.Generate("{domainname}")
 	case "ipv4":
-		return gofakeit.Generate("{ipv4address}"), nil
+		return gofakeit.Generate("{ipv4address}")
 	case "ipv6":
-		return gofakeit.Generate("{ipv6address}"), nil
+		return gofakeit.Generate("{ipv6address}")
 	default:
-		return gofakeit.Generate(s.Format), nil
+		return gofakeit.Generate(s.Format)
 	}
 }
 

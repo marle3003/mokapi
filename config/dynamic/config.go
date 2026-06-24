@@ -7,7 +7,7 @@ import (
 	"sync"
 	"text/template"
 
-	"github.com/Masterminds/sprig"
+	"github.com/go-sprout/sprout/sprigin"
 )
 
 type Event int
@@ -199,8 +199,7 @@ func (r *Refs) Remove(ref *Config) {
 func renderTemplate(b []byte) ([]byte, error) {
 	content := string(b)
 
-	funcMap := sprig.TxtFuncMap()
-	funcMap["extractUsername"] = extractUsername
+	funcMap := sprigin.FuncMap()
 	tmpl := template.New("").Funcs(funcMap)
 
 	tmpl, err := tmpl.Parse(content)

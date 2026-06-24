@@ -4,7 +4,7 @@ import (
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +22,7 @@ func TestCurrency(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "BYR", v)
+				require.Equal(t, "BIF", v)
 			},
 		},
 		{
@@ -33,7 +33,7 @@ func TestCurrency(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"code": "BYR", "name": "Belarus Ruble"}, v)
+				require.Equal(t, map[string]interface{}{"code": "BIF", "name": "Burundi Franc"}, v)
 			},
 		},
 		{
@@ -48,7 +48,7 @@ func TestCurrency(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"code": "BYR", "name": "Belarus Ruble"}, v)
+				require.Equal(t, map[string]interface{}{"code": "BIF", "name": "Burundi Franc"}, v)
 			},
 		},
 		{
@@ -59,7 +59,7 @@ func TestCurrency(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 609591.63, v)
+				require.Equal(t, 750983.89, v)
 			},
 		},
 		{
@@ -70,7 +70,7 @@ func TestCurrency(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 60.34, v)
+				require.Equal(t, 74.34, v)
 			},
 		},
 		{
@@ -87,9 +87,9 @@ func TestCurrency(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
-					"currency":     "MAD",
-					"currencyName": "Morocco Dirham",
-					"value":        int64(118148),
+					"currency":     "HTG",
+					"currencyName": "Haiti Gourde",
+					"value":        int64(98999),
 				}, v)
 			},
 		},
@@ -107,9 +107,9 @@ func TestCurrency(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
-					"currency":     "MAD",
-					"currencyName": "Morocco Dirham",
-					"amount":       609591.63,
+					"currency":     "HTG",
+					"currencyName": "Haiti Gourde",
+					"amount":       750983.89,
 				}, v)
 			},
 		},
@@ -123,7 +123,7 @@ func TestCurrency(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
-					"credit_card": float64(2291093648930118),
+					"credit_card": 4.28241936002255e+14,
 				}, v)
 			},
 		},
@@ -137,7 +137,7 @@ func TestCurrency(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
-					"creditCard": float64(2291093648930118),
+					"creditCard": 4.28241936002255e+14,
 				}, v)
 			},
 		},

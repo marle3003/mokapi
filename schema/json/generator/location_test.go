@@ -1,10 +1,11 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v7"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLocation(t *testing.T) {
@@ -21,7 +22,7 @@ func TestLocation(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Slovenia", v)
+				require.Equal(t, "Benin", v)
 			},
 		},
 		{
@@ -33,7 +34,7 @@ func TestLocation(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "SI", v)
+				require.Equal(t, "BJ", v)
 			},
 		},
 		{
@@ -45,7 +46,7 @@ func TestLocation(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "si", v)
+				require.Equal(t, "bj", v)
 			},
 		},
 		{
@@ -68,7 +69,7 @@ func TestLocation(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Slovenia", v)
+				require.Equal(t, "Benin", v)
 			},
 		},
 		{
@@ -79,7 +80,7 @@ func TestLocation(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Slovenia", v)
+				require.Equal(t, "Benin", v)
 			},
 		},
 	}

@@ -1,6 +1,6 @@
 package generator
 
-import "github.com/brianvoe/gofakeit/v6"
+import "github.com/brianvoe/gofakeit/v7"
 
 func companyNodes() []*Node {
 	return []*Node{
