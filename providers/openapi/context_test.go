@@ -4,10 +4,10 @@ import (
 	"mokapi/media"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
+	"mokapi/schema/json/generator"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v6"
 	"github.com/stretchr/testify/require"
 )
 
@@ -116,7 +116,7 @@ func TestContentTypeFromRequest(t *testing.T) {
 				require.NotNil(t, ct)
 				require.NotNil(t, mt)
 				require.NoError(t, err)
-				require.Equal(t, "image/x-xpixmap", ct.String())
+				require.Equal(t, "image/x-xbm", ct.String())
 			},
 		},
 		{
@@ -126,7 +126,7 @@ func TestContentTypeFromRequest(t *testing.T) {
 				require.NotNil(t, ct)
 				require.NotNil(t, mt)
 				require.NoError(t, err)
-				require.Equal(t, "image/x-xpixmap", ct.String())
+				require.Equal(t, "image/x-xbm", ct.String())
 			},
 		},
 		{
@@ -187,7 +187,7 @@ func TestContentTypeFromRequest(t *testing.T) {
 		test := testcase
 		t.Run(test.accept, func(t *testing.T) {
 			media.SetFaker(11)
-			gofakeit.SetGlobalFaker(gofakeit.New(11))
+			generator.Seed(11)
 
 			r := httptest.NewRequest("GET", "http://foo", nil)
 			r.Header.Add("accept", test.accept)

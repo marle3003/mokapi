@@ -1,10 +1,11 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v7"
+	"github.com/stretchr/testify/require"
 )
 
 func TestKey(t *testing.T) {
@@ -21,7 +22,7 @@ func TestKey(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "44f4ae5d-233e-4f89-ae02-126591065f49", v)
+				require.Equal(t, "ce702a60-0f08-4819-bcd4-0907c044ad5c", v)
 			},
 		},
 		{
@@ -45,7 +46,7 @@ func TestKey(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "44f4ae5d-233e-4f89-ae02-126591065f49", v)
+				require.Equal(t, "ce702a60-0f08-4819-bcd4-0907c044ad5c", v)
 			},
 		},
 		{
@@ -59,7 +60,7 @@ func TestKey(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "7291093", v)
+				require.Equal(t, "3282", v)
 			},
 		},
 	}

@@ -6,7 +6,7 @@ import (
 	"mokapi/schema/json/schema"
 	"strings"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 )
 
 const (

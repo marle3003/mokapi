@@ -4,7 +4,7 @@ import (
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +22,7 @@ func TestStringDescription(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Ourselves whomever wade regularly you how theirs these tomorrow staff gloves wow then opposite conclude those abroad she stop mob a rubbish mob as.", v)
+				require.Equal(t, "Protect the hand under cute load.", v)
 			},
 		},
 		{
@@ -35,7 +35,7 @@ func TestStringDescription(t *testing.T) {
 				require.NoError(t, err)
 				s := v.(string)
 				require.Less(t, len(s), 51)
-				require.Equal(t, "Say just these run whose foot this least.", v)
+				require.Equal(t, "Protect the hand under cute load.", v)
 			},
 		},
 		{
@@ -46,7 +46,7 @@ func TestStringDescription(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Ourselves whomever wade regularly you how theirs these tomorrow staff gloves wow then opposite conclude those abroad she stop mob a rubbish mob as.", v)
+				require.Equal(t, "Protect the hand under cute load.", v)
 			},
 		},
 	}
@@ -76,7 +76,7 @@ func TestCategory(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Fitness", v)
+				require.Equal(t, "Apps", v)
 			},
 		},
 		{
@@ -87,7 +87,7 @@ func TestCategory(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Data", v)
+				require.Equal(t, "Tech", v)
 			},
 		},
 	}

@@ -31,7 +31,7 @@ func TestService_Run_Fake(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-				require.Equal(t, "P8", r.Result)
+				require.Equal(t, "g9NiRgiFeRO", r.Result)
 			},
 		},
 		{
@@ -45,7 +45,7 @@ func TestService_Run_Fake(t *testing.T) {
 					},
 				)
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "P8"}, r.Result)
+				require.Equal(t, map[string]interface{}{"foo": "g9NiRgiFeRO"}, r.Result)
 			},
 		},
 		{
@@ -99,7 +99,7 @@ mokapi.fake(operation.messages[0].payload)
 				require.IsType(t, map[string]any{}, r.Result)
 				data := r.Result.(map[string]any)
 				require.Equal(t, map[string]any{
-					"foo": "P8",
+					"foo": "g9NiRgiFeRO",
 				}, data)
 			},
 		},

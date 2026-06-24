@@ -2,8 +2,6 @@ package js_test
 
 import (
 	"fmt"
-	"github.com/dop251/goja"
-	r "github.com/stretchr/testify/require"
 	"mokapi/config/dynamic"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
@@ -13,6 +11,9 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/dop251/goja"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestRequire(t *testing.T) {
@@ -177,7 +178,7 @@ func TestRequire(t *testing.T) {
 				r.NoError(t, err)
 
 				_, err = s.RunDefault()
-				r.EqualError(t, err, "loaded module https://foo.bar contains error: ReferenceError: foo is not defined at https://foo.bar:1:38(1) at mokapi/js/require.(*module).require-fm (native)")
+				r.EqualError(t, err, "loaded module https://foo.bar contains error: ReferenceError: foo is not defined at https://foo.bar:1:0(1) at mokapi/js/require.(*module).require-fm (native)")
 			},
 		},
 		{

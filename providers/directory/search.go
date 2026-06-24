@@ -16,7 +16,7 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -62,7 +62,6 @@ func inferMatchingRule(syntaxOID string) string {
 	}
 	return "caseExactMatch"
 }
-
 
 func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 	msg := r.Message.(*ldap.SearchRequest)
