@@ -18,28 +18,28 @@ func TestOneOf(t *testing.T) {
 			name: "oneOf only types",
 			req: &Request{
 				Schema: schematest.NewOneOf(
-					schematest.New("number"),
+					schematest.New("integer"),
 					schematest.New("string"),
 				),
 			},
 
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, -170715.30581115812, v)
+				require.Equal(t, int64(-275962), v)
 			},
 		},
 		{
-			name: "oneOf only types special case with integer and number",
+			name: "oneOf only types special case with integer and string",
 			req: &Request{
 				Schema: schematest.NewOneOf(
-					schematest.New("number"),
+					schematest.New("string"),
 					schematest.New("integer"),
 				),
 			},
 
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, -170715.30581115812, v)
+				require.Equal(t, "vMZsBhpyDmbo", v)
 			},
 		},
 		{

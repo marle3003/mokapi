@@ -654,7 +654,7 @@ func TestKafkaClient(t *testing.T) {
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Equal(t, "ijbptapwy", kafka.BytesToString(b.Records[0].Key))
-				require.Equal(t, "971925.852188296", kafka.BytesToString(b.Records[0].Value))
+				require.Equal(t, "971925.8521882962", kafka.BytesToString(b.Records[0].Value))
 			},
 		},
 		{

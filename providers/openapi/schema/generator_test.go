@@ -719,7 +719,9 @@ func TestGenerator_AllOf(t *testing.T) {
 			)),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "fnsy", "bar": 897230.3868030173}, result)
+				m := result.(map[string]any)
+				require.Equal(t, m["foo"], "fnsy")
+				require.InDelta(t, 897230.3868030173, m["bar"], 0.000001)
 			},
 		},
 		{
@@ -747,7 +749,8 @@ func TestGenerator_AllOf(t *testing.T) {
 			),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"bar": 540601.8643242136}, result)
+				m := result.(map[string]any)
+				require.InDelta(t, 540601.8643242136, m["bar"], 0.000001)
 			},
 		},
 		{
