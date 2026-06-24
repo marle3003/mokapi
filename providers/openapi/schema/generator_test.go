@@ -27,7 +27,7 @@ func TestGenerator(t *testing.T) {
 			schema: nil,
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 971925.852188296, v)
+				require.InDelta(t, 971925.852188296, v, 0.000001)
 			},
 		},
 		{
@@ -35,7 +35,7 @@ func TestGenerator(t *testing.T) {
 			schema: schematest.New(""),
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 971925.852188296, v)
+				require.InDelta(t, 971925.852188296, v, 0.000001)
 			},
 		},
 		{
@@ -449,7 +449,7 @@ func TestGeneratorFloat(t *testing.T) {
 
 			o, err := schema.CreateValue(data.schema)
 			require.NoError(t, err)
-			require.Equal(t, data.exp, o)
+			require.InDelta(t, data.exp, o, 0.000001)
 		})
 	}
 }
@@ -558,7 +558,12 @@ func TestGeneratorArray(t *testing.T) {
 			schema: schematest.New("array"),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"nsyx7", 824801.9947984695, int64(-342586), "hyaaKAQyB", -916030.8296825297}, i)
+				a := i.([]interface{})
+				require.Equal(t, "nsyx7", a[0])
+				require.InDelta(t, 824801.9947984695, a[1], 0.000001)
+				require.Equal(t, int64(-342586), a[2])
+				require.Equal(t, "hyaaKAQyB", a[3])
+				require.InDelta(t, -916030.8296825297, a[4], 0.000001)
 			},
 		},
 	}

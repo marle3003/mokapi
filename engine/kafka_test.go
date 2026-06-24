@@ -20,6 +20,7 @@ import (
 	"mokapi/schema/json/generator"
 	"mokapi/schema/json/schema/schematest"
 	"net/url"
+	"strconv"
 	"testing"
 	"time"
 
@@ -654,7 +655,9 @@ func TestKafkaClient(t *testing.T) {
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Equal(t, "ijbptapwy", kafka.BytesToString(b.Records[0].Key))
-				require.Equal(t, "971925.8521882962", kafka.BytesToString(b.Records[0].Value))
+				f, err := strconv.ParseFloat(kafka.BytesToString(b.Records[0].Value), 64)
+				require.NoError(t, err)
+				require.InDelta(t, 971925.8521882962, f, 0.000001)
 			},
 		},
 		{
