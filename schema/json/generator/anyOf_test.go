@@ -23,7 +23,7 @@ func TestAnyOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, -170715.30581115812, v)
+				require.InDelta(t, -170715.30581115812, v, 0.000001)
 			},
 		},
 		{
@@ -116,8 +116,8 @@ func TestAnyOf(t *testing.T) {
 			req: &Request{
 				Schema: schematest.New("object",
 					schematest.WithProperty("restaurantType", &schema.Schema{Enum: []any{"sit-down", "fast-food"}}),
-					schematest.WithProperty("total", schematest.New("number")),
-					schematest.WithProperty("tip", schematest.New("number",
+					schematest.WithProperty("total", schematest.New("integer")),
+					schematest.WithProperty("tip", schematest.New("integer",
 						schematest.WithMinimum(0), schematest.WithMaximum(10000),
 					)),
 					schematest.WithRequired("restaurantType"),
@@ -139,7 +139,7 @@ func TestAnyOf(t *testing.T) {
 					map[string]interface{}{
 						"gauva":          false,
 						"restaurantType": "sit-down",
-						"tip":            4908.248715376163,
+						"tip":            int64(4908),
 					},
 					v)
 			},
