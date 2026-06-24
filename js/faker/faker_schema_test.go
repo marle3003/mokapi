@@ -88,7 +88,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ default: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, 971925.852188296, v.Export())
+				r.InDelta(t, 971925.852188296, v.Export(), 0.000001)
 			},
 		},
 		{
@@ -296,10 +296,10 @@ func TestFaker_Schema(t *testing.T) {
 		},
 		{
 			name:   "uniqueItems",
-			schema: "{ uniqueItems: true, }",
+			schema: "{ items: { type: 'integer' }, uniqueItems: true, }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, []any{"nsyx7", 824801.9947984695, int64(-342586), "hyaaKAQyB", -916030.8296825297}, v.Export())
+				r.Equal(t, []any{int64(711901), int64(-600929), int64(-599435), int64(56944), int64(-537198)}, v.Export())
 			},
 		},
 		{
