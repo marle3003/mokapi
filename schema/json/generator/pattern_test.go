@@ -2,10 +2,11 @@ package generator
 
 import (
 	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v7"
+	"github.com/stretchr/testify/require"
 )
 
 func TestPattern(t *testing.T) {
@@ -25,7 +26,7 @@ func TestPattern(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "80364891092", v)
+				require.Equal(t, "8026409319", v)
 			},
 		},
 		{
@@ -52,7 +53,7 @@ func TestPattern(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "cqoABWTL", v)
+				require.Equal(t, "cqopBLWT2", v)
 			},
 		},
 		{
@@ -91,7 +92,7 @@ func TestPattern(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "auR@j\\Cc\\8J\\UWg72G7", v)
+				require.Equal(t, "auRQ@H\\?TtUNg72G7\\XusB", v)
 			},
 		},
 		{
@@ -105,7 +106,7 @@ func TestPattern(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.GreaterOrEqual(t, len(fmt.Sprintf("%v", v)), 50)
-				require.Equal(t, "CF4au0w7SH9R@juGvgHbxY\\)AHqmk9jx7n\\*c\\*II5M\\4OpeveiwsB\\Cc\\8J\\UU\\QYKXfcKWg72G7", v)
+				require.Equal(t, "auRQ@UKCH\\?TtUNwKXfFv\\)AHqmk9jx7n\\*c\\*II5MgHbQbY38QWug72G7\\XusB", v)
 			},
 		},
 		{

@@ -4,7 +4,7 @@ import (
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
 )
 
@@ -12,7 +12,7 @@ func TestStringUrl(t *testing.T) {
 	testcases := []struct {
 		name string
 		req  *Request
-		test func(t *testing.T, v interface{}, err error)
+		test func(t *testing.T, v any, err error)
 	}{
 		{
 			name: "uri",
@@ -20,9 +20,9 @@ func TestStringUrl(t *testing.T) {
 				Path:   []string{"uri"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "http://www.regionale-enable.info/virtual/portals/redefine", v)
+				require.Equal(t, "http://www.headenvisioneer.io/24-7/mesh/functionalities", v)
 			},
 		},
 		{
@@ -30,9 +30,9 @@ func TestStringUrl(t *testing.T) {
 			req: &Request{
 				Path: []string{"uri"},
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "http://www.regionale-enable.info/virtual/portals/redefine", v)
+				require.Equal(t, "http://www.headenvisioneer.io/24-7/mesh/functionalities", v)
 			},
 		},
 		{
@@ -41,9 +41,9 @@ func TestStringUrl(t *testing.T) {
 				Path:   []string{"url"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "http://www.regionale-enable.info/virtual/portals/redefine", v)
+				require.Equal(t, "http://www.headenvisioneer.io/24-7/mesh/functionalities", v)
 			},
 		},
 		{
@@ -52,9 +52,9 @@ func TestStringUrl(t *testing.T) {
 				Path:   []string{"url"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "http://www.regionale-enable.info/virtual/portals/redefine", v)
+				require.Equal(t, "http://www.headenvisioneer.io/24-7/mesh/functionalities", v)
 			},
 		},
 		{
@@ -62,9 +62,9 @@ func TestStringUrl(t *testing.T) {
 			req: &Request{
 				Path: []string{"curl"},
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(337128), v)
+				require.InDelta(t, -170715.30581115812, v, 0.000001)
 			},
 		},
 		{
@@ -73,9 +73,9 @@ func TestStringUrl(t *testing.T) {
 				Path:   []string{"url"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "http://www.regionale-enable.info/virtual/portals/redefine", v)
+				require.Equal(t, "http://www.headenvisioneer.io/24-7/mesh/functionalities", v)
 			},
 		},
 		{
@@ -84,50 +84,52 @@ func TestStringUrl(t *testing.T) {
 				Path:   []string{"updateURL"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "http://www.regionale-enable.info/virtual/portals/redefine", v)
+				require.Equal(t, "http://www.headenvisioneer.io/24-7/mesh/functionalities", v)
 			},
 		},
 		{
 			name: "url with schema array",
 			req: &Request{
-				Path:   []string{"url"},
-				Schema: schematest.New("array", schematest.WithItems("string")),
+				Path: []string{"url"},
+				Schema: schematest.New("array",
+					schematest.WithMinItems(1),
+					schematest.WithItems("string"),
+				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{
-					"http://www.dynamicembrace.name/portals/redefine/deliver/cultivate",
-					"http://www.dynamiccommunities.io/embrace/frictionless/deploy/granular",
+				require.Equal(t, []any{
+					"http://www.directend-to-end.com/mesh",
 				}, v)
 			},
 		},
 		{
 			name: "photoUrls",
 			req: &Request{
-				Path:   []string{"photoUrls"},
-				Schema: schematest.New("array", schematest.WithItems("string")),
+				Path: []string{"photoUrls"},
+				Schema: schematest.New("array",
+					schematest.WithMinItems(1),
+					schematest.WithItems("string"),
+				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{
-					"http://www.dynamicembrace.name/portals/redefine/deliver/cultivate",
-					"http://www.dynamiccommunities.io/embrace/frictionless/deploy/granular",
+				require.Equal(t, []any{
+					"http://www.directend-to-end.com/mesh",
 				}, v)
 			},
 		},
 		{
 			name: "urls no schema",
 			req: &Request{
-				Path: []string{"urls"},
+				Path:   []string{"urls"},
+				Schema: schematest.NewTypes(nil, schematest.WithMinItems(1)),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{
-					"http://www.dynamicembrace.name/portals/redefine/deliver/cultivate",
-					"http://www.dynamiccommunities.io/embrace/frictionless/deploy/granular",
-				}, v)
+				require.Equal(t, []any{"http://www.directend-to-end.com/mesh"}, v)
 			},
 		},
 	}

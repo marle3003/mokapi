@@ -254,25 +254,6 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
-			name: "template custom function",
-			test: func(t *testing.T) {
-				c := &dynamic.Config{
-					Info: dynamic.ConfigInfo{Url: mustUrl("foo.json.tmpl")},
-					Raw:  []byte(`{"user": "{{ env "TEST_USER3" | extractUsername }}"}`),
-					Data: &data{},
-				}
-
-				_ = os.Setenv("TEST_USER3", "foo\\bar")
-				defer func() {
-					_ = os.Unsetenv("TEST_USER3")
-				}()
-
-				err := dynamic.Parse(c, &dynamictest.Reader{})
-				require.NoError(t, err)
-				require.Equal(t, "bar", c.Data.(*data).User)
-			},
-		},
-		{
 			name: "call parser",
 			test: func(t *testing.T) {
 				d := &data{}

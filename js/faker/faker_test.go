@@ -11,7 +11,7 @@ import (
 	"mokapi/schema/json/generator"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
 )
@@ -45,7 +45,7 @@ func TestModule(t *testing.T) {
 					m.fake({ type: 'string' })
 				`)
 				r.NoError(t, err)
-				r.Equal(t, "XidZuoWq ", v.Export())
+				r.Equal(t, "fnsy", v.Export())
 			},
 		},
 		{
@@ -176,7 +176,7 @@ func TestModule(t *testing.T) {
 					m.fake({ type: 'object', properties: { foo: { type: 'string' }, bar: { type: 'string' }}, additionalProperties: { type: 'string' }, required: ['foo', 'bar','x', 'y', 'z'] } )
 				`)
 				r.NoError(t, err)
-				r.Equal(t, map[string]any{"bar": "vm", "bunch": "LJgmr9arWgSfi", "foo": "Yx?vY5", "gang": "jLWxKtR4", "growth": "m", "woman": "hlD4ezlYehCIA0O", "x": "CKu", "y": "gaqpsEbkw", "z": "LuvMVE6iIqk"}, v.Export())
+				r.Equal(t, map[string]any{"bar": "aKAQyByPS<qbft", "class": "Clq kaieGDf", "fear": "itucts2mX", "foo": "yxlsTI", "heart": "qdeZwkx5", "pack": "DnQ", "trip": "VgPAl89Xbz v", "x": "IqiIQzyMKld", "y": "nI fpidfoDeHcd", "z": ""}, v.Export())
 			},
 		},
 	}

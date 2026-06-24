@@ -28,7 +28,7 @@ func TestFindByName(t *testing.T) {
 				require.Equal(t, "street", n.Name)
 				v, err := n.Fake(generator.NewRequest(nil, nil, nil))
 				require.NoError(t, err)
-				require.Equal(t, "75220 Forestborough", v)
+				require.Equal(t, "295 Estatestown", v)
 			},
 		},
 		{
@@ -39,7 +39,7 @@ func TestFindByName(t *testing.T) {
 				require.Equal(t, "street", n.Name)
 				v, err := n.Fake(generator.NewRequest(nil, nil, nil))
 				require.NoError(t, err)
-				require.Equal(t, "75220 Forestborough", v)
+				require.Equal(t, "295 Estatestown", v)
 			},
 		},
 		{
@@ -50,7 +50,7 @@ func TestFindByName(t *testing.T) {
 				require.Equal(t, "number", n.Name)
 				v, err := n.Fake(generator.NewRequest(nil, nil, nil))
 				require.NoError(t, err)
-				require.Equal(t, "375", v)
+				require.Equal(t, "62951", v)
 			},
 		},
 		{
@@ -68,7 +68,7 @@ func TestFindByName(t *testing.T) {
 				require.Equal(t, "name", n.Name)
 				v, err := n.Fake(generator.NewRequest(nil, nil, nil))
 				require.NoError(t, err)
-				require.Equal(t, "Noel", v)
+				require.Equal(t, "Edward", v)
 			},
 		},
 	}

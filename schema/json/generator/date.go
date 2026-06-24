@@ -3,7 +3,7 @@ package generator
 import (
 	"time"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 )
 
 func dates() []*Node {

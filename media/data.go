@@ -1,8 +1,8 @@
 package media
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/brianvoe/gofakeit/v6/data"
+	"github.com/brianvoe/gofakeit/v7"
+	"github.com/brianvoe/gofakeit/v7/data"
 )
 
 var faker = gofakeit.New(0)
@@ -16,11 +16,11 @@ func GetRandom(accept string) ContentType {
 	}
 
 	subtypes := types[a.Type]
-	i := faker.Rand.Intn(len(subtypes))
+	i := faker.IntN(len(subtypes))
 	return subtypes[i]
 }
 
-func SetFaker(seed int64) {
+func SetFaker(seed uint64) {
 	faker = gofakeit.New(seed)
 }
 

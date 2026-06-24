@@ -1,10 +1,11 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v7"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLanguage(t *testing.T) {
@@ -21,7 +22,7 @@ func TestLanguage(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "sm", v)
+				require.Equal(t, "bm", v)
 			},
 		},
 		{
@@ -34,7 +35,7 @@ func TestLanguage(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "sm", v)
+				require.Equal(t, "bm", v)
 			},
 		},
 		{
@@ -45,7 +46,7 @@ func TestLanguage(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "nl-BE", v)
+				require.Equal(t, "de-DE", v)
 			},
 		},
 		{
@@ -56,7 +57,7 @@ func TestLanguage(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Samoan", v)
+				require.Equal(t, "Bambara", v)
 			},
 		},
 	}

@@ -7,7 +7,7 @@ import (
 	"regexp/syntax"
 	"strings"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 )
 
 func fakePattern(r *Request) (interface{}, error) {

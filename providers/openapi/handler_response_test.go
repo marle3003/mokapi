@@ -288,7 +288,7 @@ func TestHandler_Response_Context(t *testing.T) {
 			},
 			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, rr.Code)
-				require.Equal(t, `{"id":"98173564-6619-4557-888e-65b16bb5def5"}`, rr.Body.String())
+				require.Equal(t, `{"id":"b4ddf623-4ea6-48e5-9292-541f028d1fdb"}`, rr.Body.String())
 			},
 		},
 		{
@@ -350,7 +350,7 @@ func TestHandler_Response_Context(t *testing.T) {
 			},
 			test: func(t *testing.T, rr *httptest.ResponseRecorder) {
 				require.Equal(t, http.StatusOK, rr.Code)
-				require.Equal(t, `[{"name":"foo"},{"name":"bar"},{"name":"bar"},{"name":"foo"},{"name":"foo"}]`, rr.Body.String())
+				require.Equal(t, `[{},{"name":"bar"},{"name":"bar"},{"name":"foo"},{}]`, rr.Body.String())
 			},
 		},
 	}

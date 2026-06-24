@@ -1,10 +1,11 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v7"
+	"github.com/stretchr/testify/require"
 )
 
 func TestName(t *testing.T) {
@@ -18,7 +19,7 @@ func TestName(t *testing.T) {
 			req:  &Request{Path: []string{"name"}},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Ink", v)
+				require.Equal(t, "Ivy", v)
 			},
 		},
 		{
@@ -29,7 +30,7 @@ func TestName(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Ink", v)
+				require.Equal(t, "Ivy", v)
 			},
 		},
 		{
@@ -39,7 +40,7 @@ func TestName(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Ink", v)
+				require.Equal(t, "Ivy", v)
 			},
 		},
 		{
@@ -50,7 +51,7 @@ func TestName(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Ink", v)
+				require.Equal(t, "Ivy", v)
 			},
 		},
 		{
@@ -63,7 +64,7 @@ func TestName(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Neo", v)
+				require.Equal(t, "Zen", v)
 			},
 		},
 		{
@@ -77,7 +78,7 @@ func TestName(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Apex", v)
+				require.Equal(t, "Fuse", v)
 			},
 		},
 		{
@@ -90,7 +91,7 @@ func TestName(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "TerraCove", v)
+				require.Equal(t, "Verve", v)
 			},
 		},
 		{
@@ -104,7 +105,7 @@ func TestName(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Exalt", v)
+				require.Equal(t, "Verve", v)
 			},
 		},
 		{
@@ -118,7 +119,7 @@ func TestName(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Spirit", v)
+				require.Equal(t, "Shadow", v)
 			},
 		},
 		{
@@ -131,7 +132,7 @@ func TestName(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "EchoValley", v)
+				require.Equal(t, "KaleidoSpace", v)
 			},
 		},
 		{
@@ -147,7 +148,7 @@ func TestName(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Ink", "tag": map[string]interface{}{"name": "MirageStream"}}, v)
+				require.Equal(t, map[string]interface{}{"name": "Ivy", "tag": map[string]interface{}{"name": "Jaguar"}}, v)
 			},
 		},
 	}

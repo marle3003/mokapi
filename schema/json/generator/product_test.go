@@ -1,10 +1,11 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v7"
+	"github.com/stretchr/testify/require"
 )
 
 func TestProduct(t *testing.T) {
@@ -24,7 +25,7 @@ func TestProduct(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Dash Cool Fitness Tracker"}, v)
+				require.Equal(t, map[string]interface{}{"name": "Designed Can Opener"}, v)
 			},
 		},
 		{
@@ -38,7 +39,7 @@ func TestProduct(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"description": "Daily regularly you for recline her choir insufficient poised tribe. Mustering will might annually backwards abroad finger say."}, v)
+				require.Equal(t, map[string]interface{}{"description": "Experience the comfort of the Burlap Window beast, made from enamel with a enthusiastic design. It's ideal for indoor activities and loved by collectors and cooks."}, v)
 			},
 		},
 		{
@@ -52,7 +53,7 @@ func TestProduct(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"category": "musical instruments"}, v)
+				require.Equal(t, map[string]interface{}{"category": "bathroom accessories"}, v)
 			},
 		},
 		{
@@ -66,7 +67,7 @@ func TestProduct(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"material": "stainless"}, v)
+				require.Equal(t, map[string]interface{}{"material": "burlap"}, v)
 			},
 		},
 	}
