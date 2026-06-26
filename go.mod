@@ -11,7 +11,7 @@ require (
 	github.com/dop251/goja v0.0.0-20260618133527-c9b2ea77db59
 	github.com/evanw/esbuild v0.28.1
 	github.com/fsnotify/fsnotify v1.10.1
-	github.com/go-co-op/gocron v1.37.0
+	github.com/go-co-op/gocron/v2 v2.21.2
 	github.com/go-co-op/gocron/v2 v2.21.2
 	github.com/go-git/go-git/v5 v5.19.1
 	github.com/go-sprout/sprout v1.0.3
