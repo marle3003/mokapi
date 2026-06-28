@@ -3,9 +3,10 @@ package generator
 import (
 	"crypto/sha1"
 	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
 	"strings"
 	"time"
+
+	"github.com/brianvoe/gofakeit/v7"
 )
 
 func ictNodes() []*Node {
@@ -69,7 +70,7 @@ func newHashNode() *Node {
 
 func fakeHash(_ *Request) (interface{}, error) {
 	hash := sha1.New()
-	s := gofakeit.SentenceSimple()
+	s := gofakeit.Sentence()
 	b := hash.Sum([]byte(s))
 	return fmt.Sprintf("%x", b), nil
 }

@@ -26,7 +26,7 @@ func TestArray(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []any{"lx0+fjywXKo", "jxkDng", "hbEO6wpu", "qosamhfi", "JUOvtsQ WavQ", ""}, v)
+				require.Equal(t, []any{"vMZsBhpyDmbo", "YvsVnIkdsa ", "PE5psgu", "hPH4"}, v)
 			},
 		},
 		{
@@ -57,7 +57,7 @@ func TestArray(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []any{int64(6), int64(5), int64(10), int64(8), int64(1)}, v)
+				require.Equal(t, []any{int64(5), int64(2), int64(8)}, v)
 			},
 		},
 		{
@@ -82,6 +82,7 @@ func TestArray(t *testing.T) {
 			req: &Request{
 				Path: []string{"people"},
 				Schema: schematest.New("array",
+					schematest.WithMinItems(1),
 					schematest.WithItems("object",
 						schematest.WithProperty("firstname", schematest.New("string")),
 						schematest.WithProperty("lastname", schematest.New("string")),
@@ -91,8 +92,8 @@ func TestArray(t *testing.T) {
 					),
 					schematest.WithExamples([]any{
 						map[string]any{
-							"firstname": "John",
-							"lastname":  "Doe",
+							"firstname": "Emily",
+							"lastname":  "Nelson",
 							"foo":       "bar",
 						},
 					}),
@@ -102,13 +103,8 @@ func TestArray(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{
 					map[string]interface{}{
-						"firstname": "Gabriel",
-						"lastname":  "Adams",
-						"foo":       "bar",
-					},
-					map[string]interface{}{
-						"firstname": "Jayden",
-						"lastname":  "Walker",
+						"firstname": "Emily",
+						"lastname":  "Nelson",
 						"foo":       "bar",
 					},
 				}, v)
@@ -128,14 +124,29 @@ func TestArray(t *testing.T) {
 						schematest.WithRequired("firstname", "lastname", "foo"),
 						schematest.WithExamples(
 							map[string]any{
+								"firstname": "Emily",
+								"lastname":  "Nelson",
+								"foo":       "bar",
+							},
+							map[string]any{
+								"firstname": "Mia",
+								"lastname":  "Carter",
+								"foo":       "bar",
+							},
+							map[string]any{
+								"firstname": "James",
+								"lastname":  "Brown",
+								"foo":       "zzz",
+							},
+							map[string]any{
 								"firstname": "John",
-								"lastname":  "Doe",
+								"lastname":  "Lewis",
 								"foo":       "yuh",
 							},
 							map[string]any{
-								"firstname": "Mike",
-								"lastname":  "Walker",
-								"foo":       "zzz",
+								"firstname": "Benjamin",
+								"lastname":  "Davis",
+								"foo":       "yuh",
 							},
 						),
 					),
@@ -152,33 +163,25 @@ func TestArray(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, []any{
 					map[string]any{
-						"firstname": "Gabriel",
-						"foo":       "yuh",
-						"lastname":  "Adams",
-					}, map[string]any{
-						"firstname": "Jayden",
+						"firstname": "Emily",
 						"foo":       "bar",
-						"lastname":  "Walker",
+						"lastname":  "Nelson",
 					}, map[string]any{
-						"firstname": "Olivia",
+						"firstname": "Mia",
 						"foo":       "bar",
-						"lastname":  "Lopez",
+						"lastname":  "Carter",
 					}, map[string]any{
-						"firstname": "Jackson",
-						"foo":       "zzz",
-						"lastname":  "Green",
-					}, map[string]any{
-						"firstname": "Elizabeth",
+						"firstname": "James",
 						"foo":       "bar",
-						"lastname":  "Martinez",
+						"lastname":  "Brown",
 					}, map[string]any{
-						"firstname": "Olivia",
-						"foo":       "yuh",
-						"lastname":  "Williams",
-					}, map[string]any{
-						"firstname": "Olivia",
+						"firstname": "John",
 						"foo":       "bar",
-						"lastname":  "Jones",
+						"lastname":  "Lewis",
+					}, map[string]any{
+						"firstname": "Benjamin",
+						"foo":       "bar",
+						"lastname":  "Davis",
 					},
 				}, v)
 			},
@@ -188,13 +191,14 @@ func TestArray(t *testing.T) {
 			req: &Request{
 				Path: []string{"people"},
 				Schema: schematest.New("array",
+					schematest.WithMinItems(1),
 					schematest.WithContains(schematest.New("string")),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []any{
-					"qwCrwMfkOjo", "gPSz",
+					"vMZsBhpyDmbo",
 				}, v)
 			},
 		},
@@ -210,7 +214,7 @@ func TestArray(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []any{
-					"qwCrwMfkOjo", int64(-703102), "gPSz", "gPNseoOLAIqos", "qa6WoJUOvts",
+					"vMZsBhpyDmbo", "PE5psgu", "YvsVnIkdsa ",
 				}, v)
 			},
 		},
@@ -219,6 +223,7 @@ func TestArray(t *testing.T) {
 			req: &Request{
 				Path: []string{"people"},
 				Schema: schematest.New("array",
+					schematest.WithMinItems(1),
 					schematest.WithContains(schematest.New("string")),
 					schematest.WithMaxContains(3),
 				),
@@ -226,7 +231,7 @@ func TestArray(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []any{
-					"qwCrwMfkOjo", "gPSz",
+					"",
 				}, v)
 			},
 		},
@@ -273,7 +278,11 @@ func TestArray(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []any{208061.4456926526, "qwCrwMfkOjo", "Street", "SE"}, v)
+				a := v.([]any)
+				require.InDelta(t, -170715.30581115812, a[0], 0.000001)
+				require.Equal(t, "", a[1])
+				require.Equal(t, "Boulevard", a[2])
+				require.Equal(t, "NE", a[3])
 			},
 		},
 		{
@@ -291,7 +300,11 @@ func TestArray(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []any{208061.4456926526, "qwCrwMfkOjo", "Street", "SE"}, v)
+				a := v.([]any)
+				require.InDelta(t, -170715.30581115812, a[0], 0.000001)
+				require.Equal(t, "", a[1])
+				require.Equal(t, "Boulevard", a[2])
+				require.Equal(t, "NE", a[3])
 			},
 		},
 	}

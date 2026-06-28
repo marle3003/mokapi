@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,7 +29,7 @@ func TestFile(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "ink.pl", v)
+				require.Equal(t, "ivy.indd", v)
 			},
 		},
 		{
@@ -39,7 +39,7 @@ func TestFile(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "application/pkix-crl", v)
+				require.Equal(t, "application/pkix-cert", v)
 			},
 		},
 		{
@@ -60,7 +60,7 @@ func TestFile(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, false, v)
+				require.Equal(t, true, v)
 			},
 		},
 		{

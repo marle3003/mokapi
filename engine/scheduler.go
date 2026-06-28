@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-co-op/gocron"
+	"github.com/go-co-op/gocron/v2"
 )
 
 type Scheduler interface {
@@ -22,63 +22,94 @@ type Job interface {
 }
 
 type DefaultScheduler struct {
-	scheduler *gocron.Scheduler
+	scheduler gocron.Scheduler
 	m         sync.Mutex
 }
 
+type jobWrapper struct {
+	job gocron.Job
+}
+
 func NewDefaultScheduler() Scheduler {
-	return &DefaultScheduler{scheduler: gocron.NewScheduler(time.UTC)}
+	s, err := gocron.NewScheduler(gocron.WithLocation(time.UTC))
+	if err != nil {
+		panic(err)
+	}
+	return &DefaultScheduler{scheduler: s}
 }
 
 func (s *DefaultScheduler) Every(every string, handler func(), opt common.JobOptions) (Job, error) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	s.scheduler.Every(every)
+	jobDef := gocron.DurationJob(parseDuration(every))
 
+	var jobOpts []gocron.JobOption
 	if opt.Times > 0 {
-		s.scheduler.LimitRunsTo(opt.Times)
+		jobOpts = append(jobOpts, gocron.WithLimitedRuns(uint(opt.Times)))
 	}
-	if opt.SkipImmediateFirstRun {
-		s.scheduler.WaitForSchedule()
+	if !opt.SkipImmediateFirstRun {
+		jobOpts = append(jobOpts, gocron.WithStartAt(gocron.WithStartImmediately()))
 	}
 
-	return s.scheduler.Do(handler)
+	j, err := s.scheduler.NewJob(jobDef, gocron.NewTask(handler), jobOpts...)
+	if err != nil {
+		return nil, err
+	}
+
+	return &jobWrapper{job: j}, nil
 }
 
 func (s *DefaultScheduler) Cron(expr string, handler func(), opt common.JobOptions) (Job, error) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	s.scheduler.Cron(expr)
-
-	if opt.Times > 0 {
-		s.scheduler.LimitRunsTo(opt.Times)
-	}
 	if !opt.SkipImmediateFirstRun {
 		handler()
 	}
 
-	return s.scheduler.Do(handler)
+	jobDef := gocron.CronJob(expr, false)
+
+	j, err := s.scheduler.NewJob(jobDef, gocron.NewTask(handler))
+	if err != nil {
+		return nil, err
+	}
+
+	return &jobWrapper{job: j}, nil
 }
 
 func (s *DefaultScheduler) Remove(job Job) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	s.scheduler.RemoveByReference(job.(*gocron.Job))
+	if jw, ok := job.(*jobWrapper); ok {
+		_ = s.scheduler.RemoveJob(jw.job.ID())
+	}
 }
 
 func (s *DefaultScheduler) Start() {
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	s.scheduler.StartAsync()
+	s.scheduler.Start()
 }
 
 func (s *DefaultScheduler) Close() {
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	s.scheduler.Stop()
+	_ = s.scheduler.Shutdown()
+}
+
+func (j *jobWrapper) NextRun() time.Time {
+	t, _ := j.job.NextRun()
+	return t
+}
+
+func parseDuration(every string) time.Duration {
+	d, err := time.ParseDuration(every)
+	if err != nil {
+		panic(err)
+	}
+	return d
 }

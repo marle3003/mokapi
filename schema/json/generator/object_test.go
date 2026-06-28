@@ -25,7 +25,7 @@ func TestObject(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Ink"}, v)
+				require.Equal(t, map[string]interface{}{"name": "Ivy"}, v)
 			},
 		},
 		{
@@ -38,7 +38,7 @@ func TestObject(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Ink"}, v)
+				require.Equal(t, map[string]interface{}{"name": "Ivy"}, v)
 			},
 		},
 		{
@@ -52,7 +52,7 @@ func TestObject(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Ink", "foo": int64(-724202)}, v)
+				require.Equal(t, map[string]interface{}{"name": "Ivy", "foo": false}, v)
 			},
 		},
 		{
@@ -70,7 +70,7 @@ func TestObject(t *testing.T) {
 			},
 			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]any{"name": "Ink", "foo": int64(-724202), "zzz": false}, v)
+				require.Equal(t, map[string]any{"name": "Ivy", "foo": false, "zzz": false}, v)
 			},
 		},
 		{
@@ -84,7 +84,7 @@ func TestObject(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Ink"}, v)
+				require.Equal(t, map[string]interface{}{"name": "Ivy"}, v)
 			},
 		},
 		{
@@ -98,7 +98,7 @@ func TestObject(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Ink"}, v)
+				require.Equal(t, map[string]interface{}{"name": "Ivy"}, v)
 			},
 		},
 		{
@@ -113,7 +113,7 @@ func TestObject(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Velvet"}, v)
+				require.Equal(t, map[string]interface{}{"name": "Zenix"}, v)
 			},
 		},
 		{
@@ -121,6 +121,7 @@ func TestObject(t *testing.T) {
 			req: &Request{
 				Schema: schematest.New("object",
 					schematest.WithAdditionalProperties(schematest.New("string")),
+					schematest.WithMinProperties(1),
 					schematest.WithMaxProperties(3),
 				),
 			},
@@ -128,7 +129,7 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"company": "+fjywXKo", "luck": "hbEO6wpu", "sunshine": "jxkDng",
+						"bale": "MZsBhpy",
 					},
 					v)
 			},
@@ -150,14 +151,8 @@ func TestObject(t *testing.T) {
 			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]any{
-					"company": map[string]any{
-						"age": int64(81), "gender": "female",
-					},
-					"luck": map[string]any{
-						"age": int64(52), "gender": "female",
-					},
-					"sunshine": map[string]any{
-						"age": int64(69), "gender": "female",
+					"bale": map[string]any{
+						"age": int64(85), "gender": "male",
 					},
 				}, v)
 			},
@@ -175,9 +170,9 @@ func TestObject(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Len(t, v, 11)
+				require.Len(t, v, 10)
 				require.Equal(t,
-					map[string]interface{}{"brace": "ne", "chapter": "cILXzNQ", "collection": "JZGR", "comb": "q", "company": "gPSz", "life": "BYxST", "luck": "qa6WoJUOvts", "person": "NWavQeozIe", "problem": "sgzs", "string": "ticuuBCbV0biw0", "sunshine": "gPNseoOLAIqos"},
+					map[string]interface{}{"bale": "boezC", "bulb": "elk", "corruption": "", "equipment": "VnIkdsa aJFO", "gauva": "iyHPypTTndl", "issue": "sguOhkxhF", "jacket": "kWMaW", "man": "jbBbaS", "pack": " X", "woman": "0FILKfYaxbWMlsp"},
 					v)
 			},
 		},
@@ -188,7 +183,7 @@ func TestObject(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Len(t, v.(map[string]any), 8)
+				require.Len(t, v.(map[string]any), 1)
 			},
 		},
 		{
@@ -236,8 +231,8 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"foo": int64(-724202),
-						"bar": int64(-253907),
+						"foo": false,
+						"bar": []interface{}{975538.5032831749},
 					},
 					v)
 			},
@@ -252,12 +247,9 @@ func TestObject(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t,
-					map[string]interface{}{
-						"foo": "FqwCrwMfkOjojx",
-						"bar": 784901.3845489756,
-					},
-					v)
+				m := v.(map[string]interface{})
+				require.InDelta(t, 313469.93141089816, m["bar"], 0.000001)
+				require.Equal(t, "F2cjChNLDnmqkY", m["foo"])
 			},
 		},
 		{
@@ -272,8 +264,8 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"I_8wEl7": int64(549789),
-						"S_Z":     "fkOjoj",
+						"I_8wE":  int64(-873413),
+						"S_l7QZ": "NLD",
 					},
 					v)
 			},
@@ -294,9 +286,9 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"name":            "Ink",
-						"credit_card":     "6910936489301180573",
-						"billing_address": "EO6",
+						"name":            "Ivy",
+						"credit_card":     "2824193600225549",
+						"billing_address": "EEalaJFOjl",
 					},
 					v)
 			},
@@ -320,8 +312,8 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"name":            "Ink",
-						"billing_address": "ojxkDngPNseoO",
+						"name":            "Ivy",
+						"billing_address": "vtLnEEalaJ",
 					},
 					v)
 			},
@@ -363,9 +355,9 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"name":            "Ink",
-						"credit_card":     "6910936489301180573",
-						"billing_address": "EO6",
+						"name":            "Ivy",
+						"credit_card":     "2824193600225549",
+						"billing_address": "EEalaJFOjl",
 					},
 					v)
 			},
@@ -400,7 +392,7 @@ func TestObject(t *testing.T) {
 					schematest.WithProperty("country", schematest.New("string")),
 					schematest.WithIf(schematest.NewTypes(nil,
 						schematest.WithProperty("country", schematest.New("string",
-							schematest.WithConst("Slovenia")),
+							schematest.WithConst("Benin")),
 						),
 						schematest.WithRequired("country"),
 					)),
@@ -415,8 +407,8 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"country":     "Slovenia",
-						"postal_code": "80291-0936",
+						"country":     "Benin",
+						"postal_code": "80291",
 					},
 					v)
 			},
@@ -449,7 +441,7 @@ func TestObject(t *testing.T) {
 					schematest.WithProperty("country", schematest.New("string")),
 					schematest.WithIf(schematest.NewTypes(nil,
 						schematest.WithProperty("country", schematest.New("string",
-							schematest.WithConst("Slovenia")),
+							schematest.WithConst("Benin")),
 						),
 						schematest.WithRequired("country"),
 					)),
@@ -458,13 +450,13 @@ func TestObject(t *testing.T) {
 							schematest.WithPattern("[0-9]{5}(-[0-9]{4})?"))),
 						schematest.WithRequired("postal_code"),
 					)),
-					schematest.WithMaxProperties(1),
+					schematest.WithMinProperties(1),
 				),
 			},
 			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t,
-					map[string]any{"country": "Bouvet Island"},
+					map[string]any{"country": "Benin", "postal_code": "80291"},
 					v)
 			},
 		},
@@ -504,7 +496,7 @@ func TestObject(t *testing.T) {
 					schematest.WithProperty("country", schematest.New("string")),
 					schematest.WithIf(schematest.NewTypes(nil,
 						schematest.WithProperty("country", schematest.New("string",
-							schematest.WithConst("Slovenia")),
+							schematest.WithConst("Benin")),
 						),
 						schematest.WithRequired("country"),
 					)),
@@ -519,7 +511,7 @@ func TestObject(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]any{"country": "Tuvalu"}, v)
+				require.Equal(t, map[string]any{"country": "Azerbaijan"}, v)
 			},
 		},
 		{
@@ -545,7 +537,7 @@ func TestObject(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
-						"country":     "Slovenia",
+						"country":     "Benin",
 						"postal_code": "C0O 9F0",
 					},
 					v)

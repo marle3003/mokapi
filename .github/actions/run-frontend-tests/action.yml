@@ -15,7 +15,7 @@ runs:
   steps:
     - name: Download image
       id: download
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
       with:
         name: ${{ inputs.artifact-image-name }}
         path: /tmp
@@ -25,7 +25,7 @@ runs:
     - name: Run mokapi image
       run: docker run --name mokapi --rm -d -p 8090:8090 -p 8091:8091 --mount type=bind,source=$(pwd)/webui/e2e/mocks,target=/data --env MOKAPI_Log_Level=Debug --env MOKAPI_Api_Port=8091 --env MOKAPI_Api_Path=/mokapi --env MOKAPI_Providers_File_Directory=/data ${{ inputs.image-name }}
       shell: bash
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
       with:
         node-version: 24
     - name: Install and Build
@@ -46,7 +46,7 @@ runs:
       shell: bash
     - name: Upload test results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
       with:
         name: ${{ inputs.artifact-test-report }}
         path: ./webui/playwright-report
@@ -56,7 +56,7 @@ runs:
       shell: bash
     - name: Archive Mokapi logs
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
       with:
         name: mokapi-test-logs
         path: /var/tmp/mokapi.log

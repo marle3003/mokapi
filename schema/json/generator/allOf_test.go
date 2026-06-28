@@ -4,7 +4,7 @@ import (
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,7 +23,7 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(122317), v)
+				require.Equal(t, int64(-802001), v)
 			},
 		},
 		{
@@ -36,7 +36,7 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(6), v)
+				require.Equal(t, int64(8), v)
 			},
 		},
 		{
@@ -49,7 +49,7 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Fq", v)
+				require.Equal(t, "", v)
 			},
 		},
 		{
@@ -62,7 +62,7 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(6), v)
+				require.Equal(t, int64(8), v)
 			},
 		},
 		{
@@ -75,7 +75,7 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(122317), v)
+				require.Equal(t, int64(-802001), v)
 			},
 		},
 		{
@@ -88,19 +88,22 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, true, v)
+				require.Equal(t, int64(-275962), v)
 			},
 		},
 		{
 			name: "one object",
 			req: &Request{
 				Schema: schematest.NewAllOf(
-					schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
+					schematest.New("object",
+						schematest.WithProperty("foo", schematest.New("string")),
+						schematest.WithRequired("foo"),
+					),
 				),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "FqwCrwMfkOjojx"}, v)
+				require.Equal(t, map[string]interface{}{"foo": "F2cjChNLDnmqkY"}, v)
 			},
 		},
 		{
@@ -119,7 +122,7 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"bar": "Sza", "foo": "FqwCrwMfkOjojx"}, v)
+				require.Equal(t, map[string]interface{}{"bar": "CvtL", "foo": "F2cjChNLDnmqkY"}, v)
 			},
 		},
 		{
@@ -138,7 +141,7 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"bar": "Sza", "foo": "FqwCrwMfkOjojx"}, v)
+				require.Equal(t, map[string]interface{}{"bar": "CvtL", "foo": "F2cjChNLDnmqkY"}, v)
 			},
 		},
 		{
@@ -157,7 +160,7 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"bar": "Sza", "foo": "FqwCrwMfkOjojx"}, v)
+				require.Equal(t, map[string]interface{}{"bar": "CvtL", "foo": "F2cjChNLDnmqkY"}, v)
 			},
 		},
 		{
@@ -189,7 +192,7 @@ func TestAllOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"bar": "foo", "foo": "yuh"}, v)
+				require.Equal(t, map[string]interface{}{"bar": "foo", "foo": "bar"}, v)
 			},
 		},
 		{

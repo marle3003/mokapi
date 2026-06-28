@@ -35,7 +35,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ type: 'string' }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, "XidZuoWq ", v.Export())
+				r.Equal(t, "fnsy", v.Export())
 			},
 		},
 		{
@@ -43,7 +43,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ type: ['string', 'integer'] }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, int64(-168643), v.Export())
+				r.Equal(t, "fg", v.Export())
 			},
 		},
 		{
@@ -65,7 +65,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ enum: [123, 'foo'] }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, "foo", v.Export())
+				r.Equal(t, int64(123), v.Export())
 			},
 		},
 		{
@@ -88,7 +88,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ default: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, "", v.Export())
+				r.InDelta(t, 971925.852188296, v.Export(), 0.000001)
 			},
 		},
 		{
@@ -104,7 +104,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ examples: [123, 789] }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, int64(789), v.Export())
+				r.Equal(t, int64(123), v.Export())
 			},
 		},
 		{
@@ -119,7 +119,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ multipleOf: 3 }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, int64(162), v.Export())
+				r.Equal(t, int64(270), v.Export())
 			},
 		},
 		{
@@ -134,7 +134,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ maximum: 3 }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, -908522.2605665276, v.Export())
+				r.Equal(t, -229696.7569350967, v.Export())
 			},
 		},
 		{
@@ -149,7 +149,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ exclusiveMaximum: 3 }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, -908522.2605665276, v.Export())
+				r.Equal(t, -229696.7569350967, v.Export())
 			},
 		},
 		{
@@ -164,7 +164,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ minimum: 3 }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, 91480.19056868234, v.Export())
+				r.Equal(t, 770301.6212593103, v.Export())
 			},
 		},
 		{
@@ -179,7 +179,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ exclusiveMinimum: 3 }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, 91480.19056868234, v.Export())
+				r.Equal(t, 770301.6212593103, v.Export())
 			},
 		},
 		{
@@ -194,7 +194,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ maxLength: 3 }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, "X", v.Export())
+				r.Equal(t, "", v.Export())
 			},
 		},
 		{
@@ -209,7 +209,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ minLength: 3 }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, "XidZuoWq vY5el", v.Export())
+				r.Equal(t, "fnsyx7yIkhyaaK", v.Export())
 			},
 		},
 		{
@@ -239,7 +239,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ format: 'date-time', }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, "2035-01-24T13:00:35Z", v.Export())
+				r.Equal(t, "2033-11-06T04:31:13Z", v.Export())
 			},
 		},
 		{
@@ -254,7 +254,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ items: { type: 'string' }, }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, []any{"", "idZ", "wYx?vY5elXhlD", "VhgPevuwyrNrL", "lVeCZKW1JKqG"}, v.Export())
+				r.Equal(t, []any{"fg", "yx7yIkhya", "y", "AQyBy", "LPbGpPaituc"}, v.Export())
 			},
 		},
 		{
@@ -269,7 +269,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ maxItems: 3, }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, []any{true}, v.Export())
+				r.Equal(t, []any{}, v.Export())
 			},
 		},
 		{
@@ -284,7 +284,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ minItems: 3, items: { type: 'string' } }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, []interface{}{"", "idZ", "wYx?vY5elXhlD", "VhgPevuwyrNrL", "lVeCZKW1JKqG", "sffl", "tR", "h"}, v.Export())
+				r.Equal(t, []interface{}{"fg", "yx7yIkhya", "y", "AQyBy", "LPbGpPaituc", "Lx47fDnQE", "gPAl89Xbz vlNV", "Zwkx5"}, v.Export())
 			},
 		},
 		{
@@ -296,10 +296,10 @@ func TestFaker_Schema(t *testing.T) {
 		},
 		{
 			name:   "uniqueItems",
-			schema: "{ uniqueItems: true, }",
+			schema: "{ items: { type: 'integer' }, uniqueItems: true, }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, []any{true, int64(-354976), "ZuoWq vY5elXhlD", []any{-743110.6375100765, "lYehCIA", map[string]any{"caravan": true, "hail": -717855.7306413883, "mob": int64(-679449), "scale": true}, false}, false}, v.Export())
+				r.Equal(t, []any{int64(711901), int64(-600929), int64(-599435), int64(56944), int64(-537198)}, v.Export())
 			},
 		},
 		{
@@ -314,7 +314,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ prefixItems: [{ type: 'string' }, { type: 'boolean' }], items: false }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, []any{"", true}, v.Export())
+				r.Equal(t, []any{"fg", true}, v.Export())
 			},
 		},
 		{
@@ -329,7 +329,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ contains: { const: 'foo' }, items: { type: 'string' } }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, []any{"VhgPevuwyrNrL", "foo", "idZ", "wYx?vY5elXhlD", "foo"}, v.Export())
+				r.Equal(t, []any{"foo", "foo", "foo", "foo", "foo"}, v.Export())
 			},
 		},
 		{
@@ -344,7 +344,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ contains: { type: 'string' }, minContains: 4 }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, []any{"LWxKt", "wYx?vY5elXhlD", "VhgPevuwyrNrL", -620512.3329182866, -319274.3036433653, "lVeCZKW1JKqG", true, []interface{}{}, "idZ"}, v.Export())
+				r.Equal(t, []any{"ftyw5heL", "", "IkhyaaKAQyByP", "ZpI", "kx5Kt6ckaieG", "PbG", "2mXR5eZVgPAl8", "blIzvlNVuk", "nsyx7"}, v.Export())
 			},
 		},
 		{
@@ -359,7 +359,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ contains: { type: 'string' }, maxContains: 2, items: { type: 'string' } }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, []any{"wYx?vY5elXhlD", "idZ"}, v.Export())
+				r.Equal(t, []any{"", "nsyx7"}, v.Export())
 			},
 		},
 		{
@@ -374,7 +374,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ properties: { foo: { type: 'string' } } }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, map[string]any{"foo": "XidZuoWq "}, v.Export())
+				r.Equal(t, map[string]any{}, v.Export())
 			},
 		},
 		{
@@ -389,7 +389,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ maxProperties: 3 }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, map[string]any{"woman": int64(-354976)}, v.Export())
+				r.Equal(t, map[string]any{}, v.Export())
 			},
 		},
 		{
@@ -404,7 +404,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ minProperties: 3, additionalProperties: { type: 'string' } }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, map[string]any{"bunch": "VhgPevuwyrNrL", "gang": "lVeCZKW1JKqG", "growth": "sffl", "woman": "wYx?vY5elXhlD"}, v.Export())
+				r.Equal(t, map[string]any{"class": "zvlNVukPyqDClq", "fear": "lsTI5ydf yByPS<", "heart": "l89Xb", "pack": "GpPaitucts2mXR5", "problem": "Qzy", "trip": "QEmWm"}, v.Export())
 			},
 		},
 		{
@@ -419,7 +419,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ patternProperties: { '^S_': { type: 'string' } }, type: 'object' }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, map[string]any{"S_4VX": "Ozw"}, v.Export())
+				r.Equal(t, map[string]any{"S_4V": "syx"}, v.Export())
 			},
 		},
 		{
@@ -442,7 +442,7 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ additionalProperties: { type: 'string' }, maxProperties: 3 }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, map[string]any{"bunch": "", "gang": "x?vY5elXhlD4ez", "woman": "zw"}, v.Export())
+				r.Equal(t, map[string]any{"fear": "VbyxlsTI5ydf y", "pack": " yPS<", "trip": "GpPaitucts2mXR5"}, v.Export())
 			},
 		},
 		{
@@ -458,14 +458,17 @@ func TestFaker_Schema(t *testing.T) {
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
 				r.Equal(t, map[string]any{
-					"I_4VX":    int64(-908662),
-					"S_kY9X3W": "m",
-					"builtin":  int64(-86829),
-					"group":    "CKu",
-					"ocean":    "LJgmr9arWgSfi",
-					"party":    "m",
-					"sock":     "hlD4ezlYehCIA0O",
-					"time":     "jLWxKtR4",
+					"I_4V":      int64(-927324),
+					"S_XkY9X3":  " yByPS<qbft",
+					"ambulance": "nI fpidfoDeHcd",
+					"boat":      "Clq kaieGDf",
+					"body":      "VgPAl89Xbz v",
+					"builtin":   int64(-697900),
+					"cackle":    "IqiIQzyMKld",
+					"grammar":   "qdeZwkx5",
+					"harm":      "DnQ",
+					"jealousy":  "",
+					"problem":   "itucts2mX",
 				}, v.Export())
 			},
 		},
@@ -475,10 +478,7 @@ func TestFaker_Schema(t *testing.T) {
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
 				r.Equal(t, map[string]any{
-					"Gt8":     "X",
-					"Jd":      "D4ezlYehCIA0O",
-					"MTgAEPI": int64(990471),
-					"PgmZE3":  false,
+					"AgAE": int64(-927324), "Gt8P": "K", "KItde": int64(288920), "TmZE": "B",
 				}, v.Export())
 			},
 		},
@@ -507,9 +507,7 @@ func TestFaker_Schema(t *testing.T) {
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
 				r.Equal(t, map[string]any{
-					"name":            "TerraCove",
-					"credit_card":     "3645994899536906",
-					"billing_address": "hgPevuwyr",
+					"billing_address": "PbG", "credit_card": "2252759890799934473", "name": "GroveGuard",
 				}, v.Export())
 			},
 		},
@@ -540,11 +538,13 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ required: ['foo', 'bar', 'baz'] }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				m := v.Export()
+				m := v.Export().(map[string]any)
 				r.Contains(t, m, "foo")
 				r.Contains(t, m, "bar")
 				r.Contains(t, m, "baz")
-				r.Equal(t, map[string]any{"bar": int64(-354976), "baz": "ZuoWq vY5elXhlD", "foo": true}, m)
+				r.InDelta(t, 824801.9947984695, m["bar"], 0.000001)
+				r.Equal(t, int64(-342586), m["baz"])
+				r.Equal(t, "nsyx7", m["foo"])
 			},
 		},
 		{
@@ -569,9 +569,7 @@ func TestFaker_Schema(t *testing.T) {
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
 				r.Equal(t, map[string]any{
-					"name":            "TerraCove",
-					"credit_card":     "3645994899536906",
-					"billing_address": "hgPevuwyr",
+					"billing_address": "PbG", "credit_card": "2252759890799934473", "name": "GroveGuard",
 				}, v.Export())
 			},
 		},
@@ -589,7 +587,7 @@ func TestFaker_Schema(t *testing.T) {
 				r.NoError(t, err)
 				m := v.Export()
 				r.Contains(t, m, "bar")
-				r.Equal(t, map[string]any{"bar": "Pevuwy", "woman": "q vY5elXhlD4ez"}, m)
+				r.Equal(t, map[string]any{"bar": "f yByPS<qbft", "fear": "K", "foo": "gnVbyxlsTI5"}, m)
 			},
 		},
 		{

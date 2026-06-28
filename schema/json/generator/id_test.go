@@ -1,10 +1,11 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v7"
+	"github.com/stretchr/testify/require"
 )
 
 func TestId(t *testing.T) {
@@ -21,7 +22,7 @@ func TestId(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "44f4ae5d-233e-4f89-ae02-126591065f49", v)
+				require.Equal(t, "ce702a60-0f08-4819-bcd4-0907c044ad5c", v)
 			},
 		},
 		{
@@ -32,7 +33,7 @@ func TestId(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "802910936489301180573501861460", v)
+				require.Equal(t, "132824193600225549115440653199", v)
 			},
 		},
 		{
@@ -43,7 +44,7 @@ func TestId(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "44f4ae5d-233e-4f89-ae02-126591065f49", v)
+				require.Equal(t, "ce702a60-0f08-4819-bcd4-0907c044ad5c", v)
 			},
 		},
 		{
@@ -57,7 +58,7 @@ func TestId(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "7291093", v)
+				require.Equal(t, "3282", v)
 			},
 		},
 		{
@@ -67,7 +68,7 @@ func TestId(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 37727, v)
+				require.Equal(t, 9900, v)
 			},
 		},
 		{
@@ -78,7 +79,7 @@ func TestId(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(7727), v)
+				require.Equal(t, int64(990), v)
 			},
 		},
 		{
@@ -92,28 +93,29 @@ func TestId(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(18), v)
+				require.Equal(t, int64(11), v)
 			},
 		},
 		{
 			name: "ids with schema array",
 			req: &Request{
 				Path:   []string{"ids"},
-				Schema: schematest.New("array"),
+				Schema: schematest.New("array", schematest.WithMinItems(1)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{83580, 80588}, v)
+				require.Equal(t, []interface{}{36202}, v)
 			},
 		},
 		{
 			name: "ids",
 			req: &Request{
-				Path: []string{"ids"},
+				Path:   []string{"ids"},
+				Schema: schematest.NewTypes(nil, schematest.WithMinItems(1)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{83580, 80588}, v)
+				require.Equal(t, []interface{}{36202}, v)
 			},
 		},
 	}

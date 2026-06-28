@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices"
+  ],
+  "baseBranchPatterns": [
+    "develop"
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["npm"],
+      "matchFileNames": ["webui/**"]
+    },
+    {
+      "matchUpdateTypes": ["patch", "minor"],
+      "automerge": true,
+      "schedule": ["at any time"]
+    },
+    {
+      "matchUpdateTypes": ["major"],
+      "labels": ["dependency-major"],
+      "schedule": ["on friday"]
+    }
+  ]
+}

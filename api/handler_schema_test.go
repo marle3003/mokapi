@@ -19,7 +19,7 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,7 +55,7 @@ func TestHandler_Schema_Example_Query(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`"XidZuoWq "`))
+					try.HasBody(`"fnsy"`))
 
 				try.Handler(t,
 					http.MethodGet,
@@ -65,7 +65,7 @@ func TestHandler_Schema_Example_Query(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`""`))
+					try.HasBody(`"byx"`))
 
 				try.Handler(t,
 					http.MethodGet,
@@ -75,7 +75,7 @@ func TestHandler_Schema_Example_Query(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`"Y5elX"`))
+					try.HasBody(`"khyaaKAQ"`))
 
 				try.Handler(t,
 					http.MethodGet,
@@ -114,7 +114,7 @@ func TestHandler_Schema_Example_Query(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`"XidZuoWq "`))
+					try.HasBody(`"fnsy"`))
 
 				try.Handler(t,
 					http.MethodGet,
@@ -147,7 +147,7 @@ func TestHandler_Schema_Example_Query(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`"XidZuoWq "`))
+					try.HasBody(`"fnsy"`))
 
 				try.Handler(t,
 					http.MethodGet,
@@ -156,7 +156,7 @@ func TestHandler_Schema_Example_Query(t *testing.T) {
 					"",
 					h,
 					try.HasStatusCode(200),
-					try.HasBody(`""`))
+					try.HasBody(`"byx"`))
 			},
 		},
 	}
@@ -192,7 +192,7 @@ func TestHandler_Schema_Example(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"contentType":"application/json","value":"IlhpZFp1b1dxICI="}]`))
+					try.HasBody(`[{"contentType":"application/json","value":"ImZuc3ki"}]`))
 			},
 		},
 		{
@@ -236,7 +236,7 @@ func TestHandler_Schema_Example(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"contentType":"application/json","value":"IlhpZFp1b1dxICI="}]`))
+					try.HasBody(`[{"contentType":"application/json","value":"ImZuc3ki"}]`))
 			},
 		},
 		{
@@ -259,10 +259,10 @@ func TestHandler_Schema_Example(t *testing.T) {
 						require.NoError(t, err)
 						b, err := base64.StdEncoding.DecodeString(data[0]["value"])
 						require.NoError(t, err)
-						require.Equal(t, "-168643", string(b))
+						require.Equal(t, `"fg"`, string(b))
 
 					}),
-					try.HasBody(`[{"contentType":"application/json","value":"LTE2ODY0Mw=="}]`))
+					try.HasBody(`[{"contentType":"application/json","value":"ImZnIg=="}]`))
 			},
 		},
 		{
@@ -279,7 +279,7 @@ func TestHandler_Schema_Example(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"contentType":"application/json","value":"eyJmb28iOiJYaWRadW9XcSAifQ=="}]`))
+					try.HasBody(`[{"contentType":"application/json","value":"e30="}]`))
 			},
 		},
 		{
@@ -296,7 +296,7 @@ func TestHandler_Schema_Example(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"contentType":"application/xml","value":"PHRleHQ+WGlkWnVvV3EgPC90ZXh0Pg=="}]`))
+					try.HasBody(`[{"contentType":"application/xml","value":"PHRleHQ+Zm5zeTwvdGV4dD4="}]`))
 			},
 		},
 		{
@@ -313,7 +313,7 @@ func TestHandler_Schema_Example(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"contentType":"application/json","value":"IlhpZFp1b1dxICI="}]`))
+					try.HasBody(`[{"contentType":"application/json","value":"ImZuc3ki"}]`))
 			},
 		},
 		{
@@ -347,7 +347,7 @@ func TestHandler_Schema_Example(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"contentType":"application/json","value":"IlhpZFp1b1dxICI="}]`))
+					try.HasBody(`[{"contentType":"application/json","value":"ImZuc3ki"}]`))
 			},
 		},
 		{
@@ -364,7 +364,7 @@ func TestHandler_Schema_Example(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"contentType":"avro/binary","value":"ElhpZFp1b1dxIA=="},{"contentType":"application/json","value":"IlhpZFp1b1dxICI="}]`))
+					try.HasBody(`[{"contentType":"avro/binary","value":"CGZuc3k="},{"contentType":"application/json","value":"ImZuc3ki"}]`))
 			},
 		},
 		{
@@ -418,7 +418,7 @@ func TestHandler_Schema_Example(t *testing.T) {
 						assert.Equal(t, "application/json", m["contentType"])
 						b, err := base64.StdEncoding.DecodeString(m["value"].(string))
 						assert.NoError(t, err)
-						assert.Equal(t, `{"category":"People","description":"Much terribly over pose place sprint it child is joyously that I whom mango then of certain weekly mine in annually frock now board.","features":"iRzooB2","name":"ZephyrZone","price":546049.39,"subcategory":"sgB,vveWa","url":"https://www.districtgenerate.org/holistic/synergies"}`, string(b))
+						assert.Equal(t, `{"category":"Biography","description":"Publish a changelog entry for the day.","features":"gnVbyxlsTI5","id":"712bb33a-15d8-4f03-bf67-0454bb6697ec","keywords":"AQyBy","name":"Jet","price":170469.93,"url":"https://www.leadworld-class.com/open-source"}`, string(b))
 					}),
 				)
 			},

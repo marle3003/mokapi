@@ -1,8 +1,9 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
 	"strings"
+
+	"github.com/brianvoe/gofakeit/v7"
 )
 
 func newIdNode() *Node {

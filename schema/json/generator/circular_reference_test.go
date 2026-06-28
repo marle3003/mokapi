@@ -1,11 +1,12 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v7"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCircularReference(t *testing.T) {
@@ -61,7 +62,7 @@ func TestCircularReference(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Ink"}, v)
+				require.Equal(t, map[string]interface{}{"name": "Ivy"}, v)
 			},
 		},
 		{

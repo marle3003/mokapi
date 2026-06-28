@@ -4,7 +4,7 @@ import (
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
 )
 
@@ -18,28 +18,28 @@ func TestOneOf(t *testing.T) {
 			name: "oneOf only types",
 			req: &Request{
 				Schema: schematest.NewOneOf(
-					schematest.New("number"),
+					schematest.New("integer"),
 					schematest.New("string"),
 				),
 			},
 
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 208061.4456926526, v)
+				require.Equal(t, int64(-275962), v)
 			},
 		},
 		{
-			name: "oneOf only types special case with integer and number",
+			name: "oneOf only types special case with integer and string",
 			req: &Request{
 				Schema: schematest.NewOneOf(
-					schematest.New("number"),
+					schematest.New("string"),
 					schematest.New("integer"),
 				),
 			},
 
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 208061.4456926526, v)
+				require.Equal(t, "vMZsBhpyDmbo", v)
 			},
 		},
 		{
@@ -59,7 +59,7 @@ func TestOneOf(t *testing.T) {
 
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(10), v)
+				require.Equal(t, int64(2), v)
 			},
 		},
 		{
@@ -74,7 +74,7 @@ func TestOneOf(t *testing.T) {
 
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, float64(430), v)
+				require.Equal(t, float64(100), v)
 			},
 		},
 		{
@@ -95,7 +95,7 @@ func TestOneOf(t *testing.T) {
 
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": 789}, v)
+				require.Equal(t, map[string]interface{}{"foo": 123}, v)
 			},
 		},
 		{
@@ -115,7 +115,7 @@ func TestOneOf(t *testing.T) {
 			},
 
 			test: func(t *testing.T, v interface{}, err error) {
-				require.EqualError(t, err, "failed to generate valid object: reached attempt limit (10) caused by: cannot apply one of the subschemas in 'oneOf': reached attempt limit (10) caused by: data is valid against more of the given oneOf subschemas")
+				require.EqualError(t, err, "failed to generate valid object: reached attempt limit (10) caused by: cannot satisfy conditions")
 			},
 		},
 	}

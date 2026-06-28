@@ -6,7 +6,7 @@ import (
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
 )
 
@@ -48,29 +48,32 @@ func TestPet(t *testing.T) {
 			name: "pets-name",
 			req: &Request{
 				Path: []string{"pet"},
-				Schema: schematest.New("array", schematest.WithItemsNew(
-					&schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "#/components/schemas/Pet"}, Type: schema.Types{"string"}},
-				)),
+				Schema: schematest.New("array",
+					schematest.WithMinItems(1),
+					schematest.WithItemsNew(
+						&schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "#/components/schemas/Pet"}, Type: schema.Types{"string"}},
+					)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"Fyodor Dogstoevsky", "Woofgang Puck"}, v)
+				require.Equal(t, []interface{}{"Fyodor Dogstoevsky"}, v)
 			},
 		},
 		{
 			name: "pets-name within object",
 			req: &Request{
 				Path: []string{"pets"},
-				Schema: schematest.New("array", schematest.WithItems("object",
-					schematest.WithProperty("name", nil),
-					schematest.WithRequired("name"),
-				)),
+				Schema: schematest.New("array",
+					schematest.WithMinItems(1),
+					schematest.WithItems("object",
+						schematest.WithProperty("name", nil),
+						schematest.WithRequired("name"),
+					)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []interface{}{
 					map[string]interface{}{"name": "Fyodor Dogstoevsky"},
-					map[string]interface{}{"name": "Woofgang Puck"},
 				}, v)
 			},
 		},
@@ -85,7 +88,7 @@ func TestPet(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"category": "canary"}, v)
+				require.Equal(t, map[string]interface{}{"category": "cat"}, v)
 			},
 		},
 		{
@@ -103,20 +106,22 @@ func TestPet(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"category": map[string]interface{}{"name": "canary"}}, v)
+				require.Equal(t, map[string]interface{}{"category": map[string]interface{}{"name": "cat"}}, v)
 			},
 		},
 		{
 			name: "pet-categories",
 			req: &Request{
 				Path: []string{"pet"},
-				Schema: schematest.New("array", schematest.WithItemsNew(
-					&schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "#/components/schemas/Category"}, Type: schema.Types{"string"}},
-				)),
+				Schema: schematest.New("array",
+					schematest.WithMinItems(1),
+					schematest.WithItemsNew(
+						&schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "#/components/schemas/Category"}, Type: schema.Types{"string"}},
+					)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"ferret", "rabbit"}, v)
+				require.Equal(t, []interface{}{"guinea pig"}, v)
 			},
 		},
 		{
@@ -134,7 +139,7 @@ func TestPet(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"category": map[string]interface{}{"id": int64(83580), "name": "canary"}}, v)
+				require.Equal(t, map[string]interface{}{"category": map[string]interface{}{"id": int64(36202), "name": "cat"}}, v)
 			},
 		},
 		{
@@ -161,13 +166,13 @@ func TestPet(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
 					"category": map[string]interface{}{
-						"id":   int64(83580),
-						"name": "canary",
+						"id":   int64(36202),
+						"name": "cat",
 					},
 					"petDetails": map[string]interface{}{
 						"category": map[string]interface{}{
-							"id":   int64(83580),
-							"name": "canary",
+							"id":   int64(36202),
+							"name": "cat",
 						},
 					},
 				}, v)
@@ -188,7 +193,7 @@ func TestPet(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Betty", "owner": map[string]interface{}{"name": "Gabriel Adams"}}, v)
+				require.Equal(t, map[string]interface{}{"name": "Betty", "owner": map[string]interface{}{"name": "Emily Nelson"}}, v)
 			},
 		},
 		{
@@ -206,7 +211,7 @@ func TestPet(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]any{"category": map[string]interface{}{"name": "ferret"}, "name": "Betty"}, v)
+				require.Equal(t, map[string]any{"category": map[string]interface{}{"name": "guinea pig"}, "name": "Betty"}, v)
 			},
 		},
 	}
@@ -253,11 +258,16 @@ func TestPetStore(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
-					"category":  map[string]interface{}{"id": int64(83580), "name": "rabbit"},
-					"id":        int64(37727),
-					"photoUrls": []interface{}{"https://www.principalapplications.biz/cultivate/e-enable/integrated"},
-					"status":    "sold",
-					"tags":      map[string]interface{}{"id": int64(69949), "name": "Sol"}},
+					"category": map[string]interface{}{"id": int64(36202), "name": "rabbit"},
+					"id":       int64(9900),
+					"photoUrls": []interface{}{
+						"http://www.financialvalue-added.com/end-to-end/envisioneer",
+						"http://www.internationalnext-generation.name/scale",
+						"https://www.brandrich.name/extend/implement/innovative/enterprise",
+						"https://www.operationse-services.org/matrix/portals/vortals/e-markets",
+						"https://www.executivefront-end.info/innovative"},
+					"status": "available",
+					"tags":   map[string]interface{}{"id": int64(18481), "name": "Echo"}},
 					v)
 			},
 		},

@@ -20,7 +20,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "New Orleans", v)
+				require.Equal(t, "San Jose", v)
 			},
 		},
 		{
@@ -31,16 +31,16 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(229109), v)
+				require.Equal(t, int64(3282), v)
 			},
 		},
 		{
 			name: "city array",
 			request: &Request{
-				Path: []string{"cities"}, Schema: schematest.New("array")},
+				Path: []string{"cities"}, Schema: schematest.New("array", schematest.WithMinItems(1))},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"Plano", "New York City"}, v)
+				require.Equal(t, []interface{}{"Long Beach"}, v)
 			},
 		},
 		{
@@ -50,7 +50,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "229109", v)
+				require.Equal(t, "3282", v)
 			},
 		},
 		{
@@ -71,7 +71,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "229109", v)
+				require.Equal(t, "3282", v)
 			},
 		},
 		{
@@ -81,7 +81,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "229109", v)
+				require.Equal(t, "3282", v)
 			},
 		},
 		{
@@ -92,7 +92,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(229109), v)
+				require.Equal(t, int64(3282), v)
 			},
 		},
 		{
@@ -103,7 +103,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, float64(229109), v)
+				require.Equal(t, float64(3282), v)
 			},
 		},
 		{
@@ -114,7 +114,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "80291", v)
+				require.Equal(t, "73282", v)
 			},
 		},
 		{
@@ -128,7 +128,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(8029), v)
+				require.Equal(t, int64(6328), v)
 			},
 		},
 		{
@@ -136,22 +136,24 @@ func TestAddress(t *testing.T) {
 			request: &Request{Path: []string{"postcodes"}},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"29109", "648930"}, v)
+				require.Equal(t, []interface{}{}, v)
 			},
 		},
 		{
 			name: "postcodes with min & max",
 			request: &Request{
 				Path: []string{"postcodes"},
-				Schema: schematest.New("array", schematest.WithItems(
-					"integer",
-					schematest.WithMinimum(1000),
-					schematest.WithMaximum(9999),
-				)),
+				Schema: schematest.New("array",
+					schematest.WithMinItems(1),
+					schematest.WithItems(
+						"integer",
+						schematest.WithMinimum(1000),
+						schematest.WithMaximum(9999),
+					)),
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int64(7291), int64(9364)}, v)
+				require.Equal(t, []interface{}{int64(3282)}, v)
 			},
 		},
 		{
@@ -161,7 +163,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "229109", v)
+				require.Equal(t, "3282", v)
 			},
 		},
 		{
@@ -171,7 +173,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 39.452988, v)
+				require.Equal(t, 90.354201, v)
 			},
 		},
 		{
@@ -181,7 +183,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 19.726494, v)
+				require.Equal(t, 45.1771, v)
 			},
 		},
 		{
@@ -192,7 +194,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Zoey Nguyen", v)
+				require.Equal(t, "Aria Hernandez", v)
 			},
 		},
 		{
@@ -203,7 +205,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "2910 East Cliffsberg", v)
+				require.Equal(t, "2824 North Walkborough", v)
 			},
 		},
 		{
@@ -217,7 +219,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"country": "SI"}, v)
+				require.Equal(t, map[string]interface{}{"country": "BJ"}, v)
 			},
 		},
 		{
@@ -235,10 +237,10 @@ func TestAddress(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]interface{}{
-					"line1":   "Zoey Nguyen",
-					"line2":   "39364 Inletfurt",
-					"line3":   "Nashville-Davidson OH 80573",
-					"country": "Nauru",
+					"line1":   "Aria Hernandez",
+					"line2":   "41936 Cornerton",
+					"line3":   "Louisville/Jefferson KS 54911",
+					"country": "Lesotho",
 				}, v)
 			},
 		},
@@ -253,7 +255,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"houseNumber": "27"}, v)
+				require.Equal(t, map[string]interface{}{"houseNumber": "10"}, v)
 			},
 		},
 		{
@@ -267,7 +269,7 @@ func TestAddress(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"houseNumber": int64(7291)}, v)
+				require.Equal(t, map[string]interface{}{"houseNumber": int64(32824)}, v)
 			},
 		},
 	}
