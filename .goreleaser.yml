@@ -43,8 +43,8 @@ dockers:
   - goos: linux
     goarch: amd64
     image_templates:
-      - "mokapi/mokapi:noble-amd64"
-      - "mokapi/mokapi:{{ .Version }}-noble-amd64"
+      - "mokapi/mokapi:ubuntu-amd64"
+      - "mokapi/mokapi:{{ .Version }}-ubuntu-amd64"
     build_flag_templates:
       - "--platform=linux/amd64"
     dockerfile: images/release-ubuntu.Dockerfile
@@ -52,8 +52,8 @@ dockers:
   - goos: linux
     goarch: arm64
     image_templates:
-      - "mokapi/mokapi:noble-arm64v8"
-      - "mokapi/mokapi:{{ .Version }}-noble-arm64v8"
+      - "mokapi/mokapi:ubuntu-arm64v8"
+      - "mokapi/mokapi:{{ .Version }}-ubuntu-arm64v8"
     build_flag_templates:
       - "--platform=linux/arm64/v8"
     dockerfile: images/release-ubuntu.Dockerfile
@@ -67,14 +67,14 @@ docker_manifests:
     image_templates:
       - "mokapi/mokapi:{{ .Version }}-amd64"
       - "mokapi/mokapi:{{ .Version }}-arm64v8"
-  - name_template: "mokapi/mokapi:noble"
+  - name_template: "mokapi/mokapi:ubuntu"
     image_templates:
-      - "mokapi/mokapi:noble-amd64"
-      - "mokapi/mokapi:noble-arm64v8"
-  - name_template: "mokapi/mokapi:{{ .Version }}-noble"
+      - "mokapi/mokapi:ubuntu-amd64"
+      - "mokapi/mokapi:ubuntu-arm64v8"
+  - name_template: "mokapi/mokapi:{{ .Version }}-ubuntu"
     image_templates:
-      - "mokapi/mokapi:{{ .Version }}-noble-amd64"
-      - "mokapi/mokapi:{{ .Version }}-noble-arm64v8"
+      - "mokapi/mokapi:{{ .Version }}-ubuntu-amd64"
+      - "mokapi/mokapi:{{ .Version }}-ubuntu-arm64v8"
 
 brews:
   - repository:
