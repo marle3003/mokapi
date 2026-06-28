@@ -6,10 +6,17 @@ runs:
     - name: Write release notes
       shell: bash
       run: |
-        VERSION=$(jq -r '.release.tag_name' "$GITHUB_EVENT_PATH")
-        BODY=$(jq -r '.release.body' "$GITHUB_EVENT_PATH")
+        if [ "${{ github.event_name }}" = "release" ]; then
+          VERSION=$(jq -r '.release.tag_name' "$GITHUB_EVENT_PATH")
+          BODY=$(jq -r '.release.body' "$GITHUB_EVENT_PATH")
+        else
+          VERSION="${GITHUB_REF_NAME}"
+          BODY=$(gh release view "$VERSION" --repo "${{ github.repository }}" --json body --jq '.body')
+        fi
         {
           echo "## Mokapi $VERSION"
           echo
           echo "$BODY"
         } > docs/release.md
+      env:
+        GH_TOKEN: ${{ github.token }}
