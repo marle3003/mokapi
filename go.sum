@@ -71,8 +71,6 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dlclark/regexp2/v2 v2.2.2 h1:MYWvNYw8okuqNhwTYO587EZMiDruVa2vhV6fsGpfya0=
 github.com/dlclark/regexp2/v2 v2.2.2/go.mod h1:avUrQvPaLz2DrFNHJF0taWAFFX2C1GMSSoeiqFjcBmU=
-github.com/dop251/goja v0.0.0-20260618133527-c9b2ea77db59 h1:DjKLmvKK9u15djHZ88N8M0DhgnHVgJJ8bnEe0h7Lga8=
-github.com/dop251/goja v0.0.0-20260618133527-c9b2ea77db59/go.mod h1:Sc+QOu1WruvaaeT/cxFez/pXHpI9ZDjg/E8QNfSVveI=
 github.com/dop251/goja v0.0.0-20260627200808-0b76000cabdb h1:qxbH9q0zvt7Fwy9UJrHdd9grPTlO07G/vUUE3eqfZ4w=
 github.com/dop251/goja v0.0.0-20260627200808-0b76000cabdb/go.mod h1:Sc+QOu1WruvaaeT/cxFez/pXHpI9ZDjg/E8QNfSVveI=
 github.com/elazarl/goproxy v1.7.2 h1:Y2o6urb7Eule09PjlhQRGNsqRfPmYI3KKQLFpCAV3+o=
