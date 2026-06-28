@@ -2,7 +2,7 @@ package generator
 
 import (
 	"fmt"
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"slices"

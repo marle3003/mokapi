@@ -20,6 +20,7 @@ import (
 	"mokapi/schema/json/generator"
 	"mokapi/schema/json/schema/schematest"
 	"net/url"
+	"strconv"
 	"testing"
 	"time"
 
@@ -74,8 +75,8 @@ func TestKafkaClient(t *testing.T) {
 				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
-				require.Equal(t, "EZyvmtlRf", kafka.BytesToString(b.Records[0].Key))
-				require.Equal(t, `"XidZuoWq "`, kafka.BytesToString(b.Records[0].Value))
+				require.Equal(t, "byxlsTI5ydf y", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `"fnsy"`, kafka.BytesToString(b.Records[0].Value))
 			},
 		},
 		{
@@ -99,8 +100,8 @@ func TestKafkaClient(t *testing.T) {
 				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
-				require.Equal(t, "EZyvmtlRf", kafka.BytesToString(b.Records[0].Key))
-				require.Equal(t, `"XidZuoWq "`, kafka.BytesToString(b.Records[0].Value))
+				require.Equal(t, "byxlsTI5ydf y", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `"fnsy"`, kafka.BytesToString(b.Records[0].Value))
 			},
 		},
 		{
@@ -412,7 +413,7 @@ func TestKafkaClient(t *testing.T) {
 				`))
 				require.NoError(t, err)
 
-				require.Equal(t, `{"api":"foo","topic":"foo","partition":0,"offset":0,"key":"XidZuoWq ","value":"\"bar\"","schemaId":0,"headers":{}}`, hook.LastEntry().Message)
+				require.Equal(t, `{"api":"foo","topic":"foo","partition":0,"offset":0,"key":"fnsy","value":"\"bar\"","schemaId":0,"headers":{}}`, hook.LastEntry().Message)
 
 				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
@@ -654,7 +655,9 @@ func TestKafkaClient(t *testing.T) {
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Equal(t, "ijbptapwy", kafka.BytesToString(b.Records[0].Key))
-				require.Equal(t, `""`, kafka.BytesToString(b.Records[0].Value))
+				f, err := strconv.ParseFloat(kafka.BytesToString(b.Records[0].Value), 64)
+				require.NoError(t, err)
+				require.InDelta(t, 971925.8521882962, f, 0.000001)
 			},
 		},
 		{
@@ -704,7 +707,7 @@ func TestKafkaClient(t *testing.T) {
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
 				require.Equal(t, "ijbptapwy", kafka.BytesToString(b.Records[0].Key))
-				require.Equal(t, `<foo id="98173564-6619-4557-888e-65b16bb5def5"></foo>`, kafka.BytesToString(b.Records[0].Value))
+				require.Equal(t, `<foo id="b4ddf623-4ea6-48e5-9292-541f028d1fdb"></foo>`, kafka.BytesToString(b.Records[0].Value))
 			},
 		},
 		{

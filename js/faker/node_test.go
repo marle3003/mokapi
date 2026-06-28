@@ -13,7 +13,7 @@ import (
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/dop251/goja"
 	r "github.com/stretchr/testify/require"
 )

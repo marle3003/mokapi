@@ -23,7 +23,7 @@ func TestAnyOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(337128), v)
+				require.InDelta(t, -170715.30581115812, v, 0.000001)
 			},
 		},
 		{
@@ -36,7 +36,7 @@ func TestAnyOf(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "l", v)
+				require.Equal(t, "vM", v)
 			},
 		},
 		{
@@ -85,7 +85,7 @@ func TestAnyOf(t *testing.T) {
 			optionalProperties: "1",
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]any{"bar": "zashbEO6", "foo": "FqwCrwMfkOjojx"}, v)
+				require.Equal(t, map[string]any{"bar": "vtLnEEalaJ", "foo": "F2cjChNLDnmqkY"}, v)
 			},
 		},
 		{
@@ -116,8 +116,8 @@ func TestAnyOf(t *testing.T) {
 			req: &Request{
 				Schema: schematest.New("object",
 					schematest.WithProperty("restaurantType", &schema.Schema{Enum: []any{"sit-down", "fast-food"}}),
-					schematest.WithProperty("total", schematest.New("number")),
-					schematest.WithProperty("tip", schematest.New("number",
+					schematest.WithProperty("total", schematest.New("integer")),
+					schematest.WithProperty("tip", schematest.New("integer",
 						schematest.WithMinimum(0), schematest.WithMaximum(10000),
 					)),
 					schematest.WithRequired("restaurantType"),
@@ -137,8 +137,9 @@ func TestAnyOf(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t,
 					map[string]interface{}{
+						"gauva":          false,
 						"restaurantType": "sit-down",
-						"tip":            9710.164740571692,
+						"tip":            int64(4908),
 					},
 					v)
 			},

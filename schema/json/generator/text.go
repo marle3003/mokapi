@@ -3,7 +3,7 @@ package generator
 import (
 	"math"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 )
 
 func textNodes() []*Node {

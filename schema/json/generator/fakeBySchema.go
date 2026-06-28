@@ -5,7 +5,7 @@ import (
 	"mokapi/schema/json/schema"
 	"mokapi/sortedmap"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 )
 
 func fakeBySchemaNode() *Node {

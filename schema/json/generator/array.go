@@ -3,11 +3,12 @@ package generator
 import (
 	"errors"
 	"fmt"
+	"math"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"reflect"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/jinzhu/inflection"
 )
 
@@ -130,7 +131,7 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 		if s.MinContains != nil {
 			minContains = *s.MinContains
 		}
-		maxContains := length
+		maxContains := int(math.Max(float64(minContains), float64(length)))
 		if s.MaxContains != nil {
 			maxContains = *s.MaxContains
 		}

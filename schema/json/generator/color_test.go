@@ -1,10 +1,11 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v7"
+	"github.com/stretchr/testify/require"
 )
 
 func TestColor(t *testing.T) {
@@ -21,7 +22,7 @@ func TestColor(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "LightYellow", v)
+				require.Equal(t, "CadetBlue", v)
 			},
 		},
 		{
@@ -32,7 +33,7 @@ func TestColor(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "#cea93b", v)
+				require.Equal(t, "#cea19a", v)
 			},
 		},
 	}

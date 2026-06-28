@@ -15,7 +15,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-go@v5
+    - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
       with:
         go-version-file: 'go.mod'
     - uses: ./.github/actions/build-cli-flags-doc
@@ -30,7 +30,7 @@ runs:
       run: docker save -o /tmp/mokapi.tar ${{ inputs.image-name }} mokapi/mokapi:alpha
       shell: bash
     - name: Upload image
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
       with:
         name: ${{ inputs.artifact-name }}
         path: /tmp/mokapi.tar
