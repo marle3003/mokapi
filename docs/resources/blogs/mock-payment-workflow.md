@@ -1,5 +1,5 @@
 ---
-title: "Mocking a Payment Service with Mokapi: A Real Checkout Flow for Playwright"
+title: "How to Mock a Payment API Service for Playwright"
 description: Learn how to mock a payment provider with Mokapi using real HTML pages and Kafka events, so Playwright tests can walk through an actual checkout flow.
 subtitle: Most teams skip testing the checkout flow because they can't control a real payment service in their test environment. Here's how Mokapi removes that excuse.
 image:
@@ -7,7 +7,7 @@ image:
   alt: Diagram showing a shop checkout flow where Mokapi mocks both the payment provider API and a hosted payment page, with a Kafka topic carrying the payment result back to the shop backend.
 ---
 
-# Your Playwright Tests Deserve a Real Payment Flow (Without the Real Payment Service)
+# Mocking a Payment API Service in Checkout Flows
 
 You know that moment when you're setting up e2e tests for a checkout flow and you just... stop? Because wiring up a
 real payment service for tests feels like a rabbit hole nobody has time for. So you mock the API response, skip the
