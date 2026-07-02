@@ -23,7 +23,7 @@ func TestMain_SampleData(t *testing.T) {
 			name: "generate from json",
 			args: []string{"sample-data", "./test/pet.json"},
 			test: func(t *testing.T, out string) {
-				require.Equal(t, `{"id":37727,"category":{"id":83580,"name":"rabbit"},"name":"Prince of Barkness","photoUrls":[],"tags":[{"id":57421,"name":"Prism"},{"id":69949,"name":"Sol"}],"status":"pending"}`, out)
+				require.Equal(t, `{"category":{"id":36202,"name":"rabbit"},"name":"Kevin","photoUrls":[],"tags":[{"id":36098,"name":"VertexField"},{"id":27424,"name":"Lumin"},{"name":"OpalOasis"},{"name":"LunarFlare"},{"name":"VortexEdge"}],"status":"sold"}`, out)
 			},
 		},
 		{
@@ -31,15 +31,15 @@ func TestMain_SampleData(t *testing.T) {
 			args: []string{"sample-data", "./test/pet.json", "--count", "2"},
 			test: func(t *testing.T, out string) {
 				items := strings.Split(out, "\n")
-				require.Equal(t, `{"id":37727,"category":{"id":83580,"name":"rabbit"},"name":"Prince of Barkness","photoUrls":[],"tags":[{"id":57421,"name":"Prism"},{"id":69949,"name":"Sol"}],"status":"pending"}`, items[0])
-				require.Equal(t, `{"category":{"name":"ferret"},"name":"Demi","photoUrls":[],"tags":[{"id":56484,"name":"EchoForge"},{"id":53226,"name":"Shadow"},{"id":53241},{"id":29044,"name":"Flux"},{"id":56885,"name":"WillowSpark"}],"status":"available"}`, items[1])
+				require.Equal(t, `{"category":{"id":36202,"name":"rabbit"},"name":"Kevin","photoUrls":[],"tags":[{"id":36098,"name":"VertexField"},{"id":27424,"name":"Lumin"},{"name":"OpalOasis"},{"name":"LunarFlare"},{"name":"VortexEdge"}],"status":"sold"}`, items[0])
+				require.Equal(t, `{"id":81873,"category":{"id":81079,"name":"canary"},"name":"Fergus","photoUrls":["https://www.primaryaggregate.com/leverage/facilitate","http://www.deputymagnetic.net/plug-and-play/deliver/proactive/back-end","https://www.districtclicks-and-mortar.org/whiteboard/web-enabled"],"tags":[{"id":55199,"name":"Swift"},{"id":38640,"name":"Unity"},{"name":"Rocket"},{"id":24044,"name":"Arctic"},{"id":95940,"name":"Amity"}],"status":"pending"}`, items[1])
 			},
 		},
 		{
 			name: "generate from json output xml",
 			args: []string{"sample-data", "./test/pet.json", "--output", "xml", "--input-type", "openapi"},
 			test: func(t *testing.T, out string) {
-				require.Equal(t, `<Pet><id>37727</id><Category><id>83580</id><name>rabbit</name></Category><name>Prince of Barkness</name><photoUrl></photoUrl><tag><Tag><id>57421</id><name>Prism</name></Tag><Tag><id>69949</id><name>Sol</name></Tag></tag><status>pending</status></Pet>`, out)
+				require.Equal(t, `<Pet><Category><id>36202</id><name>rabbit</name></Category><name>Kevin</name><photoUrl></photoUrl><tag><Tag><id>36098</id><name>VertexField</name></Tag><Tag><id>27424</id><name>Lumin</name></Tag><Tag><name>OpalOasis</name></Tag><Tag><name>LunarFlare</name></Tag><Tag><name>VortexEdge</name></Tag></tag><status>sold</status></Pet>`, out)
 			},
 		},
 		{
@@ -47,8 +47,8 @@ func TestMain_SampleData(t *testing.T) {
 			args: []string{"sample-data", "./test/pet.json", "--output", "xml", "--input-type", "openapi", "-n", "2"},
 			test: func(t *testing.T, out string) {
 				require.Equal(t, `<samples>
-<Pet><id>37727</id><Category><id>83580</id><name>rabbit</name></Category><name>Prince of Barkness</name><photoUrl></photoUrl><tag><Tag><id>57421</id><name>Prism</name></Tag><Tag><id>69949</id><name>Sol</name></Tag></tag><status>pending</status></Pet>
-<Pet><Category><name>ferret</name></Category><name>Demi</name><photoUrl></photoUrl><tag><Tag><id>56484</id><name>EchoForge</name></Tag><Tag><id>53226</id><name>Shadow</name></Tag><Tag><id>53241</id></Tag><Tag><id>29044</id><name>Flux</name></Tag><Tag><id>56885</id><name>WillowSpark</name></Tag></tag><status>available</status></Pet>
+<Pet><Category><id>36202</id><name>rabbit</name></Category><name>Kevin</name><photoUrl></photoUrl><tag><Tag><id>36098</id><name>VertexField</name></Tag><Tag><id>27424</id><name>Lumin</name></Tag><Tag><name>OpalOasis</name></Tag><Tag><name>LunarFlare</name></Tag><Tag><name>VortexEdge</name></Tag></tag><status>sold</status></Pet>
+<Pet><id>81873</id><Category><id>81079</id><name>canary</name></Category><name>Fergus</name><photoUrl><photoUrl>https://www.primaryaggregate.com/leverage/facilitate</photoUrl><photoUrl>http://www.deputymagnetic.net/plug-and-play/deliver/proactive/back-end</photoUrl><photoUrl>https://www.districtclicks-and-mortar.org/whiteboard/web-enabled</photoUrl></photoUrl><tag><Tag><id>55199</id><name>Swift</name></Tag><Tag><id>38640</id><name>Unity</name></Tag><Tag><name>Rocket</name></Tag><Tag><id>24044</id><name>Arctic</name></Tag><Tag><id>95940</id><name>Amity</name></Tag></tag><status>pending</status></Pet>
 </samples>`, out)
 			},
 		},
@@ -56,14 +56,14 @@ func TestMain_SampleData(t *testing.T) {
 			name: "generate from openapi",
 			args: []string{"sample-data", "../../../acceptance/petstore/openapi.yml#/paths/~1pet/put/requestBody/content/application~1json/schema"},
 			test: func(t *testing.T, out string) {
-				require.Equal(t, `{"id":37727,"category":{"id":83580,"name":"rabbit"},"name":"Prince of Barkness","photoUrls":[],"tags":[{"id":57421,"name":"Prism"},{"id":69949,"name":"Sol"}],"status":"pending"}`, out)
+				require.Equal(t, `{"category":{"id":36202,"name":"rabbit"},"name":"Kevin","photoUrls":[],"tags":[{"id":36098,"name":"VertexField"},{"id":27424,"name":"Lumin"},{"name":"OpalOasis"},{"name":"LunarFlare"},{"name":"VortexEdge"}],"status":"sold"}`, out)
 			},
 		},
 		{
 			name: "generate using avro",
 			args: []string{"sample-data", `{"type": "string"}`, "--input-type", "avro", "--output", "binary"},
 			test: func(t *testing.T, out string) {
-				require.Equal(t, []byte{0x1c, 0x46, 0x71, 0x77, 0x43, 0x72, 0x77, 0x4d, 0x66, 0x6b, 0x4f, 0x6a, 0x6f, 0x6a, 0x78}, []byte(out))
+				require.Equal(t, []byte{0x1c, 0x46, 0x32, 0x63, 0x6a, 0x43, 0x68, 0x4e, 0x4c, 0x44, 0x6e, 0x6d, 0x71, 0x6b, 0x59}, []byte(out))
 			},
 		},
 		{
@@ -79,7 +79,7 @@ func TestMain_SampleData(t *testing.T) {
 }`, "--input-type", "avro", "--output", "binary"},
 			test: func(t *testing.T, out string) {
 				// json variant below
-				require.Equal(t, []byte{0xd3, 0xb3, 0x58, 0x0}, []byte(out))
+				require.Equal(t, []byte{0xb7, 0xfe, 0x47, 0x0}, []byte(out))
 			},
 		},
 		{
@@ -94,7 +94,7 @@ func TestMain_SampleData(t *testing.T) {
   ]
 }`, "--input-type", "avro"},
 			test: func(t *testing.T, out string) {
-				require.Equal(t, `{"value":-724202,"next":null}`, out)
+				require.Equal(t, `{"value":-589724,"next":null}`, out)
 			},
 		},
 	}

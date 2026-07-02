@@ -1,10 +1,11 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v7"
+	"github.com/stretchr/testify/require"
 )
 
 func TestConstraints(t *testing.T) {
@@ -38,7 +39,7 @@ func TestConstraints(t *testing.T) {
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]any{
-					"name": "Zoey Nguyen",
+					"name": "Aria Hernandez",
 					"sex":  "female",
 				}, v)
 			},

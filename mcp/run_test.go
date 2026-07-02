@@ -81,7 +81,7 @@ func TestService_Run(t *testing.T) {
 						Code: `okapi.getApis()`,
 					},
 				)
-				require.EqualError(t, err, `ReferenceError: okapi is not defined at mokapi_execute_code.js:1:1(0)
+				require.EqualError(t, err, `ReferenceError: okapi is not defined at mokapi_execute_code.js:1:0(0)
 
 Tip for Correction:
 It seems there is a syntax error or a misunderstanding of the API. 

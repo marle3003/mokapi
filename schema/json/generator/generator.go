@@ -5,7 +5,7 @@ import (
 	"mokapi/config/static"
 	"time"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 )
 
 var types = []any{"string", "number", "integer", "boolean", "array", "object", "null"}
@@ -45,6 +45,9 @@ func New(r *Request) (interface{}, error) {
 }
 
 func Seed(seed int64) {
-	gofakeit.Seed(seed)
+	err := gofakeit.Seed(seed)
+	if err != nil {
+		panic(err)
+	}
 	g.rand.Seed(seed)
 }

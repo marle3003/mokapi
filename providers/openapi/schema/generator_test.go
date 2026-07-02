@@ -8,7 +8,7 @@ import (
 	jsonSchema "mokapi/schema/json/schema"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,7 +27,7 @@ func TestGenerator(t *testing.T) {
 			schema: nil,
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "", v)
+				require.InDelta(t, 971925.852188296, v, 0.000001)
 			},
 		},
 		{
@@ -35,7 +35,7 @@ func TestGenerator(t *testing.T) {
 			schema: schematest.New(""),
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "", v)
+				require.InDelta(t, 971925.852188296, v, 0.000001)
 			},
 		},
 		{
@@ -61,20 +61,20 @@ func TestGeneratorString(t *testing.T) {
 	testcases := []struct {
 		name   string
 		schema *schema.Schema
-		test   func(v interface{}, err error)
+		test   func(t *testing.T, v interface{}, err error)
 	}{
 		{
 			name:   "string",
 			schema: schematest.New("string"),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "XidZuoWq ", v)
+				require.Equal(t, "fnsy", v)
 			},
 		},
 		{
 			name:   "by pattern",
 			schema: schematest.New("string", schematest.WithPattern("^\\d{3}-\\d{2}-\\d{4}$")),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "013-64-5994", v)
 			},
@@ -82,137 +82,137 @@ func TestGeneratorString(t *testing.T) {
 		{
 			name:   "date",
 			schema: schematest.New("string", schematest.WithFormat("date")),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "2035-01-24", v)
+				require.Equal(t, "2033-11-06", v)
 			},
 		},
 		{
 			name:   "date-time",
 			schema: schematest.New("string", schematest.WithFormat("date-time")),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "2035-01-24T13:00:35Z", v)
+				require.Equal(t, "2033-11-06T04:31:13Z", v)
 			},
 		},
 		{
 			name:   "password",
 			schema: schematest.New("string", schematest.WithFormat("password")),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "sX!54wZ8!69V", v)
+				require.Equal(t, "L*S9@WG!5x_1", v)
 			},
 		},
 		{
 			name:   "email",
 			schema: schematest.New("string", schematest.WithFormat("email")),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "markusmoen@pagac.net", v)
+				require.Equal(t, "priscilla.thornton@duncan.biz", v)
 			},
 		},
 		{
 			name:   "uuid",
 			schema: schematest.New("string", schematest.WithFormat("uuid")),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "98173564-6619-4557-888e-65b16bb5def5", v)
+				require.Equal(t, "b4ddf623-4ea6-48e5-9292-541f028d1fdb", v)
 			},
 		},
 		{
 			name:   "url",
 			schema: schematest.New("string", schematest.WithFormat("{url}")),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "https://www.dynamiciterate.name/target/seamless", v)
+				require.Equal(t, "http://www.deputyinnovative.biz/infrastructures", v)
 			},
 		},
 		{
 			name:   "hostname",
 			schema: schematest.New("string", schematest.WithFormat("hostname")),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "centraltarget.biz", v)
+				require.Equal(t, "strategicinfrastructures.biz", v)
 			},
 		},
 		{
 			name:   "ipv4",
 			schema: schematest.New("string", schematest.WithFormat("ipv4")),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "152.23.53.100", v)
+				require.Equal(t, "180.18.181.251", v)
 			},
 		},
 		{
 			name:   "ipv6",
 			schema: schematest.New("string", schematest.WithFormat("ipv6")),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "8898:ee17:bc35:9064:5866:d019:3b95:7857", v)
+				require.Equal(t, "ddb4:9212:aab5:87fb:4e33:17a4:f7b9:bf8e", v)
 			},
 		},
 		{
 			name:   "beername",
 			schema: schematest.New("string", schematest.WithFormat("{beername}")),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Duvel", v)
+				require.Equal(t, "Sierra Nevada Bigfoot Barleywine Style Ale", v)
 			},
 		},
 		{
 			name:   "address",
 			schema: schematest.New("string", schematest.WithFormat("{zip} {city}")),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "13645 Houston", v)
+				require.Equal(t, "81252 Buffalo", v)
 			},
 		},
 		{
 			name:   "uri",
 			schema: schematest.New("string", schematest.WithFormat("uri")),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "https://www.dynamiciterate.name/target/seamless", v)
+				require.Equal(t, "http://www.deputyinnovative.biz/infrastructures", v)
 			},
 		},
 		{
 			name:   "minLength",
 			schema: schematest.New("string", schematest.WithMinLength(25)),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "XidZuoWq vY5elXhlD4ezlYehCIA0OSwlV", v)
+				require.Equal(t, "fnsyx7yIkhyaaKAQyByPS<qbftyw5", v)
 			},
 		},
 		{
 			name:   "maxLength",
 			schema: schematest.New("string", schematest.WithMaxLength(4)),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "", v)
+				require.Equal(t, "fnsy", v)
 			},
 		},
 		{
 			name:   "maxLength",
 			schema: schematest.New("string", schematest.WithMaxLength(12)),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "XidZuoWq vY", v)
+				require.Equal(t, "fnsyx7yIkhy", v)
 			},
 		},
 		{
 			name:   "minLength with maxLength",
 			schema: schematest.New("string", schematest.WithMinLength(3), schematest.WithMaxLength(6)),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "XidZ", v)
+				require.Equal(t, "fns", v)
 			},
 		},
 		{
 			name:   "minLength equals maxLength",
 			schema: schematest.New("string", schematest.WithMinLength(4), schematest.WithMaxLength(4)),
-			test: func(v interface{}, err error) {
+			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "sXPO", v)
+				require.Equal(t, "wfgn", v)
 			},
 		},
 	}
@@ -224,7 +224,7 @@ func TestGeneratorString(t *testing.T) {
 			generator.Seed(11)
 
 			v, err := schema.CreateValue(tc.schema)
-			tc.test(v, err)
+			tc.test(t, v, err)
 		})
 	}
 }
@@ -237,7 +237,7 @@ func TestGeneratorBool(t *testing.T) {
 	}{
 		{
 			name:   "boolean",
-			exp:    true,
+			exp:    false,
 			schema: schematest.New("boolean"),
 		},
 	}
@@ -264,7 +264,7 @@ func TestGeneratorInt(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int32")),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int32(-837149), i)
+				require.Equal(t, int32(791768), i)
 			},
 		},
 		{
@@ -272,7 +272,7 @@ func TestGeneratorInt(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int32"), schematest.WithMinimum(10)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int32(91487), i)
+				require.Equal(t, int32(770303), i)
 			},
 		},
 		{
@@ -280,7 +280,7 @@ func TestGeneratorInt(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int32"), schematest.WithMaximum(0)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int32(-908523), i)
+				require.Equal(t, int32(-229699), i)
 			},
 		},
 		{
@@ -288,7 +288,7 @@ func TestGeneratorInt(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int32"), schematest.WithMinimum(-5), schematest.WithMaximum(5)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int32(-4), i)
+				require.Equal(t, int32(3), i)
 			},
 		},
 		{
@@ -296,7 +296,7 @@ func TestGeneratorInt(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int64")),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(-837149), i)
+				require.Equal(t, int64(791768), i)
 			},
 		},
 		{
@@ -304,7 +304,7 @@ func TestGeneratorInt(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int64"), schematest.WithMinimum(10)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(91487), i)
+				require.Equal(t, int64(770303), i)
 			},
 		},
 		{
@@ -312,7 +312,7 @@ func TestGeneratorInt(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int64"), schematest.WithMaximum(0)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(-908523), i)
+				require.Equal(t, int64(-229699), i)
 			},
 		},
 		{
@@ -320,7 +320,7 @@ func TestGeneratorInt(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int64"), schematest.WithMinimum(-5), schematest.WithMaximum(5)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(-4), i)
+				require.Equal(t, int64(3), i)
 			},
 		},
 		{
@@ -328,7 +328,7 @@ func TestGeneratorInt(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithFormat("int64"), schematest.WithMinimum(4), schematest.WithMaximum(10)),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(5), i)
+				require.Equal(t, int64(9), i)
 			},
 		},
 		{
@@ -373,42 +373,42 @@ func TestGeneratorFloat(t *testing.T) {
 	}{
 		{
 			name:   "float",
-			exp:    float32(-817045.06),
+			exp:    float32(540601.9),
 			schema: schematest.New("number", schematest.WithFormat("float")),
 		},
 		{
 			name:   "float min",
-			exp:    float32(91486.55),
+			exp:    float32(770303.25),
 			schema: schematest.New("number", schematest.WithFormat("float"), schematest.WithMinimum(10)),
 		},
 		{
 			name:   "float max",
-			exp:    float32(-908522.56),
+			exp:    float32(-229699.06),
 			schema: schematest.New("number", schematest.WithFormat("float"), schematest.WithMaximum(0)),
 		},
 		{
 			name:   "float min max",
-			exp:    float32(-4.0852256),
+			exp:    float32(2.7030094),
 			schema: schematest.New("number", schematest.WithFormat("float"), schematest.WithMinimum(-5), schematest.WithMaximum(5)),
 		},
 		{
 			name:   "double",
-			exp:    -817045.0699978453,
+			exp:    540601.8643242136,
 			schema: schematest.New("number", schematest.WithFormat("double")),
 		},
 		{
 			name:   "double min",
-			exp:    91486.55022642734,
+			exp:    770303.2291527851,
 			schema: schematest.New("number", schematest.WithFormat("double"), schematest.WithMinimum(10)),
 		},
 		{
 			name:   "double max",
-			exp:    -908522.5349989226,
+			exp:    -229699.06783789318,
 			schema: schematest.New("number", schematest.WithFormat("double"), schematest.WithMaximum(0)),
 		},
 		{
 			name:   "double min max",
-			exp:    -4.085225349989226,
+			exp:    2.703009321621068,
 			schema: schematest.New("number", schematest.WithFormat("double"), schematest.WithMinimum(-5), schematest.WithMaximum(5)),
 		},
 		{
@@ -428,17 +428,17 @@ func TestGeneratorFloat(t *testing.T) {
 		},
 		{
 			name:   "enum",
-			exp:    2,
+			exp:    1,
 			schema: schematest.New("number", schematest.WithFormat("double"), schematest.WithEnumValues(1, 2, 3, 4)),
 		},
 		{
 			name:   "exclusive minimum",
-			exp:    0.11829549300021638,
+			exp:    0.25406018643242156,
 			schema: schematest.New("number", schematest.WithFormat("double"), schematest.WithExclusiveMinimum(0.1), schematest.WithMaximum(0.3)),
 		},
 		{
 			name:   "exclusive maximum",
-			exp:    0.25457387325005376,
+			exp:    0.28851504660810456,
 			schema: schematest.New("number", schematest.WithFormat("double"), schematest.WithMinimum(0.25), schematest.WithExclusiveMaximum(0.3)),
 		},
 	}
@@ -449,7 +449,7 @@ func TestGeneratorFloat(t *testing.T) {
 
 			o, err := schema.CreateValue(data.schema)
 			require.NoError(t, err)
-			require.Equal(t, data.exp, o)
+			require.InDelta(t, data.exp, o, 0.000001)
 		})
 	}
 }
@@ -468,7 +468,7 @@ func TestGeneratorArray(t *testing.T) {
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int32(8), int32(8), int32(6), int32(7), int32(1)}, i)
+				require.Equal(t, []interface{}{int32(10), int32(6), int32(2), int32(3), int32(9)}, i)
 			},
 		},
 		{
@@ -478,7 +478,7 @@ func TestGeneratorArray(t *testing.T) {
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int32(8), int32(8), int32(6), int32(7), int32(1), int32(8), int32(9), int32(5), int32(3), int32(1)}, i)
+				require.Equal(t, []interface{}{int32(10), int32(6), int32(2), int32(3), int32(9), int32(0), int32(2), int32(6), int32(9), int32(7)}, i)
 			},
 		},
 		{
@@ -488,7 +488,7 @@ func TestGeneratorArray(t *testing.T) {
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int32(8), int32(8), int32(6), int32(7), int32(1), int32(8), int32(9), int32(5), int32(3), int32(1)}, i)
+				require.Equal(t, []interface{}{int32(10), int32(6), int32(2), int32(3), int32(9), int32(0), int32(2), int32(6), int32(9), int32(7)}, i)
 			},
 		},
 		{
@@ -498,7 +498,7 @@ func TestGeneratorArray(t *testing.T) {
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int32(8), int32(6), int32(7), int32(1), int32(9), int32(5), int32(3), int32(2), int32(4), int32(10)}, i)
+				require.Equal(t, []interface{}{int32(10), int32(6), int32(2), int32(3), int32(9), int32(0), int32(7), int32(8), int32(1), int32(5)}, i)
 			},
 		},
 		{
@@ -508,7 +508,7 @@ func TestGeneratorArray(t *testing.T) {
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{int32(7), int32(6), int32(8)}, i)
+				require.Equal(t, []interface{}{int32(6), int32(10)}, i)
 			},
 		},
 		{
@@ -519,7 +519,7 @@ func TestGeneratorArray(t *testing.T) {
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{3, 2, 1}, i)
+				require.Equal(t, []interface{}{1, 2, 3}, i)
 			},
 		},
 		{
@@ -540,7 +540,7 @@ func TestGeneratorArray(t *testing.T) {
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{7, 8, 9, 10, 1}, i)
+				require.Equal(t, []interface{}{10, 1, 2, 3, 4, 5, 6, 7, 8, 9}, i)
 			},
 		},
 		{
@@ -550,7 +550,7 @@ func TestGeneratorArray(t *testing.T) {
 			),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{1, 8, 9, 10, 7}, i)
+				require.Equal(t, []interface{}{1, 5, 2, 8, 9, 4, 3, 6, 7, 10}, i)
 			},
 		},
 		{
@@ -558,14 +558,18 @@ func TestGeneratorArray(t *testing.T) {
 			schema: schematest.New("array"),
 			test: func(t *testing.T, i interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{true, int64(-354976), "ZuoWq vY5elXhlD", []interface{}{-743110.6375100765, "lYehCIA", map[string]interface{}{"caravan": true, "hail": -717855.7306413883, "mob": int64(-679449), "scale": true}, false}, false}, i)
+				a := i.([]interface{})
+				require.Equal(t, "nsyx7", a[0])
+				require.InDelta(t, 824801.9947984695, a[1], 0.000001)
+				require.Equal(t, int64(-342586), a[2])
+				require.Equal(t, "hyaaKAQyB", a[3])
+				require.InDelta(t, -916030.8296825297, a[4], 0.000001)
 			},
 		},
 	}
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
-			gofakeit.SetGlobalFaker(gofakeit.New(11))
 			generator.Seed(11)
 
 			o, err := schema.CreateValue(tc.schema)
@@ -582,7 +586,7 @@ func TestGeneratorObject(t *testing.T) {
 	}{
 		{
 			name: "simple",
-			exp:  map[string]interface{}{"id": int32(98266)},
+			exp:  map[string]interface{}{"id": int32(89589)},
 			schema: schematest.New("object",
 				schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
 				schematest.WithRequired("id"),
@@ -590,7 +594,7 @@ func TestGeneratorObject(t *testing.T) {
 		},
 		{
 			name: "more fields",
-			exp:  map[string]interface{}{"id": int32(98266), "date": "2038-12-28"},
+			exp:  map[string]interface{}{"date": "2030-03-07", "id": int32(89589)},
 			schema: schematest.New("object",
 				schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
 				schematest.WithProperty("date", schematest.New("string", schematest.WithFormat("date"))),
@@ -599,7 +603,7 @@ func TestGeneratorObject(t *testing.T) {
 		},
 		{
 			name: "nested",
-			exp:  map[string]interface{}{"nested": map[string]interface{}{"id": int32(98266), "date": "2038-12-28"}},
+			exp:  map[string]interface{}{"nested": map[string]interface{}{"date": "2030-03-07", "id": int32(89589)}},
 			schema: schematest.New("object",
 				schematest.WithProperty("nested", schematest.New("object",
 					schematest.WithProperty("id", schematest.New("integer", schematest.WithFormat("int32"))),
@@ -612,13 +616,13 @@ func TestGeneratorObject(t *testing.T) {
 		},
 		{
 			name: "dictionary",
-			exp:  map[string]interface{}{"bunch": "Pevuwy", "growth": "NrLJgmr9arW", "hall": "JKqGj", "woman": "x?vY5elXhlD4ez"},
+			exp:  map[string]interface{}{"body": "1fpidf", "class": "yqD", "doctor": "t6ckaieGDffxcd", "fear": "TI5ydf yByPS<qb", "harm": "WDmJn", "pack": "Paitucts2mXR5eZ", "problem": "Qzy", "trip": "mWmsMMblIz"},
 			schema: schematest.New("object",
 				schematest.WithAdditionalProperties(schematest.New("string"))),
 		},
 		{
 			name: "with property _metadata",
-			exp:  map[string]interface{}{"_metadata": int64(-837149)},
+			exp:  map[string]interface{}{"_metadata": int64(791768)},
 			schema: schematest.New("object",
 				schematest.WithProperty("_metadata", schematest.New("integer", schematest.WithFormat("int64"))),
 				schematest.WithRequired("_metadata"),
@@ -626,7 +630,7 @@ func TestGeneratorObject(t *testing.T) {
 		},
 		{
 			name: "with property address as any",
-			exp:  map[string]interface{}{"address": map[string]interface{}{"address": "364 Unionsville, Norfolk, Ohio 99536", "city": "Norfolk", "country": "Lesotho", "latitude": 88.792592, "longitude": 174.504681, "state": "Ohio", "street": "364 Unionsville", "zip": "99536"}},
+			exp:  map[string]interface{}{"address": map[string]interface{}{"address": "125 East Routemouth, North Las Vegas, South Dakota 17999", "city": "North Las Vegas", "country": "Isle of Man", "latitude": -79.948308, "longitude": -60.019628, "state": "South Dakota", "street": "125 East Routemouth", "zip": "17999"}},
 			schema: schematest.New("object",
 				schematest.WithProperty("address", schematest.New("")),
 				schematest.WithRequired("address"),
@@ -634,7 +638,7 @@ func TestGeneratorObject(t *testing.T) {
 		},
 		{
 			name: "using XML name",
-			exp:  map[string]any{"name": "John Flores"},
+			exp:  map[string]any{"name": "Leah Martinez"},
 			schema: schematest.New("object",
 				schematest.WithProperty("name", schematest.New("string")),
 				schematest.WithXml(&schema.Xml{Name: "person"}),
@@ -664,6 +668,7 @@ func TestGenerator_AnyOf(t *testing.T) {
 			f: func(t *testing.T) {
 				s := schematest.New("array",
 					schematest.WithMinItems(1),
+					schematest.WithMaxItems(3),
 					schematest.WithItems("",
 						schematest.Any(
 							schematest.New("object",
@@ -685,7 +690,7 @@ func TestGenerator_AnyOf(t *testing.T) {
 				require.NoError(t, err)
 				b, err := json.Marshal(o)
 				require.NoError(t, err)
-				require.Equal(t, `[{"bar":4}]`, string(b))
+				require.Equal(t, `[{"foo":"nsyx7"},{"foo":""},{"foo":"IkhyaaKAQyByP"}]`, string(b))
 			},
 		},
 	}
@@ -719,7 +724,9 @@ func TestGenerator_AllOf(t *testing.T) {
 			)),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"foo": "XidZuoWq ", "bar": -378554.6034529718}, result)
+				m := result.(map[string]any)
+				require.Equal(t, m["foo"], "fnsy")
+				require.InDelta(t, 897230.3868030173, m["bar"], 0.000001)
 			},
 		},
 		{
@@ -733,7 +740,8 @@ func TestGenerator_AllOf(t *testing.T) {
 			),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"bar": -817045.0699978453}, result)
+				m := result.(map[string]any)
+				require.InDelta(t, 540601.8643242136, m["bar"], 0.000001)
 			},
 		},
 		{
@@ -747,7 +755,8 @@ func TestGenerator_AllOf(t *testing.T) {
 			),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"bar": -817045.0699978453}, result)
+				m := result.(map[string]any)
+				require.InDelta(t, 540601.8643242136, m["bar"], 0.000001)
 			},
 		},
 		{
@@ -814,7 +823,7 @@ func TestGenerator_OneOf(t *testing.T) {
 			)),
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 7.244365552867502, result)
+				require.Equal(t, 985963.0664648871, result)
 			},
 		},
 	}
@@ -915,7 +924,7 @@ func TestGeneratorNullable(t *testing.T) {
 		{
 			name:   "nullable string",
 			schema: schematest.New("string", schematest.IsNullable(true)),
-			seed:   43,
+			seed:   49,
 			test: func(t *testing.T, exp interface{}, err error) {
 				require.NoError(t, err)
 				require.Nil(t, exp)
@@ -924,7 +933,7 @@ func TestGeneratorNullable(t *testing.T) {
 		{
 			name:   "nullable int",
 			schema: schematest.New("integer", schematest.IsNullable(true)),
-			seed:   43,
+			seed:   49,
 			test: func(t *testing.T, exp interface{}, err error) {
 				require.NoError(t, err)
 				require.Nil(t, exp)
@@ -933,7 +942,7 @@ func TestGeneratorNullable(t *testing.T) {
 		{
 			name:   "nullable number",
 			schema: schematest.New("number", schematest.IsNullable(true)),
-			seed:   43,
+			seed:   49,
 			test: func(t *testing.T, exp interface{}, err error) {
 				require.NoError(t, err)
 				require.Nil(t, exp)
@@ -944,7 +953,7 @@ func TestGeneratorNullable(t *testing.T) {
 			schema: schematest.New("object",
 				schematest.IsNullable(true),
 				schematest.WithProperty("foo", schematest.New("string"))),
-			seed: 43,
+			seed: 49,
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
 				require.Nil(t, result)
@@ -956,7 +965,7 @@ func TestGeneratorNullable(t *testing.T) {
 				schematest.WithProperty("foo", schematest.New("string", schematest.IsNullable(true))),
 				schematest.WithRequired("foo"),
 			),
-			seed: 43,
+			seed: 49,
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, result)
@@ -971,7 +980,7 @@ func TestGeneratorNullable(t *testing.T) {
 			schema: schematest.New("array",
 				schematest.IsNullable(true),
 				schematest.WithItems("string")),
-			seed: 9,
+			seed: 49,
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
 				require.Nil(t, result)
@@ -980,8 +989,9 @@ func TestGeneratorNullable(t *testing.T) {
 		{
 			name: "nullable array item",
 			schema: schematest.New("array",
+				schematest.WithMinItems(1),
 				schematest.WithItems("string", schematest.IsNullable(true))),
-			seed: 20,
+			seed: 49,
 			test: func(t *testing.T, result interface{}, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, result)

@@ -6,7 +6,7 @@ import (
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,14 +22,14 @@ func TestGenerator(t *testing.T) {
 			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]any{
-					"address":   "2910 East Cliffsberg, Newark, Wisconsin 30118",
-					"city":      "Newark",
-					"country":   "Tokelau",
-					"latitude":  48.619729,
-					"longitude": 49.609684,
-					"state":     "Wisconsin",
-					"street":    "2910 East Cliffsberg",
-					"zip":       "30118",
+					"address":   "2824 North Walkborough, Plano, California 22554",
+					"city":      "Plano",
+					"country":   "Brazil",
+					"latitude":  17.057939,
+					"longitude": 30.125984,
+					"state":     "California",
+					"street":    "2824 North Walkborough",
+					"zip":       "22554",
 				}, v)
 			},
 		},
@@ -64,5 +64,5 @@ func TestFakeNotDefined(t *testing.T) {
 
 	v, err := generator.New(generator.NewRequest(nil, nil, nil))
 	require.NoError(t, err)
-	require.Equal(t, int64(337128), v)
+	require.InDelta(t, -170715.30581115812, v, 0.000001)
 }

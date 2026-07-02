@@ -5,7 +5,7 @@ import (
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 )
 
 const maxOneOfTries = 20

@@ -31,7 +31,7 @@ if (isDashboard) {
 const isDark = document.documentElement.getAttribute('data-theme') == 'dark';
 const nav = inject<DocConfig>('nav')!
 const route = useRoute()
-    const { getBreadcrumb, getEntryBySource } = useFileResolver();
+const { getBreadcrumb, getEntryBySource } = useFileResolver();
 const navHeaders = computed(() => {
   return Object.keys(nav).map(x => Object.assign({ label: x }, nav[x])) as DocEntry[]
 })

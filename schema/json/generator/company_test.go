@@ -1,10 +1,11 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v6"
-	"github.com/stretchr/testify/require"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
+
+	"github.com/brianvoe/gofakeit/v7"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCompany(t *testing.T) {
@@ -21,7 +22,7 @@ func TestCompany(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "OpenGov", v)
+				require.Equal(t, "Booz Allen Hamilton", v)
 			},
 		},
 		{
@@ -32,7 +33,7 @@ func TestCompany(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "OpenGov", v)
+				require.Equal(t, "Booz Allen Hamilton", v)
 			},
 		},
 		{
@@ -43,7 +44,7 @@ func TestCompany(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Entertainment and Media", v)
+				require.Equal(t, "Healthcare", v)
 			},
 		},
 		{
@@ -54,7 +55,7 @@ func TestCompany(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "OpenGov", v)
+				require.Equal(t, "Booz Allen Hamilton", v)
 			},
 		},
 		{
@@ -65,7 +66,7 @@ func TestCompany(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "OpenGov", v)
+				require.Equal(t, "Booz Allen Hamilton", v)
 			},
 		},
 	}

@@ -246,7 +246,7 @@ op.responses[0].contents[0].generateExample()`,
 					},
 				)
 				require.NoError(t, err)
-				require.Equal(t, map[string]any{"bar": int64(-804702), "foo": "P8"}, r.Result)
+				require.Equal(t, map[string]any{"bar": int64(28355), "foo": "g9NiRgiFeRO"}, r.Result)
 			},
 		},
 		{
@@ -282,7 +282,7 @@ op.invoke()`,
 				require.IsType(t, mcp.InvokeResponse{}, r.Result)
 				res := r.Result.(mcp.InvokeResponse)
 				require.Equal(t, 200, res.StatusCode)
-				require.Equal(t, `{"foo":"P8","bar":-804702}`, res.Body)
+				require.Equal(t, `{"foo":"g9NiRgiFeRO","bar":28355}`, res.Body)
 				require.Equal(t, map[string][]string{
 					"Content-Type": {"application/json"},
 				}, res.Headers)
@@ -423,7 +423,7 @@ op.invoke({ header: { foo: ['val1'] }})`,
 					},
 				)
 				require.NoError(t, err)
-				require.Equal(t, "ivyjones@ziemann.com", r.Result)
+				require.Equal(t, "nadiarhodes@george.name", r.Result)
 			},
 		},
 	}

@@ -9,7 +9,7 @@ icon: bi-box-seam-fill
 ## Download Mokapi package from GitHub
 
 ```Dockerfile tab=Dockerfile  
-FROM ubuntu:noble
+FROM ubuntu:resolute
 
 RUN apt-get update && \
 	apt-get install -y wget && \
@@ -28,7 +28,7 @@ ENTRYPOINT ["mokapi"]
 ```Dockerfile tab=Dockerfile  
 FROM mokapi/mokapi:v0.9.25 AS mokapi
 
-FROM ubuntu:noble
+FROM ubuntu:resolute
 
 COPY --from=mokapi /usr/local/bin/mokapi /usr/local/bin/mokapi
 

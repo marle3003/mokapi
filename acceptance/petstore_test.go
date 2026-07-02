@@ -137,13 +137,13 @@ func (suite *PetStoreSuite) TestGetOrderById() {
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/store/order/1",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
-		try.HasBody(`{"petId":23377,"quantity":92,"shipDate":"2012-01-30T07:58:01Z","complete":false}`))
+		try.HasBody(`{"petId":47057,"shipDate":"1995-11-16T10:19:08Z","status":"placed","complete":true}`))
 
 	try.GetRequest(suite.T(), "https://localhost:18443/store/order/10",
 		map[string]string{"Accept": "application/json"},
 		try.HasStatusCode(http.StatusOK),
 		// properties like id or petId are optional
-		try.HasBody(`{"id":93761,"petId":83318,"quantity":27,"shipDate":"2014-02-04T10:00:17Z","status":"placed","complete":true}`))
+		try.HasBody(`{"id":50660,"petId":89957,"quantity":53,"shipDate":"1981-01-14T21:14:21Z","complete":true}`))
 }
 
 func (suite *PetStoreSuite) TestTls() {

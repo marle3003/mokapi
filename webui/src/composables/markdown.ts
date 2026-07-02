@@ -4,7 +4,7 @@ import { MarkdownItBox } from '@/composables/markdown-box';
 import { MarkdownItLinks } from '@/composables/markdown-links';
 import { MarkdownItCard } from '@/composables/markdown-card';
 import { MarkdownItCarousel } from './markdown-carousel';
-import yaml from 'js-yaml'
+import { load as loadYaml } from 'js-yaml'
 import { MarkdownItBlockquote } from './markdown-blockquote';
 import { MarkdownItTabContent } from './markdown-tab-content';
 import { MarkdownItTitle } from './markdown-title';
@@ -92,7 +92,7 @@ export function parseMetadata(data: string): DocMeta {
         return {} as DocMeta
     }
   
-    return yaml.load(metadataMatch[1]!) as DocMeta
+    return loadYaml(metadataMatch[1]!) as DocMeta
 }
 
 export function transformPath(path: string): string {

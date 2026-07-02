@@ -4,7 +4,7 @@ import (
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
-	"github.com/brianvoe/gofakeit/v6"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/stretchr/testify/require"
 )
 
@@ -21,7 +21,7 @@ func TestStringFormat(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "2007-08-26", v)
+				require.Equal(t, "1977-05-07", v)
 			},
 		},
 		{
@@ -31,7 +31,7 @@ func TestStringFormat(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "2007-08-26T07:02:11Z", v)
+				require.Equal(t, "1977-05-07T20:13:28Z", v)
 			},
 		},
 		{
@@ -41,7 +41,7 @@ func TestStringFormat(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "07:02:11Z", v)
+				require.Equal(t, "20:13:28Z", v)
 			},
 		},
 		{
@@ -51,7 +51,7 @@ func TestStringFormat(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "w*YoR94jFL@X", v)
+				require.Equal(t, "d*SzbmJ2YPhc", v)
 			},
 		},
 		{
@@ -61,7 +61,7 @@ func TestStringFormat(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "shanellewehner@cruickshank.biz", v)
+				require.Equal(t, "annalise.hermann@elliott.org", v)
 			},
 		},
 		{
@@ -71,7 +71,7 @@ func TestStringFormat(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "44f4ae5d-233e-4f89-ae02-126591065f49", v)
+				require.Equal(t, "ce702a60-0f08-4819-bcd4-0907c044ad5c", v)
 			},
 		},
 		{
@@ -81,7 +81,7 @@ func TestStringFormat(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "http://www.regionale-enable.info/virtual/portals/redefine", v)
+				require.Equal(t, "http://www.headenvisioneer.io/24-7/mesh/functionalities", v)
 			},
 		},
 		{
@@ -91,7 +91,7 @@ func TestStringFormat(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "http://www.regionale-enable.info/virtual/portals/redefine", v)
+				require.Equal(t, "http://www.headenvisioneer.io/24-7/mesh/functionalities", v)
 			},
 		},
 		{
@@ -101,7 +101,7 @@ func TestStringFormat(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "corporatevirtual.com", v)
+				require.Equal(t, "central24-7.biz", v)
 			},
 		},
 		{
@@ -111,7 +111,7 @@ func TestStringFormat(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "68.244.174.93", v)
+				require.Equal(t, "206.188.64.71", v)
 			},
 		},
 		{
@@ -121,7 +121,7 @@ func TestStringFormat(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "1944:e0f4:7bae:825d:7d23:7d3e:448f:6589", v)
+				require.Equal(t, "70ce:d4bc:cf40:8e47:6e2d:abe:70be:4dc9", v)
 			},
 		},
 		{
@@ -131,7 +131,7 @@ func TestStringFormat(t *testing.T) {
 			},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Schneider Aventinus", v)
+				require.Equal(t, "Stone Imperial Russian Stout", v)
 			},
 		},
 		{
@@ -139,7 +139,7 @@ func TestStringFormat(t *testing.T) {
 			req:  &Request{Schema: schematest.New("string", schematest.WithFormat("{zip} {city}"))},
 			test: func(t *testing.T, v interface{}, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "82910 San Jose", v)
+				require.Equal(t, "32824 San Jose", v)
 			},
 		},
 		{
