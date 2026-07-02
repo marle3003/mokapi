@@ -26,7 +26,7 @@ runs:
       run: docker load --input /tmp/mokapi.tar
       shell: bash
     - name: Login to Docker
-      uses: docker/login-action@650006c6eb7dba73a995cc03b0b2d7f5ca915bee # v4
+      uses: docker/login-action@c99871dec2022cc055c062a10cc1a1310835ceb4 # v4
       with:
         username: ${{ inputs.docker-username }}
         password: ${{ inputs.docker-password }}
