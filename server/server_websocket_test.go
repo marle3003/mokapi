@@ -5,33 +5,32 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
-	"mokapi/mqtt"
-	"mokapi/mqtt/mqtttest"
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/runtime"
 	"mokapi/schema/json/schema"
 	"mokapi/server"
 	"mokapi/try"
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestMqttServer(t *testing.T) {
+func TestWebsocketServer(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, m *server.MqttManager)
+		test func(t *testing.T, m *server.WebsocketManager)
 	}{
 		{
-			name: "TestMqttServer",
-			test: func(t *testing.T, m *server.MqttManager) {
+			name: "TestWebsocketServer",
+			test: func(t *testing.T, m *server.WebsocketManager) {
 				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				c := asyncapi3test.NewConfig(
 					asyncapi3test.WithTitle("foo"),
-					asyncapi3test.WithServer("mqtt12", "mqtt", addr),
-					asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithServer("ws12", "ws", addr),
+					asyncapi3test.WithChannel("/foo",
 						asyncapi3test.WithMessage("foo",
 							asyncapi3test.WithPayload(
 								&schema.Schema{Type: schema.Types{"string"}},
@@ -42,36 +41,33 @@ func TestMqttServer(t *testing.T) {
 
 				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: c}})
 
-				// wait for mqtt start
+				// wait for websocket start
 				time.Sleep(500 * time.Millisecond)
 
-				client := mqtttest.NewClient(addr)
-				defer client.Close()
-				_, err := client.Send(&mqtt.Message{
-					Header:  &mqtt.Header{Type: mqtt.CONNECT},
-					Payload: &mqtt.ConnectRequest{},
-				})
+				client := http.Client{}
+				res, err := client.Get("http://" + addr + "/foo")
 				require.NoError(t, err)
+				require.Equal(t, http.StatusUpgradeRequired, res.StatusCode)
 			},
 		},
 		{
 			name: "kafka topic should not be available",
-			test: func(t *testing.T, m *server.MqttManager) {
+			test: func(t *testing.T, m *server.WebsocketManager) {
 				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapi3test.NewConfig(
 					asyncapi3test.WithTitle("foo"),
-					asyncapi3test.WithServer("mqtt12", "mqtt", addr),
+					asyncapi3test.WithServer("ws12", "ws", addr),
 					asyncapi3test.WithServer("kafka", "kafka", fmt.Sprintf("127.0.0.1:%v", try.GetFreePort())),
-					asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithChannel("/foo",
 						asyncapi3test.WithMessage("foo",
 							asyncapi3test.WithPayload(
 								&schema.Schema{Type: schema.Types{"string"}},
 							),
 						),
-						asyncapi3test.AssignToServer("#/servers/mqtt12"),
+						asyncapi3test.AssignToServer("#/servers/ws12"),
 					),
-					asyncapi3test.WithChannel("bar",
+					asyncapi3test.WithChannel("/bar",
 						asyncapi3test.WithMessage("bar",
 							asyncapi3test.WithPayload(
 								&schema.Schema{Type: schema.Types{"string"}},
@@ -86,26 +82,17 @@ func TestMqttServer(t *testing.T) {
 
 				m.UpdateConfig(dynamic.ConfigEvent{Config: c})
 
-				// wait for mqtt start
+				// wait for websocket start
 				time.Sleep(500 * time.Millisecond)
 
-				client := mqtttest.NewClient(addr)
-				defer client.Close()
-				msg, err := client.Send(&mqtt.Message{
-					Header:  &mqtt.Header{Type: mqtt.CONNECT},
-					Payload: &mqtt.ConnectRequest{ClientId: "client"},
-				})
+				client := http.Client{}
+				res, err := client.Get("http://" + addr + "/foo")
 				require.NoError(t, err)
-				require.IsType(t, &mqtt.ConnectResponse{}, msg.Payload)
-				require.Equal(t, mqtt.Success.Code, msg.Payload.(*mqtt.ConnectResponse).ReasonCode.Code)
+				require.Equal(t, http.StatusUpgradeRequired, res.StatusCode)
 
-				msg, err = client.Send(&mqtt.Message{
-					Header:  &mqtt.Header{Type: mqtt.PUBLISH, QoS: 1},
-					Payload: &mqtt.PublishRequest{Topic: "bar", MessageId: uint16(123)},
-				})
+				res, err = client.Get("http://" + addr + "/bar")
 				require.NoError(t, err)
-				require.IsType(t, &mqtt.PublishResponse{}, msg.Payload)
-				require.Equal(t, mqtt.TopicNameInvalid, msg.Payload.(*mqtt.PublishResponse).ReasonCode)
+				require.Equal(t, http.StatusNotFound, res.StatusCode)
 			},
 		},
 	}
@@ -116,7 +103,7 @@ func TestMqttServer(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			m := server.NewMqttManager(nil, runtime.New(&static.Config{}, &dynamictest.Reader{}))
+			m := server.NewWebsocketManager(nil, runtime.New(&static.Config{}, &dynamictest.Reader{}))
 			defer m.Stop()
 
 			tc.test(t, m)

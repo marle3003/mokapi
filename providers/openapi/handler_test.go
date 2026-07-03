@@ -1174,6 +1174,31 @@ func TestHandler_Event(t *testing.T) {
 				return nil
 			},
 		},
+		{
+			name: "header is not specified",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json"),
+					),
+				)
+				openapitest.AppendPath("/foo", c,
+					openapitest.UseOperation(http.MethodGet, op),
+				)
+				r := httptest.NewRequest(http.MethodGet, "http://localhost/foo", nil)
+				r.Header.Set("foo", "bar")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, `{"Accept":"application/json"}`, rr.Body.String())
+			},
+			event: func(event string, args ...interface{}) []*common.Action {
+				req := args[0].(*common.HttpEventRequest)
+				res := args[1].(*common.HttpEventResponse)
+				res.Data = req.Header
+				return nil
+			},
+		},
 	}
 
 	t.Parallel()

@@ -60,6 +60,8 @@ type Config struct {
 	// server objects url field in order to construct the full URL
 	Paths PathItems `yaml:"paths,omitempty" json:"paths,omitempty"`
 
+	Webhooks map[string]*PathRef `yaml:"webhooks,omitempty" json:"webhooks,omitempty"`
+
 	Security []SecurityRequirement `yaml:"security" json:"security"`
 
 	Components Components `yaml:"components,omitempty" json:"components,omitempty"`

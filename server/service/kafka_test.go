@@ -1,10 +1,11 @@
-package service
+package service_test
 
 import (
 	"fmt"
 	"mokapi/kafka"
 	"mokapi/kafka/apiVersion"
 	"mokapi/kafka/kafkatest"
+	"mokapi/server/service"
 	"mokapi/try"
 	"testing"
 
@@ -21,7 +22,7 @@ func TestKafkaBroker(t *testing.T) {
 		err := rw.Write(&apiVersion.Response{ApiKeys: []apiVersion.ApiKeyResponse{{ApiKey: kafka.ApiVersions, MinVersion: 1, MaxVersion: 2}}})
 		require.NoError(t, err)
 	})
-	b := NewKafkaBroker(fmt.Sprintf("%v", port), handler)
+	b := service.NewKafkaBroker(fmt.Sprintf("%v", port), handler)
 	b.Start()
 	defer b.Stop()
 

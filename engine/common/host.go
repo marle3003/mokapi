@@ -42,6 +42,8 @@ type Host interface {
 
 	On(event string, do EventHandler, args EventArgs)
 
+	Webhook(name string, url string, args WebhookArgs) (*WebhookResponse, error)
+
 	KafkaClient() KafkaClient
 	MqttClient() MqttClient
 	HttpClient(HttpClientOptions) HttpClient
@@ -229,4 +231,18 @@ type EventHandler func(ctx *EventContext) (bool, error)
 type EventContext struct {
 	EventLogger func(level, message string)
 	Args        []any
+}
+
+type WebhookArgs struct {
+	Method   string
+	Headers  map[string]string
+	Api      string
+	Timeout  time.Duration
+	Insecure bool
+}
+
+type WebhookResponse struct {
+	StatusCode int
+	Body       string
+	Headers    map[string][]string
 }

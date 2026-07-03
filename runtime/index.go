@@ -304,6 +304,10 @@ func (s *SearchIndex) Search(r search.Request) (search.Result, error) {
 			item, err = events.GetSearchResult(fields, discriminators)
 		case "kafka":
 			item, err = getKafkaSearchResult(fields, discriminators)
+		case "mqtt":
+			item, err = getMqttSearchResult(fields, discriminators)
+		case "websocket":
+			item, err = getWebsocketSearchResult(fields, discriminators)
 		case "mail":
 			item, err = getMailSearchResult(fields, discriminators)
 		case "ldap":
@@ -415,6 +419,10 @@ func getTypeFacet(term *bleveSearch.TermFacet) search.FacetValue {
 		facet.Value = "HTTP"
 	case "kafka":
 		facet.Value = "Kafka"
+	case "mqtt":
+		facet.Value = "MQTT"
+	case "websocket":
+		facet.Value = "Websocket"
 	case "mail":
 		facet.Value = "Mail"
 	case "event":

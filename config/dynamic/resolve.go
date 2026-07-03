@@ -242,12 +242,13 @@ func resolveUrl(ref string, cfg *Config) (*url.URL, error) {
 
 	id := getId(cfg.Data)
 	if id != "" {
-		u, err = url.Parse(id)
+		var uId *url.URL
+		uId, err = url.Parse(id)
 		if err != nil {
 			return nil, fmt.Errorf("parse URL from $id failed: %w", err)
 		}
-		if u.IsAbs() {
-			return u.Parse(ref)
+		if uId.IsAbs() {
+			return uId.Parse(ref)
 		}
 	}
 

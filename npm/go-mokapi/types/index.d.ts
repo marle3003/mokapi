@@ -120,6 +120,7 @@ export interface EventHandler {
     mqtt: MqttEventHandler;
     ldap: LdapEventHandler;
     smtp: SmtpEventHandler;
+    websocket: WebsocketEventHandler;
 }
 
 /**
@@ -331,6 +332,269 @@ export interface MqttEventMessage {
 
     /** MQTT message value */
     value: string;
+}
+
+export type WebsocketEventHandler = (message: WebsocketEventMessage) => void | Promise<void>;
+
+/**
+ * WebsocketEventMessage is an object passed to a WebSocket event handler whenever
+ * a message is received from a client. It provides access to the message payload,
+ * connection metadata, and methods to send messages back.
+ *
+ * @example
+ * // Simple request/reply
+ * import { on } from 'mokapi'
+ * export default function() {
+ *   on('websocket', function(event) {
+ *     event.reply({ text: 'pong' })
+ *   })
+ * }
+ *
+ * @example
+ * // Broadcast to all connected clients (e.g. chat)
+ * import { on } from 'mokapi'
+ * export default function() {
+ *   on('websocket', function(event) {
+ *     event.broadcast({ from: event.client.query['userId'], text: event.message.text })
+ *   })
+ * }
+ *
+ * @example
+ * // Store clients and send later
+ * import { on } from 'mokapi'
+ * const clients: WebsocketClient[] = []
+ * export default function() {
+ *   on('websocket', function(event) {
+ *     clients.push(event.client)
+ *   })
+ * }
+ *
+ * @see https://mokapi.io/docs/javascript-api/mokapi/eventhandler/WebsocketEventMessage
+ */
+export interface WebsocketEventMessage {
+    /**
+     * The name of the API, matching the `info.title` field in the AsyncAPI specification.
+     *
+     * @example
+     * on('websocket', function(event) {
+     *   console.log(event.api) // e.g. "Chat API"
+     * })
+     */
+    readonly api: string;
+
+    /**
+     * The channel on which the message was received.
+     *
+     * @example
+     * on('websocket', function(event) {
+     *   console.log(event.channel.name) // e.g. "/chat"
+     * })
+     */
+    readonly channel: WebsocketChannel;
+
+    /**
+     * The client that sent the message. Can be stored and used later
+     * to send messages outside the current event handler.
+     *
+     * @example
+     * on('websocket', function(event) {
+     *   const userId = event.client.query['userId']
+     *   const token  = event.client.headers['authorization']
+     * })
+     */
+    readonly client: WebsocketClient;
+
+    /**
+     * The decoded message payload. The type depends on the `contentType`
+     * defined in the AsyncAPI specification — typically an object for
+     * `application/json` or a string for `text/plain`.
+     *
+     * @example
+     * on('websocket', function(event) {
+     *   console.log(event.message.text)
+     * })
+     */
+    readonly message: any;
+
+    /**
+     * Sends a message back to the client that sent the current message.
+     * Shorthand for `event.client.send(message)`.
+     *
+     * The message is validated against the AsyncAPI specification before
+     * being sent. If validation fails, the error is recorded in the
+     * dashboard event log.
+     *
+     * @param message - The message payload to send. Will be encoded
+     *   according to the channel's `contentType`.
+     *
+     * @example
+     * on('websocket', function(event) {
+     *   event.reply({ text: 'got your message' })
+     * })
+     */
+    reply(message: any): void;
+
+    /**
+     * Sends a message to all clients currently connected to this channel,
+     * including the sender. Shorthand for looping over `event.channel.clients`.
+     *
+     * @param message - The message payload to send to every connected client.
+     *
+     * @example
+     * // Broadcast a chat message to everyone
+     * on('websocket', function(event) {
+     *   event.broadcast({ from: event.client.query['userId'], text: event.message.text })
+     * })
+     *
+     * @example
+     * // Broadcast excluding the sender
+     * on('websocket', function(event) {
+     *   for (const client of event.channel.clients) {
+     *     if (client.remoteAddr !== event.client.remoteAddr) {
+     *       client.send(event.message)
+     *     }
+     *   }
+     * })
+     */
+    broadcast(message: any): void;
+}
+
+/**
+ * Represents a WebSocket client connected to a channel.
+ * The client object is populated from the HTTP upgrade handshake,
+ * so `query` and `headers` reflect the values sent during the
+ * initial connection request.
+ *
+ * Client references to remain valid after the event handler returns,
+ * so they can be stored and used to push messages at any time
+ * while the connection is open.
+ *
+ * @example
+ * // Store clients on connect, send later from another event
+ * import { on } from 'mokapi'
+ * const clients: WebsocketClient[] = []
+ * export default function() {
+ *   on('websocket', function(event) {
+ *     if (event.message.type === 'join') {
+ *       clients.push(event.client)
+ *     }
+ *   })
+ * }
+ *
+ * @see https://mokapi.io/docs/javascript-api/mokapi/eventhandler/WebsocketClient
+ */
+export interface WebsocketClient {
+    /**
+     * The remote address of the client in `host:port` format.
+     * Can be used to distinguish clients when no application-level
+     * identity is available.
+     *
+     * @example
+     * on('websocket', function(event) {
+     *   console.log(event.client.remoteAddr) // e.g. "127.0.0.1:54321"
+     * })
+     */
+    readonly remoteAddr: string;
+
+    /**
+     * Query parameters from the HTTP upgrade request, as defined
+     * in the channel's WebSocket binding (`bindings.ws.query`).
+     *
+     * @example
+     * // AsyncAPI binding:
+     * // bindings:
+     * //   ws:
+     * //     query:
+     * //       properties:
+     * //         userId:
+     * //           type: string
+     *
+     * on('websocket', function(event) {
+     *   const userId = event.client.query['userId']
+     * })
+     */
+    readonly query: Record<string, string>;
+
+    /**
+     * HTTP headers from the upgrade request, as defined in the
+     * channel's WebSocket binding (`bindings.ws.headers`).
+     *
+     * @example
+     * // AsyncAPI binding:
+     * // bindings:
+     * //   ws:
+     * //     headers:
+     * //       properties:
+     * //         Authorization:
+     * //           type: string
+     *
+     * on('websocket', function(event) {
+     *   const token = event.client.headers['authorization']
+     * })
+     */
+    readonly headers: Record<string, string>;
+
+    /**
+     * Sends a message to this specific client. The client reference
+     * can be stored and called outside of the event handler to push
+     * messages at any time while the connection is open.
+     *
+     * @param message - The message payload to send. Will be encoded
+     *   according to the channel's `contentType`.
+     *
+     * @example
+     * // Immediate send (equivalent to event.reply)
+     * on('websocket', function(event) {
+     *   event.client.send({ text: 'hello' })
+     * })
+     *
+     * @example
+     * // Deferred send after storing the client
+     * const clients: WebsocketClient[] = []
+     * on('websocket', function(event) {
+     *   clients.push(event.client)
+     * })
+     * // later, from a timer or another event:
+     * clients.forEach(c => c.send({ text: 'server push' }))
+     */
+    send(message: any): void;
+}
+
+/**
+ * Represents the WebSocket channel on which a message was received.
+ * Provides access to all currently connected clients, which is useful
+ * for targeted sends or building broadcast logic manually.
+ *
+ * @see https://mokapi.io/docs/javascript-api/mokapi/eventhandler/WebsocketChannel
+ */
+export interface WebsocketChannel {
+    /**
+     * The channel path, matching the channel address in the AsyncAPI
+     * specification.
+     *
+     * @example
+     * on('websocket', function(event) {
+     *   console.log(event.channel.name) // e.g. "/chat"
+     * })
+     */
+    readonly channel: string;
+
+    /**
+     * All clients currently connected to this channel. Use this for
+     * custom fan-out logic beyond what `broadcast` provides — for
+     * example, filtering by query parameter or sending to a subset.
+     *
+     * @example
+     * // Send to all clients with a specific userId
+     * on('websocket', function(event) {
+     *   for (const client of event.channel.clients) {
+     *     if (client.query['room'] === event.message.room) {
+     *       client.send(event.message)
+     *     }
+     *   }
+     * })
+     */
+    readonly clients: readonly WebsocketClient[];
 }
 
 /**

@@ -5,13 +5,13 @@ import (
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/config/static"
 	"mokapi/engine/common"
-	"mokapi/mqtt"
 	"mokapi/providers/asyncapi3"
-	"mokapi/providers/asyncapi3/mqtt/store"
+	"mokapi/providers/asyncapi3/websocket"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"mokapi/runtime/search"
 	"mokapi/sortedmap"
+	"net/http"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -20,8 +20,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type MqttStore struct {
-	infos   map[string]*MqttInfo
+type WebsocketStore struct {
+	infos   map[string]*WebsocketInfo
 	monitor *monitor.Monitor
 	cfg     *static.Config
 	m       sync.RWMutex
@@ -30,21 +30,21 @@ type MqttStore struct {
 	reader  dynamic.Reader
 }
 
-type MqttInfo struct {
+type WebsocketInfo struct {
 	*asyncapi3.Config
-	*store.Store
+	*websocket.Store
 	configs               map[string]*dynamic.Config
 	seenTopics            map[string]bool
-	updateEventAndMetrics func(k *MqttInfo)
+	updateEventAndMetrics func(k *WebsocketInfo)
 }
 
-type MqttHandler struct {
-	Mqtt *monitor.Mqtt
-	next mqtt.Handler
+type WebsocketHandler struct {
+	Websocket *monitor.Websocket
+	next      http.Handler
 }
 
-func newMqttInfo(store *store.Store, updateEventAndMetrics func(info *MqttInfo)) *MqttInfo {
-	hc := &MqttInfo{
+func newWebsocketInfo(store *websocket.Store, updateEventAndMetrics func(info *WebsocketInfo)) *WebsocketInfo {
+	hc := &WebsocketInfo{
 		configs:               map[string]*dynamic.Config{},
 		Store:                 store,
 		seenTopics:            map[string]bool{},
@@ -53,14 +53,14 @@ func newMqttInfo(store *store.Store, updateEventAndMetrics func(info *MqttInfo))
 	return hc
 }
 
-func (s *MqttStore) Get(name string) *MqttInfo {
+func (s *WebsocketStore) Get(name string) *WebsocketInfo {
 	s.m.RLock()
 	defer s.m.RUnlock()
 
 	return s.infos[name]
 }
 
-func (s *MqttStore) List() []*MqttInfo {
+func (s *WebsocketStore) List() []*WebsocketInfo {
 	if s == nil {
 		return nil
 	}
@@ -68,27 +68,27 @@ func (s *MqttStore) List() []*MqttInfo {
 	s.m.RLock()
 	defer s.m.RUnlock()
 
-	var list []*MqttInfo
+	var list []*WebsocketInfo
 	for _, v := range s.infos {
 		list = append(list, v)
 	}
 	return list
 }
 
-func (s *MqttStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*MqttInfo, error) {
+func (s *WebsocketStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*WebsocketInfo, error) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
 	if len(s.infos) == 0 {
-		s.infos = make(map[string]*MqttInfo)
+		s.infos = make(map[string]*WebsocketInfo)
 	}
-	cfg, err := getMqttConfig(c)
+	cfg, err := getWebsocketConfig(c)
 	if err != nil {
 		return nil, err
 	}
 
 	name := cfg.Info.Name
-	ki, ok := s.infos[name]
+	wi, ok := s.infos[name]
 
 	eventStore, hasStoreConfig := s.cfg.Event.Store[name]
 	if !hasStoreConfig {
@@ -99,33 +99,33 @@ func (s *MqttStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*MqttIn
 		s.events.ResetStores(events.NewTraits().WithNamespace("mqtt").WithName(cfg.Info.Name))
 		s.events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("mqtt").WithName(cfg.Info.Name))
 
-		ki = newMqttInfo(store.New(cfg, emitter, s.events, s.monitor.Mqtt), s.updateEventStore)
-		s.infos[cfg.Info.Name] = ki
+		wi = newWebsocketInfo(websocket.New(cfg, emitter, s.events, s.monitor.Mqtt), s.updateEventStore)
+		s.infos[cfg.Info.Name] = wi
 	}
-	ki.addConfig(c, s.reader)
+	wi.addConfig(c, s.reader)
 
 	if s.cfg.Api.Search.Enabled {
-		s.addToIndex(ki.Config)
+		s.addToIndex(wi.Config)
 	}
 
-	return ki, nil
+	return wi, nil
 }
 
-func (s *MqttStore) Set(name string, ki *MqttInfo) {
+func (s *WebsocketStore) Set(name string, wi *WebsocketInfo) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
 	if len(s.infos) == 0 {
-		s.infos = make(map[string]*MqttInfo)
+		s.infos = make(map[string]*WebsocketInfo)
 	}
 
-	s.infos[name] = ki
+	s.infos[name] = wi
 }
 
-func (s *MqttStore) Remove(c *dynamic.Config) {
+func (s *WebsocketStore) Remove(c *dynamic.Config) {
 	s.m.RLock()
 
-	cfg, err := getMqttConfig(c)
+	cfg, err := getWebsocketConfig(c)
 	if err != nil {
 		return
 	}
@@ -150,13 +150,13 @@ func (s *MqttStore) Remove(c *dynamic.Config) {
 	}
 }
 
-func (c *MqttInfo) addConfig(config *dynamic.Config, reader dynamic.Reader) {
+func (c *WebsocketInfo) addConfig(config *dynamic.Config, reader dynamic.Reader) {
 	key := config.Info.Url.String()
 	c.configs[key] = config
 	c.update(reader)
 }
 
-func (c *MqttInfo) update(reader dynamic.Reader) {
+func (c *WebsocketInfo) update(reader dynamic.Reader) {
 	if len(c.configs) == 0 {
 		c.Config = nil
 		c.Store = nil
@@ -196,16 +196,16 @@ func (c *MqttInfo) update(reader dynamic.Reader) {
 	}
 
 	if cfg.Servers.Len() == 0 {
-		log.Infof("no servers defined in AsyncAPI spec — using default Mokapi broker for cluster '%s'", cfg.Info.Name)
+		log.Infof("no servers defined in AsyncAPI spec — using default Mokapi server for service '%s'", cfg.Info.Name)
 		if cfg.Servers == nil {
 			cfg.Servers = &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{}
 		}
 		cfg.Servers.Set("mokapi", &asyncapi3.ServerRef{
 			Value: &asyncapi3.Server{
-				Host:     ":1883",
-				Protocol: "mqtt",
-				Title:    "Mokapi Default Broker",
-				Summary:  "Automatically added broker because no servers are defined in the AsyncAPI spec",
+				Host:     ":80",
+				Protocol: "ws",
+				Title:    "Mokapi Default Server",
+				Summary:  "Automatically added server because no servers are defined in the AsyncAPI spec",
 			},
 		})
 	}
@@ -215,11 +215,11 @@ func (c *MqttInfo) update(reader dynamic.Reader) {
 	c.Store.Update(cfg)
 }
 
-func (c *MqttInfo) Handler(Mqtt *monitor.Mqtt) mqtt.Handler {
-	return &MqttHandler{Mqtt: Mqtt, next: c.Store}
+func (c *WebsocketInfo) Handler(ws *monitor.Websocket) http.Handler {
+	return &WebsocketHandler{Websocket: ws, next: c.Store}
 }
 
-func (c *MqttInfo) Configs() []*dynamic.Config {
+func (c *WebsocketInfo) Configs() []*dynamic.Config {
 	var r []*dynamic.Config
 	for _, config := range c.configs {
 		r = append(r, config)
@@ -227,14 +227,13 @@ func (c *MqttInfo) Configs() []*dynamic.Config {
 	return r
 }
 
-func (h *MqttHandler) ServeMessage(rw mqtt.MessageWriter, req *mqtt.Message) {
-	ctx := monitor.NewMqttContext(req.Context, h.Mqtt)
+func (h *WebsocketHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	ctx := monitor.NewWebsocketContext(r.Context(), h.Websocket)
 
-	req.WithContext(ctx)
-	h.next.ServeMessage(rw, req)
+	h.next.ServeHTTP(rw, r.WithContext(ctx))
 }
 
-func HasMqttServer(c *dynamic.Config) (*asyncapi3.Config, bool) {
+func HasWebsocketServer(c *dynamic.Config) (*asyncapi3.Config, bool) {
 	cfg, ok := IsAsyncApiConfig(c)
 	if !ok {
 		return nil, false
@@ -244,14 +243,14 @@ func HasMqttServer(c *dynamic.Config) (*asyncapi3.Config, bool) {
 		if s.Value == nil {
 			continue
 		}
-		if strings.ToLower(s.Value.Protocol) == "mqtt" {
+		if strings.ToLower(s.Value.Protocol) == "ws" {
 			return cfg, true
 		}
 	}
 	return cfg, false
 }
 
-func getMqttConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
+func getWebsocketConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
 	if _, ok := c.Data.(*asyncapi3.Config); ok {
 		return c.Data.(*asyncapi3.Config), nil
 	} else {
@@ -260,31 +259,31 @@ func getMqttConfig(c *dynamic.Config) (*asyncapi3.Config, error) {
 	}
 }
 
-func (s *MqttStore) updateEventStore(k *MqttInfo) {
+func (s *WebsocketStore) updateEventStore(k *WebsocketInfo) {
 	eventStore, hasStoreConfig := s.cfg.Event.Store[k.Config.Info.Name]
 	if !hasStoreConfig {
 		eventStore = s.cfg.Event.Store["default"]
 	}
 
-	for topicName, topic := range k.Config.Channels {
+	for channelName, topic := range k.Config.Channels {
 		if topic.Value == nil {
 			continue
 		}
 		if topic.Value.Address != "" {
-			topicName = topic.Value.Address
+			channelName = topic.Value.Address
 		}
-		if _, ok := k.seenTopics[topicName]; ok {
+		if _, ok := k.seenTopics[channelName]; ok {
 			continue
 		}
-		s.monitor.Mqtt.Messages.WithLabel(k.Config.Info.Name, topicName)
-		s.monitor.Mqtt.LastMessage.WithLabel(k.Config.Info.Name, topicName)
-		traits := events.NewTraits().WithNamespace("mqtt").WithName(k.Config.Info.Name).With("topic", topicName)
+		s.monitor.Mqtt.Messages.WithLabel(k.Config.Info.Name, channelName)
+		s.monitor.Mqtt.LastMessage.WithLabel(k.Config.Info.Name, channelName)
+		traits := events.NewTraits().WithNamespace("websocket").WithName(k.Config.Info.Name).With("channel", channelName)
 		s.events.SetStore(int(eventStore.Size), traits)
-		k.seenTopics[topicName] = true
+		k.seenTopics[channelName] = true
 	}
 }
 
-func (s *MqttStore) Len() int {
+func (s *WebsocketStore) Len() int {
 	if s == nil {
 		return 0
 	}

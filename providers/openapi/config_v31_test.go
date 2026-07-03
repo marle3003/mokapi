@@ -1,7 +1,7 @@
 package openapi_test
 
 import (
-	"github.com/stretchr/testify/require"
+	"encoding/json"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
@@ -10,6 +10,8 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestConfig_v31(t *testing.T) {
@@ -30,10 +32,16 @@ func TestConfig_v31(t *testing.T) {
 	c := root.Data.(*openapi.Config)
 	err := c.Parse(root, reader)
 	require.NoError(t, err)
+
+	// webhooks
+	require.Contains(t, c.Webhooks, "newPet")
 }
 
 func readJsonTestFile(t *testing.T, path string, data interface{}, url string) *dynamic.Config {
 	b, err := os.ReadFile(path)
+	require.NoError(t, err)
+
+	err = json.Unmarshal(b, &data)
 	require.NoError(t, err)
 
 	return &dynamic.Config{
@@ -43,8 +51,7 @@ func readJsonTestFile(t *testing.T, path string, data interface{}, url string) *
 			Checksum: nil,
 			Time:     time.Time{},
 		},
-		Raw:   b,
-		Data:  data,
-		Scope: *dynamic.NewScope(url),
+		Raw:  b,
+		Data: data,
 	}
 }

@@ -323,3 +323,10 @@ func invokeListeners(e dynamic.ConfigEvent) {
 		i++
 	}
 }
+
+func (w *ConfigWatcher) AddProvider(name string, p dynamic.Provider) {
+	w.m.Lock()
+	defer w.m.Unlock()
+
+	w.providers[name] = p
+}

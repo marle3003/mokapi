@@ -1,9 +1,10 @@
-package service
+package service_test
 
 import (
 	"fmt"
 	"mokapi/mqtt"
 	"mokapi/mqtt/mqtttest"
+	"mokapi/server/service"
 	"mokapi/try"
 	"testing"
 
@@ -27,7 +28,7 @@ func TestMqttBroker(t *testing.T) {
 			},
 		})
 	})
-	b := NewMqttBroker(fmt.Sprintf("%v", port), handler)
+	b := service.NewMqttBroker(fmt.Sprintf("%v", port), handler)
 	b.Start()
 	defer b.Stop()
 

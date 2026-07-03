@@ -167,6 +167,7 @@ func getMqttSearchResult(fields map[string]string, discriminator []string) (sear
 		} else if len(fields["title"]) > 0 {
 			title = fields["title"]
 		}
+		result.Description = BuildDescription(150, fields["summary"], fields["description"])
 		result.Domain = fields["api"]
 		result.Title = fmt.Sprintf("Topic %s", title)
 		result.Params = map[string]string{
