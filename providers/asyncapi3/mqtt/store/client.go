@@ -1,7 +1,6 @@
 package store
 
 import (
-	"fmt"
 	"mokapi/mqtt"
 	"sync"
 	"time"
@@ -98,8 +97,6 @@ func (c *Client) ResendInflight(duration time.Duration) {
 		if duration > 0 && t.After(now) {
 			continue
 		}
-
-		fmt.Println("send")
 
 		c.ctx.Send(&mqtt.Message{
 			Header: &mqtt.Header{

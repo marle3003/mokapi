@@ -63,7 +63,6 @@ func GetRequest(t *testing.T, url string, headers map[string]string, conditions 
 
 			cond(condT, tr)
 			if condT.Failed() {
-				fmt.Printf("Attempt %d failed: %s\n", attempt, url)
 				ok = false
 				break
 			}

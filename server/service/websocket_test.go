@@ -22,9 +22,8 @@ func TestWebsocketServer(t *testing.T) {
 	b.Start()
 	defer b.Stop()
 
-	client := http.Client{}
-	res, err := client.Get(fmt.Sprintf("http://%s", addr))
-	require.NoError(t, err)
+	try.GetRequest(t, fmt.Sprintf("http://%s", addr), nil,
+		try.HasStatusCode(200),
+	)
 	require.True(t, called, "handler should be called")
-	require.Equal(t, http.StatusOK, res.StatusCode)
 }
