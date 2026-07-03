@@ -8,7 +8,8 @@ require (
 	github.com/bradleyfalzon/ghinstallation/v2 v2.19.0
 	github.com/brianvoe/gofakeit/v7 v7.15.0
 	github.com/cbroglie/mustache v1.4.0
-	github.com/dop251/goja v0.0.0-20260627200808-0b76000cabdb
+	github.com/coder/websocket v1.8.15
+	github.com/dop251/goja v0.0.0-20260701091749-b07b74453ea9
 	github.com/evanw/esbuild v0.28.1
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/go-co-op/gocron/v2 v2.21.2
@@ -55,7 +56,6 @@ require (
 	github.com/blevesearch/zapx/v16 v16.3.4 // indirect
 	github.com/blevesearch/zapx/v17 v17.1.8 // indirect
 	github.com/cloudflare/circl v1.6.4 // indirect
-	github.com/coder/websocket v1.8.15 // indirect
 	github.com/cyphar/filepath-securejoin v0.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dlclark/regexp2/v2 v2.2.2 // indirect
