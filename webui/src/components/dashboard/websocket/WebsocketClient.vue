@@ -58,13 +58,13 @@ const client = computed(() => {
                         </p>
                     </div>
                     <div class="col text-end">
-                        <span class="badge bg-secondary api" title="Type of API" aria-label="Type of API">WebSocket</span>
+                        <span class="badge bg-secondary api" title="Type of API" aria-label="Type of API">Websocket</span>
                     </div>
                 </div>
                 <div class="row">
                   <div class="col-sm-2 col-4">
-                    <p id="broker" class="label">Broker</p>
-                    <p aria-labelledby="broker">{{ formatAddress(client.serverAddress) }}</p>
+                    <p id="server" class="label">Server</p>
+                    <p aria-labelledby="server">{{ formatAddress(client.serverAddress) }}</p>
                   </div>
                 </div>
             </div>

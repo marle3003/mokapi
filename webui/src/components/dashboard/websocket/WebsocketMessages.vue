@@ -249,13 +249,24 @@ function getContentType(msg: WebsocketMessage): [string, boolean] {
 
     return [msg.contentType, false]
 }
+const isTemplateChannel = computed(() => {
+    if (!props.service || !props.channelName) {
+        return false
+    }
+    const channel = props.service.channels.find(x => x.name === props.channelName)
+    console.log(channel)
+    if (!channel || !channel.instances) {
+        return false
+    }
+    return channel.instances.length > 0
+})
 </script>
 
 <template>
     <table class="table dataTable selectable" aria-label="Recent Messages">
         <thead>
             <tr>
-                <th scope="col" class="text-left col-2" v-if="!channelName">Channel</th>
+                <th scope="col" class="text-left col-2" v-if="!channelName || isTemplateChannel">Channel</th>
                 <th scope="col" class="text-left col-2" v-if="!clientId">Client</th>
                 <th scope="col" class="text-left col-4">Value</th>
                 <th scope="col" class="text-center col-2">Time</th>
@@ -265,7 +276,7 @@ function getContentType(msg: WebsocketMessage): [string, boolean] {
         <tbody>
             <tr v-for="msg in messages" :key="msg.id" @click.left="handleMessageClick(msg.event)"
                 @mousedown.middle="goToMessage(msg.event, true)">
-                <td v-if="!channelName">
+                <td v-if="!channelName || isTemplateChannel">
                     <router-link @click.stop class="row-link"
                         :to="{ name: getRouteName('websocketMessage').value, params: { id: msg.id } }">
                         {{ msg.channel }}

@@ -171,7 +171,7 @@ function isNumber(value: string): boolean {
               </p>
             </div>
             <div class="col text-end">
-              <span class="badge bg-secondary" aria-label="Service Type">WebSocket</span>
+              <span class="badge bg-secondary" aria-label="Service Type">Websocket</span>
             </div>
           </div>
           <div class="row mb-2">

@@ -27,10 +27,16 @@ declare interface WebsocketChannel {
   description: string;
   messages: { [messageId: string]: WebsocketMessage }
   tags: WebsocketTag[]
+  instances?: WebsocketChannelInstance[]
   metrics: {
     websocket_messages_total: number
     websocket_message_timestamp: number
   }
+}
+
+declare interface WebsocketChannelnstance {
+  name: string
+  parameters: Record<string, string>
 }
 
 declare interface WebsocketMessage {

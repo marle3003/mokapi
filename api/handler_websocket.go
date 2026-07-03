@@ -51,10 +51,9 @@ type websocketChannelInstance struct {
 }
 
 type websocketClient struct {
-	ClientId        string `json:"clientId"`
-	Address         string `json:"address"`
-	BrokerAddress   string `json:"brokerAddress"`
-	ProtocolVersion byte   `json:"protocolVersion"`
+	ClientId      string `json:"clientId"`
+	Address       string `json:"address"`
+	ServerAddress string `json:"serverAddress"`
 }
 
 type websocketChannelMetrics struct {
@@ -166,7 +165,7 @@ func (h *handler) getWebsocketInfo(w http.ResponseWriter, r *http.Request) {
 		c := websocketClient{
 			ClientId:      client.Id,
 			Address:       client.RemoteAddr,
-			BrokerAddress: client.ServerAddr,
+			ServerAddress: client.ServerAddr,
 		}
 		m.Clients = append(m.Clients, c)
 	}

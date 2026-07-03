@@ -59,7 +59,7 @@ watch(() => route.hash, (hash) => {
 <template>
     <div v-if="$route.name == getRouteName('websocketService').value && service != null">
         <div class="card-group">
-            <service-info-card :service="service" type="WebSocket" />
+            <service-info-card :service="service" type="Websocket" />
         </div>
 
         <div class="card-group">

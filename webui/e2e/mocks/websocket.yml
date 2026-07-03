@@ -75,6 +75,19 @@ components:
           $ref: '#/components/schemas/WebsocketChannelBindings'
         tags:
           $ref: './kafka.yml#/components/schemas/Tags'
+        instances:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebsocketChannelInstance'
+    WebsocketChannelInstance:
+      type: object
+      properties:
+        name:
+          type: string
+        Parameters:
+          type: object
+          additionalProperties:
+            type: string
     WebsocketMessageConfig:
       type: object
       properties:

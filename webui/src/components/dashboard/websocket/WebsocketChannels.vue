@@ -106,18 +106,18 @@ function toggleTag(name: string) {
 </script>
 
 <template>
-    <section class="card" aria-labelledby="topics">
+    <section class="card" aria-labelledby="channels">
         <div class="card-body">
-            <h2 id="topics" class="card-title text-center">Topics</h2>
+            <h2 id="channels" class="card-title text-center">Channels</h2>
 
             <fieldset class="text-center mt-3 mb-2" v-if="allTags.length > 1" aria-describedby="tag-help">
 
                 <legend class="visually-hidden">
-                    Filter topics by tags
+                    Filter channels by tags
                 </legend>
 
                 <p id="tag-help" class="visually-hidden">
-                    Select one or more tags to filter the topics. Selecting “All” enables all tags.
+                    Select one or more tags to filter the channels. Selecting “All” enables all tags.
                 </p>
 
                 <div class="form-check form-check-inline">
@@ -141,7 +141,7 @@ function toggleTag(name: string) {
 
             </fieldset>
             <div class="table-responsive-sm">
-                <table class="table dataTable selectable" aria-labelledby="topics">
+                <table class="table dataTable selectable" aria-labelledby="channels">
                     <thead>
                         <tr>
                             <th scope="col" class="text-left col-4">Name</th>

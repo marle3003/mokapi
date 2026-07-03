@@ -76,7 +76,7 @@ watch(() => route.hash, (hash) => {
                         </p>
                     </div>
                     <div class="col text-end">
-                        <span class="badge bg-secondary api" title="Type of API" aria-label="Type of API">WebSocket</span>
+                        <span class="badge bg-secondary api" title="Type of API" aria-label="Type of API">Websocket</span>
                     </div>
                 </div>
                 <div class="row">

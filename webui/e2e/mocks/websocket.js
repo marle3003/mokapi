@@ -12,8 +12,9 @@ const ChatMessage = {
 };
 
 const clients = [
-  { id: '67bab4de-e477-4afe-8696-df3102f7a8d8', address: '127.0.0.1:53211', server: 'localhost:8080' },
-  { id: 'b4788220-b169-483c-8406-498fbeb482fd', address: '127.0.0.1:53298', server: 'localhost:8080' },
+  { id: '67bab4de-e477-4afe-8696-df3102f7a8d8', address: '127.0.0.1:53211', serverAddress: 'localhost:8080' },
+  { id: 'b4788220-b169-483c-8406-498fbeb482fd', address: '127.0.0.1:53298', serverAddress: 'localhost:8080' },
+  { id: '5cc3940e-8b3f-4c65-9f85-9fd6f7e51e5e', address: '127.0.0.1:53200', serverAddress: 'localhost:8080' },
 ]
 
 export let services = [
@@ -53,9 +54,25 @@ export let services = [
             contentType: 'application/json',
           },
         },
-        bindings: {
-          method: 'GET',
+      },
+      {
+        name: '/chats/{chatId}',
+        messages: {
+          ChatMessage: {
+            name: 'ChatMessage',
+            title: 'Chat Message',
+            payload: { schema: ChatMessage },
+            contentType: 'application/json',
+          },
         },
+        instances: [
+          {
+            name: 'chats/1234',
+            parameters: {
+              chatId: '1234'
+            }
+          }
+        ]
       },
     ],
     metrics: metrics.filter((x) => x.name.includes('websocket')),
@@ -80,6 +97,7 @@ export default async function () {
               ...(x.summary ? { summary: x.summary } : {}),
               ...(x.description ? { description: x.description } : {}),
               messages: x.messages,
+               ...x.instances ? { instances: x.instances } : {},
               metrics: {
                 websocket_messages_total: metrics.find(
                   (m) => m.name === `websocket_messages_total{service="${services[0].name}",channel="${x.name}"}`
@@ -129,6 +147,25 @@ export let events = [
       channel: '/chat',
       message: {
         value: '{"userId":"bob","username":"Bob","text":"Hi Alice!","timestamp":"2026-02-13T09:49:26.100000+01:00"}',
+      },
+      messageId: 'ChatMessage',
+      api: 'WebSocket Chat API',
+      client: clients[1]
+    }
+  },
+  {
+    id: '5cc3940e-8b3f-4c65-9f85-9fd6f7e51e5e',
+    traits: {
+      namespace: 'websocket',
+      name: 'WebSocket Chat API',
+      channel: '/chats/{chatId}',
+      clientId: '5cc3940e-8b3f-4c65-9f85-9fd6f7e51e5e',
+    },
+    time: '2026-02-13T09:49:26.100000+01:00',
+    data: {
+      channel: '/chats/1234',
+      message: {
+        value: '{"userId":"carol","username":"Carol","text":"Hi Alice!","timestamp":"2026-02-13T09:49:26.100000+01:00"}',
       },
       messageId: 'ChatMessage',
       api: 'WebSocket Chat API',
