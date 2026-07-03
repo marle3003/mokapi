@@ -1,6 +1,6 @@
 components:
   schemas:
-    MqttInfo:
+    WebsocketInfo:
       type: object
       properties:
         name:
@@ -21,7 +21,7 @@ components:
               type: string
               format: email
 
-    Mqtt:
+    Websocket:
       type: object
       properties:
         name:
@@ -54,16 +54,13 @@ components:
                 type: string
               tags:
                 $ref: './kafka.yml#/components/schemas/Tags'
-              configs:
-                additionalProperties:
-                  type: ['number', 'string']
         topics:
           type: array
           items:
-            $ref: '#/components/schemas/MqttTopic'
+            $ref: '#/components/schemas/WebsocketChannel'
         metrics:
           $ref: 'common.yml#/components/schemas/Metrics'
-    MqttTopic:
+    WebsocketChannel:
       type: object
       properties:
         name:
@@ -73,25 +70,12 @@ components:
         messages:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/MqttMessageConfig'
+            $ref: '#/components/schemas/WebsocketMessageConfig'
         bindings:
-          $ref: '#/components/schemas/MqttTopicBindings'
+          $ref: '#/components/schemas/WebsocketChannelBindings'
         tags:
           $ref: './kafka.yml#/components/schemas/Tags'
-        instances:
-          type: array
-          items:
-            $ref: '#/components/schemas/MqttTopicInstance'
-    MqttTopicInstance:
-      type: object
-      properties:
-        name:
-          type: string
-        Parameters:
-          type: object
-          additionalProperties:
-            type: string
-    MqttMessageConfig:
+    WebsocketMessageConfig:
       type: object
       properties:
         name:
@@ -102,13 +86,20 @@ components:
           type: string
         description:
           type: string
-        key:
-          $ref: 'schema.yml#/components/schemas/Schema'
         payload:
           $ref: 'schema.yml#/components/schemas/Schema'
         header:
           $ref: 'schema.yml#/components/schemas/Schema'
         contentType:
           type: string
-    MqttTopicBindings: {}
-      
+    WebsocketChannelBindings:
+      type: object
+      properties:
+        query:
+          type: object
+          additionalProperties:
+            $ref: 'schema.yml#/components/schemas/Schema'
+        headers:
+          type: object
+          additionalProperties:
+            $ref: 'schema.yml#/components/schemas/Schema'

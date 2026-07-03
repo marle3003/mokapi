@@ -17,6 +17,7 @@ import (
 	"sync"
 
 	"github.com/coder/websocket"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -27,17 +28,6 @@ type Store struct {
 	emitter engine.EventEmitter
 	eh      events.Handler
 	m       sync.RWMutex
-	monitor *monitor.Websocket
-}
-
-type Channel struct {
-	api     string
-	path    string
-	clients map[string]*Client
-	m       sync.RWMutex
-	cfg     *asyncapi3.Channel
-	emitter engine.EventEmitter
-	log     func(log *Log, traits events.Traits)
 	monitor *monitor.Websocket
 }
 
@@ -66,45 +56,46 @@ func New(cfg *asyncapi3.Config, emitter engine.EventEmitter, eh events.Handler, 
 
 func (s *Store) Update(cfg *asyncapi3.Config) {
 	s.cfg = cfg
-	for path, c := range cfg.Channels {
-		if c.Value == nil {
+	for path, ref := range cfg.Channels {
+		if ref.Value == nil {
 			continue
 		}
-		if !c.Value.IsChannelAvailable("ws") {
+		c := ref.Value
+		if !c.IsChannelAvailable("ws") {
 			continue
 		}
-		if c.Value.Address != "" {
-			path = c.Value.Address
+		if c.Address != "" {
+			path = c.Address
 		}
 
-		if c.Value.Bindings.Websocket.Method != "" {
-			if strings.ToUpper(c.Value.Bindings.Websocket.Method) != "GET" {
-				log.Warnf("channel %s: mokapi only supports WebSocket method GET, ignoring method %q", path, c.Value.Bindings.Websocket.Method)
+		if c.Bindings.Websocket.Method != "" {
+			if strings.ToUpper(c.Bindings.Websocket.Method) != "GET" {
+				log.Warnf("channel %s: mokapi only supports WebSocket method GET, ignoring method %q", path, c.Bindings.Websocket.Method)
 			}
 		}
 
-		if s.Channels == nil {
-			s.Channels = make(map[string]*Channel)
-		}
-		ch, ok := s.Channels[path]
-		if !ok {
-			ch = &Channel{
-				api:     s.cfg.Info.Name,
-				path:    path,
-				emitter: s.emitter,
-				cfg:     c.Value,
-				log:     s.log,
-				monitor: s.monitor,
+		if len(c.Parameters) == 0 {
+			if s.Channels == nil {
+				s.Channels = make(map[string]*Channel)
 			}
-			s.Channels[path] = ch
+			ch, ok := s.Channels[path]
+			if !ok {
+				ch = &Channel{
+					Name:    path,
+					api:     s.cfg.Info.Name,
+					emitter: s.emitter,
+					cfg:     c,
+					log:     s.log,
+					monitor: s.monitor,
+				}
+				s.Channels[path] = ch
+			}
 		}
 	}
 }
 
 func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.m.RLock()
-	ch, ok := s.Channels[r.URL.Path]
-	s.m.RUnlock()
+	ch, ok := s.Channel(r.URL.Path)
 	if !ok {
 		http.NotFound(w, r)
 		return
@@ -124,6 +115,12 @@ func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	server, ok := ServerFromContext(r.Context())
+	serverAddr := ""
+	if ok {
+		serverAddr = server.Host
+	}
+
 	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{})
 	if err != nil {
 		// Accept writes the error response itself, no need to write again
@@ -132,10 +129,12 @@ func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer func() { _ = conn.CloseNow() }()
 
 	client := &Client{
+		Id:         uuid.New().String(),
+		Query:      query,
+		Header:     header,
+		RemoteAddr: r.RemoteAddr,
+		ServerAddr: serverAddr,
 		channel:    ch,
-		query:      query,
-		header:     header,
-		remoteAddr: r.RemoteAddr,
 		send:       make(chan Message, 16),
 		closeCh:    make(chan struct{}),
 	}
@@ -156,14 +155,14 @@ func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			closeStatus == websocket.StatusGoingAway:
 			// client closed cleanly, nothing to log
 		case errors.Is(err, context.Canceled):
-			// we cancelled it ourselves (e.g. spec reload), nothing to log
+			// we canceled it ourselves (e.g. spec reload), nothing to log
 		case errors.Is(err, io.EOF),
 			strings.Contains(err.Error(), "EOF"):
 			// client disconnected without sending a close frame
 			// CloseNow() does this — it's not an error
 		default:
 			_ = conn.Close(websocket.StatusUnsupportedData, err.Error())
-			log.Errorf("websocket connection error on channel %s: %v", ch.path, err)
+			log.Errorf("websocket connection error on channel %s: %v", ch.Name, err)
 		}
 	}
 }
@@ -176,16 +175,21 @@ func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Cl
 		}
 
 		var v any
-		for _, m := range c.cfg.Messages {
+		var messageId string
+		for id, m := range c.cfg.Messages {
 			if m.Value == nil || m.Value.Payload == nil || m.Value.Payload.Value == nil {
 				continue
 			}
+			messageId = id
 			var p encoding.Parser
 			p, err = m.Value.Payload.GetParser(m.Value.ContentType)
 			if err != nil {
 				log.Errorf("unsupported payload type: %T", m.Value.Payload.Value)
 			}
 			v, err = encoding.Decode(data, encoding.WithContentType(media.ParseContentType(m.Value.ContentType)), encoding.WithParser(p))
+			if err == nil {
+				break
+			}
 		}
 		if err != nil {
 			return err
@@ -194,30 +198,39 @@ func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Cl
 		evt := &Event{
 			Api: c.api,
 			Channel: EventChannel{
-				Name: ch.path,
+				Name: ch.Name,
 				ch:   ch,
 			},
 			Client: &EventClient{
-				RemoteAddress: client.remoteAddr,
+				RemoteAddress: client.RemoteAddr,
 				Headers:       nil,
 				client:        client,
 			},
 			Message: v,
 		}
-		if client.query != nil {
-			evt.Client.Query = client.query
+		if client.Query != nil {
+			evt.Client.Query = client.Query
 		} else {
 			evt.Client.Query = map[string]any{}
 		}
-		if client.header != nil {
-			evt.Client.Headers = client.header
+		if client.Header != nil {
+			evt.Client.Headers = client.Header
 		} else {
 			evt.Client.Headers = map[string]any{}
 		}
 
-		l := &Log{}
+		l := &Log{
+			Channel: c.Name,
+			Message: LogValue{
+				Value:  string(data),
+				Binary: data,
+			},
+			MessageId: messageId,
+			Api:       c.api,
+			Client:    clientLog(client),
+		}
 		l.Actions = c.emitter.Emit("websocket", evt)
-		c.log(l, events.NewTraits().With("channel", ch.path))
+		c.log(l, events.NewTraits().With("channel", ch.Name).With("clientId", client.Id))
 	}
 }
 
@@ -243,14 +256,14 @@ func (c *Channel) addClient(client *Client) {
 	if c.clients == nil {
 		c.clients = make(map[string]*Client)
 	}
-	c.clients[client.remoteAddr] = client
+	c.clients[client.Id] = client
 	c.m.Unlock()
 }
 
 func (c *Channel) removeClient(client *Client) {
 	c.m.Lock()
 	defer c.m.Unlock()
-	delete(c.clients, client.remoteAddr)
+	delete(c.clients, client.Id)
 }
 
 func toMessageType(msgType websocket.MessageType) MessageType {

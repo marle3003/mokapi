@@ -7,13 +7,15 @@ import (
 )
 
 type Client struct {
-	channel *Channel
-	query   map[string]any
-	header  map[string]any
+	Id         string
+	Query      map[string]any
+	Header     map[string]any
+	RemoteAddr string
+	ServerAddr string
 
-	remoteAddr string
-	send       chan Message
-	closeCh    chan struct{}
+	channel *Channel
+	send    chan Message
+	closeCh chan struct{}
 }
 
 func (c *Client) sendMessage(message any) error {
@@ -35,4 +37,14 @@ func (c *Client) sendMessage(message any) error {
 		Payload: data,
 	}
 	return nil
+}
+
+func (s *Store) Clients() []Client {
+	var clients []Client
+	for _, ch := range s.Channels {
+		for _, c := range ch.clients {
+			clients = append(clients, *c)
+		}
+	}
+	return clients
 }

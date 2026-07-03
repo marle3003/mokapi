@@ -115,6 +115,23 @@ export let metrics = [
         name: 'mqtt_message_timestamp{service="MQTT Temperature Sensor API",topic="sensors/{sensorId}/data"}',
         value: 1771058965
     },
+    // websocket
+    {
+        name: 'websocket_messages_total{service="WebSocket Chat API",channel="/chat"}',
+        value: 1
+    },
+    {
+        name: 'websocket_message_timestamp{service="WebSocket Chat API",channel="/chat"}',
+        value: 1672182690
+    },
+    {
+        name: 'websocket_messages_total{service="WebSocket Chat API",channel="/chat"}',
+        value: 1
+    },
+    {
+        name: 'websocket_message_timestamp{service="WebSocket Chat API",channel="/chat"}',
+        value: 1771058965
+    },
 ]
 
 export function sum(name, ...labels){

@@ -139,3 +139,25 @@ func WithMqtt(configs ...*asyncapi3.Config) Options {
 		}
 	}
 }
+
+func WithWebsocketInfo(name string, wi *runtime.WebsocketInfo) Options {
+	return func(app *runtime.App) {
+		app.Websocket.Set(name, wi)
+	}
+}
+
+func WithWebsocket(configs ...*asyncapi3.Config) Options {
+	return func(app *runtime.App) {
+		for i, cfg := range configs {
+			c := &dynamic.Config{
+				Info: dynamictest.NewConfigInfo(dynamictest.WithUrl(fmt.Sprintf("%d", i))),
+				Data: cfg,
+			}
+
+			_, err := app.Websocket.Add(c, app.Engine)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+}

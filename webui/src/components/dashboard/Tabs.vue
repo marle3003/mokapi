@@ -20,6 +20,7 @@ const tabItems = computed(() => [
   { text: 'HTTP', isVisible: isServiceAvailable('http'), to: { name: getRouteName('http').value } },
   { text: 'Kafka', isVisible: isServiceAvailable('kafka'), to: { name: getRouteName('kafka').value }  },
   { text: 'MQTT', isVisible: isServiceAvailable('mqtt'), to: { name: getRouteName('mqtt').value }  },
+  { text: 'Websocket', isVisible: isServiceAvailable('websocket'), to: { name: getRouteName('websocket').value }  },
   { text: 'Mail', isVisible: isServiceAvailable('mail'), to: { name: getRouteName('mail').value }  },
   { text: 'LDAP', isVisible: isServiceAvailable('ldap'), to: { name: getRouteName('ldap').value }  },
   { text: 'Jobs', isVisible: hasJobs.value, to: { name: getRouteName('jobs').value }  },

@@ -30,6 +30,10 @@ import MqttClustersCard from '../components/dashboard/mqtt/MqttServicesCard.vue'
 import MqttService from '../components/dashboard/mqtt/MqttService.vue'
 import MqttMessagesCard from '@/components/dashboard/mqtt/MqttMessagesCard.vue'
 
+import WebsocketMessageMetricCard from '../components/dashboard/websocket/WebsocketMessageMetricCard.vue'
+import WebsocketServicesCard from '../components/dashboard/websocket/WebsocketServicesCard.vue'
+import WebsocketMessagesCard from '@/components/dashboard/websocket/WebsocketMessagesCard.vue'
+
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 
@@ -38,7 +42,7 @@ import ConfigCard from '@/components/dashboard/ConfigCard.vue'
 import FakerTree from '@/components/dashboard/FakerTree.vue'
 
 import '@/assets/dashboard.css'
-import { computed, onMounted, onUnmounted, ref, type Ref } from 'vue'
+import { computed, onMounted, onUnmounted } from 'vue'
 
 import { useMeta } from '@/composables/meta'
 import Config from '@/components/dashboard/Config.vue'
@@ -47,6 +51,7 @@ import { useRefreshManager } from '@/composables/refresh-manager'
 import { useDashboard, getRouteName } from '@/composables/dashboard'
 import Tabs from '@/components/dashboard/Tabs.vue'
 import { useRouter } from '@/router'
+import WebsocketService from '@/components/dashboard/websocket/WebsocketService.vue'
 
 const route = useRoute()
 const router = useRouter();
@@ -146,6 +151,7 @@ router.afterEach((to) => {
                         <http-request-card v-if="isServiceAvailable('http')" includeError />
                         <kafka-message-metric-card v-if="isServiceAvailable('kafka')" />
                         <mqtt-message-metric-card v-if="isServiceAvailable('mqtt')" />
+                        <websocket-message-metric-card v-if="isServiceAvailable('websocket')" />
                         <smtp-message-metric-card v-if="isServiceAvailable('mail')" />
                         <ldap-search-metric-card v-if="isServiceAvailable('ldap')" />
                         <job-count-card />
@@ -158,6 +164,9 @@ router.afterEach((to) => {
                     </div>
                     <div class="card-group" v-if="isServiceAvailable('mqtt')">
                         <mqtt-clusters-card />
+                    </div>
+                    <div class="card-group" v-if="isServiceAvailable('websocket')">
+                        <websocket-services-card />
                     </div>
                     <div class="card-group" v-if="isServiceAvailable('mail')">
                         <mail-services-card />
@@ -203,6 +212,18 @@ router.afterEach((to) => {
                     </div>
                     <div class="card-group" v-if="isServiceAvailable('mqtt')">
                         <mqtt-messages-card />
+                    </div>
+                </div>
+
+                <div v-if="$route.name === getRouteName('websocket').value">
+                    <div class="card-group">
+                        <websocket-message-metric-card v-if="isServiceAvailable('websocket')" />
+                    </div>
+                    <div class="card-group" v-if="isServiceAvailable('websocket')">
+                        <websocket-services-card />
+                    </div>
+                    <div class="card-group" v-if="isServiceAvailable('websocket')">
+                        <websocket-messages-card />
                     </div>
                 </div>
 
@@ -258,6 +279,7 @@ router.afterEach((to) => {
                 <http-service v-if="$route.meta.service === 'http'" />
                 <kafka-service v-if="$route.meta.service === 'kafka'" />
                 <mqtt-service v-if="$route.meta.service === 'mqtt'" />
+                <websocket-service v-if="$route.meta.service === 'websocket'" />
                 <mail-service v-if="$route.meta.service === 'mail'" />
                 <ldap-service v-if="$route.meta.service === 'ldap'" />
                 <config v-if="$route.name === getRouteName('config').value"></config>

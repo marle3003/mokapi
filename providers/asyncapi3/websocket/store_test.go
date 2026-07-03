@@ -508,6 +508,61 @@ export default function() {
 				require.ErrorContains(t, err, "400")
 			},
 		},
+		{
+			name: "channel with parameter",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithContentType("text/plain"),
+					asyncapi3test.WithPayload(
+						schematest.New("string"),
+					),
+				)
+				ch := asyncapi3test.NewChannel(
+					asyncapi3test.UseMessage("ChatMessage", &asyncapi3.MessageRef{Value: msg}),
+					asyncapi3test.WithParameter(
+						"chatId", &asyncapi3.Parameter{},
+					),
+				)
+
+				return asyncapi3test.NewConfig(
+					asyncapi3test.AddChannel("/chats/{chatId}", ch),
+					asyncapi3test.WithOperation("sendChatMessage",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.UseOperationMessage(msg),
+					),
+				)
+			}(),
+			js: `import { on } from 'mokapi'
+		export default function() {
+		  on('websocket', function(event) {
+		    console.log(event.channel)
+		  })
+		}
+		`,
+			test: func(t *testing.T, store *websocket.Store, url string, app *runtime.App) {
+				ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+				defer cancel()
+				c, _, err := ws.Dial(ctx, url+"/chats/1234", &ws.DialOptions{})
+				require.NoError(t, err)
+				defer func() { _ = c.CloseNow() }()
+
+				err = c.Write(ctx, ws.MessageText, []byte("hello"))
+				require.NoError(t, err)
+
+				waitFor(t, func() bool {
+					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
+					return len(evts) > 0
+				})
+
+				evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
+				require.Len(t, evts, 1)
+				evt := evts[0]
+				d := evt.Data.(*websocket.Log)
+				require.Len(t, d.Actions, 1)
+				require.Equal(t, `{"name":"/chats/1234"}`, d.Actions[0].Logs[0].Message)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

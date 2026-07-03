@@ -2,16 +2,15 @@
 import { type Ref, computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
-import MqttTopics from './MqttTopics.vue'
-import MqttMessagesCard from './MqttMessagesCard.vue'
-import MqttTopic from './MqttTopic.vue'
+import WebsocketChannels from './WebsocketChannels.vue'
+import WebsocketMessagesCard from './WebsocketMessagesCard.vue'
+import WebsocketChannel from './WebsocketChannel.vue'
 import Servers from './Servers.vue'
 import Server from './Server.vue'
 import Configs from '../Configs.vue'
-import MqttClients from './MqttClients.vue'
-import MqttClient from './MqttClient.vue'
+import WebsocketClients from './WebsocketClients.vue'
+import WebsocketClient from './WebsocketClient.vue'
 import Message from './Message.vue'
-import Request from './MqttRequest.vue'
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useRouter } from '@/router'
 import type { ServiceResult } from '@/types/dashboard'
@@ -27,7 +26,7 @@ const service = computed(() => {
     if (!data.value) {
         return undefined
     }
-    return data.value.service as MqttService
+    return data.value.service as WebsocketService
 })
 
 watch(() => dashboard.value,
@@ -35,7 +34,7 @@ watch(() => dashboard.value,
     if (!serviceName) {
         return
     }
-    const res = db.getService(serviceName, 'mqtt');
+    const res = db.getService(serviceName, 'websocket');
     data.value = res;
 
     onCleanup(() => res.close());
@@ -43,7 +42,7 @@ watch(() => dashboard.value,
   { immediate: true }
 );
 
-const activeTab = ref('tab-topics');
+const activeTab = ref('tab-channels');
 
 function setTab(tab: string) {
     router.replace({
@@ -51,25 +50,25 @@ function setTab(tab: string) {
     });
 }
 watch(() => route.hash, (hash) => {
-        activeTab.value = hash ? hash.slice(1) : 'tab-topics'
+        activeTab.value = hash ? hash.slice(1) : 'tab-channels'
     },
     { immediate: true }
 )
 </script>
 
 <template>
-    <div v-if="$route.name == getRouteName('mqttService').value && service != null">
+    <div v-if="$route.name == getRouteName('websocketService').value && service != null">
         <div class="card-group">
-            <service-info-card :service="service" type="MQTT" />
+            <service-info-card :service="service" type="WebSocket" />
         </div>
 
         <div class="card-group">
             <section class="card" aria-label="Service Data">
                 <div class="card-body">
                     <div class="nav card-tabs" id="myTab" role="tablist">
-                        <button :class="{ active: activeTab === 'tab-topics' }" id="topics-tab" type="button" role="tab"
-                            aria-controls="topics-pane" @click="setTab('tab-topics')">
-                            Topics
+                        <button :class="{ active: activeTab === 'tab-channels' }" id="channels-tab" type="button" role="tab"
+                            aria-controls="channels-pane" @click="setTab('tab-channels')">
+                            Channels
                         </button>
                         <button :class="{ active: activeTab === 'tab-servers' }" id="servers-tab" type="button"
                             role="tab" aria-controls="servers" @click="setTab('tab-servers')">
@@ -85,11 +84,11 @@ watch(() => route.hash, (hash) => {
                         </button>
                     </div>
                     <div class="tab-content">
-                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-topics' }" id="topics-pane"
-                            role="tabpanel" aria-labelledby="topics-tab">
-                            <mqtt-topics :service="service" />
+                        <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-channels' }" id="channels-pane"
+                            role="tabpanel" aria-labelledby="channels-tab">
+                            <websocket-channels :service="service" />
                             <div class="card-group">
-                                <mqtt-messages-card :service="service" />
+                                <websocket-messages-card :service="service" />
                             </div>
                         </div>
                         <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-servers' }" id="servers"
@@ -98,7 +97,7 @@ watch(() => route.hash, (hash) => {
                         </div>
                         <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-clients' }" id="clients"
                             role="tabpanel" aria-labelledby="clients-tab">
-                            <mqtt-clients :service="service" />
+                            <websocket-clients :service="service" />
                         </div>
                         <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-configs' }" id="configs"
                             role="tabpanel" aria-labelledby="configs-tab">
@@ -109,17 +108,16 @@ watch(() => route.hash, (hash) => {
             </section>
         </div>
     </div>
-    <div v-if="$route.matched.some(route => route.name === getRouteName('mqttTopic').value)">
-        <mqtt-topic></mqtt-topic>
+    <div v-if="$route.matched.some(route => route.name === getRouteName('websocketChannel').value)">
+        <websocket-channel></websocket-channel>
     </div>
-    <div v-if="$route.name == getRouteName('mqttClient').value">
-        <mqtt-client></mqtt-client>
+    <div v-if="$route.name == getRouteName('websocketClient').value">
+        <websocket-client></websocket-client>
     </div>
-    <div v-if="$route.name == getRouteName('mqttServer').value">
+    <div v-if="$route.name == getRouteName('websocketServer').value">
         <server></server>
     </div>
-    <message v-if="$route.name == getRouteName('mqttMessage').value"></message>
-    <request v-if="$route.name == getRouteName('mqttRequest').value"></request>
+    <message v-if="$route.name == getRouteName('websocketMessage').value"></message>
 </template>
 
 <style scoped>

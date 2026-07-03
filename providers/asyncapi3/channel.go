@@ -155,7 +155,7 @@ func (c *Channel) IsNameValid(topic string) error {
 
 	match := re.FindStringSubmatch(topic)
 	if match == nil {
-		return fmt.Errorf("topic name does not match channel address expression")
+		return fmt.Errorf("channel name does not match channel address expression")
 	}
 	return nil
 }
@@ -172,7 +172,7 @@ func (c *Channel) ExtractParams(topicName string) (map[string]string, error) {
 	match := re.FindStringSubmatch(topicName)
 	if match == nil {
 		// path parameters are always required
-		return nil, fmt.Errorf("topic name does not match channel address expression")
+		return nil, fmt.Errorf("channel name does not match channel address expression")
 	}
 
 	// Build result map

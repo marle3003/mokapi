@@ -16,7 +16,7 @@ const { formatLanguage } = usePrettyLanguage()
 const { format } = usePrettyDates()
 
 const events = computed(() => {
-    return dashboard.value.getEvents({ name: 'namespace', value: 'mqtt' })
+    return dashboard.value.getEvents({ name: 'namespace', value: 'websocket' })
 })
 
 const eventId = computed(() => {
@@ -46,30 +46,30 @@ const event = computed(() => result.value?.event.value ?? null)
 const isLoading = computed(() => result.value?.isLoading ?? false)
 const close = () => result.value?.close?.()
 
-const topic = ref<MqttTopic | undefined>()
+const channel = ref<WebsocketChannel | undefined>()
 const data = computed(() => {
   if (!event.value) {
     return undefined
   }
-  return <MqttMessageData>event.value?.data
+  return <WebsocketMessageData>event.value?.data
 })
 watchEffect(() => {
   if (!event.value) {
     return
   }
-  const result = dashboard.value.getService(event.value?.traits.name!, 'mqtt')
-  const service = result.service as Ref<MqttService | null>
+  const result = dashboard.value.getService(event.value?.traits.name!, 'websocket')
+  const service = result.service as Ref<WebsocketService | null>
   if (!service.value) {
     return null
   }
-  for (let t of service.value?.topics){
-    if (t.name == event.value.traits.topic) {
-      topic.value = t
+  for (let ch of service.value?.channels){
+    if (ch.name == event.value.traits.channel) {
+      channel.value = ch
     }
   }
 })
 const message = computed(() => {
-  if (!data.value || !topic.value) {
+  if (!data.value || !channel.value) {
     return undefined
   }
 
@@ -112,15 +112,15 @@ onMounted(() => {
   }
   const id = events.value.events.value.indexOf(event.value)
   useMeta(
-      `${event.value.traits['topic']} – MQTT Message Details`,
-      'View detailed information about a MQTT message',
-      'https://mokapi.io//dashboard/mqtt/messages/' + id
+      `${event.value.traits['topic']} – WebSocket Message Details`,
+      'View detailed information about a WebSocket message',
+      'https://mokapi.io//dashboard/websocket/messages/' + id
   )
 })
 onUnmounted(() => {
   close()
 })
-function getContentType(msg: MqttMessage): [string, boolean] {
+function getContentType(msg: WebsocketMessage): [string, boolean] {
     if (msg.payload.format?.includes('application/vnd.apache.avro')) {
         switch (msg.contentType) {
             case 'avro/binary':
@@ -132,21 +132,21 @@ function getContentType(msg: MqttMessage): [string, boolean] {
 
     return [ msg.contentType, false ]
 }
-function getMessageConfig(): MqttMessage | undefined {
-  if (!topic.value || !data.value) {
+function getMessageConfig(): WebsocketMessage | undefined {
+  if (!channel.value || !data.value) {
     return undefined
   }
 
   const messageId = data.value.messageId
 
   if (!messageId) {
-      console.error('missing messageId in MQTT event log')
+      console.error('missing messageId in WebSocket event log')
       return
   }
 
-  for (const id in topic.value.messages){
+  for (const id in channel.value.messages){
       if (id === messageId) {
-          return topic.value.messages[id]
+          return channel.value.messages[id]
       }
   }
   return undefined
@@ -163,22 +163,18 @@ function isNumber(value: string): boolean {
         <div class="card-body">
           <div class="row">
             <div class="col">
-              <p id="message-topic" class="label">Topic</p>
+              <p id="message-channel" class="label">Channel</p>
               <p>
-                <router-link :to="{ name: getRouteName('mqttTopic').value, params: { service: event.traits.name, topic: event.traits.topic } }" aria-labelledby="message-topic">
-                  {{ data.topic  }}
+                <router-link :to="{ name: getRouteName('websocketChannel').value, params: { service: event.traits.name, channel: event.traits.channel } }" aria-labelledby="message-channel">
+                  {{ data.channel  }}
                 </router-link>
               </p>
             </div>
             <div class="col text-end">
-              <span class="badge bg-secondary" aria-label="Service Type">MQTT</span>
+              <span class="badge bg-secondary" aria-label="Service Type">WebSocket</span>
             </div>
           </div>
           <div class="row mb-2">
-            <div class="col-2">
-              <p id="message-retain" class="label">Retain</p>
-              <p aria-labelledby="message-retain">{{ data.retain }}</p>
-            </div>
             <div class="col">
               <p id="message-time" class="label">Time</p>
               <p aria-labelledby="message-time">{{ format(event.time) }}</p>
@@ -192,13 +188,13 @@ function isNumber(value: string): boolean {
                     name: getRouteName('config').value,
                     params: { id: data.script },
                   }" aria-labelledby="group">
-                  {{ data.clientId }}
+                  {{ data.client.id }}
                 </router-link>
-                <router-link v-else-if="data.clientId" :to="{
-                    name: getRouteName('mqttClient').value,
-                    params: {service: event.traits.name, clientId: data.clientId},
+                <router-link v-else-if="data.client" :to="{
+                    name: getRouteName('websocketClient').value,
+                    params: {service: event.traits.name, clientId: data.client.id},
                   }" aria-labelledby="group">
-                  {{ data.clientId }}
+                  {{ data.client.address }}
                 </router-link>
                 <span v-else>-</span>
               </p>
@@ -223,6 +219,6 @@ function isNumber(value: string): boolean {
   </div>
   <loading v-if="isInitLoading()"></loading>
   <div v-if="!event && !isLoading">
-    <message message="MQTT Message not found"></message>
+    <message message="WebSocket Message not found"></message>
   </div>
 </template>

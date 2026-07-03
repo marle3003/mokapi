@@ -3,9 +3,11 @@ package server
 import (
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
+	"mokapi/providers/asyncapi3/websocket"
 	"mokapi/runtime"
 	"mokapi/runtime/monitor"
 	"mokapi/server/service"
+	"net/http"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -92,11 +94,11 @@ func (m *WebsocketManager) removeService(name string) {
 }
 
 func (c *websocketService) update(cfg *runtime.WebsocketInfo, monitor *monitor.Websocket) {
-	c.updateBrokers(cfg, monitor)
+	c.updateServers(cfg, monitor)
 }
 
-func (c *websocketService) updateBrokers(cfg *runtime.WebsocketInfo, monitor *monitor.Websocket) {
-	brokers := c.servers
+func (c *websocketService) updateServers(cfg *runtime.WebsocketInfo, monitor *monitor.Websocket) {
+	servers := c.servers
 	c.servers = make(map[string]*service.WebsocketServer)
 	for it := cfg.Servers.Iter(); it.Next(); {
 		name := it.Key()
@@ -110,18 +112,22 @@ func (c *websocketService) updateBrokers(cfg *runtime.WebsocketInfo, monitor *mo
 			continue
 		}
 
-		broker, found := brokers[port]
+		broker, found := servers[port]
 		if found {
-			delete(brokers, port)
+			delete(servers, port)
 		} else {
 			log.Infof("adding new Websocket server '%v' on port %v to '%v'", name, port, cfg.Info.Name)
-			broker = service.NewWebsocketServer(port, cfg.Handler(monitor))
+			h := cfg.Handler(monitor)
+			broker = service.NewWebsocketServer(port, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				req.WithContext(websocket.NewServerContext(req.Context(), server.Value))
+				h.ServeHTTP(w, req)
+			}))
 			broker.Start()
 		}
 		c.servers[port] = broker
 	}
 
-	for name, broker := range brokers {
+	for name, broker := range servers {
 		log.Infof("removing Websocket server '%v' on port %v from '%v'", name, broker.Addr(), cfg.Info.Name)
 		broker.Stop()
 	}
