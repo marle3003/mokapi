@@ -99,7 +99,7 @@ func (s *WebsocketStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*W
 		s.events.ResetStores(events.NewTraits().WithNamespace("mqtt").WithName(cfg.Info.Name))
 		s.events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("mqtt").WithName(cfg.Info.Name))
 
-		wi = newWebsocketInfo(websocket.New(cfg, emitter, s.events, s.monitor.Mqtt), s.updateEventStore)
+		wi = newWebsocketInfo(websocket.New(cfg, emitter, s.events, s.monitor.Websocket), s.updateEventStore)
 		s.infos[cfg.Info.Name] = wi
 	}
 	wi.addConfig(c, s.reader)

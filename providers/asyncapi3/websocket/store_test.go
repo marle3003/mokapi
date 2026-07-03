@@ -530,7 +530,7 @@ export default function() {
 				require.NoError(t, err)
 			}
 
-			s := websocket.New(tc.cfg, app.Engine, app.Events, app.Monitor.Mqtt)
+			s := websocket.New(tc.cfg, app.Engine, app.Events, app.Monitor.Websocket)
 
 			serv := httptest.NewServer(s)
 			defer serv.Close()
