@@ -58,7 +58,7 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
 
             await test.step('Visit message', async () => {
 
-                await rows.nth(0).click();
+                await rows.nth(2).click();
                 
                 const meta = page.getByRole('region', { name: 'Meta' })
                 await expect(meta.getByLabel('Channel')).toHaveText('/chats/general');
@@ -70,7 +70,7 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
                 const value = page.getByRole('region', { name: 'Value' });
                 await expect(value.getByLabel('Content Type')).toHaveText('application/json');
                 await expect(value.getByLabel('Lines of Code')).toHaveText('4 lines');
-                await expect(value.getByLabel('Size of Code')).toHaveText('45 B');
+                await expect(value.getByLabel('Size of Code')).toHaveText('49 B');
                 await expect(value.getByLabel('Content', { exact: true })).toContainText('"text": "Hello there!"');
 
                 await test.step('Visit client', async () => {
@@ -84,7 +84,7 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
 
                     const messages = page.getByRole('table', { name: 'Messages' });
                     const rows = messages.locator('tbody tr');
-                    await expect(rows).toHaveCount(1);
+                    await expect(rows).toHaveCount(2);
 
                     await rows.nth(0).click()
 
