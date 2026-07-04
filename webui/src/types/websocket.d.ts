@@ -73,7 +73,7 @@ declare interface WebsocketClient {
   query: Record<string, any>
   headers: Record<string, any>
   address: string
-  serverddress: string
+  serverAddress: string
 }
 
 declare interface WebsocketClientLog {
