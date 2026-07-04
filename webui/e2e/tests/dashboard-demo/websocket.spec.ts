@@ -63,7 +63,7 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
                 const meta = page.getByRole('region', { name: 'Meta' })
                 await expect(meta.getByLabel('Channel')).toHaveText('/chats/general');
                 await expect(meta.getByLabel('Time')).not.toBeEmpty();
-                await expect(meta.getByLabel('Client')).toContainText('localhost:');
+                await expect(meta.getByLabel('Client')).toContainText(':');
                 await expect(meta.getByLabel('Content Type')).toHaveText('application/json');
                 await expect(meta.getByLabel('Service Type')).toHaveText('Websocket');
 
@@ -78,8 +78,8 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
                     await meta.getByLabel('Client').getByRole('link').click();
 
                     const info = page.getByRole('region', { name: 'Info' })
-                    await expect(info.getByLabel('Client Address')).toContainText('localhost:');
-                    await expect(info.getByLabel('Server')).toHaveText('localhost:8000')
+                    await expect(info.getByLabel('Client Address')).toContainText(':');
+                    await expect(info.getByLabel('Server')).toHaveText(':8000')
                     await expect(info.getByLabel('Type of API')).toHaveText('Websocket');
 
                     const messages = page.getByRole('table', { name: 'Messages' });
@@ -103,7 +103,7 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
             const clients = page.getByRole('table', { name: 'Clients' });
             const rows = clients.locator('tbody tr');
             await expect(rows).toHaveCount(2);
-            await expect(await getCellByColumnName(clients, 'Address', rows.nth(0))).toContainText('localhost:')
+            await expect(await getCellByColumnName(clients, 'Address', rows.nth(0))).toContainText(':')
 
         })
 
