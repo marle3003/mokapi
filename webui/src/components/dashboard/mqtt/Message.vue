@@ -8,7 +8,7 @@ import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 import { getRouteName, useDashboard } from "@/composables/dashboard";
 import { useMeta } from "@/composables/meta";
-import { usePrettyText } from "@/composables/usePrettyText";
+import Actions from '../Actions.vue'
 
 const route = useRoute();
 const { dashboard, getMode } = useDashboard()
@@ -154,6 +154,12 @@ function getMessageConfig(): MqttMessage | undefined {
 function isNumber(value: string): boolean {
   return /^[0-9]+$/.test(value);
 }
+const hasActions = computed(() => {
+    if (!data.value) {
+        return false
+    }
+    return data.value.actions?.length > 0
+})
 </script>
 
 <template>
@@ -209,6 +215,15 @@ function isNumber(value: string): boolean {
             </div>
           </div>
         </div>
+      </section>
+    </div>
+
+    <div class="card-group" v-if="hasActions">
+      <section class="card" aria-labelledby="actions">
+          <div class="card-body">
+              <h2 id="actions" class="card-title text-center">Event Handlers</h2>
+              <actions :actions="data.actions" />
+          </div>
       </section>
     </div>
 

@@ -131,7 +131,7 @@ export let events = [
       },
       messageId: 'ChatMessage',
       api: 'WebSocket Chat API',
-      client: clients[0]
+      client: { ...clients[0], direction: 'send', server: clients[0].serverAddress }
     },
   },
   {
@@ -150,7 +150,7 @@ export let events = [
       },
       messageId: 'ChatMessage',
       api: 'WebSocket Chat API',
-      client: clients[1]
+      client: { ...clients[1], direction: 'send', server: clients[1].serverAddress }
     }
   },
   {
@@ -169,7 +169,18 @@ export let events = [
       },
       messageId: 'ChatMessage',
       api: 'WebSocket Chat API',
-      client: clients[1]
+      client: { ...clients[1], direction: 'send', server: clients[1].serverAddress },
+      actions: [
+        {
+            duration: 20,
+            tags: {
+                name: "websocket",
+                file: "examples/mokapi/websocket.js",
+                fileKey: "b6fea8ac-56c7-4e73-a9c0-6337640bdca8",
+                event: "websocket"
+            }
+        }
+      ]
     }
   },
 ];

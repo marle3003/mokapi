@@ -8,12 +8,14 @@ import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 import { getRouteName, useDashboard } from "@/composables/dashboard";
 import { useMeta } from "@/composables/meta";
-import { usePrettyText } from "@/composables/usePrettyText";
+import Actions from '../Actions.vue'
+import { useWebsocket } from "@/composables/websocket.ts";
 
 const route = useRoute();
 const { dashboard, getMode } = useDashboard()
 const { formatLanguage } = usePrettyLanguage()
 const { format } = usePrettyDates()
+const { formatAddress } = useWebsocket()
 
 const events = computed(() => {
     return dashboard.value.getEvents({ name: 'namespace', value: 'websocket' })
@@ -47,6 +49,7 @@ const isLoading = computed(() => result.value?.isLoading ?? false)
 const close = () => result.value?.close?.()
 
 const channel = ref<WebsocketChannel | undefined>()
+const clients = ref<WebsocketClient[]>([])
 const data = computed(() => {
   if (!event.value) {
     return undefined
@@ -62,10 +65,15 @@ watchEffect(() => {
   if (!service.value) {
     return null
   }
-  for (let ch of service.value?.channels){
-    if (ch.name == event.value.traits.channel) {
-      channel.value = ch
+  if (service.value.channels) {
+    for (let ch of service.value?.channels){
+      if (ch.name == event.value.traits.channel) {
+        channel.value = ch
+      }
     }
+  }
+  if (service.value?.clients) {
+    clients.value = service.value.clients
   }
 })
 const message = computed(() => {
@@ -154,6 +162,15 @@ function getMessageConfig(): WebsocketMessage | undefined {
 function isNumber(value: string): boolean {
   return /^[0-9]+$/.test(value);
 }
+function isClientAvailable(id: string) {
+  return clients.value.find(x => x.id === id) !== undefined
+}
+const hasActions = computed(() => {
+    if (!data.value) {
+        return false
+    }
+    return data.value.actions?.length > 0
+})
 </script>
 
 <template>
@@ -190,12 +207,13 @@ function isNumber(value: string): boolean {
                   }" aria-labelledby="group">
                   {{ data.client.id }}
                 </router-link>
-                <router-link v-else-if="data.client" :to="{
+                <router-link v-else-if="data.client && isClientAvailable(data.client.id)" :to="{
                     name: getRouteName('websocketClient').value,
-                    params: {service: event.traits.name, clientId: data.client.id},
+                    params: {service: event.traits.name, id: data.client.id},
                   }" aria-labelledby="group">
-                  {{ data.client.address }}
+                  {{ formatAddress(data.client.address) }}
                 </router-link>
+                <span v-else-if="data.client">{{ formatAddress(data.client.address) }}</span>
                 <span v-else>-</span>
               </p>
             </div>
@@ -205,6 +223,15 @@ function isNumber(value: string): boolean {
             </div>
           </div>
         </div>
+      </section>
+    </div>
+
+    <div class="card-group" v-if="hasActions">
+      <section class="card" aria-labelledby="actions">
+          <div class="card-body">
+              <h2 id="actions" class="card-title text-center">Event Handlers</h2>
+              <actions :actions="data.actions" />
+          </div>
       </section>
     </div>
 

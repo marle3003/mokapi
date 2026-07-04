@@ -82,9 +82,11 @@ func TestStore(t *testing.T) {
 			name: "send valid message",
 			cfg: func() *asyncapi3.Config {
 				msg := asyncapi3test.NewMessage(
-					asyncapi3test.WithContentType("text/plain"),
+					asyncapi3test.WithContentType("application/json"),
 					asyncapi3test.WithPayload(
-						schematest.New("string"),
+						schematest.New("object",
+							schematest.WithProperty("text", schematest.New("string")),
+						),
 					),
 				)
 				ch := asyncapi3test.NewChannel(asyncapi3test.UseMessage("ChatMessage", &asyncapi3.MessageRef{Value: msg}))
@@ -105,7 +107,7 @@ func TestStore(t *testing.T) {
 				require.NoError(t, err)
 				defer func() { _ = c.CloseNow() }()
 
-				err = c.Write(ctx, ws.MessageText, []byte("hello"))
+				err = c.Write(ctx, ws.MessageText, []byte(`{"text":"foo"}`))
 				require.NoError(t, err)
 
 				// Try to read with a short deadline — we expect it to time out, not close

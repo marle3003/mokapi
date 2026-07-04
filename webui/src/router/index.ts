@@ -290,10 +290,10 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             meta: { service: 'websocket', title: ({ params }: MatcherLocation) => `Dashboard - Websocket Message – ${params.id}` }
           },
           {
-            path: 'service/:service/clients/:clientId',
+            path: 'service/:service/clients/:id',
             name: getRouteName('websocketClient'),
             component: dashboardView,
-            meta: { service: 'websocket', title: ({ params }: MatcherLocation) => `Dashboard - Websocket Client – ${params.clientId}` }
+            meta: { service: 'websocket', title: ({ params }: MatcherLocation) => `Dashboard - Websocket Client – ${params.id}` }
           }
         ]
       },

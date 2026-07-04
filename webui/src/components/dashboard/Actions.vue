@@ -44,18 +44,14 @@ function formatParameters(action: Action): {name?: string, value: string}[] {
                     value: formatLanguage(action.parameters[0], 'application/json')
                 }
             ]
-    }
-    if (action.tags.event === 'http') {
-        return [
-            {
-                name: 'request',
-                value: formatLanguage(action.parameters[0], 'application/json')
-            },
-            {
-                name: 'response',
-                value: formatLanguage(action.parameters[1], 'application/json')
-            }
-        ]
+        case 'mqtt':
+            return [
+                { name: 'message', value: formatLanguage(action.parameters[0], 'application/json') }
+            ]
+        case 'websocket':
+            return [
+                { name: 'event', value: formatLanguage(action.parameters[0], 'application/json') }
+            ]
     }
     
     let list = []

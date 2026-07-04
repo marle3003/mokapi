@@ -5,11 +5,9 @@ import (
 	"errors"
 	"io"
 	engine "mokapi/engine/common"
-	"mokapi/media"
 	"mokapi/providers/asyncapi3"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
-	"mokapi/schema/encoding"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"net/http"
@@ -145,8 +143,8 @@ func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	errCh := make(chan error, 2)
-	go func() { errCh <- ch.readLoop(ctx, conn, client, ch) }()
-	go func() { errCh <- s.writeLoop(ctx, conn, client) }()
+	go func() { errCh <- ch.readLoop(ctx, conn, client) }()
+	go func() { errCh <- client.writeLoop(ctx, conn) }()
 
 	if err = <-errCh; err != nil {
 		closeStatus := websocket.CloseStatus(err)
@@ -165,105 +163,6 @@ func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			log.Errorf("websocket connection error on channel %s: %v", ch.Name, err)
 		}
 	}
-}
-
-func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Client, ch *Channel) error {
-	for {
-		_, data, err := conn.Read(ctx)
-		if err != nil {
-			return err
-		}
-
-		var v any
-		var messageId string
-		for id, m := range c.cfg.Messages {
-			if m.Value == nil || m.Value.Payload == nil || m.Value.Payload.Value == nil {
-				continue
-			}
-			messageId = id
-			var p encoding.Parser
-			p, err = m.Value.Payload.GetParser(m.Value.ContentType)
-			if err != nil {
-				log.Errorf("unsupported payload type: %T", m.Value.Payload.Value)
-			}
-			v, err = encoding.Decode(data, encoding.WithContentType(media.ParseContentType(m.Value.ContentType)), encoding.WithParser(p))
-			if err == nil {
-				break
-			}
-		}
-		if err != nil {
-			return err
-		}
-
-		evt := &Event{
-			Api: c.api,
-			Channel: EventChannel{
-				Name: ch.Name,
-				ch:   ch,
-			},
-			Client: &EventClient{
-				RemoteAddress: client.RemoteAddr,
-				Headers:       nil,
-				client:        client,
-			},
-			Message: v,
-		}
-		if client.Query != nil {
-			evt.Client.Query = client.Query
-		} else {
-			evt.Client.Query = map[string]any{}
-		}
-		if client.Header != nil {
-			evt.Client.Headers = client.Header
-		} else {
-			evt.Client.Headers = map[string]any{}
-		}
-
-		l := &Log{
-			Channel: c.Name,
-			Message: LogValue{
-				Value:  string(data),
-				Binary: data,
-			},
-			MessageId: messageId,
-			Api:       c.api,
-			Client:    clientLog(client),
-		}
-		l.Actions = c.emitter.Emit("websocket", evt)
-		c.log(l, events.NewTraits().With("channel", ch.Name).With("clientId", client.Id))
-	}
-}
-
-func (s *Store) writeLoop(ctx context.Context, conn *websocket.Conn, client *Client) error {
-	for {
-		select {
-		case msg := <-client.send:
-			wsType := toWebSocketType(msg.Type)
-			if err := conn.Write(ctx, wsType, msg.Payload); err != nil {
-				return err
-			}
-		case <-client.closeCh:
-			conn.Close(websocket.StatusNormalClosure, "server closing")
-			return nil
-		case <-ctx.Done():
-			return ctx.Err()
-		}
-	}
-}
-
-func (c *Channel) addClient(client *Client) {
-	c.m.Lock()
-	if c.clients == nil {
-		c.clients = make(map[string]*Client)
-	}
-	c.clients[client.Id] = client
-	c.m.Unlock()
-}
-
-func (c *Channel) removeClient(client *Client) {
-	c.m.Lock()
-	defer c.m.Unlock()
-	delete(c.clients, client.Id)
 }
 
 func toMessageType(msgType websocket.MessageType) MessageType {

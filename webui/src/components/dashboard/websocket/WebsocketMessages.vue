@@ -7,6 +7,7 @@ import SourceView from '../SourceView.vue'
 import router from '@/router'
 import { getRouteName, useDashboard } from '@/composables/dashboard'
 import { useLocalStorage } from '@/composables/local-storage'
+import { useWebsocket } from '@/composables/websocket.ts'
 
 const props = defineProps<{
     service?: WebsocketService,
@@ -35,6 +36,7 @@ const labels = computed(() => {
 
 const { format } = usePrettyDates()
 const { formatLanguage } = usePrettyLanguage()
+const { formatAddress } = useWebsocket()
 
 const { dashboard } = useDashboard()
 const { events, close } = dashboard.value.getEvents(...labels.value)
@@ -267,7 +269,8 @@ const isTemplateChannel = computed(() => {
         <thead>
             <tr>
                 <th scope="col" class="text-left col-2" v-if="!channelName || isTemplateChannel">Channel</th>
-                <th scope="col" class="text-left col-2" v-if="!clientId">Client</th>
+                <th scope="col" class="text-left col-2" >Source</th>
+                <th scope="col" class="text-left col-2" >Destination</th>
                 <th scope="col" class="text-left col-4">Value</th>
                 <th scope="col" class="text-center col-2">Time</th>
 
@@ -282,7 +285,12 @@ const isTemplateChannel = computed(() => {
                         {{ msg.channel }}
                     </router-link>
                 </td>
-                <td class="text-left" v-if="!clientId">{{ msg.client.address }}</td>
+                <td class="text-left">
+                    {{ formatAddress(msg.client.direction === 'send' ? msg.client.address : msg.client.server) }}
+                </td>
+                <td class="text-left">
+                    {{ formatAddress(msg.client.direction === 'receive' ? msg.client.address : msg.client.server) }}
+                </td>
                 <td v-if="channelName" class="message" :title="msg.isAvro ? 'Avro content displayed as JSON' : ''">
                     <router-link @click.stop class="row-link"
                         :to="{ name: getRouteName('websocketMessage').value, params: { id: msg.id } }">

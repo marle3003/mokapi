@@ -11,7 +11,7 @@ const { dashboard } = useDashboard();
 const { formatAddress } = useWebsocket();
 
 const serviceName = route.params.service!.toString();
-const clientId = route.params.clientId!.toString();
+const clientId = route.params.id!.toString();
 const service = computed(() => {
   const result = dashboard.value.getService(serviceName, 'websocket');
   if (!result.service.value) {
@@ -22,7 +22,7 @@ const service = computed(() => {
 
 
 const client = computed(() => {
-  if (!service.value || !service.value.data) {
+  if (!service.value || !service.value.data || !service.value.data.clients) {
     return null;
   }
   for (let client of service.value.data.clients){

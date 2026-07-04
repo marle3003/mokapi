@@ -2,6 +2,7 @@ import { collectDashboard } from './collect-dashboard.ts';
 import { driveHttp } from './drive-http.ts';
 import { driveKafka, closeKafka } from './drive-kafka.ts';
 import { driveMqtt } from './drive-mqtt.ts';
+import { driveWebsocket } from './drive-websocket.ts'
 import { driveMail } from './drive-mail.ts';
 import { driveLdap } from './drive-ldap.ts';
 
@@ -10,6 +11,7 @@ async function main() {
         await driveHttp();
         await driveKafka();
         await driveMqtt();
+        await driveWebsocket();
         await driveMail();
         await driveLdap();
 

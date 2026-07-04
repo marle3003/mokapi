@@ -1,7 +1,7 @@
 declare interface WebsocketService extends Service {
   channels: WebsocketChannel[];
   servers: WebsocketServer[];
-  clients: WebsocketClient[];
+  clients?: WebsocketClient[];
 }
 
 declare interface WebsocketServer {
@@ -60,6 +60,7 @@ declare interface WebsocketMessageData {
   messageId: string
   client: WebsocketClientLog
   script: string
+  actions: Action[]
 }
 
 declare interface WebsocketMessage {
@@ -72,7 +73,7 @@ declare interface WebsocketClient {
   query: Record<string, any>
   headers: Record<string, any>
   address: string
-  serverAddress: string
+  serverddress: string
 }
 
 declare interface WebsocketClientLog {
@@ -80,5 +81,6 @@ declare interface WebsocketClientLog {
   query: Record<string, any>
   headers: Record<string, any>
   address: string
-  serverAddress: string
+  server: string
+  direction: 'receive' | 'send'
 }

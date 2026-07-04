@@ -64,6 +64,7 @@ declare interface MqttMessageData {
   messageId: string
   clientId: string
   script: string
+  actions: Action[]
 }
 
 declare interface MqttMessage {

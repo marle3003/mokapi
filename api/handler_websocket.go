@@ -51,7 +51,7 @@ type websocketChannelInstance struct {
 }
 
 type websocketClient struct {
-	ClientId      string `json:"clientId"`
+	Id            string `json:"id"`
 	Address       string `json:"address"`
 	ServerAddress string `json:"serverAddress"`
 }
@@ -163,7 +163,7 @@ func (h *handler) getWebsocketInfo(w http.ResponseWriter, r *http.Request) {
 
 	for _, client := range wi.Store.Clients() {
 		c := websocketClient{
-			ClientId:      client.Id,
+			Id:            client.Id,
 			Address:       client.RemoteAddr,
 			ServerAddress: client.ServerAddr,
 		}

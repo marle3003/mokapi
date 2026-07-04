@@ -1,6 +1,9 @@
 package websocket
 
-import log "github.com/sirupsen/logrus"
+import (
+	"github.com/dop251/goja"
+	log "github.com/sirupsen/logrus"
+)
 
 type Event struct {
 	Api     string       `json:"api"`
@@ -26,7 +29,9 @@ func (e *Event) Reply(message any) {
 	e.Client.Send(message)
 }
 
-func (e *Event) Broadcast(message any) {
+func (e *Event) Broadcast(message goja.Value) {
+	m := message.Export()
+	_ = m
 	for _, c := range e.Channel.ch.clients {
 		err := c.sendMessage(message)
 		if err != nil {

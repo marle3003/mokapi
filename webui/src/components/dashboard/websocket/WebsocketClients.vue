@@ -44,7 +44,7 @@ function goToClient(client: WebsocketClient, openInNewTab = false) {
         name: getRouteName('websocketClient').value,
         params: {
             service: props.service.name,
-            clientId: client.id,
+            id: client.id,
         }
     }
     if (openInNewTab) {
@@ -69,7 +69,7 @@ function goToClient(client: WebsocketClient, openInNewTab = false) {
                     @mousedown.middle="goToClient(c, true)">
                     <td>
                         <router-link @click.stop class="row-link"
-                            :to="{ name: getRouteName('websocketClient').value, params: { service: service.name, clientId: c.id } }">
+                            :to="{ name: getRouteName('websocketClient').value, params: { service: service.name, id: c.id } }">
                             {{ formatAddress(c.address) }}
                         </router-link>
                     </td>

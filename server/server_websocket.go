@@ -119,7 +119,7 @@ func (c *websocketService) updateServers(cfg *runtime.WebsocketInfo, monitor *mo
 			log.Infof("adding new Websocket server '%v' on port %v to '%v'", name, port, cfg.Info.Name)
 			h := cfg.Handler(monitor)
 			broker = service.NewWebsocketServer(port, http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-				req.WithContext(websocket.NewServerContext(req.Context(), server.Value))
+				req = req.WithContext(websocket.NewServerContext(req.Context(), server.Value))
 				h.ServeHTTP(w, req)
 			}))
 			broker.Start()
