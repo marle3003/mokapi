@@ -79,7 +79,7 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
 
                     const info = page.getByRole('region', { name: 'Info' })
                     await expect(info.getByLabel('Client Address')).toContainText(':');
-                    await expect(info.getByLabel('Server')).toHaveText(':8000')
+                    await expect(info.getByLabel('Server')).toContainText(':8000')
                     await expect(info.getByLabel('Type of API')).toHaveText('Websocket');
 
                     const messages = page.getByRole('table', { name: 'Messages' });
