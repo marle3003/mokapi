@@ -577,7 +577,7 @@ export interface WebsocketChannel {
      *   console.log(event.channel.name) // e.g. "/chat"
      * })
      */
-    readonly channel: string;
+    readonly name: string;
 
     /**
      * All clients currently connected to this channel. Use this for
@@ -816,16 +816,6 @@ export interface EventArgs {
      * such as for logging or recording purposes.
      */
     priority?: number;
-
-    /**
-     * Controls whether this event handler is tracked in the dashboard.
-     *
-     * - true: always track this handler
-     * - false: never track this handler
-     * - undefined: Mokapi determines tracking automatically based on
-     *   whether the message was processed or modified by the handler
-     */
-    track?: boolean | ((record: SmtpEventMessage) => boolean);
 }
 
 /**
@@ -852,7 +842,7 @@ export interface TypedEventArgs {
     /**
      * Arguments for Websocket event handlers.
      */
-    websocket: EventArgs
+    websocket: WebsocketEventArgs
     /**
      * Arguments for LDAP event handlers.
      */
@@ -863,13 +853,17 @@ export interface TypedEventArgs {
     smtp: SmtpEventArgs;
 }
 
-/**
- * Configuration options for HTTP event handlers.
- *
- * These arguments control execution behavior such as
- * priority, tagging, and dashboard tracking.
- */
-export interface HttpEventArgs extends EventArgs {}
+export interface HttpEventArgs extends EventArgs {
+    /**
+     * Controls whether this event handler is tracked in the dashboard.
+     *
+     * - true: always track this handler
+     * - false: never track this handler
+     * - undefined: Mokapi determines tracking automatically based on
+     *   whether the response object was modified by the handler
+     */
+    track?: boolean | ((request: HttpRequest, response: HttpResponse) => boolean);
+}
 
 /**
  * Configuration options for Kafka event handlers.
@@ -877,7 +871,17 @@ export interface HttpEventArgs extends EventArgs {}
  * These arguments control execution behavior such as
  * priority, tagging, and dashboard tracking.
  */
-export interface KafkaEventArgs extends EventArgs {}
+export interface KafkaEventArgs extends EventArgs {
+    /**
+     * Controls whether this event handler is tracked in the dashboard.
+     *
+     * - true: always track this handler
+     * - false: never track this handler
+     * - undefined: Mokapi determines tracking automatically based on
+     *   whether the message was modified or acknowledged by the handler
+     */
+    track?: boolean | ((message: KafkaEventMessage) => boolean);
+}
 
 /**
  * Configuration options for MQTT event handlers.
@@ -885,7 +889,35 @@ export interface KafkaEventArgs extends EventArgs {}
  * These arguments control execution behavior such as
  * priority, tagging, and dashboard tracking.
  */
-export interface MqttEventArgs extends EventArgs {}
+export interface MqttEventArgs extends EventArgs {
+    /**
+     * Controls whether this event handler is tracked in the dashboard.
+     *
+     * - true: always track this handler
+     * - false: never track this handler
+     * - undefined: Mokapi determines tracking automatically based on
+     *   whether the message was modified or acknowledged by the handler
+     */
+    track?: boolean | ((message: MqttEventMessage) => boolean);
+}
+
+/**
+ * Configuration options for Websocket event handlers.
+ *
+ * These arguments control execution behavior such as
+ * priority, tagging, and dashboard tracking.
+ */
+export interface WebsocketEventArgs extends EventArgs {
+    /**
+     * Controls whether this event handler is tracked in the dashboard.
+     *
+     * - true: always track this handler
+     * - false: never track this handler
+     * - undefined: Mokapi determines tracking automatically based on
+     *   whether the message was modified or acknowledged by the handler
+     */
+    track?: boolean | ((message: WebsocketEventMessage) => boolean);
+}
 
 /**
  * Configuration options for LDAP event handlers.
@@ -893,7 +925,17 @@ export interface MqttEventArgs extends EventArgs {}
  * These arguments control execution behavior such as
  * priority, tagging, and dashboard tracking.
  */
-export interface LdapEventArgs extends EventArgs {}
+export interface LdapEventArgs extends EventArgs {
+    /**
+     * Controls whether this event handler is tracked in the dashboard.
+     *
+     * - true: always track this handler
+     * - false: never track this handler
+     * - undefined: Mokapi determines tracking automatically based on
+     *   whether the response object was modified by the handler
+     */
+    track?: boolean | ((request: LdapSearchRequest, response: LdapSearchResponse) => boolean);
+}
 
 /**
  * Configuration options for SMTP event handlers.
@@ -901,7 +943,17 @@ export interface LdapEventArgs extends EventArgs {}
  * These arguments control execution behavior such as
  * priority, tagging, and dashboard tracking.
  */
-export interface SmtpEventArgs extends EventArgs {}
+export interface SmtpEventArgs extends EventArgs {
+    /**
+     * Controls whether this event handler is tracked in the dashboard.
+     *
+     * - true: always track this handler
+     * - false: never track this handler
+     * - undefined: Mokapi determines tracking automatically based on
+     *   whether the message was processed or modified by the handler
+     */
+    track?: boolean | ((record: SmtpEventMessage) => boolean);
+}
 
 /**
  * ScheduledEventHandler is an object used by every and cron function.
@@ -916,9 +968,9 @@ export interface SmtpEventArgs extends EventArgs {}
 export type ScheduledEventHandler = () => void | Promise<void>;
 
 /**
-* Configuration options for scheduled event handlers
-* created via `every` or `cron`.
-*/
+ * Configuration options for scheduled event handlers
+ * created via `every` or `cron`.
+ */
 export interface ScheduledEventArgs {
     /**
      * Adds or overrides existing tags used in dashboard
