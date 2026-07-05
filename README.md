@@ -128,7 +128,7 @@ Explore tutorials that walk you through mocking different protocols and scenario
 - [CI/CD Integration with GitHub Actions](https://mokapi.io/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline)\
   Run Mokapi in automated test pipelines
 
-> More at [mokapi.io/resources](https://mokapi.io/resources)
+More at [mokapi.io/resources](https://mokapi.io/resources)
 
 ## Documentation
 
