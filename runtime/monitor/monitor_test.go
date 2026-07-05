@@ -1,8 +1,9 @@
-package monitor
+package monitor_test
 
 import (
 	"context"
 	"mokapi/runtime/metrics"
+	"mokapi/runtime/monitor"
 	"mokapi/safe"
 	"testing"
 	"time"
@@ -13,7 +14,7 @@ import (
 func TestMonitor_Start(t *testing.T) {
 	t.Parallel()
 
-	m := New()
+	m := monitor.New()
 	m.RefreshRateSeconds = 1
 	p := safe.NewPool(context.Background())
 	m.Start(p)
@@ -27,7 +28,7 @@ func TestMonitor_Start(t *testing.T) {
 func TestMonitor_FindAll(t *testing.T) {
 	t.Parallel()
 
-	m := New()
+	m := monitor.New()
 	m.Http.RequestCounter.WithLabel("s", "e", "m").Add(1)
 	r := m.FindAll(metrics.ByNamespace("http"))
 	require.Len(t, r, 1)

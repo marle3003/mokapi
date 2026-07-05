@@ -43,6 +43,12 @@ func WithKafkaChannelBinding(bindings asyncapi3.TopicBindings) ChannelOptions {
 	}
 }
 
+func WithWebsocketChannelBinding(bindings asyncapi3.WebsocketChannelBindings) ChannelOptions {
+	return func(c *asyncapi3.Channel) {
+		c.Bindings.Websocket = bindings
+	}
+}
+
 func WithChannelAddress(address string) ChannelOptions {
 	return func(c *asyncapi3.Channel) {
 		c.Address = address

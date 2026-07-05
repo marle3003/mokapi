@@ -24,7 +24,6 @@ type MqttStore struct {
 	infos   map[string]*MqttInfo
 	monitor *monitor.Monitor
 	cfg     *static.Config
-	sm      *events.StoreManager
 	m       sync.RWMutex
 	events  *events.StoreManager
 	index   search.Index
@@ -97,8 +96,8 @@ func (s *MqttStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*MqttIn
 	}
 
 	if !ok {
-		s.sm.ResetStores(events.NewTraits().WithNamespace("mqtt").WithName(cfg.Info.Name))
-		s.sm.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("mqtt").WithName(cfg.Info.Name))
+		s.events.ResetStores(events.NewTraits().WithNamespace("mqtt").WithName(cfg.Info.Name))
+		s.events.SetStore(int(eventStore.Size), events.NewTraits().WithNamespace("mqtt").WithName(cfg.Info.Name))
 
 		ki = newMqttInfo(store.New(cfg, emitter, s.events, s.monitor.Mqtt), s.updateEventStore)
 		s.infos[cfg.Info.Name] = ki
@@ -144,7 +143,7 @@ func (s *MqttStore) Remove(c *dynamic.Config) {
 		s.m.RUnlock()
 		s.m.Lock()
 		delete(s.infos, name)
-		s.sm.ResetStores(events.NewTraits().WithNamespace("Mqtt").WithName(name))
+		s.events.ResetStores(events.NewTraits().WithNamespace("Mqtt").WithName(name))
 		s.m.Unlock()
 	} else {
 		s.m.RUnlock()
@@ -280,7 +279,7 @@ func (s *MqttStore) updateEventStore(k *MqttInfo) {
 		s.monitor.Mqtt.Messages.WithLabel(k.Config.Info.Name, topicName)
 		s.monitor.Mqtt.LastMessage.WithLabel(k.Config.Info.Name, topicName)
 		traits := events.NewTraits().WithNamespace("mqtt").WithName(k.Config.Info.Name).With("topic", topicName)
-		s.sm.SetStore(int(eventStore.Size), traits)
+		s.events.SetStore(int(eventStore.Size), traits)
 		k.seenTopics[topicName] = true
 	}
 }

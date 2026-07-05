@@ -1,4 +1,4 @@
-package server
+package server_test
 
 import (
 	"fmt"
@@ -9,6 +9,7 @@ import (
 	"mokapi/ldap"
 	"mokapi/providers/directory"
 	"mokapi/runtime"
+	"mokapi/server"
 	"mokapi/try"
 	"net/url"
 	"testing"
@@ -20,11 +21,11 @@ func TestLdapDirectory(t *testing.T) {
 	testcases := []struct {
 		name    string
 		configs []*dynamic.Config
-		test    func(t *testing.T, m *LdapDirectoryManager, app *runtime.App)
+		test    func(t *testing.T, m *server.LdapDirectoryManager, app *runtime.App)
 	}{
 		{
 			name: "wrong config type",
-			test: func(t *testing.T, m *LdapDirectoryManager, app *runtime.App) {
+			test: func(t *testing.T, m *server.LdapDirectoryManager, app *runtime.App) {
 				m.UpdateConfig(dynamic.ConfigEvent{
 					Config: newConfig("foo", "data"),
 				})
@@ -34,7 +35,7 @@ func TestLdapDirectory(t *testing.T) {
 		},
 		{
 			name: "add to runtime app",
-			test: func(t *testing.T, m *LdapDirectoryManager, app *runtime.App) {
+			test: func(t *testing.T, m *server.LdapDirectoryManager, app *runtime.App) {
 				m.UpdateConfig(dynamic.ConfigEvent{
 					Config: newConfig("foo", &directory.Config{
 						Info: directory.Info{Name: "foo"},
@@ -45,7 +46,7 @@ func TestLdapDirectory(t *testing.T) {
 		},
 		{
 			name: "one ldap server",
-			test: func(t *testing.T, m *LdapDirectoryManager, app *runtime.App) {
+			test: func(t *testing.T, m *server.LdapDirectoryManager, app *runtime.App) {
 				m.UpdateConfig(dynamic.ConfigEvent{
 					Config: newConfig("foo", &directory.Config{
 						Info:    directory.Info{Name: "foo"},
@@ -62,7 +63,7 @@ func TestLdapDirectory(t *testing.T) {
 		},
 		{
 			name: "update ldap event",
-			test: func(t *testing.T, m *LdapDirectoryManager, app *runtime.App) {
+			test: func(t *testing.T, m *server.LdapDirectoryManager, app *runtime.App) {
 				addr1 := fmt.Sprintf(":%v", try.GetFreePort())
 				m.UpdateConfig(dynamic.ConfigEvent{
 					Config: newConfig("foo", &directory.Config{
@@ -92,7 +93,7 @@ func TestLdapDirectory(t *testing.T) {
 		},
 		{
 			name: "delete ldap event",
-			test: func(t *testing.T, m *LdapDirectoryManager, app *runtime.App) {
+			test: func(t *testing.T, m *server.LdapDirectoryManager, app *runtime.App) {
 				addr := fmt.Sprintf(":%v", try.GetFreePort())
 				m.UpdateConfig(dynamic.ConfigEvent{
 					Config: newConfig("foo", &directory.Config{
@@ -119,7 +120,7 @@ func TestLdapDirectory(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := &static.Config{}
 			app := runtime.New(cfg, &dynamictest.Reader{})
-			m := NewLdapDirectoryManager(enginetest.NewEngine(), nil, app)
+			m := server.NewLdapDirectoryManager(enginetest.NewEngine(), nil, app)
 			defer m.Stop()
 
 			tc.test(t, m, app)

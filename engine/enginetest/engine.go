@@ -17,7 +17,9 @@ func NewEngine(opts ...engine.Options) *engine.Engine {
 
 	opts = append([]engine.Options{
 		engine.WithScriptLoader(engine.ScriptLoaderFunc(func(file *dynamic.Config, host common.Host) (common.Script, error) {
-			if path.Ext(file.Info.Kernel().Path()) == ".js" {
+			ext := path.Ext(file.Info.Kernel().Path())
+			if ext == ".js" || ext == ".ts" {
+				// use this loader to ensure not to reuse the JavaScript Registry which is a singleton
 				return jstest.New(js.WithFile(file), js.WithHost(host))
 			}
 			return loader.Load(file, host)

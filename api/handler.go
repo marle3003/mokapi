@@ -53,11 +53,12 @@ type searchInfo struct {
 type serviceType string
 
 var (
-	ServiceHttp  serviceType = "http"
-	ServiceKafka serviceType = "kafka"
-	ServiceMail  serviceType = "mail"
-	ServiceLdap  serviceType = "ldap"
-	ServiceMqtt  serviceType = "mqtt"
+	ServiceHttp      serviceType = "http"
+	ServiceKafka     serviceType = "kafka"
+	ServiceMail      serviceType = "mail"
+	ServiceLdap      serviceType = "ldap"
+	ServiceMqtt      serviceType = "mqtt"
+	ServiceWebsocket serviceType = "websocket"
 )
 
 type service struct {
@@ -108,6 +109,7 @@ func New(app *runtime.App, config static.Api) Handler {
 	h.setupHttp()
 	h.setupKafka()
 	h.setupMqtt()
+	h.setupWebsocket()
 
 	return h
 }
@@ -234,6 +236,9 @@ func (h *handler) getServices(w http.ResponseWriter, r *http.Request) {
 	if typ == "" || typ == "mqtt" {
 		services = append(services, getMqttServices(h.app.Mqtt, h.app.Monitor)...)
 	}
+	if typ == "" || typ == "websocket" {
+		services = append(services, getWebsocketServices(h.app.Websocket, h.app.Monitor)...)
+	}
 	slices.SortFunc(services, func(a service, b service) int {
 		return strings.Compare(a.Name, b.Name)
 	})
@@ -274,6 +279,9 @@ func (h *handler) getInfo(w http.ResponseWriter, _ *http.Request) {
 	}
 	if h.app.Mqtt.Len() > 0 {
 		i.ActiveServices = append(i.ActiveServices, "mqtt")
+	}
+	if h.app.Websocket.Len() > 0 {
+		i.ActiveServices = append(i.ActiveServices, "websocket")
 	}
 
 	writeJsonBody(w, i)

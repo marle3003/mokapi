@@ -21,6 +21,7 @@ type App struct {
 	Ldap      *LdapStore
 	Kafka     *KafkaStore
 	Mqtt      *MqttStore
+	Websocket *WebsocketStore
 	Mail      *MailStore
 
 	Monitor *monitor.Monitor
@@ -47,6 +48,8 @@ func New(cfg *static.Config, reader dynamic.Reader) *App {
 	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits())
 	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("http"))
 	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("kafka"))
+	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("mqtt"))
+	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("websocket"))
 	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("ldap"))
 	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("mail"))
 	em.SetStore(int(cfg.Event.Store["default"].Size), events.NewTraits().WithNamespace("job"))
@@ -60,7 +63,8 @@ func New(cfg *static.Config, reader dynamic.Reader) *App {
 		Configs:     map[string]*dynamic.Config{},
 		Http:        &HttpStore{cfg: cfg, index: index, events: em, reader: reader},
 		Kafka:       &KafkaStore{monitor: m, cfg: cfg, index: index, events: em, reader: reader},
-		Mqtt:        &MqttStore{monitor: m, cfg: cfg, index: index, sm: em, events: em, reader: reader},
+		Mqtt:        &MqttStore{monitor: m, cfg: cfg, index: index, events: em, reader: reader},
+		Websocket:   &WebsocketStore{monitor: m, cfg: cfg, index: index, events: em, reader: reader},
 		Ldap:        &LdapStore{cfg: cfg, events: em, index: index},
 		Mail:        &MailStore{cfg: cfg, sm: em, index: index},
 		cfg:         cfg,

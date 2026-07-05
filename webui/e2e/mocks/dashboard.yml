@@ -115,6 +115,23 @@ paths:
             application/json:
               schema:
                 $ref: 'mqtt.yml#/components/schemas/Mqtt'
+  /api/services/websocket/{name}:
+    get:
+      summary: Information about the WebSocket service
+      operationId: serviceWebsocket
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: name of WebSocket service
+          content:
+            application/json:
+              schema:
+                $ref: 'websocket.yml#/components/schemas/Websocket'
   /api/services/mail/{name}:
     get:
       summary: Information about the mail servers

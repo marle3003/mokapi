@@ -35,6 +35,7 @@ type Host struct {
 	m                  sync.Mutex
 	StoreTest          *engine.Store
 	CwdFunc            func() string
+	WebhookFunc        func(name string, url string, args common.WebhookArgs) (*common.WebhookResponse, error)
 }
 
 type HttpClient struct {
@@ -209,6 +210,13 @@ func (h *Host) Cwd() string {
 		panic(err)
 	}
 	return filepath.Dir(ex)
+}
+
+func (h *Host) Webhook(name string, url string, args common.WebhookArgs) (*common.WebhookResponse, error) {
+	if h.WebhookFunc != nil {
+		return h.WebhookFunc(name, url, args)
+	}
+	return nil, nil
 }
 
 func mustParse(s string) *url.URL {

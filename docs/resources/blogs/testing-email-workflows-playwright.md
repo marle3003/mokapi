@@ -1,14 +1,14 @@
 ---
-title: How to Test Email Workflows End-to-End Without a Real Mail Server
-description: Mock SMTP and IMAP with Mokapi and Playwright to test signup, verification, and password reset flows reliably.
+title: "Playwright Email Testing: E2E Workflows Without a Real Mail Server"
+description: Master Playwright email testing by mocking SMTP and IMAP with Mokapi. Test signup, verification, and password reset flows reliably.
 subtitle: "Email is at the heart of most user flows: signup, verification, password reset. These flows are easy to break and hard to test. This guide shows how to mock a full SMTP and IMAP server with Mokapi and drive it end-to-end with Playwright, so your email logic gets the same test coverage as everything else."
 icon: bi-envelope-paper
 tech: mail
 ---
 
-# How to Test Email Workflows End-to-End Without a Real Mail Server
+# Playwright Email Testing: How to Test Workflows End-to-End Without a Real Mail Server
 
-## The Problem With Testing Email
+## The Problem With Traditional E2E Email Testing
 
 Email is one of those things that's really hard to test well. You can't just assert on a return value.
 The email goes out through a third-party SMTP server, lands in a real inbox somewhere, and you have no
@@ -20,9 +20,9 @@ Neither is great. Manual testing doesn't scale and doesn't belong in CI. And ass
 was called tells you nothing about whether the subject line was right, the link was valid, or the HTML
 rendered correctly.
 
-That's why I built email support into Mokapi. The idea is the same as with every other protocol Mokapi supports:
-replace the real infrastructure with a mock that your test can inspect. Your backend connects to Mokapi's SMTP
-server exactly as it would a real mail server. Mokapi captures the message. Your test fetches it over HTTP and
+That's why I built email support into Mokapi. The idea is to streamline **Playwright email testing** by replacing
+the real infrastructure with a mock that your test can inspect. Your backend connects to Mokapi's SMTP
+server exactly as it would a real mail server. Mokapi captures the message. Your Playwright test fetches it over HTTP and
 asserts on the content.
 
 Unlike Kafka or HTTP, there's no standard specification format for email configuration. So Mokapi uses a simple
@@ -31,7 +31,7 @@ configure: just declare the protocol, the host, and the port.
 
 ---
 
-## The Scenario We're Testing
+## The Playwright Email Testing Scenario We're Building
 
 The workflow we're going to test is a classic signup flow:
 
@@ -44,10 +44,11 @@ and the test reads it back. No mocking inside the backend, no shortcuts.
 
 ---
 
-## Step 1: Configure the Mock Mail Server
+## Step 1: Configure the Mock SMTP Server for Playwright
 
 Because email doesn't have a specification format like AsyncAPI or OpenAPI, Mokapi uses a simple YAML config file.
-Here's all you need to spin up a mock SMTP server. You can find the full config on [GitHub](https://github.com/marle3003/mokapi-email-workflow/blob/main/mocks/mail.yaml).
+Here's all you need to spin up a mock SMTP server for your **Playwright E2E email testing**. You can find the full 
+config on [GitHub](https://github.com/marle3003/mokapi-email-workflow/blob/main/mocks/mail.yaml).
 
 ```yaml
 mail: '1.0'
@@ -80,7 +81,7 @@ More on that in a moment.
 
 ---
 
-## Step 2: The Express Backend
+## Step 2: The Express Backend Connection
 
 The backend is a simple Express app using Nodemailer. Nothing special here: it connects to `localhost:2525` the same
 way it would connect to any SMTP server.
@@ -115,9 +116,9 @@ a deliberate design goal: you shouldn't need to change your application code to 
 
 ---
 
-## Step 3: Writing the Playwright Test
+## Step 3: Writing the Playwright Email Test
 
-This is where it all comes together. The test does three things:
+This is where your **Playwright email testing** logic comes together. The test script automated three critical steps:
 
 1. Fills in the signup form and submits it, just like a real user
 2. Fetches the captured email from Mokapi's HTTP API
@@ -169,7 +170,7 @@ test('Email verification after signup', async ({ page, request }) => {
 });
 ```
 
-A few things worth pointing out.
+### Key Takeaways for Reliable Tests
 
 Using a random email address per test run is important. It keeps tests isolated from each other, so a message
 from a previous run can't interfere with the current one. Same idea as the `Date.now()` document ID in the Kafka
@@ -184,7 +185,7 @@ bugs your assertions miss, and it costs nothing to set up since you already have
 
 ---
 
-## Why This Pattern Works
+## Why This Playwright Email Testing Pattern Works
 
 The backend sends email exactly as it does in production. Playwright drives a real browser against a real
 frontend. Mokapi sits in the middle capturing everything and making it inspectable. No real emails are sent.

@@ -15,6 +15,7 @@ func TestAcceptance(t *testing.T) {
 	suite.Run(t, new(MailSuite))
 	suite.Run(t, new(LdapSuite))
 	suite.Run(t, new(MqttSuite))
+	suite.Run(t, new(WebsocketSuite))
 }
 
 type BaseSuite struct {

@@ -4,6 +4,7 @@ import { apps as httpServices, events as httpEvents, configs as httpConfigs } fr
 import { services as mailServices, mailEvents, getMail, getAttachment } from './mail.js'
 import { server as ldapServers, searches } from './ldap.js'
 import { clusters as mqttClusters, events as mqttEvents } from './mqtt.js'
+import { services as websocketServices, events as websocketEvents } from './websocket.js'
 import { metrics, sum, max } from './metrics.ts'
 import { get, post, fetch } from 'mokapi/http'
 import { base64 } from 'mokapi/encoding';
@@ -26,7 +27,10 @@ export default async function() {
         switch (request.operationId) {
             case 'info': {
 
-                response.data = { version: "0.11.0", activeServices: ["http", "kafka", "ldap", "mail", "mqtt"], search: { enabled: true } }
+                response.data = { 
+                    version: "0.11.0", 
+                    activeServices: ["http", "kafka", "ldap", "mail", "mqtt", "websocket"],
+                    search: { enabled: true } }
                 return
             }
             case 'services':
@@ -584,6 +588,17 @@ function getServices(type) {
             }
         }))
     }
+    if (!type || type === 'websocket') {
+        services.push(...websocketServices.map(x => {
+            return {
+                ...getInfo(x, 'websocket'),
+                metrics: {
+                    websocket_messages_total: sum('websocket_messages_total', { name: 'service', value: x.name }),
+                    websocket_message_timestamp: max('websocket_message_timestamp', { name: 'service', value: x.name })
+                }
+            }
+        }))
+    }
 
     return services
 }
@@ -619,6 +634,11 @@ function getEvent(id) {
             return e
         }
     }
+    for (const e of websocketEvents) {
+        if (e.id === id) {
+            return e
+        }
+    }
     return null
 }
 
@@ -635,6 +655,11 @@ function getEvents(traits) {
         }
     }
     for (const e of mqttEvents){
+        if (matchEvent(e, traits)) {
+            result.push(e)
+        }
+    }
+    for (const e of websocketEvents) {
         if (matchEvent(e, traits)) {
             result.push(e)
         }

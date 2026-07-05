@@ -23,6 +23,7 @@ export async function collectDashboard() {
     'service_Mail Server': { path: '/api/services/mail/Mail%20Server', loader: loadJson },
     'service_HR Employee Directory': { path: '/api/services/ldap/HR%20Employee%20Directory', loader: loadJson },
     'service_Smart Home MQTT API': { path: '/api/services/mqtt/Smart%20Home%20MQTT%20API', loader: loadJson },
+    'service_WebSocket Chat API': { path: '/api/services/websocket/WebSocket%20Chat%20API', loader: loadJson },
     events: { path: '/api/events', loader: fetchEvents },
     'mailbox_alice.johnson@example.com': { path: '/api/services/mail/Mail%20Server/mailboxes/alice.johnson@example.com', loader: loadJson },
     'mailbox_bob.miller@example.com': { path: '/api/services/mail/Mail%20Server/mailboxes/bob.miller@example.com', loader: loadJson },

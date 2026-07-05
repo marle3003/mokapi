@@ -1,6 +1,7 @@
 package openapi_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -1174,6 +1175,31 @@ func TestHandler_Event(t *testing.T) {
 				return nil
 			},
 		},
+		{
+			name: "header is not specified",
+			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
+				op := openapitest.NewOperation(
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json"),
+					),
+				)
+				openapitest.AppendPath("/foo", c,
+					openapitest.UseOperation(http.MethodGet, op),
+				)
+				r := httptest.NewRequest(http.MethodGet, "http://localhost/foo", nil)
+				r.Header.Set("foo", "bar")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, `{"Accept":"application/json"}`, rr.Body.String())
+			},
+			event: func(event string, args ...interface{}) []*common.Action {
+				req := args[0].(*common.HttpEventRequest)
+				res := args[1].(*common.HttpEventResponse)
+				res.Data = req.Header
+				return nil
+			},
+		},
 	}
 
 	t.Parallel()
@@ -1316,6 +1342,56 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 				h(rr, r)
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, `"foo"`, rr.Body.String())
+			},
+		},
+		{
+			name: "send request body as response",
+			test: func(t *testing.T) {
+				e := enginetest.NewEngine()
+				err := e.AddScript(newScript(fmt.Sprintf("%s.ts", t.Name()), `
+					import {on, sleep} from 'mokapi'
+					export default function() {
+						on('http', async (request, response) => {
+							response.data = {
+								foo: request.body.foo,
+                                bar: request.body.bar,
+							}
+						});
+					}
+				`))
+				require.NoError(t, err)
+
+				config := &openapi.Config{
+					Info:       openapi.Info{Name: "Testing"},
+					Servers:    []*openapi.Server{{Url: "http://localhost"}},
+					Components: openapi.Components{},
+				}
+
+				h := func(rw http.ResponseWriter, r *http.Request) {
+					sm := &events.StoreManager{}
+					sm.SetStore(10, events.NewTraits().WithNamespace("http"))
+					h := openapi.NewHandler(config, e, sm)
+					err = h.ServeHTTP(rw, r)
+					require.Nil(t, err)
+				}
+
+				op := openapitest.NewOperation(
+					openapitest.WithRequestBody("", true, openapitest.WithRequestContent("application/json", openapitest.NewContent(openapitest.WithSchema(schematest.New("object"))))),
+					openapitest.WithResponse(http.StatusOK,
+						openapitest.WithContent("application/json",
+							openapitest.WithSchema(schematest.New("object",
+								schematest.WithProperty("foo", schematest.New("integer")),
+								schematest.WithProperty("bar", schematest.New("integer")),
+							)),
+						),
+					))
+				openapitest.AppendPath("/foo", config, openapitest.UseOperation("get", op))
+				r := httptest.NewRequest("get", "http://localhost/foo", bytes.NewReader([]byte(`{"foo":123,"bar":789}`)))
+				r.Header.Set("accept", "application/json")
+				rr := httptest.NewRecorder()
+				h(rr, r)
+				require.Equal(t, http.StatusOK, rr.Code)
+				require.Equal(t, `{"foo":123,"bar":789}`, rr.Body.String())
 			},
 		},
 		{

@@ -78,6 +78,19 @@ components:
           $ref: '#/components/schemas/MqttTopicBindings'
         tags:
           $ref: './kafka.yml#/components/schemas/Tags'
+        instances:
+          type: array
+          items:
+            $ref: '#/components/schemas/MqttTopicInstance'
+    MqttTopicInstance:
+      type: object
+      properties:
+        name:
+          type: string
+        Parameters:
+          type: object
+          additionalProperties:
+            type: string
     MqttMessageConfig:
       type: object
       properties:
@@ -97,18 +110,5 @@ components:
           $ref: 'schema.yml#/components/schemas/Schema'
         contentType:
           type: string
-    MqttTopicBindings:
-      partitions:
-        type: integer
-      retentionBytes:
-        type: integer
-      retentionMs:
-        type: integer
-      segmentBytes:
-        type: integer
-      segmentMs:
-        type: integer
-      valueSchemaValidation:
-        type: boolean
-      keySchemaValidation:
-        type: boolean
+    MqttTopicBindings: {}
+      

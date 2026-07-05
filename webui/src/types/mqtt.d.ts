@@ -27,7 +27,7 @@ declare interface MqttTopic {
   description: string;
   messages: { [messageId: string]: MqttMessage }
   tags: MqttTag[]
-  instances: MqttTopicInstance[]
+  instances?: MqttTopicInstance[]
   metrics: {
     mqtt_messages_total: number
     mqtt_message_timestamp: number
@@ -64,6 +64,7 @@ declare interface MqttMessageData {
   messageId: string
   clientId: string
   script: string
+  actions: Action[]
 }
 
 declare interface MqttMessage {

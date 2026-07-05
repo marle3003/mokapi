@@ -5,7 +5,8 @@ type ServerBindings struct {
 }
 
 type ChannelBindings struct {
-	Kafka TopicBindings `yaml:"kafka" json:"kafka"`
+	Kafka     TopicBindings            `yaml:"kafka" json:"kafka"`
+	Websocket WebsocketChannelBindings `yaml:"ws" json:"ws"`
 }
 
 type OperationBindings struct {

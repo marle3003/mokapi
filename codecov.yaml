@@ -1,3 +1,9 @@
 ignore:
   - "try/*"
   - "**/*test/*"
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 0.1%

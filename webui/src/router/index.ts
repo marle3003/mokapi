@@ -257,6 +257,47 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
         ]
       },
       {
+        path: 'websocket',
+        name: getRouteName('websocket'),
+        component: dashboardView,
+        meta: { title: 'Dashboard - Websocket' },
+        children: [
+          {
+            path: 'service/:service',
+            name: getRouteName('websocketService'),
+            component: dashboardView,
+            meta: { service: 'websocket', title: ({ params }: MatcherLocation) => `Dashboard - MQTT – ${params.service}` }
+          },
+          {
+            path: 'service/:service/servers/:server',
+            name: getRouteName('mqttServer'),
+            component: dashboardView,
+            meta: { service: 'websocket', title: ({ params }: MatcherLocation) => `Dashboard - MQTT Server – ${params.server}` },
+          },
+          {
+            path: 'service/:service/channels/:channel',
+            name: getRouteName('websocketChannel'),
+            component: dashboardView,
+            meta: {
+              service: 'websocket',
+              title: ({ params }: MatcherLocation) => `Dashboard - Websocket Channel – ${params.topic}`
+            },
+          },
+          {
+            path: 'messages/:id',
+            name: getRouteName('websocketMessage'),
+            component: dashboardView,
+            meta: { service: 'websocket', title: ({ params }: MatcherLocation) => `Dashboard - Websocket Message – ${params.id}` }
+          },
+          {
+            path: 'service/:service/clients/:id',
+            name: getRouteName('websocketClient'),
+            component: dashboardView,
+            meta: { service: 'websocket', title: ({ params }: MatcherLocation) => `Dashboard - Websocket Client – ${params.id}` }
+          }
+        ]
+      },
+      {
         path: 'jobs',
         name: getRouteName('jobs'),
         component: dashboardView,
