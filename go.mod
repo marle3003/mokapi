@@ -4,7 +4,7 @@ go 1.26.4
 
 require (
 	github.com/blevesearch/bleve/v2 v2.6.0
-	github.com/blevesearch/bleve_index_api v1.3.12
+	github.com/blevesearch/bleve_index_api v1.4.0
 	github.com/bradleyfalzon/ghinstallation/v2 v2.19.0
 	github.com/brianvoe/gofakeit/v7 v7.15.0
 	github.com/cbroglie/mustache v1.4.0
