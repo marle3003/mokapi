@@ -135,7 +135,16 @@ func (c *Config) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 	config.Scope.OpenIfNeeded(config.Info.Path())
 
-	return c.Paths.Parse(config, reader)
+	err := c.Paths.Parse(config, reader)
+	if err != nil {
+		return err
+	}
+	for _, path := range c.Webhooks {
+		if err = path.Parse(config, reader); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (c *Config) Patch(patch *Config) {
@@ -167,6 +176,19 @@ func (c *Config) Patch(patch *Config) {
 			c.Tags = append(c.Tags, pt)
 		} else {
 			st.patch(pt)
+		}
+	}
+
+	if c.Webhooks == nil {
+		c.Webhooks = patch.Webhooks
+	} else {
+		for k, w := range patch.Webhooks {
+			pw, ok := c.Webhooks[k]
+			if !ok {
+				c.Webhooks[k] = w
+			} else {
+				pw.patch(w)
+			}
 		}
 	}
 }

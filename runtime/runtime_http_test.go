@@ -4,6 +4,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
+	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
@@ -76,6 +77,76 @@ func TestApp_AddHttp(t *testing.T) {
 				configs := info.Configs()
 				require.Len(t, configs, 1)
 				require.Equal(t, "https://mokapi.io", configs[0].Info.Url.String())
+			},
+		},
+		{
+			name: "webhook not specified",
+			test: func(t *testing.T, app *runtime.App) {
+				app.Http.Add(newConfig(
+					openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", "")),
+				))
+
+				w, err := app.Http.Webhook("foo", common.WebhookArgs{})
+				require.EqualError(t, err, "webhook not found: foo")
+				require.Nil(t, w)
+			},
+		},
+		{
+			name: "webhook is specified",
+			test: func(t *testing.T, app *runtime.App) {
+				app.Http.Add(newConfig(
+					openapitest.NewConfig("3.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithWebhook("foo"),
+					),
+				))
+
+				w, err := app.Http.Webhook("foo", common.WebhookArgs{})
+				require.NoError(t, err)
+				require.NotNil(t, w)
+			},
+		},
+		{
+			name: "webhook ambiguous",
+			test: func(t *testing.T, app *runtime.App) {
+				app.Http.Add(newConfig(
+					openapitest.NewConfig("3.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithWebhook("foo"),
+					),
+				))
+				app.Http.Add(newConfig(
+					openapitest.NewConfig("3.0",
+						openapitest.WithInfo("bar", "", ""),
+						openapitest.WithWebhook("foo"),
+					),
+				))
+
+				w, err := app.Http.Webhook("foo", common.WebhookArgs{})
+				require.EqualError(t, err, "ambiguous webhook 'foo': use args.api to refine")
+				require.Nil(t, w)
+			},
+		},
+		{
+			name: "webhook with api",
+			test: func(t *testing.T, app *runtime.App) {
+				app.Http.Add(newConfig(
+					openapitest.NewConfig("3.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithWebhook("foo", openapitest.WithOperation(http.MethodGet)),
+					),
+				))
+				app.Http.Add(newConfig(
+					openapitest.NewConfig("3.0",
+						openapitest.WithInfo("bar", "", ""),
+						openapitest.WithWebhook("foo"),
+					),
+				))
+
+				w, err := app.Http.Webhook("foo", common.WebhookArgs{Api: "foo"})
+				require.NoError(t, err)
+				require.NotNil(t, w)
+				require.NotNil(t, w.Get)
 			},
 		},
 	}
@@ -209,6 +280,37 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 				mt := res.Content["application/json"]
 				require.NotNil(t, mt)
 				require.Equal(t, "date-time", mt.Schema.Format)
+			},
+		},
+		{
+			name: "add webhook",
+			configs: []*dynamic.Config{
+				newConfig("https://a.io/a", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+					openapitest.WithWebhook("foo"),
+				)),
+				newConfig("https://a.io/b", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+					openapitest.WithWebhook("bar"),
+				)),
+			},
+			test: func(t *testing.T, app *runtime.App) {
+				info := app.Http.Get("foo")
+				require.Len(t, info.Webhooks, 2)
+			},
+		},
+		{
+			name: "update webhook",
+			configs: []*dynamic.Config{
+				newConfig("https://a.io/a", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+					openapitest.WithWebhook("foo"),
+				)),
+				newConfig("https://a.io/b", openapitest.NewConfig("3.0", openapitest.WithInfo("foo", "", ""),
+					openapitest.WithWebhook("foo", openapitest.WithOperation(http.MethodGet)),
+				)),
+			},
+			test: func(t *testing.T, app *runtime.App) {
+				info := app.Http.Get("foo")
+				require.Len(t, info.Webhooks, 1)
+				require.NotNil(t, info.Webhooks["foo"].Value.Get)
 			},
 		},
 	}

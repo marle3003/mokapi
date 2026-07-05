@@ -57,7 +57,7 @@ func TestHandler_Webhook(t *testing.T) {
 				_, e := setup(
 					runtimetest.WithHttp(
 						openapitest.NewConfig("3.1.0",
-							openapitest.WithWebhook("foo", openapitest.NewPath()),
+							openapitest.WithWebhook("foo"),
 						),
 					),
 				)
@@ -77,10 +77,10 @@ func TestHandler_Webhook(t *testing.T) {
 				_, e := setup(
 					runtimetest.WithHttp(
 						openapitest.NewConfig("3.1.0",
-							openapitest.WithWebhook("foo", openapitest.NewPath(
+							openapitest.WithWebhook("foo",
 								openapitest.WithOperation(http.MethodGet),
 								openapitest.WithOperation(http.MethodPost),
-							)),
+							),
 						),
 					),
 				)
@@ -100,10 +100,10 @@ func TestHandler_Webhook(t *testing.T) {
 				_, e := setup(
 					runtimetest.WithHttp(
 						openapitest.NewConfig("3.1.0",
-							openapitest.WithWebhook("foo", openapitest.NewPath(
+							openapitest.WithWebhook("foo",
 								openapitest.WithOperation(http.MethodGet),
 								openapitest.WithOperation(http.MethodPost, openapitest.WithRequestBody("", true)),
-							)),
+							),
 						),
 					),
 				)
@@ -126,7 +126,7 @@ func TestHandler_Webhook(t *testing.T) {
 				_, e := setup(
 					runtimetest.WithHttp(
 						openapitest.NewConfig("3.1.0",
-							openapitest.WithWebhook("foo", openapitest.NewPath(
+							openapitest.WithWebhook("foo",
 								openapitest.WithOperation(http.MethodPost,
 									openapitest.WithRequestBody("", true, openapitest.WithRequestContent("application/json",
 										openapitest.WithSchema(schematest.New("object",
@@ -135,7 +135,7 @@ func TestHandler_Webhook(t *testing.T) {
 									)),
 									openapitest.WithResponse(http.StatusOK),
 								),
-							)),
+							),
 						),
 					),
 				)
@@ -165,7 +165,7 @@ func TestHandler_Webhook(t *testing.T) {
 				_, e := setup(
 					runtimetest.WithHttp(
 						openapitest.NewConfig("3.1.0",
-							openapitest.WithWebhook("foo", openapitest.NewPath(
+							openapitest.WithWebhook("foo",
 								openapitest.WithOperation(http.MethodPost,
 									openapitest.WithRequestBody("", true, openapitest.WithRequestContent("application/json",
 										openapitest.WithSchema(schematest.New("object",
@@ -174,7 +174,7 @@ func TestHandler_Webhook(t *testing.T) {
 									)),
 									openapitest.WithResponse(http.StatusOK),
 								),
-							)),
+							),
 						),
 					),
 				)
@@ -201,7 +201,7 @@ func TestHandler_Webhook(t *testing.T) {
 				_, e := setup(
 					runtimetest.WithHttp(
 						openapitest.NewConfig("3.1.0",
-							openapitest.WithWebhook("foo", openapitest.NewPath(
+							openapitest.WithWebhook("foo",
 								openapitest.WithOperation(http.MethodPost,
 									openapitest.WithRequestBody("", true, openapitest.WithRequestContent("application/json",
 										openapitest.WithSchema(schematest.New("object",
@@ -218,7 +218,7 @@ func TestHandler_Webhook(t *testing.T) {
 										),
 									),
 								),
-							)),
+							),
 						),
 					),
 				)
@@ -249,12 +249,12 @@ func TestHandler_Webhook(t *testing.T) {
 				_, e := setup(
 					runtimetest.WithHttp(
 						openapitest.NewConfig("3.1.0",
-							openapitest.WithWebhook("foo", openapitest.NewPath(
+							openapitest.WithWebhook("foo",
 								openapitest.WithOperation(http.MethodPost,
 									openapitest.WithHeaderParam("foo", true),
 									openapitest.WithResponse(http.StatusOK),
 								),
-							)),
+							),
 						),
 					),
 				)
@@ -279,12 +279,12 @@ func TestHandler_Webhook(t *testing.T) {
 				_, e := setup(
 					runtimetest.WithHttp(
 						openapitest.NewConfig("3.1.0",
-							openapitest.WithWebhook("foo", openapitest.NewPath(
+							openapitest.WithWebhook("foo",
 								openapitest.WithOperation(http.MethodPost,
 									openapitest.WithHeaderParam("foo", true, openapitest.WithParamSchema(schematest.New("integer"))),
 									openapitest.WithResponse(http.StatusOK),
 								),
-							)),
+							),
 						),
 					),
 				)

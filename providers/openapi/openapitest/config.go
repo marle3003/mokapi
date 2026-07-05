@@ -199,11 +199,11 @@ func WithComponentSecurity(name string, scheme openapi.SecurityScheme) ConfigOpt
 	}
 }
 
-func WithWebhook(name string, p *openapi.Path) ConfigOptions {
+func WithWebhook(name string, opts ...PathOptions) ConfigOptions {
 	return func(c *openapi.Config) {
 		if c.Webhooks == nil {
 			c.Webhooks = map[string]*openapi.PathRef{}
 		}
-		c.Webhooks[name] = &openapi.PathRef{Value: p}
+		c.Webhooks[name] = &openapi.PathRef{Value: NewPath(opts...)}
 	}
 }
