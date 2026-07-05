@@ -24,6 +24,8 @@
     "api mock",
     "api mocking",
     "kafka mock",
+    "mqtt mock",
+    "websocket mock",
     "ldap mock",
     "smtp mock",
     "imap mock",
