@@ -1,0 +1,118 @@
+components:
+  schemas:
+    WebsocketInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        version:
+          type: string
+        contact:
+          type: object
+          properties:
+            name:
+              type: string
+            url:
+              type: string
+              format: uri
+            email:
+              type: string
+              format: email
+
+    Websocket:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        version:
+          type: string
+        contact:
+          type: object
+          properties:
+            name:
+              type: string
+            url:
+              type: string
+              format: uri
+            email:
+              type: string
+              format: email
+        servers:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              host:
+                type: string
+              description:
+                type: string
+              tags:
+                $ref: './kafka.yml#/components/schemas/Tags'
+        topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebsocketChannel'
+        metrics:
+          $ref: 'common.yml#/components/schemas/Metrics'
+    WebsocketChannel:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        messages:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/WebsocketMessageConfig'
+        bindings:
+          $ref: '#/components/schemas/WebsocketChannelBindings'
+        tags:
+          $ref: './kafka.yml#/components/schemas/Tags'
+        instances:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebsocketChannelInstance'
+    WebsocketChannelInstance:
+      type: object
+      properties:
+        name:
+          type: string
+        Parameters:
+          type: object
+          additionalProperties:
+            type: string
+    WebsocketMessageConfig:
+      type: object
+      properties:
+        name:
+          type: string
+        title:
+          type: string
+        summary:
+          type: string
+        description:
+          type: string
+        payload:
+          $ref: 'schema.yml#/components/schemas/Schema'
+        header:
+          $ref: 'schema.yml#/components/schemas/Schema'
+        contentType:
+          type: string
+    WebsocketChannelBindings:
+      type: object
+      properties:
+        query:
+          type: object
+          additionalProperties:
+            $ref: 'schema.yml#/components/schemas/Schema'
+        headers:
+          type: object
+          additionalProperties:
+            $ref: 'schema.yml#/components/schemas/Schema'

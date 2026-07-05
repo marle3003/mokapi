@@ -20,7 +20,7 @@ const description = computed(() => useMarkdown(props.service.description, true).
                         <p id="name" class="label">Name</p>
                         <p aria-labelledby="name" data-testid="service-name">{{ service.name }}</p>
                     </div>
-                    <div class="col">
+                    <div class="col-1">
                         <p id="version" class="label">Version</p>
                         <p aria-labelledby="version" data-testid="service-version">{{ service.version }}</p>
                     </div>

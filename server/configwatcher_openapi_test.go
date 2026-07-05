@@ -1,4 +1,4 @@
-package server
+package server_test
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"mokapi/config/static"
 	"mokapi/providers/openapi"
 	"mokapi/safe"
+	"mokapi/server"
 	"net/url"
 	"strings"
 	"testing"
@@ -43,7 +44,7 @@ paths:
     get:
       summary: "foo"`
 
-				w := NewConfigWatcher(&static.Config{})
+				w := server.NewConfigWatcher(&static.Config{})
 				configPath := mustParse("file.yml")
 				configPath.Scheme = "foo"
 				p := &testproviderMap{
@@ -60,7 +61,7 @@ paths:
 						},
 					},
 				}
-				w.providers[""] = p
+				w.AddProvider("", p)
 				pool := safe.NewPool(context.Background())
 				defer pool.Stop()
 				w.Start(pool)
@@ -119,7 +120,7 @@ paths:
       requestBody:
         $ref: 'not_found.yaml'`
 
-				w := NewConfigWatcher(&static.Config{})
+				w := server.NewConfigWatcher(&static.Config{})
 				configPath := mustParse("file.yml")
 				configPath.Scheme = "foo"
 				p := &testproviderMap{
@@ -136,7 +137,7 @@ paths:
 						},
 					},
 				}
-				w.providers[""] = p
+				w.AddProvider("", p)
 				pool := safe.NewPool(context.Background())
 				defer pool.Stop()
 				w.Start(pool)

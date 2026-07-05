@@ -2,6 +2,7 @@ package store_test
 
 import (
 	"context"
+	"io"
 	"mokapi/engine/enginetest"
 	"mokapi/mqtt"
 	"mokapi/mqtt/mqtttest"
@@ -17,6 +18,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -402,12 +404,11 @@ func TestPublish(t *testing.T) {
 		},
 	}
 
-	t.Parallel()
+	logrus.SetOutput(io.Discard)
+
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
 			eh := &eventstest.Handler{}
 			m := monitor.NewMqtt()
 			s := store.New(

@@ -129,3 +129,16 @@ func (c *Config) HasMqttServer() bool {
 	}
 	return false
 }
+
+func (c *Config) HasWebsocketServer() bool {
+	if c == nil {
+		return false
+	}
+	for it := c.Servers.Iter(); it.Next(); {
+		server := it.Value()
+		if server.Value.Protocol == "ws" {
+			return true
+		}
+	}
+	return false
+}

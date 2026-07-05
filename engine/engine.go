@@ -5,8 +5,6 @@ import (
 	"mokapi/config/static"
 	"mokapi/engine/common"
 	"mokapi/runtime"
-	"mokapi/runtime/events"
-	"mokapi/runtime/metrics"
 	"sort"
 	"sync"
 
@@ -18,6 +16,7 @@ import (
 type Options func(e *Engine)
 
 type Engine struct {
+	app         *runtime.App
 	scripts     map[string]*scriptHost
 	scheduler   Scheduler
 	logger      common.Logger
@@ -28,8 +27,6 @@ type Engine struct {
 	loader      ScriptLoader
 	parallel    bool
 	cfgEvent    static.Event
-	jobCounter  *metrics.Counter
-	sm          *events.StoreManager
 	store       *Store
 }
 
@@ -40,6 +37,7 @@ type Store struct {
 
 func New(reader dynamic.Reader, app *runtime.App, config *static.Config, parallel bool) *Engine {
 	return &Engine{
+		app:         app,
 		scripts:     make(map[string]*scriptHost),
 		scheduler:   NewDefaultScheduler(),
 		logger:      newLogger(log.StandardLogger()),
@@ -49,8 +47,6 @@ func New(reader dynamic.Reader, app *runtime.App, config *static.Config, paralle
 		parallel:    parallel,
 		loader:      NewDefaultScriptLoader(config),
 		cfgEvent:    config.Event,
-		jobCounter:  app.Monitor.JobCounter,
-		sm:          app.Events,
 		store:       &Store{data: make(map[string]any)},
 	}
 }

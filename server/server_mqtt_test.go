@@ -1,4 +1,4 @@
-package server
+package server_test
 
 import (
 	"fmt"
@@ -10,6 +10,7 @@ import (
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/runtime"
 	"mokapi/schema/json/schema"
+	"mokapi/server"
 	"mokapi/try"
 	"testing"
 	"time"
@@ -20,11 +21,11 @@ import (
 func TestMqttServer(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, m *MqttManager)
+		test func(t *testing.T, m *server.MqttManager)
 	}{
 		{
 			name: "TestMqttServer",
-			test: func(t *testing.T, m *MqttManager) {
+			test: func(t *testing.T, m *server.MqttManager) {
 				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				c := asyncapi3test.NewConfig(
@@ -39,7 +40,7 @@ func TestMqttServer(t *testing.T) {
 					),
 				)
 
-				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}, Data: c}})
+				m.UpdateConfig(dynamic.ConfigEvent{Config: &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: c}})
 
 				// wait for mqtt start
 				time.Sleep(500 * time.Millisecond)
@@ -55,7 +56,7 @@ func TestMqttServer(t *testing.T) {
 		},
 		{
 			name: "kafka topic should not be available",
-			test: func(t *testing.T, m *MqttManager) {
+			test: func(t *testing.T, m *server.MqttManager) {
 				port := try.GetFreePort()
 				addr := fmt.Sprintf("127.0.0.1:%v", port)
 				cfg := asyncapi3test.NewConfig(
@@ -79,7 +80,7 @@ func TestMqttServer(t *testing.T) {
 						asyncapi3test.AssignToServer("#/servers/kafka"),
 					),
 				)
-				c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: MustParseUrl("foo.yml")}, Data: cfg}
+				c := &dynamic.Config{Info: dynamic.ConfigInfo{Url: try.MustUrl("foo.yml")}, Data: cfg}
 				err := cfg.Parse(c, &dynamictest.Reader{})
 				require.NoError(t, err)
 
@@ -115,7 +116,7 @@ func TestMqttServer(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			m := NewMqttManager(nil, runtime.New(&static.Config{}, &dynamictest.Reader{}))
+			m := server.NewMqttManager(nil, runtime.New(&static.Config{}, &dynamictest.Reader{}))
 			defer m.Stop()
 
 			tc.test(t, m)

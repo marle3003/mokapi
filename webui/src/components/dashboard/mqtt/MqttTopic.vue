@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import MqttMessages from './MqttMessages.vue'
+import MqttTopicConfig from './MqttTopicConfig.vue';
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useRouter } from '@/router'
 import type { ServiceResult } from '@/types/dashboard'
@@ -110,10 +111,22 @@ watch(() => route.hash, (hash) => {
               >
                 Messages
               </button>
+              <button 
+                :class="{ active: activeTab === 'tab-config' }"
+                id="config-tab" type="button"
+                role="tab"
+                aria-controls="config"
+                @click="setTab('tab-config')"
+              >
+                Config
+              </button>
             </div>
             <div class="tab-content" id="tabTopic">
               <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-messages' }" id="messages" role="tabpanel" aria-labelledby="messages-tab">
                 <mqtt-messages :service="service" :topicName="topicName" />
+              </div>
+              <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-config' }" id="config" role="tabpanel" aria-labelledby="config-tab">
+                <mqtt-topic-config :topic="topic" />
               </div>
             </div>
           </div>

@@ -98,6 +98,21 @@
             ]
           },
           {
+            "label": "Websocket",
+            "items": [
+              {
+                "label": "Overview",
+                "source": "websocket/overview.md",
+                "path": "/docs/websocket/overview"
+              },
+              {
+                "label": "Quick Start",
+                "source": "websocket/quick-start.md",
+                "path": "/docs/websocket/quick-start"
+              }
+            ]
+          },
+          {
             "label": "LDAP",
             "items": [
               {

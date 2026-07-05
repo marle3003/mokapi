@@ -1,10 +1,11 @@
 package engine
 
 import (
-	"github.com/sirupsen/logrus"
 	"mokapi/config/dynamic"
 	"mokapi/engine/common"
 	"mokapi/runtime"
+
+	"github.com/sirupsen/logrus"
 )
 
 func WithScriptLoader(loader ScriptLoader) Options {
@@ -45,7 +46,6 @@ func WithLogger(logger common.Logger) Options {
 
 func WithApp(app *runtime.App) Options {
 	return func(e *Engine) {
-		e.jobCounter = app.Monitor.JobCounter
-		e.sm = app.Events
+		e.app = app
 	}
 }

@@ -48,7 +48,9 @@ func newScriptHost(file *dynamic.Config, engine *Engine) *scriptHost {
 		events: make(map[string][]*eventHandler),
 		file:   file,
 		engine: engine,
-		sm:     engine.sm,
+	}
+	if engine.app != nil {
+		sh.sm = engine.app.Events
 	}
 
 	return sh
@@ -128,7 +130,7 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 			log.Debugf("no job found with id %d", id)
 		}
 
-		sh.engine.jobCounter.Add(1)
+		sh.engine.app.Monitor.JobCounter.Add(1)
 
 		exec := common.JobExecution{
 			Schedule: schedule,
@@ -339,6 +341,10 @@ func (sh *scriptHost) Cwd() string {
 		return filepath.Dir(u.Path)
 	}
 	return filepath.Dir(u.Opaque)
+}
+
+func (sh *scriptHost) Webhook(name string, url string, args common.WebhookArgs) (*common.WebhookResponse, error) {
+	return nil, fmt.Errorf("NOT IMPLEMENTED")
 }
 
 func getScriptPath(u *url.URL) string {

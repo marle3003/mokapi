@@ -412,13 +412,13 @@ func (r *SchemaRef) GetParser(contentType string) (encoding.Parser, error) {
 
 	switch s := r.Value.(type) {
 	case *jsonSchema.Schema:
-		return &parser.Parser{Schema: s, ConvertToSortedMap: true}, nil
+		return &parser.Parser{Schema: s}, nil
 	case *openapi.Schema:
 		mt := media.ParseContentType(contentType)
 		if mt.IsXml() {
 			return openapi.NewXmlParser(s), nil
 		}
-		return &parser.Parser{Schema: openapi.ConvertToJsonSchema(s), ConvertToSortedMap: true}, nil
+		return &parser.Parser{Schema: openapi.ConvertToJsonSchema(s)}, nil
 	case *AvroRef:
 		return &avro.Parser{Schema: s.Schema}, nil
 	case *MultiSchemaFormat:

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Ref, computed, onUnmounted, ref, watch } from 'vue'
+import { type Ref, computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
 import MqttTopics from './MqttTopics.vue'

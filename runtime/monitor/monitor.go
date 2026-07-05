@@ -13,11 +13,12 @@ type Monitor struct {
 	MemoryUsage *metrics.Gauge   `json:"memstats_alloc_bytes"`
 	JobCounter  *metrics.Counter `json:"job_counter"`
 
-	Http  *Http  `json:"http"`
-	Kafka *Kafka `json:"kafka"`
-	Mqtt  *Mqtt  `json:"mqtt"`
-	Ldap  *Ldap  `json:"ldap"`
-	Mail  *Mail  `json:"mail"`
+	Http      *Http      `json:"http"`
+	Kafka     *Kafka     `json:"kafka"`
+	Mqtt      *Mqtt      `json:"mqtt"`
+	Websocket *Websocket `json:"websocket"`
+	Ldap      *Ldap      `json:"ldap"`
+	Mail      *Mail      `json:"mail"`
 
 	RefreshRateSeconds int
 
@@ -36,6 +37,7 @@ func New() *Monitor {
 	l := NewLdap()
 	s := NewMail()
 	m := NewMqtt()
+	w := NewWebsocket()
 
 	collection := []metrics.Metric{
 		startTime,
@@ -45,6 +47,7 @@ func New() *Monitor {
 	collection = append(collection, h.Metrics()...)
 	collection = append(collection, k.Metrics()...)
 	collection = append(collection, m.Metrics()...)
+	collection = append(collection, w.Metrics()...)
 	collection = append(collection, l.Metrics()...)
 	collection = append(collection, s.Metrics()...)
 
@@ -56,6 +59,7 @@ func New() *Monitor {
 		Http:               h,
 		Kafka:              k,
 		Mqtt:               m,
+		Websocket:          w,
 		Ldap:               l,
 		Mail:               s,
 		metrics:            collection,
@@ -84,6 +88,7 @@ func (m *Monitor) Reset() {
 	m.Kafka.Reset()
 	m.Mail.Reset()
 	m.Ldap.Reset()
+	m.Websocket.Reset()
 }
 
 func (m *Monitor) update() {

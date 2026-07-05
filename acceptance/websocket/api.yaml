@@ -1,0 +1,56 @@
+asyncapi: 3.0.0
+info:
+  title: My WebSocket API
+  version: 1.0.0
+
+servers:
+  production:
+    host: localhost:22800
+    protocol: ws
+
+channels:
+  chat:
+    address: /chat
+    bindings:
+      ws:
+        method: GET
+        query:
+          type: object
+          properties:
+            token:
+              type: string
+    messages:
+      incoming:
+        $ref: '#/components/messages/ChatMessage'
+      outgoing:
+        $ref: '#/components/messages/ServerMessage'
+
+operations:
+  onChatMessage:
+    action: receive
+    channel:
+      $ref: '#/channels/chat'
+    messages:
+      - $ref: '#/channels/chat/messages/incoming'
+
+  sendChatMessage:
+    action: send
+    channel:
+      $ref: '#/channels/chat'
+    messages:
+      - $ref: '#/channels/chat/messages/outgoing'
+
+components:
+  messages:
+    ChatMessage:
+      payload:
+        type: object
+        properties:
+          text:
+            type: string
+    ServerMessage:
+      payload:
+        type: object
+        properties:
+          reply:
+            type: string

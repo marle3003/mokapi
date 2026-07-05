@@ -1,4 +1,4 @@
-package service
+package service_test
 
 import (
 	"bytes"
@@ -9,6 +9,7 @@ import (
 	"mokapi/providers/openapi"
 	"mokapi/runtime/events"
 	"mokapi/server/cert"
+	"mokapi/server/service"
 	"mokapi/try"
 	"net/http"
 	"net/http/httptest"
@@ -37,12 +38,12 @@ func (h *testHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *openap
 func TestHttpServer_AddOrUpdate(t *testing.T) {
 	testcases := []struct {
 		name string
-		test func(t *testing.T, h *HttpServer, port string, sm *events.StoreManager)
+		test func(t *testing.T, h *service.HttpServer, port string, sm *events.StoreManager)
 	}{
 		{
 			name: "add service on root",
-			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
-				err := s.AddOrUpdate(&HttpService{
+			test: func(t *testing.T, s *service.HttpServer, port string, sm *events.StoreManager) {
+				err := s.AddOrUpdate(&service.HttpService{
 					Url:     mustParseUrl("http://localhost"),
 					Handler: &testHandler{},
 					Name:    "foo",
@@ -53,8 +54,8 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 		},
 		{
 			name: "add service on path foo",
-			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
-				err := s.AddOrUpdate(&HttpService{
+			test: func(t *testing.T, s *service.HttpServer, port string, sm *events.StoreManager) {
+				err := s.AddOrUpdate(&service.HttpService{
 					Url:     mustParseUrl("http://localhost/foo"),
 					Handler: &testHandler{},
 					Name:    "foo",
@@ -80,8 +81,8 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 		},
 		{
 			name: "add service with empty url",
-			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
-				err := s.AddOrUpdate(&HttpService{
+			test: func(t *testing.T, s *service.HttpServer, port string, sm *events.StoreManager) {
+				err := s.AddOrUpdate(&service.HttpService{
 					Url:     mustParseUrl(""),
 					Handler: &testHandler{},
 					Name:    "foo",
@@ -98,8 +99,8 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 		},
 		{
 			name: "add service with empty host",
-			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
-				err := s.AddOrUpdate(&HttpService{
+			test: func(t *testing.T, s *service.HttpServer, port string, sm *events.StoreManager) {
+				err := s.AddOrUpdate(&service.HttpService{
 					Url:     mustParseUrl("/foo"),
 					Handler: &testHandler{},
 					Name:    "foo",
@@ -114,8 +115,8 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 		},
 		{
 			name: "nil handler",
-			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
-				err := s.AddOrUpdate(&HttpService{
+			test: func(t *testing.T, s *service.HttpServer, port string, sm *events.StoreManager) {
+				err := s.AddOrUpdate(&service.HttpService{
 					Url:     mustParseUrl(""),
 					Handler: nil,
 					Name:    "foo",
@@ -132,15 +133,15 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 		},
 		{
 			name: "add service on already used path",
-			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
-				err := s.AddOrUpdate(&HttpService{
+			test: func(t *testing.T, s *service.HttpServer, port string, sm *events.StoreManager) {
+				err := s.AddOrUpdate(&service.HttpService{
 					Url:     mustParseUrl(""),
 					Handler: nil,
 					Name:    "foo",
 				})
 				require.NoError(t, err)
 
-				err = s.AddOrUpdate(&HttpService{
+				err = s.AddOrUpdate(&service.HttpService{
 					Url:     mustParseUrl(""),
 					Handler: nil,
 					Name:    "bar",
@@ -150,15 +151,15 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 		},
 		{
 			name: "update service",
-			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
-				err := s.AddOrUpdate(&HttpService{
+			test: func(t *testing.T, s *service.HttpServer, port string, sm *events.StoreManager) {
+				err := s.AddOrUpdate(&service.HttpService{
 					Url:     mustParseUrl(""),
 					Handler: nil,
 					Name:    "foo",
 				})
 				require.NoError(t, err)
 
-				err = s.AddOrUpdate(&HttpService{
+				err = s.AddOrUpdate(&service.HttpService{
 					Url:     mustParseUrl(""),
 					Handler: &testHandler{},
 					Name:    "foo",
@@ -172,8 +173,8 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 		},
 		{
 			name: "add service on same base path with different path",
-			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
-				err := s.AddOrUpdate(&HttpService{
+			test: func(t *testing.T, s *service.HttpServer, port string, sm *events.StoreManager) {
+				err := s.AddOrUpdate(&service.HttpService{
 					Url: mustParseUrl(""),
 					Handler: &testHandler{f: func(rw http.ResponseWriter, r *http.Request) *openapi.HttpError {
 						if r.URL.Path == "/foo" {
@@ -187,7 +188,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 				})
 				require.NoError(t, err)
 
-				err = s.AddOrUpdate(&HttpService{
+				err = s.AddOrUpdate(&service.HttpService{
 					Url: mustParseUrl(""),
 					Handler: &testHandler{f: func(rw http.ResponseWriter, r *http.Request) *openapi.HttpError {
 						if r.URL.Path == "/bar" {
@@ -223,8 +224,8 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 		},
 		{
 			name: "http error with header",
-			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
-				err := s.AddOrUpdate(&HttpService{
+			test: func(t *testing.T, s *service.HttpServer, port string, sm *events.StoreManager) {
+				err := s.AddOrUpdate(&service.HttpService{
 					Url: mustParseUrl(""),
 					Handler: &testHandler{f: func(rw http.ResponseWriter, r *http.Request) *openapi.HttpError {
 						return &openapi.HttpError{
@@ -258,8 +259,8 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 		},
 		{
 			name: "add service different base path",
-			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
-				err := s.AddOrUpdate(&HttpService{
+			test: func(t *testing.T, s *service.HttpServer, port string, sm *events.StoreManager) {
+				err := s.AddOrUpdate(&service.HttpService{
 					Url: mustParseUrl("/v1"),
 					Handler: &testHandler{f: func(rw http.ResponseWriter, r *http.Request) *openapi.HttpError {
 						servicePath, _ := r.Context().Value("servicePath").(string)
@@ -276,7 +277,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 				})
 				require.NoError(t, err)
 
-				err = s.AddOrUpdate(&HttpService{
+				err = s.AddOrUpdate(&service.HttpService{
 					Url: mustParseUrl("/v2"),
 					Handler: &testHandler{f: func(rw http.ResponseWriter, r *http.Request) *openapi.HttpError {
 						servicePath, _ := r.Context().Value("servicePath").(string)
@@ -315,15 +316,15 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 		},
 		{
 			name: "remove one URL",
-			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
-				err := s.AddOrUpdate(&HttpService{
+			test: func(t *testing.T, s *service.HttpServer, port string, sm *events.StoreManager) {
+				err := s.AddOrUpdate(&service.HttpService{
 					Url:     mustParseUrl("/foo"),
 					Handler: &testHandler{},
 					Name:    "foo",
 				})
 				require.NoError(t, err)
 
-				err = s.AddOrUpdate(&HttpService{
+				err = s.AddOrUpdate(&service.HttpService{
 					Url:     mustParseUrl("/bar"),
 					Handler: &testHandler{},
 					Name:    "foo",
@@ -357,15 +358,15 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 		},
 		{
 			name: "remove service",
-			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
-				err := s.AddOrUpdate(&HttpService{
+			test: func(t *testing.T, s *service.HttpServer, port string, sm *events.StoreManager) {
+				err := s.AddOrUpdate(&service.HttpService{
 					Url:     mustParseUrl("/foo"),
 					Handler: &testHandler{},
 					Name:    "foo",
 				})
 				require.NoError(t, err)
 
-				err = s.AddOrUpdate(&HttpService{
+				err = s.AddOrUpdate(&service.HttpService{
 					Url:     mustParseUrl("/bar"),
 					Handler: &testHandler{},
 					Name:    "foo",
@@ -391,8 +392,8 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 		},
 		{
 			name: "send request body to undefined endpoint, but the body should be read",
-			test: func(t *testing.T, s *HttpServer, port string, sm *events.StoreManager) {
-				err := s.AddOrUpdate(&HttpService{
+			test: func(t *testing.T, s *service.HttpServer, port string, sm *events.StoreManager) {
+				err := s.AddOrUpdate(&service.HttpService{
 					Url:     mustParseUrl("/foo"),
 					Handler: &testHandler{},
 					Name:    "foo",
@@ -421,7 +422,7 @@ func TestHttpServer_AddOrUpdate(t *testing.T) {
 			sm.SetStore(20, events.NewTraits().WithNamespace("http"))
 
 			port := fmt.Sprintf("%v", try.GetFreePort())
-			s := NewHttpServer(port, sm)
+			s := service.NewHttpServer(port, sm)
 			s.Start()
 			defer s.Stop()
 
@@ -439,11 +440,11 @@ func TestHttp(t *testing.T) {
 	sm.SetStore(20, events.NewTraits().WithNamespace("http"))
 
 	port := fmt.Sprintf("%v", try.GetFreePort())
-	s := NewHttpServer(port, sm)
+	s := service.NewHttpServer(port, sm)
 	s.Start()
 	defer s.Stop()
 
-	err := s.AddOrUpdate(&HttpService{
+	err := s.AddOrUpdate(&service.HttpService{
 		Url:     mustParseUrl("https://localhost"),
 		Handler: &testHandler{},
 		Name:    "foo",
@@ -470,11 +471,11 @@ func TestHttpTls(t *testing.T) {
 	require.NoError(t, err)
 
 	port := fmt.Sprintf("%v", try.GetFreePort())
-	s := NewHttpServerTls(port, certStore, sm)
+	s := service.NewHttpServerTls(port, certStore, sm)
 	s.Start()
 	defer s.Stop()
 
-	err = s.AddOrUpdate(&HttpService{
+	err = s.AddOrUpdate(&service.HttpService{
 		Url:     mustParseUrl("https://localhost"),
 		Handler: &testHandler{},
 		Name:    "foo",

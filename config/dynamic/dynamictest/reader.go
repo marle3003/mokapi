@@ -34,15 +34,16 @@ func (r *Reader) Read(u *url.URL, v any) (*dynamic.Config, error) {
 			if _, alreadyParsed := r.parsed[path]; alreadyParsed {
 				return c, nil
 			}
-			if err := p.Parse(c, r); err != nil {
-				return nil, err
-			}
 
 			if r.parsed == nil {
 				r.parsed = make(map[string]bool)
 			}
 
 			r.parsed[path] = true
+
+			if err := p.Parse(c, r); err != nil {
+				return nil, err
+			}
 		}
 
 		return c, nil

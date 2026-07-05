@@ -110,7 +110,7 @@ export default async function () {
                   ...x.summary ? { summary: x.summary } : {},
                   ...x.description ? { description: x.description } : {},
                   messages: x.messages,
-                  instances: x.instances,
+                   ...x.instances ? { instances: x.instances } : {},
                   metrics: {
                       mqtt_messages_total: metrics.find(m => m.name === `mqtt_messages_total{service="${clusters[0].name}",topic="${x.name}"}`).value,
                       mqtt_message_timestamp: metrics.find(m => m.name === `mqtt_message_timestamp{service="${clusters[0].name}",topic="${x.name}"}`).value
