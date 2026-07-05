@@ -3,7 +3,7 @@
 <img src="https://raw.githubusercontent.com/marle3003/mokapi/main/logo.svg" alt="Mokapi - Open Source Mock API Server" width="300" />
 </a>
 </p>
-<h2 align="center">The Open-Source Mock API Tool Across Protocols</h2>
+<p align="center" style="font-size: 24px">The Open-Source Mock API Tool Across Protocols</p>
 <p align="center">
 <a href="https://github.com/marle3003/mokapi/releases"><img src="https://img.shields.io/github/release/marle3003/mokapi.svg" alt="Github release"></a>
 <a href="https://github.com/marle3003/mokapi/actions/workflows/test.yml"><img src="https://github.com/marle3003/mokapi/actions/workflows/build.yml/badge.svg" alt="Build status"></a>
