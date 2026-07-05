@@ -120,7 +120,7 @@ func TestService_Run_Http(t *testing.T) {
 							openapitest.WithRequestBody(
 								"request body description",
 								true,
-								openapitest.WithRequestContent(
+								openapitest.UseRequestContent(
 									"application/json",
 									&openapi.MediaType{
 										Schema: schematest.New("string"),
@@ -185,7 +185,7 @@ func TestService_Run_Http(t *testing.T) {
 							openapitest.WithRequestBody(
 								"request body description",
 								true,
-								openapitest.WithRequestContent(
+								openapitest.UseRequestContent(
 									"application/json",
 									&openapi.MediaType{
 										Schema: schematest.New("string"),

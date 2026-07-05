@@ -5,6 +5,7 @@ import (
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
+	"mokapi/engine"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/directory"
@@ -36,6 +37,12 @@ func NewApp(opts ...Options) *runtime.App {
 		opt(app)
 	}
 	return app
+}
+
+func WithEngine(e *engine.Engine) Options {
+	return func(app *runtime.App) {
+		app.Engine = e
+	}
 }
 
 func WithHttp(configs ...*openapi.Config) Options {

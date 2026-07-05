@@ -201,7 +201,7 @@ func TestHandler_Response(t *testing.T) {
 			m := &events.StoreManager{}
 			m.SetStore(10, events.NewTraits().WithNamespace("http"))
 
-			e := &engine{emit: func(event string, args ...interface{}) []*common.Action {
+			e := &testEngine{emit: func(event string, args ...interface{}) []*common.Action {
 				tc.handler(event, args[0].(*common.HttpEventRequest), args[1].(*common.HttpEventResponse))
 				return []*common.Action{
 					{

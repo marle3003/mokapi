@@ -347,7 +347,7 @@ func TestHandler_Security(t *testing.T) {
 			}
 
 			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
-				h := openapi.NewHandler(config, &engine{emit: tc.event}, e)
+				h := openapi.NewHandler(config, &testEngine{emit: tc.event}, e)
 				h.ServeHTTP(rw, r)
 			}, config, e)
 		})

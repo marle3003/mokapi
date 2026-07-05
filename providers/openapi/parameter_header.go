@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-func parseHeader(param *Parameter, r *http.Request) (*RequestParameterValue, error) {
-	header := r.Header.Get(param.Name)
+func parseHeader(param *Parameter, h http.Header) (*RequestParameterValue, error) {
+	header := h.Get(param.Name)
 
 	if len(header) == 0 {
 		if param.Required {

@@ -45,7 +45,7 @@ curl http://localhost/api/v3/pet/1 -H 'Accept: application/json'
 
 A working mock from a public OpenAPI spec in under a minute. No installation required.
 
-## Feature
+## Features
 
 | Feature              | Description                                             |
 |----------------------|---------------------------------------------------------|
@@ -132,7 +132,7 @@ Explore tutorials that walk you through mocking different protocols and scenario
 - [CI/CD Integration with GitHub Actions](https://mokapi.io/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline)\
   Run Mokapi in automated test pipelines
 
-> More at [mokapi.io/resources](https://mokapi.io/resources)
+More at [mokapi.io/resources](https://mokapi.io/resources)
 
 ## Documentation
 

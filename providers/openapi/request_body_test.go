@@ -138,7 +138,7 @@ func TestBodyFromRequest(t *testing.T) {
 			name: "no Content-Type header with matching MediaType",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
+					openapitest.UseRequestContent("application/json", openapitest.NewContent()),
 				)),
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodPost, "https://foo.bar", strings.NewReader(`{"foo": "bar"}`))
@@ -152,8 +152,8 @@ func TestBodyFromRequest(t *testing.T) {
 			name: "no Content-Type in header, requestBody specified as xml or json, request body is json",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("application/xml", openapitest.NewContent()),
-					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
+					openapitest.UseRequestContent("application/xml", openapitest.NewContent()),
+					openapitest.UseRequestContent("application/json", openapitest.NewContent()),
 				)),
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodPost, "https://foo.bar", strings.NewReader(`{"foo": "bar"}`))
@@ -167,8 +167,8 @@ func TestBodyFromRequest(t *testing.T) {
 			name: "no Content-Type in header, requestBody specified as xml or json, request body is xml",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("application/xml", openapitest.NewContent()),
-					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
+					openapitest.UseRequestContent("application/xml", openapitest.NewContent()),
+					openapitest.UseRequestContent("application/json", openapitest.NewContent()),
 				)),
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodPost, "https://foo.bar", strings.NewReader(`<root><foo>bar</foo></root>`))
@@ -182,7 +182,7 @@ func TestBodyFromRequest(t *testing.T) {
 			name: "no Content-Type in header, request body does not match",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
+					openapitest.UseRequestContent("application/json", openapitest.NewContent()),
 				)),
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodPost, "https://foo.bar", strings.NewReader(`<root><foo>bar</foo></root>`))
@@ -196,7 +196,7 @@ func TestBodyFromRequest(t *testing.T) {
 			name: "no Content-Type in header, required but missing",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
+					openapitest.UseRequestContent("application/json", openapitest.NewContent()),
 				)),
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodPost, "https://foo.bar", nil)
@@ -210,7 +210,7 @@ func TestBodyFromRequest(t *testing.T) {
 			name: "no Content-Type in header, error reading body",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
+					openapitest.UseRequestContent("application/json", openapitest.NewContent()),
 				)),
 			request: func() *http.Request {
 				return httptest.NewRequest(http.MethodPost, "https://foo.bar", errReader(0))
@@ -224,7 +224,7 @@ func TestBodyFromRequest(t *testing.T) {
 			name: "Content-Type in header does not match request body",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
+					openapitest.UseRequestContent("application/json", openapitest.NewContent()),
 				)),
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodPost, "https://foo.bar", strings.NewReader(`<root><foo>bar</foo></root>`))
@@ -240,7 +240,7 @@ func TestBodyFromRequest(t *testing.T) {
 			name: "Content-Type in header, error while reading body",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
+					openapitest.UseRequestContent("application/json", openapitest.NewContent()),
 				)),
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodPost, "https://foo.bar", errReader(0))
@@ -256,7 +256,7 @@ func TestBodyFromRequest(t *testing.T) {
 			name: "no matching MediaType for Content-Type",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
+					openapitest.UseRequestContent("application/json", openapitest.NewContent()),
 				)),
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodPost, "https://foo.bar", strings.NewReader("<root><foo>bar</foo></root>"))
@@ -272,7 +272,7 @@ func TestBodyFromRequest(t *testing.T) {
 			name: "application/pdf should match application/octet-stream",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("application/octet-stream", openapitest.NewContent()),
+					openapitest.UseRequestContent("application/octet-stream", openapitest.NewContent()),
 				)),
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodPost, "https://foo.bar", strings.NewReader("binary"))
@@ -287,7 +287,7 @@ func TestBodyFromRequest(t *testing.T) {
 			name: "no matching MediaType for Content-Type and error while reading body",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("application/json", openapitest.NewContent()),
+					openapitest.UseRequestContent("application/json", openapitest.NewContent()),
 				)),
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodPost, "https://foo.bar", errReader(0))
@@ -303,7 +303,7 @@ func TestBodyFromRequest(t *testing.T) {
 			name: "Content-Type text/plain MediaType text/*",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("text/*", openapitest.NewContent()),
+					openapitest.UseRequestContent("text/*", openapitest.NewContent()),
 				)),
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodPost, "https://foo.bar", strings.NewReader("foobar"))
@@ -319,7 +319,7 @@ func TestBodyFromRequest(t *testing.T) {
 			name: "Content-Type text/plain MediaType */*",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("*/*", openapitest.NewContent()),
+					openapitest.UseRequestContent("*/*", openapitest.NewContent()),
 				)),
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodPost, "https://foo.bar", strings.NewReader("foobar"))
@@ -335,8 +335,8 @@ func TestBodyFromRequest(t *testing.T) {
 			name: "Content-Type text/plain MediaType */* and application/*",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("application/*", openapitest.NewContent(openapitest.WithSchema(schematest.New("integer", schematest.WithFormat("int32"))))),
-					openapitest.WithRequestContent("*/*", openapitest.NewContent()),
+					openapitest.UseRequestContent("application/*", openapitest.NewContent(openapitest.WithSchema(schematest.New("integer", schematest.WithFormat("int32"))))),
+					openapitest.UseRequestContent("*/*", openapitest.NewContent()),
 				)),
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodPost, "https://foo.bar", strings.NewReader("12"))
@@ -352,12 +352,12 @@ func TestBodyFromRequest(t *testing.T) {
 			name: "Content-Type text/plain MediaType text/html, text/html; charset=us-ascii and text/html; charset=utf-8, text/*",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("text/html", openapitest.NewContent()),
-					openapitest.WithRequestContent("text/html; charset=utf-8", openapitest.NewContent(
+					openapitest.UseRequestContent("text/html", openapitest.NewContent()),
+					openapitest.UseRequestContent("text/html; charset=utf-8", openapitest.NewContent(
 						openapitest.WithSchema(schematest.New("integer", schematest.WithFormat("int32")))),
 					),
-					openapitest.WithRequestContent("text/html; charset=us-ascii", openapitest.NewContent()),
-					openapitest.WithRequestContent("text/*", openapitest.NewContent()),
+					openapitest.UseRequestContent("text/html; charset=us-ascii", openapitest.NewContent()),
+					openapitest.UseRequestContent("text/*", openapitest.NewContent()),
 				)),
 			request: func() *http.Request {
 				r := httptest.NewRequest(http.MethodPost, "https://foo.bar", strings.NewReader("12"))
@@ -373,7 +373,7 @@ func TestBodyFromRequest(t *testing.T) {
 			name: "multipart/form-data",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("multipart/form-data", openapitest.NewContent(
+					openapitest.UseRequestContent("multipart/form-data", openapitest.NewContent(
 						openapitest.WithSchema(
 							schematest.New("object",
 								schematest.WithProperty("id", schematest.New("string", schematest.WithFormat("uuid"))),
@@ -427,7 +427,7 @@ foobar
 			name: "multipart/form-data with pdf should match application/octet-stream",
 			operation: openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("multipart/form-data", openapitest.NewContent(
+					openapitest.UseRequestContent("multipart/form-data", openapitest.NewContent(
 						openapitest.WithSchema(
 							schematest.New("object",
 								schematest.WithProperty("profileImage", schematest.New("string", schematest.WithFormat("binary"))),
@@ -637,7 +637,7 @@ func TestBodyFromRequest_FormUrlEncoded(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			op := openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("application/x-www-form-urlencoded", tc.mt),
+					openapitest.UseRequestContent("application/x-www-form-urlencoded", tc.mt),
 				))
 			r := httptest.NewRequest(http.MethodPost, "https://foo.bar", strings.NewReader(tc.body))
 			r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -790,7 +790,7 @@ Bob
 		t.Run(tc.name, func(t *testing.T) {
 			op := openapitest.NewOperation(
 				openapitest.WithRequestBody("foo", true,
-					openapitest.WithRequestContent("multipart/form-data", tc.mt),
+					openapitest.UseRequestContent("multipart/form-data", tc.mt),
 				))
 			r := httptest.NewRequest(http.MethodPost, "https://foo.bar", strings.NewReader(tc.body))
 			r.Header.Set("Content-Type", fmt.Sprintf("multipart/form-data; boundary=%s", tc.boundary))
