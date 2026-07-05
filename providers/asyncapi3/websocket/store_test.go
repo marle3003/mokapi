@@ -2,6 +2,7 @@ package websocket_test
 
 import (
 	"context"
+	"encoding/json"
 	"mokapi/config/dynamic"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/asyncapi3"
@@ -562,7 +563,12 @@ export default function() {
 				evt := evts[0]
 				d := evt.Data.(*websocket.Log)
 				require.Len(t, d.Actions, 1)
-				require.Equal(t, `{"name":"/chats/1234"}`, d.Actions[0].Logs[0].Message)
+				var result websocket.EventChannel
+				err = json.Unmarshal([]byte(d.Actions[0].Logs[0].Message), &result)
+				require.NoError(t, err)
+				require.Equal(t, "/chats/1234", result.Name)
+				require.Len(t, result.Clients, 1)
+				require.NotNil(t, result.Clients[0])
 			},
 		},
 	}

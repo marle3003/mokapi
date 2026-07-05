@@ -11,7 +11,7 @@
  *   });
  * }
  */
-export function produce(args?: PublishArgs): PublishResult;
+export function publish(args?: PublishArgs): PublishResult;
 
 /**
  * Sends a single message to a MQTT topic asynchronously.
@@ -44,9 +44,13 @@ export interface PublishArgs {
     cluster?: string;
 
     /** MQTT topic name. If not specified, message will be written to a random topic. */
+    topic?: string
 
     /** MQTT message value. If not specified, a random value will be generated based on the topic configuration. */
     value: string;
+
+    /** Whether the message should be retained */
+    retain?: boolean
 
     /**
      * The retry option is used if script is executed before Kafka topic is set up.

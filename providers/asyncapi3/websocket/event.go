@@ -6,15 +6,17 @@ import (
 )
 
 type Event struct {
-	Api     string       `json:"api"`
-	Channel EventChannel `json:"channel"`
-	Client  *EventClient `json:"client"`
-	Message any          `json:"message"`
+	Api     string        `json:"api"`
+	Channel *EventChannel `json:"channel"`
+	Client  *EventClient  `json:"client"`
+	Message any           `json:"message"`
 }
 
 type EventChannel struct {
-	Name string `json:"name"`
-	ch   *Channel
+	Name    string         `json:"name"`
+	Clients []*EventClient `json:"clients"`
+
+	ch *Channel
 }
 
 type EventClient struct {
@@ -46,4 +48,31 @@ func (c *EventClient) Send(message any) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func newEventChannel(ch *Channel) *EventChannel {
+	ec := &EventChannel{
+		Name: ch.Name,
+		ch:   ch,
+	}
+	for _, c := range ch.clients {
+		ec.Clients = append(ec.Clients, newEventClient(c))
+	}
+	return ec
+}
+
+func newEventClient(client *Client) *EventClient {
+	c := &EventClient{
+		RemoteAddress: client.RemoteAddr,
+		Headers:       map[string]any{},
+		Query:         map[string]any{},
+		client:        client,
+	}
+	for k, v := range client.Query {
+		c.Query[k] = v
+	}
+	for k, v := range c.Headers {
+		c.Headers[k] = v
+	}
+	return c
 }

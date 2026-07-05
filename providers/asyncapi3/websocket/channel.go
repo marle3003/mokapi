@@ -133,16 +133,9 @@ func (c *Channel) removeClient(client *Client) {
 
 func (c *Channel) newEvent(client *Client, v any) *Event {
 	evt := &Event{
-		Api: c.api,
-		Channel: EventChannel{
-			Name: c.Name,
-			ch:   c,
-		},
-		Client: &EventClient{
-			RemoteAddress: client.RemoteAddr,
-			Headers:       nil,
-			client:        client,
-		},
+		Api:     c.api,
+		Channel: newEventChannel(c),
+		Client:  newEventClient(client),
 		Message: v,
 	}
 	return evt
