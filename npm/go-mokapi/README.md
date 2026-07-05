@@ -1,6 +1,6 @@
 <p align="center">
 <a href="https://mokapi.io">
-<img src="logo.svg" alt="Mokapi - Open Source Mock API Server" width="300" />
+<img src="https://raw.githubusercontent.com/marle3003/mokapi/main/logo.svg" alt="Mokapi - Open Source Mock API Server" width="300" />
 </a>
 </p>
 <h2 align="center">The Open-Source Mock API Tool Across Protocols</h2>
@@ -45,7 +45,7 @@ curl http://localhost/api/v3/pet/1 -H 'Accept: application/json'
 
 A working mock from a public OpenAPI spec in under a minute. No installation required.
 
-## Features
+## Feature
 
 | Feature              | Description                                             |
 |----------------------|---------------------------------------------------------|
@@ -132,7 +132,7 @@ Explore tutorials that walk you through mocking different protocols and scenario
 - [CI/CD Integration with GitHub Actions](https://mokapi.io/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline)\
   Run Mokapi in automated test pipelines
 
-More at [mokapi.io/resources](https://mokapi.io/resources)
+> More at [mokapi.io/resources](https://mokapi.io/resources)
 
 ## Documentation
 
