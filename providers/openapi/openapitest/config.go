@@ -198,3 +198,12 @@ func WithComponentSecurity(name string, scheme openapi.SecurityScheme) ConfigOpt
 		c.Components.SecuritySchemes[name] = scheme
 	}
 }
+
+func WithWebhook(name string, opts ...PathOptions) ConfigOptions {
+	return func(c *openapi.Config) {
+		if c.Webhooks == nil {
+			c.Webhooks = map[string]*openapi.PathRef{}
+		}
+		c.Webhooks[name] = &openapi.PathRef{Value: NewPath(opts...)}
+	}
+}

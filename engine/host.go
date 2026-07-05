@@ -344,7 +344,15 @@ func (sh *scriptHost) Cwd() string {
 }
 
 func (sh *scriptHost) Webhook(name string, url string, args common.WebhookArgs) (*common.WebhookResponse, error) {
-	return nil, fmt.Errorf("NOT IMPLEMENTED")
+	wh, err := sh.engine.app.Http.Webhook(name, args)
+	if err != nil {
+		return nil, err
+	}
+	res, err := wh.RunWebhook(url, args)
+	if err != nil {
+		return nil, fmt.Errorf("webhook %s failed: %w", name, err)
+	}
+	return res, nil
 }
 
 func getScriptPath(u *url.URL) string {

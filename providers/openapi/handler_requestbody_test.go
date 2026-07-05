@@ -32,7 +32,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 				openapitest.WithPath("/foo",
 					openapitest.WithOperation("post",
 						openapitest.WithRequestBody("", false,
-							openapitest.WithRequestContent(
+							openapitest.UseRequestContent(
 								"text/plain", openapitest.NewContent(openapitest.WithSchema(schematest.New("string"))))),
 						openapitest.WithResponse(200),
 					),
@@ -59,7 +59,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 				openapitest.WithPath("/foo",
 					openapitest.WithOperation("post",
 						openapitest.WithRequestBody("", false,
-							openapitest.WithRequestContent(
+							openapitest.UseRequestContent(
 								"text/*", openapitest.NewContent(openapitest.WithSchema(schematest.New("string"))))),
 						openapitest.WithResponse(200),
 					),
@@ -86,9 +86,9 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 				openapitest.WithPath("/foo",
 					openapitest.WithOperation("post",
 						openapitest.WithRequestBody("", false,
-							openapitest.WithRequestContent(
+							openapitest.UseRequestContent(
 								"*/*", openapitest.NewContent(openapitest.WithSchema(schematest.New("number")))),
-							openapitest.WithRequestContent(
+							openapitest.UseRequestContent(
 								"text/*", openapitest.NewContent(openapitest.WithSchema(schematest.New("string"))))),
 						openapitest.WithResponse(200),
 					),
@@ -115,7 +115,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 				openapitest.WithPath("/foo",
 					openapitest.WithOperation("post",
 						openapitest.WithRequestBody("", false,
-							openapitest.WithRequestContent(
+							openapitest.UseRequestContent(
 								"application/json", openapitest.NewContent(openapitest.WithSchema(
 									schematest.New("object"),
 								)))),
@@ -144,7 +144,7 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 				openapitest.WithPath("/foo",
 					openapitest.WithOperation("post",
 						openapitest.WithRequestBody("", false,
-							openapitest.WithRequestContent(
+							openapitest.UseRequestContent(
 								"application/json", openapitest.NewContent(openapitest.WithSchema(
 									schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))),
 								)))),

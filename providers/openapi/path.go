@@ -1,10 +1,19 @@
 package openapi
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"maps"
 	"mokapi/config/dynamic"
+	"mokapi/engine/common"
+	"mokapi/media"
+	"mokapi/providers/openapi/schema"
+	"mokapi/schema/json/parser"
 	"net/http"
+	"net/url"
+	"slices"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -324,4 +333,181 @@ func (p *Path) patch(patch *Path) {
 	}
 
 	p.Parameters.Patch(patch.Parameters)
+}
+
+func (p *Path) RunWebhook(urlString string, args common.WebhookArgs) (*common.WebhookResponse, error) {
+	method := args.Method
+	ops := p.Operations()
+
+	if len(ops) == 0 {
+		return nil, fmt.Errorf("no operations specified")
+	}
+
+	if method == "" {
+		methods := slices.Collect(maps.Keys(ops))
+		switch len(methods) {
+		case 1:
+			method = methods[0]
+		default:
+			return nil, fmt.Errorf("multiple operations specified: use args.method to refine")
+		}
+	}
+
+	o, ok := ops[strings.ToUpper(method)]
+	if !ok {
+		return nil, fmt.Errorf("method %s not found", method)
+	}
+
+	u, err := url.Parse(urlString)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse url '%v': %w", urlString, err)
+	}
+
+	r := &http.Request{Method: method, URL: u}
+
+	r.Header, err = parseRequestHeader(args, o)
+	if err != nil {
+		return nil, err
+	}
+
+	r.Body, err = parseRequestBody(args, o)
+	if err != nil {
+		return nil, err
+	}
+
+	c := &http.Client{Timeout: args.Timeout}
+	res, err := c.Do(r)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := o.getResponse(res.StatusCode)
+	if resp == nil {
+		return nil, fmt.Errorf("no response for '%v' specified", res.StatusCode)
+	}
+
+	result := &common.WebhookResponse{
+		StatusCode: res.StatusCode,
+		Data:       nil,
+		Headers:    map[string]any{},
+	}
+
+	if res.Body != http.NoBody {
+		defer func() { _ = res.Body.Close() }()
+
+		ct := media.ParseContentType(res.Header.Get("Content-Type"))
+		result.Headers["Content-Type"] = ct.String()
+
+		mt := resp.GetContent(ct)
+		if mt == nil {
+			return nil, fmt.Errorf("content type '%s' for '%v' not specified", ct, res.StatusCode)
+		}
+
+		var b []byte
+		b, err = io.ReadAll(res.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read response body: %w", err)
+		}
+		var body *Body
+		body, err = parseBody(b, ct, mt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse response body: %w", err)
+		}
+		if body != nil {
+			result.Data = body.Value
+		}
+	}
+
+	for name, ref := range resp.Headers {
+		if ref.Value == nil {
+			continue
+		}
+		v, err := parseHeader(new(ref.Value.Parameter), res.Header)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse header '%v': %w", name, err)
+		}
+		if v != nil {
+			result.Headers[name] = v.Value
+		} else {
+			result.Headers[name] = nil
+		}
+	}
+
+	return result, nil
+}
+
+func parseRequestHeader(args common.WebhookArgs, o *Operation) (http.Header, error) {
+	header := http.Header{}
+	params := o.Parameters
+	if o.Path != nil && o.Path.Parameters != nil {
+		params = append(params, o.Path.Parameters...)
+	}
+	for _, refParam := range o.Parameters {
+		param := refParam.Value
+		if param == nil {
+			continue
+		}
+
+		if param.Type != ParameterHeader {
+			continue
+		}
+
+		s, ok := args.Headers[param.Name]
+		if !ok {
+			if param.Required {
+				return nil, fmt.Errorf("required header parameter %s not found", param.Name)
+			}
+			continue
+		}
+
+		ps := parser.Parser{Schema: schema.ConvertToJsonSchema(param.Schema)}
+		v, err := ps.Parse(s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse header parameter %s: %w", param.Name, err)
+		}
+		header.Set(param.Name, fmt.Sprintf("%v", v))
+	}
+	return header, nil
+}
+
+func parseRequestBody(args common.WebhookArgs, o *Operation) (io.ReadCloser, error) {
+	if o.RequestBody != nil && o.RequestBody.Value != nil {
+		rb := o.RequestBody.Value
+		if rb.Required && args.Body == "" && args.Data == nil {
+			return nil, fmt.Errorf("request body is required")
+		}
+
+		if args.Body != "" {
+			r := io.NopCloser(bytes.NewReader([]byte(args.Body)))
+			return r, nil
+		}
+
+		ct, err := getContentType(args.Headers)
+		if err != nil {
+			return nil, err
+		}
+		if ct == "" {
+			values := slices.Collect(maps.Keys(rb.Content))
+			switch len(values) {
+			case 0:
+				return nil, fmt.Errorf("request body content is not specified")
+			case 1:
+				ct = values[0]
+			default:
+				return nil, fmt.Errorf("multiple request body contents specified: use args.headers to refine")
+			}
+		}
+		contentType := media.ParseContentType(ct)
+		c := rb.Content[ct]
+		if c == nil {
+			return nil, fmt.Errorf("request body not specified for content type %s", contentType)
+		}
+		b, err := c.Schema.Marshal(args.Data, contentType)
+		if err != nil {
+			return nil, err
+		}
+		r := io.NopCloser(bytes.NewReader([]byte(b)))
+		return r, nil
+	}
+	return nil, nil
 }

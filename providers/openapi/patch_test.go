@@ -60,14 +60,14 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 					"/foo", openapitest.WithOperation(
 						"post",
 						openapitest.WithRequestBody("foo", true,
-							openapitest.WithRequestContent("text/plain", &openapi.MediaType{}))),
+							openapitest.UseRequestContent("text/plain", &openapi.MediaType{}))),
 				),
 				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
 					"/foo", openapitest.WithOperation(
 						"post",
 						openapitest.WithRequestBody("foo", true,
-							openapitest.WithRequestContent("application/json", &openapi.MediaType{}))),
+							openapitest.UseRequestContent("application/json", &openapi.MediaType{}))),
 				),
 				),
 			},
@@ -84,14 +84,14 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 					"/foo", openapitest.WithOperation(
 						"post",
 						openapitest.WithRequestBody("foo", true,
-							openapitest.WithRequestContent("text/plain", &openapi.MediaType{}))),
+							openapitest.UseRequestContent("text/plain", &openapi.MediaType{}))),
 				),
 				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
 					"/foo", openapitest.WithOperation(
 						"post",
 						openapitest.WithRequestBody("foo", true,
-							openapitest.WithRequestContent("text/plain",
+							openapitest.UseRequestContent("text/plain",
 								openapitest.NewContent(openapitest.WithSchema(schematest.New("number")))))),
 				),
 				),
@@ -109,7 +109,7 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 					"/foo", openapitest.WithOperation(
 						"post",
 						openapitest.WithRequestBody("foo", true,
-							openapitest.WithRequestContent("text/plain",
+							openapitest.UseRequestContent("text/plain",
 								openapitest.NewContent(openapitest.WithSchema(schematest.New("number")))))),
 				),
 				),
@@ -117,7 +117,7 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 					"/foo", openapitest.WithOperation(
 						"post",
 						openapitest.WithRequestBody("foo", true,
-							openapitest.WithRequestContent("text/plain",
+							openapitest.UseRequestContent("text/plain",
 								openapitest.NewContent(openapitest.WithSchema(schematest.New("number", schematest.WithFormat("double"))))))),
 				),
 				),
@@ -136,14 +136,14 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 					"/foo", openapitest.WithOperation(
 						"post",
 						openapitest.WithRequestBody("foo", true,
-							openapitest.WithRequestContent("text/plain", &openapi.MediaType{}))),
+							openapitest.UseRequestContent("text/plain", &openapi.MediaType{}))),
 				),
 				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
 					"/foo", openapitest.WithOperation(
 						"post",
 						openapitest.WithRequestBody("foo", true,
-							openapitest.WithRequestContent("text/plain",
+							openapitest.UseRequestContent("text/plain",
 								openapitest.NewContent(openapitest.WithExampleValue(12))))),
 				),
 				),

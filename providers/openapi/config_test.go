@@ -493,6 +493,27 @@ func TestConfig_Patch(t *testing.T) {
 				require.Equal(t, "string", result.Components.Schemas.Get("Foo").Type.String())
 			},
 		},
+		{
+			name: "patch add webhook",
+			configs: []*openapi.Config{
+				{},
+				openapitest.NewConfig("1.0", openapitest.WithWebhook("foo")),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				require.Len(t, result.Webhooks, 1)
+			},
+		},
+		{
+			name: "update webhook",
+			configs: []*openapi.Config{
+				openapitest.NewConfig("1.0", openapitest.WithWebhook("foo")),
+				openapitest.NewConfig("1.0", openapitest.WithWebhook("foo", openapitest.WithOperation(http.MethodGet))),
+			},
+			test: func(t *testing.T, result *openapi.Config) {
+				require.Len(t, result.Webhooks, 1)
+				require.NotNil(t, result.Webhooks["foo"].Value.Get)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

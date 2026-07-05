@@ -40,6 +40,7 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 	_ = obj.Set("patch", patch)
 	_ = obj.Set("Delete", Delete)
 	_ = obj.Set("shared", NewSharedMemory(host.Store(), vm))
+	_ = obj.Set("webhook", f.Webhook)
 }
 
 func (m *Module) Sleep(i interface{}) {

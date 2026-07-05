@@ -234,15 +234,17 @@ type EventContext struct {
 }
 
 type WebhookArgs struct {
-	Method   string
-	Headers  map[string]string
-	Api      string
-	Timeout  time.Duration
-	Insecure bool
+	Method   string         `json:"method"`
+	Data     any            `json:"data"`
+	Body     string         `json:"body"`
+	Headers  map[string]any `json:"headers"`
+	Api      string         `json:"api"`
+	Timeout  time.Duration  `json:"timeout"`
+	Insecure bool           `json:"insecure"`
 }
 
 type WebhookResponse struct {
-	StatusCode int
-	Body       string
-	Headers    map[string][]string
+	StatusCode int            `json:"statusCode"`
+	Data       any            `json:"data"`
+	Headers    map[string]any `json:"headers"`
 }

@@ -1,6 +1,7 @@
 package runtime
 
 import (
+	"fmt"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/engine/common"
@@ -220,4 +221,30 @@ func (s *HttpStore) Len() int {
 	s.m.RLock()
 	defer s.m.RUnlock()
 	return len(s.infos)
+}
+
+func (s *HttpStore) Webhook(name string, args common.WebhookArgs) (*openapi.Path, error) {
+	if args.Api == "" {
+		var webhook *openapi.Path
+		for _, api := range s.infos {
+			if w, ok := api.Webhooks[name]; ok {
+				if webhook != nil {
+					return nil, fmt.Errorf("ambiguous webhook '%s': use args.api to refine", name)
+				}
+				webhook = w.Value
+			}
+		}
+		if webhook != nil {
+			return webhook, nil
+		}
+	} else {
+		api, ok := s.infos[args.Api]
+		if !ok {
+			return nil, fmt.Errorf("api not found: %s", args.Api)
+		}
+		if w, ok := api.Webhooks[name]; ok && w.Value != nil {
+			return w.Value, nil
+		}
+	}
+	return nil, fmt.Errorf("webhook not found: %s", name)
 }

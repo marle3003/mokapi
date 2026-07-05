@@ -272,7 +272,7 @@ func TestResolveEndpoint(t *testing.T) {
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config) {
 				op := openapitest.NewOperation(openapitest.WithResponse(http.StatusOK, openapitest.WithContent("application/json")),
 					openapitest.WithRequestBody("", true,
-						openapitest.WithRequestContent("application/json",
+						openapitest.UseRequestContent("application/json",
 							openapitest.NewContent(openapitest.WithSchema(schematest.New("string", schematest.WithMinLength(4)))))))
 				openapitest.AppendPath("/foo", c, openapitest.UseOperation("POST", op))
 				r := httptest.NewRequest("POST", "http://localhost/foo", strings.NewReader(`"foo"`))
@@ -779,7 +779,7 @@ func TestResolveEndpoint(t *testing.T) {
 			}
 
 			data.test(t, func(rw http.ResponseWriter, r *http.Request) {
-				h := openapi.NewHandler(config, &engine{}, e)
+				h := openapi.NewHandler(config, &testEngine{}, e)
 				err := h.ServeHTTP(rw, r)
 				if err != nil {
 					for k, v := range err.Header {
@@ -863,7 +863,7 @@ func TestHandler_Event(t *testing.T) {
 			name: "post request using body in event function",
 			test: func(t *testing.T, h http.HandlerFunc, c *openapi.Config, sm *events.StoreManager) {
 				op := openapitest.NewOperation(
-					openapitest.WithRequestBody("", true, openapitest.WithRequestContent("application/json",
+					openapitest.WithRequestBody("", true, openapitest.UseRequestContent("application/json",
 						openapitest.NewContent())),
 					openapitest.WithResponse(http.StatusOK,
 						openapitest.WithContent("application/json"),
@@ -1216,7 +1216,7 @@ func TestHandler_Event(t *testing.T) {
 			}
 			sm := events.NewStoreManager(&index{})
 			sm.SetStore(1, events.NewTraits().WithNamespace("http"))
-			eh := &engine{emit: tc.event}
+			eh := &testEngine{emit: tc.event}
 
 			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
 				h := openapi.NewHandler(config, eh, sm)
@@ -1279,7 +1279,7 @@ func TestHandler_Log(t *testing.T) {
 			}
 
 			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
-				h := openapi.NewHandler(config, &engine{}, m)
+				h := openapi.NewHandler(config, &testEngine{}, m)
 				err := h.ServeHTTP(rw, r)
 				if err != nil {
 					for k, v := range err.Header {
@@ -1376,7 +1376,7 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 				}
 
 				op := openapitest.NewOperation(
-					openapitest.WithRequestBody("", true, openapitest.WithRequestContent("application/json", openapitest.NewContent(openapitest.WithSchema(schematest.New("object"))))),
+					openapitest.WithRequestBody("", true, openapitest.UseRequestContent("application/json", openapitest.NewContent(openapitest.WithSchema(schematest.New("object"))))),
 					openapitest.WithResponse(http.StatusOK,
 						openapitest.WithContent("application/json",
 							openapitest.WithSchema(schematest.New("object",
@@ -1675,18 +1675,18 @@ func TestHandler_Parameter(t *testing.T) {
 			}
 
 			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
-				h := openapi.NewHandler(config, &engine{emit: tc.event}, events.NewStoreManager(&index{}))
+				h := openapi.NewHandler(config, &testEngine{emit: tc.event}, events.NewStoreManager(&index{}))
 				_ = h.ServeHTTP(rw, r)
 			}, config)
 		})
 	}
 }
 
-type engine struct {
+type testEngine struct {
 	emit func(event string, args ...interface{}) []*common.Action
 }
 
-func (e *engine) Emit(event string, args ...interface{}) []*common.Action {
+func (e *testEngine) Emit(event string, args ...interface{}) []*common.Action {
 	if e.emit != nil {
 		return e.emit(event, args...)
 	}

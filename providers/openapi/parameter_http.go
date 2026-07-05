@@ -73,9 +73,8 @@ func FromRequest(params Parameters, route string, r *http.Request) (*RequestPara
 			if err != nil {
 				if strings.Contains(route, "?") {
 					return nil, fmt.Errorf("parse path parameter '%v' failed: %w. the path contains a quotation mark ('?'), which suggests query parameters are incorrectly included in the path. query parameters should be defined separately in the 'parameters' section", pv.Name, err)
-				} else {
-					return nil, fmt.Errorf("parse path parameter '%v' failed: %w", pv.Name, err)
 				}
+				return nil, fmt.Errorf("parse path parameter '%v' failed: %w", pv.Name, err)
 			}
 			if v != nil {
 				parameters.Path[pv.Name] = *v
@@ -89,7 +88,7 @@ func FromRequest(params Parameters, route string, r *http.Request) (*RequestPara
 				parameters.Query[pv.Name] = *v
 			}
 		case ParameterHeader:
-			v, err = parseHeader(pv, r)
+			v, err = parseHeader(pv, r.Header)
 			if err != nil {
 				return nil, fmt.Errorf("parse header parameter '%v' failed: %w", pv.Name, err)
 			}
