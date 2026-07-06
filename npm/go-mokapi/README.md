@@ -128,7 +128,7 @@ Explore tutorials that walk you through mocking different protocols and scenario
 - [CI/CD Integration with GitHub Actions](https://mokapi.io/resources/tutorials/running-mokapi-in-a-ci-cd-pipeline)\
   Run Mokapi in automated test pipelines
 
-> More at [mokapi.io/resources](https://mokapi.io/resources)
+More at [mokapi.io/resources](https://mokapi.io/resources)
 
 ## Documentation
 
@@ -144,7 +144,7 @@ Explore tutorials that walk you through mocking different protocols and scenario
 
 If Mokapi saves you time, consider buying me a coffee. It helps keep the project going.
 
-<a href="https://www.buymeacoffee.com/mokapi" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/mokapi) <a href="https://www.buymeacoffee.com/mokapi" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 30px !important;width: 174px !important;" ></a>
 
 ## Merch
 

@@ -19,7 +19,7 @@ info:
 
 servers:
   mokapi:
-    host: 'localhost:8080'
+    host: 'localhost:8765'
     protocol: ws
 
 channels:
@@ -38,6 +38,21 @@ channels:
 ``` box=tip title=Recommendation
 Ready to dive in? Head over to the WebSocket [Quick Start Guide](/docs/websocket/quick-start.md) and
 run your first WebSocket mock in seconds.
+```
+
+``` box=warning title="Port Conflict with Mokapi's Built-in Services"
+Mokapi uses port `8080` by default for its dashboard, health checks, and MCP server. If your
+WebSocket server runs on the same port, these services will conflict. Choose a different port for
+your WebSocket server — `8765` is a common choice — or move Mokapi's built-in services to a
+different port using the following flags:
+
+| Service       | Flag                  | Default  |
+|---------------|-----------------------|----------|
+| Dashboard/API | `--api-port`          | `8080`   |
+| Health check  | `--health-port`       | `8080`   |
+| MCP server    | `--mcp-server-port`   | `8080`   |
+
+See the [CLI flags reference](/docs/configuration/static/cli-flags) for details.
 ```
 
 ## Why Choose Mokapi to Mock WebSocket Server Workflows?
