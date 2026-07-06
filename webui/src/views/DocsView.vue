@@ -453,6 +453,9 @@ pre {
 .box.result .box-heading {
   color: var(--bs-success-text-emphasis);
 }
+.box .table > :not(caption) > * > * {
+  background-color: transparent;
+}
 .anchor {
   display: block;
   position: relative;

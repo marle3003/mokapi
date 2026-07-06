@@ -29,7 +29,7 @@ info:
 
 servers:
   mokapi:
-    host: 'localhost:8080'
+    host: 'localhost:8765'
     protocol: ws
     description: Mock WebSocket server provided by Mokapi.
 
@@ -97,8 +97,23 @@ Start Mokapi with the AsyncAPI file to simulate the WebSocket server:
 mokapi asyncapi.yaml
 ```
 
-Mokapi's log output will confirm a WebSocket server is running at `localhost:8080`, ready to accept
+Mokapi's log output will confirm a WebSocket server is running at `localhost:8765`, ready to accept
 connections.
+
+``` box=warning title="Port Conflict with Mokapi's Built-in Services"
+Mokapi uses port `8080` by default for its dashboard, health checks, and MCP server. If your
+WebSocket server runs on the same port, these services will conflict. Choose a different port for
+your WebSocket server — `8765` is a common choice — or move Mokapi's built-in services to a
+different port using the following flags:
+
+| Service       | Flag                  | Default  |
+|---------------|-----------------------|----------|
+| Dashboard/API | `--api-port`          | `8080`   |
+| Health check  | `--health-port`       | `8080`   |
+| MCP server    | `--mcp-server-port`   | `8080`   |
+
+See the [CLI flags reference](/docs/configuration/static/cli-flags) for details.
+```
 
 ## Add a Broadcast Script
 
@@ -138,9 +153,9 @@ the `ws` library for Node.js:
 import WebSocket from 'ws'
 
 // Connect Alice and Bob to the same room
-const alice = new WebSocket('ws://localhost:8080/chat/room-1')
-const bob   = new WebSocket('ws://localhost:8080/chat/room-2') // different room — won't receive Alice's messages
-const carol = new WebSocket('ws://localhost:8080/chat/room-1') // same room as Alice
+const alice = new WebSocket('ws://localhost:8765/chat/room-1')
+const bob   = new WebSocket('ws://localhost:8765/chat/room-2') // different room — won't receive Alice's messages
+const carol = new WebSocket('ws://localhost:8765/chat/room-1') // same room as Alice
 
 carol.on('message', (data) => {
   console.log('Carol received:', data.toString())
