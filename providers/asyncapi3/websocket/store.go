@@ -119,9 +119,10 @@ func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		serverAddr = server.Host
 	}
 
-	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{})
+	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{InsecureSkipVerify: true})
 	if err != nil {
 		// Accept writes the error response itself, no need to write again
+		log.Error("websocket: %s", err)
 		return
 	}
 	defer func() { _ = conn.CloseNow() }()
