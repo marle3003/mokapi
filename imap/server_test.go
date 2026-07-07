@@ -4,15 +4,20 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"github.com/stretchr/testify/require"
+	"io"
 	"mokapi/config/static"
 	"mokapi/imap"
 	"mokapi/server/cert"
 	"mokapi/try"
 	"testing"
+
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 )
 
 func TestServer(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name string
 		test func(t *testing.T, c *imap.Client)

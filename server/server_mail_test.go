@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"fmt"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
@@ -15,10 +16,12 @@ import (
 	"mokapi/try"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSmtp(t *testing.T) {
+	logrus.SetOutput(io.Discard)
 	port := try.GetFreePort()
 
 	testcases := []struct {

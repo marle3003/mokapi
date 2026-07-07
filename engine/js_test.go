@@ -2,6 +2,7 @@ package engine_test
 
 import (
 	"fmt"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine"
@@ -14,10 +15,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	r "github.com/stretchr/testify/require"
 )
 
 func TestJsScriptEngine(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	t.Parallel()
 	t.Run("valid", func(t *testing.T) {
 		t.Parallel()

@@ -30,6 +30,8 @@ import (
 )
 
 func TestKafkaClient(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	createCfg := func(topic string, msg *asyncapi3.Message) *asyncapi3.Config {
 		ch := asyncapi3test.NewChannel(
 			asyncapi3test.UseMessage("foo",

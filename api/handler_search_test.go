@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
@@ -16,10 +17,13 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 func TestHandler_SearchQuery(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	toConfig := func(c any) *dynamic.Config {
 		cfg := &dynamic.Config{
 			Info: dynamictest.NewConfigInfo(),

@@ -3,6 +3,7 @@ package server_test
 import (
 	"context"
 	"fmt"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/providers/openapi"
@@ -13,11 +14,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
 
 func TestConfigWatcher_Read(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name string
 		test func(t *testing.T)

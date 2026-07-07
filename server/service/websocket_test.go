@@ -2,15 +2,19 @@ package service_test
 
 import (
 	"fmt"
+	"io"
 	"mokapi/server/service"
 	"mokapi/try"
 	"net/http"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 func TestWebsocketServer(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	t.Parallel()
 	port := try.GetFreePort()
 	addr := fmt.Sprintf("127.0.0.1:%v", port)

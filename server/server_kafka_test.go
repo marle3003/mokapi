@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"fmt"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
@@ -16,10 +17,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 func TestKafkaServer(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	port := try.GetFreePort()
 	addr := fmt.Sprintf("127.0.0.1:%v", port)
 	c := asyncapi3test.NewConfig(

@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"fmt"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
@@ -14,10 +15,13 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 func TestLdapDirectory(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name    string
 		configs []*dynamic.Config

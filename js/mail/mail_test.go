@@ -2,8 +2,7 @@ package mail_test
 
 import (
 	"fmt"
-	"github.com/dop251/goja"
-	r "github.com/stretchr/testify/require"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
@@ -14,9 +13,15 @@ import (
 	"mokapi/runtime/events/eventstest"
 	"mokapi/smtp/smtptest"
 	"testing"
+
+	"github.com/dop251/goja"
+	"github.com/sirupsen/logrus"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestMailModule(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name string
 		cfg  *mail.Config

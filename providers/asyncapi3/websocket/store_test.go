@@ -3,6 +3,7 @@ package websocket_test
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/asyncapi3"
@@ -575,6 +576,8 @@ export default function() {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
+			log.SetOutput(io.Discard)
+
 			app := runtimetest.NewApp()
 			e := enginetest.NewEngine()
 			app.Engine = e

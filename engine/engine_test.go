@@ -1,7 +1,7 @@
 package engine_test
 
 import (
-	r "github.com/stretchr/testify/require"
+	"io"
 	"mokapi/engine"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
@@ -10,9 +10,14 @@ import (
 	"mokapi/runtime/runtimetest"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	r "github.com/stretchr/testify/require"
 )
 
 func TestEngine_Scheduler(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name string
 		test func(t *testing.T, e *engine.Engine, c *metrics.Counter, sm *events.StoreManager)

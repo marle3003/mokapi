@@ -16,11 +16,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/test"
 	r "github.com/stretchr/testify/require"
 )
 
 func TestScript_Http_Get(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name string
 		test func(t *testing.T, host *enginetest.Host)

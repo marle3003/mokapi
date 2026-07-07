@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"encoding/json"
+	"io"
 	"mokapi/api"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
@@ -24,10 +25,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 func TestHandler_Kafka(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	mustTime := func(s string) time.Time {
 		t, err := time.Parse(time.RFC3339, s)
 		if err != nil {

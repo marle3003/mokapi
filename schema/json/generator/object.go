@@ -274,7 +274,6 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 				return nil, fmt.Errorf("could not parse regex string: %v", pattern)
 			}
 			n := numPatterProperties()
-			fmt.Printf("numPatterProperties: %v\n", n)
 			for i := 0; i < n; i++ {
 				gen := regexGenerator{ra: req.g.rand}
 				gen.regexGenerate(re, len(pattern)*100)

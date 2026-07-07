@@ -767,7 +767,7 @@ func TestResolveEndpoint(t *testing.T) {
 
 	for _, data := range testdata {
 		t.Run(data.name, func(t *testing.T) {
-			test.NewNullLogger()
+			log.SetOutput(io.Discard)
 
 			e := &events.StoreManager{}
 			e.SetStore(10, events.NewTraits().WithNamespace("http"))
@@ -1668,6 +1668,8 @@ func TestHandler_Parameter(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
+			log.SetOutput(io.Discard)
+
 			config := &openapi.Config{
 				Info:       openapi.Info{Name: "Testing"},
 				Servers:    []*openapi.Server{{Url: "http://localhost"}},

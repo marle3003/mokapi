@@ -3,6 +3,7 @@ package openapi_test
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
@@ -11,6 +12,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -356,11 +358,9 @@ func TestParameterHeader_Parse(t *testing.T) {
 		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
+			logrus.SetOutput(io.Discard)
 			tc.test(t)
 		})
 	}

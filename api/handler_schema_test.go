@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/base64"
 	"encoding/json"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/providers/asyncapi3/asyncapi3test"
@@ -26,6 +27,8 @@ import (
 )
 
 func TestHandler_Schema_Example_Query(t *testing.T) {
+	log.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name string
 		app  *runtime.App

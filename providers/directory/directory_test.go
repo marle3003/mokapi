@@ -2,6 +2,7 @@ package directory_test
 
 import (
 	"context"
+	"io"
 	"mokapi/engine/enginetest"
 	"mokapi/ldap"
 	"mokapi/ldap/ldaptest"
@@ -10,6 +11,7 @@ import (
 	"mokapi/sortedmap"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -180,6 +182,8 @@ func TestDirectory_ServeBind(t *testing.T) {
 }
 
 func TestDirectory_ServeSearch(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name   string
 		config *directory.Config

@@ -2,7 +2,7 @@ package js_test
 
 import (
 	"fmt"
-	r "github.com/stretchr/testify/require"
+	"io"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/js"
@@ -13,9 +13,14 @@ import (
 	"mokapi/try"
 	"testing"
 	"time"
+
+	"github.com/sirupsen/logrus"
+	r "github.com/stretchr/testify/require"
 )
 
 func Test_Mail(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name string
 		js   string

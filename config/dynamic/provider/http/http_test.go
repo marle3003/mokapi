@@ -19,6 +19,8 @@ import (
 )
 
 func TestProvider_Start(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name string
 		init func() (static.HttpProvider, *httptest.Server)
@@ -205,6 +207,8 @@ func TestProvider_Start(t *testing.T) {
 }
 
 func TestNew(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name string
 		test func(t *testing.T)
@@ -254,6 +258,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestProxy(t *testing.T) {
+	logrus.SetOutput(io.Discard)
 	t.Parallel()
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -364,6 +369,8 @@ Loop:
 }
 
 func TestTlsWithCertError(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	server := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("foo"))
