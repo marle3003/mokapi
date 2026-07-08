@@ -1,6 +1,7 @@
 package openapi_test
 
 import (
+	"io"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/openapi"
@@ -13,6 +14,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -198,6 +200,8 @@ func TestHandler_Response(t *testing.T) {
 	for _, tc := range testcases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
+			logrus.SetOutput(io.Discard)
+
 			m := &events.StoreManager{}
 			m.SetStore(10, events.NewTraits().WithNamespace("http"))
 
@@ -357,7 +361,9 @@ func TestHandler_Response_Context(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
+			logrus.SetOutput(io.Discard)
 			generator.Seed(11)
+
 			config := openapitest.NewConfig("3.0", tc.opt)
 
 			h := openapi.NewHandler(config, enginetest.NewEngine(), &events.StoreManager{})

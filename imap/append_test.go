@@ -2,6 +2,7 @@ package imap_test
 
 import (
 	"fmt"
+	"io"
 	"mokapi/imap"
 	"mokapi/imap/imaptest"
 	"mokapi/smtp"
@@ -9,10 +10,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 func TestAppend(t *testing.T) {
+	logrus.SetOutput(io.Discard)
 
 	handler := &imaptest.Handler{
 		AppendFunc: func(mailbox string, msg *smtp.Message, opt imap.AppendOptions) error {

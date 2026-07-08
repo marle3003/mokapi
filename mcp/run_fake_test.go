@@ -2,6 +2,7 @@ package mcp_test
 
 import (
 	"context"
+	"io"
 	"mokapi/mcp"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
@@ -11,10 +12,13 @@ import (
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 func TestService_Run_Fake(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name string
 		app  *runtime.App

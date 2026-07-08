@@ -8,21 +8,26 @@ import (
 var websocket = contextKey("websocket")
 
 type Websocket struct {
-	Messages    *metrics.CounterMap
-	LastMessage *metrics.GaugeMap
+	Messages      *metrics.CounterMap
+	MessagesError *metrics.CounterMap
+	LastMessage   *metrics.GaugeMap
 }
 
 func NewWebsocket() *Websocket {
 	messages := metrics.NewCounterMap(
 		metrics.WithFQName("websocket", "messages_total"),
-		metrics.WithLabelNames("service", "topic"))
+		metrics.WithLabelNames("service", "channel"))
+	messagesError := metrics.NewCounterMap(
+		metrics.WithFQName("websocket", "messages_error_total"),
+		metrics.WithLabelNames("service", "channel"))
 	lastMessage := metrics.NewGaugeMap(
 		metrics.WithFQName("websocket", "message_timestamp"),
-		metrics.WithLabelNames("service", "topic"))
+		metrics.WithLabelNames("service", "channel"))
 
 	return &Websocket{
-		Messages:    messages,
-		LastMessage: lastMessage,
+		Messages:      messages,
+		MessagesError: messagesError,
+		LastMessage:   lastMessage,
 	}
 }
 

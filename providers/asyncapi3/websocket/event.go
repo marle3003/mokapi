@@ -5,11 +5,34 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type EventType = string
+
+const (
+	ConnectEventType EventType = "connect"
+	CloseEventType   EventType = "close"
+	MessageEventType EventType = "message"
+)
+
 type Event struct {
+	Type    EventType     `json:"type"`
 	Api     string        `json:"api"`
 	Channel *EventChannel `json:"channel"`
 	Client  *EventClient  `json:"client"`
-	Message any           `json:"message"`
+}
+
+type ConnectEvent struct {
+	Event
+}
+
+type CloseEvent struct {
+	Event
+	Reason   string `json:"reason"`
+	ClosedBy string `json:"closedBy"`
+}
+
+type MessageEvent struct {
+	Event
+	Message any `json:"message"`
 }
 
 type EventChannel struct {
@@ -27,7 +50,7 @@ type EventClient struct {
 	client *Client
 }
 
-func (e *Event) Reply(message any) {
+func (e *MessageEvent) Reply(message any) {
 	e.Client.Send(message)
 }
 
@@ -71,7 +94,7 @@ func newEventClient(client *Client) *EventClient {
 	for k, v := range client.Query {
 		c.Query[k] = v
 	}
-	for k, v := range c.Headers {
+	for k, v := range client.Headers {
 		c.Headers[k] = v
 	}
 	return c

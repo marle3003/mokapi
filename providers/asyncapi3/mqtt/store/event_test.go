@@ -1,6 +1,7 @@
 package store_test
 
 import (
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/engine"
 	"mokapi/engine/enginetest"
@@ -13,10 +14,13 @@ import (
 	"mokapi/try"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 func TestEvent(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name   string
 		engine *engine.Engine
@@ -134,12 +138,8 @@ export default function() {
 		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
 			eh := &eventstest.Handler{}
 			m := monitor.NewMqtt()
 			s := store.New(

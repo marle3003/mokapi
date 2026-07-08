@@ -2,6 +2,7 @@ package runtime_test
 
 import (
 	"context"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
@@ -16,10 +17,13 @@ import (
 	"mokapi/sortedmap"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIndex_Ldap(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	toConfig := func(c *directory.Config) *dynamic.Config {
 		cfg := &dynamic.Config{
 			Info: dynamictest.NewConfigInfo(),

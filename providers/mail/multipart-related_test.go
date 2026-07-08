@@ -1,16 +1,21 @@
 package mail_test
 
 import (
-	"github.com/stretchr/testify/require"
+	"io"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/mail"
 	"mokapi/runtime/events/eventstest"
 	"mokapi/smtp/smtptest"
 	netsmtp "net/smtp"
 	"testing"
+
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 )
 
 func TestMultipartRelated(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	cfg := &mail.Config{Settings: &mail.Settings{AutoCreateMailbox: true}}
 	s := mail.NewStore(cfg)
 	h := mail.NewHandler(cfg, s, enginetest.NewEngine(), &eventstest.Handler{})

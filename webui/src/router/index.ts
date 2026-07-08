@@ -266,13 +266,13 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             path: 'service/:service',
             name: getRouteName('websocketService'),
             component: dashboardView,
-            meta: { service: 'websocket', title: ({ params }: MatcherLocation) => `Dashboard - MQTT – ${params.service}` }
+            meta: { service: 'websocket', title: ({ params }: MatcherLocation) => `Dashboard - Websocket – ${params.service}` }
           },
           {
             path: 'service/:service/servers/:server',
-            name: getRouteName('mqttServer'),
+            name: getRouteName('websocketServer'),
             component: dashboardView,
-            meta: { service: 'websocket', title: ({ params }: MatcherLocation) => `Dashboard - MQTT Server – ${params.server}` },
+            meta: { service: 'websocket', title: ({ params }: MatcherLocation) => `Dashboard - Websocket Server – ${params.server}` },
           },
           {
             path: 'service/:service/channels/:channel',
@@ -280,7 +280,7 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             component: dashboardView,
             meta: {
               service: 'websocket',
-              title: ({ params }: MatcherLocation) => `Dashboard - Websocket Channel – ${params.topic}`
+              title: ({ params }: MatcherLocation) => `Dashboard - Websocket Channel – ${params.channel}`
             },
           },
           {
@@ -294,7 +294,13 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             name: getRouteName('websocketClient'),
             component: dashboardView,
             meta: { service: 'websocket', title: ({ params }: MatcherLocation) => `Dashboard - Websocket Client – ${params.id}` }
-          }
+          },
+          {
+            path: 'service/:service/events/:id',
+            name: getRouteName('websocketEvent'),
+            component: dashboardView,
+            meta: { service: 'websocket', title: ({ params }: MatcherLocation) => `Dashboard - Websocket Event – ${params.id}` }
+          },
         ]
       },
       {

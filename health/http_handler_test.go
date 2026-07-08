@@ -1,6 +1,7 @@
 package health_test
 
 import (
+	"io"
 	"mokapi/config/static"
 	"mokapi/health"
 	"net/http"
@@ -13,6 +14,8 @@ import (
 )
 
 func TestHealth(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name string
 		cfg  static.Health

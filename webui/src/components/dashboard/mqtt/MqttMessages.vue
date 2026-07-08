@@ -37,7 +37,6 @@ const labels = computed(() => {
 
 const { format } = usePrettyDates()
 const { formatLanguage } = usePrettyLanguage()
-const { fromBinary } = usePrettyText()
 
 const { dashboard } = useDashboard()
 const { events, close } = dashboard.value.getEvents(...labels.value)

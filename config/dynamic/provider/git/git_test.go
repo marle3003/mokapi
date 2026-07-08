@@ -2,6 +2,7 @@ package git
 
 import (
 	"context"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/static"
 	"mokapi/safe"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -25,6 +27,7 @@ var gitFiles = map[string]struct{}{
 }
 
 func TestGit(t *testing.T) {
+	logrus.SetOutput(io.Discard)
 	testcases := []struct {
 		name string
 		cfg  static.GitProvider
@@ -228,6 +231,8 @@ Stop:
 }
 
 func TestGitFileUpdate(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	repo := newGitRepo(t, t.Name())
 	repo.commit(t, "foo.txt", "foo")
 

@@ -2,6 +2,7 @@ package asyncApi_test
 
 import (
 	"fmt"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/asyncApi"
 	"mokapi/providers/asyncapi3"
@@ -9,6 +10,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
@@ -253,6 +255,8 @@ func TestChannelResolve(t *testing.T) {
 }
 
 func TestMessage(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name string
 		cfg  *asyncApi.Config
@@ -384,6 +388,8 @@ func TestMessage(t *testing.T) {
 }
 
 func TestSchema(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	message := &asyncApi.Message{}
 	config := &asyncApi.Config{
 		Channels: map[string]*asyncApi.ChannelRef{

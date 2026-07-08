@@ -2,6 +2,7 @@ package runtime_test
 
 import (
 	"context"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
@@ -15,10 +16,13 @@ import (
 	"mokapi/safe"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIndex_Kafka(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	toConfig := func(c *asyncapi3.Config) *dynamic.Config {
 		cfg := &dynamic.Config{
 			Info: dynamictest.NewConfigInfo(),
@@ -194,6 +198,8 @@ func TestIndex_Kafka(t *testing.T) {
 }
 
 func TestIndex_Kafka_Event(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	api := asyncapi3test.NewConfig(
 		asyncapi3test.WithInfo("Kafka Test Events", "", ""),
 		asyncapi3test.WithChannel("events"),

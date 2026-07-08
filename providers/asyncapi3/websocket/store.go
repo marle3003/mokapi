@@ -106,7 +106,7 @@ func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	header, err := parseHeader(r, ch)
+	headers, err := parseHeader(r, ch)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte(err.Error()))
@@ -119,9 +119,10 @@ func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		serverAddr = server.Host
 	}
 
-	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{})
+	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{InsecureSkipVerify: true})
 	if err != nil {
 		// Accept writes the error response itself, no need to write again
+		log.Errorf("websocket: %s", err)
 		return
 	}
 	defer func() { _ = conn.CloseNow() }()
@@ -129,7 +130,7 @@ func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	client := &Client{
 		Id:         uuid.New().String(),
 		Query:      query,
-		Header:     header,
+		Headers:    headers,
 		RemoteAddr: r.RemoteAddr,
 		ServerAddr: serverAddr,
 		channel:    ch,
@@ -142,26 +143,49 @@ func (s *Store) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	l := connectLog(ch, client)
+	// log event before run event engine to have the correct log order if event handler sends a message
+	s.log(l, events.NewTraits().
+		With("channel", ch.Name).
+		With("type", "connection").
+		With("clientId", client.Id))
+	l.Actions = ch.runConnectEvent(client)
+
 	errCh := make(chan error, 2)
 	go func() { errCh <- ch.readLoop(ctx, conn, client) }()
 	go func() { errCh <- client.writeLoop(ctx, conn) }()
 
 	if err = <-errCh; err != nil {
-		closeStatus := websocket.CloseStatus(err)
+		status, reason := closeStatus(err)
+		var closedBy string
 		switch {
-		case closeStatus == websocket.StatusNormalClosure,
-			closeStatus == websocket.StatusGoingAway:
-			// client closed cleanly, nothing to log
+		case status == websocket.StatusNormalClosure,
+			status == websocket.StatusGoingAway:
+			// client closed cleanly
+			closedBy = "client"
 		case errors.Is(err, context.Canceled):
 			// we canceled it ourselves (e.g. spec reload), nothing to log
+			reason = "connection closed"
+			closedBy = "server"
 		case errors.Is(err, io.EOF),
 			strings.Contains(err.Error(), "EOF"):
 			// client disconnected without sending a close frame
 			// CloseNow() does this — it's not an error
+			reason = "connection disconnected"
+			closedBy = "client"
 		default:
 			_ = conn.Close(websocket.StatusUnsupportedData, err.Error())
 			log.Errorf("websocket connection error on channel %s: %v", ch.Name, err)
+			reason = err.Error()
+			closedBy = "server"
 		}
+
+		cl := closeLog(ch, client, reason, closedBy)
+		cl.Actions = ch.runCloseEvent(client, reason, closedBy)
+		s.log(cl, events.NewTraits().
+			With("channel", ch.Name).
+			With("type", "connection").
+			With("clientId", client.Id))
 	}
 }
 
@@ -187,8 +211,7 @@ func toWebSocketType(msgType MessageType) websocket.MessageType {
 	}
 }
 
-func (s *Store) log(log *Log, traits events.Traits) {
-	log.Api = s.cfg.Info.Name
+func (s *Store) log(log events.EventData, traits events.Traits) {
 	t := traits.WithNamespace("websocket").
 		WithName(s.cfg.Info.Name)
 	_ = s.eh.Push(log, t)
@@ -259,4 +282,11 @@ func getPropertyIgnoreCase(name string, s *schema.Schema) (string, *schema.Schem
 		}
 	}
 	return "", nil
+}
+
+func closeStatus(err error) (websocket.StatusCode, string) {
+	if closeErr, ok := errors.AsType[websocket.CloseError](err); ok {
+		return closeErr.Code, closeErr.Reason
+	}
+	return -1, ""
 }

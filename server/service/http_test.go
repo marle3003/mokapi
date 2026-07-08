@@ -36,6 +36,8 @@ func (h *testHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) *openap
 }
 
 func TestHttpServer_AddOrUpdate(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name string
 		test func(t *testing.T, h *service.HttpServer, port string, sm *events.StoreManager)

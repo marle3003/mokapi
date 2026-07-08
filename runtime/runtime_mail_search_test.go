@@ -2,6 +2,7 @@ package runtime_test
 
 import (
 	"context"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
@@ -17,10 +18,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 func TestIndex_Mail(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	toConfig := func(c *mail.Config) *dynamic.Config {
 		cfg := &dynamic.Config{
 			Info: dynamictest.NewConfigInfo(),

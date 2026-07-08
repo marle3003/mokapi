@@ -3,6 +3,7 @@ package mail_test
 import (
 	"context"
 	"encoding/base64"
+	"io"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/mail"
 	"mokapi/runtime/events"
@@ -11,10 +12,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 func TestHandler_ServeSMTP(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name   string
 		config *mail.Config
@@ -384,7 +388,6 @@ func TestHandler_ServeSMTP(t *testing.T) {
 	}
 
 	for _, tc := range testcases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			s := mail.NewStore(tc.config)
 			sm := events.NewStoreManager(nil)

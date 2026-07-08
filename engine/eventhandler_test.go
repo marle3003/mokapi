@@ -1,15 +1,19 @@
 package engine_test
 
 import (
+	"io"
 	"mokapi/engine"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 func TestEventHandler(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name   string
 		script string

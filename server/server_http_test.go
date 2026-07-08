@@ -18,10 +18,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 func TestHttp(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	port := server.DefaultHttpPort
 	defer func() { server.DefaultHttpPort = port }()
 	server.DefaultHttpPort = try.GetFreePort()

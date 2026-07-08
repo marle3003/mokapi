@@ -28,6 +28,7 @@ const labels = computed(() => {
     if (props.channelName) {
         result.push({ name: 'channel', value: props.channelName })
     }
+    result.push({ name: 'type', value: 'message' })
     if (props.clientId) {
         result.push({ name: 'clientId', value: props.clientId })
     }
@@ -71,6 +72,7 @@ const messages = computed(() => {
             event: event,
             channel: data.channel,
             client: data.client,
+            direction: data.direction
         });
     }
     return result;
@@ -286,10 +288,10 @@ const isTemplateChannel = computed(() => {
                     </router-link>
                 </td>
                 <td class="text-left">
-                    {{ formatAddress(msg.client.direction === 'send' ? msg.client.address : msg.client.server) }}
+                    {{ formatAddress(msg.direction === 'send' ? msg.client.address : msg.client.server) }}
                 </td>
                 <td class="text-left">
-                    {{ formatAddress(msg.client.direction === 'receive' ? msg.client.address : msg.client.server) }}
+                    {{ formatAddress(msg.direction === 'receive' ? msg.client.address : msg.client.server) }}
                 </td>
                 <td v-if="channelName" class="message" :title="msg.isAvro ? 'Avro content displayed as JSON' : ''">
                     <router-link @click.stop class="row-link"

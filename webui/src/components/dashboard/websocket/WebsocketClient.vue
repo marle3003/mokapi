@@ -4,6 +4,7 @@ import { useRoute } from '@/router';
 import { computed } from 'vue';
 import Message from '../../Message.vue';
 import WebsocketMessagesCard from './WebsocketMessagesCard.vue'
+import WebsocketEvents from './WebsocketEvents.vue'
 import { useWebsocket } from '@/composables/websocket';
 
 const route = useRoute();
@@ -72,6 +73,9 @@ const client = computed(() => {
       </div>
       <div class="card-group">
         <websocket-messages-card :service="service.data" :client-id="client.id" :hide-when-empty="true" />
+      </div>
+      <div class="card-group">
+        <websocket-events :service="service.data" :client-id="clientId" />
       </div>
   </div>
   <div v-if="!service.isLoading && !client">

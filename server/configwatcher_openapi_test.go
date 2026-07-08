@@ -20,6 +20,8 @@ import (
 )
 
 func TestConfigWatcher_Openapi(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	dynamic.Register("openapi", dynamic.AnyVersion, &openapi.Config{})
 
 	testcases := []struct {

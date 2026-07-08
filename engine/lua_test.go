@@ -3,7 +3,7 @@ package engine_test
 import (
 	"errors"
 	"fmt"
-	"github.com/stretchr/testify/require"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine"
@@ -11,9 +11,14 @@ import (
 	"mokapi/engine/enginetest"
 	"net/url"
 	"testing"
+
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 )
 
 func TestEngine_AddScript(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	registered := 0
 	scheduler := &enginetest.Scheduler{
 		EveryFunc: func(every string, handler func(), opt common.JobOptions) (engine.Job, error) {

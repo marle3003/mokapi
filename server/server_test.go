@@ -2,6 +2,7 @@ package server_test
 
 import (
 	"context"
+	"io"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/config/static"
 	"mokapi/engine"
@@ -17,6 +18,8 @@ import (
 )
 
 func TestServer(t *testing.T) {
+	log.SetOutput(io.Discard)
+
 	pool := safe.NewPool(context.Background())
 	cfg := &static.Config{}
 

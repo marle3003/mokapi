@@ -2,12 +2,14 @@ package asyncapi3_test
 
 import (
 	"encoding/json"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/asyncapi3"
 	jsonSchema "mokapi/schema/json/schema"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v3"
 )
@@ -38,12 +40,9 @@ func TestMessage_UnmarshalJSON(t *testing.T) {
 		},
 	}
 
-	t.Parallel()
 	for _, tc := range testcases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
+			logrus.SetOutput(io.Discard)
 			var msg *asyncapi3.Message
 			err := json.Unmarshal([]byte(tc.data), &msg)
 			tc.test(t, msg, err)

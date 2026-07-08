@@ -3,6 +3,7 @@ package openapi_test
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/openapi"
@@ -633,6 +634,7 @@ func TestOperation_Parse(t *testing.T) {
 
 	for _, tc := range testcases {
 		t.Run(tc.name, func(t *testing.T) {
+			logrus.SetOutput(io.Discard)
 			hook := test.NewGlobal()
 			tc.test(t, hook)
 		})

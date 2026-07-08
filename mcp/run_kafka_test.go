@@ -2,6 +2,7 @@ package mcp_test
 
 import (
 	"context"
+	"io"
 	"mokapi/kafka"
 	"mokapi/mcp"
 	"mokapi/providers/asyncapi3"
@@ -14,10 +15,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
 )
 
 func TestService_Run_Kafka(t *testing.T) {
+	logrus.SetOutput(io.Discard)
+
 	testcases := []struct {
 		name string
 		app  *runtime.App
