@@ -40,7 +40,10 @@ func (c *Client) sendMessage(message any) error {
 	l := messageLog(c.channel, data, messageId, c, Receive)
 
 	channelName := c.channel.cfg.ResolveAddress()
-	c.channel.log(l, events.NewTraits().With("channel", channelName).With("clientId", c.Id))
+	c.channel.log(l, events.NewTraits().
+		With("channel", channelName).
+		With("type", "message").
+		With("clientId", c.Id))
 
 	labels := []string{c.channel.api, channelName}
 	c.channel.monitor.Messages.WithLabel(labels...).Add(1)
