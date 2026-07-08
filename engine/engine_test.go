@@ -33,7 +33,7 @@ func TestEngine_Scheduler(t *testing.T) {
 				`))
 				r.NoError(t, err)
 
-				time.Sleep(300 * time.Millisecond)
+				time.Sleep(time.Millisecond * 800)
 
 				evts := sm.GetEvents(events.NewTraits().WithNamespace("job").WithName("test.js"))
 				r.Len(t, evts, 1)
