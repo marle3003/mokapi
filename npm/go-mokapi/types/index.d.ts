@@ -334,7 +334,138 @@ export interface MqttEventMessage {
     value: string;
 }
 
-export type WebsocketEventHandler = (message: WebsocketEventMessage) => void | Promise<void>;
+/**
+ * Event handler function passed to `on('websocket', handler)`. Called for every
+ * WebSocket lifecycle event — connect, message, and close — on any channel
+ * defined in the AsyncAPI specification.
+ *
+ * Use the `event.type` field to distinguish between event types and access
+ * type-specific fields like `message` and `reply`.
+ *
+ * Async handlers are supported — return a `Promise` if you need to perform
+ * asynchronous work before responding.
+ *
+ * @example
+ * // Handle all event types in one handler
+ * import { on } from 'mokapi'
+ * export default function() {
+ *   on('websocket', function(event) {
+ *     if (event.type === 'connect') {
+ *       event.client.send({ text: 'welcome!' })
+ *     }
+ *     if (event.type === 'message') {
+ *       event.reply({ text: 'pong' })
+ *     }
+ *     if (event.type === 'close') {
+ *       console.log(`connection closed by ${event.closedBy}: ${event.reason}`)
+ *     }
+ *   })
+ * }
+ *
+ * @example
+ * // Async handler
+ * import { on } from 'mokapi'
+ * export default function() {
+ *   on('websocket', async function(event) {
+ *     if (event.type === 'message') {
+ *       await someAsyncOperation()
+ *       event.reply({ text: 'done' })
+ *     }
+ *   })
+ * }
+ *
+ * @see https://mokapi.io/docs/javascript-api/mokapi/eventhandler/WebsocketEventHandler
+ */
+export type WebsocketEventHandler = (message: WebsocketEvent) => void | Promise<void>;
+
+export type WebsocketEvent = WebsocketEventConnect | WebsocketEventMessage | WebsocketEventClose;
+
+/**
+ * Base interface shared by all WebSocket events. Use the `type` field to
+ * discriminate between connect, message, and close events.
+ *
+ * @example
+ * import { on } from 'mokapi'
+ * export default function() {
+ *   on('websocket', function(event) {
+ *     if (event.type === 'connect') {
+ *       event.broadcast({ text: 'a new user joined' })
+ *     }
+ *     if (event.type === 'message') {
+ *       event.reply({ text: 'pong' })
+ *     }
+ *     if (event.type === 'close') {
+ *       console.log(`client disconnected: ${event.reason}`)
+ *     }
+ *   })
+ * }
+ *
+ * @see https://mokapi.io/docs/javascript-api/mokapi/eventhandler/WebsocketEvent
+ */
+export interface WebsocketEventBase {
+    /**
+     * Discriminates between the three WebSocket event types.
+     * Use this in a conditional to access type-specific fields like
+     * `message` and `reply` (only on `'message'`) or `reason` (only on `'close'`).
+     */
+    readonly type: 'connect' | 'message' | 'close'
+
+    /**
+     * The name of the API, matching the `info.title` field in the AsyncAPI specification.
+     *
+     * @example
+     * on('websocket', function(event) {
+     *   console.log(event.api) // e.g. "Chat API"
+     * })
+     */
+    readonly api: string;
+
+    /**
+     * The channel on which the message was received.
+     *
+     * @example
+     * on('websocket', function(event) {
+     *   console.log(event.channel.name) // e.g. "/chat"
+     * })
+     */
+    readonly channel: WebsocketChannel;
+
+    /**
+     * The client that sent the message. Can be stored and used later
+     * to send messages outside the current event handler.
+     *
+     * @example
+     * on('websocket', function(event) {
+     *   const userId = event.client.query['userId']
+     *   const token  = event.client.headers['authorization']
+     * })
+     */
+    readonly client: WebsocketClient;
+
+    /**
+     * Sends a message to all clients currently connected to this channel,
+     * including the sender. Shorthand for looping over `event.channel.clients`.
+     *
+     * @param message - The message payload to send to every connected client.
+     *
+     * @example
+     * // Broadcast a chat message to everyone
+     * on('websocket', function(event) {
+     *   event.broadcast({ from: event.client.query['userId'], text: event.message.text })
+     * })
+     *
+     * @example
+     * // Broadcast excluding the sender
+     * on('websocket', function(event) {
+     *   for (const client of event.channel.clients) {
+     *     if (client.remoteAddr !== event.client.remoteAddr) {
+     *       client.send(event.message)
+     *     }
+     *   }
+     * })
+     */
+    broadcast(message: any): void;
+}
 
 /**
  * WebsocketEventMessage is an object passed to a WebSocket event handler whenever
@@ -371,38 +502,8 @@ export type WebsocketEventHandler = (message: WebsocketEventMessage) => void | P
  *
  * @see https://mokapi.io/docs/javascript-api/mokapi/eventhandler/WebsocketEventMessage
  */
-export interface WebsocketEventMessage {
-    /**
-     * The name of the API, matching the `info.title` field in the AsyncAPI specification.
-     *
-     * @example
-     * on('websocket', function(event) {
-     *   console.log(event.api) // e.g. "Chat API"
-     * })
-     */
-    readonly api: string;
-
-    /**
-     * The channel on which the message was received.
-     *
-     * @example
-     * on('websocket', function(event) {
-     *   console.log(event.channel.name) // e.g. "/chat"
-     * })
-     */
-    readonly channel: WebsocketChannel;
-
-    /**
-     * The client that sent the message. Can be stored and used later
-     * to send messages outside the current event handler.
-     *
-     * @example
-     * on('websocket', function(event) {
-     *   const userId = event.client.query['userId']
-     *   const token  = event.client.headers['authorization']
-     * })
-     */
-    readonly client: WebsocketClient;
+export interface WebsocketEventMessage extends WebsocketEventBase {
+    readonly type: 'message'
 
     /**
      * The decoded message payload. The type depends on the `contentType`
@@ -433,30 +534,100 @@ export interface WebsocketEventMessage {
      * })
      */
     reply(message: any): void;
+}
+
+/**
+ * Fired once when a client establishes a WebSocket connection.
+ * Use this to send a welcome message to the connecting client or
+ * notify all other clients that someone joined.
+ *
+ * @example
+ * // Send a welcome message to the connecting client
+ * import { on } from 'mokapi'
+ * export default function() {
+ *   on('websocket', function(event) {
+ *     if (event.type === 'connect') {
+ *       event.client.send({ text: 'welcome!' })
+ *     }
+ *   })
+ * }
+ *
+ * @example
+ * // Notify all existing clients that someone joined
+ * import { on } from 'mokapi'
+ * export default function() {
+ *   on('websocket', function(event) {
+ *     if (event.type === 'connect') {
+ *       event.broadcast({ text: `${event.client.query['userId']} has joined` })
+ *     }
+ *   })
+ * }
+ *
+ * @see https://mokapi.io/docs/javascript-api/mokapi/eventhandler/WebsocketEventConnect
+ */
+export interface WebsocketEventConnect extends WebsocketEventBase {
+    readonly type: 'connect'
+}
+
+/**
+ * Fired when a WebSocket connection is closed, either by the client or the server.
+ * Use `closedBy` to determine who initiated the close and `reason` for the explanation.
+ *
+ * @example
+ * // Log when a client disconnects
+ * import { on } from 'mokapi'
+ * export default function() {
+ *   on('websocket', function(event) {
+ *     if (event.type === 'close') {
+ *       console.log(`connection closed by ${event.closedBy}: ${event.reason}`)
+ *     }
+ *   })
+ * }
+ *
+ * @example
+ * // Notify remaining clients when someone leaves
+ * import { on } from 'mokapi'
+ * export default function() {
+ *   on('websocket', function(event) {
+ *     if (event.type === 'close') {
+ *       event.broadcast({ text: `${event.client.query['userId']} has left` })
+ *     }
+ *   })
+ * }
+ *
+ * @see https://mokapi.io/docs/javascript-api/mokapi/eventhandler/WebsocketEventClose
+ */
+export interface WebsocketEventClose extends WebsocketEventBase {
+    readonly type: 'close'
 
     /**
-     * Sends a message to all clients currently connected to this channel,
-     * including the sender. Shorthand for looping over `event.channel.clients`.
-     *
-     * @param message - The message payload to send to every connected client.
+     * The reason the connection was closed. Maps to the WebSocket close frame
+     * reason string. Empty if no reason was provided.
      *
      * @example
-     * // Broadcast a chat message to everyone
      * on('websocket', function(event) {
-     *   event.broadcast({ from: event.client.query['userId'], text: event.message.text })
+     *   if (event.type === 'close') {
+     *     console.log(event.reason) // e.g. "going away"
+     *   }
      * })
+     */
+    readonly reason: string
+
+    /**
+     * Indicates who initiated the close — either the client or the server.
      *
      * @example
-     * // Broadcast excluding the sender
      * on('websocket', function(event) {
-     *   for (const client of event.channel.clients) {
-     *     if (client.remoteAddr !== event.client.remoteAddr) {
-     *       client.send(event.message)
+     *   if (event.type === 'close') {
+     *     if (event.closedBy === 'client') {
+     *       console.log('client disconnected')
+     *     } else {
+     *       console.log('server closed the connection')
      *     }
      *   }
      * })
      */
-    broadcast(message: any): void;
+    readonly closedBy: 'client' | 'server'
 }
 
 /**
@@ -916,7 +1087,7 @@ export interface WebsocketEventArgs extends EventArgs {
      * - undefined: Mokapi determines tracking automatically based on
      *   whether the message was modified or acknowledged by the handler
      */
-    track?: boolean | ((message: WebsocketEventMessage) => boolean);
+    track?: boolean | ((message: WebsocketEvent) => boolean);
 }
 
 /**
