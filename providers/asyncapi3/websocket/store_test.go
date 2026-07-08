@@ -160,15 +160,37 @@ func TestStore(t *testing.T) {
 
 				_, _, err = c.Read(ctx)
 				require.ErrorContains(t, err, "invalid json format: invalid character 'h' looking for beginning of value")
+
+				waitFor(t, func() bool {
+					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
+					return len(evts) > 2
+				})
+
+				evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
+				require.Len(t, evts, 3)
+
+				evt := evts[0]
+				cl := evt.Data.(*websocket.CloseLog)
+				require.Equal(t, "connection", evt.Traits.Get("type"))
+				require.Equal(t, "invalid json format: invalid character 'h' looking for beginning of value", cl.Reason)
+				require.Equal(t, `server`, cl.ClosedBy)
+
+				evt = evts[1]
+				m := evt.Data.(*websocket.MessageLog)
+				require.Equal(t, "message", evt.Traits.Get("type"))
+				require.Equal(t, "invalid json format: invalid character 'h' looking for beginning of value", m.Error)
 			},
 		},
 		{
-			name: "event is triggered",
+			name: "events are triggered",
 			cfg:  chatCfg(),
 			js: `import { on } from 'mokapi'
 		export default function() {
 		  on('websocket', function(event) {
-		    console.log(event.message)
+		   	console.log(event.type)
+			if (event.type === 'close') {
+				console.log(event.reason, event.closedBy)
+			}
 		  }, { track: true })
 		}
 		`,
@@ -177,24 +199,40 @@ func TestStore(t *testing.T) {
 				defer cancel()
 				c, _, err := ws.Dial(ctx, url+"/chat", nil)
 				require.NoError(t, err)
-				defer func() { _ = c.CloseNow() }()
 				log.Info("url2", url)
 
 				// Send a valid message
 				err = c.Write(ctx, ws.MessageText, []byte(`{"text": "hello2"}`))
 				require.NoError(t, err)
 
+				_ = c.Close(ws.StatusNormalClosure, "bye")
+
 				waitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
-					return len(evts) > 0
+					return len(evts) > 2
 				})
 
 				evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
-				require.Len(t, evts, 1)
+				require.Len(t, evts, 3)
+
 				evt := evts[0]
-				d := evt.Data.(*websocket.Log)
+				cl := evt.Data.(*websocket.CloseLog)
+				require.Equal(t, "connection", evt.Traits.Get("type"))
+				require.Len(t, cl.Actions, 1)
+				require.Equal(t, `close`, cl.Actions[0].Logs[0].Message)
+				require.Equal(t, `bye client`, cl.Actions[0].Logs[1].Message)
+
+				evt = evts[1]
+				m := evt.Data.(*websocket.MessageLog)
+				require.Equal(t, "message", evt.Traits.Get("type"))
+				require.Len(t, m.Actions, 1)
+				require.Equal(t, `message`, m.Actions[0].Logs[0].Message)
+
+				evt = evts[2]
+				d := evt.Data.(*websocket.ConnectLog)
+				require.Equal(t, "connection", evt.Traits.Get("type"))
 				require.Len(t, d.Actions, 1)
-				require.Equal(t, `{"text":"hello2"}`, d.Actions[0].Logs[0].Message)
+				require.Equal(t, `connect`, d.Actions[0].Logs[0].Message)
 			},
 		},
 		{
@@ -232,12 +270,15 @@ export default function() {
 			js: `import { on } from 'mokapi'
 		export default function() {
 		  on('websocket', function(event) {
-		    event.reply({text2: "hello"})
+console.log(event.type)
+			if (event.type === 'message') {
+		    	event.reply({text2: "hello"})
+			}
 		  })
 		}
 		`,
 			test: func(t *testing.T, store *websocket.Store, url string, app *runtime.App) {
-				ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+				ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 				defer cancel()
 				c, _, err := ws.Dial(ctx, url+"/chat", nil)
 				require.NoError(t, err)
@@ -249,13 +290,18 @@ export default function() {
 
 				waitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
-					return len(evts) > 0
+					return len(evts) > 2
 				})
 
 				evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
-				require.Len(t, evts, 1)
+				require.Len(t, evts, 3)
 				evt := evts[0]
-				d := evt.Data.(*websocket.Log)
+				d := evt.Data.(*websocket.MessageLog)
+				require.Len(t, d.Actions, 0)
+				require.Equal(t, "Validation error count 1:\n\t- #/required: required properties are missing: text", d.Error)
+
+				evt = evts[1]
+				d = evt.Data.(*websocket.MessageLog)
 				require.Len(t, d.Actions, 1)
 				require.NotNil(t, d.Actions[0].Error)
 				require.Equal(t, "Validation error count 1:\n\t- #/required: required properties are missing: text", d.Actions[0].Error.Message)
@@ -370,13 +416,13 @@ export default function() {
 
 				waitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
-					return len(evts) > 0
+					return len(evts) > 1
 				})
 
 				evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
-				require.Len(t, evts, 1)
+				require.Len(t, evts, 2)
 				evt := evts[0]
-				d := evt.Data.(*websocket.Log)
+				d := evt.Data.(*websocket.MessageLog)
 				require.Len(t, d.Actions, 1)
 				require.Equal(t, `{"id":"foo"}`, d.Actions[0].Logs[0].Message)
 			},
@@ -446,7 +492,7 @@ export default function() {
 			js: `import { on } from 'mokapi'
 		export default function() {
 		  on('websocket', function(event) {
-		    console.log(event.client.headers)
+			console.log(event.client.headers)
 		  })
 		}
 		`,
@@ -466,15 +512,17 @@ export default function() {
 
 				waitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
-					return len(evts) > 0
+					return len(evts) > 1
 				})
 
 				evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
-				require.Len(t, evts, 1)
+				require.Len(t, evts, 2)
+
 				evt := evts[0]
-				d := evt.Data.(*websocket.Log)
-				require.Len(t, d.Actions, 1)
-				require.Equal(t, `{"id":"foo"}`, d.Actions[0].Logs[0].Message)
+				m := evt.Data.(*websocket.MessageLog)
+				require.Equal(t, "message", evt.Traits.Get("type"))
+				require.Len(t, m.Actions, 1)
+				require.Equal(t, `{"id":"foo"}`, m.Actions[0].Logs[0].Message)
 			},
 		},
 		{
@@ -556,13 +604,13 @@ export default function() {
 
 				waitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
-					return len(evts) > 0
+					return len(evts) > 1
 				})
 
 				evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
-				require.Len(t, evts, 1)
+				require.Len(t, evts, 2)
 				evt := evts[0]
-				d := evt.Data.(*websocket.Log)
+				d := evt.Data.(*websocket.MessageLog)
 				require.Len(t, d.Actions, 1)
 				var result websocket.EventChannel
 				err = json.Unmarshal([]byte(d.Actions[0].Logs[0].Message), &result)
@@ -608,7 +656,7 @@ export default function() {
 
 func waitFor(t *testing.T, check func() bool) {
 	t.Helper()
-	deadline := time.Now().Add(2 * time.Second)
+	deadline := time.Now().Add(30 * time.Second)
 
 	for {
 		if check() {

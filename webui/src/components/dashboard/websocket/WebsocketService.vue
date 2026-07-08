@@ -10,6 +10,7 @@ import Server from './Server.vue'
 import Configs from '../Configs.vue'
 import WebsocketClients from './WebsocketClients.vue'
 import WebsocketClient from './WebsocketClient.vue'
+import WebsocketEvent from './WebsocketEvent.vue'
 import Message from './Message.vue'
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useRouter } from '@/router'
@@ -116,6 +117,9 @@ watch(() => route.hash, (hash) => {
     </div>
     <div v-if="$route.name == getRouteName('websocketServer').value">
         <server></server>
+    </div>
+    <div v-if="$route.name == getRouteName('websocketEvent').value && service">
+        <websocket-event :service="service"></websocket-event>
     </div>
     <message v-if="$route.name == getRouteName('websocketMessage').value"></message>
 </template>

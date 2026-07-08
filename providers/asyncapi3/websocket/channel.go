@@ -22,7 +22,7 @@ type Channel struct {
 	m       sync.RWMutex
 	cfg     *asyncapi3.Channel
 	emitter engine.EventEmitter
-	log     func(log *Log, traits events.Traits)
+	log     func(log events.EventData, traits events.Traits)
 	monitor *monitor.Websocket
 }
 
@@ -98,21 +98,25 @@ func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Cl
 				break
 			}
 		}
-		if err != nil {
-			return err
-		}
-
 		channelName := c.cfg.ResolveAddress()
 
-		l := c.newLog(data, messageId, client, Send)
+		l := messageLog(c, data, messageId, client, Send)
 		// log event before run event engine to have the correct log order if event handler sends a message
-		c.log(l, events.NewTraits().With("channel", channelName).With("clientId", client.Id))
-
-		l.Actions = c.runEvent(client, msg)
+		c.log(l, events.NewTraits().
+			With("channel", channelName).
+			With("type", "message").
+			With("clientId", client.Id))
 
 		labels := []string{c.api, channelName}
 		c.monitor.Messages.WithLabel(labels...).Add(1)
 		c.monitor.LastMessage.WithLabel(labels...).Set(float64(time.Now().Unix()))
+
+		if err != nil {
+			c.monitor.MessagesError.WithLabel(labels...).Add(1)
+			l.Error = err.Error()
+			return err
+		}
+		l.Actions = c.runMessageEvent(client, msg)
 	}
 }
 
@@ -131,41 +135,56 @@ func (c *Channel) removeClient(client *Client) {
 	delete(c.clients, client.Id)
 }
 
-func (c *Channel) newEvent(client *Client, v any) *Event {
-	evt := &Event{
-		Api:     c.api,
-		Channel: newEventChannel(c),
-		Client:  newEventClient(client),
+func (c *Channel) newConnectEvent(client *Client) *ConnectEvent {
+	evt := &ConnectEvent{
+		Event: Event{
+			Type:    ConnectEventType,
+			Api:     c.api,
+			Channel: newEventChannel(c),
+			Client:  newEventClient(client),
+		},
+	}
+	return evt
+}
+
+func (c *Channel) newMessageEvent(client *Client, v any) *MessageEvent {
+	evt := &MessageEvent{
+		Event: Event{
+			Type:    MessageEventType,
+			Api:     c.api,
+			Channel: newEventChannel(c),
+			Client:  newEventClient(client),
+		},
 		Message: v,
 	}
 	return evt
 }
 
-func (c *Channel) newLog(data []byte, messageId string, client *Client, direction Direction) *Log {
-	l := &Log{
-		Channel: c.Name,
-		Message: LogValue{
-			Value:  string(data),
-			Binary: data,
+func (c *Channel) newCloseEvent(client *Client, reason, closedBy string) *CloseEvent {
+	evt := &CloseEvent{
+		Event: Event{
+			Type:    CloseEventType,
+			Api:     c.api,
+			Channel: newEventChannel(c),
+			Client:  newEventClient(client),
 		},
-		MessageId: messageId,
-		Api:       c.api,
-		Client:    clientLog(client, direction),
+		Reason:   reason,
+		ClosedBy: closedBy,
 	}
-	return l
+	return evt
 }
 
-func (c *Channel) runEvent(client *Client, msg any) []*engine.Action {
-	evt := c.newEvent(client, msg)
-	if client.Query != nil {
-		evt.Client.Query = client.Query
-	} else {
-		evt.Client.Query = map[string]any{}
-	}
-	if client.Header != nil {
-		evt.Client.Headers = client.Header
-	} else {
-		evt.Client.Headers = map[string]any{}
-	}
+func (c *Channel) runMessageEvent(client *Client, msg any) []*engine.Action {
+	evt := c.newMessageEvent(client, msg)
+	return c.emitter.Emit("websocket", evt)
+}
+
+func (c *Channel) runConnectEvent(client *Client) []*engine.Action {
+	evt := c.newConnectEvent(client)
+	return c.emitter.Emit("websocket", evt)
+}
+
+func (c *Channel) runCloseEvent(client *Client, reason, closedBy string) []*engine.Action {
+	evt := c.newCloseEvent(client, reason, closedBy)
 	return c.emitter.Emit("websocket", evt)
 }

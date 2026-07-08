@@ -12,7 +12,7 @@ import (
 type Client struct {
 	Id         string
 	Query      map[string]any
-	Header     map[string]any
+	Headers    map[string]any
 	RemoteAddr string
 	ServerAddr string
 
@@ -36,20 +36,27 @@ func (c *Client) sendMessage(message any) error {
 			break
 		}
 	}
-	if err != nil {
-		return err
-	}
-	l := c.channel.newLog(data, messageId, c, Receive)
+
+	l := messageLog(c.channel, data, messageId, c, Receive)
 
 	channelName := c.channel.cfg.ResolveAddress()
 	c.channel.log(l, events.NewTraits().With("channel", channelName).With("clientId", c.Id))
+
+	labels := []string{c.channel.api, channelName}
+	c.channel.monitor.Messages.WithLabel(labels...).Add(1)
+	c.channel.monitor.LastMessage.WithLabel(labels...).Set(float64(time.Now().Unix()))
+
+	if err != nil {
+		c.channel.monitor.MessagesError.WithLabel(labels...).Add(1)
+		l.Error = err.Error()
+		return err
+	}
+
 	c.send <- Message{
 		Type:    MessageTypeText,
 		Payload: data,
 	}
-	labels := []string{c.channel.api, channelName}
-	c.channel.monitor.Messages.WithLabel(labels...).Add(1)
-	c.channel.monitor.LastMessage.WithLabel(labels...).Set(float64(time.Now().Unix()))
+
 	return nil
 }
 

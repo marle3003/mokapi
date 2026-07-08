@@ -54,13 +54,18 @@ declare interface WebsocketServer {
   addr: string;
 }
 
+declare type WebsocketEventData = WebsocketMessageData | WebsocketConnectionLog
+
 declare interface WebsocketMessageData {
+  api: string
   channel: string
   message: WebsocketMessage;
   messageId: string
+  direction: 'receive' | 'send'
   client: WebsocketClientLog
   script: string
   actions: Action[]
+  error?: string
 }
 
 declare interface WebsocketMessage {
@@ -82,5 +87,17 @@ declare interface WebsocketClientLog {
   headers: Record<string, any>
   address: string
   server: string
-  direction: 'receive' | 'send'
+}
+
+declare interface WebsocketConnectionLog {
+  type: 'connect' | 'close'
+  api: string
+  channel: string
+  client: WebsocketClientLog
+  actions: Action[]
+}
+
+declare interface WebsocketCloseLog extends WebsocketConnectionLog {
+  reason: string
+  closedBy: string
 }
