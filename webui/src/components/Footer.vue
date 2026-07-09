@@ -98,23 +98,23 @@
               <h3>Links</h3>
               <ul>
                 <li>
-                  <a href="https://hub.docker.com/r/mokapi/mokapi" target="_blank">
-                    Docker Hub
-                  </a>
-                </li>
-                <li>
                   <a href="https://www.npmjs.com/package/go-mokapi" target="_blank">
                     NPM Registry
                   </a>
                 </li>
                 <li>
-                  <a href="https://github.com/marle3003/mokapi" target="_blank">
-                    GitHub Repository
+                  <a href="https://hub.docker.com/r/mokapi/mokapi" target="_blank">
+                    Docker Hub
                   </a>
                 </li>
                 <li>
-                  <a href="https://mokapi.myspreadshop.ch/" target="_blank" rel="noopener noreferrer" title="Support Mokapi">
-                    Merchandise Store
+                  <a href="https://community.chocolatey.org/packages/mokapi" target="_blank">
+                    Chocolatey
+                  </a>
+                </li>
+                <li>
+                  <a href="https://github.com/marle3003/mokapi" target="_blank">
+                    GitHub Repository
                   </a>
                 </li>
               </ul>
@@ -134,7 +134,7 @@
 
         <!-- Merch Shop -->
         <a 
-          href="https://mokapi.myspreadshop.ch/" 
+          href="https://mokapi.myspreadshop.com/" 
           target="_blank" 
           rel="noopener noreferrer"
           title="Mokapi Gear for True API Nerds"
