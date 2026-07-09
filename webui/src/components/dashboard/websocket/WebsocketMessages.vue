@@ -8,6 +8,7 @@ import router from '@/router'
 import { getRouteName, useDashboard } from '@/composables/dashboard'
 import { useLocalStorage } from '@/composables/local-storage'
 import { useWebsocket } from '@/composables/websocket.ts'
+import { usePrettyText } from '@/composables/usePrettyText.ts'
 
 const props = defineProps<{
     service?: WebsocketService,
@@ -37,6 +38,7 @@ const labels = computed(() => {
 
 const { format } = usePrettyDates()
 const { formatLanguage } = usePrettyLanguage()
+const { adaptiveTruncate } = usePrettyText()
 const { formatAddress } = useWebsocket()
 
 const { dashboard } = useDashboard()
@@ -72,7 +74,8 @@ const messages = computed(() => {
             event: event,
             channel: data.channel,
             client: data.client,
-            direction: data.direction
+            direction: data.direction,
+            validationErrors: data.validationErrors
         });
     }
     return result;
@@ -270,9 +273,9 @@ const isTemplateChannel = computed(() => {
     <table class="table dataTable selectable" aria-label="Recent Messages">
         <thead>
             <tr>
-                <th scope="col" class="text-left col-2" v-if="!channelName || isTemplateChannel">Channel</th>
-                <th scope="col" class="text-left col-2" >Source</th>
-                <th scope="col" class="text-left col-2" >Destination</th>
+                <th scope="col" class="text-left col-3" v-if="!channelName || isTemplateChannel">Channel</th>
+                <th scope="col" class="text-left col-1" >Source</th>
+                <th scope="col" class="text-left col-1" >Destination</th>
                 <th scope="col" class="text-left col-4">Value</th>
                 <th scope="col" class="text-center col-2">Time</th>
 
@@ -284,7 +287,8 @@ const isTemplateChannel = computed(() => {
                 <td v-if="!channelName || isTemplateChannel">
                     <router-link @click.stop class="row-link"
                         :to="{ name: getRouteName('websocketMessage').value, params: { id: msg.id } }">
-                        {{ msg.channel }}
+                        <i v-if="msg.validationErrors" class="bi bi-x-circle-fill red" role="img" aria-label="Message data is invalid" style="vertical-align: middle;"></i>
+                        {{ adaptiveTruncate(msg.channel) }}
                     </router-link>
                 </td>
                 <td class="text-left">

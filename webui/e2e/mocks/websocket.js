@@ -52,7 +52,7 @@ export let services = [
             title: 'Chat Message',
             payload: { schema: ChatMessage },
             contentType: 'application/json',
-          },
+          }
         },
       },
       {
@@ -64,6 +64,12 @@ export let services = [
             payload: { schema: ChatMessage },
             contentType: 'application/json',
           },
+          Foo: {
+            name: 'ChatMessage',
+            title: 'Chat Message',
+            payload: { schema: { type: 'object', required: ['foo', 'bar'], properties: { foo: { type: 'string' }, bar: { type: 'number'} } } },
+            contentType: 'application/json',
+          }
         },
         instances: [
           {
@@ -184,6 +190,40 @@ export let events = [
             }
         }
       ]
-    }
+    },
+  },
+  {
+    id: '0ea1241e-2468-4f58-9da0-4d0c08bdf6fb',
+    traits: {
+      namespace: 'websocket',
+      name: 'WebSocket Chat API',
+      channel: '/chats/{chatId}',
+      type: 'message',
+      clientId: '5cc3940e-8b3f-4c65-9f85-9fd6f7e51e5e',
+    },
+    time: '2026-02-13T09:50:26.100000+01:00',
+    data: {
+      channel: '/chats/1234',
+      message: {
+        value: '{"bar": "not a number"}',
+      },
+      api: 'WebSocket Chat API',
+      client: { ...clients[1], direction: 'send', server: clients[1].serverAddress },
+      validationErrors: {
+        ChatMessage: 'Validation error count 1:\n\t- #/type: invalid type, expected object but got string',
+        Foo: 'Validation error count 2:\n\t- #/bar/type: invalid type, expected number but got string\n\t- #/required: required properties are missing: foo'
+      },
+      actions: [
+        {
+            duration: 20,
+            tags: {
+                name: "websocket",
+                file: "examples/mokapi/websocket.js",
+                fileKey: "b6fea8ac-56c7-4e73-a9c0-6337640bdca8",
+                event: "websocket"
+            }
+        }
+      ]
+    },
   },
 ];

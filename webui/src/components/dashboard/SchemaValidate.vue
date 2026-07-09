@@ -32,8 +32,10 @@ const props = withDefaults(defineProps<{
         preview?: Data,
         binary?: Data
   }
+  exampleEnabled?: boolean
 }>(), {
-    title: 'Data Validator'
+    title: 'Data Validator',
+    exampleEnabled: true
 })
 const { createGuid } = useGuid()
 const { formatLanguage } = usePrettyLanguage()
@@ -214,7 +216,7 @@ function formatResultItem(result: any): [string, number] {
 
 <template>
     <div>
-        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" :data-bs-target="'#'+id">Example & Validate</button>
+        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" :data-bs-target="'#'+id">{{ exampleEnabled ? 'Example & Validate' : 'Validate' }}</button>
         <div class="modal fade" :id="id" tabindex="-1"  aria-hidden="true" :aria-labelledby="id+'title'">
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
@@ -240,7 +242,7 @@ function formatResultItem(result: any): [string, number] {
                             </span>
                         </span>
                         <div class="float-end">
-                            <button type="button" class="btn btn-primary btn-sm" @click="setExample()">Example</button>
+                            <button v-if="exampleEnabled" type="button" class="btn btn-primary btn-sm" @click="setExample()">Example</button>
                             <button type="button" class="btn btn-primary btn-sm" @click="validate()">Validate</button>
                         </div>
                     </div>

@@ -82,6 +82,7 @@ func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Cl
 
 		var msg any
 		var messageId string
+		validationErrors := make(map[string]string)
 		for id, m := range c.cfg.Messages {
 			if m.Value == nil || m.Value.Payload == nil || m.Value.Payload.Value == nil {
 				continue
@@ -97,6 +98,7 @@ func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Cl
 			if err == nil {
 				break
 			}
+			validationErrors[id] = err.Error()
 		}
 		channelName := c.cfg.ResolveAddress()
 
@@ -113,7 +115,7 @@ func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Cl
 
 		if err != nil {
 			c.monitor.MessagesError.WithLabel(labels...).Add(1)
-			l.Error = err.Error()
+			l.ValidationErrors = validationErrors
 			return err
 		}
 		l.Actions = c.runMessageEvent(client, msg)

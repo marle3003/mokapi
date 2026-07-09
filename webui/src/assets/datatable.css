@@ -17,7 +17,7 @@ table.dataTable th {
     padding: 3px 0 3px 12px;
     border-color: var(--datatable-border-color);
     border-top-width: 0;
-    border-bottom-width: 3px;
+    border-bottom-width: 2px;
     font-weight: 500;
 }
 table.dataTable.compact th {

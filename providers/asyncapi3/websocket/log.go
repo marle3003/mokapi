@@ -13,15 +13,15 @@ const (
 )
 
 type MessageLog struct {
-	Channel    string           `json:"channel"`
-	Message    LogValue         `json:"message"`
-	MessageId  string           `json:"messageId"`
-	Direction  Direction        `json:"direction"`
-	Client     ClientLog        `json:"client"`
-	ScriptFile string           `json:"script"`
-	Api        string           `json:"api"`
-	Actions    []*common.Action `json:"actions"`
-	Error      string           `json:"error,omitempty"`
+	Channel   string           `json:"channel"`
+	Message   LogValue         `json:"message"`
+	MessageId string           `json:"messageId"`
+	Direction Direction        `json:"direction"`
+	Client    ClientLog        `json:"client"`
+	Api       string           `json:"api"`
+	Actions   []*common.Action `json:"actions"`
+	// [messageId]error
+	ValidationErrors map[string]string `json:"validationErrors,omitempty"`
 }
 
 type ClientLog struct {
