@@ -178,7 +178,7 @@ func TestStore(t *testing.T) {
 				evt = evts[1]
 				m := evt.Data.(*websocket.MessageLog)
 				require.Equal(t, "message", evt.Traits.Get("type"))
-				require.Equal(t, "invalid json format: invalid character 'h' looking for beginning of value", m.Error)
+				require.Equal(t, map[string]string{"ChatMessage": "invalid json format: invalid character 'h' looking for beginning of value"}, m.ValidationErrors)
 			},
 		},
 		{
@@ -298,7 +298,7 @@ console.log(event.type)
 				evt := evts[0]
 				d := evt.Data.(*websocket.MessageLog)
 				require.Len(t, d.Actions, 0)
-				require.Equal(t, "Validation error count 1:\n\t- #/required: required properties are missing: text", d.Error)
+				require.Equal(t, map[string]string{"ChatMessage": "Validation error count 1:\n\t- #/required: required properties are missing: text"}, d.ValidationErrors)
 
 				evt = evts[1]
 				d = evt.Data.(*websocket.MessageLog)
