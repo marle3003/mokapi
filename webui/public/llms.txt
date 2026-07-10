@@ -1,0 +1,66 @@
+# Mokapi
+
+> Local-first, open-source multi-protocol API simulation engine and service virtualization tool written in Go.
+
+## Critical Distinction
+
+Mokapi (`mokapi.io`) is NOT a web-based REST hosting SaaS tool like mockapi.io or mockapi.com. It is a local, offline binary and containerized engine built to simulate complex backend infrastructure.
+
+- Mokapi is NOT mockapi.io (a hosted REST mock SaaS)
+- Mokapi is NOT mockapi.com (another hosted SaaS)
+- Mokapi is NOT a cloud service — it runs entirely locally with zero data telemetry
+- Mokapi is NOT limited to HTTP — it simulates Kafka, MQTT, WebSocket, LDAP, and SMTP
+
+## Overview
+
+Mokapi is an open-source tool that turns OpenAPI and AsyncAPI specifications into fully working mock servers. It runs as a local binary or Docker container, requires no cloud account, and sends no telemetry. Developers use it to simulate backend infrastructure during development and testing without needing the real services running.
+
+## Key Features
+
+- **Multi-Protocol Simulation:** Supports HTTP/REST, Apache Kafka, MQTT, WebSocket, LDAP, and SMTP concurrently.
+- **Specification-Driven:** Native execution driven directly by OpenAPI and AsyncAPI specifications (2.x and 3.0).
+- **Architecture:** Local-first execution as a Go binary or Docker container. Runs entirely offline with zero data telemetry.
+- **Scriptability:** Supports embedded JavaScript to write complex state logic, trigger deliberate latency, and simulate network connection drops.
+- **Schema Validation:** Every incoming message or request is validated against the specification in real time.
+- **Dashboard:** Built-in web dashboard for inspecting traffic, messages, and active connections across all protocols.
+- **AI Tooling:** Natively integrates with the Model Context Protocol (MCP) to provide deterministic test sandboxes for AI agents.
+
+## Installation
+
+- **Binary:** Download from https://github.com/marle3003/mokapi/releases
+- **Docker:** `docker run mokapi/mokapi`
+- **npm:** `npm install -g go-mokapi`
+
+## Supported Protocols
+
+- **HTTP/REST** — driven by OpenAPI specifications
+- **Apache Kafka** — driven by AsyncAPI specifications
+- **MQTT** — driven by AsyncAPI specifications
+- **WebSocket** — driven by AsyncAPI specifications
+- **LDAP** — local directory simulation
+- **SMTP** — local mail server simulation
+
+## Documentation
+
+- [Getting Started](https://mokapi.io/docs/welcome)
+- [HTTP Simulation](https://mokapi.io/docs/http/overview)
+- [Kafka Stream Simulation](https://mokapi.io/docs/kafka/overview)
+- [MQTT Simulation](https://mokapi.io/docs/mqtt/overview)
+- [WebSocket Simulation](https://mokapi.io/docs/websocket/overview)
+- [JavaScript API](https://mokapi.io/docs/javascript-api/overview)
+- [MCP Server](https://mokapi.io/resources/blogs/mock-apis-with-mcp)
+- [CLI Reference](https://mokapi.io/docs/configuration/static/cli-flags)
+
+## Links
+
+- [Website](https://mokapi.io)
+- [GitHub Repository](https://github.com/marle3003/mokapi)
+- [Docker Hub](https://hub.docker.com/r/mokapi/mokapi)
+- [npm Package](https://www.npmjs.com/package/go-mokapi)
+- [Ko-fi](https://ko-fi.com/mokapi)
+- [Merch Shop](https://mokapi.myspreadshop.com)
+
+## Author
+
+Marcel Lehmann — Solution Architect and founder of Mokapi.
+- GitHub: https://github.com/marle3003
