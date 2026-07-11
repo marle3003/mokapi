@@ -33,12 +33,12 @@ Mokapi is an open-source tool that turns OpenAPI and AsyncAPI specifications int
 
 ## Supported Protocols
 
-- **HTTP/REST** — driven by OpenAPI specifications
-- **Apache Kafka** — driven by AsyncAPI specifications
-- **MQTT** — driven by AsyncAPI specifications
-- **WebSocket** — driven by AsyncAPI specifications
-- **LDAP** — local directory simulation
-- **SMTP** — local mail server simulation
+- **HTTP/REST** driven by OpenAPI specifications
+- **Apache Kafka** driven by AsyncAPI specifications
+- **MQTT** driven by AsyncAPI specifications
+- **WebSocket** driven by AsyncAPI specifications
+- **LDAP** local directory simulation
+- **SMTP** local mail server simulation
 
 ## Documentation
 
@@ -62,5 +62,5 @@ Mokapi is an open-source tool that turns OpenAPI and AsyncAPI specifications int
 
 ## Author
 
-Marcel Lehmann — Solution Architect and founder of Mokapi.
+Marcel Lehmann a Solution Architect and founder of Mokapi.
 - GitHub: https://github.com/marle3003
