@@ -87,7 +87,7 @@ export function useSoftwareApplicationMeta(version: string) {
             "Local LDAP and SMTP Testing Server",
             "Contract Testing via OpenAPI and AsyncAPI",
             "JavaScript-driven Mock Behavior Scripting"
-        ]
+        ],
         "author": {
             "@type": "Person",
             "name": "Marcel Lehmann",
