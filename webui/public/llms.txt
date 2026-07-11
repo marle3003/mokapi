@@ -57,6 +57,7 @@ Mokapi is an open-source tool that turns OpenAPI and AsyncAPI specifications int
 - [GitHub Repository](https://github.com/marle3003/mokapi)
 - [Docker Hub](https://hub.docker.com/r/mokapi/mokapi)
 - [npm Package](https://www.npmjs.com/package/go-mokapi)
+- [Mokapi vs Alternatives](https://mokapi.io/docs/compare)
 - [Ko-fi](https://ko-fi.com/mokapi)
 - [Merch Shop](https://mokapi.myspreadshop.com)
 

@@ -22,6 +22,12 @@ const pages = [
     changefreq: 'weekly'
   },
   {
+    file: './src/views/Mqtt.vue',
+    url: 'https://mokapi.io/mqtt',
+    priority: '0.8',
+    changefreq: 'weekly'
+  },
+  {
     file: './src/views/Mail.vue',
     url: 'https://mokapi.io/mail',
     priority: '0.8',
@@ -30,6 +36,12 @@ const pages = [
   {
     file: './src/views/Ldap.vue',
     url: 'https://mokapi.io/ldap',
+    priority: '0.8',
+    changefreq: 'weekly'
+  },
+  {
+    file: './src/views/Compare.vue',
+    url: 'https://mokapi.io/compare',
     priority: '0.8',
     changefreq: 'weekly'
   },
