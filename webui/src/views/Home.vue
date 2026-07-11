@@ -289,6 +289,12 @@ function showImage(evt: MouseEvent) {
             </p>
           </div>
         </div>
+          <div class="text-center mt-5" data-v-75430ed5="">
+            <p class="text-muted">
+              Evaluating alternatives? 
+              <a href="/compare">See how Mokapi compares to WireMock, Microcks, Postman, and others →</a>
+            </p>
+          </div>
       </div>
     </section>
 
