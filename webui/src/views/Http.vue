@@ -292,9 +292,9 @@ function getConsoleContent() {
     border-radius: 50%;
     display: inline-block;
 }
-.red { background: #ff5f56; }
-.yellow { background: #ffbd2e; }
-.green { background: #27c93f; }
+.terminal-header .red { background: #ff5f56; }
+.terminal-header .yellow { background: #ffbd2e; }
+.terminal-header .green { background: #27c93f; }
 .terminal-title {
   flex: 1;
   color: #ddd;

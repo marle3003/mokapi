@@ -160,10 +160,10 @@ function showImage(evt: MouseEvent) {
               </div>
               <div class="tab-content code">
                 <div class="tab-pane fade show active" id="tabPanel-1-CLI" role="tabpanel" aria-labelledby="tab-1-CLI">
-                  <pre v-highlightjs="config"><code class="application/yaml"></code></pre>
+                  <pre v-highlightjs><code class="application/yaml">{{ config }}</code></pre>
                 </div>
                 <div class="tab-pane fade" id="tabPanel-1-File" role="tabpanel" aria-labelledby="tab-1-File">
-                  <pre v-highlightjs="script"><code class="javascript"></code></pre>
+                  <pre v-highlightjs><code class="javascript">{{ script }}</code></pre>
                 </div>
               </div>
             </div>
