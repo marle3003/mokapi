@@ -14,7 +14,7 @@
     {
       "matchUpdateTypes": ["patch", "minor"],
       "automerge": true,
-      "schedule": ["at any time"]
+      "schedule": ["on friday"]
     },
     {
       "matchUpdateTypes": ["major"],
