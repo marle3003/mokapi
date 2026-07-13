@@ -1,6 +1,6 @@
 ---
 title: "WebSocket API Mocking: Build a Chat Room Mock with Mokapi"
-description: Learn how to mock WebSocket servers using AsyncAPI specifications. Create a lightweight WebSocket mock server for real-time testing and local development.
+description: Learn how to set up Mokapi to mock a WebSocket chat server using an AsyncAPI specification, including message validation, scripted replies, and dashboard monitoring.
 ---
 
 # Mocking a Chat Room with AsyncAPI WebSocket
@@ -100,19 +100,17 @@ mokapi asyncapi.yaml
 Mokapi's log output will confirm a WebSocket server is running at `localhost:8765`, ready to accept
 connections.
 
-``` box=warning title="Port Conflict with Mokapi's Built-in Services"
+``` box=warning title="Avoid port 8080 for WebSocket servers"
 Mokapi uses port `8080` by default for its dashboard, health checks, and MCP server. If your
-WebSocket server runs on the same port, these services will conflict. Choose a different port for
-your WebSocket server — `8765` is a common choice — or move Mokapi's built-in services to a
-different port using the following flags:
+AsyncAPI spec sets the WebSocket host to `localhost:8080`, it will conflict with these built-in
+services. Use a different port in your spec — this guide uses `8765` — or move Mokapi's built-in
+services away from `8080` using all three flags:
 
-| Service       | Flag                  | Default  |
-|---------------|-----------------------|----------|
-| Dashboard/API | `--api-port`          | `8080`   |
-| Health check  | `--health-port`       | `8080`   |
-| MCP server    | `--mcp-server-port`   | `8080`   |
+```bash
+mokapi --api-port 9000 --health-port 9000 --mcp-server-port 9001 asyncapi.yaml
+```
 
-See the [CLI flags reference](/docs/configuration/static/cli-flags) for details.
+See the [CLI flags reference](/docs/configuration/static/cli-flags) for all available options.
 ```
 
 ## Add a Broadcast Script
@@ -127,11 +125,13 @@ import { on } from 'mokapi'
 
 export default function() {
   on('websocket', function(event) {
-    // Broadcast the message to all clients in the same room
-    event.broadcast({
-      userId: event.message.userId,
-      text: event.message.text
-    })
+    if (event.type === 'message') {
+      // Broadcast the message to all clients in the same room
+      event.broadcast({
+        userId: event.message.userId,
+        text: event.message.text
+      })
+    }
   })
 }
 ```
@@ -185,11 +185,11 @@ dashboard to inspect WebSocket traffic directly.
 
 The dashboard shows the full conversation per connection:
 
-| Source    | Destination | Value                                       | Time     |
-|-----------|-------------|----------------------------------------------|----------|
-| 127.0.0.1 | server      | `{"userId":"alice","text":"Hello everyone!"}` | 10:42:01 |
-| server    | 127.0.0.1   | `{"userId":"alice","text":"Hello everyone!"}` | 10:42:01 |
-| server    | 127.0.0.3   | `{"userId":"alice","text":"Hello everyone!"}` | 10:42:01 |
+| Source       | Destination        | Value                                         | Time     |
+|--------------|--------------------|-----------------------------------------------|----------|
+| 127.0.0.1    | server             | `{"userId":"alice","text":"Hello everyone!"}` | 10:42:01 |
+| server       | 127.0.0.1          | `{"userId":"alice","text":"Hello everyone!"}` | 10:42:01 |
+| server       | 127.0.0.3          | `{"userId":"alice","text":"Hello everyone!"}` | 10:42:01 |
 
 ## Schema Validation
 
@@ -215,6 +215,36 @@ with status `1003 Unsupported Data` and a reason like:
 Validation error: #/required: required properties are missing: userId
 ```
 
+## Send a Welcome Message on Connect
+
+Use the `connect` event to send a message to a client as soon as they connect, before they send
+anything:
+
+```javascript
+import { on } from 'mokapi'
+
+export default function() {
+  on('websocket', function(event) {
+    if (event.type === 'connect') {
+      event.client.send({ userId: 'server', text: 'welcome to the chat!' })
+      event.broadcast({ userId: 'server', text: `${event.client.query['userId']} joined` })
+    }
+    if (event.type === 'message') {
+      event.broadcast({
+        userId: event.message.userId,
+        text: event.message.text
+      })
+    }
+    if (event.type === 'close') {
+      event.broadcast({ userId: 'server', text: `${event.client.query['userId']} left` })
+    }
+  })
+}
+```
+
+This models a complete chat room lifecycle — join notification, message broadcasting, and leave
+notification — all in one handler.
+
 ## Reply to a Specific Client
 
 To send a response only to the client that sent the message rather than broadcasting to everyone,
@@ -225,14 +255,16 @@ import { on } from 'mokapi'
 
 export default function() {
   on('websocket', function(event) {
-    if (event.message.text === 'ping') {
-      event.reply({ userId: 'server', text: 'pong' })
-      return
+    if (event.type === 'message') {
+      if (event.message.text === 'ping') {
+        event.reply({ userId: 'server', text: 'pong' })
+        return
+      }
+      event.broadcast({
+        userId: event.message.userId,
+        text: event.message.text
+      })
     }
-    event.broadcast({
-      userId: event.message.userId,
-      text: event.message.text
-    })
   })
 }
 ```

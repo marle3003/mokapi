@@ -408,6 +408,10 @@ const router = createRouter({
       component: () => import('@/views/Mail.vue')
     },
     {
+      path: '/compare',
+      component: () => import('@/views/Compare.vue')
+    },
+    {
       path: '/docs/examples/:pathMatch(.*)*',
       redirect: to => {
         if (typeof to.params.pathMatch === 'string') {

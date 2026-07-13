@@ -75,7 +75,7 @@ const client = computed(() => {
         <websocket-messages-card :service="service.data" :client-id="client.id" :hide-when-empty="true" />
       </div>
       <div class="card-group">
-        <websocket-events :service="service.data" :client-id="clientId" />
+        <websocket-events :service="service.data" :client-id="client.id" />
       </div>
   </div>
   <div v-if="!service.isLoading && !client">

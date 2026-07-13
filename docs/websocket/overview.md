@@ -40,7 +40,7 @@ Ready to dive in? Head over to the WebSocket [Quick Start Guide](/docs/websocket
 run your first WebSocket mock in seconds.
 ```
 
-``` box=warning title="Port Conflict with Mokapi's Built-in Services"
+``` box=warning title="Avoid port 8080"
 Mokapi uses port `8080` by default for its dashboard, health checks, and MCP server. If your
 WebSocket server runs on the same port, these services will conflict. Choose a different port for
 your WebSocket server — `8765` is a common choice — or move Mokapi's built-in services to a
@@ -55,7 +55,7 @@ different port using the following flags:
 See the [CLI flags reference](/docs/configuration/static/cli-flags) for details.
 ```
 
-## Why Choose Mokapi to Mock WebSocket Server Workflows?
+## Why Use Mokapi for WebSocket?
 
 Testing real-time applications against a live backend is slow, hard to reproduce, and requires every
 dependent service to be running. Mokapi provides a lightweight, stable **WebSocket mock server** built
@@ -74,7 +74,7 @@ every test starts from a clean slate with no leftover connections or messages fr
 
 Mokapi integrates with the existing WebSocket ecosystem and supports modern industry standards:
 
-**AsyncAPI specifications**: Full support for both version 2.x and version 3.0  to generate your **mock WebSocket** API.
+**AsyncAPI specifications**: Full support for both version 2.x and version 3.0.
 
 **Schema formats**: Built-in validation for JSON Schema.
 
@@ -136,11 +136,17 @@ import { on } from 'mokapi'
 
 export default function() {
   on('websocket', function(event) {
-    // broadcast every message to all clients in the same channel
-    event.broadcast({
-      userId: event.message.userId,
-      text: event.message.text
-    })
+    if (event.type === 'connect') {
+      // send a welcome message when a client connects
+      event.client.send({ userId: 'server', text: 'welcome!' })
+    }
+    if (event.type === 'message') {
+      // broadcast every message to all clients in the same channel
+      event.broadcast({
+        userId: event.message.userId,
+        text: event.message.text
+      })
+    }
   })
 }
 ```
@@ -158,11 +164,11 @@ Use scripts to simulate conditions that are difficult to reproduce with a real b
 Unlike HTTP, a WebSocket connection is long-lived. Mokapi tracks each connection and the messages
 that flow over it. The dashboard shows the full conversation per connection:
 
-| Source    | Destination | Value                              | Time      |
-|-----------|-------------|-------------------------------------|-----------|
-| 127.0.0.1 | server      | `{"userId":"alice","text":"hi"}`   | 10:42:01  |
-| server    | 127.0.0.1   | `{"userId":"alice","text":"hi"}`   | 10:42:01  |
-| server    | 127.0.0.2   | `{"userId":"alice","text":"hi"}`   | 10:42:01  |
+| Source    | Destination     | Value                            | Time     |
+|-----------|-----------------|----------------------------------|----------|
+| 127.0.0.1 | server          | `{"userId":"alice","text":"hi"}` | 10:42:01 |
+| server    | 127.0.0.1       | `{"userId":"alice","text":"hi"}` | 10:42:01 |
+| server    | 127.0.0.2       | `{"userId":"alice","text":"hi"}` | 10:42:01 |
 
 ## Next Steps
 

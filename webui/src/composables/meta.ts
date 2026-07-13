@@ -63,18 +63,36 @@ export function useSoftwareApplicationMeta(version: string) {
         "@type": "SoftwareApplication",
         "name": "Mokapi",
         "url": "https://mokapi.io",
+        "sameAs": [
+            "https://github.com/marle3003/mokapi",
+            "https://hub.docker.com/r/mokapi/mokapi",
+            "https://www.npmjs.com/package/go-mokapi"
+        ],
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Windows, macOS, Linux",
-        "description": "An open-source, local-first multi-protocol mock API tool driven by OpenAPI and AsyncAPI specifications to simulate HTTP, Kafka, and other protocols.",
+        "description": "An open-source, local-first multi-protocol mock API tool driven by OpenAPI and AsyncAPI specifications to simulate HTTP, Kafka, WebSocket, MQTT, SMTP, and LDAP.",
         "offers": {
             "@type": "Offer",
             "price": "0",
             "priceCurrency": "USD"
         },
+        "softwareRequirements": "Docker, Go runtime, or Node.js/npm",
         "downloadUrl": "https://github.com/marle3003/mokapi/releases",
         "softwareVersion": version, 
         "license": "https://github.com/marle3003/mokapi/blob/main/LICENSE",
-        "features": "HTTP Mocking, Kafka Mocking, OpenAPI Support, AsyncAPI Support, Local-first API Simulation"
+        "keywords": "Mokapi, API simulation engine, Service Virtualization, Apache Kafka mock server, local LDAP mock, AsyncAPI simulation, offline development container, Go software",
+        "featureList": [
+            "Multi-Protocol Service Virtualization",
+            "Apache Kafka Event Stream Simulation",
+            "Local LDAP and SMTP Testing Server",
+            "Contract Testing via OpenAPI and AsyncAPI",
+            "JavaScript-driven Mock Behavior Scripting"
+        ],
+        "author": {
+            "@type": "Person",
+            "name": "Marcel Lehmann",
+            "url": "https://github.com/marle3003"
+        },
     }) 
 
     document.head.appendChild(script);

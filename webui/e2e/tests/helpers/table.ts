@@ -14,3 +14,10 @@ export async function getCellByColumnName(table: Locator, columnName: string, ro
     
     return row.locator(`td:nth-child(${headerIndex})`);
 }
+
+export async function getCellByName(table: Locator, columnName: string, row: Locator): Promise<Locator> {
+    const headers = table.getByRole('columnheader');
+    const colIndex = await headers.allInnerTexts().then(texts => texts.indexOf(columnName));
+
+    return row.getByRole('cell').nth(colIndex);
+}

@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"context"
+	"encoding/json"
 	"mokapi/media"
 	"mokapi/runtime/events"
 	"time"
@@ -25,6 +26,7 @@ func (c *Client) sendMessage(message any) error {
 	var err error
 	var data []byte
 	var messageId string
+	validationErrors := make(map[string]string)
 	for id, m := range c.channel.cfg.Messages {
 		if m.Value == nil || m.Value.Payload == nil || m.Value.Payload.Value == nil {
 			continue
@@ -35,6 +37,7 @@ func (c *Client) sendMessage(message any) error {
 			messageId = id
 			break
 		}
+		validationErrors[id] = err.Error()
 	}
 
 	l := messageLog(c.channel, data, messageId, c, Receive)
@@ -51,7 +54,12 @@ func (c *Client) sendMessage(message any) error {
 
 	if err != nil {
 		c.channel.monitor.MessagesError.WithLabel(labels...).Add(1)
-		l.Error = err.Error()
+		b, _ := json.Marshal(message)
+		l.Message = LogValue{
+			Value:  string(b),
+			Binary: b,
+		}
+		l.ValidationErrors = validationErrors
 		return err
 	}
 

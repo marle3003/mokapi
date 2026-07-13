@@ -98,13 +98,18 @@
               <h3>Links</h3>
               <ul>
                 <li>
+                  <a href="https://www.npmjs.com/package/go-mokapi" target="_blank">
+                    NPM Registry
+                  </a>
+                </li>
+                <li>
                   <a href="https://hub.docker.com/r/mokapi/mokapi" target="_blank">
                     Docker Hub
                   </a>
                 </li>
                 <li>
-                  <a href="https://www.npmjs.com/package/go-mokapi" target="_blank">
-                    NPM Registry
+                  <a href="https://community.chocolatey.org/packages/mokapi" target="_blank">
+                    Chocolatey
                   </a>
                 </li>
                 <li>
@@ -112,18 +117,38 @@
                     GitHub Repository
                   </a>
                 </li>
-                <li>
-                  <a href="https://mokapi.myspreadshop.ch/" target="_blank" rel="noopener noreferrer" title="Support Mokapi">
-                    Merchandise Store
-                  </a>
-                </li>
               </ul>
             </div>
           </div>
         </div>        
       </div>
-      <div class="d-flex justify-content-center mt-3">
-        <a href="https://www.buymeacoffee.com/mokapi" target="_blank"><img src="https://buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;" ></a>
+      <div class="d-flex flex-column align-items-center gap-2 mt-3">
+        <!-- Ko-fi -->
+        <a href="https://ko-fi.com/mokapi" target="_blank" rel="noopener noreferrer" class="mb-1">
+          <img 
+            src="/support_me_on_kofi_dark.png" 
+            alt="Buy a Beer on Ko-fi" 
+            style="height: 41px !important;"
+          >
+        </a>
+
+        <!-- Merch Shop -->
+        <a 
+          href="https://mokapi.myspreadshop.com/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          title="Mokapi Gear for True API Nerds"
+        >
+          <picture>
+            <source media="(max-width: 576px)" srcset="/merch-2x2.png">
+            <source media="(min-width: 577px)" srcset="/merch-4x1.png">
+            <img 
+              src="/merch-4x1.png" 
+              alt="Mokapi Gear for True API Nerds" 
+              style="width: 100%; max-width: 600px; border-radius: 6px;"
+            >
+          </picture>
+        </a>
       </div>
     </div>
   </footer>
@@ -153,5 +178,45 @@ footer ul li {
 }
 footer a {
   text-decoration: none;
+}
+</style>
+<style scoped>
+.merch-btn {
+  font-family: "DM Sans", Helvetica, "Century Gothic", sans-serif;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  height: 41px;
+  padding: 0 16px;
+  background-color: #242527;
+  color: #fff !important;
+  border-radius: 10px;
+  text-decoration: none !important;
+  white-space: nowrap;
+}
+
+.merch-btn-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.merch-btn-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+
+.merch-btn-title {
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.merch-btn-sub {
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.85;
+  line-height: 1.2;
 }
 </style>

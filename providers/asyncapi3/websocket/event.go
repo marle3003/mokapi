@@ -1,7 +1,6 @@
 package websocket
 
 import (
-	"github.com/dop251/goja"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -54,9 +53,7 @@ func (e *MessageEvent) Reply(message any) {
 	e.Client.Send(message)
 }
 
-func (e *Event) Broadcast(message goja.Value) {
-	m := message.Export()
-	_ = m
+func (e *Event) Broadcast(message any) {
 	for _, c := range e.Channel.ch.clients {
 		err := c.sendMessage(message)
 		if err != nil {

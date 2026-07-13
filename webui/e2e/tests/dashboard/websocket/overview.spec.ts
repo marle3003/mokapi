@@ -1,5 +1,5 @@
 import { test, expect } from '../../models/fixture-dashboard'
-import { getCellByColumnName } from '../../helpers/table'
+import { getCellByColumnName, getCellByName } from '../../helpers/table'
 
 test('Visit Websocket overview', async ({ page }) => {
     await page.goto('/dashboard')
@@ -8,7 +8,7 @@ test('Visit Websocket overview', async ({ page }) => {
 
         const dashboard = page.getByRole('region', { name: 'Dashboard' })
 
-        await expect(page.getByLabel('Websocket Messages')).toHaveText('3')
+        await expect(page.getByLabel('Websocket Messages')).toHaveText('4')
 
         const table = page.getByRole('table', { name: 'Websocket Services' });
         const rows = table.locator('tbody tr');
@@ -39,7 +39,7 @@ test('Visit Websocket overview', async ({ page }) => {
         await expect(await getCellByColumnName(table, 'Name', rows.nth(1))).toHaveText('/chats/{chatId}');
         await expect(await getCellByColumnName(table, 'Summary', rows.nth(1))).toHaveText('');
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(1))).not.toBeEmpty();
-        await expect(await getCellByColumnName(table, 'Messages', rows.nth(1))).toHaveText('1');
+        await expect(await getCellByColumnName(table, 'Messages', rows.nth(1))).toHaveText('2');
 
         await test.step('Visit /chat', async () => {
             const topics = page.getByRole('table', { name: 'Channels' });
@@ -107,10 +107,18 @@ test('Visit Websocket overview', async ({ page }) => {
 
             const messages = page.getByRole('table', { name: 'Messages' });
             const rows = messages.locator('tbody tr');
-            await expect(rows).toHaveCount(1);
-            await expect(await getCellByColumnName(messages, 'Channel', rows.nth(0))).toHaveText('/chats/1234');
+            await expect(rows).toHaveCount(2);
+            let channel = await getCellByColumnName(messages, 'Channel', rows.nth(0))
+            await expect(channel).toHaveText('/chats/1234');
+            await expect(channel.getByRole('img')).not.toBeVisible();
             await expect(await getCellByColumnName(messages, 'Value', rows.nth(0))).toHaveText('{"userId":"carol","username":"Carol","text":"Hi Alice!","timestamp":"2026-02-13T09:49:26.100000+01:00"}');
             await expect(await getCellByColumnName(messages, 'Time', rows.nth(0))).not.toBeEmpty();
+
+            channel = await getCellByColumnName(messages, 'Channel', rows.nth(1))
+            await expect(channel).toHaveText('/chats/1234');
+            await expect(channel.getByRole('img')).toBeVisible();
+            await expect(await getCellByColumnName(messages, 'Value', rows.nth(1))).toHaveText('{"bar": "not a number"}');
+            await expect(await getCellByColumnName(messages, 'Time', rows.nth(1))).not.toBeEmpty();
 
             await test.step('Visit message', async () => {
 
@@ -140,15 +148,58 @@ test('Visit Websocket overview', async ({ page }) => {
 
                     const messages = page.getByRole('table', { name: 'Messages' });
                     const rows = messages.locator('tbody tr');
-                    await expect(rows).toHaveCount(1);
+                    await expect(rows).toHaveCount(3);
 
-                    await rows.nth(0).click()
+                    await rows.nth(1).click()
 
                 })
 
                 await meta.getByLabel('Channel').click();
-                await page.getByRole('region', { name: 'Info' }).getByLabel('Cluster').click();
             })
+
+            await test.step('Visit invalid message', async () => {
+
+                await rows.nth(1).click();
+
+                const validationErrors = page.getByRole('region', { name: 'Validation Errors' })
+
+                const table = validationErrors.getByRole('table', { name: 'Validation Errors' });
+                const errors = table.getByRole('rowgroup');
+                await expect(errors).toHaveCount(2);
+                await expect(await getCellByName(table, 'Message Id', errors.nth(0))).toHaveText('ChatMessage');
+                await expect(await getCellByName(table, 'Error', errors.nth(0))).toHaveText('Validation error count 1');
+
+                await expect(await getCellByName(table, 'Message Id', errors.nth(1))).toHaveText('Foo');
+                await expect(await getCellByName(table, 'Error', errors.nth(1))).toHaveText('Validation error count 2');
+
+                await test.step('check first validation error', async () => {
+                    await (await getCellByName(table, 'Message Id', errors.nth(0))).click()
+                    const list = page.getByRole('list', { name: 'Validation error' })
+                    await expect(list.getByRole('listitem')).toHaveCount(1)
+                    await page.getByRole('button', { name: 'Validate'}).click()
+                    await expect(page.getByRole('dialog').getByRole('region', { name: 'Content' })).toContainText('{"bar": "not a number"}')
+                    await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click()
+                })
+
+                
+                const meta = page.getByRole('region', { name: 'Meta' })
+                await expect(meta.getByLabel('Channel')).toHaveText('/chats/1234');
+                await expect(meta.getByLabel('Time')).not.toBeEmpty();
+                await expect(meta.getByLabel('Client')).toHaveText('127.0.0.1:53298');
+                await expect(meta.getByLabel('Content Type')).toHaveText('-');
+                await expect(meta.getByLabel('Service Type')).toHaveText('Websocket');
+
+                const value = page.getByRole('region', { name: 'Value' });
+                await expect(value.getByLabel('Content Type')).not.toBeVisible();
+                await expect(value.getByLabel('Lines of Code')).toHaveText('1 lines');
+                await expect(value.getByLabel('Size of Code')).toHaveText('23 B');
+                await expect(value.getByLabel('Content', { exact: true })).toContainText('{"bar": "not a number"}');
+
+                await meta.getByLabel('Channel').click();
+            })
+
+            
+            await page.getByRole('region', { name: 'Info' }).getByLabel('Cluster').click();
 
         })
 

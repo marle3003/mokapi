@@ -52,7 +52,7 @@ export let services = [
             title: 'Chat Message',
             payload: { schema: ChatMessage },
             contentType: 'application/json',
-          },
+          }
         },
       },
       {
@@ -64,6 +64,12 @@ export let services = [
             payload: { schema: ChatMessage },
             contentType: 'application/json',
           },
+          Foo: {
+            name: 'ChatMessage',
+            title: 'Chat Message',
+            payload: { schema: { type: 'object', required: ['foo', 'bar'], properties: { foo: { type: 'string' }, bar: { type: 'number'} } } },
+            contentType: 'application/json',
+          }
         },
         instances: [
           {
@@ -122,7 +128,7 @@ export let events = [
       name: 'WebSocket Chat API',
       channel: '/chat',
       type: 'message',
-      clientId: '67bab4de-e477-4afe-8696-df3102f7a8d8',
+      clientId: clients[0].id,
     },
     time: '2026-02-13T09:49:25.482366+01:00',
     data: {
@@ -132,17 +138,18 @@ export let events = [
       },
       messageId: 'ChatMessage',
       api: 'WebSocket Chat API',
-      client: { ...clients[0], direction: 'send', server: clients[0].serverAddress }
+      direction: 'send',
+      client: { ...clients[0], server: clients[0].serverAddress }
     },
   },
   {
-    id: 'a1b2c3d4-0002-4d2d-a1b4-f022aeddeaf8',
+    id: '4d955c5e-030e-4b29-a762-c3be07d9b7f0',
     traits: {
       namespace: 'websocket',
       name: 'WebSocket Chat API',
       channel: '/chat',
       type: 'message',
-      clientId: 'b4788220-b169-483c-8406-498fbeb482fd',
+      clientId: clients[1].id,
     },
     time: '2026-02-13T09:49:26.100000+01:00',
     data: {
@@ -152,7 +159,8 @@ export let events = [
       },
       messageId: 'ChatMessage',
       api: 'WebSocket Chat API',
-      client: { ...clients[1], direction: 'send', server: clients[1].serverAddress }
+      direction: 'send',
+      client: { ...clients[1], server: clients[1].serverAddress }
     }
   },
   {
@@ -162,7 +170,7 @@ export let events = [
       name: 'WebSocket Chat API',
       channel: '/chats/{chatId}',
       type: 'message',
-      clientId: '5cc3940e-8b3f-4c65-9f85-9fd6f7e51e5e',
+      clientId: clients[1].id,
     },
     time: '2026-02-13T09:49:26.100000+01:00',
     data: {
@@ -172,7 +180,8 @@ export let events = [
       },
       messageId: 'ChatMessage',
       api: 'WebSocket Chat API',
-      client: { ...clients[1], direction: 'send', server: clients[1].serverAddress },
+      direction: 'send',
+      client: { ...clients[1], server: clients[1].serverAddress },
       actions: [
         {
             duration: 20,
@@ -184,6 +193,41 @@ export let events = [
             }
         }
       ]
-    }
+    },
+  },
+  {
+    id: '0ea1241e-2468-4f58-9da0-4d0c08bdf6fb',
+    traits: {
+      namespace: 'websocket',
+      name: 'WebSocket Chat API',
+      channel: '/chats/{chatId}',
+      type: 'message',
+      clientId: clients[1].id,
+    },
+    time: '2026-02-13T09:50:26.100000+01:00',
+    data: {
+      channel: '/chats/1234',
+      message: {
+        value: '{"bar": "not a number"}',
+      },
+      api: 'WebSocket Chat API',
+      direction: 'send',
+      client: { ...clients[1], server: clients[1].serverAddress },
+      validationErrors: {
+        ChatMessage: 'Validation error count 1:\n\t- #/type: invalid type, expected object but got string',
+        Foo: 'Validation error count 2:\n\t- #/bar/type: invalid type, expected number but got string\n\t- #/required: required properties are missing: foo'
+      },
+      actions: [
+        {
+            duration: 20,
+            tags: {
+                name: "websocket",
+                file: "examples/mokapi/websocket.js",
+                fileKey: "b6fea8ac-56c7-4e73-a9c0-6337640bdca8",
+                event: "websocket"
+            }
+        }
+      ]
+    },
   },
 ];
