@@ -226,10 +226,9 @@
 }
 
 .table-markdown code {
-    font-size: 0.9em;
-    background: #f5f5f5;
-    padding: 1px 4px;
-    border-radius: 3px;
+  color: #e63946;
+
+  font-weight: 600
 }
 
 .status {

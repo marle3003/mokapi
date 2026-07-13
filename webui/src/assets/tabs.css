@@ -126,7 +126,6 @@
     color: var(--code-tabs-color);
 }
 .code-tabs button[role="tab"].active, .code .code-tabs button[role="tab"]:hover {
-    color: var(--code-tabs-color-active);
     border-color: var(--code-tabs-border-color-active);
     border-bottom-width: 3px;
     border-bottom-style: solid;

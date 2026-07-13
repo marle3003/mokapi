@@ -268,7 +268,7 @@ watch(
 <style scoped>
 .source-view .header {
   padding: 8px;
-  border: 1px solid var(--source-border);
+  border: 2px solid var(--source-border);
   border-radius: 6px 6px 0 0;
   color: var(--color-text-light);
   display: flex;
@@ -279,7 +279,7 @@ watch(
   line-height: 30px;
 }
 .source-view .header .controls {
-  border: 1px solid var(--source-border);
+  border: 2px solid var(--source-border);
   border-radius: 6px;
 }
 .source-view .header .view {
@@ -295,17 +295,17 @@ watch(
   color: var(--source-header-color);
   display: inline-grid;
   place-content: center;
-  border-right: 1px solid var(--source-border);
+  border-right: 2px solid var(--source-border);
 }
 .source-view .header .controls > a {
   font-size: 0.9rem;
-  border-right: 1px solid var(--source-border);
+  border-right: 2px solid var(--source-border);
   border-top-left-radius: 6px;
   border-bottom-left-radius: 6px;
 }
 .source-view .header button.active {
   background-color: black !important;
-  outline: 1px solid var(--source-border);
+  outline: 2px solid var(--source-border);
   border-radius: 6px;
 }
 .source-view .header .controls > button, .header .controls > a {
@@ -340,7 +340,7 @@ watch(
   background-color: var(--source-header-background-active) !important;
 }
 .source-view .source {
-  border: 1px solid var(--source-border);
+  border: 2px solid var(--source-border);
   border-top: 0;
   border-radius: 0 0 6px 6px;
   overflow: hidden;

@@ -282,7 +282,7 @@ const summary = [
         <h2 class="text-center mb-2">Which Tool Should You Choose?</h2>
         <p class="text-center text-muted mb-4">Quick reference for common use cases</p>
         <div class="table-responsive">
-          <table class="table summary-table">
+          <table class="table dataTable">
             <thead>
               <tr>
                 <th>I need…</th>
@@ -435,25 +435,6 @@ const summary = [
 /* Summary table */
 .summary-section {
   background-color: var(--color-background-soft, #f8f9fa);
-}
-
-.summary-table {
-  font-size: 0.9rem;
-}
-
-.summary-table thead th {
-  font-weight: 600;
-  border-bottom: 2px solid var(--color-border, #dee2e6);
-  padding: 0.75rem 1rem;
-}
-
-.summary-table td {
-  padding: 0.65rem 1rem;
-  vertical-align: middle;
-}
-
-.summary-table .mokapi-row {
-  background-color: rgba(13, 110, 253, 0.04);
 }
 
 .text-mokapi {

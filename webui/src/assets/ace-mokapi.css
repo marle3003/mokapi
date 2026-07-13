@@ -1,12 +1,3 @@
-.ace-mokapi-dark {
-    background-color: #0d1117;
-    color: rgb(230, 237, 243);
-}
-.ace-mokapi-dark .ace_gutter {
-    background-color: #0d1117;
-    color: rgb(132, 141, 151);
-}
-
 .ace-mokapi-dark .ace_marker-layer .ace_selected-word, .ace-mokapi-dark  .ace_marker-layer .ace_selection {
     background: #1e4173;
 }
