@@ -193,7 +193,7 @@ func TestHandler_Kafka(t *testing.T) {
 					asyncapi3test.WithChannel("foo",
 						asyncapi3test.WithChannelTag("env:test", "bar"),
 					),
-					asyncapi3test.WithChannel("bar"),
+					asyncapi3test.WithChannel("bar", asyncapi3test.WithChannelAddress("bar-1")),
 				)
 				s := store.New(c, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 
@@ -204,13 +204,13 @@ func TestHandler_Kafka(t *testing.T) {
 
 				app.Monitor.Kafka.Messages.WithLabel("foo", "foo").Add(1)
 				app.Monitor.Kafka.LastMessage.WithLabel("foo", "foo").Set(2)
-				app.Monitor.Kafka.Messages.WithLabel("foo", "bar").Add(10)
-				app.Monitor.Kafka.LastMessage.WithLabel("foo", "bar").Set(11)
+				app.Monitor.Kafka.Messages.WithLabel("foo", "bar-1").Add(10)
+				app.Monitor.Kafka.LastMessage.WithLabel("foo", "bar-1").Set(11)
 
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
-			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"bar","metrics":{"kafka_messages_total":10,"kafka_message_timestamp":11}},{"name":"foo","tags":[{"name":"env:test","description":"bar"}],"metrics":{"kafka_messages_total":1,"kafka_message_timestamp":2}}]}`,
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"bar-1","metrics":{"kafka_messages_total":10,"kafka_message_timestamp":11}},{"name":"foo","tags":[{"name":"env:test","description":"bar"}],"metrics":{"kafka_messages_total":1,"kafka_message_timestamp":2}}]}`,
 		},
 		{
 			name: "get topic and multi schema format",
