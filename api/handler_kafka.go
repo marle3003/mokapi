@@ -587,8 +587,8 @@ func getTopicInfos(ki *runtime.KafkaInfo, m *monitor.Kafka) []kafkaTopicInfo {
 		}
 
 		ti.Metrics = kafkaTopicMetric{
-			NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name))),
-			LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name))),
+			NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("topic", name))),
+			LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("topic", name))),
 		}
 
 		topics = append(topics, ti)
