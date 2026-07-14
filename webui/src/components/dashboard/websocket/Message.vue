@@ -219,14 +219,7 @@ const hasActions = computed(() => {
       </section>
     </div>
 
-    <div class="card-group" v-if="data.validationErrors">
-      <section class="card" aria-labelledby="actions">
-          <div class="card-body">
-              <h2 id="actions" class="card-title text-center">Validation Errors</h2>
-              <websocket-validation-errors :validationErrors="data.validationErrors" :channel="service.channels.find(c => c.name === event!.traits.channel)" :value="data.message.value" />
-          </div>
-      </section>
-    </div>
+    <websocket-validation-errors v-if="data.validationErrors" :validationErrors="data.validationErrors" :channel="service.channels.find(c => c.name === event!.traits.channel)" :value="data.message.value" />
 
     <div class="card-group" v-if="hasActions">
       <section class="card" aria-labelledby="actions">

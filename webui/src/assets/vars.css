@@ -1,119 +1,117 @@
-:root{
+:root {
     --header-height: 4rem;
-
-    --color-background: #323743;
-    --color-background-mute:  #2e2e31;
-    --color-background-soft: rgb(40,43,51);
-    --color-background-light: #393a40;
-    
-    --color-background-promo: #323743;
-    --color-border-promo: rgba(211, 212, 213, 0.25);
-
-    --color-border: #282b33;
-
-    --color-grey: rgb(108, 117, 125);
-    --color-red: rgb(255, 46, 74);
-    --color-red-shadow: rgba(255, 46, 74, 0.4);
-    --color-blue: rgb(2, 123, 255);
-    --color-blue-shadow: rgba(2, 123, 255, 0.4);
-    --color-orange: rgb(245, 158, 11);
-    --color-orange-shadow: rgba(245, 158, 11, 0.4);
-    --color-green: rgb(48, 167, 45);
-    --color-green-shadow: rgba(48, 167, 45, 0.4);
-    --color-yellow: rgb(255, 193, 7);
-    --color-yellow-shadow: rgba(255, 193, 7, 0.4);
-    --color-purple: rgb(182, 68, 164);
-    --color-purpl-shadowe: rgba(182, 68, 164, 0.4);
-    --color-teal: rgb(0, 137, 123);
-
-    --color-brand: #d3d4d5;
-    --color-brand-hover: #eabaabff;
-
-    --color-doc-link: #eabaabff;
-    --color-doc-link-active: #a5899fff;
-    --color-doc-text-hover: #353e5bff;
-    --color-doc-border-hover: #a5899fff;
-
-    --color-button-link: #eabaabff;
-    --color-button-link-active: #a5899fff;
-    --color-button-link-inactive: #a0a1a7;
-    --color-button-text-hover: #353e5bff;
-    --color-button-border-hover: #a5899fff;
-
-    --color-refresh-background: #eabaabff;
-
-    --color-text: #d3d4d5;
-    --color-text-light: #a0a1a7;
-
-    --color-disabled: #a0a1a7;
-
-    --color-datatable-header-text: #eabaabff;
-    --color-datatable-border: #52555d;
-
-    --color-tabs-border: #52555d;
-    --color-tabs-background: #3a3e45;
-    --color-tabs-text: #eabaabff;
-
-    --color-popover-border: #52555d;
-
-
-    --header-color: rgb(255,255,255);
-    --header-link-color: var(--header-color);
-    --header-link-color-active: #eabaabff;
-
-    --icon-color: #eabaabff;
-
-    --form-color-border-active: #eabaabff;
-
-    --link-color: #eabaabff;
-    --link-color-active: #eabaabff;
  
-    --nav-color: #d3d4d5;
-    --nav-color-active: #eabaabff;
+    --color-background:       #161518;
+    --color-background-mute:  #0f0e11;
+    --color-background-soft:  #2c2a3a;
+    --color-background-light: #353e5c;
+ 
+    --color-background-promo: #21202a;
+    --color-border-promo:     rgba(234, 186, 171, 0.15);
+ 
+    --color-border:           #3a3848;
+ 
+    --color-grey:             rgb(108, 117, 125);
+    --color-red:              rgb(255, 46, 74);
+    --color-red-shadow:       rgba(255, 46, 74, 0.4);
+    --color-blue:             rgb(2, 123, 255);
+    --color-blue-shadow:      rgba(2, 123, 255, 0.4);
+    --color-orange:           rgb(245, 158, 11);
+    --color-orange-shadow:    rgba(245, 158, 11, 0.4);
+    --color-green:            rgb(48, 167, 45);
+    --color-green-shadow:     rgba(48, 167, 45, 0.4);
+    --color-yellow:           rgb(255, 193, 7);
+    --color-yellow-shadow:    rgba(255, 193, 7, 0.4);
+    --color-purple:           rgb(182, 68, 164);
+    --color-purple-shadow:    rgba(182, 68, 164, 0.4);
+    --color-teal:             rgb(0, 137, 123);
+ 
+    --color-brand:            #eabaab;
+    --color-brand-hover:      #d4a090;
 
-    --card-background: rgb(255,255,255,0.04);
-    --card-border: rgb(255,255,255,0.1);
-    --card-border-active: rgb(255,255,255,0.2);
+    --color-doc-link:         #eabaab;
+    --color-doc-link-active:  #d4a090;
+    --color-doc-text-hover:   #1a1310;
+    --color-doc-border-hover: #d4a090;
+ 
+    --color-button-link:          #eabaab;
+    --color-button-link-active:   #d4a090;
+    --color-button-link-inactive: #7a6e69;
+    --color-button-text-hover:    #1a1310;
+    --color-button-border-hover:  #d4a090;
+ 
+    --color-refresh-background:   #eabaab;
+ 
+    --color-text:             #f7e9e0;
+    --color-text-light:       #c5b2a4;
+    --color-disabled:         #7a6e69;
+
+    --color-datatable-header-text: #eabaab;
+    --color-datatable-border:      #3a3848;
+ 
+    --color-tabs-border:      #2a2935;
+    --color-tabs-background:  #21202a;
+    --color-tabs-text:        #eabaab;
+ 
+    --color-popover-border:   #2a2935;
+ 
+    --header-color:            #f7e9e0;
+    --header-link-color:       #f7e9e0;
+    --header-link-color-active: #eabaab;
+ 
+    --icon-color:              #eabaab;
+ 
+    --form-color-border-active: #eabaab;
+ 
+    --link-color:              #eabaab;
+    --link-color-active:       #d4a090;
+ 
+    --nav-color:               #c5b2a4;
+    --nav-color-active:        #eabaab;
+ 
+    --card-background:              rgba(255, 255, 255, 0.03);
+    --card-border:                  rgba(255, 255, 255, 0.08);
+    --card-border-active:           rgba(234, 186, 171, 0.25);
     --accentedCardTransitionEasing: 500ms cubic-bezier(0.7, 0, 0, 1);
-    --accentedCardScale: 1.05;
-    --accentedCardShadow: 0;
-
-    --table-header-color: var(--color-text);
-    --table-border-color: rgba(255, 255, 255, 0.1);
-
-    --datatable-color: var(--color-text);
-    --datatable-background: var(--color-background-soft);
-    --datatable-background-active: var(--color-background-mute);
-    --datatable-border-color: #52555d;
-    --datatable-header-color: #eabaabff;
-
-    --dashboard-tab-background-active: var(--color-background-soft);
-
-    --source-border: rgb(255,255,255,0.1);
-    --source-header-color: rgb(160, 161, 167);
-    --source-header-background-active: rgb(47,49,56);
-
-    --modal-header-border:  rgba(255, 255, 255, 0.1);
-    --modal-footer-border:  rgba(255, 255, 255, 0.1);
-
-    --badge-background: #eabaabff;
-
-    --tabs-border-color: rgba(255, 255, 255, 0.1);
-
-    --code-background: #0d1117;
-    --code-color: #fff;
-    --code-tabs-color: #d3d4d5;
-    --code-tabs-color-active: #eabaabff;
-    --code-tabs-border-color-active: #eabaabff;
-    --code-tabs-border-color: #3c424b;
-    --code-control-color-active: #eabaabff;
-
-    --blockquote-border-color: #eabaabff;
-    --blockquote-background-color: var(--color-background-soft);
-
-    --footer-background: #282b33;
-
-    --color-emphasis: #f0d6cc;
+    --accentedCardScale:            1.05;
+    --accentedCardShadow:           0;
+ 
+    --table-header-color:      #3a3848;
+    --table-border-color:      #3a3848;
+ 
+    --datatable-color:              #f7e9e0;
+    --datatable-background:         #2c2a3a;
+    --datatable-background-active:  #21202a;
+    --datatable-border-color:       #3a3848;
+    --datatable-header-color:       #eabaab;
+ 
+    --dashboard-tab-background-active: #2c2a3a;
+ 
+    --source-border:                  #3a3848;
+    --source-header-color:            #c5b2a4;
+    --source-header-background-active: #353e5c;
+ 
+    --modal-header-border: rgba(255, 255, 255, 0.08);
+    --modal-footer-border: rgba(255, 255, 255, 0.08);
+ 
+    --badge-background:    #eabaab;
+ 
+    --tabs-border-color:   rgba(255, 255, 255, 0.08);
+ 
+    --code-background:               #0f0e11;
+    --code-color:                    #f7e9e0;
+    --code-tabs-color:               #c5b2a4;
+    --code-tabs-color-active:        #c5b2a4;
+    --code-tabs-border-color-active: #eabaab;
+    --code-tabs-border-color:        #2a2935;
+    --code-control-color-active:     #eabaab;
+ 
+    --blockquote-border-color:      #3a3848;
+    --blockquote-background-color:  #2c2a3a;
+ 
+    --footer-background:   #0f0e11;
+ 
+    --color-emphasis:      #f7e9e0;
 }
 
 [data-theme="light"] {

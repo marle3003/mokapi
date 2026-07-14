@@ -233,7 +233,7 @@ function getMessageConfig(event: ServiceEvent): WebsocketMessage | undefined {
     const messageId = data?.messageId
 
     if (!messageId) {
-        console.error('missing messageId in MQTT event log')
+        console.error('missing messageId in Websocket event log')
         return
     }
 
