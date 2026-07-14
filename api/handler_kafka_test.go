@@ -1117,8 +1117,8 @@ func TestHandler_Kafka_Metrics(t *testing.T) {
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
 			responseBody: `{"name":"foo","version":"1.0","topics":[{"name":"foo","metrics":{"kafka_messages_total":1,"kafka_message_timestamp":12345678}}]}`,
 			addMetrics: func(monitor *monitor.Monitor) {
-				monitor.Kafka.Messages.WithLabel("foo", "topic").Add(1)
-				monitor.Kafka.LastMessage.WithLabel("foo", "topic").Set(12345678)
+				monitor.Kafka.Messages.WithLabel("foo", "foo").Add(1)
+				monitor.Kafka.LastMessage.WithLabel("foo", "foo").Set(12345678)
 			},
 		},
 		{
