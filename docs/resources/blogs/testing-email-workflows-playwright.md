@@ -83,7 +83,7 @@ More on that in a moment.
 
 ## Step 2: The Express Backend Connection
 
-The backend is a simple Express app using Nodemailer. Nothing special here: it connects to `localhost:2525` the same
+The backend is a simple Express app using [Nodemailer](https://nodemailer.com). Nothing special here: it connects to `localhost:2525` the same
 way it would connect to any SMTP server.
 
 ```javascript
@@ -118,7 +118,10 @@ a deliberate design goal: you shouldn't need to change your application code to 
 
 ## Step 3: Writing the Playwright Email Test
 
-This is where your **Playwright email testing** logic comes together. The test script automated three critical steps:
+This is where your Playwright email testing logic comes together.
+Alongside the `page` fixture that drives the browser, we use Playwright's
+[`request` fixture](https://playwright.dev/docs/api-testing) to call Mokapi's HTTP API directly, no separate HTTP
+client needed. The test script automated three critical steps:
 
 1. Fills in the signup form and submits it, just like a real user
 2. Fetches the captured email from Mokapi's HTTP API
@@ -194,8 +197,26 @@ No external dependencies. No inbox polling.
 And because the whole thing runs locally or in CI without any special infrastructure, you can add email assertions to
 your test suite the same way you'd add any other assertion. It's not a separate manual process anymore.
 
+If you're also mocking event-driven systems, the same pattern applies to testing [Kafka workflows with
+Playwright and Mokapi](/docs/resources/blogs/testing-kafka-workflows-playwright.md): define the contract, point your service at Mokapi instead of the real broker,
+and assert on what comes out the other side.
+
 The full working example is on GitHub: [mokapi-email-workflow](https://github.com/marle3003/mokapi-email-workflow). It includes a Vue frontend, an Express backend, the
 Mokapi config, and the Playwright test. Clone it and have it running in a few minutes.
 
 If your email flows have been living outside your test suite because testing them felt too complicated,
 this is the setup that changes that.
+
+## FAQ: Playwright Email Testing
+
+**Can Playwright test emails directly?**
+No. Playwright automates browsers, not mailboxes, so it has no built-in way to receive or inspect email. You need something in between, either a simulated SMTP server like Mokapi or a real email provider that your test can query via HTTP.
+
+**How do I mock an SMTP server for testing?**
+Point your app's mail transport at a local mock instead of a real mail provider. With Mokapi, that's a few lines of YAML declaring the SMTP host and port (see Step 1 above); your backend then connects to it exactly as it would a production SMTP server, with no code changes required.
+
+**Do I need a real mail server for E2E email tests?**
+No. A mock SMTP server captures outgoing messages the same way a real one would, but makes them queryable via a simple HTTP API instead of requiring inbox polling or a third-party email provider.
+
+**Can I preview emails during development, not just in automated tests?**
+Yes, if the mock supports IMAP alongside SMTP. Mokapi does this. If you point any email client (Thunderbird, Apple Mail, Outlook) to the IMAP port, the captured emails will be displayed exactly as a user would see them. This is useful for detecting visual errors that might be preventing you from seeing your messages.
