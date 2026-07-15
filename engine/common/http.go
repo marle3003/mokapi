@@ -106,3 +106,15 @@ func getResource(u Url, resources interface{}) interface{} {
 	}
 	return resource.Interface()
 }
+
+type HTTPHandler struct {
+	Filter  HTTPFilter
+	Execute HttpEventFunc
+}
+
+type HTTPFilter struct {
+	Methods []string
+	Path    string
+}
+
+type HttpEventFunc func(ctx *EventContext) error

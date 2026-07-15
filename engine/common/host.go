@@ -42,6 +42,8 @@ type Host interface {
 
 	On(event string, do EventHandler, args EventArgs)
 
+	//AddHttp(filter HTTPFilter, do HttpEventFunc, args EventArgs)
+
 	Webhook(name string, url string, args WebhookArgs) (*WebhookResponse, error)
 
 	KafkaClient() KafkaClient
