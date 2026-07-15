@@ -48,6 +48,11 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).not.toHaveText('-');
         await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('2');
 
+        await expect(await getCellByColumnName(table, 'Name', rows.nth(1))).toHaveText('user-events');
+        await expect(await getCellByColumnName(table, 'Summary', rows.nth(1))).toHaveText('The Kafka topic for user events.');
+        await expect(await getCellByColumnName(table, 'Last Message', rows.nth(1))).toHaveText('-');
+        await expect(await getCellByColumnName(table, 'Messages', rows.nth(1))).toHaveText('0');
+
         await test.step('Verify filtering by tags', async () => {
 
             const tags = page.getByRole('group', { name: 'Filter topics by tags' });

@@ -193,16 +193,24 @@ func TestHandler_Kafka(t *testing.T) {
 					asyncapi3test.WithChannel("foo",
 						asyncapi3test.WithChannelTag("env:test", "bar"),
 					),
+					asyncapi3test.WithChannel("bar", asyncapi3test.WithChannelAddress("bar-1")),
 				)
 				s := store.New(c, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 
-				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", &runtime.KafkaInfo{
+				app := runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", &runtime.KafkaInfo{
 					Config: c,
 					Store:  s,
 				}))
+
+				app.Monitor.Kafka.Messages.WithLabel("foo", "foo").Add(1)
+				app.Monitor.Kafka.LastMessage.WithLabel("foo", "foo").Set(2)
+				app.Monitor.Kafka.Messages.WithLabel("foo", "bar-1").Add(10)
+				app.Monitor.Kafka.LastMessage.WithLabel("foo", "bar-1").Set(11)
+
+				return app
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
-			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"foo","tags":[{"name":"env:test","description":"bar"}],"metrics":{"kafka_messages_total":0,"kafka_message_timestamp":0}}]}`,
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"bar-1","metrics":{"kafka_messages_total":10,"kafka_message_timestamp":11}},{"name":"foo","tags":[{"name":"env:test","description":"bar"}],"metrics":{"kafka_messages_total":1,"kafka_message_timestamp":2}}]}`,
 		},
 		{
 			name: "get topic and multi schema format",
@@ -1109,8 +1117,8 @@ func TestHandler_Kafka_Metrics(t *testing.T) {
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
 			responseBody: `{"name":"foo","version":"1.0","topics":[{"name":"foo","metrics":{"kafka_messages_total":1,"kafka_message_timestamp":12345678}}]}`,
 			addMetrics: func(monitor *monitor.Monitor) {
-				monitor.Kafka.Messages.WithLabel("foo", "topic").Add(1)
-				monitor.Kafka.LastMessage.WithLabel("foo", "topic").Set(12345678)
+				monitor.Kafka.Messages.WithLabel("foo", "foo").Add(1)
+				monitor.Kafka.LastMessage.WithLabel("foo", "foo").Set(12345678)
 			},
 		},
 		{
