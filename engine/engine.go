@@ -28,6 +28,7 @@ type Engine struct {
 	parallel    bool
 	cfgEvent    static.Event
 	store       *Store
+	EventHandler
 }
 
 type Store struct {
@@ -99,10 +100,6 @@ func (e *Engine) AddScript(evt dynamic.ConfigEvent) error {
 	}
 
 	return nil
-}
-
-func (e *Engine) Emit(event string, args ...interface{}) []*common.Action {
-	return e.Run(event, args...)
 }
 
 func (e *Engine) Start() {

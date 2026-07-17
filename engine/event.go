@@ -1,46 +1,46 @@
 package engine
 
 import (
-	"cmp"
 	"mokapi/engine/common"
-	"slices"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 )
 
-func (e *Engine) Run(event string, args ...interface{}) []*common.Action {
-	var ehs []*eventHandler
-	for _, h := range e.scripts {
-		ehs = append(ehs, h.events[event]...)
-	}
-	slices.SortStableFunc(ehs, func(a, b *eventHandler) int { return -1 * cmp.Compare(a.priority, b.priority) })
-
-	var result []*common.Action
-
-	for _, eh := range ehs {
-		a := runEventHandler(eh, args...)
-		if a != nil {
-			result = append(result, a)
-		}
-	}
-
-	return result
+type EventHandler struct {
+	HttpEventDispatcher
+	KafkaEventDispatcher
+	MqttEventDispatcher
+	WebsocketEventDispatcher
+	MailEventDispatcher
+	LdapEventDispatcher
 }
 
-func runEventHandler(eh *eventHandler, args ...interface{}) *common.Action {
+func (e *EventHandler) Clear(key string) {
+	if e == nil {
+		return
+	}
+	e.HttpEventDispatcher.Clear(key)
+	e.KafkaEventDispatcher.Clear(key)
+	e.MqttEventDispatcher.Clear(key)
+	e.WebsocketEventDispatcher.Clear(key)
+	e.MailEventDispatcher.Clear(key)
+	e.LdapEventDispatcher.Clear(key)
+}
+
+func runEventHandler(h common.EventHandler, args common.EventArgs, params ...interface{}) *common.Action {
 	action := &common.Action{
-		Tags: eh.tags,
+		Tags: args.Tags,
 	}
 	start := time.Now()
 	logs := len(action.Logs)
 
 	ctx := &common.EventContext{
 		EventLogger: action.AppendLog,
-		Args:        args,
+		Args:        params,
 	}
 
-	if b, err := eh.handler(ctx); err != nil {
+	if b, err := h(ctx); err != nil {
 		log.Errorf("unable to execute event handler: %v", err)
 		action.Error = &common.Error{Message: err.Error()}
 	} else if !b && logs == len(action.Logs) {
@@ -48,7 +48,50 @@ func runEventHandler(eh *eventHandler, args ...interface{}) *common.Action {
 	}
 	log.WithField("handler", action).Debug("processed event handler")
 
-	action.Parameters = getDeepCopy(args)
+	action.Parameters = getDeepCopy(params)
 	action.Duration = time.Now().Sub(start).Milliseconds()
 	return action
+}
+
+func (e *EventHandler) Has(key string) bool {
+	if e == nil {
+		return false
+	}
+	if e.HttpEventDispatcher.Has(key) {
+		return true
+	}
+	if e.KafkaEventDispatcher.Has(key) {
+		return true
+	}
+	if e.MqttEventDispatcher.Has(key) {
+		return true
+	}
+	if e.WebsocketEventDispatcher.Has(key) {
+		return true
+	}
+	if e.MailEventDispatcher.Has(key) {
+		return true
+	}
+	if e.LdapEventDispatcher.Has(key) {
+		return true
+	}
+	return false
+}
+
+func addDefaultTags(args *common.EventArgs, sh *scriptHost) {
+	defaultTags := map[string]string{
+		"name":    sh.name,
+		"file":    sh.name,
+		"fileKey": sh.file.Info.Key(),
+		"event":   "http",
+	}
+	if args.Tags == nil {
+		args.Tags = defaultTags
+		return
+	}
+	for k, v := range defaultTags {
+		if _, ok := args.Tags[k]; !ok {
+			args.Tags[k] = v
+		}
+	}
 }

@@ -108,11 +108,11 @@ func getResource(u Url, resources interface{}) interface{} {
 }
 
 type HTTPHandler struct {
-	Filter  HTTPFilter
+	Filter  HttpFilter
 	Execute HttpEventFunc
 }
 
-type HTTPFilter struct {
+type HttpFilter struct {
 	Methods []string
 	Path    string
 }

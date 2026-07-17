@@ -30,12 +30,19 @@ type Host struct {
 	MqttClientTest     *MqttClient
 	EveryFunc          func(every string, do func(), opt common.JobOptions)
 	CronFunc           func(every string, do func(), opt common.JobOptions)
-	OnFunc             func(event string, do common.EventHandler, args common.EventArgs)
-	FindFakerNodeFunc  func(name string) *generator.Node
-	m                  sync.Mutex
-	StoreTest          *engine.Store
-	CwdFunc            func() string
-	WebhookFunc        func(name string, url string, args common.WebhookArgs) (*common.WebhookResponse, error)
+
+	OnHttpFunc      func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs)
+	OnKafkaFunc     func(filter common.KafkaFilter, do common.EventHandler, args common.EventArgs)
+	OnMqttFunc      func(filter common.MqttFilter, do common.EventHandler, args common.EventArgs)
+	OnWebsocketFunc func(filter common.WebsocketFilter, do common.EventHandler, args common.EventArgs)
+	OnMailFunc      func(filter common.MailFilter, do common.EventHandler, args common.EventArgs)
+	OnLdapFunc      func(filter common.LdapFilter, do common.EventHandler, args common.EventArgs)
+
+	FindFakerNodeFunc func(name string) *generator.Node
+	m                 sync.Mutex
+	StoreTest         *engine.Store
+	CwdFunc           func() string
+	WebhookFunc       func(name string, url string, args common.WebhookArgs) (*common.WebhookResponse, error)
 }
 
 type HttpClient struct {
@@ -126,9 +133,39 @@ func (h *Host) Cron(expr string, do func(), opt common.JobOptions) (int, error) 
 	return 0, nil
 }
 
-func (h *Host) On(event string, do common.EventHandler, args common.EventArgs) {
-	if h.OnFunc != nil {
-		h.OnFunc(event, do, args)
+func (h *Host) OnHttp(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+	if h.OnHttpFunc != nil {
+		h.OnHttpFunc(filter, do, args)
+	}
+}
+
+func (h *Host) OnKafka(filter common.KafkaFilter, do common.EventHandler, args common.EventArgs) {
+	if h.OnKafkaFunc != nil {
+		h.OnKafkaFunc(filter, do, args)
+	}
+}
+
+func (h *Host) OnMqtt(filter common.MqttFilter, do common.EventHandler, args common.EventArgs) {
+	if h.OnMqttFunc != nil {
+		h.OnMqttFunc(filter, do, args)
+	}
+}
+
+func (h *Host) OnWebsocket(filter common.WebsocketFilter, do common.EventHandler, args common.EventArgs) {
+	if h.OnWebsocketFunc != nil {
+		h.OnWebsocketFunc(filter, do, args)
+	}
+}
+
+func (h *Host) OnMail(filter common.MailFilter, do common.EventHandler, args common.EventArgs) {
+	if h.OnMailFunc != nil {
+		h.OnMailFunc(filter, do, args)
+	}
+}
+
+func (h *Host) OnLdap(filter common.LdapFilter, do common.EventHandler, args common.EventArgs) {
+	if h.OnLdapFunc != nil {
+		h.OnLdapFunc(filter, do, args)
 	}
 }
 

@@ -35,13 +35,13 @@ func (s *Store) Publish(publish *mqtt.PublishRequest, args PublishArgs) (mqtt.Pu
 		return mqtt.PayloadFormatInvalid, fmt.Errorf("mqtt: topic validation error '%s': %s", msg.Topic, err)
 	}
 
-	evt := &Event{
+	evt := &engine.MqttMessageEvent{
 		Api:    s.cfg.Info.Name,
 		Topic:  topic.Name,
 		Value:  string(msg.Data),
 		Retain: args.Retain,
 	}
-	actions := s.eventEmitter.Emit("mqtt", evt)
+	actions := s.eventEmitter.EmitMqtt(evt)
 	if actions != nil {
 		messageId, err = topic.validate(msg.Data)
 		if err != nil {

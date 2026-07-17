@@ -175,7 +175,7 @@ func (c *MailInfo) update() {
 	}
 }
 
-func (c *MailInfo) Handler(smtp *monitor.Mail, emitter engine.EventEmitter, eh events.Handler) MailHandler {
+func (c *MailInfo) Handler(smtp *monitor.Mail, emitter engine.MailEventEmitter, eh events.Handler) MailHandler {
 	return &mailHandler{
 		monitor: smtp,
 		next:    mail.NewHandler(c.Config, c.Store, emitter, eh),

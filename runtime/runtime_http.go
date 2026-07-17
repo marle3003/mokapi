@@ -141,7 +141,7 @@ func (s *HttpStore) Remove(c *dynamic.Config) {
 	}
 }
 
-func (c *HttpInfo) Handler(http *monitor.Http, emitter common.EventEmitter, eh events.Handler) openapi.Handler {
+func (c *HttpInfo) Handler(http *monitor.Http, emitter common.HttpEventEmitter, eh events.Handler) openapi.Handler {
 	cfg := c.Config
 	h := openapi.NewHandler(cfg, emitter, eh)
 	return &httpHandler{http: http, next: h}

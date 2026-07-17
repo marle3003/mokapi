@@ -9,6 +9,7 @@ import (
 	"mokapi/engine"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
+	"net/http"
 	"net/url"
 	"testing"
 
@@ -96,7 +97,7 @@ func TestLuaOn(t *testing.T) {
 		`))
 		require.NoError(t, err)
 
-		summaries := e.Run("http")
+		summaries := e.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 
 		require.Len(t, summaries, 0, "summary length not 0")
 	})
@@ -114,7 +115,7 @@ func TestLuaOn(t *testing.T) {
 		`))
 		require.NoError(t, err)
 
-		summaries := e.Run("http")
+		summaries := e.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 
 		require.Len(t, summaries, 1, "summary length not 1")
 		summary := summaries[0]
@@ -137,7 +138,7 @@ func TestLuaOn(t *testing.T) {
 		`))
 		require.NoError(t, err)
 
-		summaries := e.Run("http")
+		summaries := e.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 
 		require.Len(t, summaries, 1, "summary length not 1")
 		summary := summaries[0]
@@ -158,7 +159,7 @@ func TestLuaOn(t *testing.T) {
 		`))
 		require.NoError(t, err)
 
-		summaries := e.Run("http")
+		summaries := e.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 
 		require.Len(t, summaries, 1, "summary length not 1")
 		require.Equal(t, "foobar", summaries[0].Tags["name"], "tag name not correct")
@@ -178,19 +179,13 @@ func TestLuaOn(t *testing.T) {
 		`))
 		require.NoError(t, err)
 
-		summaries := e.Run("http")
+		summaries := e.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 
 		require.Len(t, summaries, 1, "summary length not 1")
 		require.Equal(t, "bar", summaries[0].Tags["foo"], "tag name not correct")
 	})
 	t.Run("parameter", func(t *testing.T) {
 		t.Parallel()
-
-		p := struct {
-			Foo string
-		}{
-			"bar",
-		}
 
 		var msg string
 		logger := &enginetest.Logger{
@@ -206,16 +201,16 @@ func TestLuaOn(t *testing.T) {
 			mokapi.on(
 				'http',
 				function(p)
-					log.info(p.foo)
+					log.info(p.method)
 					return true
 				end
 			);
 		`))
 		require.NoError(t, err)
 
-		e.Run("http", p)
+		e.EmitHttp(&common.HttpEventRequest{Method: http.MethodGet}, &common.HttpEventResponse{})
 
-		require.Equal(t, "bar", msg)
+		require.Equal(t, http.MethodGet, msg)
 	})
 }
 

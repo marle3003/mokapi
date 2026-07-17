@@ -24,12 +24,12 @@ type MailServer interface {
 type MailManager struct {
 	servers      map[string]map[string]MailServer
 	app          *runtime.App
-	eventEmitter engine.EventEmitter
+	eventEmitter engine.MailEventEmitter
 	certStore    *cert.Store
 	m            sync.Mutex
 }
 
-func NewMailManager(app *runtime.App, eventEmitter engine.EventEmitter, store *cert.Store) *MailManager {
+func NewMailManager(app *runtime.App, eventEmitter engine.MailEventEmitter, store *cert.Store) *MailManager {
 	return &MailManager{
 		servers:      make(map[string]map[string]MailServer),
 		app:          app,

@@ -11,6 +11,7 @@ import (
 	"reflect"
 
 	"github.com/dop251/goja"
+	log "github.com/sirupsen/logrus"
 )
 
 type onArgs struct {
@@ -67,7 +68,22 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 		return haveChanges(origin, newHashes), nil
 	}
 
-	m.host.On(event, f, common.EventArgs{Tags: eventArgs.tags, Priority: eventArgs.priority})
+	switch event {
+	case "http":
+		m.host.OnHttp(common.HttpFilter{}, f, common.EventArgs{Tags: eventArgs.tags, Priority: eventArgs.priority})
+	case "kafka":
+		m.host.OnKafka(common.KafkaFilter{}, f, common.EventArgs{Tags: eventArgs.tags, Priority: eventArgs.priority})
+	case "mqtt":
+		m.host.OnMqtt(common.MqttFilter{}, f, common.EventArgs{Tags: eventArgs.tags, Priority: eventArgs.priority})
+	case "websocket":
+		m.host.OnWebsocket(common.WebsocketFilter{}, f, common.EventArgs{Tags: eventArgs.tags, Priority: eventArgs.priority})
+	case "smtp":
+		m.host.OnMail(common.MailFilter{}, f, common.EventArgs{Tags: eventArgs.tags, Priority: eventArgs.priority})
+	case "ldap":
+		m.host.OnLdap(common.LdapFilter{}, f, common.EventArgs{Tags: eventArgs.tags, Priority: eventArgs.priority})
+	default:
+		log.Error(fmt.Errorf("unknown event: %s", event))
+	}
 }
 
 func getOnArgs(vm *goja.Runtime, args goja.Value) (onArgs, error) {

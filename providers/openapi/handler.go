@@ -32,10 +32,10 @@ type operationHandler struct {
 
 type responseHandler struct {
 	config       *Config
-	eventEmitter common.EventEmitter
+	eventEmitter common.HttpEventEmitter
 }
 
-func NewHandler(config *Config, eventEmitter common.EventEmitter, eh events.Handler) Handler {
+func NewHandler(config *Config, eventEmitter common.HttpEventEmitter, eh events.Handler) Handler {
 	return &operationHandler{
 		config: config,
 		next: &responseHandler{
@@ -148,7 +148,7 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	actions := h.eventEmitter.Emit("http", request, response)
+	actions := h.eventEmitter.EmitHttp(request, response)
 	if logHttp != nil {
 		logHttp.Actions = actions
 	}

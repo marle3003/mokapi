@@ -13,12 +13,12 @@ import (
 
 type Handler struct {
 	config       *Config
-	eventEmitter common.EventEmitter
+	eventEmitter common.MailEventEmitter
 	store        *Store
 	eh           events.Handler
 }
 
-func NewHandler(config *Config, store *Store, eventEmitter common.EventEmitter, eh events.Handler) *Handler {
+func NewHandler(config *Config, store *Store, eventEmitter common.MailEventEmitter, eh events.Handler) *Handler {
 	return &Handler{
 		config:       config,
 		eventEmitter: eventEmitter,
@@ -81,7 +81,7 @@ func (h *Handler) processMail(rw smtp.ResponseWriter, r *smtp.DataRequest) {
 	}
 
 	res := &smtp.DataResponse{Result: smtp.Ok}
-	event.Actions = h.eventEmitter.Emit("smtp", r.Message, res.Result)
+	event.Actions = h.eventEmitter.EmitSmtp(r.Message, res.Result)
 
 	_ = rw.Write(res)
 }

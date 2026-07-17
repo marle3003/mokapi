@@ -23,7 +23,7 @@ type Store struct {
 	Channels map[string]*Channel
 
 	cfg     *asyncapi3.Config
-	emitter engine.EventEmitter
+	emitter engine.WebsocketEventEmitter
 	eh      events.Handler
 	m       sync.RWMutex
 	monitor *monitor.Websocket
@@ -41,7 +41,7 @@ const (
 	MessageTypeBinary
 )
 
-func New(cfg *asyncapi3.Config, emitter engine.EventEmitter, eh events.Handler, m *monitor.Websocket) *Store {
+func New(cfg *asyncapi3.Config, emitter engine.WebsocketEventEmitter, eh events.Handler, m *monitor.Websocket) *Store {
 	s := &Store{
 		cfg:     cfg,
 		emitter: emitter,

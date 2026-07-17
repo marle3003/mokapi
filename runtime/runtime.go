@@ -24,10 +24,9 @@ type App struct {
 	Websocket *WebsocketStore
 	Mail      *MailStore
 
-	Monitor       *monitor.Monitor
-	Events        *events.StoreManager
-	Engine        common.EventEmitter
-	EventHandlers *EventHandlers
+	Monitor *monitor.Monitor
+	Events  *events.StoreManager
+	Engine  common.EventEmitter
 
 	m           sync.Mutex
 	cfg         *static.Config

@@ -3,6 +3,7 @@ package openapi_test
 import (
 	"fmt"
 	"mokapi/engine/common"
+	"mokapi/engine/enginetest"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/runtime/events"
@@ -17,7 +18,7 @@ func TestHandler_Security(t *testing.T) {
 	testcases := []struct {
 		name  string
 		test  func(t *testing.T, h http.HandlerFunc, c *openapi.Config, eh events.Handler)
-		event func(event string, args ...interface{}) []*common.Action
+		event func(request *common.HttpEventRequest, response *common.HttpEventResponse) []*common.Action
 	}{
 		{
 			name: "basic",
@@ -44,10 +45,8 @@ func TestHandler_Security(t *testing.T) {
 				require.Equal(t, "Basic 123", httpLog.Request.Parameters[0].Value)
 				require.Equal(t, "Basic 123", *httpLog.Request.Parameters[0].Raw)
 			},
-			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.HttpEventRequest)
-				r := args[1].(*common.HttpEventResponse)
-				r.Data = req.Header["Authorization"]
+			event: func(request *common.HttpEventRequest, response *common.HttpEventResponse) []*common.Action {
+				response.Data = request.Header["Authorization"]
 				return nil
 			},
 		},
@@ -102,10 +101,8 @@ func TestHandler_Security(t *testing.T) {
 				require.Equal(t, "Bearer 123", httpLog.Request.Parameters[0].Value)
 				require.Equal(t, "Bearer 123", *httpLog.Request.Parameters[0].Raw)
 			},
-			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.HttpEventRequest)
-				r := args[1].(*common.HttpEventResponse)
-				r.Data = req.Header["Authorization"]
+			event: func(request *common.HttpEventRequest, response *common.HttpEventResponse) []*common.Action {
+				response.Data = request.Header["Authorization"]
 				return nil
 			},
 		},
@@ -136,10 +133,8 @@ func TestHandler_Security(t *testing.T) {
 				require.Equal(t, "123", httpLog.Request.Parameters[0].Value)
 				require.Equal(t, "123", *httpLog.Request.Parameters[0].Raw)
 			},
-			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.HttpEventRequest)
-				r := args[1].(*common.HttpEventResponse)
-				r.Data = req.Header["X-API-KEY"]
+			event: func(request *common.HttpEventRequest, response *common.HttpEventResponse) []*common.Action {
+				response.Data = request.Header["X-API-KEY"]
 				return nil
 			},
 		},
@@ -170,10 +165,8 @@ func TestHandler_Security(t *testing.T) {
 				require.Equal(t, "123", httpLog.Request.Parameters[0].Value)
 				require.Equal(t, "123", *httpLog.Request.Parameters[0].Raw)
 			},
-			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.HttpEventRequest)
-				r := args[1].(*common.HttpEventResponse)
-				r.Data = req.Query["apikey"]
+			event: func(request *common.HttpEventRequest, response *common.HttpEventResponse) []*common.Action {
+				response.Data = request.Query["apikey"]
 				return nil
 			},
 		},
@@ -204,10 +197,8 @@ func TestHandler_Security(t *testing.T) {
 				require.Equal(t, "123", httpLog.Request.Parameters[1].Value)
 				require.Equal(t, "123", *httpLog.Request.Parameters[1].Raw)
 			},
-			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.HttpEventRequest)
-				r := args[1].(*common.HttpEventResponse)
-				r.Data = req.Cookie["apikey"]
+			event: func(request *common.HttpEventRequest, response *common.HttpEventResponse) []*common.Action {
+				response.Data = request.Cookie["apikey"]
 				return nil
 			},
 		},
@@ -256,10 +247,8 @@ func TestHandler_Security(t *testing.T) {
 				require.Equal(t, "Bearer 123", httpLog.Request.Parameters[0].Value)
 				require.Equal(t, "Bearer 123", *httpLog.Request.Parameters[0].Raw)
 			},
-			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.HttpEventRequest)
-				r := args[1].(*common.HttpEventResponse)
-				r.Data = req.Header["Authorization"]
+			event: func(request *common.HttpEventRequest, response *common.HttpEventResponse) []*common.Action {
+				response.Data = request.Header["Authorization"]
 				return nil
 			},
 		},
@@ -293,10 +282,8 @@ func TestHandler_Security(t *testing.T) {
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, `"Bearer 123 - API_KEY_123"`, rr.Body.String())
 			},
-			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.HttpEventRequest)
-				r := args[1].(*common.HttpEventResponse)
-				r.Data = fmt.Sprintf("%s - %s", req.Header["Authorization"], req.Header["apikey"])
+			event: func(request *common.HttpEventRequest, response *common.HttpEventResponse) []*common.Action {
+				response.Data = fmt.Sprintf("%s - %s", request.Header["Authorization"], request.Header["apikey"])
 				return nil
 			},
 		},
@@ -325,10 +312,8 @@ func TestHandler_Security(t *testing.T) {
 				require.Equal(t, http.StatusOK, rr.Code)
 				require.Equal(t, `"API_KEY_123"`, rr.Body.String())
 			},
-			event: func(event string, args ...interface{}) []*common.Action {
-				req := args[0].(*common.HttpEventRequest)
-				r := args[1].(*common.HttpEventResponse)
-				r.Data = req.Header["apikey"]
+			event: func(request *common.HttpEventRequest, response *common.HttpEventResponse) []*common.Action {
+				response.Data = request.Header["apikey"]
 				return nil
 			},
 		},
@@ -346,8 +331,10 @@ func TestHandler_Security(t *testing.T) {
 				Components: openapi.Components{},
 			}
 
+			h := enginetest.HttpEventHandlerFunc(tc.event)
+
 			tc.test(t, func(rw http.ResponseWriter, r *http.Request) {
-				h := openapi.NewHandler(config, &testEngine{emit: tc.event}, e)
+				h := openapi.NewHandler(config, h, e)
 				h.ServeHTTP(rw, r)
 			}, config, e)
 		})

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"mokapi/config/dynamic"
+	engine "mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
@@ -612,7 +613,7 @@ console.log(event.type)
 				evt := evts[0]
 				d := evt.Data.(*websocket.MessageLog)
 				require.Len(t, d.Actions, 1)
-				var result websocket.EventChannel
+				var result engine.WebsocketEventChannel
 				err = json.Unmarshal([]byte(d.Actions[0].Logs[0].Message), &result)
 				require.NoError(t, err)
 				require.Equal(t, "/chats/1234", result.Name)

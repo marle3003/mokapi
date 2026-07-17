@@ -22,6 +22,13 @@ type Client struct {
 	closeCh chan struct{}
 }
 
+func (c *Client) Send(message any) {
+	err := c.sendMessage(message)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func (c *Client) sendMessage(message any) error {
 	var err error
 	var data []byte

@@ -1,6 +1,7 @@
 package modules
 
 import (
+	"fmt"
 	"mokapi/engine/common"
 	"mokapi/lua/convert"
 	"reflect"
@@ -118,7 +119,22 @@ func (m *Mokapi) on(l *lua.LState) int {
 		}
 	}
 
-	m.host.On(evt, fn, common.EventArgs{Tags: args.Tags})
+	switch evt {
+	case "http":
+		m.host.OnHttp(common.HttpFilter{}, fn, common.EventArgs{Tags: args.Tags})
+	case "kafka":
+		m.host.OnKafka(common.KafkaFilter{}, fn, common.EventArgs{Tags: args.Tags})
+	case "mqtt":
+		m.host.OnMqtt(common.MqttFilter{}, fn, common.EventArgs{Tags: args.Tags})
+	case "websocket":
+		m.host.OnWebsocket(common.WebsocketFilter{}, fn, common.EventArgs{Tags: args.Tags})
+	case "smtp":
+		m.host.OnMail(common.MailFilter{}, fn, common.EventArgs{Tags: args.Tags})
+	case "ldap":
+		m.host.OnLdap(common.LdapFilter{}, fn, common.EventArgs{Tags: args.Tags})
+	default:
+		log.Error(fmt.Errorf("unknown event: %s", evt))
+	}
 
 	return 0
 }

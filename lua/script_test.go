@@ -53,7 +53,7 @@ func TestMokapi_On(t *testing.T) {
 			fnInfo: func(s string) {
 				log = s
 			},
-			fnOn: func(evt string, do common.EventHandler, args common.EventArgs) {
+			fnOnHttp: func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
 				called = true
 				_, err := do(&common.EventContext{})
 				require.NoError(t, err)
@@ -62,7 +62,7 @@ func TestMokapi_On(t *testing.T) {
 		s, err := New("foo.lua", `
 local mokapi = require "mokapi"
 local log = require "log"
-mokapi.on("foo", function() log.info("foobar") end)
+mokapi.on("http", function() log.info("foobar") end)
 `, host)
 
 		require.NoError(t, err)
@@ -107,8 +107,8 @@ mustache.render("", {})
 
 type testHost struct {
 	common.Host
-	fnInfo func(s string)
-	fnOn   func(event string, do common.EventHandler, args common.EventArgs)
+	fnInfo   func(s string)
+	fnOnHttp func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs)
 }
 
 func (th *testHost) Info(args ...interface{}) {
@@ -117,9 +117,9 @@ func (th *testHost) Info(args ...interface{}) {
 	}
 }
 
-func (th *testHost) On(event string, do common.EventHandler, args common.EventArgs) {
-	if th.fnOn != nil {
-		th.fnOn(event, do, args)
+func (th *testHost) OnHttp(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
+	if th.fnOnHttp != nil {
+		th.fnOnHttp(filter, do, args)
 	}
 }
 

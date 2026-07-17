@@ -21,7 +21,7 @@ type Channel struct {
 	clients map[string]*Client
 	m       sync.RWMutex
 	cfg     *asyncapi3.Channel
-	emitter engine.EventEmitter
+	emitter engine.WebsocketEventEmitter
 	log     func(log events.EventData, traits events.Traits)
 	monitor *monitor.Websocket
 }
@@ -137,56 +137,68 @@ func (c *Channel) removeClient(client *Client) {
 	delete(c.clients, client.Id)
 }
 
-func (c *Channel) newConnectEvent(client *Client) *ConnectEvent {
-	evt := &ConnectEvent{
-		Event: Event{
-			Type:    ConnectEventType,
+func (c *Channel) Broadcast(message any) {
+	for _, c := range c.clients {
+		err := c.sendMessage(message)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func (c *Channel) newConnectEvent(client *Client) *engine.WebsocketConnectEvent {
+	evt := &engine.WebsocketConnectEvent{
+		WebsocketEvent: engine.WebsocketEvent{
+			Type:    engine.WebsocketConnectEventType,
 			Api:     c.api,
 			Channel: newEventChannel(c),
 			Client:  newEventClient(client),
 		},
+		Conn: client,
 	}
 	return evt
 }
 
-func (c *Channel) newMessageEvent(client *Client, v any) *MessageEvent {
-	evt := &MessageEvent{
-		Event: Event{
-			Type:    MessageEventType,
+func (c *Channel) newMessageEvent(client *Client, v any) *engine.WebsocketMessageEvent {
+	evt := &engine.WebsocketMessageEvent{
+		WebsocketEvent: engine.WebsocketEvent{
+			Type:    engine.WebsocketMessageEventType,
 			Api:     c.api,
 			Channel: newEventChannel(c),
 			Client:  newEventClient(client),
 		},
 		Message: v,
+		Conn:    client,
 	}
 	return evt
 }
 
-func (c *Channel) newCloseEvent(client *Client, reason, closedBy string) *CloseEvent {
-	evt := &CloseEvent{
-		Event: Event{
-			Type:    CloseEventType,
+func (c *Channel) newCloseEvent(client *Client, reason, closedBy string) *engine.WebsocketCloseEvent {
+	evt := &engine.WebsocketCloseEvent{
+		WebsocketEvent: engine.WebsocketEvent{
+			Type:    engine.WebsocketCloseEventType,
 			Api:     c.api,
 			Channel: newEventChannel(c),
 			Client:  newEventClient(client),
 		},
 		Reason:   reason,
 		ClosedBy: closedBy,
+		Conn:     client,
 	}
 	return evt
 }
 
 func (c *Channel) runMessageEvent(client *Client, msg any) []*engine.Action {
 	evt := c.newMessageEvent(client, msg)
-	return c.emitter.Emit("websocket", evt)
+	return c.emitter.EmitWebsocketMessage(evt)
 }
 
 func (c *Channel) runConnectEvent(client *Client) []*engine.Action {
 	evt := c.newConnectEvent(client)
-	return c.emitter.Emit("websocket", evt)
+	return c.emitter.EmitWebsocketConnect(evt)
 }
 
 func (c *Channel) runCloseEvent(client *Client, reason, closedBy string) []*engine.Action {
 	evt := c.newCloseEvent(client, reason, closedBy)
-	return c.emitter.Emit("websocket", evt)
+	return c.emitter.EmitWebsocketClose(evt)
 }

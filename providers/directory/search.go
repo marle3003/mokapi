@@ -172,7 +172,7 @@ func (d *Directory) serveSearch(rw ldap.ResponseWriter, r *ldap.Request) {
 	}
 
 	event.Response.Status = ldap.StatusText[status]
-	event.Actions = d.emitter.Emit("ldap", msg, res)
+	event.Actions = d.emitter.EmitLdap(msg, res)
 
 	if err := rw.Write(res); err != nil {
 		log.Errorf("ldap: send search done: %v", err)

@@ -36,7 +36,7 @@ export default () => {
 				res := &common.HttpEventResponse{
 					Headers: map[string]any{"Content-Type": "application/json"},
 				}
-				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
+				actions := evt.EmitHttp(&common.HttpEventRequest{}, res)
 				require.Equal(t, "text/plain", mokapi.Export(res.Headers["Content-Type"]))
 				return actions
 			},
@@ -45,7 +45,7 @@ export default () => {
 				require.Nil(t, actions[0].Error)
 
 				var res *common.HttpEventResponse
-				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				err = json.Unmarshal([]byte(actions[0].Parameters[1]), &res)
 				require.Len(t, res.Headers, 1)
 				require.Equal(t, "text/plain", res.Headers["Content-Type"])
 			},
@@ -61,7 +61,7 @@ export default () => {
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
 				res := &common.HttpEventResponse{}
-				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
+				actions := evt.EmitHttp(&common.HttpEventRequest{}, res)
 				require.Equal(t, &map[string]interface{}{"foo": "bar"}, res.Data)
 				return actions
 			},
@@ -70,7 +70,7 @@ export default () => {
 				require.Nil(t, actions[0].Error)
 
 				var res *common.HttpEventResponse
-				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				err = json.Unmarshal([]byte(actions[0].Parameters[1]), &res)
 				require.Equal(t, map[string]interface{}{"foo": "bar"}, res.Data)
 			},
 		},
@@ -85,7 +85,7 @@ export default () => {
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
 				res := &common.HttpEventResponse{}
-				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
+				actions := evt.EmitHttp(&common.HttpEventRequest{}, res)
 				require.Equal(t, 201, res.StatusCode)
 				return actions
 			},
@@ -94,7 +94,7 @@ export default () => {
 				require.Nil(t, actions[0].Error)
 
 				var res *common.HttpEventResponse
-				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				err = json.Unmarshal([]byte(actions[0].Parameters[1]), &res)
 				require.Equal(t, 201, res.StatusCode)
 			},
 		},
@@ -108,7 +108,7 @@ export default () => {
 }
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
-				return evt.Emit("http", &common.HttpEventRequest{}, &common.HttpEventResponse{})
+				return evt.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 			},
 			test: func(t *testing.T, actions []*common.Action, hook *test.Hook, err error) {
 				require.NoError(t, err)
@@ -116,7 +116,7 @@ export default () => {
 				require.Equal(t, "failed to set statusCode: expected Integer but got String at test.js:4:6(3)", actions[0].Error.Message)
 
 				var res *common.HttpEventResponse
-				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				err = json.Unmarshal([]byte(actions[0].Parameters[1]), &res)
 				require.Equal(t, 0, res.StatusCode)
 				require.Len(t, hook.Entries, 2)
 				require.Equal(t, "unable to execute event handler: failed to set statusCode: expected Integer but got String at test.js:4:6(3)", hook.LastEntry().Message)
@@ -133,7 +133,7 @@ export default () => {
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
 				res := &common.HttpEventResponse{}
-				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
+				actions := evt.EmitHttp(&common.HttpEventRequest{}, res)
 				require.Equal(t, "hello world", res.Body)
 				return actions
 			},
@@ -142,7 +142,7 @@ export default () => {
 				require.Nil(t, actions[0].Error)
 
 				var res *common.HttpEventResponse
-				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				err = json.Unmarshal([]byte(actions[0].Parameters[1]), &res)
 				require.Equal(t, "hello world", res.Body)
 			},
 		},
@@ -156,7 +156,7 @@ export default () => {
 }
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
-				return evt.Emit("http", &common.HttpEventRequest{}, &common.HttpEventResponse{})
+				return evt.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 			},
 			test: func(t *testing.T, actions []*common.Action, hook *test.Hook, err error) {
 				require.NoError(t, err)
@@ -164,7 +164,7 @@ export default () => {
 				require.Equal(t, "failed to set body: expected String but got Object at test.js:4:6(5)", actions[0].Error.Message)
 
 				var res *common.HttpEventResponse
-				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				err = json.Unmarshal([]byte(actions[0].Parameters[1]), &res)
 				require.Equal(t, "", res.Body)
 				require.Len(t, hook.Entries, 2)
 				require.Equal(t, "unable to execute event handler: failed to set body: expected String but got Object at test.js:4:6(5)", hook.LastEntry().Message)
@@ -182,7 +182,7 @@ export default () => {
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
 				res := &common.HttpEventResponse{}
-				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
+				actions := evt.EmitHttp(&common.HttpEventRequest{}, res)
 				require.Equal(t, &[]any{int64(1), int64(2), int64(3)}, res.Data)
 				return actions
 			},
@@ -190,7 +190,7 @@ export default () => {
 				require.NoError(t, err)
 				require.Nil(t, actions[0].Error)
 				var res *common.HttpEventResponse
-				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				err = json.Unmarshal([]byte(actions[0].Parameters[1]), &res)
 				require.Equal(t, []any{float64(1), float64(2), float64(3)}, res.Data)
 			},
 		},
@@ -206,7 +206,7 @@ export default () => {
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
 				res := &common.HttpEventResponse{}
-				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
+				actions := evt.EmitHttp(&common.HttpEventRequest{}, res)
 				require.Nil(t, actions[0].Error)
 				require.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 				return actions
@@ -215,7 +215,7 @@ export default () => {
 				require.NoError(t, err)
 
 				var res *common.HttpEventResponse
-				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				err = json.Unmarshal([]byte(actions[0].Parameters[1]), &res)
 				require.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 			},
 		},
@@ -230,7 +230,7 @@ export default () => {
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
 				res := &common.HttpEventResponse{Data: map[string]any{"foo": "bar"}}
-				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
+				actions := evt.EmitHttp(&common.HttpEventRequest{}, res)
 				require.Nil(t, actions[0].Error)
 				require.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 				return actions
@@ -239,7 +239,7 @@ export default () => {
 				require.NoError(t, err)
 
 				var res *common.HttpEventResponse
-				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				err = json.Unmarshal([]byte(actions[0].Parameters[1]), &res)
 				require.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 			},
 		},
@@ -254,7 +254,7 @@ export default () => {
 `,
 			run: func(evt common.EventEmitter) []*common.Action {
 				res := &common.HttpEventResponse{Data: map[string]any{"foo": "bar"}}
-				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
+				actions := evt.EmitHttp(&common.HttpEventRequest{}, res)
 				require.Nil(t, actions[0].Error)
 				require.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 				return actions
@@ -263,7 +263,7 @@ export default () => {
 				require.NoError(t, err)
 
 				var res *common.HttpEventResponse
-				err = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				err = json.Unmarshal([]byte(actions[0].Parameters[1]), &res)
 				require.Equal(t, map[string]any{"foo": "yuh"}, mokapi.Export(res.Data))
 			},
 		},
@@ -321,7 +321,7 @@ export default () => {
 			},
 			run: func(evt common.EventEmitter) []*common.Action {
 				res := &common.HttpEventResponse{Data: map[string]any{"foo": "bar"}}
-				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
+				actions := evt.EmitHttp(&common.HttpEventRequest{}, res)
 				require.Nil(t, actions[0].Error)
 				require.Nil(t, actions[1].Error)
 				require.Nil(t, actions[2].Error)
@@ -330,11 +330,11 @@ export default () => {
 			},
 			test: func(t *testing.T, actions []*common.Action) {
 				var res *common.HttpEventResponse
-				_ = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				_ = json.Unmarshal([]byte(actions[0].Parameters[1]), &res)
 				require.Equal(t, map[string]any{"foo": "handler2", "handler2": float64(0)}, mokapi.Export(res.Data))
-				_ = json.Unmarshal([]byte(actions[1].Parameters[1].(string)), &res)
+				_ = json.Unmarshal([]byte(actions[1].Parameters[1]), &res)
 				require.Equal(t, map[string]any{"foo": "handler3", "handler2": float64(0), "handler3": float64(1)}, mokapi.Export(res.Data))
-				_ = json.Unmarshal([]byte(actions[2].Parameters[1].(string)), &res)
+				_ = json.Unmarshal([]byte(actions[2].Parameters[1]), &res)
 				require.Equal(t, map[string]any{"foo": "handler1", "handler2": float64(0), "handler3": float64(1), "handler1": float64(2)}, mokapi.Export(res.Data))
 			},
 		},
@@ -367,7 +367,7 @@ export default () => {
 			},
 			run: func(evt common.EventEmitter) []*common.Action {
 				res := &common.HttpEventResponse{Data: map[string]any{"foo": "bar"}}
-				actions := evt.Emit("http", &common.HttpEventRequest{}, res)
+				actions := evt.EmitHttp(&common.HttpEventRequest{}, res)
 				require.Nil(t, actions[0].Error)
 				require.Nil(t, actions[1].Error)
 				require.Nil(t, actions[2].Error)
@@ -376,11 +376,11 @@ export default () => {
 			},
 			test: func(t *testing.T, actions []*common.Action) {
 				var res *common.HttpEventResponse
-				_ = json.Unmarshal([]byte(actions[0].Parameters[1].(string)), &res)
+				_ = json.Unmarshal([]byte(actions[0].Parameters[1]), &res)
 				require.Equal(t, map[string]any{"foo": "handler2"}, mokapi.Export(res.Data))
-				_ = json.Unmarshal([]byte(actions[1].Parameters[1].(string)), &res)
+				_ = json.Unmarshal([]byte(actions[1].Parameters[1]), &res)
 				require.Equal(t, map[string]any{"foo": "handler3"}, mokapi.Export(res.Data))
-				_ = json.Unmarshal([]byte(actions[2].Parameters[1].(string)), &res)
+				_ = json.Unmarshal([]byte(actions[2].Parameters[1]), &res)
 				require.Equal(t, map[string]any{"foo": "handler1"}, mokapi.Export(res.Data))
 			},
 		},
