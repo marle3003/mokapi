@@ -1,6 +1,4 @@
 User-agent: *
 Allow: /
-Sitemap: https://mokapi.io/sitemap.xml
 
-# AI language model crawlers
-llms-txt: https://mokapi.io/llms.txt
+Sitemap: https://mokapi.io/sitemap.xml

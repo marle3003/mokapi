@@ -55,12 +55,12 @@ func (sh *scriptHost) OnMqtt(filter common.MqttFilter, do common.EventHandler, a
 
 func (e *MqttEventDispatcher) EmitMqtt(message *common.MqttMessageEvent) []*common.Action {
 	e.mu.RLock()
-	defer e.mu.RUnlock()
-
 	var ehs []*MqttEventHandler
 	for _, h := range e.handlers {
 		ehs = append(ehs, h...)
 	}
+	e.mu.RUnlock()
+
 	slices.SortStableFunc(ehs, func(a, b *MqttEventHandler) int { return -1 * cmp.Compare(a.Args.Priority, b.Args.Priority) })
 
 	var result []*common.Action

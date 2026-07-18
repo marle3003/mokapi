@@ -55,12 +55,12 @@ func (sh *scriptHost) OnKafka(filter common.KafkaFilter, do common.EventHandler,
 
 func (e *KafkaEventDispatcher) EmitKafka(record *common.KafkaEventRecord) []*common.Action {
 	e.mu.RLock()
-	defer e.mu.RUnlock()
-
 	var ehs []*KafkaEventHandler
 	for _, h := range e.handlers {
 		ehs = append(ehs, h...)
 	}
+	e.mu.RUnlock()
+
 	slices.SortStableFunc(ehs, func(a, b *KafkaEventHandler) int { return -1 * cmp.Compare(a.Args.Priority, b.Args.Priority) })
 
 	var result []*common.Action

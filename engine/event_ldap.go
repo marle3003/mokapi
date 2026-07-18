@@ -56,12 +56,12 @@ func (sh *scriptHost) OnLdap(filter common.LdapFilter, do common.EventHandler, a
 
 func (e *LdapEventDispatcher) EmitLdap(request *ldap.SearchRequest, response *ldap.SearchResponse) []*common.Action {
 	e.mu.RLock()
-	defer e.mu.RUnlock()
-
 	var ehs []*LdapEventHandler
 	for _, h := range e.handlers {
 		ehs = append(ehs, h...)
 	}
+	e.mu.RUnlock()
+
 	slices.SortStableFunc(ehs, func(a, b *LdapEventHandler) int { return -1 * cmp.Compare(a.Args.Priority, b.Args.Priority) })
 
 	var result []*common.Action

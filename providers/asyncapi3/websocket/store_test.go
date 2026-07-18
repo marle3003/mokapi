@@ -271,7 +271,6 @@ export default function() {
 			js: `import { on } from 'mokapi'
 		export default function() {
 		  on('websocket', function(event) {
-console.log(event.type)
 			if (event.type === 'message') {
 		    	event.reply({text2: "hello"})
 			}

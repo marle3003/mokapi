@@ -101,8 +101,6 @@ func (h *WebsocketEventHandler) match(record common.WebsocketEvent) bool {
 
 func (e *WebsocketEventDispatcher) run(event any, condition func(*WebsocketEventHandler) bool) []*common.Action {
 	e.mu.RLock()
-	defer e.mu.RUnlock()
-
 	var ehs []*WebsocketEventHandler
 	for _, list := range e.handlers {
 		for _, h := range list {
@@ -111,6 +109,8 @@ func (e *WebsocketEventDispatcher) run(event any, condition func(*WebsocketEvent
 			}
 		}
 	}
+	e.mu.RUnlock()
+
 	slices.SortStableFunc(ehs, func(a, b *WebsocketEventHandler) int { return -1 * cmp.Compare(a.Args.Priority, b.Args.Priority) })
 
 	var result []*common.Action
