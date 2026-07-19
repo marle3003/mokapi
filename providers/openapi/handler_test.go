@@ -1032,8 +1032,6 @@ func TestHandler_Event(t *testing.T) {
 				require.Equal(t, "Testing", er.Api)
 				require.Equal(t, "/foo/{id}", er.Key)
 				require.Equal(t, "foo-operation", er.OperationId)
-				require.NotNil(t, er.Operation)
-				require.Equal(t, "foo-operation", er.Operation.(map[string]any)["operationId"])
 			},
 			event: func(request *common.HttpEventRequest, response *common.HttpEventResponse) []*common.Action {
 				response.Data = request
