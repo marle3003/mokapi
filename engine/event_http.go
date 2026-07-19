@@ -79,5 +79,17 @@ func (e *HttpEventDispatcher) EmitHttp(request *common.HttpEventRequest, respons
 }
 
 func (h *HttpEventHandler) match(request *common.HttpEventRequest, response *common.HttpEventResponse) bool {
+	if !matchesIfPresent(h.Filter.Method, request.Method) {
+		return false
+	}
+	if !matchesIfPresent(h.Filter.OperationId, request.OperationId) {
+		return false
+	}
+	if !matchesIfPresent(h.Filter.Path, request.Key) {
+		return false
+	}
+	if !matchesIfPresent(h.Filter.Api, request.Api) {
+		return false
+	}
 	return true
 }

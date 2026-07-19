@@ -18,10 +18,12 @@ import (
 
 const eventKey = "event"
 
-func NewEventResponse(status int, ct media.ContentType) *common.HttpEventResponse {
+func NewEventResponse(status int, ct media.ContentType, schema *schema.Schema) *common.HttpEventResponse {
 	r := &common.HttpEventResponse{
 		Headers:    make(map[string]any),
 		StatusCode: status,
+		Schema:     schema,
+		Context:    make(map[string]any),
 	}
 
 	if !ct.IsEmpty() {
@@ -50,6 +52,7 @@ func NewEventRequest(r *http.Request, contentType media.ContentType, api string)
 		Query:       make(map[string]any),
 		Header:      make(map[string]any),
 		Cookie:      make(map[string]any),
+		Operation:   op,
 	}
 
 	req.Url = common.Url{

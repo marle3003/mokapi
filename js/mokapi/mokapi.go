@@ -23,24 +23,25 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 	o := vm.Get("mokapi/internal").(*goja.Object)
 	host := o.Get("host").Export().(common.Host)
 	loop := o.Get("loop").Export().(*eventloop.EventLoop)
-	f := &Module{
+	m := &Module{
 		vm:   vm,
 		host: host,
 		loop: loop,
 	}
 	obj := module.Get("exports").(*goja.Object)
-	_ = obj.Set("sleep", f.Sleep)
-	_ = obj.Set("every", f.Every)
-	_ = obj.Set("cron", f.Cron)
-	_ = obj.Set("on", f.On)
-	_ = obj.Set("env", f.Env)
-	_ = obj.Set("encoding", f.Marshal)
-	_ = obj.Set("date", f.Date)
-	_ = obj.Set("marshal", f.Marshal)
+	_ = obj.Set("sleep", m.Sleep)
+	_ = obj.Set("every", m.Every)
+	_ = obj.Set("cron", m.Cron)
+	_ = obj.Set("on", m.On)
+	_ = obj.Set("env", m.Env)
+	_ = obj.Set("encoding", m.Marshal)
+	_ = obj.Set("date", m.Date)
+	_ = obj.Set("marshal", m.Marshal)
 	_ = obj.Set("patch", patch)
 	_ = obj.Set("Delete", Delete)
 	_ = obj.Set("shared", NewSharedMemory(host.Store(), vm))
-	_ = obj.Set("webhook", f.Webhook)
+	_ = obj.Set("webhook", m.Webhook)
+	_ = obj.Set("app", &App{m: m})
 }
 
 func (m *Module) Sleep(i interface{}) {

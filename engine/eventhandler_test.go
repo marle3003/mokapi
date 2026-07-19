@@ -134,7 +134,7 @@ export default () => {
 				require.NoError(t, err)
 				require.Len(t, actions, 1)
 				require.Len(t, actions[0].Parameters, 2)
-				require.Equal(t, `{"method":"","url":{"scheme":"","host":"","port":0,"path":"","query":""},"body":null,"path":null,"query":null,"header":null,"cookie":null,"querystring":null,"api":"","key":"","operationId":""}`, actions[0].Parameters[0])
+				require.Equal(t, `{"method":"","url":{"scheme":"","host":"","port":0,"path":"","query":""},"body":null,"path":null,"query":null,"header":null,"cookie":null,"querystring":null,"api":"","key":"","operationId":"","operation":null}`, actions[0].Parameters[0])
 			},
 		},
 		{

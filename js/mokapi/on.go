@@ -27,46 +27,7 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 		panic(m.vm.ToValue(err.Error()))
 	}
 
-	f := func(ctx *common.EventContext) (bool, error) {
-		origin, err := getHashes(ctx.Args...)
-		if err != nil {
-			return false, err
-		}
-
-		var params []goja.Value
-		for _, v := range ctx.Args {
-			params = append(params, ArgToJs(v, m.vm))
-		}
-
-		var r goja.Value
-		r, err = m.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
-			call, _ := goja.AssertFunction(do)
-			v, err := call(goja.Undefined(), params...)
-			if err != nil {
-				return nil, err
-			}
-			return v, nil
-		}, &eventloop.JobContext{EventLogger: ctx.EventLogger})
-
-		if err != nil {
-			return false, err
-		}
-
-		if r != goja.Undefined() {
-			return r.ToBoolean(), nil
-		}
-
-		if eventArgs.isTrackSet {
-			return eventArgs.track(params...)
-		}
-
-		newHashes, err := getHashes(ctx.Args...)
-		if err != nil {
-			return false, err
-		}
-
-		return haveChanges(origin, newHashes), nil
-	}
+	f := getHandler(do, eventArgs, m.vm, m.loop)
 
 	switch event {
 	case "http":
@@ -83,6 +44,49 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 		m.host.OnLdap(common.LdapFilter{}, f, common.EventArgs{Tags: eventArgs.tags, Priority: eventArgs.priority})
 	default:
 		log.Error(fmt.Errorf("unknown event: %s", event))
+	}
+}
+
+func getHandler(do goja.Value, args onArgs, vm *goja.Runtime, loop *eventloop.EventLoop) common.EventHandler {
+	return func(ctx *common.EventContext) (bool, error) {
+		origin, err := getHashes(ctx.Args...)
+		if err != nil {
+			return false, err
+		}
+
+		var params []goja.Value
+		for _, v := range ctx.Args {
+			params = append(params, ArgToJs(v, vm))
+		}
+
+		var r goja.Value
+		r, err = loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
+			call, _ := goja.AssertFunction(do)
+			v, err := call(goja.Undefined(), params...)
+			if err != nil {
+				return nil, err
+			}
+			return v, nil
+		}, &eventloop.JobContext{EventLogger: ctx.EventLogger})
+
+		if err != nil {
+			return false, err
+		}
+
+		if r != goja.Undefined() {
+			return r.ToBoolean(), nil
+		}
+
+		if args.isTrackSet {
+			return args.track(params...)
+		}
+
+		newHashes, err := getHashes(ctx.Args...)
+		if err != nil {
+			return false, err
+		}
+
+		return haveChanges(origin, newHashes), nil
 	}
 }
 

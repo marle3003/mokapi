@@ -55,6 +55,23 @@ jobs:
           artifact-image-name: ${{ inputs.image-artifact-name }}
           artifact-test-report: ${{ inputs.artifact-test-report }}
 
+  test-typescript:
+    name: Test TypeScript Definitions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          sparse-checkout: 'npm'
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+      - name: Run TypeScript Compiler (tsc)
+        working-directory: npm/go-mokapi/test
+        run: |
+          npm install -D typescript
+          npx tsc
+
   publish-report:
     name: Publish Playwright Report
     if: "(success() || needs.test.result == 'failure') && github.event.pull_request.head.repo.full_name == 'marle3003/mokapi'"

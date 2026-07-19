@@ -9,6 +9,7 @@ import (
 	"mokapi/engine/common"
 	"mokapi/lib"
 	"mokapi/media"
+	openapi "mokapi/providers/openapi/schema"
 	"mokapi/runtime/events"
 	"mokapi/runtime/monitor"
 	"net/http"
@@ -133,7 +134,11 @@ func (h *responseHandler) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 		h.serveSecurity(r, h.config.Security)
 	}
 
-	response := NewEventResponse(status, contentType)
+	var selectedResponseBodySchema *openapi.Schema
+	if mediaType != nil {
+		selectedResponseBodySchema = mediaType.Schema
+	}
+	response := NewEventResponse(status, contentType, selectedResponseBodySchema)
 	setResponseRebuild(response, request, op)
 
 	err = setResponseData(response, mediaType, request)

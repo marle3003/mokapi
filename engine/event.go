@@ -95,3 +95,7 @@ func addDefaultTags(args *common.EventArgs, sh *scriptHost) {
 		}
 	}
 }
+
+func matchesIfPresent(a, b string) bool {
+	return a == "" || a == b
+}

@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "module": "node16",
+    "moduleResolution": "node16",
+    "baseUrl": ".",
+    "paths": {
+      "mokapi": ["../types/index.d.ts"],
+    },
+    "lib": [
+      "es6"
+    ],
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictFunctionTypes": true,
+    "strictNullChecks": true,
+    "types": [],
+    "noEmit": true,
+    "forceConsistentCasingInFileNames": true,
+  },
+  "files": [
+    "mokapi-test.ts",
+  ]
+}

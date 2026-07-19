@@ -1020,25 +1020,20 @@ func TestHandler_Event(t *testing.T) {
 				b := rr.Body.Bytes()
 				err := json.Unmarshal(b, &er)
 				require.NoError(t, err)
-				require.Equal(t, &common.HttpEventRequest{
-					Method: http.MethodGet,
-					Url: common.Url{
-						Scheme: "http",
-						Host:   "localhost",
-						Port:   80,
-						Path:   "/foo/123",
-						Query:  "",
-					},
-					Body:        nil,
-					Path:        map[string]any{"id": float64(123)},
-					Query:       map[string]any{},
-					Header:      map[string]any{"Accept": "application/json"},
-					Cookie:      map[string]any{},
-					QueryString: nil,
-					Api:         "Testing",
-					Key:         "/foo/{id}",
-					OperationId: "foo-operation",
-				}, er)
+
+				require.Equal(t, http.MethodGet, er.Method)
+				require.Equal(t, common.Url{Scheme: "http", Host: "localhost", Port: 80, Path: "/foo/123", Query: ""}, er.Url)
+				require.Nil(t, er.Body)
+				require.Equal(t, map[string]any{"id": float64(123)}, er.Path)
+				require.Equal(t, map[string]any{}, er.Query)
+				require.Equal(t, map[string]any{"Accept": "application/json"}, er.Header)
+				require.Equal(t, map[string]any{}, er.Cookie)
+				require.Nil(t, er.QueryString)
+				require.Equal(t, "Testing", er.Api)
+				require.Equal(t, "/foo/{id}", er.Key)
+				require.Equal(t, "foo-operation", er.OperationId)
+				require.NotNil(t, er.Operation)
+				require.Equal(t, "foo-operation", er.Operation.(map[string]any)["operationId"])
 			},
 			event: func(request *common.HttpEventRequest, response *common.HttpEventResponse) []*common.Action {
 				response.Data = request
