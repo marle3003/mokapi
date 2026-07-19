@@ -35,6 +35,9 @@ export default async function() {
             res.ctx.name = 'Zoe'
         }, { tags: { middleware: '' }})
         .get((req, res) => {
+            if (!req.query.status.includes('sold')) {
+                return
+            }
             res.data = [
                 {
                     name: res.ctx.name,
