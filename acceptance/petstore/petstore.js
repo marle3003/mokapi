@@ -32,7 +32,7 @@ export default async function() {
     app.http()
         .route('/pet/findByStatus')
         .use((req, res) => {
-            res.ctx.name = 'Zoe'
+            res.context.name = 'Zoe'
         }, { tags: { middleware: '' }})
         .get((req, res) => {
             if (!req.query.status.includes('sold')) {
@@ -40,7 +40,7 @@ export default async function() {
             }
             res.data = [
                 {
-                    name: res.ctx.name,
+                    name: res.context.name,
                     photoUrls: []
                 }
             ]

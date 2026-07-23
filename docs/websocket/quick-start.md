@@ -40,8 +40,6 @@ channels:
     parameters:
       roomId:
         description: Unique identifier for the chat room.
-        schema:
-          type: string
     messages:
       ChatMessage:
         $ref: '#/components/messages/ChatMessage'

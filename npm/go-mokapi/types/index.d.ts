@@ -807,6 +807,18 @@ export interface WebsocketChannel {
     readonly name: string;
 
     /**
+     * The parameter values extracted from the channel address for this
+     * specific channel instance, keyed by parameter name.
+     *
+     * @example
+     * // channel address: /doc/{roomId}
+     * on('websocket', function(event) {
+     *   console.log(event.channel.params['roomId']) // e.g. "room-1"
+     * })
+     */
+    readonly params: Record<string, string>;
+
+    /**
      * All clients currently connected to this channel. Use this for
      * custom fan-out logic beyond what `broadcast` provides — for
      * example, filtering by query parameter or sending to a subset.

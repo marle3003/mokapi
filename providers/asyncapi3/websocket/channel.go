@@ -24,6 +24,7 @@ type Channel struct {
 	emitter engine.WebsocketEventEmitter
 	log     func(log events.EventData, traits events.Traits)
 	monitor *monitor.Websocket
+	params  map[string]string
 }
 
 func (s *Store) Channel(name string) (*Channel, bool) {
@@ -49,7 +50,7 @@ func (s *Store) Channel(name string) (*Channel, bool) {
 			continue
 		}
 
-		err := ch.IsNameValid(name)
+		params, err := ch.ExtractParams(name)
 		if err != nil {
 			continue
 		}
@@ -65,6 +66,7 @@ func (s *Store) Channel(name string) (*Channel, bool) {
 			cfg:     ch,
 			log:     s.log,
 			monitor: s.monitor,
+			params:  params,
 		}
 		s.Channels[name] = c
 		return c, true

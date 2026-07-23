@@ -44,6 +44,7 @@ type WebsocketMessageEvent struct {
 type WebsocketEventChannel struct {
 	Name    string                  `json:"name"`
 	Clients []*WebsocketEventClient `json:"clients"`
+	Params  map[string]string       `json:"params"`
 	Conn    WebsocketChannelConn    `json:"-"`
 }
 

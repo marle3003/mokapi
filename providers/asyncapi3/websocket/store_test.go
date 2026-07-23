@@ -618,6 +618,7 @@ export default function() {
 				require.Equal(t, "/chats/1234", result.Name)
 				require.Len(t, result.Clients, 1)
 				require.NotNil(t, result.Clients[0])
+				require.Equal(t, map[string]string{"chatId": "1234"}, result.Params)
 			},
 		},
 	}
