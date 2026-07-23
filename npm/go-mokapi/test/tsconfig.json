@@ -16,7 +16,4 @@
     "noEmit": true,
     "forceConsistentCasingInFileNames": true,
   },
-  "files": [
-    "mokapi-test.ts",
-  ]
 }

@@ -12,7 +12,7 @@ type HttpEventResponse struct {
 	Body       string         `json:"body"`
 	Data       any            `json:"data"`
 	Schema     any            `json:"schema"`
-	Context    map[string]any `json:"ctx"`
+	Context    map[string]any `json:"context"`
 
 	Rebuild func(statusCode int, contentType string) `json:"-"`
 }
