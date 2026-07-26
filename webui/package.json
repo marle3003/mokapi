@@ -59,11 +59,11 @@
     "@vue/eslint-config-typescript": "14.9.0",
     "@vue/tsconfig": "0.9.1",
     "eslint": "10.7.0",
-    "eslint-plugin-vue": "10.9.2",
+    "eslint-plugin-vue": "10.10.0",
     "npm-run-all2": "9.0.2",
-    "prettier": "3.9.5",
+    "prettier": "3.9.6",
     "typescript": "6.0.3",
-    "vite": "8.1.4",
+    "vite": "8.1.5",
     "vue-tsc": "3.3.7",
     "xml2js": "0.6.2"
   }
