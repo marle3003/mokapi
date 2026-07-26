@@ -28,6 +28,7 @@ func TestHandler_Http(t *testing.T) {
 	testcases := []struct {
 		name         string
 		app          func() *runtime.App
+		contentType  string
 		requestUrl   string
 		responseBody string
 	}{
@@ -380,6 +381,61 @@ func TestHandler_Http(t *testing.T) {
 			requestUrl:   "http://foo.api/api/services/http/foo",
 			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo/{bar}","status":"valid","operations":[{"method":"get","deprecated":false,"status":"invalid","errors":[{"message":"error"}],"metrics":{"http_requests_total":0,"http_requests_errors_total":0,"http_request_timestamp":0}}]}]`,
 		},
+		{
+			name: "export to OpenAPI.json",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithPath("/foo/{bar}",
+							openapitest.WithOperation("get"),
+						),
+					),
+				)
+			},
+			requestUrl:   "http://foo.api/api/services/http/foo/openapi.json",
+			responseBody: "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"title\": \"foo\",\n    \"version\": \"\"\n  },\n  \"paths\": {\n    \"/foo/{bar}\": {\n      \"get\": {}\n    }\n  }\n}",
+		},
+		{
+			name:        "export to OpenAPI.yaml",
+			contentType: "application/yaml",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithPath("/foo/{bar}",
+							openapitest.WithOperation("get"),
+						),
+					),
+				)
+			},
+			requestUrl: "http://foo.api/api/services/http/foo/openapi.yaml",
+			responseBody: `openapi: 3.0.0
+info:
+  title: foo
+  version: ""
+paths:
+  /foo/{bar}:
+    get: {}
+`,
+		},
+		{
+			name: "export to OpenAPI.json with server and components",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithPath("/foo/{bar}",
+							openapitest.WithOperation("get"),
+						),
+						openapitest.WithServer("/foo", ""),
+						openapitest.WithComponentSchema("foo", schematest.New("string")),
+					),
+				)
+			},
+			requestUrl:   "http://foo.api/api/services/http/foo/openapi.json",
+			responseBody: "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"title\": \"foo\",\n    \"version\": \"\"\n  },\n  \"servers\": [\n    {\n      \"url\": \"/foo\"\n    }\n  ],\n  \"paths\": {\n    \"/foo/{bar}\": {\n      \"get\": {}\n    }\n  },\n  \"components\": {\n    \"schemas\": {\n      \"foo\": {\n        \"type\": \"string\"\n      }\n    }\n  }\n}",
+		},
 	}
 
 	t.Parallel()
@@ -390,6 +446,11 @@ func TestHandler_Http(t *testing.T) {
 
 			h := New(tc.app(), static.Api{})
 
+			hasContentType := try.HasHeader("Content-Type", "application/json")
+			if tc.contentType != "" {
+				hasContentType = try.HasHeader("Content-Type", tc.contentType)
+			}
+
 			try.Handler(t,
 				http.MethodGet,
 				tc.requestUrl,
@@ -397,7 +458,7 @@ func TestHandler_Http(t *testing.T) {
 				"",
 				h,
 				try.HasStatusCode(200),
-				try.HasHeader("Content-Type", "application/json"),
+				hasContentType,
 				try.BodyContains(tc.responseBody))
 		})
 	}

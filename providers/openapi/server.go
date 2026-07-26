@@ -1,11 +1,13 @@
 package openapi
 
 type Server struct {
-	Url string
+	Url string `yaml:"url,omitempty" json:"url,omitempty"`
 
 	// An optional string describing the host designated by the URL.
 	// CommonMark syntax MAY be used for rich text representation.
-	Description string
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+
+	IsDefault bool `yaml:"-" json:"-"`
 }
 
 func (c *Config) patchServers(patch []*Server) {

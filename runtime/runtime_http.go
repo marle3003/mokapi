@@ -180,7 +180,7 @@ func patchHttp(c *HttpInfo, reader dynamic.Reader) {
 	}
 
 	if len(r.Servers) == 0 {
-		r.Servers = append(r.Servers, &openapi.Server{Url: "/"})
+		r.Servers = append(r.Servers, &openapi.Server{Url: "/", IsDefault: true})
 	}
 
 	c.Config = r

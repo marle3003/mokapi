@@ -27,18 +27,18 @@ type ResponseRef struct {
 type Response struct {
 	// A short description of the response. CommonMark syntax
 	// MAY be used for rich text representation.
-	Description string
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 
 	// A map containing descriptions of potential response payloads.
 	// The key is a media type or media type range and the value describes
 	// it. For responses that match multiple keys, only the most specific
 	// key is applicable. e.g. text/plain overrides text/*
-	Content Content
+	Content Content `yaml:"content,omitempty" json:"content,omitempty"`
 
 	// Maps a header name to its definition. RFC7230 states header names are
 	// case-insensitive. If a response header is defined with the name
 	// "Content-Type", it SHALL be ignored.
-	Headers Headers
+	Headers Headers `yaml:"headers,omitempty" json:"headers,omitempty"`
 }
 
 func (r *Responses) UnmarshalJSON(b []byte) error {

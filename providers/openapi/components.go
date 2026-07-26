@@ -19,13 +19,15 @@ type Components struct {
 
 type ComponentParameters map[string]*ParameterRef
 
-func (p ComponentParameters) Parse(config *dynamic.Config, reader dynamic.Reader) error {
-	for name, param := range p {
-		if err := param.Parse(config, reader); err != nil {
-			return fmt.Errorf("parse parameter '%v' failed: %w", name, err)
-		}
-	}
-	return nil
+func (c *Components) IsEmpty() bool {
+	return c.Schemas == nil || c.Schemas.Len() == 0 &&
+		len(c.Responses) == 0 &&
+		len(c.RequestBodies) == 0 &&
+		len(c.Parameters) == 0 &&
+		len(c.Examples) == 0 &&
+		len(c.Headers) == 0 &&
+		len(c.PathItems) == 0 &&
+		len(c.SecuritySchemes) == 0
 }
 
 func (c *Components) patch(patch Components) {
@@ -64,6 +66,15 @@ func (c *Components) patch(patch Components) {
 	} else {
 		c.SecuritySchemes.patch(patch.SecuritySchemes)
 	}
+}
+
+func (p ComponentParameters) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+	for name, param := range p {
+		if err := param.Parse(config, reader); err != nil {
+			return fmt.Errorf("parse parameter '%v' failed: %w", name, err)
+		}
+	}
+	return nil
 }
 
 func (p ComponentParameters) patch(patch ComponentParameters) {

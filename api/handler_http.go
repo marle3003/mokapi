@@ -1,6 +1,8 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
 	"maps"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema"
@@ -12,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"gopkg.in/yaml.v3"
 )
 
 type httpInfo struct {
@@ -170,6 +173,7 @@ func (h *handler) setupHttp() {
 
 	r.HandleFunc("", h.getHttpServices).Methods(http.MethodGet)
 	r.HandleFunc("/{api}", h.getHttpApi).Methods(http.MethodGet)
+	r.HandleFunc("/{api}/openapi.{ext}", h.exportHttp).Methods(http.MethodGet)
 	r.HandleFunc("/{api}/operations", h.getHttpOperations).Methods(http.MethodGet)
 }
 
@@ -473,4 +477,43 @@ func getErrors(err []openapi.Error) []errorData {
 		errData = append(errData, errorData{Message: e.Message})
 	}
 	return errData
+}
+
+func (h *handler) exportHttp(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	s := h.app.Http.Get(vars["api"])
+	if s == nil {
+		w.WriteHeader(404)
+		return
+	}
+	ext := vars["ext"]
+	var b []byte
+	var err error
+	var ct string
+	switch ext {
+	case "json":
+		b, err = json.MarshalIndent(s.Config, "", "  ")
+		ct = "application/json"
+		break
+	case "yaml":
+		var buf bytes.Buffer
+		enc := yaml.NewEncoder(&buf)
+		enc.SetIndent(2)
+		err = enc.Encode(s.Config)
+		if err != nil {
+			err = enc.Close()
+		}
+		b = buf.Bytes()
+		ct = "application/yaml"
+	}
+
+	if err != nil {
+		w.WriteHeader(500)
+		_, _ = w.Write([]byte(err.Error()))
+		return
+	}
+
+	w.Header().Set("Content-Type", ct)
+	_, _ = w.Write(b)
 }
