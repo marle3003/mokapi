@@ -4,7 +4,7 @@ type Info struct {
 	// The title of the service
 	Name string `yaml:"title" json:"title"`
 
-	Summary string `yaml:"summary" json:"summary"`
+	Summary string `yaml:"summary,omitempty" json:"summary,omitempty"`
 
 	// A short description of the API. CommonMark syntax MAY be
 	// used for rich text representation.
@@ -17,7 +17,7 @@ type Info struct {
 
 	TermsOfService string `yaml:"termsOfService,omitempty" json:"termsOfService,omitempty"`
 
-	License *License `yaml:"license" json:"license"`
+	License *License `yaml:"license,omitempty" json:"license,omitempty"`
 }
 
 type License struct {

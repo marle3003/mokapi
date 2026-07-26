@@ -30,45 +30,45 @@ type PathRef struct {
 type Path struct {
 	// An optional, string summary, intended to apply to all operations
 	// in this path.
-	Summary string
+	Summary string `yaml:"summary,omitempty" json:"summary,omitempty"`
 
 	// An optional, string description, intended to apply to all operations
 	// in this path. CommonMark syntax MAY be used for rich text representation.
-	Description string
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 
 	// A definition of a GET operation on this path.
-	Get *Operation
+	Get *Operation `yaml:"get,omitempty" json:"get,omitempty"`
 
 	// A definition of a POST operation on this path.
-	Post *Operation
+	Post *Operation `yaml:"post,omitempty" json:"post,omitempty"`
 
 	// A definition of a PUT operation on this path.
-	Put *Operation
+	Put *Operation `yaml:"put,omitempty" json:"put,omitempty"`
 
 	// A definition of a PATCH operation on this path.
-	Patch *Operation
+	Patch *Operation `yaml:"patch,omitempty" json:"patch,omitempty"`
 
 	// A definition of a DELETE operation on this path.
-	Delete *Operation
+	Delete *Operation `yaml:"delete,omitempty" json:"delete,omitempty"`
 
 	// A definition of a HEAD operation on this path.
-	Head *Operation
+	Head *Operation `yaml:"head,omitempty" json:"head,omitempty"`
 
 	// A definition of an OPTIONS operation on this path.
-	Options *Operation
+	Options *Operation `yaml:"options,omitempty" json:"options,omitempty"`
 
 	// A definition of a TRACE operation on this path.
-	Trace *Operation
+	Trace *Operation `yaml:"trace,omitempty" json:"trace,omitempty"`
 
-	Query *Operation
+	Query *Operation `yaml:"query,omitempty" json:"query,omitempty"`
 
-	AdditionalOperations map[string]*Operation `yaml:"additionalOperations" json:"additionalOperations"`
+	AdditionalOperations map[string]*Operation `yaml:"additionalOperations,omitempty" json:"additionalOperations,omitempty"`
 
 	// A list of parameters that are applicable for all
 	// the operations described under this path. These
 	// parameters can be overridden at the operation level,
 	// but cannot be removed there
-	Parameters Parameters
+	Parameters Parameters `yaml:"parameters,omitempty" json:"parameters,omitempty"`
 
 	Path   string  `yaml:"-" json:"-"`
 	Status Status  `yaml:"-" json:"-"`
@@ -85,6 +85,13 @@ func (r *PathRef) MarshalJSON() ([]byte, error) {
 	} else {
 		return json.Marshal(r.Ref)
 	}
+}
+
+func (r *PathRef) MarshalYAML() (any, error) {
+	if r.Value != nil {
+		return r.Value, nil
+	}
+	return r.Ref, nil
 }
 
 func (r *PathRef) UnmarshalYAML(node *yaml.Node) error {

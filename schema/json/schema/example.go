@@ -2,8 +2,9 @@ package schema
 
 import (
 	"encoding/json"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
+
+	"gopkg.in/yaml.v3"
 )
 
 // The gopkg.in/yaml.v3 package automatically interprets date-like strings as time.Time
@@ -33,6 +34,6 @@ func (e *Example) MarshalJSON() ([]byte, error) {
 	return json.Marshal(e.Value)
 }
 
-func (e *Example) MarshalYAML() ([]byte, error) {
+func (e *Example) MarshalYAML() (any, error) {
 	return yaml.Marshal(e.Value)
 }

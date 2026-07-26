@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"mokapi/config/dynamic"
 	"net/http"
@@ -14,38 +15,38 @@ var NoSuccessResponse = errors.New("neither success response (HTTP 2xx) nor 'def
 type Operation struct {
 	// A list of tags for API documentation control. Tags can be used for
 	// logical grouping of operations by resources or any other qualifier.
-	Tags []string `yaml:"tags" json:"tags"`
+	Tags []string `yaml:"tags,omitempty" json:"tags,omitempty"`
 
 	// A short summary of what the operation does.
-	Summary string `yaml:"summary" json:"summary"`
+	Summary string `yaml:"summary,omitempty" json:"summary,omitempty"`
 
 	// A verbose explanation of the operation behavior.
 	// CommonMark syntax MAY be used for rich text representation.
-	Description string `yaml:"description" json:"description"`
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 
-	Deprecated bool `yaml:"deprecated" json:"deprecated"`
+	Deprecated bool `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
 
 	// Unique string used to identify the operation. The id MUST be unique
 	// among all operations described in the API. The operationId value is
 	// case-sensitive. Tools and libraries MAY use the operationId to uniquely
 	// identify an operation, therefore, it is RECOMMENDED to follow common
 	// programming naming conventions.
-	OperationId string `yaml:"operationId" json:"operationId"`
+	OperationId string `yaml:"operationId,omitempty" json:"operationId,omitempty"`
 
 	// A list of parameters that are applicable for this operation.
 	// If a parameter is already defined at the Path Item, the new definition
 	// will override it but can never remove it. The list MUST NOT include
 	// duplicated parameters. A unique parameter is defined by a combination
 	// of a name and location
-	Parameters Parameters
+	Parameters Parameters `yaml:"parameters,omitempty" json:"parameters,omitempty"`
 
-	RequestBody *RequestBodyRef `yaml:"requestBody" json:"requestBody"`
+	RequestBody *RequestBodyRef `yaml:"requestBody,omitempty" json:"requestBody,omitempty"`
 
 	// The list of possible responses as they are returned from executing this
 	// operation.
-	Responses *Responses `yaml:"responses" json:"responses"`
+	Responses *Responses `yaml:"responses,omitempty" json:"responses,omitempty"`
 
-	Security []SecurityRequirement `yaml:"security" json:"security"`
+	Security []SecurityRequirement `yaml:"security,omitempty" json:"security,omitempty"`
 
 	Path   *Path   `yaml:"-" json:"-"`
 	Status Status  `yaml:"-" json:"-"`
@@ -139,4 +140,30 @@ func (o *Operation) patch(patch *Operation) {
 			o.Security = append(o.Security, v)
 		}
 	}
+}
+
+func (o *Operation) MarshalJSON() ([]byte, error) {
+	type alias Operation
+	temp := struct {
+		alias
+		Responses *Responses `json:"responses,omitempty"`
+	}{
+		alias: alias(*o),
+	}
+
+	if o.Responses != nil && o.Responses.Len() == 0 {
+		temp.Responses = nil
+	}
+
+	return json.Marshal(&temp)
+}
+
+func (o *Operation) MarshalYAML() (any, error) {
+	temp := *o
+
+	if temp.Responses != nil && temp.Responses.Len() == 0 {
+		temp.Responses = nil
+	}
+
+	return temp, nil
 }

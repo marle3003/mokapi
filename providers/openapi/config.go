@@ -2,6 +2,7 @@ package openapi
 
 import (
 	_ "embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"mokapi/config/dynamic"
@@ -62,7 +63,7 @@ type Config struct {
 
 	Webhooks map[string]*PathRef `yaml:"webhooks,omitempty" json:"webhooks,omitempty"`
 
-	Security []SecurityRequirement `yaml:"security" json:"security"`
+	Security []SecurityRequirement `yaml:"security,omitempty" json:"security,omitempty"`
 
 	Components Components `yaml:"components,omitempty" json:"components,omitempty"`
 
@@ -249,4 +250,63 @@ func (c *Config) GetStatus() Status {
 		}
 	}
 	return StatusValid
+}
+
+type config struct {
+	OpenApi      string                `yaml:"openapi" json:"openapi"`
+	Info         Info                  `yaml:"info" json:"info"`
+	Servers      []*Server             `yaml:"servers,omitempty" json:"servers,omitempty"`
+	Paths        PathItems             `yaml:"paths,omitempty" json:"paths,omitempty"`
+	Webhooks     map[string]*PathRef   `yaml:"webhooks,omitempty" json:"webhooks,omitempty"`
+	Security     []SecurityRequirement `yaml:"security,omitempty" json:"security,omitempty"`
+	Components   *Components           `yaml:"components,omitempty" json:"components,omitempty"`
+	ExternalDocs *ExternalDocs         `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
+	Tags         []*Tag                `yaml:"tags,omitempty" json:"tags,omitempty"`
+}
+
+func (c *Config) MarshalJSON() ([]byte, error) {
+	type alias Config
+	temp := struct {
+		Version string `json:"openapi"`
+		alias
+		Components *Components `json:"components,omitempty"`
+	}{
+		alias:      alias(*c), // real value copy — mutating temp never touches c
+		Version:    c.OpenApi.String(),
+		Components: &c.Components,
+	}
+
+	if len(temp.Servers) == 1 && temp.Servers[0].IsDefault {
+		temp.Servers = nil
+	}
+
+	if c.Components.IsEmpty() {
+		temp.Components = nil
+	}
+
+	return json.Marshal(&temp)
+}
+
+func (c *Config) MarshalYAML() (any, error) {
+	temp := &config{
+		OpenApi:      c.OpenApi.String(),
+		Info:         c.Info,
+		Servers:      c.Servers,
+		Paths:        c.Paths,
+		Webhooks:     c.Webhooks,
+		Security:     c.Security,
+		Components:   &c.Components,
+		ExternalDocs: c.ExternalDocs,
+		Tags:         c.Tags,
+	}
+
+	if len(temp.Servers) == 1 && temp.Servers[0].IsDefault {
+		temp.Servers = nil
+	}
+
+	if c.Components.IsEmpty() {
+		temp.Components = nil
+	}
+
+	return temp, nil
 }

@@ -159,6 +159,26 @@ func (m *LinkedHashMap[K, V]) MarshalJSON() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+func (m *LinkedHashMap[K, V]) MarshalYAML() (any, error) {
+	node := &yaml.Node{Kind: yaml.MappingNode}
+
+	for it := m.Iter(); it.Next(); {
+		keyNode := &yaml.Node{}
+		if err := keyNode.Encode(it.Key()); err != nil {
+			return nil, err
+		}
+
+		valNode := &yaml.Node{}
+		if err := valNode.Encode(it.Value()); err != nil {
+			return nil, err
+		}
+
+		node.Content = append(node.Content, keyNode, valNode)
+	}
+
+	return node, nil
+}
+
 func (m *LinkedHashMap[K, V]) ToMap() map[K]V {
 	result := map[K]V{}
 	for it := m.Iter(); it.Next(); {
