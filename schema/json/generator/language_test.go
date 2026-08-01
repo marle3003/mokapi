@@ -60,6 +60,16 @@ func TestLanguage(t *testing.T) {
 				require.Equal(t, "Bambara", v)
 			},
 		},
+		{
+			name: "language but no schema",
+			req: &Request{
+				Path: []string{"language"},
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "bm", v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
