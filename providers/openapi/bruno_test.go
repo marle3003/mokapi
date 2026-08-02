@@ -1,0 +1,497 @@
+package openapi_test
+
+import (
+	"io"
+	"mokapi/export/bruno"
+	"mokapi/providers/openapi"
+	"mokapi/providers/openapi/openapitest"
+	"mokapi/providers/openapi/schema/schematest"
+	"mokapi/schema/json/generator"
+	"mokapi/version"
+	"net/http"
+	"testing"
+
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
+)
+
+func TestConfig_ExportBruno(t *testing.T) {
+	testcases := []struct {
+		name string
+		cfg  *openapi.Config
+		host string
+		test func(t *testing.T, c bruno.Collection, err error)
+	}{
+		{
+			name: "empty",
+			cfg:  &openapi.Config{},
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Equal(t, bruno.Collection{
+					Version: &version.Version{Major: 1, Minor: 0, Patch: 0},
+					Info:    bruno.Info{},
+					Bundled: true,
+				}, c)
+			},
+		},
+		{
+			name: "with info",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithInfo("foo", "1.0", "foo description"),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Equal(t, bruno.Collection{
+					Version: &version.Version{Major: 1, Minor: 0, Patch: 0},
+					Info: bruno.Info{
+						Name:    "foo",
+						Summary: "foo description",
+						Version: "1.0",
+					},
+					Bundled: true,
+				}, c)
+			},
+		},
+		{
+			name: "with contact",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithContact("foo", "https://foo.com", "foo@foo.com"),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Equal(t, bruno.Collection{
+					Version: &version.Version{Major: 1, Minor: 0, Patch: 0},
+					Info: bruno.Info{
+						Authors: []bruno.Author{
+							{Name: "foo", Url: "https://foo.com", Email: "foo@foo.com"},
+						},
+					},
+					Bundled: true,
+				}, c)
+			},
+		},
+		{
+			name: "with one server",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithServer("https://foo.com", "foo description"),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, c.Config)
+				require.Equal(t, []bruno.Environment{
+					{
+						Name:        "foo-description",
+						Description: "foo description",
+						Variables: []bruno.Variable{
+							{Name: "baseUrl", Value: "https://foo.com"},
+						},
+					},
+				}, c.Config.Environments)
+				require.Equal(t, &bruno.RequestDefault{
+					Variables: []bruno.Variable{
+						{Name: "baseUrl", Value: "https://foo.com"},
+					},
+				}, c.Request)
+			},
+		},
+		{
+			name: "with one server just a path",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithServer("/foo", "foo description"),
+			),
+			host: "foo.com",
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, c.Config)
+				require.Equal(t, []bruno.Environment{
+					{
+						Name:        "foo-description",
+						Description: "foo description",
+						Variables: []bruno.Variable{
+							{Name: "baseUrl", Value: "http://foo.com/foo"},
+						},
+					},
+				}, c.Config.Environments)
+				require.Equal(t, &bruno.RequestDefault{
+					Variables: []bruno.Variable{
+						{Name: "baseUrl", Value: "http://foo.com/foo"},
+					},
+				}, c.Request)
+			},
+		},
+		{
+			name: "with two server different domains",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithServer("https://foo.com", "foo description"),
+				openapitest.WithServer("https://bar.com", "bar description"),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, c.Config)
+				require.Equal(t, []bruno.Environment{
+					{
+						Name:        "foo-description",
+						Description: "foo description",
+						Variables: []bruno.Variable{
+							{Name: "baseUrl", Value: "https://foo.com"},
+						},
+					},
+					{
+						Name:        "bar-description",
+						Description: "bar description",
+						Variables: []bruno.Variable{
+							{Name: "baseUrl", Value: "https://bar.com"},
+						},
+					},
+				}, c.Config.Environments)
+				require.Equal(t, &bruno.RequestDefault{
+					Variables: []bruno.Variable{
+						{Name: "baseUrl", Value: "https://foo.com"},
+					},
+				}, c.Request)
+			},
+		},
+		{
+			name: "with two server different domains not description",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithServer("https://foo.com", ""),
+				openapitest.WithServer("https://bar.com", ""),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, c.Config)
+				require.Equal(t, []bruno.Environment{
+					{
+						Name: "foo.com",
+						Variables: []bruno.Variable{
+							{Name: "baseUrl", Value: "https://foo.com"},
+						},
+					},
+					{
+						Name: "bar.com",
+						Variables: []bruno.Variable{
+							{Name: "baseUrl", Value: "https://bar.com"},
+						},
+					},
+				}, c.Config.Environments)
+				require.Equal(t, &bruno.RequestDefault{
+					Variables: []bruno.Variable{
+						{Name: "baseUrl", Value: "https://foo.com"},
+					},
+				}, c.Request)
+			},
+		},
+		{
+			name: "with two server same domains different path not description",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithServer("/foo/bar", ""),
+				openapitest.WithServer("/", ""),
+			),
+			host: "foo.com",
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, c.Config)
+				require.Equal(t, []bruno.Environment{
+					{
+						Name: "foo.com-foo-bar",
+						Variables: []bruno.Variable{
+							{Name: "baseUrl", Value: "http://foo.com/foo/bar"},
+						},
+					},
+					{
+						Name: "foo.com",
+						Variables: []bruno.Variable{
+							{Name: "baseUrl", Value: "http://foo.com"},
+						},
+					},
+				}, c.Config.Environments)
+				require.Equal(t, &bruno.RequestDefault{
+					Variables: []bruno.Variable{
+						{Name: "baseUrl", Value: "http://foo.com/foo/bar"},
+					},
+				}, c.Request)
+			},
+		},
+		{
+			name: "with path but no operation",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/foo"),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 0)
+			},
+		},
+		{
+			name: "with path and GET operation",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/foo",
+					openapitest.WithOperation(http.MethodGet),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0]
+				require.Equal(t, &bruno.HttpInfo{
+					Name:        "GET /foo",
+					Description: "",
+					Type:        "http",
+				}, item.Info)
+				require.Equal(t, &bruno.HttpDetail{
+					Method: http.MethodGet,
+					Url:    "{{baseUrl}}/foo",
+				}, item.Http)
+			},
+		},
+		{
+			name: "with path and GET operation description and path parameter",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/products/{name}",
+					openapitest.WithOperation(
+						http.MethodGet,
+						openapitest.WithOperationDescription("operation description"),
+						openapitest.WithOperationParam(
+							"name",
+							true,
+							openapitest.WithParamSchema(schematest.New("string")),
+							openapitest.WithParamInfo("param description"),
+						),
+					),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0]
+				require.Equal(t, &bruno.HttpInfo{
+					Name:        "GET /products/{name}",
+					Description: "operation description",
+					Type:        "http",
+				}, item.Info)
+				require.Equal(t, &bruno.HttpDetail{
+					Method: http.MethodGet,
+					Url:    "{{baseUrl}}/products/:name",
+					Params: []bruno.HttpRequestParam{
+						{
+							Name:        "name",
+							Value:       "Indispensable%20Trunk",
+							Description: "param description",
+							Type:        "path",
+							Disabled:    false,
+						},
+					},
+				}, item.Http)
+			},
+		},
+		{
+			name: "with path and GET operation description and path parameter defined on path",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/products/{name}",
+					openapitest.WithOperation(
+						http.MethodGet,
+						openapitest.WithOperationDescription("operation description"),
+					),
+					openapitest.WithPathParam(
+						"name",
+						openapitest.WithParamSchema(schematest.New("string")),
+						openapitest.WithParamInfo("param description"),
+					),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0]
+				require.Equal(t, &bruno.HttpInfo{
+					Name:        "GET /products/{name}",
+					Description: "operation description",
+					Type:        "http",
+				}, item.Info)
+				require.Equal(t, &bruno.HttpDetail{
+					Method: http.MethodGet,
+					Url:    "{{baseUrl}}/products/:name",
+					Params: []bruno.HttpRequestParam{
+						{
+							Name:        "name",
+							Value:       "Indispensable%20Trunk",
+							Description: "param description",
+							Type:        "path",
+							Disabled:    false,
+						},
+					},
+				}, item.Http)
+			},
+		},
+		{
+			name: "with path and GET operation description and query parameter",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/products",
+					openapitest.WithOperation(
+						http.MethodGet,
+						openapitest.WithQueryParam(
+							"name",
+							false,
+							openapitest.WithParamSchema(schematest.New("string")),
+						),
+					),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0]
+				require.Equal(t, &bruno.HttpInfo{
+					Name: "GET /products",
+					Type: "http",
+				}, item.Info)
+				require.Equal(t, &bruno.HttpDetail{
+					Method: http.MethodGet,
+					Url:    "{{baseUrl}}/products?name=",
+					Params: []bruno.HttpRequestParam{
+						{
+							Name:     "name",
+							Value:    "Indispensable Trunk",
+							Type:     "query",
+							Disabled: true,
+						},
+					},
+				}, item.Http)
+			},
+		},
+		{
+			name: "with path and GET operation description and header parameter",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/products",
+					openapitest.WithOperation(
+						http.MethodGet,
+						openapitest.WithHeaderParam(
+							"name",
+							false,
+							openapitest.WithParamSchema(schematest.New("string")),
+						),
+					),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0]
+				require.Equal(t, &bruno.HttpInfo{
+					Name: "GET /products",
+					Type: "http",
+				}, item.Info)
+				require.Equal(t, &bruno.HttpDetail{
+					Method: http.MethodGet,
+					Url:    "{{baseUrl}}/products",
+					Headers: []bruno.HttpRequestHeader{
+						{
+							Name:     "name",
+							Value:    "Indispensable Trunk",
+							Disabled: true,
+						},
+					},
+				}, item.Http)
+			},
+		},
+		{
+			name: "with path and POST operation description and request body",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/products",
+					openapitest.WithOperation(
+						http.MethodPost,
+						openapitest.WithRequestBody("request body description", true,
+							openapitest.WithRequestContent("application/json",
+								openapitest.WithSchema(schematest.New("object",
+									schematest.WithProperty("name", schematest.New("string")),
+								)),
+							),
+						),
+					),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0]
+				require.Equal(t, &bruno.HttpInfo{
+					Name: "POST /products",
+					Type: "http",
+				}, item.Info)
+				require.Equal(t, &bruno.HttpDetail{
+					Method: http.MethodPost,
+					Url:    "{{baseUrl}}/products",
+					Body: &bruno.HttpRequestBody{
+						Body: &bruno.HttpRequestBodyRaw{
+							Type: "json",
+							Data: `{"name":"Indispensable Trunk"}`,
+						},
+					},
+				}, item.Http)
+			},
+		},
+		{
+			name: "with path and POST operation description and request body json and plain text",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/products",
+					openapitest.WithOperation(
+						http.MethodPost,
+						openapitest.WithRequestBody("", true,
+							openapitest.WithRequestContent("application/json",
+								openapitest.WithSchema(schematest.New("object",
+									schematest.WithProperty("name", schematest.New("string")),
+								)),
+							),
+							openapitest.WithRequestContent("text/plain",
+								openapitest.WithSchema(schematest.New("string")),
+							),
+						),
+					),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0]
+				require.Equal(t, &bruno.HttpInfo{
+					Name: "POST /products",
+					Type: "http",
+				}, item.Info)
+				require.Equal(t, &bruno.HttpDetail{
+					Method: http.MethodPost,
+					Url:    "{{baseUrl}}/products",
+					Body: &bruno.HttpRequestBody{
+						Variant: []bruno.HttpRequestBodyVariant{
+							{
+								Title:    "application/json",
+								Selected: true,
+								Body: bruno.HttpRequestBodyRaw{
+									Type: "json",
+									Data: `{"name":"Indispensable Trunk"}`,
+								},
+							},
+							{
+								Title:    "text/plain",
+								Selected: false,
+								Body: bruno.HttpRequestBodyRaw{
+									Type: "text",
+									Data: "yQtLpCUeQyta",
+								},
+							},
+						},
+					},
+				}, item.Http)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			logrus.SetOutput(io.Discard)
+			generator.Seed(12345)
+
+			c, err := tc.cfg.ExportBruno(tc.host)
+			tc.test(t, c, err)
+		})
+	}
+}

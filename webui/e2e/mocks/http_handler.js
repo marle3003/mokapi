@@ -8,6 +8,7 @@ import { services as websocketServices, events as websocketEvents } from './webs
 import { metrics, sum, max } from './metrics.ts'
 import { get, post, fetch } from 'mokapi/http'
 import { base64 } from 'mokapi/encoding';
+import { yaml } from 'mokapi/yaml'
 
 const configs = {}
 const jobs = []
@@ -105,6 +106,28 @@ export default async function() {
                 }
                 response.data = operations
                 return
+            }
+            case 'httpOpenApi': {
+                console.log(request)
+                const serviceName = request.path['name']
+                const format = request.path['format']
+                const service = httpServices.find(x => x.name === serviceName)
+                if (!service) {
+                    response.statusCode = 404
+                    return
+                }
+                switch (format) {
+                    case 'yaml':
+                        response.headers['Content-Type'] = 'application/yaml'
+                        response.data = service
+                        return
+                    case 'json':
+                        response.headers['Content-Type'] = 'application/json'
+                        response.data = service
+                        return
+                    default:
+                        throw new Error(`Unsupported format: ${format}`)
+                }
             }
             case 'serviceKafka':
                 response.data = {

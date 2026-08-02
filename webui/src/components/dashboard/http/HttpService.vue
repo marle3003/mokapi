@@ -14,11 +14,16 @@ import ConfigCard from '../ConfigCard.vue'
 import '@/assets/http.css'
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useRouter } from '@/router'
+import { useToolbarItem } from '@/composables/toolbar-items'
+import ExportOpenAPI from './export/OpenAPI.vue'
+import ExportBruno from './export/Bruno.vue'
 
 const route = useRoute()
 const router = useRouter();
 const serviceName = route.params.service?.toString()
 const { dashboard } = useDashboard()
+const exportOpenAPIDialogVisible = ref(false)
+const exportBrunoDialogVisible = ref(false)
 
 let service: Ref<HttpService | null>
 if (serviceName){
@@ -117,6 +122,23 @@ const status = computed(() => {
     }
     return { status, errors }
 })
+
+useToolbarItem(
+    {
+        label: 'Export OpenAPI',
+        icon: 'bi-file-earmark-code',
+        onClick: () => {
+            exportOpenAPIDialogVisible.value = true
+        }
+    },
+    {
+        label: 'Export Bruno Collection',
+        icon: 'bi-collection',
+        onClick: () => {
+            exportBrunoDialogVisible.value = true
+        }
+    }
+)
 </script>
 
 <template>
@@ -175,6 +197,8 @@ const status = computed(() => {
     <div v-if="$route.name == getRouteName('httpEndpoint').value && endpoint && endpoint.error">
         <message :message="endpointNotFoundMessage(endpoint?.error)"></message>
     </div>
+    <ExportOpenAPI v-if="service" :service-name="service.name" v-model:visible="exportOpenAPIDialogVisible" />
+    <ExportBruno v-if="service" :service-name="service.name" v-model:visible="exportBrunoDialogVisible" />
 </template>
 
 <style scoped>

@@ -3,7 +3,7 @@ import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useMetrics } from '@/composables/metrics';
 import { useRoute } from 'vue-router';
 import type { AppInfo } from '@/types/dashboard';
-import { computed, onBeforeUnmount, onMounted, nextTick, useTemplateRef, type PropType } from 'vue';
+import { computed, onBeforeUnmount, onMounted, nextTick, useTemplateRef, type PropType, onUpdated } from 'vue';
 import { useRouter } from '@/router';
 
 const props = defineProps({
@@ -58,6 +58,10 @@ function isServiceAvailable(service: string): boolean{
     return props.appInfo.activeServices.includes(service)
 }
 
+onUpdated(() => {
+  updateTabsResponsiveness();
+});
+
 function updateTabsResponsiveness() {
   const container = tabsContainer.value;
   const dropdown = dropdownMenu.value;
@@ -75,14 +79,13 @@ function updateTabsResponsiveness() {
   for (const tab of [...dropdown.querySelectorAll("li")]) {
     tab.classList.add('d-none');
   }
-  // Make sure it's measurable
-  more.classList.remove("d-none");  
-  const moreWidth = more.offsetWidth;
+  const moreWidth = 66;
   more.classList.add("d-none");
 
-  const documentWidth = document.body.clientWidth * 0.9;
+  const documentWidth = document.body.clientWidth - 2*32 - 7 - 45; // 32=padding, 7=card 45=button;
   let usedWidth = moreWidth;
   let hidden = 0;
+  console.log('start', usedWidth)
 
   for (const [index, item] of allTabs.entries()) {
     const tab = item as HTMLElement
@@ -92,6 +95,7 @@ function updateTabsResponsiveness() {
       break;
     }
 
+    console.log(usedWidth + tab.offsetWidth, documentWidth)
     if (usedWidth + tab.offsetWidth > documentWidth) {
       tab.classList.add("d-none");
       const dropItem = Array.from(dropdown.querySelectorAll("li"))
@@ -127,27 +131,38 @@ function updateTabsResponsiveness() {
 </script>
 
 <template>
+
   <nav class="navbar navbar-expand pb-1" aria-label="Services">
     <div>
-      <ul class="navbar-nav me-auto mb-0" ref="tabsContainer">
-        <template v-for="tabItem in tabItems" :key="tabItem.text">
-          <li class="nav-item" :class="tabItem.cssClass ? tabItem.cssClass : ''" v-if="tabItem.isVisible">
-              <router-link class="nav-link" :to="tabItem.to">{{ tabItem.text }}</router-link>
+      
+        <ul class="navbar-nav me-auto mb-0" ref="tabsContainer">
+          <template v-for="tabItem in tabItems" :key="tabItem.text">
+            <li class="nav-item" :class="tabItem.cssClass ? tabItem.cssClass : ''" v-if="tabItem.isVisible">
+                <router-link class="nav-link" :to="tabItem.to">{{ tabItem.text }}</router-link>
+            </li>
+          </template>
+          <li id="moreTabs" class="nav-item dropdown d-none" ref="moreTabs">
+              <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">{{ tabActive?.text }}</a>
+              <ul class="dropdown-menu" ref="dropdownMenu">
+                <template v-for="tabItem in tabItems" :key="tabItem.text">
+                  <li v-if="tabItem.isVisible">
+                    <a :href="router.resolve(tabItem.to).href" class="dropdown-item">
+                      {{ tabItem.text }}
+                    </a>
+                  </li>
+                </template>
+              </ul>
           </li>
-        </template>
-        <li id="moreTabs" class="nav-item dropdown d-none" ref="moreTabs">
-            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">{{ tabActive?.text }}</a>
-            <ul class="dropdown-menu" ref="dropdownMenu">
-              <template v-for="tabItem in tabItems" :key="tabItem.text">
-                <li v-if="tabItem.isVisible">
-                  <a :href="router.resolve(tabItem.to).href" class="dropdown-item">
-                    {{ tabItem.text }}
-                  </a>
-                </li>
-              </template>
-            </ul>
-        </li>
-      </ul>
+        </ul>
     </div>
   </nav>
+
 </template>
+
+<style>
+.page-actions {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;   /* don't let it get squeezed when tabs wrap on narrow screens */
+}
+</style>

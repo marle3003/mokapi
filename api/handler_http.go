@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"maps"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema"
@@ -174,6 +175,7 @@ func (h *handler) setupHttp() {
 	r.HandleFunc("", h.getHttpServices).Methods(http.MethodGet)
 	r.HandleFunc("/{api}", h.getHttpApi).Methods(http.MethodGet)
 	r.HandleFunc("/{api}/openapi.{ext}", h.exportHttp).Methods(http.MethodGet)
+	r.HandleFunc("/{api}/bruno.{format}", h.exportHttpBruno).Methods(http.MethodGet)
 	r.HandleFunc("/{api}/operations", h.getHttpOperations).Methods(http.MethodGet)
 }
 
@@ -515,5 +517,39 @@ func (h *handler) exportHttp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", ct)
+	_, _ = w.Write(b)
+}
+
+func (h *handler) exportHttpBruno(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	s := h.app.Http.Get(vars["api"])
+	if s == nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	host := r.Host
+	if host == "" {
+		host = "localhost"
+	}
+
+	c, err := s.ExportBruno(host)
+	if err != nil {
+		w.WriteHeader(500)
+		_, _ = w.Write([]byte(err.Error()))
+		return
+	}
+	var buf bytes.Buffer
+	enc := yaml.NewEncoder(&buf)
+	enc.SetIndent(2)
+	err = enc.Encode(c)
+	if err != nil {
+		err = enc.Close()
+	}
+	b := buf.Bytes()
+
+	w.Header().Set("Content-Type", "application/yaml")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.yaml\"", s.Info.Name))
 	_, _ = w.Write(b)
 }
