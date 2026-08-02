@@ -85,7 +85,6 @@ function updateTabsResponsiveness() {
   const documentWidth = document.body.clientWidth - 2*32 - 7 - 45; // 32=padding, 7=card 45=button;
   let usedWidth = moreWidth;
   let hidden = 0;
-  console.log('start', usedWidth)
 
   for (const [index, item] of allTabs.entries()) {
     const tab = item as HTMLElement
@@ -95,7 +94,6 @@ function updateTabsResponsiveness() {
       break;
     }
 
-    console.log(usedWidth + tab.offsetWidth, documentWidth)
     if (usedWidth + tab.offsetWidth > documentWidth) {
       tab.classList.add("d-none");
       const dropItem = Array.from(dropdown.querySelectorAll("li"))
