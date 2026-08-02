@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { useGuid } from '@/composables/guid'
-import { watch, reactive } from 'vue'
+import { watch, reactive, useId } from 'vue'
 import '../../plugins/ace-editor/ace-config';
 import SourceView from './SourceView.vue'
 import { transformPath } from '@/composables/fetch'
@@ -37,10 +36,9 @@ const props = withDefaults(defineProps<{
     title: 'Data Validator',
     exampleEnabled: true
 })
-const { createGuid } = useGuid()
 const { formatLanguage } = usePrettyLanguage()
 
-const id = createGuid()
+const id = useId()
 
 const state = reactive<State>({
     source: { preview: undefined, binary: undefined },

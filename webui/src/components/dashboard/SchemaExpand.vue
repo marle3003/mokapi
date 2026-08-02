@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useGuid } from '@/composables/guid'
+import { useId } from 'vue';
 import SourceView from './SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage';
 
@@ -12,8 +12,7 @@ defineProps<{
 }>()
 
 const { formatSchema } = usePrettyLanguage()
-const { createGuid } = useGuid();
-const id = createGuid()
+const id = useId()
 </script>
 
 <template>

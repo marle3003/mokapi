@@ -148,10 +148,6 @@ func (n *Node) findBestMatch(r *Request) *Node {
 		return n
 	}
 
-	if isPlural(token) && len(r.Path) > 1 {
-		token = inflection.Singular(token)
-	}
-
 	for _, child := range n.Children {
 		var attributes = child.Attributes
 		if len(attributes) == 0 {
@@ -176,6 +172,14 @@ func (n *Node) findBestMatch(r *Request) *Node {
 			if attr == token {
 				return nil
 			}
+		}
+	}
+
+	if len(r.Path) > 1 {
+		singular := inflection.Singular(token)
+		if singular != token {
+			r.Path[0] = singular
+			return n.findBestMatch(r)
 		}
 	}
 

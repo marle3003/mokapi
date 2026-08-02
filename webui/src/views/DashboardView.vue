@@ -55,7 +55,7 @@ import WebsocketService from '@/components/dashboard/websocket/WebsocketService.
 
 const route = useRoute()
 const router = useRouter();
-const { progress, start, isActive } = useRefreshManager();
+const { progress, start, isActive, stop } = useRefreshManager();
 const transitionRefresh = computed(() => {
     return progress.value > 0.1 && progress.value < 99.9;
 })

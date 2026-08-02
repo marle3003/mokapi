@@ -52,6 +52,10 @@ const isLoading = computed(() => result.value?.isLoading ?? false)
 const close = () => result.value?.close?.()
 
 const topic = ref<KafkaTopic | null>(null)
+const topicKey = computed(() => {
+  if (!event.value) return null
+  return `${event.value.traits.name}::${event.value.traits.topic}`
+})
 const data = computed(() => {
   if (!event.value) {
     return undefined
@@ -59,8 +63,8 @@ const data = computed(() => {
   return <KafkaMessageData>event.value?.data
 })
 watch(
-  () => event.value,
-  (evt, _, onCleanup) => {
+  topicKey,
+  (key, _, onCleanup) => {
     if (!event.value) {
       return
     }

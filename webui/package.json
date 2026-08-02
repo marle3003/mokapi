@@ -66,5 +66,9 @@
     "vite": "8.1.5",
     "vue-tsc": "3.3.8",
     "xml2js": "0.6.2"
+  },
+  "allowScripts": {
+    "fsevents@2.3.2": true,
+    "fsevents@2.3.3": true
   }
 }
