@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const Server = require('./server');
 
-const skipExtensions = ['.ts', '.json', '.yaml']
+const skipExtensions = ['.ts', '.json', '.yaml'];
 
 (async () => {
   const server = new Server('../dist')
