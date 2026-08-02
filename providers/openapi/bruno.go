@@ -2,6 +2,7 @@ package openapi
 
 import (
 	"fmt"
+	"maps"
 	"mokapi/export/bruno"
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
@@ -162,7 +163,14 @@ func (c *Config) ExportBruno(host string) (bruno.Collection, error) {
 			if o.RequestBody != nil && o.RequestBody.Value != nil {
 				rb := o.RequestBody.Value
 				var result []bruno.HttpRequestBodyVariant
-				for key, mt := range rb.Content {
+
+				keys := slices.Collect(maps.Keys(rb.Content))
+				slices.SortFunc(keys, func(a, b string) int {
+					return strings.Compare(a, b)
+				})
+
+				for _, key := range keys {
+					mt := rb.Content[key]
 					typeName := "text"
 					ct := media.ParseContentType(key)
 					if ct.Subtype == "json" {
@@ -194,9 +202,6 @@ func (c *Config) ExportBruno(host string) (bruno.Collection, error) {
 				}
 
 				if len(result) > 1 {
-					slices.SortFunc(result, func(a, b bruno.HttpRequestBodyVariant) int {
-						return strings.Compare(a.Title, b.Title)
-					})
 					item.Http.Body = &bruno.HttpRequestBody{
 						Variant: result,
 					}

@@ -431,7 +431,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 			},
 		},
 		{
-			name: "with path and POST operation description and request body json and plain text",
+			name: "with path and POST operation with request body json and plain text",
 			cfg: openapitest.NewConfig("3.2.0",
 				openapitest.WithPath("/products",
 					openapitest.WithOperation(
