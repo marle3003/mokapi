@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/brianvoe/gofakeit/v7"
-	"github.com/jinzhu/inflection"
 )
 
 type resolver struct {
@@ -176,7 +175,7 @@ func (n *Node) findBestMatch(r *Request) *Node {
 	}
 
 	if len(r.Path) > 1 {
-		singular := inflection.Singular(token)
+		singular := g.inflector.Singular(token)
 		if singular != token {
 			r.Path[0] = singular
 			return n.findBestMatch(r)
