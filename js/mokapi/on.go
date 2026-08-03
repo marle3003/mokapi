@@ -54,13 +54,13 @@ func getHandler(do goja.Value, args onArgs, vm *goja.Runtime, loop *eventloop.Ev
 			return false, err
 		}
 
-		var params []goja.Value
-		for _, v := range ctx.Args {
-			params = append(params, ArgToJs(v, vm))
-		}
-
 		var r goja.Value
+		var params []goja.Value
 		r, err = loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
+			for _, v := range ctx.Args {
+				params = append(params, ArgToJs(v, vm))
+			}
+
 			call, _ := goja.AssertFunction(do)
 			v, err := call(goja.Undefined(), params...)
 			if err != nil {
