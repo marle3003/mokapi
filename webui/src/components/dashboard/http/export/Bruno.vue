@@ -80,13 +80,13 @@ function copyToClipboard(event: MouseEvent) {
                     <div v-if="isLiveMode">
                         <div class="row mb-3">
                             <label for="export-host" class="col-3 col-form-label col-form-label-sm">
-                                Host
+                                Base URL
                                 <i
                                     class="bi bi-question-circle text-muted ms-1"
                                     ref="tooltipEl"
                                     data-bs-toggle="tooltip"
                                     data-bs-placement="top"
-                                    title="Fills in the host for server URLs without one (e.g. /api/books). Has no effect on server URLs that already specify a full host."
+                                    title="Used to complete server URLs in the spec that are relative — missing a scheme, host, or port (e.g. /api/books). Has no effect on server URLs that already define a host."
                                     style="cursor: help;"
                                 ></i>
                             </label>
