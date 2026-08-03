@@ -529,9 +529,13 @@ func (h *handler) exportHttpBruno(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	host := resolveHost(r)
+	host := r.URL.Query().Get("host")
 	if host == "" {
-		host = "localhost"
+		if r.Host != "" {
+			host = r.Host
+		} else {
+			host = "localhost"
+		}
 	}
 
 	c, err := s.ExportBruno(host)
@@ -552,40 +556,4 @@ func (h *handler) exportHttpBruno(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/yaml")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.yaml\"", s.Info.Name))
 	_, _ = w.Write(b)
-}
-
-func resolveHost(r *http.Request) string {
-	// RFC 7239 standard header, e.g. Forwarded: host=example.com;proto=https
-	if fwd := r.Header.Get("Forwarded"); fwd != "" {
-		if h := parseForwardedHost(fwd); h != "" {
-			return h
-		}
-	}
-	if h := r.Header.Get("X-Forwarded-Host"); h != "" {
-		// may be a comma-separated list if multiple proxies in the chain
-		return strings.TrimSpace(strings.Split(h, ",")[0])
-	}
-	return r.Host
-}
-
-func parseForwardedHost(forwarded string) string {
-	// Multiple proxy hops are comma-separated; take the first one
-	firstHop := strings.SplitN(forwarded, ",", 2)[0]
-
-	// Within a hop, directives are semicolon-separated key=value pairs
-	for _, part := range strings.Split(firstHop, ";") {
-		part = strings.TrimSpace(part)
-		key, value, found := strings.Cut(part, "=")
-		if !found {
-			continue
-		}
-		if !strings.EqualFold(strings.TrimSpace(key), "host") {
-			continue
-		}
-		value = strings.TrimSpace(value)
-		// RFC 7239 allows the value to be quoted, e.g. host="example.com"
-		value = strings.Trim(value, `"`)
-		return value
-	}
-	return ""
 }

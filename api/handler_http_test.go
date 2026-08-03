@@ -436,6 +436,62 @@ paths:
 			requestUrl:   "http://foo.api/api/services/http/foo/openapi.json",
 			responseBody: "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"title\": \"foo\",\n    \"version\": \"\"\n  },\n  \"servers\": [\n    {\n      \"url\": \"/foo\"\n    }\n  ],\n  \"paths\": {\n    \"/foo/{bar}\": {\n      \"get\": {}\n    }\n  },\n  \"components\": {\n    \"schemas\": {\n      \"foo\": {\n        \"type\": \"string\"\n      }\n    }\n  }\n}",
 		},
+		{
+			name: "export bruno.yaml",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithServer("/foo", ""),
+					),
+				)
+			},
+			requestUrl:  "http://foo.api/api/services/http/foo/bruno.yaml",
+			contentType: "application/yaml",
+			responseBody: `opencollection: 1.0.0
+info:
+  name: foo
+config:
+  environments:
+    - name: foo.api-foo
+      variables:
+        - name: baseUrl
+          value: http://foo.api/foo
+request:
+  variables:
+    - name: baseUrl
+      value: http://foo.api/foo
+bundled: true
+`,
+		},
+		{
+			name: "export bruno.yaml using custom host",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithServer("/foo", ""),
+					),
+				)
+			},
+			requestUrl:  "http://foo.api/api/services/http/foo/bruno.yaml?host=foo.bar",
+			contentType: "application/yaml",
+			responseBody: `opencollection: 1.0.0
+info:
+  name: foo
+config:
+  environments:
+    - name: foo.bar-foo
+      variables:
+        - name: baseUrl
+          value: http://foo.bar/foo
+request:
+  variables:
+    - name: baseUrl
+      value: http://foo.bar/foo
+bundled: true
+`,
+		},
 	}
 
 	t.Parallel()

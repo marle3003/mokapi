@@ -255,10 +255,17 @@ export const dashboard: Dashboard = {
         return `/api/configs/${id}/data`
     },
 
-    getBrunoCollectionUrl(serviceName: string) {
+    getBrunoCollectionUrl(serviceName: string, params?: Record<string, string>) {
         const url = ref<string | null>(null)
         const base = `/api/services/http/${encodeURIComponent(serviceName)}`
-        url.value = transformPath(`${base}/bruno.yaml`)
+        let fullUrl = `${base}/bruno.yaml`
+        if (params) {
+            const query = new URLSearchParams(params).toString()
+            if (query) {
+                fullUrl += `?${query}`
+            }
+        }
+        url.value = transformPath(fullUrl)
         return url
     }
 }
