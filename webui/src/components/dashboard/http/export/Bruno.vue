@@ -97,7 +97,6 @@ function copyToClipboard(event: MouseEvent) {
                                     class="form-control form-control-sm"
                                     v-model="hostOverride"
                                     placeholder="api.example.com"
-                                    readonly
                                 >
                             </div>
                         </div>

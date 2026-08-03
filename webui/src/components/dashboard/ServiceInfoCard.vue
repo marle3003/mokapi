@@ -97,7 +97,7 @@ ul.contact li span.bi {
 }
 .card-toolbar {
     position: absolute;
-    top: -5px;                 /* sits exactly on the card's top border */
+    top: -7px;
     right: 0;
     transform: translateY(-100%);
     background: var(--bs-body-bg, #fff);
