@@ -2,6 +2,7 @@
 import { ref, computed, onMounted, useTemplateRef, watch } from 'vue'
 import { Modal } from 'bootstrap'
 import { transformPath } from '@/composables/fetch'
+import { useRoute } from '@/router'
 
 const props = defineProps({
     visible: { type: Boolean, default: false },
@@ -9,6 +10,8 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:visible'])
 
+const route = useRoute()
+const isLiveMode = computed(() => route.meta.mode === 'live')
 const modalEl = useTemplateRef('modalEl')
 let modalInstance: Modal | null = null
 
@@ -63,33 +66,39 @@ function copyToClipboard(event: MouseEvent) {
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row">
-                        <div class="col-2">
-                            <p class="label">Format</p>
-                        </div>
-                        <div class="col">
-                            <div class="form-check form-check-inline" v-for="opt in formatOptions" :key="opt.value">
-                                <input
-                                    class="form-check-input"
-                                    type="radio"
-                                    :id="`fmt-${opt.value}`"
-                                    :value="opt.value"
-                                    v-model="selectedFormat"
-                                >
-                                <label class="form-check-label" :for="`fmt-${opt.value}`">
-                                    {{ opt.label }}
-                                </label>
+                    <div v-if="!isLiveMode" class="alert alert-primary py-2 px-3 mb-3" role="alert">
+                        This is a demo dashboard — OpenAPI exports aren't available here.
+                        <a href="/docs/get-started/installation" >Install Mokapi</a> to try this with your own API.
+                    </div>
+                    <div v-else>
+                        <div class="row">
+                            <div class="col-2">
+                                <p class="label">Format</p>
+                            </div>
+                            <div class="col">
+                                <div class="form-check form-check-inline" v-for="opt in formatOptions" :key="opt.value">
+                                    <input
+                                        class="form-check-input"
+                                        type="radio"
+                                        :id="`fmt-${opt.value}`"
+                                        :value="opt.value"
+                                        v-model="selectedFormat"
+                                    >
+                                    <label class="form-check-label" :for="`fmt-${opt.value}`">
+                                        {{ opt.label }}
+                                    </label>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <label for="download-url" class="col-2 col-form-label col-form-label-sm">URL</label>
-                        <div class="col">
-                            <div class="input-group mb-3">
-                                <input type="url" class="form-control form-control-sm" id="download-url" :value="downloadUrl" readonly>
-                                <button class="btn btn-sm btn-outline-secondary" type="button" @click="copyToClipboard">
-                                    <i class="bi bi-copy"></i>
-                                </button>
+                        <div class="row">
+                            <label for="download-url" class="col-2 col-form-label col-form-label-sm">URL</label>
+                            <div class="col">
+                                <div class="input-group mb-3">
+                                    <input type="url" class="form-control form-control-sm" id="download-url" :value="downloadUrl" readonly>
+                                    <button class="btn btn-sm btn-outline-secondary" type="button" @click="copyToClipboard">
+                                        <i class="bi bi-copy"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -103,9 +112,10 @@ function copyToClipboard(event: MouseEvent) {
 
                     <a
                         class="btn btn-primary btn-sm"
+                        :class="{ disabled: !isLiveMode }"
                         :href="downloadUrl"
-                        :download="props.serviceName + '.' + selectedFormat"
-                        @click="close"
+                        :download="isLiveMode ? props.serviceName + '.' + selectedFormat : null"
+                        @click="isLiveMode ? close() : $event.preventDefault()"
                     >
                         <i class="bi bi-download me-1"></i>Download
                     </a>

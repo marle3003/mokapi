@@ -254,6 +254,13 @@ export const dashboard: Dashboard = {
     getConfigDataUrl(id: string) {
         return `/api/configs/${id}/data`
     },
+
+    getBrunoCollectionUrl(serviceName: string) {
+        const url = ref<string | null>(null)
+        const base = `/api/services/http/${encodeURIComponent(serviceName)}`
+        url.value = transformPath(`${base}/bruno.yaml`)
+        return url
+    }
 }
 
 function compareService(s1: Service, s2: Service) {

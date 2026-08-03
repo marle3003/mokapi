@@ -1,21 +1,27 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, useTemplateRef, watch } from 'vue'
+import { useRoute } from '@/router'
 import { Modal } from 'bootstrap'
-import { transformPath } from '@/composables/fetch'
+import { useDashboard } from '@/composables/dashboard'
 
 const props = defineProps({
     visible: { type: Boolean, default: false },
     serviceName: { type: String, required: true }
 })
 const emit = defineEmits(['update:visible'])
+const route = useRoute()
+const isLiveMode = computed(() => route.meta.mode === 'live')
 
 const modalEl = useTemplateRef('modalEl')
 let modalInstance: Modal | null = null
 
-const encodedName = computed(() => encodeURIComponent(props.serviceName))
+const { dashboard } = useDashboard()
 const downloadUrl = computed(() => {
-    const base = `/api/services/http/${encodedName.value}`
-    return transformPath(`${base}/bruno.yaml`)
+    if (!dashboard.value) {
+        return ''
+    }
+    const url = dashboard.value.getBrunoCollectionUrl(props.serviceName)
+    return url.value || ''
 })
 const copied = ref(false)
 
@@ -61,7 +67,7 @@ function copyToClipboard(event: MouseEvent) {
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row">
+                    <div class="row" v-if="isLiveMode">
                         <label for="download-url" class="col-2 col-form-label col-form-label-sm">URL</label>
                         <div class="col">
                             <div class="input-group mb-3">

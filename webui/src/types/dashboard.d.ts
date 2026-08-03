@@ -29,6 +29,8 @@ export interface Dashboard {
     getConfig(id: string): ConfigResult
     getConfigData(id: string): ConfigDataResult
     getConfigDataUrl(id: string): string
+
+    getBrunoCollectionUrl(serviceName: string): Ref<string | null>
 }
 
 export interface AppInfo {
@@ -133,4 +135,9 @@ export interface ConfigDataResult {
     isLoading: Ref<boolean>
     filename: Ref<string | undefined>
     close: () => void
+}
+
+export interface BrunoCollection {
+    serviceName: string
+    content: string
 }
