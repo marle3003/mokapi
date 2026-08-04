@@ -21,14 +21,14 @@ const downloadUrl = computed(() => {
         return ''
     }
     const params: Record<string, string> = {}
-    if (hostOverride.value) {
-        params['host'] = hostOverride.value
+    if (baseUrl.value) {
+        params['baseUrl'] = baseUrl.value
     }
     const url = dashboard.value.getBrunoCollectionUrl(props.serviceName, params)
     return url.value || ''
 })
 const copied = ref(false)
-const hostOverride = ref(window.location.host)
+const baseUrl = ref(window.location.host)
 
 onMounted(() => {
     if (!modalEl.value) {
@@ -95,8 +95,7 @@ function copyToClipboard(event: MouseEvent) {
                                     type="text"
                                     id="export-host"
                                     class="form-control form-control-sm"
-                                    v-model="hostOverride"
-                                    placeholder="api.example.com"
+                                    v-model="baseUrl"
                                 >
                             </div>
                         </div>
