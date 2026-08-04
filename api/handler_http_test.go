@@ -474,7 +474,7 @@ bundled: true
 					),
 				)
 			},
-			requestUrl:  "http://foo.api/api/services/http/foo/bruno.yaml?host=foo.bar",
+			requestUrl:  "http://foo.api/api/services/http/foo/bruno.yaml?baseUrl=foo.bar",
 			contentType: "application/yaml",
 			responseBody: `opencollection: 1.0.0
 info:

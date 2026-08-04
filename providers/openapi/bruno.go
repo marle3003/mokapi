@@ -17,7 +17,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *Config) ExportBruno(host string) (bruno.Collection, error) {
+func (c *Config) ExportBruno(baseUrl string) (bruno.Collection, error) {
 	e := bruno.Collection{
 		Version: new(version.New("1.0.0")),
 		Info: bruno.Info{
@@ -39,7 +39,7 @@ func (c *Config) ExportBruno(host string) (bruno.Collection, error) {
 	var resolvedURLs []string
 
 	for _, server := range c.Servers {
-		u, err := resolveServerURL(server.Url, host)
+		u, err := resolveURL(server.Url, baseUrl, "http")
 		if err != nil {
 			log.Debugf("failed to parse url %s: %s", server.Url, err)
 			continue
@@ -219,8 +219,8 @@ func (c *Config) ExportBruno(host string) (bruno.Collection, error) {
 	return e, nil
 }
 
-func resolveServerURL(rawURL, host string) (string, error) {
-	h, _, _ := net.SplitHostPort(host)
+func resolveURL(rawURL, baseUrl, defaultScheme string) (string, error) {
+	h := hostOnly(baseUrl)
 
 	u, err := url.Parse(rawURL)
 	if err != nil {
@@ -231,18 +231,24 @@ func resolveServerURL(rawURL, host string) (string, error) {
 		if port := u.Port(); port != "" {
 			u.Host = net.JoinHostPort(h, port)
 		} else {
-			u.Host = host
+			u.Host = baseUrl
 		}
 	}
 
 	if u.Scheme == "" {
-		u.Scheme = "http"
+		u.Scheme = defaultScheme
 	}
 
-	s := u.String()
-	s = strings.TrimSuffix(s, "/")
+	s := strings.TrimSuffix(u.String(), "/")
 
 	return s, nil
+}
+
+func hostOnly(baseUrl string) string {
+	if h, _, err := net.SplitHostPort(baseUrl); err == nil {
+		return h
+	}
+	return baseUrl // no port present, the whole string is the host
 }
 
 func environmentNames(servers []*Server, resolvedURLs []string) []string {

@@ -17,10 +17,10 @@ import (
 
 func TestConfig_ExportBruno(t *testing.T) {
 	testcases := []struct {
-		name string
-		cfg  *openapi.Config
-		host string
-		test func(t *testing.T, c bruno.Collection, err error)
+		name    string
+		cfg     *openapi.Config
+		baseUrl string
+		test    func(t *testing.T, c bruno.Collection, err error)
 	}{
 		{
 			name: "empty",
@@ -99,7 +99,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 			cfg: openapitest.NewConfig("3.2.0",
 				openapitest.WithServer("/foo", "foo description"),
 			),
-			host: "foo.com",
+			baseUrl: "foo.com",
 			test: func(t *testing.T, c bruno.Collection, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, c.Config)
@@ -115,6 +115,81 @@ func TestConfig_ExportBruno(t *testing.T) {
 				require.Equal(t, &bruno.RequestDefault{
 					Variables: []bruno.Variable{
 						{Name: "baseUrl", Value: "http://foo.com/foo"},
+					},
+				}, c.Request)
+			},
+		},
+		{
+			name: "with one server port",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithServer("http://:8080/foo", "foo description"),
+			),
+			baseUrl: "foo.com",
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, c.Config)
+				require.Equal(t, []bruno.Environment{
+					{
+						Name:        "foo-description",
+						Description: "foo description",
+						Variables: []bruno.Variable{
+							{Name: "baseUrl", Value: "http://foo.com:8080/foo"},
+						},
+					},
+				}, c.Config.Environments)
+				require.Equal(t, &bruno.RequestDefault{
+					Variables: []bruno.Variable{
+						{Name: "baseUrl", Value: "http://foo.com:8080/foo"},
+					},
+				}, c.Request)
+			},
+		},
+		{
+			name: "with one server host, port and path but no scheme",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithServer("http://foo.api:8080/foo", "foo description"),
+			),
+			baseUrl: "foo.com",
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, c.Config)
+				require.Equal(t, []bruno.Environment{
+					{
+						Name:        "foo-description",
+						Description: "foo description",
+						Variables: []bruno.Variable{
+							{Name: "baseUrl", Value: "http://foo.api:8080/foo"},
+						},
+					},
+				}, c.Config.Environments)
+				require.Equal(t, &bruno.RequestDefault{
+					Variables: []bruno.Variable{
+						{Name: "baseUrl", Value: "http://foo.api:8080/foo"},
+					},
+				}, c.Request)
+			},
+		},
+		{
+			name: "with one server with scheme",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithServer("https://foo.api/foo", "foo description"),
+			),
+			baseUrl: "foo.com",
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, c.Config)
+				require.Equal(t, []bruno.Environment{
+					{
+						Name:        "foo-description",
+						Description: "foo description",
+						Variables: []bruno.Variable{
+							{Name: "baseUrl", Value: "https://foo.api/foo"},
+						},
+					},
+				}, c.Config.Environments)
+				require.Equal(t, &bruno.RequestDefault{
+					Variables: []bruno.Variable{
+						{Name: "baseUrl", Value: "https://foo.api/foo"},
 					},
 				}, c.Request)
 			},
@@ -187,7 +262,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 				openapitest.WithServer("/foo/bar", ""),
 				openapitest.WithServer("/", ""),
 			),
-			host: "foo.com",
+			baseUrl: "foo.com",
 			test: func(t *testing.T, c bruno.Collection, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, c.Config)
@@ -490,7 +565,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 			logrus.SetOutput(io.Discard)
 			generator.Seed(12345)
 
-			c, err := tc.cfg.ExportBruno(tc.host)
+			c, err := tc.cfg.ExportBruno(tc.baseUrl)
 			tc.test(t, c, err)
 		})
 	}

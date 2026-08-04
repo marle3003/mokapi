@@ -11,6 +11,7 @@ import (
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"net/http"
+	"net/url"
 	"slices"
 	"strings"
 
@@ -529,16 +530,22 @@ func (h *handler) exportHttpBruno(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	host := r.URL.Query().Get("host")
-	if host == "" {
-		if r.Host != "" {
-			host = r.Host
-		} else {
-			host = "localhost"
+	baseUrl := "localhost"
+
+	qBaseUrl := r.URL.Query().Get("baseUrl")
+	if qBaseUrl != "" {
+		var err error
+		baseUrl, err = url.QueryUnescape(qBaseUrl)
+		if err != nil {
+			w.WriteHeader(400)
+			_, _ = w.Write([]byte(err.Error()))
+			return
 		}
+	} else if r.Host != "" {
+		baseUrl = r.Host
 	}
 
-	c, err := s.ExportBruno(host)
+	c, err := s.ExportBruno(baseUrl)
 	if err != nil {
 		w.WriteHeader(500)
 		_, _ = w.Write([]byte(err.Error()))
