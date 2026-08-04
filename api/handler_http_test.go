@@ -492,6 +492,34 @@ request:
 bundled: true
 `,
 		},
+		{
+			name: "export bruno.yaml using custom host including path",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithServer("/foo", ""),
+					),
+				)
+			},
+			requestUrl:  "http://foo.api/api/services/http/foo/bruno.yaml?baseUrl=foo.bar%2Fpath",
+			contentType: "application/yaml",
+			responseBody: `opencollection: 1.0.0
+info:
+  name: foo
+config:
+  environments:
+    - name: foo.bar-path-foo
+      variables:
+        - name: baseUrl
+          value: http://foo.bar/path/foo
+request:
+  variables:
+    - name: baseUrl
+      value: http://foo.bar/path/foo
+bundled: true
+`,
+		},
 	}
 
 	t.Parallel()

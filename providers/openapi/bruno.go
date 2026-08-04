@@ -11,6 +11,7 @@ import (
 	"mokapi/version"
 	"net"
 	"net/url"
+	"path"
 	"slices"
 	"strings"
 
@@ -220,7 +221,14 @@ func (c *Config) ExportBruno(baseUrl string) (bruno.Collection, error) {
 }
 
 func resolveURL(rawURL, baseUrl, defaultScheme string) (string, error) {
-	h := hostOnly(baseUrl)
+	if baseUrl == "" {
+		return rawURL, nil
+	}
+
+	base, err := parseBaseUrl(baseUrl)
+	if err != nil {
+		return "", fmt.Errorf("invalid baseUrl: %w", err)
+	}
 
 	u, err := url.Parse(rawURL)
 	if err != nil {
@@ -229,10 +237,11 @@ func resolveURL(rawURL, baseUrl, defaultScheme string) (string, error) {
 
 	if u.Hostname() == "" {
 		if port := u.Port(); port != "" {
-			u.Host = net.JoinHostPort(h, port)
+			u.Host = net.JoinHostPort(base.Hostname(), port)
 		} else {
-			u.Host = baseUrl
+			u.Host = base.Host
 		}
+		u.Path = path.Join(base.Path, u.Path)
 	}
 
 	if u.Scheme == "" {
@@ -244,11 +253,19 @@ func resolveURL(rawURL, baseUrl, defaultScheme string) (string, error) {
 	return s, nil
 }
 
-func hostOnly(baseUrl string) string {
-	if h, _, err := net.SplitHostPort(baseUrl); err == nil {
-		return h
+func parseBaseUrl(baseUrl string) (*url.URL, error) {
+	if !strings.Contains(baseUrl, "://") {
+		baseUrl = "http://" + baseUrl
 	}
-	return baseUrl // no port present, the whole string is the host
+
+	u, err := url.Parse(baseUrl)
+	if err != nil {
+		return nil, fmt.Errorf("invalid base url %q: %w", baseUrl, err)
+	}
+	if u.Hostname() == "" {
+		return nil, fmt.Errorf("invalid base url %q: no hostname", baseUrl)
+	}
+	return u, nil
 }
 
 func environmentNames(servers []*Server, resolvedURLs []string) []string {
