@@ -312,6 +312,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 					Name:        "GET /foo",
 					Description: "",
 					Type:        "http",
+					Sequence:    1,
 				}, item.Info)
 				require.Equal(t, &bruno.HttpDetail{
 					Method: http.MethodGet,
@@ -343,6 +344,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 					Name:        "GET /products/{name}",
 					Description: "operation description",
 					Type:        "http",
+					Sequence:    1,
 				}, item.Info)
 				require.Equal(t, &bruno.HttpDetail{
 					Method: http.MethodGet,
@@ -382,6 +384,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 					Name:        "GET /products/{name}",
 					Description: "operation description",
 					Type:        "http",
+					Sequence:    1,
 				}, item.Info)
 				require.Equal(t, &bruno.HttpDetail{
 					Method: http.MethodGet,
@@ -417,8 +420,9 @@ func TestConfig_ExportBruno(t *testing.T) {
 				require.Len(t, c.Items, 1)
 				item := c.Items[0].(bruno.HttpItem)
 				require.Equal(t, &bruno.HttpInfo{
-					Name: "GET /products",
-					Type: "http",
+					Name:     "GET /products",
+					Type:     "http",
+					Sequence: 1,
 				}, item.Info)
 				require.Equal(t, &bruno.HttpDetail{
 					Method: http.MethodGet,
@@ -453,8 +457,9 @@ func TestConfig_ExportBruno(t *testing.T) {
 				require.Len(t, c.Items, 1)
 				item := c.Items[0].(bruno.HttpItem)
 				require.Equal(t, &bruno.HttpInfo{
-					Name: "GET /products",
-					Type: "http",
+					Name:     "GET /products",
+					Type:     "http",
+					Sequence: 1,
 				}, item.Info)
 				require.Equal(t, &bruno.HttpDetail{
 					Method: http.MethodGet,
@@ -490,8 +495,9 @@ func TestConfig_ExportBruno(t *testing.T) {
 				require.Len(t, c.Items, 1)
 				item := c.Items[0].(bruno.HttpItem)
 				require.Equal(t, &bruno.HttpInfo{
-					Name: "POST /products",
-					Type: "http",
+					Name:     "POST /products",
+					Type:     "http",
+					Sequence: 1,
 				}, item.Info)
 				require.Equal(t, &bruno.HttpDetail{
 					Method: http.MethodPost,
@@ -529,8 +535,9 @@ func TestConfig_ExportBruno(t *testing.T) {
 				require.Len(t, c.Items, 1)
 				item := c.Items[0].(bruno.HttpItem)
 				require.Equal(t, &bruno.HttpInfo{
-					Name: "POST /products",
-					Type: "http",
+					Name:     "POST /products",
+					Type:     "http",
+					Sequence: 1,
 				}, item.Info)
 				require.Equal(t, &bruno.HttpDetail{
 					Method: http.MethodPost,
@@ -575,12 +582,14 @@ func TestConfig_ExportBruno(t *testing.T) {
 					Name:        "foo",
 					Description: "description",
 					Type:        "folder",
+					Sequence:    1,
 				}, folder.Info)
 				item := folder.Items[0].(bruno.HttpItem)
 				require.Equal(t, &bruno.HttpInfo{
 					Name:        "GET /foo",
 					Description: "",
 					Type:        "http",
+					Sequence:    1,
 				}, item.Info)
 			},
 		},
@@ -601,6 +610,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 					Name:        "foo",
 					Description: "summary",
 					Type:        "folder",
+					Sequence:    1,
 				}, folder.Info)
 			},
 		},
@@ -622,6 +632,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 					Name:        "foo",
 					Description: "description",
 					Type:        "folder",
+					Sequence:    1,
 				}, folder.Info)
 			},
 		},
@@ -646,6 +657,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 					Name:        "foo",
 					Description: "foo description",
 					Type:        "folder",
+					Sequence:    1,
 				}, foo.Info)
 				require.Equal(t, "GET /foo", foo.Items[0].(bruno.HttpItem).Info.Name)
 				bar := c.Items[1].(bruno.FolderItem)
@@ -654,6 +666,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 					Name:        "bar",
 					Description: "bar description",
 					Type:        "folder",
+					Sequence:    2,
 				}, bar.Info)
 				require.Equal(t, "GET /bar", bar.Items[0].(bruno.HttpItem).Info.Name)
 			},

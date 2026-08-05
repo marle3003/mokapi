@@ -483,7 +483,7 @@ func (f *folderBuilder) build() []any {
 
 	for _, tag := range f.order {
 		child := f.items[tag.Name]
-		result = append(result, bruno.FolderItem{
+		item := bruno.FolderItem{
 			Info: &bruno.FolderInfo{
 				Name:        tag.Name,
 				Description: tag.Description,
@@ -491,34 +491,15 @@ func (f *folderBuilder) build() []any {
 				Sequence:    seq,
 			},
 			Items: child.build(),
-		})
+		}
+		if item.Info.Description == "" {
+			item.Info.Description = tag.Summary
+		}
+		result = append(result, item)
 		seq++
 	}
 
 	result = append(result, buildItems(f.ops, seq)...)
 
-	return result
-}
-
-func (f *folderBuilder) build2() []any {
-	var result []any
-	for index, tag := range f.order {
-		child := f.items[tag.Name]
-
-		item := bruno.FolderItem{
-			Info: &bruno.FolderInfo{
-				Name:        tag.Name,
-				Description: tag.Description,
-				Type:        "folder",
-				Sequence:    index + 1,
-			},
-			Items: append(child.build(), buildItems(child.ops, 0)...),
-		}
-		if item.Info.Description == "" {
-			item.Info.Description = tag.Summary
-		}
-
-		result = append(result, item)
-	}
 	return result
 }
