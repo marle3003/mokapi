@@ -81,7 +81,7 @@ paths:
 				p.ch <- dynamic.ConfigEvent{Config: p.files["/root.yml"]}
 				select {
 				case c := <-ch:
-					require.Equal(t, "foo", c.Paths["/users"].Value.Get.Summary)
+					require.Equal(t, "foo", c.Paths.Lookup("/users").Value.Get.Summary)
 				case <-time.After(10 * time.Second):
 					require.Fail(t, "expected to get config")
 				}
@@ -96,7 +96,7 @@ paths:
 
 				select {
 				case c := <-ch:
-					require.Equal(t, "bar", c.Paths["/users"].Value.Get.Summary)
+					require.Equal(t, "bar", c.Paths.Lookup("/users").Value.Get.Summary)
 				case <-time.After(10 * time.Second):
 					require.Fail(t, "expected to get config")
 				}

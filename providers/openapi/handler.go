@@ -421,36 +421,40 @@ func (h *responseHandler) serveSecurity(r *http.Request, requirements []Security
 	}
 }
 
-func findOperation(method, requestPath string, paths PathItems) (*Operation, error) {
+func findOperation(method, requestPath string, paths *PathItems) (*Operation, error) {
 	var lastError error
 	var selectedOperation *Operation
 	var numParams int
 
-	for route, ref := range paths {
-		if ref.Value == nil {
-			continue
-		}
+	if paths != nil {
+		for it := paths.Iter(); it.Next(); {
+			route := it.Key()
+			ref := it.Value()
+			if ref.Value == nil {
+				continue
+			}
 
-		origRoute := route
-		if len(route) > 1 {
-			// there is no official specification for trailing slash. For ease of use, mokapi considers it equivalent
-			route = strings.TrimRight(route, "/")
-		}
+			origRoute := route
+			if len(route) > 1 {
+				// there is no official specification for trailing slash. For ease of use, mokapi considers it equivalent
+				route = strings.TrimRight(route, "/")
+			}
 
-		params, err := extractPathParams(route, requestPath)
-		if err != nil {
-			continue
-		}
-		op := ref.Value.Operation(method)
-		if op == nil {
-			allowed := slices.Collect(maps.Keys(ref.Value.Operations()))
-			lastError = newMethodNotAllowedErrorf(allowed, "Method %s not defined for path %s", method, origRoute)
-		}
+			params, err := extractPathParams(route, requestPath)
+			if err != nil {
+				continue
+			}
+			op := ref.Value.Operation(method)
+			if op == nil {
+				allowed := slices.Collect(maps.Keys(ref.Value.Operations()))
+				lastError = newMethodNotAllowedErrorf(allowed, "Method %s not defined for path %s", method, origRoute)
+			}
 
-		// Literal/static paths have higher priority than parameterized paths.
-		if selectedOperation == nil || numParams > len(params) {
-			selectedOperation = op
-			numParams = len(params)
+			// Literal/static paths have higher priority than parameterized paths.
+			if selectedOperation == nil || numParams > len(params) {
+				selectedOperation = op
+				numParams = len(params)
+			}
 		}
 	}
 

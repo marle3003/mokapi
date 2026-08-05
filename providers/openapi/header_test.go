@@ -271,7 +271,7 @@ func TestHeader_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				h := config.Paths["/foo"].Value.Get.Responses.GetResponse(http.StatusOK).Headers["foo"]
+				h := config.Paths.Lookup("/foo").Value.Get.Responses.GetResponse(http.StatusOK).Headers["foo"]
 				require.Equal(t, "foo description", h.Value.Description)
 			},
 		},
@@ -293,7 +293,7 @@ func TestHeader_Parse(t *testing.T) {
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.Equal(t, logrus.Fields{"method": "GET", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse response '200' failed: parse header 'foo' failed: resolve reference '/foo' failed: TEST ERROR", log.LastEntry().Message)
-				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation(http.MethodGet).Status)
+				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodGet).Status)
 				require.NoError(t, err)
 			},
 		},
@@ -338,7 +338,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				require.Equal(t, "foo", res.Headers["foo"].Value.Description)
 			},
 		},
@@ -369,7 +369,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				require.Equal(t, "bar", res.Headers["foo"].Value.Description)
 			},
 		},
@@ -400,7 +400,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				require.Equal(t, "foo", res.Headers["foo"].Value.Description)
 			},
 		},
@@ -431,7 +431,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				require.Equal(t, "foo", res.Headers["foo"].Value.Description)
 			},
 		},
@@ -462,7 +462,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				require.Equal(t, "foo", res.Headers["foo"].Value.Description)
 			},
 		},
@@ -493,7 +493,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				require.Equal(t, "foo", res.Headers["foo"].Value.Description)
 			},
 		},

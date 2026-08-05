@@ -72,148 +72,10 @@ func (c *Config) ExportBruno(baseUrl string) (bruno.Collection, error) {
 		}
 	}
 
-	for path, pi := range c.Paths {
-		if pi.Value == nil {
-			continue
-		}
-		for method, o := range pi.Value.Operations() {
-			name := fmt.Sprintf("%s %s", method, path)
-			if o.OperationId != "" {
-				name = o.OperationId
-			}
-			item := bruno.HttpItem{
-				Info: &bruno.HttpInfo{
-					Name:        name,
-					Description: o.Description,
-					Type:        "http",
-				},
-				Http: &bruno.HttpDetail{
-					Method:  method,
-					Url:     "{{baseUrl}}" + path,
-					Headers: nil,
-					Params:  nil,
-					Body:    nil,
-				},
-			}
-
-			reqPath := strings.Split(path, "/")
-			for i, seg := range reqPath {
-				reqPath[i] = strings.Trim(seg, "{}")
-			}
-
-			newRandom := func(s *schema.Schema, additionalPath string) string {
-				req := &generator.Request{
-					Path:   reqPath,
-					Schema: schema.ConvertToJsonSchema(s),
-				}
-				if additionalPath != "" {
-					req.Path = append(req.Path, additionalPath)
-				}
-
-				v, err := generator.New(req)
-				if err != nil {
-					log.Debugf("failed to create random data for schema at %s %s: %v", method, path, err)
-					return ""
-				}
-				return fmt.Sprintf("%v", v)
-			}
-
-			params := append(pi.Value.Parameters, o.Parameters...)
-			addedQuery := false
-			for _, ref := range params {
-				if ref.Value == nil {
-					continue
-				}
-				p := ref.Value
-				switch p.Type {
-				case ParameterHeader:
-					item.Http.Headers = append(item.Http.Headers, bruno.HttpRequestHeader{
-						Name:        p.Name,
-						Value:       newRandom(p.Schema, p.Name),
-						Description: p.Description,
-						Disabled:    !p.Required,
-					})
-				case ParameterPath:
-					// bruno does only encode query parameters but not path parameter
-					v := url.PathEscape(newRandom(p.Schema, ""))
-					item.Http.Params = append(item.Http.Params, bruno.HttpRequestParam{
-						Name:        p.Name,
-						Value:       v,
-						Description: p.Description,
-						Type:        string(ParameterPath),
-					})
-					item.Http.Url = strings.ReplaceAll(item.Http.Url, fmt.Sprintf("{%s}", p.Name), fmt.Sprintf(":%s", p.Name))
-				case ParameterQuery:
-					item.Http.Params = append(item.Http.Params, bruno.HttpRequestParam{
-						Name:        p.Name,
-						Value:       newRandom(p.Schema, p.Name),
-						Description: p.Description,
-						Type:        string(ParameterQuery),
-						Disabled:    !p.Required,
-					})
-					if !addedQuery {
-						item.Http.Url += "?"
-						addedQuery = true
-					}
-					item.Http.Url += fmt.Sprintf("%s=", p.Name)
-				default:
-					log.Debugf("unsupported type %s for parameter %s", p.Type, p.Name)
-				}
-			}
-
-			if o.RequestBody != nil && o.RequestBody.Value != nil {
-				rb := o.RequestBody.Value
-				var result []bruno.HttpRequestBodyVariant
-
-				keys := slices.Collect(maps.Keys(rb.Content))
-				slices.SortFunc(keys, func(a, b string) int {
-					return strings.Compare(a, b)
-				})
-
-				for _, key := range keys {
-					mt := rb.Content[key]
-					typeName := "text"
-					ct := media.ParseContentType(key)
-					if ct.Subtype == "json" {
-						typeName = "json"
-					}
-					if ct.Subtype == "xml" {
-						typeName = "xml"
-					}
-
-					var b []byte
-					s := schema.ConvertToJsonSchema(mt.Schema)
-					v, err := generator.New(&generator.Request{Path: reqPath, Schema: s})
-					if err != nil {
-						log.Debugf("failed to create random data for body at %s %s: %v", method, reqPath, err)
-					} else {
-						b, err = encoding.NewEncoder(s).Write(v, ct)
-					}
-
-					result = append(result, bruno.HttpRequestBodyVariant{
-						Title: key,
-						Body: bruno.HttpRequestBodyRaw{
-							Type: typeName,
-							Data: string(b),
-						},
-					})
-					if len(result) == 1 && rb.Required {
-						result[0].Selected = true
-					}
-				}
-
-				if len(result) > 1 {
-					item.Http.Body = &bruno.HttpRequestBody{
-						Variant: result,
-					}
-				} else if len(result) == 1 {
-					item.Http.Body = &bruno.HttpRequestBody{
-						Body: &result[0].Body,
-					}
-				}
-			}
-
-			e.Items = append(e.Items, item)
+	if c.Paths != nil && c.Paths.Len() > 0 {
+		items := groupByTag(c.Paths, tagsByName(c.Tags))
+		if len(items) > 0 {
+			e.Items = items
 		}
 	}
 
@@ -402,4 +264,261 @@ func tryRemoveScheme(urls []string, scheme string) []string {
 		results[i] = strings.TrimPrefix(u, prefix)
 	}
 	return results
+}
+
+func groupByTag(paths *PathItems, tagsByName map[string]*Tag) []any {
+	root := &folderBuilder{items: map[string]*folderBuilder{}}
+	var untagged []*Operation
+
+	for it := paths.Iter(); it.Next(); {
+		ref := it.Value()
+		pathItem := ref.Value
+		if pathItem == nil {
+			continue
+		}
+
+		lookup := pathItem.Operations()
+		for _, method := range pathItem.MethodOrder {
+			op := lookup[method]
+			if len(op.Tags) == 0 {
+				untagged = append(untagged, op)
+				continue
+			}
+			path := tagPath(tagsByName, op.Tags[0])
+			if len(path) == 0 {
+				// tag referenced but not declared in spec's top-level tags array
+				untagged = append(untagged, op)
+				continue
+			}
+			root.insert(path, op)
+		}
+	}
+
+	items := root.build()
+	items = append(items, buildItems(untagged, len(items)+1)...)
+
+	return items
+}
+
+func buildItems(operations []*Operation, seq int) []any {
+	var items []any
+
+	for _, o := range operations {
+		pi := o.Path
+		path := pi.Path
+		method := o.Method
+
+		name := fmt.Sprintf("%s %s", method, path)
+		if o.OperationId != "" {
+			name = o.OperationId
+		}
+		item := bruno.HttpItem{
+			Info: &bruno.HttpInfo{
+				Name:        name,
+				Description: o.Description,
+				Type:        "http",
+				Sequence:    seq,
+			},
+			Http: &bruno.HttpDetail{
+				Method:  method,
+				Url:     "{{baseUrl}}" + path,
+				Headers: nil,
+				Params:  nil,
+				Body:    nil,
+			},
+		}
+		if item.Info.Description == "" {
+			item.Info.Description = o.Summary
+		}
+
+		reqPath := strings.Split(path, "/")
+		for i, seg := range reqPath {
+			reqPath[i] = strings.Trim(seg, "{}")
+		}
+
+		newRandom := func(s *schema.Schema, additionalPath string) string {
+			req := &generator.Request{
+				Path:   reqPath,
+				Schema: schema.ConvertToJsonSchema(s),
+			}
+			if additionalPath != "" {
+				req.Path = append(req.Path, additionalPath)
+			}
+
+			v, err := generator.New(req)
+			if err != nil {
+				log.Debugf("failed to create random data for schema at %s %s: %v", method, path, err)
+				return ""
+			}
+			return fmt.Sprintf("%v", v)
+		}
+
+		params := append(pi.Parameters, o.Parameters...)
+		addedQuery := false
+		for _, ref := range params {
+			if ref.Value == nil {
+				continue
+			}
+			p := ref.Value
+			switch p.Type {
+			case ParameterHeader:
+				item.Http.Headers = append(item.Http.Headers, bruno.HttpRequestHeader{
+					Name:        p.Name,
+					Value:       newRandom(p.Schema, p.Name),
+					Description: p.Description,
+					Disabled:    !p.Required,
+				})
+			case ParameterPath:
+				// bruno does only encode query parameters but not path parameter
+				v := url.PathEscape(newRandom(p.Schema, ""))
+				item.Http.Params = append(item.Http.Params, bruno.HttpRequestParam{
+					Name:        p.Name,
+					Value:       v,
+					Description: p.Description,
+					Type:        string(ParameterPath),
+				})
+				item.Http.Url = strings.ReplaceAll(item.Http.Url, fmt.Sprintf("{%s}", p.Name), fmt.Sprintf(":%s", p.Name))
+			case ParameterQuery:
+				item.Http.Params = append(item.Http.Params, bruno.HttpRequestParam{
+					Name:        p.Name,
+					Value:       newRandom(p.Schema, p.Name),
+					Description: p.Description,
+					Type:        string(ParameterQuery),
+					Disabled:    !p.Required,
+				})
+				if !addedQuery {
+					item.Http.Url += "?"
+					addedQuery = true
+				}
+				item.Http.Url += fmt.Sprintf("%s=", p.Name)
+			default:
+				log.Debugf("unsupported type %s for parameter %s", p.Type, p.Name)
+			}
+		}
+
+		if o.RequestBody != nil && o.RequestBody.Value != nil {
+			rb := o.RequestBody.Value
+			var result []bruno.HttpRequestBodyVariant
+
+			keys := slices.Collect(maps.Keys(rb.Content))
+			slices.SortFunc(keys, func(a, b string) int {
+				return strings.Compare(a, b)
+			})
+
+			for _, key := range keys {
+				mt := rb.Content[key]
+				typeName := "text"
+				ct := media.ParseContentType(key)
+				if ct.Subtype == "json" {
+					typeName = "json"
+				}
+				if ct.Subtype == "xml" {
+					typeName = "xml"
+				}
+
+				var b []byte
+				s := schema.ConvertToJsonSchema(mt.Schema)
+				v, err := generator.New(&generator.Request{Path: reqPath, Schema: s})
+				if err != nil {
+					log.Debugf("failed to create random data for body at %s %s: %v", method, reqPath, err)
+				} else {
+					b, err = encoding.NewEncoder(s).Write(v, ct)
+				}
+
+				result = append(result, bruno.HttpRequestBodyVariant{
+					Title: key,
+					Body: bruno.HttpRequestBodyRaw{
+						Type: typeName,
+						Data: string(b),
+					},
+				})
+				if len(result) == 1 && rb.Required {
+					result[0].Selected = true
+				}
+			}
+
+			if len(result) > 1 {
+				item.Http.Body = &bruno.HttpRequestBody{
+					Variant: result,
+				}
+			} else if len(result) == 1 {
+				item.Http.Body = &bruno.HttpRequestBody{
+					Body: &result[0].Body,
+				}
+			}
+		}
+
+		items = append(items, item)
+		seq++
+	}
+	return items
+}
+
+type folderBuilder struct {
+	ops   []*Operation
+	order []*Tag
+	items map[string]*folderBuilder
+}
+
+func (f *folderBuilder) insert(path []*Tag, op *Operation) {
+	if len(path) == 1 {
+		child := f.child(path[0])
+		child.ops = append(child.ops, op)
+		return
+	}
+	f.child(path[0]).insert(path[1:], op)
+}
+
+func (f *folderBuilder) child(tag *Tag) *folderBuilder {
+	if _, ok := f.items[tag.Name]; !ok {
+		f.items[tag.Name] = &folderBuilder{items: map[string]*folderBuilder{}}
+		f.order = append(f.order, tag)
+	}
+	return f.items[tag.Name]
+}
+
+func (f *folderBuilder) build() []any {
+	var result []any
+	seq := 1
+
+	for _, tag := range f.order {
+		child := f.items[tag.Name]
+		result = append(result, bruno.FolderItem{
+			Info: &bruno.FolderInfo{
+				Name:        tag.Name,
+				Description: tag.Description,
+				Type:        "folder",
+				Sequence:    seq,
+			},
+			Items: child.build(),
+		})
+		seq++
+	}
+
+	result = append(result, buildItems(f.ops, seq)...)
+
+	return result
+}
+
+func (f *folderBuilder) build2() []any {
+	var result []any
+	for index, tag := range f.order {
+		child := f.items[tag.Name]
+
+		item := bruno.FolderItem{
+			Info: &bruno.FolderInfo{
+				Name:        tag.Name,
+				Description: tag.Description,
+				Type:        "folder",
+				Sequence:    index + 1,
+			},
+			Items: append(child.build(), buildItems(child.ops, 0)...),
+		}
+		if item.Info.Description == "" {
+			item.Info.Description = tag.Summary
+		}
+
+		result = append(result, item)
+	}
+	return result
 }

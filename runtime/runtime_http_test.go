@@ -275,7 +275,7 @@ func TestApp_AddHttp_Patching(t *testing.T) {
 			},
 			test: func(t *testing.T, app *runtime.App) {
 				info := app.Http.Get("foo")
-				p := info.Paths["/foo"]
+				p := info.Paths.Lookup("/foo")
 				require.NotNil(t, p)
 				op := p.Value.Get
 				require.NotNil(t, op)

@@ -13,7 +13,7 @@ type Components struct {
 	Parameters      ComponentParameters `yaml:"parameters,omitempty" json:"parameters,omitempty"`
 	Examples        Examples            `yaml:"examples,omitempty" json:"examples,omitempty"`
 	Headers         Headers             `yaml:"headers,omitempty" json:"headers,omitempty"`
-	PathItems       PathItems           `yaml:"pathItems,omitempty" json:"pathItems,omitempty"`
+	PathItems       *PathItems          `yaml:"pathItems,omitempty" json:"pathItems,omitempty"`
 	SecuritySchemes SecuritySchemes     `yaml:"securitySchemes,omitempty" json:"securitySchemes,omitempty"`
 }
 
@@ -26,7 +26,7 @@ func (c *Components) IsEmpty() bool {
 		len(c.Parameters) == 0 &&
 		len(c.Examples) == 0 &&
 		len(c.Headers) == 0 &&
-		len(c.PathItems) == 0 &&
+		c.PathItems.Len() == 0 &&
 		len(c.SecuritySchemes) == 0
 }
 

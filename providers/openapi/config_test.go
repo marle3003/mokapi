@@ -128,8 +128,8 @@ paths:
 `,
 			test: func(t *testing.T, c *openapi.Config, err error) {
 				require.NoError(t, err)
-				require.Equal(t, openapi.StatusValidationError, c.Paths["foo"].Value.Status)
-				require.Equal(t, "path should start with `/`", c.Paths["foo"].Value.Errors[0].Message)
+				require.Equal(t, openapi.StatusValidationError, c.Paths.Lookup("foo").Value.Status)
+				require.Equal(t, "path should start with `/`", c.Paths.Lookup("foo").Value.Errors[0].Message)
 			},
 		},
 	}
@@ -294,11 +294,11 @@ components:
 `,
 			f: func(t *testing.T, c *openapi.Config) {
 				require.NoError(t, c.Validate())
-				require.Len(t, c.Paths, 1)
+				require.Equal(t, 1, c.Paths.Len())
 				exp := []string{"204", "200"}
-				keys := c.Paths["/foo"].Value.Get.Responses.Keys()
+				keys := c.Paths.Lookup("/foo").Value.Get.Responses.Keys()
 				require.Equal(t, exp, keys)
-				r := c.Paths["/foo"].Value.Get.Responses.GetResponse(http.StatusOK)
+				r := c.Paths.Lookup("/foo").Value.Get.Responses.GetResponse(http.StatusOK)
 				content := r.Content["application/xml"]
 				require.NotNil(t, content.Schema, "ref resolved")
 			},
@@ -378,7 +378,7 @@ func TestConfig_PetStore_Path(t *testing.T) {
 	err = config.Parse(&dynamic.Config{Data: config}, nil)
 	require.NoError(t, err)
 
-	endpoint := config.Paths["/pet"]
+	endpoint := config.Paths.Lookup("/pet")
 	require.NotNil(t, endpoint.Value.Put, "put is defined")
 	require.NotNil(t, endpoint.Value.Post, "post is defined")
 	put := endpoint.Value.Put
@@ -411,7 +411,7 @@ func TestPetStore_Response(t *testing.T) {
 	err = config.Parse(&dynamic.Config{Data: config}, nil)
 	require.NoError(t, err)
 
-	endpoint := config.Paths["/pet/{petId}"]
+	endpoint := config.Paths.Lookup("/pet/{petId}")
 	r := endpoint.Value.Get.Responses.GetResponse(http.StatusOK)
 	require.NotNil(t, r, "response exists")
 	ct := media.ParseContentType("application/json")
@@ -429,7 +429,7 @@ func TestPetStore_Parameters(t *testing.T) {
 	err = config.Parse(&dynamic.Config{Data: config}, nil)
 	require.NoError(t, err)
 
-	endpoint := config.Paths["/pet/{petId}"]
+	endpoint := config.Paths.Lookup("/pet/{petId}")
 	params := endpoint.Value.Delete.Parameters
 	require.Len(t, params, 2)
 	require.Equal(t, "api_key", params[0].Value.Name)
@@ -477,8 +477,9 @@ func TestConfig_Patch(t *testing.T) {
 				openapitest.NewConfig("1.0", openapitest.WithPath("/foo")),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Len(t, result.Paths, 1)
-				require.Contains(t, result.Paths, "/foo")
+				require.Equal(t, 1, result.Paths.Len())
+				_, ok := result.Paths.Get("/foo")
+				require.True(t, ok)
 			},
 		},
 		{

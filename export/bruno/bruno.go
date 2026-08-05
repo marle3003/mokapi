@@ -8,7 +8,7 @@ type Collection struct {
 	Version *version.Version `yaml:"opencollection" json:"opencollection"`
 	Info    Info             `yaml:"info,omitempty" json:"info,omitempty"`
 	Config  *Config          `yaml:"config,omitempty" json:"config,omitempty"`
-	Items   []HttpItem       `yaml:"items,omitempty" json:"items,omitempty"`
+	Items   []any            `yaml:"items,omitempty" json:"items,omitempty"`
 	Request *RequestDefault  `yaml:"request,omitempty" json:"request,omitempty"`
 	Bundled bool             `yaml:"bundled" json:"bundled"`
 }
@@ -39,6 +39,18 @@ type Environment struct {
 type Variable struct {
 	Name  string `yaml:"name" json:"name"`
 	Value string `yaml:"value" json:"value"`
+}
+
+type FolderItem struct {
+	Info  *FolderInfo `yaml:"info,omitempty" json:"info,omitempty"`
+	Items []any       `yaml:"items,omitempty" json:"items,omitempty"`
+}
+
+type FolderInfo struct {
+	Name        string `yaml:"name" json:"name"`
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+	Type        string `yaml:"type" json:"type"`
+	Sequence    int    `yaml:"seq,omitempty" json:"seq,omitempty"`
 }
 
 type HttpItem struct {

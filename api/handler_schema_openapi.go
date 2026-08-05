@@ -20,18 +20,21 @@ func getOpenApiExample(w http.ResponseWriter, r *http.Request, cfg *openapi.Conf
 		contentType = r.Header.Get("Accept")
 	}
 
+	if cfg.Paths == nil {
+		http.Error(w, fmt.Sprintf("No result found"), http.StatusBadRequest)
+		return
+	}
+
 	var path *openapi.Path
 	if pathName == "" {
-		if len(cfg.Paths) > 1 {
+		if cfg.Paths.Len() > 1 {
 			http.Error(w, fmt.Sprintf(toManyResults), http.StatusBadRequest)
 			return
 		}
-		for _, p := range cfg.Paths {
-			path = p.Value
-			break
-		}
+		key := cfg.Paths.Keys()[0]
+		path = cfg.Paths.Lookup(key).Value
 	} else {
-		if r := cfg.Paths[pathName]; r != nil {
+		if r, _ := cfg.Paths.Get(pathName); r != nil {
 			path = r.Value
 		}
 	}

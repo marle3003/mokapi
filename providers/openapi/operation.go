@@ -48,6 +48,7 @@ type Operation struct {
 
 	Security []SecurityRequirement `yaml:"security,omitempty" json:"security,omitempty"`
 
+	Method string  `yaml:"-" json:"-"`
 	Path   *Path   `yaml:"-" json:"-"`
 	Status Status  `yaml:"-" json:"-"`
 	Errors []Error `yaml:"-" json:"-"`

@@ -61,9 +61,9 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			s:    `{ "paths": {"/foo": { "get": { "tags": ["foo", "bar"] } }} }`,
 			test: func(t *testing.T, c *Config, err error) {
 				require.NoError(t, err)
-				require.Len(t, c.Paths, 1)
-				require.Len(t, c.Paths["/foo"].Get.Tags, 2)
-				require.Equal(t, []string{"foo", "bar"}, c.Paths["/foo"].Get.Tags)
+				require.Equal(t, 1, c.Paths.Len())
+				require.Len(t, c.Paths.Lookup("/foo").Get.Tags, 2)
+				require.Equal(t, []string{"foo", "bar"}, c.Paths.Lookup("/foo").Get.Tags)
 			},
 		},
 	}

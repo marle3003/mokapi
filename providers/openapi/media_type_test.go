@@ -164,7 +164,7 @@ func TestMediaType_Parse(t *testing.T) {
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.Equal(t, logrus.Fields{"method": "GET", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse response '200' failed: parse content 'application/json' failed: parse schema failed: resolve reference '/foo.yml' failed: TEST ERROR", log.LastEntry().Message)
-				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation(http.MethodGet).Status)
+				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodGet).Status)
 				require.NoError(t, err)
 			},
 		},
@@ -189,7 +189,7 @@ func TestMediaType_Parse(t *testing.T) {
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.Equal(t, logrus.Fields{"method": "GET", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse response '200' failed: parse content 'application/json' failed: parse example 'foo' failed: resolve reference '/foo.yml' failed: TEST ERROR", log.LastEntry().Message)
-				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation(http.MethodGet).Status)
+				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodGet).Status)
 				require.NoError(t, err)
 			},
 		},
@@ -229,7 +229,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				require.Len(t, res.Content, 2)
 				require.NotNil(t, res.Content["text/plain"])
 				require.Nil(t, res.Content["text/html"])
@@ -254,7 +254,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				mt := res.Content["text/html"]
 				require.Equal(t, "string", mt.Schema.Type.String())
 			},
@@ -278,7 +278,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				mt := res.Content["text/html"]
 				require.Equal(t, "[string, object]", mt.Schema.Type.String())
 			},
@@ -302,7 +302,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				mt := res.Content["text/html"]
 				require.Equal(t, "foo", mt.Example.Value)
 			},
@@ -326,7 +326,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				mt := res.Content["text/html"]
 				require.Equal(t, "bar", mt.Example.Value)
 			},
@@ -350,7 +350,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				mt := res.Content["text/html"]
 				require.Equal(t, "foo", mt.Example.Value)
 			},
@@ -376,7 +376,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				mt := res.Content["text/html"]
 				require.Equal(t, "foo", mt.Examples["foo"].Value.Value)
 			},
@@ -404,7 +404,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				mt := res.Content["text/html"]
 				require.Equal(t, "bar", mt.Examples["foo"].Value.Value)
 			},
@@ -430,7 +430,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				mt := res.Content["text/html"]
 				require.Equal(t, "foo", mt.Examples["foo"].Value.Value)
 			},
@@ -458,7 +458,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				mt := res.Content["text/html"]
 				require.Nil(t, mt.Example)
 				require.Equal(t, "bar", mt.Examples["foo"].Value.Value)
@@ -487,7 +487,7 @@ func TestConfig_Patch_MediaType(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				mt := res.Content["text/html"]
 				require.Len(t, mt.Examples, 0)
 				require.Equal(t, "bar", mt.Example.Value)

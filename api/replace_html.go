@@ -116,7 +116,7 @@ func getPath(segments []string, c *runtime.HttpInfo) (pathName string, n int, pa
 			return
 		}
 		currentPath = fmt.Sprintf("%s/%s", currentPath, seg)
-		p, found := c.Paths[currentPath]
+		p, found := c.Paths.Get(currentPath)
 		if found {
 			pathName = currentPath
 			path = p

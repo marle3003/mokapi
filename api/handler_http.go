@@ -233,69 +233,73 @@ func (h *handler) getHttpService(s *runtime.HttpInfo) httpInfo {
 		})
 	}
 
-	for path, p := range s.Paths {
-		if p.Value == nil {
-			continue
-		}
-		pi := pathItem{
-			Path:        path,
-			Summary:     p.Value.Summary,
-			Description: p.Value.Description,
-			Status:      p.Value.Status.String(),
-		}
-		if len(p.Summary) > 0 {
-			pi.Summary = p.Summary
-		}
-		if len(p.Description) > 0 {
-			pi.Description = p.Description
-		}
-
-		for _, err := range p.Value.Errors {
-			pi.Errors = append(pi.Errors, errorData{Message: err.Message})
-		}
-
-		for method, o := range p.Value.Operations() {
-			data := httpMetrics{
-				Requests: h.app.Monitor.Http.RequestCounter.Sum(metrics.NewQuery(
-					metrics.ByLabel("service", s.Info.Name),
-					metrics.ByLabel("endpoint", p.Value.Path),
-					metrics.ByLabel("method", method),
-				)),
-				RequestErrors: h.app.Monitor.Http.RequestErrorCounter.Sum(metrics.NewQuery(
-					metrics.ByLabel("service", s.Info.Name),
-					metrics.ByLabel("endpoint", p.Value.Path),
-					metrics.ByLabel("method", method),
-				)),
-				LastRequest: h.app.Monitor.Http.LastRequest.Max(metrics.NewQuery(
-					metrics.ByLabel("service", s.Info.Name),
-					metrics.ByLabel("endpoint", p.Value.Path),
-					metrics.ByLabel("method", method),
-				)),
+	if s.Paths != nil {
+		for it := s.Paths.Iter(); it.Next(); {
+			path := it.Key()
+			p := it.Value()
+			if p.Value == nil {
+				continue
+			}
+			pi := pathItem{
+				Path:        path,
+				Summary:     p.Value.Summary,
+				Description: p.Value.Description,
+				Status:      p.Value.Status.String(),
+			}
+			if len(p.Summary) > 0 {
+				pi.Summary = p.Summary
+			}
+			if len(p.Description) > 0 {
+				pi.Description = p.Description
 			}
 
-			pi.Operations = append(pi.Operations, operationInfo{
-				Method:      strings.ToLower(method),
-				Summary:     o.Summary,
-				Description: o.Description,
-				OperationId: o.OperationId,
-				Deprecated:  o.Deprecated,
-				Tags:        o.Tags,
-				Status:      o.Status.String(),
-				Errors:      getErrors(o.Errors),
-				Metrics:     data,
+			for _, err := range p.Value.Errors {
+				pi.Errors = append(pi.Errors, errorData{Message: err.Message})
+			}
+
+			for method, o := range p.Value.Operations() {
+				data := httpMetrics{
+					Requests: h.app.Monitor.Http.RequestCounter.Sum(metrics.NewQuery(
+						metrics.ByLabel("service", s.Info.Name),
+						metrics.ByLabel("endpoint", p.Value.Path),
+						metrics.ByLabel("method", method),
+					)),
+					RequestErrors: h.app.Monitor.Http.RequestErrorCounter.Sum(metrics.NewQuery(
+						metrics.ByLabel("service", s.Info.Name),
+						metrics.ByLabel("endpoint", p.Value.Path),
+						metrics.ByLabel("method", method),
+					)),
+					LastRequest: h.app.Monitor.Http.LastRequest.Max(metrics.NewQuery(
+						metrics.ByLabel("service", s.Info.Name),
+						metrics.ByLabel("endpoint", p.Value.Path),
+						metrics.ByLabel("method", method),
+					)),
+				}
+
+				pi.Operations = append(pi.Operations, operationInfo{
+					Method:      strings.ToLower(method),
+					Summary:     o.Summary,
+					Description: o.Description,
+					OperationId: o.OperationId,
+					Deprecated:  o.Deprecated,
+					Tags:        o.Tags,
+					Status:      o.Status.String(),
+					Errors:      getErrors(o.Errors),
+					Metrics:     data,
+				})
+			}
+			result.Paths = append(result.Paths, pi)
+		}
+
+		for _, t := range s.Tags {
+			result.Tags = append(result.Tags, tag{
+				Name:        t.Name,
+				Summary:     t.Summary,
+				Description: t.Description,
+				Parent:      t.Parent,
+				Kind:        t.Kind,
 			})
 		}
-		result.Paths = append(result.Paths, pi)
-	}
-
-	for _, t := range s.Tags {
-		result.Tags = append(result.Tags, tag{
-			Name:        t.Name,
-			Summary:     t.Summary,
-			Description: t.Description,
-			Parent:      t.Parent,
-			Kind:        t.Kind,
-		})
 	}
 
 	result.Configs = getConfigs(s.Configs())
@@ -308,14 +312,13 @@ func getOperations(s *runtime.HttpInfo, path, method string, monitor *monitor.Ht
 	if path != "" {
 		paths = append(paths, path)
 	} else {
-		keys := maps.Keys(s.Paths)
-		paths = slices.Sorted(keys)
+		paths = s.Paths.Keys()
 	}
 
 	operations := make([]operation, 0, len(paths))
 	for _, ps := range paths {
 
-		p, ok := s.Paths[ps]
+		p, ok := s.Paths.Get(ps)
 		if !ok || p.Value == nil {
 			continue
 		}

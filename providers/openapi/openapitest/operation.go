@@ -36,6 +36,12 @@ func WithOperationDescription(s string) OperationOptions {
 	}
 }
 
+func WithOperationTags(tags ...string) OperationOptions {
+	return func(o *openapi.Operation) {
+		o.Tags = tags
+	}
+}
+
 func WithResponse(status int, opts ...ResponseOptions) OperationOptions {
 	return func(o *openapi.Operation) {
 		r := &openapi.Response{

@@ -98,12 +98,15 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 	}
 	patchHttp(hc, s.reader)
 
-	for path := range cfg.Paths {
-		if _, ok := hc.seenPaths[path]; ok {
-			continue
+	if cfg.Paths != nil {
+		for it := cfg.Paths.Iter(); it.Next(); {
+			path := it.Key()
+			if _, ok := hc.seenPaths[path]; ok {
+				continue
+			}
+			s.events.SetStore(int(store.Size), events.NewTraits().WithNamespace("http").WithName(name).With("path", path))
+			hc.seenPaths[path] = true
 		}
-		s.events.SetStore(int(store.Size), events.NewTraits().WithNamespace("http").WithName(name).With("path", path))
-		hc.seenPaths[path] = true
 	}
 
 	if s.cfg.Api.Search.Enabled {

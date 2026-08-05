@@ -181,7 +181,7 @@ func TestConfig_Patch_Content(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				require.Len(t, res.Content, 1)
 				require.Contains(t, res.Content, "text/plain")
 				require.NotNil(t, res.Content["text/plain"])
@@ -208,7 +208,7 @@ func TestConfig_Patch_Content(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				require.Len(t, res.Content, 2)
 				require.NotNil(t, res.Content["text/plain"])
 				require.NotNil(t, res.Content["text/html"])
@@ -240,7 +240,7 @@ func TestConfig_Patch_Content(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				require.Len(t, res.Content, 1)
 				require.NotNil(t, res.Content["text/plain"])
 				require.Equal(t, "string", res.Content["text/plain"].Schema.Type.String())

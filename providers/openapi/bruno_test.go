@@ -307,7 +307,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 			test: func(t *testing.T, c bruno.Collection, err error) {
 				require.NoError(t, err)
 				require.Len(t, c.Items, 1)
-				item := c.Items[0]
+				item := c.Items[0].(bruno.HttpItem)
 				require.Equal(t, &bruno.HttpInfo{
 					Name:        "GET /foo",
 					Description: "",
@@ -338,7 +338,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 			test: func(t *testing.T, c bruno.Collection, err error) {
 				require.NoError(t, err)
 				require.Len(t, c.Items, 1)
-				item := c.Items[0]
+				item := c.Items[0].(bruno.HttpItem)
 				require.Equal(t, &bruno.HttpInfo{
 					Name:        "GET /products/{name}",
 					Description: "operation description",
@@ -377,7 +377,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 			test: func(t *testing.T, c bruno.Collection, err error) {
 				require.NoError(t, err)
 				require.Len(t, c.Items, 1)
-				item := c.Items[0]
+				item := c.Items[0].(bruno.HttpItem)
 				require.Equal(t, &bruno.HttpInfo{
 					Name:        "GET /products/{name}",
 					Description: "operation description",
@@ -415,7 +415,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 			test: func(t *testing.T, c bruno.Collection, err error) {
 				require.NoError(t, err)
 				require.Len(t, c.Items, 1)
-				item := c.Items[0]
+				item := c.Items[0].(bruno.HttpItem)
 				require.Equal(t, &bruno.HttpInfo{
 					Name: "GET /products",
 					Type: "http",
@@ -451,7 +451,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 			test: func(t *testing.T, c bruno.Collection, err error) {
 				require.NoError(t, err)
 				require.Len(t, c.Items, 1)
-				item := c.Items[0]
+				item := c.Items[0].(bruno.HttpItem)
 				require.Equal(t, &bruno.HttpInfo{
 					Name: "GET /products",
 					Type: "http",
@@ -488,7 +488,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 			test: func(t *testing.T, c bruno.Collection, err error) {
 				require.NoError(t, err)
 				require.Len(t, c.Items, 1)
-				item := c.Items[0]
+				item := c.Items[0].(bruno.HttpItem)
 				require.Equal(t, &bruno.HttpInfo{
 					Name: "POST /products",
 					Type: "http",
@@ -527,7 +527,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 			test: func(t *testing.T, c bruno.Collection, err error) {
 				require.NoError(t, err)
 				require.Len(t, c.Items, 1)
-				item := c.Items[0]
+				item := c.Items[0].(bruno.HttpItem)
 				require.Equal(t, &bruno.HttpInfo{
 					Name: "POST /products",
 					Type: "http",
@@ -556,6 +556,106 @@ func TestConfig_ExportBruno(t *testing.T) {
 						},
 					},
 				}, item.Http)
+			},
+		},
+		{
+			name: "with path and GET operation using tag",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithTag("foo", "summary", "description"),
+				openapitest.WithPath("/foo",
+					openapitest.WithOperation(http.MethodGet, openapitest.WithOperationTags("foo")),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				folder := c.Items[0].(bruno.FolderItem)
+				require.Len(t, folder.Items, 1)
+				require.Equal(t, &bruno.FolderInfo{
+					Name:        "foo",
+					Description: "description",
+					Type:        "folder",
+				}, folder.Info)
+				item := folder.Items[0].(bruno.HttpItem)
+				require.Equal(t, &bruno.HttpInfo{
+					Name:        "GET /foo",
+					Description: "",
+					Type:        "http",
+				}, item.Info)
+			},
+		},
+		{
+			name: "with path and GET operation using tag and summary",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithTag("foo", "summary", ""),
+				openapitest.WithPath("/foo",
+					openapitest.WithOperation(http.MethodGet, openapitest.WithOperationTags("foo")),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				folder := c.Items[0].(bruno.FolderItem)
+				require.Len(t, folder.Items, 1)
+				require.Equal(t, &bruno.FolderInfo{
+					Name:        "foo",
+					Description: "summary",
+					Type:        "folder",
+				}, folder.Info)
+			},
+		},
+		{
+			name: "with path and GET operation using two tags one not used",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithTag("foo", "", "description"),
+				openapitest.WithTag("bar", "", "not used"),
+				openapitest.WithPath("/foo",
+					openapitest.WithOperation(http.MethodGet, openapitest.WithOperationTags("foo")),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				folder := c.Items[0].(bruno.FolderItem)
+				require.Len(t, folder.Items, 1)
+				require.Equal(t, &bruno.FolderInfo{
+					Name:        "foo",
+					Description: "description",
+					Type:        "folder",
+				}, folder.Info)
+			},
+		},
+		{
+			name: "with path and two GET operation using two tags, only first tag is used",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithTag("foo", "", "foo description"),
+				openapitest.WithTag("bar", "", "bar description"),
+				openapitest.WithPath("/foo",
+					openapitest.WithOperation(http.MethodGet, openapitest.WithOperationTags("foo", "bar")),
+				),
+				openapitest.WithPath("/bar",
+					openapitest.WithOperation(http.MethodGet, openapitest.WithOperationTags("bar", "foo")),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 2)
+				foo := c.Items[0].(bruno.FolderItem)
+				require.Len(t, foo.Items, 1)
+				require.Equal(t, &bruno.FolderInfo{
+					Name:        "foo",
+					Description: "foo description",
+					Type:        "folder",
+				}, foo.Info)
+				require.Equal(t, "GET /foo", foo.Items[0].(bruno.HttpItem).Info.Name)
+				bar := c.Items[1].(bruno.FolderItem)
+				require.Len(t, bar.Items, 1)
+				require.Equal(t, &bruno.FolderInfo{
+					Name:        "bar",
+					Description: "bar description",
+					Type:        "folder",
+				}, bar.Info)
+				require.Equal(t, "GET /bar", bar.Items[0].(bruno.HttpItem).Info.Name)
 			},
 		},
 	}

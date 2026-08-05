@@ -11,6 +11,7 @@ import (
 	"mokapi/media"
 	"mokapi/providers/openapi/schema"
 	"mokapi/schema/json/parser"
+	"mokapi/sortedmap"
 	"net/http"
 	"net/url"
 	"slices"
@@ -20,7 +21,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-type PathItems map[string]*PathRef
+var fixedMethods = map[string]bool{
+	"get": true, "post": true, "put": true, "delete": true,
+	"patch": true, "head": true, "options": true, "trace": true,
+	"query": true,
+}
+
+// type PathItems map[string]*PathRef
+type PathItems struct {
+	sortedmap.LinkedHashMap[string, *PathRef]
+}
 
 type PathRef struct {
 	dynamic.Reference[*PathRef]
@@ -73,10 +83,64 @@ type Path struct {
 	Path   string  `yaml:"-" json:"-"`
 	Status Status  `yaml:"-" json:"-"`
 	Errors []Error `yaml:"-" json:"-"`
+	// MethodOrder preserves the order methods appeared in the source document
+	MethodOrder []string `yaml:"-" json:"-"`
 }
 
 func (r *PathRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
+}
+
+func (p *Path) UnmarshalJSON(data []byte) error {
+	type alias Path
+	var a alias
+
+	if err := json.Unmarshal(data, &a); err != nil {
+		return err
+	}
+
+	dec := json.NewDecoder(bytes.NewReader(data))
+
+	_, _ = dec.Token() // opening '{'
+
+	var order []string
+	for dec.More() {
+		keyTok, _ := dec.Token()
+		key, _ := keyTok.(string)
+
+		if key == "additionalOperations" {
+			_, _ = dec.Token() // opening '{'
+			var keys []string
+			for dec.More() {
+				keyTok, _ := dec.Token()
+				method, _ := keyTok.(string)
+				keys = append(keys, strings.ToUpper(method))
+
+				var raw json.RawMessage
+				_ = dec.Decode(&raw)
+			}
+			_, _ = dec.Token() // closing '}'
+
+			order = append(order, keys...)
+			continue
+		}
+
+		key = strings.ToLower(key)
+		if fixedMethods[key] {
+			order = append(order, strings.ToUpper(key))
+		}
+
+		// must consume the value regardless of whether we used the key,
+		// otherwise the decoder's position desyncs for the next Token() call
+		var raw json.RawMessage
+		_ = dec.Decode(&raw)
+	}
+
+	_, _ = dec.Token() // closing '}'
+
+	a.MethodOrder = order
+	*p = Path(a)
+	return nil
 }
 
 func (r *PathRef) MarshalJSON() ([]byte, error) {
@@ -96,6 +160,37 @@ func (r *PathRef) MarshalYAML() (any, error) {
 
 func (r *PathRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.UnmarshalYaml(node, &r.Value)
+}
+
+func (p *Path) UnmarshalYAML(node *yaml.Node) error {
+	type alias Path
+	var a alias
+
+	if err := node.Decode(&a); err != nil {
+		return err
+	}
+
+	var order []string
+	for i := 0; i < len(node.Content); i += 2 {
+		key := strings.ToLower(node.Content[i].Value)
+
+		if fixedMethods[key] {
+			order = append(order, strings.ToUpper(key))
+			continue
+		}
+
+		if key == "additionaloperations" {
+			valueNode := node.Content[i+1]
+			for j := 0; j < len(valueNode.Content); j += 2 {
+				opKey := valueNode.Content[j].Value
+				order = append(order, strings.ToUpper(opKey)) // also record its position among all methods
+			}
+		}
+	}
+
+	a.MethodOrder = order
+	*p = Path(a)
+	return nil
 }
 
 func (p *Path) Operations() map[string]*Operation {
@@ -164,30 +259,31 @@ func (p *Path) Operation(method string) *Operation {
 	return nil
 }
 
-func (p PathItems) Resolve(token string) (interface{}, error) {
-	if v, ok := p["/"+token]; ok {
+func (p *PathItems) Resolve(token string) (interface{}, error) {
+	if v, ok := p.Get("/" + token); ok {
 		return v, nil
 	}
-	if v, ok := p[token]; ok {
+	if v, ok := p.Get(token); ok {
 		return v, nil
 	}
 	return nil, nil
 }
 
-func (p PathItems) Parse(config *dynamic.Config, reader dynamic.Reader) error {
+func (p *PathItems) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if p == nil {
 		return nil
 	}
 
-	for name, e := range p {
-		if e == nil {
+	for it := p.Iter(); it.Next(); {
+		pi := it.Value()
+		if pi == nil {
 			continue
 		}
-		if err := e.Parse(config, reader); err != nil {
-			return fmt.Errorf("parse path '%v' failed: %w", name, err)
+		if err := pi.Parse(config, reader); err != nil {
+			return fmt.Errorf("parse path '%v' failed: %w", it.Key(), err)
 		}
-		if e.Value != nil {
-			e.Value.Path = name
+		if pi.Value != nil {
+			pi.Value.Path = it.Key()
 		}
 	}
 	return nil
@@ -223,9 +319,9 @@ func (p *Path) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 
 	for method, op := range p.Operations() {
 		err := op.Parse(config, reader)
+		method = strings.ToUpper(method)
 		if err != nil {
 			op.Status = StatusInvalid
-			method = strings.ToUpper(method)
 			op.Errors = append(op.Errors, Error{Message: err.Error()})
 			log.
 				WithField("api", getName(config)).
@@ -235,32 +331,39 @@ func (p *Path) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 				Error(err)
 		}
 		op.Path = p
+		op.Method = method
 	}
 
-	for name, op := range p.AdditionalOperations {
+	for method, op := range p.AdditionalOperations {
+		method = strings.ToUpper(method)
 		if err := op.Parse(config, reader); err != nil {
 			op.Status = StatusInvalid
-			name = strings.ToUpper(name)
+
 			log.
 				WithField("api", getName(config)).
-				WithField("method", name).
+				WithField("method", method).
 				WithField("path", p.Path).
 				WithField("namespace", "http").
 				Error(err)
 		} else {
 			op.Path = p
+			op.Method = method
 		}
 	}
 
 	return nil
 }
 
-func (p PathItems) patch(patch PathItems) {
-	for path, v := range patch {
-		if r, ok := p[path]; ok && r != nil {
-			r.patch(v)
+func (p *PathItems) patch(patch *PathItems) {
+	if patch == nil {
+		return
+	}
+	for it := patch.Iter(); it.Next(); {
+		path := it.Key()
+		if r, ok := p.Get(path); ok && r != nil {
+			r.patch(it.Value())
 		} else {
-			p[path] = v
+			p.Set(path, it.Value())
 		}
 	}
 }
@@ -340,6 +443,16 @@ func (p *Path) patch(patch *Path) {
 	}
 
 	p.Parameters.Patch(patch.Parameters)
+
+	if len(p.MethodOrder) == 0 {
+		p.MethodOrder = patch.MethodOrder
+	} else {
+		for _, method := range patch.MethodOrder {
+			if !slices.Contains(p.MethodOrder, method) {
+				p.MethodOrder = append(p.MethodOrder, method)
+			}
+		}
+	}
 }
 
 func (p *Path) RunWebhook(urlString string, args common.WebhookArgs) (*common.WebhookResponse, error) {

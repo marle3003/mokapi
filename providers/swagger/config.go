@@ -10,9 +10,15 @@ import (
 	"mokapi/sortedmap"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
+
+var fixedMethods = map[string]bool{
+	"get": true, "post": true, "put": true, "delete": true,
+	"patch": true, "head": true, "options": true, "trace": true,
+}
 
 type Config struct {
 	Swagger             string                     `yaml:"swagger" json:"swagger"`
@@ -22,7 +28,7 @@ type Config struct {
 	Produces            []string                   `yaml:"produces,omitempty" json:"produces,omitempty"`
 	Host                string                     `yaml:"host,omitempty" json:"host,omitempty"`
 	BasePath            string                     `yaml:"basePath,omitempty" json:"basePath,omitempty"`
-	Paths               PathItems                  `yaml:"paths,omitempty" json:"paths,omitempty"`
+	Paths               *PathItems                 `yaml:"paths,omitempty" json:"paths,omitempty"`
 	Definitions         map[string]*schema.Schema  `yaml:"definitions,omitempty" json:"definitions,omitempty"`
 	Parameters          map[string]*Parameter      `yaml:"parameters,omitempty" json:"parameters,omitempty"`
 	Responses           map[string]*Response       `yaml:"responses,omitempty" json:"responses,omitempty"`
@@ -32,18 +38,21 @@ type Config struct {
 	Tags                []Tag                      `yaml:"tags,omitempty" json:"tags,omitempty"`
 }
 
-type PathItems map[string]*PathItem
+type PathItems struct {
+	sortedmap.LinkedHashMap[string, *PathItem]
+}
 
 type PathItem struct {
-	Ref        string     `yaml:"$ref,omitempty" json:"$ref,omitempty"`
-	Delete     *Operation `yaml:"delete,omitempty" json:"delete,omitempty"`
-	Get        *Operation `yaml:"get,omitempty" json:"get,omitempty"`
-	Head       *Operation `yaml:"head,omitempty" json:"head,omitempty"`
-	Options    *Operation `yaml:"options,omitempty" json:"options,omitempty"`
-	Patch      *Operation `yaml:"patch,omitempty" json:"patch,omitempty"`
-	Post       *Operation `yaml:"post,omitempty" json:"post,omitempty"`
-	Put        *Operation `yaml:"put,omitempty" json:"put,omitempty"`
-	Parameters Parameters `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	Ref         string     `yaml:"$ref,omitempty" json:"$ref,omitempty"`
+	Delete      *Operation `yaml:"delete,omitempty" json:"delete,omitempty"`
+	Get         *Operation `yaml:"get,omitempty" json:"get,omitempty"`
+	Head        *Operation `yaml:"head,omitempty" json:"head,omitempty"`
+	Options     *Operation `yaml:"options,omitempty" json:"options,omitempty"`
+	Patch       *Operation `yaml:"patch,omitempty" json:"patch,omitempty"`
+	Post        *Operation `yaml:"post,omitempty" json:"post,omitempty"`
+	Put         *Operation `yaml:"put,omitempty" json:"put,omitempty"`
+	Parameters  Parameters `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	MethodOrder []string   `yaml:"-" json:"-"`
 }
 
 type Operation struct {
@@ -112,6 +121,89 @@ type Tag struct {
 	ExternalDocs *openapi.ExternalDocs `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 }
 
+func (p *PathItem) UnmarshalJSON(data []byte) error {
+	type alias PathItem
+	var a alias
+
+	if err := json.Unmarshal(data, &a); err != nil {
+		return err
+	}
+
+	dec := json.NewDecoder(bytes.NewReader(data))
+
+	_, _ = dec.Token() // opening '{'
+
+	var order []string
+	for dec.More() {
+		keyTok, _ := dec.Token()
+		key, _ := keyTok.(string)
+
+		if key == "additionalOperations" {
+			_, _ = dec.Token() // opening '{'
+			var keys []string
+			for dec.More() {
+				keyTok, _ := dec.Token()
+				method, _ := keyTok.(string)
+				keys = append(keys, strings.ToUpper(method))
+
+				var raw json.RawMessage
+				_ = dec.Decode(&raw)
+			}
+			_, _ = dec.Token() // closing '}'
+
+			order = append(order, keys...)
+			continue
+		}
+
+		key = strings.ToLower(key)
+		if fixedMethods[key] {
+			order = append(order, strings.ToUpper(key))
+		}
+
+		// must consume the value regardless of whether we used the key,
+		// otherwise the decoder's position desyncs for the next Token() call
+		var raw json.RawMessage
+		_ = dec.Decode(&raw)
+	}
+
+	_, _ = dec.Token() // closing '}'
+
+	a.MethodOrder = order
+	*p = PathItem(a)
+	return nil
+}
+
+func (p *PathItem) UnmarshalYAML(node *yaml.Node) error {
+	type alias PathItem
+	var a alias
+
+	if err := node.Decode(&a); err != nil {
+		return err
+	}
+
+	var order []string
+	for i := 0; i < len(node.Content); i += 2 {
+		key := strings.ToLower(node.Content[i].Value)
+
+		if fixedMethods[key] {
+			order = append(order, strings.ToUpper(key))
+			continue
+		}
+
+		if key == "additionaloperations" {
+			valueNode := node.Content[i+1]
+			for j := 0; j < len(valueNode.Content); j += 2 {
+				opKey := valueNode.Content[j].Value
+				order = append(order, strings.ToUpper(opKey)) // also record its position among all methods
+			}
+		}
+	}
+
+	a.MethodOrder = order
+	*p = PathItem(a)
+	return nil
+}
+
 func (p *PathItem) Operations() map[string]*Operation {
 	operations := make(map[string]*Operation, 7)
 	if p.Get != nil {
@@ -142,7 +234,7 @@ func (p *PathItem) Operations() map[string]*Operation {
 }
 
 func (p PathItems) Resolve(token string) (interface{}, error) {
-	if v, ok := p["/"+token]; ok {
+	if v, ok := p.Get("/" + token); ok {
 		return v, nil
 	}
 	return nil, nil

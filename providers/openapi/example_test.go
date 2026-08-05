@@ -208,7 +208,7 @@ func TestExample_Parse(t *testing.T) {
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.Equal(t, logrus.Fields{"method": "GET", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse response '200' failed: parse content 'application/json' failed: parse example 'foo' failed: resolve reference '/foo.yml' failed: TEST ERROR", log.LastEntry().Message)
-				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation(http.MethodGet).Status)
+				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodGet).Status)
 				require.NoError(t, err)
 			},
 		},
@@ -236,7 +236,7 @@ func TestExample_Parse(t *testing.T) {
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
 				require.True(t, calledReader, "reader not called")
-				content := config.Paths["/foo"].Value.Get.Responses.GetResponse(http.StatusOK).Content["application/json"]
+				content := config.Paths.Lookup("/foo").Value.Get.Responses.GetResponse(http.StatusOK).Content["application/json"]
 				require.Equal(t, "foobar", content.Examples["foo"].Value.Value)
 			},
 		},
@@ -285,7 +285,7 @@ func TestConfig_Patch_Example(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				content := res.Content["text/plain"]
 				ex := content.Examples["foo"]
 				require.Equal(t, "foo summary", ex.Value.Summary)
@@ -322,7 +322,7 @@ func TestConfig_Patch_Example(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				content := res.Content["text/plain"]
 				ex := content.Examples["foo"]
 				require.Equal(t, "foo summary", ex.Value.Summary)
@@ -353,7 +353,7 @@ func TestConfig_Patch_Example(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				content := res.Content["text/plain"]
 				ex := content.Examples["foo"]
 				require.Equal(t, "foo summary", ex.Value.Summary)
@@ -384,7 +384,7 @@ func TestConfig_Patch_Example(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				content := res.Content["text/plain"]
 				ex := content.Examples["foo"]
 				require.Equal(t, "foo summary", ex.Value.Summary)
@@ -415,7 +415,7 @@ func TestConfig_Patch_Example(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				content := res.Content["text/plain"]
 				ex := content.Examples["foo"]
 				require.Equal(t, "foo summary", ex.Value.Summary)

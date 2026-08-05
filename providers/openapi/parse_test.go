@@ -35,7 +35,7 @@ func Test_Parse(t *testing.T) {
 			),
 			test: func(t *testing.T, c *openapi.Config, err error) {
 				require.NoError(t, err)
-				response := c.Paths["/foo"].Value.Get.Responses.GetResponse(200).Content["application/json"].Schema
+				response := c.Paths.Lookup("/foo").Value.Get.Responses.GetResponse(200).Content["application/json"].Schema
 				require.NotNil(t, response)
 
 				foo := c.Components.Schemas.Get("Foo")
@@ -87,7 +87,7 @@ func Test_ParseAndPatch(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, c *openapi.Config) {
-				response := c.Paths["/foo"].Value.Get.Responses.GetResponse(200).Content["application/json"].Schema
+				response := c.Paths.Lookup("/foo").Value.Get.Responses.GetResponse(200).Content["application/json"].Schema
 				require.NotNil(t, response)
 				require.True(t, response.Items.Nullable)
 			},
