@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"math/rand"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
 	"reflect"
@@ -73,9 +74,26 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 		minItems = *s.MinContains
 	}
 
+	// Determine enum size for items, if any
+	enumSize := -1
+	if s.Items != nil && len(s.Items.Enum) > 0 {
+		enumSize = len(s.Items.Enum)
+	}
+
+	maxItemsWasSet := s.MaxItems != nil
+
 	maxItems := minItems + 5
 	if s.MaxItems != nil {
 		maxItems = *s.MaxItems
+	}
+
+	// If maxItems wasn't explicitly set, don't let the default outrun the enum
+	if !maxItemsWasSet && enumSize >= 0 && enumSize < maxItems {
+		if enumSize > minItems {
+			maxItems = enumSize
+		} else {
+			maxItems = minItems
+		}
 	}
 
 	if maxItems < minItems {
@@ -165,9 +183,12 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 
 				if s.UniqueItems != nil && *s.UniqueItems {
 					v, err = nextUnique(arr, nextItem.fake)
+				} else if enumSize > 0 {
+					v, err = nextWithEnumBias(arr, enumSize, r.g.rand, nextItem.fake)
 				} else {
 					v, err = nextItem.fake()
 				}
+
 				if err != nil {
 					return err
 				}
@@ -205,6 +226,39 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 	} else {
 		return prefixItems, nil
 	}
+}
+
+// nextWithEnumBias softly discourages duplicate items when the item schema
+// is an enum, without enforcing uniqueItems semantics. pUnique is derived
+// from the fraction of the enum's distinct values already used, eased by
+// an exponent so small enums don't collapse to near-random behavior after
+// just one or two picks. Duplicates remain legal; this only shapes how
+// often we bother trying to avoid them.
+const enumBiasExponent = 3.0
+
+func nextWithEnumBias(arr []any, enumSize int, rnd *rand.Rand, fake func() (any, error)) (any, error) {
+	distinctUsed := countDistinct(arr)
+	x := float64(distinctUsed) / float64(enumSize)
+	pUnique := 1 - math.Pow(x, enumBiasExponent)
+	if pUnique < 0 {
+		pUnique = 0
+	}
+
+	if rnd.Float64() < pUnique {
+		// A few short retries to land on a non-duplicate; fall back to a
+		// plain draw rather than erroring, since duplicates are legal here.
+		for i := 0; i < 5; i++ {
+			v, err := fake()
+			if err != nil {
+				return nil, err
+			}
+			if !contains(arr, v) {
+				return v, nil
+			}
+		}
+	}
+
+	return fake()
 }
 
 func nextUnique(arr []interface{}, fakeItem func() (interface{}, error)) (interface{}, error) {
@@ -270,4 +324,12 @@ func validateContainsNum(min, max int) error {
 		return fmt.Errorf("invalid maxContains '%v': must be a non-negative number", min)
 	}
 	return nil
+}
+
+func countDistinct(arr []any) int {
+	seen := make(map[string]struct{}, len(arr))
+	for _, v := range arr {
+		seen[fmt.Sprintf("%v", v)] = struct{}{}
+	}
+	return len(seen)
 }
