@@ -106,6 +106,12 @@ func WithExplode(explode bool) ParamOptions {
 	}
 }
 
+func WithStyle(style string) ParamOptions {
+	return func(p *openapi.Parameter) {
+		p.Style = style
+	}
+}
+
 func WithCookieParam(name string, required bool, opts ...ParamOptions) OperationOptions {
 	return func(o *openapi.Operation) {
 		o.Parameters = append(o.Parameters, &openapi.ParameterRef{

@@ -62,7 +62,7 @@ func TestParseQuery(t *testing.T) {
 					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("integer"),
 					Style:   "form",
-					Explode: explode(false),
+					Explode: new(false),
 				}},
 			},
 			request: func() *http.Request {
@@ -101,7 +101,7 @@ func TestParseQuery(t *testing.T) {
 					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("integer", schematest.WithDefault(10)),
 					Style:   "form",
-					Explode: explode(false),
+					Explode: new(false),
 				}},
 			},
 			request: func() *http.Request {
@@ -122,7 +122,7 @@ func TestParseQuery(t *testing.T) {
 					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "form",
-					Explode: explode(true),
+					Explode: new(true),
 				}},
 			},
 			request: func() *http.Request {
@@ -142,7 +142,7 @@ func TestParseQuery(t *testing.T) {
 					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "form",
-					Explode: explode(false),
+					Explode: new(false),
 				}},
 			},
 			request: func() *http.Request {
@@ -161,7 +161,7 @@ func TestParseQuery(t *testing.T) {
 					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "spaceDelimited",
-					Explode: explode(true),
+					Explode: new(true),
 				}},
 			},
 			request: func() *http.Request {
@@ -180,7 +180,7 @@ func TestParseQuery(t *testing.T) {
 					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "spaceDelimited",
-					Explode: explode(false),
+					Explode: new(false),
 				}},
 			},
 			request: func() *http.Request {
@@ -199,7 +199,7 @@ func TestParseQuery(t *testing.T) {
 					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "pipeDelimited",
-					Explode: explode(true),
+					Explode: new(true),
 				}},
 			},
 			request: func() *http.Request {
@@ -218,7 +218,7 @@ func TestParseQuery(t *testing.T) {
 					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("array", schematest.WithItems("integer")),
 					Style:   "pipeDelimited",
-					Explode: explode(false),
+					Explode: new(false),
 				}},
 			},
 			request: func() *http.Request {
@@ -237,7 +237,7 @@ func TestParseQuery(t *testing.T) {
 					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("array", schematest.WithDefault([]any{1, 2, 3})),
 					Style:   "pipeDelimited",
-					Explode: explode(false),
+					Explode: new(false),
 				}},
 			},
 			request: func() *http.Request {
@@ -261,7 +261,7 @@ func TestParseQuery(t *testing.T) {
 						schematest.WithProperty("foo", schematest.New("string")),
 					),
 					Style:   "form",
-					Explode: explode(true),
+					Explode: new(true),
 				}},
 			},
 			request: func() *http.Request {
@@ -285,7 +285,7 @@ func TestParseQuery(t *testing.T) {
 					),
 					Required: true,
 					Style:    "form",
-					Explode:  explode(true),
+					Explode:  new(true),
 				}},
 			},
 			request: func() *http.Request {
@@ -307,7 +307,7 @@ func TestParseQuery(t *testing.T) {
 					),
 					Required: true,
 					Style:    "form",
-					Explode:  explode(false),
+					Explode:  new(false),
 				}},
 			},
 			request: func() *http.Request {
@@ -327,7 +327,7 @@ func TestParseQuery(t *testing.T) {
 						schematest.WithProperty("role", schematest.New("string")),
 					),
 					Style:   "form",
-					Explode: explode(true),
+					Explode: new(true),
 				}},
 			},
 			request: func() *http.Request {
@@ -349,7 +349,7 @@ func TestParseQuery(t *testing.T) {
 						schematest.WithFreeForm(false),
 					),
 					Style:   "form",
-					Explode: explode(true),
+					Explode: new(true),
 				}},
 			},
 			request: func() *http.Request {
@@ -367,7 +367,7 @@ func TestParseQuery(t *testing.T) {
 					Type:    openapi.ParameterQuery,
 					Schema:  schematest.New("object", schematest.WithAdditionalProperties(schematest.New("string"))),
 					Style:   "form",
-					Explode: explode(true),
+					Explode: new(true),
 				}},
 			},
 			request: func() *http.Request {
@@ -389,7 +389,7 @@ func TestParseQuery(t *testing.T) {
 						schematest.WithProperty("firstName", schematest.New("string")),
 					),
 					Style:   "form",
-					Explode: explode(false),
+					Explode: new(false),
 				}},
 			},
 			request: func() *http.Request {
@@ -411,7 +411,7 @@ func TestParseQuery(t *testing.T) {
 						schematest.WithProperty("firstName", schematest.New("string")),
 					),
 					Style:   "deepObject",
-					Explode: explode(true),
+					Explode: new(true),
 				}},
 			},
 			request: func() *http.Request {
@@ -434,7 +434,7 @@ func TestParseQuery(t *testing.T) {
 						schematest.WithFreeForm(false),
 					),
 					Style:   "deepObject",
-					Explode: explode(true),
+					Explode: new(true),
 				}},
 			},
 			request: func() *http.Request {
@@ -455,7 +455,7 @@ func TestParseQuery(t *testing.T) {
 						schematest.WithProperty("age", schematest.New("integer")),
 					),
 					Style:   "deepObject",
-					Explode: explode(true),
+					Explode: new(true),
 				}},
 			},
 			request: func() *http.Request {
@@ -477,7 +477,7 @@ func TestParseQuery(t *testing.T) {
 					),
 					Required: true,
 					Style:    "deepObject",
-					Explode:  explode(true),
+					Explode:  new(true),
 				}},
 			},
 			request: func() *http.Request {

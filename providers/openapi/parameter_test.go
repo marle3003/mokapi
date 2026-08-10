@@ -478,7 +478,7 @@ func TestParameters_Patch(t *testing.T) {
 			name: "patch explode",
 			configs: []openapi.Parameters{
 				{&openapi.ParameterRef{Value: &openapi.Parameter{}}},
-				{&openapi.ParameterRef{Value: &openapi.Parameter{Explode: explode(true)}}},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Explode: new(true)}}},
 			},
 			test: func(t *testing.T, result openapi.Parameters) {
 				require.Len(t, result, 1)
@@ -499,8 +499,4 @@ func TestParameters_Patch(t *testing.T) {
 			tc.test(t, p)
 		})
 	}
-}
-
-func explode(b bool) *bool {
-	return &b
 }
