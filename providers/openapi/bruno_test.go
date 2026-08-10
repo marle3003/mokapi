@@ -426,7 +426,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 				}, item.Info)
 				require.Equal(t, &bruno.HttpDetail{
 					Method: http.MethodGet,
-					Url:    "{{baseUrl}}/products?name=",
+					Url:    "{{baseUrl}}/products",
 					Params: []bruno.HttpRequestParam{
 						{
 							Name:     "name",

@@ -336,65 +336,8 @@ func buildItems(operations []*Operation, seq int) []any {
 			reqPath[i] = strings.Trim(seg, "{}")
 		}
 
-		newRandom := func(s *schema.Schema, additionalPath string) string {
-			req := &generator.Request{
-				Path:   reqPath,
-				Schema: schema.ConvertToJsonSchema(s),
-			}
-			if additionalPath != "" {
-				req.Path = append(req.Path, additionalPath)
-			}
-
-			v, err := generator.New(req)
-			if err != nil {
-				log.Debugf("failed to create random data for schema at %s %s: %v", method, path, err)
-				return ""
-			}
-			return fmt.Sprintf("%v", v)
-		}
-
 		params := append(pi.Parameters, o.Parameters...)
-		addedQuery := false
-		for _, ref := range params {
-			if ref.Value == nil {
-				continue
-			}
-			p := ref.Value
-			switch p.Type {
-			case ParameterHeader:
-				item.Http.Headers = append(item.Http.Headers, bruno.HttpRequestHeader{
-					Name:        p.Name,
-					Value:       newRandom(p.Schema, p.Name),
-					Description: p.Description,
-					Disabled:    !p.Required,
-				})
-			case ParameterPath:
-				// bruno does only encode query parameters but not path parameter
-				v := url.PathEscape(newRandom(p.Schema, ""))
-				item.Http.Params = append(item.Http.Params, bruno.HttpRequestParam{
-					Name:        p.Name,
-					Value:       v,
-					Description: p.Description,
-					Type:        string(ParameterPath),
-				})
-				item.Http.Url = strings.ReplaceAll(item.Http.Url, fmt.Sprintf("{%s}", p.Name), fmt.Sprintf(":%s", p.Name))
-			case ParameterQuery:
-				item.Http.Params = append(item.Http.Params, bruno.HttpRequestParam{
-					Name:        p.Name,
-					Value:       newRandom(p.Schema, p.Name),
-					Description: p.Description,
-					Type:        string(ParameterQuery),
-					Disabled:    !p.Required,
-				})
-				if !addedQuery {
-					item.Http.Url += "?"
-					addedQuery = true
-				}
-				item.Http.Url += fmt.Sprintf("%s=", p.Name)
-			default:
-				log.Debugf("unsupported type %s for parameter %s", p.Type, p.Name)
-			}
-		}
+		buildParams(item.Http, params, reqPath)
 
 		if o.RequestBody != nil && o.RequestBody.Value != nil {
 			rb := o.RequestBody.Value
