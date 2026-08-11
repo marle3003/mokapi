@@ -78,18 +78,10 @@ func buildPathParam(p *Parameter, newRandom func(s *schema.Schema, name string) 
 	}
 	r := newRandom(p.Schema, "")
 
-	var s string
-	switch val := r.(type) {
-	case []any:
-		if p.IsExplode() {
+	// // bruno does only encode query parameters but not path parameter
+	s := serializePathParam(p.Name, p.Style, p.IsExplode(), r, p.Schema)
 
-		}
-	default:
-		s = fmt.Sprintf("%s", val)
-	}
-
-	// bruno does only encode query parameters but not path parameter
-	param.Value = url.PathEscape(s)
+	param.Value = s
 	return param
 }
 
@@ -216,4 +208,134 @@ func buildQueryParam(p *Parameter, newRandom func(s *schema.Schema, name string)
 	}
 
 	return result
+}
+
+func serializePathParam(name, style string, explode bool, value any, s *schema.Schema) string {
+	switch style {
+	case "matrix":
+		return serializeMatrixPathParam(name, explode, value, s)
+	case "label":
+		return serializeLabelPathParam(explode, value, s)
+	default:
+		return serializeSimplePathParam(explode, value, s)
+	}
+}
+
+func serializeMatrixPathParam(name string, explode bool, value any, s *schema.Schema) string {
+	switch v := value.(type) {
+	case []any:
+		if explode {
+			var sb strings.Builder
+			for _, item := range v {
+				sb.WriteString(fmt.Sprintf(";%s=%v",
+					url.PathEscape(name), url.PathEscape(fmt.Sprint(item))),
+				)
+			}
+			return sb.String()
+		}
+		return ";" + url.PathEscape(name) + "=" + joinPathArray(v, ",")
+	case map[string]any:
+		if explode {
+			var sb strings.Builder
+			for _, k := range orderedKeys(v, s) {
+				val := v[k]
+				sb.WriteString(fmt.Sprintf(";%s=%v", url.PathEscape(k), url.PathEscape(fmt.Sprint(val))))
+			}
+			return sb.String()
+		}
+		return ";" + name + "=" + joinPathMap(v, ",", s)
+	default:
+		return fmt.Sprintf(";%s=%v", url.PathEscape(name), url.PathEscape(fmt.Sprint(v)))
+	}
+}
+
+func serializeLabelPathParam(explode bool, value any, s *schema.Schema) string {
+	switch v := value.(type) {
+	case []any:
+		if explode {
+			return "." + joinPathArray(v, ".")
+		}
+		return "." + joinPathArray(v, ",")
+	case map[string]any:
+		if explode {
+			var sb strings.Builder
+			for _, k := range orderedKeys(v, s) {
+				val := v[k]
+				sb.WriteString(fmt.Sprintf(".%s=%v", url.PathEscape(k), url.PathEscape(fmt.Sprint(val))))
+			}
+			return sb.String()
+		}
+		return "." + joinPathMap(v, ",", s)
+	default:
+		return fmt.Sprintf(".%v", url.PathEscape(fmt.Sprint(v)))
+	}
+}
+
+func serializeSimplePathParam(explode bool, value any, s *schema.Schema) string {
+	switch v := value.(type) {
+	case []any:
+		return joinPathArray(v, ",") // explode has no effect on simple arrays
+	case map[string]any:
+		if explode {
+			var sb strings.Builder
+			for _, k := range orderedKeys(v, s) {
+				val := v[k]
+				if sb.Len() > 0 {
+					sb.WriteString(",")
+				}
+				sb.WriteString(fmt.Sprintf("%s=%v", url.PathEscape(k), url.PathEscape(fmt.Sprint(val))))
+			}
+			return sb.String()
+		}
+		return joinPathMap(v, ",", s)
+	default:
+		return url.PathEscape(fmt.Sprint(v))
+	}
+}
+
+func joinPathArray(values []any, sep string) string {
+	var sb strings.Builder
+	for _, value := range values {
+		if sb.Len() > 0 {
+			sb.WriteString(sep)
+		}
+		sb.WriteString(url.PathEscape(fmt.Sprint(value)))
+	}
+	return sb.String()
+}
+
+func joinPathMap(values map[string]any, sep string, s *schema.Schema) string {
+	var sb strings.Builder
+	for _, key := range orderedKeys(values, s) {
+		value := values[key]
+		if sb.Len() > 0 {
+			sb.WriteString(sep)
+		}
+		sb.WriteString(url.PathEscape(key))
+		sb.WriteString(sep)
+		sb.WriteString(url.PathEscape(fmt.Sprint(value)))
+	}
+	return sb.String()
+}
+
+func orderedKeys(m map[string]any, s *schema.Schema) []string {
+	var keys []string
+	if s != nil && s.Properties != nil {
+		for it := s.Properties.Iter(); it.Next(); {
+			k := it.Key()
+			if _, ok := m[k]; ok {
+				keys = append(keys, k)
+			}
+		}
+
+		for k := range m {
+			if _, ok := s.Properties.LinkedHashMap.Get(k); !ok {
+				keys = append(keys, k)
+			}
+		}
+	} else {
+		keys = slices.Collect(maps.Keys(m))
+	}
+
+	return keys
 }

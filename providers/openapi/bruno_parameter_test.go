@@ -27,7 +27,6 @@ func TestConfig_ExportBruno_Parameters(t *testing.T) {
 				openapitest.WithPath("/foo",
 					openapitest.WithOperation(
 						http.MethodGet,
-						openapitest.WithOperationTags("foo", "bar"),
 						openapitest.WithQueryParam(
 							"status",
 							false,
@@ -65,7 +64,6 @@ func TestConfig_ExportBruno_Parameters(t *testing.T) {
 				openapitest.WithPath("/foo",
 					openapitest.WithOperation(
 						http.MethodGet,
-						openapitest.WithOperationTags("foo", "bar"),
 						openapitest.WithQueryParam(
 							"status",
 							true,
@@ -103,7 +101,6 @@ func TestConfig_ExportBruno_Parameters(t *testing.T) {
 				openapitest.WithPath("/foo",
 					openapitest.WithOperation(
 						http.MethodGet,
-						openapitest.WithOperationTags("foo", "bar"),
 						openapitest.WithQueryParam(
 							"status",
 							false,
@@ -136,7 +133,6 @@ func TestConfig_ExportBruno_Parameters(t *testing.T) {
 				openapitest.WithPath("/foo",
 					openapitest.WithOperation(
 						http.MethodGet,
-						openapitest.WithOperationTags("foo", "bar"),
 						openapitest.WithQueryParam(
 							"status",
 							false,
@@ -168,7 +164,6 @@ func TestConfig_ExportBruno_Parameters(t *testing.T) {
 				openapitest.WithPath("/foo",
 					openapitest.WithOperation(
 						http.MethodGet,
-						openapitest.WithOperationTags("foo", "bar"),
 						openapitest.WithQueryParam(
 							"status",
 							false,
@@ -200,7 +195,6 @@ func TestConfig_ExportBruno_Parameters(t *testing.T) {
 				openapitest.WithPath("/foo",
 					openapitest.WithOperation(
 						http.MethodGet,
-						openapitest.WithOperationTags("foo", "bar"),
 						openapitest.WithQueryParam(
 							"status",
 							false,
@@ -232,7 +226,6 @@ func TestConfig_ExportBruno_Parameters(t *testing.T) {
 				openapitest.WithPath("/foo",
 					openapitest.WithOperation(
 						http.MethodGet,
-						openapitest.WithOperationTags("foo", "bar"),
 						openapitest.WithQueryParam(
 							"status",
 							true,
@@ -278,7 +271,6 @@ func TestConfig_ExportBruno_Parameters(t *testing.T) {
 				openapitest.WithPath("/foo",
 					openapitest.WithOperation(
 						http.MethodGet,
-						openapitest.WithOperationTags("foo", "bar"),
 						openapitest.WithQueryParam(
 							"status",
 							false,
@@ -318,7 +310,6 @@ func TestConfig_ExportBruno_Parameters(t *testing.T) {
 				openapitest.WithPath("/foo",
 					openapitest.WithOperation(
 						http.MethodGet,
-						openapitest.WithOperationTags("foo", "bar"),
 						openapitest.WithQueryParam(
 							"status",
 							true,
@@ -356,6 +347,588 @@ func TestConfig_ExportBruno_Parameters(t *testing.T) {
 					Description: "prop description",
 					Disabled:    true,
 				}, item.Http.Params[1])
+			},
+		},
+		{
+			name: "simple path parameter string value",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/{color}",
+					openapitest.WithOperation(
+						http.MethodGet,
+						openapitest.WithOperationParam(
+							"color",
+							true,
+							openapitest.WithStyle("simple"),
+							openapitest.WithParamSchema(
+								schematest.New(
+									"string",
+									schematest.WithEnumValues("blue", "black", "brown"),
+								),
+							),
+						),
+					),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0].(bruno.HttpItem)
+				require.Equal(t, "{{baseUrl}}/:color", item.Http.Url)
+				require.Len(t, item.Http.Params, 1)
+				require.Equal(t, bruno.HttpRequestParam{
+					Name:     "color",
+					Value:    "brown",
+					Type:     "path",
+					Disabled: false,
+				}, item.Http.Params[0])
+			},
+		},
+		{
+			name: "simple path parameter array value",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/{color}",
+					openapitest.WithOperation(
+						http.MethodGet,
+						openapitest.WithOperationParam(
+							"color",
+							true,
+							openapitest.WithStyle("simple"),
+							openapitest.WithParamSchema(
+								schematest.New("array",
+									schematest.WithItems(
+										"string",
+										schematest.WithEnumValues("blue", "black", "brown"),
+									),
+								),
+							),
+						),
+					),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0].(bruno.HttpItem)
+				require.Equal(t, "{{baseUrl}}/:color", item.Http.Url)
+				require.Len(t, item.Http.Params, 1)
+				require.Equal(t, bruno.HttpRequestParam{
+					Name:     "color",
+					Value:    "brown,blue",
+					Type:     "path",
+					Disabled: false,
+				}, item.Http.Params[0])
+			},
+		},
+		{
+			name: "simple exploded path parameter array value",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/{color}",
+					openapitest.WithOperation(
+						http.MethodGet,
+						openapitest.WithOperationParam(
+							"color",
+							true,
+							openapitest.WithStyle("simple"),
+							openapitest.WithExplode(true),
+							openapitest.WithParamSchema(
+								schematest.New("array",
+									schematest.WithItems(
+										"string",
+										schematest.WithEnumValues("blue", "black", "brown"),
+									),
+								),
+							),
+						),
+					),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0].(bruno.HttpItem)
+				require.Equal(t, "{{baseUrl}}/:color", item.Http.Url)
+				require.Len(t, item.Http.Params, 1)
+				require.Equal(t, bruno.HttpRequestParam{
+					Name:     "color",
+					Value:    "brown,blue",
+					Type:     "path",
+					Disabled: false,
+				}, item.Http.Params[0])
+			},
+		},
+		{
+			name: "simple path parameter object value",
+			cfg: func() *openapi.Config {
+				color := schematest.New(
+					"integer",
+					schematest.WithMinimum(0),
+					schematest.WithMaximum(255),
+				)
+				return openapitest.NewConfig("3.2.0",
+					openapitest.WithPath("/{color}",
+						openapitest.WithOperation(
+							http.MethodGet,
+							openapitest.WithOperationParam(
+								"color",
+								true,
+								openapitest.WithStyle("simple"),
+								openapitest.WithParamSchema(
+									schematest.New("object",
+										schematest.WithProperty("R", color),
+										schematest.WithProperty("G", color),
+										schematest.WithProperty("B", color),
+										schematest.WithRequired("R", "G", "B"),
+									),
+								),
+							),
+						),
+					),
+				)
+			}(),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0].(bruno.HttpItem)
+				require.Equal(t, "{{baseUrl}}/:color", item.Http.Url)
+				require.Len(t, item.Http.Params, 1)
+				require.Equal(t, bruno.HttpRequestParam{
+					Name:     "color",
+					Value:    "R,160,G,100,B,83",
+					Type:     "path",
+					Disabled: false,
+				}, item.Http.Params[0])
+			},
+		},
+		{
+			name: "simple exploded path parameter array value",
+			cfg: func() *openapi.Config {
+				color := schematest.New(
+					"integer",
+					schematest.WithMinimum(0),
+					schematest.WithMaximum(255),
+				)
+				return openapitest.NewConfig("3.2.0",
+					openapitest.WithPath("/{color}",
+						openapitest.WithOperation(
+							http.MethodGet,
+							openapitest.WithOperationParam(
+								"color",
+								true,
+								openapitest.WithStyle("simple"),
+								openapitest.WithExplode(true),
+								openapitest.WithParamSchema(
+									schematest.New("object",
+										schematest.WithProperty("R", color),
+										schematest.WithProperty("G", color),
+										schematest.WithProperty("B", color),
+										schematest.WithRequired("R", "G", "B"),
+									),
+								),
+							),
+						),
+					),
+				)
+			}(),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0].(bruno.HttpItem)
+				require.Equal(t, "{{baseUrl}}/:color", item.Http.Url)
+				require.Len(t, item.Http.Params, 1)
+				require.Equal(t, bruno.HttpRequestParam{
+					Name:     "color",
+					Value:    "R=160,G=100,B=83",
+					Type:     "path",
+					Disabled: false,
+				}, item.Http.Params[0])
+			},
+		},
+		{
+			name: "matrix path parameter string value",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/{color}",
+					openapitest.WithOperation(
+						http.MethodGet,
+						openapitest.WithOperationParam(
+							"color",
+							true,
+							openapitest.WithStyle("matrix"),
+							openapitest.WithParamSchema(
+								schematest.New(
+									"string",
+									schematest.WithEnumValues("blue", "black", "brown"),
+								),
+							),
+						),
+					),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0].(bruno.HttpItem)
+				require.Equal(t, "{{baseUrl}}/:color", item.Http.Url)
+				require.Len(t, item.Http.Params, 1)
+				require.Equal(t, bruno.HttpRequestParam{
+					Name:     "color",
+					Value:    ";color=brown",
+					Type:     "path",
+					Disabled: false,
+				}, item.Http.Params[0])
+			},
+		},
+		{
+			name: "matrix path parameter array value",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/{color}",
+					openapitest.WithOperation(
+						http.MethodGet,
+						openapitest.WithOperationParam(
+							"color",
+							true,
+							openapitest.WithStyle("matrix"),
+							openapitest.WithParamSchema(
+								schematest.New("array",
+									schematest.WithItems(
+										"string",
+										schematest.WithEnumValues("blue", "black", "brown"),
+									),
+								),
+							),
+						),
+					),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0].(bruno.HttpItem)
+				require.Equal(t, "{{baseUrl}}/:color", item.Http.Url)
+				require.Len(t, item.Http.Params, 1)
+				require.Equal(t, bruno.HttpRequestParam{
+					Name:     "color",
+					Value:    ";color=brown,blue",
+					Type:     "path",
+					Disabled: false,
+				}, item.Http.Params[0])
+			},
+		},
+		{
+			name: "matrix exploded path parameter array value",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/{color}",
+					openapitest.WithOperation(
+						http.MethodGet,
+						openapitest.WithOperationParam(
+							"color",
+							true,
+							openapitest.WithStyle("matrix"),
+							openapitest.WithExplode(true),
+							openapitest.WithParamSchema(
+								schematest.New("array",
+									schematest.WithItems(
+										"string",
+										schematest.WithEnumValues("blue", "black", "brown"),
+									),
+								),
+							),
+						),
+					),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0].(bruno.HttpItem)
+				require.Equal(t, "{{baseUrl}}/:color", item.Http.Url)
+				require.Len(t, item.Http.Params, 1)
+				require.Equal(t, bruno.HttpRequestParam{
+					Name:     "color",
+					Value:    ";color=brown;color=blue",
+					Type:     "path",
+					Disabled: false,
+				}, item.Http.Params[0])
+			},
+		},
+		{
+			name: "matrix path parameter object value",
+			cfg: func() *openapi.Config {
+				color := schematest.New(
+					"integer",
+					schematest.WithMinimum(0),
+					schematest.WithMaximum(255),
+				)
+				return openapitest.NewConfig("3.2.0",
+					openapitest.WithPath("/{color}",
+						openapitest.WithOperation(
+							http.MethodGet,
+							openapitest.WithOperationParam(
+								"color",
+								true,
+								openapitest.WithStyle("matrix"),
+								openapitest.WithParamSchema(
+									schematest.New("object",
+										schematest.WithProperty("R", color),
+										schematest.WithProperty("G", color),
+										schematest.WithProperty("B", color),
+										schematest.WithRequired("R", "G", "B"),
+									),
+								),
+							),
+						),
+					),
+				)
+			}(),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0].(bruno.HttpItem)
+				require.Equal(t, "{{baseUrl}}/:color", item.Http.Url)
+				require.Len(t, item.Http.Params, 1)
+				require.Equal(t, bruno.HttpRequestParam{
+					Name:     "color",
+					Value:    ";color=R,160,G,100,B,83",
+					Type:     "path",
+					Disabled: false,
+				}, item.Http.Params[0])
+			},
+		},
+		{
+			name: "matrix exploded path parameter array value",
+			cfg: func() *openapi.Config {
+				color := schematest.New(
+					"integer",
+					schematest.WithMinimum(0),
+					schematest.WithMaximum(255),
+				)
+				return openapitest.NewConfig("3.2.0",
+					openapitest.WithPath("/{color}",
+						openapitest.WithOperation(
+							http.MethodGet,
+							openapitest.WithOperationParam(
+								"color",
+								true,
+								openapitest.WithStyle("matrix"),
+								openapitest.WithExplode(true),
+								openapitest.WithParamSchema(
+									schematest.New("object",
+										schematest.WithProperty("R", color),
+										schematest.WithProperty("G", color),
+										schematest.WithProperty("B", color),
+										schematest.WithRequired("R", "G", "B"),
+									),
+								),
+							),
+						),
+					),
+				)
+			}(),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0].(bruno.HttpItem)
+				require.Equal(t, "{{baseUrl}}/:color", item.Http.Url)
+				require.Len(t, item.Http.Params, 1)
+				require.Equal(t, bruno.HttpRequestParam{
+					Name:     "color",
+					Value:    ";R=160;G=100;B=83",
+					Type:     "path",
+					Disabled: false,
+				}, item.Http.Params[0])
+			},
+		},
+		{
+			name: "label path parameter string value",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/{color}",
+					openapitest.WithOperation(
+						http.MethodGet,
+						openapitest.WithOperationParam(
+							"color",
+							true,
+							openapitest.WithStyle("label"),
+							openapitest.WithParamSchema(
+								schematest.New(
+									"string",
+									schematest.WithEnumValues("blue", "black", "brown"),
+								),
+							),
+						),
+					),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0].(bruno.HttpItem)
+				require.Equal(t, "{{baseUrl}}/:color", item.Http.Url)
+				require.Len(t, item.Http.Params, 1)
+				require.Equal(t, bruno.HttpRequestParam{
+					Name:     "color",
+					Value:    ".brown",
+					Type:     "path",
+					Disabled: false,
+				}, item.Http.Params[0])
+			},
+		},
+		{
+			name: "label path parameter array value",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/{color}",
+					openapitest.WithOperation(
+						http.MethodGet,
+						openapitest.WithOperationParam(
+							"color",
+							true,
+							openapitest.WithStyle("label"),
+							openapitest.WithParamSchema(
+								schematest.New("array",
+									schematest.WithItems(
+										"string",
+										schematest.WithEnumValues("blue", "black", "brown"),
+									),
+								),
+							),
+						),
+					),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0].(bruno.HttpItem)
+				require.Equal(t, "{{baseUrl}}/:color", item.Http.Url)
+				require.Len(t, item.Http.Params, 1)
+				require.Equal(t, bruno.HttpRequestParam{
+					Name:     "color",
+					Value:    ".brown,blue",
+					Type:     "path",
+					Disabled: false,
+				}, item.Http.Params[0])
+			},
+		},
+		{
+			name: "label exploded path parameter array value",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/{color}",
+					openapitest.WithOperation(
+						http.MethodGet,
+						openapitest.WithOperationParam(
+							"color",
+							true,
+							openapitest.WithStyle("label"),
+							openapitest.WithExplode(true),
+							openapitest.WithParamSchema(
+								schematest.New("array",
+									schematest.WithItems(
+										"string",
+										schematest.WithEnumValues("blue", "black", "brown"),
+									),
+								),
+							),
+						),
+					),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0].(bruno.HttpItem)
+				require.Equal(t, "{{baseUrl}}/:color", item.Http.Url)
+				require.Len(t, item.Http.Params, 1)
+				require.Equal(t, bruno.HttpRequestParam{
+					Name:     "color",
+					Value:    ".brown.blue",
+					Type:     "path",
+					Disabled: false,
+				}, item.Http.Params[0])
+			},
+		},
+		{
+			name: "label path parameter object value",
+			cfg: func() *openapi.Config {
+				color := schematest.New(
+					"integer",
+					schematest.WithMinimum(0),
+					schematest.WithMaximum(255),
+				)
+				return openapitest.NewConfig("3.2.0",
+					openapitest.WithPath("/{color}",
+						openapitest.WithOperation(
+							http.MethodGet,
+							openapitest.WithOperationParam(
+								"color",
+								true,
+								openapitest.WithStyle("label"),
+								openapitest.WithParamSchema(
+									schematest.New("object",
+										schematest.WithProperty("R", color),
+										schematest.WithProperty("G", color),
+										schematest.WithProperty("B", color),
+										schematest.WithRequired("R", "G", "B"),
+									),
+								),
+							),
+						),
+					),
+				)
+			}(),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0].(bruno.HttpItem)
+				require.Equal(t, "{{baseUrl}}/:color", item.Http.Url)
+				require.Len(t, item.Http.Params, 1)
+				require.Equal(t, bruno.HttpRequestParam{
+					Name:     "color",
+					Value:    ".R,160,G,100,B,83",
+					Type:     "path",
+					Disabled: false,
+				}, item.Http.Params[0])
+			},
+		},
+		{
+			name: "label exploded path parameter array value",
+			cfg: func() *openapi.Config {
+				color := schematest.New(
+					"integer",
+					schematest.WithMinimum(0),
+					schematest.WithMaximum(255),
+				)
+				return openapitest.NewConfig("3.2.0",
+					openapitest.WithPath("/{color}",
+						openapitest.WithOperation(
+							http.MethodGet,
+							openapitest.WithOperationParam(
+								"color",
+								true,
+								openapitest.WithStyle("label"),
+								openapitest.WithExplode(true),
+								openapitest.WithParamSchema(
+									schematest.New("object",
+										schematest.WithProperty("R", color),
+										schematest.WithProperty("G", color),
+										schematest.WithProperty("B", color),
+										schematest.WithRequired("R", "G", "B"),
+									),
+								),
+							),
+						),
+					),
+				)
+			}(),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0].(bruno.HttpItem)
+				require.Equal(t, "{{baseUrl}}/:color", item.Http.Url)
+				require.Len(t, item.Http.Params, 1)
+				require.Equal(t, bruno.HttpRequestParam{
+					Name:     "color",
+					Value:    ".R=160.G=100.B=83",
+					Type:     "path",
+					Disabled: false,
+				}, item.Http.Params[0])
 			},
 		},
 	}
