@@ -24,7 +24,7 @@ runs:
         node-version: 24
         registry-url: 'https://registry.npmjs.org'
     - id: release
-      uses: pozetroninc/github-action-get-latest-release@53d33d213ee71c72360e3c829caf7cee94ec21e2 # master
+      uses: pozetroninc/github-action-get-latest-release@5ac6001ed175b443484c81ab32a20e12132be99c # master
       with:
         repository: marle3003/mokapi
         excludes: prerelease, draft
