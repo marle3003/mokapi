@@ -136,7 +136,7 @@ func WithRequestBody(description string, required bool, opts ...RequestBodyOptio
 	return func(o *openapi.Operation) {
 		body := &openapi.RequestBody{
 			Description: description,
-			Required:    required,
+			Required:    new(required),
 		}
 
 		for _, opt := range opts {
@@ -161,7 +161,7 @@ func newParam(name string, required bool, t openapi.Location, opts ...ParamOptio
 	p := &openapi.Parameter{
 		Name:     name,
 		Type:     t,
-		Required: required,
+		Required: new(required),
 	}
 
 	for _, opt := range opts {

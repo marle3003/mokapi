@@ -177,7 +177,7 @@ func (o *OpenAPI) GetOperation(id string) (*Operation, error) {
 					r.Parameters = append(r.Parameters, RequestParameters{
 						Name:        param.Value.Name,
 						In:          param.Value.Type.String(),
-						Required:    param.Value.Required,
+						Required:    param.Value.Required != nil && *param.Value.Required,
 						Schema:      param.Value.Schema,
 						Description: param.Value.Description,
 					})
@@ -189,7 +189,7 @@ func (o *OpenAPI) GetOperation(id string) (*Operation, error) {
 				if op.RequestBody != nil && op.RequestBody.Value != nil {
 					r.RequestBody = RequestBody{
 						Description: op.RequestBody.Value.Description,
-						Required:    op.RequestBody.Value.Required,
+						Required:    op.RequestBody.Value.IsRequired(),
 					}
 					for ct, content := range op.RequestBody.Value.Content {
 						r.RequestBody.Contents = append(r.RequestBody.Contents, Content{
@@ -268,12 +268,12 @@ func (op *Operation) Invoke(req InvokeRequest) (InvokeResponse, error) {
 			}
 			path = strings.ReplaceAll(path, fmt.Sprintf("{%s}", p.Value.Name), val)
 		case openapi.ParameterQuery:
-			if req.Query == nil && p.Value.Required {
+			if req.Query == nil && p.Value.Required != nil && *p.Value.Required {
 				return result, fmt.Errorf("invoke request %s %s failed: missing query parameter '%s'", op.Method, op.Path, p.Value.Name)
 			}
 			val, ok := req.Query[p.Value.Name]
 			if !ok {
-				if !p.Value.Required {
+				if p.Value.Required != nil && !*p.Value.Required {
 					continue
 				}
 				return result, fmt.Errorf("invoke request %s %s failed: missing query parameter '%s'", op.Method, op.Path, p.Value.Name)
@@ -297,12 +297,12 @@ func (op *Operation) Invoke(req InvokeRequest) (InvokeResponse, error) {
 		if p.Value == nil || p.Value.Type != openapi.ParameterHeader {
 			continue
 		}
-		if req.Header == nil && p.Value.Required {
+		if req.Header == nil && p.Value.Required != nil && *p.Value.Required {
 			return result, fmt.Errorf("invoke request %s %s failed: missing header parameter '%s'", op.Method, op.Path, p.Value.Name)
 		}
 		val, ok := req.Header[p.Value.Name]
 		if !ok {
-			if !p.Value.Required {
+			if p.Value.Required != nil && !*p.Value.Required {
 				continue
 			}
 			return result, fmt.Errorf("invoke request %s %s failed: missing header parameter '%s'", op.Method, op.Path, p.Value.Name)

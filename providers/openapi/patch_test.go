@@ -31,7 +31,7 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Equal(t, "foo", result.Paths.Lookup("/foo").Value.Post.RequestBody.Value.Description)
-				require.True(t, result.Paths.Lookup("/foo").Value.Post.RequestBody.Value.Required)
+				require.True(t, result.Paths.Lookup("/foo").Value.Post.RequestBody.Value.IsRequired())
 			},
 		},
 		{
@@ -50,7 +50,7 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 			},
 			test: func(t *testing.T, result *openapi.Config) {
 				require.Equal(t, "foo", result.Paths.Lookup("/foo").Value.Post.RequestBody.Value.Description)
-				require.True(t, result.Paths.Lookup("/foo").Value.Post.RequestBody.Value.Required)
+				require.True(t, result.Paths.Lookup("/foo").Value.Post.RequestBody.Value.IsRequired())
 			},
 		},
 		{

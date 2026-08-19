@@ -24,7 +24,7 @@ func parseQuery(param *Parameter, u *url.URL) (*RequestParameterValue, error) {
 		return rp, err
 	default:
 		if !u.Query().Has(param.Name) {
-			if param.Required {
+			if param.Required != nil && *param.Required {
 				return nil, fmt.Errorf("parameter is required")
 			}
 			v := &RequestParameterValue{}
@@ -36,11 +36,10 @@ func parseQuery(param *Parameter, u *url.URL) (*RequestParameterValue, error) {
 		raw := u.Query().Get(param.Name)
 		rp := &RequestParameterValue{Raw: &raw}
 		if len(*rp.Raw) == 0 {
-			if param.Required {
+			if param.Required != nil && *param.Required {
 				return nil, fmt.Errorf("parameter is required")
-			} else {
-				return nil, nil
 			}
+			return nil, nil
 		}
 		rp.Value, err = p.ParseWith(*rp.Raw, schema.ConvertToJsonSchema(param.Schema))
 		return rp, err
@@ -51,7 +50,7 @@ func parseQueryObject(param *Parameter, u *url.URL) (string, interface{}, error)
 	if param.Style == "form" && param.IsExplode() {
 		raw := u.RawQuery
 		if len(raw) == 0 {
-			if param.Required {
+			if param.Required != nil && *param.Required {
 				return "", nil, fmt.Errorf("parameter is required")
 			}
 			return "", param.Schema.Default, nil
@@ -61,7 +60,7 @@ func parseQueryObject(param *Parameter, u *url.URL) (string, interface{}, error)
 	} else if param.Style == "form" {
 		raw := u.Query().Get(param.Name)
 		if len(raw) == 0 {
-			if param.Required {
+			if param.Required != nil && *param.Required {
 				return "", nil, fmt.Errorf("parameter is required")
 			}
 			return "", param.Schema.Default, nil
@@ -89,7 +88,7 @@ func parseQueryObject(param *Parameter, u *url.URL) (string, interface{}, error)
 			}
 		}
 		if len(raw.String()) == 0 {
-			if param.Required {
+			if param.Required != nil && *param.Required {
 				return "", nil, fmt.Errorf("parameter is required")
 			}
 			return "", param.Schema.Default, nil

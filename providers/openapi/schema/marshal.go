@@ -9,6 +9,7 @@ import (
 	"mokapi/schema/encoding"
 	"mokapi/schema/json/parser"
 	"mokapi/schema/json/schema"
+	"mokapi/sortedmap"
 	"reflect"
 	"strings"
 )
@@ -33,15 +34,113 @@ func (s *Schema) Marshal(i interface{}, contentType media.ContentType) ([]byte, 
 }
 
 func (s *Schema) MarshalJSON() ([]byte, error) {
-	e := encoder{visited: map[*Schema]bool{}}
-	return e.encode(s)
+	e := Encoder{visited: map[*Schema]bool{}}
+	return e.MarshalJSON(s)
 }
 
-type encoder struct {
+func (s *Schema) MarshalYAML() (interface{}, error) {
+	e := Encoder{visited: map[*Schema]bool{}}
+	return e.MarshalYAML(s)
+}
+
+type Encoder struct {
+	KeepRef bool
+
 	visited map[*Schema]bool
 }
 
-func (e *encoder) encode(s *Schema) ([]byte, error) {
+func (e *Encoder) MarshalYAML(s *Schema) (any, error) {
+	if s == nil {
+		return nil, nil
+	}
+	if s.Boolean != nil {
+		return s.Boolean, nil
+	}
+	// check circular reference
+	if e.hasVisited(s) {
+		m := map[string]string{
+			"description": "circular reference",
+		}
+		if s.Ref != "" {
+			m["$ref"] = s.Ref
+		}
+		return m, nil
+	}
+	e.visited[s] = true
+	defer delete(e.visited, s)
+
+	result := &sortedmap.LinkedHashMap[string, any]{}
+	v := reflect.ValueOf(s).Elem()
+	t := v.Type()
+	var err error
+	for i := 0; i < v.NumField(); i++ {
+		ft := t.Field(i)
+		if !ft.IsExported() {
+			continue
+		}
+		f := v.FieldByName(ft.Name)
+		if isEmptyValue(f) {
+			continue
+		}
+		fv := f.Interface()
+		var fieldValue any
+		switch val := fv.(type) {
+		case schema.Types:
+			switch len(val) {
+			case 0:
+				continue
+			case 1:
+				fieldValue = val[0]
+			default:
+				fieldValue = val
+			}
+		case *Schemas:
+			m := map[string]any{}
+			for it := val.Iter(); it.Next(); {
+				m[it.Key()], err = e.MarshalYAML(it.Value())
+				if err != nil {
+					return nil, err
+				}
+			}
+			fieldValue = m
+		case *Schema:
+			fieldValue, err = e.MarshalYAML(val)
+		case *schema.UnionType[float64, bool]:
+			if val.IsA() {
+				fieldValue = val.A
+			} else {
+				fieldValue = val.B
+			}
+		case dynamic.Reference[*Schema]:
+			if val.Ref != "" && s.Sub == nil || e.KeepRef {
+				result.Set("$ref", val.Ref)
+			}
+			continue
+		case *schema.Example:
+			if val.Value != nil {
+				fieldValue = val.Value
+			}
+		default:
+			fieldValue = val
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		tag := t.Field(i).Tag.Get("yaml")
+		args := strings.Split(tag, ",")
+		name := args[0]
+		if name == "-" {
+			continue
+		}
+
+		result.Set(name, fieldValue)
+	}
+	return result, nil
+}
+
+func (e *Encoder) MarshalJSON(s *Schema) ([]byte, error) {
 	if s == nil {
 		return []byte("null"), nil
 	}
@@ -53,7 +152,7 @@ func (e *encoder) encode(s *Schema) ([]byte, error) {
 	}
 
 	// check circular reference
-	if e.visited[s] {
+	if e.hasVisited(s) {
 		var v string
 		if s.Ref != "" {
 			v = fmt.Sprintf(`{"$ref":"%s","description":"circular reference"}`, s.Ref)
@@ -97,7 +196,7 @@ func (e *encoder) encode(s *Schema) ([]byte, error) {
 				if fields.Len() > 1 {
 					fields.WriteRune(',')
 				}
-				sField, err := e.encode(it.Value())
+				sField, err := e.MarshalJSON(it.Value())
 				if err != nil {
 					return nil, err
 				}
@@ -107,7 +206,7 @@ func (e *encoder) encode(s *Schema) ([]byte, error) {
 			fields.WriteRune('}')
 			bVal = fields.Bytes()
 		case *Schema:
-			bVal, err = e.encode(val)
+			bVal, err = e.MarshalJSON(val)
 		case *schema.UnionType[float64, bool]:
 			if val.IsA() {
 				bVal, err = json.Marshal(val.A)
@@ -115,8 +214,10 @@ func (e *encoder) encode(s *Schema) ([]byte, error) {
 				bVal, err = json.Marshal(val.B)
 			}
 		case dynamic.Reference[*Schema]:
-			bVal, err = json.Marshal(val)
-			b.WriteString(strings.Trim(string(bVal), "{}"))
+			if val.Ref != "" && s.Sub == nil || e.KeepRef {
+				bVal, err = json.Marshal(val)
+				b.WriteString(strings.Trim(string(bVal), "{}"))
+			}
 			continue
 		default:
 			bVal, err = json.Marshal(val)
@@ -143,6 +244,14 @@ func (e *encoder) encode(s *Schema) ([]byte, error) {
 
 	b.WriteRune('}')
 	return b.Bytes(), nil
+}
+
+func (e *Encoder) hasVisited(s *Schema) bool {
+	if e.visited == nil {
+		e.visited = map[*Schema]bool{}
+		return false
+	}
+	return e.visited[s]
 }
 
 func isEmptyValue(v reflect.Value) bool {

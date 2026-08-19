@@ -9,9 +9,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
-func TestSchema_Marshal(t *testing.T) {
+func TestSchema_MarshalJSON(t *testing.T) {
 	testcases := []struct {
 		name   string
 		schema *schema.Schema
@@ -65,6 +66,14 @@ func TestSchema_Marshal(t *testing.T) {
 			schema: schematest.New("integer", schematest.WithExclusiveMinimumBool(true)),
 			exp:    `{"type":"integer","exclusiveMinimum":true}`,
 		},
+		{
+			name: "integer",
+			schema: schematest.New("integer",
+				schematest.WithFormat("int64"),
+				schematest.WithExample(10),
+			),
+			exp: `{"type":"integer","format":"int64","example":10}`,
+		},
 	}
 
 	t.Parallel()
@@ -76,6 +85,72 @@ func TestSchema_Marshal(t *testing.T) {
 			s, err := json.Marshal(tc.schema)
 			require.NoError(t, err)
 			require.Equal(t, tc.exp, string(s))
+		})
+	}
+}
+
+func TestSchema_MarshalYAML(t *testing.T) {
+	testcases := []struct {
+		name string
+		s    *schema.Schema
+		test func(t *testing.T, s string, err error)
+	}{
+		{
+			name: "$ref",
+			s:    &schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "#/components/schemas/foo"}},
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "$ref: '#/components/schemas/foo'\n", s)
+			},
+		},
+		{
+			name: "no $ref",
+			s:    &schema.Schema{},
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "{}\n", s)
+			},
+		},
+		{
+			name: "integer",
+			s: schematest.New("integer",
+				schematest.WithFormat("int64"),
+				schematest.WithExample(10),
+			),
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `type: integer
+format: int64
+example: 10
+`, s)
+			},
+		},
+		{
+			name: "array",
+			s: schematest.New("array",
+				schematest.WithItems(
+					"string",
+					schematest.WithMinLength(5),
+				),
+			),
+			test: func(t *testing.T, s string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `type: array
+items:
+    type: string
+    minLength: 5
+`, s)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			b, err := yaml.Marshal(tc.s)
+			tc.test(t, string(b), err)
 		})
 	}
 }

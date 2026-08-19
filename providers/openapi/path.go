@@ -27,7 +27,6 @@ var fixedMethods = map[string]bool{
 	"query": true,
 }
 
-// type PathItems map[string]*PathRef
 type PathItems struct {
 	sortedmap.LinkedHashMap[string, *PathRef]
 }
@@ -146,16 +145,15 @@ func (p *Path) UnmarshalJSON(data []byte) error {
 func (r *PathRef) MarshalJSON() ([]byte, error) {
 	if r.Value != nil {
 		return json.Marshal(r.Value)
-	} else {
-		return json.Marshal(r.Ref)
 	}
+	return json.Marshal(r.Reference)
 }
 
 func (r *PathRef) MarshalYAML() (any, error) {
 	if r.Value != nil {
 		return r.Value, nil
 	}
-	return r.Ref, nil
+	return r.Reference, nil
 }
 
 func (r *PathRef) UnmarshalYAML(node *yaml.Node) error {
@@ -275,15 +273,16 @@ func (p *PathItems) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	}
 
 	for it := p.Iter(); it.Next(); {
+		k := it.Key()
 		pi := it.Value()
 		if pi == nil {
 			continue
 		}
 		if err := pi.Parse(config, reader); err != nil {
-			return fmt.Errorf("parse path '%v' failed: %w", it.Key(), err)
+			return fmt.Errorf("parse path '%v' failed: %w", k, err)
 		}
 		if pi.Value != nil {
-			pi.Value.Path = it.Key()
+			pi.Value.Path = k
 		}
 	}
 	return nil
@@ -574,7 +573,7 @@ func parseRequestHeader(args common.WebhookArgs, o *Operation) (http.Header, err
 
 		s, ok := args.Headers[param.Name]
 		if !ok {
-			if param.Required {
+			if param.Required != nil && *param.Required {
 				return nil, fmt.Errorf("required header parameter %s not found", param.Name)
 			}
 			continue
@@ -593,7 +592,7 @@ func parseRequestHeader(args common.WebhookArgs, o *Operation) (http.Header, err
 func parseRequestBody(args common.WebhookArgs, o *Operation) (io.ReadCloser, error) {
 	if o.RequestBody != nil && o.RequestBody.Value != nil {
 		rb := o.RequestBody.Value
-		if rb.Required && args.Body == "" && args.Data == nil {
+		if rb.IsRequired() && args.Body == "" && args.Data == nil {
 			return nil, fmt.Errorf("request body is required")
 		}
 

@@ -10,7 +10,7 @@ import (
 func parseCookie(param *Parameter, r *http.Request) (*RequestParameterValue, error) {
 	cookie, err := r.Cookie(param.Name)
 	if err != nil || len(cookie.Value) == 0 {
-		if param.Required {
+		if param.Required != nil && *param.Required {
 			return nil, fmt.Errorf("parameter is required")
 		}
 		if param.Schema != nil && param.Schema.Default != nil {

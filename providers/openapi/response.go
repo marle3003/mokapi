@@ -85,9 +85,8 @@ func (r *ResponseRef) UnmarshalJSON(b []byte) error {
 func (r *ResponseRef) MarshalJSON() ([]byte, error) {
 	if r.Value != nil {
 		return json.Marshal(r.Value)
-	} else {
-		return json.Marshal(r.Ref)
 	}
+	return json.Marshal(r.Reference)
 }
 
 func (r *Responses) UnmarshalYAML(value *yaml.Node) error {
@@ -120,6 +119,13 @@ func (r *Responses) UnmarshalYAML(value *yaml.Node) error {
 
 func (r *ResponseRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.UnmarshalYaml(node, &r.Value)
+}
+
+func (r *ResponseRef) MarshalYAML() (interface{}, error) {
+	if r.Value != nil {
+		return r.Value, nil
+	}
+	return r.Reference, nil
 }
 
 func (r *Responses) Resolve(token string) (interface{}, error) {

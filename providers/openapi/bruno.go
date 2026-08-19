@@ -375,7 +375,7 @@ func buildItems(operations []*Operation, seq int) []any {
 						Data: string(b),
 					},
 				})
-				if len(result) == 1 && rb.Required {
+				if len(result) == 1 && rb.IsRequired() {
 					result[0].Selected = true
 				}
 			}

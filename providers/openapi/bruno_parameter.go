@@ -44,7 +44,7 @@ func buildParams(http *bruno.HttpDetail, params Parameters, reqPath []string) {
 				Name:        p.Name,
 				Value:       fmt.Sprintf("%v", v),
 				Description: p.Description,
-				Disabled:    !p.Required,
+				Disabled:    !p.IsRequired(),
 			})
 		case ParameterPath:
 			pParam := buildPathParam(p, newRandom)
@@ -93,7 +93,7 @@ func buildQueryParam(p *Parameter, newRandom func(s *schema.Schema, name string)
 		Name:        p.Name,
 		Description: p.Description,
 		Type:        string(ParameterQuery),
-		Disabled:    !p.Required,
+		Disabled:    !p.IsRequired(),
 	}
 
 	switch val := r.(type) {
@@ -129,7 +129,7 @@ func buildQueryParam(p *Parameter, newRandom func(s *schema.Schema, name string)
 		}
 		isRequired := func(name string) bool {
 			_, ok := required[name]
-			return ok && p.Required
+			return ok && p.IsRequired()
 		}
 
 		var keys []string
@@ -165,7 +165,7 @@ func buildQueryParam(p *Parameter, newRandom func(s *schema.Schema, name string)
 				Name:        p.Name,
 				Type:        string(ParameterQuery),
 				Description: p.Description,
-				Disabled:    !p.Required,
+				Disabled:    !p.IsRequired(),
 			}
 
 			for i, k := range keys {

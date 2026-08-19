@@ -439,7 +439,7 @@ func TestPetStore_Parameters(t *testing.T) {
 	require.Equal(t, "petId", params[1].Value.Name)
 	require.Equal(t, openapi.ParameterPath, params[1].Value.Type)
 	require.Equal(t, "Pet id to delete", params[1].Value.Description)
-	require.True(t, params[1].Value.Required)
+	require.True(t, *params[1].Value.Required)
 	require.Equal(t, "integer", params[1].Value.Schema.Type.String())
 	require.Equal(t, "int64", params[1].Value.Schema.Format)
 }

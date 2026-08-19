@@ -657,3 +657,54 @@ func TestConfig_Patch_Response(t *testing.T) {
 		})
 	}
 }
+
+func TestResponse_Marshal(t *testing.T) {
+	testcases := []struct {
+		name string
+		s    *openapi.ResponseRef
+		json string
+		yaml string
+		test func(t *testing.T, json, yaml string, err error)
+	}{
+		{
+			name: "ref",
+			s: &openapi.ResponseRef{
+				Reference: dynamic.Reference[*openapi.ResponseRef]{
+					Ref: "/foo",
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"$ref":"/foo"}`, json)
+				require.Equal(t, "$ref: /foo\n", yaml)
+			},
+		},
+		{
+			name: "value",
+			s: &openapi.ResponseRef{
+				Value: &openapi.Response{
+					Description: "foo",
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"description":"foo"}`, json)
+				require.Equal(t, "description: foo\n", yaml)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			jb, err := json.Marshal(tc.s)
+			if err != nil {
+				tc.test(t, "", "", err)
+			}
+			yb, err := yaml.Marshal(tc.s)
+			tc.test(t, string(jb), string(yb), err)
+		})
+	}
+}

@@ -3,6 +3,7 @@ package openapi_test
 import (
 	"encoding/json"
 	"fmt"
+	"mokapi/config/dynamic"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/openapitest"
 	"mokapi/providers/openapi/schema/schematest"
@@ -58,7 +59,7 @@ func TestRequestBody_UnmarshalJSON(t *testing.T) {
 				require.Equal(t, "foo", r.Description)
 				require.NotNil(t, r.Content)
 				require.Contains(t, r.Content, "foo")
-				require.True(t, r.Required)
+				require.True(t, r.IsRequired())
 			},
 		},
 	}
@@ -113,7 +114,7 @@ required: true`), &r)
 				require.Equal(t, "foo", r.Description)
 				require.NotNil(t, r.Content)
 				require.Contains(t, r.Content, "foo")
-				require.True(t, r.Required)
+				require.True(t, r.IsRequired())
 			},
 		},
 	}
@@ -797,6 +798,57 @@ Bob
 
 			b, err := openapi.BodyFromRequest(r, op)
 			tc.test(t, b, err)
+		})
+	}
+}
+
+func TestRequestBody_Marshal(t *testing.T) {
+	testcases := []struct {
+		name string
+		s    *openapi.RequestBodyRef
+		json string
+		yaml string
+		test func(t *testing.T, json, yaml string, err error)
+	}{
+		{
+			name: "ref",
+			s: &openapi.RequestBodyRef{
+				Reference: dynamic.Reference[*openapi.RequestBodyRef]{
+					Ref: "/foo",
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"$ref":"/foo"}`, json)
+				require.Equal(t, "$ref: /foo\n", yaml)
+			},
+		},
+		{
+			name: "value",
+			s: &openapi.RequestBodyRef{
+				Value: &openapi.RequestBody{
+					Description: "foo",
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"description":"foo"}`, json)
+				require.Equal(t, "description: foo\n", yaml)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			jb, err := json.Marshal(tc.s)
+			if err != nil {
+				tc.test(t, "", "", err)
+			}
+			yb, err := yaml.Marshal(tc.s)
+			tc.test(t, string(jb), string(yb), err)
 		})
 	}
 }

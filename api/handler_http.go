@@ -81,7 +81,7 @@ type param struct {
 	Style         string         `json:"style,omitempty"`
 	Explode       bool           `json:"explode"`
 	AllowReserved bool           `json:"allowReserved"`
-	Schema        *schema.Schema `json:"schema"`
+	Schema        *openapiSchema `json:"schema"`
 }
 
 type response struct {
@@ -94,7 +94,7 @@ type response struct {
 type header struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
-	Schema      *schema.Schema `json:"schema"`
+	Schema      *openapiSchema `json:"schema"`
 }
 
 type requestBody struct {
@@ -105,7 +105,7 @@ type requestBody struct {
 
 type mediaType struct {
 	Type   string         `json:"type"`
-	Schema *schema.Schema `json:"schema"`
+	Schema *openapiSchema `json:"schema"`
 }
 
 type server struct {
@@ -132,6 +132,10 @@ type httpMetrics struct {
 	Requests      float64 `json:"http_requests_total"`
 	RequestErrors float64 `json:"http_requests_errors_total"`
 	LastRequest   float64 `json:"http_request_timestamp"`
+}
+
+type openapiSchema struct {
+	*schema.Schema
 }
 
 func getHttpServices(s *runtime.HttpStore, m *monitor.Monitor) []service {
@@ -350,7 +354,7 @@ func getOperations(s *runtime.HttpInfo, path, method string, monitor *monitor.Ht
 			if o.RequestBody != nil && o.RequestBody.Value != nil {
 				op.RequestBody = &requestBody{
 					Description: o.RequestBody.Value.Description,
-					Required:    o.RequestBody.Value.Required,
+					Required:    o.RequestBody.Value.IsRequired(),
 				}
 				if len(o.RequestBody.Summary) > 0 {
 					op.Summary = o.RequestBody.Summary
@@ -359,7 +363,7 @@ func getOperations(s *runtime.HttpInfo, path, method string, monitor *monitor.Ht
 				for ct, rb := range o.RequestBody.Value.Content {
 					op.RequestBody.Contents = append(op.RequestBody.Contents, mediaType{
 						Type:   ct,
-						Schema: rb.Schema,
+						Schema: toOpenApiSchema(rb.Schema),
 					})
 				}
 			}
@@ -384,7 +388,7 @@ func getOperations(s *runtime.HttpInfo, path, method string, monitor *monitor.Ht
 					for ct, r := range r.Value.Content {
 						res.Contents = append(res.Contents, mediaType{
 							Type:   ct,
-							Schema: r.Schema,
+							Schema: toOpenApiSchema(r.Schema),
 						})
 					}
 					for name, h := range r.Value.Headers {
@@ -395,7 +399,7 @@ func getOperations(s *runtime.HttpInfo, path, method string, monitor *monitor.Ht
 						hi := header{
 							Name:        name,
 							Description: h.Value.Description,
-							Schema:      h.Value.Schema,
+							Schema:      toOpenApiSchema(h.Value.Schema),
 						}
 						if len(h.Description) > 0 {
 							hi.Description = h.Description
@@ -461,12 +465,12 @@ func getParameters(params openapi.Parameters) (result []param) {
 			Name:          p.Value.Name,
 			Type:          string(p.Value.Type),
 			Description:   p.Value.Description,
-			Required:      p.Value.Required,
-			Deprecated:    p.Value.Deprecated,
+			Required:      p.Value.IsRequired(),
+			Deprecated:    p.Value.IsDeprecated(),
 			Style:         p.Value.Style,
 			Explode:       p.Value.IsExplode(),
-			AllowReserved: p.Value.AllowReserved,
-			Schema:        p.Value.Schema,
+			AllowReserved: p.Value.IsAllowReserved(),
+			Schema:        toOpenApiSchema(p.Value.Schema),
 		}
 		if len(p.Description) > 0 {
 			pi.Description = p.Description
@@ -566,4 +570,16 @@ func (h *handler) exportHttpBruno(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/yaml")
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.yaml\"", s.Info.Name))
 	_, _ = w.Write(b)
+}
+
+func toOpenApiSchema(s *schema.Schema) *openapiSchema {
+	if s == nil {
+		return nil
+	}
+	return &openapiSchema{Schema: s}
+}
+
+func (s *openapiSchema) MarshalJSON() ([]byte, error) {
+	e := schema.Encoder{KeepRef: true}
+	return e.MarshalJSON(s.Schema)
 }
