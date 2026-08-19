@@ -93,8 +93,8 @@ type Parameter struct {
 	Format           string         `yaml:"format,omitempty" json:"format,omitempty"`
 	Pattern          string         `yaml:"pattern,omitempty" json:"pattern,omitempty"`
 	AllowEmptyValue  bool           `yaml:"allowEmptyValue,omitempty" json:"allowEmptyValue,omitempty"`
-	Required         bool           `yaml:"required,omitempty" json:"required,omitempty"`
-	Deprecated       bool           `yaml:"deprecated" json:"deprecated"`
+	Required         *bool          `yaml:"required,omitempty" json:"required,omitempty"`
+	Deprecated       *bool          `yaml:"deprecated" json:"deprecated"`
 	UniqueItems      *bool          `yaml:"uniqueItems,omitempty" json:"uniqueItems,omitempty"`
 	ExclusiveMin     bool           `yaml:"exclusiveMinimum,omitempty" json:"exclusiveMinimum,omitempty"`
 	ExclusiveMax     bool           `yaml:"exclusiveMaximum,omitempty" json:"exclusiveMaximum,omitempty"`
@@ -339,3 +339,7 @@ type SecurityScheme struct {
 }
 
 type SecurityRequirement map[string][]string
+
+func (p *Parameter) IsRequired() bool {
+	return p.Required != nil && *p.Required
+}

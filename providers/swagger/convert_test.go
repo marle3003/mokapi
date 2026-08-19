@@ -183,7 +183,7 @@ func TestConvert(t *testing.T) {
 				p := r.Value
 				require.Equal(t, openapi.ParameterPath, p.Parameters[0].Value.Type)
 				require.Equal(t, "id", p.Parameters[0].Value.Name)
-				require.True(t, p.Parameters[0].Value.Required)
+				require.True(t, p.Parameters[0].Value.IsRequired())
 				require.Equal(t, "integer", p.Parameters[0].Value.Schema.Type.String())
 				require.Equal(t, "int64", p.Parameters[0].Value.Schema.Format)
 				require.Equal(t, "id parameter", p.Parameters[0].Value.Description)
@@ -253,7 +253,7 @@ func TestConvert(t *testing.T) {
 			test: func(t *testing.T, config *openapi.Config) {
 				get := config.Paths.Lookup("/foo").Value.Get
 				require.NotNil(t, get.RequestBody)
-				require.True(t, get.RequestBody.Value.Required)
+				require.True(t, get.RequestBody.Value.IsRequired())
 			},
 		},
 		{
@@ -509,6 +509,88 @@ func TestConvert(t *testing.T) {
 			test: func(t *testing.T, config *openapi.Config) {
 				require.Len(t, config.Paths.Lookup("/pet").Value.Get.Tags, 2)
 				require.Equal(t, []string{"foo", "bar"}, config.Paths.Lookup("/pet").Value.Get.Tags)
+			},
+		},
+		{
+			name: "request body using formData",
+			config: `{"swagger": "2.0", "paths": { "/pet": { "post": 
+{ 
+  "parameters": [
+    {
+      "name": "additionalMetadata",
+	  "in": "formData",
+	  "description": "Additional data to pass to server",
+	  "required": false,
+	  "type": "string"
+    },
+    {
+      "name": "file",
+	  "in": "formData",
+	  "description": "file to upload",
+	  "required": false,
+      "type": "file"
+    }
+  ]
+} } } }`,
+			test: func(t *testing.T, config *openapi.Config) {
+				path := config.Paths.Lookup("/pet")
+				require.NotNil(t, path.Value.Post.RequestBody)
+				require.NotNil(t, path.Value.Post.RequestBody.Value)
+				rb := path.Value.Post.RequestBody.Value
+				require.False(t, rb.IsRequired())
+				require.NotNil(t, rb.Content, "multipart/form-data")
+				s := rb.Content["multipart/form-data"].Schema
+				require.Nil(t, s.Required)
+
+				additionalMetadata := s.Properties.Get("additionalMetadata")
+				require.Equal(t, "string", additionalMetadata.Type.String())
+				require.Equal(t, "Additional data to pass to server", additionalMetadata.Description)
+
+				file := s.Properties.Get("file")
+				require.Equal(t, "string", file.Type.String())
+				require.Equal(t, "binary", file.Format)
+				require.Equal(t, "file to upload", file.Description)
+			},
+		},
+		{
+			name: "request body using formData one parameter is required",
+			config: `{"swagger": "2.0", "paths": { "/pet": { "post": 
+{ 
+  "parameters": [
+    {
+      "name": "additionalMetadata",
+	  "in": "formData",
+	  "description": "Additional data to pass to server",
+	  "required": false,
+	  "type": "string"
+    },
+    {
+      "name": "file",
+	  "in": "formData",
+	  "description": "file to upload",
+	  "required": true,
+      "type": "file"
+    }
+  ]
+} } } }`,
+			test: func(t *testing.T, config *openapi.Config) {
+				path := config.Paths.Lookup("/pet")
+				require.NotNil(t, path.Value.Post.RequestBody)
+				require.NotNil(t, path.Value.Post.RequestBody.Value)
+				rb := path.Value.Post.RequestBody.Value
+				require.True(t, rb.IsRequired())
+				require.NotNil(t, rb.Content, "multipart/form-data")
+				s := rb.Content["multipart/form-data"].Schema
+				require.Equal(t, []string{"file"}, s.Required)
+
+				additionalMetadata := s.Properties.Get("additionalMetadata")
+				require.Equal(t, "string", additionalMetadata.Type.String())
+				require.Equal(t, "Additional data to pass to server", additionalMetadata.Description)
+
+				file := s.Properties.Get("file")
+				require.Equal(t, "string", file.Type.String())
+				require.Equal(t, "binary", file.Format)
+				require.Equal(t, "file to upload", file.Description)
 			},
 		},
 	}
