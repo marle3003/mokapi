@@ -21,8 +21,8 @@ require (
 	github.com/jinzhu/inflection v1.0.0
 	github.com/modelcontextprotocol/go-sdk v1.7.0
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.9.4
-	github.com/stretchr/testify v1.11.1
+	github.com/sirupsen/logrus v1.10.1
+	github.com/stretchr/testify v1.12.0
 	github.com/yuin/gopher-lua v1.1.2
 	golang.org/x/net v0.57.0
 	golang.org/x/text v0.41.0
