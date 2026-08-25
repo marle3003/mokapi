@@ -6,26 +6,26 @@ require (
 	github.com/blevesearch/bleve/v2 v2.6.0
 	github.com/blevesearch/bleve_index_api v1.3.12
 	github.com/bradleyfalzon/ghinstallation/v2 v2.19.0
-	github.com/brianvoe/gofakeit/v7 v7.15.0
+	github.com/brianvoe/gofakeit/v7 v7.16.0
 	github.com/cbroglie/mustache v1.4.0
 	github.com/coder/websocket v1.8.15
-	github.com/dop251/goja v0.0.0-20260806115107-493f22071ef6
+	github.com/dop251/goja v0.0.0-20260820211235-95a30dcd3fa5
 	github.com/evanw/esbuild v0.28.2
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/go-co-op/gocron/v2 v2.22.0
 	github.com/go-git/go-git/v5 v5.19.2
-	github.com/go-sprout/sprout v1.0.3
+	github.com/go-sprout/sprout v1.1.1
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/jinzhu/inflection v1.0.0
 	github.com/modelcontextprotocol/go-sdk v1.7.0
 	github.com/pkg/errors v0.9.1
-	github.com/sirupsen/logrus v1.9.4
-	github.com/stretchr/testify v1.11.1
+	github.com/sirupsen/logrus v1.10.1
+	github.com/stretchr/testify v1.12.1
 	github.com/yuin/gopher-lua v1.1.2
-	golang.org/x/net v0.57.0
-	golang.org/x/text v0.40.0
+	golang.org/x/net v0.58.0
+	golang.org/x/text v0.41.0
 	gopkg.in/go-asn1-ber/asn1-ber.v1 v1.0.0-20181015200546-f715ec2f112d
 	gopkg.in/yaml.v3 v3.0.1
 	layeh.com/gopher-luar v1.0.11
@@ -90,8 +90,8 @@ require (
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	go.etcd.io/bbolt v1.5.0 // indirect
-	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.54.0 // indirect
+	go.yaml.in/yaml/v3 v3.0.5 // indirect
+	golang.org/x/crypto v0.55.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
