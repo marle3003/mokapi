@@ -938,7 +938,9 @@ func TestConfig_ExportBruno_Parameters(t *testing.T) {
 			logrus.SetOutput(io.Discard)
 			generator.Seed(12345)
 
-			c, err := tc.cfg.ExportBruno(tc.baseUrl)
+			c, err := tc.cfg.ExportBruno(openapi.BrunoExportOptions{
+				BaseUrl: tc.baseUrl,
+			})
 			tc.test(t, c, err)
 		})
 	}

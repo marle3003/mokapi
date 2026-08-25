@@ -8,6 +8,8 @@ import (
 
 type ConfigOptions func(c *openapi.Config)
 
+type TagOptions func(c *openapi.Tag)
+
 func NewConfig(versionString string, opts ...ConfigOptions) *openapi.Config {
 	c := &openapi.Config{
 		OpenApi: version.New(versionString),
@@ -44,7 +46,7 @@ func WithContact(name, url, email string) ConfigOptions {
 	}
 }
 
-func WithTag(name, summary, description string) ConfigOptions {
+func WithTag(name, summary, description string, opts ...TagOptions) ConfigOptions {
 	return func(c *openapi.Config) {
 		var tag *openapi.Tag
 		for _, t := range c.Tags {
@@ -58,6 +60,10 @@ func WithTag(name, summary, description string) ConfigOptions {
 		}
 		tag.Summary = summary
 		tag.Description = description
+
+		for _, opt := range opts {
+			opt(tag)
+		}
 	}
 }
 
@@ -213,5 +219,17 @@ func WithWebhook(name string, opts ...PathOptions) ConfigOptions {
 			c.Webhooks = map[string]*openapi.PathRef{}
 		}
 		c.Webhooks[name] = &openapi.PathRef{Value: NewPath(opts...)}
+	}
+}
+
+func WithTagParent(parent string) TagOptions {
+	return func(t *openapi.Tag) {
+		t.Parent = parent
+	}
+}
+
+func WithTagKind(kind string) TagOptions {
+	return func(t *openapi.Tag) {
+		t.Kind = kind
 	}
 }

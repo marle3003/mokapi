@@ -96,3 +96,15 @@ func WithPathErrors(err ...openapi.Error) PathOptions {
 		p.Errors = err
 	}
 }
+
+func WithPathSummary(summary string) PathOptions {
+	return func(p *openapi.Path) {
+		p.Summary = summary
+	}
+}
+
+func WithPathDescription(description string) PathOptions {
+	return func(p *openapi.Path) {
+		p.Description = description
+	}
+}

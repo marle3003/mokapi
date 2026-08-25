@@ -18,12 +18,32 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (c *Config) ExportBruno(baseUrl string) (bruno.Collection, error) {
+type FolderArrangement int
+
+const (
+	TagsFolderArrangement FolderArrangement = iota
+	PathFolderArrangement
+)
+
+type HttpItemName int
+
+const (
+	SummaryHttpItemName HttpItemName = iota
+	PathHttpItemName
+)
+
+type BrunoExportOptions struct {
+	FolderArrangement FolderArrangement
+	HttpItemName      HttpItemName
+	BaseUrl           string
+}
+
+func (c *Config) ExportBruno(opt BrunoExportOptions) (bruno.Collection, error) {
 	e := bruno.Collection{
 		Version: new(version.New("1.0.0")),
 		Info: bruno.Info{
 			Name:    c.Info.Name,
-			Summary: c.Info.Description,
+			Summary: c.Info.Summary,
 			Version: c.Info.Version,
 		},
 		Bundled: true,
@@ -40,7 +60,7 @@ func (c *Config) ExportBruno(baseUrl string) (bruno.Collection, error) {
 	var resolvedURLs []string
 
 	for _, server := range c.Servers {
-		u, err := resolveURL(server.Url, baseUrl, "http")
+		u, err := resolveURL(server.Url, opt.BaseUrl, "http")
 		if err != nil {
 			log.Debugf("failed to parse url %s: %s", server.Url, err)
 			continue
@@ -73,7 +93,14 @@ func (c *Config) ExportBruno(baseUrl string) (bruno.Collection, error) {
 	}
 
 	if c.Paths != nil && c.Paths.Len() > 0 {
-		items := groupByTag(c.Paths, tagsByName(c.Tags))
+		var items []any
+		switch opt.FolderArrangement {
+		case PathFolderArrangement:
+			items = groupByPath(c.Paths, opt)
+		default:
+			items = groupByTag(c.Paths, tagsByName(c.Tags), opt)
+		}
+
 		if len(items) > 0 {
 			e.Items = items
 		}
@@ -266,41 +293,9 @@ func tryRemoveScheme(urls []string, scheme string) []string {
 	return results
 }
 
-func groupByTag(paths *PathItems, tagsByName map[string]*Tag) []any {
-	root := &folderBuilder{items: map[string]*folderBuilder{}}
-	var untagged []*Operation
+type BrunoHttpItemNameFunc func(op *Operation, opt BrunoExportOptions) string
 
-	for it := paths.Iter(); it.Next(); {
-		ref := it.Value()
-		pathItem := ref.Value
-		if pathItem == nil {
-			continue
-		}
-
-		lookup := pathItem.Operations()
-		for _, method := range pathItem.MethodOrder {
-			op := lookup[method]
-			if len(op.Tags) == 0 {
-				untagged = append(untagged, op)
-				continue
-			}
-			path := tagPath(tagsByName, op.Tags[0])
-			if len(path) == 0 {
-				// tag referenced but not declared in spec's top-level tags array
-				untagged = append(untagged, op)
-				continue
-			}
-			root.insert(path, op)
-		}
-	}
-
-	items := root.build()
-	items = append(items, buildItems(untagged, len(items)+1)...)
-
-	return items
-}
-
-func buildItems(operations []*Operation, seq int) []any {
+func buildItems(operations []*Operation, seq int, opt BrunoExportOptions, getItemName BrunoHttpItemNameFunc) []any {
 	var items []any
 
 	for _, o := range operations {
@@ -308,14 +303,11 @@ func buildItems(operations []*Operation, seq int) []any {
 		path := pi.Path
 		method := o.Method
 
-		name := fmt.Sprintf("%s %s", method, path)
-		if o.OperationId != "" {
-			name = o.OperationId
-		}
+		name := fmt.Sprintf("%s %s", method, getItemName(o, opt))
 		item := bruno.HttpItem{
 			Info: &bruno.HttpInfo{
 				Name:        name,
-				Description: o.Description,
+				Description: getBrunoItemDescription(o),
 				Type:        "http",
 				Sequence:    seq,
 			},
@@ -326,9 +318,6 @@ func buildItems(operations []*Operation, seq int) []any {
 				Params:  nil,
 				Body:    nil,
 			},
-		}
-		if item.Info.Description == "" {
-			item.Info.Description = o.Summary
 		}
 
 		reqPath := strings.Split(path, "/")
@@ -397,52 +386,24 @@ func buildItems(operations []*Operation, seq int) []any {
 	return items
 }
 
-type folderBuilder struct {
-	ops   []*Operation
-	order []*Tag
-	items map[string]*folderBuilder
-}
-
-func (f *folderBuilder) insert(path []*Tag, op *Operation) {
-	if len(path) == 1 {
-		child := f.child(path[0])
-		child.ops = append(child.ops, op)
-		return
-	}
-	f.child(path[0]).insert(path[1:], op)
-}
-
-func (f *folderBuilder) child(tag *Tag) *folderBuilder {
-	if _, ok := f.items[tag.Name]; !ok {
-		f.items[tag.Name] = &folderBuilder{items: map[string]*folderBuilder{}}
-		f.order = append(f.order, tag)
-	}
-	return f.items[tag.Name]
-}
-
-func (f *folderBuilder) build() []any {
-	var result []any
-	seq := 1
-
-	for _, tag := range f.order {
-		child := f.items[tag.Name]
-		item := bruno.FolderItem{
-			Info: &bruno.FolderInfo{
-				Name:        tag.Name,
-				Description: tag.Description,
-				Type:        "folder",
-				Sequence:    seq,
-			},
-			Items: child.build(),
+func getBrunoItemName(op *Operation, opt BrunoExportOptions) string {
+	switch opt.HttpItemName {
+	case PathHttpItemName:
+		return op.Path.Path
+	default:
+		if op.Summary != "" {
+			return op.Summary
 		}
-		if item.Info.Description == "" {
-			item.Info.Description = tag.Summary
+		if op.Path.Summary != "" {
+			return op.Path.Summary
 		}
-		result = append(result, item)
-		seq++
+		return op.Path.Path
 	}
+}
 
-	result = append(result, buildItems(f.ops, seq)...)
-
-	return result
+func getBrunoItemDescription(op *Operation) string {
+	if op.Description != "" {
+		return op.Description
+	}
+	return op.Path.Description
 }

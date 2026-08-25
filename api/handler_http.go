@@ -552,7 +552,7 @@ func (h *handler) exportHttpBruno(w http.ResponseWriter, r *http.Request) {
 		baseUrl = r.Host
 	}
 
-	c, err := s.ExportBruno(baseUrl)
+	c, err := s.ExportBruno(openapi.BrunoExportOptions{BaseUrl: baseUrl})
 	if err != nil {
 		w.WriteHeader(500)
 		_, _ = w.Write([]byte(err.Error()))

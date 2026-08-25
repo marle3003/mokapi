@@ -17,10 +17,10 @@ import (
 
 func TestConfig_ExportBruno(t *testing.T) {
 	testcases := []struct {
-		name    string
-		cfg     *openapi.Config
-		baseUrl string
-		test    func(t *testing.T, c bruno.Collection, err error)
+		name string
+		cfg  *openapi.Config
+		opt  openapi.BrunoExportOptions
+		test func(t *testing.T, c bruno.Collection, err error)
 	}{
 		{
 			name: "empty",
@@ -37,7 +37,8 @@ func TestConfig_ExportBruno(t *testing.T) {
 		{
 			name: "with info",
 			cfg: openapitest.NewConfig("3.2.0",
-				openapitest.WithInfo("foo", "1.0", "foo description"),
+				openapitest.WithInfo("foo", "1.0", ""),
+				openapitest.WithSummary("foo summary"),
 			),
 			test: func(t *testing.T, c bruno.Collection, err error) {
 				require.NoError(t, err)
@@ -45,7 +46,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 					Version: &version.Version{Major: 1, Minor: 0, Patch: 0},
 					Info: bruno.Info{
 						Name:    "foo",
-						Summary: "foo description",
+						Summary: "foo summary",
 						Version: "1.0",
 					},
 					Bundled: true,
@@ -99,7 +100,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 			cfg: openapitest.NewConfig("3.2.0",
 				openapitest.WithServer("/foo", "foo description"),
 			),
-			baseUrl: "foo.com",
+			opt: openapi.BrunoExportOptions{BaseUrl: "foo.com"},
 			test: func(t *testing.T, c bruno.Collection, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, c.Config)
@@ -124,7 +125,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 			cfg: openapitest.NewConfig("3.2.0",
 				openapitest.WithServer("http://:8080/foo", "foo description"),
 			),
-			baseUrl: "foo.com",
+			opt: openapi.BrunoExportOptions{BaseUrl: "foo.com"},
 			test: func(t *testing.T, c bruno.Collection, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, c.Config)
@@ -149,7 +150,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 			cfg: openapitest.NewConfig("3.2.0",
 				openapitest.WithServer("http://foo.api:8080/foo", "foo description"),
 			),
-			baseUrl: "foo.com",
+			opt: openapi.BrunoExportOptions{BaseUrl: "foo.com"},
 			test: func(t *testing.T, c bruno.Collection, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, c.Config)
@@ -174,7 +175,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 			cfg: openapitest.NewConfig("3.2.0",
 				openapitest.WithServer("https://foo.api/foo", "foo description"),
 			),
-			baseUrl: "foo.com",
+			opt: openapi.BrunoExportOptions{BaseUrl: "foo.com"},
 			test: func(t *testing.T, c bruno.Collection, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, c.Config)
@@ -262,7 +263,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 				openapitest.WithServer("/foo/bar", ""),
 				openapitest.WithServer("/", ""),
 			),
-			baseUrl: "foo.com",
+			opt: openapi.BrunoExportOptions{BaseUrl: "foo.com"},
 			test: func(t *testing.T, c bruno.Collection, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, c.Config)
@@ -317,6 +318,60 @@ func TestConfig_ExportBruno(t *testing.T) {
 				require.Equal(t, &bruno.HttpDetail{
 					Method: http.MethodGet,
 					Url:    "{{baseUrl}}/foo",
+				}, item.Http)
+			},
+		},
+		{
+			name: "use operation summary",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/pet",
+					openapitest.WithOperation(
+						http.MethodPut,
+						openapitest.WithOperationSummary("Update an existing pet"),
+						openapitest.WithOperationDescription("Update an existing pet by Id."),
+					),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0].(bruno.HttpItem)
+				require.Equal(t, &bruno.HttpInfo{
+					Name:        "PUT Update an existing pet",
+					Description: "Update an existing pet by Id.",
+					Type:        "http",
+					Sequence:    1,
+				}, item.Info)
+				require.Equal(t, &bruno.HttpDetail{
+					Method: http.MethodPut,
+					Url:    "{{baseUrl}}/pet",
+				}, item.Http)
+			},
+		},
+		{
+			name: "use path summary and description as fallback",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/pet",
+					openapitest.WithPathSummary("Update an existing pet"),
+					openapitest.WithPathDescription("Update an existing pet by Id."),
+					openapitest.WithOperation(
+						http.MethodPut,
+					),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				item := c.Items[0].(bruno.HttpItem)
+				require.Equal(t, &bruno.HttpInfo{
+					Name:        "PUT Update an existing pet",
+					Description: "Update an existing pet by Id.",
+					Type:        "http",
+					Sequence:    1,
+				}, item.Info)
+				require.Equal(t, &bruno.HttpDetail{
+					Method: http.MethodPut,
+					Url:    "{{baseUrl}}/pet",
 				}, item.Http)
 			},
 		},
@@ -580,7 +635,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 				require.Len(t, folder.Items, 1)
 				require.Equal(t, &bruno.FolderInfo{
 					Name:        "foo",
-					Description: "description",
+					Description: "summary",
 					Type:        "folder",
 					Sequence:    1,
 				}, folder.Info)
@@ -671,6 +726,93 @@ func TestConfig_ExportBruno(t *testing.T) {
 				require.Equal(t, "GET /bar", bar.Items[0].(bruno.HttpItem).Info.Name)
 			},
 		},
+		{
+			name: "using tag tree",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithTag("foo", "", "foo description"),
+				openapitest.WithTag("bar", "", "bar description",
+					openapitest.WithTagParent("foo"),
+				),
+				openapitest.WithPath("/foo",
+					openapitest.WithOperation(http.MethodGet, openapitest.WithOperationTags("foo")),
+				),
+				openapitest.WithPath("/bar",
+					openapitest.WithOperation(http.MethodGet, openapitest.WithOperationTags("bar")),
+				),
+			),
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 1)
+				require.IsType(t, bruno.FolderItem{}, c.Items[0])
+				foo := c.Items[0].(bruno.FolderItem)
+				require.Len(t, foo.Items, 2)
+				require.Equal(t, &bruno.FolderInfo{
+					Name:        "foo",
+					Description: "foo description",
+					Type:        "folder",
+					Sequence:    1,
+				}, foo.Info)
+
+				bar := foo.Items[0].(bruno.FolderItem)
+				require.Len(t, bar.Items, 1)
+				require.Equal(t, &bruno.FolderInfo{
+					Name:        "bar",
+					Description: "bar description",
+					Type:        "folder",
+					Sequence:    1,
+				}, bar.Info)
+
+				require.Equal(t, "GET /foo", foo.Items[1].(bruno.HttpItem).Info.Name)
+				require.Equal(t, "GET /bar", bar.Items[0].(bruno.HttpItem).Info.Name)
+			},
+		},
+		{
+			name: "using path as arrangement create folder but not empty ones",
+			cfg: openapitest.NewConfig("3.2.0",
+				openapitest.WithPath("/pet",
+					openapitest.WithOperation(http.MethodPut),
+					openapitest.WithOperation(http.MethodPost),
+				),
+				openapitest.WithPath("/pet/findByStatus",
+					openapitest.WithOperation(http.MethodGet),
+				),
+				openapitest.WithPath("/pet/findByTags",
+					openapitest.WithOperation(http.MethodGet),
+				),
+				openapitest.WithPath("/foo/user/login",
+					openapitest.WithOperation(http.MethodGet),
+				),
+				openapitest.WithPath("/bar/store/inventory",
+					openapitest.WithOperation(http.MethodGet),
+				),
+				openapitest.WithPath("/bar/yuh",
+					openapitest.WithOperation(http.MethodGet),
+				),
+			),
+			opt: openapi.BrunoExportOptions{FolderArrangement: openapi.PathFolderArrangement},
+			test: func(t *testing.T, c bruno.Collection, err error) {
+				require.NoError(t, err)
+				require.Len(t, c.Items, 3)
+				pet := c.Items[0].(bruno.FolderItem)
+				require.Equal(t, "pet", pet.Info.Name)
+				require.Equal(t, "PUT pet", pet.Items[0].(bruno.HttpItem).Info.Name)
+				require.Equal(t, "POST pet", pet.Items[1].(bruno.HttpItem).Info.Name)
+				require.Equal(t, "GET findByStatus", pet.Items[2].(bruno.HttpItem).Info.Name)
+				require.Equal(t, "GET findByTags", pet.Items[3].(bruno.HttpItem).Info.Name)
+
+				foo := c.Items[1].(bruno.FolderItem)
+				require.Equal(t, "foo/user", foo.Info.Name)
+				require.Equal(t, "GET login", foo.Items[0].(bruno.HttpItem).Info.Name)
+
+				bar := c.Items[2].(bruno.FolderItem)
+				require.Equal(t, "bar", bar.Info.Name)
+				require.Equal(t, "GET yuh", bar.Items[1].(bruno.HttpItem).Info.Name)
+
+				store := bar.Items[0].(bruno.FolderItem)
+				require.Equal(t, "store", store.Info.Name)
+				require.Equal(t, "GET inventory", store.Items[0].(bruno.HttpItem).Info.Name)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
@@ -678,7 +820,7 @@ func TestConfig_ExportBruno(t *testing.T) {
 			logrus.SetOutput(io.Discard)
 			generator.Seed(12345)
 
-			c, err := tc.cfg.ExportBruno(tc.baseUrl)
+			c, err := tc.cfg.ExportBruno(tc.opt)
 			tc.test(t, c, err)
 		})
 	}
