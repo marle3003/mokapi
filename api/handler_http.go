@@ -537,22 +537,44 @@ func (h *handler) exportHttpBruno(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	baseUrl := "localhost"
+	opt := openapi.BrunoExportOptions{
+		BaseUrl: "localhost",
+	}
 
 	qBaseUrl := r.URL.Query().Get("baseUrl")
 	if qBaseUrl != "" {
 		var err error
-		baseUrl, err = url.QueryUnescape(qBaseUrl)
+		opt.BaseUrl, err = url.QueryUnescape(qBaseUrl)
 		if err != nil {
 			w.WriteHeader(400)
 			_, _ = w.Write([]byte(err.Error()))
 			return
 		}
 	} else if r.Host != "" {
-		baseUrl = r.Host
+		opt.BaseUrl = r.Host
 	}
 
-	c, err := s.ExportBruno(openapi.BrunoExportOptions{BaseUrl: baseUrl})
+	qFolderArrangement := r.URL.Query().Get("folderArrangement")
+	if qFolderArrangement != "" {
+		switch qFolderArrangement {
+		case "paths":
+			opt.FolderArrangement = openapi.PathFolderArrangement
+		default:
+			opt.FolderArrangement = openapi.TagsFolderArrangement
+		}
+	}
+
+	qItemName := r.URL.Query().Get("itemName")
+	if qItemName != "" {
+		switch qItemName {
+		case "path":
+			opt.HttpItemName = openapi.PathHttpItemName
+		default:
+			opt.HttpItemName = openapi.SummaryHttpItemName
+		}
+	}
+
+	c, err := s.ExportBruno(opt)
 	if err != nil {
 		w.WriteHeader(500)
 		_, _ = w.Write([]byte(err.Error()))

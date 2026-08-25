@@ -23,14 +23,15 @@ const toolbar = useToolbarItems()
                 class="btn btn-sm btn-outline-secondary kebab-btn"
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
+                :aria-label="`Actions for ${service.name}`"
             >
                 <i class="bi bi-three-dots-vertical"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
                 <li v-for="item in toolbar.items" :key="item.id">
-                    <a class="dropdown-item" href="#" @click.prevent="item.onClick()">
-                        <i v-if="item.icon" :class="['bi', item.icon, 'me-2']"></i>{{ item.label }}
-                    </a>
+                    <button class="dropdown-item" @click.prevent="item.onClick()">
+                        <i v-if="item.icon" :class="['bi', item.icon, 'me-2']" aria-hidden="true"></i>{{ item.label }}
+                    </button>
 
                 </li>
             </ul>

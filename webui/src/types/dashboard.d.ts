@@ -30,7 +30,7 @@ export interface Dashboard {
     getConfigData(id: string): ConfigDataResult
     getConfigDataUrl(id: string): string
 
-    getBrunoCollectionUrl(serviceName: string, params?: Record<string, string>): Ref<string | null>
+    getBrunoCollectionUrl(serviceName: string, params?: URLSearchParams): Ref<string | null>
 }
 
 export interface AppInfo {

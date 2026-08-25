@@ -255,12 +255,12 @@ export const dashboard: Dashboard = {
         return `/api/configs/${id}/data`
     },
 
-    getBrunoCollectionUrl(serviceName: string, params?: Record<string, string>) {
+    getBrunoCollectionUrl(serviceName: string, params?: URLSearchParams) {
         const url = ref<string | null>(null)
         const base = `/api/services/http/${encodeURIComponent(serviceName)}`
         let fullUrl = `${base}/bruno.yaml`
         if (params) {
-            const query = new URLSearchParams(params).toString()
+            const query = params.toString()
             if (query) {
                 fullUrl += `?${query}`
             }

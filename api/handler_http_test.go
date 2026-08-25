@@ -520,6 +520,89 @@ request:
 bundled: true
 `,
 		},
+		{
+			name: "export bruno.yaml using paths folder arrangement",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithServer("/foo", ""),
+						openapitest.WithPath("/foo/bar",
+							openapitest.WithOperation("get"),
+						),
+					),
+				)
+			},
+			requestUrl:  "http://foo.api/api/services/http/foo/bruno.yaml?folderArrangement=paths",
+			contentType: "application/yaml",
+			responseBody: `opencollection: 1.0.0
+info:
+  name: foo
+config:
+  environments:
+    - name: foo.api-foo
+      variables:
+        - name: baseUrl
+          value: http://foo.api/foo
+items:
+  - info:
+      name: foo
+      type: folder
+      seq: 1
+    items:
+      - info:
+          name: GET bar
+          type: http
+          seq: 1
+        http:
+          method: GET
+          url: '{{baseUrl}}/foo/bar'
+request:
+  variables:
+    - name: baseUrl
+      value: http://foo.api/foo
+bundled: true
+`,
+		},
+		{
+			name: "export bruno.yaml using path item name",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithServer("/foo", ""),
+						openapitest.WithPath("/foo/bar",
+							openapitest.WithOperation("get", openapitest.WithOperationSummary("should not be used")),
+						),
+					),
+				)
+			},
+			requestUrl:  "http://foo.api/api/services/http/foo/bruno.yaml?itemName=path",
+			contentType: "application/yaml",
+			responseBody: `opencollection: 1.0.0
+info:
+  name: foo
+config:
+  environments:
+    - name: foo.api-foo
+      variables:
+        - name: baseUrl
+          value: http://foo.api/foo
+items:
+  - info:
+      name: GET /foo/bar
+      type: http
+      seq: 1
+    http:
+      method: GET
+      url: '{{baseUrl}}/foo/bar'
+request:
+  variables:
+    - name: baseUrl
+      value: http://foo.api/foo
+bundled: true
+`,
+		},
 	}
 
 	t.Parallel()

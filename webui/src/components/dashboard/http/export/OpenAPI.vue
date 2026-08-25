@@ -66,7 +66,7 @@ function copyToClipboard(event: MouseEvent) {
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div v-if="!isLiveMode" class="alert alert-primary py-2 px-3 mb-3" role="alert">
+                    <div v-if="!isLiveMode" class="alert alert-primary py-2 px-3 mb-3 small" role="alert">
                         This is a demo dashboard — OpenAPI exports aren't available here.
                         <a href="/docs/get-started/installation" >Install Mokapi</a> to try this with your own API.
                     </div>

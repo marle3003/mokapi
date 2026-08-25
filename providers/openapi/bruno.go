@@ -391,11 +391,14 @@ func getBrunoItemName(op *Operation, opt BrunoExportOptions) string {
 	case PathHttpItemName:
 		return op.Path.Path
 	default:
-		if op.Summary != "" {
-			return op.Summary
+		if s := strings.TrimSpace(op.Summary); s != "" {
+			return s
 		}
-		if op.Path.Summary != "" {
-			return op.Path.Summary
+		if op.OperationId != "" {
+			return op.OperationId
+		}
+		if s := strings.TrimSpace(op.Path.Summary); s != "" {
+			return s
 		}
 		return op.Path.Path
 	}
