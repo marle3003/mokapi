@@ -18,12 +18,15 @@ import { useRouter } from '@/router'
 import Request from './Request.vue'
 import type { ServiceResult } from '@/types/dashboard'
 import Server from './Server.vue'
+import ExportAsyncApi from './export/AsyncAPI.vue'
+import { useToolbarItem } from '@/composables/toolbar-items.ts'
 
 const route = useRoute();
 const router = useRouter();
 const serviceName = route.params.service?.toString()
 let data = ref<ServiceResult | null>(null);
 const { dashboard } = useDashboard();
+const exportAsyncAPIDialogVisible = ref(false)
 
 const service = computed(() => {
     if (!data.value) {
@@ -56,6 +59,15 @@ watch(() => route.hash, (hash) => {
         activeTab.value = hash ? hash.slice(1) : 'tab-topics'
     },
     { immediate: true }
+)
+useToolbarItem(
+    {
+        label: 'Export AsyncAPI',
+        icon: 'bi-file-earmark-code',
+        onClick: () => {
+            exportAsyncAPIDialogVisible.value = true
+        }
+    }
 )
 </script>
 
@@ -136,6 +148,7 @@ watch(() => route.hash, (hash) => {
     </div>
     <message v-if="$route.name == getRouteName('kafkaMessage').value"></message>
     <request v-if="$route.name == getRouteName('kafkaRequest').value"></request>
+    <ExportAsyncApi v-if="service" :service-name="service.name" v-model:visible="exportAsyncAPIDialogVisible" />
 </template>
 
 <style scoped>

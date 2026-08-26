@@ -9,7 +9,7 @@ type ConfigOptions func(c *asyncapi3.Config)
 
 func NewConfig(opts ...ConfigOptions) *asyncapi3.Config {
 	c := &asyncapi3.Config{
-		Version:            "2.0.0",
+		Version:            "3.0.0",
 		Info:               asyncapi3.Info{Name: "test", Version: "1.0"},
 		Servers:            &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{},
 		DefaultContentType: asyncapi3.DefaultContentType,

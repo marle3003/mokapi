@@ -16,12 +16,15 @@ import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useRouter } from '@/router'
 import type { ServiceResult } from '@/types/dashboard'
 import '@/assets/mqtt.css'
+import ExportAsyncApi from './export/AsyncAPI.vue'
+import { useToolbarItem } from '@/composables/toolbar-items.ts'
 
 const route = useRoute();
 const router = useRouter();
 const serviceName = route.params.service?.toString()
 let data = ref<ServiceResult | null>(null);
 const { dashboard } = useDashboard();
+const exportAsyncAPIDialogVisible = ref(false)
 
 const service = computed(() => {
     if (!data.value) {
@@ -54,6 +57,15 @@ watch(() => route.hash, (hash) => {
         activeTab.value = hash ? hash.slice(1) : 'tab-channels'
     },
     { immediate: true }
+)
+useToolbarItem(
+    {
+        label: 'Export AsyncAPI',
+        icon: 'bi-file-earmark-code',
+        onClick: () => {
+            exportAsyncAPIDialogVisible.value = true
+        }
+    }
 )
 </script>
 
@@ -122,6 +134,7 @@ watch(() => route.hash, (hash) => {
         <websocket-event :service="service"></websocket-event>
     </div>
     <message v-if="$route.name == getRouteName('websocketMessage').value"></message>
+    <ExportAsyncApi v-if="service" :service-name="service.name" v-model:visible="exportAsyncAPIDialogVisible" />
 </template>
 
 <style scoped>

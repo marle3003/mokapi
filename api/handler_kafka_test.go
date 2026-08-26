@@ -1061,6 +1061,50 @@ func TestHandler_KafkaAPI(t *testing.T) {
 				)
 			},
 		},
+		{
+			name: "export to AsyncAPI.json",
+			app: func() *runtime.App {
+				return runtimetest.NewKafkaApp(
+					asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "", ""),
+						asyncapi3test.WithChannel("foo"),
+					),
+				)
+			},
+			test: func(t *testing.T, app *runtime.App, h http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/asyncapi.json",
+					map[string]string{"Accept": "application/json"},
+					"",
+					h,
+					try.HasStatusCode(http.StatusOK),
+					try.HasBody("{\n  \"asyncapi\": \"3.0.0\",\n  \"info\": {\n    \"title\": \"foo\"\n  },\n  \"defaultContentType\": \"application/json\",\n  \"servers\": {\n    \"mokapi\": {\n      \"host\": \":9092\",\n      \"title\": \"Mokapi Default Broker\",\n      \"summary\": \"Automatically added broker because no servers are defined in the AsyncAPI spec\",\n      \"protocol\": \"kafka\"\n    }\n  },\n  \"channels\": {\n    \"foo\": {\n      \"bindings\": {}\n    }\n  }\n}"),
+				)
+			},
+		},
+		{
+			name: "export to OpenAPI.yaml",
+			app: func() *runtime.App {
+				return runtimetest.NewKafkaApp(
+					asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "", ""),
+						asyncapi3test.WithChannel("foo"),
+					),
+				)
+			},
+			test: func(t *testing.T, app *runtime.App, h http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/asyncapi.yaml",
+					map[string]string{"Accept": "application/json"},
+					"",
+					h,
+					try.HasStatusCode(http.StatusOK),
+					try.HasBody("asyncapi: 3.0.0\ninfo:\n  title: foo\ndefaultContentType: application/json\nservers:\n  mokapi:\n    host: :9092\n    title: Mokapi Default Broker\n    summary: Automatically added broker because no servers are defined in the AsyncAPI spec\n    protocol: kafka\nchannels:\n  foo:\n    bindings: {}\n"),
+				)
+			},
+		},
 	}
 
 	t.Parallel()

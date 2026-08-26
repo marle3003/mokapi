@@ -96,6 +96,7 @@ func (h *handler) setupWebsocket() {
 
 	r.HandleFunc("", h.getWebsocketServices).Methods(http.MethodGet)
 	r.HandleFunc("/{service}", h.getWebsocketInfo).Methods(http.MethodGet)
+	r.HandleFunc("/{cluster}/asyncapi.{ext}", h.exportAsyncApi).Methods(http.MethodGet)
 	r.HandleFunc("/{service}/channels", h.getWebsocketChannels).Methods(http.MethodGet)
 }
 

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,6 +21,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 )
 
 type kafkaInfo struct {
@@ -208,6 +210,7 @@ func (h *handler) setupKafka() {
 
 	r.HandleFunc("", h.getKafkaClusters).Methods(http.MethodGet)
 	r.HandleFunc("/{cluster}", h.getKafkaInfo).Methods(http.MethodGet)
+	r.HandleFunc("/{cluster}/asyncapi.{ext}", h.exportAsyncApi).Methods(http.MethodGet)
 	r.HandleFunc("/{cluster}/topics", h.getKafkaTopics).Methods(http.MethodGet)
 	r.HandleFunc("/{cluster}/topics/{topic}", h.getKafkaTopic).Methods(http.MethodGet)
 	r.HandleFunc("/{cluster}/topics/{topic}", h.produceKafkaMessage).Methods(http.MethodPost)
@@ -873,4 +876,43 @@ func getSoftware(name, version string) string {
 		}
 	}
 	return software
+}
+
+func (h *handler) exportAsyncApi(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	s := h.app.Kafka.Get(vars["cluster"])
+	if s == nil {
+		w.WriteHeader(404)
+		return
+	}
+	ext := vars["ext"]
+	var b []byte
+	var err error
+	var ct string
+	switch ext {
+	case "json":
+		b, err = json.MarshalIndent(s.Config, "", "  ")
+		ct = "application/json"
+		break
+	case "yaml":
+		var buf bytes.Buffer
+		enc := yaml.NewEncoder(&buf)
+		enc.SetIndent(2)
+		err = enc.Encode(s.Config)
+		if err != nil {
+			err = enc.Close()
+		}
+		b = buf.Bytes()
+		ct = "application/yaml"
+	}
+
+	if err != nil {
+		w.WriteHeader(500)
+		_, _ = w.Write([]byte(err.Error()))
+		return
+	}
+
+	w.Header().Set("Content-Type", ct)
+	_, _ = w.Write(b)
 }
