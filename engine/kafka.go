@@ -63,7 +63,7 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 				return nil, fmt.Errorf("failed to produce message to Kafka topic '%v': %w", t.Name, err)
 			}
 			if msg != nil {
-				if msg.Bindings.Kafka.Key != nil {
+				if msg.Bindings != nil && msg.Bindings.Kafka.Key != nil {
 					keySchema = msg.Bindings.Kafka.Key
 				}
 				payload = msg.Payload

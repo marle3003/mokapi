@@ -46,12 +46,15 @@ func UseOperationMessage(msg *asyncapi3.Message) OperationOptions {
 
 func WithOperationChannel(ch *asyncapi3.Channel) OperationOptions {
 	return func(o *asyncapi3.Operation) {
-		o.Channel = asyncapi3.ChannelRef{Value: ch}
+		o.Channel = &asyncapi3.ChannelRef{Value: ch}
 	}
 }
 
 func WithOperationBinding(b asyncapi3.KafkaOperationBinding) OperationOptions {
 	return func(o *asyncapi3.Operation) {
+		if o.Bindings == nil {
+			o.Bindings = &asyncapi3.OperationBindings{}
+		}
 		o.Bindings.Kafka = b
 	}
 }

@@ -66,7 +66,7 @@ func (s *Store) Update(cfg *asyncapi3.Config) {
 			path = c.Address
 		}
 
-		if c.Bindings.Websocket.Method != "" {
+		if c.Bindings != nil && c.Bindings.Websocket.Method != "" {
 			if strings.ToUpper(c.Bindings.Websocket.Method) != "GET" {
 				log.Warnf("channel %s: mokapi only supports WebSocket method GET, ignoring method %q", path, c.Bindings.Websocket.Method)
 			}
@@ -218,6 +218,9 @@ func (s *Store) log(log events.EventData, traits events.Traits) {
 }
 
 func parseQuery(r *http.Request, ch *Channel) (map[string]any, error) {
+	if ch.cfg.Bindings == nil {
+		return map[string]any{}, nil
+	}
 	s := ch.cfg.Bindings.Websocket.Query
 	if s == nil {
 		return map[string]any{}, nil
@@ -245,6 +248,9 @@ func parseQuery(r *http.Request, ch *Channel) (map[string]any, error) {
 }
 
 func parseHeader(r *http.Request, ch *Channel) (map[string]any, error) {
+	if ch.cfg.Bindings == nil {
+		return map[string]any{}, nil
+	}
 	s := ch.cfg.Bindings.Websocket.Headers
 	if s == nil {
 		return map[string]any{}, nil

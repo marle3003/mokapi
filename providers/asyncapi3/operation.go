@@ -1,6 +1,7 @@
 package asyncapi3
 
 import (
+	"encoding/json"
 	"mokapi/config/dynamic"
 
 	"gopkg.in/yaml.v3"
@@ -12,16 +13,16 @@ type OperationRef struct {
 }
 
 type Operation struct {
-	Action      string               `yaml:"action" json:"action"`
-	Channel     ChannelRef           `yaml:"channel" json:"channel"`
-	Title       string               `yaml:"title" json:"title"`
-	Summary     string               `yaml:"summary" json:"summary"`
-	Description string               `yaml:"description" json:"description"`
-	Bindings    OperationBindings    `yaml:"bindings" json:"bindings"`
-	Traits      []*OperationTraitRef `yaml:"traits" json:"traits"`
-	Messages    []*MessageRef        `yaml:"messages" json:"messages"`
+	Action      string               `yaml:"action,omitempty" json:"action,omitempty"`
+	Channel     *ChannelRef          `yaml:"channel,omitempty" json:"channel,omitempty"`
+	Title       string               `yaml:"title,omitempty" json:"title,omitempty"`
+	Summary     string               `yaml:"summary,omitempty" json:"summary,omitempty"`
+	Description string               `yaml:"description,omitempty" json:"description,omitempty"`
+	Bindings    *OperationBindings   `yaml:"bindings,omitempty" json:"bindings,omitempty"`
+	Traits      []*OperationTraitRef `yaml:"traits,omitempty" json:"traits,omitempty"`
+	Messages    []*MessageRef        `yaml:"messages,omitempty" json:"messages,omitempty"`
 
-	ExternalDocs []*ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
+	ExternalDocs []*ExternalDocRef `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 }
 
 type OperationTraitRef struct {
@@ -30,13 +31,13 @@ type OperationTraitRef struct {
 }
 
 type OperationTrait struct {
-	Channel     *ChannelRef       `yaml:"channel" json:"channel"`
-	Title       string            `yaml:"title" json:"title"`
-	Summary     string            `yaml:"summary" json:"summary"`
-	Description string            `yaml:"description" json:"description"`
-	Bindings    OperationBindings `yaml:"bindings" json:"bindings"`
+	Channel     *ChannelRef        `yaml:"channel,omitempty" json:"channel,omitempty"`
+	Title       string             `yaml:"title,omitempty" json:"title,omitempty"`
+	Summary     string             `yaml:"summary,omitempty" json:"summary,omitempty"`
+	Description string             `yaml:"description,omitempty" json:"description,omitempty"`
+	Bindings    *OperationBindings `yaml:"bindings,omitempty" json:"bindings,omitempty"`
 
-	ExternalDocs []*ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
+	ExternalDocs []*ExternalDocRef `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 }
 
 func (r *OperationRef) UnmarshalYAML(node *yaml.Node) error {
@@ -47,12 +48,40 @@ func (r *OperationRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
 }
 
+func (r *OperationRef) MarshalJSON() ([]byte, error) {
+	if r.Value != nil {
+		return json.Marshal(r.Value)
+	}
+	return json.Marshal(r.Reference)
+}
+
+func (r *OperationRef) MarshalYAML() (any, error) {
+	if r.Value != nil {
+		return r.Value, nil
+	}
+	return r.Reference, nil
+}
+
 func (r *OperationTraitRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.UnmarshalYaml(node, &r.Value)
 }
 
 func (r *OperationTraitRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
+}
+
+func (r *OperationTraitRef) MarshalJSON() ([]byte, error) {
+	if r.Value != nil {
+		return json.Marshal(r.Value)
+	}
+	return json.Marshal(r.Reference)
+}
+
+func (r *OperationTraitRef) MarshalYAML() (any, error) {
+	if r.Value != nil {
+		return r.Value, nil
+	}
+	return r.Reference, nil
 }
 
 func (r *OperationRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
@@ -76,7 +105,7 @@ func (o *Operation) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		return nil
 	}
 
-	if len(o.Channel.Ref) > 0 {
+	if o.Channel != nil && len(o.Channel.Ref) > 0 {
 		r := dynamic.Reference[ChannelRef]{Ref: o.Channel.Ref}
 		resolved, err := r.Resolve(config, reader)
 		if err != nil {
@@ -130,10 +159,14 @@ func (o *Operation) applyTrait(trait *OperationTrait) {
 
 	o.ExternalDocs = append(o.ExternalDocs, trait.ExternalDocs...)
 
-	if o.Bindings.Kafka.ClientId == nil {
-		o.Bindings.Kafka.ClientId = trait.Bindings.Kafka.ClientId
-	}
-	if o.Bindings.Kafka.GroupId == nil {
-		o.Bindings.Kafka.GroupId = trait.Bindings.Kafka.GroupId
+	if o.Bindings == nil {
+		o.Bindings = trait.Bindings
+	} else {
+		if o.Bindings.Kafka.ClientId == nil {
+			o.Bindings.Kafka.ClientId = trait.Bindings.Kafka.ClientId
+		}
+		if o.Bindings.Kafka.GroupId == nil {
+			o.Bindings.Kafka.GroupId = trait.Bindings.Kafka.GroupId
+		}
 	}
 }

@@ -1,6 +1,7 @@
 package asyncapi3
 
 import (
+	"encoding/json"
 	"mokapi/config/dynamic"
 
 	"gopkg.in/yaml.v3"
@@ -12,17 +13,17 @@ type ServerRef struct {
 }
 
 type Server struct {
-	Host            string                        `yaml:"host" json:"host"`
-	Pathname        string                        `yaml:"pathname" json:"pathname"`
-	Title           string                        `yaml:"title" json:"title"`
-	Summary         string                        `yaml:"summary" json:"summary"`
-	Description     string                        `yaml:"description" json:"description"`
-	Protocol        string                        `yaml:"protocol" json:"protocol"`
-	ProtocolVersion string                        `yaml:"protocolVersion" json:"protocolVersion"`
-	Variables       map[string]*ServerVariableRef `yaml:"variables" json:"variables"`
-	Tags            []*TagRef                     `yaml:"tags" json:"tags"`
-	Bindings        ServerBindings                `yaml:"bindings" json:"bindings"`
-	ExternalDocs    []ExternalDocRef              `yaml:"externalDocs" json:"externalDocs"`
+	Host            string                        `yaml:"host,omitempty" json:"host,omitempty"`
+	Pathname        string                        `yaml:"pathname,omitempty" json:"pathname,omitempty"`
+	Title           string                        `yaml:"title,omitempty" json:"title,omitempty"`
+	Summary         string                        `yaml:"summary,omitempty" json:"summary,omitempty"`
+	Description     string                        `yaml:"description,omitempty" json:"description,omitempty"`
+	Protocol        string                        `yaml:"protocol,omitempty" json:"protocol,omitempty"`
+	ProtocolVersion string                        `yaml:"protocolVersion,omitempty" json:"protocolVersion,omitempty"`
+	Variables       map[string]*ServerVariableRef `yaml:"variables,omitempty" json:"variables,omitempty"`
+	Tags            []*TagRef                     `yaml:"tags,omitempty" json:"tags,omitempty"`
+	Bindings        *ServerBindings               `yaml:"bindings,omitempty" json:"bindings,omitempty"`
+	ExternalDocs    []ExternalDocRef              `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 }
 
 type ServerVariableRef struct {
@@ -97,6 +98,20 @@ func (r *ServerRef) UnmarshalYAML(node *yaml.Node) error {
 
 func (r *ServerRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
+}
+
+func (r *ServerRef) MarshalJSON() ([]byte, error) {
+	if r.Value != nil {
+		return json.Marshal(r.Value)
+	}
+	return json.Marshal(r.Reference)
+}
+
+func (r *ServerRef) MarshalYAML() (any, error) {
+	if r.Value != nil {
+		return r.Value, nil
+	}
+	return r.Reference, nil
 }
 
 func (r *ServerVariableRef) UnmarshalYAML(node *yaml.Node) error {

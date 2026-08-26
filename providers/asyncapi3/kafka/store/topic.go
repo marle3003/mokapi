@@ -42,7 +42,10 @@ func (t *Topic) delete() {
 func newTopic(name string, channel *asyncapi3.Channel, ops []*asyncapi3.Operation, s *Store) *Topic {
 	t := &Topic{Name: name, logger: s.log, s: s, Config: channel, operations: ops}
 
-	numPartitions := channel.Bindings.Kafka.Partitions
+	numPartitions := 1
+	if channel.Bindings != nil {
+		numPartitions = channel.Bindings.Kafka.Partitions
+	}
 	for i := 0; i < numPartitions; i++ {
 		part := newPartition(i, s.brokers, t.log, s.trigger, t)
 		part.validator = newValidator(channel)
@@ -54,7 +57,10 @@ func newTopic(name string, channel *asyncapi3.Channel, ops []*asyncapi3.Operatio
 
 func (t *Topic) update(config *asyncapi3.Channel, s *Store) {
 	t.Config = config
-	numPartitions := config.Bindings.Kafka.Partitions
+	numPartitions := 1
+	if config.Bindings != nil {
+		numPartitions = config.Bindings.Kafka.Partitions
+	}
 
 	for i, p := range t.Partitions {
 		if i >= numPartitions {

@@ -431,11 +431,29 @@ func TestConfig_Patch_Channel(t *testing.T) {
 			configs: []*asyncapi3.Config{
 				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo")),
 				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
-					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 1}),
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 5}),
 				)),
 			},
 			test: func(t *testing.T, result *asyncapi3.Config) {
-				require.Equal(t, 1, result.Channels["foo"].Value.Bindings.Kafka.Partitions)
+				require.Equal(t, 5, result.Channels["foo"].Value.Bindings.Kafka.Partitions)
+			},
+		},
+		{
+			name: "add channel Partition",
+			configs: []*asyncapi3.Config{
+				{
+					Channels: map[string]*asyncapi3.ChannelRef{
+						"foo": {
+							Value: &asyncapi3.Channel{},
+						},
+					},
+				},
+				asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo",
+					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 5}),
+				)),
+			},
+			test: func(t *testing.T, result *asyncapi3.Config) {
+				require.Equal(t, 5, result.Channels["foo"].Value.Bindings.Kafka.Partitions)
 			},
 		},
 		{

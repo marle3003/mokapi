@@ -1,6 +1,7 @@
 package asyncapi3
 
 import (
+	"encoding/json"
 	"mokapi/config/dynamic"
 
 	log "github.com/sirupsen/logrus"
@@ -13,23 +14,23 @@ type MessageRef struct {
 }
 
 type Message struct {
-	Title       string `yaml:"title" json:"title"`
-	Name        string `yaml:"name" json:"name"`
-	Summary     string `yaml:"summary" json:"summary"`
-	Description string `yaml:"description" json:"description"`
-	Deprecated  bool   `yaml:"deprecated" json:"deprecated"`
+	Title       string `yaml:"title,omitempty" json:"title,omitempty"`
+	Name        string `yaml:"name,omitempty" json:"name,omitempty"`
+	Summary     string `yaml:"summary,omitempty" json:"summary,omitempty"`
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+	Deprecated  bool   `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
 
-	CorrelationId *CorrelationIdRef `yaml:"correlationId" json:"correlationId"`
+	CorrelationId *CorrelationIdRef `yaml:"correlationId,omitempty" json:"correlationId,omitempty"`
 
-	ContentType string             `yaml:"contentType" json:"contentType"`
-	Headers     *SchemaRef         `yaml:"headers" json:"headers"`
-	Payload     *SchemaRef         `yaml:"payload" json:"payload"`
-	Bindings    MessageBinding     `yaml:"bindings" json:"bindings"`
-	Traits      []*MessageTraitRef `yaml:"traits" json:"traits"`
+	ContentType string             `yaml:"contentType,omitempty" json:"contentType,omitempty"`
+	Headers     *SchemaRef         `yaml:"headers,omitempty" json:"headers,omitempty"`
+	Payload     *SchemaRef         `yaml:"payload,omitempty" json:"payload,omitempty"`
+	Bindings    *MessageBinding    `yaml:"bindings,omitempty" json:"bindings,omitempty"`
+	Traits      []*MessageTraitRef `yaml:"traits,omitempty" json:"traits,omitempty"`
 
-	Examples []interface{} `yaml:"examples" json:"examples"`
+	Examples []interface{} `yaml:"examples,omitempty" json:"examples,omitempty"`
 
-	ExternalDocs []*ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
+	ExternalDocs []*ExternalDocRef `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 }
 
 type MessageTraitRef struct {
@@ -38,20 +39,20 @@ type MessageTraitRef struct {
 }
 
 type MessageTrait struct {
-	Name        string `yaml:"name" json:"name"`
-	Title       string `yaml:"title" json:"title"`
-	Summary     string `yaml:"summary" json:"summary"`
-	Description string `yaml:"description" json:"description"`
+	Name        string `yaml:"name,omitempty" json:"name,omitempty"`
+	Title       string `yaml:"title,omitempty" json:"title,omitempty"`
+	Summary     string `yaml:"summary,omitempty" json:"summary,omitempty"`
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 
-	CorrelationId *CorrelationIdRef `yaml:"correlationId" json:"correlationId"`
+	CorrelationId *CorrelationIdRef `yaml:"correlationId,omitempty" json:"correlationId,omitempty"`
 
-	ContentType string         `yaml:"contentType" json:"contentType"`
-	Headers     *SchemaRef     `yaml:"headers" json:"headers"`
-	Bindings    MessageBinding `yaml:"bindings" json:"bindings"`
+	ContentType string          `yaml:"contentType,omitempty" json:"contentType,omitempty"`
+	Headers     *SchemaRef      `yaml:"headers,omitempty" json:"headers,omitempty"`
+	Bindings    *MessageBinding `yaml:"bindings,omitempty" json:"bindings,omitempty"`
 
-	Examples []*MessageExample `yaml:"examples" json:"examples"`
+	Examples []*MessageExample `yaml:"examples,omitempty" json:"examples,omitempty"`
 
-	ExternalDocs []*ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
+	ExternalDocs []*ExternalDocRef `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 }
 
 func (r *MessageRef) UnmarshalYAML(node *yaml.Node) error {
@@ -62,12 +63,40 @@ func (r *MessageRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
 }
 
+func (r *MessageRef) MarshalJSON() ([]byte, error) {
+	if r.Value != nil {
+		return json.Marshal(r.Value)
+	}
+	return json.Marshal(r.Reference)
+}
+
+func (r *MessageRef) MarshalYAML() (any, error) {
+	if r.Value != nil {
+		return r.Value, nil
+	}
+	return r.Reference, nil
+}
+
 func (r *MessageTraitRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.UnmarshalYaml(node, &r.Value)
 }
 
 func (r *MessageTraitRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
+}
+
+func (r *MessageTraitRef) MarshalJSON() ([]byte, error) {
+	if r.Value != nil {
+		return json.Marshal(r.Value)
+	}
+	return json.Marshal(r.Reference)
+}
+
+func (r *MessageTraitRef) MarshalYAML() (any, error) {
+	if r.Value != nil {
+		return r.Value, nil
+	}
+	return r.Reference, nil
 }
 
 func (r *MessageRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
@@ -126,7 +155,7 @@ func (m *Message) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		}
 	}
 
-	if m.Bindings.Kafka.Key != nil {
+	if m.Bindings != nil && m.Bindings.Kafka.Key != nil {
 		err := m.Bindings.Kafka.Key.Parse(config, reader)
 		if err != nil {
 			return err
@@ -195,7 +224,7 @@ func (m *Message) applyTrait(trait *MessageTrait) {
 	m.Examples = append(m.Examples, trait.Examples)
 	m.ExternalDocs = append(m.ExternalDocs, trait.ExternalDocs...)
 
-	if m.Bindings.Kafka.Key == nil {
+	if m.Bindings != nil && m.Bindings.Kafka.Key == nil {
 		m.Bindings.Kafka.Key = trait.Bindings.Kafka.Key
 	}
 }

@@ -1,6 +1,7 @@
 package asyncapi3
 
 import (
+	"encoding/json"
 	"mokapi/config/dynamic"
 
 	"gopkg.in/yaml.v3"
@@ -12,9 +13,9 @@ type TagRef struct {
 }
 
 type Tag struct {
-	Name         string            `yaml:"name" json:"name"`
-	Description  string            `yaml:"description" json:"description"`
-	ExternalDocs []*ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
+	Name         string            `yaml:"name,omitempty" json:"name,omitempty"`
+	Description  string            `yaml:"description,omitempty" json:"description,omitempty"`
+	ExternalDocs []*ExternalDocRef `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 }
 
 func (r *TagRef) UnmarshalYAML(node *yaml.Node) error {
@@ -23,6 +24,20 @@ func (r *TagRef) UnmarshalYAML(node *yaml.Node) error {
 
 func (r *TagRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
+}
+
+func (r *TagRef) MarshalJSON() ([]byte, error) {
+	if r.Value != nil {
+		return json.Marshal(r.Value)
+	}
+	return json.Marshal(r.Reference)
+}
+
+func (r *TagRef) MarshalYAML() (any, error) {
+	if r.Value != nil {
+		return r.Value, nil
+	}
+	return r.Reference, nil
 }
 
 func (r *TagRef) parse(config *dynamic.Config, reader dynamic.Reader) error {

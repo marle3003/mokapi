@@ -3,17 +3,17 @@ package asyncapi3
 import "mokapi/config/dynamic"
 
 type Components struct {
-	Servers         map[string]*ServerRef         `yaml:"servers" json:"servers"`
-	Tags            map[string]*TagRef            `yaml:"tags" json:"tags"`
-	Channels        map[string]*ChannelRef        `yaml:"channels" json:"channels"`
-	Schemas         map[string]*SchemaRef         `yaml:"schemas" json:"schemas"`
-	Messages        map[string]*MessageRef        `yaml:"messages" json:"messages"`
-	Operations      map[string]*OperationRef      `yaml:"operations" json:"operations"`
-	Parameters      map[string]*ParameterRef      `yaml:"parameters" json:"parameters"`
-	CorrelationIds  map[string]*CorrelationIdRef  `yaml:"correlationIds" json:"correlationIds"`
-	ExternalDocs    map[string]*ExternalDocRef    `yaml:"externalDocs" json:"externalDocs"`
-	OperationTraits map[string]*OperationTraitRef `yaml:"operationTraits" json:"operationTraits"`
-	MessageTraits   map[string]*MessageTraitRef   `yaml:"messageTraits" json:"messageTraits"`
+	Servers         map[string]*ServerRef         `yaml:"servers,omitempty" json:"servers,omitempty"`
+	Tags            map[string]*TagRef            `yaml:"tags,omitempty" json:"tags,omitempty"`
+	Channels        map[string]*ChannelRef        `yaml:"channels,omitempty" json:"channels,omitempty"`
+	Schemas         map[string]*SchemaRef         `yaml:"schemas,omitempty" json:"schemas,omitempty"`
+	Messages        map[string]*MessageRef        `yaml:"messages,omitempty" json:"messages,omitempty"`
+	Operations      map[string]*OperationRef      `yaml:"operations,omitempty" json:"operations,omitempty"`
+	Parameters      map[string]*ParameterRef      `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	CorrelationIds  map[string]*CorrelationIdRef  `yaml:"correlationIds,omitempty" json:"correlationIds,omitempty"`
+	ExternalDocs    map[string]*ExternalDocRef    `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
+	OperationTraits map[string]*OperationTraitRef `yaml:"operationTraits,omitempty" json:"operationTraits,omitempty"`
+	MessageTraits   map[string]*MessageTraitRef   `yaml:"messageTraits,omitempty" json:"messageTraits,omitempty"`
 }
 
 func (c *Components) parse(config *dynamic.Config, reader dynamic.Reader) error {
