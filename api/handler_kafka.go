@@ -611,6 +611,11 @@ func newTopic(t *store.Topic, ki *runtime.KafkaInfo, ch *asyncapi3.Channel, m *m
 		return partitions[i].Id < partitions[j].Id
 	})
 
+	bindings := asyncapi3.TopicBindings{Partitions: 1}
+	if t.Config.Bindings != nil {
+		bindings = t.Config.Bindings.Kafka
+	}
+
 	result := kafkaTopic{
 		Name:        t.Name,
 		Title:       ch.Title,
@@ -618,13 +623,13 @@ func newTopic(t *store.Topic, ki *runtime.KafkaInfo, ch *asyncapi3.Channel, m *m
 		Description: ch.Description,
 		Partitions:  partitions,
 		Bindings: kafkaBindings{
-			Partitions:            t.Config.Bindings.Kafka.Partitions,
-			RetentionBytes:        t.Config.Bindings.Kafka.RetentionBytes,
-			RetentionMs:           t.Config.Bindings.Kafka.RetentionMs,
-			SegmentBytes:          t.Config.Bindings.Kafka.SegmentBytes,
-			SegmentMs:             t.Config.Bindings.Kafka.SegmentMs,
-			ValueSchemaValidation: t.Config.Bindings.Kafka.ValueSchemaValidation,
-			KeySchemaValidation:   t.Config.Bindings.Kafka.KeySchemaValidation,
+			Partitions:            bindings.Partitions,
+			RetentionBytes:        bindings.RetentionBytes,
+			RetentionMs:           bindings.RetentionMs,
+			SegmentBytes:          bindings.SegmentBytes,
+			SegmentMs:             bindings.SegmentMs,
+			ValueSchemaValidation: bindings.ValueSchemaValidation,
+			KeySchemaValidation:   bindings.KeySchemaValidation,
 		},
 		Tags:   getKafkaTags(ch),
 		Groups: getGroupInfos(ki, t.Name, m),
