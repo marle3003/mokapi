@@ -80,7 +80,7 @@ func validateProducer(t *Topic, ctx *kafka.ClientContext) error {
 		if op.Action != "send" {
 			continue
 		}
-		if op.Bindings.Kafka.ClientId != nil {
+		if op.Bindings != nil && op.Bindings.Kafka.ClientId != nil {
 			s := op.Bindings.Kafka.ClientId
 			p := parser.Parser{Schema: s}
 			_, err := p.Parse(ctx.ClientId)

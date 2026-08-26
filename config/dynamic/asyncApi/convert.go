@@ -150,7 +150,7 @@ func addOperation(msgName, action string, op *Operation, ch *asyncapi3.ChannelRe
 
 	result := &asyncapi3.Operation{
 		Action:      action,
-		Channel:     *ch,
+		Channel:     ch,
 		Summary:     op.Summary,
 		Description: op.Description,
 		Bindings:    convertOperationBinding(op.Bindings),
@@ -349,8 +349,8 @@ func resolveServerUrl(s string) (protocol, host, path string) {
 	return
 }
 
-func convertServerBinding(b ServerBindings) asyncapi3.ServerBindings {
-	return asyncapi3.ServerBindings{Kafka: asyncapi3.BrokerBindings{
+func convertServerBinding(b ServerBindings) *asyncapi3.ServerBindings {
+	return &asyncapi3.ServerBindings{Kafka: asyncapi3.BrokerBindings{
 		LogRetentionBytes:            b.Kafka.LogRetentionBytes,
 		LogRetentionMs:               b.Kafka.LogRetentionMs,
 		LogRetentionCheckIntervalMs:  b.Kafka.LogRetentionCheckIntervalMs,
@@ -362,16 +362,16 @@ func convertServerBinding(b ServerBindings) asyncapi3.ServerBindings {
 	}}
 }
 
-func convertMessageBinding(b MessageBinding) asyncapi3.MessageBinding {
-	return asyncapi3.MessageBinding{
+func convertMessageBinding(b MessageBinding) *asyncapi3.MessageBinding {
+	return &asyncapi3.MessageBinding{
 		Kafka: asyncapi3.KafkaMessageBinding{
 			Key: b.Kafka.Key,
 		},
 	}
 }
 
-func convertChannelBinding(b ChannelBindings) asyncapi3.ChannelBindings {
-	return asyncapi3.ChannelBindings{Kafka: asyncapi3.TopicBindings{
+func convertChannelBinding(b ChannelBindings) *asyncapi3.ChannelBindings {
+	return &asyncapi3.ChannelBindings{Kafka: asyncapi3.TopicBindings{
 		Partitions:            b.Kafka.Partitions,
 		RetentionBytes:        b.Kafka.RetentionBytes,
 		RetentionMs:           b.Kafka.RetentionMs,
@@ -381,8 +381,8 @@ func convertChannelBinding(b ChannelBindings) asyncapi3.ChannelBindings {
 	}}
 }
 
-func convertOperationBinding(b OperationBindings) asyncapi3.OperationBindings {
-	return asyncapi3.OperationBindings{
+func convertOperationBinding(b OperationBindings) *asyncapi3.OperationBindings {
+	return &asyncapi3.OperationBindings{
 		Kafka: asyncapi3.KafkaOperationBinding{
 			GroupId:  b.Kafka.GroupId,
 			ClientId: b.Kafka.ClientId,

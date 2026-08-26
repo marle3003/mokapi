@@ -1,6 +1,7 @@
 package asyncapi3
 
 import (
+	"encoding/json"
 	"mokapi/config/dynamic"
 
 	"gopkg.in/yaml.v3"
@@ -12,8 +13,8 @@ type CorrelationIdRef struct {
 }
 
 type CorrelationId struct {
-	Description string `yaml:"description" json:"description"`
-	Location    string `yaml:"location" json:"location"`
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+	Location    string `yaml:"location,omitempty" json:"location,omitempty"`
 }
 
 func (r *CorrelationIdRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
@@ -34,4 +35,18 @@ func (r *CorrelationIdRef) UnmarshalYAML(node *yaml.Node) error {
 
 func (r *CorrelationIdRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
+}
+
+func (r *CorrelationIdRef) MarshalJSON() ([]byte, error) {
+	if r.Value != nil {
+		return json.Marshal(r.Value)
+	}
+	return json.Marshal(r.Reference)
+}
+
+func (r *CorrelationIdRef) MarshalYAML() (any, error) {
+	if r.Value != nil {
+		return r.Value, nil
+	}
+	return r.Reference, nil
 }

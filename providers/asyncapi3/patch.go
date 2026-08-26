@@ -95,7 +95,11 @@ func (s *Server) patch(patch *Server) {
 		s.ProtocolVersion = patch.ProtocolVersion
 	}
 
-	s.Bindings.Kafka.Patch(patch.Bindings.Kafka)
+	if s.Bindings != nil {
+		s.Bindings.Kafka.Patch(patch.Bindings.Kafka)
+	} else {
+		s.Bindings = patch.Bindings
+	}
 }
 
 func (c *Config) patchChannels(patch *Config) {
@@ -146,7 +150,11 @@ func (c *Channel) patch(patch *Channel) {
 		}
 	}
 
-	c.Bindings.Kafka.Patch(patch.Bindings.Kafka)
+	if c.Bindings != nil {
+		c.Bindings.Kafka.Patch(patch.Bindings.Kafka)
+	} else {
+		c.Bindings = patch.Bindings
+	}
 }
 
 func (o *Operation) patch(patch *Operation) {
@@ -204,7 +212,11 @@ func (m *Message) patch(patch *Message) {
 	} else {
 		m.Headers.Patch(patch.Headers)
 	}
-	m.Bindings.Kafka.Patch(patch.Bindings.Kafka)
+	if m.Bindings != nil {
+		m.Bindings.Kafka.Patch(patch.Bindings.Kafka)
+	} else {
+		m.Bindings = patch.Bindings
+	}
 }
 
 func (c *Config) patchComponents(patch *Config) {
@@ -287,6 +299,10 @@ func (b *BrokerBindings) Patch(patch BrokerBindings) {
 }
 
 func (t *TopicBindings) Patch(patch TopicBindings) {
+	for k, v := range patch.configs {
+		t.configs[k] = v
+	}
+
 	if patch.Partitions != 0 {
 		t.Partitions = patch.Partitions
 	}

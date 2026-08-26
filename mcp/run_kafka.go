@@ -297,7 +297,7 @@ func getKafkaMessages(msg *asyncapi3.MessageRef) KafkaMessage {
 	if msg.Value.Payload != nil {
 		m.Payload = msg.Value.Payload.Value
 	}
-	if msg.Value.Bindings.Kafka.Key != nil {
+	if msg.Value.Bindings != nil && msg.Value.Bindings.Kafka.Key != nil {
 		m.Key = msg.Value.Bindings.Kafka.Key
 	}
 	return m

@@ -66,7 +66,7 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyn
 	v := &messageValidator{messageId: messageId, msg: msg}
 
 	var msgParser encoding.Parser
-	if msg.Payload != nil && channel.Bindings.Kafka.ValueSchemaValidation {
+	if msg.Payload != nil && isValueSchemaValidationEnabled(channel) {
 		var err error
 		msgParser, err = msg.Payload.GetParser(msg.ContentType)
 		if err != nil {
@@ -80,7 +80,7 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyn
 		}
 	}
 
-	if msg.Bindings.Kafka.Key != nil && channel.Bindings.Kafka.KeySchemaValidation {
+	if msg.Bindings != nil && msg.Bindings.Kafka.Key != nil && isKeySchemaValidationEnabled(channel) {
 		var keyParser encoding.Parser
 		switch s := msg.Bindings.Kafka.Key.Value.(type) {
 		case *schema.Schema:
@@ -132,7 +132,7 @@ func (mv *messageValidator) Validate(record *kafka.Record) (*KafkaMessageLog, er
 		SequenceNumber: record.SequenceNumber,
 	}
 
-	if mv.msg != nil && mv.msg.Bindings.Kafka.SchemaIdLocation == "payload" {
+	if mv.msg != nil && mv.msg.Bindings != nil && mv.msg.Bindings.Kafka.SchemaIdLocation == "payload" {
 		var err error
 		r.SchemaId, err = readSchemaId(record.Value, mv.msg.Bindings.Kafka.SchemaIdPayloadEncoding)
 		if err != nil {
@@ -333,4 +333,18 @@ func parseHeader(headers []kafka.RecordHeader, sr *asyncapi3.SchemaRef) (map[str
 		}
 	}
 	return result, nil
+}
+
+func isValueSchemaValidationEnabled(ch *asyncapi3.Channel) bool {
+	if ch.Bindings == nil {
+		return true
+	}
+	return ch.Bindings.Kafka.ValueSchemaValidation
+}
+
+func isKeySchemaValidationEnabled(ch *asyncapi3.Channel) bool {
+	if ch.Bindings == nil {
+		return true
+	}
+	return ch.Bindings.Kafka.KeySchemaValidation
 }

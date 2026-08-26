@@ -20,6 +20,9 @@ func WithServerTags(tags ...asyncapi3.Tag) ServerOptions {
 
 func WithKafkaServerBinding(k asyncapi3.BrokerBindings) ServerOptions {
 	return func(s *asyncapi3.Server) {
+		if s.Bindings == nil {
+			s.Bindings = &asyncapi3.ServerBindings{}
+		}
 		s.Bindings.Kafka = k
 	}
 }

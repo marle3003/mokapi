@@ -80,6 +80,12 @@ func WithChannel(name string, opts ...ChannelOptions) ConfigOptions {
 		}
 		ch := NewChannel(opts...)
 		ch.Name = name
+		if ch.Bindings == nil {
+			ch.Bindings = &asyncapi3.ChannelBindings{}
+			ch.Bindings.Kafka.Partitions = 1
+			ch.Bindings.Kafka.ValueSchemaValidation = true
+			ch.Bindings.Kafka.KeySchemaValidation = true
+		}
 		c.Channels[name] = &asyncapi3.ChannelRef{Value: ch}
 		ch.Config = c
 	}

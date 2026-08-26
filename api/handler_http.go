@@ -603,5 +603,5 @@ func toOpenApiSchema(s *schema.Schema) *openapiSchema {
 
 func (s *openapiSchema) MarshalJSON() ([]byte, error) {
 	e := schema.Encoder{KeepRef: true}
-	return e.MarshalJSON(s.Schema)
+	return e.ToJSON(s.Schema)
 }

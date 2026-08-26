@@ -48,6 +48,9 @@ func WithContentType(s string) MessageOptions {
 
 func WithKey(s *schema.Schema) MessageOptions {
 	return func(m *asyncapi3.Message) {
+		if m.Bindings == nil {
+			m.Bindings = &asyncapi3.MessageBinding{}
+		}
 		m.Bindings.Kafka.Key = &asyncapi3.SchemaRef{Value: s}
 	}
 }
@@ -63,6 +66,9 @@ func WithMessageInfo(name, title, summary, description string) MessageOptions {
 
 func WithKafkaMessageBinding(b asyncapi3.KafkaMessageBinding) MessageOptions {
 	return func(m *asyncapi3.Message) {
+		if m.Bindings == nil {
+			m.Bindings = &asyncapi3.MessageBinding{}
+		}
 		m.Bindings.Kafka = b
 	}
 }

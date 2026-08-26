@@ -5,20 +5,119 @@ import (
 	"encoding/json"
 	"fmt"
 	"mokapi/config/dynamic"
+	"mokapi/sortedmap"
 	"reflect"
 	"strings"
 )
 
 func (s *Schema) MarshalJSON() ([]byte, error) {
-	e := encoder{refs: map[string]bool{}}
-	return e.encode(s)
+	e := Encoder{visited: map[*Schema]bool{}}
+	return e.ToJSON(s)
 }
 
-type encoder struct {
-	refs map[string]bool
+func (s *Schema) MarshalYAML() (any, error) {
+	e := Encoder{visited: map[*Schema]bool{}}
+	return e.ToYAML(s)
 }
 
-func (e *encoder) encode(r *Schema) ([]byte, error) {
+type Encoder struct {
+	KeepRef bool
+
+	visited map[*Schema]bool
+}
+
+func (e *Encoder) ToYAML(s *Schema) (any, error) {
+	if s == nil {
+		return nil, nil
+	}
+	if s.Boolean != nil {
+		return s.Boolean, nil
+	}
+	// check circular reference
+	if e.hasVisited(s) {
+		m := map[string]string{
+			"description": "circular reference",
+		}
+		if s.Ref != "" {
+			m["$ref"] = s.Ref
+		}
+		return m, nil
+	}
+	e.visited[s] = true
+	defer delete(e.visited, s)
+
+	result := &sortedmap.LinkedHashMap[string, any]{}
+	v := reflect.ValueOf(s).Elem()
+	t := v.Type()
+	var err error
+	for i := 0; i < v.NumField(); i++ {
+		ft := t.Field(i)
+		if !ft.IsExported() {
+			continue
+		}
+		f := v.FieldByName(ft.Name)
+		if isEmptyValue(f) {
+			continue
+		}
+		fv := f.Interface()
+		var fieldValue any
+		switch val := fv.(type) {
+		case Types:
+			switch len(val) {
+			case 0:
+				continue
+			case 1:
+				fieldValue = val[0]
+			default:
+				fieldValue = val
+			}
+		case *Schemas:
+			m := map[string]any{}
+			for it := val.Iter(); it.Next(); {
+				m[it.Key()], err = e.ToYAML(it.Value())
+				if err != nil {
+					return nil, err
+				}
+			}
+			fieldValue = m
+		case *Schema:
+			fieldValue, err = e.ToYAML(val)
+		case *UnionType[float64, bool]:
+			if val.IsA() {
+				fieldValue = val.A
+			} else {
+				fieldValue = val.B
+			}
+		case dynamic.Reference[*Schema]:
+			if val.Ref != "" && s.Sub == nil || e.KeepRef {
+				result.Set("$ref", val.Ref)
+			}
+			continue
+		case *Example:
+			if val.Value != nil {
+				fieldValue = val.Value
+			}
+		default:
+			fieldValue = val
+		}
+
+		if err != nil {
+			return nil, err
+		}
+
+		tag := t.Field(i).Tag.Get("yaml")
+		args := strings.Split(tag, ",")
+		name := args[0]
+		if name == "-" {
+			continue
+		}
+
+		result.Set(name, fieldValue)
+	}
+	return result, nil
+}
+
+func (e *Encoder) ToJSON(r *Schema) ([]byte, error) {
 	var b bytes.Buffer
 	if r.Boolean != nil {
 		b.Write([]byte(fmt.Sprintf("%v", *r.Boolean)))
@@ -27,19 +126,19 @@ func (e *encoder) encode(r *Schema) ([]byte, error) {
 
 	b.WriteRune('{')
 
-	if r.Ref != "" {
-		// loop protection, only return reference
-		if _, ok := e.refs[r.Ref]; ok {
-			b.Write([]byte(fmt.Sprintf(`"$ref":"%v"`, r.Ref)))
+	// check circular reference
+	if e.hasVisited(r) {
+		var v string
+		if r.Ref != "" {
+			v = fmt.Sprintf(`{"$ref":"%s","description":"circular reference"}`, r.Ref)
 
-			b.WriteRune('}')
-			return b.Bytes(), nil
+		} else {
+			v = `{"description":"circular reference"}`
 		}
-		e.refs[r.Ref] = true
-		defer func() {
-			delete(e.refs, r.Ref)
-		}()
+		return []byte(v), nil
 	}
+	e.visited[r] = true
+	defer delete(e.visited, r)
 
 	if r != nil {
 		v := reflect.ValueOf(r).Elem()
@@ -70,7 +169,7 @@ func (e *encoder) encode(r *Schema) ([]byte, error) {
 					if fields.Len() > 1 {
 						fields.WriteRune(',')
 					}
-					sField, err := e.encode(it.Value())
+					sField, err := e.ToJSON(it.Value())
 					if err != nil {
 						return nil, err
 					}
@@ -80,13 +179,14 @@ func (e *encoder) encode(r *Schema) ([]byte, error) {
 				fields.WriteRune('}')
 				bVal = fields.Bytes()
 			case *Schema:
-				bVal, err = e.encode(val)
+				bVal, err = e.ToJSON(val)
 			case dynamic.Reference[*Schema]:
-				if val.Ref != "" {
+				if val.Ref != "" && r.Sub == nil || e.KeepRef {
 					if b.Len() > 1 {
 						b.Write([]byte{','})
 					}
-					b.WriteString(fmt.Sprintf(`"$ref": "%s"`, val.Ref))
+					bVal, err = json.Marshal(val)
+					b.WriteString(strings.Trim(string(bVal), "{}"))
 				}
 				continue
 			default:
@@ -112,6 +212,14 @@ func (e *encoder) encode(r *Schema) ([]byte, error) {
 
 	b.WriteRune('}')
 	return b.Bytes(), nil
+}
+
+func (e *Encoder) hasVisited(s *Schema) bool {
+	if e.visited == nil {
+		e.visited = map[*Schema]bool{}
+		return false
+	}
+	return e.visited[s]
 }
 
 func isEmptyValue(v reflect.Value) bool {

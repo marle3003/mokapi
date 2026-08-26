@@ -9,9 +9,6 @@ type ChannelOptions func(c *asyncapi3.Channel)
 
 func NewChannel(opts ...ChannelOptions) *asyncapi3.Channel {
 	ch := &asyncapi3.Channel{}
-	// default enable validation
-	ch.Bindings.Kafka.ValueSchemaValidation = true
-	ch.Bindings.Kafka.Partitions = 1
 	for _, opt := range opts {
 		opt(ch)
 	}
@@ -39,12 +36,18 @@ func UseMessage(name string, msg *asyncapi3.MessageRef) ChannelOptions {
 
 func WithKafkaChannelBinding(bindings asyncapi3.TopicBindings) ChannelOptions {
 	return func(c *asyncapi3.Channel) {
+		if c.Bindings == nil {
+			c.Bindings = &asyncapi3.ChannelBindings{}
+		}
 		c.Bindings.Kafka = bindings
 	}
 }
 
 func WithWebsocketChannelBinding(bindings asyncapi3.WebsocketChannelBindings) ChannelOptions {
 	return func(c *asyncapi3.Channel) {
+		if c.Bindings == nil {
+			c.Bindings = &asyncapi3.ChannelBindings{}
+		}
 		c.Bindings.Websocket = bindings
 	}
 }

@@ -262,8 +262,11 @@ func (h *handler) getKafkaInfo(w http.ResponseWriter, r *http.Request) {
 			Summary:     s.Value.Summary,
 			Description: s.Value.Description,
 			Protocol:    s.Value.Protocol,
-			Configs:     s.Value.Bindings.Kafka.Configs(),
 		}
+		if s.Value.Bindings != nil {
+			ks.Configs = s.Value.Bindings.Kafka.Configs()
+		}
+
 		for _, r := range s.Value.Tags {
 			if r.Value == nil {
 				continue
@@ -786,7 +789,7 @@ func getMessageConfigs(ch *asyncapi3.Channel, cfg *asyncapi3.Config) map[string]
 			m.ContentType = cfg.DefaultContentType
 		}
 
-		if msg.Bindings.Kafka.Key != nil {
+		if msg.Bindings != nil && msg.Bindings.Kafka.Key != nil {
 			s, err := msg.Bindings.Kafka.Key.GetSchema()
 			if err != nil {
 				log.Errorf("failed to get schema for key in topic '%s': %v", ch.Name, err)

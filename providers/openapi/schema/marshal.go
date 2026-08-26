@@ -35,12 +35,12 @@ func (s *Schema) Marshal(i interface{}, contentType media.ContentType) ([]byte, 
 
 func (s *Schema) MarshalJSON() ([]byte, error) {
 	e := Encoder{visited: map[*Schema]bool{}}
-	return e.MarshalJSON(s)
+	return e.ToJSON(s)
 }
 
 func (s *Schema) MarshalYAML() (interface{}, error) {
 	e := Encoder{visited: map[*Schema]bool{}}
-	return e.MarshalYAML(s)
+	return e.ToYAML(s)
 }
 
 type Encoder struct {
@@ -49,7 +49,7 @@ type Encoder struct {
 	visited map[*Schema]bool
 }
 
-func (e *Encoder) MarshalYAML(s *Schema) (any, error) {
+func (e *Encoder) ToYAML(s *Schema) (any, error) {
 	if s == nil {
 		return nil, nil
 	}
@@ -97,14 +97,14 @@ func (e *Encoder) MarshalYAML(s *Schema) (any, error) {
 		case *Schemas:
 			m := map[string]any{}
 			for it := val.Iter(); it.Next(); {
-				m[it.Key()], err = e.MarshalYAML(it.Value())
+				m[it.Key()], err = e.ToYAML(it.Value())
 				if err != nil {
 					return nil, err
 				}
 			}
 			fieldValue = m
 		case *Schema:
-			fieldValue, err = e.MarshalYAML(val)
+			fieldValue, err = e.ToYAML(val)
 		case *schema.UnionType[float64, bool]:
 			if val.IsA() {
 				fieldValue = val.A
@@ -140,7 +140,7 @@ func (e *Encoder) MarshalYAML(s *Schema) (any, error) {
 	return result, nil
 }
 
-func (e *Encoder) MarshalJSON(s *Schema) ([]byte, error) {
+func (e *Encoder) ToJSON(s *Schema) ([]byte, error) {
 	if s == nil {
 		return []byte("null"), nil
 	}
@@ -160,8 +160,7 @@ func (e *Encoder) MarshalJSON(s *Schema) ([]byte, error) {
 		} else {
 			v = `{"description":"circular reference"}`
 		}
-		b.Write([]byte(v))
-		return b.Bytes(), nil
+		return []byte(v), nil
 	}
 	e.visited[s] = true
 	defer delete(e.visited, s)
@@ -196,7 +195,7 @@ func (e *Encoder) MarshalJSON(s *Schema) ([]byte, error) {
 				if fields.Len() > 1 {
 					fields.WriteRune(',')
 				}
-				sField, err := e.MarshalJSON(it.Value())
+				sField, err := e.ToJSON(it.Value())
 				if err != nil {
 					return nil, err
 				}
@@ -206,7 +205,7 @@ func (e *Encoder) MarshalJSON(s *Schema) ([]byte, error) {
 			fields.WriteRune('}')
 			bVal = fields.Bytes()
 		case *Schema:
-			bVal, err = e.MarshalJSON(val)
+			bVal, err = e.ToJSON(val)
 		case *schema.UnionType[float64, bool]:
 			if val.IsA() {
 				bVal, err = json.Marshal(val.A)
@@ -215,6 +214,9 @@ func (e *Encoder) MarshalJSON(s *Schema) ([]byte, error) {
 			}
 		case dynamic.Reference[*Schema]:
 			if val.Ref != "" && s.Sub == nil || e.KeepRef {
+				if b.Len() > 1 {
+					b.Write([]byte{','})
+				}
 				bVal, err = json.Marshal(val)
 				b.WriteString(strings.Trim(string(bVal), "{}"))
 			}

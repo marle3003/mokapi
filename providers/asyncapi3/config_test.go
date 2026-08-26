@@ -778,3 +778,60 @@ func TestConfig_Payload_JSON(t *testing.T) {
 		})
 	}
 }
+
+func TestConfig_Marshal(t *testing.T) {
+	testcases := []struct {
+		name string
+		s    *asyncapi3.Config
+		json string
+		yaml string
+		test func(t *testing.T, json, yaml string, err error)
+	}{
+		{
+			name: "empty",
+			s:    &asyncapi3.Config{Version: "3.0.0", Info: asyncapi3.Info{Name: "foo"}},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"asyncapi":"3.0.0","info":{"title":"foo"}}`, json)
+				require.Equal(t, `asyncapi: 3.0.0
+info:
+    title: foo
+`, yaml)
+			},
+		},
+		{
+			name: "with a channel",
+			s: &asyncapi3.Config{
+				Version: "3.0.0", Info: asyncapi3.Info{Name: "foo"},
+				Channels: map[string]*asyncapi3.ChannelRef{
+					"foo": {Value: &asyncapi3.Channel{Title: "title"}},
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"asyncapi":"3.0.0","info":{"title":"foo"},"channels":{"foo":{"title":"title"}}}`, json)
+				require.Equal(t, `asyncapi: 3.0.0
+info:
+    title: foo
+channels:
+    foo:
+        title: title
+`, yaml)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			jb, err := json.Marshal(tc.s)
+			if err != nil {
+				tc.test(t, "", "", err)
+			}
+			yb, err := yaml.Marshal(tc.s)
+			tc.test(t, string(jb), string(yb), err)
+		})
+	}
+}
