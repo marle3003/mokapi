@@ -1,6 +1,6 @@
 ARG VERSION
 
-FROM node:26.7.0@sha256:2baf63043c99f4e98ed174ac428bf87f0f9ac5bf49194d60ade5acad24a1efda as webui
+FROM node:26.7.0@sha256:40fd8249a701dab7431d15074ac4cf4f1c18eecd713807599cd76a7a6caad48b as webui
 
 COPY ./webui ./webui
 
