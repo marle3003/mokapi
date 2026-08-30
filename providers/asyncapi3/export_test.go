@@ -1,6 +1,7 @@
 package asyncapi3_test
 
 import (
+	"encoding/json"
 	"mokapi/config/dynamic"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
@@ -400,9 +401,9 @@ func TestExport(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			e := asyncapi3.Export{}
-			jsonResult, err := e.ToJSON(tc.cfg)
-			tc.test(t, string(jsonResult), "", err)
+			e := tc.cfg.Export()
+			b, err := json.Marshal(e)
+			tc.test(t, string(b), "", err)
 		})
 	}
 }
