@@ -1079,7 +1079,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 					"",
 					h,
 					try.HasStatusCode(http.StatusOK),
-					try.HasBody("{\n  \"asyncapi\": \"3.0.0\",\n  \"info\": {\n    \"title\": \"foo\"\n  },\n  \"defaultContentType\": \"application/json\",\n  \"servers\": {\n    \"mokapi\": {\n      \"host\": \":9092\",\n      \"title\": \"Mokapi Default Broker\",\n      \"summary\": \"Automatically added broker because no servers are defined in the AsyncAPI spec\",\n      \"protocol\": \"kafka\"\n    }\n  },\n  \"channels\": {\n    \"foo\": {\n      \"bindings\": {}\n    }\n  }\n}"),
+					try.HasBody("{\"asyncapi\":\"3.0.0\",\"info\":{\"title\":\"foo\"},\"defaultContentType\":\"application/json\",\"servers\":{\"mokapi\":{\"host\":\":9092\",\"title\":\"Mokapi Default Broker\",\"summary\":\"Automatically added broker because no servers are defined in the AsyncAPI spec\",\"protocol\":\"kafka\"}},\"channels\":{\"foo\":{\"bindings\":{}}}}"),
 				)
 			},
 		},

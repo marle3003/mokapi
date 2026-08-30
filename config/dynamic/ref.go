@@ -50,6 +50,10 @@ func (r *Reference[T]) HasRef() bool {
 	return r.Ref != "" || r.DynamicRef != ""
 }
 
+func (r *Reference[T]) IsLocalRef() bool {
+	return strings.HasPrefix(r.Ref, "#")
+}
+
 func (r *Reference[T]) Resolve(config *Config, reader Reader) (T, error) {
 	var err error
 	var result T
@@ -60,7 +64,7 @@ func (r *Reference[T]) Resolve(config *Config, reader Reader) (T, error) {
 
 	if r.Ref != "" {
 		ref := r.Ref
-		if !strings.HasPrefix(ref, "#") {
+		if !r.IsLocalRef() {
 			u, err := resolveUrl(r.Ref, r.origin)
 			if err != nil {
 				return result, fmt.Errorf("resolve reference '%s' failed: %v", r.Ref, err)

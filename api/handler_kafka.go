@@ -892,7 +892,8 @@ func (h *handler) exportAsyncApi(w http.ResponseWriter, r *http.Request) {
 	var ct string
 	switch ext {
 	case "json":
-		b, err = json.MarshalIndent(s.Config, "", "  ")
+		e := asyncapi3.Export{}
+		b, err = e.ToJSON(s.Config)
 		ct = "application/json"
 		break
 	case "yaml":

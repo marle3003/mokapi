@@ -155,6 +155,9 @@ func (p *SharedValue) Get(key string) goja.Value {
 }
 
 func (p *SharedValue) Has(key string) bool {
+	p.m.Lock()
+	defer p.m.Unlock()
+
 	switch v := p.source.(type) {
 	case *goja.Object:
 		return slices.Contains(v.Keys(), key)

@@ -22,6 +22,12 @@ func WithPayload(s *schema.Schema) MessageOptions {
 	}
 }
 
+func UsePayload(ref *asyncapi3.SchemaRef) MessageOptions {
+	return func(m *asyncapi3.Message) {
+		m.Payload = ref
+	}
+}
+
 func WithPayloadOpenAPI(s *openapi.Schema) MessageOptions {
 	return func(m *asyncapi3.Message) {
 		m.Payload = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{

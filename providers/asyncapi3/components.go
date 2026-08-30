@@ -1,6 +1,8 @@
 package asyncapi3
 
-import "mokapi/config/dynamic"
+import (
+	"mokapi/config/dynamic"
+)
 
 type Components struct {
 	Servers         map[string]*ServerRef         `yaml:"servers,omitempty" json:"servers,omitempty"`
@@ -14,6 +16,7 @@ type Components struct {
 	ExternalDocs    map[string]*ExternalDocRef    `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 	OperationTraits map[string]*OperationTraitRef `yaml:"operationTraits,omitempty" json:"operationTraits,omitempty"`
 	MessageTraits   map[string]*MessageTraitRef   `yaml:"messageTraits,omitempty" json:"messageTraits,omitempty"`
+	ServerVariables map[string]*ServerVariableRef `yaml:"serverVariables,omitempty" json:"serverVariables,omitempty"`
 }
 
 func (c *Components) parse(config *dynamic.Config, reader dynamic.Reader) error {

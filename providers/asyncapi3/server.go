@@ -27,7 +27,7 @@ type Server struct {
 }
 
 type ServerVariableRef struct {
-	dynamic.Reference[ServerVariableRef]
+	dynamic.Reference[*ServerVariableRef]
 	Value *ServerVariable
 }
 

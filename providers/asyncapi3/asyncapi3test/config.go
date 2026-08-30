@@ -73,6 +73,15 @@ func WithServer(name, protocol, host string, opts ...ServerOptions) ConfigOption
 	}
 }
 
+func UseServer(name string, ref *asyncapi3.ServerRef) ConfigOptions {
+	return func(c *asyncapi3.Config) {
+		if c.Servers == nil {
+			c.Servers = &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{}
+		}
+		c.Servers.Set(name, ref)
+	}
+}
+
 func WithChannel(name string, opts ...ChannelOptions) ConfigOptions {
 	return func(c *asyncapi3.Config) {
 		if c.Channels == nil {
@@ -88,6 +97,15 @@ func WithChannel(name string, opts ...ChannelOptions) ConfigOptions {
 		}
 		c.Channels[name] = &asyncapi3.ChannelRef{Value: ch}
 		ch.Config = c
+	}
+}
+
+func UseChannel(name string, ch *asyncapi3.ChannelRef) ConfigOptions {
+	return func(c *asyncapi3.Config) {
+		if c.Channels == nil {
+			c.Channels = make(map[string]*asyncapi3.ChannelRef)
+		}
+		c.Channels[name] = ch
 	}
 }
 
@@ -114,5 +132,14 @@ func WithOperation(name string, opts ...OperationOptions) ConfigOptions {
 			panic("no valid action set: expected send or receive")
 		}
 		c.Operations[name] = &asyncapi3.OperationRef{Value: op}
+	}
+}
+
+func UseOperation(name string, op *asyncapi3.OperationRef) ConfigOptions {
+	return func(c *asyncapi3.Config) {
+		if c.Operations == nil {
+			c.Operations = make(map[string]*asyncapi3.OperationRef)
+		}
+		c.Operations[name] = op
 	}
 }

@@ -28,7 +28,7 @@ type Message struct {
 	Bindings    *MessageBinding    `yaml:"bindings,omitempty" json:"bindings,omitempty"`
 	Traits      []*MessageTraitRef `yaml:"traits,omitempty" json:"traits,omitempty"`
 
-	Examples []interface{} `yaml:"examples,omitempty" json:"examples,omitempty"`
+	Examples []any `yaml:"examples,omitempty" json:"examples,omitempty"`
 
 	ExternalDocs []*ExternalDocRef `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 }

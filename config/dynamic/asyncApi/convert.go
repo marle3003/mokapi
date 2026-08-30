@@ -83,54 +83,51 @@ func convertChannel(name string, c *ChannelRef, config *asyncapi3.Config) (*asyn
 	result := &asyncapi3.ChannelRef{Reference: dynamic.Reference[*asyncapi3.ChannelRef]{Ref: c.Ref}}
 
 	if c.Value != nil {
-		target := &asyncapi3.Channel{
+		result.Value = &asyncapi3.Channel{
 			Address:     name,
 			Summary:     "",
 			Description: c.Value.Description,
 			Messages:    map[string]*asyncapi3.MessageRef{},
 			Bindings:    convertChannelBinding(c.Value.Bindings),
 		}
-		ref := &asyncapi3.ChannelRef{Value: target}
 
 		for _, server := range c.Value.Servers {
-			target.Servers = append(
-				target.Servers,
+			result.Value.Servers = append(
+				result.Value.Servers,
 				&asyncapi3.ServerRef{Reference: dynamic.Reference[*asyncapi3.ServerRef]{
 					Ref: fmt.Sprintf("#/servers/%s", server),
 				}})
 		}
 
-		if err := convertParameters(target, c.Value.Parameters); err != nil {
+		if err := convertParameters(result.Value, c.Value.Parameters); err != nil {
 			return nil, err
 		}
 
 		if c.Value.Publish != nil && c.Value.Subscribe != nil && c.Value.Publish.Message != nil && c.Value.Subscribe.Message != nil {
 			if c.Value.Publish.Message.Ref == c.Value.Subscribe.Message.Ref {
 				msg := convertMessage(c.Value.Publish.Message)
-				msgName := addMessage(target, msg, "", "", c.Value.Publish.Message.Ref)
+				msgName := addMessage(result.Value, &asyncapi3.MessageRef{Value: msg.Value}, "", "", c.Value.Publish.Message.Ref)
 				if msgName != "" {
-					addOperation(msgName, "send", c.Value.Publish, ref, msg, config)
-					addOperation(msgName, "receive", c.Value.Subscribe, ref, msg, config)
+					addOperation(msgName, "send", c.Value.Publish, result, msg, config)
+					addOperation(msgName, "receive", c.Value.Subscribe, result, msg, config)
 				}
 			}
 		} else {
 			if c.Value.Publish != nil {
 				msg := convertMessage(c.Value.Publish.Message)
-				msgName := addMessage(target, msg, c.Value.Publish.OperationId, c.Value.Publish.Message.Ref, "publish")
+				msgName := addMessage(result.Value, &asyncapi3.MessageRef{Value: msg.Value}, c.Value.Publish.OperationId, c.Value.Publish.Message.Ref, "publish")
 				if msgName != "" {
-					addOperation(msgName, "send", c.Value.Publish, ref, msg, config)
+					addOperation(msgName, "send", c.Value.Publish, result, msg, config)
 				}
 			}
 			if c.Value.Subscribe != nil {
 				msg := convertMessage(c.Value.Subscribe.Message)
-				msgName := addMessage(target, msg, c.Value.Subscribe.OperationId, c.Value.Subscribe.Message.Ref, "subscribe")
+				msgName := addMessage(result.Value, &asyncapi3.MessageRef{Value: msg.Value}, c.Value.Subscribe.OperationId, c.Value.Subscribe.Message.Ref, "subscribe")
 				if msgName != "" {
-					addOperation(msgName, "receive", c.Value.Subscribe, ref, msg, config)
+					addOperation(msgName, "receive", c.Value.Subscribe, result, msg, config)
 				}
 			}
 		}
-
-		result.Value = target
 	}
 
 	return result, nil

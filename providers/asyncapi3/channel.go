@@ -26,9 +26,9 @@ type Channel struct {
 	Parameters  map[string]*ParameterRef `yaml:"parameters,omitempty" json:"parameters,omitempty"`
 	Bindings    *ChannelBindings         `yaml:"bindings,omitempty" json:"bindings,omitempty"`
 
-	Tags         []*TagRef        `yaml:"tags,omitempty" json:"tags,omitempty"`
-	ExternalDocs []ExternalDocRef `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
-	Config       *Config          `yaml:"-" json:"-"`
+	Tags         []*TagRef         `yaml:"tags,omitempty" json:"tags,omitempty"`
+	ExternalDocs []*ExternalDocRef `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
+	Config       *Config           `yaml:"-" json:"-"`
 }
 
 func (r *ChannelRef) UnmarshalYAML(node *yaml.Node) error {
