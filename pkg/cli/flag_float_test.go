@@ -27,7 +27,7 @@ func TestFlagFloat(t *testing.T) {
 				c.Flags().Float("foo", 0, cli.FlagDoc{})
 				return c
 			},
-			args: []string{"--foo 12.4"},
+			args: []string{"--foo", "12.4"},
 			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12.4, cmd.Flags().GetFloat("foo"))
@@ -41,7 +41,7 @@ func TestFlagFloat(t *testing.T) {
 				c.Flags().Float("bar", 0, cli.FlagDoc{})
 				return c
 			},
-			args: []string{"--bar 12.4"},
+			args: []string{"--bar", "12.4"},
 			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12.4, cmd.Flags().GetFloat("bar"))

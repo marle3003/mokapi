@@ -26,7 +26,7 @@ func TestFlagSlice(t *testing.T) {
 				c.Flags().StringSlice("foo", nil, false, cli.FlagDoc{})
 				return c
 			},
-			args: []string{"--foo a b c"},
+			args: []string{"--foo", "a", "b", "c"},
 			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []string{"a", "b", "c"}, cmd.Flags().GetStringSlice("foo"))
@@ -40,7 +40,7 @@ func TestFlagSlice(t *testing.T) {
 				c.Flags().StringSlice("foo", []string{"zzz"}, false, cli.FlagDoc{})
 				return c
 			},
-			args: []string{"--foo a b c"},
+			args: []string{"--foo", "a", "b", "c"},
 			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []string{"a", "b", "c"}, cmd.Flags().GetStringSlice("foo"))
