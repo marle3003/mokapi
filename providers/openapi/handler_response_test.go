@@ -34,14 +34,14 @@ func TestHandler_Response(t *testing.T) {
 	testcases := []struct {
 		name    string
 		config  *openapi.Config
-		handler func(event string, req *common.HttpEventRequest, res *common.HttpEventResponse)
+		handler func(req *common.HttpEventRequest, res *common.HttpEventResponse)
 		req     func() *http.Request
 		test    func(t *testing.T, rr *httptest.ResponseRecorder, eh events.Handler)
 	}{
 		{
 			name:   "string as response body",
 			config: getConfig(schematest.New("string"), "application/json"),
-			handler: func(event string, req *common.HttpEventRequest, res *common.HttpEventResponse) {
+			handler: func(req *common.HttpEventRequest, res *common.HttpEventResponse) {
 				res.Body = "foo"
 			},
 			req: func() *http.Request {
@@ -55,7 +55,7 @@ func TestHandler_Response(t *testing.T) {
 		{
 			name:   "invalid string body",
 			config: getConfig(schematest.New("string", schematest.WithFormat("date")), "application/json"),
-			handler: func(event string, req *common.HttpEventRequest, res *common.HttpEventResponse) {
+			handler: func(req *common.HttpEventRequest, res *common.HttpEventResponse) {
 				res.Data = "foo"
 			},
 			req: func() *http.Request {
@@ -69,7 +69,7 @@ func TestHandler_Response(t *testing.T) {
 		{
 			name:   "object with null property",
 			config: getConfig(schematest.New("object", schematest.WithProperty("foo", schematest.New("string", schematest.IsNullable(true)))), "application/json"),
-			handler: func(event string, req *common.HttpEventRequest, res *common.HttpEventResponse) {
+			handler: func(req *common.HttpEventRequest, res *common.HttpEventResponse) {
 				res.Data = map[string]interface{}{"foo": nil}
 			},
 			req: func() *http.Request {
@@ -83,7 +83,7 @@ func TestHandler_Response(t *testing.T) {
 		{
 			name:   "detect content type on byte array",
 			config: getConfig(schematest.New("object", schematest.WithProperty("foo", schematest.New("string"))), "*/*"),
-			handler: func(event string, req *common.HttpEventRequest, res *common.HttpEventResponse) {
+			handler: func(req *common.HttpEventRequest, res *common.HttpEventResponse) {
 				res.Data = []byte(`{"foo":"bar"}`)
 			},
 			req: func() *http.Request {
@@ -98,7 +98,7 @@ func TestHandler_Response(t *testing.T) {
 		{
 			name:   "application/octet-stream with string",
 			config: getConfig(schematest.New("string"), "application/octet-stream"),
-			handler: func(event string, req *common.HttpEventRequest, res *common.HttpEventResponse) {
+			handler: func(req *common.HttpEventRequest, res *common.HttpEventResponse) {
 				res.Data = "foo"
 			},
 			req: func() *http.Request {
@@ -112,7 +112,7 @@ func TestHandler_Response(t *testing.T) {
 		{
 			name:   "application/octet-stream with object",
 			config: getConfig(schematest.New("object"), "application/octet-stream"),
-			handler: func(event string, req *common.HttpEventRequest, res *common.HttpEventResponse) {
+			handler: func(req *common.HttpEventRequest, res *common.HttpEventResponse) {
 				res.Data = map[string]interface{}{"foo": "bar"}
 			},
 			req: func() *http.Request {
@@ -126,7 +126,7 @@ func TestHandler_Response(t *testing.T) {
 		{
 			name:   "no content defined should send empty response body",
 			config: getConfig(nil, ""),
-			handler: func(event string, req *common.HttpEventRequest, res *common.HttpEventResponse) {
+			handler: func(req *common.HttpEventRequest, res *common.HttpEventResponse) {
 				res.Data = map[string]interface{}{"foo": "bar"}
 			},
 			req: func() *http.Request {
@@ -147,7 +147,7 @@ func TestHandler_Response(t *testing.T) {
 		{
 			name:   "no content defined should send body, when res.Body is used",
 			config: getConfig(nil, ""),
-			handler: func(event string, req *common.HttpEventRequest, res *common.HttpEventResponse) {
+			handler: func(req *common.HttpEventRequest, res *common.HttpEventResponse) {
 				res.Headers["Content-Type"] = "text/plain"
 				res.Body = "foo"
 			},
@@ -178,7 +178,7 @@ func TestHandler_Response(t *testing.T) {
 						),
 					)))
 			}(),
-			handler: func(event string, req *common.HttpEventRequest, res *common.HttpEventResponse) {
+			handler: func(req *common.HttpEventRequest, res *common.HttpEventResponse) {
 				res.Headers = map[string]interface{}{"foo": "bar"}
 			},
 			req: func() *http.Request {
@@ -205,15 +205,15 @@ func TestHandler_Response(t *testing.T) {
 			m := &events.StoreManager{}
 			m.SetStore(10, events.NewTraits().WithNamespace("http"))
 
-			e := &testEngine{emit: func(event string, args ...interface{}) []*common.Action {
-				tc.handler(event, args[0].(*common.HttpEventRequest), args[1].(*common.HttpEventResponse))
+			e := enginetest.HttpEventHandlerFunc(func(request *common.HttpEventRequest, response *common.HttpEventResponse) []*common.Action {
+				tc.handler(request, response)
 				return []*common.Action{
 					{
 						Duration: 16,
 						Tags:     map[string]string{"foo": "bar"},
 					},
 				}
-			}}
+			})
 
 			h := openapi.NewHandler(tc.config, e, m)
 			rr := httptest.NewRecorder()

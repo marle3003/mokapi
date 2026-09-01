@@ -35,7 +35,7 @@
     "http-status-codes": "^2.3.0",
     "js-yaml": "^5.2.2",
     "kafkajs": "^2.2.4",
-    "ldapts": "^8.1.8",
+    "ldapts": "^9.0.0",
     "markdown-it": "^14.2.0",
     "markdown-it-container": "^4.0.0",
     "mime-types": "^3.0.2",
@@ -49,22 +49,26 @@
     "xml-formatter": "^3.7.0"
   },
   "devDependencies": {
-    "@playwright/test": "1.61.1",
+    "@playwright/test": "1.62.1",
     "@rushstack/eslint-patch": "1.16.1",
     "@types/js-yaml": "4.0.9",
     "@types/markdown-it-container": "4.0.0",
-    "@types/node": "26.1.1",
-    "@vitejs/plugin-vue": "6.0.7",
+    "@types/node": "26.3.0",
+    "@vitejs/plugin-vue": "6.0.8",
     "@vue/eslint-config-prettier": "10.2.0",
     "@vue/eslint-config-typescript": "14.9.0",
     "@vue/tsconfig": "0.9.1",
-    "eslint": "10.6.0",
-    "eslint-plugin-vue": "10.9.2",
-    "npm-run-all2": "9.0.2",
-    "prettier": "3.9.5",
+    "eslint": "10.9.1",
+    "eslint-plugin-vue": "10.10.0",
+    "npm-run-all2": "9.0.3",
+    "prettier": "3.9.6",
     "typescript": "6.0.3",
-    "vite": "8.1.4",
-    "vue-tsc": "3.3.7",
+    "vite": "8.2.2",
+    "vue-tsc": "3.3.11",
     "xml2js": "0.6.2"
+  },
+  "allowScripts": {
+    "fsevents@2.3.2": true,
+    "fsevents@2.3.3": true
   }
 }

@@ -16,8 +16,8 @@ type Proxy struct {
 	target        reflect.Value
 	wasPointer    bool
 	vm            *goja.Runtime
-	KeyNormalizer func(string) string
-	ToJSValue     func(vm *goja.Runtime, k string, v any) goja.Value
+	KeyNormalizer func(string) string                                `json:"-"`
+	ToJSValue     func(vm *goja.Runtime, k string, v any) goja.Value `json:"-"`
 }
 
 func NewProxy(target any, vm *goja.Runtime) *Proxy {
@@ -248,10 +248,10 @@ func (p *Proxy) Export() any {
 }
 
 func getField(structValue reflect.Value, name, tag string) reflect.Value {
-	name = capitalize(name)
+	fieldName := capitalize(name)
 	for i := 0; i < structValue.NumField(); i++ {
 		f := structValue.Type().Field(i)
-		if f.Name == name {
+		if f.Name == fieldName {
 			return structValue.Field(i)
 		}
 		t := f.Tag.Get(tag)

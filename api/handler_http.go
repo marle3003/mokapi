@@ -1,6 +1,9 @@
 package api
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"maps"
 	"mokapi/providers/openapi"
 	"mokapi/providers/openapi/schema"
@@ -8,10 +11,12 @@ import (
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"net/http"
+	"net/url"
 	"slices"
 	"strings"
 
 	"github.com/gorilla/mux"
+	"gopkg.in/yaml.v3"
 )
 
 type httpInfo struct {
@@ -76,7 +81,7 @@ type param struct {
 	Style         string         `json:"style,omitempty"`
 	Explode       bool           `json:"explode"`
 	AllowReserved bool           `json:"allowReserved"`
-	Schema        *schema.Schema `json:"schema"`
+	Schema        *openapiSchema `json:"schema"`
 }
 
 type response struct {
@@ -89,7 +94,7 @@ type response struct {
 type header struct {
 	Name        string         `json:"name"`
 	Description string         `json:"description"`
-	Schema      *schema.Schema `json:"schema"`
+	Schema      *openapiSchema `json:"schema"`
 }
 
 type requestBody struct {
@@ -100,7 +105,7 @@ type requestBody struct {
 
 type mediaType struct {
 	Type   string         `json:"type"`
-	Schema *schema.Schema `json:"schema"`
+	Schema *openapiSchema `json:"schema"`
 }
 
 type server struct {
@@ -127,6 +132,10 @@ type httpMetrics struct {
 	Requests      float64 `json:"http_requests_total"`
 	RequestErrors float64 `json:"http_requests_errors_total"`
 	LastRequest   float64 `json:"http_request_timestamp"`
+}
+
+type openapiSchema struct {
+	*schema.Schema
 }
 
 func getHttpServices(s *runtime.HttpStore, m *monitor.Monitor) []service {
@@ -170,6 +179,8 @@ func (h *handler) setupHttp() {
 
 	r.HandleFunc("", h.getHttpServices).Methods(http.MethodGet)
 	r.HandleFunc("/{api}", h.getHttpApi).Methods(http.MethodGet)
+	r.HandleFunc("/{api}/openapi.{ext}", h.exportHttp).Methods(http.MethodGet)
+	r.HandleFunc("/{api}/bruno.{format}", h.exportHttpBruno).Methods(http.MethodGet)
 	r.HandleFunc("/{api}/operations", h.getHttpOperations).Methods(http.MethodGet)
 }
 
@@ -226,69 +237,73 @@ func (h *handler) getHttpService(s *runtime.HttpInfo) httpInfo {
 		})
 	}
 
-	for path, p := range s.Paths {
-		if p.Value == nil {
-			continue
-		}
-		pi := pathItem{
-			Path:        path,
-			Summary:     p.Value.Summary,
-			Description: p.Value.Description,
-			Status:      p.Value.Status.String(),
-		}
-		if len(p.Summary) > 0 {
-			pi.Summary = p.Summary
-		}
-		if len(p.Description) > 0 {
-			pi.Description = p.Description
-		}
-
-		for _, err := range p.Value.Errors {
-			pi.Errors = append(pi.Errors, errorData{Message: err.Message})
-		}
-
-		for method, o := range p.Value.Operations() {
-			data := httpMetrics{
-				Requests: h.app.Monitor.Http.RequestCounter.Sum(metrics.NewQuery(
-					metrics.ByLabel("service", s.Info.Name),
-					metrics.ByLabel("endpoint", p.Value.Path),
-					metrics.ByLabel("method", method),
-				)),
-				RequestErrors: h.app.Monitor.Http.RequestErrorCounter.Sum(metrics.NewQuery(
-					metrics.ByLabel("service", s.Info.Name),
-					metrics.ByLabel("endpoint", p.Value.Path),
-					metrics.ByLabel("method", method),
-				)),
-				LastRequest: h.app.Monitor.Http.LastRequest.Max(metrics.NewQuery(
-					metrics.ByLabel("service", s.Info.Name),
-					metrics.ByLabel("endpoint", p.Value.Path),
-					metrics.ByLabel("method", method),
-				)),
+	if s.Paths != nil {
+		for it := s.Paths.Iter(); it.Next(); {
+			path := it.Key()
+			p := it.Value()
+			if p.Value == nil {
+				continue
+			}
+			pi := pathItem{
+				Path:        path,
+				Summary:     p.Value.Summary,
+				Description: p.Value.Description,
+				Status:      p.Value.Status.String(),
+			}
+			if len(p.Summary) > 0 {
+				pi.Summary = p.Summary
+			}
+			if len(p.Description) > 0 {
+				pi.Description = p.Description
 			}
 
-			pi.Operations = append(pi.Operations, operationInfo{
-				Method:      strings.ToLower(method),
-				Summary:     o.Summary,
-				Description: o.Description,
-				OperationId: o.OperationId,
-				Deprecated:  o.Deprecated,
-				Tags:        o.Tags,
-				Status:      o.Status.String(),
-				Errors:      getErrors(o.Errors),
-				Metrics:     data,
+			for _, err := range p.Value.Errors {
+				pi.Errors = append(pi.Errors, errorData{Message: err.Message})
+			}
+
+			for method, o := range p.Value.Operations() {
+				data := httpMetrics{
+					Requests: h.app.Monitor.Http.RequestCounter.Sum(metrics.NewQuery(
+						metrics.ByLabel("service", s.Info.Name),
+						metrics.ByLabel("endpoint", p.Value.Path),
+						metrics.ByLabel("method", method),
+					)),
+					RequestErrors: h.app.Monitor.Http.RequestErrorCounter.Sum(metrics.NewQuery(
+						metrics.ByLabel("service", s.Info.Name),
+						metrics.ByLabel("endpoint", p.Value.Path),
+						metrics.ByLabel("method", method),
+					)),
+					LastRequest: h.app.Monitor.Http.LastRequest.Max(metrics.NewQuery(
+						metrics.ByLabel("service", s.Info.Name),
+						metrics.ByLabel("endpoint", p.Value.Path),
+						metrics.ByLabel("method", method),
+					)),
+				}
+
+				pi.Operations = append(pi.Operations, operationInfo{
+					Method:      strings.ToLower(method),
+					Summary:     o.Summary,
+					Description: o.Description,
+					OperationId: o.OperationId,
+					Deprecated:  o.Deprecated,
+					Tags:        o.Tags,
+					Status:      o.Status.String(),
+					Errors:      getErrors(o.Errors),
+					Metrics:     data,
+				})
+			}
+			result.Paths = append(result.Paths, pi)
+		}
+
+		for _, t := range s.Tags {
+			result.Tags = append(result.Tags, tag{
+				Name:        t.Name,
+				Summary:     t.Summary,
+				Description: t.Description,
+				Parent:      t.Parent,
+				Kind:        t.Kind,
 			})
 		}
-		result.Paths = append(result.Paths, pi)
-	}
-
-	for _, t := range s.Tags {
-		result.Tags = append(result.Tags, tag{
-			Name:        t.Name,
-			Summary:     t.Summary,
-			Description: t.Description,
-			Parent:      t.Parent,
-			Kind:        t.Kind,
-		})
 	}
 
 	result.Configs = getConfigs(s.Configs())
@@ -301,14 +316,13 @@ func getOperations(s *runtime.HttpInfo, path, method string, monitor *monitor.Ht
 	if path != "" {
 		paths = append(paths, path)
 	} else {
-		keys := maps.Keys(s.Paths)
-		paths = slices.Sorted(keys)
+		paths = s.Paths.Keys()
 	}
 
 	operations := make([]operation, 0, len(paths))
 	for _, ps := range paths {
 
-		p, ok := s.Paths[ps]
+		p, ok := s.Paths.Get(ps)
 		if !ok || p.Value == nil {
 			continue
 		}
@@ -340,7 +354,7 @@ func getOperations(s *runtime.HttpInfo, path, method string, monitor *monitor.Ht
 			if o.RequestBody != nil && o.RequestBody.Value != nil {
 				op.RequestBody = &requestBody{
 					Description: o.RequestBody.Value.Description,
-					Required:    o.RequestBody.Value.Required,
+					Required:    o.RequestBody.Value.IsRequired(),
 				}
 				if len(o.RequestBody.Summary) > 0 {
 					op.Summary = o.RequestBody.Summary
@@ -349,7 +363,7 @@ func getOperations(s *runtime.HttpInfo, path, method string, monitor *monitor.Ht
 				for ct, rb := range o.RequestBody.Value.Content {
 					op.RequestBody.Contents = append(op.RequestBody.Contents, mediaType{
 						Type:   ct,
-						Schema: rb.Schema,
+						Schema: toOpenApiSchema(rb.Schema),
 					})
 				}
 			}
@@ -374,7 +388,7 @@ func getOperations(s *runtime.HttpInfo, path, method string, monitor *monitor.Ht
 					for ct, r := range r.Value.Content {
 						res.Contents = append(res.Contents, mediaType{
 							Type:   ct,
-							Schema: r.Schema,
+							Schema: toOpenApiSchema(r.Schema),
 						})
 					}
 					for name, h := range r.Value.Headers {
@@ -385,7 +399,7 @@ func getOperations(s *runtime.HttpInfo, path, method string, monitor *monitor.Ht
 						hi := header{
 							Name:        name,
 							Description: h.Value.Description,
-							Schema:      h.Value.Schema,
+							Schema:      toOpenApiSchema(h.Value.Schema),
 						}
 						if len(h.Description) > 0 {
 							hi.Description = h.Description
@@ -451,12 +465,12 @@ func getParameters(params openapi.Parameters) (result []param) {
 			Name:          p.Value.Name,
 			Type:          string(p.Value.Type),
 			Description:   p.Value.Description,
-			Required:      p.Value.Required,
-			Deprecated:    p.Value.Deprecated,
+			Required:      p.Value.IsRequired(),
+			Deprecated:    p.Value.IsDeprecated(),
 			Style:         p.Value.Style,
 			Explode:       p.Value.IsExplode(),
-			AllowReserved: p.Value.AllowReserved,
-			Schema:        p.Value.Schema,
+			AllowReserved: p.Value.IsAllowReserved(),
+			Schema:        toOpenApiSchema(p.Value.Schema),
 		}
 		if len(p.Description) > 0 {
 			pi.Description = p.Description
@@ -473,4 +487,124 @@ func getErrors(err []openapi.Error) []errorData {
 		errData = append(errData, errorData{Message: e.Message})
 	}
 	return errData
+}
+
+func (h *handler) exportHttp(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	s := h.app.Http.Get(vars["api"])
+	if s == nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	e := s.Export()
+
+	ext := vars["ext"]
+	var b []byte
+	var err error
+	var ct string
+	switch ext {
+	case "json":
+		b, err = json.Marshal(e)
+		ct = "application/json"
+		break
+	case "yaml":
+		var buf bytes.Buffer
+		enc := yaml.NewEncoder(&buf)
+		enc.SetIndent(2)
+		err = enc.Encode(e)
+		if err != nil {
+			err = enc.Close()
+		}
+		b = buf.Bytes()
+		ct = "application/yaml"
+	}
+
+	if err != nil {
+		w.WriteHeader(500)
+		_, _ = w.Write([]byte(err.Error()))
+		return
+	}
+
+	w.Header().Set("Content-Type", ct)
+	_, _ = w.Write(b)
+}
+
+func (h *handler) exportHttpBruno(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	s := h.app.Http.Get(vars["api"])
+	if s == nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	opt := openapi.BrunoExportOptions{
+		BaseUrl: "localhost",
+	}
+
+	qBaseUrl := r.URL.Query().Get("baseUrl")
+	if qBaseUrl != "" {
+		var err error
+		opt.BaseUrl, err = url.QueryUnescape(qBaseUrl)
+		if err != nil {
+			w.WriteHeader(400)
+			_, _ = w.Write([]byte(err.Error()))
+			return
+		}
+	} else if r.Host != "" {
+		opt.BaseUrl = r.Host
+	}
+
+	qFolderArrangement := r.URL.Query().Get("folderArrangement")
+	if qFolderArrangement != "" {
+		switch qFolderArrangement {
+		case "paths":
+			opt.FolderArrangement = openapi.PathFolderArrangement
+		default:
+			opt.FolderArrangement = openapi.TagsFolderArrangement
+		}
+	}
+
+	qItemName := r.URL.Query().Get("itemName")
+	if qItemName != "" {
+		switch qItemName {
+		case "path":
+			opt.HttpItemName = openapi.PathHttpItemName
+		default:
+			opt.HttpItemName = openapi.SummaryHttpItemName
+		}
+	}
+
+	c, err := s.ExportBruno(opt)
+	if err != nil {
+		w.WriteHeader(500)
+		_, _ = w.Write([]byte(err.Error()))
+		return
+	}
+	var buf bytes.Buffer
+	enc := yaml.NewEncoder(&buf)
+	enc.SetIndent(2)
+	err = enc.Encode(c)
+	if err != nil {
+		err = enc.Close()
+	}
+	b := buf.Bytes()
+
+	w.Header().Set("Content-Type", "application/yaml")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.yaml\"", s.Info.Name))
+	_, _ = w.Write(b)
+}
+
+func toOpenApiSchema(s *schema.Schema) *openapiSchema {
+	if s == nil {
+		return nil
+	}
+	return &openapiSchema{Schema: s}
+}
+
+func (s *openapiSchema) MarshalJSON() ([]byte, error) {
+	e := schema.Encoder{KeepRef: true}
+	return e.ToJSON(s.Schema)
 }

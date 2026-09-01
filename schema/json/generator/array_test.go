@@ -307,6 +307,20 @@ func TestArray(t *testing.T) {
 				require.Equal(t, "NE", a[3])
 			},
 		},
+		{
+			name: "small arrays with enum should not have duplicated items",
+			req: &Request{
+				Schema: schematest.New("array",
+					schematest.WithItems("string",
+						schematest.WithEnum([]any{"sold", "available", "pending"}),
+					),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, []any{"available", "sold"}, v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

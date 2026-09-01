@@ -14,6 +14,7 @@ export async function collectDashboard() {
     metrics: { path: '/api/metrics?q=app', loader: loadJson },
     'service_Swagger Petstore': { path: '/api/services/http/Swagger%20Petstore', loader: loadJson },
     'service_Swagger Petstore_operations': { path: '/api/services/http/Swagger%20Petstore/operations', loader: loadJson },
+    'service_Swagger Petstore_bruno': { path: '/api/services/http/Swagger%20Petstore/bruno.yaml', loader: load },
     'service_Kafka Order Service API': { path: '/api/services/kafka/Kafka%20Order%20Service%20API', loader: loadJson },
     'service_Kafka Order Service API_topic_order-topic': { path: '/api/services/kafka/Kafka%20Order%20Service%20API/topics/order-topic', loader: loadJson },
     'service_Kafka Order Service API_topic_user-events': { path: '/api/services/kafka/Kafka%20Order%20Service%20API/topics/user-events', loader: loadJson },
@@ -27,7 +28,7 @@ export async function collectDashboard() {
     events: { path: '/api/events', loader: fetchEvents },
     'mailbox_alice.johnson@example.com': { path: '/api/services/mail/Mail%20Server/mailboxes/alice.johnson@example.com', loader: loadJson },
     'mailbox_bob.miller@example.com': { path: '/api/services/mail/Mail%20Server/mailboxes/bob.miller@example.com', loader: loadJson },
-    configs: { path: '/api/configs', loader: loadConfigs }
+    configs: { path: '/api/configs', loader: loadConfigs },
   }
 
   const snapshot: Record<string, any> = {}
@@ -38,6 +39,11 @@ export async function collectDashboard() {
   }
 
   await fs.writeFile(output + '/dashboard.json', JSON.stringify(snapshot, null, 2));
+}
+
+async function load(url: string, key: string, snapshot: Record<string, any>) {
+  const res = await fetch(url)
+  snapshot[key] = await res.text()
 }
 
 async function loadJson(url: string, key: string, snapshot: Record<string, any>) {

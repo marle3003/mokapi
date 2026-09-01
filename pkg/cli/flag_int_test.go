@@ -27,7 +27,7 @@ func TestFlagInt(t *testing.T) {
 				c.Flags().Int("foo", 0, cli.FlagDoc{})
 				return c
 			},
-			args: []string{"--foo 12"},
+			args: []string{"--foo", "12"},
 			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12, cmd.Flags().GetInt("foo"))
@@ -41,7 +41,7 @@ func TestFlagInt(t *testing.T) {
 				c.Flags().Int("foo", 0, cli.FlagDoc{})
 				return c
 			},
-			args: []string{"--foo 12.4"},
+			args: []string{"--foo", "12.4"},
 			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
 				require.EqualError(t, err, "failed to set flag foo: parsing 12.4: invalid syntax")
 			},
@@ -53,7 +53,7 @@ func TestFlagInt(t *testing.T) {
 				c.Flags().Int("bar", 0, cli.FlagDoc{})
 				return c
 			},
-			args: []string{"--bar 12"},
+			args: []string{"--bar", "12"},
 			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12, cmd.Flags().GetInt("bar"))
@@ -67,7 +67,7 @@ func TestFlagInt(t *testing.T) {
 				c.Flags().Int("any", 0, cli.FlagDoc{})
 				return c
 			},
-			args: []string{"--any 12"},
+			args: []string{"--any", "12"},
 			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 12, cmd.Flags().GetInt("any"))

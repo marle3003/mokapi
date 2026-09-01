@@ -5,6 +5,7 @@ import (
 	"mokapi/sortedmap"
 	"reflect"
 
+	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
 	luar "layeh.com/gopher-luar"
 )
@@ -119,7 +120,8 @@ func ToLua(l *lua.LState, from interface{}) (lua.LValue, error) {
 				fv := v.FieldByName(fd.Name).Interface()
 				lv, err := ToLua(l, fv)
 				if err != nil {
-					return nil, err
+					log.Debugf("skipped converting field %v to LUA state: %v", fd.Name, err)
+					continue
 				}
 				to.FieldByName(fd.Name).Set(reflect.ValueOf(lv))
 			}
@@ -128,7 +130,25 @@ func ToLua(l *lua.LState, from interface{}) (lua.LValue, error) {
 			ud.Value = p.Interface()
 			return ud, nil
 		default:
+			if s, err := isCustomString(from); err == nil {
+				return ToLua(l, s)
+			}
+			v = reflect.ValueOf(from)
+			if v.Kind() == reflect.Ptr {
+				if v.IsNil() {
+					return lua.LNil, nil
+				}
+				return ToLua(l, v.Elem().Interface())
+			}
 			return nil, fmt.Errorf("type %t not supported", i)
 		}
 	}
+}
+
+func isCustomString(v interface{}) (string, error) {
+	val := reflect.ValueOf(v)
+	if val.Kind() == reflect.String {
+		return val.String(), nil
+	}
+	return "", fmt.Errorf("type %v not supported", v)
 }

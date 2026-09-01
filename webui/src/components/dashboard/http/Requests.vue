@@ -182,7 +182,6 @@ const events = computed<ServiceEvent[]>(() => {
                     method = filter.method.value[0]
                 }
                 result = result.filter(x => {
-                    console.log((x.data as HttpEventData).request.method)
                     return method === (x.data as HttpEventData).request.method
             });
             }

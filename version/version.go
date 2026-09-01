@@ -88,6 +88,10 @@ func (v *Version) MarshalJSON() ([]byte, error) {
 	return []byte(fmt.Sprintf(`"%v.%v.%v"`, v.Major, v.Minor, v.Patch)), nil
 }
 
+func (v *Version) MarshalYAML() (any, error) {
+	return fmt.Sprintf("%v.%v.%v", v.Major, v.Minor, v.Patch), nil
+}
+
 func (v *Version) UnmarshalYAML(value *yaml.Node) error {
 	var s string
 	err := value.Decode(&s)

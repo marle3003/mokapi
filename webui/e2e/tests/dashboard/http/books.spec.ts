@@ -79,7 +79,7 @@ test.describe('Visit Books API', () => {
                 await page.getByRole('link', { name: '/books' }).click();
                 await expect(page).toHaveURL(/Books%20API\/books/)
 
-                await expect(page.getByLabel('Path')).toHaveText('/books');
+                await expect(page.getByLabel('Path', { exact: true })).toHaveText('/books');
                 await expect(page.getByLabel('Service', { exact: true })).toHaveText('Books API')
                 await expect(page.getByLabel('Type of API')).toHaveText('HTTP')
 

@@ -25,13 +25,18 @@ type Broker struct {
 func newBroker(id int, name string, config *asyncapi3.Server) *Broker {
 	h, p := parseHostAndPort(config.Host)
 
+	bindings := &asyncapi3.ServerBindings{}
+	if config.Bindings != nil {
+		bindings = config.Bindings
+	}
+
 	return &Broker{
 		Id:              id,
 		Name:            name,
 		Host:            h,
 		Port:            p,
 		config:          config,
-		kafkaConfig:     config.Bindings.Kafka,
+		kafkaConfig:     bindings.Kafka,
 		stopCleanerChan: make(chan bool, 1),
 	}
 }

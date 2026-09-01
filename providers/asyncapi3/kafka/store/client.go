@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"maps"
 	"math/rand"
 	"mokapi/config/dynamic"
 	"mokapi/kafka"
@@ -15,7 +14,6 @@ import (
 	avro "mokapi/schema/avro/schema"
 	"mokapi/schema/encoding"
 	"mokapi/schema/json/schema"
-	"slices"
 	"time"
 
 	"github.com/pkg/errors"
@@ -376,57 +374,13 @@ func (r *Record) UnmarshalJSON(b []byte) error {
 }
 
 func selectMessage(value any, topic *asyncapi3.Channel) (*asyncapi3.Message, error) {
-	noOperationDefined := true
-	var validationErr error
-	cfg := topic.Config
-
 	// first try to get send operation
-	for _, op := range cfg.Operations {
-		if op.Value == nil || op.Value.Channel.Value == nil {
-			continue
-		}
-		if op.Value.Channel.Value == topic && op.Value.Action == "send" {
-			noOperationDefined = false
-			var messages []*asyncapi3.MessageRef
-			if len(op.Value.Messages) == 0 {
-				messages = slices.Collect(maps.Values(op.Value.Channel.Value.Messages))
-			} else {
-				messages = op.Value.Messages
-			}
-			for _, msg := range messages {
-				if msg.Value == nil {
-					continue
-				}
-				if validationErr = valueMatchMessagePayload(value, msg.Value); validationErr == nil {
-					return msg.Value, nil
-				}
-			}
-		}
+	msg, noOperationDefined, validationErr := getMessage(value, topic, "send")
+	if validationErr == nil {
+		return msg, nil
 	}
-
 	// second, try to get receive operation
-	for _, op := range cfg.Operations {
-		if op.Value == nil || op.Value.Channel.Value == nil {
-			continue
-		}
-		if op.Value.Channel.Value == topic && op.Value.Action == "receive" {
-			noOperationDefined = false
-			var messages []*asyncapi3.MessageRef
-			if len(op.Value.Messages) == 0 {
-				messages = slices.Collect(maps.Values(op.Value.Channel.Value.Messages))
-			} else {
-				messages = op.Value.Messages
-			}
-			for _, msg := range messages {
-				if msg.Value == nil {
-					continue
-				}
-				if validationErr = valueMatchMessagePayload(value, msg.Value); validationErr == nil {
-					return msg.Value, nil
-				}
-			}
-		}
-	}
+	msg, noOperationDefined, validationErr = getMessage(value, topic, "receive")
 
 	if noOperationDefined {
 		for _, msg := range topic.Messages {
@@ -452,6 +406,39 @@ func selectMessage(value any, topic *asyncapi3.Channel) (*asyncapi3.Message, err
 		return nil, nil
 	}
 	return nil, fmt.Errorf("channel defines no message schema; define a message payload in the channel or provide an explicit message")
+}
+
+func getMessage(value any, topic *asyncapi3.Channel, action string) (*asyncapi3.Message, bool, error) {
+	cfg := topic.Config
+	noOperationDefined := true
+	var validationErr error
+
+	for _, op := range cfg.Operations {
+		if op.Value == nil || op.Value.Channel.Value == nil {
+			continue
+		}
+		if op.Value.Channel.Value == topic && op.Value.Action == action {
+			noOperationDefined = false
+			if len(op.Value.Messages) == 0 {
+				for _, msg := range op.Value.Channel.Value.Messages {
+					if msg.Value != nil {
+						if validationErr = valueMatchMessagePayload(value, msg.Value); validationErr == nil {
+							return msg.Value, false, nil
+						}
+					}
+				}
+			} else {
+				for _, msg := range op.Value.Messages {
+					if msg.Value != nil {
+						if validationErr = valueMatchMessagePayload(value, msg.Value); validationErr == nil {
+							return msg.Value, false, nil
+						}
+					}
+				}
+			}
+		}
+	}
+	return nil, noOperationDefined, validationErr
 }
 
 func valueMatchMessagePayload(value any, msg *asyncapi3.Message) error {

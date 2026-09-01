@@ -28,6 +28,7 @@ func TestHandler_Http(t *testing.T) {
 	testcases := []struct {
 		name         string
 		app          func() *runtime.App
+		contentType  string
 		requestUrl   string
 		responseBody string
 	}{
@@ -380,6 +381,229 @@ func TestHandler_Http(t *testing.T) {
 			requestUrl:   "http://foo.api/api/services/http/foo",
 			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo/{bar}","status":"valid","operations":[{"method":"get","deprecated":false,"status":"invalid","errors":[{"message":"error"}],"metrics":{"http_requests_total":0,"http_requests_errors_total":0,"http_request_timestamp":0}}]}]`,
 		},
+		{
+			name: "export to OpenAPI.json",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithPath("/foo/{bar}",
+							openapitest.WithOperation("get"),
+						),
+					),
+				)
+			},
+			requestUrl:   "http://foo.api/api/services/http/foo/openapi.json",
+			responseBody: "{\"openapi\":\"3.0.0\",\"info\":{\"title\":\"foo\",\"version\":\"\"},\"paths\":{\"/foo/{bar}\":{\"get\":{}}}}",
+		},
+		{
+			name:        "export to OpenAPI.yaml",
+			contentType: "application/yaml",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithPath("/foo/{bar}",
+							openapitest.WithOperation("get"),
+						),
+					),
+				)
+			},
+			requestUrl: "http://foo.api/api/services/http/foo/openapi.yaml",
+			responseBody: `openapi: 3.0.0
+info:
+  title: foo
+  version: ""
+paths:
+  /foo/{bar}:
+    get: {}
+`,
+		},
+		{
+			// unused components are not exported
+			name: "export to OpenAPI.json with server and components",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithPath("/foo/{bar}",
+							openapitest.WithOperation("get"),
+						),
+						openapitest.WithServer("/foo", ""),
+						openapitest.WithComponentSchema("foo", schematest.New("string")),
+					),
+				)
+			},
+			requestUrl:   "http://foo.api/api/services/http/foo/openapi.json",
+			responseBody: "{\"openapi\":\"3.0.0\",\"info\":{\"title\":\"foo\",\"version\":\"\"},\"servers\":[{\"url\":\"/foo\"}],\"paths\":{\"/foo/{bar}\":{\"get\":{}}}}",
+		},
+		{
+			name: "export bruno.yaml",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithServer("/foo", ""),
+					),
+				)
+			},
+			requestUrl:  "http://foo.api/api/services/http/foo/bruno.yaml",
+			contentType: "application/yaml",
+			responseBody: `opencollection: 1.0.0
+info:
+  name: foo
+config:
+  environments:
+    - name: foo.api-foo
+      variables:
+        - name: baseUrl
+          value: http://foo.api/foo
+request:
+  variables:
+    - name: baseUrl
+      value: http://foo.api/foo
+bundled: true
+`,
+		},
+		{
+			name: "export bruno.yaml using custom host",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithServer("/foo", ""),
+					),
+				)
+			},
+			requestUrl:  "http://foo.api/api/services/http/foo/bruno.yaml?baseUrl=foo.bar",
+			contentType: "application/yaml",
+			responseBody: `opencollection: 1.0.0
+info:
+  name: foo
+config:
+  environments:
+    - name: foo.bar-foo
+      variables:
+        - name: baseUrl
+          value: http://foo.bar/foo
+request:
+  variables:
+    - name: baseUrl
+      value: http://foo.bar/foo
+bundled: true
+`,
+		},
+		{
+			name: "export bruno.yaml using custom host including path",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithServer("/foo", ""),
+					),
+				)
+			},
+			requestUrl:  "http://foo.api/api/services/http/foo/bruno.yaml?baseUrl=foo.bar%2Fpath",
+			contentType: "application/yaml",
+			responseBody: `opencollection: 1.0.0
+info:
+  name: foo
+config:
+  environments:
+    - name: foo.bar-path-foo
+      variables:
+        - name: baseUrl
+          value: http://foo.bar/path/foo
+request:
+  variables:
+    - name: baseUrl
+      value: http://foo.bar/path/foo
+bundled: true
+`,
+		},
+		{
+			name: "export bruno.yaml using paths folder arrangement",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithServer("/foo", ""),
+						openapitest.WithPath("/foo/bar",
+							openapitest.WithOperation("get"),
+						),
+					),
+				)
+			},
+			requestUrl:  "http://foo.api/api/services/http/foo/bruno.yaml?folderArrangement=paths",
+			contentType: "application/yaml",
+			responseBody: `opencollection: 1.0.0
+info:
+  name: foo
+config:
+  environments:
+    - name: foo.api-foo
+      variables:
+        - name: baseUrl
+          value: http://foo.api/foo
+items:
+  - info:
+      name: foo
+      type: folder
+      seq: 1
+    items:
+      - info:
+          name: GET bar
+          type: http
+          seq: 1
+        http:
+          method: GET
+          url: '{{baseUrl}}/foo/bar'
+request:
+  variables:
+    - name: baseUrl
+      value: http://foo.api/foo
+bundled: true
+`,
+		},
+		{
+			name: "export bruno.yaml using path item name",
+			app: func() *runtime.App {
+				return runtimetest.NewHttpApp(
+					openapitest.NewConfig("3.0.0",
+						openapitest.WithInfo("foo", "", ""),
+						openapitest.WithServer("/foo", ""),
+						openapitest.WithPath("/foo/bar",
+							openapitest.WithOperation("get", openapitest.WithOperationSummary("should not be used")),
+						),
+					),
+				)
+			},
+			requestUrl:  "http://foo.api/api/services/http/foo/bruno.yaml?itemName=path",
+			contentType: "application/yaml",
+			responseBody: `opencollection: 1.0.0
+info:
+  name: foo
+config:
+  environments:
+    - name: foo.api-foo
+      variables:
+        - name: baseUrl
+          value: http://foo.api/foo
+items:
+  - info:
+      name: GET /foo/bar
+      type: http
+      seq: 1
+    http:
+      method: GET
+      url: '{{baseUrl}}/foo/bar'
+request:
+  variables:
+    - name: baseUrl
+      value: http://foo.api/foo
+bundled: true
+`,
+		},
 	}
 
 	t.Parallel()
@@ -390,6 +614,11 @@ func TestHandler_Http(t *testing.T) {
 
 			h := New(tc.app(), static.Api{})
 
+			hasContentType := try.HasHeader("Content-Type", "application/json")
+			if tc.contentType != "" {
+				hasContentType = try.HasHeader("Content-Type", tc.contentType)
+			}
+
 			try.Handler(t,
 				http.MethodGet,
 				tc.requestUrl,
@@ -397,7 +626,7 @@ func TestHandler_Http(t *testing.T) {
 				"",
 				h,
 				try.HasStatusCode(200),
-				try.HasHeader("Content-Type", "application/json"),
+				hasContentType,
 				try.BodyContains(tc.responseBody))
 		})
 	}

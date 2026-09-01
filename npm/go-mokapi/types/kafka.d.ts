@@ -1,7 +1,7 @@
 import { JSONValue } from ".";
 
 /**
- * Sends a single message to a Kafka topic.
+ * Sends messages to a Kafka topic.
  * https://mokapi.io/docs/javascript-api/mokapi-kafka/produce
  * @param args - ProduceArgs object contains Kafka produce arguments.
  * @returns The produce result.
@@ -22,7 +22,7 @@ import { JSONValue } from ".";
 export function produce(args?: ProduceArgs): ProduceResult;
 
 /**
- * Sends a single message to a Kafka topic asynchronously.
+ * Sends messages to a Kafka topic asynchronously.
  * https://mokapi.io/docs/javascript-api/mokapi-kafka/produce
  * @param args - ProduceArgs object contains Kafka produce arguments.
  * @returns The produce result.

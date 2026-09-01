@@ -8,11 +8,12 @@ import (
 
 type ConfigOptions func(c *openapi.Config)
 
+type TagOptions func(c *openapi.Tag)
+
 func NewConfig(versionString string, opts ...ConfigOptions) *openapi.Config {
 	c := &openapi.Config{
 		OpenApi: version.New(versionString),
 		Servers: nil,
-		Paths:   make(map[string]*openapi.PathRef),
 	}
 
 	for _, opt := range opts {
@@ -45,7 +46,7 @@ func WithContact(name, url, email string) ConfigOptions {
 	}
 }
 
-func WithTag(name, summary, description string) ConfigOptions {
+func WithTag(name, summary, description string, opts ...TagOptions) ConfigOptions {
 	return func(c *openapi.Config) {
 		var tag *openapi.Tag
 		for _, t := range c.Tags {
@@ -59,6 +60,10 @@ func WithTag(name, summary, description string) ConfigOptions {
 		}
 		tag.Summary = summary
 		tag.Description = description
+
+		for _, opt := range opts {
+			opt(tag)
+		}
 	}
 }
 
@@ -68,7 +73,10 @@ func WithPath(name string, opts ...PathOptions) ConfigOptions {
 		if path != nil {
 			path.Path = name
 		}
-		c.Paths[name] = &openapi.PathRef{Value: path}
+		if c.Paths == nil {
+			c.Paths = &openapi.PathItems{}
+		}
+		c.Paths.Set(name, &openapi.PathRef{Value: path})
 	}
 }
 
@@ -77,7 +85,10 @@ func UsePath(name string, p *openapi.Path) ConfigOptions {
 		if p != nil {
 			p.Path = name
 		}
-		c.Paths[name] = &openapi.PathRef{Value: p}
+		if c.Paths == nil {
+			c.Paths = &openapi.PathItems{}
+		}
+		c.Paths.Set(name, &openapi.PathRef{Value: p})
 	}
 }
 
@@ -86,7 +97,10 @@ func WithPathRef(name string, ref *openapi.PathRef) ConfigOptions {
 		if ref != nil && ref.Value != nil {
 			ref.Value.Path = name
 		}
-		c.Paths[name] = ref
+		if c.Paths == nil {
+			c.Paths = &openapi.PathItems{}
+		}
+		c.Paths.Set(name, ref)
 	}
 }
 
@@ -184,9 +198,9 @@ func WithComponentPathItem(name string, r *openapi.Path) ConfigOptions {
 func WithComponentPathItemRef(name string, r *openapi.PathRef) ConfigOptions {
 	return func(c *openapi.Config) {
 		if c.Components.PathItems == nil {
-			c.Components.PathItems = openapi.PathItems{}
+			c.Components.PathItems = &openapi.PathItems{}
 		}
-		c.Components.PathItems[name] = r
+		c.Components.PathItems.Set(name, r)
 	}
 }
 
@@ -205,5 +219,17 @@ func WithWebhook(name string, opts ...PathOptions) ConfigOptions {
 			c.Webhooks = map[string]*openapi.PathRef{}
 		}
 		c.Webhooks[name] = &openapi.PathRef{Value: NewPath(opts...)}
+	}
+}
+
+func WithTagParent(parent string) TagOptions {
+	return func(t *openapi.Tag) {
+		t.Parent = parent
+	}
+}
+
+func WithTagKind(kind string) TagOptions {
+	return func(t *openapi.Tag) {
+		t.Kind = kind
 	}
 }

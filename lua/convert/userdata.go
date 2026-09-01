@@ -2,10 +2,11 @@ package convert
 
 import (
 	"fmt"
-	lua "github.com/yuin/gopher-lua"
 	"mokapi/sortedmap"
 	"reflect"
 	"strings"
+
+	lua "github.com/yuin/gopher-lua"
 )
 
 func fromUserData(userdata *lua.LUserData, to interface{}) error {
@@ -40,6 +41,9 @@ func toSortedMapFromUserData(userdata *lua.LUserData, to interface{}) error {
 	for i := 0; i < t.NumField(); i++ {
 		f := t.Field(i)
 		fv := from.FieldByName(f.Name).Interface()
+		if fv == nil {
+			continue
+		}
 
 		var value interface{}
 		err := FromLua(fv.(lua.LValue), &value)

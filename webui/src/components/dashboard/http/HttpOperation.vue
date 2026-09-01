@@ -11,7 +11,7 @@ import { useDashboard } from '@/composables/dashboard'
 const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },
     path: { type: Object as PropType<HttpPath>, required: true },
-    method: { type: Object as PropType<string>, required: true },
+    method: { type: String, required: true },
 })
 
 const { dashboard } = useDashboard()

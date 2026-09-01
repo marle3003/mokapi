@@ -11,6 +11,8 @@ type HttpEventResponse struct {
 	StatusCode int            `json:"statusCode"`
 	Body       string         `json:"body"`
 	Data       any            `json:"data"`
+	Schema     any            `json:"schema"`
+	Context    map[string]any `json:"context"`
 
 	Rebuild func(statusCode int, contentType string) `json:"-"`
 }
@@ -28,6 +30,7 @@ type HttpEventRequest struct {
 	Api         string `json:"api"`
 	Key         string `json:"key"`
 	OperationId string `json:"operationId"`
+	Operation   any    `json:"operation"`
 }
 
 type Url struct {
@@ -105,4 +108,16 @@ func getResource(u Url, resources interface{}) interface{} {
 		return nil
 	}
 	return resource.Interface()
+}
+
+type HTTPHandler struct {
+	Filter  HttpFilter
+	Execute EventHandler
+}
+
+type HttpFilter struct {
+	Api         string
+	Method      string
+	Path        string
+	OperationId string
 }

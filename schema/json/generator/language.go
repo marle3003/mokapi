@@ -15,7 +15,7 @@ func languages() []*Node {
 
 func fakeLanguage(r *Request) (any, error) {
 	s := r.Schema
-	if s.MaxLength != nil {
+	if s != nil && s.MaxLength != nil {
 		if *s.MaxLength == 2 {
 			// ISO-639-1
 			return gofakeit.LanguageAbbreviation(), nil

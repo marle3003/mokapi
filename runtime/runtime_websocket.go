@@ -75,7 +75,7 @@ func (s *WebsocketStore) List() []*WebsocketInfo {
 	return list
 }
 
-func (s *WebsocketStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*WebsocketInfo, error) {
+func (s *WebsocketStore) Add(c *dynamic.Config, emitter common.WebsocketEventEmitter) (*WebsocketInfo, error) {
 	s.m.Lock()
 	defer s.m.Unlock()
 

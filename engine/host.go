@@ -211,6 +211,8 @@ func (sh *scriptHost) close() {
 	for index := len(sh.cleanupFuncs) - 1; index >= 0; index-- {
 		sh.cleanupFuncs[index]()
 	}
+
+	sh.engine.Clear(sh.name)
 }
 
 func (sh *scriptHost) AddCleanupFunc(f func()) {
@@ -316,7 +318,7 @@ func (sh *scriptHost) CanClose() bool {
 	if sh.script == nil {
 		return true
 	}
-	return len(sh.events) == 0 && len(sh.jobs) == 0 && sh.script.CanClose() && len(sh.cleanupFuncs) == 0
+	return !sh.engine.Has(sh.name) && len(sh.jobs) == 0 && sh.script.CanClose() && len(sh.cleanupFuncs) == 0
 }
 
 func (sh *scriptHost) FindFakerNode(name string) *generator.Node {
@@ -371,8 +373,8 @@ func (sh *scriptHost) endEventHandler() {
 	sh.eventLogger = nil
 }
 
-func getDeepCopy(args []any) []any {
-	result := make([]any, len(args))
+func getDeepCopy(args []any) []string {
+	result := make([]string, len(args))
 	for i, arg := range args {
 		b, _ := json.Marshal(arg)
 		result[i] = string(b)

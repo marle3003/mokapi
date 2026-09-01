@@ -22,6 +22,12 @@ func WithPayload(s *schema.Schema) MessageOptions {
 	}
 }
 
+func UsePayload(ref *asyncapi3.SchemaRef) MessageOptions {
+	return func(m *asyncapi3.Message) {
+		m.Payload = ref
+	}
+}
+
 func WithPayloadOpenAPI(s *openapi.Schema) MessageOptions {
 	return func(m *asyncapi3.Message) {
 		m.Payload = &asyncapi3.SchemaRef{Value: &asyncapi3.MultiSchemaFormat{
@@ -48,6 +54,9 @@ func WithContentType(s string) MessageOptions {
 
 func WithKey(s *schema.Schema) MessageOptions {
 	return func(m *asyncapi3.Message) {
+		if m.Bindings == nil {
+			m.Bindings = &asyncapi3.MessageBinding{}
+		}
 		m.Bindings.Kafka.Key = &asyncapi3.SchemaRef{Value: s}
 	}
 }
@@ -63,6 +72,9 @@ func WithMessageInfo(name, title, summary, description string) MessageOptions {
 
 func WithKafkaMessageBinding(b asyncapi3.KafkaMessageBinding) MessageOptions {
 	return func(m *asyncapi3.Message) {
+		if m.Bindings == nil {
+			m.Bindings = &asyncapi3.MessageBinding{}
+		}
 		m.Bindings.Kafka = b
 	}
 }

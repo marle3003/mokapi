@@ -177,8 +177,12 @@ test('Visit Websocket overview', async ({ page }) => {
                     const list = page.getByRole('list', { name: 'Validation error' })
                     await expect(list.getByRole('listitem')).toHaveCount(1)
                     await page.getByRole('button', { name: 'Validate'}).click()
-                    await expect(page.getByRole('dialog').getByRole('region', { name: 'Content' })).toContainText('{"bar": "not a number"}')
-                    await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click()
+                    const dialog = page.getByRole('dialog')
+                    await expect(dialog.getByRole('region', { name: 'Content' })).toContainText('{"bar": "not a number"}')
+                    await dialog.getByRole('button', { name: 'Close' }).click()
+
+                    const ids = await page.locator('.modal.fade').evaluateAll(els => els.map(e => e.id))
+console.log(ids)
                 })
 
                 

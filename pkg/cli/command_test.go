@@ -98,8 +98,8 @@ func TestCommand(t *testing.T) {
 			args: []string{"--skip-prefix", "_", "foo_"},
 			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []string{"foo_"}, cmd.Flags().GetStringSlice("skip-prefix"))
-				require.Equal(t, []string{"foo_"}, cmd.Config.(*config).SkipPrefix)
+				require.Equal(t, []string{"_", "foo_"}, cmd.Flags().GetStringSlice("skip-prefix"))
+				require.Equal(t, []string{"_", "foo_"}, cmd.Config.(*config).SkipPrefix)
 			},
 		},
 		{

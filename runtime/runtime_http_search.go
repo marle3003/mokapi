@@ -93,7 +93,13 @@ func (s *HttpStore) addToIndex(cfg *openapi.Config) {
 
 	s.index.Add(fmt.Sprintf("http_%s", cfg.Info.Name), c)
 
-	for path, p := range cfg.Paths {
+	if cfg.Paths == nil {
+		return
+	}
+
+	for it := cfg.Paths.Iter(); it.Next(); {
+		path := it.Key()
+		p := it.Value()
 		if p.Value == nil {
 			continue
 		}
@@ -262,8 +268,13 @@ func getHttpSearchResult(fields map[string]string, discriminator []string) (sear
 
 func (s *HttpStore) removeFromIndex(cfg *openapi.Config) {
 	s.index.Delete(fmt.Sprintf("http_%s", cfg.Info.Name))
+	if cfg.Paths == nil {
+		return
+	}
 
-	for path, p := range cfg.Paths {
+	for it := cfg.Paths.Iter(); it.Next(); {
+		path := it.Key()
+		p := it.Value()
 		s.index.Delete(fmt.Sprintf("http_%s_%s", cfg.Info.Name, path))
 		for method := range p.Value.Operations() {
 			s.index.Delete(fmt.Sprintf("http_%s_%s_%s", cfg.Info.Name, path, method))

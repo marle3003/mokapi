@@ -199,8 +199,8 @@ func TestResponseHandler_ServeHTTP_ResponseBody(t *testing.T) {
 			test.NewNullLogger()
 
 			var r *common.HttpEventRequest
-			e := enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
-				r = args[0].(*common.HttpEventRequest)
+			e := enginetest.HttpEventHandlerFunc(func(request *common.HttpEventRequest, response *common.HttpEventResponse) []*common.Action {
+				r = request
 				return nil
 			})
 

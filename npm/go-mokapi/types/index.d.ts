@@ -227,7 +227,63 @@ export interface HttpResponse {
      *   }
      * })
      */
-    rebuild: (statusCode?: number, contentType?: string) => void;
+    rebuild(statusCode?: number, contentType?: string): void;
+
+    /**
+     * A request-scoped key-value store for passing data between handlers
+     * registered on the same route.
+     *
+     * Use `context` to share state between `use()` middleware and method handlers
+     * without relying on external variables. Values are only available for the
+     * lifetime of the current request.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.api('Petstore').http()
+     *     .route('/pets/{petId}')
+     *       .use((req, res) => {
+     *         res.context.user = parseToken(req.header['Authorization'])
+     *       })
+     *       .get((req, res) => {
+     *         res.data = { id: req.path.petId, owner: res.context.user.name }
+     *       })
+     * }
+     */
+    context: Record<string, any>
+
+    /**
+     * Stops the handler pipeline for the current route.
+     *
+     * By default, all handlers registered on a route run in order.
+     * Calling `stopPropagation()` prevents any subsequent handlers
+     * on the same route from being executed.
+     *
+     * This is useful for guard logic such as authentication checks,
+     * where further processing should be skipped if a condition is not met.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.api('Petstore').http()
+     *     .route('/pets/{petId}')
+     *       .use((req, res) => {
+     *         if (!req.header['Authorization']) {
+     *           res.statusCode = 401
+     *           res.stopPropagation()  // get/delete will not run
+     *           return
+     *         }
+     *         res.context.user = parseToken(req.header['Authorization'])
+     *       })
+     *       .get((req, res) => {
+     *         res.data = { id: req.path.petId, owner: res.context.user.name }
+     *       })
+     *       .delete((req, res) => {
+     *         res.statusCode = 204
+     *       })
+     * }
+     */
+    stopPropagation(): void
 }
 
 /**
@@ -749,6 +805,18 @@ export interface WebsocketChannel {
      * })
      */
     readonly name: string;
+
+    /**
+     * The parameter values extracted from the channel address for this
+     * specific channel instance, keyed by parameter name.
+     *
+     * @example
+     * // channel address: /doc/{roomId}
+     * on('websocket', function(event) {
+     *   console.log(event.channel.params['roomId']) // e.g. "room-1"
+     * })
+     */
+    readonly params: Record<string, string>;
 
     /**
      * All clients currently connected to this channel. Use this for
@@ -1322,3 +1390,501 @@ export interface SharedMemory {
  * ```
  */
 export const shared: SharedMemory;
+
+/**
+ * The central application object for registering HTTP (and future protocol) handlers
+ * in a structured, route-oriented style.
+ *
+ * `app` is a singleton — the same instance is returned every time it is accessed.
+ * Use `app.api()` to scope handlers to a specific API by its OpenAPI `info.title`,
+ * which is required when multiple APIs share the same path.
+ *
+ * @example
+ * // Without API scope — matches all APIs with this path
+ * import { app } from 'mokapi'
+ * export default function() {
+ *   app.http().get('/pets', (req, res) => {
+ *     res.data = [{ name: 'Bello' }]
+ *   })
+ * }
+ *
+ * @example
+ * // With API scope — only matches the 'Petstore' API
+ * import { app } from 'mokapi'
+ * export default function() {
+ *   app.api('Petstore').http().get('/pets', (req, res) => {
+ *     res.data = [{ name: 'Bello' }]
+ *   })
+ * }
+ */
+export const app: App
+
+/**
+ * The top-level application interface providing access to protocol routers
+ * and API scoping.
+ *
+ * Use `api()` to narrow handlers to a specific API by its OpenAPI `info.title`.
+ * Use `http()` directly for handlers that apply across all APIs.
+ */
+export interface App {
+    /**
+     * Creates or returns a scoped context for the given API title.
+     *
+     * The title must match the `info.title` field in the OpenAPI specification.
+     * Scoping is required when multiple APIs define the same path, to avoid
+     * a handler running for unintended APIs.
+     *
+     * @param title The API title as defined in `info.title` of the OpenAPI spec.
+     * @returns An `ApiScope` bound to the given API title.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   const petstore = app.api('Petstore')
+     *   petstore.http().get('/pets', (req, res) => {
+     *     res.data = [{ name: 'Bello' }]
+     *   })
+     *
+     *   const zoo = app.api('Zoo API')
+     *   zoo.http().get('/pets', (req, res) => {
+     *     res.data = [{ name: 'Simba' }]
+     *   })
+     * }
+     */
+    api(title: string): ApiScope
+
+    /**
+     * Returns an `HttpRouter` not bound to any specific API.
+     * Handlers registered here will run for all APIs that match
+     * the given path and method.
+     *
+     * Use this for cross-cutting concerns such as logging, shared headers,
+     * or common error responses.
+     *
+     * @returns An `HttpRouter` with no API scope.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.http().get('/pets', (req, res) => {
+     *     res.headers['X-Mock'] = 'true'
+     *   })
+     * }
+     */
+    http(): HttpRouter
+}
+
+/**
+ * A scoped application context bound to a specific API by its `info.title`.
+ *
+ * Obtain an `ApiScope` via `app.api('My API')`. All handlers registered
+ * through this scope will only run for requests matched to the named API.
+ *
+ * @example
+ * import { app } from 'mokapi'
+ * export default function() {
+ *   const petstore = app.api('Petstore')
+ *   petstore.http().route('/pets')
+ *     .get((req, res) => { res.data = [] })
+ *     .post((req, res) => { res.statusCode = 201 })
+ * }
+ */
+export interface ApiScope {
+    /**
+     * Returns an `HttpRouter` scoped to this API.
+     *
+     * Handlers registered on this router will only run for HTTP requests
+     * that are matched to the API identified by this scope's title.
+     *
+     * @returns An `HttpRouter` bound to this API scope.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.api('Petstore').http().get('/pets', (req, res) => {
+     *     res.data = [{ name: 'Bello' }]
+     *   })
+     * }
+     */
+    http(): HttpRouter
+}
+
+/**
+ * Registers and organizes HTTP event handlers by path, operation, and method.
+ *
+ * Obtain an `HttpRouter` via `app.http()` or `app.api('My API').http()`.
+ *
+ * Two styles are supported:
+ * - **Shorthand**: `router.get(path, handler)` — registers a handler directly for a path and method.
+ * - **Chained**: `router.route(path).get(handler).post(handler)` — groups multiple methods under one path.
+ *
+ * Paths must match the path template defined in the OpenAPI specification,
+ * not the absolute server URL. For example, use `/pets/{petId}`, not `/v1/pets/123`.
+ *
+ * When multiple APIs share the same path, use `app.api()` to scope the router
+ * to a specific API title to avoid unintended matches.
+ *
+ * All handlers registered on the same path and method run in registration order
+ * (or by `priority` if specified). The last handler to write wins.
+ *
+ * @example
+ * // Shorthand style
+ * import { app } from 'mokapi'
+ * export default function() {
+ *   const router = app.api('Petstore').http()
+ *   router.get('/pets', (req, res) => { res.data = [] })
+ *   router.post('/pets', (req, res) => { res.statusCode = 201 })
+ * }
+ *
+ * @example
+ * // Chained style
+ * import { app } from 'mokapi'
+ * export default function() {
+ *   app.api('Petstore').http()
+ *     .route('/pets')
+ *       .get((req, res) => { res.data = [] })
+ *       .post((req, res) => { res.statusCode = 201 })
+ * }
+ */
+export interface HttpRouter {
+
+    /**
+     * Registers a middleware handler that runs for all methods.
+     *
+     * Middleware is useful for shared logic that should execute regardless
+     * of the HTTP method — for example, authentication checks, setting up
+     * `res.ctx`, or adding common response headers.
+     *
+     * Middleware handlers run in registration order relative to other handlers
+     * on the same route. Use `opts.priority` to control ordering explicitly.
+     *
+     * @param handler The middleware handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `HttpRoute` instance for chaining.
+     *
+     * @example
+     * router
+     *   .use((req, res) => {
+     *     const token = req.header['Authorization']
+     *     if (!token) {
+     *       res.statusCode = 401
+     *       return
+     *     }
+     *     res.ctx.user = parseToken(token)
+     *   })
+     *   .get((req, res) => {
+     *     res.data = { id: req.path.petId, owner: res.ctx.user.name }
+     *   })
+     */
+    use(handler: HttpEventHandler, opts?: HttpEventArgs): this
+
+    /**
+     * Returns an `HttpRoute` for the given OpenAPI path template.
+     *
+     * Use this to register multiple method handlers under the same path
+     * using method chaining, or to attach middleware via `.use()`.
+     *
+     * The path must match the path template in the OpenAPI specification,
+     * e.g. `/pets/{petId}`, not the absolute URL.
+     *
+     * @param path The OpenAPI path template, e.g. `/pets/{petId}`.
+     * @returns An `HttpRoute` for the given path.
+     *
+     * @example
+     * router.route('/pets/{petId}')
+     *   .use((req, res) => {
+     *     if (!req.header['Authorization']) {
+     *       res.statusCode = 401
+     *       res.stopPropagation()  // get/delete will not run
+     *       return
+     *     }
+     *     res.context.user = parseToken(req.header['Authorization'])
+     *   })
+     *   .get((req, res) => {
+     *     res.data = { id: req.path.petId, owner: res.context.user.name }
+     *   })
+     *   .delete((req, res) => {
+     *     res.statusCode = 204
+     *   })
+     */
+    route(path: string): HttpRoute
+
+    /**
+     * Returns an `HttpRoute` matched by the given `operationId` as defined
+     * in the OpenAPI specification.
+     *
+     * Use this as an alternative to `route()` when you prefer to reference
+     * operations by name rather than by path template.
+     *
+     * @param operationId The `operationId` defined in the OpenAPI operation.
+     * @returns An `HttpRoute` for the matching operation.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.api('Petstore').http()
+     *     .operation('listPets')
+     *     .get((req, res) => { res.data = [] })
+     * }
+     */
+    operation(operationId: string): HttpRoute
+
+    /**
+     * Narrows this router to a specific API by title.
+     *
+     * This is an alternative to `app.api(title).http()` for cases where
+     * the router is already obtained and you want to further scope it.
+     *
+     * @param title The API title as defined in `info.title` of the OpenAPI spec.
+     * @returns A new `HttpRouter` scoped to the given API title.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.http().api('Petstore').get('/pets', (req, res) => {
+     *     res.data = []
+     *   })
+     * }
+     */
+    api(title: string): HttpRouter
+
+    /**
+     * Registers a handler for `GET` requests to the given path.
+     * @param path The OpenAPI path template, e.g. `/pets/{petId}`.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     *
+     * @example
+     * app.http().get('/pets', (req, res) => { res.data = [] })
+     */
+    get(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+
+    /**
+     * Registers a handler for `POST` requests to the given path.
+     * @param path The OpenAPI path template.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     *
+     * @example
+     * app.http().post('/pets', (req, res) => { res.statusCode = 201 })
+     */
+    post(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+
+    /**
+     * Registers a handler for `PUT` requests to the given path.
+     * @param path The OpenAPI path template.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     */
+    put(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+
+    /**
+     * Registers a handler for `PATCH` requests to the given path.
+     * @param path The OpenAPI path template.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     */
+    patch(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+
+    /**
+     * Registers a handler for `DELETE` requests to the given path.
+     * @param path The OpenAPI path template.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     */
+    delete(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+
+    /**
+     * Registers a handler for `HEAD` requests to the given path.
+     * @param path The OpenAPI path template.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     */
+    head(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+
+    /**
+     * Registers a handler for `OPTIONS` requests to the given path.
+     * @param path The OpenAPI path template.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     */
+    options(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+
+    /**
+     * Registers a handler for `TRACE` requests to the given path.
+     * @param path The OpenAPI path template.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     */
+    trace(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+
+    /**
+     * Registers a handler for `QUERY` requests to the given path.
+     * @param path The OpenAPI path template.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     */
+    query(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+
+    /** Allows registering a handler for any HTTP method, including custom ones.
+     * @example
+     * app.http().purge('/cache', (req, res) => { res.statusCode = 200 })
+     */
+    [method: string]: any
+}
+
+/**
+ * Represents a single route (path or operation) within an `HttpRouter`,
+ * allowing multiple method handlers and middleware to be registered
+ * via method chaining.
+ *
+ * Obtain an `HttpRoute` via `router.route(path)` or `router.operation(operationId)`.
+ *
+ * All methods return `this`, enabling fluent chaining:
+ * ```ts
+ * router.route('/pets')
+ *   .use(authMiddleware)
+ *   .get(listHandler)
+ *   .post(createHandler)
+ * ```
+ *
+ * Handlers registered on the same route run in registration order
+ * (or by `priority`). The last handler to write a value wins.
+ *
+ * Middleware registered via `use()` runs for all methods on this route
+ * and is well suited for shared logic such as authentication,
+ * request context setup, or response enrichment.
+ *
+ * @example
+ * import { app } from 'mokapi'
+ * export default function() {
+ *   app.api('Petstore').http()
+ *     .route('/pets/{petId}')
+ *       .use((req, res) => {
+ *         // Runs before get and delete — set up shared context
+ *         res.ctx.requestedAt = Date.now()
+ *       })
+ *       .get((req, res) => {
+ *         res.data = { id: req.path.petId, requestedAt: res.ctx.requestedAt }
+ *       })
+ *       .delete((req, res) => {
+ *         res.statusCode = 204
+ *       })
+ * }
+ */
+export interface HttpRoute {
+
+    /**
+     * Registers a middleware handler that runs for all methods on this route.
+     *
+     * Middleware is useful for shared logic that should execute regardless
+     * of the HTTP method — for example, authentication checks, setting up
+     * `res.ctx`, or adding common response headers.
+     *
+     * Middleware handlers run in registration order relative to other handlers
+     * on the same route. Use `opts.priority` to control ordering explicitly.
+     *
+     * @param handler The middleware handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `HttpRoute` instance for chaining.
+     *
+     * @example
+     * router.route('/pets/{petId}')
+     *   .use((req, res) => {
+     *     const token = req.header['Authorization']
+     *     if (!token) {
+     *       res.statusCode = 401
+     *       return
+     *     }
+     *     res.ctx.user = parseToken(token)
+     *   })
+     *   .get((req, res) => {
+     *     res.data = { id: req.path.petId, owner: res.ctx.user.name }
+     *   })
+     */
+    use(handler: HttpEventHandler, opts?: HttpEventArgs): this
+
+    /**
+     * Registers a handler for `GET` requests on this route.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `HttpRoute` instance for chaining.
+     *
+     * @example
+     * router.route('/pets').get((req, res) => { res.data = [] })
+     */
+    get(handler: HttpEventHandler, opts?: HttpEventArgs): this
+
+    /**
+     * Registers a handler for `POST` requests on this route.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `HttpRoute` instance for chaining.
+     *
+     * @example
+     * router.route('/pets').post((req, res) => { res.statusCode = 201 })
+     */
+    post(handler: HttpEventHandler, opts?: HttpEventArgs): this
+
+    /**
+     * Registers a handler for `PUT` requests on this route.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `HttpRoute` instance for chaining.
+     */
+    put(handler: HttpEventHandler, opts?: HttpEventArgs): this
+
+    /**
+     * Registers a handler for `PATCH` requests on this route.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `HttpRoute` instance for chaining.
+     */
+    patch(handler: HttpEventHandler, opts?: HttpEventArgs): this
+
+    /**
+     * Registers a handler for `DELETE` requests on this route.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `HttpRoute` instance for chaining.
+     */
+    delete(handler: HttpEventHandler, opts?: HttpEventArgs): this
+
+    /**
+     * Registers a handler for `HEAD` requests on this route.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `HttpRoute` instance for chaining.
+     */
+    head(handler: HttpEventHandler, opts?: HttpEventArgs): this
+
+    /**
+     * Registers a handler for `OPTIONS` requests on this route.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `HttpRoute` instance for chaining.
+     */
+    options(handler: HttpEventHandler, opts?: HttpEventArgs): this
+
+    /**
+     * Registers a handler for `TRACE` requests on this route.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `HttpRoute` instance for chaining.
+     */
+    trace(handler: HttpEventHandler, opts?: HttpEventArgs): this
+
+    /**
+     * Registers a handler for `QUERY` requests on this route.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `HttpRoute` instance for chaining.
+     */
+    query(handler: HttpEventHandler, opts?: HttpEventArgs): this
+
+    /** Allows registering a handler for any HTTP method, including custom ones such as `PURGE` or `SEARCH`.
+     * @example
+     * router.route('/cache').purge((req, res) => { res.statusCode = 200 })
+     */
+    [method: string]: any
+}

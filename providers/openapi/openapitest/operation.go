@@ -30,6 +30,18 @@ func WithOperationSummary(summary string) OperationOptions {
 	}
 }
 
+func WithOperationDescription(s string) OperationOptions {
+	return func(o *openapi.Operation) {
+		o.Description = s
+	}
+}
+
+func WithOperationTags(tags ...string) OperationOptions {
+	return func(o *openapi.Operation) {
+		o.Tags = tags
+	}
+}
+
 func WithResponse(status int, opts ...ResponseOptions) OperationOptions {
 	return func(o *openapi.Operation) {
 		r := &openapi.Response{
@@ -94,6 +106,12 @@ func WithExplode(explode bool) ParamOptions {
 	}
 }
 
+func WithStyle(style string) ParamOptions {
+	return func(p *openapi.Parameter) {
+		p.Style = style
+	}
+}
+
 func WithCookieParam(name string, required bool, opts ...ParamOptions) OperationOptions {
 	return func(o *openapi.Operation) {
 		o.Parameters = append(o.Parameters, &openapi.ParameterRef{
@@ -118,7 +136,7 @@ func WithRequestBody(description string, required bool, opts ...RequestBodyOptio
 	return func(o *openapi.Operation) {
 		body := &openapi.RequestBody{
 			Description: description,
-			Required:    required,
+			Required:    new(required),
 		}
 
 		for _, opt := range opts {
@@ -143,7 +161,7 @@ func newParam(name string, required bool, t openapi.Location, opts ...ParamOptio
 	p := &openapi.Parameter{
 		Name:     name,
 		Type:     t,
-		Required: required,
+		Required: new(required),
 	}
 
 	for _, opt := range opts {

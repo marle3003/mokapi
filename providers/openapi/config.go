@@ -2,6 +2,7 @@ package openapi
 
 import (
 	_ "embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"mokapi/config/dynamic"
@@ -58,11 +59,11 @@ type Config struct {
 	// A relative path to an individual endpoint. The path MUST begin
 	// with a forward slash ('/'). The path is appended to the url from
 	// server objects url field in order to construct the full URL
-	Paths PathItems `yaml:"paths,omitempty" json:"paths,omitempty"`
+	Paths *PathItems `yaml:"paths,omitempty" json:"paths,omitempty"`
 
 	Webhooks map[string]*PathRef `yaml:"webhooks,omitempty" json:"webhooks,omitempty"`
 
-	Security []SecurityRequirement `yaml:"security" json:"security"`
+	Security []SecurityRequirement `yaml:"security,omitempty" json:"security,omitempty"`
 
 	Components Components `yaml:"components,omitempty" json:"components,omitempty"`
 
@@ -106,13 +107,17 @@ func (c *Config) Validate() (err error) {
 		err = errors.Join(err, errors.New("an openapi title is required"))
 	}
 
-	for name, path := range c.Paths {
-		if !strings.HasPrefix(name, "/") {
-			if path.Value == nil {
-				err = errors.Join(err, fmt.Errorf("should only have path names that start with `/`: '%s'", name))
-			} else {
-				path.Value.Status = StatusValidationError
-				path.Value.Errors = append(path.Value.Errors, Error{Message: "path should start with `/`"})
+	if c.Paths != nil {
+		for it := c.Paths.Iter(); it.Next(); {
+			name := it.Key()
+			path := it.Value()
+			if !strings.HasPrefix(name, "/") {
+				if path.Value == nil {
+					err = errors.Join(err, fmt.Errorf("should only have path names that start with `/`: '%s'", name))
+				} else {
+					path.Value.Status = StatusValidationError
+					path.Value.Errors = append(path.Value.Errors, Error{Message: "path should start with `/`"})
+				}
 			}
 		}
 	}
@@ -203,17 +208,6 @@ func (r *RequestBody) GetMedia(contentType media.ContentType) *MediaType {
 	return nil
 }
 
-func (c *Config) UnmarshalJSON(b []byte) error {
-	type alias Config
-	a := alias(*c)
-	err := dynamic.UnmarshalJSON(b, &a)
-	if err != nil {
-		return err
-	}
-	*c = Config(a)
-	return nil
-}
-
 func (s Status) String() string {
 	switch s {
 	case StatusValid:
@@ -235,18 +229,81 @@ func getName(cfg *dynamic.Config) string {
 }
 
 func (c *Config) GetStatus() Status {
-	for _, pt := range c.Paths {
-		if pt.Value == nil {
+	if c.Paths == nil {
+		return StatusValid
+	}
+	for it := c.Paths.Iter(); it.Next(); {
+		pi := it.Value()
+		if pi.Value == nil {
 			continue
 		}
-		if pt.Value.Status != StatusValid {
-			return pt.Value.Status
+		if pi.Value.Status != StatusValid {
+			return pi.Value.Status
 		}
-		for _, op := range pt.Value.Operations() {
+		for _, op := range pi.Value.Operations() {
 			if op.Status != StatusValid {
 				return op.Status
 			}
 		}
 	}
 	return StatusValid
+}
+
+type config struct {
+	OpenApi      string                `yaml:"openapi" json:"openapi"`
+	Info         Info                  `yaml:"info" json:"info"`
+	Servers      []*Server             `yaml:"servers,omitempty" json:"servers,omitempty"`
+	Paths        *PathItems            `yaml:"paths,omitempty" json:"paths,omitempty"`
+	Webhooks     map[string]*PathRef   `yaml:"webhooks,omitempty" json:"webhooks,omitempty"`
+	Security     []SecurityRequirement `yaml:"security,omitempty" json:"security,omitempty"`
+	Components   *Components           `yaml:"components,omitempty" json:"components,omitempty"`
+	ExternalDocs *ExternalDocs         `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
+	Tags         []*Tag                `yaml:"tags,omitempty" json:"tags,omitempty"`
+}
+
+func (c *Config) MarshalJSON() ([]byte, error) {
+	type alias Config
+	temp := struct {
+		Version string `json:"openapi"`
+		alias
+		Components *Components `json:"components,omitempty"`
+	}{
+		alias:      alias(*c), // real value copy — mutating temp never touches c
+		Version:    c.OpenApi.String(),
+		Components: &c.Components,
+	}
+
+	if len(temp.Servers) == 1 && temp.Servers[0].IsDefault {
+		temp.Servers = nil
+	}
+
+	if c.Components.IsEmpty() {
+		temp.Components = nil
+	}
+
+	return json.Marshal(&temp)
+}
+
+func (c *Config) MarshalYAML() (any, error) {
+	temp := &config{
+		OpenApi:      c.OpenApi.String(),
+		Info:         c.Info,
+		Servers:      c.Servers,
+		Paths:        c.Paths,
+		Webhooks:     c.Webhooks,
+		Security:     c.Security,
+		Components:   &c.Components,
+		ExternalDocs: c.ExternalDocs,
+		Tags:         c.Tags,
+	}
+
+	if len(temp.Servers) == 1 && temp.Servers[0].IsDefault {
+		temp.Servers = nil
+	}
+
+	if c.Components.IsEmpty() {
+		temp.Components = nil
+	}
+
+	return temp, nil
 }

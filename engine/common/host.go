@@ -3,14 +3,47 @@ package common
 import (
 	"fmt"
 	"mokapi/config/dynamic"
+	"mokapi/ldap"
 	"mokapi/schema/json/generator"
+	"mokapi/smtp"
 	"net/http"
 	"strings"
 	"time"
 )
 
 type EventEmitter interface {
-	Emit(event string, args ...interface{}) []*Action
+	HttpEventEmitter
+	KafkaEventEmitter
+	MqttEventEmitter
+	WebsocketEventEmitter
+	MailEventEmitter
+	LdapEventEmitter
+}
+
+type HttpEventEmitter interface {
+	EmitHttp(request *HttpEventRequest, response *HttpEventResponse) []*Action
+}
+
+type KafkaEventEmitter interface {
+	EmitKafka(record *KafkaEventRecord) []*Action
+}
+
+type MqttEventEmitter interface {
+	EmitMqtt(message *MqttMessageEvent) []*Action
+}
+
+type WebsocketEventEmitter interface {
+	EmitWebsocketConnect(event *WebsocketConnectEvent) []*Action
+	EmitWebsocketMessage(event *WebsocketMessageEvent) []*Action
+	EmitWebsocketClose(event *WebsocketCloseEvent) []*Action
+}
+
+type MailEventEmitter interface {
+	EmitSmtp(message *smtp.Message, status *smtp.Status) []*Action
+}
+
+type LdapEventEmitter interface {
+	EmitLdap(request *ldap.SearchRequest, response *ldap.SearchResponse) []*Action
 }
 
 type Script interface {
@@ -40,7 +73,12 @@ type Host interface {
 
 	OpenFile(file string, hint string) (*dynamic.Config, error)
 
-	On(event string, do EventHandler, args EventArgs)
+	OnHttp(filter HttpFilter, do EventHandler, args EventArgs)
+	OnKafka(filter KafkaFilter, do EventHandler, args EventArgs)
+	OnMqtt(filter MqttFilter, do EventHandler, args EventArgs)
+	OnWebsocket(filter WebsocketFilter, do EventHandler, args EventArgs)
+	OnMail(filter MailFilter, do EventHandler, args EventArgs)
+	OnLdap(filter LdapFilter, do EventHandler, args EventArgs)
 
 	Webhook(name string, url string, args WebhookArgs) (*WebhookResponse, error)
 
@@ -146,7 +184,7 @@ type MqttPublishResult struct {
 type Action struct {
 	Duration   int64             `json:"duration"`
 	Tags       map[string]string `json:"tags"`
-	Parameters []any             `json:"parameters"`
+	Parameters []string          `json:"parameters"`
 	Logs       []Log             `json:"logs"`
 	Error      *Error            `json:"error"`
 }

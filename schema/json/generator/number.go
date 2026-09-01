@@ -219,14 +219,14 @@ func getRangeWithDefault(s *schema.Schema, min, max float64) (float64, float64) 
 	if s.ExclusiveMinimum != nil {
 		if s.ExclusiveMinimum.IsA() {
 			min = s.ExclusiveMinimum.A + modifier
-		} else {
+		} else if s.Minimum != nil {
 			min = *s.Minimum + modifier
 		}
 	}
 	if s.ExclusiveMaximum != nil {
 		if s.ExclusiveMaximum.IsA() {
 			max = s.ExclusiveMaximum.A - modifier
-		} else {
+		} else if s.Maximum != nil {
 			max = *s.Maximum - modifier
 		}
 	}

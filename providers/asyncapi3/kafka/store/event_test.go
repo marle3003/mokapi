@@ -26,10 +26,11 @@ func TestProduceTriggersEvent(t *testing.T) {
 	sm := &events.StoreManager{}
 
 	triggerCount := 0
-	s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngineWithHandler(func(event string, args ...interface{}) []*common.Action {
+	f := enginetest.KafkaEventHandlerFunc(func(record *common.KafkaEventRecord) []*common.Action {
 		triggerCount++
 		return nil
-	}), sm, monitor.NewKafka())
+	})
+	s := store.New(asyncapi3test.NewConfig(), f, sm, monitor.NewKafka())
 	defer s.Close()
 
 	s.Update(asyncapi3test.NewConfig(

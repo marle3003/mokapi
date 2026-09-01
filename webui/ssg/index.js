@@ -3,6 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const Server = require('./server');
 
+const skipExtensions = ['.ts', '.json', '.yaml'];
+
 (async () => {
   const server = new Server('../dist')
   await server.start()
@@ -16,7 +18,8 @@ const Server = require('./server');
       console.log('skip ' + url)
       return
     }
-    if (path.extname(url.pathname) === '.ts') {
+    const ext = path.extname(url.pathname)
+    if (skipExtensions.includes(ext)) {
       console.log('skip ' + url);
       return;
     }

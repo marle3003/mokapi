@@ -177,6 +177,50 @@ func TestNumber(t *testing.T) {
 				require.Equal(t, "3282", v)
 			},
 		},
+		{
+			name: "exclusive float",
+			req: &Request{
+				Path: []string{"id"},
+				Schema: schematest.New("integer",
+					schematest.WithExclusiveMinimum(0),
+					schematest.WithExclusiveMaximum(3),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(1), v)
+			},
+		},
+		{
+			name: "exclusive bool",
+			req: &Request{
+				Path: []string{"id"},
+				Schema: schematest.New("integer",
+					schematest.WithMinimum(0),
+					schematest.WithMaximum(3),
+					schematest.WithExclusiveMinimumFlag(true),
+					schematest.WithExclusiveMaximumFlag(true),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(1), v)
+			},
+		},
+		{
+			name: "exclusive bool but min and max not set",
+			req: &Request{
+				Path: []string{"id"},
+				Schema: schematest.New("integer",
+					schematest.WithExclusiveMinimumFlag(true),
+					schematest.WithExclusiveMaximumFlag(true),
+				),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, int64(9900), v)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

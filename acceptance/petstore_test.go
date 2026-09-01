@@ -124,6 +124,14 @@ func (suite *PetStoreSuite) TestJsHttpHandler() {
 	)
 }
 
+func (suite *PetStoreSuite) TestNewJsHttpHandler() {
+	time.Sleep(4 * time.Second)
+	try.GetRequest(suite.T(), "http://127.0.0.1:18080/pet/findByStatus?status=sold",
+		map[string]string{"Accept": "application/json", "api_key": "123"},
+		try.HasStatusCode(http.StatusOK),
+		try.HasBody(`[{"name":"Zoe","photoUrls":[]}]`))
+}
+
 func (suite *PetStoreSuite) TestLuaFile() {
 	// ensure scripts are executed
 	time.Sleep(2 * time.Second)

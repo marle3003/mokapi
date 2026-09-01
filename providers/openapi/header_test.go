@@ -56,7 +56,7 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 				header := &openapi.Header{}
 				err := json.Unmarshal([]byte(`{ "required": true  }`), &header)
 				require.NoError(t, err)
-				require.True(t, header.Required)
+				require.True(t, *header.Required)
 			},
 		},
 		{
@@ -65,7 +65,7 @@ func TestHeader_UnmarshalJSON(t *testing.T) {
 				header := &openapi.Header{}
 				err := json.Unmarshal([]byte(`{ "deprecated": true  }`), &header)
 				require.NoError(t, err)
-				require.True(t, header.Deprecated)
+				require.True(t, *header.Deprecated)
 			},
 		},
 		{
@@ -163,7 +163,7 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 				header := &openapi.Header{}
 				err := yaml.Unmarshal([]byte(`required: true`), &header)
 				require.NoError(t, err)
-				require.True(t, header.Required)
+				require.True(t, *header.Required)
 			},
 		},
 		{
@@ -172,7 +172,7 @@ func TestHeader_UnmarshalYAML(t *testing.T) {
 				header := &openapi.Header{}
 				err := yaml.Unmarshal([]byte(`deprecated: true`), &header)
 				require.NoError(t, err)
-				require.True(t, header.Deprecated)
+				require.True(t, *header.Deprecated)
 			},
 		},
 		{
@@ -271,7 +271,7 @@ func TestHeader_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				h := config.Paths["/foo"].Value.Get.Responses.GetResponse(http.StatusOK).Headers["foo"]
+				h := config.Paths.Lookup("/foo").Value.Get.Responses.GetResponse(http.StatusOK).Headers["foo"]
 				require.Equal(t, "foo description", h.Value.Description)
 			},
 		},
@@ -293,7 +293,7 @@ func TestHeader_Parse(t *testing.T) {
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.Equal(t, logrus.Fields{"method": "GET", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse response '200' failed: parse header 'foo' failed: resolve reference '/foo' failed: TEST ERROR", log.LastEntry().Message)
-				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation(http.MethodGet).Status)
+				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodGet).Status)
 				require.NoError(t, err)
 			},
 		},
@@ -338,7 +338,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				require.Equal(t, "foo", res.Headers["foo"].Value.Description)
 			},
 		},
@@ -369,7 +369,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				require.Equal(t, "bar", res.Headers["foo"].Value.Description)
 			},
 		},
@@ -400,7 +400,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				require.Equal(t, "foo", res.Headers["foo"].Value.Description)
 			},
 		},
@@ -431,7 +431,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				require.Equal(t, "foo", res.Headers["foo"].Value.Description)
 			},
 		},
@@ -462,7 +462,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				require.Equal(t, "foo", res.Headers["foo"].Value.Description)
 			},
 		},
@@ -493,7 +493,7 @@ func TestConfig_Patch_Header(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				res := result.Paths["/foo"].Value.Post.Responses.GetResponse(200)
+				res := result.Paths.Lookup("/foo").Value.Post.Responses.GetResponse(200)
 				require.Equal(t, "foo", res.Headers["foo"].Value.Description)
 			},
 		},
@@ -507,6 +507,64 @@ func TestConfig_Patch_Header(t *testing.T) {
 				c.Patch(p)
 			}
 			tc.test(t, c)
+		})
+	}
+}
+
+func TestHeader_Marshal(t *testing.T) {
+	testcases := []struct {
+		name string
+		s    *openapi.HeaderRef
+		json string
+		yaml string
+		test func(t *testing.T, json, yaml string, err error)
+	}{
+		{
+			name: "ref",
+			s: &openapi.HeaderRef{
+				Reference: dynamic.Reference[*openapi.HeaderRef]{
+					Ref: "/foo",
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"$ref":"/foo"}`, json)
+				require.Equal(t, "$ref: /foo\n", yaml)
+			},
+		},
+		{
+			name: "value",
+			s: &openapi.HeaderRef{
+				Value: &openapi.Header{
+					Parameter: openapi.Parameter{
+						Name:        "foo",
+						Type:        "header",
+						Description: "foo description",
+					},
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"name":"foo","in":"header","description":"foo description"}`, json)
+				require.Equal(t, `name: foo
+in: header
+description: foo description
+`, yaml)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			jb, err := json.Marshal(tc.s)
+			if err != nil {
+				tc.test(t, "", "", err)
+			}
+			yb, err := yaml.Marshal(tc.s)
+			tc.test(t, string(jb), string(yb), err)
 		})
 	}
 }

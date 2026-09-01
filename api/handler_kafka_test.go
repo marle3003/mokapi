@@ -193,16 +193,24 @@ func TestHandler_Kafka(t *testing.T) {
 					asyncapi3test.WithChannel("foo",
 						asyncapi3test.WithChannelTag("env:test", "bar"),
 					),
+					asyncapi3test.WithChannel("bar", asyncapi3test.WithChannelAddress("bar-1")),
 				)
 				s := store.New(c, enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 
-				return runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", &runtime.KafkaInfo{
+				app := runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", &runtime.KafkaInfo{
 					Config: c,
 					Store:  s,
 				}))
+
+				app.Monitor.Kafka.Messages.WithLabel("foo", "foo").Add(1)
+				app.Monitor.Kafka.LastMessage.WithLabel("foo", "foo").Set(2)
+				app.Monitor.Kafka.Messages.WithLabel("foo", "bar-1").Add(10)
+				app.Monitor.Kafka.LastMessage.WithLabel("foo", "bar-1").Set(11)
+
+				return app
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
-			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"foo","tags":[{"name":"env:test","description":"bar"}],"metrics":{"kafka_messages_total":0,"kafka_message_timestamp":0}}]}`,
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"bar-1","metrics":{"kafka_messages_total":10,"kafka_message_timestamp":11}},{"name":"foo","tags":[{"name":"env:test","description":"bar"}],"metrics":{"kafka_messages_total":1,"kafka_message_timestamp":2}}]}`,
 		},
 		{
 			name: "get topic and multi schema format",
@@ -225,7 +233,7 @@ func TestHandler_Kafka(t *testing.T) {
 				}))
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo/topics/foo",
-			responseBody: `{"name":"foo","description":"bar","partitions":[{"id":0,"startOffset":0,"offset":0,"segments":0}],"messages":{"foo":{"name":"foo","payload":{"format":"foo","schema":{"type":"string"}},"contentType":"application/json"}},"bindings":{"partitions":1,"valueSchemaValidation":true}}`,
+			responseBody: `{"name":"foo","description":"bar","partitions":[{"id":0,"startOffset":0,"offset":0,"segments":0}],"messages":{"foo":{"name":"foo","payload":{"format":"foo","schema":{"type":"string"}},"contentType":"application/json"}},"bindings":{"partitions":1,"valueSchemaValidation":true,"keySchemaValidation":true}}`,
 		},
 		{
 			name: "get cluster info with group",
@@ -369,7 +377,7 @@ func TestHandler_Kafka(t *testing.T) {
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo/topics/foo",
-			responseBody: `{"name":"foo","description":"bar","partitions":[{"id":0,"startOffset":0,"offset":0,"segments":0}],"messages":{"foo":{"name":"foo","payload":{"format":"foo","schema":{"type":"string"}},"contentType":"application/json"}},"bindings":{"partitions":1,"valueSchemaValidation":true}}`,
+			responseBody: `{"name":"foo","description":"bar","partitions":[{"id":0,"startOffset":0,"offset":0,"segments":0}],"messages":{"foo":{"name":"foo","payload":{"format":"foo","schema":{"type":"string"}},"contentType":"application/json"}},"bindings":{"partitions":1,"valueSchemaValidation":true,"keySchemaValidation":true}}`,
 		},
 	}
 
@@ -481,7 +489,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"name":"topic-1","description":"foobar","partitions":[{"id":0,"startOffset":0,"offset":0,"segments":0}],"messages":{"foo":{"name":"foo","payload":null,"contentType":"application/json"}},"bindings":{"partitions":1,"valueSchemaValidation":true}}`),
+					try.HasBody(`{"name":"topic-1","description":"foobar","partitions":[{"id":0,"startOffset":0,"offset":0,"segments":0}],"messages":{"foo":{"name":"foo","payload":null,"contentType":"application/json"}},"bindings":{"partitions":1,"valueSchemaValidation":true,"keySchemaValidation":true}}`),
 				)
 			},
 		},
@@ -1053,6 +1061,50 @@ func TestHandler_KafkaAPI(t *testing.T) {
 				)
 			},
 		},
+		{
+			name: "export to AsyncAPI.json",
+			app: func() *runtime.App {
+				return runtimetest.NewKafkaApp(
+					asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "", ""),
+						asyncapi3test.WithChannel("foo"),
+					),
+				)
+			},
+			test: func(t *testing.T, app *runtime.App, h http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/asyncapi.json",
+					map[string]string{"Accept": "application/json"},
+					"",
+					h,
+					try.HasStatusCode(http.StatusOK),
+					try.HasBody("{\"asyncapi\":\"3.0.0\",\"info\":{\"title\":\"foo\"},\"defaultContentType\":\"application/json\",\"servers\":{\"mokapi\":{\"host\":\":9092\",\"title\":\"Mokapi Default Broker\",\"summary\":\"Automatically added broker because no servers are defined in the AsyncAPI spec\",\"protocol\":\"kafka\"}},\"channels\":{\"foo\":{\"bindings\":{}}}}"),
+				)
+			},
+		},
+		{
+			name: "export to OpenAPI.yaml",
+			app: func() *runtime.App {
+				return runtimetest.NewKafkaApp(
+					asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "", ""),
+						asyncapi3test.WithChannel("foo"),
+					),
+				)
+			},
+			test: func(t *testing.T, app *runtime.App, h http.Handler) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/asyncapi.yaml",
+					map[string]string{"Accept": "application/json"},
+					"",
+					h,
+					try.HasStatusCode(http.StatusOK),
+					try.HasBody("asyncapi: 3.0.0\ninfo:\n  title: foo\ndefaultContentType: application/json\nservers:\n  mokapi:\n    host: :9092\n    title: Mokapi Default Broker\n    summary: Automatically added broker because no servers are defined in the AsyncAPI spec\n    protocol: kafka\nchannels:\n  foo:\n    bindings: {}\n"),
+				)
+			},
+		},
 	}
 
 	t.Parallel()
@@ -1109,8 +1161,8 @@ func TestHandler_Kafka_Metrics(t *testing.T) {
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
 			responseBody: `{"name":"foo","version":"1.0","topics":[{"name":"foo","metrics":{"kafka_messages_total":1,"kafka_message_timestamp":12345678}}]}`,
 			addMetrics: func(monitor *monitor.Monitor) {
-				monitor.Kafka.Messages.WithLabel("foo", "topic").Add(1)
-				monitor.Kafka.LastMessage.WithLabel("foo", "topic").Set(12345678)
+				monitor.Kafka.Messages.WithLabel("foo", "foo").Add(1)
+				monitor.Kafka.LastMessage.WithLabel("foo", "foo").Set(12345678)
 			},
 		},
 		{

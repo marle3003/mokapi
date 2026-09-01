@@ -46,12 +46,12 @@ func FromContext(ctx context.Context) (*RequestParameters, bool) {
 
 func FromRequest(params Parameters, route string, r *http.Request) (*RequestParameters, error) {
 	parameters := &RequestParameters{
-		Path:   make(map[string]RequestParameterValue),
 		Query:  make(map[string]RequestParameterValue),
 		Header: make(map[string]RequestParameterValue),
 		Cookie: make(map[string]RequestParameterValue),
 	}
 
+	var pathParams []*Parameter
 	for _, ref := range params {
 		if ref.Value == nil {
 			continue
@@ -69,16 +69,7 @@ func FromRequest(params Parameters, route string, r *http.Request) (*RequestPara
 				parameters.Cookie[pv.Name] = *v
 			}
 		case ParameterPath:
-			v, err = parsePath(pv, route, r)
-			if err != nil {
-				if strings.Contains(route, "?") {
-					return nil, fmt.Errorf("parse path parameter '%v' failed: %w. the path contains a quotation mark ('?'), which suggests query parameters are incorrectly included in the path. query parameters should be defined separately in the 'parameters' section", pv.Name, err)
-				}
-				return nil, fmt.Errorf("parse path parameter '%v' failed: %w", pv.Name, err)
-			}
-			if v != nil {
-				parameters.Path[pv.Name] = *v
-			}
+			pathParams = append(pathParams, pv)
 		case ParameterQuery:
 			v, err = parseQuery(pv, r.URL)
 			if err != nil {
@@ -104,6 +95,17 @@ func FromRequest(params Parameters, route string, r *http.Request) (*RequestPara
 		}
 	}
 
+	var err error
+	parameters.Path, err = findPathValues(pathParams, route, r)
+	if err != nil {
+		return nil, err
+	}
+	for _, param := range pathParams {
+		if _, ok := parameters.Path[param.Name]; !ok {
+			return nil, fmt.Errorf("parse path parameter '%s' failed: path parameter %s not found in route %s", param.Name, param.Name, route)
+		}
+	}
+
 	validate(route, parameters)
 
 	return parameters, nil
@@ -112,9 +114,8 @@ func FromRequest(params Parameters, route string, r *http.Request) (*RequestPara
 func parseObject(p *Parameter, value string, separator string, explode bool, decode decoder) (map[string]interface{}, error) {
 	if explode {
 		return parseExplodeObject(p, value, separator, decode)
-	} else {
-		return parseUnExplodeObject(p, value, separator)
 	}
+	return parseUnExplodeObject(p, value, separator)
 }
 
 func parseExplodeObject(param *Parameter, value, separator string, decode decoder) (map[string]interface{}, error) {

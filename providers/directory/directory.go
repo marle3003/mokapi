@@ -15,11 +15,11 @@ import (
 
 type Directory struct {
 	config  *Config
-	emitter engine.EventEmitter
+	emitter engine.LdapEventEmitter
 	eh      events.Handler
 }
 
-func NewHandler(config *Config, emitter engine.EventEmitter, eh events.Handler) ldap.Handler {
+func NewHandler(config *Config, emitter engine.LdapEventEmitter, eh events.Handler) ldap.Handler {
 	return &Directory{config: config, emitter: emitter, eh: eh}
 }
 

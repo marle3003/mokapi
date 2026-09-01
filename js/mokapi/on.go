@@ -11,6 +11,7 @@ import (
 	"reflect"
 
 	"github.com/dop251/goja"
+	log "github.com/sirupsen/logrus"
 )
 
 type onArgs struct {
@@ -26,19 +27,40 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 		panic(m.vm.ToValue(err.Error()))
 	}
 
-	f := func(ctx *common.EventContext) (bool, error) {
+	f := getHandler(do, eventArgs, m.vm, m.loop)
+
+	switch event {
+	case "http":
+		m.host.OnHttp(common.HttpFilter{}, f, common.EventArgs{Tags: eventArgs.tags, Priority: eventArgs.priority})
+	case "kafka":
+		m.host.OnKafka(common.KafkaFilter{}, f, common.EventArgs{Tags: eventArgs.tags, Priority: eventArgs.priority})
+	case "mqtt":
+		m.host.OnMqtt(common.MqttFilter{}, f, common.EventArgs{Tags: eventArgs.tags, Priority: eventArgs.priority})
+	case "websocket":
+		m.host.OnWebsocket(common.WebsocketFilter{}, f, common.EventArgs{Tags: eventArgs.tags, Priority: eventArgs.priority})
+	case "smtp":
+		m.host.OnMail(common.MailFilter{}, f, common.EventArgs{Tags: eventArgs.tags, Priority: eventArgs.priority})
+	case "ldap":
+		m.host.OnLdap(common.LdapFilter{}, f, common.EventArgs{Tags: eventArgs.tags, Priority: eventArgs.priority})
+	default:
+		log.Error(fmt.Errorf("unknown event: %s", event))
+	}
+}
+
+func getHandler(do goja.Value, args onArgs, vm *goja.Runtime, loop *eventloop.EventLoop) common.EventHandler {
+	return func(ctx *common.EventContext) (bool, error) {
 		origin, err := getHashes(ctx.Args...)
 		if err != nil {
 			return false, err
 		}
 
-		var params []goja.Value
-		for _, v := range ctx.Args {
-			params = append(params, ArgToJs(v, m.vm))
-		}
-
 		var r goja.Value
-		r, err = m.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
+		var params []goja.Value
+		r, err = loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
+			for _, v := range ctx.Args {
+				params = append(params, ArgToJs(v, vm))
+			}
+
 			call, _ := goja.AssertFunction(do)
 			v, err := call(goja.Undefined(), params...)
 			if err != nil {
@@ -55,8 +77,8 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 			return r.ToBoolean(), nil
 		}
 
-		if eventArgs.isTrackSet {
-			return eventArgs.track(params...)
+		if args.isTrackSet {
+			return args.track(params...)
 		}
 
 		newHashes, err := getHashes(ctx.Args...)
@@ -66,8 +88,6 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 
 		return haveChanges(origin, newHashes), nil
 	}
-
-	m.host.On(event, f, common.EventArgs{Tags: eventArgs.tags, Priority: eventArgs.priority})
 }
 
 func getOnArgs(vm *goja.Runtime, args goja.Value) (onArgs, error) {

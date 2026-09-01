@@ -27,7 +27,8 @@ func TestPath_UnmarshalJSON(t *testing.T) {
 				p := openapi.PathItems{}
 				err := json.Unmarshal([]byte(`{ "/foo": {} }`), &p)
 				require.NoError(t, err)
-				require.Contains(t, p, "/foo")
+				_, ok := p.Get("/foo")
+				require.True(t, ok)
 			},
 		},
 		{
@@ -126,12 +127,30 @@ func TestPath_UnmarshalJSON(t *testing.T) {
 			},
 		},
 		{
+			name: "path custom method",
+			test: func(t *testing.T) {
+				p := &openapi.Path{}
+				err := json.Unmarshal([]byte(`{"additionalOperations": { "LINK": {} } }`), &p)
+				require.NoError(t, err)
+				require.NotNil(t, p.AdditionalOperations["LINK"])
+			},
+		},
+		{
 			name: "path parameters",
 			test: func(t *testing.T) {
 				p := &openapi.Path{}
 				err := json.Unmarshal([]byte(`{ "parameters": [] }`), &p)
 				require.NoError(t, err)
 				require.NotNil(t, p.Parameters)
+			},
+		},
+		{
+			name: "operations order",
+			test: func(t *testing.T) {
+				p := &openapi.Path{}
+				err := json.Unmarshal([]byte(`{ "delete":{}, "get":{}, "additionalOperations": { "LINK": {} }, "post": {} }`), &p)
+				require.NoError(t, err)
+				require.Equal(t, []string{"DELETE", "GET", "LINK", "POST"}, p.MethodOrder)
 			},
 		},
 	}
@@ -157,7 +176,8 @@ func TestPath_UnmarshalYAML(t *testing.T) {
 				p := openapi.PathItems{}
 				err := yaml.Unmarshal([]byte(`/foo: {}`), &p)
 				require.NoError(t, err)
-				require.Contains(t, p, "/foo")
+				_, ok := p.Get("/foo")
+				require.True(t, ok)
 			},
 		},
 		{
@@ -269,6 +289,18 @@ func TestPath_UnmarshalYAML(t *testing.T) {
 				err := yaml.Unmarshal([]byte(`parameters: []`), &p)
 				require.NoError(t, err)
 				require.NotNil(t, p.Parameters)
+			},
+		},
+		{
+			name: "operation order",
+			test: func(t *testing.T) {
+				p := &openapi.Path{}
+				err := yaml.Unmarshal([]byte(`delete: {}
+get: {}
+additionalOperations: { LINK: {} }
+post: {}`), &p)
+				require.NoError(t, err)
+				require.Equal(t, []string{"DELETE", "GET", "LINK", "POST"}, p.MethodOrder)
 			},
 		},
 	}
@@ -463,7 +495,7 @@ func TestPath_Parse(t *testing.T) {
 						&openapi.PathRef{Reference: dynamic.Reference[*openapi.PathRef]{Ref: "foo.yml#/paths/foo"}}))
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				require.Equal(t, target, config.Paths["/foo"].Value)
+				require.Equal(t, target, config.Paths.Lookup("/foo").Value)
 			},
 		},
 		{
@@ -482,7 +514,7 @@ func TestPath_Parse(t *testing.T) {
 						&openapi.PathRef{Reference: dynamic.Reference[*openapi.PathRef]{Ref: "foo.yml#/paths/foo"}}))
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				require.Nil(t, config.Paths["/foo"].Value)
+				require.Nil(t, config.Paths.Lookup("/foo").Value)
 			},
 		},
 		{
@@ -491,7 +523,7 @@ func TestPath_Parse(t *testing.T) {
 				reader := dynamictest.ReaderFunc(func(u *url.URL, _ any) (*dynamic.Config, error) {
 					require.Equal(t, "/foo.yml", u.String())
 					config := openapitest.NewConfig("3.0")
-					config.Paths = openapi.PathItems{}
+					config.Paths = &openapi.PathItems{}
 					cfg := &dynamic.Config{Info: dynamic.ConfigInfo{Url: u},
 						Data: config,
 					}
@@ -533,7 +565,7 @@ func TestPath_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				require.NotNil(t, config.Paths["foo"].Value)
+				require.NotNil(t, config.Paths.Lookup("foo").Value)
 			},
 		},
 	}
@@ -565,15 +597,18 @@ func TestConfig_Patch_Path(t *testing.T) {
 				)),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Len(t, result.Paths, 1)
-				require.Contains(t, result.Paths, "/foo")
-				require.Nil(t, result.Paths["/foo"].Value)
+				require.Equal(t, 1, result.Paths.Len())
+				p, ok := result.Paths.Get("/foo")
+				require.True(t, ok)
+				require.Nil(t, p.Value)
 			},
 		},
 		{
 			name: "left path ref is nil",
 			configs: []*openapi.Config{
-				{Paths: map[string]*openapi.PathRef{"/foo": nil}},
+				openapitest.NewConfig("1.0",
+					openapitest.WithPathRef("/foo", nil),
+				),
 				openapitest.NewConfig("1.0", openapitest.WithPath(
 					"/foo",
 					openapitest.WithOperation(
@@ -583,9 +618,10 @@ func TestConfig_Patch_Path(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Len(t, result.Paths, 1)
-				require.Contains(t, result.Paths, "/foo")
-				require.NotNil(t, result.Paths["/foo"].Value.Post)
+				require.Equal(t, 1, result.Paths.Len())
+				p, ok := result.Paths.Get("/foo")
+				require.True(t, ok)
+				require.NotNil(t, p.Value.Post)
 			},
 		},
 		{
@@ -599,9 +635,10 @@ func TestConfig_Patch_Path(t *testing.T) {
 				openapitest.NewConfig("1.0"),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Len(t, result.Paths, 1)
-				require.Contains(t, result.Paths, "/foo")
-				require.NotNil(t, result.Paths["/foo"].Value.Post)
+				require.Equal(t, 1, result.Paths.Len())
+				p, ok := result.Paths.Get("/foo")
+				require.True(t, ok)
+				require.NotNil(t, p.Value.Post)
 			},
 		},
 		{
@@ -615,9 +652,10 @@ func TestConfig_Patch_Path(t *testing.T) {
 				)),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Len(t, result.Paths, 1)
-				require.Contains(t, result.Paths, "/foo")
-				require.NotNil(t, result.Paths["/foo"].Value.Post)
+				require.Equal(t, 1, result.Paths.Len())
+				p, ok := result.Paths.Get("/foo")
+				require.True(t, ok)
+				require.NotNil(t, p.Value.Post)
 			},
 		},
 		{
@@ -632,9 +670,10 @@ func TestConfig_Patch_Path(t *testing.T) {
 				)),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Len(t, result.Paths, 1)
-				require.Contains(t, result.Paths, "/foo")
-				require.NotNil(t, result.Paths["/foo"].Value.Post)
+				require.Equal(t, 1, result.Paths.Len())
+				p, ok := result.Paths.Get("/foo")
+				require.True(t, ok)
+				require.NotNil(t, p.Value.Post)
 			},
 		},
 		{
@@ -646,10 +685,11 @@ func TestConfig_Patch_Path(t *testing.T) {
 					"/foo", openapitest.WithPathInfo("foo", "bar"))),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Len(t, result.Paths, 1)
-				require.Contains(t, result.Paths, "/foo")
-				require.Equal(t, "foo", result.Paths["/foo"].Value.Summary)
-				require.Equal(t, "bar", result.Paths["/foo"].Value.Description)
+				require.Equal(t, 1, result.Paths.Len())
+				p, ok := result.Paths.Get("/foo")
+				require.True(t, ok)
+				require.Equal(t, "foo", p.Value.Summary)
+				require.Equal(t, "bar", p.Value.Description)
 			},
 		},
 		{
@@ -661,7 +701,7 @@ func TestConfig_Patch_Path(t *testing.T) {
 					"/foo", openapitest.WithPathParam("foo"))),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				e := result.Paths["/foo"].Value
+				e := result.Paths.Lookup("/foo").Value
 				require.Len(t, e.Parameters, 1)
 			},
 		},
@@ -674,7 +714,7 @@ func TestConfig_Patch_Path(t *testing.T) {
 					"/foo", openapitest.WithPathParam("foo", openapitest.WithParamSchema(schematest.New("number"))))),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				e := result.Paths["/foo"].Value
+				e := result.Paths.Lookup("/foo").Value
 				require.Len(t, e.Parameters, 1)
 				require.Equal(t, "number", e.Parameters[0].Value.Schema.Type.String())
 			},
@@ -689,6 +729,57 @@ func TestConfig_Patch_Path(t *testing.T) {
 				c.Patch(p)
 			}
 			tc.test(t, c)
+		})
+	}
+}
+
+func TestPath_Marshal(t *testing.T) {
+	testcases := []struct {
+		name string
+		s    *openapi.PathRef
+		json string
+		yaml string
+		test func(t *testing.T, json, yaml string, err error)
+	}{
+		{
+			name: "ref",
+			s: &openapi.PathRef{
+				Reference: dynamic.Reference[*openapi.PathRef]{
+					Ref: "/foo",
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"$ref":"/foo"}`, json)
+				require.Equal(t, "$ref: /foo\n", yaml)
+			},
+		},
+		{
+			name: "value",
+			s: &openapi.PathRef{
+				Value: &openapi.Path{
+					Description: "foo",
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"description":"foo"}`, json)
+				require.Equal(t, "description: foo\n", yaml)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			jb, err := json.Marshal(tc.s)
+			if err != nil {
+				tc.test(t, "", "", err)
+			}
+			yb, err := yaml.Marshal(tc.s)
+			tc.test(t, string(jb), string(yb), err)
 		})
 	}
 }

@@ -29,17 +29,18 @@ func AppendPath(path string, config *openapi.Config, opts ...PathOptions) *opena
 		opt(e)
 	}
 	if config.Paths == nil {
-		config.Paths = make(map[string]*openapi.PathRef)
+		config.Paths = &openapi.PathItems{}
 	}
-	config.Paths[path] = &openapi.PathRef{
+	config.Paths.Set(path, &openapi.PathRef{
 		Value: e,
-	}
+	})
 	return e
 }
 
 func UseOperation(method string, op *openapi.Operation) PathOptions {
+	op.Method = strings.ToUpper(method)
 	return func(e *openapi.Path) {
-		switch strings.ToUpper(method) {
+		switch op.Method {
 		case "GET":
 			e.Get = op
 		case "POST":
@@ -65,6 +66,7 @@ func UseOperation(method string, op *openapi.Operation) PathOptions {
 			e.AdditionalOperations[method] = op
 		}
 		op.Path = e
+		e.MethodOrder = append(e.MethodOrder, op.Method)
 	}
 }
 
@@ -92,5 +94,17 @@ func WithPathErrors(err ...openapi.Error) PathOptions {
 	return func(p *openapi.Path) {
 		p.Status = openapi.StatusInvalid
 		p.Errors = err
+	}
+}
+
+func WithPathSummary(summary string) PathOptions {
+	return func(p *openapi.Path) {
+		p.Summary = summary
+	}
+}
+
+func WithPathDescription(description string) PathOptions {
+	return func(p *openapi.Path) {
+		p.Description = description
 	}
 }

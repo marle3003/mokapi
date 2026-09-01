@@ -261,7 +261,6 @@ const isTemplateChannel = computed(() => {
         return false
     }
     const channel = props.service.channels.find(x => x.name === props.channelName)
-    console.log(channel)
     if (!channel || !channel.instances) {
         return false
     }

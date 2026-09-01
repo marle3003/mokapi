@@ -108,10 +108,10 @@
 }
 .dashboard-tabs {
   background-color: var(--color-background);
-  width: 100%;
   position: fixed;
   top: 4rem;
   z-index: 10;
+  /*padding-right: 39px; /* 2rem + 7px margin of card */
 }
 .dashboard-tabs.demo {
     top: 10rem;

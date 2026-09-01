@@ -1,6 +1,7 @@
 package asyncapi3_test
 
 import (
+	"encoding/json"
 	"mokapi/providers/asyncapi3"
 	"testing"
 
@@ -8,360 +9,153 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func TestKafkaBindingsServer_Yaml(t *testing.T) {
+func TestServerBindings_Kafka_Marshal(t *testing.T) {
 	testcases := []struct {
-		name   string
-		config string
-		test   func(t *testing.T, config *asyncapi3.Config, err error)
+		name string
+		s    *asyncapi3.ServerBindings
+		json string
+		yaml string
+		test func(t *testing.T, json, yaml string, err error)
 	}{
 		{
+			name: "kafka default",
+			s: &asyncapi3.ServerBindings{
+				Kafka: asyncapi3.BrokerBindings{},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{}`, json)
+				require.Equal(t, "{}\n", yaml)
+			},
+		},
+		{
 			name: "log.retention.bytes",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.retention.bytes: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+			s: &asyncapi3.ServerBindings{
+				Kafka: asyncapi3.BrokerBindings{
+					LogRetentionBytes: 5,
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Servers.Lookup("test").Value.Bindings.Kafka.LogRetentionBytes)
+				require.Equal(t, `{"kafka":{"log.retention.bytes":5}}`, json)
+				require.Equal(t, "kafka:\n    log.retention.bytes: 5\n", yaml)
 			},
 		},
 		{
-			name: "log.retention.bytes error",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.retention.bytes: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid log.retention.bytes: cannot unmarshal string to int64: foo")
+			name: "log.retention",
+			s: &asyncapi3.ServerBindings{
+				Kafka: asyncapi3.BrokerBindings{
+					LogRetentionMs: 5,
+				},
 			},
-		},
-		{
-			name: "log.retention.ms",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.retention.ms: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+			test: func(t *testing.T, json, yaml string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Servers.Lookup("test").Value.Bindings.Kafka.LogRetentionMs)
-			},
-		},
-		{
-			name: "log.retention.ms error",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.retention.ms: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid log.retention.ms: cannot unmarshal string to int64: foo")
-			},
-		},
-		{
-			name: "log.retention.minutes",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.retention.minutes: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.NoError(t, err)
-				require.Equal(t, int64(600000), config.Servers.Lookup("test").Value.Bindings.Kafka.LogRetentionMs)
-			},
-		},
-		{
-			name: "log.retention.minutes error",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.retention.minutes: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid log.retention.minutes: cannot unmarshal string to int64: foo")
-			},
-		},
-		{
-			name: "log.retention.hours",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.retention.hours: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.NoError(t, err)
-				require.Equal(t, int64(36000000), config.Servers.Lookup("test").Value.Bindings.Kafka.LogRetentionMs)
-			},
-		},
-		{
-			name: "log.retention.hours error",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.retention.hours: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid log.retention.hours: cannot unmarshal string to int64: foo")
+				require.Equal(t, `{"kafka":{"log.retention":5}}`, json)
+				require.Equal(t, "kafka:\n    log.retention: 5\n", yaml)
 			},
 		},
 		{
 			name: "log.retention.check.interval.ms",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.retention.check.interval.ms: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Servers.Lookup("test").Value.Bindings.Kafka.LogRetentionCheckIntervalMs)
+			s: &asyncapi3.ServerBindings{
+				Kafka: asyncapi3.BrokerBindings{
+					LogRetentionCheckIntervalMs: 5,
+				},
 			},
-		},
-		{
-			name: "log.retention.check.interval.ms error",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.retention.check.interval.ms: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid log.retention.check.interval.ms: cannot unmarshal string to int64: foo")
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"kafka":{"log.retention.check.interval.ms":5}}`, json)
+				require.Equal(t, "kafka:\n    log.retention.check.interval.ms: 5\n", yaml)
 			},
 		},
 		{
 			name: "log.segment.delete.delay.ms",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.segment.delete.delay.ms: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+			s: &asyncapi3.ServerBindings{
+				Kafka: asyncapi3.BrokerBindings{
+					LogSegmentDeleteDelayMs: 5,
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Servers.Lookup("test").Value.Bindings.Kafka.LogSegmentDeleteDelayMs)
+				require.Equal(t, `{"kafka":{"log.segment.delete.delay.ms":5}}`, json)
+				require.Equal(t, "kafka:\n    log.segment.delete.delay.ms: 5\n", yaml)
 			},
 		},
 		{
-			name: "log.segment.delete.delay.ms error",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.segment.delete.delay.ms: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid log.segment.delete.delay.ms: cannot unmarshal string to int64: foo")
+			name: "log.roll",
+			s: &asyncapi3.ServerBindings{
+				Kafka: asyncapi3.BrokerBindings{
+					LogRollMs: 5,
+				},
 			},
-		},
-		{
-			name: "log.roll.ms",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.roll.ms: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+			test: func(t *testing.T, json, yaml string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Servers.Lookup("test").Value.Bindings.Kafka.LogRollMs)
-			},
-		},
-		{
-			name: "log.roll.ms error",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.roll.ms: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid log.roll.ms: cannot unmarshal string to int64: foo")
-			},
-		},
-		{
-			name: "log.roll.minutes",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.roll.minutes: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.NoError(t, err)
-				require.Equal(t, int64(600000), config.Servers.Lookup("test").Value.Bindings.Kafka.LogRollMs)
-			},
-		},
-		{
-			name: "log.roll.minutes error",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.roll.minutes: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid log.roll.minutes: cannot unmarshal string to int64: foo")
-			},
-		},
-		{
-			name: "log.roll.hours",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.roll.hours: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.NoError(t, err)
-				require.Equal(t, int64(36000000), config.Servers.Lookup("test").Value.Bindings.Kafka.LogRollMs)
-			},
-		},
-		{
-			name: "log.roll.hours error",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.roll.hours: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid log.roll.hours: cannot unmarshal string to int64: foo")
+				require.Equal(t, `{"kafka":{"log.roll":5}}`, json)
+				require.Equal(t, "kafka:\n    log.roll: 5\n", yaml)
 			},
 		},
 		{
 			name: "log.segment.bytes",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.segment.bytes: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Servers.Lookup("test").Value.Bindings.Kafka.LogSegmentBytes)
+			s: &asyncapi3.ServerBindings{
+				Kafka: asyncapi3.BrokerBindings{
+					LogSegmentBytes: 5,
+				},
 			},
-		},
-		{
-			name: "log.segment.bytes error",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        log.segment.bytes: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid log.segment.bytes: cannot unmarshal string to int64: foo")
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"kafka":{"log.segment.bytes":5}}`, json)
+				require.Equal(t, "kafka:\n    log.segment.bytes: 5\n", yaml)
 			},
 		},
 		{
 			name: "group.initial.rebalance.delay.ms",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        group.initial.rebalance.delay.ms: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Servers.Lookup("test").Value.Bindings.Kafka.GroupInitialRebalanceDelayMs)
+			s: &asyncapi3.ServerBindings{
+				Kafka: asyncapi3.BrokerBindings{
+					GroupInitialRebalanceDelayMs: 5,
+				},
 			},
-		},
-		{
-			name: "group.initial.rebalance.delay.ms error",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        group.initial.rebalance.delay.ms: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid group.initial.rebalance.delay.ms: cannot unmarshal string to int64: foo")
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"kafka":{"group.initial.rebalance.delay.ms":5}}`, json)
+				require.Equal(t, "kafka:\n    group.initial.rebalance.delay.ms: 5\n", yaml)
 			},
 		},
 		{
 			name: "group.min.session.timeout.ms",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        group.min.session.timeout.ms: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Servers.Lookup("test").Value.Bindings.Kafka.GroupMinSessionTimeoutMs)
+			s: &asyncapi3.ServerBindings{
+				Kafka: asyncapi3.BrokerBindings{
+					GroupMinSessionTimeoutMs: 5,
+				},
 			},
-		},
-		{
-			name: "group.min.session.timeout.ms error",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        group.min.session.timeout.ms: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid group.min.session.timeout.ms: cannot unmarshal string to int64: foo")
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"kafka":{"group.min.session.timeout.ms":5}}`, json)
+				require.Equal(t, "kafka:\n    group.min.session.timeout.ms: 5\n", yaml)
 			},
 		},
 		{
 			name: "schemaRegistryUrl",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        schemaRegistryUrl: foo.bar
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.Equal(t, "foo.bar", config.Servers.Lookup("test").Value.Bindings.Kafka.SchemaRegistryUrl)
+			s: &asyncapi3.ServerBindings{
+				Kafka: asyncapi3.BrokerBindings{
+					SchemaRegistryUrl: "foo.bar",
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"kafka":{"schemaRegistryUrl":"foo.bar"}}`, json)
+				require.Equal(t, "kafka:\n    schemaRegistryUrl: foo.bar\n", yaml)
 			},
 		},
 		{
 			name: "schemaRegistryVendor",
-			config: `
-servers:
-  test:
-    bindings:
-      kafka:
-        schemaRegistryVendor: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.Equal(t, "foo", config.Servers.Lookup("test").Value.Bindings.Kafka.SchemaRegistryVendor)
+			s: &asyncapi3.ServerBindings{
+				Kafka: asyncapi3.BrokerBindings{
+					SchemaRegistryVendor: "foo",
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"kafka":{"schemaRegistryVendor":"foo"}}`, json)
+				require.Equal(t, "kafka:\n    schemaRegistryVendor: foo\n", yaml)
 			},
 		},
 	}
@@ -371,256 +165,160 @@ servers:
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-
-			cfg := &asyncapi3.Config{}
-			err := yaml.Unmarshal([]byte(tc.config), &cfg)
-
-			tc.test(t, cfg, err)
+			jb, err := json.Marshal(tc.s)
+			if err != nil {
+				tc.test(t, "", "", err)
+			}
+			yb, err := yaml.Marshal(tc.s)
+			tc.test(t, string(jb), string(yb), err)
 		})
 	}
 }
 
-func TestKafkaBindingsTopic_Yaml(t *testing.T) {
+func TestChannelBindings_Kafka_Marshal(t *testing.T) {
 	testcases := []struct {
-		name   string
-		config string
-		test   func(t *testing.T, config *asyncapi3.Config, err error)
+		name string
+		s    *asyncapi3.ChannelBindings
+		json string
+		yaml string
+		test func(t *testing.T, json, yaml string, err error)
 	}{
 		{
-			name: "partitions",
-			config: `
-channels:
-  test:
-    bindings:
-      kafka:
-        partitions: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+			name: "kafka default",
+			s: &asyncapi3.ChannelBindings{
+				Kafka: asyncapi3.TopicBindings{
+					ValueSchemaValidation: true,
+					KeySchemaValidation:   true,
+					Partitions:            1,
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 10, config.Channels["test"].Value.Bindings.Kafka.Partitions)
+				require.Equal(t, `{}`, json)
+				require.Equal(t, "{}\n", yaml)
 			},
 		},
 		{
-			name: "partition not set",
-			config: `
-channels:
-  test:
-    bindings:
-      kafka:
-        retention.bytes: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+			name: "partition",
+			s: &asyncapi3.ChannelBindings{
+				Kafka: asyncapi3.TopicBindings{
+					ValueSchemaValidation: true,
+					KeySchemaValidation:   true,
+					Partitions:            5,
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, 1, config.Channels["test"].Value.Bindings.Kafka.Partitions)
+				require.Equal(t, `{"kafka":{"partitions":5}}`, json)
+				require.Equal(t, "kafka:\n    partitions: 5\n", yaml)
 			},
 		},
 		{
-			name: "partitions error",
-			config: `
-channels:
-  test:
-    bindings:
-      kafka:
-        partitions: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid partition: cannot unmarshal string to int: foo")
+			name: "default partition set by config",
+			s: func() *asyncapi3.ChannelBindings {
+				tb := &asyncapi3.TopicBindings{}
+				err := json.Unmarshal([]byte(`{"partitions":1}`), &tb)
+				require.NoError(t, err)
+				return &asyncapi3.ChannelBindings{Kafka: *tb}
+			}(),
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"kafka":{"partitions":1}}`, json)
+				require.Equal(t, "kafka:\n    partitions: 1\n", yaml)
 			},
 		},
 		{
 			name: "retention.bytes",
-			config: `
-channels:
-  test:
-    bindings:
-      kafka:
-        retention.bytes: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Channels["test"].Value.Bindings.Kafka.RetentionBytes)
+			s: &asyncapi3.ChannelBindings{
+				Kafka: asyncapi3.TopicBindings{
+					Partitions:            1,
+					ValueSchemaValidation: true,
+					KeySchemaValidation:   true,
+					RetentionBytes:        5,
+				},
 			},
-		},
-		{
-			name: "retention.bytes error",
-			config: `
-channels:
-  test:
-    bindings:
-      kafka:
-        retention.bytes: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid retention.bytes: cannot unmarshal string to int64: foo")
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"kafka":{"retention.bytes":5}}`, json)
+				require.Equal(t, "kafka:\n    retention.bytes: 5\n", yaml)
 			},
 		},
 		{
 			name: "retention.ms",
-			config: `
-channels:
-  test:
-    bindings:
-      kafka:
-        retention.ms: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Channels["test"].Value.Bindings.Kafka.RetentionMs)
+			s: &asyncapi3.ChannelBindings{
+				Kafka: asyncapi3.TopicBindings{
+					Partitions:            1,
+					ValueSchemaValidation: true,
+					KeySchemaValidation:   true,
+					RetentionMs:           5,
+				},
 			},
-		},
-		{
-			name: "retention.ms error",
-			config: `
-channels:
-  test:
-    bindings:
-      kafka:
-        retention.ms: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid retention.ms: cannot unmarshal string to int64: foo")
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"kafka":{"retention.ms":5}}`, json)
+				require.Equal(t, "kafka:\n    retention.ms: 5\n", yaml)
 			},
 		},
 		{
 			name: "segment.bytes",
-			config: `
-channels:
-  test:
-    bindings:
-      kafka:
-        segment.bytes: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Channels["test"].Value.Bindings.Kafka.SegmentBytes)
+			s: &asyncapi3.ChannelBindings{
+				Kafka: asyncapi3.TopicBindings{
+					Partitions:            1,
+					ValueSchemaValidation: true,
+					KeySchemaValidation:   true,
+					SegmentBytes:          5,
+				},
 			},
-		},
-		{
-			name: "segment.bytes error",
-			config: `
-channels:
-  test:
-    bindings:
-      kafka:
-        segment.bytes: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid segment.bytes: cannot unmarshal string to int64: foo")
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"kafka":{"segment.bytes":5}}`, json)
+				require.Equal(t, "kafka:\n    segment.bytes: 5\n", yaml)
 			},
 		},
 		{
 			name: "segment.ms",
-			config: `
-channels:
-  test:
-    bindings:
-      kafka:
-        segment.ms: 10
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.NoError(t, err)
-				require.Equal(t, int64(10), config.Channels["test"].Value.Bindings.Kafka.SegmentMs)
+			s: &asyncapi3.ChannelBindings{
+				Kafka: asyncapi3.TopicBindings{
+					Partitions:            1,
+					ValueSchemaValidation: true,
+					KeySchemaValidation:   true,
+					SegmentMs:             5,
+				},
 			},
-		},
-		{
-			name: "segment.ms error",
-			config: `
-channels:
-  test:
-    bindings:
-      kafka:
-        segment.ms: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid segment.ms: cannot unmarshal string to int64: foo")
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"kafka":{"segment.ms":5}}`, json)
+				require.Equal(t, "kafka:\n    segment.ms: 5\n", yaml)
 			},
 		},
 		{
 			name: "confluent.value.schema.validation",
-			config: `
-channels:
-  test:
-    bindings:
-      kafka:
-        confluent.value.schema.validation: false
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.NoError(t, err)
-				require.False(t, config.Channels["test"].Value.Bindings.Kafka.ValueSchemaValidation)
+			s: &asyncapi3.ChannelBindings{
+				Kafka: asyncapi3.TopicBindings{
+					Partitions:            1,
+					ValueSchemaValidation: false,
+					KeySchemaValidation:   true,
+				},
 			},
-		},
-		{
-			name: "confluent.value.schema.validation error",
-			config: `
-channels:
-  test:
-    bindings:
-      kafka:
-        confluent.value.schema.validation: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid confluent.value.schema.validation: cannot unmarshal string to bool: foo")
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"kafka":{"confluent.value.schema.validation":false}}`, json)
+				require.Equal(t, "kafka:\n    confluent.value.schema.validation: false\n", yaml)
 			},
 		},
 		{
 			name: "confluent.key.schema.validation",
-			config: `
-channels:
-  test:
-    bindings:
-      kafka:
-        confluent.key.schema.validation: false
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.NoError(t, err)
-				require.False(t, config.Channels["test"].Value.Bindings.Kafka.KeySchemaValidation)
+			s: &asyncapi3.ChannelBindings{
+				Kafka: asyncapi3.TopicBindings{
+					Partitions:            1,
+					ValueSchemaValidation: true,
+					KeySchemaValidation:   false,
+				},
 			},
-		},
-		{
-			name: "confluent.key.schema.validation error",
-			config: `
-channels:
-  test:
-    bindings:
-      kafka:
-        confluent.key.schema.validation: foo
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.EqualError(t, err, "invalid confluent.key.schema.validation: cannot unmarshal string to bool: foo")
-			},
-		},
-		{
-			name: "schemaIdLocation",
-			config: `
-channels:
-  test:
-    address: test-topic
-    messages:
-      testMessage:
-        bindings:
-          kafka:
-            schemaIdLocation: payload
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
+			test: func(t *testing.T, json, yaml string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "payload", config.Channels["test"].Value.Messages["testMessage"].Value.Bindings.Kafka.SchemaIdLocation)
-			},
-		},
-		{
-			name: "schemaIdPayloadEncoding",
-			config: `
-channels:
-  test:
-    address: test-topic
-    messages:
-      testMessage:
-        bindings:
-          kafka:
-            schemaIdPayloadEncoding: '4'
-`,
-			test: func(t *testing.T, config *asyncapi3.Config, err error) {
-				require.NoError(t, err)
-				require.Equal(t, "4", config.Channels["test"].Value.Messages["testMessage"].Value.Bindings.Kafka.SchemaIdPayloadEncoding)
+				require.Equal(t, `{"kafka":{"confluent.key.schema.validation":false}}`, json)
+				require.Equal(t, "kafka:\n    confluent.key.schema.validation: false\n", yaml)
 			},
 		},
 	}
@@ -630,11 +328,12 @@ channels:
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-
-			cfg := &asyncapi3.Config{}
-			err := yaml.Unmarshal([]byte(tc.config), &cfg)
-
-			tc.test(t, cfg, err)
+			jb, err := json.Marshal(tc.s)
+			if err != nil {
+				tc.test(t, "", "", err)
+			}
+			yb, err := yaml.Marshal(tc.s)
+			tc.test(t, string(jb), string(yb), err)
 		})
 	}
 }

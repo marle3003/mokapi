@@ -83,54 +83,51 @@ func convertChannel(name string, c *ChannelRef, config *asyncapi3.Config) (*asyn
 	result := &asyncapi3.ChannelRef{Reference: dynamic.Reference[*asyncapi3.ChannelRef]{Ref: c.Ref}}
 
 	if c.Value != nil {
-		target := &asyncapi3.Channel{
+		result.Value = &asyncapi3.Channel{
 			Address:     name,
 			Summary:     "",
 			Description: c.Value.Description,
 			Messages:    map[string]*asyncapi3.MessageRef{},
 			Bindings:    convertChannelBinding(c.Value.Bindings),
 		}
-		ref := &asyncapi3.ChannelRef{Value: target}
 
 		for _, server := range c.Value.Servers {
-			target.Servers = append(
-				target.Servers,
+			result.Value.Servers = append(
+				result.Value.Servers,
 				&asyncapi3.ServerRef{Reference: dynamic.Reference[*asyncapi3.ServerRef]{
 					Ref: fmt.Sprintf("#/servers/%s", server),
 				}})
 		}
 
-		if err := convertParameters(target, c.Value.Parameters); err != nil {
+		if err := convertParameters(result.Value, c.Value.Parameters); err != nil {
 			return nil, err
 		}
 
 		if c.Value.Publish != nil && c.Value.Subscribe != nil && c.Value.Publish.Message != nil && c.Value.Subscribe.Message != nil {
 			if c.Value.Publish.Message.Ref == c.Value.Subscribe.Message.Ref {
 				msg := convertMessage(c.Value.Publish.Message)
-				msgName := addMessage(target, msg, "", "", c.Value.Publish.Message.Ref)
+				msgName := addMessage(result.Value, &asyncapi3.MessageRef{Value: msg.Value}, "", "", c.Value.Publish.Message.Ref)
 				if msgName != "" {
-					addOperation(msgName, "send", c.Value.Publish, ref, msg, config)
-					addOperation(msgName, "receive", c.Value.Subscribe, ref, msg, config)
+					addOperation(msgName, "send", c.Value.Publish, result, msg, config)
+					addOperation(msgName, "receive", c.Value.Subscribe, result, msg, config)
 				}
 			}
 		} else {
 			if c.Value.Publish != nil {
 				msg := convertMessage(c.Value.Publish.Message)
-				msgName := addMessage(target, msg, c.Value.Publish.OperationId, c.Value.Publish.Message.Ref, "publish")
+				msgName := addMessage(result.Value, &asyncapi3.MessageRef{Value: msg.Value}, c.Value.Publish.OperationId, c.Value.Publish.Message.Ref, "publish")
 				if msgName != "" {
-					addOperation(msgName, "send", c.Value.Publish, ref, msg, config)
+					addOperation(msgName, "send", c.Value.Publish, result, msg, config)
 				}
 			}
 			if c.Value.Subscribe != nil {
 				msg := convertMessage(c.Value.Subscribe.Message)
-				msgName := addMessage(target, msg, c.Value.Subscribe.OperationId, c.Value.Subscribe.Message.Ref, "subscribe")
+				msgName := addMessage(result.Value, &asyncapi3.MessageRef{Value: msg.Value}, c.Value.Subscribe.OperationId, c.Value.Subscribe.Message.Ref, "subscribe")
 				if msgName != "" {
-					addOperation(msgName, "receive", c.Value.Subscribe, ref, msg, config)
+					addOperation(msgName, "receive", c.Value.Subscribe, result, msg, config)
 				}
 			}
 		}
-
-		result.Value = target
 	}
 
 	return result, nil
@@ -150,7 +147,7 @@ func addOperation(msgName, action string, op *Operation, ch *asyncapi3.ChannelRe
 
 	result := &asyncapi3.Operation{
 		Action:      action,
-		Channel:     *ch,
+		Channel:     ch,
 		Summary:     op.Summary,
 		Description: op.Description,
 		Bindings:    convertOperationBinding(op.Bindings),
@@ -349,8 +346,8 @@ func resolveServerUrl(s string) (protocol, host, path string) {
 	return
 }
 
-func convertServerBinding(b ServerBindings) asyncapi3.ServerBindings {
-	return asyncapi3.ServerBindings{Kafka: asyncapi3.BrokerBindings{
+func convertServerBinding(b ServerBindings) *asyncapi3.ServerBindings {
+	return &asyncapi3.ServerBindings{Kafka: asyncapi3.BrokerBindings{
 		LogRetentionBytes:            b.Kafka.LogRetentionBytes,
 		LogRetentionMs:               b.Kafka.LogRetentionMs,
 		LogRetentionCheckIntervalMs:  b.Kafka.LogRetentionCheckIntervalMs,
@@ -362,16 +359,16 @@ func convertServerBinding(b ServerBindings) asyncapi3.ServerBindings {
 	}}
 }
 
-func convertMessageBinding(b MessageBinding) asyncapi3.MessageBinding {
-	return asyncapi3.MessageBinding{
+func convertMessageBinding(b MessageBinding) *asyncapi3.MessageBinding {
+	return &asyncapi3.MessageBinding{
 		Kafka: asyncapi3.KafkaMessageBinding{
 			Key: b.Kafka.Key,
 		},
 	}
 }
 
-func convertChannelBinding(b ChannelBindings) asyncapi3.ChannelBindings {
-	return asyncapi3.ChannelBindings{Kafka: asyncapi3.TopicBindings{
+func convertChannelBinding(b ChannelBindings) *asyncapi3.ChannelBindings {
+	return &asyncapi3.ChannelBindings{Kafka: asyncapi3.TopicBindings{
 		Partitions:            b.Kafka.Partitions,
 		RetentionBytes:        b.Kafka.RetentionBytes,
 		RetentionMs:           b.Kafka.RetentionMs,
@@ -381,8 +378,8 @@ func convertChannelBinding(b ChannelBindings) asyncapi3.ChannelBindings {
 	}}
 }
 
-func convertOperationBinding(b OperationBindings) asyncapi3.OperationBindings {
-	return asyncapi3.OperationBindings{
+func convertOperationBinding(b OperationBindings) *asyncapi3.OperationBindings {
+	return &asyncapi3.OperationBindings{
 		Kafka: asyncapi3.KafkaOperationBinding{
 			GroupId:  b.Kafka.GroupId,
 			ClientId: b.Kafka.ClientId,

@@ -3,8 +3,6 @@ package asyncapi3
 import (
 	"fmt"
 	"mokapi/schema/json/schema"
-
-	"gopkg.in/yaml.v3"
 )
 
 type BrokerBindings struct {
@@ -54,6 +52,8 @@ type KafkaMessageBinding struct {
 }
 
 type TopicBindings struct {
+	configs map[string]any
+
 	Partitions int
 
 	// RetentionBytes This configuration controls the maximum size a partition (which consists of log segments) can grow
@@ -79,13 +79,47 @@ type TopicBindings struct {
 	KeySchemaValidation   bool
 }
 
-func (b *BrokerBindings) UnmarshalYAML(value *yaml.Node) error {
-	b.configs = make(map[string]any)
-	err := value.Decode(b.configs)
-	if err != nil {
-		return err
-	}
+func (b *BrokerBindings) Configs() map[string]any {
+	return b.configs
+}
 
+func (b *BrokerBindings) marshal() map[string]any {
+	m := map[string]any{}
+	if b.LogRetentionBytes > 0 {
+		m["log.retention.bytes"] = b.LogRetentionBytes
+	}
+	if b.LogRetentionMs > 0 {
+		m["log.retention"] = b.LogRetentionMs
+	}
+	if b.LogRetentionCheckIntervalMs > 0 {
+		m["log.retention.check.interval.ms"] = b.LogRetentionCheckIntervalMs
+	}
+	if b.LogSegmentDeleteDelayMs > 0 {
+		m["log.segment.delete.delay.ms"] = b.LogSegmentDeleteDelayMs
+	}
+	if b.LogRollMs > 0 {
+		m["log.roll"] = b.LogRollMs
+	}
+	if b.LogSegmentBytes > 0 {
+		m["log.segment.bytes"] = b.LogSegmentBytes
+	}
+	if b.GroupInitialRebalanceDelayMs > 0 {
+		m["group.initial.rebalance.delay.ms"] = b.GroupInitialRebalanceDelayMs
+	}
+	if b.GroupMinSessionTimeoutMs > 0 {
+		m["group.min.session.timeout.ms"] = b.GroupMinSessionTimeoutMs
+	}
+	if b.SchemaRegistryUrl != "" {
+		m["schemaRegistryUrl"] = b.SchemaRegistryUrl
+	}
+	if b.SchemaRegistryVendor != "" {
+		m["schemaRegistryVendor"] = b.SchemaRegistryVendor
+	}
+	return m
+}
+
+func (b *BrokerBindings) unmarshal() error {
+	var err error
 	b.LogRetentionBytes, err = getInt64(b.configs, "log.retention.bytes")
 	if err != nil {
 		return fmt.Errorf("invalid log.retention.bytes: %w", err)
@@ -125,23 +159,41 @@ func (b *BrokerBindings) UnmarshalYAML(value *yaml.Node) error {
 	if s, ok := b.configs["schemaRegistryVendor"]; ok {
 		b.SchemaRegistryVendor = s.(string)
 	}
-
 	return nil
 }
 
-func (b *BrokerBindings) Configs() map[string]any {
-	return b.configs
+func (t *TopicBindings) marshal() map[string]any {
+	m := map[string]any{}
+	if t.Partitions != 1 {
+		m["partitions"] = t.Partitions
+	} else if _, ok := t.configs["partitions"]; ok {
+		m["partitions"] = t.Partitions
+	}
+	if t.RetentionBytes != 0 {
+		m["retention.bytes"] = t.RetentionBytes
+	}
+	if t.RetentionMs != 0 {
+		m["retention.ms"] = t.RetentionMs
+	}
+	if t.SegmentBytes != 0 {
+		m["segment.bytes"] = t.SegmentBytes
+	}
+	if t.SegmentMs != 0 {
+		m["segment.ms"] = t.SegmentMs
+	}
+	if !t.ValueSchemaValidation {
+		m["confluent.value.schema.validation"] = false
+	}
+	if !t.KeySchemaValidation {
+		m["confluent.key.schema.validation"] = false
+	}
+	return m
 }
 
-func (t *TopicBindings) UnmarshalYAML(value *yaml.Node) error {
+func (t *TopicBindings) unmarshal(m map[string]any) error {
 	t.ValueSchemaValidation = true
 	t.KeySchemaValidation = true
-
-	m := make(map[string]interface{})
-	err := value.Decode(m)
-	if err != nil {
-		return err
-	}
+	var err error
 
 	if _, ok := m["partitions"]; !ok {
 		t.Partitions = 1
@@ -210,6 +262,8 @@ func getInt(m map[string]interface{}, keys ...string) (int, error) {
 		switch v := i.(type) {
 		case int:
 			return v, nil
+		case float64:
+			return int(v), nil
 		default:
 			return 0, fmt.Errorf("cannot unmarshal %T to int: %v", i, i)
 		}
@@ -225,6 +279,8 @@ func getInt64(m map[string]interface{}, keys ...string) (int64, error) {
 			return int64(v), nil
 		case int64:
 			return v, nil
+		case float64:
+			return int64(v), nil
 		default:
 			return 0, fmt.Errorf("cannot unmarshal %T to int64: %v", i, i)
 		}

@@ -78,7 +78,7 @@ func TestFromRequest_Header(t *testing.T) {
 			params: openapi.Parameters{{Value: &openapi.Parameter{
 				Type:     openapi.ParameterHeader,
 				Name:     "debug",
-				Required: false,
+				Required: new(false),
 				Schema:   schematest.New("integer", schematest.WithDefault(10)),
 			}}},
 			request: func() *http.Request {
@@ -95,7 +95,7 @@ func TestFromRequest_Header(t *testing.T) {
 			params: openapi.Parameters{{Value: &openapi.Parameter{
 				Type:     openapi.ParameterHeader,
 				Name:     "debug",
-				Required: false,
+				Required: new(false),
 				Schema:   schematest.New("integer", schematest.WithEnumValues(0, 1)),
 			}}},
 			request: func() *http.Request {
@@ -112,7 +112,7 @@ func TestFromRequest_Header(t *testing.T) {
 			params: openapi.Parameters{{Value: &openapi.Parameter{
 				Type:     openapi.ParameterHeader,
 				Name:     "debug",
-				Required: true,
+				Required: new(true),
 				Schema:   schematest.New("integer", schematest.WithEnumValues(0, 1)),
 			}}},
 			request: func() *http.Request {
@@ -128,7 +128,7 @@ func TestFromRequest_Header(t *testing.T) {
 			params: openapi.Parameters{{Value: &openapi.Parameter{
 				Type:     openapi.ParameterHeader,
 				Name:     "debug",
-				Required: true,
+				Required: new(true),
 				Schema:   schematest.New("integer", schematest.WithEnumValues(0, 1)),
 			}}},
 			request: func() *http.Request {

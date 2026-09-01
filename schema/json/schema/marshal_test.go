@@ -61,7 +61,7 @@ func TestSchema_MarshalJSON_Recursion(t *testing.T) {
 			},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, `{"$ref":"foo","properties":{"foo":{"$ref":"foo"}}}`, s)
+				require.Equal(t, `{"$ref":"foo","properties":{"foo":{"$ref":"foo","description":"circular reference"}}}`, s)
 			},
 		},
 		{
@@ -75,7 +75,7 @@ func TestSchema_MarshalJSON_Recursion(t *testing.T) {
 			},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, `{"$ref":"foo","items":{"$ref":"foo"}}`, s)
+				require.Equal(t, `{"$ref":"foo","items":{"$ref":"foo","description":"circular reference"}}`, s)
 			},
 		},
 		{
@@ -89,7 +89,7 @@ func TestSchema_MarshalJSON_Recursion(t *testing.T) {
 			},
 			test: func(t *testing.T, s string, err error) {
 				require.NoError(t, err)
-				require.Equal(t, `{"$ref":"foo","contains":{"$ref":"foo"}}`, s)
+				require.Equal(t, `{"$ref":"foo","contains":{"$ref":"foo","description":"circular reference"}}`, s)
 			},
 		},
 		{

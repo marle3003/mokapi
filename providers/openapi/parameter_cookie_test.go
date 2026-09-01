@@ -65,7 +65,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 			params: openapi.Parameters{{Value: &openapi.Parameter{
 				Type:     openapi.ParameterCookie,
 				Name:     "debug",
-				Required: false,
+				Required: new(false),
 				Schema:   schematest.New("integer", schematest.WithEnumValues(0, 1)),
 			}}},
 			request: func() *http.Request {
@@ -82,7 +82,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 			params: openapi.Parameters{{Value: &openapi.Parameter{
 				Type:     openapi.ParameterCookie,
 				Name:     "debug",
-				Required: true,
+				Required: new(true),
 				Schema:   schematest.New("integer", schematest.WithEnumValues(0, 1)),
 			}}},
 			request: func() *http.Request {
@@ -98,7 +98,7 @@ func TestFromRequest_Cookie(t *testing.T) {
 			params: openapi.Parameters{{Value: &openapi.Parameter{
 				Type:     openapi.ParameterCookie,
 				Name:     "debug",
-				Required: true,
+				Required: new(true),
 				Schema:   schematest.New("integer", schematest.WithEnumValues(0, 1)),
 			}}},
 			request: func() *http.Request {

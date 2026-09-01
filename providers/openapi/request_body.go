@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"maps"
@@ -29,15 +30,15 @@ type RequestBodyRef struct {
 type RequestBody struct {
 	// A brief description of the request body. This could contain
 	// examples of use. CommonMark syntax MAY be used for rich text representation.
-	Description string
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 
 	// The content of the request body. The key is a media type or media type range
 	// and the value describes it. For requests that match multiple keys, only the
 	// most specific key is applicable. e.g. text/plain overrides text/*
-	Content Content
+	Content Content `yaml:"content,omitempty" json:"content,omitempty"`
 
 	// Determines if the request body is required in the request. Defaults to false.
-	Required bool
+	Required *bool `yaml:"required,omitempty" json:"required,omitempty"`
 }
 
 type Body struct {
@@ -49,12 +50,26 @@ func (r *RequestBodyRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
 }
 
+func (r *RequestBodyRef) MarshalJSON() ([]byte, error) {
+	if r.Value != nil {
+		return json.Marshal(r.Value)
+	}
+	return json.Marshal(r.Reference)
+}
+
 func (r *RequestBodyRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.UnmarshalYaml(node, &r.Value)
 }
 
+func (r *RequestBodyRef) MarshalYAML() (interface{}, error) {
+	if r.Value != nil {
+		return r.Value, nil
+	}
+	return r.Reference, nil
+}
+
 func BodyFromRequest(r *http.Request, op *Operation) (body *Body, err error) {
-	if r.ContentLength == 0 && op.RequestBody.Value.Required {
+	if r.ContentLength == 0 && op.RequestBody.Value.IsRequired() {
 		return nil, fmt.Errorf("request body is required")
 	}
 
@@ -219,6 +234,10 @@ func (r *RequestBodyRef) patch(patch *RequestBodyRef) {
 	} else {
 		r.Value.patch(patch.Value)
 	}
+}
+
+func (r *RequestBody) IsRequired() bool {
+	return r.Required != nil && *r.Required
 }
 
 func (r *RequestBody) patch(patch *RequestBody) {

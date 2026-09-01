@@ -12,16 +12,16 @@ const DefaultContentType = "application/json"
 
 type Config struct {
 	Version string `yaml:"asyncapi" json:"asyncapi"`
-	Id      string `yaml:"id" json:"id"`
+	Id      string `yaml:"id,omitempty" json:"id,omitempty"`
 	Info    Info   `yaml:"info" json:"info"`
 
 	// Default content type to use when encoding/decoding a message's payload.
-	DefaultContentType string `yaml:"defaultContentType" json:"defaultContentType"`
+	DefaultContentType string `yaml:"defaultContentType,omitempty" json:"defaultContentType,omitempty"`
 
-	Servers *sortedmap.LinkedHashMap[string, *ServerRef] `yaml:"servers" json:"servers"`
+	Servers *sortedmap.LinkedHashMap[string, *ServerRef] `yaml:"servers,omitempty" json:"servers,omitempty"`
 
-	Channels   map[string]*ChannelRef
-	Operations map[string]*OperationRef `yaml:"operations" json:"operations"`
+	Channels   map[string]*ChannelRef   `yaml:"channels,omitempty" json:"channels,omitempty"`
+	Operations map[string]*OperationRef `yaml:"operations,omitempty" json:"operations,omitempty"`
 
 	Components *Components `yaml:"components,omitempty" json:"components,omitempty"`
 }
@@ -29,11 +29,11 @@ type Config struct {
 type Info struct {
 	Name           string           `yaml:"title" json:"title"`
 	Description    string           `yaml:"description,omitempty" json:"description,omitempty"`
-	Version        string           `yaml:"version" json:"version"`
+	Version        string           `yaml:"version,omitempty" json:"version,omitempty"`
 	TermsOfService string           `yaml:"termsOfService,omitempty" json:"termsOfService,omitempty"`
 	Contact        *Contact         `yaml:"contact,omitempty" json:"contact,omitempty"`
 	License        *License         `yaml:"license,omitempty" json:"license,omitempty"`
-	ExternalDocs   []ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
+	ExternalDocs   []ExternalDocRef `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
 }
 
 type Contact struct {

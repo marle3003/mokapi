@@ -5,6 +5,7 @@ import (
 	"mokapi/engine"
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
+	"net/http"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -18,7 +19,7 @@ func TestEventHandler(t *testing.T) {
 		name   string
 		script string
 		logger *enginetest.Logger
-		run    func(evt common.EventEmitter) []*common.Action
+		run    func(evt common.HttpEventEmitter) []*common.Action
 		test   func(t *testing.T, actions []*common.Action, err error)
 	}{
 		{
@@ -30,8 +31,8 @@ export default () => {
 	})
 }
 `,
-			run: func(evt common.EventEmitter) []*common.Action {
-				return evt.Emit("http")
+			run: func(evt common.HttpEventEmitter) []*common.Action {
+				return evt.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 			},
 			test: func(t *testing.T, actions []*common.Action, err error) {
 				require.NoError(t, err)
@@ -48,8 +49,8 @@ export default () => {
 	}, { track: true })
 }
 `,
-			run: func(evt common.EventEmitter) []*common.Action {
-				return evt.Emit("http")
+			run: func(evt common.HttpEventEmitter) []*common.Action {
+				return evt.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 			},
 			test: func(t *testing.T, actions []*common.Action, err error) {
 				require.NoError(t, err)
@@ -68,8 +69,8 @@ export default () => {
 	})
 }
 `,
-			run: func(evt common.EventEmitter) []*common.Action {
-				return evt.Emit("http")
+			run: func(evt common.HttpEventEmitter) []*common.Action {
+				return evt.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 			},
 			test: func(t *testing.T, actions []*common.Action, err error) {
 				require.NoError(t, err)
@@ -88,8 +89,8 @@ export default () => {
 	}, { track: true })
 }
 `,
-			run: func(evt common.EventEmitter) []*common.Action {
-				return evt.Emit("http")
+			run: func(evt common.HttpEventEmitter) []*common.Action {
+				return evt.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 			},
 			test: func(t *testing.T, actions []*common.Action, err error) {
 				require.NoError(t, err)
@@ -109,8 +110,8 @@ export default () => {
 }
 `,
 			logger: &enginetest.Logger{IsLevelEnabledFunc: func(level string) bool { return false }},
-			run: func(evt common.EventEmitter) []*common.Action {
-				return evt.Emit("http")
+			run: func(evt common.HttpEventEmitter) []*common.Action {
+				return evt.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 			},
 			test: func(t *testing.T, actions []*common.Action, err error) {
 				require.NoError(t, err)
@@ -126,14 +127,14 @@ export default () => {
 	}, { track: true })
 }
 `,
-			run: func(evt common.EventEmitter) []*common.Action {
-				return evt.Emit("http", "foo")
+			run: func(evt common.HttpEventEmitter) []*common.Action {
+				return evt.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 			},
 			test: func(t *testing.T, actions []*common.Action, err error) {
 				require.NoError(t, err)
 				require.Len(t, actions, 1)
-				require.Len(t, actions[0].Parameters, 1)
-				require.Equal(t, `"foo"`, actions[0].Parameters[0])
+				require.Len(t, actions[0].Parameters, 2)
+				require.Equal(t, `{"method":"","url":{"scheme":"","host":"","port":0,"path":"","query":""},"body":null,"path":null,"query":null,"header":null,"cookie":null,"querystring":null,"api":"","key":"","operationId":"","operation":null}`, actions[0].Parameters[0])
 			},
 		},
 		{
@@ -148,21 +149,18 @@ export default () => {
 	})
 }
 `,
-			run: func(evt common.EventEmitter) []*common.Action {
-				req := struct {
-					Method string
-				}{Method: "POST"}
-				return evt.Emit("http", &req)
+			run: func(evt common.HttpEventEmitter) []*common.Action {
+				return evt.EmitHttp(&common.HttpEventRequest{Method: http.MethodPost}, &common.HttpEventResponse{})
 			},
 			test: func(t *testing.T, actions []*common.Action, err error) {
 				require.NoError(t, err)
 				require.Len(t, actions, 2)
 
-				require.Len(t, actions[0].Parameters, 1)
-				require.Equal(t, `{"Method":"GET"}`, actions[0].Parameters[0])
+				require.Len(t, actions[0].Parameters, 2)
+				require.Contains(t, actions[0].Parameters[0], `"method":"GET"`)
 
-				require.Len(t, actions[1].Parameters, 1)
-				require.Equal(t, `{"Method":"DELETE"}`, actions[1].Parameters[0])
+				require.Len(t, actions[1].Parameters, 2)
+				require.Contains(t, actions[1].Parameters[0], `"method":"DELETE"`)
 			},
 		},
 	}

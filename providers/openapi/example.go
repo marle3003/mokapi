@@ -30,8 +30,22 @@ func (r *ExampleRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
 }
 
+func (r *ExampleRef) MarshalJSON() ([]byte, error) {
+	if r.Value != nil {
+		return json.Marshal(r.Value)
+	}
+	return json.Marshal(r.Reference)
+}
+
 func (r *ExampleRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.UnmarshalYaml(node, &r.Value)
+}
+
+func (r *ExampleRef) MarshalYAML() (interface{}, error) {
+	if r.Value != nil {
+		return r.Value, nil
+	}
+	return r.Reference, nil
 }
 
 func (e *ExampleValue) UnmarshalJSON(b []byte) error {

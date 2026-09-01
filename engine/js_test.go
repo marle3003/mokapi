@@ -11,6 +11,7 @@ import (
 	"mokapi/js"
 	"mokapi/js/jstest"
 	"mokapi/js/require"
+	"net/http"
 	"net/url"
 	"strings"
 	"testing"
@@ -211,7 +212,7 @@ func TestJsOn(t *testing.T) {
 		t.Parallel()
 		e := enginetest.NewEngine()
 		err := e.AddScript(newScript("test.js", `
-			import {on, sleep} from 'mokapi'
+			import { on } from 'mokapi'
 			export default function() {}
 		`))
 		r.NoError(t, err)
@@ -221,7 +222,7 @@ func TestJsOn(t *testing.T) {
 		t.Parallel()
 		e := enginetest.NewEngine()
 		err := e.AddScript(newScript("test.js", `
-			import {on, sleep} from 'mokapi'
+			import { on } from 'mokapi'
 			export default function() {
 				on('http', function() {
 					return false
@@ -231,7 +232,7 @@ func TestJsOn(t *testing.T) {
 		r.NoError(t, err)
 		r.Equal(t, 1, e.Scripts(), "script length not 1")
 
-		summaries := e.Run("http")
+		summaries := e.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 
 		r.Len(t, summaries, 0, "summary length not 0")
 	})
@@ -239,7 +240,7 @@ func TestJsOn(t *testing.T) {
 		t.Parallel()
 		e := enginetest.NewEngine()
 		err := e.AddScript(newScript("test.js", `
-			import {on, sleep} from 'mokapi'
+			import { on } from 'mokapi'
 			export default function() {
 				on('http', function(request, response) {
 				}, { track: true });
@@ -248,7 +249,7 @@ func TestJsOn(t *testing.T) {
 		r.NoError(t, err)
 		r.Equal(t, 1, e.Scripts(), "script length not 1")
 
-		summaries := e.Run("http", &struct{}{}, &struct{}{})
+		summaries := e.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 
 		r.Len(t, summaries, 1, "summary length not 1")
 		summary := summaries[0]
@@ -260,7 +261,7 @@ func TestJsOn(t *testing.T) {
 		t.Parallel()
 		e := enginetest.NewEngine()
 		err := e.AddScript(newScript("test.js", `
-			import {on, sleep} from 'mokapi'
+			import { on, sleep } from 'mokapi'
 			export default function() {
 				on('http', function() {
 					sleep(1000);
@@ -269,7 +270,7 @@ func TestJsOn(t *testing.T) {
 		`))
 		r.NoError(t, err)
 
-		summaries := e.Run("http")
+		summaries := e.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 
 		r.Len(t, summaries, 1, "summary length not 1")
 		summary := summaries[0]
@@ -279,7 +280,7 @@ func TestJsOn(t *testing.T) {
 		t.Parallel()
 		e := enginetest.NewEngine()
 		err := e.AddScript(newScript("test.js", `
-			import {on, sleep} from 'mokapi'
+			import { on, sleep } from 'mokapi'
 			export default function() {
 				on('http', function() {
 					sleep('1s');
@@ -288,7 +289,7 @@ func TestJsOn(t *testing.T) {
 		`))
 		r.NoError(t, err)
 
-		summaries := e.Run("http")
+		summaries := e.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 
 		r.Len(t, summaries, 1, "summary length not 1")
 		summary := summaries[0]
@@ -298,14 +299,14 @@ func TestJsOn(t *testing.T) {
 		t.Parallel()
 		e := enginetest.NewEngine()
 		err := e.AddScript(newScript("test.js", `
-			import {on} from 'mokapi'
+			import { on } from 'mokapi'
 			export default function() {
 				on('http', function() {}, {tags: {'name': 'foobar'}, track: true });
 			}
 		`))
 		r.NoError(t, err)
 
-		summaries := e.Run("http")
+		summaries := e.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 
 		r.Len(t, summaries, 1, "summary length not 1")
 		r.Equal(t, "foobar", summaries[0].Tags["name"], "tag name not correct")
@@ -314,26 +315,20 @@ func TestJsOn(t *testing.T) {
 		t.Parallel()
 		e := enginetest.NewEngine()
 		err := e.AddScript(newScript("test.js", `
-			import {on} from 'mokapi'
+			import { on } from 'mokapi'
 			export default function() {
 				on('http', function() {}, {tags: {'foo': 'bar'}, track: true });
 			}
 		`))
 		r.NoError(t, err)
 
-		summaries := e.Run("http")
+		summaries := e.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 
 		r.Len(t, summaries, 1, "summary length not 1")
 		r.Equal(t, "bar", summaries[0].Tags["foo"], "tag name not correct")
 	})
 	t.Run("parameter", func(t *testing.T) {
 		t.Parallel()
-
-		p := struct {
-			Foo string `json:"foo"`
-		}{
-			"bar",
-		}
 
 		var msg string
 		logger := &enginetest.Logger{
@@ -344,21 +339,21 @@ func TestJsOn(t *testing.T) {
 
 		e := enginetest.NewEngine(engine.WithLogger(logger))
 		err := e.AddScript(newScript("test.js", `
-			import {on} from 'mokapi'
+			import { on } from 'mokapi'
 			export default function() {
 				on(
 					'http', 
 					function(p) {
-						console.log(p.foo);
+						console.log(p.method);
 					}
 				);
 			}
 		`))
 		r.NoError(t, err)
 
-		e.Run("http", p)
+		e.EmitHttp(&common.HttpEventRequest{Method: http.MethodGet}, &common.HttpEventResponse{})
 
-		r.Equal(t, "bar", msg)
+		r.Equal(t, http.MethodGet, msg)
 	})
 }
 
@@ -443,7 +438,7 @@ func TestJsOpen(t *testing.T) {
 		err := e.AddScript(s)
 		r.NoError(t, err)
 
-		summaries := e.Run("http")
+		summaries := e.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 
 		r.Len(t, summaries, 1, "summary length not 1")
 		summary := summaries[0]
@@ -453,7 +448,7 @@ func TestJsOpen(t *testing.T) {
 		barFile.Info.Checksum = []byte("foobar")
 		barFile.Listeners.Invoke(dynamic.ConfigEvent{Config: barFile})
 
-		summaries = e.Run("http")
+		summaries = e.EmitHttp(&common.HttpEventRequest{}, &common.HttpEventResponse{})
 
 		r.Len(t, summaries, 1, "summary length not 1")
 		summary = summaries[0]

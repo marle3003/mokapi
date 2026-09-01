@@ -22,6 +22,7 @@ func NewEventResponse(status int, ct media.ContentType) *common.HttpEventRespons
 	r := &common.HttpEventResponse{
 		Headers:    make(map[string]any),
 		StatusCode: status,
+		Context:    make(map[string]any),
 	}
 
 	if !ct.IsEmpty() {

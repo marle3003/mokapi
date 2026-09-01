@@ -26,13 +26,13 @@ func TestParseParam(t *testing.T) {
 					Name:     "channel",
 					Type:     ParameterPath,
 					Schema:   schematest.New("string"),
-					Required: true,
+					Required: new(true),
 				}},
 				&ParameterRef{Value: &Parameter{
 					Name:     "id",
 					Type:     ParameterPath,
 					Schema:   schematest.New("integer", schematest.WithFormat("int64")),
-					Required: true,
+					Required: new(true),
 				}},
 			},
 			test: func(t *testing.T, p *RequestParameters) {

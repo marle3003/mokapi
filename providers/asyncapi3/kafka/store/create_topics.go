@@ -12,17 +12,18 @@ func (s *Store) createtopics(rw kafka.ResponseWriter, req *kafka.Request) error 
 
 	for _, t := range r.Topics {
 		channel := &asyncapi3.Channel{
-			Title: t.Name,
+			Title:    t.Name,
+			Bindings: &asyncapi3.ChannelBindings{},
 		}
 		channel.Bindings.Kafka.Partitions = int(t.NumPartitions)
 		ops := []*asyncapi3.Operation{
 			{
 				Action:  "send",
-				Channel: asyncapi3.ChannelRef{Value: channel},
+				Channel: &asyncapi3.ChannelRef{Value: channel},
 			},
 			{
 				Action:  "receive",
-				Channel: asyncapi3.ChannelRef{Value: channel},
+				Channel: &asyncapi3.ChannelRef{Value: channel},
 			},
 		}
 

@@ -30,8 +30,8 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Equal(t, "foo", result.Paths["/foo"].Value.Post.RequestBody.Value.Description)
-				require.True(t, result.Paths["/foo"].Value.Post.RequestBody.Value.Required)
+				require.Equal(t, "foo", result.Paths.Lookup("/foo").Value.Post.RequestBody.Value.Description)
+				require.True(t, result.Paths.Lookup("/foo").Value.Post.RequestBody.Value.IsRequired())
 			},
 		},
 		{
@@ -49,8 +49,8 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Equal(t, "foo", result.Paths["/foo"].Value.Post.RequestBody.Value.Description)
-				require.True(t, result.Paths["/foo"].Value.Post.RequestBody.Value.Required)
+				require.Equal(t, "foo", result.Paths.Lookup("/foo").Value.Post.RequestBody.Value.Description)
+				require.True(t, result.Paths.Lookup("/foo").Value.Post.RequestBody.Value.IsRequired())
 			},
 		},
 		{
@@ -72,7 +72,7 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				body := result.Paths["/foo"].Value.Post.RequestBody.Value
+				body := result.Paths.Lookup("/foo").Value.Post.RequestBody.Value
 				require.Contains(t, body.Content, "text/plain")
 				require.Contains(t, body.Content, "application/json")
 			},
@@ -97,7 +97,7 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				body := result.Paths["/foo"].Value.Post.RequestBody.Value
+				body := result.Paths.Lookup("/foo").Value.Post.RequestBody.Value
 				require.Len(t, body.Content, 1)
 				require.Equal(t, "number", body.Content["text/plain"].Schema.Type.String())
 			},
@@ -123,7 +123,7 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				body := result.Paths["/foo"].Value.Post.RequestBody.Value
+				body := result.Paths.Lookup("/foo").Value.Post.RequestBody.Value
 				require.Len(t, body.Content, 1)
 				require.Equal(t, "number", body.Content["text/plain"].Schema.Type.String())
 				require.Equal(t, "double", body.Content["text/plain"].Schema.Format)
@@ -149,7 +149,7 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				body := result.Paths["/foo"].Value.Post.RequestBody.Value
+				body := result.Paths.Lookup("/foo").Value.Post.RequestBody.Value
 				require.Len(t, body.Content, 1)
 				require.Equal(t, 12, body.Content["text/plain"].Example.Value)
 			},
@@ -199,8 +199,8 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Len(t, result.Paths["/foo"].Value.Post.Security, 1)
-				require.Contains(t, result.Paths["/foo"].Value.Post.Security[0], "foo")
+				require.Len(t, result.Paths.Lookup("/foo").Value.Post.Security, 1)
+				require.Contains(t, result.Paths.Lookup("/foo").Value.Post.Security[0], "foo")
 			},
 		},
 		{
@@ -221,9 +221,9 @@ func TestConfig_Patch_Methods_RequestBody(t *testing.T) {
 				),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Len(t, result.Paths["/foo"].Value.Post.Security, 2)
-				require.Equal(t, []string{"foo"}, result.Paths["/foo"].Value.Post.Security[0]["foo"])
-				require.Equal(t, []string{"foo", "bar"}, result.Paths["/foo"].Value.Post.Security[1]["foo"])
+				require.Len(t, result.Paths.Lookup("/foo").Value.Post.Security, 2)
+				require.Equal(t, []string{"foo"}, result.Paths.Lookup("/foo").Value.Post.Security[0]["foo"])
+				require.Equal(t, []string{"foo", "bar"}, result.Paths.Lookup("/foo").Value.Post.Security[1]["foo"])
 			},
 		},
 	}

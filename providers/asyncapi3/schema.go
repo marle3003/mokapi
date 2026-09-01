@@ -77,6 +77,20 @@ func (r *SchemaRef) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+func (r *SchemaRef) MarshalJSON() ([]byte, error) {
+	if r.Value != nil {
+		return json.Marshal(r.Value)
+	}
+	return json.Marshal(r.Reference)
+}
+
+func (r *SchemaRef) MarshalYAML() (any, error) {
+	if r.Value != nil {
+		return r.Value, nil
+	}
+	return r.Reference, nil
+}
+
 func (r *SchemaRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	if len(r.Ref) > 0 {
 		resolved, err := r.Resolve(config, reader)

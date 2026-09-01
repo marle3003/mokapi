@@ -174,6 +174,14 @@ func (n *Node) findBestMatch(r *Request) *Node {
 		}
 	}
 
+	if len(r.Path) > 1 {
+		singular := g.inflector.Singular(token)
+		if singular != token {
+			r.Path[0] = singular
+			return n.findBestMatch(r)
+		}
+	}
+
 	// Skip current token
 	skip := r.shift()
 	if len(skip.Path) > 0 {

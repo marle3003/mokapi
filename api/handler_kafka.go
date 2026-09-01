@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,6 +21,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 )
 
 type kafkaInfo struct {
@@ -208,6 +210,7 @@ func (h *handler) setupKafka() {
 
 	r.HandleFunc("", h.getKafkaClusters).Methods(http.MethodGet)
 	r.HandleFunc("/{cluster}", h.getKafkaInfo).Methods(http.MethodGet)
+	r.HandleFunc("/{cluster}/asyncapi.{ext}", h.exportAsyncApi).Methods(http.MethodGet)
 	r.HandleFunc("/{cluster}/topics", h.getKafkaTopics).Methods(http.MethodGet)
 	r.HandleFunc("/{cluster}/topics/{topic}", h.getKafkaTopic).Methods(http.MethodGet)
 	r.HandleFunc("/{cluster}/topics/{topic}", h.produceKafkaMessage).Methods(http.MethodPost)
@@ -262,8 +265,11 @@ func (h *handler) getKafkaInfo(w http.ResponseWriter, r *http.Request) {
 			Summary:     s.Value.Summary,
 			Description: s.Value.Description,
 			Protocol:    s.Value.Protocol,
-			Configs:     s.Value.Bindings.Kafka.Configs(),
 		}
+		if s.Value.Bindings != nil {
+			ks.Configs = s.Value.Bindings.Kafka.Configs()
+		}
+
 		for _, r := range s.Value.Tags {
 			if r.Value == nil {
 				continue
@@ -587,8 +593,8 @@ func getTopicInfos(ki *runtime.KafkaInfo, m *monitor.Kafka) []kafkaTopicInfo {
 		}
 
 		ti.Metrics = kafkaTopicMetric{
-			NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name))),
-			LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name))),
+			NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("topic", addr))),
+			LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("topic", addr))),
 		}
 
 		topics = append(topics, ti)
@@ -608,6 +614,11 @@ func newTopic(t *store.Topic, ki *runtime.KafkaInfo, ch *asyncapi3.Channel, m *m
 		return partitions[i].Id < partitions[j].Id
 	})
 
+	bindings := asyncapi3.TopicBindings{Partitions: 1}
+	if t.Config.Bindings != nil {
+		bindings = t.Config.Bindings.Kafka
+	}
+
 	result := kafkaTopic{
 		Name:        t.Name,
 		Title:       ch.Title,
@@ -615,13 +626,13 @@ func newTopic(t *store.Topic, ki *runtime.KafkaInfo, ch *asyncapi3.Channel, m *m
 		Description: ch.Description,
 		Partitions:  partitions,
 		Bindings: kafkaBindings{
-			Partitions:            t.Config.Bindings.Kafka.Partitions,
-			RetentionBytes:        t.Config.Bindings.Kafka.RetentionBytes,
-			RetentionMs:           t.Config.Bindings.Kafka.RetentionMs,
-			SegmentBytes:          t.Config.Bindings.Kafka.SegmentBytes,
-			SegmentMs:             t.Config.Bindings.Kafka.SegmentMs,
-			ValueSchemaValidation: t.Config.Bindings.Kafka.ValueSchemaValidation,
-			KeySchemaValidation:   t.Config.Bindings.Kafka.KeySchemaValidation,
+			Partitions:            bindings.Partitions,
+			RetentionBytes:        bindings.RetentionBytes,
+			RetentionMs:           bindings.RetentionMs,
+			SegmentBytes:          bindings.SegmentBytes,
+			SegmentMs:             bindings.SegmentMs,
+			ValueSchemaValidation: bindings.ValueSchemaValidation,
+			KeySchemaValidation:   bindings.KeySchemaValidation,
 		},
 		Tags:   getKafkaTags(ch),
 		Groups: getGroupInfos(ki, t.Name, m),
@@ -786,7 +797,7 @@ func getMessageConfigs(ch *asyncapi3.Channel, cfg *asyncapi3.Config) map[string]
 			m.ContentType = cfg.DefaultContentType
 		}
 
-		if msg.Bindings.Kafka.Key != nil {
+		if msg.Bindings != nil && msg.Bindings.Kafka.Key != nil {
 			s, err := msg.Bindings.Kafka.Key.GetSchema()
 			if err != nil {
 				log.Errorf("failed to get schema for key in topic '%s': %v", ch.Name, err)
@@ -865,4 +876,46 @@ func getSoftware(name, version string) string {
 		}
 	}
 	return software
+}
+
+func (h *handler) exportAsyncApi(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	s := h.app.Kafka.Get(vars["cluster"])
+	if s == nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	e := s.Export()
+
+	ext := vars["ext"]
+	var b []byte
+	var err error
+	var ct string
+	switch ext {
+	case "json":
+		b, err = json.Marshal(e)
+		ct = "application/json"
+		break
+	case "yaml":
+		var buf bytes.Buffer
+		enc := yaml.NewEncoder(&buf)
+		enc.SetIndent(2)
+		err = enc.Encode(e)
+		if err != nil {
+			err = enc.Close()
+		}
+		b = buf.Bytes()
+		ct = "application/yaml"
+	}
+
+	if err != nil {
+		w.WriteHeader(500)
+		_, _ = w.Write([]byte(err.Error()))
+		return
+	}
+
+	w.Header().Set("Content-Type", ct)
+	_, _ = w.Write(b)
 }

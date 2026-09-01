@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"mokapi/config/dynamic"
+	engine "mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/asyncapi3test"
@@ -270,7 +271,6 @@ export default function() {
 			js: `import { on } from 'mokapi'
 		export default function() {
 		  on('websocket', function(event) {
-console.log(event.type)
 			if (event.type === 'message') {
 		    	event.reply({text2: "hello"})
 			}
@@ -612,12 +612,13 @@ console.log(event.type)
 				evt := evts[0]
 				d := evt.Data.(*websocket.MessageLog)
 				require.Len(t, d.Actions, 1)
-				var result websocket.EventChannel
+				var result engine.WebsocketEventChannel
 				err = json.Unmarshal([]byte(d.Actions[0].Logs[0].Message), &result)
 				require.NoError(t, err)
 				require.Equal(t, "/chats/1234", result.Name)
 				require.Len(t, result.Clients, 1)
 				require.NotNil(t, result.Clients[0])
+				require.Equal(t, map[string]string{"chatId": "1234"}, result.Params)
 			},
 		},
 	}

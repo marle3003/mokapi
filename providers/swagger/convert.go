@@ -25,7 +25,6 @@ func (c *converter) Convert() (*openapi.Config, error) {
 	result := &openapi.Config{
 		OpenApi: version.New("3.0.3"),
 		Info:    c.config.Info,
-		Paths:   make(map[string]*openapi.PathRef),
 	}
 
 	if len(c.config.Schemes) == 0 {
@@ -42,12 +41,19 @@ func (c *converter) Convert() (*openapi.Config, error) {
 		result.Servers = append(result.Servers, &openapi.Server{Url: server})
 	}
 
-	for path, item := range c.config.Paths {
-		converted, err := c.convertPath(item)
-		if err != nil {
-			return nil, err
+	if c.config.Paths != nil {
+		for it := c.config.Paths.Iter(); it.Next(); {
+			path := it.Key()
+			item := it.Value()
+			if result.Paths == nil {
+				result.Paths = &openapi.PathItems{}
+			}
+			converted, err := c.convertPath(item)
+			if err != nil {
+				return nil, err
+			}
+			result.Paths.Set(path, converted)
 		}
-		result.Paths[path] = converted
 	}
 
 	if len(c.config.Responses) > 0 {
@@ -108,7 +114,9 @@ func (c *converter) convertPath(p *PathItem) (*openapi.PathRef, error) {
 		return &openapi.PathRef{Reference: dynamic.Reference[*openapi.PathRef]{Ref: convertRef(p.Ref)}}, nil
 	}
 
-	result := &openapi.Path{}
+	result := &openapi.Path{
+		MethodOrder: p.MethodOrder,
+	}
 
 	var body *openapi.RequestBodyRef
 	var bodySchema *schema.Schema
@@ -188,6 +196,52 @@ func (c *converter) convertOperation(o *Operation) (*openapi.Operation, error) {
 				}
 			}
 			result.RequestBody = &openapi.RequestBodyRef{Value: body}
+		case "formData":
+			var body *openapi.RequestBody
+			var s *schema.Schema
+			if result.RequestBody == nil {
+				s = &schema.Schema{
+					Type:       jsonSchema.Types{"object"},
+					Properties: &schema.Schemas{},
+				}
+				body = &openapi.RequestBody{
+					Content: map[string]*openapi.MediaType{
+						"multipart/form-data": {
+							ContentType: media.ParseContentType("multipart/form-data"),
+							Schema:      s,
+						},
+					},
+				}
+				result.RequestBody = &openapi.RequestBodyRef{Value: body}
+			} else {
+				body = result.RequestBody.Value
+				if _, ok := result.RequestBody.Value.Content["multipart/form-data"]; !ok {
+					s = &schema.Schema{
+						Type:       jsonSchema.Types{"object"},
+						Properties: &schema.Schemas{},
+					}
+					result.RequestBody.Value.Content["multipart/form-data"] = &openapi.MediaType{
+						ContentType: media.ParseContentType("multipart/form-data"),
+						Schema:      s,
+					}
+				}
+				s = result.RequestBody.Value.Content["multipart/form-data"].Schema
+			}
+			ps := &schema.Schema{Description: p.Description}
+			switch p.Type {
+			case "file":
+				ps.Type = jsonSchema.Types{"string"}
+				ps.Format = "binary"
+			default:
+				ps.Type = jsonSchema.Types{p.Type}
+			}
+			s.Properties.Set(p.Name, ps)
+			if p.IsRequired() {
+				s.Required = append(s.Required, p.Name)
+				if !body.IsRequired() {
+					body.Required = new(true)
+				}
+			}
 		default:
 			result.Parameters = append(result.Parameters, convertParameter(p))
 		}

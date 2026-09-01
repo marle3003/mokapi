@@ -1,6 +1,7 @@
 package asyncapi3
 
 import (
+	"encoding/json"
 	"fmt"
 	"mokapi/config/dynamic"
 	"regexp"
@@ -14,19 +15,20 @@ type ChannelRef struct {
 }
 
 type Channel struct {
+	// the map key name
 	Name        string                   `yaml:"-" json:"-"`
-	Title       string                   `yaml:"title" json:"title"`
-	Address     string                   `yaml:"address" json:"address"`
-	Summary     string                   `yaml:"summary" json:"summary"`
-	Description string                   `yaml:"description" json:"description"`
-	Servers     []*ServerRef             `yaml:"servers" json:"servers"`
-	Messages    map[string]*MessageRef   `yaml:"messages" json:"messages"`
-	Parameters  map[string]*ParameterRef `yaml:"parameters" json:"parameters"`
-	Bindings    ChannelBindings          `yaml:"bindings" json:"bindings"`
+	Title       string                   `yaml:"title,omitempty" json:"title,omitempty"`
+	Address     string                   `yaml:"address,omitempty" json:"address,omitempty"`
+	Summary     string                   `yaml:"summary,omitempty" json:"summary,omitempty"`
+	Description string                   `yaml:"description,omitempty" json:"description,omitempty"`
+	Servers     []*ServerRef             `yaml:"servers,omitempty" json:"servers,omitempty"`
+	Messages    map[string]*MessageRef   `yaml:"messages,omitempty" json:"messages,omitempty"`
+	Parameters  map[string]*ParameterRef `yaml:"parameters,omitempty" json:"parameters,omitempty"`
+	Bindings    *ChannelBindings         `yaml:"bindings,omitempty" json:"bindings,omitempty"`
 
-	Tags         []*TagRef        `yaml:"tags" json:"tags"`
-	ExternalDocs []ExternalDocRef `yaml:"externalDocs" json:"externalDocs"`
-	Config       *Config
+	Tags         []*TagRef         `yaml:"tags,omitempty" json:"tags,omitempty"`
+	ExternalDocs []*ExternalDocRef `yaml:"externalDocs,omitempty" json:"externalDocs,omitempty"`
+	Config       *Config           `yaml:"-" json:"-"`
 }
 
 func (r *ChannelRef) UnmarshalYAML(node *yaml.Node) error {
@@ -35,6 +37,20 @@ func (r *ChannelRef) UnmarshalYAML(node *yaml.Node) error {
 
 func (r *ChannelRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
+}
+
+func (r *ChannelRef) MarshalJSON() ([]byte, error) {
+	if r.Value != nil {
+		return json.Marshal(r.Value)
+	}
+	return json.Marshal(r.Reference)
+}
+
+func (r *ChannelRef) MarshalYAML() (any, error) {
+	if r.Value != nil {
+		return r.Value, nil
+	}
+	return r.Reference, nil
 }
 
 func (r *ChannelRef) Parse(config *dynamic.Config, reader dynamic.Reader) error {
@@ -75,37 +91,6 @@ func (c *Channel) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		}
 	}
 
-	return nil
-}
-
-func (c *Channel) UnmarshalYAML(node *yaml.Node) error {
-	// set default
-	c.Bindings.Kafka.ValueSchemaValidation = true
-	c.Bindings.Kafka.Partitions = 1
-
-	type alias Channel
-	a := alias(*c)
-	err := node.Decode(&a)
-	if err != nil {
-		return err
-	}
-	*c = Channel(a)
-	return nil
-}
-
-func (c *Channel) UnmarshalJSON(b []byte) error {
-	// set default
-	c.Bindings.Kafka.ValueSchemaValidation = true
-	c.Bindings.Kafka.KeySchemaValidation = true
-	c.Bindings.Kafka.Partitions = 1
-
-	type alias Channel
-	a := alias(*c)
-	err := dynamic.UnmarshalJSON(b, &a)
-	if err != nil {
-		return err
-	}
-	*c = Channel(a)
 	return nil
 }
 

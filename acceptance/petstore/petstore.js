@@ -1,4 +1,4 @@
-import {on} from 'mokapi'
+import { on, app } from 'mokapi'
 import kafka from 'mokapi/kafka'
 
 export default async function() {
@@ -28,6 +28,37 @@ export default async function() {
             }
         }
     });
+
+    app.http()
+        .route('/pet/findByStatus')
+        .use((req, res) => {
+            res.context.name = 'Zoe'
+        }, { tags: { middleware: '' }})
+        .get((req, res) => {
+            if (!req.query.status.includes('sold')) {
+                return
+            }
+            res.data = [
+                {
+                    name: res.context.name,
+                    photoUrls: []
+                }
+            ]
+        })
+    app.http().get('/pet/findByTags', (req, res) => {
+        res.data = [
+            {
+                name: 'Chili',
+                photoUrls: []
+            }
+        ]
+    }, {
+        // this handler should not be called on findByStatus
+        // value -1 ensures the handler is called at last
+        // However, if the handler is executed anyway, the response would be overwritten.
+        priority: -1
+    })
+
     await kafka.produceAsync({
         topic: 'petstore.order-event',
         cluster: 'A sample AsyncApi Kafka streaming api',

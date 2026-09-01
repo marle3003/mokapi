@@ -1,6 +1,7 @@
 package asyncapi3_test
 
 import (
+	"encoding/json"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/providers/asyncapi3"
@@ -315,6 +316,56 @@ components:
 			require.NoError(t, err)
 
 			tc.test(cfg)
+		})
+	}
+}
+
+func TestComponents_Marshal(t *testing.T) {
+	testcases := []struct {
+		name string
+		s    *asyncapi3.Components
+		json string
+		yaml string
+		test func(t *testing.T, json, yaml string, err error)
+	}{
+		{
+			name: "empty",
+			s:    &asyncapi3.Components{},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{}`, json)
+				require.Equal(t, "{}\n", yaml)
+			},
+		},
+		{
+			name: "with a channel",
+			s: &asyncapi3.Components{
+				Channels: map[string]*asyncapi3.ChannelRef{
+					"foo": {Value: &asyncapi3.Channel{Title: "title"}},
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"channels":{"foo":{"title":"title"}}}`, json)
+				require.Equal(t, `channels:
+    foo:
+        title: title
+`, yaml)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			jb, err := json.Marshal(tc.s)
+			if err != nil {
+				tc.test(t, "", "", err)
+			}
+			yb, err := yaml.Marshal(tc.s)
+			tc.test(t, string(jb), string(yb), err)
 		})
 	}
 }

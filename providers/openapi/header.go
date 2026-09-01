@@ -27,6 +27,13 @@ func (r *HeaderRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Value)
 }
 
+func (r *HeaderRef) MarshalJSON() ([]byte, error) {
+	if r.Value != nil {
+		return json.Marshal(r.Value)
+	}
+	return json.Marshal(r.Reference)
+}
+
 func (h *Header) UnmarshalJSON(b []byte) error {
 	type alias Header
 	header := alias{}
@@ -41,6 +48,13 @@ func (h *Header) UnmarshalJSON(b []byte) error {
 
 func (r *HeaderRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.UnmarshalYaml(node, &r.Value)
+}
+
+func (r *HeaderRef) MarshalYAML() (interface{}, error) {
+	if r.Value != nil {
+		return r.Value.Parameter, nil
+	}
+	return r.Reference, nil
 }
 
 func (h *Header) UnmarshalYAML(node *yaml.Node) error {

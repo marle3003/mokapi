@@ -37,7 +37,7 @@ type Store struct {
 	topics       map[string]*Topic
 	groups       map[string]*Group
 	cluster      string
-	eventEmitter common.EventEmitter
+	eventEmitter common.KafkaEventEmitter
 	eh           events.Handler
 	producers    map[int64]*ProducerState
 	monitor      *monitor.Kafka
@@ -52,7 +52,7 @@ type ProducerState struct {
 	ProducerEpoch int16
 }
 
-func NewEmpty(eventEmitter common.EventEmitter, eh events.Handler, monitor *monitor.Kafka) *Store {
+func NewEmpty(eventEmitter common.KafkaEventEmitter, eh events.Handler, monitor *monitor.Kafka) *Store {
 	return &Store{
 		topics:       make(map[string]*Topic),
 		brokers:      []*Broker{},
@@ -65,7 +65,7 @@ func NewEmpty(eventEmitter common.EventEmitter, eh events.Handler, monitor *moni
 	}
 }
 
-func New(config *asyncapi3.Config, eventEmitter common.EventEmitter, eh events.Handler, monitor *monitor.Kafka) *Store {
+func New(config *asyncapi3.Config, eventEmitter common.KafkaEventEmitter, eh events.Handler, monitor *monitor.Kafka) *Store {
 	s := NewEmpty(eventEmitter, eh, monitor)
 	s.Update(config)
 	return s
@@ -345,7 +345,7 @@ func (s *Store) trigger(topic string, partition int, record *kafka.Record, schem
 		h[v.Key] = string(v.Value)
 	}
 
-	r := &EventRecord{
+	r := &common.KafkaEventRecord{
 		Api:       s.cluster,
 		Topic:     topic,
 		Partition: partition,
@@ -361,7 +361,7 @@ func (s *Store) trigger(topic string, partition int, record *kafka.Record, schem
 		r.Value = kafka.BytesToString(record.Value)
 	}
 
-	actions := s.eventEmitter.Emit("kafka", r)
+	actions := s.eventEmitter.EmitKafka(r)
 	if len(actions) == 0 {
 		return nil
 	}

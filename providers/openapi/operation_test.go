@@ -219,7 +219,7 @@ func TestOperation_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				path := config.Paths["/foo"].Value
+				path := config.Paths.Lookup("/foo").Value
 				require.Equal(t, path.Get.Path, path)
 			},
 		},
@@ -238,7 +238,7 @@ func TestOperation_Parse(t *testing.T) {
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.Equal(t, logrus.Fields{"method": "GET", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR", log.LastEntry().Message)
-				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation(http.MethodGet).Status)
+				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodGet).Status)
 				require.NoError(t, err)
 			},
 		},
@@ -255,7 +255,7 @@ func TestOperation_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				path := config.Paths["/foo"].Value
+				path := config.Paths.Lookup("/foo").Value
 				require.Equal(t, path.Post.Path, path)
 			},
 		},
@@ -274,7 +274,7 @@ func TestOperation_Parse(t *testing.T) {
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.Equal(t, logrus.Fields{"method": "POST", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR", log.LastEntry().Message)
-				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation(http.MethodPost).Status)
+				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodPost).Status)
 				require.NoError(t, err)
 			},
 		},
@@ -291,7 +291,7 @@ func TestOperation_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				path := config.Paths["/foo"].Value
+				path := config.Paths.Lookup("/foo").Value
 				require.Equal(t, path.Put.Path, path)
 			},
 		},
@@ -310,7 +310,7 @@ func TestOperation_Parse(t *testing.T) {
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.Equal(t, logrus.Fields{"method": "PUT", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR", log.LastEntry().Message)
-				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation(http.MethodPut).Status)
+				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodPut).Status)
 				require.NoError(t, err)
 			},
 		},
@@ -327,7 +327,7 @@ func TestOperation_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				path := config.Paths["/foo"].Value
+				path := config.Paths.Lookup("/foo").Value
 				require.Equal(t, path.Patch.Path, path)
 			},
 		},
@@ -346,7 +346,7 @@ func TestOperation_Parse(t *testing.T) {
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.Equal(t, logrus.Fields{"method": "PATCH", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR", log.LastEntry().Message)
-				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation(http.MethodPatch).Status)
+				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodPatch).Status)
 				require.NoError(t, err)
 			},
 		},
@@ -363,7 +363,7 @@ func TestOperation_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				path := config.Paths["/foo"].Value
+				path := config.Paths.Lookup("/foo").Value
 				require.Equal(t, path.Delete.Path, path)
 			},
 		},
@@ -382,7 +382,7 @@ func TestOperation_Parse(t *testing.T) {
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.Equal(t, logrus.Fields{"method": "DELETE", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR", log.LastEntry().Message)
-				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation(http.MethodDelete).Status)
+				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodDelete).Status)
 				require.NoError(t, err)
 			},
 		},
@@ -399,7 +399,7 @@ func TestOperation_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				path := config.Paths["/foo"].Value
+				path := config.Paths.Lookup("/foo").Value
 				require.Equal(t, path.Head.Path, path)
 			},
 		},
@@ -418,7 +418,7 @@ func TestOperation_Parse(t *testing.T) {
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.Equal(t, logrus.Fields{"method": "HEAD", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR", log.LastEntry().Message)
-				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation(http.MethodHead).Status)
+				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodHead).Status)
 				require.NoError(t, err)
 			},
 		},
@@ -435,7 +435,7 @@ func TestOperation_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				path := config.Paths["/foo"].Value
+				path := config.Paths.Lookup("/foo").Value
 				require.Equal(t, path.Options.Path, path)
 			},
 		},
@@ -454,7 +454,7 @@ func TestOperation_Parse(t *testing.T) {
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.Equal(t, logrus.Fields{"method": "OPTIONS", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR", log.LastEntry().Message)
-				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation(http.MethodOptions).Status)
+				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodOptions).Status)
 				require.NoError(t, err)
 			},
 		},
@@ -471,7 +471,7 @@ func TestOperation_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				path := config.Paths["/foo"].Value
+				path := config.Paths.Lookup("/foo").Value
 				require.Equal(t, path.Trace.Path, path)
 			},
 		},
@@ -490,7 +490,7 @@ func TestOperation_Parse(t *testing.T) {
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.Equal(t, logrus.Fields{"method": "TRACE", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR", log.LastEntry().Message)
-				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation(http.MethodTrace).Status)
+				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodTrace).Status)
 				require.NoError(t, err)
 			},
 		},
@@ -507,7 +507,7 @@ func TestOperation_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				path := config.Paths["/foo"].Value
+				path := config.Paths.Lookup("/foo").Value
 				require.Equal(t, path.Query.Path, path)
 			},
 		},
@@ -526,7 +526,7 @@ func TestOperation_Parse(t *testing.T) {
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.Equal(t, logrus.Fields{"method": "QUERY", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR", log.LastEntry().Message)
-				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation("QUERY").Status)
+				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation("QUERY").Status)
 				require.NoError(t, err)
 			},
 		},
@@ -543,7 +543,7 @@ func TestOperation_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				path := config.Paths["/foo"].Value
+				path := config.Paths.Lookup("/foo").Value
 				require.Equal(t, path.AdditionalOperations["LINK"].Path, path)
 			},
 		},
@@ -562,7 +562,7 @@ func TestOperation_Parse(t *testing.T) {
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.Equal(t, logrus.Fields{"method": "LINK", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse parameter index '0' failed: resolve reference '/foo.yml' failed: TEST ERROR", log.LastEntry().Message)
-				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation("LINK").Status)
+				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation("LINK").Status)
 				require.NoError(t, err)
 			},
 		},
@@ -581,7 +581,7 @@ func TestOperation_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				path := config.Paths["/foo"].Value
+				path := config.Paths.Lookup("/foo").Value
 				require.Equal(t, "foo", path.Trace.RequestBody.Value.Description)
 			},
 		},
@@ -605,7 +605,7 @@ func TestOperation_Parse(t *testing.T) {
 				)
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.NoError(t, err)
-				path := config.Paths["/foo"].Value
+				path := config.Paths.Lookup("/foo").Value
 				require.Equal(t, "foo", path.Trace.RequestBody.Value.Description)
 			},
 		},
@@ -626,7 +626,7 @@ func TestOperation_Parse(t *testing.T) {
 				err := config.Parse(&dynamic.Config{Info: dynamic.ConfigInfo{Url: &url.URL{}}, Data: config}, reader)
 				require.Equal(t, logrus.Fields{"method": "TRACE", "api": "HTTP API", "namespace": "http", "path": "/foo"}, log.LastEntry().Data)
 				require.Equal(t, "parse request body failed: resolve reference '/foo.yml#/components/requestBodies/foo' failed: TEST ERROR", log.LastEntry().Message)
-				require.Equal(t, openapi.StatusInvalid, config.Paths["/foo"].Value.Operation(http.MethodTrace).Status)
+				require.Equal(t, openapi.StatusInvalid, config.Paths.Lookup("/foo").Value.Operation(http.MethodTrace).Status)
 				require.NoError(t, err)
 			},
 		},
@@ -660,9 +660,10 @@ func TestConfig_Patch_Operation(t *testing.T) {
 					"/foo", openapitest.WithOperation(m))),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Len(t, result.Paths, 1)
-				require.Contains(t, result.Paths, "/foo")
-				require.NotNil(t, result.Paths["/foo"].Value.Operations()[strings.ToTitle(m)])
+				require.Equal(t, 1, result.Paths.Len())
+				_, ok := result.Paths.Get("/foo")
+				require.True(t, ok)
+				require.NotNil(t, result.Paths.Lookup("/foo").Value.Operations()[strings.ToTitle(m)])
 			},
 		})
 		testcases = append(testcases, testType{
@@ -676,9 +677,10 @@ func TestConfig_Patch_Operation(t *testing.T) {
 					))),
 			},
 			test: func(t *testing.T, result *openapi.Config) {
-				require.Len(t, result.Paths, 1)
-				require.Contains(t, result.Paths, "/foo")
-				o := result.Paths["/foo"].Value.Operations()[strings.ToTitle(m)]
+				require.Equal(t, 1, result.Paths.Len())
+				_, ok := result.Paths.Get("/foo")
+				require.True(t, ok)
+				o := result.Paths.Lookup("/foo").Value.Operations()[strings.ToTitle(m)]
 				require.Equal(t, "foo", o.Summary)
 				require.Equal(t, "bar", o.Description)
 				require.Equal(t, "id", o.OperationId)
@@ -696,9 +698,10 @@ func TestConfig_Patch_Operation(t *testing.T) {
 				"/foo")),
 		},
 		test: func(t *testing.T, result *openapi.Config) {
-			require.Len(t, result.Paths, 1)
-			require.Contains(t, result.Paths, "/foo")
-			o := result.Paths["/foo"].Value.Get
+			require.Equal(t, 1, result.Paths.Len())
+			_, ok := result.Paths.Get("/foo")
+			require.True(t, ok)
+			o := result.Paths.Lookup("/foo").Value.Get
 			require.Equal(t, "", o.Summary)
 		},
 	})

@@ -1,6 +1,6 @@
 import { reactive, ref, watchEffect } from "vue";
 import { transformPath, useFetch } from "./fetch";
-import type { AppInfoResponse, Dashboard, ExampleRequest, ExampleResult, MailboxMessagesResult, MailboxResult } from "@/types/dashboard";
+import type { AppInfoResponse, BrunoCollection, Dashboard, ExampleRequest, ExampleResult, MailboxMessagesResult, MailboxResult } from "@/types/dashboard";
 import type { Response } from "./fetch";
 
 export function useDemoDashboard() {
@@ -332,6 +332,23 @@ export function useDemoDashboard() {
             }
             return '/demo/' + getFilenameFromUrl(config?.url)
         },
+
+        getBrunoCollectionUrl(serviceName: string) {
+            const url = ref<string | null>(null)
+
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                const content = db.data['service_' + serviceName + '_bruno'] || null
+                if (content) {
+                    const blob = new Blob([content], { type: 'application/yaml' });
+                    url.value = URL.createObjectURL(blob)
+                }
+            })
+
+            return url
+        }
     }
 
     function compareService(s1: Service, s2: Service) {

@@ -55,7 +55,7 @@ func TestParameterHeader_UnmarshalJSON(t *testing.T) {
 				param := &openapi.Parameter{}
 				err := json.Unmarshal([]byte(`{ "required": true  }`), &param)
 				require.NoError(t, err)
-				require.True(t, param.Required)
+				require.True(t, *param.Required)
 			},
 		},
 		{
@@ -64,7 +64,7 @@ func TestParameterHeader_UnmarshalJSON(t *testing.T) {
 				param := &openapi.Parameter{}
 				err := json.Unmarshal([]byte(`{ "deprecated": true  }`), &param)
 				require.NoError(t, err)
-				require.True(t, param.Deprecated)
+				require.True(t, *param.Deprecated)
 			},
 		},
 		{
@@ -192,7 +192,7 @@ func TestParameterHeader_UnmarshalYAML(t *testing.T) {
 				param := &openapi.Parameter{}
 				err := yaml.Unmarshal([]byte(`required: true`), &param)
 				require.NoError(t, err)
-				require.True(t, param.Required)
+				require.True(t, *param.Required)
 			},
 		},
 		{
@@ -201,7 +201,7 @@ func TestParameterHeader_UnmarshalYAML(t *testing.T) {
 				param := &openapi.Parameter{}
 				err := yaml.Unmarshal([]byte(`deprecated: true`), &param)
 				require.NoError(t, err)
-				require.True(t, param.Deprecated)
+				require.True(t, *param.Deprecated)
 			},
 		},
 		{
@@ -433,12 +433,12 @@ func TestParameters_Patch(t *testing.T) {
 		{
 			name: "patch required",
 			configs: []openapi.Parameters{
-				{&openapi.ParameterRef{Value: &openapi.Parameter{Required: true}}},
-				{&openapi.ParameterRef{Value: &openapi.Parameter{Required: false}}},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Required: new(true)}}},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Required: new(false)}}},
 			},
 			test: func(t *testing.T, result openapi.Parameters) {
 				require.Len(t, result, 1)
-				require.False(t, result[0].Value.Required)
+				require.False(t, *result[0].Value.Required)
 			},
 		},
 		{
@@ -456,11 +456,11 @@ func TestParameters_Patch(t *testing.T) {
 			name: "patch deprecated",
 			configs: []openapi.Parameters{
 				{&openapi.ParameterRef{Value: &openapi.Parameter{}}},
-				{&openapi.ParameterRef{Value: &openapi.Parameter{Deprecated: true}}},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Deprecated: new(true)}}},
 			},
 			test: func(t *testing.T, result openapi.Parameters) {
 				require.Len(t, result, 1)
-				require.True(t, result[0].Value.Deprecated)
+				require.True(t, *result[0].Value.Deprecated)
 			},
 		},
 		{
@@ -478,7 +478,7 @@ func TestParameters_Patch(t *testing.T) {
 			name: "patch explode",
 			configs: []openapi.Parameters{
 				{&openapi.ParameterRef{Value: &openapi.Parameter{}}},
-				{&openapi.ParameterRef{Value: &openapi.Parameter{Explode: explode(true)}}},
+				{&openapi.ParameterRef{Value: &openapi.Parameter{Explode: new(true)}}},
 			},
 			test: func(t *testing.T, result openapi.Parameters) {
 				require.Len(t, result, 1)
@@ -501,6 +501,58 @@ func TestParameters_Patch(t *testing.T) {
 	}
 }
 
-func explode(b bool) *bool {
-	return &b
+func TestParameter_Marshal(t *testing.T) {
+	testcases := []struct {
+		name string
+		s    *openapi.ParameterRef
+		json string
+		yaml string
+		test func(t *testing.T, json, yaml string, err error)
+	}{
+		{
+			name: "ref",
+			s: &openapi.ParameterRef{
+				Reference: dynamic.Reference[*openapi.ParameterRef]{
+					Ref: "/foo",
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"$ref":"/foo"}`, json)
+				require.Equal(t, "$ref: /foo\n", yaml)
+			},
+		},
+		{
+			name: "value",
+			s: &openapi.ParameterRef{
+				Value: &openapi.Parameter{
+					Name:        "foo",
+					Type:        "query",
+					Description: "foo description",
+				},
+			},
+			test: func(t *testing.T, json, yaml string, err error) {
+				require.NoError(t, err)
+				require.Equal(t, `{"name":"foo","in":"query","description":"foo description"}`, json)
+				require.Equal(t, `name: foo
+in: query
+description: foo description
+`, yaml)
+			},
+		},
+	}
+
+	t.Parallel()
+	for _, tc := range testcases {
+		tc := tc
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			jb, err := json.Marshal(tc.s)
+			if err != nil {
+				tc.test(t, "", "", err)
+			}
+			yb, err := yaml.Marshal(tc.s)
+			tc.test(t, string(jb), string(yb), err)
+		})
+	}
 }

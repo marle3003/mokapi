@@ -77,7 +77,7 @@ func (s *KafkaStore) List() []*KafkaInfo {
 	return list
 }
 
-func (s *KafkaStore) Add(c *dynamic.Config, emitter common.EventEmitter) (*KafkaInfo, error) {
+func (s *KafkaStore) Add(c *dynamic.Config, emitter common.KafkaEventEmitter) (*KafkaInfo, error) {
 	cfg := getKafkaConfig(c)
 	if cfg == nil {
 		return nil, errors.New("no Kafka config found")

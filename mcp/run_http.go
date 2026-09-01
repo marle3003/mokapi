@@ -100,7 +100,12 @@ func (m *mokapi) getHttpApi(name string) *OpenAPI {
 }
 func (o *OpenAPI) GetOperations() []OperationSummary {
 	var result []OperationSummary
-	for _, p := range o.info.Paths {
+	if o.info.Paths == nil {
+		return result
+	}
+
+	for it := o.info.Paths.Iter(); it.Next(); {
+		p := it.Value()
 		if p.Value == nil {
 			continue
 		}
@@ -143,79 +148,82 @@ func (o *OpenAPI) GetOperations() []OperationSummary {
 }
 
 func (o *OpenAPI) GetOperation(id string) (*Operation, error) {
-	for _, p := range o.info.Paths {
-		if p.Value == nil {
-			continue
-		}
-		for method, op := range p.Value.Operations() {
-
-			operationId := getOperationId(method, op)
-			if id != operationId {
+	if o.info.Paths != nil {
+		for it := o.info.Paths.Iter(); it.Next(); {
+			p := it.Value()
+			if p.Value == nil {
 				continue
 			}
+			for method, op := range p.Value.Operations() {
 
-			r := &Operation{
-				OperationId: operationId,
-				Method:      method,
-				Path:        p.Value.Path,
-				Summary:     op.Summary,
-				Description: op.Description,
-				spec:        op,
-				handler:     o.handler,
-			}
-			for _, param := range op.Parameters {
-				if param.Value == nil {
+				operationId := getOperationId(method, op)
+				if id != operationId {
 					continue
 				}
-				r.Parameters = append(r.Parameters, RequestParameters{
-					Name:        param.Value.Name,
-					In:          param.Value.Type.String(),
-					Required:    param.Value.Required,
-					Schema:      param.Value.Schema,
-					Description: param.Value.Description,
-				})
-			}
-			slices.SortStableFunc(r.Parameters, func(a, b RequestParameters) int {
-				return strings.Compare(a.Name, b.Name)
-			})
 
-			if op.RequestBody != nil && op.RequestBody.Value != nil {
-				r.RequestBody = RequestBody{
-					Description: op.RequestBody.Value.Description,
-					Required:    op.RequestBody.Value.Required,
+				r := &Operation{
+					OperationId: operationId,
+					Method:      method,
+					Path:        p.Value.Path,
+					Summary:     op.Summary,
+					Description: op.Description,
+					spec:        op,
+					handler:     o.handler,
 				}
-				for ct, content := range op.RequestBody.Value.Content {
-					r.RequestBody.Contents = append(r.RequestBody.Contents, Content{
-						ContentType: ct,
-						Schema:      content.Schema,
+				for _, param := range op.Parameters {
+					if param.Value == nil {
+						continue
+					}
+					r.Parameters = append(r.Parameters, RequestParameters{
+						Name:        param.Value.Name,
+						In:          param.Value.Type.String(),
+						Required:    param.Value.Required != nil && *param.Value.Required,
+						Schema:      param.Value.Schema,
+						Description: param.Value.Description,
 					})
 				}
-			}
-			for it := op.Responses.Iter(); it.Next(); {
-				status, err := strconv.Atoi(it.Key())
-				if err != nil {
-					continue
-				}
+				slices.SortStableFunc(r.Parameters, func(a, b RequestParameters) int {
+					return strings.Compare(a.Name, b.Name)
+				})
 
-				res := it.Value()
-				if res.Value == nil {
-					continue
+				if op.RequestBody != nil && op.RequestBody.Value != nil {
+					r.RequestBody = RequestBody{
+						Description: op.RequestBody.Value.Description,
+						Required:    op.RequestBody.Value.IsRequired(),
+					}
+					for ct, content := range op.RequestBody.Value.Content {
+						r.RequestBody.Contents = append(r.RequestBody.Contents, Content{
+							ContentType: ct,
+							Schema:      content.Schema,
+						})
+					}
 				}
-				var contents []Content
-				for ct, content := range res.Value.Content {
-					contents = append(contents, Content{
-						ContentType: ct,
-						Schema:      content.Schema,
+				for it := op.Responses.Iter(); it.Next(); {
+					status, err := strconv.Atoi(it.Key())
+					if err != nil {
+						continue
+					}
+
+					res := it.Value()
+					if res.Value == nil {
+						continue
+					}
+					var contents []Content
+					for ct, content := range res.Value.Content {
+						contents = append(contents, Content{
+							ContentType: ct,
+							Schema:      content.Schema,
+						})
+					}
+					r.Responses = append(r.Responses, Response{
+						StatusCode:  status,
+						Description: res.Value.Description,
+						Contents:    contents,
 					})
 				}
-				r.Responses = append(r.Responses, Response{
-					StatusCode:  status,
-					Description: res.Value.Description,
-					Contents:    contents,
-				})
-			}
 
-			return r, nil
+				return r, nil
+			}
 		}
 	}
 	return nil, fmt.Errorf("operation with ID '%s' not found. Hint: Use getOperations() to see the full list of valid IDs", id)
@@ -260,12 +268,12 @@ func (op *Operation) Invoke(req InvokeRequest) (InvokeResponse, error) {
 			}
 			path = strings.ReplaceAll(path, fmt.Sprintf("{%s}", p.Value.Name), val)
 		case openapi.ParameterQuery:
-			if req.Query == nil && p.Value.Required {
+			if req.Query == nil && p.Value.Required != nil && *p.Value.Required {
 				return result, fmt.Errorf("invoke request %s %s failed: missing query parameter '%s'", op.Method, op.Path, p.Value.Name)
 			}
 			val, ok := req.Query[p.Value.Name]
 			if !ok {
-				if !p.Value.Required {
+				if p.Value.Required != nil && !*p.Value.Required {
 					continue
 				}
 				return result, fmt.Errorf("invoke request %s %s failed: missing query parameter '%s'", op.Method, op.Path, p.Value.Name)
@@ -289,12 +297,12 @@ func (op *Operation) Invoke(req InvokeRequest) (InvokeResponse, error) {
 		if p.Value == nil || p.Value.Type != openapi.ParameterHeader {
 			continue
 		}
-		if req.Header == nil && p.Value.Required {
+		if req.Header == nil && p.Value.Required != nil && *p.Value.Required {
 			return result, fmt.Errorf("invoke request %s %s failed: missing header parameter '%s'", op.Method, op.Path, p.Value.Name)
 		}
 		val, ok := req.Header[p.Value.Name]
 		if !ok {
-			if !p.Value.Required {
+			if p.Value.Required != nil && !*p.Value.Required {
 				continue
 			}
 			return result, fmt.Errorf("invoke request %s %s failed: missing header parameter '%s'", op.Method, op.Path, p.Value.Name)

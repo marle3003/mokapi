@@ -9,8 +9,6 @@ import (
 )
 
 type Schema struct {
-	m map[string]bool
-
 	Id string `yaml:"$id,omitempty" json:"$id,omitempty"`
 	dynamic.Reference[*Schema]
 
@@ -83,6 +81,9 @@ type Schema struct {
 	// both are valid: https://json-schema.org/draft/2019-09/release-notes#semi-incompatible-changes
 	Definitions map[string]*Schema `yaml:"definitions,omitempty" json:"definitions,omitempty"`
 	Defs        map[string]*Schema `yaml:"$defs,omitempty" json:"$defs,omitempty"`
+
+	Sub *Schema `yaml:"-" json:"-"`
+	m   map[string]bool
 }
 
 type UnmarshalError struct {
@@ -306,7 +307,8 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 	}
 
 	if s.Reference.HasRef() {
-		r, err := s.Reference.Resolve(config, reader)
+		var err error
+		s.Sub, err = s.Reference.Resolve(config, reader)
 		if err != nil {
 			return err
 		}
@@ -316,7 +318,7 @@ func (s *Schema) Parse(config *dynamic.Config, reader dynamic.Reader) error {
 		// the parsed schema graph. Dynamic references may resolve differently
 		// depending on the evaluation context, so shared schema nodes must
 		// never be mutated.
-		s.apply(r)
+		s.apply(s.Sub)
 	}
 
 	return nil

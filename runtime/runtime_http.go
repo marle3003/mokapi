@@ -98,12 +98,15 @@ func (s *HttpStore) Add(c *dynamic.Config) *HttpInfo {
 	}
 	patchHttp(hc, s.reader)
 
-	for path := range cfg.Paths {
-		if _, ok := hc.seenPaths[path]; ok {
-			continue
+	if cfg.Paths != nil {
+		for it := cfg.Paths.Iter(); it.Next(); {
+			path := it.Key()
+			if _, ok := hc.seenPaths[path]; ok {
+				continue
+			}
+			s.events.SetStore(int(store.Size), events.NewTraits().WithNamespace("http").WithName(name).With("path", path))
+			hc.seenPaths[path] = true
 		}
-		s.events.SetStore(int(store.Size), events.NewTraits().WithNamespace("http").WithName(name).With("path", path))
-		hc.seenPaths[path] = true
 	}
 
 	if s.cfg.Api.Search.Enabled {
@@ -141,7 +144,7 @@ func (s *HttpStore) Remove(c *dynamic.Config) {
 	}
 }
 
-func (c *HttpInfo) Handler(http *monitor.Http, emitter common.EventEmitter, eh events.Handler) openapi.Handler {
+func (c *HttpInfo) Handler(http *monitor.Http, emitter common.HttpEventEmitter, eh events.Handler) openapi.Handler {
 	cfg := c.Config
 	h := openapi.NewHandler(cfg, emitter, eh)
 	return &httpHandler{http: http, next: h}
@@ -180,7 +183,7 @@ func patchHttp(c *HttpInfo, reader dynamic.Reader) {
 	}
 
 	if len(r.Servers) == 0 {
-		r.Servers = append(r.Servers, &openapi.Server{Url: "/"})
+		r.Servers = append(r.Servers, &openapi.Server{Url: "/", IsDefault: true})
 	}
 
 	c.Config = r

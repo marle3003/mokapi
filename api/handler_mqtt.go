@@ -98,6 +98,7 @@ func (h *handler) setupMqtt() {
 
 	r.HandleFunc("", h.getMqttClusters).Methods(http.MethodGet)
 	r.HandleFunc("/{cluster}", h.getMqttInfo).Methods(http.MethodGet)
+	r.HandleFunc("/{cluster}/asyncapi.{ext}", h.exportAsyncApi).Methods(http.MethodGet)
 	r.HandleFunc("/{cluster}/topics", h.getMqttTopics).Methods(http.MethodGet)
 }
 

@@ -239,7 +239,9 @@ func TestKafkaClient(t *testing.T) {
 					asyncapi3test.WithKey(schematest.New("string")),
 				)
 				cfg := createCfg("foo", msg)
-				cfg.Channels["foo"].Value.Bindings.Kafka.Partitions = 10
+				cfg.Channels["foo"].Value.Bindings = &asyncapi3.ChannelBindings{
+					Kafka: asyncapi3.TopicBindings{Partitions: 10},
+				}
 
 				return cfg
 			},

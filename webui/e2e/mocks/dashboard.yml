@@ -81,6 +81,27 @@ paths:
                 type: array
                 items:
                   $ref: 'http.yml#/components/schemas/Operation'
+  /api/services/http/{name}/openapi.{format}:
+    get:
+      summary: Information about the http service
+      operationId: httpOpenApi
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: format
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [json, yaml]
+      responses:
+        "200":
+          description: http service openapi spec
+          content:
+            '*/*': {}
   /api/services/kafka/{name}:
     get:
       summary: Information about the kafka cluster

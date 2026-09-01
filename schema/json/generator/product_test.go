@@ -29,6 +29,17 @@ func TestProduct(t *testing.T) {
 			},
 		},
 		{
+			name: "use path /products/name",
+			req: &Request{
+				Path:   []string{"products", "name"},
+				Schema: schematest.New("string"),
+			},
+			test: func(t *testing.T, v interface{}, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "Designed Can Opener", v)
+			},
+		},
+		{
 			name: "description",
 			req: &Request{
 				Path: []string{"product"},

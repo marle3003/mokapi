@@ -1,6 +1,7 @@
 package openapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"mokapi/config/dynamic"
 	"mokapi/providers/openapi/schema"
@@ -27,30 +28,30 @@ type Parameter struct {
 	Type Location `yaml:"in" json:"in"`
 
 	// The schema defining the type used for the parameter
-	Schema *schema.Schema `yaml:"schema" json:"schema"`
+	Schema *schema.Schema `yaml:"schema,omitempty" json:"schema,omitempty"`
 
 	// Determines whether the parameter is mandatory.
 	// If the location of the parameter is "path", this property
 	// is required and its value MUST be true
-	Required bool `yaml:"required" json:"required"`
+	Required *bool `yaml:"required,omitempty" json:"required,omitempty"`
 
 	// A brief description of the parameter. This could contain examples
 	// of use.
-	Description string `yaml:"description" json:"description"`
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
 
-	Deprecated bool `yaml:"deprecated" json:"deprecated"`
+	Deprecated *bool `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
 
 	// Defines how multiple values are delimited. Possible styles depend on
 	// the parameter location
-	Style string `yaml:"style" json:"style"`
+	Style string `yaml:"style,omitempty" json:"style,omitempty"`
 
 	// specifies whether arrays and objects should generate separate
 	// parameters for each array item or object property
-	Explode *bool `yaml:"explode" json:"explode"`
+	Explode *bool `yaml:"explode,omitempty" json:"explode,omitempty"`
 
-	AllowReserved bool `yaml:"allowReserved" json:"allowReserved"`
+	AllowReserved *bool `yaml:"allowReserved,omitempty" json:"allowReserved,omitempty"`
 
-	Content Content `yaml:"content" json:"content"`
+	Content Content `yaml:"content,omitempty" json:"content,omitempty"`
 }
 
 type Parameters []*ParameterRef
@@ -123,4 +124,30 @@ func (r *ParameterRef) Parse(config *dynamic.Config, reader dynamic.Reader) erro
 
 func (p *Parameter) Parse(_ *dynamic.Config, _ dynamic.Reader) error {
 	return nil
+}
+
+func (r *ParameterRef) MarshalJSON() ([]byte, error) {
+	if r.Value != nil {
+		return json.Marshal(r.Value)
+	}
+	return json.Marshal(r.Reference)
+}
+
+func (r *ParameterRef) MarshalYAML() (interface{}, error) {
+	if r.Value != nil {
+		return r.Value, nil
+	}
+	return r.Reference, nil
+}
+
+func (p *Parameter) IsRequired() bool {
+	return p.Required != nil && *p.Required
+}
+
+func (p *Parameter) IsDeprecated() bool {
+	return p.Deprecated != nil && *p.Deprecated
+}
+
+func (p *Parameter) IsAllowReserved() bool {
+	return p.AllowReserved != nil && *p.AllowReserved
 }

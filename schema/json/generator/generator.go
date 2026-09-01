@@ -15,15 +15,17 @@ type generator struct {
 	rand *rand.Rand
 	cfg  static.DataGen
 
-	root *Node
+	root      *Node
+	inflector *cachedInflector
 }
 
 var g *generator
 
 func init() {
 	g = &generator{
-		rand: rand.New(rand.NewSource(time.Now().Unix())),
-		root: buildTree(),
+		rand:      rand.New(rand.NewSource(time.Now().Unix())),
+		root:      buildTree(),
+		inflector: newCachedInflector(2048),
 	}
 }
 

@@ -19,6 +19,9 @@ end
 
 mokapi.on("http", function(request, response)
     if request.operationId == "findPetsByStatus" then
+        if request.query.status[0] == "sold" then
+            return false
+        end
         response.data = getPetsByStatus(request.query.status)
         return true
      end

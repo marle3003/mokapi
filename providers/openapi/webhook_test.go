@@ -29,10 +29,6 @@ func TestHandler_Webhook(t *testing.T) {
 		return app, e
 	}
 
-	type Arg struct {
-		Result any
-	}
-
 	testcases := []struct {
 		name    string
 		handler http.Handler
@@ -143,17 +139,17 @@ func TestHandler_Webhook(t *testing.T) {
 				err := addScript(e, `
 					import { on, webhook } from 'mokapi'
 					export default function() {
-						const res = webhook('foo', '%s', { data: { foo: 'bar' } })
-						on('debug', (arg) => arg.result = res)
+						const response = webhook('foo', '%s', { data: { foo: 'bar' } })
+						on('http', (req, res) => res.data = response)
 					}
 				`, url)
-				arg := Arg{}
-				e.Run("debug", &arg)
+				res := &common.HttpEventResponse{}
+				e.EmitHttp(&common.HttpEventRequest{}, res)
 				require.NoError(t, err)
 				require.Equal(t, &common.WebhookResponse{
 					StatusCode: http.StatusOK,
 					Headers:    map[string]any{},
-				}, arg.Result)
+				}, res.Data)
 			},
 		},
 		{
@@ -185,8 +181,6 @@ func TestHandler_Webhook(t *testing.T) {
 						webhook('foo', '%s', { data: { foo: 123 } })
 					}
 				`, url)
-				arg := Arg{}
-				e.Run("debug", &arg)
 				require.EqualError(t, err, "webhook foo failed: Validation error count 1:\n\t- #/foo/type: invalid type, expected string but got integer")
 			},
 		},
@@ -226,18 +220,18 @@ func TestHandler_Webhook(t *testing.T) {
 				err := addScript(e, `
 					import { on, webhook } from 'mokapi'
 					export default function() {
-						const res = webhook('foo', '%s', { data: { foo: 'bar' } })
-						on('debug', (arg) => arg.result = res)
+						const response = webhook('foo', '%s', { data: { foo: 'bar' } })
+						on('http', (req, res) => res.data = response)
 					}
 				`, url)
-				arg := Arg{}
-				e.Run("debug", &arg)
+				res := &common.HttpEventResponse{}
+				e.EmitHttp(&common.HttpEventRequest{}, res)
 				require.NoError(t, err)
 				require.Equal(t, &common.WebhookResponse{
 					StatusCode: http.StatusOK,
 					Data:       map[string]interface{}{"foo": "bar"},
 					Headers:    map[string]any{"Content-Type": "application/json"},
-				}, arg.Result)
+				}, res.Data)
 			},
 		},
 		{
@@ -265,8 +259,6 @@ func TestHandler_Webhook(t *testing.T) {
 						webhook('foo', '%s', {  })
 					}
 				`, url)
-				arg := Arg{}
-				e.Run("debug", &arg)
 				require.EqualError(t, err, "webhook foo failed: required header parameter foo not found")
 			},
 		},
@@ -295,8 +287,6 @@ func TestHandler_Webhook(t *testing.T) {
 						webhook('foo', '%s', { headers: { foo: 'bar' } })
 					}
 				`, url)
-				arg := Arg{}
-				e.Run("debug", &arg)
 				require.EqualError(t, err, "webhook foo failed: failed to parse header parameter foo: Validation error count 1:\n\t- #/type: invalid type, expected integer but got string")
 			},
 		},

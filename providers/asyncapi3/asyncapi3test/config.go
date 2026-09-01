@@ -9,7 +9,7 @@ type ConfigOptions func(c *asyncapi3.Config)
 
 func NewConfig(opts ...ConfigOptions) *asyncapi3.Config {
 	c := &asyncapi3.Config{
-		Version:            "2.0.0",
+		Version:            "3.0.0",
 		Info:               asyncapi3.Info{Name: "test", Version: "1.0"},
 		Servers:            &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{},
 		DefaultContentType: asyncapi3.DefaultContentType,
@@ -73,6 +73,15 @@ func WithServer(name, protocol, host string, opts ...ServerOptions) ConfigOption
 	}
 }
 
+func UseServer(name string, ref *asyncapi3.ServerRef) ConfigOptions {
+	return func(c *asyncapi3.Config) {
+		if c.Servers == nil {
+			c.Servers = &sortedmap.LinkedHashMap[string, *asyncapi3.ServerRef]{}
+		}
+		c.Servers.Set(name, ref)
+	}
+}
+
 func WithChannel(name string, opts ...ChannelOptions) ConfigOptions {
 	return func(c *asyncapi3.Config) {
 		if c.Channels == nil {
@@ -80,8 +89,23 @@ func WithChannel(name string, opts ...ChannelOptions) ConfigOptions {
 		}
 		ch := NewChannel(opts...)
 		ch.Name = name
+		if ch.Bindings == nil {
+			ch.Bindings = &asyncapi3.ChannelBindings{}
+			ch.Bindings.Kafka.Partitions = 1
+			ch.Bindings.Kafka.ValueSchemaValidation = true
+			ch.Bindings.Kafka.KeySchemaValidation = true
+		}
 		c.Channels[name] = &asyncapi3.ChannelRef{Value: ch}
 		ch.Config = c
+	}
+}
+
+func UseChannel(name string, ch *asyncapi3.ChannelRef) ConfigOptions {
+	return func(c *asyncapi3.Config) {
+		if c.Channels == nil {
+			c.Channels = make(map[string]*asyncapi3.ChannelRef)
+		}
+		c.Channels[name] = ch
 	}
 }
 
@@ -108,5 +132,14 @@ func WithOperation(name string, opts ...OperationOptions) ConfigOptions {
 			panic("no valid action set: expected send or receive")
 		}
 		c.Operations[name] = &asyncapi3.OperationRef{Value: op}
+	}
+}
+
+func UseOperation(name string, op *asyncapi3.OperationRef) ConfigOptions {
+	return func(c *asyncapi3.Config) {
+		if c.Operations == nil {
+			c.Operations = make(map[string]*asyncapi3.OperationRef)
+		}
+		c.Operations[name] = op
 	}
 }
