@@ -19,7 +19,7 @@ func TestRoot_Providers_File(t *testing.T) {
 			name: "directories index path",
 			cmd: func(t *testing.T) *cli.Command {
 				cmd := mokapi.NewCmdMokapi()
-				cmd.SetArgs([]string{"--providers-file-directories[0]-path ./foo"})
+				cmd.SetArgs([]string{"--providers-file-directories[0]-path", "./foo"})
 				return cmd
 			},
 			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {
@@ -32,7 +32,7 @@ func TestRoot_Providers_File(t *testing.T) {
 			name: "directories index path",
 			cmd: func(t *testing.T) *cli.Command {
 				cmd := mokapi.NewCmdMokapi()
-				cmd.SetArgs([]string{"--providers-file-directories[0]-path /foo"})
+				cmd.SetArgs([]string{"--providers-file-directories[0]-path", "/foo"})
 				return cmd
 			},
 			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {
@@ -45,7 +45,7 @@ func TestRoot_Providers_File(t *testing.T) {
 			name: "directories index include",
 			cmd: func(t *testing.T) *cli.Command {
 				cmd := mokapi.NewCmdMokapi()
-				cmd.SetArgs([]string{"--providers-file-directories[0]-include *index.js"})
+				cmd.SetArgs([]string{"--providers-file-directories[0]-include", "*index.js"})
 				return cmd
 			},
 			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {
@@ -58,7 +58,7 @@ func TestRoot_Providers_File(t *testing.T) {
 			name: "directories index include two values",
 			cmd: func(t *testing.T) *cli.Command {
 				cmd := mokapi.NewCmdMokapi()
-				cmd.SetArgs([]string{"--providers-file-directories[0]-include *index.js *foo.ts"})
+				cmd.SetArgs([]string{"--providers-file-directories[0]-include", "*index.js", "*foo.ts"})
 				return cmd
 			},
 			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {

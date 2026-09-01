@@ -17,8 +17,8 @@ func RegisterFileProvider(cmd *cli.Command) {
 	// directories
 	cmd.Flags().DynamicString("providers-file-directories[<index>]", providerFileDirectoriesIndex)
 	cmd.Flags().DynamicString("providers-file-directories[<index>]-path", providerFileDirectoriesPath)
-	cmd.Flags().DynamicString("providers-file-directories[<index>]-include", providerFileDirectoriesInclude)
-	cmd.Flags().DynamicString("providers-file-directories[<index>]-exclude", providerFileDirectoriesExclude)
+	cmd.Flags().DynamicStringSlice("providers-file-directories[<index>]-include", false, providerFileDirectoriesInclude)
+	cmd.Flags().DynamicStringSlice("providers-file-directories[<index>]-exclude", false, providerFileDirectoriesExclude)
 }
 
 var providerFile = cli.FlagDoc{

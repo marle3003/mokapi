@@ -60,7 +60,7 @@ func TestFlagBool(t *testing.T) {
 				c.Flags().Bool("foo", true, cli.FlagDoc{})
 				return c
 			},
-			args: []string{"--no-foo false"},
+			args: []string{"--no-foo", "false"},
 			test: func(t *testing.T, cmd *cli.Command, args []string, err error) {
 				require.NoError(t, err)
 				require.Equal(t, true, cmd.Flags().GetBool("foo"))

@@ -24,7 +24,7 @@ func TestFlagString(t *testing.T) {
 					return nil
 				}}
 				c.Flags().String("foo", "", cli.FlagDoc{})
-				c.SetArgs([]string{"--foo bar"})
+				c.SetArgs([]string{"--foo", "bar"})
 
 				err := c.Execute()
 
@@ -42,7 +42,7 @@ func TestFlagString(t *testing.T) {
 					return nil
 				}}
 				c.Flags().String("foo", "", cli.FlagDoc{})
-				c.SetArgs([]string{"--foo file:" + path})
+				c.SetArgs([]string{"--foo", "file:" + path})
 
 				err := c.Execute()
 

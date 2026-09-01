@@ -23,7 +23,7 @@ func TestRoot_Providers_Git(t *testing.T) {
 			name: "--providers-git-repositories",
 			cmd: func(t *testing.T) *cli.Command {
 				cmd := mokapi.NewCmdMokapi()
-				cmd.SetArgs([]string{"--providers-git-repositories url=https://github.com/foo/foo.git,include=*.json url=https://github.com/bar/bar.git,include=*.yaml"})
+				cmd.SetArgs([]string{"--providers-git-repositories", "url=https://github.com/foo/foo.git,include=*.json", "url=https://github.com/bar/bar.git,include=*.yaml"})
 				return cmd
 			},
 			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {
@@ -56,7 +56,7 @@ func TestRoot_Providers_Git(t *testing.T) {
 			name: "index url",
 			cmd: func(t *testing.T) *cli.Command {
 				cmd := mokapi.NewCmdMokapi()
-				cmd.SetArgs([]string{"--providers-git-repositories[0]-url https://github.com/foo/foo.git"})
+				cmd.SetArgs([]string{"--providers-git-repositories[0]-url", "https://github.com/foo/foo.git"})
 				return cmd
 			},
 			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {
@@ -99,7 +99,7 @@ WRuPspPXIAHPKrjEHkUsgDZHW/V0fJWbIjJarw==
 				})
 
 				cmd := mokapi.NewCmdMokapi()
-				cmd.SetArgs([]string{"--providers-git-repositories url=https://github.com/foo/foo.git url=https://github.com/bar/bar.git"})
+				cmd.SetArgs([]string{"--providers-git-repositories", "url=https://github.com/foo/foo.git", "url=https://github.com/bar/bar.git"})
 				return cmd
 			},
 			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {

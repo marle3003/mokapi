@@ -60,10 +60,6 @@ func parseFlags(args []string, envNamePrefix string, flags *FlagSet) ([]string, 
 				name = name[0:i]
 				hasValue = true
 				break
-			} else if name[i] == ' ' {
-				value = name[i+1:]
-				name = name[0:i]
-				break
 			}
 		}
 
@@ -80,19 +76,25 @@ func parseFlags(args []string, envNamePrefix string, flags *FlagSet) ([]string, 
 		}
 
 		// value is next args
+		var values []string
 		for i++; i < len(args); i++ {
 			if strings.HasPrefix(args[i], "--") || strings.HasPrefix(args[i], "-") {
 				i--
 				break
 			}
-			value = args[i]
+			values = append(values, args[i])
+		}
+
+		if len(values) == 0 {
+			values = []string{""}
 		}
 
 		if strings.HasPrefix(param, "no-") {
-			param, value = normalizeNoFlags(param, value)
+			param, value = normalizeNoFlags(param, values[0])
+			values = []string{value}
 		}
 
-		if err := flags.setValue(param, []string{value}, SourceCli); err != nil {
+		if err := flags.setValue(param, values, SourceCli); err != nil {
 			return nil, err
 		}
 	}
