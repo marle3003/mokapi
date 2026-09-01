@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"mokapi/config/dynamic"
 	"mokapi/sortedmap"
-	"net/url"
-	"path"
-	"strings"
 )
 
 type export struct {
@@ -81,7 +78,7 @@ func (e *export) buildOperation(origin *OperationRef) *OperationRef {
 	var result *OperationRef
 	var value Operation
 	if origin.HasRef() {
-		name := refName(origin.Ref)
+		name := dynamic.RefName(origin.Ref)
 		e.ensureComponents()
 		if e.result.Components.Operations == nil {
 			e.result.Components.Operations = map[string]*OperationRef{}
@@ -151,7 +148,7 @@ func (e *export) buildServer(origin *ServerRef) *ServerRef {
 	var result *ServerRef
 	var value Server
 	if origin.HasRef() {
-		name := refName(origin.Ref)
+		name := dynamic.RefName(origin.Ref)
 		e.ensureComponents()
 		if e.result.Components.Servers == nil {
 			e.result.Components.Servers = map[string]*ServerRef{}
@@ -200,7 +197,7 @@ func (e *export) buildChannel(origin *ChannelRef) *ChannelRef {
 	var result *ChannelRef
 	var value Channel
 	if origin.HasRef() {
-		name := refName(origin.Ref)
+		name := dynamic.RefName(origin.Ref)
 		e.ensureComponents()
 		if e.result.Components.Channels == nil {
 			e.result.Components.Channels = map[string]*ChannelRef{}
@@ -272,7 +269,7 @@ func (e *export) buildMessage(origin *MessageRef) *MessageRef {
 	var result *MessageRef
 	var value Message
 	if origin.HasRef() {
-		name := refName(origin.Ref)
+		name := dynamic.RefName(origin.Ref)
 		e.ensureComponents()
 		if e.result.Components.Messages == nil {
 			e.result.Components.Messages = map[string]*MessageRef{}
@@ -325,7 +322,7 @@ func (e *export) buildCorrelationId(origin *CorrelationIdRef) *CorrelationIdRef 
 	}
 
 	if origin.HasRef() {
-		name := refName(origin.Ref)
+		name := dynamic.RefName(origin.Ref)
 		e.ensureComponents()
 		if e.result.Components.CorrelationIds == nil {
 			e.result.Components.CorrelationIds = map[string]*CorrelationIdRef{}
@@ -349,7 +346,7 @@ func (e *export) buildMessageTrait(origin *MessageTraitRef) *MessageTraitRef {
 	var result *MessageTraitRef
 	var value MessageTrait
 	if origin.HasRef() {
-		name := refName(origin.Ref)
+		name := dynamic.RefName(origin.Ref)
 		e.ensureComponents()
 		if e.result.Components.MessageTraits == nil {
 			e.result.Components.MessageTraits = map[string]*MessageTraitRef{}
@@ -392,7 +389,7 @@ func (e *export) buildOperationTrait(origin *OperationTraitRef) *OperationTraitR
 	var result *OperationTraitRef
 	var value OperationTrait
 	if origin.HasRef() {
-		name := refName(origin.Ref)
+		name := dynamic.RefName(origin.Ref)
 		e.ensureComponents()
 		if e.result.Components.OperationTraits == nil {
 			e.result.Components.OperationTraits = map[string]*OperationTraitRef{}
@@ -432,7 +429,7 @@ func (e *export) buildExternalDoc(origin *ExternalDocRef) *ExternalDocRef {
 	}
 
 	if origin.HasRef() {
-		name := refName(origin.Ref)
+		name := dynamic.RefName(origin.Ref)
 		e.ensureComponents()
 		if e.result.Components.ExternalDocs == nil {
 			e.result.Components.ExternalDocs = map[string]*ExternalDocRef{}
@@ -454,7 +451,7 @@ func (e *export) buildSchema(origin *SchemaRef) *SchemaRef {
 	}
 
 	if origin.HasRef() {
-		name := refName(origin.Ref)
+		name := dynamic.RefName(origin.Ref)
 		e.ensureComponents()
 		if e.result.Components.Schemas == nil {
 			e.result.Components.Schemas = map[string]*SchemaRef{}
@@ -476,7 +473,7 @@ func (e *export) buildParameter(origin *ParameterRef) *ParameterRef {
 	}
 
 	if origin.HasRef() {
-		name := refName(origin.Ref)
+		name := dynamic.RefName(origin.Ref)
 		e.ensureComponents()
 		if e.result.Components.Parameters == nil {
 			e.result.Components.Parameters = map[string]*ParameterRef{}
@@ -498,7 +495,7 @@ func (e *export) buildServerVariable(origin *ServerVariableRef) *ServerVariableR
 	}
 
 	if origin.HasRef() {
-		name := refName(origin.Ref)
+		name := dynamic.RefName(origin.Ref)
 		e.ensureComponents()
 		if e.result.Components.ServerVariables == nil {
 			e.result.Components.ServerVariables = map[string]*ServerVariableRef{}
@@ -520,7 +517,7 @@ func (e *export) buildTag(origin *TagRef) *TagRef {
 	}
 
 	if origin.HasRef() {
-		name := refName(origin.Ref)
+		name := dynamic.RefName(origin.Ref)
 		e.ensureComponents()
 		if e.result.Components.Tags == nil {
 			e.result.Components.Tags = map[string]*TagRef{}
@@ -556,67 +553,4 @@ func (e *export) getChannel(ch *ChannelRef) string {
 		}
 	}
 	return ""
-}
-
-func refName(ref string) string {
-	if strings.HasPrefix(ref, "#/") {
-		parts := strings.Split(ref, "/")
-		return parts[len(parts)-1]
-	}
-
-	u, err := url.Parse(ref)
-	if err != nil {
-		return sanitize(ref)
-	}
-
-	file := strings.TrimSuffix(path.Base(u.Path), path.Ext(u.Path))
-	if u.Path == "" || u.Path == "/" {
-		file = ""
-	}
-
-	if u.Host != "" {
-		if file != "" {
-			file = u.Host + "_" + file
-		} else {
-			file = u.Host
-		}
-	}
-
-	var pointer string
-	if u.Fragment != "" {
-		segs := strings.Split(strings.Trim(u.Fragment, "/"), "/")
-		last := segs[len(segs)-1]
-		last = strings.ReplaceAll(last, "~1", "/")
-		last = strings.ReplaceAll(last, "~0", "~")
-		pointer = last
-	}
-
-	switch {
-	case file != "" && pointer != "":
-		return sanitize(file + "_" + pointer)
-	case pointer != "":
-		return sanitize(pointer)
-	default:
-		return sanitize(file)
-	}
-}
-
-func sanitize(s string) string {
-	var b strings.Builder
-	for _, r := range s {
-		switch {
-		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '_':
-			b.WriteRune(r)
-		default:
-			b.WriteRune('_')
-		}
-	}
-	name := b.String()
-	if name == "" {
-		return "_"
-	}
-	if name[0] >= '0' && name[0] <= '9' {
-		name = "_" + name // avoid a leading digit
-	}
-	return name
 }

@@ -3,6 +3,8 @@ package dynamic
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
+	"path"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -78,4 +80,67 @@ func (r *Reference[T]) Resolve(config *Config, reader Reader) (T, error) {
 
 	result, err = ResolveDynamic[T](r.DynamicRef, config, reader)
 	return result, err
+}
+
+func RefName(ref string) string {
+	if strings.HasPrefix(ref, "#/") {
+		parts := strings.Split(ref, "/")
+		return parts[len(parts)-1]
+	}
+
+	u, err := url.Parse(ref)
+	if err != nil {
+		return sanitize(ref)
+	}
+
+	file := strings.TrimSuffix(path.Base(u.Path), path.Ext(u.Path))
+	if u.Path == "" || u.Path == "/" {
+		file = ""
+	}
+
+	if u.Host != "" {
+		if file != "" {
+			file = u.Host + "_" + file
+		} else {
+			file = u.Host
+		}
+	}
+
+	var pointer string
+	if u.Fragment != "" {
+		segs := strings.Split(strings.Trim(u.Fragment, "/"), "/")
+		last := segs[len(segs)-1]
+		last = strings.ReplaceAll(last, "~1", "/")
+		last = strings.ReplaceAll(last, "~0", "~")
+		pointer = last
+	}
+
+	switch {
+	case file != "" && pointer != "":
+		return sanitize(file + "_" + pointer)
+	case pointer != "":
+		return sanitize(pointer)
+	default:
+		return sanitize(file)
+	}
+}
+
+func sanitize(s string) string {
+	var b strings.Builder
+	for _, r := range s {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '_':
+			b.WriteRune(r)
+		default:
+			b.WriteRune('_')
+		}
+	}
+	name := b.String()
+	if name == "" {
+		return "_"
+	}
+	if name[0] >= '0' && name[0] <= '9' {
+		name = "_" + name // avoid a leading digit
+	}
+	return name
 }

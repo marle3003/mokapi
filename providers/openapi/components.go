@@ -20,13 +20,13 @@ type Components struct {
 type ComponentParameters map[string]*ParameterRef
 
 func (c *Components) IsEmpty() bool {
-	return c.Schemas == nil || c.Schemas.Len() == 0 &&
+	return (c.Schemas == nil || c.Schemas.Len() == 0) &&
 		len(c.Responses) == 0 &&
 		len(c.RequestBodies) == 0 &&
 		len(c.Parameters) == 0 &&
 		len(c.Examples) == 0 &&
 		len(c.Headers) == 0 &&
-		c.PathItems.Len() == 0 &&
+		(c.PathItems == nil || c.PathItems.Len() == 0) &&
 		len(c.SecuritySchemes) == 0
 }
 

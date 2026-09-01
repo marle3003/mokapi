@@ -145,12 +145,7 @@ func (o *Operation) patch(patch *Operation) {
 
 func (o *Operation) MarshalJSON() ([]byte, error) {
 	type alias Operation
-	temp := struct {
-		alias
-		Responses *Responses `json:"responses,omitempty"`
-	}{
-		alias: alias(*o),
-	}
+	temp := alias(*o)
 
 	if o.Responses != nil && o.Responses.Len() == 0 {
 		temp.Responses = nil

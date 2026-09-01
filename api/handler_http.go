@@ -497,20 +497,23 @@ func (h *handler) exportHttp(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(404)
 		return
 	}
+
+	e := s.Export()
+
 	ext := vars["ext"]
 	var b []byte
 	var err error
 	var ct string
 	switch ext {
 	case "json":
-		b, err = json.MarshalIndent(s.Config, "", "  ")
+		b, err = json.Marshal(e)
 		ct = "application/json"
 		break
 	case "yaml":
 		var buf bytes.Buffer
 		enc := yaml.NewEncoder(&buf)
 		enc.SetIndent(2)
-		err = enc.Encode(s.Config)
+		err = enc.Encode(e)
 		if err != nil {
 			err = enc.Close()
 		}

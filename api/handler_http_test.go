@@ -394,7 +394,7 @@ func TestHandler_Http(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo/openapi.json",
-			responseBody: "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"title\": \"foo\",\n    \"version\": \"\"\n  },\n  \"paths\": {\n    \"/foo/{bar}\": {\n      \"get\": {}\n    }\n  }\n}",
+			responseBody: "{\"openapi\":\"3.0.0\",\"info\":{\"title\":\"foo\",\"version\":\"\"},\"paths\":{\"/foo/{bar}\":{\"get\":{}}}}",
 		},
 		{
 			name:        "export to OpenAPI.yaml",
@@ -420,6 +420,7 @@ paths:
 `,
 		},
 		{
+			// unused components are not exported
 			name: "export to OpenAPI.json with server and components",
 			app: func() *runtime.App {
 				return runtimetest.NewHttpApp(
@@ -434,7 +435,7 @@ paths:
 				)
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo/openapi.json",
-			responseBody: "{\n  \"openapi\": \"3.0.0\",\n  \"info\": {\n    \"title\": \"foo\",\n    \"version\": \"\"\n  },\n  \"servers\": [\n    {\n      \"url\": \"/foo\"\n    }\n  ],\n  \"paths\": {\n    \"/foo/{bar}\": {\n      \"get\": {}\n    }\n  },\n  \"components\": {\n    \"schemas\": {\n      \"foo\": {\n        \"type\": \"string\"\n      }\n    }\n  }\n}",
+			responseBody: "{\"openapi\":\"3.0.0\",\"info\":{\"title\":\"foo\",\"version\":\"\"},\"servers\":[{\"url\":\"/foo\"}],\"paths\":{\"/foo/{bar}\":{\"get\":{}}}}",
 		},
 		{
 			name: "export bruno.yaml",
