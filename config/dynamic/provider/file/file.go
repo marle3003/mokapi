@@ -257,14 +257,16 @@ func (p *Provider) walk(fileInfo static.FileConfig) error {
 		if err != nil {
 			return err
 		}
+
+		relPath, _ := filepath.Rel(fileInfo.Path, path)
 		if fi.IsDir() {
-			if p.skip(path, true, fileInfo) && path != fileInfo.Path {
+			if p.skip(relPath, true, fileInfo) && path != fileInfo.Path {
 				log.Debugf("skip dir: %v", path)
 				return filepath.SkipDir
 			}
 			p.readMokapiIgnore(path)
 			p.watchPath(path)
-		} else if !p.skip(path, false, fileInfo) {
+		} else if !p.skip(relPath, false, fileInfo) {
 			if c, err := p.readFile(path); err != nil {
 				log.Error(err)
 			} else if len(c.Raw) > 0 {

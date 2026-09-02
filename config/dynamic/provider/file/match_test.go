@@ -1,8 +1,9 @@
 package file
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestMatch(t *testing.T) {
@@ -26,6 +27,17 @@ func TestMatch(t *testing.T) {
 				"/name.log":      false,
 				"/name/file.txt": true,
 				"/lib/name":      true,
+				"/lib/name.log":  false,
+				"/lib/foo.log":   false,
+			},
+		},
+		{
+			name:    "root name",
+			pattern: "/name",
+			test: map[string]bool{
+				"/name.log":      false,
+				"/name/file.txt": true,
+				"/lib/name":      false,
 				"/lib/name.log":  false,
 				"/lib/foo.log":   false,
 			},
