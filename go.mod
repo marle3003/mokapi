@@ -7,7 +7,7 @@ require (
 	github.com/blevesearch/bleve_index_api v1.4.1
 	github.com/bradleyfalzon/ghinstallation/v2 v2.19.0
 	github.com/brianvoe/gofakeit/v7 v7.16.0
-	github.com/cbroglie/mustache v1.4.0
+	github.com/cbroglie/mustache v1.4.2
 	github.com/coder/websocket v1.8.15
 	github.com/dop251/goja v0.0.0-20260901132549-43234fa61381
 	github.com/evanw/esbuild v0.28.2
