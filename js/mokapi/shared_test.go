@@ -1,6 +1,7 @@
 package mokapi_test
 
 import (
+	"encoding/json"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine"
@@ -455,6 +456,21 @@ func TestModule_Shared(t *testing.T) {
 				`)
 				r.NoError(t, err)
 				r.Equal(t, []string{}, mokapi.Export(v))
+			},
+		},
+		{
+			name: "marshal",
+			test: func(t *testing.T, newVm func() *goja.Runtime) {
+				vm1 := newVm()
+
+				v, err := vm1.RunString(`
+					const m = require('mokapi');
+					m.shared.set('foo', { value: 123 });
+					m.shared.get('foo')
+				`)
+				r.NoError(t, err)
+				b, err := json.Marshal(v)
+				r.Equal(t, `{"value":123}`, string(b))
 			},
 		},
 	}
