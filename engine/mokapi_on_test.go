@@ -8,6 +8,7 @@ import (
 	"mokapi/engine/common"
 	"mokapi/engine/enginetest"
 	"mokapi/js/mokapi"
+	"net/http"
 	"testing"
 
 	"github.com/sirupsen/logrus"
@@ -382,6 +383,64 @@ export default () => {
 				require.Equal(t, map[string]any{"foo": "handler3"}, mokapi.Export(res.Data))
 				_ = json.Unmarshal([]byte(actions[2].Parameters[1]), &res)
 				require.Equal(t, map[string]any{"foo": "handler1"}, mokapi.Export(res.Data))
+			},
+		},
+		{
+			name: "using context and shared number",
+			scripts: []string{`
+import { app, shared } from 'mokapi'
+export default () => {
+	const db = shared.update('db', (current) => current || {});
+	db['foo'] = 123;
+	app.http()
+	  .use((req, res) => { res.context.data = db['foo'] })
+	  .get('/foo', (req, res) => { res.data = res.context.data })
+}
+`,
+			},
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.HttpEventResponse{Context: make(map[string]any)}
+				actions := evt.EmitHttp(&common.HttpEventRequest{Method: http.MethodGet, Key: "/foo"}, res)
+				require.Equal(t, int64(123), mokapi.Export(res.Data))
+				return actions
+			},
+			test: func(t *testing.T, actions []*common.Action) {
+				var res *common.HttpEventResponse
+				// first action is from use handler
+				_ = json.Unmarshal([]byte(actions[0].Parameters[1]), &res)
+				require.Nil(t, res.Data)
+				// second action is from use handler
+				_ = json.Unmarshal([]byte(actions[1].Parameters[1]), &res)
+				require.Equal(t, float64(123), mokapi.Export(res.Data))
+			},
+		},
+		{
+			name: "using context and shared object",
+			scripts: []string{`
+import { app, shared } from 'mokapi'
+export default () => {
+	const db = shared.update('db', (current) => current || {});
+	db['foo'] = { value: 123 };
+	app.http()
+	  .use((req, res) => { res.context.data = db['foo'] })
+	  .get('/foo', (req, res) => { res.data = res.context.data })
+}
+`,
+			},
+			run: func(evt common.EventEmitter) []*common.Action {
+				res := &common.HttpEventResponse{Context: make(map[string]any)}
+				actions := evt.EmitHttp(&common.HttpEventRequest{Method: http.MethodGet, Key: "/foo"}, res)
+				require.Equal(t, map[string]any{"value": int64(123)}, mokapi.Export(res.Data))
+				return actions
+			},
+			test: func(t *testing.T, actions []*common.Action) {
+				var res *common.HttpEventResponse
+				// first action is from use handler
+				_ = json.Unmarshal([]byte(actions[0].Parameters[1]), &res)
+				require.Nil(t, res.Data)
+				// second action is from use handler
+				_ = json.Unmarshal([]byte(actions[1].Parameters[1]), &res)
+				require.Equal(t, map[string]any{"value": float64(123)}, mokapi.Export(res.Data))
 			},
 		},
 	}
