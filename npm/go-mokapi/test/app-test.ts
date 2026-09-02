@@ -1,9 +1,11 @@
 import { app } from "mokapi";
 
 app.http().get('/foo', (req, res) => {})
+app.http().get('/foo', () => {}).post('/foo',() =>{})
 app.http().route('').get(() =>{}).post(() => {})
 app.api('title').http().get('', (req, res) => {})
 app.http().api('title').use((req, res) => {})
+app.api('title').http().use((req, res) => {})
 app.http().custom('/foo', () => {})
 app.http().get('', () => {}, { track: true })
 // @ts-ignore

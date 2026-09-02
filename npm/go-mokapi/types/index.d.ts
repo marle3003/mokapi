@@ -1524,6 +1524,14 @@ export interface ApiScope {
  * When multiple APIs share the same path, use `app.api()` to scope the router
  * to a specific API title to avoid unintended matches.
  *
+ * All methods return `this`, enabling fluent chaining:
+ * ```ts
+ * app.http()
+ *   .use(authMiddleware)
+ *   .get(listHandler)
+ *   .post(createHandler)
+ * ```
+ *
  * All handlers registered on the same path and method run in registration order
  * (or by `priority` if specified). The last handler to write wins.
  *
@@ -1531,7 +1539,7 @@ export interface ApiScope {
  * // Shorthand style
  * import { app } from 'mokapi'
  * export default function() {
- *   const router = app.api('Petstore').http()
+ *   const router = app.http().api('Petstore')
  *   router.get('/pets', (req, res) => { res.data = [] })
  *   router.post('/pets', (req, res) => { res.statusCode = 201 })
  * }
@@ -1540,7 +1548,7 @@ export interface ApiScope {
  * // Chained style
  * import { app } from 'mokapi'
  * export default function() {
- *   app.api('Petstore').http()
+ *   app.http().api('Petstore')
  *     .route('/pets')
  *       .get((req, res) => { res.data = [] })
  *       .post((req, res) => { res.statusCode = 201 })
@@ -1657,7 +1665,7 @@ export interface HttpRouter {
      * @example
      * app.http().get('/pets', (req, res) => { res.data = [] })
      */
-    get(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+    get(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): this
 
     /**
      * Registers a handler for `POST` requests to the given path.
@@ -1668,7 +1676,7 @@ export interface HttpRouter {
      * @example
      * app.http().post('/pets', (req, res) => { res.statusCode = 201 })
      */
-    post(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+    post(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): this
 
     /**
      * Registers a handler for `PUT` requests to the given path.
@@ -1676,7 +1684,7 @@ export interface HttpRouter {
      * @param handler The event handler to invoke.
      * @param opts Optional handler configuration such as priority and tracking.
      */
-    put(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+    put(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): this
 
     /**
      * Registers a handler for `PATCH` requests to the given path.
@@ -1684,7 +1692,7 @@ export interface HttpRouter {
      * @param handler The event handler to invoke.
      * @param opts Optional handler configuration such as priority and tracking.
      */
-    patch(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+    patch(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): this
 
     /**
      * Registers a handler for `DELETE` requests to the given path.
@@ -1692,7 +1700,7 @@ export interface HttpRouter {
      * @param handler The event handler to invoke.
      * @param opts Optional handler configuration such as priority and tracking.
      */
-    delete(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+    delete(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): this
 
     /**
      * Registers a handler for `HEAD` requests to the given path.
@@ -1700,7 +1708,7 @@ export interface HttpRouter {
      * @param handler The event handler to invoke.
      * @param opts Optional handler configuration such as priority and tracking.
      */
-    head(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+    head(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): this
 
     /**
      * Registers a handler for `OPTIONS` requests to the given path.
@@ -1708,7 +1716,7 @@ export interface HttpRouter {
      * @param handler The event handler to invoke.
      * @param opts Optional handler configuration such as priority and tracking.
      */
-    options(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+    options(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): this
 
     /**
      * Registers a handler for `TRACE` requests to the given path.
@@ -1716,7 +1724,7 @@ export interface HttpRouter {
      * @param handler The event handler to invoke.
      * @param opts Optional handler configuration such as priority and tracking.
      */
-    trace(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+    trace(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): this
 
     /**
      * Registers a handler for `QUERY` requests to the given path.
@@ -1724,7 +1732,7 @@ export interface HttpRouter {
      * @param handler The event handler to invoke.
      * @param opts Optional handler configuration such as priority and tracking.
      */
-    query(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): void
+    query(path: string, handler: HttpEventHandler, opts?: HttpEventArgs): this
 
     /** Allows registering a handler for any HTTP method, including custom ones.
      * @example
