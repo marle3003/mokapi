@@ -97,6 +97,13 @@ LOG:
 }
 
 func export(v goja.Value) any {
+	if goja.IsNull(v) {
+		return "null"
+	}
+	if goja.IsUndefined(v) {
+		return "undefined"
+	}
+
 	m, ok := v.(json.Marshaler)
 	if !ok {
 		return v.Export()

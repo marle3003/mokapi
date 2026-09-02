@@ -22,7 +22,7 @@ func TestConsole(t *testing.T) {
 			name: "no parameters",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var logs []any
-				host.InfoFunc = func(args ...interface{}) {
+				host.InfoFunc = func(args ...any) {
 					logs = args
 				}
 
@@ -34,10 +34,55 @@ func TestConsole(t *testing.T) {
 			},
 		},
 		{
+			name: "null",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var logs []any
+				host.InfoFunc = func(args ...any) {
+					logs = args
+				}
+
+				_, err := vm.RunString(`
+					console.log(null);
+				`)
+				r.NoError(t, err)
+				r.Equal(t, "null", logs[0])
+			},
+		},
+		{
+			name: "undefined",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var logs []any
+				host.InfoFunc = func(args ...any) {
+					logs = args
+				}
+
+				_, err := vm.RunString(`
+					console.log(undefined);
+				`)
+				r.NoError(t, err)
+				r.Equal(t, "undefined", logs[0])
+			},
+		},
+		{
+			name: "external nil",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				var logs []any
+				host.InfoFunc = func(args ...any) {
+					logs = args
+				}
+				_ = vm.Set("foo", nil)
+				_, err := vm.RunString(`
+					console.log(foo);
+				`)
+				r.NoError(t, err)
+				r.Equal(t, "null", logs[0])
+			},
+		},
+		{
 			name: "string",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var logs []any
-				host.InfoFunc = func(args ...interface{}) {
+				host.InfoFunc = func(args ...any) {
 					logs = args
 				}
 
@@ -52,7 +97,7 @@ func TestConsole(t *testing.T) {
 			name: "two string",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var logs []any
-				host.InfoFunc = func(args ...interface{}) {
+				host.InfoFunc = func(args ...any) {
 					logs = args
 				}
 
@@ -67,7 +112,7 @@ func TestConsole(t *testing.T) {
 			name: "object",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var logs []any
-				host.InfoFunc = func(args ...interface{}) {
+				host.InfoFunc = func(args ...any) {
 					logs = args
 				}
 
@@ -82,7 +127,7 @@ func TestConsole(t *testing.T) {
 			name: "format",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var logs []any
-				host.InfoFunc = func(args ...interface{}) {
+				host.InfoFunc = func(args ...any) {
 					logs = args
 				}
 
@@ -98,7 +143,7 @@ func TestConsole(t *testing.T) {
 			name: "format with object",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var logs []any
-				host.InfoFunc = func(args ...interface{}) {
+				host.InfoFunc = func(args ...any) {
 					logs = args
 				}
 
@@ -113,7 +158,7 @@ func TestConsole(t *testing.T) {
 			name: "format with decimal",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var logs []any
-				host.InfoFunc = func(args ...interface{}) {
+				host.InfoFunc = func(args ...any) {
 					logs = args
 				}
 
@@ -128,7 +173,7 @@ func TestConsole(t *testing.T) {
 			name: "invalid format",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var logs []any
-				host.InfoFunc = func(args ...interface{}) {
+				host.InfoFunc = func(args ...any) {
 					logs = args
 				}
 
@@ -143,7 +188,7 @@ func TestConsole(t *testing.T) {
 			name: "format with missing",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var logs []any
-				host.InfoFunc = func(args ...interface{}) {
+				host.InfoFunc = func(args ...any) {
 					logs = args
 				}
 
@@ -158,7 +203,7 @@ func TestConsole(t *testing.T) {
 			name: "format %9.2f",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var logs []any
-				host.InfoFunc = func(args ...interface{}) {
+				host.InfoFunc = func(args ...any) {
 					logs = args
 				}
 
@@ -173,7 +218,7 @@ func TestConsole(t *testing.T) {
 			name: "format %9.2f with missing",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var logs []any
-				host.InfoFunc = func(args ...interface{}) {
+				host.InfoFunc = func(args ...any) {
 					logs = args
 				}
 
@@ -188,7 +233,7 @@ func TestConsole(t *testing.T) {
 			name: "multiple parameters",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var logs []any
-				host.InfoFunc = func(args ...interface{}) {
+				host.InfoFunc = func(args ...any) {
 					logs = args
 				}
 
@@ -203,7 +248,7 @@ func TestConsole(t *testing.T) {
 			name: "log error",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var logs []any
-				host.ErrorFunc = func(args ...interface{}) {
+				host.ErrorFunc = func(args ...any) {
 					logs = args
 				}
 
@@ -218,7 +263,7 @@ func TestConsole(t *testing.T) {
 			name: "log warn",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var logs []any
-				host.WarnFunc = func(args ...interface{}) {
+				host.WarnFunc = func(args ...any) {
 					logs = args
 				}
 
@@ -233,7 +278,7 @@ func TestConsole(t *testing.T) {
 			name: "log debug",
 			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
 				var logs []any
-				host.DebugFunc = func(args ...interface{}) {
+				host.DebugFunc = func(args ...any) {
 					logs = args
 				}
 
