@@ -1,9 +1,11 @@
 package mokapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"mokapi/lib"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -26,14 +28,28 @@ func NewProxy(target any, vm *goja.Runtime) *Proxy {
 }
 
 func newProxy(v reflect.Value, vm *goja.Runtime) *Proxy {
-	wasPointer := v.Kind() == reflect.Ptr
+	wasPointer := v.Kind() == reflect.Pointer
+
 	if v.Kind() == reflect.Interface {
-		ptr := reflect.New(v.Elem().Type())
-		ptr.Elem().Set(v.Elem())
-		v = ptr
-		wasPointer = false
+		concrete := v
+
+		if concrete.Kind() == reflect.Interface {
+			if !concrete.IsNil() {
+				concrete = concrete.Elem()
+			}
+		}
+
+		if concrete.IsValid() && concrete.Kind() != reflect.Pointer {
+			ptr := reflect.New(concrete.Type())
+			ptr.Elem().Set(concrete)
+			v = ptr
+		} else {
+			v = concrete
+			wasPointer = true
+		}
 	}
-	if v.Kind() != reflect.Ptr {
+
+	if v.Kind() != reflect.Pointer {
 		ptr := reflect.New(v.Type())
 		ptr.Elem().Set(v)
 		v = ptr
@@ -45,6 +61,12 @@ func newProxy(v reflect.Value, vm *goja.Runtime) *Proxy {
 func (p *Proxy) Get(key string) goja.Value {
 	if !p.target.IsValid() {
 		return goja.Undefined()
+	}
+
+	if key == "toJSON" {
+		return p.vm.ToValue(func() any {
+			return p.Export()
+		})
 	}
 
 	target := unwrap(p.target)
@@ -119,7 +141,7 @@ func (p *Proxy) Get(key string) goja.Value {
 			return goja.Undefined()
 		}
 	}
-	panic(fmt.Sprintf("%s is not defined", key))
+	return goja.Undefined()
 }
 
 func (p *Proxy) Has(key string) bool {
@@ -157,6 +179,9 @@ func (p *Proxy) Set(key string, value goja.Value) bool {
 		return true
 	case reflect.Struct:
 		f := getField(target, key, "json")
+		if !f.IsValid() {
+			return false
+		}
 		err := assignValue(f, value.Export(), key)
 		if err != nil {
 			panic(p.vm.ToValue(err))
@@ -181,7 +206,7 @@ func (p *Proxy) Delete(key string) bool {
 func (p *Proxy) Keys() []string {
 	var result []string
 	target := p.target
-	if target.Kind() == reflect.Ptr {
+	if target.Kind() == reflect.Pointer {
 		target = target.Elem()
 	}
 	if target.Kind() == reflect.Map {
@@ -191,8 +216,7 @@ func (p *Proxy) Keys() []string {
 	}
 	if target.Kind() == reflect.Struct {
 		t := target.Type()
-		for i := 0; i < t.NumField(); i++ {
-			f := t.Field(i)
+		for f := range t.Fields() {
 			if f.PkgPath != "" {
 				continue
 			}
@@ -221,9 +245,15 @@ func (p *Proxy) toJSValue(key string, v reflect.Value) goja.Value {
 		return goja.Undefined()
 	}
 
-	if p.ToJSValue != nil {
-		return p.ToJSValue(p.vm, key, v.Interface())
+	i := v.Interface()
+	if sv, ok := i.(*SharedValue); ok {
+		return sv.ToValue()
 	}
+
+	if p.ToJSValue != nil {
+		return p.ToJSValue(p.vm, key, i)
+	}
+
 	return p.vm.NewDynamicObject(newProxy(v, p.vm))
 }
 
@@ -247,6 +277,10 @@ func (p *Proxy) Export() any {
 	return Export(v)
 }
 
+func (p *Proxy) MarshalJSON() ([]byte, error) {
+	return json.Marshal(p.Export())
+}
+
 func getField(structValue reflect.Value, name, tag string) reflect.Value {
 	fieldName := capitalize(name)
 	for i := 0; i < structValue.NumField(); i++ {
@@ -256,10 +290,8 @@ func getField(structValue reflect.Value, name, tag string) reflect.Value {
 		}
 		t := f.Tag.Get(tag)
 		tagValues := strings.Split(t, ",")
-		for _, tagValue := range tagValues {
-			if tagValue == name {
-				return structValue.Field(i)
-			}
+		if slices.Contains(tagValues, name) {
+			return structValue.Field(i)
 		}
 	}
 	return reflect.Value{}
@@ -321,10 +353,22 @@ func assignValue(field reflect.Value, value any, fieldName string) error {
 }
 
 func convertTo(targetType reflect.Type, value reflect.Value) (reflect.Value, error) {
-	if targetType.Kind() == reflect.Interface && value.Kind() != reflect.Ptr {
-		ptr := reflect.New(value.Type())
-		ptr.Elem().Set(value)
-		value = ptr
+	if targetType.Kind() == reflect.Interface {
+		concrete := value
+
+		if concrete.Kind() == reflect.Interface {
+			if !concrete.IsNil() {
+				concrete = concrete.Elem()
+			}
+		}
+
+		if concrete.IsValid() && concrete.Kind() != reflect.Pointer {
+			ptr := reflect.New(concrete.Type())
+			ptr.Elem().Set(concrete)
+			value = ptr
+		} else {
+			value = concrete
+		}
 	}
 
 	sourceType := value.Type()
@@ -369,7 +413,7 @@ func convertTo(targetType reflect.Type, value reflect.Value) (reflect.Value, err
 func unwrap(v reflect.Value) reflect.Value {
 	for {
 		switch v.Kind() {
-		case reflect.Ptr, reflect.Interface:
+		case reflect.Pointer, reflect.Interface:
 			if v.IsNil() {
 				return v
 			}

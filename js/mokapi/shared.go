@@ -1,6 +1,7 @@
 package mokapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"mokapi/engine/common"
 	"reflect"
@@ -92,7 +93,7 @@ func Export(v any) any {
 		return Export(val.Export())
 	default:
 		rv := reflect.ValueOf(val)
-		if rv.Kind() == reflect.Ptr {
+		if rv.Kind() == reflect.Pointer {
 			rv = rv.Elem()
 		}
 		if !rv.IsValid() {
@@ -223,9 +224,13 @@ func (p *SharedValue) ToValue() goja.Value {
 	}
 }
 
-// Export is used by the json schema parser interface Exportable
+// Export is used by the JSON schema parser interface Exportable
 func (p *SharedValue) Export() any {
 	return p.source.Export()
+}
+
+func (p *SharedValue) MarshalJSON() ([]byte, error) {
+	return json.Marshal(p.Export())
 }
 
 func useValue(v goja.Value, vm *goja.Runtime) any {

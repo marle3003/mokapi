@@ -26,7 +26,7 @@ func TestProxy(t *testing.T) {
 					proxy.foo = 2;
 				`)
 				r.NoError(t, err)
-				r.Equal(t, map[string]interface{}{"foo": int64(2)}, p.Export())
+				r.Equal(t, map[string]any{"foo": int64(2)}, p.Export())
 			},
 		},
 		{
@@ -62,7 +62,7 @@ func TestProxy(t *testing.T) {
 					proxy.foo.bar = 1;
 				`)
 				r.NoError(t, err)
-				r.Equal(t, map[string]interface{}{"foo": map[string]interface{}{"BAR": int64(1)}}, p.Export())
+				r.Equal(t, map[string]any{"foo": map[string]any{"BAR": int64(1)}}, p.Export())
 			},
 		},
 		{
@@ -238,6 +238,38 @@ func TestProxy(t *testing.T) {
 				`)
 				r.NoError(t, err)
 				r.Equal(t, map[string]map[string][]any{"headers": {"foo": {"bar", "yuh"}}}, mokapi.Export(p))
+			},
+		},
+		{
+			name: "assign shared value",
+			test: func(t *testing.T, vm *goja.Runtime) {
+				p := mokapi.NewProxy(map[string]any{}, vm)
+				err := vm.Set("proxy", vm.NewDynamicObject(p))
+				r.NoError(t, err)
+				sv := mokapi.NewSharedValue(vm.ToValue(map[string]any{"foo": ""}), vm)
+				err = vm.Set("shared", sv.ToValue())
+				r.NoError(t, err)
+				_, err = vm.RunString(`
+					proxy.shared = shared
+					proxy.shared.foo = 'bar'
+				`)
+				r.NoError(t, err)
+				r.Equal(t, map[string]any{"shared": map[string]any{"foo": "bar"}}, mokapi.Export(p))
+			},
+		},
+		{
+			name: "assign value to not existing field should just ignore the assignment",
+			test: func(t *testing.T, vm *goja.Runtime) {
+				v := &struct{}{}
+				p := mokapi.NewProxy(v, vm)
+				err := vm.Set("proxy", vm.NewDynamicObject(p))
+				r.NoError(t, err)
+				r.NoError(t, err)
+				_, err = vm.RunString(`
+					proxy.field = 'foo'
+				`)
+				r.NoError(t, err)
+				r.Equal(t, struct{}{}, mokapi.Export(p))
 			},
 		},
 	}
