@@ -48,6 +48,20 @@ m.app.http().foo('/pets', (req, res) => {})
 			},
 		},
 		{
+			name: "fluent register",
+			script: `
+const m = require('mokapi')
+m.app.http().get('/pets', (req, res) => {}).put('/pets', (req, res) => {})
+`,
+			test: func(t *testing.T, handlers []common.HTTPHandler, err error) {
+				r.Len(t, handlers, 2)
+				r.Equal(t, http.MethodGet, handlers[0].Filter.Method)
+				r.Equal(t, "/pets", handlers[0].Filter.Path)
+				r.Equal(t, http.MethodPut, handlers[1].Filter.Method)
+				r.Equal(t, "/pets", handlers[1].Filter.Path)
+			},
+		},
+		{
 			name: "api and post handler",
 			script: `
 const m = require('mokapi')
@@ -95,6 +109,20 @@ m.app.http().route('/pets').get((req, res) => {})
 				r.Len(t, handlers, 1)
 				r.Equal(t, http.MethodGet, handlers[0].Filter.Method)
 				r.Equal(t, "/pets", handlers[0].Filter.Path)
+			},
+		},
+		{
+			name: "fluent register on route",
+			script: `
+const m = require('mokapi')
+m.app.http().route('/pets').get((req, res) => {}).post((req, res) => {})
+`,
+			test: func(t *testing.T, handlers []common.HTTPHandler, err error) {
+				r.Len(t, handlers, 2)
+				r.Equal(t, http.MethodGet, handlers[0].Filter.Method)
+				r.Equal(t, "/pets", handlers[0].Filter.Path)
+				r.Equal(t, http.MethodPost, handlers[1].Filter.Method)
+				r.Equal(t, "/pets", handlers[1].Filter.Path)
 			},
 		},
 		{
@@ -159,6 +187,7 @@ m.app.http().route('/pets').use((req, res) => {}).get((req, res) => {})
 					Execute: do,
 				})
 			}
+
 			_, err = vm.RunString(tc.script)
 			r.NoError(t, err)
 

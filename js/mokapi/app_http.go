@@ -32,7 +32,7 @@ func (h *Http) Operation(operationId string) goja.Value {
 	return newRouteObject(r)
 }
 
-func (h *Http) Method(method string, path string, do goja.Value, vArgs goja.Value) {
+func (h *Http) Method(method string, path string, do goja.Value, vArgs goja.Value) goja.Value {
 	filter := h.filter
 	filter.Path = path
 	filter.Method = method
@@ -44,6 +44,7 @@ func (h *Http) Method(method string, path string, do goja.Value, vArgs goja.Valu
 	f := getHandler(do, args, h.m.vm, h.m.loop)
 
 	h.m.host.OnHttp(filter, f, common.EventArgs{Tags: args.tags, Priority: args.priority})
+	return newHttpObject(h)
 }
 
 func (h *Http) Api(name string) goja.Value {
@@ -63,7 +64,7 @@ func (h *Http) Use(do goja.Value, vArgs goja.Value) goja.Value {
 	return newHttpObject(h)
 }
 
-func (h *HttpRoute) Method(method string, do goja.Value, vArgs goja.Value) {
+func (h *HttpRoute) Method(method string, do goja.Value, vArgs goja.Value) goja.Value {
 	filter := h.filter
 	filter.Method = method
 
@@ -74,6 +75,7 @@ func (h *HttpRoute) Method(method string, do goja.Value, vArgs goja.Value) {
 	f := getHandler(do, args, h.m.vm, h.m.loop)
 
 	h.m.host.OnHttp(filter, f, common.EventArgs{Tags: args.tags, Priority: args.priority})
+	return newRouteObject(h)
 }
 
 func (h *HttpRoute) Use(do goja.Value, vArgs goja.Value) goja.Value {
@@ -113,8 +115,8 @@ func (r *HttpObject) Get(key string) goja.Value {
 	}
 
 	method := strings.ToUpper(key)
-	return r.vm.ToValue(func(path string, do goja.Value, vArgs goja.Value) {
-		r.http.Method(method, path, do, vArgs)
+	return r.vm.ToValue(func(path string, do goja.Value, vArgs goja.Value) goja.Value {
+		return r.http.Method(method, path, do, vArgs)
 	})
 }
 
@@ -147,8 +149,8 @@ func (r *RouteObject) Get(key string) goja.Value {
 	}
 
 	method := strings.ToUpper(key)
-	return r.vm.ToValue(func(do goja.Value, vArgs goja.Value) {
-		r.route.Method(method, do, vArgs)
+	return r.vm.ToValue(func(do goja.Value, vArgs goja.Value) goja.Value {
+		return r.route.Method(method, do, vArgs)
 	})
 }
 

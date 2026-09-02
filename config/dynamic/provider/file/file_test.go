@@ -281,12 +281,12 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("/*\n!/dir/bar"),
 				},
 				{
-					Name:  "/bar.txt",
+					Name:  "bar.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
 				{
-					Name:  "/dir/bar/foo.txt",
+					Name:  "dir/bar/foo.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
@@ -305,7 +305,7 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("**/*.*\n!*.js"),
 				},
 				{
-					Name:  "/bar.txt",
+					Name:  "bar.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
@@ -335,7 +335,7 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("**/*.*\n!*.js\n!mokapi.ts"),
 				},
 				{
-					Name:  "/bar.txt",
+					Name:  "bar.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
@@ -371,7 +371,7 @@ func TestProvider(t *testing.T) {
 					Data:  []byte("**/*.*\n!/foo/bar/**"),
 				},
 				{
-					Name:  "/bar.txt",
+					Name:  "bar.txt",
 					IsDir: false,
 					Data:  []byte("foobar"),
 				},
@@ -507,6 +507,32 @@ func TestProvider(t *testing.T) {
 				require.Len(t, events, 2)
 				require.Equal(t, "dir/index.js", events[0].Name)
 				require.Equal(t, "dir/foo.js", events[1].Name)
+			},
+		},
+		{
+			name: "relative path and include",
+			fs: &filetest.MockFS{Entries: []*filetest.Entry{
+				{
+					Name:  "../foo/bar.txt",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "../foo/dir/index.js",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+				{
+					Name:  "../foo/dir/foo.js",
+					IsDir: false,
+					Data:  []byte("foobar"),
+				},
+			}},
+			cfg: static.FileProvider{Directories: []static.FileConfig{{Path: "../foo", Include: []string{"/dir"}}}},
+			test: func(t *testing.T, events []dynamic.ConfigEvent) {
+				require.Len(t, events, 2)
+				require.Equal(t, "../foo/dir/index.js", events[0].Name)
+				require.Equal(t, "../foo/dir/foo.js", events[1].Name)
 			},
 		},
 		{
