@@ -15,7 +15,7 @@ require (
 	github.com/go-co-op/gocron/v2 v2.22.0
 	github.com/go-git/go-git/v5 v5.19.2
 	github.com/go-sprout/sprout v1.1.1
-	github.com/golang-jwt/jwt/v4 v4.5.2
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
