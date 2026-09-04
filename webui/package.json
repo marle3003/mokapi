@@ -62,7 +62,7 @@
     "eslint-plugin-vue": "10.10.0",
     "npm-run-all2": "9.0.3",
     "prettier": "3.9.6",
-    "typescript": "6.0.3",
+    "typescript": "7.0.2",
     "vite": "8.2.2",
     "vue-tsc": "3.3.11",
     "xml2js": "0.6.2"
