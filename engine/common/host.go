@@ -115,16 +115,15 @@ type KafkaProduceArgs struct {
 	Cluster    string
 	Topic      string
 	Messages   []KafkaMessage
-	Timeout    int
 	Retry      RetryArgs
 	ClientId   string
 	ScriptFile string
 }
 
 type KafkaMessage struct {
-	Key       interface{}
+	Key       any
 	Value     []byte
-	Data      interface{}
+	Data      any
 	Headers   map[string]string
 	Partition int
 }

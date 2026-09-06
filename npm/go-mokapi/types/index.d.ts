@@ -9,17 +9,6 @@
  * https://mokapi.io/docs/javascript-api/overview
  */
 
-import "./faker";
-import "./global";
-import "./http";
-import "./kafka";
-import "./mqtt";
-import "./mustache";
-import "./yaml";
-import "./encoding";
-import "./mail";
-import "./file";
-
 /**
  * Attaches an event handler for the given event.
  *
@@ -1472,6 +1461,8 @@ export interface App {
      * }
      */
     http(): HttpRouter
+
+    kafka(): KafkaRouter
 }
 
 /**
@@ -1507,6 +1498,8 @@ export interface ApiScope {
      * }
      */
     http(): HttpRouter
+
+    kafka(): KafkaRouter
 }
 
 /**
@@ -1895,4 +1888,577 @@ export interface HttpRoute {
      * router.route('/cache').purge((req, res) => { res.statusCode = 200 })
      */
     [method: string]: any
+}
+
+/**
+ * Registers and organizes Kafka message handlers and producers by topic.
+ *
+ * Obtain a `KafkaRouter` via `app.kafka()` or `app.api('My API').kafka()`.
+ *
+ * Two styles are supported:
+ * - **Shorthand**: `router.produce(topic, message)` — produces directly to a named topic.
+ * - **Scoped**: `router.topic(name).produce(message)` — groups handlers and producers under one topic.
+ *
+ * When multiple APIs share the same topic name, use `app.api()` to scope the router
+ * to a specific API title to avoid unintended matches.
+ *
+ * @example
+ * // Shorthand style
+ * import { app } from 'mokapi'
+ * export default function() {
+ *   const router = app.api('Order Events').kafka()
+ *   router.produce('order-placed', { data: { id: 1 } })
+ *   router.message((msg) => { console.log(msg.value) })
+ * }
+ *
+ * @example
+ * // Scoped style
+ * import { app } from 'mokapi'
+ * export default function() {
+ *   app.api('Order Events').kafka()
+ *     .topic('order-placed')
+ *       .message((msg) => { msg.value = { ...msg.value, processed: true } })
+ *       .produce({ data: { id: 1 } })
+ * }
+ */
+export interface KafkaRouter {
+    /**
+     * Returns a `KafkaTopic` scoped to the given topic name.
+     *
+     * Use this to register message handlers or produce messages for a specific topic
+     * using method chaining, without repeating the topic name on every call.
+     *
+     * @param name The Kafka topic name as defined in the AsyncAPI specification.
+     * @returns A `KafkaTopic` scoped to the given topic name.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.api('Order Events').kafka()
+     *     .topic('order-placed')
+     *       .message((msg) => { console.log(msg.value) })
+     *       .produce({ data: { id: 1 } })
+     * }
+     */
+    topic(name: string): KafkaTopic
+
+    /**
+     * Registers a handler for incoming messages across all topics.
+     *
+     * The handler can read and modify the message before it is processed.
+     * Use `topic()` to scope the handler to a specific topic.
+     *
+     * @param handler The event handler to invoke for each incoming message.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `KafkaRouter` instance for chaining.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default function() {
+     *   app.kafka().message((msg) => {
+     *     // Add a correlation ID to every message across all topics
+     *     msg.headers = { ...msg.headers, correlationId: 'abc-123' }
+     *   })
+     * }
+     */
+    message(handler: KafkaEventHandler, opts?: KafkaEventArgs): KafkaRouter
+
+    /**
+     * Produces one or more messages to the given Kafka topic synchronously.
+     *
+     * If neither `value` nor `data` is set on a message, Mokapi generates
+     * a random valid value based on the AsyncAPI schema definition.
+     *
+     * Use `produceAsync()` if you need to await the result.
+     *
+     * @param topic The Kafka topic name to produce to.
+     * @param message One or more messages to produce.
+     * @param opts Optional configuration including a result callback and retry settings.
+     * @returns This `KafkaRouter` instance for chaining.
+     *
+     * @example
+     * // Produce a single message with explicit data
+     * app.kafka().produce('order-placed', { data: { id: 1 } })
+     *
+     * @example
+     * // Produce a message with a result callback
+     * app.kafka().produce('order-placed', { data: { id: 1 } }, {
+     *   result: (r) => console.log(r.messages[0].offset)
+     * })
+     *
+     * @example
+     * // Produce multiple messages
+     * app.kafka().produce('order-placed', [
+     *   { data: { id: 1 } },
+     *   { data: { id: 2 } },
+     *   {}  // random generated value
+     * ])
+     */
+    produce(topic: string, message: KafkaProduceMessage | KafkaProduceMessage[], opts?: KafkaProduceArgs): KafkaRouter
+
+    /**
+     * Produces one or more messages to the given Kafka topic asynchronously.
+     *
+     * Use this when you need to await the produce result, for example to
+     * read the assigned offset before continuing.
+     *
+     * If neither `value` nor `data` is set on a message, Mokapi generates
+     * a random valid value based on the AsyncAPI schema definition.
+     *
+     * @param topic The Kafka topic name to produce to.
+     * @param message One or more messages to produce.
+     * @param opts Optional configuration including a result callback and retry settings.
+     * @returns A `Promise` resolving to this `KafkaRouter` instance for chaining.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default async function() {
+     *   await app.kafka().produceAsync('order-placed', { data: { id: 1 } }, {
+     *     result: (r) => console.log(r.messages[0].offset)
+     *   })
+     * }
+     */
+    produceAsync(topic: string, message: KafkaProduceMessage | KafkaProduceMessage[], opts?: KafkaProduceArgs): Promise<KafkaRouter>
+}
+
+/**
+ * Represents a single Kafka topic within a `KafkaRouter`,
+ * allowing message handlers and producers to be registered
+ * via method chaining.
+ *
+ * Obtain a `KafkaTopic` via `router.topic(name)`.
+ *
+ * All methods return `this`, enabling fluent chaining:
+ * ```ts
+ * router.topic('order-placed')
+ *   .message(handler)
+ *   .produce({ data: { id: 1 } })
+ * ```
+ *
+ * @example
+ * import { app } from 'mokapi'
+ * export default function() {
+ *   app.api('Order Events').kafka()
+ *     .topic('order-placed')
+ *       .message((msg) => {
+ *         // Modify incoming messages for this topic
+ *         msg.headers = { ...msg.headers, processed: 'true' }
+ *       })
+ *       .produce({ data: { id: 1 } })
+ * }
+ */
+export interface KafkaTopic {
+
+    /**
+     * Registers a handler for incoming messages on this topic.
+     *
+     * The handler can read and modify the message before it is processed.
+     * Multiple handlers can be registered and run in registration order.
+     *
+     * @param handler The event handler to invoke for each incoming message.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `KafkaTopic` instance for chaining.
+     *
+     * @example
+     * app.api('Order Events').kafka()
+     *   .topic('order-placed')
+     *   .message((msg) => {
+     *     msg.headers = { ...msg.headers, correlationId: 'abc-123' }
+     *   })
+     */
+    message(handler: KafkaEventHandler, opts?: KafkaEventArgs): KafkaTopic
+
+    /**
+     * Produces one or more messages to this topic synchronously.
+     *
+     * If neither `value` nor `data` is set on a message, Mokapi generates
+     * a random valid value based on the AsyncAPI schema definition.
+     *
+     * Use `produceAsync()` if you need to await the result.
+     *
+     * @param message One or more messages to produce.
+     * @param opts Optional configuration including a result callback and retry settings.
+     * @returns This `KafkaTopic` instance for chaining.
+     *
+     * @example
+     * app.api('Order Events').kafka()
+     *   .topic('order-placed')
+     *   .produce({ data: { id: 1 } })
+     *
+     * @example
+     * // Produce with result callback
+     * app.api('Order Events').kafka()
+     *   .topic('order-placed')
+     *   .produce({ data: { id: 1 } }, {
+     *     result: (r) => console.log(r.messages[0].offset)
+     *   })
+     */
+    produce(message: KafkaProduceMessage | KafkaProduceMessage[], opts?: KafkaProduceArgs): KafkaTopic
+
+    /**
+     * Produces one or more messages to this topic asynchronously.
+     *
+     * Use this when you need to await the produce result, for example to
+     * read the assigned offset before continuing.
+     *
+     * If neither `value` nor `data` is set on a message, Mokapi generates
+     * a random valid value based on the AsyncAPI schema definition.
+     *
+     * @param message One or more messages to produce.
+     * @param opts Optional configuration including a result callback and retry settings.
+     * @returns A `Promise` resolving to this `KafkaTopic` instance for chaining.
+     *
+     * @example
+     * import { app } from 'mokapi'
+     * export default async function() {
+     *   await app.api('Order Events').kafka()
+     *     .topic('order-placed')
+     *     .produceAsync({ data: { id: 1 } }, {
+     *       result: (r) => console.log(r.messages[0].offset)
+     *     })
+     * }
+     */
+    produceAsync(message: KafkaProduceMessage | KafkaProduceMessage[], opts?: KafkaProduceArgs): Promise<KafkaTopic>
+}
+
+/**
+ * Represents a single Kafka message to be produced via `produce()` or `produceAsync()`.
+ *
+ * At least one of `data` or `value` should be set. If neither is provided,
+ * Mokapi generates a random valid value based on the AsyncAPI schema definition.
+ *
+ * Use `data` when the topic has a schema defined — Mokapi handles validation
+ * and serialization. Use `value` when you need full control over the raw bytes
+ * written to Kafka.
+ *
+ * @example
+ * // Schema-based encoding via data
+ * app.kafka().produce('order-placed', {
+ *   key: 'order-1',
+ *   data: { id: 1, item: 'Book' }
+ * })
+ *
+ * @example
+ * // Raw value — written as-is
+ * app.kafka().produce('order-placed', {
+ *   key: 'order-1',
+ *   value: 'raw-string-payload'
+ * })
+ *
+ * @example
+ * // Random generated value — neither data nor value set
+ * app.kafka().produce('order-placed', {})
+ *
+ * @example
+ * // With headers and explicit partition
+ * app.kafka().produce('order-placed', {
+ *   partition: 0,
+ *   key: 'order-1',
+ *   data: { id: 1 },
+ *   headers: { correlationId: 'abc-123' }
+ * })
+ */
+export interface KafkaProduceMessage {
+    /**
+     * The zero-based partition index to write the message to.
+     * If not specified, Mokapi selects a partition automatically
+     * based on the message key or topic configuration.
+     */
+    partition?: number;
+
+    /**
+     * The message key used for partitioning and identification.
+     *
+     * If not specified, Mokapi generates a random valid key
+     * based on the topic schema defined in the AsyncAPI specification.
+     *
+     * @example
+     * app.kafka().produce('order-placed', { key: 'order-1', data: { id: 1 } })
+     */
+    key?: any;
+
+    /**
+     * Structured data to be encoded and validated according to the
+     * AsyncAPI schema definition for this topic.
+     *
+     * Mokapi serializes this value based on the topic's content type
+     * (e.g. `application/json`) and validates it against the schema
+     * before writing to Kafka.
+     *
+     * If neither `data` nor `value` is set, Mokapi generates a random
+     * valid value based on the AsyncAPI schema definition.
+     *
+     * Prefer `data` over `value` when the topic has a schema defined,
+     * as it ensures the message is valid according to your AsyncAPI contract.
+     *
+     * @example
+     * app.kafka().produce('order-placed', {
+     *   data: { id: 1, item: 'Book', quantity: 2 }
+     * })
+     */
+    data?: any;
+
+    /**
+     * Raw value written directly to Kafka without schema validation or encoding.
+     *
+     * Primitives (`string`, `number`, `boolean`, `null`) and `ArrayBuffer`
+     * are written as-is. Objects are JSON-serialized at runtime.
+     *
+     * If neither `value` nor `data` is set, Mokapi generates a random valid
+     * value based on the AsyncAPI schema definition.
+     *
+     * Use `data` instead if you want schema-based encoding and validation.
+     * Use `value` when you need full control over the raw bytes written to Kafka,
+     * for example when testing consumers that expect a specific binary format.
+     *
+     * @example
+     * // Raw string
+     * app.kafka().produce('order-placed', { value: 'raw-payload' })
+     *
+     * @example
+     * // Pre-encoded binary via ArrayBuffer
+     * app.kafka().produce('order-placed', { value: myArrayBuffer })
+     */
+    value?: any;
+
+    /**
+     * Key-value pairs attached to the Kafka message as metadata headers.
+     *
+     * Headers are forwarded as-is and are not validated against the
+     * AsyncAPI specification. Use them for cross-cutting concerns such
+     * as correlation IDs, tracing, or content type hints.
+     *
+     * @example
+     * app.kafka().produce('order-placed', {
+     *   data: { id: 1 },
+     *   headers: { correlationId: 'abc-123', source: 'mokapi' }
+     * })
+     */
+    headers?: Record<string, any>;
+}
+
+/**
+ * Optional configuration for `produce()` and `produceAsync()`.
+ *
+ * Use `result` to inspect the outcome of a produce operation such as
+ * the assigned partition and offset. Use `retry` to configure retry
+ * behavior when the Kafka topic is not yet available.
+ *
+ * @example
+ * // Read the assigned offset after producing
+ * app.kafka().produce('order-placed', { data: { id: 1 } }, {
+ *   result: (r) => console.log(`Written to offset ${r.messages[0].offset}`)
+ * })
+ *
+ * @example
+ * // Retry up to 10 times with a 5 second initial wait
+ * app.kafka().produce('order-placed', { data: { id: 1 } }, {
+ *   retry: { retries: 10, initialRetryTime: '5s' }
+ * })
+ */
+export interface KafkaProduceArgs {
+    /**
+     * Callback invoked with the produce result after the message has been
+     * successfully written to Kafka.
+     *
+     * Use this to read the assigned partition, offset, key, or value of
+     * each produced message. The callback receives a single `KafkaProduceResult`
+     * containing one `KafkaMessageResult` per produced message.
+     *
+     * @example
+     * app.kafka().produce('order-placed', [
+     *   { data: { id: 1 } },
+     *   { data: { id: 2 } }
+     * ], {
+     *   result: (r) => {
+     *     for (const msg of r.messages) {
+     *       console.log(`partition=${msg.partition} offset=${msg.offset}`)
+     *     }
+     *   }
+     * })
+     */
+    result?: (result: KafkaProduceResult) => void
+
+    /**
+     * Retry configuration applied when the script executes before the
+     * Kafka topic is fully set up in Mokapi.
+     *
+     * Mokapi uses an exponential backoff strategy based on these settings.
+     * If all retries are exhausted, the produce operation fails with an error.
+     *
+     * @example
+     * app.kafka().produce('order-placed', { data: { id: 1 } }, {
+     *   retry: { retries: 10, maxRetryTime: '60s' }
+     * })
+     */
+    retry?: KafkaProduceRetry;
+}
+
+/**
+ * The result of a `produce()` or `produceAsync()` operation.
+ *
+ * Contains the cluster and topic where the messages were written,
+ * along with a per-message result including the assigned partition and offset.
+ *
+ * Received via the `result` callback in `KafkaProduceArgs`:
+ *
+ * @example
+ * app.kafka().produce('order-placed', { data: { id: 1 } }, {
+ *   result: (r) => {
+ *     console.log(r.cluster)             // e.g. 'Order Events'
+ *     console.log(r.topic)               // e.g. 'order-placed'
+ *     console.log(r.messages[0].offset)  // e.g. 42
+ *   }
+ * })
+ *
+ * https://mokapi.io/docs/javascript-api/mokapi-kafka/kafkaproduceresult
+ */
+export interface KafkaProduceResult {
+    /**
+     * The name of the Kafka cluster (AsyncAPI `info.title`) where
+     * the messages were written.
+     */
+    readonly cluster: string;
+
+    /**
+     * The name of the Kafka topic where the messages were written.
+     */
+    readonly topic: string;
+
+    /**
+     * One result entry per produced message, in the same order as the
+     * input messages passed to `produce()`.
+     */
+    messages: KafkaMessageResult[];
+}
+
+/**
+ * Represents the outcome of producing a single Kafka message.
+ *
+ * One `KafkaMessageResult` is returned per message passed to `produce()`,
+ * accessible via `KafkaProduceResult.messages`.
+ *
+ * @example
+ * app.kafka().produce('order-placed', [
+ *   { data: { id: 1 } },
+ *   { data: { id: 2 } }
+ * ], {
+ *   result: (r) => {
+ *     for (const msg of r.messages) {
+ *       console.log(`key=${msg.key} partition=${msg.partition} offset=${msg.offset}`)
+ *     }
+ *   }
+ * })
+ *
+ * https://mokapi.io/docs/javascript-api/mokapi-kafka/kafkamessageresult
+ */
+export interface KafkaMessageResult {
+    /**
+     * The zero-based index of the Kafka partition where the message was written.
+     */
+    readonly partition: number;
+
+    /**
+     * The unique sequential identifier assigned to the message within its partition.
+     * Use this to track or reference the message after it has been written.
+     */
+    readonly offset: number;
+
+    /**
+     * The key of the written Kafka message as a string.
+     * Reflects the key that was used for partitioning, whether explicitly
+     * set or randomly generated by Mokapi.
+     */
+    readonly key: string;
+
+    /**
+     * The serialized payload of the written Kafka message as a string.
+     * Reflects the encoded form of `data` or `value` as written to Kafka.
+     */
+    readonly value: string;
+
+    /**
+     * The metadata headers attached to the written Kafka message.
+     * Reflects the headers passed in `KafkaProduceMessage.headers`.
+     */
+    readonly headers: { [name: string]: string };
+}
+
+/**
+ * Retry configuration for Kafka produce operations.
+ *
+ * Applied when `produce()` or `produceAsync()` is called before the target
+ * Kafka topic is fully initialized in Mokapi. Mokapi retries using an
+ * exponential backoff strategy based on these settings.
+ *
+ * The wait time before each retry is calculated as:
+ * `min(initialRetryTime * factor^attempt, maxRetryTime)`
+ *
+ * @example
+ * // Default retry behavior
+ * app.kafka().produce('order-placed', { data: { id: 1 } }, {
+ *   retry: {}
+ * })
+ *
+ * @example
+ * // Custom retry — faster initial retry, more attempts
+ * app.kafka().produce('order-placed', { data: { id: 1 } }, {
+ *   retry: {
+ *     retries: 10,
+ *     initialRetryTime: '500ms',
+ *     maxRetryTime: '60s',
+ *     factor: 2
+ *   }
+ * })
+ */
+export interface KafkaProduceRetry {
+    /**
+     * Maximum total wait time across all retry attempts.
+     *
+     * Accepts milliseconds as a `number` or a duration string such as
+     * `"30s"` or `"2h45m"`. Valid time units are `ns`, `us` (or `µs`),
+     * `ms`, `s`, `m`, `h`.
+     *
+     * @default "30000ms"
+     *
+     * @example
+     * app.kafka().produce('order-placed', {}, { retry: { maxRetryTime: '60s' } })
+     */
+    maxRetryTime?: string | number;
+
+    /**
+     * Wait time before the first retry attempt. Subsequent retries multiply
+     * this value by `factor` on each attempt until `maxRetryTime` is reached.
+     *
+     * Accepts milliseconds as a `number` or a duration string such as
+     * `"200ms"` or `"2s"`. Valid time units are `ns`, `us` (or `µs`),
+     * `ms`, `s`, `m`, `h`.
+     *
+     * @default "200ms"
+     *
+     * @example
+     * app.kafka().produce('order-placed', {}, { retry: { initialRetryTime: '1s' } })
+     */
+    initialRetryTime?: string | number;
+
+    /**
+     * Multiplier applied to the wait time after each retry attempt.
+     *
+     * With the default values, the wait times are:
+     * - 1st retry: 200ms
+     * - 2nd retry: 4 × 200ms = 800ms
+     * - 3rd retry: 4 × 800ms = 3200ms
+     * - ...capped at `maxRetryTime`
+     *
+     * @default 4
+     */
+    factor?: number;
+
+    /**
+     * Maximum number of retry attempts before the produce operation fails.
+     * Set to `0` to disable retries entirely.
+     *
+     * @default 5
+     */
+    retries?: number;
 }

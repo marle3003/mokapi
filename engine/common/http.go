@@ -110,11 +110,6 @@ func getResource(u Url, resources interface{}) interface{} {
 	return resource.Interface()
 }
 
-type HTTPHandler struct {
-	Filter  HttpFilter
-	Execute EventHandler
-}
-
 type HttpFilter struct {
 	Api         string
 	Method      string
