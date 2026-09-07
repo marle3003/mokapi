@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"mokapi/engine/common"
-	"mokapi/js/kafka"
 	"mokapi/js/util"
 
 	"github.com/dop251/goja"
@@ -21,9 +20,8 @@ type KafkaTopic struct {
 }
 
 type KafkaProduceArgs struct {
-	Retry   common.RetryArgs
-	Timeout int
-	result  KafkaProduceResultCallback
+	Retry  common.RetryArgs
+	result KafkaProduceResultCallback
 }
 
 type KafkaProduceResultCallback func(result common.KafkaMessageResult) error
@@ -257,7 +255,7 @@ func mapProduceMessage(vMsg *goja.Object) (common.KafkaMessage, error) {
 
 func mapProduceArgs(v goja.Value, vm *goja.Runtime) (*KafkaProduceArgs, error) {
 	args := &KafkaProduceArgs{
-		Retry: kafka.DefaultRetryArgs(),
+		Retry: util.DefaultRetryArgs(),
 	}
 
 	if v == nil || goja.IsUndefined(v) || goja.IsNull(v) {
@@ -273,7 +271,7 @@ func mapProduceArgs(v goja.Value, vm *goja.Runtime) (*KafkaProduceArgs, error) {
 				return nil, fmt.Errorf("invalid property type '%s'", propName)
 			}
 			var err error
-			args.Retry, err = kafka.ConvertToRetryArgs(retry)
+			args.Retry, err = util.ConvertToRetryArgs(retry)
 			if err != nil {
 				return args, err
 			}

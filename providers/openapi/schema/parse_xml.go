@@ -1,12 +1,14 @@
 package schema
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"io"
 	"mokapi/schema/json/parser"
 	"path"
 	"strconv"
+	"strings"
 )
 
 type XmlParser struct {
@@ -26,22 +28,14 @@ func NewXmlParser(s *Schema) *XmlParser {
 }
 
 func (p *XmlParser) Parse(v any) (any, error) {
-	var b []byte
+	var err error
 	switch vv := v.(type) {
 	case string:
-		b = []byte(vv)
+		v, err = UnmarshalXML(strings.NewReader(vv), p.s)
 	case []byte:
-		b = vv
-	default:
-		return nil, fmt.Errorf("failed to parse XML: unsupported type: %T", v)
+		v, err = UnmarshalXML(bytes.NewReader(vv), p.s)
 	}
 
-	n := &node{}
-	err := xml.Unmarshal(b, &n)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal XML: %w", err)
-	}
-	data, err := parseXML(n, p.s, "/"+xmlNameAsString(n.XMLName))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse XML: %w", err)
 	}
@@ -52,7 +46,7 @@ func (p *XmlParser) Parse(v any) (any, error) {
 		ConvertStringToBoolean:       true,
 		ValidateAdditionalProperties: true,
 	}
-	return pn.Parse(data)
+	return pn.Parse(v)
 }
 
 func (p *XmlParser) ParseFrom(r io.Reader) (any, error) {
@@ -63,7 +57,7 @@ func (p *XmlParser) ParseFrom(r io.Reader) (any, error) {
 	return p.Parse(b)
 }
 
-func UnmarshalXML(r io.Reader, s *Schema) (interface{}, error) {
+func UnmarshalXML(r io.Reader, s *Schema) (any, error) {
 	b, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err

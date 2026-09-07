@@ -438,6 +438,6 @@ func (r *SchemaRef) GetParser(contentType string) (encoding.Parser, error) {
 	case *MultiSchemaFormat:
 		return s.Schema.GetParser(contentType)
 	default:
-		return nil, fmt.Errorf("unsupported payload type: %T", s)
+		return nil, fmt.Errorf("unsupported payload schema type: %T", s)
 	}
 }

@@ -136,7 +136,7 @@ type RetryArgs struct {
 }
 
 type KafkaProduceResult struct {
-	Cluster  string
+	Api      string
 	Topic    string
 	Messages []KafkaMessageResult
 }
@@ -166,9 +166,9 @@ type MqttClient interface {
 type MqttPublishArgs struct {
 	Cluster    string
 	Topic      string
-	Value      string
+	Data       any
+	Value      []byte
 	Retain     bool
-	Timeout    int
 	Retry      RetryArgs
 	ClientId   string
 	ScriptFile string

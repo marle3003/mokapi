@@ -36,10 +36,16 @@ func (c *MqttClient) Publish(args *common.MqttPublishArgs) (*common.MqttPublishR
 		ScriptFile: args.ScriptFile,
 	}
 
-	_, err = m.Publish(&mqtt.PublishRequest{
+	if args.Data != nil {
+
+	}
+
+	req := &mqtt.PublishRequest{
 		Topic: t.Name,
-		Data:  []byte(args.Value),
-	}, pa)
+		Data:  args.Value,
+	}
+
+	_, err = m.Publish(req, pa)
 
 	if err != nil {
 		return nil, err
@@ -47,7 +53,7 @@ func (c *MqttClient) Publish(args *common.MqttPublishArgs) (*common.MqttPublishR
 	return &common.MqttPublishResult{
 		Cluster: m.Info.Name,
 		Topic:   t.Name,
-		Value:   args.Value,
+		Value:   string(args.Value),
 	}, nil
 }
 

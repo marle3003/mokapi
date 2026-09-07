@@ -68,7 +68,7 @@ m.app.kafka().api("foo").message((msg) => {})
 			name: "produce to topic",
 			script: `
 const m = require('mokapi')
-m.app.kafka().produce('foo', { key: 'key' })
+m.app.kafka().produce('foo', { key: 'key', value: 'val' })
 `,
 			test: func(t *testing.T, handlers []handler, produces []*common.KafkaProduceArgs, vm *goja.Runtime, err error) {
 				r.Len(t, produces, 1)
@@ -78,6 +78,7 @@ m.app.kafka().produce('foo', { key: 'key' })
 				r.Equal(t, common.RetryArgs{MaxRetryTime: 180000000000, InitialRetryTime: 500000000, Factor: 2, Retries: 10}, produces[0].Retry)
 				r.NotEmpty(t, produces[0].ScriptFile)
 				r.Equal(t, "key", produces[0].Messages[0].Key)
+				r.Equal(t, "val", string(produces[0].Messages[0].Value))
 				r.Equal(t, -1, produces[0].Messages[0].Partition)
 				r.Nil(t, produces[0].Messages[0].Headers)
 
@@ -220,9 +221,6 @@ const p = m.app.kafka().produceAsync('foo', { }, { result: (r) => result = r })
 		},
 		{
 			name: "produce using retry with numbers",
-			produceResult: &common.KafkaProduceResult{
-				Messages: []common.KafkaMessageResult{{Key: "foo"}},
-			},
 			script: `
 const m = require('mokapi')
 let result;
@@ -237,9 +235,6 @@ m.app.kafka().produce('foo', { }, { retry: { maxRetryTime: 1, initialRetryTime: 
 		},
 		{
 			name: "produce using retry with strings",
-			produceResult: &common.KafkaProduceResult{
-				Messages: []common.KafkaMessageResult{{Key: "foo"}},
-			},
 			script: `
 const m = require('mokapi')
 let result;

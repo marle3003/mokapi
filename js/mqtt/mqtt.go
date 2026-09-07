@@ -110,7 +110,7 @@ func (m *Module) mapParams(args goja.Value) (*common.MqttPublishArgs, error) {
 				if goja.IsUndefined(value) || goja.IsNull(value) {
 					continue
 				}
-				pa.Value = value.String()
+				pa.Value = []byte(value.String())
 			case "retry":
 				retry := params.Get(k).Export().(map[string]interface{})
 				if i, ok := retry["maxRetryTime"]; ok {
