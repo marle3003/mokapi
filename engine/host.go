@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -143,6 +144,7 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 		defer func() {
 			r := recover()
 			if r != nil {
+				log.Debugf("script error %v: %v", sh.Name(), string(debug.Stack()))
 				log.Errorf("script error %v: %v", sh.Name(), r)
 				exec.Error = &common.Error{Message: fmt.Sprintf("%v", r)}
 			}
