@@ -52,7 +52,7 @@
     "@playwright/test": "1.62.1",
     "@rushstack/eslint-patch": "1.16.1",
     "@types/js-yaml": "4.0.9",
-    "@types/markdown-it-container": "4.0.0",
+    "@types/markdown-it-container": "4.0.1",
     "@types/node": "26.4.1",
     "@vitejs/plugin-vue": "6.0.8",
     "@vue/eslint-config-prettier": "10.2.0",
