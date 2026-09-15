@@ -34,9 +34,10 @@ type scriptHost struct {
 	events map[string][]*eventHandler
 	file   *dynamic.Config
 
-	eventLogger  func(level, message string)
-	cleanupFuncs []func()
-	sm           *events.StoreManager
+	eventLogger   func(level, message string)
+	eventLoggerMu sync.RWMutex
+	cleanupFuncs  []func()
+	sm            *events.StoreManager
 
 	m sync.Mutex
 }
@@ -221,34 +222,40 @@ func (sh *scriptHost) AddCleanupFunc(f func()) {
 
 func (sh *scriptHost) Info(args ...interface{}) {
 	sh.engine.logger.Info(args...)
-	if sh.eventLogger != nil && sh.IsLevelEnabled("info") {
-		sh.eventLogger("log", fmt.Sprint(args...))
-	}
+	sh.logEvent("info", "log", args...)
 }
 
 func (sh *scriptHost) Warn(args ...interface{}) {
 	sh.engine.logger.Warn(args...)
-	if sh.eventLogger != nil && sh.IsLevelEnabled("warn") {
-		sh.eventLogger("warn", fmt.Sprint(args...))
-	}
+	sh.logEvent("warn", "warn", args...)
 }
 
 func (sh *scriptHost) Error(args ...interface{}) {
 	sh.engine.logger.Error(args...)
-	if sh.eventLogger != nil && sh.IsLevelEnabled("error") {
-		sh.eventLogger("error", fmt.Sprint(args...))
-	}
+	sh.logEvent("error", "error", args...)
 }
 
 func (sh *scriptHost) Debug(args ...interface{}) {
 	sh.engine.logger.Debug(args...)
-	if sh.eventLogger != nil && sh.IsLevelEnabled("debug") {
-		sh.eventLogger("debug", fmt.Sprint(args...))
-	}
+	sh.logEvent("debug", "debug", args...)
 }
 
 func (sh *scriptHost) SetEventLogger(logger func(level, message string)) {
+	sh.eventLoggerMu.Lock()
+	defer sh.eventLoggerMu.Unlock()
 	sh.eventLogger = logger
+}
+
+func (sh *scriptHost) logEvent(configuredLevel, eventLevel string, args ...interface{}) {
+	if !sh.IsLevelEnabled(configuredLevel) {
+		return
+	}
+
+	sh.eventLoggerMu.RLock()
+	defer sh.eventLoggerMu.RUnlock()
+	if sh.eventLogger != nil {
+		sh.eventLogger(eventLevel, fmt.Sprint(args...))
+	}
 }
 
 func (sh *scriptHost) IsLevelEnabled(level string) bool {
@@ -365,12 +372,12 @@ func getScriptPath(u *url.URL) string {
 }
 
 func (sh *scriptHost) startEventHandler(eventLog func(level, message string)) {
-	sh.eventLogger = eventLog
+	sh.SetEventLogger(eventLog)
 }
 
 // Function to end the event handler context
 func (sh *scriptHost) endEventHandler() {
-	sh.eventLogger = nil
+	sh.SetEventLogger(nil)
 }
 
 func getDeepCopy(args []any) []string {
