@@ -1,6 +1,9 @@
 package common
 
-type MqttFilter struct{}
+type MqttFilter struct {
+	Api   string
+	Topic string
+}
 
 type MqttMessageEvent struct {
 	Api    string

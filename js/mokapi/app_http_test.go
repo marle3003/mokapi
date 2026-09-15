@@ -17,11 +17,16 @@ import (
 )
 
 func TestModule_AppHttp(t *testing.T) {
+	type handler struct {
+		Filter  common.HttpFilter
+		Execute common.EventHandler
+	}
+
 	testcases := []struct {
 		name   string
 		script string
 		logger *enginetest.Logger
-		test   func(t *testing.T, handlers []common.HTTPHandler, err error)
+		test   func(t *testing.T, handlers []handler, err error)
 	}{
 		{
 			name: "GET handler",
@@ -29,7 +34,7 @@ func TestModule_AppHttp(t *testing.T) {
 const m = require('mokapi')
 m.app.http().get('/pets', (req, res) => {})
 `,
-			test: func(t *testing.T, handlers []common.HTTPHandler, err error) {
+			test: func(t *testing.T, handlers []handler, err error) {
 				r.Len(t, handlers, 1)
 				r.Equal(t, http.MethodGet, handlers[0].Filter.Method)
 				r.Equal(t, "/pets", handlers[0].Filter.Path)
@@ -41,7 +46,7 @@ m.app.http().get('/pets', (req, res) => {})
 const m = require('mokapi')
 m.app.http().foo('/pets', (req, res) => {})
 `,
-			test: func(t *testing.T, handlers []common.HTTPHandler, err error) {
+			test: func(t *testing.T, handlers []handler, err error) {
 				r.Len(t, handlers, 1)
 				r.Equal(t, "FOO", handlers[0].Filter.Method)
 				r.Equal(t, "/pets", handlers[0].Filter.Path)
@@ -53,7 +58,7 @@ m.app.http().foo('/pets', (req, res) => {})
 const m = require('mokapi')
 m.app.http().get('/pets', (req, res) => {}).put('/pets', (req, res) => {})
 `,
-			test: func(t *testing.T, handlers []common.HTTPHandler, err error) {
+			test: func(t *testing.T, handlers []handler, err error) {
 				r.Len(t, handlers, 2)
 				r.Equal(t, http.MethodGet, handlers[0].Filter.Method)
 				r.Equal(t, "/pets", handlers[0].Filter.Path)
@@ -67,7 +72,7 @@ m.app.http().get('/pets', (req, res) => {}).put('/pets', (req, res) => {})
 const m = require('mokapi')
 m.app.api('foo').http().post('/pets', (req, res) => {})
 `,
-			test: func(t *testing.T, handlers []common.HTTPHandler, err error) {
+			test: func(t *testing.T, handlers []handler, err error) {
 				r.Len(t, handlers, 1)
 				r.Equal(t, "foo", handlers[0].Filter.Api)
 				r.Equal(t, http.MethodPost, handlers[0].Filter.Method)
@@ -80,7 +85,7 @@ m.app.api('foo').http().post('/pets', (req, res) => {})
 const m = require('mokapi')
 m.app.http().api('foo').delete('/pets', (req, res) => {})
 `,
-			test: func(t *testing.T, handlers []common.HTTPHandler, err error) {
+			test: func(t *testing.T, handlers []handler, err error) {
 				r.Len(t, handlers, 1)
 				r.Equal(t, "foo", handlers[0].Filter.Api)
 				r.Equal(t, http.MethodDelete, handlers[0].Filter.Method)
@@ -93,7 +98,7 @@ m.app.http().api('foo').delete('/pets', (req, res) => {})
 const m = require('mokapi')
 m.app.http().use((req, res) => {})
 `,
-			test: func(t *testing.T, handlers []common.HTTPHandler, err error) {
+			test: func(t *testing.T, handlers []handler, err error) {
 				r.Len(t, handlers, 1)
 				r.Equal(t, "", handlers[0].Filter.Method)
 				r.Equal(t, "", handlers[0].Filter.Path)
@@ -105,7 +110,7 @@ m.app.http().use((req, res) => {})
 const m = require('mokapi')
 m.app.http().route('/pets').get((req, res) => {})
 `,
-			test: func(t *testing.T, handlers []common.HTTPHandler, err error) {
+			test: func(t *testing.T, handlers []handler, err error) {
 				r.Len(t, handlers, 1)
 				r.Equal(t, http.MethodGet, handlers[0].Filter.Method)
 				r.Equal(t, "/pets", handlers[0].Filter.Path)
@@ -117,7 +122,7 @@ m.app.http().route('/pets').get((req, res) => {})
 const m = require('mokapi')
 m.app.http().route('/pets').get((req, res) => {}).post((req, res) => {})
 `,
-			test: func(t *testing.T, handlers []common.HTTPHandler, err error) {
+			test: func(t *testing.T, handlers []handler, err error) {
 				r.Len(t, handlers, 2)
 				r.Equal(t, http.MethodGet, handlers[0].Filter.Method)
 				r.Equal(t, "/pets", handlers[0].Filter.Path)
@@ -131,7 +136,7 @@ m.app.http().route('/pets').get((req, res) => {}).post((req, res) => {})
 const m = require('mokapi')
 m.app.http().route('/pets').foo((req, res) => {})
 `,
-			test: func(t *testing.T, handlers []common.HTTPHandler, err error) {
+			test: func(t *testing.T, handlers []handler, err error) {
 				r.Len(t, handlers, 1)
 				r.Equal(t, "FOO", handlers[0].Filter.Method)
 				r.Equal(t, "/pets", handlers[0].Filter.Path)
@@ -143,7 +148,7 @@ m.app.http().route('/pets').foo((req, res) => {})
 const m = require('mokapi')
 m.app.http().route('/pets').use((req, res) => {})
 `,
-			test: func(t *testing.T, handlers []common.HTTPHandler, err error) {
+			test: func(t *testing.T, handlers []handler, err error) {
 				r.Len(t, handlers, 1)
 				r.Equal(t, "", handlers[0].Filter.Method)
 				r.Equal(t, "/pets", handlers[0].Filter.Path)
@@ -155,7 +160,7 @@ m.app.http().route('/pets').use((req, res) => {})
 const m = require('mokapi')
 m.app.http().route('/pets').use((req, res) => {}).get((req, res) => {})
 `,
-			test: func(t *testing.T, handlers []common.HTTPHandler, err error) {
+			test: func(t *testing.T, handlers []handler, err error) {
 				r.Len(t, handlers, 2)
 				r.Equal(t, "", handlers[0].Filter.Method)
 				r.Equal(t, "/pets", handlers[0].Filter.Path)
@@ -180,9 +185,9 @@ m.app.http().route('/pets').use((req, res) => {}).get((req, res) => {})
 			js.EnableInternal(vm, host, loop, &dynamic.Config{Info: dynamictest.NewConfigInfo()})
 			reg.Enable(vm)
 
-			var handlers []common.HTTPHandler
+			var handlers []handler
 			host.OnHttpFunc = func(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
-				handlers = append(handlers, common.HTTPHandler{
+				handlers = append(handlers, handler{
 					Filter:  filter,
 					Execute: do,
 				})

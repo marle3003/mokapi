@@ -2,11 +2,9 @@ package kafka
 
 import (
 	"fmt"
-	"mokapi/config/dynamic"
 	"mokapi/engine/common"
 	"mokapi/js/eventloop"
 	"mokapi/js/util"
-	"time"
 
 	"github.com/dop251/goja"
 	log "github.com/sirupsen/logrus"
@@ -93,16 +91,11 @@ func (m *Module) ProduceAsync(v goja.Value) interface{} {
 }
 
 func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
-	file := getFile(m.rt)
+	file := util.GetScriptFile(m.rt)
 	opt := &common.KafkaProduceArgs{
 		ClientId:   "mokapi-script",
 		ScriptFile: file.Info.Key(),
-		Retry: common.RetryArgs{
-			MaxRetryTime:     3 * time.Minute,
-			InitialRetryTime: 500 * time.Millisecond,
-			Retries:          10,
-			Factor:           2,
-		},
+		Retry:      util.DefaultRetryArgs(),
 	}
 
 	if args != nil && !goja.IsUndefined(args) && !goja.IsNull(args) {
@@ -221,41 +214,11 @@ func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 					opt.Messages = append(opt.Messages, r)
 				}
 			case "retry":
-				retry := params.Get(k).Export().(map[string]interface{})
-				if i, ok := retry["maxRetryTime"]; ok {
-					switch v := i.(type) {
-					case int64:
-						opt.Retry.MaxRetryTime = time.Duration(v) * time.Millisecond
-					case string:
-						d, err := time.ParseDuration(v)
-						if err != nil {
-							return nil, fmt.Errorf("parse maxRetryTime failed: %w", err)
-						}
-						opt.Retry.MaxRetryTime = d
-					default:
-						return nil, fmt.Errorf("type %T for maxRetryTime not supported", v)
-					}
-
-				}
-				if i, ok := retry["initialRetryTime"]; ok {
-					switch v := i.(type) {
-					case int64:
-						opt.Retry.InitialRetryTime = time.Duration(v) * time.Millisecond
-					case string:
-						d, err := time.ParseDuration(v)
-						if err != nil {
-							return nil, fmt.Errorf("parse initialRetryTime failed: %w", err)
-						}
-						opt.Retry.InitialRetryTime = d
-					default:
-						return nil, fmt.Errorf("type %T for initialRetryTime not supported", v)
-					}
-				}
-				if v, ok := retry["retries"]; ok {
-					opt.Retry.Retries = int(v.(int64))
-				}
-				if v, ok := retry["factor"]; ok {
-					opt.Retry.Factor = int(v.(int64))
+				retry := params.Get(k).Export().(map[string]any)
+				var err error
+				opt.Retry, err = util.ConvertToRetryArgs(retry)
+				if err != nil {
+					return nil, err
 				}
 			}
 		}
@@ -270,8 +233,4 @@ func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 
 func (m *Module) warnDeprecatedAttribute(name string) {
 	m.host.Warn(fmt.Sprintf("DEPRECATED: '%v' should not be used anymore: check https://mokapi.io/docs/javascript-api/mokapi-kafka/produceargs for more info in %v", name, m.host.Name()))
-}
-
-func getFile(vm *goja.Runtime) *dynamic.Config {
-	return vm.Get("mokapi/internal").(*goja.Object).Get("file").Export().(*dynamic.Config)
 }

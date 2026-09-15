@@ -11,4 +11,7 @@ type KafkaEventRecord struct {
 	Headers   map[string]string
 }
 
-type KafkaFilter struct{}
+type KafkaFilter struct {
+	Api   string
+	Topic string
+}

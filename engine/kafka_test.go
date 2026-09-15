@@ -66,14 +66,19 @@ func TestKafkaClient(t *testing.T) {
 				return createCfg("foo", msg)
 			},
 			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				hook := test.NewGlobal()
+
 				err := e.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
-						produce({ })
+						const result = produce({ })
+						console.log(result)
 					}
 				`))
 
 				require.NoError(t, err)
+				require.Contains(t, hook.LastEntry().Message, `"api":"foo","topic":"foo"`)
+
 				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
@@ -512,7 +517,7 @@ func TestKafkaClient(t *testing.T) {
 						produce({ topic: 'foo', messages: [{ data: 12 }] })
 					}
 				`))
-				require.EqualError(t, err, "failed to produce message to Kafka topic 'foo': Kafka message validation failed:\n\nMessage:\n12\n\nValidation error count 1:\n\t- #/type: invalid type, expected string but got integer\n at mokapi/js/kafka.(*Module).Produce-fm (native)")
+				require.EqualError(t, err, "failed to produce message to Kafka topic 'foo': message validation failed:\n\nMessage:\n12\n\nValidation error count 1:\n\t- #/type: invalid type, expected string but got integer\n at mokapi/js/kafka.(*Module).Produce-fm (native)")
 
 				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
@@ -521,7 +526,7 @@ func TestKafkaClient(t *testing.T) {
 
 				// logs
 				require.Len(t, hook.Entries, 2)
-				require.Equal(t, "js error: failed to produce message to Kafka topic 'foo': Kafka message validation failed:\n\nMessage:\n12\n\nValidation error count 1:\n\t- #/type: invalid type, expected string but got integer\n in test.js", hook.LastEntry().Message)
+				require.Equal(t, "js error: failed to produce message to Kafka topic 'foo': message validation failed:\n\nMessage:\n12\n\nValidation error count 1:\n\t- #/type: invalid type, expected string but got integer\n in test.js", hook.LastEntry().Message)
 			},
 		},
 		{
@@ -688,7 +693,7 @@ func TestKafkaClient(t *testing.T) {
 				err := e.AddScript(newScript("test.js", `
 					import { produce } from 'mokapi/kafka'
 					export default function() {
-						produce({ messages: [{ data: { id: '123456' } }] })
+						produce({ messages: [{ key: 'foo', data: { id: '123456' } }] })
 					}
 				`))
 
@@ -696,7 +701,7 @@ func TestKafkaClient(t *testing.T) {
 				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
-				require.Equal(t, "gbrmarxhk", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, "foo", kafka.BytesToString(b.Records[0].Key))
 				require.Equal(t, `<foo id="123456"></foo>`, kafka.BytesToString(b.Records[0].Value))
 
 				err = e.AddScript(newScript("test.js", `
@@ -710,7 +715,7 @@ func TestKafkaClient(t *testing.T) {
 				b, errCode = app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(1, 1000)
 				require.Equal(t, kafka.None, errCode)
 				require.NotNil(t, b)
-				require.Equal(t, "ijbptapwy", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, "gbrmarxhk", kafka.BytesToString(b.Records[0].Key))
 				require.Equal(t, `<foo id="b4ddf623-4ea6-48e5-9292-541f028d1fdb"></foo>`, kafka.BytesToString(b.Records[0].Value))
 			},
 		},
@@ -741,7 +746,7 @@ func TestKafkaClient(t *testing.T) {
 						produce({ messages: [{ data: { foo: 'bar' } }] })
 					}
 				`))
-				require.EqualError(t, err, "failed to produce message to Kafka topic 'foo': Kafka message validation failed:\n\nMessage:\n{\"foo\":\"bar\"}\n\nValidation error count 1:\n\t- #/required: required properties are missing: id\n at mokapi/js/kafka.(*Module).Produce-fm (native)")
+				require.EqualError(t, err, "failed to produce message to Kafka topic 'foo': message validation failed:\n\nMessage:\n{\"foo\":\"bar\"}\n\nValidation error count 1:\n\t- #/required: required properties are missing: id\n at mokapi/js/kafka.(*Module).Produce-fm (native)")
 			},
 		},
 		{

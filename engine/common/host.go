@@ -115,16 +115,15 @@ type KafkaProduceArgs struct {
 	Cluster    string
 	Topic      string
 	Messages   []KafkaMessage
-	Timeout    int
 	Retry      RetryArgs
 	ClientId   string
 	ScriptFile string
 }
 
 type KafkaMessage struct {
-	Key       interface{}
+	Key       any
 	Value     []byte
-	Data      interface{}
+	Data      any
 	Headers   map[string]string
 	Partition int
 }
@@ -137,7 +136,7 @@ type RetryArgs struct {
 }
 
 type KafkaProduceResult struct {
-	Cluster  string
+	Api      string
 	Topic    string
 	Messages []KafkaMessageResult
 }
@@ -167,9 +166,9 @@ type MqttClient interface {
 type MqttPublishArgs struct {
 	Cluster    string
 	Topic      string
-	Value      string
+	Data       any
+	Value      []byte
 	Retain     bool
-	Timeout    int
 	Retry      RetryArgs
 	ClientId   string
 	ScriptFile string

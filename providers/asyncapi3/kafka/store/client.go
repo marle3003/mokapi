@@ -9,11 +9,7 @@ import (
 	"mokapi/kafka"
 	"mokapi/media"
 	"mokapi/providers/asyncapi3"
-	openapi "mokapi/providers/openapi/schema"
 	"mokapi/runtime/monitor"
-	avro "mokapi/schema/avro/schema"
-	"mokapi/schema/encoding"
-	"mokapi/schema/json/schema"
 	"time"
 
 	"github.com/pkg/errors"
@@ -318,7 +314,7 @@ func (c *Client) parse(v any, ct media.ContentType, topic *asyncapi3.Channel) ([
 		}
 		return []byte(s), nil
 	case "application/json":
-		msg, err := selectMessage(v, topic)
+		msg, err := topic.GetMessageByPayload(v)
 		if err != nil {
 			return nil, err
 		}
@@ -328,7 +324,7 @@ func (c *Client) parse(v any, ct media.ContentType, topic *asyncapi3.Channel) ([
 		b, _ := json.Marshal(v)
 		return b, nil
 	default:
-		msg, err := selectMessage(v, topic)
+		msg, err := topic.GetMessageByPayload(v)
 		if err != nil {
 			return nil, err
 		}
@@ -371,98 +367,4 @@ func (r *Record) UnmarshalJSON(b []byte) error {
 	}
 	*r = Record(a)
 	return nil
-}
-
-func selectMessage(value any, topic *asyncapi3.Channel) (*asyncapi3.Message, error) {
-	// first try to get send operation
-	msg, noOperationDefined, validationErr := getMessage(value, topic, "send")
-	if validationErr == nil {
-		return msg, nil
-	}
-	// second, try to get receive operation
-	msg, noOperationDefined, validationErr = getMessage(value, topic, "receive")
-
-	if noOperationDefined {
-		for _, msg := range topic.Messages {
-			if validationErr = valueMatchMessagePayload(value, msg.Value); validationErr == nil {
-				return msg.Value, nil
-			}
-		}
-	}
-
-	if value != nil {
-		switch value.(type) {
-		case string, []byte:
-			break
-		default:
-			b, err := json.Marshal(value)
-			if err == nil {
-				value = string(b)
-			}
-		}
-		if validationErr != nil {
-			return nil, fmt.Errorf("Kafka message validation failed:\n\nMessage:\n%v\n\n%w\n", value, validationErr)
-		}
-		return nil, nil
-	}
-	return nil, fmt.Errorf("channel defines no message schema; define a message payload in the channel or provide an explicit message")
-}
-
-func getMessage(value any, topic *asyncapi3.Channel, action string) (*asyncapi3.Message, bool, error) {
-	cfg := topic.Config
-	noOperationDefined := true
-	var validationErr error
-
-	for _, op := range cfg.Operations {
-		if op.Value == nil || op.Value.Channel.Value == nil {
-			continue
-		}
-		if op.Value.Channel.Value == topic && op.Value.Action == action {
-			noOperationDefined = false
-			if len(op.Value.Messages) == 0 {
-				for _, msg := range op.Value.Channel.Value.Messages {
-					if msg.Value != nil {
-						if validationErr = valueMatchMessagePayload(value, msg.Value); validationErr == nil {
-							return msg.Value, false, nil
-						}
-					}
-				}
-			} else {
-				for _, msg := range op.Value.Messages {
-					if msg.Value != nil {
-						if validationErr = valueMatchMessagePayload(value, msg.Value); validationErr == nil {
-							return msg.Value, false, nil
-						}
-					}
-				}
-			}
-		}
-	}
-	return nil, noOperationDefined, validationErr
-}
-
-func valueMatchMessagePayload(value any, msg *asyncapi3.Message) error {
-	if value == nil || msg.Payload == nil {
-		return nil
-	}
-	ct := media.ParseContentType(msg.ContentType)
-	s, err := msg.Payload.GetSchema()
-	if err != nil {
-		return err
-	}
-
-	switch v := s.(type) {
-	case *schema.Schema:
-		_, err := encoding.NewEncoder(v).Write(value, ct)
-		return err
-	case *openapi.Schema:
-		_, err := v.Marshal(value, ct)
-		return err
-	case *avro.Schema:
-		jsSchema := avro.ConvertToJsonSchema(v)
-		_, err := encoding.NewEncoder(jsSchema).Write(value, ct)
-		return err
-	default:
-		return nil
-	}
 }

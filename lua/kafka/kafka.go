@@ -3,8 +3,6 @@ package kafka
 import (
 	"mokapi/engine/common"
 	"mokapi/lua/convert"
-	"strings"
-	"time"
 
 	log "github.com/sirupsen/logrus"
 	lua "github.com/yuin/gopher-lua"
@@ -47,7 +45,7 @@ func (m *Module) Produce(state *lua.LState) int {
 			log.Error(err)
 		}
 	}
-	args := &common.KafkaProduceArgs{Cluster: opts.Cluster, Topic: opts.Topic, Timeout: opts.Timeout}
+	args := &common.KafkaProduceArgs{Cluster: opts.Cluster, Topic: opts.Topic}
 	args.Messages = append(args.Messages, common.KafkaMessage{
 		Key:       opts.Key,
 		Data:      opts.Value,
@@ -55,27 +53,20 @@ func (m *Module) Produce(state *lua.LState) int {
 		Partition: opts.Partition,
 	})
 
-	var err error
-	timeout := time.Duration(args.Timeout) * time.Second
-	for start := time.Now(); time.Since(start) < timeout; {
-		if result, err := m.client.Produce(args); err == nil {
-			r := &kafkaResult{KafkaProduceResult: result}
-			if result != nil && len(result.Messages) == 1 {
-				r.Key = result.Messages[0].Key
-				r.Value = result.Messages[0].Value
-				r.Headers = result.Messages[0].Headers
-				r.Partition = result.Messages[0].Partition
-			}
-			state.Push(luar.New(state, r))
-			return 1
-		} else if !strings.HasPrefix(err.Error(), "no broker found at") {
-			break
+	if result, err := m.client.Produce(args); err == nil {
+		r := &kafkaResult{KafkaProduceResult: result}
+		if result != nil && len(result.Messages) == 1 {
+			r.Key = result.Messages[0].Key
+			r.Value = result.Messages[0].Value
+			r.Headers = result.Messages[0].Headers
+			r.Partition = result.Messages[0].Partition
 		}
+		state.Push(luar.New(state, r))
+		return 1
 	}
 
 	state.Push(lua.LNil)
-	state.Push(lua.LString(err.Error()))
-	return 2
+	return 1
 }
 
 func (m *Module) Loader(state *lua.LState) int {

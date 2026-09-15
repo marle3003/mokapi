@@ -11,10 +11,11 @@ import (
 )
 
 type PublishArgs struct {
-	QoS        byte
-	Retain     bool
-	ClientId   string
-	ScriptFile string
+	QoS            byte
+	Retain         bool
+	ClientId       string
+	ScriptFile     string
+	SkipValidation bool
 }
 
 func (s *Store) Publish(publish *mqtt.PublishRequest, args PublishArgs) (mqtt.PublishReason, error) {
@@ -30,9 +31,13 @@ func (s *Store) Publish(publish *mqtt.PublishRequest, args PublishArgs) (mqtt.Pu
 		return mqtt.TopicNameInvalid, fmt.Errorf("topic %s not found", msg.Topic)
 	}
 
-	messageId, err := topic.validate(msg.Data)
-	if err != nil {
-		return mqtt.PayloadFormatInvalid, fmt.Errorf("mqtt: topic validation error '%s': %s", msg.Topic, err)
+	var messageId string
+	var err error
+	if !args.SkipValidation {
+		messageId, err = topic.validate(msg.Data)
+		if err != nil {
+			return mqtt.PayloadFormatInvalid, fmt.Errorf("mqtt: topic validation error '%s': %s", msg.Topic, err)
+		}
 	}
 
 	evt := &engine.MqttMessageEvent{
@@ -43,9 +48,11 @@ func (s *Store) Publish(publish *mqtt.PublishRequest, args PublishArgs) (mqtt.Pu
 	}
 	actions := s.eventEmitter.EmitMqtt(evt)
 	if actions != nil {
-		messageId, err = topic.validate(msg.Data)
-		if err != nil {
-			return mqtt.PayloadFormatInvalid, fmt.Errorf("mqtt: topic validation error '%s': %s", msg.Topic, err)
+		if !args.SkipValidation {
+			messageId, err = topic.validate(msg.Data)
+			if err != nil {
+				return mqtt.PayloadFormatInvalid, fmt.Errorf("mqtt: topic validation error '%s': %s", msg.Topic, err)
+			}
 		}
 		args.Retain = evt.Retain
 	}

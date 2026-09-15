@@ -168,3 +168,77 @@ func (c *Channel) ExtractParams(topicName string) (map[string]string, error) {
 
 	return params, nil
 }
+
+func (c *Channel) GetMessageByPayload(value any) (*Message, error) {
+	// first try to get send operation
+	msg, noOperationDefined, validationErr := c.getMessageByPayload(value, "send")
+	if !noOperationDefined && validationErr == nil {
+		return msg, nil
+	}
+	// second, try to get receive operation
+	msg, noOperationDefined, validationErr = c.getMessageByPayload(value, "receive")
+	if !noOperationDefined && validationErr == nil {
+		return msg, nil
+	}
+
+	if noOperationDefined {
+		for _, m := range c.Messages {
+			if m.Value == nil {
+				continue
+			}
+			if validationErr = m.Value.ValidatePayload(value); validationErr == nil {
+				return m.Value, nil
+			}
+		}
+	}
+
+	if value != nil {
+		switch value.(type) {
+		case string, []byte:
+			break
+		default:
+			b, err := json.Marshal(value)
+			if err == nil {
+				value = string(b)
+			}
+		}
+		if validationErr != nil {
+			return nil, fmt.Errorf("message validation failed:\n\nMessage:\n%v\n\n%w\n", value, validationErr)
+		}
+		return nil, nil
+	}
+	return nil, fmt.Errorf("channel defines no message schema; define a message payload in the channel or provide an explicit message")
+}
+
+func (c *Channel) getMessageByPayload(value any, action string) (*Message, bool, error) {
+	cfg := c.Config
+	noOperationDefined := true
+	var validationErr error
+
+	for _, op := range cfg.Operations {
+		if op.Value == nil || op.Value.Channel.Value == nil {
+			continue
+		}
+		if op.Value.Channel.Value == c && op.Value.Action == action {
+			noOperationDefined = false
+			if len(op.Value.Messages) == 0 {
+				for _, msg := range op.Value.Channel.Value.Messages {
+					if msg.Value != nil {
+						if validationErr = msg.Value.ValidatePayload(value); validationErr == nil {
+							return msg.Value, false, nil
+						}
+					}
+				}
+			} else {
+				for _, msg := range op.Value.Messages {
+					if msg.Value != nil {
+						if validationErr = msg.Value.ValidatePayload(value); validationErr == nil {
+							return msg.Value, false, nil
+						}
+					}
+				}
+			}
+		}
+	}
+	return nil, noOperationDefined, validationErr
+}

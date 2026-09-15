@@ -228,3 +228,17 @@ func (m *Message) applyTrait(trait *MessageTrait) {
 		m.Bindings.Kafka.Key = trait.Bindings.Kafka.Key
 	}
 }
+
+func (m *Message) ValidatePayload(value any) error {
+	if value == nil || m.Payload == nil {
+		return nil
+	}
+
+	p, err := m.Payload.GetParser(m.ContentType)
+	if err != nil {
+		return err
+	}
+
+	_, err = p.Parse(value)
+	return err
+}

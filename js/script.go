@@ -20,6 +20,7 @@ import (
 	"mokapi/js/require"
 	"mokapi/js/yaml"
 	"reflect"
+	"runtime/debug"
 	"strings"
 	"sync"
 
@@ -155,6 +156,7 @@ func (s *Script) ensureRuntime() error {
 		if r != nil {
 			// Closing the script may cause errors. runtime = nil => closing
 			if s.runtime != nil {
+				log.Debugf("js: recovered from panic %v: %v", s.file.Info.Path(), string(debug.Stack()))
 				log.Errorf("js: recovered from panic %v: %v", s.file.Info.Path(), r)
 			}
 		}

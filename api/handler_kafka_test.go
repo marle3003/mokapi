@@ -656,7 +656,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 								{
 									Partition: -1,
 									Offset:    -1,
-									Error:     "Kafka message validation failed:\n\nMessage:\n123\n\nValidation error count 1:\n\t- #/type: invalid type, expected string but got number\n",
+									Error:     "message validation failed:\n\nMessage:\n123\n\nValidation error count 1:\n\t- #/type: invalid type, expected string but got number\n",
 								},
 							},
 						}, data)
