@@ -54,7 +54,7 @@
     "@types/js-yaml": "4.0.9",
     "@types/markdown-it-container": "4.0.1",
     "@types/node": "26.5.0",
-    "@vitejs/plugin-vue": "6.0.8",
+    "@vitejs/plugin-vue": "6.0.9",
     "@vue/eslint-config-prettier": "10.2.0",
     "@vue/eslint-config-typescript": "14.9.0",
     "@vue/tsconfig": "0.9.1",
