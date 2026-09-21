@@ -215,7 +215,7 @@ func (t *Topic) Produce(partition int, value any, key string, headers map[string
 	}
 
 	if len(result) > 0 && result[0].Error != "" {
-		return fmt.Errorf("%s\nTo create a valid payload:\n1. Select a message from operation.messages\n2. Generate example data:\n\n   const value = mokapi.fake(message.payload)\n\n3. Modify only the required fields if needed.", result[0].Error)
+		return fmt.Errorf("%s\n\nTo create a valid payload:\n1. Select a message from operation.messages\n2. Generate example data:\n\n   const value = mokapi.fake(message.payload)\n\n3. Modify only the required fields if needed.", result[0].Error)
 	}
 
 	// update JS topic and partition

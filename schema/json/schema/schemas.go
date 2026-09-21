@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"mokapi/config/dynamic"
 	"mokapi/sortedmap"
+	"reflect"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Schemas struct {
@@ -51,8 +53,8 @@ func (s *Schemas) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	if delim, ok := token.(json.Delim); ok && delim != '{' {
-		return fmt.Errorf("expected openapi.Responses map, got %s", token)
+	if delim, ok := token.(json.Delim); !ok || delim != '{' {
+		return fmt.Errorf("expected object, got %s", dynamic.ToTypeName(reflect.TypeOf(token)))
 	}
 	s.LinkedHashMap = sortedmap.LinkedHashMap[string, *Schema]{}
 	for {

@@ -2,6 +2,7 @@ package faker
 
 import (
 	"fmt"
+	"mokapi/js/eventloop"
 	"mokapi/js/util"
 	"mokapi/schema/json/generator"
 	"reflect"
@@ -166,10 +167,10 @@ func (n *Node) Set(key string, val goja.Value) bool {
 		}
 		old := n.origNode.Fake
 		n.origNode.Fake = func(r *generator.Request) (interface{}, error) {
-			v, err := n.m.loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
+			v, err := n.m.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
 				param := n.m.vm.ToValue(r)
 				return f(goja.Undefined(), param)
-			})
+			}, &eventloop.JobContext{})
 			if err != nil {
 				return nil, err
 			}

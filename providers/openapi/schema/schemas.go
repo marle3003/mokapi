@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"mokapi/config/dynamic"
 	"mokapi/sortedmap"
+	"reflect"
 
 	"github.com/pkg/errors"
 	"gopkg.in/yaml.v3"
@@ -37,8 +38,8 @@ func (s *Schemas) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return err
 	}
-	if delim, ok := token.(json.Delim); ok && delim != '{' {
-		return fmt.Errorf("expected openapi.Responses map, got %s", token)
+	if delim, ok := token.(json.Delim); !ok || delim != '{' {
+		return fmt.Errorf("expected object, got %s", dynamic.ToTypeName(reflect.TypeOf(token)))
 	}
 	s.LinkedHashMap = sortedmap.LinkedHashMap[string, *Schema]{}
 	for {
@@ -55,7 +56,11 @@ func (s *Schemas) UnmarshalJSON(b []byte) error {
 		err = dec.Decode(&val)
 		if err != nil {
 			offset += dynamic.NextTokenIndex(b[offset:])
-			return dynamic.NewStructuralErrorWithField(err, offset, dec, key)
+			return &dynamic.SchemaError{
+				Message: err,
+				Offset:  offset,
+				Field:   key,
+			}
 		}
 		s.Set(key, val)
 	}

@@ -87,7 +87,7 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			test: func(t *testing.T) {
 				var s string
 				err := UnmarshalJSON([]byte(`true`), &s)
-				require.EqualError(t, err, "bool is not assignable to string")
+				require.EqualError(t, err, "expected type string, got boolean")
 			},
 		},
 		{
@@ -137,8 +137,8 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 					X string `json:"name"`
 				}
 				err := UnmarshalJSON([]byte(`{"name": []}`), &v)
-				require.EqualError(t, err, "structural error at name: expected string but received an array")
-				require.Equal(t, int64(10), err.(*StructuralError).Offset)
+				require.EqualError(t, err, "schema error at field 'name': expected string, got array")
+				require.Equal(t, int64(9), err.(*SchemaError).Offset)
 			},
 		},
 		{
@@ -231,7 +231,7 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			test: func(t *testing.T) {
 				v := make(map[string]string)
 				err := UnmarshalJSON([]byte(`{"value": true}`), &v)
-				require.EqualError(t, err, "structural error at value: bool is not assignable to string")
+				require.EqualError(t, err, "schema error at field 'value': expected type string, got boolean")
 				require.Equal(t, map[string]string{"value": ""}, v)
 			},
 		},

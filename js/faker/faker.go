@@ -2,11 +2,13 @@ package faker
 
 import (
 	"fmt"
+	"mokapi/config/dynamic"
 	"mokapi/engine/common"
 	"mokapi/js/eventloop"
 	"mokapi/js/util"
 	"mokapi/providers/openapi/schema"
 	"mokapi/schema/json/generator"
+	jsonSchema "mokapi/schema/json/schema"
 	"reflect"
 
 	"github.com/dop251/goja"
@@ -59,7 +61,7 @@ func (m *Module) FakeAsync(v goja.Value) *goja.Promise {
 	return p
 }
 
-func (m *Module) fake(v goja.Value) (interface{}, error) {
+func (m *Module) fake(v goja.Value) (any, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -71,13 +73,13 @@ func (m *Module) fake(v goja.Value) (interface{}, error) {
 
 	r := &generator.Request{}
 	if isOpenApiSchema(v.ToObject(m.vm)) {
-		s, err := ToOpenAPISchema(v, m.vm)
+		s, err := toStruct[*schema.Schema](v, m.vm)
 		if err != nil {
 			panic(m.vm.ToValue(err.Error()))
 		}
 		r.Schema = schema.ConvertToJsonSchema(s)
 	} else {
-		s, err := ToJsonSchema(v, m.vm)
+		s, err := toStruct[*jsonSchema.Schema](v, m.vm)
 		if err != nil {
 			panic(m.vm.ToValue(err.Error()))
 		}
@@ -85,4 +87,26 @@ func (m *Module) fake(v goja.Value) (interface{}, error) {
 	}
 
 	return generator.New(r)
+}
+
+func toStruct[T any](v goja.Value, vm *goja.Runtime) (T, error) {
+	var out T
+
+	// stringify ensures order of fields instead of exporting to a map
+	jsonGlobal := vm.GlobalObject().Get("JSON").ToObject(vm)
+	stringify, ok := goja.AssertFunction(jsonGlobal.Get("stringify"))
+	if !ok {
+		return out, fmt.Errorf("JSON.stringify not available")
+	}
+
+	res, err := stringify(goja.Undefined(), v)
+	if err != nil {
+		return out, err
+	}
+
+	err = dynamic.UnmarshalJSON([]byte(res.String()), &out)
+	if err != nil {
+		return out, dynamic.FormatError(nil, err)
+	}
+	return out, err
 }

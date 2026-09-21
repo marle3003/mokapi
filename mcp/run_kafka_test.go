@@ -467,9 +467,6 @@ t`,
 				)
 				require.EqualError(t, err, `message validation failed:
 
-Message:
-{"foo":123}
-
 Validation error count 1:
 	- #/foo/type: invalid type, expected string but got integer
 

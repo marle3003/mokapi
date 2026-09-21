@@ -1,7 +1,6 @@
 package swagger
 
 import (
-	"encoding/json"
 	"mokapi/config/dynamic"
 	"testing"
 
@@ -35,16 +34,14 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			name: "wrong type in schema attribute",
 			s:    `{"definitions": { "Foo": { "items": [] } }}`,
 			test: func(t *testing.T, c *Config, err error) {
-				require.EqualError(t, err, "structural error at definitions.Foo.items: expected object but received an array")
-				require.Equal(t, int64(38), err.(*dynamic.StructuralError).Offset)
+				require.EqualError(t, err, "schema error at field 'definitions.Foo.items': expected object, got array")
 			},
 		},
 		{
 			name: "wrong type in schema properties attribute",
 			s:    `{"definitions": { "Foo": { "properties": { "value": { "items": [] } } } }}`,
 			test: func(t *testing.T, c *Config, err error) {
-				require.EqualError(t, err, "structural error at definitions.Foo.properties.value.items: expected object but received an array")
-				require.Equal(t, int64(65), err.(*dynamic.StructuralError).Offset)
+				require.EqualError(t, err, "schema error at field 'definitions.Foo.properties.value.items': expected object, got array")
 			},
 		},
 		{
@@ -71,7 +68,7 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			c := &Config{}
-			err := json.Unmarshal([]byte(tc.s), c)
+			err := dynamic.UnmarshalJSON([]byte(tc.s), c)
 			tc.test(t, c, err)
 		})
 	}

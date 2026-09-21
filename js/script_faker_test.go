@@ -55,7 +55,7 @@ func TestScript_Faker(t *testing.T) {
 					js.WithHost(host))
 				r.NoError(t, err)
 				_, err = s.RunDefault()
-				r.EqualError(t, err, "unexpected type for 'type': Object at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'type': expected type string or array, got object at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -82,7 +82,7 @@ func TestScript_Faker(t *testing.T) {
 					js.WithHost(host))
 				r.NoError(t, err)
 				_, err = s.RunDefault()
-				r.EqualError(t, err, "unexpected type for 'exclusiveMinimum': got String, expected Number or Boolean at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'exclusiveMinimum': expected type number or boolean, got string (\"str\") at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -109,7 +109,7 @@ func TestScript_Faker(t *testing.T) {
 					js.WithHost(host))
 				r.NoError(t, err)
 				_, err = s.RunDefault()
-				r.EqualError(t, err, "unexpected type for 'exclusiveMaximum': got String, expected Number or Boolean at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'exclusiveMaximum': expected type number or boolean, got string (\"str\") at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
