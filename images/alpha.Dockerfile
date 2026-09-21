@@ -1,6 +1,6 @@
 ARG VERSION
 
-FROM node:26.8.1@sha256:f5d1cc40abc10c2843339a2134d07817cf33c405cb16bfd052b0ed790254c3a3 as webui
+FROM node:26.9.0@sha256:e26b4e7d163a29e0d05806e167db8cc0c76f02f633006c1f5c0aeea5a8415147 as webui
 
 COPY ./webui ./webui
 
@@ -31,7 +31,7 @@ RUN go test -v ./...
 
 RUN go build -o mokapi -ldflags="-X mokapi/version.BuildVersion=$VERSION -X mokapi/version.BuildTime=$BUILD_TIME" ./cmd/mokapi
 
-FROM alpine:3.24.1@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
+FROM alpine:3.24.2@sha256:3cf95fe0816180395592b8373f3ec60663f076127617bbacb4eacf9667afe2e9
 
 COPY --from=gobuild /go/src/github.com/mokapi/mokapi /usr/local/bin/mokapi
 
