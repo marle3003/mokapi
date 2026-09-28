@@ -97,7 +97,7 @@ function getSchemeClass(scheme: HttpSecurityScheme) {
 
             <div class="nav card-tabs" role="tablist" data-testid="tabs">
               <button :class="activeTab === 'RequestBody' ? 'active' : 'disabled'" id="body-tab" :aria-disabled="!operation.requestBody" data-bs-toggle="tab" data-bs-target="#body" type="button" role="tab" aria-controls="body" :aria-selected="activeTab === 'RequestBody'"><span class="bi-file-text me-2" />Body</button>
-              <button :class="{ active: activeTab === 'Parameters' }" id="parameters-tab" data-bs-toggle="tab" data-bs-target="#parameters" type="button" role="tab" aria-controls="parameters" :aria-selected="activeTab === 'Parameters'"><span class="bi-sliders me-2" />Parameters</button>
+              <button :class="{ active: activeTab === 'Parameters', disabled: !operation.parameters }" id="parameters-tab" data-bs-toggle="tab" data-bs-target="#parameters" type="button" role="tab" aria-controls="parameters" :aria-selected="activeTab === 'Parameters'"><span class="bi-sliders me-2" />Parameters</button>
               <button :class="{ active: activeTab === 'Security', disabled: !operation.security }" id="security-tab" :aria-disabled="!operation.security" data-bs-toggle="tab" data-bs-target="#security" type="button" role="tab" aria-controls="security" :aria-selected="activeTab === 'Security'"><span class="bi-shield-lock me-2" /> Security</button>
             </div>
 

@@ -12,7 +12,7 @@ func TestCurrency(t *testing.T) {
 	testcases := []struct {
 		name string
 		req  *Request
-		test func(t *testing.T, v interface{}, err error)
+		test func(t *testing.T, v any, err error)
 	}{
 		{
 			name: "currency",
@@ -20,7 +20,7 @@ func TestCurrency(t *testing.T) {
 				Path:   []string{"currency"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "BIF", v)
 			},
@@ -31,9 +31,9 @@ func TestCurrency(t *testing.T) {
 				Path:   []string{"currency"},
 				Schema: schematest.New("object"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"code": "BIF", "name": "Burundi Franc"}, v)
+				require.Equal(t, map[string]any{"code": "BIF", "name": "Burundi Franc"}, v)
 			},
 		},
 		{
@@ -46,9 +46,9 @@ func TestCurrency(t *testing.T) {
 					schematest.WithRequired("code", "name"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"code": "BIF", "name": "Burundi Franc"}, v)
+				require.Equal(t, map[string]any{"code": "BIF", "name": "Burundi Franc"}, v)
 			},
 		},
 		{
@@ -57,7 +57,7 @@ func TestCurrency(t *testing.T) {
 				Path:   []string{"price"},
 				Schema: schematest.New("number"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 750983.89, v)
 			},
@@ -68,7 +68,7 @@ func TestCurrency(t *testing.T) {
 				Path:   []string{"price"},
 				Schema: schematest.New("number", schematest.WithMaximum(99)),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, 74.34, v)
 			},
@@ -84,9 +84,9 @@ func TestCurrency(t *testing.T) {
 					schematest.WithRequired("value", "currency", "currencyName"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{
+				require.Equal(t, map[string]any{
 					"currency":     "HTG",
 					"currencyName": "Haiti Gourde",
 					"value":        int64(98999),
@@ -104,9 +104,9 @@ func TestCurrency(t *testing.T) {
 					schematest.WithRequired("amount", "currency", "currencyName"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{
+				require.Equal(t, map[string]any{
 					"currency":     "HTG",
 					"currencyName": "Haiti Gourde",
 					"amount":       750983.89,
@@ -120,9 +120,9 @@ func TestCurrency(t *testing.T) {
 					schematest.WithProperty("credit_card", schematest.New("number")),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{
+				require.Equal(t, map[string]any{
 					"credit_card": 4.28241936002255e+14,
 				}, v)
 			},
@@ -134,9 +134,9 @@ func TestCurrency(t *testing.T) {
 					schematest.WithProperty("creditCard", schematest.New("number")),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{
+				require.Equal(t, map[string]any{
 					"creditCard": 4.28241936002255e+14,
 				}, v)
 			},

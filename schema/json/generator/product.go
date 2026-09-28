@@ -5,23 +5,28 @@ import "github.com/brianvoe/gofakeit/v7"
 func products() []*Node {
 	return []*Node{
 		{
-			Name: "product",
+			Name:       "product",
+			Attributes: []string{"product"},
 			Children: []*Node{
 				{
-					Name: "name",
-					Fake: fakeProductName,
+					Name:       "name",
+					Attributes: []string{"name"},
+					Fake:       fakeProductName,
 				},
 				{
-					Name: "description",
-					Fake: fakeProductDescription,
+					Name:       "description",
+					Attributes: []string{"description"},
+					Fake:       fakeProductDescription,
 				},
 				{
-					Name: "category",
-					Fake: fakeProductCategory,
+					Name:       "category",
+					Attributes: []string{"category"},
+					Fake:       fakeProductCategory,
 				},
 				{
-					Name: "material",
-					Fake: fakeProductMaterial,
+					Name:       "material",
+					Attributes: []string{"material"},
+					Fake:       fakeProductMaterial,
 				},
 			},
 		},

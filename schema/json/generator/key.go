@@ -1,10 +1,14 @@
 package generator
 
 func newKeyNode() *Node {
-	return &Node{Name: "key", Fake: fakeKey}
+	return &Node{
+		Name:       "key",
+		Attributes: []string{"key"},
+		Fake:       fakeKey,
+	}
 }
 
-func fakeKey(r *Request) (interface{}, error) {
+func fakeKey(r *Request) (any, error) {
 	s := r.Schema
 	if s.IsString() {
 		if s.Pattern != "" {

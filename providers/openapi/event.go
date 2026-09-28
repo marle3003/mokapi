@@ -119,9 +119,9 @@ func setResponseData(r *common.HttpEventResponse, m *MediaType, request *common.
 		data, err := generator.New(req)
 		if err != nil {
 			return fmt.Errorf("generate response data failed: %v", err)
-		} else {
-			r.Data = data
 		}
+
+		r.Data = data
 	}
 	return nil
 }
@@ -129,7 +129,7 @@ func setResponseData(r *common.HttpEventResponse, m *MediaType, request *common.
 func setResponseHeader(r *common.HttpEventResponse, headers Headers) error {
 	for k, v := range headers {
 		if v.Value == nil {
-			log.Warnf("header ref not resovled: %v", v.Ref)
+			log.Warnf("header ref not resolved: %v", v.Ref)
 			continue
 		}
 		if data, err := schema.CreateValue(v.Value.Schema); err != nil {
@@ -141,8 +141,8 @@ func setResponseHeader(r *common.HttpEventResponse, headers Headers) error {
 	return nil
 }
 
-func getGeneratorContext(r *common.HttpEventRequest) map[string]interface{} {
-	ctx := map[string]interface{}{}
+func getGeneratorContext(r *common.HttpEventRequest) map[string]any {
+	ctx := map[string]any{}
 	for k, v := range r.Cookie {
 		if v != nil {
 			ctx[k] = v

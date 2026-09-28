@@ -662,6 +662,30 @@ paths:
             'application/json':
               schema:
                 $ref: '#/components/schemas/FakerTree'
+  /api/faker/node/{name}/fake:
+    parameters:
+      - in: path
+        name: name
+        required: true
+        schema:
+          type: string
+    get:
+      summary: returns a fake value produced by the faker node
+      operationId: fakerNodeFake
+      responses:
+        "200":
+          description: the fake value produced by the faker node
+          content:
+            'application/json':
+              schema: true
+        "400":
+          description: bad request for faker node
+          content:
+            text/plain:
+              schema:
+                type: string
+        "404":
+          description: faker node not found
   /api/search/query:
     get:
       summary: search mock data

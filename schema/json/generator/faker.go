@@ -32,6 +32,9 @@ func newFakerWithFallback(n *Node, r *Request) *faker {
 				return nil, err
 			}
 			if v, err = validate(v, r); err != nil {
+				if n.Custom {
+					log.Debugf("custom fake function at node failed for '%s': %v", n.Name, err)
+				}
 				return fakeBySchema(r)
 			}
 			return v, nil

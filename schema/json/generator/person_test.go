@@ -19,16 +19,16 @@ func TestPerson(t *testing.T) {
 	testcases := []struct {
 		name string
 		req  *Request
-		test func(t *testing.T, v interface{}, err error)
+		test func(t *testing.T, v any, err error)
 	}{
 		{
 			name: "person any",
 			req: &Request{
 				Path: []string{"person"},
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{
+				require.Equal(t, map[string]any{
 					"firstname": "Aria",
 					"lastname":  "Hernandez",
 					"gender":    "female",
@@ -42,9 +42,9 @@ func TestPerson(t *testing.T) {
 				Path:   []string{"person"},
 				Schema: schematest.New("object"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{
+				require.Equal(t, map[string]any{
 					"firstname": "Aria",
 					"gender":    "female",
 					"lastname":  "Hernandez",
@@ -61,9 +61,9 @@ func TestPerson(t *testing.T) {
 					schematest.WithRequired("name"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Aria Hernandez"}, v)
+				require.Equal(t, map[string]any{"name": "Aria Hernandez"}, v)
 			},
 		},
 		{
@@ -77,9 +77,9 @@ func TestPerson(t *testing.T) {
 					schematest.WithRequired("name", "firstname", "lastname"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{
+				require.Equal(t, map[string]any{
 					"firstname": "Aria",
 					"lastname":  "Hernandez",
 					"name":      "Aria Hernandez",
@@ -97,9 +97,9 @@ func TestPerson(t *testing.T) {
 					schematest.WithRequired("firstname", "lastname", "sex"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{
+				require.Equal(t, map[string]any{
 					"firstname": "Emily",
 					"lastname":  "Jones",
 					"sex":       "female",
@@ -122,10 +122,10 @@ func TestPerson(t *testing.T) {
 					schematest.WithRequired("firstname", "lastname", "gender", "sex", "email", "phone", "username", "contact"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{
-					"contact": map[string]interface{}{
+				require.Equal(t, map[string]any{
+					"contact": map[string]any{
 						"email": "riley.jones@vicee-markets.com",
 						"phone": "+15144065319"},
 					"email":     "riley.jones@groupschemas.com",
@@ -152,7 +152,7 @@ func TestPerson(t *testing.T) {
 			},
 			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{
+				require.Equal(t, []any{
 					map[string]any{"name": "Emily Nelson"},
 					map[string]any{"name": "Aiden Garcia"},
 					map[string]any{"name": "Sebastian Wright"},
@@ -167,9 +167,9 @@ func TestPerson(t *testing.T) {
 				Path:   []string{"persons"},
 				Schema: schematest.NewTypes(nil, schematest.WithMinItems(1)),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{
+				require.Equal(t, []any{
 					map[string]any{
 						"email":     "emily.nelson@directend-to-end.com",
 						"firstname": "Emily",
@@ -184,9 +184,9 @@ func TestPerson(t *testing.T) {
 			req: &Request{
 				Path: []string{"contact"},
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"email": "kbryant57@berge.biz", "phone": "+992824193"}, v)
+				require.Equal(t, map[string]any{"email": "kbryant57@berge.biz", "phone": "+992824193"}, v)
 			},
 		},
 		{
@@ -194,7 +194,7 @@ func TestPerson(t *testing.T) {
 			req: &Request{
 				Path: []string{"phone"},
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "+992824193", v)
 			},
@@ -205,18 +205,18 @@ func TestPerson(t *testing.T) {
 				Path:   []string{"phone"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "+992824193", v)
 			},
 		},
 		{
-			name: "phone schema string",
+			name: "notificationPhoneNumber schema string",
 			req: &Request{
 				Path:   []string{"notificationPhoneNumber"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "+992824193", v)
 			},
@@ -227,7 +227,7 @@ func TestPerson(t *testing.T) {
 				Path:   []string{"phone"},
 				Schema: schematest.New("boolean"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, true, v)
 			},
@@ -238,7 +238,7 @@ func TestPerson(t *testing.T) {
 				Path:   []string{"windowsUserName"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "ahernandez", v)
 			},
@@ -253,9 +253,9 @@ func TestPerson(t *testing.T) {
 					schematest.WithRequired("firstname", "lastname"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"firstname": "Aria", "lastname": "Hernandez"}, v)
+				require.Equal(t, map[string]any{"firstname": "Aria", "lastname": "Hernandez"}, v)
 			},
 		},
 		{
@@ -264,7 +264,7 @@ func TestPerson(t *testing.T) {
 				Path:   []string{"person", "birthday"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				isDateString(t, v)
 			},
@@ -275,7 +275,7 @@ func TestPerson(t *testing.T) {
 				Path:   []string{"person", "birthDate"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				isDateString(t, v)
 			},
@@ -295,7 +295,7 @@ func TestPerson(t *testing.T) {
 			},
 			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{
+				require.Equal(t, []any{
 					map[string]any{"firstname": "Emily", "title": "Mrs."},
 					map[string]any{"firstname": "Aiden", "title": "Mx."},
 					map[string]any{"firstname": "Sebastian", "title": "Rev."},
@@ -323,16 +323,16 @@ func TestPerson(t *testing.T) {
 			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []any{
-					map[string]interface{}{"alias": "L. Jackson", "firstname": "Leah", "lastname": "Jackson", "sex": "female", "username": "ljackson"},
-					map[string]interface{}{"alias": "M. Hernandez", "firstname": "Mia", "lastname": "Hernandez", "sex": "female", "username": "mhernandez"},
-					map[string]interface{}{"alias": "V. Carter", "firstname": "Violet", "lastname": "Carter", "sex": "female", "username": "vcarter"},
-					map[string]interface{}{"alias": "C. Jones", "firstname": "Camila", "lastname": "Jones", "sex": "female", "username": "cjones"},
-					map[string]interface{}{"alias": "W. Anderson", "firstname": "Wyatt", "lastname": "Anderson", "sex": "male", "username": "wanderson"},
+					map[string]any{"alias": "L. Jackson", "firstname": "Leah", "lastname": "Jackson", "sex": "female", "username": "ljackson"},
+					map[string]any{"alias": "M. Hernandez", "firstname": "Mia", "lastname": "Hernandez", "sex": "female", "username": "mhernandez"},
+					map[string]any{"alias": "V. Carter", "firstname": "Violet", "lastname": "Carter", "sex": "female", "username": "vcarter"},
+					map[string]any{"alias": "C. Jones", "firstname": "Camila", "lastname": "Jones", "sex": "female", "username": "cjones"},
+					map[string]any{"alias": "W. Anderson", "firstname": "Wyatt", "lastname": "Anderson", "sex": "male", "username": "wanderson"},
 				}, v)
 			},
 		},
 		{
-			name: "person fullname",
+			name: "person full name",
 			req: &Request{
 				Path: []string{"person"},
 				Schema: schematest.New("object",
@@ -341,9 +341,9 @@ func TestPerson(t *testing.T) {
 					schematest.WithRequired("name"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"firstname": "Aria", "fullName": "Aria Hernandez", "name": "Aria Hernandez"}, v)
+				require.Equal(t, map[string]any{"firstname": "Aria", "fullName": "Aria Hernandez", "name": "Aria Hernandez"}, v)
 			},
 		},
 
@@ -357,9 +357,9 @@ func TestPerson(t *testing.T) {
 					schematest.WithRequired("name", "firstName"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"firstName": "Aria", "name": "Aria Hernandez"}, v)
+				require.Equal(t, map[string]any{"firstName": "Aria", "name": "Aria Hernandez"}, v)
 			},
 		},
 		{
@@ -372,9 +372,9 @@ func TestPerson(t *testing.T) {
 					schematest.WithRequired("name", "firstName2"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"firstName2": "Drew", "name": "Emily Drew Nelson"}, v)
+				require.Equal(t, map[string]any{"firstName2": "Aria", "name": "Aria Hernandez"}, v)
 			},
 		},
 		{
@@ -385,9 +385,34 @@ func TestPerson(t *testing.T) {
 					schematest.WithItems("string"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"A. Hernandez", "A. H."}, v)
+				require.Equal(t, []any{"A. Hernandez", "A. H."}, v)
+			},
+		},
+		{
+			name: "sender and recipient",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithProperty("sender",
+						schematest.New("object",
+							schematest.WithProperty("firstname", nil),
+						),
+					),
+					schematest.WithProperty("recipient",
+						schematest.New("object",
+							schematest.WithProperty("firstname", nil),
+						),
+					),
+					schematest.WithRequired("sender", "recipient"),
+				),
+			},
+			test: func(t *testing.T, v any, err error) {
+				require.NoError(t, err)
+				require.Equal(t, map[string]any{
+					"recipient": map[string]any{"firstname": "Mason"},
+					"sender":    map[string]any{"firstname": "Aria"},
+				}, v)
 			},
 		},
 	}

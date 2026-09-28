@@ -43,32 +43,32 @@ func TestFindByName(t *testing.T) {
 			},
 		},
 		{
-			name: "absolute /house/number",
+			name: "absolute /address/line1",
 			test: func(t *testing.T) {
-				n := generator.FindByName("/house/number")
+				n := generator.FindByName("/address/line1")
 				require.NotNil(t, n)
-				require.Equal(t, "number", n.Name)
+				require.Equal(t, "line1", n.Name)
 				v, err := n.Fake(generator.NewRequest(nil, nil, nil))
 				require.NoError(t, err)
-				require.Equal(t, "62951", v)
+				require.Equal(t, "Grayson Anderson", v)
 			},
 		},
 		{
-			name: "absolute /house/number2",
+			name: "absolute /address/line10",
 			test: func(t *testing.T) {
 				n := generator.FindByName("/house/number2")
 				require.Nil(t, n)
 			},
 		},
 		{
-			name: "relative middle/name",
+			name: "relative contact/phone",
 			test: func(t *testing.T) {
-				n := generator.FindByName("middle/name")
+				n := generator.FindByName("contact/phone")
 				require.NotNil(t, n)
-				require.Equal(t, "name", n.Name)
+				require.Equal(t, "phone", n.Name)
 				v, err := n.Fake(generator.NewRequest(nil, nil, nil))
 				require.NoError(t, err)
-				require.Equal(t, "Edward", v)
+				require.Equal(t, "+1062951049628", v)
 			},
 		},
 	}

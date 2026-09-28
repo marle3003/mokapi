@@ -17,13 +17,14 @@ const RootName = "root"
 type fakeFunc func() (any, error)
 
 type Node struct {
-	Name       string                        `json:"name"`
-	Attributes []string                      `json:"attributes,omitempty"`
-	Weight     float64                       `json:"weight,omitempty"`
-	DependsOn  []string                      `json:"dependsOn,omitempty"`
-	Children   []*Node                       `json:"children,omitempty"`
-	Custom     bool                          `json:"custom,omitempty"`
-	Fake       func(r *Request) (any, error) `json:"-"`
+	Name        string                        `json:"name"`
+	Attributes  []string                      `json:"attributes,omitempty"`
+	Weight      float64                       `json:"weight,omitempty"`
+	DependsOn   []string                      `json:"dependsOn,omitempty"`
+	Children    []*Node                       `json:"children,omitempty"`
+	Custom      bool                          `json:"custom,omitempty"`
+	Fake        func(r *Request) (any, error) `json:"-"`
+	defaultNode *Node
 }
 
 func NewNode(name string) *Node {
@@ -122,13 +123,14 @@ func validate(v any, r *Request) (any, error) {
 
 func buildTree() *Node {
 	r := NewNode("root")
+	r.defaultNode = fakeBySchemaNode()
+
 	r.Children = []*Node{
 		newNameNode(),
 		newIdNode(),
 		newKeyNode(),
 		newEmailNode(),
 		newUrlNode(),
-		newUriNode(),
 	}
 
 	r.Children = append(r.Children, numbers()...)
@@ -146,7 +148,6 @@ func buildTree() *Node {
 	r.Children = append(r.Children, products()...)
 	r.Children = append(r.Children, files()...)
 	r.Children = append(r.Children, companyNodes()...)
-	r.Children = append(r.Children, fakeBySchemaNode())
 
 	return r
 }

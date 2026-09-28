@@ -189,6 +189,10 @@ func ArgToJs(arg any, vm *goja.Runtime) goja.Value {
 					p.KeyNormalizer = http.CanonicalHeaderKey
 				case "rebuild":
 					return rebuild(vm, v)
+				case "stopPropagation":
+					return vm.ToValue(func() {
+						v.StopPropagation = true
+					})
 				}
 
 				switch val.(type) {
@@ -214,16 +218,16 @@ func rebuild(vm *goja.Runtime, res *common.HttpEventResponse) goja.Value {
 		if statusCode != nil {
 			if statusCode.ExportType().Kind() != reflect.Int64 {
 				panic(fmt.Sprintf("response.rebuild failed: statusCode must be a number: got %v", util.JsType(statusCode.Export())))
-			} else {
-				s = statusCode.ToInteger()
 			}
+
+			s = statusCode.ToInteger()
 		}
 		if contentType != nil {
 			if contentType.ExportType().Kind() != reflect.String {
 				panic(fmt.Sprintf("response.rebuild failed: contentType must be a string: got %v", util.JsType(contentType.Export())))
-			} else {
-				c = contentType.String()
 			}
+
+			c = contentType.String()
 		}
 		res.Rebuild(int(s), c)
 	})

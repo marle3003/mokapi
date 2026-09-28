@@ -7,12 +7,13 @@ import (
 )
 
 type HttpEventResponse struct {
-	Headers    map[string]any `json:"headers"`
-	StatusCode int            `json:"statusCode"`
-	Body       string         `json:"body"`
-	Data       any            `json:"data"`
-	Schema     any            `json:"schema"`
-	Context    map[string]any `json:"context"`
+	Headers         map[string]any `json:"headers"`
+	StatusCode      int            `json:"statusCode"`
+	Body            string         `json:"body"`
+	Data            any            `json:"data"`
+	Schema          any            `json:"schema"`
+	Context         map[string]any `json:"context"`
+	StopPropagation bool           `json:"-"`
 
 	Rebuild func(statusCode int, contentType string) `json:"-"`
 }
@@ -20,7 +21,7 @@ type HttpEventResponse struct {
 type HttpEventRequest struct {
 	Method      string         `json:"method"`
 	Url         Url            `json:"url"`
-	Body        interface{}    `json:"body"`
+	Body        any            `json:"body"`
 	Path        map[string]any `json:"path"`
 	Query       map[string]any `json:"query"`
 	Header      map[string]any `json:"header"`
@@ -70,7 +71,7 @@ func (r *HttpEventResponse) HasBody() bool {
 	return len(r.Body) > 0 || r.Data != nil
 }
 
-func HttpEventHandler(req *HttpEventRequest, res *HttpEventResponse, resources interface{}) (bool, error) {
+func HttpEventHandler(req *HttpEventRequest, res *HttpEventResponse, resources any) (bool, error) {
 	resource := getResource(req.Url, resources)
 	if resource == nil {
 		return false, nil
@@ -79,7 +80,7 @@ func HttpEventHandler(req *HttpEventRequest, res *HttpEventResponse, resources i
 	return true, nil
 }
 
-func getResource(u Url, resources interface{}) interface{} {
+func getResource(u Url, resources any) any {
 	paths := strings.Split(u.Path, "/")
 	val := reflect.ValueOf(resources)
 	for _, path := range paths[:len(paths)-1] {

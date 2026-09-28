@@ -5,37 +5,41 @@ import (
 )
 
 func newNameNode() *Node {
-	return &Node{Name: "name", Fake: fakeName}
+	return &Node{
+		Name:       "name",
+		Attributes: []string{"name"},
+		Fake:       fakeName,
+	}
 }
 
-func fakeName(r *Request) (interface{}, error) {
+func fakeName(r *Request) (any, error) {
 	if v, ok := r.Context.Values["name"]; ok {
 		return v, nil
 	}
 
 	s := r.Schema
 	var collection []string
-	min := 0
-	max := 12
+	minLength := 0
+	maxLength := 12
 	if s != nil && s.MinLength != nil {
-		min = *s.MinLength
+		minLength = *s.MinLength
 	}
 	if s != nil && s.MaxLength != nil {
-		max = *s.MaxLength
+		maxLength = *s.MaxLength
 	}
-	if min <= 3 && max >= 3 {
+	if minLength <= 3 && maxLength >= 3 {
 		collection = append(collection, names3...)
 	}
-	if min <= 4 && max >= 4 {
+	if minLength <= 4 && maxLength >= 4 {
 		collection = append(collection, names4...)
 	}
-	if min <= 5 && max >= 5 {
+	if minLength <= 5 && maxLength >= 5 {
 		collection = append(collection, names5...)
 	}
-	if min <= 6 && max >= 6 {
+	if minLength <= 6 && maxLength >= 6 {
 		collection = append(collection, names6...)
 	}
-	if max >= 12 {
+	if maxLength >= 12 {
 		collection = append(collection, names...)
 	}
 

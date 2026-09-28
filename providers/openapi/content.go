@@ -66,7 +66,10 @@ func (c *Content) UnmarshalYAML(value *yaml.Node) error {
 			return err
 		}
 		if val == nil {
-			return fmt.Errorf("content.%s should be object but it is nil", key)
+			return &dynamic.SchemaError{
+				Message: fmt.Errorf("should be object but it is nil"),
+				Field:   "content." + key,
+			}
 		}
 		ct := media.ParseContentType(key)
 		val.ContentType = ct

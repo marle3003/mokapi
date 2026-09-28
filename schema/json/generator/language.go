@@ -7,8 +7,9 @@ import (
 func languages() []*Node {
 	return []*Node{
 		{
-			Name: "language",
-			Fake: fakeLanguage,
+			Name:       "language",
+			Attributes: []string{"language"},
+			Fake:       fakeLanguage,
 		},
 	}
 }

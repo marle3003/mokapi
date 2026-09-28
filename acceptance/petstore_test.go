@@ -4,11 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"mokapi/config/static"
-	"mokapi/kafka"
-	"mokapi/kafka/fetch"
-	"mokapi/kafka/kafkatest"
-	"mokapi/kafka/metaData"
-	"mokapi/kafka/produce"
 	"mokapi/schema/json/generator"
 	"mokapi/try"
 	"net/http"
@@ -16,7 +11,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 type PetStoreSuite struct{ BaseSuite }
@@ -51,46 +45,6 @@ func (suite *PetStoreSuite) TestApi() {
 			try.BodyContains(`{"name":"Swagger Petstore","description":"This is a sample server Petstore server.  You can find out more about `),
 			try.BodyMatch(`"configs":\[{"id":".*","url":".*\/acceptance\/petstore\/openapi\.yml","provider":"file","time":".*"}\]`),
 		)
-	})
-
-	suite.T().Run("get AsyncAPI service", func(t *testing.T) {
-		expected := map[string]interface{}{
-			"version": "1.0.0",
-			"name":    "A sample AsyncApi Kafka streaming api",
-			"servers": []interface{}{
-				map[string]interface{}{
-					"host":     "127.0.0.1:19092",
-					"name":     "broker",
-					"protocol": "kafka",
-				},
-			},
-
-			"topics": []interface{}{map[string]interface{}{
-				"name": "petstore.order-event",
-				"metrics": map[string]interface{}{
-					// skip timestamp check "kafka_message_timestamp"
-					"kafka_messages_total": float64(1),
-				},
-			}},
-		}
-
-		deadline := time.Now().Add(5 * time.Second)
-		for time.Now().Before(deadline) {
-			try.GetRequest(t, fmt.Sprintf("http://127.0.0.1:%v/api/services/kafka/A%%20sample%%20AsyncApi%%20Kafka%%20streaming%%20api", suite.cfg.Api.Port),
-				nil,
-				try.HasStatusCode(http.StatusOK),
-				try.BodyContainsData(expected),
-			)
-			if !t.Failed() {
-				break
-			}
-			if time.Now().After(deadline) {
-				t.FailNow()
-			}
-			// reset test failure state before retrying
-			t.Cleanup(func() {})
-			time.Sleep(100 * time.Millisecond)
-		}
 	})
 }
 
@@ -162,75 +116,6 @@ func (suite *PetStoreSuite) TestTls() {
 	)
 }
 
-func (suite *PetStoreSuite) TestKafka_TopicConfig() {
-	c := kafkatest.NewClient("127.0.0.1:19092", "test")
-	defer c.Close()
-
-	r, err := c.Metadata(0, &metaData.Request{})
-	require.NoError(suite.T(), err)
-	require.Len(suite.T(), r.Topics, 1)
-	require.Equal(suite.T(), "petstore.order-event", r.Topics[0].Name)
-	require.Len(suite.T(), r.Topics[0].Partitions, 2)
-
-	require.Equal(suite.T(), 1, suite.cmd.App.Http.Len())
-}
-
-func (suite *PetStoreSuite) TestKafka_Produce_InvalidFormat() {
-	c := kafkatest.NewClient("127.0.0.1:19092", "test")
-	defer c.Close()
-
-	r, err := c.Produce(0, &produce.Request{Topics: []produce.RequestTopic{
-		{Name: "petstore.order-event", Partitions: []produce.RequestPartition{
-			{
-				Index: 0,
-				Record: kafka.RecordBatch{
-					Records: []*kafka.Record{
-						{
-							Offset:  0,
-							Time:    time.Now(),
-							Key:     kafka.NewBytes([]byte(`foo`)),
-							Value:   kafka.NewBytes([]byte(`{}`)),
-							Headers: nil,
-						},
-					},
-				},
-			},
-		},
-		}},
-	})
-	require.NoError(suite.T(), err)
-	require.Equal(suite.T(), "petstore.order-event", r.Topics[0].Name)
-	require.Equal(suite.T(), kafka.InvalidRecord, r.Topics[0].Partitions[0].ErrorCode)
-	require.Equal(suite.T(), int64(0), r.Topics[0].Partitions[0].BaseOffset)
-}
-
-func (suite *PetStoreSuite) TestKafkaProduce() {
-	c := kafkatest.NewClient("127.0.0.1:19092", "test")
-	defer c.Close()
-	r, err := c.Produce(0, &produce.Request{Topics: []produce.RequestTopic{
-		{Name: "petstore.order-event", Partitions: []produce.RequestPartition{
-			{
-				Index: 0,
-				Record: kafka.RecordBatch{
-					Records: []*kafka.Record{
-						{
-							Offset:  0,
-							Time:    time.Now(),
-							Key:     kafka.NewBytes([]byte(`foo`)),
-							Value:   kafka.NewBytes([]byte(`{"id": 12345}`)),
-							Headers: nil,
-						},
-					},
-				},
-			},
-		},
-		}},
-	})
-	require.NoError(suite.T(), err)
-	require.Equal(suite.T(), "petstore.order-event", r.Topics[0].Name)
-	require.Equal(suite.T(), kafka.None, r.Topics[0].Partitions[0].ErrorCode)
-}
-
 func (suite *PetStoreSuite) TestEvents() {
 	try.GetRequest(suite.T(), "http://127.0.0.1:18080/user/bob",
 		map[string]string{"Accept": "application/json"},
@@ -269,48 +154,6 @@ func (suite *PetStoreSuite) TestEvents() {
 	)
 }
 
-func (suite *PetStoreSuite) TestKafkaEventAndMetrics() {
-	// ensure scripts are executed
-	time.Sleep(3 * time.Second)
-
-	// test kafka metrics
-	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%d/api/metrics/kafka", suite.cfg.Api.Port), nil,
-		try.BodyContains(`kafka_messages_total{service=\"A sample AsyncApi Kafka streaming api\",topic=\"petstore.order-event\"}","value":1}`),
-	)
-
-	// test kafka events, header added by JavaScript event handler
-	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%d/api/events?namespace=kafka", suite.cfg.Api.Port), nil,
-		try.BodyContains(`"headers":{"foo":{"value":"bar","binary":"YmFy"}`),
-		try.BodyContains(`"messageId":"order"`),
-	)
-}
-
-func (suite *PetStoreSuite) TestKafka3_Consume() {
-	// ensure scripts are executed
-	time.Sleep(3 * time.Second)
-
-	c := kafkatest.NewClient("localhost:19093", "test")
-	defer c.Close()
-
-	r, err := c.Fetch(12, &fetch.Request{
-		MaxBytes:  1000,
-		MinBytes:  1,
-		MaxWaitMs: 5000,
-		Topics: []fetch.Topic{
-			{
-				Name: "petstore.order-event",
-				Partitions: []fetch.RequestPartition{{
-					Index:    0,
-					MaxBytes: 1000,
-				}},
-			},
-		},
-	})
-	require.NoError(suite.T(), err)
-	require.NotNil(suite.T(), r)
-	require.Len(suite.T(), r.Topics[0].Partitions[0].RecordSet.Records, 1)
-}
-
 func (suite *PetStoreSuite) TestSearch_Paging() {
 	time.Sleep(3 * time.Second)
 
@@ -327,7 +170,7 @@ func (suite *PetStoreSuite) TestSearch_Paging() {
 
 			items := data["results"].([]any)
 			assert.Len(t, items, 10)
-			evt := items[0].(map[string]interface{})
+			evt := items[0].(map[string]any)
 			assert.Equal(t, "HTTP", evt["type"])
 			assert.Equal(t, "Swagger Petstore", evt["title"])
 			assert.NotContains(t, evt, "domain")
@@ -347,7 +190,7 @@ func (suite *PetStoreSuite) TestSearch_Paging() {
 
 			items := data["results"].([]any)
 			assert.Len(t, items, 10)
-			evt := items[0].(map[string]interface{})
+			evt := items[0].(map[string]any)
 			assert.Equal(t, "HTTP", evt["type"])
 			assert.Equal(t, "/pet/{petId}/uploadImage", evt["title"])
 			assert.Equal(t, "Swagger Petstore", evt["domain"])

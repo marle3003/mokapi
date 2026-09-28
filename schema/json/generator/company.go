@@ -5,26 +5,31 @@ import "github.com/brianvoe/gofakeit/v7"
 func companyNodes() []*Node {
 	return []*Node{
 		{
-			Name: "company",
-			Fake: fakeCompany,
+			Name:       "company",
+			Attributes: []string{"company"},
+			Fake:       fakeCompany,
 			Children: []*Node{
 				{
-					Name: "name",
-					Fake: fakeCompany,
+					Name:       "name",
+					Attributes: []string{"name", "fullName"},
+					Fake:       fakeCompany,
 				},
 			},
 		},
 		{
-			Name: "industry",
-			Fake: fakeIndustry,
+			Name:       "industry",
+			Attributes: []string{"industry"},
+			Fake:       fakeIndustry,
 		},
 		{
-			Name: "organization",
-			Fake: fakeCompany,
+			Name:       "organization",
+			Attributes: []string{"organization"},
+			Fake:       fakeCompany,
 			Children: []*Node{
 				{
-					Name: "name",
-					Fake: fakeCompany,
+					Name:       "name",
+					Attributes: []string{"name", "fullName"},
+					Fake:       fakeCompany,
 				},
 			},
 		},

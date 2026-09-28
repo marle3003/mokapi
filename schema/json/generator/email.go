@@ -2,19 +2,21 @@ package generator
 
 import (
 	"fmt"
-	"github.com/brianvoe/gofakeit/v7"
 	"strings"
+
+	"github.com/brianvoe/gofakeit/v7"
 )
 
 func newEmailNode() *Node {
 	return &Node{
-		Name:      "email",
-		DependsOn: []string{"firstname", "lastname"},
-		Fake:      fakeEmail,
+		Name:       "email",
+		Attributes: []string{"email"},
+		DependsOn:  []string{"firstname", "lastname"},
+		Fake:       fakeEmail,
 	}
 }
 
-func fakeEmail(r *Request) (interface{}, error) {
+func fakeEmail(r *Request) (any, error) {
 	choosePersonEmail := false
 	first, ok := r.Context.Values["firstname"]
 	if ok {

@@ -65,6 +65,7 @@ func (e *HttpEventDispatcher) EmitHttp(request *common.HttpEventRequest, respons
 
 	var result []*common.Action
 
+LOOP:
 	for _, eh := range ehs {
 		if !eh.match(request, response) {
 			continue
@@ -72,6 +73,9 @@ func (e *HttpEventDispatcher) EmitHttp(request *common.HttpEventRequest, respons
 		a := runEventHandler(eh.Execute, eh.Args, request, response)
 		if a != nil {
 			result = append(result, a)
+		}
+		if response.StopPropagation {
+			break LOOP
 		}
 	}
 
