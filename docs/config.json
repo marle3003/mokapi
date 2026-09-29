@@ -386,6 +386,11 @@
                 "label": "fake",
                 "source": "javascript-api/mokapi-faker/fake.md",
                 "path": "/docs/javascript-api/mokapi-faker/fake"
+              },
+              {
+                "label": "findByName",
+                "source": "javascript-api/mokapi-faker/findByName.md",
+                "path": "/docs/javascript-api/mokapi-faker/findbyname"
               }
             ]
           },
