@@ -64,4 +64,4 @@ export default function() {
 ## Customizing the generated data
 
 The generator is built as a tree of nodes. You can change existing nodes or add your own to produce data that fits your business domain, for example addresses
-from your own country or product names from your catalog. See [findByName( name )](./findByName.md).
+from your own country or product names from your catalog. See [findByName( name )](./findbyname.md).
