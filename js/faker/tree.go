@@ -31,7 +31,7 @@ func convertToNode(v goja.Value, m *Module) *generator.Node {
 				n.Name = name.String()
 			case "fake":
 				fake, _ := goja.AssertFunction(obj.Get(k))
-				n.Fake = func(r *generator.Request) (interface{}, error) {
+				n.Fake = func(r *generator.Request) (any, error) {
 					v, err := m.loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
 						param := m.vm.ToValue(r)
 						return fake(goja.Undefined(), param)
@@ -43,10 +43,10 @@ func convertToNode(v goja.Value, m *Module) *generator.Node {
 				}
 			case "attributes":
 				i := obj.Get(k).Export()
-				n.Attributes = toStringArray(i)
+				n.Attributes = toStringArray(i, m.vm)
 			case "dependsOn":
 				i := obj.Get(k).Export()
-				n.Attributes = toStringArray(i)
+				n.DependsOn = toStringArray(i, m.vm)
 			case "children":
 				val := obj.Get(k)
 				if val.ExportType().Kind() != reflect.Slice {
@@ -55,7 +55,7 @@ func convertToNode(v goja.Value, m *Module) *generator.Node {
 				}
 				arr := val.ToObject(m.vm)
 				length := int(arr.Get("length").ToInteger())
-				for i := 0; i < length; i++ {
+				for i := range length {
 					item := arr.Get(strconv.Itoa(i))
 					n.Children = append(n.Children, convertToNode(item, m))
 				}
@@ -69,7 +69,7 @@ func convertToNode(v goja.Value, m *Module) *generator.Node {
 	panic(m.vm.ToValue("unexpected function parameter"))
 }
 
-func toStringArray(i interface{}) []string {
+func toStringArray(i any, vm *goja.Runtime) []string {
 	values, ok := i.([]any)
 	var result []string
 	if ok {
@@ -81,6 +81,7 @@ func toStringArray(i interface{}) []string {
 			}
 			result = append(result, s)
 		}
+		return result
 	}
-	return result
+	panic(vm.ToValue(fmt.Errorf("expected type Array, got %T", util.JsType(i))))
 }

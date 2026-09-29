@@ -13,7 +13,7 @@ func TestObject(t *testing.T) {
 		name               string
 		req                *Request
 		optionalProperties string
-		test               func(t *testing.T, v interface{}, err error)
+		test               func(t *testing.T, v any, err error)
 	}{
 		{
 			name: "object",
@@ -23,9 +23,9 @@ func TestObject(t *testing.T) {
 					schematest.WithRequired("name"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Ivy"}, v)
+				require.Equal(t, map[string]any{"name": "Ivy"}, v)
 			},
 		},
 		{
@@ -36,9 +36,9 @@ func TestObject(t *testing.T) {
 					schematest.WithRequired("name"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Ivy"}, v)
+				require.Equal(t, map[string]any{"name": "Ivy"}, v)
 			},
 		},
 		{
@@ -50,9 +50,9 @@ func TestObject(t *testing.T) {
 					schematest.WithRequired("name"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Ivy", "foo": false}, v)
+				require.Equal(t, map[string]any{"name": "Ivy", "foo": false}, v)
 			},
 		},
 		{
@@ -82,9 +82,9 @@ func TestObject(t *testing.T) {
 					schematest.WithFreeForm(false),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Ivy"}, v)
+				require.Equal(t, map[string]any{"name": "Ivy"}, v)
 			},
 		},
 		{
@@ -96,9 +96,9 @@ func TestObject(t *testing.T) {
 					schematest.WithFreeForm(true),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Ivy"}, v)
+				require.Equal(t, map[string]any{"name": "Ivy"}, v)
 			},
 		},
 		{
@@ -111,9 +111,9 @@ func TestObject(t *testing.T) {
 					schematest.WithMaxProperties(1),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Zenix"}, v)
+				require.Equal(t, map[string]any{"name": "Zenix"}, v)
 			},
 		},
 		{
@@ -125,10 +125,10 @@ func TestObject(t *testing.T) {
 					schematest.WithMaxProperties(3),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t,
-					map[string]interface{}{
+					map[string]any{
 						"bale": "MZsBhpy",
 					},
 					v)
@@ -168,11 +168,11 @@ func TestObject(t *testing.T) {
 					schematest.WithMaxProperties(12),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Len(t, v, 10)
 				require.Equal(t,
-					map[string]interface{}{"bale": "boezC", "bulb": "elk", "corruption": "", "equipment": "VnIkdsa aJFO", "gauva": "iyHPypTTndl", "issue": "sguOhkxhF", "jacket": "kWMaW", "man": "jbBbaS", "pack": " X", "woman": "0FILKfYaxbWMlsp"},
+					map[string]any{"bale": "boezC", "bulb": "elk", "corruption": "", "equipment": "VnIkdsa aJFO", "gauva": "iyHPypTTndl", "issue": "sguOhkxhF", "jacket": "kWMaW", "man": "jbBbaS", "pack": " X", "woman": "0FILKfYaxbWMlsp"},
 					v)
 			},
 		},
@@ -181,7 +181,7 @@ func TestObject(t *testing.T) {
 			req: &Request{
 				Schema: schematest.New("object"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Len(t, v.(map[string]any), 1)
 			},
@@ -190,13 +190,13 @@ func TestObject(t *testing.T) {
 			name: "object no properties with examples",
 			req: &Request{
 				Schema: schematest.New("object",
-					schematest.WithExamples(map[string]interface{}{"foo": "bar"}),
+					schematest.WithExamples(map[string]any{"foo": "bar"}),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t,
-					map[string]interface{}{
+					map[string]any{
 						"foo": "bar",
 					},
 					v)
@@ -208,13 +208,13 @@ func TestObject(t *testing.T) {
 				Path: []string{"address"},
 				Schema: schematest.New("object",
 					schematest.WithProperty("foo", schematest.New("string")),
-					schematest.WithExamples(map[string]interface{}{"foo": "bar"}),
+					schematest.WithExamples(map[string]any{"foo": "bar"}),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t,
-					map[string]interface{}{
+					map[string]any{
 						"foo": "bar",
 					},
 					v)
@@ -227,12 +227,12 @@ func TestObject(t *testing.T) {
 					schematest.WithRequired("foo", "bar"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t,
-					map[string]interface{}{
+					map[string]any{
 						"foo": false,
-						"bar": []interface{}{975538.5032831749},
+						"bar": []any{975538.5032831749},
 					},
 					v)
 			},
@@ -245,9 +245,9 @@ func TestObject(t *testing.T) {
 					schematest.WithRequired("bar"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				m := v.(map[string]interface{})
+				m := v.(map[string]any)
 				require.InDelta(t, 313469.93141089816, m["bar"], 0.000001)
 				require.Equal(t, "F2cjChNLDnmqkY", m["foo"])
 			},
@@ -260,10 +260,10 @@ func TestObject(t *testing.T) {
 					schematest.WithPatternProperty("^I_", schematest.New("integer")),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t,
-					map[string]interface{}{
+					map[string]any{
 						"I_8wE":  int64(-873413),
 						"S_l7QZ": "NLD",
 					},
@@ -282,10 +282,10 @@ func TestObject(t *testing.T) {
 				),
 			},
 			optionalProperties: "0",
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t,
-					map[string]interface{}{
+					map[string]any{
 						"name":            "Ivy",
 						"credit_card":     "2824193600225549",
 						"billing_address": "EEalaJFOjl",
@@ -308,10 +308,10 @@ func TestObject(t *testing.T) {
 				),
 			},
 			optionalProperties: "1",
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t,
-					map[string]interface{}{
+					map[string]any{
 						"name":            "Ivy",
 						"billing_address": "vtLnEEalaJ",
 					},
@@ -331,7 +331,7 @@ func TestObject(t *testing.T) {
 				),
 			},
 			optionalProperties: "1",
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "failed to generate valid object: reached attempt limit (10) caused by: cannot apply dependentRequired for 'credit_card': maxProperties=2 was exceeded")
 			},
 		},
@@ -351,10 +351,10 @@ func TestObject(t *testing.T) {
 				),
 			},
 			optionalProperties: "0",
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t,
-					map[string]interface{}{
+					map[string]any{
 						"name":            "Ivy",
 						"credit_card":     "2824193600225549",
 						"billing_address": "EEalaJFOjl",
@@ -380,7 +380,7 @@ func TestObject(t *testing.T) {
 				),
 			},
 			optionalProperties: "1",
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "failed to generate valid object: reached attempt limit (10) caused by: cannot apply dependentSchemas for 'credit_card': maxProperties=2 was exceeded")
 			},
 		},
@@ -403,10 +403,10 @@ func TestObject(t *testing.T) {
 					)),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t,
-					map[string]interface{}{
+					map[string]any{
 						"country":     "Benin",
 						"postal_code": "80291",
 					},
@@ -429,7 +429,7 @@ func TestObject(t *testing.T) {
 					schematest.WithMinProperties(1),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "failed to generate valid object: reached attempt limit (10) caused by: cannot satisfy conditions")
 			},
 		},
@@ -484,7 +484,7 @@ func TestObject(t *testing.T) {
 					schematest.WithMaxProperties(1),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "failed to generate valid object: reached attempt limit (10) caused by: conditional schema could not be applied: reached attempt limit (10) caused by: reached maximum of value maxProperties=1")
 			},
 		},
@@ -509,7 +509,7 @@ func TestObject(t *testing.T) {
 					schematest.WithMaxProperties(1),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, map[string]any{"country": "Azerbaijan"}, v)
 			},
@@ -533,12 +533,31 @@ func TestObject(t *testing.T) {
 					)),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t,
-					map[string]interface{}{
+					map[string]any{
 						"country":     "Benin",
 						"postal_code": "C0O 9F0",
+					},
+					v)
+			},
+		},
+		{
+			name: "test person domain",
+			req: &Request{
+				Schema: schematest.New("object",
+					schematest.WithProperty("name", schematest.New("string")),
+					schematest.WithProperty("birthDate", schematest.New("string")),
+					schematest.WithRequired("name", "birthDate"),
+				),
+			},
+			test: func(t *testing.T, v any, err error) {
+				require.NoError(t, err)
+				require.Equal(t,
+					map[string]any{
+						"name":      "Aria Hernandez",
+						"birthDate": "2013-03-15",
 					},
 					v)
 			},

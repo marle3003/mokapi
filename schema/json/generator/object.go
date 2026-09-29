@@ -451,9 +451,11 @@ func detectDomain(s *schema.Schema, root *Node) string {
 func scoreDomain(attribute []string, n *Node) float64 {
 	score := 0.0
 	for _, attr := range attribute {
-		attr = strings.ToLower(attr)
 		for _, child := range n.Children {
-			if attr == child.Name {
+			found := slices.ContainsFunc(child.Attributes, func(s string) bool {
+				return strings.EqualFold(attr, s)
+			})
+			if found {
 				score += child.Weight
 			}
 		}

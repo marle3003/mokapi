@@ -167,11 +167,12 @@ func TestScript_Faker(t *testing.T) {
 				}
 
 				s, err := jstest.New(jstest.WithSource(
-					`import { findByName } from 'mokapi/faker'
+					`import { findByName, ROOT_NAME } from 'mokapi/faker'
 							export default function() {
-								let root = findByName('root')
+								let root = findByName(ROOT_NAME)
 								root.children.push({
 									name: 'foo',
+									attributes: ['foo'],
 									fake: (r) => {
 										return 'bar'
 									}
@@ -182,7 +183,7 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 
 				s, err = jstest.New(jstest.WithSource(
-					`import { fake, findByName } from 'mokapi/faker'
+					`import { fake } from 'mokapi/faker'
 						 export default function() {
 							return fake({ type: 'object', properties: { foo: { type: 'string'} } })
 						 }`),
@@ -190,7 +191,7 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				r.Equal(t, map[string]interface{}{
+				r.Equal(t, map[string]any{
 					"foo": "bar",
 				}, v.Export())
 				r.NoError(t, err)
@@ -213,6 +214,7 @@ func TestScript_Faker(t *testing.T) {
 						 	let root = findByName('root')
 							root.children.push({
 								name: 'foo',
+								attributes: ['foo'],
 								fake: (r) => {
 									return 'bar'
 								}
@@ -223,7 +225,7 @@ func TestScript_Faker(t *testing.T) {
 				r.NoError(t, err)
 				v, err := s.RunDefault()
 				r.NoError(t, err)
-				r.Equal(t, map[string]interface{}{
+				r.Equal(t, map[string]any{
 					"foo": "bar",
 				}, v.Export())
 				r.NoError(t, err)

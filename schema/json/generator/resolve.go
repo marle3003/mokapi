@@ -143,11 +143,7 @@ func (n *Node) findBestMatch(r *Request) *Node {
 	}
 
 	for _, child := range n.Children {
-		var attributes = child.Attributes
-		if len(attributes) == 0 {
-			attributes = []string{child.Name}
-		}
-		for _, attr := range attributes {
+		for _, attr := range child.Attributes {
 			if attr == "*" || strings.EqualFold(attr, token) {
 				match := child.findBestMatch(r.shift())
 				if match != nil {
@@ -156,16 +152,6 @@ func (n *Node) findBestMatch(r *Request) *Node {
 			}
 		}
 	}
-
-	// Check if the current token exists in the root
-	/*for _, child := range g.root.Children {
-		if child.Name == token {
-			return nil
-		}
-		if slices.Contains(child.Attributes, token) {
-			return nil
-		}
-	}*/
 
 	if len(r.Path) > 1 {
 		singular := g.inflector.Singular(token)
@@ -191,15 +177,6 @@ func (n *Node) findBestMatch(r *Request) *Node {
 			return match
 		}
 	}
-
-	// Skip current token
-	/*skip := r.shift()
-	if len(skip.Path) > 0 {
-		match := n.findBestMatch(skip)
-		if match != nil {
-			return match
-		}
-	}*/
 
 	return nil
 }

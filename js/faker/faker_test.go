@@ -56,7 +56,7 @@ func TestModule(t *testing.T) {
 					m.fake({ type: 'object', example: { foo: 'bar' } })
 				`)
 				r.NoError(t, err)
-				r.Equal(t, map[string]interface{}{"foo": "bar"}, v.Export())
+				r.Equal(t, map[string]any{"foo": "bar"}, v.Export())
 			},
 		},
 		{
@@ -118,6 +118,7 @@ func TestModule(t *testing.T) {
 				  	root.children.unshift(
 						{
 							name: 'foo',
+							attributes: ['foo'],
 							fake: (r) => {
 								const value = 'hello';
 								r.context.values['foo'] = value;
@@ -126,16 +127,17 @@ func TestModule(t *testing.T) {
 						},
 						{
 							name: 'bar',
-							dependsOn: 'foo',
+							attributes: ['bar'],
+							dependsOn: ['foo'],
 							fake: (r) => {
 								return r.context.values['foo'] + ' Carol';
 							}
 						},
 					)
-				    m.fake({ properties: { foo: {}, bar: {} }, required: ['foo', 'bar'] })
+				    m.fake({ properties: { bar: {}, foo: {} }, required: ['foo', 'bar'] })
 				`)
 				r.NoError(t, err)
-				r.Equal(t, map[string]interface{}{"bar": "hello Carol", "foo": "hello"}, v.Export())
+				r.Equal(t, map[string]any{"bar": "hello Carol", "foo": "hello"}, v.Export())
 			},
 		},
 		{
@@ -152,6 +154,7 @@ func TestModule(t *testing.T) {
 					const frequencyItems = ['never', 'daily', 'weekly', 'monthly', 'yearly']
 					n.children.push({
 						name: 'frequency',
+						attributes: ['frequency'],
 						fake: (r) => {
 							return frequencyItems[Math.floor(Math.random()*frequencyItems.length)]
 						}
@@ -163,7 +166,7 @@ func TestModule(t *testing.T) {
 					})
 				`)
 				r.NoError(t, err)
-				m := v.Export().(map[string]interface{})
+				m := v.Export().(map[string]any)
 				frequencyItems := []string{"never", "daily", "weekly", "monthly", "yearly"}
 				r.Contains(t, frequencyItems, m["frequency"])
 			},
