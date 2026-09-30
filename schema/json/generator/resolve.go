@@ -96,10 +96,10 @@ func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
 		}
 	}
 
-	path := tokenize(req.Path)
-	n := findBestMatch(g.root, req.WithPath(path))
+	n := findBestMatch(g.root, req)
 	if n == g.root.defaultNode {
-		n = findBestMatch(g.root, req)
+		path := tokenize(req.Path)
+		n = findBestMatch(g.root, req.WithPath(path))
 	}
 
 	return newFakerWithFallback(n, req), nil

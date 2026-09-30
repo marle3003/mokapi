@@ -1,6 +1,7 @@
 package faker
 
 import (
+	"encoding/json"
 	"fmt"
 	"mokapi/js/util"
 	"mokapi/schema/json/generator"
@@ -33,8 +34,20 @@ func convertToNode(v goja.Value, m *Module) *generator.Node {
 				fake, _ := goja.AssertFunction(obj.Get(k))
 				n.Fake = func(r *generator.Request) (any, error) {
 					v, err := m.loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
-						param := m.vm.ToValue(r)
-						return fake(goja.Undefined(), param)
+						param, err := ToJsValue(m.vm, r)
+						if err != nil {
+							panic(m.vm.ToValue(err))
+						}
+						val, err := fake(goja.Undefined(), param)
+						if err != nil {
+							return nil, err
+						}
+						r2, err := toStruct[*generator.Request](param, m.vm)
+						if err != nil {
+							panic(m.vm.ToValue(err))
+						}
+						r.Context.Values = r2.Context.Values
+						return val, nil
 					})
 					if err != nil {
 						return nil, err
@@ -84,4 +97,16 @@ func toStringArray(i any, vm *goja.Runtime) []string {
 		return result
 	}
 	panic(vm.ToValue(fmt.Errorf("expected type Array, got %T", util.JsType(i))))
+}
+
+func ToJsValue(vm *goja.Runtime, schema any) (goja.Value, error) {
+	data, err := json.Marshal(schema)
+	if err != nil {
+		return nil, err
+	}
+	var v any
+	if err := json.Unmarshal(data, &v); err != nil {
+		return nil, err
+	}
+	return vm.ToValue(v), nil
 }
