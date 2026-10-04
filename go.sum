@@ -76,6 +76,8 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dlclark/regexp2/v2 v2.7.1 h1:yqDtwI1ptXXvEUNpYTk2lad4jLtAcKqkzepn4savSk4=
 github.com/dlclark/regexp2/v2 v2.7.1/go.mod h1:avUrQvPaLz2DrFNHJF0taWAFFX2C1GMSSoeiqFjcBmU=
+github.com/dlclark/regexp2/v2 v2.8.1 h1:I1jbaCbXeOxdVN8z3fb55Mvtgb94/6+Dh0zjmXjKV/0=
+github.com/dlclark/regexp2/v2 v2.8.1/go.mod h1:avUrQvPaLz2DrFNHJF0taWAFFX2C1GMSSoeiqFjcBmU=
 github.com/dop251/goja v0.0.0-20260903201622-f87b40ad7341 h1:Xw5BlyA4EmkkAR09eEHJ/EzZr+VwcIiHDXQKxv41fDU=
 github.com/dop251/goja v0.0.0-20260903201622-f87b40ad7341/go.mod h1:u8yZRUavu+N4EnFFy6J5fVtjE7lEcZ2YyV2GcBXY9c8=
 github.com/dop251/goja v0.0.0-20260906210903-70ad66ec7ce4 h1:GsWm9G80nlJAmJE/r9qdyqQWieJVdJObCMxmu4cZ5dQ=
@@ -88,6 +90,8 @@ github.com/dop251/goja v0.0.0-20260926152631-39ec2650adc9 h1:Ksd3Vil12b/ykT5NjGz
 github.com/dop251/goja v0.0.0-20260926152631-39ec2650adc9/go.mod h1:u8yZRUavu+N4EnFFy6J5fVtjE7lEcZ2YyV2GcBXY9c8=
 github.com/dop251/goja v0.0.0-20261001102346-43ac577c6fa3 h1:kI6ni9uYdzgZNqk+TUAeBpB4JLcxGSKpUFFQoMB8JGk=
 github.com/dop251/goja v0.0.0-20261001102346-43ac577c6fa3/go.mod h1:u8yZRUavu+N4EnFFy6J5fVtjE7lEcZ2YyV2GcBXY9c8=
+github.com/dop251/goja v0.0.0-20261004200024-481fdb442bb4 h1:MRZ0SrzpwIYx0fE7FFz6jeUSC95M/tivyy90sHyt+BA=
+github.com/dop251/goja v0.0.0-20261004200024-481fdb442bb4/go.mod h1:GrCNKUrVplXZj0juFue0Cj2Xt/eL2Nuu2+y3UTanEo8=
 github.com/elazarl/goproxy v1.7.2 h1:Y2o6urb7Eule09PjlhQRGNsqRfPmYI3KKQLFpCAV3+o=
 github.com/elazarl/goproxy v1.7.2/go.mod h1:82vkLNir0ALaW14Rc399OTTjyNREgmdL2cVoIbS6XaE=
 github.com/emirpasic/gods v1.18.1 h1:FXtiHYKDGKCW2KzwZKx0iC0PQmdlorYgdFG9jPXJ1Bc=
