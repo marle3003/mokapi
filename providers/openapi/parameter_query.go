@@ -68,12 +68,15 @@ func parseQueryObject(param *Parameter, u *url.URL) (string, interface{}, error)
 		i, err := parseUnExplodeObject(param, raw, ",")
 		return raw, i, err
 	} else if param.Style == "deepObject" && param.IsExplode() {
-		paramRegex := regexp.MustCompile(fmt.Sprintf(`%v\[(?P<name>.+)\]`, param.Name))
+		paramRegex := regexp.MustCompile(fmt.Sprintf(`^%s\[(?P<name>.+)\]$`, regexp.QuoteMeta(param.Name)))
 		obj := map[string]interface{}{}
 		raw := strings.Builder{}
 
 		for k, values := range u.Query() {
 			match := paramRegex.FindStringSubmatch(k)
+			if match == nil {
+				continue
+			}
 			name := match[1]
 			prop := param.Schema.Properties.Get(name)
 			if prop == nil && !param.Schema.IsFreeForm() && !param.Schema.IsDictionary() {
