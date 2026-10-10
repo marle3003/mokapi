@@ -5,6 +5,7 @@ import (
 	"mokapi/providers/openapi/schema/schematest"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -536,5 +537,170 @@ func TestParseQuery(t *testing.T) {
 			tc.test(t, r, err)
 		})
 
+	}
+}
+
+func TestParseQueryDeepObjectOtherParameters(t *testing.T) {
+	objectParameter := func(name string) *openapi.Parameter {
+		return &openapi.Parameter{
+			Name: name,
+			Type: openapi.ParameterQuery,
+			Schema: schematest.New("object",
+				schematest.WithProperty("role", schematest.New("string")),
+				schematest.WithFreeForm(false),
+			),
+			Style:   "deepObject",
+			Explode: new(true),
+		}
+	}
+	defaultParameter := objectParameter("filter")
+	defaultParameter.Schema.Default = map[string]any{"role": "guest"}
+	requiredParameter := objectParameter("filter")
+	requiredParameter.Required = new(true)
+
+	testcases := []struct {
+		name    string
+		params  openapi.Parameters
+		query   url.Values
+		want    map[string]any
+		wantErr string
+	}{
+		{
+			name:   "undeclared scalar pagination",
+			params: openapi.Parameters{{Value: objectParameter("filter")}},
+			query:  url.Values{"filter[role]": {"admin"}, "page": {"2"}},
+			want:   map[string]any{"filter": map[string]any{"role": "admin"}},
+		},
+		{
+			name: "declared scalar pagination",
+			params: openapi.Parameters{
+				{Value: objectParameter("filter")},
+				{Value: &openapi.Parameter{
+					Name:   "page",
+					Type:   openapi.ParameterQuery,
+					Schema: schematest.New("integer"),
+					Style:  "form",
+				}},
+			},
+			query: url.Values{"filter[role]": {"admin"}, "page": {"2"}},
+			want:  map[string]any{"filter": map[string]any{"role": "admin"}, "page": int64(2)},
+		},
+		{
+			name: "multiple object parameters",
+			params: openapi.Parameters{
+				{Value: objectParameter("filter")},
+				{Value: objectParameter("selection")},
+			},
+			query: url.Values{"filter[role]": {"admin"}, "selection[role]": {"guest"}},
+			want: map[string]any{
+				"filter":    map[string]any{"role": "admin"},
+				"selection": map[string]any{"role": "guest"},
+			},
+		},
+		{
+			name:   "optional object absent beside scalar",
+			params: openapi.Parameters{{Value: objectParameter("filter")}},
+			query:  url.Values{"page": {"2"}},
+			want:   map[string]any{"filter": nil},
+		},
+		{
+			name:   "default object absent beside scalar",
+			params: openapi.Parameters{{Value: defaultParameter}},
+			query:  url.Values{"page": {"2"}},
+			want:   map[string]any{"filter": map[string]any{"role": "guest"}},
+		},
+		{
+			name:    "required object absent beside scalar",
+			params:  openapi.Parameters{{Value: requiredParameter}},
+			query:   url.Values{"page": {"2"}},
+			wantErr: "parse query parameter 'filter' failed: parameter is required",
+		},
+		{
+			name:   "parameter name prefix lookalike",
+			params: openapi.Parameters{{Value: objectParameter("filter")}},
+			query:  url.Values{"otherfilter[role]": {"guest"}},
+			want:   map[string]any{"filter": nil},
+		},
+		{
+			name:   "parameter name suffix lookalike",
+			params: openapi.Parameters{{Value: objectParameter("filter")}},
+			query:  url.Values{"filter[role]other": {"guest"}},
+			want:   map[string]any{"filter": nil},
+		},
+		{
+			name:   "regexp punctuation is literal",
+			params: openapi.Parameters{{Value: objectParameter("filter.name")}},
+			query:  url.Values{"filterXname[role]": {"guest"}},
+			want:   map[string]any{"filter.name": nil},
+		},
+		{
+			name:   "lookalikes beside matching object",
+			params: openapi.Parameters{{Value: objectParameter("filter")}},
+			query: url.Values{
+				"filter[role]":       {"admin"},
+				"otherfilter[other]": {"guest"},
+				"filter[other]tail":  {"guest"},
+			},
+			want: map[string]any{"filter": map[string]any{"role": "admin"}},
+		},
+		{
+			name:    "matching unknown property is rejected",
+			params:  openapi.Parameters{{Value: objectParameter("filter")}},
+			query:   url.Values{"filter[unknown]": {"guest"}},
+			wantErr: "parse query parameter 'filter' failed: property 'unknown' not defined in schema: schema type=object properties=[role] free-form=false",
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			request := httptest.NewRequest(http.MethodGet, "https://foo.bar?"+tc.query.Encode(), nil)
+			var result *openapi.RequestParameters
+			var err error
+			require.NotPanics(t, func() {
+				result, err = openapi.FromRequest(tc.params, "", request)
+			})
+			if tc.wantErr != "" {
+				require.EqualError(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			require.Len(t, result.Query, len(tc.want))
+			for name, value := range tc.want {
+				require.NotNil(t, result.Query[name])
+				require.Equal(t, value, result.Query[name].Value)
+			}
+		})
+	}
+}
+
+func TestParseQueryDeepObjectParameterNames(t *testing.T) {
+	for _, name := range []string{
+		"filter.name", "filter+name", "filter(name", "filter)name",
+		"filter{name", "filter}name",
+		"filter|name", "filter*name", "filter?name", "filter^name",
+		"filter$name", `filter\name`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			params := openapi.Parameters{{Value: &openapi.Parameter{
+				Name: name,
+				Type: openapi.ParameterQuery,
+				Schema: schematest.New("object",
+					schematest.WithProperty("role", schematest.New("string")),
+					schematest.WithFreeForm(false),
+				),
+				Style:   "deepObject",
+				Explode: new(true),
+			}}}
+			query := url.Values{name + "[role]": {"admin"}}
+			request := httptest.NewRequest(http.MethodGet, "https://foo.bar?"+query.Encode(), nil)
+			var result *openapi.RequestParameters
+			var err error
+			require.NotPanics(t, func() {
+				result, err = openapi.FromRequest(params, "", request)
+			})
+			require.NoError(t, err)
+			require.Equal(t, map[string]any{"role": "admin"}, result.Query[name].Value)
+			require.Equal(t, name+"[role]=admin", *result.Query[name].Raw)
+		})
 	}
 }
