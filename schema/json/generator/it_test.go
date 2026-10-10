@@ -13,7 +13,7 @@ func TestIt(t *testing.T) {
 	testcases := []struct {
 		name string
 		req  *Request
-		test func(t *testing.T, v interface{}, err error)
+		test func(t *testing.T, v any, err error)
 	}{
 		{
 			name: "error",
@@ -21,7 +21,7 @@ func TestIt(t *testing.T) {
 				Path:   []string{"error"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "error", v)
 			},
@@ -31,7 +31,7 @@ func TestIt(t *testing.T) {
 			req: &Request{
 				Path: []string{"error"},
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "error", v)
 			},
@@ -42,7 +42,7 @@ func TestIt(t *testing.T) {
 				Path:   []string{"website"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "central24-7.biz", v)
 			},
@@ -64,7 +64,7 @@ func TestStringHash(t *testing.T) {
 	testcases := []struct {
 		name string
 		req  *Request
-		test func(t *testing.T, v interface{}, err error)
+		test func(t *testing.T, v any, err error)
 	}{
 		{
 			name: "hash",
@@ -72,7 +72,7 @@ func TestStringHash(t *testing.T) {
 				Path:   []string{"hash"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "50726f74656374207468652068616e6420756e6465722063757465206c6f61642eda39a3ee5e6b4b0d3255bfef95601890afd80709", v)
 			},
@@ -82,7 +82,7 @@ func TestStringHash(t *testing.T) {
 			req: &Request{
 				Path: []string{"error"},
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "error", v)
 			},
@@ -110,7 +110,7 @@ func TestUser(t *testing.T) {
 	testcases := []struct {
 		name string
 		req  *Request
-		test func(t *testing.T, v interface{}, err error)
+		test func(t *testing.T, v any, err error)
 	}{
 		{
 			name: "user as string",
@@ -118,9 +118,9 @@ func TestUser(t *testing.T) {
 				Path:   []string{"user"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, "Deanna.Elliott", v)
+				require.Equal(t, "ahernandez", v)
 			},
 		},
 		{
@@ -128,10 +128,10 @@ func TestUser(t *testing.T) {
 			req: &Request{
 				Path: []string{"user"},
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t,
-					map[string]interface{}{
+					map[string]any{
 						"email":     "annalise.hermann@salesmorph.name",
 						"firstname": "Annalise",
 						"gender":    "female",
@@ -147,7 +147,7 @@ func TestUser(t *testing.T) {
 				Path:   []string{"lastLogin"},
 				Schema: schematest.New("string", schematest.WithFormat("date-time")),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				isDateTimeString(t, v)
 			},
@@ -158,7 +158,7 @@ func TestUser(t *testing.T) {
 				Path:   []string{"password"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "zPmhSJc2b*Y", v)
 			},

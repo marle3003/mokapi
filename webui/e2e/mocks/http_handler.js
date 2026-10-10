@@ -443,10 +443,17 @@ export default async function() {
                     response.data = ''
                     return
                 }
-            case 'fakerTree':
+            case 'fakerTree': {
                 const resp = get(`${apiBaseUrl}/mokapi/api/faker/tree`)
                 response.body = resp.body
                 return
+            }
+            case 'fakerNodeFake': {
+                const resp = get(`${apiBaseUrl}/mokapi/api/faker/node/${request.path.name}/fake`)
+                response.statusCode = resp.statusCode
+                response.body = resp.body
+                return
+            }
             case 'search':
                 switch (request.query.q) {
                     case 'bad':

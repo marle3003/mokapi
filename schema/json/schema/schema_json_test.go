@@ -53,7 +53,7 @@ func TestSchemaJson(t *testing.T) {
 			name: "type is not a string value",
 			data: `{"type": ["string", 123] }`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
-				require.EqualError(t, err, "cannot unmarshal 123 into field type of type schema")
+				require.EqualError(t, err, "schema error at field 'type[1]': expected type string, got number")
 			},
 		},
 		{
@@ -275,6 +275,13 @@ func TestSchemaJson(t *testing.T) {
 			test: func(t *testing.T, s *schema.Schema, err error) {
 				require.NoError(t, err)
 				require.Equal(t, false, *s.Not.Boolean)
+			},
+		},
+		{
+			name: "properties error",
+			data: `{"properties": 123 }`,
+			test: func(t *testing.T, s *schema.Schema, err error) {
+				require.EqualError(t, err, "schema error at field 'properties': expected object, got number")
 			},
 		},
 	}

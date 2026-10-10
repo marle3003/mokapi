@@ -1,10 +1,6 @@
 import { on, app } from 'mokapi'
-import kafka from 'mokapi/kafka'
 
 export default async function() {
-    on('kafka', function (record) {
-        record.headers = { foo: 'bar', schemaId: record.schemaId }
-    })
     on('http', function(request, response) {
         if (request.operationId === "getPetById") {
             switch (request.path.petId) {
@@ -57,15 +53,5 @@ export default async function() {
         // value -1 ensures the handler is called at last
         // However, if the handler is executed anyway, the response would be overwritten.
         priority: -1
-    })
-
-    await kafka.produceAsync({
-        topic: 'petstore.order-event',
-        cluster: 'A sample AsyncApi Kafka streaming api',
-        messages: [{partition: 0}]
-    })
-    await kafka.produceAsync({
-        topic: 'petstore.order-event',
-        cluster: 'Petstore Stream API',
     })
 }

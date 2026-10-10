@@ -2,11 +2,12 @@ package schema_test
 
 import (
 	"encoding/json"
-	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v3"
 	"mokapi/providers/openapi/schema"
 	"mokapi/providers/openapi/schema/schematest"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestSchema_UnmarshalJSON(t *testing.T) {
@@ -332,7 +333,7 @@ func TestSchema_UnmarshalJSON(t *testing.T) {
 			name: "items: wrong type",
 			s:    `{ "items": [] }`,
 			test: func(t *testing.T, r *schema.Schema, err error) {
-				require.EqualError(t, err, "structural error at items: expected object but received an array")
+				require.EqualError(t, err, "schema error at field 'items': expected object, got array")
 			},
 		},
 		{

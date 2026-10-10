@@ -89,24 +89,19 @@ func (r *resolver) resolve(req *Request, fallback bool) (*faker, error) {
 
 	}
 
-	path := tokenize(req.Path)
-	if s == nil {
-		if len(path) > 0 {
-			last := path[len(path)-1]
-			if isPlural(last) {
-				return r.resolve(req.With(path, &schema.Schema{Type: schema.Types{"array"}}, req.examples), true)
-			}
+	if s == nil && len(req.Path) > 0 {
+		last := req.Path[len(req.Path)-1]
+		if isPlural(last) {
+			return r.resolve(req.With(req.Path, &schema.Schema{Type: schema.Types{"array"}}, req.examples), true)
 		}
 	}
-	n := findBestMatch(g.root, req.With(path, req.Schema, req.examples))
-	if n == nil {
-		if !fallback {
-			return nil, NoMatchFound
-		}
-		return newFaker(func() (any, error) {
-			return fakeBySchema(req)
-		}), nil
+
+	n := findBestMatch(g.root, req)
+	if n == g.root.defaultNode {
+		path := tokenize(req.Path)
+		n = findBestMatch(g.root, req.WithPath(path))
 	}
+
 	return newFakerWithFallback(n, req), nil
 }
 
@@ -135,7 +130,7 @@ func findBestMatch(root *Node, r *Request) *Node {
 			return match
 		}
 		if len(r.Path) == 0 {
-			return nil
+			return root.defaultNode
 		}
 		r = r.shift()
 	}
@@ -148,12 +143,8 @@ func (n *Node) findBestMatch(r *Request) *Node {
 	}
 
 	for _, child := range n.Children {
-		var attributes = child.Attributes
-		if len(attributes) == 0 {
-			attributes = []string{child.Name}
-		}
-		for _, attr := range attributes {
-			if attr == token || attr == "*" {
+		for _, attr := range child.Attributes {
+			if attr == "*" || strings.EqualFold(attr, token) {
 				match := child.findBestMatch(r.shift())
 				if match != nil {
 					return match
@@ -162,31 +153,31 @@ func (n *Node) findBestMatch(r *Request) *Node {
 		}
 	}
 
-	// Check if the current token exists in the root
-	for _, child := range g.root.Children {
-		if child.Name == token {
-			return nil
-		}
-		for _, attr := range child.Attributes {
-			if attr == token {
-				return nil
-			}
-		}
-	}
-
 	if len(r.Path) > 1 {
 		singular := g.inflector.Singular(token)
 		if singular != token {
 			r.Path[0] = singular
-			return n.findBestMatch(r)
+			match := n.findBestMatch(r)
+			if match != nil {
+				return match
+			}
 		}
 	}
 
-	// Skip current token
-	skip := r.shift()
-	if len(skip.Path) > 0 {
-		return n.findBestMatch(skip)
+	// merge path
+	if len(r.Path) > 1 {
+		var sb strings.Builder
+		sb.WriteString(r.Path[0])
+		for _, p := range r.Path[1:] {
+			sb.WriteString(p)
+		}
+		merged := r.WithPath([]string{sb.String()})
+		match := n.findBestMatch(merged)
+		if match != nil {
+			return match
+		}
 	}
+
 	return nil
 }
 

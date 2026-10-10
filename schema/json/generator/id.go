@@ -7,10 +7,14 @@ import (
 )
 
 func newIdNode() *Node {
-	return &Node{Name: "id", Fake: fakeId}
+	return &Node{
+		Name:       "id",
+		Attributes: []string{"id"},
+		Fake:       fakeId,
+	}
 }
 
-func fakeId(r *Request) (interface{}, error) {
+func fakeId(r *Request) (any, error) {
 	if v, ok := r.Context.Values["id"]; ok {
 		if _, err := validate(v, r); err == nil {
 			return v, nil

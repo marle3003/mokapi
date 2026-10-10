@@ -1,30 +1,28 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v7"
 	"mokapi/schema/json/parser"
 	"strings"
+
+	"github.com/brianvoe/gofakeit/v7"
 )
 
 func locations() []*Node {
 	return []*Node{
 		{
-			Name: "country",
-			Fake: fakeCountry,
-			Children: []*Node{
-				{
-					Name: "name",
-					Fake: fakeCountry,
-				},
-			},
+			Name:       "country",
+			Attributes: []string{"country", "countryName"},
+			Fake:       fakeCountry,
 		},
 		{
-			Name: "longitude",
-			Fake: fakeLongitude,
+			Name:       "longitude",
+			Attributes: []string{"longitude"},
+			Fake:       fakeLongitude,
 		},
 		{
-			Name: "latitude",
-			Fake: fakeLatitude,
+			Name:       "latitude",
+			Attributes: []string{"latitude"},
+			Fake:       fakeLatitude,
 		},
 	}
 }

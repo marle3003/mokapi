@@ -110,6 +110,7 @@ func New(app *runtime.App, config static.Api) Handler {
 	h.setupKafka()
 	h.setupMqtt()
 	h.setupWebsocket()
+	h.setupFaker()
 
 	return h
 }
@@ -172,8 +173,6 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.serveSystem(w, r)
 	case strings.HasPrefix(p, "/api/configs"):
 		h.handleConfig(w, r)
-	case strings.HasPrefix(p, "/api/faker/tree"):
-		h.handleFakerTree(w, r)
 	case strings.HasPrefix(p, "/api/search"):
 		h.getSearchResults(w, r)
 	case strings.HasPrefix(p, h.healthPath) && h.healthHandler != nil:

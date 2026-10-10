@@ -17,9 +17,9 @@ type Schema struct {
 	Anchor        string `yaml:"$anchor,omitempty" json:"$anchor,omitempty"`
 	DynamicAnchor string `yaml:"$dynamicAnchor,omitempty" json:"$dynamicAnchor,omitempty"`
 
-	Type  Types         `yaml:"type,omitempty" json:"type,omitempty"`
-	Enum  []interface{} `yaml:"enum,omitempty" json:"enum,omitempty"`
-	Const *interface{}  `yaml:"const,omitempty" json:"const,omitempty"`
+	Type  Types `yaml:"type,omitempty" json:"type,omitempty"`
+	Enum  []any `yaml:"enum,omitempty" json:"enum,omitempty"`
+	Const *any  `yaml:"const,omitempty" json:"const,omitempty"`
 
 	// Numbers
 	MultipleOf       *float64                  `yaml:"multipleOf,omitempty" json:"multipleOf,omitempty"`
@@ -68,11 +68,11 @@ type Schema struct {
 	Else *Schema `yaml:"else,omitempty" json:"else,omitempty"`
 
 	// Annotations
-	Title       string      `yaml:"title,omitempty" json:"title,omitempty"`
-	Description string      `yaml:"description,omitempty" json:"description,omitempty"`
-	Default     interface{} `yaml:"default,omitempty" json:"default,omitempty"`
-	Deprecated  bool        `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
-	Examples    []Example   `yaml:"examples,omitempty" json:"examples,omitempty"`
+	Title       string    `yaml:"title,omitempty" json:"title,omitempty"`
+	Description string    `yaml:"description,omitempty" json:"description,omitempty"`
+	Default     any       `yaml:"default,omitempty" json:"default,omitempty"`
+	Deprecated  bool      `yaml:"deprecated,omitempty" json:"deprecated,omitempty"`
+	Examples    []Example `yaml:"examples,omitempty" json:"examples,omitempty"`
 
 	// Media
 	ContentMediaType string `yaml:"contentMediaType,omitempty" json:"contentMediaType,omitempty"`
@@ -84,15 +84,6 @@ type Schema struct {
 
 	Sub *Schema `yaml:"-" json:"-"`
 	m   map[string]bool
-}
-
-type UnmarshalError struct {
-	Value interface{}
-	Field string
-}
-
-func (e *UnmarshalError) Error() string {
-	return fmt.Sprintf("cannot unmarshal %v into field %v of type schema", e.Value, e.Field)
 }
 
 func (s *Schema) Validate() error {
@@ -168,20 +159,15 @@ func (s *Schema) UnmarshalJSON(b []byte) error {
 	}
 
 	r := dynamic.Reference[*Schema]{}
-	err := json.Unmarshal(b, &r)
+	err := dynamic.UnmarshalJSON(b, &r)
 	if err != nil {
 		return err
 	}
 
 	type alias Schema
 	a := alias{}
-	err = json.Unmarshal(b, &a)
-	if typeErr, ok := err.(*json.UnmarshalTypeError); ok {
-		return &UnmarshalError{
-			Value: typeErr.Value,
-			Field: typeErr.Field,
-		}
-	} else if err != nil {
+	err = dynamic.UnmarshalJSON(b, &a)
+	if err != nil {
 		return err
 	}
 	a.m = s.m

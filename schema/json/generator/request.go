@@ -61,6 +61,8 @@ func (r *Request) With(path []string, s *schema.Schema, example []any) *Request 
 type Context struct {
 	Values    Values `json:"values"`
 	snapshots []Values
+	// represents how many steps current context is away from the root
+	level int
 }
 
 type Values map[string]any
@@ -70,10 +72,17 @@ func newContext() *Context {
 }
 
 func (c *Context) Snapshot() {
-	c.snapshots = append(c.snapshots, c.Values.Snapshot())
+	if c.level != 0 {
+		c.snapshots = append(c.snapshots, c.Values.Snapshot())
+	}
+	c.level++
 }
 
 func (c *Context) Restore() {
+	if len(c.snapshots) <= 1 {
+		return
+	}
+
 	snapshot := c.snapshots[len(c.snapshots)-1]
 	c.snapshots = c.snapshots[:len(c.snapshots)-1]
 	c.Values = snapshot
@@ -84,6 +93,10 @@ func (c *Context) Has(key string) bool {
 	return ok
 }
 
+func (c *Context) Value(key string) any {
+	return c.Values[key]
+}
+
 func (s *Values) Snapshot() Values {
 	snapshot := map[string]any{}
 	for k, v := range *s {
@@ -91,5 +104,6 @@ func (s *Values) Snapshot() Values {
 			snapshot[k] = v
 		}
 	}
+	*s = map[string]any{}
 	return snapshot
 }

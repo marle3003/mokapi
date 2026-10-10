@@ -203,7 +203,7 @@ func (c *Channel) GetMessageByPayload(value any) (*Message, error) {
 			}
 		}
 		if validationErr != nil {
-			return nil, fmt.Errorf("message validation failed:\n\nMessage:\n%v\n\n%w\n", value, validationErr)
+			return nil, fmt.Errorf("message validation failed:\n\n%w", validationErr)
 		}
 		return nil, nil
 	}

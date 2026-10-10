@@ -28,7 +28,7 @@ func (e *EventHandler) Clear(key string) {
 	e.LdapEventDispatcher.Clear(key)
 }
 
-func runEventHandler(h common.EventHandler, args common.EventArgs, params ...interface{}) *common.Action {
+func runEventHandler(h common.EventHandler, args common.EventArgs, params ...any) *common.Action {
 	action := &common.Action{
 		Tags: args.Tags,
 	}

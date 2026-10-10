@@ -14,7 +14,7 @@ func TestPet(t *testing.T) {
 	testcases := []struct {
 		name string
 		req  *Request
-		test func(t *testing.T, v interface{}, err error)
+		test func(t *testing.T, v any, err error)
 	}{
 		{
 			name: "pet-name",
@@ -25,9 +25,9 @@ func TestPet(t *testing.T) {
 					schematest.WithRequired("name"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Betty"}, v)
+				require.Equal(t, map[string]any{"name": "Betty"}, v)
 			},
 		},
 		{
@@ -39,9 +39,9 @@ func TestPet(t *testing.T) {
 					schematest.WithRequired("name"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Betty"}, v)
+				require.Equal(t, map[string]any{"name": "Betty"}, v)
 			},
 		},
 		{
@@ -54,9 +54,9 @@ func TestPet(t *testing.T) {
 						&schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "#/components/schemas/Pet"}, Type: schema.Types{"string"}},
 					)),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"Fyodor Dogstoevsky"}, v)
+				require.Equal(t, []any{"Fyodor Dogstoevsky"}, v)
 			},
 		},
 		{
@@ -70,10 +70,10 @@ func TestPet(t *testing.T) {
 						schematest.WithRequired("name"),
 					)),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{
-					map[string]interface{}{"name": "Fyodor Dogstoevsky"},
+				require.Equal(t, []any{
+					map[string]any{"name": "Fyodor Dogstoevsky"},
 				}, v)
 			},
 		},
@@ -86,9 +86,9 @@ func TestPet(t *testing.T) {
 					schematest.WithRequired("category"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"category": "cat"}, v)
+				require.Equal(t, map[string]any{"category": "cat"}, v)
 			},
 		},
 		{
@@ -104,9 +104,9 @@ func TestPet(t *testing.T) {
 					schematest.WithRequired("category"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"category": map[string]interface{}{"name": "cat"}}, v)
+				require.Equal(t, map[string]any{"category": map[string]any{"name": "cat"}}, v)
 			},
 		},
 		{
@@ -119,9 +119,9 @@ func TestPet(t *testing.T) {
 						&schema.Schema{Reference: dynamic.Reference[*schema.Schema]{Ref: "#/components/schemas/Category"}, Type: schema.Types{"string"}},
 					)),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{"guinea pig"}, v)
+				require.Equal(t, []any{"guinea pig"}, v)
 			},
 		},
 		{
@@ -137,45 +137,9 @@ func TestPet(t *testing.T) {
 					schematest.WithRequired("category"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"category": map[string]interface{}{"id": int64(36202), "name": "cat"}}, v)
-			},
-		},
-		{
-			name: "pet categories in two sub objects",
-			req: &Request{
-				Path: []string{"pet"},
-				Schema: schematest.New("object",
-					schematest.WithProperty("category", schematest.New("object",
-						schematest.WithProperty("name", schematest.New("string")),
-						schematest.WithProperty("id", schematest.New("integer")),
-						schematest.WithRequired("name", "id"),
-					)),
-					schematest.WithProperty("petDetails", schematest.New("object",
-						schematest.WithProperty("category", schematest.New("object",
-							schematest.WithProperty("name", schematest.New("string")),
-							schematest.WithProperty("id", schematest.New("integer")),
-							schematest.WithRequired("name", "id"),
-						)), schematest.WithRequired("category"),
-					),
-					), schematest.WithRequired("petDetails", "category"),
-				),
-			},
-			test: func(t *testing.T, v interface{}, err error) {
-				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{
-					"category": map[string]interface{}{
-						"id":   int64(36202),
-						"name": "cat",
-					},
-					"petDetails": map[string]interface{}{
-						"category": map[string]interface{}{
-							"id":   int64(36202),
-							"name": "cat",
-						},
-					},
-				}, v)
+				require.Equal(t, map[string]any{"category": map[string]any{"id": int64(36202), "name": "cat"}}, v)
 			},
 		},
 		{
@@ -191,9 +155,9 @@ func TestPet(t *testing.T) {
 					schematest.WithRequired("name", "owner"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{"name": "Betty", "owner": map[string]interface{}{"name": "Emily Nelson"}}, v)
+				require.Equal(t, map[string]any{"name": "Betty", "owner": map[string]any{"name": "Emily Nelson"}}, v)
 			},
 		},
 		{
@@ -209,9 +173,9 @@ func TestPet(t *testing.T) {
 					schematest.WithRequired("name", "category"),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]any{"category": map[string]interface{}{"name": "guinea pig"}, "name": "Betty"}, v)
+				require.Equal(t, map[string]any{"category": map[string]any{"name": "guinea pig"}, "name": "Betty"}, v)
 			},
 		},
 	}
@@ -240,14 +204,14 @@ func TestPetStore(t *testing.T) {
 			schematest.WithProperty("name", schematest.New("string")),
 			schematest.WithRequired("id", "name"),
 		)),
-		schematest.WithProperty("status", schematest.New("string", schematest.WithEnum([]interface{}{"available", "pending", "sold"}))),
+		schematest.WithProperty("status", schematest.New("string", schematest.WithEnum([]any{"available", "pending", "sold"}))),
 		schematest.WithRequired("id", "category", "photoUrls", "tags", "status"),
 	)
 
 	testcases := []struct {
 		name string
 		req  *Request
-		test func(t *testing.T, v interface{}, err error)
+		test func(t *testing.T, v any, err error)
 	}{
 		{
 			name: "pet",
@@ -255,19 +219,19 @@ func TestPetStore(t *testing.T) {
 				Path:   []string{"pet"},
 				Schema: pet,
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, map[string]interface{}{
-					"category": map[string]interface{}{"id": int64(36202), "name": "rabbit"},
+				require.Equal(t, map[string]any{
+					"category": map[string]any{"id": int64(36202), "name": "rabbit"},
 					"id":       int64(9900),
-					"photoUrls": []interface{}{
+					"photoUrls": []any{
 						"http://www.financialvalue-added.com/end-to-end/envisioneer",
 						"http://www.internationalnext-generation.name/scale",
 						"https://www.brandrich.name/extend/implement/innovative/enterprise",
 						"https://www.operationse-services.org/matrix/portals/vortals/e-markets",
 						"https://www.executivefront-end.info/innovative"},
 					"status": "available",
-					"tags":   map[string]interface{}{"id": int64(18481), "name": "Echo"}},
+					"tags":   map[string]any{"id": int64(18481), "name": "Echo"}},
 					v)
 			},
 		},

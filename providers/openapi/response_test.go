@@ -55,7 +55,7 @@ func TestResponse_UnmarshalJSON(t *testing.T) {
 				res := openapi.Responses{}
 				err := json.Unmarshal([]byte(`{ "foo": { "description": "foo" } }`), &res)
 				// For JSON files, line and column position for error is handled in dynamic package
-				require.EqualError(t, err, "structural error at foo: invalid http status code 'foo': only valid HTTP status codes, default or range (1XX, 2XX,...) are allowed")
+				require.EqualError(t, err, "invalid http status code 'foo': only valid HTTP status codes, default or range (1XX, 2XX,...) are allowed")
 				require.Equal(t, 0, res.Len())
 			},
 		},
@@ -73,7 +73,7 @@ func TestResponse_UnmarshalJSON(t *testing.T) {
 			test: func(t *testing.T) {
 				res := openapi.Responses{}
 				err := json.Unmarshal([]byte(`{ "200": [{ "description": "foo" }] }`), &res)
-				require.EqualError(t, err, "structural error at 200: expected object but received an array")
+				require.EqualError(t, err, "schema error at field '200': expected object, got array")
 				require.Equal(t, 0, res.Len())
 			},
 		},

@@ -13,7 +13,9 @@ import (
 func TestStringDate(t *testing.T) {
 	// tests depends on current year so without this, all tests will break in next year
 	isDateString := func(t *testing.T, s any) {
-		_, err := time.Parse("2006-01-02", s.(string))
+		str, ok := s.(string)
+		require.True(t, ok, "expected string")
+		_, err := time.Parse("2006-01-02", str)
 		require.NoError(t, err)
 	}
 	isDateTimeString := func(t *testing.T, s any) {
@@ -24,7 +26,7 @@ func TestStringDate(t *testing.T) {
 	testcases := []struct {
 		name string
 		req  *Request
-		test func(t *testing.T, v interface{}, err error)
+		test func(t *testing.T, v any, err error)
 	}{
 		{
 			name: "created",
@@ -32,7 +34,7 @@ func TestStringDate(t *testing.T) {
 				Path:   []string{"created"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				isDateString(t, v)
 			},
@@ -42,7 +44,7 @@ func TestStringDate(t *testing.T) {
 			req: &Request{
 				Path: []string{"createdAt"},
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				isDateString(t, v)
 			},
@@ -52,7 +54,7 @@ func TestStringDate(t *testing.T) {
 			req: &Request{
 				Path: []string{"creationDate"},
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				isDateString(t, v)
 			},
@@ -62,7 +64,7 @@ func TestStringDate(t *testing.T) {
 			req: &Request{
 				Path: []string{"modified"},
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				isDateString(t, v)
 			},
@@ -72,7 +74,7 @@ func TestStringDate(t *testing.T) {
 			req: &Request{
 				Path: []string{"modifyDate"},
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				isDateString(t, v)
 			},
@@ -82,7 +84,7 @@ func TestStringDate(t *testing.T) {
 			req: &Request{
 				Path: []string{"updateDate"},
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				isDateString(t, v)
 			},
@@ -92,7 +94,7 @@ func TestStringDate(t *testing.T) {
 			req: &Request{
 				Path: []string{"deleted"},
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				isDateString(t, v)
 			},
@@ -102,7 +104,7 @@ func TestStringDate(t *testing.T) {
 			req: &Request{
 				Path: []string{"deletedAt"},
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				isDateString(t, v)
 			},
@@ -112,7 +114,7 @@ func TestStringDate(t *testing.T) {
 			req: &Request{
 				Path: []string{"deleteDate"},
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				isDateString(t, v)
 			},
@@ -122,7 +124,7 @@ func TestStringDate(t *testing.T) {
 			req: &Request{
 				Path: []string{"foundationDate"},
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				isDateString(t, v)
 			},
@@ -135,9 +137,9 @@ func TestStringDate(t *testing.T) {
 					schematest.WithProperty("inactiveFrom", schematest.New("string", schematest.WithFormat("date-time"))),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				m := v.(map[string]interface{})
+				m := v.(map[string]any)
 				isDateTimeString(t, m["activeFrom"])
 				isDateTimeString(t, m["inactiveFrom"])
 			},
@@ -150,9 +152,9 @@ func TestStringDate(t *testing.T) {
 					schematest.WithProperty("publishedUntil", schematest.New("string", schematest.WithFormat("date-time"))),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				m := v.(map[string]interface{})
+				m := v.(map[string]any)
 				isDateTimeString(t, m["publishedFrom"])
 				isDateTimeString(t, m["publishedUntil"])
 			},

@@ -14,68 +14,73 @@ func ictNodes() []*Node {
 		newErrorNode(),
 		newHashNode(),
 		{
-			Name:      "username",
-			DependsOn: []string{"firstname", "lastname"},
-			Fake:      fakeUsername,
+			Name:       "username",
+			Attributes: []string{"username"},
+			DependsOn:  []string{"firstname", "lastname"},
+			Fake:       fakeUsername,
 		},
 		{
-			Name: "user",
-			Fake: fakeUser,
-			Children: []*Node{
-				{
-					Name: "name",
-					Fake: fakeUsername,
-				},
-			},
+			Name:       "user",
+			Attributes: []string{"user"},
+			DependsOn:  []string{"firstname", "lastname"},
+			Fake:       fakeUser,
 		},
 		{
-			Name: "website",
-			Fake: fakeWebsite,
+			Name:       "website",
+			Attributes: []string{"website"},
+			Fake:       fakeWebsite,
 		},
 		{
-			Name: "role",
-			Fake: fakeRole,
+			Name:       "role",
+			Attributes: []string{"role"},
+			Fake:       fakeRole,
 		},
 		{
-			Name: "permission",
-			Fake: fakePermission,
+			Name:       "permission",
+			Attributes: []string{"permission"},
+			Fake:       fakePermission,
 		},
 		{
-			Name: "last",
-			Children: []*Node{
-				{
-					Name: "login",
-					Fake: fakeLastLogin,
-				},
-			},
+			Name:       "lastlogin",
+			Attributes: []string{"lastLogin"},
+			Fake:       fakeLastLogin,
 		},
 		{
-			Name: "password",
-			Fake: fakePassword,
+			Name:       "password",
+			Attributes: []string{"password"},
+			Fake:       fakePassword,
 		},
 	}
 }
 
 func newErrorNode() *Node {
-	return &Node{Name: "error", Fake: fakeError}
+	return &Node{
+		Name:       "error",
+		Attributes: []string{"error"},
+		Fake:       fakeError,
+	}
 }
 
-func fakeError(r *Request) (interface{}, error) {
+func fakeError(_ *Request) (any, error) {
 	return gofakeit.Error().Error(), nil
 }
 
 func newHashNode() *Node {
-	return &Node{Name: "hash", Fake: fakeHash}
+	return &Node{
+		Name:       "hash",
+		Attributes: []string{"hash"},
+		Fake:       fakeHash,
+	}
 }
 
-func fakeHash(_ *Request) (interface{}, error) {
+func fakeHash(_ *Request) (any, error) {
 	hash := sha1.New()
 	s := gofakeit.Sentence()
 	b := hash.Sum([]byte(s))
 	return fmt.Sprintf("%x", b), nil
 }
 
-func fakeUsername(r *Request) (interface{}, error) {
+func fakeUsername(r *Request) (any, error) {
 	var err error
 
 	var first string
@@ -106,16 +111,16 @@ func fakeUsername(r *Request) (interface{}, error) {
 	return fmt.Sprintf("%c%s", first[0], last), nil
 }
 
-func fakeUser(r *Request) (interface{}, error) {
+func fakeUser(r *Request) (any, error) {
 	s := r.Schema
 	if s.IsString() {
-		return gofakeit.Username(), nil
+		return fakeUsername(r)
 	}
 	firstname := gofakeit.FirstName()
 	lastname := gofakeit.LastName()
 	first := strings.ToLower(firstname)
 	last := strings.ToLower(lastname)
-	return map[string]interface{}{
+	return map[string]any{
 		"firstname": firstname,
 		"lastname":  lastname,
 		"gender":    gofakeit.Gender(),
@@ -124,22 +129,22 @@ func fakeUser(r *Request) (interface{}, error) {
 	}, nil
 }
 
-func fakeRole(_ *Request) (interface{}, error) {
+func fakeRole(_ *Request) (any, error) {
 	index := gofakeit.Number(0, len(roles)-1)
 	return roles[index], nil
 }
 
-func fakePermission(_ *Request) (interface{}, error) {
+func fakePermission(_ *Request) (any, error) {
 	index := gofakeit.Number(0, len(permissions)-1)
 	return permissions[index], nil
 }
 
-func fakeLastLogin(r *Request) (interface{}, error) {
+func fakeLastLogin(r *Request) (any, error) {
 	year := time.Now().Year()
 	return fakeDateInPastWithMinYear(r, year-1)
 }
 
-func fakePassword(r *Request) (interface{}, error) {
+func fakePassword(r *Request) (any, error) {
 	return gofakeit.Password(true, true, true, true, false, 11), nil
 }
 

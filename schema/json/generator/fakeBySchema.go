@@ -22,7 +22,7 @@ func fakeBySchemaNode() *Node {
 	}
 }
 
-func fakeBySchema(r *Request) (interface{}, error) {
+func fakeBySchema(r *Request) (any, error) {
 	if fake, ok := applyConstraints(r); ok {
 		return fake()
 	}
@@ -61,7 +61,7 @@ func fakeBySchema(r *Request) (interface{}, error) {
 	case t.IsObject():
 		return fakeObject(r)
 	case t.IsArray():
-		items := func() (interface{}, error) {
+		items := func() (any, error) {
 			return fakeBySchema(r.WithSchema(s.Items))
 		}
 		return fakeArray(r, newFaker(items))
@@ -97,7 +97,7 @@ func fakeBySchema(r *Request) (interface{}, error) {
 	return fakeBySchema(r.WithSchema(&c))
 }
 
-func fakeObject(r *Request) (interface{}, error) {
+func fakeObject(r *Request) (any, error) {
 	s := r.Schema
 	if s.Properties == nil {
 		s.Properties = &schema.Schemas{LinkedHashMap: sortedmap.LinkedHashMap[string, *schema.Schema]{}}
@@ -105,10 +105,10 @@ func fakeObject(r *Request) (interface{}, error) {
 		length := numProperties(0, 10, s)
 
 		if length == 0 {
-			return map[string]interface{}{}, nil
+			return map[string]any{}, nil
 		}
 
-		for i := 0; i < length; i++ {
+		for i := range length {
 			var name string
 			if i < len(s.Required) {
 				name = s.Required[i]
@@ -146,7 +146,7 @@ func removeNull(slice schema.Types) schema.Types {
 func selectExample(r *Request) (any, error) {
 	items := r.examples
 	start := gofakeit.Number(0, len(items)-1)
-	for i := 0; i < len(items); i++ {
+	for i := range items {
 		index := (start + i) % len(items)
 		item := items[index]
 

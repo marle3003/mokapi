@@ -33,7 +33,7 @@ func SetConfig(cfg static.DataGen) {
 	g.cfg = cfg
 }
 
-func New(r *Request) (interface{}, error) {
+func New(r *Request) (any, error) {
 	r.g = g
 	if r.Context == nil {
 		r.Context = newContext()

@@ -65,13 +65,16 @@ func (r *Responses) UnmarshalJSON(b []byte) error {
 		err = dec.Decode(&val)
 		if err != nil {
 			offset += dynamic.NextTokenIndex(b[offset:])
-			return dynamic.NewStructuralErrorWithField(err, offset, dec, key)
+			return &dynamic.SchemaError{
+				Field:   key,
+				Offset:  offset,
+				Message: err,
+			}
 		}
 		switch m := any(&r.LinkedHashMap).(type) {
 		case *sortedmap.LinkedHashMap[string, *ResponseRef]:
 			if !isValidStatusCode(key) {
-				offset += dynamic.NextTokenIndex(b[offset:])
-				return dynamic.NewStructuralErrorWithField(fmt.Errorf("invalid http status code '%v': only valid HTTP status codes, default or range (1XX, 2XX,...) are allowed", key), offset, dec, key)
+				return fmt.Errorf("invalid http status code '%v': only valid HTTP status codes, default or range (1XX, 2XX,...) are allowed", key)
 			}
 			m.Set(key, val)
 		}

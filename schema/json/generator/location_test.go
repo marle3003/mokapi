@@ -12,7 +12,7 @@ func TestLocation(t *testing.T) {
 	testcases := []struct {
 		name    string
 		request *Request
-		test    func(t *testing.T, v interface{}, err error)
+		test    func(t *testing.T, v any, err error)
 	}{
 		{
 			name: "country",
@@ -20,7 +20,18 @@ func TestLocation(t *testing.T) {
 				Path:   []string{"country"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "Benin", v)
+			},
+		},
+		{
+			name: "country_name",
+			request: &Request{
+				Path:   []string{"country_name"},
+				Schema: schematest.New("string"),
+			},
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "Benin", v)
 			},
@@ -32,7 +43,7 @@ func TestLocation(t *testing.T) {
 				Schema: schematest.New("string",
 					schematest.WithPattern("[A-Z]{2}")),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "BJ", v)
 			},
@@ -44,7 +55,7 @@ func TestLocation(t *testing.T) {
 				Schema: schematest.New("string",
 					schematest.WithPattern("[a-z]{2}")),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "bj", v)
 			},
@@ -56,7 +67,7 @@ func TestLocation(t *testing.T) {
 				Schema: schematest.New("string",
 					schematest.WithPattern("^[a-zA-Z]{4}$")),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "cQOp", v)
 			},
@@ -67,7 +78,7 @@ func TestLocation(t *testing.T) {
 				Path:   []string{"country"},
 				Schema: schematest.New("string", schematest.WithMaxLength(15)),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "Benin", v)
 			},
@@ -78,7 +89,7 @@ func TestLocation(t *testing.T) {
 				Path:   []string{"countryName"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "Benin", v)
 			},

@@ -9,89 +9,29 @@ import (
 func dates() []*Node {
 	nodes := []*Node{
 		{
-			Name: "created",
-			Fake: fakePastDate(5),
-			Children: []*Node{
-				{
-					Name: "at",
-					Fake: fakePastDate(5),
-				},
-			},
+			Name:       "created",
+			Attributes: []string{"created", "createdAt", "creationDate"},
+			Fake:       fakePastDate(5),
 		},
 		{
-			Name: "creation",
-			Children: []*Node{
-				{
-					Name: "date",
-					Fake: fakePastDate(5),
-				},
-			},
+			Name:       "modified",
+			Attributes: []string{"modified", "modifiedAt", "modificationDate", "modifyDate"},
+			Fake:       fakePastDate(5),
 		},
 		{
-			Name: "modified",
-			Fake: fakePastDate(5),
-			Children: []*Node{
-				{
-					Name: "at",
-					Fake: fakePastDate(5),
-				},
-			},
+			Name:       "updated",
+			Attributes: []string{"updated", "updatedAt", "updateDate"},
+			Fake:       fakePastDate(5),
 		},
 		{
-			Name: "modify",
-			Children: []*Node{
-				{
-					Name: "date",
-					Fake: fakePastDate(5),
-				},
-			},
+			Name:       "deleted",
+			Attributes: []string{"deleted", "deletedAt", "deleteDate"},
+			Fake:       fakePastDate(5),
 		},
 		{
-			Name: "updated",
-			Fake: fakePastDate(5),
-			Children: []*Node{
-				{
-					Name: "at",
-					Fake: fakePastDate(5),
-				},
-			},
-		},
-		{
-			Name: "update",
-			Children: []*Node{
-				{
-					Name: "date",
-					Fake: fakePastDate(5),
-				},
-			},
-		},
-		{
-			Name: "deleted",
-			Fake: fakePastDate(5),
-			Children: []*Node{
-				{
-					Name: "at",
-					Fake: fakePastDate(5),
-				},
-			},
-		},
-		{
-			Name: "delete",
-			Children: []*Node{
-				{
-					Name: "date",
-					Fake: fakePastDate(5),
-				},
-			},
-		},
-		{
-			Name: "foundation",
-			Children: []*Node{
-				{
-					Name: "date",
-					Fake: fakePastDate(100),
-				},
-			},
+			Name:       "foundation",
+			Attributes: []string{"foundationDate"},
+			Fake:       fakePastDate(100),
 		},
 	}
 	nodes = append(nodes, timePairs()...)
@@ -105,7 +45,7 @@ func timePairs() []*Node {
 
 	var nodes []*Node
 	for k, v := range commonTimePairs {
-		n1 := buildTimePairTree(tokenize([]string{k}), nil, func(r *Request) (any, error) {
+		n1 := buildTimePairTree([]string{k}, nil, func(r *Request) (any, error) {
 			d, err := fakeDateInPastWithMinYear(r, now.Year()-5)
 			if err != nil {
 				return nil, err
@@ -116,7 +56,7 @@ func timePairs() []*Node {
 		nodes = append(nodes, n1)
 		for _, v2 := range v {
 			md := minDate
-			n2 := buildTimePairTree(tokenize([]string{v2}), []string{k}, func(r *Request) (any, error) {
+			n2 := buildTimePairTree([]string{v2}, []string{k}, func(r *Request) (any, error) {
 				if depValue, ok := r.Context.Values[k]; ok {
 					t, err := time.Parse(time.RFC3339, depValue.(string))
 					if err == nil {
@@ -132,17 +72,12 @@ func timePairs() []*Node {
 }
 
 func buildTimePairTree(tokens []string, dependsOn []string, fake func(r *Request) (any, error)) *Node {
-	n := &Node{
-		Name: tokens[0],
+	return &Node{
+		Name:       tokens[0],
+		Fake:       fake,
+		DependsOn:  dependsOn,
+		Attributes: tokens[1:],
 	}
-	tokens = tokens[1:]
-	if len(tokens) == 0 {
-		n.Fake = fake
-		n.DependsOn = dependsOn
-	} else {
-		n.Children = []*Node{buildTimePairTree(tokens, dependsOn, fake)}
-	}
-	return n
 }
 
 func fakePastDate(pastYears int) func(r *Request) (any, error) {

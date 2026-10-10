@@ -57,7 +57,7 @@ func (m *Module) Produce(v goja.Value) interface{} {
 
 	result, err := client.Produce(args)
 	if err != nil {
-		log.Errorf("js error: %v in %v", err, m.host.Name())
+		log.Errorf("js error(%s): %s", m.host.Name(), err)
 		panic(m.rt.ToValue(err.Error()))
 	}
 	if len(result.Messages) == 1 {

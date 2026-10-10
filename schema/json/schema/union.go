@@ -2,7 +2,11 @@ package schema
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"mokapi/config/dynamic"
+	"reflect"
+
 	"gopkg.in/yaml.v3"
 )
 
@@ -47,7 +51,17 @@ func (ut *UnionType[T1, T2]) UnmarshalJSON(b []byte) error {
 	}
 
 	ut.t = 1
-	return json.Unmarshal(b, &ut.B)
+	err := json.Unmarshal(b, &ut.B)
+	if err != nil {
+		var te *json.UnmarshalTypeError
+		if errors.As(err, &te) {
+			return &dynamic.SchemaError{
+				Offset:  te.Offset,
+				Message: fmt.Errorf("expected type %s or %s, got %s (%s)", dynamic.ToTypeName(reflect.TypeFor[T1]()), dynamic.ToTypeName(reflect.TypeFor[T2]()), te.Value, b),
+			}
+		}
+	}
+	return err
 }
 
 func (ut *UnionType[T1, T2]) String() string {
