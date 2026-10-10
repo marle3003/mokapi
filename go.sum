@@ -92,6 +92,8 @@ github.com/dop251/goja v0.0.0-20261001102346-43ac577c6fa3 h1:kI6ni9uYdzgZNqk+TUA
 github.com/dop251/goja v0.0.0-20261001102346-43ac577c6fa3/go.mod h1:u8yZRUavu+N4EnFFy6J5fVtjE7lEcZ2YyV2GcBXY9c8=
 github.com/dop251/goja v0.0.0-20261004200024-481fdb442bb4 h1:MRZ0SrzpwIYx0fE7FFz6jeUSC95M/tivyy90sHyt+BA=
 github.com/dop251/goja v0.0.0-20261004200024-481fdb442bb4/go.mod h1:GrCNKUrVplXZj0juFue0Cj2Xt/eL2Nuu2+y3UTanEo8=
+github.com/dop251/goja v0.0.0-20261010130053-73dc7edc278f h1:YG1l3Oxv2sIF2Xn9SesDXGwsrbZT3EZSKcl3Rs5NuU0=
+github.com/dop251/goja v0.0.0-20261010130053-73dc7edc278f/go.mod h1:Cp9NYOLrEKg/ypIRkUWYXWLuKAyyFGkDmGeJ95Sw0zI=
 github.com/elazarl/goproxy v1.7.2 h1:Y2o6urb7Eule09PjlhQRGNsqRfPmYI3KKQLFpCAV3+o=
 github.com/elazarl/goproxy v1.7.2/go.mod h1:82vkLNir0ALaW14Rc399OTTjyNREgmdL2cVoIbS6XaE=
 github.com/emirpasic/gods v1.18.1 h1:FXtiHYKDGKCW2KzwZKx0iC0PQmdlorYgdFG9jPXJ1Bc=
