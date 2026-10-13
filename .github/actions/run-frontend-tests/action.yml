@@ -23,7 +23,7 @@ runs:
       run: docker load --input /tmp/mokapi.tar
       shell: bash
     - name: Run mokapi image
-      run: docker run --name mokapi --rm -d -p 8090:8090 -p 8091:8091 --mount type=bind,source=$(pwd)/webui/e2e/mocks,target=/data --env MOKAPI_Log_Level=Debug --env MOKAPI_Api_Port=8091 --env MOKAPI_Api_Path=/mokapi --env MOKAPI_Providers_File_Directory=/data ${{ inputs.image-name }}
+      run: docker run --name mokapi --rm -d -p 8090:8090 -p 8091:8091 --mount type=bind,source=$(pwd)/webui,target=/data --env MOKAPI_Log_Level=Debug --env MOKAPI_Api_Port=8091 --env MOKAPI_Api_Path=/mokapi --env MOKAPI_Providers_File_Directory=/data/e2e/mocks ${{ inputs.image-name }}
       shell: bash
     - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
       with:
