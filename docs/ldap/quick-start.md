@@ -25,7 +25,9 @@ than interacting with actual LDAP entries. You can later extend this configurati
 advanced server settings as needed.
 
 ```yaml tab=ldap.yaml
-ldap: 1.0 # file configuration version not LDAP protocol version 
+ldap: 1.0 # file configuration version not LDAP protocol version
+info:
+  title: Basic LDAP Server
 host: :389
 ```
 
@@ -81,6 +83,8 @@ In the LDAP configuration, you would reference this LDIF file as follows:
 
 ```yaml tab=ldap.yaml
 ldap: 1.0 # file configuration version not LDAP protocol version 
+info:
+  title: LDAP Server using LDIF
 host: :389
 files:
   - ./example.ldif
