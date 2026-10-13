@@ -3,12 +3,16 @@ package eventstest
 import "mokapi/runtime/events"
 
 type Event struct {
-	Name string
+	Name string `json:"name"`
 	Api  string `json:"api"`
 }
 
 func (e *Event) Title() string {
 	return e.Name
+}
+
+func (e *Event) Info() any {
+	return e
 }
 
 func (e *Event) IndexFields() map[string]any {

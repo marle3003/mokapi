@@ -81,15 +81,24 @@ test('Visit Websocket overview', async ({ page }) => {
                     await expect(info.getByLabel('Server')).toHaveText('localhost:8080');
                     await expect(info.getByLabel('Type of API')).toHaveText('Websocket');
 
-                    const messages = page.getByRole('table', { name: 'Messages' });
-                    const rows = messages.locator('tbody tr');
-                    await expect(rows).toHaveCount(1);
+                    const tblMessages = page.getByRole('table', { name: 'Messages' });
+                    const messages = tblMessages.locator('tbody tr');
+                    await expect(messages).toHaveCount(1);
 
-                    await rows.nth(0).click()
+                    const tblRequests = page.getByRole('table', { name: 'Requests' });
+                    const requests = tblRequests.locator('tbody tr');
+                    await expect(rows).toHaveCount(1);
+                    await expect(await getCellByColumnName(tblRequests, 'Type', requests.nth(0))).toHaveText('Connect')
+                    await expect(await getCellByColumnName(tblRequests, 'Channel', requests.nth(0))).toHaveText('/chats/general')
+                    await expect(await getCellByColumnName(tblRequests, 'Reason', requests.nth(0))).toHaveText('')
+                    await expect(await getCellByColumnName(tblRequests, 'Closed By', requests.nth(0))).toHaveText('')
+                    await expect(await getCellByColumnName(tblRequests, 'Time', requests.nth(0))).not.toBeEmpty()
+
+                    await messages.nth(0).click()
 
                 })
 
-                await meta.getByLabel('Channel').click();
+                await page.getByRole('region', { name: 'Meta' }).getByLabel('Channel').click();
                 await page.getByRole('region', { name: 'Info' }).getByLabel('Cluster').click();
             })
 

@@ -18,37 +18,28 @@ const { format: formatTime } = usePrettyDates();
 const { dashboard } = useDashboard()
 const { formatType, formatAddress } = useWebsocket()
 
-const eventId = computed(() => {
-    const id = route.params.id
-    if (!id) {
-        return undefined
-    }
-
-    if (typeof id === 'string') {
-        return id
-    }
-    return null
-})
-const data = ref<EventResult | null>(null);
+const event = ref<ServiceEvent | null>(null);
+const isLoading = ref<boolean>(true)
 
 watch(() => dashboard.value,
   (db, _, onCleanup) => {
-    if (!eventId.value) {
-        return
-    }
-    const res = db.getEvent(eventId.value);
-    data.value = res;
+    const res = db.getEvent(route.params.id as string);
 
-    onCleanup(() => res.close());
+    const stop = watch(res.event, (v) => { event.value = v; isLoading.value = false }, { immediate: true })
+
+    onCleanup(() => {
+        stop()
+        res.close
+    });
   },
   { immediate: true }
 );
 
 const eventData = computed(() => {
-    if (!data.value || !data.value.event) {
+    if (!event.value) {
         return undefined
     }
-    return data.value.event.data as WebsocketConnectionLog
+    return event.value.data as WebsocketConnectionLog
 })
 function isClientAvailable(id: string) {
   return  props.service.clients?.find(x => x.id === id) !== undefined
@@ -64,7 +55,7 @@ const channel = computed(() => {
 </script>
 
 <template>
-    <div v-if="data && data.event && eventData">
+    <div v-if="event && eventData">
         <div class="card-group">
             <div class="card">
                 <div class="card-body">
@@ -77,7 +68,7 @@ const channel = computed(() => {
                         </div>
                         <div class="col text-end">
                             <p id="time" class="label">Time</p>
-                            <p aria-labelledby="time">{{ formatTime(data.event.time) }}</p>
+                            <p aria-labelledby="time">{{ formatTime(event.time) }}</p>
                         </div>
                         <div class="col text-end">
                             <span class="badge bg-secondary" aria-label="Service Type">Websocket</span>
@@ -89,7 +80,7 @@ const channel = computed(() => {
                             <div aria-labelledby="channel">
                                 <router-link :to="{
                                     name: getRouteName('websocketChannel').value,
-                                    params: {service: data.event.traits.name, channel: channel.name},
+                                    params: {service: event.traits.name, channel: channel.name},
                                 }">
                                 {{ eventData.channel }}
                                 </router-link>
@@ -102,7 +93,7 @@ const channel = computed(() => {
                             <p aria-labelledby="clientId">
                                 <router-link v-if="eventData.client && isClientAvailable(eventData.client.id)" :to="{
                                     name: getRouteName('websocketClient').value,
-                                    params: {service: data.event.traits.name, id: eventData.client.id},
+                                    params: {service: event.traits.name, id: eventData.client.id},
                                 }">
                                 {{ formatAddress(eventData.client.address) }}
                                 </router-link>
@@ -125,8 +116,8 @@ const channel = computed(() => {
         </div>
         
     </div>
-    <loading v-if="!data || data.isLoading"></loading>
-    <div v-if="data && !data.event && !data.isLoading">
+    <loading v-if="!event || isLoading"></loading>
+    <div v-if="!event && !isLoading">
         <message message="WebSocket Event not found"></message>
     </div>
 </template>

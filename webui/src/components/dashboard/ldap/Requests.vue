@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { type PropType, onUnmounted } from 'vue';
+import { type PropType, computed, reactive, ref, watch } from 'vue';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { getRouteName, useDashboard } from '@/composables/dashboard';
-import { useLdap } from '@/composables/ldap';
 
 const props = defineProps({
     service: { type: Object as PropType<LdapService> },
@@ -14,21 +13,45 @@ if (props.service){
     labels.push({name: 'name', value: props.service!.name})
 }
 
-const router = useRouter()
-const { dashboard } = useDashboard();
-const { events, close } = dashboard.value.getEvents(...labels)
-const { format, duration } = usePrettyDates()
-const { targetDn, criteria } = useLdap()
-let data: LdapEventData
+const paging = reactive({
+    current: 1,
+    size: 25,
+    sizeOptions: [10, 25, 50, 100]
+})
 
-function goToEvent(event: ServiceEvent, openInNewTab = false){
+const router = useRouter()
+const { format, duration } = usePrettyDates()
+
+const { dashboard } = useDashboard();
+const result = ref<ServiceEventResult | null>(null);
+const events = computed(() => result.value?.items ?? [])
+watch(
+  [() => dashboard.value, () => paging.current, () => paging.size, labels ],
+  ([db], _, onCleanup) => {
+    const res = db.getEvents({
+      page: paging.current,
+      size: paging.size,
+      labels: labels,
+    })
+
+    const stop = watch(res.data, (v) => { result.value = v }, { immediate: true })
+
+    onCleanup(() => {
+      stop()
+      res.close()
+    })
+  },
+  { immediate: true }
+);
+
+function goToEvent(eventId: string, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
     }
 
     const to = {
         name: getRouteName('ldapRequest').value,
-        params: {id: event.id},
+        params: {id: eventId},
     }
     if (openInNewTab) {
         const routeData = router.resolve(to);
@@ -37,13 +60,15 @@ function goToEvent(event: ServiceEvent, openInNewTab = false){
         router.push(to)
     }
 }
-function eventData(event: ServiceEvent): LdapEventData{
-    return <LdapEventData>event.data
+function eventData(event: ServiceEventInfo): LdapEventInfo {
+    return <LdapEventInfo>event.data
 }
-
-onUnmounted(() => {
-    close()
-})
+function criteria(value: string | string[]): string {
+    if (Array.isArray(value)) {
+        return value.join('<br />')
+    }
+    return value
+}
 </script>
 
 <template>
@@ -63,26 +88,50 @@ onUnmounted(() => {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="event in events!" :key="event.id" @mouseup.left="goToEvent(event)" @mousedown.middle="goToEvent(event, true)" :set="data = eventData(event)">
+                        <tr v-for="event in events!" :key="event.id" @mouseup.left="goToEvent(event.id)" @mousedown.middle="goToEvent(event.id, true)">
                             <td>
                                 <router-link @click.stop class="row-link" :to="{ name: getRouteName('ldapRequest').value, params: {id: event.id} }">
-                                    <span class="badge ldap operation" :class="eventData(event).request.operation.toLocaleLowerCase()">
-                                    {{ eventData(event).request.operation }}
+                                    <span class="badge ldap operation" :class="eventData(event).operation.toLocaleLowerCase()">
+                                    {{ eventData(event).operation }}
                                     </span>
                                 </router-link>
                             </td>
                             <td>
-                                {{ targetDn(data) }}
+                                {{ eventData(event).dn }}
                             </td>
-                            <td>
-                                {{ criteria(data)}}
-                            </td>
-                            <td class="text-center">{{ data.response?.status ?? '-' }}</td>
+                            <td v-html="criteria(eventData(event).criteria)"></td>
+                            <td class="text-center">{{ eventData(event).status ?? '-' }}</td>
                             <td class="text-center">{{ format(event.time) }}</td>
-                            <td class="text-center">{{ duration(data.duration) }}</td>
+                            <td class="text-center">{{ duration(eventData(event).duration) }}</td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+            <!-- Paging -->
+            <div class="row" v-if="result && result.total > result.size">
+                 <div class="d-flex justify-content-between align-items-center mb-3">
+                    
+                    <div class="small text-muted">
+                        Showing {{ events.length }} of {{ result.total }} requests
+                    </div>
+
+                        <Pager :current="result.page" :size="10" :total="result.total" />
+
+                        <select
+                            class="form-select form-select-sm"
+                            style="width:auto"
+                            v-model.number="result.size"
+                        >
+                            <option
+                                v-for="size in paging.sizeOptions"
+                                :key="size"
+                                :value="size"
+                            >
+                                {{ size }}
+                            </option>
+                        </select>
+
+                 </div>
             </div>
         </div>
     </section>

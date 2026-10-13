@@ -111,12 +111,13 @@ export let mailEvents = [
             from: 'alice@mokapi.io',
             to: ['bob@mokapi.io'],
             messageId: '20230223-084925.763-4196@mokapi.io',
-            subject: 'A test mail'
+            subject: 'A test mail',
+            duration: 30016,
         },
     },
 ]
 
-export function getMail(messageId) {
+export function getMail(messageId: string) {
     for (let m of mails) {
         if (m.messageId === messageId) {
             return m
@@ -125,8 +126,12 @@ export function getMail(messageId) {
     return null
 }
 
-export function getAttachment(messageId, attachmentName) {
+export function getAttachment(messageId: string, attachmentName: string) {
     const mail = getMail(messageId)
+    if (!mail) {
+        return null
+    }
+
     for (let a of mail.attachments) {
         if (a.name === attachmentName) {
             return a

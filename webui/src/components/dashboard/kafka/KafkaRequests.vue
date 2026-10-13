@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useDashboard, getRouteName } from '@/composables/dashboard';
-import { computed, ref, watch, type Component } from 'vue';
+import { computed, reactive, ref, watch, type Component } from 'vue';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRouter } from '@/router';
 import JoinGroupSummary from './requests/JoinGroupSummary.vue';
@@ -8,7 +8,6 @@ import SyncGroupSummary from './requests/SyncGroupSummary.vue';
 import ListOffsetsSummary from './requests/ListOffsetsSummary.vue';
 import FindCoordinatorSummary from './requests/FindCoordinatorSummary.vue';
 import InitProducerIdSummary from './requests/InitProducerIdSummary.vue';
-import type { EventsResult } from '@/types/dashboard';
 
 const props = defineProps<{
   service: KafkaService,
@@ -36,16 +35,40 @@ const labels = computed(() => {
   return result;
 })
 
+const paging = reactive({
+  current: 1,
+  size: 25,
+  sizeOptions: [10, 25, 50, 100]
+})
+
 const { dashboard } = useDashboard()
-const data = ref<EventsResult | null>(null);
+const result = ref<ServiceEventResult | null>(null);
+const events = computed(() => result.value?.items ?? [])
+watch(
+  [() => dashboard.value, () => paging.current, () => paging.size, labels],
+  ([db], _, onCleanup) => {
+    const res = db.getEvents({
+      page: paging.current,
+      size: paging.size,
+      labels: labels.value,
+    })
+
+    const stop = watch(res.data, (v) => { result.value = v }, { immediate: true })
+
+    onCleanup(() => {
+      stop()
+      res.close()
+    })
+  },
+  { immediate: true }
+);
 
 const requests = computed(() => {
-  if (!data.value || !data.value.events) {
+  if (!events.value) {
     return [];
   }
-  const events = data.value.events
   const result = [];
-  for (const event of events) {
+  for (const event of events.value) {
     const data = eventData(event)
     if (!data) {
       continue
@@ -59,37 +82,24 @@ const requests = computed(() => {
   return result
 })
 
-watch(() => dashboard.value,
-  (db, _, onCleanup) => {
-    const res =  db.getEvents(...labels.value);
-    data.value = res;
-
-    onCleanup(() => res.close());
-  },
-  { immediate: true }
-);
-
-function eventData(event: ServiceEvent | null): KafkaRequestLog | null {
-  if (!event) {
-    return null
-  }
+function eventData(event: ServiceEventInfo): KafkaRequestLog {
   return event.data as KafkaRequestLog
 }
-function goToRequest(event: ServiceEvent, openInNewTab = false) {
-    if (getSelection()?.toString()) {
-        return
-    }
+function goToRequest(eventId: string, openInNewTab = false) {
+  if (getSelection()?.toString()) {
+    return
+  }
 
-    const to = {
-        name: getRouteName('kafkaRequest').value,
-        params: { service: props.service.name, id: event.id }
-    }
-    if (openInNewTab) {
-        const routeData = router.resolve(to);
-        window.open(routeData.href, '_blank')
-    } else {
-        router.push(to)
-    }
+  const to = {
+    name: getRouteName('kafkaRequest').value,
+    params: { service: props.service.name, id: eventId }
+  }
+  if (openInNewTab) {
+    const routeData = router.resolve(to);
+    window.open(routeData.href, '_blank')
+  } else {
+    router.push(to)
+  }
 }
 </script>
 
@@ -114,22 +124,44 @@ function goToRequest(event: ServiceEvent, openInNewTab = false) {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in requests" :key="row.event.id" @click.left="goToRequest(row.event)" @mousedown.middle="goToRequest(row.event, true)">
+            <tr v-for="row in requests" :key="row.event.id" @click.left="goToRequest(row.event.id)"
+              @mousedown.middle="goToRequest(row.event.id, true)">
               <td>
                 <router-link @click.stop class="row-link"
-                    :to="{ name: getRouteName('kafkaRequest').value, params: { service: props.service.name, id: row.event.id } }">
-                    {{ row.data.header.requestName }}
+                  :to="{ name: getRouteName('kafkaRequest').value, params: { service: props.service.name, id: row.event.id } }">
+                  {{ row.data.header.requestName }}
                 </router-link>
               </td>
               <td>{{ row.data.header.version }}</td>
               <td>
-                <component :is="summary[row.data.header.requestKey]" :request="row.data.request" :response="row.data.response"/>
+                <component :is="summary[row.data.header.requestKey]" :request="row.data.request"
+                  :response="row.data.response" />
               </td>
-              <td>{{ row.data.response.errorCode && row.data.response.errorCode !== '' ? row.data.response.errorCode : 'None' }}</td>
+              <td>{{ row.data.response.errorCode && row.data.response.errorCode !== '' ? row.data.response.errorCode :
+                'None' }}</td>
               <td class="text-center">{{ formatTime(row.event.time) }}</td>
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <!-- Paging -->
+      <div class="row" v-if="result && result.total > result.size">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+
+          <div class="small text-muted">
+            Showing {{ events.length }} of {{ result.total }} requests
+          </div>
+
+          <Pager :current="result.page" :size="10" :total="result.total" />
+
+          <select class="form-select form-select-sm" style="width:auto" v-model.number="result.size">
+            <option v-for="size in paging.sizeOptions" :key="size" :value="size">
+              {{ size }}
+            </option>
+          </select>
+
+        </div>
       </div>
     </div>
   </section>

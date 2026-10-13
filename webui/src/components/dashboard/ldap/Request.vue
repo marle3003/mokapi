@@ -6,47 +6,32 @@ import Delete from './Delete.vue'
 import ModifyDN from './ModifyDN.vue'
 import Compare from './Compare.vue'
 import { useRoute } from 'vue-router'
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useDashboard } from '@/composables/dashboard'
 import Message from '@/components/Message.vue'
 import Loading from '@/components/Loading.vue'
 import RequestInfoCard from './RequestInfoCard.vue'
 import Bind from './Bind.vue'
-import { useMeta } from '@/composables/meta'
 
 const route = useRoute()
 const { dashboard, getMode } = useDashboard()
 
-const events = computed(() => {
-    return dashboard.value.getEvents({ name: 'namespace', value: 'ldap' })
-})
+const event = ref<ServiceEvent | null>(null);
+const isLoading = ref<boolean>(true)
 
-const eventId = computed(() => {
-  const id = route.params.id
-  if (!id) {
-    return undefined
-  }
+watch(() => dashboard.value,
+  (db, _, onCleanup) => {
+    const res = db.getEvent(route.params.id as string);
 
-  if (typeof id === 'string') {
-    if (isNumber(id)) {
-        const index = parseFloat(id);
-        const ev = events.value.events.value[index];
-        return ev?.id ?? null;
-    } else {
-        return id;
-    }
-  }
-  return null
-})
+    const stop = watch(res.event, (v) => { event.value = v; isLoading.value = false }, { immediate: true })
 
-const result = computed(() => {
-  if (!eventId.value) return null
-  return dashboard.value.getEvent(eventId.value)
-})
-
-const event = computed(() => result.value?.event.value ?? null)
-const isLoading = computed(() => result.value?.isLoading ?? false)
-const close = () => result.value?.close?.()
+    onCleanup(() => {
+        stop()
+        res.close
+    });
+  },
+  { immediate: true }
+);
 
 const data = computed(() => {
     if (!event?.value) {
@@ -68,28 +53,6 @@ const request = computed(() => {
     }
 })
 
-function isInitLoading() {
-    return isLoading.value && !event.value
-}
-
-onMounted(() => {
-    if (!event.value || !data.value || getMode() !== 'demo') {
-        return
-    }
-    const id = events.value.events.value.indexOf(event.value)
-    useMeta(
-        `${data.value.request.operation} ${request.value} – Mail Message Details`,
-        'View LDAP request details including operation, DN, attributes, and results. Debug directory authentication and queries using the Mokapi Dashboard.',
-        'https://mokapi.io/dashboard-demo/ldap/ldap/requests/' + id
-    )
-})
-
-onUnmounted(() => {
-    close()
-})
-function isNumber(value: string): boolean {
-  return /^[0-9]+$/.test(value);
-}
 </script>
 
 <template>
@@ -106,7 +69,7 @@ function isNumber(value: string): boolean {
         <compare v-if="event && data.request.operation == 'Compare'" :event="event"></compare>
     </div>
 
-    <Loading v-if="isInitLoading()"></loading>
+    <Loading v-if="!event && isLoading"></loading>
     <div v-if="!event && !isLoading">
         <Message message="Search request not found"></message>
     </div>

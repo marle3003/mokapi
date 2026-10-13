@@ -123,9 +123,9 @@ func newMessageValidator(messageId string, msg *asyncapi3.Message, channel *asyn
 
 func (mv *messageValidator) Validate(record *kafka.Record) (*KafkaMessageLog, error) {
 	r := &KafkaMessageLog{
-		Key:            LogValue{},
-		Message:        LogValue{},
-		Headers:        make(map[string]LogValue),
+		Key:            &LogValue{},
+		Message:        &LogValue{},
+		Headers:        make(map[string]*LogValue),
 		MessageId:      mv.messageId,
 		ProducerId:     record.ProducerId,
 		ProducerEpoch:  record.ProducerEpoch,
@@ -183,7 +183,7 @@ type schemaValidator struct {
 	contentType string
 }
 
-func (v *schemaValidator) Validate(data io.Reader) (interface{}, error) {
+func (v *schemaValidator) Validate(data io.Reader) (any, error) {
 	return encoding.DecodeFrom(data, encoding.WithContentType(media.ParseContentType(v.contentType)), encoding.WithParser(v.parser))
 }
 
@@ -191,7 +191,7 @@ type headerValidator struct {
 	schema *asyncapi3.SchemaRef
 }
 
-func (v *headerValidator) Validate(headers []kafka.RecordHeader) (map[string]LogValue, error) {
+func (v *headerValidator) Validate(headers []kafka.RecordHeader) (map[string]*LogValue, error) {
 	return parseHeader(headers, v.schema)
 }
 
@@ -230,15 +230,15 @@ func readSchemaId(payload kafka.Bytes, encoding string) (int, error) {
 	return int(version), err
 }
 
-func convertHeader(headers []kafka.RecordHeader) map[string]LogValue {
-	result := map[string]LogValue{}
+func convertHeader(headers []kafka.RecordHeader) map[string]*LogValue {
+	result := map[string]*LogValue{}
 	for _, header := range headers {
-		result[header.Key] = LogValue{Binary: header.Value}
+		result[header.Key] = &LogValue{Binary: header.Value}
 	}
 	return result
 }
 
-func parseHeader(headers []kafka.RecordHeader, sr *asyncapi3.SchemaRef) (map[string]LogValue, error) {
+func parseHeader(headers []kafka.RecordHeader, sr *asyncapi3.SchemaRef) (map[string]*LogValue, error) {
 	if sr == nil || sr.Value == nil {
 		return convertHeader(headers), nil
 	}
@@ -247,7 +247,7 @@ func parseHeader(headers []kafka.RecordHeader, sr *asyncapi3.SchemaRef) (map[str
 		m[header.Key] = header.Value
 	}
 
-	result := map[string]LogValue{}
+	result := map[string]*LogValue{}
 	switch s := sr.Value.(type) {
 	case *schema.Schema:
 		if s.Properties == nil {
@@ -258,7 +258,7 @@ func parseHeader(headers []kafka.RecordHeader, sr *asyncapi3.SchemaRef) (map[str
 		for it := s.Properties.Iter(); it.Next(); {
 			if b, ok := m[it.Key()]; ok {
 				t := it.Value().Type
-				var v interface{}
+				var v any
 				var err error
 				switch {
 				case t.IsString():
@@ -296,7 +296,7 @@ func parseHeader(headers []kafka.RecordHeader, sr *asyncapi3.SchemaRef) (map[str
 				if err != nil {
 					return nil, err
 				}
-				result[it.Key()] = LogValue{Value: fmt.Sprintf("%v", v)}
+				result[it.Key()] = &LogValue{Value: fmt.Sprintf("%v", v)}
 				done[it.Key()] = true
 			} else if slices.Contains(s.Required, it.Key()) {
 				return nil, fmt.Errorf("required property '%s' is missing in header", it.Key())
@@ -314,9 +314,9 @@ func parseHeader(headers []kafka.RecordHeader, sr *asyncapi3.SchemaRef) (map[str
 		for _, h := range headers {
 			if _, ok := done[h.Key]; !ok {
 				if utf8.Valid(h.Value) {
-					result[h.Key] = LogValue{Value: string(h.Value), Binary: h.Value}
+					result[h.Key] = &LogValue{Value: string(h.Value), Binary: h.Value}
 				} else {
-					result[h.Key] = LogValue{Binary: h.Value}
+					result[h.Key] = &LogValue{Binary: h.Value}
 				}
 			}
 		}
@@ -328,7 +328,7 @@ func parseHeader(headers []kafka.RecordHeader, sr *asyncapi3.SchemaRef) (map[str
 					return nil, err
 				}
 				b, _ := json.Marshal(val)
-				result[f.Name] = LogValue{Value: string(b)}
+				result[f.Name] = &LogValue{Value: string(b)}
 			}
 		}
 	}

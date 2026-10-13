@@ -10,13 +10,13 @@ import Event from './search/Event.vue';
 import Ldap from './search/Ldap.vue';
 import Mail from './search/Mail.vue';
 import Config from './search/Config.vue';
+import Pager from './Pager.vue';
 
 const route = useRoute()
 const queryText = ref<string>(route.query.q?.toString() ?? '')
 const pageIndex = ref(getIndex())
 const errorMessage = ref<string | undefined>()
 const searchResult = ref<SearchResult | undefined>();
-const maxVisiblePages = 10  // max pages in pagination
 const showTips = ref(false)
 const facets = ref<{ [name: string]: string | undefined }>({})
 const loading = useProgressiveLoading()
@@ -27,24 +27,7 @@ const pageNumber = computed(() => {
   }
   return Math.ceil(searchResult.value?.total / 10)
 })
-const pageRange = computed(() => {
-  const half = Math.floor(maxVisiblePages / 2)
 
-  let start = pageIndex.value + 1 - half
-  let end = pageIndex.value + 1 + half - 1
-
-  if (start < 1) {
-    start = 1
-    end = maxVisiblePages
-  }
-
-  if (end > pageNumber.value) {
-    end = pageNumber.value
-    start = Math.max(1, pageNumber.value - maxVisiblePages + 1)
-  }
-
-  return Array.from({ length: end - start + 1 }, (_, i) => start + i)
-})
 let timeout: ReturnType<typeof setTimeout>;
 watch(queryText, async () => {
   if (!queryText.value || queryText.value.length < 3 || queryText.value.endsWith(':')) {
@@ -338,23 +321,7 @@ function facetTitle(s: string) {
 
           <div class="row justify-content-md-center" v-if="pageNumber > 1">
             <div class="col-6 col-auto">
-              <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center">
-                  <li class="page-item" v-if="pageIndex > 0">
-                    <a class="page-link" aria-label="Previous" @click="pageIndex_click(pageIndex - 1)">
-                      <span aria-hidden="true">&laquo;</span>
-                    </a>
-                  </li>
-                  <li v-for="index in pageRange" :key="index" class="page-item" :class="index === pageIndex + 1 ? 'active' : ''">
-                    <a class="page-link" @click="pageIndex_click(index - 1)">{{ index }}</a>
-                  </li>
-                  <li class="page-item" v-if="pageIndex + 1 < pageNumber">
-                    <a class="page-link" aria-label="Next" @click="pageIndex_click(pageIndex + 1)">
-                      <span aria-hidden="true">&raquo;</span>
-                    </a>
-                  </li>
-                </ul>
-              </nav>
+              <Pager :current="pageIndex" :size="10" :total="searchResult.total" :sizeOptions="[10]" @page:changed="pageIndex_click" />
             </div>
           </div>
 
@@ -395,14 +362,6 @@ function facetTitle(s: string) {
 
 .search-results {
   margin-top: 15px;
-}
-
-.pagination .page-link {
-  cursor: pointer;
-}
-
-.pagination .page-item:not(.active) .page-link {
-  color: var(--link-color)
 }
 
 .dashboard .search-results .card {

@@ -1,4 +1,3 @@
-import type { AppInfoResponse } from "@/composables/appInfo"
 import type { Response } from "@/composables/fetch"
 import type { Ref } from "vue"
 
@@ -13,7 +12,7 @@ export interface Dashboard {
     getKafkaGroup(serviceName: string, groupName: string): KafkaGroupResult
     getKafkaClient(serviceName: string, clientId: string): KafkaClientResult
 
-    getEvents(...labels: Label[]): EventsResult
+    getEvents(query?: EventQuery): EventsResult
     getEvent(id: string): EventResult
 
     getExample(request: ExampleRequest): ExampleResult
@@ -74,7 +73,7 @@ export interface KafkaTopicResult {
 }
 
 export interface EventsResult {
-    events: Ref<ServiceEvent[]>
+    data: Ref<ServiceEventResult>
     close(): void
 }
 
@@ -140,4 +139,25 @@ export interface ConfigDataResult {
 export interface BrunoCollection {
     serviceName: string
     content: string
+}
+
+export interface EventQuery {
+    labels: Label[]
+    http?: HttpEventFilter
+
+    page: number
+    size: number
+}
+
+export interface HttpEventFilter {
+    methods?: string[]
+    url?: string
+    requestHeaders?: { name: string, value: string }[]
+    statusCode?: string
+    responseHeaders?: { name: string, value: string }[]
+    clientIP?: string
+}
+
+export interface KafkaEventFilter {
+
 }

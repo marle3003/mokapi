@@ -57,6 +57,13 @@ declare interface HttpParameter {
     schema?: Schema
 }
 
+declare interface HttpEventInfo {
+    url: string
+    statusCode: number
+    duration: number
+    deprecated: boolean
+}
+
 declare interface HttpEventData {
     request: HttpEventRequest
     response: HttpEventResponse

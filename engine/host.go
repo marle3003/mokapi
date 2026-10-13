@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/engine/common"
@@ -112,9 +113,7 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 		"file":    sh.name,
 		"fileKey": sh.file.Info.Key(),
 	}
-	for k, v := range opt.Tags {
-		tags[k] = v
-	}
+	maps.Copy(tags, opt.Tags)
 
 	t := events.NewTraits().WithNamespace("job").WithName(tags["name"])
 	if len(sh.sm.GetStores(t)) == 1 {
@@ -189,9 +188,7 @@ func (sh *scriptHost) On(event string, handler common.EventHandler, args common.
 		priority: args.Priority,
 	}
 
-	for k, v := range args.Tags {
-		h.tags[k] = v
-	}
+	maps.Copy(h.tags, args.Tags)
 
 	sh.events[event] = append(sh.events[event], h)
 }
@@ -222,22 +219,22 @@ func (sh *scriptHost) AddCleanupFunc(f func()) {
 	sh.cleanupFuncs = append(sh.cleanupFuncs, f)
 }
 
-func (sh *scriptHost) Info(args ...interface{}) {
+func (sh *scriptHost) Info(args ...any) {
 	sh.engine.logger.Info(args...)
 	sh.logEvent("info", "log", args...)
 }
 
-func (sh *scriptHost) Warn(args ...interface{}) {
+func (sh *scriptHost) Warn(args ...any) {
 	sh.engine.logger.Warn(args...)
 	sh.logEvent("warn", "warn", args...)
 }
 
-func (sh *scriptHost) Error(args ...interface{}) {
+func (sh *scriptHost) Error(args ...any) {
 	sh.engine.logger.Error(args...)
 	sh.logEvent("error", "error", args...)
 }
 
-func (sh *scriptHost) Debug(args ...interface{}) {
+func (sh *scriptHost) Debug(args ...any) {
 	sh.engine.logger.Debug(args...)
 	sh.logEvent("debug", "debug", args...)
 }
@@ -248,7 +245,7 @@ func (sh *scriptHost) SetEventLogger(logger func(level, message string)) {
 	sh.eventLogger = logger
 }
 
-func (sh *scriptHost) logEvent(configuredLevel, eventLevel string, args ...interface{}) {
+func (sh *scriptHost) logEvent(configuredLevel, eventLevel string, args ...any) {
 	if !sh.IsLevelEnabled(configuredLevel) {
 		return
 	}

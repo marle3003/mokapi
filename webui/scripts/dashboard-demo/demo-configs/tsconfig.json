@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "lib": ["es2020", "dom"],
+        "paths": {
+            "mokapi": ["../../../../npm/go-mokapi/types/index"],
+            "mokapi/*": ["../../../../npm/go-mokapi/types/*"]
+        },
+        "types": ["../../../../npm/go-mokapi/types/global"]
+    }
+}

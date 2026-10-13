@@ -134,7 +134,7 @@ export let metrics = [
     },
 ]
 
-export function sum(name, ...labels){
+export function sum(name: string, ...labels: Label[]){
     if (!metrics){
         return 0
     }
@@ -152,7 +152,7 @@ export function sum(name, ...labels){
     return sum
 }
 
-export function max(name, ...labels) {
+export function max(name: string, ...labels: Label[]) {
     if (!metrics){
         return 0
     }
@@ -173,7 +173,7 @@ export function max(name, ...labels) {
     return max
 }
 
-export function filter(name, ...labels) {
+export function filter(name: string, ...labels: Label[]) {
     const result = [];
     if (!metrics){
         return [];
@@ -191,7 +191,7 @@ export function filter(name, ...labels) {
     return result;
 }
 
-export function parseLabels(metric) {
+export function parseLabels(metric: { name: string }) {
     const match = metric.name.match(/\{(.+)}/);
     if (!match || match.length < 2 || !match[1]) {
         return {};
@@ -205,7 +205,7 @@ export function parseLabels(metric) {
     );
 }
 
-function matchLabels(metric, labels){
+function matchLabels(metric: { name: string }, labels: Label[]){
     for (var label of labels){
         const s = `${label.name}="${label.value}"`
         if (!metric.name.includes(s)){

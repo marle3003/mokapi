@@ -1,4 +1,99 @@
-import {metrics} from "metrics"
+import { app } from 'mokapi'
+import { metrics, sum, max} from './metrics'
+
+export default function () {
+    app.http()
+        .operation('serviceHttp', (req, res) => {
+            const name = req.path['name']
+            const service = apps.find(x => x.name === name)
+            if (!service) {
+                res.rebuild(404)
+            } else  {
+                res.data = {
+                    name: service.name,
+                    description: service.description,
+                    version: service.version,
+                    ...service.contact ? { contact: service.contact } : {},
+                    servers: service.servers,
+                    paths: service.paths.map(p => {
+                        return {
+                            path: p.path,
+                            ...('summary' in p ? { summary: p.summary } : {}),
+                            ...('description' in p ? { description: p.description } : {}),
+                            status: p.status,
+                            ...('errors' in p ? { errors: p.errors } : {}),
+                            operations: p.operations.map(o => {
+                                return {
+                                    method: o.method,
+                                    ...('summary' in o ? { summary: o.summary } : {}),
+                                    ...('description' in o ? { description: o.description } : {}),
+                                    ...('operationId' in o ? { operationId: o.operationId } : {}),
+                                    deprecated: ('deprecated' in o ? o.deprecated : false),
+                                    ...('tags' in o ? { tags: o.tags } : {}),
+                                    status: o.status,
+                                    ...('errors' in o ? { errors: o.errors } : {}),
+                                    metrics: {
+                                        http_requests_total: sum('http_requests_total', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path }, { name: 'method', value: o.method.toUpperCase() }),
+                                        http_requests_errors_total: sum('http_requests_errors_total', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path }, { name: 'method', value: o.method.toUpperCase() }),
+                                        http_request_timestamp: max('http_request_timestamp', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path }, { name: 'method', value: o.method.toUpperCase() })
+                                    }
+                                }
+                            })
+                        }
+                    }),
+                }
+            }
+        })
+        .operation('httpOperations', (req, res) => {
+            const name = req.path['name']
+                const service = apps.find(x => x.name === name)
+                if (!service) {
+                    res.rebuild(404)
+                    return
+                }
+                const method = req.query['method']
+                const path = req.query['path']
+                let operations = []
+                for (const p of service.paths) {
+                    if (!path || p.path === path) {
+                        for (const o of p.operations) {
+                            if (!method || o.method.toLowerCase() === method.toLowerCase()) {
+                                operations.push({
+                                    ...o,
+                                    metrics: {
+                                        http_requests_total: sum('http_requests_total', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path}, { name: 'method', value: o.method.toUpperCase() }),
+                                        http_requests_errors_total: sum('http_requests_errors_total', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path}, { name: 'method', value: o.method.toUpperCase() }),
+                                        http_request_timestamp: max('http_request_timestamp', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path}, { name: 'method', value: o.method.toUpperCase() })
+                                    }
+                                })
+                            }
+                        }
+                    }
+                }
+                res.data = operations
+        })
+        .operation('httpOpenApi', (req, res) => {
+            const serviceName = req.path['name']
+            const format = req.path['format']
+            const service = apps.find(x => x.name === serviceName)
+            if (!service) {
+                res.rebuild(404)
+                return
+            }
+            switch (format) {
+                case 'yaml':
+                    res.headers['Content-Type'] = 'application/yaml'
+                    res.data = service
+                    return
+                case 'json':
+                    res.headers['Content-Type'] = 'application/json'
+                    res.data = service
+                    return
+                default:
+                    throw new Error(`Unsupported format: ${format}`)
+            }
+        })
+}
 
 const category = {
     type: "object",
@@ -11,7 +106,7 @@ const category = {
             type: "string"
         }
     },
-    xml: {name: "Category"}
+    xml: { name: "Category" }
 }
 
 const tag = {
@@ -25,7 +120,7 @@ const tag = {
             type: "string"
         }
     },
-    xml: {name: "Tag"}
+    xml: { name: "Tag" }
 }
 
 const pet = {
@@ -70,7 +165,7 @@ const pet = {
             enum: ["available", "pending", "sold"]
         }
     },
-    xml: {name: "Pet"}
+    xml: { name: "Pet" }
 }
 
 const book = {
@@ -160,7 +255,7 @@ export let apps = [
                             {
                                 type: "query",
                                 name: "$format",
-                                schema: {type: "string"},
+                                schema: { type: "string" },
                                 required: false,
                                 deprecated: false,
                                 explode: false,
@@ -414,7 +509,7 @@ export let apps = [
                                 headers: [
                                     {
                                         name: "Expires-After",
-                                        schema: {type: "string", format: "date-time"},
+                                        schema: { type: "string", format: "date-time" },
                                         description: "date in UTC when token expires",
                                     }
                                 ],
@@ -626,7 +721,7 @@ export let events = [
             path: "/pet",
             method: 'POST'
         },
-        time:  '2023-02-13T08:49:25.482366+01:00',
+        time: '2023-02-13T08:49:25.482366+01:00',
         data: {
             deprecated: true,
             request: {
@@ -665,10 +760,10 @@ export let events = [
                         event: "http"
                     },
                     logs: [
-                        { level: 'info', message: 'a custom log message, see https://mokapi.io'},
-                        { level: 'warn', message: 'a warn log message'},
-                        { level: 'error', message: 'a error log message'},
-                        { level: 'debug', message: 'a debug log message'}
+                        { level: 'info', message: 'a custom log message, see https://mokapi.io' },
+                        { level: 'warn', message: 'a warn log message' },
+                        { level: 'error', message: 'a error log message' },
+                        { level: 'debug', message: 'a debug log message' }
                     ],
                     parameters: [
                         JSON.stringify({
@@ -689,7 +784,7 @@ export let events = [
                             headers: {
                                 "Content-Type": "application/json"
                             },
-                            data: {"foo":"bar"}
+                            data: { "foo": "bar" }
                         })
                     ]
                 }
@@ -725,7 +820,7 @@ export let events = [
                 statusCode: 201,
                 headers: {
                     "Content-Type": "application/json",
-                    "Set-Cookie": "sessionId=38afes7a8"
+                    "Set-Cookie": "sessionId=38afes6v3"
                 },
                 size: 512
             },

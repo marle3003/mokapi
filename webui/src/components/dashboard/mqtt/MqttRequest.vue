@@ -21,43 +21,33 @@ const route = useRoute();
 const { format: formatTime } = usePrettyDates();
 const { dashboard } = useDashboard()
 const { formatType } = useMqtt()
-
-const eventId = computed(() => {
-    const id = route.params.id
-    if (!id) {
-        return undefined
-    }
-
-    if (typeof id === 'string') {
-        return id
-    }
-    return null
-})
-const data = ref<EventResult | null>(null);
+const event = ref<ServiceEvent | null>(null);
+const isLoading = ref<boolean>(true)
 
 watch(() => dashboard.value,
   (db, _, onCleanup) => {
-    if (!eventId.value) {
-        return
-    }
-    const res = db.getEvent(eventId.value);
-    data.value = res;
+    const res = db.getEvent(route.params.id as string);
+    
+    const stop = watch(res.event, (v) => { event.value = v; isLoading.value = false }, { immediate: true })
 
-    onCleanup(() => res.close());
+    onCleanup(() => {
+        stop()
+        res.close()
+    });
   },
   { immediate: true }
 );
 
 const eventData = computed(() => {
-    if (!data.value || !data.value.event) {
+    if (!event.value) {
         return undefined
     }
-    return data.value.event.data as MqttRequestLog
+    return event.value.data as MqttRequestLog
 })
 </script>
 
 <template>
-    <div v-if="data && data.event && eventData">
+    <div v-if="event && eventData">
         <div class="card-group">
             <div class="card">
                 <div class="card-body">
@@ -70,7 +60,7 @@ const eventData = computed(() => {
                         </div>
                         <div class="col ms-auto">
                             <p id="time" class="label">Time</p>
-                            <p aria-labelledby="time">{{ formatTime(data.event.time) }}</p>
+                            <p aria-labelledby="time">{{ formatTime(event.time) }}</p>
                         </div>
                     </div>
                 </div>
@@ -79,8 +69,8 @@ const eventData = computed(() => {
         <component :is="detail[eventData.type]"
             :request="eventData.request" :response="eventData.response" />
     </div>
-    <loading v-if="!data || data.isLoading"></loading>
-    <div v-if="data && !data.event && !data.isLoading">
+    <loading v-if="!event && isLoading"></loading>
+    <div v-if="!event && !isLoading">
         <message message="MQTT Request not found"></message>
     </div>
 </template>

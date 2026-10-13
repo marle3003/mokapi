@@ -170,7 +170,7 @@ func (s *Store) logMessage(messageId string, topic *Topic, publish *mqtt.Publish
 	err := s.eh.Push(&LogMessage{
 		Topic:     topic.Name,
 		MessageId: messageId,
-		Message: LogValue{
+		Message: &LogValue{
 			Value:  string(publish.Data),
 			Binary: publish.Data,
 		},

@@ -57,6 +57,13 @@ declare interface MqttBroker {
 
 declare type MqttEventData = MqttMessageData | MqttRequestLog
 
+declare type MqttEventInfo = MqttMessageInfo | MqttRequestLog
+
+declare interface MqttMessageInfo {
+  topic: string
+  message: MqttMessage
+}
+
 declare interface MqttMessageData {
   topic: string
   message: MqttMessage;

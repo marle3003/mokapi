@@ -51,8 +51,7 @@ function setCanonical(href: string) {
         canonical.rel = 'canonical'
         document.getElementsByTagName('head')[0]!.appendChild(canonical);
     }
-    canonical.href = href;
-    
+    canonical.href = href;   
 }
 
 export function useSoftwareApplicationMeta(version: string) {

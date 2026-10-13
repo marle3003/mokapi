@@ -1,4 +1,4 @@
-import { metrics } from 'metrics.ts';
+import { metrics } from './metrics';
 import { on } from 'mokapi';
 
 const Measurement = {
@@ -106,14 +106,14 @@ export default async function () {
           topics: clusters[0].topics.map(x => {
               return {
                   name: x.name,
-                  ...x.title ? { title: x.title } : {},
-                  ...x.summary ? { summary: x.summary } : {},
-                  ...x.description ? { description: x.description } : {},
+                  ...('title' in x  ? { title: x.title } : {}),
+                  ...('summary' in x ? { summary: x.summary } : {}),
+                  ...('description' in x ? { description: x.description } : {}),
                   messages: x.messages,
-                   ...x.instances ? { instances: x.instances } : {},
+                   ...('instances' in x ? { instances: x.instances } : {}),
                   metrics: {
-                      mqtt_messages_total: metrics.find(m => m.name === `mqtt_messages_total{service="${clusters[0].name}",topic="${x.name}"}`).value,
-                      mqtt_message_timestamp: metrics.find(m => m.name === `mqtt_message_timestamp{service="${clusters[0].name}",topic="${x.name}"}`).value
+                      mqtt_messages_total: metrics.find(m => m.name === `mqtt_messages_total{service="${clusters[0].name}",topic="${x.name}"}`)?.value ?? 0,
+                      mqtt_message_timestamp: metrics.find(m => m.name === `mqtt_message_timestamp{service="${clusters[0].name}",topic="${x.name}"}`)?.value ?? 0
                   }
               }
           }),

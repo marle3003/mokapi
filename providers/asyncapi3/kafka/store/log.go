@@ -11,21 +11,27 @@ import (
 type LogRecord func(log *KafkaMessageLog, traits events.Traits)
 
 type KafkaMessageLog struct {
-	Offset         int64               `json:"offset"`
-	Key            LogValue            `json:"key"`
-	Message        LogValue            `json:"message"`
-	SchemaId       int                 `json:"schemaId"`
-	MessageId      string              `json:"messageId"`
-	Partition      int                 `json:"partition"`
-	Headers        map[string]LogValue `json:"headers"`
-	ProducerId     int64               `json:"producerId"`
-	ProducerEpoch  int16               `json:"producerEpoch"`
-	SequenceNumber int32               `json:"sequenceNumber"`
-	Deleted        bool                `json:"deleted"`
-	Api            string              `json:"api"`
-	ClientId       string              `json:"clientId"`
-	ScriptFile     string              `json:"script"`
-	Actions        []*common.Action    `json:"actions"`
+	Offset         int64                `json:"offset"`
+	Key            *LogValue            `json:"key"`
+	Message        *LogValue            `json:"message"`
+	SchemaId       int                  `json:"schemaId"`
+	MessageId      string               `json:"messageId"`
+	Partition      int                  `json:"partition"`
+	Headers        map[string]*LogValue `json:"headers"`
+	ProducerId     int64                `json:"producerId"`
+	ProducerEpoch  int16                `json:"producerEpoch"`
+	SequenceNumber int32                `json:"sequenceNumber"`
+	Deleted        bool                 `json:"deleted"`
+	Api            string               `json:"api"`
+	ClientId       string               `json:"clientId"`
+	ScriptFile     string               `json:"script"`
+	Actions        []*common.Action     `json:"actions"`
+}
+
+type KafkaMessageInfo struct {
+	Key     *LogValue `json:"key"`
+	Message *LogValue `json:"message"`
+	Deleted bool      `json:"deleted"`
 }
 
 type LogValue struct {
@@ -34,10 +40,20 @@ type LogValue struct {
 }
 
 func (l *KafkaMessageLog) Title() string {
+	if l.Key == nil {
+		return ""
+	}
 	if l.Key.Value != "" {
 		return l.Key.Value
-	} else {
-		return string(l.Key.Binary)
+	}
+	return string(l.Key.Binary)
+}
+
+func (l *KafkaMessageLog) Info() any {
+	return KafkaMessageInfo{
+		Key:     l.Key,
+		Message: l.Message,
+		Deleted: l.Deleted,
 	}
 }
 
@@ -54,23 +70,30 @@ func (l *KafkaMessageLog) IndexFields() map[string]any {
 		"partition": l.Partition,
 	}
 
-	if l.Key.Value != "" {
-		m["key"] = l.Key.Value
-	} else {
-		m["key"] = string(l.Key.Binary)
+	if l.Key != nil {
+		if l.Key.Value != "" {
+			m["key"] = l.Key.Value
+		} else {
+			m["key"] = string(l.Key.Binary)
+		}
 	}
 
-	if l.Message.Value != "" {
-		m["message"] = l.Message.Value
-	} else {
-		m["message"] = string(l.Message.Binary)
+	if l.Message != nil {
+		if l.Message.Value != "" {
+			m["message"] = l.Message.Value
+		} else {
+			m["message"] = string(l.Message.Binary)
+		}
 	}
 
 	var headers []headerIndex
 	for k, h := range l.Headers {
-		val := h.Value
-		if val == "" {
-			val = string(h.Binary)
+		val := ""
+		if h != nil {
+			val = h.Value
+			if val == "" {
+				val = string(h.Binary)
+			}
 		}
 		headers = append(headers, headerIndex{
 			Key:   k,
@@ -84,8 +107,8 @@ func (l *KafkaMessageLog) IndexFields() map[string]any {
 
 func newKafkaLog(record *kafka.Record) *KafkaMessageLog {
 	return &KafkaMessageLog{
-		Key:            LogValue{Binary: kafka.Read(record.Key)},
-		Message:        LogValue{Binary: kafka.Read(record.Value)},
+		Key:            &LogValue{Binary: kafka.Read(record.Key)},
+		Message:        &LogValue{Binary: kafka.Read(record.Value)},
 		Headers:        convertHeader(record.Headers),
 		ProducerId:     record.ProducerId,
 		ProducerEpoch:  record.ProducerEpoch,
@@ -122,6 +145,10 @@ func (l *KafkaRequestLogEvent) Title() string {
 	return l.Request.Title()
 }
 
+func (l *KafkaRequestLogEvent) Info() any {
+	return l
+}
+
 type KafkaRequest interface {
 	Title() string
 }
@@ -154,6 +181,10 @@ func (r *KafkaJoinGroupRequest) Title() string {
 	return fmt.Sprintf("JoinGroup %s", r.GroupName)
 }
 
+func (r *KafkaJoinGroupRequest) Info() any {
+	return r
+}
+
 type KafkaJoinGroupResponse struct {
 	KafkaResponseError
 	GenerationId int32    `json:"generationId"`
@@ -181,6 +212,10 @@ func (r *KafkaSyncGroupRequest) Title() string {
 	return fmt.Sprintf("SyncGroup %s", r.GroupName)
 }
 
+func (r *KafkaSyncGroupRequest) Info() any {
+	return r
+}
+
 type KafkaSyncGroupResponse struct {
 	KafkaResponseError
 	ProtocolType string                   `json:"protocolType"`
@@ -194,6 +229,10 @@ type KafkaListOffsetsRequest struct {
 
 func (r *KafkaListOffsetsRequest) Title() string {
 	return "ListOffsets"
+}
+
+func (r *KafkaListOffsetsRequest) Info() any {
+	return r
 }
 
 type KafkaListOffsetsRequestPartition struct {
@@ -226,6 +265,10 @@ func (r *KafkaFindCoordinatorRequest) Title() string {
 	return "FindCoordinator"
 }
 
+func (r *KafkaFindCoordinatorRequest) Info() any {
+	return r
+}
+
 type KafkaFindCoordinatorResponse struct {
 	KafkaResponseError
 	Host string `json:"host"`
@@ -242,6 +285,10 @@ type KafkaInitProducerIdRequest struct {
 
 func (r *KafkaInitProducerIdRequest) Title() string {
 	return "InitProducerId"
+}
+
+func (r *KafkaInitProducerIdRequest) Info() any {
+	return r
 }
 
 type KafkaInitProducerIdResponse struct {

@@ -73,8 +73,8 @@ func TestEvents(t *testing.T) {
 			app: runtimetest.NewApp(
 				runtimetest.WithEvent(events.NewTraits().WithNamespace("kafka").With("topic", "foo"), &store.KafkaMessageLog{
 					Offset:    1234,
-					Key:       store.LogValue{Value: "key"},
-					Message:   store.LogValue{Value: "message"},
+					Key:       &store.LogValue{Value: "key"},
+					Message:   &store.LogValue{Value: "message"},
 					Partition: 8,
 					Api:       "cluster",
 				}),

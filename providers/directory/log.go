@@ -5,7 +5,16 @@ import (
 	"mokapi/engine/common"
 	"mokapi/ldap"
 	"mokapi/runtime/events"
+	"strings"
 )
+
+type LogInfo struct {
+	Operation string `json:"operation"`
+	Dn        string `json:"dn,omitempty"`
+	Criteria  string `json:"criteria,omitempty"`
+	Status    string `json:"status,omitempty"`
+	Duration  int64  `json:"duration"`
+}
 
 type SearchLog struct {
 	Request  *SearchRequest   `json:"request"`
@@ -15,16 +24,16 @@ type SearchLog struct {
 }
 
 type SearchRequest struct {
-	Operation         string        `json:"operation"`
-	BaseDN            string        `json:"baseDN"`
-	Scope             string        `json:"scope"`
-	DereferencePolicy int64         `json:"dereferencePolicy"`
-	SizeLimit         int64         `json:"sizeLimit"`
-	TimeLimit         int64         `json:"timeLimit"`
-	TypesOnly         bool          `json:"typesOnly"`
-	Filter            string        `json:"filter"`
-	Attributes        []string      `json:"attributes"`
-	Controls          []interface{} `json:"controls"`
+	Operation         string   `json:"operation"`
+	BaseDN            string   `json:"baseDN"`
+	Scope             string   `json:"scope"`
+	DereferencePolicy int64    `json:"dereferencePolicy"`
+	SizeLimit         int64    `json:"sizeLimit"`
+	TimeLimit         int64    `json:"timeLimit"`
+	TypesOnly         bool     `json:"typesOnly"`
+	Filter            string   `json:"filter"`
+	Attributes        []string `json:"attributes"`
+	Controls          []any    `json:"controls"`
 }
 
 type SearchResponse struct {
@@ -321,12 +330,38 @@ func (l *BindLog) Title() string {
 	return fmt.Sprintf("%s %s %s", l.Request.Auth, l.Request.Name, l.Request.Password)
 }
 
+func (l *BindLog) Info() any {
+	return LogInfo{
+		Operation: l.Request.Operation,
+		Dn:        l.Request.Name,
+		Status:    l.Response.Status,
+		Duration:  l.Duration,
+	}
+}
+
 func (l *UnbindLog) Title() string {
 	return ""
 }
 
+func (l *UnbindLog) Info() any {
+	return LogInfo{
+		Operation: l.Request.Operation,
+		Duration:  l.Duration,
+	}
+}
+
 func (l *SearchLog) Title() string {
 	return l.Request.Filter
+}
+
+func (l *SearchLog) Info() any {
+	return LogInfo{
+		Operation: l.Request.Operation,
+		Dn:        l.Request.BaseDN,
+		Criteria:  l.Request.Filter,
+		Status:    l.Response.Status,
+		Duration:  l.Duration,
+	}
 }
 
 func (l *SearchLog) IndexFields() map[string]any {
@@ -343,18 +378,78 @@ func (l *CompareLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Value)
 }
 
+func (l *CompareLog) Info() any {
+	return LogInfo{
+		Operation: l.Request.Operation,
+		Dn:        l.Request.Dn,
+		Criteria:  fmt.Sprintf("%s == %s", l.Request.Attribute, l.Request.Value),
+		Status:    l.Response.Status,
+		Duration:  l.Duration,
+	}
+}
+
 func (l *ModifyLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Dn)
+}
+
+type ModifyInfo struct {
+	Operation string   `json:"operation"`
+	Dn        string   `json:"dn,omitempty"`
+	Criteria  []string `json:"criteria,omitempty"`
+	Status    string   `json:"status,omitempty"`
+	Duration  int64    `json:"duration"`
+}
+
+func (l *ModifyLog) Info() any {
+	criteria := make([]string, 0, len(l.Request.Items))
+	for _, i := range l.Request.Items {
+		criteria = append(criteria, fmt.Sprintf("%s %s", strings.ToLower(i.Modification), i.Attribute.Type))
+	}
+	return ModifyInfo{
+		Operation: l.Request.Operation,
+		Dn:        l.Request.Dn,
+		Criteria:  criteria,
+		Status:    l.Response.Status,
+		Duration:  l.Duration,
+	}
 }
 
 func (l *ModifyDNLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Dn)
 }
 
+func (l *ModifyDNLog) Info() any {
+	return LogInfo{
+		Operation: l.Request.Operation,
+		Dn:        l.Request.Dn,
+		Criteria:  l.Request.NewRdn,
+		Status:    l.Response.Status,
+		Duration:  l.Duration,
+	}
+}
+
 func (l *DeleteLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Dn)
 }
 
+func (l *DeleteLog) Info() any {
+	return LogInfo{
+		Operation: l.Request.Operation,
+		Dn:        l.Request.Dn,
+		Status:    l.Response.Status,
+		Duration:  l.Duration,
+	}
+}
+
 func (l *AddLog) Title() string {
 	return fmt.Sprintf("%s %s", l.Request.Operation, l.Request.Dn)
+}
+
+func (l *AddLog) Info() any {
+	return LogInfo{
+		Operation: l.Request.Operation,
+		Dn:        l.Request.Dn,
+		Status:    l.Response.Status,
+		Duration:  l.Duration,
+	}
 }

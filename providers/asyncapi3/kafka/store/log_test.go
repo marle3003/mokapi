@@ -11,9 +11,9 @@ func TestKafkaLog_Title(t *testing.T) {
 	v := store.KafkaMessageLog{}
 	require.Equal(t, "", v.Title())
 
-	v = store.KafkaMessageLog{Key: store.LogValue{Value: "foo"}}
+	v = store.KafkaMessageLog{Key: &store.LogValue{Value: "foo"}}
 	require.Equal(t, "foo", v.Title())
 
-	v = store.KafkaMessageLog{Key: store.LogValue{Binary: []byte("foo")}}
+	v = store.KafkaMessageLog{Key: &store.LogValue{Binary: []byte("foo")}}
 	require.Equal(t, "foo", v.Title())
 }

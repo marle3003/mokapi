@@ -7,64 +7,27 @@ import MailBody from './MailBody.vue'
 import MailFooter from './MailFooter.vue'
 import MailAttachments from './MailAttachments.vue'
 import { useDashboard } from "@/composables/dashboard";
-import { computed, onMounted } from "vue";
-import { useMeta } from "@/composables/meta";
+import { ref, watch } from "vue";
 
 const { format } = usePrettyDates()
 const route = useRoute()
 const { dashboard, getMode } = useDashboard()
 
-const events = computed(() => {
-    return dashboard.value.getEvents({ name: 'namespace', value: 'mail' })
-})
+const mail = ref<Message | null>(null);
+const isLoading = ref<boolean>(true)
 
-const id = computed(() => {
-  const id = route.params.id
-  if (!id) {
-    return undefined
-  }
+watch(() => dashboard.value,
+  (db, _, onCleanup) => {
+    const res = db.getMail(route.params.id as string);
 
-  if (typeof id === 'string') {
-    if (isNumber(id)) {
-        const index = parseFloat(id);
-        const ev = events.value.events.value[index];
-        return (<SmtpEventData>ev?.data).messageId ?? null;
-    } else {
-        return id;
-    }
-  }
-  return null
-})
+    const stop = watch(res.mail, (v) => { mail.value = v; isLoading.value = false }, { immediate: true })
 
-const mailResult = computed(() => id.value ? dashboard.value.getMail(id.value) : undefined)
-const mail = computed(() => mailResult.value?.mail.value)
-const isLoading = computed(() => mailResult.value?.isLoading.value)
-
-const event = computed(() => {
-  if (!id.value) return null
-  return events.value.events.value.find(x => {
-    const msg = x.data as SmtpEventData
-    if (!msg) {
-      return false
-    }
-    return msg.messageId == id.value
-  })
-})
-
-function isNumber(value: string): boolean {
-  return /^[0-9]+$/.test(value);
-}
-onMounted(() => {
-    if (!event.value || getMode() !== 'demo') {
-        return
-    }
-    const id = events.value.events.value.indexOf(event.value)
-    useMeta(
-        `${mail.value?.data.subject} – Mail Message Details`,
-        'View detailed mail event data including sender, recipient, headers, and message content. Inspect and debug email workflows in the Mokapi Dashboard.',
-        'https://mokapi.io/dashboard-demo/mail/mail/mails/' + id
-    )
-})
+    onCleanup(() => {
+        stop()
+    });
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
