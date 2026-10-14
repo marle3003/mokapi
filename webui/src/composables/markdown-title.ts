@@ -1,8 +1,6 @@
-import type { Options } from "markdown-it";
-import type MarkdownIt from "markdown-it"
-import type Token from "markdown-it/lib/token.mjs";
+import type { MarkdownIt, Token } from "markdown-it"
 
-export function MarkdownItTitle(meta: DocMeta): (md: MarkdownIt, opts: Options) => void {
+export function MarkdownItTitle(meta: DocMeta): (md: MarkdownIt) => void {
 
     return function(md: MarkdownIt): void {
 

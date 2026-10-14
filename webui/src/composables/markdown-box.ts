@@ -1,10 +1,7 @@
-import type { Options } from "markdown-it"
-import type MarkdownIt from "markdown-it"
-import type Token from "markdown-it/lib/token.mjs"
-import type Renderer from "markdown-it/lib/renderer.mjs"
+import type { MarkdownIt, MarkdownItOptions, Token, Renderer, RendererRule } from "markdown-it"
 
-export function MarkdownItBox(md: MarkdownIt, opts: Options) {
-    var defaultRender = md.renderer.rules.fence!,
+export function MarkdownItBox(md: MarkdownIt) {
+    var defaultRender: RendererRule = md.renderer.rules.fence,
         unescapeAll = md.utils.unescapeAll,
         boxExpr = /box=(\w*)/,
         noTitleExpre = /noTitle/,
@@ -92,7 +89,7 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
         return undefined
     }
 
-    function fenceGroup(tokens: Token[], idx: number, options: Options, env: any, slf: Renderer): string {
+    function fenceGroup(tokens: Token[], idx: number, options: Required<MarkdownItOptions>, env: any, slf: Renderer): string {
         if (!tokens[idx] || tokens[idx].hidden) { return ''; }
 
         const name = getAlertName(tokens[idx])
