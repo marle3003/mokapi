@@ -1,7 +1,7 @@
-const { chromium } = require('playwright');
-const fs = require('fs');
-const path = require('path');
-const Server = require('./server');
+import { chromium } from 'playwright';
+import fs from 'node:fs';
+import path from 'node:path';
+import { Server } from './server.js';
 
 const skipExtensions = ['.ts', '.json', '.yaml'];
 

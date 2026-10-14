@@ -1,9 +1,9 @@
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
-const mime = require('mime-types');
+import http from 'node:http';
+import fs from 'node:fs';
+import path from 'node:path';
+import mime from 'mime-types';
 
-module.exports = class Server {
+export class Server {
     server
 
     constructor(baseDir) {
