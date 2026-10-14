@@ -944,7 +944,7 @@ export enum LdapResultStatus {
     SizeLimitExceeded = 4,
 }
 
-export type SmtpEventHandler = (record: SmtpEventMessage) => void | Promise<void>;
+export type SmtpEventHandler = (message: SmtpEventMessage) => void | Promise<void>;
 
 export interface SmtpEventMessage {
     server: string;

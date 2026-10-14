@@ -45,7 +45,7 @@ func (e *MailEventDispatcher) Register(key string, handler *MailEventHandler) {
 }
 
 func (sh *scriptHost) OnMail(filter common.MailFilter, do common.EventHandler, args common.EventArgs) {
-	addDefaultTags(&args, sh)
+	addDefaultTags(&args, sh, "smtp")
 	h := &MailEventHandler{
 		Filter:  filter,
 		Execute: do,

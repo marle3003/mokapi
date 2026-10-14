@@ -45,7 +45,7 @@ func (e *LdapEventDispatcher) Register(key string, handler *LdapEventHandler) {
 }
 
 func (sh *scriptHost) OnLdap(filter common.LdapFilter, do common.EventHandler, args common.EventArgs) {
-	addDefaultTags(&args, sh)
+	addDefaultTags(&args, sh, "ldap")
 	h := &LdapEventHandler{
 		Filter:  filter,
 		Execute: do,
