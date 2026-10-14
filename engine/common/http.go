@@ -55,6 +55,10 @@ func (r *HttpEventRequest) String() string {
 }
 
 func (r *HttpEventRequest) Snapshot() any {
+	if r == nil {
+		return r
+	}
+
 	type alias HttpEventRequest
 	return struct {
 		*alias
@@ -84,6 +88,11 @@ func (r *HttpEventResponse) HasBody() bool {
 }
 
 func (r *HttpEventResponse) Snapshot() any {
+	if r == nil {
+		return r
+	}
+
+	limit := 256 << 10
 	type alias HttpEventResponse
 	return struct {
 		*alias
@@ -91,8 +100,8 @@ func (r *HttpEventResponse) Snapshot() any {
 		Data jsonpreview.Truncated `json:"data"`
 	}{
 		alias: (*alias)(r),
-		Body:  jsonpreview.Truncated{V: r.Body, Limit: 256 << 10},
-		Data:  jsonpreview.Truncated{V: r.Body, Limit: 256 << 10},
+		Body:  jsonpreview.Truncated{V: r.Body, Limit: limit},
+		Data:  jsonpreview.Truncated{V: r.Data, Limit: limit},
 	}
 }
 
