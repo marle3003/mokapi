@@ -1,6 +1,6 @@
 import type { Options } from "markdown-it"
 import type MarkdownIt from "markdown-it"
-import Token from "markdown-it/lib/token"
+import Token from "markdown-it/lib/token.mjs"
 import { useRoute } from "vue-router"
 
 export function MarkdownItLinks(md: MarkdownIt, opts: Options) {

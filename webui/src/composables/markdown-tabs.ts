@@ -1,7 +1,7 @@
 import type { Options } from "markdown-it"
 import type MarkdownIt from "markdown-it"
-import type Token from "markdown-it/lib/token"
-import type Renderer from "markdown-it/lib/renderer"
+import type Token from "markdown-it/lib/token.mjs"
+import type Renderer from "markdown-it/lib/renderer.mjs"
 
 
 export function MarkdownItTabs(md: MarkdownIt, opts: Options) {

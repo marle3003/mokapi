@@ -1,7 +1,7 @@
 import type { Options } from "markdown-it"
 import type MarkdownIt from "markdown-it"
-import type Token from "markdown-it/lib/token"
-import type Renderer from "markdown-it/lib/renderer"
+import type Token from "markdown-it/lib/token.mjs"
+import type Renderer from "markdown-it/lib/renderer.mjs"
 
 export function MarkdownItBox(md: MarkdownIt, opts: Options) {
     var defaultRender = md.renderer.rules.fence!,
@@ -151,7 +151,7 @@ export function MarkdownItBox(md: MarkdownIt, opts: Options) {
                 }
 
                 alert += `<div class="box ${name}">
-                        <p class="box-heading ${heading}">${!hideIcon(tokens) ? icon : ''}${title}</p>
+                        <p class="box-heading ${heading}">${!hideIcon(token) ? icon : ''}${title}</p>
                         <div class="box-body">${content}</div>
                         ${url}
                         </div>`

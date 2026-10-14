@@ -2,7 +2,7 @@ import type MarkdownIt from "markdown-it"
 import type { Options } from "markdown-it"
 import container from "markdown-it-container"
 import type { Renderer } from "markdown-it/dist/index.cjs.js"
-import Token from 'markdown-it/lib/token'
+import Token from 'markdown-it/lib/token.mjs'
 
 export function MarkdownItTabContent(md: MarkdownIt, _opts: Options) {
 
