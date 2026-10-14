@@ -322,6 +322,44 @@ func TestOffsetFetch_Validation(t *testing.T) {
 		fn   func(t *testing.T, s *store.Store, hook *test.Hook)
 	}{
 		{
+			"no binding set",
+			func(t *testing.T, s *store.Store, hook *test.Hook) {
+				b := kafkatest.NewBroker(kafkatest.WithHandler(s))
+				defer b.Close()
+
+				ch := asyncapi3test.NewChannel()
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("", "kafka", b.Addr),
+					asyncapi3test.AddChannel("foo", ch),
+					asyncapi3test.WithOperation("foo",
+						asyncapi3test.WithOperationAction("receive"),
+						asyncapi3test.WithOperationChannel(ch),
+					)))
+
+				err := b.Client().JoinSyncGroup("foo", "bar", 3, 3)
+				require.NoError(t, err)
+
+				res, err := b.Client().OffsetFetch(3, &offsetFetch.Request{
+					GroupId: "bar",
+					Topics: []offsetFetch.RequestTopic{
+						{
+							Name:             "foo",
+							PartitionIndexes: []int32{0},
+						},
+					}})
+
+				require.Equal(t, kafka.None, res.ErrorCode)
+				require.Len(t, res.Topics, 1)
+				require.Len(t, res.Topics[0].Partitions, 1)
+
+				p := res.Topics[0].Partitions[0]
+				require.Equal(t, kafka.None, p.ErrorCode)
+				require.Equal(t, int64(-1), p.CommittedOffset)
+
+				require.Equal(t, 5, len(hook.Entries))
+			},
+		},
+		{
 			"invalid clientId",
 			func(t *testing.T, s *store.Store, hook *test.Hook) {
 				b := kafkatest.NewBroker(kafkatest.WithHandler(s))
