@@ -1,9 +1,6 @@
 import { test, expect } from '../models/fixture-dashboard'
-import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
 import { formatTimestamp } from '../helpers/format'
 
-dayjs.extend(relativeTime)
 
 test.describe('Dashboard', () => {
     test.use({ colorScheme: 'dark' })
