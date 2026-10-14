@@ -38,6 +38,8 @@ type eventQuery struct {
 	size   int
 }
 
+const maxEventPageSize = 1000
+
 func (h *handler) setupEvents() {
 	r := h.router.PathPrefix("/api/events").Subrouter()
 
@@ -306,7 +308,7 @@ func parseEventFilter(v url.Values) (eventQuery, error) {
 	s := v.Get("page")
 	if s != "" {
 		q.page, err = strconv.Atoi(s)
-		if err != nil {
+		if err != nil || q.page < 1 {
 			return q, fmt.Errorf("invalid query parameter 'page'")
 		}
 	}
@@ -314,7 +316,7 @@ func parseEventFilter(v url.Values) (eventQuery, error) {
 	s = v.Get("size")
 	if s != "" {
 		q.size, err = strconv.Atoi(s)
-		if err != nil {
+		if err != nil || q.size < 1 || q.size > maxEventPageSize {
 			return q, fmt.Errorf("invalid query parameter 'size'")
 		}
 	}
