@@ -22,19 +22,6 @@ const clients = computed(() => {
     })
 })
 
-onMounted(() => {
-    const elements = document.querySelectorAll('.has-popover')
-    const popovers = [...elements].map(x => {
-        new Popover(x, {
-            customClass: 'custom-popover',
-            trigger: 'hover',
-            html: true,
-            placement: 'left',
-            content: () => x.querySelector('span:not(.bi)')?.innerHTML ?? '',
-        })
-    })
-})
-
 function goToClient(client: WebsocketClient, openInNewTab = false) {
     if (getSelection()?.toString()) {
         return
@@ -65,8 +52,7 @@ function goToClient(client: WebsocketClient, openInNewTab = false) {
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="c in clients" :key="c.id" @click.left="goToClient(c)"
-                    @mousedown.middle="goToClient(c, true)">
+                <tr v-for="c in clients" :key="c.id" @click.left="goToClient(c)" @mousedown.middle="goToClient(c, true)">
                     <td>
                         <router-link @click.stop class="row-link"
                             :to="{ name: getRouteName('websocketClient').value, params: { service: service.name, id: c.id } }">

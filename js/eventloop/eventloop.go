@@ -3,7 +3,11 @@ package eventloop
 import (
 	"fmt"
 	"mokapi/engine/common"
+	"runtime"
+	"strconv"
+	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/dop251/goja"
@@ -38,6 +42,7 @@ type EventLoop struct {
 
 	waitCond *sync.Cond
 	waitLock sync.Mutex
+	loopGoID uint64
 }
 
 func New(vm *goja.Runtime, host common.Host) *EventLoop {
@@ -59,6 +64,14 @@ func New(vm *goja.Runtime, host common.Host) *EventLoop {
 	return r
 }
 
+func goID() uint64 {
+	var buf [64]byte
+	n := runtime.Stack(buf[:], false)
+	field := strings.Fields(strings.TrimPrefix(string(buf[:n]), "goroutine "))[0]
+	id, _ := strconv.ParseUint(field, 10, 64)
+	return id
+}
+
 func (loop *EventLoop) Run(fn func(vm *goja.Runtime)) {
 	if loop.running {
 		loop.queueChan <- func() { fn(loop.vm) }
@@ -68,6 +81,10 @@ func (loop *EventLoop) Run(fn func(vm *goja.Runtime)) {
 }
 
 func (loop *EventLoop) RunSync(fn func(vm *goja.Runtime) (goja.Value, error)) (goja.Value, error) {
+	if loop.onLoopGoroutine() {
+		return fn(loop.vm)
+	}
+
 	done := make(chan struct{})
 	var result goja.Value
 	var err error
@@ -81,6 +98,10 @@ func (loop *EventLoop) RunSync(fn func(vm *goja.Runtime) (goja.Value, error)) (g
 }
 
 func (loop *EventLoop) RunAsync(fn JobFunc, ctx *JobContext) (goja.Value, error) {
+	if loop.onLoopGoroutine() {
+		return fn(loop.vm)
+	}
+
 	if loop.running {
 		var result goja.Value
 		var err error
@@ -125,12 +146,13 @@ func (loop *EventLoop) RunAsync(fn JobFunc, ctx *JobContext) (goja.Value, error)
 		return result, nil
 	}
 
-	return nil, fmt.Errorf("eventloop not started")
+	return nil, fmt.Errorf("event loop not started")
 }
 
 func (loop *EventLoop) StartLoop() {
 	loop.running = true
 	go func() {
+		atomic.StoreUint64(&loop.loopGoID, goID())
 	LOOP:
 		for {
 			select {
@@ -239,4 +261,8 @@ Stop:
 			loop.queueChan <- i.run
 		}
 	}
+}
+
+func (loop *EventLoop) onLoopGoroutine() bool {
+	return goID() == atomic.LoadUint64(&loop.loopGoID)
 }

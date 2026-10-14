@@ -24,6 +24,13 @@ type HttpLog struct {
 	ClientIP   string           `json:"clientIP"`
 }
 
+type HttpLogInfo struct {
+	Url        string `json:"url"`
+	StatusCode int    `json:"statusCode"`
+	Duration   int64  `json:"duration"`
+	Deprecated bool   `json:"deprecated"`
+}
+
 type HttpRequestLog struct {
 	Method      string          `json:"method"`
 	Url         string          `json:"url"`
@@ -110,6 +117,15 @@ func (l *HttpLog) Title() string {
 		return ""
 	}
 	return l.Request.Url
+}
+
+func (l *HttpLog) Info() any {
+	return HttpLogInfo{
+		Url:        l.Request.Url,
+		StatusCode: l.Response.StatusCode,
+		Duration:   l.Duration,
+		Deprecated: l.Deprecated,
+	}
 }
 
 func (l *HttpLog) IndexFields() map[string]any {

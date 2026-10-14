@@ -56,12 +56,12 @@ func (r *resolver) resolveArray(req *Request) (*faker, error) {
 		}
 		return nil, err
 	}
-	return newFaker(func() (interface{}, error) {
+	return newFaker(func() (any, error) {
 		return fakeArray(req, item)
 	}), nil
 }
 
-func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
+func fakeArray(r *Request, fakeItem *faker) (any, error) {
 	s := r.Schema
 	if s == nil {
 		s = &schema.Schema{}
@@ -120,7 +120,7 @@ func fakeArray(r *Request, fakeItem *faker) (interface{}, error) {
 			return fakeBySchema(r.WithSchema(ps))
 		})
 
-		var v interface{}
+		var v any
 		var err error
 		if s.UniqueItems != nil && *s.UniqueItems {
 			v, err = nextUnique(prefixItems, prefixItem.fake)
@@ -261,7 +261,7 @@ func nextWithEnumBias(arr []any, enumSize int, rnd *rand.Rand, fake func() (any,
 	return fake()
 }
 
-func nextUnique(arr []interface{}, fakeItem func() (interface{}, error)) (interface{}, error) {
+func nextUnique(arr []any, fakeItem func() (any, error)) (any, error) {
 	for i := 0; i < 10; i++ {
 		v, err := fakeItem()
 		if err != nil {
@@ -275,7 +275,7 @@ func nextUnique(arr []interface{}, fakeItem func() (interface{}, error)) (interf
 	return nil, fmt.Errorf("cannot fill array with unique items")
 }
 
-func contains(s []interface{}, v interface{}) bool {
+func contains(s []any, v any) bool {
 	for _, i := range s {
 		if reflect.DeepEqual(i, v) {
 			return true

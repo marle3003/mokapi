@@ -138,3 +138,31 @@ func TestEventLoop(t *testing.T) {
 		})
 	}
 }
+
+func TestEventLoop_NestedRunSync_NoDeadlock(t *testing.T) {
+	vm := goja.New()
+	loop := eventloop.New(vm, &enginetest.Host{})
+	loop.StartLoop()
+	defer loop.Stop()
+
+	done := make(chan struct{})
+
+	go func() {
+		_, err := loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
+			return loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
+				return vm.ToValue("inner result"), nil
+			})
+		})
+		if err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		// ok, kein Deadlock
+	case <-time.After(2 * time.Second):
+		t.Fatal("deadlock: nested RunSync did not return in time")
+	}
+}

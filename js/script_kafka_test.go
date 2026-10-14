@@ -187,8 +187,8 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			test: func(t *testing.T, host *enginetest.Host) {
 				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					return &common.KafkaProduceResult{
-						Cluster: "Cluster",
-						Topic:   "Topic",
+						Api:   "Cluster",
+						Topic: "Topic",
 						Messages: []common.KafkaMessageResult{
 							{
 								Key:       "foo",
@@ -210,7 +210,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				v, err := s.RunDefault()
 				r.NoError(t, err)
 				result := v.Export().(*common.KafkaProduceResult)
-				r.Equal(t, "Cluster", result.Cluster)
+				r.Equal(t, "Cluster", result.Api)
 				r.Equal(t, "Topic", result.Topic)
 				r.Equal(t, 99, result.Messages[0].Partition)
 				r.Equal(t, int64(3451345), result.Messages[0].Offset)

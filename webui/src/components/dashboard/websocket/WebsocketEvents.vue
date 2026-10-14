@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useDashboard, getRouteName } from '@/composables/dashboard';
-import { computed, onUnmounted, ref, watch, type Component } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { usePrettyDates } from '@/composables/usePrettyDate';
 import { useRouter } from '@/router';
-import type { EventsResult } from '@/types/dashboard';
 import { useWebsocket } from '@/composables/websocket';
+import { usePageSize } from '@/composables/paging';
 
 const props = defineProps<{
   service: WebsocketService,
@@ -22,65 +22,51 @@ const labels = computed(() => {
   return result;
 })
 
-const { dashboard } = useDashboard()
-const data = ref<EventsResult | null>(null);
-
-const events = computed(() => {
-  if (!data.value || !data.value.events) {
-    return [];
-  }
-  const events = data.value.events
-  const result = [];
-  for (const event of events) {
-    const data = eventData(event)
-    if (!data) {
-      continue
-    }
-
-    result.push({
-      event: event,
-      data: data
-    });
-  }
-  return result
+const paging = reactive({
+    current: 1,
+    size: usePageSize(25),
 })
 
-watch(() => dashboard.value,
-  (db, _, onCleanup) => {
-    const res =  db.getEvents(...labels.value);
-    data.value = res;
+const { dashboard } = useDashboard()
+const result = ref<ServiceEventResult | null>(null);
+const events = computed(() => result.value?.items ?? [])
+watch(
+  [() => dashboard.value, () => paging.current, () => paging.size, labels],
+  ([db], _, onCleanup) => {
+    const res = db.getEvents({
+      page: paging.current,
+      size: paging.size,
+      labels: labels.value,
+    })
 
-    onCleanup(() => res.close());
+    const stop = watch(res.data, (v) => { result.value = v }, { immediate: true })
+
+    onCleanup(() => {
+      stop()
+      res.close()
+    })
   },
   { immediate: true }
 );
 
-
-onUnmounted(() => {
-  close()
-})
-
-function eventData(event: ServiceEvent | null): WebsocketConnectionLog | null {
-  if (!event) {
-    return null
-  }
+function eventData(event: ServiceEventInfo): WebsocketConnectionLog {
   return event.data as WebsocketConnectionLog
 }
-function goToEvent(event: ServiceEvent, openInNewTab = false) {
-    if (getSelection()?.toString()) {
-        return
-    }
+function goToEvent(eventId: string, openInNewTab = false) {
+  if (getSelection()?.toString()) {
+    return
+  }
 
-    const to = {
-        name: getRouteName('websocketEvent').value,
-        params: { service: props.service.name, id: event.id }
-    }
-    if (openInNewTab) {
-        const routeData = router.resolve(to);
-        window.open(routeData.href, '_blank')
-    } else {
-        router.push(to)
-    }
+  const to = {
+    name: getRouteName('websocketEvent').value,
+    params: { service: props.service.name, id: eventId }
+  }
+  if (openInNewTab) {
+    const routeData = router.resolve(to);
+    window.open(routeData.href, '_blank')
+  } else {
+    router.push(to)
+  }
 }
 </script>
 
@@ -90,7 +76,7 @@ function goToEvent(event: ServiceEvent, openInNewTab = false) {
       <h2 id="requests" class="card-title text-center">Connection Requests</h2>
 
       <div class="table-responsive-sm">
-        <table class="table dataTable selectable" aria-label="requests">
+        <table class="table dataTable selectable" aria-labelledby="requests">
           <thead>
             <tr>
               <th scope="col" class="text-left col-2">Type</th>
@@ -101,21 +87,29 @@ function goToEvent(event: ServiceEvent, openInNewTab = false) {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in events" :key="row.event.id" @click.left="goToEvent(row.event)" @mousedown.middle="goToEvent(row.event, true)">
+            <tr v-for="event in events" :key="event.id" @click.left="goToEvent(event.id)"
+              @mousedown.middle="goToEvent(event.id, true)">
               <td>
-                <router-link @click.stop class="badge operation" :class="row.data.type"
-                    :to="{ name: getRouteName('websocketEvent').value, params: { service: props.service.name, id: row.event.id } }">
-                    {{ formatType(row.data.type) }}
+                <router-link @click.stop class="badge operation" :class="eventData(event).type"
+                  :to="{ name: getRouteName('websocketEvent').value, params: { service: props.service.name, id: event.id } }">
+                  {{ formatType(eventData(event).type) }}
                 </router-link>
               </td>
-              <td>{{ row.data.channel }}</td>
-              <td>{{ (row.data as WebsocketCloseLog).reason ?? ''  }}</td>
-              <td>{{ (row.data as WebsocketCloseLog).closedBy ?? ''  }}</td>
-              <td class="text-center">{{ formatTime(row.event.time) }}</td>
+              <td>{{ eventData(event).channel }}</td>
+              <td>{{ (eventData(event) as WebsocketCloseLog).reason ?? '' }}</td>
+              <td>{{ (eventData(event) as WebsocketCloseLog).closedBy ?? '' }}</td>
+              <td class="text-center">{{ formatTime(event.time) }}</td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <Paging v-if="result"
+          :count="events.length"
+          :total="result.total"
+          v-model:current="paging.current"
+          v-model:size="paging.size"
+      />
     </div>
   </section>
 </template>

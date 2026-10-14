@@ -12,7 +12,7 @@ func TestCompany(t *testing.T) {
 	testcases := []struct {
 		name string
 		req  *Request
-		test func(t *testing.T, v interface{}, err error)
+		test func(t *testing.T, v any, err error)
 	}{
 		{
 			name: "company",
@@ -20,7 +20,7 @@ func TestCompany(t *testing.T) {
 				Path:   []string{"company"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "Booz Allen Hamilton", v)
 			},
@@ -31,7 +31,7 @@ func TestCompany(t *testing.T) {
 				Path:   []string{"companyName"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "Booz Allen Hamilton", v)
 			},
@@ -42,7 +42,7 @@ func TestCompany(t *testing.T) {
 				Path:   []string{"industry"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "Healthcare", v)
 			},
@@ -53,7 +53,7 @@ func TestCompany(t *testing.T) {
 				Path:   []string{"organization"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "Booz Allen Hamilton", v)
 			},
@@ -61,10 +61,21 @@ func TestCompany(t *testing.T) {
 		{
 			name: "organization name",
 			req: &Request{
+				Path:   []string{"organization", "name"},
+				Schema: schematest.New("string"),
+			},
+			test: func(t *testing.T, v any, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "Booz Allen Hamilton", v)
+			},
+		},
+		{
+			name: "organization fullName",
+			req: &Request{
 				Path:   []string{"organization", "fullName"},
 				Schema: schematest.New("string"),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "Booz Allen Hamilton", v)
 			},

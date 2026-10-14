@@ -5,24 +5,29 @@ import "github.com/brianvoe/gofakeit/v7"
 func pets() []*Node {
 	return []*Node{
 		{
-			Name: "pet",
-			Fake: fakePet,
+			Name:       "pet",
+			Attributes: []string{"pet"},
+			Fake:       fakePet,
 			Children: []*Node{
 				{
-					Name: "name",
-					Fake: fakePetName,
+					Name:       "name",
+					Attributes: []string{"name"},
+					Fake:       fakePetName,
 				},
 				{
-					Name: "category",
-					Fake: fakePetCategory,
+					Name:       "category",
+					Attributes: []string{"category"},
+					Fake:       fakePetCategory,
 					Children: []*Node{
 						{
-							Name: "name",
-							Fake: fakePetCategory,
+							Name:       "name",
+							Attributes: []string{"name"},
+							Fake:       fakePetCategory,
 						},
 						{
-							Name: "id",
-							Fake: fakePetCategoryId,
+							Name:       "id",
+							Attributes: []string{"id"},
+							Fake:       fakePetCategoryId,
 						},
 					},
 				},

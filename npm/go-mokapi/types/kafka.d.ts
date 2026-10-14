@@ -1,5 +1,3 @@
-import { JSONValue } from ".";
-
 /**
  * Sends messages to a Kafka topic.
  * https://mokapi.io/docs/javascript-api/mokapi-kafka/produce
@@ -73,13 +71,13 @@ export interface ProduceArgs {
     partition?: number;
 
     /** Kafka message key. If not specified, a random key will be generated based on the topic configuration. */
-    key?: JSONValue;
+    key?: any;
 
     /** Kafka message value. If not specified, a random value will be generated based on the topic configuration. */
-    value?: JSONValue;
+    value?: any;
 
     /** Kafka message headers. */
-    headers?: { [name: string]: JSONValue };
+    headers?: { [name: string]: any };
 
     /**
      * An array of Kafka messages
@@ -117,16 +115,16 @@ export interface Message {
     partition?: number;
 
     /** Kafka message key. If not specified, a random key will be generated based on the topic configuration. */
-    key?: JSONValue;
+    key?: any;
 
     /** Kafka message value. If data and value are not specified, a random value will be generated based on the topic configuration. */
-    data?: JSONValue;
+    data?: any;
 
     /** Kafka message value not validating against schema. If data and value are not specified, a random value will be generated based on the topic configuration. */
     value?: string | number | boolean | null;
 
     /** Kafka message headers. */
-    headers?: { [name: string]: JSONValue };
+    headers?: { [name: string]: any };
 }
 
 /**

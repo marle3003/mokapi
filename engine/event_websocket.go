@@ -86,7 +86,7 @@ func (e *WebsocketEventDispatcher) Register(key string, handler *WebsocketEventH
 }
 
 func (sh *scriptHost) OnWebsocket(filter common.WebsocketFilter, do common.EventHandler, args common.EventArgs) {
-	addDefaultTags(&args, sh)
+	addDefaultTags(&args, sh, "websocket")
 	h := &WebsocketEventHandler{
 		Filter:  filter,
 		Execute: do,

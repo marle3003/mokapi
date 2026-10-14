@@ -1,10 +1,7 @@
-import type { Options } from "markdown-it"
-import type MarkdownIt from "markdown-it"
-import type Token from "markdown-it/lib/token"
-import type Renderer from "markdown-it/lib/renderer"
+import type { MarkdownIt, Token, Renderer, MarkdownItOptions } from "markdown-it"
 
-export function MarkdownItCarousel(metadata: any): (md: MarkdownIt, opts: Options) => void {
-    return function(md: MarkdownIt, opts: Options): void {
+export function MarkdownItCarousel(metadata: any): (md: MarkdownIt) => void {
+    return function(md: MarkdownIt): void {
         var defaultRender = md.renderer.rules.text!,
             carousel = /{{\s*carousel\s.*}}/,
             kv = /([^\s=]+="[^"]*")/g
@@ -27,7 +24,7 @@ export function MarkdownItCarousel(metadata: any): (md: MarkdownIt, opts: Option
             return data
         }
 
-        function text(tokens: Token[], idx: number, options: Options, env: any, slf: Renderer): string {
+        function text(tokens: Token[], idx: number, options: Required<MarkdownItOptions>, env: any, slf: Renderer): string {
             if (!tokens[idx] || tokens[idx].hidden) { return ''; }
 
             const carousel = getCarousel(tokens[idx])

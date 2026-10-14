@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/provider/file"
 	"mokapi/engine/common"
@@ -12,11 +13,16 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
+	"runtime/debug"
 	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 )
+
+type Snapshotter interface {
+	Snapshot() any
+}
 
 type eventHandler struct {
 	handler  common.EventHandler
@@ -34,9 +40,10 @@ type scriptHost struct {
 	events map[string][]*eventHandler
 	file   *dynamic.Config
 
-	eventLogger  func(level, message string)
-	cleanupFuncs []func()
-	sm           *events.StoreManager
+	eventLogger   func(level, message string)
+	eventLoggerMu sync.RWMutex
+	cleanupFuncs  []func()
+	sm            *events.StoreManager
 
 	m sync.Mutex
 }
@@ -110,9 +117,7 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 		"file":    sh.name,
 		"fileKey": sh.file.Info.Key(),
 	}
-	for k, v := range opt.Tags {
-		tags[k] = v
-	}
+	maps.Copy(tags, opt.Tags)
 
 	t := events.NewTraits().WithNamespace("job").WithName(tags["name"])
 	if len(sh.sm.GetStores(t)) == 1 {
@@ -143,6 +148,7 @@ func (sh *scriptHost) newJobFunc(handler func(), opt common.JobOptions, schedule
 		defer func() {
 			r := recover()
 			if r != nil {
+				log.Debugf("script error %v: %v", sh.Name(), string(debug.Stack()))
 				log.Errorf("script error %v: %v", sh.Name(), r)
 				exec.Error = &common.Error{Message: fmt.Sprintf("%v", r)}
 			}
@@ -186,9 +192,7 @@ func (sh *scriptHost) On(event string, handler common.EventHandler, args common.
 		priority: args.Priority,
 	}
 
-	for k, v := range args.Tags {
-		h.tags[k] = v
-	}
+	maps.Copy(h.tags, args.Tags)
 
 	sh.events[event] = append(sh.events[event], h)
 }
@@ -219,36 +223,42 @@ func (sh *scriptHost) AddCleanupFunc(f func()) {
 	sh.cleanupFuncs = append(sh.cleanupFuncs, f)
 }
 
-func (sh *scriptHost) Info(args ...interface{}) {
+func (sh *scriptHost) Info(args ...any) {
 	sh.engine.logger.Info(args...)
-	if sh.eventLogger != nil && sh.IsLevelEnabled("info") {
-		sh.eventLogger("log", fmt.Sprint(args...))
-	}
+	sh.logEvent("info", "log", args...)
 }
 
-func (sh *scriptHost) Warn(args ...interface{}) {
+func (sh *scriptHost) Warn(args ...any) {
 	sh.engine.logger.Warn(args...)
-	if sh.eventLogger != nil && sh.IsLevelEnabled("warn") {
-		sh.eventLogger("warn", fmt.Sprint(args...))
-	}
+	sh.logEvent("warn", "warn", args...)
 }
 
-func (sh *scriptHost) Error(args ...interface{}) {
+func (sh *scriptHost) Error(args ...any) {
 	sh.engine.logger.Error(args...)
-	if sh.eventLogger != nil && sh.IsLevelEnabled("error") {
-		sh.eventLogger("error", fmt.Sprint(args...))
-	}
+	sh.logEvent("error", "error", args...)
 }
 
-func (sh *scriptHost) Debug(args ...interface{}) {
+func (sh *scriptHost) Debug(args ...any) {
 	sh.engine.logger.Debug(args...)
-	if sh.eventLogger != nil && sh.IsLevelEnabled("debug") {
-		sh.eventLogger("debug", fmt.Sprint(args...))
-	}
+	sh.logEvent("debug", "debug", args...)
 }
 
 func (sh *scriptHost) SetEventLogger(logger func(level, message string)) {
+	sh.eventLoggerMu.Lock()
+	defer sh.eventLoggerMu.Unlock()
 	sh.eventLogger = logger
+}
+
+func (sh *scriptHost) logEvent(configuredLevel, eventLevel string, args ...any) {
+	if !sh.IsLevelEnabled(configuredLevel) {
+		return
+	}
+
+	sh.eventLoggerMu.RLock()
+	defer sh.eventLoggerMu.RUnlock()
+	if sh.eventLogger != nil {
+		sh.eventLogger(eventLevel, fmt.Sprint(args...))
+	}
 }
 
 func (sh *scriptHost) IsLevelEnabled(level string) bool {
@@ -365,17 +375,20 @@ func getScriptPath(u *url.URL) string {
 }
 
 func (sh *scriptHost) startEventHandler(eventLog func(level, message string)) {
-	sh.eventLogger = eventLog
+	sh.SetEventLogger(eventLog)
 }
 
 // Function to end the event handler context
 func (sh *scriptHost) endEventHandler() {
-	sh.eventLogger = nil
+	sh.SetEventLogger(nil)
 }
 
 func getDeepCopy(args []any) []string {
 	result := make([]string, len(args))
 	for i, arg := range args {
+		if s, ok := arg.(Snapshotter); ok {
+			arg = s.Snapshot()
+		}
 		b, _ := json.Marshal(arg)
 		result[i] = string(b)
 	}

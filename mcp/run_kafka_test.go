@@ -465,10 +465,7 @@ t.produce(0, { foo: 123 }, 'foo');
 t`,
 					},
 				)
-				require.EqualError(t, err, `Kafka message validation failed:
-
-Message:
-{"foo":123}
+				require.EqualError(t, err, `message validation failed:
 
 Validation error count 1:
 	- #/foo/type: invalid type, expected string but got integer

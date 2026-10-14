@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"mokapi/schema/json/schema"
+	"slices"
 	"strings"
 
 	"github.com/brianvoe/gofakeit/v7"
@@ -19,7 +20,8 @@ const smallestFloat = 1e-15
 func numbers() []*Node {
 	return []*Node{
 		{
-			Name: "number",
+			Name:       "number",
+			Attributes: []string{"number"},
 			Fake: func(r *Request) (any, error) {
 				if r.Schema == nil {
 					r = r.WithSchema(&schema.Schema{Type: schema.Types{"string"}})
@@ -28,23 +30,26 @@ func numbers() []*Node {
 			},
 		},
 		{
-			Name: "age",
-			Fake: fakeAge,
+			Name:       "age",
+			Attributes: []string{"age"},
+			Fake:       fakeAge,
 		},
 		{
-			Name: "year",
-			Fake: fakeYear,
+			Name:       "year",
+			Attributes: []string{"year"},
+			Fake:       fakeYear,
 		},
 		{
-			Name: "quantity",
-			Fake: func(r *Request) (interface{}, error) {
+			Name:       "quantity",
+			Attributes: []string{"quantity"},
+			Fake: func(r *Request) (any, error) {
 				return fakeIntegerWithRange(r.Schema, 0, 100)
 			},
 		},
 	}
 }
 
-func fakeYear(r *Request) (interface{}, error) {
+func fakeYear(r *Request) (any, error) {
 	s := r.Schema
 	if s.IsAny() {
 		s = &schema.Schema{Type: []string{"integer"}}
@@ -109,7 +114,7 @@ func fakeIntegerWithRange(s *schema.Schema, min, max int) (any, error) {
 	return int64(v), nil
 }
 
-func fakeNumber(r *Request) (interface{}, error) {
+func fakeNumber(r *Request) (any, error) {
 	n, err := newNumber(r)
 	if err != nil {
 		return nil, err
@@ -127,7 +132,7 @@ func fakeNumber(r *Request) (interface{}, error) {
 	return n, nil
 }
 
-func newNumber(r *Request) (interface{}, error) {
+func newNumber(r *Request) (any, error) {
 	s := r.Schema
 	if s == nil {
 		return gofakeit.Float64(), nil
@@ -194,7 +199,7 @@ func newNumber(r *Request) (interface{}, error) {
 	return v, nil
 }
 
-func fakeAge(r *Request) (interface{}, error) {
+func fakeAge(r *Request) (any, error) {
 	minValue, maxValue := getRangeWithDefault(r.Schema, 0, 100)
 	return int64(gofakeit.Number(int(minValue), int(maxValue))), nil
 }
@@ -282,12 +287,7 @@ func shouldEnsureDecimalPart(s *schema.Schema) bool {
 	if s.Not.AnyOf == nil {
 		return false
 	}
-	for _, as := range s.Not.AnyOf {
-		if shouldEnsureDecimalPart(as) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(s.Not.AnyOf, shouldEnsureDecimalPart)
 }
 
 func isInteger(n any) bool {

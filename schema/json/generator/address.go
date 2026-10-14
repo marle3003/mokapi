@@ -12,34 +12,41 @@ import (
 func addresses() []*Node {
 	return []*Node{
 		{
-			Name: "address",
-			Fake: fakeAddress,
+			Name:       "address",
+			Attributes: []string{"address"},
+			Fake:       fakeAddress,
 			Children: append([]*Node{
 				{
-					Name: "co",
-					Fake: fakePersonName,
+					Name:       "co",
+					Attributes: []string{"co"},
+					Fake:       fakePersonName,
 				},
 				{
-					Name: "line1",
-					Fake: fakePersonName,
+					Name:       "line1",
+					Attributes: []string{"line1"},
+					Fake:       fakePersonName,
 				},
 				{
-					Name: "line2",
-					Fake: fakeStreet,
+					Name:       "line2",
+					Attributes: []string{"line2"},
+					Fake:       fakeStreet,
 				},
 				{
-					Name: "line3",
-					Fake: func(r *Request) (interface{}, error) {
+					Name:       "line3",
+					Attributes: []string{"line3"},
+					Fake: func(r *Request) (any, error) {
 						return fmt.Sprintf("%v %v %v", gofakeit.City(), gofakeit.StateAbr(), gofakeit.Zip()), nil
 					},
 				},
 				{
-					Name: "floor",
-					Fake: fakeFloor,
+					Name:       "floor",
+					Attributes: []string{"floor"},
+					Fake:       fakeFloor,
 					Children: []*Node{
 						{
-							Name: "door",
-							Fake: fakeRoom,
+							Name:       "door",
+							Attributes: []string{"door"},
+							Fake:       fakeRoom,
 						},
 					},
 				},
@@ -53,17 +60,14 @@ func addresses() []*Node {
 			),
 		},
 		{
-			Name: "co",
-			Children: []*Node{
-				{
-					Name: "address",
-					Fake: fakePersonName,
-				},
-			},
+			Name:       "co",
+			Attributes: []string{"coAddress"},
+			Fake:       fakePersonName,
 		},
 		{
-			Name: "street",
-			Fake: fakeStreet,
+			Name:       "street",
+			Attributes: []string{"street"},
+			Fake:       fakeStreet,
 		},
 		{
 			Name:       "city",
@@ -72,25 +76,13 @@ func addresses() []*Node {
 		},
 		{
 			Name:       "zip",
-			Attributes: []string{"zip", "postcode", "postal"},
+			Attributes: []string{"zip", "zipCode", "postcode", "postal", "postalCode"},
 			Fake:       fakePostcode,
-			Children: []*Node{
-				{
-					Name: "code",
-					Fake: fakePostcode,
-				},
-			},
 		},
 		{
 			Name:       "house",
-			Attributes: []string{"house", "building"},
+			Attributes: []string{"house", "houseNumber", "building", "buildingNumber"},
 			Fake:       fakeHouseNumber,
-			Children: []*Node{
-				{
-					Name: "number",
-					Fake: fakeHouseNumber,
-				},
-			},
 		},
 	}
 }
@@ -102,7 +94,7 @@ func fakeStreet(r *Request) (any, error) {
 }
 
 func fakeCity(r *Request) (any, error) {
-	var v interface{}
+	var v any
 	var err error
 	s := r.Schema
 	if s.IsAny() || s.IsString() {
@@ -132,7 +124,7 @@ func newPostCode(s *schema.Schema) (any, error) {
 	}
 	minLength := 4
 	maxLength := 6
-	if s.IsInteger() {
+	if s.IsInteger() || s.IsNumber() {
 		if s.Minimum != nil {
 			minLength = len(fmt.Sprintf("%v", *s.Minimum))
 		}
@@ -166,9 +158,9 @@ func newPostCode(s *schema.Schema) (any, error) {
 	return code, nil
 }
 
-func fakeAddress(_ *Request) (interface{}, error) {
+func fakeAddress(_ *Request) (any, error) {
 	addr := gofakeit.Address()
-	return map[string]interface{}{
+	return map[string]any{
 		"address":   addr.Address,
 		"street":    addr.Street,
 		"city":      addr.City,

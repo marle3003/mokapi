@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	numPatternProperties     = []interface{}{0, 1, 2, 3, 4, 5}
+	numPatternProperties     = []any{0, 1, 2, 3, 4, 5}
 	weightsPatternProperties = []float32{0.1, 3, 2, 1, 0.5, 0.5}
 )
 
@@ -48,16 +48,19 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 		return nil, err
 	}
 
-	fake := func() (interface{}, error) {
+	fake := func() (any, error) {
+		req.Context.Snapshot()
+		defer req.Context.Restore()
+
 		var propNames []string
-		props := map[string]interface{}{}
+		props := map[string]any{}
 		var sorted []string
 		sorted, err = topologicalSort(fakes)
 		if err != nil {
 			return nil, err
 		}
 
-		var result map[string]interface{}
+		var result map[string]any
 		p := parser.Parser{Schema: s, ValidateAdditionalProperties: true}
 		err = fakeWithRetries(10, func() error {
 			for _, key := range sorted {
@@ -71,7 +74,7 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 				}
 			}
 
-			result = map[string]interface{}{}
+			result = map[string]any{}
 			for _, key := range s.Required {
 				result[key] = props[key]
 			}
@@ -110,8 +113,8 @@ func (r *resolver) resolveObject(req *Request) (*faker, error) {
 
 					n := len(result)
 					if n >= minProps {
-						n := gofakeit.Float64Range(0, 1)
-						if n > req.g.cfg.OptionalPropertiesProbability() {
+						rand := gofakeit.Float64Range(0, 1)
+						if rand > req.g.cfg.OptionalPropertiesProbability() {
 							continue
 						}
 					}
@@ -214,7 +217,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 	domain := detectDomain(s, g.root)
 	fallback := domain == ""
 	req.examples = examplesFromRequest(req)
-	if !isKnownDomain(req) {
+	if domain != "" && !isKnownDomain(req) {
 		req.Path = append(req.Path, domain)
 	}
 	propertyNameParser := propertyNamesParser(s)
@@ -274,7 +277,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 				return nil, fmt.Errorf("could not parse regex string: %v", pattern)
 			}
 			n := numPatterProperties()
-			for i := 0; i < n; i++ {
+			for range n {
 				gen := regexGenerator{ra: req.g.rand}
 				gen.regexGenerate(re, len(pattern)*100)
 				propName := gen.sb.String()
@@ -296,7 +299,7 @@ func (r *resolver) fakeObject(req *Request) (*sortedmap.LinkedHashMap[string, *f
 		// if additionalProperties=true we don't add random properties, it is not expected by users
 
 		length := numProperties(1, 10, s)
-		for i := 0; i < length; i++ {
+		for range length {
 			f, err := r.resolve(req.WithSchema(s.AdditionalProperties), true)
 			if err != nil {
 				return nil, err
@@ -326,7 +329,7 @@ func (r *resolver) fakeDictionary(req *Request) (*sortedmap.LinkedHashMap[string
 	length := numProperties(1, 10, req.Schema)
 	fakes := &sortedmap.LinkedHashMap[string, *faker]{}
 	propertyNameParser := propertyNamesParser(req.Schema)
-	for i := 0; i < length; i++ {
+	for range length {
 		f, err := r.resolve(req.WithSchema(req.Schema.AdditionalProperties), true)
 		if err != nil {
 			return nil, err
@@ -384,9 +387,9 @@ func numProperties(min, max int, s *schema.Schema) int {
 	}
 	if min == max {
 		return min
-	} else {
-		return gofakeit.Number(min, max)
 	}
+
+	return gofakeit.Number(min, max)
 }
 
 func numPatterProperties() int {
@@ -407,10 +410,8 @@ func isKnownDomain(r *Request) bool {
 		if n.Name == domain {
 			return true
 		}
-		for _, attr := range g.root.Attributes {
-			if attr == domain {
-				return true
-			}
+		if slices.Contains(g.root.Attributes, domain) {
+			return true
 		}
 	}
 	return false
@@ -450,9 +451,11 @@ func detectDomain(s *schema.Schema, root *Node) string {
 func scoreDomain(attribute []string, n *Node) float64 {
 	score := 0.0
 	for _, attr := range attribute {
-		attr = strings.ToLower(attr)
 		for _, child := range n.Children {
-			if attr == child.Name {
+			found := slices.ContainsFunc(child.Attributes, func(s string) bool {
+				return strings.EqualFold(attr, s)
+			})
+			if found {
 				score += child.Weight
 			}
 		}
@@ -518,7 +521,7 @@ func propertyFromExample(prop string, r *Request) []any {
 
 	var result []any
 	for _, ex := range r.examples {
-		if m, ok := ex.(map[string]interface{}); ok {
+		if m, ok := ex.(map[string]any); ok {
 			result = append(result, m[prop])
 		}
 	}
@@ -620,9 +623,7 @@ func applyConditional(req *Request, result map[string]any, changed *bool) error 
 
 			newLength := len(result) + len(condResult)
 			if s.MaxProperties == nil || newLength <= *s.MaxProperties {
-				for k, v := range condResult {
-					result[k] = v
-				}
+				maps.Copy(result, condResult)
 				return nil
 			}
 			return fmt.Errorf("reached maximum of value maxProperties=%d", *s.MaxProperties)
@@ -725,9 +726,7 @@ func applyObjectAllOf(req *Request, result map[string]any, changed *bool) error 
 
 			newLength := len(result) + len(m)
 			if base.MaxProperties == nil || newLength <= *base.MaxProperties {
-				for k, v := range m {
-					result[k] = v
-				}
+				maps.Copy(result, m)
 				*changed = true
 				return nil
 			}
@@ -766,9 +765,7 @@ func applyOneOf(req *Request, result map[string]any, changed *bool) error {
 			resultOne, err = New(req.WithSchema(selected))
 			if m, ok := resultOne.(map[string]any); ok {
 				var temp = maps.Clone(result)
-				for k, v := range m {
-					temp[k] = v
-				}
+				maps.Copy(temp, m)
 
 				for idx, one := range base.OneOf {
 					if idx == index {
@@ -782,17 +779,15 @@ func applyOneOf(req *Request, result map[string]any, changed *bool) error {
 
 				newLength := len(result) + len(m)
 				if base.MaxProperties == nil || newLength <= *base.MaxProperties {
-					for k, v := range m {
-						result[k] = v
-					}
+					maps.Copy(result, m)
 					*changed = true
 					return nil
 				}
 				return fmt.Errorf("reached maximum of value maxProperties=%d", *base.MaxProperties)
 
-			} else {
-				return fmt.Errorf("invalid conditional schema: got %s, expected Object", selected.Type)
 			}
+
+			return fmt.Errorf("invalid conditional schema: got %s, expected Object", selected.Type)
 		})
 		if err == nil {
 			return nil

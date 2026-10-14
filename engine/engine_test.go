@@ -8,10 +8,12 @@ import (
 	"mokapi/runtime/events"
 	"mokapi/runtime/metrics"
 	"mokapi/runtime/runtimetest"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus/hooks/test"
 	r "github.com/stretchr/testify/require"
 )
 
@@ -113,6 +115,11 @@ func TestEngine_Scheduler(t *testing.T) {
 		{
 			name: "run job script error",
 			test: func(t *testing.T, e *engine.Engine, c *metrics.Counter, sm *events.StoreManager) {
+				logrus.SetLevel(logrus.DebugLevel)
+				t.Cleanup(func() { logrus.SetLevel(logrus.InfoLevel) })
+				hook := test.NewGlobal()
+				t.Cleanup(hook.Reset)
+
 				err := e.AddScript(newScript("test.js", `
 					import mokapi from 'mokapi'
 					export default function() {
@@ -130,6 +137,7 @@ func TestEngine_Scheduler(t *testing.T) {
 				exec := evts[0].Data.(*common.JobExecution)
 				r.NotNil(t, exec.Error)
 				r.Equal(t, "Error: script error at test.js:5:13(3)", exec.Error.Message)
+				r.True(t, hasLogEntry(hook.Entries, logrus.DebugLevel, "goroutine "), "expected panic stack trace in debug logs")
 			},
 		},
 		{
@@ -155,4 +163,13 @@ func TestEngine_Scheduler(t *testing.T) {
 			tc.test(t, e, app.Monitor.JobCounter, app.Events)
 		})
 	}
+}
+
+func hasLogEntry(entries []logrus.Entry, level logrus.Level, message string) bool {
+	for _, entry := range entries {
+		if entry.Level == level && strings.Contains(entry.Message, message) {
+			return true
+		}
+	}
+	return false
 }

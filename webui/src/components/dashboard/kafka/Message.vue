@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { useRoute } from "@/router";
-import { computed, onUnmounted, ref, onMounted, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import SourceView from '../SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { usePrettyDates } from "@/composables/usePrettyDate";
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 import { getRouteName, useDashboard } from "@/composables/dashboard";
-import { useMeta } from "@/composables/meta";
 import { usePrettyText } from "@/composables/usePrettyText";
 import Actions from '../Actions.vue'
 import MessageHeaderTable from './MessageHeaderTable.vue'
@@ -18,38 +17,22 @@ const { formatLanguage } = usePrettyLanguage()
 const { format } = usePrettyDates()
 const { fromBinary } = usePrettyText()
 
-const events = computed(() => {
-  return dashboard.value.getEvents({ name: 'namespace', value: 'kafka' })
-})
+const event = ref<ServiceEvent | null>(null);
+const isLoading = ref<boolean>(true)
 
-const eventId = computed(() => {
-  const id = route.params.id
-  if (!id) {
-    return undefined
-  }
+watch(() => dashboard.value,
+  (db, _, onCleanup) => {
+    const res = db.getEvent(route.params.id as string);
 
-  if (typeof id === 'string') {
-    if (isNumber(id)) {
-      const index = parseFloat(id);
-      const ev = events.value.events.value[index];
-      return ev?.id ?? null;
-    } else {
-      return id;
-    }
-  }
-  return null
-})
+    const stop = watch(res.event, (v) => { event.value = v; isLoading.value = false }, { immediate: true })
 
-const result = computed(() => {
-  if (!eventId.value) {
-    return null
-  }
-  return dashboard.value.getEvent(eventId.value)
-})
-
-const event = computed(() => result.value?.event.value ?? null)
-const isLoading = computed(() => result.value?.isLoading ?? false)
-const close = () => result.value?.close?.()
+    onCleanup(() => {
+        stop()
+        res.close
+    });
+  },
+  { immediate: true }
+);
 
 const topic = ref<KafkaTopic | null>(null)
 const topicKey = computed(() => {
@@ -119,23 +102,6 @@ const message = computed(() => {
   return { source, contentType, contentTypeTitle: messageConfig.value.contentType, keyType }
 })
 
-function isInitLoading() {
-  return isLoading.value && !result.value
-}
-onMounted(() => {
-  if (!event.value || getMode() !== 'demo') {
-    return
-  }
-  const id = events.value.events.value.indexOf(event.value)
-  useMeta(
-    `${key(data.value?.key ?? null)} ${event.value.traits['topic']} – Kafka Message Details`,
-    'View detailed information about a Kafka message, including key, value, headers, offset, partition, schema ID, and producer metadata.',
-    'https://mokapi.io//dashboard/kafka/messages/' + id
-  )
-})
-onUnmounted(() => {
-  close()
-})
 function getContentType(msg: KafkaMessage): [string, boolean] {
   if (msg.payload.format?.includes('application/vnd.apache.avro')) {
     switch (msg.contentType) {
@@ -178,9 +144,6 @@ function key(key: KafkaValue | null): string {
     return fromBinary(key.binary)
   }
   return ''
-}
-function isNumber(value: string): boolean {
-  return /^[0-9]+$/.test(value);
 }
 const hasActions = computed(() => {
     if (!data.value) {
@@ -304,8 +267,8 @@ const hasActions = computed(() => {
       </section>
     </div>
   </div>
-  <loading v-if="isInitLoading()"></loading>
-  <div v-else-if="!result?.event.value">
+  <loading v-if="!event && isLoading"></loading>
+  <div v-else-if="!event && !isLoading">
       <message message="Kafka Message not found"></message>
   </div>
 </template>

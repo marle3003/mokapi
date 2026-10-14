@@ -24,6 +24,10 @@ func (a *App) Kafka() *Kafka {
 	return &Kafka{filter: common.KafkaFilter{Api: a.api}, m: a.m}
 }
 
+func (a *App) Mqtt() *Mqtt {
+	return &Mqtt{filter: common.MqttFilter{Api: a.api}, m: a.m}
+}
+
 func (a *App) Api(name string) *App {
 	return &App{api: name, m: a.m}
 }

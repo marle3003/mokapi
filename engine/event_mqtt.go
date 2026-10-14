@@ -44,7 +44,7 @@ func (e *MqttEventDispatcher) Register(key string, handler *MqttEventHandler) {
 }
 
 func (sh *scriptHost) OnMqtt(filter common.MqttFilter, do common.EventHandler, args common.EventArgs) {
-	addDefaultTags(&args, sh)
+	addDefaultTags(&args, sh, "mqtt")
 	h := &MqttEventHandler{
 		Filter:  filter,
 		Execute: do,

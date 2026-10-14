@@ -24,7 +24,7 @@ type Exportable interface {
 	Export() any
 }
 
-func (p *Parser) ParseWith(data interface{}, schema *schema.Schema) (interface{}, error) {
+func (p *Parser) ParseWith(data any, schema *schema.Schema) (any, error) {
 	v, err := p.parse(data, schema)
 	if err != nil {
 		return v, &Error{err: err}
@@ -33,7 +33,7 @@ func (p *Parser) ParseWith(data interface{}, schema *schema.Schema) (interface{}
 	return v, nil
 }
 
-func (p *Parser) Parse(data interface{}) (interface{}, error) {
+func (p *Parser) Parse(data any) (any, error) {
 	v, err := p.parse(data, p.Schema)
 	if err != nil {
 		return v, &Error{err: err}
@@ -42,7 +42,7 @@ func (p *Parser) Parse(data interface{}) (interface{}, error) {
 	return v, nil
 }
 
-func (p *Parser) parse(data interface{}, s *schema.Schema) (interface{}, error) {
+func (p *Parser) parse(data any, s *schema.Schema) (any, error) {
 	if e, ok := data.(Exportable); ok {
 		data = e.Export()
 	}
@@ -72,7 +72,7 @@ func (p *Parser) parse(data interface{}, s *schema.Schema) (interface{}, error) 
 	evaluatedProperties := map[string]bool{}
 	evaluatedItems := map[int]bool{}
 
-	var v interface{}
+	var v any
 	var err error
 	if len(s.Type) == 0 {
 		t := toType(data)
@@ -129,7 +129,7 @@ func (p *Parser) parse(data interface{}, s *schema.Schema) (interface{}, error) 
 		return nil, err
 	}
 
-	if m, ok := v.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
+	if m, ok := v.(*sortedmap.LinkedHashMap[string, any]); ok {
 		if p.ConvertToSortedMap {
 			v = m
 		} else {
@@ -140,16 +140,16 @@ func (p *Parser) parse(data interface{}, s *schema.Schema) (interface{}, error) 
 	return v, nil
 }
 
-func (p *Parser) parseType(data interface{}, s *schema.Schema, typeName string, evaluatedProperties map[string]bool, evaluatedItems map[int]bool) (interface{}, error) {
+func (p *Parser) parseType(data any, s *schema.Schema, typeName string, evaluatedProperties map[string]bool, evaluatedItems map[int]bool) (any, error) {
 	switch data.(type) {
-	case []interface{}:
+	case []any:
 		if typeName != "array" {
 			return nil, &ErrorDetail{
 				Message: fmt.Sprintf("invalid type, expected %v but got %v", s.Type, toType(data)),
 				Field:   "type",
 			}
 		}
-	case map[string]interface{}:
+	case map[string]any:
 		if typeName != "object" {
 			return nil, &ErrorDetail{
 				Message: fmt.Sprintf("invalid type, expected %v but got %v", s.Type, toType(data)),
@@ -228,13 +228,13 @@ func unTitle(s string) string {
 	return s
 }
 
-func (p *Parser) evaluateUnevaluatedProperties(data interface{}, schema *schema.Schema, evaluatedProperties map[string]bool) (interface{}, error) {
+func (p *Parser) evaluateUnevaluatedProperties(data any, schema *schema.Schema, evaluatedProperties map[string]bool) (any, error) {
 	if schema.UnevaluatedProperties == nil {
 		return data, nil
 	}
 	var err ErrorList
 
-	if object, ok := data.(*sortedmap.LinkedHashMap[string, interface{}]); ok {
+	if object, ok := data.(*sortedmap.LinkedHashMap[string, any]); ok {
 		for it := object.Iter(); it.Next(); {
 			name := it.Key()
 			val := it.Value()
@@ -263,13 +263,13 @@ func (p *Parser) evaluateUnevaluatedProperties(data interface{}, schema *schema.
 	return data, nil
 }
 
-func (p *Parser) evaluateUnevaluatedItems(data interface{}, schema *schema.Schema, evaluatedItems map[int]bool) (interface{}, error) {
+func (p *Parser) evaluateUnevaluatedItems(data any, schema *schema.Schema, evaluatedItems map[int]bool) (any, error) {
 	if schema.UnevaluatedItems == nil {
 		return data, nil
 	}
 	var err ErrorList
 
-	if arr, ok := data.([]interface{}); ok {
+	if arr, ok := data.([]any); ok {
 		for i, val := range arr {
 			if _, evaluated := evaluatedItems[i]; !evaluated {
 				if schema.UnevaluatedItems.Boolean != nil && !*schema.UnevaluatedItems.Boolean {

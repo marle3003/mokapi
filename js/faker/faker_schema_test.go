@@ -50,14 +50,14 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid type",
 			schema: "{ type: 123 }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'type': Integer at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'type': expected type string or array, got number at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
 			name:   "one type is invalid",
 			schema: "{ type: [123] }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'type': Integer at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'type[0]': expected type string, got number at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -72,7 +72,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid enum type",
 			schema: "{ enum: 123 }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'enum': got Integer, expected Array at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'enum': expected type array, got number (123) at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -111,7 +111,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid example type",
 			schema: "{ examples: 123 }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'enum': got Integer, expected Array at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'examples': expected type array, got number (123) at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -126,7 +126,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid multipleOf type",
 			schema: "{ multipleOf: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'multipleOf': got String, expected Number at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'multipleOf': expected type number, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -141,7 +141,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid maximum type",
 			schema: "{ maximum: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'maximum': got String, expected Number at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'maximum': expected type number, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -156,7 +156,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid exclusiveMaximum type",
 			schema: "{ exclusiveMaximum: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'exclusiveMaximum': got String, expected Number or Boolean at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'exclusiveMaximum': expected type number or boolean, got string (\"foo\") at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -171,7 +171,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid minimum type",
 			schema: "{ minimum: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'minimum': got String, expected Number at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'minimum': expected type number, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -186,7 +186,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid exclusiveMinimum type",
 			schema: "{ exclusiveMinimum: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'exclusiveMinimum': got String, expected Number or Boolean at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'exclusiveMinimum': expected type number or boolean, got string (\"foo\") at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -201,7 +201,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid maxLength type",
 			schema: "{ maxLength: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'maxLength': got String, expected Number at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'maxLength': expected type integer, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -216,7 +216,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid minLength type",
 			schema: "{ minLength: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'minLength': got String, expected Number at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'minLength': expected type integer, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -231,7 +231,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid pattern type",
 			schema: "{ pattern: 123 }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'pattern': got Integer, expected String at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'pattern': expected type string, got number (123) at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -246,7 +246,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid format type",
 			schema: "{ format: 123 }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'format': got Integer, expected String at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'format': expected type string, got number (123) at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -261,7 +261,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid format type",
 			schema: "{ items: 123 }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "expect JSON schema but got: Integer at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'items': expected type object, got number (123) at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -276,7 +276,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid maxItems type",
 			schema: "{ maxItems: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'maxItems': got String, expected Integer at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'maxItems': expected type integer, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -284,14 +284,14 @@ func TestFaker_Schema(t *testing.T) {
 			schema: "{ minItems: 3, items: { type: 'string' } }",
 			test: func(t *testing.T, v goja.Value, err error) {
 				r.NoError(t, err)
-				r.Equal(t, []interface{}{"fg", "yx7yIkhya", "y", "AQyBy", "LPbGpPaituc", "Lx47fDnQE", "gPAl89Xbz vlNV", "Zwkx5"}, v.Export())
+				r.Equal(t, []any{"fg", "yx7yIkhya", "y", "AQyBy", "LPbGpPaituc", "Lx47fDnQE", "gPAl89Xbz vlNV", "Zwkx5"}, v.Export())
 			},
 		},
 		{
 			name:   "invalid minItems type",
 			schema: "{ minItems: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'minItems': got String, expected Integer at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'minItems': expected type integer, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -306,7 +306,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid uniqueItems type",
 			schema: "{ uniqueItems: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'uniqueItems': got String, expected Boolean at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'uniqueItems': expected type boolean, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -321,7 +321,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid uniqueItems type",
 			schema: "{ uniqueItems: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'uniqueItems': got String, expected Boolean at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'uniqueItems': expected type boolean, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -336,7 +336,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid contains type",
 			schema: "{ contains: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "expect JSON schema but got: String at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'contains': expected type object, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -351,7 +351,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid minContains type",
 			schema: "{ minContains: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'minContains': got String, expected Integer at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'minContains': expected type integer, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -366,7 +366,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid maxContains type",
 			schema: "{ maxContains: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'maxContains': got String, expected Integer at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'maxContains': expected type integer, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -381,7 +381,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid properties type",
 			schema: "{ properties: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'properties': got String, expected Object at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'properties': expected object, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -396,7 +396,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid maxProperties type",
 			schema: "{ maxProperties: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'maxProperties': got String, expected Integer at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'maxProperties': expected type integer, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -411,7 +411,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid minProperties type",
 			schema: "{ minProperties: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'minProperties': got String, expected Integer at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'minProperties': expected type integer, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -426,7 +426,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid patternProperties type",
 			schema: "{ patternProperties: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'patternProperties': got String, expected Object at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'patternProperties': expected type object, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -449,7 +449,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid additionalProperties type",
 			schema: "{ additionalProperties: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "parse 'additionalProperties' failed: expect JSON schema but got: String at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'additionalProperties': expected type object, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -486,7 +486,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid propertyNames type",
 			schema: "{ propertyNames: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "parse 'propertyNames' failed: expect JSON schema but got: String at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'propertyNames': expected type object, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -515,21 +515,21 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid dependentRequired type",
 			schema: "{ dependentRequired: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'dependentRequired': got String, expected Object at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'dependentRequired': expected type object, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
 			name:   "invalid dependentRequired type not array",
 			schema: "{ dependentRequired: { foo: 123 } }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'dependentRequired.foo': got Integer, expected Array at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'dependentRequired.foo': expected type array, got number (123) at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
 			name:   "invalid dependentRequired type not string array",
 			schema: "{ dependentRequired: { foo: [123] } }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'dependentRequired.foo[0]': got Integer, expected String at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'dependentRequired.foo': expected type string, got number (123) at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 
@@ -577,7 +577,7 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid dependentSchemas type",
 			schema: "{ dependentSchemas: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'dependentSchemas': got String, expected Object at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'dependentSchemas': expected type object, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
 			},
 		},
 		{
@@ -594,7 +594,16 @@ func TestFaker_Schema(t *testing.T) {
 			name:   "invalid required type",
 			schema: "{ required: 'foo' }",
 			test: func(t *testing.T, v goja.Value, err error) {
-				r.EqualError(t, err, "unexpected type for 'required': got String, expected Array at mokapi/js/faker.(*Module).Fake-fm (native)")
+				r.EqualError(t, err, "schema error at field 'required': expected type array, got string at mokapi/js/faker.(*Module).Fake-fm (native)")
+			},
+		},
+		{
+			name:   "oneOf",
+			schema: "{ oneOf: [{type: 'string',const:'foo'},{type: 'string',const:'bar'}] }",
+			test: func(t *testing.T, v goja.Value, err error) {
+				r.NoError(t, err)
+				m := v.Export()
+				r.Equal(t, "foo", m)
 			},
 		},
 	}

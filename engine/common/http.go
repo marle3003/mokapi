@@ -2,17 +2,19 @@ package common
 
 import (
 	"fmt"
+	"mokapi/lib/jsonpreview"
 	"reflect"
 	"strings"
 )
 
 type HttpEventResponse struct {
-	Headers    map[string]any `json:"headers"`
-	StatusCode int            `json:"statusCode"`
-	Body       string         `json:"body"`
-	Data       any            `json:"data"`
-	Schema     any            `json:"schema"`
-	Context    map[string]any `json:"context"`
+	Headers         map[string]any `json:"headers"`
+	StatusCode      int            `json:"statusCode"`
+	Body            string         `json:"body"`
+	Data            any            `json:"data"`
+	Schema          any            `json:"schema"`
+	Context         map[string]any `json:"context"`
+	StopPropagation bool           `json:"-"`
 
 	Rebuild func(statusCode int, contentType string) `json:"-"`
 }
@@ -20,7 +22,7 @@ type HttpEventResponse struct {
 type HttpEventRequest struct {
 	Method      string         `json:"method"`
 	Url         Url            `json:"url"`
-	Body        interface{}    `json:"body"`
+	Body        any            `json:"body"`
 	Path        map[string]any `json:"path"`
 	Query       map[string]any `json:"query"`
 	Header      map[string]any `json:"header"`
@@ -52,6 +54,21 @@ func (r *HttpEventRequest) String() string {
 	return s
 }
 
+func (r *HttpEventRequest) Snapshot() any {
+	if r == nil {
+		return r
+	}
+
+	type alias HttpEventRequest
+	return struct {
+		*alias
+		Body jsonpreview.Truncated `json:"body"`
+	}{
+		alias: (*alias)(r),
+		Body:  jsonpreview.Truncated{V: r.Body, Limit: 256 << 10},
+	}
+}
+
 func (u Url) String() string {
 	sb := strings.Builder{}
 	sb.WriteString(u.Scheme)
@@ -70,7 +87,25 @@ func (r *HttpEventResponse) HasBody() bool {
 	return len(r.Body) > 0 || r.Data != nil
 }
 
-func HttpEventHandler(req *HttpEventRequest, res *HttpEventResponse, resources interface{}) (bool, error) {
+func (r *HttpEventResponse) Snapshot() any {
+	if r == nil {
+		return r
+	}
+
+	limit := 256 << 10
+	type alias HttpEventResponse
+	return struct {
+		*alias
+		Body jsonpreview.Truncated `json:"body"`
+		Data jsonpreview.Truncated `json:"data"`
+	}{
+		alias: (*alias)(r),
+		Body:  jsonpreview.Truncated{V: r.Body, Limit: limit},
+		Data:  jsonpreview.Truncated{V: r.Data, Limit: limit},
+	}
+}
+
+func HttpEventHandler(req *HttpEventRequest, res *HttpEventResponse, resources any) (bool, error) {
 	resource := getResource(req.Url, resources)
 	if resource == nil {
 		return false, nil
@@ -79,7 +114,7 @@ func HttpEventHandler(req *HttpEventRequest, res *HttpEventResponse, resources i
 	return true, nil
 }
 
-func getResource(u Url, resources interface{}) interface{} {
+func getResource(u Url, resources any) any {
 	paths := strings.Split(u.Path, "/")
 	val := reflect.ValueOf(resources)
 	for _, path := range paths[:len(paths)-1] {

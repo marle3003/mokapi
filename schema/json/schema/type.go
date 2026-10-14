@@ -1,10 +1,13 @@
 package schema
 
 import (
-	"encoding/json"
 	"fmt"
-	"gopkg.in/yaml.v3"
+	"mokapi/config/dynamic"
+	"reflect"
+	"slices"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
 type Types []string
@@ -31,45 +34,50 @@ func (t Types) String() string {
 }
 
 func (t *Types) UnmarshalJSON(b []byte) error {
-	var v interface{}
-	err := json.Unmarshal(b, &v)
+	var v any
+	err := dynamic.UnmarshalJSON(b, &v)
 	if err != nil {
 		return err
 	}
-	if str, ok := v.(string); ok {
-		*t = append(*t, str)
-	} else if arr, ok := v.([]interface{}); ok {
-		for _, i := range arr {
-			if str, ok := i.(string); ok {
+	switch val := v.(type) {
+	case string:
+		*t = append(*t, val)
+	case []any:
+		for i, item := range val {
+			if str, ok := item.(string); ok {
 				*t = append(*t, str)
 			} else {
-				return &UnmarshalError{Value: i, Field: "type"}
+				return &dynamic.SchemaError{
+					Field: fmt.Sprintf("[%d]", i),
+					Message: fmt.Errorf("expected type string, got %s",
+						dynamic.ToTypeName(reflect.TypeOf(item))),
+				}
 			}
 		}
-	} else {
-		return &UnmarshalError{Value: v, Field: "type"}
+	default:
+		return fmt.Errorf(`expected type string or array, got %s`, dynamic.ToTypeName(reflect.TypeOf(v)))
 	}
 	return nil
 }
 
 func (t *Types) UnmarshalYAML(value *yaml.Node) error {
-	var v interface{}
+	var v any
 	err := value.Decode(&v)
 	if err != nil {
 		return err
 	}
 	if str, ok := v.(string); ok {
 		*t = append(*t, str)
-	} else if arr, ok := v.([]interface{}); ok {
+	} else if arr, ok := v.([]any); ok {
 		for _, i := range arr {
 			if str, ok := i.(string); ok {
 				*t = append(*t, str)
 			} else {
-				return &UnmarshalError{Value: i, Field: "type"}
+				return fmt.Errorf(`expected type string, got %s`, dynamic.ToTypeName(reflect.TypeOf(i)))
 			}
 		}
 	} else {
-		return &UnmarshalError{Value: v, Field: "type"}
+		return fmt.Errorf(`expected type string or array, got %s`, dynamic.ToTypeName(reflect.TypeOf(v)))
 	}
 	return nil
 }
@@ -78,21 +86,11 @@ func (t *Types) Includes(typeName string) bool {
 	if t == nil {
 		return false
 	}
-	for _, v := range *t {
-		if v == typeName {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(*t, typeName)
 }
 
 func (t *Types) IsOneOf(typeNames ...string) bool {
-	for _, typeName := range typeNames {
-		if t.Includes(typeName) {
-			return true
-		}
-	}
-	return false
+	return slices.ContainsFunc(typeNames, t.Includes)
 }
 
 func (t *Types) IsAny() bool {

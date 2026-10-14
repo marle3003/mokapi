@@ -57,6 +57,13 @@ declare interface HttpParameter {
     schema?: Schema
 }
 
+declare interface HttpEventInfo {
+    url: string
+    statusCode: number
+    duration: number
+    deprecated: boolean
+}
+
 declare interface HttpEventData {
     request: HttpEventRequest
     response: HttpEventResponse
@@ -120,7 +127,13 @@ declare interface Action {
     parameters: any[]
     logs: { level: string, message: string}[]
     error?: { message: string }
+}
 
+declare interface Truncated {
+  truncated: true
+  size: number
+  sha256: string
+  preview: string
 }
 
 declare interface Tags { [key: string]: string }

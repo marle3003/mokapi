@@ -2,6 +2,7 @@ package mokapi
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"mokapi/engine/common"
@@ -49,7 +50,7 @@ func (m *Module) On(event string, do goja.Value, vArgs goja.Value) {
 
 func getHandler(do goja.Value, args onArgs, vm *goja.Runtime, loop *eventloop.EventLoop) common.EventHandler {
 	return func(ctx *common.EventContext) (bool, error) {
-		origin, err := getHashes(ctx.Args...)
+		origin, err := hashOf(ctx.Args)
 		if err != nil {
 			return false, err
 		}
@@ -81,7 +82,7 @@ func getHandler(do goja.Value, args onArgs, vm *goja.Runtime, loop *eventloop.Ev
 			return args.track(params...)
 		}
 
-		newHashes, err := getHashes(ctx.Args...)
+		newHashes, err := hashOf(ctx.Args)
 		if err != nil {
 			return false, err
 		}
@@ -153,26 +154,18 @@ func getOnArgs(vm *goja.Runtime, args goja.Value) (onArgs, error) {
 	return onArgs{}, nil
 }
 
-func getHashes(args ...any) ([][]byte, error) {
-	var result [][]byte
-	for _, arg := range args {
-		b, err := json.Marshal(arg)
-		if err != nil {
-			return nil, fmt.Errorf("failed to marshal arg: %v", err)
-		}
-		result = append(result, b)
+func hashOf(v any) ([32]byte, error) {
+	h := sha256.New()
+	var sum [32]byte
+	if err := json.NewEncoder(h).Encode(v); err != nil {
+		return sum, fmt.Errorf("failed to marshal arg: %v", err)
 	}
-	return result, nil
+	copy(sum[:], h.Sum(nil))
+	return sum, nil
 }
 
-func haveChanges(origin [][]byte, new [][]byte) bool {
-	for i, o := range origin {
-		n := new[i]
-		if !bytes.Equal(o, n) {
-			return true
-		}
-	}
-	return false
+func haveChanges(origin, new [32]byte) bool {
+	return !bytes.Equal(origin[:], new[:])
 }
 
 func ArgToJs(arg any, vm *goja.Runtime) goja.Value {
@@ -189,6 +182,10 @@ func ArgToJs(arg any, vm *goja.Runtime) goja.Value {
 					p.KeyNormalizer = http.CanonicalHeaderKey
 				case "rebuild":
 					return rebuild(vm, v)
+				case "stopPropagation":
+					return vm.ToValue(func() {
+						v.StopPropagation = true
+					})
 				}
 
 				switch val.(type) {
@@ -214,16 +211,16 @@ func rebuild(vm *goja.Runtime, res *common.HttpEventResponse) goja.Value {
 		if statusCode != nil {
 			if statusCode.ExportType().Kind() != reflect.Int64 {
 				panic(fmt.Sprintf("response.rebuild failed: statusCode must be a number: got %v", util.JsType(statusCode.Export())))
-			} else {
-				s = statusCode.ToInteger()
 			}
+
+			s = statusCode.ToInteger()
 		}
 		if contentType != nil {
 			if contentType.ExportType().Kind() != reflect.String {
 				panic(fmt.Sprintf("response.rebuild failed: contentType must be a string: got %v", util.JsType(contentType.Export())))
-			} else {
-				c = contentType.String()
 			}
+
+			c = contentType.String()
 		}
 		res.Rebuild(int(s), c)
 	})

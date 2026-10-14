@@ -9,7 +9,6 @@ import (
 	"mokapi/js/faker"
 	"mokapi/js/require"
 	"mokapi/schema/json/generator"
-	"mokapi/schema/json/schema"
 	"mokapi/schema/json/schema/schematest"
 	"testing"
 
@@ -46,7 +45,7 @@ func TestNode(t *testing.T) {
 					street.fake = () => 123;
 				`)
 				r.NoError(t, err)
-				v, err := street.Fake(nil)
+				v, err := street.Fake(&generator.Request{})
 				r.NoError(t, err)
 				r.Equal(t, int64(123), v)
 				cleanup(host)
@@ -114,7 +113,7 @@ func TestNode(t *testing.T) {
 					street.fake = () => { throw new Error('TEST') };
 				`)
 				r.NoError(t, err)
-				_, err = street.Fake(nil)
+				_, err = street.Fake(&generator.Request{})
 				r.EqualError(t, err, "Error: TEST at <eval>:4:34(3)")
 			},
 		},
@@ -137,7 +136,7 @@ func TestNode(t *testing.T) {
 				r.NoError(t, err)
 				v, err := street.Fake(generator.NewRequest(nil, schematest.New("string"), nil))
 				r.NoError(t, err)
-				r.Equal(t, &schema.Types{"string"}, v)
+				r.Equal(t, "string", v)
 			},
 		},
 		{
@@ -257,10 +256,84 @@ func TestNode(t *testing.T) {
 				r.True(t, children[1].Custom)
 			},
 		},
+		{
+			name: "schema having single type",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				street := generator.NewNode("street")
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					if name == "street" {
+						return street
+					}
+					return nil
+				}
+
+				_, err := vm.RunString(`
+					const m = require('faker');
+					const street = m.findByName('street');
+					street.fake = (r) => {
+						return r.schema.type
+					}
+				`)
+				r.NoError(t, err)
+				v, err := street.Fake(&generator.Request{Schema: schematest.New("string")})
+				r.NoError(t, err)
+				r.Equal(t, "string", v)
+			},
+		},
+		{
+			name: "schema having multiple type",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				street := generator.NewNode("street")
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					if name == "street" {
+						return street
+					}
+					return nil
+				}
+
+				_, err := vm.RunString(`
+					const m = require('faker');
+					const street = m.findByName('street');
+					street.fake = (r) => {
+						return r.schema.type
+					}
+				`)
+				r.NoError(t, err)
+				v, err := street.Fake(&generator.Request{Schema: schematest.NewTypes([]string{"string", "integer"})})
+				r.NoError(t, err)
+				r.Equal(t, []any{"string", "integer"}, v)
+			},
+		},
+		{
+			name: "add value to context",
+			test: func(t *testing.T, vm *goja.Runtime, host *enginetest.Host) {
+				street := generator.NewNode("street")
+				host.FindFakerNodeFunc = func(name string) *generator.Node {
+					if name == "street" {
+						return street
+					}
+					return nil
+				}
+
+				_, err := vm.RunString(`
+					const m = require('faker');
+					const street = m.findByName('street');
+					street.fake = (r) => {
+						r.context.values.foo = 'bar'
+						return 'bar'
+					}
+				`)
+				r.NoError(t, err)
+				req := generator.NewRequest(nil, schematest.NewTypes([]string{"string", "integer"}), nil)
+				v, err := street.Fake(req)
+				r.NoError(t, err)
+				r.Equal(t, "bar", v)
+				r.Equal(t, generator.Values{"foo": "bar"}, req.Context.Values)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			gofakeit.Seed(11)
 

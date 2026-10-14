@@ -46,7 +46,7 @@ func parseQuery(param *Parameter, u *url.URL) (*RequestParameterValue, error) {
 	}
 }
 
-func parseQueryObject(param *Parameter, u *url.URL) (string, interface{}, error) {
+func parseQueryObject(param *Parameter, u *url.URL) (string, any, error) {
 	if param.Style == "form" && param.IsExplode() {
 		raw := u.RawQuery
 		if len(raw) == 0 {
@@ -68,20 +68,32 @@ func parseQueryObject(param *Parameter, u *url.URL) (string, interface{}, error)
 		i, err := parseUnExplodeObject(param, raw, ",")
 		return raw, i, err
 	} else if param.Style == "deepObject" && param.IsExplode() {
-		paramRegex := regexp.MustCompile(fmt.Sprintf(`%v\[(?P<name>.+)\]`, param.Name))
-		obj := map[string]interface{}{}
+		paramRegex := regexp.MustCompile(fmt.Sprintf(`^%s\[(?P<name>.+)\]$`, regexp.QuoteMeta(param.Name)))
+		obj := map[string]any{}
 		raw := strings.Builder{}
 
 		for k, values := range u.Query() {
 			match := paramRegex.FindStringSubmatch(k)
+			if match == nil {
+				continue
+			}
 			name := match[1]
 			prop := param.Schema.Properties.Get(name)
 			if prop == nil && !param.Schema.IsFreeForm() && !param.Schema.IsDictionary() {
 				return "", nil, fmt.Errorf("property '%v' not defined in schema: %s", name, param.Schema)
 			}
-			s := strings.Join(values, ",")
-			raw.WriteString(fmt.Sprintf("%v[%v]=%v", param.Name, name, s))
-			if v, err := p.ParseWith(s, schema.ConvertToJsonSchema(prop)); err != nil {
+
+			var data any
+			if prop != nil && prop.Type.IsArray() {
+				data = values
+			} else if len(values) == 1 {
+				data = values[0]
+			} else {
+				data = values
+			}
+
+			raw.WriteString(fmt.Sprintf("%v[%v]=%v", param.Name, name, strings.Join(values, ",")))
+			if v, err := p.ParseWith(data, schema.ConvertToJsonSchema(prop)); err != nil {
 				return "", nil, err
 			} else {
 				obj[name] = v

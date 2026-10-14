@@ -1,18 +1,21 @@
 package generator
 
 import (
-	"github.com/brianvoe/gofakeit/v7"
 	"strings"
+
+	"github.com/brianvoe/gofakeit/v7"
 )
 
 func colors() []*Node {
 	return []*Node{
 		{
-			Name: "color",
-			Fake: fakeColor,
+			Name:       "color",
+			Attributes: []string{"color"},
+			Fake:       fakeColor,
 			Children: []*Node{
 				{
-					Name: "name",
+					Name:       "name",
+					Attributes: []string{"name"},
 					Fake: func(r *Request) (any, error) {
 						return gofakeit.Color(), nil
 					},

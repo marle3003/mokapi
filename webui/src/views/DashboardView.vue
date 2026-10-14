@@ -3,7 +3,6 @@ import AppStartCard from '../components/dashboard/AppStartCard.vue'
 import MemoryUsageCard from '../components/dashboard/MemoryCard.vue'
 import JobCountCard from '@/components/dashboard/JobCountCard.vue'
 import Search from '../components/dashboard/Search.vue'
-import Events from '../components/dashboard/Events.vue'
 
 import HttpRequestCard from '../components/dashboard/http/HttpRequestMetricCard.vue'
 import HttpServicesCard from '../components/dashboard/http/HttpServicesCard.vue'
@@ -270,10 +269,6 @@ router.afterEach((to) => {
 
                 <div v-if="$route.name === getRouteName('search').value">
                     <search v-if="$route.name === 'search'"></search>
-                </div>
-
-                <div v-if="$route.name === getRouteName('events').value">
-                    <events></events>
                 </div>
 
                 <http-service v-if="$route.meta.service === 'http'" />

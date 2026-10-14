@@ -2,26 +2,31 @@ package generator
 
 import (
 	"fmt"
-	"github.com/brianvoe/gofakeit/v7"
 	"strings"
+
+	"github.com/brianvoe/gofakeit/v7"
 )
 
 func files() []*Node {
 	return []*Node{
 		{
-			Name: "file",
+			Name:       "file",
+			Attributes: []string{"file"},
 			Children: []*Node{
 				{
-					Name: "name",
-					Fake: fakeFileName,
+					Name:       "name",
+					Attributes: []string{"name"},
+					Fake:       fakeFileName,
 				},
 				{
-					Name: "type",
-					Fake: fakeFileType,
+					Name:       "type",
+					Attributes: []string{"type"},
+					Fake:       fakeFileType,
 				},
 				{
-					Name: "size",
-					Fake: fakeFileSize,
+					Name:       "size",
+					Attributes: []string{"size"},
+					Fake:       fakeFileSize,
 				},
 			},
 		},

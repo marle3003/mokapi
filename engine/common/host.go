@@ -136,7 +136,7 @@ type RetryArgs struct {
 }
 
 type KafkaProduceResult struct {
-	Cluster  string
+	Api      string
 	Topic    string
 	Messages []KafkaMessageResult
 }
@@ -166,9 +166,9 @@ type MqttClient interface {
 type MqttPublishArgs struct {
 	Cluster    string
 	Topic      string
-	Value      string
+	Data       any
+	Value      []byte
 	Retain     bool
-	Timeout    int
 	Retry      RetryArgs
 	ClientId   string
 	ScriptFile string
@@ -243,13 +243,17 @@ func (e *JobExecution) Title() string {
 	return e.Tags["name"]
 }
 
+func (e *JobExecution) Info() any {
+	return e
+}
+
 func (e *JobExecution) Domain() string {
 	return "Job Execution"
 }
 
 type FakerNode interface {
 	Name() string
-	Fake(r *generator.Request) (interface{}, error)
+	Fake(r *generator.Request) (any, error)
 }
 
 type Store interface {

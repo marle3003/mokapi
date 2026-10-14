@@ -12,7 +12,7 @@ func TestArray(t *testing.T) {
 	testcases := []struct {
 		name string
 		req  *Request
-		test func(t *testing.T, v interface{}, err error)
+		test func(t *testing.T, v any, err error)
 	}{
 		{
 			name: "minItems and maxItems",
@@ -24,7 +24,7 @@ func TestArray(t *testing.T) {
 					schematest.WithMaxItems(6),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []any{"vMZsBhpyDmbo", "YvsVnIkdsa ", "PE5psgu", "hPH4"}, v)
 			},
@@ -38,7 +38,7 @@ func TestArray(t *testing.T) {
 					schematest.WithMaxItems(2),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "invalid schema: minItems must be less than maxItems")
 			},
 		},
@@ -55,7 +55,7 @@ func TestArray(t *testing.T) {
 					schematest.WithUniqueItems(),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []any{int64(5), int64(2), int64(8)}, v)
 			},
@@ -73,7 +73,7 @@ func TestArray(t *testing.T) {
 					schematest.WithUniqueItems(),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "failed to generate valid array: reached attempt limit (10) caused by: cannot fill array with unique items")
 			},
 		},
@@ -99,10 +99,10 @@ func TestArray(t *testing.T) {
 					}),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
-				require.Equal(t, []interface{}{
-					map[string]interface{}{
+				require.Equal(t, []any{
+					map[string]any{
 						"firstname": "Emily",
 						"lastname":  "Nelson",
 						"foo":       "bar",
@@ -195,7 +195,7 @@ func TestArray(t *testing.T) {
 					schematest.WithContains(schematest.New("string")),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []any{
 					"vMZsBhpyDmbo",
@@ -211,7 +211,7 @@ func TestArray(t *testing.T) {
 					schematest.WithMinContains(3),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []any{
 					"vMZsBhpyDmbo", "PE5psgu", "YvsVnIkdsa ",
@@ -228,7 +228,7 @@ func TestArray(t *testing.T) {
 					schematest.WithMaxContains(3),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []any{
 					"",
@@ -245,7 +245,7 @@ func TestArray(t *testing.T) {
 					schematest.WithMaxItems(2),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "invalid schema: minContains must be less than maxItems")
 			},
 		},
@@ -260,7 +260,7 @@ func TestArray(t *testing.T) {
 					schematest.WithMaxContains(1),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.EqualError(t, err, "failed to generate valid array: reached attempt limit (10) caused by: reached maximum of value maxContains=1")
 			},
 		},
@@ -276,7 +276,7 @@ func TestArray(t *testing.T) {
 					),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				a := v.([]any)
 				require.InDelta(t, -170715.30581115812, a[0], 0.000001)
@@ -298,7 +298,7 @@ func TestArray(t *testing.T) {
 					schematest.WithItemsNew(schematest.NewBool(false)),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				a := v.([]any)
 				require.InDelta(t, -170715.30581115812, a[0], 0.000001)
@@ -316,7 +316,7 @@ func TestArray(t *testing.T) {
 					),
 				),
 			},
-			test: func(t *testing.T, v interface{}, err error) {
+			test: func(t *testing.T, v any, err error) {
 				require.NoError(t, err)
 				require.Equal(t, []any{"available", "sold"}, v)
 			},

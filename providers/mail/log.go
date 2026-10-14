@@ -19,6 +19,14 @@ type Log struct {
 	Actions   []*common.Action `json:"actions"`
 }
 
+type LogInfo struct {
+	MessageId string   `json:"messageId"`
+	From      string   `json:"from"`
+	To        []string `json:"to"`
+	Subject   string   `json:"subject"`
+	Duration  int64    `json:"duration"`
+}
+
 func NewLogEvent(msg *smtp.Message, ctx *smtp.ClientContext, eh events.Handler, traits events.Traits) *Log {
 	event := &Log{
 		From:     ctx.From,
@@ -44,6 +52,16 @@ func NewLogEvent(msg *smtp.Message, ctx *smtp.ClientContext, eh events.Handler, 
 
 func (l *Log) Title() string {
 	return fmt.Sprintf("%s", l.Subject)
+}
+
+func (l *Log) Info() any {
+	return LogInfo{
+		MessageId: l.MessageId,
+		From:      l.From,
+		To:        l.To,
+		Subject:   l.Subject,
+		Duration:  l.Duration,
+	}
 }
 
 func (l *Log) IndexFields() map[string]any {

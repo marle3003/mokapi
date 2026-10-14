@@ -1,5 +1,195 @@
-import { metrics, filter as filterMetrics, parseLabels } from './metrics.ts'
+import { app } from 'mokapi'
+import { metrics, filter as filterMetrics, parseLabels } from './metrics'
 import { base64 } from 'mokapi/encoding';
+import { getInfo, matchTraits } from './helpers';
+
+export default function () {
+    app.http()
+        .operation('serviceKafka', (_, res) => {
+            res.data = {
+                name: clusters[0].name,
+                description: clusters[0].description,
+                version: clusters[0].version,
+                contact: clusters[0].contact,
+                servers: clusters[0].servers,
+                topics: clusters[0].topics.map(x => {
+                    return {
+                        name: x.name,
+                        ...x.summary === undefined ? {} : { summary: x.summary },
+                        metrics: {
+                            kafka_messages_total: metrics.find(m => m.name === `kafka_messages_total{service="Kafka World",topic="${x.name}"}`)?.value ?? 0,
+                            kafka_message_timestamp: metrics.find(m => m.name === `kafka_message_timestamp{service="Kafka World",topic="${x.name}"}`)?.value ?? 0
+                        }
+                    }
+                }),
+                groups: clusters[0].groups.map(x => {
+                    return {
+                        name: x.name,
+                        generation: x.generation,
+                        state: x.state,
+                        protocol: x.protocol,
+                        members: x.members.length ?? 0,
+                        metrics: x.metrics
+                    }
+                }),
+                clients: clusters[0].clients.map(c => {
+                    return {
+                        clientId: c.clientId,
+                        address: c.address,
+                        software: c.software,
+                    }
+                }),
+                configs: clusters[0].configs.map(c => {
+                    return {
+                        id: c.id,
+                        url: c.url,
+                        provider: c.provider,
+                        time: c.time
+                    }
+                })
+            }
+        })
+        .operation('kafkaGroup', (req, res) => {
+            res.data = clusters[0].groups.find(x => x.name === req.path['group'])
+        })
+        .operation('kafkaClusters', (req, res) => {
+            res.data = clusters.map(x => getInfo(x, 'kafka'))
+        })
+        .operation('kafkaTopics', (req, res) => {
+            res.data = clusters[0].topics
+        })
+        .operation('kafkaTopic', (req, res) => {
+            const topic = clusters[0].topics.find(x => x.name === req.path.topic)
+            if (!topic) {
+                res.rebuild(404)
+                return
+            }
+            res.data = {
+                ...topic,
+                groups: clusters[0].groups.filter(g => g.topics.includes(topic.name)).map(x => {
+                    return {
+                        name: x.name,
+                        generation: x.generation,
+                        state: x.state,
+                        protocol: x.protocol,
+                        members: x.members.length ?? 0,
+                        metrics: x.metrics
+                    }
+                }),
+            }
+        })
+        .operation('kafkaProduceTopic', (req, res) => {
+            const topic = clusters[0].topics.find(x => x.name === req.path.topic)
+            if (!topic) {
+                res.rebuild(404)
+                return
+            }
+            res.data = {
+                offsets: [
+                    {
+                        partition: 0,
+                        offset: 1234,
+                    }
+                ]
+            }
+        })
+        .operation('kafkaPartitions', (req, res) => {
+            const topic = clusters[0].topics.find(x => x.name === req.path.topic)
+            if (!topic) {
+                res.rebuild(404)
+                return
+            }
+            res.data = topic.partitions
+        })
+        .operation('kafkaPartition', (req, res) => {
+            const topic = clusters[0].topics.find(x => x.name === req.path.topic)
+            if (!topic) {
+                res.rebuild(404)
+                return
+            }
+            const id = req.path.partitionId
+            if (id >= topic.partitions.length) {
+                res.rebuild(404)
+                return
+            }
+            res.data = topic.partitions[id]
+        })
+        .operation('kafkaProducePartition', (req, res) => {
+            const topic = clusters[0].topics.find(x => x.name === req.path.topic)
+            if (!topic) {
+                res.rebuild(404)
+                return
+            }
+            const id = req.path.partitionId
+            if (id >= topic.partitions.length) {
+                res.rebuild(404)
+                return
+            }
+            res.data = {
+                offsets: [
+                    {
+                        partition: id,
+                        offset: 1234,
+                    }
+                ]
+            }
+        })
+        .operation('kafkaOffsets', (req, res) => {
+            const topic = clusters[0].topics.find(x => x.name === req.path.topic)
+            if (!topic) {
+                res.rebuild(404)
+                return
+            }
+            const id = req.path.partitionId
+            if (id >= topic.partitions.length) {
+                res.rebuild(404)
+                return
+            }
+            const data = events.filter(x => matchTraits(x, {topic: topic.name, type: 'message'}) && x.data.partition === id)
+            if (req.header['Accept'] === 'application/json') {
+                res.data = data.map(x =>  ({
+                    key: x.data.key?.value,
+                    value: JSON.parse(x.data.message?.value ?? '')
+                }))
+            } else {
+                res.data = data.map(x => ({
+                    key: base64.encode(x.data.key?.value ?? ''),
+                    value: base64.encode(x.data.message?.value ?? '')
+                }))
+            }
+        })
+        .operation('kafkaOffset', (req, res) => {
+            const topic = clusters[0].topics.find(x => x.name === req.path.topic)
+            if (!topic) {
+                res.rebuild(404)
+                return
+            }
+            const id = req.path.partitionId
+            if (id >= topic.partitions.length) {
+                res.rebuild(404)
+                return
+            }
+            const data = events.filter(x => matchTraits(x, {topic: topic.name, type: 'message'}) && x.data.partition === id && x.data.offset === req.path.offset)
+            if (data.length === 0) {
+                res.rebuild(404)
+                return
+            }
+            if (req.header['Accept'] === 'application/json') {
+                res.data = {
+                    key: events[0].data.key?.value,
+                    value: JSON.parse(events[0].data.message?.value ?? '')
+                }
+            } else {
+                res.data = {
+                    key: base64.encode(data[0].data.key?.value ?? ''),
+                    value: base64.encode(data[0].data.message?.value ?? '')
+                }
+            }
+        })
+        .operation('kafkaClient', (req, res) => {
+            res.data = clusters[0].clients.find(x => x.clientId === req.path['clientId'])
+        })
+}
 
 const Product = {
     type: 'object',
@@ -427,6 +617,34 @@ export let events = [
             },
             partition: 0,
             messageId: 'avro'
+        }
+    },
+    {
+        id: '84490626-b806-4420-898c-d6b28d1f4ab1',
+        traits: {
+            namespace: 'kafka',
+            name: 'Kafka World',
+            type: 'request',
+            clientId: 'consumer',
+        },
+        time: '2025-02-13T09:49:25.482366+01:00',
+        data: {
+            "api": "Kafka World",
+            "header": {
+                "requestKey": 10,
+                "requestName": "FindCoordinator",
+                "version": 2
+            },
+            "request": {
+                "key": "mokapi.shop.products",
+                "keyType": 0
+            },
+            "response": {
+                "errorCode": "",
+                "errorMessage": "",
+                "host": "localhost",
+                "port": 9092
+            }
         }
     }
  ]

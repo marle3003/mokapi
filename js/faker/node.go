@@ -1,7 +1,9 @@
 package faker
 
 import (
+	"encoding/json"
 	"fmt"
+	"mokapi/js/eventloop"
 	"mokapi/js/util"
 	"mokapi/schema/json/generator"
 	"reflect"
@@ -91,7 +93,7 @@ func (n *Node) Set(key string, val goja.Value) bool {
 		arr := val.ToObject(n.m.vm)
 		length := int(arr.Get("length").ToInteger())
 		old := n.origNode.Attributes
-		for i := 0; i < length; i++ {
+		for i := range length {
 			item := arr.Get(strconv.Itoa(i))
 			if attr, ok := item.Export().(string); !ok {
 				s := fmt.Sprintf("unexpected type for 'attributes[%d]': got %s, expected Array", i, util.JsType(val))
@@ -129,7 +131,7 @@ func (n *Node) Set(key string, val goja.Value) bool {
 		arr := val.ToObject(n.m.vm)
 		length := int(arr.Get("length").ToInteger())
 		old := n.origNode.DependsOn
-		for i := 0; i < length; i++ {
+		for i := range length {
 			item := arr.Get(strconv.Itoa(i))
 			if attr, ok := item.Export().(string); !ok {
 				s := fmt.Sprintf("unexpected type for 'dependsOn[%d]': got %s, expected Array", i, util.JsType(val))
@@ -150,7 +152,7 @@ func (n *Node) Set(key string, val goja.Value) bool {
 		arr := val.ToObject(n.m.vm)
 		length := int(arr.Get("length").ToInteger())
 		old := n.origNode.Children
-		for i := 0; i < length; i++ {
+		for i := range length {
 			item := arr.Get(strconv.Itoa(i))
 			n.origNode.Children = append(n.origNode.Children, convertToNode(item, n.m))
 		}
@@ -165,11 +167,25 @@ func (n *Node) Set(key string, val goja.Value) bool {
 			panic(n.m.vm.ToValue(s))
 		}
 		old := n.origNode.Fake
-		n.origNode.Fake = func(r *generator.Request) (interface{}, error) {
-			v, err := n.m.loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
-				param := n.m.vm.ToValue(r)
-				return f(goja.Undefined(), param)
-			})
+		custom := n.origNode.Custom
+		n.origNode.Custom = true
+		n.origNode.Fake = func(r *generator.Request) (any, error) {
+			v, err := n.m.loop.RunAsync(func(vm *goja.Runtime) (goja.Value, error) {
+				var param any
+				if r != nil {
+					s, err := schemaToValue(vm, r.Schema)
+					if err != nil {
+						return nil, err
+					}
+					param = map[string]any{
+						"path":    r.Path,
+						"schema":  s,
+						"context": r.Context,
+					}
+				}
+
+				return f(goja.Undefined(), vm.ToValue(param))
+			}, &eventloop.JobContext{})
 			if err != nil {
 				return nil, err
 			}
@@ -177,6 +193,7 @@ func (n *Node) Set(key string, val goja.Value) bool {
 		}
 		n.restore = append(n.restore, func() {
 			n.origNode.Fake = old
+			n.origNode.Custom = custom
 		})
 		return true
 	}
@@ -290,4 +307,16 @@ func (d *dependsOn) Splice(start int, deleteCount int, items []string) {
 	d.n.restore = append(d.n.restore, func() {
 		d.n.origNode.DependsOn = restore()
 	})
+}
+
+func schemaToValue(vm *goja.Runtime, schema any) (goja.Value, error) {
+	data, err := json.Marshal(schema)
+	if err != nil {
+		return nil, err
+	}
+	var v any
+	if err := json.Unmarshal(data, &v); err != nil {
+		return nil, err
+	}
+	return vm.ToValue(v), nil
 }

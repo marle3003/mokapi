@@ -28,7 +28,7 @@ func (e *EventHandler) Clear(key string) {
 	e.LdapEventDispatcher.Clear(key)
 }
 
-func runEventHandler(h common.EventHandler, args common.EventArgs, params ...interface{}) *common.Action {
+func runEventHandler(h common.EventHandler, args common.EventArgs, params ...any) *common.Action {
 	action := &common.Action{
 		Tags: args.Tags,
 	}
@@ -78,12 +78,12 @@ func (e *EventHandler) Has(key string) bool {
 	return false
 }
 
-func addDefaultTags(args *common.EventArgs, sh *scriptHost) {
+func addDefaultTags(args *common.EventArgs, sh *scriptHost, event string) {
 	defaultTags := map[string]string{
 		"name":    sh.name,
 		"file":    sh.name,
 		"fileKey": sh.file.Info.Key(),
-		"event":   "http",
+		"event":   event,
 	}
 	if args.Tags == nil {
 		args.Tags = defaultTags

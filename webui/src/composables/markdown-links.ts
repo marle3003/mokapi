@@ -1,37 +1,31 @@
-import type { Options } from "markdown-it"
-import type MarkdownIt from "markdown-it"
-import Token from "markdown-it/lib/token"
+import type { MarkdownIt } from "markdown-it"
 import { useRoute } from "vue-router"
 
-export function MarkdownItLinks(md: MarkdownIt, opts: Options) {
+export function MarkdownItLinks(md: MarkdownIt) {
 
-    function replace(s: string): string{
+    function replace(s: string): string {
         s = s.replace('.md', '')
-        const u = new URL(s, document.location.href)
-        return u.toString()
+        return new URL(s, document.location.href).toString()
     }
 
     const route = useRoute()
 
-    md.core.ruler.after('inline', 'link', function(state){
-        state.tokens.forEach(function (blockToken: Token) {
-            if (blockToken.type === 'inline' && blockToken.children) {
-              blockToken.children.forEach(function (token: Token) {
-                if (token.type == 'link_open' && token.attrs) {
-                    for (let attr of token.attrs){
-                        if (attr[0] == 'href' && attr[1].endsWith('.md')){
-                            attr[1] = replace(attr[1])
-                        }
-                        else if (attr[0] == 'href' && attr[1].includes('.md#')){
-                            attr[1] = replace(attr[1])
-                        }
-                        else if (attr[0] == 'href' && attr[1].startsWith('#')){
-                            attr[1] = route.path + attr[1]
-                        }
-                    }
+    md.core.ruler.after('inline', 'link', (state) => {
+        for (const blockToken of state.tokens) {
+            if (blockToken.type !== 'inline' || !blockToken.children) continue
+
+            for (const token of blockToken.children) {
+                if (token.type !== 'link_open') continue
+
+                const href = token.attrGet('href')
+                if (typeof href !== 'string') continue
+
+                if (href.endsWith('.md') || href.includes('.md#')) {
+                    token.attrSet('href', replace(href))
+                } else if (href.startsWith('#')) {
+                    token.attrSet('href', route.path + href)
                 }
-              })
             }
-          })
+        }
     })
-};
+}

@@ -3,17 +3,17 @@ package generator
 import "github.com/brianvoe/gofakeit/v7"
 
 func newUrlNode() *Node {
-	return &Node{Name: "url", Fake: fakeUrl}
+	return &Node{
+		Name:       "url",
+		Attributes: []string{"url", "uri"},
+		Fake:       fakeUrl,
+	}
 }
 
-func newUriNode() *Node {
-	return &Node{Name: "uri", Fake: fakeUrl}
-}
-
-func fakeUrl(_ *Request) (interface{}, error) {
+func fakeUrl(_ *Request) (any, error) {
 	return gofakeit.URL(), nil
 }
 
-func fakeWebsite(_ *Request) (interface{}, error) {
+func fakeWebsite(_ *Request) (any, error) {
 	return gofakeit.DomainName(), nil
 }

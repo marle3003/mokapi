@@ -9,21 +9,24 @@ import (
 func textNodes() []*Node {
 	return []*Node{
 		{
-			Name: "description",
-			Fake: fakeDescription,
+			Name:       "description",
+			Attributes: []string{"description"},
+			Fake:       fakeDescription,
 		},
 		{
-			Name: "category",
-			Fake: fakeCategory,
+			Name:       "category",
+			Attributes: []string{"category"},
+			Fake:       fakeCategory,
 		},
 		{
-			Name: "message",
-			Fake: fakeDescription,
+			Name:       "message",
+			Attributes: []string{"message"},
+			Fake:       fakeDescription,
 		},
 	}
 }
 
-func fakeDescription(r *Request) (interface{}, error) {
+func fakeDescription(r *Request) (any, error) {
 	wordCount := 15
 	if r.Schema != nil {
 		avgWordLength := 5
@@ -65,7 +68,7 @@ var (
 	}
 )
 
-func fakeCategory(r *Request) (interface{}, error) {
+func fakeCategory(r *Request) (any, error) {
 	var pool []string
 	if r.Schema != nil {
 		min := 0

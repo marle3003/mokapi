@@ -49,7 +49,7 @@ func Parse(c *Config, r Reader) error {
 	return nil
 }
 
-func parse(c *Config) (interface{}, error) {
+func parse(c *Config) (any, error) {
 	name := getFileName(c)
 	reset(c)
 
@@ -73,7 +73,7 @@ func parse(c *Config) (interface{}, error) {
 		result = string(b)
 	default:
 		// try parse from JSON and YAML
-		var v interface{}
+		var v any
 		v, err = parseJson(b, result)
 		if err == nil {
 			c.Info.ContentType = "application/json"
@@ -91,16 +91,16 @@ func parse(c *Config) (interface{}, error) {
 	return result, err
 }
 
-func parseJson(b []byte, v any) (interface{}, error) {
+func parseJson(b []byte, v any) (any, error) {
 	d := &dynamicObject{data: v}
 	err := UnmarshalJSON(b, d)
 	if err != nil {
-		return nil, err
+		return nil, FormatError(b, err)
 	}
 	return d.data, nil
 }
 
-func parseYaml(b []byte, v any) (interface{}, error) {
+func parseYaml(b []byte, v any) (any, error) {
 	d := &dynamicObject{data: v}
 	err := yaml.Unmarshal(b, d)
 	if err != nil {
@@ -117,7 +117,7 @@ func (d *dynamicObject) UnmarshalJSON(b []byte) error {
 		d.data = reflect.New(ct.configType).Interface()
 		err := UnmarshalJSON(b, d.data)
 		if err != nil {
-			return formatError(b, err)
+			return FormatError(b, err)
 		}
 		return nil
 	}
@@ -128,11 +128,11 @@ func (d *dynamicObject) UnmarshalJSON(b []byte) error {
 
 	// resolve pointer of pointer for example: **schema.Schema
 	rt := reflect.TypeOf(d.data)
-	for rt.Kind() == reflect.Ptr {
+	for rt.Kind() == reflect.Pointer {
 		rt = rt.Elem()
 	}
 	rv := reflect.ValueOf(d.data)
-	if rv.Kind() != reflect.Ptr {
+	if rv.Kind() != reflect.Pointer {
 		return fmt.Errorf("dynamic data must have a pointer to a struct")
 	}
 	if rv.Elem().CanSet() {
@@ -143,13 +143,13 @@ func (d *dynamicObject) UnmarshalJSON(b []byte) error {
 
 	err := UnmarshalJSON(b, &d.data)
 	if err != nil {
-		return formatError(b, err)
+		return err
 	}
 
 	return nil
 }
 
-func (d *dynamicObject) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (d *dynamicObject) UnmarshalYAML(unmarshal func(any) error) error {
 	data := make(map[string]string)
 	_ = unmarshal(data)
 
@@ -164,11 +164,11 @@ func (d *dynamicObject) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	// resolve pointer of pointer for example: **schema.Schema
 	rt := reflect.TypeOf(d.data)
-	for rt.Kind() == reflect.Ptr {
+	for rt.Kind() == reflect.Pointer {
 		rt = rt.Elem()
 	}
 	rv := reflect.ValueOf(d.data)
-	if rv.Kind() != reflect.Ptr {
+	if rv.Kind() != reflect.Pointer {
 		return fmt.Errorf("dynamic data must have a pointer to a struct")
 	}
 	if rv.Elem().CanSet() {
@@ -207,36 +207,6 @@ func getFileName(c *Config) string {
 	return name
 }
 
-func formatError(input []byte, err error) error {
-	var structErr *StructuralError
-	if !errors.As(err, &structErr) {
-		return err
-	}
-
-	newLine := byte(0x0A)
-	offset := int(structErr.Offset)
-
-	if offset > len(input) || offset < 0 {
-		return err
-	}
-
-	line := 1
-	column := 0
-	for i, b := range input {
-		if i == offset {
-			break
-		}
-		if b == newLine {
-			line++
-			column = 0
-		} else {
-			column++
-		}
-	}
-
-	return fmt.Errorf("%w at line %d, column %d", err, line, column)
-}
-
 func getConfigType(data map[string]string) *configType {
 	for _, ct := range configTypes {
 		if s, ok := data[ct.header]; ok {
@@ -250,7 +220,7 @@ func getConfigType(data map[string]string) *configType {
 
 func reset(c *Config) {
 	v := reflect.ValueOf(c.Data)
-	if v.Kind() != reflect.Ptr || v.IsZero() {
+	if v.Kind() != reflect.Pointer || v.IsZero() {
 		return
 	}
 

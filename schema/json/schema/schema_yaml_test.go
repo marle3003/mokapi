@@ -52,7 +52,7 @@ func TestSchemaYaml(t *testing.T) {
 			name: "type is not a string value",
 			data: `type: [string, 123]`,
 			test: func(t *testing.T, s *schema.Schema, err error) {
-				require.EqualError(t, err, "cannot unmarshal 123 into field type of type schema")
+				require.EqualError(t, err, "expected type string, got integer")
 			},
 		},
 		{

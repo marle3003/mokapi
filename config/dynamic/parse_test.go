@@ -64,10 +64,23 @@ func TestParse(t *testing.T) {
 			},
 		},
 		{
+			name: "json syntax error",
+			test: func(t *testing.T) {
+				c := &dynamic.Config{
+					Info: dynamic.ConfigInfo{Url: mustUrl("foo.json")},
+					Raw:  []byte(`{"name", "foo"}`),
+				}
+
+				err := dynamic.Parse(c, &dynamictest.Reader{})
+				require.EqualError(t, err, "invalid character ',' after object key at line 1, column 8")
+				require.Nil(t, c.Data)
+			},
+		},
+		{
 			name: "json structure error",
 			test: func(t *testing.T) {
 				d := &struct {
-					Info struct{}
+					Info struct{} `json:"info"`
 				}{}
 
 				c := &dynamic.Config{
@@ -77,7 +90,7 @@ func TestParse(t *testing.T) {
 				}
 
 				err := dynamic.Parse(c, &dynamictest.Reader{})
-				require.EqualError(t, err, "structural error at info: expected object but received an array at line 1, column 29")
+				require.EqualError(t, err, "schema error at field 'info': expected object, got array at line 1, column 28")
 				require.Nil(t, c.Data)
 			},
 		},

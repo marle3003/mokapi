@@ -63,7 +63,7 @@ export default () => {
 			run: func(evt common.EventEmitter) []*common.Action {
 				res := &common.HttpEventResponse{}
 				actions := evt.EmitHttp(&common.HttpEventRequest{}, res)
-				require.Equal(t, &map[string]interface{}{"foo": "bar"}, res.Data)
+				require.Equal(t, &map[string]any{"foo": "bar"}, res.Data)
 				return actions
 			},
 			test: func(t *testing.T, actions []*common.Action, _ *test.Hook, err error) {
@@ -72,7 +72,8 @@ export default () => {
 
 				var res *common.HttpEventResponse
 				err = json.Unmarshal([]byte(actions[0].Parameters[1]), &res)
-				require.Equal(t, map[string]interface{}{"foo": "bar"}, res.Data)
+				require.NoError(t, err)
+				require.Equal(t, map[string]any{"foo": "bar"}, res.Data)
 			},
 		},
 		{

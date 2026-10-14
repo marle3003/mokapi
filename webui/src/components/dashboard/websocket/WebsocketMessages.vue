@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import { onMounted, ref, onUnmounted, computed } from 'vue'
+import { ref, computed, reactive, watch } from 'vue'
 import { usePrettyDates } from '@/composables/usePrettyDate'
-import { Modal, Tab } from 'bootstrap'
-import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
-import SourceView from '../SourceView.vue'
 import router from '@/router'
 import { getRouteName, useDashboard } from '@/composables/dashboard'
-import { useLocalStorage } from '@/composables/local-storage'
 import { useWebsocket } from '@/composables/websocket.ts'
 import { usePrettyText } from '@/composables/usePrettyText.ts'
+import { usePageSize } from '@/composables/paging'
 
 const props = defineProps<{
     service?: WebsocketService,
@@ -20,7 +17,6 @@ const emit = defineEmits<{
     (e: "loaded", count: number): void
 }>();
 
-const tags = useLocalStorage<string[]>(`websocket-${props.service?.name}-tags`, ['__all'])
 const labels = computed(() => {
     const result = [{ name: 'namespace', value: 'websocket' }];
     if (props.service) {
@@ -36,41 +32,49 @@ const labels = computed(() => {
     return result;
 })
 
+const paging = reactive({
+    current: 1,
+    size: usePageSize(25),
+})
+
 const { format } = usePrettyDates()
-const { formatLanguage } = usePrettyLanguage()
 const { adaptiveTruncate } = usePrettyText()
 const { formatAddress } = useWebsocket()
 
 const { dashboard } = useDashboard()
-const { events, close } = dashboard.value.getEvents(...labels.value)
-const messageDialog = ref<any>(null)
-const tabDetailData = ref<any>(null)
-let dialog: Modal
-let tab: Tab
+const result = ref<ServiceEventResult | null>(null);
+const events = computed(() => result.value?.items ?? [])
+watch(
+    [() => dashboard.value, () => paging.current, () => paging.size, labels],
+    ([db], _, onCleanup) => {
+        const res = db.getEvents({
+            page: paging.current,
+            size: paging.size,
+            labels: labels.value,
+        })
+
+        const stop = watch(res.data, (v) => { result.value = v }, { immediate: true })
+
+        onCleanup(() => {
+            stop()
+            res.close()
+        })
+    },
+    { immediate: true }
+);
+watch(() => events.value, (events) => emit("loaded", events.length), { immediate: true })
 
 const messages = computed(() => {
     const result = [];
-    emit("loaded", events.value.length);
     for (const event of events.value) {
         const data = eventData(event)
         if (!data) {
             continue
         }
 
-        if (props.service && !props.channelName && !tags.value.includes('__all')) {
-            const channel = props.service.channels.find(t => t.name === event.traits['channel']);
-            if (!channel) {
-                continue
-            }
-            if (!channel.tags || !channel.tags.some(tag => tags.value.some(x => x == tag.name))) {
-                continue
-            }
-        }
-
         result.push({
             id: event.id,
             value: data.message.value ?? data.message.binary,
-            isAvro: isAvro(event),
             event: event,
             channel: data.channel,
             client: data.client,
@@ -81,13 +85,13 @@ const messages = computed(() => {
     return result;
 })
 
-function eventData(event: ServiceEvent | null): WebsocketMessageData | null {
+function eventData(event: ServiceEventInfo | null): WebsocketMessageData | null {
     if (!event) {
         return null
     }
     return event.data as WebsocketMessageData
 }
-function isAvro(event: ServiceEvent): boolean {
+function isAvro(event: ServiceEventInfo): boolean {
     const msg = getMessageConfig(event)
     if (!msg) {
         return false
@@ -95,45 +99,15 @@ function isAvro(event: ServiceEvent): boolean {
     const [_, isAvro] = getContentType(msg)
     return isAvro
 }
-onMounted(() => {
-    dialog = new Modal(messageDialog.value)
-    tab = new Tab(tabDetailData.value)
-})
-onUnmounted(() => {
-    close()
-})
-interface DialogData {
-    source: Source
-    contentType: string
-    contentTypeTitle: string
-    isAvro: boolean
-    time: string
-    channel: string
-}
-let message = ref<DialogData | null>(null)
-let clickTimeout: ReturnType<typeof setTimeout> | null = null
 
-function handleMessageClick(event: ServiceEvent) {
-    if (clickTimeout) {
-        clearTimeout(clickTimeout)
-        clickTimeout = null
-        showMessage(event)
-    } else {
-        clickTimeout = setTimeout(() => {
-            goToMessage(event)
-            clickTimeout = null
-        }, 250)
-    }
-}
-
-function goToMessage(event: ServiceEvent, openInNewTab = false) {
+function goToMessage(eventId: string, openInNewTab = false) {
     if (getSelection()?.toString()) {
         return
     }
 
     const to = {
         name: getRouteName('websocketMessage').value,
-        params: { id: event.id }
+        params: { id: eventId }
     }
     if (openInNewTab) {
         const routeData = router.resolve(to);
@@ -143,59 +117,7 @@ function goToMessage(event: ServiceEvent, openInNewTab = false) {
     }
 }
 
-function showMessage(event: ServiceEvent) {
-    if (getSelection()?.toString()) {
-        return
-    }
-
-    const data = eventData(event)
-    if (!data) {
-        return
-    }
-
-    const messageConfig = getMessageConfig(event)
-    if (!messageConfig) {
-        console.error('resolve message failed')
-        return
-    }
-
-    const [contentType, isAvro] = getContentType(messageConfig)
-
-    const source: Source = {}
-    if (data.message.value) {
-        source.preview = {
-            content: formatLanguage(data.message.value, isAvro ? 'application/json' : messageConfig.contentType),
-            contentType: contentType,
-            contentTypeTitle: messageConfig.contentType,
-            description: isAvro ? 'Avro content in JSON format' : undefined
-        }
-    }
-
-    if (data.message.binary) {
-        switch (messageConfig.contentType) {
-            case 'avro/binary':
-            case 'application/avro':
-            case 'application/octet-stream':
-                source.preview!.description = 'Avro content in JSON format'
-                source.binary = { content: atob(data.message.binary), contentType: messageConfig.contentType }
-        }
-    }
-
-    message.value = {
-        source: source,
-        contentType: contentType,
-        contentTypeTitle: messageConfig.contentType,
-        isAvro: isAvro,
-        time: format(event.time),
-        channel: data.channel,
-    }
-    if (dialog) {
-        tab.show()
-        dialog.show()
-    }
-}
-
-function getChannel(event: ServiceEvent): WebsocketChannel | undefined {
+function getChannel(event: ServiceEventInfo): WebsocketChannel | undefined {
     const channelName = event.traits["channel"]!
 
     let service = props.service
@@ -218,7 +140,7 @@ function getChannel(event: ServiceEvent): WebsocketChannel | undefined {
 
     return undefined
 }
-function getMessageConfig(event: ServiceEvent): WebsocketMessage | undefined {
+function getMessageConfig(event: ServiceEventInfo): WebsocketMessage | undefined {
     const data = eventData(event)
     const channel = getChannel(event)
     if (!channel) {
@@ -269,99 +191,55 @@ const isTemplateChannel = computed(() => {
 </script>
 
 <template>
-    <table class="table dataTable selectable" aria-label="Recent Messages">
-        <thead>
-            <tr>
-                <th scope="col" class="text-left col-3" v-if="!channelName || isTemplateChannel">Channel</th>
-                <th scope="col" class="text-left col-1" >Source</th>
-                <th scope="col" class="text-left col-1" >Destination</th>
-                <th scope="col" class="text-left col-4">Value</th>
-                <th scope="col" class="text-center col-2">Time</th>
+    <div class="table-responsive">
+        <table class="table dataTable selectable" aria-label="Recent Messages">
+            <thead>
+                <tr>
+                    <th scope="col" class="text-left col-3" v-if="!channelName || isTemplateChannel">Channel</th>
+                    <th scope="col" class="text-left col-1">Source</th>
+                    <th scope="col" class="text-left col-1">Destination</th>
+                    <th scope="col" class="text-left col-4">Value</th>
+                    <th scope="col" class="text-center col-2">Time</th>
 
-            </tr>
-        </thead>
-        <tbody>
-            <tr v-for="msg in messages" :key="msg.id" @click.left="handleMessageClick(msg.event)"
-                @mousedown.middle="goToMessage(msg.event, true)">
-                <td v-if="!channelName || isTemplateChannel">
-                    <router-link @click.stop class="row-link"
-                        :to="{ name: getRouteName('websocketMessage').value, params: { id: msg.id } }">
-                        <i v-if="msg.validationErrors" class="bi bi-x-circle-fill red" role="img" aria-label="Message data is invalid" style="vertical-align: middle;"></i>
-                        {{ adaptiveTruncate(msg.channel) }}
-                    </router-link>
-                </td>
-                <td class="text-left">
-                    {{ formatAddress(msg.direction === 'send' ? msg.client.address : msg.client.server) }}
-                </td>
-                <td class="text-left">
-                    {{ formatAddress(msg.direction === 'receive' ? msg.client.address : msg.client.server) }}
-                </td>
-                <td v-if="channelName" class="message" :title="msg.isAvro ? 'Avro content displayed as JSON' : ''">
-                    <router-link @click.stop class="row-link"
-                        :to="{ name: getRouteName('websocketMessage').value, params: { id: msg.id } }">
-                        {{ msg.value }}
-                    </router-link>
-                </td>
-                <td v-else class="message" :title="msg.isAvro ? 'Avro content displayed as JSON' : ''">{{ msg.value }}
-                </td>
-                <td class="text-center">{{ format(msg.event.time) }}</td>
-            </tr>
-        </tbody>
-    </table>
-    <div class="modal fade" id="messageDialog" ref="messageDialog" tabindex="-1" aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-body">
-                    <div class="card-group">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row">
-                                    <ul class="nav nav-pills tab-sm mb-3" role="tablist">
-                                        <li class="nav-link show active" style="padding-left: 12px;" ref="tabDetailData"
-                                            id="detail-data-tab" data-bs-toggle="tab" data-bs-target="#detail-data"
-                                            type="button" role="tab" aria-controls="detail-data" aria-selected="true">
-                                            Data</li>
-                                        <li class="nav-link" id="detail-meta-tab" data-bs-toggle="tab"
-                                            data-bs-target="#detail-meta" type="button" role="tab"
-                                            aria-controls="detail-meta" aria-selected="false">Metadata</li>
-                                    </ul>
-
-                                    <div class="tab-content" v-if="message">
-                                        <div class="tab-pane fade show active" id="detail-data" role="tabpanel">
-                                            <source-view :source="message.source" :content-type="message.contentType"
-                                                :content-type-title="message.contentTypeTitle" />
-                                        </div>
-
-                                        <div class="tab-pane fade" id="detail-meta" role="tabpanel">
-                                            <div class="row mb-2">
-                                                <p id="dialog-meta-channel" class="label">Channel</p>
-                                                <p aria-labelledby="dialog-meta-channel">{{ message.channel }}</p>
-                                            </div>
-                                            <div class="row mb-2">
-                                                <div class="col-2">
-                                                    <p id="dialog-meta-message-content-type" class="label">Message
-                                                        Content Type</p>
-                                                    <p aria-labelledby="dialog-meta-message-content-type">{{
-                                                        message.contentType }}</p>
-                                                </div>
-                                            </div>
-                                            <div class="row mb-2">
-                                                <div class="col">
-                                                    <p id="dialog-meta-time" class="label">Time</p>
-                                                    <p aria-labelledby="dialog-meta-time">{{ message.time }}</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="msg in messages" :key="msg.id" @click.left="goToMessage(msg.id)"
+                    @mousedown.middle="goToMessage(msg.id, true)">
+                    <td v-if="!channelName || isTemplateChannel">
+                        <router-link @click.stop class="row-link"
+                            :to="{ name: getRouteName('websocketMessage').value, params: { id: msg.id } }">
+                            <i v-if="msg.validationErrors" class="bi bi-x-circle-fill red" role="img"
+                                aria-label="Message data is invalid" style="vertical-align: middle;"></i>
+                            {{ adaptiveTruncate(msg.channel) }}
+                        </router-link>
+                    </td>
+                    <td class="text-left">
+                        {{ formatAddress(msg.direction === 'send' ? msg.client.address : msg.client.server) }}
+                    </td>
+                    <td class="text-left">
+                        {{ formatAddress(msg.direction === 'receive' ? msg.client.address : msg.client.server) }}
+                    </td>
+                    <td v-if="channelName" class="message">
+                        <router-link @click.stop class="row-link"
+                            :to="{ name: getRouteName('websocketMessage').value, params: { id: msg.id } }">
+                            {{ msg.value }}
+                        </router-link>
+                    </td>
+                    <td v-else class="message">{{ msg.value }}
+                    </td>
+                    <td class="text-center">{{ format(msg.event.time) }}</td>
+                </tr>
+            </tbody>
+        </table>
     </div>
+    
+    <Paging v-if="result"
+        :count="events.length"
+        :total="result.total"
+        v-model:current="paging.current"
+        v-model:size="paging.size"
+    />
 </template>
 
 <style scoped>

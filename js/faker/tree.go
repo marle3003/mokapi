@@ -1,6 +1,7 @@
 package faker
 
 import (
+	"encoding/json"
 	"fmt"
 	"mokapi/js/util"
 	"mokapi/schema/json/generator"
@@ -31,10 +32,22 @@ func convertToNode(v goja.Value, m *Module) *generator.Node {
 				n.Name = name.String()
 			case "fake":
 				fake, _ := goja.AssertFunction(obj.Get(k))
-				n.Fake = func(r *generator.Request) (interface{}, error) {
+				n.Fake = func(r *generator.Request) (any, error) {
 					v, err := m.loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
-						param := m.vm.ToValue(r)
-						return fake(goja.Undefined(), param)
+						param, err := ToJsValue(m.vm, r)
+						if err != nil {
+							panic(m.vm.ToValue(err))
+						}
+						val, err := fake(goja.Undefined(), param)
+						if err != nil {
+							return nil, err
+						}
+						r2, err := toStruct[*generator.Request](param, m.vm)
+						if err != nil {
+							panic(m.vm.ToValue(err))
+						}
+						r.Context.Values = r2.Context.Values
+						return val, nil
 					})
 					if err != nil {
 						return nil, err
@@ -43,10 +56,10 @@ func convertToNode(v goja.Value, m *Module) *generator.Node {
 				}
 			case "attributes":
 				i := obj.Get(k).Export()
-				n.Attributes = toStringArray(i)
+				n.Attributes = toStringArray(i, m.vm)
 			case "dependsOn":
 				i := obj.Get(k).Export()
-				n.Attributes = toStringArray(i)
+				n.DependsOn = toStringArray(i, m.vm)
 			case "children":
 				val := obj.Get(k)
 				if val.ExportType().Kind() != reflect.Slice {
@@ -55,7 +68,7 @@ func convertToNode(v goja.Value, m *Module) *generator.Node {
 				}
 				arr := val.ToObject(m.vm)
 				length := int(arr.Get("length").ToInteger())
-				for i := 0; i < length; i++ {
+				for i := range length {
 					item := arr.Get(strconv.Itoa(i))
 					n.Children = append(n.Children, convertToNode(item, m))
 				}
@@ -69,7 +82,7 @@ func convertToNode(v goja.Value, m *Module) *generator.Node {
 	panic(m.vm.ToValue("unexpected function parameter"))
 }
 
-func toStringArray(i interface{}) []string {
+func toStringArray(i any, vm *goja.Runtime) []string {
 	values, ok := i.([]any)
 	var result []string
 	if ok {
@@ -81,6 +94,19 @@ func toStringArray(i interface{}) []string {
 			}
 			result = append(result, s)
 		}
+		return result
 	}
-	return result
+	panic(vm.ToValue(fmt.Errorf("expected type Array, got %T", util.JsType(i))))
+}
+
+func ToJsValue(vm *goja.Runtime, schema any) (goja.Value, error) {
+	data, err := json.Marshal(schema)
+	if err != nil {
+		return nil, err
+	}
+	var v any
+	if err := json.Unmarshal(data, &v); err != nil {
+		return nil, err
+	}
+	return vm.ToValue(v), nil
 }
