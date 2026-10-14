@@ -11,7 +11,7 @@ test.describe('Visit HTTP dashboard', () => {
         
         const table = page.getByRole('table', { name: 'Recent Requests' });
         let rows = table.locator('tbody tr');
-        await expect(rows).toHaveCount(5)
+        await expect(rows).toHaveCount(6)
 
         const filterButton = page.getByRole('button', { name: 'Filter' })
         const dialog = page.getByRole('dialog', { name: 'Filter' })
@@ -36,7 +36,7 @@ test.describe('Visit HTTP dashboard', () => {
             await expect(rows).toHaveCount(0)
 
             await names.selectOption('Swagger Petstore')
-            await expect(rows).toHaveCount(5)
+            await expect(rows).toHaveCount(6)
 
             await dialog.getByRole('button', { name: 'Close' }).click()
         })
@@ -102,13 +102,13 @@ test.describe('Visit HTTP dashboard', () => {
             
             await dialog.getByRole('checkbox', { name: 'Status Code' }).check()
             await dialog.getByRole('textbox', { name: 'Status Code' }).fill('200')
-            await expect(rows).toHaveCount(1)
+            await expect(rows).toHaveCount(2)
 
             await dialog.getByRole('textbox', { name: 'Status Code' }).fill('200-400')
-            await expect(rows).toHaveCount(3)
+            await expect(rows).toHaveCount(4)
 
             await dialog.getByRole('textbox', { name: 'Status Code' }).fill('2xx')
-            await expect(rows).toHaveCount(3)
+            await expect(rows).toHaveCount(4)
 
             await dialog.getByRole('textbox', { name: 'Status Code' }).fill('!2xx')
             await expect(rows).toHaveCount(2)
@@ -126,7 +126,7 @@ test.describe('Visit HTTP dashboard', () => {
 
             await dialog.getByRole('textbox', { name: 'Response Header Name 1' }).fill('Content-Type')
             await dialog.getByRole('textbox', { name: 'Response Header Value 1' }).fill('application/json')
-            await expect(rows).toHaveCount(5)
+            await expect(rows).toHaveCount(6)
 
             await resetFilters()
             await filterButton.click()
@@ -153,7 +153,7 @@ test.describe('Visit HTTP dashboard', () => {
             await expect(rows).toHaveCount(4)
 
             await dialog.getByRole('textbox', { name: 'Client IP' }).fill('192.0.1.1/24')
-            await expect(rows).toHaveCount(1)
+            await expect(rows).toHaveCount(2)
 
             await dialog.getByRole('button', { name: 'Close' }).click()
             await expect(filterButton).toContainText('1')

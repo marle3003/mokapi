@@ -5,6 +5,7 @@ import SourceView from './SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { usePrettyText } from '@/composables/usePrettyText'
 import { getRouteName } from '@/composables/dashboard'
+import { usePrettyBytes } from '@/composables/usePrettyBytes.ts'
 
 defineProps({
     actions: { type: Object as PropType<Action[]>, required: true },
@@ -14,6 +15,7 @@ const { formatLanguage } = usePrettyLanguage()
 
 const { duration } = usePrettyDates()
 const { parseUrls } = usePrettyText()
+const { format: formatBytes } = usePrettyBytes()
 let status: string | null
 
 function getName(action: Action){
@@ -87,6 +89,37 @@ function getStatus(action: Action) {
     }
     return 'success'
 }
+
+const isTruncated = function(v: any): v is Truncated {
+  return v !== null && typeof v === 'object' && v.truncated === true
+}
+
+function formatParam(raw: any) {
+  const truncated: Truncated[] = []
+  if (!raw) {
+    return { text: undefined, truncated }
+  }
+
+  const token = `__TRUNCATED_${crypto.randomUUID()}_`
+  const obj = JSON.parse(raw, (_key, value) => {
+    if (isTruncated(value)) {
+      truncated.push(value)
+      return `${token}${truncated.length - 1}__`
+    }
+    return value
+  })
+
+  const text = JSON.stringify(obj, null, 2).replace(
+    new RegExp(`"${token}(\\d+)__"`, 'g'),
+    (_m, i) => {
+      const t = truncated[Number(i)]
+      return `"${t.preview}…"  ⟨${formatBytes(t.size - t.preview.length)} more, truncated⟩`
+    }
+  )
+
+  return { text, truncated }
+}
+
 </script>
 
 <template>
@@ -130,7 +163,7 @@ function getStatus(action: Action) {
                                         </h2>
                                         <div :id="'action-'+index+'-param-'+paramIndex" class="accordion-collapse collapse p-0" :aria-labelledby="'action-'+index+'-param-heading-'+paramIndex" data-bs-parent="#parametersAccordion">
                                             <div class="accordion-body p-0">
-                                                <source-view :source="{ preview: { content: item.value, contentType: 'application/json' }}" :hide-header="true" :max-height="250"></source-view>
+                                                <source-view :source="{ preview: { content: formatParam(item.value).text, contentType: 'application/json' }}" :hide-header="true" :max-height="250"></source-view>
                                             </div>
                                         </div>
                                     </div>

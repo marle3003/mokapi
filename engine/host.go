@@ -20,6 +20,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+type Snapshotter interface {
+	Snapshot() any
+}
+
 type eventHandler struct {
 	handler  common.EventHandler
 	tags     map[string]string
@@ -382,6 +386,9 @@ func (sh *scriptHost) endEventHandler() {
 func getDeepCopy(args []any) []string {
 	result := make([]string, len(args))
 	for i, arg := range args {
+		if s, ok := arg.(Snapshotter); ok {
+			arg = s.Snapshot()
+		}
 		b, _ := json.Marshal(arg)
 		result[i] = string(b)
 	}

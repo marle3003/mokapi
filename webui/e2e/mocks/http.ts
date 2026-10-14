@@ -971,5 +971,78 @@ export let events = [
             duration: 133,
             clientIP: '192.0.1.127'
         }
+    },
+    {
+        id: "6f954c79-c8ff-45bb-bddf-c88da57d53d9",
+        traits: {
+            namespace: "http",
+            name: "Swagger Petstore",
+            path: "/requestWithParams",
+            method: 'GET'
+        },
+        time: '2023-02-13T10:05:25.583366+01:00',
+        data: {
+            request: {
+                method: "GET",
+                url: "http://127.0.0.1:18080/requestWithParams",
+                contentType: "application/json",
+                parameters: [],
+                body: '"Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor"'
+            },
+            response: {
+                statusCode: 200,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: `"Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor"`,
+                size: 512
+            },
+            duration: 133,
+            actions: [
+                {
+                    duration: 20,
+                    tags: {
+                        name: "dashboard",
+                        file: "examples/mokapi/http_handler.js",
+                        fileKey: "b6fea8ac-56c7-4e73-a9c0-6887640bdca8",
+                        event: "http"
+                    },
+                    logs: [],
+                    parameters: [
+                        JSON.stringify({
+                            method: "POST",
+                            url: "http://127.0.0.1:18080/pet",
+                            parameters: [
+                                {
+                                    name: 'Accept-Encoding',
+                                    type: 'header',
+                                    raw: 'gzip, deflate'
+                                }
+                            ],
+                            contentType: "application/xml",
+                            body: {
+                                truncated: true,
+                                size: 1000,
+                                hash: 'abc',
+                                preview: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor'
+                            }
+                        }),
+                        JSON.stringify({
+                            statusCode: 200,
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            data: {
+                                truncated: true,
+                                size: 1000,
+                                hash: 'abc',
+                                preview: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor'
+                            }
+                        })
+                    ]
+                }
+            ],
+            clientIP: '192.0.1.127'
+        }
     }
 ]

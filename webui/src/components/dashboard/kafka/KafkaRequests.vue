@@ -8,6 +8,7 @@ import SyncGroupSummary from './requests/SyncGroupSummary.vue';
 import ListOffsetsSummary from './requests/ListOffsetsSummary.vue';
 import FindCoordinatorSummary from './requests/FindCoordinatorSummary.vue';
 import InitProducerIdSummary from './requests/InitProducerIdSummary.vue';
+import { usePageSize } from '@/composables/paging.ts';
 
 const props = defineProps<{
   service: KafkaService,
@@ -36,9 +37,8 @@ const labels = computed(() => {
 })
 
 const paging = reactive({
-  current: 1,
-  size: 25,
-  sizeOptions: [10, 25, 50, 100]
+    current: 1,
+    size: usePageSize(25),
 })
 
 const { dashboard } = useDashboard()
@@ -145,24 +145,12 @@ function goToRequest(eventId: string, openInNewTab = false) {
         </table>
       </div>
 
-      <!-- Paging -->
-      <div class="row" v-if="result && result.total > result.size">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-
-          <div class="small text-muted">
-            Showing {{ events.length }} of {{ result.total }} requests
-          </div>
-
-          <Pager :current="result.page" :size="10" :total="result.total" />
-
-          <select class="form-select form-select-sm" style="width:auto" v-model.number="result.size">
-            <option v-for="size in paging.sizeOptions" :key="size" :value="size">
-              {{ size }}
-            </option>
-          </select>
-
-        </div>
-      </div>
+      <Paging v-if="result"
+        :count="events.length"
+        :total="result.total"
+        v-model:current="paging.current"
+        v-model:size="paging.size"
+      />
     </div>
   </section>
 </template>

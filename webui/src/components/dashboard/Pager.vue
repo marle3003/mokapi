@@ -33,14 +33,13 @@ const range = computed(() => {
     start = Math.max(1, pages.value - maxVisiblePages + 1)
   }
 
-  console.log(start, end, half, maxVisiblePages)
   return Array.from({ length: end - start + 1 }, (_, i) => start + i)
 })
 
 </script>
 
 <template>
-    <nav aria-label="Page navigation">
+    <nav v-if="pages > 1" aria-label="Page navigation">
         <ul class="pagination justify-content-center">
             <li class="page-item" v-if="current > 1">
                 <a class="page-link" aria-label="Previous" @click="emit('page:changed', current - 1)">

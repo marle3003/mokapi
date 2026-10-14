@@ -21,13 +21,6 @@ const showTips = ref(false)
 const facets = ref<{ [name: string]: string | undefined }>({})
 const loading = useProgressiveLoading()
 
-const pageNumber = computed(() => {
-  if (!searchResult.value) {
-    return 0
-  }
-  return Math.ceil(searchResult.value?.total / 10)
-})
-
 let timeout: ReturnType<typeof setTimeout>;
 watch(queryText, async () => {
   if (!queryText.value || queryText.value.length < 3 || queryText.value.endsWith(':')) {
@@ -319,7 +312,7 @@ function facetTitle(s: string) {
             {{ errorMessage }}
           </div>
 
-          <div class="row justify-content-md-center" v-if="pageNumber > 1">
+          <div class="row justify-content-md-center">
             <div class="col-6 col-auto">
               <Pager :current="pageIndex" :size="10" :total="searchResult.total" :sizeOptions="[10]" @page:changed="pageIndex_click" />
             </div>

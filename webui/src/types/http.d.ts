@@ -127,7 +127,13 @@ declare interface Action {
     parameters: any[]
     logs: { level: string, message: string}[]
     error?: { message: string }
+}
 
+declare interface Truncated {
+  truncated: true
+  size: number
+  sha256: string
+  preview: string
 }
 
 declare interface Tags { [key: string]: string }
