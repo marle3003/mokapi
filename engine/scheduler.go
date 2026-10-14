@@ -47,6 +47,10 @@ func (s *DefaultScheduler) Every(every string, handler func(), opt common.JobOpt
 	var jobOpts []gocron.JobOption
 	if opt.Times > 0 {
 		jobOpts = append(jobOpts, gocron.WithLimitedRuns(uint(opt.Times)))
+		// Ensure WithLimitedRuns works correctly if job execution outlasts the schedule interval.
+		// Without SingletonMode, gocron might trigger concurrent runs before the previous run
+		// finishes and decrements the remaining execution counter, leading to too many runs.
+		jobOpts = append(jobOpts, gocron.WithSingletonMode(gocron.LimitModeReschedule))
 	}
 	if !opt.SkipImmediateFirstRun {
 		jobOpts = append(jobOpts, gocron.WithStartAt(gocron.WithStartImmediately()))
