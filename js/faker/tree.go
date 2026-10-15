@@ -33,6 +33,8 @@ func convertToNode(v goja.Value, m *Module) *generator.Node {
 			case "fake":
 				fake, _ := goja.AssertFunction(obj.Get(k))
 				n.Fake = func(r *generator.Request) (any, error) {
+					b := r.Context.Values == nil
+					_ = b
 					v, err := m.loop.RunSync(func(vm *goja.Runtime) (goja.Value, error) {
 						param, err := ToJsValue(m.vm, r)
 						if err != nil {
@@ -46,7 +48,9 @@ func convertToNode(v goja.Value, m *Module) *generator.Node {
 						if err != nil {
 							panic(m.vm.ToValue(err))
 						}
-						r.Context.Values = r2.Context.Values
+						if r2.Context.Values != nil {
+							r.Context.Values = r2.Context.Values
+						}
 						return val, nil
 					})
 					if err != nil {
