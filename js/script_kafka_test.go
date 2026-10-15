@@ -81,7 +81,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					msg := args.Messages[0]
 					r.Equal(t, "key", msg.Key)
-					r.Equal(t, "value", msg.Data)
+					r.Equal(t, "value", msg.Data.Value)
 					r.Equal(t, 2, msg.Partition)
 					return &common.KafkaProduceResult{}, nil
 				}
@@ -103,7 +103,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					msg := args.Messages[0]
 					r.Equal(t, "key", msg.Key)
-					r.Equal(t, "value", msg.Data)
+					r.Equal(t, "value", msg.Data.Value)
 					r.Equal(t, 2, msg.Partition)
 					return &common.KafkaProduceResult{}, nil
 				}
@@ -145,7 +145,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					msg := args.Messages[0]
 					r.Equal(t, "key1", msg.Key)
-					r.Equal(t, []byte("hello world"), msg.Value)
+					r.Equal(t, []byte("hello world"), msg.Value.Value)
 					r.Equal(t, map[string]string{"system-id": "foo"}, msg.Headers)
 					r.Equal(t, msg.Partition, 12)
 					return &common.KafkaProduceResult{}, nil
@@ -167,7 +167,7 @@ func TestScript_Kafka_Produce(t *testing.T) {
 			test: func(t *testing.T, host *enginetest.Host) {
 				host.KafkaClientTest.ProduceFunc = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
 					msg := args.Messages[0]
-					r.Equal(t, "hello world", msg.Data)
+					r.Equal(t, "hello world", msg.Data.Value)
 					return &common.KafkaProduceResult{}, nil
 				}
 

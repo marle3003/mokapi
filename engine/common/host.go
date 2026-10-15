@@ -122,10 +122,15 @@ type KafkaProduceArgs struct {
 
 type KafkaMessage struct {
 	Key       any
-	Value     []byte
-	Data      any
+	Value     Optional[[]byte]
+	Data      Optional[any]
 	Headers   map[string]string
 	Partition int
+}
+
+type Optional[T any] struct {
+	IsSet bool
+	Value T
 }
 
 type RetryArgs struct {

@@ -40,36 +40,35 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 
 	var produced []common.KafkaMessageResult
 	for _, m := range args.Messages {
-		value := m.Data
-		if m.Value != nil {
-			value = m.Value
-		}
-
 		keySchema := &asyncapi3.SchemaRef{
 			Value: &schema.Schema{Type: schema.Types{"string"}, Pattern: "[a-z]{9}"},
 		}
 
-		// if m.Value is not used then select Kafka message config by the data which must be valid
-		if m.Value == nil && (value == nil || m.Key == nil) {
-			var payload *asyncapi3.SchemaRef
-			var msg *asyncapi3.Message
+		var value any
+		if m.Value.IsSet {
+			value = m.Value.Value
+		} else if m.Data.IsSet {
+			value = m.Data.Value
+		}
 
-			msg, err = t.Config.GetMessageByPayload(value)
+		// returns the first valid message or the first message if value is nil
+		var msg *asyncapi3.Message
+		msg, err = t.Config.GetMessageByPayload(value)
+		if !m.Value.IsSet && err != nil {
+			return nil, fmt.Errorf("failed to produce message to Kafka topic '%v': %w", t.Name, err)
+		}
+		var payload *asyncapi3.SchemaRef
+		if msg != nil {
+			if msg.Bindings != nil && msg.Bindings.Kafka.Key != nil {
+				keySchema = msg.Bindings.Kafka.Key
+			}
+			payload = msg.Payload
+		}
+
+		if !m.Value.IsSet && !m.Data.IsSet {
+			value, err = createValue(payload)
 			if err != nil {
-				return nil, fmt.Errorf("failed to produce message to Kafka topic '%v': %w", t.Name, err)
-			}
-			if msg != nil {
-				if msg.Bindings != nil && msg.Bindings.Kafka.Key != nil {
-					keySchema = msg.Bindings.Kafka.Key
-				}
-				payload = msg.Payload
-			}
-
-			if value == nil {
-				value, err = createValue(payload)
-				if err != nil {
-					return nil, fmt.Errorf("unable to generate kafka value: %v", err)
-				}
+				return nil, fmt.Errorf("unable to generate kafka value: %v", err)
 			}
 		}
 
@@ -90,7 +89,7 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 			Value:          value,
 			Headers:        headers,
 			Partition:      m.Partition,
-			SkipValidation: m.Value != nil,
+			SkipValidation: m.Value.IsSet,
 		}}, media.ContentType{})
 		if err != nil {
 			return nil, fmt.Errorf("failed to produce message to Kafka topic '%v': %w", t.Name, err)

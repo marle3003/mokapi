@@ -78,7 +78,7 @@ m.app.kafka().produce('foo', { key: 'key', value: 'val' })
 				r.Equal(t, common.RetryArgs{MaxRetryTime: 180000000000, InitialRetryTime: 500000000, Factor: 2, Retries: 10}, produces[0].Retry)
 				r.NotEmpty(t, produces[0].ScriptFile)
 				r.Equal(t, "key", produces[0].Messages[0].Key)
-				r.Equal(t, "val", string(produces[0].Messages[0].Value))
+				r.Equal(t, "val", string(produces[0].Messages[0].Value.Value))
 				r.Equal(t, -1, produces[0].Messages[0].Partition)
 				r.Nil(t, produces[0].Messages[0].Headers)
 
@@ -119,11 +119,11 @@ m.app.kafka().produce('foo', ['bar', 123, 12.3, true, null].map(x => { return { 
 				r.Len(t, produces, 1)
 				r.Equal(t, "foo", produces[0].Topic)
 				r.Len(t, produces[0].Messages, 5)
-				r.Equal(t, "bar", string(produces[0].Messages[0].Value))
-				r.Equal(t, "123", string(produces[0].Messages[1].Value))
-				r.Equal(t, "12.3", string(produces[0].Messages[2].Value))
-				r.Equal(t, "true", string(produces[0].Messages[3].Value))
-				r.Equal(t, "", string(produces[0].Messages[4].Value))
+				r.Equal(t, "bar", string(produces[0].Messages[0].Value.Value))
+				r.Equal(t, "123", string(produces[0].Messages[1].Value.Value))
+				r.Equal(t, "12.3", string(produces[0].Messages[2].Value.Value))
+				r.Equal(t, "true", string(produces[0].Messages[3].Value.Value))
+				r.Equal(t, "", string(produces[0].Messages[4].Value.Value))
 			},
 		},
 		{
@@ -138,7 +138,7 @@ uint8View[2] = 64;
 m.app.kafka().produce('foo', { value: buffer })
 `,
 			test: func(t *testing.T, handlers []handler, produces []*common.KafkaProduceArgs, vm *goja.Runtime, err error) {
-				r.Equal(t, []byte{255, 128, 64, 0, 0, 0, 0, 0}, produces[0].Messages[0].Value)
+				r.Equal(t, []byte{255, 128, 64, 0, 0, 0, 0, 0}, produces[0].Messages[0].Value.Value)
 			},
 		},
 		{
@@ -148,7 +148,7 @@ const m = require('mokapi')
 m.app.kafka().produce('foo', { value: { foo: 'bar' } })
 `,
 			test: func(t *testing.T, handlers []handler, produces []*common.KafkaProduceArgs, vm *goja.Runtime, err error) {
-				r.Equal(t, `{"foo":"bar"}`, string(produces[0].Messages[0].Value))
+				r.Equal(t, `{"foo":"bar"}`, string(produces[0].Messages[0].Value.Value))
 			},
 		},
 		{
@@ -158,7 +158,7 @@ const m = require('mokapi')
 m.app.kafka().produce('foo', { data: { foo: 'bar' } })
 `,
 			test: func(t *testing.T, handlers []handler, produces []*common.KafkaProduceArgs, vm *goja.Runtime, err error) {
-				r.Equal(t, map[string]any{"foo": "bar"}, produces[0].Messages[0].Data)
+				r.Equal(t, map[string]any{"foo": "bar"}, produces[0].Messages[0].Data.Value)
 			},
 		},
 		{

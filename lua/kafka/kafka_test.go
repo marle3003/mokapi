@@ -2,11 +2,12 @@ package kafka
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
-	lua "github.com/yuin/gopher-lua"
 	"mokapi/engine/common"
 	"mokapi/sortedmap"
 	"testing"
+
+	"github.com/stretchr/testify/require"
+	lua "github.com/yuin/gopher-lua"
 )
 
 type client struct {
@@ -92,8 +93,8 @@ func TestModule_Produce(t *testing.T) {
 			"value",
 			func(t *testing.T, l *lua.LState, m *Module, c *client) {
 				c.produce = func(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-					require.IsType(t, &sortedmap.LinkedHashMap[string, interface{}]{}, args.Messages[0].Data)
-					foo, _ := args.Messages[0].Data.(*sortedmap.LinkedHashMap[string, interface{}]).Get("foo")
+					require.IsType(t, &sortedmap.LinkedHashMap[string, any]{}, args.Messages[0].Data.Value)
+					foo, _ := args.Messages[0].Data.Value.(*sortedmap.LinkedHashMap[string, any]).Get("foo")
 					require.Equal(t, "bar", foo)
 					return nil, nil
 				}

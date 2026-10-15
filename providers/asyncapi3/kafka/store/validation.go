@@ -143,11 +143,10 @@ func (mv *messageValidator) Validate(record *kafka.Record) (*KafkaMessageLog, er
 	if mv.payload != nil {
 		if _, err := mv.payload.Validate(record.Value); err != nil {
 			return r, err
-		} else {
-			b := kafka.Read(record.Value)
-			r.Message.Value = string(b)
-			r.Message.Binary = b
 		}
+		b := kafka.Read(record.Value)
+		r.Message.Value = string(b)
+		r.Message.Binary = b
 	} else {
 		r.Message.Binary = kafka.Read(record.Value)
 	}
