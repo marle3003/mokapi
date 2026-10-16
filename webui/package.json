@@ -29,7 +29,7 @@
     "bootstrap-icons": "^1.13.1",
     "cors": "^2.8.6",
     "dayjs": "^1.11.21",
-    "del-cli": "^7.0.0",
+    "del-cli": "^8.0.0",
     "express": "^5.2.1",
     "fuse.js": "^7.4.2",
     "highlight.js": "^11.11.1",
