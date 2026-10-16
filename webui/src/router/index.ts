@@ -1,4 +1,3 @@
-import Events from '@/components/dashboard/Events.vue'
 import Search from '@/components/dashboard/Search.vue'
 import { getRouteName } from '@/composables/dashboard'
 import { createRouter, createWebHistory, useRoute as baseRoute, type RouteLocationRaw, type RouteRecordRaw, type MatcherLocation } from 'vue-router'
@@ -66,12 +65,6 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
         name: getRouteName('serviceList'),
         component: dashboardView
       },
-       {
-        path: 'events',
-        name: getRouteName('events'),
-        component: Events,
-        meta: { title: 'Dashboard - Events'}
-      },
       {
         path: 'search',
         name: getRouteName('search'),
@@ -94,7 +87,11 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             path: 'requests/:id',
             name: getRouteName('httpRequest'),
             component: dashboardView,
-            meta: { service: 'http', title: ({ params }: MatcherLocation) => `Dashboard - HTTP Request – ${params.id}` }
+            meta: { 
+              service: 'http',
+              title: ({ params }: MatcherLocation) => `Dashboard - HTTP Request – ${params.id}`,
+              noindex: true
+            }
           },
           {
             path: 'services/:service/:endpoint(.*)*',
@@ -147,13 +144,21 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             path: 'messages/:id',
             name: getRouteName('kafkaMessage'),
             component: dashboardView,
-            meta: { service: 'kafka', title: ({ params }: MatcherLocation) => `Dashboard - Kafka Message – ${params.id}` }
+            meta: { 
+              service: 'kafka',
+              title: ({ params }: MatcherLocation) => `Dashboard - Kafka Message – ${params.id}`,
+              noindex: true
+            }
           },
           {
             path: 'service/:service/requests/:id',
             name: getRouteName('kafkaRequest'),
             component: dashboardView,
-            meta: { service: 'kafka', title: ({ params }: MatcherLocation) => `Dashboard - Kafka Request – ${params.id}` }
+            meta: { 
+              service: 'kafka',
+              title: ({ params }: MatcherLocation) => `Dashboard - Kafka Request – ${params.id}`,
+              noindex: true
+            }
           },
           {
             path: 'service/:service/clients/:clientId',
@@ -179,7 +184,11 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             path: 'ldap/requests/:id',
             name: getRouteName('ldapRequest'),
             component: dashboardView,
-            meta: { service: 'ldap', title: ({ params }: MatcherLocation) => `Dashboard - LDAP Request – ${params.id}` }
+            meta: { 
+              service: 'ldap',
+              title: ({ params }: MatcherLocation) => `Dashboard - LDAP Request – ${params.id}`,
+              noindex: true
+            }
           },
         ]
       },
@@ -205,7 +214,11 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             path: 'mail/mails/:id',
             name: getRouteName('smtpMail'),
             component: dashboardView,
-            meta: { service: 'mail', title: ({ params }: MatcherLocation) => `Dashboard - Mail – ${params.id}` }
+            meta: { 
+              service: 'mail',
+              title: ({ params }: MatcherLocation) => `Dashboard - Mail – ${params.id}`,
+              noindex: true
+            }
           },
         ]
       },
@@ -240,13 +253,21 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             path: 'messages/:id',
             name: getRouteName('mqttMessage'),
             component: dashboardView,
-            meta: { service: 'mqtt', title: ({ params }: MatcherLocation) => `Dashboard - MQTT Message – ${params.id}` }
+            meta: { 
+              service: 'mqtt',
+              title: ({ params }: MatcherLocation) => `Dashboard - MQTT Message – ${params.id}`,
+              noindex: true
+            }
           },
           {
             path: 'service/:service/requests/:id',
             name: getRouteName('mqttRequest'),
             component: dashboardView,
-            meta: { service: 'mqtt', title: ({ params }: MatcherLocation) => `Dashboard - MQTT Request – ${params.id}` }
+            meta: { 
+              service: 'mqtt',
+              title: ({ params }: MatcherLocation) => `Dashboard - MQTT Request – ${params.id}`,
+              noindex: true
+            }
           },
           {
             path: 'service/:service/clients/:clientId',
@@ -287,7 +308,11 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             path: 'messages/:id',
             name: getRouteName('websocketMessage'),
             component: dashboardView,
-            meta: { service: 'websocket', title: ({ params }: MatcherLocation) => `Dashboard - Websocket Message – ${params.id}` }
+            meta: { 
+              service: 'websocket',
+              title: ({ params }: MatcherLocation) => `Dashboard - Websocket Message – ${params.id}`,
+              noindex: true
+            }
           },
           {
             path: 'service/:service/clients/:id',
@@ -299,7 +324,11 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
             path: 'service/:service/events/:id',
             name: getRouteName('websocketEvent'),
             component: dashboardView,
-            meta: { service: 'websocket', title: ({ params }: MatcherLocation) => `Dashboard - Websocket Event – ${params.id}` }
+            meta: { 
+              service: 'websocket',
+              title: ({ params }: MatcherLocation) => `Dashboard - Websocket Event – ${params.id}`,
+              noindex: true
+            }
           },
         ]
       },
@@ -319,7 +348,10 @@ function createDashboardRoute(mode: 'live' | 'demo'): RouteRecordRaw {
         path: 'config/:id',
         name: getRouteName('config'),
         component: dashboardView,
-        meta: { title: ({ params }: MatcherLocation) => `Dashboard - Config – ${params.id}` }
+        meta: { 
+          title: ({ params }: MatcherLocation) => `Dashboard - Config – ${params.id}`,
+          noindex: true
+        }
       },
       {
         path: 'tree',
@@ -472,26 +504,24 @@ const router = createRouter({
 })
 
 // add refresh query parameter if clicked link does not have it but current route has it
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, from) => {
   if (!to.path.startsWith('/dashboard') || to.path.startsWith('/dashboard-demo')) {
-    return next()
+    return 
   }
         
   const hadRefresh = !!from.query.refresh;
   const hasRefresh = !!to.query.refresh;
 
   if (hadRefresh && !hasRefresh) {
-    return next({
+    return{
       path: to.path,
       query: {
         ...to.query,
         refresh: from.query.refresh
       },
       hash: to.hash,
-    })
+    }
   }
-
-  return next()
 });
 
 if (import.meta.env.VITE_DASHBOARD === 'true') {
@@ -529,3 +559,18 @@ function waitForElement(selector: string, timeout = 2000): Promise<boolean> {
     check()
   })
 }
+
+router.afterEach((to) => {
+  let tag = document.querySelector<HTMLMetaElement>('meta[name="robots"]')
+
+  if (to.meta.noindex) {
+    if (!tag) {
+      tag = document.createElement('meta')
+      tag.name = 'robots'
+      document.head.appendChild(tag)
+    }
+    tag.content = 'noindex'
+  } else {
+    tag?.remove()
+  }
+})

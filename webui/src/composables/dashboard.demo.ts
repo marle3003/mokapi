@@ -1,7 +1,8 @@
 import { reactive, ref, watchEffect } from "vue";
 import { transformPath, useFetch } from "./fetch";
-import type { AppInfoResponse, BrunoCollection, Dashboard, ExampleRequest, ExampleResult, MailboxMessagesResult, MailboxResult } from "@/types/dashboard";
+import type { AppInfoResponse, EventQuery, Dashboard, ExampleRequest, ExampleResult, MailboxMessagesResult, MailboxResult } from "@/types/dashboard";
 import type { Response } from "./fetch";
+import { match, matchTraits } from '../../lib/events'
 
 export function useDemoDashboard() {
 
@@ -132,9 +133,13 @@ export function useDemoDashboard() {
             return { client, isLoading, close: () => {} }
         },
 
-        getEvents(...labels: Label[]) {
-            const events = ref<ServiceEvent[]>([])
+        getEvents(query?: EventQuery) {
+            const page = query?.page ?? 1
+            const size = query?.size ?? 25
+            const data = ref<ServiceEventResult>({ items: [], page, size, total: 0 })
             const isLoading = ref<boolean>(true)
+
+            console.log(query)
 
             watchEffect(() => {
                 if (!db.data) {
@@ -143,21 +148,23 @@ export function useDemoDashboard() {
                 
                 const result = []
                  for (const event of db.data['events']) {
-                    let isValid = true
-                    for (const label of labels) {
-                        if (event.traits[label.name] !== label.value) {
-                            isValid = false
-                        }
+                    if (query?.labels && !matchTraits(event, query?.labels)) {
+                        continue
                     }
-                    if (isValid) {
+                    const detail = db.data['event_' + event.id]
+                    if (!detail) {
+                        continue
+                    }
+                    if (match(detail, query)) {
                         result.push(event)
                     }
                 }
 
-                events.value = result
+                data.value.items = result.slice((page - 1) * size, page * size)
+                data.value.total = result.length
                 isLoading.value = db.isLoading
             })
-            return { events, isLoading, close: () => {} }
+            return { data, isLoading, close: () => {} }
         },
 
         getEvent(id: string) {
@@ -168,12 +175,7 @@ export function useDemoDashboard() {
                 if (!db.data) {
                     return
                 }
-                const events = db.data['events'];
-                for (const e of events) {
-                    if (e.id === id) {
-                        event.value = e;
-                    }
-                }
+                event.value = db.data['event_'+id];
                 isLoading.value = db.isLoading
             })
             return { event, isLoading, close: () => {} }

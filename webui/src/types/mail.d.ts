@@ -43,6 +43,14 @@ declare interface RejectResponse {
     message: string
 }
 
+declare interface SmtpEventInfo {
+    subject: string
+    from: string
+    to: string[]
+    duration: number
+    messageId: string
+}
+
 declare interface SmtpEventData {
     from: string
     to: string[]

@@ -6,28 +6,26 @@ import HttpBody from './HttpBody.vue'
 import HttpHeader from './HttpEventHeader.vue'
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
-import { onUnmounted, computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import Actions from '../Actions.vue'
 import { useDashboard } from '@/composables/dashboard'
-import { useMeta } from '@/composables/meta'
-import type { EventResult, EventsResult } from '@/types/dashboard'
 
 const route = useRoute();
-const { dashboard, getMode } = useDashboard()
+const { dashboard } = useDashboard()
 
-const data = ref<EventResult | null>(null);
-const events = ref<EventsResult | null>(null);
+const event = ref<ServiceEvent | null>(null);
+const isLoading = ref<boolean>(true)
 const operation = computed(() => {
-    if (!data.value || !data.value?.event) {
+    if (!event.value) {
         return undefined;
     }
 
-    const serviceName = data.value?.event?.traits.name
+    const serviceName = event.value.traits.name
     if (!serviceName) {
         return undefined
     }
-    const path = data.value.event.traits.path;
-    const method = data.value.event.traits.method?.toLocaleLowerCase();
+    const path = event.value.traits.path;
+    const method = event.value.traits.method?.toLocaleLowerCase();
     const result = dashboard.value.getHttpOperations(serviceName, path, method)
     if (!result.operations.value || result.operations.value.length === 0) {
         return undefined
@@ -35,48 +33,25 @@ const operation = computed(() => {
     return result.operations.value[0]
 })
 
-const eventId = computed(() => {
-  const id = route.params.id
-  if (!id) {
-    return undefined
-  }
-
-  if (typeof id === 'string') {
-    if (isNumber(id)) {
-        const index = parseFloat(id);
-        const ev = events.value?.events[index];
-        return ev?.id ?? null;
-    } else {
-        return id;
-    }
-  }
-  return null
-})
-
 watch(() => dashboard.value,
   (db, _, onCleanup) => {
-    if (!eventId.value) {
-        return
-    }
-    const res1 = db.getEvent(eventId.value);
-    data.value = res1;
+    const res = db.getEvent(route.params.id as string);
 
-    const res2 = db.getEvents({ name: 'namespace', value: 'http' });
-    events.value = res2;
+    const stop = watch(res.event, (v) => { event.value = v; isLoading.value = false }, { immediate: true })
 
     onCleanup(() => {
-        res1.close();
-        res2.close();
+        stop()
+        res.close
     });
   },
   { immediate: true }
 );
 
 const eventData = computed(() => {
-    if (!data.value || !data.value.event) {
+    if (!event.value) {
         return undefined;
     }
-    return <HttpEventData>data.value.event?.data
+    return <HttpEventData>event.value.data
 })
 
 function getResponseContentType(): string {
@@ -91,29 +66,12 @@ const hasActions = computed(() => {
     }
     return eventData.value.actions?.length > 0
 })
-onMounted(() => {
-    if (!data.value || !data.value.event || !events.value || getMode() !== 'demo') {
-        return
-    }
-    const id = events.value.events.indexOf(data.value.event)
-    useMeta(
-        `${eventData.value?.request.method} ${eventData.value?.request.url} – HTTP Request Details`,
-        'Inspect full HTTP request and response details including method, URL, headers, parameters, body, status code, response contents, duration, and client IP.',
-        'https://mokapi.io/dashboard-demo/http/requests/' + id
-    )
-})
-onUnmounted(() => {
-    close()
-})
-function isNumber(value: string): boolean {
-  return /^[0-9]+$/.test(value);
-}
 </script>
 
 <template>
-    <div v-if="data?.event && eventData">
+    <div v-if="event && eventData">
         <div class="card-group">
-            <request-info-card :event="data.event"></request-info-card>
+            <request-info-card :event="event"></request-info-card>
         </div>
         <div class="card-group" v-if="hasActions">
             <section class="card" aria-labelledby="actions">
@@ -146,8 +104,8 @@ function isNumber(value: string): boolean {
             </section>
         </div>
     </div>
-    <loading v-if="!data || data?.isLoading"></loading>
-    <div v-if="!eventId || (data && !data.event && !data.isLoading)">
+    <loading v-if="!event && isLoading"></loading>
+    <div v-if="!event && !isLoading">
         <message message="HTTP Request not found"></message>
     </div>
 </template>

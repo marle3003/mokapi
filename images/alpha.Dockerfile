@@ -1,6 +1,6 @@
 ARG VERSION
 
-FROM node:26.11.1@sha256:32fa97f3363975684b08bf4e8a68a47c7905175cc20275b50b974bbd02aba731 as webui
+FROM node:26.12.0@sha256:1b84b89ada025e3b14543cbb837ffaa1c1b5273b841c5b94dd1a8f9c1d8cf7fe as webui
 
 COPY ./webui ./webui
 
@@ -11,7 +11,7 @@ COPY ./docs ./src/assets/docs
 RUN npm install
 RUN npm run build-dashboard
 
-FROM golang:1.27.2-alpine@sha256:85dc1069ac644ea3c527b177303a406eb3358192816cd7f9e5848eb658851673 AS gobuild
+FROM golang:1.27.2-alpine@sha256:f92b6ef800e499660581efdabdf25d9d817a9d124eaf900924f0504e7e27e12d AS gobuild
 
 ARG VERSION=dev
 

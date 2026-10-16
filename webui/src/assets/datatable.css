@@ -93,3 +93,11 @@ table.dataTable button.row-link {
 .cell-link:hover::after {
   opacity: 0.8;
 }
+
+.pagination .page-link {
+  cursor: pointer;
+  font-size: 12px;
+}
+.pagination .page-item:not(.active) .page-link {
+  color: var(--link-color)
+}

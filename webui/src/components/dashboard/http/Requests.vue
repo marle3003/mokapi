@@ -7,6 +7,9 @@ import { Modal, Tooltip } from 'bootstrap'
 import RegexInput from '@/components/RegexInput.vue'
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { usePrettyText } from '@/composables/usePrettyText'
+import type { HttpEventFilter } from '@/types/dashboard.js'
+import Paging from '../Paging.vue'
+import { usePageSize } from '@/composables/paging.ts'
 
 const props = defineProps({
     serviceName: { type: String, required: false},
@@ -14,7 +17,7 @@ const props = defineProps({
     method: { type: String, required: false}
 })
 
-const labels = ref<any[]>([{ name: 'namespace', value: 'http' }])
+const labels = ref<Label[]>([{ name: 'namespace', value: 'http' }])
 if (props.serviceName){
     labels.value.push({ name: 'name', value: props.serviceName })
     if (props.path){
@@ -25,9 +28,119 @@ if (props.serviceName){
     }
 }
 
+const paging = reactive({
+    current: 1,
+    size: usePageSize(25),
+})
+
+const filter = reactive<Filter>({
+    service: { state: 'Not', checkbox: false, value: [] },
+    method: { state: 'Not', checkbox: false, value: ['GET']},
+    url: { checkbox: false, value: ''},
+    request: {
+        headers: { checkbox: false, value: [{ name: '', value: '' }]}
+    },
+    response: {
+         headers: { checkbox: false, value: [{ name: '', value: '' }]},
+         statusCode: { checkbox: false, value: '', title: `<b>Status Code Filter:</b><br>
+            &bull; Multiple entries (comma-separated): 200, 404<br>
+            &bull; Negation: prefix with '!' (e.g., !501)<br>
+            &bull; Range: start-end (e.g., 200-300)<br>
+            &bull; Status class: 4xx for all client errors`
+        }
+    },
+    clientIP: { checkbox: false, value: '', title: `<b>IP Filter Options:</b><br>
+          &bull; Multiple entries (comma-separated): 192.168.0.1,10.0.0.1<br>
+          &bull; Negation: prefix with '!' (e.g.,  !127.0.0.1)<br>
+          &bull; CIDR notation: 192.168.0.0/24` }
+    }
+)
+
+const s = localStorage.getItem(`http-requests-${getFilterCacheKey()}`)
+if (s && s !== '') {
+    const saved = JSON.parse(s)
+    mergeDeep(filter, saved)
+}
+
+const filters = computed<HttpEventFilter & { labels?: Label[] }>(() => {
+    const result: HttpEventFilter & { labels?: Label[] } = {}
+
+    if (props.serviceName === undefined) {
+        if (filter.service.state !== 'Not') {
+            result.labels = filter.service.value.map(x => ({ name: 'name', value: x}))
+        }
+    }
+    const custom = filter.method.custom?.toUpperCase().split(/[\s,]+/);
+    switch (filter.method.state) {
+        case 'Single':
+            if (filter.method.value[0] === 'CUSTOM') {
+                result.methods = custom
+            } else {
+                result.methods = [filter.method.value[0]]
+            }
+            break;
+        case 'Multi':
+            const methods = []
+            for (const m of filter.method.value) {
+                if (m === 'CUSTOM' && custom) {
+                    methods.push(...custom)
+                }else {
+                    methods.push(m)
+                }
+            }
+            result.methods = methods
+    }
+    if (filter.url.checkbox && filter.url.value) {
+         result.url = filter.url.value
+    }
+    
+    if (filter.request.headers.checkbox && filter.request.headers.value?.length > 0) {
+        result.requestHeaders = filter.request.headers.value.filter(x => x.name !== '' && x.value !== '')
+    }
+
+    if (filter.response.statusCode.checkbox) {
+        result.statusCode = filter.response.statusCode.value
+    }
+
+    if (filter.response.headers.checkbox && filter.response.headers.value?.length > 0) {
+        result.responseHeaders = filter.response.headers.value.filter(x => x.name !== '' && x.value !== '')
+    }
+
+    if (filter.clientIP.checkbox && filter.clientIP.value != '') {
+        result.clientIP = filter.clientIP.value
+    }
+
+    return result
+})
+
 const router = useRouter()
 const { dashboard } = useDashboard()
-const { events: data, close } = dashboard.value.getEvents(...labels.value)
+const result = ref<ServiceEventResult | null>(null);
+const events = computed(() => result.value?.items ?? [])
+watch(
+  [() => dashboard.value, () => paging.current, () => paging.size, labels, filters ],
+  ([db], _, onCleanup) => {
+    const queryLabels = [...labels.value]
+    if (filters.value.labels) {
+        queryLabels.push(...filters.value.labels)
+    }
+    const res = db.getEvents({
+      page: paging.current,
+      size: paging.size,
+      labels: queryLabels,
+      http: filters.value,
+    })
+
+    const stop = watch(res.data, (v) => { result.value = v }, { immediate: true })
+
+    onCleanup(() => {
+      stop()
+      res.close()
+    })
+  },
+  { immediate: true }
+);
+
 const { format, duration } = usePrettyDates()
 const { formatStatusCode } = usePrettyHttp()
 const { adaptiveTruncate } = usePrettyText()
@@ -46,6 +159,9 @@ watch(
       () => res.services.value,
       (v) => {
         services.value = v as HttpService[]
+        if (filter.service.value.length === 0 && services.value.length > 0) {
+            filter.service.value = [services.value[0].name]
+        }
       },
       { immediate: true }
     )
@@ -69,19 +185,19 @@ type CheckboxFilter = 'Not' | 'Single' | 'Multi'
 interface Filter {
     service: MultiFilterItem
     method: MultiFilterItem & { custom?: string}
-    url: FilterItem
+    url: FilterItem<string>
     request: {
-        headers: FilterItem
+        headers: FilterItem<Header[]>
     }
     response: {
-        headers: FilterItem
-        statusCode: FilterItem
+        headers: FilterItem<Header[]>
+        statusCode: FilterItem<string>
     }
-    clientIP: FilterItem
+    clientIP: FilterItem<string>
 }
-interface FilterItem {
+interface FilterItem<T> {
     checkbox: boolean
-    value: any
+    value: T
     title?: string
 }
 interface MultiFilterItem {
@@ -89,27 +205,10 @@ interface MultiFilterItem {
     state: CheckboxFilter
     value: string[]
 }
-const filter = reactive<Filter>({
-    service: { state: 'Not', checkbox: false, value: [] },
-    method: { state: 'Not', checkbox: false, value: ['GET']},
-    url: { checkbox: false, value: null},
-    request: {
-        headers: { checkbox: false, value: [{ name: '', value: '' }]}
-    },
-    response: {
-         headers: { checkbox: false, value: [{ name: '', value: '' }]},
-         statusCode: { checkbox: false, value: '', title: `<b>Status Code Filter:</b><br>
-            &bull; Multiple entries (comma-separated): 200, 404<br>
-            &bull; Negation: prefix with '-' (e.g., -501)<br>
-            &bull; Range: start-end (e.g., 200-300)`
-        }
-    },
-    clientIP: { checkbox: false, value: '', title: `<b>IP Filter Options:</b><br>
-          &bull; Multiple entries (comma-separated): 192.168.0.1,10.0.0.1<br>
-          &bull; Negation: prefix with '-' (e.g.,  -127.0.0.1)<br>
-          &bull; CIDR notation: 192.168.0.0/24` }
-    }
-)
+interface Header {
+    name: string;
+    value: string;
+}
 
 const updateLimit = () => {
   if (urlCell.value) {
@@ -121,11 +220,6 @@ const updateLimit = () => {
 const observer = new ResizeObserver(updateLimit);
 onMounted(() => {
     dialog = Modal.getOrCreateInstance(dialogRef.value!);
-    const s = localStorage.getItem(`http-requests-${getFilterCacheKey()}`)
-    if (s && s !== '') {
-        const saved = JSON.parse(s)
-        mergeDeep(filter, saved)
-    }
     const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
     tooltipTriggerList.forEach(el => new Tooltip(el, {
         trigger: 'hover'
@@ -135,7 +229,7 @@ onMounted(() => {
     }
 })
 
-function goToRequest(event: ServiceEvent, openInNewTab = false){
+function goToRequest(event: ServiceEventInfo, openInNewTab = false){
     if (getSelection()?.toString()) {
         return
     }
@@ -151,161 +245,14 @@ function goToRequest(event: ServiceEvent, openInNewTab = false){
         router.push(to)
     }
 }
-function eventData(event: ServiceEvent): HttpEventData{
-    return <HttpEventData>event.data
-}
 
 watch(filter, () => {
     localStorage.setItem(`http-requests-${getFilterCacheKey()}`, JSON.stringify(filter))
 })
 
-const events = computed<ServiceEvent[]>(() => {
-    let result = data.value;
-    if (props.serviceName === undefined) {
-        switch (filter.service.state) {
-            case 'Single':
-                result = result.filter(x => x.traits.name === service.value);
-                break;
-            case 'Multi':
-                result = result.filter(x => x.traits.name && service.value?.includes(x.traits.name));
-        }
-    }
-    const custom = filter.method.custom?.toUpperCase().split(' ');
-    switch (filter.method.state) {
-        case 'Single':
-            if (filter.method.value[0] === 'CUSTOM') {
-                result = result.filter(x => custom?.includes((x.data as HttpEventData).request.method));
-            } else {
-                let method = 'GET'
-                // if in multiple mode all methods are unselected, value contains no method
-                if (filter.method.value.length > 0) {
-                    method = filter.method.value[0]
-                }
-                result = result.filter(x => {
-                    return method === (x.data as HttpEventData).request.method
-            });
-            }
-            break;
-        case 'Multi':
-            result = result.filter(x => {
-                const method = (x.data as HttpEventData).request.method;
-                for (const m of filter.method.value) {
-                    if (m === 'CUSTOM') {
-                        if (custom?.includes(method)) {
-                            return true;
-                        }
-                    }else {
-                        if (m === method) {
-                            return true;
-                        } 
-                    }
-                }
-                return false;
-            })
-    }
-    if (urlValue.value?.regex) {
-        result = result.filter(x => {
-            const data = x.data as HttpEventData
-            return urlValue.value?.regex.test(data.request.url)
-        })
-    }
-    
-    if (filter.request.headers.checkbox && requestHeaderFilter.value?.length > 0) {
-        result = result.filter(x => {
-            const data = x.data as HttpEventData
-            for (const filter of requestHeaderFilter.value) {
-                if (!filter(data)) {
-                    return false
-                }
-            }
-            return true
-        })
-    }
-
-    if (filter.response.headers.checkbox && responseHeaderFilter.value?.length > 0) {
-        result = result.filter(x => {
-            const data = x.data as HttpEventData
-            for (const filter of responseHeaderFilter.value) {
-                if (!filter(data)) {
-                    return false
-                }
-            }
-            return true
-        })
-    }
-    if (filter.clientIP.checkbox && filter.clientIP.value.length > 0) {
-        const values = (filter.clientIP.value as string).split(',').map(x => x.trim()).filter(x => x.length > 0)
-        result = result.filter(x => {
-            const data = x.data as HttpEventData
-
-            let matched = false;
-
-            for (let value of values) {
-                let not = false
-                if (value[0] === '-') {
-                    not = true
-                    value = value.substring(1)
-                }
-                let isMatch = false
-                if (value.includes('/')) {
-                    isMatch = cidrMatch(data.clientIP, value)
-                } else {
-                    isMatch = data.clientIP === value
-                }
-
-                if (not && isMatch) {
-                    // Negated value matches → reject immediately
-                    return false
-                }
-                if (!not && isMatch) {
-                    // Normal value matches → mark as matched
-                    matched = true;
-                }
-            }
-            return matched || values.every(v => v[0] === '-')
-        })
-    }
-    if (filter.response.statusCode.checkbox && filter.response.statusCode.value.length > 0) {
-        const values = (filter.response.statusCode.value as string).split(',').map(x => x.trim()).filter(x => x.length > 0)
-        result = result.filter(x => {
-            const data = x.data as HttpEventData
-
-            let matched = false;
-
-            for (let value of values) {
-                let not = false
-                if (value[0] === '-') {
-                    not = true
-                    value = value.substring(1)
-                }
-                let isMatch = false
-                if (value.includes('-')) {
-                    const parts = value.split('-').map(x => x.trim())
-                    if (parts.length !== 2) {
-                        continue
-                    }
-                    const min = parseInt(parts[0]!)
-                    const max = parseInt(parts[1]!)
-                    isMatch = data.response.statusCode >= min && data.response.statusCode <= max
-                } else {
-                    isMatch = data.response.statusCode.toString() === value
-                }
-
-                if (not && isMatch) {
-                    // Negated value matches → reject immediately
-                    return false
-                }
-                if (!not && isMatch) {
-                    // Normal value matches → mark as matched
-                    matched = true;
-                }
-            }
-            return matched || values.every(v => v[0] === '-')
-        })
-    }
-
-    return result
-})
+function eventData(event: ServiceEventInfo): HttpEventInfo{
+    return <HttpEventInfo>event.data
+}
 
 const hasDeprecatedRequests = computed(() => {
     if (!events.value) {
@@ -373,7 +320,6 @@ const method = computed({
 })
 
 onUnmounted(() => {
-    close()
     observer.disconnect()
 })
 function showDialog() {
@@ -432,7 +378,7 @@ function getFilterCacheKey() {
     }
     return `filter-${props.serviceName}-${props.path}-${props.method}`
 }
-function onHeaderInput(headers: FilterItem, index: number) {
+function onHeaderInput(headers: FilterItem<Header[]>, index: number) {
     const last = headers.value[headers.value.length - 1]
 
     // If currently editing the last row and it has a name → add new empty row
@@ -448,7 +394,7 @@ function onHeaderInput(headers: FilterItem, index: number) {
         }
     }
 }
-function removeHeaderFilter(headers: FilterItem, index: number) {
+function removeHeaderFilter(headers: FilterItem<Header[]>, index: number) {
   headers.value.splice(index, 1)
 
   // Ensure at least one empty placeholder row
@@ -478,114 +424,6 @@ const responseHeaderErrors = computed(() => {
     }
     return result
 })
-const requestHeaderFilter = computed(() => {
-    const result: ((data: HttpEventData) => boolean)[] = []
-    if (!requestHeaderValueRefs.value) {
-        return result;
-    }
-
-    for (let i = 0; i < filter.request.headers.value.length - 1; i++) {
-        if (requestHeaderValueRefs.value[i]?.regexError) {
-            continue
-        }
-        const fh = filter.request.headers.value[i];
-        result.push((data: HttpEventData) => {
-            const params = data.request.parameters
-            if (!params) {
-                return false
-            }
-
-            const name = fh.name?.toLowerCase();
-            for (const param of params) {
-                if (param.type !== 'header') {
-                    continue
-                }
-                if (!name) {
-                    const regex = requestHeaderValueRefs.value[i]?.regex
-                    if (regex && regex.test(param.raw)) {
-                        return true
-                    }
-                } else if (param.name.toLowerCase() === name) {
-                    if (!fh.value) {
-                        return true
-                    } else {
-                        const regex = requestHeaderValueRefs.value[i]?.regex
-                        if (regex && regex.test(param.raw)) {
-                            return true
-                        }
-                    }
-                }
-            }
-            return false
-        })
-    }
-    return result
-})
-const responseHeaderFilter = computed(() => {
-    const result: ((data: HttpEventData) => boolean)[] = []
-    if (!responseHeaderValueRefs.value) {
-        return result;
-    }
-
-    for (let i = 0; i < filter.response.headers.value.length - 1; i++) {
-        if (responseHeaderValueRefs.value[i]?.regexError) {
-            continue
-        }
-        const fh = filter.response.headers.value[i];
-        result.push((data: HttpEventData) => {
-            const headers = data.response.headers
-            if (!headers) {
-                return false
-            }
-
-            const name = fh.name?.toLowerCase();
-            for (const fieldName in headers) {
-                
-                if (!name) {
-                    const regex = responseHeaderValueRefs.value[i].regex
-                    if (regex && regex.test(headers[name])) {
-                        return true
-                    }
-                } else if (fieldName.toLowerCase() === name) {
-                    if (!fh.value) {
-                        return true
-                    } else {
-                        const regex = responseHeaderValueRefs.value[i].regex
-                        if (regex && regex.test(headers[fieldName])) {
-                            return true
-                        }
-                    }
-                }
-            }
-            return false
-        })
-    }
-    return result
-})
-function ipToInt(ip: string): number {
-    return ip
-        .split('.')
-        .map((octet) => parseInt(octet, 10))
-        .reduce((acc, octet) => (acc << 8) + octet, 0);
-}
-
-function cidrMatch(ip: string, cidr: string): boolean {
-    const parts: string[] = cidr.split('/');
-    if (parts.length !== 2) {
-        return false
-    }
-
-    const [range, bitsStr] = parts;
-    const bits: number = parseInt(bitsStr!, 10);
-
-    if (isNaN(bits) || bits < 0 || bits > 32) {
-        return false
-    }
-
-    const mask: number = ~(2 ** (32 - bits) - 1);
-
-    return (ipToInt(ip) & mask) === (ipToInt(range!) & mask);
-}
 function mergeDeep<T>(target: T, source: Partial<T>): T {
     for (const key in source) {
         const sourceValue = source[key];
@@ -617,6 +455,7 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                 <div class="col-4">
                     <h2 id="requests" class="card-title text-center">Recent Requests</h2>
                 </div>
+                <!-- Filter button -->
                 <div class="col-4 d-flex justify-content-end">
                     <button class="btn btn-outline-primary position-relative" 
                         style="--bs-btn-padding-y: .25rem; --bs-btn-padding-x: .5rem; --bs-btn-font-size: .75rem;"
@@ -634,6 +473,7 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                         </span>
                     </button>
                 </div>
+                
             </div>
             
             <div class="table-responsive">
@@ -649,27 +489,35 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="event in events!" :key="event.id" @click="goToRequest(event)" @mousedown.middle="goToRequest(event, true)">
+                        <tr v-for="event in events" :key="event.id" @click="goToRequest(event)" @mousedown.middle="goToRequest(event, true)">
                             <td v-if="hasDeprecatedRequests" style="padding-left:0;">
                                 <span class="bi bi-exclamation-triangle-fill yellow warning" v-if="eventData(event).deprecated" title="deprecated"></span>
                             </td>
                             <td class="text-left">
-                                <span class="badge operation" :class="eventData(event).request.method.toLowerCase()">
-                                    {{ eventData(event).request.method }}
+                                <span class="badge operation" :class="event.traits.method.toLowerCase()">
+                                    {{ event.traits.method }}
                                 </span>
                             </td>
                             <td>
                                 <router-link @click.stop class="row-link" :to="{ name: getRouteName('httpRequest').value, params: {id: event.id} }">
-                                    {{ adaptiveTruncate(eventData(event).request.url, dynamicLimit) }}
+                                    {{ adaptiveTruncate(eventData(event).url, dynamicLimit) }}
                                 </router-link>
                             </td>
-                            <td class="text-center">{{ formatStatusCode(eventData(event).response.statusCode.toString()) }}</td>
+                            <td class="text-center">{{ formatStatusCode(eventData(event).statusCode.toString()) }}</td>
                             <td class="text-center">{{ format(event.time) }}</td>
                             <td class="text-center">{{ duration(eventData(event).duration) }}</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+
+            <Paging v-if="result"
+                :count="events.length"
+                :total="result.total"
+                v-model:current="paging.current"
+                v-model:size="paging.size"
+             />
+
         </div>
     </section>
 
@@ -759,10 +607,10 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                             <div  v-for="(hf, i) in filter.request.headers.value">
                                 <div class="row me-0":class="{ 'mb-2': (i as number) < (filter.request.headers.value.length - 1)}" >
                                     <div class="col ps-0 pe-1">
-                                        <input type="text" class="form-control form-control-sm" id="reqeuest-header-name" v-model="hf.name" placeholder="Name" @input="onHeaderInput(filter.request.headers, (i as number) )">
+                                        <input type="text" class="form-control form-control-sm" :id="'reqeuest-header-name_'+ i" v-model="hf.name" placeholder="Name" @input="onHeaderInput(filter.request.headers, (i as number) )" :aria-label="'Request Header Name '+((i as number)+1)">
                                     </div>
                                     <div class="col ps-1 pe-0">
-                                        <RegexInput v-model="hf.value" :ref="el => requestHeaderValueRefs[(i as number) ] = el" placeholder="Value [Regex]" @input="onHeaderInput(filter.request.headers, (i as number) )" />
+                                        <RegexInput v-model="hf.value" :ref="el => requestHeaderValueRefs[(i as number) ] = el" placeholder="Value [Regex]" @input="onHeaderInput(filter.request.headers, (i as number) )" :aria-label="'Request Header Value '+((i as number)+1)" />
                                     </div>
                                     <div class="col-1">
                                         <button v-if="(i as number)  < filter.request.headers.value.length -1"
@@ -795,7 +643,7 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                         <div class="col" v-show="filter.response.statusCode.checkbox">
                              <div class="col ps-0 pe-1"  data-bs-toggle="tooltip" data-bs-delay='{"show": 200, "hide": 100}' :title="filter.response.statusCode.title" data-bs-html="true">
                                 <div class="row me-0">
-                                    <input type="text" class="form-control form-control-sm" id="statusCode" v-model="filter.response.statusCode.value">
+                                    <input type="text" class="form-control form-control-sm" id="statusCode" v-model="filter.response.statusCode.value" aria-label="Status Code">
                                 </div>
                             </div>
                         </div>
@@ -813,10 +661,10 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                             <div  v-for="(hf, i) in filter.response.headers.value">
                                 <div class="row me-0":class="{ 'mb-2': (i as number)  < filter.response.headers.value.length - 1 }" >
                                     <div class="col ps-0 pe-1">
-                                        <input type="text" class="form-control form-control-sm" id="response-header-name" v-model="hf.name" placeholder="Name" @input="onHeaderInput(filter.response.headers, (i as number) )">
+                                        <input type="text" class="form-control form-control-sm" id="response-header-name" v-model="hf.name" placeholder="Name" @input="onHeaderInput(filter.response.headers, (i as number) )" :aria-label="'Response Header Name '+((i as number)+1)">
                                     </div>
                                     <div class="col ps-1 pe-0">
-                                        <RegexInput v-model="hf.value" :ref="el => responseHeaderValueRefs[(i as number) ] = el" placeholder="Value [Regex]" @input="onHeaderInput(filter.response.headers, (i as number) )" />
+                                        <RegexInput v-model="hf.value" :ref="el => responseHeaderValueRefs[(i as number) ] = el" placeholder="Value [Regex]" @input="onHeaderInput(filter.response.headers, (i as number) )" :aria-label="'Response Header Value '+((i as number)+1)" />
                                     </div>
                                     <div class="col-1">
                                         <button v-if="(i as number)  < filter.response.headers.value.length -1"
@@ -849,7 +697,7 @@ function mergeDeep<T>(target: T, source: Partial<T>): T {
                         <div class="col" v-show="filter.clientIP.checkbox">
                              <div class="col ps-0 pe-1"  data-bs-toggle="tooltip" data-bs-delay='{"show": 200, "hide": 100}' :title="filter.clientIP.title" data-bs-html="true">
                                 <div class="row me-0">
-                                    <input type="text" class="form-control form-control-sm" id="clientIP" v-model="filter.clientIP.value">
+                                    <input type="text" class="form-control form-control-sm" id="clientIP" v-model="filter.clientIP.value" aria-label="Client IP">
                                 </div>
                             </div>
                         </div>

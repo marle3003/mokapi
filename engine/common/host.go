@@ -122,10 +122,15 @@ type KafkaProduceArgs struct {
 
 type KafkaMessage struct {
 	Key       any
-	Value     []byte
-	Data      any
+	Value     Optional[[]byte]
+	Data      Optional[any]
 	Headers   map[string]string
 	Partition int
+}
+
+type Optional[T any] struct {
+	IsSet bool
+	Value T
 }
 
 type RetryArgs struct {
@@ -243,13 +248,17 @@ func (e *JobExecution) Title() string {
 	return e.Tags["name"]
 }
 
+func (e *JobExecution) Info() any {
+	return e
+}
+
 func (e *JobExecution) Domain() string {
 	return "Job Execution"
 }
 
 type FakerNode interface {
 	Name() string
-	Fake(r *generator.Request) (interface{}, error)
+	Fake(r *generator.Request) (any, error)
 }
 
 type Store interface {

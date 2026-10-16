@@ -1,10 +1,7 @@
-import type MarkdownIt from "markdown-it"
-import type { Options } from "markdown-it"
-import container from "markdown-it-container"
-import type { Renderer } from "markdown-it/dist/index.cjs.js"
-import Token from 'markdown-it/lib/token'
+import type { MarkdownIt, MarkdownItOptions, Renderer, Token } from "markdown-it"
+import container from 'markdown-it-container'
 
-export function MarkdownItTabContent(md: MarkdownIt, _opts: Options) {
+export function MarkdownItTabContent(md: MarkdownIt) {
 
     md.core.ruler.push('test', function (state) {
         let hide = false
@@ -89,7 +86,7 @@ export function MarkdownItTabContent(md: MarkdownIt, _opts: Options) {
 
     md.use(container, 'tabs', {
         validate: (params: any) => params.trim() === 'tabs',
-        render: (tokens: Token[], idx: number, options: Options, env: any, slf: Renderer) => {
+        render: (tokens: Token[], idx: number, options: Required<MarkdownItOptions>, env: any, slf: Renderer) => {
             const token = tokens[idx];
             if (token?.nesting === 1) {
                 return ''

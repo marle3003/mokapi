@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"mokapi/lib/jsonpreview"
 	"reflect"
 	"strings"
 )
@@ -53,6 +54,21 @@ func (r *HttpEventRequest) String() string {
 	return s
 }
 
+func (r *HttpEventRequest) Snapshot() any {
+	if r == nil {
+		return r
+	}
+
+	type alias HttpEventRequest
+	return struct {
+		*alias
+		Body jsonpreview.Truncated `json:"body"`
+	}{
+		alias: (*alias)(r),
+		Body:  jsonpreview.Truncated{V: r.Body, Limit: 256 << 10},
+	}
+}
+
 func (u Url) String() string {
 	sb := strings.Builder{}
 	sb.WriteString(u.Scheme)
@@ -69,6 +85,24 @@ func (u Url) String() string {
 
 func (r *HttpEventResponse) HasBody() bool {
 	return len(r.Body) > 0 || r.Data != nil
+}
+
+func (r *HttpEventResponse) Snapshot() any {
+	if r == nil {
+		return r
+	}
+
+	limit := 256 << 10
+	type alias HttpEventResponse
+	return struct {
+		*alias
+		Body jsonpreview.Truncated `json:"body"`
+		Data jsonpreview.Truncated `json:"data"`
+	}{
+		alias: (*alias)(r),
+		Body:  jsonpreview.Truncated{V: r.Body, Limit: limit},
+		Data:  jsonpreview.Truncated{V: r.Data, Limit: limit},
+	}
 }
 
 func HttpEventHandler(req *HttpEventRequest, res *HttpEventResponse, resources any) (bool, error) {

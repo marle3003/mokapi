@@ -41,6 +41,10 @@ func (l *MessageLog) Title() string {
 	return ""
 }
 
+func (l *MessageLog) Info() any {
+	return l
+}
+
 func messageLog(c *Channel, data []byte, messageId string, client *Client, direction Direction) *MessageLog {
 	l := &MessageLog{
 		Channel: c.Name,
@@ -87,6 +91,10 @@ func (l *ConnectLog) Title() string {
 	return fmt.Sprintf("Connect to %s", l.Channel)
 }
 
+func (l *ConnectLog) Info() any {
+	return l
+}
+
 type CloseLog struct {
 	Type     string           `json:"type"`
 	Channel  string           `json:"channel"`
@@ -110,4 +118,8 @@ func closeLog(c *Channel, client *Client, reason, closedBy string) *CloseLog {
 
 func (l *CloseLog) Title() string {
 	return fmt.Sprintf("Connect to %s", l.Channel)
+}
+
+func (l *CloseLog) Info() any {
+	return l
 }

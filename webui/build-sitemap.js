@@ -1,6 +1,6 @@
-const fs = require('fs');
-const path = require('path');
-const util = require('util');
+import fs from 'node:fs';
+import path from 'node:path';
+import util from 'node:util';
 
 const pages = [
   {
@@ -48,7 +48,7 @@ function writeItem(item) {
   let xml = '';
 
   if (item.path && item.source) {
-    stats = fs.statSync(path.join(docsPath, item.source));
+    const stats = fs.statSync(path.join(docsPath, item.source));
     const url = `https://mokapi.io${item.path}`;
     const node = util.format(urlTemplate, url, stats.mtime.toISOString())
     xml += node + '\n'
@@ -84,7 +84,7 @@ try {
 
   // write docs
   const data = fs.readFileSync(path.join(docsPath, 'config.json'), 'utf8');
-  docs = JSON.parse(data)
+  const docs = JSON.parse(data)
   content += writeObject(docs)
 
   // trim leading and trailing whitespace and new lines

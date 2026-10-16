@@ -44,7 +44,7 @@ func (e *KafkaEventDispatcher) Register(key string, handler *KafkaEventHandler) 
 }
 
 func (sh *scriptHost) OnKafka(filter common.KafkaFilter, do common.EventHandler, args common.EventArgs) {
-	addDefaultTags(&args, sh)
+	addDefaultTags(&args, sh, "kafka")
 	h := &KafkaEventHandler{
 		Filter:  filter,
 		Execute: do,

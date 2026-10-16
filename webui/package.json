@@ -1,5 +1,6 @@
 {
   "name": "mokapi",
+  "type": "module",
   "version": "0.10.0",
   "private": true,
   "scripts": {
@@ -36,7 +37,7 @@
     "js-yaml": "^5.2.2",
     "kafkajs": "^2.2.4",
     "ldapts": "^9.0.0",
-    "markdown-it": "^14.2.0",
+    "markdown-it": "^15.0.0",
     "markdown-it-container": "^4.0.0",
     "mime-types": "^3.0.2",
     "mqtt": "^5.15.1",
@@ -49,22 +50,22 @@
     "xml-formatter": "^3.7.0"
   },
   "devDependencies": {
-    "@playwright/test": "1.63.0",
+    "@playwright/test": "1.64.0",
     "@rushstack/eslint-patch": "1.16.1",
     "@types/js-yaml": "4.0.9",
     "@types/markdown-it-container": "4.0.1",
-    "@types/node": "26.6.4",
-    "@vitejs/plugin-vue": "6.0.9",
+    "@types/node": "26.6.5",
+    "@vitejs/plugin-vue": "6.0.10",
     "@vue/eslint-config-prettier": "10.2.0",
     "@vue/eslint-config-typescript": "14.9.0",
     "@vue/tsconfig": "0.9.1",
     "eslint": "10.12.0",
     "eslint-plugin-vue": "10.11.1",
     "npm-run-all2": "9.0.3",
-    "prettier": "3.9.9",
+    "prettier": "3.9.10",
     "typescript": "6.0.3",
-    "vite": "8.3.3",
-    "vue-tsc": "3.3.12",
+    "vite": "8.3.4",
+    "vue-tsc": "3.3.13",
     "xml2js": "0.6.2"
   },
   "allowScripts": {

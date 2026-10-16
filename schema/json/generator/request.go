@@ -1,6 +1,7 @@
 package generator
 
 import (
+	"maps"
 	"mokapi/schema/json/schema"
 )
 
@@ -59,8 +60,8 @@ func (r *Request) With(path []string, s *schema.Schema, example []any) *Request 
 }
 
 type Context struct {
-	Values    Values `json:"values"`
-	snapshots []Values
+	Values    map[string]any `json:"values"`
+	snapshots []map[string]any
 	// represents how many steps current context is away from the root
 	level int
 }
@@ -73,7 +74,10 @@ func newContext() *Context {
 
 func (c *Context) Snapshot() {
 	if c.level != 0 {
-		c.snapshots = append(c.snapshots, c.Values.Snapshot())
+		m := map[string]any{}
+		maps.Copy(m, c.Values)
+		c.Values = map[string]any{}
+		c.snapshots = append(c.snapshots, m)
 	}
 	c.level++
 }
@@ -95,15 +99,4 @@ func (c *Context) Has(key string) bool {
 
 func (c *Context) Value(key string) any {
 	return c.Values[key]
-}
-
-func (s *Values) Snapshot() Values {
-	snapshot := map[string]any{}
-	for k, v := range *s {
-		if v != nil {
-			snapshot[k] = v
-		}
-	}
-	*s = map[string]any{}
-	return snapshot
 }

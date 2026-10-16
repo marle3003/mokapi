@@ -1,4 +1,4 @@
-import { metrics } from 'metrics.ts';
+import { metrics } from './metrics';
 import { on } from 'mokapi';
 
 const ChatMessage = {
@@ -99,11 +99,11 @@ export default async function () {
           channels: services[0].channels.map((x) => {
             return {
               name: x.name,
-              ...(x.title ? { title: x.title } : {}),
-              ...(x.summary ? { summary: x.summary } : {}),
-              ...(x.description ? { description: x.description } : {}),
+              ...('title' in x ? { title: x.title } : {}),
+              ...('summary' in x ? { summary: x.summary } : {}),
+              ...('description' in x ? { description: x.description } : {}),
               messages: x.messages,
-               ...x.instances ? { instances: x.instances } : {},
+               ...('instances' in x ? { instances: x.instances } : {}),
               metrics: {
                 websocket_messages_total: metrics.find(
                   (m) => m.name === `websocket_messages_total{service="${services[0].name}",channel="${x.name}"}`
@@ -228,6 +228,29 @@ export let events = [
             }
         }
       ]
+    },
+  },
+  {
+    id: '9ab700fa-55b6-4c32-9c53-8cd3926dacc4',
+    traits: {
+      namespace: 'websocket',
+      name: 'WebSocket Chat API',
+      channel: '/chats/{chatId}',
+      type: 'connection',
+      clientId: clients[0].id,
+    },
+    time: '2026-02-13T09:50:26.100000+01:00',
+    data: {
+      type: 'connect',
+      channel: '/chats/general',
+      client: {
+        id: clients[1].id,
+        query: {},
+        header: {},
+        address: clients[0].address,
+        server: clients[0].serverAddress
+      },
+      api: 'WebSocket Chat API',
     },
   },
 ];

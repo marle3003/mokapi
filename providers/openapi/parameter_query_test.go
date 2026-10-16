@@ -649,6 +649,38 @@ func TestParseQueryDeepObjectOtherParameters(t *testing.T) {
 			query:   url.Values{"filter[unknown]": {"guest"}},
 			wantErr: "parse query parameter 'filter' failed: property 'unknown' not defined in schema: schema type=object properties=[role] free-form=false",
 		},
+		{
+			name: "property is array using multiple values",
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Name: "filter",
+				Type: openapi.ParameterQuery,
+				Schema: schematest.New("object",
+					schematest.WithProperty("role", schematest.New("array", schematest.WithItems("string"))),
+				),
+				Style:   "deepObject",
+				Explode: new(true),
+			}}},
+			query: url.Values{
+				"filter[role]": {"admin", "user"},
+			},
+			want: map[string]any{"filter": map[string]any{"role": []any{"admin", "user"}}},
+		},
+		{
+			name: "property is array using comma separated values",
+			params: openapi.Parameters{{Value: &openapi.Parameter{
+				Name: "filter",
+				Type: openapi.ParameterQuery,
+				Schema: schematest.New("object",
+					schematest.WithProperty("role", schematest.New("array", schematest.WithItems("string"))),
+				),
+				Style:   "deepObject",
+				Explode: new(true),
+			}}},
+			query: url.Values{
+				"filter[role]": {"admin,user"},
+			},
+			want: map[string]any{"filter": map[string]any{"role": []any{"admin,user"}}},
+		},
 	}
 
 	for _, tc := range testcases {

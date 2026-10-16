@@ -168,6 +168,17 @@ m.app.http().route('/pets').use((req, res) => {}).get((req, res) => {})
 				r.Equal(t, "/pets", handlers[1].Filter.Path)
 			},
 		},
+		{
+			name: "operationId",
+			script: `
+const m = require('mokapi')
+m.app.http().operation('foo', (req, res) => {})
+`,
+			test: func(t *testing.T, handlers []handler, err error) {
+				r.Len(t, handlers, 1)
+				r.Equal(t, "foo", handlers[0].Filter.OperationId)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

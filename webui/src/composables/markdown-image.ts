@@ -1,5 +1,4 @@
-import type MarkdownIt from "markdown-it"
-import type Token from "markdown-it/lib/token"
+import type { MarkdownIt, Token, Renderer, MarkdownItOptions } from "markdown-it"
 
 export function imageCaption(md: MarkdownIt) {
 
@@ -15,7 +14,7 @@ export function imageCaption(md: MarkdownIt) {
                     attr[1] = alt
                 }
                 img += ` ${attr[0]}="${attr[1]}"`
-                if (attr[0] === 'title') {
+                if (attr[0] === 'title' && typeof attr[1] === 'string') {
                     title = attr[1]
                 }
             }

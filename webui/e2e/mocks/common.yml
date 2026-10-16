@@ -53,64 +53,6 @@ components:
           type: string
         value:
           type: number
-    Events:
-      type: array
-      items:
-        $ref: '#/components/schemas/Event'
-    Event:
-      type: object
-      properties:
-        id:
-          type: string
-        traits:
-          type: object
-          additionalProperties:
-            type: string
-        time:
-          type: string
-        data:
-          anyOf:
-            - $ref: '#/components/schemas/KafkaEvent'
-            - description: any
-          type: object
-          additionalProperties: true
-    KafkaEvent:
-      type: object
-      properties:
-        offset:
-          type: integer
-        key:
-          $ref: '#/components/schemas/KafkaValue'
-        message:
-          $ref: '#/components/schemas/KafkaValue'
-        schemaId:
-          type: integer
-        partition:
-          type: integer
-        headers:
-          type: object
-          additionalProperties:
-            type: object
-            properties:
-              value:
-                type: string
-              binary:
-                type: string
-        deleted:
-          type: boolean
-        producerId:
-          type: number
-        producerEpoch:
-          type: number
-        sequenceNumber:
-          type: number
-    KafkaValue:
-      type: object
-      properties:
-        value:
-          type: string
-        binary:
-          type: string
     Error:
       type: object
       properties:

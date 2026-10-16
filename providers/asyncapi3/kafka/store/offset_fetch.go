@@ -82,7 +82,7 @@ func validateConsumer(t *Topic, clientId, groupId string) (error, kafka.ErrorCod
 		if op.Action != "receive" {
 			continue
 		}
-		if op.Bindings.Kafka.ClientId != nil {
+		if op.Bindings != nil && op.Bindings.Kafka.ClientId != nil {
 			p := parser.Parser{Schema: op.Bindings.Kafka.ClientId}
 			_, err = p.Parse(clientId)
 			if err != nil {
@@ -91,7 +91,7 @@ func validateConsumer(t *Topic, clientId, groupId string) (error, kafka.ErrorCod
 				continue
 			}
 		}
-		if op.Bindings.Kafka.GroupId != nil {
+		if op.Bindings != nil && op.Bindings.Kafka.GroupId != nil {
 			p := parser.Parser{Schema: op.Bindings.Kafka.GroupId}
 			_, err = p.Parse(groupId)
 			if err != nil {

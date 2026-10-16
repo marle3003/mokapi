@@ -56,6 +56,10 @@ func (d *LogData) Title() string {
 	return fmt.Sprintf("%v: %v", d.Level, msg)
 }
 
+func (d *LogData) Info() any {
+	return d
+}
+
 func extractTraits(entry *log.Entry) events.Traits {
 	traits := events.NewTraits()
 	if ns, ok := entry.Data["namespace"].(string); ok {

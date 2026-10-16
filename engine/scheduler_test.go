@@ -1,10 +1,11 @@
 package engine
 
 import (
-	"github.com/stretchr/testify/require"
 	"mokapi/engine/common"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestScheduler(t *testing.T) {
@@ -41,6 +42,7 @@ func TestScheduler(t *testing.T) {
 			test: func(t *testing.T, s Scheduler) {
 				count := 0
 				_, err := s.Every("100ms", func() {
+					time.Sleep(200 * time.Millisecond)
 					count++
 				}, common.JobOptions{Times: 1})
 				require.NoError(t, err)

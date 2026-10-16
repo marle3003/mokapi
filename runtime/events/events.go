@@ -18,6 +18,7 @@ type Handler interface {
 
 type EventData interface {
 	Title() string
+	Info() any
 }
 
 type StoreManager struct {

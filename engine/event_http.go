@@ -44,7 +44,7 @@ func (e *HttpEventDispatcher) Register(key string, handler *HttpEventHandler) {
 }
 
 func (sh *scriptHost) OnHttp(filter common.HttpFilter, do common.EventHandler, args common.EventArgs) {
-	addDefaultTags(&args, sh)
+	addDefaultTags(&args, sh, "http")
 	h := &HttpEventHandler{
 		Filter:  filter,
 		Execute: do,
