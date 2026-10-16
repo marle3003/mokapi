@@ -50,7 +50,7 @@
     "xml-formatter": "^3.7.0"
   },
   "devDependencies": {
-    "@playwright/test": "1.63.0",
+    "@playwright/test": "1.64.0",
     "@rushstack/eslint-patch": "1.16.1",
     "@types/js-yaml": "4.0.9",
     "@types/markdown-it-container": "4.0.1",
