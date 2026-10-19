@@ -57,6 +57,7 @@ func TestValidation(t *testing.T) {
 				// latest message is first
 				require.Equal(t,
 					&store.KafkaMessageLog{
+						Topic:     "foo",
 						Offset:    1,
 						Key:       &store.LogValue{Value: "", Binary: []byte("key-bar")},
 						Message:   &store.LogValue{Value: "", Binary: []byte("bar")},
@@ -70,6 +71,7 @@ func TestValidation(t *testing.T) {
 					e[0].Data.(*store.KafkaMessageLog))
 				require.Equal(t,
 					&store.KafkaMessageLog{
+						Topic:     "foo",
 						Offset:    0,
 						Key:       &store.LogValue{Value: "", Binary: []byte("key-foo")},
 						Message:   &store.LogValue{Value: "", Binary: []byte("foo")},

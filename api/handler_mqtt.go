@@ -1,6 +1,7 @@
 package api
 
 import (
+	"maps"
 	"mokapi/providers/asyncapi3"
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
@@ -42,6 +43,7 @@ type mqttTopic struct {
 	Description string                   `json:"description,omitempty"`
 	Messages    map[string]messageConfig `json:"messages,omitempty"`
 	Tags        []kafkaTag               `json:"tags,omitempty"`
+	Parameters  []string                 `json:"parameters,omitempty"`
 	Instances   []mqttTopicInstance      `json:"instances,omitempty"`
 	Metrics     mqttTopicMetrics         `json:"metrics,omitempty"`
 }
@@ -49,6 +51,7 @@ type mqttTopic struct {
 type mqttTopicInstance struct {
 	Name       string            `json:"name"`
 	Parameters map[string]string `json:"parameters,omitempty"`
+	Metrics    mqttTopicMetrics  `json:"metrics,omitempty"`
 }
 
 type mqttClient struct {
@@ -59,8 +62,8 @@ type mqttClient struct {
 }
 
 type mqttTopicMetrics struct {
-	NumMessages     float64 `json:"mqtt_messages_total"`
-	LastMessageTime float64 `json:"mqtt_message_timestamp"`
+	NumMessages     float64 `json:"messages_total"`
+	LastMessageTime float64 `json:"message_timestamp"`
 }
 
 func getMqttServices(store *runtime.MqttStore, m *monitor.Monitor) []service {
@@ -193,34 +196,39 @@ func (h *handler) getMqttTopics(w http.ResponseWriter, r *http.Request) {
 
 func getMqttTopics(mi *runtime.MqttInfo, m *monitor.Mqtt) []mqttTopic {
 	topics := make([]mqttTopic, 0, len(mi.Config.Channels))
-	for name, ch := range mi.Config.Channels {
+	for _, ch := range mi.Config.Channels {
 		if ch.Value == nil {
 			continue
 		}
-		if !ch.Value.IsChannelAvailable("kafka") {
+		if !ch.Value.IsChannelAvailable("mqtt") {
 			continue
 		}
-		addr := name
-		if ch.Value.Address != "" {
-			addr = ch.Value.Address
-		}
+		addr := ch.Value.ResolveAddress()
 
 		data := newMqttTopic(addr, ch.Value, mi.Config)
 		if len(ch.Value.Parameters) > 0 {
+			data.Parameters = slices.SortedFunc(maps.Keys(ch.Value.Parameters), func(a, b string) int {
+				return strings.Compare(a, b)
+			})
 			for _, t := range mi.Topics {
 				if err := ch.Value.IsNameValid(t.Name); err == nil {
 					params, _ := ch.Value.ExtractParams(t.Name)
-					data.Instances = append(data.Instances, mqttTopicInstance{
+					inst := mqttTopicInstance{
 						Name:       t.Name,
 						Parameters: params,
-					})
+					}
+					inst.Metrics = mqttTopicMetrics{
+						NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name), metrics.ByLabel("instance", t.Name))),
+						LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name), metrics.ByLabel("instance", t.Name))),
+					}
+					data.Instances = append(data.Instances, inst)
 				}
 			}
 		}
 
 		data.Metrics = mqttTopicMetrics{
-			NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name))),
-			LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name))),
+			NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name), metrics.ByLabel("topic", addr))),
+			LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", mi.Info.Name), metrics.ByLabel("topic", addr))),
 		}
 
 		topics = append(topics, data)

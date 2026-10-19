@@ -20,15 +20,14 @@ func SetUUIDGenerator(g UUIDGenerator) {
 }
 
 type ClientContext struct {
-	Addr                   string
-	ClientId               string
-	ClientSoftwareName     string
-	ClientSoftwareVersion  string
-	Heartbeat              time.Time
-	Member                 map[string]string
-	Close                  func()
-	AllowAutoTopicCreation bool
-	ServerAddress          string
+	Addr                  string
+	ClientId              string
+	ClientSoftwareName    string
+	ClientSoftwareVersion string
+	Heartbeat             time.Time
+	Member                map[string]string
+	Close                 func()
+	ServerAddress         string
 }
 
 func (c *ClientContext) AddGroup(groupName, memberId string) {
@@ -56,5 +55,5 @@ func ClientFromContext(ctx context.Context) *ClientContext {
 }
 
 func NewClientContext(ctx context.Context, addr, serverAddress string) context.Context {
-	return context.WithValue(ctx, clientKey, &ClientContext{Addr: addr, ServerAddress: serverAddress, AllowAutoTopicCreation: true, Heartbeat: time.Now()})
+	return context.WithValue(ctx, clientKey, &ClientContext{Addr: addr, ServerAddress: serverAddress, Heartbeat: time.Now()})
 }

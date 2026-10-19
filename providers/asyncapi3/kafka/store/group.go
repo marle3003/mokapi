@@ -39,7 +39,7 @@ func (s *Store) newGroup(name string, coordinator *Broker) *Group {
 	g := &Group{
 		Name: name,
 	}
-	g.balancer = newGroupBalancer(g, coordinator.kafkaConfig, &groupMonitor{cluster: s.cluster, monitor: s.monitor})
+	g.balancer = newGroupBalancer(g, coordinator.kafkaConfig, &groupMonitor{cluster: s.config.Info.Name, monitor: s.monitor})
 	go g.balancer.run()
 	return g
 }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Ref, computed, ref, watch } from 'vue'
+import { computed, provide, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
 import WebsocketChannels from './WebsocketChannels.vue'
@@ -18,6 +18,8 @@ import type { ServiceResult } from '@/types/dashboard'
 import '@/assets/mqtt.css'
 import ExportAsyncApi from './export/AsyncAPI.vue'
 import { useToolbarItem } from '@/composables/toolbar-items.ts'
+import { provideBreadcrumb } from '@/composables/breadcrumb.ts'
+import Breadcrumb from '../Breadcrumb.vue'
 
 const route = useRoute();
 const router = useRouter();
@@ -35,9 +37,6 @@ const service = computed(() => {
 
 watch(() => dashboard.value,
   (db, _, onCleanup) => {
-    if (!serviceName) {
-        return
-    }
     const res = db.getService(serviceName, 'websocket');
     data.value = res;
 
@@ -67,9 +66,25 @@ useToolbarItem(
         }
     }
 )
+const refresh = computed(() => route.query.refresh ? { refresh: route.query.refresh } : {})
+const tail = provideBreadcrumb()
+const breadcrumb = computed<BreadcrumbItem[]>(() => {
+  const base: BreadcrumbItem[] = [
+    { text: 'Websocket', to: { name: getRouteName('websocket').value, query: refresh.value } },
+  ]
+  if (!service.value) return base
+  const isOverview = route.name === getRouteName('websocketService').value
+  base.push(isOverview
+    ? { text: service.value.name }
+    : { text: service.value.name, to: { name: getRouteName('websocketService').value,
+        params: { service: service.value.name }, query: refresh.value } })
+  return [...base, ...tail.value]
+})
 </script>
 
 <template>
+    <Breadcrumb :items="breadcrumb" />
+
     <div v-if="$route.name == getRouteName('websocketService').value && service != null">
         <div class="card-group">
             <service-info-card :service="service" type="Websocket" />
@@ -122,7 +137,7 @@ useToolbarItem(
         </div>
     </div>
     <div v-if="$route.matched.some(route => route.name === getRouteName('websocketChannel').value)">
-        <websocket-channel></websocket-channel>
+        <websocket-channel v-if="service" :service="service"></websocket-channel>
     </div>
     <div v-if="$route.name == getRouteName('websocketClient').value">
         <websocket-client></websocket-client>

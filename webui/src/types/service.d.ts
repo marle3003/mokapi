@@ -34,7 +34,7 @@ declare interface ServiceEventResult {
 
 declare interface ServiceEventInfo {
     id: string
-    data: HttpEventInfo | KafkaEventInfo | MqttEventInfo | WebsocketEventData | SmtpEventInfo | LdapEventInfo | JobExecution | LogMessage
+    data: HttpEventInfo | KafkaEventInfo | MqttEventInfo | WebsocketEventInfo | SmtpEventInfo | LdapEventInfo | JobExecution | LogMessage
     time: string
     traits: Traits
 }

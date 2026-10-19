@@ -53,7 +53,7 @@ func TestHandler_Mqtt(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services",
-			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"mqtt","metrics":{"mqtt_messages_total":0,"mqtt_message_timestamp":0}}]`,
+			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"mqtt","metrics":{"messages_total":0,"message_timestamp":0}}]`,
 		},
 		{
 			name: "get MQTT services",
@@ -76,7 +76,7 @@ func TestHandler_Mqtt(t *testing.T) {
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/mqtt",
-			responseBody: `[{"name":"foo","description":"mqtt","contact":{"name":"mokapi","url":"https://mokapi.io","email":"info@mokapi.io"},"version":"1.0","type":"mqtt","metrics":{"mqtt_messages_total":0,"mqtt_message_timestamp":0}}]`,
+			responseBody: `[{"name":"foo","description":"mqtt","contact":{"name":"mokapi","url":"https://mokapi.io","email":"info@mokapi.io"},"version":"1.0","type":"mqtt","metrics":{"messages_total":0,"message_timestamp":0}}]`,
 		},
 		{
 			name: "get specific",
@@ -95,6 +95,70 @@ func TestHandler_Mqtt(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services/mqtt/foo",
 			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"mokapi","host":":1883","protocol":"mqtt","title":"Mokapi Default Broker","summary":"Automatically added broker because no servers are defined in the AsyncAPI spec","description":""}],"configs":[{"id":"64613435-3062-6462-3033-316532633233","url":"file://foo.yml","provider":"test","time":"2023-12-27T13:01:30Z"}]}`,
+		},
+		{
+			name: "channels with metrics",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+
+				cfg := &dynamic.Config{
+					Info: dynamictest.NewConfigInfo(),
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+						asyncapi3test.WithServer("bar", "mqtt", "foo.bar"),
+						asyncapi3test.WithChannel("channel1"),
+						asyncapi3test.WithChannel("channel2"),
+					),
+				}
+				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
+
+				app.Monitor.Mqtt.Messages.WithLabel("foo", "channel1").Add(1)
+				app.Monitor.Mqtt.Messages.WithLabel("foo", "channel2").Add(2)
+				app.Monitor.Mqtt.LastMessage.WithLabel("foo", "channel1").Set(1234)
+				app.Monitor.Mqtt.LastMessage.WithLabel("foo", "channel2").Set(7890)
+
+				_, err := app.Mqtt.Add(cfg, enginetest.NewEngine())
+				require.NoError(t, err)
+
+				return app
+			},
+			requestUrl:   "http://foo.api/api/services/mqtt/foo/topics",
+			responseBody: `[{"name":"channel1","metrics":{"messages_total":1,"message_timestamp":1234}},{"name":"channel2","metrics":{"messages_total":2,"message_timestamp":7890}}]`,
+		},
+		{
+			name: "channels with assigned server",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+				addr := fmt.Sprintf(":%v", try.GetFreePort())
+
+				mqtt := asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("foo", "mqtt", addr),
+					asyncapi3test.WithServer("bar", "kafka", "foo.bar"),
+					asyncapi3test.WithChannel("channel1",
+						asyncapi3test.AssignToServer("#/servers/foo"),
+					),
+					asyncapi3test.WithChannel("channel2",
+						asyncapi3test.AssignToServer("#/servers/bar"),
+					),
+				)
+
+				cfg := &dynamic.Config{
+					Info: dynamictest.NewConfigInfo(),
+					Data: mqtt,
+				}
+				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
+				err := mqtt.Parse(cfg, &dynamictest.Reader{})
+				require.NoError(t, err)
+
+				mi, err := app.Mqtt.Add(cfg, enginetest.NewEngine())
+				require.NoError(t, err)
+				mi.Topics["sensors/1234z/data"] = &store.Topic{Name: "sensors/1234z/data"}
+
+				return app
+			},
+			requestUrl:   "http://foo.api/api/services/mqtt/foo/topics",
+			responseBody: `[{"name":"channel1","metrics":{"messages_total":0,"message_timestamp":0}}]`,
 		},
 		{
 			name: "topic with parameter",
@@ -117,10 +181,13 @@ func TestHandler_Mqtt(t *testing.T) {
 				require.NoError(t, err)
 				mi.Topics["sensors/1234z/data"] = &store.Topic{Name: "sensors/1234z/data"}
 
+				app.Monitor.Mqtt.Messages.WithLabel("foo", "sensors/{sensorId}/data", "sensors/1234z/data").Add(1)
+				app.Monitor.Mqtt.LastMessage.WithLabel("foo", "sensors/{sensorId}/data", "sensors/1234z/data").Set(1234)
+
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/mqtt/foo/topics",
-			responseBody: `[{"name":"sensors/{sensorId}/data","instances":[{"name":"sensors/1234z/data","parameters":{"sensorId":"1234z"}}],"metrics":{"mqtt_messages_total":0,"mqtt_message_timestamp":0}}]`,
+			responseBody: `[{"name":"sensors/{sensorId}/data","parameters":["sensorId"],"instances":[{"name":"sensors/1234z/data","parameters":{"sensorId":"1234z"},"metrics":{"messages_total":1,"message_timestamp":1234}}],"metrics":{"messages_total":1,"message_timestamp":1234}}]`,
 		},
 	}
 
@@ -157,7 +224,7 @@ func TestHandler_Mqtt_Metrics(t *testing.T) {
 			name:         "service list with metric",
 			app:          runtimetest.NewApp(runtimetest.WithMqttInfo("foo", getMqttInfo(asyncapi3test.NewConfig(asyncapi3test.WithTitle("foo"))))),
 			requestUrl:   "http://foo.api/api/services",
-			responseBody: `[{"name":"foo","version":"1.0","type":"mqtt","metrics":{"mqtt_messages_total":1,"mqtt_message_timestamp":12345678}}]`,
+			responseBody: `[{"name":"foo","version":"1.0","type":"mqtt","metrics":{"messages_total":1,"message_timestamp":12345678}}]`,
 			addMetrics: func(monitor *monitor.Monitor) {
 				monitor.Mqtt.Messages.WithLabel("foo", "topic").Add(1)
 				monitor.Mqtt.LastMessage.WithLabel("foo", "topic").Set(12345678)
@@ -168,14 +235,14 @@ func TestHandler_Mqtt_Metrics(t *testing.T) {
 			app: runtimetest.NewApp(
 				runtimetest.WithMqttInfo("foo", getMqttInfo(
 					asyncapi3test.NewConfig(asyncapi3test.WithTitle("foo"),
-						asyncapi3test.WithChannel("foo"),
+						asyncapi3test.WithChannel("channel-1"),
 					),
 				))),
 			requestUrl:   "http://foo.api/api/services/mqtt/foo",
-			responseBody: `{"name":"foo","version":"1.0","topics":[{"name":"foo","metrics":{"mqtt_messages_total":1,"mqtt_message_timestamp":12345678}}]}`,
+			responseBody: `{"name":"foo","version":"1.0","topics":[{"name":"channel-1","metrics":{"messages_total":1,"message_timestamp":12345678}}]}`,
 			addMetrics: func(monitor *monitor.Monitor) {
-				monitor.Mqtt.Messages.WithLabel("foo", "topic").Add(1)
-				monitor.Mqtt.LastMessage.WithLabel("foo", "topic").Set(12345678)
+				monitor.Mqtt.Messages.WithLabel("foo", "channel-1").Add(1)
+				monitor.Mqtt.LastMessage.WithLabel("foo", "channel-1").Set(12345678)
 			},
 		},
 	}

@@ -62,25 +62,37 @@ func (t *Topic) update(config *asyncapi3.Channel, s *Store) {
 		numPartitions = config.Bindings.Kafka.Partitions
 	}
 
-	for i, p := range t.Partitions {
-		if i >= numPartitions {
-			p.delete()
-		} else {
-			p.validator = newValidator(config)
-		}
+	t.updatePartitions(numPartitions)
+}
+
+func (t *Topic) updatePartitions(numPartitions int) {
+	n := numPartitions
+	if n < len(t.Partitions) {
+		n = len(t.Partitions)
 	}
 
-	for i := len(t.Partitions); i < numPartitions; i++ {
-		part := newPartition(i, s.brokers, t.log, s.trigger, t)
-		part.validator = newValidator(config)
-		t.Partitions = append(t.Partitions, part)
+	for i := range n {
+		var p *Partition
+		if i >= numPartitions {
+			p = t.Partitions[i]
+			p.delete()
+		} else {
+			if i >= len(t.Partitions) {
+				s := t.Store()
+				p = newPartition(i, s.brokers, t.log, s.trigger, t)
+				t.Partitions = append(t.Partitions, p)
+			} else {
+				p = t.Partitions[i]
+			}
+			p.validator = newValidator(t.Config)
+		}
 	}
 
 	t.Partitions = t.Partitions[:numPartitions]
 }
 
 func (t *Topic) log(r *KafkaMessageLog, traits events.Traits) {
-	t.logger(r, traits.With("topic", t.Name))
+	t.logger(r, traits.With("topic", t.Config.ResolveAddress()))
 }
 
 func (t *Topic) Store() *Store {

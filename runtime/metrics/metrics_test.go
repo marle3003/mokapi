@@ -61,6 +61,26 @@ func TestNewCounterMap(t *testing.T) {
 			},
 		},
 		{
+			name: "missing label",
+			f: func(t *testing.T) {
+				c := NewCounterMap(WithName("foo"), WithLabelNames("foo"))
+				require.PanicsWithValue(t, "invalid labels values for foo", func() {
+					c.WithLabel().Add(1)
+				})
+			},
+		},
+		{
+			name: "using optional label",
+			f: func(t *testing.T) {
+				c := NewCounterMap(WithName("foo"), WithLabelNames("foo"), WithOptionalNames("bar"))
+				c.WithLabel("foo1").Add(1)
+				require.Equal(t, 1.0, c.Value(&Query{Labels: []*Label{{Name: "foo", Value: "foo1"}}}))
+				c.WithLabel("foo2", "bar").Add(1)
+				require.Equal(t, 1.0, c.Value(&Query{Labels: []*Label{{Name: "foo", Value: "foo1"}}}))
+				require.Equal(t, 1.0, c.Value(&Query{Labels: []*Label{{Name: "foo", Value: "foo2"}, {Name: "bar", Value: "bar"}}}))
+			},
+		},
+		{
 			name: "json",
 			f: func(t *testing.T) {
 				c := NewCounterMap(WithName("foo"), WithLabelNames("foo"))

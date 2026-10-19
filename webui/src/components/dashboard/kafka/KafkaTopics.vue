@@ -56,10 +56,10 @@ function compareTopics(t1: KafkaTopicInfo, t2: KafkaTopicInfo) {
 }
 
 function lastMessage(topic: KafkaTopicInfo) {
-    if (!topic.metrics.kafka_message_timestamp || topic.metrics.kafka_message_timestamp == 0) {
+    if (!topic.metrics.message_timestamp || topic.metrics.message_timestamp == 0) {
         return '-'
     }
-    return format(topic.metrics.kafka_message_timestamp)
+    return format(topic.metrics.message_timestamp)
 }
 function goToTopic(topic: KafkaTopicInfo, openInNewTab = false) {
     if (getSelection()?.toString()) {
@@ -162,7 +162,7 @@ function toggleTag(name: string) {
                                 <div class="table-markdown">{{ topic.summary }}</div>
                             </td>
                             <td class="text-center">{{ lastMessage(topic) }}</td>
-                            <td class="text-center">{{ topic.metrics.kafka_messages_total }}</td>
+                            <td class="text-center">{{ topic.metrics.messages_total }}</td>
                         </tr>
                     </tbody>
                 </table>

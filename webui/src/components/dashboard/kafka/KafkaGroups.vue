@@ -19,7 +19,7 @@ const groups = computed(() => {
     return props.topic.groups
 })
 function lastRebalancing(group: KafkaGroupInfo) {
-  const timestamp = group.metrics.kafka_rebalance_timestamp;
+  const timestamp = group.metrics.rebalance_timestamp;
   if (!timestamp) {
     return '-'
   }
@@ -55,10 +55,10 @@ function lags(group: KafkaGroupInfo) {
     }
     let result = 0;
     for (const partition of topicMetrics) {
-        if (!partition.kafka_consumer_group_lag) {
+        if (!partition.consumer_group_lag) {
             continue
         }
-        result += partition.kafka_consumer_group_lag
+        result += partition.consumer_group_lag
     }
     return result
 }

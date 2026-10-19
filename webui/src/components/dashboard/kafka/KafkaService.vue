@@ -20,6 +20,8 @@ import type { ServiceResult } from '@/types/dashboard'
 import Server from './Server.vue'
 import ExportAsyncApi from './export/AsyncAPI.vue'
 import { useToolbarItem } from '@/composables/toolbar-items.ts'
+import Breadcrumb from '../Breadcrumb.vue'
+import { provideBreadcrumb } from '@/composables/breadcrumb.ts'
 
 const route = useRoute();
 const router = useRouter();
@@ -69,9 +71,25 @@ useToolbarItem(
         }
     }
 )
+const refresh = computed(() => route.query.refresh ? { refresh: route.query.refresh } : {})
+const tail = provideBreadcrumb()
+const breadcrumb = computed<BreadcrumbItem[]>(() => {
+  const base: BreadcrumbItem[] = [
+    { text: 'Kafka', to: { name: getRouteName('mqtt').value, query: refresh.value } },
+  ]
+  if (!service.value) return base
+  const isOverview = route.name === getRouteName('kafkaService').value
+  base.push(isOverview
+    ? { text: service.value.name }
+    : { text: service.value.name, to: { name: getRouteName('kafkaService').value,
+        params: { service: service.value.name }, query: refresh.value } })
+  return [...base, ...tail.value]
+})
 </script>
 
 <template>
+    <Breadcrumb :items="breadcrumb" />
+
     <div v-if="$route.name == getRouteName('kafkaService').value && service != null">
         <div class="card-group">
             <service-info-card :service="service" type="Kafka" />

@@ -6,10 +6,12 @@ import { getRouteName, useDashboard } from '@/composables/dashboard'
 import { useWebsocket } from '@/composables/websocket.ts'
 import { usePrettyText } from '@/composables/usePrettyText.ts'
 import { usePageSize } from '@/composables/paging'
+import Paging from '../Paging.vue'
 
 const props = defineProps<{
     service?: WebsocketService,
     channelName?: string
+    instanceName?: string
     clientId?: string
 }>()
 
@@ -24,6 +26,9 @@ const labels = computed(() => {
     }
     if (props.channelName) {
         result.push({ name: 'channel', value: props.channelName })
+    }
+    if (props.instanceName) {
+        result.push({ name: 'instance', value: props.instanceName })
     }
     result.push({ name: 'type', value: 'message' })
     if (props.clientId) {
@@ -85,19 +90,11 @@ const messages = computed(() => {
     return result;
 })
 
-function eventData(event: ServiceEventInfo | null): WebsocketMessageData | null {
+function eventData(event: ServiceEventInfo | null): WebsocketMessageInfo | null {
     if (!event) {
         return null
     }
     return event.data as WebsocketMessageData
-}
-function isAvro(event: ServiceEventInfo): boolean {
-    const msg = getMessageConfig(event)
-    if (!msg) {
-        return false
-    }
-    const [_, isAvro] = getContentType(msg)
-    return isAvro
 }
 
 function goToMessage(eventId: string, openInNewTab = false) {
@@ -117,67 +114,6 @@ function goToMessage(eventId: string, openInNewTab = false) {
     }
 }
 
-function getChannel(event: ServiceEventInfo): WebsocketChannel | undefined {
-    const channelName = event.traits["channel"]!
-
-    let service = props.service
-    if (!service) {
-        const { services } = dashboard.value.getServices('websocket', false);
-        for (const s of services.value) {
-            if (s.name === event.traits['name']) {
-                service = s as WebsocketService
-            }
-        }
-    }
-
-    if (props.service) {
-        for (const channel of props.service.channels) {
-            if (channel.name === channelName) {
-                return channel
-            }
-        }
-    }
-
-    return undefined
-}
-function getMessageConfig(event: ServiceEventInfo): WebsocketMessage | undefined {
-    const data = eventData(event)
-    const channel = getChannel(event)
-    if (!channel) {
-        return undefined
-    }
-
-    const keys = Object.keys(channel.messages)
-    if (keys.length === 1) {
-        return channel.messages[keys[0]!]
-    }
-
-    const messageId = data?.messageId
-
-    if (!messageId) {
-        console.error('missing messageId in Websocket event log')
-        return
-    }
-
-    for (const id in channel.messages) {
-        if (id === messageId) {
-            return channel.messages[id]
-        }
-    }
-    return undefined
-}
-function getContentType(msg: WebsocketMessage): [string, boolean] {
-    if (msg.payload.format?.includes('application/vnd.apache.avro')) {
-        switch (msg.contentType) {
-            case 'avro/binary':
-            case 'application/avro':
-            case 'application/octet-stream':
-                return ['application/json', true]
-        }
-    }
-
-    return [msg.contentType, false]
-}
 const isTemplateChannel = computed(() => {
     if (!props.service || !props.channelName) {
         return false
@@ -195,7 +131,7 @@ const isTemplateChannel = computed(() => {
         <table class="table dataTable selectable" aria-label="Recent Messages">
             <thead>
                 <tr>
-                    <th scope="col" class="text-left col-3" v-if="!channelName || isTemplateChannel">Channel</th>
+                    <th scope="col" class="text-left col-3" v-if="!channelName || isTemplateChannel">Path</th>
                     <th scope="col" class="text-left col-1">Source</th>
                     <th scope="col" class="text-left col-1">Destination</th>
                     <th scope="col" class="text-left col-4">Value</th>

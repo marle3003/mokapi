@@ -62,26 +62,6 @@ func TestStore(t *testing.T) {
 			},
 		},
 		{
-			"create topic",
-			func(t *testing.T, sm *events.StoreManager) {
-				s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), sm, monitor.NewKafka())
-				defer s.Close()
-				topic, err := s.NewTopic("foo", asyncapi3test.NewChannel(), []*asyncapi3.Operation{})
-				require.NoError(t, err)
-				require.Equal(t, "foo", topic.Name)
-				require.Equal(t, 1, len(topic.Partitions))
-			},
-		},
-		{
-			"create topic, already exists",
-			func(t *testing.T, sm *events.StoreManager) {
-				s := store.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo")), enginetest.NewEngine(), sm, monitor.NewKafka())
-				defer s.Close()
-				_, err := s.NewTopic("foo", asyncapi3test.NewChannel(), []*asyncapi3.Operation{})
-				require.Error(t, err, "topic foo already exists")
-			},
-		},
-		{
 			"update topic add partition",
 			func(t *testing.T, sm *events.StoreManager) {
 				s := store.New(asyncapi3test.NewConfig(asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 1}))), enginetest.NewEngine(), sm, monitor.NewKafka())

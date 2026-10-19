@@ -664,13 +664,14 @@ func TestHandler_Events(t *testing.T) {
 
 				newHttpEvent(t, httptest.NewRequest("get", "http://localhost/foo", nil), events.NewTraits().WithNamespace("http"), sm)
 				err := sm.Push(&kafka.KafkaMessageLog{
+					Topic:   "topic",
 					Key:     &kafka.LogValue{Value: "foo"},
 					Message: &kafka.LogValue{Value: "bar"},
 				}, events.NewTraits().WithNamespace("kafka"))
 				require.NoError(t, err)
-				err = sm.Push(&mqtt.LogMessage{Message: &mqtt.LogValue{Value: "foo"}}, events.NewTraits().WithNamespace("kafka"))
+				err = sm.Push(&mqtt.LogMessage{Topic: "topic", Message: &mqtt.LogValue{Value: "foo"}}, events.NewTraits().WithNamespace("kafka"))
 				require.NoError(t, err)
-				err = sm.Push(&websocket.MessageLog{Message: websocket.LogValue{Value: "foo"}}, events.NewTraits().WithNamespace("kafka"))
+				err = sm.Push(&websocket.MessageLog{Channel: "channel", Message: &websocket.LogValue{Value: "foo"}}, events.NewTraits().WithNamespace("kafka"))
 				require.NoError(t, err)
 				err = sm.Push(&directory.SearchLog{
 					Request:  &directory.SearchRequest{Operation: "Search", BaseDN: "foo", Filter: "bar"},
@@ -705,9 +706,9 @@ func TestHandler_Events(t *testing.T) {
 						// get the inserted order not LIFO
 						slices.Reverse(items)
 						require.Equal(t, map[string]any{"deprecated": false, "duration": float64(0), "statusCode": float64(0), "url": "http://localhost/foo"}, getItemData(items, 0))
-						require.Equal(t, map[string]any{"deleted": false, "key": map[string]any{"binary": nil, "value": "foo"}, "message": map[string]any{"binary": nil, "value": "bar"}}, getItemData(items, 1))
-						require.Equal(t, map[string]any{"topic": "", "message": map[string]any{"binary": nil, "value": "foo"}}, getItemData(items, 2))
-						require.Equal(t, map[string]any{"binary": nil, "value": "foo"}, getItemData(items, 3)["message"])
+						require.Equal(t, map[string]any{"topic": "topic", "deleted": false, "key": map[string]any{"binary": nil, "value": "foo"}, "message": map[string]any{"binary": nil, "value": "bar"}}, getItemData(items, 1))
+						require.Equal(t, map[string]any{"topic": "topic", "message": map[string]any{"binary": nil, "value": "foo"}}, getItemData(items, 2))
+						require.Equal(t, map[string]any{"channel": "channel", "client": map[string]any{"address": "", "header": nil, "id": "", "query": nil, "server": ""}, "direction": "", "message": map[string]any{"binary": nil, "value": "foo"}}, getItemData(items, 3))
 						require.Equal(t, map[string]any{"criteria": "bar", "dn": "foo", "duration": float64(10), "operation": "Search", "status": "ok"}, getItemData(items, 4))
 					}),
 				)
@@ -792,6 +793,7 @@ func TestHandler_KafkaEvents(t *testing.T) {
 				sm.SetStore(1, events.NewTraits().WithNamespace("kafka"))
 
 				err := sm.Push(&kafka.KafkaMessageLog{
+					Topic:          "foo",
 					Offset:         123,
 					Key:            &kafka.LogValue{},
 					Message:        &kafka.LogValue{},
@@ -817,6 +819,7 @@ func TestHandler_KafkaEvents(t *testing.T) {
 						var m map[string]any
 						require.NoError(t, json.Unmarshal([]byte(body), &m))
 						require.Equal(t, map[string]any{
+							"topic":   "foo",
 							"api":     "",
 							"deleted": false,
 							"headers": any(nil),

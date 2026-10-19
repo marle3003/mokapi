@@ -53,3 +53,8 @@ interface JobExecution {
   logs: { level: string, message: string}[]
   error?: { message: string }
 }
+
+declare interface BreadcrumbItem {
+  text: string
+  to?: RouteLocationRaw
+}

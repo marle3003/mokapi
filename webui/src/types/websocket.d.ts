@@ -1,5 +1,4 @@
-declare interface WebsocketService extends Service {
-  channels: WebsocketChannel[];
+declare interface WebsocketService extends BaseChannelService<WebsocketChannel> {
   servers: WebsocketServer[];
   clients?: WebsocketClient[];
 }
@@ -11,47 +10,30 @@ declare interface WebsocketServer {
   title: string
   summary: string
   description: string;
-  tags: WebsocketTag[]
+  tags: Tag[]
   configs: { [key: string]: any }
 }
 
-declare interface WebsocketTag {
-  name: string
-  description: string
-}
-
-declare interface WebsocketChannel {
-  name: string;
-  title: string
-  summary: string;
-  description: string;
-  messages: { [messageId: string]: WebsocketMessage }
-  tags: WebsocketTag[]
-  instances?: WebsocketChannelInstance[]
+declare interface WebsocketChannel extends BaseChannel {
   metrics: {
-    websocket_messages_total: number
-    websocket_message_timestamp: number
+    messages_total: number
+    message_timestamp: number
   }
-}
-
-declare interface WebsocketChannelnstance {
-  name: string
-  parameters: Record<string, string>
-}
-
-declare interface WebsocketMessage {
-  name: string
-  title: string
-  summary: string
-  description: string
-  key: SchemaFormat;
-  payload: SchemaFormat;
-  contentType: string;
 }
 
 declare interface WebsocketServer {
   name: string;
   addr: string;
+}
+
+declare type WebsocketEventInfo =  WebsocketMessageInfo | WebsocketConnectionLog
+
+declare interface WebsocketMessageInfo {
+  channel: string
+  message: WebsocketMessage;
+  direction: string
+  client: WebsocketClientLog
+  validationErrors?: Record<string, string>
 }
 
 declare type WebsocketEventData = WebsocketMessageData | WebsocketConnectionLog
@@ -67,7 +49,7 @@ declare interface WebsocketMessageData {
   validationErrors?: Record<string, string>
 }
 
-declare interface WebsocketMessage {
+declare interface WebsocketMessage extends BaseMessage {
   value?: string
   binary?: string
 }

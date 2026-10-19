@@ -18,17 +18,23 @@ type Kafka struct {
 func NewKafka() *Kafka {
 	messages := metrics.NewCounterMap(
 		metrics.WithFQName("kafka", "messages_total"),
-		metrics.WithLabelNames("service", "topic"))
+		metrics.WithLabelNames("service", "topic"),
+		metrics.WithOptionalNames("instance"),
+	)
 	lastMessage := metrics.NewGaugeMap(
 		metrics.WithFQName("kafka", "message_timestamp"),
-		metrics.WithLabelNames("service", "topic"))
+		metrics.WithLabelNames("service", "topic"),
+		metrics.WithOptionalNames("instance"),
+	)
 	lag := metrics.NewGaugeMap(
 		metrics.WithFQName("kafka", "consumer_group_lag"),
-		metrics.WithLabelNames("service", "group", "topic", "partition"))
+		metrics.WithLabelNames("service", "group", "topic", "partition"),
+	)
 
 	commits := metrics.NewGaugeMap(
 		metrics.WithFQName("kafka", "consumer_group_commit"),
-		metrics.WithLabelNames("service", "group", "topic", "partition"))
+		metrics.WithLabelNames("service", "group", "topic", "partition"),
+	)
 	lastRebalancing :=
 		metrics.NewGaugeMap(
 			metrics.WithFQName("kafka", "rebalance_timestamp"),

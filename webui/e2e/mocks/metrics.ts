@@ -38,6 +38,7 @@ export let metrics = [
         name: 'http_request_timestamp{service="Swagger Petstore",endpoint="/pet/findByStatus",method="POST"}',
         value: 1652237690
     },
+    // Kafka
     {
         name: 'kafka_messages_total{service="Kafka World",topic="mokapi.shop.products"}',
         value: 10
@@ -83,6 +84,15 @@ export let metrics = [
         value: 1652035690
     },
     {
+        name: 'kafka_messages_total{service="Kafka World",topic="orders.{region}.{eventType}"}',
+        value: 1
+    },
+    {
+        name: 'kafka_message_timestamp{service="Kafka World",topic="orders.{region}.{eventType}"}',
+        value: 1652036176
+    },
+    // Mails
+    {
         name: 'mail_mails_total{service="Mail Testserver"}',
         value: 3
     },
@@ -108,11 +118,11 @@ export let metrics = [
         value: 1672182690
     },
     {
-        name: 'mqtt_messages_total{service="MQTT Temperature Sensor API",topic="sensors/{sensorId}/data"}',
+        name: 'mqtt_messages_total{service="MQTT Temperature Sensor API",topic="sensors/{sensorId}/data",instance="sensors/123/data"}',
         value: 1
     },
     {
-        name: 'mqtt_message_timestamp{service="MQTT Temperature Sensor API",topic="sensors/{sensorId}/data"}',
+        name: 'mqtt_message_timestamp{service="MQTT Temperature Sensor API",topic="sensors/{sensorId}/data",instance="sensors/123/data"}',
         value: 1771058965
     },
     // websocket
@@ -125,11 +135,11 @@ export let metrics = [
         value: 1672182690
     },
     {
-        name: 'websocket_messages_total{service="WebSocket Chat API",channel="/chats/{chatId}"}',
+        name: 'websocket_messages_total{service="WebSocket Chat API",channel="/chats/{chatId}",instance="/chats/1234"}',
         value: 2
     },
     {
-        name: 'websocket_message_timestamp{service="WebSocket Chat API",channel="/chats/{chatId}"}',
+        name: 'websocket_message_timestamp{service="WebSocket Chat API",channel="/chats/{chatId}",instance="/chats/1234"}',
         value: 1771058323
     },
 ]

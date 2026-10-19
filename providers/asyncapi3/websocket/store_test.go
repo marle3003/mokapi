@@ -12,6 +12,7 @@ import (
 	"mokapi/providers/asyncapi3/websocket"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
+	"mokapi/runtime/metrics"
 	"mokapi/runtime/runtimetest"
 	"mokapi/schema/json/schema/schematest"
 	"mokapi/try"
@@ -607,7 +608,19 @@ export default function() {
 					return len(evts) > 1
 				})
 
+				require.Equal(t, 1.0, app.Monitor.Websocket.Messages.Sum(
+					metrics.NewQuery(metrics.ByLabel("channel", "/chats/{chatId}")),
+				))
+				require.Equal(t, 1.0, app.Monitor.Websocket.Messages.Sum(
+					metrics.NewQuery(
+						metrics.ByLabel("channel", "/chats/{chatId}"),
+						metrics.ByLabel("instance", "/chats/1234"),
+					),
+				))
+
 				evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
+				require.Equal(t, "/chats/{chatId}", evts[0].Traits.Get("channel"))
+				require.Equal(t, "/chats/1234", evts[0].Traits.Get("instance"))
 				require.Len(t, evts, 2)
 				evt := evts[0]
 				d := evt.Data.(*websocket.MessageLog)

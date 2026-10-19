@@ -3,6 +3,7 @@ import { getCellByColumnName, getCellByName } from '../../helpers/table'
 
 test('Visit Websocket overview', async ({ page }) => {
     await page.goto('/dashboard')
+    const breadcrumb = page.getByRole('navigation', { name: 'Breadcrumb' })
 
     await test.step('Verify Dashboard', async () => {
 
@@ -28,24 +29,24 @@ test('Visit Websocket overview', async ({ page }) => {
         await expect(region.getByLabel('Name')).toHaveText('WebSocket Chat API')
         await expect(region.getByLabel('Description')).toHaveText('A simple chat app mocked over WebSocket. Clients open a single connection to /chat and exchange text frames in real time.')
 
-        const table = page.getByRole('table', { name: 'Channels' });
+        const table = page.getByRole('table', { name: 'Paths' });
         const rows = table.locator('tbody tr');
         await expect(rows).toHaveCount(2);
-        await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('/chat');
+        await expect(await getCellByColumnName(table, 'Path', rows.nth(0))).toHaveText('/chat');
         await expect(await getCellByColumnName(table, 'Summary', rows.nth(0))).toHaveText('Single WS endpoint carrying all chat messages');
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).not.toBeEmpty();
         await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('2');
 
-        await expect(await getCellByColumnName(table, 'Name', rows.nth(1))).toHaveText('/chats/{chatId}');
+        await expect(await getCellByColumnName(table, 'Path', rows.nth(1))).toHaveText('Template /chats/{chatId}, 1 path');
         await expect(await getCellByColumnName(table, 'Summary', rows.nth(1))).toHaveText('');
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(1))).not.toBeEmpty();
         await expect(await getCellByColumnName(table, 'Messages', rows.nth(1))).toHaveText('2');
 
         await test.step('Visit /chat', async () => {
-            const topics = page.getByRole('table', { name: 'Channels' });
+            const topics = page.getByRole('table', { name: 'Paths' });
             await topics.getByText('/chat', { exact: true }).click();
 
-            await expect(page.getByLabel('Channel', { exact: true })).toHaveText('/chat');
+            await expect(page.getByLabel('Path', { exact: true })).toHaveText('/chat');
             await expect(page.getByLabel('Summary')).toHaveText('Single WS endpoint carrying all chat messages');
             await expect(page.getByLabel('Type of API')).toHaveText('Websocket');
 
@@ -60,7 +61,7 @@ test('Visit Websocket overview', async ({ page }) => {
                 await rows.nth(0).click();
                 
                 const meta = page.getByRole('region', { name: 'Meta' })
-                await expect(meta.getByLabel('Channel')).toHaveText('/chat');
+                await expect(meta.getByLabel('Path')).toHaveText('/chat');
                 await expect(meta.getByLabel('Time')).not.toBeEmpty();
                 await expect(meta.getByLabel('Client')).toHaveText('127.0.0.1:53211');
                 await expect(meta.getByLabel('Content Type')).toHaveText('application/json');
@@ -98,43 +99,59 @@ test('Visit Websocket overview', async ({ page }) => {
 
                 })
 
-                await page.getByRole('region', { name: 'Meta' }).getByLabel('Channel').click();
-                await page.getByRole('region', { name: 'Info' }).getByLabel('Cluster').click();
+                await page.getByRole('region', { name: 'Meta' }).getByLabel('Path').click();
+                await breadcrumb.getByRole('link', { name: 'WebSocket Chat API' }).click()
             })
 
         })
 
         await test.step('Visit chats/{chatId}', async () => {
-            const topics = page.getByRole('table', { name: 'Channel' });
+            const topics = page.getByRole('table', { name: 'Paths' });
             await topics.getByText('/chats/{chatId}').click();
 
-            await expect(page.getByLabel('Channel', { exact: true })).toHaveText('/chats/{chatId}');
+            await expect(page.getByLabel('Path Template', { exact: true })).toHaveText('/chats/{chatId}');
             await expect(page.getByLabel('Title')).not.toBeVisible();
             await expect(page.getByLabel('Summary')).not.toBeVisible();
             await expect(page.getByLabel('Description')).not.toBeVisible();
             await expect(page.getByLabel('Type of API')).toHaveText('Websocket');
 
+            const instances = page.getByRole('table', { name: 'Paths' })
+            const instance = instances.locator('tbody tr').nth(0);
+            await expect(await getCellByColumnName(instances, 'Path', instance)).toContainText('/chats/1234')
+            await expect(await getCellByColumnName(instances, 'Last Message', instance)).not.toHaveText('-')
+            await expect(await getCellByColumnName(instances, 'Messages', instance)).toContainText('2')
+
             const messages = page.getByRole('table', { name: 'Messages' });
             const rows = messages.locator('tbody tr');
             await expect(rows).toHaveCount(2);
-            let channel = await getCellByColumnName(messages, 'Channel', rows.nth(0))
+            let channel = await getCellByColumnName(messages, 'Path', rows.nth(0))
             await expect(channel).toHaveText('/chats/1234');
             await expect(channel.getByRole('img')).not.toBeVisible();
             await expect(await getCellByColumnName(messages, 'Value', rows.nth(0))).toHaveText('{"userId":"carol","username":"Carol","text":"Hi Alice!","timestamp":"2026-02-13T09:49:26.100000+01:00"}');
             await expect(await getCellByColumnName(messages, 'Time', rows.nth(0))).not.toBeEmpty();
 
-            channel = await getCellByColumnName(messages, 'Channel', rows.nth(1))
+            channel = await getCellByColumnName(messages, 'Path', rows.nth(1))
             await expect(channel).toHaveText('/chats/1234');
             await expect(channel.getByRole('img')).toBeVisible();
             await expect(await getCellByColumnName(messages, 'Value', rows.nth(1))).toHaveText('{"bar": "not a number"}');
             await expect(await getCellByColumnName(messages, 'Time', rows.nth(1))).not.toBeEmpty();
+
+            await test.step('Visit instance', async() => {
+                await instance.click()
+
+                const meta = page.getByRole('region', { name: 'Info' })
+                await expect(meta.getByLabel('Path')).toHaveText('/chats/1234');
+
+                await expect(breadcrumb).toContainText('/chats/{chatId}')
+                await expect(breadcrumb).toContainText('/chats/1234')
+            })
 
             await test.step('Visit message', async () => {
 
                 await rows.nth(0).click();
                 
                 const meta = page.getByRole('region', { name: 'Meta' })
-                await expect(meta.getByLabel('Channel')).toHaveText('/chats/1234');
+                await expect(meta.getByLabel('Path')).toHaveText('/chats/1234');
                 await expect(meta.getByLabel('Time')).not.toBeEmpty();
                 await expect(meta.getByLabel('Client')).toHaveText('127.0.0.1:53298');
                 await expect(meta.getByLabel('Content Type')).toHaveText('application/json');
@@ -163,7 +180,7 @@ test('Visit Websocket overview', async ({ page }) => {
 
                 })
 
-                await meta.getByLabel('Channel').click();
+                await meta.getByLabel('Path').click();
             })
 
             await test.step('Visit invalid message', async () => {
@@ -189,14 +206,11 @@ test('Visit Websocket overview', async ({ page }) => {
                     const dialog = page.getByRole('dialog')
                     await expect(dialog.getByRole('region', { name: 'Content' })).toContainText('{"bar": "not a number"}')
                     await dialog.getByRole('button', { name: 'Close' }).click()
-
-                    const ids = await page.locator('.modal.fade').evaluateAll(els => els.map(e => e.id))
-console.log(ids)
                 })
 
                 
                 const meta = page.getByRole('region', { name: 'Meta' })
-                await expect(meta.getByLabel('Channel')).toHaveText('/chats/1234');
+                await expect(meta.getByLabel('Path')).toHaveText('/chats/1234');
                 await expect(meta.getByLabel('Time')).not.toBeEmpty();
                 await expect(meta.getByLabel('Client')).toHaveText('127.0.0.1:53298');
                 await expect(meta.getByLabel('Content Type')).toHaveText('-');
@@ -208,11 +222,10 @@ console.log(ids)
                 await expect(value.getByLabel('Size of Code')).toHaveText('23 B');
                 await expect(value.getByLabel('Content', { exact: true })).toContainText('{"bar": "not a number"}');
 
-                await meta.getByLabel('Channel').click();
+                await meta.getByLabel('Path').click();
             })
-
             
-            await page.getByRole('region', { name: 'Info' }).getByLabel('Cluster').click();
+            await breadcrumb.getByRole('link', { name: 'WebSocket Chat API' }).click()
 
         })
 

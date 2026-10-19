@@ -11,6 +11,7 @@ import (
 type LogRecord func(log *KafkaMessageLog, traits events.Traits)
 
 type KafkaMessageLog struct {
+	Topic          string               `json:"topic"`
 	Offset         int64                `json:"offset"`
 	Key            *LogValue            `json:"key"`
 	Message        *LogValue            `json:"message"`
@@ -29,6 +30,7 @@ type KafkaMessageLog struct {
 }
 
 type KafkaMessageInfo struct {
+	Topic   string    `json:"topic"`
 	Key     *LogValue `json:"key"`
 	Message *LogValue `json:"message"`
 	Deleted bool      `json:"deleted"`
@@ -51,6 +53,7 @@ func (l *KafkaMessageLog) Title() string {
 
 func (l *KafkaMessageLog) Info() any {
 	return KafkaMessageInfo{
+		Topic:   l.Topic,
 		Key:     l.Key,
 		Message: l.Message,
 		Deleted: l.Deleted,
@@ -121,13 +124,13 @@ type KafkaRequestData interface {
 }
 
 func (s *Store) logRequest(h *kafka.Header, req KafkaRequest) func(res any) {
-	log := &KafkaRequestLogEvent{Api: s.cluster, Request: req}
+	log := &KafkaRequestLogEvent{Api: s.config.Info.Name, Request: req}
 	log.Header.set(h)
 	return func(res any) {
 		log.Response = res
 		t := events.NewTraits().
 			WithNamespace("kafka").
-			WithName(s.cluster).
+			WithName(s.config.Info.Name).
 			With("type", "request").
 			With("clientId", h.ClientId)
 		_ = s.eh.Push(log, t)

@@ -25,6 +25,7 @@ import (
 	"net/url"
 	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -36,12 +37,12 @@ type Store struct {
 	brokers      []*Broker
 	topics       map[string]*Topic
 	groups       map[string]*Group
-	cluster      string
 	eventEmitter common.KafkaEventEmitter
 	eh           events.Handler
 	producers    map[int64]*ProducerState
 	monitor      *monitor.Kafka
 	clients      map[string]*kafka.ClientContext
+	config       *asyncapi3.Config
 
 	nextPID int64
 	m       sync.RWMutex
@@ -88,8 +89,48 @@ func (s *Store) Topic(name string) *Topic {
 	return nil
 }
 
-func (s *Store) NewTopic(name string, config *asyncapi3.Channel, ops []*asyncapi3.Operation) (*Topic, error) {
-	return s.addTopic(name, config, ops)
+func (s *Store) NewTopic(name string, b *Broker) (*Topic, error) {
+	var errs []error
+	for _, ref := range s.config.Channels {
+		if ref.Value == nil {
+			continue
+		}
+		ch := ref.Value
+		if len(ch.Parameters) == 0 {
+			continue
+		}
+		if err := ch.IsNameValid(name); err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		if !ch.IsChannelAvailable("kafka") {
+			errs = append(errs, fmt.Errorf("channel '%s' is not available for Kafka protocol", ch.Name))
+			continue
+		}
+		if !isChannelAvailable(ch, b) {
+			errs = append(errs, fmt.Errorf("channel '%s' is not available on server '%s'", ch.Name, b.Name))
+		}
+
+		return s.addTopic(name, ch, s.getOperations(ch))
+	}
+
+	switch len(errs) {
+	case 0:
+		return nil, fmt.Errorf("topic '%s' does not match any channel available on server '%s'", name, b.Name)
+	case 1:
+		return nil, errs[0]
+	default:
+		list := slices.Collect(func(yield func(string) bool) {
+			for _, err := range errs {
+				yield(fmt.Sprintf("- %s", err.Error()))
+			}
+		})
+		slices.SortStableFunc(list, func(s1 string, s2 string) int {
+			return strings.Compare(s1, s2)
+		})
+		return nil, fmt.Errorf("topic '%s' does not match any channel available on server '%s':\n%s", name, b.Name, strings.Join(list, "\n"))
+	}
+
 }
 
 func (s *Store) Topics() []*Topic {
@@ -138,7 +179,7 @@ func (s *Store) GetOrCreateGroup(name string, broker *Broker) *Group {
 }
 
 func (s *Store) Update(c *asyncapi3.Config) {
-	s.cluster = c.Info.Name
+	s.config = c
 	if c.Servers != nil {
 		for it := c.Servers.Iter(); it.Next(); {
 			name := it.Key()
@@ -149,7 +190,7 @@ func (s *Store) Update(c *asyncapi3.Config) {
 			if b := s.getBroker(name); b != nil {
 				host, port := parseHostAndPort(server.Value.Host)
 				if len(host) == 0 {
-					log.Errorf("unable to update broker '%v' to cluster '%v': missing host in url '%v'", name, s.cluster, server.Value.Host)
+					log.Errorf("unable to update broker '%v' to cluster '%v': missing host in url '%v'", name, s.config.Info.Name, server.Value.Host)
 					continue
 				}
 				b.Host = host
@@ -175,6 +216,9 @@ func (s *Store) Update(c *asyncapi3.Config) {
 		if !ch.Value.IsChannelAvailable("kafka") {
 			continue
 		}
+		if len(ch.Value.Parameters) > 0 {
+			continue
+		}
 
 		if ch.Value.Address != "" {
 			n = ch.Value.Address
@@ -183,8 +227,8 @@ func (s *Store) Update(c *asyncapi3.Config) {
 		if t, ok := s.topics[n]; ok {
 			t.update(ch.Value, s)
 		} else {
-			if _, err := s.addTopic(n, ch.Value, getOperations(ch.Value, c)); err != nil {
-				log.Errorf("unable to add topic '%v' to broker '%v': %v", n, s.cluster, err)
+			if _, err := s.addTopic(n, ch.Value, s.getOperations(ch.Value)); err != nil {
+				log.Errorf("unable to add topic '%v' to broker '%v': %v", n, s.config.Info.Name, err)
 			}
 		}
 	}
@@ -248,7 +292,7 @@ func (s *Store) ServeMessage(rw kafka.ResponseWriter, req *kafka.Request) {
 	case *apiVersion.Request:
 		err = s.apiversion(rw, req)
 	case *createTopics.Request:
-		err = s.createtopics(rw, req)
+		err = s.createTopics(rw, req)
 	case *initProducerId.Request:
 		err = s.initProducerID(rw, req)
 	default:
@@ -329,9 +373,9 @@ func (s *Store) getBrokerByPort(addr string) *Broker {
 }
 
 func (s *Store) log(log *KafkaMessageLog, traits events.Traits) {
-	log.Api = s.cluster
+	log.Api = s.config.Info.Name
 	t := traits.WithNamespace("kafka").
-		WithName(s.cluster).
+		WithName(s.config.Info.Name).
 		With("type", "message")
 	if log.ClientId != "" {
 		t = t.With("clientId", log.ClientId)
@@ -346,7 +390,7 @@ func (s *Store) trigger(topic string, partition int, record *kafka.Record, schem
 	}
 
 	r := &common.KafkaEventRecord{
-		Api:       s.cluster,
+		Api:       s.config.Info.Name,
 		Topic:     topic,
 		Partition: partition,
 		Offset:    record.Offset,
@@ -441,8 +485,8 @@ func parseHostAndPort(s string) (host string, port int) {
 }
 
 func (s *Store) UpdateMetrics(m *monitor.Kafka, topic *Topic, partition *Partition, batch kafka.RecordBatch) {
-	m.Messages.WithLabel(s.cluster, topic.Name).Add(float64(len(batch.Records)))
-	m.LastMessage.WithLabel(s.cluster, topic.Name).Set(float64(time.Now().Unix()))
+	m.Messages.WithLabel(s.config.Info.Name, topic.Name).Add(float64(len(batch.Records)))
+	m.LastMessage.WithLabel(s.config.Info.Name, topic.Name).Set(float64(time.Now().Unix()))
 
 	for name, g := range s.groups {
 		gt, ok := g.Commits[topic.Name]
@@ -454,18 +498,22 @@ func (s *Store) UpdateMetrics(m *monitor.Kafka, topic *Topic, partition *Partiti
 			continue
 		}
 		lag := float64(partition.Offset() - commit)
-		m.Lags.WithLabel(s.cluster, name, topic.Name, strconv.Itoa(partition.Index)).Set(lag)
+		m.Lags.WithLabel(s.config.Info.Name, name, topic.Name, strconv.Itoa(partition.Index)).Set(lag)
 	}
 }
 
-func getOperations(channel *asyncapi3.Channel, config *asyncapi3.Config) []*asyncapi3.Operation {
+func (s *Store) getOperations(channel *asyncapi3.Channel) []*asyncapi3.Operation {
 	var ops []*asyncapi3.Operation
-	for _, op := range config.Operations {
+	for _, op := range s.config.Operations {
 		if op == nil || op.Value == nil {
 			continue
 		}
-		if op.Value.Channel.Value == channel {
-			ops = append(ops, op.Value)
+		v := op.Value
+		if v.Channel == nil || v.Channel.Value == nil {
+			continue
+		}
+		if v.Channel.Value == channel {
+			ops = append(ops, v)
 		}
 	}
 	return ops

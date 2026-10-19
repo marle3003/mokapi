@@ -222,6 +222,7 @@ func (p *Partition) write(batch kafka.RecordBatch, opts WriteOptions) (WriteResu
 			baseTime = r.Time
 		}
 
+		kLog.Topic = p.Topic.Name
 		kLog.ClientId = opts.ClientId
 		kLog.ScriptFile = opts.ScriptFile
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"mokapi/media"
 	"mokapi/providers/asyncapi3"
 	"mokapi/providers/asyncapi3/kafka/store"
@@ -99,23 +100,36 @@ type kafkaMember struct {
 }
 
 type kafkaTopicInfo struct {
-	Name    string           `json:"name"`
-	Summary string           `json:"summary,omitempty"`
-	Tags    []kafkaTag       `json:"tags,omitempty"`
-	Metrics kafkaTopicMetric `json:"metrics"`
+	Name       string               `json:"name"`
+	Summary    string               `json:"summary,omitempty"`
+	Tags       []kafkaTag           `json:"tags,omitempty"`
+	Parameters []string             `json:"parameters,omitempty"`
+	Instances  []kafkaTopicInstance `json:"instances,omitempty"`
+	Metrics    kafkaTopicMetric     `json:"metrics"`
 }
 
 type kafkaTopic struct {
-	Name        string                   `json:"name"`
-	Title       string                   `json:"title,omitempty"`
-	Summary     string                   `json:"summary,omitempty"`
-	Description string                   `json:"description,omitempty"`
-	Partitions  []kafkaPartition         `json:"partitions"`
-	Messages    map[string]messageConfig `json:"messages,omitempty"`
-	Bindings    kafkaBindings            `json:"bindings,omitempty"`
-	Tags        []kafkaTag               `json:"tags,omitempty"`
-	Groups      []kafkaGroupInfo         `json:"groups,omitempty"`
+	Name        string                       `json:"name"`
+	Title       string                       `json:"title,omitempty"`
+	Summary     string                       `json:"summary,omitempty"`
+	Description string                       `json:"description,omitempty"`
+	Instance    string                       `json:"instance,omitempty"`
+	Partitions  []kafkaPartition             `json:"partitions"`
+	Messages    map[string]messageConfig     `json:"messages,omitempty"`
+	Bindings    kafkaBindings                `json:"bindings,omitempty"`
+	Tags        []kafkaTag                   `json:"tags,omitempty"`
+	Groups      []kafkaGroupInfo             `json:"groups,omitempty"`
+	Template    string                       `json:"template,omitempty"`
+	Parameters  kafkaTopicInstanceParameters `json:"parameters,omitempty"`
 }
+
+type kafkaTopicInstance struct {
+	Name       string                       `json:"name"`
+	Parameters kafkaTopicInstanceParameters `json:"parameters,omitempty"`
+	Metrics    kafkaTopicMetric             `json:"metrics"`
+}
+
+type kafkaTopicInstanceParameters map[string]string
 
 type kafkaPartition struct {
 	Id          int   `json:"id"`
@@ -160,19 +174,19 @@ type KafkaRecordResult struct {
 }
 
 type kafkaTopicMetric struct {
-	NumMessages     float64 `json:"kafka_messages_total"`
-	LastMessageTime float64 `json:"kafka_message_timestamp"`
+	NumMessages     float64 `json:"messages_total"`
+	LastMessageTime float64 `json:"message_timestamp"`
 }
 
 type kafkaGroupMetrics struct {
-	LastRebalancing float64                             `json:"kafka_rebalance_timestamp"`
+	LastRebalancing float64                             `json:"rebalance_timestamp"`
 	Topics          map[string][]kafkaTopicGroupMetrics `json:"topics,omitempty"`
 }
 
 type kafkaTopicGroupMetrics struct {
 	Partition int     `json:"partition"`
-	Lags      float64 `json:"kafka_consumer_group_lag"`
-	Commit    float64 `json:"kafka_consumer_group_commit"`
+	Lags      float64 `json:"consumer_group_lag"`
+	Commit    float64 `json:"consumer_group_commit"`
 }
 
 func getKafkaServices(store *runtime.KafkaStore, m *monitor.Monitor) []service {
@@ -322,23 +336,8 @@ func (h *handler) getKafkaTopic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for n, ch := range ki.Channels {
-		if ch.Value == nil {
-			continue
-		}
-		addr := ch.Value.Address
-		if addr == "" {
-			addr = n
-		}
-		if addr == t.Name {
-			r := newTopic(t, ki, ch.Value, h.app.Monitor.Kafka)
-			write(w, r)
-			return
-		}
-
-	}
-	w.WriteHeader(http.StatusNotFound)
-	_, _ = w.Write([]byte("kafka topic not found"))
+	ti := newTopic(t, ki, t.Config, h.app.Monitor.Kafka)
+	write(w, ti)
 }
 
 func (h *handler) getKafkaPartitions(w http.ResponseWriter, r *http.Request) {
@@ -574,22 +573,40 @@ func (h *handler) produceKafkaMessage(w http.ResponseWriter, r *http.Request) {
 
 func getTopicInfos(ki *runtime.KafkaInfo, m *monitor.Kafka) []kafkaTopicInfo {
 	topics := make([]kafkaTopicInfo, 0, len(ki.Config.Channels))
-	for name, ch := range ki.Config.Channels {
+	for _, ch := range ki.Config.Channels {
 		if ch.Value == nil {
 			continue
 		}
 		if !ch.Value.IsChannelAvailable("kafka") {
 			continue
 		}
-		addr := ch.Value.Address
-		if addr == "" {
-			addr = name
-		}
+		addr := ch.Value.ResolveAddress()
 
 		ti := kafkaTopicInfo{
 			Name:    addr,
 			Summary: ch.Value.Summary,
 			Tags:    getKafkaTags(ch.Value),
+		}
+
+		if len(ch.Value.Parameters) > 0 {
+			ti.Parameters = slices.SortedFunc(maps.Keys(ch.Value.Parameters), func(a, b string) int {
+				return strings.Compare(a, b)
+			})
+			for _, t := range ki.Topics() {
+				if err := ch.Value.IsNameValid(t.Name); err == nil {
+					params, _ := ch.Value.ExtractParams(t.Name)
+					inst := kafkaTopicInstance{
+						Name:       t.Name,
+						Parameters: params,
+					}
+					inst.Metrics = kafkaTopicMetric{
+						NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("instance", t.Name))),
+						LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("instance", t.Name))),
+					}
+
+					ti.Instances = append(ti.Instances, inst)
+				}
+			}
 		}
 
 		ti.Metrics = kafkaTopicMetric{
@@ -636,6 +653,12 @@ func newTopic(t *store.Topic, ki *runtime.KafkaInfo, ch *asyncapi3.Channel, m *m
 		},
 		Tags:   getKafkaTags(ch),
 		Groups: getGroupInfos(ki, t.Name, m),
+	}
+
+	if len(ch.Parameters) > 0 {
+		params, _ := ch.ExtractParams(t.Name)
+		result.Parameters = params
+		result.Template = t.Config.Name
 	}
 
 	result.Messages = getMessageConfigs(ch, ki.Config)
@@ -918,4 +941,23 @@ func (h *handler) exportAsyncApi(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", ct)
 	_, _ = w.Write(b)
+}
+
+func (p kafkaTopicInstanceParameters) MarshalJSON() ([]byte, error) {
+	keys := slices.SortedFunc(maps.Keys(p), func(a, b string) int {
+		return strings.Compare(a, b)
+	})
+	if len(keys) == 0 {
+		return []byte("{}"), nil
+	}
+	var b bytes.Buffer
+	b.WriteString("{")
+	for i, k := range keys {
+		if i > 0 {
+			b.WriteString(",")
+		}
+		b.WriteString(fmt.Sprintf(`"%s": "%s"`, k, p[k]))
+	}
+	b.WriteString("}")
+	return b.Bytes(), nil
 }

@@ -7,7 +7,7 @@ import { server as ldapServers, searches } from './ldap'
 import { clusters as mqttClusters, events as mqttEvents } from './mqtt'
 import { services as websocketServices, events as websocketEvents } from './websocket'
 import { sum, max } from './metrics'
-import { getInfo, matchTraits } from './helpers'
+import { getInfo } from './helpers'
 import { jobs } from './jobs'
 import { match, type Query } from '../../lib/events'
 

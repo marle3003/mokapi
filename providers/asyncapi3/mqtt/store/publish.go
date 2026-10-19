@@ -146,6 +146,9 @@ func (s *Store) Topic(topic string) (*Topic, bool) {
 func (s *Store) logMessage(messageId string, topic *Topic, publish *mqtt.PublishRequest, actions []*engine.Action, args PublishArgs) {
 	topicName := topic.cfg.ResolveAddress()
 	labels := []string{s.cfg.Info.Name, topicName}
+	if topic.Name != topicName {
+		labels = append(labels, topic.Name)
+	}
 
 	s.monitor.Messages.WithLabel(labels...).Add(1)
 	s.monitor.LastMessage.WithLabel(labels...).Set(float64(time.Now().Unix()))

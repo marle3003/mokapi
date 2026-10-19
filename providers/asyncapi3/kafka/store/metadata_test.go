@@ -22,11 +22,11 @@ import (
 func TestMetadata(t *testing.T) {
 	testcases := []struct {
 		name string
-		fn   func(t *testing.T, s *store.Store)
+		test func(t *testing.T, s *store.Store)
 	}{
 		{
-			"default",
-			func(t *testing.T, s *store.Store) {
+			name: "default",
+			test: func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithInfo("Cluster Test", "", ""),
 					asyncapi3test.WithServer("", "kafka", "127.0.0.1:9092"),
@@ -60,13 +60,11 @@ func TestMetadata(t *testing.T) {
 				require.Len(t, res.Topics[0].Partitions[0].ReplicaNodes, 0)
 				require.Len(t, res.Topics[0].Partitions[0].IsrNodes, 0)
 				require.False(t, res.Topics[0].IsInternal)
-
-				require.False(t, kafka.ClientFromContext(r.Context).AllowAutoTopicCreation)
 			},
 		},
 		{
-			"with specific topic and two partitions",
-			func(t *testing.T, s *store.Store) {
+			name: "with specific topic and two partitions",
+			test: func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithChannel("foo", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 2})),
 					asyncapi3test.WithChannel("foo2", asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 2})),
@@ -87,8 +85,8 @@ func TestMetadata(t *testing.T) {
 			},
 		},
 		{
-			"with invalid topic",
-			func(t *testing.T, s *store.Store) {
+			name: "with invalid topic",
+			test: func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithChannel("foo")))
 
@@ -105,8 +103,8 @@ func TestMetadata(t *testing.T) {
 			},
 		},
 		{
-			"create auto topic true",
-			func(t *testing.T, s *store.Store) {
+			name: "create auto topic true",
+			test: func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithChannel("foo")))
 
@@ -115,13 +113,11 @@ func TestMetadata(t *testing.T) {
 					AllowAutoTopicCreation: true,
 				})
 				s.ServeMessage(rr, r)
-
-				require.True(t, kafka.ClientFromContext(r.Context).AllowAutoTopicCreation)
 			},
 		},
 		{
-			"with invalid topic name",
-			func(t *testing.T, s *store.Store) {
+			name: "with invalid topic name",
+			test: func(t *testing.T, s *store.Store) {
 				for _, name := range []string{"", ".", "..", "event?", strings.Repeat("a", 250)} {
 					testName := name
 					if len(name) > 10 {
@@ -142,8 +138,8 @@ func TestMetadata(t *testing.T) {
 			},
 		},
 		{
-			"only server with empty protocol (backward compatibility) and kafka",
-			func(t *testing.T, s *store.Store) {
+			name: "only server with empty protocol (backward compatibility) and kafka",
+			test: func(t *testing.T, s *store.Store) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithServer("foo", "kafka", "127.0.0.1:9092"),
 					asyncapi3test.WithServer("bar", "amqp", "127.0.0.1:9093"),
@@ -162,8 +158,8 @@ func TestMetadata(t *testing.T) {
 			},
 		},
 		{
-			"2.2.0 assigning channels to servers",
-			func(t *testing.T, s *store.Store) {
+			name: "2.2.0 assigning channels to servers",
+			test: func(t *testing.T, s *store.Store) {
 				cfg := asyncapi3test.NewConfig(
 					asyncapi3test.WithServer("foo", "kafka", "127.0.0.1:9092"),
 					asyncapi3test.WithServer("bar", "kafka", "127.0.0.1:9093"),
@@ -172,21 +168,19 @@ func TestMetadata(t *testing.T) {
 				err := cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{})
 				require.NoError(t, err)
 				s.Update(cfg)
+
 				rr := kafkatest.NewRecorder()
 				r := kafkatest.NewRequest("kafkatest", 4, &metaData.Request{})
 				r.Host = "127.0.0.1:9092"
 				s.ServeMessage(rr, r)
-
 				res, ok := rr.Message.(*metaData.Response)
 				require.True(t, ok)
-
 				require.Len(t, res.Topics, 1)
 				require.Equal(t, "foo", res.Topics[0].Name)
 
 				r = kafkatest.NewRequest("kafkatest", 4, &metaData.Request{})
 				r.Host = "127.0.0.1:9093"
 				s.ServeMessage(rr, r)
-
 				res, ok = rr.Message.(*metaData.Response)
 				require.True(t, ok)
 				require.Len(t, res.Topics, 0)
@@ -194,10 +188,82 @@ func TestMetadata(t *testing.T) {
 				r = kafkatest.NewRequest("kafkatest", 4, &metaData.Request{})
 				r.Host = "foo.bar:9093"
 				s.ServeMessage(rr, r)
-
 				res, ok = rr.Message.(*metaData.Response)
 				require.True(t, ok)
 				require.Len(t, res.Topics, 0)
+			},
+		},
+		{
+			name: "allow topic creation",
+			test: func(t *testing.T, s *store.Store) {
+				cfg := asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("foo", "kafka", "127.0.0.1:9092"),
+					asyncapi3test.WithChannel("orders.{region}.{eventType}",
+						asyncapi3test.WithParameter(
+							"region", &asyncapi3.Parameter{
+								Enum: []string{"us", "eu"},
+							},
+						),
+						asyncapi3test.WithParameter(
+							"eventType", &asyncapi3.Parameter{
+								Enum: []string{"created", "processed"},
+							},
+						),
+					),
+				)
+
+				err := cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{})
+				require.NoError(t, err)
+				s.Update(cfg)
+				rr := kafkatest.NewRecorder()
+				r := kafkatest.NewRequest("kafkatest", 4, &metaData.Request{
+					AllowAutoTopicCreation: true,
+					Topics:                 []metaData.TopicName{{Name: "orders.us.created"}},
+				})
+				r.Host = "127.0.0.1:9092"
+				s.ServeMessage(rr, r)
+
+				res, ok := rr.Message.(*metaData.Response)
+				require.True(t, ok)
+				require.Len(t, res.Topics, 1)
+				require.Equal(t, "orders.us.created", res.Topics[0].Name)
+			},
+		},
+		{
+			name: "do not allow topic creation",
+			test: func(t *testing.T, s *store.Store) {
+				cfg := asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("foo", "kafka", "127.0.0.1:9092"),
+					asyncapi3test.WithChannel("orders.{region}.{eventType}",
+						asyncapi3test.WithParameter(
+							"region", &asyncapi3.Parameter{
+								Enum: []string{"us", "eu"},
+							},
+						),
+						asyncapi3test.WithParameter(
+							"eventType", &asyncapi3.Parameter{
+								Enum: []string{"created", "processed"},
+							},
+						),
+					),
+				)
+
+				err := cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{})
+				require.NoError(t, err)
+				s.Update(cfg)
+				rr := kafkatest.NewRecorder()
+				r := kafkatest.NewRequest("kafkatest", 4, &metaData.Request{
+					AllowAutoTopicCreation: false,
+					Topics:                 []metaData.TopicName{{Name: "orders.us.created"}},
+				})
+				r.Host = "127.0.0.1:9092"
+				s.ServeMessage(rr, r)
+
+				res, ok := rr.Message.(*metaData.Response)
+				require.True(t, ok)
+				require.Len(t, res.Topics, 1)
+				require.Equal(t, "orders.us.created", res.Topics[0].Name)
+				require.Equal(t, kafka.UnknownTopicOrPartition, res.Topics[0].ErrorCode)
 			},
 		},
 	}
@@ -210,7 +276,7 @@ func TestMetadata(t *testing.T) {
 
 			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), &eventstest.Handler{}, monitor.NewKafka())
 			defer s.Close()
-			tc.fn(t, s)
+			tc.test(t, s)
 		})
 	}
 }

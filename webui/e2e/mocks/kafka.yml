@@ -65,6 +65,8 @@ components:
               application/json:
                 schema:
                   $ref: '#/components/schemas/Topic'
+          '404':
+            description: Topic not found
       post:
         summary: Produce messages to a topic, the partition will be chosen randomly
         operationId: kafkaProduceTopic
@@ -415,6 +417,12 @@ components:
           $ref: '#/components/schemas/TopicBindings'
         tags:
           $ref: '#/components/schemas/Tags'
+        template:
+          type: string
+        parameters:
+          type: object
+          additionalProperties:
+            type: string
     Partition:
       type: object
       properties:

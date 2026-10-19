@@ -6,15 +6,22 @@ import { getRouteName, useDashboard } from '@/composables/dashboard'
 import { useLocalStorage } from '@/composables/local-storage'
 import { usePrettyText } from '@/composables/usePrettyText'
 import { usePageSize } from '@/composables/paging'
+import Paging from '../Paging.vue'
 
 const { format } = usePrettyDates()
 const { fromBinary } = usePrettyText()
 
 const props = defineProps<{
     service?: KafkaService,
-    topic?: KafkaTopic
+    topicName?: string
+    instanceName?: string
     clientId?: string
 }>()
+
+const emit = defineEmits<{
+    (e: "loaded", count: number): void
+}>();
+
 
 const tags = useLocalStorage<string[]>(`kafka-${props.service?.name}-tags`, ['__all'])
 const labels = computed(() => {
@@ -22,8 +29,11 @@ const labels = computed(() => {
     if (props.service) {
         result.push({name: 'name', value: props.service.name})
     }
-    if (props.topic?.name) {
-        result.push({name: 'topic', value: props.topic.name})
+    if (props.topicName) {
+        result.push({name: 'topic', value: props.topicName})
+    }
+    if (props.instanceName) {
+        result.push({ name: 'instance', value: props.instanceName })
     }
     result.push({ name: 'type', value: 'message' })
     if (props.clientId){
@@ -58,13 +68,14 @@ watch(
   },
   { immediate: true }
 );
+watch(() => events.value, (events) => emit("loaded", events.length), { immediate: true })
 
 const messages = computed(() => {
     const result = [];
     for (const event of events.value) {
         const data = eventData(event)
 
-        if (props.service && !props.clientId && !props.topic?.name && !tags.value.includes('__all')) {
+        if (props.service && !props.clientId && !props.topicName && !tags.value.includes('__all')) {
             const topic = props.service.topics.find(t => t.name === event.traits['topic']);
             if (!topic) {
                 continue
@@ -82,6 +93,14 @@ const messages = computed(() => {
         });
     }
     return result;
+})
+
+const isTemplateTopic = computed(() => {
+    if (!props.service || !props.topicName) {
+        return false
+    }
+    const topic = props.service.topics.find(x => x.name === props.topicName)
+    return (topic?.parameters?.length ?? 0) > 0
 })
 
 function eventData(event: ServiceEventInfo): KafkaMessageInfo {
@@ -113,6 +132,7 @@ function key(data: KafkaMessageInfo): string {
     }
     return ''
 }
+const showTopicColumn = computed(() => !props.topicName || isTemplateTopic.value)
 </script>
 
 <template>
@@ -120,7 +140,7 @@ function key(data: KafkaMessageInfo): string {
         <table class="table dataTable selectable" aria-label="Recent Messages">
             <thead>
                 <tr>
-                    <th scope="col" class="text-left col-2" v-if="!topic">Topic</th>
+                    <th scope="col" class="text-left col-2" v-if="showTopicColumn === true">Topic</th>
                     <th scope="col" class="text-left col-2">Key</th>
                     <th scope="col" class="text-left col-4">Value</th>
                     <th scope="col" class="text-center col-2">Time</th>
@@ -129,11 +149,18 @@ function key(data: KafkaMessageInfo): string {
             </thead>
             <tbody>
                 <tr v-for="msg in messages" :key="msg.id" @click="goToMessage(msg.id)" @mousedown.middle="goToMessage(msg.id, true)" :class="msg.deleted ? 'deleted': ''">
-                    <td v-if="!topic">{{ msg.traits["topic"] }}</td>
+                    <td v-if="showTopicColumn === true">
+                        <router-link @click.stop class="row-link"
+                            :to="{ name: getRouteName('kafkaMessage').value, params: { id: msg.id } }">
+                            {{ eventData(msg).topic }}
+                        </router-link>
+                    </td>
                     <td class="key">
-                        <router-link @click.stop class="row-link" :to="{name: getRouteName('kafkaMessage').value, params: { id: msg.id }}">
+                        <router-link v-if="!showTopicColumn" class="row-link"
+                            @click.stop :to="{name: getRouteName('kafkaMessage').value, params: { id: msg.id }}">
                             {{ msg.key }}
                         </router-link>
+                        <span v-else>{{ msg.key }}</span>
                     </td>
                     <td class="message">{{ msg.value }}</td>
                     <td class="text-center">{{ format(msg.time) }}</td>

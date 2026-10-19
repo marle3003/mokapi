@@ -16,13 +16,19 @@ type Websocket struct {
 func NewWebsocket() *Websocket {
 	messages := metrics.NewCounterMap(
 		metrics.WithFQName("websocket", "messages_total"),
-		metrics.WithLabelNames("service", "channel"))
+		metrics.WithLabelNames("service", "channel"),
+		metrics.WithOptionalNames("instance"),
+	)
 	messagesError := metrics.NewCounterMap(
 		metrics.WithFQName("websocket", "messages_error_total"),
-		metrics.WithLabelNames("service", "channel"))
+		metrics.WithLabelNames("service", "channel"),
+		metrics.WithOptionalNames("instance"),
+	)
 	lastMessage := metrics.NewGaugeMap(
 		metrics.WithFQName("websocket", "message_timestamp"),
-		metrics.WithLabelNames("service", "channel"))
+		metrics.WithLabelNames("service", "channel"),
+		metrics.WithOptionalNames("instance"),
+	)
 
 	return &Websocket{
 		Messages:      messages,

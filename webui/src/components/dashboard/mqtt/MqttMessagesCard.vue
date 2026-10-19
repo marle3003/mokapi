@@ -5,6 +5,7 @@ import MqttMessages from './MqttMessages.vue'
 const props = defineProps<{
     service?: MqttService,
     topicName?: string
+    instanceName?: string
     clientId?: string
     hideWhenEmpty?: boolean
 }>()
@@ -26,7 +27,7 @@ function onLoaded(count: number) {
     <section class="card" aria-labelledby="messages" :style="{ display: hide ? 'none' : 'block'}">
         <div class="card-body">
             <h2 id="messages" class="card-title text-center">Recent Messages</h2>
-            <mqtt-messages :service="service" :topic-name="topicName" :client-id="clientId" @loaded="onLoaded" />
+            <mqtt-messages :service="service" :topic-name="topicName" :instance-name="instanceName" :client-id="clientId" @loaded="onLoaded" />
         </div>
     </section>
 </template>

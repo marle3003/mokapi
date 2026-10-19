@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import KafkaGroups from './KafkaGroups.vue'
 import KafkaMessages from './KafkaMessages.vue'
@@ -8,6 +8,10 @@ import TopicConfig from './TopicConfig.vue'
 import { getRouteName, useDashboard } from '@/composables/dashboard';
 import { useRouter } from '@/router'
 import { useMarkdown } from '@/composables/markdown'
+import ChannelInstanceView from '@/components/dashboard/asyncapi/ChannelInstanceView.vue'
+import KafkaMessagesCard from './KafkaMessagesCard.vue'
+import { splitTemplate } from '@/composables/channel'
+import { useBreadcrumb } from '@/composables/breadcrumb.ts'
 
 const props = defineProps<{
     service: KafkaService,
@@ -52,6 +56,22 @@ watch(() => route.hash, (hash) => {
   },
   { immediate: true }
 )
+
+const isTemplate = computed(() => (topic.value?.parameters?.length ?? 0) > 0 && !topic.value?.template)
+useBreadcrumb(() => {
+  if (!topic.value) return []
+  return topic.value.template
+    ? [
+        { 
+          text: topic.value.template, to: { 
+            name: getRouteName('kafkaTopic').value,
+            params: { service: serviceName, topic: topic.value.template }
+          }
+        },
+       { text: topic.value.name }
+      ]
+    : [{ text: topic.value.name }]
+})
 </script>
 
 <template>
@@ -61,8 +81,14 @@ watch(() => route.hash, (hash) => {
             <div class="card-body">
                 <div class="row">
                     <div class="col-8 header mb-3">
-                        <p id="topic" class="label">Topic</p>
-                        <p aria-labelledby="topic">{{ topic.name }}</p>
+                        <p id="topic" class="label">Topic {{ isTemplate ? 'Template' : '' }}</p>
+                        <p v-if="isTemplate" class="channel-name" aria-labelledby="topic">
+                           <template v-for="(part, i) in splitTemplate(topic.name)" :key="i">
+                            <span v-if="part.param" class="param">{{ part.text }}</span>
+                            <template v-else>{{ part.text }}</template>
+                          </template>
+                        </p>
+                        <p v-else aria-labelledby="topic">{{ topicName }}</p>
                     </div>
                     <div class="col">
                         <p id="cluster" class="label">Cluster</p>
@@ -110,6 +136,7 @@ watch(() => route.hash, (hash) => {
                 Messages
               </button>
               <button 
+                v-if="!isTemplate"
                 :class="{ active: activeTab === 'tab-partitions' }"
                 id="partitions-tab"
                 type="button"
@@ -120,6 +147,7 @@ watch(() => route.hash, (hash) => {
                 Partitions
               </button>
               <button
+                v-if="!isTemplate"
                 :class="{ active: activeTab === 'tab-groups' }"
                 id="groups-tab"
                 type="button"
@@ -142,12 +170,21 @@ watch(() => route.hash, (hash) => {
             </div>
             <div class="tab-content" id="tabTopic">
               <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-messages' }" id="messages" role="tabpanel" aria-labelledby="messages-tab">
-                <kafka-messages :service="service" :topic="topic" />
+                <template v-if="isTemplate">
+                  <channel-instance-view v-if="topic.instances"
+                    :service-name="service.name" :channel="topic" :instances="topic.instances"
+                    instances-label="Topics", instance-label="Topic" channel-route="kafkaTopic">
+                  </channel-instance-view>
+                  <div class="card-group">
+                    <kafka-messages-card :service="service" :topic-name="topic.name" />
+                  </div>
+                </template>
+                <kafka-messages v-else :service="service" :topic-name="topic.template ?? topic.name" :instance-name="topic.template ? topic.name : ''" />
               </div>
-              <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-partitions' }" id="partitions" role="tabpanel" aria-labelledby="partitions-tab">
+              <div v-if="!isTemplate" class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-partitions' }" id="partitions" role="tabpanel" aria-labelledby="partitions-tab">
                 <kafka-partition :topic="topic" />
               </div>
-              <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-groups' }" id="groups" role="tabpanel" aria-labelledby="groups-tab">
+              <div v-if="!isTemplate" class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-groups' }" id="groups" role="tabpanel" aria-labelledby="groups-tab">
                 <kafka-groups :service="service" :topic="topic"/>
               </div>
               <div class="tab-pane fade" :class="{ 'show active': activeTab === 'tab-configs' }" id="configs" role="tabpanel" aria-labelledby="configs-tab">
