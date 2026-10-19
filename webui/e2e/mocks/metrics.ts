@@ -1,6 +1,20 @@
 const app_start = new Date()
 app_start.setHours(new Date().getHours() - 2)
 
+import { app } from 'mokapi'
+
+export default function () {
+    app.http()
+        .operation('metrics', (req, res) => {
+            let names = req.query['names']
+            res.data = !names ? metrics : metrics.filter(x => names.includes(x.name))
+        })
+        .operation('metricsType', (req, res) => {
+            let type = req.path['type']
+            res.data = metrics.filter(x => x.name.startsWith(type + '_'))
+        })
+}
+
 export let metrics = [
     {
         name: 'app_start_timestamp',

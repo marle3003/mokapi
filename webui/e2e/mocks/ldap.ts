@@ -1,4 +1,13 @@
-export let server = [
+import { app } from 'mokapi'
+
+export default function () {
+    app.http()
+        .operation('serviceLdap', (_, res) => {
+            res.data = servers[0]
+        })
+}
+
+export let servers = [
     {
         name: "LDAP Testserver",
         description: "This is a sample LDAP server",

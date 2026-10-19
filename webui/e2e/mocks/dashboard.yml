@@ -280,7 +280,7 @@ paths:
   /api/services/mail/messages/{messageId}/attachments/{name}:
     get:
       summary: Retrieve mail attachment's content
-      operationId: smtpMailAttachment
+      operationId: smtpMessageAttachment
       parameters:
         - name: messageId
           in: path
@@ -300,49 +300,6 @@ paths:
             '*/*':
               schema:
                 type: string
-        "404":
-          description: mail attachment not found
-  /api/services/mail/mails/{messageId}:
-    get:
-      summary: Retrieve the mail with the given messageId
-      operationId: smtpMail
-      deprecated: true
-      parameters:
-        - name: messageId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: mail
-          content:
-            application/json:
-              schema:
-                $ref: './mail.yml#/components/schemas/SmtpMessage'
-        "404":
-          description: mail not found
-  /api/services/mail/mails/{messageId}/attachments/{name}:
-    get:
-      summary: Retrieve mail attachment's content
-      operationId: smtpMailAttachment
-      parameters:
-        - name: messageId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: name
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: mail
-          content:
-            '*/*':
-              schema: {}
         "404":
           description: mail attachment not found
   /api/services/kafka:

@@ -1,17 +1,17 @@
-import { app } from 'mokapi'
-import { get } from 'mokapi/http'
+import { app, sleep } from 'mokapi'
+import { get, post, fetch } from 'mokapi/http'
 import { clusters as kafkaClusters, events as kafkaEvents, configs as kafkaConfigs } from './kafka'
 import { apps as httpServices, events as httpEvents, configs as httpConfigs } from './http'
 import { services as mailServices, mailEvents, getMail, getAttachment } from './mail'
-import { server as ldapServers, searches } from './ldap'
+import { servers as ldapServers, searches } from './ldap'
 import { clusters as mqttClusters, events as mqttEvents } from './mqtt'
 import { services as websocketServices, events as websocketEvents } from './websocket'
 import { sum, max } from './metrics'
 import { getInfo, matchTraits } from './helpers'
-import { jobs } from './jobs'
+import { jobs, config as jobConfig } from './jobs'
 import { match, type Query } from '../../lib/events'
 
-export default function() {
+export default async function() {
     const apiBaseUrl = `http://localhost:8091/mokapi`
     const { version, buildTime } = get(`${apiBaseUrl}/api/info`).json()
 
@@ -53,7 +53,66 @@ export default function() {
             }
             res.data = event
         })
+        .operation('example', (req, res) => {
+            const resp = post(`${apiBaseUrl}/api/schema/example`, req.body)
+            res.statusCode = resp.statusCode
+            res.headers = resp.headers
+            res.body = resp.body
+        })
+        .operation('validate', (req, res) => {
+            sleep(1000)
+            let url = `${apiBaseUrl}/api/schema/validate`
+            if (req.query['outputFormat']) {
+                url += '?outputFormat=' + req.query['outputFormat']
+            }
+            const resp = post(url, req.body)
+            res.statusCode = resp.statusCode
+            res.headers = resp.headers
+            res.body = resp.body
+            res.data = null
+        })
+        .operation('configs', (req, res) => {
+            res.data = configs
+        })
+        .operation('config', (req, res) => {
+            const config = configs.find(x => x.id === req.path.id)
+            if (!config) {
+                res.rebuild(404)
+                return
+            }
+            res.data = config
+        })
+        .operation('configData', (req, res) => {
+            const config = configData[req.path.id]
+            if (!config) {
+                res.rebuild(404)
+                return
+            }
+            res.data = config.data
+            res.headers = config.headers
+        })
+
+    for (const config of configs) {
+        if (!config.data || !config.data.startsWith('http://localhost:8090')) {
+            continue
+        }
+        const r = await fetch(config.data)
+        configData[config.id] = {
+            data:   r.body,
+            headers: {
+                'Content-Disposition': `inline; filename="${config.filename}"`
+            }
+        }
+    }
 }
+
+const configs = [
+    ...Object.values(httpConfigs),
+    ...Object.values(kafkaConfigs),
+    ...Object.values(jobConfig)
+]
+
+const configData: Record<string, { data: string, headers: Record<string, string> }> = {}
 
 
 function getServices(type: string) {
