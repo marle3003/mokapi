@@ -95,7 +95,7 @@ function messages(channel: KafkaChannel): string[] {
     })
 }
 const examplePath = computed(() => {
-    return props.channel.name.split(/[.-_]/).reverse()
+    return props.channel.name.split(/[._-]/).reverse()
 })
 </script>
 
