@@ -280,7 +280,7 @@ paths:
   /api/services/mail/messages/{messageId}/attachments/{name}:
     get:
       summary: Retrieve mail attachment's content
-      operationId: smtpMailAttachment
+      operationId: smtpMessageAttachment
       parameters:
         - name: messageId
           in: path
@@ -302,51 +302,10 @@ paths:
                 type: string
         "404":
           description: mail attachment not found
-  /api/services/mail/mails/{messageId}:
-    get:
-      summary: Retrieve the mail with the given messageId
-      operationId: smtpMail
-      deprecated: true
-      parameters:
-        - name: messageId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: mail
-          content:
-            application/json:
-              schema:
-                $ref: './mail.yml#/components/schemas/SmtpMessage'
-        "404":
-          description: mail not found
-  /api/services/mail/mails/{messageId}/attachments/{name}:
-    get:
-      summary: Retrieve mail attachment's content
-      operationId: smtpMailAttachment
-      parameters:
-        - name: messageId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: name
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: mail
-          content:
-            '*/*':
-              schema: {}
-        "404":
-          description: mail attachment not found
   /api/services/kafka:
     $ref: './kafka.yml#/components/pathItems/Clusters'
+  /api/services/kafka/{cluster}/channels/{channel}:
+    $ref: './kafka.yml#/components/pathItems/Channel'
   /api/services/kafka/{cluster}/topics:
     $ref: './kafka.yml#/components/pathItems/Topics'
   /api/services/kafka/{cluster}/topics/{topic}:
@@ -382,43 +341,9 @@ paths:
   /api/services/kafka/{cluster}/clients/{clientId}:
     $ref: './kafka.yml#/components/pathItems/Client'
   /api/events:
-    get:
-      summary: list of events
-      operationId: events
-      parameters:
-        - name: traits
-          in: query
-          required: false
-          schema:
-            type: object
-            additionalProperties:
-              type: string
-      responses:
-        "200":
-          description: name of kafka cluster
-          content:
-            application/json:
-              schema:
-                $ref: 'common.yml#/components/schemas/Events'
+    $ref: './events.yaml#/components/pathItems/Events'
   /api/events/{id}:
-    get:
-      summary: Information about the kafka cluster
-      operationId: event
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: name of kafka cluster
-          content:
-            application/json:
-              schema:
-                $ref: 'common.yml#/components/schemas/Event'
-        "404":
-          description: no event exists for specified id
+    $ref: './events.yaml#/components/pathItems/Event'
   /api/metrics:
     get:
       summary: get list of metrics

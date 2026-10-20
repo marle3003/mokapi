@@ -48,7 +48,7 @@ func (m *Module) Produce(state *lua.LState) int {
 	args := &common.KafkaProduceArgs{Cluster: opts.Cluster, Topic: opts.Topic}
 	args.Messages = append(args.Messages, common.KafkaMessage{
 		Key:       opts.Key,
-		Data:      opts.Value,
+		Data:      common.Optional[any]{Value: opts.Value, IsSet: true},
 		Headers:   opts.Headers,
 		Partition: opts.Partition,
 	})

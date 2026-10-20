@@ -9,8 +9,6 @@
  * https://mokapi.io/docs/javascript-api/overview
  */
 
-import {ProduceRetry} from "./mqtt";
-
 /**
  * Attaches an event handler for the given event.
  *
@@ -946,7 +944,7 @@ export enum LdapResultStatus {
     SizeLimitExceeded = 4,
 }
 
-export type SmtpEventHandler = (record: SmtpEventMessage) => void | Promise<void>;
+export type SmtpEventHandler = (message: SmtpEventMessage) => void | Promise<void>;
 
 export interface SmtpEventMessage {
     server: string;
@@ -1216,18 +1214,6 @@ export interface ScheduledEventArgs {
      * Toggles behavior of first execution. Default is true
      */
     runFirstTimeImmediately?: boolean;
-}
-
-/**
- * JavaScript value representable with JSON.
- */
-export type JSONValue = null | undefined | boolean | number | string | JSONValue[] | JSONObject;
-
-/**
- * Object representable with JSON.
- */
-export interface JSONObject {
-    [key: string]: JSONValue;
 }
 
 /**
@@ -1756,24 +1742,39 @@ export interface HttpRouter {
     route(path: string): HttpRoute
 
     /**
-     * Returns an `HttpRoute` matched by the given `operationId` as defined
-     * in the OpenAPI specification.
+     * Registers a handler directly for the operation identified by the given
+     * `operationId` as defined in the OpenAPI specification.
      *
-     * Use this as an alternative to `route()` when you prefer to reference
-     * operations by name rather than by path template.
+     * Since an `operationId` already uniquely identifies both the path and the
+     * HTTP method of an operation, no further method scoping is needed.
+     * This makes it a concise alternative to `route(path).get(handler)` —
+     * especially useful when paths are long or contain many parameters.
      *
-     * @param operationId The `operationId` defined in the OpenAPI operation.
-     * @returns An `HttpRoute` for the matching operation.
+     * Behaves identically to the method shorthand functions such as `get()` and
+     * `post()` on `HttpRouter`: all registered handlers run in order, and
+     * `res.stopPropagation()` can be used to prevent subsequent handlers
+     * from running.
+     *
+     * @param operationId The `operationId` as defined in the OpenAPI operation.
+     * @param handler The event handler to invoke.
+     * @param opts Optional handler configuration such as priority and tracking.
+     * @returns This `HttpRouter` instance for chaining.
      *
      * @example
+     * // Equivalent to: app.api('Petstore').http().route('/pets').get(handler)
      * import { app } from 'mokapi'
      * export default function() {
      *   app.api('Petstore').http()
-     *     .operation('listPets')
-     *     .get((req, res) => { res.data = [] })
+     *     .operation('listPets', (req, res) => {
+     *       res.data = [{ id: 1, name: 'Bello' }]
+     *     })
+     *     .operation('createPet', (req, res) => {
+     *       res.statusCode = 201
+     *       res.data = { id: 2, name: req.body.name }
+     *     })
      * }
      */
-    operation(operationId: string): HttpRoute
+    operation(operationId: string, handler: HttpEventHandler, opts?: HttpEventArgs): HttpRouter
 
     /**
      * Narrows this router to a specific API by title.

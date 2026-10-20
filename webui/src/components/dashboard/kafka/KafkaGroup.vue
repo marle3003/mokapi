@@ -46,7 +46,7 @@ const lastRebalancing = computed(() => {
   if (!group.value) {
     return '-'
   }
-  const timestamp = group.value.metrics.kafka_rebalance_timestamp;
+  const timestamp = group.value.metrics.rebalance_timestamp;
   if (!timestamp) {
     return '-'
   }
@@ -98,14 +98,14 @@ const partitions = computed(() => {
   for (const topic in group.value.metrics.topics) {
     const topicMetrics = group.value.metrics.topics[topic]
     for (const partition of topicMetrics) {
-      if (!partition.kafka_consumer_group_commit) {
+      if (!partition.consumer_group_commit) {
         continue
       }
       result.push({
         topic: topic,
         partition: partition.partition,
-        commit: partition.kafka_consumer_group_commit,
-        lag: partition.kafka_consumer_group_lag
+        commit: partition.consumer_group_commit,
+        lag: partition.consumer_group_lag
       })
     }
   }

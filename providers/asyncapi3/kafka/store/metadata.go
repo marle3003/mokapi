@@ -3,6 +3,7 @@ package store
 import (
 	"mokapi/kafka"
 	"mokapi/kafka/metaData"
+	"mokapi/providers/asyncapi3"
 	"path"
 )
 
@@ -10,16 +11,14 @@ func (s *Store) metadata(rw kafka.ResponseWriter, req *kafka.Request) error {
 	r := req.Message.(*metaData.Request)
 
 	brokers := s.Brokers()
-	ctx := kafka.ClientFromContext(req.Context)
-	ctx.AllowAutoTopicCreation = r.AllowAutoTopicCreation
 
 	res := &metaData.Response{
 		Brokers:   make([]metaData.ResponseBroker, 0, len(brokers)),
 		Topics:    make([]metaData.ResponseTopic, 0, len(r.Topics)),
-		ClusterId: s.cluster,
+		ClusterId: s.config.Info.Name,
 	}
 
-	// Mokapi does no leader management, therefore only the current server is returned as the broker.
+	// Mokapi does no leader management; therefore, only the current server is returned as the broker.
 	host, port := parseHostAndPort(req.Host)
 	b := s.getBrokerByPort(req.Host)
 	if b != nil && b.Host != "" {
@@ -41,6 +40,13 @@ func (s *Store) metadata(rw kafka.ResponseWriter, req *kafka.Request) error {
 			topic := s.Topic(name)
 			if topic != nil && isTopicAvailable(topic, b) {
 				return topic, kafka.None
+			}
+			if topic == nil && r.AllowAutoTopicCreation {
+				var err error
+				topic, err = s.NewTopic(name, b)
+				if err == nil {
+					return topic, kafka.None
+				}
 			}
 			return nil, kafka.UnknownTopicOrPartition
 		}
@@ -86,10 +92,14 @@ func (s *Store) metadata(rw kafka.ResponseWriter, req *kafka.Request) error {
 }
 
 func isTopicAvailable(t *Topic, b *Broker) bool {
-	if len(t.Config.Servers) == 0 {
+	return isChannelAvailable(t.Config, b)
+}
+
+func isChannelAvailable(ch *asyncapi3.Channel, b *Broker) bool {
+	if len(ch.Servers) == 0 {
 		return true
 	}
-	for _, s := range t.Config.Servers {
+	for _, s := range ch.Servers {
 		name := path.Base(s.Ref)
 		if b != nil && name == b.Name {
 			return true

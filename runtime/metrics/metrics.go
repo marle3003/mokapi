@@ -79,10 +79,10 @@ func (i *Info) Match(query *Query) bool {
 type Options func(o *options)
 
 type options struct {
-	namespace  string
-	name       string
-	labels     []*Label
-	labelNames []string
+	namespace     string
+	name          string
+	labelNames    []string
+	optionalNames []string
 }
 
 func WithName(name string) Options {
@@ -102,6 +102,21 @@ func WithFQName(namespace, name string) Options {
 		o.namespace = namespace
 		o.name = name
 	}
+}
+
+func WithOptionalNames(names ...string) Options {
+	return func(o *options) {
+		o.optionalNames = names
+	}
+}
+
+func (o options) areLabelsValid(values []string) bool {
+	minLabels := len(o.labelNames)
+	maxLabels := len(o.labelNames) + len(o.optionalNames)
+	if len(values) < minLabels || len(values) > maxLabels {
+		return false
+	}
+	return true
 }
 
 func hash(values []string) uint32 {

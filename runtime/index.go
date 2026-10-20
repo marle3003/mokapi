@@ -175,6 +175,9 @@ func (s *SearchIndex) runWorker(ctx context.Context) {
 		if batchSize == 0 {
 			return
 		}
+		if s.idx == nil {
+			return
+		}
 
 		if err := s.idx.Batch(batch); err != nil {
 			println("batch failed:", err.Error())

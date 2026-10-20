@@ -1,6 +1,6 @@
 import { reactive, ref, watchEffect } from "vue";
 import { transformPath, useFetch } from "./fetch";
-import type { Dashboard, ExampleRequest, ExampleResult, MailboxMessagesResult, MailboxResult } from "@/types/dashboard";
+import type { Dashboard, ExampleRequest, ExampleResult, MailboxMessagesResult, MailboxResult, EventQuery } from "@/types/dashboard";
 import { usePrettyLanguage } from "./usePrettyLanguage";
 
 const { formatLanguage } = usePrettyLanguage();
@@ -58,6 +58,18 @@ export const dashboard: Dashboard = {
         return {operations, isLoading, close: response.close} 
     },
 
+    getKafkaChannel(serviceName: string, channelName: string) {
+        const response = useFetch(`/api/services/kafka/${serviceName}/channels/${channelName}`)
+        const channel = ref<KafkaChannel | null>(null)
+        const isLoading = ref<boolean>(true)
+
+        watchEffect(() => {
+            channel.value = response.data ? response.data : null
+            isLoading.value = response.isLoading
+        })
+        return {channel, isLoading, close: response.close} 
+    },
+
     getKafkaTopic(serviceName: string, topicName: string) {
         const response = useFetch(`/api/services/kafka/${serviceName}/topics/${topicName}`)
         const topic = ref<KafkaTopic | null>(null)
@@ -94,23 +106,60 @@ export const dashboard: Dashboard = {
         return {client, isLoading, close: response.close} 
     },
 
-    getEvents(...labels: Label[]) {
+    getEvents(query?: EventQuery) {
         let url = `/api/events`
-        for (const [index, label] of labels.entries()) {
-            let separator = index === 0 ? '?' : '&'
-            url += `${separator}${label.name}=${label.value}`
+
+        if (query) {
+            const params = new URLSearchParams()
+            if (query.labels) {
+                for (const label of query.labels) {
+                    params.append(`traits[${label.name}]`, label.value)
+                }
+            }
+            if (query.http) {
+                if (query.http.methods) {
+                    params.append('http[method]', query.http.methods.join(','))
+                }
+                if (query.http.url) {
+                    params.append('http[url]', query.http.url)
+                }
+                for (const h of query.http.requestHeaders ?? []) {
+                    params.append('http[requestHeader]', `${h.name}${h.value ? ':'+h.value : ''}`)
+                }
+                if (query.http.statusCode) {
+                    params.append('http[statusCode]', query.http.statusCode)
+                }
+                for (const h of query.http.responseHeaders ?? []) {
+                    params.append('http[responseHeader]', `${h.name}${h.value ? ':'+h.value : ''}`)
+                }
+                if (query.http.clientIP) {
+                    params.append('http[clientIP]', query.http.clientIP)
+                }
+            }
+            if (query.page !== undefined) {
+                params.append('page', query.page.toString())
+            }
+            if (query.size !== undefined) {
+                params.append('size', query.size.toString())
+            }
+
+            url += `?${params.toString()}`
         }
+        
+
+       
         const res = useFetch(url)
-        const events = ref<ServiceEvent[]>([])
+        const data = ref<ServiceEventResult>({ items: [], page: 1, size: 25, total: 0 })
 
         watchEffect(() => {
             if (!res.data){
-                events.value = []
+                data.value.items = []
+                data.value.total = 0
                 return
             }
-            events.value = res.data
+            data.value = res.data
         })
-        return { events, close: res.close }
+        return { data, close: res.close }
     },
 
     getEvent(id: string){

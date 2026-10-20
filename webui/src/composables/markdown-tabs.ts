@@ -1,10 +1,7 @@
-import type { Options } from "markdown-it"
-import type MarkdownIt from "markdown-it"
-import type Token from "markdown-it/lib/token"
-import type Renderer from "markdown-it/lib/renderer"
+import type { MarkdownIt, Token, MarkdownItOptions, Renderer } from "markdown-it"
 
 
-export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
+export function MarkdownItTabs(md: MarkdownIt) {
     var defaultRender = md.renderer.rules.fence!,
         unescapeAll = md.utils.unescapeAll,
         simple = /tab=([^\s]*)/,
@@ -58,7 +55,7 @@ export function MarkdownItTabs(md: MarkdownIt, opts: Options) {
         return 'default'
     }
 
-    function fenceGroup(tokens: Token[], idx: number, options: Options, env: any, slf: Renderer): string {
+    function fenceGroup(tokens: Token[], idx: number, options: Required<MarkdownItOptions>, env: any, slf: Renderer): string {
         const token = tokens[idx]
         if (!token || token.hidden) return ''
 

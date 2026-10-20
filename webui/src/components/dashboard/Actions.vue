@@ -5,6 +5,7 @@ import SourceView from './SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { usePrettyText } from '@/composables/usePrettyText'
 import { getRouteName } from '@/composables/dashboard'
+import { usePrettyBytes } from '@/composables/usePrettyBytes.ts'
 
 defineProps({
     actions: { type: Object as PropType<Action[]>, required: true },
@@ -14,6 +15,7 @@ const { formatLanguage } = usePrettyLanguage()
 
 const { duration } = usePrettyDates()
 const { parseUrls } = usePrettyText()
+const { format: formatBytes } = usePrettyBytes()
 let status: string | null
 
 function getName(action: Action){
@@ -30,27 +32,45 @@ function formatParameters(action: Action): {name?: string, value: string}[] {
             return [
                 {
                     name: 'request',
-                    value: formatLanguage(action.parameters[0], 'application/json')
+                    value: formatParam(action.parameters[0]).text
                 },
                 {
                     name: 'response',
-                    value: formatLanguage(action.parameters[1], 'application/json')
+                    value: formatParam(action.parameters[1]).text
                 }
             ]
         case 'kafka':
             return [
                 {
                     name: 'message',
-                    value: formatLanguage(action.parameters[0], 'application/json')
+                    value: formatParam(action.parameters[0]).text
                 }
             ]
         case 'mqtt':
             return [
-                { name: 'message', value: formatLanguage(action.parameters[0], 'application/json') }
+                { name: 'message', value: formatParam(action.parameters[0]).text }
             ]
         case 'websocket':
             return [
-                { name: 'event', value: formatLanguage(action.parameters[0], 'application/json') }
+                { name: 'event', value: formatParam(action.parameters[0]).text }
+            ]
+        case 'ldap':
+            return [
+                {
+                    name: 'request',
+                    value: formatParam(action.parameters[0]).text
+                },
+                {
+                    name: 'response',
+                    value: formatParam(action.parameters[1]).text
+                }
+            ]
+        case 'smtp':
+            return [
+                {
+                    name: 'message',
+                    value: formatParam(action.parameters[0]).text
+                }
             ]
     }
     
@@ -87,6 +107,33 @@ function getStatus(action: Action) {
     }
     return 'success'
 }
+
+const isTruncated = function(v: any): v is Truncated {
+  return v !== null && typeof v === 'object' && v.truncated === true
+}
+
+function formatParam(raw: any) {
+  const truncated: Truncated[] = []
+  const token = `__TRUNCATED_${crypto.randomUUID()}_`
+  const obj = JSON.parse(raw, (_key, value) => {
+    if (isTruncated(value)) {
+      truncated.push(value)
+      return `${token}${truncated.length - 1}__`
+    }
+    return value
+  })
+
+  const text = JSON.stringify(obj, null, 2).replace(
+    new RegExp(`"${token}(\\d+)__"`, 'g'),
+    (_m, i) => {
+      const t = truncated[Number(i)]
+      return `"${t.preview}…"  ⟨${formatBytes(t.size - t.preview.length)} more, truncated⟩`
+    }
+  )
+
+  return { text, truncated }
+}
+
 </script>
 
 <template>

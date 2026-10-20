@@ -105,13 +105,21 @@ func (c *Channel) readLoop(ctx context.Context, conn *websocket.Conn, client *Cl
 		channelName := c.cfg.ResolveAddress()
 
 		l := messageLog(c, data, messageId, client, Send)
-		// log event before run event engine to have the correct log order if event handler sends a message
-		c.log(l, events.NewTraits().
+		traits := events.NewTraits().
 			With("channel", channelName).
 			With("type", "message").
-			With("clientId", client.Id))
+			With("clientId", client.Id)
+		if c.Name != channelName {
+			traits = traits.With("instance", c.Name)
+		}
+
+		// log event before run event engine to have the correct log order if event handler sends a message
+		c.log(l, traits)
 
 		labels := []string{c.api, channelName}
+		if c.Name != channelName {
+			labels = append(labels, c.Name)
+		}
 		c.monitor.Messages.WithLabel(labels...).Add(1)
 		c.monitor.LastMessage.WithLabel(labels...).Set(float64(time.Now().Unix()))
 

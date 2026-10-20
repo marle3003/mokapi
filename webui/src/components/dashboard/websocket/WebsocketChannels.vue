@@ -4,6 +4,7 @@ import { usePrettyDates } from '@/composables/usePrettyDate'
 import { getRouteName } from '@/composables/dashboard';
 import { computed } from 'vue';
 import { useLocalStorage } from '@/composables/local-storage';
+import { splitTemplate, instanceCount } from '@/composables/channel'
 
 const props = defineProps<{
     service: WebsocketService,
@@ -17,7 +18,7 @@ const allTags = computed(() => {
     if (!props.service || !props.service.channels) {
         return [];
     }
-    const result: WebsocketTag[] = [];
+    const result: Tag[] = [];
     const names: { [name: string]: any } = {}
 
     for (const channel of props.service.channels) {
@@ -56,10 +57,10 @@ function compareChannels(c1: WebsocketChannel, c2: WebsocketChannel) {
 }
 
 function lastMessage(channel: WebsocketChannel) {
-    if (!channel.metrics.websocket_message_timestamp || channel.metrics.websocket_message_timestamp == 0) {
+    if (!channel.metrics.message_timestamp || channel.metrics.message_timestamp == 0) {
         return '-'
     }
-    return format(channel.metrics.websocket_message_timestamp)
+    return format(channel.metrics.message_timestamp)
 }
 
 function goToChannel(channel: WebsocketChannel, openInNewTab = false) {
@@ -103,12 +104,17 @@ function toggleTag(name: string) {
         tags.value = tags.value.filter((t) => t !== '__all')
     }
 }
+function instanceLabel(channel: WebsocketChannel) {
+  const n = instanceCount(channel)
+  if (n === 0) return 'no paths yet'
+  return n === 1 ? '1 path' : `${n} paths`
+}
 </script>
 
 <template>
     <section class="card" aria-labelledby="channels">
         <div class="card-body">
-            <h2 id="channels" class="card-title text-center">Channels</h2>
+            <h2 id="channels" class="card-title text-center">Paths</h2>
 
             <fieldset class="text-center mt-3 mb-2" v-if="allTags.length > 1" aria-describedby="tag-help">
 
@@ -144,7 +150,7 @@ function toggleTag(name: string) {
                 <table class="table dataTable selectable" aria-labelledby="channels">
                     <thead>
                         <tr>
-                            <th scope="col" class="text-left col-4">Name</th>
+                            <th scope="col" class="text-left col-4">Path</th>
                             <th scope="col" class="text-left col-4">Summary</th>
                             <th scope="col" class="text-center col-2">Last Message</th>
                             <th scope="col" class="text-center col-1">Messages</th>
@@ -156,14 +162,28 @@ function toggleTag(name: string) {
                             <td>
                                 <router-link @click.stop class="row-link"
                                     :to="{ name: getRouteName('websocketChannel').value, params: { service: props.service.name, channel: channel.name } }">
-                                    {{ channel.name }}
+                                    <template v-if="channel.parameters?.length">
+                                        <span class="visually-hidden">Template </span>
+                                        <span class="channel-name">
+                                            <template v-for="(part, i) in splitTemplate(channel.name)" :key="i">
+                                                <span v-if="part.param" class="param">{{ part.text }}</span>
+                                                <template v-else>{{ part.text }}</template>
+                                            </template>
+                                        </span>
+                                        <span class="visually-hidden">, </span>
+                                        <span class="badge ms-2"
+                                        :class="instanceCount(channel) ? 'bg-secondary' : 'bg-light text-muted'">
+                                            {{ instanceLabel(channel) }}
+                                        </span>
+                                    </template>
+                                    <span v-else>{{ channel.name }}</span>
                                 </router-link>
                             </td>
                             <td>
                                 <div>{{ channel.summary }}</div>
                             </td>
                             <td class="text-center">{{ lastMessage(channel) }}</td>
-                            <td class="text-center">{{ channel.metrics.websocket_messages_total }}</td>
+                            <td class="text-center">{{ channel.metrics.messages_total }}</td>
                         </tr>
                     </tbody>
                 </table>

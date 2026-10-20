@@ -12,13 +12,8 @@ declare interface KafkaServer {
   title: string
   summary: string
   description: string;
-  tags: KafkaTag[]
+  tags: Tag[]
   configs: { [key: string]: any }
-}
-
-declare interface KafkaTag {
-  name: string
-  description?: string
 }
 
 declare interface KafkaTopicInfo {
@@ -26,33 +21,35 @@ declare interface KafkaTopicInfo {
   summary?: string;
   lastMessageReceived?: number
   messages: number
-  tags: KafkaTag[]
+  parameters?: string[]
+  instances?: ChannelInstance[]
+  tags: Tag[]
   metrics: {
-    kafka_messages_total: number
-    kafka_message_timestamp: number
+    messages_total: number
+    message_timestamp: number
   }
 }
 
-declare interface KafkaTopic {
+declare interface KafkaChannel {
   name: string;
   title: string
   summary: string;
   description: string;
-  partitions: KafkaPartition[];
   messages: { [messageId: string]: KafkaMessage }
-  tags: KafkaTag[]
+  parameters?: string[]
+  instances?: ChannelInstance[]
+  tags: Tag[]
+}
+
+declare interface KafkaTopic {
+  name: string;
+  parameters: Record<string, string>
+  partitions: KafkaPartition[];
   groups: KafkaGroupInfo[]
 }
 
-declare interface KafkaMessage {
-  name: string
-  title: string
-  summary: string
-  description: string
+declare interface KafkaMessage extends BaseMessage {
   key: SchemaFormat;
-  payload: SchemaFormat;
-  header: SchemaFormat
-  contentType: string;
 }
 
 declare interface KafkaPartition {
@@ -74,8 +71,8 @@ declare interface KafkaGroupInfo {
   protocol: string
   members: number
   metrics: {
-    kafka_rebalance_timestamp: number
-    topics: Record<string, { partition: number, kafka_consumer_group_lag: number, kafka_consumer_group_commit: number }[]>
+    rebalance_timestamp: number
+    topics: Record<string, { partition: number, consumer_group_lag: number, consumer_group_commit: number }[]>
   }
 }
 
@@ -88,8 +85,8 @@ declare interface KafkaGroup {
   protocol: string;
   topics: string[] | null;
   metrics: {
-    kafka_rebalance_timestamp: number
-    topics: Record<string, { partition: number, kafka_consumer_group_lag: number, kafka_consumer_group_commit: number }[]>
+    rebalance_timestamp: number
+    topics: Record<string, { partition: number, consumer_group_lag: number, consumer_group_commit: number }[]>
   }
 }
 
@@ -100,6 +97,15 @@ declare interface KafkaMember {
   software: string;
   heartbeat: number;
   partitions: { [topicName: string]: number[] };
+}
+
+declare type KafkaEventInfo =  KafkaMessageInfo | KafkaRequestLog
+
+declare interface KafkaMessageInfo {
+  topic: string
+  key: KafkaValue;
+  message: KafkaValue;
+  deleted: boolean
 }
 
 declare type KafkaEventData = KafkaMessageData | KafkaRequestLog

@@ -15,10 +15,14 @@ type Mqtt struct {
 func NewMqtt() *Mqtt {
 	messages := metrics.NewCounterMap(
 		metrics.WithFQName("mqtt", "messages_total"),
-		metrics.WithLabelNames("service", "topic"))
+		metrics.WithLabelNames("service", "topic"),
+		metrics.WithOptionalNames("instance"),
+	)
 	lastMessage := metrics.NewGaugeMap(
 		metrics.WithFQName("mqtt", "message_timestamp"),
-		metrics.WithLabelNames("service", "topic"))
+		metrics.WithLabelNames("service", "topic"),
+		metrics.WithOptionalNames("instance"),
+	)
 
 	return &Mqtt{
 		Messages:    messages,

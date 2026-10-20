@@ -1,0 +1,125 @@
+components:
+  pathItems:
+    Events:
+      get:
+        summary: list of events
+        operationId: events
+        parameters:
+          - $ref: '#/components/parameters/Traits'
+          - $ref: '#/components/parameters/Http'
+        responses:
+          "200":
+            description: name of kafka cluster
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Events'
+    Event:
+      get:
+        summary: Information about the kafka cluster
+        operationId: event
+        parameters:
+          - name: id
+            in: path
+            required: true
+            schema:
+              type: string
+              description: Specify multiple values separated by commas or by repeating the parameter (OR logic). Case-insensitive.
+        responses:
+          "200":
+            description: name of kafka cluster
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Event'
+          "404":
+            description: no event exists for specified id
+  parameters:
+    Traits:
+      name: traits
+      in: query
+      required: false
+      style: deepObject
+      explode: true
+      schema:
+        type: object
+        additionalProperties:
+          type: string
+    Http:
+      name: http
+      in: query
+      required: false
+      style: deepObject
+      explode: true
+      schema:
+        $ref: '#/components/schemas/HttpEventFilter'
+  schemas:
+    Events:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+        page:
+          type: integer
+        size:
+          type: integer
+        total:
+          type: integer
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+        traits:
+          type: object
+          additionalProperties:
+            type: string
+        time:
+          type: string
+        data:
+          anyOf:
+            - $ref: 'kafka.yml#/components/schemas/KafkaEvent'
+            - description: any
+          type: object
+          additionalProperties: true
+    HttpEventFilter:
+      type: object
+      properties:
+        method:
+          type: string
+          description: |
+            Filters by HTTP method. Specify multiple methods separated by commas or by repeating the parameter (OR logic).
+            Case-insensitive.
+          pattern: '^[A-Za-z]+(,[A-Za-z]+)*$'
+        url:
+          type: string
+        requestHeader:
+          type: array
+          items:
+            type: string
+            description: |
+              Format Name:ValueRegex. Without :, only checks that the header exists; :Regex matches against all headers. Repeat the parameter to combine filters with AND.
+            example: 'Content-Type:application/json'
+        statusCode:
+          type: string
+          examples:
+            - 200,201
+            - '-200'
+            - 200-299
+        responseHeader:
+          type: array
+          items:
+            type: string
+            description: |
+              Format Name:ValueRegex. Without :, only checks that the header exists; :Regex matches against all headers. Repeat the parameter to combine filters with AND.
+            example: 'Content-Type:application/json'
+        clientIP:
+          type: string
+          examples:
+            - 192.168.0.1
+            - 192.168.0.1,10.0.0.1
+            - '!127.0.0.1'
+            - 192.168.0.0/24
+

@@ -23,9 +23,30 @@ channels:
     summary: The Kafka topic for user events.
     tags:
       - name: user
+  shipment_updates:
+    address: shipments.{region}.updates
+    title: Shipment Updates per Region
+    summary: Regional topics with shipment tracking events.
+    description: |
+      Each fulfilment region publishes tracking events to its own topic,
+      for example `shipments.eu.updates` or `shipments.us.updates`.
+      Topics are created on demand as soon as a region starts shipping,
+      so a single channel definition covers all regional topics.
+    parameters:
+      region:
+        description: Fulfilment region that handles the shipment.
+        enum: [eu, us, apac, latam]
+        examples: [eu, us]
+    messages:
+      ShipmentUpdated:
+        $ref: '#/components/messages/ShipmentUpdated'
+    bindings:
+      kafka:
+        partitions: 2
+    tags:
+      - name: shipping
 
 operations:
-  # Operation for publishing new orders
   publishNewOrder:
     action: send
     channel:
@@ -38,9 +59,7 @@ operations:
           type: string
           description: The producer client ID, must be prefixed with 'producer-'.
           pattern: '^producer-[a-zA-Z0-9-]+$'
-        bindingVersion: 0.4.0
   
-  # Operation for subscribing to status updates (presumably from another service)
   receiveOrderStatus:
     action: receive
     channel:
@@ -53,7 +72,27 @@ operations:
           type: string
           description: The consumer group ID, must adhere to internal naming conventions.
           pattern: '^order-status-group-[0-9]{3}$'
-        bindingVersion: 0.4.0
+  
+  publishShipmentUpdate:
+    action: send
+    channel:
+      $ref: '#/channels/shipment_updates'
+    summary: A regional fulfilment center reports a shipment status change.
+    messages:
+      - $ref: '#/channels/shipment_updates/messages/ShipmentUpdated'
+
+  receiveShipmentUpdates:
+    action: receive
+    channel:
+      $ref: '#/channels/shipment_updates'
+    summary: The order service tracks shipments across all regions.
+    messages:
+      - $ref: '#/channels/shipment_updates/messages/ShipmentUpdated'
+    bindings:
+      kafka:
+        groupId:
+          type: string
+          pattern: '^shipment-tracking-[a-z]+$'
 
 components:
   messages:
@@ -66,7 +105,7 @@ components:
       examples:
         - name: new-order-example
           payload:
-            orderId: "12345"
+            orderId: "7e2b4d0f-1aa1-49e3-9f11-54c266d480c3"
             productId: "PROD-ABC"
             quantity: 2
             customerEmail: "customer@example.com"
@@ -81,11 +120,47 @@ components:
       examples:
         - name: status-update-example
           payload:
-            orderId: "12345"
+            orderId: "7e2b4d0f-1aa1-49e3-9f11-54c266d480c3"
             productId: "PROD-ABC"
             quantity: 2
             customerEmail: "customer@example.com"
             status: "SHIPPED"
+
+    ShipmentUpdated:
+      name: ShipmentUpdatedEvent
+      title: Shipment Updated Event
+      summary: A shipment moved to a new tracking status.
+      payload:
+        $ref: '#/components/schemas/ShipmentPayload'
+      bindings:
+        kafka:
+          key:
+            type: string
+            format: uuid
+            description: The order ID, so all events of an order stay in order on one partition.
+          bindingVersion: 0.4.0
+      examples:
+        - name: shipment-in-transit
+          summary: Parcel left the EU hub.
+          payload:
+            shipmentId: "8f14e45f-ceea-467f-a8f2-3c6e5b1d2a90"
+            orderId: "c9bf9e57-1685-4c89-bafb-ff5af830be8a"
+            region: eu
+            carrier: DHL
+            status: IN_TRANSIT
+            location: "Frankfurt Hub"
+            timestamp: "2026-10-20T09:15:00Z"
+            estimatedDelivery: "2026-10-22"
+        - name: shipment-delivered
+          summary: Parcel delivered in the US.
+          payload:
+            shipmentId: "1b4e28ba-2fa1-41d2-883f-0016d3cca427"
+            orderId: "a3bb189e-8bf9-4888-9912-ace4e6543002"
+            region: us
+            carrier: UPS
+            status: DELIVERED
+            location: "Austin, TX"
+            timestamp: "2026-10-20T16:42:00Z"
   
   schemas:
     OrderPayload:
@@ -117,3 +192,37 @@ components:
         - quantity
         - customerEmail
         - status
+
+    ShipmentPayload:
+      type: object
+      properties:
+        shipmentId:
+          type: string
+          format: uuid
+          description: Unique ID of the shipment.
+        orderId:
+          type: string
+          format: uuid
+          description: The order this shipment belongs to.
+        region:
+          type: string
+          enum: [eu, us, apac, latam]
+          description: Fulfilment region; matches the topic parameter.
+        carrier:
+          type: string
+          enum: [DHL, UPS, FedEx, DPD, Post]
+        status:
+          type: string
+          enum: [LABEL_CREATED, PICKED_UP, IN_TRANSIT, OUT_FOR_DELIVERY, DELIVERED, EXCEPTION]
+          description: Current tracking status.
+        location:
+          type: string
+          description: Last known location of the parcel.
+        timestamp:
+          type: string
+          format: date-time
+          description: When the status change happened.
+        estimatedDelivery:
+          type: string
+          format: date
+      required: [shipmentId, orderId, region, carrier, status, timestamp]

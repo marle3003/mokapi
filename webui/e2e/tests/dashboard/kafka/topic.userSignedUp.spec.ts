@@ -6,6 +6,7 @@ import { useSourceView } from '../../components/source'
 
 test('Visit Kafka topic mokapi.shop.userSignedUp', async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"])
+    const breadcrumb = page.getByRole('navigation', { name: 'Breadcrumb' })
 
     const topic = cluster.topics[1]
     await test.step('Browse to topic "mokapi.shop.userSignedUp"', async () => {
@@ -23,7 +24,6 @@ test('Visit Kafka topic mokapi.shop.userSignedUp', async ({ page, context }) => 
         const info = page.getByRole('region', { name: "Info" })
         await expect(info).toBeVisible()
         await expect(info.getByLabel('Topic')).toHaveText(topic.name)
-        await expect(info.getByLabel('Cluster')).toHaveText(cluster.name)
         await expect(info.getByLabel('Type of API')).toHaveText('Kafka')
         await expect(info.getByLabel('Summary')).toHaveText(topic.summary)
     })
@@ -142,7 +142,7 @@ test('Visit Kafka topic mokapi.shop.userSignedUp', async ({ page, context }) => 
         })
 
         await test.step('Go back to cluster view', async () => {
-            await page.getByRole('link', { name: 'cluster' }).click()
+            await breadcrumb.getByRole('link', { name: 'Kafka World' }).click()
             const region = page.getByRole('region', { name: 'Info' });
             await expect(region.getByLabel('name')).toHaveText(cluster.name)
         })

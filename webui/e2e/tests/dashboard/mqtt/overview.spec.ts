@@ -3,6 +3,7 @@ import { getCellByColumnName } from '../../helpers/table'
 
 test('Visit MQTT overview', async ({ page }) => {
     await page.goto('/dashboard')
+    const breadcrumb = page.getByRole('navigation', { name: 'Breadcrumb' })
 
     await test.step('Verify Dashboard', async () => {
 
@@ -36,7 +37,7 @@ test('Visit MQTT overview', async ({ page }) => {
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).not.toBeEmpty();
         await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('1');
 
-        await expect(await getCellByColumnName(table, 'Name', rows.nth(1))).toHaveText('sensors/{sensorId}/data');
+        await expect(await getCellByColumnName(table, 'Name', rows.nth(1))).toHaveText('Template sensors/{sensorId}/data, 1 topic');
         await expect(await getCellByColumnName(table, 'Summary', rows.nth(1))).toHaveText('');
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(1))).not.toBeEmpty();
         await expect(await getCellByColumnName(table, 'Messages', rows.nth(1))).toHaveText('1');
@@ -92,7 +93,7 @@ test('Visit MQTT overview', async ({ page }) => {
                 })
 
                 await meta.getByLabel('Topic').click();
-                await page.getByRole('region', { name: 'Info' }).getByLabel('Cluster').click();
+                await breadcrumb.getByRole('link', { name: 'MQTT Temperature Sensor API' }).click()
             })
 
         })
@@ -101,11 +102,17 @@ test('Visit MQTT overview', async ({ page }) => {
             const topics = page.getByRole('table', { name: 'Topics' });
             await topics.getByText('sensors/{sensorId}/data').click();
 
-            await expect(page.getByLabel('Topic', { exact: true })).toHaveText('sensors/{sensorId}/data');
+            await expect(page.getByLabel('Topic Template', { exact: true })).toHaveText('sensors/{sensorId}/data');
             await expect(page.getByLabel('Title')).not.toBeVisible();
             await expect(page.getByLabel('Summary')).not.toBeVisible();
             await expect(page.getByLabel('Description')).not.toBeVisible();
             await expect(page.getByLabel('Type of API')).toHaveText('MQTT');
+
+            const instances = page.getByRole('table', { name: 'Topics' })
+            const instance = instances.locator('tbody tr').nth(0);
+            await expect(await getCellByColumnName(instances, 'Topic', instance)).toContainText('sensors/123/data')
+            await expect(await getCellByColumnName(instances, 'Last Message', instance)).not.toHaveText('-')
+            await expect(await getCellByColumnName(instances, 'Messages', instance)).toContainText('1')
 
             const messages = page.getByRole('table', { name: 'Messages' });
             const rows = messages.locator('tbody tr');
@@ -113,6 +120,16 @@ test('Visit MQTT overview', async ({ page }) => {
             await expect(await getCellByColumnName(messages, 'Topic', rows.nth(0))).toHaveText('sensors/123/data');
             await expect(await getCellByColumnName(messages, 'Value', rows.nth(0))).toHaveText('{"temp":33,"timestamp":"2026-02-14T09:49:25.482366+01:00"}');
             await expect(await getCellByColumnName(messages, 'Time', rows.nth(0))).not.toBeEmpty();
+
+            await test.step('Visit instance', async() => {
+                await instance.click()
+
+                const meta = page.getByRole('region', { name: 'Info' })
+                await expect(meta.getByLabel('Topic')).toHaveText('sensors/123/data');
+
+                await expect(breadcrumb).toContainText('sensors/{sensorId}/data')
+                await expect(breadcrumb).toContainText('sensors/123/data')
+            })
 
             await test.step('Visit message', async () => {
 
@@ -151,7 +168,7 @@ test('Visit MQTT overview', async ({ page }) => {
                 })
 
                 await meta.getByLabel('Topic').click();
-                await page.getByRole('region', { name: 'Info' }).getByLabel('Cluster').click();
+                await breadcrumb.getByRole('link', { name: 'MQTT Temperature Sensor API' }).click()
             })
 
         })

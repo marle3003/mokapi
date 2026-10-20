@@ -328,7 +328,7 @@ func TestNode(t *testing.T) {
 				v, err := street.Fake(req)
 				r.NoError(t, err)
 				r.Equal(t, "bar", v)
-				r.Equal(t, generator.Values{"foo": "bar"}, req.Context.Values)
+				r.Equal(t, map[string]any{"foo": "bar"}, req.Context.Values)
 			},
 		},
 	}

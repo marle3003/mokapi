@@ -20,8 +20,8 @@ type kafkaResult struct {
 	*common.KafkaProduceResult
 
 	// deprecated fields
-	Key       interface{}
-	Value     interface{}
+	Key       any
+	Value     any
 	Offset    int64
 	Headers   map[string]string
 	Partition int
@@ -41,7 +41,7 @@ func Require(vm *goja.Runtime, module *goja.Object) {
 	_ = obj.Set("produceAsync", f.ProduceAsync)
 }
 
-func (m *Module) Produce(v goja.Value) interface{} {
+func (m *Module) Produce(v goja.Value) any {
 	defer func() {
 		r := recover()
 		if r != nil {
@@ -70,7 +70,7 @@ func (m *Module) Produce(v goja.Value) interface{} {
 	return result
 }
 
-func (m *Module) ProduceAsync(v goja.Value) interface{} {
+func (m *Module) ProduceAsync(v goja.Value) any {
 	p, resolve, reject := m.rt.NewPromise()
 	go func() {
 		defer func() {
@@ -147,7 +147,7 @@ func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 				if goja.IsUndefined(value) || goja.IsNull(value) {
 					continue
 				}
-				message.Data = value.Export()
+				message.Data = common.Optional[any]{Value: value.Export(), IsSet: true}
 			case "headers":
 				if message == nil {
 					message = &common.KafkaMessage{Partition: -1}
@@ -165,9 +165,9 @@ func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 					}
 				}
 			case "messages":
-				records := params.Get(k).Export().([]interface{})
+				records := params.Get(k).Export().([]any)
 				for _, item := range records {
-					rec, ok := item.(map[string]interface{})
+					rec, ok := item.(map[string]any)
 					if !ok {
 						return nil, fmt.Errorf("invalid type in messages: expected Object but got %v", util.JsType(item))
 					}
@@ -178,9 +178,9 @@ func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 					if v, ok := rec["value"]; ok {
 						switch val := v.(type) {
 						case []byte:
-							r.Value = val
+							r.Value = common.Optional[[]byte]{Value: val, IsSet: true}
 						case string:
-							r.Value = []byte(val)
+							r.Value = common.Optional[[]byte]{Value: []byte(val), IsSet: true}
 						case []any:
 							b := make([]byte, len(val))
 							for i, item := range val {
@@ -190,13 +190,13 @@ func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 									return nil, fmt.Errorf("invalid type in messages: byte numbers: %v", item)
 								}
 							}
-							r.Value = b
+							r.Value = common.Optional[[]byte]{Value: b, IsSet: true}
 						default:
-							r.Value = []byte(fmt.Sprintf("%v", v))
+							r.Value = common.Optional[[]byte]{Value: []byte(fmt.Sprintf("%v", v)), IsSet: true}
 						}
 					}
 					if d, ok := rec["data"]; ok {
-						r.Data = d
+						r.Data = common.Optional[any]{Value: d, IsSet: true}
 					}
 					if h, ok := rec["headers"]; ok {
 						r.Headers = map[string]string{}
@@ -220,6 +220,8 @@ func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 				if err != nil {
 					return nil, err
 				}
+			case "allowAutoTopicCreation":
+				opt.AllowAutoTopicCreation = params.Get(k).Export().(bool)
 			}
 		}
 		if message != nil {

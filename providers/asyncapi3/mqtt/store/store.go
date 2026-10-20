@@ -58,6 +58,10 @@ func (s *Store) Update(cfg *asyncapi3.Config) {
 		if !ch.Value.IsChannelAvailable("mqtt") {
 			continue
 		}
+		if len(ch.Value.Parameters) > 0 {
+			continue
+		}
+
 		if s.Topics == nil {
 			s.Topics = make(map[string]*Topic)
 		}
@@ -66,9 +70,8 @@ func (s *Store) Update(cfg *asyncapi3.Config) {
 			address = ch.Value.Address
 		}
 
-		if len(ch.Value.Parameters) == 0 {
-			s.Topics[address] = &Topic{Name: address, cfg: ch.Value}
-		}
+		s.Topics[address] = &Topic{Name: address, cfg: ch.Value}
+
 	}
 }
 

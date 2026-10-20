@@ -1,28 +1,38 @@
 <script setup lang="ts">
-import { type Ref, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import Servers from './Server.vue'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
 import Searches from './Requests.vue'
 import ConfigCard from '../ConfigCard.vue'
 import Request from './Request.vue'
-import { getRouteName, useDashboard } from '@/composables/dashboard';
+import { getRouteName } from '@/composables/dashboard';
 import '@/assets/ldap.css'
+import { useService } from '@/composables/service.ts'
+import { provideBreadcrumb } from '@/composables/breadcrumb.ts'
+import { computed } from 'vue'
+import Breadcrumb from '../Breadcrumb.vue'
 
-const route = useRoute()
-const serviceName = route.params.service?.toString()
-let service: Ref<LdapService | null>
-if (serviceName){
-  const { dashboard } = useDashboard()
-  const result = dashboard.value.getService(serviceName, 'ldap')
-  service = result.service as Ref<LdapService | null>
-  onUnmounted(() => {
-      result.close()
-  })
-}
+const route = useRoute();
+const { service } = useService<LdapService>('ldap')
+
+const tail = provideBreadcrumb()
+const breadcrumb = computed<BreadcrumbItem[]>(() => {
+  const base: BreadcrumbItem[] = [
+    { text: 'LDAP', to: { name: getRouteName('ldap').value } },
+  ]
+  if (!service.value) return base
+  const isOverview = route.name === getRouteName('ldapService').value
+  base.push(isOverview
+    ? { text: service.value.name }
+    : { text: service.value.name, to: { name: getRouteName('ldapService').value,
+        params: { service: service.value.name } } })
+  return [...base, ...tail.value]
+})
 </script>
 
 <template>
+  <Breadcrumb :items="breadcrumb" />
+
   <div v-if="$route.name == getRouteName('ldapService').value && service != null">
       <div class="card-group">
           <service-info-card :service="service" type="LDAP" />

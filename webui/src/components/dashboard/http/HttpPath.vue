@@ -4,6 +4,7 @@ import { useRoute } from '@/router';
 import HttpOperationsCard from './HttpOperationsCard.vue';
 import Requests from './Requests.vue';
 import ServiceStatus from '../ServiceStatus.vue'
+import { useBreadcrumb } from '@/composables/breadcrumb.ts';
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },
@@ -43,6 +44,10 @@ const status = computed(() => {
     }
     return { status, errors }
 })
+useBreadcrumb(() => {
+  if (!props.path) return []
+  return [ { text: props.path.path } ]
+})
 </script>
 
 <template>
@@ -56,14 +61,6 @@ const status = computed(() => {
                             <p data-testid="path" aria-labelledby="path">
                                 <span class="bi bi-exclamation-triangle-fill yellow pe-2" v-if="allOperationsDeprecated()"></span>
                                 {{ path.path }}
-                            </p>
-                        </div>
-                        <div class="col">
-                            <p id="service" class="label">Service</p>
-                            <p data-testid="service" aria-labelledby="service">
-                                <router-link :to="route.service(service, 'http')">
-                                {{ service.name }}
-                                </router-link>
                             </p>
                         </div>
                         <div class="col" v-if="allOperationsDeprecated()">

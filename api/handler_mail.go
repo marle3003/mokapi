@@ -117,8 +117,8 @@ type attachment struct {
 }
 
 type mailMetrics struct {
-	NumMails float64 `json:"mail_mails_total"`
-	LastMail float64 `json:"mail_mail_timestamp"`
+	NumMails float64 `json:"mails_total"`
+	LastMail float64 `json:"mail_timestamp"`
 }
 
 func getMailServices(store *runtime.MailStore, m *monitor.Monitor) []service {

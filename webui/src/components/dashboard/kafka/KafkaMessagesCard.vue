@@ -4,7 +4,8 @@ import KafkaMessages from './KafkaMessages.vue'
 
 const props = defineProps<{
     service?: KafkaService,
-    topic?: KafkaTopic
+    topicName?: string
+    instanceName?: string
     clientId?: string
     hideWhenEmpty?: boolean
 }>()
@@ -26,7 +27,7 @@ function onLoaded(count: number) {
     <section class="card" aria-labelledby="messages" :style="{ display: hide ? 'none' : 'block'}">
         <div class="card-body">
             <h2 id="messages" class="card-title text-center">Recent Messages</h2>
-            <kafka-messages :service="service" :topic="topic" :client-id="clientId" @loaded="onLoaded" />
+            <kafka-messages :service="service" :topic-name="topicName" :instance-name="instanceName" :client-id="clientId" @loaded="onLoaded" />
         </div>
     </section>
 </template>

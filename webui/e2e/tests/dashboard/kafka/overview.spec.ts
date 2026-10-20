@@ -9,7 +9,7 @@ test('Visit Kafka overview', async ({ page }) => {
     await tabs.kafka.click()
 
     await test.step('Check messages metric', async () => {
-        await expect(page.getByRole('status', { name: 'Kafka Messages' })).toHaveText('11')
+        await expect(page.getByRole('status', { name: 'Kafka Messages' })).toHaveText('12')
     })
 
     await test.step('Check clusters', async () => {

@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { usePrettyDates } from '@/composables/usePrettyDate'
-import { computed, onMounted, onUnmounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import duration from 'dayjs/plugin/duration'
 import { usePrettyText } from '@/composables/usePrettyText'
 import { getRouteName, useDashboard } from '@/composables/dashboard'
 
+const paging = reactive({
+    current: 1,
+    size: 25,
+    sizeOptions: [10, 25, 50, 100]
+})
+
 const { dashboard } = useDashboard()
-const { events, close } = dashboard.value.getEvents({ name: 'namespace', value: 'jobs' })
 const { format, duration: prettyDuration } = usePrettyDates()
 const { parseUrls } = usePrettyText()
 dayjs.extend(duration)
@@ -17,6 +21,27 @@ const now = ref(dayjs())
 interface Timer {
     hours: number, minutes: number, seconds: number
 }
+
+const result = ref<ServiceEventResult | null>(null);
+const events = computed(() => result.value?.items ?? [])
+watch(
+  [() => dashboard.value, () => paging.current, () => paging.size ],
+  ([db], _, onCleanup) => {
+    const res = db.getEvents({
+      page: paging.current,
+      size: paging.size,
+      labels: [{ name: 'namespace', value: 'job' }],
+    })
+
+    const stop = watch(res.data, (v) => { result.value = v }, { immediate: true })
+
+    onCleanup(() => {
+      stop()
+      res.close()
+    })
+  },
+  { immediate: true }
+);
 
 const timers = computed(() => {
     const result: { [name: string]: Timer } = {}
@@ -55,14 +80,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-    close()
     clearInterval(interval)
 })
 
-function eventData(event: ServiceEvent | null): JobExecution | null{
-    if (!event) {
-        return null
-    }
+function eventData(event: ServiceEventInfo): JobExecution {
     return <JobExecution>event.data
 }
 function formatTimer(timer: Timer) {

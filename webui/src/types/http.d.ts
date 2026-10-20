@@ -23,9 +23,9 @@ declare interface HttpOperationInfo {
     status: string
     errors?: Error[]
     metrics: {
-        http_requests_total: number
-        http_requests_errors_total: number
-        http_request_timestamp: number
+        requests_total: number
+        requests_errors_total: number
+        request_timestamp: number
     }
 }
 
@@ -55,6 +55,13 @@ declare interface HttpParameter {
     explode: boolean
     allowReserved: boolean
     schema?: Schema
+}
+
+declare interface HttpEventInfo {
+    url: string
+    statusCode: number
+    duration: number
+    deprecated: boolean
 }
 
 declare interface HttpEventData {
@@ -120,7 +127,13 @@ declare interface Action {
     parameters: any[]
     logs: { level: string, message: string}[]
     error?: { message: string }
+}
 
+declare interface Truncated {
+  truncated: true
+  size: number
+  sha256: string
+  preview: string
 }
 
 declare interface Tags { [key: string]: string }

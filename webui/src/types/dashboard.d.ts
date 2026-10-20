@@ -1,19 +1,19 @@
-import type { AppInfoResponse } from "@/composables/appInfo"
 import type { Response } from "@/composables/fetch"
 import type { Ref } from "vue"
 
 export interface Dashboard {
     getAppInfo(): AppInfoResponse
 
-    getServices(type?: string, doRefresh?: boolean): ServicesResult
-    getService(name: string, type: string): ServiceResult
+    getServices(type?: ServiceType, doRefresh?: boolean): ServicesResult
+    getService(name: string, type: ServiceType): ServiceResult
 
     getHttpOperations(serviceName: string, path?: string, method?: string): HttpOperationsResult
+    getKafkaChannel(serviceName: string, topicName: string): KafkaChannelResult
     getKafkaTopic(serviceName: string, topicName: string): KafkaTopicResult
     getKafkaGroup(serviceName: string, groupName: string): KafkaGroupResult
     getKafkaClient(serviceName: string, clientId: string): KafkaClientResult
 
-    getEvents(...labels: Label[]): EventsResult
+    getEvents(query?: EventQuery): EventsResult
     getEvent(id: string): EventResult
 
     getExample(request: ExampleRequest): ExampleResult
@@ -67,6 +67,12 @@ export interface HttpOperationsResult {
     close(): void
 }
 
+export interface KafkaChannelResult {
+    channel: Ref<KafkaChannel | null>
+    isLoading: Ref<boolean>
+    close(): void
+}
+
 export interface KafkaTopicResult {
     topic: Ref<KafkaTopic | null>
     isLoading: Ref<boolean>
@@ -74,7 +80,7 @@ export interface KafkaTopicResult {
 }
 
 export interface EventsResult {
-    events: Ref<ServiceEvent[]>
+    data: Ref<ServiceEventResult>
     close(): void
 }
 
@@ -140,4 +146,25 @@ export interface ConfigDataResult {
 export interface BrunoCollection {
     serviceName: string
     content: string
+}
+
+export interface EventQuery {
+    labels: Label[]
+    http?: HttpEventFilter
+
+    page: number
+    size: number
+}
+
+export interface HttpEventFilter {
+    methods?: string[]
+    url?: string
+    requestHeaders?: { name: string, value: string }[]
+    statusCode?: string
+    responseHeaders?: { name: string, value: string }[]
+    clientIP?: string
+}
+
+export interface KafkaEventFilter {
+
 }

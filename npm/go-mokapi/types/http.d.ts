@@ -1,5 +1,3 @@
-import { JSONValue } from ".";
-
 /**
  * Make GET request.
  * https://mokapi.io/docs/javascript-api/mokapi-http/get
@@ -23,7 +21,7 @@ export function get(url: string, args?: Args): Response;
  *   headers: { 'Content-Type': "application/json" }
  * })
  */
-export function post(url: string, body?: JSONValue, args?: Args): Response;
+export function post(url: string, body?: any, args?: Args): Response;
 
 /**
  * Make PUT request.
@@ -37,7 +35,7 @@ export function post(url: string, body?: JSONValue, args?: Args): Response;
  *   headers: { 'Content-Type': "application/json" }
  * })
  */
-export function put(url: string, body?: JSONValue, args?: Args): Response;
+export function put(url: string, body?: any, args?: Args): Response;
 
 /**
  * Make HEAD request.
@@ -60,7 +58,7 @@ export function head(url: string, args?: Args): Response;
  * @example
  * patch("https://foo.bar/foo")
  */
-export function patch(url: string, body?: JSONValue, args?: Args): Response;
+export function patch(url: string, body?: any, args?: Args): Response;
 
 /**
  * Make PATCH request.
@@ -72,7 +70,7 @@ export function patch(url: string, body?: JSONValue, args?: Args): Response;
  * @example
  * del("https://foo.bar/foo")
  */
-export function del(url: string, body?: JSONValue, args?: Args): Response;
+export function del(url: string, body?: any, args?: Args): Response;
 
 /**
  * Make OPTIONS request.
@@ -84,7 +82,7 @@ export function del(url: string, body?: JSONValue, args?: Args): Response;
  * @example
  * options("https://foo.bar/foo")
  */
-export function options(url: string, body?: JSONValue, args?: Args): Response;
+export function options(url: string, body?: any, args?: Args): Response;
 
 /**
  * Sends an HTTP request and returns a Promise resolving to the response.
@@ -224,5 +222,5 @@ export interface Response {
      * const res = get(url)
      * res.json()
      */
-    json(): JSONValue;
+    json(): any;
 }

@@ -84,10 +84,17 @@ components:
       properties:
         name:
           type: string
-        Parameters:
+        parameters:
           type: object
           additionalProperties:
             type: string
+        metrics:
+          type: object
+          properties:
+            messages_total:
+              type: integer
+            message_timestamp:
+              type: integer
     WebsocketMessageConfig:
       type: object
       properties:

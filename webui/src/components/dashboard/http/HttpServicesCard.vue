@@ -11,7 +11,7 @@ const { dashboard } = useDashboard()
 const { services, close } = dashboard.value.getServices('http')
 
 function lastRequest(s: Service) {
-    const n = s.metrics.http_request_timestamp
+    const n = s.metrics.request_timestamp
     if (n == 0) {
         return '-'
     }
@@ -19,11 +19,11 @@ function lastRequest(s: Service) {
 }
 
 function requests(s: Service) {
-    return s.metrics.http_requests_total
+    return s.metrics.requests_total
 }
 
 function errors(s: Service) {
-    return s.metrics.http_requests_errors_total
+    return s.metrics.requests_errors_total
 }
 
 function goToService(s: Service, openInNewTab = false) {

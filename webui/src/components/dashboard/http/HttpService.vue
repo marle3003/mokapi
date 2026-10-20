@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Ref, onUnmounted, computed, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
 import ServiceStatus from '../ServiceStatus.vue'
@@ -12,27 +12,21 @@ import Servers from './Servers.vue'
 import Message from '@/components/Message.vue'
 import ConfigCard from '../ConfigCard.vue'
 import '@/assets/http.css'
-import { getRouteName, useDashboard } from '@/composables/dashboard';
+import { getRouteName } from '@/composables/dashboard';
 import { useRouter } from '@/router'
 import { useToolbarItem } from '@/composables/toolbar-items'
 import ExportOpenAPI from './export/OpenAPI.vue'
 import ExportBruno from './export/Bruno.vue'
+import Breadcrumb from '../Breadcrumb.vue'
+import { provideBreadcrumb } from '@/composables/breadcrumb.ts'
+import { useService } from '@/composables/service.ts'
 
 const route = useRoute()
 const router = useRouter();
-const serviceName = route.params.service?.toString()
-const { dashboard } = useDashboard()
+const { service } = useService<HttpService>('http')
+
 const exportOpenAPIDialogVisible = ref(false)
 const exportBrunoDialogVisible = ref(false)
-
-let service: Ref<HttpService | null>
-if (serviceName){
-    const result = dashboard.value.getService(serviceName, 'http')
-    service = result.service as Ref<HttpService | null>
-    onUnmounted(() => {
-        result.close()
-    })
-}
 
 let endpoint = computed(() => {
     const endpoint = getEndpoint()
@@ -139,9 +133,25 @@ useToolbarItem(
         }
     }
 )
+
+const tail = provideBreadcrumb()
+const breadcrumb = computed<BreadcrumbItem[]>(() => {
+  const base: BreadcrumbItem[] = [
+    { text: 'HTTP', to: { name: getRouteName('http').value } },
+  ]
+  if (!service.value) return base
+  const isOverview = route.name === getRouteName('httpService').value
+  base.push(isOverview
+    ? { text: service.value.name }
+    : { text: service.value.name, to: { name: getRouteName('httpService').value,
+        params: { service: service.value.name } } })
+  return [...base, ...tail.value]
+})
 </script>
 
 <template>
+    <Breadcrumb :items="breadcrumb" />
+
     <div v-if="$route.name == getRouteName('httpService').value && service != null">
         <div class="card-group">
             <service-info-card :service="service" type="HTTP" :status="status.status" />

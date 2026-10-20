@@ -1,4 +1,4 @@
-import { metrics } from 'metrics.ts';
+import { sum, max, metrics } from './metrics';
 import { on } from 'mokapi';
 
 const ChatMessage = {
@@ -71,14 +71,15 @@ export let services = [
             contentType: 'application/json',
           }
         },
+        parameters: ['chatId'],
         instances: [
           {
-            name: 'chats/1234',
+            name: '/chats/1234',
             parameters: {
               chatId: '1234'
-            }
+            },
           }
-        ]
+        ],
       },
     ],
     metrics: metrics.filter((x) => x.name.includes('websocket')),
@@ -96,21 +97,26 @@ export default async function () {
           version: services[0].version,
           contact: services[0].contact,
           servers: services[0].servers,
-          channels: services[0].channels.map((x) => {
+          channels: services[0].channels.map((x: any) => {
             return {
               name: x.name,
-              ...(x.title ? { title: x.title } : {}),
-              ...(x.summary ? { summary: x.summary } : {}),
-              ...(x.description ? { description: x.description } : {}),
+              ...('title' in x ? { title: x.title } : {}),
+              ...('summary' in x ? { summary: x.summary } : {}),
+              ...('description' in x ? { description: x.description } : {}),
               messages: x.messages,
-               ...x.instances ? { instances: x.instances } : {},
+              ...('parameters' in x ? { parameters: x.parameters} : {}), 
+              ...('instances' in x ? { instances: x.instances.map((i: any) => (
+                {
+                  ...i,
+                  metrics: {
+                    messages_total: sum('websocket_messages_total', { name: 'service', value: services[0].name }, { name: 'channel', value: x.name }, { name: 'instance', value: i.name }),
+                    message_timestamp: max('websocket_message_timestamp', { name: 'service', value: services[0].name }, { name: 'channel', value: x.name }, { name: 'instance', value: i.name })
+                  },
+                }
+              )) } : {}),
               metrics: {
-                websocket_messages_total: metrics.find(
-                  (m) => m.name === `websocket_messages_total{service="${services[0].name}",channel="${x.name}"}`
-                )?.value,
-                websocket_message_timestamp: metrics.find(
-                  (m) => m.name === `websocket_message_timestamp{service="${services[0].name}",channel="${x.name}"}`
-                )?.value,
+                messages_total: sum('websocket_messages_total', { name: 'service', value: services[0].name }, { name: 'channel', value: x.name }),
+                message_timestamp: max('websocket_message_timestamp', { name: 'service', value: services[0].name }, { name: 'channel', value: x.name })
               },
             };
           }),
@@ -169,6 +175,7 @@ export let events = [
       namespace: 'websocket',
       name: 'WebSocket Chat API',
       channel: '/chats/{chatId}',
+      instance: '/chats/1234',
       type: 'message',
       clientId: clients[1].id,
     },
@@ -201,6 +208,7 @@ export let events = [
       namespace: 'websocket',
       name: 'WebSocket Chat API',
       channel: '/chats/{chatId}',
+      instance: '/chats/1234',
       type: 'message',
       clientId: clients[1].id,
     },
@@ -228,6 +236,30 @@ export let events = [
             }
         }
       ]
+    },
+  },
+  {
+    id: '9ab700fa-55b6-4c32-9c53-8cd3926dacc4',
+    traits: {
+      namespace: 'websocket',
+      name: 'WebSocket Chat API',
+      channel: '/chats/{chatId}',
+      instance: '/chats/1234',
+      type: 'connection',
+      clientId: clients[0].id,
+    },
+    time: '2026-02-13T09:50:26.100000+01:00',
+    data: {
+      type: 'connect',
+      channel: '/chats/general',
+      client: {
+        id: clients[1].id,
+        query: {},
+        header: {},
+        address: clients[0].address,
+        server: clients[0].serverAddress
+      },
+      api: 'WebSocket Chat API',
     },
   },
 ];

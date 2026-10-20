@@ -23,7 +23,30 @@ components:
                       contact:
                         $ref: './common.yml#/components/schemas/Contact'
                     additionalProperties: false
-
+    Channel:
+      get:
+        summary: Returns channel specification
+        operationId: kafkaChannel
+        parameters:
+          - in: path
+            name: cluster
+            required: true
+            schema:
+              type: string
+          - in: path
+            name: channel
+            required: true
+            schema:
+              type: string
+        responses:
+          '200':
+            description: The channel specification
+            content:
+              application/json:
+                schema:
+                  $ref: '#/components/schemas/Channel'
+          '404':
+            description: Channel not found
     Topics:
       get:
         summary: Returns the list of topics that belongs to the specified Kafka cluster
@@ -42,7 +65,7 @@ components:
                 schema:
                   type: array
                   items:
-                    $ref: '#/components/schemas/TopicInfo'
+                    $ref: '#/components/schemas/ChannelInfo'
     Topic:
       parameters:
         - in: path
@@ -65,6 +88,8 @@ components:
               application/json:
                 schema:
                   $ref: '#/components/schemas/Topic'
+          '404':
+            description: Topic not found
       post:
         summary: Produce messages to a topic, the partition will be chosen randomly
         operationId: kafkaProduceTopic
@@ -376,7 +401,7 @@ components:
         topics:
           type: array
           items:
-            $ref: '#/components/schemas/TopicInfo'
+            $ref: '#/components/schemas/ChannelInfo'
         groups:
           type: array
           items:
@@ -385,7 +410,7 @@ components:
           type: array
           items:
             $ref: './common.yml#/components/schemas/ConfigInfo'
-    TopicInfo:
+    ChannelInfo:
       type: object
       properties:
         name:
@@ -396,25 +421,60 @@ components:
           type: integer
         messages:
           type: integer
+    Channel:
+      type: object
+      properties:
+        name:
+          type: string
+        title:
+          type: string
+        summary:
+          type: string
+        description:
+          type: string
+        messages:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/MessageConfig'
+        parameters:
+          type: array
+          items:
+            type: string
+        tags:
+          $ref: '#/components/schemas/Tags'
+        metrics:
+          type: object
+          properties:
+            messages_total:
+              type: integer
+            message_timestamp:
+              type: integer
     Topic:
       type: object
       properties:
         name:
           type: string
-        summary:
-          type: string
+        parameters:
+          type: object
+          additionalProperties:
+            type: string
+        bindings:
+          $ref: '#/components/schemas/TopicBindings'
         partitions:
           type: array
           items:
             $ref: '#/components/schemas/Partition'
-        messages:
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/GroupInfo'
+        metrics:
           type: object
-          additionalProperties:
-            $ref: '#/components/schemas/MessageConfig'
-        bindings:
-          $ref: '#/components/schemas/TopicBindings'
-        tags:
-          $ref: '#/components/schemas/Tags'
+          properties:
+            messages_total:
+              type: integer
+            message_timestamp:
+              type: integer
     Partition:
       type: object
       properties:
@@ -444,7 +504,7 @@ components:
         metrics:
           type: object
           properties:
-            kafka_rebalance_timestamp:
+            rebalance_timestamp:
               type: integer
             topics:
               type: object
@@ -478,7 +538,7 @@ components:
         metrics:
           type: object
           properties:
-            kafka_rebalance_timestamp:
+            rebalance_timestamp:
               type: integer
             topics:
               type: object
@@ -601,3 +661,40 @@ components:
             type: string
           description:
             type: string
+    KafkaEvent:
+      type: object
+      properties:
+        offset:
+          type: integer
+        key:
+          $ref: '#/components/schemas/KafkaValue'
+        message:
+          $ref: '#/components/schemas/KafkaValue'
+        schemaId:
+          type: integer
+        partition:
+          type: integer
+        headers:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              value:
+                type: string
+              binary:
+                type: string
+        deleted:
+          type: boolean
+        producerId:
+          type: number
+        producerEpoch:
+          type: number
+        sequenceNumber:
+          type: number
+    KafkaValue:
+      type: object
+      properties:
+        value:
+          type: string
+        binary:
+          type: string

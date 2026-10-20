@@ -43,8 +43,9 @@ type RecordResult struct {
 }
 
 type Client struct {
-	ClientId   string
-	ScriptFile string
+	ClientId               string
+	ScriptFile             string
+	AllowAutoTopicCreation bool
 
 	store   *Store
 	monitor *monitor.Kafka
@@ -60,7 +61,15 @@ func NewClient(s *Store, m *monitor.Kafka) *Client {
 func (c *Client) Write(topic string, records []Record, ct media.ContentType) ([]RecordResult, error) {
 	t := c.store.Topic(topic)
 	if t == nil {
-		return nil, TopicNotFound
+		if c.AllowAutoTopicCreation {
+			var err error
+			t, err = c.store.NewTopic(topic, nil)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, TopicNotFound
+		}
 	}
 
 	var result []RecordResult

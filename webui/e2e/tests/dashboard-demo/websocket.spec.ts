@@ -7,6 +7,7 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
     } else {
         await page.goto('/dashboard-demo')
     }
+    const breadcrumb = page.getByRole('navigation', { name: 'Breadcrumb' })
 
     await test.step('Verify Dashboard', async () => {
 
@@ -30,29 +31,48 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
         await expect(region.getByLabel('Name')).toHaveText('WebSocket Chat API')
         await expect(region.getByLabel('Description')).toHaveText('A real-time Chat API based on WebSockets for bidirectional communication within chat rooms.')
 
-        const table = page.getByRole('table', { name: 'Channels' });
+        const table = page.getByRole('table', { name: 'Paths' });
         const rows = table.locator('tbody tr');
         await expect(rows).toHaveCount(1);
 
-        await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('/chats/{roomId}');
+        await expect(await getCellByColumnName(table, 'Path', rows.nth(0))).toHaveText('Template /chats/{roomId}, 1 path');
         await expect(await getCellByColumnName(table, 'Summary', rows.nth(0))).toHaveText('');
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).not.toBeEmpty();
         await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('3');
 
         await test.step('Visit /chats/{roomId}', async () => {
-            const topics = page.getByRole('table', { name: 'Channels' });
+            const topics = page.getByRole('table', { name: 'Paths' });
             await topics.getByText('/chats/{roomId}').click();
 
             const info = page.getByRole('region', { name: 'Info' })
 
-            await expect(info.getByLabel('Channel', { exact: true })).toHaveText('/chats/{roomId}');
+            await expect(info.getByLabel('Path Template', { exact: true })).toHaveText('/chats/{roomId}');
             await expect(info.getByLabel('Description')).toHaveText('The communication channel for a specific chat room.')
             await expect(info.getByLabel('Type of API')).toHaveText('Websocket');
 
+            let rows = topics.locator('tbody tr');
+            await expect(rows).toHaveCount(1);
+            await expect(await getCellByColumnName(topics, 'Path', rows.nth(0))).toHaveText('/chats/general');
+            await expect(await getCellByColumnName(topics, 'Last Message', rows.nth(0))).not.toBeEmpty();
+            await expect(await getCellByColumnName(topics, 'Messages', rows.nth(0))).toHaveText('3');
+
             const messages = page.getByRole('table', { name: 'Messages' });
-            const rows = messages.locator('tbody tr');
+
+            await test.step('Visit /chats/general', async () => {
+                await rows.nth(0).click();
+
+                await expect(info.getByLabel('Path', { exact: true })).toHaveText('/chats/general');
+                await expect(info.getByLabel('Description')).toHaveText('The communication channel for a specific chat room.')
+                await expect(info.getByLabel('Type of API')).toHaveText('Websocket');
+                await expect(messages.locator('tbody tr')).toHaveCount(3);
+
+                await breadcrumb.getByRole('link', { name: '/chats/{roomId}' }).click();
+
+            });
+
+            rows = messages.locator('tbody tr');
             await expect(rows).toHaveCount(3);
-            await expect(await getCellByColumnName(messages, 'Channel', rows.nth(0))).toHaveText('/chats/general');
+            await expect(await getCellByColumnName(messages, 'Path', rows.nth(0))).toHaveText('/chats/general');
             await expect(await getCellByColumnName(messages, 'Value', rows.nth(0))).toContainText('{"text":"Hello there!"');
             await expect(await getCellByColumnName(messages, 'Time', rows.nth(0))).not.toBeEmpty();
 
@@ -61,7 +81,7 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
                 await rows.nth(2).click();
                 
                 const meta = page.getByRole('region', { name: 'Meta' })
-                await expect(meta.getByLabel('Channel')).toHaveText('/chats/general');
+                await expect(meta.getByLabel('Path')).toHaveText('/chats/general');
                 await expect(meta.getByLabel('Time')).not.toBeEmpty();
                 await expect(meta.getByLabel('Client')).toContainText(':');
                 await expect(meta.getByLabel('Content Type')).toHaveText('application/json');
@@ -90,8 +110,8 @@ test('Visit Websocket overview', async ({ page, baseURL }) => {
 
                 })
 
-                await meta.getByLabel('Channel').click();
-                await page.getByRole('region', { name: 'Info' }).getByLabel('Cluster').click();
+                await meta.getByLabel('Path').click();
+                await breadcrumb.getByRole('link', { name: 'WebSocket Chat API' }).click();
             })
 
         })

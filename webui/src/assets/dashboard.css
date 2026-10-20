@@ -235,3 +235,5 @@
     text-transform: capitalize;
     color: var(--color-red);
 }
+
+.dashboard .channel-name .param { color: var(--bs-primary); font-weight: 500; }

@@ -29,47 +29,50 @@ func NewKafkaClient(app *runtime.App) *KafkaClient {
 }
 
 func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProduceResult, error) {
-	k, t, err := c.tryGet(args.Cluster, args.Topic, args.Retry)
+	k, ch, err := c.tryGet(args.Cluster, args.Topic, args.Retry)
 	if err != nil {
 		return nil, err
 	}
+	if args.Topic == "" {
+		args.Topic = ch.ResolveAddress()
+	}
 
 	client := store.NewClient(k.Store, c.app.Monitor.Kafka)
+	client.AllowAutoTopicCreation = args.AllowAutoTopicCreation
 	client.ClientId = args.ClientId
 	client.ScriptFile = args.ScriptFile
 
 	var produced []common.KafkaMessageResult
 	for _, m := range args.Messages {
-		value := m.Data
-		if m.Value != nil {
-			value = m.Value
-		}
-
 		keySchema := &asyncapi3.SchemaRef{
 			Value: &schema.Schema{Type: schema.Types{"string"}, Pattern: "[a-z]{9}"},
 		}
 
-		// if m.Value is not used then select Kafka message config by the data which must be valid
-		if m.Value == nil && (value == nil || m.Key == nil) {
-			var payload *asyncapi3.SchemaRef
-			var msg *asyncapi3.Message
+		var value any
+		if m.Value.IsSet {
+			value = m.Value.Value
+		} else if m.Data.IsSet {
+			value = m.Data.Value
+		}
 
-			msg, err = t.Config.GetMessageByPayload(value)
+		// returns the first valid message or the first message if value is nil
+		var msg *asyncapi3.Message
+		msg, err = ch.GetMessageByPayload(value)
+		if !m.Value.IsSet && err != nil {
+			return nil, fmt.Errorf("failed to produce message to Kafka topic '%v': %w", args.Topic, err)
+		}
+		var payload *asyncapi3.SchemaRef
+		if msg != nil {
+			if msg.Bindings != nil && msg.Bindings.Kafka.Key != nil {
+				keySchema = msg.Bindings.Kafka.Key
+			}
+			payload = msg.Payload
+		}
+
+		if !m.Value.IsSet && !m.Data.IsSet {
+			value, err = createValue(payload)
 			if err != nil {
-				return nil, fmt.Errorf("failed to produce message to Kafka topic '%v': %w", t.Name, err)
-			}
-			if msg != nil {
-				if msg.Bindings != nil && msg.Bindings.Kafka.Key != nil {
-					keySchema = msg.Bindings.Kafka.Key
-				}
-				payload = msg.Payload
-			}
-
-			if value == nil {
-				value, err = createValue(payload)
-				if err != nil {
-					return nil, fmt.Errorf("unable to generate kafka value: %v", err)
-				}
+				return nil, fmt.Errorf("unable to generate kafka value: %v", err)
 			}
 		}
 
@@ -85,19 +88,19 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 			headers = append(headers, store.RecordHeader{Name: hk, Value: hv})
 		}
 
-		rec, err := client.Write(t.Name, []store.Record{{
+		rec, err := client.Write(args.Topic, []store.Record{{
 			Key:            m.Key,
 			Value:          value,
 			Headers:        headers,
 			Partition:      m.Partition,
-			SkipValidation: m.Value != nil,
+			SkipValidation: m.Value.IsSet,
 		}}, media.ContentType{})
 		if err != nil {
-			return nil, fmt.Errorf("failed to produce message to Kafka topic '%v': %w", t.Name, err)
+			return nil, fmt.Errorf("failed to produce message to Kafka topic '%v': %w", args.Topic, err)
 		}
 
 		if rec[0].Error != "" {
-			return nil, fmt.Errorf("failed to produce message to Kafka topic '%v': %s", t.Name, rec[0].Error)
+			return nil, fmt.Errorf("failed to produce message to Kafka topic '%v': %s", args.Topic, rec[0].Error)
 		}
 
 		produced = append(produced, common.KafkaMessageResult{
@@ -111,13 +114,13 @@ func (c *KafkaClient) Produce(args *common.KafkaProduceArgs) (*common.KafkaProdu
 
 	return &common.KafkaProduceResult{
 		Api:      k.Info.Name,
-		Topic:    t.Name,
+		Topic:    args.Topic,
 		Messages: produced,
 	}, nil
 
 }
 
-func (c *KafkaClient) tryGet(cluster string, topic string, retry common.RetryArgs) (k *runtime.KafkaInfo, t *store.Topic, err error) {
+func (c *KafkaClient) tryGet(cluster string, topic string, retry common.RetryArgs) (k *runtime.KafkaInfo, t *asyncapi3.Channel, err error) {
 	count := 0
 	backoff := retry.InitialRetryTime
 	for {
@@ -136,7 +139,7 @@ func (c *KafkaClient) tryGet(cluster string, topic string, retry common.RetryArg
 	}
 }
 
-func (c *KafkaClient) get(cluster string, topic string) (k *runtime.KafkaInfo, t *store.Topic, err error) {
+func (c *KafkaClient) get(cluster string, topic string) (k *runtime.KafkaInfo, ch *asyncapi3.Channel, err error) {
 	if len(cluster) == 0 {
 		if len(topic) == 0 {
 			clusters := c.app.Kafka.List()
@@ -149,34 +152,47 @@ func (c *KafkaClient) get(cluster string, topic string) (k *runtime.KafkaInfo, t
 				err = newAmbiguousError("ambiguous topic %v. Specify the cluster", topic)
 				return
 			}
-			return clusters[0], topics[0], nil
+			return clusters[0], topics[0].Config, nil
 		}
 
-		var topics []*store.Topic
+		var topics []*asyncapi3.Channel
 		for _, v := range c.app.Kafka.List() {
 			if t := v.Topic(topic); t != nil {
 				k = v
 				if len(cluster) == 0 {
 					cluster = v.Info.Name
 				}
-				topics = append(topics, t)
+				topics = append(topics, t.Config)
+			} else if topic != "" {
+				for _, ref := range v.Channels {
+					if ref.Value == nil {
+						continue
+					}
+					if err = ref.Value.IsNameValid(topic); err == nil {
+						k = v
+						topics = append(topics, ref.Value)
+					}
+				}
 			}
 		}
 		if len(topics) > 1 {
 			err = newAmbiguousError("ambiguous topic %v. Specify the cluster", topic)
 			return
 		} else if len(topics) == 1 {
-			t = topics[0]
+			ch = topics[0]
 		}
 	} else {
 		if k = c.app.Kafka.Get(cluster); k != nil {
-			t = k.Topic(topic)
+			t := k.Topic(topic)
+			if t != nil {
+				ch = t.Config
+			}
 		} else {
 			return nil, nil, fmt.Errorf("kafka cluster '%v' not found", cluster)
 		}
 	}
 
-	if t == nil {
+	if ch == nil {
 		err = fmt.Errorf("kafka topic '%v' not found", topic)
 		return
 	}
@@ -195,7 +211,7 @@ func (c *KafkaClient) getPartition(t *store.Topic, partition int) (*store.Partit
 	return t.Partition(partition), nil
 }
 
-func createValue(r *asyncapi3.SchemaRef) (value interface{}, err error) {
+func createValue(r *asyncapi3.SchemaRef) (value any, err error) {
 	var s asyncapi3.Schema
 	if r != nil && r.Value != nil {
 		s, err = r.GetSchema()

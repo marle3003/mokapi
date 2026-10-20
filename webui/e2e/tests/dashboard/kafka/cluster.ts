@@ -7,8 +7,8 @@ export const cluster = {
         name: 'mokapi',
     },
     description: 'To ours significant why upon tomorrow her faithful many motionless.',
-    lastMessage: formatTimestamp(1652135690),
-    messages: '11',
+    lastMessage: formatTimestamp(1676278165),
+    messages: '12',
     brokers: [{
         name: 'Broker',
         url: 'localhost:9092',

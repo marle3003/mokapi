@@ -17,7 +17,7 @@ func NewGauge(opt ...Options) *Gauge {
 		opt(o)
 	}
 	return &Gauge{
-		info: &Info{Namespace: o.namespace, Name: o.name, labels: o.labels},
+		info: &Info{Namespace: o.namespace, Name: o.name},
 	}
 }
 
@@ -67,13 +67,20 @@ func NewGaugeMap(opts ...Options) *GaugeMap {
 		info:   info,
 		gauges: make(map[uint32]*Gauge),
 		newGauge: func(values []string) *Gauge {
-			if len(o.labelNames) != len(values) {
+			if !o.areLabelsValid(values) {
 				panic(fmt.Sprintf("invalid labels values for %v", info.String()))
 			}
 			labels := make([]*Label, 0)
 			for i, v := range values {
+				var name string
+				if i < len(o.labelNames) {
+					name = o.labelNames[i]
+				} else {
+					name = o.optionalNames[i-len(o.labelNames)]
+				}
+
 				labels = append(labels, &Label{
-					Name:  o.labelNames[i],
+					Name:  name,
 					Value: v,
 				})
 			}

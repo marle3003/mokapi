@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"mokapi/config/dynamic"
 	"regexp"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -140,19 +141,34 @@ func (c *Channel) IsNameValid(topic string) error {
 
 	match := re.FindStringSubmatch(topic)
 	if match == nil {
-		return fmt.Errorf("channel name does not match channel address expression")
+		return fmt.Errorf("does not match channel address expression '%s'", address)
 	}
 	return nil
 }
 
-func (c *Channel) ExtractParams(topicName string) (map[string]string, error) {
-	// Find all {param} names
-	re := regexp.MustCompile(`\{([^}]+)\}`)
-	names := re.FindAllStringSubmatch(c.ResolveAddress(), -1)
+var paramRe = regexp.MustCompile(`\{([^}]+)\}`)
 
-	// Replace {param} with regex group
-	pattern := "^" + re.ReplaceAllString(c.ResolveAddress(), `([^/]+)`) + "$"
-	re = regexp.MustCompile(pattern)
+func (c *Channel) ExtractParams(topicName string) (map[string]string, error) {
+	address := c.ResolveAddress()
+
+	var b strings.Builder
+	var names []string
+	b.WriteString("^")
+	last := 0
+	for _, m := range paramRe.FindAllStringSubmatchIndex(address, -1) {
+		// m[0]:m[1] = "{name}", m[2]:m[3] = "name"
+		b.WriteString(regexp.QuoteMeta(address[last:m[0]]))
+		b.WriteString(`([^/]+?)`)
+		names = append(names, address[m[2]:m[3]])
+		last = m[1]
+	}
+	b.WriteString(regexp.QuoteMeta(address[last:]))
+	b.WriteString("$")
+
+	re, err := regexp.Compile(b.String())
+	if err != nil {
+		return nil, err
+	}
 
 	match := re.FindStringSubmatch(topicName)
 	if match == nil {
@@ -163,7 +179,7 @@ func (c *Channel) ExtractParams(topicName string) (map[string]string, error) {
 	// Build result map
 	params := map[string]string{}
 	for i, name := range names {
-		params[name[1]] = match[i+1]
+		params[name] = match[i+1]
 	}
 
 	return params, nil

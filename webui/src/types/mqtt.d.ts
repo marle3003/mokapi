@@ -20,34 +20,16 @@ declare interface MqttTag {
   description: string
 }
 
-declare interface MqttTopic {
-  name: string;
-  title: string
-  summary: string;
-  description: string;
-  messages: { [messageId: string]: MqttMessage }
-  tags: MqttTag[]
-  instances?: MqttTopicInstance[]
+declare interface MqttTopic extends BaseChannel<MqttMessage> {
   metrics: {
-    mqtt_messages_total: number
-    mqtt_message_timestamp: number
+    messages_total: number
+    message_timestamp: number
   }
 }
 
-declare interface MqttTopicInstance {
-  name: string
-  parameters: Record<string, string>
-}
-
-declare interface MqttMessage {
-  name: string
-  title: string
-  summary: string
-  description: string
+declare interface MqttMessage extends BaseMessage {
   key: SchemaFormat;
-  payload: SchemaFormat;
   header: SchemaFormat
-  contentType: string;
 }
 
 declare interface MqttBroker {
@@ -56,6 +38,13 @@ declare interface MqttBroker {
 }
 
 declare type MqttEventData = MqttMessageData | MqttRequestLog
+
+declare type MqttEventInfo = MqttMessageInfo | MqttRequestLog
+
+declare interface MqttMessageInfo {
+  topic: string
+  message: MqttMessage
+}
 
 declare interface MqttMessageData {
   topic: string

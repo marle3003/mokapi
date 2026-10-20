@@ -41,7 +41,7 @@ func TestKafkaClient(t *testing.T) {
 
 		return asyncapi3test.NewConfig(
 			asyncapi3test.WithInfo("foo", "", ""),
-			asyncapi3test.AddChannel("foo", ch),
+			asyncapi3test.AddChannel(topic, ch),
 			asyncapi3test.WithComponentMessage("foo", msg),
 			asyncapi3test.WithOperation("sendAction",
 				asyncapi3test.WithOperationAction("send"),
@@ -353,7 +353,7 @@ func TestKafkaClient(t *testing.T) {
 				return createCfg("foo", msg)
 			},
 			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
-				for i := 0; i < 3; i++ {
+				for i := range 3 {
 					_, _ = app.Kafka.Add(getConfig(
 						asyncapi3test.NewConfig(asyncapi3test.WithInfo(fmt.Sprintf("x%v", i), "", ""))), e)
 				}
@@ -783,6 +783,86 @@ func TestKafkaClient(t *testing.T) {
 				require.NotNil(t, b)
 				require.Equal(t, "gbrmarxhk", kafka.BytesToString(b.Records[0].Key))
 				require.Equal(t, `<foo>bar</foo>`, kafka.BytesToString(b.Records[0].Value))
+			},
+		},
+		{
+			name: "using data=nil",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithPayloadOpenAPI(
+						opSchematest.NewAny(
+							opSchematest.New("object",
+								opSchematest.WithProperty(
+									"id",
+									opSchematest.New(
+										"string",
+										opSchematest.WithXml(&opSchema.Xml{Attribute: true}),
+									),
+								),
+								opSchematest.WithRequired("id"),
+							),
+							opSchematest.New("null"),
+						),
+					),
+				)
+				return createCfg("foo", msg)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ messages: [{ data: null }] })
+					}
+				`))
+
+				require.NoError(t, err)
+				b, errCode := app.Kafka.Get("foo").Store.Topic("foo").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Equal(t, "gbrmarxhk", kafka.BytesToString(b.Records[0].Key))
+				require.Equal(t, `null`, kafka.BytesToString(b.Records[0].Value))
+			},
+		},
+		{
+			name: "using auto create topic",
+			cfg: func() *asyncapi3.Config {
+				msg := asyncapi3test.NewMessage(
+					asyncapi3test.WithPayloadOpenAPI(
+						opSchematest.New("string"),
+					),
+				)
+
+				ch := asyncapi3test.NewChannel(
+					asyncapi3test.WithParameter("param", &asyncapi3.Parameter{}),
+					asyncapi3test.UseMessage("foo",
+						&asyncapi3.MessageRef{Value: msg},
+					),
+				)
+
+				return asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "", ""),
+					asyncapi3test.AddChannel("foo.{param}", ch),
+					asyncapi3test.WithComponentMessage("foo", msg),
+					asyncapi3test.WithOperation("sendAction",
+						asyncapi3test.WithOperationAction("send"),
+						asyncapi3test.WithOperationChannel(ch),
+						asyncapi3test.UseOperationMessage(msg),
+					),
+				)
+			},
+			test: func(t *testing.T, e *engine.Engine, app *runtime.App) {
+				err := e.AddScript(newScript("test.js", `
+					import { produce } from 'mokapi/kafka'
+					export default function() {
+						produce({ topic: 'foo.bar', messages: [{ data: 'hello' }], allowAutoTopicCreation: true, retry: { retries: 0 } })
+					}
+				`))
+
+				require.NoError(t, err)
+				b, errCode := app.Kafka.Get("foo").Topic("foo.bar").Partition(0).Read(0, 1000)
+				require.Equal(t, kafka.None, errCode)
+				require.NotNil(t, b)
+				require.Equal(t, `"hello"`, kafka.BytesToString(b.Records[0].Value))
 			},
 		},
 	}

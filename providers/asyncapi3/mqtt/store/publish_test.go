@@ -358,8 +358,8 @@ func TestPublish(t *testing.T) {
 						asyncapi3test.WithParameter(
 							"sensorId", &asyncapi3.Parameter{},
 						),
-					)),
-				)
+					),
+				))
 
 				publisher := newClient("publisher", s)
 				defer publisher.close()
@@ -395,11 +395,19 @@ func TestPublish(t *testing.T) {
 				require.Equal(t, "sensors/1234z/data", d.Topic)
 				require.Equal(t, "publisher", d.ClientId)
 				require.Equal(t, "hello world", d.Message.Value)
-				require.Equal(t, "namespace=mqtt, name=test-server, clientId=publisher, sensorId=1234z, topic=sensors/{sensorId}/data, type=message", evts[0].Traits.String())
+				require.Equal(t, "namespace=mqtt, name=test-server, clientId=publisher, instance=sensors/1234z/data, topic=sensors/{sensorId}/data, type=message", evts[0].Traits.String())
 
-				require.Equal(t, float64(1), m.Messages.Sum(metrics.NewQuery()))
-				require.Equal(t, float64(1), m.Messages.WithLabel("test-server", "sensors/{sensorId}/data").Value())
-				require.Greater(t, m.LastMessage.WithLabel("test-server", "sensors/{sensorId}/data").Value(), float64(1))
+				require.Equal(t, 1.0, m.Messages.Sum(
+					metrics.NewQuery(metrics.ByLabel("topic", "sensors/{sensorId}/data"))),
+				)
+				require.Equal(t, 0.0, m.Messages.WithLabel("test-server", "sensors/{sensorId}/data").Value())
+				require.Greater(t, m.LastMessage.WithLabel("test-server", "sensors/{sensorId}/data", "sensors/1234z/data").Value(), float64(1))
+				require.Equal(t, 1.0, m.Messages.Sum(
+					metrics.NewQuery(
+						metrics.ByLabel("topic", "sensors/{sensorId}/data"),
+						metrics.ByLabel("instance", "sensors/1234z/data"),
+					),
+				))
 			},
 		},
 	}
@@ -407,7 +415,6 @@ func TestPublish(t *testing.T) {
 	logrus.SetOutput(io.Discard)
 
 	for _, tc := range testcases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			eh := &eventstest.Handler{}
 			m := monitor.NewMqtt()

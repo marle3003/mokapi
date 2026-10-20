@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"mokapi/config/dynamic"
 	"mokapi/config/dynamic/dynamictest"
 	"mokapi/engine/common"
@@ -785,9 +786,7 @@ func TestResolveEndpoint(t *testing.T) {
 				h := openapi.NewHandler(config, f, e)
 				err := h.ServeHTTP(rw, r)
 				if err != nil {
-					for k, v := range err.Header {
-						rw.Header()[k] = v
-					}
+					maps.Copy(rw.Header(), err.Header)
 					http.Error(rw, err.Message, err.StatusCode)
 				}
 			}, config)
@@ -1199,9 +1198,7 @@ func TestHandler_Event(t *testing.T) {
 				r = r.WithContext(ctx)
 				httpErr := h.ServeHTTP(rw, r)
 				if httpErr != nil {
-					for k, v := range httpErr.Header {
-						rw.Header()[k] = v
-					}
+					maps.Copy(rw.Header(), httpErr.Header)
 					http.Error(rw, httpErr.Message, httpErr.StatusCode)
 				}
 			}, config, sm)
@@ -1239,7 +1236,6 @@ func TestHandler_Log(t *testing.T) {
 	}
 
 	for _, tc := range testcases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			test.NewNullLogger()
 
@@ -1259,9 +1255,7 @@ func TestHandler_Log(t *testing.T) {
 				h := openapi.NewHandler(config, f, m)
 				err := h.ServeHTTP(rw, r)
 				if err != nil {
-					for k, v := range err.Header {
-						rw.Header()[k] = v
-					}
+					maps.Copy(rw.Header(), err.Header)
 					http.Error(rw, err.Message, err.StatusCode)
 				}
 			}, config, m)
@@ -1474,8 +1468,8 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 				require.Contains(t, rr.Body.String(), `{"foo":`)
 
 				result := sm.GetEvents(events.NewTraits().WithNamespace("http"))
-				log := result[0].Data.(*openapi.HttpLog)
-				require.Equal(t, "no configuration was found for HTTP status code 404, https://swagger.io/docs/specification/describing-responses", log.Actions[0].Error.Message)
+				hl := result[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "no configuration was found for HTTP status code 404, https://swagger.io/docs/specification/describing-responses", hl.Actions[0].Error.Message)
 			},
 		},
 		{
@@ -1592,14 +1586,13 @@ func TestHandler_Event_TypeScript(t *testing.T) {
 				require.Contains(t, rr.Body.String(), `{"foo":`)
 
 				result := sm.GetEvents(events.NewTraits().WithNamespace("http"))
-				log := result[0].Data.(*openapi.HttpLog)
-				require.Equal(t, "content type 'text/plain' is not specified for HTTP status code 404", log.Actions[0].Error.Message)
+				hl := result[0].Data.(*openapi.HttpLog)
+				require.Equal(t, "content type 'text/plain' is not specified for HTTP status code 404", hl.Actions[0].Error.Message)
 			},
 		},
 	}
 
 	for _, tc := range testcases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			tc.test(t)
 		})
@@ -1662,10 +1655,10 @@ func TestHandler_Parameter(t *testing.T) {
 }
 
 type testEngine struct {
-	emit func(event string, args ...interface{}) []*common.Action
+	emit func(event string, args ...any) []*common.Action
 }
 
-func (e *testEngine) Emit(event string, args ...interface{}) []*common.Action {
+func (e *testEngine) Emit(event string, args ...any) []*common.Action {
 	if e.emit != nil {
 		return e.emit(event, args...)
 	}

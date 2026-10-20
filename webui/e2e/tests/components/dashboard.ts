@@ -15,6 +15,7 @@ export function useDashboardTabs(page: Page) {
         kafka: dashboard.getByRole('link', { name: 'Kafka', exact: true }),
         mail: dashboard.getByRole('link', { name: 'Mail', exact: true }),
         ldap: dashboard.getByRole('link', { name: 'LDAP', exact: true }),
+        jobs: dashboard.getByRole('link', { name: 'Jobs', exact: true }),
         configs: dashboard.getByRole('link', { name: 'Configs', exact: true }),
     }
 }

@@ -213,22 +213,22 @@ func mapProduceMessage(vMsg *goja.Object) (common.KafkaMessage, error) {
 		case "key":
 			msg.Key = vMsg.Get(propName).Export()
 		case "data":
-			msg.Data = vMsg.Get(propName).Export()
+			msg.Data = common.Optional[any]{Value: vMsg.Get(propName).Export(), IsSet: true}
 		case "value":
 			v := vMsg.Get(propName).Export()
 			switch val := v.(type) {
 			case goja.ArrayBuffer:
-				msg.Value = val.Bytes()
+				msg.Value = common.Optional[[]byte]{Value: val.Bytes(), IsSet: true}
 			case string, int64, float64, bool:
-				msg.Value = []byte(fmt.Sprintf("%v", val))
+				msg.Value = common.Optional[[]byte]{Value: []byte(fmt.Sprintf("%v", val)), IsSet: true}
 			case nil:
-				msg.Value = nil
+				msg.Value = common.Optional[[]byte]{Value: nil, IsSet: true}
 			default:
 				b, err := json.Marshal(val)
 				if err != nil {
 					return msg, fmt.Errorf("kafka produce: value cannot be serialized: %v", err)
 				}
-				msg.Value = b
+				msg.Value = common.Optional[[]byte]{Value: b, IsSet: true}
 
 			}
 		case "headers":

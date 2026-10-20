@@ -146,6 +146,9 @@ func (s *Store) Topic(topic string) (*Topic, bool) {
 func (s *Store) logMessage(messageId string, topic *Topic, publish *mqtt.PublishRequest, actions []*engine.Action, args PublishArgs) {
 	topicName := topic.cfg.ResolveAddress()
 	labels := []string{s.cfg.Info.Name, topicName}
+	if topic.Name != topicName {
+		labels = append(labels, topic.Name)
+	}
 
 	s.monitor.Messages.WithLabel(labels...).Add(1)
 	s.monitor.LastMessage.WithLabel(labels...).Set(float64(time.Now().Unix()))
@@ -157,20 +160,14 @@ func (s *Store) logMessage(messageId string, topic *Topic, publish *mqtt.Publish
 		With("topic", topicName).
 		With("type", "message").
 		With("clientId", args.ClientId)
-	if len(topic.cfg.Parameters) > 0 {
-		params, err := topic.cfg.ExtractParams(topic.Name)
-		if err != nil {
-			log.Errorf("mqtt: failed to log message: %s", err)
-		}
-		for k, v := range params {
-			traits.With(k, v)
-		}
+	if topic.Name != topicName {
+		traits.With("instance", topic.Name)
 	}
 
 	err := s.eh.Push(&LogMessage{
 		Topic:     topic.Name,
 		MessageId: messageId,
-		Message: LogValue{
+		Message: &LogValue{
 			Value:  string(publish.Data),
 			Binary: publish.Data,
 		},

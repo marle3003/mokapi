@@ -13,7 +13,7 @@ const {format} = usePrettyDates()
 const router = useRouter()
 
 function lastRequest(service: Service){
-    const n = service.metrics.ldap_request_timestamp
+    const n = service.metrics.request_timestamp
     if (n == 0){
         return '-'
     }
@@ -64,7 +64,7 @@ onUnmounted(() => {
                         </td>
                         <td><div v-html="useMarkdown(service.description).content" class="table-markdown"></div></td>
                         <td class="text-center">{{ lastRequest(service) }}</td>
-                        <td class="text-center">{{ service.metrics.ldap_requests_total }}</td>
+                        <td class="text-center">{{ service.metrics.requests_total }}</td>
                     </tr>
                 </tbody>
             </table>

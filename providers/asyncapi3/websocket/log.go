@@ -14,13 +14,21 @@ const (
 
 type MessageLog struct {
 	Channel   string           `json:"channel"`
-	Message   LogValue         `json:"message"`
+	Message   *LogValue        `json:"message"`
 	MessageId string           `json:"messageId"`
 	Direction Direction        `json:"direction"`
 	Client    ClientLog        `json:"client"`
 	Api       string           `json:"api"`
 	Actions   []*common.Action `json:"actions"`
 	// [messageId]error
+	ValidationErrors map[string]string `json:"validationErrors,omitempty"`
+}
+
+type MessageLogInfo struct {
+	Channel          string            `json:"channel"`
+	Message          *LogValue         `json:"message"`
+	Direction        Direction         `json:"direction"`
+	Client           ClientLog         `json:"client"`
 	ValidationErrors map[string]string `json:"validationErrors,omitempty"`
 }
 
@@ -41,10 +49,20 @@ func (l *MessageLog) Title() string {
 	return ""
 }
 
+func (l *MessageLog) Info() any {
+	return MessageLogInfo{
+		Channel:          l.Channel,
+		Message:          l.Message,
+		Direction:        l.Direction,
+		Client:           l.Client,
+		ValidationErrors: l.ValidationErrors,
+	}
+}
+
 func messageLog(c *Channel, data []byte, messageId string, client *Client, direction Direction) *MessageLog {
 	l := &MessageLog{
 		Channel: c.Name,
-		Message: LogValue{
+		Message: &LogValue{
 			Value:  string(data),
 			Binary: data,
 		},
@@ -87,6 +105,10 @@ func (l *ConnectLog) Title() string {
 	return fmt.Sprintf("Connect to %s", l.Channel)
 }
 
+func (l *ConnectLog) Info() any {
+	return l
+}
+
 type CloseLog struct {
 	Type     string           `json:"type"`
 	Channel  string           `json:"channel"`
@@ -110,4 +132,8 @@ func closeLog(c *Channel, client *Client, reason, closedBy string) *CloseLog {
 
 func (l *CloseLog) Title() string {
 	return fmt.Sprintf("Connect to %s", l.Channel)
+}
+
+func (l *CloseLog) Info() any {
+	return l
 }

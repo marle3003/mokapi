@@ -2,6 +2,7 @@ package api_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"mokapi/api"
 	"mokapi/config/dynamic"
@@ -32,14 +33,6 @@ import (
 func TestHandler_Kafka(t *testing.T) {
 	logrus.SetOutput(io.Discard)
 
-	mustTime := func(s string) time.Time {
-		t, err := time.Parse(time.RFC3339, s)
-		if err != nil {
-			panic(err)
-		}
-		return t
-	}
-
 	testcases := []struct {
 		name         string
 		app          func() *runtime.App
@@ -56,7 +49,7 @@ func TestHandler_Kafka(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services",
-			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"kafka","metrics":{"kafka_messages_total":0,"kafka_message_timestamp":0}}]`,
+			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"kafka","metrics":{"messages_total":0,"message_timestamp":0}}]`,
 		},
 		{
 			name: "get kafka services",
@@ -78,7 +71,7 @@ func TestHandler_Kafka(t *testing.T) {
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/kafka",
-			responseBody: `[{"name":"foo","description":"bar","contact":{"name":"mokapi","url":"https://mokapi.io","email":"info@mokapi.io"},"version":"1.0","type":"kafka","metrics":{"kafka_messages_total":0,"kafka_message_timestamp":0}}]`,
+			responseBody: `[{"name":"foo","description":"bar","contact":{"name":"mokapi","url":"https://mokapi.io","email":"info@mokapi.io"},"version":"1.0","type":"kafka","metrics":{"messages_total":0,"message_timestamp":0}}]`,
 		},
 		{
 			name: "get kafka services with contact",
@@ -90,7 +83,7 @@ func TestHandler_Kafka(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services",
-			responseBody: `[{"name":"test","contact":{"name":"foo","url":"https://foo.bar","email":"foo@bar.com"},"version":"1.0","type":"kafka","metrics":{"kafka_messages_total":0,"kafka_message_timestamp":0}}]`,
+			responseBody: `[{"name":"test","contact":{"name":"foo","url":"https://foo.bar","email":"foo@bar.com"},"version":"1.0","type":"kafka","metrics":{"messages_total":0,"message_timestamp":0}}]`,
 		},
 		{
 			name: "get cluster info",
@@ -102,7 +95,7 @@ func TestHandler_Kafka(t *testing.T) {
 						asyncapi3test.WithInfo("foo", "bar", "1.0"),
 					),
 				}
-				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
+				cfg.Info.Time = try.MustTime("2023-12-27T13:01:30+00:00")
 
 				_, _ = app.Kafka.Add(cfg, enginetest.NewEngine())
 				return app
@@ -183,7 +176,7 @@ func TestHandler_Kafka(t *testing.T) {
 				}))
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
-			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"foo","summary":"bar","metrics":{"kafka_messages_total":0,"kafka_message_timestamp":0}}]}`,
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"foo","summary":"bar","metrics":{"messages_total":0,"message_timestamp":0}}]}`,
 		},
 		{
 			name: "get cluster info with topic and tag",
@@ -210,7 +203,7 @@ func TestHandler_Kafka(t *testing.T) {
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
-			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"bar-1","metrics":{"kafka_messages_total":10,"kafka_message_timestamp":11}},{"name":"foo","tags":[{"name":"env:test","description":"bar"}],"metrics":{"kafka_messages_total":1,"kafka_message_timestamp":2}}]}`,
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","topics":[{"name":"bar-1","metrics":{"messages_total":10,"message_timestamp":11}},{"name":"foo","tags":[{"name":"env:test","description":"bar"}],"metrics":{"messages_total":1,"message_timestamp":2}}]}`,
 		},
 		{
 			name: "get topic and multi schema format",
@@ -232,8 +225,8 @@ func TestHandler_Kafka(t *testing.T) {
 					Store:  s,
 				}))
 			},
-			requestUrl:   "http://foo.api/api/services/kafka/foo/topics/foo",
-			responseBody: `{"name":"foo","description":"bar","partitions":[{"id":0,"startOffset":0,"offset":0,"segments":0}],"messages":{"foo":{"name":"foo","payload":{"format":"foo","schema":{"type":"string"}},"contentType":"application/json"}},"bindings":{"partitions":1,"valueSchemaValidation":true,"keySchemaValidation":true}}`,
+			requestUrl:   "http://foo.api/api/services/kafka/foo/channels/foo",
+			responseBody: `{"name":"foo","description":"bar","messages":{"foo":{"name":"foo","payload":{"format":"foo","schema":{"type":"string"}},"contentType":"application/json"}},"metrics":{"messages_total":0,"message_timestamp":0}}`,
 		},
 		{
 			name: "get cluster info with group",
@@ -258,7 +251,7 @@ func TestHandler_Kafka(t *testing.T) {
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
-			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","host":"foo.bar","protocol":"kafka"}],"groups":[{"name":"foo","generation":3,"state":"PreparingRebalance","protocol":"range","members":0,"metrics":{"kafka_rebalance_timestamp":0}}]}`,
+			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","host":"foo.bar","protocol":"kafka"}],"groups":[{"name":"foo","generation":3,"state":"PreparingRebalance","protocol":"range","members":0,"metrics":{"rebalance_timestamp":0}}]}`,
 		},
 		{
 			name: "get group",
@@ -283,7 +276,7 @@ func TestHandler_Kafka(t *testing.T) {
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo/groups/foo",
-			responseBody: `{"name":"foo","generation":3,"state":"PreparingRebalance","protocol":"range","members":null,"leader":"","topics":null,"metrics":{"kafka_rebalance_timestamp":0}}`,
+			responseBody: `{"name":"foo","generation":3,"state":"PreparingRebalance","protocol":"range","members":null,"leader":"","topics":null,"metrics":{"rebalance_timestamp":0}}`,
 		},
 		{
 			name: "get group without generation",
@@ -302,7 +295,7 @@ func TestHandler_Kafka(t *testing.T) {
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo/groups/foo",
-			responseBody: `{"name":"foo","generation":-1,"state":"PreparingRebalance","protocol":"","members":null,"leader":"","topics":null,"metrics":{"kafka_rebalance_timestamp":0}}`,
+			responseBody: `{"name":"foo","generation":-1,"state":"PreparingRebalance","protocol":"","members":null,"leader":"","topics":null,"metrics":{"rebalance_timestamp":0}}`,
 		},
 		{
 			name: "get specific with group containing members",
@@ -358,10 +351,10 @@ func TestHandler_Kafka(t *testing.T) {
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/kafka/foo/groups/foo",
-			responseBody: `{"name":"foo","generation":3,"state":"PreparingRebalance","protocol":"range","members":[{"name":"m1","clientId":"client1","addr":"192.168.0.100","software":"mokapi 1.0","heartbeat":"2024-04-22T15:04:05+07:00","partitions":{"topic":[1,2,5]}},{"name":"m2","clientId":"client2","addr":"192.168.0.200","software":"mokapi 1.0","heartbeat":"2024-04-22T15:04:10+07:00","partitions":{"topic":[3,4,6]}}],"leader":"m1","topics":null,"metrics":{"kafka_rebalance_timestamp":0}}`,
+			responseBody: `{"name":"foo","generation":3,"state":"PreparingRebalance","protocol":"range","members":[{"name":"m1","clientId":"client1","addr":"192.168.0.100","software":"mokapi 1.0","heartbeat":"2024-04-22T15:04:05+07:00","partitions":{"topic":[1,2,5]}},{"name":"m2","clientId":"client2","addr":"192.168.0.200","software":"mokapi 1.0","heartbeat":"2024-04-22T15:04:10+07:00","partitions":{"topic":[3,4,6]}}],"leader":"m1","topics":null,"metrics":{"rebalance_timestamp":0}}`,
 		},
 		{
-			name: "get topic with openapi schema",
+			name: "get channel with openapi schema",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				app.Kafka.Set("foo", getKafkaInfo(asyncapi3test.NewConfig(
@@ -376,8 +369,8 @@ func TestHandler_Kafka(t *testing.T) {
 				)))
 				return app
 			},
-			requestUrl:   "http://foo.api/api/services/kafka/foo/topics/foo",
-			responseBody: `{"name":"foo","description":"bar","partitions":[{"id":0,"startOffset":0,"offset":0,"segments":0}],"messages":{"foo":{"name":"foo","payload":{"format":"foo","schema":{"type":"string"}},"contentType":"application/json"}},"bindings":{"partitions":1,"valueSchemaValidation":true,"keySchemaValidation":true}}`,
+			requestUrl:   "http://foo.api/api/services/kafka/foo/channels/foo",
+			responseBody: `{"name":"foo","description":"bar","messages":{"foo":{"name":"foo","payload":{"format":"foo","schema":{"type":"string"}},"contentType":"application/json"}},"metrics":{"messages_total":0,"message_timestamp":0}}`,
 		},
 	}
 
@@ -459,12 +452,12 @@ func TestHandler_KafkaAPI(t *testing.T) {
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`[{"name":"topic-1","metrics":{"kafka_messages_total":0,"kafka_message_timestamp":0}}]`),
+					try.HasBody(`[{"name":"topic-1","metrics":{"messages_total":0,"message_timestamp":0}}]`),
 				)
 			},
 		},
 		{
-			name: "get specific kafka topic",
+			name: "get specific kafka channel",
 			app: func() *runtime.App {
 				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
 				_, _ = app.Kafka.Add(&dynamic.Config{
@@ -483,13 +476,13 @@ func TestHandler_KafkaAPI(t *testing.T) {
 			test: func(t *testing.T, app *runtime.App, h http.Handler) {
 				try.Handler(t,
 					http.MethodGet,
-					"http://foo.api/api/services/kafka/foo/topics/topic-1",
+					"http://foo.api/api/services/kafka/foo/channels/topic-1",
 					nil,
 					"",
 					h,
 					try.HasStatusCode(200),
 					try.HasHeader("Content-Type", "application/json"),
-					try.HasBody(`{"name":"topic-1","description":"foobar","partitions":[{"id":0,"startOffset":0,"offset":0,"segments":0}],"messages":{"foo":{"name":"foo","payload":null,"contentType":"application/json"}},"bindings":{"partitions":1,"valueSchemaValidation":true,"keySchemaValidation":true}}`),
+					try.HasBody(`{"name":"topic-1","description":"foobar","messages":{"foo":{"name":"foo","payload":null,"contentType":"application/json"}},"metrics":{"messages_total":0,"message_timestamp":0}}`),
 				)
 			},
 		},
@@ -985,7 +978,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 				res, err := c.Write("topic-1", []store.Record{
 					{
 						Key:   "foo",
-						Value: map[string]interface{}{"value": "bar"},
+						Value: map[string]any{"value": "bar"},
 					},
 				}, ct)
 				if err != nil {
@@ -1043,7 +1036,7 @@ func TestHandler_KafkaAPI(t *testing.T) {
 				_, _ = c.Write("topic-1", []store.Record{
 					{
 						Key:   "foo",
-						Value: map[string]interface{}{"value": "bar"},
+						Value: map[string]any{"value": "bar"},
 					},
 				}, ct)
 
@@ -1144,7 +1137,7 @@ func TestHandler_Kafka_Metrics(t *testing.T) {
 			name:         "service list with metric",
 			app:          runtimetest.NewApp(runtimetest.WithKafkaInfo("foo", getKafkaInfo(asyncapi3test.NewConfig(asyncapi3test.WithTitle("foo"))))),
 			requestUrl:   "http://foo.api/api/services",
-			responseBody: `[{"name":"foo","version":"1.0","type":"kafka","metrics":{"kafka_messages_total":1,"kafka_message_timestamp":12345678}}]`,
+			responseBody: `[{"name":"foo","version":"1.0","type":"kafka","metrics":{"messages_total":1,"message_timestamp":12345678}}]`,
 			addMetrics: func(monitor *monitor.Monitor) {
 				monitor.Kafka.Messages.WithLabel("foo", "topic").Add(1)
 				monitor.Kafka.LastMessage.WithLabel("foo", "topic").Set(12345678)
@@ -1159,7 +1152,7 @@ func TestHandler_Kafka_Metrics(t *testing.T) {
 					),
 				))),
 			requestUrl:   "http://foo.api/api/services/kafka/foo",
-			responseBody: `{"name":"foo","version":"1.0","topics":[{"name":"foo","metrics":{"kafka_messages_total":1,"kafka_message_timestamp":12345678}}]}`,
+			responseBody: `{"name":"foo","version":"1.0","topics":[{"name":"foo","metrics":{"messages_total":1,"message_timestamp":12345678}}]}`,
 			addMetrics: func(monitor *monitor.Monitor) {
 				monitor.Kafka.Messages.WithLabel("foo", "foo").Add(1)
 				monitor.Kafka.LastMessage.WithLabel("foo", "foo").Set(12345678)
@@ -1188,7 +1181,7 @@ func TestHandler_Kafka_Metrics(t *testing.T) {
 				return app
 			}(),
 			requestUrl:   "http://foo.api/api/services/kafka/foo/groups/group-1",
-			responseBody: `{"name":"group-1","generation":3,"state":"PreparingRebalance","protocol":"range","members":null,"leader":"","topics":null,"metrics":{"kafka_rebalance_timestamp":12345678,"topics":{"topic-foo":[{"partition":0,"kafka_consumer_group_lag":123,"kafka_consumer_group_commit":11}]}}}`,
+			responseBody: `{"name":"group-1","generation":3,"state":"PreparingRebalance","protocol":"range","members":null,"leader":"","topics":null,"metrics":{"rebalance_timestamp":12345678,"topics":{"topic-foo":[{"partition":0,"consumer_group_lag":123,"consumer_group_commit":11}]}}}`,
 			addMetrics: func(monitor *monitor.Monitor) {
 				monitor.Kafka.Lags.WithLabel("foo", "group-1", "topic-foo", "0").Set(123)
 				monitor.Kafka.Commits.WithLabel("foo", "group-1", "topic-foo", "0").Set(11)
@@ -1215,6 +1208,100 @@ func TestHandler_Kafka_Metrics(t *testing.T) {
 				try.HasStatusCode(200),
 				try.HasHeader("Content-Type", "application/json"),
 				try.HasBody(tc.responseBody))
+		})
+	}
+}
+
+func TestHandler_Kafka_Topic_Parameter(t *testing.T) {
+	app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+	addr := fmt.Sprintf(":%v", try.GetFreePort())
+	cfg := &dynamic.Config{
+		Info: dynamictest.NewConfigInfo(),
+		Data: asyncapi3test.NewConfig(
+			asyncapi3test.WithInfo("foo", "bar", "1.0"),
+			asyncapi3test.WithServer("foo", "kafka", addr),
+			asyncapi3test.WithChannel("orders.{region}.{eventType}",
+				asyncapi3test.WithParameter("region", &asyncapi3.Parameter{}),
+				asyncapi3test.WithParameter("eventType", &asyncapi3.Parameter{}),
+			),
+		),
+	}
+	cfg.Info.Time = try.MustTime("2023-12-27T13:01:30+00:00")
+
+	mi, err := app.Kafka.Add(cfg, enginetest.NewEngine())
+	require.NoError(t, err)
+	_, err = mi.NewTopic("orders.eu.created", mi.Brokers()[0])
+	require.NoError(t, err)
+
+	app.Monitor.Kafka.Messages.WithLabel("foo", "orders.{region}.{eventType}", "orders.eu.created").Add(1)
+	app.Monitor.Kafka.LastMessage.WithLabel("foo", "orders.{region}.{eventType}", "orders.eu.created").Set(1234)
+
+	h := api.New(app, static.Api{})
+
+	testcases := []struct {
+		name string
+		test func(t *testing.T)
+	}{
+		{
+			name: "get service",
+			test: func(t *testing.T) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo",
+					nil,
+					"",
+					h,
+					try.HasStatusCode(http.StatusOK),
+					try.HasBody(fmt.Sprintf(`{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"foo","host":"%v","protocol":"kafka"}],"topics":[{"name":"orders.{region}.{eventType}","parameters":["eventType","region"],"instances":[{"name":"orders.eu.created","parameters":{"eventType":"created","region":"eu"},"metrics":{"messages_total":0,"message_timestamp":0}}],"metrics":{"messages_total":1,"message_timestamp":1234}}],"configs":[{"id":"64613435-3062-6462-3033-316532633233","url":"file://foo.yml","provider":"test","time":"2023-12-27T13:01:30Z"}]}`, addr)),
+				)
+			},
+		},
+		{
+			name: "get channel",
+			test: func(t *testing.T) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/channels/orders.{region}.{eventType}",
+					nil,
+					"",
+					h,
+					try.HasStatusCode(http.StatusOK),
+					try.HasBody(`{"name":"orders.{region}.{eventType}","parameters":["eventType","region"],"instances":[{"name":"orders.eu.created","parameters":{"eventType":"created","region":"eu"},"metrics":{"messages_total":1,"message_timestamp":1234}}],"metrics":{"messages_total":1,"message_timestamp":1234}}`),
+				)
+			},
+		},
+		{
+			name: "get topic using template name",
+			test: func(t *testing.T) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/topics/orders.{region}.{eventType}",
+					nil,
+					"",
+					h,
+					try.HasStatusCode(http.StatusNotFound),
+				)
+			},
+		},
+		{
+			name: "get topic",
+			test: func(t *testing.T) {
+				try.Handler(t,
+					http.MethodGet,
+					"http://foo.api/api/services/kafka/foo/topics/orders.eu.created",
+					nil,
+					"",
+					h,
+					try.HasStatusCode(http.StatusOK),
+					try.HasBody(`{"name":"orders.eu.created","parameters":{"eventType":"created","region":"eu"},"bindings":{"partitions":1,"valueSchemaValidation":true,"keySchemaValidation":true},"partitions":[{"id":0,"startOffset":0,"offset":0,"segments":0}],"metrics":{"messages_total":1,"message_timestamp":1234}}`),
+				)
+			},
+		},
+	}
+
+	for _, tc := range testcases {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.test(t)
 		})
 	}
 }

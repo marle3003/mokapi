@@ -25,11 +25,19 @@ func (h *Http) Route(path string) goja.Value {
 	return newRouteObject(r)
 }
 
-func (h *Http) Operation(operationId string) goja.Value {
+func (h *Http) Operation(operationId string, do goja.Value, vArgs goja.Value) goja.Value {
 	filter := h.filter
 	filter.OperationId = operationId
-	r := &HttpRoute{filter: filter, m: h.m}
-	return newRouteObject(r)
+
+	args, err := getOnArgs(h.m.vm, vArgs)
+	if err != nil {
+		panic(err)
+	}
+	f := getHandler(do, args, h.m.vm, h.m.loop)
+
+	h.m.host.OnHttp(filter, f, common.EventArgs{Tags: args.tags, Priority: args.priority})
+
+	return newHttpObject(h)
 }
 
 func (h *Http) Method(method string, path string, do goja.Value, vArgs goja.Value) goja.Value {
@@ -110,6 +118,8 @@ func (r *HttpObject) Get(key string) goja.Value {
 		return r.vm.ToValue(r.http.Use)
 	case "route":
 		return r.vm.ToValue(r.http.Route)
+	case "operation":
+		return r.vm.ToValue(r.http.Operation)
 	case "api":
 		return r.vm.ToValue(r.http.Api)
 	}

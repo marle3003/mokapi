@@ -50,19 +50,27 @@ func (c *Client) sendMessage(message any) error {
 	l := messageLog(c.channel, data, messageId, c, Receive)
 
 	channelName := c.channel.cfg.ResolveAddress()
-	c.channel.log(l, events.NewTraits().
+	traits := events.NewTraits().
 		With("channel", channelName).
 		With("type", "message").
-		With("clientId", c.Id))
+		With("clientId", c.Id)
+	if c.channel.Name != channelName {
+		traits = traits.With("instance", c.channel.Name)
+	}
+
+	c.channel.log(l, traits)
 
 	labels := []string{c.channel.api, channelName}
+	if c.channel.Name != channelName {
+		labels = append(labels, c.channel.Name)
+	}
 	c.channel.monitor.Messages.WithLabel(labels...).Add(1)
 	c.channel.monitor.LastMessage.WithLabel(labels...).Set(float64(time.Now().Unix()))
 
 	if err != nil {
 		c.channel.monitor.MessagesError.WithLabel(labels...).Add(1)
 		b, _ := json.Marshal(message)
-		l.Message = LogValue{
+		l.Message = &LogValue{
 			Value:  string(b),
 			Binary: b,
 		}

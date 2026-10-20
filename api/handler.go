@@ -111,6 +111,7 @@ func New(app *runtime.App, config static.Api) Handler {
 	h.setupMqtt()
 	h.setupWebsocket()
 	h.setupFaker()
+	h.setupEvents()
 
 	return h
 }
@@ -163,8 +164,6 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.getDashboard(w, r)
 	case strings.HasPrefix(p, "/api/metrics"):
 		h.getMetrics(w, r)
-	case strings.HasPrefix(p, "/api/events"):
-		h.getEvents(w, r)
 	case p == "/api/schema/example":
 		h.getExampleData(w, r)
 	case p == "/api/schema/validate":

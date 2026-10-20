@@ -78,12 +78,12 @@ func (e *EventHandler) Has(key string) bool {
 	return false
 }
 
-func addDefaultTags(args *common.EventArgs, sh *scriptHost) {
+func addDefaultTags(args *common.EventArgs, sh *scriptHost, event string) {
 	defaultTags := map[string]string{
 		"name":    sh.name,
 		"file":    sh.name,
 		"fileKey": sh.file.Info.Key(),
-		"event":   "http",
+		"event":   event,
 	}
 	if args.Tags == nil {
 		args.Tags = defaultTags

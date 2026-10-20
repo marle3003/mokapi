@@ -4,6 +4,7 @@ import { usePrettyDates } from '@/composables/usePrettyDate'
 import { getRouteName } from '@/composables/dashboard';
 import { computed } from 'vue';
 import { useLocalStorage } from '@/composables/local-storage';
+import { splitTemplate, instanceCount } from '@/composables/channel'
 
 const props = defineProps<{
     service: MqttService,
@@ -56,10 +57,10 @@ function compareTopics(t1: MqttTopic, t2: MqttTopic) {
 }
 
 function lastMessage(topic: MqttTopic) {
-    if (!topic.metrics.mqtt_message_timestamp || topic.metrics.mqtt_message_timestamp == 0) {
+    if (!topic.metrics.message_timestamp || topic.metrics.message_timestamp == 0) {
         return '-'
     }
-    return format(topic.metrics.mqtt_message_timestamp)
+    return format(topic.metrics.message_timestamp)
 }
 
 function goToTopic(topic: MqttTopic, openInNewTab = false) {
@@ -102,6 +103,11 @@ function toggleTag(name: string) {
 
         tags.value = tags.value.filter((t) => t !== '__all')
     }
+}
+function instanceLabel(channel: MqttTopic) {
+  const n = instanceCount(channel)
+  if (n === 0) return 'no topics yet'
+  return n === 1 ? '1 topic' : `${n} topics`
 }
 </script>
 
@@ -156,14 +162,28 @@ function toggleTag(name: string) {
                             <td>
                                 <router-link @click.stop class="row-link"
                                     :to="{ name: getRouteName('mqttTopic').value, params: { service: props.service.name, topic: topic.name } }">
-                                    {{ topic.name }}
+                                    <template v-if="topic.parameters?.length">
+                                        <span class="visually-hidden">Template </span>
+                                        <span class="channel-name">
+                                            <template v-for="(part, i) in splitTemplate(topic.name)" :key="i">
+                                                <span v-if="part.param" class="param">{{ part.text }}</span>
+                                                <template v-else>{{ part.text }}</template>
+                                            </template>
+                                        </span>
+                                        <span class="visually-hidden">, </span>
+                                        <span class="badge ms-2"
+                                        :class="instanceCount(topic) ? 'bg-secondary' : 'bg-light text-muted'">
+                                            {{ instanceLabel(topic) }}
+                                        </span>
+                                    </template>
+                                    <span v-else>{{ topic.name }}</span>
                                 </router-link>
                             </td>
                             <td>
                                 <div>{{ topic.summary }}</div>
                             </td>
                             <td class="text-center">{{ lastMessage(topic) }}</td>
-                            <td class="text-center">{{ topic.metrics.mqtt_messages_total }}</td>
+                            <td class="text-center">{{ topic.metrics.messages_total }}</td>
                         </tr>
                     </tbody>
                 </table>

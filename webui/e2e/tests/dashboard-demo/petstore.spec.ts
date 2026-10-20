@@ -124,8 +124,6 @@ test('Visit Petstore Demo', async ({ page, baseURL }) => {
         await page.getByText('/pet/{petId}', { exact: true }).click()
 
         await expect(page.getByLabel('Path', { exact: true })).toHaveText('/pet/{petId}')
-        await expect(page.getByLabel('Service', { exact: true })).toHaveText('Swagger Petstore')
-        await expect(page.getByLabel('Service', { exact: true }).getByRole('link')).toHaveAttribute('href', dashboard + '/http/services/Swagger%20Petstore')
 
         const region = page.getByRole('region', { name: 'Methods' });
         await expect(region).toBeVisible();
@@ -160,7 +158,6 @@ test('Visit Petstore Demo', async ({ page, baseURL }) => {
 
         await expect(page.getByLabel('Operation', { exact: true })).toHaveText('DELETE /pet/{petId}');
         await expect(page.getByLabel('Operation ID')).toHaveText('deletePet');
-        await expect(page.getByLabel('Service', { exact: true })).toHaveText('Swagger Petstore');
         await expect(page.getByLabel('Summary')).toHaveText('Deletes a pet');
 
         await test.step('Verify request', async () => {

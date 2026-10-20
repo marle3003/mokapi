@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Ref, onUnmounted } from 'vue'
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import Servers from './Servers.vue'
 import Mailboxes from './Mailboxes.vue'
@@ -10,22 +10,32 @@ import Mail from './Mail.vue'
 import Rules from './Rules.vue'
 import ConfigCard from '../ConfigCard.vue'
 import Mailbox from './Mailbox.vue'
-import { useDashboard, getRouteName } from '@/composables/dashboard';
+import { getRouteName } from '@/composables/dashboard';
+import { useService } from '@/composables/service.ts'
+import { provideBreadcrumb } from '@/composables/breadcrumb.ts'
+import Breadcrumb from '../Breadcrumb.vue'
 
 const route = useRoute()
-const serviceName = route.params.service?.toString()
-let service: Ref<MailService | null>
-if (serviceName){
-  const { dashboard } = useDashboard()
-  const result = dashboard.value.getService(serviceName, 'mail')
-  service = result.service as Ref<MailService | null>
-  onUnmounted(() => {
-    result.close()
-  })
-}
+const { service } = useService<MailService>('mail')
+
+const tail = provideBreadcrumb()
+const breadcrumb = computed<BreadcrumbItem[]>(() => {
+  const base: BreadcrumbItem[] = [
+    { text: 'Mail', to: { name: getRouteName('mail').value } },
+  ]
+  if (!service.value) return base
+  const isOverview = route.name === getRouteName('mailService').value
+  base.push(isOverview
+    ? { text: service.value.name }
+    : { text: service.value.name, to: { name: getRouteName('mailService').value,
+        params: { service: service.value.name } } })
+  return [...base, ...tail.value]
+})
 </script>
 
 <template>
+  <Breadcrumb :items="breadcrumb" />
+
   <div v-if="$route.name == getRouteName('mailService').value && service != null">
       <div class="card-group">
           <service-info-card :service="service" type="Mail" />

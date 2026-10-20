@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRoute } from "@/router";
-import { computed, onUnmounted, watchEffect, ref, type Ref, onMounted } from "vue";
+import { computed, onUnmounted, watchEffect, ref, type Ref, onMounted, watch } from "vue";
 import SourceView from '../SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { usePrettyDates } from "@/composables/usePrettyDate";
@@ -13,41 +13,28 @@ import { useWebsocket } from "@/composables/websocket.ts";
 import WebsocketValidationErrors from "./WebsocketValidationErrors.vue";
 
 const route = useRoute();
-const { dashboard, getMode } = useDashboard()
+const { dashboard } = useDashboard()
 const { formatLanguage } = usePrettyLanguage()
 const { format } = usePrettyDates()
 const { formatAddress } = useWebsocket()
 
-const events = computed(() => {
-    return dashboard.value.getEvents({ name: 'namespace', value: 'websocket' })
-})
 
-const eventId = computed(() => {
-  const id = route.params.id
-  if (!id) {
-    return undefined
-  }
+const event = ref<ServiceEvent | null>(null);
+const isLoading = ref<boolean>(true)
 
-  if (typeof id === 'string') {
-    if (isNumber(id)) {
-        const index = parseFloat(id);
-        const ev = events.value.events.value[index];
-        return ev?.id ?? null;
-    } else {
-        return id;
-    }
-  }
-  return null
-})
+watch(() => dashboard.value,
+  (db, _, onCleanup) => {
+    const res = db.getEvent(route.params.id as string);
 
-const result = computed(() => {
-  if (!eventId.value) return null
-  return dashboard.value.getEvent(eventId.value)
-})
+    const stop = watch(res.event, (v) => { event.value = v; isLoading.value = false }, { immediate: true })
 
-const event = computed(() => result.value?.event.value ?? null)
-const isLoading = computed(() => result.value?.isLoading ?? false)
-const close = () => result.value?.close?.()
+    onCleanup(() => {
+        stop()
+        res.close
+    });
+  },
+  { immediate: true }
+);
 
 const service = ref<WebsocketService | null>(null)
 const channel = ref<WebsocketChannel | undefined>()
@@ -111,23 +98,6 @@ const message = computed(() => {
   return {source, contentType, contentTypeTitle: messageConfig.contentType}
 })
 
-function isInitLoading() {
-  return isLoading.value && !event.value
-}
-onMounted(() => {
-  if (!event.value || getMode() !== 'demo') {
-      return
-  }
-  const id = events.value.events.value.indexOf(event.value)
-  useMeta(
-      `${event.value.traits['topic']} – WebSocket Message Details`,
-      'View detailed information about a WebSocket message',
-      'https://mokapi.io//dashboard/websocket/messages/' + id
-  )
-})
-onUnmounted(() => {
-  close()
-})
 function getContentType(msg: WebsocketMessage): [string, boolean] {
     if (msg.payload.format?.includes('application/vnd.apache.avro')) {
         switch (msg.contentType) {
@@ -179,7 +149,7 @@ const hasActions = computed(() => {
         <div class="card-body">
           <div class="row">
             <div class="col">
-              <p id="message-channel" class="label">Channel</p>
+              <p id="message-channel" class="label">Path</p>
               <p>
                 <router-link :to="{ name: getRouteName('websocketChannel').value, params: { service: event.traits.name, channel: event.traits.channel } }" aria-labelledby="message-channel">
                   {{ data.channel  }}
@@ -247,7 +217,7 @@ const hasActions = computed(() => {
       </section>
     </div>
   </div>
-  <loading v-if="isInitLoading()"></loading>
+  <loading v-if="!event && isLoading"></loading>
   <div v-if="!event && !isLoading">
     <message message="WebSocket Message not found"></message>
   </div>

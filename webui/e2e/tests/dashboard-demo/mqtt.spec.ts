@@ -7,6 +7,7 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
     } else {
         await page.goto('/dashboard-demo')
     }
+    const breadcrumb = page.getByRole('navigation', { name: 'Breadcrumb' })
 
     await test.step('Verify Dashboard', async () => {
 
@@ -34,7 +35,7 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
         const rows = table.locator('tbody tr');
         await expect(rows).toHaveCount(1);
 
-        await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('sensors/{sensorId}/data');
+        await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('Template sensors/{sensorId}/data, 1 topic');
         await expect(await getCellByColumnName(table, 'Summary', rows.nth(0))).toHaveText('');
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).not.toBeEmpty();
         await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('1');
@@ -43,12 +44,32 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
             const topics = page.getByRole('table', { name: 'Topics' });
             await topics.getByText('sensors/{sensorId}/data').click();
 
-            await expect(page.getByLabel('Topic', { exact: true })).toHaveText('sensors/{sensorId}/data');
+            await expect(page.getByLabel('Topic Template', { exact: true })).toHaveText('sensors/{sensorId}/data');
             await expect(page.getByLabel('Description')).not.toBeVisible();
             await expect(page.getByLabel('Type of API')).toHaveText('MQTT');
 
+            let rows = topics.locator('tbody tr');
+            await expect(rows).toHaveCount(1);
+            await expect(await getCellByColumnName(topics, 'Topic', rows.nth(0))).toHaveText('sensors/12345/data');
+            await expect(await getCellByColumnName(topics, 'Last Message', rows.nth(0))).not.toBeEmpty();
+            await expect(await getCellByColumnName(topics, 'Messages', rows.nth(0))).toHaveText('1')
+
             const messages = page.getByRole('table', { name: 'Messages' });
-            const rows = messages.locator('tbody tr');
+
+            await test.step('Visit sensors/12345/data', async () => {
+                await rows.nth(0).click();
+
+                await expect(page.getByLabel('Topic', { exact: true })).toHaveText('sensors/12345/data');
+                await expect(page.getByLabel('Description')).not.toBeVisible();
+                await expect(page.getByLabel('Type of API')).toHaveText('MQTT');
+                await expect(messages.locator('tbody tr')).toHaveCount(1);
+
+                await breadcrumb.getByRole('link', { name: 'sensors/{sensorId}/data' }).click();
+
+            });
+
+            
+            rows = messages.locator('tbody tr');
             await expect(rows).toHaveCount(1);
             await expect(await getCellByColumnName(messages, 'Topic', rows.nth(0))).toHaveText('sensors/12345/data');
             await expect(await getCellByColumnName(messages, 'Value', rows.nth(0))).toContainText('{"temp":24,"timestamp":"');
@@ -91,7 +112,7 @@ test('Visit MQTT overview', async ({ page, baseURL }) => {
                 })
 
                 await meta.getByLabel('Topic').click();
-                await page.getByRole('region', { name: 'Info' }).getByLabel('Cluster').click();
+                await breadcrumb.getByRole('link', { name: 'Smart Home MQTT API' }).click();
             })
 
         })

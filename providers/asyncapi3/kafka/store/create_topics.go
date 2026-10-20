@@ -3,37 +3,46 @@ package store
 import (
 	"mokapi/kafka"
 	"mokapi/kafka/createTopics"
-	"mokapi/providers/asyncapi3"
 )
 
-func (s *Store) createtopics(rw kafka.ResponseWriter, req *kafka.Request) error {
+func (s *Store) createTopics(rw kafka.ResponseWriter, req *kafka.Request) error {
 	r := req.Message.(*createTopics.Request)
 	res := &createTopics.Response{}
+	b := s.getBrokerByPort(req.Host)
 
-	for _, t := range r.Topics {
-		channel := &asyncapi3.Channel{
-			Title:    t.Name,
-			Bindings: &asyncapi3.ChannelBindings{},
-		}
-		channel.Bindings.Kafka.Partitions = int(t.NumPartitions)
-		ops := []*asyncapi3.Operation{
-			{
-				Action:  "send",
-				Channel: &asyncapi3.ChannelRef{Value: channel},
-			},
-			{
-				Action:  "receive",
-				Channel: &asyncapi3.ChannelRef{Value: channel},
-			},
+	for _, rt := range r.Topics {
+		t := s.Topic(rt.Name)
+		if t != nil {
+			appendCreateTopicResponse(res, createTopics.TopicResponse{
+				Name:      rt.Name,
+				ErrorCode: kafka.TopicAlreadyExists,
+			})
+			continue
 		}
 
-		_, err := s.NewTopic(t.Name, channel, ops)
-		errCode := kafka.None
+		t, err := s.NewTopic(rt.Name, b)
 		if err != nil {
-			errCode = kafka.TopicAlreadyExists
+			appendCreateTopicResponse(res, createTopics.TopicResponse{
+				Name:         rt.Name,
+				ErrorCode:    kafka.PolicyViolation,
+				ErrorMessage: err.Error(),
+			})
+			continue
 		}
-		res.Topics = append(res.Topics, createTopics.TopicResponse{Name: t.Name, ErrorCode: errCode})
+
+		if rt.NumPartitions >= 0 {
+			t.updatePartitions(int(rt.NumPartitions))
+		}
+
+		appendCreateTopicResponse(res, createTopics.TopicResponse{
+			Name:          rt.Name,
+			NumPartitions: int32(len(t.Partitions)),
+		})
 	}
 
 	return rw.Write(res)
+}
+
+func appendCreateTopicResponse(res *createTopics.Response, topic createTopics.TopicResponse) {
+	res.Topics = append(res.Topics, topic)
 }

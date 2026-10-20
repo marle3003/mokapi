@@ -100,10 +100,10 @@ type Host interface {
 }
 
 type Logger interface {
-	Info(args ...interface{})
-	Warn(args ...interface{})
-	Error(args ...interface{})
-	Debug(args ...interface{})
+	Info(args ...any)
+	Warn(args ...any)
+	Error(args ...any)
+	Debug(args ...any)
 	IsLevelEnabled(level string) bool
 }
 
@@ -112,20 +112,26 @@ type KafkaClient interface {
 }
 
 type KafkaProduceArgs struct {
-	Cluster    string
-	Topic      string
-	Messages   []KafkaMessage
-	Retry      RetryArgs
-	ClientId   string
-	ScriptFile string
+	Cluster                string
+	Topic                  string
+	Messages               []KafkaMessage
+	AllowAutoTopicCreation bool
+	Retry                  RetryArgs
+	ClientId               string
+	ScriptFile             string
 }
 
 type KafkaMessage struct {
 	Key       any
-	Value     []byte
-	Data      any
+	Value     Optional[[]byte]
+	Data      Optional[any]
 	Headers   map[string]string
 	Partition int
+}
+
+type Optional[T any] struct {
+	IsSet bool
+	Value T
 }
 
 type RetryArgs struct {
@@ -243,13 +249,17 @@ func (e *JobExecution) Title() string {
 	return e.Tags["name"]
 }
 
+func (e *JobExecution) Info() any {
+	return e
+}
+
 func (e *JobExecution) Domain() string {
 	return "Job Execution"
 }
 
 type FakerNode interface {
 	Name() string
-	Fake(r *generator.Request) (interface{}, error)
+	Fake(r *generator.Request) (any, error)
 }
 
 type Store interface {

@@ -20,8 +20,8 @@ func (h *handler) getMetrics(w http.ResponseWriter, r *http.Request) {
 	if !r.URL.Query().Has("names") {
 		result = h.app.Monitor.FindAll(query...)
 	} else {
-		names := strings.Split(r.URL.Query().Get("names"), ",")
-		for _, name := range names {
+		names := strings.SplitSeq(r.URL.Query().Get("names"), ",")
+		for name := range names {
 			result = append(
 				result,
 				h.app.Monitor.FindAll(append(query, metrics.ByFQName(name))...)...,

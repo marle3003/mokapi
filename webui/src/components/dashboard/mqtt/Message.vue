@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { useRoute } from "@/router";
-import { computed, onUnmounted, watchEffect, ref, type Ref, onMounted } from "vue";
+import { computed, watchEffect, ref, type Ref, watch } from "vue";
 import SourceView from '../SourceView.vue'
 import { usePrettyLanguage } from '@/composables/usePrettyLanguage'
 import { usePrettyDates } from "@/composables/usePrettyDate";
 import Loading from '@/components/Loading.vue'
 import Message from '@/components/Message.vue'
 import { getRouteName, useDashboard } from "@/composables/dashboard";
-import { useMeta } from "@/composables/meta";
 import Actions from '../Actions.vue'
 
 const route = useRoute();
@@ -15,36 +14,21 @@ const { dashboard, getMode } = useDashboard()
 const { formatLanguage } = usePrettyLanguage()
 const { format } = usePrettyDates()
 
-const events = computed(() => {
-    return dashboard.value.getEvents({ name: 'namespace', value: 'mqtt' })
-})
+const event = ref<ServiceEvent | null>(null);
+const isLoading = ref<boolean>(true)
+watch(() => dashboard.value,
+  (db, _, onCleanup) => {
+    const res = db.getEvent(route.params.id as string);
 
-const eventId = computed(() => {
-  const id = route.params.id
-  if (!id) {
-    return undefined
-  }
+    const stop = watch(res.event, (v) => { event.value = v; isLoading.value = false }, { immediate: true })
 
-  if (typeof id === 'string') {
-    if (isNumber(id)) {
-        const index = parseFloat(id);
-        const ev = events.value.events.value[index];
-        return ev?.id ?? null;
-    } else {
-        return id;
-    }
-  }
-  return null
-})
-
-const result = computed(() => {
-  if (!eventId.value) return null
-  return dashboard.value.getEvent(eventId.value)
-})
-
-const event = computed(() => result.value?.event.value ?? null)
-const isLoading = computed(() => result.value?.isLoading ?? false)
-const close = () => result.value?.close?.()
+    onCleanup(() => {
+        stop()
+        res.close
+    });
+  },
+  { immediate: true }
+);
 
 const topic = ref<MqttTopic | undefined>()
 const data = computed(() => {
@@ -101,24 +85,6 @@ const message = computed(() => {
       }
   }
   return {source, contentType, contentTypeTitle: messageConfig.contentType, keyType}
-})
-
-function isInitLoading() {
-  return isLoading.value && !event.value
-}
-onMounted(() => {
-  if (!event.value || getMode() !== 'demo') {
-      return
-  }
-  const id = events.value.events.value.indexOf(event.value)
-  useMeta(
-      `${event.value.traits['topic']} – MQTT Message Details`,
-      'View detailed information about a MQTT message',
-      'https://mokapi.io//dashboard/mqtt/messages/' + id
-  )
-})
-onUnmounted(() => {
-  close()
 })
 function getContentType(msg: MqttMessage): [string, boolean] {
     if (msg.payload.format?.includes('application/vnd.apache.avro')) {
@@ -236,7 +202,7 @@ const hasActions = computed(() => {
       </section>
     </div>
   </div>
-  <loading v-if="isInitLoading()"></loading>
+  <loading v-if="!event && isLoading"></loading>
   <div v-if="!event && !isLoading">
     <message message="MQTT Message not found"></message>
   </div>

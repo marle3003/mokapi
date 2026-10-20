@@ -1,7 +1,9 @@
 package acceptance
 
 import (
+	"encoding/json"
 	"fmt"
+	"mokapi/api"
 	"mokapi/config/static"
 	"mokapi/kafka"
 	"mokapi/kafka/fetch"
@@ -51,7 +53,7 @@ func (suite *KafkaSuite) TestApi() {
 				"name": "petstore.order-event",
 				"metrics": map[string]any{
 					// skip timestamp check "kafka_message_timestamp"
-					"kafka_messages_total": float64(1),
+					"messages_total": float64(1),
 				},
 			}},
 		}
@@ -154,8 +156,20 @@ func (suite *KafkaSuite) TestKafkaEventAndMetrics() {
 		try.BodyContains(`kafka_messages_total{service=\"A sample AsyncApi Kafka streaming api\",topic=\"petstore.order-event\"}","value":1}`),
 	)
 
+	var eventId string
 	// test kafka events, header added by JavaScript event handler
 	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%d/api/events?namespace=kafka", suite.cfg.Api.Port), nil,
+		try.AssertBody(func(t *testing.T, body string) {
+			var data api.EventPage
+			err := json.Unmarshal([]byte(body), &data)
+			require.NoError(t, err)
+			require.Len(t, data.Items, 2)
+			// first event does not define a header specification therefor header only contains binary
+			eventId = data.Items[1].Id
+		}),
+	)
+
+	try.GetRequest(suite.T(), fmt.Sprintf("http://127.0.0.1:%d/api/events/"+eventId, suite.cfg.Api.Port), nil,
 		try.BodyContains(`"headers":{"foo":{"value":"bar","binary":"YmFy"}`),
 		try.BodyContains(`"messageId":"order"`),
 	)
