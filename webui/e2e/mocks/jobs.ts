@@ -76,3 +76,14 @@ export const jobs = [
 
     }
 ]
+
+export const config = {
+    '6f5cab53-9f51-4bbe-bb32-fe41ee71d542': {
+        id: '6f5cab53-9f51-4bbe-bb32-fe41ee71d542',
+        url: 'file://cron.js',
+        provider: 'file',
+        time: '2025-05-01T08:49:25.482366+01:00',
+        data: "import { every } from 'mokapi'; export default function() { every('1s', function() {}); }",
+        filename: 'cron.js'
+    }
+}
