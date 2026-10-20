@@ -37,6 +37,17 @@ func TestRoot_Api(t *testing.T) {
 				require.Equal(t, true, cfg.Api.Search.InMemory)
 			},
 		},
+		{
+			name: "search disabled",
+			cmd: func(t *testing.T) *cli.Command {
+				cmd := mokapi.NewCmdMokapi()
+				cmd.SetArgs([]string{"--api-search-enabled", "false"})
+				return cmd
+			},
+			test: func(t *testing.T, cfg *static.Config, flags *cli.FlagSet) {
+				require.Equal(t, false, cfg.Api.Search.Enabled)
+			},
+		},
 	}
 
 	for _, tc := range testcases {

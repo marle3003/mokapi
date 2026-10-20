@@ -1,3 +1,64 @@
+import { app } from 'mokapi'
+
+export default function () {
+    app.http()
+        .operation('serviceMail', (_, res) => {
+            res.data = services[0]
+        })
+        .operation('mailboxes', (_, res) => {
+            res.data = services[0].mailboxes
+        })
+        .operation('mailbox', (req, res) => {
+             for (const mb of services[0].mailboxes) {
+                if (mb.name === req.path.mailbox) {
+                    res.data = {
+                        ...mb,
+                        folders: mb.folders.map(x => x.name)
+                    }
+                    return
+                }
+            }
+            res.rebuild(404)
+        })
+        .operation('smtpMessages', (req, res) => {
+            for (const mb of services[0].mailboxes) {
+                if (mb.name === req.path.mailbox) {
+                    const result = []
+                    for (const f of mb.folders) {
+                        result.push(...f.messages)
+                    }
+                    res.data = result
+                    return
+                }
+            }
+            res.rebuild(404)
+        })
+        .operation('smtpMessage', (req, res) => {
+            const messageId = req.path.messageId
+            const mail = getMail(messageId)
+            if (mail == null) {
+                res.rebuild(404)
+                return
+            }
+            res.data = {
+                service: services[0].name,
+                data: mail
+            }
+        })
+        .operation('smtpMessageAttachment', (req, res) => {
+            const messageId = req.path.messageId
+            const mail = getMail(messageId)
+            if (mail == null) {
+                res.rebuild(404)
+                return
+            }
+            res.data = {
+                service: services[0].name,
+                data: mail
+            }
+        })
+}
+
 export let mails = [
     {
         from: [{name: 'Alice', address: 'alice@mokapi.io'}],
