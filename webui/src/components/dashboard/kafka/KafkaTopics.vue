@@ -17,7 +17,7 @@ const allTags = computed(() => {
     if (!props.service || !props.service.topics) {
         return [];
     }
-    const result: KafkaTag[] = [];
+    const result: Tag[] = [];
     const names: { [name: string]: any } = {}
 
     for (const topic of props.service.topics) {
