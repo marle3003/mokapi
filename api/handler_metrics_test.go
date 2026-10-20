@@ -17,7 +17,7 @@ func TestHandler_Metrics(t *testing.T) {
 		fn   func(t *testing.T, h http.Handler, app *runtime.App)
 	}{
 		{
-			name: "/api/metrics",
+			name: "get metrics",
 			app: &runtime.App{
 				Monitor: monitor.New(),
 			},
@@ -34,7 +34,7 @@ func TestHandler_Metrics(t *testing.T) {
 			},
 		},
 		{
-			name: "/api/metrics?names=app_start_timestamp,app_memory_usage_bytes",
+			name: "using query names",
 			app: &runtime.App{
 				Monitor: monitor.New(),
 			},
@@ -51,7 +51,7 @@ func TestHandler_Metrics(t *testing.T) {
 			},
 		},
 		{
-			name: "/api/metrics/kafka",
+			name: "get kafka",
 			app: &runtime.App{
 				Monitor: monitor.New(),
 			},
@@ -68,7 +68,7 @@ func TestHandler_Metrics(t *testing.T) {
 			},
 		},
 		{
-			name: "/api/metrics/kafka with metric",
+			name: "get kafka with metric",
 			app: &runtime.App{
 				Monitor: monitor.New(),
 			},

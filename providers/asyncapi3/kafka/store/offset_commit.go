@@ -82,6 +82,6 @@ func (s *Store) processMetricsOffsetCommit(ctx context.Context, g *Group, topic 
 	}
 
 	lag := float64(partition.Offset() - g.Commits[topic][partition.Index])
-	m.Lags.WithLabel(s.cluster, g.Name, topic, strconv.Itoa(partition.Index)).Set(lag)
-	m.Commits.WithLabel(s.cluster, g.Name, topic, strconv.Itoa(partition.Index)).Set(float64(g.Commits[topic][partition.Index]))
+	m.Lags.WithLabel(s.config.Info.Name, g.Name, topic, strconv.Itoa(partition.Index)).Set(lag)
+	m.Commits.WithLabel(s.config.Info.Name, g.Name, topic, strconv.Itoa(partition.Index)).Set(float64(g.Commits[topic][partition.Index]))
 }

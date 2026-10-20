@@ -26,6 +26,7 @@ const (
 	UnsupportedVersion          ErrorCode = 35
 	TopicAlreadyExists          ErrorCode = 36
 	UnsupportedForMessageFormat ErrorCode = 43
+	PolicyViolation             ErrorCode = 44
 	OutOfOrderSequenceNumber    ErrorCode = 45
 	DuplicateSequenceNumber     ErrorCode = 46
 	InvalidProducerEpoch        ErrorCode = 47

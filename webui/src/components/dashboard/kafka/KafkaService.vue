@@ -13,40 +13,21 @@ import KafkaGroupMember from './KafkaGroupMember.vue'
 import KafkaClients from './KafkaClients.vue'
 import KafkaClient from './KafkaClient.vue'
 import Message from './Message.vue'
-import { getRouteName, useDashboard } from '@/composables/dashboard';
+import { getRouteName } from '@/composables/dashboard';
 import { useRouter } from '@/router'
 import Request from './Request.vue'
-import type { ServiceResult } from '@/types/dashboard'
 import Server from './Server.vue'
 import ExportAsyncApi from './export/AsyncAPI.vue'
 import { useToolbarItem } from '@/composables/toolbar-items.ts'
+import Breadcrumb from '../Breadcrumb.vue'
+import { provideBreadcrumb } from '@/composables/breadcrumb.ts'
+import { useService } from '@/composables/service.ts'
+
+const { service } = useService<KafkaService>('kafka')
 
 const route = useRoute();
 const router = useRouter();
-const serviceName = route.params.service?.toString()
-let data = ref<ServiceResult | null>(null);
-const { dashboard } = useDashboard();
 const exportAsyncAPIDialogVisible = ref(false)
-
-const service = computed(() => {
-    if (!data.value) {
-        return undefined
-    }
-    return data.value.service as KafkaService
-})
-
-watch(() => dashboard.value,
-  (db, _, onCleanup) => {
-    if (!serviceName) {
-        return
-    }
-    const res = db.getService(serviceName, 'kafka');
-    data.value = res;
-
-    onCleanup(() => res.close());
-  },
-  { immediate: true }
-);
 
 const activeTab = ref('tab-topics');
 
@@ -69,9 +50,25 @@ useToolbarItem(
         }
     }
 )
+
+const tail = provideBreadcrumb()
+const breadcrumb = computed<BreadcrumbItem[]>(() => {
+  const base: BreadcrumbItem[] = [
+    { text: 'Kafka', to: { name: getRouteName('mqtt').value } },
+  ]
+  if (!service.value) return base
+  const isOverview = route.name === getRouteName('kafkaService').value
+  base.push(isOverview
+    ? { text: service.value.name }
+    : { text: service.value.name, to: { name: getRouteName('kafkaService').value,
+        params: { service: service.value.name } } })
+  return [...base, ...tail.value]
+})
 </script>
 
 <template>
+    <Breadcrumb :items="breadcrumb" />
+
     <div v-if="$route.name == getRouteName('kafkaService').value && service != null">
         <div class="card-group">
             <service-info-card :service="service" type="Kafka" />

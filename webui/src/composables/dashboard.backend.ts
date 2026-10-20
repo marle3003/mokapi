@@ -58,6 +58,18 @@ export const dashboard: Dashboard = {
         return {operations, isLoading, close: response.close} 
     },
 
+    getKafkaChannel(serviceName: string, channelName: string) {
+        const response = useFetch(`/api/services/kafka/${serviceName}/channels/${channelName}`)
+        const channel = ref<KafkaChannel | null>(null)
+        const isLoading = ref<boolean>(true)
+
+        watchEffect(() => {
+            channel.value = response.data ? response.data : null
+            isLoading.value = response.isLoading
+        })
+        return {channel, isLoading, close: response.close} 
+    },
+
     getKafkaTopic(serviceName: string, topicName: string) {
         const response = useFetch(`/api/services/kafka/${serviceName}/topics/${topicName}`)
         const topic = ref<KafkaTopic | null>(null)

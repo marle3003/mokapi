@@ -7,6 +7,7 @@ import Requests from './Requests.vue'
 import ServiceStatus from '../ServiceStatus.vue'
 import { useMarkdown } from '@/composables/markdown'
 import { useDashboard } from '@/composables/dashboard'
+import { useBreadcrumb } from '@/composables/breadcrumb.ts'
 
 const props = defineProps({
     service: { type: Object as PropType<HttpService>, required: true },
@@ -30,6 +31,18 @@ const operation = computed(() => {
 
 const route = useRoute()
 const description = computed(() => useMarkdown(operation.value?.description || '').content)
+useBreadcrumb(() => {
+  if (!props.path || !props.method) {
+    return []
+  }
+  return [ 
+    { 
+        text: props.path.path,
+        to: route.httpPath(props.service, props.path)
+    },
+    { text: props.method.toUpperCase() }
+ ]
+})
 </script>
 
 <template>
@@ -37,8 +50,8 @@ const description = computed(() => useMarkdown(operation.value?.description || '
         <div class="card-group">
             <div class="card">
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-8 header mb-3">
+                    <div class="row mb-3">
+                        <div class="col-8 header">
                             <p id="operation" class="label">Operation</p>
                             <p aria-labelledby="operation">
                                 <span class="bi bi-exclamation-triangle-fill yellow pe-2" style="vertical-align: middle;" v-if="operation.deprecated"></span>
@@ -50,25 +63,20 @@ const description = computed(() => useMarkdown(operation.value?.description || '
                                 </span>
                             </p>
                         </div>
+                        <div class="col text-end">
+                            <span class="badge bg-secondary" aria-label="Type of API" data-testid="type">HTTP</span>
+                        </div>
+                    </div>
+                    <div v-if="operation.operationId || operation.deprecated" class="row">
                         <div class="col">
                             <p id="operation-id" class="label">Operation ID</p>
                             <p aria-labelledby="operation-id">{{ operation.operationId }}</p> 
-                        </div>
-                        <div class="col">
-                            <p id="service" class="label">Service</p>
-                            <p aria-labelledby="service">
-                                <router-link :to="route.service(service, 'http')">
-                                    {{ service.name }}
-                                </router-link>
-                            </p>
                         </div>
                         <div class="col" v-if="operation.deprecated">
                             <p class="label">Warning</p>
                             <p data-testid="warning">Deprecated</p>
                         </div>
-                        <div class="col text-end">
-                            <span class="badge bg-secondary" aria-label="Type of API" data-testid="type">HTTP</span>
-                        </div>
+                        
                     </div>
                     <div class="row" v-if="operation.summary">
                         <p id="summary" class="label">Summary</p>

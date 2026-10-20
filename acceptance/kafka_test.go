@@ -53,7 +53,7 @@ func (suite *KafkaSuite) TestApi() {
 				"name": "petstore.order-event",
 				"metrics": map[string]any{
 					// skip timestamp check "kafka_message_timestamp"
-					"kafka_messages_total": float64(1),
+					"messages_total": float64(1),
 				},
 			}},
 		}

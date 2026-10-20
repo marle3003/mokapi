@@ -13,8 +13,10 @@ import (
 	"mokapi/providers/asyncapi3/asyncapi3test"
 	"mokapi/providers/asyncapi3/kafka/store"
 	"mokapi/runtime/events"
+	"mokapi/runtime/metrics"
 	"mokapi/runtime/monitor"
 	"mokapi/schema/json/schema/schematest"
+	"mokapi/try"
 	"testing"
 	"time"
 
@@ -26,11 +28,11 @@ import (
 func TestProduce(t *testing.T) {
 	testcases := []struct {
 		name string
-		fn   func(t *testing.T, s *store.Store, sm *events.StoreManager)
+		test func(t *testing.T, s *store.Store, sm *events.StoreManager, m *monitor.Kafka)
 	}{
 		{
-			"default",
-			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
+			name: "default",
+			test: func(t *testing.T, s *store.Store, sm *events.StoreManager, _ *monitor.Kafka) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithServer("foo", "kafka", "127.0.0.1"),
 					asyncapi3test.WithChannel("foo")))
@@ -140,8 +142,8 @@ func TestProduce(t *testing.T) {
 			},
 		},
 		{
-			"Base Offset",
-			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
+			name: "Base Offset",
+			test: func(t *testing.T, s *store.Store, sm *events.StoreManager, _ *monitor.Kafka) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithChannel("foo")))
 				_, _ = s.Topic("foo").Partition(0).Write(kafka.RecordBatch{Records: []*kafka.Record{
@@ -181,8 +183,8 @@ func TestProduce(t *testing.T) {
 			},
 		},
 		{
-			"invalid message value format",
-			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
+			name: "invalid message value format",
+			test: func(t *testing.T, s *store.Store, sm *events.StoreManager, _ *monitor.Kafka) {
 				s.Update(asyncapi3test.NewConfig(
 					asyncapi3test.WithChannel("foo",
 						asyncapi3test.WithMessage("foo",
@@ -222,8 +224,8 @@ func TestProduce(t *testing.T) {
 			},
 		},
 		{
-			"invalid client id",
-			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
+			name: "invalid client id",
+			test: func(t *testing.T, s *store.Store, sm *events.StoreManager, _ *monitor.Kafka) {
 				ch := asyncapi3test.NewChannel(
 					asyncapi3test.WithMessage("foo",
 						asyncapi3test.WithContentType("application/json"),
@@ -274,8 +276,8 @@ func TestProduce(t *testing.T) {
 			},
 		},
 		{
-			"valid client id",
-			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
+			name: "valid client id",
+			test: func(t *testing.T, s *store.Store, sm *events.StoreManager, _ *monitor.Kafka) {
 				ch := asyncapi3test.NewChannel(
 					asyncapi3test.WithMessage("foo",
 						asyncapi3test.WithContentType("application/json"),
@@ -324,8 +326,8 @@ func TestProduce(t *testing.T) {
 			},
 		},
 		{
-			"no partitions",
-			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
+			name: "no partitions",
+			test: func(t *testing.T, s *store.Store, sm *events.StoreManager, _ *monitor.Kafka) {
 				ch := asyncapi3test.NewChannel(
 					asyncapi3test.WithKafkaChannelBinding(asyncapi3.TopicBindings{Partitions: 0}))
 				s.Update(asyncapi3test.NewConfig(
@@ -356,8 +358,8 @@ func TestProduce(t *testing.T) {
 			},
 		},
 		{
-			"using producer Id",
-			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
+			name: "using producer Id",
+			test: func(t *testing.T, s *store.Store, sm *events.StoreManager, _ *monitor.Kafka) {
 				ch := asyncapi3test.NewChannel(
 					asyncapi3test.WithMessage("foo",
 						asyncapi3test.WithContentType("application/json"),
@@ -423,8 +425,8 @@ func TestProduce(t *testing.T) {
 			},
 		},
 		{
-			"using producer Id but invalid sequence number, to high",
-			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
+			name: "using producer Id but invalid sequence number, to high",
+			test: func(t *testing.T, s *store.Store, sm *events.StoreManager, _ *monitor.Kafka) {
 				ch := asyncapi3test.NewChannel(
 					asyncapi3test.WithMessage("foo",
 						asyncapi3test.WithContentType("application/json"),
@@ -481,8 +483,8 @@ func TestProduce(t *testing.T) {
 			},
 		},
 		{
-			"call produce twice for same sequence number",
-			func(t *testing.T, s *store.Store, sm *events.StoreManager) {
+			name: "call produce twice for same sequence number",
+			test: func(t *testing.T, s *store.Store, sm *events.StoreManager, _ *monitor.Kafka) {
 				ch := asyncapi3test.NewChannel(
 					asyncapi3test.WithMessage("foo",
 						asyncapi3test.WithContentType("application/json"),
@@ -538,15 +540,83 @@ func TestProduce(t *testing.T) {
 				require.Equal(t, "kafka: failed to write to topic 'foo' partition 0: message sequence number already received: 0", hook.LastEntry().Message)
 			},
 		},
+		{
+			name: "produce to channel using parameter",
+			test: func(t *testing.T, s *store.Store, sm *events.StoreManager, m *monitor.Kafka) {
+				s.Update(asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("foo", "kafka", "127.0.0.1"),
+					asyncapi3test.WithChannel("products.{region}",
+						asyncapi3test.WithParameter(
+							"region", &asyncapi3.Parameter{
+								Enum: []string{"us", "eu"},
+							},
+						),
+					),
+				))
+				_, err := s.NewTopic("products.us", s.Brokers()[0])
+				require.NoError(t, err)
+
+				g := s.GetOrCreateGroup("foo", s.Brokers()[0])
+				g.Commit("foo", 0, 0)
+				sm.SetStore(5, events.NewTraits().WithNamespace("kafka"))
+
+				rr := kafkatest.NewRecorder()
+				r := kafkatest.NewRequest("kafkatest", 3, &produce.Request{
+					Topics: []produce.RequestTopic{
+						{Name: "products.us", Partitions: []produce.RequestPartition{
+							{
+								Record: kafka.RecordBatch{
+									Records: []*kafka.Record{
+										{
+											Offset:  0,
+											Time:    time.Now(),
+											Key:     kafka.NewBytes([]byte("foo")),
+											Value:   kafka.NewBytes([]byte("bar")),
+											Headers: nil,
+										},
+									},
+								},
+							},
+						},
+						}}})
+				r.WithContext(monitor.NewKafkaContext(r.Context, m))
+				s.ServeMessage(rr, r)
+
+				res, ok := rr.Message.(*produce.Response)
+				require.True(t, ok)
+				require.Equal(t, "products.us", res.Topics[0].Name)
+				require.Equal(t, kafka.None, res.Topics[0].Partitions[0].ErrorCode)
+				require.Equal(t, int64(0), res.Topics[0].Partitions[0].BaseOffset)
+
+				logs := sm.GetEvents(events.NewTraits().WithNamespace("kafka").WithName("test").With("topic", "products.{region}"))
+				require.Len(t, logs, 1)
+				require.Equal(t, "namespace=kafka, name=test, clientId=kafkatest, instance=products.us, partition=0, topic=products.{region}, type=message", logs[0].Traits.String())
+				data := logs[0].Data.(*store.KafkaMessageLog)
+				require.Equal(t, "products.us", data.Topic)
+				require.Equal(t, "foo", string(data.Key.Binary))
+				require.Equal(t, "bar", string(data.Message.Binary))
+				require.Equal(t, int64(0), data.Offset)
+				require.Equal(t, "kafkatest", data.ClientId)
+				require.Equal(t, "kafkatest", logs[0].Traits.Get("clientId"))
+
+				try.WaitFor(t, func() bool {
+					n := m.Messages.Sum(metrics.NewQuery())
+					return n > 0
+				})
+
+				require.Equal(t, 1.0, m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("instance", "products.us"))))
+				require.Greater(t, m.LastMessage.Value(metrics.NewQuery(metrics.ByLabel("instance", "products.us"))), 1.0)
+			},
+		},
 	}
 
 	for _, tc := range testcases {
-		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			sm := &events.StoreManager{}
-			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), sm, monitor.NewKafka())
+			m := monitor.NewKafka()
+			s := store.New(asyncapi3test.NewConfig(), enginetest.NewEngine(), sm, m)
 			defer s.Close()
-			tc.fn(t, s, sm)
+			tc.test(t, s, sm, m)
 		})
 	}
 }

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"maps"
 	"mokapi/providers/asyncapi3"
 	"mokapi/runtime"
 	"mokapi/runtime/metrics"
@@ -41,13 +42,15 @@ type websocketChannel struct {
 	Description string                     `json:"description,omitempty"`
 	Messages    map[string]messageConfig   `json:"messages,omitempty"`
 	Tags        []kafkaTag                 `json:"tags,omitempty"`
+	Parameters  []string                   `json:"parameters,omitempty"`
 	Instances   []websocketChannelInstance `json:"instances,omitempty"`
 	Metrics     websocketChannelMetrics    `json:"metrics,omitempty"`
 }
 
 type websocketChannelInstance struct {
-	Name       string            `json:"name"`
-	Parameters map[string]string `json:"parameters,omitempty"`
+	Name       string                  `json:"name"`
+	Parameters map[string]string       `json:"parameters,omitempty"`
+	Metrics    websocketChannelMetrics `json:"metrics,omitempty"`
 }
 
 type websocketClient struct {
@@ -57,8 +60,8 @@ type websocketClient struct {
 }
 
 type websocketChannelMetrics struct {
-	NumMessages     float64 `json:"websocket_messages_total"`
-	LastMessageTime float64 `json:"websocket_message_timestamp"`
+	NumMessages     float64 `json:"messages_total"`
+	LastMessageTime float64 `json:"message_timestamp"`
 }
 
 func getWebsocketServices(store *runtime.WebsocketStore, m *monitor.Monitor) []service {
@@ -190,34 +193,39 @@ func (h *handler) getWebsocketChannels(w http.ResponseWriter, r *http.Request) {
 
 func getWebsocketChannels(wi *runtime.WebsocketInfo, m *monitor.Websocket) []websocketChannel {
 	channels := make([]websocketChannel, 0, len(wi.Config.Channels))
-	for name, ch := range wi.Config.Channels {
+	for _, ch := range wi.Config.Channels {
 		if ch.Value == nil {
 			continue
 		}
 		if !ch.Value.IsChannelAvailable("ws") {
 			continue
 		}
-		addr := name
-		if ch.Value.Address != "" {
-			addr = ch.Value.Address
-		}
+		addr := ch.Value.ResolveAddress()
 
 		data := newWebsocketChannel(addr, ch.Value, wi.Config)
 		if len(ch.Value.Parameters) > 0 {
+			data.Parameters = slices.SortedFunc(maps.Keys(ch.Value.Parameters), func(a, b string) int {
+				return strings.Compare(a, b)
+			})
 			for _, c := range wi.Store.Channels {
 				if err := ch.Value.IsNameValid(c.Name); err == nil {
 					params, _ := ch.Value.ExtractParams(c.Name)
-					data.Instances = append(data.Instances, websocketChannelInstance{
+					inst := websocketChannelInstance{
 						Name:       c.Name,
 						Parameters: params,
-					})
+					}
+					inst.Metrics = websocketChannelMetrics{
+						NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", wi.Info.Name), metrics.ByLabel("instance", c.Name))),
+						LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", wi.Info.Name), metrics.ByLabel("instance", c.Name))),
+					}
+					data.Instances = append(data.Instances, inst)
 				}
 			}
 		}
 
 		data.Metrics = websocketChannelMetrics{
-			NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", wi.Info.Name))),
-			LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", wi.Info.Name))),
+			NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", wi.Info.Name), metrics.ByLabel("channel", addr))),
+			LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", wi.Info.Name), metrics.ByLabel("channel", addr))),
 		}
 
 		channels = append(channels, data)

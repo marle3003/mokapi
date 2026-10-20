@@ -80,7 +80,6 @@ test.describe('Visit Books API', () => {
                 await expect(page).toHaveURL(/Books%20API\/books/)
 
                 await expect(page.getByLabel('Path', { exact: true })).toHaveText('/books');
-                await expect(page.getByLabel('Service', { exact: true })).toHaveText('Books API')
                 await expect(page.getByLabel('Type of API')).toHaveText('HTTP')
 
                 await test.step('Verify methods', async () => {
@@ -106,7 +105,6 @@ test.describe('Visit Books API', () => {
 
                         await expect(page.getByLabel('Operation', { exact: true })).toHaveText('POST /books');
                         await expect(page.getByLabel('Operation ID')).toHaveText('addBook');
-                        await expect(page.getByLabel('Service', { exact: true })).toHaveText('Books API');
                         await expect(page.getByLabel('Type of API')).toHaveText('HTTP');
                         await expect(page.getByLabel('Summary')).toHaveText('Add a new book');
                         await expect(page.getByLabel('Description', { exact: true })).not.toBeVisible();

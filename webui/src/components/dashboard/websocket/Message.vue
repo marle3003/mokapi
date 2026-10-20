@@ -13,7 +13,7 @@ import { useWebsocket } from "@/composables/websocket.ts";
 import WebsocketValidationErrors from "./WebsocketValidationErrors.vue";
 
 const route = useRoute();
-const { dashboard, getMode } = useDashboard()
+const { dashboard } = useDashboard()
 const { formatLanguage } = usePrettyLanguage()
 const { format } = usePrettyDates()
 const { formatAddress } = useWebsocket()
@@ -149,7 +149,7 @@ const hasActions = computed(() => {
         <div class="card-body">
           <div class="row">
             <div class="col">
-              <p id="message-channel" class="label">Channel</p>
+              <p id="message-channel" class="label">Path</p>
               <p>
                 <router-link :to="{ name: getRouteName('websocketChannel').value, params: { service: event.traits.name, channel: event.traits.channel } }" aria-labelledby="message-channel">
                   {{ data.channel  }}

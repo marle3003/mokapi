@@ -33,9 +33,9 @@ export default function () {
                                     status: o.status,
                                     ...('errors' in o ? { errors: o.errors } : {}),
                                     metrics: {
-                                        http_requests_total: sum('http_requests_total', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path }, { name: 'method', value: o.method.toUpperCase() }),
-                                        http_requests_errors_total: sum('http_requests_errors_total', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path }, { name: 'method', value: o.method.toUpperCase() }),
-                                        http_request_timestamp: max('http_request_timestamp', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path }, { name: 'method', value: o.method.toUpperCase() })
+                                        requests_total: sum('http_requests_total', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path }, { name: 'method', value: o.method.toUpperCase() }),
+                                        requests_errors_total: sum('http_requests_errors_total', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path }, { name: 'method', value: o.method.toUpperCase() }),
+                                        request_timestamp: max('http_request_timestamp', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path }, { name: 'method', value: o.method.toUpperCase() })
                                     }
                                 }
                             })
@@ -61,9 +61,9 @@ export default function () {
                                 operations.push({
                                     ...o,
                                     metrics: {
-                                        http_requests_total: sum('http_requests_total', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path}, { name: 'method', value: o.method.toUpperCase() }),
-                                        http_requests_errors_total: sum('http_requests_errors_total', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path}, { name: 'method', value: o.method.toUpperCase() }),
-                                        http_request_timestamp: max('http_request_timestamp', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path}, { name: 'method', value: o.method.toUpperCase() })
+                                        requests_total: sum('http_requests_total', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path}, { name: 'method', value: o.method.toUpperCase() }),
+                                        requests_errors_total: sum('http_requests_errors_total', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path}, { name: 'method', value: o.method.toUpperCase() }),
+                                        request_timestamp: max('http_request_timestamp', { name: 'service', value: service.name }, { name: 'endpoint', value: p.path}, { name: 'method', value: o.method.toUpperCase() })
                                     }
                                 })
                             }

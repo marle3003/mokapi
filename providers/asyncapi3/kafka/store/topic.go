@@ -27,7 +27,7 @@ type Operation struct {
 }
 
 func (t *Topic) Partition(index int) *Partition {
-	if index >= len(t.Partitions) {
+	if t == nil || index >= len(t.Partitions) {
 		return nil
 	}
 	return t.Partitions[index]
@@ -62,25 +62,39 @@ func (t *Topic) update(config *asyncapi3.Channel, s *Store) {
 		numPartitions = config.Bindings.Kafka.Partitions
 	}
 
-	for i, p := range t.Partitions {
+	t.updatePartitions(numPartitions)
+}
+
+func (t *Topic) updatePartitions(numPartitions int) {
+	n := max(numPartitions, len(t.Partitions))
+
+	for i := range n {
+		var p *Partition
 		if i >= numPartitions {
+			p = t.Partitions[i]
 			p.delete()
 		} else {
-			p.validator = newValidator(config)
+			if i >= len(t.Partitions) {
+				s := t.Store()
+				p = newPartition(i, s.brokers, t.log, s.trigger, t)
+				t.Partitions = append(t.Partitions, p)
+			} else {
+				p = t.Partitions[i]
+			}
+			p.validator = newValidator(t.Config)
 		}
-	}
-
-	for i := len(t.Partitions); i < numPartitions; i++ {
-		part := newPartition(i, s.brokers, t.log, s.trigger, t)
-		part.validator = newValidator(config)
-		t.Partitions = append(t.Partitions, part)
 	}
 
 	t.Partitions = t.Partitions[:numPartitions]
 }
 
 func (t *Topic) log(r *KafkaMessageLog, traits events.Traits) {
-	t.logger(r, traits.With("topic", t.Name))
+	topicName := t.Config.ResolveAddress()
+	traits.With("topic", t.Config.ResolveAddress())
+	if t.Name != topicName {
+		traits.With("instance", t.Name)
+	}
+	t.logger(r, traits)
 }
 
 func (t *Topic) Store() *Store {

@@ -172,10 +172,10 @@ function goToTopic(topicName: string, openInNewTab = false){
                     </td>
                     <td class="text-center">{{ p.index }}</td>
                     <td class="text-center">
-                      {{ group.metrics.topics[p.topic].find(t => t.partition == p.index)?.kafka_consumer_group_commit ?? '-' }}
+                      {{ group.metrics.topics[p.topic].find(t => t.partition == p.index)?.consumer_group_commit ?? '-' }}
                     </td>
                     <td class="text-center">
-                      {{ group.metrics.topics[p.topic].find(t => t.partition == p.index)?.kafka_consumer_group_lag }}
+                      {{ group.metrics.topics[p.topic].find(t => t.partition == p.index)?.consumer_group_lag }}
                     </td>
                   </tr>
                 </tbody>

@@ -12,7 +12,7 @@ import Actions from '../Actions.vue'
 import MessageHeaderTable from './MessageHeaderTable.vue'
 
 const route = useRoute();
-const { dashboard, getMode } = useDashboard()
+const { dashboard } = useDashboard()
 const { formatLanguage } = usePrettyLanguage()
 const { format } = usePrettyDates()
 const { fromBinary } = usePrettyText()
@@ -34,7 +34,7 @@ watch(() => dashboard.value,
   { immediate: true }
 );
 
-const topic = ref<KafkaTopic | null>(null)
+const channel = ref<KafkaChannel | null>(null)
 const topicKey = computed(() => {
   if (!event.value) return null
   return `${event.value.traits.name}::${event.value.traits.topic}`
@@ -51,12 +51,12 @@ watch(
     if (!event.value) {
       return
     }
-    const result = dashboard.value.getKafkaTopic(event.value?.traits.name!, event.value.traits.topic)
+    const result = dashboard.value.getKafkaChannel(event.value?.traits.name!, event.value.traits.topic)
 
     const stop = watch(
-      () => result.topic.value,
+      () => result.channel.value,
       (v) => {
-        topic.value = v
+        channel.value = v
       },
       { immediate: true }
     )
@@ -69,7 +69,7 @@ watch(
   { immediate: true }
 )
 const message = computed(() => {
-  if (!data.value || !topic.value) {
+  if (!data.value || !channel.value) {
     return undefined
   }
 
@@ -115,7 +115,7 @@ function getContentType(msg: KafkaMessage): [string, boolean] {
   return [msg.contentType, false]
 }
 const messageConfig = computed(() => {
-  if (!topic.value || !data.value) {
+  if (!channel.value || !data.value) {
     return undefined
   }
 
@@ -126,9 +126,9 @@ const messageConfig = computed(() => {
     return
   }
 
-  for (const id in topic.value.messages) {
+  for (const id in channel.value.messages) {
     if (id === messageId) {
-      return topic.value.messages[id]
+      return channel.value.messages[id]
     }
   }
   return undefined

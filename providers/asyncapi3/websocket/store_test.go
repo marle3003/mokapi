@@ -12,6 +12,7 @@ import (
 	"mokapi/providers/asyncapi3/websocket"
 	"mokapi/runtime"
 	"mokapi/runtime/events"
+	"mokapi/runtime/metrics"
 	"mokapi/runtime/runtimetest"
 	"mokapi/schema/json/schema/schematest"
 	"mokapi/try"
@@ -162,7 +163,7 @@ func TestStore(t *testing.T) {
 				_, _, err = c.Read(ctx)
 				require.ErrorContains(t, err, "invalid json format: invalid character 'h' looking for beginning of value")
 
-				waitFor(t, func() bool {
+				try.WaitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
 					return len(evts) > 2
 				})
@@ -208,7 +209,7 @@ func TestStore(t *testing.T) {
 
 				_ = c.Close(ws.StatusNormalClosure, "bye")
 
-				waitFor(t, func() bool {
+				try.WaitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
 					return len(evts) > 2
 				})
@@ -288,7 +289,7 @@ export default function() {
 				err = c.Write(ctx, ws.MessageText, []byte(`{"text": "hello"}`))
 				require.NoError(t, err)
 
-				waitFor(t, func() bool {
+				try.WaitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
 					return len(evts) > 2
 				})
@@ -414,7 +415,7 @@ export default function() {
 				err = c.Write(ctx, ws.MessageText, []byte("hello"))
 				require.NoError(t, err)
 
-				waitFor(t, func() bool {
+				try.WaitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
 					return len(evts) > 1
 				})
@@ -510,7 +511,7 @@ export default function() {
 				err = c.Write(ctx, ws.MessageText, []byte("hello"))
 				require.NoError(t, err)
 
-				waitFor(t, func() bool {
+				try.WaitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
 					return len(evts) > 1
 				})
@@ -602,12 +603,24 @@ export default function() {
 				err = c.Write(ctx, ws.MessageText, []byte("hello"))
 				require.NoError(t, err)
 
-				waitFor(t, func() bool {
+				try.WaitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
 					return len(evts) > 1
 				})
 
+				require.Equal(t, 1.0, app.Monitor.Websocket.Messages.Sum(
+					metrics.NewQuery(metrics.ByLabel("channel", "/chats/{chatId}")),
+				))
+				require.Equal(t, 1.0, app.Monitor.Websocket.Messages.Sum(
+					metrics.NewQuery(
+						metrics.ByLabel("channel", "/chats/{chatId}"),
+						metrics.ByLabel("instance", "/chats/1234"),
+					),
+				))
+
 				evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
+				require.Equal(t, "/chats/{chatId}", evts[0].Traits.Get("channel"))
+				require.Equal(t, "/chats/1234", evts[0].Traits.Get("instance"))
 				require.Len(t, evts, 2)
 				evt := evts[0]
 				d := evt.Data.(*websocket.MessageLog)
@@ -652,20 +665,5 @@ export default function() {
 
 			tc.test(t, s, serv.URL, app)
 		})
-	}
-}
-
-func waitFor(t *testing.T, check func() bool) {
-	t.Helper()
-	deadline := time.Now().Add(30 * time.Second)
-
-	for {
-		if check() {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("waitFor deadline")
-		}
-		time.Sleep(20 * time.Millisecond)
 	}
 }

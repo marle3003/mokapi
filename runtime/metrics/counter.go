@@ -17,7 +17,7 @@ func NewCounter(opt ...Options) *Counter {
 	for _, opt := range opt {
 		opt(o)
 	}
-	return &Counter{info: &Info{Namespace: o.namespace, Name: o.name, labels: o.labels}}
+	return &Counter{info: &Info{Namespace: o.namespace, Name: o.name}}
 }
 
 func (c *Counter) Add(v float64) {
@@ -73,13 +73,20 @@ func NewCounterMap(opts ...Options) *CounterMap {
 		info:     info,
 		counters: make(map[uint32]*Counter),
 		newCounter: func(values []string) *Counter {
-			if len(o.labelNames) != len(values) {
+			if !o.areLabelsValid(values) {
 				panic(fmt.Sprintf("invalid labels values for %v", info))
 			}
 			labels := make([]*Label, 0)
 			for i, v := range values {
+				var name string
+				if i < len(o.labelNames) {
+					name = o.labelNames[i]
+				} else {
+					name = o.optionalNames[i-len(o.labelNames)]
+				}
+
 				labels = append(labels, &Label{
-					Name:  o.labelNames[i],
+					Name:  name,
 					Value: v,
 				})
 			}

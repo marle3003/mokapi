@@ -6,6 +6,7 @@ import { usePrettyDates } from "@/composables/usePrettyDate";
 import Message from "@/components/Message.vue";
 import { getRouteName, useDashboard } from "@/composables/dashboard";
 import { useMarkdown } from '@/composables/markdown';
+import { useBreadcrumb } from '@/composables/breadcrumb';
 
 const props = defineProps({
   service: { type: Object as PropType<MailService>, required: true },
@@ -37,6 +38,11 @@ function goToMail(msg: MessageInfo, openInNewTab = false) {
     router.push(to)
   }
 }
+
+useBreadcrumb(() => {
+  if (!props.mailboxName) return []
+  return [ { text: props.mailboxName } ]
+})
 </script>
 
 <template>
@@ -52,14 +58,6 @@ function goToMail(msg: MessageInfo, openInNewTab = false) {
               <label id="mailbox-name" class="label">Mailbox Name</label>
               <p aria-labelledby="mailbox-name">
                 {{ mailbox.name }}
-              </p>
-            </div>
-            <div class="col">
-              <p id="service" class="label">Service</p>
-              <p aria-labelledby="service">
-                <router-link :to="route.service(service, 'mail')">
-                  {{ service.name }}
-                </router-link>
               </p>
             </div>
             <div class="col text-end">

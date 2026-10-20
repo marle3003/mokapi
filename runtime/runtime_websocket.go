@@ -275,8 +275,8 @@ func (s *WebsocketStore) updateEventStore(k *WebsocketInfo) {
 		if _, ok := k.seenTopics[channelName]; ok {
 			continue
 		}
-		s.monitor.Mqtt.Messages.WithLabel(k.Config.Info.Name, channelName)
-		s.monitor.Mqtt.LastMessage.WithLabel(k.Config.Info.Name, channelName)
+		s.monitor.Websocket.Messages.WithLabel(k.Config.Info.Name, channelName)
+		s.monitor.Websocket.LastMessage.WithLabel(k.Config.Info.Name, channelName)
 		traits := events.NewTraits().WithNamespace("websocket").WithName(k.Config.Info.Name).With("channel", channelName)
 		s.events.SetStore(int(eventStore.Size), traits)
 		k.seenTopics[channelName] = true

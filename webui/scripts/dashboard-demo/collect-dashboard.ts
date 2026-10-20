@@ -15,15 +15,25 @@ export async function collectDashboard() {
     'service_Swagger Petstore': { path: '/api/services/http/Swagger%20Petstore', loader: loadJson },
     'service_Swagger Petstore_operations': { path: '/api/services/http/Swagger%20Petstore/operations', loader: loadJson },
     'service_Swagger Petstore_bruno': { path: '/api/services/http/Swagger%20Petstore/bruno.yaml', loader: load },
+    
     'service_Kafka Order Service API': { path: '/api/services/kafka/Kafka%20Order%20Service%20API', loader: loadJson },
+    'service_Kafka Order Service API_channel_order-topic': { path: '/api/services/kafka/Kafka%20Order%20Service%20API/channels/order-topic', loader: loadJson },
     'service_Kafka Order Service API_topic_order-topic': { path: '/api/services/kafka/Kafka%20Order%20Service%20API/topics/order-topic', loader: loadJson },
+    'service_Kafka Order Service API_channel_user-events': { path: '/api/services/kafka/Kafka%20Order%20Service%20API/channels/user-events', loader: loadJson },
     'service_Kafka Order Service API_topic_user-events': { path: '/api/services/kafka/Kafka%20Order%20Service%20API/topics/user-events', loader: loadJson },
+    'service_Kafka Order Service API_channel_shipments.{region}.updates': { path: '/api/services/kafka/Kafka%20Order%20Service%20API/channels/shipments.{region}.updates', loader: loadJson },
+    'service_Kafka Order Service API_topic_shipments.eu.updates': { path: '/api/services/kafka/Kafka%20Order%20Service%20API/topics/shipments.eu.updates', loader: loadJson },
+
     'service_Kafka Order Service API_group_order-status-group-100': { path: '/api/services/kafka/Kafka%20Order%20Service%20API/groups/order-status-group-100', loader: loadJson },
     'service_Kafka Order Service API_client_consumer-1': { path: '/api/services/kafka/Kafka%20Order%20Service%20API/clients/consumer-1', loader: loadJson },
     'service_Kafka Order Service API_client_producer-1': { path: '/api/services/kafka/Kafka%20Order%20Service%20API/clients/producer-1', loader: loadJson },
+    
     'service_Mail Server': { path: '/api/services/mail/Mail%20Server', loader: loadJson },
+    
     'service_HR Employee Directory': { path: '/api/services/ldap/HR%20Employee%20Directory', loader: loadJson },
+    
     'service_Smart Home MQTT API': { path: '/api/services/mqtt/Smart%20Home%20MQTT%20API', loader: loadJson },
+    
     'service_WebSocket Chat API': { path: '/api/services/websocket/WebSocket%20Chat%20API', loader: loadJson },
     events: { path: '/api/events?size=1000', loader: fetchEvents },
     'mailbox_alice.johnson@example.com': { path: '/api/services/mail/Mail%20Server/mailboxes/alice.johnson@example.com', loader: loadJson },

@@ -6,6 +6,7 @@ import { ref, watch } from 'vue';
 import Message from '../../Message.vue';
 import KafkaMessagesCard from './KafkaMessagesCard.vue'
 import KafkaRequests from './KafkaRequests.vue'
+import { useBreadcrumb } from '@/composables/breadcrumb.ts';
 
 const route = useRoute();
 const router = useRouter();
@@ -80,6 +81,11 @@ function gotToMember(memberId: string, groupName: string, openInNewTab = false){
         router.push(to)
     }
 }
+
+useBreadcrumb(() => {
+  if (!clientId) return []
+  return  [{ text: clientId }]
+})
 </script>
 
 <template>
@@ -92,17 +98,6 @@ function gotToMember(memberId: string, groupName: string, openInNewTab = false){
                         <p id="clientId" class="label">ClientId</p>
                         <p aria-labelledby="clientId">
                           {{ client.clientId }}
-                        </p>
-                    </div>
-                    <div class="col">
-                        <p id="group" class="label">Cluster</p>
-                        <p>
-                          <router-link :to="{
-                              name: getRouteName('kafkaService').value,
-                              params: {service: serviceName},
-                          }" aria-labelledby="cluster">
-                          {{ serviceName }}
-                        </router-link>
                         </p>
                     </div>
                     <div class="col text-end">

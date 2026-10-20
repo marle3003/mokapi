@@ -53,7 +53,7 @@ func TestHandler_Websocket(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services",
-			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"websocket","metrics":{"websocket_messages_total":0,"websocket_message_timestamp":0}}]`,
+			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"websocket","metrics":{"messages_total":0,"message_timestamp":0}}]`,
 		},
 		{
 			name: "get Websocket services",
@@ -76,7 +76,7 @@ func TestHandler_Websocket(t *testing.T) {
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/websocket",
-			responseBody: `[{"name":"foo","description":"websocket","contact":{"name":"mokapi","url":"https://mokapi.io","email":"info@mokapi.io"},"version":"1.0","type":"websocket","metrics":{"websocket_messages_total":0,"websocket_message_timestamp":0}}]`,
+			responseBody: `[{"name":"foo","description":"websocket","contact":{"name":"mokapi","url":"https://mokapi.io","email":"info@mokapi.io"},"version":"1.0","type":"websocket","metrics":{"messages_total":0,"message_timestamp":0}}]`,
 		},
 		{
 			name: "get specific",
@@ -95,6 +95,70 @@ func TestHandler_Websocket(t *testing.T) {
 			},
 			requestUrl:   "http://foo.api/api/services/websocket/foo",
 			responseBody: `{"name":"foo","description":"bar","version":"1.0","servers":[{"name":"mokapi","host":":80","protocol":"ws","title":"Mokapi Default Server","summary":"Automatically added server because no servers are defined in the AsyncAPI spec","description":""}],"configs":[{"id":"64613435-3062-6462-3033-316532633233","url":"file://foo.yml","provider":"test","time":"2023-12-27T13:01:30Z"}]}`,
+		},
+		{
+			name: "channels with metrics",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+
+				cfg := &dynamic.Config{
+					Info: dynamictest.NewConfigInfo(),
+					Data: asyncapi3test.NewConfig(
+						asyncapi3test.WithInfo("foo", "bar", "1.0"),
+						asyncapi3test.WithServer("bar", "mqtt", "foo.bar"),
+						asyncapi3test.WithChannel("channel1"),
+						asyncapi3test.WithChannel("channel2"),
+					),
+				}
+				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
+
+				app.Monitor.Websocket.Messages.WithLabel("foo", "channel1").Add(1)
+				app.Monitor.Websocket.Messages.WithLabel("foo", "channel2").Add(2)
+				app.Monitor.Websocket.LastMessage.WithLabel("foo", "channel1").Set(1234)
+				app.Monitor.Websocket.LastMessage.WithLabel("foo", "channel2").Set(7890)
+
+				_, err := app.Websocket.Add(cfg, enginetest.NewEngine())
+				require.NoError(t, err)
+
+				return app
+			},
+			requestUrl:   "http://foo.api/api/services/websocket/foo/channels",
+			responseBody: `[{"name":"channel1","metrics":{"messages_total":1,"message_timestamp":1234}},{"name":"channel2","metrics":{"messages_total":2,"message_timestamp":7890}}]`,
+		},
+		{
+			name: "channels with assigned server",
+			app: func() *runtime.App {
+				app := runtime.New(&static.Config{}, &dynamictest.Reader{})
+				addr := fmt.Sprintf(":%v", try.GetFreePort())
+				ws := asyncapi3test.NewConfig(
+					asyncapi3test.WithInfo("foo", "bar", "1.0"),
+					asyncapi3test.WithServer("foo", "ws", addr),
+					asyncapi3test.WithServer("bar", "mqtt", "foo.bar"),
+					asyncapi3test.WithChannel("channel1",
+						asyncapi3test.AssignToServer("#/servers/foo"),
+					),
+					asyncapi3test.WithChannel("channel2",
+						asyncapi3test.AssignToServer("#/servers/bar"),
+					),
+				)
+				cfg := &dynamic.Config{
+					Info: dynamictest.NewConfigInfo(),
+					Data: ws,
+				}
+				cfg.Info.Time = mustTime("2023-12-27T13:01:30+00:00")
+				err := ws.Parse(cfg, &dynamictest.Reader{})
+				require.NoError(t, err)
+
+				mi, err := app.Websocket.Add(cfg, enginetest.NewEngine())
+				require.NoError(t, err)
+				mi.Store.Channels = map[string]*websocket.Channel{
+					"chats/1234z": {Name: "chats/1234z"},
+				}
+
+				return app
+			},
+			requestUrl:   "http://foo.api/api/services/websocket/foo/channels",
+			responseBody: `[{"name":"channel1","metrics":{"messages_total":0,"message_timestamp":0}}]`,
 		},
 		{
 			name: "channel with parameter",
@@ -119,10 +183,13 @@ func TestHandler_Websocket(t *testing.T) {
 					"chats/1234z": {Name: "chats/1234z"},
 				}
 
+				app.Monitor.Websocket.Messages.WithLabel("foo", "chats/{chatId}", "chats/1234z").Add(1)
+				app.Monitor.Websocket.LastMessage.WithLabel("foo", "chats/{chatId}", "chats/1234z").Set(1234)
+
 				return app
 			},
 			requestUrl:   "http://foo.api/api/services/websocket/foo/channels",
-			responseBody: `[{"name":"chats/{chatId}","instances":[{"name":"chats/1234z","parameters":{"chatId":"1234z"}}],"metrics":{"websocket_messages_total":0,"websocket_message_timestamp":0}}]`,
+			responseBody: `[{"name":"chats/{chatId}","parameters":["chatId"],"instances":[{"name":"chats/1234z","parameters":{"chatId":"1234z"},"metrics":{"messages_total":1,"message_timestamp":1234}}],"metrics":{"messages_total":1,"message_timestamp":1234}}]`,
 		},
 	}
 
@@ -159,7 +226,7 @@ func TestHandler_Websocket_Metrics(t *testing.T) {
 			name:         "service list with metric",
 			app:          runtimetest.NewApp(runtimetest.WithWebsocketInfo("foo", getWebsocketInfo(asyncapi3test.NewConfig(asyncapi3test.WithTitle("foo"))))),
 			requestUrl:   "http://foo.api/api/services",
-			responseBody: `[{"name":"foo","version":"1.0","type":"websocket","metrics":{"websocket_messages_total":1,"websocket_message_timestamp":12345678}}]`,
+			responseBody: `[{"name":"foo","version":"1.0","type":"websocket","metrics":{"messages_total":1,"message_timestamp":12345678}}]`,
 			addMetrics: func(monitor *monitor.Monitor) {
 				monitor.Websocket.Messages.WithLabel("foo", "channel-1").Add(1)
 				monitor.Websocket.LastMessage.WithLabel("foo", "channel-1").Set(12345678)
@@ -170,11 +237,11 @@ func TestHandler_Websocket_Metrics(t *testing.T) {
 			app: runtimetest.NewApp(
 				runtimetest.WithWebsocketInfo("foo", getWebsocketInfo(
 					asyncapi3test.NewConfig(asyncapi3test.WithTitle("foo"),
-						asyncapi3test.WithChannel("foo"),
+						asyncapi3test.WithChannel("channel-1"),
 					),
 				))),
 			requestUrl:   "http://foo.api/api/services/websocket/foo",
-			responseBody: `{"name":"foo","version":"1.0","channels":[{"name":"foo","metrics":{"websocket_messages_total":1,"websocket_message_timestamp":12345678}}]}`,
+			responseBody: `{"name":"foo","version":"1.0","channels":[{"name":"channel-1","metrics":{"messages_total":1,"message_timestamp":12345678}}]}`,
 			addMetrics: func(monitor *monitor.Monitor) {
 				monitor.Websocket.Messages.WithLabel("foo", "channel-1").Add(1)
 				monitor.Websocket.LastMessage.WithLabel("foo", "channel-1").Set(12345678)

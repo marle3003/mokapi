@@ -1,4 +1,4 @@
-import { metrics } from './metrics';
+import { sum, max, metrics } from './metrics';
 import { on } from 'mokapi';
 
 const Measurement = {
@@ -75,12 +75,13 @@ export let clusters = [
             contentType: 'application/json',
           },
         },
+        parameters: ['sensorId'],
         instances: [
           {
             name: 'sensors/123/data',
             parameters: {
               sensorId: '123'
-            }
+            },
           }
         ]
       },
@@ -110,11 +111,20 @@ export default async function () {
                   ...('summary' in x ? { summary: x.summary } : {}),
                   ...('description' in x ? { description: x.description } : {}),
                   messages: x.messages,
-                   ...('instances' in x ? { instances: x.instances } : {}),
+                  ...('parameters' in x ? { parameters: x.parameters} : {}),
+                  ...('instances' in x ? { instances: x.instances?.map((i: any) => (
+                    {
+                      ...i,
+                      metrics: {
+                        messages_total: sum('mqtt_messages_total', { name: 'service', value: clusters[0].name }, { name: 'topic', value: x.name }, { name: 'instance', value: i.name }),
+                        message_timestamp: max('mqtt_message_timestamp', { name: 'service', value: clusters[0].name }, { name: 'topic', value: x.name }, { name: 'instance', value: i.name })
+                      },
+                    }
+                  )) } : {}),
                   metrics: {
-                      mqtt_messages_total: metrics.find(m => m.name === `mqtt_messages_total{service="${clusters[0].name}",topic="${x.name}"}`)?.value ?? 0,
-                      mqtt_message_timestamp: metrics.find(m => m.name === `mqtt_message_timestamp{service="${clusters[0].name}",topic="${x.name}"}`)?.value ?? 0
-                  }
+                    messages_total: sum('mqtt_messages_total', { name: 'service', value: clusters[0].name }, { name: 'topic', value: x.name }),
+                    message_timestamp: max('mqtt_message_timestamp', { name: 'service', value: clusters[0].name }, { name: 'topic', value: x.name })
+                  },
               }
           }),
           clients: clusters[0].clients
@@ -155,6 +165,7 @@ export let events = [
       name: 'MQTT Temperature Sensor API',
       type: 'message',
       topic: 'sensors/{sensorId}/data',
+      instance: 'sensors/123/data',
       sensorId: '123',
       clientId: 'mqtt-client-2',
     },

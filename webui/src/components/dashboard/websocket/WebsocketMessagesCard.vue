@@ -5,6 +5,7 @@ import WebsocketMessages from './WebsocketMessages.vue'
 const props = defineProps<{
     service?: WebsocketService,
     channelName?: string
+    instanceName?: string
     clientId?: string
     hideWhenEmpty?: boolean
 }>()
@@ -26,7 +27,7 @@ function onLoaded(count: number) {
     <section class="card" aria-labelledby="messages" :style="{ display: hide ? 'none' : 'block'}">
         <div class="card-body">
             <h2 id="messages" class="card-title text-center">Recent Messages</h2>
-            <websocket-messages :service="service" :channel-name="channelName" :client-id="clientId" @loaded="onLoaded" />
+            <websocket-messages :service="service" :channel-name="channelName" :instance-name="instanceName" :client-id="clientId" @loaded="onLoaded" />
         </div>
     </section>
 </template>

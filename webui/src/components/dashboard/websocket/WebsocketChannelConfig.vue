@@ -147,15 +147,8 @@ const examplePath = computed(() => {
             
         </div>
         <div class="row mt-2">
-            <ul class="nav nav-pills tab-sm" role="tablist">
-                <li class="nav-link" :class="selected.key ? '' : 'disabled'" id="tab-config-schemas-key" data-bs-toggle="pill" data-bs-target="#tabpanel-config-schemas-key" type="button" role="tab" aria-controls="tabpanel-config-schemas-key" aria-selected="false">Key</li>
-                <li class="nav-link active" id="tab-config-schemas-message" data-bs-toggle="pill" data-bs-target="#tabpanel-config-schemas-message" type="button" role="tab" aria-controls="tabpanel-config-schemas-message" aria-selected="true">Value</li>
-            </ul>
 
             <div class="tab-content" id="tab-config-schemas">
-                <div class="tab-pane fade" id="tabpanel-config-schemas-key" role="tabpanel" v-if="selected.key" aria-labelledby="tab-config-schemas-key">
-                    <source-view :source="{ preview: { content: JSON.stringify(selected.key.schema), contentType: 'application/json' } }" :hide-content-type="true" />
-                </div>
                 <div class="tab-pane fade show active" id="tabpanel-config-schemas-message" role="tabpanel" aria-labelledby="tab-config-schemas-message">
                     <section aria-label="Schema">
                         <source-view :source="{ preview: {content: formatSchema(selected.payload), contentType: 'application/json' } }" :hide-content-type="true" :height="500" class="mb-2" :filename="channel.name+'-message.json'" />

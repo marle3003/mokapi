@@ -100,10 +100,10 @@ type Host interface {
 }
 
 type Logger interface {
-	Info(args ...interface{})
-	Warn(args ...interface{})
-	Error(args ...interface{})
-	Debug(args ...interface{})
+	Info(args ...any)
+	Warn(args ...any)
+	Error(args ...any)
+	Debug(args ...any)
 	IsLevelEnabled(level string) bool
 }
 
@@ -112,12 +112,13 @@ type KafkaClient interface {
 }
 
 type KafkaProduceArgs struct {
-	Cluster    string
-	Topic      string
-	Messages   []KafkaMessage
-	Retry      RetryArgs
-	ClientId   string
-	ScriptFile string
+	Cluster                string
+	Topic                  string
+	Messages               []KafkaMessage
+	AllowAutoTopicCreation bool
+	Retry                  RetryArgs
+	ClientId               string
+	ScriptFile             string
 }
 
 type KafkaMessage struct {

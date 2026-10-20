@@ -4,6 +4,7 @@ import { test, expect } from '../../models/fixture-dashboard'
 import { formatDateTime } from "../../helpers/format"
 
 test('Visit Mail Testserver', async ({ page }) => {
+    const breadcrumb = page.getByRole('navigation', { name: 'Breadcrumb' })
 
     await test.step('Browse to Mail Testserver', async () => {
         const { tabs, open } = useDashboard(page)
@@ -78,7 +79,7 @@ test('Visit Mail Testserver', async ({ page }) => {
         row = mails.getRow(1)
         await expect(row.getCellByName('Subject')).toHaveText('A test mail')
 
-        await page.getByLabel('Service', { exact: true }).getByRole('link').click()
+        await breadcrumb.getByRole('link', { name: 'Mail Testserver' }).click()
     })
 
     await test.step('Check rules', async () => {

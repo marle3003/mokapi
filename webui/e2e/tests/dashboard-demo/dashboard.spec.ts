@@ -36,7 +36,7 @@ test('Visit Dashboard Demo Overview', async ({ page, baseURL }) => {
 
         const row = table.getByRole('row').filter({ hasText: 'Kafka Order Service API' })
         await expect(row).toBeVisible()
-        await expect(await getCellByColumnName(table, 'Messages', row)).toHaveText('2')
+        await expect(await getCellByColumnName(table, 'Messages', row)).toHaveText('3')
     })
 
     await test.step('Verify Mail Server is in the Mail table', async() => {

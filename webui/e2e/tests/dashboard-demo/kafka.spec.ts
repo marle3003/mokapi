@@ -13,6 +13,8 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
         dashboard = '/dashboard-demo'
         await page.goto('/dashboard-demo')
     }
+    const breadcrumb = page.getByRole('navigation', { name: 'Breadcrumb' })
+
 
     await page.getByText('Kafka Order Service API').click();
 
@@ -42,23 +44,28 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
         await page.getByRole('tab', { name: 'Topics' }).click();
         const table = page.getByRole('table', { name: 'Topics' });
         const rows = table.locator('tbody tr');
-        await expect(rows).toHaveCount(2);
+        await expect(rows).toHaveCount(3);
         await expect(await getCellByColumnName(table, 'Name', rows.nth(0))).toHaveText('order-topic');
         await expect(await getCellByColumnName(table, 'Summary', rows.nth(0))).toHaveText('The Kafka topic for order events.');
         await expect(await getCellByColumnName(table, 'Last Message', rows.nth(0))).not.toHaveText('-');
         await expect(await getCellByColumnName(table, 'Messages', rows.nth(0))).toHaveText('2');
 
-        await expect(await getCellByColumnName(table, 'Name', rows.nth(1))).toHaveText('user-events');
-        await expect(await getCellByColumnName(table, 'Summary', rows.nth(1))).toHaveText('The Kafka topic for user events.');
-        await expect(await getCellByColumnName(table, 'Last Message', rows.nth(1))).toHaveText('-');
-        await expect(await getCellByColumnName(table, 'Messages', rows.nth(1))).toHaveText('0');
+        await expect(await getCellByColumnName(table, 'Name', rows.nth(1))).toHaveText('shipments.{region}.updates');
+        await expect(await getCellByColumnName(table, 'Summary', rows.nth(1))).toHaveText('Regional topics with shipment tracking events.');
+        await expect(await getCellByColumnName(table, 'Last Message', rows.nth(1))).not.toHaveText('-');
+        await expect(await getCellByColumnName(table, 'Messages', rows.nth(1))).toHaveText('1');
+
+        await expect(await getCellByColumnName(table, 'Name', rows.nth(2))).toHaveText('user-events');
+        await expect(await getCellByColumnName(table, 'Summary', rows.nth(2))).toHaveText('The Kafka topic for user events.');
+        await expect(await getCellByColumnName(table, 'Last Message', rows.nth(2))).toHaveText('-');
+        await expect(await getCellByColumnName(table, 'Messages', rows.nth(2))).toHaveText('0');
 
         await test.step('Verify filtering by tags', async () => {
 
             const tags = page.getByRole('group', { name: 'Filter topics by tags' });
             await expect(tags.getByRole('checkbox', { name: 'All' })).toBeChecked();
             await tags.getByRole('checkbox', { name: 'user' }).click();
-            await expect(rows).toHaveCount(1);
+            await expect(rows).toHaveCount(2);
 
         });
 
@@ -134,19 +141,21 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
 
     });
 
+    const messages = page.getByRole('table', { name: 'Recent Messages' });
+
     await test.step('Verify Recent Messages', async () => {
 
         await page.getByRole('tab', { name: 'Topics' }).click();
         const region = page.getByRole('region', { name: 'Recent Messages' });
         await expect(region).toBeVisible();
 
-        const table = region.getByRole('table', { name: 'Recent Messages' });
-        const rows = table.locator('tbody tr');
-        await expect(rows).toHaveCount(2);
-        await expect(await getCellByColumnName(table, 'Key', rows.nth(0))).toHaveText('a914817b-c5f0-433e-8280-1cd2fe44234e');
-        await expect(await getCellByColumnName(table, 'Value', rows.nth(0))).toContainText('{"orderId":"a914817b-c5f0-433e-8280-1cd2fe44234e","productId":"2a');
-        await expect(await getCellByColumnName(table, 'Topic', rows.nth(0))).toHaveText('order-topic');
-        await expect(await getCellByColumnName(table, 'Time', rows.nth(0))).not.toBeEmpty();
+        
+        const rows = messages.locator('tbody tr');
+        await expect(rows).toHaveCount(3);
+        await expect(await getCellByColumnName(messages, 'Key', rows.nth(1))).toHaveText('a914817b-c5f0-433e-8280-1cd2fe44234e');
+        await expect(await getCellByColumnName(messages, 'Value', rows.nth(1))).toContainText('{"orderId":"a914817b-c5f0-433e-8280-1cd2fe44234e","productId":"2a');
+        await expect(await getCellByColumnName(messages, 'Topic', rows.nth(1))).toHaveText('order-topic');
+        await expect(await getCellByColumnName(messages, 'Time', rows.nth(1))).not.toBeEmpty();
 
     })
 
@@ -156,8 +165,6 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
         await page.getByRole('table', { name: 'Topics' }).getByText('order-topic').click();
         const info = page.getByRole('region', { name: 'Info' });
         await expect(info.getByLabel('Topic', { exact: true })).toHaveText('order-topic');
-        await expect(info.getByLabel('Cluster')).toHaveText('Kafka Order Service API');
-        await expect(info.getByLabel('Cluster')).toHaveAttribute('href');
         await expect(info.getByLabel('Summary')).toHaveText('The Kafka topic for order events.');
 
         await expect(info.getByLabel('Type of API')).toHaveText('Kafka');
@@ -262,8 +269,26 @@ test('Visit Kafka Order Service', async ({ page, baseURL }) => {
             await expect(value.getByLabel('Lines of Code').nth(0)).toHaveText('44 lines');
             await expect(value.getByLabel('Size of Code').nth(0)).toHaveText('877 B');
             await expect(value.getByRole('region', { name: 'Content' }).nth(0)).toContainText(`"type": "object",
-  "properties": {`);
+"properties": {`);
 
+        });
+
+        await test.step('Visit shipments.{region}.updates', async () => {
+            await breadcrumb.getByRole('link', { name: 'Kafka Order Service API' }).click();
+            await page.getByRole('link', { name: 'shipments.{region}.updates' }).click();
+
+            const region = page.getByRole('region', { name: 'Info' })
+            await expect(region.getByLabel('Topic Template')).toHaveText('shipments.{region}.updates');
+            await expect(region.getByLabel('Title')).toHaveText('Shipment Updates per Region');
+            await expect(region.getByLabel('Summary')).toHaveText('Regional topics with shipment tracking events.')
+            await expect(region.getByLabel('Description')).toContainText('Each fulfilment region publishes tracking')
+            await expect(region.getByLabel('Type of API')).toHaveText('Kafka');
+            await expect(messages.locator('tbody tr')).toHaveCount(1);
+
+            await page.getByRole('table', { name: 'Topics' }).getByRole('link', { name: 'shipments.eu.updates' }).click();
+
+            await expect(region.getByLabel('Topic', { exact: true })).toHaveText('shipments.eu.updates');
+            await expect(messages.locator('tbody tr')).toHaveCount(1);
         });
 
     });

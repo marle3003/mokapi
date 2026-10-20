@@ -4,10 +4,12 @@ import { usePrettyDates } from '@/composables/usePrettyDate'
 import router from '@/router'
 import { getRouteName, useDashboard } from '@/composables/dashboard'
 import { usePageSize } from '@/composables/paging';
+import Paging from '../Paging.vue';
 
 const props = defineProps<{
     service?: MqttService,
     topicName?: string
+    instanceName?: string
     clientId?: string
 }>()
 
@@ -22,6 +24,9 @@ const labels = computed(() => {
     }
     if (props.topicName) {
         result.push({ name: 'topic', value: props.topicName })
+    }
+    if (props.instanceName) {
+        result.push({ name: 'instance', value: props.instanceName })
     }
     result.push({ name: 'type', value: 'message' })
     if (props.clientId) {

@@ -9,6 +9,8 @@ declare interface Service {
     status?: string
 }
 
+declare type ServiceType = 'http' | 'kafka' | 'mqtt' | 'websocket' | 'mail' | 'ldap'
+
 declare interface Contact {
     name: string
     url: string
@@ -34,7 +36,7 @@ declare interface ServiceEventResult {
 
 declare interface ServiceEventInfo {
     id: string
-    data: HttpEventInfo | KafkaEventInfo | MqttEventInfo | WebsocketEventData | SmtpEventInfo | LdapEventInfo | JobExecution | LogMessage
+    data: HttpEventInfo | KafkaEventInfo | MqttEventInfo | WebsocketEventInfo | SmtpEventInfo | LdapEventInfo | JobExecution | LogMessage
     time: string
     traits: Traits
 }

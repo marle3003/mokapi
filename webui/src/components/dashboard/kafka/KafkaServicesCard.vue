@@ -11,7 +11,7 @@ const { dashboard } = useDashboard();
 const { services, close } = dashboard.value.getServices('kafka');
 
 function lastMessage(service: Service){
-    const n = service.metrics.kafka_message_timestamp
+    const n = service.metrics.message_timestamp
     if (n == 0){
         return '-'
     }
@@ -62,7 +62,7 @@ onUnmounted(() => {
                         </td>
                         <td><div v-html="useMarkdown(service.description).content" class="table-markdown"></div></td>
                         <td class="text-center">{{ lastMessage(service) }}</td>
-                        <td class="text-center">{{ service.metrics.kafka_messages_total }}</td>
+                        <td class="text-center">{{ service.metrics.messages_total }}</td>
                     </tr>
                 </tbody>
             </table>

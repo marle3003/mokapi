@@ -4,10 +4,11 @@ import type { Ref } from "vue"
 export interface Dashboard {
     getAppInfo(): AppInfoResponse
 
-    getServices(type?: string, doRefresh?: boolean): ServicesResult
-    getService(name: string, type: string): ServiceResult
+    getServices(type?: ServiceType, doRefresh?: boolean): ServicesResult
+    getService(name: string, type: ServiceType): ServiceResult
 
     getHttpOperations(serviceName: string, path?: string, method?: string): HttpOperationsResult
+    getKafkaChannel(serviceName: string, topicName: string): KafkaChannelResult
     getKafkaTopic(serviceName: string, topicName: string): KafkaTopicResult
     getKafkaGroup(serviceName: string, groupName: string): KafkaGroupResult
     getKafkaClient(serviceName: string, clientId: string): KafkaClientResult
@@ -62,6 +63,12 @@ export interface ServiceResult {
 
 export interface HttpOperationsResult {
     operations: Ref<HttpOperation[] | null>
+    isLoading: Ref<boolean>
+    close(): void
+}
+
+export interface KafkaChannelResult {
+    channel: Ref<KafkaChannel | null>
     isLoading: Ref<boolean>
     close(): void
 }
