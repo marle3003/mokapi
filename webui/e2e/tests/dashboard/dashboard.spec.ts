@@ -57,7 +57,7 @@ test.describe('Dashboard', () => {
             const kafkaCells = dashboard.kafka.serviceList.getByRole('cell')
             await expect(kafkaCells.nth(0)).toHaveText('Kafka World')
             await expect(kafkaCells.nth(1)).not.toHaveText('')
-            await expect(kafkaCells.nth(2)).toHaveText(formatTimestamp(1652135690))
+            await expect(kafkaCells.nth(2)).toHaveText(formatTimestamp(1676278165))
             await expect(kafkaCells.nth(3)).toHaveText('12')
         })
 
