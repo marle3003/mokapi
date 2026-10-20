@@ -50,7 +50,7 @@ function goToChannel(instance: string, openInNewTab = false) {
 }
 
 function lastMessage(channel: ChannelInstance) {
-    if (!channel.metrics?.message_timestamp) {
+    if (!channel.metrics.message_timestamp) {
         return '-'
     }
     return format(channel.metrics.message_timestamp)

@@ -89,7 +89,7 @@ export let metrics = [
     },
     {
         name: 'kafka_message_timestamp{service="Kafka World",topic="orders.{region}.{eventType}",instance="orders.us.created"}',
-        value: 1652036176
+        value: 1676278165
     },
     // Mails
     {

@@ -728,7 +728,7 @@ export let events = [
                     {
                         orderId: 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d',
                         amount: 149.99,
-                        timestamp: '2026-10-17T10:15:30Z'
+                        timestamp: '2026-10-17T10:15:30'
                     })
             },
             partition: 0,
