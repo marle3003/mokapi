@@ -40,7 +40,7 @@ const requests = computed(() => {
 
     let result = 0;
     for (const service of services.value) {
-        result += service.metrics.http_requests_total || 0
+        result += service.metrics.requests_total || 0
     }
     return result;
 })
@@ -51,7 +51,7 @@ const errors = computed(() => {
 
     let result = 0;
     for (const service of services.value) {
-        result += service.metrics.http_requests_errors_total || 0
+        result += service.metrics.requests_errors_total || 0
     }
     return result;
 })

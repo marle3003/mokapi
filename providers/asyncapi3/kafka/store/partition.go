@@ -98,6 +98,9 @@ func newPartition(index int, brokers Brokers, logger LogRecord, trigger Trigger,
 }
 
 func (p *Partition) Read(offset int64, maxBytes int) (kafka.RecordBatch, kafka.ErrorCode) {
+	if p == nil {
+		return kafka.RecordBatch{}, kafka.UnknownTopicOrPartition
+	}
 	batch := kafka.NewRecordBatch()
 	if offset < p.StartOffset() {
 		return batch, kafka.OffsetOutOfRange

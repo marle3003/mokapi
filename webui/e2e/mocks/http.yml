@@ -89,9 +89,9 @@ components:
                 metrics:
                   type: object
                   properties:
-                    http_requests_total:
+                    requests_total:
                       type: integer
-                    http_requests_errors_total:
+                    requests_errors_total:
                       type: integer
                     request_timestamp:
                       type: integer

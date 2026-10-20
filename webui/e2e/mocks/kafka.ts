@@ -6,32 +6,14 @@ import { getInfo, matchTraits } from './helpers';
 export default function () {
     app.http()
         .operation('serviceKafka', (_, res) => {
+            const channels = clusters[0].topics.filter(x => !clusters[0].topics.some(y => y.instances && y.instances.find(z => z.name === x.name)))
             res.data = {
                 name: clusters[0].name,
                 description: clusters[0].description,
                 version: clusters[0].version,
                 contact: clusters[0].contact,
                 servers: clusters[0].servers,
-                topics: clusters[0].topics.filter(x => !x.template).map(x => {
-                    return {
-                        name: x.name,
-                        ...x.summary === undefined ? {} : { summary: x.summary },
-                        ...('parameters' in x ? { parameters: x.parameters } : {}),
-                        ...('instances' in x ? { instances: x.instances?.map((i: any) => (
-                            {
-                                ...i,
-                                metrics: {
-                                messages_total: sum('kafka_messages_total', { name: 'service', value: clusters[0].name }, { name: 'topic', value: x.name }, { name: 'instance', value: i.name }),
-                                message_timestamp: max('kafka_message_timestamp', { name: 'service', value: clusters[0].name }, { name: 'topic', value: x.name }, { name: 'instance', value: i.name })
-                                },
-                            }
-                            )) } : {}),
-                        metrics: {
-                            messages_total: metrics.find(m => m.name === `kafka_messages_total{service="Kafka World",topic="${x.name}"}`)?.value ?? 0,
-                            message_timestamp: metrics.find(m => m.name === `kafka_message_timestamp{service="Kafka World",topic="${x.name}"}`)?.value ?? 0
-                        }
-                    }
-                }),
+                topics: channels.map(x => getChannelInfo(x)),
                 groups: clusters[0].groups.map(x => {
                     return {
                         name: x.name,
@@ -59,6 +41,18 @@ export default function () {
                 })
             }
         })
+        .operation('kafkaChannel', (req, res) => {
+            const topic = clusters[0].topics.find(x => x.name === req.path['channel'])
+            if (!topic) {
+                res.rebuild(404)
+                return
+            }
+            const { partitions, ...channel } = topic
+            res.data = {
+                ...channel,
+                ...getChannelInfo(topic)
+            }
+        })
         .operation('kafkaGroup', (req, res) => {
             res.data = clusters[0].groups.find(x => x.name === req.path['group'])
         })
@@ -70,14 +64,14 @@ export default function () {
         })
         .operation('kafkaTopic', (req, res) => {
             const topic = clusters[0].topics.find(x => x.name === req.path.topic)
-            if (!topic) {
+            if (!topic || topic.instances) {
                 res.rebuild(404)
                 return
             }
             const { parameters, ...data } = topic
             res.data = {
                 ...data,
-                ...('parameters' in topic && topic.template ? { parameters: topic.parameters }: {}),
+                ...('parameters' in topic ? { parameters: topic.parameters }: {}),
                 groups: clusters[0].groups.filter(g => g.topics.includes(topic.name)).map(x => {
                     return {
                         name: x.name,
@@ -439,7 +433,6 @@ export let clusters = [
             },
             {
                 name: 'orders.us.created',
-                template: 'orders.{region}.{eventType}',
                 messages: {
                     'orderMessage': {
                         name: 'OrderEvent',
@@ -487,22 +480,22 @@ export let clusters = [
                 protocol: 'Range',
                 topics: ['mokapi.shop.products', 'mokapi.shop.userSignedUp'],
                 metrics: {
-                    kafka_rebalance_timestamp: metrics.find(m => m.name === `kafka_rebalance_timestamp{service="Kafka World",group="foo"}`)?.value || 0,
+                    rebalance_timestamp: metrics.find(m => m.name === `kafka_rebalance_timestamp{service="Kafka World",group="foo"}`)?.value || 0,
                     topics: {
                         'mokapi.shop.products': filterMetrics('kafka_consumer_group_commit', { name: 'group', value: 'foo' }, { name: 'topic', value: 'mokapi.shop.products' }).map(m => {
                             const labels = parseLabels(m)
                             return {
                                 partition: labels.partition,
-                                kafka_consumer_group_lag: metrics.find(x => x.name === `kafka_consumer_group_lag{service="Kafka World",group="foo",topic="mokapi.shop.products",partition="${labels.partition}"}`)?.value || 0,
-                                kafka_consumer_group_commit: m.value
+                                consumer_group_lag: metrics.find(x => x.name === `kafka_consumer_group_lag{service="Kafka World",group="foo",topic="mokapi.shop.products",partition="${labels.partition}"}`)?.value || 0,
+                                consumer_group_commit: m.value
                             }
                         }),
                         'mokapi.shop.userSignedUp': filterMetrics('kafka_consumer_group_commit', { name: 'group', value: 'foo' }, { name: 'topic', value: 'mokapi.shop.userSignedUp' }).map(m => {
                             const labels = parseLabels(m)
                             return {
                                 partition: labels.partition,
-                                kafka_consumer_group_lag: metrics.find(x => x.name === `kafka_consumer_group_lag{service="Kafka World",group="foo",topic="mokapi.shop.userSignedUp",partition="${labels.partition}"}`)?.value || 0,
-                                kafka_consumer_group_commit: m.value
+                                consumer_group_lag: metrics.find(x => x.name === `kafka_consumer_group_lag{service="Kafka World",group="foo",topic="mokapi.shop.userSignedUp",partition="${labels.partition}"}`)?.value || 0,
+                                consumer_group_commit: m.value
                             }
                         })
                     }
@@ -526,14 +519,14 @@ export let clusters = [
                 protocol: 'Range',
                 topics: ['mokapi.shop.userSignedUp'],
                 metrics: {
-                    kafka_rebalance_timestamp: metrics.find(m => m.name === `kafka_rebalance_timestamp{service="Kafka World",group="mokapi.shop.userSignedUp"}`)?.value || 0,
+                    rebalance_timestamp: metrics.find(m => m.name === `kafka_rebalance_timestamp{service="Kafka World",group="mokapi.shop.userSignedUp"}`)?.value || 0,
                     topics: {
                         'mokapi.shop.userSignedUp': filterMetrics('kafka_consumer_group_commit', { name: 'group', value: 'bar' }, { name: 'topic', value: 'mokapi.shop.userSignedUp' }).map(m => {
                             const labels = parseLabels(m)
                             return {
                                 partition: labels.partition,
-                                kafka_consumer_group_lag: metrics.find(x => x.name === `kafka_consumer_group_lag{service="Kafka World",group="foo",topic="mokapi.shop.userSignedUp",partition="${labels.partition}"}`)?.value || 0,
-                                kafka_consumer_group_commit: m.value
+                                consumer_group_lag: metrics.find(x => x.name === `kafka_consumer_group_lag{service="Kafka World",group="foo",topic="mokapi.shop.userSignedUp",partition="${labels.partition}"}`)?.value || 0,
+                                consumer_group_commit: m.value
                             }
                         })
                     }
@@ -715,7 +708,7 @@ export let events = [
         }
     },
     {
-        id: '5d549ffe-97cd-477d-8db6-27ed4963c08d',
+        id: '3373222f-e854-4dc6-b369-1f67b79cf47d',
         traits: {
             namespace: 'kafka',
             name: 'Kafka World',
@@ -743,3 +736,24 @@ export let events = [
         }
     },
 ]
+
+function getChannelInfo(c: any) {
+    return {
+        name: c.name,
+        ...c.summary === undefined ? {} : { summary: c.summary },
+        ...('parameters' in c ? { parameters: c.parameters } : {}),
+        ...('instances' in c ? { instances: c.instances?.map((i: any) => (
+            {
+                ...i,
+                metrics: {
+                    messages_total: sum('kafka_messages_total', { name: 'service', value: clusters[0].name }, { name: 'topic', value: c.name }, { name: 'instance', value: i.name }),
+                    message_timestamp: max('kafka_message_timestamp', { name: 'service', value: clusters[0].name }, { name: 'topic', value: c.name }, { name: 'instance', value: i.name })
+                },
+            }
+            )) } : {}),
+        metrics: {
+            messages_total: metrics.find(m => m.name === `kafka_messages_total{service="Kafka World",topic="${c.name}"}`)?.value ?? 0,
+            message_timestamp: metrics.find(m => m.name === `kafka_message_timestamp{service="Kafka World",topic="${c.name}"}`)?.value ?? 0
+        }
+    }
+}

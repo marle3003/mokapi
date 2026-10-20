@@ -26,15 +26,15 @@ import (
 )
 
 type kafkaInfo struct {
-	Name        string            `json:"name"`
-	Description string            `json:"description,omitempty"`
-	Version     string            `json:"version"`
-	Contact     *contact          `json:"contact,omitempty"`
-	Servers     []kafkaServer     `json:"servers,omitempty"`
-	Topics      []kafkaTopicInfo  `json:"topics,omitempty"`
-	Groups      []kafkaGroupInfo  `json:"groups,omitempty"`
-	Configs     []configInfo      `json:"configs,omitempty"`
-	Clients     []kafkaClientInfo `json:"clients,omitempty"`
+	Name        string             `json:"name"`
+	Description string             `json:"description,omitempty"`
+	Version     string             `json:"version"`
+	Contact     *contact           `json:"contact,omitempty"`
+	Servers     []kafkaServer      `json:"servers,omitempty"`
+	Topics      []kafkaChannelInfo `json:"topics,omitempty"`
+	Groups      []kafkaGroupInfo   `json:"groups,omitempty"`
+	Configs     []configInfo       `json:"configs,omitempty"`
+	Clients     []kafkaClientInfo  `json:"clients,omitempty"`
 }
 
 type kafkaServer struct {
@@ -99,7 +99,7 @@ type kafkaMember struct {
 	Partitions map[string][]int `json:"partitions"`
 }
 
-type kafkaTopicInfo struct {
+type kafkaChannelInfo struct {
 	Name       string               `json:"name"`
 	Summary    string               `json:"summary,omitempty"`
 	Tags       []kafkaTag           `json:"tags,omitempty"`
@@ -108,25 +108,31 @@ type kafkaTopicInfo struct {
 	Metrics    kafkaTopicMetric     `json:"metrics"`
 }
 
+type kafkaChannel struct {
+	Name        string                   `json:"name"`
+	Title       string                   `json:"title,omitempty"`
+	Summary     string                   `json:"summary,omitempty"`
+	Description string                   `json:"description,omitempty"`
+	Messages    map[string]messageConfig `json:"messages,omitempty"`
+	Parameters  []string                 `json:"parameters,omitempty"`
+	Instances   []kafkaTopicInstance     `json:"instances,omitempty"`
+	Tags        []kafkaTag               `json:"tags,omitempty"`
+	Metrics     kafkaTopicMetric         `json:"metrics"`
+}
+
 type kafkaTopic struct {
-	Name        string                       `json:"name"`
-	Title       string                       `json:"title,omitempty"`
-	Summary     string                       `json:"summary,omitempty"`
-	Description string                       `json:"description,omitempty"`
-	Instance    string                       `json:"instance,omitempty"`
-	Partitions  []kafkaPartition             `json:"partitions"`
-	Messages    map[string]messageConfig     `json:"messages,omitempty"`
-	Bindings    kafkaBindings                `json:"bindings,omitempty"`
-	Tags        []kafkaTag                   `json:"tags,omitempty"`
-	Groups      []kafkaGroupInfo             `json:"groups,omitempty"`
-	Template    string                       `json:"template,omitempty"`
-	Parameters  kafkaTopicInstanceParameters `json:"parameters,omitempty"`
+	Name       string                       `json:"name"`
+	Parameters kafkaTopicInstanceParameters `json:"parameters,omitempty"`
+	Bindings   kafkaBindings                `json:"bindings"`
+	Partitions []kafkaPartition             `json:"partitions"`
+	Groups     []kafkaGroupInfo             `json:"groups,omitempty"`
+	Metrics    kafkaTopicMetric             `json:"metrics"`
 }
 
 type kafkaTopicInstance struct {
 	Name       string                       `json:"name"`
 	Parameters kafkaTopicInstanceParameters `json:"parameters,omitempty"`
-	Metrics    kafkaTopicMetric             `json:"metrics"`
+	Metrics    mqttTopicMetrics             `json:"metrics"`
 }
 
 type kafkaTopicInstanceParameters map[string]string
@@ -225,6 +231,7 @@ func (h *handler) setupKafka() {
 	r.HandleFunc("", h.getKafkaClusters).Methods(http.MethodGet)
 	r.HandleFunc("/{cluster}", h.getKafkaInfo).Methods(http.MethodGet)
 	r.HandleFunc("/{cluster}/asyncapi.{ext}", h.exportAsyncApi).Methods(http.MethodGet)
+	r.HandleFunc("/{cluster}/channels/{channel}", h.getKafkaChannel).Methods(http.MethodGet)
 	r.HandleFunc("/{cluster}/topics", h.getKafkaTopics).Methods(http.MethodGet)
 	r.HandleFunc("/{cluster}/topics/{topic}", h.getKafkaTopic).Methods(http.MethodGet)
 	r.HandleFunc("/{cluster}/topics/{topic}", h.produceKafkaMessage).Methods(http.MethodPost)
@@ -300,7 +307,7 @@ func (h *handler) getKafkaInfo(w http.ResponseWriter, r *http.Request) {
 		return strings.Compare(k.Servers[i].Name, k.Servers[j].Name) < 0
 	})
 
-	k.Topics = getTopicInfos(ki, h.app.Monitor.Kafka)
+	k.Topics = getKafkaChannels(slices.Collect(maps.Values(ki.Channels)), ki, h.app.Monitor.Kafka)
 	k.Groups = getGroupInfos(ki, "", h.app.Monitor.Kafka)
 	k.Configs = getConfigInfos(ki.Configs())
 
@@ -317,6 +324,70 @@ func (h *handler) getKafkaInfo(w http.ResponseWriter, r *http.Request) {
 	write(w, k)
 }
 
+func (h *handler) getKafkaChannel(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+
+	ki := h.app.Kafka.Get(vars["cluster"])
+	if ki == nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	var ch *asyncapi3.Channel
+	for name, item := range ki.Channels {
+		if name == vars["channel"] {
+			ch = item.Value
+			break
+		}
+		if item.Value != nil && item.Value.Address == vars["channel"] {
+			ch = item.Value
+			break
+		}
+	}
+
+	if ch == nil || !ch.IsChannelAvailable("kafka") {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	addr := ch.ResolveAddress()
+	result := kafkaChannel{
+		Name:        addr,
+		Title:       ch.Title,
+		Summary:     ch.Summary,
+		Description: ch.Description,
+		Messages:    getMessageConfigs(ch, ki.Config),
+		Tags:        getKafkaTags(ch),
+	}
+
+	if len(ch.Parameters) > 0 {
+		result.Parameters = slices.SortedFunc(maps.Keys(ch.Parameters), func(a, b string) int {
+			return strings.Compare(a, b)
+		})
+		for _, t := range ki.Topics() {
+			if err := ch.IsNameValid(t.Name); err == nil {
+				params, _ := ch.ExtractParams(t.Name)
+				inst := kafkaTopicInstance{
+					Name:       t.Name,
+					Parameters: params,
+				}
+				inst.Metrics = mqttTopicMetrics{
+					NumMessages:     h.app.Monitor.Kafka.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("instance", t.Name))),
+					LastMessageTime: h.app.Monitor.Kafka.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("instance", t.Name))),
+				}
+				result.Instances = append(result.Instances, inst)
+			}
+		}
+	}
+
+	result.Metrics = kafkaTopicMetric{
+		NumMessages:     h.app.Monitor.Kafka.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("topic", addr))),
+		LastMessageTime: h.app.Monitor.Kafka.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("topic", addr))),
+	}
+
+	write(w, result)
+}
+
 func (h *handler) getKafkaTopics(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
@@ -326,7 +397,12 @@ func (h *handler) getKafkaTopics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	topics := getTopicInfos(ki, h.app.Monitor.Kafka)
+	var channels []*asyncapi3.ChannelRef
+	for _, topic := range ki.Topics() {
+		channels = append(channels, &asyncapi3.ChannelRef{Value: topic.Config})
+	}
+
+	topics := getKafkaChannels(channels, ki, h.app.Monitor.Kafka)
 	write(w, topics)
 }
 
@@ -571,9 +647,9 @@ func (h *handler) produceKafkaMessage(w http.ResponseWriter, r *http.Request) {
 	write(w, res)
 }
 
-func getTopicInfos(ki *runtime.KafkaInfo, m *monitor.Kafka) []kafkaTopicInfo {
-	topics := make([]kafkaTopicInfo, 0, len(ki.Config.Channels))
-	for _, ch := range ki.Config.Channels {
+func getKafkaChannels(channels []*asyncapi3.ChannelRef, ki *runtime.KafkaInfo, m *monitor.Kafka) []kafkaChannelInfo {
+	topics := make([]kafkaChannelInfo, 0, len(ki.Config.Channels))
+	for _, ch := range channels {
 		if ch.Value == nil {
 			continue
 		}
@@ -582,7 +658,7 @@ func getTopicInfos(ki *runtime.KafkaInfo, m *monitor.Kafka) []kafkaTopicInfo {
 		}
 		addr := ch.Value.ResolveAddress()
 
-		ti := kafkaTopicInfo{
+		ti := kafkaChannelInfo{
 			Name:    addr,
 			Summary: ch.Value.Summary,
 			Tags:    getKafkaTags(ch.Value),
@@ -599,11 +675,6 @@ func getTopicInfos(ki *runtime.KafkaInfo, m *monitor.Kafka) []kafkaTopicInfo {
 						Name:       t.Name,
 						Parameters: params,
 					}
-					inst.Metrics = kafkaTopicMetric{
-						NumMessages:     m.Messages.Sum(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("instance", t.Name))),
-						LastMessageTime: m.LastMessage.Max(metrics.NewQuery(metrics.ByLabel("service", ki.Info.Name), metrics.ByLabel("instance", t.Name))),
-					}
-
 					ti.Instances = append(ti.Instances, inst)
 				}
 			}
@@ -637,11 +708,8 @@ func newTopic(t *store.Topic, ki *runtime.KafkaInfo, ch *asyncapi3.Channel, m *m
 	}
 
 	result := kafkaTopic{
-		Name:        t.Name,
-		Title:       ch.Title,
-		Summary:     ch.Summary,
-		Description: ch.Description,
-		Partitions:  partitions,
+		Name:       t.Name,
+		Partitions: partitions,
 		Bindings: kafkaBindings{
 			Partitions:            bindings.Partitions,
 			RetentionBytes:        bindings.RetentionBytes,
@@ -651,17 +719,27 @@ func newTopic(t *store.Topic, ki *runtime.KafkaInfo, ch *asyncapi3.Channel, m *m
 			ValueSchemaValidation: bindings.ValueSchemaValidation,
 			KeySchemaValidation:   bindings.KeySchemaValidation,
 		},
-		Tags:   getKafkaTags(ch),
 		Groups: getGroupInfos(ki, t.Name, m),
 	}
 
 	if len(ch.Parameters) > 0 {
 		params, _ := ch.ExtractParams(t.Name)
 		result.Parameters = params
-		result.Template = t.Config.Name
 	}
 
-	result.Messages = getMessageConfigs(ch, ki.Config)
+	labels := []metrics.QueryOptions{
+		metrics.ByLabel("service", ki.Info.Name),
+	}
+	if len(t.Config.Parameters) > 0 {
+		labels = append(labels, metrics.ByLabel("instance", t.Name))
+	} else {
+		labels = append(labels, metrics.ByLabel("topic", t.Name))
+	}
+
+	result.Metrics = kafkaTopicMetric{
+		NumMessages:     m.Messages.Sum(metrics.NewQuery(labels...)),
+		LastMessageTime: m.LastMessage.Max(metrics.NewQuery(labels...)),
+	}
 
 	return result
 }

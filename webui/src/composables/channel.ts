@@ -1,39 +1,30 @@
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, type MaybeRefOrGetter, toValue } from 'vue'
 import { useRoute } from 'vue-router'
 import { useRouter } from '@/router'
-import { useDashboard } from '@/composables/dashboard'
-import type { ServiceResult } from '@/types/dashboard'
 
 export function useChannel<C extends BaseChannel, S extends BaseChannelService<C> | BaseTopicService<C>>(
+  service: MaybeRefOrGetter<S | undefined>,
   type: 'kafka' | 'mqtt' | 'websocket'
 ) {
   const route = useRoute()
-  const { dashboard } = useDashboard()
-
-  const serviceName = computed(() => route.params.service!.toString())
   const channelName = computed(() => route.params.channel?.toString() ?? route.params.topic?.toString() )
 
-  const result = ref<ServiceResult | null>(null)
-  watch([dashboard, serviceName], ([db, name], _, onCleanup) => {
-    const res = db.getService(name, type)
-    result.value = res
-    onCleanup(() => res.close())
-  }, { immediate: true })
-
-  const service = computed(() => result.value?.service as S | undefined)
+  const channels = computed<C[]>(() => {
+    const s = toValue(service)
+    if (!s) {
+      return []
+    }
+    if ('channels' in s) {
+      return s.channels
+    }
+    if ('topics' in s) {
+      return s.topics
+    }
+    return []
+  })
 
   const data = computed<{ channel: C, instance?: ChannelInstance } | null>(() => {
-    if (!service.value) {
-      return null
-    }
-    let channels: C[] = []
-    if ('channels' in service.value) {
-      channels = service.value.channels
-    } else if ('topics' in service.value) {
-      channels = service.value.topics
-    }
-
-    for (const channel of channels ?? []) {
+    for (const channel of channels.value ?? []) {
       if (channel.name === channelName.value) return { channel }
       const instance = channel.instances?.find(x => x.name === channelName.value)
       if (instance) return { channel, instance }
@@ -41,7 +32,7 @@ export function useChannel<C extends BaseChannel, S extends BaseChannelService<C
     return null
   })
 
-  return { service, data, channelName }
+  return { data, channelName }
 }
 
 export function splitTemplate(name: string) {

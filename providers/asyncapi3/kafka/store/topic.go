@@ -27,7 +27,7 @@ type Operation struct {
 }
 
 func (t *Topic) Partition(index int) *Partition {
-	if index >= len(t.Partitions) {
+	if t == nil || index >= len(t.Partitions) {
 		return nil
 	}
 	return t.Partitions[index]
@@ -66,10 +66,7 @@ func (t *Topic) update(config *asyncapi3.Channel, s *Store) {
 }
 
 func (t *Topic) updatePartitions(numPartitions int) {
-	n := numPartitions
-	if n < len(t.Partitions) {
-		n = len(t.Partitions)
-	}
+	n := max(numPartitions, len(t.Partitions))
 
 	for i := range n {
 		var p *Partition
@@ -92,7 +89,12 @@ func (t *Topic) updatePartitions(numPartitions int) {
 }
 
 func (t *Topic) log(r *KafkaMessageLog, traits events.Traits) {
-	t.logger(r, traits.With("topic", t.Config.ResolveAddress()))
+	topicName := t.Config.ResolveAddress()
+	traits.With("topic", t.Config.ResolveAddress())
+	if t.Name != topicName {
+		traits.With("instance", t.Name)
+	}
+	t.logger(r, traits)
 }
 
 func (t *Topic) Store() *Store {

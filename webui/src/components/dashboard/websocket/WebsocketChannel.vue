@@ -9,12 +9,12 @@ import { getRouteName } from '@/composables/dashboard'
 import { useChannel } from '@/composables/channel.ts'
 import { useBreadcrumb } from '@/composables/breadcrumb.ts'
 
-const props = defineProps<{ service: WebsocketService }>()
+const props = defineProps<{ service?: WebsocketService }>()
 
-const { service, data, channelName } = useChannel<WebsocketChannel, WebsocketService>('websocket')
+const { data, channelName } = useChannel<WebsocketChannel, WebsocketService>(() => props.service, 'websocket')
 const serviceRoute = computed(() => ({
   name: getRouteName('websocketService').value,
-  params: { service: service.value?.name },
+  params: { service: props.service?.name },
 }))
 
 useBreadcrumb(() => {
@@ -25,7 +25,7 @@ useBreadcrumb(() => {
         { 
           text: channel.name, to: { 
             name: getRouteName('websocketChannel').value,
-            params: { service: service.value?.name, channel: channel.name }
+            params: { service: props.service?.name, channel: channel.name }
           }
         },
        { text: instance.name }

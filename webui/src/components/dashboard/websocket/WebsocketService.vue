@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, provide, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
 import WebsocketChannels from './WebsocketChannels.vue'
@@ -12,39 +12,19 @@ import WebsocketClients from './WebsocketClients.vue'
 import WebsocketClient from './WebsocketClient.vue'
 import WebsocketEvent from './WebsocketEvent.vue'
 import Message from './Message.vue'
-import { getRouteName, useDashboard } from '@/composables/dashboard';
+import { getRouteName } from '@/composables/dashboard';
 import { useRouter } from '@/router'
-import type { ServiceResult } from '@/types/dashboard'
 import '@/assets/mqtt.css'
 import ExportAsyncApi from './export/AsyncAPI.vue'
 import { useToolbarItem } from '@/composables/toolbar-items.ts'
 import { provideBreadcrumb } from '@/composables/breadcrumb.ts'
 import Breadcrumb from '../Breadcrumb.vue'
+import { useService } from '@/composables/service.ts'
 
 const route = useRoute();
 const router = useRouter();
-const serviceName = route.params.service?.toString()
-let data = ref<ServiceResult | null>(null);
-const { dashboard } = useDashboard();
+const { service } = useService<WebsocketService>('websocket')
 const exportAsyncAPIDialogVisible = ref(false)
-
-const service = computed(() => {
-    if (!data.value) {
-        return undefined
-    }
-    return data.value.service as WebsocketService
-})
-
-watch(() => dashboard.value,
-  (db, _, onCleanup) => {
-    const res = db.getService(serviceName, 'websocket');
-    data.value = res;
-
-    onCleanup(() => res.close());
-  },
-  { immediate: true }
-);
-
 const activeTab = ref('tab-channels');
 
 function setTab(tab: string) {
@@ -66,18 +46,18 @@ useToolbarItem(
         }
     }
 )
-const refresh = computed(() => route.query.refresh ? { refresh: route.query.refresh } : {})
+
 const tail = provideBreadcrumb()
 const breadcrumb = computed<BreadcrumbItem[]>(() => {
   const base: BreadcrumbItem[] = [
-    { text: 'Websocket', to: { name: getRouteName('websocket').value, query: refresh.value } },
+    { text: 'Websocket', to: { name: getRouteName('websocket').value } },
   ]
   if (!service.value) return base
   const isOverview = route.name === getRouteName('websocketService').value
   base.push(isOverview
     ? { text: service.value.name }
     : { text: service.value.name, to: { name: getRouteName('websocketService').value,
-        params: { service: service.value.name }, query: refresh.value } })
+        params: { service: service.value.name } } })
   return [...base, ...tail.value]
 })
 </script>

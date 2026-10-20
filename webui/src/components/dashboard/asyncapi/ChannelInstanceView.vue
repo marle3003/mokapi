@@ -33,9 +33,9 @@ function goToChannel(instance: string, openInNewTab = false) {
 
     const to: { name: string, params: Record<string, string> } = {
         name: getRouteName(props.channelRoute).value,
-        params: {}
+        params: { service: props.serviceName }
     }
-    if (props.channelRoute === 'websocket') {
+    if (props.channelRoute === 'websocketChannel') {
         to.params.channel = instance
     } else {
         to.params.topic = instance
@@ -77,7 +77,7 @@ function lastMessage(channel: ChannelInstance) {
                             @mousedown.middle="goToChannel(instance.name, true)">
                             <td>
                                 <router-link @click.stop class="row-link"
-                                    :to="{ name: getRouteName(channelRoute).value, params: { service: props.serviceName, ...(channelRoute === 'websocket' ? {channel: instance.name} : { topic: instance.name }) } }">
+                                    :to="{ name: getRouteName(channelRoute).value, params: { service: props.serviceName, ...(channelRoute === 'websocketChannel' ? {channel: instance.name} : { topic: instance.name }) } }">
                                     {{ instance.name }}
                                 </router-link>
                             </td>

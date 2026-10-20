@@ -116,6 +116,17 @@ func TestStore(t *testing.T) {
 				require.Equal(t, "Validation error count 1:\n\t- #/type: invalid type, expected string but got number", wr.Records[0].BatchIndexErrorMessage)
 			},
 		},
+		{
+			"channel using parameters",
+			func(t *testing.T, sm *events.StoreManager) {
+				s := store.New(asyncapi3test.NewConfig(
+					asyncapi3test.WithChannel("foo.{region}",
+						asyncapi3test.WithParameter("region", &asyncapi3.Parameter{})),
+				), enginetest.NewEngine(), sm, monitor.NewKafka())
+				defer s.Close()
+				require.Equal(t, 0, len(s.Topics()))
+			},
+		},
 	}
 
 	t.Parallel()

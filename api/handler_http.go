@@ -116,8 +116,8 @@ type server struct {
 type securityRequirement map[string]securityScheme
 
 type securityScheme struct {
-	Scopes  []string    `json:"scopes"`
-	Configs interface{} `json:"configs"`
+	Scopes  []string `json:"scopes"`
+	Configs any      `json:"configs"`
 }
 
 type tag struct {
@@ -129,9 +129,9 @@ type tag struct {
 }
 
 type httpMetrics struct {
-	Requests      float64 `json:"http_requests_total"`
-	RequestErrors float64 `json:"http_requests_errors_total"`
-	LastRequest   float64 `json:"http_request_timestamp"`
+	Requests      float64 `json:"requests_total"`
+	RequestErrors float64 `json:"requests_errors_total"`
+	LastRequest   float64 `json:"request_timestamp"`
 }
 
 type openapiSchema struct {

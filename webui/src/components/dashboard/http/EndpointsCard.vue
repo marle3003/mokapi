@@ -77,8 +77,8 @@ function goToPath(path: HttpPath, openInNewTab = false){
 function lastRequest(path: HttpPath){
     let lastRequest = 0
     for (const op of path.operations) {
-        if (op.metrics.http_request_timestamp > lastRequest) {
-            lastRequest = op.metrics.http_request_timestamp
+        if (op.metrics.request_timestamp > lastRequest) {
+            lastRequest = op.metrics.request_timestamp
         }
     }
 
@@ -91,7 +91,7 @@ function lastRequest(path: HttpPath){
 function requests(path: HttpPath){
     let totalRequests = 0
     for (const op of path.operations) {
-        totalRequests += op.metrics.http_requests_total
+        totalRequests += op.metrics.requests_total
     }
     return totalRequests
 }
@@ -99,7 +99,7 @@ function requests(path: HttpPath){
 function errors(path: HttpPath){
     let totalErrors = 0
     for (const op of path.operations) {
-        totalErrors += op.metrics.http_requests_errors_total
+        totalErrors += op.metrics.requests_errors_total
     }
     return totalErrors
 }

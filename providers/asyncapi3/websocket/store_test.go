@@ -163,7 +163,7 @@ func TestStore(t *testing.T) {
 				_, _, err = c.Read(ctx)
 				require.ErrorContains(t, err, "invalid json format: invalid character 'h' looking for beginning of value")
 
-				waitFor(t, func() bool {
+				try.WaitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
 					return len(evts) > 2
 				})
@@ -209,7 +209,7 @@ func TestStore(t *testing.T) {
 
 				_ = c.Close(ws.StatusNormalClosure, "bye")
 
-				waitFor(t, func() bool {
+				try.WaitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
 					return len(evts) > 2
 				})
@@ -289,7 +289,7 @@ export default function() {
 				err = c.Write(ctx, ws.MessageText, []byte(`{"text": "hello"}`))
 				require.NoError(t, err)
 
-				waitFor(t, func() bool {
+				try.WaitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
 					return len(evts) > 2
 				})
@@ -415,7 +415,7 @@ export default function() {
 				err = c.Write(ctx, ws.MessageText, []byte("hello"))
 				require.NoError(t, err)
 
-				waitFor(t, func() bool {
+				try.WaitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
 					return len(evts) > 1
 				})
@@ -511,7 +511,7 @@ export default function() {
 				err = c.Write(ctx, ws.MessageText, []byte("hello"))
 				require.NoError(t, err)
 
-				waitFor(t, func() bool {
+				try.WaitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
 					return len(evts) > 1
 				})
@@ -603,7 +603,7 @@ export default function() {
 				err = c.Write(ctx, ws.MessageText, []byte("hello"))
 				require.NoError(t, err)
 
-				waitFor(t, func() bool {
+				try.WaitFor(t, func() bool {
 					evts := app.Events.GetEvents(events.NewTraits().WithNamespace("websocket"))
 					return len(evts) > 1
 				})
@@ -665,20 +665,5 @@ export default function() {
 
 			tc.test(t, s, serv.URL, app)
 		})
-	}
-}
-
-func waitFor(t *testing.T, check func() bool) {
-	t.Helper()
-	deadline := time.Now().Add(30 * time.Second)
-
-	for {
-		if check() {
-			break
-		}
-		if time.Now().After(deadline) {
-			t.Fatal("waitFor deadline")
-		}
-		time.Sleep(20 * time.Millisecond)
 	}
 }

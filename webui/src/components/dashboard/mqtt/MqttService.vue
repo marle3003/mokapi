@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Ref, computed, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ServiceInfoCard from '../ServiceInfoCard.vue'
 import MqttTopics from './MqttTopics.vue'
@@ -12,41 +12,20 @@ import MqttClients from './MqttClients.vue'
 import MqttClient from './MqttClient.vue'
 import Message from './Message.vue'
 import Request from './MqttRequest.vue'
-import { getRouteName, useDashboard } from '@/composables/dashboard';
+import { getRouteName } from '@/composables/dashboard';
 import { useRouter } from '@/router'
-import type { ServiceResult } from '@/types/dashboard'
 import '@/assets/mqtt.css'
 import ExportAsyncApi from './export/AsyncAPI.vue'
 import { useToolbarItem } from '@/composables/toolbar-items.ts'
 import Breadcrumb from '../Breadcrumb.vue'
 import { provideBreadcrumb } from '@/composables/breadcrumb.ts'
+import { useService } from '@/composables/service.ts'
+
+const { service } = useService<MqttService>('mqtt')
 
 const route = useRoute();
 const router = useRouter();
-const serviceName = route.params.service?.toString()
-let data = ref<ServiceResult | null>(null);
-const { dashboard } = useDashboard();
 const exportAsyncAPIDialogVisible = ref(false)
-
-const service = computed(() => {
-    if (!data.value) {
-        return undefined
-    }
-    return data.value.service as MqttService
-})
-
-watch(() => dashboard.value,
-  (db, _, onCleanup) => {
-    if (!serviceName) {
-        return
-    }
-    const res = db.getService(serviceName, 'mqtt');
-    data.value = res;
-
-    onCleanup(() => res.close());
-  },
-  { immediate: true }
-);
 
 const activeTab = ref('tab-topics');
 
@@ -69,18 +48,18 @@ useToolbarItem(
         }
     }
 )
-const refresh = computed(() => route.query.refresh ? { refresh: route.query.refresh } : {})
+
 const tail = provideBreadcrumb()
 const breadcrumb = computed<BreadcrumbItem[]>(() => {
   const base: BreadcrumbItem[] = [
-    { text: 'MQTT', to: { name: getRouteName('mqtt').value, query: refresh.value } },
+    { text: 'MQTT', to: { name: getRouteName('mqtt').value } },
   ]
   if (!service.value) return base
   const isOverview = route.name === getRouteName('mqttService').value
   base.push(isOverview
     ? { text: service.value.name }
     : { text: service.value.name, to: { name: getRouteName('mqttService').value,
-        params: { service: service.value.name }, query: refresh.value } })
+        params: { service: service.value.name } } })
   return [...base, ...tail.value]
 })
 </script>
@@ -140,7 +119,7 @@ const breadcrumb = computed<BreadcrumbItem[]>(() => {
         </div>
     </div>
     <div v-if="$route.matched.some(route => route.name === getRouteName('mqttTopic').value)">
-        <mqtt-topic></mqtt-topic>
+        <mqtt-topic :service="service"></mqtt-topic>
     </div>
     <div v-if="$route.name == getRouteName('mqttClient').value">
         <mqtt-client></mqtt-client>

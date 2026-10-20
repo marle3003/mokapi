@@ -1,4 +1,4 @@
-declare interface KafkaService extends BaseChannelService<KafkaTopicInfo> {
+declare interface KafkaService extends Service {
   topics: KafkaTopicInfo[];
   groups: KafkaGroupInfo[];
   servers: KafkaServer[];
@@ -12,26 +12,40 @@ declare interface KafkaServer {
   title: string
   summary: string
   description: string;
-  tags: KafkaTag[]
+  tags: Tag[]
   configs: { [key: string]: any }
 }
 
-declare interface KafkaTag {
-  name: string
-  description?: string
-}
-
-declare interface KafkaTopicInfo extends BaseChannelInfo {
+declare interface KafkaTopicInfo {
+  name: string;
+  summary?: string;
+  lastMessageReceived?: number
+  messages: number
+  parameters?: string[]
+  instances?: ChannelInstance[]
+  tags: Tag[]
   metrics: {
     messages_total: number
     message_timestamp: number
   }
 }
 
-declare interface KafkaTopic extends BaseChannel<KafkaMessage> {
+declare interface KafkaChannel {
+  name: string;
+  title: string
+  summary: string;
+  description: string;
+  messages: { [messageId: string]: KafkaMessage }
+  parameters?: string[]
+  instances?: ChannelInstance[]
+  tags: Tag[]
+}
+
+declare interface KafkaTopic {
+  name: string;
+  parameters: Record<string, string>
   partitions: KafkaPartition[];
   groups: KafkaGroupInfo[]
-  template?: string
 }
 
 declare interface KafkaMessage extends BaseMessage {

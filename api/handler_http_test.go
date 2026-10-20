@@ -40,7 +40,7 @@ func TestHandler_Http(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services",
-			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"http","status":"valid","metrics":{"http_requests_total":0,"http_requests_errors_total":0,"http_request_timestamp":0}}]`,
+			responseBody: `[{"name":"foo","description":"bar","version":"1.0","type":"http","status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`,
 		},
 		{
 			name: "summary takes precedence over description",
@@ -53,7 +53,7 @@ func TestHandler_Http(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services",
-			responseBody: `[{"name":"foo","description":"summary","version":"1.0","type":"http","status":"valid","metrics":{"http_requests_total":0,"http_requests_errors_total":0,"http_request_timestamp":0}}`,
+			responseBody: `[{"name":"foo","description":"summary","version":"1.0","type":"http","status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}`,
 		},
 		{
 			name: "get http services with contact",
@@ -65,7 +65,7 @@ func TestHandler_Http(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services",
-			responseBody: `[{"name":"foo","contact":{"name":"foo","url":"https://foo.bar","email":"foo@bar.com"},"type":"http","status":"valid","metrics":{"http_requests_total":0,"http_requests_errors_total":0,"http_request_timestamp":0}}]`,
+			responseBody: `[{"name":"foo","contact":{"name":"foo","url":"https://foo.bar","email":"foo@bar.com"},"type":"http","status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`,
 		},
 		{
 			name: "get specific http service",
@@ -178,7 +178,7 @@ func TestHandler_Http(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo/operations?method=get&path=/foo/{bar}",
-			responseBody: `[{"method":"get","path":"/foo/{bar}","deprecated":false,"parameters":[{"name":"bar","type":"path","required":true,"deprecated":false,"explode":false,"allowReserved":false,"schema":{"type":"string"}}],"status":"valid","metrics":{"http_requests_total":0,"http_requests_errors_total":0,"http_request_timestamp":0}}]`,
+			responseBody: `[{"method":"get","path":"/foo/{bar}","deprecated":false,"parameters":[{"name":"bar","type":"path","required":true,"deprecated":false,"explode":false,"allowReserved":false,"schema":{"type":"string"}}],"status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`,
 		},
 		{
 			name: "get http service with requestBody",
@@ -196,7 +196,7 @@ func TestHandler_Http(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo/operations?method=get&path=/foo/{bar}",
-			responseBody: `[{"method":"get","path":"/foo/{bar}","deprecated":false,"requestBody":{"description":"foo","contents":[{"type":"application/json","schema":{"type":"string"}}],"required":true},"status":"valid","metrics":{"http_requests_total":0,"http_requests_errors_total":0,"http_request_timestamp":0}}]`,
+			responseBody: `[{"method":"get","path":"/foo/{bar}","deprecated":false,"requestBody":{"description":"foo","contents":[{"type":"application/json","schema":{"type":"string"}}],"required":true},"status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`,
 		},
 		{
 			name: "get http service with security",
@@ -218,7 +218,7 @@ func TestHandler_Http(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo/operations?method=get&path=/foo",
-			responseBody: `[{"method":"get","path":"/foo","deprecated":false,"security":[{"foo":{"scopes":[],"configs":{"type":"apiKey","in":"header","name":"X-API-Key"}}}],"status":"valid","metrics":{"http_requests_total":0,"http_requests_errors_total":0,"http_request_timestamp":0}}]`,
+			responseBody: `[{"method":"get","path":"/foo","deprecated":false,"security":[{"foo":{"scopes":[],"configs":{"type":"apiKey","in":"header","name":"X-API-Key"}}}],"status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`,
 		},
 		{
 			name: "get http service with global security",
@@ -239,7 +239,7 @@ func TestHandler_Http(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo/operations?method=get&path=/foo",
-			responseBody: `[{"method":"get","path":"/foo","deprecated":false,"security":[{"foo":{"scopes":[],"configs":{"type":"apiKey","in":"header","name":"X-API-Key"}}}],"status":"valid","metrics":{"http_requests_total":0,"http_requests_errors_total":0,"http_request_timestamp":0}}]`,
+			responseBody: `[{"method":"get","path":"/foo","deprecated":false,"security":[{"foo":{"scopes":[],"configs":{"type":"apiKey","in":"header","name":"X-API-Key"}}}],"status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`,
 		},
 		{
 			name: "get http service with response",
@@ -261,7 +261,7 @@ func TestHandler_Http(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo/operations?method=get&path=/foo/{bar}",
-			responseBody: `[{"method":"get","path":"/foo/{bar}","deprecated":false,"responses":[{"statusCode":"200","description":"foo description","contents":[{"type":"application/json","schema":{"type":"string"}}],"headers":[{"name":"foo","description":"bar","schema":{"type":"string"}}]}],"status":"valid","metrics":{"http_requests_total":0,"http_requests_errors_total":0,"http_request_timestamp":0}}]`,
+			responseBody: `[{"method":"get","path":"/foo/{bar}","deprecated":false,"responses":[{"statusCode":"200","description":"foo description","contents":[{"type":"application/json","schema":{"type":"string"}}],"headers":[{"name":"foo","description":"bar","schema":{"type":"string"}}]}],"status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`,
 		},
 		{
 			name: "reference override summary/description",
@@ -299,7 +299,7 @@ func TestHandler_Http(t *testing.T) {
 				return runtimetest.NewHttpApp(c)
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo/operations?method=get&path=/foo/{bar}",
-			responseBody: `[{"method":"get","path":"/foo/{bar}","deprecated":false,"responses":[{"statusCode":"200","description":"Description","contents":[{"type":"application/json","schema":{"type":"string"}}],"headers":[{"name":"foo","description":"bar","schema":{"type":"string"}}]}],"status":"valid","metrics":{"http_requests_total":0,"http_requests_errors_total":0,"http_request_timestamp":0}}]`,
+			responseBody: `[{"method":"get","path":"/foo/{bar}","deprecated":false,"responses":[{"statusCode":"200","description":"Description","contents":[{"type":"application/json","schema":{"type":"string"}}],"headers":[{"name":"foo","description":"bar","schema":{"type":"string"}}]}],"status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`,
 		},
 		{
 			name: "schema with string or number",
@@ -321,7 +321,7 @@ func TestHandler_Http(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo/operations?method=get&path=/foo/{bar}",
-			responseBody: `[{"method":"get","path":"/foo/{bar}","deprecated":false,"responses":[{"statusCode":"200","description":"foo description","contents":[{"type":"application/json","schema":{"type":["string","number"]}}]}],"status":"valid","metrics":{"http_requests_total":0,"http_requests_errors_total":0,"http_request_timestamp":0}}]`,
+			responseBody: `[{"method":"get","path":"/foo/{bar}","deprecated":false,"responses":[{"statusCode":"200","description":"foo description","contents":[{"type":"application/json","schema":{"type":["string","number"]}}]}],"status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`,
 		},
 		{
 			name: "schema with default",
@@ -342,7 +342,7 @@ func TestHandler_Http(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo/operations?method=get&path=/foo/{bar}",
-			responseBody: `[{"method":"get","path":"/foo/{bar}","deprecated":false,"responses":[{"statusCode":"200","description":"foo description","contents":[{"type":"application/json","schema":{"type":"string","default":"foobar"}}]}],"status":"valid","metrics":{"http_requests_total":0,"http_requests_errors_total":0,"http_request_timestamp":0}}]`,
+			responseBody: `[{"method":"get","path":"/foo/{bar}","deprecated":false,"responses":[{"statusCode":"200","description":"foo description","contents":[{"type":"application/json","schema":{"type":"string","default":"foobar"}}]}],"status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]`,
 		},
 		{
 			name: "tags",
@@ -360,7 +360,7 @@ func TestHandler_Http(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",
-			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo/{bar}","status":"valid","operations":[{"method":"get","deprecated":false,"tags":["foo"],"status":"valid","metrics":{"http_requests_total":0,"http_requests_errors_total":0,"http_request_timestamp":0}}]}],"tags":[{"name":"foo","summary":"sum","description":"desc","parent":"","kind":""}]`,
+			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo/{bar}","status":"valid","operations":[{"method":"get","deprecated":false,"tags":["foo"],"status":"valid","metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]}],"tags":[{"name":"foo","summary":"sum","description":"desc","parent":"","kind":""}]`,
 		},
 		{
 			name: "operation with errors",
@@ -379,7 +379,7 @@ func TestHandler_Http(t *testing.T) {
 				)
 			},
 			requestUrl:   "http://foo.api/api/services/http/foo",
-			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo/{bar}","status":"valid","operations":[{"method":"get","deprecated":false,"status":"invalid","errors":[{"message":"error"}],"metrics":{"http_requests_total":0,"http_requests_errors_total":0,"http_request_timestamp":0}}]}]`,
+			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo/{bar}","status":"valid","operations":[{"method":"get","deprecated":false,"status":"invalid","errors":[{"message":"error"}],"metrics":{"requests_total":0,"requests_errors_total":0,"request_timestamp":0}}]}]`,
 		},
 		{
 			name: "export to OpenAPI.json",
@@ -657,7 +657,7 @@ func TestHandler_Http_Metrics(t *testing.T) {
 			name:         "service list with metric",
 			app:          runtimetest.NewHttpApp(openapitest.NewConfig("3.0.0", openapitest.WithInfo("foo", "", ""))),
 			requestUrl:   "http://foo.api/api/services",
-			responseBody: `{"name":"foo","type":"http","status":"valid","metrics":{"http_requests_total":1,"http_requests_errors_total":3,"http_request_timestamp":123456}}`,
+			responseBody: `{"name":"foo","type":"http","status":"valid","metrics":{"requests_total":1,"requests_errors_total":3,"request_timestamp":123456}}`,
 			addMetrics: func(monitor *monitor.Monitor) {
 				monitor.Http.RequestCounter.WithLabel("foo", "bar", http.MethodGet).Add(1)
 				monitor.Http.RequestErrorCounter.WithLabel("foo", "bar", http.MethodGet).Add(3)
@@ -673,7 +673,7 @@ func TestHandler_Http_Metrics(t *testing.T) {
 				),
 			),
 			requestUrl:   "http://foo.api/api/services/http/foo",
-			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo/{bar}","status":"valid","operations":[{"method":"get","deprecated":false,"status":"valid","metrics":{"http_requests_total":1,"http_requests_errors_total":3,"http_request_timestamp":123456}}]}],`,
+			responseBody: `{"name":"foo","servers":[{"url":"/","description":""}],"paths":[{"path":"/foo/{bar}","status":"valid","operations":[{"method":"get","deprecated":false,"status":"valid","metrics":{"requests_total":1,"requests_errors_total":3,"request_timestamp":123456}}]}],`,
 			addMetrics: func(monitor *monitor.Monitor) {
 				monitor.Http.RequestCounter.WithLabel("foo", "/foo/{bar}", http.MethodGet).Add(1)
 				monitor.Http.RequestErrorCounter.WithLabel("foo", "/foo/{bar}", http.MethodGet).Add(3)

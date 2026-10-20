@@ -9,10 +9,14 @@ import { getRouteName } from '@/composables/dashboard'
 import { useChannel } from '@/composables/channel.ts'
 import { useBreadcrumb } from '@/composables/breadcrumb.ts'
 
-const { service, data, channelName } = useChannel<MqttTopic, MqttService>('mqtt')
+const props = defineProps<{
+  service?: MqttService,
+}>()
+
+const { data, channelName } = useChannel<MqttTopic, MqttService>(() => props.service, 'mqtt')
 const serviceRoute = computed(() => ({
   name: getRouteName('mqttService').value,
-  params: { service: service.value?.name },
+  params: { service: props.service?.name },
 }))
 
 useBreadcrumb(() => {
@@ -23,7 +27,7 @@ useBreadcrumb(() => {
         { 
           text: channel.name, to: { 
             name: getRouteName('mqttTopic').value,
-            params: { service: service.value?.name, channel: channel.name }
+            params: { service: props.service?.name, channel: channel.name }
           }
         },
        { text: instance.name }

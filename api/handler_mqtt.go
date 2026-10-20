@@ -45,13 +45,13 @@ type mqttTopic struct {
 	Tags        []kafkaTag               `json:"tags,omitempty"`
 	Parameters  []string                 `json:"parameters,omitempty"`
 	Instances   []mqttTopicInstance      `json:"instances,omitempty"`
-	Metrics     mqttTopicMetrics         `json:"metrics,omitempty"`
+	Metrics     mqttTopicMetrics         `json:"metrics"`
 }
 
 type mqttTopicInstance struct {
 	Name       string            `json:"name"`
 	Parameters map[string]string `json:"parameters,omitempty"`
-	Metrics    mqttTopicMetrics  `json:"metrics,omitempty"`
+	Metrics    mqttTopicMetrics  `json:"metrics"`
 }
 
 type mqttClient struct {

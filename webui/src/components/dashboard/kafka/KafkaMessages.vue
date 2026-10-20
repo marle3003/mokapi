@@ -100,7 +100,7 @@ const isTemplateTopic = computed(() => {
         return false
     }
     const topic = props.service.topics.find(x => x.name === props.topicName)
-    return (topic?.parameters?.length ?? 0) > 0
+    return (topic?.instances?.length ?? -1) >= 0 && !props.instanceName
 })
 
 function eventData(event: ServiceEventInfo): KafkaMessageInfo {

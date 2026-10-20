@@ -63,9 +63,9 @@ function getServices(type: string) {
             return {
                 ...getInfo(x, 'http'),
                 metrics: {
-                    http_requests_total: sum('http_requests_total', { name: 'service', value: x.name }),
-                    http_requests_errors_total: sum('http_requests_errors_total', { name: 'service', value: x.name }),
-                    http_request_timestamp: max('http_request_timestamp', { name: 'service', value: x.name })
+                    requests_total: sum('http_requests_total', { name: 'service', value: x.name }),
+                    requests_errors_total: sum('http_requests_errors_total', { name: 'service', value: x.name }),
+                    request_timestamp: max('http_request_timestamp', { name: 'service', value: x.name })
                 }
             }
         }))
@@ -75,8 +75,8 @@ function getServices(type: string) {
             return {
                 ...getInfo(x, 'kafka'),
                 metrics: {
-                    kafka_messages_total: sum('kafka_messages_total', { name: 'service', value: x.name }),
-                    kafka_message_timestamp: max('kafka_message_timestamp', { name: 'service', value: x.name })
+                    messages_total: sum('kafka_messages_total', { name: 'service', value: x.name }),
+                    message_timestamp: max('kafka_message_timestamp', { name: 'service', value: x.name })
                 }
             }
         }))
@@ -86,8 +86,8 @@ function getServices(type: string) {
             return {
                 ...getInfo(x, 'mail'),
                 metrics: {
-                    mail_mails_total: sum('mail_mails_total', { name: 'service', value: x.name }),
-                    mail_mail_timestamp: max('mail_mail_timestamp', { name: 'service', value: x.name })
+                    mails_total: sum('mail_mails_total', { name: 'service', value: x.name }),
+                    mail_timestamp: max('mail_mail_timestamp', { name: 'service', value: x.name })
                 }
             }
         }))
@@ -97,8 +97,8 @@ function getServices(type: string) {
             return {
                 ...getInfo(x, 'ldap'),
                 metrics: {
-                    ldap_requests_total: sum('ldap_requests_total', { name: 'service', value: x.name }),
-                    ldap_request_timestamp: max('ldap_request_timestamp', { name: 'service', value: x.name })
+                    requests_total: sum('ldap_requests_total', { name: 'service', value: x.name }),
+                    request_timestamp: max('ldap_request_timestamp', { name: 'service', value: x.name })
                 }
             }
         }))
@@ -108,8 +108,8 @@ function getServices(type: string) {
             return {
                 ...getInfo(x, 'mqtt'),
                 metrics: {
-                    mqtt_messages_total: sum('mqtt_messages_total', { name: 'service', value: x.name }),
-                    mqtt_message_timestamp: max('mqtt_message_timestamp', { name: 'service', value: x.name })
+                    messages_total: sum('mqtt_messages_total', { name: 'service', value: x.name }),
+                    message_timestamp: max('mqtt_message_timestamp', { name: 'service', value: x.name })
                 }
             }
         }))
@@ -119,8 +119,8 @@ function getServices(type: string) {
             return {
                 ...getInfo(x, 'websocket'),
                 metrics: {
-                    websocket_messages_total: sum('websocket_messages_total', { name: 'service', value: x.name }),
-                    websocket_message_timestamp: max('websocket_message_timestamp', { name: 'service', value: x.name })
+                    messages_total: sum('websocket_messages_total', { name: 'service', value: x.name }),
+                    message_timestamp: max('websocket_message_timestamp', { name: 'service', value: x.name })
                 }
             }
         }))

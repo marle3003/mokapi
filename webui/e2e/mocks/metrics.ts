@@ -84,11 +84,11 @@ export let metrics = [
         value: 1652035690
     },
     {
-        name: 'kafka_messages_total{service="Kafka World",topic="orders.{region}.{eventType}"}',
+        name: 'kafka_messages_total{service="Kafka World",topic="orders.{region}.{eventType}",instance="orders.us.created"}',
         value: 1
     },
     {
-        name: 'kafka_message_timestamp{service="Kafka World",topic="orders.{region}.{eventType}"}',
+        name: 'kafka_message_timestamp{service="Kafka World",topic="orders.{region}.{eventType}",instance="orders.us.created"}',
         value: 1652036176
     },
     // Mails

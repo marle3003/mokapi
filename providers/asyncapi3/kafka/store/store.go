@@ -79,8 +79,16 @@ func (s *Store) Close() {
 }
 
 func (s *Store) Topic(name string) *Topic {
+	if s == nil {
+		return nil
+	}
+
 	s.m.RLock()
 	defer s.m.RUnlock()
+
+	if s.topics == nil {
+		return nil
+	}
 
 	if t, ok := s.topics[name]; ok {
 		return t
@@ -107,8 +115,10 @@ func (s *Store) NewTopic(name string, b *Broker) (*Topic, error) {
 			errs = append(errs, fmt.Errorf("channel '%s' is not available for Kafka protocol", ch.Name))
 			continue
 		}
-		if !isChannelAvailable(ch, b) {
-			errs = append(errs, fmt.Errorf("channel '%s' is not available on server '%s'", ch.Name, b.Name))
+		if b != nil {
+			if !isChannelAvailable(ch, b) {
+				errs = append(errs, fmt.Errorf("channel '%s' is not available on server '%s'", ch.Name, b.Name))
+			}
 		}
 
 		return s.addTopic(name, ch, s.getOperations(ch))
@@ -308,10 +318,6 @@ func (s *Store) addTopic(name string, channel *asyncapi3.Channel, ops []*asyncap
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	if channel.Address != "" {
-		name = channel.Address
-	}
-
 	if _, ok := s.topics[name]; ok {
 		return nil, fmt.Errorf("topic %v already exists", name)
 	}
@@ -485,8 +491,14 @@ func parseHostAndPort(s string) (host string, port int) {
 }
 
 func (s *Store) UpdateMetrics(m *monitor.Kafka, topic *Topic, partition *Partition, batch kafka.RecordBatch) {
-	m.Messages.WithLabel(s.config.Info.Name, topic.Name).Add(float64(len(batch.Records)))
-	m.LastMessage.WithLabel(s.config.Info.Name, topic.Name).Set(float64(time.Now().Unix()))
+	topicName := topic.Config.ResolveAddress()
+	labels := []string{s.config.Info.Name, topicName}
+	if topic.Name != topicName {
+		labels = append(labels, topic.Name)
+	}
+
+	m.Messages.WithLabel(labels...).Add(float64(len(batch.Records)))
+	m.LastMessage.WithLabel(labels...).Set(float64(time.Now().Unix()))
 
 	for name, g := range s.groups {
 		gt, ok := g.Commits[topic.Name]

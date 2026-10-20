@@ -9,6 +9,8 @@ declare interface Service {
     status?: string
 }
 
+declare type ServiceType = 'http' | 'kafka' | 'mqtt' | 'websocket' | 'mail' | 'ldap'
+
 declare interface Contact {
     name: string
     url: string

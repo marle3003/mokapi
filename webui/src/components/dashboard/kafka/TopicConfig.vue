@@ -7,7 +7,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useMarkdown } from '@/composables/markdown'
 
 const props = defineProps<{
-    topic: KafkaTopic,
+    channel: KafkaChannel,
 }>()
 
 const { formatSchema } = usePrettyLanguage()
@@ -27,16 +27,16 @@ function filename() {
         }
     }
 
-    return `${props.topic.name}-example${ext}`
+    return `${props.channel.name}-example${ext}`
 }
 
 onMounted(() => {
-    if (!props.topic) {
+    if (!props.channel) {
         return
     }
-    const first = messages(props.topic)[0]
+    const first = messages(props.channel)[0]
     if (first) {
-        const msg = props.topic.messages[first]
+        const msg = props.channel.messages[first]
         if (msg) {
             selected.value = msg
         }
@@ -45,8 +45,8 @@ onMounted(() => {
 })
 
 function selectedMessageChange(event: any){
-    for (const messageId in props.topic.messages){
-        const msg = props.topic.messages[messageId]!
+    for (const messageId in props.channel.messages){
+        const msg = props.channel.messages[messageId]!
         if (msg.name == event.target.value){
             selected.value = msg
         }
@@ -86,21 +86,21 @@ const source = computed(() => {
     return source
 })
 
-function messages(topic: KafkaTopic): string[] {
-    if (!topic.messages) {
+function messages(channel: KafkaChannel): string[] {
+    if (!channel.messages) {
         return [];
     }
-    return Object.keys(topic.messages).sort((a, b) => {
+    return Object.keys(channel.messages).sort((a, b) => {
         return a.localeCompare(b)
     })
 }
 const examplePath = computed(() => {
-    return props.topic.name.split(/[.-_]/).reverse()
+    return props.channel.name.split(/[.-_]/).reverse()
 })
 </script>
 
 <template>
-    <div class="row" v-if="topic.messages && Object.keys(topic.messages).length > 1">
+    <div class="row" v-if="channel.messages && Object.keys(channel.messages).length > 1">
         <div class="col-auto">
             <div class="label">
                 Messages
@@ -108,7 +108,7 @@ const examplePath = computed(() => {
         </div>
         <hr />
     </div>
-    <div class="row" v-if="!topic.messages || Object.keys(topic.messages).length == 0">
+    <div class="row" v-if="!channel.messages || Object.keys(channel.messages).length == 0">
         <div class="col-auto">
             No message defined for this topic.
         </div>
@@ -117,8 +117,8 @@ const examplePath = computed(() => {
         <div class="row">
             <div class="col-auto">
                 <p id="message-name" class="label">Name</p>
-                <select class="form-select form-select-sm mb-2" aria-labelledby="message-name" @change="selectedMessageChange" v-if="Object.keys(topic.messages).length > 1">
-                    <option v-for="msg in messages(topic)" :selected="msg == selected.name">{{ msg }}</option>
+                <select class="form-select form-select-sm mb-2" aria-labelledby="message-name" @change="selectedMessageChange" v-if="Object.keys(channel.messages).length > 1">
+                    <option v-for="msg in messages(channel)" :selected="msg == selected.name">{{ msg }}</option>
                 </select>
                 <p aria-labelledby="message-name" v-else>{{ selected.name }}</p>
             </div>
@@ -158,13 +158,13 @@ const examplePath = computed(() => {
                 </div>
                 <div class="tab-pane fade show active" id="tabpanel-config-schemas-message" role="tabpanel" aria-labelledby="tab-config-schemas-message">
                     <section aria-label="Schema">
-                        <source-view :source="{ preview: {content: formatSchema(selected.payload), contentType: 'application/json' } }" :hide-content-type="true" :height="500" class="mb-2" :filename="topic.name+'-message.json'" />
+                        <source-view :source="{ preview: {content: formatSchema(selected.payload), contentType: 'application/json' } }" :hide-content-type="true" :height="500" class="mb-2" :filename="channel.name+'-message.json'" />
                         <div class="row">
                             <div class="col-auto pe-2 mt-1">
-                                <schema-expand :schema="selected.payload" :title="'Value - '+topic.name" :source="{filename: topic.name+'-message.json'}" />
+                                <schema-expand :schema="selected.payload" :title="'Value - '+channel.name" :source="{filename: channel.name+'-message.json'}" />
                             </div>
                             <div class="col-auto pe-2 mt-1">
-                                <schema-validate :title="'Value Validator - '+topic.name" :schema="selected.payload" :source="source" :example="{ path: examplePath }"/>
+                                <schema-validate :title="'Value Validator - '+channel.name" :schema="selected.payload" :source="source" :example="{ path: examplePath }"/>
                             </div>
                         </div>
                     </section>

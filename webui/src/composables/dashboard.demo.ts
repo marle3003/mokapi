@@ -91,6 +91,20 @@ export function useDemoDashboard() {
             return { operations, isLoading, close: () => {} }
         },
 
+        getKafkaChannel(serviceName: string, topicName: string) {
+            const channel = ref<KafkaChannel | null>(null)
+            const isLoading = ref<boolean>(true)
+
+            watchEffect(() => {
+                if (!db.data) {
+                    return
+                }
+                channel.value = db.data['service_' + serviceName + '_channel_' + topicName]
+                isLoading.value = db.isLoading
+            })
+            return { channel, isLoading, close: () => {} }
+        },
+
         getKafkaTopic(serviceName: string, topicName: string) {
             const topic = ref<KafkaTopic | null>(null)
             const isLoading = ref<boolean>(true)

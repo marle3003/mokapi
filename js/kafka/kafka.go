@@ -220,6 +220,8 @@ func (m *Module) mapParams(args goja.Value) (*common.KafkaProduceArgs, error) {
 				if err != nil {
 					return nil, err
 				}
+			case "allowAutoTopicCreation":
+				opt.AllowAutoTopicCreation = params.Get(k).Export().(bool)
 			}
 		}
 		if message != nil {

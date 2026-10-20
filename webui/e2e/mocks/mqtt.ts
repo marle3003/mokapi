@@ -165,7 +165,7 @@ export let events = [
       name: 'MQTT Temperature Sensor API',
       type: 'message',
       topic: 'sensors/{sensorId}/data',
-      isntance: 'sensors/123/data',
+      instance: 'sensors/123/data',
       sensorId: '123',
       clientId: 'mqtt-client-2',
     },

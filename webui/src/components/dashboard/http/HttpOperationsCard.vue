@@ -52,7 +52,7 @@ function showWarningColumn(){
     return false
 }
 function lastRequest(op: HttpOperationInfo){
-    const n = op.metrics.http_request_timestamp
+    const n = op.metrics.request_timestamp
     if (n == 0){
         return '-'
     }
@@ -60,11 +60,11 @@ function lastRequest(op: HttpOperationInfo){
 }
 
 function requests(op: HttpOperationInfo){
-    return op.metrics.http_requests_total
+    return op.metrics.requests_total
 }
 
 function errors(op: HttpOperationInfo){
-    return op.metrics.http_requests_errors_total
+    return op.metrics.requests_errors_total
 }
 function operationCssClass(operation: HttpOperationInfo): string {
     if (operation.status === 'valid') {

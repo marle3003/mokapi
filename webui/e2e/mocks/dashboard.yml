@@ -347,6 +347,8 @@ paths:
           description: mail attachment not found
   /api/services/kafka:
     $ref: './kafka.yml#/components/pathItems/Clusters'
+  /api/services/kafka/{cluster}/channels/{channel}:
+    $ref: './kafka.yml#/components/pathItems/Channel'
   /api/services/kafka/{cluster}/topics:
     $ref: './kafka.yml#/components/pathItems/Topics'
   /api/services/kafka/{cluster}/topics/{topic}:

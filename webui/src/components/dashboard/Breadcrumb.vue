@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import type { RouteLocationRaw } from 'vue-router'
-
 defineProps<{ items: BreadcrumbItem[] }>()
 </script>
 
 <template>
-  <nav aria-label="Breadcrumb" class="dashboard-breadcrumb">
+  <nav aria-label="Breadcrumb" class="dashboard-breadcrumb" v-if="items.length > 1">
     <ol class="breadcrumb mb-2">
       <li v-for="(item, i) in items" :key="i"
         class="breadcrumb-item"

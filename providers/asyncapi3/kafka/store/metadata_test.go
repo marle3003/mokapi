@@ -227,6 +227,49 @@ func TestMetadata(t *testing.T) {
 				require.True(t, ok)
 				require.Len(t, res.Topics, 1)
 				require.Equal(t, "orders.us.created", res.Topics[0].Name)
+
+				topic := s.Topic("orders.us.created")
+				require.Equal(t, "orders.us.created", topic.Name)
+			},
+		},
+		{
+			name: "allow topic creation using address",
+			test: func(t *testing.T, s *store.Store) {
+				cfg := asyncapi3test.NewConfig(
+					asyncapi3test.WithServer("foo", "kafka", "127.0.0.1:9092"),
+					asyncapi3test.WithChannel("channel-1",
+						asyncapi3test.WithChannelAddress("orders.{region}.{eventType}"),
+						asyncapi3test.WithParameter(
+							"region", &asyncapi3.Parameter{
+								Enum: []string{"us", "eu"},
+							},
+						),
+						asyncapi3test.WithParameter(
+							"eventType", &asyncapi3.Parameter{
+								Enum: []string{"created", "processed"},
+							},
+						),
+					),
+				)
+
+				err := cfg.Parse(&dynamic.Config{Data: cfg}, &dynamictest.Reader{})
+				require.NoError(t, err)
+				s.Update(cfg)
+				rr := kafkatest.NewRecorder()
+				r := kafkatest.NewRequest("kafkatest", 4, &metaData.Request{
+					AllowAutoTopicCreation: true,
+					Topics:                 []metaData.TopicName{{Name: "orders.us.created"}},
+				})
+				r.Host = "127.0.0.1:9092"
+				s.ServeMessage(rr, r)
+
+				res, ok := rr.Message.(*metaData.Response)
+				require.True(t, ok)
+				require.Len(t, res.Topics, 1)
+				require.Equal(t, "orders.us.created", res.Topics[0].Name)
+
+				topic := s.Topic("orders.us.created")
+				require.Equal(t, "orders.us.created", topic.Name)
 			},
 		},
 		{

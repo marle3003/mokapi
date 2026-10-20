@@ -36,7 +36,7 @@ const sum = computed(() => {
 
     let result = 0;
     for (const service of services.value) {
-        result += service.metrics.mail_mails_total || 0
+        result += service.metrics.mails_total || 0
     }
     return result;
 })

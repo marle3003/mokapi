@@ -160,14 +160,8 @@ func (s *Store) logMessage(messageId string, topic *Topic, publish *mqtt.Publish
 		With("topic", topicName).
 		With("type", "message").
 		With("clientId", args.ClientId)
-	if len(topic.cfg.Parameters) > 0 {
-		params, err := topic.cfg.ExtractParams(topic.Name)
-		if err != nil {
-			log.Errorf("mqtt: failed to log message: %s", err)
-		}
-		for k, v := range params {
-			traits.With(k, v)
-		}
+	if topic.Name != topicName {
+		traits.With("instance", topic.Name)
 	}
 
 	err := s.eh.Push(&LogMessage{

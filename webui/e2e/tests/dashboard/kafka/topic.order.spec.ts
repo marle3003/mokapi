@@ -9,6 +9,7 @@ const ace = { edit: (id: any) => { return { setValue: (s: string) => {} } } }
 
 test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"])
+    const breadcrumb = page.getByRole('navigation', { name: 'Breadcrumb' })
 
     const topic = cluster.topics[0]
     await test.step('Browse to topic "mokapi.shop.products"', async () => {
@@ -26,7 +27,6 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
         const info = page.getByRole('region', { name: "Info" })
         await expect(info).toBeVisible()
         await expect(info.getByLabel('Topic')).toHaveText(topic.name)
-        await expect(info.getByLabel('Cluster')).toHaveText(cluster.name)
         await expect(info.getByLabel('Type of API')).toHaveText('Kafka')
         if (topic.title) {
             await expect(info.getByLabel('Title')).toHaveText(topic.title)
@@ -42,6 +42,7 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
     await useKafkaMessages(page).test(page.getByRole('table', { name: 'Recent Messages' }), false)
 
     const tabList = page.getByRole('region', { name: 'Topic Data' }).getByRole('tablist')
+    
     await test.step('Check partition"', async () => {
         await tabList.getByRole('tab', { name: 'Partitions' }).click()
         const table = page.getByRole('tabpanel', { name: 'Partitions' }).getByRole('table', { name: 'Topic Partitions' })
@@ -155,7 +156,7 @@ test('Visit Kafka topic mokapi.shop.products', async ({ page, context }) => {
         })
 
         await test.step('Go back to cluster view', async () => {
-            await page.getByRole('link', { name: 'cluster' }).click()
+            await breadcrumb.getByRole('link', { name: 'Kafka World' }).click()
             const region = page.getByRole('region', { name: 'Info' });
             await expect(region.getByLabel('name')).toHaveText(cluster.name)
         })

@@ -74,8 +74,6 @@ test('Visit Mail Server', async ({ page, baseURL }) => {
 
             await rows.nth(1).click();
             await expect(page.getByLabel('Mailbox Name')).toHaveText('bob.miller@example.com');
-            await expect(page.getByLabel('Service', { exact: true })).toHaveText('Mail Server');
-            await expect(page.getByLabel('Service', { exact: true }).getByRole('link')).toHaveAttribute('href', dashboard + '/mail/service/Mail%20Server');
             await expect(page.getByLabel('Username')).toHaveText('bob.miller');
             await expect(page.getByLabel('Password')).toHaveText('mysecretpassword123');
 
@@ -117,8 +115,6 @@ test('Visit Mail Server', async ({ page, baseURL }) => {
             await page.getByRole('table', { name: 'Mailboxes' }).getByText('alice.johnson@example.com').click();
 
             await expect(page.getByLabel('Mailbox Name')).toHaveText('alice.johnson@example.com');
-            await expect(page.getByLabel('Service', { exact: true })).toHaveText('Mail Server');
-            await expect(page.getByLabel('Service', { exact: true }).getByRole('link')).toHaveAttribute('href',  dashboard + '/mail/service/Mail%20Server');
             await expect(page.getByLabel('Username')).toHaveText('alice.johnson');
             await expect(page.getByLabel('Password')).toHaveText('anothersecretpassword456');
 

@@ -17,8 +17,8 @@ type ldapInfo struct {
 }
 
 type ldapMetrics struct {
-	NumRequests float64 `json:"ldap_requests_total"`
-	LastRequest float64 `json:"ldap_request_timestamp"`
+	NumRequests float64 `json:"requests_total"`
+	LastRequest float64 `json:"request_timestamp"`
 }
 
 func getLdapServices(store *runtime.LdapStore, m *monitor.Monitor) []service {

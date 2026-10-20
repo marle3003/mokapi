@@ -36,7 +36,7 @@ const sum = computed(() => {
 
     let result = 0;
     for (const service of services.value) {
-        result += service.metrics.websocket_messages_total || 0
+        result += service.metrics.messages_total || 0
     }
     return result;
 })

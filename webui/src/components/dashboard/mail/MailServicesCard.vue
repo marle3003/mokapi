@@ -11,7 +11,7 @@ const {format} = usePrettyDates()
 const router = useRouter()
 
 function lastMail(service: Service){
-    const n = service.metrics.mail_mail_timestamp
+    const n = service.metrics.mail_timestamp
     if (n == 0){
         return '-'
     }
@@ -62,7 +62,7 @@ onUnmounted(() => {
                         </td>
                         <td><div v-html="useMarkdown(service.description).content" class="table-markdown"></div></td>
                         <td class="text-center">{{ lastMail(service) }}</td>
-                        <td class="text-center">{{ service.metrics.mail_mails_total }}</td>
+                        <td class="text-center">{{ service.metrics.mails_total }}</td>
                     </tr>
                 </tbody>
             </table>
