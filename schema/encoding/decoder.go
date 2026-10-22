@@ -9,7 +9,7 @@ import (
 
 type Decoder interface {
 	IsSupporting(contentType media.ContentType) bool
-	Decode([]byte, *DecodeState) (interface{}, error)
+	Decode([]byte, *DecodeState) (any, error)
 }
 
 type Parser interface {
@@ -37,7 +37,7 @@ func RegisterDecoder(d Decoder) {
 
 type DecodeOptions func(state *DecodeState)
 
-func DecodeFrom(r io.Reader, opts ...DecodeOptions) (interface{}, error) {
+func DecodeFrom(r io.Reader, opts ...DecodeOptions) (any, error) {
 	if r == nil {
 		return Decode(nil, opts...)
 	}
@@ -49,7 +49,7 @@ func DecodeFrom(r io.Reader, opts ...DecodeOptions) (interface{}, error) {
 	return Decode(b, opts...)
 }
 
-func Decode(b []byte, opts ...DecodeOptions) (interface{}, error) {
+func Decode(b []byte, opts ...DecodeOptions) (any, error) {
 	state := newDecodeState()
 	for _, opt := range opts {
 		opt(state)
