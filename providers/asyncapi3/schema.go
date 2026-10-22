@@ -419,24 +419,48 @@ func (r *AvroRef) UnmarshalJSON(b []byte) error {
 	return r.Reference.UnmarshalJson(b, &r.Schema)
 }
 
-func (r *SchemaRef) GetParser(contentType string) (encoding.Parser, error) {
+type parserOptions struct {
+	convertStrings bool
+}
+
+type ParserOption func(*parserOptions)
+
+// WithStringConversion parses string input as number/boolean if the schema expects it.
+// Used for Kafka keys, which clients usually send as plain text.
+func WithStringConversion() ParserOption {
+	return func(o *parserOptions) { o.convertStrings = true }
+}
+
+func (r *SchemaRef) GetParser(contentType string, opts ...ParserOption) (encoding.Parser, error) {
 	if r == nil || r.Value == nil {
 		return &encoding.NullParser{}, nil
 	}
 
+	var o parserOptions
+	for _, opt := range opts {
+		opt(&o)
+	}
+
+	jsonParser := func(s *jsonSchema.Schema) encoding.Parser {
+		return &parser.Parser{
+			Schema:                 s,
+			ConvertStringToNumber:  o.convertStrings,
+			ConvertStringToBoolean: o.convertStrings,
+		}
+	}
+
 	switch s := r.Value.(type) {
 	case *jsonSchema.Schema:
-		return &parser.Parser{Schema: s}, nil
+		return jsonParser(s), nil
 	case *openapi.Schema:
-		mt := media.ParseContentType(contentType)
-		if mt.IsXml() {
+		if media.ParseContentType(contentType).IsXml() {
 			return openapi.NewXmlParser(s), nil
 		}
-		return &parser.Parser{Schema: openapi.ConvertToJsonSchema(s)}, nil
+		return jsonParser(openapi.ConvertToJsonSchema(s)), nil
 	case *AvroRef:
 		return &avro.Parser{Schema: s.Schema}, nil
 	case *MultiSchemaFormat:
-		return s.Schema.GetParser(contentType)
+		return s.Schema.GetParser(contentType, opts...)
 	default:
 		return nil, fmt.Errorf("unsupported payload schema type: %T", s)
 	}

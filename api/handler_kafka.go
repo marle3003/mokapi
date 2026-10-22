@@ -378,6 +378,9 @@ func (h *handler) getKafkaChannel(w http.ResponseWriter, r *http.Request) {
 				result.Instances = append(result.Instances, inst)
 			}
 		}
+		slices.SortFunc(result.Instances, func(a, b kafkaTopicInstance) int {
+			return strings.Compare(a.Name, b.Name)
+		})
 	}
 
 	result.Metrics = kafkaTopicMetric{

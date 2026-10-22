@@ -42,7 +42,7 @@ type RequestBody struct {
 }
 
 type Body struct {
-	Value interface{}
+	Value any
 	Raw   string
 }
 
@@ -61,7 +61,7 @@ func (r *RequestBodyRef) UnmarshalYAML(node *yaml.Node) error {
 	return r.Reference.UnmarshalYaml(node, &r.Value)
 }
 
-func (r *RequestBodyRef) MarshalYAML() (interface{}, error) {
+func (r *RequestBodyRef) MarshalYAML() (any, error) {
 	if r.Value != nil {
 		return r.Value, nil
 	}
@@ -258,7 +258,7 @@ type urlValueDecoder struct {
 	mt *MediaType
 }
 
-func (d urlValueDecoder) decode(propName string, val interface{}) (interface{}, error) {
+func (d urlValueDecoder) decode(propName string, val any) (any, error) {
 	values := val.([]string)
 
 	prop := d.mt.Schema.Properties.Get(propName)
@@ -277,7 +277,7 @@ func (d urlValueDecoder) decode(propName string, val interface{}) (interface{}, 
 	}
 }
 
-func (d urlValueDecoder) decodeArray(propName string, values []string) (interface{}, error) {
+func (d urlValueDecoder) decodeArray(propName string, values []string) (any, error) {
 	enc, ok := d.mt.Encoding[propName]
 	if !ok || enc.Explode {
 		return values, nil
@@ -292,7 +292,7 @@ func (d urlValueDecoder) decodeArray(propName string, values []string) (interfac
 	}
 }
 
-func (d urlValueDecoder) decodeObject(propName string, values []string) (interface{}, error) {
+func (d urlValueDecoder) decodeObject(propName string, values []string) (any, error) {
 	enc, ok := d.mt.Encoding[propName]
 	if !ok {
 		return nil, fmt.Errorf("behavior not specified for complex serialization without content-type: see https://swagger.io/docs/specification/v3_0/describing-request-body/describing-request-body/")
@@ -310,7 +310,7 @@ type multipartForm struct {
 	p  parser.Parser
 }
 
-func (d multipartForm) decode(m map[string]interface{}, part *multipart.Part) error {
+func (d multipartForm) decode(m map[string]any, part *multipart.Part) error {
 	name := part.FormName()
 	b, err := io.ReadAll(part)
 	if err != nil {
@@ -354,11 +354,11 @@ func (d multipartForm) decode(m map[string]interface{}, part *multipart.Part) er
 	}
 
 	if prop.Type.IsArray() {
-		var arr []interface{}
+		var arr []any
 		if m[name] == nil {
-			arr = make([]interface{}, 0)
+			arr = make([]any, 0)
 		} else {
-			arr = m[name].([]interface{})
+			arr = m[name].([]any)
 		}
 		m[name] = append(arr, v)
 	} else {

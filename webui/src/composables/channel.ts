@@ -40,7 +40,7 @@ export function splitTemplate(name: string) {
     .map(text => ({ text, param: text.startsWith('{') }))
 }
 
-export function instanceCount(channel: BaseChannel) {
+export function instanceCount(channel: { instances?: ChannelInstance[] }) {
   return channel.instances?.length ?? 0
 }
 

@@ -4,6 +4,7 @@ import { usePrettyDates } from '@/composables/usePrettyDate'
 import { getRouteName } from '@/composables/dashboard';
 import { computed } from 'vue';
 import { useLocalStorage } from '@/composables/local-storage';
+import { splitTemplate, instanceCount } from '@/composables/channel'
 
 const props = defineProps<{
     service: KafkaService,
@@ -102,6 +103,11 @@ function toggleTag(name: string) {
         tags.value = tags.value.filter((t) => t !== '__all')
     }
 }
+function instanceLabel(channel: KafkaTopicInfo) {
+  const n = instanceCount(channel)
+  if (n === 0) return 'no topics yet'
+  return n === 1 ? '1 topic' : `${n} topics`
+}
 </script>
 
 <template>
@@ -155,7 +161,21 @@ function toggleTag(name: string) {
                             <td>
                                 <router-link @click.stop class="row-link"
                                     :to="{ name: getRouteName('kafkaTopic').value, params: { service: props.service.name, topic: topic.name } }">
-                                    {{ topic.name }}
+                                    <template v-if="topic.parameters?.length">
+                                        <span class="visually-hidden">Template </span>
+                                        <span class="channel-name">
+                                            <template v-for="(part, i) in splitTemplate(topic.name)" :key="i">
+                                                <span v-if="part.param" class="param">{{ part.text }}</span>
+                                                <template v-else>{{ part.text }}</template>
+                                            </template>
+                                        </span>
+                                        <span class="visually-hidden">, </span>
+                                        <span class="badge ms-2"
+                                        :class="instanceCount(topic) ? 'bg-secondary' : 'bg-light text-muted'">
+                                            {{ instanceLabel(topic) }}
+                                        </span>
+                                    </template>
+                                    <span v-else>{{ topic.name }}</span>
                                 </router-link>
                             </td>
                             <td>

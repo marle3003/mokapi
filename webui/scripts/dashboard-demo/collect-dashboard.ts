@@ -23,6 +23,7 @@ export async function collectDashboard() {
     'service_Kafka Order Service API_topic_user-events': { path: '/api/services/kafka/Kafka%20Order%20Service%20API/topics/user-events', loader: loadJson },
     'service_Kafka Order Service API_channel_shipments.{region}.updates': { path: '/api/services/kafka/Kafka%20Order%20Service%20API/channels/shipments.{region}.updates', loader: loadJson },
     'service_Kafka Order Service API_topic_shipments.eu.updates': { path: '/api/services/kafka/Kafka%20Order%20Service%20API/topics/shipments.eu.updates', loader: loadJson },
+    'service_Kafka Order Service API_topic_shipments.us.updates': { path: '/api/services/kafka/Kafka%20Order%20Service%20API/topics/shipments.us.updates', loader: loadJson },
 
     'service_Kafka Order Service API_group_order-status-group-100': { path: '/api/services/kafka/Kafka%20Order%20Service%20API/groups/order-status-group-100', loader: loadJson },
     'service_Kafka Order Service API_client_consumer-1': { path: '/api/services/kafka/Kafka%20Order%20Service%20API/clients/consumer-1', loader: loadJson },

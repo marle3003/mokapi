@@ -19,6 +19,9 @@ test('Visit Kafka topic orders.{region}.{eventType}', async ({ page, context }) 
         await page.getByRole('table', { name: 'Clusters' }).getByText(cluster.name).click()
         await expect(page.getByRole('region', { name: "Info" })).toBeVisible()
 
+        const topics = page.getByRole('table', { name: 'Topics' })
+        await expect(await getCellByColumnName(topics, 'Name', topics.locator('tbody tr').nth(3))).toHaveText('Template orders.{region}.{eventType}, 1 topic');
+
         await page.getByRole('table', { name: 'Topics' }).getByText('orders.{region}.{eventType}').click()
 
         const info = page.getByRole('region', { name: "Info" })

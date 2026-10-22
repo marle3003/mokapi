@@ -14,8 +14,8 @@ func (d *JsonDecoder) IsSupporting(contentType media.ContentType) bool {
 	return contentType.Subtype == "json" || strings.HasSuffix(contentType.Subtype, "+json")
 }
 
-func (d *JsonDecoder) Decode(b []byte, state *DecodeState) (interface{}, error) {
-	var i interface{}
+func (d *JsonDecoder) Decode(b []byte, state *DecodeState) (any, error) {
+	var i any
 	err := json.Unmarshal(b, &i)
 	if err != nil {
 		return nil, fmt.Errorf("invalid json format: %v", err)
