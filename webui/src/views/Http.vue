@@ -203,7 +203,7 @@ function getConsoleContent() {
           <p class="lead mb-4 text">Go beyond static mocks—customize, debug, and explore your APIs with powerful built-in tools.</p>
         </div>
 
-        <div class="row pb-4 pb-lg-5 mb-lg-5 mt-3">
+        <div class="row pb-4 pb-lg-5 mb-lg-5">
           <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-2 order-lg-1">
             <div class="text-lg-start text-center">
               <h3>Customize API Responses</h3>
@@ -218,7 +218,7 @@ function getConsoleContent() {
           </div>
         </div>
 
-        <div class="row">
+        <div class="row pb-4 pb-lg-5 mb-lg-5">
           <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center">
             <img src="/http.png" alt="Mokapi's dashboard with an overview of all mocked APIs including metrics and logs." style="width:100%" />
           </div>
@@ -232,6 +232,29 @@ function getConsoleContent() {
             </div>
           </div>
         </div>
+
+        <div class="row pb-4 pb-lg-5 mb-lg-5">
+          <div class="col-12 col-lg-6 ps-lg-5 pe-lg-3 d-flex align-items-center order-2 order-lg-2">
+            <img
+              src="/bruno-petstore-collection.png"
+              alt="Bruno showing the imported Swagger Petstore collection, with a POST request to /store/order pre-filled with a JSON request body generated from the OpenAPI schema."
+              style="width:100%"
+            />
+          </div>
+          <div class="col-12 col-lg-6 ps-lg-3 pe-lg-5 d-flex align-items-center order-1 order-lg-1">
+            <div class="text-lg-start text-center">
+              <h3>Export Ready-to-Use Bruno Collections</h3>
+              <p><a href="https://www.usebruno.com" target="_blank" rel="noopener">Bruno</a> already imports OpenAPI specs — but without example data, you're left filling in every request body and header by hand. Mokapi generates a complete Bruno collection with realistic values for every operation, ready to run against your mock immediately.</p>
+              <router-link :to="{ path: 'dashboard-demo/http/services/Swagger%20Petstore', query: { demo: 'bruno' } }">
+                <button type="button" class="btn btn-primary btn-sm me-2">Try it in the Demo</button>
+              </router-link>
+              <router-link :to="{ path: '/docs/http/export-bruno' }">
+                <button type="button" class="btn btn-outline-primary btn-sm">Learn More</button>
+              </router-link>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 

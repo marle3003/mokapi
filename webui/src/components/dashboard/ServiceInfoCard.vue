@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 import { useMarkdown } from '@/composables/markdown';
 import { useToolbarItems } from '@/composables/toolbar-items';
-
+import { useRoute, useRouter } from '@/router';
+import { Dropdown } from 'bootstrap';
 
 const props = defineProps<{
     service: Service,
@@ -10,8 +11,23 @@ const props = defineProps<{
     status?: string
 }>()
 
+const route = useRoute()
+
 const description = computed(() => useMarkdown(props.service.description, true).content)
 const toolbar = useToolbarItems()
+const toolbarButton = useTemplateRef('toolbar-button')
+const highlightItem = ref<string | null>(null)
+
+watch(() => [route.query.demo, toolbarButton.value], async ([kind]) => {
+    if (kind !== 'bruno' || !toolbarButton.value) {
+        console.log('skip', toolbar.items.length)
+        return
+    }
+     console.log('highlight')
+    await nextTick()
+    Dropdown.getOrCreateInstance(toolbarButton.value).show()
+    highlightItem.value = 'Export Bruno Collection'
+}, { immediate: true })
 </script>
 
 <template>
@@ -24,12 +40,13 @@ const toolbar = useToolbarItems()
                 data-bs-toggle="dropdown"
                 aria-expanded="false"
                 :aria-label="`Actions for ${service.name}`"
+                ref="toolbar-button"
             >
                 <i class="bi bi-three-dots-vertical"></i>
             </button>
             <ul class="dropdown-menu dropdown-menu-end">
                 <li v-for="item in toolbar.items" :key="item.id">
-                    <button class="dropdown-item" @click.prevent="item.onClick()">
+                    <button class="dropdown-item" @click.prevent="highlightItem = null; item.onClick(); item.onClick()" :class="{ 'menu-highlight': highlightItem == item.label}">
                         <i v-if="item.icon" :class="['bi', item.icon, 'me-2']" aria-hidden="true"></i>{{ item.label }}
                     </button>
 
@@ -104,5 +121,15 @@ ul.contact li span.bi {
     background: var(--bs-body-bg, #fff);
     border-radius: 0.375rem;
     box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+.menu-highlight {
+  background: var(--bs-primary-bg-subtle);
+  animation: menu-pulse 1.6s ease-in-out 3;
+}
+@keyframes menu-pulse {
+  30% { background: var(--bs-primary-border-subtle); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .menu-highlight { animation: none; }
 }
 </style>

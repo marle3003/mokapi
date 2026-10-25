@@ -34,8 +34,9 @@ test('Visit Petstore Demo', async ({ page, baseURL }) => {
 
         await page.getByRole('tab', { name: 'Servers' }).click();
         const table = page.getByRole('table', { name: 'Servers'});
-        const url = await getCellByColumnName(table, 'Url');
-        await expect(url).toHaveText('http://petstore.swagger.io/v2');
+        const rows = table.locator('tbody tr')
+        await expect(await getCellByColumnName(table, 'Url', rows.nth(0))).toHaveText('http://localhost/petstore');
+        await expect(await getCellByColumnName(table, 'Url', rows.nth(1))).toHaveText('http://petstore.swagger.io/v2');
 
     });
 
@@ -75,11 +76,15 @@ test('Visit Petstore Demo', async ({ page, baseURL }) => {
         await page.getByRole('tab', { name: 'Configs' }).click();
         const table = page.getByRole('table', { name: 'Configs' });
         const rows = table.locator('tbody tr');
-        await expect(await getCellByColumnName(table, 'URL', rows.nth(0))).toContainText('/petstore.yaml');
+
+        await expect(await getCellByColumnName(table, 'URL', rows.nth(0))).toContainText('/petstore.patch.yaml');
         await expect(await getCellByColumnName(table, 'Provider', rows.nth(0))).toHaveText('File');
 
-        await expect(await getCellByColumnName(table, 'URL', rows.nth(1))).toContainText('/z.petstore.fix.yaml');
+        await expect(await getCellByColumnName(table, 'URL', rows.nth(1))).toContainText('/petstore.yaml');
         await expect(await getCellByColumnName(table, 'Provider', rows.nth(1))).toHaveText('File');
+
+        await expect(await getCellByColumnName(table, 'URL', rows.nth(2))).toContainText('/z.petstore.fix.yaml');
+        await expect(await getCellByColumnName(table, 'Provider', rows.nth(2))).toHaveText('File');
 
     });
 

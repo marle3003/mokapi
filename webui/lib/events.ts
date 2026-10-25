@@ -33,7 +33,6 @@ export function match(e: Event, q?: Query): boolean {
         return false
     }
     if (q.http && e.traits.namespace === 'http') {
-        console.log(q.http.methods, e)
         if (q.http.methods) {
             if (!q.http.methods.includes(e.data.request.method)) {
                 return false
